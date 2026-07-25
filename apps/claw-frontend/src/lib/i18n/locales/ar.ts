@@ -4068,6 +4068,11 @@ export const ar: TranslationDictionary = {
       },
     },
     architecturePage: {
+      hero: {
+        title: 'كيف بُني ClawAI',
+        subtitle:
+          'ثماني عشرة خدمة مستقلة قابلة للنشر، تمتلك كل منها قاعدة بياناتها الخاصة، ومنسّقة عبر بنية موجّهة بالأحداث. تُبثّ الردود أثناء توليدها، وكل طبقة محمية على حدة.',
+      },
       overview: {
         title: 'كيف بُني ClawAI',
         body1:

@@ -4184,6 +4184,11 @@ export const de: TranslationDictionary = {
       },
     },
     architecturePage: {
+      hero: {
+        title: 'Wie ClawAI aufgebaut ist',
+        subtitle:
+          'Achtzehn unabhängig bereitstellbare Dienste, jeder mit einer eigenen Datenbank, koordiniert über ein ereignisgesteuertes Rückgrat. Antworten werden während der Erzeugung gestreamt, und jede Schicht ist eigenständig abgesichert.',
+      },
       overview: {
         title: 'Wie ClawAI aufgebaut ist',
         body1:

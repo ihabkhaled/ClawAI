@@ -4112,6 +4112,11 @@ export const en: TranslationDictionary = {
       },
     },
     architecturePage: {
+      hero: {
+        title: 'How ClawAI is built',
+        subtitle:
+          'Eighteen independently deployable services, each owning its own database, coordinated over an event-driven backbone. Responses stream as they are generated, and every layer is defended on its own.',
+      },
       overview: {
         title: 'How ClawAI is built',
         body1:

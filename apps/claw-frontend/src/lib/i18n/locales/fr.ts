@@ -4195,6 +4195,11 @@ export const fr: TranslationDictionary = {
       },
     },
     architecturePage: {
+      hero: {
+        title: 'Comment ClawAI est construit',
+        subtitle:
+          'Dix-huit services déployables indépendamment, chacun propriétaire de sa propre base de données, coordonnés par une architecture orientée événements. Les réponses sont diffusées au fil de leur génération et chaque couche est protégée séparément.',
+      },
       overview: {
         title: 'Comment ClawAI est conçu',
         body1:

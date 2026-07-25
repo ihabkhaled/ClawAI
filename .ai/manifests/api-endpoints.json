@@ -1673,6 +1673,36 @@
       },
       {
         "method": "GET",
+        "route": "/router-models/costs",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/router-models/costs",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/router-models/costs/:provider/:model",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/router-models/costs/:provider/:model/versions",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/router-models/costs/estimate",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/router-models/costs/price",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/router-models/intelligence/:provider/:model",
         "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-intelligence.controller.ts"
       },
@@ -2508,5 +2538,5 @@
     ]
   },
   "generated": true,
-  "total": 494
+  "total": 500
 }

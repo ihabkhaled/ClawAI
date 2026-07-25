@@ -399,7 +399,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-routing-service",
-      "endpointCount": 57,
+      "endpointCount": 63,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -412,6 +412,7 @@
       "port": 4004,
       "portSource": "shared-constants",
       "prismaModels": [
+        "ModelCostVersion",
         "ReplayCase",
         "ReplayRun",
         "RouterAdminOverride",

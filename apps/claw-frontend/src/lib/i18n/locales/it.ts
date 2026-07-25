@@ -2600,13 +2600,21 @@ export const it: TranslationDictionary = {
       notActiveHelp:
         'Perché la chat non sta usando questo modello? Attivalo per caricarlo in memoria; solo un modello frontier locale può essere attivo alla volta.',
     },
-    download: { start: 'Scarica', cancel: 'Annulla', retry: 'Riprova' },
+    download: {
+      start: 'Scarica',
+      cancel: 'Annulla',
+      retry: 'Riprova',
+    },
     compat: {
       fits: 'Compatibile con il tuo hardware',
       warns: 'Hardware al limite',
       refuses: 'Hardware insufficiente',
     },
-    qualityTier: { survival: 'Sopravvivenza', balanced: 'Bilanciato', best: 'Migliore' },
+    qualityTier: {
+      survival: 'Sopravvivenza',
+      balanced: 'Bilanciato',
+      best: 'Migliore',
+    },
     preflight: {
       RAM_INSUFFICIENT: 'RAM insufficiente per questo modello.',
       DISK_INSUFFICIENT: 'Spazio su disco insufficiente (non bypassabile).',
@@ -2724,7 +2732,6 @@ export const it: TranslationDictionary = {
       save: 'Salva',
     },
   },
-
   emailTemplates: {
     page: {
       title: 'Modelli e-mail',
@@ -2755,7 +2762,6 @@ export const it: TranslationDictionary = {
       cancel: 'Annulla',
     },
   },
-
   inbox: {
     page: {
       title: 'Posta in arrivo area di lavoro',
@@ -2970,9 +2976,15 @@ export const it: TranslationDictionary = {
       title: 'Invia IMPL_PROMPT a…',
       description: 'Scegli dove consegnare il brief di codice approvato.',
       cancel: 'Annulla',
-      CHAT: { hint: 'Apri un nuovo thread con il brief precaricato' },
-      AGENT: { hint: 'Inserisci nella coda del terminale dell’agente' },
-      CLIPBOARD: { hint: 'Copia negli appunti per strumenti esterni' },
+      CHAT: {
+        hint: 'Apri un nuovo thread con il brief precaricato',
+      },
+      AGENT: {
+        hint: 'Inserisci nella coda del terminale dell’agente',
+      },
+      CLIPBOARD: {
+        hint: 'Copia negli appunti per strumenti esterni',
+      },
     },
   },
   learned: {
@@ -4155,6 +4167,11 @@ export const it: TranslationDictionary = {
       },
     },
     architecturePage: {
+      hero: {
+        title: 'Come è costruito ClawAI',
+        subtitle:
+          'Diciotto servizi distribuibili in modo indipendente, ciascuno proprietario del proprio database, coordinati da una struttura orientata agli eventi. Le risposte vengono trasmesse mentre sono generate e ogni livello è protetto separatamente.',
+      },
       overview: {
         title: 'Com’è costruito ClawAI',
         body1:

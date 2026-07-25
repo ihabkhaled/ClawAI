@@ -3869,6 +3869,10 @@ export type TranslationDictionary = {
       };
     };
     architecturePage: {
+      hero: {
+        title: string;
+        subtitle: string;
+      };
       overview: {
         title: string;
         body1: string;

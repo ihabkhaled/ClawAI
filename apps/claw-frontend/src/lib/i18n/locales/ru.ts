@@ -2598,13 +2598,21 @@ export const ru: TranslationDictionary = {
       notActiveHelp:
         'Почему чат не использует эту модель? Активируйте её, чтобы загрузить в память; одновременно может быть активна только одна локальная frontier-модель.',
     },
-    download: { start: 'Скачать', cancel: 'Отмена', retry: 'Повторить' },
+    download: {
+      start: 'Скачать',
+      cancel: 'Отмена',
+      retry: 'Повторить',
+    },
     compat: {
       fits: 'Подходит под оборудование',
       warns: 'Граничное оборудование',
       refuses: 'Недостаточно оборудования',
     },
-    qualityTier: { survival: 'Выживание', balanced: 'Сбалансированно', best: 'Лучшее' },
+    qualityTier: {
+      survival: 'Выживание',
+      balanced: 'Сбалансированно',
+      best: 'Лучшее',
+    },
     preflight: {
       RAM_INSUFFICIENT: 'Недостаточно ОЗУ для этой модели.',
       DISK_INSUFFICIENT: 'Недостаточно места на диске (нельзя обойти).',
@@ -2722,7 +2730,6 @@ export const ru: TranslationDictionary = {
       save: 'Сохранить',
     },
   },
-
   emailTemplates: {
     page: {
       title: 'Шаблоны писем',
@@ -2753,7 +2760,6 @@ export const ru: TranslationDictionary = {
       cancel: 'Отмена',
     },
   },
-
   inbox: {
     page: {
       title: 'Входящие рабочего пространства',
@@ -2969,9 +2975,15 @@ export const ru: TranslationDictionary = {
       title: 'Отправить IMPL_PROMPT в…',
       description: 'Выберите, куда доставить одобренный бриф кода.',
       cancel: 'Отмена',
-      CHAT: { hint: 'Открыть новую цепочку с загруженным брифом' },
-      AGENT: { hint: 'Поместить в очередь терминала агента' },
-      CLIPBOARD: { hint: 'Копировать для внешних инструментов' },
+      CHAT: {
+        hint: 'Открыть новую цепочку с загруженным брифом',
+      },
+      AGENT: {
+        hint: 'Поместить в очередь терминала агента',
+      },
+      CLIPBOARD: {
+        hint: 'Копировать для внешних инструментов',
+      },
     },
   },
   learned: {
@@ -4149,6 +4161,11 @@ export const ru: TranslationDictionary = {
       },
     },
     architecturePage: {
+      hero: {
+        title: 'Как устроен ClawAI',
+        subtitle:
+          'Восемнадцать независимо развёртываемых сервисов, каждый со своей базой данных, связанных событийной архитектурой. Ответы передаются потоково по мере генерации, и каждый уровень защищён отдельно.',
+      },
       overview: {
         title: 'Как устроен ClawAI',
         body1:
