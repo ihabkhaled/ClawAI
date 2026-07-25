@@ -3345,6 +3345,19 @@ export const en: TranslationDictionary = {
     progressTitle: 'Live progress',
     errorTitle: 'Run failed',
   },
+  billing: {
+    checkout: {
+      startFailed: 'We could not start checkout. Please try again.',
+    },
+    planChange: {
+      quoteFailed: 'We could not price that change. Please try again.',
+      confirmFailed: 'We could not apply that change. You have not been charged.',
+      scheduled: 'Your plan change is scheduled.',
+    },
+    paymentMethods: {
+      removeFailed: 'We could not remove that payment method.',
+    },
+  },
   marketing: {
     header: {
       navLabel: 'Main navigation',

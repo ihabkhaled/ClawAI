@@ -3386,6 +3386,19 @@ export const ru: TranslationDictionary = {
     progressTitle: 'Прогресс в реальном времени',
     errorTitle: 'Сбой выполнения',
   },
+  billing: {
+    checkout: {
+      startFailed: 'Не удалось начать оплату. Попробуйте ещё раз.',
+    },
+    planChange: {
+      quoteFailed: 'Не удалось рассчитать стоимость этого изменения. Попробуйте ещё раз.',
+      confirmFailed: 'Не удалось применить изменение. Списание не производилось.',
+      scheduled: 'Смена тарифа запланирована.',
+    },
+    paymentMethods: {
+      removeFailed: 'Не удалось удалить этот способ оплаты.',
+    },
+  },
   marketing: {
     header: {
       navLabel: 'Основная навигация',

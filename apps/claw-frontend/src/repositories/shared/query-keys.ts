@@ -1,4 +1,13 @@
 export const queryKeys = {
+  billing: {
+    all: ['billing'] as const,
+    plans: () => [...queryKeys.billing.all, 'plans'] as const,
+    current: () => [...queryKeys.billing.all, 'current'] as const,
+    usage: () => [...queryKeys.billing.all, 'usage'] as const,
+    invoices: () => [...queryKeys.billing.all, 'invoices'] as const,
+    paymentMethods: () => [...queryKeys.billing.all, 'payment-methods'] as const,
+    checkoutSession: (id: string) => [...queryKeys.billing.all, 'checkout', id] as const,
+  },
   auth: {
     me: ['auth', 'me'] as const,
   },

@@ -3365,6 +3365,19 @@ export const hi: TranslationDictionary = {
     progressTitle: 'लाइव प्रगति',
     errorTitle: 'निष्पादन विफल',
   },
+  billing: {
+    checkout: {
+      startFailed: 'हम भुगतान शुरू नहीं कर सके। कृपया पुनः प्रयास करें।',
+    },
+    planChange: {
+      quoteFailed: 'हम इस बदलाव की कीमत नहीं निकाल सके। कृपया पुनः प्रयास करें।',
+      confirmFailed: 'हम यह बदलाव लागू नहीं कर सके। आपसे कोई शुल्क नहीं लिया गया है।',
+      scheduled: 'आपका प्लान बदलाव निर्धारित कर दिया गया है।',
+    },
+    paymentMethods: {
+      removeFailed: 'हम वह भुगतान विधि हटा नहीं सके।',
+    },
+  },
   marketing: {
     header: {
       navLabel: 'मुख्य नेविगेशन',

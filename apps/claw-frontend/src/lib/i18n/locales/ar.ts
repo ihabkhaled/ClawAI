@@ -3335,6 +3335,19 @@ export const ar: TranslationDictionary = {
     progressTitle: 'التقدم المباشر',
     errorTitle: 'فشل التشغيل',
   },
+  billing: {
+    checkout: {
+      startFailed: 'تعذّر بدء عملية الدفع. يُرجى المحاولة مرة أخرى.',
+    },
+    planChange: {
+      quoteFailed: 'تعذّر تسعير هذا التغيير. يُرجى المحاولة مرة أخرى.',
+      confirmFailed: 'تعذّر تطبيق هذا التغيير. لم يتم خصم أي مبلغ منك.',
+      scheduled: 'تم جدولة تغيير خطتك.',
+    },
+    paymentMethods: {
+      removeFailed: 'تعذّر حذف طريقة الدفع هذه.',
+    },
+  },
   marketing: {
     header: {
       navLabel: 'التنقل الرئيسي',

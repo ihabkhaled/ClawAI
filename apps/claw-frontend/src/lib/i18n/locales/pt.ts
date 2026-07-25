@@ -3381,6 +3381,19 @@ export const pt: TranslationDictionary = {
     progressTitle: 'Progresso ao vivo',
     errorTitle: 'A execução falhou',
   },
+  billing: {
+    checkout: {
+      startFailed: 'Não foi possível iniciar o pagamento. Tente novamente.',
+    },
+    planChange: {
+      quoteFailed: 'Não foi possível calcular o preço dessa alteração. Tente novamente.',
+      confirmFailed: 'Não foi possível aplicar essa alteração. Nada foi cobrado de você.',
+      scheduled: 'A alteração do seu plano está agendada.',
+    },
+    paymentMethods: {
+      removeFailed: 'Não foi possível remover esse método de pagamento.',
+    },
+  },
   marketing: {
     header: {
       navLabel: 'Navegação principal',

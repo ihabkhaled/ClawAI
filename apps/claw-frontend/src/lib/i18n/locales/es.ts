@@ -3397,6 +3397,19 @@ export const es: TranslationDictionary = {
     progressTitle: 'Progreso en vivo',
     errorTitle: 'La ejecución falló',
   },
+  billing: {
+    checkout: {
+      startFailed: 'No pudimos iniciar el pago. Inténtelo de nuevo.',
+    },
+    planChange: {
+      quoteFailed: 'No pudimos calcular el precio de ese cambio. Inténtelo de nuevo.',
+      confirmFailed: 'No pudimos aplicar ese cambio. No se le ha cobrado nada.',
+      scheduled: 'Su cambio de plan está programado.',
+    },
+    paymentMethods: {
+      removeFailed: 'No pudimos eliminar ese método de pago.',
+    },
+  },
   marketing: {
     header: {
       navLabel: 'Navegación principal',

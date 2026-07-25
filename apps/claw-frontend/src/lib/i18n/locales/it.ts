@@ -3389,6 +3389,20 @@ export const it: TranslationDictionary = {
     progressTitle: 'Avanzamento in tempo reale',
     errorTitle: 'Esecuzione non riuscita',
   },
+  billing: {
+    checkout: {
+      startFailed: 'Non è stato possibile avviare il pagamento. Riprova.',
+    },
+    planChange: {
+      quoteFailed: 'Non è stato possibile calcolare il prezzo di questa modifica. Riprova.',
+      confirmFailed:
+        'Non è stato possibile applicare la modifica. Non ti è stato addebitato nulla.',
+      scheduled: 'La modifica del tuo piano è programmata.',
+    },
+    paymentMethods: {
+      removeFailed: 'Non è stato possibile rimuovere questo metodo di pagamento.',
+    },
+  },
   marketing: {
     header: {
       navLabel: 'Navigazione principale',

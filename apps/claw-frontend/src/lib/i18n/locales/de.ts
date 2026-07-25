@@ -3400,6 +3400,20 @@ export const de: TranslationDictionary = {
     progressTitle: 'Live-Fortschritt',
     errorTitle: 'Ausführung fehlgeschlagen',
   },
+  billing: {
+    checkout: {
+      startFailed:
+        'Der Bezahlvorgang konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
+    },
+    planChange: {
+      quoteFailed: 'Diese Änderung konnte nicht berechnet werden. Bitte versuchen Sie es erneut.',
+      confirmFailed: 'Diese Änderung konnte nicht angewendet werden. Es wurde nichts abgebucht.',
+      scheduled: 'Ihr Tarifwechsel ist geplant.',
+    },
+    paymentMethods: {
+      removeFailed: 'Diese Zahlungsmethode konnte nicht entfernt werden.',
+    },
+  },
   marketing: {
     header: {
       navLabel: 'Hauptnavigation',

@@ -3409,6 +3409,20 @@ export const fr: TranslationDictionary = {
     progressTitle: 'Progression en direct',
     errorTitle: 'Échec de l’exécution',
   },
+  billing: {
+    checkout: {
+      startFailed: 'Nous n’avons pas pu démarrer le paiement. Veuillez réessayer.',
+    },
+    planChange: {
+      quoteFailed: 'Nous n’avons pas pu chiffrer ce changement. Veuillez réessayer.',
+      confirmFailed:
+        'Nous n’avons pas pu appliquer ce changement. Aucun montant ne vous a été débité.',
+      scheduled: 'Votre changement de forfait est planifié.',
+    },
+    paymentMethods: {
+      removeFailed: 'Nous n’avons pas pu supprimer ce moyen de paiement.',
+    },
+  },
   marketing: {
     header: {
       navLabel: 'Navigation principale',

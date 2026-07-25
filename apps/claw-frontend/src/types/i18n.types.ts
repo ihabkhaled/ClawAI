@@ -3302,6 +3302,19 @@ export type TranslationDictionary = {
     progressTitle: string;
     errorTitle: string;
   };
+  billing: {
+    checkout: {
+      startFailed: string;
+    };
+    planChange: {
+      quoteFailed: string;
+      confirmFailed: string;
+      scheduled: string;
+    };
+    paymentMethods: {
+      removeFailed: string;
+    };
+  };
   marketing: {
     header: {
       navLabel: string;
