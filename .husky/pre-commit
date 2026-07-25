@@ -18,6 +18,32 @@ npx lint-staged || exit 1
 # for a human or an agent to remember.
 if git diff --cached --name-only | grep -qE '^(packages/|apps/|infra/|docker/|docs/|scripts/|rules/|skills/|\.env\.example|tools/)'; then
   echo "pre-commit 2/3: regenerating knowledge layer + inventory snapshot"
+
+  # The generators read the WORKING TREE, but CI regenerates from what was
+  # actually committed. If unstaged or untracked source files are lying around,
+  # generating here records facts CI cannot see — e.g. an event declared in an
+  # untracked service file lands in event-graph.json, and CI then reports the
+  # manifest as stale on every subsequent push.
+  #
+  # So: hide everything that is not being committed, generate against exactly
+  # the staged tree, then restore. lint-staged performs the same dance in step 1,
+  # so the pattern is already proven here. The trap restores the stash even if a
+  # generator fails or the shell is interrupted — losing a developer's
+  # uncommitted work to a hook would be far worse than a stale manifest.
+  STASH_MSG="pre-commit-knowledge-$$"
+  STASHED=0
+  if ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+    if git stash push --quiet --keep-index --include-untracked --message "$STASH_MSG"; then
+      STASHED=1
+    fi
+  fi
+  restore_stash() {
+    if [ "$STASHED" = "1" ]; then
+      git stash pop --quiet || echo "→ WARNING: could not restore '$STASH_MSG'; recover it with 'git stash list'"
+    fi
+  }
+  trap 'restore_stash' EXIT INT TERM
+
   npm run knowledge:build >/dev/null || { echo "→ knowledge:build failed"; exit 1; }
   npm run audit >/dev/null || { echo "→ audit failed"; exit 1; }
   git add .ai docs/features/ai-native-engineering-os/inventory.snapshot.json 2>/dev/null
@@ -25,10 +51,13 @@ if git diff --cached --name-only | grep -qE '^(packages/|apps/|infra/|docker/|do
   git ls-files --modified --others --exclude-standard -- '*/AGENTS.md' 'AGENTS.md' | while read -r f; do
     git add "$f"
   done
-  # Belt and braces: the same verifications CI runs, so a red build is
-  # impossible to push from here.
+  # The same verifications CI runs, against the same content CI will see.
   npm run knowledge:verify || { echo "→ knowledge:verify failed"; exit 1; }
   npm run audit:check || { echo "→ audit:check failed"; exit 1; }
+
+  restore_stash
+  STASHED=0
+  trap - EXIT INT TERM
 else
   echo "pre-commit 2/3: knowledge + inventory (skipped — no generated-source changes)"
 fi
