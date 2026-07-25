@@ -378,9 +378,7 @@
       "producers": []
     },
     {
-      "consumers": [
-        "claw-payment-service"
-      ],
+      "consumers": [],
       "key": "BILLING_SUBSCRIPTION_ACTIVATED",
       "pattern": "billing.subscription.activated",
       "producers": []
