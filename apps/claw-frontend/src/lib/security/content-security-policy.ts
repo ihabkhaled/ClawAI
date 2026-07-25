@@ -18,6 +18,15 @@ const GOOGLE_AD_CONNECT_HOSTS: ReadonlyArray<string> = [
   'https://www.google-analytics.com',
 ];
 
+// Only needed in DEVELOPMENT. Production script-src uses 'strict-dynamic',
+// under which host allowlists are ignored entirely and trust flows from the
+// nonce on the loader tag instead.
+const GOOGLE_AD_SCRIPT_HOSTS: ReadonlyArray<string> = [
+  'https://pagead2.googlesyndication.com',
+  'https://googleads.g.doubleclick.net',
+  'https://tpc.googlesyndication.com',
+];
+
 const GOOGLE_AD_IMG_HOSTS: ReadonlyArray<string> = [
   'https://pagead2.googlesyndication.com',
   'https://googleads.g.doubleclick.net',
@@ -54,8 +63,19 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
   // block Next.js/Turbopack HMR + React Refresh inline scripts. Dev therefore
   // gets a deliberately relaxed script-src. Production is strict: nonce +
   // 'strict-dynamic', no 'unsafe-inline', no 'unsafe-eval'.
+  // Development has no 'strict-dynamic', so the AdSense loader is NOT covered by
+  // nonce-inherited trust and 'self' does not match a Google host — the script
+  // tag renders but the browser blocks it, which looks exactly like AdSense
+  // "not being implemented". Dev therefore names the loader host explicitly.
+  // Production needs no host here: 'strict-dynamic' means the nonce-carrying
+  // loader is trusted and everything it inserts inherits that trust.
   const scriptSrc = isDev
-    ? ["'self'", "'unsafe-inline'", "'unsafe-eval'"]
+    ? [
+        "'self'",
+        "'unsafe-inline'",
+        "'unsafe-eval'",
+        ...(adsenseEnabled ? GOOGLE_AD_SCRIPT_HOSTS : []),
+      ]
     : ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"];
 
   const connectSrc = [
