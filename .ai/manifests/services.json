@@ -345,9 +345,23 @@
       "port": 4018,
       "portSource": "shared-constants",
       "prismaModels": [
-        "SeedExecution"
+        "BillingCustomer",
+        "CheckoutSession",
+        "FxQuote",
+        "GatewayPlanMapping",
+        "IdempotencyRecord",
+        "InboxEvent",
+        "Invoice",
+        "InvoiceLine",
+        "OutboxEvent",
+        "PaymentMethod",
+        "PaymentTransaction",
+        "ProrationQuote",
+        "SeedExecution",
+        "Subscription",
+        "WebhookEvent"
       ],
-      "testFiles": 10,
+      "testFiles": 15,
       "testRunner": "jest"
     },
     {

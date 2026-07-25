@@ -94,7 +94,21 @@
       "RuntimeConfig"
     ],
     "claw-payment-service": [
-      "SeedExecution"
+      "BillingCustomer",
+      "CheckoutSession",
+      "FxQuote",
+      "GatewayPlanMapping",
+      "IdempotencyRecord",
+      "InboxEvent",
+      "Invoice",
+      "InvoiceLine",
+      "OutboxEvent",
+      "PaymentMethod",
+      "PaymentTransaction",
+      "ProrationQuote",
+      "SeedExecution",
+      "Subscription",
+      "WebhookEvent"
     ],
     "claw-research-service": [
       "FetchJob",

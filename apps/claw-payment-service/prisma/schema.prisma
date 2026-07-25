@@ -7,6 +7,554 @@ datasource db {
   provider = "postgresql"
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Conventions for every model below
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// MONEY is always an integer count of the currency's minor unit ($5.00 -> 500).
+// Never a float, never a Decimal that could be read into one. Provider cost is
+// integer micro-USD. `0.1 + 0.2 !== 0.3` is a wrong charge, not a curiosity.
+//
+// EXTERNAL IDS (userId, planId, planPriceVersionId) are validated opaque
+// strings with NO foreign key. They live in the auth service's database and
+// this service must never be able to join to them.
+//
+// GATEWAY SECRETS (customer ids, subscription ids, payment-method tokens) are
+// AES-256-GCM encrypted at the application layer before they reach a column.
+// The plaintext never touches the database or a log.
+//
+// APPEND-ORIENTED: payment tables record what happened. A correction is a new
+// compensating row, never an edit to history.
+
+/// Local mirror of a gateway customer. One row per (user, gateway).
+model BillingCustomer {
+  id     String @id @default(cuid())
+  /// Auth-service user id. Opaque string, no FK — cross-DB joins are banned.
+  userId String @map("user_id")
+  gateway String
+
+  /// AES-256-GCM ciphertext of the gateway's customer id.
+  encryptedGatewayCustomerId String? @map("encrypted_gateway_customer_id")
+  /// Which PAYMENT_TOKEN_ENCRYPTION_KEY version produced the ciphertext, so a
+  /// key rotation can decrypt old rows instead of orphaning them.
+  encryptionKeyVersion       Int     @default(1) @map("encryption_key_version")
+
+  /// Only stored when the gateway requires it for receipts. Not an identity.
+  billingEmail String? @map("billing_email")
+  status       String  @default("ACTIVE")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  subscriptions  Subscription[]
+  paymentMethods PaymentMethod[]
+
+  @@unique([userId, gateway])
+  @@index([userId])
+  @@index([status])
+  @@map("billing_customers")
+}
+
+/// A user's subscription to a plan.
+///
+/// Exactly one row per user may hold an entitlement-bearing status at a time —
+/// enforced by `uniqueActiveKey`, a column the application sets to the userId
+/// while the subscription is effective and to NULL once it is not. A partial
+/// unique index on a nullable column is how "one active per user" becomes a
+/// database guarantee rather than an application convention that races.
+model Subscription {
+  id                 String @id @default(cuid())
+  userId             String @map("user_id")
+  billingCustomerId  String @map("billing_customer_id")
+
+  /// Auth-service plan + the EXACT immutable price version purchased. Retaining
+  /// the version is what stops a later price change from rewriting history.
+  planId             String @map("plan_id")
+  planSlug           String @map("plan_slug")
+  planPriceVersionId String @map("plan_price_version_id")
+
+  gateway String
+  /// AES-256-GCM ciphertext of the gateway's subscription id.
+  encryptedGatewaySubscriptionId String? @map("encrypted_gateway_subscription_id")
+  encryptionKeyVersion           Int     @default(1) @map("encryption_key_version")
+  /// Blind index over the gateway subscription id: lets a webhook look the row
+  /// up by provider id without the plaintext ever being stored or queryable.
+  gatewaySubscriptionLookupHash  String? @map("gateway_subscription_lookup_hash")
+
+  status          String
+  billingInterval String @map("billing_interval")
+  currency        String
+  /// Integer minor units. Snapshot of what was actually agreed.
+  amountMinor     Int    @map("amount_minor")
+
+  currentPeriodStart DateTime  @map("current_period_start")
+  currentPeriodEnd   DateTime  @map("current_period_end")
+  cancelAtPeriodEnd  Boolean   @default(false) @map("cancel_at_period_end")
+  cancelledAt        DateTime? @map("cancelled_at")
+  pastDueAt          DateTime? @map("past_due_at")
+  gracePeriodEndsAt  DateTime? @map("grace_period_ends_at")
+
+  /// The instant the user's paid entitlement lapses. Auth extends to exactly
+  /// this value and drops any event carrying an older one as SUPERSEDED.
+  entitlementValidUntil DateTime @map("entitlement_valid_until")
+
+  /// Set when a downgrade is queued for period end.
+  scheduledPlanId             String?   @map("scheduled_plan_id")
+  scheduledPlanSlug           String?   @map("scheduled_plan_slug")
+  scheduledPlanPriceVersionId String?   @map("scheduled_plan_price_version_id")
+  scheduledEffectiveAt        DateTime? @map("scheduled_effective_at")
+
+  /// Optimistic concurrency. Two simultaneous upgrades cannot both commit:
+  /// the second sees a changed version and is rejected as a conflict.
+  version Int @default(0)
+
+  /// userId while entitlement-bearing, NULL otherwise. See the model comment.
+  uniqueActiveKey String? @map("unique_active_key")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  billingCustomer  BillingCustomer     @relation(fields: [billingCustomerId], references: [id])
+  transactions     PaymentTransaction[]
+  invoices         Invoice[]
+  prorationQuotes  ProrationQuote[]
+  checkoutSessions CheckoutSession[]
+
+  @@unique([uniqueActiveKey])
+  @@unique([gateway, gatewaySubscriptionLookupHash])
+  @@index([userId])
+  @@index([status])
+  @@index([currentPeriodEnd])
+  @@index([gracePeriodEndsAt])
+  @@index([scheduledEffectiveAt])
+  @@map("subscriptions")
+}
+
+/// A server-priced checkout attempt. The ONLY object permitted to carry an
+/// amount into a gateway, and immutable once created.
+model CheckoutSession {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+
+  purpose String
+  status  String
+  gateway String
+
+  planId             String @map("plan_id")
+  planSlug           String @map("plan_slug")
+  planPriceVersionId String @map("plan_price_version_id")
+  billingInterval    String @map("billing_interval")
+
+  /// Canonical USD price of the bound price version.
+  baseAmountMinor Int    @map("base_amount_minor")
+  baseCurrency    String @map("base_currency")
+  /// What the gateway is actually asked to charge (FX-converted for Paymob).
+  /// The provider's reported amount is revalidated against THIS value.
+  chargeAmountMinor Int    @map("charge_amount_minor")
+  chargeCurrency    String @map("charge_currency")
+
+  /// Frozen FX inputs, so a completed charge can be re-derived years later.
+  fxQuoteId        String? @map("fx_quote_id")
+  fxFinalRateScaled BigInt? @map("fx_final_rate_scaled")
+
+  /// Caller-supplied idempotency key, scoped by (user, operation).
+  idempotencyKey String @map("idempotency_key")
+  /// Random nonce echoed by the return page and checked against this row, so a
+  /// redirect cannot be replayed or forged for another session.
+  stateNonce     String @map("state_nonce")
+
+  providerOrderId   String? @map("provider_order_id")
+  hostedCheckoutUrl String? @map("hosted_checkout_url")
+
+  subscriptionId String? @map("subscription_id")
+  /// Consumed proration quote, for an upgrade.
+  prorationQuoteId String? @map("proration_quote_id")
+
+  expiresAt   DateTime  @map("expires_at")
+  verifiedAt  DateTime? @map("verified_at")
+  completedAt DateTime? @map("completed_at")
+  /// Stable machine code only. Never a provider error body.
+  failureCode String?   @map("failure_code")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  subscription Subscription?        @relation(fields: [subscriptionId], references: [id])
+  transactions PaymentTransaction[]
+
+  @@unique([userId, idempotencyKey])
+  @@unique([gateway, providerOrderId])
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("checkout_sessions")
+}
+
+/// One money movement. Append-only.
+model PaymentTransaction {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  subscriptionId    String? @map("subscription_id")
+  checkoutSessionId String? @map("checkout_session_id")
+
+  gateway String
+  type    String
+  status  String
+
+  /// What ClawAI intended to charge, in the canonical plan currency.
+  amountMinor Int    @map("amount_minor")
+  currency    String
+  /// What the provider reported charging. Divergence from the above is a
+  /// reconciliation finding, never silently accepted.
+  providerAmountMinor Int?    @map("provider_amount_minor")
+  providerCurrency    String? @map("provider_currency")
+
+  providerTransactionId String? @map("provider_transaction_id")
+  providerOrderId       String? @map("provider_order_id")
+  idempotencyKey        String  @map("idempotency_key")
+
+  /// Immutable snapshots so an invoice can be reproduced exactly.
+  priceSnapshotJson Json?   @map("price_snapshot_json")
+  fxSnapshotJson    Json?   @map("fx_snapshot_json")
+
+  /// Stable machine code only. Never a provider error body.
+  failureCode String? @map("failure_code")
+
+  capturedAt DateTime? @map("captured_at")
+  refundedAt DateTime? @map("refunded_at")
+  /// Set when the original charge this row reverses is known.
+  reversesTransactionId String? @map("reverses_transaction_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  subscription    Subscription?    @relation(fields: [subscriptionId], references: [id])
+  checkoutSession CheckoutSession? @relation(fields: [checkoutSessionId], references: [id])
+
+  /// A provider transaction may be recorded exactly once. This unique index is
+  /// what makes a duplicate capture or duplicate refund impossible under retry.
+  @@unique([gateway, providerTransactionId])
+  @@unique([userId, idempotencyKey])
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@map("payment_transactions")
+}
+
+/// Immutable billing document. Never rewritten; a correction is a new invoice.
+model Invoice {
+  id             String  @id @default(cuid())
+  /// Human-facing sequential reference.
+  number         String  @unique
+  userId         String  @map("user_id")
+  subscriptionId String? @map("subscription_id")
+
+  status   String
+  currency String
+
+  subtotalMinor       Int @map("subtotal_minor")
+  discountMinor       Int @default(0) @map("discount_minor")
+  taxMinor            Int @default(0) @map("tax_minor")
+  totalMinor          Int @map("total_minor")
+  amountPaidMinor     Int @default(0) @map("amount_paid_minor")
+  amountRefundedMinor Int @default(0) @map("amount_refunded_minor")
+
+  periodStart DateTime? @map("period_start")
+  periodEnd   DateTime? @map("period_end")
+  issuedAt    DateTime  @default(now()) @map("issued_at")
+  paidAt      DateTime? @map("paid_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  lines        InvoiceLine[]
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([issuedAt])
+  @@map("invoices")
+}
+
+/// One line of an invoice. Lines always sum to the invoice total.
+model InvoiceLine {
+  id          String @id @default(cuid())
+  invoiceId   String @map("invoice_id")
+  kind        String
+  description String
+  quantity    Int    @default(1)
+  /// Negative only for PRORATION_CREDIT / DISCOUNT / REFUND.
+  amountMinor Int    @map("amount_minor")
+  sortOrder   Int    @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_lines")
+}
+
+/// A short-lived, server-computed price promise for a plan change. Expires so a
+/// user cannot hold a stale favourable amount open across a price change.
+model ProrationQuote {
+  id             String @id @default(cuid())
+  userId         String @map("user_id")
+  subscriptionId String @map("subscription_id")
+
+  currentPlanId             String @map("current_plan_id")
+  currentPlanSlug           String @map("current_plan_slug")
+  currentPlanPriceVersionId String @map("current_plan_price_version_id")
+  currentAmountMinor        Int    @map("current_amount_minor")
+
+  targetPlanId             String @map("target_plan_id")
+  targetPlanSlug           String @map("target_plan_slug")
+  targetPlanPriceVersionId String @map("target_plan_price_version_id")
+  targetAmountMinor        Int    @map("target_amount_minor")
+  targetBillingInterval    String @map("target_billing_interval")
+
+  currency    String
+  effectiveAt DateTime @map("effective_at")
+
+  /// Scaled integer (PRORATION_RATIO_SCALE). Never a float.
+  remainingRatioScaled       Int @map("remaining_ratio_scaled")
+  unusedCurrentCreditMinor   Int @map("unused_current_credit_minor")
+  targetRemainingChargeMinor Int @map("target_remaining_charge_minor")
+  amountDueMinor             Int @map("amount_due_minor")
+
+  /// True for a downgrade, which defers to period end rather than charging now.
+  isScheduledForPeriodEnd Boolean   @default(false) @map("is_scheduled_for_period_end")
+  scheduledEffectiveAt    DateTime? @map("scheduled_effective_at")
+
+  status     String
+  expiresAt  DateTime  @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("proration_quotes")
+}
+
+/// A vaulted payment method.
+///
+/// Structurally incapable of holding card data: there is no PAN column, no CVV
+/// column, and no expiry-with-number. Only the gateway's own token (encrypted)
+/// plus the masked metadata a user needs to recognise their card.
+model PaymentMethod {
+  id                String @id @default(cuid())
+  userId            String @map("user_id")
+  billingCustomerId String @map("billing_customer_id")
+  gateway           String
+
+  /// AES-256-GCM ciphertext of the gateway's payment-method token. AAD binds
+  /// (userId, gateway, id) so a ciphertext lifted into another row fails to
+  /// decrypt instead of silently authorising a different user's charge.
+  encryptedToken       String @map("encrypted_token")
+  encryptionKeyVersion Int    @default(1) @map("encryption_key_version")
+  /// Keyed HMAC of the token. Lets us detect "this card is already saved"
+  /// without ever comparing plaintext.
+  tokenBlindIndex      String @map("token_blind_index")
+
+  /// Masked metadata ONLY. `last4` is the maximum PAN fragment permitted.
+  type        String
+  brand       String? @db.VarChar(32)
+  last4       String? @db.VarChar(4)
+  expiryMonth Int?    @map("expiry_month")
+  expiryYear  Int?    @map("expiry_year")
+
+  status    String
+  isDefault Boolean @default(false) @map("is_default")
+
+  /// When the user explicitly agreed to store this method. Absent consent, a
+  /// method must not be vaulted.
+  consentedAt DateTime? @map("consented_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  billingCustomer BillingCustomer @relation(fields: [billingCustomerId], references: [id])
+
+  @@unique([userId, gateway, tokenBlindIndex])
+  @@index([userId])
+  @@index([status])
+  @@map("payment_methods")
+}
+
+/// An inbound gateway webhook.
+///
+/// The row is written BEFORE any business state changes, so a replay is caught
+/// by the unique index rather than by re-running handlers and hoping they are
+/// idempotent.
+model WebhookEvent {
+  id      String @id @default(cuid())
+  gateway String
+  /// The gateway's own event id.
+  providerEventId String @map("provider_event_id")
+  eventType       String @map("event_type")
+
+  /// SHA-256 of the raw body. Proves duplicate delivery without retaining a
+  /// payload that may contain payer details.
+  payloadHash String @map("payload_hash")
+  /// Result of constant-time signature/HMAC verification.
+  signatureValid Boolean @map("signature_valid")
+
+  status   String
+  attempts Int    @default(0)
+
+  receivedAt  DateTime  @default(now()) @map("received_at")
+  processedAt DateTime? @map("processed_at")
+  /// Sanitized machine code only.
+  errorCode   String?   @map("error_code")
+
+  /// What the handler acted on, for reconciliation.
+  relatedSubscriptionId String? @map("related_subscription_id")
+  relatedTransactionId  String? @map("related_transaction_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([gateway, providerEventId])
+  @@index([status])
+  @@index([receivedAt])
+  @@index([eventType])
+  @@map("webhook_events")
+}
+
+/// Replay protection for financial writes, scoped by (user, operation, key).
+///
+/// Replaying a key with a DIFFERENT request body is an error, not a replay: it
+/// means the caller reused a key across two distinct operations, and returning
+/// the first response would be wrong. `requestHash` is what detects that.
+model IdempotencyRecord {
+  id        String @id @default(cuid())
+  userId    String @map("user_id")
+  operation String
+  key       String
+
+  requestHash String @map("request_hash")
+  status      String
+
+  /// Replayable response, so a retry returns the original result verbatim.
+  responseJson       Json? @map("response_json")
+  responseStatusCode Int?  @map("response_status_code")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  expiresAt DateTime  @map("expires_at")
+
+  @@unique([userId, operation, key])
+  @@index([expiresAt])
+  @@map("idempotency_records")
+}
+
+/// Transactional outbox.
+///
+/// Written in the SAME database transaction as the state change it announces,
+/// so an entitlement event can never be lost between "payment committed" and
+/// "message published". A separate poller drains it.
+model OutboxEvent {
+  id      String @id @default(cuid())
+  /// EventPattern value, e.g. billing.subscription.activated.
+  pattern String
+  /// Envelope eventId — the key the consumer's inbox de-duplicates on.
+  eventId String @unique @map("event_id")
+
+  aggregateType String @map("aggregate_type")
+  aggregateId   String @map("aggregate_id")
+  payloadJson   Json   @map("payload_json")
+
+  status   String
+  attempts Int    @default(0)
+  /// Sanitized machine code only.
+  lastErrorCode String? @map("last_error_code")
+
+  availableAt DateTime  @default(now()) @map("available_at")
+  publishedAt DateTime? @map("published_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status, availableAt])
+  @@index([aggregateType, aggregateId])
+  @@map("outbox_events")
+}
+
+/// Consumer-side inbox for events this service receives.
+///
+/// Recorded BEFORE the event is applied and keyed on the envelope eventId, so
+/// RabbitMQ's at-least-once delivery cannot double-apply.
+model InboxEvent {
+  id      String @id @default(cuid())
+  eventId String @unique @map("event_id")
+  pattern String
+  producer String
+
+  status String
+  /// Sanitized machine code only.
+  errorCode String? @map("error_code")
+
+  receivedAt  DateTime  @default(now()) @map("received_at")
+  processedAt DateTime? @map("processed_at")
+
+  @@index([status])
+  @@index([receivedAt])
+  @@map("inbox_events")
+}
+
+/// A captured FX rate, bound to the checkout that used it.
+model FxQuote {
+  id            String @id @default(cuid())
+  baseCurrency  String @map("base_currency")
+  quoteCurrency String @map("quote_currency")
+
+  /// Scaled integers (FX_RATE_SCALE). Never floats.
+  sourceRateScaled BigInt @map("source_rate_scaled")
+  safetyMarginBps  Int    @map("safety_margin_bps")
+  finalRateScaled  BigInt @map("final_rate_scaled")
+
+  source    String
+  fetchedAt DateTime @map("fetched_at")
+  expiresAt DateTime @map("expires_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([baseCurrency, quoteCurrency, expiresAt])
+  @@map("fx_quotes")
+}
+
+/// Maps an auth-service PlanPriceVersion to the immutable plan object created
+/// at a gateway. A price change creates a NEW gateway plan; existing
+/// subscriptions are never silently moved onto it.
+model GatewayPlanMapping {
+  id                 String @id @default(cuid())
+  gateway            String
+  planId             String @map("plan_id")
+  planSlug           String @map("plan_slug")
+  planPriceVersionId String @map("plan_price_version_id")
+
+  gatewayProductId String  @map("gateway_product_id")
+  gatewayPlanId    String  @map("gateway_plan_id")
+  isActive         Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([gateway, planPriceVersionId])
+  @@unique([gateway, gatewayPlanId])
+  @@index([planId])
+  @@map("gateway_plan_mappings")
+}
+
 /// Run-once seeding history.
 ///
 /// A seeder is identified by (name, version). Once a row reaches COMPLETED it
@@ -19,17 +567,17 @@ datasource db {
 /// PostgreSQL advisory lock before consulting this table, so exactly one
 /// replica evaluates and applies while the others wait and observe the result.
 model SeedExecution {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   version     Int
   checksum    String
   status      String
-  startedAt   DateTime @default(now()) @map("started_at")
+  startedAt   DateTime  @default(now()) @map("started_at")
   completedAt DateTime? @map("completed_at")
   /// Sanitized failure reason. Never a stack trace or a provider payload.
   error       String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@unique([name, version])
   @@index([name])

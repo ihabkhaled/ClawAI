@@ -164,7 +164,21 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
-        "SeedExecution"
+        "BillingCustomer",
+        "CheckoutSession",
+        "FxQuote",
+        "GatewayPlanMapping",
+        "IdempotencyRecord",
+        "InboxEvent",
+        "Invoice",
+        "InvoiceLine",
+        "OutboxEvent",
+        "PaymentMethod",
+        "PaymentTransaction",
+        "ProrationQuote",
+        "SeedExecution",
+        "Subscription",
+        "WebhookEvent"
       ],
       "service": "claw-payment-service"
     },

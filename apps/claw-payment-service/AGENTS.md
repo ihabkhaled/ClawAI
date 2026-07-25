@@ -19,9 +19,9 @@ npm run dev
 ## Ownership (generated)
 - Port: 4018
 - Database: postgresql
-- Prisma models: SeedExecution
+- Prisma models: BillingCustomer, CheckoutSession, FxQuote, GatewayPlanMapping, IdempotencyRecord, InboxEvent, Invoice, InvoiceLine, OutboxEvent, PaymentMethod, PaymentTransaction, ProrationQuote, SeedExecution, Subscription, WebhookEvent
 - API endpoints: 1 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 10 (jest)
+- Test files: 15 (jest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
