@@ -56,7 +56,10 @@
     "vercel:deploy": "node scripts/vercel/deploy.mjs",
     "vercel:verify": "node scripts/vercel/verify.mjs",
     "vercel:resolve-urls": "node scripts/vercel/resolve-service-urls.mjs",
-    "vercel:setup": "node scripts/vercel/setup.mjs"
+    "vercel:setup": "node scripts/vercel/setup.mjs",
+    "migrate:all": "node tools/release/migrate-all.mjs",
+    "seed:versioned": "node tools/release/seed-versioned.mjs",
+    "release:prepare": "npm run migrate:all && npm run seed:versioned"
   },
   "engines": {
     "node": ">=22.13.0"
