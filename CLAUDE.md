@@ -2,16 +2,16 @@
 
 ## What This Is
 
-Local-first AI orchestration platform. 17 NestJS microservices + Next.js frontend + 13 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama. Monorepo with npm workspaces.
+Local-first AI orchestration platform. 18 NestJS microservices + Next.js frontend + 14 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama. Monorepo with npm workspaces.
 
 ## Architecture at a Glance
 
 ```
 Frontend (Next.js 16, port 3000)
   → Nginx reverse proxy (port 4000)
-    → 17 backend services (ports 4001-4017)
+    → 18 backend services (ports 4001-4018)
       → RabbitMQ (async events, topic exchange: claw.events)
-      → 13 PostgreSQL (pgvector), 1 MongoDB (3 databases), 1 Redis
+      → 14 PostgreSQL (pgvector), 1 MongoDB (3 databases), 1 Redis
       → Ollama (local AI runtime, port 11434)
 ```
 
@@ -36,6 +36,7 @@ apps/
   claw-agent-service/           # Port 4015, PG claw_agent — desktop agent sessions, terminal command approval, repo tracking, file events
   claw-research-service/        # Port 4016, PG claw_research — dynamic search/fetch/scrape/clone + evidence orchestration (Tavily, SearXNG, Ollama Web)
   claw-workspace-service/       # Port 4014, PG claw_workspace — workspace connectors (GitHub, GitLab, Jira, Slack, Drive, OneDrive, SharePoint, Confluence, Figma, Gmail, Bitbucket, ClickUp), OAuth2/PKCE, webhook, sync, search, scheduled background sync
+  claw-payment-service/         # Port 4018, PG claw_payments (host 5453) — subscriptions, checkout sessions, PayPal + Paymob adapters, invoices, proration, refunds/chargebacks, vaulted gateway tokens (AES-256-GCM, never card data), webhook verification + replay defence, transactional outbox → auth entitlement inbox, reconciliation. Owns NO user/plan rows: prices come from auth-service's versioned `PlanPriceVersion` over a signed internal API, and a paid entitlement is impossible without a verified payment or an audited admin grant.
   claw-llamacpp-service/        # Port 4017, PG claw_llamacpp — Local Frontier LLMs (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) via vanilla llama.cpp; binary lifecycle, HF pull jobs (SSE), single-resident process supervisor, OpenAI-compatible inference proxy, hardware preflight. **Base image MUST be Debian (`node:20-bookworm-slim`)** because llama.cpp release binaries are glibc-linked and won't run on Alpine even with gcompat (missing `__res_init`, `pthread_cond_clockwait`, `__wmemcpy_chk`). `LLAMACPP_DATA_PATH` MUST point inside the `llamacpp-data` named volume (`/var/lib/claw/llamacpp` by default) so the auto-installed binary + downloaded model weights survive rebuilds.
 packages/
   shared-types/      # 18 enums, event payloads, auth types
@@ -576,95 +577,106 @@ Mitigations (in priority order):
 
 Exchange: `claw.events` (topic, durable). DLQ + 3 retries with backoff.
 
-| Event                                 | Publisher                          | Consumers                |
-| ------------------------------------- | ---------------------------------- | ------------------------ |
-| message.created                       | chat                               | routing                  |
-| message.routed                        | routing                            | chat                     |
-| message.completed                     | chat                               | audit, memory            |
-| thread.created                        | chat                               | —                        |
-| user.login/logout                     | auth                               | audit                    |
-| connector.created/updated/deleted     | connector                          | audit                    |
-| connector.synced                      | connector                          | audit, routing           |
-| connector.health_checked              | connector                          | audit, routing           |
-| routing.decision_made                 | routing                            | audit                    |
-| memory.extracted                      | memory                             | audit                    |
-| memory.suggested                      | memory                             | audit                    |
-| memory.approved                       | memory                             | audit                    |
-| memory.rejected                       | memory                             | audit                    |
-| memory.used                           | memory                             | audit                    |
-| memory.forgotten                      | memory                             | audit                    |
-| memory.paused                         | memory                             | audit                    |
-| memory.redacted                       | memory                             | audit                    |
-| context_pack.created                  | memory                             | audit                    |
-| context_pack.updated                  | memory                             | audit                    |
-| context_pack.deleted                  | memory                             | audit                    |
-| context_pack.attached                 | memory                             | audit                    |
-| context_pack.detached                 | memory                             | audit                    |
-| context_pack.used                     | memory                             | audit                    |
-| context_pack.version_created          | memory                             | audit                    |
-| context_pack.version_reverted         | memory                             | audit                    |
-| context_pack.shared                   | memory                             | audit                    |
-| context.receipt_written               | chat                               | audit                    |
-| chat_thread.memory_toggled            | chat                               | audit                    |
-| chat_thread.context_toggled           | chat                               | audit                    |
-| file.uploaded/chunked                 | file                               | —                        |
-| log.server                            | all services                       | server-logs              |
-| image.generated                       | image                              | audit                    |
-| image.failed                          | image                              | audit                    |
-| file.generated                        | file-gen                           | audit                    |
-| file_generation.failed                | file-gen                           | audit                    |
-| agent.session.connected               | agent                              | audit                    |
-| agent.session.disconnected            | agent                              | audit                    |
-| agent.device_paired                   | agent                              | audit                    |
-| agent.device_revoked                  | agent                              | audit                    |
-| agent.token_rotated                   | agent                              | audit                    |
-| agent.token_reuse_detected            | agent                              | audit                    |
-| agent.policy_violated                 | agent                              | audit                    |
-| agent.capability.proposed             | agent                              | audit                    |
-| agent.capability.policy_matched       | agent                              | audit                    |
-| agent.capability.auto_approved        | agent                              | audit, capability-runner |
-| agent.capability.approved             | agent                              | audit, capability-runner |
-| agent.capability.rejected             | agent                              | audit                    |
-| agent.capability.executing            | agent                              | audit                    |
-| agent.capability.executed             | agent                              | audit                    |
-| agent.capability.failed               | agent                              | audit                    |
-| agent.capability.cancelled            | agent                              | audit                    |
-| agent.capability.expired              | agent                              | audit                    |
-| agent.capability.rolled_back          | agent                              | audit                    |
-| agent.capability.denied               | agent                              | audit                    |
-| workspace.sync.run_started            | workspace                          | audit                    |
-| workspace.sync.run_completed          | workspace                          | audit                    |
-| workspace.sync.run_failed             | workspace                          | audit                    |
-| workspace.sync.stale_detected         | workspace                          | audit                    |
-| workspace.sync.manual_triggered       | workspace                          | audit                    |
-| workspace.sync.paused                 | workspace                          | audit                    |
-| workspace.sync.resumed                | workspace                          | audit                    |
-| workspace.sync.rate_limited           | workspace                          | audit                    |
-| workspace.sync.dlq_sent               | workspace                          | audit                    |
-| llamacpp.binary.installed             | llamacpp                           | audit                    |
-| llamacpp.binary.updated               | llamacpp                           | audit                    |
-| llamacpp.pull.started                 | llamacpp                           | audit                    |
-| llamacpp.pull.progress                | llamacpp                           | audit                    |
-| llamacpp.pull.completed               | llamacpp                           | audit                    |
-| llamacpp.pull.failed                  | llamacpp                           | audit                    |
-| llamacpp.model.loaded                 | llamacpp                           | audit, routing           |
-| llamacpp.model.unloaded               | llamacpp                           | audit, routing           |
-| llamacpp.model.crashed                | llamacpp                           | audit, routing           |
-| llamacpp.weights.deleted              | llamacpp                           | audit                    |
-| llamacpp.preflight.overridden         | llamacpp                           | audit                    |
-| routing.models.synced                 | routing                            | audit                    |
-| runtime.progress.stage_changed        | chat / image (declared, SSE today) | audit (planned)          |
-| runtime.progress.content_delta        | chat (declared, SSE today)         | audit (planned)          |
-| runtime.progress.reasoning_delta      | chat (declared, SSE today)         | audit (planned)          |
-| runtime.progress.metrics_tick         | chat (declared, SSE today)         | audit (planned)          |
-| runtime.progress.usage_final          | chat (declared, SSE today)         | audit (planned)          |
-| runtime.progress.image_preview        | image (declared, SSE today)        | audit (planned)          |
-| runtime.progress.node_progress        | image / ComfyUI (PR4 — SSE today)  | audit (planned)          |
-| runtime.progress.step_progress        | image / SD WebUI (PR3 — SSE today) | audit (planned)          |
-| runtime.progress.prompt_eval_progress | chat / llama.cpp (declared)        | audit (planned)          |
-| runtime.progress.artifact_saved       | image (PR3+PR4 — SSE today)        | audit (planned)          |
-| runtime.progress.error                | chat / image (declared, SSE today) | audit (planned)          |
-| runtime.progress.cancelled            | chat / image (declared, SSE today) | audit (planned)          |
+| Event                                    | Publisher                          | Consumers                |
+| ---------------------------------------- | ---------------------------------- | ------------------------ |
+| message.created                          | chat                               | routing                  |
+| message.routed                           | routing                            | chat                     |
+| message.completed                        | chat                               | audit, memory            |
+| thread.created                           | chat                               | —                        |
+| user.login/logout                        | auth                               | audit                    |
+| connector.created/updated/deleted        | connector                          | audit                    |
+| connector.synced                         | connector                          | audit, routing           |
+| connector.health_checked                 | connector                          | audit, routing           |
+| routing.decision_made                    | routing                            | audit                    |
+| memory.extracted                         | memory                             | audit                    |
+| memory.suggested                         | memory                             | audit                    |
+| memory.approved                          | memory                             | audit                    |
+| memory.rejected                          | memory                             | audit                    |
+| memory.used                              | memory                             | audit                    |
+| memory.forgotten                         | memory                             | audit                    |
+| memory.paused                            | memory                             | audit                    |
+| memory.redacted                          | memory                             | audit                    |
+| context_pack.created                     | memory                             | audit                    |
+| context_pack.updated                     | memory                             | audit                    |
+| context_pack.deleted                     | memory                             | audit                    |
+| context_pack.attached                    | memory                             | audit                    |
+| context_pack.detached                    | memory                             | audit                    |
+| context_pack.used                        | memory                             | audit                    |
+| context_pack.version_created             | memory                             | audit                    |
+| context_pack.version_reverted            | memory                             | audit                    |
+| context_pack.shared                      | memory                             | audit                    |
+| context.receipt_written                  | chat                               | audit                    |
+| chat_thread.memory_toggled               | chat                               | audit                    |
+| chat_thread.context_toggled              | chat                               | audit                    |
+| file.uploaded/chunked                    | file                               | —                        |
+| log.server                               | all services                       | server-logs              |
+| image.generated                          | image                              | audit                    |
+| image.failed                             | image                              | audit                    |
+| file.generated                           | file-gen                           | audit                    |
+| file_generation.failed                   | file-gen                           | audit                    |
+| agent.session.connected                  | agent                              | audit                    |
+| agent.session.disconnected               | agent                              | audit                    |
+| agent.device_paired                      | agent                              | audit                    |
+| agent.device_revoked                     | agent                              | audit                    |
+| agent.token_rotated                      | agent                              | audit                    |
+| agent.token_reuse_detected               | agent                              | audit                    |
+| agent.policy_violated                    | agent                              | audit                    |
+| agent.capability.proposed                | agent                              | audit                    |
+| agent.capability.policy_matched          | agent                              | audit                    |
+| agent.capability.auto_approved           | agent                              | audit, capability-runner |
+| agent.capability.approved                | agent                              | audit, capability-runner |
+| agent.capability.rejected                | agent                              | audit                    |
+| agent.capability.executing               | agent                              | audit                    |
+| agent.capability.executed                | agent                              | audit                    |
+| agent.capability.failed                  | agent                              | audit                    |
+| agent.capability.cancelled               | agent                              | audit                    |
+| agent.capability.expired                 | agent                              | audit                    |
+| agent.capability.rolled_back             | agent                              | audit                    |
+| agent.capability.denied                  | agent                              | audit                    |
+| workspace.sync.run_started               | workspace                          | audit                    |
+| workspace.sync.run_completed             | workspace                          | audit                    |
+| workspace.sync.run_failed                | workspace                          | audit                    |
+| workspace.sync.stale_detected            | workspace                          | audit                    |
+| workspace.sync.manual_triggered          | workspace                          | audit                    |
+| workspace.sync.paused                    | workspace                          | audit                    |
+| workspace.sync.resumed                   | workspace                          | audit                    |
+| workspace.sync.rate_limited              | workspace                          | audit                    |
+| workspace.sync.dlq_sent                  | workspace                          | audit                    |
+| llamacpp.binary.installed                | llamacpp                           | audit                    |
+| llamacpp.binary.updated                  | llamacpp                           | audit                    |
+| llamacpp.pull.started                    | llamacpp                           | audit                    |
+| llamacpp.pull.progress                   | llamacpp                           | audit                    |
+| llamacpp.pull.completed                  | llamacpp                           | audit                    |
+| llamacpp.pull.failed                     | llamacpp                           | audit                    |
+| llamacpp.model.loaded                    | llamacpp                           | audit, routing           |
+| llamacpp.model.unloaded                  | llamacpp                           | audit, routing           |
+| llamacpp.model.crashed                   | llamacpp                           | audit, routing           |
+| llamacpp.weights.deleted                 | llamacpp                           | audit                    |
+| llamacpp.preflight.overridden            | llamacpp                           | audit                    |
+| routing.models.synced                    | routing                            | audit                    |
+| billing.subscription.activated           | payment                            | auth (inbox), audit      |
+| billing.subscription.renewed             | payment                            | auth (inbox), audit      |
+| billing.subscription.upgraded            | payment                            | auth (inbox), audit      |
+| billing.subscription.downgrade_scheduled | payment                            | auth (inbox), audit      |
+| billing.subscription.cancelled           | payment                            | auth (inbox), audit      |
+| billing.subscription.expired             | payment                            | auth (inbox), audit      |
+| billing.subscription.past_due            | payment                            | auth (inbox), audit      |
+| billing.subscription.suspended           | payment                            | auth (inbox), audit      |
+| billing.payment.refunded                 | payment                            | auth (inbox), audit      |
+| billing.payment.chargeback               | payment                            | auth (inbox), audit      |
+| billing.entitlement.reconcile_requested  | payment                            | auth (inbox), audit      |
+| runtime.progress.stage_changed           | chat / image (declared, SSE today) | audit (planned)          |
+| runtime.progress.content_delta           | chat (declared, SSE today)         | audit (planned)          |
+| runtime.progress.reasoning_delta         | chat (declared, SSE today)         | audit (planned)          |
+| runtime.progress.metrics_tick            | chat (declared, SSE today)         | audit (planned)          |
+| runtime.progress.usage_final             | chat (declared, SSE today)         | audit (planned)          |
+| runtime.progress.image_preview           | image (declared, SSE today)        | audit (planned)          |
+| runtime.progress.node_progress           | image / ComfyUI (PR4 — SSE today)  | audit (planned)          |
+| runtime.progress.step_progress           | image / SD WebUI (PR3 — SSE today) | audit (planned)          |
+| runtime.progress.prompt_eval_progress    | chat / llama.cpp (declared)        | audit (planned)          |
+| runtime.progress.artifact_saved          | image (PR3+PR4 — SSE today)        | audit (planned)          |
+| runtime.progress.error                   | chat / image (declared, SSE today) | audit (planned)          |
+| runtime.progress.cancelled               | chat / image (declared, SSE today) | audit (planned)          |
 
 > **Note (2026-05-31, PR2-5 shipped):** the 12 `runtime.progress.*` patterns
 > are declared in `packages/shared-constants/src/runtime-progress-events.constants.ts`.
@@ -1012,29 +1024,32 @@ Failed checks → HTTP 422 with reason codes. Filenames sanitized before storage
 
 ## Nginx Route Map (port 443 HTTPS → services, port 4000 → 301 → 443)
 
-| Frontend Path            | Backend Service  | Notes                                                                                         |
-| ------------------------ | ---------------- | --------------------------------------------------------------------------------------------- |
-| /api/v1/auth/\*          | auth:4001        | Login, refresh, logout, me, me/entitlements (self plan+quota)                                 |
-| /api/v1/users/\*         | auth:4001        | User CRUD (admin)                                                                             |
-| /api/v1/admin/\*         | auth:4001        | Admin RBAC: plans + roles CRUD (ADMIN-gated)                                                  |
-| /api/v1/chat-threads/\*  | chat:4002        | Thread CRUD                                                                                   |
-| /api/v1/chat-messages/\* | chat:4002        | Message CRUD, feedback, regenerate, parallel compare                                          |
-| /api/v1/connectors/\*    | connector:4003   | Connector CRUD, test, sync                                                                    |
-| /api/v1/routing/\*       | routing:4004     | Policies, decisions, evaluate, replay                                                         |
-| /api/v1/memories/\*      | memory:4005      | Memory CRUD                                                                                   |
-| /api/v1/context-packs/\* | memory:4005      | Context pack CRUD                                                                             |
-| /api/v1/files/\*         | file:4006        | Upload, list, chunks                                                                          |
-| /api/v1/audits/\*        | audit:4007       | Audit logs                                                                                    |
-| /api/v1/usage/\*         | audit:4007       | Usage statistics                                                                              |
-| /api/v1/ollama/\*        | ollama:4008      | Models, pull, generate                                                                        |
-| /api/v1/health           | health:4009      | Aggregated health                                                                             |
-| /api/v1/client-logs      | client-logs:4010 | Frontend log ingestion                                                                        |
-| /api/v1/server-logs      | server-logs:4011 | Backend log viewer                                                                            |
-| /api/v1/images           | image:4012       | Image generation                                                                              |
-| /api/v1/file-generations | file-gen:4013    | File export (PDF/DOCX/CSV/etc.)                                                               |
-| /api/v1/agent/\*         | agent:4015       | Sessions, terminal commands, repos, file events                                               |
-| /api/v1/research/\*      | research:4016    | Dynamic search providers + search runs (Phase 1)                                              |
-| /api/v1/llamacpp/\*      | llamacpp:4017    | Local Frontier — catalog, pull jobs (SSE), models, inference (SSE), hardware, runtime, health |
+| Frontend Path                | Backend Service  | Notes                                                                                                                                                                                                                                                                              |
+| ---------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| /api/v1/auth/\*              | auth:4001        | Login, refresh, logout, me, me/entitlements (self plan+quota)                                                                                                                                                                                                                      |
+| /api/v1/users/\*             | auth:4001        | User CRUD (admin)                                                                                                                                                                                                                                                                  |
+| /api/v1/admin/\*             | auth:4001        | Admin RBAC: plans + roles CRUD (ADMIN-gated)                                                                                                                                                                                                                                       |
+| /api/v1/chat-threads/\*      | chat:4002        | Thread CRUD                                                                                                                                                                                                                                                                        |
+| /api/v1/chat-messages/\*     | chat:4002        | Message CRUD, feedback, regenerate, parallel compare                                                                                                                                                                                                                               |
+| /api/v1/connectors/\*        | connector:4003   | Connector CRUD, test, sync                                                                                                                                                                                                                                                         |
+| /api/v1/routing/\*           | routing:4004     | Policies, decisions, evaluate, replay                                                                                                                                                                                                                                              |
+| /api/v1/memories/\*          | memory:4005      | Memory CRUD                                                                                                                                                                                                                                                                        |
+| /api/v1/context-packs/\*     | memory:4005      | Context pack CRUD                                                                                                                                                                                                                                                                  |
+| /api/v1/files/\*             | file:4006        | Upload, list, chunks                                                                                                                                                                                                                                                               |
+| /api/v1/audits/\*            | audit:4007       | Audit logs                                                                                                                                                                                                                                                                         |
+| /api/v1/usage/\*             | audit:4007       | Usage statistics                                                                                                                                                                                                                                                                   |
+| /api/v1/ollama/\*            | ollama:4008      | Models, pull, generate                                                                                                                                                                                                                                                             |
+| /api/v1/health               | health:4009      | Aggregated health                                                                                                                                                                                                                                                                  |
+| /api/v1/client-logs          | client-logs:4010 | Frontend log ingestion                                                                                                                                                                                                                                                             |
+| /api/v1/server-logs          | server-logs:4011 | Backend log viewer                                                                                                                                                                                                                                                                 |
+| /api/v1/images               | image:4012       | Image generation                                                                                                                                                                                                                                                                   |
+| /api/v1/file-generations     | file-gen:4013    | File export (PDF/DOCX/CSV/etc.)                                                                                                                                                                                                                                                    |
+| /api/v1/agent/\*             | agent:4015       | Sessions, terminal commands, repos, file events                                                                                                                                                                                                                                    |
+| /api/v1/research/\*          | research:4016    | Dynamic search providers + search runs (Phase 1)                                                                                                                                                                                                                                   |
+| /api/v1/llamacpp/\*          | llamacpp:4017    | Local Frontier — catalog, pull jobs (SSE), models, inference (SSE), hardware, runtime, health                                                                                                                                                                                      |
+| /api/v1/billing/\*           | payment:4018     | Plans, current subscription, checkout sessions, plan-change quote/confirm, cancel/resume, invoices, payment methods                                                                                                                                                                |
+| /api/v1/payments/\*          | payment:4018     | Gateway order/intention creation. Rate-limited (`payment_writes`), no caching                                                                                                                                                                                                      |
+| /api/v1/payments/webhooks/\* | payment:4018     | PayPal + Paymob callbacks. **Unauthenticated by design** (a gateway cannot present a JWT) — authenticity comes from mandatory constant-time signature/HMAC verification in the service. Declared before the generic `/payments` block; 256k body cap; `payment_webhooks` rate zone |
 
 ---
 
@@ -1285,6 +1300,33 @@ Single root `.env` (copy from `.env.example`). Groups:
   - OCR_LANGUAGE (default `eng`) — tesseract language pack (e.g. `eng+ara`)
   - OCR_WORKER_THREADS (default 2) — parallel tesseract workers per file-service container
   - SCANNED_PDF_CHAR_THRESHOLD (default 100) — char count below which a PDF is treated as scanned and routed to OCR
+- Subscriptions, Billing & Payments (2026-07-25, `claw-payment-service` port 4018, PG `claw_payments` host 5453):
+  - **Prices are NEVER env vars.** They live in the database as versioned
+    `PlanPriceVersion` rows, so a price change creates a new immutable version
+    instead of repricing existing subscriptions and invoices.
+  - `PAYMENT_DATABASE_URL`, `PAYMENT_SERVICE_URL`, `PAYMENT_SERVICE_PORT` (4018),
+    `PG_PAYMENTS_{USER,PASSWORD,DB,PORT}` (5453)
+  - `PAYMENT_TOKEN_ENCRYPTION_KEY` (64 hex) + `PAYMENT_TOKEN_KEY_VERSION` —
+    envelope key for vaulted **gateway tokens** (never card data). Deliberately
+    separate from `ENCRYPTION_KEY` so a payment-token compromise does not also
+    expose connector API keys, and so the two rotate independently. Regenerating
+    it orphans every vaulted payment method; both installers preserve it.
+  - PayPal: `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`,
+    `PAYPAL_ENV` (sandbox|live), `NEXT_PUBLIC_PAYPAL_CLIENT_ID`
+  - Paymob: `PAYMOB_SECRET_KEY`, `PAYMOB_PUBLIC_KEY`, `PAYMOB_API_KEY`,
+    `PAYMOB_HMAC_SECRET`, `PAYMOB_CARD_INTEGRATION_ID`, `PAYMOB_CURRENCY`,
+    `NEXT_PUBLIC_PAYMOB_PUBLIC_KEY`
+  - FX: `EXCHANGE_RATE_API_BASE_URL`, `EXCHANGE_RATE_CACHE_TTL_MS`,
+    `USD_TO_EGP_FALLBACK_RATE` (0 = fail checkout rather than charge a stale
+    rate), `FX_QUOTE_TTL_MS`, `FX_SAFETY_MARGIN_BPS`
+  - Lifecycle: `WEBHOOK_REPLAY_TOLERANCE_MS`, `BILLING_GRACE_PERIOD_MS`,
+    `BILLING_RECONCILIATION_CRON`, `PAYMENT_OUTBOX_POLL_INTERVAL_MS`,
+    `PAYMENT_OUTBOX_MAX_ATTEMPTS`, `PAYMENT_GATEWAY_TIMEOUT_MS`,
+    `PAYMENT_GATEWAY_MAX_RETRIES`
+  - **A gateway is enabled only when its WHOLE credential set is present.** A
+    partial set does not half-enable it — a checkout that reaches PayPal without
+    a webhook id can be paid but never verified. Production fails fast on
+    configured-but-sandbox PayPal.
 - Dual-write window: chat-service now writes `FileDeliveryEntry` data to BOTH the legacy `ChatMessage.metadata.fileDelivery` JSON column AND the new `file_delivery_records` table (ADR-054). The JSON column stays the source of truth for the first 30 days of zero divergence in the drift checker, then the read path flips to the table and the JSON column is dropped in a follow-up migration. Set `FILE_DELIVERY_RECORDS_DUAL_WRITE=false` to disable the new table write (legacy JSON only) — escape hatch only; remove after the dual-write window closes.
 
 ---

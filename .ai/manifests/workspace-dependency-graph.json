@@ -253,6 +253,30 @@
       "to": "@claw/shared-utilities"
     },
     {
+      "from": "claw-payment-service",
+      "to": "@claw/shared-auth"
+    },
+    {
+      "from": "claw-payment-service",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-payment-service",
+      "to": "@claw/shared-entitlements"
+    },
+    {
+      "from": "claw-payment-service",
+      "to": "@claw/shared-rabbitmq"
+    },
+    {
+      "from": "claw-payment-service",
+      "to": "@claw/shared-types"
+    },
+    {
+      "from": "claw-payment-service",
+      "to": "@claw/shared-utilities"
+    },
+    {
       "from": "claw-research-service",
       "to": "@claw/shared-auth"
     },

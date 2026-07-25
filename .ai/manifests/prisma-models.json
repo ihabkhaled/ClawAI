@@ -93,6 +93,9 @@
       "PullJob",
       "RuntimeConfig"
     ],
+    "claw-payment-service": [
+      "SeedExecution"
+    ],
     "claw-research-service": [
       "FetchJob",
       "PageCache",

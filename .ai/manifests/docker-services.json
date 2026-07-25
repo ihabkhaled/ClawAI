@@ -144,6 +144,13 @@
     },
     {
       "files": [
+        "docker/docker-compose.dev.services.yml",
+        "docker/docker-compose.prod.services.yml"
+      ],
+      "name": "payment-service"
+    },
+    {
+      "files": [
         "docker/docker-compose.dev.databases.yml",
         "docker/docker-compose.prod.databases.yml"
       ],
@@ -211,6 +218,13 @@
         "docker/docker-compose.prod.databases.yml"
       ],
       "name": "pg-ollama"
+    },
+    {
+      "files": [
+        "docker/docker-compose.dev.databases.yml",
+        "docker/docker-compose.prod.databases.yml"
+      ],
+      "name": "pg-payments"
     },
     {
       "files": [

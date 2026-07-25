@@ -1576,6 +1576,13 @@
         "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
       }
     ],
+    "claw-payment-service": [
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-payment-service/src/modules/health/health.controller.ts"
+      }
+    ],
     "claw-research-service": [
       {
         "method": "GET",
@@ -2501,5 +2508,5 @@
     ]
   },
   "generated": true,
-  "total": 493
+  "total": 494
 }

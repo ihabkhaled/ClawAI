@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 170 identical headings (151827 vs 118039 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 170 identical headings (156085 vs 118400 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 3 identical headings (151827 vs 19206 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 3 identical headings (156085 vs 19206 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -27,7 +27,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CODEX.md and cursor.md share 4 identical headings (118039 vs 19206 bytes) — candidates for compact routing",
+        "message": "CODEX.md and cursor.md share 4 identical headings (118400 vs 19206 bytes) — candidates for compact routing",
         "severity": "medium"
       }
     ],
@@ -1631,6 +1631,13 @@
           "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
         }
       ],
+      "claw-payment-service": [
+        {
+          "method": "GET",
+          "route": "/health",
+          "source": "apps/claw-payment-service/src/modules/health/health.controller.ts"
+        }
+      ],
       "claw-research-service": [
         {
           "method": "GET",
@@ -2699,6 +2706,17 @@
           "statements": 70
         }
       },
+      "claw-payment-service": {
+        "confidence": "unverified",
+        "reason": "declared threshold; not the executed coverage result",
+        "source": "apps/claw-payment-service/jest.config.ts",
+        "value": {
+          "branches": 92,
+          "functions": 92,
+          "lines": 92,
+          "statements": 92
+        }
+      },
       "claw-research-service": {
         "confidence": "unverified",
         "reason": "declared threshold; not the executed coverage result",
@@ -2888,6 +2906,13 @@
       },
       {
         "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "payment-service"
+      },
+      {
+        "files": [
           "docker/docker-compose.dev.databases.yml",
           "docker/docker-compose.prod.databases.yml"
         ],
@@ -2955,6 +2980,13 @@
           "docker/docker-compose.prod.databases.yml"
         ],
         "name": "pg-ollama"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.databases.yml",
+          "docker/docker-compose.prod.databases.yml"
+        ],
+        "name": "pg-payments"
       },
       {
         "files": [
@@ -3167,6 +3199,16 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "BILLING_GRACE_PERIOD_MS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "BILLING_RECONCILIATION_CRON"
       },
       {
         "confidence": "verified",
@@ -3391,6 +3433,16 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "EXCHANGE_RATE_API_BASE_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "EXCHANGE_RATE_CACHE_TTL_MS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "FIGMA_WEBHOOK_SECRET"
       },
       {
@@ -3447,6 +3499,16 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "FRONTEND_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "FX_QUOTE_TTL_MS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "FX_SAFETY_MARGIN_BPS"
       },
       {
         "confidence": "verified",
@@ -3756,6 +3818,16 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "NEXT_PUBLIC_PAYMOB_PUBLIC_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "NEXT_PUBLIC_PAYPAL_CLIENT_ID"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "NEXT_PUBLIC_ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED"
       },
       {
@@ -3882,6 +3954,101 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMENT_DATABASE_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMENT_GATEWAY_MAX_RETRIES"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMENT_GATEWAY_TIMEOUT_MS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMENT_OUTBOX_MAX_ATTEMPTS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMENT_OUTBOX_POLL_INTERVAL_MS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMENT_SERVICE_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMENT_SERVICE_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMENT_TOKEN_ENCRYPTION_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMENT_TOKEN_KEY_VERSION"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMOB_API_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMOB_CARD_INTEGRATION_ID"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMOB_CURRENCY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMOB_HMAC_SECRET"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMOB_PUBLIC_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYMOB_SECRET_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYPAL_CLIENT_ID"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYPAL_CLIENT_SECRET"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYPAL_ENV"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PAYPAL_WEBHOOK_ID"
       },
       {
         "confidence": "verified",
@@ -4082,6 +4249,26 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "PG_OLLAMA_USER"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_PAYMENTS_DB"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_PAYMENTS_PASSWORD"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_PAYMENTS_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_PAYMENTS_USER"
       },
       {
         "confidence": "verified",
@@ -4366,7 +4553,17 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "USD_TO_EGP_FALLBACK_RATE"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "WEBHOOK_CONNECTOR_REQUESTS_PER_MINUTE"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "WEBHOOK_REPLAY_TOLERANCE_MS"
       },
       {
         "confidence": "verified",
@@ -5761,11 +5958,11 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 151827,
+          "bytes": 156085,
           "file": "CLAUDE.md"
         },
         {
-          "bytes": 118039,
+          "bytes": 118400,
           "file": "CODEX.md"
         },
         {
@@ -6246,6 +6443,12 @@
         "source": "infra/nginx/nginx.conf"
       },
       {
+        "location": "/api/v1/billing",
+        "port": 4018,
+        "service": "payment-service",
+        "source": "infra/nginx/nginx.conf"
+      },
+      {
         "location": "/api/v1/chat-messages",
         "port": 4002,
         "service": "chat-service",
@@ -6417,6 +6620,18 @@
         "location": "/api/v1/ollama",
         "port": 4008,
         "service": "ollama-service",
+        "source": "infra/nginx/nginx.conf"
+      },
+      {
+        "location": "/api/v1/payments",
+        "port": 4018,
+        "service": "payment-service",
+        "source": "infra/nginx/nginx.conf"
+      },
+      {
+        "location": "/api/v1/payments/webhooks",
+        "port": 4018,
+        "service": "payment-service",
         "source": "infra/nginx/nginx.conf"
       },
       {
@@ -7222,6 +7437,20 @@
           "value": "postgresql"
         }
       },
+      "claw-payment-service": {
+        "models": [
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "SeedExecution"
+          }
+        ],
+        "provider": {
+          "confidence": "verified",
+          "source": "apps/claw-payment-service/prisma/schema.prisma",
+          "value": "postgresql"
+        }
+      },
       "claw-research-service": {
         "models": [
           {
@@ -7555,6 +7784,10 @@
       "claw-ollama-service": {
         "runner": "jest",
         "testFiles": 17
+      },
+      "claw-payment-service": {
+        "runner": "jest",
+        "testFiles": 10
       },
       "claw-research-service": {
         "runner": "jest",
@@ -7998,6 +8231,40 @@
         "type": "nestjs-service"
       },
       {
+        "dir": "apps/claw-payment-service",
+        "internalDeps": [
+          "@claw/shared-auth",
+          "@claw/shared-constants",
+          "@claw/shared-entitlements",
+          "@claw/shared-rabbitmq",
+          "@claw/shared-types",
+          "@claw/shared-utilities"
+        ],
+        "name": "claw-payment-service",
+        "scripts": [
+          "build",
+          "db:reset",
+          "dev",
+          "format",
+          "format:check",
+          "lint",
+          "lint:fix",
+          "lint:strict",
+          "migrate",
+          "migrate:dev",
+          "prisma:generate",
+          "start",
+          "start:prod",
+          "test",
+          "test:cov",
+          "test:watch",
+          "typecheck",
+          "validate"
+        ],
+        "source": "apps/claw-payment-service/package.json",
+        "type": "nestjs-service"
+      },
+      {
         "dir": "apps/claw-research-service",
         "internalDeps": [
           "@claw/shared-auth",
@@ -8233,20 +8500,20 @@
   "summary": {
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
-    "dockerServiceCount": 39,
-    "endpointCount": 493,
-    "envVarCount": 293,
+    "dockerServiceCount": 41,
+    "endpointCount": 494,
+    "envVarCount": 326,
     "eventCount": 158,
     "frontendRouteCount": 90,
     "localeCount": 9,
-    "nginxRouteCount": 46,
+    "nginxRouteCount": 49,
     "permissionCount": 38,
     "portCount": 16,
     "portCoverageGapCount": 2,
-    "serviceCount": 17,
+    "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 532,
-    "workspaceCount": 24
+    "totalTestFiles": 542,
+    "workspaceCount": 25
   }
 }

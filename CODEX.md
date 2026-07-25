@@ -32,16 +32,16 @@ Every AI agent (Claude, Codex, Cursor, or any other) working on this codebase MU
 
 ## What This Is
 
-Local-first AI orchestration platform. 17 NestJS microservices + Next.js frontend + 13 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama. Monorepo with npm workspaces.
+Local-first AI orchestration platform. 18 NestJS microservices + Next.js frontend + 14 PostgreSQL + MongoDB + Redis + RabbitMQ + Ollama. Monorepo with npm workspaces.
 
 ## Architecture at a Glance
 
 ```
 Frontend (Next.js 16, port 3000)
   → Nginx reverse proxy (port 4000)
-    → 17 backend services (ports 4001-4017)
+    → 18 backend services (ports 4001-4018)
       → RabbitMQ (async events, topic exchange: claw.events)
-      → 13 PostgreSQL (pgvector), 1 MongoDB (3 databases), 1 Redis
+      → 14 PostgreSQL (pgvector), 1 MongoDB (3 databases), 1 Redis
       → Ollama (local AI runtime, port 11434)
 ```
 
@@ -65,6 +65,7 @@ apps/
   claw-file-generation-service/ # Port 4013, PG claw_file_generations — file export (PDF/DOCX/CSV/HTML/MD/TXT/JSON)
   claw-agent-service/           # Port 4015, PG claw_agent — desktop agent sessions, terminal command approval, repo tracking, file events
   claw-research-service/        # Port 4016, PG claw_research — dynamic search/fetch/scrape/clone + evidence orchestration (Tavily, SearXNG, Ollama Web)
+  claw-payment-service/         # Port 4018, PG claw_payments (host 5453) - subscriptions, checkout sessions, PayPal + Paymob adapters, invoices, proration, refunds/chargebacks, vaulted gateway tokens (AES-256-GCM, never card data), webhook verification + replay defence, transactional outbox -> auth entitlement inbox, reconciliation. Owns NO user/plan rows.
 packages/
   shared-types/      # 18 enums, event payloads, auth types
   shared-constants/  # Exchange name, ports, API prefix, pagination defaults

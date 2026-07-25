@@ -456,6 +456,33 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # Payment Service (subscriptions, checkout, gateways, entitlement sync)
+  # ---------------------------------------------------------------------------
+  payment-service:
+    build:
+      context: ..
+      dockerfile: apps/claw-payment-service/Dockerfile
+    container_name: claw-payment-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4018:4018'
+    volumes:
+      - ../certs:/certs:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4018/api/v1/health || exit 1',
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   # Llamacpp Service (Local Frontier — Phase 1+)
   # ---------------------------------------------------------------------------
   llamacpp-service:

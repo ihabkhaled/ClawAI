@@ -857,6 +857,7 @@
         "claw-llamacpp-service",
         "claw-memory-service",
         "claw-ollama-service",
+        "claw-payment-service",
         "claw-research-service",
         "claw-routing-service",
         "claw-server-logs-service",

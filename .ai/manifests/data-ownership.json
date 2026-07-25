@@ -164,6 +164,14 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "SeedExecution"
+      ],
+      "service": "claw-payment-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
         "FetchJob",
         "PageCache",
         "ResearchRun",

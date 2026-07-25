@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Run-once seeding history.
+///
+/// A seeder is identified by (name, version). Once a row reaches COMPLETED it
+/// never runs again, so restarting a container or scaling to N replicas cannot
+/// re-apply data to production. The checksum records the seeder's content at
+/// the time it ran: if the file is later edited WITHOUT bumping the version,
+/// startup aborts loudly rather than silently applying different data.
+///
+/// Concurrency is handled one level up — ReleaseBootstrapService takes a
+/// PostgreSQL advisory lock before consulting this table, so exactly one
+/// replica evaluates and applies while the others wait and observe the result.
+model SeedExecution {
+  id          String   @id @default(cuid())
+  name        String
+  version     Int
+  checksum    String
+  status      String
+  startedAt   DateTime @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  /// Sanitized failure reason. Never a stack trace or a provider payload.
+  error       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([name, version])
+  @@index([name])
+  @@index([status])
+  @@map("seed_executions")
+}

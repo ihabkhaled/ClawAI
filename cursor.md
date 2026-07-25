@@ -41,7 +41,7 @@ These are DELIVERY BLOCKERS — a PR without them is rejected:
 
 **Follow `CLAUDE.md` and `rules/` exactly.** `CLAUDE.md` defines:
 
-- Architecture (17 NestJS microservices + Next.js + Ollama + 13 PostgreSQL + MongoDB + Redis + RabbitMQ)
+- Architecture (18 NestJS microservices + Next.js + Ollama + 14 PostgreSQL + MongoDB + Redis + RabbitMQ)
 - Layer boundaries (Controller → Service → Repository → Manager)
 - ESLint rules (no `any`, no inline types, strict enums, no string literal unions)
 - The 18-item delivery checklist

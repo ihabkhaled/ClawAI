@@ -330,6 +330,28 @@
     },
     {
       "database": "postgresql",
+      "dir": "apps/claw-payment-service",
+      "endpointCount": 1,
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "mongooseModels": [],
+      "name": "claw-payment-service",
+      "port": 4018,
+      "portSource": "shared-constants",
+      "prismaModels": [
+        "SeedExecution"
+      ],
+      "testFiles": 10,
+      "testRunner": "jest"
+    },
+    {
+      "database": "postgresql",
       "dir": "apps/claw-research-service",
       "endpointCount": 16,
       "internalDeps": [
