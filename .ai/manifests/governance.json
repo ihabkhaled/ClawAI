@@ -1,19 +1,19 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 161008,
+      "bytes": 161179,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 120521,
+      "bytes": 121047,
       "file": "CODEX.md"
     },
     {
-      "bytes": 19483,
+      "bytes": 21854,
       "file": "cursor.md"
     },
     {
-      "bytes": 3339,
+      "bytes": 5737,
       "file": "AGENTS.md"
     },
     {
@@ -51,7 +51,7 @@
   "looseDocs": 22,
   "rules": [
     {
-      "bytes": 5514,
+      "bytes": 8162,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -95,7 +95,7 @@
       "file": "rules/05-frontend-components-and-hooks.md"
     },
     {
-      "bytes": 10831,
+      "bytes": 13819,
       "file": "rules/05-infra-rules.md"
     },
     {
@@ -111,7 +111,7 @@
       "file": "rules/07-backend-controllers-and-transport.md"
     },
     {
-      "bytes": 6370,
+      "bytes": 9018,
       "file": "rules/07-commit-rules.md"
     },
     {
@@ -183,11 +183,11 @@
       "file": "rules/22-testing-and-coverage.md"
     },
     {
-      "bytes": 3426,
+      "bytes": 6074,
       "file": "rules/23-git-commits-hooks-and-release-gates.md"
     },
     {
-      "bytes": 2935,
+      "bytes": 5583,
       "file": "rules/24-generated-files-and-knowledge-freshness.md"
     },
     {
@@ -201,7 +201,7 @@
   ],
   "skills": [
     {
-      "bytes": 5109,
+      "bytes": 7757,
       "file": "skills/00-index.md"
     },
     {

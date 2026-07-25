@@ -5,13 +5,32 @@
 echo "pre-commit 1/3: lint-staged (eslint --fix + prettier on staged files)"
 npx lint-staged || exit 1
 
-# If any generated-source input is staged, the committed .ai knowledge layer
-# must be regenerated and staged too. This is fast (pure file reads).
-if git diff --cached --name-only | grep -qE '^(packages/shared-|apps/|infra/nginx/|docker/|\.env\.example|tools/(knowledge|lib)/)'; then
-  echo "pre-commit 2/3: knowledge freshness"
-  npm run knowledge:check || { echo "→ run 'npm run knowledge:build' and stage .ai/"; exit 1; }
+# The committed .ai knowledge layer and the audit inventory snapshot are
+# GENERATED from the tree. CI verifies they match; if they drift, the build goes
+# red on every subsequent push until someone regenerates them.
+#
+# This step REGENERATES and STAGES them rather than merely checking, because a
+# check alone kept failing in a way that is easy to get wrong: regenerating
+# BEFORE staging races lint-staged, which reformats files in step 1 above and
+# changes the very bytes the manifest hashed. Running the generators here — after
+# the formatters have settled — means the recorded hashes always describe what is
+# actually being committed. The gate cannot be forgotten, and there is nothing
+# for a human or an agent to remember.
+if git diff --cached --name-only | grep -qE '^(packages/|apps/|infra/|docker/|docs/|scripts/|rules/|skills/|\.env\.example|tools/)'; then
+  echo "pre-commit 2/3: regenerating knowledge layer + inventory snapshot"
+  npm run knowledge:build >/dev/null || { echo "→ knowledge:build failed"; exit 1; }
+  npm run audit >/dev/null || { echo "→ audit failed"; exit 1; }
+  git add .ai docs/features/ai-native-engineering-os/inventory.snapshot.json 2>/dev/null
+  # Workspace AGENTS.md files are generated too.
+  git ls-files --modified --others --exclude-standard -- '*/AGENTS.md' 'AGENTS.md' | while read -r f; do
+    git add "$f"
+  done
+  # Belt and braces: the same verifications CI runs, so a red build is
+  # impossible to push from here.
+  npm run knowledge:verify || { echo "→ knowledge:verify failed"; exit 1; }
+  npm run audit:check || { echo "→ audit:check failed"; exit 1; }
 else
-  echo "pre-commit 2/3: knowledge freshness (skipped — no generated-source changes)"
+  echo "pre-commit 2/3: knowledge + inventory (skipped — no generated-source changes)"
 fi
 
 # Typecheck only the workspaces this commit's STAGED changes touch (root/

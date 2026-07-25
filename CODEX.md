@@ -2120,3 +2120,57 @@ Local builds work because `node_modules/@claw/<pkg>` is a symlink + `dist/` is p
 ## Compare / judge / critic file attachments (Slice A, 2026-05-30)
 
 Compare / judge / critic now accept `fileIds: string[]` end-to-end: FE picker → `POST /chat-messages/parallel` → per-lane attachment resolution → judge + critic prompts. Each lane writes a per-model `FileDeliveryEntry[]` into `ChatMessage.metadata.fileDelivery` (also surfaced on `ParallelModelResponse.attachmentDelivery`) so the FE renders a delivery-mode chip (`NATIVE_IMAGE` / `EXTRACTED_TEXT` / `OMITTED_NO_VISION` / `OMITTED_UNSUPPORTED` / `TRUNCATED_TEXT`) per model. Three critical bugs were fixed: (1) `FileProcessingManager` was never wired into the parallel path so attachments silently dropped; (2) `ServiceTokenGuard` rejected internal file-content calls from chat-service when the parallel lane re-issued the service token; (3) cloud adapters sent `image_url` parts to Ollama, which silently dropped images — Ollama now receives the native `images: [base64]` shape and cloud lanes keep `image_url`. Full canonical chain in `docs/03-architecture/compare-file-attachments.md`.
+
+## Generated artifacts are a HARD GATE (never optional)
+
+`.ai/**`, every workspace `AGENTS.md`, and
+`docs/features/ai-native-engineering-os/inventory.snapshot.json` are
+**generated from the tree**. CI verifies them on every push:
+
+| CI job              | Command                    | Fails when                                                           |
+| ------------------- | -------------------------- | -------------------------------------------------------------------- |
+| Knowledge freshness | `npm run knowledge:check`  | a generated file's hash no longer matches the tree                   |
+| Knowledge integrity | `npm run knowledge:verify` | stale file, broken link, orphan reviewer, hook-bypass, contradiction |
+| Inventory audit     | `npm run audit:check`      | the inventory snapshot hash has drifted                              |
+
+**A stale artifact turns the build red on every subsequent push**, for everyone,
+until someone regenerates it. It is not a warning and it is not deferrable.
+
+### The rule
+
+Any commit that touches `packages/**`, `apps/**`, `infra/**`, `docker/**`,
+`docs/**`, `scripts/**`, `rules/**`, `skills/**`, `tools/**` or `.env.example`
+MUST regenerate and stage:
+
+```bash
+npm run knowledge:build      # rewrites .ai/** + workspace AGENTS.md
+npm run audit                # rewrites the inventory snapshot
+git add .ai docs/features/ai-native-engineering-os/inventory.snapshot.json
+git add apps/*/AGENTS.md packages/*/AGENTS.md 2>/dev/null
+npm run knowledge:verify     # what CI runs
+npm run audit:check          # what CI runs
+```
+
+The pre-commit hook now does all of this **automatically**, so in normal use
+there is nothing to remember. The rule is written down because the hook can be
+skipped (it must not be) and because a red CI needs a documented fix.
+
+### Order matters — regenerate AFTER formatting, never before
+
+This is the mistake that actually caused a red build:
+
+1. `npm run knowledge:build` — hashes the current bytes
+2. `git add` / commit — **lint-staged reformats the staged files**
+3. the reformatted bytes no longer match the hashes recorded in step 1
+4. `knowledge:check` passes locally (it ran before the reformat) but
+   `knowledge:verify` fails in CI
+
+Generators must run **after** prettier and `eslint --fix` have settled. The
+pre-commit hook is ordered that way deliberately: lint-staged is step 1,
+regeneration is step 2.
+
+### Never hand-edit a generated artifact
+
+If a generated file is wrong, fix the **generator or its input**, then
+regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
+overwritten on the next build and hides the real problem.

@@ -2475,3 +2475,57 @@ Stream 13 RUNNER (event-driven step DAG executor) and streams 20-42 (browser, sc
 9. Every CLI-side capability MUST have manual cross-OS evidence captured to `.claude/Integrations/cross-os-evidence/<date>-<stream>-<os>.md`.
 10. Every irreversible capability MUST record `metadata.noUndoReason` text OR a typed `undoPlan` in the CapabilityInvocation row at completion time.
 11. Local-first-by-default: activity memory, OCR results, screenshot blobs stay on the user's machine unless an explicit per-record cloud-sync flag is flipped.
+
+## Generated artifacts are a HARD GATE (never optional)
+
+`.ai/**`, every workspace `AGENTS.md`, and
+`docs/features/ai-native-engineering-os/inventory.snapshot.json` are
+**generated from the tree**. CI verifies them on every push:
+
+| CI job              | Command                    | Fails when                                                           |
+| ------------------- | -------------------------- | -------------------------------------------------------------------- |
+| Knowledge freshness | `npm run knowledge:check`  | a generated file's hash no longer matches the tree                   |
+| Knowledge integrity | `npm run knowledge:verify` | stale file, broken link, orphan reviewer, hook-bypass, contradiction |
+| Inventory audit     | `npm run audit:check`      | the inventory snapshot hash has drifted                              |
+
+**A stale artifact turns the build red on every subsequent push**, for everyone,
+until someone regenerates it. It is not a warning and it is not deferrable.
+
+### The rule
+
+Any commit that touches `packages/**`, `apps/**`, `infra/**`, `docker/**`,
+`docs/**`, `scripts/**`, `rules/**`, `skills/**`, `tools/**` or `.env.example`
+MUST regenerate and stage:
+
+```bash
+npm run knowledge:build      # rewrites .ai/** + workspace AGENTS.md
+npm run audit                # rewrites the inventory snapshot
+git add .ai docs/features/ai-native-engineering-os/inventory.snapshot.json
+git add apps/*/AGENTS.md packages/*/AGENTS.md 2>/dev/null
+npm run knowledge:verify     # what CI runs
+npm run audit:check          # what CI runs
+```
+
+The pre-commit hook now does all of this **automatically**, so in normal use
+there is nothing to remember. The rule is written down because the hook can be
+skipped (it must not be) and because a red CI needs a documented fix.
+
+### Order matters — regenerate AFTER formatting, never before
+
+This is the mistake that actually caused a red build:
+
+1. `npm run knowledge:build` — hashes the current bytes
+2. `git add` / commit — **lint-staged reformats the staged files**
+3. the reformatted bytes no longer match the hashes recorded in step 1
+4. `knowledge:check` passes locally (it ran before the reformat) but
+   `knowledge:verify` fails in CI
+
+Generators must run **after** prettier and `eslint --fix` have settled. The
+pre-commit hook is ordered that way deliberately: lint-staged is step 1,
+regeneration is step 2.
+
+### Never hand-edit a generated artifact
+
+If a generated file is wrong, fix the **generator or its input**, then
+regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
+overwritten on the next build and hides the real problem.
