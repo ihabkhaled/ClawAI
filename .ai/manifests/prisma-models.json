@@ -23,15 +23,21 @@
       "TerminalCommand"
     ],
     "claw-auth-service": [
+      "EntitlementInboxEvent",
+      "FeatureUsageRecord",
       "Plan",
+      "PlanFeatureRule",
       "PlanModelAccess",
+      "PlanPriceVersion",
       "Role",
       "RolePermission",
+      "SeedExecution",
       "Session",
       "SystemSetting",
       "TokenUsageLedger",
       "User",
-      "UserPlanAssignment"
+      "UserPlanAssignment",
+      "WeightedUsageRecord"
     ],
     "claw-chat-service": [
       "ChatMessage",

@@ -78,17 +78,23 @@
       "port": 4001,
       "portSource": "shared-constants",
       "prismaModels": [
+        "EntitlementInboxEvent",
+        "FeatureUsageRecord",
         "Plan",
+        "PlanFeatureRule",
         "PlanModelAccess",
+        "PlanPriceVersion",
         "Role",
         "RolePermission",
+        "SeedExecution",
         "Session",
         "SystemSetting",
         "TokenUsageLedger",
         "User",
-        "UserPlanAssignment"
+        "UserPlanAssignment",
+        "WeightedUsageRecord"
       ],
-      "testFiles": 22,
+      "testFiles": 25,
       "testRunner": "jest"
     },
     {

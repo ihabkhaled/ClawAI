@@ -40,15 +40,21 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "EntitlementInboxEvent",
+        "FeatureUsageRecord",
         "Plan",
+        "PlanFeatureRule",
         "PlanModelAccess",
+        "PlanPriceVersion",
         "Role",
         "RolePermission",
+        "SeedExecution",
         "Session",
         "SystemSetting",
         "TokenUsageLedger",
         "User",
-        "UserPlanAssignment"
+        "UserPlanAssignment",
+        "WeightedUsageRecord"
       ],
       "service": "claw-auth-service"
     },

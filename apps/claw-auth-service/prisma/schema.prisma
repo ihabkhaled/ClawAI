@@ -39,27 +39,27 @@ enum UserAppearancePreference {
 }
 
 model User {
-  id                 String     @id @default(cuid())
-  email              String     @unique
-  username           String     @unique
-  passwordHash       String     @map("password_hash")
-  role               UserRole   @default(USER)
+  id                   String                   @id @default(cuid())
+  email                String                   @unique
+  username             String                   @unique
+  passwordHash         String                   @map("password_hash")
+  role                 UserRole                 @default(USER)
   // Dynamic RBAC FK (Auth/RBAC/Plans flagship). Nullable during the backfill
   // window; the resolver falls back to the `role` enum when roleId is null.
-  roleId             String?    @map("role_id")
+  roleId               String?                  @map("role_id")
   // Fast pointer to the user's active plan (Phase B). Nullable: ADMIN bypasses
   // plans entirely, and the column is backfilled for existing users.
-  activePlanId       String?    @map("active_plan_id")
-  status             UserStatus @default(PENDING)
-  mustChangePassword    Boolean                  @default(false) @map("must_change_password")
-  languagePreference    UserLanguagePreference   @default(EN) @map("language_preference")
-  appearancePreference  UserAppearancePreference @default(SYSTEM) @map("appearance_preference")
-  createdAt             DateTime                 @default(now()) @map("created_at")
-  updatedAt             DateTime                 @updatedAt @map("updated_at")
+  activePlanId         String?                  @map("active_plan_id")
+  status               UserStatus               @default(PENDING)
+  mustChangePassword   Boolean                  @default(false) @map("must_change_password")
+  languagePreference   UserLanguagePreference   @default(EN) @map("language_preference")
+  appearancePreference UserAppearancePreference @default(SYSTEM) @map("appearance_preference")
+  createdAt            DateTime                 @default(now()) @map("created_at")
+  updatedAt            DateTime                 @updatedAt @map("updated_at")
 
   sessions        Session[]
-  roleRef         Role?               @relation(fields: [roleId], references: [id])
-  activePlan      Plan?               @relation("UserActivePlan", fields: [activePlanId], references: [id])
+  roleRef         Role?                @relation(fields: [roleId], references: [id])
+  activePlan      Plan?                @relation("UserActivePlan", fields: [activePlanId], references: [id])
   planAssignments UserPlanAssignment[]
 
   @@index([email])
@@ -79,37 +79,54 @@ enum PlanAssignmentStatus {
 // Admin-managed subscription plan (Phase B). Prices are modeled so billing can
 // be added later; no payment integration ships now.
 model Plan {
-  id                     String   @id @default(cuid())
-  name                   String
-  slug                   String   @unique
-  description            String?
-  priceMonthly           Decimal? @map("price_monthly") @db.Decimal(12, 2)
-  priceYearly            Decimal? @map("price_yearly") @db.Decimal(12, 2)
-  currency               String?  @default("USD")
-  displayOrder           Int      @default(0) @map("display_order")
-  isDefault              Boolean  @default(false) @map("is_default")
-  isActive               Boolean  @default(true) @map("is_active")
-  isPublic               Boolean  @default(true) @map("is_public")
-  dailyTokenQuota        Int      @default(0) @map("daily_token_quota")
-  monthlyTokenQuota      Int?     @map("monthly_token_quota")
-  maxChatsPerDay         Int?     @map("max_chats_per_day")
-  maxMessagesPerDay      Int?     @map("max_messages_per_day")
-  maxWorkspaceConnections Int?    @map("max_workspace_connections")
-  maxContextPacks        Int?     @map("max_context_packs")
-  maxMemoryItems         Int?     @map("max_memory_items")
-  allowCompareMode       Boolean  @default(false) @map("allow_compare_mode")
-  allowJudgeMode         Boolean  @default(false) @map("allow_judge_mode")
-  allowResearchMode      Boolean  @default(false) @map("allow_research_mode")
-  allowCriticReview      Boolean  @default(false) @map("allow_critic_review")
-  allowWorkspaces        Boolean  @default(true) @map("allow_workspaces")
-  allowMemory            Boolean  @default(true) @map("allow_memory")
-  allowContextPacks      Boolean  @default(true) @map("allow_context_packs")
-  createdAt              DateTime @default(now()) @map("created_at")
-  updatedAt              DateTime @updatedAt @map("updated_at")
+  id                                 String              @id @default(cuid())
+  name                               String
+  slug                               String              @unique
+  description                        String?
+  priceMonthly                       Decimal?            @map("price_monthly") @db.Decimal(12, 2)
+  priceYearly                        Decimal?            @map("price_yearly") @db.Decimal(12, 2)
+  currency                           String?             @default("USD")
+  displayOrder                       Int                 @default(0) @map("display_order")
+  isDefault                          Boolean             @default(false) @map("is_default")
+  isActive                           Boolean             @default(true) @map("is_active")
+  isPublic                           Boolean             @default(true) @map("is_public")
+  dailyTokenQuota                    Int                 @default(0) @map("daily_token_quota")
+  weeklyTokenQuota                   Int?                @map("weekly_token_quota")
+  monthlyTokenQuota                  Int?                @map("monthly_token_quota")
+  // Operational profitability control, never returned to a normal user. NULL
+  // means no ceiling. Even "Unlimited" has one: unlimited chats and local
+  // models, but premium cloud spend stops at a fair-use boundary instead of
+  // accruing unbounded provider charges.
+  monthlyProviderCostCeilingMicroUsd BigInt?             @map("monthly_provider_cost_ceiling_micro_usd")
+  // NULL = unlimited, 0 = disabled. The three are never interchangeable.
+  maxConcurrentRequests              Int?                @map("max_concurrent_requests")
+  maxChatsPerDay                     Int?                @map("max_chats_per_day")
+  maxMessagesPerDay                  Int?                @map("max_messages_per_day")
+  maxWorkspaceConnections            Int?                @map("max_workspace_connections")
+  maxContextPacks                    Int?                @map("max_context_packs")
+  maxMemoryItems                     Int?                @map("max_memory_items")
+  allowCompareMode                   Boolean             @default(false) @map("allow_compare_mode")
+  allowJudgeMode                     Boolean             @default(false) @map("allow_judge_mode")
+  allowResearchMode                  Boolean             @default(false) @map("allow_research_mode")
+  allowCriticReview                  Boolean             @default(false) @map("allow_critic_review")
+  allowWorkspaces                    Boolean             @default(true) @map("allow_workspaces")
+  allowMemory                        Boolean             @default(true) @map("allow_memory")
+  allowContextPacks                  Boolean             @default(true) @map("allow_context_packs")
+  // Replaces the unsafe legacy rule where an EMPTY PlanModelAccess array meant
+  // "unrestricted". Existing rows migrate as LEGACY_UNRESTRICTED so no install
+  // loses access on deploy; the seeded plans get explicit modes.
+  modelAccessMode                    PlanModelAccessMode @default(LEGACY_UNRESTRICTED) @map("model_access_mode")
+  // Routing cost classes permitted under ALLOW_COST_CLASSES. Explicit per-model
+  // rows still override this set.
+  allowedCostClasses                 String[]            @default([]) @map("allowed_cost_classes")
+  createdAt                          DateTime            @default(now()) @map("created_at")
+  updatedAt                          DateTime            @updatedAt @map("updated_at")
 
-  modelAccess     PlanModelAccess[]
-  assignments     UserPlanAssignment[]
-  activeForUsers  User[]               @relation("UserActivePlan")
+  modelAccess    PlanModelAccess[]
+  assignments    UserPlanAssignment[]
+  priceVersions  PlanPriceVersion[]
+  featureRules   PlanFeatureRule[]
+  activeForUsers User[]               @relation("UserActivePlan")
 
   @@index([isActive])
   @@index([displayOrder])
@@ -119,18 +136,18 @@ model Plan {
 // Per-plan provider/model access. Backend source of truth for what a plan's
 // users may call, and in which role (primary/fallback/judge/compare).
 model PlanModelAccess {
-  id                    String   @id @default(cuid())
-  planId                String   @map("plan_id")
-  provider              String
-  model                 String
-  isAllowed             Boolean  @default(true) @map("is_allowed")
-  allowAsPrimary        Boolean  @default(true) @map("allow_as_primary")
-  allowAsFallback       Boolean  @default(true) @map("allow_as_fallback")
-  allowAsJudge          Boolean  @default(false) @map("allow_as_judge")
-  allowInCompare        Boolean  @default(true) @map("allow_in_compare")
-  dailyTokenLimitOverride Int?   @map("daily_token_limit_override")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id                      String   @id @default(cuid())
+  planId                  String   @map("plan_id")
+  provider                String
+  model                   String
+  isAllowed               Boolean  @default(true) @map("is_allowed")
+  allowAsPrimary          Boolean  @default(true) @map("allow_as_primary")
+  allowAsFallback         Boolean  @default(true) @map("allow_as_fallback")
+  allowAsJudge            Boolean  @default(false) @map("allow_as_judge")
+  allowInCompare          Boolean  @default(true) @map("allow_in_compare")
+  dailyTokenLimitOverride Int?     @map("daily_token_limit_override")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
 
   plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
@@ -142,15 +159,26 @@ model PlanModelAccess {
 // Historical record of plan assignments. The current ACTIVE row mirrors
 // User.activePlanId; older rows are retained for audit.
 model UserPlanAssignment {
-  id               String               @id @default(cuid())
-  userId           String               @map("user_id")
-  planId           String               @map("plan_id")
-  status           PlanAssignmentStatus @default(ACTIVE)
-  assignedByUserId String?              @map("assigned_by_user_id")
-  startsAt         DateTime             @default(now()) @map("starts_at")
-  endsAt           DateTime?            @map("ends_at")
-  createdAt        DateTime             @default(now()) @map("created_at")
-  updatedAt        DateTime             @updatedAt @map("updated_at")
+  id                    String               @id @default(cuid())
+  userId                String               @map("user_id")
+  planId                String               @map("plan_id")
+  status                PlanAssignmentStatus @default(ACTIVE)
+  assignedByUserId      String?              @map("assigned_by_user_id")
+  // Provenance. An ADMIN_GRANT must stay distinguishable from a paid
+  // subscription forever — it may never fabricate or imitate a payment.
+  grantType             EntitlementGrantType @default(FREE_DEFAULT) @map("grant_type")
+  // Required for ADMIN_GRANT and PROMOTIONAL; enforced in the service layer.
+  grantReason           String?              @map("grant_reason")
+  // How long the entitlement stays valid without further confirmation. Renewal
+  // extends it; grace expiry, refund and chargeback pull it back.
+  entitlementValidUntil DateTime?            @map("entitlement_valid_until")
+  // Opaque payment-service identifiers. Never a cross-database foreign key.
+  sourceSubscriptionId  String?              @map("source_subscription_id")
+  sourceEventId         String?              @map("source_event_id")
+  startsAt              DateTime             @default(now()) @map("starts_at")
+  endsAt                DateTime?            @map("ends_at")
+  createdAt             DateTime             @default(now()) @map("created_at")
+  updatedAt             DateTime             @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan Plan @relation(fields: [planId], references: [id])
@@ -164,17 +192,17 @@ model UserPlanAssignment {
 // Durable per-user/day token ledger (source of truth + admin reporting). The
 // runtime hot-path counter lives in Redis; this row is the reconciled total.
 model TokenUsageLedger {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  planId       String?  @map("plan_id")
-  date         String
-  inputTokens  Int      @default(0) @map("input_tokens")
-  outputTokens Int      @default(0) @map("output_tokens")
-  totalTokens  Int      @default(0) @map("total_tokens")
-  requestCount Int      @default(0) @map("request_count")
-  modelBreakdown Json?  @map("model_breakdown")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  planId         String?  @map("plan_id")
+  date           String
+  inputTokens    Int      @default(0) @map("input_tokens")
+  outputTokens   Int      @default(0) @map("output_tokens")
+  totalTokens    Int      @default(0) @map("total_tokens")
+  requestCount   Int      @default(0) @map("request_count")
+  modelBreakdown Json?    @map("model_breakdown")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@unique([userId, date])
   @@index([userId])
@@ -187,14 +215,14 @@ model TokenUsageLedger {
 // Admins may create custom roles (e.g. SUPPORT, READ_ONLY_ADMIN) and grant
 // any subset of the fixed Permission catalog via RolePermission rows.
 model Role {
-  id           String           @id @default(cuid())
-  slug         String           @unique
+  id           String   @id @default(cuid())
+  slug         String   @unique
   name         String
   description  String?
-  isSystem     Boolean          @default(false) @map("is_system")
-  isAssignable Boolean          @default(true) @map("is_assignable")
-  createdAt    DateTime         @default(now()) @map("created_at")
-  updatedAt    DateTime         @updatedAt @map("updated_at")
+  isSystem     Boolean  @default(false) @map("is_system")
+  isAssignable Boolean  @default(true) @map("is_assignable")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   permissions RolePermission[]
   users       User[]
@@ -239,4 +267,246 @@ model SystemSetting {
 
   @@index([key])
   @@map("system_settings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Subscriptions, billing and quota (payment flagship)
+//
+// Auth remains the owner of identity, plan definitions, feature policy, quota
+// configuration and the CURRENT entitlement projection. It never holds payment
+// instruments or gateway state — the payment service owns those and drives
+// entitlement changes through verified billing events consumed via the inbox
+// below. A paid entitlement is therefore impossible without either a verified
+// payment or an audited admin grant.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum BillingIntervalKind {
+  MONTHLY
+  YEARLY
+}
+
+enum PlanModelAccessMode {
+  ALLOW_ALL
+  DENY_ALL
+  ALLOW_LIST
+  ALLOW_COST_CLASSES
+  LEGACY_UNRESTRICTED
+}
+
+enum PlanFeatureKey {
+  COMPARE_MODE
+  JUDGE_MODE
+  RESEARCH_MODE
+  CRITIC_REVIEW
+  WORKSPACES
+  MEMORY
+  CONTEXT_PACKS
+}
+
+enum PlanFeatureAccessMode {
+  DISABLED
+  ENABLED
+  LIMITED
+}
+
+enum PlanFeatureWindow {
+  LIFETIME
+  DAY
+  WEEK
+  MONTH
+  BILLING_PERIOD
+}
+
+enum EntitlementGrantType {
+  PAID_SUBSCRIPTION
+  ADMIN_GRANT
+  PROMOTIONAL
+  MIGRATION
+  FREE_DEFAULT
+}
+
+enum FeatureUsageState {
+  RESERVED
+  CONSUMED
+  RELEASED
+}
+
+enum WeightedUsageState {
+  RESERVED
+  FINALIZED
+  RELEASED
+}
+
+enum EntitlementInboxStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  SKIPPED
+}
+
+// Immutable price record. A price CHANGE creates a new version rather than
+// mutating a column, so an existing subscription and every historical invoice
+// keep charging exactly what was purchased.
+model PlanPriceVersion {
+  id              String              @id @default(cuid())
+  planId          String              @map("plan_id")
+  billingInterval BillingIntervalKind @map("billing_interval")
+  currency        String              @default("USD")
+  // Integer minor units ($5.00 => 500). Money is never a float anywhere.
+  amountMinor     Int                 @map("amount_minor")
+  version         Int
+  isActive        Boolean             @default(true) @map("is_active")
+  // Emulated partial-unique index: carries "<planId>:<interval>" while this
+  // row is the active price and NULL once retired. Postgres treats every NULL
+  // as distinct, so any number of retired rows coexist but a second ACTIVE
+  // price for the same plan+interval is rejected by the database itself.
+  activeKey       String?             @unique @map("active_key")
+  effectiveFrom   DateTime            @default(now()) @map("effective_from")
+  retiredAt       DateTime?           @map("retired_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  createdByUserId String?             @map("created_by_user_id")
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, billingInterval, version])
+  @@index([planId])
+  @@index([isActive])
+  @@map("plan_price_versions")
+}
+
+// Generic feature policy. Replaces the boolean-only Plan.allow* columns, which
+// cannot express "one lifetime use" (Free trials) or "10 per month".
+model PlanFeatureRule {
+  id         String                @id @default(cuid())
+  planId     String                @map("plan_id")
+  feature    PlanFeatureKey
+  accessMode PlanFeatureAccessMode @map("access_mode")
+  // NULL for DISABLED/ENABLED; a positive integer for LIMITED.
+  limit      Int?
+  window     PlanFeatureWindow     @default(MONTH)
+  createdAt  DateTime              @default(now()) @map("created_at")
+  updatedAt  DateTime              @updatedAt @map("updated_at")
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, feature])
+  @@index([planId])
+  @@map("plan_feature_rules")
+}
+
+// Durable feature-run ledger. The Free tier's one-shot trials must survive a
+// cleared browser, so the counter lives here and Redis is only a hot cache.
+// Reserved before execution, consumed after successful delivery, released when
+// execution fails before the user received a result.
+model FeatureUsageRecord {
+  id         String            @id @default(cuid())
+  userId     String            @map("user_id")
+  planId     String?           @map("plan_id")
+  feature    PlanFeatureKey
+  window     PlanFeatureWindow
+  periodKey  String            @map("period_key")
+  requestId  String            @map("request_id")
+  state      FeatureUsageState @default(RESERVED)
+  reservedAt DateTime          @default(now()) @map("reserved_at")
+  consumedAt DateTime?         @map("consumed_at")
+  releasedAt DateTime?         @map("released_at")
+
+  // Makes reservation idempotent per request — a retried request reuses its
+  // reservation instead of burning a second trial.
+  @@unique([userId, feature, requestId])
+  @@index([userId, feature, periodKey, state])
+  @@map("feature_usage_records")
+}
+
+// Per-execution weighted-token ledger. Deliberately a different grain from
+// TokenUsageLedger (a per-day rollup) because reservation id, request id,
+// provider, model and workflow cannot be represented in a daily aggregate.
+// This is the durable source Redis counters are reconciled against.
+model WeightedUsageRecord {
+  id                    String             @id @default(cuid())
+  userId                String             @map("user_id")
+  planId                String?            @map("plan_id")
+  subscriptionId        String?            @map("subscription_id")
+  reservationId         String             @unique @map("reservation_id")
+  requestId             String             @map("request_id")
+  provider              String
+  model                 String
+  workflow              String?
+  rawInputTokens        Int                @default(0) @map("raw_input_tokens")
+  rawCachedTokens       Int                @default(0) @map("raw_cached_tokens")
+  rawReasoningTokens    Int                @default(0) @map("raw_reasoning_tokens")
+  rawOutputTokens       Int                @default(0) @map("raw_output_tokens")
+  toolCallCount         Int                @default(0) @map("tool_call_count")
+  // 1,000,000 weighted tokens == $1.00 of estimated provider cost.
+  weightedTokens        Int                @default(0) @map("weighted_tokens")
+  estimatedCostMicroUsd BigInt             @default(0) @map("estimated_cost_micro_usd")
+  actualCostMicroUsd    BigInt?            @map("actual_cost_micro_usd")
+  currency              String             @default("USD")
+  state                 WeightedUsageState @default(RESERVED)
+  // UTC period keys: YYYY-MM-DD, ISO week (YYYY-Www), YYYY-MM.
+  dayKey                String             @map("day_key")
+  weekKey               String             @map("week_key")
+  monthKey              String             @map("month_key")
+  billingPeriodKey      String?            @map("billing_period_key")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  finalizedAt           DateTime?          @map("finalized_at")
+
+  @@index([userId, dayKey])
+  @@index([userId, weekKey])
+  @@index([userId, monthKey])
+  @@index([state, createdAt])
+  @@index([requestId])
+  @@map("weighted_usage_records")
+}
+
+// Inbox for billing events published by the payment service. Auth applies an
+// entitlement change exactly once: the unique eventId rejects redelivery, and
+// a stale event is skipped rather than allowed to overwrite newer state.
+model EntitlementInboxEvent {
+  id            String                 @id @default(cuid())
+  eventId       String                 @unique @map("event_id")
+  eventType     String                 @map("event_type")
+  schemaVersion Int                    @map("schema_version")
+  producer      String
+  userId        String                 @map("user_id")
+  payloadJson   Json                   @map("payload_json")
+  status        EntitlementInboxStatus @default(PENDING)
+  attempts      Int                    @default(0)
+  effectiveAt   DateTime               @map("effective_at")
+  processedAt   DateTime?              @map("processed_at")
+  lastError     String?                @map("last_error")
+  createdAt     DateTime               @default(now()) @map("created_at")
+
+  @@index([status, createdAt])
+  @@index([userId])
+  @@map("entitlement_inbox_events")
+}
+
+enum SeedExecutionStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// Run-once ledger for versioned data seeders. Migrations and seeds still run at
+// container start, but a completed seeder is never re-executed, so restarting a
+// production replica cannot re-seed over administrator-edited rows.
+//
+// A changed seed requires a NEW version: mutating a completed seeder and
+// expecting it to re-run is exactly the failure mode this table exists to make
+// impossible. The checksum records what was actually applied, so drift is
+// detectable rather than silent.
+model SeedExecution {
+  id          String              @id @default(cuid())
+  name        String
+  version     Int
+  checksum    String
+  status      SeedExecutionStatus @default(RUNNING)
+  startedAt   DateTime            @default(now()) @map("started_at")
+  completedAt DateTime?           @map("completed_at")
+  lastError   String?             @map("last_error")
+
+  @@unique([name, version])
+  @@index([status])
+  @@map("seed_executions")
 }

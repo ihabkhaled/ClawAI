@@ -14,6 +14,8 @@
 const { PrismaPg } = require('@prisma/adapter-pg');
 const argon2 = require('argon2');
 const path = require('path');
+const { runVersionedSeeder } = require('./seed-runner');
+const planCatalogSeeder = require('./seeders/plan-catalog.seeder');
 
 const distPrismaPath = path.resolve(__dirname, '..', 'dist', 'generated', 'prisma');
 const { PrismaClient } = require(distPrismaPath);
@@ -252,6 +254,13 @@ async function seed() {
   for (const def of SYSTEM_PLANS) {
     planBySlug[def.slug] = await upsertSystemPlan(def);
   }
+
+  // 3b. Versioned plan catalog (seven plans, versioned prices, quota ceilings,
+  //     model-access policy, feature rules). Guarded by SeedExecution + an
+  //     advisory lock, so it runs exactly once no matter how many replicas boot
+  //     together or how often a container restarts.
+  await runVersionedSeeder(prisma, planCatalogSeeder);
+
   const freePlanId = planBySlug['free'].id;
   const planless = await prisma.user.findMany({
     where: { activePlanId: null, role: { not: 'ADMIN' } },
