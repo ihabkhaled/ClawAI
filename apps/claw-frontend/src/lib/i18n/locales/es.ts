@@ -3418,6 +3418,29 @@ export const es: TranslationDictionary = {
       description: 'La página que buscas no existe o pudo haberse movido.',
       backHome: 'Volver al inicio',
     },
+    contact: {
+      title: 'Contacto',
+      subtitle:
+        '¿Preguntas sobre el autoalojamiento, el enrutamiento, las integraciones o el agente de escritorio? Envíanos un mensaje y te responderemos.',
+      nameLabel: 'Nombre',
+      emailLabel: 'Correo electrónico',
+      subjectLabel: 'Asunto',
+      messageLabel: 'Mensaje',
+      nameRequired: 'Introduce tu nombre.',
+      emailInvalid: 'Introduce una dirección de correo electrónico válida.',
+      subjectRequired: 'Introduce un asunto.',
+      messageRequired: 'Introduce un mensaje (al menos 10 caracteres).',
+      submit: 'Enviar mensaje',
+      submitting: 'Enviando…',
+      privacyNote:
+        'Usamos tus datos solo para responder a este mensaje. Consulta nuestra política de privacidad.',
+      successTitle: 'Mensaje enviado',
+      successBody: 'Gracias por escribirnos. Responderemos a tu correo lo antes posible.',
+      sendAnother: 'Enviar otro mensaje',
+      errorInvalid: 'Revisa el formulario e inténtalo de nuevo.',
+      errorRateLimited: 'Demasiados mensajes. Espera un momento antes de volver a intentarlo.',
+      errorGeneric: 'Se produjo un error al enviar tu mensaje. Inténtalo de nuevo.',
+    },
     home: {
       hero: {
         title: 'Orquestación de IA local primero, sin renunciar a los modelos en la nube',

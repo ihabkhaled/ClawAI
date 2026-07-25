@@ -32,7 +32,7 @@ Claw is an open-source platform for orchestrating AI models across multiple prov
 - **Image and file generation** -- Dedicated services for image output and downloadable document/file generation
 - **Operational visibility** -- Aggregated health, audit logging, usage ledgers, client logs, and server logs
 - **Role-based access control** -- Admin, operator, and viewer roles with JWT authentication
-- **Monorepo structure** -- Frontend, 17 backend services, and 5 shared packages using npm workspaces
+- **Monorepo structure** -- Frontend, 18 backend services, and 6 shared packages using npm workspaces
 
 ---
 

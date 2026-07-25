@@ -2140,3 +2140,11 @@ export type DashboardSystemHealthCardProps = {
   healthSummary: AggregatedHealth['summary'] | null;
   isLoading: boolean;
 };
+
+// Contact page — success confirmation panel props.
+export type ContactSuccessProps = {
+  title: string;
+  body: string;
+  resetLabel: string;
+  onReset: () => void;
+};

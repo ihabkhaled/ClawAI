@@ -7,7 +7,7 @@ below, the canonical source wins.
 
 ## Repository identity
 
-ClawAI — a local-first AI orchestration platform. 17 NestJS microservices + a
+ClawAI — a local-first AI orchestration platform. 18 NestJS microservices + a
 Next.js 16 frontend + 6 shared packages, in an npm-workspace monorepo. Events
 flow over RabbitMQ (`claw.events`); nginx reverse-proxies `/api/v1/*`.
 

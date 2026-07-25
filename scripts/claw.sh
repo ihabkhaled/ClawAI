@@ -269,7 +269,10 @@ case "$1" in
     if [ "${CLAW_FORCE:-0}" != "1" ]; then
       echo "This will WIPE every Claw postgres database (auth, chat, connector,"
       echo "routing, memory, files, ollama, images, file-generations, workspace,"
-      echo "agent, research, llamacpp), MongoDB, and RabbitMQ state. All other"
+      echo "agent, research, payments, llamacpp), MongoDB, and RabbitMQ state."
+      echo "That INCLUDES the payment database: subscriptions, invoices and"
+      echo "payment history are financial records and are NOT recoverable."
+      echo "All other"
       echo "data volumes (file uploads, model weights, redis, certs) are kept."
       echo ""
       printf "Type RESET to confirm: "
@@ -298,6 +301,7 @@ case "$1" in
       claw_pg-workspace-data \
       claw_pg-agent-data \
       claw_pg-research-data \
+      claw_pg-payments-data \
       claw_pg-llamacpp-data \
     ; do
       if docker volume inspect "$vol" >/dev/null 2>&1; then

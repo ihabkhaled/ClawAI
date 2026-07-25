@@ -1,0 +1,66 @@
+name: Lighthouse
+
+# Performance / accessibility / best-practices / SEO budget gate for the public
+# marketing surface. Runs only when the frontend (or this workflow / its config)
+# changes, so it never slows unrelated backend PRs.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/claw-frontend/**'
+      - '.github/workflows/lighthouse.yml'
+      - 'apps/claw-frontend/lighthouserc.json'
+  pull_request:
+    paths:
+      - 'apps/claw-frontend/**'
+      - '.github/workflows/lighthouse.yml'
+      - 'apps/claw-frontend/lighthouserc.json'
+
+jobs:
+  lighthouse:
+    name: Lighthouse budgets (marketing)
+    runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
+      # A valid, canonical SITE_URL so the pages render indexable (localhost
+      # would be forced noindex by site-config, tanking the SEO audit). The
+      # value only needs to be a bare https origin — Lighthouse still browses
+      # localhost.
+      SITE_URL: https://claw.example
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Link tsgo binary (@typescript/native-preview)
+        run: npm rebuild @typescript/native-preview
+
+      - name: Build shared packages
+        run: |
+          cd packages/shared-types && npx tsgo -p tsconfig.build.json
+          cd ../shared-constants && npx tsgo -p tsconfig.build.json
+          cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
+          cd ../shared-auth && npx tsgo -p tsconfig.build.json
+          cd ../shared-utilities && npx tsgo -p tsconfig.build.json
+          cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
+
+      - name: Build frontend
+        run: npm run build --workspace=claw-frontend
+
+      - name: Run Lighthouse CI
+        working-directory: apps/claw-frontend
+        run: npx --yes @lhci/cli@0.15.x autorun --config=lighthouserc.json
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: apps/claw-frontend/.lighthouseci
+          if-no-files-found: ignore

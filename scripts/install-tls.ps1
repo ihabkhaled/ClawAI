@@ -1,15 +1,15 @@
 # =============================================================================
-# Claw — Local TLS / SSL Cert Generator (Windows)
+# Claw - Local TLS / SSL Cert Generator (Windows)
 # -----------------------------------------------------------------------------
-# Two-tier strategy — picks whichever works without user interaction:
+# Two-tier strategy - picks whichever works without user interaction:
 #
-#   Tier 1 — mkcert (browser-trusted): installs mkcert via winget/choco/
+#   Tier 1 - mkcert (browser-trusted): installs mkcert via winget/choco/
 #            direct-binary, runs `mkcert -install` (self-elevates ONCE for
 #            LocalMachine cert store), issues a leaf cert covering localhost
 #            + every internal docker hostname + the user-configured
 #            CLAW_HOSTNAME (default claw.local, can be a domain or bare IP).
 #
-#   Tier 2 — openssl self-signed (fallback): if mkcert install fails OR
+#   Tier 2 - openssl self-signed (fallback): if mkcert install fails OR
 #            admin elevation is declined, generates a self-signed leaf cert
 #            via a one-shot `docker run alpine openssl ...`. Browser shows
 #            a one-time "Not Secure" warning but inter-service TLS works.
@@ -21,7 +21,7 @@
 # Hostname source: $env:CLAW_HOSTNAME -> .env file -> claw.local default.
 # Re-run any time you change CLAW_HOSTNAME in .env to reissue the cert.
 #
-# Idempotent. Forced on by scripts/install.ps1 — never prompts the user
+# Idempotent. Forced on by scripts/install.ps1 - never prompts the user
 # beyond the (optional) UAC popup.
 # =============================================================================
 $ErrorActionPreference = 'Stop'
@@ -74,7 +74,7 @@ $HostsArr = @(
     'memory-service', 'file-service', 'audit-service', 'ollama-service',
     'health-service', 'client-logs-service', 'server-logs-service',
     'image-service', 'file-generation-service', 'workspace-service',
-    'agent-service', 'research-service', 'llamacpp-service'
+    'agent-service', 'research-service', 'llamacpp-service', 'payment-service'
 )
 $HostsArr += $ClawHostname
 if (-not (Test-IsIpv4 $ClawHostname)) {
@@ -246,7 +246,7 @@ function Ensure-HostsEntry {
         return
     }
 
-    # Not admin — self-elevate JUST for the hosts file write.
+    # Not admin - self-elevate JUST for the hosts file write.
     Write-Tls "Requesting admin elevation to add $ClawHostname to hosts file"
     $cmd = "Add-Content -LiteralPath '$hostsFile' -Value '$entry' -Encoding ASCII"
     try {
@@ -275,10 +275,10 @@ if (Try-InstallMkcert) {
         $UsedMkcert = $true
         Write-TlsOk 'Browser-trusted cert issued via mkcert'
     } else {
-        Write-TlsWarn 'mkcert -install or cert issuance failed — falling back to openssl'
+        Write-TlsWarn 'mkcert -install or cert issuance failed - falling back to openssl'
     }
 } else {
-    Write-TlsWarn 'mkcert install failed — falling back to openssl self-signed'
+    Write-TlsWarn 'mkcert install failed - falling back to openssl self-signed'
 }
 
 if (-not $UsedMkcert) {
@@ -301,7 +301,7 @@ if ($UsedMkcert) {
 }
 Write-Host '  certs/claw.crt     leaf cert (mounted into every container)'
 Write-Host '  certs/claw.key     leaf private key (mounted read-only)'
-Write-Host '  certs/rootCA.pem   root CA — used as NODE_EXTRA_CA_CERTS'
+Write-Host '  certs/rootCA.pem   root CA - used as NODE_EXTRA_CA_CERTS'
 if (Test-IsIpv4 $ClawHostname) {
     Write-Host "  hosts entry:       (skipped - IP) try: https://$ClawHostname"
 } else {

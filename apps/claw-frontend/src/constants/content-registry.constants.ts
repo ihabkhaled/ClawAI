@@ -42,6 +42,23 @@ export const CONTENT_REGISTRY: ReadonlyArray<ContentRegistryEntry> = [
     relatedSlugs: ['about', 'how-it-works', 'architecture'],
     structuredDataType: StructuredDataType.WEBSITE,
   },
+  {
+    slug: 'contact',
+    locale: Locale.EN,
+    status: ContentLifecycleStatus.PUBLISHED,
+    title: 'Contact ClawAI',
+    description:
+      'Get in touch with the ClawAI team — questions about self-hosting, local-first AI orchestration, workspace integrations, or the desktop agent.',
+    category: ContentCategory.CONTACT,
+    canonicalPath: '/contact',
+    lastReviewed: '2026-07-25',
+    indexability: Indexability.INDEXABLE,
+    // A form/support page is indexable but never an ad surface.
+    adEligibility: AdEligibility.INELIGIBLE,
+    reviewStatus: ContentReviewStatus.REVIEWED,
+    relatedSlugs: ['about', 'faq'],
+    structuredDataType: StructuredDataType.NONE,
+  },
   ...(
     [
       ['about', ContentCategory.ABOUT],
@@ -70,7 +87,6 @@ export const CONTENT_REGISTRY: ReadonlyArray<ContentRegistryEntry> = [
       ['guides/privacy-first-ai', ContentCategory.GUIDE],
       ['compare/local-ai-vs-cloud-ai', ContentCategory.COMPARISON],
       ['faq', ContentCategory.FAQ],
-      ['contact', ContentCategory.CONTACT],
       ['privacy', ContentCategory.LEGAL],
       ['terms', ContentCategory.LEGAL],
       ['cookies', ContentCategory.LEGAL],

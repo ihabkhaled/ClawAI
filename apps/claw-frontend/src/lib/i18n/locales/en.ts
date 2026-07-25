@@ -3378,6 +3378,28 @@ export const en: TranslationDictionary = {
       description: "The page you're looking for doesn't exist or may have moved.",
       backHome: 'Back to home',
     },
+    contact: {
+      title: 'Contact us',
+      subtitle:
+        'Questions about self-hosting, routing, integrations, or the desktop agent? Send us a message and we’ll get back to you.',
+      nameLabel: 'Name',
+      emailLabel: 'Email',
+      subjectLabel: 'Subject',
+      messageLabel: 'Message',
+      nameRequired: 'Please enter your name.',
+      emailInvalid: 'Please enter a valid email address.',
+      subjectRequired: 'Please enter a subject.',
+      messageRequired: 'Please enter a message (at least 10 characters).',
+      submit: 'Send message',
+      submitting: 'Sending…',
+      privacyNote: 'We use your details only to reply to this message. See our privacy policy.',
+      successTitle: 'Message sent',
+      successBody: 'Thanks for reaching out. We’ll reply to your email as soon as we can.',
+      sendAnother: 'Send another message',
+      errorInvalid: 'Please check the form and try again.',
+      errorRateLimited: 'Too many messages. Please wait a little while before trying again.',
+      errorGeneric: 'Something went wrong sending your message. Please try again.',
+    },
     home: {
       hero: {
         title: 'Local-first AI orchestration, without giving up cloud models',

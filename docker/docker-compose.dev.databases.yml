@@ -233,6 +233,36 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # PostgreSQL (Payment Service)
+  #
+  # Owns billing customers, subscriptions, checkout sessions, transactions,
+  # invoices, vaulted payment-method tokens and the transactional outbox. It is
+  # deliberately a SEPARATE instance from claw_auth: the payment service must
+  # never be able to read or write user/plan rows directly, and a compromise of
+  # one database must not yield the other.
+  # ---------------------------------------------------------------------------
+  pg-payments:
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-payments
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_PAYMENTS_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_PAYMENTS_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_PAYMENTS_DB:-claw_payments}
+    ports:
+      - '${PG_PAYMENTS_PORT:-5453}:5432'
+    volumes:
+      - pg-payments-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${PG_PAYMENTS_USER:-claw} -d ${PG_PAYMENTS_DB:-claw_payments}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   # PostgreSQL (Agent Service)
   # ---------------------------------------------------------------------------
   pg-agent:
@@ -407,6 +437,7 @@ volumes:
   pg-images-data:
   pg-workspace-data:
   pg-research-data:
+  pg-payments-data:
   pg-agent-data:
   pg-llamacpp-data:
   pg-file-generations-data:

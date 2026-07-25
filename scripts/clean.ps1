@@ -1,5 +1,5 @@
 # =============================================================================
-# clean.ps1 — Remove all node_modules/ and dist/ across the monorepo
+# clean.ps1 - Remove all node_modules/ and dist/ across the monorepo
 # Usage: powershell scripts/clean.ps1
 # =============================================================================
 

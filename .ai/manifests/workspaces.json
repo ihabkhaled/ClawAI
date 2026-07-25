@@ -425,6 +425,40 @@
       "type": "nestjs-service"
     },
     {
+      "dir": "apps/claw-payment-service",
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-payment-service",
+      "scripts": [
+        "build",
+        "db:reset",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:fix",
+        "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
+        "start",
+        "start:prod",
+        "test",
+        "test:cov",
+        "test:watch",
+        "typecheck",
+        "validate"
+      ],
+      "source": "apps/claw-payment-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
       "dir": "apps/claw-research-service",
       "internalDeps": [
         "@claw/shared-auth",

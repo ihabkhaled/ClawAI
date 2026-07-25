@@ -113,3 +113,6 @@ apps/claw-*-service/public/
 .ai/local/
 # Audit working copy (the committed snapshot lives under docs/features/).
 .audit/
+
+# Lighthouse CI reports
+.lighthouseci/

@@ -361,6 +361,72 @@
     },
     {
       "consumers": [],
+      "key": "BILLING_ENTITLEMENT_RECONCILE_REQUESTED",
+      "pattern": "billing.entitlement.reconcile_requested",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "BILLING_PAYMENT_CHARGEBACK",
+      "pattern": "billing.payment.chargeback",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "BILLING_PAYMENT_REFUNDED",
+      "pattern": "billing.payment.refunded",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "BILLING_SUBSCRIPTION_ACTIVATED",
+      "pattern": "billing.subscription.activated",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "BILLING_SUBSCRIPTION_CANCELLED",
+      "pattern": "billing.subscription.cancelled",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "BILLING_SUBSCRIPTION_DOWNGRADE_SCHEDULED",
+      "pattern": "billing.subscription.downgrade_scheduled",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "BILLING_SUBSCRIPTION_EXPIRED",
+      "pattern": "billing.subscription.expired",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "BILLING_SUBSCRIPTION_PAST_DUE",
+      "pattern": "billing.subscription.past_due",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "BILLING_SUBSCRIPTION_RENEWED",
+      "pattern": "billing.subscription.renewed",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "BILLING_SUBSCRIPTION_SUSPENDED",
+      "pattern": "billing.subscription.suspended",
+      "producers": []
+    },
+    {
+      "consumers": [],
+      "key": "BILLING_SUBSCRIPTION_UPGRADED",
+      "pattern": "billing.subscription.upgraded",
+      "producers": []
+    },
+    {
+      "consumers": [],
       "key": "CATALOG_UPDATED",
       "pattern": "catalog.updated",
       "producers": []
@@ -791,6 +857,7 @@
         "claw-llamacpp-service",
         "claw-memory-service",
         "claw-ollama-service",
+        "claw-payment-service",
         "claw-research-service",
         "claw-routing-service",
         "claw-server-logs-service",

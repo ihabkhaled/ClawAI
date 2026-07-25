@@ -32,6 +32,12 @@
       "source": "infra/nginx/nginx.conf"
     },
     {
+      "location": "/api/v1/billing",
+      "port": 4018,
+      "service": "payment-service",
+      "source": "infra/nginx/nginx.conf"
+    },
+    {
       "location": "/api/v1/chat-messages",
       "port": 4002,
       "service": "chat-service",
@@ -203,6 +209,18 @@
       "location": "/api/v1/ollama",
       "port": 4008,
       "service": "ollama-service",
+      "source": "infra/nginx/nginx.conf"
+    },
+    {
+      "location": "/api/v1/payments",
+      "port": 4018,
+      "service": "payment-service",
+      "source": "infra/nginx/nginx.conf"
+    },
+    {
+      "location": "/api/v1/payments/webhooks",
+      "port": 4018,
+      "service": "payment-service",
       "source": "infra/nginx/nginx.conf"
     },
     {

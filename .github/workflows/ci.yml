@@ -63,6 +63,9 @@ jobs:
           - service: llamacpp
             workspace: claw-llamacpp-service
             prisma: true
+          - service: payment
+            workspace: claw-payment-service
+            prisma: true
           - service: client-logs
             workspace: claw-client-logs-service
             prisma: false
@@ -171,6 +174,9 @@ jobs:
             prisma: true
           - service: llamacpp
             workspace: claw-llamacpp-service
+            prisma: true
+          - service: payment
+            workspace: claw-payment-service
             prisma: true
           - service: client-logs
             workspace: claw-client-logs-service
@@ -281,6 +287,9 @@ jobs:
           - service: llamacpp
             workspace: claw-llamacpp-service
             prisma: true
+          - service: payment
+            workspace: claw-payment-service
+            prisma: true
           - service: client-logs
             workspace: claw-client-logs-service
             prisma: false
@@ -345,6 +354,13 @@ jobs:
       LLAMACPP_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
       LLAMACPP_SERVICE_URL: http://localhost:4017
       LLAMACPP_DATA_PATH: /tmp/llamacpp-test
+      PAYMENT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      PAYMENT_SERVICE_URL: http://localhost:4018
+      # Test-only key. Distinct from ENCRYPTION_KEY so a test that asserts the
+      # two are separate cannot pass by accident.
+      PAYMENT_TOKEN_ENCRYPTION_KEY: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
+      # Gateway credentials are intentionally ABSENT: CI must never reach a real
+      # payment endpoint. Adapter tests mock at the HTTP boundary instead.
       # MongoDB
       AUDIT_MONGODB_URI: mongodb://localhost:27017/test
       CLIENT_LOGS_MONGODB_URI: mongodb://localhost:27017/test
@@ -439,6 +455,9 @@ jobs:
             prisma: true
           - service: llamacpp
             workspace: claw-llamacpp-service
+            prisma: true
+          - service: payment
+            workspace: claw-payment-service
             prisma: true
           - service: client-logs
             workspace: claw-client-logs-service

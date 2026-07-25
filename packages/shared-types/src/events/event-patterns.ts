@@ -165,4 +165,19 @@ export enum EventPattern {
   CONTEXT_RECEIPT_WRITTEN = 'context.receipt_written',
   CHAT_THREAD_MEMORY_TOGGLED = 'chat_thread.memory_toggled',
   CHAT_THREAD_CONTEXT_TOGGLED = 'chat_thread.context_toggled',
+  // === Subscriptions & Payments (claw-payment-service -> auth inbox + audit) ===
+  // Published from a transactional outbox in the payment database so an
+  // entitlement change can never be lost between commit and publish. Auth
+  // consumes them through an inbox table keyed on the envelope's eventId.
+  BILLING_SUBSCRIPTION_ACTIVATED = 'billing.subscription.activated',
+  BILLING_SUBSCRIPTION_RENEWED = 'billing.subscription.renewed',
+  BILLING_SUBSCRIPTION_UPGRADED = 'billing.subscription.upgraded',
+  BILLING_SUBSCRIPTION_DOWNGRADE_SCHEDULED = 'billing.subscription.downgrade_scheduled',
+  BILLING_SUBSCRIPTION_CANCELLED = 'billing.subscription.cancelled',
+  BILLING_SUBSCRIPTION_EXPIRED = 'billing.subscription.expired',
+  BILLING_SUBSCRIPTION_PAST_DUE = 'billing.subscription.past_due',
+  BILLING_SUBSCRIPTION_SUSPENDED = 'billing.subscription.suspended',
+  BILLING_PAYMENT_REFUNDED = 'billing.payment.refunded',
+  BILLING_PAYMENT_CHARGEBACK = 'billing.payment.chargeback',
+  BILLING_ENTITLEMENT_RECONCILE_REQUESTED = 'billing.entitlement.reconcile_requested',
 }

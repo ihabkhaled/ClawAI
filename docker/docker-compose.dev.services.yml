@@ -487,6 +487,34 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  payment-service:
+    build:
+      context: ..
+      dockerfile: apps/claw-payment-service/Dockerfile.dev
+    container_name: claw-payment-service
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - '4018:4018'
+    volumes:
+      - ../apps/claw-payment-service/src:/app/apps/claw-payment-service/src
+      - ../apps/claw-payment-service/prisma:/app/apps/claw-payment-service/prisma
+      - ../certs:/certs:ro
+    command: ['./docker-entrypoint.dev.sh']
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-check-certificate -qO- https://localhost:4018/api/v1/health || exit 1',
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   llamacpp-service:
     # Local-AI runtime component. Created only when the local-ai compose
     # profile is active (CLAW_LOCAL_AI=true via scripts/claw.sh or installer).

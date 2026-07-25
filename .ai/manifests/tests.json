@@ -6,7 +6,7 @@
     },
     "@claw/shared-constants": {
       "runner": "jest",
-      "testFiles": 1
+      "testFiles": 2
     },
     "@claw/shared-entitlements": {
       "runner": "jest",
@@ -22,7 +22,7 @@
     },
     "@claw/shared-utilities": {
       "runner": "jest",
-      "testFiles": 16
+      "testFiles": 21
     },
     "claw-agent-service": {
       "runner": "jest",
@@ -58,7 +58,7 @@
     },
     "claw-frontend": {
       "runner": "vitest",
-      "testFiles": 164
+      "testFiles": 170
     },
     "claw-health-service": {
       "runner": "jest",
@@ -80,6 +80,10 @@
       "runner": "jest",
       "testFiles": 17
     },
+    "claw-payment-service": {
+      "runner": "jest",
+      "testFiles": 15
+    },
     "claw-research-service": {
       "runner": "jest",
       "testFiles": 14
@@ -98,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 520
+  "total": 547
 }

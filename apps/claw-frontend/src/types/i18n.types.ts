@@ -3335,6 +3335,27 @@ export type TranslationDictionary = {
       description: string;
       backHome: string;
     };
+    contact: {
+      title: string;
+      subtitle: string;
+      nameLabel: string;
+      emailLabel: string;
+      subjectLabel: string;
+      messageLabel: string;
+      nameRequired: string;
+      emailInvalid: string;
+      subjectRequired: string;
+      messageRequired: string;
+      submit: string;
+      submitting: string;
+      privacyNote: string;
+      successTitle: string;
+      successBody: string;
+      sendAnother: string;
+      errorInvalid: string;
+      errorRateLimited: string;
+      errorGeneric: string;
+    };
     home: {
       hero: {
         title: string;

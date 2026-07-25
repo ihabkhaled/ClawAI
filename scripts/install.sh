@@ -459,6 +459,10 @@ echo ""
 
 JWT_SECRET=$(gen_secret_b64)
 ENCRYPTION_KEY=$(gen_secret_hex)
+# Separate from ENCRYPTION_KEY on purpose: vaulted gateway payment tokens are
+# encrypted under their own key so a payment-token compromise does not also
+# expose connector API keys, and so the two can be rotated independently.
+PAYMENT_TOKEN_ENCRYPTION_KEY=$(gen_secret_hex)
 DB_PASSWORD=$(gen_password)
 MONGO_PASS=$(gen_password)
 RABBIT_PASS=$(gen_password)
@@ -473,6 +477,7 @@ FIGMA_WEBHOOK_SECRET=$(gen_secret_hex)
 
 ok "JWT secret generated (${#JWT_SECRET} chars)"
 ok "Encryption key generated (${#ENCRYPTION_KEY} hex chars)"
+ok "Payment token encryption key generated (${#PAYMENT_TOKEN_ENCRYPTION_KEY} hex chars)"
 ok "Database passwords generated"
 ok "Admin password generated"
 ok "Inter-service auth token generated (${#INTER_SERVICE_AUTH_TOKEN} hex chars)"
@@ -494,6 +499,7 @@ if [ -f "$ENV_FILE" ]; then
   PREV_RABBIT_PASS="$(get_env_value "RABBITMQ_PASSWORD" "$ENV_FILE")"
   PREV_JWT_SECRET="$(get_env_value "JWT_SECRET" "$ENV_FILE")"
   PREV_ENCRYPTION_KEY="$(get_env_value "ENCRYPTION_KEY" "$ENV_FILE")"
+  PREV_PAYMENT_TOKEN_KEY="$(get_env_value "PAYMENT_TOKEN_ENCRYPTION_KEY" "$ENV_FILE")"
   if [ -n "$PREV_DB_PASSWORD" ]; then
     DB_PASSWORD="$PREV_DB_PASSWORD"
     ok "Preserved PG_*_PASSWORD from existing .env (postgres volumes already use this)"
@@ -513,6 +519,10 @@ if [ -f "$ENV_FILE" ]; then
   if [ -n "$PREV_ENCRYPTION_KEY" ]; then
     ENCRYPTION_KEY="$PREV_ENCRYPTION_KEY"
     ok "Preserved ENCRYPTION_KEY from existing .env (changing it would invalidate stored connector secrets)"
+  fi
+  if [ -n "$PREV_PAYMENT_TOKEN_KEY" ]; then
+    PAYMENT_TOKEN_ENCRYPTION_KEY="$PREV_PAYMENT_TOKEN_KEY"
+    ok "Preserved PAYMENT_TOKEN_ENCRYPTION_KEY from existing .env (changing it would orphan every vaulted payment method)"
   fi
 fi
 echo ""
@@ -855,6 +865,12 @@ PG_RESEARCH_PASSWORD=${DB_PASSWORD}
 PG_RESEARCH_DB=claw_research
 PG_RESEARCH_PORT=5452
 
+# PostgreSQL — Payment Service (separate instance from claw_auth by design)
+PG_PAYMENTS_USER=claw
+PG_PAYMENTS_PASSWORD=${DB_PASSWORD}
+PG_PAYMENTS_DB=claw_payments
+PG_PAYMENTS_PORT=5453
+
 PG_LLAMACPP_USER=claw
 PG_LLAMACPP_PASSWORD=${DB_PASSWORD}
 PG_LLAMACPP_DB=claw_llamacpp
@@ -896,6 +912,54 @@ JWT_REFRESH_EXPIRY=7d
 ENCRYPTION_KEY=${ENCRYPTION_KEY}
 
 # =============================================================================
+# Subscriptions, Billing & Payments (claw-payment-service, port 4018)
+# =============================================================================
+# Plan PRICES are never read from env — they live in the database as versioned
+# PlanPriceVersion rows so a price change creates a new immutable version and
+# never reprices an existing subscription or invoice.
+
+# Envelope key for vaulted GATEWAY TOKENS (never card data — ClawAI never
+# receives a PAN or CVV). Separate from ENCRYPTION_KEY so the two rotate
+# independently.
+PAYMENT_TOKEN_ENCRYPTION_KEY=${PAYMENT_TOKEN_ENCRYPTION_KEY}
+PAYMENT_TOKEN_KEY_VERSION=1
+
+# Gateways start DISABLED. Fill in a complete credential set to enable one — a
+# partial set does not half-enable a gateway.
+# PayPal: https://developer.paypal.com/dashboard/applications
+PAYPAL_CLIENT_ID=
+PAYPAL_CLIENT_SECRET=
+PAYPAL_WEBHOOK_ID=
+PAYPAL_ENV=sandbox
+NEXT_PUBLIC_PAYPAL_CLIENT_ID=
+
+# Paymob: dashboard > Settings > Account Info / Integrations
+PAYMOB_SECRET_KEY=
+PAYMOB_PUBLIC_KEY=
+PAYMOB_API_KEY=
+PAYMOB_HMAC_SECRET=
+PAYMOB_CARD_INTEGRATION_ID=
+PAYMOB_CURRENCY=EGP
+NEXT_PUBLIC_PAYMOB_PUBLIC_KEY=
+
+# Foreign exchange (plan prices stay canonical in USD)
+EXCHANGE_RATE_API_BASE_URL=https://open.er-api.com/v6
+EXCHANGE_RATE_CACHE_TTL_MS=3600000
+# 0 means "fail checkout rather than charge against a stale hardcoded rate".
+USD_TO_EGP_FALLBACK_RATE=0
+FX_QUOTE_TTL_MS=900000
+FX_SAFETY_MARGIN_BPS=150
+
+# Lifecycle, reconciliation and outbound bounds
+WEBHOOK_REPLAY_TOLERANCE_MS=600000
+BILLING_GRACE_PERIOD_MS=259200000
+BILLING_RECONCILIATION_CRON=0 */15 * * * *
+PAYMENT_OUTBOX_POLL_INTERVAL_MS=5000
+PAYMENT_OUTBOX_MAX_ATTEMPTS=10
+PAYMENT_GATEWAY_TIMEOUT_MS=20000
+PAYMENT_GATEWAY_MAX_RETRIES=2
+
+# =============================================================================
 # Admin Seed
 # =============================================================================
 ADMIN_EMAIL=${ADMIN_EMAIL}
@@ -928,6 +992,19 @@ NEXT_PUBLIC_ADSENSE_CLIENT_ID=
 NEXT_PUBLIC_ADSENSE_SERVING_ENABLED=false
 NEXT_PUBLIC_ADSENSE_REVIEW_MODE=false
 ADSENSE_PUBLISHER_ID=
+# Public contact form (/api/contact). Server-only — SMTP creds never reach the
+# browser. OFF by default; set ENABLED=true + PROVIDER=smtp with credentials.
+CONTACT_EMAIL_ENABLED=false
+CONTACT_EMAIL_PROVIDER=none
+CONTACT_EMAIL_FROM=no-reply@claw.local
+CONTACT_EMAIL_TO=
+CONTACT_RATE_LIMIT_MAX=3
+CONTACT_RATE_LIMIT_WINDOW_MS=3600000
+CONTACT_SMTP_HOST=
+CONTACT_SMTP_PORT=587
+CONTACT_SMTP_SECURE=false
+CONTACT_SMTP_USER=
+CONTACT_SMTP_PASS=
 
 # =============================================================================
 # Ollama
@@ -1040,6 +1117,7 @@ FILE_GENERATION_SERVICE_URL=https://file-generation-service:4013
 WORKSPACE_SERVICE_URL=https://workspace-service:4014
 AGENT_SERVICE_URL=https://agent-service:4015
 RESEARCH_SERVICE_URL=https://research-service:4016
+PAYMENT_SERVICE_URL=https://payment-service:4018
 LLAMACPP_SERVICE_URL=https://llamacpp-service:4017
 
 # =============================================================================
@@ -1061,6 +1139,7 @@ FILE_GENERATION_PORT=4013
 WORKSPACE_PORT=4014
 AGENT_PORT=4015
 RESEARCH_PORT=4016
+PAYMENT_SERVICE_PORT=4018
 LLAMACPP_PORT=4017
 
 # Workspace scheduled sync (Stream 01 Phase 5)
@@ -1135,6 +1214,7 @@ FILE_GENERATION_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-file-generation
 WORKSPACE_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-workspace:5432/claw_workspace?schema=public
 AGENT_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-agent:5432/claw_agent?schema=public
 RESEARCH_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-research:5432/claw_research?schema=public
+PAYMENT_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-payments:5432/claw_payments?schema=public
 LLAMACPP_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-llamacpp:5432/claw_llamacpp?schema=public
 
 # claw-llamacpp-service (Local Frontier LLM runtime)

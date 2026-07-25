@@ -90,6 +90,7 @@ HOSTS=(
   agent-service
   research-service
   llamacpp-service
+  payment-service
 )
 
 # Append the user-configured hostname. mkcert handles both DNS names and

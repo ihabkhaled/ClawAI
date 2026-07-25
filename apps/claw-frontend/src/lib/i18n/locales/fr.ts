@@ -3430,6 +3430,31 @@ export const fr: TranslationDictionary = {
       description: 'La page que vous recherchez n’existe pas ou a peut-être été déplacée.',
       backHome: 'Retour à l’accueil',
     },
+    contact: {
+      title: 'Contact',
+      subtitle:
+        'Des questions sur l’auto-hébergement, le routage, les intégrations ou l’agent de bureau ? Envoyez-nous un message et nous vous répondrons.',
+      nameLabel: 'Nom',
+      emailLabel: 'E-mail',
+      subjectLabel: 'Objet',
+      messageLabel: 'Message',
+      nameRequired: 'Veuillez saisir votre nom.',
+      emailInvalid: 'Veuillez saisir une adresse e-mail valide.',
+      subjectRequired: 'Veuillez saisir un objet.',
+      messageRequired: 'Veuillez saisir un message (au moins 10 caractères).',
+      submit: 'Envoyer le message',
+      submitting: 'Envoi…',
+      privacyNote:
+        'Nous utilisons vos informations uniquement pour répondre à ce message. Voir notre politique de confidentialité.',
+      successTitle: 'Message envoyé',
+      successBody:
+        'Merci de nous avoir contactés. Nous répondrons à votre e-mail dès que possible.',
+      sendAnother: 'Envoyer un autre message',
+      errorInvalid: 'Veuillez vérifier le formulaire et réessayer.',
+      errorRateLimited: 'Trop de messages. Veuillez patienter un instant avant de réessayer.',
+      errorGeneric:
+        'Une erreur s’est produite lors de l’envoi de votre message. Veuillez réessayer.',
+    },
     home: {
       hero: {
         title: 'Orchestration d’IA « local-first », sans renoncer aux modèles cloud',

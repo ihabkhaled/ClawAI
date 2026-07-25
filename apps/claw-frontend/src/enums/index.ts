@@ -137,3 +137,5 @@ export { AdEligibility } from './ad-eligibility.enum';
 export { ContentReviewStatus } from './content-review-status.enum';
 export { StructuredDataType } from './structured-data-type.enum';
 export { ContentLifecycleStatus } from './content-lifecycle-status.enum';
+export { ContactEmailProvider } from './contact-email-provider.enum';
+export { ContactResponseCode } from './contact-response-code.enum';

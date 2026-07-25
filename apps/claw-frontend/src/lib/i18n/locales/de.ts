@@ -3417,6 +3417,32 @@ export const de: TranslationDictionary = {
       description: 'Die gesuchte Seite existiert nicht oder wurde verschoben.',
       backHome: 'Zurück zur Startseite',
     },
+    contact: {
+      title: 'Kontakt',
+      subtitle:
+        'Fragen zu Self-Hosting, Routing, Integrationen oder dem Desktop-Agent? Schreiben Sie uns eine Nachricht und wir melden uns bei Ihnen.',
+      nameLabel: 'Name',
+      emailLabel: 'E-Mail',
+      subjectLabel: 'Betreff',
+      messageLabel: 'Nachricht',
+      nameRequired: 'Bitte geben Sie Ihren Namen ein.',
+      emailInvalid: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.',
+      subjectRequired: 'Bitte geben Sie einen Betreff ein.',
+      messageRequired: 'Bitte geben Sie eine Nachricht ein (mindestens 10 Zeichen).',
+      submit: 'Nachricht senden',
+      submitting: 'Wird gesendet…',
+      privacyNote:
+        'Wir verwenden Ihre Angaben nur zur Beantwortung dieser Nachricht. Siehe unsere Datenschutzerklärung.',
+      successTitle: 'Nachricht gesendet',
+      successBody:
+        'Danke für Ihre Nachricht. Wir antworten Ihnen so schnell wie möglich per E-Mail.',
+      sendAnother: 'Weitere Nachricht senden',
+      errorInvalid: 'Bitte überprüfen Sie das Formular und versuchen Sie es erneut.',
+      errorRateLimited:
+        'Zu viele Nachrichten. Bitte warten Sie einen Moment, bevor Sie es erneut versuchen.',
+      errorGeneric:
+        'Beim Senden Ihrer Nachricht ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.',
+    },
     home: {
       hero: {
         title: 'Local-first-KI-Orchestrierung, ohne auf Cloud-Modelle zu verzichten',
