@@ -581,6 +581,9 @@ services:
     container_name: claw-frontend
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      WATCHPACK_POLLING: 'true'
+      CHOKIDAR_USEPOLLING: 'true'
     ports:
       - '3000:3000'
     volumes:
