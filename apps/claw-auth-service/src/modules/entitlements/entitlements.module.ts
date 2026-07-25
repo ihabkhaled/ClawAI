@@ -7,11 +7,20 @@ import { EntitlementsInternalController } from './controllers/entitlements-inter
 import { MeEntitlementsController } from './controllers/me-entitlements.controller';
 import { QuotaInternalController } from '../quota/controllers/quota-internal.controller';
 import { EntitlementsService } from './services/entitlements.service';
+import { EntitlementApplierService } from './services/entitlement-applier.service';
+import { EntitlementInboxService } from './services/entitlement-inbox.service';
+import { EntitlementInboxRepository } from './repositories/entitlement-inbox.repository';
 
 @Module({
   imports: [RolesModule, PlansModule, QuotaModule],
   controllers: [EntitlementsInternalController, MeEntitlementsController, QuotaInternalController],
-  providers: [EntitlementsService, AuthRepository],
-  exports: [EntitlementsService],
+  providers: [
+    EntitlementsService,
+    AuthRepository,
+    EntitlementInboxService,
+    EntitlementApplierService,
+    EntitlementInboxRepository,
+  ],
+  exports: [EntitlementsService, EntitlementInboxService],
 })
 export class EntitlementsModule {}

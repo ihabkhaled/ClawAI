@@ -14,7 +14,9 @@ import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
+import { BillingModule } from '../modules/billing/billing.module';
 import { FxModule } from '../modules/fx/fx.module';
+import { OutboxModule } from '../modules/outbox/outbox.module';
 import { GatewaysModule } from '../modules/gateways/gateways.module';
 import { HealthModule } from '../modules/health/health.module';
 
@@ -84,6 +86,8 @@ import { HealthModule } from '../modules/health/health.module';
     HealthModule,
     GatewaysModule,
     FxModule,
+    OutboxModule,
+    BillingModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

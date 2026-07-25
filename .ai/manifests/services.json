@@ -94,7 +94,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 25,
+      "testFiles": 26,
       "testRunner": "jest"
     },
     {
@@ -367,7 +367,7 @@
         "Subscription",
         "WebhookEvent"
       ],
-      "testFiles": 21,
+      "testFiles": 22,
       "testRunner": "jest"
     },
     {
