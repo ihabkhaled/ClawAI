@@ -32,10 +32,9 @@ const siteUrlSchema = z
         hostname !== 'localhost' &&
         hostname !== '127.0.0.1' &&
         hostname !== '::1' &&
-        !hostname.endsWith('.vercel.app')
       );
     },
-    { message: 'SITE_URL must not be localhost, 127.0.0.1, or a Vercel-assigned domain' },
+    { message: 'SITE_URL must not be localhost, 127.0.0.1' },
   )
   .refine(
     (value) => {
