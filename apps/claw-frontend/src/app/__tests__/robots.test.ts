@@ -17,18 +17,24 @@ describe('robots', () => {
   });
 
   it(
-    'disallows every known private route prefix in production',
+    'allows every crawler to fetch public and localized shared-chat URLs',
     async () => {
       vi.stubEnv('NODE_ENV', 'production');
       process.env['SITE_URL'] = 'https://claw.example';
       const { PRIVATE_ROUTE_PREFIXES } = await import('@/constants');
+      const { SUPPORTED_LOCALES } = await import('@/lib/i18n/i18n.constants');
       const robots = (await import('../robots')).default;
 
       const result = robots();
       expect(result.sitemap).toBe('https://claw.example/sitemap.xml');
-      const disallow = Array.isArray(result.rules)
-        ? result.rules[0]?.disallow
-        : (result.rules as { disallow?: string | string[] }).disallow;
+      const rules = Array.isArray(result.rules) ? result.rules[0] : result.rules;
+      expect(rules?.userAgent).toBe('*');
+      expect(rules?.allow).toContain('/');
+      for (const { locale } of SUPPORTED_LOCALES) {
+        expect(rules?.allow).toContain(`/${locale}/share/chat/`);
+      }
+
+      const disallow = rules?.disallow;
       for (const prefix of PRIVATE_ROUTE_PREFIXES) {
         expect(disallow).toContain(prefix);
       }
