@@ -3403,6 +3403,12 @@ export const it: TranslationDictionary = {
       description:
         'Pubblica una copia in sola lettura di questa conversazione a un indirizzo pubblico.',
     },
+    errors: {
+      emptyThread:
+        "Questa conversazione non contiene ancora messaggi, quindi non c'è nulla da condividere.",
+      shareNotFound: 'Questa chat non è condivisa. Crea prima un link.',
+      invalidShareId: 'Questo link di condivisione non è valido.',
+    },
     warning: {
       heading: 'Prima di pubblicare',
       acknowledge: 'Ho capito cosa diventa pubblico pubblicando questa chat.',

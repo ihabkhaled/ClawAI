@@ -20,7 +20,13 @@ export function ModelAccessSection(): React.ReactElement {
           <div key={family.name}>
             <dt className="text-foreground font-medium">{family.name}</dt>
             <dd className="text-muted-foreground mt-1.5 text-sm">{t(family.strengthKey)}</dd>
-            <dd className="text-muted-foreground/80 mt-2 text-xs">{family.models.join(' · ')}</dd>
+            {/* Full-opacity `text-muted-foreground`, never `/80`. An opacity
+                modifier on an already-muted colour composites toward the page
+                background: at 12px this measured 3.24:1 against white and failed
+                the Lighthouse `color-contrast` assertion on every card. Even at the
+                darkest token value the /80 variant only reaches 3.59:1, so the
+                modifier itself is the defect — not the token behind it. */}
+            <dd className="text-muted-foreground mt-2 text-xs">{family.models.join(' · ')}</dd>
           </div>
         ))}
       </dl>

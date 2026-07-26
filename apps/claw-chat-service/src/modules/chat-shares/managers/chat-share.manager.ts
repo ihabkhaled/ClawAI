@@ -53,11 +53,27 @@ export class ChatShareManager {
     private readonly events: ChatShareEventsService,
   ) {}
 
+  /**
+   * The owner's view of a thread's share, or null when it is not shared.
+   *
+   * A REVOKED row counts as "not shared". The row survives revocation so that a
+   * later re-publish can reuse the same record, but that is storage detail the
+   * owner should never see: returning it made the dialog render the published
+   * state — live public link, "Stop sharing", a version number — for a
+   * conversation that was in fact private, and every button in that state then
+   * failed against a share the backend rightly considered gone.
+   *
+   * The public read path already filters on status in its WHERE clause; this
+   * closes the same hole on the owner path.
+   */
   async getForOwner(threadId: string, userId: string): Promise<OwnerChatShareView | null> {
     this.logger.debug(`getForOwner: thread=${threadId}`);
     await this.requireOwnedThread(threadId, userId);
     const share = await this.shares.findByThreadId(threadId);
-    return share === null ? null : this.toOwnerView(share, threadId);
+    if (share?.status !== ChatShareStatus.ACTIVE) {
+      return null;
+    }
+    return this.toOwnerView(share, threadId);
   }
 
   /**

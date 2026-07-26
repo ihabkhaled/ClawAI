@@ -2,8 +2,9 @@ import { apiClient } from '@/services/shared/api-client';
 import type {
   OwnerChatShare,
   PublishChatShareInput,
-  UpdateChatShareInput,
+  UpdateChatShareIndexingInput,
 } from '@/types/chat-share.types';
+import { asOwnerChatShare } from '@/utilities/owner-chat-share.utility';
 
 /**
  * The only place the browser talks to the share-management API.
@@ -17,10 +18,22 @@ import type {
  * search engines receive server-rendered chat text rather than an empty shell.
  */
 export const chatSharesRepository = {
-  /** Returns null when the thread has never been shared. */
+  /**
+   * Returns null when the thread has never been shared.
+   *
+   * Normalised through `asOwnerChatShare` rather than returned raw. NestJS
+   * serialises a `null` return as an EMPTY BODY, and axios parses an empty body as
+   * `''` — so `response.data ?? null` yields `''`, which is not `null` and
+   * therefore reads as "this thread IS shared" to any caller doing a null check.
+   *
+   * That is precisely what went wrong: the share dialog rendered its published
+   * state — public-link field, "Version 0", "0 messages", Stop sharing — for
+   * threads that had never been shared, and every button then failed against the
+   * backend with "ChatShare not found".
+   */
   async get(threadId: string): Promise<OwnerChatShare | null> {
-    const response = await apiClient.get<OwnerChatShare | null>(`/chat-threads/${threadId}/share`);
-    return response.data;
+    const response = await apiClient.get<unknown>(`/chat-threads/${threadId}/share`);
+    return asOwnerChatShare(response.data);
   },
 
   async publish(threadId: string, input: PublishChatShareInput): Promise<OwnerChatShare> {
@@ -28,8 +41,17 @@ export const chatSharesRepository = {
     return response.data;
   },
 
-  /** Changes indexing without republishing the snapshot. */
-  async updateIndexing(threadId: string, input: UpdateChatShareInput): Promise<OwnerChatShare> {
+  /**
+   * Changes indexing without republishing the snapshot.
+   *
+   * Takes the narrower input type on purpose: the backend PATCH schema accepts
+   * `allowIndexing` alone, and re-asserting the publication acknowledgement on
+   * every toggle would imply the warning is being re-consented to when it is not.
+   */
+  async updateIndexing(
+    threadId: string,
+    input: UpdateChatShareIndexingInput,
+  ): Promise<OwnerChatShare> {
     const response = await apiClient.patch<OwnerChatShare>(
       `/chat-threads/${threadId}/share`,
       input,

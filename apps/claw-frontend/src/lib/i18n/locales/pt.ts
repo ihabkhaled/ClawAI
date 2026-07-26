@@ -3394,6 +3394,11 @@ export const pt: TranslationDictionary = {
       title: 'Compartilhar esta conversa',
       description: 'Publique uma cópia somente leitura desta conversa em um endereço público.',
     },
+    errors: {
+      emptyThread: 'Esta conversa ainda não tem mensagens, portanto não há nada para compartilhar.',
+      shareNotFound: 'Esta conversa não está compartilhada. Crie um link primeiro.',
+      invalidShareId: 'Esse link de compartilhamento não é válido.',
+    },
     warning: {
       heading: 'Antes de publicar',
       acknowledge: 'Entendo o que se torna público ao publicar esta conversa.',

@@ -126,12 +126,34 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+    /* 50% lightness, not the shadcn default 53.3%.
+     *
+     * `text-primary` on `bg-primary/10` — the standard accent pill — measured
+     * 4.48:1 at 53.3%, failing the 4.5:1 AA requirement by two hundredths. A
+     * 10%-alpha tint of the same hue is very close to the text colour's own
+     * lightness, so the pairing has almost no headroom by construction.
+     *
+     * At 50% the pill is 5.02:1 and `text-primary` on `--background` is 5.82:1.
+     * This also *improves* the inverse pairing: `--primary-foreground` on
+     * `bg-primary` goes from 4.94:1 to 5.56:1, so buttons get more contrast too. */
+    --primary: 221.2 83.2% 50%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* 44% lightness, not the shadcn default 46.9%.
+     *
+     * `text-muted-foreground` on `bg-muted` is an extremely common pairing (small
+     * pills, chips, table meta) and at 46.9% it computes to a 4.34:1 ratio — under
+     * the 4.5:1 WCAG AA requirement for normal-size text. It passes for LARGE text
+     * (3:1), which is why the failure looked arbitrary: only the pages using it at
+     * `text-xs` tripped Lighthouse's `color-contrast` assertion, and axe scores the
+     * whole audit 0 for a single failing element, so one chip failed a whole page.
+     *
+     * At 44% the pair is 4.81:1 and it is 5.27:1 on plain `--background`, while
+     * still reading as clearly secondary next to `--foreground` (20:1). Dark mode
+     * needs no change — it is already 5.71:1 on `bg-muted`. */
+    --muted-foreground: 215.4 16.3% 44%;
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
@@ -164,8 +186,13 @@
     --pressed-overlay: 222 47% 11% / 0.08;
     --selected-overlay: 221 83% 53% / 0.08;
 
-    /* Soft text tiers */
-    --text-soft: 215 16% 46%;
+    /* Soft text tiers. Kept in step with --muted-foreground: the same 4.5:1
+     * requirement applies wherever either is used as text, and having one at 44%
+     * and the other at 46% would make the accessible choice a coin flip. */
+    --text-soft: 215 16% 44%;
+    /* 62% is 2.9:1 on white — below AA for text of ANY size. Retained only for
+     * non-text decoration (hairlines, dividers, disabled glyphs paired with a
+     * text label); never use it for content a user has to read. */
     --text-faint: 215 14% 62%;
 
     /* Semantic status colors */
@@ -481,11 +508,46 @@
 @layer utilities {
   /* Respect iOS/Android home-indicator + notch insets for fixed/sticky chrome */
   .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: calc(var(--safe-bottom-base, 0px) + env(safe-area-inset-bottom));
   }
 
+  /*
+   * ADDITIVE, on purpose.
+   *
+   * This previously assigned the inset to padding-top directly, which silently
+   * defeated every `pt-*` / `p-*` utility on the same element — same layer,
+   * declared later, so this rule won. On desktop the inset is 0px, so such an
+   * element ended up with NO top padding at all: the chat header's title sat
+   * flush against its frosted edge despite carrying `pt-5 sm:pt-7`, and toasts
+   * hugged the viewport edge despite `p-4`.
+   *
+   * Callers needing their own base set `--safe-top-base` through a named class
+   * below, so the two declarations cannot fight.
+   */
   .safe-top {
-    padding-top: env(safe-area-inset-top);
+    padding-top: calc(var(--safe-top-base, 0px) + env(safe-area-inset-top));
+  }
+
+  /* 1rem of breathing room, plus whatever the notch needs on top of it. */
+  .safe-top-base-4 {
+    --safe-top-base: 1rem;
+  }
+
+  /*
+   * The chat thread header's vertical rhythm.
+   *
+   * The breakpoint lives here rather than as `sm:pt-7` on the element because
+   * `.safe-top` owns padding-top; a `pt-*` utility alongside it is simply
+   * discarded. Values match `pt-5` / `sm:pt-7`.
+   */
+  .safe-top-base-header {
+    --safe-top-base: 1.25rem;
+  }
+
+  @media (min-width: 640px) {
+    .safe-top-base-header {
+      --safe-top-base: 1.75rem;
+    }
   }
 
   /* Fade the tail of long scroll regions (e.g. sidebar nav) */

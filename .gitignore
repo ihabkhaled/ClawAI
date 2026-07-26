@@ -116,3 +116,7 @@ apps/claw-*-service/public/
 
 # Lighthouse CI reports
 .lighthouseci/
+
+# Playwright run artifacts (traces, screenshots, HTML report)
+test-results/
+playwright-report/

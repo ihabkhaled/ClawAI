@@ -42,6 +42,8 @@ Every workspace: all 17 `apps/claw-*` services, `apps/claw-frontend`, all six
 ## Prohibited patterns
 
 - `--no-verify` or any git-hook bypass to land a change.
+- Leaving a commit unpushed while starting the next one. One commit, one push:
+  CI only sees what is pushed, so a local stack is a stack of unverified commits.
 - `eslint-disable` / `eslint-disable-next-line` to silence a real finding.
 - `@ts-ignore`, or `@ts-expect-error` without an approved waiver.
 - `any`, or `as unknown as X` casts.
@@ -83,4 +85,6 @@ npx tsgo --noEmit && npm run lint && npm test && npm run build   # per-folder ga
 - [ ] `knowledge:context` was run and its output read before coding.
 - [ ] Every blocker above is provably satisfied for the diff.
 - [ ] Per-folder gates green; no `--no-verify` used to hide a failure.
+- [ ] Every commit pushed before the next was started —
+      `git log --oneline origin/<branch>..HEAD` is empty.
 - [ ] No prohibited pattern present anywhere in the diff.

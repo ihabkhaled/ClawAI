@@ -18,3 +18,14 @@ Validation (touched folders only):
   cd <workspace> && npm run typecheck && npm run lint && npm test && npm run build
 
 Scoped rules live in .cursor/rules/*.mdc (by file glob). Full router: cursor.md + AGENTS.md.
+
+Prompt packs / execution prompts — before ANY code, run the protocol in
+rules/26-prompt-pack-intake-protocol.md (runbook: skills/execute-prompt-pack.md):
+read the pack end to end; npm run knowledge:context; read governing docs in
+authority order; audit every deliverable done/partial/missing against the CODE
+(present is not wired — a repo method with no callers is scaffolding); review the
+constraint surface up front (eslint flat config, TS strict, prettier, coverage
+floors, security, i18n x9 + i18n.types.ts, the CLAUDE.md delivery checklist, and
+the gate topology incl. pre-commit/pre-push/CI/freshness/Vercel); write the plan
+and state deviations — policy outranks the pack, never silently; then implement
+with scoped gates, one gated commit per change, each pushed before the next.

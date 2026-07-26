@@ -5,6 +5,10 @@ import { WebhookOutcome } from '../../types/webhook.types';
 import type { CheckoutSessionRepository } from '../../../billing/repositories/checkout-session.repository';
 import type { PaypalAdapter } from '../../../gateways/paypal/paypal.adapter';
 import type { PaymentActivationService } from '../payment-activation.service';
+import type { PaymentReversalService } from '../payment-reversal.service';
+import type { PaymentTransactionRepository } from '../../../billing/repositories/payment-transaction.repository';
+import type { SubscriptionLifecycleService } from '../../../billing/services/subscription-lifecycle.service';
+import type { SubscriptionRepository } from '../../../subscriptions/repositories/subscription.repository';
 import type { WebhookEventRepository } from '../../repositories/webhook-event.repository';
 
 const HEADERS = {
@@ -34,8 +38,15 @@ describe('PaypalWebhookService', () => {
     markFailed: jest.Mock;
     markIgnored: jest.Mock;
   };
-  let sessions: { findById: jest.Mock };
+  let sessions: { findById: jest.Mock; markFailed: jest.Mock };
   let activation: { activate: jest.Mock };
+  let reversals: { refund: jest.Mock; chargeback: jest.Mock };
+  let transactions: {
+    findByProviderTransactionId: jest.Mock;
+    findLatestChargeForSubscription: jest.Mock;
+  };
+  let subscriptions: { findByGatewayLookupHash: jest.Mock };
+  let lifecycle: { revokeEntitlement: jest.Mock; markPastDue: jest.Mock };
   let service: PaypalWebhookService;
 
   beforeEach(() => {
@@ -60,6 +71,7 @@ describe('PaypalWebhookService', () => {
       markIgnored: jest.fn(),
     };
     sessions = {
+      markFailed: jest.fn(),
       findById: jest.fn().mockResolvedValue({
         id: 'cs-1',
         providerOrderId: 'PP-ORDER-1',
@@ -68,12 +80,26 @@ describe('PaypalWebhookService', () => {
       }),
     };
     activation = { activate: jest.fn().mockResolvedValue('sub-1') };
+    reversals = {
+      refund: jest.fn().mockResolvedValue(true),
+      chargeback: jest.fn().mockResolvedValue(true),
+    };
+    transactions = {
+      findByProviderTransactionId: jest.fn().mockResolvedValue(null),
+      findLatestChargeForSubscription: jest.fn().mockResolvedValue(null),
+    };
+    subscriptions = { findByGatewayLookupHash: jest.fn().mockResolvedValue(null) };
+    lifecycle = { revokeEntitlement: jest.fn(), markPastDue: jest.fn() };
 
     service = new PaypalWebhookService(
       paypal as unknown as PaypalAdapter,
       events as unknown as WebhookEventRepository,
       sessions as unknown as CheckoutSessionRepository,
       activation as unknown as PaymentActivationService,
+      reversals as unknown as PaymentReversalService,
+      transactions as unknown as PaymentTransactionRepository,
+      subscriptions as unknown as SubscriptionRepository,
+      lifecycle as unknown as SubscriptionLifecycleService,
     );
   });
 

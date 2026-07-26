@@ -17,7 +17,7 @@ Every commit and push in the repo; the git hooks; `.github/workflows/ci.yml`.
    run the four gates **inside those folders only**: `npx tsgo --noEmit`
    (frontend: `npm run typecheck`), `npm run lint`, `npm test`, `npm run build`.
    Never run the all-workspace gate for a scoped change.
-2. **Green then commit.** When touched-folder gates pass, commit and push and let the
+2. **Green then commit.** When touched-folder gates pass, commit and let the
    hook run. The pre-commit hook is now scoped + fast (lint-staged + knowledge
    freshness + `affected typecheck --staged`), so there is no reason to bypass it.
    **`--no-verify` is banned** ([ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md));
@@ -29,11 +29,17 @@ Every commit and push in the repo; the git hooks; `.github/workflows/ci.yml`.
    subject ≤ 100 chars, no sentence/start/pascal/upper case.
 5. **Explicit paths when splitting commits** — `git add <path> …`, never
    `git add -A`/`.` (contaminates the commit with parallel WIP).
-6. **Prefer reversible git actions** — new commit over amend; confirm before
+6. **Push each commit before starting the next one.** One commit, one push: after
+   a commit passes its hook, the next git command is `git push`. CI only sees what
+   is pushed, so N local commits are N unverified commits with an N-wide bisect
+   surface, and unpushed work exists on one disk. `git log --oneline
+origin/<branch>..HEAD` must be empty before you stage the next change. The only
+   exception is an explicit user instruction not to push.
+7. **Prefer reversible git actions** — new commit over amend; confirm before
    force-push / `reset --hard`.
-7. **`npm run release:preflight` runs the full gate** — that is the place the
+8. **`npm run release:preflight` runs the full gate** — that is the place the
    all-workspace checks belong, not the per-change loop.
-8. **Docs-only changes** (`docs/**`, `CLAUDE.md`, `rules/**`, locale files paired
+9. **Docs-only changes** (`docs/**`, `CLAUDE.md`, `rules/**`, locale files paired
    with `i18n.types.ts`) skip the code gates but stay conventional-format.
 
 ## Prohibited patterns
@@ -41,6 +47,7 @@ Every commit and push in the repo; the git hooks; `.github/workflows/ci.yml`.
 - `--no-verify` (or any hook bypass) on commit or push — banned outright.
 - Running lint/typecheck/test/build across all 17 services for a one-service change.
 - `git add -A` / `git add .` when splitting a commit.
+- Building a local stack: committing again while an earlier commit is unpushed.
 - A non-conventional commit subject.
 
 ## Correct pattern
@@ -62,6 +69,7 @@ git push origin <branch>
 
 ## Related skills
 
+- [commit-and-push-each-change](../skills/commit-and-push-each-change.md)
 - [09-refactor-toolkit](../skills/09-refactor-toolkit.md)
 
 ## Related context
@@ -72,7 +80,9 @@ git push origin <branch>
 
 - [ ] Touched-folder gates green; full gate not run for a scoped change.
 - [ ] Conventional commit; explicit paths; reversible actions.
-- [ ] `--no-verify` used only to skip the redundant hook, never a real failure.
+- [ ] `--no-verify` not used at all (banned by ADR-061).
+- [ ] Every commit pushed before the next was started; `git log --oneline
+    origin/<branch>..HEAD` is empty.
 
 ## Generated artifacts are a HARD GATE (never optional)
 

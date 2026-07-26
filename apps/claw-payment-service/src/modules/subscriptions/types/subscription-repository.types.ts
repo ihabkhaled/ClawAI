@@ -55,3 +55,31 @@ export type SubscriptionStatusChange = {
   expectedVersion: number;
   data: SubscriptionMutableFields;
 };
+
+/**
+ * A payment method being vaulted.
+ *
+ * There is deliberately no field a PAN could occupy: `last4` is the maximum card
+ * fragment the type can carry, and the gateway token arrives separately so it is
+ * never adjacent to the masked metadata in a log line.
+ */
+export type CreatePaymentMethodData = {
+  /** Minted by the caller so the token can be encrypted against it before insert. */
+  id: string;
+  /** Ciphertext already bound to (userId, gateway, id). */
+  encryptedToken: string;
+  userId: string;
+  billingCustomerId: string;
+  gateway: string;
+  /** Deterministic keyed index, for duplicate detection without plaintext. */
+  tokenBlindIndex: string;
+  encryptionKeyVersion: number;
+  type: string;
+  brand: string | null;
+  last4: string | null;
+  expiryMonth: number | null;
+  expiryYear: number | null;
+  isDefault: boolean;
+  /** Absent consent, a method must not be vaulted at all. */
+  consentedAt: Date | null;
+};

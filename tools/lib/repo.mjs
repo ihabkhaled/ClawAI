@@ -5,6 +5,8 @@ import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, dirname, relative, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { normalizeEol } from './fact.mjs';
+
 /**
  * True when `moduleUrl` (an import.meta.url) is the CLI entrypoint. Cross-OS
  * safe (handles the file:// vs file:/// difference on Windows). Use to guard
@@ -87,6 +89,19 @@ const DEFAULT_SKIP = new Set([
   'generated',
   '.audit',
   '.ai',
+  // Agent scratch space. `.claude/worktrees/*` holds FULL copies of the
+  // repository — services, schemas, event declarations and all. Walking into it
+  // makes the generators describe files that are not in the repo, so the
+  // manifests come out different on a machine that has used worktrees than in
+  // CI, which has none. That divergence surfaces only as `knowledge:verify
+  // FAILED — stale generated file` with locally-clean output, which is
+  // needlessly hard to diagnose. Same class of error as the working-tree
+  // pollution fixed in 6baf1c54.
+  '.claude',
+  // Local Playwright/Lighthouse output.
+  '.lighthouseci',
+  'test-results',
+  'playwright-report',
 ]);
 
 /**
@@ -121,7 +136,19 @@ export function walkFiles(absDir, filter = () => true, skip = DEFAULT_SKIP) {
 /** File size in bytes, or 0 when absent. */
 export function fileSize(absPath) {
   try {
-    return statSync(absPath).size;
+    // Measured on LF-normalised content, NOT statSync().size.
+    //
+    // The on-disk size of a text file depends on the checkout: with
+    // `core.autocrlf=true` a Windows working tree stores CRLF, making every file
+    // one byte larger per line than the same commit checked out on Linux. Feeding
+    // that into a manifest makes the manifest platform-dependent, so a Windows
+    // contributor and CI generate different bytes from identical source and the
+    // freshness gate fails with locally-clean output — a genuinely hard failure to
+    // read, because `git status` shows nothing wrong.
+    //
+    // Normalising here keeps the manifest a property of the CONTENT, which is what
+    // it is supposed to describe.
+    return normalizeEol(readFileSync(absPath, 'utf8')).length;
   } catch {
     return 0;
   }

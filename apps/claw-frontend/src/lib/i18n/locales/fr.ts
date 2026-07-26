@@ -3423,6 +3423,12 @@ export const fr: TranslationDictionary = {
       description:
         'Publiez une copie en lecture seule de cette conversation à une adresse publique.',
     },
+    errors: {
+      emptyThread:
+        "Cette conversation ne contient encore aucun message, il n'y a donc rien à partager.",
+      shareNotFound: "Cette conversation n'est pas partagée. Créez d'abord un lien.",
+      invalidShareId: "Ce lien de partage n'est pas valide.",
+    },
     warning: {
       heading: 'Avant de publier',
       acknowledge: 'Je comprends ce que la publication de cette conversation rend public.',

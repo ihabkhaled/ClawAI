@@ -25,12 +25,56 @@ npm run build              # success
 
 3. Multi-folder change → run the gates for EACH touched folder, never for the untouched ones.
 4. Non-workspace files with no gate (`scripts/**`, `infra/**`, plain `*.mjs`) → do the cheapest equivalent check (`node --check <file>`, JSON/schema validate). Do NOT trigger an all-workspace run "to be safe".
-5. When ALL gates for the touched folders are green, commit and let the hook run (it re-verifies the scoped subset):
+5. When ALL gates for the touched folders are green, commit and let the hook run (it re-verifies the scoped subset), then **push immediately**:
 
 ```bash
 git commit -m "<conventional-commit-message>"
 git push origin <branch>
 ```
+
+## Push each commit before starting the next one (MANDATORY)
+
+**One commit, one push. Never build a local stack of unpushed commits.**
+
+After every `git commit` that passes its hook, the very next git command is
+`git push`. Do not stage the next change, do not start the next task, until the
+commit you just made is on the remote.
+
+Why this is a rule and not a preference:
+
+- **CI only sees what is pushed.** A stack of five local commits is five
+  unverified commits. The first one may already have broken the build, and you
+  will not find out until the whole stack lands — at which point the bisect
+  surface is five commits wide instead of one.
+- **Unpushed work is unbacked-up work.** A local-only commit exists on exactly
+  one disk.
+- **A red push is cheap to fix in isolation.** Pushing commit N before writing
+  commit N+1 means a failure is attributable to one change, and the fix is a
+  follow-up commit rather than an interactive rebase through work that has since
+  been built on top of it.
+- **Reviewers and collaborators cannot see local commits.** Long-lived local
+  stacks are how two people silently diverge on the same files.
+
+The sequence for a multi-commit task is therefore:
+
+```bash
+# commit 1
+git add <explicit paths>
+git commit -m "…"
+git push origin <branch>          # ← before anything else
+
+# commit 2 — only now
+git add <explicit paths>
+git commit -m "…"
+git push origin <branch>
+```
+
+If a push is rejected (`non-fast-forward`), integrate and push again before
+continuing — never continue committing on top of a branch you could not push.
+
+The one exception is an explicit instruction not to push (a spike, an
+experiment, a review-locally-first request). That instruction has to come from
+the user; it is never the default and never inferred.
 
 **Never use `--no-verify`** (nor `-c core.hooksPath=/dev/null` or any other bypass). The hook is scoped and fast; a failure in it is a real problem in something you staged — fix it, don't skip it. The only exception is a documented incident procedure with explicit human sign-off (see `docs/exceptions/README.md`).
 

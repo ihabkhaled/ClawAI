@@ -3414,6 +3414,12 @@ export const de: TranslationDictionary = {
       description:
         'Veröffentliche eine schreibgeschützte Kopie dieser Unterhaltung unter einem öffentlichen Link.',
     },
+    errors: {
+      emptyThread:
+        'Diese Unterhaltung enthält noch keine Nachrichten, es gibt also nichts zu teilen.',
+      shareNotFound: 'Dieser Chat wird nicht geteilt. Erstelle zuerst einen Link.',
+      invalidShareId: 'Dieser Freigabelink ist ungültig.',
+    },
     warning: {
       heading: 'Vor dem Veröffentlichen',
       acknowledge: 'Mir ist klar, was durch das Veröffentlichen dieses Chats öffentlich wird.',

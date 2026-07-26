@@ -25,7 +25,11 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
     <div className="flex h-full flex-col">
       {/* Sticky top header — frosted glass + safe-top inset on mobile so it
           sits below the iOS notch / Android status bar without overlap. */}
-      <div className="surface-glass safe-top sticky top-0 z-20 -mx-3 mb-3 flex flex-col gap-3 px-3 py-3 sm:-mx-4 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:rounded-none sm:px-4 sm:py-4">
+      {/* Asymmetric vertical padding: more above than below. The header sits
+          directly under the portal's own top border, and equal padding left the
+          title reading as if it were glued to that line. The extra top space
+          separates the two without pushing the whole conversation down. */}
+      <div className="surface-glass safe-top safe-top-base-header sticky top-0 z-20 -mx-3 mb-3 flex flex-col gap-3 px-3 pb-3 sm:-mx-4 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:rounded-none sm:px-4 sm:pb-4">
         <div className="flex min-w-0 items-center gap-2">
           {/* Mobile: icon-only back button at the start of the header.
               Desktop: appears as labeled button in the actions cluster. */}
