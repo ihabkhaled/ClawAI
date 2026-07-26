@@ -9,6 +9,7 @@ import { THEME_INIT_SCRIPT } from '@/constants/theme.constants';
 // — this is a server component, and that barrel also re-exports the
 // 'use client' LocaleProvider/LocaleContext, which can pull React's
 // createContext into the server bundle and break the production build.
+import { loadDictionary } from '@/lib/i18n/dictionary-loader';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 import { getDirection, getHtmlLanguage, isSupportedLocale } from '@/utilities/locale.utility';
@@ -66,6 +67,7 @@ export default async function RootLayout({
   const nonce = requestHeaders.get('x-nonce') ?? undefined;
   const requestedLocale = requestHeaders.get(LOCALE_REQUEST_HEADER);
   const locale = isSupportedLocale(requestedLocale) ? requestedLocale : DEFAULT_LOCALE;
+  const dictionary = await loadDictionary(locale);
 
   return (
     <html
@@ -102,7 +104,9 @@ export default async function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
-        <Providers initialLocale={locale}>{children}</Providers>
+        <Providers initialLocale={locale} initialDictionary={dictionary}>
+          {children}
+        </Providers>
       </body>
     </html>
   );

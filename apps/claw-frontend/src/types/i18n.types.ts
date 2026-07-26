@@ -4569,12 +4569,14 @@ export type LocaleConfig = {
 export type LocaleContextValue = {
   locale: Locale;
   dir: Direction;
+  dictionary: TranslationDictionary;
   setLocale: (locale: Locale) => void;
 };
 
 export type LocaleProviderProps = {
   children: React.ReactNode;
-  initialLocale?: Locale;
+  initialLocale: Locale;
+  initialDictionary: TranslationDictionary;
 };
 
 export type TranslateFunction = (key: string, params?: Record<string, string | number>) => string;

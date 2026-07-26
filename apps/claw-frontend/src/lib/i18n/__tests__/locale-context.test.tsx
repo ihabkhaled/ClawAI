@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { Direction } from '@/enums/direction.enum';
 import { Locale } from '@/enums/locale.enum';
 import { LocaleContext, LocaleProvider } from '@/lib/i18n/locale-context';
+import { ar } from '@/lib/i18n/locales/ar';
+import { en } from '@/lib/i18n/locales/en';
 
 // Mock the locale utility so we control hydration behavior
 vi.mock('@/utilities/locale.utility', () => ({
@@ -29,27 +31,18 @@ function TestConsumer(): React.ReactElement {
 }
 
 describe('LocaleProvider', () => {
-  it('renders children', () => {
+  it('renders children with the URL-derived dictionary', () => {
     render(
-      <LocaleProvider>
+      <LocaleProvider initialLocale={Locale.EN} initialDictionary={en}>
         <span data-testid="child">hello</span>
       </LocaleProvider>,
     );
     expect(screen.getByTestId('child')).toHaveTextContent('hello');
   });
 
-  it('provides the default locale when no initialLocale is given', () => {
-    render(
-      <LocaleProvider>
-        <TestConsumer />
-      </LocaleProvider>,
-    );
-    expect(screen.getByTestId('locale')).toHaveTextContent(Locale.EN);
-  });
-
   it('provides the initialLocale when specified', () => {
     render(
-      <LocaleProvider initialLocale={Locale.AR}>
+      <LocaleProvider initialLocale={Locale.AR} initialDictionary={ar}>
         <TestConsumer />
       </LocaleProvider>,
     );
@@ -58,7 +51,7 @@ describe('LocaleProvider', () => {
 
   it('provides LTR direction for English', () => {
     render(
-      <LocaleProvider initialLocale={Locale.EN}>
+      <LocaleProvider initialLocale={Locale.EN} initialDictionary={en}>
         <TestConsumer />
       </LocaleProvider>,
     );
@@ -67,7 +60,7 @@ describe('LocaleProvider', () => {
 
   it('provides RTL direction for Arabic', () => {
     render(
-      <LocaleProvider initialLocale={Locale.AR}>
+      <LocaleProvider initialLocale={Locale.AR} initialDictionary={ar}>
         <TestConsumer />
       </LocaleProvider>,
     );

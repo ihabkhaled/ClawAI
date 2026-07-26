@@ -15,6 +15,7 @@ import { pt } from './locales/pt';
 import { ru } from './locales/ru';
 import { th } from './locales/th';
 import { zh } from './locales/zh';
+import { resolveTranslation } from './translation-resolver';
 
 const dictionaries: Record<Locale, TranslationDictionary> = {
   [Locale.EN]: en,
@@ -51,31 +52,5 @@ export function getTranslation(
   key: string,
   params?: Record<string, string | number>,
 ): string {
-  const dict = getDictionary(locale);
-  const parts = key.split('.');
-
-  if (parts.length < 2) {
-    return key;
-  }
-
-  let current: unknown = dict;
-  for (const part of parts) {
-    if (typeof current !== 'object' || current === null) {
-      return key;
-    }
-    current = (current as Record<string, unknown>)[part];
-  }
-
-  if (typeof current !== 'string') {
-    return key;
-  }
-
-  if (!params) {
-    return current;
-  }
-
-  return Object.entries(params).reduce<string>(
-    (result, [paramKey, paramValue]) => result.replaceAll(`{${paramKey}}`, String(paramValue)),
-    current,
-  );
+  return resolveTranslation(getDictionary(locale), key, params);
 }

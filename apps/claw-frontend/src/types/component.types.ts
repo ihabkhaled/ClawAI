@@ -40,7 +40,7 @@ import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 import type { OwnerChatShare, PublicChatShareMessage } from '@/types/chat-share.types';
-import type { TranslateFunction } from '@/types/i18n.types';
+import type { TranslationDictionary, TranslateFunction } from '@/types/i18n.types';
 import type {
   ResearchEvidenceBundle,
   ResearchOptions,
@@ -401,6 +401,7 @@ export type FormFieldErrors = Record<string, string[] | undefined>;
 export type ProvidersProps = {
   children: React.ReactNode;
   initialLocale: Locale;
+  initialDictionary: TranslationDictionary;
 };
 
 export type ThemeProviderProps = {
