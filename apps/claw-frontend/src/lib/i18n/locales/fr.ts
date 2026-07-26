@@ -3410,6 +3410,107 @@ export const fr: TranslationDictionary = {
     progressTitle: 'Progression en direct',
     errorTitle: 'Échec de l’exécution',
   },
+  chatShare: {
+    button: {
+      label: 'Partager',
+    },
+    dialog: {
+      title: 'Partager cette conversation',
+      description:
+        'Publiez une copie en lecture seule de cette conversation à une adresse publique.',
+    },
+    warning: {
+      heading: 'Avant de publier',
+      acknowledge: 'Je comprends ce que la publication de cette conversation rend public.',
+      noLoginRequired: 'Toute personne disposant du lien peut la lire sans se connecter.',
+      containsHistory: 'La copie publiée contient la conversation dans son état actuel.',
+      mayBeIndexed: 'Les moteurs de recherche peuvent l’indexer si vous l’autorisez.',
+      mayAppearInSearch: 'Elle peut apparaître dans les résultats de recherche.',
+      mayShowAds: 'Des publicités peuvent apparaître sur la page.',
+      revokeIsNotRemoval:
+        'Désactiver le partage empêche les accès futurs, mais ne peut pas supprimer les copies déjà détenues par les moteurs de recherche ou par d’autres personnes.',
+      futureMessagesPrivate: 'Les messages envoyés ensuite restent privés.',
+      mustUpdateExplicitly:
+        'Pour publier des messages plus récents, vous devez mettre à jour vous-même la version partagée.',
+      noSensitiveData:
+        'Ne partagez jamais de secrets, d’identifiants, de données personnelles, de données de patients ni d’informations confidentielles d’entreprise.',
+    },
+    url: {
+      label: 'Lien public',
+      copy: 'Copier le lien',
+      copied: 'Copié',
+      open: 'Ouvrir dans un nouvel onglet',
+    },
+    indexing: {
+      label: 'Autoriser les moteurs de recherche à indexer cette conversation',
+      description:
+        'Désactivé, le lien fonctionne pour quiconque le possède, mais la page reste absente des résultats de recherche.',
+    },
+    blocked: {
+      safety:
+        'L’indexation est désactivée car cette conversation semble contenir un identifiant ou des données personnelles. Retirez-les puis mettez à jour la version partagée.',
+      tooShort:
+        'L’indexation est désactivée car cette conversation est trop courte pour être indexée.',
+    },
+    visibility: {
+      private: 'Privée',
+      unlisted: 'Publique, non répertoriée',
+      indexed: 'Publique, indexée',
+    },
+    status: {
+      snapshot: 'Version {version}',
+      lastUpdated: 'Copie partagée mise à jour le {date}',
+      messages: '{count} messages',
+      unpublished: 'Cette conversation a des messages plus récents qui ne sont pas publiés.',
+    },
+    actions: {
+      publish: 'Publier le lien public',
+      refresh: 'Mettre à jour la version partagée',
+      regenerate: 'Générer un nouveau lien',
+      disable: 'Arrêter le partage',
+    },
+    disable: {
+      title: 'Arrêter le partage de cette conversation ?',
+      description:
+        'Le lien public cesse de fonctionner immédiatement. Les moteurs de recherche et les personnes ayant enregistré une copie peuvent la conserver un certain temps.',
+      confirm: 'Arrêter le partage',
+    },
+    regenerate: {
+      title: 'Générer un nouveau lien ?',
+      description:
+        'Le lien actuel cesse définitivement de fonctionner et ne peut pas être restauré. Toute personne à qui vous l’avez donné aura besoin du nouveau.',
+      confirm: 'Générer un nouveau lien',
+    },
+    toast: {
+      published: 'Lien public créé.',
+      publishFailed: 'Impossible de publier cette conversation.',
+      indexingUpdated: 'Préférence d’indexation enregistrée.',
+      indexingFailed: 'Impossible de modifier la préférence d’indexation.',
+      refreshed: 'Version partagée mise à jour.',
+      refreshFailed: 'Impossible de mettre à jour la version partagée.',
+      urlRegenerated: 'Nouveau lien créé. Le précédent ne fonctionne plus.',
+      regenerateFailed: 'Impossible de générer un nouveau lien.',
+      revoked: 'Cette conversation est redevenue privée.',
+      revokeFailed: 'Impossible d’arrêter le partage de cette conversation.',
+    },
+    public: {
+      unavailableTitle: 'Conversation partagée indisponible',
+      genericDescription: 'Une conversation partagée publiquement depuis ClawAI.',
+      published: 'Publiée le {date}',
+      updated: 'Mise à jour le {date}',
+      messageCount: '{count} messages',
+      snapshotDisclaimer:
+        'Ceci est une copie en lecture seule publiée par le propriétaire de la conversation. Ce n’est pas une conversation en direct.',
+      roleUser: 'Utilisateur',
+      roleAssistant: 'Assistant',
+      truncated: 'Ce message a été raccourci car il est exceptionnellement long.',
+      advertisement: 'Publicité',
+      backToHome: 'Aller à ClawAI',
+      report: 'Signaler cette page',
+      footerDisclaimer:
+        'Partagé par un utilisateur de ClawAI. Les réponses ont été générées par des modèles d’IA et peuvent être inexactes.',
+    },
+  },
   billing: {
     page: {
       title: 'Facturation',

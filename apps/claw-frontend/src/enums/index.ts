@@ -139,3 +139,10 @@ export { StructuredDataType } from './structured-data-type.enum';
 export { ContentLifecycleStatus } from './content-lifecycle-status.enum';
 export { ContactEmailProvider } from './contact-email-provider.enum';
 export { ContactResponseCode } from './contact-response-code.enum';
+export {
+  ChatShareVisibility,
+  ChatShareStatus,
+  ChatShareSafetyStatus,
+  ChatShareConfirmAction,
+} from './chat-share.enum';
+export { BadgeTone } from './badge-tone.enum';

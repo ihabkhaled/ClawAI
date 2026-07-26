@@ -47,6 +47,11 @@
       "route": "/"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/share/chat/[publicShareId]/page.tsx",
+      "kind": "page",
+      "route": "/share/chat/[publicShareId]"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/use-cases/page.tsx",
       "kind": "page",
       "route": "/use-cases"

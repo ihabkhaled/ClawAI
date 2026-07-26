@@ -914,6 +914,13 @@ NEXT_PUBLIC_ADSENSE_CLIENT_ID=
 NEXT_PUBLIC_ADSENSE_SERVING_ENABLED=false
 NEXT_PUBLIC_ADSENSE_REVIEW_MODE=false
 ADSENSE_PUBLISHER_ID=
+# Per-placement ad slot ids. Blank = that unit never renders. Keep blank
+# locally: the Playwright suite asserts no ad is requested in a test run.
+NEXT_PUBLIC_ADSENSE_HOME_SLOT=
+NEXT_PUBLIC_ADSENSE_CONTENT_SLOT=
+NEXT_PUBLIC_ADSENSE_SHARED_CHAT_TOP_SLOT=
+NEXT_PUBLIC_ADSENSE_SHARED_CHAT_INLINE_SLOT=
+NEXT_PUBLIC_ADSENSE_SHARED_CHAT_BOTTOM_SLOT=
 # Public contact form (/api/contact). Server-only - SMTP creds never reach the
 # browser. OFF by default; set ENABLED=true + PROVIDER=smtp with credentials.
 CONTACT_EMAIL_ENABLED=false

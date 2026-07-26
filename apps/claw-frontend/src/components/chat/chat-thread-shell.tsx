@@ -8,6 +8,8 @@ import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel'
 import { MessageComposer } from '@/components/chat/message-composer';
 import { ThreadSettings } from '@/components/chat/thread-settings';
 import { VirtualizedMessages } from '@/components/chat/virtualized-messages';
+import { ShareChatButton } from '@/components/chat-shares/share-chat-button';
+import { ShareChatDialog } from '@/components/chat-shares/share-chat-dialog';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
@@ -41,7 +43,7 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
           <div className="min-w-0 flex-1">
             <EditableTitle title={props.title} editableTitle={props.editableTitle} />
             {props.thread ? (
-              <p className="mt-0.5 truncate text-xs text-muted-foreground sm:mt-1 sm:text-sm">
+              <p className="text-muted-foreground mt-0.5 truncate text-xs sm:mt-1 sm:text-sm">
                 {props.thread.routingMode}
                 {/* Only show the last-model meta on sm+ — on mobile the title
                     truncation already eats most of the row width. */}
@@ -65,6 +67,7 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
               <span className="hidden sm:inline">{props.compareLabel}</span>
             </Button>
           ) : null}
+          <ShareChatButton {...props.shareButtonProps} />
           <Button
             variant="ghost"
             size="icon-sm"
@@ -121,16 +124,18 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
           <button
             type="button"
             aria-label={props.resizeAriaLabel}
-            className="absolute inset-x-0 top-0 z-10 hidden h-3 cursor-ns-resize items-center justify-center hover:bg-muted/50 md:flex"
+            className="hover:bg-muted/50 absolute inset-x-0 top-0 z-10 hidden h-3 cursor-ns-resize items-center justify-center md:flex"
             onMouseDown={props.onResizeHandleMouseDown}
           >
-            <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+            <div className="bg-muted-foreground/30 h-1 w-10 rounded-full" />
           </button>
           <div className="flex flex-col p-3 pt-3 sm:p-4 md:h-full">
             <MessageComposer {...props.composerProps} />
           </div>
         </div>
       </div>
+
+      <ShareChatDialog {...props.shareDialogProps} />
 
       <ConfirmDialog
         open={props.deleteConfirmOpen}

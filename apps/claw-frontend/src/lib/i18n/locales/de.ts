@@ -3401,6 +3401,107 @@ export const de: TranslationDictionary = {
     progressTitle: 'Live-Fortschritt',
     errorTitle: 'Ausführung fehlgeschlagen',
   },
+  chatShare: {
+    button: {
+      label: 'Teilen',
+    },
+    dialog: {
+      title: 'Diesen Chat teilen',
+      description:
+        'Veröffentliche eine schreibgeschützte Kopie dieser Unterhaltung unter einem öffentlichen Link.',
+    },
+    warning: {
+      heading: 'Vor dem Veröffentlichen',
+      acknowledge: 'Mir ist klar, was durch das Veröffentlichen dieses Chats öffentlich wird.',
+      noLoginRequired: 'Jede Person mit dem Link kann ihn ohne Anmeldung lesen.',
+      containsHistory:
+        'Die veröffentlichte Kopie enthält die Unterhaltung in ihrem jetzigen Stand.',
+      mayBeIndexed: 'Suchmaschinen können sie indexieren, wenn du Indexierung erlaubst.',
+      mayAppearInSearch: 'Sie kann in Suchergebnissen erscheinen.',
+      mayShowAds: 'Auf der Seite können Werbeanzeigen erscheinen.',
+      revokeIsNotRemoval:
+        'Das Abschalten der Freigabe verhindert künftige Zugriffe, kann aber Kopien nicht entfernen, die Suchmaschinen oder andere Personen schon haben.',
+      futureMessagesPrivate: 'Später gesendete Nachrichten bleiben privat.',
+      mustUpdateExplicitly:
+        'Um neuere Nachrichten zu veröffentlichen, musst du die geteilte Version selbst aktualisieren.',
+      noSensitiveData:
+        'Teile niemals Geheimnisse, Zugangsdaten, personenbezogene Daten, Patientendaten oder vertrauliche Unternehmensinformationen.',
+    },
+    url: {
+      label: 'Öffentlicher Link',
+      copy: 'Link kopieren',
+      copied: 'Kopiert',
+      open: 'In neuem Tab öffnen',
+    },
+    indexing: {
+      label: 'Suchmaschinen erlauben, diesen Chat zu indexieren',
+      description:
+        'Ausgeschaltet funktioniert der Link für alle, die ihn haben, die Seite bleibt aber aus den Suchergebnissen heraus.',
+    },
+    blocked: {
+      safety:
+        'Indexierung ist aus, weil diese Unterhaltung Zugangsdaten oder personenbezogene Daten zu enthalten scheint. Entferne sie und aktualisiere dann die geteilte Version.',
+      tooShort: 'Indexierung ist aus, weil diese Unterhaltung zu kurz ist, um indexiert zu werden.',
+    },
+    visibility: {
+      private: 'Privat',
+      unlisted: 'Öffentlich, nicht gelistet',
+      indexed: 'Öffentlich, indexiert',
+    },
+    status: {
+      snapshot: 'Version {version}',
+      lastUpdated: 'Geteilte Kopie aktualisiert am {date}',
+      messages: '{count} Nachrichten',
+      unpublished: 'Dieser Chat hat neuere Nachrichten, die noch nicht veröffentlicht sind.',
+    },
+    actions: {
+      publish: 'Öffentlichen Link veröffentlichen',
+      refresh: 'Geteilte Version aktualisieren',
+      regenerate: 'Neuen Link erzeugen',
+      disable: 'Freigabe beenden',
+    },
+    disable: {
+      title: 'Freigabe dieses Chats beenden?',
+      description:
+        'Der öffentliche Link funktioniert sofort nicht mehr. Suchmaschinen und Personen, die eine Kopie gespeichert haben, könnten sie noch eine Zeit lang besitzen.',
+      confirm: 'Freigabe beenden',
+    },
+    regenerate: {
+      title: 'Neuen Link erzeugen?',
+      description:
+        'Der aktuelle Link funktioniert dauerhaft nicht mehr und kann nicht wiederhergestellt werden. Alle, denen du ihn gegeben hast, brauchen den neuen.',
+      confirm: 'Neuen Link erzeugen',
+    },
+    toast: {
+      published: 'Öffentlicher Link erstellt.',
+      publishFailed: 'Dieser Chat konnte nicht veröffentlicht werden.',
+      indexingUpdated: 'Indexierungseinstellung gespeichert.',
+      indexingFailed: 'Die Indexierungseinstellung konnte nicht geändert werden.',
+      refreshed: 'Geteilte Version aktualisiert.',
+      refreshFailed: 'Die geteilte Version konnte nicht aktualisiert werden.',
+      urlRegenerated: 'Neuer Link erstellt. Der vorherige funktioniert nicht mehr.',
+      regenerateFailed: 'Es konnte kein neuer Link erzeugt werden.',
+      revoked: 'Dieser Chat ist wieder privat.',
+      revokeFailed: 'Die Freigabe dieses Chats konnte nicht beendet werden.',
+    },
+    public: {
+      unavailableTitle: 'Geteilter Chat nicht verfügbar',
+      genericDescription: 'Eine öffentlich geteilte Unterhaltung aus ClawAI.',
+      published: 'Veröffentlicht am {date}',
+      updated: 'Aktualisiert am {date}',
+      messageCount: '{count} Nachrichten',
+      snapshotDisclaimer:
+        'Dies ist eine schreibgeschützte Kopie, die der Eigentümer des Chats veröffentlicht hat. Es ist keine laufende Unterhaltung.',
+      roleUser: 'Benutzer',
+      roleAssistant: 'Assistent',
+      truncated: 'Diese Nachricht wurde gekürzt, weil sie ungewöhnlich lang ist.',
+      advertisement: 'Werbung',
+      backToHome: 'Zu ClawAI',
+      report: 'Diese Seite melden',
+      footerDisclaimer:
+        'Von einem ClawAI-Nutzer geteilt. Die Antworten wurden von KI-Modellen erzeugt und können falsch sein.',
+    },
+  },
   billing: {
     page: {
       title: 'Abrechnung',

@@ -4,22 +4,26 @@ import { useEffect, useRef } from 'react';
 
 import { getAdSenseConfig } from '@/lib/adsense/adsense-config';
 import { hasAdvertisingConsent } from '@/lib/adsense/adsense-consent';
-import { isAdUnitEligible } from '@/lib/adsense/adsense-eligibility';
+import { resolveAdUnitEligibility } from '@/lib/adsense/adsense-eligibility';
 import type { UseAdUnitReturn } from '@/types/adsense-hook.types';
 import { logger } from '@/utilities';
 
 // A manual ad unit renders ONLY when: the client id is configured, serving is
-// explicitly enabled, the path is an ad-eligible reviewed editorial page, and
-// advertising consent is present. Any single failure => nothing renders and no
-// ad request is made.
-export function useAdUnit(pathname: string): UseAdUnitReturn {
+// explicitly enabled, the placement is eligible, and advertising consent is
+// present. Any single failure => nothing renders and no ad request is made.
+//
+// `serverEligibility` is the seam for dynamic pages: when supplied it replaces the
+// path-based registry lookup, so a public shared chat is an ad surface only if the
+// SERVER said its snapshot qualifies. Omitted, the registry decides; `false` or an
+// unresolved value means no ad.
+export function useAdUnit(pathname: string, serverEligibility?: boolean): UseAdUnitReturn {
   const insRef = useRef<HTMLModElement | null>(null);
   const config = getAdSenseConfig();
 
   const shouldRender =
     config.isConfigured &&
     config.servingEnabled &&
-    isAdUnitEligible(pathname) &&
+    resolveAdUnitEligibility(pathname, serverEligibility) &&
     hasAdvertisingConsent();
 
   useEffect(() => {

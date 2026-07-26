@@ -352,6 +352,11 @@ export default defineConfig([
       'no-console': 'off',
       'security/detect-possible-timing-attacks': 'off',
       'react/no-danger': 'off',
+      // A test proving `javascript:` and `data:` hrefs are REJECTED has to
+      // contain one. The rule exists to stop such a URL reaching a browser; an
+      // assertion that we refuse it is the opposite of that risk, and without
+      // this the sanitiser's security tests could not be written at all.
+      'no-script-url': 'off',
     },
   },
 ]);

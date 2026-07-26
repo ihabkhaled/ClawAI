@@ -33,14 +33,41 @@ function collectRoutePaths(dir: string, prefix: string, found: string[] = []): s
   return found;
 }
 
+/**
+ * Whether a route has a dynamic segment (`[param]`).
+ *
+ * Dynamic routes are deliberately exempt from the registry check below. The
+ * registry describes reviewed, hand-authored pages at fixed paths; a route like
+ * `/share/chat/[publicShareId]` has no fixed path at all, and its URLs come from
+ * a data source (the chat-service indexable-share feed) rather than from a file.
+ * Requiring a registry entry for it would mean inventing one for a path that is
+ * never requested.
+ *
+ * Those URLs still reach the sitemap — via the dynamic half asserted in
+ * `sitemap.test.ts` — so exempting them here does not reopen the invisible-page
+ * hole this file exists to close.
+ */
+function isDynamicRoute(route: string): boolean {
+  return route.includes('[');
+}
+
 describe('sitemap coverage', () => {
-  const routes = collectRoutePaths(MARKETING_ROOT, '');
+  const allRoutes = collectRoutePaths(MARKETING_ROOT, '');
+  const routes = allRoutes.filter((route) => !isDynamicRoute(route));
+  const dynamicRoutes = allRoutes.filter((route) => isDynamicRoute(route));
   const publishedPaths = new Set(getPublishedPages().map((page) => page.canonicalPath));
   const indexablePaths = new Set(getIndexablePages().map((page) => page.canonicalPath));
 
   it('finds the public marketing routes on disk', () => {
     expect(routes.length).toBeGreaterThan(1);
     expect(routes).toContain('/');
+  });
+
+  it('recognises the shared-chat route as dynamic rather than unregistered', () => {
+    // Pins the exemption to a route we know about. If a future dynamic marketing
+    // route appears, this list changes and somebody has to decide deliberately
+    // whether its URLs reach the sitemap.
+    expect(dynamicRoutes).toEqual(['/share/chat/[publicShareId]']);
   });
 
   it('has a PUBLISHED registry entry for every public page that exists', () => {

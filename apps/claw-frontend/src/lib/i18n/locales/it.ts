@@ -3390,6 +3390,107 @@ export const it: TranslationDictionary = {
     progressTitle: 'Avanzamento in tempo reale',
     errorTitle: 'Esecuzione non riuscita',
   },
+  chatShare: {
+    button: {
+      label: 'Condividi',
+    },
+    dialog: {
+      title: 'Condividi questa chat',
+      description:
+        'Pubblica una copia in sola lettura di questa conversazione a un indirizzo pubblico.',
+    },
+    warning: {
+      heading: 'Prima di pubblicare',
+      acknowledge: 'Ho capito cosa diventa pubblico pubblicando questa chat.',
+      noLoginRequired: 'Chiunque abbia il link può leggerla senza accedere.',
+      containsHistory: 'La copia pubblicata contiene la conversazione così com’è ora.',
+      mayBeIndexed: 'I motori di ricerca possono indicizzarla se consenti l’indicizzazione.',
+      mayAppearInSearch: 'Può comparire nei risultati di ricerca.',
+      mayShowAds: 'Sulla pagina possono comparire annunci pubblicitari.',
+      revokeIsNotRemoval:
+        'Disattivare la condivisione blocca gli accessi futuri, ma non può rimuovere le copie già in mano ai motori di ricerca o ad altre persone.',
+      futureMessagesPrivate: 'I messaggi inviati successivamente restano privati.',
+      mustUpdateExplicitly:
+        'Per pubblicare i messaggi più recenti devi aggiornare tu stesso la versione condivisa.',
+      noSensitiveData:
+        'Non condividere mai segreti, credenziali, dati personali, dati di pazienti o informazioni aziendali riservate.',
+    },
+    url: {
+      label: 'Link pubblico',
+      copy: 'Copia link',
+      copied: 'Copiato',
+      open: 'Apri in una nuova scheda',
+    },
+    indexing: {
+      label: 'Consenti ai motori di ricerca di indicizzare questa chat',
+      description:
+        'Disattivato, il link funziona per chiunque lo possieda, ma la pagina resta fuori dai risultati di ricerca.',
+    },
+    blocked: {
+      safety:
+        'L’indicizzazione è disattivata perché questa conversazione sembra contenere una credenziale o dati personali. Rimuovili, poi aggiorna la versione condivisa.',
+      tooShort:
+        'L’indicizzazione è disattivata perché questa conversazione è troppo breve per essere indicizzata.',
+    },
+    visibility: {
+      private: 'Privata',
+      unlisted: 'Pubblica, non elencata',
+      indexed: 'Pubblica, indicizzata',
+    },
+    status: {
+      snapshot: 'Versione {version}',
+      lastUpdated: 'Copia condivisa aggiornata il {date}',
+      messages: '{count} messaggi',
+      unpublished: 'Questa chat ha messaggi più recenti non ancora pubblicati.',
+    },
+    actions: {
+      publish: 'Pubblica link pubblico',
+      refresh: 'Aggiorna versione condivisa',
+      regenerate: 'Genera un nuovo link',
+      disable: 'Interrompi condivisione',
+    },
+    disable: {
+      title: 'Interrompere la condivisione di questa chat?',
+      description:
+        'Il link pubblico smette di funzionare immediatamente. I motori di ricerca e chi ha salvato una copia potrebbero conservarla per un po’.',
+      confirm: 'Interrompi condivisione',
+    },
+    regenerate: {
+      title: 'Generare un nuovo link?',
+      description:
+        'Il link attuale smette di funzionare in modo permanente e non può essere ripristinato. Chi lo ha ricevuto avrà bisogno del nuovo.',
+      confirm: 'Genera nuovo link',
+    },
+    toast: {
+      published: 'Link pubblico creato.',
+      publishFailed: 'Non è stato possibile pubblicare questa chat.',
+      indexingUpdated: 'Preferenza di indicizzazione salvata.',
+      indexingFailed: 'Non è stato possibile modificare la preferenza di indicizzazione.',
+      refreshed: 'Versione condivisa aggiornata.',
+      refreshFailed: 'Non è stato possibile aggiornare la versione condivisa.',
+      urlRegenerated: 'Nuovo link creato. Il precedente non funziona più.',
+      regenerateFailed: 'Non è stato possibile generare un nuovo link.',
+      revoked: 'Questa chat è di nuovo privata.',
+      revokeFailed: 'Non è stato possibile interrompere la condivisione di questa chat.',
+    },
+    public: {
+      unavailableTitle: 'Chat condivisa non disponibile',
+      genericDescription: 'Una conversazione condivisa pubblicamente da ClawAI.',
+      published: 'Pubblicata il {date}',
+      updated: 'Aggiornata il {date}',
+      messageCount: '{count} messaggi',
+      snapshotDisclaimer:
+        'Questa è una copia in sola lettura pubblicata dal proprietario della chat. Non è una conversazione dal vivo.',
+      roleUser: 'Utente',
+      roleAssistant: 'Assistente',
+      truncated: 'Questo messaggio è stato accorciato perché insolitamente lungo.',
+      advertisement: 'Pubblicità',
+      backToHome: 'Vai a ClawAI',
+      report: 'Segnala questa pagina',
+      footerDisclaimer:
+        'Condivisa da un utente di ClawAI. Le risposte sono state generate da modelli di IA e possono essere inesatte.',
+    },
+  },
   billing: {
     page: {
       title: 'Fatturazione',

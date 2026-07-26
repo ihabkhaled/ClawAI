@@ -9,12 +9,10 @@ import { useEditableTitle } from '@/hooks/chat/use-editable-title';
 import { useInThreadCompare } from '@/hooks/chat/use-in-thread-compare';
 import { useResizableComposer } from '@/hooks/chat/use-resizable-composer';
 import { useThreadDataController } from '@/hooks/chat/use-thread-data-controller';
+import { useShareChatController } from '@/hooks/chat-shares/use-share-chat-controller';
 import { useToggle } from '@/hooks/common/use-toggle';
 import { useTranslation } from '@/lib/i18n/use-translation';
-import type {
-  ChatThreadShellProps,
-  UseThreadDetailPageReturn,
-} from '@/types';
+import type { ChatThreadShellProps, UseThreadDetailPageReturn } from '@/types';
 
 // Page-bootstrap controller for /chat/[threadId]. The .tsx may call EXACTLY
 // ONE hook (this one). Composes useParams + useTranslation + the data
@@ -39,6 +37,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
   const canCritic = planFeatures.has(PlanFeature.ALLOW_CRITIC_REVIEW);
   const title = data.thread?.title ?? t('chat.untitled');
   const deleteConfirm = useToggle(false);
+  const share = useShareChatController(threadId.length > 0 ? threadId : null);
 
   const shellProps: ChatThreadShellProps = {
     threadId,
@@ -71,6 +70,8 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     threadSettingsLabel: t('chat.threadSettings'),
     deleteLabel: t('common.delete'),
     compareLabel: t('compare.title'),
+    shareButtonProps: share.buttonProps,
+    shareDialogProps: share.dialogProps,
     inThreadComparePanelProps: {
       selectedModels: compare.selectedModels,
       onToggleModel: compare.handleToggleModel,

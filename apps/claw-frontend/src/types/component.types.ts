@@ -28,6 +28,7 @@ import type {
 } from '@/enums';
 import type { AiActionKind } from '@/enums/ai-action-kind.enum';
 import type { AlertVariant } from '@/enums/alert-variant.enum';
+import type { BadgeTone } from '@/enums/badge-tone.enum';
 import type { ComposerControlVariant } from '@/enums/composer-control-variant.enum';
 import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-level.enum';
 import type { CopyButtonVariant } from '@/enums/copy-button-variant.enum';
@@ -37,6 +38,7 @@ import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
+import type { OwnerChatShare, PublicChatShareMessage } from '@/types/chat-share.types';
 import type { TranslateFunction } from '@/types/i18n.types';
 import type {
   ResearchEvidenceBundle,
@@ -1628,6 +1630,9 @@ export type ChatThreadShellProps = {
   threadSettingsLabel: string;
   deleteLabel: string;
   compareLabel: string;
+  // Public-share management: header entry point + its dialog.
+  shareButtonProps: ShareChatButtonProps;
+  shareDialogProps: ShareChatDialogProps;
   // In-thread compare panel (only rendered when compareIsOpen && canCompare).
   inThreadComparePanelProps: InThreadComparePanelProps;
   // Thread settings card (only rendered when threadSettingsOpen).
@@ -2154,4 +2159,137 @@ export type ContactSuccessProps = {
 export type SelectGroupHeaderProps = {
   children: React.ReactNode;
   className?: string;
+};
+
+// ─── Public chat-share component props ──────────────────────────────────────
+
+export type SharePublicationWarningProps = {
+  headingLabel: string;
+  /** Pre-translated consequence bullets, rendered verbatim in order. */
+  bullets: ReadonlyArray<string>;
+  acknowledgeLabel: string;
+  hasAcknowledged: boolean;
+  onToggleAcknowledged: () => void;
+};
+
+export type ShareIndexingControlProps = {
+  label: string;
+  description: string;
+  allowIndexing: boolean;
+  onToggle: () => void;
+  isPending: boolean;
+  /** Why the server would not honour indexing, or null when it did. */
+  blockedReason: string | null;
+  switchId: string;
+};
+
+export type PublicShareUrlFieldProps = {
+  label: string;
+  url: string;
+  copyLabel: string;
+  copiedLabel: string;
+  openLabel: string;
+  isCopied: boolean;
+  onCopy: () => void;
+};
+
+export type PublicShareStatusProps = {
+  visibilityLabel: string;
+  visibilityTone: BadgeTone;
+  snapshotLabel: string;
+  lastUpdatedLabel: string;
+  messageCountLabel: string;
+  /** Set when the private thread has moved past the published snapshot. */
+  unpublishedNotice: string | null;
+};
+
+export type ShareChatDialogProps = {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  error: string | null;
+  /** null renders the pre-publication state. */
+  share: OwnerChatShare | null;
+  warningProps: SharePublicationWarningProps;
+  urlFieldProps: PublicShareUrlFieldProps;
+  indexingProps: ShareIndexingControlProps;
+  statusProps: PublicShareStatusProps;
+  confirmDialogProps: ConfirmDialogProps;
+  publishLabel: string;
+  refreshLabel: string;
+  regenerateLabel: string;
+  disableLabel: string;
+  isPublishPending: boolean;
+  isRefreshPending: boolean;
+  isRegeneratePending: boolean;
+  isRevokePending: boolean;
+  onPublish: () => void;
+  onRefresh: () => void;
+  onRequestRegenerate: () => void;
+  onRequestDisable: () => void;
+};
+
+export type ShareChatButtonProps = {
+  label: string;
+  /** Visually marks a thread that is already public. */
+  isShared: boolean;
+  onClick: () => void;
+};
+
+// ─── Public shared-chat page component props ────────────────────────────────
+
+export type PublicSharedChatHeaderProps = {
+  title: string;
+  publishedLabel: string;
+  updatedLabel: string;
+  messageCountLabel: string;
+  snapshotDisclaimer: string;
+};
+
+export type PublicSharedMessageProps = {
+  message: PublicChatShareMessage;
+  roleLabel: string;
+  /** Pre-formatted timestamp. Formatting on the server keeps SSR deterministic. */
+  timestampLabel: string;
+  modelLabel: string | null;
+  /** Shown when the body hit the render cap. */
+  truncatedLabel: string;
+};
+
+/**
+ * The half of the message-list props the server view model can resolve on its
+ * own: labels, formatters, and where the inline ad belongs.
+ *
+ * Split from the props proper so the view model can be built without knowing the
+ * message array or holding a React node, and so the page supplies exactly the two
+ * things only it has.
+ */
+export type PublicSharedMessageListPresentation = {
+  userRoleLabel: string;
+  assistantRoleLabel: string;
+  truncatedLabel: string;
+  /** 1-based message index after which the inline ad is placed, or null. */
+  inlineAdAfterIndex: number | null;
+  formatTimestamp: (iso: string) => string;
+  formatModelLabel: (message: PublicChatShareMessage) => string | null;
+};
+
+export type PublicSharedMessageListProps = PublicSharedMessageListPresentation & {
+  messages: PublicChatShareMessage[];
+  /** Rendered between message groups when the page is ad-eligible. */
+  inlineAd: React.ReactNode;
+};
+
+export type PublicMarkdownRendererProps = {
+  content: string;
+  truncatedLabel: string;
+};
+
+export type PublicSharedChatFooterProps = {
+  homeLabel: string;
+  homeHref: string;
+  reportLabel: string;
+  reportHref: string;
+  disclaimer: string;
 };

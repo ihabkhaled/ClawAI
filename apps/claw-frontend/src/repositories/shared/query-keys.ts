@@ -390,6 +390,10 @@ export const queryKeys = {
     all: ['connectorGrants'] as const,
     list: (connectorId: string) => ['connectorGrants', 'list', connectorId] as const,
   },
+  chatShares: {
+    all: ['chatShares'] as const,
+    detail: (threadId: string) => ['chatShares', 'detail', threadId] as const,
+  },
   runtimeProgress: {
     all: ['runtimeProgress'] as const,
     probes: () => [...queryKeys.runtimeProgress.all, 'probe'] as const,

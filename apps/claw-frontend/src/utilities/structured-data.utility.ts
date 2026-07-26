@@ -33,9 +33,52 @@ export function buildSoftwareApplicationJsonLd(siteUrl: string): JsonLdObject {
   };
 }
 
-// Defense in depth against script-tag breakout even though every field
-// above is a static, developer-controlled string (no user input reaches
-// this function).
+/**
+ * Structured data for one published chat.
+ *
+ * `WebPage` and nothing more ambitious. A shared chat is not an `Article` (no
+ * human author to credit), not a `QAPage` (not a community answering a question),
+ * not a `NewsArticle`, and not a `Review` — claiming any of those would be lying to
+ * a search engine about what the page is, which is both a policy violation and an
+ * invitation to be de-indexed.
+ *
+ * Every string here reaches the serializer, and on this page they come from user
+ * content. That is why `serializeJsonLd` escapes rather than trusting the input:
+ * see the note on that function.
+ */
+export function buildSharedChatJsonLd(input: {
+  canonicalUrl: string;
+  title: string;
+  description: string | null;
+  publishedAt: string;
+  updatedAt: string;
+}): JsonLdObject {
+  const jsonLd: JsonLdObject = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: input.title,
+    url: input.canonicalUrl,
+    datePublished: input.publishedAt,
+    dateModified: input.updatedAt,
+    inLanguage: 'en',
+    isAccessibleForFree: true,
+  };
+  if (input.description !== null) {
+    jsonLd['description'] = input.description;
+  }
+  return jsonLd;
+}
+
+/**
+ * Serialises JSON-LD for inline embedding.
+ *
+ * `<` is escaped because a `</script>` sequence anywhere inside a string value
+ * would close the block early and start executing whatever follows. On the static
+ * marketing pages every value is developer-controlled and this is belt-and-braces;
+ * on a shared chat page the title and description are USER content, so it is the
+ * actual control preventing a chat titled `</script><script>…` from running code
+ * for every visitor.
+ */
 export function serializeJsonLd(data: JsonLdObject): string {
   return JSON.stringify(data).replaceAll('<', '\\u003c');
 }

@@ -137,11 +137,21 @@ const compareMock = {
   setSelectedFileIds: vi.fn(),
 };
 
+// Share management pulls a TanStack query; mocked here for the same reason every
+// other composed hook is — this file tests the composition, not the data layer.
+const shareControllerMock = {
+  buttonProps: { label: 'chatShare.button.label', isShared: false, onClick: vi.fn() },
+  dialogProps: {} as never,
+};
+
+vi.mock('@/hooks/chat-shares/use-share-chat-controller', () => ({
+  useShareChatController: vi.fn(() => shareControllerMock),
+}));
 vi.mock('@/hooks/chat/use-in-thread-compare', () => ({
   useInThreadCompare: vi.fn(() => compareMock),
 }));
 
-describe('useThreadDetailPage — composes all 6 page-level hooks', () => {
+describe('useThreadDetailPage — composes every page-level hook', () => {
   it('returns a single shellProps bag wired from every composed hook', () => {
     const { result } = renderHook(() => useThreadDetailPage());
 

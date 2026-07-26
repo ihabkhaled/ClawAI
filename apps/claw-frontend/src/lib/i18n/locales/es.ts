@@ -3398,6 +3398,106 @@ export const es: TranslationDictionary = {
     progressTitle: 'Progreso en vivo',
     errorTitle: 'La ejecución falló',
   },
+  chatShare: {
+    button: {
+      label: 'Compartir',
+    },
+    dialog: {
+      title: 'Compartir este chat',
+      description: 'Publica una copia de solo lectura de esta conversación en un enlace público.',
+    },
+    warning: {
+      heading: 'Antes de publicar',
+      acknowledge: 'Entiendo qué se hace público al publicar este chat.',
+      noLoginRequired: 'Cualquiera con el enlace puede leerlo sin iniciar sesión.',
+      containsHistory: 'La copia publicada contiene la conversación tal como está ahora.',
+      mayBeIndexed: 'Los motores de búsqueda pueden indexarla si permites la indexación.',
+      mayAppearInSearch: 'Puede aparecer en los resultados de búsqueda.',
+      mayShowAds: 'Pueden aparecer anuncios en la página.',
+      revokeIsNotRemoval:
+        'Desactivar el uso compartido impide accesos futuros, pero no puede eliminar copias que ya tengan los motores de búsqueda u otras personas.',
+      futureMessagesPrivate: 'Los mensajes que envíes después siguen siendo privados.',
+      mustUpdateExplicitly:
+        'Para publicar mensajes más recientes debes actualizar la versión compartida tú mismo.',
+      noSensitiveData:
+        'Nunca compartas secretos, credenciales, datos personales, datos de pacientes ni información confidencial de la empresa.',
+    },
+    url: {
+      label: 'Enlace público',
+      copy: 'Copiar enlace',
+      copied: 'Copiado',
+      open: 'Abrir en una pestaña nueva',
+    },
+    indexing: {
+      label: 'Permitir que los motores de búsqueda indexen este chat',
+      description:
+        'Desactivado, el enlace funciona para quien lo tenga, pero la página no aparece en los resultados de búsqueda.',
+    },
+    blocked: {
+      safety:
+        'La indexación está desactivada porque esta conversación parece contener una credencial o datos personales. Elimínalos y actualiza la versión compartida.',
+      tooShort:
+        'La indexación está desactivada porque esta conversación es demasiado corta para indexarse.',
+    },
+    visibility: {
+      private: 'Privado',
+      unlisted: 'Público, sin listar',
+      indexed: 'Público, indexado',
+    },
+    status: {
+      snapshot: 'Versión {version}',
+      lastUpdated: 'Copia compartida actualizada el {date}',
+      messages: '{count} mensajes',
+      unpublished: 'Este chat tiene mensajes más recientes que aún no se han publicado.',
+    },
+    actions: {
+      publish: 'Publicar enlace público',
+      refresh: 'Actualizar versión compartida',
+      regenerate: 'Generar un enlace nuevo',
+      disable: 'Dejar de compartir',
+    },
+    disable: {
+      title: '¿Dejar de compartir este chat?',
+      description:
+        'El enlace público deja de funcionar de inmediato. Los motores de búsqueda y quien haya guardado una copia pueden conservarla algún tiempo.',
+      confirm: 'Dejar de compartir',
+    },
+    regenerate: {
+      title: '¿Generar un enlace nuevo?',
+      description:
+        'El enlace actual deja de funcionar de forma permanente y no se puede restaurar. Quien lo tenga necesitará el nuevo.',
+      confirm: 'Generar enlace nuevo',
+    },
+    toast: {
+      published: 'Enlace público creado.',
+      publishFailed: 'No se pudo publicar este chat.',
+      indexingUpdated: 'Preferencia de indexación guardada.',
+      indexingFailed: 'No se pudo cambiar la preferencia de indexación.',
+      refreshed: 'Versión compartida actualizada.',
+      refreshFailed: 'No se pudo actualizar la versión compartida.',
+      urlRegenerated: 'Enlace nuevo creado. El anterior ya no funciona.',
+      regenerateFailed: 'No se pudo generar un enlace nuevo.',
+      revoked: 'Este chat vuelve a ser privado.',
+      revokeFailed: 'No se pudo dejar de compartir este chat.',
+    },
+    public: {
+      unavailableTitle: 'Chat compartido no disponible',
+      genericDescription: 'Una conversación compartida públicamente desde ClawAI.',
+      published: 'Publicado el {date}',
+      updated: 'Actualizado el {date}',
+      messageCount: '{count} mensajes',
+      snapshotDisclaimer:
+        'Esta es una copia de solo lectura publicada por el propietario del chat. No es una conversación en vivo.',
+      roleUser: 'Usuario',
+      roleAssistant: 'Asistente',
+      truncated: 'Este mensaje se acortó porque es inusualmente largo.',
+      advertisement: 'Publicidad',
+      backToHome: 'Ir a ClawAI',
+      report: 'Denunciar esta página',
+      footerDisclaimer:
+        'Compartido por un usuario de ClawAI. Las respuestas fueron generadas por modelos de IA y pueden ser inexactas.',
+    },
+  },
   billing: {
     page: {
       title: 'Facturación',

@@ -1,4 +1,6 @@
 export const ROUTES = {
+  // Public marketing home. Named so a link back to it never hardcodes '/'.
+  HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
   // Public marketing route. Also the entry point for organisations asking

@@ -767,6 +767,17 @@ export type {
   DashboardStatCardProps,
   DashboardQuickActionCardProps,
   DashboardSystemHealthCardProps,
+  SharePublicationWarningProps,
+  ShareIndexingControlProps,
+  PublicShareUrlFieldProps,
+  PublicShareStatusProps,
+  ShareChatDialogProps,
+  ShareChatButtonProps,
+  PublicSharedChatHeaderProps,
+  PublicSharedMessageProps,
+  PublicSharedMessageListProps,
+  PublicMarkdownRendererProps,
+  PublicSharedChatFooterProps,
 } from './component.types';
 export type { ResearchProviderFormState, UseResearchProvidersPageReturn } from './hook.types';
 export type {
@@ -904,3 +915,15 @@ export type {
   UseCaseEntry,
 } from './home-content.types';
 export type { JsonLdObject } from './structured-data.types';
+export type {
+  OwnerChatShare,
+  PublicChatShare,
+  PublicChatShareMessage,
+  PublicChatSitemapEntry,
+  PublishChatShareInput,
+} from './chat-share.types';
+export type {
+  UseChatShareQueryReturn,
+  UseChatShareMutationsReturn,
+  UseShareChatDialogReturn,
+} from './chat-share-hook.types';

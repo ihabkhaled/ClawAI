@@ -3303,6 +3303,96 @@ export type TranslationDictionary = {
     progressTitle: string;
     errorTitle: string;
   };
+  chatShare: {
+    button: {
+      label: string;
+    };
+    dialog: {
+      title: string;
+      description: string;
+    };
+    warning: {
+      heading: string;
+      acknowledge: string;
+      noLoginRequired: string;
+      containsHistory: string;
+      mayBeIndexed: string;
+      mayAppearInSearch: string;
+      mayShowAds: string;
+      revokeIsNotRemoval: string;
+      futureMessagesPrivate: string;
+      mustUpdateExplicitly: string;
+      noSensitiveData: string;
+    };
+    url: {
+      label: string;
+      copy: string;
+      copied: string;
+      open: string;
+    };
+    indexing: {
+      label: string;
+      description: string;
+    };
+    blocked: {
+      safety: string;
+      tooShort: string;
+    };
+    visibility: {
+      private: string;
+      unlisted: string;
+      indexed: string;
+    };
+    status: {
+      snapshot: string;
+      lastUpdated: string;
+      messages: string;
+      unpublished: string;
+    };
+    actions: {
+      publish: string;
+      refresh: string;
+      regenerate: string;
+      disable: string;
+    };
+    disable: {
+      title: string;
+      description: string;
+      confirm: string;
+    };
+    regenerate: {
+      title: string;
+      description: string;
+      confirm: string;
+    };
+    toast: {
+      published: string;
+      publishFailed: string;
+      indexingUpdated: string;
+      indexingFailed: string;
+      refreshed: string;
+      refreshFailed: string;
+      urlRegenerated: string;
+      regenerateFailed: string;
+      revoked: string;
+      revokeFailed: string;
+    };
+    public: {
+      unavailableTitle: string;
+      genericDescription: string;
+      published: string;
+      updated: string;
+      messageCount: string;
+      snapshotDisclaimer: string;
+      roleUser: string;
+      roleAssistant: string;
+      truncated: string;
+      advertisement: string;
+      backToHome: string;
+      report: string;
+      footerDisclaimer: string;
+    };
+  };
   billing: {
     page: {
       title: string;
