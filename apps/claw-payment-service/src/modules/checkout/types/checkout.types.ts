@@ -25,6 +25,34 @@ export type CheckoutSessionView = {
   expiresAt: string;
 };
 
+// The minimum a gateway order needs from its caller. Narrower than the full
+// start input so the upgrade path can reuse it without inventing a plan id it
+// does not have.
+export type GatewayOrderContext = {
+  gateway: BillingGateway;
+  userEmail: string;
+};
+
+// An upgrade checkout. The amount comes from a CONSUMED proration quote, not
+// from the plan's full price and never from the request body — the customer
+// agreed to exactly this prorated figure.
+export type StartPlanChangeCheckoutInput = {
+  userId: string;
+  userEmail: string;
+  subscriptionId: string;
+  prorationQuoteId: string;
+  targetPlanId: string;
+  targetPlanSlug: string;
+  targetPriceVersionId: string;
+  // Typed as string, not BillingInterval: it round-trips through a database
+  // column on the proration quote, and pretending otherwise would need a cast.
+  billingInterval: string;
+  gateway: BillingGateway;
+  amountDueMinor: number;
+  currency: string;
+  idempotencyKey: string;
+};
+
 // Server-resolved money for a checkout. Produced from an immutable price
 // version plus, for a non-USD gateway, a bound FX quote.
 export type ResolvedCharge = {

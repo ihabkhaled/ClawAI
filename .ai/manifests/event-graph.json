@@ -386,13 +386,17 @@
       "producers": []
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-payment-service"
+      ],
       "key": "BILLING_SUBSCRIPTION_CANCELLED",
       "pattern": "billing.subscription.cancelled",
       "producers": []
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-payment-service"
+      ],
       "key": "BILLING_SUBSCRIPTION_DOWNGRADE_SCHEDULED",
       "pattern": "billing.subscription.downgrade_scheduled",
       "producers": []
@@ -422,7 +426,9 @@
       "producers": []
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-payment-service"
+      ],
       "key": "BILLING_SUBSCRIPTION_UPGRADED",
       "pattern": "billing.subscription.upgraded",
       "producers": []

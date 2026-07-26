@@ -17,6 +17,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { BillingModule } from '../modules/billing/billing.module';
 import { CheckoutModule } from '../modules/checkout/checkout.module';
 import { PlanCatalogModule } from '../modules/plan-catalog/plan-catalog.module';
+import { SubscriptionsModule } from '../modules/subscriptions/subscriptions.module';
 import { WebhooksModule } from '../modules/webhooks/webhooks.module';
 import { FxModule } from '../modules/fx/fx.module';
 import { OutboxModule } from '../modules/outbox/outbox.module';
@@ -93,6 +94,7 @@ import { HealthModule } from '../modules/health/health.module';
     BillingModule,
     PlanCatalogModule,
     CheckoutModule,
+    SubscriptionsModule,
     WebhooksModule,
   ],
   providers: [

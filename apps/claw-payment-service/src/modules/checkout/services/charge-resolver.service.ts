@@ -47,6 +47,35 @@ export class ChargeResolverService {
     return this.converted(price, settlementCurrency);
   }
 
+  /**
+   * Converts an amount that has ALREADY been agreed — a consumed proration
+   * quote — into what the gateway will be asked to charge.
+   *
+   * Distinct from `resolve` because there is no catalog lookup: re-reading the
+   * plan's full price here would charge an upgrading customer the whole tier
+   * instead of the prorated difference they confirmed.
+   */
+  async convertQuotedAmount(
+    amountDueMinor: number,
+    currency: string,
+    gateway: BillingGateway,
+    planPriceVersionId: string,
+  ): Promise<ResolvedCharge> {
+    this.logger.debug(
+      `convertQuotedAmount: ${String(amountDueMinor)} ${currency} gateway=${gateway}`,
+    );
+    if (amountDueMinor <= 0) {
+      this.logger.error('convertQuotedAmount: refusing a non-positive quoted amount');
+      throw new BillingException(BillingErrorCode.PLAN_NOT_PURCHASABLE);
+    }
+    const price = { id: planPriceVersionId, amountMinor: amountDueMinor, currency };
+    const settlementCurrency = resolveSettlementCurrency(gateway);
+    if (settlementCurrency === null || settlementCurrency === currency) {
+      return ChargeResolverService.sameCurrency(price);
+    }
+    return this.converted(price, settlementCurrency);
+  }
+
   private static sameCurrency(price: {
     id: string;
     amountMinor: number;

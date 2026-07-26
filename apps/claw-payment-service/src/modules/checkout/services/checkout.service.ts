@@ -19,7 +19,12 @@ import {
   CHECKOUT_RETURN_PATH,
   CHECKOUT_STATE_NONCE_BYTES,
 } from '../constants/checkout.constants';
-import { type CheckoutSessionView, type StartCheckoutInput } from '../types/checkout.types';
+import {
+  type CheckoutSessionView,
+  type GatewayOrderContext,
+  type StartCheckoutInput,
+  type StartPlanChangeCheckoutInput,
+} from '../types/checkout.types';
 import { toCheckoutSessionView } from '../utilities/checkout-view.utility';
 import { ChargeResolverService } from './charge-resolver.service';
 import { type CheckoutSession } from '../../../generated/prisma';
@@ -72,6 +77,67 @@ export class CheckoutService {
     }
   }
 
+  /**
+   * Opens a checkout for an upgrade the user has already been quoted.
+   *
+   * The amount comes from the consumed proration quote, not from the target
+   * plan's full price: the customer agreed to a specific prorated figure and
+   * that is the only number we may charge. Everything else — the FX conversion
+   * for a non-USD gateway, committing before calling the provider, recording a
+   * stable failure code — follows the same path as a new subscription.
+   */
+  async startPlanChange(input: StartPlanChangeCheckoutInput): Promise<CheckoutSessionView> {
+    this.logger.debug(`startPlanChange: user=${input.userId} quote=${input.prorationQuoteId}`);
+
+    const existing = await this.sessions.findByIdempotencyKey(input.userId, input.idempotencyKey);
+    if (existing !== null) {
+      this.logger.log(`startPlanChange: replaying existing session=${existing.id}`);
+      return toCheckoutSessionView(existing);
+    }
+
+    const charge = await this.charges.convertQuotedAmount(
+      input.amountDueMinor,
+      input.currency,
+      input.gateway,
+      input.targetPriceVersionId,
+    );
+    const session = await this.sessions.create({
+      userId: input.userId,
+      purpose: CheckoutPurpose.UPGRADE,
+      status: CheckoutSessionStatus.CREATED,
+      gateway: input.gateway,
+      planId: input.targetPlanId,
+      planSlug: input.targetPlanSlug,
+      planPriceVersionId: input.targetPriceVersionId,
+      billingInterval: input.billingInterval,
+      baseAmountMinor: charge.baseAmountMinor,
+      baseCurrency: charge.baseCurrency,
+      chargeAmountMinor: charge.chargeAmountMinor,
+      chargeCurrency: charge.chargeCurrency,
+      fxQuoteId: charge.fxQuoteId,
+      fxFinalRateScaled: charge.fxFinalRateScaled,
+      prorationQuoteId: input.prorationQuoteId,
+      subscription: { connect: { id: input.subscriptionId } },
+      idempotencyKey: input.idempotencyKey,
+      stateNonce: randomBytes(CHECKOUT_STATE_NONCE_BYTES).toString('hex'),
+      expiresAt: new Date(Date.now() + CHECKOUT_SESSION_TTL_MS),
+    });
+
+    try {
+      return await this.attachGatewayOrder(session, {
+        gateway: input.gateway,
+        userEmail: input.userEmail,
+      });
+    } catch (error: unknown) {
+      await this.sessions.markFailed(session.id, BillingErrorCode.GATEWAY_UNAVAILABLE);
+      this.logger.error(
+        `startPlanChange: gateway order failed session=${session.id} — ` +
+          `${error instanceof Error ? error.message : 'unknown'}`,
+      );
+      throw error;
+    }
+  }
+
   async findOwned(userId: string, sessionId: string): Promise<CheckoutSessionView> {
     this.logger.debug(`findOwned: user=${userId} session=${sessionId}`);
     const session = await this.sessions.findById(sessionId);
@@ -111,7 +177,7 @@ export class CheckoutService {
 
   private async attachGatewayOrder(
     session: CheckoutSession,
-    input: StartCheckoutInput,
+    input: GatewayOrderContext,
   ): Promise<CheckoutSessionView> {
     const order =
       input.gateway === BillingGateway.PAYPAL

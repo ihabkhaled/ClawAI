@@ -1,0 +1,119 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { EventPattern } from '@claw/shared-types';
+
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { OutboxRepository } from '../../outbox/repositories/outbox.repository';
+import {
+  BILLING_EVENT_SCHEMA_VERSION,
+  PAYMENT_PRODUCER,
+} from '../../billing/constants/billing.constants';
+import { type ProrationQuoteView } from '../../billing/types/proration.types';
+import { type Subscription } from '../../../generated/prisma';
+
+/**
+ * Applies a plan change that takes no money.
+ *
+ * Two shapes land here:
+ *
+ * - A **downgrade**, which is queued for period end. The customer paid for the
+ *   current period at the higher tier and keeps it; shrinking their plan
+ *   immediately would be taking back something already bought, and refunding
+ *   the difference is a cash decision that needs a policy, not a button.
+ * - A **zero-amount change**, where proration rounds the difference to nothing.
+ *   That applies immediately — there is no money involved either way.
+ *
+ * Both write the state change and the entitlement event in ONE transaction, so
+ * a crash between them cannot leave auth believing something payment does not.
+ */
+@Injectable()
+export class ScheduledDowngradeService {
+  private readonly logger = new Logger(ScheduledDowngradeService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly outbox: OutboxRepository,
+  ) {}
+
+  async schedule(subscription: Subscription, quote: ProrationQuoteView): Promise<void> {
+    this.logger.debug(`schedule: subscription=${subscription.id} -> ${quote.targetPlanSlug}`);
+    const effectiveAt = new Date(quote.scheduledEffectiveAtMs ?? subscription.currentPeriodEnd);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.subscription.update({
+        where: { id: subscription.id },
+        data: {
+          scheduledPlanId: quote.targetPlanId,
+          scheduledPlanSlug: quote.targetPlanSlug,
+          scheduledPlanPriceVersionId: quote.targetPriceVersionId,
+          scheduledEffectiveAt: effectiveAt,
+          version: { increment: 1 },
+        },
+      });
+      await this.outbox.enqueue(tx, {
+        pattern: EventPattern.BILLING_SUBSCRIPTION_DOWNGRADE_SCHEDULED,
+        eventId: randomUUID(),
+        aggregateType: 'Subscription',
+        aggregateId: subscription.id,
+        payloadJson: {
+          schemaVersion: BILLING_EVENT_SCHEMA_VERSION,
+          producer: PAYMENT_PRODUCER,
+          userId: subscription.userId,
+          subscriptionId: subscription.id,
+          planId: subscription.planId,
+          scheduledPlanId: quote.targetPlanId,
+          effectiveAt: new Date().toISOString(),
+          // Unchanged: the CURRENT plan's entitlement runs to period end. The
+          // downgrade is a future event, not a present revocation.
+          entitlementValidUntil: subscription.entitlementValidUntil.toISOString(),
+          scheduledEffectiveAt: effectiveAt.toISOString(),
+          correlationId: quote.quoteId,
+          causationId: subscription.id,
+        },
+      });
+    });
+
+    this.logger.log(
+      `schedule: subscription=${subscription.id} moves to ${quote.targetPlanSlug} ` +
+        `at ${effectiveAt.toISOString()}`,
+    );
+  }
+
+  async applyImmediately(subscription: Subscription, quote: ProrationQuoteView): Promise<void> {
+    this.logger.debug(`applyImmediately: subscription=${subscription.id}`);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.subscription.update({
+        where: { id: subscription.id },
+        data: {
+          planId: quote.targetPlanId,
+          planSlug: quote.targetPlanSlug,
+          planPriceVersionId: quote.targetPriceVersionId,
+          version: { increment: 1 },
+        },
+      });
+      await this.outbox.enqueue(tx, {
+        pattern: EventPattern.BILLING_SUBSCRIPTION_UPGRADED,
+        eventId: randomUUID(),
+        aggregateType: 'Subscription',
+        aggregateId: subscription.id,
+        payloadJson: {
+          schemaVersion: BILLING_EVENT_SCHEMA_VERSION,
+          producer: PAYMENT_PRODUCER,
+          userId: subscription.userId,
+          subscriptionId: subscription.id,
+          planId: quote.targetPlanId,
+          planPriceVersionId: quote.targetPriceVersionId,
+          effectiveAt: new Date().toISOString(),
+          entitlementValidUntil: subscription.entitlementValidUntil.toISOString(),
+          correlationId: quote.quoteId,
+          causationId: subscription.id,
+        },
+      });
+    });
+
+    this.logger.log(
+      `applyImmediately: subscription=${subscription.id} now ${quote.targetPlanSlug}`,
+    );
+  }
+}

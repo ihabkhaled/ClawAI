@@ -108,6 +108,7 @@ export class ProrationService {
     targetPlanId: string;
     targetPlanSlug: string;
     targetPlanPriceVersionId: string;
+    targetBillingInterval: string;
     currency: string;
     remainingRatioScaled: number;
     unusedCurrentCreditMinor: number;
@@ -123,6 +124,7 @@ export class ProrationService {
       targetPlanId: record.targetPlanId,
       targetPlanSlug: record.targetPlanSlug,
       targetPriceVersionId: record.targetPlanPriceVersionId,
+      targetBillingInterval: record.targetBillingInterval,
       currency: record.currency,
       remainingRatioScaled: record.remainingRatioScaled,
       unusedCurrentCreditMinor: record.unusedCurrentCreditMinor,

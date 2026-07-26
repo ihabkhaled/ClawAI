@@ -1659,8 +1659,48 @@
         },
         {
           "method": "GET",
+          "route": "/billing/invoices",
+          "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/billing/me",
+          "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/billing/payment-methods",
+          "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/billing/payment-methods/:id",
+          "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/billing/plans",
           "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/billing/subscription/cancel",
+          "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/billing/subscription/change/confirm",
+          "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/billing/subscription/change/quote",
+          "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/billing/subscription/resume",
+          "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
         },
         {
           "method": "GET",
@@ -8012,7 +8052,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 27
+        "testFiles": 30
       },
       "claw-research-service": {
         "runner": "jest",
@@ -8726,7 +8766,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 508,
+    "endpointCount": 516,
     "envVarCount": 329,
     "eventCount": 158,
     "frontendRouteCount": 97,
@@ -8738,7 +8778,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 576,
+    "totalTestFiles": 579,
     "workspaceCount": 25
   }
 }

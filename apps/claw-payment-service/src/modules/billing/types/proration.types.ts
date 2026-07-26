@@ -25,6 +25,10 @@ export type ProrationQuoteView = {
   targetPlanId: string;
   targetPlanSlug: string;
   targetPriceVersionId: string;
+  // Carried on the quote so confirm never has to trust the client to restate
+  // it — a caller that could name a different interval than the one it was
+  // quoted for could pay a monthly price for a yearly plan.
+  targetBillingInterval: string;
   currency: string;
   // Scaled integer — never a float.
   remainingRatioScaled: number;
