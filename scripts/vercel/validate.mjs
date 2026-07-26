@@ -57,7 +57,11 @@ const DOCKER_ONLY_HOSTS = [
 ];
 
 /** Values that must never appear in a production URL variable. */
-const LOCAL_HOST_PATTERNS = [/^https?:\/\/localhost/i, /^https?:\/\/127\.0\.0\.1/i, /^https?:\/\/0\.0\.0\.0/i];
+const LOCAL_HOST_PATTERNS = [
+  /^https?:\/\/localhost/i,
+  /^https?:\/\/127\.0\.0\.1/i,
+  /^https?:\/\/0\.0\.0\.0/i,
+];
 
 /** Variables that carry a local-runtime dependency ClawAI-on-Vercel must not need. */
 const LOCAL_RUNTIME_VARIABLES = [
@@ -95,19 +99,31 @@ class Findings {
 function checkProjectPaths(projects, findings) {
   for (const project of projects.projects) {
     if (project.status === 'not-vercel-compatible') {
-      if (project.notVercelCompatibleReason === undefined || project.notVercelCompatibleReason === '') {
-        findings.fail('project-status', `${project.key} is not-vercel-compatible but gives no reason`);
+      if (
+        project.notVercelCompatibleReason === undefined ||
+        project.notVercelCompatibleReason === ''
+      ) {
+        findings.fail(
+          'project-status',
+          `${project.key} is not-vercel-compatible but gives no reason`,
+        );
       }
       continue;
     }
     const root = join(REPO_ROOT, project.rootDirectory);
     if (!existsSync(root)) {
-      findings.fail('project-path', `${project.key} rootDirectory does not exist: ${project.rootDirectory}`);
+      findings.fail(
+        'project-path',
+        `${project.key} rootDirectory does not exist: ${project.rootDirectory}`,
+      );
       continue;
     }
     const packageJsonPath = join(root, 'package.json');
     if (!existsSync(packageJsonPath)) {
-      findings.fail('project-path', `${project.key} has no package.json at ${project.rootDirectory}`);
+      findings.fail(
+        'project-path',
+        `${project.key} has no package.json at ${project.rootDirectory}`,
+      );
       continue;
     }
     const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
@@ -129,14 +145,27 @@ function checkProjectPaths(projects, findings) {
         `${project.key} buildCommand is ${project.buildCommand.length} chars; Vercel caps it at 256. Move the work into scripts/vercel/build-service.sh.`,
       );
     }
-    if (project.installCommand !== null && project.installCommand !== undefined && project.installCommand.length > 256) {
+    if (
+      project.installCommand !== null &&
+      project.installCommand !== undefined &&
+      project.installCommand.length > 256
+    ) {
       findings.fail(
         'install-command-length',
         `${project.key} installCommand is ${project.installCommand.length} chars; Vercel caps it at 256.`,
       );
     }
+    if (project.installCommand !== 'npm ci') {
+      findings.fail(
+        'install-command-root',
+        `${project.key} must run "npm ci" from Vercel's workspace-aware project context; relative cd commands can escape the cloned monorepo and make npm fetch private @claw packages from the public registry.`,
+      );
+    }
     if (project.prismaSchema !== null && pkg.scripts?.['prisma:generate'] === undefined) {
-      findings.fail('prisma-generate', `${project.key} has a Prisma schema but no "prisma:generate" script`);
+      findings.fail(
+        'prisma-generate',
+        `${project.key} has a Prisma schema but no "prisma:generate" script`,
+      );
     }
   }
   findings.pass('project-paths-scanned');
@@ -186,8 +215,15 @@ function checkPortBinding(projects, findings) {
 
 function checkHealthEndpoints(projects, findings) {
   for (const project of projects.projects.filter((p) => p.status === 'enabled')) {
-    if (project.healthPath === null || project.healthPath === undefined || project.healthPath === '') {
-      findings.fail('health-endpoint', `${project.key} has no healthPath and no documented exemption`);
+    if (
+      project.healthPath === null ||
+      project.healthPath === undefined ||
+      project.healthPath === ''
+    ) {
+      findings.fail(
+        'health-endpoint',
+        `${project.key} has no healthPath and no documented exemption`,
+      );
     }
   }
   findings.pass('health-endpoints-declared');
@@ -215,7 +251,10 @@ function checkPrismaSchemasHaveMigrations(projects, migrations, findings) {
     }
     const schemaPath = join(REPO_ROOT, migration.schema);
     if (!existsSync(schemaPath)) {
-      findings.fail('migration-schema', `${migration.service} schema not found: ${migration.schema}`);
+      findings.fail(
+        'migration-schema',
+        `${migration.service} schema not found: ${migration.schema}`,
+      );
       continue;
     }
     const migrationsDir = join(schemaPath, '..', 'migrations');
@@ -227,7 +266,10 @@ function checkPrismaSchemasHaveMigrations(projects, migrations, findings) {
       );
     }
     if (typeof migration.command === 'string' && migration.command.includes('migrate dev')) {
-      findings.fail('migration-command', `${migration.service} uses "prisma migrate dev", which is forbidden`);
+      findings.fail(
+        'migration-command',
+        `${migration.service} uses "prisma migrate dev", which is forbidden`,
+      );
     }
     if (!actuallyHasMigrations) {
       findings.warn(
@@ -339,19 +381,28 @@ function checkEnvironmentDeclarations(projects, environment, findings) {
   const allEntries = [
     ...environment.shared,
     ...Object.entries(environment)
-      .filter(([key]) => !['shared', 'derived', '$schema', 'version', 'description', 'conventions'].includes(key))
+      .filter(
+        ([key]) =>
+          !['shared', 'derived', '$schema', 'version', 'description', 'conventions'].includes(key),
+      )
       .flatMap(([, value]) => (Array.isArray(value) ? value : [])),
   ];
   for (const entry of allEntries) {
     if (entry.secret === true && entry.name.startsWith('NEXT_PUBLIC_')) {
-      findings.fail('secret-exposure', `${entry.name} is marked secret but uses the NEXT_PUBLIC_ prefix`);
+      findings.fail(
+        'secret-exposure',
+        `${entry.name} is marked secret but uses the NEXT_PUBLIC_ prefix`,
+      );
     }
   }
 
   // Explicit guard for the one the brief calls out by name.
   const frontendNames = new Set((environment.frontend ?? []).map((entry) => entry.name));
   if (frontendNames.has('OLLAMA_API_KEY') || frontendNames.has('NEXT_PUBLIC_OLLAMA_API_KEY')) {
-    findings.fail('secret-exposure', 'OLLAMA_API_KEY must never be assigned to the frontend project');
+    findings.fail(
+      'secret-exposure',
+      'OLLAMA_API_KEY must never be assigned to the frontend project',
+    );
   }
   findings.pass('environment-declarations-complete');
 }
@@ -381,7 +432,11 @@ function checkProductionValues(projects, env, target, findings) {
       ...(project.requiredEnvironmentVariables ?? []),
       ...(project.optionalEnvironmentVariables ?? []),
     ]) {
-      if (variable.endsWith('_URL') || variable.endsWith('_URI') || variable.endsWith('_BASE_URL')) {
+      if (
+        variable.endsWith('_URL') ||
+        variable.endsWith('_URI') ||
+        variable.endsWith('_BASE_URL')
+      ) {
         urlVariables.add(variable);
       }
     }
@@ -393,7 +448,10 @@ function checkProductionValues(projects, env, target, findings) {
       continue;
     }
     if (LOCAL_HOST_PATTERNS.some((pattern) => pattern.test(value))) {
-      findings.fail('localhost-in-production', `${variable} points at a localhost address in a production run`);
+      findings.fail(
+        'localhost-in-production',
+        `${variable} points at a localhost address in a production run`,
+      );
     }
     let host;
     try {
@@ -421,7 +479,10 @@ function checkGitignore(findings) {
   const lines = contents.split(/\r?\n/).map((line) => line.trim());
 
   if (!lines.includes('.env.vercel')) {
-    findings.fail('gitignore', '.env.vercel is not gitignored — deployment secrets could be committed');
+    findings.fail(
+      'gitignore',
+      '.env.vercel is not gitignored — deployment secrets could be committed',
+    );
   }
   if (!lines.includes('deploy/vercel/generated/')) {
     findings.fail('gitignore', 'deploy/vercel/generated/ is not gitignored');
@@ -451,7 +512,10 @@ function checkNoSecretsInSource(findings) {
     const looksSecret = /TOKEN|SECRET|PASSWORD|KEY|_URI|_URL/i.test(key);
     // Placeholder scheme prefixes are fine; a filled-in credential is not.
     const isPlaceholder =
-      value === '' || /^(https?:\/\/)?$/.test(value) || value.startsWith('<') || value.startsWith('changeme');
+      value === '' ||
+      /^(https?:\/\/)?$/.test(value) ||
+      value.startsWith('<') ||
+      value.startsWith('changeme');
     if (looksSecret && !isPlaceholder) {
       offenders.push(key);
     }
@@ -467,7 +531,10 @@ function checkNoSecretsInSource(findings) {
 
   const leaked = join(REPO_ROOT, '.env.vercel');
   if (existsSync(leaked)) {
-    findings.warn('env-local', '.env.vercel exists locally (expected) — confirm it is never staged for commit');
+    findings.warn(
+      'env-local',
+      '.env.vercel exists locally (expected) — confirm it is never staged for commit',
+    );
   }
 }
 
@@ -565,7 +632,9 @@ async function main() {
 
   log.step('Verdict');
   if (findings.errors.length > 0) {
-    log.error(`${findings.errors.length} error(s), ${findings.warnings.length} warning(s). Validation FAILED.`);
+    log.error(
+      `${findings.errors.length} error(s), ${findings.warnings.length} warning(s). Validation FAILED.`,
+    );
     return 1;
   }
   log.ok(`0 errors, ${findings.warnings.length} warning(s). Validation PASSED.`);

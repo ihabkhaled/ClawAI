@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "installCommand": "cd ../.. && npm ci",
+  "installCommand": "npm ci",
   "buildCommand": "bash ../../scripts/vercel/build-service.sh claw-research-service",
   "framework": null,
   "outputDirectory": "public",

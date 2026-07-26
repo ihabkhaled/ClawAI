@@ -2,10 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "framework": "nextjs",
-  "installCommand": "cd ../.. && npm ci",
+  "installCommand": "npm ci",
   "buildCommand": "bash ../../scripts/vercel/build-service.sh claw-frontend",
   "outputDirectory": ".next",
   "git": {
-    "deploymentEnabled": true
+    "deploymentEnabled": false
   }
 }

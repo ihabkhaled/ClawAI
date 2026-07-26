@@ -50,20 +50,20 @@ serverless function must not bind a port. The entry requires the compiled
 
 ### The automation layer
 
-| File | Purpose |
-| --- | --- |
-| `deploy/vercel/projects.json` | Single source of truth: every project, path, build command, health path, database, dependency |
-| `deploy/vercel/environment.json` | Which environment variable goes to which project, and which are secret |
-| `deploy/vercel/migrations.json` | Migration plan per database, including MongoDB TTL indexes |
-| `scripts/vercel/validate.mjs` | Pre-flight consistency and safety checks (no network, no token needed) |
-| `scripts/vercel/generate-configs.mjs` | Writes `apps/*/vercel.json` and `apps/*/api/index.js` from the manifest |
-| `scripts/vercel/provision.mjs` | Creates and configures Vercel projects. Idempotent, never deletes |
-| `scripts/vercel/sync-env.mjs` | Uploads environment variables to the right projects only |
-| `scripts/vercel/resolve-service-urls.mjs` | Discovers live URLs and fans them out |
-| `scripts/vercel/migrate.mjs` | Runs Prisma deploy migrations and Mongo index setup |
-| `scripts/vercel/deploy.mjs` | Deploys in dependency order, frontend last |
-| `scripts/vercel/verify.mjs` | Probes health, auth, CORS, streaming, proxy, Ollama |
-| `scripts/vercel/setup.mjs` | Runs the whole pipeline in order |
+| File                                      | Purpose                                                                                       |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `deploy/vercel/projects.json`             | Single source of truth: every project, path, build command, health path, database, dependency |
+| `deploy/vercel/environment.json`          | Which environment variable goes to which project, and which are secret                        |
+| `deploy/vercel/migrations.json`           | Migration plan per database, including MongoDB TTL indexes                                    |
+| `scripts/vercel/validate.mjs`             | Pre-flight consistency and safety checks (no network, no token needed)                        |
+| `scripts/vercel/generate-configs.mjs`     | Writes `apps/*/vercel.json` and `apps/*/api/index.js` from the manifest                       |
+| `scripts/vercel/provision.mjs`            | Creates and configures Vercel projects. Idempotent, never deletes                             |
+| `scripts/vercel/sync-env.mjs`             | Uploads environment variables to the right projects only                                      |
+| `scripts/vercel/resolve-service-urls.mjs` | Discovers live URLs and fans them out                                                         |
+| `scripts/vercel/migrate.mjs`              | Runs Prisma deploy migrations and Mongo index setup                                           |
+| `scripts/vercel/deploy.mjs`               | Deploys in dependency order, frontend last                                                    |
+| `scripts/vercel/verify.mjs`               | Probes health, auth, CORS, streaming, proxy, Ollama                                           |
+| `scripts/vercel/setup.mjs`                | Runs the whole pipeline in order                                                              |
 
 ---
 
@@ -72,16 +72,16 @@ serverless function must not bind a port. The entry requires the compiled
 Provision these before the first deployment. Nothing below is created by the
 automation — it only wires them up.
 
-| Resource | Count | Notes |
-| --- | --- | --- |
-| PostgreSQL databases | 11 | One per service. Neon, Supabase, or Vercel Postgres. Each needs a **pooled** and a **direct** connection string. |
-| pgvector extension | 1 | On the **memory** database only. `migrate.mjs` creates it when the role has permission. |
-| MongoDB databases | 3 | audit, client-logs, server-logs. One Atlas cluster can host all three. |
-| Redis | 1 | Use a serverless-friendly provider (Upstash). A single-node Redis will exhaust connections under per-invocation serverless load. |
-| AMQP broker | 1 | CloudAMQP or equivalent, for the `claw.events` topic exchange. See the consumer limitation in §16. |
-| Object storage | 1 | Vercel Blob or S3-compatible. **Required** — the Vercel filesystem is ephemeral. |
-| Ollama-compatible API | 1 | External endpoint. ClawAI on Vercel never runs a local Ollama or llama.cpp runtime. |
-| Vercel account | 1 | A token with project-create and deploy scope. |
+| Resource              | Count | Notes                                                                                                                            |
+| --------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------- |
+| PostgreSQL databases  | 11    | One per service. Neon, Supabase, or Vercel Postgres. Each needs a **pooled** and a **direct** connection string.                 |
+| pgvector extension    | 1     | On the **memory** database only. `migrate.mjs` creates it when the role has permission.                                          |
+| MongoDB databases     | 3     | audit, client-logs, server-logs. One Atlas cluster can host all three.                                                           |
+| Redis                 | 1     | Use a serverless-friendly provider (Upstash). A single-node Redis will exhaust connections under per-invocation serverless load. |
+| AMQP broker           | 1     | CloudAMQP or equivalent, for the `claw.events` topic exchange. See the consumer limitation in §16.                               |
+| Object storage        | 1     | Vercel Blob or S3-compatible. **Required** — the Vercel filesystem is ephemeral.                                                 |
+| Ollama-compatible API | 1     | External endpoint. ClawAI on Vercel never runs a local Ollama or llama.cpp runtime.                                              |
+| Vercel account        | 1     | A token with project-create and deploy scope.                                                                                    |
 
 Cloud AI provider keys (OpenAI, Anthropic, Gemini, …) are normally stored
 per-connector in the database, encrypted with `ENCRYPTION_KEY`, and entered
@@ -99,14 +99,14 @@ cp .env.vercel.example .env.vercel
 
 The values you cannot skip:
 
-| Group | Variables |
-| --- | --- |
-| Vercel account | `VERCEL_TOKEN`, `VERCEL_TEAM_ID`, `VERCEL_GIT_REPOSITORY`, `VERCEL_PRODUCTION_BRANCH` |
+| Group           | Variables                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| Vercel account  | `VERCEL_TOKEN`, `VERCEL_TEAM_ID`, `VERCEL_GIT_REPOSITORY`, `VERCEL_PRODUCTION_BRANCH`       |
 | Shared security | `JWT_SECRET` (≥32 chars), `ENCRYPTION_KEY` (64 hex), `INTER_SERVICE_AUTH_TOKEN` (≥32 chars) |
-| Infrastructure | `REDIS_URL`, `RABBITMQ_URL`, `BLOB_READ_WRITE_TOKEN` |
-| Databases | 11 × `*_DATABASE_URL` + `*_DIRECT_DATABASE_URL`, 3 × `*_MONGODB_URI` |
-| AI runtime | `OLLAMA_BASE_URL`, `OLLAMA_API_KEY` |
-| Browser | `CORS_ORIGINS` |
+| Infrastructure  | `REDIS_URL`, `RABBITMQ_URL`, `BLOB_READ_WRITE_TOKEN`                                        |
+| Databases       | 11 × `*_DATABASE_URL` + `*_DIRECT_DATABASE_URL`, 3 × `*_MONGODB_URI`                        |
+| AI runtime      | `OLLAMA_BASE_URL`, `OLLAMA_API_KEY`                                                         |
+| Browser         | `CORS_ORIGINS`                                                                              |
 
 Generate the secrets:
 
@@ -318,16 +318,16 @@ npm run vercel:verify -- --target production
 
 Checks performed per service:
 
-| Check | Pass condition | Required |
-| --- | --- | --- |
-| health | `GET /api/v1/health` returns 2xx | yes |
-| auth-guard | An unauthenticated protected endpoint returns **401**, not 404 or 500 | yes |
-| cors-preflight | `OPTIONS` allows the frontend origin | no |
-| streaming | The SSE route exists and is not buffered into a plain response | no |
-| frontend | `GET /` returns 2xx/3xx | yes |
-| frontend→backend proxy | `/api/v1/health` through the frontend is not a 404 | no |
-| ollama api | `GET {OLLAMA_BASE_URL}/api/tags` returns 2xx — a listing call, no inference | yes |
-| disabled services | ollama and llamacpp are correctly absent | no |
+| Check                  | Pass condition                                                              | Required |
+| ---------------------- | --------------------------------------------------------------------------- | -------- |
+| health                 | `GET /api/v1/health` returns 2xx                                            | yes      |
+| auth-guard             | An unauthenticated protected endpoint returns **401**, not 404 or 500       | yes      |
+| cors-preflight         | `OPTIONS` allows the frontend origin                                        | no       |
+| streaming              | The SSE route exists and is not buffered into a plain response              | no       |
+| frontend               | `GET /` returns 2xx/3xx                                                     | yes      |
+| frontend→backend proxy | `/api/v1/health` through the frontend is not a 404                          | no       |
+| ollama api             | `GET {OLLAMA_BASE_URL}/api/tags` returns 2xx — a listing call, no inference | yes      |
+| disabled services      | ollama and llamacpp are correctly absent                                    | no       |
 
 The distinction between 401 and 404 matters: 404 means the rewrite or API prefix
 is wrong, 500 means the guard is throwing rather than rejecting, and 200 means
@@ -352,10 +352,16 @@ in a team, `VERCEL_TEAM_ID` must be set. The script stops at the first
 credential failure instead of repeating the same error per project.
 
 **`Cannot find module '@claw/shared-types'` during a Vercel build**
-The shared packages were not built. Every `buildCommand` starts with
-`npm run vercel:build:shared`; check that the project's build command in the
-Vercel dashboard matches `deploy/vercel/projects.json`, then re-run
-`npm run vercel:provision`, which patches drifted settings.
+First inspect the install log. Every project must use `npm ci` exactly. Vercel
+already runs the command in a workspace-aware context for the configured
+`apps/<workspace>` root; prepending `cd ../..` can escape the cloned checkout
+and makes npm attempt to download private `@claw/*` workspaces from npmjs.org.
+The validator rejects that configuration.
+
+If installation succeeds but the build cannot resolve the package, verify that
+the build command still calls `scripts/vercel/build-service.sh`, then run
+`npm run vercel:provision` to patch dashboard drift from
+`deploy/vercel/projects.json`.
 
 **Service returns 500 on every request**
 Its Zod `AppConfig` validation failed at boot. A missing required variable is
@@ -400,26 +406,26 @@ new instance only.
 
 ## 14. Expected Vercel project names
 
-| Key | Vercel project | Root directory | Status |
-| --- | --- | --- | --- |
-| `auth` | `claw-auth-service` | `apps/claw-auth-service` | enabled |
-| `chat` | `claw-chat-service` | `apps/claw-chat-service` | enabled |
-| `connector` | `claw-connector-service` | `apps/claw-connector-service` | enabled |
-| `routing` | `claw-routing-service` | `apps/claw-routing-service` | enabled |
-| `memory` | `claw-memory-service` | `apps/claw-memory-service` | enabled |
-| `file` | `claw-file-service` | `apps/claw-file-service` | enabled |
-| `audit` | `claw-audit-service` | `apps/claw-audit-service` | enabled |
-| `health` | `claw-health-service` | `apps/claw-health-service` | enabled |
-| `client-logs` | `claw-client-logs-service` | `apps/claw-client-logs-service` | enabled |
-| `server-logs` | `claw-server-logs-service` | `apps/claw-server-logs-service` | enabled |
-| `image` | `claw-image-service` | `apps/claw-image-service` | enabled |
-| `file-generation` | `claw-file-generation-service` | `apps/claw-file-generation-service` | enabled |
-| `workspace` | `claw-workspace-service` | `apps/claw-workspace-service` | enabled |
-| `agent` | `claw-agent-service` | `apps/claw-agent-service` | enabled |
-| `research` | `claw-research-service` | `apps/claw-research-service` | enabled |
-| `frontend` | `claw-frontend` | `apps/claw-frontend` | enabled |
-| `ollama` | — | `apps/claw-ollama-service` | **not-vercel-compatible** |
-| `llamacpp` | — | `apps/claw-llamacpp-service` | **not-vercel-compatible** |
+| Key               | Vercel project                 | Root directory                      | Status                    |
+| ----------------- | ------------------------------ | ----------------------------------- | ------------------------- |
+| `auth`            | `claw-auth-service`            | `apps/claw-auth-service`            | enabled                   |
+| `chat`            | `claw-chat-service`            | `apps/claw-chat-service`            | enabled                   |
+| `connector`       | `claw-connector-service`       | `apps/claw-connector-service`       | enabled                   |
+| `routing`         | `claw-routing-service`         | `apps/claw-routing-service`         | enabled                   |
+| `memory`          | `claw-memory-service`          | `apps/claw-memory-service`          | enabled                   |
+| `file`            | `claw-file-service`            | `apps/claw-file-service`            | enabled                   |
+| `audit`           | `claw-audit-service`           | `apps/claw-audit-service`           | enabled                   |
+| `health`          | `claw-health-service`          | `apps/claw-health-service`          | enabled                   |
+| `client-logs`     | `claw-client-logs-service`     | `apps/claw-client-logs-service`     | enabled                   |
+| `server-logs`     | `claw-server-logs-service`     | `apps/claw-server-logs-service`     | enabled                   |
+| `image`           | `claw-image-service`           | `apps/claw-image-service`           | enabled                   |
+| `file-generation` | `claw-file-generation-service` | `apps/claw-file-generation-service` | enabled                   |
+| `workspace`       | `claw-workspace-service`       | `apps/claw-workspace-service`       | enabled                   |
+| `agent`           | `claw-agent-service`           | `apps/claw-agent-service`           | enabled                   |
+| `research`        | `claw-research-service`        | `apps/claw-research-service`        | enabled                   |
+| `frontend`        | `claw-frontend`                | `apps/claw-frontend`                | enabled                   |
+| `ollama`          | —                              | `apps/claw-ollama-service`          | **not-vercel-compatible** |
+| `llamacpp`        | —                              | `apps/claw-llamacpp-service`        | **not-vercel-compatible** |
 
 16 Vercel projects. The two excluded services are never provisioned; the
 automation refuses `--service ollama` and `--service llamacpp` outright.
@@ -431,24 +437,24 @@ automation refuses `--service ollama` and `--service llamacpp` outright.
 Each service owns exactly one database. Sharing one is a validation error, not a
 convention.
 
-| Service | Engine | Runtime variable | Migration variable |
-| --- | --- | --- | --- |
-| auth | PostgreSQL | `AUTH_DATABASE_URL` | `AUTH_DIRECT_DATABASE_URL` |
-| chat | PostgreSQL | `CHAT_DATABASE_URL` | `CHAT_DIRECT_DATABASE_URL` |
-| connector | PostgreSQL | `CONNECTOR_DATABASE_URL` | `CONNECTOR_DIRECT_DATABASE_URL` |
-| routing | PostgreSQL | `ROUTING_DATABASE_URL` | `ROUTING_DIRECT_DATABASE_URL` |
-| memory | PostgreSQL + **pgvector** | `MEMORY_DATABASE_URL` | `MEMORY_DIRECT_DATABASE_URL` |
-| file | PostgreSQL | `FILES_DATABASE_URL` | `FILES_DIRECT_DATABASE_URL` |
-| image | PostgreSQL | `IMAGE_DATABASE_URL` | `IMAGE_DIRECT_DATABASE_URL` |
-| file-generation | PostgreSQL | `FILE_GENERATION_DATABASE_URL` | `FILE_GENERATION_DIRECT_DATABASE_URL` |
-| workspace | PostgreSQL | `WORKSPACE_DATABASE_URL` | `WORKSPACE_DIRECT_DATABASE_URL` |
-| agent | PostgreSQL | `AGENT_DATABASE_URL` | `AGENT_DIRECT_DATABASE_URL` |
-| research | PostgreSQL | `RESEARCH_DATABASE_URL` | `RESEARCH_DIRECT_DATABASE_URL` |
-| audit | MongoDB | `AUDIT_MONGODB_URI` | — |
-| client-logs | MongoDB | `CLIENT_LOGS_MONGODB_URI` | — |
-| server-logs | MongoDB | `SERVER_LOGS_MONGODB_URI` | — |
-| health | none | — | — |
-| frontend | none | — | — |
+| Service         | Engine                    | Runtime variable               | Migration variable                    |
+| --------------- | ------------------------- | ------------------------------ | ------------------------------------- |
+| auth            | PostgreSQL                | `AUTH_DATABASE_URL`            | `AUTH_DIRECT_DATABASE_URL`            |
+| chat            | PostgreSQL                | `CHAT_DATABASE_URL`            | `CHAT_DIRECT_DATABASE_URL`            |
+| connector       | PostgreSQL                | `CONNECTOR_DATABASE_URL`       | `CONNECTOR_DIRECT_DATABASE_URL`       |
+| routing         | PostgreSQL                | `ROUTING_DATABASE_URL`         | `ROUTING_DIRECT_DATABASE_URL`         |
+| memory          | PostgreSQL + **pgvector** | `MEMORY_DATABASE_URL`          | `MEMORY_DIRECT_DATABASE_URL`          |
+| file            | PostgreSQL                | `FILES_DATABASE_URL`           | `FILES_DIRECT_DATABASE_URL`           |
+| image           | PostgreSQL                | `IMAGE_DATABASE_URL`           | `IMAGE_DIRECT_DATABASE_URL`           |
+| file-generation | PostgreSQL                | `FILE_GENERATION_DATABASE_URL` | `FILE_GENERATION_DIRECT_DATABASE_URL` |
+| workspace       | PostgreSQL                | `WORKSPACE_DATABASE_URL`       | `WORKSPACE_DIRECT_DATABASE_URL`       |
+| agent           | PostgreSQL                | `AGENT_DATABASE_URL`           | `AGENT_DIRECT_DATABASE_URL`           |
+| research        | PostgreSQL                | `RESEARCH_DATABASE_URL`        | `RESEARCH_DIRECT_DATABASE_URL`        |
+| audit           | MongoDB                   | `AUDIT_MONGODB_URI`            | —                                     |
+| client-logs     | MongoDB                   | `CLIENT_LOGS_MONGODB_URI`      | —                                     |
+| server-logs     | MongoDB                   | `SERVER_LOGS_MONGODB_URI`      | —                                     |
+| health          | none                      | —                              | —                                     |
+| frontend        | none                      | —                              | —                                     |
 
 The two MongoDB log stores get a 30-day TTL index created by
 `npm run vercel:migrate`. Audit rows are retained indefinitely by design.
@@ -462,16 +468,16 @@ control. These are the honest trade-offs, not bugs.
 
 ### Not deployed at all
 
-| Component | Why |
-| --- | --- |
-| `claw-llamacpp-service` | Downloads and executes glibc-linked llama.cpp binaries, supervises a resident inference process, stores GGUF weights on a volume. |
-| `claw-ollama-service` | Manages a local Ollama runtime: multi-gigabyte model pulls onto a persistent volume, minute-long SSE pull jobs, ComfyUI weight placement. |
-| Local Ollama runtime | No GPU, no persistent volume. Replaced by `OLLAMA_BASE_URL` + `OLLAMA_API_KEY`. |
-| ComfyUI / Stable Diffusion | Local GPU diffusion runtimes. Only cloud image providers (DALL-E, Gemini) work. |
-| ClamAV | No sidecar container. `CLAMAV_ENABLED=false`; uploads are not virus-scanned unless you point `CLAMAV_HOST` at an external daemon. |
-| OCR (tesseract) | Needs native binaries and a persistent worker pool. `OCR_ENABLED=false`. |
-| nginx | Replaced by `next.config.mjs` rewrites on the frontend project. |
-| mkcert TLS | Vercel terminates TLS at its edge. `HTTPS_CERT_PATH` / `HTTPS_KEY_PATH` are unused. |
+| Component                  | Why                                                                                                                                       |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `claw-llamacpp-service`    | Downloads and executes glibc-linked llama.cpp binaries, supervises a resident inference process, stores GGUF weights on a volume.         |
+| `claw-ollama-service`      | Manages a local Ollama runtime: multi-gigabyte model pulls onto a persistent volume, minute-long SSE pull jobs, ComfyUI weight placement. |
+| Local Ollama runtime       | No GPU, no persistent volume. Replaced by `OLLAMA_BASE_URL` + `OLLAMA_API_KEY`.                                                           |
+| ComfyUI / Stable Diffusion | Local GPU diffusion runtimes. Only cloud image providers (DALL-E, Gemini) work.                                                           |
+| ClamAV                     | No sidecar container. `CLAMAV_ENABLED=false`; uploads are not virus-scanned unless you point `CLAMAV_HOST` at an external daemon.         |
+| OCR (tesseract)            | Needs native binaries and a persistent worker pool. `OCR_ENABLED=false`.                                                                  |
+| nginx                      | Replaced by `next.config.mjs` rewrites on the frontend project.                                                                           |
+| mkcert TLS                 | Vercel terminates TLS at its edge. `HTTPS_CERT_PATH` / `HTTPS_KEY_PATH` are unused.                                                       |
 
 ### Degraded
 
@@ -485,7 +491,7 @@ Driving these from Vercel Cron needs HTTP trigger endpoints the services do not
 expose today — that is open work, not something this automation silently papers
 over.
 
-**Durable RabbitMQ consumption does not happen.** Services still *publish*
+**Durable RabbitMQ consumption does not happen.** Services still _publish_
 events fine. But `claw-audit-service` and `claw-server-logs-service` consume
 from AMQP with a long-lived connection, which a serverless function cannot hold.
 Audit rows and server logs are only written for what arrives over direct HTTP.
@@ -550,9 +556,9 @@ node scripts/vercel/generate-configs.mjs --check
 
 ## 19. GitHub Actions
 
-| Workflow | Trigger | Does |
-| --- | --- | --- |
-| `.github/workflows/vercel-preview.yml` | pull request to `main` | Detects affected projects, validates, builds, deploys preview, resolves URLs, verifies, comments URLs on the PR |
+| Workflow                                  | Trigger                         | Does                                                                                                                       |
+| ----------------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `.github/workflows/vercel-preview.yml`    | pull request to `main`          | Detects affected projects, validates, builds, deploys preview, resolves URLs, verifies, comments URLs on the PR            |
 | `.github/workflows/vercel-production.yml` | push to `main`, manual dispatch | Validates, typechecks, tests, provisions, syncs env, migrates, deploys backends, resolves URLs, deploys frontend, verifies |
 
 Required GitHub secrets:
