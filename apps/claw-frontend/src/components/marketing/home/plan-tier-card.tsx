@@ -17,6 +17,7 @@ export function PlanTierCard({ tier, isYearly }: MarketingPlanTierCardProps): Re
     isYearly && tier.yearlyUsd !== null
       ? 'marketing.pricing.perYear'
       : 'marketing.pricing.perMonth';
+  const interval = isYearly && tier.yearlyUsd !== null ? 'yearly' : 'monthly';
 
   return (
     <div
@@ -62,7 +63,7 @@ export function PlanTierCard({ tier, isYearly }: MarketingPlanTierCardProps): Re
       </ul>
 
       <Link
-        href={isFree ? ROUTES.REGISTER : ROUTES.REGISTER}
+        href={`${ROUTES.REGISTER}?plan=${tier.slug}&interval=${interval}`}
         className={cn(
           buttonVariants({ variant: tier.isFeatured ? 'default' : 'outline' }),
           'mt-6 w-full',

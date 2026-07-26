@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale-switcher';
 import { APP_VERSION, MARKETING_GITHUB_URL, ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
-import { getConfiguredSocialLinks, getPublishedPages } from '@/utilities';
+import { getConfiguredSocialLinks, getPublishedPagesForLocale } from '@/utilities';
 
 // Server-renderable content is computed at module scope (registry + social
 // config are both static per build), so only the two truly interactive
@@ -14,12 +14,15 @@ import { getConfiguredSocialLinks, getPublishedPages } from '@/utilities';
 // it too because useTranslation is a context hook, but no data fetching
 // happens here.
 export function MarketingFooter(): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const year = new Date().getFullYear();
   const socialLinks = getConfiguredSocialLinks();
   // Every published page besides the homepage itself — Phase A has none,
   // Phase B populates this as pages flip from PLANNED to PUBLISHED.
-  const explorePages = getPublishedPages().filter((page) => page.canonicalPath !== '/');
+  const dedicatedGetStartedPaths = new Set(['/', '/contact', '/pricing']);
+  const explorePages = getPublishedPagesForLocale(locale).filter(
+    (page) => !dedicatedGetStartedPaths.has(page.canonicalPath),
+  );
 
   return (
     <footer className="border-border bg-surface-shell border-t">
@@ -86,7 +89,7 @@ export function MarketingFooter(): React.ReactElement {
                 </Link>
               </li>
               <li>
-                <Link href="/#pricing" className="hover:text-foreground">
+                <Link href="/pricing" className="hover:text-foreground">
                   {t('marketing.header.navPricing')}
                 </Link>
               </li>

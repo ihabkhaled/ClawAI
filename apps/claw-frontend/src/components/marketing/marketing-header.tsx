@@ -26,7 +26,7 @@ export function MarketingHeader(): React.ReactElement {
 
         <nav
           aria-label={t('marketing.header.navLabel')}
-          className="hidden items-center gap-6 md:flex"
+          className="hidden items-center gap-6 xl:flex"
         >
           {MARKETING_NAV_LINKS.map((link) => (
             <Link
@@ -39,7 +39,7 @@ export function MarketingHeader(): React.ReactElement {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-1 xl:flex">
           <Button variant="ghost" size="sm" asChild>
             <a href={MARKETING_GITHUB_URL} target="_blank" rel="noopener noreferrer">
               {t('marketing.header.github')}
@@ -51,14 +51,14 @@ export function MarketingHeader(): React.ReactElement {
             <Link href={ROUTES.LOGIN}>{t('marketing.header.login')}</Link>
           </Button>
           <Button size="sm" asChild>
-            <Link href={ROUTES.CHAT}>{t('marketing.header.openClaw')}</Link>
+            <Link href={ROUTES.REGISTER}>{t('marketing.header.createAccount')}</Link>
           </Button>
         </div>
 
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 md:hidden"
+          className="h-9 w-9 xl:hidden"
           aria-label={t('marketing.header.menuOpen')}
           onClick={() => setIsOpen(true)}
         >
