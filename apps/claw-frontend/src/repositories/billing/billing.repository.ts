@@ -26,8 +26,11 @@ export const billingRepository = {
     return response.data;
   },
 
+  // Usage lives in auth-service, not payment-service: quota counters and
+  // feature allowances are an entitlement concern, and routing this through
+  // billing would put a second service on the path for data it does not own.
   async getUsage(): Promise<BillingUsage> {
-    const response = await apiClient.get<BillingUsage>('/billing/usage');
+    const response = await apiClient.get<BillingUsage>('/auth/me/usage');
     return response.data;
   },
 

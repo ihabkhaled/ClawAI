@@ -7,6 +7,7 @@ import { EntitlementsInternalController } from './controllers/entitlements-inter
 import { MeEntitlementsController } from './controllers/me-entitlements.controller';
 import { QuotaInternalController } from '../quota/controllers/quota-internal.controller';
 import { EntitlementsService } from './services/entitlements.service';
+import { UsageViewService } from './services/usage-view.service';
 import { EntitlementApplierService } from './services/entitlement-applier.service';
 import { EntitlementInboxService } from './services/entitlement-inbox.service';
 import { EntitlementInboxRepository } from './repositories/entitlement-inbox.repository';
@@ -21,6 +22,6 @@ import { EntitlementInboxRepository } from './repositories/entitlement-inbox.rep
     EntitlementApplierService,
     EntitlementInboxRepository,
   ],
-  exports: [EntitlementsService, EntitlementInboxService],
+  exports: [EntitlementsService, EntitlementInboxService, UsageViewService],
 })
 export class EntitlementsModule {}

@@ -1,17 +1,23 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { MeEntitlementsController } from '../me-entitlements.controller';
 import { EntitlementsService } from '../../services/entitlements.service';
+import { UsageViewService } from '../../services/usage-view.service';
 import { UserRole } from '../../../../common/enums';
 
 describe('MeEntitlementsController', () => {
   let controller: MeEntitlementsController;
   let serviceMock: jest.Mocked<{ getForUser: jest.Mock }>;
+  let usageMock: jest.Mocked<{ getForUser: jest.Mock }>;
 
   beforeEach(async () => {
     serviceMock = { getForUser: jest.fn() };
+    usageMock = { getForUser: jest.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MeEntitlementsController],
-      providers: [{ provide: EntitlementsService, useValue: serviceMock }],
+      providers: [
+        { provide: EntitlementsService, useValue: serviceMock },
+        { provide: UsageViewService, useValue: usageMock },
+      ],
     }).compile();
     controller = module.get<MeEntitlementsController>(MeEntitlementsController);
   });
