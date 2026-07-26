@@ -45,6 +45,10 @@ export function isKnownPublicPath(pathname: string): boolean {
   return getIndexablePages().some((entry) => entry.canonicalPath === pathname);
 }
 
+export function isKnownPublicPathForLocale(pathname: string, locale: Locale): boolean {
+  return getIndexablePagesForLocale(locale).some((entry) => entry.path === pathname);
+}
+
 export function isAdEligiblePath(pathname: string): boolean {
   return getAdEligiblePages().some((entry) => entry.canonicalPath === pathname);
 }

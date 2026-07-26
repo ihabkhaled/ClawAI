@@ -7,6 +7,11 @@ describe('isPublicPath', () => {
     expect(isPublicPath('/en')).toBe(true);
   });
 
+  it('does not index an English fallback under an untranslated locale URL', () => {
+    expect(isPublicPath('/ja')).toBe(false);
+    expect(isPublicPath('/fa/features')).toBe(false);
+  });
+
   it('treats framework crawler files as public', () => {
     expect(isPublicPath('/robots.txt')).toBe(true);
     expect(isPublicPath('/sitemap.xml')).toBe(true);

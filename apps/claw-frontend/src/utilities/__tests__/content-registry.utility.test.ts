@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { CONTENT_REGISTRY } from '@/constants/content-registry.constants';
 import { ContentLifecycleStatus, ContentReviewStatus, Indexability, AdEligibility } from '@/enums';
+import { Locale } from '@/enums/locale.enum';
 import {
   getAdEligiblePages,
   getIndexablePages,
+  getIndexablePagesForLocale,
   getPageBySlug,
   getPublishedPages,
   isKnownPublicPath,
@@ -106,5 +108,15 @@ describe('getPageBySlug / isKnownPublicPath', () => {
   it('treats an unregistered path as NOT a known public path', () => {
     expect(isKnownPublicPath('/chat')).toBe(false);
     expect(isKnownPublicPath('/some/random/path')).toBe(false);
+  });
+});
+
+describe('localized publication boundary', () => {
+  it('never promotes English metadata into an untranslated locale', () => {
+    expect(getIndexablePagesForLocale(Locale.EN).length).toBeGreaterThan(0);
+    expect(getIndexablePagesForLocale(Locale.JA)).toEqual([]);
+    expect(getIndexablePagesForLocale(Locale.TH)).toEqual([]);
+    expect(getIndexablePagesForLocale(Locale.FA)).toEqual([]);
+    expect(getIndexablePagesForLocale(Locale.ZH)).toEqual([]);
   });
 });

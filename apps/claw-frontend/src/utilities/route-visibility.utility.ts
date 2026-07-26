@@ -1,6 +1,6 @@
 import { SHARE_CHAT_PATH_PREFIX } from '@/constants/chat-share.constants';
 import { RouteVisibility } from '@/enums/route-visibility.enum';
-import { isKnownPublicPath } from '@/utilities/content-registry.utility';
+import { isKnownPublicPathForLocale } from '@/utilities/content-registry.utility';
 import { parseLocaleFromPathname, stripLocaleFromPathname } from '@/utilities/locale.utility';
 
 // Framework-generated crawler files that are never registry entries but
@@ -47,7 +47,7 @@ export function classifyRouteVisibility(pathname: string): RouteVisibility {
   if (isSharedChatPath(pathname)) {
     return locale === null ? RouteVisibility.UNKNOWN : RouteVisibility.DYNAMIC_PUBLIC_CANDIDATE;
   }
-  if (locale !== null && isKnownPublicPath(unlocalizedPath)) {
+  if (locale !== null && isKnownPublicPathForLocale(unlocalizedPath, locale)) {
     return RouteVisibility.STATIC_PUBLIC;
   }
   return RouteVisibility.PRIVATE;

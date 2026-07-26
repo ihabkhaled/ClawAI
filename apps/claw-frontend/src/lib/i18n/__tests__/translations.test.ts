@@ -22,6 +22,52 @@ describe('getDictionary', () => {
   });
 });
 
+function flattenDictionary(
+  value: unknown,
+  prefix = '',
+  result: Record<string, string> = {},
+): Record<string, string> {
+  if (typeof value === 'string') {
+    result[prefix] = value;
+    return result;
+  }
+  if (typeof value !== 'object' || value === null) {
+    return result;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    flattenDictionary(child, prefix === '' ? key : `${prefix}.${key}`, result);
+  }
+  return result;
+}
+
+function placeholders(value: string): string[] {
+  return [...value.matchAll(/\{([^}]+)\}/gu)].map((match) => match[1] ?? '').sort();
+}
+
+describe('dictionary parity', () => {
+  const english = flattenDictionary(getDictionary(Locale.EN));
+
+  it.each(Object.values(Locale))('%s has identical keys and placeholders', (locale) => {
+    const localized = flattenDictionary(getDictionary(locale));
+    expect(Object.keys(localized).sort()).toEqual(Object.keys(english).sort());
+    for (const key of Object.keys(english)) {
+      expect(placeholders(localized[key] ?? '')).toEqual(placeholders(english[key] ?? ''));
+    }
+  });
+
+  it.each([Locale.JA, Locale.TH, Locale.FA, Locale.ZH])(
+    '%s translates representative application controls natively',
+    (locale) => {
+      expect(getTranslation(locale, 'common.save')).not.toBe(
+        getTranslation(Locale.EN, 'common.save'),
+      );
+      expect(getTranslation(locale, 'common.cancel')).not.toBe(
+        getTranslation(Locale.EN, 'common.cancel'),
+      );
+    },
+  );
+});
+
 describe('getTranslation', () => {
   // ---------- basic lookups ----------
 
