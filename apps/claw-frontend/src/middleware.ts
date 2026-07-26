@@ -67,6 +67,7 @@ export function middleware(request: NextRequest): NextResponse {
     nonce,
     isDev: process.env.NODE_ENV !== 'production',
     adsenseEnabled,
+    upgradeInsecureRequests: request.nextUrl.protocol === 'https:',
   });
 
   const requestHeaders = new Headers(request.headers);
@@ -121,8 +122,8 @@ export const config = {
      * Match all request paths except:
      * - api routes
      * - _next (static files)
-     * - favicon, images, assets
+     * - public files with an extension (images, fonts, and other assets)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.svg$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*$).*)',
   ],
 };

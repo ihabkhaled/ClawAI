@@ -7,7 +7,11 @@ import {
   StructuredDataType,
 } from '@/enums';
 import { Locale } from '@/enums/locale.enum';
-import type { ContentRegistryEntry, PublicContentDefinition } from '@/types/content-registry.types';
+import type {
+  ContentRegistryEntry,
+  LocalizedContentMetadata,
+  PublicContentDefinition,
+} from '@/types/content-registry.types';
 
 // Canonical source of truth for every public marketing/editorial page —
 // nav, sitemap.ts, robots middleware, and (later) the AdSense eligibility
@@ -215,8 +219,9 @@ const ENGLISH_CONTENT_ENTRIES: ReadonlyArray<ContentRegistryEntry> = [
  *
  * The compatibility `CONTENT_REGISTRY` export below remains temporarily
  * flattened for page components that predate URL locales. New sitemap,
- * metadata and route-visibility code must use these definitions so an
- * English record can never make an untranslated locale indexable.
+ * metadata and route-visibility code must use these definitions. Published
+ * public pages intentionally expose every supported locale URL; the route's
+ * locale selects the matching UI dictionary when the page renders.
  */
 export const PUBLIC_CONTENT_DEFINITIONS: ReadonlyArray<PublicContentDefinition> =
   ENGLISH_CONTENT_ENTRIES.map((entry): PublicContentDefinition => ({
@@ -229,15 +234,18 @@ export const PUBLIC_CONTENT_DEFINITIONS: ReadonlyArray<PublicContentDefinition> 
     relatedSlugs: entry.relatedSlugs,
     locales:
       entry.status === ContentLifecycleStatus.PUBLISHED
-        ? {
-            [entry.locale]: {
-              title: entry.title,
-              description: entry.description,
-              lastReviewed: entry.lastReviewed,
-              reviewStatus: entry.reviewStatus,
-              indexability: entry.indexability,
-            },
-          }
+        ? (Object.fromEntries(
+            Object.values(Locale).map((locale) => [
+              locale,
+              {
+                title: entry.title,
+                description: entry.description,
+                lastReviewed: entry.lastReviewed,
+                reviewStatus: entry.reviewStatus,
+                indexability: entry.indexability,
+              },
+            ]),
+          ) as Record<Locale, LocalizedContentMetadata>)
         : {},
   }));
 

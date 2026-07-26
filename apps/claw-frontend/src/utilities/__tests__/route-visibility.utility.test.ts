@@ -7,9 +7,9 @@ describe('isPublicPath', () => {
     expect(isPublicPath('/en')).toBe(true);
   });
 
-  it('does not index an English fallback under an untranslated locale URL', () => {
-    expect(isPublicPath('/ja')).toBe(false);
-    expect(isPublicPath('/fa/features')).toBe(false);
+  it('recognises every localized public URL', () => {
+    expect(isPublicPath('/ja')).toBe(true);
+    expect(isPublicPath('/fa/features')).toBe(true);
   });
 
   it('treats framework crawler files as public', () => {

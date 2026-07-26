@@ -60,7 +60,7 @@ describe('content registry integrity', () => {
   // reviewing it, since publishing also makes it indexable and linkable.
   it('publishes exactly the home, contact and six topic pages (all indexable)', () => {
     const published = getPublishedPages();
-    const paths = published.map((page) => page.canonicalPath).sort();
+    const paths = [...new Set(published.map((page) => page.canonicalPath))].sort();
     expect(paths).toEqual([
       '/',
       '/architecture',
@@ -88,7 +88,7 @@ describe('getIndexablePages / getAdEligiblePages defense in depth', () => {
   // surfaces, so they are published and indexable but never ad surfaces.
   it('returns only reviewed, published editorial pages as ad surfaces', () => {
     const eligible = getAdEligiblePages();
-    const paths = eligible.map((page) => page.canonicalPath).sort();
+    const paths = [...new Set(eligible.map((page) => page.canonicalPath))].sort();
     expect(paths).toEqual([
       '/',
       '/architecture',
@@ -128,24 +128,30 @@ describe('getPageBySlug / isKnownPublicPath', () => {
 });
 
 describe('localized publication boundary', () => {
-  it('never promotes English metadata into an untranslated locale', () => {
-    expect(getIndexablePagesForLocale(Locale.EN).length).toBeGreaterThan(0);
-    expect(getIndexablePagesForLocale(Locale.JA)).toEqual([]);
-    expect(getIndexablePagesForLocale(Locale.TH)).toEqual([]);
-    expect(getIndexablePagesForLocale(Locale.FA)).toEqual([]);
-    expect(getIndexablePagesForLocale(Locale.ZH)).toEqual([]);
+  it('publishes every reviewed public page under every locale URL', () => {
+    const expectedCount = getIndexablePagesForLocale(Locale.EN).length;
+    for (const locale of Object.values(Locale)) {
+      expect(getIndexablePagesForLocale(locale)).toHaveLength(expectedCount);
+    }
   });
 
-  it('resolves only metadata that exists for the requested locale', () => {
+  it('resolves metadata for every supported locale', () => {
     expect(getPublishedPagesForLocale(Locale.EN).length).toBe(8);
-    expect(getPublishedPagesForLocale(Locale.JA)).toEqual([]);
+    expect(getPublishedPagesForLocale(Locale.JA).length).toBe(8);
     expect(getPageBySlugAndLocale('features', Locale.EN)?.title).toContain('Features');
-    expect(getPageBySlugAndLocale('features', Locale.JA)).toBeUndefined();
+    expect(getPageBySlugAndLocale('features', Locale.JA)?.title).toContain('Features');
   });
 
-  it('creates localized canonicals and alternates without declaring fallback locales', () => {
+  it('creates localized canonicals and alternates for every language', () => {
     expect(getLocalizedCanonicalPath('features', Locale.EN)).toBe('/en/features');
-    expect(getLocalizedCanonicalPath('features', Locale.JA)).toBeUndefined();
-    expect(getLanguageAlternates('features')).toEqual({ en: '/en/features' });
+    expect(getLocalizedCanonicalPath('features', Locale.JA)).toBe('/ja/features');
+    expect(getLanguageAlternates('features')).toEqual(
+      expect.objectContaining({
+        en: '/en/features',
+        ar: '/ar/features',
+        ja: '/ja/features',
+        zh: '/zh/features',
+      }),
+    );
   });
 });

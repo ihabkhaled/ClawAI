@@ -43,4 +43,12 @@ describe('middleware X-Robots-Tag enforcement', () => {
     expect(response.status).toBe(308);
     expect(response.headers.get('location')).toBe('https://claw.example/ja/contact');
   });
+
+  it('does not upgrade subresources when serving an HTTP origin', () => {
+    const response = middleware(new NextRequest(new URL('/en/contact', 'http://localhost:3000')));
+
+    expect(response.headers.get('content-security-policy')).not.toContain(
+      'upgrade-insecure-requests',
+    );
+  });
 });

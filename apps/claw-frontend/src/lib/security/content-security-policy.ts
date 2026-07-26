@@ -56,7 +56,7 @@ export function generateCspNonce(): string {
 //   inline <style> blocks that cannot carry a nonce reliably; this is the
 //   documented, accepted relaxation and does not enable script execution.
 export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions): string {
-  const { nonce, isDev, adsenseEnabled } = options;
+  const { nonce, isDev, adsenseEnabled, upgradeInsecureRequests } = options;
 
   // In development we must NOT emit a nonce or 'strict-dynamic': a CSP3 browser
   // ignores 'unsafe-inline' the moment a nonce/hash is present, which would
@@ -102,7 +102,7 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
     `frame-ancestors 'none'`,
     `manifest-src 'self'`,
     `worker-src 'self' blob:`,
-    ...(isDev ? [] : ['upgrade-insecure-requests']),
+    ...(!isDev && upgradeInsecureRequests ? ['upgrade-insecure-requests'] : []),
   ];
 
   return directives.join('; ');

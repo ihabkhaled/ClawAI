@@ -36,6 +36,8 @@ describe('sitemap index route', () => {
       const xml = await response.text();
 
       expect(xml).toContain('https://claw.example/sitemaps/en/pages-1.xml');
+      expect(xml).toContain('https://claw.example/sitemaps/ar/pages-1.xml');
+      expect(xml).toContain('https://claw.example/sitemaps/zh/pages-1.xml');
       expect(xml).toContain('https://claw.example/sitemaps/ja/chats-1.xml');
       expect(xml).toContain('https://claw.example/sitemaps/ja/chats-2.xml');
       expect(xml).not.toContain('/share/chat/');

@@ -71,7 +71,7 @@ describe('token-vault', () => {
       const envelope = encryptGatewayToken(TOKEN, KEY, 1, CONTEXT);
       const parts = envelope.split('.');
       const cipher = parts[3] ?? '';
-      parts[3] = `${cipher.slice(0, -1)}${cipher.at(-1) === 'A' ? 'B' : 'A'}`;
+      parts[3] = `${cipher.startsWith('A') ? 'B' : 'A'}${cipher.slice(1)}`;
 
       expect(() => decryptGatewayToken(parts.join('.'), KEY, CONTEXT)).toThrow();
     });
