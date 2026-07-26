@@ -366,13 +366,17 @@
       "producers": []
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-payment-service"
+      ],
       "key": "BILLING_PAYMENT_CHARGEBACK",
       "pattern": "billing.payment.chargeback",
       "producers": []
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-payment-service"
+      ],
       "key": "BILLING_PAYMENT_REFUNDED",
       "pattern": "billing.payment.refunded",
       "producers": []
@@ -408,7 +412,9 @@
       "producers": []
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-payment-service"
+      ],
       "key": "BILLING_SUBSCRIPTION_PAST_DUE",
       "pattern": "billing.subscription.past_due",
       "producers": []
@@ -420,7 +426,9 @@
       "producers": []
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-payment-service"
+      ],
       "key": "BILLING_SUBSCRIPTION_SUSPENDED",
       "pattern": "billing.subscription.suspended",
       "producers": []

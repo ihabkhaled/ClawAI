@@ -42,7 +42,16 @@ describe('PaymentActivationService', () => {
   beforeEach(() => {
     sessions = { findById: jest.fn(), markFailed: jest.fn() };
     customers = { ensureForUser: jest.fn().mockResolvedValue({ id: 'bc-1' }) };
-    lifecycle = { activateFromVerifiedPayment: jest.fn().mockResolvedValue('sub-1') };
+    // Returns an ActivationResult, not a bare id: activation now also records the
+    // payment transaction and issues the invoice, and the caller reports the
+    // invoice number in its log line.
+    lifecycle = {
+      activateFromVerifiedPayment: jest.fn().mockResolvedValue({
+        subscriptionId: 'sub-1',
+        transactionId: 'tx-1',
+        invoiceNumber: 'CLAW-00000001',
+      }),
+    };
     jest
       .spyOn(AppConfig, 'get')
       .mockReturnValue({ BILLING_GRACE_PERIOD_MS: 259_200_000 } as ReturnType<

@@ -65,7 +65,7 @@ export class PaymentActivationService {
     const periodStartMs = Date.now();
     const periodEndMs = resolvePeriodEndMs(periodStartMs, session.billingInterval);
 
-    const subscriptionId = await this.lifecycle.activateFromVerifiedPayment({
+    const activation = await this.lifecycle.activateFromVerifiedPayment({
       paymentVerified: true,
       userId: session.userId,
       billingCustomerId: customer.id,
@@ -85,9 +85,18 @@ export class PaymentActivationService {
       encryptedGatewaySubscriptionId: null,
       gatewaySubscriptionLookupHash: null,
       correlationId: payment.correlationId,
+      // Carried through so a later refund or chargeback naming this capture can be
+      // paired with the charge it reverses.
+      providerTransactionId: payment.providerTransactionId,
+      providerOrderId: session.providerOrderId,
+      providerAmountMinor: payment.amountMinor,
+      providerCurrency: payment.currency,
     });
 
-    this.logger.log(`activate: subscription=${subscriptionId} from session=${session.id}`);
-    return subscriptionId;
+    this.logger.log(
+      `activate: subscription=${activation.subscriptionId} invoice=${activation.invoiceNumber} ` +
+        `from session=${session.id}`,
+    );
+    return activation.subscriptionId;
   }
 }
