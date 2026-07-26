@@ -66,7 +66,20 @@ export type PublicChatSitemapEntry = {
   updatedAt: string;
 };
 
-/** Body of the publish request. The owner id comes from the JWT, never here. */
+/**
+ * Body of the publish request. The owner id comes from the JWT, never here.
+ *
+ * `acknowledgedPublicWarning` is `true` and nothing else: the backend DTO declares
+ * it `z.literal(true)`, so the field is not a preference being reported but a
+ * precondition being asserted. Typing it as `boolean` would let a caller send
+ * `false` and get a 400 it could not have anticipated from the type.
+ */
 export type PublishChatShareInput = {
+  allowIndexing: boolean;
+  acknowledgedPublicWarning: true;
+};
+
+/** Body of the indexing PATCH. Deliberately narrower than publish. */
+export type UpdateChatShareIndexingInput = {
   allowIndexing: boolean;
 };

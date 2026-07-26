@@ -3354,6 +3354,11 @@ export const en: TranslationDictionary = {
       title: 'Share this chat',
       description: 'Publish a read-only copy of this conversation at a public link.',
     },
+    errors: {
+      emptyThread: 'This conversation has no messages yet, so there is nothing to share.',
+      shareNotFound: 'This chat is not shared. Create a link first.',
+      invalidShareId: 'That share link is not valid.',
+    },
     warning: {
       heading: 'Before you publish',
       acknowledge: 'I understand what publishing this chat makes public.',

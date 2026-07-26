@@ -3406,6 +3406,11 @@ export const es: TranslationDictionary = {
       title: 'Compartir este chat',
       description: 'Publica una copia de solo lectura de esta conversación en un enlace público.',
     },
+    errors: {
+      emptyThread: 'Esta conversación aún no tiene mensajes, así que no hay nada que compartir.',
+      shareNotFound: 'Este chat no está compartido. Crea un enlace primero.',
+      invalidShareId: 'Ese enlace para compartir no es válido.',
+    },
     warning: {
       heading: 'Antes de publicar',
       acknowledge: 'Entiendo qué se hace público al publicar este chat.',

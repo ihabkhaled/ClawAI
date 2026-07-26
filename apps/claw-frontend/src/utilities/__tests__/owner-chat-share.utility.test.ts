@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { ChatShareStatus } from '@/enums/chat-share.enum';
+
 import { asOwnerChatShare } from '../owner-chat-share.utility';
 
 // Regression cover for a shipped bug: the share dialog showed its PUBLISHED state
@@ -42,6 +44,7 @@ describe('asOwnerChatShare', () => {
     const share = {
       publicShareId: 'AbCdEfGhIjKlMnOpQrStUv',
       publicUrl: 'https://claw.example/share/chat/AbCdEfGhIjKlMnOpQrStUv',
+      status: ChatShareStatus.ACTIVE,
       snapshotVersion: 2,
       messageCount: 8,
     };
@@ -52,8 +55,26 @@ describe('asOwnerChatShare', () => {
   it('accepts a share carrying fields the frontend does not know about', () => {
     // Keying on one required field rather than validating the whole shape means a
     // field added by the backend cannot make valid payloads start failing.
-    const share = { publicShareId: 'AbCdEfGhIjKlMnOpQrStUv', somethingNew: true };
+    const share = {
+      publicShareId: 'AbCdEfGhIjKlMnOpQrStUv',
+      status: ChatShareStatus.ACTIVE,
+      somethingNew: true,
+    };
 
     expect(asOwnerChatShare(share)).not.toBeNull();
+  });
+
+  /**
+   * A revoked share is not a share. The row outlives revocation so a later
+   * re-publish can reuse it, but showing it to the owner claims a private
+   * conversation is public — and every button in that state acts on a share the
+   * backend considers gone.
+   */
+  it.each([
+    ['REVOKED', ChatShareStatus.REVOKED as string],
+    ['a status the frontend does not recognise', 'SOMETHING_ELSE'],
+    ['a missing status', undefined],
+  ])('treats %s as no share', (_label, status) => {
+    expect(asOwnerChatShare({ publicShareId: 'AbCdEfGhIjKlMnOpQrStUv', status })).toBeNull();
   });
 });

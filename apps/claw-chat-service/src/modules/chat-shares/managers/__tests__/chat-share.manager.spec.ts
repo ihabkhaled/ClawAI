@@ -375,6 +375,21 @@ describe('ChatShareManager', () => {
 
       expect(view?.hasUnpublishedMessages).toBe(false);
     });
+
+    /**
+     * The row survives revocation so a later re-publish can reuse it. Returning
+     * it here made the share dialog render the published state — live public
+     * link, "Stop sharing", a version number — for a conversation that was in
+     * fact private, and every button in that state then acted on a share the
+     * rest of the backend considered gone.
+     */
+    it('reports a revoked share as not shared', async () => {
+      shares.findByThreadId.mockResolvedValue(
+        makeShare({ status: ChatShareStatus.REVOKED, visibility: ChatShareVisibility.PRIVATE }),
+      );
+
+      await expect(manager.getForOwner('thread-1', 'user-1')).resolves.toBeNull();
+    });
   });
 
   describe('domain events', () => {

@@ -1,5 +1,9 @@
 import { apiClient } from '@/services/shared/api-client';
-import type { OwnerChatShare, PublishChatShareInput } from '@/types/chat-share.types';
+import type {
+  OwnerChatShare,
+  PublishChatShareInput,
+  UpdateChatShareIndexingInput,
+} from '@/types/chat-share.types';
 import { asOwnerChatShare } from '@/utilities/owner-chat-share.utility';
 
 /**
@@ -37,8 +41,17 @@ export const chatSharesRepository = {
     return response.data;
   },
 
-  /** Changes indexing without republishing the snapshot. */
-  async updateIndexing(threadId: string, input: PublishChatShareInput): Promise<OwnerChatShare> {
+  /**
+   * Changes indexing without republishing the snapshot.
+   *
+   * Takes the narrower input type on purpose: the backend PATCH schema accepts
+   * `allowIndexing` alone, and re-asserting the publication acknowledgement on
+   * every toggle would imply the warning is being re-consented to when it is not.
+   */
+  async updateIndexing(
+    threadId: string,
+    input: UpdateChatShareIndexingInput,
+  ): Promise<OwnerChatShare> {
     const response = await apiClient.patch<OwnerChatShare>(
       `/chat-threads/${threadId}/share`,
       input,

@@ -3311,6 +3311,12 @@ export type TranslationDictionary = {
       title: string;
       description: string;
     };
+    /** Named causes from the backend, shown in place of the generic failure. */
+    errors: {
+      emptyThread: string;
+      shareNotFound: string;
+      invalidShareId: string;
+    };
     warning: {
       heading: string;
       acknowledge: string;

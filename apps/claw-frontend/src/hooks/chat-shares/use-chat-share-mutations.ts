@@ -6,6 +6,7 @@ import { useTranslation } from '@/lib/i18n';
 import { chatSharesRepository } from '@/repositories/chat-shares/chat-shares.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UseChatShareMutationsReturn } from '@/types/chat-share-hook.types';
+import { resolveChatShareErrorKey } from '@/utilities/chat-share-error.utility';
 import { showToast } from '@/utilities/toast.utility';
 
 /**
@@ -36,9 +37,18 @@ export function useChatShareMutations(threadId: string | null): UseChatShareMuta
     [queryClient, t],
   );
 
+  /**
+   * `messageKey` is the generic "this action failed" line. When the backend
+   * named a specific cause, that wins: "this conversation has no messages yet"
+   * tells the owner what to do, "Could not publish this chat" does not.
+   *
+   * The resolved message is also passed to the toast as its fallback, because
+   * `apiError` would otherwise print `error.message` — which for a
+   * BusinessException is the raw key `chat.share.errors.EMPTY_THREAD`.
+   */
   const fail = useCallback(
     (mutationError: unknown, messageKey: string): void => {
-      const message = t(messageKey);
+      const message = t(resolveChatShareErrorKey(mutationError, messageKey));
       setPendingAction(null);
       setError(message);
       showToast.apiError(mutationError, message);
@@ -48,7 +58,17 @@ export function useChatShareMutations(threadId: string | null): UseChatShareMuta
 
   const publishMutation = useMutation({
     mutationFn: (allowIndexing: boolean) =>
-      chatSharesRepository.publish(threadId as string, { allowIndexing }),
+      chatSharesRepository.publish(threadId as string, {
+        allowIndexing,
+        // The backend declares this `z.literal(true)` — it is a precondition the
+        // request asserts, not a preference it reports. Omitting it was a 400 on
+        // every publish attempt, which left the whole feature unusable: no share
+        // was ever created, so every follow-up call 404'd.
+        //
+        // The dialog independently refuses to call this until the user has ticked
+        // the acknowledgement, so asserting it here is not a bypass of that gate.
+        acknowledgedPublicWarning: true,
+      }),
     onSuccess: () => settle('chatShare.toast.published'),
     onError: (mutationError: unknown) => fail(mutationError, 'chatShare.toast.publishFailed'),
   });

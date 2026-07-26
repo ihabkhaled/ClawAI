@@ -1,3 +1,4 @@
+import { ChatShareStatus } from '@/enums/chat-share.enum';
 import type { OwnerChatShare } from '@/types/chat-share.types';
 
 /**
@@ -14,6 +15,12 @@ import type { OwnerChatShare } from '@/types/chat-share.types';
  * one field that cannot be absent from a genuine share, and checking a single
  * required field means a future added field cannot accidentally make valid
  * payloads fail this check.
+ *
+ * A REVOKED share is also "no share". The row outlives revocation so a later
+ * re-publish can reuse it, but presenting it to the owner claims a private
+ * conversation is public — the worst direction for this particular lie to run.
+ * The backend now filters these out too; this is the second lock on that door,
+ * and it is the one that holds against an older backend.
  */
 export function asOwnerChatShare(payload: unknown): OwnerChatShare | null {
   if (payload === null || payload === undefined || typeof payload !== 'object') {
@@ -22,6 +29,9 @@ export function asOwnerChatShare(payload: unknown): OwnerChatShare | null {
   const candidate = payload as Partial<OwnerChatShare>;
   const publicShareId = candidate.publicShareId;
   if (typeof publicShareId !== 'string' || publicShareId.length === 0) {
+    return null;
+  }
+  if (candidate.status !== ChatShareStatus.ACTIVE) {
     return null;
   }
   return candidate as OwnerChatShare;
