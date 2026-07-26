@@ -32,4 +32,15 @@ export const th: TranslationDictionary = {
     langPersian: 'ภาษาเปอร์เซีย',
     langSimplifiedChinese: 'ภาษาจีนตัวย่อ',
   },
+  billing: {
+    ...en.billing,
+    paymentMethods: {
+      ...en.billing.paymentMethods,
+      setupFailed: 'ไม่สามารถเริ่มตั้งค่าวิธีชำระเงินอย่างปลอดภัยได้',
+      add: 'เพิ่มวิธีชำระเงิน',
+      adding: 'กำลังเปิด…',
+      consent:
+        'เมื่อดำเนินการต่อ Paymob จะเปิดขึ้น การบันทึกโทเค็นบัตรที่ตรวจสอบแล้วถือว่าคุณยินยอมให้จัดเก็บวิธีชำระเงินนี้',
+    },
+  },
 };

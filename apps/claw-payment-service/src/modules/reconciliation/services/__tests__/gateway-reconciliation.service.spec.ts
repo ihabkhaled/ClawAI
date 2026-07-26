@@ -16,7 +16,7 @@ function checkout(id: string, overrides: Partial<CheckoutSession> = {}): Checkou
   return {
     id,
     userId: 'user-1',
-    purpose: 'SUBSCRIPTION',
+    purpose: 'NEW_SUBSCRIPTION',
     status: CheckoutSessionStatus.AWAITING_PAYMENT,
     gateway: BillingGateway.PAYPAL,
     planId: 'plan-pro',
@@ -31,6 +31,7 @@ function checkout(id: string, overrides: Partial<CheckoutSession> = {}): Checkou
     fxFinalRateScaled: null,
     idempotencyKey: `checkout:${id}`,
     stateNonce: 'nonce',
+    paymentMethodConsentedAt: null,
     providerOrderId: `order:${id}`,
     hostedCheckoutUrl: null,
     subscriptionId: null,

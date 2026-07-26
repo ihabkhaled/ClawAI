@@ -17,7 +17,7 @@ export function checkoutFixture(overrides: Partial<CheckoutSession> = {}): Check
   return {
     id: 'checkout-1',
     userId: 'user-1',
-    purpose: 'SUBSCRIPTION',
+    purpose: 'NEW_SUBSCRIPTION',
     status: CheckoutSessionStatus.AWAITING_PAYMENT,
     gateway: BillingGateway.PAYPAL,
     planId: 'plan-pro',
@@ -32,6 +32,7 @@ export function checkoutFixture(overrides: Partial<CheckoutSession> = {}): Check
     fxFinalRateScaled: null,
     idempotencyKey: 'checkout-1',
     stateNonce: 'nonce',
+    paymentMethodConsentedAt: null,
     providerOrderId: 'order-1',
     hostedCheckoutUrl: null,
     subscriptionId: null,

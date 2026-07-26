@@ -3426,6 +3426,10 @@ export type TranslationDictionary = {
     };
     paymentMethods: {
       removeFailed: string;
+      setupFailed: string;
+      add: string;
+      adding: string;
+      consent: string;
       title: string;
       empty: string;
       error: string;

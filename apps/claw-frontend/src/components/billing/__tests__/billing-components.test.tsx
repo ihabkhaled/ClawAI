@@ -101,6 +101,8 @@ describe('PaymentMethodList', () => {
         methods={methods}
         isLoading={false}
         isError={false}
+        onAdd={vi.fn()}
+        isAdding={false}
         onRemove={vi.fn()}
         pendingId="pm-1"
         t={t}
@@ -119,6 +121,8 @@ describe('PaymentMethodList', () => {
         methods={methods}
         isLoading={false}
         isError={false}
+        onAdd={vi.fn()}
+        isAdding={false}
         onRemove={onRemove}
         pendingId={null}
         t={t}
@@ -140,11 +144,47 @@ describe('PaymentMethodList', () => {
         methods={[]}
         isLoading={false}
         isError={false}
+        onAdd={vi.fn()}
+        isAdding={false}
         onRemove={vi.fn()}
         pendingId={null}
         t={t}
       />,
     );
     expect(screen.getByText('billing.paymentMethods.empty')).toBeInTheDocument();
+  });
+
+  it('records the explicit add action and disables it while setup starts', async () => {
+    const onAdd = vi.fn();
+    const { rerender } = render(
+      <PaymentMethodList
+        methods={[]}
+        isLoading={false}
+        isError={false}
+        onAdd={onAdd}
+        isAdding={false}
+        onRemove={vi.fn()}
+        pendingId={null}
+        t={t}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'billing.paymentMethods.add' }));
+    expect(onAdd).toHaveBeenCalledOnce();
+    expect(screen.getByText('billing.paymentMethods.consent')).toBeInTheDocument();
+
+    rerender(
+      <PaymentMethodList
+        methods={[]}
+        isLoading={false}
+        isError={false}
+        onAdd={onAdd}
+        isAdding
+        onRemove={vi.fn()}
+        pendingId={null}
+        t={t}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'billing.paymentMethods.adding' })).toBeDisabled();
   });
 });

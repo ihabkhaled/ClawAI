@@ -32,4 +32,15 @@ export const fa: TranslationDictionary = {
     langPersian: 'فارسی',
     langSimplifiedChinese: 'چینی ساده‌شده',
   },
+  billing: {
+    ...en.billing,
+    paymentMethods: {
+      ...en.billing.paymentMethods,
+      setupFailed: 'راه‌اندازی امن روش پرداخت آغاز نشد.',
+      add: 'افزودن روش',
+      adding: 'در حال باز کردن…',
+      consent:
+        'با ادامه، Paymob باز می‌شود. ذخیره توکن تأییدشده کارت به معنی رضایت شما برای نگهداری این روش پرداخت است.',
+    },
+  },
 };

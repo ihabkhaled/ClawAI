@@ -1733,6 +1733,11 @@
           "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/billing/payment-method-setup-sessions",
+          "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/billing/payment-methods",
           "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
@@ -6703,7 +6708,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4226
+        "value": 4230
       },
       "localeCount": 13,
       "locales": [
@@ -8240,7 +8245,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 196
+        "testFiles": 198
       },
       "claw-health-service": {
         "runner": "jest",
@@ -8264,7 +8269,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 51
+        "testFiles": 55
       },
       "claw-research-service": {
         "runner": "jest",
@@ -8979,7 +8984,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 532,
+    "endpointCount": 533,
     "envVarCount": 335,
     "eventCount": 165,
     "frontendRouteCount": 98,
@@ -8991,7 +8996,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 2,
-    "totalTestFiles": 635,
+    "totalTestFiles": 641,
     "workspaceCount": 25
   }
 }

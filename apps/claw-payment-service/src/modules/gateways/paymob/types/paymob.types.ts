@@ -14,6 +14,11 @@ export type PaymobIntentionResult = {
   clientSecret: string;
 };
 
+export type PaymobSetupIntentionInput = {
+  checkoutSessionId: string;
+  billingEmail: string;
+};
+
 export type PaymobVerificationResult = {
   verified: boolean;
   transactionId: string | null;

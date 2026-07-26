@@ -7,6 +7,10 @@ import {
   ReconciliationResolution,
 } from '../../../common/enums/reconciliation.enum';
 import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
+import {
+  isSubscriptionCheckoutSession,
+  type SubscriptionCheckoutSession,
+} from '../../billing/utilities/checkout-session-purpose.utility';
 import { PaymobAdapter } from '../../gateways/paymob/paymob.adapter';
 import { PaypalAdapter } from '../../gateways/paypal/paypal.adapter';
 import { PaymentActivationService } from '../../webhooks/services/payment-activation.service';
@@ -60,6 +64,14 @@ export class GatewayReconciliationService {
     runId: string,
     session: CheckoutSession,
   ): Promise<GatewayReconciliationResult> {
+    if (!isSubscriptionCheckoutSession(session)) {
+      return this.quarantine(
+        runId,
+        session,
+        ReconciliationClassification.MISSING_PROVIDER_REFERENCE,
+        null,
+      );
+    }
     if (session.providerOrderId === null) {
       return this.quarantine(
         runId,
@@ -85,7 +97,9 @@ export class GatewayReconciliationService {
     }
   }
 
-  private async readGateway(session: CheckoutSession): Promise<ClassifiedGatewayResult> {
+  private async readGateway(
+    session: SubscriptionCheckoutSession,
+  ): Promise<ClassifiedGatewayResult> {
     const expected = {
       amountMinor: session.chargeAmountMinor,
       currency: session.chargeCurrency,

@@ -8,12 +8,14 @@ import { PAYMOB_CARD_TOKEN_EVENT } from '../constants/webhook.constants';
 import { WebhookEventRepository } from '../repositories/webhook-event.repository';
 import { readCardExpiry, readCardLast4 } from '../utilities/paymob-card.utility';
 import {
+  asBoundedIdentifier,
   asBoundedString,
   asRecord,
   hashWebhookPayload,
   parseWebhookBody,
 } from '../utilities/webhook-payload.utility';
 import { type WebhookHandlingResult, WebhookOutcome } from '../types/webhook.types';
+import { CheckoutSessionPurpose } from '../../../generated/prisma';
 
 /**
  * Paymob's card-token callback — the only way a saved card enters the system.
@@ -87,7 +89,7 @@ export class PaymobCardTokenService {
     await this.events.markProcessing(claimed.id);
 
     // Step 3 — whose card is this? Answered from our own session record.
-    const orderId = asBoundedString(card['order_id'], 64);
+    const orderId = asBoundedIdentifier(card['order_id'], 64);
     const session =
       orderId === null
         ? null
@@ -103,6 +105,10 @@ export class PaymobCardTokenService {
     // Step 4 — vault. Consent is the vault's own precondition; a session that did
     // not ask to save the card has no consent timestamp and is refused there.
     const expiry = readCardExpiry(card);
+    const consentedAt =
+      session.purpose === CheckoutSessionPurpose.PAYMENT_METHOD_SETUP
+        ? session.paymentMethodConsentedAt
+        : new Date();
     const vaulted = await this.vault.vaultCard({
       userId: session.userId,
       gateway: BillingGateway.PAYMOB,
@@ -116,9 +122,12 @@ export class PaymobCardTokenService {
       // Reaching this callback at all means the customer ticked "save this card"
       // in Paymob's hosted form — that tick IS the consent, and this is when it
       // happened.
-      consentedAt: new Date(),
+      consentedAt,
     });
 
+    if (session.purpose === CheckoutSessionPurpose.PAYMENT_METHOD_SETUP) {
+      await this.sessions.markPaymentMethodSetupCompleted(session.id);
+    }
     await this.events.markProcessed(claimed.id, null, vaulted.paymentMethodId);
     this.logger.log(
       `handle: card vaulted method=${vaulted.paymentMethodId} ` +

@@ -11,6 +11,8 @@ import {
   PAYMOB_PATHS,
   PAYMOB_RETRY_BASE_DELAY_MS,
   PAYMOB_RETRYABLE_STATUS_CODES,
+  PAYMOB_SETUP_AMOUNT_MINOR,
+  PAYMOB_SETUP_DESCRIPTION,
 } from './constants/paymob.constants';
 import {
   paymobCardTokenSchema,
@@ -24,6 +26,7 @@ import {
   type PaymobIntentionInput,
   type PaymobIntentionResult,
   type PaymobSavedCard,
+  type PaymobSetupIntentionInput,
   type PaymobVerificationResult,
 } from './types/paymob.types';
 
@@ -77,6 +80,41 @@ export class PaymobAdapter {
       true,
     );
 
+    return {
+      intentionId: String(intention.id),
+      clientSecret: intention.client_secret,
+    };
+  }
+
+  async createSetupIntention(input: PaymobSetupIntentionInput): Promise<PaymobIntentionResult> {
+    const config = AppConfig.get();
+    if (config.PAYMOB_SECRET_KEY === undefined || config.PAYMOB_CARD_INTEGRATION_ID === undefined) {
+      throw new BillingException(BillingErrorCode.PAYMENT_METHOD_UNAVAILABLE);
+    }
+    const intention = await this.send(
+      HttpMethod.POST,
+      PAYMOB_PATHS.INTENTION,
+      paymobIntentionResponseSchema,
+      {
+        amount: PAYMOB_SETUP_AMOUNT_MINOR,
+        currency: config.PAYMOB_CURRENCY,
+        payment_methods: [Number.parseInt(config.PAYMOB_CARD_INTEGRATION_ID, 10)],
+        special_reference: input.checkoutSessionId,
+        items: [],
+        billing_data: {
+          email: input.billingEmail,
+          first_name: 'ClawAI',
+          last_name: 'Subscriber',
+          phone_number: 'NA',
+        },
+        extras: {
+          checkoutSessionId: input.checkoutSessionId,
+          paymentMethodSetup: true,
+        },
+        description: PAYMOB_SETUP_DESCRIPTION,
+      },
+      true,
+    );
     return {
       intentionId: String(intention.id),
       clientSecret: intention.client_secret,

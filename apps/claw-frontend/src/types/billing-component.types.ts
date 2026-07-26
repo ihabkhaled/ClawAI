@@ -84,6 +84,8 @@ export type PaymentMethodListProps = {
   methods: PaymentMethodView[];
   isLoading: boolean;
   isError: boolean;
+  onAdd: () => void;
+  isAdding: boolean;
   onRemove: (id: string) => void;
   // Per-row, so removing one card does not disable every other row.
   pendingId: string | null;

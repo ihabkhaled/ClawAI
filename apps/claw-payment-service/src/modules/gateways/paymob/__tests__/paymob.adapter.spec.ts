@@ -86,6 +86,32 @@ describe('PaymobAdapter', () => {
     });
   });
 
+  describe('createSetupIntention', () => {
+    it('creates a zero-value tokenization intention without plan or price fields', async () => {
+      mockHttp.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: { id: 'SETUP1', client_secret: 'setup_secret' },
+      });
+
+      await expect(
+        adapter.createSetupIntention({
+          checkoutSessionId: 'setup-1',
+          billingEmail: 'user@example.com',
+        }),
+      ).resolves.toEqual({ intentionId: 'SETUP1', clientSecret: 'setup_secret' });
+
+      const body = mockHttp.mock.calls[0]?.[0]?.body as Record<string, unknown>;
+      expect(body).toMatchObject({
+        amount: 0,
+        currency: 'EGP',
+        special_reference: 'setup-1',
+        items: [],
+      });
+      expect(JSON.stringify(body)).not.toContain('planId');
+    });
+  });
+
   describe('verifyCallback', () => {
     const signed = (payload: Record<string, unknown>): string => computePaymobHmac(payload, SECRET);
 

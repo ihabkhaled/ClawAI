@@ -32,4 +32,14 @@ export const zh: TranslationDictionary = {
     langPersian: '波斯语',
     langSimplifiedChinese: '简体中文',
   },
+  billing: {
+    ...en.billing,
+    paymentMethods: {
+      ...en.billing.paymentMethods,
+      setupFailed: '无法启动安全的付款方式设置。',
+      add: '添加付款方式',
+      adding: '正在打开…',
+      consent: '继续操作将打开 Paymob。保存已验证的银行卡令牌即表示您同意存储此付款方式。',
+    },
+  },
 };

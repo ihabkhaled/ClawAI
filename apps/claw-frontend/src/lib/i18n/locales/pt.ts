@@ -3514,6 +3514,11 @@ export const pt: TranslationDictionary = {
     },
     paymentMethods: {
       removeFailed: 'Não foi possível remover esse método de pagamento.',
+      setupFailed: 'Não foi possível iniciar a configuração segura do método de pagamento.',
+      add: 'Adicionar método',
+      adding: 'Abrindo…',
+      consent:
+        'Continuar abre o Paymob. Ao salvar o token verificado do cartão, você concorda em armazenar este método de pagamento.',
       title: 'Métodos de pagamento',
       empty: 'Nenhum método de pagamento salvo ainda.',
       error: 'Não foi possível carregar seus métodos de pagamento.',

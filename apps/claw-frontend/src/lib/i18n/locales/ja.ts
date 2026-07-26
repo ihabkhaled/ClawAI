@@ -32,4 +32,15 @@ export const ja: TranslationDictionary = {
     langPersian: 'ペルシア語',
     langSimplifiedChinese: '簡体字中国語',
   },
+  billing: {
+    ...en.billing,
+    paymentMethods: {
+      ...en.billing.paymentMethods,
+      setupFailed: '安全な支払い方法の設定を開始できませんでした。',
+      add: '支払い方法を追加',
+      adding: '開いています…',
+      consent:
+        '続行するとPaymobが開きます。検証済みカードトークンを保存することで、この支払い方法の保存に同意したものとみなされます。',
+    },
+  },
 };

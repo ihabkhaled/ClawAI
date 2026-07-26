@@ -3536,6 +3536,11 @@ export const de: TranslationDictionary = {
     },
     paymentMethods: {
       removeFailed: 'Diese Zahlungsmethode konnte nicht entfernt werden.',
+      setupFailed: 'Die sichere Einrichtung der Zahlungsmethode konnte nicht gestartet werden.',
+      add: 'Methode hinzufügen',
+      adding: 'Wird geöffnet…',
+      consent:
+        'Sie werden zu Paymob weitergeleitet. Mit dem Speichern des verifizierten Kartentokens stimmen Sie der Speicherung dieser Zahlungsmethode zu.',
       title: 'Zahlungsmethoden',
       empty: 'Noch keine Zahlungsmethode gespeichert.',
       error: 'Ihre Zahlungsmethoden konnten nicht geladen werden.',

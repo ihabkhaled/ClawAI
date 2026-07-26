@@ -1,0 +1,97 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
+import {
+  BillingErrorCode,
+  BillingGateway,
+  CheckoutPurpose,
+  CheckoutSessionStatus,
+} from '@claw/shared-types';
+
+import { AppConfig } from '../../../app/config/app.config';
+import { BillingException } from '../../../common/errors';
+import { CHECKOUT_SESSION_TTL_MS } from '../../billing/constants/billing.constants';
+import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
+import { PaymobAdapter } from '../../gateways/paymob/paymob.adapter';
+import { CHECKOUT_STATE_NONCE_BYTES } from '../constants/checkout.constants';
+import {
+  type PaymentMethodSetupSessionView,
+  type StartPaymentMethodSetupInput,
+} from '../types/checkout.types';
+import { type CheckoutSession, CheckoutSessionPurpose } from '../../../generated/prisma';
+
+@Injectable()
+export class PaymentMethodSetupService {
+  private readonly logger = new Logger(PaymentMethodSetupService.name);
+
+  constructor(
+    private readonly sessions: CheckoutSessionRepository,
+    private readonly paymob: PaymobAdapter,
+  ) {}
+
+  async start(input: StartPaymentMethodSetupInput): Promise<PaymentMethodSetupSessionView> {
+    const existing = await this.sessions.findByIdempotencyKey(input.userId, input.idempotencyKey);
+    if (existing !== null) {
+      if (existing.purpose !== CheckoutSessionPurpose.PAYMENT_METHOD_SETUP) {
+        throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
+      }
+      return PaymentMethodSetupService.toView(existing);
+    }
+
+    const session = await this.sessions.create({
+      userId: input.userId,
+      purpose: CheckoutPurpose.PAYMENT_METHOD_SETUP,
+      status: CheckoutSessionStatus.CREATED,
+      gateway: BillingGateway.PAYMOB,
+      planId: null,
+      planSlug: null,
+      planPriceVersionId: null,
+      billingInterval: null,
+      baseAmountMinor: null,
+      baseCurrency: null,
+      chargeAmountMinor: null,
+      chargeCurrency: null,
+      idempotencyKey: input.idempotencyKey,
+      stateNonce: randomBytes(CHECKOUT_STATE_NONCE_BYTES).toString('hex'),
+      paymentMethodConsentedAt: new Date(),
+      expiresAt: new Date(Date.now() + CHECKOUT_SESSION_TTL_MS),
+    });
+
+    try {
+      const intention = await this.paymob.createSetupIntention({
+        checkoutSessionId: session.id,
+        billingEmail: input.userEmail,
+      });
+      const hostedUrl = PaymentMethodSetupService.buildHostedUrl(intention.clientSecret);
+      await this.sessions.attachProviderOrder(session.id, intention.intentionId, hostedUrl);
+      return PaymentMethodSetupService.toView({
+        ...session,
+        status: CheckoutSessionStatus.AWAITING_PAYMENT,
+        providerOrderId: intention.intentionId,
+        hostedCheckoutUrl: hostedUrl,
+      });
+    } catch (error: unknown) {
+      await this.sessions.markFailed(session.id, BillingErrorCode.GATEWAY_UNAVAILABLE);
+      this.logger.error(`start: Paymob setup failed session=${session.id}`);
+      throw error;
+    }
+  }
+
+  private static buildHostedUrl(clientSecret: string): string {
+    const publicKey = AppConfig.get().PAYMOB_PUBLIC_KEY;
+    if (publicKey === undefined) {
+      throw new BillingException(BillingErrorCode.GATEWAY_NOT_CONFIGURED);
+    }
+    const query = new URLSearchParams({ publicKey, clientSecret });
+    return `https://accept.paymob.com/unifiedcheckout/?${query.toString()}`;
+  }
+
+  private static toView(session: CheckoutSession): PaymentMethodSetupSessionView {
+    return {
+      id: session.id,
+      status: session.status,
+      gateway: session.gateway,
+      hostedCheckoutUrl: session.hostedCheckoutUrl,
+      expiresAt: session.expiresAt.toISOString(),
+    };
+  }
+}

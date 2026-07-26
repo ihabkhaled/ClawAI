@@ -1668,6 +1668,11 @@
         "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/billing/payment-method-setup-sessions",
+        "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/billing/payment-methods",
         "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
@@ -2698,5 +2703,5 @@
     ]
   },
   "generated": true,
-  "total": 532
+  "total": 533
 }

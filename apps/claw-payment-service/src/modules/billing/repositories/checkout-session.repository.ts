@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { CheckoutSessionStatus } from '@claw/shared-types';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { type CheckoutSession, type Prisma } from '../../../generated/prisma';
+import {
+  type CheckoutSession,
+  CheckoutSessionPurpose,
+  type Prisma,
+} from '../../../generated/prisma';
 
 @Injectable()
 export class CheckoutSessionRepository {
@@ -97,12 +101,24 @@ export class CheckoutSessionRepository {
     });
   }
 
+  async markPaymentMethodSetupCompleted(id: string): Promise<void> {
+    await this.prisma.checkoutSession.update({
+      where: { id },
+      data: {
+        status: CheckoutSessionStatus.COMPLETED,
+        verifiedAt: new Date(),
+        completedAt: new Date(),
+      },
+    });
+  }
+
   // Sessions that never completed and are past expiry. Reconciliation reads
   // these back FROM THE GATEWAY rather than assuming they failed — a payment
   // may well have succeeded while our callback was lost.
   async listExpiredPending(nowMs: number, limit: number): Promise<CheckoutSession[]> {
     return this.prisma.checkoutSession.findMany({
       where: {
+        purpose: { not: CheckoutSessionPurpose.PAYMENT_METHOD_SETUP },
         status: { in: [CheckoutSessionStatus.CREATED, CheckoutSessionStatus.AWAITING_PAYMENT] },
         expiresAt: { lt: new Date(nowMs) },
       },
@@ -114,6 +130,7 @@ export class CheckoutSessionRepository {
   async countExpiredPending(nowMs: number): Promise<number> {
     return this.prisma.checkoutSession.count({
       where: {
+        purpose: { not: CheckoutSessionPurpose.PAYMENT_METHOD_SETUP },
         status: { in: [CheckoutSessionStatus.CREATED, CheckoutSessionStatus.AWAITING_PAYMENT] },
         expiresAt: { lt: new Date(nowMs) },
       },

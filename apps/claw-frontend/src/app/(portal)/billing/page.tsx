@@ -122,6 +122,8 @@ export default function BillingPage(): ReactElement {
           methods={paymentMethods.methods}
           isLoading={paymentMethods.isLoading}
           isError={paymentMethods.isError}
+          onAdd={paymentMethods.startSetup}
+          isAdding={paymentMethods.isSetupPending}
           onRemove={paymentMethods.remove}
           pendingId={paymentMethods.pendingId}
           t={t}

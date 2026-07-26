@@ -3545,6 +3545,11 @@ export const fr: TranslationDictionary = {
     },
     paymentMethods: {
       removeFailed: 'Nous n’avons pas pu supprimer ce moyen de paiement.',
+      setupFailed: 'Nous n’avons pas pu démarrer la configuration sécurisée du moyen de paiement.',
+      add: 'Ajouter un moyen',
+      adding: 'Ouverture…',
+      consent:
+        'Continuer ouvre Paymob. En enregistrant le jeton de carte vérifié, vous acceptez de conserver ce moyen de paiement.',
       title: 'Moyens de paiement',
       empty: 'Aucun moyen de paiement enregistré pour l’instant.',
       error: 'Nous n’avons pas pu charger vos moyens de paiement.',

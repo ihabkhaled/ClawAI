@@ -49,3 +49,9 @@ export const PAYMOB_REVERSAL_FLAGS: ReadonlyArray<string> = [
 export const PAYMOB_RETRYABLE_STATUS_CODES: ReadonlyArray<number> = [408, 429, 500, 502, 503, 504];
 export const PAYMOB_MAX_RETRY_ATTEMPTS = 3;
 export const PAYMOB_RETRY_BASE_DELAY_MS = 250;
+
+// Paymob's hosted card-tokenization flow requires an intention even when no
+// purchase is taking place. Zero explicitly means "vault only": no amount is
+// persisted locally and no transaction may enter subscription activation.
+export const PAYMOB_SETUP_AMOUNT_MINOR = 0;
+export const PAYMOB_SETUP_DESCRIPTION = 'ClawAI saved payment method';

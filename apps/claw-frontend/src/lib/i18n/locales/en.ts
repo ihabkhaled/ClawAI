@@ -3477,6 +3477,11 @@ export const en: TranslationDictionary = {
     },
     paymentMethods: {
       removeFailed: 'We could not remove that payment method.',
+      setupFailed: 'We could not start secure payment-method setup.',
+      add: 'Add method',
+      adding: 'Opening…',
+      consent:
+        'Continuing opens Paymob. Saving the verified card token confirms your consent to store this payment method.',
       title: 'Payment methods',
       empty: 'No saved payment method yet.',
       error: 'We could not load your payment methods.',

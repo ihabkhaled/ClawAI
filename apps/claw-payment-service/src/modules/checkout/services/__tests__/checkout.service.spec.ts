@@ -1,4 +1,9 @@
-import { BillingGateway, BillingInterval, CheckoutSessionStatus } from '@claw/shared-types';
+import {
+  BillingGateway,
+  BillingInterval,
+  CheckoutPurpose,
+  CheckoutSessionStatus,
+} from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { BillingException } from '../../../../common/errors';
@@ -31,8 +36,12 @@ function makeSession(overrides: Record<string, unknown> = {}): Record<string, un
   return {
     id: 'cs-1',
     userId: 'user-1',
+    purpose: CheckoutPurpose.NEW_SUBSCRIPTION,
     status: CheckoutSessionStatus.CREATED,
     gateway: BillingGateway.PAYPAL,
+    planId: 'plan-pro',
+    planSlug: 'pro',
+    planPriceVersionId: 'ppv-1',
     billingInterval: BillingInterval.MONTHLY,
     chargeAmountMinor: 1999,
     chargeCurrency: 'USD',
@@ -40,6 +49,7 @@ function makeSession(overrides: Record<string, unknown> = {}): Record<string, un
     baseCurrency: 'USD',
     idempotencyKey: 'idem-abcdefgh',
     stateNonce: 'nonce-value',
+    paymentMethodConsentedAt: null,
     hostedCheckoutUrl: null,
     providerOrderId: null,
     expiresAt: new Date('2026-08-01T00:00:00.000Z'),
@@ -72,13 +82,11 @@ describe('CheckoutService', () => {
     };
     charges = { resolve: jest.fn().mockResolvedValue(CHARGE) };
     paypal = {
-      createOrder: jest
-        .fn()
-        .mockResolvedValue({
-          orderId: 'PP-1',
-          status: 'CREATED',
-          approvalUrl: 'https://pp/approve',
-        }),
+      createOrder: jest.fn().mockResolvedValue({
+        orderId: 'PP-1',
+        status: 'CREATED',
+        approvalUrl: 'https://pp/approve',
+      }),
     };
     paymob = {
       createIntention: jest

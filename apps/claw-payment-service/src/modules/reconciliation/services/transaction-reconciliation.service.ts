@@ -7,6 +7,7 @@ import {
   ReconciliationResolution,
 } from '../../../common/enums/reconciliation.enum';
 import { PaymentTransactionRepository } from '../../billing/repositories/payment-transaction.repository';
+import { isSubscriptionCheckoutSession } from '../../billing/utilities/checkout-session-purpose.utility';
 import { PaymobAdapter } from '../../gateways/paymob/paymob.adapter';
 import { PaypalAdapter } from '../../gateways/paypal/paypal.adapter';
 import { RECONCILIATION_BATCH_SIZE } from '../constants/reconciliation.constants';
@@ -70,7 +71,7 @@ export class TransactionReconciliationService {
     candidate: ReconciliationTransactionCandidate,
   ): Promise<ClassifiedGatewayResult> {
     const session = candidate.checkoutSession;
-    if (session === null) {
+    if (session === null || !isSubscriptionCheckoutSession(session)) {
       return TransactionReconciliationService.unsupported();
     }
     const expected = {

@@ -11,6 +11,10 @@ import { AppConfig } from '../../../app/config/app.config';
 import { BillingException } from '../../../common/errors';
 import { CHECKOUT_SESSION_TTL_MS } from '../../billing/constants/billing.constants';
 import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
+import {
+  isSubscriptionCheckoutSession,
+  type SubscriptionCheckoutSession,
+} from '../../billing/utilities/checkout-session-purpose.utility';
 import { PaymobAdapter } from '../../gateways/paymob/paymob.adapter';
 import { PaypalAdapter } from '../../gateways/paypal/paypal.adapter';
 import {
@@ -27,7 +31,6 @@ import {
 } from '../types/checkout.types';
 import { toCheckoutSessionView } from '../utilities/checkout-view.utility';
 import { ChargeResolverService } from './charge-resolver.service';
-import { type CheckoutSession } from '../../../generated/prisma';
 
 /**
  * Creates a server-priced checkout session and hands it to a gateway.
@@ -56,6 +59,9 @@ export class CheckoutService {
     // payable order for one intent is how a customer gets charged twice.
     const existing = await this.sessions.findByIdempotencyKey(input.userId, input.idempotencyKey);
     if (existing !== null) {
+      if (!isSubscriptionCheckoutSession(existing)) {
+        throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
+      }
       this.logger.log(`start: replaying existing session=${existing.id}`);
       return toCheckoutSessionView(existing);
     }
@@ -91,6 +97,9 @@ export class CheckoutService {
 
     const existing = await this.sessions.findByIdempotencyKey(input.userId, input.idempotencyKey);
     if (existing !== null) {
+      if (!isSubscriptionCheckoutSession(existing)) {
+        throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
+      }
       this.logger.log(`startPlanChange: replaying existing session=${existing.id}`);
       return toCheckoutSessionView(existing);
     }
@@ -122,6 +131,9 @@ export class CheckoutService {
       stateNonce: randomBytes(CHECKOUT_STATE_NONCE_BYTES).toString('hex'),
       expiresAt: new Date(Date.now() + CHECKOUT_SESSION_TTL_MS),
     });
+    if (!isSubscriptionCheckoutSession(session)) {
+      throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
+    }
 
     try {
       return await this.attachGatewayOrder(session, {
@@ -147,14 +159,17 @@ export class CheckoutService {
     if (session?.userId !== userId) {
       throw new BillingException(BillingErrorCode.CHECKOUT_SESSION_NOT_FOUND);
     }
+    if (!isSubscriptionCheckoutSession(session)) {
+      throw new BillingException(BillingErrorCode.CHECKOUT_SESSION_NOT_FOUND);
+    }
     return toCheckoutSessionView(session);
   }
 
   private async createSession(
     input: StartCheckoutInput,
     charge: Awaited<ReturnType<ChargeResolverService['resolve']>>,
-  ): Promise<CheckoutSession> {
-    return this.sessions.create({
+  ): Promise<SubscriptionCheckoutSession> {
+    const session = await this.sessions.create({
       userId: input.userId,
       purpose: CheckoutPurpose.NEW_SUBSCRIPTION,
       status: CheckoutSessionStatus.CREATED,
@@ -173,10 +188,14 @@ export class CheckoutService {
       stateNonce: randomBytes(CHECKOUT_STATE_NONCE_BYTES).toString('hex'),
       expiresAt: new Date(Date.now() + CHECKOUT_SESSION_TTL_MS),
     });
+    if (!isSubscriptionCheckoutSession(session)) {
+      throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
+    }
+    return session;
   }
 
   private async attachGatewayOrder(
-    session: CheckoutSession,
+    session: SubscriptionCheckoutSession,
     input: GatewayOrderContext,
   ): Promise<CheckoutSessionView> {
     const order =
@@ -196,7 +215,7 @@ export class CheckoutService {
   }
 
   private async createPaypalOrder(
-    session: CheckoutSession,
+    session: SubscriptionCheckoutSession,
   ): Promise<{ providerOrderId: string; hostedUrl: string | null }> {
     const result = await this.paypal.createOrder({
       amountMinor: session.chargeAmountMinor,
@@ -211,7 +230,7 @@ export class CheckoutService {
   }
 
   private async createPaymobIntention(
-    session: CheckoutSession,
+    session: SubscriptionCheckoutSession,
     billingEmail: string,
   ): Promise<{ providerOrderId: string; hostedUrl: string | null }> {
     const result = await this.paymob.createIntention({
@@ -231,7 +250,7 @@ export class CheckoutService {
   // Built from configuration plus our own session id and nonce. A redirect
   // target supplied by the caller would let an attacker land a paying customer
   // on a page they control.
-  private static buildReturnUrl(session: CheckoutSession, path: string): string {
+  private static buildReturnUrl(session: SubscriptionCheckoutSession, path: string): string {
     const base = AppConfig.get().FRONTEND_URL.replace(/\/+$/, '');
     const query = new URLSearchParams({ session: session.id, state: session.stateNonce });
     return `${base}${path}?${query.toString()}`;

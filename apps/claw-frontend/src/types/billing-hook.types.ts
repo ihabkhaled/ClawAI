@@ -59,6 +59,8 @@ export type UsePaymentMethodsReturn = {
   methods: PaymentMethodView[];
   isLoading: boolean;
   isError: boolean;
+  startSetup: () => void;
+  isSetupPending: boolean;
   remove: (id: string) => void;
   // Per-row, not per-page: a single isMutating flag would disable every row
   // while one is being deleted.

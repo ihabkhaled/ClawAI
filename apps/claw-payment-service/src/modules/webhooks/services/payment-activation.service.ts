@@ -5,6 +5,7 @@ import { AppConfig } from '../../../app/config/app.config';
 import { BillingException } from '../../../common/errors';
 import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
 import { SubscriptionLifecycleService } from '../../billing/services/subscription-lifecycle.service';
+import { isSubscriptionCheckoutSession } from '../../billing/utilities/checkout-session-purpose.utility';
 import { BillingCustomerRepository } from '../repositories/billing-customer.repository';
 import { resolvePeriodEndMs } from '../utilities/billing-period.utility';
 import { type VerifiedPayment } from '../types/verified-payment.types';
@@ -43,6 +44,10 @@ export class PaymentActivationService {
     if (session.status === CheckoutSessionStatus.COMPLETED) {
       this.logger.warn(`activate: session=${session.id} already completed — ignoring replay`);
       return session.subscriptionId;
+    }
+    if (!isSubscriptionCheckoutSession(session)) {
+      this.logger.error(`activate: non-subscription session=${session.id}`);
+      throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
     }
 
     // The amount is compared against what WE recorded, not against anything in
