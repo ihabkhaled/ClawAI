@@ -1,23 +1,23 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 19266,
+      "bytes": 19168,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 4935,
+      "bytes": 4890,
       "file": "CODEX.md"
     },
     {
-      "bytes": 26115,
+      "bytes": 25527,
       "file": "cursor.md"
     },
     {
-      "bytes": 8316,
+      "bytes": 8220,
       "file": "AGENTS.md"
     },
     {
-      "bytes": 1772,
+      "bytes": 1733,
       "file": ".cursorrules"
     }
   ],
@@ -51,373 +51,373 @@
   "looseDocs": 22,
   "rules": [
     {
-      "bytes": 10815,
+      "bytes": 10745,
       "file": "rules/00-master-rules.md"
     },
     {
-      "bytes": 4531,
+      "bytes": 4395,
       "file": "rules/00-non-negotiable-rules.md"
     },
     {
-      "bytes": 4412,
+      "bytes": 4392,
       "file": "rules/01-planning-rules.md"
     },
     {
-      "bytes": 2872,
+      "bytes": 2854,
       "file": "rules/01-task-intake-and-planning.md"
     },
     {
-      "bytes": 9536,
+      "bytes": 9432,
       "file": "rules/02-backend-rules.md"
     },
     {
-      "bytes": 2972,
+      "bytes": 2940,
       "file": "rules/02-monorepo-and-workspace-ownership.md"
     },
     {
-      "bytes": 8840,
+      "bytes": 8708,
       "file": "rules/03-frontend-rules.md"
     },
     {
-      "bytes": 3132,
+      "bytes": 3118,
       "file": "rules/03-microservice-boundaries.md"
     },
     {
-      "bytes": 2852,
+      "bytes": 2834,
       "file": "rules/04-nextjs-app-router.md"
     },
     {
-      "bytes": 11494,
+      "bytes": 10803,
       "file": "rules/04-testing-rules.md"
     },
     {
-      "bytes": 2934,
+      "bytes": 2900,
       "file": "rules/05-frontend-components-and-hooks.md"
     },
     {
-      "bytes": 13819,
+      "bytes": 13761,
       "file": "rules/05-infra-rules.md"
     },
     {
-      "bytes": 4337,
+      "bytes": 4297,
       "file": "rules/06-docs-rules.md"
     },
     {
-      "bytes": 2914,
+      "bytes": 2894,
       "file": "rules/06-frontend-queries-and-cache.md"
     },
     {
-      "bytes": 2686,
+      "bytes": 2660,
       "file": "rules/07-backend-controllers-and-transport.md"
     },
     {
-      "bytes": 11095,
+      "bytes": 10789,
       "file": "rules/07-commit-rules.md"
     },
     {
-      "bytes": 2808,
+      "bytes": 2782,
       "file": "rules/08-backend-managers-and-use-cases.md"
     },
     {
-      "bytes": 5402,
+      "bytes": 5380,
       "file": "rules/08-security-rules.md"
     },
     {
-      "bytes": 3000,
+      "bytes": 2978,
       "file": "rules/09-backend-services.md"
     },
     {
-      "bytes": 11094,
+      "bytes": 11024,
       "file": "rules/09-refactor-rules.md"
     },
     {
-      "bytes": 2565,
+      "bytes": 2545,
       "file": "rules/10-repositories-and-persistence.md"
     },
     {
-      "bytes": 2871,
+      "bytes": 2851,
       "file": "rules/11-dtos-and-validation.md"
     },
     {
-      "bytes": 2922,
+      "bytes": 2882,
       "file": "rules/12-types-enums-constants-and-declaration-ownership.md"
     },
     {
-      "bytes": 2927,
+      "bytes": 2907,
       "file": "rules/13-external-library-wrappers-and-adapters.md"
     },
     {
-      "bytes": 3070,
+      "bytes": 3033,
       "file": "rules/14-shared-packages.md"
     },
     {
-      "bytes": 2956,
+      "bytes": 2935,
       "file": "rules/15-configuration-and-environment.md"
     },
     {
-      "bytes": 3111,
+      "bytes": 3087,
       "file": "rules/16-authentication-and-authorization.md"
     },
     {
-      "bytes": 2972,
+      "bytes": 2956,
       "file": "rules/17-rabbitmq-events-and-jobs.md"
     },
     {
-      "bytes": 3102,
+      "bytes": 3084,
       "file": "rules/18-error-handling-and-reliability.md"
     },
     {
-      "bytes": 3314,
+      "bytes": 3290,
       "file": "rules/19-logging-observability-and-redaction.md"
     },
     {
-      "bytes": 3096,
+      "bytes": 3062,
       "file": "rules/20-i18n-and-user-facing-messages.md"
     },
     {
-      "bytes": 3321,
+      "bytes": 3293,
       "file": "rules/21-security-and-secrets.md"
     },
     {
-      "bytes": 3028,
+      "bytes": 2990,
       "file": "rules/22-testing-and-coverage.md"
     },
     {
-      "bytes": 6898,
+      "bytes": 6717,
       "file": "rules/23-git-commits-hooks-and-release-gates.md"
     },
     {
-      "bytes": 5583,
+      "bytes": 5545,
       "file": "rules/24-generated-files-and-knowledge-freshness.md"
     },
     {
-      "bytes": 3392,
+      "bytes": 3374,
       "file": "rules/25-exceptions-and-waivers.md"
     },
     {
-      "bytes": 11904,
+      "bytes": 11630,
       "file": "rules/26-prompt-pack-intake-protocol.md"
     },
     {
-      "bytes": 15433,
+      "bytes": 15363,
       "file": "rules/27-engineering-mindsets.md"
     },
     {
-      "bytes": 4087,
+      "bytes": 4045,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 8124,
+      "bytes": 7954,
       "file": "skills/00-index.md"
     },
     {
-      "bytes": 8944,
+      "bytes": 8816,
       "file": "skills/01-codebase-navigation.md"
     },
     {
-      "bytes": 5295,
+      "bytes": 5269,
       "file": "skills/02-service-scaffold.md"
     },
     {
-      "bytes": 9062,
+      "bytes": 9060,
       "file": "skills/03-feature-scaffold.md"
     },
     {
-      "bytes": 7124,
+      "bytes": 7083,
       "file": "skills/04-debug-toolkit.md"
     },
     {
-      "bytes": 10924,
+      "bytes": 9735,
       "file": "skills/05-qa-toolkit.md"
     },
     {
-      "bytes": 6141,
+      "bytes": 6137,
       "file": "skills/06-docker-toolkit.md"
     },
     {
-      "bytes": 5909,
+      "bytes": 5897,
       "file": "skills/07-database-toolkit.md"
     },
     {
-      "bytes": 8046,
+      "bytes": 8020,
       "file": "skills/08-event-bus-toolkit.md"
     },
     {
-      "bytes": 9074,
+      "bytes": 9000,
       "file": "skills/09-refactor-toolkit.md"
     },
     {
-      "bytes": 6410,
+      "bytes": 6380,
       "file": "skills/README.md"
     },
     {
-      "bytes": 3632,
+      "bytes": 3615,
       "file": "skills/add-app-route.md"
     },
     {
-      "bytes": 3805,
+      "bytes": 3791,
       "file": "skills/add-config-value.md"
     },
     {
-      "bytes": 4133,
+      "bytes": 4117,
       "file": "skills/add-event-consumer.md"
     },
     {
-      "bytes": 4205,
+      "bytes": 4179,
       "file": "skills/add-library-adapter.md"
     },
     {
-      "bytes": 3892,
+      "bytes": 3870,
       "file": "skills/add-migration.md"
     },
     {
-      "bytes": 4126,
+      "bytes": 4112,
       "file": "skills/add-permission.md"
     },
     {
-      "bytes": 3904,
+      "bytes": 3888,
       "file": "skills/add-prisma-model.md"
     },
     {
-      "bytes": 4554,
+      "bytes": 4538,
       "file": "skills/add-provider-connector.md"
     },
     {
-      "bytes": 4201,
+      "bytes": 4187,
       "file": "skills/add-rabbitmq-event.md"
     },
     {
-      "bytes": 4792,
+      "bytes": 4776,
       "file": "skills/add-workspace-connector.md"
     },
     {
-      "bytes": 5532,
+      "bytes": 5494,
       "file": "skills/backend-architecture-review.md"
     },
     {
-      "bytes": 4369,
+      "bytes": 4242,
       "file": "skills/commit-and-push-each-change.md"
     },
     {
-      "bytes": 4783,
+      "bytes": 4749,
       "file": "skills/create-backend-module.md"
     },
     {
-      "bytes": 3477,
+      "bytes": 3457,
       "file": "skills/create-client-container.md"
     },
     {
-      "bytes": 3951,
+      "bytes": 3931,
       "file": "skills/create-controller.md"
     },
     {
-      "bytes": 3854,
+      "bytes": 3834,
       "file": "skills/create-dto.md"
     },
     {
-      "bytes": 4943,
+      "bytes": 4879,
       "file": "skills/create-frontend-module.md"
     },
     {
-      "bytes": 4230,
+      "bytes": 4206,
       "file": "skills/create-manager-or-use-case.md"
     },
     {
-      "bytes": 6477,
+      "bytes": 6441,
       "file": "skills/create-microservice.md"
     },
     {
-      "bytes": 3702,
+      "bytes": 3678,
       "file": "skills/create-presentational-component.md"
     },
     {
-      "bytes": 3372,
+      "bytes": 3348,
       "file": "skills/create-query.md"
     },
     {
-      "bytes": 3743,
+      "bytes": 3719,
       "file": "skills/create-repository.md"
     },
     {
-      "bytes": 4078,
+      "bytes": 4058,
       "file": "skills/create-service.md"
     },
     {
-      "bytes": 3520,
+      "bytes": 3491,
       "file": "skills/create-view-model-hook.md"
     },
     {
-      "bytes": 3744,
+      "bytes": 3724,
       "file": "skills/debug-flaky-test.md"
     },
     {
-      "bytes": 6381,
+      "bytes": 6172,
       "file": "skills/execute-prompt-pack.md"
     },
     {
-      "bytes": 4220,
+      "bytes": 4194,
       "file": "skills/find-canonical-owner.md"
     },
     {
-      "bytes": 4262,
+      "bytes": 4238,
       "file": "skills/frontend-architecture-review.md"
     },
     {
-      "bytes": 3154,
+      "bytes": 3134,
       "file": "skills/increase-coverage-correctly.md"
     },
     {
-      "bytes": 3026,
+      "bytes": 3008,
       "file": "skills/inspect-affected-workspaces.md"
     },
     {
-      "bytes": 4368,
+      "bytes": 4352,
       "file": "skills/navigate-codebase.md"
     },
     {
-      "bytes": 5199,
+      "bytes": 5173,
       "file": "skills/resolve-task-context.md"
     },
     {
-      "bytes": 4760,
+      "bytes": 4741,
       "file": "skills/reuse-before-creating.md"
     },
     {
-      "bytes": 4469,
+      "bytes": 4455,
       "file": "skills/security-review.md"
     },
     {
-      "bytes": 4619,
+      "bytes": 4591,
       "file": "skills/trace-event-end-to-end.md"
     },
     {
-      "bytes": 4464,
+      "bytes": 4430,
       "file": "skills/trace-frontend-feature.md"
     },
     {
-      "bytes": 5027,
+      "bytes": 4977,
       "file": "skills/trace-request-end-to-end.md"
     },
     {
-      "bytes": 3066,
+      "bytes": 3058,
       "file": "skills/write-api-contract-tests.md"
     },
     {
-      "bytes": 3353,
+      "bytes": 3335,
       "file": "skills/write-backend-e2e-tests.md"
     },
     {
-      "bytes": 5107,
+      "bytes": 5067,
       "file": "skills/write-integration-tests.md"
     },
     {
-      "bytes": 5177,
+      "bytes": 5135,
       "file": "skills/write-service-tests.md"
     },
     {
-      "bytes": 5132,
+      "bytes": 5096,
       "file": "skills/write-unit-tests.md"
     }
   ]
