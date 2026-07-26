@@ -88,8 +88,9 @@ tmp/
 tmp/qa-run.log
 qa-run.log
 
-apps/claw-frontend/scripts/
+apps/claw-frontend/scripts/*
 !apps/claw-frontend/scripts/run-vitest.cjs
+!apps/claw-frontend/scripts/clear-cache.mjs
 # ESLint cache
 .eslintcache
 

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "clear-cache": "rm -rf .next",
+    "clear-cache": "node scripts/clear-cache.mjs",
     "dev": "npm run clear-cache && next dev --turbopack --port 3000",
     "build": "npm run clear-cache && next build --turbopack",
     "build:vercel": "next build --turbopack",
