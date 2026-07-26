@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 174 identical headings (163710 vs 123223 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 174 identical headings (163742 vs 123223 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 7 identical headings (163710 vs 22185 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 7 identical headings (163742 vs 22185 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -52,51 +52,6 @@
       }
     ],
     "staleClaims": [
-      {
-        "evidence": [
-          "CLAUDE.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "CLAUDE.md claims 9 locales but 13 locale files exist",
-        "severity": "low"
-      },
-      {
-        "evidence": [
-          "CLAUDE.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "CLAUDE.md claims 9 locales but 13 locale files exist",
-        "severity": "low"
-      },
-      {
-        "evidence": [
-          "CLAUDE.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "CLAUDE.md claims 9 locales but 13 locale files exist",
-        "severity": "low"
-      },
-      {
-        "evidence": [
-          "CLAUDE.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "CLAUDE.md claims 9 locales but 13 locale files exist",
-        "severity": "low"
-      },
-      {
-        "evidence": [
-          "CLAUDE.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "CLAUDE.md claims 9 locales but 13 locale files exist",
-        "severity": "low"
-      },
       {
         "evidence": [
           "CLAUDE.md",
@@ -6356,7 +6311,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 163710,
+          "bytes": 163742,
           "file": "CLAUDE.md"
         },
         {
@@ -9041,7 +8996,7 @@
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
-    "staleClaimCount": 13,
+    "staleClaimCount": 8,
     "totalTestFiles": 602,
     "workspaceCount": 25
   }

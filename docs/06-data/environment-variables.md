@@ -190,10 +190,17 @@ Claw uses 12 separate PostgreSQL instances, one per data-owning service.
 | `NEXT_PUBLIC_APP_NAME` | No       | `Claw`                  | Application display name                    |
 | `NEXT_PUBLIC_APP_URL`  | No       | `http://localhost:3000` | Frontend public URL                         |
 | `FRONTEND_PORT`        | No       | `3000`                  | Port the Next.js frontend listens on        |
+| `SITE_URL`             | Production | —                       | Canonical HTTPS bare origin; enables crawling |
+| `CHAT_SERVICE_URL`     | Production | —                       | Server-only chat-service origin for public shares/discovery |
+| `INTER_SERVICE_AUTH_TOKEN` | Production | —                    | Server-only credential for protected internal feeds |
 
 **Notes:**
 
 - Variables prefixed with `NEXT_PUBLIC_` are embedded in the browser bundle. Never put secrets here.
+- `SITE_URL` is deliberately fail-closed: preview, local, missing, or invalid
+  values produce global noindex and `robots.txt` disallow-all.
+- Never expose `CHAT_SERVICE_URL` or `INTER_SERVICE_AUTH_TOKEN` with a
+  `NEXT_PUBLIC_` prefix.
 
 ---
 

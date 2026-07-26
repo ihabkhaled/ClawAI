@@ -93,9 +93,9 @@ of service on the publish path.
 
 ## Ad eligibility
 
-Server-derived and fail-closed. `adsEligible` is true only when the safety status
-is `APPROVED` **and** the content threshold is met, and it is computed in the
-service and passed to the page.
+Server-derived and fail-closed. `indexEligible` and `adsEligible` are separate
+snapshot decisions. A safe, substantial chat may be indexed while remaining
+ad-ineligible. Discovery queries never filter on `adsEligible`.
 
 A URL matching `/share/chat/*` is never enough on its own. That is the
 difference between "this page is allowed to show ads" and "this page has the
@@ -138,7 +138,9 @@ hand to a search engine — a canonical URL pointing at a domain they control.
 | `POST`   | `/api/v1/chat-threads/:threadId/share/regenerate-url` | owner    |
 | `DELETE` | `/api/v1/chat-threads/:threadId/share`                | owner    |
 | `GET`    | `/api/v1/public/chat-shares/:publicShareId`           | **none** |
-| `GET`    | `/api/v1/internal/chat-shares/sitemap-feed`           | internal |
+| `GET`    | `/api/v1/internal/chat-shares/sitemap-feed`           | service token |
+| `GET`    | `/api/v1/internal/chat-shares/sitemap-count`          | service token |
+| `GET`    | `/api/v1/internal/chat-shares/rss-feed`               | service token |
 
 Owner identity always comes from the verified JWT via `@CurrentUser`, never from
 a body or a path. The manager independently re-checks thread ownership, so an
@@ -147,9 +149,17 @@ IDOR attempt fails at the data layer even if a future route forgets to.
 A thread belonging to someone else reports **not found**, not forbidden —
 forbidden would confirm the id exists.
 
-The sitemap feed returns only `{ publicShareId, updatedAt }`. A sitemap is a
-public document; a title in it would publish a conversation's subject to anyone
-who fetched it.
+The sitemap feed returns opaque keyset pages containing only
+`{ publicShareId, contentLocale, updatedAt }`; the cursor uses `updatedAt` plus
+the stable row id to prevent timestamp ties from skipping rows. The RSS feed
+adds only a sanitized title/description and publication timestamps. Neither
+internal feed exposes transcript content or owner/private identifiers.
+
+Each immutable snapshot stores `contentLocale` (existing rows migrate to
+English). Its only canonical public URL is
+`/{contentLocale}/share/chat/{publicShareId}`. A request under another supported
+locale redirects permanently to that canonical locale; no fake translated
+alternate is emitted.
 
 ## Environment
 

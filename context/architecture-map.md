@@ -170,8 +170,9 @@ page.tsx (render only) → controller hook (useX) → query/mutation hooks
   loading/empty/error/success states.
 - **TanStack Query** owns all server state; **Zustand** holds minimal client
   state (auth, sidebar, filters).
-- **shadcn/ui** for all form controls; **i18n across 9 locales** (en, ar, de, es,
-  fr, hi, it, pt, ru; ar is RTL) — no hardcoded user-facing text.
+- **shadcn/ui** for all form controls; **i18n across 13 locales** (en, ar, de,
+  es, fr, hi, it, pt, ru, ja, th, fa, zh; ar and fa are RTL) — no hardcoded
+  user-facing text.
 
 Full rules in [frontend-architecture.md](frontend-architecture.md) and
 `rules/03-frontend-rules.md`.

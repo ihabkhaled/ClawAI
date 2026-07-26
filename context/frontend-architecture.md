@@ -53,13 +53,14 @@ page.tsx (render only) → controller hook (useX) → query/mutation hooks
   variables handle dark mode. `cn()` from `@/lib/utils` for conditional classes.
   Mobile-first breakpoints.
 
-## i18n (9 locales)
+## i18n (13 locales)
 
-- Locales: **en, ar, de, es, fr, hi, it, pt, ru** — Arabic is RTL.
+- Locales: **en, ar, de, es, fr, hi, it, pt, ru, ja, th, fa, zh** —
+  Arabic and Persian are RTL; `zh` emits `zh-Hans` metadata.
 - All user-facing text via `t('key')`; **never hardcode**.
 - Files: `src/lib/i18n/locales/<locale>.ts`. Type schema:
   `src/types/i18n.types.ts`.
-- **Atomic rule:** adding a key means updating **all 9 locale files AND
+- **Atomic rule:** adding a key means updating **all 13 locale files AND
   `i18n.types.ts` in the same change**. Never copy English into non-English
   locales as a placeholder — write a real translation. `t()` is NOT type-safe
   against the dictionary, so spot-check a non-EN locale (de or ar) after adding

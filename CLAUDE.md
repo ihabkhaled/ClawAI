@@ -79,7 +79,7 @@ The `typescript` dependency is **aliased** to `@typescript/native-preview@beta`;
 3. **`scripts/install.sh`** — add the variable to the generated .env block
 4. **`scripts/install.ps1`** — same for Windows PowerShell installer
 5. **ALL split Docker compose files** — `docker/docker-compose.dev.{databases,services,ollama}.yml`, `docker/docker-compose.prod.{databases,services,ollama}.yml`, plus the per-vendor GPU overlays (`gpu-nvidia`, `gpu-rocm`, `gpu-vulkan` × dev/prod) if your service needs GPU passthrough — if new service, port, volume, database, or AI runtime dependency
-6. **i18n locale files** — if any new user-facing text (ALL 9 locales: en, ar, de, es, fr, hi, it, pt, ru)
+6. **i18n locale files** — if any new user-facing text (ALL 13 locales: en, ar, de, es, fr, hi, it, pt, ru, ja, th, fa, zh)
 7. **Architecture docs** (`docs/`) — if the change affects documented architecture
 8. **Prisma migrations** — if any schema change (`npx prisma migrate dev --name <name>`)
 9. **Seed files** — if new default data needed (e.g., admin user, default policies)
@@ -418,7 +418,7 @@ Past mistakes:
   files identically. The German user saw "New Chat" instead of
   "Neuer Chat".
 - `inbox.page.title = 'Workspace Inbox'` shipped identically to
-  all 9 locales. The Arabic user saw English text in an RTL UI.
+  all 13 locales. The Arabic user saw English text in an RTL UI.
 - 1131 entries across 8 non-EN locales had `value === enValue`
   silently — caught only by an explicit audit script, not by
   typecheck.
@@ -1419,7 +1419,7 @@ Claude MUST verify ALL of these before saying a task is complete:
 - [ ] No raw HTML elements where shadcn/ui required
 - [ ] No `any` types introduced
 - [ ] No inline types/enums/constants in restricted files
-- [ ] All new user-facing text has i18n keys in all 9 locales
+- [ ] All new user-facing text has i18n keys in all 13 locales
 - [ ] Error states (not just happy paths) implemented and testable
 - [ ] storeErrorMessage wrapped in try-catch for all fire-and-forget managers
 - [ ] emitError called before storeErrorMessage in error paths
@@ -1635,7 +1635,7 @@ Check and update ALL of these:
 8. **`packages/shared-types`** — add new event patterns if the service publishes events
 9. **`apps/claw-health-service`** — add the new service URL to health check list
 10. **`.github/workflows/ci.yml`** — add new service to the Prisma generate loop and test env vars
-11. **i18n locale files** — if any new user-facing text (ALL 9 locales: en, ar, de, es, fr, hi, it, pt, ru)
+11. **i18n locale files** — if any new user-facing text (ALL 13 locales: en, ar, de, es, fr, hi, it, pt, ru, ja, th, fa, zh)
 12. **Architecture docs** (`docs/`) — if the change affects documented architecture
 13. **Prisma migrations** — if any schema change (`npx prisma migrate dev --name <name>`)
 14. **Seed files** — if new default data needed (e.g., catalog entries, default policies)
@@ -2176,7 +2176,7 @@ docs/
   - `.env` and `.env.example`
   - `scripts/install.sh` + `scripts/install.ps1`
   - `.github/workflows/ci.yml`
-  - i18n (all 9 locales) if user-facing
+  - i18n (all 13 locales) if user-facing
   - `docs/04-backend/services-index.md`
   - `CLAUDE.md` workspace layout
   - Frontend types, hooks, and pages if user-facing
