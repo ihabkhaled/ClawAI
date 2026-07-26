@@ -1,11 +1,11 @@
 import { Bot } from 'lucide-react';
 
+import { SelectGroupHeader } from '@/components/common/select-group-header';
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -79,7 +79,7 @@ export function OrchestrationSingleModelSelect({
   return (
     <div className="space-y-2">
       <label
-        className="block text-sm font-medium text-foreground"
+        className="text-foreground block text-sm font-medium"
         htmlFor="orchestration-single-model-select"
       >
         {resolvedLabel}
@@ -90,13 +90,13 @@ export function OrchestrationSingleModelSelect({
         disabled={isDisabled}
       >
         <SelectTrigger id="orchestration-single-model-select" className="w-full">
-          <Bot className="me-2 h-4 w-4 shrink-0 text-muted-foreground" />
+          <Bot className="text-muted-foreground me-2 h-4 w-4 shrink-0" />
           <SelectValue placeholder={triggerPlaceholder} />
         </SelectTrigger>
         <SelectContent>
           {localGroup !== null ? (
             <SelectGroup>
-              <SelectLabel>{localGroup.label}</SelectLabel>
+              <SelectGroupHeader>{localGroup.label}</SelectGroupHeader>
               {models.map((model) => (
                 <SelectItem
                   key={encodeModelValue(model.provider, model.model)}
@@ -110,7 +110,7 @@ export function OrchestrationSingleModelSelect({
           ) : null}
         </SelectContent>
       </Select>
-      <p className="text-xs text-muted-foreground">{isEmpty ? resolvedEmpty : resolvedHelper}</p>
+      <p className="text-muted-foreground text-xs">{isEmpty ? resolvedEmpty : resolvedHelper}</p>
     </div>
   );
 }

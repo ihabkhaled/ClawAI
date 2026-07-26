@@ -2148,3 +2148,10 @@ export type ContactSuccessProps = {
   resetLabel: string;
   onReset: () => void;
 };
+
+// Group heading inside a Select dropdown. `className` stays open so a caller
+// can adjust spacing for an unusually dense list without forking the styling.
+export type SelectGroupHeaderProps = {
+  children: React.ReactNode;
+  className?: string;
+};

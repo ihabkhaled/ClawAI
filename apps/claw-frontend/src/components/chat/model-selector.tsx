@@ -1,11 +1,11 @@
 import { Bot } from 'lucide-react';
 
+import { SelectGroupHeader } from '@/components/common/select-group-header';
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -89,7 +89,7 @@ export function ModelSelector({
       >
         <Bot
           className={cn(
-            'shrink-0 text-muted-foreground',
+            'text-muted-foreground shrink-0',
             isCompact ? 'h-4 w-4' : 'mr-1 h-3.5 w-3.5',
           )}
         />
@@ -99,7 +99,7 @@ export function ModelSelector({
         <SelectItem value={MODEL_AUTO_VALUE}>Auto (routing decides)</SelectItem>
         {groupedModels.map((group) => (
           <SelectGroup key={group.provider}>
-            <SelectLabel>{group.label}</SelectLabel>
+            <SelectGroupHeader>{group.label}</SelectGroupHeader>
             {group.models.map((model) => (
               <SelectItem
                 key={encodeModelValue(model.provider, model.model)}
@@ -113,7 +113,7 @@ export function ModelSelector({
                       {model.specifications.map((specification) => (
                         <span
                           key={specification}
-                          className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground"
+                          className="border-border bg-muted text-muted-foreground rounded border px-1.5 py-0.5 text-[10px] leading-none"
                         >
                           {specification}
                         </span>

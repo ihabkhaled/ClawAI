@@ -3,6 +3,7 @@
 import { Copy, Sparkles } from 'lucide-react';
 import type { ReactElement } from 'react';
 
+import { SelectGroupHeader } from '@/components/common/select-group-header';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,7 +18,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -56,7 +56,7 @@ export function AiActionDialog({
         </DialogHeader>
 
         <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto">
-          <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
+          <div className="border-border bg-muted/30 rounded-md border p-3 text-sm">
             {contextPreview}
           </div>
 
@@ -73,7 +73,7 @@ export function AiActionDialog({
               <SelectContent>
                 {ctrl.groupedModels.map((group) => (
                   <SelectGroup key={group.provider}>
-                    <SelectLabel>{group.label}</SelectLabel>
+                    <SelectGroupHeader>{group.label}</SelectGroupHeader>
                     {group.models.map((entry) => (
                       <SelectItem
                         key={`${entry.provider}::${entry.model}`}
@@ -89,8 +89,8 @@ export function AiActionDialog({
           </div>
 
           {ctrl.result !== null ? (
-            <div className="flex flex-col gap-2 rounded-md border border-border bg-card p-3">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="border-border bg-card flex flex-col gap-2 rounded-md border p-3">
+              <div className="text-muted-foreground flex items-center justify-between text-xs">
                 <span>
                   {t('aiActions.dialog.generated_by', {
                     model: ctrl.result.generatedBy?.displayName ?? '—',
@@ -107,14 +107,14 @@ export function AiActionDialog({
                   {ctrl.copied ? t('aiActions.dialog.copied') : t('aiActions.dialog.copy')}
                 </Button>
               </div>
-              <div className="whitespace-pre-wrap break-words text-sm text-foreground">
+              <div className="text-foreground text-sm break-words whitespace-pre-wrap">
                 {ctrl.result.content}
               </div>
             </div>
           ) : null}
 
           {ctrl.error !== null ? (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-3 text-sm">
               {ctrl.error.message}
             </div>
           ) : null}

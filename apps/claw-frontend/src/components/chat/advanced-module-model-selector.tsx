@@ -1,11 +1,11 @@
 import { Bot } from 'lucide-react';
 
+import { SelectGroupHeader } from '@/components/common/select-group-header';
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -51,7 +51,7 @@ export function AdvancedModuleModelSelector({
       </label>
       <Select value={selectedValue} onValueChange={handleChange} disabled={isDisabled}>
         <SelectTrigger id="advanced-module-model-selector" className="w-full">
-          <Bot className="me-2 h-4 w-4 shrink-0 text-muted-foreground" />
+          <Bot className="text-muted-foreground me-2 h-4 w-4 shrink-0" />
           <SelectValue
             placeholder={
               isLoading ? t('advancedModelSelector.loading') : t('advancedModelSelector.auto')
@@ -62,7 +62,7 @@ export function AdvancedModuleModelSelector({
           <SelectItem value={MODEL_AUTO_VALUE}>{t('advancedModelSelector.auto')}</SelectItem>
           {localGroup ? (
             <SelectGroup>
-              <SelectLabel>{localGroup.label}</SelectLabel>
+              <SelectGroupHeader>{localGroup.label}</SelectGroupHeader>
               {models.map((model) => (
                 <SelectItem
                   key={encodeModelValue(model.provider, model.model)}
@@ -76,7 +76,7 @@ export function AdvancedModuleModelSelector({
           ) : null}
         </SelectContent>
       </Select>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-xs">
         {models.length > 0
           ? t('advancedModelSelector.description')
           : t('advancedModelSelector.empty')}
