@@ -8118,7 +8118,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 30
+        "testFiles": 31
       },
       "claw-research-service": {
         "runner": "jest",
@@ -8844,7 +8844,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 587,
+    "totalTestFiles": 588,
     "workspaceCount": 25
   }
 }

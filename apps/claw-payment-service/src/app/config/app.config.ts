@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { withoutBlankEnvValues } from '../../common/utilities/env-blank.utility';
+
 // A gateway is enabled only when its WHOLE credential set is present. Partial
 // configuration must never half-enable a gateway: a checkout that reaches a
 // provider without a webhook secret can be paid but never verified, which is
@@ -96,7 +98,10 @@ let cachedConfig: AppConfigType | undefined;
 
 export class AppConfig {
   static validate(): AppConfigType {
-    const result = appConfigSchema.safeParse(process.env);
+    // Blank values are stripped first so `KEY=` in a .env file means "unset"
+    // rather than "the empty string" — otherwise every unconfigured gateway
+    // credential fails min(1) and the service cannot boot with gateways off.
+    const result = appConfigSchema.safeParse(withoutBlankEnvValues(process.env));
     if (!result.success) {
       // Only the variable NAME and the rule it broke are printed. Never the
       // value: a config error must not leak a secret into a boot log.
