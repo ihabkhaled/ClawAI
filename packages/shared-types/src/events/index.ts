@@ -27,6 +27,16 @@ export type {
   AgentLifecycleEventPayload,
 } from './agent-lifecycle-events.types';
 export type {
+  ChatShareEventBase,
+  ChatSharePublishedPayload,
+  ChatShareUpdatedPayload,
+  ChatShareVisibilityChangedPayload,
+  ChatShareRevokedPayload,
+  ChatShareUrlRegeneratedPayload,
+  ChatShareSafetyRejectedPayload,
+  ChatShareEventPayload,
+} from './chat-share-events.types';
+export type {
   BaseCapabilityEventPayload,
   CapabilityClassValue,
   CapabilityRiskLabelValue,

@@ -5118,6 +5118,36 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "CHAT_SHARE_PUBLISHED",
+        "pattern": "chat.share.published",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "CHAT_SHARE_REVOKED",
+        "pattern": "chat.share.revoked",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "CHAT_SHARE_SAFETY_REJECTED",
+        "pattern": "chat.share.safety_rejected",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "CHAT_SHARE_UPDATED",
+        "pattern": "chat.share.updated",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "CHAT_SHARE_URL_REGENERATED",
+        "pattern": "chat.share.url_regenerated",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "CHAT_SHARE_VISIBILITY_CHANGED",
+        "pattern": "chat.share.visibility_changed",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "CHAT_THREAD_CONTEXT_TOGGLED",
         "pattern": "chat_thread.context_toggled",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -8066,7 +8096,7 @@
       },
       "claw-audit-service": {
         "runner": "jest",
-        "testFiles": 13
+        "testFiles": 14
       },
       "claw-auth-service": {
         "runner": "jest",
@@ -8074,7 +8104,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 60
+        "testFiles": 61
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -8834,7 +8864,7 @@
     "dockerServiceCount": 41,
     "endpointCount": 525,
     "envVarCount": 330,
-    "eventCount": 158,
+    "eventCount": 164,
     "frontendRouteCount": 97,
     "localeCount": 9,
     "nginxRouteCount": 50,
@@ -8844,7 +8874,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 588,
+    "totalTestFiles": 590,
     "workspaceCount": 25
   }
 }

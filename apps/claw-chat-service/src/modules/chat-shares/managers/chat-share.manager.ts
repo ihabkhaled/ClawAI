@@ -8,6 +8,7 @@ import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-thre
 import { DEFAULT_SHARE_TITLE, MAX_SNAPSHOT_MESSAGES } from '../constants/chat-shares.constants';
 import { ChatShareErrorCode } from '../enums/chat-share-error-code.enum';
 import { ChatSharesRepository } from '../repositories/chat-shares.repository';
+import { ChatShareEventsService } from '../services/chat-share-events.service';
 import { ChatShareMapperService } from '../services/chat-share-mapper.service';
 import { buildPublicShareUrl } from '../utilities/public-share-url.utility';
 import { withPublicIds } from '../utilities/publishable-message.utility';
@@ -20,9 +21,15 @@ import {
   evaluateSnapshotSafety,
   resolveAdsEligibility,
 } from '../utilities/snapshot-safety.utility';
-import { type OwnerChatShareView } from '../types/chat-shares.types';
+import { type OwnerChatShareView, type SnapshotSafetyResult } from '../types/chat-shares.types';
+import { type ChatShareEventIdentity } from '../types/chat-share-event.types';
 import { type PublishShareInput, type UpdateShareInput } from '../types/chat-share-input.types';
-import { type ChatShare, ChatShareStatus, ChatShareVisibility } from '../../../generated/prisma';
+import {
+  type ChatShare,
+  ChatShareSafetyStatus,
+  ChatShareStatus,
+  ChatShareVisibility,
+} from '../../../generated/prisma';
 
 /**
  * Owns publication, refresh, revocation and URL regeneration.
@@ -42,6 +49,7 @@ export class ChatShareManager {
     private readonly threads: ChatThreadsRepository,
     private readonly messages: ChatMessagesRepository,
     private readonly mapper: ChatShareMapperService,
+    private readonly events: ChatShareEventsService,
   ) {}
 
   async getForOwner(threadId: string, userId: string): Promise<OwnerChatShareView | null> {
@@ -121,6 +129,15 @@ export class ChatShareManager {
       `publish: thread=${input.threadId} published visibility=${visibility} ` +
         `messages=${String(snapshot.messages.length)}`,
     );
+    const identity = { shareId: share.id, threadId: input.threadId, userId: input.userId };
+    this.events.published(identity, {
+      visibility,
+      safetyStatus: snapshot.safety.status,
+      messageCount: snapshot.messages.length,
+      snapshotVersion: 1,
+      adsEligible: snapshot.adsEligible,
+    });
+    this.emitSafetyRejectionIfAny(identity, snapshot.safety, input.allowIndexing);
     return this.toOwnerView({ ...share, snapshotVersion: 1 }, input.threadId);
   }
 
@@ -159,6 +176,19 @@ export class ChatShareManager {
       `refresh: thread=${threadId} version=${String(updated.snapshotVersion)} ` +
         `messages=${String(snapshot.messages.length)}`,
     );
+    const identity = { shareId: share.id, threadId, userId };
+    this.events.updated(identity, {
+      visibility: updated.visibility,
+      safetyStatus: updated.safetyStatus,
+      messageCount: updated.messageCount,
+      snapshotVersion: updated.snapshotVersion,
+      adsEligible: updated.adsEligible,
+    });
+    this.emitSafetyRejectionIfAny(
+      identity,
+      snapshot.safety,
+      share.visibility === ChatShareVisibility.PUBLIC_INDEXED,
+    );
     return this.toOwnerView(updated, threadId);
   }
 
@@ -172,6 +202,10 @@ export class ChatShareManager {
       visibility: this.resolveVisibility(input.allowIndexing, share.adsEligible),
     });
     this.logger.log(`updateVisibility: thread=${input.threadId} -> ${updated.visibility}`);
+    this.events.visibilityChanged(
+      { shareId: share.id, threadId: input.threadId, userId: input.userId },
+      { previousVisibility: share.visibility, visibility: updated.visibility },
+    );
     return this.toOwnerView(updated, input.threadId);
   }
 
@@ -191,6 +225,7 @@ export class ChatShareManager {
       publicShareId: generatePublicShareId(),
     });
     this.logger.warn(`regenerateUrl: thread=${threadId} previous URL is now dead`);
+    this.events.urlRegenerated({ shareId: share.id, threadId, userId }, updated.visibility);
     return this.toOwnerView(updated, threadId);
   }
 
@@ -214,6 +249,27 @@ export class ChatShareManager {
       revokedAt: new Date(),
     });
     this.logger.log(`revoke: thread=${threadId} is private again`);
+    this.events.revoked({ shareId: share.id, threadId, userId }, share.visibility);
+  }
+
+  /**
+   * Emits a safety-rejection event only when the owner actually asked for
+   * indexing and the scan is what stopped it.
+   *
+   * Without the `allowIndexing` condition every unlisted share would emit a
+   * "rejection", which would turn the audit signal into noise and hide the case
+   * that matters: an owner who wanted a chat indexed and whose snapshot looks
+   * like it contains a credential.
+   */
+  private emitSafetyRejectionIfAny(
+    identity: ChatShareEventIdentity,
+    safety: SnapshotSafetyResult,
+    allowIndexing: boolean,
+  ): void {
+    if (!allowIndexing || safety.status === ChatShareSafetyStatus.APPROVED) {
+      return;
+    }
+    this.events.safetyRejected(identity, safety.reasons, safety.status);
   }
 
   private async buildSnapshot(threadId: string): Promise<{

@@ -1,6 +1,7 @@
 import { AppConfig } from '../../../../app/config/app.config';
 import { EntityNotFoundException } from '../../../../common/errors';
 import { ChatShareManager } from '../chat-share.manager';
+import type { ChatShareEventsService } from '../../services/chat-share-events.service';
 import { ChatShareMapperService } from '../../services/chat-share-mapper.service';
 import type { ChatMessagesRepository } from '../../../chat-messages/repositories/chat-messages.repository';
 import type { ChatSharesRepository } from '../../repositories/chat-shares.repository';
@@ -80,13 +81,31 @@ type SharesRepoMock = {
   findPublicByShareId: jest.Mock;
 };
 
+type EventsMock = {
+  published: jest.Mock;
+  updated: jest.Mock;
+  visibilityChanged: jest.Mock;
+  revoked: jest.Mock;
+  urlRegenerated: jest.Mock;
+  safetyRejected: jest.Mock;
+};
+
 describe('ChatShareManager', () => {
   let shares: SharesRepoMock;
   let threads: { findById: jest.Mock };
   let messages: { findAllByThreadIdAscending: jest.Mock; countByThreadId: jest.Mock };
+  let events: EventsMock;
   let manager: ChatShareManager;
 
   beforeEach(() => {
+    events = {
+      published: jest.fn(),
+      updated: jest.fn(),
+      visibilityChanged: jest.fn(),
+      revoked: jest.fn(),
+      urlRegenerated: jest.fn(),
+      safetyRejected: jest.fn(),
+    };
     shares = {
       findByThreadId: jest.fn().mockResolvedValue(null),
       create: jest
@@ -119,6 +138,7 @@ describe('ChatShareManager', () => {
       threads as unknown as ChatThreadsRepository,
       messages as unknown as ChatMessagesRepository,
       new ChatShareMapperService(),
+      events as unknown as ChatShareEventsService,
     );
   });
 
@@ -354,6 +374,112 @@ describe('ChatShareManager', () => {
       const view = await manager.getForOwner('thread-1', 'user-1');
 
       expect(view?.hasUnpublishedMessages).toBe(false);
+    });
+  });
+
+  describe('domain events', () => {
+    it('emits published with state but never the public identifier', async () => {
+      // The identifier is a bearer credential for the public page. The bus and
+      // the audit collection both outlive a revocation, so it must not be there.
+      await manager.publish({ threadId: 'thread-1', userId: 'user-1', allowIndexing: true });
+
+      expect(events.published).toHaveBeenCalledTimes(1);
+      const [identity, state] = events.published.mock.calls[0] as [
+        Record<string, unknown>,
+        Record<string, unknown>,
+      ];
+      expect(identity).toEqual({ shareId: 'share-1', threadId: 'thread-1', userId: 'user-1' });
+      expect(state).toMatchObject({ snapshotVersion: 1, messageCount: 4 });
+      expect(JSON.stringify({ identity, state })).not.toContain('publicShareId');
+    });
+
+    it('does not emit a publish event when the request was a no-op', async () => {
+      shares.findByThreadId.mockResolvedValue(makeShare());
+
+      await manager.publish({ threadId: 'thread-1', userId: 'user-1', allowIndexing: true });
+
+      expect(events.published).not.toHaveBeenCalled();
+    });
+
+    it('emits safetyRejected only when indexing was actually requested', async () => {
+      messages.findAllByThreadIdAscending.mockResolvedValue([
+        makeMessage({ id: 'm1', content: `${SUBSTANTIAL} sk-${'a'.repeat(40)}` }),
+        makeMessage({ id: 'm2', role: MessageRole.ASSISTANT }),
+        makeMessage({ id: 'm3' }),
+        makeMessage({ id: 'm4', role: MessageRole.ASSISTANT }),
+      ]);
+
+      await manager.publish({ threadId: 'thread-1', userId: 'user-1', allowIndexing: false });
+      expect(events.safetyRejected).not.toHaveBeenCalled();
+
+      await manager.publish({ threadId: 'thread-1', userId: 'user-1', allowIndexing: true });
+      expect(events.safetyRejected).toHaveBeenCalledTimes(1);
+    });
+
+    it('carries reason codes, never the matched secret, in safetyRejected', async () => {
+      const secret = `sk-${'a'.repeat(40)}`;
+      messages.findAllByThreadIdAscending.mockResolvedValue([
+        makeMessage({ id: 'm1', content: `${SUBSTANTIAL} ${secret}` }),
+        makeMessage({ id: 'm2', role: MessageRole.ASSISTANT }),
+        makeMessage({ id: 'm3' }),
+        makeMessage({ id: 'm4', role: MessageRole.ASSISTANT }),
+      ]);
+
+      await manager.publish({ threadId: 'thread-1', userId: 'user-1', allowIndexing: true });
+
+      const [, reasons] = events.safetyRejected.mock.calls[0] as [unknown, string[]];
+      expect(reasons).toContain('POSSIBLE_SECRET');
+      expect(JSON.stringify(reasons)).not.toContain(secret);
+    });
+
+    it('emits updated on refresh with the new snapshot version', async () => {
+      shares.findByThreadId.mockResolvedValue(makeShare({ snapshotVersion: 3 }));
+
+      await manager.refresh('thread-1', 'user-1');
+
+      const [, state] = events.updated.mock.calls[0] as [unknown, { snapshotVersion: number }];
+      expect(state.snapshotVersion).toBe(4);
+    });
+
+    it('emits the visibility transition, old and new', async () => {
+      shares.findByThreadId.mockResolvedValue(
+        makeShare({ visibility: ChatShareVisibility.PUBLIC_UNLISTED }),
+      );
+
+      await manager.updateVisibility({
+        threadId: 'thread-1',
+        userId: 'user-1',
+        allowIndexing: true,
+      });
+
+      expect(events.visibilityChanged).toHaveBeenCalledWith(
+        { shareId: 'share-1', threadId: 'thread-1', userId: 'user-1' },
+        {
+          previousVisibility: ChatShareVisibility.PUBLIC_UNLISTED,
+          visibility: ChatShareVisibility.PUBLIC_INDEXED,
+        },
+      );
+    });
+
+    it('emits revoked with what the share used to be', async () => {
+      shares.findByThreadId.mockResolvedValue(
+        makeShare({ visibility: ChatShareVisibility.PUBLIC_INDEXED }),
+      );
+
+      await manager.revoke('thread-1', 'user-1');
+
+      expect(events.revoked).toHaveBeenCalledWith(
+        { shareId: 'share-1', threadId: 'thread-1', userId: 'user-1' },
+        ChatShareVisibility.PUBLIC_INDEXED,
+      );
+    });
+
+    it('emits urlRegenerated', async () => {
+      shares.findByThreadId.mockResolvedValue(makeShare());
+
+      await manager.regenerateUrl('thread-1', 'user-1');
+
+      expect(events.urlRegenerated).toHaveBeenCalledTimes(1);
     });
   });
 });

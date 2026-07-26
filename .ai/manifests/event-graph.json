@@ -440,6 +440,60 @@
       "producers": []
     },
     {
+      "consumers": [
+        "claw-audit-service",
+        "claw-chat-service"
+      ],
+      "key": "CHAT_SHARE_PUBLISHED",
+      "pattern": "chat.share.published",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-chat-service"
+      ],
+      "key": "CHAT_SHARE_REVOKED",
+      "pattern": "chat.share.revoked",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-chat-service"
+      ],
+      "key": "CHAT_SHARE_SAFETY_REJECTED",
+      "pattern": "chat.share.safety_rejected",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-chat-service"
+      ],
+      "key": "CHAT_SHARE_UPDATED",
+      "pattern": "chat.share.updated",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-chat-service"
+      ],
+      "key": "CHAT_SHARE_URL_REGENERATED",
+      "pattern": "chat.share.url_regenerated",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-chat-service"
+      ],
+      "key": "CHAT_SHARE_VISIBILITY_CHANGED",
+      "pattern": "chat.share.visibility_changed",
+      "producers": []
+    },
+    {
       "consumers": [],
       "key": "CHAT_THREAD_CONTEXT_TOGGLED",
       "pattern": "chat_thread.context_toggled",

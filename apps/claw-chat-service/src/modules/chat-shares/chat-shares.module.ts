@@ -7,6 +7,7 @@ import { ChatSharesInternalController } from './controllers/chat-shares-internal
 import { PublicChatSharesController } from './controllers/public-chat-shares.controller';
 import { ChatShareManager } from './managers/chat-share.manager';
 import { ChatSharesRepository } from './repositories/chat-shares.repository';
+import { ChatShareEventsService } from './services/chat-share-events.service';
 import { ChatShareMapperService } from './services/chat-share-mapper.service';
 import { PublicChatShareService } from './services/public-chat-share.service';
 
@@ -17,6 +18,7 @@ import { PublicChatShareService } from './services/public-chat-share.service';
     ChatShareManager,
     PublicChatShareService,
     ChatShareMapperService,
+    ChatShareEventsService,
     ChatSharesRepository,
   ],
   exports: [ChatShareManager, ChatSharesRepository],

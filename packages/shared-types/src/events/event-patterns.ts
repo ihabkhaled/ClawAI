@@ -161,6 +161,17 @@ export enum EventPattern {
   CONTEXT_PACK_VERSION_CREATED = 'context_pack.version_created',
   CONTEXT_PACK_VERSION_REVERTED = 'context_pack.version_reverted',
   CONTEXT_PACK_SHARED = 'context_pack.shared',
+  // === Public read-only chat shares (claw-chat-service -> audit) ===
+  // Carry ids and state transitions only. A share event must never contain
+  // conversation text or the public identifier: the bus and the audit
+  // collection both outlive a revocation, and the identifier is the bearer
+  // credential for the public page.
+  CHAT_SHARE_PUBLISHED = 'chat.share.published',
+  CHAT_SHARE_UPDATED = 'chat.share.updated',
+  CHAT_SHARE_VISIBILITY_CHANGED = 'chat.share.visibility_changed',
+  CHAT_SHARE_REVOKED = 'chat.share.revoked',
+  CHAT_SHARE_URL_REGENERATED = 'chat.share.url_regenerated',
+  CHAT_SHARE_SAFETY_REJECTED = 'chat.share.safety_rejected',
   // === Memory + Context Integration V2 (receipts + thread toggles) ===
   CONTEXT_RECEIPT_WRITTEN = 'context.receipt_written',
   CHAT_THREAD_MEMORY_TOGGLED = 'chat_thread.memory_toggled',

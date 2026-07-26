@@ -60,7 +60,7 @@
       "port": 4007,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 13,
+      "testFiles": 14,
       "testRunner": "jest"
     },
     {
@@ -121,7 +121,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 60,
+      "testFiles": 61,
       "testRunner": "jest"
     },
     {
