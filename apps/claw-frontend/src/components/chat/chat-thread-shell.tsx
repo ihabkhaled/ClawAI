@@ -29,7 +29,7 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
           directly under the portal's own top border, and equal padding left the
           title reading as if it were glued to that line. The extra top space
           separates the two without pushing the whole conversation down. */}
-      <div className="surface-glass safe-top sticky top-0 z-20 -mx-3 mb-3 flex flex-col gap-3 px-3 pt-5 pb-3 sm:-mx-4 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:rounded-none sm:px-4 sm:pt-7 sm:pb-4">
+      <div className="surface-glass safe-top safe-top-base-header sticky top-0 z-20 -mx-3 mb-3 flex flex-col gap-3 px-3 pb-3 sm:-mx-4 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:rounded-none sm:px-4 sm:pb-4">
         <div className="flex min-w-0 items-center gap-2">
           {/* Mobile: icon-only back button at the start of the header.
               Desktop: appears as labeled button in the actions cluster. */}

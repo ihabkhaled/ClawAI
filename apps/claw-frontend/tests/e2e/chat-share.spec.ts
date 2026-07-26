@@ -31,13 +31,6 @@ async function login(page: Page): Promise<void> {
 }
 
 /**
- * Opens a thread that actually has messages, and returns its id.
- *
- * The newest thread in the sidebar is frequently an empty one the user opened
- * and never sent into. Publishing that is a legitimate 400 (`EMPTY_THREAD`), so
- * picking blindly tests the wrong thing.
- */
-/**
  * The access token the app is using, read from where the auth store persists it.
  *
  * `page.request` is a separate context from the page and carries no Authorization
@@ -57,6 +50,13 @@ async function readAccessToken(page: Page): Promise<string> {
   return token;
 }
 
+/**
+ * Opens a thread that actually has messages, and returns its id.
+ *
+ * The newest thread in the sidebar is frequently an empty one the user opened
+ * and never sent into. Publishing that is a legitimate 400 (`EMPTY_THREAD`), so
+ * picking blindly tests the wrong thing.
+ */
 async function openNonEmptyThread(page: Page, token: string): Promise<string> {
   await page.goto(`${BASE}/chat`);
   const links = page.locator('a[href^="/chat/"]');

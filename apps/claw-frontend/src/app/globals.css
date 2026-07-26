@@ -507,11 +507,46 @@
 @layer utilities {
   /* Respect iOS/Android home-indicator + notch insets for fixed/sticky chrome */
   .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: calc(var(--safe-bottom-base, 0px) + env(safe-area-inset-bottom));
   }
 
+  /*
+   * ADDITIVE, on purpose.
+   *
+   * This previously assigned the inset to padding-top directly, which silently
+   * defeated every `pt-*` / `p-*` utility on the same element — same layer,
+   * declared later, so this rule won. On desktop the inset is 0px, so such an
+   * element ended up with NO top padding at all: the chat header's title sat
+   * flush against its frosted edge despite carrying `pt-5 sm:pt-7`, and toasts
+   * hugged the viewport edge despite `p-4`.
+   *
+   * Callers needing their own base set `--safe-top-base` through a named class
+   * below, so the two declarations cannot fight.
+   */
   .safe-top {
-    padding-top: env(safe-area-inset-top);
+    padding-top: calc(var(--safe-top-base, 0px) + env(safe-area-inset-top));
+  }
+
+  /* 1rem of breathing room, plus whatever the notch needs on top of it. */
+  .safe-top-base-4 {
+    --safe-top-base: 1rem;
+  }
+
+  /*
+   * The chat thread header's vertical rhythm.
+   *
+   * The breakpoint lives here rather than as `sm:pt-7` on the element because
+   * `.safe-top` owns padding-top; a `pt-*` utility alongside it is simply
+   * discarded. Values match `pt-5` / `sm:pt-7`.
+   */
+  .safe-top-base-header {
+    --safe-top-base: 1.25rem;
+  }
+
+  @media (min-width: 640px) {
+    .safe-top-base-header {
+      --safe-top-base: 1.75rem;
+    }
   }
 
   /* Fade the tail of long scroll regions (e.g. sidebar nav) */

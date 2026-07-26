@@ -55,15 +55,15 @@ export function GroupedThreadList({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        <span className="ms-2 text-sm text-muted-foreground">{t('chat.loadingThreads')}</span>
+        <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+        <span className="text-muted-foreground ms-2 text-sm">{t('chat.loadingThreads')}</span>
       </div>
     );
   }
 
   if (threads.length === 0) {
     return (
-      <div className="py-8 text-center text-sm text-muted-foreground">
+      <div className="text-muted-foreground py-8 text-center text-sm">
         {search.length > 0 ? t('chat.noMatchingThreads') : t('chat.noThreads')}
       </div>
     );
@@ -73,9 +73,15 @@ export function GroupedThreadList({
     <div ref={containerRef} className="h-full overflow-y-auto pe-1">
       {groups.map((group) => (
         <section key={group.id} className="mb-3">
-          <h3 className="sticky top-0 z-10 -mx-1 mb-2 bg-background/95 px-1 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <h3 className="bg-background/95 text-muted-foreground supports-[backdrop-filter]:bg-background/80 sticky top-0 z-10 -mx-1 mb-2 px-1 py-1 text-xs font-semibold tracking-wide uppercase backdrop-blur">
             {t(THREAD_DATE_GROUP_LABEL_KEYS[group.id])}
-            <span className="ms-2 text-[10px] font-normal opacity-70">{group.threads.length}</span>
+            {/*
+              No opacity here. `text-muted-foreground` is tuned to sit just above
+              the 4.5:1 floor, so knocking 30% off it put this count at 4.28:1 —
+              and at 10px it is small text, which has no relaxed threshold to
+              fall back on. Size alone keeps it subordinate to the group label.
+            */}
+            <span className="ms-2 text-[10px] font-normal">{group.threads.length}</span>
           </h3>
           <div className="flex flex-col gap-2">
             {group.threads.map((thread) => (
@@ -95,8 +101,8 @@ export function GroupedThreadList({
       <div ref={sentinelRef} aria-hidden="true" />
       {isFetchingNextPage ? (
         <div className="flex items-center justify-center py-3">
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          <span className="ms-2 text-xs text-muted-foreground">{t('chat.loadingMoreThreads')}</span>
+          <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+          <span className="text-muted-foreground ms-2 text-xs">{t('chat.loadingMoreThreads')}</span>
         </div>
       ) : null}
     </div>
