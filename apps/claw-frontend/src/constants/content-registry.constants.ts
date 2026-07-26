@@ -1,3 +1,4 @@
+import { PUBLIC_PAGE_SEO_BY_LOCALE } from '@/constants/public-page-seo.constants';
 import {
   AdEligibility,
   ContentCategory,
@@ -6,6 +7,7 @@ import {
   Indexability,
   StructuredDataType,
 } from '@/enums';
+import { LaunchPublicPageSlug } from '@/enums/launch-public-page-slug.enum';
 import { Locale } from '@/enums/locale.enum';
 import type {
   ContentRegistryEntry,
@@ -13,245 +15,224 @@ import type {
   PublicContentDefinition,
 } from '@/types/content-registry.types';
 
-// Canonical source of truth for every public marketing/editorial page —
-// nav, sitemap.ts, robots middleware, and (later) the AdSense eligibility
-// resolver all derive from this single array. A page that is not PUBLISHED
-// here is never linked, never in the sitemap, and never indexable —
-// regardless of what individual fields on its entry say (see
-// getIndexablePages()/isKnownPublicPath() in content-registry.utility.ts
-// for the defense-in-depth enforcement of that rule).
-//
-// Phase B ships eight PUBLISHED entries: home, contact, and the six topic
-// pages (features, how-it-works, architecture, local-first-ai, use-cases,
-// faq). Everything else stays PLANNED so a later phase only needs to flip
-// `status` and add the page component.
-//
-// A slug appears EXACTLY ONCE. getPageBySlug() returns the first match, so a
-// duplicate between the published block and the planned list would silently
-// shadow one of them.
-//
-// Note on `local-first-ai`: the route name is retained for link stability, but
-// the page is positioned as private on-premise deployment for ORGANISATIONS,
-// not as the product's identity. Planned routes that would have marketed local
-// models to individual users were removed when the product was repositioned
-// around hosted access to frontier cloud models.
-const ENGLISH_CONTENT_ENTRIES: ReadonlyArray<ContentRegistryEntry> = [
+const REVIEW_DATE = '2026-07-27';
+
+type PublishedContentConfig = {
+  slug: LaunchPublicPageSlug;
+  path: string;
+  category: ContentCategory;
+  adEligibility: AdEligibility;
+  structuredDataType: StructuredDataType;
+  relatedSlugs: readonly string[];
+};
+
+const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
   {
-    slug: 'home',
-    locale: Locale.EN,
-    status: ContentLifecycleStatus.PUBLISHED,
-    title: 'ClawAI — Every Frontier AI Model, One Subscription',
-    description:
-      'Reach Claude Opus, GPT-5, Gemini, Kimi K2, GLM, Qwen, DeepSeek and Grok from one account. Intelligent routing picks the right model per task, with plans from $5/month.',
+    slug: LaunchPublicPageSlug.HOME,
+    path: '/',
     category: ContentCategory.HOME,
-    canonicalPath: '/',
-    lastReviewed: '2026-07-25',
-    indexability: Indexability.INDEXABLE,
-    // The homepage is the one reviewed editorial page live in Phase A, so it
-    // is the only ad-eligible route. Whether ads actually serve is still
-    // gated by NEXT_PUBLIC_ADSENSE_SERVING_ENABLED (off by default) — this
-    // flag only makes the page a valid ad surface, not an active one.
     adEligibility: AdEligibility.ELIGIBLE,
-    reviewStatus: ContentReviewStatus.REVIEWED,
-    relatedSlugs: ['about', 'how-it-works', 'architecture'],
     structuredDataType: StructuredDataType.WEBSITE,
+    relatedSlugs: ['about', 'features', 'pricing'],
   },
   {
-    slug: 'contact',
-    locale: Locale.EN,
-    status: ContentLifecycleStatus.PUBLISHED,
-    title: 'Contact ClawAI',
-    description:
-      'Get in touch with the ClawAI team — questions about self-hosting, local-first AI orchestration, workspace integrations, or the desktop agent.',
-    category: ContentCategory.CONTACT,
-    canonicalPath: '/contact',
-    lastReviewed: '2026-07-25',
-    indexability: Indexability.INDEXABLE,
-    // A form/support page is indexable but never an ad surface.
+    slug: LaunchPublicPageSlug.ABOUT,
+    path: '/about',
+    category: ContentCategory.ABOUT,
     adEligibility: AdEligibility.INELIGIBLE,
-    reviewStatus: ContentReviewStatus.REVIEWED,
-    relatedSlugs: ['about', 'faq'],
-    structuredDataType: StructuredDataType.NONE,
-  },
-  // ─── Phase B: the six topic pages, each now a real reviewed page ──────────
-  // The home page is a summary and entry point; long-form content lives on
-  // these routes so each one can rank and be linked on its own.
-  {
-    slug: 'features',
-    locale: Locale.EN,
-    status: ContentLifecycleStatus.PUBLISHED,
-    title: 'Features — ClawAI',
-    description:
-      'One subscription across Claude, GPT, Gemini, Kimi, GLM, Qwen, DeepSeek and Grok, with intelligent routing, Compare, Consensus, Judge review, memory, files and workspace connectors.',
-    category: ContentCategory.FEATURES,
-    canonicalPath: '/features',
-    lastReviewed: '2026-07-25',
-    indexability: Indexability.INDEXABLE,
-    adEligibility: AdEligibility.ELIGIBLE,
-    reviewStatus: ContentReviewStatus.REVIEWED,
-    relatedSlugs: ['how-it-works', 'use-cases', 'architecture'],
-    structuredDataType: StructuredDataType.NONE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['architecture', 'features', 'security-and-privacy'],
   },
   {
-    slug: 'how-it-works',
-    locale: Locale.EN,
-    status: ContentLifecycleStatus.PUBLISHED,
-    title: 'How It Works — ClawAI',
-    description:
-      'Create an account, pick a plan, and ask anything. ClawAI routes each task to the best-suited model and meters every request against one cost-normalized allowance.',
-    category: ContentCategory.HOW_IT_WORKS,
-    canonicalPath: '/how-it-works',
-    lastReviewed: '2026-07-25',
-    indexability: Indexability.INDEXABLE,
-    adEligibility: AdEligibility.ELIGIBLE,
-    reviewStatus: ContentReviewStatus.REVIEWED,
-    relatedSlugs: ['features', 'faq', 'use-cases'],
-    structuredDataType: StructuredDataType.NONE,
+    slug: LaunchPublicPageSlug.ACCEPTABLE_USE,
+    path: '/acceptable-use',
+    category: ContentCategory.LEGAL,
+    adEligibility: AdEligibility.INELIGIBLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['terms', 'privacy', 'contact'],
   },
   {
-    slug: 'architecture',
-    locale: Locale.EN,
-    status: ContentLifecycleStatus.PUBLISHED,
-    title: 'Architecture — ClawAI',
-    description:
-      'How ClawAI is built: 18 independently deployable services, database-per-service ownership, an event-driven backbone, streaming responses, and defence-in-depth security.',
+    slug: LaunchPublicPageSlug.ARCHITECTURE,
+    path: '/architecture',
     category: ContentCategory.ARCHITECTURE,
-    canonicalPath: '/architecture',
-    lastReviewed: '2026-07-25',
-    indexability: Indexability.INDEXABLE,
     adEligibility: AdEligibility.ELIGIBLE,
-    reviewStatus: ContentReviewStatus.REVIEWED,
-    relatedSlugs: ['features', 'local-first-ai'],
-    structuredDataType: StructuredDataType.NONE,
+    structuredDataType: StructuredDataType.TECH_ARTICLE,
+    relatedSlugs: ['features', 'security-and-privacy', 'local-first-ai'],
   },
   {
-    slug: 'local-first-ai',
-    locale: Locale.EN,
-    status: ContentLifecycleStatus.PUBLISHED,
-    title: 'ClawAI on Your Infrastructure — Private Deployment for Organisations',
-    description:
-      'For organisations whose data cannot leave their network: deploy ClawAI on your own servers and run local models only. Scoped per engagement — talk to us.',
-    category: ContentCategory.LOCAL_FIRST,
-    canonicalPath: '/local-first-ai',
-    lastReviewed: '2026-07-25',
-    indexability: Indexability.INDEXABLE,
-    // A sales/contact page, never an ad surface.
+    slug: LaunchPublicPageSlug.CONTACT,
+    path: '/contact',
+    category: ContentCategory.CONTACT,
     adEligibility: AdEligibility.INELIGIBLE,
-    reviewStatus: ContentReviewStatus.REVIEWED,
-    relatedSlugs: ['contact', 'architecture'],
-    structuredDataType: StructuredDataType.NONE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['faq', 'local-first-ai', 'security-and-privacy'],
   },
   {
-    slug: 'use-cases',
-    locale: Locale.EN,
-    status: ContentLifecycleStatus.PUBLISHED,
-    title: 'Use Cases — ClawAI',
-    description:
-      'What people build with ClawAI: development, research, analysis, writing, support, document generation and images — each routed to the model best suited to it.',
-    category: ContentCategory.USE_CASES,
-    canonicalPath: '/use-cases',
-    lastReviewed: '2026-07-25',
-    indexability: Indexability.INDEXABLE,
-    adEligibility: AdEligibility.ELIGIBLE,
-    reviewStatus: ContentReviewStatus.REVIEWED,
-    relatedSlugs: ['features', 'how-it-works'],
-    structuredDataType: StructuredDataType.NONE,
+    slug: LaunchPublicPageSlug.COOKIES,
+    path: '/cookies',
+    category: ContentCategory.LEGAL,
+    adEligibility: AdEligibility.INELIGIBLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['privacy', 'terms'],
   },
   {
-    slug: 'faq',
-    locale: Locale.EN,
-    status: ContentLifecycleStatus.PUBLISHED,
-    title: 'FAQ — ClawAI',
-    description:
-      'Answers on plans and billing, which models are included, how allowances are measured, data privacy, and private deployment for organisations.',
+    slug: LaunchPublicPageSlug.FAQ,
+    path: '/faq',
     category: ContentCategory.FAQ,
-    canonicalPath: '/faq',
-    lastReviewed: '2026-07-25',
-    indexability: Indexability.INDEXABLE,
     adEligibility: AdEligibility.ELIGIBLE,
-    reviewStatus: ContentReviewStatus.REVIEWED,
-    relatedSlugs: ['how-it-works', 'contact'],
-    structuredDataType: StructuredDataType.NONE,
+    structuredDataType: StructuredDataType.FAQ_PAGE,
+    relatedSlugs: ['pricing', 'supported-models', 'contact'],
   },
-  ...(
-    [
-      ['about', ContentCategory.ABOUT],
-      ['multi-provider-ai', ContentCategory.MULTI_PROVIDER],
-      ['model-routing', ContentCategory.MODEL_ROUTING],
-      ['advanced-orchestration', ContentCategory.ORCHESTRATION],
-      ['memory-and-context', ContentCategory.MEMORY_CONTEXT],
-      ['rag-and-files', ContentCategory.RAG_FILES],
-      ['workspace-connectors', ContentCategory.WORKSPACE],
-      ['desktop-agent', ContentCategory.DESKTOP_AGENT],
-      ['self-hosting', ContentCategory.SELF_HOSTING],
-      ['security-and-privacy', ContentCategory.SECURITY_PRIVACY],
-      ['ai-safety', ContentCategory.AI_SAFETY],
-      ['observability', ContentCategory.OBSERVABILITY],
-      ['supported-providers', ContentCategory.PROVIDERS],
-      ['guides', ContentCategory.GUIDE],
-      ['guides/getting-started', ContentCategory.GUIDE],
-      ['guides/provider-routing', ContentCategory.GUIDE],
-      ['guides/privacy-first-ai', ContentCategory.GUIDE],
-      ['privacy', ContentCategory.LEGAL],
-      ['terms', ContentCategory.LEGAL],
-      ['cookies', ContentCategory.LEGAL],
-      ['acceptable-use', ContentCategory.LEGAL],
-    ] as const
-  ).map(([slug, category]): ContentRegistryEntry => ({
-    slug,
-    locale: Locale.EN,
-    status: ContentLifecycleStatus.PLANNED,
-    title: '',
-    description: '',
-    category,
-    canonicalPath: `/${slug}`,
-    lastReviewed: '2026-07-24',
-    indexability: Indexability.NOINDEX,
+  {
+    slug: LaunchPublicPageSlug.FEATURES,
+    path: '/features',
+    category: ContentCategory.FEATURES,
+    adEligibility: AdEligibility.ELIGIBLE,
+    structuredDataType: StructuredDataType.SOFTWARE_APPLICATION,
+    relatedSlugs: ['how-it-works', 'supported-models', 'use-cases'],
+  },
+  {
+    slug: LaunchPublicPageSlug.HOW_IT_WORKS,
+    path: '/how-it-works',
+    category: ContentCategory.HOW_IT_WORKS,
+    adEligibility: AdEligibility.ELIGIBLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['features', 'pricing', 'architecture'],
+  },
+  {
+    slug: LaunchPublicPageSlug.LOCAL_FIRST_AI,
+    path: '/local-first-ai',
+    category: ContentCategory.LOCAL_FIRST,
     adEligibility: AdEligibility.INELIGIBLE,
-    reviewStatus: ContentReviewStatus.PENDING_REVIEW,
-    relatedSlugs: [],
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['contact', 'architecture', 'security-and-privacy'],
+  },
+  {
+    slug: LaunchPublicPageSlug.PRICING,
+    path: '/pricing',
+    category: ContentCategory.PRICING,
+    adEligibility: AdEligibility.INELIGIBLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['features', 'supported-models', 'faq'],
+  },
+  {
+    slug: LaunchPublicPageSlug.PRIVACY,
+    path: '/privacy',
+    category: ContentCategory.LEGAL,
+    adEligibility: AdEligibility.INELIGIBLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['security-and-privacy', 'cookies', 'terms'],
+  },
+  {
+    slug: LaunchPublicPageSlug.SECURITY_AND_PRIVACY,
+    path: '/security-and-privacy',
+    category: ContentCategory.SECURITY_PRIVACY,
+    adEligibility: AdEligibility.INELIGIBLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['privacy', 'architecture', 'local-first-ai'],
+  },
+  {
+    slug: LaunchPublicPageSlug.SUPPORTED_MODELS,
+    path: '/supported-models',
+    category: ContentCategory.PROVIDERS,
+    adEligibility: AdEligibility.INELIGIBLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['features', 'pricing', 'how-it-works'],
+  },
+  {
+    slug: LaunchPublicPageSlug.TERMS,
+    path: '/terms',
+    category: ContentCategory.LEGAL,
+    adEligibility: AdEligibility.INELIGIBLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['acceptable-use', 'privacy', 'cookies'],
+  },
+  {
+    slug: LaunchPublicPageSlug.USE_CASES,
+    path: '/use-cases',
+    category: ContentCategory.USE_CASES,
+    adEligibility: AdEligibility.ELIGIBLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['features', 'how-it-works', 'pricing'],
+  },
+];
+
+const PLANNED_CONTENT_CONFIGS = [
+  ['multi-provider-ai', ContentCategory.MULTI_PROVIDER],
+  ['model-routing', ContentCategory.MODEL_ROUTING],
+  ['advanced-orchestration', ContentCategory.ORCHESTRATION],
+  ['memory-and-context', ContentCategory.MEMORY_CONTEXT],
+  ['rag-and-files', ContentCategory.RAG_FILES],
+  ['workspace-connectors', ContentCategory.WORKSPACE],
+  ['desktop-agent', ContentCategory.DESKTOP_AGENT],
+  ['self-hosting', ContentCategory.SELF_HOSTING],
+  ['ai-safety', ContentCategory.AI_SAFETY],
+  ['observability', ContentCategory.OBSERVABILITY],
+  ['supported-providers', ContentCategory.PROVIDERS],
+  ['guides', ContentCategory.GUIDE],
+  ['guides/getting-started', ContentCategory.GUIDE],
+  ['guides/provider-routing', ContentCategory.GUIDE],
+  ['guides/privacy-first-ai', ContentCategory.GUIDE],
+] as const;
+
+function buildLocalizedMetadata(
+  slug: LaunchPublicPageSlug,
+): Record<Locale, LocalizedContentMetadata> {
+  return Object.values(Locale).reduce(
+    (metadataByLocale, locale) => {
+      const seo = PUBLIC_PAGE_SEO_BY_LOCALE[locale][slug];
+      metadataByLocale[locale] = {
+        title: seo.title,
+        description: seo.description,
+        keywords: seo.keywords,
+        lastReviewed: REVIEW_DATE,
+        reviewStatus: ContentReviewStatus.REVIEWED,
+        indexability: Indexability.INDEXABLE,
+      };
+      return metadataByLocale;
+    },
+    {} as Record<Locale, LocalizedContentMetadata>,
+  );
+}
+
+const PUBLISHED_DEFINITIONS: ReadonlyArray<PublicContentDefinition> = PUBLISHED_CONTENT_CONFIGS.map(
+  (config): PublicContentDefinition => ({
+    slug: config.slug,
+    category: config.category,
+    path: config.path,
+    status: ContentLifecycleStatus.PUBLISHED,
+    adEligibility: config.adEligibility,
+    structuredDataType: config.structuredDataType,
+    relatedSlugs: config.relatedSlugs,
+    locales: buildLocalizedMetadata(config.slug),
+  }),
+);
+
+const PLANNED_DEFINITIONS: ReadonlyArray<PublicContentDefinition> = PLANNED_CONTENT_CONFIGS.map(
+  ([slug, category]): PublicContentDefinition => ({
+    slug,
+    category,
+    path: `/${slug}`,
+    status: ContentLifecycleStatus.PLANNED,
+    adEligibility: AdEligibility.INELIGIBLE,
     structuredDataType: StructuredDataType.NONE,
-  })),
+    relatedSlugs: [],
+    locales: {},
+  }),
+);
+
+/**
+ * Canonical public-discovery authority. Navigation, metadata, sitemaps, RSS,
+ * robots decisions and audits derive from this logical, locale-aware registry.
+ */
+export const PUBLIC_CONTENT_DEFINITIONS: ReadonlyArray<PublicContentDefinition> = [
+  ...PUBLISHED_DEFINITIONS,
+  ...PLANNED_DEFINITIONS,
 ];
 
 /**
- * Logical public pages are the canonical source for discovery decisions.
- *
- * The compatibility `CONTENT_REGISTRY` export below remains temporarily
- * flattened for page components that predate URL locales. New sitemap,
- * metadata and route-visibility code must use these definitions. Published
- * public pages intentionally expose every supported locale URL; the route's
- * locale selects the matching UI dictionary when the page renders.
- */
-export const PUBLIC_CONTENT_DEFINITIONS: ReadonlyArray<PublicContentDefinition> =
-  ENGLISH_CONTENT_ENTRIES.map((entry): PublicContentDefinition => ({
-    slug: entry.slug,
-    category: entry.category,
-    path: entry.canonicalPath,
-    status: entry.status,
-    adEligibility: entry.adEligibility,
-    structuredDataType: entry.structuredDataType,
-    relatedSlugs: entry.relatedSlugs,
-    locales:
-      entry.status === ContentLifecycleStatus.PUBLISHED
-        ? (Object.fromEntries(
-            Object.values(Locale).map((locale) => [
-              locale,
-              {
-                title: entry.title,
-                description: entry.description,
-                lastReviewed: entry.lastReviewed,
-                reviewStatus: entry.reviewStatus,
-                indexability: entry.indexability,
-              },
-            ]),
-          ) as Record<Locale, LocalizedContentMetadata>)
-        : {},
-  }));
-
-/**
- * @deprecated Prefer `PUBLIC_CONTENT_DEFINITIONS` and locale-aware registry
- * utilities. This flattened view exists for unchanged marketing components.
+ * Compatibility projection for older consumers. New code should prefer
+ * `PUBLIC_CONTENT_DEFINITIONS` and the locale-aware registry utilities.
  */
 export const CONTENT_REGISTRY: ReadonlyArray<ContentRegistryEntry> =
   PUBLIC_CONTENT_DEFINITIONS.flatMap((definition) => {
@@ -262,6 +243,7 @@ export const CONTENT_REGISTRY: ReadonlyArray<ContentRegistryEntry> =
         status: definition.status,
         title: metadata.title,
         description: metadata.description,
+        keywords: metadata.keywords,
         category: definition.category,
         canonicalPath: definition.path,
         lastReviewed: metadata.lastReviewed,
@@ -284,6 +266,7 @@ export const CONTENT_REGISTRY: ReadonlyArray<ContentRegistryEntry> =
         status: definition.status,
         title: '',
         description: '',
+        keywords: [],
         category: definition.category,
         canonicalPath: definition.path,
         lastReviewed: '',

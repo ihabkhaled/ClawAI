@@ -1,6 +1,7 @@
 export enum ContentCategory {
   HOME = 'HOME',
   ABOUT = 'ABOUT',
+  PRICING = 'PRICING',
   HOW_IT_WORKS = 'HOW_IT_WORKS',
   FEATURES = 'FEATURES',
   ARCHITECTURE = 'ARCHITECTURE',

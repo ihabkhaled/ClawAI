@@ -54,6 +54,9 @@ describe('buildPublicPageMetadata', () => {
     expect(metadata.alternates).toEqual(
       expect.objectContaining({ canonical: 'https://claw.example/ja/features' }),
     );
+    expect(metadata.title).not.toBe('Features â€” ClawAI');
+    expect(metadata.description).not.toContain('One subscription across Claude');
+    expect(metadata.keywords).toEqual(expect.arrayContaining([expect.any(String)]));
     expect(metadata.robots).toEqual(expect.objectContaining({ index: true, follow: true }));
   });
 });

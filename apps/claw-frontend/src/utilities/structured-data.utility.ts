@@ -1,6 +1,6 @@
 import { MARKETING_GITHUB_URL } from '@/constants/marketing-nav.constants';
 import type { SharedChatJsonLdInput } from '@/types/chat-share-page.types';
-import type { JsonLdObject } from '@/types/structured-data.types';
+import type { JsonLdObject, PublicPageJsonLdInput } from '@/types/structured-data.types';
 
 // Only facts the application and repository actually support — no
 // fabricated ratings, reviews, prices, or provider endorsements.
@@ -31,6 +31,24 @@ export function buildSoftwareApplicationJsonLd(siteUrl: string): JsonLdObject {
     url: siteUrl,
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'Linux, Windows, macOS (self-hosted via Docker)',
+  };
+}
+
+export function buildPublicPageJsonLd(input: PublicPageJsonLdInput): JsonLdObject {
+  const canonicalUrl = new URL(input.canonicalUrl);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: input.name,
+    description: input.description,
+    url: input.canonicalUrl,
+    inLanguage: input.language,
+    dateModified: input.lastReviewed,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'ClawAI',
+      url: canonicalUrl.origin,
+    },
   };
 }
 

@@ -12,6 +12,16 @@
       "route": "/register"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/about/page.tsx",
+      "kind": "page",
+      "route": "/about"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/acceptable-use/page.tsx",
+      "kind": "page",
+      "route": "/acceptable-use"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/architecture/page.tsx",
       "kind": "page",
       "route": "/architecture"
@@ -20,6 +30,11 @@
       "file": "apps/claw-frontend/src/app/(marketing)/contact/page.tsx",
       "kind": "page",
       "route": "/contact"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/cookies/page.tsx",
+      "kind": "page",
+      "route": "/cookies"
     },
     {
       "file": "apps/claw-frontend/src/app/(marketing)/faq/page.tsx",
@@ -47,9 +62,34 @@
       "route": "/"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/pricing/page.tsx",
+      "kind": "page",
+      "route": "/pricing"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/privacy/page.tsx",
+      "kind": "page",
+      "route": "/privacy"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/security-and-privacy/page.tsx",
+      "kind": "page",
+      "route": "/security-and-privacy"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/share/chat/[publicShareId]/page.tsx",
       "kind": "page",
       "route": "/share/chat/[publicShareId]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/supported-models/page.tsx",
+      "kind": "page",
+      "route": "/supported-models"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/terms/page.tsx",
+      "kind": "page",
+      "route": "/terms"
     },
     {
       "file": "apps/claw-frontend/src/app/(marketing)/use-cases/page.tsx",

@@ -34,6 +34,7 @@ function toRegistryEntry(
     status: definition.status,
     title: metadata.title,
     description: metadata.description,
+    keywords: metadata.keywords,
     category: definition.category,
     canonicalPath: definition.path,
     lastReviewed: metadata.lastReviewed,
@@ -142,6 +143,7 @@ export function getIndexablePagesForLocale(locale: Locale): LocalizedContentRegi
         metadata: {
           title: metadata.title,
           description: metadata.description,
+          keywords: metadata.keywords,
           lastReviewed: metadata.lastReviewed,
         },
       },
