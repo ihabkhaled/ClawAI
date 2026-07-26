@@ -28,7 +28,7 @@
     "docker:dev:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
     "docker:logs": "docker compose logs -f",
     "docker:ps": "docker compose ps",
-    "prepare": "node .husky/install.mjs",
+    "prepare": "node .husky/install.mjs || exit 0",
     "lint-staged": "lint-staged",
     "audit": "node tools/audit/index.mjs",
     "audit:check": "node tools/audit/index.mjs --check",
