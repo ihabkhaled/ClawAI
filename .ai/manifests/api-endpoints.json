@@ -1708,6 +1708,21 @@
         "source": "apps/claw-payment-service/src/modules/health/health.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/internal/payments/subscriptions/:id/status",
+        "source": "apps/claw-payment-service/src/modules/internal-payments/controllers/internal-payments.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/payments/transactions/:id/status",
+        "source": "apps/claw-payment-service/src/modules/internal-payments/controllers/internal-payments.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/payments/users/:userId/entitlement",
+        "source": "apps/claw-payment-service/src/modules/internal-payments/controllers/internal-payments.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/payments/webhooks/paymob",
         "source": "apps/claw-payment-service/src/modules/webhooks/controllers/paymob-webhook.controller.ts"
@@ -2683,5 +2698,5 @@
     ]
   },
   "generated": true,
-  "total": 529
+  "total": 532
 }

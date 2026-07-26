@@ -24,6 +24,7 @@ import { OutboxModule } from '../modules/outbox/outbox.module';
 import { GatewaysModule } from '../modules/gateways/gateways.module';
 import { HealthModule } from '../modules/health/health.module';
 import { ReconciliationModule } from '../modules/reconciliation/reconciliation.module';
+import { InternalPaymentsModule } from '../modules/internal-payments/internal-payments.module';
 
 @Module({
   imports: [
@@ -98,6 +99,7 @@ import { ReconciliationModule } from '../modules/reconciliation/reconciliation.m
     SubscriptionsModule,
     WebhooksModule,
     ReconciliationModule,
+    InternalPaymentsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

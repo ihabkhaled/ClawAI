@@ -1773,6 +1773,21 @@
           "source": "apps/claw-payment-service/src/modules/health/health.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/internal/payments/subscriptions/:id/status",
+          "source": "apps/claw-payment-service/src/modules/internal-payments/controllers/internal-payments.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/payments/transactions/:id/status",
+          "source": "apps/claw-payment-service/src/modules/internal-payments/controllers/internal-payments.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/payments/users/:userId/entitlement",
+          "source": "apps/claw-payment-service/src/modules/internal-payments/controllers/internal-payments.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/payments/webhooks/paymob",
           "source": "apps/claw-payment-service/src/modules/webhooks/controllers/paymob-webhook.controller.ts"
@@ -8201,7 +8216,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 30
+        "testFiles": 35
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8249,7 +8264,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 47
+        "testFiles": 51
       },
       "claw-research-service": {
         "runner": "jest",
@@ -8964,7 +8979,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 529,
+    "endpointCount": 532,
     "envVarCount": 335,
     "eventCount": 165,
     "frontendRouteCount": 98,
@@ -8976,7 +8991,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 2,
-    "totalTestFiles": 626,
+    "totalTestFiles": 635,
     "workspaceCount": 25
   }
 }

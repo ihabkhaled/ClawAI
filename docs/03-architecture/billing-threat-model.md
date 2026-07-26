@@ -16,6 +16,7 @@ What an attacker would try against the payment path, and what stops them.
 | Gateway → webhook      | **No**               | Authenticity comes from signature/HMAC verification, never from the URL being secret |
 | Gateway → API response | **No**               | Validated with Zod before it becomes business state                                  |
 | payment-service → auth | Yes, _authenticated_ | Producer identity is checked on every entitlement event                              |
+| auth-service → payment | Yes, _authenticated_ | Shared service token, constant-time comparison, bounded Zod response, user-id match  |
 | Redirect / return page | **No**               | Display-only. A browser can be told anything                                         |
 
 The redirect boundary is the one people get wrong. A user who reaches
@@ -57,6 +58,17 @@ evidence that counts is a server-side capture read or a verified webhook.
 | Retry a capture after a timeout | Captures are never retried; the order is read back instead                      |
 | Redeliver an entitlement event  | `createMany({skipDuplicates})` on the inbox's unique `eventId`                  |
 | Deliver events out of order     | `effectiveAt` comparison — a stale event is skipped, never applied              |
+| Replay entitlement reconcile    | Durable inbox claim; only one failed-event retry claimant can proceed           |
+
+### Internal endpoint abuse
+
+| Attack                                        | Control                                                                            |
+| --------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Call internal status routes from the internet | No `/api/v1/internal/payments` nginx location; regression test enforces absence    |
+| Present a user JWT as service authority       | Guard accepts only the exact `Service` scheme and shared inter-service token       |
+| Time token guesses                            | Equal-length tokens are compared with `timingSafeEqual`                            |
+| Return another user's entitlement             | Auth validates the bounded response and requires its `userId` to match the request |
+| Leak provider or tenant internals on lookup   | Responses are allowlisted projections; unknown ids share one generic 404           |
 
 ### Quota and cost abuse
 

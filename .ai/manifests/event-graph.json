@@ -361,7 +361,8 @@
     },
     {
       "consumers": [
-        "claw-audit-service"
+        "claw-audit-service",
+        "claw-auth-service"
       ],
       "key": "BILLING_ENTITLEMENT_RECONCILE_REQUESTED",
       "pattern": "billing.entitlement.reconcile_requested",

@@ -28,6 +28,11 @@ export type { ProrationInput, ProrationQuote, ProrationResult } from './proratio
 export type { InvoiceLineView, InvoiceView } from './invoice.type';
 export type { PaymentMethodView } from './payment-method.type';
 export type {
+  AuthoritativeBillingEntitlement,
+  InternalPaymentStatus,
+  InternalSubscriptionStatus,
+} from './internal-payment.type';
+export type {
   ModelCostRates,
   QuotaFinalization,
   QuotaRejection,

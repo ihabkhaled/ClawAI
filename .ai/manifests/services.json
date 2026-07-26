@@ -94,7 +94,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 30,
+      "testFiles": 35,
       "testRunner": "jest"
     },
     {
@@ -339,7 +339,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-payment-service",
-      "endpointCount": 16,
+      "endpointCount": 19,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -371,7 +371,7 @@
         "Subscription",
         "WebhookEvent"
       ],
-      "testFiles": 47,
+      "testFiles": 51,
       "testRunner": "jest"
     },
     {

@@ -113,7 +113,7 @@ This is why `claw.sh reset` warns explicitly about the payment database:
 subscriptions, invoices and payment history are financial records and are not
 recoverable.
 
-## Security posture (scaffold-level)
+## Security posture
 
 - **Redaction** is broad by default: authorization and cookie headers, every
   gateway signature header, and the entire request/response body are redacted in
@@ -134,6 +134,31 @@ recoverable.
   what an attacker hammers to farm trials or brute-force a reference.
 - **No caching** on any billing or payment route: billing state is per-user and
   changes on payment.
+
+## Internal service API
+
+The payment service exposes three service-authenticated read routes. They are
+reachable only on the internal service network and are deliberately absent from
+nginx:
+
+| Route                                              | Purpose                                         |
+| -------------------------------------------------- | ----------------------------------------------- |
+| `GET /internal/payments/transactions/:id/status`   | Bounded transaction status projection           |
+| `GET /internal/payments/subscriptions/:id/status`  | Bounded subscription status projection          |
+| `GET /internal/payments/users/:userId/entitlement` | Payment's authoritative paid-entitlement answer |
+
+Every route requires `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>`.
+Comparison is constant-time, missing/wrong schemes are rejected, inputs and
+outputs are Zod-validated, and unknown record responses use one generic 404
+shape. No provider transaction body, gateway subscription identifier, vaulted
+token, or card metadata crosses this boundary.
+
+Auth consumes `billing.entitlement.reconcile_requested`, calls the user-scoped
+entitlement route with the shared service-token wrapper, validates that the
+response belongs to the requested user, and applies the current payment truth
+through its durable inbox and canonical entitlement applier. A failed lookup is
+marked failed and rethrown for broker retry; one retry claimant wins
+atomically.
 
 ## Health
 
@@ -240,13 +265,14 @@ them to try another one.
 
 Live: config, infrastructure, error model, health, Docker (dev + prod), nginx,
 TLS SANs, CI matrix, installers, `seed_executions`, billing schema, both gateway
-adapters, FX quoting, proration, the transactional outbox, the signed
-plan-catalog client, checkout creation, and both webhook verification paths
-through to entitlement activation.
+adapters, FX quoting, proration, the transactional outbox, signed plan-catalog
+client, checkout and subscription management, webhook verification,
+entitlement activation, locked reconciliation/lifecycle sweeps, and the
+service-authenticated internal status/reconcile API.
 
-Still to land: plan-change quote/confirm endpoints, cancel/resume, invoices and
-payment-method endpoints, the reconciliation sweep, and refund/chargeback
-handling.
+Still to land in the subscription-completion program: standalone payment-method
+setup, first-class refund operations, immutable invoice delivery, public
+pricing, and the admin price/margin surfaces.
 
 ## Related
 
