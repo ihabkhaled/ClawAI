@@ -31,6 +31,17 @@ const appConfigSchema = z
     AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
     ROUTING_SERVICE_URL: z.string().min(1).default('http://routing-service:4004'),
 
+    // Shared secret for the signed internal plan-catalog API. Without it this
+    // service cannot learn a price, and a checkout must not proceed.
+    INTER_SERVICE_AUTH_TOKEN: z
+      .string()
+      .min(32, 'INTER_SERVICE_AUTH_TOKEN must be at least 32 characters'),
+
+    // Where a gateway sends the customer back. Return URLs are built from THIS
+    // value, never from a client-supplied redirect parameter — an attacker-
+    // controlled return URL turns a real payment into a phishing landing page.
+    FRONTEND_URL: z.string().min(1).default('https://claw.local'),
+
     // Application-layer envelope key for vaulted gateway tokens. Distinct from
     // the platform-wide ENCRYPTION_KEY so a payment-token compromise does not
     // also expose connector API keys, and so it can be rotated independently.

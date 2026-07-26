@@ -15,6 +15,9 @@ import { RedisModule } from '../infrastructure/redis/redis.module';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { BillingModule } from '../modules/billing/billing.module';
+import { CheckoutModule } from '../modules/checkout/checkout.module';
+import { PlanCatalogModule } from '../modules/plan-catalog/plan-catalog.module';
+import { WebhooksModule } from '../modules/webhooks/webhooks.module';
 import { FxModule } from '../modules/fx/fx.module';
 import { OutboxModule } from '../modules/outbox/outbox.module';
 import { GatewaysModule } from '../modules/gateways/gateways.module';
@@ -88,6 +91,9 @@ import { HealthModule } from '../modules/health/health.module';
     FxModule,
     OutboxModule,
     BillingModule,
+    PlanCatalogModule,
+    CheckoutModule,
+    WebhooksModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

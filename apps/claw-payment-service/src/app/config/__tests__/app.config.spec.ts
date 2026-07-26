@@ -2,6 +2,7 @@ import { AppConfig } from '../app.config';
 
 const VALID_HEX_KEY = 'a'.repeat(64);
 const VALID_JWT_SECRET = 's'.repeat(32);
+const VALID_SERVICE_TOKEN = 't'.repeat(48);
 
 function baseEnv(): Record<string, string> {
   return {
@@ -10,6 +11,7 @@ function baseEnv(): Record<string, string> {
     RABBITMQ_URL: 'amqp://localhost:5672',
     JWT_SECRET: VALID_JWT_SECRET,
     PAYMENT_TOKEN_ENCRYPTION_KEY: VALID_HEX_KEY,
+    INTER_SERVICE_AUTH_TOKEN: VALID_SERVICE_TOKEN,
   };
 }
 
@@ -37,6 +39,9 @@ describe('AppConfig', () => {
       'RABBITMQ_URL',
       'JWT_SECRET',
       'PAYMENT_TOKEN_ENCRYPTION_KEY',
+      // Without it this service cannot read a price, so booting would mean
+      // every checkout fails at the gateway step instead of at startup.
+      'INTER_SERVICE_AUTH_TOKEN',
     ])('rejects a missing %s', (key) => {
       const env = baseEnv();
       Reflect.deleteProperty(env, key);

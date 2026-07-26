@@ -1593,9 +1593,34 @@
     ],
     "claw-payment-service": [
       {
+        "method": "POST",
+        "route": "/billing/checkout-sessions",
+        "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/billing/checkout-sessions/:id",
+        "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/billing/plans",
+        "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-payment-service/src/modules/health/health.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/payments/webhooks/paymob",
+        "source": "apps/claw-payment-service/src/modules/webhooks/controllers/paymob-webhook.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/payments/webhooks/paypal",
+        "source": "apps/claw-payment-service/src/modules/webhooks/controllers/paypal-webhook.controller.ts"
       }
     ],
     "claw-research-service": [
@@ -2553,5 +2578,5 @@
     ]
   },
   "generated": true,
-  "total": 503
+  "total": 508
 }

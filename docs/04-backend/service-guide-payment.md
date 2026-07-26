@@ -174,15 +174,79 @@ schema versions, duplicate event ids, non-payment-service producers for paid
 activations, and stale events whose `entitlementValidUntil` predates the stored
 value.
 
+## How a price becomes a charge
+
+This service does not own prices and never copies them. Auth-service holds them
+as immutable `PlanPriceVersion` rows; payment-service reads one over a signed
+internal API and stores its **id** on the checkout session. That indirection is
+what makes a repricing incapable of rewriting what an existing subscriber
+already agreed to pay.
+
+```
+browser                payment-service                 auth-service
+   │  planId, interval, gateway   │                          │
+   ├─────────────────────────────►│                          │
+   │  (no amount, no currency,    │  GET /internal/plans/price│
+   │   no userId — those are      ├─────────────────────────►│
+   │   server-resolved)           │  Authorization: Service … │
+   │                              │◄─────────────────────────┤
+   │                              │  { id, amountMinor, … }   │
+   │                              │                           │
+   │                              │  Zod-validate: a price that is not a
+   │                              │  non-negative integer is REFUSED.
+   │                              │  Zero/negative never reaches a gateway.
+   │                              │
+   │                              │  FX (Paymob only): quote USD→EGP, freeze
+   │                              │  the rate id onto the session.
+   │                              │
+   │                              │  COMMIT the session row  ← before the
+   │                              │                            gateway call
+   │                              ├──────────► PayPal / Paymob
+   │◄─────────────────────────────┤  hostedCheckoutUrl
+```
+
+The session is committed **before** the provider is contacted. If the provider
+call then succeeds but its response is lost, we still hold a record of what was
+intended, so reconciliation has something to match the money against.
+
+`ChargeResolverService` is the only place a charge is derived, and it reads
+nothing from the request body.
+
+## How a payment becomes an entitlement
+
+Both gateway handlers follow the same order, and the order **is** the security
+design:
+
+1. **Verify the signature/HMAC** over the raw bytes. A rejected signature is
+   recorded (never silently dropped — a forgery attempt is a signal an operator
+   needs) and nothing further happens.
+2. **Claim the event.** The `(gateway, providerEventId)` unique index arbitrates
+   replays, so two replicas receiving the same retry cannot both win.
+3. **Read the order back from the gateway.** We never activate on what the
+   webhook body says the amount was — only on what an authenticated
+   server-to-server read tells us.
+4. **Activate**, in one transaction with the outbox row that informs auth.
+
+`PaymentActivationService` re-checks the amount against the session's own
+recorded figure even though the adapter already verified it. A mismatch fails
+the session with `PAYMENT_AMOUNT_MISMATCH` rather than being accepted with a
+warning.
+
+Both webhook endpoints always answer `200 {"received": true}`. A 4xx would make
+the gateway retry, and telling a forger their signature was rejected only tells
+them to try another one.
+
 ## Current status
 
-Scaffold complete: config, infrastructure, filters/interceptors/pipes, error
-model, health, Docker (dev + prod), nginx, TLS SANs, CI matrix, installers,
-health aggregation, `seed_executions`. Gates green with 97 tests and ≥92%
-coverage on all four metrics.
+Live: config, infrastructure, error model, health, Docker (dev + prod), nginx,
+TLS SANs, CI matrix, installers, `seed_executions`, billing schema, both gateway
+adapters, FX quoting, proration, the transactional outbox, the signed
+plan-catalog client, checkout creation, and both webhook verification paths
+through to entitlement activation.
 
-Billing schema, gateway adapters, proration and entitlement synchronization land
-in the following commits on `feat/secure-subscriptions-payments`.
+Still to land: plan-change quote/confirm endpoints, cancel/resume, invoices and
+payment-method endpoints, the reconciliation sweep, and refund/chargeback
+handling.
 
 ## Related
 

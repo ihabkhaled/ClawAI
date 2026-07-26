@@ -18,6 +18,7 @@ describe('HealthService', () => {
       RABBITMQ_URL: 'amqp://localhost:5672',
       JWT_SECRET: 's'.repeat(32),
       PAYMENT_TOKEN_ENCRYPTION_KEY: 'a'.repeat(64),
+      INTER_SERVICE_AUTH_TOKEN: 't'.repeat(48),
     } as NodeJS.ProcessEnv;
     AppConfig.validate();
   });

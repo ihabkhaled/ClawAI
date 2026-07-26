@@ -838,6 +838,10 @@ ENCRYPTION_KEY=$encryptionKey
 PAYMENT_TOKEN_ENCRYPTION_KEY=$paymentTokenEncryptionKey
 PAYMENT_TOKEN_KEY_VERSION=1
 
+# Where a gateway sends the customer back after payment. Return URLs are built
+# from THIS value server-side, never from a client-supplied redirect parameter.
+FRONTEND_URL=https://$clawHostname
+
 # Gateways start DISABLED. Fill in a complete credential set to enable one - a
 # partial set does not half-enable a gateway.
 # PayPal: https://developer.paypal.com/dashboard/applications
