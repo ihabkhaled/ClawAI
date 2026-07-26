@@ -352,11 +352,12 @@ in a team, `VERCEL_TEAM_ID` must be set. The script stops at the first
 credential failure instead of repeating the same error per project.
 
 **`Cannot find module '@claw/shared-types'` during a Vercel build**
-First inspect the install log. Every project must use `npm ci` exactly. Vercel
-already runs the command in a workspace-aware context for the configured
-`apps/<workspace>` root; prepending `cd ../..` can escape the cloned checkout
-and makes npm attempt to download private `@claw/*` workspaces from npmjs.org.
-The validator rejects that configuration.
+First inspect the install log. Every project must use `cd ../.. && npm ci`
+exactly so installation starts at the monorepo root despite the configured
+`apps/<workspace>` project root. If npm attempts to download a private
+`@claw/*` workspace from npmjs.org, compare the dependency's exact version with
+the local workspace package version; a mismatch makes npm fall through to the
+public registry. The validator rejects a non-root install command.
 
 If installation succeeds but the build cannot resolve the package, verify that
 the build command still calls `scripts/vercel/build-service.sh`, then run

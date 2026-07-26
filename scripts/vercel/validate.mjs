@@ -155,10 +155,10 @@ function checkProjectPaths(projects, findings) {
         `${project.key} installCommand is ${project.installCommand.length} chars; Vercel caps it at 256.`,
       );
     }
-    if (project.installCommand !== 'npm ci') {
+    if (project.installCommand !== 'cd ../.. && npm ci') {
       findings.fail(
         'install-command-root',
-        `${project.key} must run "npm ci" from Vercel's workspace-aware project context; relative cd commands can escape the cloned monorepo and make npm fetch private @claw packages from the public registry.`,
+        `${project.key} must run "cd ../.. && npm ci" from the configured apps/<workspace> root so npm resolves every private @claw package from the monorepo workspace.`,
       );
     }
     if (project.prismaSchema !== null && pkg.scripts?.['prisma:generate'] === undefined) {
