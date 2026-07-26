@@ -37,8 +37,12 @@ fi
 
 cd "${REPO_ROOT}"
 
-echo "==> building shared packages"
-npm run vercel:build:shared
+if [[ "${WORKSPACE}" == "claw-frontend" ]]; then
+  echo "==> frontend has no shared workspace dependencies — skipping shared package builds"
+else
+  echo "==> building shared packages"
+  npm run vercel:build:shared
+fi
 
 # Generated Prisma clients are gitignored, so a fresh Vercel checkout has none.
 # `npx prisma generate` rather than the npm script: not every service defines

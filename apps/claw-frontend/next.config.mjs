@@ -25,6 +25,11 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    // Vercel restores .next/cache between deployments. Keep production build
+    // caching opt-in to Vercel so local builds retain their current behavior.
+    turbopackFileSystemCacheForBuild: process.env.VERCEL === '1',
+  },
   // NOTE: Next 16 removed the `eslint` config key and the built-in `next lint`
   // pass, so there is no eslint block here. Linting runs via `npm run lint`.
   // On Vercel there is no nginx, so the reverse-proxy route map lives here.

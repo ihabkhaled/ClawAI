@@ -11,7 +11,7 @@
  * tailwindcss-animate plugin, content globs) authoritative via v4's
  * legacy-config compatibility path. */
 @import 'tailwindcss';
-@config '../../tailwind.config.ts';
+@config '../../tailwind.config.mts';
 
 .dark pre code.hljs {
   background: transparent;

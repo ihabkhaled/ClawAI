@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "framework": "nextjs",
-  "installCommand": "cd ../.. && npm ci",
+  "installCommand": "cd ../.. && npm ci --workspace=claw-frontend --include-workspace-root=false",
   "buildCommand": "bash ../../scripts/vercel/build-service.sh claw-frontend",
   "outputDirectory": ".next",
   "git": {

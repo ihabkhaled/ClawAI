@@ -63,6 +63,10 @@ const LOCAL_HOST_PATTERNS = [
   /^https?:\/\/0\.0\.0\.0/i,
 ];
 
+const ROOT_INSTALL_COMMAND = 'cd ../.. && npm ci';
+const FRONTEND_INSTALL_COMMAND =
+  'cd ../.. && npm ci --workspace=claw-frontend --include-workspace-root=false';
+
 /** Variables that carry a local-runtime dependency ClawAI-on-Vercel must not need. */
 const LOCAL_RUNTIME_VARIABLES = [
   'LLAMACPP_SERVICE_URL',
@@ -94,6 +98,19 @@ class Findings {
     this.checks.push({ check, status: 'warn', detail });
     this.warnings.push(`${check}: ${detail}`);
   }
+}
+
+function privateWorkspaceDependencies(pkg) {
+  const dependencySections = [
+    pkg.dependencies,
+    pkg.devDependencies,
+    pkg.optionalDependencies,
+    pkg.peerDependencies,
+  ];
+
+  return dependencySections
+    .flatMap((dependencies) => Object.keys(dependencies ?? {}))
+    .filter((name) => name.startsWith('@claw/'));
 }
 
 function checkProjectPaths(projects, findings) {
@@ -155,10 +172,18 @@ function checkProjectPaths(projects, findings) {
         `${project.key} installCommand is ${project.installCommand.length} chars; Vercel caps it at 256.`,
       );
     }
-    if (project.installCommand !== 'cd ../.. && npm ci') {
+    const privateDependencies = privateWorkspaceDependencies(pkg);
+    const usesSafeFrontendInstall =
+      project.key === 'frontend' &&
+      project.installCommand === FRONTEND_INSTALL_COMMAND &&
+      privateDependencies.length === 0;
+
+    if (project.installCommand !== ROOT_INSTALL_COMMAND && !usesSafeFrontendInstall) {
       findings.fail(
         'install-command-root',
-        `${project.key} must run "cd ../.. && npm ci" from the configured apps/<workspace> root so npm resolves every private @claw package from the monorepo workspace.`,
+        project.key === 'frontend' && privateDependencies.length > 0
+          ? `frontend cannot use its scoped install while it depends on private workspaces: ${privateDependencies.join(', ')}`
+          : `${project.key} must run "${ROOT_INSTALL_COMMAND}" from the configured apps/<workspace> root.`,
       );
     }
     if (project.prismaSchema !== null && pkg.scripts?.['prisma:generate'] === undefined) {
