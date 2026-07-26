@@ -1,3 +1,4 @@
+import type { BillingGateway, BillingInterval } from '@/enums/billing.enum';
 import type {
   BillingPlan,
   BillingUsage,
@@ -6,6 +7,7 @@ import type {
   PaymentMethodView,
   ProrationQuoteView,
 } from '@/types/billing.types';
+import type { TranslateFunction } from '@/types/i18n.types';
 
 export type UseBillingPlansReturn = {
   plans: BillingPlan[];
@@ -65,6 +67,28 @@ export type UsePaymentMethodsReturn = {
   clearError: () => void;
 };
 
+export type UseCancelSubscriptionReturn = {
+  cancel: () => void;
+  resume: () => void;
+  isCancelPending: boolean;
+  isResumePending: boolean;
+  error: string | null;
+  clearError: () => void;
+};
+
+export type UseBillingViewStateReturn = {
+  interval: BillingInterval;
+  setInterval: (interval: BillingInterval) => void;
+  gateway: BillingGateway;
+  setGateway: (gateway: BillingGateway) => void;
+  // The plan the user is considering. Non-null opens the quote dialog.
+  targetPlan: BillingPlan | null;
+  openPlanChange: (plan: BillingPlan) => void;
+  closePlanChange: () => void;
+  isCancelOpen: boolean;
+  setIsCancelOpen: (open: boolean) => void;
+};
+
 export type UseBillingPageReturn = {
   subscription: UseCurrentSubscriptionReturn;
   usage: UseBillingUsageReturn;
@@ -72,4 +96,12 @@ export type UseBillingPageReturn = {
   paymentMethods: UsePaymentMethodsReturn;
   planChange: UsePlanChangeReturn;
   plans: UseBillingPlansReturn;
+  checkout: UseStartCheckoutReturn;
+  cancellation: UseCancelSubscriptionReturn;
+  view: UseBillingViewStateReturn;
+  // Chosen by the page controller: a user with no subscription starts a fresh
+  // checkout, an existing subscriber goes through quote -> confirm.
+  selectPlan: (plan: BillingPlan) => void;
+  confirmPlanSelection: () => void;
+  t: TranslateFunction;
 };

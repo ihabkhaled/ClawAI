@@ -1,0 +1,150 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
+
+import { PaymentMethodList } from '@/components/billing/payment-method-list';
+import { ProrationBreakdown } from '@/components/billing/proration-breakdown';
+import { UsageWindowBar } from '@/components/billing/usage-window-bar';
+import type { PaymentMethodView, ProrationQuoteView, UsageWindow } from '@/types/billing.types';
+
+const t = (key: string, params?: Record<string, string | number>): string =>
+  params === undefined ? key : `${key}:${JSON.stringify(params)}`;
+
+function makeQuote(overrides: Partial<ProrationQuoteView> = {}): ProrationQuoteView {
+  return {
+    quoteId: 'q1',
+    targetPlanSlug: 'pro',
+    currency: 'USD',
+    unusedCurrentCreditMinor: 500,
+    targetRemainingChargeMinor: 1500,
+    amountDueMinor: 1000,
+    isScheduledForPeriodEnd: false,
+    scheduledEffectiveAt: null,
+    expiresAt: '2026-08-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+describe('ProrationBreakdown', () => {
+  it('shows credit and charge separately, not just the total', () => {
+    // The user is about to be charged a number they did not pick. Showing only
+    // the total is how an upgrade turns into a chargeback.
+    render(<ProrationBreakdown quote={makeQuote()} t={t} />);
+    expect(screen.getByText('-$5.00')).toBeInTheDocument();
+    expect(screen.getByText('$15.00')).toBeInTheDocument();
+    expect(screen.getByText('$10.00')).toBeInTheDocument();
+  });
+
+  it('states plainly that a scheduled downgrade charges nothing today', () => {
+    render(
+      <ProrationBreakdown
+        quote={makeQuote({
+          isScheduledForPeriodEnd: true,
+          scheduledEffectiveAt: '2026-08-01T00:00:00.000Z',
+          amountDueMinor: 0,
+        })}
+        t={t}
+      />,
+    );
+    expect(screen.getByText('billing.proration.scheduledNoCharge')).toBeInTheDocument();
+    expect(screen.queryByText('billing.proration.dueToday')).not.toBeInTheDocument();
+  });
+});
+
+describe('UsageWindowBar', () => {
+  function makeWindow(used: number, limit: number | null): UsageWindow {
+    return { used, limit, remaining: limit === null ? null : limit - used, periodKey: 'p' };
+  }
+
+  it('reports a real percentage for a limited window', () => {
+    render(<UsageWindowBar label="Today" window={makeWindow(50, 100)} t={t} />);
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
+  });
+
+  it('does not claim a percentage for an unlimited window', () => {
+    render(<UsageWindowBar label="Today" window={makeWindow(9000, null)} t={t} />);
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
+    expect(screen.getByText(/billing\.usage\.usedUnlimited/)).toBeInTheDocument();
+  });
+
+  it('shows a disabled window as full, not empty', () => {
+    render(<UsageWindowBar label="Today" window={makeWindow(0, 0)} t={t} />);
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
+  });
+});
+
+describe('PaymentMethodList', () => {
+  const methods: PaymentMethodView[] = [
+    {
+      id: 'pm-1',
+      gateway: 'PAYPAL',
+      brand: 'Visa',
+      last4: '4242',
+      expiryMonth: 4,
+      expiryYear: 2030,
+      isDefault: true,
+    },
+    {
+      id: 'pm-2',
+      gateway: 'PAYMOB',
+      brand: 'Mastercard',
+      last4: '4444',
+      expiryMonth: null,
+      expiryYear: null,
+      isDefault: false,
+    },
+  ];
+
+  it('disables only the row being removed', async () => {
+    render(
+      <PaymentMethodList
+        methods={methods}
+        isLoading={false}
+        isError={false}
+        onRemove={vi.fn()}
+        pendingId="pm-1"
+        t={t}
+      />,
+    );
+    // A single page-wide isMutating flag would freeze every row here. The
+    // second card must stay actionable while the first is being removed.
+    expect(screen.getByRole('button', { name: 'billing.paymentMethods.removing' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'billing.paymentMethods.remove' })).toBeEnabled();
+  });
+
+  it('passes the row id to the remove handler', async () => {
+    const onRemove = vi.fn();
+    render(
+      <PaymentMethodList
+        methods={methods}
+        isLoading={false}
+        isError={false}
+        onRemove={onRemove}
+        pendingId={null}
+        t={t}
+      />,
+    );
+    const [, secondRowButton] = screen.getAllByRole('button', {
+      name: 'billing.paymentMethods.remove',
+    });
+    if (secondRowButton === undefined) {
+      throw new Error('expected a remove button on the second row');
+    }
+    await userEvent.click(secondRowButton);
+    expect(onRemove).toHaveBeenCalledWith('pm-2');
+  });
+
+  it('renders the empty state', () => {
+    render(
+      <PaymentMethodList
+        methods={[]}
+        isLoading={false}
+        isError={false}
+        onRemove={vi.fn()}
+        pendingId={null}
+        t={t}
+      />,
+    );
+    expect(screen.getByText('billing.paymentMethods.empty')).toBeInTheDocument();
+  });
+});

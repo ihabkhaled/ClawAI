@@ -73,6 +73,7 @@ export const ROUTES = {
   ADMIN_RUNTIME_PROGRESS: '/admin/runtime-progress',
   USAGE: '/usage',
   PLAN: '/plan',
+  BILLING: '/billing',
   AGENT: '/agent',
   AGENT_TERMINAL: '/agent/terminal',
   AGENT_REPOS: '/agent/repos',

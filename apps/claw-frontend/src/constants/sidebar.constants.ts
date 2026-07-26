@@ -27,6 +27,7 @@ import {
   GitBranch,
   Bot,
   Radar,
+  Receipt,
   KeyRound,
   Globe,
   Search,
@@ -214,6 +215,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
     ],
   },
   { labelKey: 'nav.plan', href: ROUTES.PLAN, icon: CreditCard },
+  { labelKey: 'nav.billing', href: ROUTES.BILLING, icon: Receipt },
   { labelKey: 'nav.usage', href: ROUTES.USAGE, icon: Gauge },
   { labelKey: 'nav.settings', href: ROUTES.SETTINGS, icon: Settings },
 ];

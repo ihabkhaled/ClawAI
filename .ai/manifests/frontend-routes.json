@@ -162,6 +162,11 @@
       "route": "/audits"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/billing/page.tsx",
+      "kind": "page",
+      "route": "/billing"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/chat/[threadId]/page.tsx",
       "kind": "page",
       "route": "/chat/[threadId]"

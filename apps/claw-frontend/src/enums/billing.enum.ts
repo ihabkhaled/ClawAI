@@ -35,3 +35,12 @@ export enum BillingGateway {
   PAYPAL = 'PAYPAL',
   PAYMOB = 'PAYMOB',
 }
+
+// Drives the colour of a usage bar. Derived from the ratio, never stored, so a
+// limit change is reflected immediately rather than on the next write.
+export enum UsageTone {
+  UNLIMITED = 'UNLIMITED',
+  NORMAL = 'NORMAL',
+  WARNING = 'WARNING',
+  EXHAUSTED = 'EXHAUSTED',
+}

@@ -165,3 +165,14 @@ export {
   buildSoftwareApplicationJsonLd,
   serializeJsonLd,
 } from './structured-data.utility';
+export {
+  formatMinorAmount,
+  computeUsageRatio,
+  resolveUsageTone,
+  computeUsageWindowPercent,
+  formatQuotaLimit,
+  findPlanPrice,
+  isCurrentPlan,
+  computeYearlySavingMinor,
+  isSubscriptionEntitling,
+} from './billing.utility';

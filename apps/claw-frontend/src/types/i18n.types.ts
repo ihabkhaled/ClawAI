@@ -167,6 +167,7 @@ export type TranslationDictionary = {
     adminRoles: string;
     adminRuntimeProgress: string;
     plan: string;
+    billing: string;
     usage: string;
     more: string;
   };
@@ -3303,6 +3304,14 @@ export type TranslationDictionary = {
     errorTitle: string;
   };
   billing: {
+    page: {
+      title: string;
+      description: string;
+    };
+    error: {
+      title: string;
+      dismiss: string;
+    };
     checkout: {
       startFailed: string;
     };
@@ -3310,9 +3319,137 @@ export type TranslationDictionary = {
       quoteFailed: string;
       confirmFailed: string;
       scheduled: string;
+      title: string;
+      description: string;
+      confirm: string;
+      confirming: string;
     };
     paymentMethods: {
       removeFailed: string;
+      title: string;
+      empty: string;
+      error: string;
+      default: string;
+      expires: string;
+      remove: string;
+      removing: string;
+    };
+    banner: {
+      pastDueTitle: string;
+      pastDueDescription: string;
+      pastDueWithGrace: string;
+      suspendedTitle: string;
+      suspendedDescription: string;
+      incompleteTitle: string;
+      incompleteDescription: string;
+      cancellingTitle: string;
+      cancellingDescription: string;
+      scheduledChangeTitle: string;
+      scheduledChangeDescription: string;
+    };
+    summary: {
+      freeTitle: string;
+      freeDescription: string;
+      price: string;
+      renewsOn: string;
+    };
+    // Keyed by SubscriptionStatus. A missing member renders the raw key, so the
+    // billing-i18n test asserts the enum and this record stay in step.
+    status: {
+      PENDING: string;
+      INCOMPLETE: string;
+      ACTIVE: string;
+      PAST_DUE: string;
+      PAUSED: string;
+      CANCEL_AT_PERIOD_END: string;
+      CANCELLED: string;
+      EXPIRED: string;
+      REFUNDED: string;
+      CHARGEBACK: string;
+      SUSPENDED: string;
+    };
+    interval: {
+      MONTHLY: string;
+      YEARLY: string;
+      toggleLabel: string;
+    };
+    actions: {
+      cancel: string;
+      cancelling: string;
+      resume: string;
+      resuming: string;
+    };
+    plans: {
+      title: string;
+      current: string;
+      currentCta: string;
+      selectCta: string;
+      unavailableForInterval: string;
+      yearlySaving: string;
+      dailyTokens: string;
+      monthlyTokens: string;
+      chatsPerDay: string;
+      error: string;
+      empty: string;
+    };
+    quota: {
+      unlimited: string;
+      disabled: string;
+    };
+    usage: {
+      title: string;
+      day: string;
+      week: string;
+      month: string;
+      error: string;
+      empty: string;
+      usedOfLimit: string;
+      usedUnlimited: string;
+    };
+    features: {
+      title: string;
+      usedOfLimit: string;
+      COMPARE_MODE: string;
+      JUDGE_MODE: string;
+      RESEARCH_MODE: string;
+      CRITIC_REVIEW: string;
+      WORKSPACES: string;
+      MEMORY: string;
+      CONTEXT_PACKS: string;
+    };
+    invoices: {
+      title: string;
+      number: string;
+      issued: string;
+      status: string;
+      total: string;
+      view: string;
+      error: string;
+      empty: string;
+    };
+    gateway: {
+      label: string;
+      placeholder: string;
+      PAYPAL: string;
+      PAYMOB: string;
+    };
+    proration: {
+      unusedCredit: string;
+      remainingCharge: string;
+      dueToday: string;
+      scheduled: string;
+      scheduledNoCharge: string;
+    };
+    cancel: {
+      title: string;
+      description: string;
+      confirm: string;
+      scheduled: string;
+      failed: string;
+    };
+    resume: {
+      done: string;
+      failed: string;
     };
   };
   marketing: {
