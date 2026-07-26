@@ -8,17 +8,18 @@
 
 ## Rule Files
 
-| File                   | Domain                                                                |
-| ---------------------- | --------------------------------------------------------------------- |
-| `01-planning-rules.md` | Phase 0–0g: planning gate before every change                         |
-| `02-backend-rules.md`  | NestJS architecture: controllers, services, managers, repos           |
-| `03-frontend-rules.md` | Next.js architecture: pages, hooks, components, state                 |
-| `04-testing-rules.md`  | **Mandatory testing**: TDD, unit, API (20-25×), UI, QA, UAT, coverage |
-| `05-infra-rules.md`    | Docker, Nginx, CI, .env, shared packages                              |
-| `06-docs-rules.md`     | Documentation: when, where, what format                               |
-| `07-commit-rules.md`   | Conventional commits, PR rules, branch rules                          |
-| `08-security-rules.md` | Security: secrets, auth, input validation, OWASP                      |
-| `09-refactor-rules.md` | **Refactor discipline**: extraction, dedup, logging, coverage, splits |
+| File                                | Domain                                                                               |
+| ----------------------------------- | ------------------------------------------------------------------------------------ |
+| `01-planning-rules.md`              | Phase 0–0g: planning gate before every change                                        |
+| `02-backend-rules.md`               | NestJS architecture: controllers, services, managers, repos                          |
+| `03-frontend-rules.md`              | Next.js architecture: pages, hooks, components, state                                |
+| `04-testing-rules.md`               | **Mandatory testing**: TDD, unit, API (20-25×), UI, QA, UAT, coverage                |
+| `05-infra-rules.md`                 | Docker, Nginx, CI, .env, shared packages                                             |
+| `06-docs-rules.md`                  | Documentation: when, where, what format                                              |
+| `07-commit-rules.md`                | Conventional commits, PR rules, branch rules                                         |
+| `08-security-rules.md`              | Security: secrets, auth, input validation, OWASP                                     |
+| `09-refactor-rules.md`              | **Refactor discipline**: extraction, dedup, logging, coverage, splits                |
+| `26-prompt-pack-intake-protocol.md` | **Prompt-pack intake**: what MUST happen before code when work arrives as a document |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 
@@ -37,7 +38,11 @@ These are NEVER acceptable. They block delivery unconditionally:
 
 > Full text: `rules/07-commit-rules.md` → "Scoped Quality Gates Before Commit". Mirrored in `CLAUDE.md`, `CODEX.md`, `cursor.md`, and agent memory `feedback_per_folder_gates_before_commit`.
 
-**Run lint/typecheck/test/build ONLY in the folder(s) you touched — NEVER across all 17 services.** The all-workspace gate is prohibitively expensive (13 Prisma clients, every service compiled, thousands of tests) and false-fails on unchanged sibling services in a fresh worktree. For ANY change in ANY folder (`apps/claw-<service>/`, `apps/claw-frontend/`, `packages/<pkg>/`): run the four gates inside that folder; when green, `git commit --no-verify` + `git push --no-verify`. `--no-verify` skips only the redundant all-workspace hook, never a real failure in the folder you changed. Non-workspace files (`scripts/**`, `*.mjs`) → cheapest equivalent check (`node --check`). Docs-only changes skip the gates but stay conventional-format.
+**Run lint/typecheck/test/build ONLY in the folder(s) you touched — NEVER across all 17 services.** The all-workspace gate is prohibitively expensive (13 Prisma clients, every service compiled, thousands of tests) and false-fails on unchanged sibling services in a fresh worktree. For ANY change in ANY folder (`apps/claw-<service>/`, `apps/claw-frontend/`, `packages/<pkg>/`): run the four gates inside that folder; when green, `git commit` then `git push`. Non-workspace files (`scripts/**`, `*.mjs`) → cheapest equivalent check (`node --check`). Docs-only changes skip the gates but stay conventional-format.
+
+**`--no-verify` is banned** ([ADR-061](../docs/13-adr/adr-061-git-hook-policy-no-bypass.md)). The hooks now run the _affected_ lane only, so they are scoped and fast — a hook failure is a real problem in something you staged, and skipping it just moves the failure to CI. The only exception is a documented incident procedure with explicit human sign-off (`docs/exceptions/README.md`).
+
+**Push every commit before starting the next one.** One commit, one push: after a commit passes its hook, the next git command is `git push`. CI only sees what is pushed, so a local stack of N commits is N unverified commits with an N-wide bisect surface. Full rationale in `rules/07-commit-rules.md` → "Push each commit before starting the next one"; runbook in `skills/commit-and-push-each-change.md`. `git log --oneline origin/<branch>..HEAD` must be empty when you begin the next commit.
 
 ## The Non-Negotiable Mandate
 
@@ -90,6 +95,27 @@ A feature IS done when:
 3. The specific rule file for the task domain
 4. Service-specific `CLAUDE.md` for the service being touched
 5. The relevant `docs/` file for the feature area
+
+## Prompt packs and execution prompts (read BEFORE any code)
+
+When work arrives as a document — prompt pack, execution prompt, plan pack,
+implementation brief — the intake protocol in
+[`26-prompt-pack-intake-protocol.md`](26-prompt-pack-intake-protocol.md) runs first,
+in full, regardless of how small or urgent the pack looks. Runbook:
+[`../skills/execute-prompt-pack.md`](../skills/execute-prompt-pack.md). Summary:
+[`../context/prompt-pack-intake.md`](../context/prompt-pack-intake.md).
+
+The two failures it exists to prevent: **building what the pack literally says
+instead of what this repo needs** (a second engine where a seam exists), and
+**rebuilding what already shipped** — packs are usually handed over mid-flight, so
+the deliverable is the remainder. Hence the non-negotiable middle steps: audit every
+deliverable **against the code** (done / partial / missing — and _present is not
+wired_), and review the constraint surface (ESLint, TypeScript, Prettier, coverage,
+security, i18n × 9, the delivery checklist, and every gate including pre-commit,
+pre-push, CI and Vercel) **before** writing code rather than after.
+
+Where a pack conflicts with repository policy, **policy wins** — and the deviation is
+stated explicitly in the plan, never applied silently.
 
 ## Generated artifacts are a HARD GATE (never optional)
 

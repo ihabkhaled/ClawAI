@@ -1,23 +1,23 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 161179,
+      "bytes": 167640,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 121047,
+      "bytes": 127153,
       "file": "CODEX.md"
     },
     {
-      "bytes": 21854,
+      "bytes": 26115,
       "file": "cursor.md"
     },
     {
-      "bytes": 5737,
+      "bytes": 8316,
       "file": "AGENTS.md"
     },
     {
-      "bytes": 945,
+      "bytes": 1772,
       "file": ".cursorrules"
     }
   ],
@@ -51,11 +51,11 @@
   "looseDocs": 22,
   "rules": [
     {
-      "bytes": 8162,
+      "bytes": 10808,
       "file": "rules/00-master-rules.md"
     },
     {
-      "bytes": 4164,
+      "bytes": 4531,
       "file": "rules/00-non-negotiable-rules.md"
     },
     {
@@ -111,7 +111,7 @@
       "file": "rules/07-backend-controllers-and-transport.md"
     },
     {
-      "bytes": 9018,
+      "bytes": 11095,
       "file": "rules/07-commit-rules.md"
     },
     {
@@ -183,7 +183,7 @@
       "file": "rules/22-testing-and-coverage.md"
     },
     {
-      "bytes": 6074,
+      "bytes": 6898,
       "file": "rules/23-git-commits-hooks-and-release-gates.md"
     },
     {
@@ -195,13 +195,17 @@
       "file": "rules/25-exceptions-and-waivers.md"
     },
     {
+      "bytes": 11904,
+      "file": "rules/26-prompt-pack-intake-protocol.md"
+    },
+    {
       "bytes": 4087,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 7757,
+      "bytes": 8124,
       "file": "skills/00-index.md"
     },
     {
@@ -289,6 +293,10 @@
       "file": "skills/backend-architecture-review.md"
     },
     {
+      "bytes": 4369,
+      "file": "skills/commit-and-push-each-change.md"
+    },
+    {
       "bytes": 4783,
       "file": "skills/create-backend-module.md"
     },
@@ -339,6 +347,10 @@
     {
       "bytes": 3744,
       "file": "skills/debug-flaky-test.md"
+    },
+    {
+      "bytes": 6381,
+      "file": "skills/execute-prompt-pack.md"
     },
     {
       "bytes": 4220,

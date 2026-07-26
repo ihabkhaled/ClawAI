@@ -20,6 +20,7 @@ sources and should be re-derived when they drift.
 | [stack-and-toolchain.md](stack-and-toolchain.md) ***         | **Canonical.** Exact commands: tsgo build, per-folder gate lane, jest/vitest/playwright, prisma, knowledge/affected/release, docker. |
 | [codebase-navigation.md](codebase-navigation.md)             | Where to look for any given kind of code.                                                                                            |
 | [task-router.md](task-router.md)                             | Maps a kind of task → rules + skills + reviewers + validation lane (mirrors `.ai/packs/`).                                           |
+| [prompt-pack-intake.md](prompt-pack-intake.md)               | The seven steps that must precede code when work arrives as a prompt pack or execution prompt.                                       |
 | [workspace-map.md](workspace-map.md)                         | The npm-workspace inventory (23 workspaces).                                                                                         |
 | [service-catalog.md](service-catalog.md)                     | One entry per service: path, port, DB, responsibility, deps, events, pitfalls.                                                       |
 | [service-dependency-map.md](service-dependency-map.md)       | Who calls whom (HTTP + events + shared packages).                                                                                    |
