@@ -34,6 +34,9 @@ describe('buildPublicPageMetadata', () => {
         'zh-Hans': 'https://claw.example/zh/features',
         'x-default': 'https://claw.example/en/features',
       },
+      types: {
+        'application/rss+xml': 'https://claw.example/en/feed.xml',
+      },
     });
     expect(metadata.openGraph).toEqual(
       expect.objectContaining({

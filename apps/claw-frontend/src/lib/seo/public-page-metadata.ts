@@ -53,6 +53,9 @@ export function buildPublicPageMetadata(slug: string, locale: Locale): Metadata 
     alternates: {
       canonical,
       languages,
+      types: {
+        'application/rss+xml': `${siteUrl}/${locale}/feed.xml`,
+      },
     },
     robots: {
       index: indexable,

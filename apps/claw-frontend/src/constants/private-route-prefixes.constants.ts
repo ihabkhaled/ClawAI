@@ -24,6 +24,7 @@ export const PRIVATE_ROUTE_PREFIXES: ReadonlyArray<string> = [
   '/workspace',
   '/usage',
   '/plan',
+  '/billing',
   '/agent',
   '/api',
 ];

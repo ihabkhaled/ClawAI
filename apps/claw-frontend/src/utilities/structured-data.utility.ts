@@ -1,4 +1,5 @@
 import { MARKETING_GITHUB_URL } from '@/constants/marketing-nav.constants';
+import type { SharedChatJsonLdInput } from '@/types/chat-share-page.types';
 import type { JsonLdObject } from '@/types/structured-data.types';
 
 // Only facts the application and repository actually support — no
@@ -46,13 +47,7 @@ export function buildSoftwareApplicationJsonLd(siteUrl: string): JsonLdObject {
  * content. That is why `serializeJsonLd` escapes rather than trusting the input:
  * see the note on that function.
  */
-export function buildSharedChatJsonLd(input: {
-  canonicalUrl: string;
-  title: string;
-  description: string | null;
-  publishedAt: string;
-  updatedAt: string;
-}): JsonLdObject {
+export function buildSharedChatJsonLd(input: SharedChatJsonLdInput): JsonLdObject {
   const jsonLd: JsonLdObject = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -60,7 +55,7 @@ export function buildSharedChatJsonLd(input: {
     url: input.canonicalUrl,
     datePublished: input.publishedAt,
     dateModified: input.updatedAt,
-    inLanguage: 'en',
+    inLanguage: input.contentLanguage,
     isAccessibleForFree: true,
   };
   if (input.description !== null) {
