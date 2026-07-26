@@ -6,6 +6,6 @@
   "buildCommand": "bash ../../scripts/vercel/build-service.sh claw-frontend",
   "outputDirectory": ".next",
   "git": {
-    "deploymentEnabled": false
+    "deploymentEnabled": true
   }
 }

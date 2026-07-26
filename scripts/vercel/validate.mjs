@@ -174,11 +174,21 @@ function checkProjectPaths(projects, findings) {
 function checkGeneratedConfigs(projects, findings) {
   for (const project of projects.projects.filter((p) => p.status === 'enabled')) {
     const root = join(REPO_ROOT, project.rootDirectory);
-    if (!existsSync(join(root, 'vercel.json'))) {
+    const configPath = join(root, 'vercel.json');
+    if (!existsSync(configPath)) {
       findings.fail(
         'vercel-config',
         `${project.key} has no vercel.json. Run: node scripts/vercel/generate-configs.mjs`,
       );
+    } else {
+      const config = JSON.parse(readFileSync(configPath, 'utf8'));
+      const expectedGitDeployment = project.framework === 'nextjs';
+      if (config.git?.deploymentEnabled !== expectedGitDeployment) {
+        findings.fail(
+          'git-deployment-mode',
+          `${project.key} must set git.deploymentEnabled=${String(expectedGitDeployment)}; frontend PR previews are Git-driven while backend deployments are automation-controlled.`,
+        );
+      }
     }
     // Next.js is served by Vercel's own builder; only Nest services need a
     // hand-off entry point.
