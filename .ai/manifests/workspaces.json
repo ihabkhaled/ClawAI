@@ -257,6 +257,7 @@
       "name": "claw-frontend",
       "scripts": [
         "build",
+        "build:vercel",
         "clear-cache",
         "dev",
         "format",

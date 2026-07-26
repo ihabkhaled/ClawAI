@@ -69,6 +69,17 @@ test('frontend Vercel build skips unrelated shared package compilation', () => {
   );
 });
 
+test('Vercel preserves the frontend build cache without changing local build behavior', () => {
+  const buildScript = readFileSync(repoPath('scripts/vercel/build-service.sh'), 'utf8');
+  const frontendPackage = JSON.parse(
+    readFileSync(repoPath('apps/claw-frontend/package.json'), 'utf8'),
+  );
+
+  assert.equal(frontendPackage.scripts.build, 'npm run clear-cache && next build --turbopack');
+  assert.equal(frontendPackage.scripts['build:vercel'], 'next build --turbopack');
+  assert.match(buildScript, /npm run build:vercel --workspace="\$\{WORKSPACE\}"/);
+});
+
 test('Tailwind config is explicitly loaded as an ES module', () => {
   const globals = readFileSync(repoPath('apps/claw-frontend/src/app/globals.css'), 'utf8');
 

@@ -53,7 +53,11 @@ if [ -f "${SERVICE_DIR}/prisma/schema.prisma" ]; then
 fi
 
 echo "==> compiling ${WORKSPACE}"
-npm run build --workspace="${WORKSPACE}"
+if [[ "${WORKSPACE}" == "claw-frontend" ]]; then
+  npm run build:vercel --workspace="${WORKSPACE}"
+else
+  npm run build --workspace="${WORKSPACE}"
+fi
 
 # The Prisma client is generated into src/generated/prisma as plain .js/.d.ts.
 # tsgo only compiles .ts, so it never lands in dist/, and the compiled

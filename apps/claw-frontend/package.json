@@ -6,6 +6,7 @@
     "clear-cache": "rm -rf .next",
     "dev": "npm run clear-cache && next dev --turbopack --port 3000",
     "build": "npm run clear-cache && next build --turbopack",
+    "build:vercel": "next build --turbopack",
     "start": "next start",
     "lint": "eslint src/ --concurrency=4",
     "lint:strict": "next lint && eslint src/ --max-warnings 0",
