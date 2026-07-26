@@ -1,19 +1,26 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const appConfigSchema = z.object({
-  AUTH_DATABASE_URL: z.string().min(1, "AUTH_DATABASE_URL is required"),
+  AUTH_DATABASE_URL: z.string().min(1, 'AUTH_DATABASE_URL is required'),
   AUTH_PORT: z.coerce.number().int().positive().default(4001),
-  REDIS_URL: z.string().min(1, "REDIS_URL is required"),
-  RABBITMQ_URL: z.string().min(1, "RABBITMQ_URL is required"),
+  REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
+  RABBITMQ_URL: z.string().min(1, 'RABBITMQ_URL is required'),
 
-  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
-  JWT_ACCESS_EXPIRY: z.string().default("15m"),
-  JWT_REFRESH_EXPIRY: z.string().default("7d"),
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
+  JWT_ACCESS_EXPIRY: z.string().default('15m'),
+  JWT_REFRESH_EXPIRY: z.string().default('7d'),
 
   ENCRYPTION_KEY: z
     .string()
-    .length(64, "ENCRYPTION_KEY must be a 64-character hex string")
-    .regex(/^[0-9a-fA-F]+$/, "ENCRYPTION_KEY must be valid hex"),
+    .length(64, 'ENCRYPTION_KEY must be a 64-character hex string')
+    .regex(/^[0-9a-fA-F]+$/, 'ENCRYPTION_KEY must be valid hex'),
+
+  // Shared secret for service-to-service calls. Guards the internal
+  // plan-catalog API, which is the source of truth for what a subscription
+  // costs — an unauthenticated caller there could influence a real charge.
+  INTER_SERVICE_AUTH_TOKEN: z
+    .string()
+    .min(32, 'INTER_SERVICE_AUTH_TOKEN must be at least 32 characters'),
 
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_USERNAME: z.string().min(1).optional(),
@@ -40,8 +47,8 @@ export class AppConfig {
     const result = appConfigSchema.safeParse(process.env);
     if (!result.success) {
       const formatted = result.error.issues
-        .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
-        .join("\n");
+        .map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`)
+        .join('\n');
       throw new Error(`Invalid environment configuration:\n${formatted}`);
     }
     cachedConfig = result.data;

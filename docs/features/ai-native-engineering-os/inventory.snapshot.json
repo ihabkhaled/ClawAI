@@ -636,6 +636,21 @@
           "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/internal/plans/catalog",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/plans/price",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/plans/price-versions/:id",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/internal/quota/finalize",
           "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
@@ -7919,7 +7934,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 26
+        "testFiles": 28
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8681,7 +8696,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 500,
+    "endpointCount": 503,
     "envVarCount": 328,
     "eventCount": 158,
     "frontendRouteCount": 97,
@@ -8693,7 +8708,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 569,
+    "totalTestFiles": 571,
     "workspaceCount": 25
   }
 }

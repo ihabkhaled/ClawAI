@@ -581,6 +581,21 @@
         "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/internal/plans/catalog",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/plans/price",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/plans/price-versions/:id",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/internal/quota/finalize",
         "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
@@ -2538,5 +2553,5 @@
     ]
   },
   "generated": true,
-  "total": 500
+  "total": 503
 }

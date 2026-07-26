@@ -38,6 +38,7 @@ const stubAppConfig = (seedReconcile: boolean): void => {
     JWT_ACCESS_EXPIRY: '15m',
     JWT_REFRESH_EXPIRY: '7d',
     ENCRYPTION_KEY: '0'.repeat(64),
+    INTER_SERVICE_AUTH_TOKEN: 's'.repeat(32),
     SEED_RECONCILE_PERMISSIONS: seedReconcile,
   });
 };
@@ -63,23 +64,19 @@ describe('PermissionsSeederService', () => {
       // COMPARE_USE + FILES_USE (the exact prod symptom this PR fixes).
       const adminRoleId = 'role-admin';
       const userRoleId = 'role-user';
-      prisma.role.findUnique.mockImplementation(
-        ({ where }: { where: { slug: string } }) => {
-          if (where.slug === UserRole.ADMIN) {
-            return Promise.resolve({ id: adminRoleId, slug: UserRole.ADMIN });
-          }
-          if (where.slug === UserRole.USER) {
-            return Promise.resolve({ id: userRoleId, slug: UserRole.USER });
-          }
-          return Promise.resolve(null);
-        },
-      );
+      prisma.role.findUnique.mockImplementation(({ where }: { where: { slug: string } }) => {
+        if (where.slug === UserRole.ADMIN) {
+          return Promise.resolve({ id: adminRoleId, slug: UserRole.ADMIN });
+        }
+        if (where.slug === UserRole.USER) {
+          return Promise.resolve({ id: userRoleId, slug: UserRole.USER });
+        }
+        return Promise.resolve(null);
+      });
       prisma.rolePermission.findMany.mockImplementation(
         ({ where }: { where: { roleId: string } }) => {
           if (where.roleId === adminRoleId) {
-            return Promise.resolve(
-              Object.values(Permission).map((p) => ({ permission: p })),
-            );
+            return Promise.resolve(Object.values(Permission).map((p) => ({ permission: p })));
           }
           // USER is behind the seed by COMPARE_USE + FILES_USE (the exact live
           // prod drift this PR fixes). Derive the "present" set from the
@@ -123,20 +120,16 @@ describe('PermissionsSeederService', () => {
 
       // ADMIN exists with the full set; USER has one EXTRA permission
       // (ADMIN_USERS_MANAGE) that is NOT in USER_DEFAULT_PERMISSIONS.
-      prisma.role.findUnique.mockImplementation(
-        ({ where }: { where: { slug: string } }) => {
-          if (where.slug === UserRole.ADMIN) {
-            return Promise.resolve({ id: 'role-admin', slug: UserRole.ADMIN });
-          }
-          return Promise.resolve({ id: 'role-user', slug: UserRole.USER });
-        },
-      );
+      prisma.role.findUnique.mockImplementation(({ where }: { where: { slug: string } }) => {
+        if (where.slug === UserRole.ADMIN) {
+          return Promise.resolve({ id: 'role-admin', slug: UserRole.ADMIN });
+        }
+        return Promise.resolve({ id: 'role-user', slug: UserRole.USER });
+      });
       prisma.rolePermission.findMany.mockImplementation(
         ({ where }: { where: { roleId: string } }) => {
           if (where.roleId === 'role-admin') {
-            return Promise.resolve(
-              Object.values(Permission).map((p) => ({ permission: p })),
-            );
+            return Promise.resolve(Object.values(Permission).map((p) => ({ permission: p })));
           }
           // Canonical USER set PLUS one EXTRA (ADMIN_USERS_MANAGE) that is not
           // in the seed. Deriving the base from the constant keeps this fixture
@@ -161,20 +154,16 @@ describe('PermissionsSeederService', () => {
     it('keeps extras when SEED_RECONCILE_PERMISSIONS=false (add-only mode)', async () => {
       stubAppConfig(false);
 
-      prisma.role.findUnique.mockImplementation(
-        ({ where }: { where: { slug: string } }) => {
-          if (where.slug === UserRole.ADMIN) {
-            return Promise.resolve({ id: 'role-admin', slug: UserRole.ADMIN });
-          }
-          return Promise.resolve({ id: 'role-user', slug: UserRole.USER });
-        },
-      );
+      prisma.role.findUnique.mockImplementation(({ where }: { where: { slug: string } }) => {
+        if (where.slug === UserRole.ADMIN) {
+          return Promise.resolve({ id: 'role-admin', slug: UserRole.ADMIN });
+        }
+        return Promise.resolve({ id: 'role-user', slug: UserRole.USER });
+      });
       prisma.rolePermission.findMany.mockImplementation(
         ({ where }: { where: { roleId: string } }) => {
           if (where.roleId === 'role-admin') {
-            return Promise.resolve(
-              Object.values(Permission).map((p) => ({ permission: p })),
-            );
+            return Promise.resolve(Object.values(Permission).map((p) => ({ permission: p })));
           }
           // USER has an extra ADMIN_LOGS_VIEW grant operators applied by hand.
           return Promise.resolve([
@@ -198,26 +187,20 @@ describe('PermissionsSeederService', () => {
     it('reports no drift when current grants already match the seed', async () => {
       stubAppConfig(true);
 
-      prisma.role.findUnique.mockImplementation(
-        ({ where }: { where: { slug: string } }) => {
-          if (where.slug === UserRole.ADMIN) {
-            return Promise.resolve({ id: 'role-admin', slug: UserRole.ADMIN });
-          }
-          return Promise.resolve({ id: 'role-user', slug: UserRole.USER });
-        },
-      );
+      prisma.role.findUnique.mockImplementation(({ where }: { where: { slug: string } }) => {
+        if (where.slug === UserRole.ADMIN) {
+          return Promise.resolve({ id: 'role-admin', slug: UserRole.ADMIN });
+        }
+        return Promise.resolve({ id: 'role-user', slug: UserRole.USER });
+      });
       prisma.rolePermission.findMany.mockImplementation(
         ({ where }: { where: { roleId: string } }) => {
           if (where.roleId === 'role-admin') {
-            return Promise.resolve(
-              Object.values(Permission).map((p) => ({ permission: p })),
-            );
+            return Promise.resolve(Object.values(Permission).map((p) => ({ permission: p })));
           }
           // Derive from the canonical constant so this "no drift" fixture
           // never goes stale when USER_DEFAULT_PERMISSIONS gains a permission.
-          return Promise.resolve(
-            USER_DEFAULT_PERMISSIONS.map((permission) => ({ permission })),
-          );
+          return Promise.resolve(USER_DEFAULT_PERMISSIONS.map((permission) => ({ permission })));
         },
       );
 
