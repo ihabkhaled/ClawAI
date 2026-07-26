@@ -19,7 +19,7 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "prepare": "cd ../.. && node apps/claw-frontend/.husky/install.mjs 2>/dev/null || true",
+    "prepare": "node .husky/install.mjs",
     "lint-staged": "lint-staged"
   },
   "dependencies": {
