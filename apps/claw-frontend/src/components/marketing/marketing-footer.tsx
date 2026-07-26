@@ -27,7 +27,7 @@ export function MarketingFooter(): React.ReactElement {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2 lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 font-semibold">
-              <Image src="/claw-logo.svg" alt="" width={28} height={28} aria-hidden="true" />
+              <Image src="/claw-logo.png" alt="" width={28} height={28} aria-hidden="true" />
               <span>ClawAI</span>
             </Link>
             <p className="text-muted-foreground mt-3 max-w-sm text-sm">

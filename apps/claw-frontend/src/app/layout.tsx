@@ -34,8 +34,9 @@ export const metadata: Metadata = {
   title: { default: SITE_TITLE, template: '%s | ClawAI' },
   description: SITE_DESCRIPTION,
   icons: {
-    icon: '/icon.svg',
+    icon: '/icon.png',
     apple: '/apple-icon.png',
+    shortcut: '/favicon.ico',
   },
   manifest: '/manifest.webmanifest',
   openGraph: {

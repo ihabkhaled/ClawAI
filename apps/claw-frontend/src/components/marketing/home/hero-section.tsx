@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { buttonVariants } from '@/components/ui/button';
@@ -13,6 +14,18 @@ export function HeroSection({ lastReviewed }: HomeHeroProps): React.ReactElement
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 sm:py-24 lg:px-8">
+      {/* Decorative: the headline immediately below says the same thing in
+          words, so an empty alt keeps a screen reader from reading the brand
+          twice. `priority` because this is the LCP element above the fold. */}
+      <Image
+        src="/claw-hero.png"
+        alt=""
+        width={250}
+        height={250}
+        priority
+        aria-hidden="true"
+        className="mx-auto mb-8 h-[250px] w-[250px]"
+      />
       <h1 className="text-foreground text-4xl font-bold tracking-tight sm:text-5xl">
         {t('marketing.home.hero.title')}
       </h1>

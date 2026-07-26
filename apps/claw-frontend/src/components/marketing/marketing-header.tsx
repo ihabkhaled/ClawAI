@@ -20,7 +20,7 @@ export function MarketingHeader(): React.ReactElement {
     <header className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/75 sticky top-0 z-40 w-full border-b backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2 font-semibold">
-          <Image src="/claw-logo.svg" alt="" width={32} height={32} aria-hidden="true" priority />
+          <Image src="/claw-logo.png" alt="" width={32} height={32} aria-hidden="true" priority />
           <span className="text-base">ClawAI</span>
         </Link>
 
