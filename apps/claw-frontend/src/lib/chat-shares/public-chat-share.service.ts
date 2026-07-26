@@ -84,12 +84,12 @@ export async function countIndexableChatShares(
   );
 }
 
-export async function listPublicChatRssEntries(locale: Locale): Promise<PublicChatRssEntry[]> {
+export async function listPublicChatRssEntries(
+  locale: Locale,
+): Promise<PublicChatRssEntry[] | null> {
   const query = new URLSearchParams({ locale, limit: '100' });
-  return (
-    (await fetchChatServiceJson<PublicChatRssEntry[]>(
-      `${CHAT_SHARE_RSS_FEED_PATH}?${query.toString()}`,
-      true,
-    )) ?? []
+  return fetchChatServiceJson<PublicChatRssEntry[]>(
+    `${CHAT_SHARE_RSS_FEED_PATH}?${query.toString()}`,
+    true,
   );
 }
