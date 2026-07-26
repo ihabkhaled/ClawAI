@@ -102,6 +102,8 @@ model Subscription {
   scheduledPlanId             String?   @map("scheduled_plan_id")
   scheduledPlanSlug           String?   @map("scheduled_plan_slug")
   scheduledPlanPriceVersionId String?   @map("scheduled_plan_price_version_id")
+  scheduledAmountMinor        Int?      @map("scheduled_amount_minor")
+  scheduledBillingInterval    String?   @map("scheduled_billing_interval")
   scheduledEffectiveAt        DateTime? @map("scheduled_effective_at")
 
   /// Optimistic concurrency. Two simultaneous upgrades cannot both commit:
@@ -583,4 +585,55 @@ model SeedExecution {
   @@index([name])
   @@index([status])
   @@map("seed_executions")
+}
+
+/// One durable execution of the billing reconciliation sweep. Counts make a
+/// partial batch observable without retaining gateway response bodies.
+model ReconciliationRun {
+  id String @id @default(cuid())
+
+  status String
+  scannedCount     Int @default(0) @map("scanned_count")
+  repairedCount    Int @default(0) @map("repaired_count")
+  quarantinedCount Int @default(0) @map("quarantined_count")
+  unprocessedCount Int @default(0) @map("unprocessed_count")
+
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  /// Sanitized machine code only. Never a gateway body or stack trace.
+  errorCode String? @map("error_code")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  divergences ReconciliationDivergence[]
+
+  @@index([status])
+  @@index([startedAt])
+  @@map("reconciliation_runs")
+}
+
+/// A classified difference between local billing state and an authoritative
+/// provider read. Stable status facts only: no payer data or provider payloads.
+model ReconciliationDivergence {
+  id    String @id @default(cuid())
+  runId String @map("run_id")
+
+  entityType     String @map("entity_type")
+  entityId       String @map("entity_id")
+  gateway        String
+  classification String
+  localStatus    String @map("local_status")
+  providerStatus String? @map("provider_status")
+  resolution     String
+  repairedAt     DateTime? @map("repaired_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  run ReconciliationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, entityType, entityId, classification])
+  @@index([entityType, entityId])
+  @@index([classification])
+  @@index([resolution])
+  @@map("reconciliation_divergences")
 }

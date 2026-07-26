@@ -1,0 +1,115 @@
+import {
+  BillingGateway,
+  CheckoutSessionStatus,
+  PaymentTransactionStatus,
+  PaymentTransactionType,
+  SubscriptionStatus,
+} from '@claw/shared-types';
+
+import type {
+  CheckoutSession,
+  PaymentTransaction,
+  Subscription,
+} from '../../../../generated/prisma';
+import type { ReconciliationTransactionCandidate } from '../../../billing/types/billing-reconciliation.types';
+
+export function checkoutFixture(overrides: Partial<CheckoutSession> = {}): CheckoutSession {
+  return {
+    id: 'checkout-1',
+    userId: 'user-1',
+    purpose: 'SUBSCRIPTION',
+    status: CheckoutSessionStatus.AWAITING_PAYMENT,
+    gateway: BillingGateway.PAYPAL,
+    planId: 'plan-pro',
+    planSlug: 'pro',
+    planPriceVersionId: 'price-pro',
+    billingInterval: 'MONTHLY',
+    baseAmountMinor: 2000,
+    baseCurrency: 'USD',
+    chargeAmountMinor: 2000,
+    chargeCurrency: 'USD',
+    fxQuoteId: null,
+    fxFinalRateScaled: null,
+    idempotencyKey: 'checkout-1',
+    stateNonce: 'nonce',
+    providerOrderId: 'order-1',
+    hostedCheckoutUrl: null,
+    subscriptionId: null,
+    prorationQuoteId: null,
+    expiresAt: new Date('2026-07-25T00:00:00.000Z'),
+    verifiedAt: null,
+    completedAt: null,
+    failureCode: null,
+    createdAt: new Date('2026-07-24T00:00:00.000Z'),
+    updatedAt: new Date('2026-07-24T00:00:00.000Z'),
+    ...overrides,
+  };
+}
+
+export function transactionFixture(
+  overrides: Partial<PaymentTransaction> = {},
+): ReconciliationTransactionCandidate {
+  return {
+    id: 'transaction-1',
+    userId: 'user-1',
+    subscriptionId: null,
+    checkoutSessionId: 'checkout-1',
+    gateway: BillingGateway.PAYPAL,
+    type: PaymentTransactionType.CHARGE,
+    status: PaymentTransactionStatus.UNRESOLVED,
+    amountMinor: 2000,
+    currency: 'USD',
+    providerAmountMinor: null,
+    providerCurrency: null,
+    providerTransactionId: null,
+    providerOrderId: 'order-1',
+    idempotencyKey: 'transaction-1',
+    priceSnapshotJson: null,
+    fxSnapshotJson: null,
+    failureCode: null,
+    capturedAt: null,
+    refundedAt: null,
+    reversesTransactionId: null,
+    createdAt: new Date('2026-07-24T00:00:00.000Z'),
+    updatedAt: new Date('2026-07-24T00:00:00.000Z'),
+    checkoutSession: checkoutFixture(),
+    ...overrides,
+  };
+}
+
+export function subscriptionFixture(overrides: Partial<Subscription> = {}): Subscription {
+  return {
+    id: 'subscription-1',
+    userId: 'user-1',
+    billingCustomerId: 'customer-1',
+    planId: 'plan-pro',
+    planSlug: 'pro',
+    planPriceVersionId: 'price-pro',
+    gateway: BillingGateway.PAYPAL,
+    encryptedGatewaySubscriptionId: 'encrypted',
+    encryptionKeyVersion: 1,
+    gatewaySubscriptionLookupHash: 'lookup',
+    status: SubscriptionStatus.ACTIVE,
+    billingInterval: 'MONTHLY',
+    currency: 'USD',
+    amountMinor: 2000,
+    currentPeriodStart: new Date('2026-07-01T00:00:00.000Z'),
+    currentPeriodEnd: new Date('2026-08-01T00:00:00.000Z'),
+    cancelAtPeriodEnd: false,
+    cancelledAt: null,
+    pastDueAt: null,
+    gracePeriodEndsAt: null,
+    entitlementValidUntil: new Date('2026-08-04T00:00:00.000Z'),
+    scheduledPlanId: null,
+    scheduledPlanSlug: null,
+    scheduledPlanPriceVersionId: null,
+    scheduledAmountMinor: null,
+    scheduledBillingInterval: null,
+    scheduledEffectiveAt: null,
+    version: 1,
+    uniqueActiveKey: 'user-1',
+    createdAt: new Date('2026-07-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-07-24T00:00:00.000Z'),
+    ...overrides,
+  };
+}

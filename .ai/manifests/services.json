@@ -60,7 +60,7 @@
       "port": 4007,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 14,
+      "testFiles": 15,
       "testRunner": "jest"
     },
     {
@@ -94,7 +94,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 29,
+      "testFiles": 30,
       "testRunner": "jest"
     },
     {
@@ -365,11 +365,13 @@
         "PaymentMethod",
         "PaymentTransaction",
         "ProrationQuote",
+        "ReconciliationDivergence",
+        "ReconciliationRun",
         "SeedExecution",
         "Subscription",
         "WebhookEvent"
       ],
-      "testFiles": 36,
+      "testFiles": 47,
       "testRunner": "jest"
     },
     {

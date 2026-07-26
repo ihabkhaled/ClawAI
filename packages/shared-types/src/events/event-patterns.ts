@@ -184,6 +184,7 @@ export enum EventPattern {
   BILLING_SUBSCRIPTION_RENEWED = 'billing.subscription.renewed',
   BILLING_SUBSCRIPTION_UPGRADED = 'billing.subscription.upgraded',
   BILLING_SUBSCRIPTION_DOWNGRADE_SCHEDULED = 'billing.subscription.downgrade_scheduled',
+  BILLING_SUBSCRIPTION_DOWNGRADED = 'billing.subscription.downgraded',
   BILLING_SUBSCRIPTION_CANCELLED = 'billing.subscription.cancelled',
   BILLING_SUBSCRIPTION_EXPIRED = 'billing.subscription.expired',
   BILLING_SUBSCRIPTION_PAST_DUE = 'billing.subscription.past_due',

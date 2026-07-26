@@ -48,9 +48,7 @@ describe('OutboxPublisherService', () => {
   beforeEach(() => {
     repository = {
       claimBatch: jest.fn<Promise<OutboxPublishCandidate[]>, [number, Date]>(async () => [event]),
-      markFailed: jest.fn<Promise<void>, [string, number, number, Date, string]>(
-        async () => {},
-      ),
+      markFailed: jest.fn<Promise<void>, [string, number, number, Date, string]>(async () => {}),
       markPublished: jest.fn<Promise<void>, [string]>(async () => {}),
     };
     rabbit = {
@@ -83,7 +81,10 @@ describe('OutboxPublisherService', () => {
       expect.any(Function),
     );
     expect(repository.claimBatch).toHaveBeenCalledWith(50, new Date(nowMs));
-    expect(rabbit.publish).toHaveBeenCalledWith(event.pattern, event.payloadJson);
+    expect(rabbit.publish).toHaveBeenCalledWith(event.pattern, {
+      ...event.payloadJson,
+      eventId: event.eventId,
+    });
     expect(repository.markPublished).toHaveBeenCalledWith(event.id);
   });
 

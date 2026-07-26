@@ -360,13 +360,17 @@
       "producers": []
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-audit-service"
+      ],
       "key": "BILLING_ENTITLEMENT_RECONCILE_REQUESTED",
       "pattern": "billing.entitlement.reconcile_requested",
       "producers": []
     },
     {
       "consumers": [
+        "claw-audit-service",
+        "claw-auth-service",
         "claw-payment-service"
       ],
       "key": "BILLING_PAYMENT_CHARGEBACK",
@@ -375,6 +379,8 @@
     },
     {
       "consumers": [
+        "claw-audit-service",
+        "claw-auth-service",
         "claw-payment-service"
       ],
       "key": "BILLING_PAYMENT_REFUNDED",
@@ -383,6 +389,8 @@
     },
     {
       "consumers": [
+        "claw-audit-service",
+        "claw-auth-service",
         "claw-payment-service"
       ],
       "key": "BILLING_SUBSCRIPTION_ACTIVATED",
@@ -391,6 +399,8 @@
     },
     {
       "consumers": [
+        "claw-audit-service",
+        "claw-auth-service",
         "claw-payment-service"
       ],
       "key": "BILLING_SUBSCRIPTION_CANCELLED",
@@ -399,6 +409,7 @@
     },
     {
       "consumers": [
+        "claw-audit-service",
         "claw-payment-service"
       ],
       "key": "BILLING_SUBSCRIPTION_DOWNGRADE_SCHEDULED",
@@ -406,13 +417,28 @@
       "producers": []
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-audit-service",
+        "claw-auth-service",
+        "claw-payment-service"
+      ],
+      "key": "BILLING_SUBSCRIPTION_DOWNGRADED",
+      "pattern": "billing.subscription.downgraded",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-auth-service",
+        "claw-payment-service"
+      ],
       "key": "BILLING_SUBSCRIPTION_EXPIRED",
       "pattern": "billing.subscription.expired",
       "producers": []
     },
     {
       "consumers": [
+        "claw-audit-service",
         "claw-payment-service"
       ],
       "key": "BILLING_SUBSCRIPTION_PAST_DUE",
@@ -420,13 +446,18 @@
       "producers": []
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-audit-service",
+        "claw-auth-service"
+      ],
       "key": "BILLING_SUBSCRIPTION_RENEWED",
       "pattern": "billing.subscription.renewed",
       "producers": []
     },
     {
       "consumers": [
+        "claw-audit-service",
+        "claw-auth-service",
         "claw-payment-service"
       ],
       "key": "BILLING_SUBSCRIPTION_SUSPENDED",
@@ -435,6 +466,8 @@
     },
     {
       "consumers": [
+        "claw-audit-service",
+        "claw-auth-service",
         "claw-payment-service"
       ],
       "key": "BILLING_SUBSCRIPTION_UPGRADED",

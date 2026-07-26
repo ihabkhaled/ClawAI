@@ -7,6 +7,7 @@ export type {
   BillingSubscriptionRenewedPayload,
   BillingSubscriptionUpgradedPayload,
   BillingSubscriptionDowngradeScheduledPayload,
+  BillingSubscriptionDowngradedPayload,
   BillingSubscriptionCancelledPayload,
   BillingSubscriptionExpiredPayload,
   BillingSubscriptionPastDuePayload,

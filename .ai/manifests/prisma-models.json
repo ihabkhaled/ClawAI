@@ -114,6 +114,8 @@
       "PaymentMethod",
       "PaymentTransaction",
       "ProrationQuote",
+      "ReconciliationDivergence",
+      "ReconciliationRun",
       "SeedExecution",
       "Subscription",
       "WebhookEvent"

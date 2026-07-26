@@ -14,6 +14,7 @@ import {
 } from '../constants/outbox.constants';
 import { OutboxRepository } from '../repositories/outbox.repository';
 import type { OutboxPublishCandidate } from '../types/outbox-publisher.types';
+import { addOutboxEventId } from '../utilities/outbox-envelope.utility';
 
 @Injectable()
 export class OutboxPublisherService {
@@ -63,7 +64,7 @@ export class OutboxPublisherService {
 
   private async publishOne(event: OutboxPublishCandidate): Promise<boolean> {
     try {
-      await this.rabbit.publish(event.pattern, event.payloadJson);
+      await this.rabbit.publish(event.pattern, addOutboxEventId(event.payloadJson, event.eventId));
       await this.repository.markPublished(event.id);
       return true;
     } catch {

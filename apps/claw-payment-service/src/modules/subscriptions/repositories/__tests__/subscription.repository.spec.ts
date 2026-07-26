@@ -181,6 +181,23 @@ describe('SubscriptionRepository', () => {
       });
     });
 
+    it('counts grace expiry and due downgrade backlog with the same inclusive boundary', async () => {
+      const now = new Date('2026-07-25T00:00:00.000Z');
+
+      await repository.countGraceExpired(now);
+      await repository.countDueScheduledChanges(now);
+
+      expect(subscription.count).toHaveBeenNthCalledWith(1, {
+        where: {
+          status: SubscriptionStatus.PAST_DUE,
+          gracePeriodEndsAt: { not: null, lte: now },
+        },
+      });
+      expect(subscription.count).toHaveBeenNthCalledWith(2, {
+        where: { scheduledEffectiveAt: { not: null, lte: now } },
+      });
+    });
+
     it('finds entitlements that lapsed without renewal', async () => {
       const now = new Date('2026-07-25T00:00:00.000Z');
       await repository.findLapsedEntitlements(now, 10);

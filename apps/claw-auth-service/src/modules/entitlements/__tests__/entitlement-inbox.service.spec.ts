@@ -1,6 +1,7 @@
 import { EntitlementInboxService } from '../services/entitlement-inbox.service';
 import { type EntitlementInboxRepository } from '../repositories/entitlement-inbox.repository';
 import { type EntitlementApplierService } from '../services/entitlement-applier.service';
+import { ENTITLEMENT_GRANTING_PATTERNS } from '../constants/entitlement-inbox.constants';
 
 const validEvent = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
   eventId: 'evt-1',
@@ -136,5 +137,9 @@ describe('EntitlementInboxService', () => {
     expect(applier.apply).toHaveBeenCalledWith(
       expect.objectContaining({ pattern: 'billing.payment.chargeback' }),
     );
+  });
+
+  it('recognizes an applied downgrade as a paid entitlement plan change', () => {
+    expect(ENTITLEMENT_GRANTING_PATTERNS).toContain('billing.subscription.downgraded');
   });
 });

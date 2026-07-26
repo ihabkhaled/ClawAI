@@ -302,4 +302,50 @@ export class SubscriptionLifecycleService {
       });
     });
   }
+
+  async expirePastDueIfVersionMatches(
+    subscriptionId: string,
+    userId: string,
+    expectedVersion: number,
+    graceDeadline: Date,
+    now: Date,
+    correlationId: string,
+  ): Promise<boolean> {
+    this.logger.warn(`expirePastDueIfVersionMatches: subscription=${subscriptionId}`);
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.subscription.updateMany({
+        where: {
+          id: subscriptionId,
+          status: SubscriptionStatus.PAST_DUE,
+          version: expectedVersion,
+          gracePeriodEndsAt: { equals: graceDeadline, lte: now },
+        },
+        data: {
+          status: SubscriptionStatus.EXPIRED,
+          uniqueActiveKey: resolveUniqueActiveKey(SubscriptionStatus.EXPIRED, userId),
+          version: { increment: 1 },
+        },
+      });
+      if (updated.count === 0) {
+        return false;
+      }
+      await this.outbox.enqueue(tx, {
+        pattern: EventPattern.BILLING_SUBSCRIPTION_EXPIRED,
+        eventId: randomUUID(),
+        aggregateType: 'Subscription',
+        aggregateId: subscriptionId,
+        payloadJson: {
+          schemaVersion: BILLING_EVENT_SCHEMA_VERSION,
+          producer: PAYMENT_PRODUCER,
+          userId,
+          subscriptionId,
+          effectiveAt: now.toISOString(),
+          entitlementValidUntil: now.toISOString(),
+          correlationId,
+          causationId: subscriptionId,
+        },
+      });
+      return true;
+    });
+  }
 }

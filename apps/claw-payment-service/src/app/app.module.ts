@@ -23,6 +23,7 @@ import { FxModule } from '../modules/fx/fx.module';
 import { OutboxModule } from '../modules/outbox/outbox.module';
 import { GatewaysModule } from '../modules/gateways/gateways.module';
 import { HealthModule } from '../modules/health/health.module';
+import { ReconciliationModule } from '../modules/reconciliation/reconciliation.module';
 
 @Module({
   imports: [
@@ -96,6 +97,7 @@ import { HealthModule } from '../modules/health/health.module';
     CheckoutModule,
     SubscriptionsModule,
     WebhooksModule,
+    ReconciliationModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

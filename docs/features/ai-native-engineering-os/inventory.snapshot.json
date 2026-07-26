@@ -5143,6 +5143,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "BILLING_SUBSCRIPTION_DOWNGRADED",
+        "pattern": "billing.subscription.downgraded",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "BILLING_SUBSCRIPTION_EXPIRED",
         "pattern": "billing.subscription.expired",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -7874,6 +7879,16 @@
           {
             "confidence": "verified",
             "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "ReconciliationDivergence"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "ReconciliationRun"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
             "value": "SeedExecution"
           },
           {
@@ -8182,11 +8197,11 @@
       },
       "claw-audit-service": {
         "runner": "jest",
-        "testFiles": 14
+        "testFiles": 15
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 29
+        "testFiles": 30
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8234,7 +8249,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 36
+        "testFiles": 47
       },
       "claw-research-service": {
         "runner": "jest",
@@ -8951,7 +8966,7 @@
     "dockerServiceCount": 41,
     "endpointCount": 529,
     "envVarCount": 335,
-    "eventCount": 164,
+    "eventCount": 165,
     "frontendRouteCount": 98,
     "localeCount": 13,
     "nginxRouteCount": 51,
@@ -8961,7 +8976,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 2,
-    "totalTestFiles": 613,
+    "totalTestFiles": 626,
     "workspaceCount": 25
   }
 }

@@ -27,6 +27,6 @@ import { SubscriptionQueryService } from './services/subscription-query.service'
     InvoiceRepository,
     PaymentMethodRepository,
   ],
-  exports: [SubscriptionQueryService, SubscriptionRepository],
+  exports: [SubscriptionQueryService, SubscriptionRepository, ScheduledDowngradeService],
 })
 export class SubscriptionsModule {}

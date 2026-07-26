@@ -110,4 +110,13 @@ export class CheckoutSessionRepository {
       take: limit,
     });
   }
+
+  async countExpiredPending(nowMs: number): Promise<number> {
+    return this.prisma.checkoutSession.count({
+      where: {
+        status: { in: [CheckoutSessionStatus.CREATED, CheckoutSessionStatus.AWAITING_PAYMENT] },
+        expiresAt: { lt: new Date(nowMs) },
+      },
+    });
+  }
 }
