@@ -1,0 +1,15 @@
+export enum Locale {
+  EN = 'en',
+  AR = 'ar',
+  DE = 'de',
+  ES = 'es',
+  FR = 'fr',
+  HI = 'hi',
+  IT = 'it',
+  PT = 'pt',
+  RU = 'ru',
+  JA = 'ja',
+  TH = 'th',
+  FA = 'fa',
+  ZH = 'zh',
+}

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { BadgeTone } from '@/enums/badge-tone.enum';
 import { ChatShareSafetyStatus, ChatShareVisibility } from '@/enums/chat-share.enum';
+import { Locale } from '@/enums/locale.enum';
 import type { OwnerChatShare } from '@/types/chat-share.types';
 
 import {
@@ -23,6 +24,8 @@ function makeShare(overrides: Partial<OwnerChatShare> = {}): OwnerChatShare {
     title: 'Setting up production infrastructure',
     messageCount: 8,
     adsEligible: true,
+    indexEligible: true,
+    contentLocale: Locale.EN,
     publishedAt: '2026-07-01T10:00:00.000Z',
     lastSnapshotAt: '2026-07-01T10:00:00.000Z',
     hasUnpublishedMessages: false,

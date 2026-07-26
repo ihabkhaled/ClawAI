@@ -32,7 +32,10 @@ export function getChatServiceOrigin(): string | null {
  * resolving immediately, and a cached success would keep serving a conversation
  * the owner has taken back.
  */
-export async function fetchChatServiceJson<T>(path: string): Promise<T | null> {
+export async function fetchChatServiceJson<T>(
+  path: string,
+  serviceAuthenticated = false,
+): Promise<T | null> {
   const origin = getChatServiceOrigin();
   if (origin === null) {
     return null;
@@ -41,10 +44,17 @@ export async function fetchChatServiceJson<T>(path: string): Promise<T | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CHAT_SHARE_FETCH_TIMEOUT_MS);
   try {
+    const serviceToken = process.env['INTER_SERVICE_AUTH_TOKEN'];
+    if (serviceAuthenticated && (serviceToken === undefined || serviceToken.trim() === '')) {
+      return null;
+    }
     const response = await fetch(`${origin}${path}`, {
       cache: 'no-store',
       signal: controller.signal,
-      headers: { Accept: 'application/json' },
+      headers: {
+        Accept: 'application/json',
+        ...(serviceAuthenticated ? { Authorization: `Service ${serviceToken}` } : {}),
+      },
     });
     if (!response.ok) {
       return null;

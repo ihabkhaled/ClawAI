@@ -1,5 +1,9 @@
 import { apiClient } from '@/services/shared/api-client';
-import type { OwnerChatShare, PublishChatShareInput } from '@/types/chat-share.types';
+import type {
+  OwnerChatShare,
+  PublishChatShareInput,
+  UpdateChatShareInput,
+} from '@/types/chat-share.types';
 
 /**
  * The only place the browser talks to the share-management API.
@@ -25,7 +29,7 @@ export const chatSharesRepository = {
   },
 
   /** Changes indexing without republishing the snapshot. */
-  async updateIndexing(threadId: string, input: PublishChatShareInput): Promise<OwnerChatShare> {
+  async updateIndexing(threadId: string, input: UpdateChatShareInput): Promise<OwnerChatShare> {
     const response = await apiClient.patch<OwnerChatShare>(
       `/chat-threads/${threadId}/share`,
       input,

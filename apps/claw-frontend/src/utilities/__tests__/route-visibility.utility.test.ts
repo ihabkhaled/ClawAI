@@ -4,7 +4,7 @@ import { isPublicPath } from '@/utilities/route-visibility.utility';
 
 describe('isPublicPath', () => {
   it('treats the homepage as public', () => {
-    expect(isPublicPath('/')).toBe(true);
+    expect(isPublicPath('/en')).toBe(true);
   });
 
   it('treats framework crawler files as public', () => {
@@ -33,7 +33,7 @@ describe('isPublicPath', () => {
     // A visitor following a shared link has no account, so the route must
     // bypass the login redirect and must not be blanket-tagged noindex at the
     // middleware layer — an INDEXED share is supposed to be indexable.
-    expect(isPublicPath('/share/chat/AbCdEfGhIjKlMnOpQrStUv')).toBe(true);
+    expect(isPublicPath('/en/share/chat/AbCdEfGhIjKlMnOpQrStUv')).toBe(true);
   });
 
   it('does not treat the shared-chat prefix itself as a page', () => {
@@ -47,6 +47,6 @@ describe('isPublicPath', () => {
     // Route-level publicness is not share-level availability. A syntactically
     // valid but revoked or nonexistent identifier still matches the route here;
     // the 404 and the ad gating are decided by the server per share.
-    expect(isPublicPath('/share/chat/definitely-not-a-real-id')).toBe(true);
+    expect(isPublicPath('/en/share/chat/definitely-not-a-real-id')).toBe(true);
   });
 });

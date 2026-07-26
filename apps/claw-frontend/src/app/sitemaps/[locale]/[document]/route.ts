@@ -1,0 +1,83 @@
+import { CHAT_SHARE_SITEMAP_PAGE_SIZE } from '@/constants/chat-share-api.constants';
+import {
+  DISCOVERY_CACHE_CONTROL,
+  SITEMAP_URL_CHUNK_SIZE,
+  XML_CONTENT_TYPE,
+} from '@/constants/seo-discovery.constants';
+import { getIndexableChatSharePage } from '@/lib/chat-shares/public-chat-share.service';
+import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
+import type { DiscoveryRouteContext, SitemapUrlEntry } from '@/types/seo-discovery.types';
+import {
+  getIndexablePagesForLocale,
+  getLanguageAlternates,
+} from '@/utilities/content-registry.utility';
+import { getHtmlLanguage, isSupportedLocale } from '@/utilities/locale.utility';
+import { buildSitemapUrlSetXml } from '@/utilities/xml.utility';
+
+export async function GET(_request: Request, context: DiscoveryRouteContext): Promise<Response> {
+  const { locale: localeValue, document } = await context.params;
+  if (shouldNoIndexEverything() || !isSupportedLocale(localeValue)) {
+    return new Response(null, { status: 404 });
+  }
+  const pageMatch = /^pages-(\d+)\.xml$/u.exec(document);
+  const chatMatch = /^chats-(\d+)\.xml$/u.exec(document);
+  const siteUrl = getSiteUrl();
+  let entries: SitemapUrlEntry[] = [];
+
+  if (pageMatch?.[1] === '1') {
+    entries = getIndexablePagesForLocale(localeValue).map((page) => {
+      const alternates = getLanguageAlternates(page.slug);
+      return {
+        url: `${siteUrl}${page.canonicalPath}`,
+        lastModified: page.metadata.lastReviewed,
+        alternates: [
+          ...Object.entries(alternates).map(([language, path]) => ({
+            language: getHtmlLanguage(language as typeof localeValue),
+            url: `${siteUrl}${path}`,
+          })),
+          { language: 'x-default', url: `${siteUrl}/en${page.path === '/' ? '' : page.path}` },
+        ],
+      };
+    });
+  } else if (chatMatch?.[1] !== undefined) {
+    const chunk = Number(chatMatch[1]);
+    if (!Number.isSafeInteger(chunk) || chunk < 1) {
+      return new Response(null, { status: 404 });
+    }
+    const rowsToSkip = (chunk - 1) * SITEMAP_URL_CHUNK_SIZE;
+    let visited = 0;
+    let cursor: string | null = null;
+    while (entries.length < SITEMAP_URL_CHUNK_SIZE) {
+      const page = await getIndexableChatSharePage(localeValue, cursor);
+      if (page === null || page.items.length === 0) {
+        break;
+      }
+      for (const item of page.items) {
+        if (visited >= rowsToSkip && entries.length < SITEMAP_URL_CHUNK_SIZE) {
+          entries.push({
+            url: `${siteUrl}/${item.contentLocale}/share/chat/${item.publicShareId}`,
+            lastModified: item.updatedAt,
+          });
+        }
+        visited += 1;
+      }
+      cursor = page.nextCursor;
+      if (cursor === null || visited >= rowsToSkip + SITEMAP_URL_CHUNK_SIZE) {
+        break;
+      }
+      if (visited > rowsToSkip + SITEMAP_URL_CHUNK_SIZE + CHAT_SHARE_SITEMAP_PAGE_SIZE) {
+        break;
+      }
+    }
+  } else {
+    return new Response(null, { status: 404 });
+  }
+
+  return new Response(buildSitemapUrlSetXml(entries), {
+    headers: {
+      'Cache-Control': DISCOVERY_CACHE_CONTROL,
+      'Content-Type': XML_CONTENT_TYPE,
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
+}

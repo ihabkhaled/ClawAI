@@ -4,7 +4,12 @@ import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { Locale } from '@/enums/locale.enum';
 import type { LocaleContextValue, LocaleProviderProps } from '@/types/i18n.types';
-import { getDirection, getStoredLocale, persistLocale } from '@/utilities/locale.utility';
+import {
+  getDirection,
+  getHtmlLanguage,
+  getStoredLocale,
+  persistLocale,
+} from '@/utilities/locale.utility';
 
 import { DEFAULT_LOCALE } from './i18n.constants';
 
@@ -30,7 +35,7 @@ export function LocaleProvider({ children, initialLocale }: LocaleProviderProps)
 
     const dir = getDirection(locale);
     document.documentElement.dir = dir;
-    document.documentElement.lang = locale;
+    document.documentElement.lang = getHtmlLanguage(locale);
   }, [locale, hydrated]);
 
   const setLocale = useCallback((newLocale: Locale): void => {

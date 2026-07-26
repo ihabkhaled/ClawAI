@@ -1,15 +1,19 @@
 {
-  "approxKeyCount": 4218,
+  "approxKeyCount": 4222,
   "generated": true,
   "locales": [
     "ar",
     "de",
     "en",
     "es",
+    "fa",
     "fr",
     "hi",
     "it",
+    "ja",
     "pt",
-    "ru"
+    "ru",
+    "th",
+    "zh"
   ]
 }

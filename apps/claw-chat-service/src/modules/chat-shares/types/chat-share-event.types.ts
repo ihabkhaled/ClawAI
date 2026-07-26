@@ -14,6 +14,7 @@ export type ChatShareSnapshotEventState = {
   messageCount: number;
   snapshotVersion: number;
   adsEligible: boolean;
+  indexEligible: boolean;
 };
 
 /** A visibility transition, old → new. */

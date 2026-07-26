@@ -186,6 +186,8 @@ model ChatShare {
   /// Server-derived. A URL matching /share/chat/* must never become an ad
   /// surface on its own — eligibility is decided here and passed to the page.
   adsEligible Boolean @default(false) @map("ads_eligible")
+  indexEligible Boolean @default(false) @map("index_eligible")
+  contentLocale String @default("en") @map("content_locale")
 
   publishedAt    DateTime  @map("published_at")
   lastSnapshotAt DateTime  @map("last_snapshot_at")
@@ -197,7 +199,7 @@ model ChatShare {
   messages ChatShareMessage[]
 
   /// Drives the sitemap feed: active + indexed, ordered by recency.
-  @@index([status, visibility, updatedAt])
+  @@index([status, visibility, safetyStatus, indexEligible, contentLocale, updatedAt, id])
   @@index([ownerUserId])
   @@map("chat_shares")
 }

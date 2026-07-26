@@ -11,6 +11,7 @@ vi.mock('@/utilities/locale.utility', () => ({
   getStoredLocale: (): Locale => Locale.EN,
   getDirection: (locale: Locale): Direction =>
     locale === Locale.AR ? Direction.RTL : Direction.LTR,
+  getHtmlLanguage: (locale: Locale): string => locale,
   persistLocale: vi.fn(),
 }));
 

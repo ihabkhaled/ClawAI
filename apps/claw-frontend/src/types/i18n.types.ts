@@ -1039,6 +1039,10 @@ export type TranslationDictionary = {
     langRussian: string;
     langPortuguese: string;
     langHindi: string;
+    langJapanese: string;
+    langThai: string;
+    langPersian: string;
+    langSimplifiedChinese: string;
     appearanceSystem: string;
     appearanceLight: string;
     appearanceDark: string;

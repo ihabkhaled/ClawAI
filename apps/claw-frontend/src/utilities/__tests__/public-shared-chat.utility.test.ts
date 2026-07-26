@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ChatShareVisibility } from '@/enums/chat-share.enum';
+import { Locale } from '@/enums/locale.enum';
 import { MessageRole } from '@/enums/message-role.enum';
 import type { PublicChatShare } from '@/types/chat-share.types';
 
@@ -30,6 +31,8 @@ function makeShare(overrides: Partial<PublicChatShare> = {}): PublicChatShare {
     snapshotVersion: 2,
     messageCount: 4,
     adsEligible: true,
+    indexEligible: true,
+    contentLocale: Locale.EN,
     visibility: ChatShareVisibility.PUBLIC_INDEXED,
     messages: [
       {
@@ -47,8 +50,10 @@ function makeShare(overrides: Partial<PublicChatShare> = {}): PublicChatShare {
 }
 
 describe('buildSharePath', () => {
-  it('builds the canonical path from the identifier alone', () => {
-    expect(buildSharePath('AbCdEfGhIjKlMnOpQrStUv')).toBe('/share/chat/AbCdEfGhIjKlMnOpQrStUv');
+  it('builds the canonical path from the content locale and identifier', () => {
+    expect(buildSharePath('AbCdEfGhIjKlMnOpQrStUv', Locale.JA)).toBe(
+      '/ja/share/chat/AbCdEfGhIjKlMnOpQrStUv',
+    );
   });
 });
 
@@ -84,7 +89,7 @@ describe('buildSharedChatMetadata', () => {
     const metadata = buildSharedChatMetadata(makeShare(), SITE_URL, t);
 
     expect(metadata.robots).toMatchObject({ index: true, follow: true });
-    expect(metadata.alternates?.canonical).toBe(`${SITE_URL}/share/chat/AbCdEfGhIjKlMnOpQrStUv`);
+    expect(metadata.alternates?.canonical).toBe(`${SITE_URL}/en/share/chat/AbCdEfGhIjKlMnOpQrStUv`);
   });
 
   it('emits noindex for an unlisted share even though the path is crawlable', () => {
@@ -112,7 +117,7 @@ describe('buildSharedChatMetadata', () => {
     const metadata = buildSharedChatMetadata(makeShare(), 'https://configured.example', t);
 
     expect(metadata.alternates?.canonical).toBe(
-      'https://configured.example/share/chat/AbCdEfGhIjKlMnOpQrStUv',
+      'https://configured.example/en/share/chat/AbCdEfGhIjKlMnOpQrStUv',
     );
   });
 
@@ -136,7 +141,7 @@ describe('buildSharedChatViewModel', () => {
   it('carries the canonical URL into the JSON-LD input', () => {
     const view = buildSharedChatViewModel(makeShare(), SITE_URL, t);
 
-    expect(view.jsonLd.canonicalUrl).toBe(`${SITE_URL}/share/chat/AbCdEfGhIjKlMnOpQrStUv`);
+    expect(view.jsonLd.canonicalUrl).toBe(`${SITE_URL}/en/share/chat/AbCdEfGhIjKlMnOpQrStUv`);
     expect(view.jsonLd.publishedAt).toBe('2026-07-01T10:00:00.000Z');
     expect(view.jsonLd.updatedAt).toBe('2026-07-05T12:30:00.000Z');
   });
@@ -144,7 +149,7 @@ describe('buildSharedChatViewModel', () => {
   it('resolves the pathname the ad units are gated on', () => {
     const view = buildSharedChatViewModel(makeShare(), SITE_URL, t);
 
-    expect(view.pathname).toBe('/share/chat/AbCdEfGhIjKlMnOpQrStUv');
+    expect(view.pathname).toBe('/en/share/chat/AbCdEfGhIjKlMnOpQrStUv');
   });
 
   it('has no inline ad slot for a short conversation', () => {

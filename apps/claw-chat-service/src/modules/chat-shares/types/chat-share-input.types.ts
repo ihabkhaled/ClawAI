@@ -1,3 +1,5 @@
+import type { Locale } from '@claw/shared-types';
+
 // Inputs to the share manager.
 //
 // `userId` is threaded in from the verified JWT by the controller and is never
@@ -7,6 +9,7 @@ export type PublishShareInput = {
   threadId: string;
   userId: string;
   allowIndexing: boolean;
+  contentLocale?: Locale;
 };
 
 export type UpdateShareInput = {

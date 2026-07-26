@@ -4,11 +4,13 @@ import { PrismaService } from '../../../infrastructure/database/prisma/prisma.se
 import {
   type ChatShare,
   type ChatShareMessage,
+  ChatShareSafetyStatus,
   ChatShareStatus,
   ChatShareVisibility,
   type Prisma,
 } from '../../../generated/prisma';
 import { type PublishableSnapshotMessage } from '../types/chat-shares.types';
+import type { PublicChatDiscoveryRow, SitemapCursor } from '../types/chat-share-discovery.types';
 
 @Injectable()
 export class ChatSharesRepository {
@@ -100,17 +102,51 @@ export class ChatSharesRepository {
    * updatedAt rather than OFFSET so the query stays flat as the table grows and
    * never loads every public share into memory.
    */
-  async listIndexable(limit: number, cursorUpdatedAt: Date | null): Promise<ChatShare[]> {
+  async listIndexable(
+    contentLocale: string,
+    limit: number,
+    cursor: SitemapCursor | null,
+  ): Promise<PublicChatDiscoveryRow[]> {
     this.logger.debug(`listIndexable: limit=${String(limit)}`);
     return this.prisma.chatShare.findMany({
       where: {
         status: ChatShareStatus.ACTIVE,
         visibility: ChatShareVisibility.PUBLIC_INDEXED,
-        adsEligible: true,
-        ...(cursorUpdatedAt === null ? {} : { updatedAt: { lt: cursorUpdatedAt } }),
+        safetyStatus: ChatShareSafetyStatus.APPROVED,
+        indexEligible: true,
+        contentLocale,
+        ...(cursor === null
+          ? {}
+          : {
+              OR: [
+                { updatedAt: { lt: cursor.updatedAt } },
+                { updatedAt: cursor.updatedAt, id: { lt: cursor.id } },
+              ],
+            }),
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
       take: limit,
+      select: {
+        id: true,
+        publicShareId: true,
+        contentLocale: true,
+        title: true,
+        description: true,
+        publishedAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async countIndexable(contentLocale: string): Promise<number> {
+    return this.prisma.chatShare.count({
+      where: {
+        status: ChatShareStatus.ACTIVE,
+        visibility: ChatShareVisibility.PUBLIC_INDEXED,
+        safetyStatus: ChatShareSafetyStatus.APPROVED,
+        indexEligible: true,
+        contentLocale,
+      },
     });
   }
 
@@ -129,6 +165,7 @@ export class ChatSharesRepository {
         status: ChatShareStatus.REVOKED,
         visibility: ChatShareVisibility.PRIVATE,
         adsEligible: false,
+        indexEligible: false,
         revokedAt: new Date(),
       },
     });

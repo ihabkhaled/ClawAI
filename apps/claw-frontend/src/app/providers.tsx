@@ -8,7 +8,7 @@ import { LocaleProvider } from '@/lib/i18n';
 import { ThemeProvider } from '@/lib/theme';
 import type { ProvidersProps } from '@/types';
 
-export function Providers({ children }: ProvidersProps) {
+export function Providers({ children, initialLocale }: ProvidersProps): React.ReactElement {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -25,7 +25,7 @@ export function Providers({ children }: ProvidersProps) {
   );
 
   return (
-    <LocaleProvider>
+    <LocaleProvider initialLocale={initialLocale}>
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           {children}

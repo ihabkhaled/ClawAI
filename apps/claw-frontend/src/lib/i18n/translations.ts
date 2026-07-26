@@ -6,11 +6,15 @@ import { ar } from './locales/ar';
 import { de } from './locales/de';
 import { en } from './locales/en';
 import { es } from './locales/es';
+import { fa } from './locales/fa';
 import { fr } from './locales/fr';
 import { hi } from './locales/hi';
 import { it } from './locales/it';
+import { ja } from './locales/ja';
 import { pt } from './locales/pt';
 import { ru } from './locales/ru';
+import { th } from './locales/th';
+import { zh } from './locales/zh';
 
 const dictionaries: Record<Locale, TranslationDictionary> = {
   [Locale.EN]: en,
@@ -22,6 +26,10 @@ const dictionaries: Record<Locale, TranslationDictionary> = {
   [Locale.RU]: ru,
   [Locale.PT]: pt,
   [Locale.HI]: hi,
+  [Locale.JA]: ja,
+  [Locale.TH]: th,
+  [Locale.FA]: fa,
+  [Locale.ZH]: zh,
 };
 
 /**

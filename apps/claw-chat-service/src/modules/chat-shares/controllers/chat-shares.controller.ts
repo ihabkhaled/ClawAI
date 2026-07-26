@@ -55,6 +55,7 @@ export class ChatSharesController {
       threadId: params.threadId,
       userId: user.id,
       allowIndexing: dto.allowIndexing,
+      contentLocale: dto.contentLocale,
     });
   }
 

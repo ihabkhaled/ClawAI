@@ -34,6 +34,7 @@ import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-leve
 import type { CopyButtonVariant } from '@/enums/copy-button-variant.enum';
 import type { EmptyStateVariant } from '@/enums/empty-state-variant.enum';
 import type { LoadingStateVariant } from '@/enums/loading-state.enum';
+import type { Locale } from '@/enums/locale.enum';
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
@@ -399,6 +400,7 @@ export type FormFieldErrors = Record<string, string[] | undefined>;
 
 export type ProvidersProps = {
   children: React.ReactNode;
+  initialLocale: Locale;
 };
 
 export type ThemeProviderProps = {

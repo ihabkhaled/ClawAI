@@ -22,6 +22,14 @@ export const LANGUAGE_OPTIONS: readonly LanguageOption[] = [
   { value: UserLanguagePreference.RU, label: 'settings.langRussian', nativeLabel: 'Русский' },
   { value: UserLanguagePreference.PT, label: 'settings.langPortuguese', nativeLabel: 'Português' },
   { value: UserLanguagePreference.HI, label: 'settings.langHindi', nativeLabel: 'हिन्दी' },
+  { value: UserLanguagePreference.JA, label: 'settings.langJapanese', nativeLabel: '日本語' },
+  { value: UserLanguagePreference.TH, label: 'settings.langThai', nativeLabel: 'ไทย' },
+  { value: UserLanguagePreference.FA, label: 'settings.langPersian', nativeLabel: 'فارسی' },
+  {
+    value: UserLanguagePreference.ZH,
+    label: 'settings.langSimplifiedChinese',
+    nativeLabel: '简体中文',
+  },
 ] as const;
 
 export const APPEARANCE_OPTIONS: readonly AppearanceOption[] = [

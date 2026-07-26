@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { headers } from 'next/headers';
 
+import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import { SITE_DESCRIPTION, SITE_TITLE } from '@/constants/site-metadata.constants';
 import { THEME_INIT_SCRIPT } from '@/constants/theme.constants';
 // Imported directly from i18n.constants rather than the `@/lib/i18n` barrel
@@ -10,7 +11,7 @@ import { THEME_INIT_SCRIPT } from '@/constants/theme.constants';
 // createContext into the server bundle and break the production build.
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
-import { getDirection } from '@/utilities/locale.utility';
+import { getDirection, getHtmlLanguage, isSupportedLocale } from '@/utilities/locale.utility';
 
 import './globals.css';
 import { Providers } from './providers';
@@ -61,12 +62,15 @@ export default async function RootLayout({
   // here authorises the inline theme-init script under the strict CSP and
   // opts the tree into per-request rendering (unavoidable for nonce CSP —
   // a static HTML file cannot carry a unique per-request nonce).
-  const nonce = (await headers()).get('x-nonce') ?? undefined;
+  const requestHeaders = await headers();
+  const nonce = requestHeaders.get('x-nonce') ?? undefined;
+  const requestedLocale = requestHeaders.get(LOCALE_REQUEST_HEADER);
+  const locale = isSupportedLocale(requestedLocale) ? requestedLocale : DEFAULT_LOCALE;
 
   return (
     <html
-      lang={DEFAULT_LOCALE}
-      dir={getDirection(DEFAULT_LOCALE)}
+      lang={getHtmlLanguage(locale)}
+      dir={getDirection(locale)}
       suppressHydrationWarning
       className={inter.variable}
     >
@@ -98,7 +102,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
-        <Providers>{children}</Providers>
+        <Providers initialLocale={locale}>{children}</Providers>
       </body>
     </html>
   );

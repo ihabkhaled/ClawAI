@@ -28,7 +28,7 @@ packages, in an npm-workspace monorepo. Events flow over RabbitMQ (topic exchang
 - NEVER cross a service's database boundary — use HTTP or RabbitMQ.
 - NEVER put business logic in controllers or DB calls outside repositories.
 - NEVER log secrets/tokens/passwords; NEVER expose secrets to the frontend.
-- NEVER add user-facing text without i18n in all 9 locales.
+- NEVER add user-facing text without i18n in all 13 locales.
 - NEVER add code without a test.
 
 ## Validation (run the gates for the folders you touched ONLY)
@@ -50,7 +50,7 @@ Full validation before release: `npm run release:preflight`.
 - Shared packages: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 - Events: 164 on `claw.events`
 - Permissions: 38 · Env vars: 335
-- API endpoints: 525 · Frontend pages: 98
+- API endpoints: 527 · Frontend pages: 98
 
 This file is generated. To change it, edit the renderer + policy sources and run
 `npm run knowledge:build`.

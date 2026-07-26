@@ -23,6 +23,8 @@ const SHARE = {
   description: 'How do I configure nginx as a reverse proxy?',
   messageCount: 6,
   adsEligible: true,
+  indexEligible: true,
+  contentLocale: 'en',
   publishedAt: new Date('2026-07-01T10:00:00.000Z'),
   lastSnapshotAt: new Date('2026-07-20T09:00:00.000Z'),
   revokedAt: null,

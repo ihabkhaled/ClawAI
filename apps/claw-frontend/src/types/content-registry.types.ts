@@ -23,3 +23,12 @@ export type ContentRegistryEntry = {
   relatedSlugs: string[];
   structuredDataType: StructuredDataType;
 };
+
+export type LocalizedContentRegistryEntry = ContentRegistryEntry & {
+  path: string;
+  metadata: {
+    title: string;
+    description: string;
+    lastReviewed: string;
+  };
+};

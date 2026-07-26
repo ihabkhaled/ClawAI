@@ -19,6 +19,7 @@ const STATE = {
   messageCount: 6,
   snapshotVersion: 2,
   adsEligible: true,
+  indexEligible: true,
 };
 
 describe('ChatShareEventsService', () => {

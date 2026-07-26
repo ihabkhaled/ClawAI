@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
 import { CHAT_SHARE_ACTIONS } from '@/constants/chat-share.constants';
+import { useLocale } from '@/hooks/use-locale';
 import { useTranslation } from '@/lib/i18n';
 import { chatSharesRepository } from '@/repositories/chat-shares/chat-shares.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
@@ -22,6 +23,7 @@ import { showToast } from '@/utilities/toast.utility';
  */
 export function useChatShareMutations(threadId: string | null): UseChatShareMutationsReturn {
   const { t } = useTranslation();
+  const { locale } = useLocale();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
@@ -48,7 +50,7 @@ export function useChatShareMutations(threadId: string | null): UseChatShareMuta
 
   const publishMutation = useMutation({
     mutationFn: (allowIndexing: boolean) =>
-      chatSharesRepository.publish(threadId as string, { allowIndexing }),
+      chatSharesRepository.publish(threadId as string, { allowIndexing, contentLocale: locale }),
     onSuccess: () => settle('chatShare.toast.published'),
     onError: (mutationError: unknown) => fail(mutationError, 'chatShare.toast.publishFailed'),
   });

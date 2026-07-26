@@ -39,7 +39,13 @@ export function evaluateSnapshotSafety(messages: SnapshotMessage[]): SnapshotSaf
     reasons.push(SnapshotSafetyReason.INSUFFICIENT_CONTENT);
   }
 
-  return { status: resolveStatus(reasons), reasons, meetsContentThreshold };
+  const status = resolveStatus(reasons);
+  return {
+    status,
+    reasons,
+    meetsContentThreshold,
+    indexEligible: status === ChatShareSafetyStatus.APPROVED && meetsContentThreshold,
+  };
 }
 
 /**

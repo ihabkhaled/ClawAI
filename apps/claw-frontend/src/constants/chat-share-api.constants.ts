@@ -13,6 +13,8 @@ export const PUBLIC_CHAT_SHARE_API_PATH = '/api/v1/public/chat-shares';
 
 /** Path of the internal sitemap feed. */
 export const CHAT_SHARE_SITEMAP_FEED_PATH = '/api/v1/internal/chat-shares/sitemap-feed';
+export const CHAT_SHARE_SITEMAP_COUNT_PATH = '/api/v1/internal/chat-shares/sitemap-count';
+export const CHAT_SHARE_RSS_FEED_PATH = '/api/v1/internal/chat-shares/rss-feed';
 
 /**
  * How many entries the sitemap pulls per page from the feed.

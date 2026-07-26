@@ -8,4 +8,8 @@ export enum UserLanguagePreference {
   RU = 'RU',
   PT = 'PT',
   HI = 'HI',
+  JA = 'JA',
+  TH = 'TH',
+  FA = 'FA',
+  ZH = 'ZH',
 }

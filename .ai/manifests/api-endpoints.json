@@ -824,6 +824,16 @@
       },
       {
         "method": "GET",
+        "route": "/internal/chat-shares/rss-feed",
+        "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/chat-shares/sitemap-count",
+        "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares-internal.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/internal/chat-shares/sitemap-feed",
         "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares-internal.controller.ts"
       },
@@ -2663,5 +2673,5 @@
     ]
   },
   "generated": true,
-  "total": 525
+  "total": 527
 }

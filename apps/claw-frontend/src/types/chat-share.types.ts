@@ -3,6 +3,7 @@ import type {
   ChatShareStatus,
   ChatShareVisibility,
 } from '@/enums/chat-share.enum';
+import type { Locale } from '@/enums/locale.enum';
 import type { MessageRole } from '@/enums/message-role.enum';
 
 // Field names mirror the backend DTOs verbatim. Renaming one on the way in is
@@ -22,6 +23,8 @@ export type OwnerChatShare = {
   title: string;
   messageCount: number;
   adsEligible: boolean;
+  indexEligible: boolean;
+  contentLocale: Locale;
   publishedAt: string;
   lastSnapshotAt: string;
   /** True when the private thread has moved on since the last snapshot. */
@@ -44,6 +47,8 @@ export type PublicChatShare = {
   messageCount: number;
   /** Server-derived. A page never decides for itself that it may show ads. */
   adsEligible: boolean;
+  indexEligible: boolean;
+  contentLocale: Locale;
   visibility: ChatShareVisibility;
   messages: PublicChatShareMessage[];
 };
@@ -63,10 +68,35 @@ export type PublicChatShareMessage = {
 /** One entry of the sitemap feed. Identifier and timestamp, nothing else. */
 export type PublicChatSitemapEntry = {
   publicShareId: string;
+  contentLocale: Locale;
+  updatedAt: string;
+};
+
+export type PublicChatSitemapPage = {
+  items: PublicChatSitemapEntry[];
+  nextCursor: string | null;
+};
+
+export type PublicChatSitemapCount = {
+  locale: Locale;
+  count: number;
+};
+
+export type PublicChatRssEntry = {
+  publicShareId: string;
+  contentLocale: Locale;
+  title: string;
+  description: string | null;
+  publishedAt: string;
   updatedAt: string;
 };
 
 /** Body of the publish request. The owner id comes from the JWT, never here. */
 export type PublishChatShareInput = {
+  allowIndexing: boolean;
+  contentLocale: Locale;
+};
+
+export type UpdateChatShareInput = {
   allowIndexing: boolean;
 };

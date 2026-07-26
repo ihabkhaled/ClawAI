@@ -4,10 +4,15 @@ import { isValidPublicShareId } from '../../../common/utilities/public-share-id.
 import { SITEMAP_FEED_PAGE_SIZE } from '../constants/public-share-route.constants';
 import { ChatSharesRepository } from '../repositories/chat-shares.repository';
 import { ChatShareMapperService } from './chat-share-mapper.service';
-import {
-  type PublicChatShareResponse,
-  type PublicChatSitemapEntry,
-} from '../types/chat-shares.types';
+import { type PublicChatShareResponse } from '../types/chat-shares.types';
+import type {
+  PublicChatRssEntry,
+  PublicChatSitemapCount,
+  PublicChatSitemapPage,
+} from '../types/chat-share-discovery.types';
+import type { Locale } from '@claw/shared-types';
+import { decodeSitemapCursor, encodeSitemapCursor } from '../utilities/sitemap-cursor.utility';
+import { parseStoredLocale } from '../utilities/stored-locale.utility';
 
 /**
  * The read path for unauthenticated visitors.
@@ -64,17 +69,42 @@ export class PublicChatShareService {
    * conversation's subject to anyone who fetched it.
    */
   async listSitemapEntries(
+    locale: Locale,
     limit: number = SITEMAP_FEED_PAGE_SIZE,
     cursor: string | null = null,
-  ): Promise<PublicChatSitemapEntry[]> {
+  ): Promise<PublicChatSitemapPage> {
     this.logger.debug(`listSitemapEntries: limit=${String(limit)}`);
-    const cursorDate = cursor === null ? null : new Date(cursor);
-    const shares = await this.shares.listIndexable(
-      limit,
-      cursorDate !== null && !Number.isNaN(cursorDate.getTime()) ? cursorDate : null,
-    );
+    const decodedCursor = cursor === null ? null : decodeSitemapCursor(cursor);
+    if (cursor !== null && decodedCursor === null) {
+      return { items: [], nextCursor: null };
+    }
+    const shares = await this.shares.listIndexable(locale, limit, decodedCursor);
+    const last = shares.at(-1);
+    return {
+      items: shares.map((share) => ({
+        publicShareId: share.publicShareId,
+        contentLocale: parseStoredLocale(share.contentLocale),
+        updatedAt: share.updatedAt.toISOString(),
+      })),
+      nextCursor:
+        shares.length === limit && last !== undefined
+          ? encodeSitemapCursor({ updatedAt: last.updatedAt, id: last.id })
+          : null,
+    };
+  }
+
+  async countSitemapEntries(locale: Locale): Promise<PublicChatSitemapCount> {
+    return { locale, count: await this.shares.countIndexable(locale) };
+  }
+
+  async listRssEntries(locale: Locale, limit: number = 100): Promise<PublicChatRssEntry[]> {
+    const shares = await this.shares.listIndexable(locale, limit, null);
     return shares.map((share) => ({
       publicShareId: share.publicShareId,
+      contentLocale: parseStoredLocale(share.contentLocale),
+      title: share.title,
+      description: share.description,
+      publishedAt: share.publishedAt.toISOString(),
       updatedAt: share.updatedAt.toISOString(),
     }));
   }

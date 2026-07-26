@@ -17,6 +17,7 @@ import { join } from 'node:path';
 
 import {
   GENERATED_DIR,
+  escapeMarkdownTableCell,
   loadProjects,
   loadDeploymentEnv,
   parseEnvFile,
@@ -56,7 +57,10 @@ async function probe(url, options = {}) {
       ok: false,
       status: 0,
       latencyMs: Date.now() - started,
-      error: error.name === 'AbortError' ? `timed out after ${options.timeoutMs ?? REQUEST_TIMEOUT_MS}ms` : error.message,
+      error:
+        error.name === 'AbortError'
+          ? `timed out after ${options.timeoutMs ?? REQUEST_TIMEOUT_MS}ms`
+          : error.message,
     };
   } finally {
     clearTimeout(timer);
@@ -71,7 +75,8 @@ class Report {
 
   record(entry) {
     this.checks.push(entry);
-    const status = entry.status === 'pass' ? log.ok : entry.status === 'warn' ? log.warn : log.error;
+    const status =
+      entry.status === 'pass' ? log.ok : entry.status === 'warn' ? log.warn : log.error;
     status(`${entry.project.padEnd(16)} ${entry.check.padEnd(28)} ${entry.detail}`);
   }
 
@@ -379,7 +384,9 @@ function renderMarkdown(report) {
   ];
   for (const entry of report.checks) {
     const icon = entry.status === 'pass' ? 'PASS' : entry.status === 'warn' ? 'WARN' : 'FAIL';
-    lines.push(`| ${entry.project} | ${entry.check} | ${icon} | ${entry.detail.replace(/\|/g, '\\|')} |`);
+    lines.push(
+      `| ${escapeMarkdownTableCell(entry.project)} | ${escapeMarkdownTableCell(entry.check)} | ${icon} | ${escapeMarkdownTableCell(entry.detail)} |`,
+    );
   }
   const required = report.requiredFailures;
   lines.push('', '## Verdict', '');
@@ -413,13 +420,17 @@ async function main() {
       const baseUrl = baseUrlFor(project, urls) ?? '<unresolved>';
       log.plain(`  ${project.key.padEnd(16)} health        ${baseUrl}${project.healthPath}`);
       if (project.protectedProbePath !== null && project.protectedProbePath !== undefined) {
-        log.plain(`  ${''.padEnd(16)} auth-guard    ${baseUrl}${project.protectedProbePath} (expect 401)`);
+        log.plain(
+          `  ${''.padEnd(16)} auth-guard    ${baseUrl}${project.protectedProbePath} (expect 401)`,
+        );
       }
       if (project.streamingPath !== undefined) {
         log.plain(`  ${''.padEnd(16)} streaming     ${baseUrl}${project.streamingPath}`);
       }
     }
-    log.plain(`  ${'external'.padEnd(16)} ollama api    ${env.OLLAMA_BASE_URL ?? '<OLLAMA_BASE_URL unset>'}/api/tags`);
+    log.plain(
+      `  ${'external'.padEnd(16)} ollama api    ${env.OLLAMA_BASE_URL ?? '<OLLAMA_BASE_URL unset>'}/api/tags`,
+    );
     for (const skipped of skippedProjects(manifest)) {
       log.plain(`  ${skipped.key.padEnd(16)} expect absent [${skipped.status}]`);
     }
