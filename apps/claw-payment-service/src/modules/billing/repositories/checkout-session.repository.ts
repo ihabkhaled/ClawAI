@@ -16,6 +16,28 @@ export class CheckoutSessionRepository {
     return this.prisma.checkoutSession.findUnique({ where: { id } });
   }
 
+  /**
+   * The session a gateway order belongs to.
+   *
+   * Paymob's card-token callback names only its own order id, so this is how a
+   * saved card is attributed to a user: the order is one WE created and bound to a
+   * session, and the session knows whose it is. Resolving the user from our own
+   * records rather than from anything in the callback body means a forged payload
+   * cannot attach a card to someone else's account.
+   *
+   * Newest first: a provider order id should be unique, but ordering makes the
+   * result deterministic if a gateway ever reuses one.
+   */
+  async findByProviderOrderId(
+    gateway: string,
+    providerOrderId: string,
+  ): Promise<CheckoutSession | null> {
+    return this.prisma.checkoutSession.findFirst({
+      where: { gateway, providerOrderId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   // Idempotency is scoped per user AND key, so one user's key can never collide
   // with another's, and a replayed request returns the original session instead
   // of creating a second payable order.

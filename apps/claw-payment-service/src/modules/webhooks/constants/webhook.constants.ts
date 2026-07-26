@@ -39,6 +39,14 @@ export const PAYPAL_REVERSAL_EVENTS: ReadonlyArray<string> = [
 // type is synthesised for the audit row.
 export const PAYMOB_TRANSACTION_EVENT = 'TRANSACTION';
 
+// The separate card-token callback, fired when a customer ticks "save this card"
+// in hosted checkout. Distinct from TRANSACTION so the two cannot collide on the
+// `(gateway, providerEventId)` unique index.
+export const PAYMOB_CARD_TOKEN_EVENT = 'CARD_TOKEN';
+
+// The maximum PAN fragment permitted anywhere in storage or logs.
+export const CARD_LAST4_LENGTH = 4;
+
 // Cap on the stored event type string, so a hostile payload cannot write an
 // unbounded value into the audit row.
 export const WEBHOOK_EVENT_TYPE_MAX_LENGTH = 128;

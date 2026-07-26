@@ -1750,6 +1750,16 @@
         },
         {
           "method": "POST",
+          "route": "/payments/webhooks/paymob/card-token",
+          "source": "apps/claw-payment-service/src/modules/webhooks/controllers/paymob-webhook.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/payments/webhooks/paymob/transaction",
+          "source": "apps/claw-payment-service/src/modules/webhooks/controllers/paymob-webhook.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/payments/webhooks/paypal",
           "source": "apps/claw-payment-service/src/modules/webhooks/controllers/paypal-webhook.controller.ts"
         }
@@ -8191,7 +8201,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 32
+        "testFiles": 34
       },
       "claw-research-service": {
         "runner": "jest",
@@ -8905,7 +8915,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 525,
+    "endpointCount": 527,
     "envVarCount": 335,
     "eventCount": 164,
     "frontendRouteCount": 98,
@@ -8917,7 +8927,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 598,
+    "totalTestFiles": 600,
     "workspaceCount": 25
   }
 }

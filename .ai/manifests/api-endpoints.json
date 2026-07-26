@@ -1704,6 +1704,16 @@
       },
       {
         "method": "POST",
+        "route": "/payments/webhooks/paymob/card-token",
+        "source": "apps/claw-payment-service/src/modules/webhooks/controllers/paymob-webhook.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/payments/webhooks/paymob/transaction",
+        "source": "apps/claw-payment-service/src/modules/webhooks/controllers/paymob-webhook.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/payments/webhooks/paypal",
         "source": "apps/claw-payment-service/src/modules/webhooks/controllers/paypal-webhook.controller.ts"
       }
@@ -2663,5 +2673,5 @@
     ]
   },
   "generated": true,
-  "total": 525
+  "total": 527
 }
