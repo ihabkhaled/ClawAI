@@ -9,16 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 176 identical headings (167640 vs 127153 bytes) — candidates for compact routing",
-        "severity": "medium"
-      },
-      {
-        "evidence": [
-          "CLAUDE.md",
-          "cursor.md"
-        ],
-        "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 9 identical headings (167640 vs 26115 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 2 identical headings (19266 vs 4935 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -27,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CODEX.md and cursor.md share 10 identical headings (127153 vs 26115 bytes) — candidates for compact routing",
+        "message": "CODEX.md and cursor.md share 1 identical headings (4935 vs 26115 bytes) — candidates for compact routing",
         "severity": "medium"
       }
     ],
@@ -6228,11 +6219,11 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 167640,
+          "bytes": 19266,
           "file": "CLAUDE.md"
         },
         {
-          "bytes": 127153,
+          "bytes": 4935,
           "file": "CODEX.md"
         },
         {
@@ -6277,7 +6268,7 @@
       "looseDocs": 22,
       "rules": [
         {
-          "bytes": 10808,
+          "bytes": 10815,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -6423,6 +6414,10 @@
         {
           "bytes": 11904,
           "file": "rules/26-prompt-pack-intake-protocol.md"
+        },
+        {
+          "bytes": 15433,
+          "file": "rules/27-engineering-mindsets.md"
         },
         {
           "bytes": 4087,
