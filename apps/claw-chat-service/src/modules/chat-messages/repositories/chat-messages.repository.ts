@@ -1,7 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { type ChatMessage } from "../../../generated/prisma";
-import { type CreateMessageData } from "../types/chat-messages.types";
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type ChatMessage } from '../../../generated/prisma';
+import { type CreateMessageData } from '../types/chat-messages.types';
 
 @Injectable()
 export class ChatMessagesRepository {
@@ -21,7 +21,22 @@ export class ChatMessagesRepository {
       where: { threadId },
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * The whole thread in conversation order.
+   *
+   * Ascending, unpaginated, and capped by the caller — a published snapshot has
+   * to be the complete transcript in the order it happened, and paging it would
+   * risk publishing a conversation with a hole in the middle.
+   */
+  async findAllByThreadIdAscending(threadId: string, take: number): Promise<ChatMessage[]> {
+    return this.prisma.chatMessage.findMany({
+      where: { threadId },
+      orderBy: { createdAt: 'asc' },
+      take,
     });
   }
 
@@ -33,7 +48,7 @@ export class ChatMessagesRepository {
     return this.prisma.chatMessage.findMany({
       where: { threadId },
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
   }
 

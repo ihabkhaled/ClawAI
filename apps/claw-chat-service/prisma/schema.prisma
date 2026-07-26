@@ -29,29 +29,29 @@ enum MessageRole {
 // ─── Models ──────────────────────────────────────────────
 
 model ChatThread {
-  id           String      @id @default(cuid())
-  userId       String      @map("user_id")
-  title        String?
-  routingMode  RoutingMode @default(AUTO) @map("routing_mode")
-  lastProvider String?     @map("last_provider")
-  lastModel    String?     @map("last_model")
-  isPinned     Boolean     @default(false) @map("is_pinned")
-  isArchived   Boolean     @default(false) @map("is_archived")
-  preferredProvider String?  @map("preferred_provider")
-  preferredModel    String?  @map("preferred_model")
-  contextPackIds    String[] @default([]) @map("context_pack_ids")
-  systemPrompt      String?  @map("system_prompt")
-  temperature       Float?   @default(0.7) @map("temperature")
-  maxTokens         Int?     @map("max_tokens")
-  judgeEnabled      Boolean  @default(false) @map("judge_enabled")
-  judgeModel        String?  @map("judge_model")
-  qualityThreshold  Float?   @map("quality_threshold")
-  maxReRouteAttempts Int?    @map("max_reroute_attempts")
+  id                 String      @id @default(cuid())
+  userId             String      @map("user_id")
+  title              String?
+  routingMode        RoutingMode @default(AUTO) @map("routing_mode")
+  lastProvider       String?     @map("last_provider")
+  lastModel          String?     @map("last_model")
+  isPinned           Boolean     @default(false) @map("is_pinned")
+  isArchived         Boolean     @default(false) @map("is_archived")
+  preferredProvider  String?     @map("preferred_provider")
+  preferredModel     String?     @map("preferred_model")
+  contextPackIds     String[]    @default([]) @map("context_pack_ids")
+  systemPrompt       String?     @map("system_prompt")
+  temperature        Float?      @default(0.7) @map("temperature")
+  maxTokens          Int?        @map("max_tokens")
+  judgeEnabled       Boolean     @default(false) @map("judge_enabled")
+  judgeModel         String?     @map("judge_model")
+  qualityThreshold   Float?      @map("quality_threshold")
+  maxReRouteAttempts Int?        @map("max_reroute_attempts")
   // === Integration V2 — per-thread memory/context switches ===
-  useMemory    Boolean     @default(true) @map("use_memory")
-  useContext   Boolean     @default(true) @map("use_context")
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @updatedAt @map("updated_at")
+  useMemory          Boolean     @default(true) @map("use_memory")
+  useContext         Boolean     @default(true) @map("use_context")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
 
   messages ChatMessage[]
 
@@ -91,9 +91,9 @@ model ChatMessage {
   metadata      Json?
   createdAt     DateTime     @default(now()) @map("created_at")
 
-  thread               ChatThread           @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  attachments          MessageAttachment[]
-  fileDeliveryRecords  FileDeliveryRecord[]
+  thread              ChatThread           @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  attachments         MessageAttachment[]
+  fileDeliveryRecords FileDeliveryRecord[]
 
   @@index([threadId])
   @@index([createdAt])
@@ -132,4 +132,107 @@ model FileDeliveryRecord {
   @@index([fileId, provider, model])
   @@index([threadId, fileId])
   @@map("file_delivery_records")
+}
+
+// ─── Public shared chats ─────────────────────────────────
+//
+// A published chat is an IMMUTABLE SNAPSHOT, not a live projection of the
+// private thread. That is the whole safety design: a user who shares a harmless
+// conversation and then discusses something private in the same thread must not
+// have that second half published behind their back. New messages only become
+// public when the owner explicitly refreshes the snapshot.
+
+enum ChatShareVisibility {
+  PRIVATE
+  PUBLIC_UNLISTED
+  PUBLIC_INDEXED
+}
+
+enum ChatShareStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum ChatShareSafetyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REQUIRES_REVIEW
+}
+
+model ChatShare {
+  id          String @id @default(uuid())
+  /// One share per thread. Re-publishing reuses this row and bumps the version.
+  threadId    String @unique @map("thread_id")
+  /// Always derived from the authenticated session, never from a request body.
+  ownerUserId String @map("owner_user_id")
+
+  /// The only identifier that ever appears in a public URL. Cryptographically
+  /// random with >=128 bits of entropy, so the id space cannot be enumerated
+  /// and reveals nothing about the thread, the user, or when it was created.
+  publicShareId String @unique @map("public_share_id")
+
+  status       ChatShareStatus       @default(ACTIVE)
+  visibility   ChatShareVisibility
+  safetyStatus ChatShareSafetyStatus @default(PENDING) @map("safety_status")
+
+  /// Bumped on every refresh, so a stale cached page is identifiable.
+  snapshotVersion Int @default(1) @map("snapshot_version")
+
+  title        String
+  description  String?
+  messageCount Int     @map("message_count")
+
+  /// Server-derived. A URL matching /share/chat/* must never become an ad
+  /// surface on its own — eligibility is decided here and passed to the page.
+  adsEligible Boolean @default(false) @map("ads_eligible")
+
+  publishedAt    DateTime  @map("published_at")
+  lastSnapshotAt DateTime  @map("last_snapshot_at")
+  revokedAt      DateTime? @map("revoked_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  messages ChatShareMessage[]
+
+  /// Drives the sitemap feed: active + indexed, ordered by recency.
+  @@index([status, visibility, updatedAt])
+  @@index([ownerUserId])
+  @@map("chat_shares")
+}
+
+/// A published copy of one message.
+///
+/// A COPY, deliberately — not a foreign key to ChatMessage. Reading through to
+/// the live message would republish later edits and undo the snapshot
+/// guarantee, and it would put a private row one join away from a public
+/// endpoint.
+model ChatShareMessage {
+  id          String @id @default(uuid())
+  chatShareId String @map("chat_share_id")
+
+  /// A fresh id per published message. Private message ids are never reused in
+  /// public output — they are a handle onto private data.
+  publicMessageId String @unique @map("public_message_id")
+
+  sequence Int
+  role     MessageRole
+  content  String
+
+  /// Display labels only ("OpenAI", "gpt-4o"). Never a connector id or any
+  /// internal provider configuration identifier.
+  providerLabel String? @map("provider_label")
+  modelLabel    String? @map("model_label")
+
+  /// When the message was originally sent, so the published transcript reads
+  /// in real time rather than showing the moment it was copied.
+  originalCreatedAt DateTime @map("original_created_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  share ChatShare @relation(fields: [chatShareId], references: [id], onDelete: Cascade)
+
+  @@unique([chatShareId, sequence])
+  @@index([chatShareId])
+  @@map("chat_share_messages")
 }

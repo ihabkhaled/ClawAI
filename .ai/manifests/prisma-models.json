@@ -42,6 +42,8 @@
     "claw-chat-service": [
       "ChatMessage",
       "ChatMessageContextReceipt",
+      "ChatShare",
+      "ChatShareMessage",
       "ChatThread",
       "FileDeliveryRecord",
       "MessageAttachment"

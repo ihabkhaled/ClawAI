@@ -100,7 +100,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-chat-service",
-      "endpointCount": 27,
+      "endpointCount": 35,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -115,11 +115,13 @@
       "prismaModels": [
         "ChatMessage",
         "ChatMessageContextReceipt",
+        "ChatShare",
+        "ChatShareMessage",
         "ChatThread",
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 54,
+      "testFiles": 60,
       "testRunner": "jest"
     },
     {

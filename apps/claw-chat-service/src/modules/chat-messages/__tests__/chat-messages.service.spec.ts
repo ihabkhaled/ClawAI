@@ -60,6 +60,7 @@ const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, jest.Moc
   findById: jest.fn(),
   findByThreadId: jest.fn(),
   findRecentByThreadId: jest.fn(),
+  findAllByThreadIdAscending: jest.fn(),
   countByThreadId: jest.fn(),
   updateFeedback: jest.fn(),
   deleteByThreadId: jest.fn(),

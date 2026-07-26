@@ -788,9 +788,44 @@
         "source": "apps/claw-chat-service/src/modules/context-preview/controllers/context-preview.controller.ts"
       },
       {
+        "method": "DELETE",
+        "route": "/chat-threads/:threadId/share",
+        "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/chat-threads/:threadId/share",
+        "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/chat-threads/:threadId/share",
+        "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-threads/:threadId/share",
+        "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-threads/:threadId/share/refresh",
+        "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-threads/:threadId/share/regenerate-url",
+        "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-chat-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/chat-shares/sitemap-feed",
+        "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares-internal.controller.ts"
       },
       {
         "method": "POST",
@@ -801,6 +836,11 @@
         "method": "POST",
         "route": "/internal/chat/threads/seeded",
         "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/public/chat-shares/:publicShareId",
+        "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/public-chat-shares.controller.ts"
       }
     ],
     "claw-client-logs-service": [
@@ -2623,5 +2663,5 @@
     ]
   },
   "generated": true,
-  "total": 517
+  "total": 525
 }

@@ -979,6 +979,10 @@ SEED_RECONCILE_PERMISSIONS=false
 NEXT_PUBLIC_API_URL=
 NEXT_PUBLIC_APP_NAME=Claw
 NEXT_PUBLIC_APP_URL=${CLAW_BASE_URL}
+
+# Canonical origin for public shared-chat URLs, built server-side by
+# chat-service. Never derived from a request Host header.
+PUBLIC_SITE_URL=${CLAW_BASE_URL}
 # Phase 8 UI transparency — dev-only Thread Context Inspector toggle.
 NEXT_PUBLIC_ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED=false
 FRONTEND_PORT=3000

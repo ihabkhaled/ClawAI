@@ -13,6 +13,12 @@ const appConfigSchema = z.object({
 
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
 
+  // The canonical origin for public share URLs. Read from configuration, never
+  // from a request Host or X-Forwarded-Host header: a preview domain, a
+  // reverse-proxy host, or a spoofed forwarded header must not be able to
+  // become the canonical URL we hand to a user or to a search engine.
+  PUBLIC_SITE_URL: z.string().min(1).default('https://claw.local'),
+
   AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
   OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
   LLAMACPP_SERVICE_URL: z.string().min(1).default('http://llamacpp-service:4017'),

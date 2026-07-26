@@ -64,6 +64,8 @@
       "prismaModels": [
         "ChatMessage",
         "ChatMessageContextReceipt",
+        "ChatShare",
+        "ChatShareMessage",
         "ChatThread",
         "FileDeliveryRecord",
         "MessageAttachment"

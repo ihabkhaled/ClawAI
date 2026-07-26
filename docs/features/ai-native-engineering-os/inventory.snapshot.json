@@ -843,9 +843,44 @@
           "source": "apps/claw-chat-service/src/modules/context-preview/controllers/context-preview.controller.ts"
         },
         {
+          "method": "DELETE",
+          "route": "/chat-threads/:threadId/share",
+          "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/chat-threads/:threadId/share",
+          "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/chat-threads/:threadId/share",
+          "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/chat-threads/:threadId/share",
+          "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/chat-threads/:threadId/share/refresh",
+          "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/chat-threads/:threadId/share/regenerate-url",
+          "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-chat-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/chat-shares/sitemap-feed",
+          "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares-internal.controller.ts"
         },
         {
           "method": "POST",
@@ -856,6 +891,11 @@
           "method": "POST",
           "route": "/internal/chat/threads/seeded",
           "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads-internal.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/public/chat-shares/:publicShareId",
+          "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/public-chat-shares.controller.ts"
         }
       ],
       "claw-client-logs-service": [
@@ -4468,6 +4508,11 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "PUBLIC_SITE_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "RABBITMQ_MANAGEMENT_PORT"
       },
       {
@@ -6800,6 +6845,12 @@
         "source": "infra/nginx/nginx.conf"
       },
       {
+        "location": "/api/v1/public/chat-shares",
+        "port": 4002,
+        "service": "chat-service",
+        "source": "infra/nginx/nginx.conf"
+      },
+      {
         "location": "/api/v1/research",
         "port": 4016,
         "service": "research-service",
@@ -7351,6 +7402,16 @@
             "confidence": "verified",
             "source": "apps/claw-chat-service/prisma/schema.prisma",
             "value": "ChatMessageContextReceipt"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-chat-service/prisma/schema.prisma",
+            "value": "ChatShare"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-chat-service/prisma/schema.prisma",
+            "value": "ChatShareMessage"
           },
           {
             "confidence": "verified",
@@ -8013,7 +8074,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 54
+        "testFiles": 60
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -8771,19 +8832,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 517,
-    "envVarCount": 329,
+    "endpointCount": 525,
+    "envVarCount": 330,
     "eventCount": 158,
     "frontendRouteCount": 97,
     "localeCount": 9,
-    "nginxRouteCount": 49,
+    "nginxRouteCount": 50,
     "permissionCount": 38,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 580,
+    "totalTestFiles": 586,
     "workspaceCount": 25
   }
 }
