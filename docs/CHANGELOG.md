@@ -8,6 +8,73 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+---
+
+## [1.0.0] - 2026-07-26
+
+First stable release. The platform reaches feature completeness across
+orchestration, billing, public sharing and the AI-native engineering layer, and
+every workspace now ships a single, consistent version.
+
+### Added
+
+- **Public read-only shared chats** — an owner can publish an immutable snapshot of
+  a conversation at a stable public URL, choose whether search engines may index it,
+  refresh the published version, regenerate the URL, or revoke access. The public
+  page is server-rendered so crawlers and screen readers receive the real transcript,
+  and message bodies render through a hardened markdown pipeline that treats every
+  message as hostile input: no raw HTML, scheme-checked links marked `nofollow ugc`,
+  no remote images, and a hard size cap.
+- **Subscriptions, billing and payments** — seven database-backed plans with
+  versioned immutable prices, PayPal and Paymob gateways, proration, invoices,
+  payment transactions, refunds and chargebacks, weighted-token quotas, and a
+  transactional outbox that makes an entitlement change exactly as durable as the
+  payment behind it.
+- **`chat.share.*` domain events** consumed by the audit service, carrying ids and
+  state transitions only — never conversation text, never the public identifier.
+- **AdSense monetisation** for eligible public pages, with per-share eligibility
+  derived on the server rather than from the URL, and five independently
+  configurable slots that default to off.
+- **Prompt-pack intake protocol** (rule 26) and **push-per-commit** (rules 07/23):
+  what must happen before code when work arrives as a document, and why a local
+  stack of unpushed commits is a stack of unverified ones.
+- **Engineering mindsets** promoted to their own rule (27) with a canonical home.
+
+### Changed
+
+- **Every workspace now reports 1.0.0.** 24 of 26 still declared 0.1.0, internal
+  `@claw/*` pins still referenced 0.1.0, and three code sites hardcoded a version of
+  their own — including the llamacpp `/health` endpoint and the sidebar badge. All
+  now derive from `package.json`, guarded by a test so they cannot drift again.
+- **`CLAUDE.md` reduced from 167 kB to 14 kB and `CODEX.md` from 127 kB to 5 kB.**
+  Both had grown into mirrors of `rules/`, which meant two copies of every rule with
+  no guarantee they agreed. They are now indexes over the canonical sources.
+
+### Fixed
+
+- **Dev containers served a stale Prisma client.** The entrypoint copy used a form
+  that copies INTO the destination once it exists, so the compiled client froze at
+  first-run state and a schema enum added later was missing at runtime. Fixed across
+  all 14 dev entrypoints.
+- **A blank environment variable was not treated as unset.** A `.env` file writes an
+  unset key as the empty string, which failed `min(1)` and made payment-service
+  unbootable in the documented gateways-disabled configuration.
+- **`npm install` failed inside every service container** because the root
+  `prepare` script required a `.husky` file the images do not copy.
+- **`UsageViewService` was exported without being provided**, so auth-service could
+  not start and the billing usage meters had never been reachable.
+- **Refunds and chargebacks had no effect on entitlement.** The revocation path
+  existed with zero callers, payment transactions and invoices were never written at
+  all, and the PayPal webhook acted on exactly one event type.
+- **Four marketing pages failed the Lighthouse accessibility gate.** Three distinct
+  contrast defects, all light-mode: muted text on a muted surface at 4.34:1, an
+  opacity modifier compositing text to 3.24:1, and an accent pill at 4.48:1. Verified
+  at zero failing nodes across all asserted URLs in both colour schemes, with a
+  regression test that computes the ratios from the tokens.
+- **Generated manifests depended on checkout line endings.** File sizes came from
+  `statSync`, so a CRLF working tree and Linux CI could never agree on the freshness
+  hash no matter how often either regenerated.
+
 ### Added
 
 - **Grew from 9 to 17 backend services** — added Client Logs (:4010), Server
