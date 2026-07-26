@@ -17,6 +17,7 @@ import { EntitlementInboxRepository } from './repositories/entitlement-inbox.rep
   controllers: [EntitlementsInternalController, MeEntitlementsController, QuotaInternalController],
   providers: [
     EntitlementsService,
+    UsageViewService,
     AuthRepository,
     EntitlementInboxService,
     EntitlementApplierService,
