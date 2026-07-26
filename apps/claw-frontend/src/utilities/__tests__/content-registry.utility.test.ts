@@ -1,18 +1,34 @@
 import { describe, expect, it } from 'vitest';
 
-import { CONTENT_REGISTRY } from '@/constants/content-registry.constants';
+import {
+  CONTENT_REGISTRY,
+  PUBLIC_CONTENT_DEFINITIONS,
+} from '@/constants/content-registry.constants';
 import { ContentLifecycleStatus, ContentReviewStatus, Indexability, AdEligibility } from '@/enums';
 import { Locale } from '@/enums/locale.enum';
 import {
   getAdEligiblePages,
   getIndexablePages,
   getIndexablePagesForLocale,
+  getLanguageAlternates,
+  getLocalizedCanonicalPath,
   getPageBySlug,
+  getPageBySlugAndLocale,
+  getPublishedPagesForLocale,
   getPublishedPages,
   isKnownPublicPath,
 } from '@/utilities/content-registry.utility';
 
 describe('content registry integrity', () => {
+  it('stores each logical slug once with locale metadata nested below it', () => {
+    expect(new Set(PUBLIC_CONTENT_DEFINITIONS.map((entry) => entry.slug)).size).toBe(
+      PUBLIC_CONTENT_DEFINITIONS.length,
+    );
+    expect(PUBLIC_CONTENT_DEFINITIONS.find((entry) => entry.slug === 'features')?.locales).toEqual(
+      expect.objectContaining({ [Locale.EN]: expect.any(Object) }),
+    );
+  });
+
   it('has no duplicate (slug, locale) pairs', () => {
     const seen = new Set<string>();
     for (const entry of CONTENT_REGISTRY) {
@@ -118,5 +134,18 @@ describe('localized publication boundary', () => {
     expect(getIndexablePagesForLocale(Locale.TH)).toEqual([]);
     expect(getIndexablePagesForLocale(Locale.FA)).toEqual([]);
     expect(getIndexablePagesForLocale(Locale.ZH)).toEqual([]);
+  });
+
+  it('resolves only metadata that exists for the requested locale', () => {
+    expect(getPublishedPagesForLocale(Locale.EN).length).toBe(8);
+    expect(getPublishedPagesForLocale(Locale.JA)).toEqual([]);
+    expect(getPageBySlugAndLocale('features', Locale.EN)?.title).toContain('Features');
+    expect(getPageBySlugAndLocale('features', Locale.JA)).toBeUndefined();
+  });
+
+  it('creates localized canonicals and alternates without declaring fallback locales', () => {
+    expect(getLocalizedCanonicalPath('features', Locale.EN)).toBe('/en/features');
+    expect(getLocalizedCanonicalPath('features', Locale.JA)).toBeUndefined();
+    expect(getLanguageAlternates('features')).toEqual({ en: '/en/features' });
   });
 });

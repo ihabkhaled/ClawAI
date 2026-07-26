@@ -1,26 +1,62 @@
-import { CONTENT_REGISTRY } from '@/constants/content-registry.constants';
-import { AdEligibility, ContentLifecycleStatus, Indexability } from '@/enums';
+import {
+  CONTENT_REGISTRY,
+  PUBLIC_CONTENT_DEFINITIONS,
+} from '@/constants/content-registry.constants';
+import { AdEligibility, ContentLifecycleStatus, ContentReviewStatus, Indexability } from '@/enums';
 import type { Locale } from '@/enums/locale.enum';
 import type {
   ContentRegistryEntry,
+  LocalizedContentMetadata,
   LocalizedContentRegistryEntry,
+  PublicContentDefinition,
 } from '@/types/content-registry.types';
 import { localisePath } from '@/utilities/locale.utility';
 
-// Defense in depth: a PLANNED entry is always treated as non-indexable and
-// ad-ineligible regardless of what its own fields say, so a data-entry
-// mistake on a not-yet-reviewed page can never make it indexable or
-// ad-eligible by accident.
-function isEffectivelyIndexable(entry: ContentRegistryEntry): boolean {
+function isEffectivelyIndexable(
+  definition: PublicContentDefinition,
+  metadata: LocalizedContentMetadata | undefined,
+): metadata is LocalizedContentMetadata {
   return (
-    entry.status === ContentLifecycleStatus.PUBLISHED &&
-    entry.indexability === Indexability.INDEXABLE
+    definition.status === ContentLifecycleStatus.PUBLISHED &&
+    metadata?.reviewStatus === ContentReviewStatus.REVIEWED &&
+    metadata.indexability === Indexability.INDEXABLE
   );
+}
+
+function toRegistryEntry(
+  definition: PublicContentDefinition,
+  locale: Locale,
+  metadata: LocalizedContentMetadata,
+): ContentRegistryEntry {
+  return {
+    slug: definition.slug,
+    locale,
+    status: definition.status,
+    title: metadata.title,
+    description: metadata.description,
+    category: definition.category,
+    canonicalPath: definition.path,
+    lastReviewed: metadata.lastReviewed,
+    indexability: metadata.indexability,
+    adEligibility: definition.adEligibility,
+    reviewStatus: metadata.reviewStatus,
+    relatedSlugs: definition.relatedSlugs,
+    structuredDataType: definition.structuredDataType,
+  };
+}
+
+function getLocalizedEntry(
+  definition: PublicContentDefinition,
+  locale: Locale,
+): ContentRegistryEntry | undefined {
+  const metadata = definition.locales[locale];
+  return metadata === undefined ? undefined : toRegistryEntry(definition, locale, metadata);
 }
 
 function isEffectivelyAdEligible(entry: ContentRegistryEntry): boolean {
   return (
     entry.status === ContentLifecycleStatus.PUBLISHED &&
+    entry.reviewStatus === ContentReviewStatus.REVIEWED &&
     entry.adEligibility === AdEligibility.ELIGIBLE
   );
 }
@@ -29,8 +65,24 @@ export function getPublishedPages(): ContentRegistryEntry[] {
   return CONTENT_REGISTRY.filter((entry) => entry.status === ContentLifecycleStatus.PUBLISHED);
 }
 
+export function getPublishedPagesForLocale(locale: Locale): ContentRegistryEntry[] {
+  return PUBLIC_CONTENT_DEFINITIONS.flatMap((definition) => {
+    if (definition.status !== ContentLifecycleStatus.PUBLISHED) {
+      return [];
+    }
+    const entry = getLocalizedEntry(definition, locale);
+    return entry === undefined ? [] : [entry];
+  });
+}
+
 export function getIndexablePages(): ContentRegistryEntry[] {
-  return CONTENT_REGISTRY.filter((entry) => isEffectivelyIndexable(entry));
+  return PUBLIC_CONTENT_DEFINITIONS.flatMap((definition) =>
+    Object.entries(definition.locales).flatMap(([locale, metadata]) =>
+      isEffectivelyIndexable(definition, metadata)
+        ? [toRegistryEntry(definition, locale as Locale, metadata)]
+        : [],
+    ),
+  );
 }
 
 export function getAdEligiblePages(): ContentRegistryEntry[] {
@@ -41,8 +93,30 @@ export function getPageBySlug(slug: string): ContentRegistryEntry | undefined {
   return CONTENT_REGISTRY.find((entry) => entry.slug === slug);
 }
 
+export function getPageBySlugAndLocale(
+  slug: string,
+  locale: Locale,
+): ContentRegistryEntry | undefined {
+  const definition = PUBLIC_CONTENT_DEFINITIONS.find((entry) => entry.slug === slug);
+  return definition === undefined ? undefined : getLocalizedEntry(definition, locale);
+}
+
+export function getLocalizedCanonicalPath(slug: string, locale: Locale): string | undefined {
+  const definition = PUBLIC_CONTENT_DEFINITIONS.find((entry) => entry.slug === slug);
+  const metadata = definition?.locales[locale];
+  return definition !== undefined && isEffectivelyIndexable(definition, metadata)
+    ? localisePath(definition.path, locale)
+    : undefined;
+}
+
 export function isKnownPublicPath(pathname: string): boolean {
-  return getIndexablePages().some((entry) => entry.canonicalPath === pathname);
+  return PUBLIC_CONTENT_DEFINITIONS.some(
+    (definition) =>
+      definition.path === pathname &&
+      Object.values(definition.locales).some((metadata) =>
+        isEffectivelyIndexable(definition, metadata),
+      ),
+  );
 }
 
 export function isKnownPublicPathForLocale(pathname: string, locale: Locale): boolean {
@@ -54,24 +128,37 @@ export function isAdEligiblePath(pathname: string): boolean {
 }
 
 export function getIndexablePagesForLocale(locale: Locale): LocalizedContentRegistryEntry[] {
-  return getIndexablePages()
-    .filter((entry) => entry.locale === locale)
-    .map((entry) => ({
-      ...entry,
-      path: entry.canonicalPath,
-      canonicalPath: localisePath(entry.canonicalPath, locale),
-      metadata: {
-        title: entry.title,
-        description: entry.description,
-        lastReviewed: entry.lastReviewed,
+  return PUBLIC_CONTENT_DEFINITIONS.flatMap((definition) => {
+    const metadata = definition.locales[locale];
+    if (!isEffectivelyIndexable(definition, metadata)) {
+      return [];
+    }
+    const entry = toRegistryEntry(definition, locale, metadata);
+    return [
+      {
+        ...entry,
+        path: definition.path,
+        canonicalPath: localisePath(definition.path, locale),
+        metadata: {
+          title: metadata.title,
+          description: metadata.description,
+          lastReviewed: metadata.lastReviewed,
+        },
       },
-    }));
+    ];
+  });
 }
 
 export function getLanguageAlternates(slug: string): Partial<Record<Locale, string>> {
+  const definition = PUBLIC_CONTENT_DEFINITIONS.find((entry) => entry.slug === slug);
+  if (definition === undefined) {
+    return {};
+  }
   return Object.fromEntries(
-    getIndexablePages()
-      .filter((entry) => entry.slug === slug)
-      .map((entry) => [entry.locale, localisePath(entry.canonicalPath, entry.locale)]),
+    Object.entries(definition.locales).flatMap(([locale, metadata]) =>
+      isEffectivelyIndexable(definition, metadata)
+        ? [[locale, localisePath(definition.path, locale as Locale)]]
+        : [],
+    ),
   );
 }

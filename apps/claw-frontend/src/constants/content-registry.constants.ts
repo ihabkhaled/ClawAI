@@ -7,7 +7,7 @@ import {
   StructuredDataType,
 } from '@/enums';
 import { Locale } from '@/enums/locale.enum';
-import type { ContentRegistryEntry } from '@/types/content-registry.types';
+import type { ContentRegistryEntry, PublicContentDefinition } from '@/types/content-registry.types';
 
 // Canonical source of truth for every public marketing/editorial page —
 // nav, sitemap.ts, robots middleware, and (later) the AdSense eligibility
@@ -31,7 +31,7 @@ import type { ContentRegistryEntry } from '@/types/content-registry.types';
 // not as the product's identity. Planned routes that would have marketed local
 // models to individual users were removed when the product was repositioned
 // around hosted access to frontier cloud models.
-export const CONTENT_REGISTRY: ReadonlyArray<ContentRegistryEntry> = [
+const ENGLISH_CONTENT_ENTRIES: ReadonlyArray<ContentRegistryEntry> = [
   {
     slug: 'home',
     locale: Locale.EN,
@@ -209,3 +209,81 @@ export const CONTENT_REGISTRY: ReadonlyArray<ContentRegistryEntry> = [
     structuredDataType: StructuredDataType.NONE,
   })),
 ];
+
+/**
+ * Logical public pages are the canonical source for discovery decisions.
+ *
+ * The compatibility `CONTENT_REGISTRY` export below remains temporarily
+ * flattened for page components that predate URL locales. New sitemap,
+ * metadata and route-visibility code must use these definitions so an
+ * English record can never make an untranslated locale indexable.
+ */
+export const PUBLIC_CONTENT_DEFINITIONS: ReadonlyArray<PublicContentDefinition> =
+  ENGLISH_CONTENT_ENTRIES.map((entry): PublicContentDefinition => ({
+    slug: entry.slug,
+    category: entry.category,
+    path: entry.canonicalPath,
+    status: entry.status,
+    adEligibility: entry.adEligibility,
+    structuredDataType: entry.structuredDataType,
+    relatedSlugs: entry.relatedSlugs,
+    locales:
+      entry.status === ContentLifecycleStatus.PUBLISHED
+        ? {
+            [entry.locale]: {
+              title: entry.title,
+              description: entry.description,
+              lastReviewed: entry.lastReviewed,
+              reviewStatus: entry.reviewStatus,
+              indexability: entry.indexability,
+            },
+          }
+        : {},
+  }));
+
+/**
+ * @deprecated Prefer `PUBLIC_CONTENT_DEFINITIONS` and locale-aware registry
+ * utilities. This flattened view exists for unchanged marketing components.
+ */
+export const CONTENT_REGISTRY: ReadonlyArray<ContentRegistryEntry> =
+  PUBLIC_CONTENT_DEFINITIONS.flatMap((definition) => {
+    const localizedEntries = Object.entries(definition.locales).map(
+      ([locale, metadata]): ContentRegistryEntry => ({
+        slug: definition.slug,
+        locale: locale as Locale,
+        status: definition.status,
+        title: metadata.title,
+        description: metadata.description,
+        category: definition.category,
+        canonicalPath: definition.path,
+        lastReviewed: metadata.lastReviewed,
+        indexability: metadata.indexability,
+        adEligibility: definition.adEligibility,
+        reviewStatus: metadata.reviewStatus,
+        relatedSlugs: definition.relatedSlugs,
+        structuredDataType: definition.structuredDataType,
+      }),
+    );
+
+    if (localizedEntries.length > 0) {
+      return localizedEntries;
+    }
+
+    return [
+      {
+        slug: definition.slug,
+        locale: Locale.EN,
+        status: definition.status,
+        title: '',
+        description: '',
+        category: definition.category,
+        canonicalPath: definition.path,
+        lastReviewed: '',
+        indexability: Indexability.NOINDEX,
+        adEligibility: AdEligibility.INELIGIBLE,
+        reviewStatus: ContentReviewStatus.PENDING_REVIEW,
+        relatedSlugs: definition.relatedSlugs,
+        structuredDataType: definition.structuredDataType,
+      },
+    ];
+  });

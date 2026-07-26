@@ -884,7 +884,12 @@ export type {
   OrchestrationPageShellProps,
   UseOrchestrationStagesResult,
 } from './orchestration.types';
-export type { ContentRegistryEntry } from './content-registry.types';
+export type {
+  ContentRegistryEntry,
+  LocalizedContentMetadata,
+  LocalizedContentRegistryEntry,
+  PublicContentDefinition,
+} from './content-registry.types';
 export type {
   UseMarketingLocaleSwitcherReturn,
   UseMarketingThemeToggleReturn,
