@@ -8,6 +8,10 @@ import { PUBLIC_SHARE_PATH_PREFIX } from '../constants/public-share-route.consta
  * an attacker who can set that header would have us mint — and hand to a search
  * engine — a canonical URL pointing at a domain they control.
  */
-export function buildPublicShareUrl(siteUrl: string, publicShareId: string): string {
-  return `${siteUrl.replace(/\/+$/, '')}${PUBLIC_SHARE_PATH_PREFIX}/${publicShareId}`;
+export function buildPublicShareUrl(
+  siteUrl: string,
+  contentLocale: string,
+  publicShareId: string,
+): string {
+  return `${siteUrl.replace(/\/+$/, '')}/${contentLocale}${PUBLIC_SHARE_PATH_PREFIX}/${publicShareId}`;
 }

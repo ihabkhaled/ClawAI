@@ -7,8 +7,8 @@ import { HeroSection } from '@/components/marketing/home/hero-section';
 import { HowItWorksSection } from '@/components/marketing/home/how-it-works-section';
 import { ModelRosterSection } from '@/components/marketing/home/model-roster-section';
 import { PricingSection } from '@/components/marketing/home/pricing-section';
-import { SITE_DESCRIPTION, SITE_TITLE } from '@/constants/site-metadata.constants';
-import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
+import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
+import { getSiteUrl } from '@/lib/site/site-config';
 // Imported directly from their specific submodules rather than the
 // `@/utilities` barrel — this is a server component, and the utilities
 // barrel re-exports 150+ files; pulling the whole barrel into a server
@@ -25,46 +25,7 @@ import {
 } from '@/utilities/structured-data.utility';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const entry = getPageBySlug('home');
-  const siteUrl = getSiteUrl();
-  const noIndexEverything = shouldNoIndexEverything();
-  const canonical = `${siteUrl}${entry?.canonicalPath ?? '/'}`;
-  const title = entry?.title ?? SITE_TITLE;
-  const description = entry?.description ?? SITE_DESCRIPTION;
-  const ogImageUrl = `${siteUrl}/opengraph-image`;
-
-  return {
-    title,
-    description,
-    alternates: { canonical },
-    robots: {
-      index: !noIndexEverything,
-      follow: !noIndexEverything,
-    },
-    openGraph: {
-      type: 'website',
-      siteName: 'ClawAI',
-      title,
-      description,
-      url: canonical,
-      locale: 'en_US',
-      images: [
-        {
-          url: ogImageUrl,
-          width: 1200,
-          height: 630,
-          type: 'image/png',
-          alt: 'ClawAI — every frontier AI model on one subscription',
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [ogImageUrl],
-    },
-  };
+  return buildRequestPublicPageMetadata('home');
 }
 
 // The home page is a SUMMARY and an entry point to a paid account: what you

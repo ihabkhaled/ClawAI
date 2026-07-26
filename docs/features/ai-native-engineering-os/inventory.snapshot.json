@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 2 identical headings (19168 vs 4890 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 2 identical headings (19170 vs 4890 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -42,7 +42,26 @@
         "severity": "medium"
       }
     ],
-    "staleClaims": []
+    "staleClaims": [
+      {
+        "evidence": [
+          "CODEX.md",
+          "apps/claw-frontend/src/lib/i18n/locales"
+        ],
+        "kind": "stale-locale-count",
+        "message": "CODEX.md claims 9 locales but 13 locale files exist",
+        "severity": "low"
+      },
+      {
+        "evidence": [
+          "CODEX.md",
+          "apps/claw-frontend/src/lib/i18n/locales"
+        ],
+        "kind": "stale-locale-count",
+        "message": "CODEX.md claims 9 locales but 13 locale files exist",
+        "severity": "low"
+      }
+    ]
   },
   "inventory": {
     "apiEndpoints": {
@@ -867,6 +886,16 @@
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-chat-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/chat-shares/rss-feed",
+          "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares-internal.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/chat-shares/sitemap-count",
+          "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/chat-shares-internal.controller.ts"
         },
         {
           "method": "GET",
@@ -6229,7 +6258,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 19168,
+          "bytes": 19170,
           "file": "CLAUDE.md"
         },
         {
@@ -6654,19 +6683,23 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4222
+        "value": 4226
       },
-      "localeCount": 9,
+      "localeCount": 13,
       "locales": [
         "ar",
         "de",
         "en",
         "es",
+        "fa",
         "fr",
         "hi",
         "it",
+        "ja",
         "pt",
-        "ru"
+        "ru",
+        "th",
+        "zh"
       ],
       "source": "apps/claw-frontend/src/lib/i18n/locales"
     },
@@ -8157,7 +8190,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 61
+        "testFiles": 64
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -8177,7 +8210,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 191
+        "testFiles": 196
       },
       "claw-health-service": {
         "runner": "jest",
@@ -8915,19 +8948,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 527,
+    "endpointCount": 529,
     "envVarCount": 335,
     "eventCount": 164,
     "frontendRouteCount": 98,
-    "localeCount": 9,
+    "localeCount": 13,
     "nginxRouteCount": 51,
     "permissionCount": 38,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
-    "staleClaimCount": 0,
-    "totalTestFiles": 603,
+    "staleClaimCount": 2,
+    "totalTestFiles": 611,
     "workspaceCount": 25
   }
 }

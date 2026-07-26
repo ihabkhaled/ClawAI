@@ -1,10 +1,22 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 
 import { Public } from '../../../app/decorators/public.decorator';
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
-import { type SitemapFeedQueryDto, sitemapFeedQuerySchema } from '../dto/chat-share.dto';
+import {
+  type RssFeedQueryDto,
+  rssFeedQuerySchema,
+  type SitemapCountQueryDto,
+  sitemapCountQuerySchema,
+  type SitemapFeedQueryDto,
+  sitemapFeedQuerySchema,
+} from '../dto/chat-share.dto';
 import { PublicChatShareService } from '../services/public-chat-share.service';
-import { type PublicChatSitemapEntry } from '../types/chat-shares.types';
+import type {
+  PublicChatRssEntry,
+  PublicChatSitemapCount,
+  PublicChatSitemapPage,
+} from '../types/chat-share-discovery.types';
 
 /**
  * The sitemap feed the frontend reads when building its dynamic sitemap.
@@ -15,13 +27,28 @@ import { type PublicChatSitemapEntry } from '../types/chat-shares.types';
  */
 @Controller('internal/chat-shares')
 @Public()
+@UseGuards(ServiceTokenGuard)
 export class ChatSharesInternalController {
   constructor(private readonly shares: PublicChatShareService) {}
 
   @Get('sitemap-feed')
   async listSitemapEntries(
     @Query(new ZodValidationPipe(sitemapFeedQuerySchema)) query: SitemapFeedQueryDto,
-  ): Promise<PublicChatSitemapEntry[]> {
-    return this.shares.listSitemapEntries(query.limit, query.cursor ?? null);
+  ): Promise<PublicChatSitemapPage> {
+    return this.shares.listSitemapEntries(query.locale, query.limit, query.cursor ?? null);
+  }
+
+  @Get('sitemap-count')
+  async countSitemapEntries(
+    @Query(new ZodValidationPipe(sitemapCountQuerySchema)) query: SitemapCountQueryDto,
+  ): Promise<PublicChatSitemapCount> {
+    return this.shares.countSitemapEntries(query.locale);
+  }
+
+  @Get('rss-feed')
+  async listRssEntries(
+    @Query(new ZodValidationPipe(rssFeedQuerySchema)) query: RssFeedQueryDto,
+  ): Promise<PublicChatRssEntry[]> {
+    return this.shares.listRssEntries(query.locale, query.limit);
   }
 }

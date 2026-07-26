@@ -1,11 +1,14 @@
 import { SHARE_CHAT_PATH_PREFIX } from '@/constants/chat-share.constants';
-import { isKnownPublicPath } from '@/utilities/content-registry.utility';
+import { RouteVisibility } from '@/enums/route-visibility.enum';
+import { isKnownPublicPathForLocale } from '@/utilities/content-registry.utility';
+import { parseLocaleFromPathname, stripLocaleFromPathname } from '@/utilities/locale.utility';
 
 // Framework-generated crawler files that are never registry entries but
 // must never be tagged noindex either.
 const STATIC_PUBLIC_PATHS: ReadonlyArray<string> = [
   '/robots.txt',
   '/sitemap.xml',
+  '/sitemaps',
   '/manifest.webmanifest',
   '/icon.png',
   '/apple-icon.png',
@@ -14,6 +17,12 @@ const STATIC_PUBLIC_PATHS: ReadonlyArray<string> = [
   '/favicon.ico',
   '/ads.txt',
 ];
+
+function matchesStaticPublicPath(pathname: string): boolean {
+  return STATIC_PUBLIC_PATHS.some(
+    (path) => pathname === path || (path === '/sitemaps' && pathname.startsWith('/sitemaps/')),
+  );
+}
 
 /**
  * Whether a path is a public shared-chat page.
@@ -25,7 +34,23 @@ const STATIC_PUBLIC_PATHS: ReadonlyArray<string> = [
  * a random string matching this prefix gets a 404 and no ads rather than a page.
  */
 export function isSharedChatPath(pathname: string): boolean {
-  return pathname.startsWith(`${SHARE_CHAT_PATH_PREFIX}/`);
+  const unlocalizedPath = stripLocaleFromPathname(pathname);
+  return unlocalizedPath.startsWith(`${SHARE_CHAT_PATH_PREFIX}/`);
+}
+
+export function classifyRouteVisibility(pathname: string): RouteVisibility {
+  if (matchesStaticPublicPath(pathname)) {
+    return RouteVisibility.PUBLIC_MACHINE_ROUTE;
+  }
+  const locale = parseLocaleFromPathname(pathname);
+  const unlocalizedPath = stripLocaleFromPathname(pathname);
+  if (isSharedChatPath(pathname)) {
+    return locale === null ? RouteVisibility.UNKNOWN : RouteVisibility.DYNAMIC_PUBLIC_CANDIDATE;
+  }
+  if (locale !== null && isKnownPublicPathForLocale(unlocalizedPath, locale)) {
+    return RouteVisibility.STATIC_PUBLIC;
+  }
+  return RouteVisibility.PRIVATE;
 }
 
 // Single implementation of "unknown routes default to non-indexable":
@@ -40,9 +65,10 @@ export function isSharedChatPath(pathname: string): boolean {
 // supposed to be indexable. The page's own metadata then applies the correct
 // per-share directive — `noindex` for unlisted, revoked, and unavailable.
 export function isPublicPath(pathname: string): boolean {
+  const visibility = classifyRouteVisibility(pathname);
   return (
-    STATIC_PUBLIC_PATHS.includes(pathname) ||
-    isKnownPublicPath(pathname) ||
-    isSharedChatPath(pathname)
+    visibility === RouteVisibility.PUBLIC_MACHINE_ROUTE ||
+    visibility === RouteVisibility.STATIC_PUBLIC ||
+    visibility === RouteVisibility.DYNAMIC_PUBLIC_CANDIDATE
   );
 }

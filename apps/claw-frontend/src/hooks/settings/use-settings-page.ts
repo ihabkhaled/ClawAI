@@ -8,6 +8,7 @@ import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useChangePassword } from '@/hooks/settings/use-change-password';
 import { useUpdatePreferences } from '@/hooks/settings/use-update-preferences';
 import { useLocale } from '@/hooks/use-locale';
+import { useLocaleNavigation } from '@/hooks/use-locale-navigation';
 import { useAppTheme } from '@/hooks/use-theme';
 import {
   changePasswordSchema,
@@ -24,6 +25,7 @@ import {
 export function useSettingsPage() {
   const { user, isLoading } = useCurrentUser();
   const { locale, setLocale } = useLocale();
+  const { replaceLocale } = useLocaleNavigation();
   const { theme, setTheme } = useAppTheme();
   const { updatePreferences, isPending: isPreferencesPending } = useUpdatePreferences();
 
@@ -44,21 +46,36 @@ export function useSettingsPage() {
   const currentAppearance = themeToAppearance(theme);
 
   function handleLanguageChange(language: UserLanguagePreference): void {
-    logger.info({ component: 'settings', action: 'change-language', message: 'User changing language', details: { language } });
+    logger.info({
+      component: 'settings',
+      action: 'change-language',
+      message: 'User changing language',
+      details: { language },
+    });
     const newLocale = languageToLocale(language);
     setLocale(newLocale);
+    replaceLocale(newLocale);
     updatePreferences({ languagePreference: language });
   }
 
   function handleAppearanceChange(appearance: UserAppearancePreference): void {
-    logger.info({ component: 'settings', action: 'change-appearance', message: 'User changing appearance', details: { appearance } });
+    logger.info({
+      component: 'settings',
+      action: 'change-appearance',
+      message: 'User changing appearance',
+      details: { appearance },
+    });
     const newTheme = appearanceToTheme(appearance);
     setTheme(newTheme);
     updatePreferences({ appearancePreference: appearance });
   }
 
   function handlePasswordSubmit(data: ChangePasswordFormValues): void {
-    logger.info({ component: 'settings', action: 'submit-password-change', message: 'User submitting password change' });
+    logger.info({
+      component: 'settings',
+      action: 'submit-password-change',
+      message: 'User submitting password change',
+    });
     changePassword({
       currentPassword: data.currentPassword,
       newPassword: data.newPassword,

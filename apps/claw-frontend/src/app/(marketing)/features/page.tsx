@@ -11,7 +11,7 @@ import { FeaturesProvidersSection } from '@/components/marketing/features/featur
 import { FeaturesRoutingSection } from '@/components/marketing/features/features-routing-section';
 import { FeaturesSecuritySection } from '@/components/marketing/features/features-security-section';
 import { FeaturesWorkspaceSection } from '@/components/marketing/features/features-workspace-section';
-import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
+import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 // Imported from their specific submodules rather than the `@/utilities`
 // barrel — this is a server component, and pulling the whole barrel into a
 // server component's module graph risks dragging client-only code into the
@@ -19,46 +19,7 @@ import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
 import { getPageBySlug } from '@/utilities/content-registry.utility';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const entry = getPageBySlug('features');
-  const siteUrl = getSiteUrl();
-  const noIndexEverything = shouldNoIndexEverything();
-  const canonical = `${siteUrl}${entry?.canonicalPath ?? '/features'}`;
-  const title = entry?.title ?? 'ClawAI Features';
-  const description = entry?.description ?? '';
-  const ogImageUrl = `${siteUrl}/opengraph-image`;
-
-  return {
-    title,
-    description,
-    alternates: { canonical },
-    robots: {
-      index: !noIndexEverything,
-      follow: !noIndexEverything,
-    },
-    openGraph: {
-      type: 'website',
-      siteName: 'ClawAI',
-      title,
-      description,
-      url: canonical,
-      locale: 'en_US',
-      images: [
-        {
-          url: ogImageUrl,
-          width: 1200,
-          height: 630,
-          type: 'image/png',
-          alt: 'ClawAI — one subscription, every frontier model',
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [ogImageUrl],
-    },
-  };
+  return buildRequestPublicPageMetadata('features');
 }
 
 export default function FeaturesPage(): React.ReactElement {

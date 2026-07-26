@@ -10,24 +10,32 @@ import {
 import type { Locale } from '@/enums/locale.enum';
 import { useUpdatePreferences } from '@/hooks/settings/use-update-preferences';
 import { useLocale } from '@/hooks/use-locale';
+import { useLocaleNavigation } from '@/hooks/use-locale-navigation';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 import { localeToLanguage } from '@/utilities/preference.utility';
 
 export function LocaleSwitcher(): React.ReactElement {
   const { locale, setLocale } = useLocale();
   const { updatePreferences, isPending } = useUpdatePreferences();
+  const { replaceLocale } = useLocaleNavigation();
 
   const currentConfig = SUPPORTED_LOCALES.find((l) => l.locale === locale);
 
   function handleLocaleChange(newLocale: Locale): void {
     setLocale(newLocale);
+    replaceLocale(newLocale);
     updatePreferences({ languagePreference: localeToLanguage(newLocale) });
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-9 gap-1 px-2 text-xs font-medium" disabled={isPending}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-9 gap-1 px-2 text-xs font-medium"
+          disabled={isPending}
+        >
           {currentConfig?.label.slice(0, 2).toUpperCase() ?? locale.toUpperCase()}
         </Button>
       </DropdownMenuTrigger>

@@ -61,6 +61,8 @@ function makeShare(overrides: Record<string, unknown> = {}): Record<string, unkn
     description: null,
     messageCount: 4,
     adsEligible: true,
+    indexEligible: true,
+    contentLocale: 'en',
     publishedAt: new Date('2026-07-01T10:00:00.000Z'),
     lastSnapshotAt: new Date('2026-07-01T10:00:00.000Z'),
     revokedAt: null,
@@ -177,7 +179,7 @@ describe('ChatShareManager', () => {
       expect(view.publicShareId).toMatch(/^[A-Za-z0-9_-]{22}$/);
       // Origin from configuration, never a request header — a spoofed
       // X-Forwarded-Host must not become a canonical URL.
-      expect(view.publicUrl).toBe(`https://claw.local/share/chat/${view.publicShareId}`);
+      expect(view.publicUrl).toBe(`https://claw.local/en/share/chat/${view.publicShareId}`);
     });
 
     it('is idempotent for an already-active share', async () => {

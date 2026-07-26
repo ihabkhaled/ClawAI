@@ -69,7 +69,7 @@ stated explicitly, never applied silently.
 - **NEVER** put business logic in a controller, a Prisma/Mongoose call outside a repository, or `process.env` outside AppConfig.
 - **NEVER** use `console.log`, `==`/`!=`, `var`, or a non-null `!`.
 - **NEVER** log or expose a secret, token, password, refresh token, or API key.
-- **NEVER** add user-facing text without i18n in all 9 locales, as real translations.
+- **NEVER** add user-facing text without i18n in all 13 locales, as real translations.
 - **NEVER** add code without a test.
 - **NEVER** declare a `type`/`interface`/`enum`/module-`const` inline in a logic file — extract per [`rules/12-types-enums-constants-and-declaration-ownership.md`](rules/12-types-enums-constants-and-declaration-ownership.md).
 
@@ -129,7 +129,7 @@ plus the per-vendor GPU overlays) · `infra/nginx/nginx.conf` ·
 `packages/shared-constants` · `packages/shared-types` ·
 `apps/claw-health-service` · `.github/workflows/ci.yml` (the build step **and** the
 per-package matrix, in all 4 jobs) · `scripts/install-tls.{sh,ps1}` HOSTS array ·
-all 9 i18n locales + `i18n.types.ts` in the same commit · Prisma migration · seeds ·
+all 13 i18n locales + `i18n.types.ts` in the same commit · Prisma migration · seeds ·
 tests · frontend types · `docs/` · this file only when a canonical rule genuinely
 changes.
 

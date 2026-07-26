@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Locale } from '@claw/shared-types';
 
 // What the owner is allowed to say.
 //
@@ -9,6 +10,7 @@ import { z } from 'zod';
 // straight into a search index.
 export const publishShareSchema = z.object({
   allowIndexing: z.boolean(),
+  contentLocale: z.nativeEnum(Locale),
   // Unchecked by default and required to be true. A pre-ticked box would make
   // publishing somebody's private conversation a one-click accident.
   acknowledgedPublicWarning: z.literal(true),
@@ -39,7 +41,21 @@ export type PublicShareParamDto = z.infer<typeof publicShareParamSchema>;
 
 export const sitemapFeedQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(5000).optional(),
-  cursor: z.string().datetime().optional(),
+  cursor: z.string().min(1).max(256).optional(),
+  locale: z.nativeEnum(Locale),
 });
 
 export type SitemapFeedQueryDto = z.infer<typeof sitemapFeedQuerySchema>;
+
+export const sitemapCountQuerySchema = z.object({
+  locale: z.nativeEnum(Locale),
+});
+
+export type SitemapCountQueryDto = z.infer<typeof sitemapCountQuerySchema>;
+
+export const rssFeedQuerySchema = z.object({
+  locale: z.nativeEnum(Locale),
+  limit: z.coerce.number().int().positive().max(100).optional(),
+});
+
+export type RssFeedQueryDto = z.infer<typeof rssFeedQuerySchema>;

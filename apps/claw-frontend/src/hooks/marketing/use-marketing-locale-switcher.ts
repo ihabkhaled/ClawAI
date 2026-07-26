@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 
 import type { Locale } from '@/enums/locale.enum';
 import { useLocale } from '@/hooks/use-locale';
+import { useLocaleNavigation } from '@/hooks/use-locale-navigation';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 import type { UseMarketingLocaleSwitcherReturn } from '@/types';
 
@@ -13,12 +14,14 @@ import type { UseMarketingLocaleSwitcherReturn } from '@/types';
 // anonymous visitors have no session to persist a preference against.
 export function useMarketingLocaleSwitcher(): UseMarketingLocaleSwitcherReturn {
   const { locale, setLocale } = useLocale();
+  const { replaceLocale } = useLocaleNavigation();
 
   const handleLocaleChange = useCallback(
     (newLocale: Locale): void => {
       setLocale(newLocale);
+      replaceLocale(newLocale);
     },
-    [setLocale],
+    [replaceLocale, setLocale],
   );
 
   return { locale, options: SUPPORTED_LOCALES, handleLocaleChange };

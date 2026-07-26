@@ -36,6 +36,7 @@ import { REPO_ROOT, loadProjects, parseArgs, log, runScript } from './lib/common
  * they ask it to. The repo link stays (the dashboard and CLI need it).
  */
 const GIT_DEPLOYMENTS_DISABLED = { deploymentEnabled: false };
+const GIT_DEPLOYMENTS_ENABLED = { deploymentEnabled: true };
 
 /** Services whose work is long-running enough to need more than the default 60s. */
 const EXTENDED_DURATION = new Set(['chat', 'image', 'research', 'file', 'file-generation']);
@@ -192,7 +193,7 @@ function renderFrontendVercelJson(project) {
     installCommand: project.installCommand,
     buildCommand: project.buildCommand,
     outputDirectory: project.outputDirectory,
-    git: GIT_DEPLOYMENTS_DISABLED,
+    git: GIT_DEPLOYMENTS_ENABLED,
     // Backend proxying is declared in next.config.mjs rewrites(), driven by the
     // *_SERVICE_URL variables that resolve-service-urls.mjs syncs. Putting it
     // there rather than here keeps one source of truth for the route map.
@@ -206,7 +207,9 @@ async function main() {
   const manifest = loadProjects();
   const deployable = manifest.projects.filter((project) => project.status === 'enabled');
 
-  log.step(`${checkOnly ? 'Checking' : 'Generating'} Vercel configs for ${deployable.length} project(s)`);
+  log.step(
+    `${checkOnly ? 'Checking' : 'Generating'} Vercel configs for ${deployable.length} project(s)`,
+  );
 
   const stale = [];
   let written = 0;
@@ -216,7 +219,10 @@ async function main() {
 
     const targets = [];
     if (project.framework === 'nextjs') {
-      targets.push({ path: join(root, 'vercel.json'), contents: renderFrontendVercelJson(project) });
+      targets.push({
+        path: join(root, 'vercel.json'),
+        contents: renderFrontendVercelJson(project),
+      });
     } else {
       targets.push({ path: join(root, 'vercel.json'), contents: renderVercelJson(project) });
       targets.push({ path: join(root, 'api', 'index.js'), contents: renderHandler(project) });

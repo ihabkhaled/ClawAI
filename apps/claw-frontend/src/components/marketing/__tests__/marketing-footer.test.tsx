@@ -16,6 +16,10 @@ vi.mock('@/hooks/use-locale', () => ({
   useLocale: () => ({ locale: 'en', dir: 'ltr', setLocale: vi.fn() }),
 }));
 
+vi.mock('@/hooks/use-locale-navigation', () => ({
+  useLocaleNavigation: () => ({ replaceLocale: vi.fn() }),
+}));
+
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>

@@ -46,8 +46,14 @@ on-demand via `npx`. Reports land in `apps/claw-frontend/.lighthouseci`
 ## Which pages are audited
 
 Every **published, indexable** page in `CONTENT_REGISTRY` — eight today:
-`/`, `/features`, `/how-it-works`, `/architecture`, `/use-cases`, `/faq`,
-`/local-first-ai`, `/contact`.
+`/en`, `/en/features`, `/en/how-it-works`, `/en/architecture`,
+`/en/use-cases`, `/en/faq`, `/en/local-first-ai`, `/en/contact`.
+
+Only reviewed/indexable locale variants are audited. A locale must not be added
+to Lighthouse merely to satisfy a matrix: doing so would either audit an
+untranslated English fallback or require weakening the crawlability gate.
+Registry coverage tests fail if a published English logical page is absent or
+if an unprefixed/private/orphaned route enters the matrix.
 
 This list used to be `/` and `/contact` only. When the six topic pages were
 published the config was not updated, so they shipped with **no accessibility

@@ -1,9 +1,15 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import HomePage, { generateMetadata } from '@/app/(marketing)/page';
+import { Locale } from '@/enums/locale.enum';
 import { LocaleProvider } from '@/lib/i18n';
+import { en } from '@/lib/i18n/locales/en';
 import { getPageBySlug } from '@/utilities/content-registry.utility';
+
+vi.mock('next/headers', () => ({
+  headers: async (): Promise<Headers> => new Headers({ 'x-claw-locale': Locale.EN }),
+}));
 
 // The homepage sections are client components that read copy via
 // useTranslation, so they must render inside a LocaleProvider. Assertions
@@ -12,7 +18,7 @@ import { getPageBySlug } from '@/utilities/content-registry.utility';
 // this test.
 function renderHome(): void {
   render(
-    <LocaleProvider>
+    <LocaleProvider initialLocale={Locale.EN} initialDictionary={en}>
       <HomePage />
     </LocaleProvider>,
   );
@@ -66,6 +72,6 @@ describe('HomePage generateMetadata', () => {
     const metadata = await generateMetadata();
     expect(metadata.title).toContain('ClawAI');
     expect(metadata.description).toBeTruthy();
-    expect(metadata.alternates?.canonical).toMatch(/\/$/);
+    expect(metadata.alternates?.canonical).toMatch(/\/en$/);
   });
 });

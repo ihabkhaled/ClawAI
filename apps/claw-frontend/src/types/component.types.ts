@@ -34,12 +34,13 @@ import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-leve
 import type { CopyButtonVariant } from '@/enums/copy-button-variant.enum';
 import type { EmptyStateVariant } from '@/enums/empty-state-variant.enum';
 import type { LoadingStateVariant } from '@/enums/loading-state.enum';
+import type { Locale } from '@/enums/locale.enum';
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 import type { OwnerChatShare, PublicChatShareMessage } from '@/types/chat-share.types';
-import type { TranslateFunction } from '@/types/i18n.types';
+import type { TranslationDictionary, TranslateFunction } from '@/types/i18n.types';
 import type {
   ResearchEvidenceBundle,
   ResearchOptions,
@@ -399,6 +400,8 @@ export type FormFieldErrors = Record<string, string[] | undefined>;
 
 export type ProvidersProps = {
   children: React.ReactNode;
+  initialLocale: Locale;
+  initialDictionary: TranslationDictionary;
 };
 
 export type ThemeProviderProps = {

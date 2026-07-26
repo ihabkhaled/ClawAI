@@ -55,7 +55,7 @@ And before release: `npm run release:preflight`.
   ([event-flow-map.md](event-flow-map.md))
 - **database-migration** — never cross a DB boundary; schema change → container
   rebuild. ([database-ownership-map.md](database-ownership-map.md))
-- **frontend-feature** — new user-facing text → all 9 locales + `i18n.types.ts`
+- **frontend-feature** — new user-facing text → all 13 locales + `i18n.types.ts`
   in the same change. ([frontend-architecture.md](frontend-architecture.md))
 - **infrastructure** — a new env var or service must propagate to every compose
   file, installer, nginx, CI, and shared-constants.

@@ -30,6 +30,10 @@ enum UserLanguagePreference {
   RU
   PT
   HI
+  JA
+  TH
+  FA
+  ZH
 }
 
 enum UserAppearancePreference {

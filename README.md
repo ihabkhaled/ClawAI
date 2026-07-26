@@ -33,6 +33,8 @@ Claw is an open-source platform for orchestrating AI models across multiple prov
 - **Operational visibility** -- Aggregated health, audit logging, usage ledgers, client logs, and server logs
 - **Role-based access control** -- Admin, operator, and viewer roles with JWT authentication
 - **Monorepo structure** -- Frontend, 18 backend services, and 6 shared packages using npm workspaces
+- **Multilingual discovery** -- URL-authoritative routing across 13 locales,
+  reviewed-only hreflang, chunked sitemap discovery, and bounded localized RSS
 
 ---
 
@@ -68,6 +70,12 @@ You will be prompted to change your password on first login.
 The auth service automatically runs database migrations and seeds the default admin user on first start. If users already exist, the seed is skipped (idempotent).
 
 The frontend is available at `http://localhost:3000` and all API traffic routes through Nginx at `http://localhost:4000`.
+
+Human-facing URLs use a locale prefix (for example `/en`, `/fa/features`, and
+`/ja/chat`). Machine routes such as `/api/*`, `/robots.txt`, and `/sitemap.xml`
+remain locale-neutral. See
+[Multilingual discovery](docs/05-frontend/multilingual-discovery.md) for the
+publication, privacy, deployment, and search-removal contracts.
 
 ---
 

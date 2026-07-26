@@ -20,7 +20,12 @@ describe('generateCspNonce', () => {
 });
 
 describe('buildContentSecurityPolicy', () => {
-  const baseOptions = { nonce: 'abc123', isDev: false, adsenseEnabled: false };
+  const baseOptions = {
+    nonce: 'abc123',
+    isDev: false,
+    adsenseEnabled: false,
+    upgradeInsecureRequests: true,
+  };
 
   it('embeds the nonce and strict-dynamic in script-src', () => {
     const csp = buildContentSecurityPolicy(baseOptions);
@@ -41,11 +46,14 @@ describe('buildContentSecurityPolicy', () => {
     expect(csp).toContain(`frame-ancestors 'none'`);
   });
 
-  it('adds upgrade-insecure-requests in production only', () => {
+  it('adds upgrade-insecure-requests only for production HTTPS requests', () => {
     expect(buildContentSecurityPolicy(baseOptions)).toContain('upgrade-insecure-requests');
     expect(buildContentSecurityPolicy({ ...baseOptions, isDev: true })).not.toContain(
       'upgrade-insecure-requests',
     );
+    expect(
+      buildContentSecurityPolicy({ ...baseOptions, upgradeInsecureRequests: false }),
+    ).not.toContain('upgrade-insecure-requests');
   });
 
   it('does not emit a nonce or strict-dynamic in development (would break HMR)', () => {

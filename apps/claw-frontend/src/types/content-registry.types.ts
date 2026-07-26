@@ -20,6 +20,34 @@ export type ContentRegistryEntry = {
   indexability: Indexability;
   adEligibility: AdEligibility;
   reviewStatus: ContentReviewStatus;
-  relatedSlugs: string[];
+  relatedSlugs: readonly string[];
   structuredDataType: StructuredDataType;
+};
+
+export type LocalizedContentRegistryEntry = ContentRegistryEntry & {
+  path: string;
+  metadata: {
+    title: string;
+    description: string;
+    lastReviewed: string;
+  };
+};
+
+export type LocalizedContentMetadata = {
+  title: string;
+  description: string;
+  lastReviewed: string;
+  reviewStatus: ContentReviewStatus;
+  indexability: Indexability;
+};
+
+export type PublicContentDefinition = {
+  slug: string;
+  category: ContentCategory;
+  path: string;
+  status: ContentLifecycleStatus;
+  adEligibility: AdEligibility;
+  structuredDataType: StructuredDataType;
+  relatedSlugs: readonly string[];
+  locales: Partial<Record<Locale, LocalizedContentMetadata>>;
 };

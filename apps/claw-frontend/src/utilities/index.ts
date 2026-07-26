@@ -152,9 +152,15 @@ export type { ParsedCombo } from './keyboard-shortcut.utility';
 export {
   getPublishedPages,
   getIndexablePages,
+  getIndexablePagesForLocale,
   getAdEligiblePages,
   getPageBySlug,
+  getPageBySlugAndLocale,
+  getPublishedPagesForLocale,
+  getLocalizedCanonicalPath,
+  getLanguageAlternates,
   isKnownPublicPath,
+  isKnownPublicPathForLocale,
   isAdEligiblePath,
 } from './content-registry.utility';
 export { isPublicPath } from './route-visibility.utility';

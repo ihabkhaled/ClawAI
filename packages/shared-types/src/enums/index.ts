@@ -14,6 +14,7 @@ export { AuditSeverity } from './audit-severity.enum';
 export { HealthCheckStatus, ServiceStatus } from './health-status.enum';
 export { LocalModelRole } from './local-model-role.enum';
 export { UserLanguagePreference } from './user-language-preference.enum';
+export { Locale } from './locale.enum';
 export { UserAppearancePreference } from './user-appearance-preference.enum';
 export { LogLevel } from './log-level.enum';
 export { WorkspaceProvider } from './workspace-provider.enum';

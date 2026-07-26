@@ -5,14 +5,14 @@
       "startServerReadyPattern": "Local:|Ready in|started server",
       "startServerReadyTimeout": 60000,
       "url": [
-        "http://localhost:3000/",
-        "http://localhost:3000/features",
-        "http://localhost:3000/how-it-works",
-        "http://localhost:3000/architecture",
-        "http://localhost:3000/use-cases",
-        "http://localhost:3000/faq",
-        "http://localhost:3000/local-first-ai",
-        "http://localhost:3000/contact"
+        "http://localhost:3000/en",
+        "http://localhost:3000/en/features",
+        "http://localhost:3000/en/how-it-works",
+        "http://localhost:3000/en/architecture",
+        "http://localhost:3000/en/use-cases",
+        "http://localhost:3000/en/faq",
+        "http://localhost:3000/en/local-first-ai",
+        "http://localhost:3000/en/contact"
       ],
       "numberOfRuns": 2,
       "settings": {

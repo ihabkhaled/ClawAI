@@ -6,6 +6,7 @@ import {
   type PublicChatShareResponse,
 } from '../types/chat-shares.types';
 import { type ChatShare, type ChatShareMessage } from '../../../generated/prisma';
+import { parseStoredLocale } from '../utilities/stored-locale.utility';
 
 /**
  * The last line of defence before data leaves the service.
@@ -27,6 +28,8 @@ export class ChatShareMapperService {
       snapshotVersion: share.snapshotVersion,
       messageCount: share.messageCount,
       adsEligible: share.adsEligible,
+      indexEligible: share.indexEligible,
+      contentLocale: parseStoredLocale(share.contentLocale),
       visibility: share.visibility,
       messages: share.messages.map((message) => this.toPublicMessage(message)),
     };
@@ -61,6 +64,8 @@ export class ChatShareMapperService {
       title: share.title,
       messageCount: share.messageCount,
       adsEligible: share.adsEligible,
+      indexEligible: share.indexEligible,
+      contentLocale: parseStoredLocale(share.contentLocale),
       publishedAt: share.publishedAt.toISOString(),
       lastSnapshotAt: share.lastSnapshotAt.toISOString(),
       hasUnpublishedMessages,

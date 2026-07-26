@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Locale } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
@@ -100,7 +101,8 @@ export class ChatShareManager {
       );
     }
 
-    const visibility = this.resolveVisibility(input.allowIndexing, snapshot.adsEligible);
+    const contentLocale = input.contentLocale ?? Locale.EN;
+    const visibility = this.resolveVisibility(input.allowIndexing, snapshot.indexEligible);
     const now = new Date();
     // A revoked share gets a NEW identifier. Reusing the old one would make a
     // URL somebody already has resolve to content again after the owner
@@ -119,6 +121,8 @@ export class ChatShareManager {
             description: snapshot.description,
             messageCount: snapshot.messages.length,
             adsEligible: snapshot.adsEligible,
+            indexEligible: snapshot.indexEligible,
+            contentLocale,
             publishedAt: now,
             lastSnapshotAt: now,
           })
@@ -131,6 +135,8 @@ export class ChatShareManager {
             description: snapshot.description,
             messageCount: snapshot.messages.length,
             adsEligible: snapshot.adsEligible,
+            indexEligible: snapshot.indexEligible,
+            contentLocale,
             publishedAt: now,
             lastSnapshotAt: now,
             revokedAt: null,
@@ -152,6 +158,7 @@ export class ChatShareManager {
       messageCount: snapshot.messages.length,
       snapshotVersion: 1,
       adsEligible: snapshot.adsEligible,
+      indexEligible: snapshot.indexEligible,
     });
     this.emitSafetyRejectionIfAny(identity, snapshot.safety, input.allowIndexing);
     return this.toOwnerView({ ...share, snapshotVersion: 1 }, input.threadId);
@@ -183,7 +190,7 @@ export class ChatShareManager {
       // staying indexed on the strength of its earlier state.
       visibility: this.resolveVisibility(
         share.visibility === ChatShareVisibility.PUBLIC_INDEXED,
-        snapshot.adsEligible,
+        snapshot.indexEligible,
       ),
       lastSnapshotAt: now,
     });
@@ -199,6 +206,7 @@ export class ChatShareManager {
       messageCount: updated.messageCount,
       snapshotVersion: updated.snapshotVersion,
       adsEligible: updated.adsEligible,
+      indexEligible: updated.indexEligible,
     });
     this.emitSafetyRejectionIfAny(
       identity,
@@ -215,7 +223,7 @@ export class ChatShareManager {
     const share = await this.requireActiveShare(input.threadId);
 
     const updated = await this.shares.update(share.id, {
-      visibility: this.resolveVisibility(input.allowIndexing, share.adsEligible),
+      visibility: this.resolveVisibility(input.allowIndexing, share.indexEligible),
     });
     this.logger.log(`updateVisibility: thread=${input.threadId} -> ${updated.visibility}`);
     this.events.visibilityChanged(
@@ -262,6 +270,7 @@ export class ChatShareManager {
       status: ChatShareStatus.REVOKED,
       visibility: ChatShareVisibility.PRIVATE,
       adsEligible: false,
+      indexEligible: false,
       revokedAt: new Date(),
     });
     this.logger.log(`revoke: thread=${threadId} is private again`);
@@ -293,6 +302,7 @@ export class ChatShareManager {
     description: string | null;
     safety: ReturnType<typeof evaluateSnapshotSafety>;
     adsEligible: boolean;
+    indexEligible: boolean;
   }> {
     const raw = await this.messages.findAllByThreadIdAscending(threadId, MAX_SNAPSHOT_MESSAGES);
     const messages = buildSnapshotMessages(raw);
@@ -302,6 +312,7 @@ export class ChatShareManager {
       description: buildShareDescription(messages),
       safety,
       adsEligible: resolveAdsEligibility(safety.status, safety.meetsContentThreshold),
+      indexEligible: safety.indexEligible,
     };
   }
 
@@ -312,8 +323,8 @@ export class ChatShareManager {
    * failed the safety scan or is too thin stays PUBLIC_UNLISTED. Reachable by
    * URL, absent from every search engine.
    */
-  private resolveVisibility(allowIndexing: boolean, adsEligible: boolean): ChatShareVisibility {
-    return allowIndexing && adsEligible
+  private resolveVisibility(allowIndexing: boolean, indexEligible: boolean): ChatShareVisibility {
+    return allowIndexing && indexEligible
       ? ChatShareVisibility.PUBLIC_INDEXED
       : ChatShareVisibility.PUBLIC_UNLISTED;
   }
@@ -344,7 +355,11 @@ export class ChatShareManager {
     const liveCount = await this.messages.countByThreadId(threadId);
     return this.mapper.toOwnerView(
       share,
-      buildPublicShareUrl(AppConfig.get().PUBLIC_SITE_URL, share.publicShareId),
+      buildPublicShareUrl(
+        AppConfig.get().PUBLIC_SITE_URL,
+        share.contentLocale,
+        share.publicShareId,
+      ),
       // Compared against the private thread's live count so the UI can offer
       // "update shared version" instead of leaving the owner wondering why
       // their newest message is missing from the public page.

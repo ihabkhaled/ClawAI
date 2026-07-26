@@ -4,6 +4,7 @@ import {
   type ChatShareVisibility,
   type MessageRole,
 } from '../../../generated/prisma';
+import type { Locale } from '@claw/shared-types';
 
 /**
  * The public payload. This is the whole contract with the outside world, and
@@ -25,6 +26,8 @@ export type PublicChatShareResponse = {
   messageCount: number;
   // Server-derived, so a page cannot decide for itself that it may show ads.
   adsEligible: boolean;
+  indexEligible: boolean;
+  contentLocale: Locale;
   // Drives the page's robots metadata. PUBLIC_UNLISTED is reachable by URL but
   // must never be indexed.
   visibility: ChatShareVisibility;
@@ -54,6 +57,8 @@ export type OwnerChatShareView = {
   title: string;
   messageCount: number;
   adsEligible: boolean;
+  indexEligible: boolean;
+  contentLocale: Locale;
   publishedAt: string;
   lastSnapshotAt: string;
   // True when the private thread has moved on since the last snapshot, so the
@@ -90,10 +95,5 @@ export type SnapshotSafetyResult = {
   // secret into a response or a log is exactly the leak we are preventing.
   reasons: string[];
   meetsContentThreshold: boolean;
-};
-
-/** Minimal row the sitemap feed exposes. Nothing else may leave. */
-export type PublicChatSitemapEntry = {
-  publicShareId: string;
-  updatedAt: string;
+  indexEligible: boolean;
 };

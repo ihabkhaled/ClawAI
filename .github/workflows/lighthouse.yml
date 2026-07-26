@@ -16,6 +16,9 @@ on:
       - '.github/workflows/lighthouse.yml'
       - 'apps/claw-frontend/lighthouserc.json'
 
+permissions:
+  contents: read
+
 jobs:
   lighthouse:
     name: Lighthouse budgets (marketing)

@@ -1,16 +1,18 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 
 import { AdUnit } from '@/components/adsense/ad-unit';
 import { PublicSharedChatFooter } from '@/components/chat-shares/public-shared-chat-footer';
 import { PublicSharedChatHeader } from '@/components/chat-shares/public-shared-chat-header';
 import { PublicSharedMessageList } from '@/components/chat-shares/public-shared-message-list';
+import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import { PUBLIC_SHARE_MAX_RENDERED_MESSAGES } from '@/constants/public-share-render.constants';
 import { SHARED_CHAT_AD_RESERVED_HEIGHT } from '@/constants/shared-chat-ads.constants';
 import { getAdSenseSlots } from '@/lib/adsense/adsense-config';
 import { getPublicChatShare } from '@/lib/chat-shares/public-chat-share.service';
-import { createServerTranslator, resolveLocaleFromAcceptLanguage } from '@/lib/i18n/server-locale';
+import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
+import { createServerTranslator } from '@/lib/i18n/server-locale';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { PublicSharedChatPageParams } from '@/types/chat-share-page.types';
 import {
@@ -27,10 +29,8 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: PublicSharedChatPageParams): Promise<Metadata> {
   const { publicShareId } = await params;
-  const [share, requestHeaders] = await Promise.all([getPublicChatShare(publicShareId), headers()]);
-  const t = createServerTranslator(
-    resolveLocaleFromAcceptLanguage(requestHeaders.get('accept-language')),
-  );
+  const share = await getPublicChatShare(publicShareId);
+  const t = createServerTranslator(share?.contentLocale ?? DEFAULT_LOCALE);
   return buildSharedChatMetadata(share, getSiteUrl(), t);
 }
 
@@ -61,9 +61,12 @@ export default async function PublicSharedChatPage({
     notFound();
   }
 
-  const t = createServerTranslator(
-    resolveLocaleFromAcceptLanguage(requestHeaders.get('accept-language')),
-  );
+  const requestedLocale = requestHeaders.get(LOCALE_REQUEST_HEADER);
+  if (requestedLocale !== share.contentLocale) {
+    permanentRedirect(`/${share.contentLocale}/share/chat/${share.publicShareId}`);
+  }
+
+  const t = createServerTranslator(share.contentLocale);
   const view = buildSharedChatViewModel(share, getSiteUrl(), t);
   const slots = getAdSenseSlots();
   const messages = share.messages.slice(0, PUBLIC_SHARE_MAX_RENDERED_MESSAGES);

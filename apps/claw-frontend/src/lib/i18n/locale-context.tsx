@@ -1,48 +1,41 @@
 'use client';
 
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useEffect, useMemo } from 'react';
 
 import type { Locale } from '@/enums/locale.enum';
 import type { LocaleContextValue, LocaleProviderProps } from '@/types/i18n.types';
-import { getDirection, getStoredLocale, persistLocale } from '@/utilities/locale.utility';
-
-import { DEFAULT_LOCALE } from './i18n.constants';
+import { getDirection, getHtmlLanguage, persistLocale } from '@/utilities/locale.utility';
 
 export const LocaleContext = createContext<LocaleContextValue | undefined>(undefined);
 
-export function LocaleProvider({ children, initialLocale }: LocaleProviderProps): React.ReactNode {
-  const [locale, setLocaleState] = useState<Locale>(initialLocale ?? DEFAULT_LOCALE);
-  const [hydrated, setHydrated] = useState(false);
-
-  // Hydrate from localStorage on mount
+export function LocaleProvider({
+  children,
+  initialLocale,
+  initialDictionary,
+}: LocaleProviderProps): React.ReactNode {
+  // The URL-derived server locale is authoritative. This effect is only a
+  // defensive sync for client transitions; localStorage never selects the
+  // language for an already-prefixed route.
   useEffect(() => {
-    if (!initialLocale) {
-      setLocaleState(getStoredLocale());
-    }
-    setHydrated(true);
+    const dir = getDirection(initialLocale);
+    document.documentElement.dir = dir;
+    document.documentElement.lang = getHtmlLanguage(initialLocale);
   }, [initialLocale]);
 
-  // Sync document dir attribute when locale changes (only after hydration)
-  useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
-
-    const dir = getDirection(locale);
-    document.documentElement.dir = dir;
-    document.documentElement.lang = locale;
-  }, [locale, hydrated]);
-
   const setLocale = useCallback((newLocale: Locale): void => {
-    setLocaleState(newLocale);
     persistLocale(newLocale);
   }, []);
 
-  const dir = getDirection(locale);
+  const dir = getDirection(initialLocale);
 
   const value = useMemo<LocaleContextValue>(
-    () => ({ locale, dir, setLocale }),
-    [locale, dir, setLocale],
+    () => ({
+      locale: initialLocale,
+      dir,
+      dictionary: initialDictionary,
+      setLocale,
+    }),
+    [initialLocale, dir, initialDictionary, setLocale],
   );
 
   return <LocaleContext value={value}>{children}</LocaleContext>;

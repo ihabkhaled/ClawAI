@@ -97,7 +97,9 @@ export function resolveTarget(flags) {
   }
   const value = String(raw).toLowerCase();
   if (value !== TARGET_PRODUCTION && value !== TARGET_PREVIEW) {
-    throw new Error(`--target must be "${TARGET_PREVIEW}" or "${TARGET_PRODUCTION}", got "${value}"`);
+    throw new Error(
+      `--target must be "${TARGET_PREVIEW}" or "${TARGET_PRODUCTION}", got "${value}"`,
+    );
   }
   return value;
 }
@@ -262,11 +264,16 @@ export function loadDeploymentEnv(flags = {}) {
 export function readVercelCredentials(env) {
   const token = env.VERCEL_TOKEN;
   if (token === undefined || token === '') {
-    throw new Error('VERCEL_TOKEN is not set. Add it to .env.vercel or export it in the environment.');
+    throw new Error(
+      'VERCEL_TOKEN is not set. Add it to .env.vercel or export it in the environment.',
+    );
   }
   return {
     token,
-    teamId: env.VERCEL_TEAM_ID !== undefined && env.VERCEL_TEAM_ID !== '' ? env.VERCEL_TEAM_ID : undefined,
+    teamId:
+      env.VERCEL_TEAM_ID !== undefined && env.VERCEL_TEAM_ID !== ''
+        ? env.VERCEL_TEAM_ID
+        : undefined,
     gitRepository: env.VERCEL_GIT_REPOSITORY ?? 'ihabkhaled/ClawAI',
     productionBranch: env.VERCEL_PRODUCTION_BRANCH ?? 'main',
   };
@@ -324,6 +331,23 @@ export function writeGenerated(filename, contents) {
   const path = join(GENERATED_DIR, filename);
   writeFileSync(path, contents, 'utf8');
   return path;
+}
+
+/**
+ * Encode untrusted text for a single GitHub-flavoured Markdown table cell.
+ *
+ * HTML entities avoid Markdown escape ambiguity, while line breaks become
+ * explicit breaks so probe responses cannot inject additional rows.
+ */
+export function escapeMarkdownTableCell(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('|', '&#124;')
+    .replaceAll('\r\n', '<br>')
+    .replaceAll('\r', '<br>')
+    .replaceAll('\n', '<br>');
 }
 
 // --------------------------------------------------------------- summary

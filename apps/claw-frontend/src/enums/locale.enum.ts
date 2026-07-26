@@ -8,4 +8,8 @@ export enum Locale {
   RU = 'ru',
   PT = 'pt',
   HI = 'hi',
+  JA = 'ja',
+  TH = 'th',
+  FA = 'fa',
+  ZH = 'zh',
 }

@@ -1039,6 +1039,10 @@ export type TranslationDictionary = {
     langRussian: string;
     langPortuguese: string;
     langHindi: string;
+    langJapanese: string;
+    langThai: string;
+    langPersian: string;
+    langSimplifiedChinese: string;
     appearanceSystem: string;
     appearanceLight: string;
     appearanceDark: string;
@@ -4571,12 +4575,14 @@ export type LocaleConfig = {
 export type LocaleContextValue = {
   locale: Locale;
   dir: Direction;
+  dictionary: TranslationDictionary;
   setLocale: (locale: Locale) => void;
 };
 
 export type LocaleProviderProps = {
   children: React.ReactNode;
-  initialLocale?: Locale;
+  initialLocale: Locale;
+  initialDictionary: TranslationDictionary;
 };
 
 export type TranslateFunction = (key: string, params?: Record<string, string | number>) => string;

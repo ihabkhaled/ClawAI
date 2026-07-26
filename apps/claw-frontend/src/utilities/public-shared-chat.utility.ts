@@ -6,14 +6,16 @@ import {
 } from '@/constants/chat-share.constants';
 import { ROUTES } from '@/constants/routes.constants';
 import { ChatShareVisibility } from '@/enums/chat-share.enum';
+import type { Locale } from '@/enums/locale.enum';
 import type { SharedChatViewModel } from '@/types/chat-share-page.types';
 import type { PublicChatShare, PublicChatShareMessage } from '@/types/chat-share.types';
 import type { TranslateFunction } from '@/types/i18n.types';
 import { buildShareMetaDescription, formatPublicModelLabel } from '@/utilities/chat-share.utility';
+import { getOpenGraphLocale, localisePath } from '@/utilities/locale.utility';
 
 /** Canonical path for a share. One definition, used by metadata and the ad units. */
-export function buildSharePath(publicShareId: string): string {
-  return `${SHARE_CHAT_PATH_PREFIX}/${publicShareId}`;
+export function buildSharePath(publicShareId: string, contentLocale: Locale): string {
+  return `/${contentLocale}${SHARE_CHAT_PATH_PREFIX}/${publicShareId}`;
 }
 
 /**
@@ -64,8 +66,8 @@ export function buildSharedChatMetadata(
     };
   }
 
-  const canonical = `${siteUrl}${buildSharePath(share.publicShareId)}`;
-  const isIndexed = share.visibility === ChatShareVisibility.PUBLIC_INDEXED;
+  const canonical = `${siteUrl}${buildSharePath(share.publicShareId, share.contentLocale)}`;
+  const isIndexed = share.visibility === ChatShareVisibility.PUBLIC_INDEXED && share.indexEligible;
   const description =
     buildShareMetaDescription(share.description) ?? t('chatShare.public.genericDescription');
 
@@ -82,6 +84,7 @@ export function buildSharedChatMetadata(
       url: canonical,
       publishedTime: share.publishedAt,
       modifiedTime: share.updatedAt,
+      locale: getOpenGraphLocale(share.contentLocale),
     },
     twitter: {
       card: 'summary',
@@ -106,7 +109,7 @@ export function buildSharedChatViewModel(
   siteUrl: string,
   t: TranslateFunction,
 ): SharedChatViewModel {
-  const canonicalUrl = `${siteUrl}${buildSharePath(share.publicShareId)}`;
+  const canonicalUrl = `${siteUrl}${buildSharePath(share.publicShareId, share.contentLocale)}`;
 
   return {
     headerProps: {
@@ -131,9 +134,9 @@ export function buildSharedChatViewModel(
     },
     footerProps: {
       homeLabel: t('chatShare.public.backToHome'),
-      homeHref: ROUTES.HOME,
+      homeHref: localisePath(ROUTES.HOME, share.contentLocale),
       reportLabel: t('chatShare.public.report'),
-      reportHref: ROUTES.CONTACT,
+      reportHref: localisePath(ROUTES.CONTACT, share.contentLocale),
       disclaimer: t('chatShare.public.footerDisclaimer'),
     },
     jsonLd: {
@@ -143,7 +146,7 @@ export function buildSharedChatViewModel(
       publishedAt: share.publishedAt,
       updatedAt: share.updatedAt,
     },
-    pathname: buildSharePath(share.publicShareId),
+    pathname: buildSharePath(share.publicShareId, share.contentLocale),
     adLabel: t('chatShare.public.advertisement'),
   };
 }

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { Locale } from '@/enums/locale.enum';
+
 import { chatSharesRepository } from '../chat-shares.repository';
 
 vi.mock('@/services/shared/api-client', () => ({
@@ -54,11 +56,13 @@ describe('chatSharesRepository', () => {
       await chatSharesRepository.publish('thread-1', {
         allowIndexing: false,
         acknowledgedPublicWarning: true,
+        contentLocale: Locale.EN,
       });
 
       expect(mocked.post).toHaveBeenCalledWith('/chat-threads/thread-1/share', {
         allowIndexing: false,
         acknowledgedPublicWarning: true,
+        contentLocale: Locale.EN,
       });
     });
 
@@ -68,6 +72,7 @@ describe('chatSharesRepository', () => {
       await chatSharesRepository.publish('thread-1', {
         allowIndexing: true,
         acknowledgedPublicWarning: true,
+        contentLocale: Locale.EN,
       });
 
       expect(mocked.post).toHaveBeenCalledWith(

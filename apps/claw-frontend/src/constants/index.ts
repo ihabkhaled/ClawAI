@@ -243,7 +243,7 @@ export {
   ORCHESTRATION_STAGE_LABEL_KEYS,
   ORCHESTRATION_STAGE_MOBILE_COLLAPSE_PX,
 } from './orchestration-stage.constants';
-export { CONTENT_REGISTRY } from './content-registry.constants';
+export { CONTENT_REGISTRY, PUBLIC_CONTENT_DEFINITIONS } from './content-registry.constants';
 export { PRIVATE_ROUTE_PREFIXES } from './private-route-prefixes.constants';
 export { MARKETING_NAV_LINKS, MARKETING_GITHUB_URL } from './marketing-nav.constants';
 export { APP_VERSION } from './app-version.constants';

@@ -1,6 +1,7 @@
 # Internationalization (i18n) Implementation
 
-> Complete guide to the 8-language i18n system, RTL support, and adding new translations.
+> Complete guide to the 13-language URL-authoritative i18n system, RTL support,
+> and adding new translations.
 
 ---
 
@@ -16,6 +17,11 @@
 | `it` | Italian    | LTR       | `src/lib/i18n/locales/it.ts` |
 | `pt` | Portuguese | LTR       | `src/lib/i18n/locales/pt.ts` |
 | `ru` | Russian    | LTR       | `src/lib/i18n/locales/ru.ts` |
+| `hi` | Hindi      | LTR       | `src/lib/i18n/locales/hi.ts` |
+| `ja` | Japanese   | LTR       | `src/lib/i18n/locales/ja.ts` |
+| `th` | Thai       | LTR       | `src/lib/i18n/locales/th.ts` |
+| `fa` | Persian    | RTL       | `src/lib/i18n/locales/fa.ts` |
+| `zh` | Simplified Chinese | LTR | `src/lib/i18n/locales/zh.ts` |
 
 ---
 
@@ -34,6 +40,11 @@ src/lib/i18n/
     it.ts    # Italian
     pt.ts    # Portuguese
     ru.ts    # Russian
+    hi.ts    # Hindi
+    ja.ts    # Japanese
+    th.ts    # Thai
+    fa.ts    # Persian
+    zh.ts    # Simplified Chinese
   index.ts   # LocaleProvider, useTranslation hook export
 
 src/types/i18n.types.ts   # Type-safe translation key definitions
@@ -46,7 +57,7 @@ src/enums/locale.enum.ts  # Locale enum values
 The `LocaleProvider` wraps the entire application in `src/app/providers.tsx`:
 
 ```tsx
-<LocaleProvider>
+<LocaleProvider initialLocale={serverLocale}>
   <ThemeProvider>
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   </ThemeProvider>
@@ -115,7 +126,7 @@ function MyComponent(): ReactElement {
 ### Rules
 
 1. **Never hardcode user-facing text** -- always use `t('key')`
-2. **All 9 locale files must stay in sync** -- every key in `en.ts` must exist in all others
+2. **All 13 locale files must stay in sync** -- every key in `en.ts` must exist in all others
 3. **Keys are type-safe** -- TypeScript will error if you use a key that does not exist
 4. **Domain-organized** -- keys are grouped by feature area (common, auth, chat, connectors, etc.)
 
@@ -147,7 +158,7 @@ common: {
 },
 ```
 
-### Step 3: Add translations to ALL 7 remaining locale files
+### Step 3: Add native translations to all 12 remaining locale files
 
 You must add the corresponding translation to each file:
 
@@ -158,6 +169,11 @@ You must add the corresponding translation to each file:
 - `it.ts` -- Italian translation
 - `pt.ts` -- Portuguese translation
 - `ru.ts` -- Russian translation
+- `hi.ts` -- Hindi translation
+- `ja.ts` -- Japanese translation
+- `th.ts` -- Thai translation
+- `fa.ts` -- Persian translation
+- `zh.ts` -- Simplified Chinese translation
 
 ### Step 4: Use in component
 
@@ -177,15 +193,20 @@ return <span>{t('common.newKey')}</span>;
 - [ ] Italian translation added to `it.ts`
 - [ ] Portuguese translation added to `pt.ts`
 - [ ] Russian translation added to `ru.ts`
+- [ ] Hindi translation added to `hi.ts`
+- [ ] Japanese translation added to `ja.ts`
+- [ ] Thai translation added to `th.ts`
+- [ ] Persian translation added to `fa.ts`
+- [ ] Simplified Chinese translation added to `zh.ts`
 - [ ] Used via `t('key')` in component (never hardcoded)
 
 ---
 
-## 5. RTL Support (Arabic)
+## 5. RTL Support (Arabic and Persian)
 
-Arabic uses right-to-left text direction. The application handles this by:
+Arabic and Persian use right-to-left text direction. The application handles this by:
 
-1. **Global `dir` attribute**: When Arabic is selected, `dir="rtl"` is applied to the HTML root element
+1. **Global `dir` attribute**: For `/ar/*` and `/fa/*`, `dir="rtl"` is server-rendered on the HTML root
 2. **CSS logical properties**: Tailwind CSS logical properties (`ms-`, `me-`, `ps-`, `pe-`) are preferred over `ml-`, `mr-`, `pl-`, `pr-` for correct RTL behavior
 3. **Layout mirroring**: Sidebar, navigation, and content areas are automatically mirrored
 
@@ -211,7 +232,12 @@ To test Arabic RTL layout:
 
 ---
 
-## 6. Language Preference Persistence
+## 6. URL authority and preference persistence
+
+The locale prefix is authoritative. Middleware validates it, stamps
+`x-claw-locale`, and the root layout passes that server locale to
+`LocaleProvider`. Storage and account preferences can influence a future
+redirect, but cannot change the language rendered for an already-prefixed URL.
 
 The user's language preference is stored in the user profile via the settings page:
 
@@ -250,6 +276,8 @@ Keys are organized by domain to keep them manageable:
 
 ## 8. Testing Translation Completeness
 
-A test in `src/lib/i18n/__tests__/` verifies that all 9 locale files have the same keys as the English file. This prevents missing translations from reaching production.
+A test in `src/lib/i18n/__tests__/` verifies that all 13 locale files have the
+same keys and interpolation placeholders as English. This prevents missing or
+structurally incompatible translations from reaching production.
 
 The test iterates over all keys in `en.ts` and asserts they exist in every other locale file.

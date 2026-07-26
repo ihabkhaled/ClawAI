@@ -1,12 +1,19 @@
 import {
   CHAT_SHARE_SITEMAP_FEED_PATH,
-  CHAT_SHARE_SITEMAP_MAX_ENTRIES,
+  CHAT_SHARE_SITEMAP_COUNT_PATH,
+  CHAT_SHARE_RSS_FEED_PATH,
   CHAT_SHARE_SITEMAP_PAGE_SIZE,
   PUBLIC_CHAT_SHARE_API_PATH,
 } from '@/constants/chat-share-api.constants';
 import { PUBLIC_SHARE_ID_PATTERN } from '@/constants/public-share-id.constants';
+import type { Locale } from '@/enums/locale.enum';
 import { fetchChatServiceJson } from '@/lib/chat-shares/chat-share-api';
-import type { PublicChatShare, PublicChatSitemapEntry } from '@/types/chat-share.types';
+import type {
+  PublicChatRssEntry,
+  PublicChatShare,
+  PublicChatSitemapCount,
+  PublicChatSitemapPage,
+} from '@/types/chat-share.types';
 
 /**
  * Whether an identifier is even shaped like one we could have issued.
@@ -50,30 +57,39 @@ export async function getPublicChatShare(publicShareId: string): Promise<PublicC
  * its dynamic half is a degraded sitemap; a sitemap that 500s is no sitemap at all,
  * and would take the static pages down with it.
  */
-export async function listIndexableChatShares(): Promise<PublicChatSitemapEntry[]> {
-  const collected: PublicChatSitemapEntry[] = [];
-  let cursor: string | null = null;
-
-  while (collected.length < CHAT_SHARE_SITEMAP_MAX_ENTRIES) {
-    const query = new URLSearchParams({ limit: String(CHAT_SHARE_SITEMAP_PAGE_SIZE) });
-    if (cursor !== null) {
-      query.set('cursor', cursor);
-    }
-    const page = await fetchChatServiceJson<PublicChatSitemapEntry[]>(
-      `${CHAT_SHARE_SITEMAP_FEED_PATH}?${query.toString()}`,
-    );
-    if (page === null || page.length === 0) {
-      break;
-    }
-    collected.push(...page);
-    if (page.length < CHAT_SHARE_SITEMAP_PAGE_SIZE) {
-      break;
-    }
-    cursor = page.at(-1)?.publicShareId ?? null;
-    if (cursor === null) {
-      break;
-    }
+export async function getIndexableChatSharePage(
+  locale: Locale,
+  cursor: string | null,
+): Promise<PublicChatSitemapPage | null> {
+  const query = new URLSearchParams({
+    locale,
+    limit: String(CHAT_SHARE_SITEMAP_PAGE_SIZE),
+  });
+  if (cursor !== null) {
+    query.set('cursor', cursor);
   }
+  return fetchChatServiceJson<PublicChatSitemapPage>(
+    `${CHAT_SHARE_SITEMAP_FEED_PATH}?${query.toString()}`,
+    true,
+  );
+}
 
-  return collected.slice(0, CHAT_SHARE_SITEMAP_MAX_ENTRIES);
+export async function countIndexableChatShares(
+  locale: Locale,
+): Promise<PublicChatSitemapCount | null> {
+  const query = new URLSearchParams({ locale });
+  return fetchChatServiceJson<PublicChatSitemapCount>(
+    `${CHAT_SHARE_SITEMAP_COUNT_PATH}?${query.toString()}`,
+    true,
+  );
+}
+
+export async function listPublicChatRssEntries(
+  locale: Locale,
+): Promise<PublicChatRssEntry[] | null> {
+  const query = new URLSearchParams({ locale, limit: '100' });
+  return fetchChatServiceJson<PublicChatRssEntry[]>(
+    `${CHAT_SHARE_RSS_FEED_PATH}?${query.toString()}`,
+    true,
+  );
 }
