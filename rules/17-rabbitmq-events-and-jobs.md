@@ -31,6 +31,15 @@ All services that publish or consume events, `@claw/shared-rabbitmq`,
 7. **Runtime-progress note:** the 12 `runtime.progress.*` patterns are declared but
    currently delivered over in-process SSE, not durably on RabbitMQ. Don't assume
    durable delivery for those until the backlog item ships.
+8. **Every scheduled job is multi-replica safe.** Cron and interval handlers must
+   acquire a Redis lock with a unique owner token before doing work. The lock TTL
+   must exceed the job's documented worst-case duration, and release must use an
+   atomic compare-and-delete script so an expired lock can never be deleted by its
+   former owner. Release is attempted in `finally`; contention skips safely.
+9. **Scheduled work is bounded, idempotent, and resumable.** Process a finite batch,
+   persist progress between batches, and make replay harmless. Log lock contention,
+   skipped work, failures, and any unprocessed remainder without PII or secrets.
+   A replica crash or provider outage must leave the next run able to continue.
 
 ## Prohibited patterns
 
@@ -38,6 +47,9 @@ All services that publish or consume events, `@claw/shared-rabbitmq`,
 - A raw string event pattern instead of the shared-types constant.
 - A consumer `catch` block that logs nothing and stores nothing.
 - Adding a domain event without an audit-service consumer.
+- A process-local boolean, raw timer, or unconditional Redis `DEL` used as the
+  concurrency guard for a scheduled job.
+- An unbounded sweep or a job whose partial completion cannot be resumed safely.
 
 ## Correct pattern
 
@@ -53,6 +65,8 @@ await this.events.publish(CONNECTOR_SYNCED, { connectorId: id, requestId }); // 
 - **Knowledge check** — `.ai/manifests/{rabbitmq-events,event-graph}.json` +
   `knowledge:verify` flag undeclared/orphaned patterns.
 - **Unit test** — publish-after-persist and consumer error handling asserted.
+- **Unit test** — lock contention, owner mismatch, callback failure, and atomic
+  release behavior asserted for every scheduled-job foundation.
 - **Review checklist** — new events confirmed wired to their consumers.
 
 ## Related skills
@@ -68,3 +82,5 @@ await this.events.publish(CONNECTOR_SYNCED, { connectorId: id, requestId }); // 
 - [ ] Event pattern + payload type in `@claw/shared-types`, used by both ends.
 - [ ] Published from the service after persistence, with a correlation ID.
 - [ ] Consumers handle errors (log + store); new events wired into audit.
+- [ ] Scheduled handlers use an owner-token lock, bounded idempotent batches, and
+      safe resume semantics under contention, expiry, and replica failure.

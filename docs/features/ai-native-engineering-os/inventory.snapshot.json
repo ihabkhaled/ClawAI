@@ -6415,7 +6415,7 @@
           "file": "rules/16-authentication-and-authorization.md"
         },
         {
-          "bytes": 2956,
+          "bytes": 4193,
           "file": "rules/17-rabbitmq-events-and-jobs.md"
         },
         {
@@ -6435,7 +6435,7 @@
           "file": "rules/21-security-and-secrets.md"
         },
         {
-          "bytes": 2990,
+          "bytes": 3578,
           "file": "rules/22-testing-and-coverage.md"
         },
         {
@@ -8234,7 +8234,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 34
+        "testFiles": 36
       },
       "claw-research-service": {
         "runner": "jest",
@@ -8961,7 +8961,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 2,
-    "totalTestFiles": 611,
+    "totalTestFiles": 613,
     "workspaceCount": 25
   }
 }

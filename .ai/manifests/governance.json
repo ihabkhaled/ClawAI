@@ -159,7 +159,7 @@
       "file": "rules/16-authentication-and-authorization.md"
     },
     {
-      "bytes": 2956,
+      "bytes": 4193,
       "file": "rules/17-rabbitmq-events-and-jobs.md"
     },
     {
@@ -179,7 +179,7 @@
       "file": "rules/21-security-and-secrets.md"
     },
     {
-      "bytes": 2990,
+      "bytes": 3578,
       "file": "rules/22-testing-and-coverage.md"
     },
     {
