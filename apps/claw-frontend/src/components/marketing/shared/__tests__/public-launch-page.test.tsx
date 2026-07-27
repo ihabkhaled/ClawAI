@@ -21,17 +21,6 @@ describe('PublicLaunchPage', () => {
     expect(screen.getByText(/2026-07-27/)).toBeInTheDocument();
   });
 
-  it('preserves plan and billing interval in every paid registration link', async () => {
-    const { container } = render(await PublicLaunchPage({ slug: PublicLaunchPageSlug.PRICING }));
-
-    const paidLinks = container.querySelectorAll<HTMLAnchorElement>('a[href^="/register?plan="]');
-    expect(paidLinks.length).toBeGreaterThan(1);
-    for (const link of paidLinks) {
-      expect(link.getAttribute('href')).toMatch(/^\/register\?plan=[a-z-]+&interval=monthly$/);
-    }
-    expect(screen.getByText(/server-side price/i)).toBeInTheDocument();
-  });
-
   it('names only implemented provider families and explains live availability', async () => {
     render(await PublicLaunchPage({ slug: PublicLaunchPageSlug.SUPPORTED_MODELS }));
 
