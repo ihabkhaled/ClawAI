@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Archivo, IBM_Plex_Mono, Inter } from 'next/font/google';
 import { headers } from 'next/headers';
 
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
@@ -29,6 +29,22 @@ const inter = Inter({
   display: 'swap',
   variable: '--font-inter',
   preload: true,
+});
+
+const editorialDisplay = Archivo({
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
+  display: 'swap',
+  variable: '--font-editorial-display',
+  preload: false,
+});
+
+const editorialMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['500', '600'],
+  display: 'swap',
+  variable: '--font-editorial-mono',
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -74,7 +90,7 @@ export default async function RootLayout({
       lang={getHtmlLanguage(locale)}
       dir={getDirection(locale)}
       suppressHydrationWarning
-      className={inter.variable}
+      className={`${inter.variable} ${editorialDisplay.variable} ${editorialMono.variable}`}
     >
       <head>
         {/*

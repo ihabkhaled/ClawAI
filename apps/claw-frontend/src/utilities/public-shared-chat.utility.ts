@@ -11,7 +11,7 @@ import type { SharedChatViewModel } from '@/types/chat-share-page.types';
 import type { PublicChatShare, PublicChatShareMessage } from '@/types/chat-share.types';
 import type { TranslateFunction } from '@/types/i18n.types';
 import { buildShareMetaDescription, formatPublicModelLabel } from '@/utilities/chat-share.utility';
-import { getOpenGraphLocale, localisePath } from '@/utilities/locale.utility';
+import { getHtmlLanguage, getOpenGraphLocale, localisePath } from '@/utilities/locale.utility';
 
 /** Canonical path for a share. One definition, used by metadata and the ad units. */
 export function buildSharePath(publicShareId: string, contentLocale: Locale): string {
@@ -145,6 +145,7 @@ export function buildSharedChatViewModel(
       description: buildShareMetaDescription(share.description),
       publishedAt: share.publishedAt,
       updatedAt: share.updatedAt,
+      contentLanguage: getHtmlLanguage(share.contentLocale),
     },
     pathname: buildSharePath(share.publicShareId, share.contentLocale),
     adLabel: t('chatShare.public.advertisement'),

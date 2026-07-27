@@ -21,6 +21,7 @@ const GLOBALS_CSS = join(__dirname, '..', 'globals.css');
 const AA_NORMAL_TEXT = 4.5;
 
 type Hsl = { h: number; s: number; l: number };
+type Rgb = [number, number, number];
 
 function parseToken(css: string, name: string, blockStart: number): Hsl {
   // Reads the FIRST definition at or after `blockStart`, so the light-mode block
@@ -34,7 +35,7 @@ function parseToken(css: string, name: string, blockStart: number): Hsl {
   return { h: Number(match[1]), s: Number(match[2]), l: Number(match[3]) };
 }
 
-function toRgb({ h, s, l }: Hsl): [number, number, number] {
+function toRgb({ h, s, l }: Hsl): Rgb {
   const saturation = s / 100;
   const lightness = l / 100;
   const a = saturation * Math.min(lightness, 1 - lightness);
@@ -45,12 +46,36 @@ function toRgb({ h, s, l }: Hsl): [number, number, number] {
   return [Math.round(channel(0) * 255), Math.round(channel(8) * 255), Math.round(channel(4) * 255)];
 }
 
-function relativeLuminance(rgb: [number, number, number]): number {
+function relativeLuminance(rgb: Rgb): number {
   const linear = rgb.map((value) => {
     const channel = value / 255;
     return channel <= 0.039_28 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
   });
   return 0.2126 * (linear[0] ?? 0) + 0.7152 * (linear[1] ?? 0) + 0.0722 * (linear[2] ?? 0);
+}
+
+function parseHexToken(css: string, name: string, blockStart: number): Rgb {
+  const declaration = `--${name}:`;
+  const declarationStart = css.indexOf(declaration, blockStart);
+  const match = /^\s*#([\da-f]{6})/iu.exec(css.slice(declarationStart + declaration.length));
+  if (match?.[1] === undefined) {
+    throw new Error(`hex token --${name} not found after offset ${String(blockStart)}`);
+  }
+  return [0, 2, 4].map((offset) =>
+    Number.parseInt(match[1]?.slice(offset, offset + 2) ?? '', 16),
+  ) as Rgb;
+}
+
+function rgbContrastRatio(firstRgb: Rgb, secondRgb: Rgb): number {
+  const first = relativeLuminance(firstRgb);
+  const second = relativeLuminance(secondRgb);
+  return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+}
+
+function blend(foreground: Rgb, background: Rgb, opacity: number): Rgb {
+  return foreground.map((channel, index) =>
+    Math.round(channel * opacity + (background[index] ?? 0) * (1 - opacity)),
+  ) as Rgb;
 }
 
 function contrastRatio(foreground: Hsl, background: Hsl): number {
@@ -144,5 +169,15 @@ describe('semantic colour tokens meet WCAG AA for text', () => {
     const background = parseToken(css, 'muted', lightStart);
     const mutedForeground = parseToken(css, 'muted-foreground', lightStart);
     expect(contrastRatio(mutedForeground, background)).toBeGreaterThan(4.6);
+  });
+
+  it('keeps editorial evidence links readable on the tinted evidence surface', () => {
+    const editorialStart = themeBlockOffset(css, '.editorial-page-shell');
+    const paper = parseHexToken(css, 'editorial-paper', editorialStart);
+    const rule = parseHexToken(css, 'editorial-rule', editorialStart);
+    const link = parseHexToken(css, 'editorial-circuit', editorialStart);
+    const evidenceSurface = blend(rule, paper, 0.18);
+
+    expect(rgbContrastRatio(link, evidenceSurface)).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
   });
 });

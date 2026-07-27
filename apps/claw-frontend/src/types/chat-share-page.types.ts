@@ -16,6 +16,7 @@ export type SharedChatJsonLdInput = {
   description: string | null;
   publishedAt: string;
   updatedAt: string;
+  contentLanguage: string;
 };
 
 /**

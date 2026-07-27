@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+// The frontend enforces a strict CSP without `unsafe-eval`. Zod's JIT capability
+// probe otherwise calls `Function("")` during hydration, which the browser
+// correctly reports as a CSP violation even though Zod catches the exception.
+z.config({ jitless: true });
+
 // Shared by the client form (react-hook-form resolver) AND the server route,
 // so validation can never diverge. Every string is length-capped. `company`
 // is a honeypot: a real user never sees or fills it, so any value means a bot.

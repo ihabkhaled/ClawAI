@@ -57,9 +57,9 @@ export async function buildLocalizedRssResponse(
     publishedAt: entry.publishedAt,
     category: 'public-chat',
   }));
-  const items = [...topicItems, ...chatItems]
-    .sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt))
-    .slice(0, 100);
+  const items = [...topicItems, ...chatItems].sort(
+    (left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt),
+  );
   const feedPathByKind: Readonly<Record<RssFeedKind, string>> = {
     [RssFeedKind.COMBINED]: 'feed.xml',
     [RssFeedKind.TOPICS]: 'feeds/topics.xml',

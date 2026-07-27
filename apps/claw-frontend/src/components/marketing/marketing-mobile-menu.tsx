@@ -66,7 +66,7 @@ export function MarketingMobileMenu({
             <Link href={ROUTES.LOGIN}>{t('marketing.header.login')}</Link>
           </Button>
           <Button asChild onClick={onNavigate}>
-            <Link href={ROUTES.CHAT}>{t('marketing.header.openClaw')}</Link>
+            <Link href={ROUTES.REGISTER}>{t('marketing.header.createAccount')}</Link>
           </Button>
         </div>
       </SheetContent>

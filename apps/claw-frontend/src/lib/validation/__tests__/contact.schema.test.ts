@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import { contactSchema } from '@/lib/validation/contact.schema';
 
@@ -10,6 +11,10 @@ const valid = {
 };
 
 describe('contactSchema', () => {
+  it('uses CSP-safe validation without runtime code generation', () => {
+    expect(z.config().jitless).toBe(true);
+  });
+
   it('accepts a well-formed submission', () => {
     expect(contactSchema.safeParse(valid).success).toBe(true);
   });
