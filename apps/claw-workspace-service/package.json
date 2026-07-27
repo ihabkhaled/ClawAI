@@ -41,7 +41,7 @@
     "amqplib": "^2.0.1",
     "helmet": "^8.3.0",
     "ioredis": "^5.11.1",
-    "isomorphic-dompurify": "^3.16.0",
+    "isomorphic-dompurify": "2.26.0",
     "jsonwebtoken": "^9.0.2",
     "nestjs-pino": "^4.1.0",
     "pino": "^10.3.1",
