@@ -33,7 +33,7 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.7",
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.1.1",
     "@types/nodemailer": "^7.0.12",
     "@typescript/native-preview": "^7.0.0-dev.20260607.1",
     "jest": "^30.4.2",
