@@ -2,12 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel } from '@claw/shared-types';
 import { AuthManager } from '../managers/auth.manager';
+import { WEB_SESSION_CLIENT } from '../constants/token-session.constants';
 import {
   type LoginResult,
   type RefreshResult,
   type RegisterResult,
   type UserProfile,
 } from '../types/auth.types';
+import type { SessionClient } from '../types/token-session.types';
 
 @Injectable()
 export class AuthService {
@@ -56,10 +58,14 @@ export class AuthService {
     }
   }
 
-  async login(email: string, password: string): Promise<LoginResult> {
+  async login(
+    email: string,
+    password: string,
+    client: SessionClient = WEB_SESSION_CLIENT,
+  ): Promise<LoginResult> {
     this.logger.log(`login: attempting login for email=${email}`);
     try {
-      const result = await this.authManager.login(email, password);
+      const result = await this.authManager.login(email, password, client);
 
       this.structuredLogger.logAction({
         level: LogLevel.INFO,

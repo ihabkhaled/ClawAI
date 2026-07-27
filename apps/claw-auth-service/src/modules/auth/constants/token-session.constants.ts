@@ -11,3 +11,7 @@ export const WEB_SESSION_CLIENT = {
   kind: SessionClientKind.WEB,
   name: 'ClawAI Web',
 } as const;
+export const VSCODE_SESSION_CLIENT = {
+  kind: SessionClientKind.VSCODE,
+  name: 'ClawAI for VS Code',
+} as const;

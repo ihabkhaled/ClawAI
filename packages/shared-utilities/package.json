@@ -18,7 +18,7 @@
     "typecheck": "tsgo --noEmit",
     "build": "tsgo -p tsconfig.build.json",
     "test": "jest --passWithNoTests",
-    "lint": "eslint src/ --concurrency=4",
+    "lint": "eslint src/ --concurrency=1",
     "lint:fix": "eslint src/ --fix",
     "test:watch": "jest --watch"
   },

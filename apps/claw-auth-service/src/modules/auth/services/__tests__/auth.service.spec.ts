@@ -4,6 +4,7 @@ import { EventPattern } from '@claw/shared-types';
 import { AuthService } from '../auth.service';
 import { AuthManager } from '../../managers/auth.manager';
 import { UserRole } from '../../../../common/enums';
+import { SessionClientKind } from '../../enums/session-client-kind.enum';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -47,7 +48,10 @@ describe('AuthService', () => {
       const out = await service.login('a@b', 'p');
 
       expect(out).toBe(result);
-      expect(managerMock.login).toHaveBeenCalledWith('a@b', 'p');
+      expect(managerMock.login).toHaveBeenCalledWith('a@b', 'p', {
+        kind: SessionClientKind.WEB,
+        name: 'ClawAI Web',
+      });
       expect(rabbitMock.publish).toHaveBeenCalledWith(
         EventPattern.USER_LOGIN,
         expect.objectContaining({ userId: 'u1', email: 'a@b' }),
@@ -63,6 +67,22 @@ describe('AuthService', () => {
         (c) => c[0] === EventPattern.USER_LOGIN,
       );
       expect(userLoginCalls).toHaveLength(0);
+    });
+
+    it('passes client provenance to the manager', async () => {
+      managerMock.login.mockResolvedValue({
+        accessToken: 'a',
+        refreshToken: 'r',
+        user: { id: 'u1', email: 'a@b', role: UserRole.OPERATOR },
+      });
+      const client = {
+        kind: SessionClientKind.VSCODE,
+        name: 'ClawAI for VS Code',
+      };
+
+      await service.login('a@b', 'p', client);
+
+      expect(managerMock.login).toHaveBeenCalledWith('a@b', 'p', client);
     });
   });
 

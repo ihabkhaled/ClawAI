@@ -21,6 +21,7 @@ import {
   RegisterResult,
   UserProfile,
 } from '../types/auth.types';
+import type { SessionClient } from '../types/token-session.types';
 
 @Injectable()
 export class AuthManager {
@@ -77,7 +78,11 @@ export class AuthManager {
     return { tokens, user: await this.toUserSummary(user) };
   }
 
-  async login(email: string, password: string): Promise<LoginResult> {
+  async login(
+    email: string,
+    password: string,
+    client: SessionClient = WEB_SESSION_CLIENT,
+  ): Promise<LoginResult> {
     this.logger.log(`login: looking up user by email=${email}`);
     const user = await this.authRepository.findUserByEmail(email);
     if (!user) {
@@ -98,7 +103,7 @@ export class AuthManager {
     }
 
     this.logger.debug(`login: credentials verified for user ${user.id}, issuing tokens`);
-    const tokens = await this.tokenSessionManager.issue(user, WEB_SESSION_CLIENT);
+    const tokens = await this.tokenSessionManager.issue(user, client);
     this.logger.log(`login: completed for user ${user.id}`);
 
     return { tokens, user: await this.toUserSummary(user) };

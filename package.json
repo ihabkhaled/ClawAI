@@ -5,7 +5,8 @@
   "description": "Claw — Local-first AI orchestration platform (microservices)",
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/claw-*-service",
+    "apps/claw-frontend"
   ],
   "scripts": {
     "dev:frontend": "npm run dev --workspace=claw-frontend",

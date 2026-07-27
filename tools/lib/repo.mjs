@@ -156,16 +156,25 @@ export function fileSize(absPath) {
 
 /**
  * Discover workspace directories from the root package.json `workspaces` globs.
- * Only supports the `<dir>/*` form the repo actually uses (packages/*, apps/*).
+ * Supports an exact workspace path or a wildcard in the final path segment.
+ * Keeping expansion at one directory level prevents workspace discovery from
+ * descending into nested repositories and submodules.
  */
 export function discoverWorkspaces() {
   const rootPkg = readJson(repoPath('package.json'));
   const globs = (rootPkg && rootPkg.workspaces) || [];
   const result = [];
   for (const glob of [...globs].sort()) {
-    if (!glob.endsWith('/*')) continue;
-    const base = glob.slice(0, -2);
-    for (const name of listDirs(repoPath(base))) {
+    const separator = glob.lastIndexOf('/');
+    if (separator < 1) continue;
+    const base = glob.slice(0, separator);
+    const segment = glob.slice(separator + 1);
+    if (base.includes('*') || segment.length === 0) continue;
+    const pattern = new RegExp(
+      `^${segment.replace(/[\\^$.[\]{}()+?|]/gu, '\\$&').replaceAll('*', '.*')}$`,
+      'u',
+    );
+    for (const name of listDirs(repoPath(base)).filter((entry) => pattern.test(entry))) {
       const dir = `${base}/${name}`;
       const pkg = readJson(repoPath(dir, 'package.json'));
       if (!pkg) continue;

@@ -3,7 +3,7 @@ import { AuthService } from '../services/auth.service';
 import { Public } from '../../../app/decorators/public.decorator';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
-import { LoginDto, loginSchema } from '../dto/login.dto';
+import { LoginDto, loginSchema, loginSessionClient } from '../dto/login.dto';
 import { RegisterDto, registerSchema } from '../dto/register.dto';
 import { RefreshTokenDto, refreshTokenSchema } from '../dto/refresh-token.dto';
 import { AuthenticatedUser } from '../../../common/types';
@@ -26,7 +26,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(loginSchema))
   async login(@Body() dto: LoginDto): Promise<LoginResult> {
-    return this.authService.login(dto.email, dto.password);
+    return this.authService.login(dto.email, dto.password, loginSessionClient(dto));
   }
 
   @Public()

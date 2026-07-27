@@ -1,5 +1,6 @@
 import { loginSchema } from '../login.dto';
 import { refreshTokenSchema } from '../refresh-token.dto';
+import { SessionClientKind } from '../../enums/session-client-kind.enum';
 
 describe('loginSchema', () => {
   it('should validate a correct login payload', () => {
@@ -53,6 +54,34 @@ describe('loginSchema', () => {
     const result = loginSchema.safeParse({});
 
     expect(result.success).toBe(false);
+  });
+
+  it('accepts bounded VS Code session provenance', () => {
+    expect(
+      loginSchema.safeParse({
+        email: 'user@example.com',
+        password: 'MyPassword123',
+        clientKind: SessionClientKind.VSCODE,
+        clientName: 'ClawAI for VS Code',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('rejects unknown client kinds and oversized client names', () => {
+    expect(
+      loginSchema.safeParse({
+        email: 'user@example.com',
+        password: 'MyPassword123',
+        clientKind: 'TERMINAL',
+      }).success,
+    ).toBe(false);
+    expect(
+      loginSchema.safeParse({
+        email: 'user@example.com',
+        password: 'MyPassword123',
+        clientName: 'x'.repeat(101),
+      }).success,
+    ).toBe(false);
   });
 });
 

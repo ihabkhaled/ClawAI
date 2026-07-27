@@ -5,6 +5,7 @@ import { type RolesService } from '../../../roles/services/roles.service';
 import { type PlansRepository } from '../../../plans/repositories/plans.repository';
 import { UserRole, UserStatus } from '../../../../common/enums';
 import { AccountSuspendedException, InvalidCredentialsException } from '../../../../common/errors';
+import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import * as utilities from '@common/utilities';
 
 // Mock the utilities module (the @common/utilities alias)
@@ -206,6 +207,19 @@ describe('AuthManager', () => {
       await expect(manager.login('test@example.com', 'any-password')).rejects.toThrow(
         InvalidCredentialsException,
       );
+    });
+
+    it('issues tokens for the declared VS Code client', async () => {
+      repository.findUserByEmail.mockResolvedValue(mockUser);
+      mockedUtilities.verifyPassword.mockResolvedValue(true);
+      const client = {
+        kind: SessionClientKind.VSCODE,
+        name: 'ClawAI for VS Code',
+      };
+
+      await manager.login('test@example.com', 'correct-password', client);
+
+      expect(tokenSessionManager.issue).toHaveBeenCalledWith(mockUser, client);
     });
   });
 
