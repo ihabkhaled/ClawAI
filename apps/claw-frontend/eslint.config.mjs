@@ -104,6 +104,14 @@ export default defineConfig([
     ...config,
     files: ['**/*.{ts,tsx}'],
   })),
+  {
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
 
   // React recommended (flat config)
   {

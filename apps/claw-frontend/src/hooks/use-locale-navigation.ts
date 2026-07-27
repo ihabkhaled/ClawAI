@@ -18,6 +18,7 @@ export function useLocaleNavigation(): UseLocaleNavigationReturn {
       const hash = globalThis.location.hash;
       const path = `${pathname}${query === '' ? '' : `?${query}`}${hash}`;
       router.replace(replacePathLocale(path, locale));
+      router.refresh();
     },
     [pathname, router, searchParams],
   );

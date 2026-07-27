@@ -1,6 +1,6 @@
 # Shared Packages Reference
 
-Complete reference for the **5** shared npm workspace packages used across all ClawAI backend services. Updated 2026-04-26 with the addition of `shared-utilities`.
+Reference for the shared npm workspace packages used across the ClawAI backend services.
 
 ---
 
@@ -659,11 +659,12 @@ The workflow step now reads:
 ```yaml
 - name: Build shared packages
   run: |
-    cd packages/shared-types && npx tsc
-    cd ../shared-constants && npx tsc
-    cd ../shared-rabbitmq && npx tsc
-    cd ../shared-auth && npx tsc
-    cd ../shared-utilities && npx tsc   # added 2026-04-26
+    cd packages/shared-types && npx tsgo -p tsconfig.build.json
+    cd ../shared-constants && npx tsgo -p tsconfig.build.json
+    cd ../shared-utilities && npx tsgo -p tsconfig.build.json
+    cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
+    cd ../shared-auth && npx tsgo -p tsconfig.build.json
+    cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
 ```
 
 This rule is now codified in `rules/05-infra-rules.md` and `rules/09-refactor-rules.md`.
@@ -672,32 +673,26 @@ This rule is now codified in `rules/05-infra-rules.md` and `rules/09-refactor-ru
 
 ## Package Dependency Graph
 
-```
-shared-types      (no dependencies on other shared packages)
-  ^
-  |
-shared-constants  (no dependencies on other shared packages)
-  ^
-  |
-shared-rabbitmq   (depends on shared-types, shared-constants)
-  ^
-  |
-shared-auth       (depends on shared-types)
-  ^
-  |
-shared-utilities  (depends on shared-types, shared-constants)  ← added 2026-04-26
+```text
+shared-types ─────────┬─> shared-utilities ─> shared-auth
+                     ├─> shared-rabbitmq
+                     └─> shared-entitlements
+shared-constants ────┴─> shared-utilities / shared-rabbitmq
 ```
 
-All 17 backend services depend on `shared-types`, `shared-constants`, `shared-rabbitmq`, and `shared-auth`. **12** also depend on `shared-utilities` (after Phase C of the codebase-wide refactor); the remaining services adopt it in their per-service refactor phases.
+All services use only the shared packages they declare. In particular,
+`shared-auth` depends on `shared-utilities`, so a clean build must compile
+utilities before auth.
 
 ### Build Order
 
 When modifying shared packages, rebuild in dependency order:
 
 1. `shared-types` and `shared-constants` (independent, can build in parallel)
-2. `shared-auth` (depends on shared-types)
-3. `shared-rabbitmq` (depends on shared-types, shared-constants)
-4. **`shared-utilities`** (depends on shared-types, shared-constants)
-5. All service packages (depend on the shared packages above)
+2. `shared-utilities` (depends on shared-types and shared-constants)
+3. `shared-rabbitmq` (depends on shared-types and shared-constants)
+4. `shared-auth` (depends on shared-types and shared-utilities)
+5. `shared-entitlements` (depends on shared-types)
+6. All service packages (depend on the shared packages above)
 
 The CI workflow `.github/workflows/ci.yml` enforces this order — if you add a new shared package, you MUST update the "Build shared packages" step in **all four** jobs (lint / typecheck / test / build).

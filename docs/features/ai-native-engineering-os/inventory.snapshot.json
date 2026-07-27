@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CODEX.md and cursor.md share 1 identical headings (4892 vs 25527 bytes) — candidates for compact routing",
+        "message": "CODEX.md and cursor.md share 1 identical headings (4892 vs 25592 bytes) — candidates for compact routing",
         "severity": "medium"
       }
     ],
@@ -6372,7 +6372,7 @@
           "file": "CODEX.md"
         },
         {
-          "bytes": 25527,
+          "bytes": 25592,
           "file": "cursor.md"
         },
         {
@@ -6457,7 +6457,7 @@
           "file": "rules/05-frontend-components-and-hooks.md"
         },
         {
-          "bytes": 13761,
+          "bytes": 13826,
           "file": "rules/05-infra-rules.md"
         },
         {
@@ -8358,7 +8358,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 215
+        "testFiles": 216
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9110,7 +9110,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 686,
+    "totalTestFiles": 687,
     "workspaceCount": 25
   }
 }

@@ -66,8 +66,10 @@ Each job runs on a fresh `ubuntu-latest` runner and repeats these setup steps:
 - run: |
     cd packages/shared-types && npx tsc
     cd ../shared-constants && npx tsc
+    cd ../shared-utilities && npx tsc
     cd ../shared-rabbitmq && npx tsc
     cd ../shared-auth && npx tsc
+    cd ../shared-entitlements && npx tsc
 
 # 5. Generate Prisma clients for all services with Prisma
 - run: |

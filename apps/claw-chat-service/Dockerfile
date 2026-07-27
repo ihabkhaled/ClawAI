@@ -17,9 +17,9 @@ COPY --from=deps /app /app
 COPY apps/claw-chat-service/ .
 RUN cd /app/packages/shared-types && npx tsgo \
  && cd /app/packages/shared-constants && npx tsgo \
+ && cd /app/packages/shared-utilities && npx tsgo \
  && cd /app/packages/shared-rabbitmq && npx tsgo \
- && cd /app/packages/shared-auth && npx tsgo \
- && cd /app/packages/shared-utilities && npx tsgo
+ && cd /app/packages/shared-auth && npx tsgo
 RUN npx prisma generate
 # npm run build = tsgo -p tsconfig.build.json && node scripts/rewrite-paths.mjs dist && node scripts/copy-assets.mjs
 RUN npm run build

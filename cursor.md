@@ -262,9 +262,10 @@ When you add a new package under `packages/`, the CI workflow needs an extra bui
   run: |
     cd packages/shared-types && npx tsgo -p tsconfig.build.json
     cd ../shared-constants && npx tsgo -p tsconfig.build.json
+    cd ../shared-utilities && npx tsgo -p tsconfig.build.json
     cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
     cd ../shared-auth && npx tsgo -p tsconfig.build.json
-    cd ../shared-utilities && npx tsgo -p tsconfig.build.json
+    cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
     cd ../<new-shared-package> && npx tsgo -p tsconfig.build.json   # MUST add for any new shared package
 ```
 

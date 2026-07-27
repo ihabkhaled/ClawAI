@@ -20,9 +20,9 @@ RUN npm install --ignore-scripts
 # Compile shared packages with workspace-hoisted types available
 RUN cd packages/shared-types && npx tsgo
 RUN cd packages/shared-constants && npx tsgo
+RUN cd packages/shared-utilities && npx tsgo
 RUN cd packages/shared-rabbitmq && npx tsgo
 RUN cd packages/shared-auth && npx tsgo
-RUN cd packages/shared-utilities && npx tsgo
 
 WORKDIR /app/apps/claw-agent-service
 RUN npx prisma generate

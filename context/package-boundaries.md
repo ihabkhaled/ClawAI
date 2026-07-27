@@ -21,13 +21,14 @@ copies with imports (extend-don't-parallelize).
 | **`@claw/shared-types`**        | TypeScript types, enums, event payloads, the `EventPattern` union, the `Permission` enum                                                   | none (leaf)                    |
 | **`@claw/shared-constants`**    | ports (`*_SERVICE_PORT`), exchange name (`claw.events`), API prefix, service-name constants, pagination defaults                           | none (leaf)                    |
 | **`@claw/shared-utilities`**    | domain-neutral functions: jwt verify, http-client (retry/backoff), crypto primitives, url-safety, regex/time/encoding helpers              | shared-constants, shared-types |
-| **`@claw/shared-auth`**         | AuthGuard, RolesGuard, `@Public`, `@Roles`, `@CurrentUser` decorators                                                                      | shared-types                   |
+| **`@claw/shared-auth`**         | AuthGuard, RolesGuard, `@Public`, `@Roles`, `@CurrentUser` decorators                                                                      | shared-types, shared-utilities |
 | **`@claw/shared-rabbitmq`**     | RabbitMQModule, RabbitMQService (publish/consume with retry + DLQ), StructuredLogger                                                       | shared-constants, shared-types |
 | **`@claw/shared-entitlements`** | plan feature gates (`allowCompareMode`, `allowJudgeMode`, `allowMemory`, …) enforced by chat `AccessControlService` + FE `useFeatureGates` | shared-types                   |
 
 Dependency DAG (from the manifest): `shared-types` and `shared-constants` are
-leaves; `shared-auth` and `shared-entitlements` → `shared-types`;
-`shared-rabbitmq` and `shared-utilities` → both leaves. No cycles.
+leaves; `shared-utilities` and `shared-rabbitmq` → both leaves;
+`shared-entitlements` → `shared-types`; `shared-auth` → `shared-types` +
+`shared-utilities`. No cycles.
 
 ## Who imports what
 
@@ -36,7 +37,7 @@ leaves; `shared-auth` and `shared-entitlements` → `shared-types`;
 - **All except health** import `shared-rabbitmq`.
 - **`shared-entitlements`** is imported by audit, chat, connector, file,
   llamacpp, memory, ollama, research, routing, server-logs, workspace.
-- **`shared-auth`** is imported only by agent, research, workspace.
+- **`shared-auth`** is imported only by agent, payment, research, workspace.
 - **`health`** imports `shared-utilities` **only**.
 
 ## Decision guide
