@@ -8154,7 +8154,7 @@
     "tests": {
       "@claw/shared-auth": {
         "runner": "jest",
-        "testFiles": 0
+        "testFiles": 1
       },
       "@claw/shared-constants": {
         "runner": "jest",
@@ -8186,7 +8186,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 29
+        "testFiles": 30
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8845,7 +8845,8 @@
       {
         "dir": "packages/shared-auth",
         "internalDeps": [
-          "@claw/shared-types"
+          "@claw/shared-types",
+          "@claw/shared-utilities"
         ],
         "name": "@claw/shared-auth",
         "scripts": [
@@ -8961,7 +8962,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 2,
-    "totalTestFiles": 613,
+    "totalTestFiles": 615,
     "workspaceCount": 25
   }
 }

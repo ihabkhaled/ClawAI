@@ -102,9 +102,9 @@ export class AuthService {
     return result;
   }
 
-  async logout(userId: string): Promise<void> {
+  async logout(userId: string, sessionId: string): Promise<void> {
     this.logger.log(`logout: logging out user ${userId}`);
-    await this.authManager.logout(userId);
+    await this.authManager.logout(userId, sessionId);
 
     await this.rabbitMQService.publish(EventPattern.USER_LOGOUT, {
       userId,

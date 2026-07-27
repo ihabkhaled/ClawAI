@@ -40,7 +40,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(@CurrentUser() user: AuthenticatedUser): Promise<void> {
-    return this.authService.logout(user.id);
+    return this.authService.logout(user.id, user.sessionId);
   }
 
   @Get('me')

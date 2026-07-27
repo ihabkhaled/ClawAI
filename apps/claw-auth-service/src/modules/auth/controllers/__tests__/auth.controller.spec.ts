@@ -45,9 +45,14 @@ describe('AuthController', () => {
     expect(result).toBe(expected);
   });
 
-  it('logout forwards user.id', async () => {
-    await controller.logout({ id: 'u1', email: 'a', role: UserRole.OPERATOR } as never);
-    expect(serviceMock.logout).toHaveBeenCalledWith('u1');
+  it('logout forwards the authenticated user and session IDs', async () => {
+    await controller.logout({
+      id: 'u1',
+      email: 'a',
+      role: UserRole.OPERATOR,
+      sessionId: 'session-1',
+    });
+    expect(serviceMock.logout).toHaveBeenCalledWith('u1', 'session-1');
   });
 
   it('me returns profile from service', async () => {

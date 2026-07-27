@@ -257,9 +257,8 @@ model RolePermission {
 model Session {
   id                  String            @id @default(cuid())
   userId              String            @map("user_id")
-  refreshToken        String            @unique @map("refresh_token")
-  refreshTokenHash    String?           @unique @map("refresh_token_hash")
-  familyId            String?           @map("family_id")
+  refreshTokenHash    String            @unique @map("refresh_token_hash")
+  familyId            String            @map("family_id")
   clientKind          SessionClientKind @default(WEB) @map("client_kind")
   clientName          String?           @map("client_name")
   usedAt              DateTime?         @map("used_at")

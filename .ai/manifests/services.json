@@ -94,7 +94,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 29,
+      "testFiles": 30,
       "testRunner": "jest"
     },
     {

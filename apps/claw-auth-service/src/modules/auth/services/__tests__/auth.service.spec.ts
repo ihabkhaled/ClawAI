@@ -78,8 +78,8 @@ describe('AuthService', () => {
 
   describe('logout', () => {
     it('delegates to manager and publishes USER_LOGOUT', async () => {
-      await service.logout('u1');
-      expect(managerMock.logout).toHaveBeenCalledWith('u1');
+      await service.logout('u1', 'session-1');
+      expect(managerMock.logout).toHaveBeenCalledWith('u1', 'session-1');
       expect(rabbitMock.publish).toHaveBeenCalledWith(
         EventPattern.USER_LOGOUT,
         expect.objectContaining({ userId: 'u1' }),

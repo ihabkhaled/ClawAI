@@ -1,9 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { SignOptions } from 'jsonwebtoken';
 import { User } from '../../../generated/prisma';
-import { AppConfig } from '../../../app/config/app.config';
-import { JwtPayload } from '../../../common/types';
-import { hashPassword, signAccessToken, signRefreshToken, verifyPassword } from '@common/utilities';
+import { hashPassword, verifyPassword } from '@common/utilities';
 import { UserRole, UserStatus } from '../../../common/enums';
 import { validatePasswordStrength } from '../../users/service.utilities/password-policy.utility';
 import {
@@ -11,17 +8,17 @@ import {
   BusinessException,
   DuplicateEntityException,
   InvalidCredentialsException,
-  InvalidRefreshTokenException,
 } from '../../../common/errors';
 import { RolesService } from '../../roles/services/roles.service';
 import { PlansRepository } from '../../plans/repositories/plans.repository';
 import { AuthRepository } from '../repositories/auth.repository';
+import { WEB_SESSION_CLIENT } from '../constants/token-session.constants';
+import { TokenSessionManager } from './token-session.manager';
 import {
   AuthUserSummary,
   LoginResult,
   RefreshResult,
   RegisterResult,
-  TokenPair,
   UserProfile,
 } from '../types/auth.types';
 
@@ -33,6 +30,7 @@ export class AuthManager {
     private readonly authRepository: AuthRepository,
     private readonly rolesService: RolesService,
     private readonly plansRepository: PlansRepository,
+    private readonly tokenSessionManager: TokenSessionManager,
   ) {}
 
   // Self-registration: always creates a USER, status ACTIVE, on the default
@@ -75,7 +73,7 @@ export class AuthManager {
     this.logger.log(
       `register: created user ${user.id} role=USER plan=${defaultPlan?.slug ?? 'none'}`,
     );
-    const tokens = await this.issueTokenPair(user);
+    const tokens = await this.tokenSessionManager.issue(user, WEB_SESSION_CLIENT);
     return { tokens, user: await this.toUserSummary(user) };
   }
 
@@ -100,7 +98,7 @@ export class AuthManager {
     }
 
     this.logger.debug(`login: credentials verified for user ${user.id}, issuing tokens`);
-    const tokens = await this.issueTokenPair(user);
+    const tokens = await this.tokenSessionManager.issue(user, WEB_SESSION_CLIENT);
     this.logger.log(`login: completed for user ${user.id}`);
 
     return { tokens, user: await this.toUserSummary(user) };
@@ -108,32 +106,12 @@ export class AuthManager {
 
   async refresh(refreshToken: string): Promise<RefreshResult> {
     this.logger.debug('refresh: validating refresh token');
-    const session = await this.authRepository.findSessionByRefreshToken(refreshToken);
-    if (!session) {
-      throw new InvalidRefreshTokenException();
-    }
-
-    if (session.expiresAt < new Date()) {
-      await this.authRepository.deleteSession(session.id);
-      throw new InvalidRefreshTokenException();
-    }
-
-    const user = await this.authRepository.findUserById(session.userId);
-    if (user?.status !== UserStatus.ACTIVE) {
-      await this.authRepository.deleteSession(session.id);
-      throw new InvalidRefreshTokenException();
-    }
-
-    await this.authRepository.deleteSession(session.id);
-
-    this.logger.log(`refresh: rotating tokens for user ${user.id}`);
-    const tokens = await this.issueTokenPair(user);
-    return { tokens };
+    return { tokens: await this.tokenSessionManager.rotate(refreshToken) };
   }
 
-  async logout(userId: string): Promise<void> {
-    this.logger.log(`logout: deleting sessions for user ${userId}`);
-    await this.authRepository.deleteSessionsByUserId(userId);
+  async logout(userId: string, sessionId: string): Promise<void> {
+    this.logger.log(`logout: revoking current session for user ${userId}`);
+    await this.tokenSessionManager.revokeCurrent(userId, sessionId);
     this.logger.log(`logout: completed for user ${userId}`);
   }
 
@@ -186,61 +164,5 @@ export class AuthManager {
       candidate = `${base}${suffix}`;
     }
     return candidate;
-  }
-
-  private async issueTokenPair(user: User): Promise<TokenPair> {
-    const config = AppConfig.get();
-
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role as UserRole,
-    };
-    const claims: Record<string, unknown> = { ...payload };
-
-    const accessToken = signAccessToken(
-      claims,
-      config.JWT_SECRET,
-      config.JWT_ACCESS_EXPIRY as SignOptions['expiresIn'],
-    );
-
-    const refreshTokenValue = signRefreshToken();
-
-    const refreshExpiryMs = this.parseExpiry(config.JWT_REFRESH_EXPIRY);
-    const expiresAt = new Date(Date.now() + refreshExpiryMs);
-
-    await this.authRepository.createSession({
-      userId: user.id,
-      refreshToken: refreshTokenValue,
-      expiresAt,
-    });
-
-    return {
-      accessToken,
-      refreshToken: refreshTokenValue,
-    };
-  }
-
-  private parseExpiry(expiry: string): number {
-    const match = expiry.match(/^(\d+)(s|m|h|d)$/);
-    if (!match) {
-      return 7 * 24 * 60 * 60 * 1000; // default 7 days
-    }
-
-    const value = Number.parseInt(match[1] ?? '7', 10);
-    const unit = match[2];
-
-    switch (unit) {
-      case 's':
-        return value * 1000;
-      case 'm':
-        return value * 60 * 1000;
-      case 'h':
-        return value * 60 * 60 * 1000;
-      case 'd':
-        return value * 24 * 60 * 60 * 1000;
-      default:
-        return 7 * 24 * 60 * 60 * 1000;
-    }
   }
 }

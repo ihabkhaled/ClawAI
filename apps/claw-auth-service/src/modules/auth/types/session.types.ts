@@ -1,11 +1,10 @@
-import type { SessionClientKind } from '../enums/session-client-kind.enum';
+import type { SessionClientKind } from '../../../generated/prisma';
 
 export interface CreateSessionInput {
   id?: string;
   userId: string;
-  refreshToken: string;
-  refreshTokenHash?: string;
-  familyId?: string;
+  refreshTokenHash: string;
+  familyId: string;
   clientKind?: SessionClientKind;
   clientName?: string;
   expiresAt: Date;
@@ -13,8 +12,6 @@ export interface CreateSessionInput {
 
 export interface SessionReplacementInput extends CreateSessionInput {
   id: string;
-  refreshTokenHash: string;
-  familyId: string;
 }
 
 export interface RotateSessionInput {
