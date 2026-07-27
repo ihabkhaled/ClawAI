@@ -34,7 +34,7 @@
     "@nestjs/platform-express": "^11.1.26",
     "@nestjs/throttler": "^6.5.0",
     "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "^7.9.0",
     "amqplib": "^2.0.1",
     "helmet": "^8.3.0",
     "ioredis": "^5.11.1",
