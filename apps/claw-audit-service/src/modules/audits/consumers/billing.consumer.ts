@@ -27,6 +27,10 @@ export class BillingAuditConsumer implements OnModuleInit {
     await this.handle('BILLING_SUBSCRIPTION_DOWNGRADED', 'MEDIUM', raw);
   }
 
+  async handleRefunded(raw: unknown): Promise<void> {
+    await this.handle('BILLING_PAYMENT_REFUNDED', 'HIGH', raw);
+  }
+
   private async handle(
     action: string,
     severity: 'LOW' | 'MEDIUM' | 'HIGH',
@@ -52,6 +56,10 @@ export class BillingAuditConsumer implements OnModuleInit {
         previousPlanId: event.previousPlanId,
         previousPlanSlug: event.previousPlanSlug,
         previousPlanPriceVersionId: event.previousPlanPriceVersionId,
+        paymentTransactionId: event.paymentTransactionId,
+        refundedAmountMinor: event.refundedAmountMinor,
+        currency: event.currency,
+        isFullRefund: event.isFullRefund,
         effectiveAt: event.effectiveAt,
         correlationId: event.correlationId,
         causationId: event.causationId,

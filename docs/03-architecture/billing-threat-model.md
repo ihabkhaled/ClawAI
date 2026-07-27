@@ -38,27 +38,30 @@ evidence that counts is a server-side capture read or a verified webhook.
 
 ### Payment forgery
 
-| Attack                                   | Control                                                                                                                                |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Forge a webhook                          | PayPal: signature verified via the gateway's verify API. Paymob: HMAC-SHA512 over the fixed field order, compared in **constant time** |
-| Replay a real webhook                    | Unique `(gateway, providerEventId)`; a duplicate is recorded and ignored                                                               |
-| Claim success from the redirect          | Redirects are display-only; entitlement requires a verified capture                                                                    |
-| Pay for session A, claim session B       | `custom_id` / `merchant_order_id` must match the session being completed                                                               |
-| Pay a valid amount in the wrong currency | Currency checked independently of amount                                                                                               |
-| Pay, then charge back                    | `CHARGEBACK` is terminal; entitlement is revoked immediately                                                                           |
-| Pay, then refund, keep access            | Reversal flags (`is_refunded`, `is_voided`, `error_occured`) are checked — `success: true` alone is never sufficient                   |
+| Attack                                   | Control                                                                                                                                 |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Forge a webhook                          | PayPal: signature verified via the gateway's verify API. Paymob: HMAC-SHA512 over the fixed field order, compared in **constant time**  |
+| Replay a real webhook                    | Unique `(gateway, providerEventId)`; a duplicate is recorded and ignored                                                                |
+| Claim success from the redirect          | Redirects are display-only; entitlement requires a verified capture                                                                     |
+| Pay for session A, claim session B       | `custom_id` / `merchant_order_id` must match the session being completed                                                                |
+| Pay a valid amount in the wrong currency | Currency checked independently of amount                                                                                                |
+| Pay, then charge back                    | `CHARGEBACK` is terminal; entitlement is revoked immediately                                                                            |
+| Race partial refunds above the capture   | A committed `PENDING` reservation reduces the balance; a DB trigger locks the charge and rejects an aggregate above the captured amount |
+| Use a partial refund to revoke service   | Partial refunds are audit-only for entitlement; only cumulative full refund or chargeback revokes paid access                           |
+| Pay, then refund, keep access            | Reversal flags (`is_refunded`, `is_voided`, `error_occured`) are checked — `success: true` alone is never sufficient                    |
 
 ### Concurrency and idempotency
 
-| Attack                          | Control                                                                         |
-| ------------------------------- | ------------------------------------------------------------------------------- |
-| Double-submit checkout          | Idempotency key scoped `(user, key)`; the replay returns the original session   |
-| Race two upgrades               | Conditional update on the quote's status — exactly one confirm wins             |
-| Race two subscriptions          | `unique_active_key` — the **database** rejects a second entitlement-bearing row |
-| Retry a capture after a timeout | Captures are never retried; the order is read back instead                      |
-| Redeliver an entitlement event  | `createMany({skipDuplicates})` on the inbox's unique `eventId`                  |
-| Deliver events out of order     | `effectiveAt` comparison — a stale event is skipped, never applied              |
-| Replay entitlement reconcile    | Durable inbox claim; only one failed-event retry claimant can proceed           |
+| Attack                          | Control                                                                                      |
+| ------------------------------- | -------------------------------------------------------------------------------------------- |
+| Double-submit checkout          | Idempotency key scoped `(user, key)`; the replay returns the original session                |
+| Race two upgrades               | Conditional update on the quote's status — exactly one confirm wins                          |
+| Race two subscriptions          | `unique_active_key` — the **database** rejects a second entitlement-bearing row              |
+| Retry a capture after a timeout | Captures are never retried; the order is read back instead                                   |
+| Redeliver an entitlement event  | `createMany({skipDuplicates})` on the inbox's unique `eventId`                               |
+| Deliver events out of order     | `effectiveAt` comparison — a stale event is skipped, never applied                           |
+| Replay entitlement reconcile    | Durable inbox claim; only one failed-event retry claimant can proceed                        |
+| Retry an ambiguous refund       | The local reservation is returned for the same operator key; the gateway is not called again |
 
 ### Internal endpoint abuse
 

@@ -116,6 +116,7 @@
       "ProrationQuote",
       "ReconciliationDivergence",
       "ReconciliationRun",
+      "Refund",
       "SeedExecution",
       "Subscription",
       "WebhookEvent"

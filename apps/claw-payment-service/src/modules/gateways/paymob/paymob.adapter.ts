@@ -242,7 +242,11 @@ export class PaymobAdapter {
     };
   }
 
-  async refund(transactionId: string, amountMinor: number): Promise<{ refundId: string }> {
+  async refund(
+    transactionId: string,
+    amountMinor: number,
+    idempotencyKey: string,
+  ): Promise<{ refundId: string }> {
     this.logger.log(`refund: transaction=${transactionId}`);
     const refund = await this.send(
       HttpMethod.POST,
@@ -250,6 +254,7 @@ export class PaymobAdapter {
       paymobRefundResponseSchema,
       { transaction_id: transactionId, amount_cents: amountMinor },
       false,
+      { 'Idempotency-Key': idempotencyKey },
     );
     if (!refund.success) {
       throw new BillingException(BillingErrorCode.PAYMENT_NOT_VERIFIED);
@@ -263,6 +268,7 @@ export class PaymobAdapter {
     schema: ZodType<T>,
     body: unknown,
     retryable: boolean,
+    additionalHeaders: Readonly<Record<string, string>> = {},
   ): Promise<T> {
     const config = AppConfig.get();
     if (config.PAYMOB_SECRET_KEY === undefined) {
@@ -277,7 +283,10 @@ export class PaymobAdapter {
       const response = await httpRequest<unknown>({
         url: `${PAYMOB_BASE_URL}${path}`,
         method,
-        headers: { Authorization: `Token ${config.PAYMOB_SECRET_KEY}` },
+        headers: {
+          Authorization: `Token ${config.PAYMOB_SECRET_KEY}`,
+          ...additionalHeaders,
+        },
         body,
         timeoutMs: config.PAYMENT_GATEWAY_TIMEOUT_MS,
       });

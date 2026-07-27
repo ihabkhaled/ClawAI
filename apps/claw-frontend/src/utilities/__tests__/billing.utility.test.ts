@@ -13,6 +13,7 @@ import {
   computeYearlySavingMinor,
   findPlanPrice,
   formatMinorAmount,
+  parseMajorAmountToMinor,
   formatQuotaLimit,
   isCurrentPlan,
   isSubscriptionEntitling,
@@ -65,6 +66,19 @@ describe('formatMinorAmount', () => {
 
   it('renders zero as a real amount, not as blank', () => {
     expect(formatMinorAmount(0, 'USD', 'en-US')).toBe('$0.00');
+  });
+});
+
+describe('parseMajorAmountToMinor', () => {
+  it('converts decimal input without floating-point arithmetic', () => {
+    expect(parseMajorAmountToMinor('19.99', 'USD')).toBe(1999);
+    expect(parseMajorAmountToMinor('5000', 'JPY')).toBe(5000);
+  });
+
+  it('rejects zero, excessive precision, and unsafe values', () => {
+    expect(parseMajorAmountToMinor('0', 'USD')).toBeNull();
+    expect(parseMajorAmountToMinor('1.999', 'USD')).toBeNull();
+    expect(parseMajorAmountToMinor('999999999999999999999', 'USD')).toBeNull();
   });
 });
 

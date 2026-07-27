@@ -66,6 +66,30 @@ describe('BillingAuditConsumer', () => {
     });
   });
 
+  it('records refund amount and scope without retaining provider payloads', async () => {
+    await consumer.handleRefunded({
+      ...event(),
+      paymentTransactionId: 'charge-1',
+      refundedAmountMinor: 2_500,
+      currency: 'USD',
+      isFullRefund: false,
+      providerResponse: { payerEmail: 'private@example.com' },
+    });
+
+    expect(audits.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'BILLING_PAYMENT_REFUNDED',
+        details: expect.objectContaining({
+          paymentTransactionId: 'charge-1',
+          refundedAmountMinor: 2_500,
+          currency: 'USD',
+          isFullRefund: false,
+        }),
+      }),
+    );
+    expect(JSON.stringify(audits.createAuditLog.mock.calls)).not.toContain('private@example.com');
+  });
+
   it('throws an invalid payload so RabbitMQ retry and DLQ remain active', async () => {
     await expect(consumer.handleDowngraded({ userId: 'user-1' })).rejects.toThrow(
       'invalid billing audit event',

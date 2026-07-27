@@ -205,6 +205,7 @@ export class PaypalWebhookService {
     }
 
     const request = {
+      originalTransactionId: original.id,
       subscriptionId: original.subscriptionId,
       userId: original.userId,
       gateway: BillingGateway.PAYPAL,

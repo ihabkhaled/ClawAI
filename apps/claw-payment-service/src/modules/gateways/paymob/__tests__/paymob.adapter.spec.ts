@@ -110,6 +110,20 @@ describe('PaymobAdapter', () => {
       });
       expect(JSON.stringify(body)).not.toContain('planId');
     });
+
+    it('refuses setup when Paymob is not fully configured', async () => {
+      jest.spyOn(AppConfig, 'get').mockReturnValue({
+        PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
+      } as unknown as ReturnType<typeof AppConfig.get>);
+
+      await expect(
+        adapter.createSetupIntention({
+          checkoutSessionId: 'setup-1',
+          billingEmail: 'user@example.com',
+        }),
+      ).rejects.toThrow();
+      expect(mockHttp).not.toHaveBeenCalled();
+    });
   });
 
   describe('verifyCallback', () => {
@@ -164,6 +178,14 @@ describe('PaymobAdapter', () => {
 
     it('rejects an unsuccessful transaction', () => {
       const payload = transaction({ success: false });
+      expect(adapter.verifyCallback(payload, signed(payload), EXPECTED)).toMatchObject({
+        mismatchReason: 'NOT_SUCCESSFUL',
+      });
+    });
+
+    it('rejects a signed payload that fails the transaction schema', () => {
+      const payload = { id: 123456 };
+
       expect(adapter.verifyCallback(payload, signed(payload), EXPECTED)).toMatchObject({
         mismatchReason: 'NOT_SUCCESSFUL',
       });
@@ -254,22 +276,33 @@ describe('PaymobAdapter', () => {
     it('refuses an unverified card-token callback', () => {
       expect(adapter.extractSavedCard(cardPayload(), 'bogus')).toBeNull();
     });
+
+    it('refuses a verified callback that does not contain saved-card fields', () => {
+      const payload = { order_id: 987 };
+
+      expect(adapter.extractSavedCard(payload, computePaymobHmac(payload, SECRET))).toBeNull();
+    });
   });
 
   describe('refund', () => {
     it('returns the refund id on success', async () => {
       mockHttp.mockResolvedValue({ ok: true, status: 200, data: { id: 'RF9', success: true } });
-      await expect(adapter.refund('123456', 50_000)).resolves.toEqual({ refundId: 'RF9' });
+      await expect(adapter.refund('123456', 50_000, 'refund-key-1')).resolves.toEqual({
+        refundId: 'RF9',
+      });
+      expect(mockHttp.mock.calls[0]?.[0]?.headers).toMatchObject({
+        'Idempotency-Key': 'refund-key-1',
+      });
     });
 
     it('throws when Paymob reports the refund as unsuccessful', async () => {
       mockHttp.mockResolvedValue({ ok: true, status: 200, data: { id: 'RF9', success: false } });
-      await expect(adapter.refund('123456', 50_000)).rejects.toThrow();
+      await expect(adapter.refund('123456', 50_000, 'refund-key-2')).rejects.toThrow();
     });
 
     it('never retries a refund', async () => {
       mockHttp.mockResolvedValue({ ok: false, status: 500, data: {} });
-      await expect(adapter.refund('1', 1)).rejects.toThrow();
+      await expect(adapter.refund('1', 1, 'refund-key-3')).rejects.toThrow();
       expect(mockHttp).toHaveBeenCalledTimes(1);
     });
   });

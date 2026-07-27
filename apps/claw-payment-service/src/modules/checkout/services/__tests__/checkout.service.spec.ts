@@ -4,6 +4,7 @@ import {
   CheckoutPurpose,
   CheckoutSessionStatus,
 } from '@claw/shared-types';
+import { Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { BillingException } from '../../../../common/errors';
@@ -168,6 +169,7 @@ describe('CheckoutService', () => {
   });
 
   it('records a stable failure code when the gateway call fails', async () => {
+    const errorLog = jest.spyOn(Logger.prototype, 'error').mockImplementation();
     sessions.findByIdempotencyKey.mockResolvedValue(null);
     sessions.create.mockResolvedValue(makeSession());
     paypal.createOrder.mockRejectedValue(new Error('paypal down: payer bob@example.com'));
@@ -177,6 +179,10 @@ describe('CheckoutService', () => {
     // A machine code, never the provider message — which here carries a payer
     // email that must not be persisted on our record.
     expect(sessions.markFailed).toHaveBeenCalledWith('cs-1', 'GATEWAY_UNAVAILABLE');
+    expect(errorLog).toHaveBeenCalledWith(
+      'start: gateway order failed session=cs-1 code=GATEWAY_UNAVAILABLE',
+    );
+    expect(JSON.stringify(errorLog.mock.calls)).not.toContain('bob@example.com');
   });
 
   it('routes a Paymob checkout through the intention API', async () => {

@@ -66,6 +66,7 @@ export const ROUTES = {
   ADMIN_AI_ACTION_POLICIES: '/admin/ai-action-policies',
   ADMIN_SUGGESTION_RULES: '/admin/suggestion-rules',
   ADMIN_WEBHOOK_DELIVERIES: '/admin/webhook-deliveries',
+  ADMIN_REFUNDS: '/admin/refunds',
   ADMIN_PLANS: '/admin/plans',
   ADMIN_PLAN_NEW: '/admin/plans/new',
   ADMIN_PLAN_EDIT: (id: string) => `/admin/plans/${id}/edit` as const,

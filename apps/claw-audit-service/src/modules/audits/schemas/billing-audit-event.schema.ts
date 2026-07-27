@@ -18,4 +18,11 @@ export const billingAuditEventSchema = z.object({
   previousPlanId: z.string().min(1).max(100).optional(),
   previousPlanSlug: z.string().min(1).max(100).optional(),
   previousPlanPriceVersionId: z.string().min(1).max(100).optional(),
+  paymentTransactionId: z.string().min(1).max(100).optional(),
+  refundedAmountMinor: z.number().int().positive().optional(),
+  currency: z
+    .string()
+    .regex(/^[A-Z]{3}$/)
+    .optional(),
+  isFullRefund: z.boolean().optional(),
 });

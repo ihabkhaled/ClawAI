@@ -87,6 +87,11 @@
       "route": "/admin/plans"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/refunds/page.tsx",
+      "kind": "page",
+      "route": "/admin/refunds"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/admin/roles/[id]/page.tsx",
       "kind": "page",
       "route": "/admin/roles/[id]"

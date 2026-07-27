@@ -1649,6 +1649,16 @@
     "claw-payment-service": [
       {
         "method": "POST",
+        "route": "/admin/billing/refunds",
+        "source": "apps/claw-payment-service/src/modules/refunds/controllers/refund.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/billing/refunds/refundable-transactions",
+        "source": "apps/claw-payment-service/src/modules/refunds/controllers/refund.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/billing/checkout-sessions",
         "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
       },
@@ -2703,5 +2713,5 @@
     ]
   },
   "generated": true,
-  "total": 533
+  "total": 535
 }

@@ -139,6 +139,28 @@ describe('EntitlementInboxService', () => {
     );
   });
 
+  it('audits a partial refund without revoking the paid entitlement', async () => {
+    const outcome = await service.handle(
+      'billing.payment.refunded',
+      validEvent({ eventId: 'evt-partial', isFullRefund: false }),
+    );
+
+    expect(outcome).toBe('APPLIED');
+    expect(repository.markProcessed).toHaveBeenCalledWith('evt-partial');
+    expect(applier.apply).not.toHaveBeenCalled();
+  });
+
+  it('continues to revoke entitlement for a cumulative full refund', async () => {
+    await service.handle(
+      'billing.payment.refunded',
+      validEvent({ eventId: 'evt-full', isFullRefund: true }),
+    );
+
+    expect(applier.apply).toHaveBeenCalledWith(
+      expect.objectContaining({ pattern: 'billing.payment.refunded' }),
+    );
+  });
+
   it('recognizes an applied downgrade as a paid entitlement plan change', () => {
     expect(ENTITLEMENT_GRANTING_PATTERNS).toContain('billing.subscription.downgraded');
   });

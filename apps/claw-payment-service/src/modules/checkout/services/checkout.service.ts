@@ -76,8 +76,7 @@ export class CheckoutService {
       // provider's error body — it can carry payer details.
       await this.sessions.markFailed(session.id, BillingErrorCode.GATEWAY_UNAVAILABLE);
       this.logger.error(
-        `start: gateway order failed session=${session.id} — ` +
-          `${error instanceof Error ? error.message : 'unknown'}`,
+        `start: gateway order failed session=${session.id} code=${BillingErrorCode.GATEWAY_UNAVAILABLE}`,
       );
       throw error;
     }
@@ -143,8 +142,7 @@ export class CheckoutService {
     } catch (error: unknown) {
       await this.sessions.markFailed(session.id, BillingErrorCode.GATEWAY_UNAVAILABLE);
       this.logger.error(
-        `startPlanChange: gateway order failed session=${session.id} — ` +
-          `${error instanceof Error ? error.message : 'unknown'}`,
+        `startPlanChange: gateway order failed session=${session.id} code=${BillingErrorCode.GATEWAY_UNAVAILABLE}`,
       );
       throw error;
     }

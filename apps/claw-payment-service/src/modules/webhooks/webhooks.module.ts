@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { BillingModule } from '../billing/billing.module';
 import { GatewaysModule } from '../gateways/gateways.module';
+import { RefundsModule } from '../refunds/refunds.module';
 import { PaymentMethodRepository } from '../subscriptions/repositories/payment-method.repository';
 import { SubscriptionRepository } from '../subscriptions/repositories/subscription.repository';
 import { PaymentMethodVaultService } from '../subscriptions/services/payment-method-vault.service';
@@ -21,7 +22,7 @@ import { PaypalWebhookService } from './services/paypal-webhook.service';
 // The repository is stateless data access, so a second provider instance is
 // harmless — a service with in-memory state would not be.
 @Module({
-  imports: [BillingModule, GatewaysModule],
+  imports: [BillingModule, GatewaysModule, RefundsModule],
   controllers: [PaypalWebhookController, PaymobWebhookController],
   providers: [
     PaypalWebhookService,

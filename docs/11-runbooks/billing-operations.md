@@ -21,14 +21,17 @@ ORDER BY created_at DESC;
 Two rows with the **same** `provider_transaction_id` are one charge. Two rows
 with different ones are two charges.
 
-1. Refund at the gateway through the adapter (never in the gateway dashboard
-   alone — the local ledger would not learn about it).
+1. Open **Admin → Refunds**, locate the captured transaction, and issue the
+   refund there (never in the gateway dashboard alone — the local ledger would
+   not learn about it).
 2. A full refund revokes entitlement immediately; a partial refund does not.
 3. Confirm a `billing.payment.refunded` row reached the outbox.
-4. Confirm auth applied it: the user's active plan should be `free`.
+4. For a full refund, confirm auth applied it: paid entitlement must be gone.
+   For a partial refund, confirm the existing entitlement remains active.
 
 Refunds are **idempotent by key**. Re-running a refund does not return the money
-twice.
+twice. A `PENDING` refund already reserves its amount, so another operator
+cannot exceed the captured total while the provider result is in flight.
 
 ---
 

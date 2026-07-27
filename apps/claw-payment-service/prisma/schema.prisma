@@ -14,6 +14,12 @@ enum CheckoutSessionPurpose {
   PAYMENT_METHOD_SETUP
 }
 
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Conventions for every model below
 // ═══════════════════════════════════════════════════════════════════════════
@@ -126,6 +132,7 @@ model Subscription {
   billingCustomer  BillingCustomer      @relation(fields: [billingCustomerId], references: [id])
   transactions     PaymentTransaction[]
   invoices         Invoice[]
+  refunds          Refund[]
   prorationQuotes  ProrationQuote[]
   checkoutSessions CheckoutSession[]
 
@@ -241,6 +248,7 @@ model PaymentTransaction {
 
   subscription    Subscription?    @relation(fields: [subscriptionId], references: [id])
   checkoutSession CheckoutSession? @relation(fields: [checkoutSessionId], references: [id])
+  refunds         Refund[]
 
   /// A provider transaction may be recorded exactly once. This unique index is
   /// what makes a duplicate capture or duplicate refund impossible under retry.
@@ -281,6 +289,7 @@ model Invoice {
 
   subscription Subscription? @relation(fields: [subscriptionId], references: [id])
   lines        InvoiceLine[]
+  refunds      Refund[]
 
   @@index([userId])
   @@index([subscriptionId])
@@ -306,6 +315,45 @@ model InvoiceLine {
 
   @@index([invoiceId])
   @@map("invoice_lines")
+}
+
+/// One operator-requested or provider-reported refund.
+///
+/// A PENDING row reserves its amount before the provider call. PostgreSQL locks
+/// the captured transaction and rejects any reservation whose aggregate would
+/// exceed the charge, so two replicas cannot over-refund under concurrency.
+model Refund {
+  id                     String       @id @default(cuid())
+  paymentTransactionId   String       @map("payment_transaction_id")
+  subscriptionId         String       @map("subscription_id")
+  invoiceId              String?      @map("invoice_id")
+  userId                 String       @map("user_id")
+  requestedByUserId      String       @map("requested_by_user_id")
+  gateway                String
+  status                 RefundStatus
+  amountMinor            Int          @map("amount_minor")
+  currency               String
+  idempotencyKey         String       @map("idempotency_key")
+  providerIdempotencyKey String       @map("provider_idempotency_key")
+  providerRefundId       String?      @map("provider_refund_id")
+  reason                 String       @db.VarChar(500)
+  failureCode            String?      @map("failure_code")
+  completedAt            DateTime?    @map("completed_at")
+  createdAt              DateTime     @default(now()) @map("created_at")
+  updatedAt              DateTime     @updatedAt @map("updated_at")
+
+  paymentTransaction PaymentTransaction @relation(fields: [paymentTransactionId], references: [id], onDelete: Restrict)
+  subscription       Subscription       @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  invoice            Invoice?           @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@unique([requestedByUserId, idempotencyKey])
+  @@unique([gateway, providerRefundId])
+  @@index([paymentTransactionId])
+  @@index([subscriptionId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("refunds")
 }
 
 /// A short-lived, server-computed price promise for a plan change. Expires so a

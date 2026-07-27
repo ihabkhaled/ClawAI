@@ -25,6 +25,7 @@ import { GatewaysModule } from '../modules/gateways/gateways.module';
 import { HealthModule } from '../modules/health/health.module';
 import { ReconciliationModule } from '../modules/reconciliation/reconciliation.module';
 import { InternalPaymentsModule } from '../modules/internal-payments/internal-payments.module';
+import { RefundsModule } from '../modules/refunds/refunds.module';
 
 @Module({
   imports: [
@@ -100,6 +101,7 @@ import { InternalPaymentsModule } from '../modules/internal-payments/internal-pa
     WebhooksModule,
     ReconciliationModule,
     InternalPaymentsModule,
+    RefundsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

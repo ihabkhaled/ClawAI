@@ -27,6 +27,7 @@ export type { CheckoutGatewayHandoff, CheckoutSessionView } from './checkout.typ
 export type { ProrationInput, ProrationQuote, ProrationResult } from './proration.type';
 export type { InvoiceLineView, InvoiceView } from './invoice.type';
 export type { PaymentMethodView } from './payment-method.type';
+export type { CreateRefundRequest, RefundableTransactionView, RefundView } from './refund.type';
 export type {
   AuthoritativeBillingEntitlement,
   InternalPaymentStatus,

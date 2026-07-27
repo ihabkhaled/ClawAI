@@ -163,6 +163,7 @@ export type TranslationDictionary = {
     adminAiActionPolicies: string;
     adminSuggestionRules: string;
     adminWebhookDeliveries: string;
+    adminRefunds: string;
     adminPlans: string;
     adminRoles: string;
     adminRuntimeProgress: string;
@@ -3016,6 +3017,29 @@ export type TranslationDictionary = {
       privacy: string;
       confidence: string;
     };
+  };
+  adminRefunds: {
+    title: string;
+    description: string;
+    loading: string;
+    error: string;
+    empty: string;
+    user: string;
+    captured: string;
+    remaining: string;
+    remainingBalance: string;
+    capturedOn: string;
+    refundAction: string;
+    refunding: string;
+    dialogTitle: string;
+    dialogDescription: string;
+    amount: string;
+    maximum: string;
+    reason: string;
+    confirm: string;
+    invalidAmount: string;
+    success: string;
+    failed: string;
   };
   adminPlans: {
     title: string;
