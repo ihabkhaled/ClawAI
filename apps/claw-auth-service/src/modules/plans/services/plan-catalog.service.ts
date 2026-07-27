@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { EntityNotFoundException } from '../../../common/errors';
+import { type BillingIntervalKind } from '../../../generated/prisma';
 import { PlanBillingRepository } from '../repositories/plan-billing.repository';
 import { PlansRepository } from '../repositories/plans.repository';
 import {
@@ -12,7 +14,6 @@ import {
   toFeatureRuleView,
   toPriceVersionView,
 } from '../utilities/plan-catalog.utility';
-import { type BillingIntervalKind } from '../../../generated/prisma';
 
 /**
  * Serves the plan catalog to the payment service.
@@ -85,9 +86,37 @@ export class PlanCatalogService {
     return price === null ? null : toPriceVersionView(price);
   }
 
+  async listPriceVersions(planId: string): Promise<PlanPriceVersionView[]> {
+    await this.requirePlan(planId);
+    const prices = await this.billing.listPricesForPlan(planId);
+    return prices.map(toPriceVersionView);
+  }
+
+  async publishPrice(input: {
+    planId: string;
+    billingInterval: BillingIntervalKind;
+    currency: string;
+    amountMinor: number;
+    createdByUserId: string;
+  }): Promise<PlanPriceVersionView> {
+    await this.requirePlan(input.planId);
+    const price = await this.billing.publishNewPrice(input);
+    this.logger.log(
+      `publishPrice: plan=${input.planId} interval=${input.billingInterval} version=${String(price.version)}`,
+    );
+    return toPriceVersionView(price);
+  }
+
   async listFeatureRules(planId: string): Promise<PlanFeatureRuleView[]> {
     this.logger.debug(`listFeatureRules: plan=${planId}`);
     const rules = await this.billing.listFeatureRules(planId);
     return rules.map(toFeatureRuleView);
+  }
+
+  private async requirePlan(planId: string): Promise<void> {
+    const plan = await this.plans.findById(planId);
+    if (plan === null) {
+      throw new EntityNotFoundException('Plan', planId);
+    }
   }
 }

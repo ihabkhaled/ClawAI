@@ -98,6 +98,15 @@ describe('apiClient', () => {
     );
   });
 
+  it('requests binary downloads as blobs instead of query parameters', async () => {
+    mockResponse(new Blob(['pdf'], { type: 'application/pdf' }));
+
+    await apiClient.getBlob('/billing/invoices/invoice-1/pdf');
+
+    expect(requests[0]?.config).toEqual(expect.objectContaining({ responseType: 'blob' }));
+    expect(requests[0]?.config.params).toBeUndefined();
+  });
+
   it('sends JSON body for POST requests', async () => {
     mockResponse({ id: 1 });
     const body = { name: 'Test', email: 'test@example.com' };

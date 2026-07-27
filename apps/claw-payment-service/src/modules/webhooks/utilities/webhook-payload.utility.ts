@@ -31,6 +31,14 @@ export function asBoundedString(value: unknown, maxLength: number): string | nul
   return value;
 }
 
+export function asBoundedIdentifier(value: unknown, maxLength: number): string | null {
+  if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) {
+    const identifier = String(value);
+    return identifier.length <= maxLength ? identifier : null;
+  }
+  return asBoundedString(value, maxLength);
+}
+
 export function asEventId(value: unknown): string | null {
   return asBoundedString(value, WEBHOOK_EVENT_ID_MAX_LENGTH);
 }

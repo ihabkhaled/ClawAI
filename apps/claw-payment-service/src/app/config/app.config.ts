@@ -22,6 +22,31 @@ const paymobConfigSchema = z.object({
   PAYMOB_CURRENCY: z.string().length(3).default('EGP'),
 });
 
+const emailConfigSchema = z.object({
+  CONTACT_EMAIL_ENABLED: z.enum(['true', 'false']).default('false'),
+  CONTACT_EMAIL_PROVIDER: z.enum(['none', 'smtp']).default('none'),
+  CONTACT_EMAIL_FROM: z.string().email().default('no-reply@claw.local'),
+  CONTACT_SMTP_HOST: z.string().min(1).optional(),
+  CONTACT_SMTP_PORT: z.coerce.number().int().positive().default(587),
+  CONTACT_SMTP_SECURE: z.enum(['true', 'false']).default('false'),
+  CONTACT_SMTP_USER: z.string().min(1).optional(),
+  CONTACT_SMTP_PASS: z.string().min(1).optional(),
+});
+
+function requireSmtpValue(
+  context: z.RefinementCtx,
+  key: 'CONTACT_SMTP_HOST' | 'CONTACT_SMTP_USER' | 'CONTACT_SMTP_PASS',
+  value: string | undefined,
+): void {
+  if (value === undefined) {
+    context.addIssue({
+      code: 'custom',
+      path: [key],
+      message: `${key} is required when SMTP email delivery is enabled`,
+    });
+  }
+}
+
 const appConfigSchema = z
   .object({
     NODE_ENV: z.string().default('development'),
@@ -76,6 +101,7 @@ const appConfigSchema = z
   })
   .and(paypalConfigSchema)
   .and(paymobConfigSchema)
+  .and(emailConfigSchema)
   .superRefine((config, ctx) => {
     // Production must fail fast on an insecure default rather than boot into a
     // state where a real card payment can be taken against sandbox credentials.
@@ -89,6 +115,11 @@ const appConfigSchema = z
           message: 'PAYPAL_ENV must be "live" when NODE_ENV=production and PayPal is configured',
         });
       }
+    }
+    if (config.CONTACT_EMAIL_ENABLED === 'true' && config.CONTACT_EMAIL_PROVIDER === 'smtp') {
+      requireSmtpValue(ctx, 'CONTACT_SMTP_HOST', config.CONTACT_SMTP_HOST);
+      requireSmtpValue(ctx, 'CONTACT_SMTP_USER', config.CONTACT_SMTP_USER);
+      requireSmtpValue(ctx, 'CONTACT_SMTP_PASS', config.CONTACT_SMTP_PASS);
     }
   });
 

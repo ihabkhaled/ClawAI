@@ -101,6 +101,15 @@ export class SubscriptionRepository {
     });
   }
 
+  async countGraceExpired(now: Date): Promise<number> {
+    return this.prisma.subscription.count({
+      where: {
+        status: SubscriptionStatus.PAST_DUE,
+        gracePeriodEndsAt: { not: null, lte: now },
+      },
+    });
+  }
+
   // Downgrades that have come due.
   async findDueScheduledChanges(now: Date, limit: number): Promise<Subscription[]> {
     this.logger.debug(`findDueScheduledChanges: before=${now.toISOString()}`);
@@ -108,6 +117,12 @@ export class SubscriptionRepository {
       where: { scheduledEffectiveAt: { not: null, lte: now } },
       orderBy: { scheduledEffectiveAt: 'asc' },
       take: limit,
+    });
+  }
+
+  async countDueScheduledChanges(now: Date): Promise<number> {
+    return this.prisma.subscription.count({
+      where: { scheduledEffectiveAt: { not: null, lte: now } },
     });
   }
 
@@ -128,5 +143,43 @@ export class SubscriptionRepository {
   async countByStatus(status: SubscriptionStatus): Promise<number> {
     this.logger.debug(`countByStatus: ${status}`);
     return this.prisma.subscription.count({ where: { status } });
+  }
+
+  async findProviderBoundNonTerminal(limit: number): Promise<Subscription[]> {
+    return this.prisma.subscription.findMany({
+      where: {
+        encryptedGatewaySubscriptionId: { not: null },
+        status: {
+          in: [
+            SubscriptionStatus.PENDING,
+            SubscriptionStatus.INCOMPLETE,
+            SubscriptionStatus.ACTIVE,
+            SubscriptionStatus.PAST_DUE,
+            SubscriptionStatus.PAUSED,
+            SubscriptionStatus.CANCEL_AT_PERIOD_END,
+          ],
+        },
+      },
+      orderBy: { updatedAt: 'asc' },
+      take: limit,
+    });
+  }
+
+  async countProviderBoundNonTerminal(): Promise<number> {
+    return this.prisma.subscription.count({
+      where: {
+        encryptedGatewaySubscriptionId: { not: null },
+        status: {
+          in: [
+            SubscriptionStatus.PENDING,
+            SubscriptionStatus.INCOMPLETE,
+            SubscriptionStatus.ACTIVE,
+            SubscriptionStatus.PAST_DUE,
+            SubscriptionStatus.PAUSED,
+            SubscriptionStatus.CANCEL_AT_PERIOD_END,
+          ],
+        },
+      },
+    });
   }
 }

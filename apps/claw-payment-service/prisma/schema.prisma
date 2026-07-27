@@ -7,6 +7,25 @@ datasource db {
   provider = "postgresql"
 }
 
+enum CheckoutSessionPurpose {
+  NEW_SUBSCRIPTION
+  UPGRADE
+  RENEWAL
+  PAYMENT_METHOD_SETUP
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum InvoiceDeliveryStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Conventions for every model below
 // ═══════════════════════════════════════════════════════════════════════════
@@ -28,9 +47,9 @@ datasource db {
 
 /// Local mirror of a gateway customer. One row per (user, gateway).
 model BillingCustomer {
-  id     String @id @default(cuid())
+  id      String @id @default(cuid())
   /// Auth-service user id. Opaque string, no FK — cross-DB joins are banned.
-  userId String @map("user_id")
+  userId  String @map("user_id")
   gateway String
 
   /// AES-256-GCM ciphertext of the gateway's customer id.
@@ -63,9 +82,9 @@ model BillingCustomer {
 /// unique index on a nullable column is how "one active per user" becomes a
 /// database guarantee rather than an application convention that races.
 model Subscription {
-  id                 String @id @default(cuid())
-  userId             String @map("user_id")
-  billingCustomerId  String @map("billing_customer_id")
+  id                String @id @default(cuid())
+  userId            String @map("user_id")
+  billingCustomerId String @map("billing_customer_id")
 
   /// Auth-service plan + the EXACT immutable price version purchased. Retaining
   /// the version is what stops a later price change from rewriting history.
@@ -73,7 +92,7 @@ model Subscription {
   planSlug           String @map("plan_slug")
   planPriceVersionId String @map("plan_price_version_id")
 
-  gateway String
+  gateway                        String
   /// AES-256-GCM ciphertext of the gateway's subscription id.
   encryptedGatewaySubscriptionId String? @map("encrypted_gateway_subscription_id")
   encryptionKeyVersion           Int     @default(1) @map("encryption_key_version")
@@ -102,6 +121,8 @@ model Subscription {
   scheduledPlanId             String?   @map("scheduled_plan_id")
   scheduledPlanSlug           String?   @map("scheduled_plan_slug")
   scheduledPlanPriceVersionId String?   @map("scheduled_plan_price_version_id")
+  scheduledAmountMinor        Int?      @map("scheduled_amount_minor")
+  scheduledBillingInterval    String?   @map("scheduled_billing_interval")
   scheduledEffectiveAt        DateTime? @map("scheduled_effective_at")
 
   /// Optimistic concurrency. Two simultaneous upgrades cannot both commit:
@@ -114,9 +135,10 @@ model Subscription {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  billingCustomer  BillingCustomer     @relation(fields: [billingCustomerId], references: [id])
+  billingCustomer  BillingCustomer      @relation(fields: [billingCustomerId], references: [id])
   transactions     PaymentTransaction[]
   invoices         Invoice[]
+  refunds          Refund[]
   prorationQuotes  ProrationQuote[]
   checkoutSessions CheckoutSession[]
 
@@ -133,40 +155,45 @@ model Subscription {
 /// A server-priced checkout attempt. The ONLY object permitted to carry an
 /// amount into a gateway, and immutable once created.
 model CheckoutSession {
-  id     String @id @default(cuid())
-  userId String @map("user_id")
+  id           String  @id @default(cuid())
+  userId       String  @map("user_id")
+  /// Frozen recipient for the invoice created from this checkout. This is not
+  /// used as identity; ownership always comes from the verified user id.
+  billingEmail String? @map("billing_email")
 
-  purpose String
+  purpose CheckoutSessionPurpose
   status  String
   gateway String
 
-  planId             String @map("plan_id")
-  planSlug           String @map("plan_slug")
-  planPriceVersionId String @map("plan_price_version_id")
-  billingInterval    String @map("billing_interval")
+  planId             String? @map("plan_id")
+  planSlug           String? @map("plan_slug")
+  planPriceVersionId String? @map("plan_price_version_id")
+  billingInterval    String? @map("billing_interval")
 
   /// Canonical USD price of the bound price version.
-  baseAmountMinor Int    @map("base_amount_minor")
-  baseCurrency    String @map("base_currency")
+  baseAmountMinor   Int?    @map("base_amount_minor")
+  baseCurrency      String? @map("base_currency")
   /// What the gateway is actually asked to charge (FX-converted for Paymob).
   /// The provider's reported amount is revalidated against THIS value.
-  chargeAmountMinor Int    @map("charge_amount_minor")
-  chargeCurrency    String @map("charge_currency")
+  chargeAmountMinor Int?    @map("charge_amount_minor")
+  chargeCurrency    String? @map("charge_currency")
 
   /// Frozen FX inputs, so a completed charge can be re-derived years later.
-  fxQuoteId        String? @map("fx_quote_id")
+  fxQuoteId         String? @map("fx_quote_id")
   fxFinalRateScaled BigInt? @map("fx_final_rate_scaled")
 
   /// Caller-supplied idempotency key, scoped by (user, operation).
-  idempotencyKey String @map("idempotency_key")
+  idempotencyKey           String    @map("idempotency_key")
   /// Random nonce echoed by the return page and checked against this row, so a
   /// redirect cannot be replayed or forged for another session.
-  stateNonce     String @map("state_nonce")
+  stateNonce               String    @map("state_nonce")
+  /// Explicit consent recorded by ClawAI before a standalone card setup starts.
+  paymentMethodConsentedAt DateTime? @map("payment_method_consented_at")
 
   providerOrderId   String? @map("provider_order_id")
   hostedCheckoutUrl String? @map("hosted_checkout_url")
 
-  subscriptionId String? @map("subscription_id")
+  subscriptionId   String? @map("subscription_id")
   /// Consumed proration quote, for an upgrade.
   prorationQuoteId String? @map("proration_quote_id")
 
@@ -202,8 +229,8 @@ model PaymentTransaction {
   status  String
 
   /// What ClawAI intended to charge, in the canonical plan currency.
-  amountMinor Int    @map("amount_minor")
-  currency    String
+  amountMinor         Int     @map("amount_minor")
+  currency            String
   /// What the provider reported charging. Divergence from the above is a
   /// reconciliation finding, never silently accepted.
   providerAmountMinor Int?    @map("provider_amount_minor")
@@ -214,22 +241,23 @@ model PaymentTransaction {
   idempotencyKey        String  @map("idempotency_key")
 
   /// Immutable snapshots so an invoice can be reproduced exactly.
-  priceSnapshotJson Json?   @map("price_snapshot_json")
-  fxSnapshotJson    Json?   @map("fx_snapshot_json")
+  priceSnapshotJson Json? @map("price_snapshot_json")
+  fxSnapshotJson    Json? @map("fx_snapshot_json")
 
   /// Stable machine code only. Never a provider error body.
   failureCode String? @map("failure_code")
 
-  capturedAt DateTime? @map("captured_at")
-  refundedAt DateTime? @map("refunded_at")
+  capturedAt            DateTime? @map("captured_at")
+  refundedAt            DateTime? @map("refunded_at")
   /// Set when the original charge this row reverses is known.
-  reversesTransactionId String? @map("reverses_transaction_id")
+  reversesTransactionId String?   @map("reverses_transaction_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   subscription    Subscription?    @relation(fields: [subscriptionId], references: [id])
   checkoutSession CheckoutSession? @relation(fields: [checkoutSessionId], references: [id])
+  refunds         Refund[]
 
   /// A provider transaction may be recorded exactly once. This unique index is
   /// what makes a duplicate capture or duplicate refund impossible under retry.
@@ -268,8 +296,10 @@ model Invoice {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  subscription Subscription?    @relation(fields: [subscriptionId], references: [id])
   lines        InvoiceLine[]
+  refunds      Refund[]
+  delivery     InvoiceDelivery?
 
   @@index([userId])
   @@index([subscriptionId])
@@ -295,6 +325,66 @@ model InvoiceLine {
 
   @@index([invoiceId])
   @@map("invoice_lines")
+}
+
+/// Durable, retryable delivery intent created in the same transaction as its
+/// immutable invoice. One invoice can have at most one original delivery.
+model InvoiceDelivery {
+  id             String                @id @default(cuid())
+  invoiceId      String                @unique @map("invoice_id")
+  recipientEmail String                @map("recipient_email")
+  status         InvoiceDeliveryStatus @default(PENDING)
+  attempts       Int                   @default(0)
+  availableAt    DateTime              @default(now()) @map("available_at")
+  deliveredAt    DateTime?             @map("delivered_at")
+  /// Stable machine code only. Provider error bodies are never persisted.
+  lastErrorCode  String?               @map("last_error_code")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@index([status, availableAt])
+  @@map("invoice_deliveries")
+}
+
+/// One operator-requested or provider-reported refund.
+///
+/// A PENDING row reserves its amount before the provider call. PostgreSQL locks
+/// the captured transaction and rejects any reservation whose aggregate would
+/// exceed the charge, so two replicas cannot over-refund under concurrency.
+model Refund {
+  id                     String       @id @default(cuid())
+  paymentTransactionId   String       @map("payment_transaction_id")
+  subscriptionId         String       @map("subscription_id")
+  invoiceId              String?      @map("invoice_id")
+  userId                 String       @map("user_id")
+  requestedByUserId      String       @map("requested_by_user_id")
+  gateway                String
+  status                 RefundStatus
+  amountMinor            Int          @map("amount_minor")
+  currency               String
+  idempotencyKey         String       @map("idempotency_key")
+  providerIdempotencyKey String       @map("provider_idempotency_key")
+  providerRefundId       String?      @map("provider_refund_id")
+  reason                 String       @db.VarChar(500)
+  failureCode            String?      @map("failure_code")
+  completedAt            DateTime?    @map("completed_at")
+  createdAt              DateTime     @default(now()) @map("created_at")
+  updatedAt              DateTime     @updatedAt @map("updated_at")
+
+  paymentTransaction PaymentTransaction @relation(fields: [paymentTransactionId], references: [id], onDelete: Restrict)
+  subscription       Subscription       @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  invoice            Invoice?           @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@unique([requestedByUserId, idempotencyKey])
+  @@unique([gateway, providerRefundId])
+  @@index([paymentTransactionId])
+  @@index([subscriptionId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("refunds")
 }
 
 /// A short-lived, server-computed price promise for a plan change. Expires so a
@@ -396,15 +486,15 @@ model PaymentMethod {
 /// by the unique index rather than by re-running handlers and hoping they are
 /// idempotent.
 model WebhookEvent {
-  id      String @id @default(cuid())
-  gateway String
+  id              String @id @default(cuid())
+  gateway         String
   /// The gateway's own event id.
   providerEventId String @map("provider_event_id")
   eventType       String @map("event_type")
 
   /// SHA-256 of the raw body. Proves duplicate delivery without retaining a
   /// payload that may contain payer details.
-  payloadHash String @map("payload_hash")
+  payloadHash    String  @map("payload_hash")
   /// Result of constant-time signature/HMAC verification.
   signatureValid Boolean @map("signature_valid")
 
@@ -448,9 +538,9 @@ model IdempotencyRecord {
   responseJson       Json? @map("response_json")
   responseStatusCode Int?  @map("response_status_code")
 
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  expiresAt DateTime @map("expires_at")
 
   @@unique([userId, operation, key])
   @@index([expiresAt])
@@ -473,8 +563,8 @@ model OutboxEvent {
   aggregateId   String @map("aggregate_id")
   payloadJson   Json   @map("payload_json")
 
-  status   String
-  attempts Int    @default(0)
+  status        String
+  attempts      Int     @default(0)
   /// Sanitized machine code only.
   lastErrorCode String? @map("last_error_code")
 
@@ -494,12 +584,12 @@ model OutboxEvent {
 /// Recorded BEFORE the event is applied and keyed on the envelope eventId, so
 /// RabbitMQ's at-least-once delivery cannot double-apply.
 model InboxEvent {
-  id      String @id @default(cuid())
-  eventId String @unique @map("event_id")
-  pattern String
+  id       String @id @default(cuid())
+  eventId  String @unique @map("event_id")
+  pattern  String
   producer String
 
-  status String
+  status    String
   /// Sanitized machine code only.
   errorCode String? @map("error_code")
 
@@ -583,4 +673,55 @@ model SeedExecution {
   @@index([name])
   @@index([status])
   @@map("seed_executions")
+}
+
+/// One durable execution of the billing reconciliation sweep. Counts make a
+/// partial batch observable without retaining gateway response bodies.
+model ReconciliationRun {
+  id String @id @default(cuid())
+
+  status           String
+  scannedCount     Int    @default(0) @map("scanned_count")
+  repairedCount    Int    @default(0) @map("repaired_count")
+  quarantinedCount Int    @default(0) @map("quarantined_count")
+  unprocessedCount Int    @default(0) @map("unprocessed_count")
+
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  /// Sanitized machine code only. Never a gateway body or stack trace.
+  errorCode   String?   @map("error_code")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  divergences ReconciliationDivergence[]
+
+  @@index([status])
+  @@index([startedAt])
+  @@map("reconciliation_runs")
+}
+
+/// A classified difference between local billing state and an authoritative
+/// provider read. Stable status facts only: no payer data or provider payloads.
+model ReconciliationDivergence {
+  id    String @id @default(cuid())
+  runId String @map("run_id")
+
+  entityType     String    @map("entity_type")
+  entityId       String    @map("entity_id")
+  gateway        String
+  classification String
+  localStatus    String    @map("local_status")
+  providerStatus String?   @map("provider_status")
+  resolution     String
+  repairedAt     DateTime? @map("repaired_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  run ReconciliationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, entityType, entityId, classification])
+  @@index([entityType, entityId])
+  @@index([classification])
+  @@index([resolution])
+  @@map("reconciliation_divergences")
 }

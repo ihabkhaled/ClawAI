@@ -61,6 +61,12 @@ export type BillingSubscriptionDowngradeScheduledPayload = BillingSubscriptionEv
   scheduledEffectiveAt: string;
 };
 
+export type BillingSubscriptionDowngradedPayload = BillingSubscriptionEventBase & {
+  previousPlanId: string;
+  previousPlanSlug: string;
+  previousPlanPriceVersionId: string;
+};
+
 export type BillingSubscriptionCancelledPayload = BillingSubscriptionEventBase & {
   cancelAtPeriodEnd: boolean;
   cancelledAt: string;
@@ -107,6 +113,7 @@ export type BillingEventPayload =
   | BillingSubscriptionRenewedPayload
   | BillingSubscriptionUpgradedPayload
   | BillingSubscriptionDowngradeScheduledPayload
+  | BillingSubscriptionDowngradedPayload
   | BillingSubscriptionCancelledPayload
   | BillingSubscriptionExpiredPayload
   | BillingSubscriptionPastDuePayload

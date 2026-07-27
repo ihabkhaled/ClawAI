@@ -40,7 +40,7 @@ export function PlanForm({
             aria-invalid={fieldErrors.name !== undefined}
           />
           {fieldErrors.name !== undefined ? (
-            <p className="text-xs text-destructive">{fieldErrors.name}</p>
+            <p className="text-destructive text-xs">{fieldErrors.name}</p>
           ) : null}
         </div>
 
@@ -56,9 +56,9 @@ export function PlanForm({
             placeholder="pro"
             aria-invalid={fieldErrors.slug !== undefined}
           />
-          <p className="text-xs text-muted-foreground">{t('adminPlans.form.slugHelp')}</p>
+          <p className="text-muted-foreground text-xs">{t('adminPlans.form.slugHelp')}</p>
           {fieldErrors.slug !== undefined ? (
-            <p className="text-xs text-destructive">{fieldErrors.slug}</p>
+            <p className="text-destructive text-xs">{fieldErrors.slug}</p>
           ) : null}
         </div>
       </div>
@@ -74,58 +74,8 @@ export function PlanForm({
           rows={2}
         />
         {fieldErrors.description !== undefined ? (
-          <p className="text-xs text-destructive">{fieldErrors.description}</p>
+          <p className="text-destructive text-xs">{fieldErrors.description}</p>
         ) : null}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="grid gap-2">
-          <label htmlFor="plan-price-monthly" className="text-sm font-medium">
-            {t('adminPlans.form.priceMonthly')}
-          </label>
-          <Input
-            id="plan-price-monthly"
-            type="number"
-            min={0}
-            value={state.priceMonthly}
-            onChange={(e) => setField('priceMonthly', e.target.value)}
-            aria-invalid={fieldErrors.priceMonthly !== undefined}
-          />
-          {fieldErrors.priceMonthly !== undefined ? (
-            <p className="text-xs text-destructive">{fieldErrors.priceMonthly}</p>
-          ) : null}
-        </div>
-        <div className="grid gap-2">
-          <label htmlFor="plan-price-yearly" className="text-sm font-medium">
-            {t('adminPlans.form.priceYearly')}
-          </label>
-          <Input
-            id="plan-price-yearly"
-            type="number"
-            min={0}
-            value={state.priceYearly}
-            onChange={(e) => setField('priceYearly', e.target.value)}
-            aria-invalid={fieldErrors.priceYearly !== undefined}
-          />
-          {fieldErrors.priceYearly !== undefined ? (
-            <p className="text-xs text-destructive">{fieldErrors.priceYearly}</p>
-          ) : null}
-        </div>
-        <div className="grid gap-2">
-          <label htmlFor="plan-currency" className="text-sm font-medium">
-            {t('adminPlans.form.currency')}
-          </label>
-          <Input
-            id="plan-currency"
-            value={state.currency}
-            onChange={(e) => setField('currency', e.target.value)}
-            placeholder="USD"
-            aria-invalid={fieldErrors.currency !== undefined}
-          />
-          {fieldErrors.currency !== undefined ? (
-            <p className="text-xs text-destructive">{fieldErrors.currency}</p>
-          ) : null}
-        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -141,11 +91,11 @@ export function PlanForm({
             onChange={(e) => setField('dailyTokenQuota', e.target.value)}
             aria-invalid={fieldErrors.dailyTokenQuota !== undefined}
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             {t('adminPlans.form.dailyTokenQuotaHelp')}
           </p>
           {fieldErrors.dailyTokenQuota !== undefined ? (
-            <p className="text-xs text-destructive">{fieldErrors.dailyTokenQuota}</p>
+            <p className="text-destructive text-xs">{fieldErrors.dailyTokenQuota}</p>
           ) : null}
         </div>
         <div className="grid gap-2">
@@ -162,7 +112,7 @@ export function PlanForm({
             aria-invalid={fieldErrors.monthlyTokenQuota !== undefined}
           />
           {fieldErrors.monthlyTokenQuota !== undefined ? (
-            <p className="text-xs text-destructive">{fieldErrors.monthlyTokenQuota}</p>
+            <p className="text-destructive text-xs">{fieldErrors.monthlyTokenQuota}</p>
           ) : null}
         </div>
       </div>
@@ -247,7 +197,7 @@ export function PlanForm({
         </div>
       </div>
 
-      <div className="grid gap-3 rounded-lg border border-border p-4">
+      <div className="border-border grid gap-3 rounded-lg border p-4">
         <h3 className="text-sm font-semibold">{t('adminPlans.form.featureGates')}</h3>
         <div className="flex items-center justify-between gap-2">
           <label htmlFor="plan-is-public" className="text-sm">
@@ -294,7 +244,7 @@ export function PlanForm({
             <label htmlFor="plan-allow-critic" className="text-sm">
               {t('adminPlans.gate.allowCriticReview')}
             </label>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {t('adminPlans.featureAllowCriticReviewHint')}
             </p>
           </div>
@@ -338,7 +288,7 @@ export function PlanForm({
 
       {submitErrorMessage !== null ? (
         <p
-          className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm text-destructive"
+          className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-2 text-sm"
           role="alert"
         >
           {submitErrorMessage}

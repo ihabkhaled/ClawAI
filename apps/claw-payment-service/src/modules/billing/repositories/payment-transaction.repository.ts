@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PaymentTransactionType } from '@claw/shared-types';
+import { PaymentTransactionStatus, PaymentTransactionType } from '@claw/shared-types';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type PaymentTransaction, type Prisma } from '../../../generated/prisma';
 import { type RecordTransactionInput } from '../types/billing-record.types';
+import { type ReconciliationTransactionCandidate } from '../types/billing-reconciliation.types';
 
 /**
  * Data access for payment transactions. Append-only: a correction is a new
@@ -98,5 +99,38 @@ export class PaymentTransactionRepository {
   /** Charges with no entitlement event behind them. A reconciliation input. */
   async countByType(type: PaymentTransactionType): Promise<number> {
     return this.prisma.paymentTransaction.count({ where: { type } });
+  }
+
+  async listNonTerminalForReconciliation(
+    limit: number,
+  ): Promise<ReconciliationTransactionCandidate[]> {
+    return this.prisma.paymentTransaction.findMany({
+      where: {
+        status: {
+          in: [
+            PaymentTransactionStatus.PENDING,
+            PaymentTransactionStatus.AUTHORIZED,
+            PaymentTransactionStatus.UNRESOLVED,
+          ],
+        },
+      },
+      include: { checkoutSession: true },
+      orderBy: { createdAt: 'asc' },
+      take: limit,
+    });
+  }
+
+  async countNonTerminalForReconciliation(): Promise<number> {
+    return this.prisma.paymentTransaction.count({
+      where: {
+        status: {
+          in: [
+            PaymentTransactionStatus.PENDING,
+            PaymentTransactionStatus.AUTHORIZED,
+            PaymentTransactionStatus.UNRESOLVED,
+          ],
+        },
+      },
+    });
   }
 }

@@ -61,9 +61,6 @@ export type CreatePlanRequest = {
   name: string;
   slug: string;
   description?: string;
-  priceMonthly?: number;
-  priceYearly?: number;
-  currency?: string;
   displayOrder?: number;
   isPublic?: boolean;
   dailyTokenQuota: number;
@@ -139,9 +136,6 @@ export type PlanFormState = {
   name: string;
   slug: string;
   description: string;
-  priceMonthly: string;
-  priceYearly: string;
-  currency: string;
   displayOrder: string;
   isPublic: boolean;
   dailyTokenQuota: string;
@@ -295,6 +289,7 @@ export type PlanRowProps = {
   onSetDefault: (id: string) => void;
   onEditHref: string;
   onModelAccessHref: string;
+  onPricesHref: string;
   t: TranslateFunction;
 };
 

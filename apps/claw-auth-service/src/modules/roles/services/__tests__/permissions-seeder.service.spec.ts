@@ -39,6 +39,7 @@ const stubAppConfig = (seedReconcile: boolean): void => {
     JWT_REFRESH_EXPIRY: '7d',
     ENCRYPTION_KEY: '0'.repeat(64),
     INTER_SERVICE_AUTH_TOKEN: 's'.repeat(32),
+    PAYMENT_SERVICE_URL: 'http://payment-service:4018',
     SEED_RECONCILE_PERMISSIONS: seedReconcile,
   });
 };

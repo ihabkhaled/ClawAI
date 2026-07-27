@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { EventPattern } from '@claw/shared-types';
 
 import {
   PAYMENT_SERVICE_PRODUCER,
@@ -82,8 +83,14 @@ export class EntitlementInboxService {
       entitlementValidUntil: string;
       planId?: string;
       subscriptionId?: string;
+      isFullRefund?: boolean;
     },
   ): Promise<InboxApplyOutcome> {
+    if (pattern === EventPattern.BILLING_PAYMENT_REFUNDED && event.isFullRefund === false) {
+      await this.repository.markProcessed(event.eventId);
+      this.logger.log(`applyClaimed: partial refund ${event.eventId} recorded without revocation`);
+      return 'APPLIED';
+    }
     try {
       const applied = await this.applier.apply({
         pattern,

@@ -1,4 +1,10 @@
-import { BillingGateway, BillingInterval, CheckoutSessionStatus } from '@claw/shared-types';
+import {
+  BillingGateway,
+  BillingInterval,
+  CheckoutPurpose,
+  CheckoutSessionStatus,
+} from '@claw/shared-types';
+import { Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { BillingException } from '../../../../common/errors';
@@ -31,8 +37,12 @@ function makeSession(overrides: Record<string, unknown> = {}): Record<string, un
   return {
     id: 'cs-1',
     userId: 'user-1',
+    purpose: CheckoutPurpose.NEW_SUBSCRIPTION,
     status: CheckoutSessionStatus.CREATED,
     gateway: BillingGateway.PAYPAL,
+    planId: 'plan-pro',
+    planSlug: 'pro',
+    planPriceVersionId: 'ppv-1',
     billingInterval: BillingInterval.MONTHLY,
     chargeAmountMinor: 1999,
     chargeCurrency: 'USD',
@@ -40,6 +50,7 @@ function makeSession(overrides: Record<string, unknown> = {}): Record<string, un
     baseCurrency: 'USD',
     idempotencyKey: 'idem-abcdefgh',
     stateNonce: 'nonce-value',
+    paymentMethodConsentedAt: null,
     hostedCheckoutUrl: null,
     providerOrderId: null,
     expiresAt: new Date('2026-08-01T00:00:00.000Z'),
@@ -72,13 +83,11 @@ describe('CheckoutService', () => {
     };
     charges = { resolve: jest.fn().mockResolvedValue(CHARGE) };
     paypal = {
-      createOrder: jest
-        .fn()
-        .mockResolvedValue({
-          orderId: 'PP-1',
-          status: 'CREATED',
-          approvalUrl: 'https://pp/approve',
-        }),
+      createOrder: jest.fn().mockResolvedValue({
+        orderId: 'PP-1',
+        status: 'CREATED',
+        approvalUrl: 'https://pp/approve',
+      }),
     };
     paymob = {
       createIntention: jest
@@ -147,6 +156,17 @@ describe('CheckoutService', () => {
     );
   });
 
+  it('freezes the authenticated billing recipient on the checkout session', async () => {
+    sessions.findByIdempotencyKey.mockResolvedValue(null);
+    sessions.create.mockResolvedValue(makeSession());
+
+    await service.start(INPUT);
+
+    expect(sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({ billingEmail: 'buyer@example.com' }),
+    );
+  });
+
   it('builds the return URL from configuration, not from the request', async () => {
     sessions.findByIdempotencyKey.mockResolvedValue(null);
     sessions.create.mockResolvedValue(makeSession());
@@ -160,6 +180,7 @@ describe('CheckoutService', () => {
   });
 
   it('records a stable failure code when the gateway call fails', async () => {
+    const errorLog = jest.spyOn(Logger.prototype, 'error').mockImplementation();
     sessions.findByIdempotencyKey.mockResolvedValue(null);
     sessions.create.mockResolvedValue(makeSession());
     paypal.createOrder.mockRejectedValue(new Error('paypal down: payer bob@example.com'));
@@ -169,6 +190,10 @@ describe('CheckoutService', () => {
     // A machine code, never the provider message — which here carries a payer
     // email that must not be persisted on our record.
     expect(sessions.markFailed).toHaveBeenCalledWith('cs-1', 'GATEWAY_UNAVAILABLE');
+    expect(errorLog).toHaveBeenCalledWith(
+      'start: gateway order failed session=cs-1 code=GATEWAY_UNAVAILABLE',
+    );
+    expect(JSON.stringify(errorLog.mock.calls)).not.toContain('bob@example.com');
   });
 
   it('routes a Paymob checkout through the intention API', async () => {

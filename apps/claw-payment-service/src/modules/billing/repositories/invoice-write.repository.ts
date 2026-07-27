@@ -43,6 +43,10 @@ export class InvoiceWriteRepository {
         periodStart: input.periodStart,
         periodEnd: input.periodEnd,
         paidAt: isPaid ? new Date() : null,
+        delivery:
+          input.recipientEmail === null
+            ? undefined
+            : { create: { recipientEmail: input.recipientEmail } },
         lines: {
           create: input.lines.map((line) => ({
             kind: line.kind,

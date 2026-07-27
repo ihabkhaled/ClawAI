@@ -124,6 +124,8 @@ describe('semantic colour tokens meet WCAG AA for text', () => {
     const card = parseToken(css, 'card', offset);
     const foreground = parseToken(css, 'foreground', offset);
     const mutedForeground = parseToken(css, 'muted-foreground', offset);
+    const destructive = parseToken(css, 'destructive', offset);
+    const destructiveForeground = parseToken(css, 'destructive-foreground', offset);
 
     it('foreground on background clears AA', () => {
       expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
@@ -147,6 +149,16 @@ describe('semantic colour tokens meet WCAG AA for text', () => {
       // Kept in step with muted-foreground: same requirement, same surfaces.
       const soft = parseToken(css, 'text-soft', offset);
       expect(contrastRatio(soft, muted)).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+    });
+
+    it('destructive on background clears AA', () => {
+      expect(contrastRatio(destructive, background)).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+    });
+
+    it('destructive-foreground on destructive clears AA', () => {
+      expect(contrastRatio(destructiveForeground, destructive)).toBeGreaterThanOrEqual(
+        AA_NORMAL_TEXT,
+      );
     });
   });
 

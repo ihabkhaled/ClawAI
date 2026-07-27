@@ -15,80 +15,13 @@ import {
   LEGAL_PUBLIC_LAUNCH_SLUGS,
   PUBLIC_LAUNCH_EFFECTIVE_DATE,
 } from '@/constants/public-launch-page.constants';
-import { MARKETING_PLAN_TIERS } from '@/constants/subscription-marketing.constants';
-import type { Locale } from '@/enums/locale.enum';
 import { PublicLaunchPageSlug } from '@/enums/public-launch-page-slug.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { PublicLaunchPageProps } from '@/types/public-launch-content.types';
 import { getPageBySlugAndLocale } from '@/utilities/content-registry.utility';
 import { getHtmlLanguage, isSupportedLocale, localisePath } from '@/utilities/locale.utility';
-import {
-  formatPublicPlanUsd,
-  getPublicPlanDisplayName,
-} from '@/utilities/public-launch-page.utility';
 import { buildPublicPageJsonLd, serializeJsonLd } from '@/utilities/structured-data.utility';
-
-function PricingCatalog({
-  locale,
-  labels,
-}: {
-  locale: Locale;
-  labels: (typeof PUBLIC_LAUNCH_LABELS_BY_LOCALE)[Locale];
-}): React.ReactElement {
-  return (
-    <section aria-labelledby="baseline-plan-catalog" className="border-border border-y py-10">
-      <h2 id="baseline-plan-catalog" className="text-foreground text-2xl font-bold tracking-tight">
-        {labels.baselineCatalog}
-      </h2>
-      <p className="text-muted-foreground mt-3 max-w-3xl text-sm leading-7">
-        {labels.liveCheckoutNote}
-      </p>
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {MARKETING_PLAN_TIERS.map((tier) => (
-          <article
-            key={tier.slug}
-            className="border-border bg-card flex min-w-0 flex-col border p-5 shadow-sm"
-          >
-            <h3 className="text-foreground text-xl font-semibold">
-              {getPublicPlanDisplayName(tier.slug)}
-            </h3>
-            <dl className="mt-5 grid gap-3 text-sm">
-              <div className="border-border flex justify-between gap-4 border-b pb-2">
-                <dt className="text-muted-foreground">{labels.monthlyPrice}</dt>
-                <dd className="text-foreground font-semibold">
-                  {formatPublicPlanUsd(tier.monthlyUsd, locale)}
-                </dd>
-              </div>
-              <div className="border-border flex justify-between gap-4 border-b pb-2">
-                <dt className="text-muted-foreground">{labels.yearlyPrice}</dt>
-                <dd className="text-foreground font-semibold">
-                  {tier.yearlyUsd === null ? '—' : formatPublicPlanUsd(tier.yearlyUsd, locale)}
-                </dd>
-              </div>
-              <div className="border-border flex justify-between gap-4 border-b pb-2">
-                <dt className="text-muted-foreground">{labels.dailyAllowance}</dt>
-                <dd className="text-foreground font-semibold">{tier.dailyTokens}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">{labels.monthlyAllowance}</dt>
-                <dd className="text-foreground font-semibold">
-                  {tier.slug === 'unlimited' ? '∞' : tier.monthlyTokens}
-                </dd>
-              </div>
-            </dl>
-            <Link
-              href={`/register?plan=${tier.slug}&interval=monthly`}
-              className="bg-primary text-primary-foreground focus-visible:ring-ring mt-6 inline-flex min-h-11 items-center justify-center px-4 py-2 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-            >
-              {labels.startFree} · {getPublicPlanDisplayName(tier.slug)}
-            </Link>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 function ProviderCatalog({ heading, note }: { heading: string; note: string }): React.ReactElement {
   return (
@@ -181,9 +114,6 @@ export async function PublicLaunchPage({
             </section>
           ))}
 
-          {slug === PublicLaunchPageSlug.PRICING ? (
-            <PricingCatalog locale={locale} labels={labels} />
-          ) : null}
           {slug === PublicLaunchPageSlug.SUPPORTED_MODELS ? (
             <ProviderCatalog
               heading={page.sections[0]?.title ?? page.eyebrow}

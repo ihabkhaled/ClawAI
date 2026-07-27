@@ -14,6 +14,9 @@ export function toPriceVersionView(price: PlanPriceVersion): PlanPriceVersionVie
     amountMinor: price.amountMinor,
     version: price.version,
     isActive: price.isActive,
+    effectiveFrom: price.effectiveFrom,
+    retiredAt: price.retiredAt,
+    createdAt: price.createdAt,
   };
 }
 

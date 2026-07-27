@@ -66,6 +66,7 @@ export { PlanFeatureWindow } from './plan-feature-window.enum';
 export { PlanModelAccessMode } from './plan-model-access-mode.enum';
 export { ProrationQuoteStatus } from './proration-quote-status.enum';
 export { QuotaWindow } from './quota-window.enum';
+export { RefundStatus } from './refund-status.enum';
 export { SeedExecutionStatus } from './seed-execution-status.enum';
 export { SubscriptionStatus } from './subscription-status.enum';
 export { WebhookEventStatus } from './webhook-event-status.enum';

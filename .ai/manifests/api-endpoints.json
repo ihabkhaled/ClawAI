@@ -491,6 +491,16 @@
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/admin/plans/:id/price-versions",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/plans/:id/price-versions",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/admin/plans/:id/set-default",
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
@@ -584,6 +594,11 @@
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/billing-metrics/provider-costs",
+        "source": "apps/claw-auth-service/src/modules/quota/controllers/provider-cost-metrics-internal.controller.ts"
       },
       {
         "method": "GET",
@@ -1648,6 +1663,31 @@
     ],
     "claw-payment-service": [
       {
+        "method": "GET",
+        "route": "/admin/billing/dashboard",
+        "source": "apps/claw-payment-service/src/modules/billing-dashboard/controllers/billing-dashboard.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/billing/dashboard/price-version-counts",
+        "source": "apps/claw-payment-service/src/modules/billing-dashboard/controllers/billing-dashboard.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/billing/reconciliation",
+        "source": "apps/claw-payment-service/src/modules/reconciliation/controllers/reconciliation-admin.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/billing/refunds",
+        "source": "apps/claw-payment-service/src/modules/refunds/controllers/refund.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/billing/refunds/refundable-transactions",
+        "source": "apps/claw-payment-service/src/modules/refunds/controllers/refund.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/billing/checkout-sessions",
         "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
@@ -1664,8 +1704,18 @@
       },
       {
         "method": "GET",
+        "route": "/billing/invoices/:id/pdf",
+        "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/billing/me",
         "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/billing/payment-method-setup-sessions",
+        "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
       },
       {
         "method": "GET",
@@ -1706,6 +1756,21 @@
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-payment-service/src/modules/health/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/payments/subscriptions/:id/status",
+        "source": "apps/claw-payment-service/src/modules/internal-payments/controllers/internal-payments.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/payments/transactions/:id/status",
+        "source": "apps/claw-payment-service/src/modules/internal-payments/controllers/internal-payments.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/payments/users/:userId/entitlement",
+        "source": "apps/claw-payment-service/src/modules/internal-payments/controllers/internal-payments.controller.ts"
       },
       {
         "method": "POST",
@@ -2683,5 +2748,5 @@
     ]
   },
   "generated": true,
-  "total": 529
+  "total": 542
 }

@@ -16,6 +16,7 @@ What an attacker would try against the payment path, and what stops them.
 | Gateway → webhook      | **No**               | Authenticity comes from signature/HMAC verification, never from the URL being secret |
 | Gateway → API response | **No**               | Validated with Zod before it becomes business state                                  |
 | payment-service → auth | Yes, _authenticated_ | Producer identity is checked on every entitlement event                              |
+| auth-service → payment | Yes, _authenticated_ | Shared service token, constant-time comparison, bounded Zod response, user-id match  |
 | Redirect / return page | **No**               | Display-only. A browser can be told anything                                         |
 
 The redirect boundary is the one people get wrong. A user who reaches
@@ -37,26 +38,51 @@ evidence that counts is a server-side capture read or a verified webhook.
 
 ### Payment forgery
 
-| Attack                                   | Control                                                                                                                                |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Forge a webhook                          | PayPal: signature verified via the gateway's verify API. Paymob: HMAC-SHA512 over the fixed field order, compared in **constant time** |
-| Replay a real webhook                    | Unique `(gateway, providerEventId)`; a duplicate is recorded and ignored                                                               |
-| Claim success from the redirect          | Redirects are display-only; entitlement requires a verified capture                                                                    |
-| Pay for session A, claim session B       | `custom_id` / `merchant_order_id` must match the session being completed                                                               |
-| Pay a valid amount in the wrong currency | Currency checked independently of amount                                                                                               |
-| Pay, then charge back                    | `CHARGEBACK` is terminal; entitlement is revoked immediately                                                                           |
-| Pay, then refund, keep access            | Reversal flags (`is_refunded`, `is_voided`, `error_occured`) are checked — `success: true` alone is never sufficient                   |
+| Attack                                   | Control                                                                                                                                 |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Forge a webhook                          | PayPal: signature verified via the gateway's verify API. Paymob: HMAC-SHA512 over the fixed field order, compared in **constant time**  |
+| Replay a real webhook                    | Unique `(gateway, providerEventId)`; a duplicate is recorded and ignored                                                                |
+| Claim success from the redirect          | Redirects are display-only; entitlement requires a verified capture                                                                     |
+| Pay for session A, claim session B       | `custom_id` / `merchant_order_id` must match the session being completed                                                                |
+| Pay a valid amount in the wrong currency | Currency checked independently of amount                                                                                                |
+| Pay, then charge back                    | `CHARGEBACK` is terminal; entitlement is revoked immediately                                                                            |
+| Race partial refunds above the capture   | A committed `PENDING` reservation reduces the balance; a DB trigger locks the charge and rejects an aggregate above the captured amount |
+| Use a partial refund to revoke service   | Partial refunds are audit-only for entitlement; only cumulative full refund or chargeback revokes paid access                           |
+| Pay, then refund, keep access            | Reversal flags (`is_refunded`, `is_voided`, `error_occured`) are checked — `success: true` alone is never sufficient                    |
 
 ### Concurrency and idempotency
 
-| Attack                          | Control                                                                         |
-| ------------------------------- | ------------------------------------------------------------------------------- |
-| Double-submit checkout          | Idempotency key scoped `(user, key)`; the replay returns the original session   |
-| Race two upgrades               | Conditional update on the quote's status — exactly one confirm wins             |
-| Race two subscriptions          | `unique_active_key` — the **database** rejects a second entitlement-bearing row |
-| Retry a capture after a timeout | Captures are never retried; the order is read back instead                      |
-| Redeliver an entitlement event  | `createMany({skipDuplicates})` on the inbox's unique `eventId`                  |
-| Deliver events out of order     | `effectiveAt` comparison — a stale event is skipped, never applied              |
+| Attack                          | Control                                                                                      |
+| ------------------------------- | -------------------------------------------------------------------------------------------- |
+| Double-submit checkout          | Idempotency key scoped `(user, key)`; the replay returns the original session                |
+| Race two upgrades               | Conditional update on the quote's status — exactly one confirm wins                          |
+| Race two subscriptions          | `unique_active_key` — the **database** rejects a second entitlement-bearing row              |
+| Retry a capture after a timeout | Captures are never retried; the order is read back instead                                   |
+| Redeliver an entitlement event  | `createMany({skipDuplicates})` on the inbox's unique `eventId`                               |
+| Deliver events out of order     | `effectiveAt` comparison — a stale event is skipped, never applied                           |
+| Replay entitlement reconcile    | Durable inbox claim; only one failed-event retry claimant can proceed                        |
+| Retry an ambiguous refund       | The local reservation is returned for the same operator key; the gateway is not called again |
+
+### Internal endpoint abuse
+
+| Attack                                        | Control                                                                            |
+| --------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Call internal status routes from the internet | No `/api/v1/internal/payments` nginx location; regression test enforces absence    |
+| Present a user JWT as service authority       | Guard accepts only the exact `Service` scheme and shared inter-service token       |
+| Time token guesses                            | Equal-length tokens are compared with `timingSafeEqual`                            |
+| Return another user's entitlement             | Auth validates the bounded response and requires its `userId` to match the request |
+| Leak provider or tenant internals on lookup   | Responses are allowlisted projections; unknown ids share one generic 404           |
+
+### Administrative billing abuse
+
+| Attack                                      | Control                                                                                               |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Reach billing controls through a copied URL | Auth-service and payment-service enforce `ADMIN_PLANS_MANAGE`; hidden navigation is not authorization |
+| Rewrite an old price                        | Append-only `PlanPriceVersion`; database and service contracts reject mutation                        |
+| Infer or corrupt margin with float math     | Revenue and provider cost aggregate in integer microUSD; mixed currencies are rejected                |
+| Read another service's billing database     | Dashboard uses signed, bounded internal projections; no cross-database query                          |
+| Run reconciliation on every replica         | Redis owner-token lock plus bounded, idempotent, resumable work                                       |
+| Delete a lock acquired by another owner     | Atomic Lua compare-and-delete; token is never logged or shown in a runbook                            |
 
 ### Quota and cost abuse
 
@@ -71,13 +97,17 @@ evidence that counts is a server-side capture read or a verified webhook.
 
 ### Data exposure
 
-| Attack                               | Control                                                                         |
-| ------------------------------------ | ------------------------------------------------------------------------------- |
-| Read another user's invoices         | Owner resolved from the JWT; user id never accepted from the client             |
-| Harvest card data from logs          | No PAN/CVV ever enters the system; response bodies are never logged             |
-| Learn margins from an error          | Cost ceilings are internal; error payloads carry stable codes only              |
-| Steal a vaulted token                | AES-256-GCM with AAD bound to `userId\|gateway\|paymentMethodId`, key-versioned |
-| Extract secrets from a gateway error | Failures log status codes, never provider bodies                                |
+| Attack                               | Control                                                                                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Read another user's invoices         | Owner resolved from the JWT; user id never accepted from the client                                                      |
+| Rewrite an issued invoice            | PostgreSQL triggers reject header/line mutation; refunds may only increase a bounded total with the matching status      |
+| Leak a token or internal id in a PDF | Renderer accepts a customer-safe projection with no id, provider reference, token or card field                          |
+| Turn an attachment into SSRF/LFI     | Shared SMTP adapter accepts in-memory bytes and disables URL/file attachment access                                      |
+| Lose an invoice during SMTP outage   | Delivery intent commits with the invoice and retries under an owner-safe scheduled job; owned download remains available |
+| Harvest card data from logs          | No PAN/CVV ever enters the system; response bodies are never logged                                                      |
+| Learn margins from an error          | Cost ceilings are internal; error payloads carry stable codes only                                                       |
+| Steal a vaulted token                | AES-256-GCM with AAD bound to `userId\|gateway\|paymentMethodId`, key-versioned                                          |
+| Extract secrets from a gateway error | Failures log status codes, never provider bodies                                                                         |
 
 ---
 
@@ -101,13 +131,13 @@ section exists to prevent.
 
 Honest list of what is _not_ fully mitigated today:
 
-| Risk                                    | Status                                                                                              |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Saved cards / vault endpoints           | **Not implemented.** Deliberate — the spec forbids advertising saved cards before merchant approval |
-| Durable publish of `runtime.progress.*` | SSE only; RabbitMQ publishing is future work                                                        |
-| FX provider outage with no fallback     | Fails the checkout by design; no degraded-rate path                                                 |
-| Chargeback dispute automation           | Manual — the reconciliation dashboard surfaces cases, a human answers them                          |
-| Gateway-side fraud scoring              | Delegated to PayPal/Paymob; ClawAI adds rate limiting only                                          |
+| Risk                                    | Status                                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Saved-card merchant approval            | Hosted tokenization is implemented, but must not be advertised until each gateway approves the merchant |
+| Durable publish of `runtime.progress.*` | SSE only; RabbitMQ publishing is future work                                                            |
+| FX provider outage with no fallback     | Fails the checkout by design; no degraded-rate path                                                     |
+| Chargeback dispute automation           | Manual — the reconciliation dashboard surfaces cases, a human answers them                              |
+| Gateway-side fraud scoring              | Delegated to PayPal/Paymob; ClawAI adds rate limiting only                                              |
 
 ---
 
@@ -116,11 +146,13 @@ Honest list of what is _not_ fully mitigated today:
 | Symptom                          | First action                                                                                                      |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | Webhook signature failures spike | Confirm the webhook id/HMAC secret matches the gateway; **do not** relax verification                             |
-| Entitlement drift                | Re-run reconciliation; the inbox is idempotent, replay is safe                                                    |
+| Entitlement drift                | Follow `docs/11-runbooks/runbook-billing-reconciliation.md`; replay is idempotent                                 |
 | Suspected token compromise       | Rotate `PAYMENT_TOKEN_ENCRYPTION_KEY`, bump the key version, revoke tokens at the gateway                         |
 | Duplicate charges reported       | Check `PaymentTransaction` by idempotency key before refunding — a duplicate _record_ is not a duplicate _charge_ |
 | A plan is mispriced              | Publish a **new** price version; never edit the old one, or historical invoices stop reconciling                  |
 
-Rotating `PAYMENT_TOKEN_ENCRYPTION_KEY` orphans every vaulted token by design —
-that is the point of a rotation. Both installers preserve it precisely so it is
-never rotated by accident.
+The ciphertext records `PAYMENT_TOKEN_KEY_VERSION`, but the running service
+holds one active key. Re-encrypt or revoke vaulted rows under an approved
+rotation procedure before replacing that key; changing it in place makes old
+tokens unreadable. Both installers preserve it so it is never rotated by
+accident.

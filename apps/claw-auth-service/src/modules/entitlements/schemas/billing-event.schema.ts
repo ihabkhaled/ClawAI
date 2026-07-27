@@ -18,6 +18,10 @@ export const billingEventSchema = z.object({
   entitlementValidUntil: z.string().datetime(),
   correlationId: z.string().max(200).optional(),
   causationId: z.string().max(200).optional(),
+  // Refund events are entitlement-neutral until their cumulative total equals
+  // the captured charge. Absent on older events, which conservatively retain
+  // the historical full-refund behavior.
+  isFullRefund: z.boolean().optional(),
 });
 
 export type BillingEventEnvelope = z.infer<typeof billingEventSchema>;

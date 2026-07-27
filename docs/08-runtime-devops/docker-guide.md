@@ -2,7 +2,10 @@
 
 ## Overview
 
-ClawAI runs as a fully containerized development environment using Docker Compose. The stack comprises 28 containers organized into infrastructure, backend microservices, a reverse proxy, and the frontend.
+ClawAI runs as a fully containerized development environment using split Docker
+Compose files. The complete profile contains 18 backend services, their owned
+databases, shared infrastructure, a reverse proxy, the frontend, and optional
+local-AI runtimes.
 
 All containers share the `claw-network` bridge network and read environment variables from a single root `.env` file.
 
@@ -10,7 +13,7 @@ All containers share the `claw-network` bridge network and read environment vari
 
 ## Container Inventory
 
-### Infrastructure (12 containers)
+### Infrastructure
 
 | Container                | Image                        | Host Port  | Internal Port | Purpose                                |
 | ------------------------ | ---------------------------- | ---------- | ------------- | -------------------------------------- |
@@ -23,28 +26,38 @@ All containers share the `claw-network` bridge network and read environment vari
 | claw-pg-ollama           | pgvector/pgvector:pg16       | 5447       | 5432          | PostgreSQL for ollama service          |
 | claw-pg-images           | pgvector/pgvector:pg16       | 5448       | 5432          | PostgreSQL for image service           |
 | claw-pg-file-generations | pgvector/pgvector:pg16       | 5449       | 5432          | PostgreSQL for file generation service |
+| claw-pg-workspace        | pgvector/pgvector:pg16       | 5450       | 5432          | PostgreSQL for workspace service       |
+| claw-pg-agent            | pgvector/pgvector:pg16       | 5451       | 5432          | PostgreSQL for agent service           |
+| claw-pg-research         | pgvector/pgvector:pg16       | 5452       | 5432          | PostgreSQL for research service        |
+| claw-pg-payments         | pgvector/pgvector:pg16       | 5453       | 5432          | PostgreSQL for payment service         |
+| claw-pg-llamacpp         | pgvector/pgvector:pg16       | 5454       | 5432          | PostgreSQL for llama.cpp service       |
 | claw-mongodb             | mongo:7                      | 27018      | 27017         | MongoDB for audit, client/server logs  |
 | claw-redis               | redis:7-alpine               | 6380       | 6379          | Redis cache and session store          |
 | claw-rabbitmq            | rabbitmq:3-management-alpine | 5672/15672 | 5672/15672    | Message broker with management UI      |
 | claw-ollama              | ollama/ollama:latest         | 11434      | 11434         | Local AI runtime (LLM inference)       |
 
-### Backend Services (13 containers)
+### Backend Services (18 containers)
 
-| Container                    | Dockerfile                                       | Host Port | Purpose                         |
-| ---------------------------- | ------------------------------------------------ | --------- | ------------------------------- |
-| claw-auth-service            | apps/claw-auth-service/Dockerfile.dev            | 4001      | Authentication, users, RBAC     |
-| claw-chat-service            | apps/claw-chat-service/Dockerfile.dev            | 4002      | Threads, messages, AI execution |
-| claw-connector-service       | apps/claw-connector-service/Dockerfile.dev       | 4003      | Cloud provider management       |
-| claw-routing-service         | apps/claw-routing-service/Dockerfile.dev         | 4004      | Intelligent model routing       |
-| claw-memory-service          | apps/claw-memory-service/Dockerfile.dev          | 4005      | Memory and context packs        |
-| claw-file-service            | apps/claw-file-service/Dockerfile.dev            | 4006      | File upload and chunking        |
-| claw-audit-service           | apps/claw-audit-service/Dockerfile.dev           | 4007      | Audit logs and usage tracking   |
-| claw-ollama-service          | apps/claw-ollama-service/Dockerfile.dev          | 4008      | Ollama model management         |
-| claw-health-service          | apps/claw-health-service/Dockerfile.dev          | 4009      | Aggregated health checks        |
-| claw-client-logs-service     | apps/claw-client-logs-service/Dockerfile.dev     | 4010      | Frontend log ingestion          |
-| claw-server-logs-service     | apps/claw-server-logs-service/Dockerfile.dev     | 4011      | Backend log aggregation         |
-| claw-image-service           | apps/claw-image-service/Dockerfile.dev           | 4012      | AI image generation             |
-| claw-file-generation-service | apps/claw-file-generation-service/Dockerfile.dev | 4013      | AI file generation              |
+| Container                    | Dockerfile                                       | Host Port | Purpose                          |
+| ---------------------------- | ------------------------------------------------ | --------- | -------------------------------- |
+| claw-auth-service            | apps/claw-auth-service/Dockerfile.dev            | 4001      | Authentication, users, RBAC      |
+| claw-chat-service            | apps/claw-chat-service/Dockerfile.dev            | 4002      | Threads, messages, AI execution  |
+| claw-connector-service       | apps/claw-connector-service/Dockerfile.dev       | 4003      | Cloud provider management        |
+| claw-routing-service         | apps/claw-routing-service/Dockerfile.dev         | 4004      | Intelligent model routing        |
+| claw-memory-service          | apps/claw-memory-service/Dockerfile.dev          | 4005      | Memory and context packs         |
+| claw-file-service            | apps/claw-file-service/Dockerfile.dev            | 4006      | File upload and chunking         |
+| claw-audit-service           | apps/claw-audit-service/Dockerfile.dev           | 4007      | Audit logs and usage tracking    |
+| claw-ollama-service          | apps/claw-ollama-service/Dockerfile.dev          | 4008      | Ollama model management          |
+| claw-health-service          | apps/claw-health-service/Dockerfile.dev          | 4009      | Aggregated health checks         |
+| claw-client-logs-service     | apps/claw-client-logs-service/Dockerfile.dev     | 4010      | Frontend log ingestion           |
+| claw-server-logs-service     | apps/claw-server-logs-service/Dockerfile.dev     | 4011      | Backend log aggregation          |
+| claw-image-service           | apps/claw-image-service/Dockerfile.dev           | 4012      | AI image generation              |
+| claw-file-generation-service | apps/claw-file-generation-service/Dockerfile.dev | 4013      | AI file generation               |
+| claw-workspace-service       | apps/claw-workspace-service/Dockerfile.dev       | 4014      | Workspace connectors and actions |
+| claw-agent-service           | apps/claw-agent-service/Dockerfile.dev           | 4015      | Desktop agent                    |
+| claw-research-service        | apps/claw-research-service/Dockerfile.dev        | 4016      | Research orchestration           |
+| claw-llamacpp-service        | apps/claw-llamacpp-service/Dockerfile.dev        | 4017      | Local llama.cpp runtime          |
+| claw-payment-service         | apps/claw-payment-service/Dockerfile.dev         | 4018      | Subscriptions and payments       |
 
 ### Proxy and Frontend (2 containers)
 
@@ -127,7 +140,7 @@ Layer 2 (depends on Layer 1 being healthy):
   health-service    → redis, rabbitmq
 
 Layer 3 (depends on all services being healthy):
-  nginx → all 11+ backend services
+  nginx → all 18 backend services
 
 Layer 4:
   frontend → nginx (service_started, not health check)
@@ -273,7 +286,8 @@ claw-network (bridge)
   +-- Infrastructure
   |     pg-auth:5432, pg-chat:5432, pg-connector:5432, pg-routing:5432
   |     pg-memory:5432, pg-files:5432, pg-ollama:5432, pg-images:5432
-  |     pg-file-generations:5432
+  |     pg-file-generations:5432, pg-workspace:5432, pg-agent:5432
+  |     pg-research:5432, pg-llamacpp:5432, pg-payments:5432
   |     mongodb:27017, redis:6379, rabbitmq:5672
   |     ollama:11434
   |
@@ -282,7 +296,9 @@ claw-network (bridge)
   |     routing-service:4004, memory-service:4005, file-service:4006
   |     audit-service:4007, ollama-service:4008, health-service:4009
   |     client-logs-service:4010, server-logs-service:4011
-  |     image-service:4012
+  |     image-service:4012, file-generation-service:4013
+  |     workspace-service:4014, agent-service:4015, research-service:4016
+  |     llamacpp-service:4017, payment-service:4018
   |
   +-- Proxy + Frontend
         nginx:80 (host 4000), frontend:3000
@@ -291,6 +307,11 @@ claw-network (bridge)
 Nginx resolves service hostnames using Docker's internal DNS (`127.0.0.11`) with 5s TTL, allowing it to survive service restarts without becoming stale.
 
 Inter-service HTTP calls use the `*_SERVICE_URL` environment variables (e.g., `CONNECTOR_SERVICE_URL=http://connector-service:4003`).
+
+Local and distributed nginx both expose payment webhooks, customer payments,
+customer billing, and admin billing. Distributed deployments set
+`CLAW_PAYMENT_ORIGIN`; neither configuration exposes `/api/v1/internal/payments`
+or any other internal payment contract.
 
 ---
 
@@ -313,7 +334,7 @@ Inter-service HTTP calls use the `*_SERVICE_URL` environment variables (e.g., `C
 | Redis                | ~50 MB    | ~10 MB     |
 | RabbitMQ             | ~200 MB   | ~50 MB     |
 | Ollama (5 models)    | ~2-6 GB   | ~10 GB     |
-| 17 NestJS services   | ~2.6 GB   | ~500 MB    |
+| 18 NestJS services   | ~2.6 GB   | ~500 MB    |
 | Nginx                | ~10 MB    | ~5 MB      |
 | Next.js frontend     | ~500 MB   | ~300 MB    |
 

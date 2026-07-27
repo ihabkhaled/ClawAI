@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 2 identical headings (19170 vs 4890 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 2 identical headings (19594 vs 4892 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CODEX.md and cursor.md share 1 identical headings (4890 vs 25527 bytes) — candidates for compact routing",
+        "message": "CODEX.md and cursor.md share 1 identical headings (4892 vs 25527 bytes) — candidates for compact routing",
         "severity": "medium"
       }
     ],
@@ -42,26 +42,7 @@
         "severity": "medium"
       }
     ],
-    "staleClaims": [
-      {
-        "evidence": [
-          "CODEX.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "CODEX.md claims 9 locales but 13 locale files exist",
-        "severity": "low"
-      },
-      {
-        "evidence": [
-          "CODEX.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "CODEX.md claims 9 locales but 13 locale files exist",
-        "severity": "low"
-      }
-    ]
+    "staleClaims": []
   },
   "inventory": {
     "apiEndpoints": {
@@ -556,6 +537,16 @@
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/admin/plans/:id/price-versions",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/admin/plans/:id/price-versions",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/admin/plans/:id/set-default",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
@@ -649,6 +640,11 @@
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/billing-metrics/provider-costs",
+          "source": "apps/claw-auth-service/src/modules/quota/controllers/provider-cost-metrics-internal.controller.ts"
         },
         {
           "method": "GET",
@@ -1713,6 +1709,31 @@
       ],
       "claw-payment-service": [
         {
+          "method": "GET",
+          "route": "/admin/billing/dashboard",
+          "source": "apps/claw-payment-service/src/modules/billing-dashboard/controllers/billing-dashboard.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/billing/dashboard/price-version-counts",
+          "source": "apps/claw-payment-service/src/modules/billing-dashboard/controllers/billing-dashboard.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/admin/billing/reconciliation",
+          "source": "apps/claw-payment-service/src/modules/reconciliation/controllers/reconciliation-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/admin/billing/refunds",
+          "source": "apps/claw-payment-service/src/modules/refunds/controllers/refund.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/billing/refunds/refundable-transactions",
+          "source": "apps/claw-payment-service/src/modules/refunds/controllers/refund.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/billing/checkout-sessions",
           "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
@@ -1729,8 +1750,18 @@
         },
         {
           "method": "GET",
+          "route": "/billing/invoices/:id/pdf",
+          "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/billing/me",
           "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/billing/payment-method-setup-sessions",
+          "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
         },
         {
           "method": "GET",
@@ -1771,6 +1802,21 @@
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-payment-service/src/modules/health/health.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/payments/subscriptions/:id/status",
+          "source": "apps/claw-payment-service/src/modules/internal-payments/controllers/internal-payments.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/payments/transactions/:id/status",
+          "source": "apps/claw-payment-service/src/modules/internal-payments/controllers/internal-payments.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/payments/users/:userId/entitlement",
+          "source": "apps/claw-payment-service/src/modules/internal-payments/controllers/internal-payments.controller.ts"
         },
         {
           "method": "POST",
@@ -5143,6 +5189,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "BILLING_SUBSCRIPTION_DOWNGRADED",
+        "pattern": "billing.subscription.downgraded",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "BILLING_SUBSCRIPTION_EXPIRED",
         "pattern": "billing.subscription.expired",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -5855,6 +5906,11 @@
         "route": "/admin/ai-action-policies"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/billing/page.tsx",
+        "kind": "page",
+        "route": "/admin/billing"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/page.tsx",
         "kind": "page",
         "route": "/admin"
@@ -5870,6 +5926,11 @@
         "route": "/admin/plans/[id]/model-access"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/plans/[id]/prices/page.tsx",
+        "kind": "page",
+        "route": "/admin/plans/[id]/prices"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/plans/new/page.tsx",
         "kind": "page",
         "route": "/admin/plans/new"
@@ -5878,6 +5939,11 @@
         "file": "apps/claw-frontend/src/app/(portal)/admin/plans/page.tsx",
         "kind": "page",
         "route": "/admin/plans"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/refunds/page.tsx",
+        "kind": "page",
+        "route": "/admin/refunds"
       },
       {
         "file": "apps/claw-frontend/src/app/(portal)/admin/roles/[id]/page.tsx",
@@ -6298,11 +6364,11 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 19170,
+          "bytes": 19594,
           "file": "CLAUDE.md"
         },
         {
-          "bytes": 4890,
+          "bytes": 4892,
           "file": "CODEX.md"
         },
         {
@@ -6347,7 +6413,7 @@
       "looseDocs": 22,
       "rules": [
         {
-          "bytes": 10745,
+          "bytes": 10988,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -6455,7 +6521,7 @@
           "file": "rules/16-authentication-and-authorization.md"
         },
         {
-          "bytes": 2956,
+          "bytes": 4343,
           "file": "rules/17-rabbitmq-events-and-jobs.md"
         },
         {
@@ -6475,7 +6541,7 @@
           "file": "rules/21-security-and-secrets.md"
         },
         {
-          "bytes": 2990,
+          "bytes": 3578,
           "file": "rules/22-testing-and-coverage.md"
         },
         {
@@ -6499,13 +6565,17 @@
           "file": "rules/27-engineering-mindsets.md"
         },
         {
+          "bytes": 4303,
+          "file": "rules/28-billing-integrity-and-api-contracts.md"
+        },
+        {
           "bytes": 4045,
           "file": "rules/README.md"
         }
       ],
       "skills": [
         {
-          "bytes": 7954,
+          "bytes": 8383,
           "file": "skills/00-index.md"
         },
         {
@@ -6545,8 +6615,12 @@
           "file": "skills/09-refactor-toolkit.md"
         },
         {
-          "bytes": 6380,
+          "bytes": 6622,
           "file": "skills/README.md"
+        },
+        {
+          "bytes": 4010,
+          "file": "skills/add-a-payment-gateway-flow.md"
         },
         {
           "bytes": 3615,
@@ -6645,6 +6719,10 @@
           "file": "skills/create-view-model-hook.md"
         },
         {
+          "bytes": 3192,
+          "file": "skills/debug-a-stuck-scheduled-job.md"
+        },
+        {
           "bytes": 3724,
           "file": "skills/debug-flaky-test.md"
         },
@@ -6671,6 +6749,10 @@
         {
           "bytes": 4352,
           "file": "skills/navigate-codebase.md"
+        },
+        {
+          "bytes": 3566,
+          "file": "skills/reconcile-billing-state.md"
         },
         {
           "bytes": 5173,
@@ -6723,7 +6805,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4226
+        "value": 4270
       },
       "localeCount": 13,
       "locales": [
@@ -6782,6 +6864,12 @@
         "location": "/api/v1/admin",
         "port": 4001,
         "service": "auth-service",
+        "source": "infra/nginx/nginx.conf"
+      },
+      {
+        "location": "/api/v1/admin/billing",
+        "port": 4018,
+        "service": "payment-service",
         "source": "infra/nginx/nginx.conf"
       },
       {
@@ -7889,6 +7977,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "InvoiceDelivery"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
             "value": "InvoiceLine"
           },
           {
@@ -7910,6 +8003,21 @@
             "confidence": "verified",
             "source": "apps/claw-payment-service/prisma/schema.prisma",
             "value": "ProrationQuote"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "ReconciliationDivergence"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "ReconciliationRun"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "Refund"
           },
           {
             "confidence": "verified",
@@ -8214,7 +8322,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "jest",
-        "testFiles": 21
+        "testFiles": 23
       },
       "claw-agent-service": {
         "runner": "jest",
@@ -8222,11 +8330,11 @@
       },
       "claw-audit-service": {
         "runner": "jest",
-        "testFiles": 14
+        "testFiles": 15
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 29
+        "testFiles": 36
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8250,7 +8358,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 200
+        "testFiles": 215
       },
       "claw-health-service": {
         "runner": "jest",
@@ -8274,7 +8382,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 34
+        "testFiles": 76
       },
       "claw-research-service": {
         "runner": "jest",
@@ -8989,19 +9097,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 529,
+    "endpointCount": 542,
     "envVarCount": 335,
-    "eventCount": 164,
-    "frontendRouteCount": 106,
+    "eventCount": 165,
+    "frontendRouteCount": 109,
     "localeCount": 13,
-    "nginxRouteCount": 51,
+    "nginxRouteCount": 52,
     "permissionCount": 38,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
-    "staleClaimCount": 2,
-    "totalTestFiles": 615,
+    "staleClaimCount": 0,
+    "totalTestFiles": 682,
     "workspaceCount": 25
   }
 }

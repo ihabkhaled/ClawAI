@@ -4,6 +4,7 @@ import { BillingModule } from '../billing/billing.module';
 import { CheckoutModule } from '../checkout/checkout.module';
 import { OutboxModule } from '../outbox/outbox.module';
 import { PlanCatalogModule } from '../plan-catalog/plan-catalog.module';
+import { InvoiceDocumentsModule } from '../invoice-documents/invoice-documents.module';
 import { SubscriptionsController } from './controllers/subscriptions.controller';
 import { InvoiceRepository } from './repositories/invoice.repository';
 import { PaymentMethodRepository } from './repositories/payment-method.repository';
@@ -15,7 +16,7 @@ import { SubscriptionCancelService } from './services/subscription-cancel.servic
 import { SubscriptionQueryService } from './services/subscription-query.service';
 
 @Module({
-  imports: [BillingModule, CheckoutModule, OutboxModule, PlanCatalogModule],
+  imports: [BillingModule, CheckoutModule, OutboxModule, PlanCatalogModule, InvoiceDocumentsModule],
   controllers: [SubscriptionsController],
   providers: [
     SubscriptionQueryService,
@@ -27,6 +28,6 @@ import { SubscriptionQueryService } from './services/subscription-query.service'
     InvoiceRepository,
     PaymentMethodRepository,
   ],
-  exports: [SubscriptionQueryService, SubscriptionRepository],
+  exports: [SubscriptionQueryService, SubscriptionRepository, ScheduledDowngradeService],
 })
 export class SubscriptionsModule {}

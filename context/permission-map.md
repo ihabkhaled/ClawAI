@@ -37,6 +37,12 @@ admins manage grants via `PUT /api/v1/admin/roles/:id/permissions`.
 `ADMIN_WORKSPACE_AUTOMATION_MANAGE`, `ADMIN_WORKSPACES_VIEW`, `ADMIN_USAGE_VIEW`,
 `ADMIN_LOGS_VIEW`, `ADMIN_SYSTEM_VIEW`
 
+`ADMIN_PLANS_MANAGE` is the server-side gate for plan CRUD, immutable price
+versions, subscriber counts, provider-cost and margin dashboards, refunds, and
+manual reconciliation. Hiding the `/admin/billing` or plan-price navigation is
+only a usability measure; each auth-service and payment-service endpoint must
+enforce the permission independently.
+
 ## USER default grants
 
 Seeded from `USER_DEFAULT_PERMISSIONS` in

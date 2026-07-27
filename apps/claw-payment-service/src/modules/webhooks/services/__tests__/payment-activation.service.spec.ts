@@ -28,6 +28,7 @@ function makeSession(overrides: Record<string, unknown> = {}): Record<string, un
     baseCurrency: 'USD',
     chargeAmountMinor: 1999,
     chargeCurrency: 'USD',
+    billingEmail: 'buyer@example.com',
     subscriptionId: null,
     ...overrides,
   };
@@ -74,7 +75,12 @@ describe('PaymentActivationService', () => {
     await expect(service.activate(PAYMENT)).resolves.toBe('sub-1');
 
     expect(lifecycle.activateFromVerifiedPayment).toHaveBeenCalledWith(
-      expect.objectContaining({ paymentVerified: true, userId: 'user-1', planId: 'plan-pro' }),
+      expect.objectContaining({
+        paymentVerified: true,
+        userId: 'user-1',
+        planId: 'plan-pro',
+        invoiceRecipientEmail: 'buyer@example.com',
+      }),
     );
   });
 

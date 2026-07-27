@@ -173,6 +173,7 @@ export {
 } from './structured-data.utility';
 export {
   formatMinorAmount,
+  parseMajorAmountToMinor,
   computeUsageRatio,
   resolveUsageTone,
   computeUsageWindowPercent,

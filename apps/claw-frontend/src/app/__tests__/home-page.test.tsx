@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -11,16 +12,26 @@ vi.mock('next/headers', () => ({
   headers: async (): Promise<Headers> => new Headers({ 'x-claw-locale': Locale.EN }),
 }));
 
+vi.mock('@/lib/pricing/public-pricing-api', () => ({
+  fetchPublicPricingCatalog: async () => [],
+}));
+
 // The homepage sections are client components that read copy via
 // useTranslation, so they must render inside a LocaleProvider. Assertions
 // target hrefs and structure rather than English copy — the marketing copy
 // lives in the locale files and is expected to be reworded independently of
 // this test.
-function renderHome(): void {
+async function renderHome(): Promise<void> {
+  const page = await HomePage();
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   render(
-    <LocaleProvider initialLocale={Locale.EN} initialDictionary={en}>
-      <HomePage />
-    </LocaleProvider>,
+    <QueryClientProvider client={queryClient}>
+      <LocaleProvider initialLocale={Locale.EN} initialDictionary={en}>
+        {page}
+      </LocaleProvider>
+    </QueryClientProvider>,
   );
 }
 
@@ -32,35 +43,35 @@ function hrefsOnPage(): string[] {
 }
 
 describe('HomePage', () => {
-  it('renders exactly one h1', () => {
-    renderHome();
+  it('renders exactly one h1', async () => {
+    await renderHome();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
 
-  it('routes the primary conversion path to sign-up and sign-in', () => {
-    renderHome();
+  it('routes the primary conversion path to sign-up and sign-in', async () => {
+    await renderHome();
     const hrefs = hrefsOnPage();
     expect(hrefs).toContain('/register');
     expect(hrefs).toContain('/login');
   });
 
-  it('links out to the dedicated topic pages instead of inlining them', () => {
-    renderHome();
+  it('links out to the dedicated topic pages instead of inlining them', async () => {
+    await renderHome();
     const hrefs = hrefsOnPage();
     for (const path of ['/features', '/how-it-works', '/architecture', '/faq', '/use-cases']) {
       expect(hrefs).toContain(path);
     }
   });
 
-  it('offers the on-premise deployment only as an organisation contact path', () => {
-    renderHome();
+  it('offers the on-premise deployment only as an organisation contact path', async () => {
+    await renderHome();
     const hrefs = hrefsOnPage();
     expect(hrefs).toContain('/contact');
     expect(hrefs).toContain('/local-first-ai');
   });
 
-  it('renders the last-reviewed date from the content registry', () => {
-    renderHome();
+  it('renders the last-reviewed date from the content registry', async () => {
+    await renderHome();
     const lastReviewed = getPageBySlug('home')?.lastReviewed ?? '';
     expect(lastReviewed).not.toBe('');
     expect(document.body.textContent).toContain(lastReviewed);

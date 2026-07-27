@@ -1,6 +1,8 @@
 import { MARKETING_GITHUB_URL } from '@/constants/marketing-nav.constants';
 import type { SharedChatJsonLdInput } from '@/types/chat-share-page.types';
+import type { PublicPlan } from '@/types/public-pricing.types';
 import type { JsonLdObject, PublicPageJsonLdInput } from '@/types/structured-data.types';
+import { formatPriceDecimal } from '@/utilities/pricing-catalog.utility';
 
 // Only facts the application and repository actually support — no
 // fabricated ratings, reviews, prices, or provider endorsements.
@@ -48,6 +50,30 @@ export function buildPublicPageJsonLd(input: PublicPageJsonLdInput): JsonLdObjec
       '@type': 'WebSite',
       name: 'ClawAI',
       url: canonicalUrl.origin,
+    },
+  };
+}
+
+export function buildPricingJsonLd(canonicalUrl: string, plans: PublicPlan[]): JsonLdObject {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'ClawAI pricing',
+    url: canonicalUrl,
+    mainEntity: {
+      '@type': 'OfferCatalog',
+      name: 'ClawAI subscription plans',
+      itemListElement: plans.flatMap((plan) =>
+        plan.prices
+          .filter((price) => price.isActive)
+          .map((price) => ({
+            '@type': 'Offer',
+            name: `${plan.name} ${price.billingInterval.toLowerCase()}`,
+            price: formatPriceDecimal(price),
+            priceCurrency: price.currency,
+            url: canonicalUrl,
+          })),
+      ),
     },
   };
 }

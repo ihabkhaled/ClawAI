@@ -19,18 +19,18 @@ Produced by `npm run knowledge:build` (`tools/knowledge/build.mjs`). These are
 | File                                         | Contains                                                      |
 | -------------------------------------------- | ------------------------------------------------------------- |
 | `services.json`                              | per-service dir, port, DB, models, deps, endpoint/test counts |
-| `ports.json`                                 | the 15 `*_SERVICE_PORT` constants                             |
+| `ports.json`                                 | the 16 `*_SERVICE_PORT` constants                             |
 | `packages.json`                              | the 6 shared packages + internal deps                         |
 | `workspaces.json`                            | full workspace inventory                                      |
 | `workspace-dependency-graph.json`            | package/service dependency edges                              |
 | `rabbitmq-events.json`                       | event contract detail                                         |
 | `event-graph.json`                           | event pattern → producers/consumers (heuristic)               |
-| `api-endpoints.json`                         | 493 endpoints across services                                 |
+| `api-endpoints.json`                         | 542 endpoints across services                                 |
 | `nginx-routes.json`                          | gateway prefix → service:port                                 |
-| `frontend-routes.json`                       | 89 frontend pages                                             |
+| `frontend-routes.json`                       | 102 frontend pages                                            |
 | `docker-services.json`                       | docker service → compose files                                |
 | `permissions.json`                           | 38 permissions                                                |
-| `environment-variables.json`                 | 274 env vars                                                  |
+| `environment-variables.json`                 | 335 env vars                                                  |
 | `prisma-models.json`                         | Prisma model inventory                                        |
 | `governance.json`                            | AI-entrypoint/rule/skill/doc sizes + counts                   |
 | `hashes.json`                                | content hashes for drift detection                            |

@@ -8,7 +8,7 @@ and `mongodb` containers).
 
 ## Store types
 
-- **13 PostgreSQL instances** (one per Postgres-backed service, pgvector-capable)
+- **14 PostgreSQL instances** (one per Postgres-backed service, pgvector-capable)
   via **Prisma 7.8**.
 - **1 MongoDB** serving 3 services (audit, client-logs, server-logs) via
   **Mongoose**.
@@ -19,13 +19,13 @@ and `mongodb` containers).
 Compose containers: `pg-auth`, `pg-chat`, `pg-connector`, `pg-routing`,
 `pg-memory`, `pg-files`, `pg-ollama`, `pg-images`, `pg-file-generations`,
 `pg-workspace`, `pg-agent`, `pg-research`, `pg-llamacpp`, plus `mongodb`,
-`redis`, `rabbitmq`, `clamav` (databases compose files).
+`pg-payments`, `redis`, `rabbitmq`, `clamav` (databases compose files).
 
 ## Ownership table
 
 | Service               | DB                  | Key models (see services.json for full list)                                                                                                                                                                     |
 | --------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| auth :4001            | Postgres            | User, Session, Role, RolePermission, Plan, PlanModelAccess, UserPlanAssignment, TokenUsageLedger, SystemSetting                                                                                                  |
+| auth :4001            | Postgres            | User, Session, Role(+Permission), Plan(+FeatureRule/ModelAccess/PriceVersion), UserPlanAssignment, entitlement inbox/usage ledgers, SeedExecution, SystemSetting                                                 |
 | chat :4002            | Postgres            | ChatThread, ChatMessage, ChatMessageContextReceipt, MessageAttachment, FileDeliveryRecord                                                                                                                        |
 | connector :4003       | Postgres            | Connector, ConnectorModel, ConnectorHealthEvent, ModelSyncRun                                                                                                                                                    |
 | routing :4004         | Postgres            | RoutingDecision, RoutingPolicy, RouterModelRegistry/Profile/Topic, RouterLearnedScore, RouterCircuitBreaker, ReplayRun/Case, RoutingFeedback/Outcome, TaxonomyRole (14 models)                                   |
@@ -42,6 +42,7 @@ Compose containers: `pg-auth`, `pg-chat`, `pg-connector`, `pg-routing`,
 | agent :4015           | Postgres            | AgentSession, Device, PairingRequest, RefreshToken, TerminalCommand, CapabilityInvocation, AccessPolicy, Recipe(+Run/Step), ActivityMemoryEntry, Organization(+Member), Marketplace(Listing/Install) (20 models) |
 | research :4016        | Postgres            | SearchProvider, SearchRun, ResearchRun, FetchJob, PageCache                                                                                                                                                      |
 | llamacpp :4017        | Postgres            | FrontierCatalogEntry, BinaryRelease, PullJob, HardwareSnapshot, ModelLoadEvent, PreflightOverrideAudit, RuntimeConfig                                                                                            |
+| payment :4018         | Postgres            | BillingCustomer, Subscription, CheckoutSession, PaymentTransaction, Invoice(+Line/Delivery), Refund, PaymentMethod, ProrationQuote, FxQuote, WebhookEvent, OutboxEvent, ReconciliationRun/Divergence             |
 
 ## Migrations (Prisma services)
 

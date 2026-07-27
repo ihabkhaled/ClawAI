@@ -4,7 +4,7 @@ The npm-workspace inventory. Ground truth: root `package.json`
 (`"workspaces": ["packages/*", "apps/*"]`), `.ai/manifests/services.json`,
 `.ai/manifests/packages.json`, `.ai/manifests/tests.json`.
 
-**Total workspaces: 24** = 6 shared packages + 17 backend services + 1 frontend.
+**Total workspaces: 25** = 6 shared packages + 18 backend services + 1 frontend.
 
 ## Shared packages (`packages/`)
 
@@ -24,13 +24,13 @@ edges: `.ai/manifests/workspace-dependency-graph.json`.
 
 | Service                      | Port            | DB       | Test files | Endpoints |
 | ---------------------------- | --------------- | -------- | ---------- | --------- |
-| claw-auth-service            | 4001            | Postgres | 22         | 38        |
-| claw-chat-service            | 4002            | Postgres | 54         | 27        |
+| claw-auth-service            | 4001            | Postgres | 36         | 45        |
+| claw-chat-service            | 4002            | Postgres | 64         | 37        |
 | claw-connector-service       | 4003            | Postgres | 16         | 13        |
-| claw-routing-service         | 4004            | Postgres | 49         | 57        |
+| claw-routing-service         | 4004            | Postgres | 50         | 63        |
 | claw-memory-service          | 4005            | Postgres | 12         | 46        |
 | claw-file-service            | 4006            | Postgres | 15         | 14        |
-| claw-audit-service           | 4007            | Mongo    | 13         | 7         |
+| claw-audit-service           | 4007            | Mongo    | 15         | 7         |
 | claw-ollama-service          | 4008            | Postgres | 17         | 34        |
 | claw-health-service          | 4009            | none     | 4          | 1         |
 | claw-client-logs-service     | 4010 (env-only) | Mongo    | 6          | 5         |
@@ -41,6 +41,7 @@ edges: `.ai/manifests/workspace-dependency-graph.json`.
 | claw-agent-service           | 4015            | Postgres | 9          | 83        |
 | claw-research-service        | 4016            | Postgres | 14         | 16        |
 | claw-llamacpp-service        | 4017            | Postgres | 16         | 26        |
+| claw-payment-service         | 4018            | Postgres | 76         | 26        |
 
 Counts from `.ai/manifests/services.json` + `tests.json`. The
 env-only-port note for client-logs/server-logs is expanded in
@@ -50,11 +51,11 @@ env-only-port note for client-logs/server-logs is expanded in
 
 | Workspace     | Runner     | Test files | Pages |
 | ------------- | ---------- | ---------- | ----- |
-| claw-frontend | **vitest** | 151        | 89    |
+| claw-frontend | **vitest** | 211        | 102   |
 
 ## Test totals
 
-507 test files across the monorepo (`.ai/manifests/tests.json`). All backend
+678 test files across the monorepo (`.ai/manifests/tests.json`). All backend
 services + shared packages use **jest**; the frontend uses **vitest**. See
 [testing-map.md](testing-map.md).
 
@@ -65,7 +66,7 @@ services + shared packages use **jest**; the frontend uses **vitest**. See
   them).
 - Every service depends on `@claw/shared-constants`, `@claw/shared-types`,
   `@claw/shared-utilities`; all except health also use `@claw/shared-rabbitmq`.
-- Only `agent`, `research`, `workspace` additionally import `@claw/shared-auth`
+- Only `agent`, `payment`, `research`, and `workspace` additionally import `@claw/shared-auth`
   (they run their own auth surface).
 - `health-service` is intentionally minimal: it depends **only** on
   `@claw/shared-utilities`.

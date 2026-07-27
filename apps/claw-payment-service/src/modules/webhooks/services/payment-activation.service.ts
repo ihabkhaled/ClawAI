@@ -5,6 +5,10 @@ import { AppConfig } from '../../../app/config/app.config';
 import { BillingException } from '../../../common/errors';
 import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
 import { SubscriptionLifecycleService } from '../../billing/services/subscription-lifecycle.service';
+import {
+  isSubscriptionCheckoutSession,
+  type SubscriptionCheckoutSession,
+} from '../../billing/utilities/checkout-session-purpose.utility';
 import { BillingCustomerRepository } from '../repositories/billing-customer.repository';
 import { resolvePeriodEndMs } from '../utilities/billing-period.utility';
 import { type VerifiedPayment } from '../types/verified-payment.types';
@@ -44,22 +48,12 @@ export class PaymentActivationService {
       this.logger.warn(`activate: session=${session.id} already completed — ignoring replay`);
       return session.subscriptionId;
     }
-
-    // The amount is compared against what WE recorded, not against anything in
-    // the webhook body. A provider that reports a different figure is a
-    // reconciliation finding, never a silent acceptance.
-    if (
-      payment.amountMinor !== session.chargeAmountMinor ||
-      payment.currency !== session.chargeCurrency
-    ) {
-      this.logger.error(
-        `activate: amount mismatch session=${session.id} ` +
-          `expected=${String(session.chargeAmountMinor)}${session.chargeCurrency} ` +
-          `reported=${String(payment.amountMinor)}${payment.currency}`,
-      );
-      await this.sessions.markFailed(session.id, BillingErrorCode.PAYMENT_AMOUNT_MISMATCH);
-      throw new BillingException(BillingErrorCode.PAYMENT_AMOUNT_MISMATCH);
+    if (!isSubscriptionCheckoutSession(session)) {
+      this.logger.error(`activate: non-subscription session=${session.id}`);
+      throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
     }
+
+    await this.assertPaymentMatchesSession(session, payment);
 
     const customer = await this.customers.ensureForUser(session.userId, session.gateway);
     const periodStartMs = Date.now();
@@ -68,6 +62,7 @@ export class PaymentActivationService {
     const activation = await this.lifecycle.activateFromVerifiedPayment({
       paymentVerified: true,
       userId: session.userId,
+      invoiceRecipientEmail: session.billingEmail,
       billingCustomerId: customer.id,
       checkoutSessionId: session.id,
       planId: session.planId,
@@ -98,5 +93,24 @@ export class PaymentActivationService {
         `from session=${session.id}`,
     );
     return activation.subscriptionId;
+  }
+
+  private async assertPaymentMatchesSession(
+    session: SubscriptionCheckoutSession,
+    payment: VerifiedPayment,
+  ): Promise<void> {
+    if (
+      payment.amountMinor === session.chargeAmountMinor &&
+      payment.currency === session.chargeCurrency
+    ) {
+      return;
+    }
+    this.logger.error(
+      `activate: amount mismatch session=${session.id} ` +
+        `expected=${String(session.chargeAmountMinor)}${session.chargeCurrency} ` +
+        `reported=${String(payment.amountMinor)}${payment.currency}`,
+    );
+    await this.sessions.markFailed(session.id, BillingErrorCode.PAYMENT_AMOUNT_MISMATCH);
+    throw new BillingException(BillingErrorCode.PAYMENT_AMOUNT_MISMATCH);
   }
 }

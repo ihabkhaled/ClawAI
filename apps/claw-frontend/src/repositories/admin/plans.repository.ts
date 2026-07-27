@@ -7,6 +7,10 @@ import type {
   UpdatePlanModelAccessRequest,
   UpdatePlanRequest,
 } from '@/types';
+import type {
+  AdminPlanPriceVersion,
+  PublishAdminPlanPriceRequest,
+} from '@/types/admin-plan-price.types';
 
 const PLANS_BASE = '/admin/plans';
 
@@ -79,6 +83,24 @@ export const plansRepository = {
     const response = await apiClient.post<PlanView>(
       `${PLANS_BASE}/users/${encodeURIComponent(userId)}/assign`,
       { planId },
+    );
+    return response.data;
+  },
+
+  async listPriceVersions(id: string): Promise<AdminPlanPriceVersion[]> {
+    const response = await apiClient.get<AdminPlanPriceVersion[]>(
+      `${PLANS_BASE}/${encodeURIComponent(id)}/price-versions`,
+    );
+    return response.data;
+  },
+
+  async publishPrice(
+    id: string,
+    payload: PublishAdminPlanPriceRequest,
+  ): Promise<AdminPlanPriceVersion> {
+    const response = await apiClient.post<AdminPlanPriceVersion>(
+      `${PLANS_BASE}/${encodeURIComponent(id)}/price-versions`,
+      payload,
     );
     return response.data;
   },

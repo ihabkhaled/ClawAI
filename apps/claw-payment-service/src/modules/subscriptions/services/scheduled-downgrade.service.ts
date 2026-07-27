@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { EventPattern } from '@claw/shared-types';
+import {
+  type BillingSubscriptionDowngradedPayload,
+  EntitlementGrantType,
+  EventPattern,
+} from '@claw/shared-types';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { OutboxRepository } from '../../outbox/repositories/outbox.repository';
@@ -9,7 +13,7 @@ import {
   PAYMENT_PRODUCER,
 } from '../../billing/constants/billing.constants';
 import { type ProrationQuoteView } from '../../billing/types/proration.types';
-import { type Subscription } from '../../../generated/prisma';
+import { type Prisma, type Subscription } from '../../../generated/prisma';
 
 /**
  * Applies a plan change that takes no money.
@@ -46,6 +50,8 @@ export class ScheduledDowngradeService {
           scheduledPlanId: quote.targetPlanId,
           scheduledPlanSlug: quote.targetPlanSlug,
           scheduledPlanPriceVersionId: quote.targetPriceVersionId,
+          scheduledAmountMinor: quote.targetAmountMinor,
+          scheduledBillingInterval: quote.targetBillingInterval,
           scheduledEffectiveAt: effectiveAt,
           version: { increment: 1 },
         },
@@ -115,5 +121,85 @@ export class ScheduledDowngradeService {
     this.logger.log(
       `applyImmediately: subscription=${subscription.id} now ${quote.targetPlanSlug}`,
     );
+  }
+
+  async applyDue(subscription: Subscription, now: Date, correlationId: string): Promise<boolean> {
+    if (
+      subscription.scheduledPlanId === null ||
+      subscription.scheduledPlanSlug === null ||
+      subscription.scheduledPlanPriceVersionId === null ||
+      subscription.scheduledAmountMinor === null ||
+      subscription.scheduledBillingInterval === null
+    ) {
+      this.logger.error(`applyDue: incomplete snapshot subscription=${subscription.id}`);
+      return false;
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.subscription.updateMany({
+        where: {
+          id: subscription.id,
+          version: subscription.version,
+          scheduledEffectiveAt: { not: null, lte: now },
+        },
+        data: {
+          planId: subscription.scheduledPlanId ?? subscription.planId,
+          planSlug: subscription.scheduledPlanSlug ?? subscription.planSlug,
+          planPriceVersionId:
+            subscription.scheduledPlanPriceVersionId ?? subscription.planPriceVersionId,
+          amountMinor: subscription.scheduledAmountMinor ?? subscription.amountMinor,
+          billingInterval: subscription.scheduledBillingInterval ?? subscription.billingInterval,
+          scheduledPlanId: null,
+          scheduledPlanSlug: null,
+          scheduledPlanPriceVersionId: null,
+          scheduledAmountMinor: null,
+          scheduledBillingInterval: null,
+          scheduledEffectiveAt: null,
+          version: { increment: 1 },
+        },
+      });
+      if (updated.count === 0) {
+        return false;
+      }
+      await this.enqueueAppliedDowngrade(tx, subscription, now, correlationId);
+      return true;
+    });
+  }
+
+  private async enqueueAppliedDowngrade(
+    tx: Prisma.TransactionClient,
+    subscription: Subscription,
+    now: Date,
+    correlationId: string,
+  ): Promise<void> {
+    const eventId = randomUUID();
+    const effectiveAt = now.toISOString();
+    const payload: BillingSubscriptionDowngradedPayload = {
+      eventId,
+      schemaVersion: BILLING_EVENT_SCHEMA_VERSION,
+      producer: PAYMENT_PRODUCER,
+      userId: subscription.userId,
+      subscriptionId: subscription.id,
+      planId: subscription.scheduledPlanId ?? subscription.planId,
+      planSlug: subscription.scheduledPlanSlug ?? subscription.planSlug,
+      planPriceVersionId:
+        subscription.scheduledPlanPriceVersionId ?? subscription.planPriceVersionId,
+      grantType: EntitlementGrantType.PAID_SUBSCRIPTION,
+      effectiveAt,
+      entitlementValidUntil: subscription.entitlementValidUntil.toISOString(),
+      correlationId,
+      causationId: subscription.id,
+      occurredAt: effectiveAt,
+      previousPlanId: subscription.planId,
+      previousPlanSlug: subscription.planSlug,
+      previousPlanPriceVersionId: subscription.planPriceVersionId,
+    };
+    await this.outbox.enqueue(tx, {
+      pattern: EventPattern.BILLING_SUBSCRIPTION_DOWNGRADED,
+      eventId,
+      aggregateType: 'Subscription',
+      aggregateId: subscription.id,
+      payloadJson: payload,
+    });
   }
 }

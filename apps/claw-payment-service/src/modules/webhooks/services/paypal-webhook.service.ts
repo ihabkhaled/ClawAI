@@ -9,6 +9,7 @@ import {
 import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
 import { PaymentTransactionRepository } from '../../billing/repositories/payment-transaction.repository';
 import { SubscriptionLifecycleService } from '../../billing/services/subscription-lifecycle.service';
+import { isSubscriptionCheckoutSession } from '../../billing/utilities/checkout-session-purpose.utility';
 import { PaypalAdapter } from '../../gateways/paypal/paypal.adapter';
 import { type PaypalWebhookHeaders } from '../../gateways/paypal/types/paypal.types';
 import { SubscriptionRepository } from '../../subscriptions/repositories/subscription.repository';
@@ -204,6 +205,7 @@ export class PaypalWebhookService {
     }
 
     const request = {
+      originalTransactionId: original.id,
       subscriptionId: original.subscriptionId,
       userId: original.userId,
       gateway: BillingGateway.PAYPAL,
@@ -369,7 +371,7 @@ export class PaypalWebhookService {
     }
     const session = await this.sessions.findById(sessionId);
     const providerOrderId = session?.providerOrderId ?? null;
-    if (session === null || providerOrderId === null) {
+    if (session === null || providerOrderId === null || !isSubscriptionCheckoutSession(session)) {
       return null;
     }
     return {
