@@ -17,6 +17,7 @@ export function usePublicPricing(initialPlans: PublicPlan[] | null): UsePublicPr
     queryFn: ({ signal }) => publicPricingRepository.list(signal),
     initialData: initialPlans ?? undefined,
     staleTime: 60_000,
+    enabled: initialPlans !== null,
   });
   const retry = useCallback((): void => {
     void query.refetch();
@@ -25,7 +26,8 @@ export function usePublicPricing(initialPlans: PublicPlan[] | null): UsePublicPr
   return {
     plans: query.data ?? [],
     isLoading: query.isLoading,
-    isError: query.isError,
+    isError:
+      query.data === undefined && !query.isFetching && (initialPlans === null || query.isError),
     error: (query.error as Error | null) ?? null,
     isYearly: toggle.isYearly,
     selectMonthly: toggle.selectMonthly,
