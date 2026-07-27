@@ -11,6 +11,7 @@ import {
 // a paid plan simply by forgetting to check.
 export type ActivateSubscriptionInput = {
   userId: string;
+  invoiceRecipientEmail: string | null;
   billingCustomerId: string;
   checkoutSessionId: string;
   planId: string;

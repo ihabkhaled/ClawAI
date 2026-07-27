@@ -6,6 +6,8 @@
  * credit goes in.
  */
 export type ReversalRequest = {
+  /** The captured charge row this refund reverses, resolved from our records. */
+  originalTransactionId: string;
   subscriptionId: string;
   userId: string;
   gateway: string;

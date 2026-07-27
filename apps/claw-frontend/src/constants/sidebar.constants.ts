@@ -203,6 +203,16 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
         icon: CreditCard,
       },
       {
+        labelKey: 'nav.adminRefunds',
+        href: ROUTES.ADMIN_REFUNDS,
+        icon: Receipt,
+      },
+      {
+        labelKey: 'nav.billing',
+        href: ROUTES.ADMIN_BILLING,
+        icon: Gauge,
+      },
+      {
         labelKey: 'nav.adminRoles',
         href: ROUTES.ADMIN_ROLES,
         icon: UserCog,

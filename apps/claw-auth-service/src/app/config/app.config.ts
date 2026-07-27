@@ -21,6 +21,7 @@ const appConfigSchema = z.object({
   INTER_SERVICE_AUTH_TOKEN: z
     .string()
     .min(32, 'INTER_SERVICE_AUTH_TOKEN must be at least 32 characters'),
+  PAYMENT_SERVICE_URL: z.string().url().default('http://payment-service:4018'),
 
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_USERNAME: z.string().min(1).optional(),

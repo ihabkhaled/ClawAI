@@ -221,6 +221,11 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "BILLING_SUBSCRIPTION_DOWNGRADED",
+      "pattern": "billing.subscription.downgraded",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "BILLING_SUBSCRIPTION_EXPIRED",
       "pattern": "billing.subscription.expired",
       "source": "packages/shared-types/src/events/event-patterns.ts"

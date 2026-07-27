@@ -163,6 +163,7 @@ export type TranslationDictionary = {
     adminAiActionPolicies: string;
     adminSuggestionRules: string;
     adminWebhookDeliveries: string;
+    adminRefunds: string;
     adminPlans: string;
     adminRoles: string;
     adminRuntimeProgress: string;
@@ -3017,6 +3018,44 @@ export type TranslationDictionary = {
       confidence: string;
     };
   };
+  adminRefunds: {
+    title: string;
+    description: string;
+    loading: string;
+    error: string;
+    empty: string;
+    user: string;
+    captured: string;
+    remaining: string;
+    remainingBalance: string;
+    capturedOn: string;
+    refundAction: string;
+    refunding: string;
+    dialogTitle: string;
+    dialogDescription: string;
+    amount: string;
+    maximum: string;
+    reason: string;
+    confirm: string;
+    invalidAmount: string;
+    success: string;
+    failed: string;
+  };
+  adminBilling: {
+    title: string;
+    description: string;
+    loading: string;
+    error: string;
+    empty: string;
+    revenue: string;
+    providerCost: string;
+    margin: string;
+    subscriptions: string;
+    churn: string;
+    failedPayments: string;
+    period: string;
+    nonUsdRevenue: string;
+  };
   adminPlans: {
     title: string;
     description: string;
@@ -3426,6 +3465,10 @@ export type TranslationDictionary = {
     };
     paymentMethods: {
       removeFailed: string;
+      setupFailed: string;
+      add: string;
+      adding: string;
+      consent: string;
       title: string;
       empty: string;
       error: string;
@@ -3524,6 +3567,9 @@ export type TranslationDictionary = {
       status: string;
       total: string;
       view: string;
+      download: string;
+      downloading: string;
+      downloadError: string;
       error: string;
       empty: string;
     };

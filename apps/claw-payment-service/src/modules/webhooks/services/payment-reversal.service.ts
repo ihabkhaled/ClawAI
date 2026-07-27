@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventPattern, PaymentTransactionType, SubscriptionStatus } from '@claw/shared-types';
 
-import { PaymentTransactionRepository } from '../../billing/repositories/payment-transaction.repository';
 import { SubscriptionLifecycleService } from '../../billing/services/subscription-lifecycle.service';
+import { RefundWebhookService } from '../../refunds/services/refund-webhook.service';
 import { type ReversalRequest } from '../types/reversal.types';
 
 /**
@@ -12,18 +12,16 @@ import { type ReversalRequest } from '../types/reversal.types';
  * The policy difference between the two reversal kinds is the whole reason this
  * exists as its own service:
  *
- * - **Refund** → `REFUNDED`. A customer-service outcome. We gave the money back,
- *   so the access goes with it.
- * - **Chargeback** → `SUSPENDED`. A dispute, not a decision. Access ends
- *   immediately because the funds are gone, but the status says "contested" so an
- *   operator reviewing the account can tell the two apart. Suspension also stops
- *   the disputed transaction being reused.
+ * - **Partial refund** keeps the paid entitlement. A cumulative full refund
+ *   moves the subscription to `REFUNDED` and revokes it immediately.
+ * - **Chargeback** moves the subscription to terminal `CHARGEBACK` and revokes
+ *   access immediately because the funds are gone.
  *
  * Neither path deletes user data. Losing paid features is the consequence of a
  * reversal; losing your conversations is not.
  *
- * Every method is idempotent through the `(gateway, providerTransactionId)` unique
- * index, so a gateway redelivering a refund notification cannot refund twice.
+ * Every method is idempotent through the provider reversal id. A gateway
+ * redelivering a notification cannot apply it twice.
  */
 @Injectable()
 export class PaymentReversalService {
@@ -31,18 +29,13 @@ export class PaymentReversalService {
 
   constructor(
     private readonly lifecycle: SubscriptionLifecycleService,
-    private readonly transactions: PaymentTransactionRepository,
+    private readonly refundWebhooks: RefundWebhookService,
   ) {}
 
   /** Money returned to the customer at our or their request. */
   async refund(request: ReversalRequest): Promise<boolean> {
     this.logger.warn(`refund: subscription=${request.subscriptionId}`);
-    return this.apply(
-      request,
-      PaymentTransactionType.REFUND,
-      SubscriptionStatus.REFUNDED,
-      EventPattern.BILLING_PAYMENT_REFUNDED,
-    );
+    return this.refundWebhooks.apply(request);
   }
 
   /** Funds pulled back by the card network or PayPal. A dispute. */
@@ -51,7 +44,7 @@ export class PaymentReversalService {
     return this.apply(
       request,
       PaymentTransactionType.CHARGEBACK,
-      SubscriptionStatus.SUSPENDED,
+      SubscriptionStatus.CHARGEBACK,
       EventPattern.BILLING_PAYMENT_CHARGEBACK,
     );
   }
@@ -62,14 +55,8 @@ export class PaymentReversalService {
     status: SubscriptionStatus,
     pattern: EventPattern,
   ): Promise<boolean> {
-    // Pair the reversal with the charge it offsets so reconciliation can match
-    // them. When the gateway gives us no capture reference, the latest charge on
-    // the subscription is the row a reversal most plausibly reverses — recorded as
-    // a best-effort link, never used to decide whether to revoke.
-    const original = await this.transactions.findLatestChargeForSubscription(
-      request.subscriptionId,
-    );
-
+    // Pair the reversal with the exact charge verified by the webhook handler
+    // so reconciliation never guesses which payment was disputed.
     return this.lifecycle.reverseAndRevoke({
       subscriptionId: request.subscriptionId,
       userId: request.userId,
@@ -81,7 +68,7 @@ export class PaymentReversalService {
       providerCurrency: request.providerCurrency,
       providerTransactionId: request.providerTransactionId,
       idempotencyKey: `${type.toLowerCase()}:${request.providerTransactionId ?? request.subscriptionId}`,
-      reversesTransactionId: original?.id ?? null,
+      reversesTransactionId: request.originalTransactionId,
       invoiceId: request.invoiceId,
       status,
       pattern,

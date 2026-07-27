@@ -109,6 +109,14 @@ export type CheckoutSessionView = {
   expiresAt: string;
 };
 
+export type PaymentMethodSetupSessionView = {
+  id: string;
+  status: string;
+  gateway: string;
+  hostedCheckoutUrl: string | null;
+  expiresAt: string;
+};
+
 export type InvoiceView = {
   id: string;
   number: string;

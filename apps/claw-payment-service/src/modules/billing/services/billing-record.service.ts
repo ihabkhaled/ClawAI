@@ -5,7 +5,7 @@ import {
   PaymentTransactionType,
 } from '@claw/shared-types';
 
-import { type Prisma } from '../../../generated/prisma';
+import { type PaymentTransaction, type Prisma } from '../../../generated/prisma';
 import { InvoiceWriteRepository } from '../repositories/invoice-write.repository';
 import { PaymentTransactionRepository } from '../repositories/payment-transaction.repository';
 import {
@@ -44,34 +44,14 @@ export class BillingRecordService {
     input: RecordChargeInput,
   ): Promise<RecordedCharge> {
     this.logger.debug(`recordCharge: subscription=${input.subscriptionId}`);
-    const transaction = await this.transactions.record(tx, {
-      userId: input.userId,
-      subscriptionId: input.subscriptionId,
-      checkoutSessionId: input.checkoutSessionId,
-      gateway: input.gateway,
-      type: input.type,
-      status: PaymentTransactionStatus.CAPTURED,
-      amountMinor: input.amountMinor,
-      currency: input.currency,
-      providerAmountMinor: input.providerAmountMinor,
-      providerCurrency: input.providerCurrency,
-      providerTransactionId: input.providerTransactionId,
-      providerOrderId: input.providerOrderId,
-      idempotencyKey: input.idempotencyKey,
-      priceSnapshot: input.priceSnapshot,
-      fxSnapshot: input.fxSnapshot,
-      capturedAt: new Date(),
-      refundedAt: null,
-      reversesTransactionId: null,
-    });
-
+    const transaction = await this.recordCapturedTransaction(tx, input);
     const invoice = await this.invoices.create(tx, {
       userId: input.userId,
+      recipientEmail: input.invoiceRecipientEmail,
       subscriptionId: input.subscriptionId,
       currency: input.currency,
       periodStart: input.periodStart,
       periodEnd: input.periodEnd,
-      // The charge captured, so the invoice is paid in full at issue time.
       amountPaidMinor: input.amountMinor,
       lines: [
         {
@@ -92,6 +72,32 @@ export class BillingRecordService {
         `amount=${String(input.amountMinor)}${input.currency}`,
     );
     return { transactionId: transaction.id, invoiceId: invoice.id, invoiceNumber: invoice.number };
+  }
+
+  private async recordCapturedTransaction(
+    tx: Prisma.TransactionClient,
+    input: RecordChargeInput,
+  ): Promise<PaymentTransaction> {
+    return this.transactions.record(tx, {
+      userId: input.userId,
+      subscriptionId: input.subscriptionId,
+      checkoutSessionId: input.checkoutSessionId,
+      gateway: input.gateway,
+      type: input.type,
+      status: PaymentTransactionStatus.CAPTURED,
+      amountMinor: input.amountMinor,
+      currency: input.currency,
+      providerAmountMinor: input.providerAmountMinor,
+      providerCurrency: input.providerCurrency,
+      providerTransactionId: input.providerTransactionId,
+      providerOrderId: input.providerOrderId,
+      idempotencyKey: input.idempotencyKey,
+      priceSnapshot: input.priceSnapshot,
+      fxSnapshot: input.fxSnapshot,
+      capturedAt: new Date(),
+      refundedAt: null,
+      reversesTransactionId: null,
+    });
   }
 
   /**

@@ -25,6 +25,21 @@ export type CheckoutSessionView = {
   expiresAt: string;
 };
 
+export type PaymentMethodSetupSessionView = {
+  id: string;
+  status: string;
+  gateway: string;
+  hostedCheckoutUrl: string | null;
+  expiresAt: string;
+};
+
+export type StartPaymentMethodSetupInput = {
+  userId: string;
+  userEmail: string;
+  idempotencyKey: string;
+  consentToStore: true;
+};
+
 // The minimum a gateway order needs from its caller. Narrower than the full
 // start input so the upgrade path can reuse it without inventing a plan id it
 // does not have.

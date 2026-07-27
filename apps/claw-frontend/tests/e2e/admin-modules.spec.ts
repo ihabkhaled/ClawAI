@@ -63,4 +63,27 @@ test.describe('Admin modules', () => {
     // Date column should never render the literal "Invalid Date" string.
     await expect(page.getByText('Invalid Date')).toHaveCount(0);
   });
+
+  test('billing dashboard exposes protected revenue and subscription health', async ({ page }) => {
+    await login(page);
+    await page.goto('/admin/billing');
+    await expect(page.getByRole('heading', { name: /Billing dashboard/ })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(/Revenue/).first()).toBeVisible();
+    await expect(page.getByText(/Provider cost/).first()).toBeVisible();
+    await expect(page.getByText(/Failed payments/).first()).toBeVisible();
+  });
+
+  test('plan pricing only offers immutable version publication', async ({ page }) => {
+    await login(page);
+    await page.goto('/admin/plans');
+    const priceLink = page.locator('a[href$="/prices"]').first();
+    await expect(priceLink).toBeVisible({ timeout: 15_000 });
+    await priceLink.click();
+    await expect(page.getByLabel(/Billing period/)).toBeVisible();
+    await expect(page.getByLabel(/Currency/)).toBeVisible();
+    await expect(page.getByRole('button', { name: /Create/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Edit/ })).toHaveCount(0);
+  });
 });

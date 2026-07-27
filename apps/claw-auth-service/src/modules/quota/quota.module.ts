@@ -6,6 +6,8 @@ import { FeaturePolicyService } from './services/feature-policy.service';
 import { TokenLedgerRepository } from './repositories/token-ledger.repository';
 import { WeightedUsageRepository } from './repositories/weighted-usage.repository';
 import { FeatureUsageRepository } from './repositories/feature-usage.repository';
+import { ProviderCostMetricsInternalController } from './controllers/provider-cost-metrics-internal.controller';
+import { ProviderCostMetricsService } from './services/provider-cost-metrics.service';
 
 // QuotaService + ledgers only. The internal quota HTTP controller lives in
 // EntitlementsModule (it needs EntitlementsService to resolve a user's daily
@@ -16,12 +18,14 @@ import { FeatureUsageRepository } from './repositories/feature-usage.repository'
 // one-directional too.
 @Module({
   imports: [RedisModule, PlansModule],
+  controllers: [ProviderCostMetricsInternalController],
   providers: [
     QuotaService,
     FeaturePolicyService,
     TokenLedgerRepository,
     WeightedUsageRepository,
     FeatureUsageRepository,
+    ProviderCostMetricsService,
   ],
   exports: [
     QuotaService,

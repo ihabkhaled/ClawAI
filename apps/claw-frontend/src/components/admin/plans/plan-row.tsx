@@ -16,6 +16,7 @@ export function PlanRow({
   onSetDefault,
   onEditHref,
   onModelAccessHref,
+  onPricesHref,
   t,
 }: PlanRowProps): ReactElement {
   const isPending = pendingId === plan.id;
@@ -26,7 +27,7 @@ export function PlanRow({
       <CardContent className="flex flex-col gap-3 p-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-base font-semibold">{plan.name}</span>
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{plan.slug}</code>
+          <code className="bg-muted rounded px-1.5 py-0.5 text-xs">{plan.slug}</code>
           {plan.isDefault ? (
             <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-xs text-blue-600 dark:text-blue-400">
               {t('adminPlans.defaultBadge')}
@@ -36,33 +37,33 @@ export function PlanRow({
             className={
               plan.isActive
                 ? 'rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-600 dark:text-emerald-400'
-                : 'rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground'
+                : 'border-border bg-muted text-muted-foreground rounded-full border px-2 py-0.5 text-xs'
             }
           >
             {plan.isActive ? t('adminPlans.statusActive') : t('adminPlans.statusInactive')}
           </span>
           {plan.isPublic ? null : (
-            <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            <span className="border-border bg-muted text-muted-foreground rounded-full border px-2 py-0.5 text-xs">
               {t('adminPlans.privateBadge')}
             </span>
           )}
         </div>
 
         {plan.description !== null ? (
-          <p className="text-sm text-muted-foreground">{plan.description}</p>
+          <p className="text-muted-foreground text-sm">{plan.description}</p>
         ) : null}
 
-        <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-3">
+        <div className="text-muted-foreground grid gap-1 text-xs sm:grid-cols-3">
           <div>
-            <span className="font-medium text-foreground">{t('adminPlans.dailyQuota')}</span>:{' '}
+            <span className="text-foreground font-medium">{t('adminPlans.dailyQuota')}</span>:{' '}
             {formatTokenCount(plan.dailyTokenQuota)}
           </div>
           <div>
-            <span className="font-medium text-foreground">{t('adminPlans.monthlyQuota')}</span>:{' '}
+            <span className="text-foreground font-medium">{t('adminPlans.monthlyQuota')}</span>:{' '}
             {formatNullableLimit(plan.monthlyTokenQuota, unlimited)}
           </div>
           <div>
-            <span className="font-medium text-foreground">{t('adminPlans.modelRules')}</span>:{' '}
+            <span className="text-foreground font-medium">{t('adminPlans.modelRules')}</span>:{' '}
             {plan.modelAccess.length}
           </div>
         </div>
@@ -73,6 +74,9 @@ export function PlanRow({
           </Button>
           <Button asChild size="sm" variant="outline">
             <Link href={onModelAccessHref}>{t('adminPlans.modelAccessAction')}</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href={onPricesHref}>{t('billing.summary.price')}</Link>
           </Button>
           {plan.isActive ? (
             <Button

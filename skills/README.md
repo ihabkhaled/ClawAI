@@ -123,6 +123,12 @@ navigation skills above:
 - [`08-event-bus-toolkit.md`](./08-event-bus-toolkit.md)
 - [`09-refactor-toolkit.md`](./09-refactor-toolkit.md)
 
+### Billing and scheduled operations
+
+- [`reconcile-billing-state.md`](./reconcile-billing-state.md)
+- [`debug-a-stuck-scheduled-job.md`](./debug-a-stuck-scheduled-job.md)
+- [`add-a-payment-gateway-flow.md`](./add-a-payment-gateway-flow.md)
+
 ---
 
 ## Keeping skills current

@@ -40,6 +40,8 @@ export type SubscriptionMutableFields = {
   scheduledPlanId?: string | null;
   scheduledPlanSlug?: string | null;
   scheduledPlanPriceVersionId?: string | null;
+  scheduledAmountMinor?: number | null;
+  scheduledBillingInterval?: string | null;
   scheduledEffectiveAt?: Date | null;
   encryptedGatewaySubscriptionId?: string | null;
   gatewaySubscriptionLookupHash?: string | null;

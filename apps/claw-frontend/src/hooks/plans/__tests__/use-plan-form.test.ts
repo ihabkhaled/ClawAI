@@ -39,14 +39,12 @@ describe('usePlanForm', () => {
   it('starts from blank defaults when no initial plan', () => {
     const { result } = renderHook(() => usePlanForm(null));
     expect(result.current.state.name).toBe('');
-    expect(result.current.state.currency).toBe('USD');
     expect(result.current.fieldErrors).toEqual({});
   });
 
   it('seeds state from an initial plan, mapping nullables to strings', () => {
     const { result } = renderHook(() => usePlanForm(seedPlan));
     expect(result.current.state.name).toBe('Pro');
-    expect(result.current.state.priceMonthly).toBe('19');
     expect(result.current.state.monthlyTokenQuota).toBe('2000000');
     expect(result.current.state.allowJudgeMode).toBe(false);
   });
@@ -54,16 +52,10 @@ describe('usePlanForm', () => {
   it('maps null numeric fields to empty strings when seeding', () => {
     const sparse = {
       ...seedPlan,
-      priceMonthly: null,
-      priceYearly: null,
-      currency: null,
       monthlyTokenQuota: null,
       maxChatsPerDay: null,
     } satisfies PlanView;
     const { result } = renderHook(() => usePlanForm(sparse));
-    expect(result.current.state.priceMonthly).toBe('');
-    expect(result.current.state.priceYearly).toBe('');
-    expect(result.current.state.currency).toBe('');
     expect(result.current.state.monthlyTokenQuota).toBe('');
     expect(result.current.state.maxChatsPerDay).toBe('');
   });

@@ -8,9 +8,15 @@ import {
   checkoutSessionParamSchema,
   type CreateCheckoutSessionDto,
   createCheckoutSessionSchema,
+  type CreatePaymentMethodSetupSessionDto,
+  createPaymentMethodSetupSessionSchema,
 } from '../dto/checkout.dto';
 import { CheckoutService } from '../services/checkout.service';
-import { type CheckoutSessionView } from '../types/checkout.types';
+import { PaymentMethodSetupService } from '../services/payment-method-setup.service';
+import {
+  type CheckoutSessionView,
+  type PaymentMethodSetupSessionView,
+} from '../types/checkout.types';
 import { PlanCatalogClient } from '../../plan-catalog/plan-catalog.client';
 import { type PlanCatalogEntry } from '../../plan-catalog/types/plan-catalog.types';
 
@@ -21,12 +27,28 @@ import { type PlanCatalogEntry } from '../../plan-catalog/types/plan-catalog.typ
 export class CheckoutController {
   constructor(
     private readonly checkout: CheckoutService,
+    private readonly paymentMethodSetup: PaymentMethodSetupService,
     private readonly catalog: PlanCatalogClient,
   ) {}
 
   @Get('plans')
   async listPlans(): Promise<PlanCatalogEntry[]> {
     return this.catalog.listCatalog();
+  }
+
+  @Post('payment-method-setup-sessions')
+  @HttpCode(HttpStatus.CREATED)
+  async createPaymentMethodSetupSession(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(createPaymentMethodSetupSessionSchema))
+    dto: CreatePaymentMethodSetupSessionDto,
+  ): Promise<PaymentMethodSetupSessionView> {
+    return this.paymentMethodSetup.start({
+      userId: user.id,
+      userEmail: user.email,
+      idempotencyKey: dto.idempotencyKey,
+      consentToStore: dto.consentToStore,
+    });
   }
 
   @Post('checkout-sessions')

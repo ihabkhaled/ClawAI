@@ -34,6 +34,15 @@ export const apiClient = {
     }
   },
 
+  async getBlob(path: string): Promise<ApiResponse<Blob>> {
+    try {
+      const response = await httpClient.get<Blob>(path, { responseType: 'blob' });
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      throw toApiClientError(error);
+    }
+  },
+
   async post<T>(
     path: string,
     body?: unknown,

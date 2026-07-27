@@ -74,7 +74,7 @@ export class ProrationService {
     nowMs: number = Date.now(),
   ): Promise<ProrationQuoteView> {
     const quote = await this.repository.findById(quoteId);
-    if (!quote || quote.subscriptionId !== subscriptionId) {
+    if (quote?.subscriptionId !== subscriptionId) {
       throw new BillingException(BillingErrorCode.PRORATION_QUOTE_EXPIRED);
     }
     if (quote.status !== ProrationQuoteStatus.ACTIVE) {
@@ -108,6 +108,7 @@ export class ProrationService {
     targetPlanId: string;
     targetPlanSlug: string;
     targetPlanPriceVersionId: string;
+    targetAmountMinor: number;
     targetBillingInterval: string;
     currency: string;
     remainingRatioScaled: number;
@@ -124,6 +125,7 @@ export class ProrationService {
       targetPlanId: record.targetPlanId,
       targetPlanSlug: record.targetPlanSlug,
       targetPriceVersionId: record.targetPlanPriceVersionId,
+      targetAmountMinor: record.targetAmountMinor,
       targetBillingInterval: record.targetBillingInterval,
       currency: record.currency,
       remainingRatioScaled: record.remainingRatioScaled,

@@ -42,27 +42,36 @@ function makePrice(overrides: PlanRow = {}): PlanRow {
     activeKey: 'plan-pro:MONTHLY',
     retiredAt: null,
     createdByUserId: null,
+    effectiveFrom: new Date('2026-07-01T00:00:00.000Z'),
+    createdAt: new Date('2026-07-01T00:00:00.000Z'),
     ...overrides,
   };
 }
 
 describe('PlanCatalogService', () => {
-  let plans: jest.Mocked<Pick<PlansRepository, 'findAll'>>;
+  let plans: jest.Mocked<Pick<PlansRepository, 'findAll' | 'findById'>>;
   let billing: jest.Mocked<
     Pick<
       PlanBillingRepository,
-      'listActivePrices' | 'listFeatureRules' | 'findActivePrice' | 'findPriceById'
+      | 'listActivePrices'
+      | 'listFeatureRules'
+      | 'findActivePrice'
+      | 'findPriceById'
+      | 'listPricesForPlan'
+      | 'publishNewPrice'
     >
   >;
   let service: PlanCatalogService;
 
   beforeEach(() => {
-    plans = { findAll: jest.fn() } as never;
+    plans = { findAll: jest.fn(), findById: jest.fn() } as never;
     billing = {
       listActivePrices: jest.fn(),
       listFeatureRules: jest.fn(),
       findActivePrice: jest.fn(),
       findPriceById: jest.fn(),
+      listPricesForPlan: jest.fn(),
+      publishNewPrice: jest.fn(),
     } as never;
     service = new PlanCatalogService(
       plans as unknown as PlansRepository,
@@ -181,6 +190,57 @@ describe('PlanCatalogService', () => {
     it('returns null for an unknown id', async () => {
       billing.findPriceById.mockResolvedValue(null as never);
       await expect(service.findPriceVersion('nope')).resolves.toBeNull();
+    });
+  });
+
+  describe('admin price versions', () => {
+    it('lists active and retired immutable versions for a plan', async () => {
+      plans.findById.mockResolvedValue(makePlan() as never);
+      billing.listPricesForPlan.mockResolvedValue([
+        makePrice({ id: 'price-current', version: 2 }),
+        makePrice({ id: 'price-retired', version: 1, isActive: false }),
+      ] as never);
+
+      const prices = await service.listPriceVersions('plan-pro');
+
+      expect(prices.map((price) => price.id)).toEqual(['price-current', 'price-retired']);
+    });
+
+    it('mints a new version through the atomic repository operation', async () => {
+      plans.findById.mockResolvedValue(makePlan() as never);
+      billing.publishNewPrice.mockResolvedValue(makePrice({ id: 'price-v4', version: 4 }) as never);
+
+      const price = await service.publishPrice({
+        planId: 'plan-pro',
+        billingInterval: BillingIntervalKind.MONTHLY,
+        currency: 'USD',
+        amountMinor: 2499,
+        createdByUserId: 'admin-1',
+      });
+
+      expect(billing.publishNewPrice).toHaveBeenCalledWith({
+        planId: 'plan-pro',
+        billingInterval: BillingIntervalKind.MONTHLY,
+        currency: 'USD',
+        amountMinor: 2499,
+        createdByUserId: 'admin-1',
+      });
+      expect(price.version).toBe(4);
+    });
+
+    it('rejects price publication for an unknown plan', async () => {
+      plans.findById.mockResolvedValue(null);
+
+      await expect(
+        service.publishPrice({
+          planId: 'missing',
+          billingInterval: BillingIntervalKind.MONTHLY,
+          currency: 'USD',
+          amountMinor: 2499,
+          createdByUserId: 'admin-1',
+        }),
+      ).rejects.toMatchObject({ code: 'ENTITY_NOT_FOUND' });
+      expect(billing.publishNewPrice).not.toHaveBeenCalled();
     });
   });
 });

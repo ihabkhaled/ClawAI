@@ -46,6 +46,7 @@ const baseProps = {
   onSetDefault: vi.fn(),
   onEditHref: '/admin/plans/pl1/edit',
   onModelAccessHref: '/admin/plans/pl1/model-access',
+  onPricesHref: '/admin/plans/pl1/prices',
   t: (key: string) => key,
 };
 

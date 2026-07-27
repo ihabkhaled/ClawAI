@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { BillingInterval } from '@/enums/billing.enum';
 import { plansRepository } from '@/repositories/admin/plans.repository';
 import type {
   CreatePlanRequest,
@@ -8,6 +9,10 @@ import type {
   UpdatePlanModelAccessRequest,
   UpdatePlanRequest,
 } from '@/types';
+import type {
+  AdminPlanPriceVersion,
+  PublishAdminPlanPriceRequest,
+} from '@/types/admin-plan-price.types';
 
 const mockGet = vi.fn();
 const mockPost = vi.fn();
@@ -111,5 +116,50 @@ describe('plans repository', () => {
     const result = await plansRepository.assignUser('u 1', 'pl1');
     expect(mockPost).toHaveBeenCalledWith('/admin/plans/users/u%201/assign', { planId: 'pl1' });
     expect(result).toEqual(samplePlan);
+  });
+
+  it('lists immutable price versions from the encoded plan path', async () => {
+    const version = {
+      id: 'price-1',
+      planId: 'p 1',
+      billingInterval: BillingInterval.MONTHLY,
+      currency: 'USD',
+      amountMinor: 2_000,
+      version: 1,
+      isActive: true,
+      effectiveFrom: '2026-08-01T00:00:00.000Z',
+      retiredAt: null,
+      createdAt: '2026-07-27T00:00:00.000Z',
+    } satisfies AdminPlanPriceVersion;
+    mockGet.mockResolvedValue({ data: [version] });
+
+    await expect(plansRepository.listPriceVersions('p 1')).resolves.toEqual([version]);
+    expect(mockGet).toHaveBeenCalledWith('/admin/plans/p%201/price-versions');
+  });
+
+  it('publishes the exact immutable price request body', async () => {
+    const payload: PublishAdminPlanPriceRequest = {
+      billingInterval: BillingInterval.MONTHLY,
+      currency: 'USD',
+      amountMinor: 2_000,
+    };
+    const version = {
+      id: 'price-1',
+      planId: 'p/1',
+      ...payload,
+      version: 1,
+      isActive: true,
+      effectiveFrom: '2026-08-01T00:00:00.000Z',
+      retiredAt: null,
+      createdAt: '2026-07-27T00:00:00.000Z',
+    } satisfies AdminPlanPriceVersion;
+    mockPost.mockResolvedValue({ data: version });
+
+    await expect(plansRepository.publishPrice('p/1', payload)).resolves.toEqual(version);
+    expect(mockPost).toHaveBeenCalledWith('/admin/plans/p%2F1/price-versions', {
+      billingInterval: BillingInterval.MONTHLY,
+      currency: 'USD',
+      amountMinor: 2_000,
+    });
   });
 });

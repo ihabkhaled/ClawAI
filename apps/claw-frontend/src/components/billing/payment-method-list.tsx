@@ -10,14 +10,22 @@ export function PaymentMethodList({
   methods,
   isLoading,
   isError,
+  onAdd,
+  isAdding,
   onRemove,
   pendingId,
   t,
 }: PaymentMethodListProps): ReactElement {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">{t('billing.paymentMethods.title')}</CardTitle>
+      <CardHeader className="flex-row items-start justify-between gap-4">
+        <div className="grid gap-1">
+          <CardTitle className="text-lg">{t('billing.paymentMethods.title')}</CardTitle>
+          <p className="text-muted-foreground text-xs">{t('billing.paymentMethods.consent')}</p>
+        </div>
+        <Button type="button" size="sm" disabled={isAdding} onClick={onAdd}>
+          {isAdding ? t('billing.paymentMethods.adding') : t('billing.paymentMethods.add')}
+        </Button>
       </CardHeader>
       <CardContent className="grid gap-3">
         {isLoading ? <Skeleton className="h-16 w-full" /> : null}

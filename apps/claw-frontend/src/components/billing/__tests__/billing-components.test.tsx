@@ -2,10 +2,16 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import { InvoiceTable } from '@/components/billing/invoice-table';
 import { PaymentMethodList } from '@/components/billing/payment-method-list';
 import { ProrationBreakdown } from '@/components/billing/proration-breakdown';
 import { UsageWindowBar } from '@/components/billing/usage-window-bar';
-import type { PaymentMethodView, ProrationQuoteView, UsageWindow } from '@/types/billing.types';
+import type {
+  InvoiceView,
+  PaymentMethodView,
+  ProrationQuoteView,
+  UsageWindow,
+} from '@/types/billing.types';
 
 const t = (key: string, params?: Record<string, string | number>): string =>
   params === undefined ? key : `${key}:${JSON.stringify(params)}`;
@@ -101,6 +107,8 @@ describe('PaymentMethodList', () => {
         methods={methods}
         isLoading={false}
         isError={false}
+        onAdd={vi.fn()}
+        isAdding={false}
         onRemove={vi.fn()}
         pendingId="pm-1"
         t={t}
@@ -119,6 +127,8 @@ describe('PaymentMethodList', () => {
         methods={methods}
         isLoading={false}
         isError={false}
+        onAdd={vi.fn()}
+        isAdding={false}
         onRemove={onRemove}
         pendingId={null}
         t={t}
@@ -140,11 +150,80 @@ describe('PaymentMethodList', () => {
         methods={[]}
         isLoading={false}
         isError={false}
+        onAdd={vi.fn()}
+        isAdding={false}
         onRemove={vi.fn()}
         pendingId={null}
         t={t}
       />,
     );
     expect(screen.getByText('billing.paymentMethods.empty')).toBeInTheDocument();
+  });
+
+  it('records the explicit add action and disables it while setup starts', async () => {
+    const onAdd = vi.fn();
+    const { rerender } = render(
+      <PaymentMethodList
+        methods={[]}
+        isLoading={false}
+        isError={false}
+        onAdd={onAdd}
+        isAdding={false}
+        onRemove={vi.fn()}
+        pendingId={null}
+        t={t}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'billing.paymentMethods.add' }));
+    expect(onAdd).toHaveBeenCalledOnce();
+    expect(screen.getByText('billing.paymentMethods.consent')).toBeInTheDocument();
+
+    rerender(
+      <PaymentMethodList
+        methods={[]}
+        isLoading={false}
+        isError={false}
+        onAdd={onAdd}
+        isAdding
+        onRemove={vi.fn()}
+        pendingId={null}
+        t={t}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'billing.paymentMethods.adding' })).toBeDisabled();
+  });
+});
+
+describe('InvoiceTable', () => {
+  const invoices: InvoiceView[] = [
+    {
+      id: 'invoice-1',
+      number: 'CLAW-00000001',
+      status: 'PAID',
+      currency: 'USD',
+      totalMinor: 2_000,
+      issuedAt: '2026-07-27T00:00:00.000Z',
+      paidAt: '2026-07-27T00:00:00.000Z',
+      hostedInvoiceUrl: null,
+    },
+  ];
+
+  it('offers an authenticated download even without a hosted provider URL', async () => {
+    const onDownload = vi.fn();
+    render(
+      <InvoiceTable
+        invoices={invoices}
+        isLoading={false}
+        isError={false}
+        onDownload={onDownload}
+        pendingId={null}
+        isDownloadError={false}
+        t={t}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'billing.invoices.download' }));
+    expect(onDownload).toHaveBeenCalledWith('invoice-1', 'CLAW-00000001');
   });
 });
