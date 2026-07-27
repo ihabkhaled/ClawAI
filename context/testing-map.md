@@ -1,41 +1,43 @@
 # Testing Map
 
-Ground truth: `.ai/manifests/tests.json` (**507 test files** total),
+Ground truth: `.ai/manifests/tests.json` (**678 test files** total),
 `services.json` (`testRunner`/`testFiles` per service).
 
 ## Runners
 
 - **Backend services + shared packages → jest** (ts-jest). Test files are
   `*.spec.ts`, colocated in `__tests__/`.
-- **Frontend → vitest** (`vitest run`). 151 test files. `*.test.ts` / `*.spec.ts`.
+- **Frontend → vitest** (`vitest run`). 211 test files. `*.test.ts` / `*.spec.ts`.
 - **E2E → playwright** (`npm run test:e2e` in the frontend).
 
 ## Test-file distribution (from tests.json)
 
-| Workspace                             | Runner | Files  |
-| ------------------------------------- | ------ | ------ |
-| claw-frontend                         | vitest | 151    |
-| claw-workspace-service                | jest   | 66     |
-| claw-chat-service                     | jest   | 54     |
-| claw-routing-service                  | jest   | 49     |
-| claw-auth-service                     | jest   | 22     |
-| claw-ollama-service                   | jest   | 17     |
-| claw-connector-service                | jest   | 16     |
-| claw-llamacpp-service                 | jest   | 16     |
-| @claw/shared-utilities                | jest   | 16     |
-| claw-file-service                     | jest   | 15     |
-| claw-research-service                 | jest   | 14     |
-| claw-audit-service                    | jest   | 13     |
-| claw-memory-service                   | jest   | 12     |
-| claw-agent-service                    | jest   | 9      |
-| claw-image-service                    | jest   | 9      |
-| claw-file-generation-service          | jest   | 7      |
-| claw-server-logs-service              | jest   | 7      |
-| claw-client-logs-service              | jest   | 6      |
-| claw-health-service                   | jest   | 4      |
-| @claw/shared-entitlements             | jest   | 2      |
-| @claw/shared-constants / shared-types | jest   | 1 each |
-| @claw/shared-auth / shared-rabbitmq   | jest   | 0      |
+| Workspace                           | Runner | Files |
+| ----------------------------------- | ------ | ----- |
+| claw-frontend                       | vitest | 211   |
+| claw-workspace-service              | jest   | 66    |
+| claw-chat-service                   | jest   | 64    |
+| claw-routing-service                | jest   | 50    |
+| claw-payment-service                | jest   | 76    |
+| claw-auth-service                   | jest   | 36    |
+| @claw/shared-utilities              | jest   | 23    |
+| claw-ollama-service                 | jest   | 17    |
+| claw-connector-service              | jest   | 16    |
+| claw-llamacpp-service               | jest   | 16    |
+| claw-file-service                   | jest   | 15    |
+| claw-audit-service                  | jest   | 15    |
+| claw-research-service               | jest   | 14    |
+| claw-memory-service                 | jest   | 12    |
+| claw-agent-service                  | jest   | 9     |
+| claw-image-service                  | jest   | 9     |
+| claw-file-generation-service        | jest   | 7     |
+| claw-server-logs-service            | jest   | 7     |
+| claw-client-logs-service            | jest   | 6     |
+| claw-health-service                 | jest   | 4     |
+| @claw/shared-entitlements           | jest   | 2     |
+| @claw/shared-constants              | jest   | 2     |
+| @claw/shared-types                  | jest   | 1     |
+| @claw/shared-auth / shared-rabbitmq | jest   | 0     |
 
 ## Coverage bar
 
@@ -54,6 +56,10 @@ before merging.
   overflow).
 - Manager error-path tests required (every `catch` covered).
 - Test files have all ESLint restrictions OFF; `any` allowed.
+- Billing repository tests assert the exact serialized frontend request body;
+  owner-token lock tests cover lost ownership; money assertions use integer
+  minor units or microUSD; constraints and cross-service contracts are tested
+  at their owning boundary.
 
 ## The test layers (beyond unit)
 

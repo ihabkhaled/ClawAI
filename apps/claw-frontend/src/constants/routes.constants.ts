@@ -6,6 +6,7 @@ export const ROUTES = {
   // Public marketing route. Also the entry point for organisations asking
   // about a private on-premise deployment.
   CONTACT: '/contact',
+  PRICING: '/pricing',
   DASHBOARD: '/dashboard',
   CHAT: '/chat',
   CHAT_THREAD: (threadId: string) => `/chat/${threadId}` as const,
@@ -66,10 +67,13 @@ export const ROUTES = {
   ADMIN_AI_ACTION_POLICIES: '/admin/ai-action-policies',
   ADMIN_SUGGESTION_RULES: '/admin/suggestion-rules',
   ADMIN_WEBHOOK_DELIVERIES: '/admin/webhook-deliveries',
+  ADMIN_REFUNDS: '/admin/refunds',
+  ADMIN_BILLING: '/admin/billing',
   ADMIN_PLANS: '/admin/plans',
   ADMIN_PLAN_NEW: '/admin/plans/new',
   ADMIN_PLAN_EDIT: (id: string) => `/admin/plans/${id}/edit` as const,
   ADMIN_PLAN_MODEL_ACCESS: (id: string) => `/admin/plans/${id}/model-access` as const,
+  ADMIN_PLAN_PRICES: (id: string) => `/admin/plans/${id}/prices` as const,
   ADMIN_ROLES: '/admin/roles',
   ADMIN_ROLE_DETAIL: (id: string) => `/admin/roles/${id}` as const,
   ADMIN_RUNTIME_PROGRESS: '/admin/runtime-progress',

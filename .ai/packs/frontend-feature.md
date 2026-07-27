@@ -15,7 +15,7 @@ Next.js frontend feature/component change.
 
 ## Known pitfalls
 - TSX = render only; no hooks/consts/inline types/sub-components
-- All text via t() in all 9 locales
+- All text via t() in all 13 locales
 - Use shadcn/ui — no raw select/input/textarea
 
 ## How to use

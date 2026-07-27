@@ -49,12 +49,12 @@ export default function AdminPlansPage(): ReactElement {
       />
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">{t('adminPlans.loading')}</p>
+        <p className="text-muted-foreground text-sm">{t('adminPlans.loading')}</p>
       ) : null}
 
       {isError ? (
         <div
-          className="flex items-center justify-between gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          className="border-destructive/40 bg-destructive/10 text-destructive flex items-center justify-between gap-2 rounded-lg border p-3 text-sm"
           role="alert"
         >
           <span>{error?.message ?? t('adminPlans.error')}</span>
@@ -66,7 +66,7 @@ export default function AdminPlansPage(): ReactElement {
 
       {mutationError !== null ? (
         <div
-          className="flex items-center justify-between gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          className="border-destructive/40 bg-destructive/10 text-destructive flex items-center justify-between gap-2 rounded-lg border p-3 text-sm"
           role="alert"
         >
           <span>{mutationError.message || t('adminPlans.mutationError')}</span>
@@ -77,7 +77,7 @@ export default function AdminPlansPage(): ReactElement {
       ) : null}
 
       {!isLoading && !isError && plans.length === 0 ? (
-        <p className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+        <p className="border-border bg-muted/20 text-muted-foreground rounded-lg border p-6 text-center text-sm">
           {t('adminPlans.empty')}
         </p>
       ) : null}
@@ -94,6 +94,7 @@ export default function AdminPlansPage(): ReactElement {
               onSetDefault={onSetDefault}
               onEditHref={ROUTES.ADMIN_PLAN_EDIT(plan.id)}
               onModelAccessHref={ROUTES.ADMIN_PLAN_MODEL_ACCESS(plan.id)}
+              onPricesHref={ROUTES.ADMIN_PLAN_PRICES(plan.id)}
               t={t}
             />
           ))}

@@ -91,6 +91,22 @@ export const queryKeys = {
     lists: () => [...queryKeys.adminPlans.all, 'list'] as const,
     detail: (id: string) => [...queryKeys.adminPlans.all, 'detail', id] as const,
     users: (id: string) => [...queryKeys.adminPlans.all, 'users', id] as const,
+    prices: (id: string) => [...queryKeys.adminPlans.all, 'prices', id] as const,
+  },
+  adminRefunds: {
+    all: ['adminRefunds'] as const,
+    refundableTransactions: () =>
+      [...queryKeys.adminRefunds.all, 'refundable-transactions'] as const,
+  },
+  adminBilling: {
+    all: ['adminBilling'] as const,
+    dashboard: () => ['adminBilling', 'dashboard'] as const,
+    priceVersionCounts: (planId: string) =>
+      ['adminBilling', 'price-version-counts', planId] as const,
+  },
+  publicPricing: {
+    all: ['publicPricing'] as const,
+    catalog: () => ['publicPricing', 'catalog'] as const,
   },
   adminRoles: {
     all: ['adminRoles'] as const,

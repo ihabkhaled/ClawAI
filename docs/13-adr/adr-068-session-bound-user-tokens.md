@@ -1,4 +1,4 @@
-# ADR-064: Session-bound user tokens
+# ADR-068: Session-bound user tokens
 
 **Status**: Accepted
 **Date**: 2026-07-27

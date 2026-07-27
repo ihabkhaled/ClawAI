@@ -163,6 +163,32 @@ describe('AppConfig', () => {
     });
   });
 
+  describe('invoice email delivery', () => {
+    it('keeps delivery disabled by default', () => {
+      const config = AppConfig.validate();
+      expect(config.CONTACT_EMAIL_ENABLED).toBe('false');
+      expect(config.CONTACT_EMAIL_PROVIDER).toBe('none');
+    });
+
+    it('requires the complete SMTP credential set when delivery is enabled', () => {
+      process.env['CONTACT_EMAIL_ENABLED'] = 'true';
+      process.env['CONTACT_EMAIL_PROVIDER'] = 'smtp';
+      process.env['CONTACT_SMTP_HOST'] = 'smtp.example.com';
+      expect(() => AppConfig.validate()).toThrow(/CONTACT_SMTP_USER/);
+      expect(() => AppConfig.validate()).toThrow(/CONTACT_SMTP_PASS/);
+    });
+
+    it('accepts a complete server-only SMTP configuration', () => {
+      process.env['CONTACT_EMAIL_ENABLED'] = 'true';
+      process.env['CONTACT_EMAIL_PROVIDER'] = 'smtp';
+      process.env['CONTACT_EMAIL_FROM'] = 'billing@claw.ai';
+      process.env['CONTACT_SMTP_HOST'] = 'smtp.example.com';
+      process.env['CONTACT_SMTP_USER'] = 'mailer';
+      process.env['CONTACT_SMTP_PASS'] = 'secret';
+      expect(() => AppConfig.validate()).not.toThrow();
+    });
+  });
+
   describe('get', () => {
     it('returns the cached config after validate', () => {
       const validated = AppConfig.validate();

@@ -9,7 +9,7 @@ The RabbitMQ event model. Ground truth: `.ai/manifests/event-graph.json`
 
 - **One durable topic exchange: `claw.events`**, with a **DLQ + 3 retries with
   backoff**, provided by `@claw/shared-rabbitmq`.
-- **147 event patterns** are registered (`.ai/BOOTSTRAP.md`). Routing keys are
+- **165 event patterns** are registered (`.ai/BOOTSTRAP.md`). Routing keys are
   dotted (`message.routed`, `connector.synced`, `workspace.sync.run_completed`).
 - Adding an event: **add the pattern to `@claw/shared-types` first**, then
   publish in the producing service (in a service/manager, never a controller),
@@ -45,10 +45,11 @@ chat  --message.completed-->    routing, memory, audit
 | llamacpp                       | `llamacpp.model.loaded/unloaded/crashed`                                                                                            | routing, audit    |
 | memory                         | `memory.extracted/suggested/approved/rejected/redacted/forgotten`                                                                   | audit (extracted) |
 | auth                           | `user.login/logout`                                                                                                                 | audit             |
+| payment                        | `billing.subscription.*`, `billing.payment.*`, `billing.invoice.*`, `billing.refund.*`, `billing.entitlement.*`                     | auth, audit       |
 | agent                          | `agent.capability.*` (12), `agent.session_*`, `agent.device_*`, `agent.token_*`                                                     | audit             |
 | workspace                      | `workspace.sync.*`, `workspace_action.*`, `ai_action.*`, `workspace_connector.*`, `workspace.webhook.*`, `workspace.auto_suggest.*` | audit             |
 | file                           | `file.uploaded/chunked/deleted/failed`, `file.ocr_*`, `file.retention_expired`, `file.archive_expanded`                             | audit             |
-| **all 16 non-health services** | **`log.server`**                                                                                                                    | **server-logs**   |
+| **all 17 non-health services** | **`log.server`**                                                                                                                    | **server-logs**   |
 
 ## `log.server` (the logging pipeline)
 
@@ -56,7 +57,7 @@ Every service's Pino logger publishes `log.server`; `server-logs-service`
 persists to MongoDB (TTL 30 days). This is automatic plumbing — no per-service
 wiring. Producers of `log.server` per the graph: agent, audit, auth, chat,
 client-logs, connector, file, file-generation, image, llamacpp, memory, ollama,
-research, routing, server-logs, workspace (16 total).
+payment, research, routing, server-logs, workspace (17 total).
 
 ## Declared-but-not-yet-wired
 

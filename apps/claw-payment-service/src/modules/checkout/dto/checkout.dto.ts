@@ -18,6 +18,17 @@ export const createCheckoutSessionSchema = z.object({
 
 export type CreateCheckoutSessionDto = z.infer<typeof createCheckoutSessionSchema>;
 
+export const createPaymentMethodSetupSessionSchema = z
+  .object({
+    idempotencyKey: z.string().min(8).max(128),
+    consentToStore: z.literal(true),
+  })
+  .strict();
+
+export type CreatePaymentMethodSetupSessionDto = z.infer<
+  typeof createPaymentMethodSetupSessionSchema
+>;
+
 export const checkoutSessionParamSchema = z.object({
   id: z.string().min(1).max(64),
 });

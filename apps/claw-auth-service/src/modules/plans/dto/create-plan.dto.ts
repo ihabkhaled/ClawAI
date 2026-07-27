@@ -8,9 +8,6 @@ export const createPlanSchema = z.object({
     .max(50)
     .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers and hyphens'),
   description: z.string().max(1000).optional(),
-  priceMonthly: z.number().min(0).max(1_000_000).optional(),
-  priceYearly: z.number().min(0).max(1_000_000).optional(),
-  currency: z.string().length(3).optional(),
   displayOrder: z.number().int().min(0).max(10_000).optional(),
   isPublic: z.boolean().optional(),
   dailyTokenQuota: z.number().int().min(0).max(1_000_000_000),

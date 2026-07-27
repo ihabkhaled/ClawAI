@@ -8,7 +8,6 @@ const PLAN_SLUG = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
 const NAME_MAX = 128;
 const SLUG_MAX = 64;
 const DESCRIPTION_MAX = 1000;
-const CURRENCY_MAX = 8;
 
 // Blank controlled-input strings collapse to undefined before coercion so an
 // empty numeric field is treated as "omitted" rather than coerced to 0.
@@ -18,11 +17,6 @@ const blankToUndefined = (value: unknown): unknown =>
 const optionalNonNegativeInt = z.preprocess(
   blankToUndefined,
   z.coerce.number().int().min(0).optional(),
-);
-
-const optionalNonNegativeNumber = z.preprocess(
-  blankToUndefined,
-  z.coerce.number().min(0).optional(),
 );
 
 export const createPlanSchema = z.object({
@@ -39,9 +33,6 @@ export const createPlanSchema = z.object({
     .string()
     .max(DESCRIPTION_MAX, `Description must be at most ${DESCRIPTION_MAX} characters`)
     .optional(),
-  priceMonthly: optionalNonNegativeNumber,
-  priceYearly: optionalNonNegativeNumber,
-  currency: z.string().max(CURRENCY_MAX).optional(),
   displayOrder: optionalNonNegativeInt,
   isPublic: z.boolean().optional(),
   dailyTokenQuota: z.coerce.number().int().min(0, 'Daily token quota must be 0 or greater'),

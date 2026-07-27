@@ -529,19 +529,19 @@ runs the Critic → Judge quality pipeline per lane.
 }
 ```
 
-| Field           | Type     | Required          | Constraints                                                                    |
-| --------------- | -------- | ----------------- | ------------------------------------------------------------------------------ |
-| threadId        | string   | No                | Max 255 chars (auto-creates a thread when omitted)                             |
-| content         | string   | Yes               | 1 to 100,000 chars                                                             |
-| models          | array    | Yes               | 2-5 `{provider, model}` pairs                                                  |
-| judgeEnabled    | boolean  | No                | Activates the Judge step on every lane                                         |
-| judgeModel      | string   | No                | `PROVIDER:model` or plain local model name (max 255)                           |
-| criticEnabled   | boolean  | No (default false)| Activates the Critic step; **requires `judgeEnabled=true` AND `criticModel`**  |
-| criticModel     | string   | Conditional       | Required + non-empty whenever `criticEnabled=true` (max 200 chars)             |
-| researchMode    | enum     | No                | `NONE`, `WEB_SEARCH`, `FETCH`, `EXTRACT` — enricher pre-pends shared evidence  |
-| researchQuery   | string   | No                | Max 500 chars                                                                  |
-| researchProviderId | string| No                | Max 64 chars                                                                   |
-| fileIds         | string[] | No                | Max 10 items                                                                   |
+| Field              | Type     | Required           | Constraints                                                                   |
+| ------------------ | -------- | ------------------ | ----------------------------------------------------------------------------- |
+| threadId           | string   | No                 | Max 255 chars (auto-creates a thread when omitted)                            |
+| content            | string   | Yes                | 1 to 100,000 chars                                                            |
+| models             | array    | Yes                | 2-5 `{provider, model}` pairs                                                 |
+| judgeEnabled       | boolean  | No                 | Activates the Judge step on every lane                                        |
+| judgeModel         | string   | No                 | `PROVIDER:model` or plain local model name (max 255)                          |
+| criticEnabled      | boolean  | No (default false) | Activates the Critic step; **requires `judgeEnabled=true` AND `criticModel`** |
+| criticModel        | string   | Conditional        | Required + non-empty whenever `criticEnabled=true` (max 200 chars)            |
+| researchMode       | enum     | No                 | `NONE`, `WEB_SEARCH`, `FETCH`, `EXTRACT` — enricher pre-pends shared evidence |
+| researchQuery      | string   | No                 | Max 500 chars                                                                 |
+| researchProviderId | string   | No                 | Max 64 chars                                                                  |
+| fileIds            | string[] | No                 | Max 10 items                                                                  |
 
 **Validation rules (Zod superRefine):**
 
@@ -1768,3 +1768,65 @@ Aggregated health status of all services.
   "timestamp": "2026-04-09T10:30:00.000Z"
 }
 ```
+
+---
+
+## 17. Subscriptions, Payments, and Billing (payment-service, port 4018)
+
+All customer and admin routes require a Bearer JWT except gateway webhooks.
+User ownership is derived from that JWT; request bodies never accept a `userId`,
+price, or currency as authority.
+
+### Customer billing
+
+| Method | Route                                           | Purpose                                      |
+| ------ | ----------------------------------------------- | -------------------------------------------- |
+| GET    | `/api/v1/billing/plans`                         | Public active plan and current-price catalog |
+| POST   | `/api/v1/billing/checkout-sessions`             | Create a server-priced hosted checkout       |
+| GET    | `/api/v1/billing/checkout-sessions/:id`         | Read the caller's checkout state             |
+| POST   | `/api/v1/billing/payment-method-setup-sessions` | Start purpose-constrained tokenization       |
+| GET    | `/api/v1/billing/me`                            | Current subscription                         |
+| GET    | `/api/v1/billing/invoices`                      | Owned immutable invoice list                 |
+| GET    | `/api/v1/billing/invoices/:id/pdf`              | Owned invoice PDF download                   |
+| GET    | `/api/v1/billing/payment-methods`               | Masked saved payment methods                 |
+| DELETE | `/api/v1/billing/payment-methods/:id`           | Remove an owned method                       |
+| POST   | `/api/v1/billing/subscription/change/quote`     | Create a bounded proration quote             |
+| POST   | `/api/v1/billing/subscription/change/confirm`   | Confirm one quote exactly once               |
+| POST   | `/api/v1/billing/subscription/cancel`           | Schedule cancellation                        |
+| POST   | `/api/v1/billing/subscription/resume`           | Resume before period end                     |
+
+Checkout creation accepts only plan id, billing interval, gateway, and an
+idempotency key. The service resolves the authenticated owner and immutable
+price version.
+
+### Gateway webhooks
+
+`POST /api/v1/payments/webhooks/paypal` and the Paymob webhook variants are
+public because gateways cannot present a ClawAI JWT. They verify the exact raw
+body with the provider signature/HMAC, claim a unique provider event, and return
+a generic receipt. nginx applies dedicated body and rate limits.
+
+### Administrative billing
+
+Every route below requires `ADMIN_PLANS_MANAGE`.
+
+| Method | Route                                                   | Purpose                                   |
+| ------ | ------------------------------------------------------- | ----------------------------------------- |
+| GET    | `/api/v1/admin/plans/:id/price-versions`                | Read append-only price history            |
+| POST   | `/api/v1/admin/plans/:id/price-versions`                | Publish a future/current price version    |
+| GET    | `/api/v1/admin/billing/dashboard`                       | Revenue, cost, margin, refund, drift data |
+| GET    | `/api/v1/admin/billing/dashboard/price-version-counts`  | Subscribers by immutable price version    |
+| GET    | `/api/v1/admin/billing/refunds/refundable-transactions` | Refundable ledger                         |
+| POST   | `/api/v1/admin/billing/refunds`                         | Reserve and submit a partial/full refund  |
+| POST   | `/api/v1/admin/billing/reconciliation`                  | Start an owner-safe reconciliation run    |
+
+All monetary fields are integer minor units or integer microUSD. Refund writes
+require an operator idempotency key; cumulative pending/completed refunds may
+not exceed the captured amount.
+
+### Private internal contracts
+
+Payment status and entitlement reads live under `/internal/payments/*`;
+auth-service plan/price/provider-cost projections live under `/internal/*`.
+They require `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>`, validate
+bounded Zod projections, and are intentionally absent from every nginx config.

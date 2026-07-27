@@ -39,6 +39,25 @@ export function usePaymentMethods(): UsePaymentMethodsReturn {
     },
   });
 
+  const setupMutation = useMutation({
+    mutationFn: () =>
+      billingRepository.createPaymentMethodSetupSession({
+        idempotencyKey: crypto.randomUUID(),
+        consentToStore: true,
+      }),
+    onSuccess: (session) => {
+      setError(null);
+      if (session.hostedCheckoutUrl !== null) {
+        window.location.assign(session.hostedCheckoutUrl);
+      }
+    },
+    onError: (mutationError: unknown) => {
+      const message = t('billing.paymentMethods.setupFailed');
+      setError(message);
+      showToast.apiError(mutationError, message);
+    },
+  });
+
   const remove = useCallback(
     (id: string) => {
       mutation.mutate(id);
@@ -50,10 +69,16 @@ export function usePaymentMethods(): UsePaymentMethodsReturn {
     setError(null);
   }, []);
 
+  const startSetup = useCallback(() => {
+    setupMutation.mutate();
+  }, [setupMutation]);
+
   return {
     methods: query.data ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
+    startSetup,
+    isSetupPending: setupMutation.isPending,
     remove,
     pendingId,
     error,

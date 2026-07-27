@@ -58,7 +58,7 @@ describe('content registry integrity', () => {
   // Deliberately an explicit list rather than a derived one: this is the
   // tripwire that catches a page being flipped to PUBLISHED without anyone
   // reviewing it, since publishing also makes it indexable and linkable.
-  it('publishes exactly the home, contact and six topic pages (all indexable)', () => {
+  it('publishes exactly the home, pricing, contact and six topic pages (all indexable)', () => {
     const published = getPublishedPages();
     const paths = [...new Set(published.map((page) => page.canonicalPath))].sort();
     expect(paths).toEqual([
@@ -69,6 +69,7 @@ describe('content registry integrity', () => {
       '/features',
       '/how-it-works',
       '/local-first-ai',
+      '/pricing',
       '/use-cases',
     ]);
     for (const page of published) {
@@ -136,8 +137,8 @@ describe('localized publication boundary', () => {
   });
 
   it('resolves metadata for every supported locale', () => {
-    expect(getPublishedPagesForLocale(Locale.EN).length).toBe(8);
-    expect(getPublishedPagesForLocale(Locale.JA).length).toBe(8);
+    expect(getPublishedPagesForLocale(Locale.EN).length).toBe(9);
+    expect(getPublishedPagesForLocale(Locale.JA).length).toBe(9);
     expect(getPageBySlugAndLocale('features', Locale.EN)?.title).toContain('Features');
     expect(getPageBySlugAndLocale('features', Locale.JA)?.title).toContain('Features');
   });

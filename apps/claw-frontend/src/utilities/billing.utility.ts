@@ -30,6 +30,41 @@ function resolveMinorUnitDivisor(currency: string): number {
   }
 }
 
+export function parseMajorAmountToMinor(value: string, currency: string): number | null {
+  const parts = value.trim().split('.');
+  const whole = parts.at(0) ?? '';
+  const fraction = parts.at(1) ?? '';
+  if (
+    parts.length > 2 ||
+    whole.length === 0 ||
+    !isAsciiDigits(whole) ||
+    (parts.length === 2 && (fraction.length === 0 || !isAsciiDigits(fraction)))
+  ) {
+    return null;
+  }
+  const divisor = resolveMinorUnitDivisor(currency);
+  const fractionDigits = Math.log10(divisor);
+  if (fraction.length > fractionDigits) {
+    return null;
+  }
+  const amount = BigInt(whole) * BigInt(divisor);
+  const fractionMinor = fraction.length === 0 ? 0n : BigInt(fraction.padEnd(fractionDigits, '0'));
+  const total = amount + fractionMinor;
+  if (total <= 0n || total > BigInt(Number.MAX_SAFE_INTEGER)) {
+    return null;
+  }
+  return Number(total);
+}
+
+function isAsciiDigits(value: string): boolean {
+  for (const character of value) {
+    if (character < '0' || character > '9') {
+      return false;
+    }
+  }
+  return true;
+}
+
 /**
  * Format an integer minor-unit amount for display.
  *

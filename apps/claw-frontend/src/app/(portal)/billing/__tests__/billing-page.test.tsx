@@ -66,6 +66,8 @@ function baseHook(overrides: Partial<UseBillingPageReturn> = {}): UseBillingPage
       methods: [],
       isLoading: false,
       isError: false,
+      startSetup: vi.fn(),
+      isSetupPending: false,
       remove: vi.fn(),
       pendingId: null,
       error: null,

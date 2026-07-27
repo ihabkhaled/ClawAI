@@ -18,14 +18,14 @@ bug to be fixed. Resolve up, never down.
 2. **`rules/00-non-negotiable-rules.md`** — the hard blockers.
 3. **`context/architecture-map.md`** — the canonical service/route/event map.
 4. **`context/stack-and-toolchain.md`** — the canonical toolchain contract.
-5. **Numbered `rules/*.md`** (this catalog, `01`–`25`).
+5. **Numbered `rules/*.md`** (this catalog, `01`–`28`).
 6. **`skills/*.md`** — operational runbooks (how-to; rules are the what/why).
 7. **`context/*` + `memory/*`** — supporting context and durable agent memory.
 8. **`.ai/` manifests** (`.ai/manifests/*.json`, `.ai/BOOTSTRAP.md`, `.ai/packs/*.md`) — machine-readable derived facts.
 9. **Compact AI routers** (`CODEX.md`, `cursor.md` and other per-tool entrypoints) — mirrors, never originals.
 
 > The legacy `rules/00-master-rules.md … 09-refactor-rules.md` set remains valid
-> and is not superseded; this numbered `00-25` catalog is the finer-grained,
+> and is not superseded; this numbered `00-28` catalog is the finer-grained,
 > enforcement-tagged expansion that lives alongside it.
 
 ## Rule file format

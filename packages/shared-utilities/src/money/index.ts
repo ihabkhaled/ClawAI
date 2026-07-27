@@ -27,3 +27,4 @@ export {
   isFxQuoteExpired,
   parseRateToScaled,
 } from './fx.utility';
+export { calculateMarginMicroUsd, sumMicroUsd, usdMinorToMicroUsd } from './micro-usd.utility';

@@ -1,6 +1,18 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Res,
+  StreamableFile,
+} from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
 import { type AuthenticatedUser } from '@claw/shared-types';
+import { type Response } from 'express';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
@@ -11,7 +23,12 @@ import {
   type PlanChangeQuoteDto,
   planChangeQuoteSchema,
 } from '../../checkout/dto/checkout.dto';
-import { type PaymentMethodParamDto, paymentMethodParamSchema } from '../dto/subscriptions.dto';
+import {
+  type InvoiceParamDto,
+  invoiceParamSchema,
+  type PaymentMethodParamDto,
+  paymentMethodParamSchema,
+} from '../dto/subscriptions.dto';
 import { PaymentMethodService } from '../services/payment-method.service';
 import { PlanChangeService } from '../services/plan-change.service';
 import { SubscriptionCancelService } from '../services/subscription-cancel.service';
@@ -23,6 +40,7 @@ import {
   type ProrationQuoteResponse,
 } from '../types/subscription-view.types';
 import { type CheckoutSessionView } from '../../checkout/types/checkout.types';
+import { InvoiceDocumentService } from '../../invoice-documents/services/invoice-document.service';
 
 // Identity always comes from the verified JWT via @CurrentUser, never from a
 // request body or path. Every service method below is scoped by that userId.
@@ -33,6 +51,7 @@ export class SubscriptionsController {
     private readonly planChange: PlanChangeService,
     private readonly cancellation: SubscriptionCancelService,
     private readonly methods: PaymentMethodService,
+    private readonly documents: InvoiceDocumentService,
   ) {}
 
   @Get('me')
@@ -45,6 +64,21 @@ export class SubscriptionsController {
   @Get('invoices')
   async listInvoices(@CurrentUser() user: AuthenticatedUser): Promise<InvoiceView[]> {
     return this.query.listInvoices(user.id);
+  }
+
+  @Get('invoices/:id/pdf')
+  async downloadInvoice(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param(new ZodValidationPipe(invoiceParamSchema)) params: InvoiceParamDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<StreamableFile> {
+    const document = await this.documents.renderOwned(user.id, params.id);
+    response.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${document.filename}"`,
+      'Cache-Control': 'private, no-store',
+    });
+    return new StreamableFile(Buffer.from(document.bytes));
   }
 
   @Get('payment-methods')

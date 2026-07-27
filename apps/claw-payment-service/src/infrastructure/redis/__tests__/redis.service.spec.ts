@@ -6,6 +6,7 @@ type MockRedis = {
   get: jest.Mock;
   set: jest.Mock;
   del: jest.Mock;
+  eval: jest.Mock;
   quit: jest.Mock;
 };
 
@@ -14,6 +15,7 @@ function buildClient(): MockRedis {
     get: jest.fn(async () => null),
     set: jest.fn(async () => 'OK'),
     del: jest.fn(async () => 1),
+    eval: jest.fn(async () => 1),
     quit: jest.fn(async () => 'OK'),
   };
 }
@@ -57,23 +59,34 @@ describe('RedisService', () => {
     });
   });
 
-  describe('setNxEx', () => {
+  describe('acquireLock', () => {
     it('reports success when the lock is acquired', async () => {
       client.set.mockResolvedValueOnce('OK');
-      await expect(service.setNxEx('lock', 'owner', 30)).resolves.toBe(true);
+      await expect(service.acquireLock('lock', 'owner', 30)).resolves.toBe(true);
       expect(client.set).toHaveBeenCalledWith('lock', 'owner', 'EX', 30, 'NX');
     });
 
     it('reports failure when another replica already holds the lock', async () => {
-      // This is what stops two replicas running the same reconciliation job.
       client.set.mockResolvedValueOnce(null);
-      await expect(service.setNxEx('lock', 'owner', 30)).resolves.toBe(false);
+      await expect(service.acquireLock('lock', 'owner', 30)).resolves.toBe(false);
     });
   });
 
-  it('deletes a key', async () => {
-    await service.del('k');
-    expect(client.del).toHaveBeenCalledWith('k');
+  describe('releaseLock', () => {
+    it('atomically deletes a lock only when the owner token matches', async () => {
+      client.eval.mockResolvedValueOnce(1);
+
+      await expect(service.releaseLock('lock', 'owner')).resolves.toBe(true);
+      expect(client.eval).toHaveBeenCalledWith(expect.any(String), 1, 'lock', 'owner');
+      expect(client.del).not.toHaveBeenCalled();
+    });
+
+    it('preserves a lock now owned by another replica', async () => {
+      client.eval.mockResolvedValueOnce(0);
+
+      await expect(service.releaseLock('lock', 'stale-owner')).resolves.toBe(false);
+      expect(client.del).not.toHaveBeenCalled();
+    });
   });
 
   it('exposes the raw client for atomic Lua scripts', () => {

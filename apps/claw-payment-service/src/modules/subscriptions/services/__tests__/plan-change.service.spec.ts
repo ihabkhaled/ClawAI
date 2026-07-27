@@ -36,6 +36,7 @@ function makeQuote(overrides: Record<string, unknown> = {}): Record<string, unkn
     targetPlanId: 'plan-pro',
     targetPlanSlug: 'pro',
     targetPriceVersionId: 'ppv-new',
+    targetAmountMinor: 2000,
     targetBillingInterval: 'MONTHLY',
     currency: 'USD',
     remainingRatioScaled: 5_000_000,

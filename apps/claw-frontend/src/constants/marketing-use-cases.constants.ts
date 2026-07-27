@@ -107,7 +107,7 @@ export const MARKETING_USE_CASE_VALUE_POINTS: ReadonlyArray<MarketingUseCaseValu
 ];
 
 // Pricing is a section of the home page, not a route of its own yet.
-export const MARKETING_USE_CASES_PRICING_PATH = '/#pricing';
+export const MARKETING_USE_CASES_PRICING_PATH = '/pricing';
 
 // On-premise deployment is an enterprise conversation, never a self-serve
 // link — the page only points at the contact form.

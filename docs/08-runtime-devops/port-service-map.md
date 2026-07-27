@@ -10,7 +10,7 @@
 | Frontend (Next.js)  | 3000                            | `claw-frontend`                                 |
 | Nginx reverse proxy | 4000 (HTTP → 301) / 443 (HTTPS) | All API traffic; routes `/api/v1/*` to services |
 
-## Backend services (17)
+## Backend services (18)
 
 | Service         | Port | Datastore                                     | Prisma? | Purpose                                        |
 | --------------- | ---- | --------------------------------------------- | :-----: | ---------------------------------------------- |
@@ -31,6 +31,7 @@
 | agent           | 4015 | PostgreSQL `claw_agent` (5451)                |   ✅    | Desktop agent sessions, capability framework   |
 | research        | 4016 | PostgreSQL `claw_research` (5452)             |   ✅    | Search/fetch/scrape/clone + evidence           |
 | llamacpp        | 4017 | PostgreSQL `claw_llamacpp` (5440)             |   ✅    | Local frontier LLMs via vanilla llama.cpp      |
+| payment         | 4018 | PostgreSQL `claw_payments` (5441)             |   ✅    | Subscriptions, payments, invoices, refunds     |
 
 **Totals:** 13 PostgreSQL instances (ports 5440–5452), 1 MongoDB (3 logical
 databases, port 27018), 13 Prisma services, 4 non-Prisma (audit, health,

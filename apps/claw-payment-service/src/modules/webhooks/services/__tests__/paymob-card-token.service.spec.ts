@@ -1,4 +1,4 @@
-import { BillingGateway } from '@claw/shared-types';
+import { BillingGateway, CheckoutPurpose } from '@claw/shared-types';
 
 import { PaymobCardTokenService } from '../paymob-card-token.service';
 import { WebhookOutcome } from '../../types/webhook.types';
@@ -40,7 +40,7 @@ describe('PaymobCardTokenService', () => {
     markFailed: jest.Mock;
     markIgnored: jest.Mock;
   };
-  let sessions: { findByProviderOrderId: jest.Mock };
+  let sessions: { findByProviderOrderId: jest.Mock; markPaymentMethodSetupCompleted: jest.Mock };
   let vault: { vaultCard: jest.Mock };
   let service: PaymobCardTokenService;
 
@@ -55,7 +55,13 @@ describe('PaymobCardTokenService', () => {
       markIgnored: jest.fn(),
     };
     sessions = {
-      findByProviderOrderId: jest.fn().mockResolvedValue({ id: 'cs-1', userId: 'user-1' }),
+      findByProviderOrderId: jest.fn().mockResolvedValue({
+        id: 'cs-1',
+        userId: 'user-1',
+        purpose: CheckoutPurpose.NEW_SUBSCRIPTION,
+        paymentMethodConsentedAt: null,
+      }),
+      markPaymentMethodSetupCompleted: jest.fn(),
     };
     vault = {
       vaultCard: jest
@@ -140,6 +146,22 @@ describe('PaymobCardTokenService', () => {
 
     const input = vault.vaultCard.mock.calls[0]?.[0] as { consentedAt: Date | null };
     expect(input.consentedAt).toBeInstanceOf(Date);
+  });
+
+  it('uses the consent recorded on a standalone setup session and completes it', async () => {
+    const consentedAt = new Date('2026-07-27T00:00:00.000Z');
+    sessions.findByProviderOrderId.mockResolvedValue({
+      id: 'setup-1',
+      userId: 'user-1',
+      purpose: CheckoutPurpose.PAYMENT_METHOD_SETUP,
+      paymentMethodConsentedAt: consentedAt,
+    });
+
+    await service.handle(body({ order_id: 264064419 }), HMAC);
+
+    expect(sessions.findByProviderOrderId).toHaveBeenCalledWith(BillingGateway.PAYMOB, '264064419');
+    expect(vault.vaultCard).toHaveBeenCalledWith(expect.objectContaining({ consentedAt }));
+    expect(sessions.markPaymentMethodSetupCompleted).toHaveBeenCalledWith('setup-1');
   });
 
   it('ignores an unparseable body rather than throwing', async () => {

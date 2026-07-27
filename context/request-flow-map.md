@@ -46,10 +46,14 @@ Selected mappings from the manifest:
 | `/api/v1/agent`                                                                  | agent:4015       |
 | `/api/v1/research`                                                               | research:4016    |
 | `/api/v1/llamacpp`                                                               | llamacpp:4017    |
+| `/api/v1/payments`, `/api/v1/billing`, `/api/v1/admin/billing`                   | payment:4018     |
 | `/`                                                                              | frontend:3000    |
 
 The chat-service exposes many sub-route location blocks (`/parallel`,
 `/consensus`, `/best-of-n`, `/stream`, …) that all target chat:4002.
+Payment webhook routes are public but signature-verified. Payment internal
+routes are intentionally absent from nginx in both local and distributed
+configurations.
 
 ## Chat message flow (end-to-end, async)
 

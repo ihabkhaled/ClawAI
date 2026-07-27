@@ -60,6 +60,14 @@ export class EntitlementInboxRepository {
     });
   }
 
+  async retryFailed(eventId: string): Promise<boolean> {
+    const result = await this.prisma.entitlementInboxEvent.updateMany({
+      where: { eventId, status: EntitlementInboxStatus.FAILED },
+      data: { status: EntitlementInboxStatus.PENDING },
+    });
+    return result.count === 1;
+  }
+
   async findRetryable(limit: number): Promise<EntitlementInboxEvent[]> {
     return this.prisma.entitlementInboxEvent.findMany({
       where: { status: EntitlementInboxStatus.FAILED },

@@ -1,5 +1,7 @@
 import { MARKETING_GITHUB_URL } from '@/constants/marketing-nav.constants';
+import type { PublicPlan } from '@/types/public-pricing.types';
 import type { JsonLdObject } from '@/types/structured-data.types';
+import { formatPriceDecimal } from '@/utilities/pricing-catalog.utility';
 
 // Only facts the application and repository actually support — no
 // fabricated ratings, reviews, prices, or provider endorsements.
@@ -30,6 +32,30 @@ export function buildSoftwareApplicationJsonLd(siteUrl: string): JsonLdObject {
     url: siteUrl,
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'Linux, Windows, macOS (self-hosted via Docker)',
+  };
+}
+
+export function buildPricingJsonLd(canonicalUrl: string, plans: PublicPlan[]): JsonLdObject {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'ClawAI pricing',
+    url: canonicalUrl,
+    mainEntity: {
+      '@type': 'OfferCatalog',
+      name: 'ClawAI subscription plans',
+      itemListElement: plans.flatMap((plan) =>
+        plan.prices
+          .filter((price) => price.isActive)
+          .map((price) => ({
+            '@type': 'Offer',
+            name: `${plan.name} ${price.billingInterval.toLowerCase()}`,
+            price: formatPriceDecimal(price),
+            priceCurrency: price.currency,
+            url: canonicalUrl,
+          })),
+      ),
+    },
   };
 }
 

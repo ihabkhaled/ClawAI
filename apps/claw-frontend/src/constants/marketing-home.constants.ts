@@ -12,6 +12,7 @@ export const MARKETING_HOME_PATHS = {
   USE_CASES: '/use-cases',
   FAQ: '/faq',
   CONTACT: '/contact',
+  PRICING: '/pricing',
 } as const;
 
 // Plan slugs kept when the pricing block is asked for a `compact` render

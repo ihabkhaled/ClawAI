@@ -1,4 +1,4 @@
-import { ExternalLink } from 'lucide-react';
+import { Download } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,15 @@ import type { InvoiceTableProps } from '@/types/billing-component.types';
 import { formatMinorAmount } from '@/utilities/billing.utility';
 import { formatDateTimeSafe } from '@/utilities/date.utility';
 
-export function InvoiceTable({ invoices, isLoading, isError, t }: InvoiceTableProps): ReactElement {
+export function InvoiceTable({
+  invoices,
+  isLoading,
+  isError,
+  onDownload,
+  pendingId,
+  isDownloadError,
+  t,
+}: InvoiceTableProps): ReactElement {
   return (
     <Card>
       <CardHeader>
@@ -28,6 +36,12 @@ export function InvoiceTable({ invoices, isLoading, isError, t }: InvoiceTablePr
         {isError ? (
           <p className="text-destructive text-sm" role="alert">
             {t('billing.invoices.error')}
+          </p>
+        ) : null}
+
+        {isDownloadError ? (
+          <p className="text-destructive mb-3 text-sm" role="alert">
+            {t('billing.invoices.downloadError')}
           </p>
         ) : null}
 
@@ -57,18 +71,19 @@ export function InvoiceTable({ invoices, isLoading, isError, t }: InvoiceTablePr
                       {formatMinorAmount(invoice.totalMinor, invoice.currency)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {invoice.hostedInvoiceUrl === null ? null : (
-                        <Button asChild size="sm" variant="ghost">
-                          <a
-                            href={invoice.hostedInvoiceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <ExternalLink className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
-                            {t('billing.invoices.view')}
-                          </a>
-                        </Button>
-                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={pendingId === invoice.id}
+                        onClick={() => {
+                          onDownload(invoice.id, invoice.number);
+                        }}
+                      >
+                        <Download className="me-1 h-3.5 w-3.5" aria-hidden="true" />
+                        {pendingId === invoice.id
+                          ? t('billing.invoices.downloading')
+                          : t('billing.invoices.download')}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

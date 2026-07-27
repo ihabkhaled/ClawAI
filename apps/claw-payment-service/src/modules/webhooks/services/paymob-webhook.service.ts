@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { BillingErrorCode, BillingGateway } from '@claw/shared-types';
 
 import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
+import { isSubscriptionCheckoutSession } from '../../billing/utilities/checkout-session-purpose.utility';
 import { PaymobAdapter } from '../../gateways/paymob/paymob.adapter';
 import { PAYMOB_TRANSACTION_EVENT } from '../constants/webhook.constants';
 import { WebhookEventRepository } from '../repositories/webhook-event.repository';
@@ -57,6 +58,10 @@ export class PaymobWebhookService {
             ? BillingErrorCode.PAYMENT_REFERENCE_MISMATCH
             : BillingErrorCode.CHECKOUT_SESSION_NOT_FOUND,
       });
+    }
+    if (!isSubscriptionCheckoutSession(session)) {
+      this.logger.log(`handle: setup transaction ignored session=${session.id}`);
+      return PaymobWebhookService.result(WebhookOutcome.IGNORED);
     }
 
     // HMAC is checked over the payload's own canonical field order before any

@@ -23,6 +23,10 @@ import { FxModule } from '../modules/fx/fx.module';
 import { OutboxModule } from '../modules/outbox/outbox.module';
 import { GatewaysModule } from '../modules/gateways/gateways.module';
 import { HealthModule } from '../modules/health/health.module';
+import { ReconciliationModule } from '../modules/reconciliation/reconciliation.module';
+import { InternalPaymentsModule } from '../modules/internal-payments/internal-payments.module';
+import { RefundsModule } from '../modules/refunds/refunds.module';
+import { BillingDashboardModule } from '../modules/billing-dashboard/billing-dashboard.module';
 
 @Module({
   imports: [
@@ -96,6 +100,10 @@ import { HealthModule } from '../modules/health/health.module';
     CheckoutModule,
     SubscriptionsModule,
     WebhooksModule,
+    ReconciliationModule,
+    InternalPaymentsModule,
+    RefundsModule,
+    BillingDashboardModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

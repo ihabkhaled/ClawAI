@@ -156,6 +156,7 @@ describe('toProrationQuoteResponse', () => {
       targetPlanId: 'plan-pro',
       targetPlanSlug: 'pro',
       targetPriceVersionId: 'ppv-1',
+      targetAmountMinor: 2000,
       targetBillingInterval: 'MONTHLY',
       currency: 'USD',
       remainingRatioScaled: 5_000_000,

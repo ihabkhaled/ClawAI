@@ -21,14 +21,17 @@ ORDER BY created_at DESC;
 Two rows with the **same** `provider_transaction_id` are one charge. Two rows
 with different ones are two charges.
 
-1. Refund at the gateway through the adapter (never in the gateway dashboard
-   alone — the local ledger would not learn about it).
+1. Open **Admin → Refunds**, locate the captured transaction, and issue the
+   refund there (never in the gateway dashboard alone — the local ledger would
+   not learn about it).
 2. A full refund revokes entitlement immediately; a partial refund does not.
 3. Confirm a `billing.payment.refunded` row reached the outbox.
-4. Confirm auth applied it: the user's active plan should be `free`.
+4. For a full refund, confirm auth applied it: paid entitlement must be gone.
+   For a partial refund, confirm the existing entitlement remains active.
 
 Refunds are **idempotent by key**. Re-running a refund does not return the money
-twice.
+twice. A `PENDING` refund already reserves its amount, so another operator
+cannot exceed the captured total while the provider result is in flight.
 
 ---
 
@@ -118,7 +121,8 @@ different schedules.
 Never edit a price. Publish a new version:
 
 ```
-POST /api/v1/admin/plans/:planId/prices   { billingInterval, amountMinor, currency }
+POST /api/v1/admin/plans/:planId/price-versions
+{ billingInterval, amountMinor, currency }
 ```
 
 This retires the current version and inserts the next in one transaction.
@@ -141,6 +145,11 @@ Runs on `BILLING_RECONCILIATION_CRON`. It compares:
 
 Discrepancies are surfaced, never auto-corrected. An automatic correction to a
 financial record is how one bug becomes a thousand wrong invoices.
+
+For diagnosis and an owner-safe manual run, follow
+[runbook-billing-reconciliation.md](runbook-billing-reconciliation.md). For
+stalled lifecycle, outbox, or invoice-delivery work, follow
+[runbook-failed-billing-sweep.md](runbook-failed-billing-sweep.md).
 
 ---
 

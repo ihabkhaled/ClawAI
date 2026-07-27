@@ -29,6 +29,11 @@ Every workspace. Backend uses Jest (`*.spec.ts`), frontend uses Vitest
    0 failures required.
 7. **Verify persistence and logs, not just the response** — GET after write, query
    the DB, scan container logs. UI truth ≠ DB truth ≠ fetch truth.
+8. **Assert exact request contracts across frontend and backend.** For every
+   frontend mutation, test the serialized method, path, headers, and JSON body.
+   Pair it with backend DTO/controller tests for the same field names, optionality,
+   null behavior, and validation limits. A UI test that only asserts "fetch was
+   called" does not prove the two workspaces agree.
 
 ## Prohibited patterns
 
@@ -37,6 +42,8 @@ Every workspace. Backend uses Jest (`*.spec.ts`), frontend uses Vitest
 - `expect(x).toBeDefined()` as the only assertion.
 - `xit`/`.skip()` / mocking the unit under test.
 - Declaring a feature done without running its `qa/` script.
+- Testing a frontend mutation and backend endpoint independently without an exact
+  request-body contract assertion at their boundary.
 
 ## Correct pattern
 
@@ -66,4 +73,5 @@ qa/test-memory-service.sh   # auth → endpoints → psql verify → log scan �
 
 - [ ] New/changed behavior tested; coverage ≥ 92 %, not lowered.
 - [ ] Edge/boundary/error paths + DTO fuzz covered.
+- [ ] Frontend method/path/headers/body exactly match the backend DTO contract.
 - [ ] `qa/test-<feature>.sh` run with 0 failures; DB + logs verified.

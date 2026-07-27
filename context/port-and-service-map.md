@@ -1,6 +1,6 @@
 # Port & Service Map
 
-The canonical port table. Ground truth: `.ai/manifests/ports.json` (the 15
+The canonical port table. Ground truth: `.ai/manifests/ports.json` (the 16
 `*_SERVICE_PORT` constants in `@claw/shared-constants`) and
 `.ai/manifests/services.json` (per-service `port` + `portSource`).
 
@@ -26,9 +26,10 @@ The canonical port table. Ground truth: `.ai/manifests/ports.json` (the 15
 | agent           | 4015     | shared-constants                  | Postgres               |
 | research        | 4016     | shared-constants                  | Postgres               |
 | llamacpp        | 4017     | shared-constants                  | Postgres (Debian base) |
+| payment         | 4018     | shared-constants                  | Postgres               |
 
-Backend services occupy **4001–4017** contiguously. The next new backend service
-takes **4018** — add its constant to `@claw/shared-constants`.
+Backend services occupy **4001–4018** contiguously. The next new backend service
+takes **4019** — add its constant to `@claw/shared-constants`.
 
 ## ⚠️ The client-logs / server-logs env-only gap
 
@@ -41,8 +42,8 @@ audited gap — the inventory audit reports it as `portCoverageGaps` /
 
 Consequences and cautions:
 
-- The canonical port catalog in `@claw/shared-constants` lists **15** services,
-  not 17. Any code that iterates the port constants will **miss these two**.
+- The canonical port catalog in `@claw/shared-constants` lists **16** services,
+  not 18. Any code that iterates the port constants will **miss these two**.
 - nginx still routes them (`/api/v1/client-logs` → 4010, `/api/v1/server-logs` →
   4011, from `nginx-routes.json`) because those ports are hard-configured, not
   read from the constant.

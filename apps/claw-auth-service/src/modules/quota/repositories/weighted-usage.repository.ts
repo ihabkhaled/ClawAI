@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { type WeightedUsagePeriodField } from '../../../common/enums/weighted-usage-period-field.enum';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type WeightedUsageRecord, WeightedUsageState } from '../../../generated/prisma';
+import { type ProviderCostAggregateRow } from '../types/provider-cost.types';
 import { type WeightedFinalizeInput, type WeightedReservationInput } from '../types/quota.types';
 
 @Injectable()
@@ -83,5 +84,18 @@ export class WeightedUsageRepository {
       },
     });
     return result._sum.weightedTokens ?? 0;
+  }
+
+  async aggregateProviderCosts(from: Date): Promise<ProviderCostAggregateRow[]> {
+    return this.prisma.$queryRaw<ProviderCostAggregateRow[]>`
+      SELECT
+        plan_id AS "planId",
+        COALESCE(SUM(COALESCE(actual_cost_micro_usd, estimated_cost_micro_usd)), 0) AS "costMicroUsd"
+      FROM weighted_usage_records
+      WHERE created_at >= ${from}
+        AND state IN ('RESERVED', 'FINALIZED')
+      GROUP BY plan_id
+      ORDER BY plan_id ASC NULLS LAST
+    `;
   }
 }

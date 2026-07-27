@@ -8,3 +8,4 @@ export * from './money';
 export * from './weighted-tokens';
 export * from './idempotency';
 export * from './token-security';
+export * from './email';

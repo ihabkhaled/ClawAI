@@ -86,7 +86,7 @@ export function MarketingFooter(): React.ReactElement {
                 </Link>
               </li>
               <li>
-                <Link href="/#pricing" className="hover:text-foreground">
+                <Link href="/pricing" className="hover:text-foreground">
                   {t('marketing.header.navPricing')}
                 </Link>
               </li>

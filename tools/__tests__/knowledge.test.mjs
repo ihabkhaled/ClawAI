@@ -81,10 +81,14 @@ test('BOOTSTRAP.md is generated and within a compact budget', () => {
 test('every workspace gets a generated AGENTS.md', () => {
   const files = computeGeneratedFiles();
   const agentsFiles = Object.keys(files).filter((f) => f.endsWith('/AGENTS.md'));
-  assert.ok(agentsFiles.length >= 20, `expected many workspace AGENTS.md, got ${agentsFiles.length}`);
+  assert.ok(
+    agentsFiles.length >= 20,
+    `expected many workspace AGENTS.md, got ${agentsFiles.length}`,
+  );
 });
 
 test('task classifier routes known task shapes to the right pack', () => {
+  assert.equal(classifyTask('reconcile billing after a partial refund').pack, 'billing-payments');
   assert.equal(classifyTask('add refresh token rotation to auth').pack, 'authentication-security');
   assert.equal(classifyTask('fix chat streaming sse deltas').pack, 'chat-streaming');
   assert.equal(classifyTask('add a new rabbitmq event for connectors').pack, 'rabbitmq-event');
@@ -95,12 +99,34 @@ test('task classifier routes known task shapes to the right pack', () => {
 });
 
 test('resolveContext returns a structured, budget-bounded bundle', () => {
-  const ctx = resolveContext({ task: 'add refresh-token session rotation', service: 'auth', maxTokens: 6000 });
+  const ctx = resolveContext({
+    task: 'add refresh-token session rotation',
+    service: 'auth',
+    maxTokens: 6000,
+  });
   assert.equal(ctx.classification.pack, 'authentication-security');
   assert.ok(ctx.affectedWorkspaces.some((w) => w.name === 'claw-auth-service'));
   assert.ok(ctx.governingRules.length > 0);
   assert.ok(Array.isArray(ctx.recommendedReviewers) && ctx.recommendedReviewers.length > 0);
   assert.equal(ctx.budget.maxTokens, 6000);
+});
+
+test('billing task pack scopes the two billing data owners', () => {
+  const ctx = resolveContext({
+    task: 'reconcile billing after a partial refund',
+    maxTokens: 6000,
+  });
+  assert.equal(ctx.classification.pack, 'billing-payments');
+  assert.deepEqual(
+    ctx.affectedWorkspaces.map((workspace) => workspace.name),
+    ['claw-auth-service', 'claw-payment-service'],
+  );
+  assert.ok(
+    ctx.governingRules.some(
+      (rule) => rule.file === 'rules/28-billing-integrity-and-api-contracts.md',
+    ),
+  );
+  assert.ok(ctx.matchingSkills.some((skill) => skill.file === 'skills/reconcile-billing-state.md'));
 });
 
 test('resolveContext flags missing info for an unscoped, empty task', () => {

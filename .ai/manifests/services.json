@@ -60,13 +60,13 @@
       "port": 4007,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 14,
+      "testFiles": 15,
       "testRunner": "jest"
     },
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 42,
+      "endpointCount": 45,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",
@@ -94,7 +94,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 30,
+      "testFiles": 37,
       "testRunner": "jest"
     },
     {
@@ -339,7 +339,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-payment-service",
-      "endpointCount": 16,
+      "endpointCount": 26,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -360,16 +360,20 @@
         "IdempotencyRecord",
         "InboxEvent",
         "Invoice",
+        "InvoiceDelivery",
         "InvoiceLine",
         "OutboxEvent",
         "PaymentMethod",
         "PaymentTransaction",
         "ProrationQuote",
+        "ReconciliationDivergence",
+        "ReconciliationRun",
+        "Refund",
         "SeedExecution",
         "Subscription",
         "WebhookEvent"
       ],
-      "testFiles": 34,
+      "testFiles": 76,
       "testRunner": "jest"
     },
     {
