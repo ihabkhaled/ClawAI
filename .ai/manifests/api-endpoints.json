@@ -491,6 +491,16 @@
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/admin/plans/:id/price-versions",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/plans/:id/price-versions",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/admin/plans/:id/set-default",
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
@@ -584,6 +594,11 @@
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/billing-metrics/provider-costs",
+        "source": "apps/claw-auth-service/src/modules/quota/controllers/provider-cost-metrics-internal.controller.ts"
       },
       {
         "method": "GET",
@@ -1647,6 +1662,16 @@
       }
     ],
     "claw-payment-service": [
+      {
+        "method": "GET",
+        "route": "/admin/billing/dashboard",
+        "source": "apps/claw-payment-service/src/modules/billing-dashboard/controllers/billing-dashboard.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/billing/dashboard/price-version-counts",
+        "source": "apps/claw-payment-service/src/modules/billing-dashboard/controllers/billing-dashboard.controller.ts"
+      },
       {
         "method": "POST",
         "route": "/admin/billing/refunds",
@@ -2718,5 +2743,5 @@
     ]
   },
   "generated": true,
-  "total": 536
+  "total": 541
 }

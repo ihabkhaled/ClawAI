@@ -556,6 +556,16 @@
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/admin/plans/:id/price-versions",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/admin/plans/:id/price-versions",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/admin/plans/:id/set-default",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
@@ -649,6 +659,11 @@
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/billing-metrics/provider-costs",
+          "source": "apps/claw-auth-service/src/modules/quota/controllers/provider-cost-metrics-internal.controller.ts"
         },
         {
           "method": "GET",
@@ -1712,6 +1727,16 @@
         }
       ],
       "claw-payment-service": [
+        {
+          "method": "GET",
+          "route": "/admin/billing/dashboard",
+          "source": "apps/claw-payment-service/src/modules/billing-dashboard/controllers/billing-dashboard.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/billing/dashboard/price-version-counts",
+          "source": "apps/claw-payment-service/src/modules/billing-dashboard/controllers/billing-dashboard.controller.ts"
+        },
         {
           "method": "POST",
           "route": "/admin/billing/refunds",
@@ -5860,6 +5885,11 @@
         "route": "/admin/ai-action-policies"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/billing/page.tsx",
+        "kind": "page",
+        "route": "/admin/billing"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/page.tsx",
         "kind": "page",
         "route": "/admin"
@@ -5873,6 +5903,11 @@
         "file": "apps/claw-frontend/src/app/(portal)/admin/plans/[id]/model-access/page.tsx",
         "kind": "page",
         "route": "/admin/plans/[id]/model-access"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/plans/[id]/prices/page.tsx",
+        "kind": "page",
+        "route": "/admin/plans/[id]/prices"
       },
       {
         "file": "apps/claw-frontend/src/app/(portal)/admin/plans/new/page.tsx",
@@ -6733,7 +6768,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4256
+        "value": 4270
       },
       "localeCount": 13,
       "locales": [
@@ -6792,6 +6827,12 @@
         "location": "/api/v1/admin",
         "port": 4001,
         "service": "auth-service",
+        "source": "infra/nginx/nginx.conf"
+      },
+      {
+        "location": "/api/v1/admin/billing",
+        "port": 4018,
+        "service": "payment-service",
         "source": "infra/nginx/nginx.conf"
       },
       {
@@ -8244,7 +8285,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "jest",
-        "testFiles": 22
+        "testFiles": 23
       },
       "claw-agent-service": {
         "runner": "jest",
@@ -8256,7 +8297,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 35
+        "testFiles": 36
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8280,7 +8321,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 208
+        "testFiles": 211
       },
       "claw-health-service": {
         "runner": "jest",
@@ -8304,7 +8345,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 73
+        "testFiles": 75
       },
       "claw-research-service": {
         "runner": "jest",
@@ -9019,19 +9060,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 536,
+    "endpointCount": 541,
     "envVarCount": 335,
     "eventCount": 165,
-    "frontendRouteCount": 100,
+    "frontendRouteCount": 102,
     "localeCount": 13,
-    "nginxRouteCount": 51,
+    "nginxRouteCount": 52,
     "permissionCount": 38,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 2,
-    "totalTestFiles": 670,
+    "totalTestFiles": 677,
     "workspaceCount": 25
   }
 }

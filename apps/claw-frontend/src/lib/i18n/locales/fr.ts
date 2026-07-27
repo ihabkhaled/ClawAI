@@ -3145,6 +3145,21 @@ export const fr: TranslationDictionary = {
     success: 'Remboursement demandé.',
     failed: 'Impossible d’émettre le remboursement.',
   },
+  adminBilling: {
+    title: 'Tableau de bord de facturation',
+    description: 'Revenus, coûts fournisseurs, marge et santé des abonnements.',
+    loading: 'Chargement des métriques de facturation...',
+    error: 'Impossible de charger les métriques de facturation.',
+    empty: 'Aucune activité de facturation pour cette période.',
+    revenue: 'Revenus',
+    providerCost: 'Coûts fournisseurs',
+    margin: 'Marge',
+    subscriptions: 'Abonnements',
+    churn: 'Attrition',
+    failedPayments: 'Paiements échoués',
+    period: '30 derniers jours',
+    nonUsdRevenue: 'Revenus dans les autres devises',
+  },
   adminPlans: {
     title: 'Forfaits',
     description:

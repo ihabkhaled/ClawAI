@@ -14,6 +14,12 @@
       "source": "infra/nginx/nginx.conf"
     },
     {
+      "location": "/api/v1/admin/billing",
+      "port": 4018,
+      "service": "payment-service",
+      "source": "infra/nginx/nginx.conf"
+    },
+    {
       "location": "/api/v1/agent",
       "port": 4015,
       "service": "agent-service",

@@ -16,6 +16,9 @@ export type PlanPriceVersionView = {
   amountMinor: number;
   version: number;
   isActive: boolean;
+  effectiveFrom: Date;
+  retiredAt: Date | null;
+  createdAt: Date;
 };
 
 export type PlanFeatureRuleView = {

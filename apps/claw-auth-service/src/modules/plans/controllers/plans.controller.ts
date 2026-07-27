@@ -15,12 +15,18 @@ import {
   SetPlanModelAccessDto,
   setPlanModelAccessSchema,
 } from '../dto/plan-misc.dto';
+import { type PublishPlanPriceDto, publishPlanPriceSchema } from '../dto/plan-price.dto';
+import { PlanCatalogService } from '../services/plan-catalog.service';
 import { type PlanView } from '../types/plans.types';
+import { type PlanPriceVersionView } from '../types/plan-catalog.types';
 
 @Controller('admin/plans')
 @Roles(UserRole.ADMIN)
 export class PlansController {
-  constructor(private readonly plansService: PlansService) {}
+  constructor(
+    private readonly plansService: PlansService,
+    private readonly planCatalog: PlanCatalogService,
+  ) {}
 
   @Get()
   async list(): Promise<PlanView[]> {
@@ -60,6 +66,26 @@ export class PlansController {
   @Post(':id/set-default')
   async setDefault(@Param('id') id: string): Promise<PlanView> {
     return this.plansService.setDefault(id);
+  }
+
+  @Get(':id/price-versions')
+  async listPriceVersions(@Param('id') id: string): Promise<PlanPriceVersionView[]> {
+    return this.planCatalog.listPriceVersions(id);
+  }
+
+  @Post(':id/price-versions')
+  async publishPrice(
+    @Param('id') id: string,
+    @CurrentUser() admin: AuthenticatedUser,
+    @Body(new ZodValidationPipe(publishPlanPriceSchema)) dto: PublishPlanPriceDto,
+  ): Promise<PlanPriceVersionView> {
+    return this.planCatalog.publishPrice({
+      planId: id,
+      billingInterval: dto.billingInterval,
+      currency: dto.currency,
+      amountMinor: dto.amountMinor,
+      createdByUserId: admin.id,
+    });
   }
 
   @Post('reorder')

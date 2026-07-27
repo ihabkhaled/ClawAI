@@ -80,6 +80,7 @@ describe('route-permission.utility', () => {
     it('maps each specific admin page above the /admin catch-all', () => {
       expect(requiredPermissionForPath('/admin/plans')).toBe(Permission.ADMIN_PLANS_MANAGE);
       expect(requiredPermissionForPath('/admin/plans/new')).toBe(Permission.ADMIN_PLANS_MANAGE);
+      expect(requiredPermissionForPath('/admin/billing')).toBe(Permission.ADMIN_PLANS_MANAGE);
       expect(requiredPermissionForPath('/admin/roles')).toBe(Permission.ADMIN_PERMISSIONS_MANAGE);
       expect(requiredPermissionForPath('/admin/roles/r-1')).toBe(
         Permission.ADMIN_PERMISSIONS_MANAGE,

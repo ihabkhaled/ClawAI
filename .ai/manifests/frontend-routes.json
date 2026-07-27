@@ -67,6 +67,11 @@
       "route": "/admin/ai-action-policies"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/billing/page.tsx",
+      "kind": "page",
+      "route": "/admin/billing"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/admin/page.tsx",
       "kind": "page",
       "route": "/admin"
@@ -80,6 +85,11 @@
       "file": "apps/claw-frontend/src/app/(portal)/admin/plans/[id]/model-access/page.tsx",
       "kind": "page",
       "route": "/admin/plans/[id]/model-access"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/plans/[id]/prices/page.tsx",
+      "kind": "page",
+      "route": "/admin/plans/[id]/prices"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/admin/plans/new/page.tsx",

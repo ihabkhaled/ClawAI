@@ -113,6 +113,7 @@ http {
     # Substituted by envsubst at container start. Declared once here as maps so
     # a typo is a start-up failure rather than a 502 discovered in production.
     map $host $origin_auth            { default "${CLAW_AUTH_ORIGIN}"; }
+    map $host $origin_payment         { default "${CLAW_PAYMENT_ORIGIN}"; }
     map $host $origin_chat            { default "${CLAW_CHAT_ORIGIN}"; }
     map $host $origin_connector       { default "${CLAW_CONNECTOR_ORIGIN}"; }
     map $host $origin_routing         { default "${CLAW_ROUTING_ORIGIN}"; }
@@ -174,6 +175,13 @@ http {
 
         location /api/v1/users {
             set $backend https://$origin_auth;
+            proxy_pass $backend;
+        }
+
+        # Payment-owned admin billing routes must win over the generic auth
+        # admin prefix below. Both controllers enforce ADMIN_PLANS_MANAGE.
+        location /api/v1/admin/billing {
+            set $backend https://$origin_payment;
             proxy_pass $backend;
         }
 

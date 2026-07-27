@@ -3041,6 +3041,21 @@ export type TranslationDictionary = {
     success: string;
     failed: string;
   };
+  adminBilling: {
+    title: string;
+    description: string;
+    loading: string;
+    error: string;
+    empty: string;
+    revenue: string;
+    providerCost: string;
+    margin: string;
+    subscriptions: string;
+    churn: string;
+    failedPayments: string;
+    period: string;
+    nonUsdRevenue: string;
+  };
   adminPlans: {
     title: string;
     description: string;

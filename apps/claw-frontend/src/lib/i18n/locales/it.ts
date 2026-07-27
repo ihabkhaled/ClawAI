@@ -3126,6 +3126,21 @@ export const it: TranslationDictionary = {
     success: 'Rimborso richiesto.',
     failed: 'Impossibile emettere il rimborso.',
   },
+  adminBilling: {
+    title: 'Dashboard di fatturazione',
+    description: 'Ricavi, costi dei fornitori, margine e stato degli abbonamenti.',
+    loading: 'Caricamento delle metriche di fatturazione...',
+    error: 'Impossibile caricare le metriche di fatturazione.',
+    empty: 'Nessuna attività di fatturazione per questo periodo.',
+    revenue: 'Ricavi',
+    providerCost: 'Costi dei fornitori',
+    margin: 'Margine',
+    subscriptions: 'Abbonamenti',
+    churn: 'Abbandono',
+    failedPayments: 'Pagamenti non riusciti',
+    period: 'Ultimi 30 giorni',
+    nonUsdRevenue: 'Ricavi in altre valute',
+  },
   adminPlans: {
     title: 'Piani',
     description:
