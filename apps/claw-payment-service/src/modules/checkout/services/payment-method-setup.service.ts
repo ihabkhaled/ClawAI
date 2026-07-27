@@ -39,6 +39,7 @@ export class PaymentMethodSetupService {
 
     const session = await this.sessions.create({
       userId: input.userId,
+      billingEmail: input.userEmail,
       purpose: CheckoutPurpose.PAYMENT_METHOD_SETUP,
       status: CheckoutSessionStatus.CREATED,
       gateway: BillingGateway.PAYMOB,

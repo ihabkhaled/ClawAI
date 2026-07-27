@@ -17,6 +17,31 @@ All variables are defined in `.env.example` at the project root. Copy it to `.en
 
 ---
 
+## Shared outbound email
+
+The frontend contact route and payment-service invoice worker use the same
+server-only SMTP configuration and the shared hardened transport adapter.
+Invoice PDFs remain available through authenticated download when delivery is
+disabled.
+
+| Variable                 | Required             | Default               | Description                                       |
+| ------------------------ | -------------------- | --------------------- | ------------------------------------------------- |
+| `CONTACT_EMAIL_ENABLED`  | No                   | `false`               | Enables configured outbound delivery              |
+| `CONTACT_EMAIL_PROVIDER` | No                   | `none`                | `smtp` for real delivery; `none` disables it      |
+| `CONTACT_EMAIL_FROM`     | When SMTP is enabled | `no-reply@claw.local` | Verified sender used by contact and invoice mail  |
+| `CONTACT_SMTP_HOST`      | When SMTP is enabled | —                     | SMTP relay host                                   |
+| `CONTACT_SMTP_PORT`      | No                   | `587`                 | `465` implicit TLS; other ports require STARTTLS  |
+| `CONTACT_SMTP_SECURE`    | No                   | `false`               | Operator hint; TLS mode is safely derived by port |
+| `CONTACT_SMTP_USER`      | When SMTP is enabled | —                     | SMTP username                                     |
+| `CONTACT_SMTP_PASS`      | When SMTP is enabled | —                     | SMTP password; never log or expose                |
+
+`CONTACT_EMAIL_TO`, `CONTACT_RATE_LIMIT_MAX`, and
+`CONTACT_RATE_LIMIT_WINDOW_MS` are contact-form-only. Invoice delivery uses the
+recipient frozen from the authenticated checkout and never accepts a webhook
+recipient.
+
+---
+
 ## PostgreSQL Instances
 
 Claw uses 12 separate PostgreSQL instances, one per data-owning service.

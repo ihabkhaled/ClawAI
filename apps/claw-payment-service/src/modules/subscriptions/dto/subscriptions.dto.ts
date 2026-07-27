@@ -6,3 +6,9 @@ export const paymentMethodParamSchema = z.object({
 });
 
 export type PaymentMethodParamDto = z.infer<typeof paymentMethodParamSchema>;
+
+export const invoiceParamSchema = z.object({
+  id: z.string().min(1).max(64),
+});
+
+export type InvoiceParamDto = z.infer<typeof invoiceParamSchema>;

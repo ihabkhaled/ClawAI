@@ -2,10 +2,16 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import { InvoiceTable } from '@/components/billing/invoice-table';
 import { PaymentMethodList } from '@/components/billing/payment-method-list';
 import { ProrationBreakdown } from '@/components/billing/proration-breakdown';
 import { UsageWindowBar } from '@/components/billing/usage-window-bar';
-import type { PaymentMethodView, ProrationQuoteView, UsageWindow } from '@/types/billing.types';
+import type {
+  InvoiceView,
+  PaymentMethodView,
+  ProrationQuoteView,
+  UsageWindow,
+} from '@/types/billing.types';
 
 const t = (key: string, params?: Record<string, string | number>): string =>
   params === undefined ? key : `${key}:${JSON.stringify(params)}`;
@@ -186,5 +192,38 @@ describe('PaymentMethodList', () => {
       />,
     );
     expect(screen.getByRole('button', { name: 'billing.paymentMethods.adding' })).toBeDisabled();
+  });
+});
+
+describe('InvoiceTable', () => {
+  const invoices: InvoiceView[] = [
+    {
+      id: 'invoice-1',
+      number: 'CLAW-00000001',
+      status: 'PAID',
+      currency: 'USD',
+      totalMinor: 2_000,
+      issuedAt: '2026-07-27T00:00:00.000Z',
+      paidAt: '2026-07-27T00:00:00.000Z',
+      hostedInvoiceUrl: null,
+    },
+  ];
+
+  it('offers an authenticated download even without a hosted provider URL', async () => {
+    const onDownload = vi.fn();
+    render(
+      <InvoiceTable
+        invoices={invoices}
+        isLoading={false}
+        isError={false}
+        onDownload={onDownload}
+        pendingId={null}
+        isDownloadError={false}
+        t={t}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'billing.invoices.download' }));
+    expect(onDownload).toHaveBeenCalledWith('invoice-1', 'CLAW-00000001');
   });
 });

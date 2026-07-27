@@ -109,6 +109,7 @@
       "IdempotencyRecord",
       "InboxEvent",
       "Invoice",
+      "InvoiceDelivery",
       "InvoiceLine",
       "OutboxEvent",
       "PaymentMethod",

@@ -7,3 +7,4 @@ export * from './runtime-progress';
 export * from './money';
 export * from './weighted-tokens';
 export * from './idempotency';
+export * from './email';

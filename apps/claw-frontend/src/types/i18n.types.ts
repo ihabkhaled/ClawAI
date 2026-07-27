@@ -3552,6 +3552,9 @@ export type TranslationDictionary = {
       status: string;
       total: string;
       view: string;
+      download: string;
+      downloading: string;
+      downloadError: string;
       error: string;
       empty: string;
     };

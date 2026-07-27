@@ -89,6 +89,7 @@ export class SubscriptionLifecycleService {
       // that document it — that gap is why /billing/invoices returned nothing.
       const charge = await this.records.recordCharge(tx, {
         userId: input.userId,
+        invoiceRecipientEmail: input.invoiceRecipientEmail,
         subscriptionId: subscription.id,
         checkoutSessionId: input.checkoutSessionId,
         gateway: input.gateway,

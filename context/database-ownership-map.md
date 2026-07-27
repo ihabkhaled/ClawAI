@@ -8,7 +8,7 @@ and `mongodb` containers).
 
 ## Store types
 
-- **13 PostgreSQL instances** (one per Postgres-backed service, pgvector-capable)
+- **14 PostgreSQL instances** (one per Postgres-backed service, pgvector-capable)
   via **Prisma 7.8**.
 - **1 MongoDB** serving 3 services (audit, client-logs, server-logs) via
   **Mongoose**.
@@ -19,7 +19,7 @@ and `mongodb` containers).
 Compose containers: `pg-auth`, `pg-chat`, `pg-connector`, `pg-routing`,
 `pg-memory`, `pg-files`, `pg-ollama`, `pg-images`, `pg-file-generations`,
 `pg-workspace`, `pg-agent`, `pg-research`, `pg-llamacpp`, plus `mongodb`,
-`redis`, `rabbitmq`, `clamav` (databases compose files).
+`pg-payments`, `redis`, `rabbitmq`, `clamav` (databases compose files).
 
 ## Ownership table
 
@@ -42,6 +42,7 @@ Compose containers: `pg-auth`, `pg-chat`, `pg-connector`, `pg-routing`,
 | agent :4015           | Postgres            | AgentSession, Device, PairingRequest, RefreshToken, TerminalCommand, CapabilityInvocation, AccessPolicy, Recipe(+Run/Step), ActivityMemoryEntry, Organization(+Member), Marketplace(Listing/Install) (20 models) |
 | research :4016        | Postgres            | SearchProvider, SearchRun, ResearchRun, FetchJob, PageCache                                                                                                                                                      |
 | llamacpp :4017        | Postgres            | FrontierCatalogEntry, BinaryRelease, PullJob, HardwareSnapshot, ModelLoadEvent, PreflightOverrideAudit, RuntimeConfig                                                                                            |
+| payment :4018         | Postgres            | BillingCustomer, Subscription, CheckoutSession, PaymentTransaction, Invoice(+Line/Delivery), Refund, PaymentMethod, ProrationQuote, FxQuote, WebhookEvent, OutboxEvent, ReconciliationRun/Finding                |
 
 ## Migrations (Prisma services)
 

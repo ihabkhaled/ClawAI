@@ -97,6 +97,13 @@ class BillingRepository {
     return response.data;
   }
 
+  async downloadInvoice(id: string): Promise<Blob> {
+    const response = await apiClient.get<Blob>(`/billing/invoices/${id}/pdf`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  }
+
   async listPaymentMethods(): Promise<PaymentMethodView[]> {
     const response = await apiClient.get<PaymentMethodView[]>('/billing/payment-methods');
     return response.data;

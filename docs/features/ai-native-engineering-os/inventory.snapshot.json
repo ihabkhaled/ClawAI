@@ -1739,6 +1739,11 @@
         },
         {
           "method": "GET",
+          "route": "/billing/invoices/:id/pdf",
+          "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/billing/me",
           "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
         },
@@ -6723,7 +6728,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4253
+        "value": 4256
       },
       "localeCount": 13,
       "locales": [
@@ -7889,6 +7894,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "InvoiceDelivery"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
             "value": "InvoiceLine"
           },
           {
@@ -8229,7 +8239,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "jest",
-        "testFiles": 21
+        "testFiles": 22
       },
       "claw-agent-service": {
         "runner": "jest",
@@ -8265,7 +8275,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 202
+        "testFiles": 204
       },
       "claw-health-service": {
         "runner": "jest",
@@ -8289,7 +8299,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 66
+        "testFiles": 73
       },
       "claw-research-service": {
         "runner": "jest",
@@ -9004,7 +9014,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 535,
+    "endpointCount": 536,
     "envVarCount": 335,
     "eventCount": 165,
     "frontendRouteCount": 99,
@@ -9016,7 +9026,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 2,
-    "totalTestFiles": 656,
+    "totalTestFiles": 666,
     "workspaceCount": 25
   }
 }

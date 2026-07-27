@@ -1674,6 +1674,11 @@
       },
       {
         "method": "GET",
+        "route": "/billing/invoices/:id/pdf",
+        "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/billing/me",
         "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
       },
@@ -2713,5 +2718,5 @@
     ]
   },
   "generated": true,
-  "total": 535
+  "total": 536
 }

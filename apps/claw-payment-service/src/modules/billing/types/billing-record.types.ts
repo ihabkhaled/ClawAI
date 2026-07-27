@@ -44,6 +44,8 @@ export type InvoiceLineInput = {
 /** An immutable invoice plus its lines. Lines always sum to the total. */
 export type CreateInvoiceInput = {
   userId: string;
+  /** Recipient frozen at checkout; null leaves a durable document available for download only. */
+  recipientEmail: string | null;
   subscriptionId: string | null;
   currency: string;
   periodStart: Date | null;

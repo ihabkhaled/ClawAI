@@ -53,6 +53,9 @@ export type UseBillingInvoicesReturn = {
   invoices: InvoiceView[];
   isLoading: boolean;
   isError: boolean;
+  download: (id: string, number: string) => void;
+  pendingId: string | null;
+  isDownloadError: boolean;
 };
 
 export type UsePaymentMethodsReturn = {

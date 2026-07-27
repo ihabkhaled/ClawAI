@@ -62,6 +62,12 @@ export const th: TranslationDictionary = {
   },
   billing: {
     ...en.billing,
+    invoices: {
+      ...en.billing.invoices,
+      download: 'ดาวน์โหลด',
+      downloading: 'กำลังดาวน์โหลด…',
+      downloadError: 'ไม่สามารถดาวน์โหลดใบแจ้งหนี้นี้ได้',
+    },
     paymentMethods: {
       ...en.billing.paymentMethods,
       setupFailed: 'ไม่สามารถเริ่มตั้งค่าวิธีชำระเงินอย่างปลอดภัยได้',

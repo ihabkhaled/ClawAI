@@ -4,6 +4,7 @@ import { type CheckoutSession, CheckoutSessionPurpose } from '../../../../genera
 const session = (overrides: Partial<CheckoutSession> = {}): CheckoutSession => ({
   id: 'session-1',
   userId: 'user-1',
+  billingEmail: null,
   purpose: CheckoutSessionPurpose.NEW_SUBSCRIPTION,
   status: 'CREATED',
   gateway: 'PAYMOB',

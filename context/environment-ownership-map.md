@@ -16,6 +16,7 @@ single root `.env` (copy from `.env.example`) drives everything; all services us
 | JWT / crypto              | `JWT_SECRET`, `JWT_ACCESS_EXPIRY`, `JWT_REFRESH_EXPIRY`, `ENCRYPTION_KEY`, `INTER_SERVICE_AUTH_TOKEN`                      |
 | Admin seed                | `ADMIN_EMAIL/USERNAME/PASSWORD`                                                                                            |
 | Frontend                  | `NEXT_PUBLIC_API_URL/APP_NAME/APP_URL`, `FRONTEND_PORT`                                                                    |
+| Outbound email            | `CONTACT_EMAIL_ENABLED/PROVIDER/FROM`, `CONTACT_SMTP_HOST/PORT/SECURE/USER/PASS`                                           |
 | Per-service ports         | `AUTH_PORT`, `CHAT_PORT`, …, `CLIENT_LOGS_PORT`, `SERVER_LOGS_PORT`                                                        |
 | Inter-service URLs        | `<SVC>_SERVICE_URL`                                                                                                        |
 | TLS                       | `HTTPS_CERT_PATH`, `HTTPS_KEY_PATH`, `NODE_EXTRA_CA_CERTS`                                                                 |

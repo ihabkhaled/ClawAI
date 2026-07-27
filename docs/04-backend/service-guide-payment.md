@@ -269,10 +269,12 @@ adapters, FX quoting, proration, the transactional outbox, signed plan-catalog
 client, checkout and subscription management, webhook verification,
 entitlement activation, locked reconciliation/lifecycle sweeps, and the
 service-authenticated internal status/reconcile API, standalone payment-method
-setup, and first-class partial/full refund operations with an admin ledger.
+setup, first-class partial/full refund operations with an admin ledger, and
+immutable invoice PDF rendering with durable SMTP delivery and authenticated
+owner downloads.
 
-Still to land in the subscription-completion program: immutable invoice
-delivery, public pricing, and the admin price/margin surfaces.
+Still to land in the subscription-completion program: public pricing and the
+admin price/margin surfaces.
 
 ## Related
 

@@ -5,6 +5,7 @@ import { type Prisma } from '../../../generated/prisma';
 /** A captured charge plus everything the invoice documenting it needs. */
 export type RecordChargeInput = {
   userId: string;
+  invoiceRecipientEmail: string | null;
   subscriptionId: string;
   checkoutSessionId: string | null;
   gateway: string;

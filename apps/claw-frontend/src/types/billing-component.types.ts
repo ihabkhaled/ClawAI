@@ -77,6 +77,9 @@ export type InvoiceTableProps = {
   invoices: InvoiceView[];
   isLoading: boolean;
   isError: boolean;
+  onDownload: (id: string, number: string) => void;
+  pendingId: string | null;
+  isDownloadError: boolean;
   t: TranslateFunction;
 };
 

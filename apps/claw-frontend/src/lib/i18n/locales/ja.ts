@@ -61,6 +61,12 @@ export const ja: TranslationDictionary = {
   },
   billing: {
     ...en.billing,
+    invoices: {
+      ...en.billing.invoices,
+      download: 'ダウンロード',
+      downloading: 'ダウンロード中…',
+      downloadError: 'この請求書をダウンロードできませんでした。',
+    },
     paymentMethods: {
       ...en.billing.paymentMethods,
       setupFailed: '安全な支払い方法の設定を開始できませんでした。',

@@ -86,13 +86,17 @@ evidence that counts is a server-side capture read or a verified webhook.
 
 ### Data exposure
 
-| Attack                               | Control                                                                         |
-| ------------------------------------ | ------------------------------------------------------------------------------- |
-| Read another user's invoices         | Owner resolved from the JWT; user id never accepted from the client             |
-| Harvest card data from logs          | No PAN/CVV ever enters the system; response bodies are never logged             |
-| Learn margins from an error          | Cost ceilings are internal; error payloads carry stable codes only              |
-| Steal a vaulted token                | AES-256-GCM with AAD bound to `userId\|gateway\|paymentMethodId`, key-versioned |
-| Extract secrets from a gateway error | Failures log status codes, never provider bodies                                |
+| Attack                               | Control                                                                                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Read another user's invoices         | Owner resolved from the JWT; user id never accepted from the client                                                      |
+| Rewrite an issued invoice            | PostgreSQL triggers reject header/line mutation; refunds may only increase a bounded total with the matching status      |
+| Leak a token or internal id in a PDF | Renderer accepts a customer-safe projection with no id, provider reference, token or card field                          |
+| Turn an attachment into SSRF/LFI     | Shared SMTP adapter accepts in-memory bytes and disables URL/file attachment access                                      |
+| Lose an invoice during SMTP outage   | Delivery intent commits with the invoice and retries under an owner-safe scheduled job; owned download remains available |
+| Harvest card data from logs          | No PAN/CVV ever enters the system; response bodies are never logged                                                      |
+| Learn margins from an error          | Cost ceilings are internal; error payloads carry stable codes only                                                       |
+| Steal a vaulted token                | AES-256-GCM with AAD bound to `userId\|gateway\|paymentMethodId`, key-versioned                                          |
+| Extract secrets from a gateway error | Failures log status codes, never provider bodies                                                                         |
 
 ---
 

@@ -17,6 +17,7 @@ export function checkoutFixture(overrides: Partial<CheckoutSession> = {}): Check
   return {
     id: 'checkout-1',
     userId: 'user-1',
+    billingEmail: null,
     purpose: 'NEW_SUBSCRIPTION',
     status: CheckoutSessionStatus.AWAITING_PAYMENT,
     gateway: BillingGateway.PAYPAL,

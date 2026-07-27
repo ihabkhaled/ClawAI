@@ -16,6 +16,7 @@ function checkout(id: string, overrides: Partial<CheckoutSession> = {}): Checkou
   return {
     id,
     userId: 'user-1',
+    billingEmail: null,
     purpose: 'NEW_SUBSCRIPTION',
     status: CheckoutSessionStatus.AWAITING_PAYMENT,
     gateway: BillingGateway.PAYPAL,

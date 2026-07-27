@@ -22,7 +22,7 @@
     },
     "@claw/shared-utilities": {
       "runner": "jest",
-      "testFiles": 21
+      "testFiles": 22
     },
     "claw-agent-service": {
       "runner": "jest",
@@ -58,7 +58,7 @@
     },
     "claw-frontend": {
       "runner": "vitest",
-      "testFiles": 202
+      "testFiles": 204
     },
     "claw-health-service": {
       "runner": "jest",
@@ -82,7 +82,7 @@
     },
     "claw-payment-service": {
       "runner": "jest",
-      "testFiles": 66
+      "testFiles": 73
     },
     "claw-research-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 656
+  "total": 666
 }

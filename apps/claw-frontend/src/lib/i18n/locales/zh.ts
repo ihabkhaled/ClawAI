@@ -61,6 +61,12 @@ export const zh: TranslationDictionary = {
   },
   billing: {
     ...en.billing,
+    invoices: {
+      ...en.billing.invoices,
+      download: '下载',
+      downloading: '正在下载…',
+      downloadError: '无法下载此发票。',
+    },
     paymentMethods: {
       ...en.billing.paymentMethods,
       setupFailed: '无法启动安全的付款方式设置。',

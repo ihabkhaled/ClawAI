@@ -116,6 +116,9 @@ export default function BillingPage(): ReactElement {
           invoices={invoices.invoices}
           isLoading={invoices.isLoading}
           isError={invoices.isError}
+          onDownload={invoices.download}
+          pendingId={invoices.pendingId}
+          isDownloadError={invoices.isDownloadError}
           t={t}
         />
         <PaymentMethodList

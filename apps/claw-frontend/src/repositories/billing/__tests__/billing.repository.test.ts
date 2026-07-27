@@ -3,10 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { billingRepository } from '@/repositories/billing/billing.repository';
 
 const mockPost = vi.fn();
+const mockGet = vi.fn();
 
 vi.mock('@/services/shared/api-client', () => ({
   apiClient: {
-    get: vi.fn(),
+    get: (...args: unknown[]) => mockGet(...args),
     post: (...args: unknown[]) => mockPost(...args),
     delete: vi.fn(),
   },
@@ -36,6 +37,16 @@ describe('billingRepository payment-method setup', () => {
     expect(mockPost).toHaveBeenCalledWith('/billing/payment-method-setup-sessions', {
       idempotencyKey: 'setup-idempotency-1',
       consentToStore: true,
+    });
+  });
+
+  it('downloads invoices as authenticated PDF blobs', async () => {
+    const pdf = new Blob(['invoice'], { type: 'application/pdf' });
+    mockGet.mockResolvedValue({ data: pdf });
+
+    await expect(billingRepository.downloadInvoice('invoice-1')).resolves.toBe(pdf);
+    expect(mockGet).toHaveBeenCalledWith('/billing/invoices/invoice-1/pdf', {
+      responseType: 'blob',
     });
   });
 });

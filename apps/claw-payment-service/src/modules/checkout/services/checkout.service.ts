@@ -111,6 +111,7 @@ export class CheckoutService {
     );
     const session = await this.sessions.create({
       userId: input.userId,
+      billingEmail: input.userEmail,
       purpose: CheckoutPurpose.UPGRADE,
       status: CheckoutSessionStatus.CREATED,
       gateway: input.gateway,
@@ -169,6 +170,7 @@ export class CheckoutService {
   ): Promise<SubscriptionCheckoutSession> {
     const session = await this.sessions.create({
       userId: input.userId,
+      billingEmail: input.userEmail,
       purpose: CheckoutPurpose.NEW_SUBSCRIPTION,
       status: CheckoutSessionStatus.CREATED,
       gateway: input.gateway,

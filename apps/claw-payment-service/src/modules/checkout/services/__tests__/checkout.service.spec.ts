@@ -156,6 +156,17 @@ describe('CheckoutService', () => {
     );
   });
 
+  it('freezes the authenticated billing recipient on the checkout session', async () => {
+    sessions.findByIdempotencyKey.mockResolvedValue(null);
+    sessions.create.mockResolvedValue(makeSession());
+
+    await service.start(INPUT);
+
+    expect(sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({ billingEmail: 'buyer@example.com' }),
+    );
+  });
+
   it('builds the return URL from configuration, not from the request', async () => {
     sessions.findByIdempotencyKey.mockResolvedValue(null);
     sessions.create.mockResolvedValue(makeSession());

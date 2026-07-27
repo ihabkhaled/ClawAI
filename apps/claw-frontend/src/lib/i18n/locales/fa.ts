@@ -61,6 +61,12 @@ export const fa: TranslationDictionary = {
   },
   billing: {
     ...en.billing,
+    invoices: {
+      ...en.billing.invoices,
+      download: 'دانلود',
+      downloading: 'در حال دانلود…',
+      downloadError: 'دانلود این صورتحساب ممکن نشد.',
+    },
     paymentMethods: {
       ...en.billing.paymentMethods,
       setupFailed: 'راه‌اندازی امن روش پرداخت آغاز نشد.',

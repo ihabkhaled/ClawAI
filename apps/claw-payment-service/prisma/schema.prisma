@@ -20,6 +20,12 @@ enum RefundStatus {
   FAILED
 }
 
+enum InvoiceDeliveryStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Conventions for every model below
 // ═══════════════════════════════════════════════════════════════════════════
@@ -149,8 +155,11 @@ model Subscription {
 /// A server-priced checkout attempt. The ONLY object permitted to carry an
 /// amount into a gateway, and immutable once created.
 model CheckoutSession {
-  id     String @id @default(cuid())
-  userId String @map("user_id")
+  id           String  @id @default(cuid())
+  userId       String  @map("user_id")
+  /// Frozen recipient for the invoice created from this checkout. This is not
+  /// used as identity; ownership always comes from the verified user id.
+  billingEmail String? @map("billing_email")
 
   purpose CheckoutSessionPurpose
   status  String
@@ -287,9 +296,10 @@ model Invoice {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  subscription Subscription?    @relation(fields: [subscriptionId], references: [id])
   lines        InvoiceLine[]
   refunds      Refund[]
+  delivery     InvoiceDelivery?
 
   @@index([userId])
   @@index([subscriptionId])
@@ -315,6 +325,27 @@ model InvoiceLine {
 
   @@index([invoiceId])
   @@map("invoice_lines")
+}
+
+/// Durable, retryable delivery intent created in the same transaction as its
+/// immutable invoice. One invoice can have at most one original delivery.
+model InvoiceDelivery {
+  id             String                @id @default(cuid())
+  invoiceId      String                @unique @map("invoice_id")
+  recipientEmail String                @map("recipient_email")
+  status         InvoiceDeliveryStatus @default(PENDING)
+  attempts       Int                   @default(0)
+  availableAt    DateTime              @default(now()) @map("available_at")
+  deliveredAt    DateTime?             @map("delivered_at")
+  /// Stable machine code only. Provider error bodies are never persisted.
+  lastErrorCode  String?               @map("last_error_code")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@index([status, availableAt])
+  @@map("invoice_deliveries")
 }
 
 /// One operator-requested or provider-reported refund.
