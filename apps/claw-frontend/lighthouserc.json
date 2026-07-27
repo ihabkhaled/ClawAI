@@ -6,6 +6,7 @@
       "startServerReadyTimeout": 60000,
       "url": [
         "http://localhost:3000/en",
+        "http://localhost:3000/en/pricing",
         "http://localhost:3000/en/features",
         "http://localhost:3000/en/how-it-works",
         "http://localhost:3000/en/architecture",

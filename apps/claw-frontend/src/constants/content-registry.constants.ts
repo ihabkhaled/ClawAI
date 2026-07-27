@@ -21,7 +21,7 @@ import type {
 // getIndexablePages()/isKnownPublicPath() in content-registry.utility.ts
 // for the defense-in-depth enforcement of that rule).
 //
-// Phase B ships eight PUBLISHED entries: home, contact, and the six topic
+// Phase B ships nine PUBLISHED entries: home, pricing, contact, and the six topic
 // pages (features, how-it-works, architecture, local-first-ai, use-cases,
 // faq). Everything else stays PLANNED so a later phase only needs to flip
 // `status` and add the page component.
@@ -42,7 +42,7 @@ const ENGLISH_CONTENT_ENTRIES: ReadonlyArray<ContentRegistryEntry> = [
     status: ContentLifecycleStatus.PUBLISHED,
     title: 'ClawAI — Every Frontier AI Model, One Subscription',
     description:
-      'Reach Claude Opus, GPT-5, Gemini, Kimi K2, GLM, Qwen, DeepSeek and Grok from one account. Intelligent routing picks the right model per task, with plans from $5/month.',
+      'Reach Claude Opus, GPT-5, Gemini, Kimi K2, GLM, Qwen, DeepSeek and Grok from one account. Intelligent routing picks the right model per task.',
     category: ContentCategory.HOME,
     canonicalPath: '/',
     lastReviewed: '2026-07-25',
@@ -55,6 +55,22 @@ const ENGLISH_CONTENT_ENTRIES: ReadonlyArray<ContentRegistryEntry> = [
     reviewStatus: ContentReviewStatus.REVIEWED,
     relatedSlugs: ['about', 'how-it-works', 'architecture'],
     structuredDataType: StructuredDataType.WEBSITE,
+  },
+  {
+    slug: 'pricing',
+    locale: Locale.EN,
+    status: ContentLifecycleStatus.PUBLISHED,
+    title: 'Pricing and Plans — ClawAI',
+    description:
+      'Compare current ClawAI subscription prices, billing periods, model access and usage allowances from the live billing catalog.',
+    category: ContentCategory.PRICING,
+    canonicalPath: '/pricing',
+    lastReviewed: '2026-07-27',
+    indexability: Indexability.INDEXABLE,
+    adEligibility: AdEligibility.INELIGIBLE,
+    reviewStatus: ContentReviewStatus.REVIEWED,
+    relatedSlugs: ['features', 'faq', 'use-cases'],
+    structuredDataType: StructuredDataType.WEB_PAGE,
   },
   {
     slug: 'contact',

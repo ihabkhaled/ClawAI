@@ -5840,6 +5840,11 @@
         "route": "/"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/pricing/page.tsx",
+        "kind": "page",
+        "route": "/pricing"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/share/chat/[publicShareId]/page.tsx",
         "kind": "page",
         "route": "/share/chat/[publicShareId]"
@@ -8275,7 +8280,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 204
+        "testFiles": 208
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9017,7 +9022,7 @@
     "endpointCount": 536,
     "envVarCount": 335,
     "eventCount": 165,
-    "frontendRouteCount": 99,
+    "frontendRouteCount": 100,
     "localeCount": 13,
     "nginxRouteCount": 51,
     "permissionCount": 38,
@@ -9026,7 +9031,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 2,
-    "totalTestFiles": 666,
+    "totalTestFiles": 670,
     "workspaceCount": 25
   }
 }

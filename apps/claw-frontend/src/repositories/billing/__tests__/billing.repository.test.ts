@@ -4,10 +4,12 @@ import { billingRepository } from '@/repositories/billing/billing.repository';
 
 const mockPost = vi.fn();
 const mockGet = vi.fn();
+const mockGetBlob = vi.fn();
 
 vi.mock('@/services/shared/api-client', () => ({
   apiClient: {
     get: (...args: unknown[]) => mockGet(...args),
+    getBlob: (...args: unknown[]) => mockGetBlob(...args),
     post: (...args: unknown[]) => mockPost(...args),
     delete: vi.fn(),
   },
@@ -42,11 +44,9 @@ describe('billingRepository payment-method setup', () => {
 
   it('downloads invoices as authenticated PDF blobs', async () => {
     const pdf = new Blob(['invoice'], { type: 'application/pdf' });
-    mockGet.mockResolvedValue({ data: pdf });
+    mockGetBlob.mockResolvedValue({ data: pdf });
 
     await expect(billingRepository.downloadInvoice('invoice-1')).resolves.toBe(pdf);
-    expect(mockGet).toHaveBeenCalledWith('/billing/invoices/invoice-1/pdf', {
-      responseType: 'blob',
-    });
+    expect(mockGetBlob).toHaveBeenCalledWith('/billing/invoices/invoice-1/pdf');
   });
 });

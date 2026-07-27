@@ -98,9 +98,7 @@ class BillingRepository {
   }
 
   async downloadInvoice(id: string): Promise<Blob> {
-    const response = await apiClient.get<Blob>(`/billing/invoices/${id}/pdf`, {
-      responseType: 'blob',
-    });
+    const response = await apiClient.getBlob(`/billing/invoices/${id}/pdf`);
     return response.data;
   }
 

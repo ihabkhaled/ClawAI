@@ -7,6 +7,7 @@ import { HeroSection } from '@/components/marketing/home/hero-section';
 import { HowItWorksSection } from '@/components/marketing/home/how-it-works-section';
 import { ModelRosterSection } from '@/components/marketing/home/model-roster-section';
 import { PricingSection } from '@/components/marketing/home/pricing-section';
+import { fetchPublicPricingCatalog } from '@/lib/pricing/public-pricing-api';
 import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 import { getSiteUrl } from '@/lib/site/site-config';
 // Imported directly from their specific submodules rather than the
@@ -33,10 +34,11 @@ export async function generateMetadata(): Promise<Metadata> {
 // features teaser, and one clearly separated band for organisations that want
 // an on-premise deployment. Every topic links out to its own dedicated page —
 // long-form content lives there, not here.
-export default function HomePage(): React.ReactElement {
+export default async function HomePage(): Promise<React.ReactElement> {
   const entry = getPageBySlug('home');
   const siteUrl = getSiteUrl();
   const lastReviewed = entry?.lastReviewed ?? '';
+  const plans = await fetchPublicPricingCatalog();
 
   return (
     <>
@@ -50,7 +52,7 @@ export default function HomePage(): React.ReactElement {
 
       <HeroSection lastReviewed={lastReviewed} />
       <ModelRosterSection />
-      <PricingSection />
+      <PricingSection initialPlans={plans} />
       <HowItWorksSection />
       <FeaturesSection />
       <EnterpriseBandSection />
