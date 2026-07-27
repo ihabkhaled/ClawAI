@@ -32,7 +32,14 @@ function parseArgs(argv) {
 }
 
 function terms(task) {
-  return [...new Set(task.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2))];
+  return [
+    ...new Set(
+      task
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((t) => t.length > 2),
+    ),
+  ];
 }
 
 function scoreText(text, taskTerms) {
@@ -65,9 +72,16 @@ export function resolveContext(args) {
     affectedWorkspaces = services
       .filter((s) => s.name.includes(args.service))
       .map((s) => ({ name: s.name, reason: `explicit --service=${args.service}` }));
+  } else if (classification.affectedServices !== undefined) {
+    affectedWorkspaces = services
+      .filter((s) => classification.affectedServices.includes(s.name))
+      .map((s) => ({ name: s.name, reason: `curated ${classification.pack} task pack` }));
   } else {
     affectedWorkspaces = services
-      .map((s) => ({ name: s.name, score: scoreText(`${s.name} ${s.prismaModels.join(' ')}`, taskTerms) }))
+      .map((s) => ({
+        name: s.name,
+        score: scoreText(`${s.name} ${s.prismaModels.join(' ')}`, taskTerms),
+      }))
       .filter((s) => s.score > 0)
       .sort((a, b) => b.score - a.score || cmp(a.name, b.name))
       .slice(0, 4)
@@ -96,8 +110,10 @@ export function resolveContext(args) {
   const skills = rankGovernance('skills', taskTerms);
 
   const missing = [];
-  if (affectedWorkspaces.length === 0) missing.push('No workspace matched the task terms — pass --service to scope it.');
-  if (taskTerms.length === 0) missing.push('Task description too short to rank — provide a fuller --task.');
+  if (affectedWorkspaces.length === 0)
+    missing.push('No workspace matched the task terms — pass --service to scope it.');
+  if (taskTerms.length === 0)
+    missing.push('Task description too short to rank — provide a fuller --task.');
 
   return {
     task: args.task,
@@ -119,7 +135,10 @@ export function resolveContext(args) {
 }
 
 function toMarkdown(ctx) {
-  const list = (arr) => (arr.length > 0 ? arr.map((x) => `- ${typeof x === 'string' ? x : x.file ?? x.name}`).join('\n') : '- (none matched)');
+  const list = (arr) =>
+    arr.length > 0
+      ? arr.map((x) => `- ${typeof x === 'string' ? x : (x.file ?? x.name)}`).join('\n')
+      : '- (none matched)';
   const wsList = ctx.affectedWorkspaces.length
     ? ctx.affectedWorkspaces.map((w) => `- **${w.name}** — ${w.reason}`).join('\n')
     : '- (none matched — scope with --service)';
@@ -175,7 +194,9 @@ function main() {
   writeFileSync(repoPath('.ai/local/current-context.json'), stableStringify(ctx));
   writeFileSync(repoPath('.ai/local/current-context.md'), toMarkdown(ctx));
   console.log(`Resolved context for: "${args.task}"`);
-  console.log(`  pack=${ctx.classification.pack} · workspaces=${ctx.affectedWorkspaces.length} · rules=${ctx.governingRules.length} · skills=${ctx.matchingSkills.length}`);
+  console.log(
+    `  pack=${ctx.classification.pack} · workspaces=${ctx.affectedWorkspaces.length} · rules=${ctx.governingRules.length} · skills=${ctx.matchingSkills.length}`,
+  );
   console.log('  → .ai/local/current-context.md');
 }
 

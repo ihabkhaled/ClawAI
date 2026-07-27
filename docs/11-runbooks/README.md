@@ -15,6 +15,8 @@
 | TLS / cert / `Hostname doesn't match` errors | [troubleshoot-tls.md](troubleshoot-tls.md)                                                                                            |
 | Local frontier (llama.cpp) issues            | [frontier-troubleshooting.md](frontier-troubleshooting.md) · [frontier-first-time-walkthrough.md](frontier-first-time-walkthrough.md) |
 | Workspace connector sync failing             | [runbook-workspace-automation.md](runbook-workspace-automation.md)                                                                    |
+| Billing reconciliation is stuck              | [runbook-billing-reconciliation.md](runbook-billing-reconciliation.md)                                                                |
+| A billing sweep or delivery job failed       | [runbook-failed-billing-sweep.md](runbook-failed-billing-sweep.md)                                                                    |
 | Anything else                                | [troubleshooting.md](troubleshooting.md) · [operational-runbooks.md](operational-runbooks.md)                                         |
 
 > **Before any runbook**, do the standard triage from
@@ -72,3 +74,9 @@
 ### Workspace
 
 - [runbook-workspace-automation.md](runbook-workspace-automation.md)
+
+### Billing
+
+- [billing-operations.md](billing-operations.md)
+- [runbook-billing-reconciliation.md](runbook-billing-reconciliation.md)
+- [runbook-failed-billing-sweep.md](runbook-failed-billing-sweep.md)

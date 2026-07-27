@@ -73,6 +73,17 @@ evidence that counts is a server-side capture read or a verified webhook.
 | Return another user's entitlement             | Auth validates the bounded response and requires its `userId` to match the request |
 | Leak provider or tenant internals on lookup   | Responses are allowlisted projections; unknown ids share one generic 404           |
 
+### Administrative billing abuse
+
+| Attack                                      | Control                                                                                               |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Reach billing controls through a copied URL | Auth-service and payment-service enforce `ADMIN_PLANS_MANAGE`; hidden navigation is not authorization |
+| Rewrite an old price                        | Append-only `PlanPriceVersion`; database and service contracts reject mutation                        |
+| Infer or corrupt margin with float math     | Revenue and provider cost aggregate in integer microUSD; mixed currencies are rejected                |
+| Read another service's billing database     | Dashboard uses signed, bounded internal projections; no cross-database query                          |
+| Run reconciliation on every replica         | Redis owner-token lock plus bounded, idempotent, resumable work                                       |
+| Delete a lock acquired by another owner     | Atomic Lua compare-and-delete; token is never logged or shown in a runbook                            |
+
 ### Quota and cost abuse
 
 | Attack                         | Control                                                                |
@@ -120,13 +131,13 @@ section exists to prevent.
 
 Honest list of what is _not_ fully mitigated today:
 
-| Risk                                    | Status                                                                                              |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Saved cards / vault endpoints           | **Not implemented.** Deliberate — the spec forbids advertising saved cards before merchant approval |
-| Durable publish of `runtime.progress.*` | SSE only; RabbitMQ publishing is future work                                                        |
-| FX provider outage with no fallback     | Fails the checkout by design; no degraded-rate path                                                 |
-| Chargeback dispute automation           | Manual — the reconciliation dashboard surfaces cases, a human answers them                          |
-| Gateway-side fraud scoring              | Delegated to PayPal/Paymob; ClawAI adds rate limiting only                                          |
+| Risk                                    | Status                                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Saved-card merchant approval            | Hosted tokenization is implemented, but must not be advertised until each gateway approves the merchant |
+| Durable publish of `runtime.progress.*` | SSE only; RabbitMQ publishing is future work                                                            |
+| FX provider outage with no fallback     | Fails the checkout by design; no degraded-rate path                                                     |
+| Chargeback dispute automation           | Manual — the reconciliation dashboard surfaces cases, a human answers them                              |
+| Gateway-side fraud scoring              | Delegated to PayPal/Paymob; ClawAI adds rate limiting only                                              |
 
 ---
 
@@ -135,11 +146,13 @@ Honest list of what is _not_ fully mitigated today:
 | Symptom                          | First action                                                                                                      |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | Webhook signature failures spike | Confirm the webhook id/HMAC secret matches the gateway; **do not** relax verification                             |
-| Entitlement drift                | Re-run reconciliation; the inbox is idempotent, replay is safe                                                    |
+| Entitlement drift                | Follow `docs/11-runbooks/runbook-billing-reconciliation.md`; replay is idempotent                                 |
 | Suspected token compromise       | Rotate `PAYMENT_TOKEN_ENCRYPTION_KEY`, bump the key version, revoke tokens at the gateway                         |
 | Duplicate charges reported       | Check `PaymentTransaction` by idempotency key before refunding — a duplicate _record_ is not a duplicate _charge_ |
 | A plan is mispriced              | Publish a **new** price version; never edit the old one, or historical invoices stop reconciling                  |
 
-Rotating `PAYMENT_TOKEN_ENCRYPTION_KEY` orphans every vaulted token by design —
-that is the point of a rotation. Both installers preserve it precisely so it is
-never rotated by accident.
+The ciphertext records `PAYMENT_TOKEN_KEY_VERSION`, but the running service
+holds one active key. Re-encrypt or revoke vaulted rows under an approved
+rotation procedure before replacing that key; changing it in place makes old
+tokens unreadable. Both installers preserve it so it is never rotated by
+accident.

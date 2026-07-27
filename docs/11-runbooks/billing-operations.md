@@ -121,7 +121,8 @@ different schedules.
 Never edit a price. Publish a new version:
 
 ```
-POST /api/v1/admin/plans/:planId/prices   { billingInterval, amountMinor, currency }
+POST /api/v1/admin/plans/:planId/price-versions
+{ billingInterval, amountMinor, currency }
 ```
 
 This retires the current version and inserts the next in one transaction.
@@ -144,6 +145,11 @@ Runs on `BILLING_RECONCILIATION_CRON`. It compares:
 
 Discrepancies are surfaced, never auto-corrected. An automatic correction to a
 financial record is how one bug becomes a thousand wrong invoices.
+
+For diagnosis and an owner-safe manual run, follow
+[runbook-billing-reconciliation.md](runbook-billing-reconciliation.md). For
+stalled lifecycle, outbox, or invoice-delivery work, follow
+[runbook-failed-billing-sweep.md](runbook-failed-billing-sweep.md).
 
 ---
 

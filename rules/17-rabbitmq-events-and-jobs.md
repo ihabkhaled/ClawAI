@@ -72,10 +72,12 @@ await this.events.publish(CONNECTOR_SYNCED, { connectorId: id, requestId }); // 
 ## Related skills
 
 - [08-event-bus-toolkit](../skills/08-event-bus-toolkit.md)
+- [debug-a-stuck-scheduled-job](../skills/debug-a-stuck-scheduled-job.md)
 
 ## Related context
 
 - Root `CLAUDE.md` — "Event Bus (RabbitMQ)" table, "Message Flow (End-to-End)".
+- [ADR-067](../docs/13-adr/adr-067-owner-token-locks-for-scheduled-jobs.md)
 
 ## Definition of done
 

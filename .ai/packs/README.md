@@ -5,6 +5,7 @@ Curated bundles that map a kind of task to its reviewers, validation lane, and
 pitfalls. The context resolver (`npm run knowledge:context`) classifies your
 task into one of these automatically.
 
+- **billing-payments** — subscription, payment gateway, refund, invoice, pricing, or billing operations change
 - **authentication-security** — auth-service change touching identity, sessions, or permissions
 - **rabbitmq-event** — RabbitMQ event contract or producer/consumer change
 - **database-migration** — Prisma/Mongoose schema or migration change

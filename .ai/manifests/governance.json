@@ -1,11 +1,11 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 19170,
+      "bytes": 19594,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 4890,
+      "bytes": 4892,
       "file": "CODEX.md"
     },
     {
@@ -51,7 +51,7 @@
   "looseDocs": 22,
   "rules": [
     {
-      "bytes": 10745,
+      "bytes": 10988,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -159,7 +159,7 @@
       "file": "rules/16-authentication-and-authorization.md"
     },
     {
-      "bytes": 4193,
+      "bytes": 4343,
       "file": "rules/17-rabbitmq-events-and-jobs.md"
     },
     {
@@ -203,13 +203,17 @@
       "file": "rules/27-engineering-mindsets.md"
     },
     {
+      "bytes": 4303,
+      "file": "rules/28-billing-integrity-and-api-contracts.md"
+    },
+    {
       "bytes": 4045,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 7954,
+      "bytes": 8383,
       "file": "skills/00-index.md"
     },
     {
@@ -249,8 +253,12 @@
       "file": "skills/09-refactor-toolkit.md"
     },
     {
-      "bytes": 6380,
+      "bytes": 6622,
       "file": "skills/README.md"
+    },
+    {
+      "bytes": 4010,
+      "file": "skills/add-a-payment-gateway-flow.md"
     },
     {
       "bytes": 3615,
@@ -349,6 +357,10 @@
       "file": "skills/create-view-model-hook.md"
     },
     {
+      "bytes": 3192,
+      "file": "skills/debug-a-stuck-scheduled-job.md"
+    },
+    {
       "bytes": 3724,
       "file": "skills/debug-flaky-test.md"
     },
@@ -375,6 +387,10 @@
     {
       "bytes": 4352,
       "file": "skills/navigate-codebase.md"
+    },
+    {
+      "bytes": 3566,
+      "file": "skills/reconcile-billing-state.md"
     },
     {
       "bytes": 5173,

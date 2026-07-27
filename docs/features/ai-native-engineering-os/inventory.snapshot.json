@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 2 identical headings (19170 vs 4890 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 2 identical headings (19594 vs 4892 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CODEX.md and cursor.md share 1 identical headings (4890 vs 25527 bytes) — candidates for compact routing",
+        "message": "CODEX.md and cursor.md share 1 identical headings (4892 vs 25527 bytes) — candidates for compact routing",
         "severity": "medium"
       }
     ],
@@ -42,26 +42,7 @@
         "severity": "medium"
       }
     ],
-    "staleClaims": [
-      {
-        "evidence": [
-          "CODEX.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "CODEX.md claims 9 locales but 13 locale files exist",
-        "severity": "low"
-      },
-      {
-        "evidence": [
-          "CODEX.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "CODEX.md claims 9 locales but 13 locale files exist",
-        "severity": "low"
-      }
-    ]
+    "staleClaims": []
   },
   "inventory": {
     "apiEndpoints": {
@@ -1736,6 +1717,11 @@
           "method": "GET",
           "route": "/admin/billing/dashboard/price-version-counts",
           "source": "apps/claw-payment-service/src/modules/billing-dashboard/controllers/billing-dashboard.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/admin/billing/reconciliation",
+          "source": "apps/claw-payment-service/src/modules/reconciliation/controllers/reconciliation-admin.controller.ts"
         },
         {
           "method": "POST",
@@ -6343,11 +6329,11 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 19170,
+          "bytes": 19594,
           "file": "CLAUDE.md"
         },
         {
-          "bytes": 4890,
+          "bytes": 4892,
           "file": "CODEX.md"
         },
         {
@@ -6392,7 +6378,7 @@
       "looseDocs": 22,
       "rules": [
         {
-          "bytes": 10745,
+          "bytes": 10988,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -6500,7 +6486,7 @@
           "file": "rules/16-authentication-and-authorization.md"
         },
         {
-          "bytes": 4193,
+          "bytes": 4343,
           "file": "rules/17-rabbitmq-events-and-jobs.md"
         },
         {
@@ -6544,13 +6530,17 @@
           "file": "rules/27-engineering-mindsets.md"
         },
         {
+          "bytes": 4303,
+          "file": "rules/28-billing-integrity-and-api-contracts.md"
+        },
+        {
           "bytes": 4045,
           "file": "rules/README.md"
         }
       ],
       "skills": [
         {
-          "bytes": 7954,
+          "bytes": 8383,
           "file": "skills/00-index.md"
         },
         {
@@ -6590,8 +6580,12 @@
           "file": "skills/09-refactor-toolkit.md"
         },
         {
-          "bytes": 6380,
+          "bytes": 6622,
           "file": "skills/README.md"
+        },
+        {
+          "bytes": 4010,
+          "file": "skills/add-a-payment-gateway-flow.md"
         },
         {
           "bytes": 3615,
@@ -6690,6 +6684,10 @@
           "file": "skills/create-view-model-hook.md"
         },
         {
+          "bytes": 3192,
+          "file": "skills/debug-a-stuck-scheduled-job.md"
+        },
+        {
           "bytes": 3724,
           "file": "skills/debug-flaky-test.md"
         },
@@ -6716,6 +6714,10 @@
         {
           "bytes": 4352,
           "file": "skills/navigate-codebase.md"
+        },
+        {
+          "bytes": 3566,
+          "file": "skills/reconcile-billing-state.md"
         },
         {
           "bytes": 5173,
@@ -8345,7 +8347,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 75
+        "testFiles": 76
       },
       "claw-research-service": {
         "runner": "jest",
@@ -9060,7 +9062,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 541,
+    "endpointCount": 542,
     "envVarCount": 335,
     "eventCount": 165,
     "frontendRouteCount": 102,
@@ -9071,8 +9073,8 @@
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
-    "staleClaimCount": 2,
-    "totalTestFiles": 677,
+    "staleClaimCount": 0,
+    "totalTestFiles": 678,
     "workspaceCount": 25
   }
 }

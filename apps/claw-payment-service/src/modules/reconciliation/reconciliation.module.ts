@@ -5,6 +5,7 @@ import { GatewaysModule } from '../gateways/gateways.module';
 import { ScheduledJobsModule } from '../scheduled-jobs/scheduled-jobs.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { WebhooksModule } from '../webhooks/webhooks.module';
+import { ReconciliationAdminController } from './controllers/reconciliation-admin.controller';
 import { ReconciliationManager } from './managers/reconciliation.manager';
 import { ReconciliationRepository } from './repositories/reconciliation.repository';
 import { GatewayReconciliationService } from './services/gateway-reconciliation.service';
@@ -14,6 +15,7 @@ import { ProviderSubscriptionReconciliationService } from './services/provider-s
 import { TransactionReconciliationService } from './services/transaction-reconciliation.service';
 
 @Module({
+  controllers: [ReconciliationAdminController],
   imports: [
     BillingModule,
     GatewaysModule,

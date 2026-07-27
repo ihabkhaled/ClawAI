@@ -1,7 +1,7 @@
 # Frontend Architecture
 
 `apps/claw-frontend` — Next.js 16.2, React 19.2, TanStack Query, Zustand,
-Tailwind, shadcn/ui. **89 pages** (`.ai/manifests/frontend-routes.json`), **151
+Tailwind, shadcn/ui. **102 pages** (`.ai/manifests/frontend-routes.json`), **211
 vitest test files** (`.ai/manifests/tests.json`). Full rules:
 `rules/03-frontend-rules.md`.
 

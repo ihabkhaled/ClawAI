@@ -7,8 +7,8 @@ of these drift, regenerate the manifests and update this file.
 
 Every service depends on `@claw/shared-constants`, `@claw/shared-types`,
 `@claw/shared-utilities` (health depends on shared-utilities only); most also on
-`@claw/shared-rabbitmq` and `@claw/shared-entitlements`. Only agent, research,
-workspace add `@claw/shared-auth`. All 16 non-health services publish
+`@claw/shared-rabbitmq` and `@claw/shared-entitlements`. Only agent, payment,
+research, and workspace add `@claw/shared-auth`. All 17 non-health services publish
 `log.server`.
 
 ---
@@ -98,7 +98,7 @@ workspace add `@claw/shared-auth`. All 16 non-health services publish
 
 - **Path:** `apps/claw-server-logs-service` · **Gateway:** `/api/v1/server-logs`
 - **Owns:** ServerLog (Mongoose, TTL 30d)
-- **Responsibility:** consumes `log.server` from all 16 services; Elasticsearch-ready backend log viewer.
+- **Responsibility:** consumes `log.server` from all 17 non-health services; Elasticsearch-ready backend log viewer.
 - **Pitfalls:** **no port constant** — port is `SERVER_LOGS_PORT` env-only.
 
 ## claw-image-service — :4012 · PostgreSQL
@@ -143,3 +143,12 @@ workspace add `@claw/shared-auth`. All 16 non-health services publish
 - **Responsibility:** local frontier LLMs via vanilla llama.cpp — binary lifecycle, HF pull jobs (SSE), single-resident process supervisor, OpenAI-compatible inference proxy, hardware preflight.
 - **Produces:** `llamacpp.binary.installed/updated`, `llamacpp.pull.*`, `llamacpp.model.loaded/unloaded/crashed` (routing consumes these), `llamacpp.weights.deleted`, `llamacpp.preflight.overridden`.
 - **Pitfalls:** base image MUST be Debian (`node:20-bookworm-slim`) — release binaries are glibc-linked. `LLAMACPP_DATA_PATH` must live in the named volume. Has GPU overlays in compose.
+
+## claw-payment-service — :4018 · PostgreSQL
+
+- **Path:** `apps/claw-payment-service` · **Gateway:** `/api/v1/payments`, `/api/v1/billing`, `/api/v1/admin/billing`
+- **Owns:** BillingCustomer, CheckoutSession, FxQuote, GatewayPlanMapping, IdempotencyRecord, InboxEvent, Invoice, InvoiceDelivery, InvoiceLine, OutboxEvent, PaymentMethod, PaymentTransaction, ProrationQuote, ReconciliationDivergence, ReconciliationRun, Refund, SeedExecution, Subscription, WebhookEvent
+- **Responsibility:** PayPal and Paymob checkout/payment-method setup, subscriptions, immutable invoices, refunds, lifecycle sweeps, reconciliation, and the admin billing dashboard.
+- **Produces:** billing subscription, payment, invoice, refund, and entitlement lifecycle events through the transactional outbox.
+- **Calls:** auth internal plan/entitlement and provider-cost contracts; auth consumes payment events to project subscription state and revoke entitlements.
+- **Pitfalls:** keep money in integer minor units or microUSD, keep `/internal/*` off nginx, use owner-token locks for scheduled jobs, and treat prices, refunds, and invoice snapshots as immutable records.

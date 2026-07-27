@@ -14,8 +14,8 @@ research work across cloud AI providers and local runtimes (Ollama, llama.cpp,
 ComfyUI, Stable Diffusion), with memory, context packs, workspace connectors,
 and a desktop agent — all behind one authenticated gateway.
 
-It is an **npm-workspace monorepo**: **17 NestJS microservices + 1 Next.js
-frontend + 6 shared packages** = 24 workspaces (23 with a `package.json` under
+It is an **npm-workspace monorepo**: **18 NestJS microservices + 1 Next.js
+frontend + 6 shared packages** = 25 workspaces (25 with a `package.json` under
 `apps/`/`packages/`; the frontend counts as an app). See
 [workspace-map.md](workspace-map.md).
 
@@ -39,7 +39,7 @@ frontend + 6 shared packages** = 24 workspaces (23 with a `package.json` under
                 │  HTTP/HTTPS to service:port
                 ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│  17 NestJS services (ports 4001–4017)                                  │
+│  18 NestJS services (ports 4001–4018)                                  │
 │  Controller (3-line) → Service (≤30 ln) → Repository (no throw)        │
 │                     ↘ Manager (≤80 ln orchestration)                   │
 │                     ↘ Adapter (wraps vendor SDKs)                       │
@@ -60,7 +60,7 @@ and — for local AI — **Ollama**, **ComfyUI**, **Stable Diffusion** runtimes 
 
 ## Services and ports (ground truth: `.ai/manifests/ports.json`)
 
-15 services have a `*_SERVICE_PORT` constant in `@claw/shared-constants`. **Two
+16 services have a `*_SERVICE_PORT` constant in `@claw/shared-constants`. **Two
 services (`client-logs` 4010, `server-logs` 4011) have NO port constant — their
 port is env-only** (`CLIENT_LOGS_PORT` / `SERVER_LOGS_PORT`). This gap is called
 out by the inventory audit (`portCoverageGaps`) and detailed in
@@ -85,6 +85,7 @@ out by the inventory audit (`portCoverageGaps`) and detailed in
 | agent           | 4015            | PostgreSQL                     |
 | research        | 4016            | PostgreSQL                     |
 | llamacpp        | 4017            | PostgreSQL (Debian base image) |
+| payment         | 4018            | PostgreSQL                     |
 
 Most PostgreSQL services use **Prisma 7.8**; the three Mongo services (audit,
 client-logs, server-logs) use **Mongoose**. `health` has no database.
@@ -96,7 +97,9 @@ client-logs, server-logs) use **Mongoose**. `health` has no database.
 2. **nginx** terminates TLS and routes by **longest-prefix match** to the target
    service port. Route table is ground-truth in
    `.ai/manifests/nginx-routes.json`; e.g. `/api/v1/chat-threads` → chat:4002,
-   `/api/v1/memories` → memory:4005, `/api/v1/agent` → agent:4015.
+   `/api/v1/memories` → memory:4005, `/api/v1/agent` → agent:4015, and
+   `/api/v1/payments` or `/api/v1/billing` → payment:4018. Internal payment
+   contracts are deliberately absent from nginx.
 3. The service's **AuthGuard/RolesGuard** (from `@claw/shared-auth`) verifies the
    JWT and permissions, then the request flows Controller → Service →
    Repository/Manager.
@@ -118,7 +121,7 @@ Streaming (chat SSE) uses `@Sse('stream/:threadId')`; nginx must set
   producers and consumers (heuristic inference; treat as a strong hint, verify in
   code). `audit-service` is the near-universal consumer; `routing-service` and
   `chat-service` consume the message/connector/model lifecycle events.
-- **`log.server`** is special: all 16 non-health services publish it; the
+- **`log.server`** is special: all 17 non-health services publish it; the
   `server-logs-service` persists it to MongoDB (TTL 30 days).
 
 Rules for events: every producer needs a documented consumer; handlers must
@@ -202,8 +205,8 @@ by **`scripts/claw.sh`**. Exact commands are canonical in
 | Events (producers/consumers)       | `.ai/manifests/event-graph.json`, `rabbitmq-events.json` |
 | HTTP routes at the gateway         | `.ai/manifests/nginx-routes.json`                        |
 | API endpoints per service          | `.ai/manifests/api-endpoints.json`                       |
-| Frontend pages (89)                | `.ai/manifests/frontend-routes.json`                     |
+| Frontend pages (102)               | `.ai/manifests/frontend-routes.json`                     |
 | Docker service → compose files     | `.ai/manifests/docker-services.json`                     |
 | Package dependency edges           | `.ai/manifests/workspace-dependency-graph.json`          |
 | Permissions (38)                   | `.ai/manifests/permissions.json`                         |
-| Env vars (274)                     | `.ai/manifests/environment-variables.json`               |
+| Env vars (335)                     | `.ai/manifests/environment-variables.json`               |

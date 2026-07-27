@@ -1,6 +1,6 @@
 # Environment Ownership Map
 
-**274 environment variables** (`.ai/manifests/environment-variables.json`). A
+**335 environment variables** (`.ai/manifests/environment-variables.json`). A
 single root `.env` (copy from `.env.example`) drives everything; all services use
 `env_file: .env`. Config is read through a **Zod-validated AppConfig** — never
 `process.env` directly (`rules/02-backend-rules.md`).
@@ -10,13 +10,15 @@ single root `.env` (copy from `.env.example`) drives everything; all services us
 | Group                     | Examples                                                                                                                   |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | General                   | `NODE_ENV`, `CORS_ORIGINS`, `THROTTLE_TTL/LIMIT`, `CLAW_LOCAL_AI`, `CLAW_HOSTNAME`                                         |
-| PostgreSQL (×13)          | `PG_<SVC>_USER/PASSWORD/DB/PORT`, `<SVC>_DATABASE_URL`                                                                     |
+| PostgreSQL (×14)          | `PG_<SVC>_USER/PASSWORD/DB/PORT`, `<SVC>_DATABASE_URL`                                                                     |
 | MongoDB                   | `MONGO_USER/PASSWORD/DB/PORT`, `AUDIT_MONGODB_URI`, `CLIENT_LOGS_MONGODB_URI`, `SERVER_LOGS_MONGODB_URI`                   |
 | Redis / RabbitMQ          | `REDIS_URL/PORT`, `RABBITMQ_USER/PASSWORD/URL/PORT/MANAGEMENT_PORT`                                                        |
 | JWT / crypto              | `JWT_SECRET`, `JWT_ACCESS_EXPIRY`, `JWT_REFRESH_EXPIRY`, `ENCRYPTION_KEY`, `INTER_SERVICE_AUTH_TOKEN`                      |
 | Admin seed                | `ADMIN_EMAIL/USERNAME/PASSWORD`                                                                                            |
 | Frontend                  | `NEXT_PUBLIC_API_URL/APP_NAME/APP_URL`, `FRONTEND_PORT`                                                                    |
 | Outbound email            | `CONTACT_EMAIL_ENABLED/PROVIDER/FROM`, `CONTACT_SMTP_HOST/PORT/SECURE/USER/PASS`                                           |
+| Payment / billing         | `PAYPAL_*`, `PAYMOB_*`, `PAYMENT_TOKEN_ENCRYPTION_*`, `FX_*`, `PAYMENT_*_INTERVAL_MS`, `PAYMENT_GATEWAY_*`                 |
+| Distributed origins       | `CLAW_<SVC>_ORIGIN`, including `CLAW_PAYMENT_ORIGIN`; internal service routes remain private                               |
 | Per-service ports         | `AUTH_PORT`, `CHAT_PORT`, …, `CLIENT_LOGS_PORT`, `SERVER_LOGS_PORT`                                                        |
 | Inter-service URLs        | `<SVC>_SERVICE_URL`                                                                                                        |
 | TLS                       | `HTTPS_CERT_PATH`, `HTTPS_KEY_PATH`, `NODE_EXTRA_CA_CERTS`                                                                 |

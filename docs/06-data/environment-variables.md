@@ -44,7 +44,7 @@ recipient.
 
 ## PostgreSQL Instances
 
-Claw uses 12 separate PostgreSQL instances, one per data-owning service.
+Claw uses 14 separate PostgreSQL instances, one per data-owning service.
 
 | Variable                       | Required | Default                    | Description                         |
 | ------------------------------ | -------- | -------------------------- | ----------------------------------- |
@@ -108,6 +108,10 @@ Claw uses 12 separate PostgreSQL instances, one per data-owning service.
 | `PG_WORKSPACE_USER`            | Yes      | `claw`                     | Workspace service database username |
 | `PG_WORKSPACE_PASSWORD`        | Yes      | `claw_secret`              | Workspace service database password |
 | `PG_WORKSPACE_DB`              | Yes      | `claw_workspace`           | Workspace service database name     |
+| `PG_PAYMENTS_PORT`             | Yes      | `5453`                     | Payment database host port          |
+| `PG_PAYMENTS_USER`             | Yes      | `claw`                     | Payment database username           |
+| `PG_PAYMENTS_PASSWORD`         | Yes      | `claw_secret`              | Payment database password           |
+| `PG_PAYMENTS_DB`               | Yes      | `claw_payments`            | Payment database name               |
 
 **Notes:**
 
@@ -277,6 +281,44 @@ Claw uses 12 separate PostgreSQL instances, one per data-owning service.
 
 ---
 
+## Payment and Billing
+
+Prices are database-owned immutable `PlanPriceVersion` records, not environment
+variables. The payment service validates the variables below at startup. Leave a
+gateway's full credential set blank to disable it; partial configuration is
+rejected.
+
+| Variable                                                         | Required           | Default                | Purpose                                                        |
+| ---------------------------------------------------------------- | ------------------ | ---------------------- | -------------------------------------------------------------- |
+| `PAYMENT_DATABASE_URL`                                           | Yes                | —                      | Payment-service PostgreSQL connection                          |
+| `PAYMENT_SERVICE_PORT`                                           | No                 | `4018`                 | Payment-service listen port                                    |
+| `AUTH_SERVICE_URL`, `ROUTING_SERVICE_URL`                        | Yes                | service-local URLs     | Signed internal plan, entitlement, and provider-cost contracts |
+| `INTER_SERVICE_AUTH_TOKEN`                                       | Yes                | —                      | Minimum 32-character internal request signing secret           |
+| `FRONTEND_URL`                                                   | Yes                | `https://claw.local`   | Server-owned checkout return origin                            |
+| `PAYMENT_TOKEN_ENCRYPTION_KEY`                                   | Yes                | —                      | 64-character hex key for vaulted gateway tokens                |
+| `PAYMENT_TOKEN_KEY_VERSION`                                      | No                 | `1`                    | Ciphertext key version used during rotation                    |
+| `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`  | To enable PayPal   | —                      | Complete PayPal server credential set                          |
+| `PAYPAL_ENV`                                                     | No                 | `sandbox`              | `sandbox` or `live`; configured production requires `live`     |
+| `NEXT_PUBLIC_PAYPAL_CLIENT_ID`                                   | To render PayPal   | —                      | Public browser client identifier                               |
+| `PAYMOB_SECRET_KEY`, `PAYMOB_PUBLIC_KEY`, `PAYMOB_HMAC_SECRET`   | To enable Paymob   | —                      | Complete Paymob secret/public/HMAC set                         |
+| `PAYMOB_CARD_INTEGRATION_ID`                                     | To enable Paymob   | —                      | Paymob hosted-card integration                                 |
+| `PAYMOB_API_KEY`                                                 | No                 | —                      | Legacy Paymob auth-token API key                               |
+| `PAYMOB_CURRENCY`, `NEXT_PUBLIC_PAYMOB_PUBLIC_KEY`               | No / render Paymob | `EGP` / —              | Settlement currency and safe browser key                       |
+| `EXCHANGE_RATE_API_BASE_URL`, `EXCHANGE_RATE_CACHE_TTL_MS`       | No                 | provider / `3600000`   | FX source and cache lifetime                                   |
+| `USD_TO_EGP_FALLBACK_RATE`                                       | No                 | `0`                    | Non-zero emergency fallback; zero fails closed                 |
+| `FX_QUOTE_TTL_MS`, `FX_SAFETY_MARGIN_BPS`                        | No                 | `900000` / `150`       | Bound quote lifetime and adverse-movement margin               |
+| `WEBHOOK_REPLAY_TOLERANCE_MS`, `BILLING_GRACE_PERIOD_MS`         | No                 | `600000` / `259200000` | Replay window and past-due entitlement grace                   |
+| `BILLING_RECONCILIATION_CRON`                                    | No                 | `0 */15 * * * *`       | Reconciliation schedule                                        |
+| `PAYMENT_OUTBOX_POLL_INTERVAL_MS`, `PAYMENT_OUTBOX_MAX_ATTEMPTS` | No                 | `5000` / `10`          | Outbox drain cadence and dead-letter threshold                 |
+| `PAYMENT_GATEWAY_TIMEOUT_MS`, `PAYMENT_GATEWAY_MAX_RETRIES`      | No                 | `20000` / `2`          | Bounded provider calls and safe/idempotent retries             |
+
+Invoice delivery uses the shared SMTP variables above. In distributed nginx,
+set `CLAW_PAYMENT_ORIGIN` to the payment deployment origin; expose only
+`/payments/webhooks`, `/payments`, `/billing`, and `/admin/billing`, never
+`/internal/*`.
+
+---
+
 ## Inter-Service URLs
 
 All services communicate via internal Docker service names.
@@ -321,6 +363,7 @@ All services communicate via internal Docker service names.
 | `AGENT_PORT`           | `4015`  | Agent           |
 | `RESEARCH_PORT`        | `4016`  | Research        |
 | `WORKSPACE_PORT`       | `4014`  | Workspace       |
+| `PAYMENT_SERVICE_PORT` | `4018`  | Payment         |
 
 ---
 
@@ -342,6 +385,7 @@ Prisma reads from `DATABASE_URL` per service. Each service's `.env` or the root 
 | `AGENT_DATABASE_URL`            | Agent           |
 | `RESEARCH_DATABASE_URL`         | Research        |
 | `WORKSPACE_DATABASE_URL`        | Workspace       |
+| `PAYMENT_DATABASE_URL`          | Payment         |
 | `AUDIT_MONGODB_URI`             | Audit           |
 | `CLIENT_LOGS_MONGODB_URI`       | Client Logs     |
 | `SERVER_LOGS_MONGODB_URI`       | Server Logs     |

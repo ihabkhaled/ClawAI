@@ -273,11 +273,34 @@ setup, first-class partial/full refund operations with an admin ledger, and
 immutable invoice PDF rendering with durable SMTP delivery and authenticated
 owner downloads.
 
-Still to land in the subscription-completion program: public pricing and the
-admin price/margin surfaces.
+Public pricing is live from auth-service's plan catalog. The admin surface now
+publishes append-only price versions at
+`POST /api/v1/admin/plans/:id/price-versions` and reads them at the matching GET
+route. Payment-service exposes these `ADMIN_PLANS_MANAGE` operations:
+
+| Route                                                      | Purpose                                                                 |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `GET /api/v1/admin/billing/dashboard`                      | Integer microUSD revenue, provider cost, margin, refund, and drift data |
+| `GET /api/v1/admin/billing/dashboard/price-version-counts` | Subscriber counts by immutable price version                            |
+| `GET/POST /api/v1/admin/billing/refunds/*`                 | Refundable ledger and idempotent partial/full refunds                   |
+| `POST /api/v1/admin/billing/reconciliation`                | Owner-safe manual reconciliation run                                    |
+
+Dashboard aggregation reads provider cost only through auth-service's signed
+`GET /internal/billing-metrics/provider-costs` projection. It never joins databases,
+mixes currencies, or uses floating point. Hidden frontend navigation is not an
+authorization boundary; every admin endpoint enforces the permission itself.
+
+All scheduled outbox, lifecycle, invoice-delivery, and reconciliation jobs use
+Redis owner-token locks: acquire with `SET NX EX`, release with atomic
+compare-and-delete, and release from `finally`. Work remains bounded,
+idempotent, and resumable if a replica dies.
 
 ## Related
 
 - `apps/claw-payment-service/CLAUDE.md` — service rules
 - `docs/06-data/environment-variables.md` — full env reference
+- `docs/11-runbooks/runbook-billing-reconciliation.md` — reconciliation diagnosis and safe recovery
+- `docs/11-runbooks/runbook-failed-billing-sweep.md` — lifecycle/outbox/invoice sweep recovery
+- `rules/28-billing-integrity-and-api-contracts.md` — immutable billing and API contract rules
+- `docs/13-adr/adr-064-refund-entitlement-semantics.md` through ADR 067 — financial-record and job decisions
 - `.claude/Integrations/secure-subscriptions-payments__PLAN.md` — Phase-0 plan

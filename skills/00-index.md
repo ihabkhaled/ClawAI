@@ -18,6 +18,9 @@
 | RabbitMQ Event Bus Toolkit  | `08-event-bus-toolkit.md`        | Publishing events, consuming events, DLQ inspection                       |
 | Refactor Toolkit            | `09-refactor-toolkit.md`         | Per-service refactor: dedup, extraction, splits, logging, coverage        |
 | Commit and Push Each Change | `commit-and-push-each-change.md` | Landing work: one gated commit, pushed before the next one starts         |
+| Reconcile Billing State     | `reconcile-billing-state.md`     | Diagnose, run, and verify owner-safe billing reconciliation               |
+| Debug a Stuck Scheduled Job | `debug-a-stuck-scheduled-job.md` | Recover locked, crashed, or incomplete bounded scheduled work             |
+| Add a Payment Gateway Flow  | `add-a-payment-gateway-flow.md`  | Add verified, idempotent, redacted provider payment behavior              |
 
 ---
 

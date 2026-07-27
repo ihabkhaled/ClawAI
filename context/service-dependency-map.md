@@ -14,8 +14,8 @@ Every service imports `@claw/shared-constants`, `@claw/shared-types`,
 
 - **`@claw/shared-rabbitmq`** — all services except `health`.
 - **`@claw/shared-entitlements`** — audit, chat, connector, file, llamacpp,
-  memory, ollama, research, routing, server-logs, workspace.
-- **`@claw/shared-auth`** — only agent, research, workspace.
+  memory, ollama, payment, research, routing, server-logs, workspace.
+- **`@claw/shared-auth`** — only agent, payment, research, workspace.
 - **`health`** — depends on `@claw/shared-utilities` **only**.
 
 Package-to-package: `shared-auth`, `shared-entitlements` → `shared-types`;
@@ -39,7 +39,8 @@ auth    --user.login/logout-->   audit
 memory  --memory.extracted-->    audit
 workspace --workspace.sync.*/ai_action.*--> audit
 agent   --agent.capability.*-->  audit
-ALL(16) --log.server-->          server-logs
+payment --billing.*-->           auth, audit
+ALL(17) --log.server-->          server-logs
 ```
 
 **`audit-service` is the universal sink.** **`routing-service` is the main
@@ -65,6 +66,8 @@ synchronous data other services need at request time:
 | workspace | chat             | `/internal/chat/generate`, `/internal/chat/threads/seeded`         |
 | workspace | file-gen / image | `/internal/file-generations/generate`, `/internal/images/generate` |
 | agent     | chat             | `/internal/agent/terminal/seed-command`                            |
+| payment   | auth             | `/internal/plans/*`, `/internal/billing-metrics/provider-costs`    |
+| auth      | payment          | `/internal/payments/users/:userId/entitlement`                     |
 | health    | all              | `/health` aggregation                                              |
 
 Internal endpoints are discovered in `.ai/manifests/api-endpoints.json` (routes

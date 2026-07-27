@@ -437,6 +437,42 @@ http {
             proxy_read_timeout 300s;
         }
 
+        # --- Payment Service: gateway webhooks ---
+        # Public by design: providers cannot present a ClawAI JWT. The payment
+        # service verifies the PayPal transmission signature or Paymob HMAC.
+        location /api/v1/payments/webhooks {
+            set $backend https://$origin_payment;
+            proxy_pass $backend;
+            client_max_body_size 256k;
+            proxy_request_buffering on;
+            proxy_set_header Content-Type $content_type;
+            proxy_buffering off;
+            proxy_cache off;
+            add_header Cache-Control "no-store" always;
+        }
+
+        # --- Payment Service: checkout + gateway order creation ---
+        location /api/v1/payments {
+            set $backend https://$origin_payment;
+            proxy_pass $backend;
+            client_max_body_size 256k;
+            proxy_read_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_cache off;
+            add_header Cache-Control "no-store" always;
+        }
+
+        # --- Payment Service: customer billing management ---
+        location /api/v1/billing {
+            set $backend https://$origin_payment;
+            proxy_pass $backend;
+            client_max_body_size 256k;
+            proxy_read_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_cache off;
+            add_header Cache-Control "no-store" always;
+        }
+
         # --- Client Logs Service ---
         location /api/v1/client-logs {
             set $backend https://$origin_client_logs;
