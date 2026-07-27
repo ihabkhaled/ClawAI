@@ -36,6 +36,11 @@ enum UserLanguagePreference {
   ZH
 }
 
+enum SessionClientKind {
+  WEB
+  VSCODE
+}
+
 enum UserAppearancePreference {
   SYSTEM
   LIGHT
@@ -250,15 +255,24 @@ model RolePermission {
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  refreshToken String   @unique @map("refresh_token")
-  expiresAt    DateTime @map("expires_at")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id                  String            @id @default(cuid())
+  userId              String            @map("user_id")
+  refreshToken        String            @unique @map("refresh_token")
+  refreshTokenHash    String?           @unique @map("refresh_token_hash")
+  familyId            String?           @map("family_id")
+  clientKind          SessionClientKind @default(WEB) @map("client_kind")
+  clientName          String?           @map("client_name")
+  usedAt              DateTime?         @map("used_at")
+  revokedAt           DateTime?         @map("revoked_at")
+  replacedBySessionId String?           @map("replaced_by_session_id")
+  expiresAt           DateTime          @map("expires_at")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([familyId])
   @@index([expiresAt])
   @@map("sessions")
 }

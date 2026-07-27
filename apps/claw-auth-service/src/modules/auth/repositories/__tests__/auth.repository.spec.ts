@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from '@nestjs/testing';
+import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import { AuthRepository } from '../auth.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
 
@@ -9,9 +10,12 @@ describe('AuthRepository', () => {
     session: {
       create: jest.Mock;
       findUnique: jest.Mock;
+      update: jest.Mock;
+      updateMany: jest.Mock;
       delete: jest.Mock;
       deleteMany: jest.Mock;
     };
+    $transaction: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -20,9 +24,12 @@ describe('AuthRepository', () => {
       session: {
         create: jest.fn().mockResolvedValue({ id: 's1' }),
         findUnique: jest.fn().mockResolvedValue({ id: 's1' }),
+        update: jest.fn().mockResolvedValue({ id: 's1' }),
+        updateMany: jest.fn().mockResolvedValue({ count: 2 }),
         delete: jest.fn().mockResolvedValue({ id: 's1' }),
         deleteMany: jest.fn().mockResolvedValue({ count: 3 }),
       },
+      $transaction: jest.fn().mockImplementation(async (operations: unknown[]) => operations),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -52,6 +59,74 @@ describe('AuthRepository', () => {
     await repository.findSessionByRefreshToken('rt-1');
     expect(prismaMock.session.findUnique).toHaveBeenCalledWith({
       where: { refreshToken: 'rt-1' },
+    });
+  });
+
+  it('looks up a session by refresh-token hash', async () => {
+    await repository.findSessionByRefreshTokenHash('digest');
+
+    expect(prismaMock.session.findUnique).toHaveBeenCalledWith({
+      where: { refreshTokenHash: 'digest' },
+    });
+  });
+
+  it('marks the current session used and creates its replacement atomically', async () => {
+    const usedAt = new Date('2026-07-27T00:00:00.000Z');
+    const expiresAt = new Date('2026-08-26T00:00:00.000Z');
+
+    await repository.rotateSession({
+      currentSessionId: 'session-current',
+      usedAt,
+      replacement: {
+        id: 'session-next',
+        userId: 'u1',
+        refreshToken: 'refresh-next',
+        refreshTokenHash: 'digest-next',
+        familyId: 'family-1',
+        clientKind: SessionClientKind.VSCODE,
+        clientName: 'VS Code',
+        expiresAt,
+      },
+    });
+
+    expect(prismaMock.session.update).toHaveBeenCalledWith({
+      where: {
+        id: 'session-current',
+        revokedAt: null,
+        usedAt: null,
+      },
+      data: {
+        replacedBySessionId: 'session-next',
+        usedAt,
+      },
+    });
+    expect(prismaMock.session.create).toHaveBeenCalledWith({
+      data: {
+        id: 'session-next',
+        userId: 'u1',
+        refreshToken: 'refresh-next',
+        refreshTokenHash: 'digest-next',
+        familyId: 'family-1',
+        clientKind: SessionClientKind.VSCODE,
+        clientName: 'VS Code',
+        expiresAt,
+      },
+    });
+    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('revokes every active session in a token family', async () => {
+    const revokedAt = new Date('2026-07-27T00:00:00.000Z');
+
+    await repository.revokeSessionFamily('family-1', revokedAt);
+
+    expect(prismaMock.session.deleteMany).not.toHaveBeenCalled();
+    expect(prismaMock.session.updateMany).toHaveBeenCalledWith({
+      where: {
+        familyId: 'family-1',
+        revokedAt: null,
+      },
+      data: { revokedAt },
     });
   });
 
