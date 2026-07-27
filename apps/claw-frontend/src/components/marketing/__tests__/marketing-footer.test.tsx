@@ -65,4 +65,15 @@ describe('MarketingFooter', () => {
     render(<MarketingFooter />);
     expect(screen.queryByText('marketing.footer.socialX')).not.toBeInTheDocument();
   });
+
+  it('renders each public destination once for the active locale', () => {
+    render(<MarketingFooter />);
+    const internalHrefs = screen
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'))
+      .filter((href): href is string => href !== null && href.startsWith('/'));
+
+    expect(internalHrefs.filter((href) => href === '/features')).toHaveLength(1);
+    expect(new Set(internalHrefs).size).toBe(internalHrefs.length);
+  });
 });

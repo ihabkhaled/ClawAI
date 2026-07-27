@@ -59,7 +59,7 @@ describe('buildLocalizedRssResponse failure behavior', () => {
     expect(xml).toContain('https://claw.example/en/features');
   });
 
-  it('orders chat items newest first and enforces the 100-item limit', async () => {
+  it('orders chat items newest first without truncating eligible entries', async () => {
     listPublicChatRssEntries.mockResolvedValue(
       Array.from({ length: 101 }, (_, index) => ({
         publicShareId: `share-${index}`,
@@ -74,11 +74,11 @@ describe('buildLocalizedRssResponse failure behavior', () => {
     const response = await buildLocalizedRssResponse(feedRequest(), RssFeedKind.CHATS);
     const xml = await response.text();
 
-    expect(xml.match(/<item>/gu)).toHaveLength(100);
+    expect(xml.match(/<item>/gu)).toHaveLength(101);
     expect(xml.indexOf('<title>Chat 100</title>')).toBeLessThan(
       xml.indexOf('<title>Chat 99</title>'),
     );
-    expect(xml).not.toContain('<title>Chat 0</title>');
+    expect(xml).toContain('<title>Chat 0</title>');
   });
 
   it('honors an exact ETag validator', async () => {

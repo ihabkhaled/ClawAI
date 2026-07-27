@@ -58,18 +58,25 @@ describe('content registry integrity', () => {
   // Deliberately an explicit list rather than a derived one: this is the
   // tripwire that catches a page being flipped to PUBLISHED without anyone
   // reviewing it, since publishing also makes it indexable and linkable.
-  it('publishes exactly the home, pricing, contact and six topic pages (all indexable)', () => {
+  it('publishes exactly the reviewed launch surface (all indexable)', () => {
     const published = getPublishedPages();
     const paths = [...new Set(published.map((page) => page.canonicalPath))].sort();
     expect(paths).toEqual([
       '/',
+      '/about',
+      '/acceptable-use',
       '/architecture',
       '/contact',
+      '/cookies',
       '/faq',
       '/features',
       '/how-it-works',
       '/local-first-ai',
       '/pricing',
+      '/privacy',
+      '/security-and-privacy',
+      '/supported-models',
+      '/terms',
       '/use-cases',
     ]);
     for (const page of published) {
@@ -119,7 +126,7 @@ describe('getPageBySlug / isKnownPublicPath', () => {
   });
 
   it('treats a planned page path as NOT a known public path', () => {
-    expect(isKnownPublicPath('/about')).toBe(false);
+    expect(isKnownPublicPath('/multi-provider-ai')).toBe(false);
   });
 
   it('treats an unregistered path as NOT a known public path', () => {
@@ -137,10 +144,35 @@ describe('localized publication boundary', () => {
   });
 
   it('resolves metadata for every supported locale', () => {
-    expect(getPublishedPagesForLocale(Locale.EN).length).toBe(9);
-    expect(getPublishedPagesForLocale(Locale.JA).length).toBe(9);
-    expect(getPageBySlugAndLocale('features', Locale.EN)?.title).toContain('Features');
-    expect(getPageBySlugAndLocale('features', Locale.JA)?.title).toContain('Features');
+    expect(getPublishedPagesForLocale(Locale.EN).length).toBe(16);
+    expect(getPublishedPagesForLocale(Locale.JA).length).toBe(16);
+    expect(getPageBySlugAndLocale('features', Locale.EN)?.title.toLowerCase()).toContain(
+      'features',
+    );
+    expect(getPageBySlugAndLocale('features', Locale.JA)?.title).toMatch(
+      /[\u3040-\u30ff\u3400-\u9fff]/,
+    );
+  });
+
+  it('publishes native SEO metadata and focused keywords for every locale', () => {
+    const englishPages = new Map(
+      getPublishedPagesForLocale(Locale.EN).map((page) => [page.slug, page]),
+    );
+
+    for (const locale of Object.values(Locale)) {
+      for (const page of getPublishedPagesForLocale(locale)) {
+        expect(page.title.trim().length).toBeGreaterThan(0);
+        expect(page.description.trim().length).toBeGreaterThan(80);
+        expect(page.keywords.length).toBeGreaterThanOrEqual(3);
+        expect(page.title.match(/ClawAI.*ClawAI/)).toBeNull();
+
+        if (locale !== Locale.EN) {
+          const englishPage = englishPages.get(page.slug);
+          expect(page.title).not.toBe(englishPage?.title);
+          expect(page.description).not.toBe(englishPage?.description);
+        }
+      }
+    }
   });
 
   it('creates localized canonicals and alternates for every language', () => {

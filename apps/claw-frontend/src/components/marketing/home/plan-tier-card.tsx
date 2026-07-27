@@ -20,6 +20,7 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
   const cadenceKey = isYearly ? 'marketing.pricing.perYear' : 'marketing.pricing.perMonth';
   const disabled = t('billing.quota.disabled');
   const unlimited = t('billing.quota.unlimited');
+  const interval = isYearly ? 'yearly' : 'monthly';
 
   return (
     <div
@@ -66,7 +67,7 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
       </dl>
 
       <Link
-        href={ROUTES.REGISTER}
+        href={`${ROUTES.REGISTER}?plan=${plan.slug}&interval=${interval}`}
         aria-disabled={price === null}
         className={cn(
           buttonVariants({ variant: plan.isDefault ? 'default' : 'outline' }),

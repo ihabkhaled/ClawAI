@@ -6,14 +6,21 @@
       "startServerReadyTimeout": 60000,
       "url": [
         "http://localhost:3000/en",
-        "http://localhost:3000/en/pricing",
+        "http://localhost:3000/en/about",
+        "http://localhost:3000/en/acceptable-use",
         "http://localhost:3000/en/features",
         "http://localhost:3000/en/how-it-works",
         "http://localhost:3000/en/architecture",
         "http://localhost:3000/en/use-cases",
         "http://localhost:3000/en/faq",
         "http://localhost:3000/en/local-first-ai",
-        "http://localhost:3000/en/contact"
+        "http://localhost:3000/en/contact",
+        "http://localhost:3000/en/cookies",
+        "http://localhost:3000/en/pricing",
+        "http://localhost:3000/en/privacy",
+        "http://localhost:3000/en/security-and-privacy",
+        "http://localhost:3000/en/supported-models",
+        "http://localhost:3000/en/terms"
       ],
       "numberOfRuns": 2,
       "settings": {
@@ -31,19 +38,19 @@
         "categories:accessibility": [
           "error",
           {
-            "minScore": 0.95
+            "minScore": 1
           }
         ],
         "categories:best-practices": [
           "error",
           {
-            "minScore": 0.95
+            "minScore": 1
           }
         ],
         "categories:seo": [
           "error",
           {
-            "minScore": 0.95
+            "minScore": 1
           }
         ],
         "meta-description": "error",

@@ -48,7 +48,9 @@ describe('sitemap index route', () => {
   it(
     'fails closed outside the canonical production environment',
     async () => {
-      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.stubEnv('VERCEL_ENV', 'preview');
+      process.env['SITE_URL'] = 'https://claw.example';
       const { GET } = await import('../sitemap.xml/route');
 
       const response = await GET();

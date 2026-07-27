@@ -50,9 +50,13 @@ export function buildPublicPageMetadata(slug: string, locale: Locale): Metadata 
   return {
     title,
     description,
+    keywords: [...(entry?.keywords ?? [])],
     alternates: {
       canonical,
       languages,
+      types: {
+        'application/rss+xml': `${siteUrl}/${locale}/feed.xml`,
+      },
     },
     robots: {
       index: indexable,

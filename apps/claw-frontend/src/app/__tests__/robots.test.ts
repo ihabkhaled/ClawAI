@@ -35,6 +35,7 @@ describe('robots', () => {
       }
 
       const disallow = rules?.disallow;
+      expect(disallow).toContain('/billing');
       for (const prefix of PRIVATE_ROUTE_PREFIXES) {
         expect(disallow).toContain(prefix);
       }
@@ -45,7 +46,9 @@ describe('robots', () => {
   it(
     'disallows everything in non-canonical environments',
     async () => {
-      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.stubEnv('VERCEL_ENV', 'preview');
+      process.env['SITE_URL'] = 'https://claw.example';
       const robots = (await import('../robots')).default;
 
       const result = robots();

@@ -1,7 +1,8 @@
+import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server';
 import { NextRequest } from 'next/server';
 import { describe, expect, it } from 'vitest';
 
-import { middleware } from '../middleware';
+import { config, middleware } from '../middleware';
 
 function buildRequest(pathname: string): NextRequest {
   return new NextRequest(new URL(pathname, 'https://claw.example'));
@@ -42,6 +43,27 @@ describe('middleware X-Robots-Tag enforcement', () => {
 
     expect(response.status).toBe(308);
     expect(response.headers.get('location')).toBe('https://claw.example/ja/contact');
+  });
+
+  it('runs middleware for every localized RSS endpoint', () => {
+    const localizedFeeds = [
+      { path: '/ja/feed.xml', rewrittenPath: '/feed.xml' },
+      { path: '/ar/feeds/topics.xml', rewrittenPath: '/feeds/topics.xml' },
+      { path: '/de/feeds/chats.xml', rewrittenPath: '/feeds/chats.xml' },
+    ];
+
+    for (const { path, rewrittenPath } of localizedFeeds) {
+      expect(
+        unstable_doesMiddlewareMatch({
+          config,
+          nextConfig: {},
+          url: `https://claw.example${path}`,
+        }),
+      ).toBe(true);
+      expect(middleware(buildRequest(path)).headers.get('x-middleware-rewrite')).toBe(
+        `https://claw.example${rewrittenPath}`,
+      );
+    }
   });
 
   it('does not upgrade subresources when serving an HTTP origin', () => {

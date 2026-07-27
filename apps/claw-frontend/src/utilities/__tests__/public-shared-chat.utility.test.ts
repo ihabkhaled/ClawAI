@@ -12,6 +12,7 @@ import {
   formatPublicDate,
   resolveInlineAdIndex,
 } from '../public-shared-chat.utility';
+import { buildSharedChatJsonLd } from '../structured-data.utility';
 
 const SITE_URL = 'https://claw.example';
 
@@ -144,6 +145,12 @@ describe('buildSharedChatViewModel', () => {
     expect(view.jsonLd.canonicalUrl).toBe(`${SITE_URL}/en/share/chat/AbCdEfGhIjKlMnOpQrStUv`);
     expect(view.jsonLd.publishedAt).toBe('2026-07-01T10:00:00.000Z');
     expect(view.jsonLd.updatedAt).toBe('2026-07-05T12:30:00.000Z');
+  });
+
+  it('uses the shared chat content language in JSON-LD', () => {
+    const view = buildSharedChatViewModel(makeShare({ contentLocale: Locale.ZH }), SITE_URL, t);
+
+    expect(buildSharedChatJsonLd(view.jsonLd)).toMatchObject({ inLanguage: 'zh-Hans' });
   });
 
   it('resolves the pathname the ad units are gated on', () => {

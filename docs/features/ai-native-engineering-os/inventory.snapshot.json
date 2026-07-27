@@ -5811,6 +5811,16 @@
         "route": "/register"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/about/page.tsx",
+        "kind": "page",
+        "route": "/about"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/acceptable-use/page.tsx",
+        "kind": "page",
+        "route": "/acceptable-use"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/architecture/page.tsx",
         "kind": "page",
         "route": "/architecture"
@@ -5819,6 +5829,11 @@
         "file": "apps/claw-frontend/src/app/(marketing)/contact/page.tsx",
         "kind": "page",
         "route": "/contact"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/cookies/page.tsx",
+        "kind": "page",
+        "route": "/cookies"
       },
       {
         "file": "apps/claw-frontend/src/app/(marketing)/faq/page.tsx",
@@ -5856,9 +5871,29 @@
         "route": "/pricing"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/privacy/page.tsx",
+        "kind": "page",
+        "route": "/privacy"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/security-and-privacy/page.tsx",
+        "kind": "page",
+        "route": "/security-and-privacy"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/share/chat/[publicShareId]/page.tsx",
         "kind": "page",
         "route": "/share/chat/[publicShareId]"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/supported-models/page.tsx",
+        "kind": "page",
+        "route": "/supported-models"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/terms/page.tsx",
+        "kind": "page",
+        "route": "/terms"
       },
       {
         "file": "apps/claw-frontend/src/app/(marketing)/use-cases/page.tsx",
@@ -8323,7 +8358,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 211
+        "testFiles": 215
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9065,7 +9100,7 @@
     "endpointCount": 542,
     "envVarCount": 335,
     "eventCount": 165,
-    "frontendRouteCount": 102,
+    "frontendRouteCount": 109,
     "localeCount": 13,
     "nginxRouteCount": 52,
     "permissionCount": 38,
@@ -9074,7 +9109,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 678,
+    "totalTestFiles": 682,
     "workspaceCount": 25
   }
 }

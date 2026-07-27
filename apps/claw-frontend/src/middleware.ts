@@ -118,6 +118,8 @@ export function middleware(request: NextRequest): NextResponse {
 
 export const config = {
   matcher: [
+    '/:locale/feed.xml',
+    '/:locale/feeds/:feed.xml',
     /*
      * Match all request paths except:
      * - api routes

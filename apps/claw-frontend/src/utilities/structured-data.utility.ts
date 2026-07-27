@@ -1,6 +1,7 @@
 import { MARKETING_GITHUB_URL } from '@/constants/marketing-nav.constants';
+import type { SharedChatJsonLdInput } from '@/types/chat-share-page.types';
 import type { PublicPlan } from '@/types/public-pricing.types';
-import type { JsonLdObject } from '@/types/structured-data.types';
+import type { JsonLdObject, PublicPageJsonLdInput } from '@/types/structured-data.types';
 import { formatPriceDecimal } from '@/utilities/pricing-catalog.utility';
 
 // Only facts the application and repository actually support — no
@@ -32,6 +33,24 @@ export function buildSoftwareApplicationJsonLd(siteUrl: string): JsonLdObject {
     url: siteUrl,
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'Linux, Windows, macOS (self-hosted via Docker)',
+  };
+}
+
+export function buildPublicPageJsonLd(input: PublicPageJsonLdInput): JsonLdObject {
+  const canonicalUrl = new URL(input.canonicalUrl);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: input.name,
+    description: input.description,
+    url: input.canonicalUrl,
+    inLanguage: input.language,
+    dateModified: input.lastReviewed,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'ClawAI',
+      url: canonicalUrl.origin,
+    },
   };
 }
 
@@ -72,13 +91,7 @@ export function buildPricingJsonLd(canonicalUrl: string, plans: PublicPlan[]): J
  * content. That is why `serializeJsonLd` escapes rather than trusting the input:
  * see the note on that function.
  */
-export function buildSharedChatJsonLd(input: {
-  canonicalUrl: string;
-  title: string;
-  description: string | null;
-  publishedAt: string;
-  updatedAt: string;
-}): JsonLdObject {
+export function buildSharedChatJsonLd(input: SharedChatJsonLdInput): JsonLdObject {
   const jsonLd: JsonLdObject = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -86,7 +99,7 @@ export function buildSharedChatJsonLd(input: {
     url: input.canonicalUrl,
     datePublished: input.publishedAt,
     dateModified: input.updatedAt,
-    inLanguage: 'en',
+    inLanguage: input.contentLanguage,
     isAccessibleForFree: true,
   };
   if (input.description !== null) {

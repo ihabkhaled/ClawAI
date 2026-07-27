@@ -14,6 +14,7 @@ export type ContentRegistryEntry = {
   status: ContentLifecycleStatus;
   title: string;
   description: string;
+  keywords: readonly string[];
   category: ContentCategory;
   canonicalPath: string;
   lastReviewed: string;
@@ -29,6 +30,7 @@ export type LocalizedContentRegistryEntry = ContentRegistryEntry & {
   metadata: {
     title: string;
     description: string;
+    keywords: readonly string[];
     lastReviewed: string;
   };
 };
@@ -36,6 +38,7 @@ export type LocalizedContentRegistryEntry = ContentRegistryEntry & {
 export type LocalizedContentMetadata = {
   title: string;
   description: string;
+  keywords: readonly string[];
   lastReviewed: string;
   reviewStatus: ContentReviewStatus;
   indexability: Indexability;
@@ -50,4 +53,10 @@ export type PublicContentDefinition = {
   structuredDataType: StructuredDataType;
   relatedSlugs: readonly string[];
   locales: Partial<Record<Locale, LocalizedContentMetadata>>;
+};
+
+export type PublicPageSeoCopy = {
+  title: string;
+  description: string;
+  keywords: readonly [string, string, string, ...string[]];
 };
