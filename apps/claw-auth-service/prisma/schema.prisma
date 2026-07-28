@@ -41,6 +41,13 @@ enum SessionClientKind {
   VSCODE
 }
 
+enum DeviceAuthorizationStatus {
+  PENDING
+  APPROVED
+  DENIED
+  CONSUMED
+}
+
 enum UserAppearancePreference {
   SYSTEM
   LIGHT
@@ -274,6 +281,29 @@ model Session {
   @@index([familyId])
   @@index([expiresAt])
   @@map("sessions")
+}
+
+model DeviceAuthorizationGrant {
+  id                 String                    @id @default(cuid())
+  deviceCodeHash     String                    @unique @map("device_code_hash")
+  userCode           String                    @unique @map("user_code")
+  clientName         String                    @map("client_name")
+  clientVersion      String                    @map("client_version")
+  status             DeviceAuthorizationStatus @default(PENDING)
+  approvedByUserId   String?                   @map("approved_by_user_id")
+  intervalSeconds    Int                       @default(5) @map("interval_seconds")
+  lastPolledAt       DateTime?                 @map("last_polled_at")
+  pollViolationCount Int                       @default(0) @map("poll_violation_count")
+  expiresAt          DateTime                  @map("expires_at")
+  approvedAt         DateTime?                 @map("approved_at")
+  deniedAt           DateTime?                 @map("denied_at")
+  consumedAt         DateTime?                 @map("consumed_at")
+  createdAt          DateTime                  @default(now()) @map("created_at")
+  updatedAt          DateTime                  @updatedAt @map("updated_at")
+
+  @@index([status, expiresAt])
+  @@index([approvedByUserId])
+  @@map("device_authorization_grants")
 }
 
 model SystemSetting {

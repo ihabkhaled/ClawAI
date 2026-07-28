@@ -7596,6 +7596,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "DeviceAuthorizationGrant"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "EntitlementInboxEvent"
           },
           {
@@ -8374,7 +8379,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 40
+        "testFiles": 42
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8398,7 +8403,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 220
+        "testFiles": 221
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9150,7 +9155,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 699,
+    "totalTestFiles": 702,
     "workspaceCount": 25
   }
 }

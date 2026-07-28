@@ -23,6 +23,7 @@
       "TerminalCommand"
     ],
     "claw-auth-service": [
+      "DeviceAuthorizationGrant",
       "EntitlementInboxEvent",
       "FeatureUsageRecord",
       "Plan",

@@ -78,6 +78,7 @@
       "port": 4001,
       "portSource": "shared-constants",
       "prismaModels": [
+        "DeviceAuthorizationGrant",
         "EntitlementInboxEvent",
         "FeatureUsageRecord",
         "Plan",
@@ -94,7 +95,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 40,
+      "testFiles": 42,
       "testRunner": "jest"
     },
     {

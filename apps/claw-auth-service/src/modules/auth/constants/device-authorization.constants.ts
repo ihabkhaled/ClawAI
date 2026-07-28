@@ -1,0 +1,4 @@
+export const DEVICE_CODE_TTL_SECONDS = 10 * 60;
+export const DEVICE_POLL_INTERVAL_SECONDS = 5;
+export const DEVICE_SLOW_DOWN_SECONDS = 5;
+export const MILLISECONDS_PER_SECOND = 1000;
