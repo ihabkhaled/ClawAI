@@ -28,7 +28,7 @@ vi.mock('@/lib/i18n', () => ({
 
 vi.mock('@/utilities/toast.utility', () => ({
   showToast: {
-    apiError: vi.fn(),
+    error: vi.fn(),
   },
 }));
 

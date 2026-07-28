@@ -5,6 +5,7 @@ import { useTranslation } from '@/lib/i18n';
 import { billingRepository } from '@/repositories/billing/billing.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UseCancelSubscriptionReturn } from '@/types/billing-hook.types';
+import { resolveBillingErrorMessage } from '@/utilities/billing-error.utility';
 import { showToast } from '@/utilities/toast.utility';
 
 // Cancel and resume.
@@ -26,9 +27,9 @@ export function useCancelSubscription(): UseCancelSubscriptionReturn {
       showToast.success({ description: t('billing.cancel.scheduled') });
     },
     onError: (mutationError: unknown) => {
-      const message = t('billing.cancel.failed');
+      const message = resolveBillingErrorMessage(mutationError, t, t('billing.cancel.failed'));
       setError(message);
-      showToast.apiError(mutationError, message);
+      showToast.error({ title: t('billing.error.title'), description: message });
     },
   });
 
@@ -40,9 +41,9 @@ export function useCancelSubscription(): UseCancelSubscriptionReturn {
       showToast.success({ description: t('billing.resume.done') });
     },
     onError: (mutationError: unknown) => {
-      const message = t('billing.resume.failed');
+      const message = resolveBillingErrorMessage(mutationError, t, t('billing.resume.failed'));
       setError(message);
-      showToast.apiError(mutationError, message);
+      showToast.error({ title: t('billing.error.title'), description: message });
     },
   });
 

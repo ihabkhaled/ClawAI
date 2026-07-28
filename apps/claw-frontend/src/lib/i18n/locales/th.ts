@@ -62,6 +62,13 @@ export const th: TranslationDictionary = {
   },
   billing: {
     ...en.billing,
+    errors: {
+      PLAN_NOT_PURCHASABLE: 'แพ็กเกจนี้ไม่พร้อมให้ซื้อ',
+      PAYMENT_NOT_VERIFIED: 'ไม่สามารถยืนยันการชำระเงินได้ และยังไม่มีการเรียกเก็บเงินจากคุณ',
+      PAYMENT_METHOD_UNAVAILABLE:
+        'วิธีชำระเงินนี้ไม่พร้อมใช้งานในขณะนี้ โปรดเลือกวิธีอื่นหรือลองอีกครั้งภายหลัง',
+      SUBSCRIPTION_NOT_FOUND: 'คุณไม่มีการสมัครสมาชิกที่ใช้งานอยู่',
+    },
     invoices: {
       ...en.billing.invoices,
       download: 'ดาวน์โหลด',

@@ -2,11 +2,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import { BillingPlanCard } from '@/components/billing/billing-plan-card';
 import { InvoiceTable } from '@/components/billing/invoice-table';
 import { PaymentMethodList } from '@/components/billing/payment-method-list';
 import { ProrationBreakdown } from '@/components/billing/proration-breakdown';
 import { UsageWindowBar } from '@/components/billing/usage-window-bar';
+import { BillingInterval } from '@/enums/billing.enum';
 import type {
+  BillingPlan,
   InvoiceView,
   PaymentMethodView,
   ProrationQuoteView,
@@ -30,6 +33,85 @@ function makeQuote(overrides: Partial<ProrationQuoteView> = {}): ProrationQuoteV
     ...overrides,
   };
 }
+
+function makePlan(amountMinor: number): BillingPlan {
+  return {
+    id: 'plan-1',
+    slug: amountMinor === 0 ? 'free' : 'starter',
+    name: amountMinor === 0 ? 'Free' : 'Starter',
+    description: null,
+    displayOrder: 1,
+    isDefault: amountMinor === 0,
+    prices: [
+      {
+        billingInterval: BillingInterval.MONTHLY,
+        currency: 'USD',
+        amountMinor,
+        planPriceVersionId: 'price-1',
+      },
+    ],
+    dailyTokenQuota: 300_000,
+    weeklyTokenQuota: null,
+    monthlyTokenQuota: null,
+    maxChatsPerDay: 10,
+    maxMessagesPerDay: 100,
+    maxWorkspaceConnections: 0,
+    maxContextPacks: 0,
+    maxMemoryItems: 0,
+    features: [],
+  };
+}
+
+describe('BillingPlanCard', () => {
+  it('does not offer checkout for a zero-cost plan', () => {
+    render(
+      <BillingPlanCard
+        plan={makePlan(0)}
+        interval={BillingInterval.MONTHLY}
+        isCurrent={false}
+        onSelect={vi.fn()}
+        isPending={false}
+        t={t}
+      />,
+    );
+
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('does not render a plan-selection button for the current plan', () => {
+    render(
+      <BillingPlanCard
+        plan={makePlan(500)}
+        interval={BillingInterval.MONTHLY}
+        isCurrent
+        onSelect={vi.fn()}
+        isPending={false}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('billing.plans.current')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('keeps a paid non-current plan selectable', async () => {
+    const onSelect = vi.fn();
+    const plan = makePlan(500);
+    render(
+      <BillingPlanCard
+        plan={plan}
+        interval={BillingInterval.MONTHLY}
+        isCurrent={false}
+        onSelect={onSelect}
+        isPending={false}
+        t={t}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'billing.plans.selectCta' }));
+    expect(onSelect).toHaveBeenCalledWith(plan);
+  });
+});
 
 describe('ProrationBreakdown', () => {
   it('shows credit and charge separately, not just the total', () => {

@@ -3550,6 +3550,14 @@ export const it: TranslationDictionary = {
       title: 'Qualcosa è andato storto',
       dismiss: 'Chiudi',
     },
+    errors: {
+      PLAN_NOT_PURCHASABLE: "Questo piano non è disponibile per l'acquisto.",
+      PAYMENT_NOT_VERIFIED:
+        'Non è stato possibile verificare il pagamento. Non ti è stato addebitato nulla.',
+      PAYMENT_METHOD_UNAVAILABLE:
+        'Questo metodo di pagamento non è al momento disponibile. Scegline un altro o riprova più tardi.',
+      SUBSCRIPTION_NOT_FOUND: 'Non hai un abbonamento attivo.',
+    },
     checkout: {
       startFailed: 'Non è stato possibile avviare il pagamento. Riprova.',
     },

@@ -61,6 +61,13 @@ export const ja: TranslationDictionary = {
   },
   billing: {
     ...en.billing,
+    errors: {
+      PLAN_NOT_PURCHASABLE: 'このプランは購入できません。',
+      PAYMENT_NOT_VERIFIED: '支払いを確認できませんでした。料金は請求されていません。',
+      PAYMENT_METHOD_UNAVAILABLE:
+        'この支払い方法は現在利用できません。別の方法を選ぶか、後でもう一度お試しください。',
+      SUBSCRIPTION_NOT_FOUND: '有効なサブスクリプションがありません。',
+    },
     invoices: {
       ...en.billing.invoices,
       download: 'ダウンロード',

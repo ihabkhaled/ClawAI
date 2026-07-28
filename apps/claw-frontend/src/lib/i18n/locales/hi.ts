@@ -3523,6 +3523,13 @@ export const hi: TranslationDictionary = {
       title: 'कुछ गड़बड़ हो गई',
       dismiss: 'हटाएँ',
     },
+    errors: {
+      PLAN_NOT_PURCHASABLE: 'यह प्लान खरीदने के लिए उपलब्ध नहीं है।',
+      PAYMENT_NOT_VERIFIED: 'भुगतान सत्यापित नहीं किया जा सका। आपसे कोई राशि नहीं ली गई है।',
+      PAYMENT_METHOD_UNAVAILABLE:
+        'यह भुगतान विधि अभी उपलब्ध नहीं है। दूसरी विधि चुनें या बाद में फिर प्रयास करें।',
+      SUBSCRIPTION_NOT_FOUND: 'आपके पास कोई सक्रिय सदस्यता नहीं है।',
+    },
     checkout: {
       startFailed: 'हम भुगतान शुरू नहीं कर सके। कृपया पुनः प्रयास करें।',
     },

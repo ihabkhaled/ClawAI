@@ -5,6 +5,7 @@ import { useTranslation } from '@/lib/i18n';
 import { billingRepository } from '@/repositories/billing/billing.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UsePaymentMethodsReturn } from '@/types/billing-hook.types';
+import { resolveBillingErrorMessage } from '@/utilities/billing-error.utility';
 import { showToast } from '@/utilities/toast.utility';
 
 export function usePaymentMethods(): UsePaymentMethodsReturn {
@@ -30,9 +31,13 @@ export function usePaymentMethods(): UsePaymentMethodsReturn {
       await queryClient.invalidateQueries({ queryKey: queryKeys.billing.paymentMethods() });
     },
     onError: (mutationError: unknown) => {
-      const message = t('billing.paymentMethods.removeFailed');
+      const message = resolveBillingErrorMessage(
+        mutationError,
+        t,
+        t('billing.paymentMethods.removeFailed'),
+      );
       setError(message);
-      showToast.apiError(mutationError, message);
+      showToast.error({ title: t('billing.error.title'), description: message });
     },
     onSettled: () => {
       setPendingId(null);
@@ -52,9 +57,13 @@ export function usePaymentMethods(): UsePaymentMethodsReturn {
       }
     },
     onError: (mutationError: unknown) => {
-      const message = t('billing.paymentMethods.setupFailed');
+      const message = resolveBillingErrorMessage(
+        mutationError,
+        t,
+        t('billing.paymentMethods.setupFailed'),
+      );
       setError(message);
-      showToast.apiError(mutationError, message);
+      showToast.error({ title: t('billing.error.title'), description: message });
     },
   });
 

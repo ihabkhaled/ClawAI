@@ -23,6 +23,8 @@ export function BillingPlanCard({
 }: BillingPlanCardProps): ReactElement {
   const price = findPlanPrice(plan, interval);
   const savingMinor = interval === BillingInterval.YEARLY ? computeYearlySavingMinor(plan) : 0;
+  const isNoCostPlan =
+    plan.prices.length > 0 && plan.prices.every((planPrice) => planPrice.amountMinor === 0);
 
   return (
     <Card className={isCurrent ? 'border-primary' : undefined}>
@@ -75,14 +77,16 @@ export function BillingPlanCard({
           </li>
         </ul>
 
-        <Button
-          type="button"
-          className="w-full"
-          disabled={isCurrent || isPending || price === null}
-          onClick={() => onSelect(plan)}
-        >
-          {isCurrent ? t('billing.plans.currentCta') : t('billing.plans.selectCta')}
-        </Button>
+        {!isCurrent && !isNoCostPlan ? (
+          <Button
+            type="button"
+            className="w-full"
+            disabled={isPending || price === null}
+            onClick={() => onSelect(plan)}
+          >
+            {t('billing.plans.selectCta')}
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );

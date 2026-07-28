@@ -188,7 +188,7 @@ describe('BillingPage', () => {
     expect(selectPlan).toHaveBeenCalledWith(plan);
   });
 
-  it('disables the CTA on the plan the user already has', () => {
+  it('hides selection for the current plan and exposes subscription cancellation', () => {
     mockHook.mockReturnValue(
       baseHook({
         plans: { plans: [plan], isLoading: false, isError: false, error: null },
@@ -196,6 +196,9 @@ describe('BillingPage', () => {
       }),
     );
     render(<BillingPage />);
-    expect(screen.getByRole('button', { name: 'billing.plans.currentCta' })).toBeDisabled();
+    expect(
+      screen.queryByRole('button', { name: 'billing.plans.currentCta' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'billing.actions.cancel' })).toBeEnabled();
   });
 });
