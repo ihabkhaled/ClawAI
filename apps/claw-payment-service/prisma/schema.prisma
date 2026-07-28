@@ -356,7 +356,7 @@ model InvoiceDelivery {
 model Refund {
   id                     String       @id @default(cuid())
   paymentTransactionId   String       @map("payment_transaction_id")
-  subscriptionId         String       @map("subscription_id")
+  subscriptionId         String?      @map("subscription_id")
   invoiceId              String?      @map("invoice_id")
   userId                 String       @map("user_id")
   requestedByUserId      String       @map("requested_by_user_id")
@@ -364,17 +364,22 @@ model Refund {
   status                 RefundStatus
   amountMinor            Int          @map("amount_minor")
   currency               String
+  providerAmountMinor    Int          @map("provider_amount_minor")
+  providerCurrency       String       @map("provider_currency")
   idempotencyKey         String       @map("idempotency_key")
   providerIdempotencyKey String       @map("provider_idempotency_key")
   providerRefundId       String?      @map("provider_refund_id")
   reason                 String       @db.VarChar(500)
   failureCode            String?      @map("failure_code")
+  automatic              Boolean      @default(false)
+  attempts               Int          @default(0)
+  nextAttemptAt          DateTime?    @map("next_attempt_at")
   completedAt            DateTime?    @map("completed_at")
   createdAt              DateTime     @default(now()) @map("created_at")
   updatedAt              DateTime     @updatedAt @map("updated_at")
 
   paymentTransaction PaymentTransaction @relation(fields: [paymentTransactionId], references: [id], onDelete: Restrict)
-  subscription       Subscription       @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  subscription       Subscription?      @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
   invoice            Invoice?           @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
 
   @@unique([requestedByUserId, idempotencyKey])
@@ -383,6 +388,7 @@ model Refund {
   @@index([subscriptionId])
   @@index([userId])
   @@index([status])
+  @@index([automatic, status, nextAttemptAt])
   @@index([createdAt])
   @@map("refunds")
 }

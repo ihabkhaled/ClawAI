@@ -1,6 +1,10 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-import { PAYMOB_HMAC_ALGORITHM, PAYMOB_HMAC_FIELD_ORDER } from '../constants/paymob.constants';
+import {
+  PAYMOB_CARD_TOKEN_HMAC_FIELD_ORDER,
+  PAYMOB_HMAC_ALGORITHM,
+  PAYMOB_HMAC_FIELD_ORDER,
+} from '../constants/paymob.constants';
 
 // Reads a dotted path ("order.id", "source_data.pan") out of the callback
 // payload. A missing field becomes the empty string, which is what Paymob does
@@ -28,9 +32,22 @@ export function buildPaymobHmacPayload(payload: Record<string, unknown>): string
   return PAYMOB_HMAC_FIELD_ORDER.map((path) => readPath(payload, path)).join('');
 }
 
+export function buildPaymobCardTokenHmacPayload(payload: Record<string, unknown>): string {
+  return PAYMOB_CARD_TOKEN_HMAC_FIELD_ORDER.map((path) => readPath(payload, path)).join('');
+}
+
 export function computePaymobHmac(payload: Record<string, unknown>, secret: string): string {
   return createHmac(PAYMOB_HMAC_ALGORITHM, secret)
     .update(buildPaymobHmacPayload(payload))
+    .digest('hex');
+}
+
+export function computePaymobCardTokenHmac(
+  payload: Record<string, unknown>,
+  secret: string,
+): string {
+  return createHmac(PAYMOB_HMAC_ALGORITHM, secret)
+    .update(buildPaymobCardTokenHmacPayload(payload))
     .digest('hex');
 }
 
@@ -47,8 +64,21 @@ export function verifyPaymobHmac(
   secret: string,
 ): boolean {
   const expected = computePaymobHmac(payload, secret);
+  return digestsMatch(expected, receivedHmac);
+}
+
+export function verifyPaymobCardTokenHmac(
+  payload: Record<string, unknown>,
+  receivedHmac: string,
+  secret: string,
+): boolean {
+  const expected = computePaymobCardTokenHmac(payload, secret);
+  return digestsMatch(expected, receivedHmac);
+}
+
+function digestsMatch(expected: string, received: string): boolean {
   const expectedBuffer = Buffer.from(expected, 'utf8');
-  const receivedBuffer = Buffer.from(receivedHmac.trim().toLowerCase(), 'utf8');
+  const receivedBuffer = Buffer.from(received.trim().toLowerCase(), 'utf8');
   if (expectedBuffer.length !== receivedBuffer.length) {
     return false;
   }

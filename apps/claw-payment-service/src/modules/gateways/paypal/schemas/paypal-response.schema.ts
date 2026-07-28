@@ -51,6 +51,15 @@ export const paypalOrderResponseSchema = z.object({
       }),
     )
     .min(1),
+  links: z
+    .array(
+      z.object({
+        href: z.string().url(),
+        rel: z.string().min(1),
+        method: z.string().min(1),
+      }),
+    )
+    .optional(),
 });
 
 export type PaypalOrderResponse = z.infer<typeof paypalOrderResponseSchema>;

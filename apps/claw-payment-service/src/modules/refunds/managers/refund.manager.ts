@@ -8,7 +8,10 @@ import { PaypalAdapter } from '../../gateways/paypal/paypal.adapter';
 import { RefundRepository } from '../repositories/refund.repository';
 import { RefundCompletionService } from '../services/refund-completion.service';
 import { type RefundRecord, type RequestRefundInput } from '../types/refund.types';
-import { calculateRemainingRefundableMinor } from '../utilities/refund-balance.utility';
+import {
+  calculateProviderRefundMinor,
+  calculateRemainingRefundableMinor,
+} from '../utilities/refund-balance.utility';
 import { toRefundView } from '../utilities/refund-view.utility';
 
 @Injectable()
@@ -48,10 +51,20 @@ export class RefundManager {
         HttpStatus.CONFLICT,
       );
     }
+    const reservedProvider = await this.refunds.listReservedProviderAmounts(charge.id);
+    const providerAmountMinor = calculateProviderRefundMinor(
+      charge.amountMinor,
+      charge.providerAmountMinor,
+      input.amountMinor,
+      remaining,
+      reservedProvider,
+    );
 
     const reservation = await this.refunds.reserve({
       ...input,
       charge,
+      providerAmountMinor,
+      providerCurrency: charge.providerCurrency,
       providerIdempotencyKey: `refund:${randomUUID()}`,
     });
     const providerResult = await this.callProvider(reservation, charge.providerTransactionId);
@@ -73,8 +86,8 @@ export class RefundManager {
       if (refund.gateway === BillingGateway.PAYPAL) {
         const result = await this.paypal.refundCapture(
           providerTransactionId,
-          refund.amountMinor,
-          refund.currency,
+          refund.providerAmountMinor,
+          refund.providerCurrency,
           refund.providerIdempotencyKey,
         );
         return { refundId: result.refundId, completed: result.status === 'COMPLETED' };
@@ -82,7 +95,7 @@ export class RefundManager {
       if (refund.gateway === BillingGateway.PAYMOB) {
         const result = await this.paymob.refund(
           providerTransactionId,
-          refund.amountMinor,
+          refund.providerAmountMinor,
           refund.providerIdempotencyKey,
         );
         return { refundId: result.refundId, completed: true };

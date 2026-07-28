@@ -39,6 +39,7 @@ describe('PaymentMethodSetupService', () => {
     jest.clearAllMocks();
     jest.spyOn(AppConfig, 'get').mockReturnValue({
       PAYMOB_PUBLIC_KEY: 'pk_test',
+      PAYMOB_CURRENCY: 'EGP',
     } as ReturnType<typeof AppConfig.get>);
     sessions.findByIdempotencyKey.mockResolvedValue(null);
     sessions.create.mockResolvedValue(setupSession());
@@ -56,7 +57,7 @@ describe('PaymentMethodSetupService', () => {
     jest.restoreAllMocks();
   });
 
-  it('creates a planless, moneyless setup session with recorded consent', async () => {
+  it('creates a planless verification-charge session with recorded consent', async () => {
     await service.start(INPUT);
 
     expect(sessions.create).toHaveBeenCalledWith(
@@ -66,8 +67,10 @@ describe('PaymentMethodSetupService', () => {
         planId: null,
         planPriceVersionId: null,
         billingInterval: null,
-        baseAmountMinor: null,
-        chargeAmountMinor: null,
+        baseAmountMinor: 10,
+        baseCurrency: 'EGP',
+        chargeAmountMinor: 10,
+        chargeCurrency: 'EGP',
         paymentMethodConsentedAt: expect.any(Date),
       }),
     );

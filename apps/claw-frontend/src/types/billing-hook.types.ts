@@ -1,4 +1,4 @@
-import type { BillingGateway, BillingInterval } from '@/enums/billing.enum';
+import type { BillingGateway, BillingInterval, BillingReturnPhase } from '@/enums/billing.enum';
 import type {
   BillingPlan,
   BillingUsage,
@@ -109,4 +109,8 @@ export type UseBillingPageReturn = {
   selectPlan: (plan: BillingPlan) => void;
   confirmPlanSelection: () => void;
   t: TranslateFunction;
+};
+
+export type UsePaypalReturnReturn = {
+  phase: BillingReturnPhase;
 };

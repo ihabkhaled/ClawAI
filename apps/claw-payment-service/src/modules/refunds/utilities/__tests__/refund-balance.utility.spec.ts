@@ -1,4 +1,7 @@
-import { calculateRemainingRefundableMinor } from '../refund-balance.utility';
+import {
+  calculateProviderRefundMinor,
+  calculateRemainingRefundableMinor,
+} from '../refund-balance.utility';
 
 describe('calculateRemainingRefundableMinor', () => {
   it('subtracts completed and pending refund reservations from the captured amount', () => {
@@ -17,5 +20,19 @@ describe('calculateRemainingRefundableMinor', () => {
     { capturedMinor: 100, refunds: [0.5], label: 'fractional refund' },
   ])('rejects a $label', ({ capturedMinor, refunds }) => {
     expect(() => calculateRemainingRefundableMinor(capturedMinor, refunds)).toThrow();
+  });
+});
+
+describe('calculateProviderRefundMinor', () => {
+  it('converts a partial canonical refund with integer arithmetic', () => {
+    expect(calculateProviderRefundMinor(500, 24_750, 100, 500, [])).toBe(4_950);
+  });
+
+  it('assigns all remaining provider units to the final canonical refund', () => {
+    expect(calculateProviderRefundMinor(3, 10, 2, 2, [3])).toBe(7);
+  });
+
+  it('never allocates more provider money than remains captured', () => {
+    expect(() => calculateProviderRefundMinor(100, 1_000, 50, 100, [900])).toThrow();
   });
 });

@@ -45,6 +45,8 @@ export class RefundWebhookService {
       providerIdempotencyKey: providerRefundId,
       reason: 'PROVIDER_CONFIRMED_REFUND',
       charge,
+      providerAmountMinor: request.providerAmountMinor ?? request.amountMinor,
+      providerCurrency: request.providerCurrency ?? request.currency,
     });
     await this.completion.complete(reservation.id, providerRefundId, request.correlationId);
     return true;

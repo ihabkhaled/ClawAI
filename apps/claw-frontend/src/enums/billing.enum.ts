@@ -36,6 +36,12 @@ export enum BillingGateway {
   PAYMOB = 'PAYMOB',
 }
 
+export enum BillingReturnPhase {
+  COMPLETING = 'COMPLETING',
+  SUCCESS = 'SUCCESS',
+  ERROR = 'ERROR',
+}
+
 // Drives the colour of a usage bar. Derived from the ratio, never stored, so a
 // limit change is reflected immediately rather than on the next write.
 export enum UsageTone {

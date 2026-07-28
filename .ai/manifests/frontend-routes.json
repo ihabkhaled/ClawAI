@@ -222,9 +222,19 @@
       "route": "/audits"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/billing/cancelled/page.tsx",
+      "kind": "page",
+      "route": "/billing/cancelled"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/billing/page.tsx",
       "kind": "page",
       "route": "/billing"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/billing/return/page.tsx",
+      "kind": "page",
+      "route": "/billing/return"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/chat/[threadId]/page.tsx",

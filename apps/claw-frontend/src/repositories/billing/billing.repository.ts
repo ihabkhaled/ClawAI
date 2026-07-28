@@ -53,6 +53,17 @@ class BillingRepository {
     return response.data;
   }
 
+  async completePaypalCheckout(
+    id: string,
+    input: { providerOrderId: string; state: string },
+  ): Promise<CheckoutSessionView> {
+    const response = await apiClient.post<CheckoutSessionView>(
+      `/billing/checkout-sessions/${id}/complete-paypal`,
+      input,
+    );
+    return response.data;
+  }
+
   // Quote and confirm are separate calls on purpose: the user is shown an exact
   // amount and confirms THAT number. Re-deriving it at confirm time would let
   // the price move between the two steps.

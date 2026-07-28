@@ -19,3 +19,34 @@ export function calculateRemainingRefundableMinor(
   }
   return capturedMinor - reservedMinor;
 }
+
+export function calculateProviderRefundMinor(
+  capturedMinor: number,
+  providerCapturedMinor: number,
+  requestedMinor: number,
+  remainingMinor: number,
+  reservedProviderMinor: ReadonlyArray<number>,
+): number {
+  assertPositiveMinorUnits(capturedMinor, 'capturedMinor');
+  assertPositiveMinorUnits(providerCapturedMinor, 'providerCapturedMinor');
+  assertPositiveMinorUnits(requestedMinor, 'requestedMinor');
+  assertPositiveMinorUnits(remainingMinor, 'remainingMinor');
+  const providerRemaining = calculateRemainingRefundableMinor(
+    providerCapturedMinor,
+    reservedProviderMinor,
+  );
+  if (requestedMinor > remainingMinor) {
+    throw new RangeError('requested refund exceeds the canonical remainder');
+  }
+  if (requestedMinor === remainingMinor) {
+    return providerRemaining;
+  }
+
+  const proportional =
+    (BigInt(providerCapturedMinor) * BigInt(requestedMinor)) / BigInt(capturedMinor);
+  const allocated = Number(proportional === 0n ? 1n : proportional);
+  if (!Number.isSafeInteger(allocated) || allocated > providerRemaining) {
+    throw new RangeError('provider refund exceeds the captured provider amount');
+  }
+  return allocated;
+}

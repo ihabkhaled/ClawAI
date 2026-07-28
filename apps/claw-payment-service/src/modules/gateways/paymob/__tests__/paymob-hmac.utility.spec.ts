@@ -1,8 +1,11 @@
 import { createHmac } from 'node:crypto';
 
 import {
+  buildPaymobCardTokenHmacPayload,
   buildPaymobHmacPayload,
+  computePaymobCardTokenHmac,
   computePaymobHmac,
+  verifyPaymobCardTokenHmac,
   verifyPaymobHmac,
 } from '../utilities/paymob-hmac.utility';
 
@@ -95,5 +98,39 @@ describe('paymob HMAC', () => {
 
   it('produces a stable digest for identical input', () => {
     expect(computePaymobHmac(callback(), SECRET)).toBe(computePaymobHmac(callback(), SECRET));
+  });
+});
+
+describe('Paymob card-token HMAC', () => {
+  const cardToken = {
+    card_subtype: 'MasterCard',
+    created_at: '2026-07-28T00:00:00Z',
+    email: 'user@example.com',
+    id: 987,
+    masked_pan: 'xxxx-xxxx-xxxx-2346',
+    merchant_id: 111,
+    order_id: 222,
+    token: 'tok_abc',
+  };
+
+  it('uses Paymobâ€™s distinct card-token field order', () => {
+    expect(buildPaymobCardTokenHmacPayload(cardToken)).toBe(
+      'MasterCard2026-07-28T00:00:00Zuser@example.com987xxxx-xxxx-xxxx-2346111222tok_abc',
+    );
+  });
+
+  it('accepts the card-token digest and rejects the transaction digest', () => {
+    const digest = computePaymobCardTokenHmac(cardToken, SECRET);
+    expect(verifyPaymobCardTokenHmac(cardToken, digest, SECRET)).toBe(true);
+    expect(verifyPaymobCardTokenHmac(cardToken, computePaymobHmac(cardToken, SECRET), SECRET)).toBe(
+      false,
+    );
+  });
+
+  it('rejects a tampered card token in constant-time verification', () => {
+    const digest = computePaymobCardTokenHmac(cardToken, SECRET);
+    expect(verifyPaymobCardTokenHmac({ ...cardToken, token: 'tok_attacker' }, digest, SECRET)).toBe(
+      false,
+    );
   });
 });

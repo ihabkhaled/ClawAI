@@ -49,4 +49,28 @@ describe('billingRepository payment-method setup', () => {
     await expect(billingRepository.downloadInvoice('invoice-1')).resolves.toBe(pdf);
     expect(mockGetBlob).toHaveBeenCalledWith('/billing/invoices/invoice-1/pdf');
   });
+
+  it('completes PayPal without sending client-owned money or identity fields', async () => {
+    const response = {
+      id: 'checkout-1',
+      status: 'COMPLETED',
+      gateway: 'PAYPAL',
+      chargeAmountMinor: 500,
+      chargeCurrency: 'USD',
+      hostedCheckoutUrl: null,
+      expiresAt: '2026-07-28T00:00:00.000Z',
+    };
+    mockPost.mockResolvedValue({ data: response });
+
+    await expect(
+      billingRepository.completePaypalCheckout('checkout-1', {
+        providerOrderId: '5O190127TN364715T',
+        state: 'a'.repeat(64),
+      }),
+    ).resolves.toEqual(response);
+    expect(mockPost).toHaveBeenCalledWith('/billing/checkout-sessions/checkout-1/complete-paypal', {
+      providerOrderId: '5O190127TN364715T',
+      state: 'a'.repeat(64),
+    });
+  });
 });

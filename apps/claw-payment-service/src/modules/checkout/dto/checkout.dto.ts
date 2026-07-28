@@ -35,6 +35,15 @@ export const checkoutSessionParamSchema = z.object({
 
 export type CheckoutSessionParamDto = z.infer<typeof checkoutSessionParamSchema>;
 
+export const completePaypalCheckoutSchema = z
+  .object({
+    providerOrderId: z.string().min(1).max(64),
+    state: z.string().regex(/^[a-f0-9]{64}$/),
+  })
+  .strict();
+
+export type CompletePaypalCheckoutDto = z.infer<typeof completePaypalCheckoutSchema>;
+
 export const planChangeQuoteSchema = z.object({
   targetPlanId: z.string().min(1).max(64),
   billingInterval: z.nativeEnum(BillingInterval),

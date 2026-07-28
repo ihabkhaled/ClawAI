@@ -2,7 +2,7 @@ import { httpRequest } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { PaymobAdapter } from '../paymob.adapter';
-import { computePaymobHmac } from '../utilities/paymob-hmac.utility';
+import { computePaymobCardTokenHmac, computePaymobHmac } from '../utilities/paymob-hmac.utility';
 
 jest.mock('@claw/shared-utilities', () => ({
   ...jest.requireActual('@claw/shared-utilities'),
@@ -87,7 +87,7 @@ describe('PaymobAdapter', () => {
   });
 
   describe('createSetupIntention', () => {
-    it('creates a zero-value tokenization intention without plan or price fields', async () => {
+    it('creates Paymobâ€™s minimum-value verification intention without plan fields', async () => {
       mockHttp.mockResolvedValue({
         ok: true,
         status: 200,
@@ -103,11 +103,13 @@ describe('PaymobAdapter', () => {
 
       const body = mockHttp.mock.calls[0]?.[0]?.body as Record<string, unknown>;
       expect(body).toMatchObject({
-        amount: 0,
+        amount: 10,
         currency: 'EGP',
         special_reference: 'setup-1',
-        items: [],
       });
+      expect(body['items']).toEqual([
+        { name: 'ClawAI saved payment method', amount: 10, quantity: 1 },
+      ]);
       expect(JSON.stringify(body)).not.toContain('planId');
     });
 
@@ -263,7 +265,7 @@ describe('PaymobAdapter', () => {
 
     it('returns only the gateway token and masked metadata', () => {
       const payload = cardPayload();
-      const result = adapter.extractSavedCard(payload, computePaymobHmac(payload, SECRET));
+      const result = adapter.extractSavedCard(payload, computePaymobCardTokenHmac(payload, SECRET));
       expect(result).toEqual({
         gatewayToken: 'tok_abc',
         maskedPan: 'xxxx-xxxx-xxxx-2346',
@@ -280,7 +282,9 @@ describe('PaymobAdapter', () => {
     it('refuses a verified callback that does not contain saved-card fields', () => {
       const payload = { order_id: 987 };
 
-      expect(adapter.extractSavedCard(payload, computePaymobHmac(payload, SECRET))).toBeNull();
+      expect(
+        adapter.extractSavedCard(payload, computePaymobCardTokenHmac(payload, SECRET)),
+      ).toBeNull();
     });
   });
 

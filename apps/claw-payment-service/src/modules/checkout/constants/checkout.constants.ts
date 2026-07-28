@@ -10,3 +10,7 @@ export const CHECKOUT_DESCRIPTION_PREFIX = 'ClawAI subscription';
 // Bytes of entropy in the state nonce echoed by the return page. 32 bytes is
 // far beyond guessing range for a value that lives at most 30 minutes.
 export const CHECKOUT_STATE_NONCE_BYTES = 32;
+
+// Internal claim state: the owning replica may attempt capture exactly once.
+// A crash here is resolved by reading the provider order, never by recapturing.
+export const CHECKOUT_CAPTURING_STATUS = 'CAPTURING';

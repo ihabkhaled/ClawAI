@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CheckoutSessionStatus } from '@claw/shared-types';
+import { BillingGateway, CheckoutSessionStatus } from '@claw/shared-types';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
@@ -7,6 +7,7 @@ import {
   CheckoutSessionPurpose,
   type Prisma,
 } from '../../../generated/prisma';
+import { CHECKOUT_CAPTURING_STATUS } from '../../checkout/constants/checkout.constants';
 
 @Injectable()
 export class CheckoutSessionRepository {
@@ -56,7 +57,7 @@ export class CheckoutSessionRepository {
 
   async markStatus(
     id: string,
-    status: CheckoutSessionStatus,
+    status: CheckoutSessionStatus | typeof CHECKOUT_CAPTURING_STATUS,
     completedAt: Date | null = null,
   ): Promise<void> {
     await this.prisma.checkoutSession.update({
@@ -101,6 +102,20 @@ export class CheckoutSessionRepository {
     });
   }
 
+  async claimForCapture(userId: string, id: string, providerOrderId: string): Promise<boolean> {
+    const claimed = await this.prisma.checkoutSession.updateMany({
+      where: {
+        id,
+        userId,
+        gateway: BillingGateway.PAYPAL,
+        providerOrderId,
+        status: CheckoutSessionStatus.AWAITING_PAYMENT,
+      },
+      data: { status: CHECKOUT_CAPTURING_STATUS },
+    });
+    return claimed.count === 1;
+  }
+
   async markPaymentMethodSetupCompleted(id: string): Promise<void> {
     await this.prisma.checkoutSession.update({
       where: { id },
@@ -119,7 +134,14 @@ export class CheckoutSessionRepository {
     return this.prisma.checkoutSession.findMany({
       where: {
         purpose: { not: CheckoutSessionPurpose.PAYMENT_METHOD_SETUP },
-        status: { in: [CheckoutSessionStatus.CREATED, CheckoutSessionStatus.AWAITING_PAYMENT] },
+        status: {
+          in: [
+            CheckoutSessionStatus.CREATED,
+            CheckoutSessionStatus.AWAITING_PAYMENT,
+            CHECKOUT_CAPTURING_STATUS,
+            CheckoutSessionStatus.VERIFIED,
+          ],
+        },
         expiresAt: { lt: new Date(nowMs) },
       },
       orderBy: { createdAt: 'asc' },
@@ -131,7 +153,14 @@ export class CheckoutSessionRepository {
     return this.prisma.checkoutSession.count({
       where: {
         purpose: { not: CheckoutSessionPurpose.PAYMENT_METHOD_SETUP },
-        status: { in: [CheckoutSessionStatus.CREATED, CheckoutSessionStatus.AWAITING_PAYMENT] },
+        status: {
+          in: [
+            CheckoutSessionStatus.CREATED,
+            CheckoutSessionStatus.AWAITING_PAYMENT,
+            CHECKOUT_CAPTURING_STATUS,
+            CheckoutSessionStatus.VERIFIED,
+          ],
+        },
         expiresAt: { lt: new Date(nowMs) },
       },
     });
