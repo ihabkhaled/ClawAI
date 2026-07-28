@@ -28,6 +28,7 @@ export function useBillingPage(): UseBillingPageReturn {
   const checkout = useStartCheckout();
   const cancellation = useCancelSubscription();
   const view = useBillingViewState();
+  const { closePlanChange, setIsCancelOpen, setIsEndNowOpen } = view;
 
   const hasSubscription = isSubscriptionEntitling(subscription.subscription);
 
@@ -37,14 +38,26 @@ export function useBillingPage(): UseBillingPageReturn {
       planChange.gatewaySession !== null ||
       paymentMethods.gatewaySession !== null
     ) {
-      view.closePlanChange();
+      closePlanChange();
     }
   }, [
     checkout.gatewaySession,
     paymentMethods.gatewaySession,
     planChange.gatewaySession,
-    view.closePlanChange,
+    closePlanChange,
   ]);
+
+  useEffect(() => {
+    if (subscription.subscription?.cancelAtPeriodEnd === true && !cancellation.isCancelPending) {
+      setIsCancelOpen(false);
+    }
+  }, [cancellation.isCancelPending, subscription.subscription?.cancelAtPeriodEnd, setIsCancelOpen]);
+
+  useEffect(() => {
+    if (subscription.subscription === null && !cancellation.isEndNowPending) {
+      setIsEndNowOpen(false);
+    }
+  }, [cancellation.isEndNowPending, setIsEndNowOpen, subscription.subscription]);
 
   const selectPlan = useCallback(
     (plan: BillingPlan) => {

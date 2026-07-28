@@ -3632,6 +3632,8 @@ export const pt: TranslationDictionary = {
       cancelling: 'Cancelando…',
       resume: 'Manter minha assinatura',
       resuming: 'Retomando…',
+      remove: 'Remover assinatura',
+      removing: 'Removendo…',
     },
     plans: {
       title: 'Planos',
@@ -3708,6 +3710,14 @@ export const pt: TranslationDictionary = {
     resume: {
       done: 'Sua assinatura vai continuar.',
       failed: 'Não foi possível retomar sua assinatura.',
+    },
+    remove: {
+      title: 'Remover sua assinatura agora?',
+      description:
+        'Seu acesso pago termina imediatamente. Esta ação não pode ser desfeita. Suas faturas e seu histórico de pagamentos continuarão disponíveis.',
+      confirm: 'Remover assinatura',
+      done: 'Sua assinatura foi encerrada.',
+      failed: 'Não foi possível remover sua assinatura.',
     },
   },
   marketing: {

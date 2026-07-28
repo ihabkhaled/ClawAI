@@ -114,6 +114,11 @@ class BillingRepository {
     return response.data;
   }
 
+  async endSubscriptionNow(): Promise<CurrentSubscription> {
+    const response = await apiClient.delete<CurrentSubscription>('/billing/subscription');
+    return response.data;
+  }
+
   async listInvoices(): Promise<InvoiceView[]> {
     const response = await apiClient.get<InvoiceView[]>('/billing/invoices');
     return response.data;

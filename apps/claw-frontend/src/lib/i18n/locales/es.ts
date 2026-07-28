@@ -3647,6 +3647,8 @@ export const es: TranslationDictionary = {
       cancelling: 'Cancelando…',
       resume: 'Mantener mi suscripción',
       resuming: 'Reanudando…',
+      remove: 'Eliminar suscripción',
+      removing: 'Eliminando…',
     },
     plans: {
       title: 'Planes',
@@ -3723,6 +3725,14 @@ export const es: TranslationDictionary = {
     resume: {
       done: 'Su suscripción continuará.',
       failed: 'No pudimos reanudar su suscripción.',
+    },
+    remove: {
+      title: '¿Eliminar su suscripción ahora?',
+      description:
+        'Su acceso de pago termina de inmediato. Esta acción no se puede deshacer. Sus facturas y el historial de pagos seguirán disponibles.',
+      confirm: 'Eliminar suscripción',
+      done: 'Su suscripción ha finalizado.',
+      failed: 'No pudimos eliminar su suscripción.',
     },
   },
   marketing: {

@@ -12,6 +12,7 @@ export function useBillingViewState(): UseBillingViewStateReturn {
   const [gateway, setGateway] = useState<BillingGateway>(BillingGateway.PAYPAL);
   const [targetPlan, setTargetPlan] = useState<BillingPlan | null>(null);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [isEndNowOpen, setIsEndNowOpen] = useState(false);
 
   const closePlanChange = useCallback(() => {
     setTargetPlan(null);
@@ -27,5 +28,7 @@ export function useBillingViewState(): UseBillingViewStateReturn {
     closePlanChange,
     isCancelOpen,
     setIsCancelOpen,
+    isEndNowOpen,
+    setIsEndNowOpen,
   };
 }

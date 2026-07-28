@@ -3645,6 +3645,8 @@ export const it: TranslationDictionary = {
       cancelling: 'Annullamento…',
       resume: 'Mantieni il mio abbonamento',
       resuming: 'Ripresa…',
+      remove: 'Rimuovi abbonamento',
+      removing: 'Rimozione…',
     },
     plans: {
       title: 'Piani',
@@ -3722,6 +3724,14 @@ export const it: TranslationDictionary = {
     resume: {
       done: 'Il tuo abbonamento proseguirà.',
       failed: 'Non è stato possibile riprendere il tuo abbonamento.',
+    },
+    remove: {
+      title: 'Rimuovere subito il tuo abbonamento?',
+      description:
+        'Il tuo accesso a pagamento termina immediatamente. Questa azione non può essere annullata. Le fatture e la cronologia dei pagamenti resteranno disponibili.',
+      confirm: 'Rimuovi abbonamento',
+      done: 'Il tuo abbonamento è terminato.',
+      failed: 'Non è stato possibile rimuovere il tuo abbonamento.',
     },
   },
   marketing: {

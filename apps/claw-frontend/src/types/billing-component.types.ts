@@ -27,8 +27,10 @@ export type SubscriptionSummaryCardProps = {
   subscription: CurrentSubscription | null;
   onCancel: () => void;
   onResume: () => void;
+  onEndNow: () => void;
   isCancelPending: boolean;
   isResumePending: boolean;
+  isEndNowPending: boolean;
   t: TranslateFunction;
 };
 

@@ -102,8 +102,10 @@ function baseHook(overrides: Partial<UseBillingPageReturn> = {}): UseBillingPage
     cancellation: {
       cancel: vi.fn(),
       resume: vi.fn(),
+      endNow: vi.fn(),
       isCancelPending: false,
       isResumePending: false,
+      isEndNowPending: false,
       error: null,
       clearError: vi.fn(),
     },
@@ -117,6 +119,8 @@ function baseHook(overrides: Partial<UseBillingPageReturn> = {}): UseBillingPage
       closePlanChange: vi.fn(),
       isCancelOpen: false,
       setIsCancelOpen: vi.fn(),
+      isEndNowOpen: false,
+      setIsEndNowOpen: vi.fn(),
     },
     selectPlan: vi.fn(),
     confirmPlanSelection: vi.fn(),
@@ -217,5 +221,37 @@ describe('BillingPage', () => {
       screen.queryByRole('button', { name: 'billing.plans.currentCta' }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'billing.actions.cancel' })).toBeEnabled();
+  });
+
+  it('confirms immediate removal after a subscription is scheduled to end', async () => {
+    const endNow = vi.fn();
+    mockHook.mockReturnValue(
+      baseHook({
+        subscription: {
+          subscription: { ...subscription, cancelAtPeriodEnd: true },
+          isLoading: false,
+          isError: false,
+        },
+        cancellation: {
+          cancel: vi.fn(),
+          resume: vi.fn(),
+          endNow,
+          isCancelPending: false,
+          isResumePending: false,
+          isEndNowPending: false,
+          error: null,
+          clearError: vi.fn(),
+        },
+        view: {
+          ...baseHook().view,
+          isEndNowOpen: true,
+        },
+      }),
+    );
+    render(<BillingPage />);
+
+    expect(screen.getByRole('dialog')).toHaveTextContent('billing.remove.description');
+    await userEvent.click(screen.getByRole('button', { name: 'billing.remove.confirm' }));
+    expect(endNow).toHaveBeenCalledOnce();
   });
 });

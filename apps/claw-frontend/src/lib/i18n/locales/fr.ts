@@ -3664,6 +3664,8 @@ export const fr: TranslationDictionary = {
       cancelling: 'Résiliation…',
       resume: 'Conserver mon abonnement',
       resuming: 'Reprise…',
+      remove: 'Supprimer l’abonnement',
+      removing: 'Suppression…',
     },
     plans: {
       title: 'Forfaits',
@@ -3741,6 +3743,14 @@ export const fr: TranslationDictionary = {
     resume: {
       done: 'Votre abonnement se poursuivra.',
       failed: 'Nous n’avons pas pu reprendre votre abonnement.',
+    },
+    remove: {
+      title: 'Supprimer votre abonnement maintenant ?',
+      description:
+        'Votre accès payant prend fin immédiatement. Cette action est irréversible. Vos factures et votre historique de paiement restent disponibles.',
+      confirm: 'Supprimer l’abonnement',
+      done: 'Votre abonnement a pris fin.',
+      failed: 'Nous n’avons pas pu supprimer votre abonnement.',
     },
   },
   marketing: {

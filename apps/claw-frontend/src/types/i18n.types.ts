@@ -3537,6 +3537,8 @@ export type TranslationDictionary = {
       cancelling: string;
       resume: string;
       resuming: string;
+      remove: string;
+      removing: string;
     };
     plans: {
       title: string;
@@ -3610,6 +3612,13 @@ export type TranslationDictionary = {
       failed: string;
     };
     resume: {
+      done: string;
+      failed: string;
+    };
+    remove: {
+      title: string;
+      description: string;
+      confirm: string;
       done: string;
       failed: string;
     };

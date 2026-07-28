@@ -68,8 +68,10 @@ export default function BillingPage(): ReactElement {
             subscription={subscription.subscription}
             onCancel={() => view.setIsCancelOpen(true)}
             onResume={cancellation.resume}
+            onEndNow={() => view.setIsEndNowOpen(true)}
             isCancelPending={cancellation.isCancelPending}
             isResumePending={cancellation.isResumePending}
+            isEndNowPending={cancellation.isEndNowPending}
             t={t}
           />
         )}
@@ -156,6 +158,17 @@ export default function BillingPage(): ReactElement {
         cancelLabel={t('common.cancel')}
         onConfirm={cancellation.cancel}
         isConfirming={cancellation.isCancelPending}
+      />
+
+      <ConfirmDialog
+        open={view.isEndNowOpen}
+        onOpenChange={view.setIsEndNowOpen}
+        title={t('billing.remove.title')}
+        description={t('billing.remove.description')}
+        confirmLabel={t('billing.remove.confirm')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={cancellation.endNow}
+        isConfirming={cancellation.isEndNowPending}
       />
 
       <GatewayCheckoutDialog

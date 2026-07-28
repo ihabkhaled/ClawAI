@@ -3654,6 +3654,8 @@ export const de: TranslationDictionary = {
       cancelling: 'Wird gekündigt…',
       resume: 'Abonnement behalten',
       resuming: 'Wird fortgesetzt…',
+      remove: 'Abonnement entfernen',
+      removing: 'Wird entfernt…',
     },
     plans: {
       title: 'Tarife',
@@ -3731,6 +3733,14 @@ export const de: TranslationDictionary = {
     resume: {
       done: 'Ihr Abonnement läuft weiter.',
       failed: 'Ihr Abonnement konnte nicht fortgesetzt werden.',
+    },
+    remove: {
+      title: 'Abonnement jetzt entfernen?',
+      description:
+        'Ihr bezahlter Zugang endet sofort. Dies kann nicht rückgängig gemacht werden. Rechnungen und Zahlungsverlauf bleiben verfügbar.',
+      confirm: 'Abonnement entfernen',
+      done: 'Ihr Abonnement wurde beendet.',
+      failed: 'Ihr Abonnement konnte nicht entfernt werden.',
     },
   },
   marketing: {

@@ -3575,6 +3575,8 @@ export const ar: TranslationDictionary = {
       cancelling: 'جارٍ الإلغاء…',
       resume: 'الاحتفاظ باشتراكي',
       resuming: 'جارٍ الاستئناف…',
+      remove: 'إزالة الاشتراك',
+      removing: 'جارٍ الإزالة…',
     },
     plans: {
       title: 'الخطط',
@@ -3651,6 +3653,14 @@ export const ar: TranslationDictionary = {
     resume: {
       done: 'سيستمر اشتراكك.',
       failed: 'تعذّر استئناف اشتراكك.',
+    },
+    remove: {
+      title: 'إزالة اشتراكك الآن؟',
+      description:
+        'سينتهي وصولك المدفوع فورًا. لا يمكن التراجع عن ذلك. ستظل فواتيرك وسجل مدفوعاتك متاحة.',
+      confirm: 'إزالة الاشتراك',
+      done: 'انتهى اشتراكك.',
+      failed: 'تعذّرت إزالة اشتراكك.',
     },
   },
   marketing: {

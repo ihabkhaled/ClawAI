@@ -61,6 +61,19 @@ export const ja: TranslationDictionary = {
   },
   billing: {
     ...en.billing,
+    actions: {
+      ...en.billing.actions,
+      remove: 'サブスクリプションを削除',
+      removing: '削除中…',
+    },
+    remove: {
+      title: 'サブスクリプションを今すぐ削除しますか？',
+      description:
+        '有料アクセスは直ちに終了します。この操作は取り消せません。請求書と支払い履歴は引き続き確認できます。',
+      confirm: 'サブスクリプションを削除',
+      done: 'サブスクリプションは終了しました。',
+      failed: 'サブスクリプションを削除できませんでした。',
+    },
     errors: {
       PLAN_NOT_PURCHASABLE: 'このプランは購入できません。',
       PAYMENT_NOT_VERIFIED: '支払いを確認できませんでした。料金は請求されていません。',

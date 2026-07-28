@@ -12,8 +12,10 @@ export function SubscriptionSummaryCard({
   subscription,
   onCancel,
   onResume,
+  onEndNow,
   isCancelPending,
   isResumePending,
+  isEndNowPending,
   t,
 }: SubscriptionSummaryCardProps): ReactElement {
   // No subscription is a normal state, not an error: it is what every free
@@ -60,9 +62,19 @@ export function SubscriptionSummaryCard({
 
         <div className="flex flex-wrap gap-2">
           {isCancelling ? (
-            <Button type="button" variant="outline" onClick={onResume} disabled={isResumePending}>
-              {isResumePending ? t('billing.actions.resuming') : t('billing.actions.resume')}
-            </Button>
+            <>
+              <Button type="button" variant="outline" onClick={onResume} disabled={isResumePending}>
+                {isResumePending ? t('billing.actions.resuming') : t('billing.actions.resume')}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={onEndNow}
+                disabled={isEndNowPending}
+              >
+                {isEndNowPending ? t('billing.actions.removing') : t('billing.actions.remove')}
+              </Button>
+            </>
           ) : (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isCancelPending}>
               {isCancelPending ? t('billing.actions.cancelling') : t('billing.actions.cancel')}

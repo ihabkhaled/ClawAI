@@ -85,8 +85,10 @@ export type UsePaymentMethodsReturn = {
 export type UseCancelSubscriptionReturn = {
   cancel: () => void;
   resume: () => void;
+  endNow: () => void;
   isCancelPending: boolean;
   isResumePending: boolean;
+  isEndNowPending: boolean;
   error: string | null;
   clearError: () => void;
 };
@@ -102,6 +104,8 @@ export type UseBillingViewStateReturn = {
   closePlanChange: () => void;
   isCancelOpen: boolean;
   setIsCancelOpen: (open: boolean) => void;
+  isEndNowOpen: boolean;
+  setIsEndNowOpen: (open: boolean) => void;
 };
 
 export type UseBillingPageReturn = {
