@@ -42,6 +42,16 @@ describe('billingRepository payment-method setup', () => {
     });
   });
 
+  it.each([null, '', undefined])(
+    'normalizes an empty current-subscription response to null',
+    async (data) => {
+      mockGet.mockResolvedValue({ data });
+
+      await expect(billingRepository.getCurrent()).resolves.toBeNull();
+      expect(mockGet).toHaveBeenCalledWith('/billing/me');
+    },
+  );
+
   it('downloads invoices as authenticated PDF blobs', async () => {
     const pdf = new Blob(['invoice'], { type: 'application/pdf' });
     mockGetBlob.mockResolvedValue({ data: pdf });
