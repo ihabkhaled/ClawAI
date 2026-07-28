@@ -31,6 +31,14 @@ function resolveMinorUnitDivisor(currency: string): number {
 }
 
 export function parseMajorAmountToMinor(value: string, currency: string): number | null {
+  return parseMajorAmount(value, currency, false);
+}
+
+export function parsePlanPriceMajorToMinor(value: string, currency: string): number | null {
+  return parseMajorAmount(value, currency, true);
+}
+
+function parseMajorAmount(value: string, currency: string, allowZero: boolean): number | null {
   const parts = value.trim().split('.');
   const whole = parts.at(0) ?? '';
   const fraction = parts.at(1) ?? '';
@@ -50,7 +58,7 @@ export function parseMajorAmountToMinor(value: string, currency: string): number
   const amount = BigInt(whole) * BigInt(divisor);
   const fractionMinor = fraction.length === 0 ? 0n : BigInt(fraction.padEnd(fractionDigits, '0'));
   const total = amount + fractionMinor;
-  if (total <= 0n || total > BigInt(Number.MAX_SAFE_INTEGER)) {
+  if ((!allowZero && total <= 0n) || total < 0n || total > BigInt(Number.MAX_SAFE_INTEGER)) {
     return null;
   }
   return Number(total);

@@ -8349,7 +8349,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 36
+        "testFiles": 37
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8373,7 +8373,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 218
+        "testFiles": 220
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9124,7 +9124,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 690,
+    "totalTestFiles": 693,
     "workspaceCount": 25
   }
 }

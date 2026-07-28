@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SUPPORTED_PLAN_CURRENCIES } from '@/constants/billing.constants';
 import { BillingInterval } from '@/enums/billing.enum';
 import type { UseAdminPlanPricesResult } from '@/types/admin-plan-price.types';
 import { formatMinorAmount } from '@/utilities';
@@ -49,12 +50,18 @@ export function PlanPriceEditor(controller: UseAdminPlanPricesResult): ReactElem
             <label htmlFor="price-currency" className="text-sm font-medium">
               {controller.t('adminPlans.form.currency')}
             </label>
-            <Input
-              id="price-currency"
-              value={controller.currency}
-              maxLength={3}
-              onChange={(event) => controller.setCurrency(event.target.value)}
-            />
+            <Select value={controller.currency} onValueChange={controller.setCurrency}>
+              <SelectTrigger id="price-currency">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SUPPORTED_PLAN_CURRENCIES.map((currency) => (
+                  <SelectItem key={currency} value={currency}>
+                    {currency}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <label htmlFor="price-amount" className="text-sm font-medium">
@@ -64,7 +71,7 @@ export function PlanPriceEditor(controller: UseAdminPlanPricesResult): ReactElem
               id="price-amount"
               type="number"
               min="0"
-              step="1"
+              step="0.01"
               value={controller.amount}
               onChange={(event) => controller.setAmount(event.target.value)}
             />

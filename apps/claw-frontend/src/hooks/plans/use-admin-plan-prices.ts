@@ -14,6 +14,7 @@ import type {
   UseAdminPlanPricesResult,
 } from '@/types/admin-plan-price.types';
 import { showToast } from '@/utilities';
+import { parsePlanPriceMajorToMinor } from '@/utilities/billing.utility';
 
 export function useAdminPlanPrices(): UseAdminPlanPricesResult {
   const params = useParams<{ id: string }>();
@@ -55,6 +56,7 @@ export function useAdminPlanPrices(): UseAdminPlanPricesResult {
       showToast.success({ description: t('adminPlans.updateSucceeded') });
       void queryClient.invalidateQueries({ queryKey: queryKeys.adminPlans.prices(planId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.publicPricing.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.billing.plans() });
     },
     onError: (error: Error) => {
       setSaveError(error);
@@ -62,16 +64,11 @@ export function useAdminPlanPrices(): UseAdminPlanPricesResult {
     },
   });
   const setCurrency = useCallback((value: string): void => {
-    setCurrencyState(value.toUpperCase().slice(0, 3));
+    setCurrencyState(value);
   }, []);
   const publish = useCallback((): void => {
-    const amountMinor = Number(amount);
-    if (
-      currency.length !== 3 ||
-      amount.trim() === '' ||
-      !Number.isSafeInteger(amountMinor) ||
-      amountMinor < 0
-    ) {
+    const amountMinor = parsePlanPriceMajorToMinor(amount, currency);
+    if (amountMinor === null) {
       setSaveError(new Error(t('adminPlans.mutationError')));
       return;
     }

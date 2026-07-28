@@ -42,6 +42,8 @@ export const BILLING_GATEWAY_ORDER: BillingGateway[] = [
   BillingGateway.PAYMOB,
 ];
 
+export const SUPPORTED_PLAN_CURRENCIES: string[] = ['USD', 'EUR', 'EGP'];
+
 // Statuses that mean the account is in trouble and the user must act. Anything
 // not listed renders no banner at all.
 export const BILLING_ATTENTION_STATUSES: SubscriptionStatus[] = [
