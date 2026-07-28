@@ -4,12 +4,18 @@ import { PaymentTransactionStatus, PaymentTransactionType } from '@claw/shared-t
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type Prisma, RefundStatus } from '../../../generated/prisma';
 import {
+  type AutomaticCompensationInput,
+  type PreparedAutomaticCompensation,
   type RefundableCharge,
   type RefundableChargeSummary,
   type RefundCompletionContext,
   type RefundRecord,
   type ReserveRefundInput,
 } from '../types/refund.types';
+import {
+  AUTOMATIC_REFUND_ACTOR,
+  AUTOMATIC_REFUND_RETRY_BASE_MS,
+} from '../constants/payment-compensation.constants';
 
 @Injectable()
 export class RefundRepository {
@@ -66,6 +72,8 @@ export class RefundRepository {
       gateway: charge.gateway,
       amountMinor: charge.amountMinor,
       currency: charge.currency,
+      providerAmountMinor: charge.providerAmountMinor ?? charge.amountMinor,
+      providerCurrency: charge.providerCurrency ?? charge.currency,
       providerTransactionId: charge.providerTransactionId,
     };
   }
@@ -93,6 +101,8 @@ export class RefundRepository {
         gateway: true,
         amountMinor: true,
         currency: true,
+        providerAmountMinor: true,
+        providerCurrency: true,
         capturedAt: true,
         refunds: {
           where: { status: { in: [RefundStatus.PENDING, RefundStatus.SUCCEEDED] } },
@@ -112,6 +122,8 @@ export class RefundRepository {
           gateway: row.gateway,
           amountMinor: row.amountMinor,
           currency: row.currency,
+          providerAmountMinor: row.providerAmountMinor ?? row.amountMinor,
+          providerCurrency: row.providerCurrency ?? row.currency,
           capturedAt: row.capturedAt,
           reservedAmounts: row.refunds.map((refund) => refund.amountMinor),
         },
@@ -130,6 +142,17 @@ export class RefundRepository {
     return rows.map((row) => row.amountMinor);
   }
 
+  async listReservedProviderAmounts(paymentTransactionId: string): Promise<number[]> {
+    const rows = await this.prisma.refund.findMany({
+      where: {
+        paymentTransactionId,
+        status: { in: [RefundStatus.PENDING, RefundStatus.SUCCEEDED] },
+      },
+      select: { providerAmountMinor: true },
+    });
+    return rows.map((row) => row.providerAmountMinor);
+  }
+
   async reserve(input: ReserveRefundInput): Promise<RefundRecord> {
     this.logger.log(`reserve: transaction=${input.paymentTransactionId}`);
     return this.prisma.refund.create({
@@ -143,6 +166,8 @@ export class RefundRepository {
         status: RefundStatus.PENDING,
         amountMinor: input.amountMinor,
         currency: input.charge.currency,
+        providerAmountMinor: input.providerAmountMinor,
+        providerCurrency: input.providerCurrency,
         idempotencyKey: input.idempotencyKey,
         providerIdempotencyKey: input.providerIdempotencyKey,
         reason: input.reason,
@@ -153,7 +178,126 @@ export class RefundRepository {
   async markProviderAccepted(id: string, providerRefundId: string): Promise<RefundRecord> {
     return this.prisma.refund.update({
       where: { id },
-      data: { providerRefundId },
+      data: {
+        providerRefundId,
+        failureCode: null,
+        nextAttemptAt: null,
+        attempts: { increment: 1 },
+      },
+    });
+  }
+
+  async prepareAutomaticCompensation(
+    input: AutomaticCompensationInput,
+  ): Promise<PreparedAutomaticCompensation> {
+    return this.prisma.$transaction(async (tx) => {
+      const existingCharge = await tx.paymentTransaction.findUnique({
+        where: {
+          gateway_providerTransactionId: {
+            gateway: input.gateway,
+            providerTransactionId: input.providerTransactionId,
+          },
+        },
+      });
+      const charge =
+        existingCharge ??
+        (await tx.paymentTransaction.create({
+          data: {
+            userId: input.userId,
+            subscriptionId: null,
+            checkoutSessionId: input.checkoutSessionId,
+            gateway: input.gateway,
+            type: PaymentTransactionType.CHARGE,
+            status: PaymentTransactionStatus.CAPTURED,
+            amountMinor: input.amountMinor,
+            currency: input.currency,
+            providerAmountMinor: input.amountMinor,
+            providerCurrency: input.currency,
+            providerTransactionId: input.providerTransactionId,
+            providerOrderId: input.providerOrderId,
+            idempotencyKey: `compensation-charge:${input.checkoutSessionId}`,
+            failureCode: input.failureCode,
+            capturedAt: new Date(),
+          },
+        }));
+
+      const idempotencyKey = `automatic:${input.checkoutSessionId}`;
+      const existingRefund = await tx.refund.findUnique({
+        where: {
+          requestedByUserId_idempotencyKey: {
+            requestedByUserId: AUTOMATIC_REFUND_ACTOR,
+            idempotencyKey,
+          },
+        },
+      });
+      const refund =
+        existingRefund ??
+        (await tx.refund.create({
+          data: {
+            paymentTransactionId: charge.id,
+            subscriptionId: charge.subscriptionId,
+            invoiceId: null,
+            userId: charge.userId,
+            requestedByUserId: AUTOMATIC_REFUND_ACTOR,
+            gateway: charge.gateway,
+            status: RefundStatus.PENDING,
+            amountMinor: charge.amountMinor,
+            currency: charge.currency,
+            providerAmountMinor: charge.providerAmountMinor ?? charge.amountMinor,
+            providerCurrency: charge.providerCurrency ?? charge.currency,
+            idempotencyKey,
+            providerIdempotencyKey: `auto-refund:${input.checkoutSessionId}`,
+            reason: input.reason,
+            failureCode: input.failureCode,
+            automatic: true,
+            nextAttemptAt: new Date(),
+          },
+        }));
+      return {
+        refund,
+        providerTransactionId: input.providerTransactionId,
+        checkoutSessionId: input.checkoutSessionId,
+      };
+    });
+  }
+
+  async listRetryableAutomaticCompensations(
+    now: Date,
+    limit: number,
+  ): Promise<PreparedAutomaticCompensation[]> {
+    const rows = await this.prisma.refund.findMany({
+      where: {
+        automatic: true,
+        status: RefundStatus.PENDING,
+        providerRefundId: null,
+        nextAttemptAt: { lte: now },
+      },
+      include: { paymentTransaction: true },
+      orderBy: { nextAttemptAt: 'asc' },
+      take: limit,
+    });
+    return rows.flatMap((row) => {
+      const providerTransactionId = row.paymentTransaction.providerTransactionId;
+      const checkoutSessionId = row.paymentTransaction.checkoutSessionId;
+      if (providerTransactionId === null || checkoutSessionId === null) {
+        return [];
+      }
+      return [{ refund: row, providerTransactionId, checkoutSessionId }];
+    });
+  }
+
+  async markAutomaticAttemptFailed(id: string, failureCode: string): Promise<void> {
+    const refund = await this.prisma.refund.findUnique({ where: { id } });
+    const attempts = (refund?.attempts ?? 0) + 1;
+    const delayMs = AUTOMATIC_REFUND_RETRY_BASE_MS * 2 ** Math.min(attempts - 1, 6);
+    await this.prisma.refund.update({
+      where: { id },
+      data: {
+        status: RefundStatus.PENDING,
+        failureCode,
+        attempts: { increment: 1 },
+        nextAttemptAt: new Date(Date.now() + delayMs),
+      },
     });
   }
 

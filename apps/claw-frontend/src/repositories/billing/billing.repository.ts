@@ -24,7 +24,10 @@ class BillingRepository {
 
   async getCurrent(): Promise<CurrentSubscription | null> {
     const response = await apiClient.get<CurrentSubscription | null>('/billing/me');
-    return response.data;
+    // Nest/Express serializes a controller's `null` result as an empty 200
+    // response. Axios represents that body as an empty string at runtime even
+    // though the declared API contract is `CurrentSubscription | null`.
+    return response.data || null;
   }
 
   // Usage lives in auth-service, not payment-service: quota counters and
@@ -50,6 +53,17 @@ class BillingRepository {
 
   async getCheckoutSession(id: string): Promise<CheckoutSessionView> {
     const response = await apiClient.get<CheckoutSessionView>(`/billing/checkout-sessions/${id}`);
+    return response.data;
+  }
+
+  async completePaypalCheckout(
+    id: string,
+    input: { providerOrderId: string; state: string },
+  ): Promise<CheckoutSessionView> {
+    const response = await apiClient.post<CheckoutSessionView>(
+      `/billing/checkout-sessions/${id}/complete-paypal`,
+      input,
+    );
     return response.data;
   }
 

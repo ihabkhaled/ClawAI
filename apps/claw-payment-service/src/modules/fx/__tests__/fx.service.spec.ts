@@ -66,6 +66,9 @@ describe('FxService', () => {
   it('fetches a rate, applies the safety margin, and persists the quote', async () => {
     mockHttp.mockResolvedValue({ ok: true, status: 200, data: { rates: { EGP: '48.00' } } });
     const result = await service.quote(2000, 'USD', 'EGP', NOW);
+    expect(mockHttp).toHaveBeenCalledWith(
+      expect.objectContaining({ url: 'https://rates.example/v1/latest/USD' }),
+    );
     // 48.00 + 100bps = 48.48, so $20.00 becomes 969.60 EGP => 96960 piastres.
     expect(result.finalRateScaled).toBe(Math.round(48.48 * RATE_SCALE));
     expect(result.convertedAmountMinor).toBe(96_960);

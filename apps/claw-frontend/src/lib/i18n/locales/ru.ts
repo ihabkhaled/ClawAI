@@ -3554,6 +3554,13 @@ export const ru: TranslationDictionary = {
       title: 'Что-то пошло не так',
       dismiss: 'Скрыть',
     },
+    errors: {
+      PLAN_NOT_PURCHASABLE: 'Этот тариф сейчас недоступен для покупки.',
+      PAYMENT_NOT_VERIFIED: 'Не удалось подтвердить платёж. Средства с вас не списывались.',
+      PAYMENT_METHOD_UNAVAILABLE:
+        'Этот способ оплаты сейчас недоступен. Выберите другой или повторите попытку позже.',
+      SUBSCRIPTION_NOT_FOUND: 'У вас нет активной подписки.',
+    },
     checkout: {
       startFailed: 'Не удалось начать оплату. Попробуйте ещё раз.',
     },

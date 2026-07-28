@@ -73,6 +73,9 @@ export class RefundCompletionService {
     tx: Prisma.TransactionClient,
     context: RefundCompletionContext,
   ): Promise<boolean> {
+    if (context.subscription === null) {
+      return false;
+    }
     const total = await this.refunds.sumSucceededAmount(tx, context.charge.id);
     if (total !== context.charge.amountMinor) {
       return false;
@@ -100,8 +103,8 @@ export class RefundCompletionService {
       type: PaymentTransactionType.REFUND,
       amountMinor: context.refund.amountMinor,
       currency: context.refund.currency,
-      providerAmountMinor: context.refund.amountMinor,
-      providerCurrency: context.refund.currency,
+      providerAmountMinor: context.refund.providerAmountMinor,
+      providerCurrency: context.refund.providerCurrency,
       providerTransactionId: providerRefundId,
       idempotencyKey: `refund:${context.refund.id}`,
       reversesTransactionId: context.charge.id,
@@ -117,6 +120,9 @@ export class RefundCompletionService {
     completedAt: Date,
     isFullRefund: boolean,
   ): Promise<void> {
+    if (context.subscription === null) {
+      return;
+    }
     const eventId = randomUUID();
     const effectiveAt = completedAt.toISOString();
     const payload: BillingPaymentRefundedPayload = {

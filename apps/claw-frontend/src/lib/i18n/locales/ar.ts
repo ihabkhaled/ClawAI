@@ -3499,6 +3499,13 @@ export const ar: TranslationDictionary = {
       title: 'حدث خطأ ما',
       dismiss: 'إغلاق',
     },
+    errors: {
+      PLAN_NOT_PURCHASABLE: 'هذه الخطة غير متاحة للشراء.',
+      PAYMENT_NOT_VERIFIED: 'تعذر التحقق من الدفع. لم يتم خصم أي مبلغ منك.',
+      PAYMENT_METHOD_UNAVAILABLE:
+        'طريقة الدفع هذه غير متاحة حاليًا. اختر طريقة أخرى أو حاول مرة أخرى لاحقًا.',
+      SUBSCRIPTION_NOT_FOUND: 'ليس لديك اشتراك نشط.',
+    },
     checkout: {
       startFailed: 'تعذّر بدء عملية الدفع. يُرجى المحاولة مرة أخرى.',
     },

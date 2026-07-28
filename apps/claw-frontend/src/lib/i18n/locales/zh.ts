@@ -71,6 +71,12 @@ export const zh: TranslationDictionary = {
   },
   billing: {
     ...en.billing,
+    errors: {
+      PLAN_NOT_PURCHASABLE: '此套餐目前不可购买。',
+      PAYMENT_NOT_VERIFIED: '无法验证付款，尚未向您收取任何费用。',
+      PAYMENT_METHOD_UNAVAILABLE: '此付款方式目前不可用。请选择其他方式或稍后重试。',
+      SUBSCRIPTION_NOT_FOUND: '您当前没有有效订阅。',
+    },
     invoices: {
       ...en.billing.invoices,
       download: '下载',

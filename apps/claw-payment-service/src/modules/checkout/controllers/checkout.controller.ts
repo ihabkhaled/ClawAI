@@ -6,6 +6,8 @@ import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
   type CheckoutSessionParamDto,
   checkoutSessionParamSchema,
+  type CompletePaypalCheckoutDto,
+  completePaypalCheckoutSchema,
   type CreateCheckoutSessionDto,
   createCheckoutSessionSchema,
   type CreatePaymentMethodSetupSessionDto,
@@ -13,6 +15,7 @@ import {
 } from '../dto/checkout.dto';
 import { CheckoutService } from '../services/checkout.service';
 import { PaymentMethodSetupService } from '../services/payment-method-setup.service';
+import { PaypalCheckoutCompletionService } from '../services/paypal-checkout-completion.service';
 import {
   type CheckoutSessionView,
   type PaymentMethodSetupSessionView,
@@ -29,6 +32,7 @@ export class CheckoutController {
     private readonly checkout: CheckoutService,
     private readonly paymentMethodSetup: PaymentMethodSetupService,
     private readonly catalog: PlanCatalogClient,
+    private readonly paypalCompletion: PaypalCheckoutCompletionService,
   ) {}
 
   @Get('plans')
@@ -73,5 +77,20 @@ export class CheckoutController {
     @Param(new ZodValidationPipe(checkoutSessionParamSchema)) params: CheckoutSessionParamDto,
   ): Promise<CheckoutSessionView> {
     return this.checkout.findOwned(user.id, params.id);
+  }
+
+  @Post('checkout-sessions/:id/complete-paypal')
+  async completePaypal(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param(new ZodValidationPipe(checkoutSessionParamSchema)) params: CheckoutSessionParamDto,
+    @Body(new ZodValidationPipe(completePaypalCheckoutSchema))
+    dto: CompletePaypalCheckoutDto,
+  ): Promise<CheckoutSessionView> {
+    return this.paypalCompletion.complete({
+      userId: user.id,
+      sessionId: params.id,
+      providerOrderId: dto.providerOrderId,
+      state: dto.state,
+    });
   }
 }

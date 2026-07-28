@@ -6,6 +6,7 @@ import { billingRepository } from '@/repositories/billing/billing.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UsePlanChangeReturn } from '@/types/billing-hook.types';
 import type { ProrationQuoteView } from '@/types/billing.types';
+import { resolveBillingErrorMessage } from '@/utilities/billing-error.utility';
 import { showToast } from '@/utilities/toast.utility';
 
 // Two-step plan change: quote, then confirm.
@@ -28,9 +29,13 @@ export function usePlanChange(): UsePlanChangeReturn {
       setQuote(result);
     },
     onError: (mutationError: unknown) => {
-      const message = t('billing.planChange.quoteFailed');
+      const message = resolveBillingErrorMessage(
+        mutationError,
+        t,
+        t('billing.planChange.quoteFailed'),
+      );
       setError(message);
-      showToast.apiError(mutationError, message);
+      showToast.error({ title: t('billing.error.title'), description: message });
     },
   });
 
@@ -58,9 +63,13 @@ export function usePlanChange(): UsePlanChangeReturn {
       showToast.success({ description: t('billing.planChange.scheduled') });
     },
     onError: (mutationError: unknown) => {
-      const message = t('billing.planChange.confirmFailed');
+      const message = resolveBillingErrorMessage(
+        mutationError,
+        t,
+        t('billing.planChange.confirmFailed'),
+      );
       setError(message);
-      showToast.apiError(mutationError, message);
+      showToast.error({ title: t('billing.error.title'), description: message });
     },
   });
 

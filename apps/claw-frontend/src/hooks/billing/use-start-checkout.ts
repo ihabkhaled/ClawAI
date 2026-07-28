@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import { billingRepository } from '@/repositories/billing/billing.repository';
 import type { UseStartCheckoutReturn } from '@/types/billing-hook.types';
+import { resolveBillingErrorMessage } from '@/utilities/billing-error.utility';
 import { showToast } from '@/utilities/toast.utility';
 
 // Starts a checkout and hands the browser to the gateway.
@@ -31,9 +32,13 @@ export function useStartCheckout(): UseStartCheckoutReturn {
     onError: (mutationError: unknown) => {
       // Both a toast AND a persistent banner. A payment screen that fails
       // silently is a delivery blocker, and a toast alone is missable.
-      const message = t('billing.checkout.startFailed');
+      const message = resolveBillingErrorMessage(
+        mutationError,
+        t,
+        t('billing.checkout.startFailed'),
+      );
       setError(message);
-      showToast.apiError(mutationError, message);
+      showToast.error({ title: t('billing.error.title'), description: message });
     },
   });
 

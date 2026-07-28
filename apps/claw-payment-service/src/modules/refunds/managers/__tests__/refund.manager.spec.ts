@@ -10,6 +10,8 @@ describe('RefundManager', () => {
     gateway: BillingGateway.PAYPAL,
     amountMinor: 10_000,
     currency: 'USD',
+    providerAmountMinor: 10_000,
+    providerCurrency: 'USD',
     providerTransactionId: 'capture-1',
   };
   const reservation = {
@@ -23,11 +25,16 @@ describe('RefundManager', () => {
     status: 'PENDING',
     amountMinor: 4_000,
     currency: charge.currency,
+    providerAmountMinor: 4_000,
+    providerCurrency: charge.providerCurrency,
     idempotencyKey: 'refund-request-1',
     providerIdempotencyKey: 'provider-key-1',
     providerRefundId: null,
     reason: 'Customer request',
     failureCode: null,
+    automatic: false,
+    attempts: 0,
+    nextAttemptAt: null,
     completedAt: null,
     createdAt: new Date('2026-07-27T00:00:00.000Z'),
     updatedAt: new Date('2026-07-27T00:00:00.000Z'),
@@ -36,6 +43,7 @@ describe('RefundManager', () => {
     findByIdempotencyKey: jest.fn(),
     findCapturedCharge: jest.fn(),
     listReservedAmounts: jest.fn(),
+    listReservedProviderAmounts: jest.fn(),
     reserve: jest.fn(),
     markProviderAccepted: jest.fn(),
     markFailed: jest.fn(),
@@ -50,6 +58,7 @@ describe('RefundManager', () => {
     repository.findByIdempotencyKey.mockResolvedValue(null);
     repository.findCapturedCharge.mockResolvedValue(charge);
     repository.listReservedAmounts.mockResolvedValue([1_000]);
+    repository.listReservedProviderAmounts.mockResolvedValue([1_000]);
     repository.reserve.mockResolvedValue(reservation);
     repository.markProviderAccepted.mockResolvedValue(reservation);
     paypal.refundCapture.mockResolvedValue({ refundId: 'provider-refund-1', status: 'COMPLETED' });

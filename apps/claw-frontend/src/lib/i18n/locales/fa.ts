@@ -71,6 +71,13 @@ export const fa: TranslationDictionary = {
   },
   billing: {
     ...en.billing,
+    errors: {
+      PLAN_NOT_PURCHASABLE: 'این طرح برای خرید در دسترس نیست.',
+      PAYMENT_NOT_VERIFIED: 'پرداخت تأیید نشد. هیچ مبلغی از شما کسر نشده است.',
+      PAYMENT_METHOD_UNAVAILABLE:
+        'این روش پرداخت در حال حاضر در دسترس نیست. روش دیگری انتخاب کنید یا بعداً دوباره تلاش کنید.',
+      SUBSCRIPTION_NOT_FOUND: 'شما اشتراک فعالی ندارید.',
+    },
     invoices: {
       ...en.billing.invoices,
       download: 'دانلود',

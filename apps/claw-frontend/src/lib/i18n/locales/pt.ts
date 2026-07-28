@@ -3550,6 +3550,14 @@ export const pt: TranslationDictionary = {
       title: 'Algo deu errado',
       dismiss: 'Dispensar',
     },
+    errors: {
+      PLAN_NOT_PURCHASABLE: 'Este plano não está disponível para compra.',
+      PAYMENT_NOT_VERIFIED:
+        'Não foi possível verificar o pagamento. Nenhum valor foi cobrado de você.',
+      PAYMENT_METHOD_UNAVAILABLE:
+        'Este método de pagamento está indisponível no momento. Escolha outro ou tente novamente mais tarde.',
+      SUBSCRIPTION_NOT_FOUND: 'Você não tem uma assinatura ativa.',
+    },
     checkout: {
       startFailed: 'Não foi possível iniciar o pagamento. Tente novamente.',
     },

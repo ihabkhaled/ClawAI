@@ -23,6 +23,7 @@ const orderResponse = (overrides: {
   currency?: string;
   customId?: string;
   withCapture?: boolean;
+  approvalHref?: string;
 }) => ({
   id: 'ORDER1',
   status: overrides.status ?? 'COMPLETED',
@@ -44,6 +45,13 @@ const orderResponse = (overrides: {
                 },
               ],
             },
+    },
+  ],
+  links: [
+    {
+      href: overrides.approvalHref ?? 'https://www.sandbox.paypal.com/checkoutnow?token=ORDER1',
+      rel: 'approve',
+      method: 'GET',
     },
   ],
 });
@@ -74,6 +82,78 @@ describe('PaypalAdapter', () => {
   });
 
   describe('createOrder', () => {
+    it('accepts PayPal default minimal create-order representation', async () => {
+      mockHttp.mockResolvedValue(
+        okResponse({
+          id: 'ORDER1',
+          status: 'CREATED',
+          links: [
+            {
+              href: 'https://www.sandbox.paypal.com/checkoutnow?token=ORDER1',
+              rel: 'approve',
+              method: 'GET',
+            },
+          ],
+        }),
+      );
+
+      await expect(
+        adapter.createOrder({
+          amountMinor: 500,
+          currency: 'USD',
+          checkoutSessionId: 'cs_1',
+          idempotencyKey: 'idem-minimal',
+          returnUrl: 'https://claw.local/billing/return',
+          cancelUrl: 'https://claw.local/billing/cancelled',
+          description: 'Starter monthly',
+        }),
+      ).resolves.toMatchObject({
+        orderId: 'ORDER1',
+        status: 'CREATED',
+      });
+    });
+
+    it('returns the trusted PayPal approval URL', async () => {
+      mockHttp.mockResolvedValue(okResponse(orderResponse({ status: 'CREATED' })));
+
+      await expect(
+        adapter.createOrder({
+          amountMinor: 500,
+          currency: 'USD',
+          checkoutSessionId: 'cs_1',
+          idempotencyKey: 'idem-approval',
+          returnUrl: 'https://claw.local/billing/return',
+          cancelUrl: 'https://claw.local/billing/cancelled',
+          description: 'Starter monthly',
+        }),
+      ).resolves.toMatchObject({
+        approvalUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=ORDER1',
+      });
+    });
+
+    it('rejects an approval URL outside PayPal', async () => {
+      mockHttp.mockResolvedValue(
+        okResponse(
+          orderResponse({
+            status: 'CREATED',
+            approvalHref: 'https://attacker.example/steal-session',
+          }),
+        ),
+      );
+
+      await expect(
+        adapter.createOrder({
+          amountMinor: 500,
+          currency: 'USD',
+          checkoutSessionId: 'cs_1',
+          idempotencyKey: 'idem-host',
+          returnUrl: 'https://claw.local/billing/return',
+          cancelUrl: 'https://claw.local/billing/cancelled',
+          description: 'Starter monthly',
+        }),
+      ).rejects.toThrow();
+    });
+
     it('sends the server-side price, never a client-supplied one', async () => {
       mockHttp.mockResolvedValue(okResponse(orderResponse({ status: 'CREATED' })));
       await adapter.createOrder({

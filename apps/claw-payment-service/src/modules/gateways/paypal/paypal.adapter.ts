@@ -16,6 +16,7 @@ import {
 } from './constants/paypal.constants';
 import { PaypalTokenManager } from './managers/paypal-token.manager';
 import {
+  paypalCreateOrderResponseSchema,
   paypalOrderResponseSchema,
   paypalRefundResponseSchema,
   paypalSubscriptionResponseSchema,
@@ -75,7 +76,7 @@ export class PaypalAdapter {
     const order = await this.send(
       HttpMethod.POST,
       PAYPAL_PATHS.ORDERS,
-      paypalOrderResponseSchema,
+      paypalCreateOrderResponseSchema,
       body,
       input.idempotencyKey,
       // Safe to retry: the request id makes a repeat idempotent at PayPal.
@@ -85,8 +86,25 @@ export class PaypalAdapter {
     return {
       orderId: order.id,
       status: order.status,
-      approvalUrl: null,
+      approvalUrl: PaypalAdapter.requireApprovalUrl(order.links),
     };
+  }
+
+  private static requireApprovalUrl(
+    links: ReadonlyArray<{ href: string; rel: string; method: string }> | undefined,
+  ): string {
+    const approval = links?.find((link) => link.rel === 'approve' && link.method === 'GET');
+    if (approval === undefined) {
+      throw new BillingException(BillingErrorCode.PAYMENT_NOT_VERIFIED);
+    }
+    const url = new URL(approval.href);
+    if (
+      url.protocol !== 'https:' ||
+      (url.hostname !== 'paypal.com' && !url.hostname.endsWith('.paypal.com'))
+    ) {
+      throw new BillingException(BillingErrorCode.PAYMENT_NOT_VERIFIED);
+    }
+    return url.toString();
   }
 
   // Captures an approved order and verifies the result before the caller is

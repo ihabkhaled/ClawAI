@@ -22,3 +22,17 @@ test('both nginx deployment modes expose every public payment route', async () =
     assert.doesNotMatch(nginx, /location\s+\/api\/v1\/internal\/payments(?:\s|\/|\{)/u);
   }
 });
+
+test('local payment write limiting excludes safe billing reads', async () => {
+  const nginx = await readFile(new URL('../../infra/nginx/nginx.conf', import.meta.url), 'utf8');
+
+  assert.match(nginx, /map\s+\$request_method\s+\$payment_write_key\s*\{/u);
+  assert.match(nginx, /GET\s+"";/u);
+  assert.match(nginx, /HEAD\s+"";/u);
+  assert.match(nginx, /OPTIONS\s+"";/u);
+  assert.match(
+    nginx,
+    /limit_req_zone\s+\$payment_write_key\s+zone=payment_writes:10m\s+rate=20r\/m;/u,
+  );
+  assert.doesNotMatch(nginx, /limit_req_zone\s+\$binary_remote_addr\s+zone=payment_writes/u);
+});

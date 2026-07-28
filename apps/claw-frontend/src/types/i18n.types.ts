@@ -3461,6 +3461,12 @@ export type TranslationDictionary = {
       title: string;
       dismiss: string;
     };
+    errors: {
+      PLAN_NOT_PURCHASABLE: string;
+      PAYMENT_NOT_VERIFIED: string;
+      PAYMENT_METHOD_UNAVAILABLE: string;
+      SUBSCRIPTION_NOT_FOUND: string;
+    };
     checkout: {
       startFailed: string;
     };

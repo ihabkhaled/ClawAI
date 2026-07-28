@@ -109,6 +109,11 @@ git push origin <branch>                 # immediately, before the next commit
 **One commit, one push.** `git log --oneline origin/<branch>..HEAD` must be empty
 before you start the next commit.
 
+**Large flagship work must ship in batches.** Split a gigantic feature into
+coherent, independently reviewable and independently gated changes. Finish the
+scoped validation lane, commit, and push each batch before continuing to code the
+next batch; never accumulate an entire flagship feature as one unpushed worktree.
+
 **Every GitHub gate must be green before a push counts as done**: CI matrix
 (lint → typecheck → test → build), knowledge freshness, inventory audit,
 **Lighthouse CI** (including accessibility assertions such as `color-contrast` over

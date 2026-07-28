@@ -339,7 +339,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-payment-service",
-      "endpointCount": 26,
+      "endpointCount": 27,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -373,7 +373,7 @@
         "Subscription",
         "WebhookEvent"
       ],
-      "testFiles": 76,
+      "testFiles": 81,
       "testRunner": "jest"
     },
     {

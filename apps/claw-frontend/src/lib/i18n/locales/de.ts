@@ -3571,6 +3571,13 @@ export const de: TranslationDictionary = {
       title: 'Etwas ist schiefgelaufen',
       dismiss: 'Ausblenden',
     },
+    errors: {
+      PLAN_NOT_PURCHASABLE: 'Dieser Tarif kann derzeit nicht gekauft werden.',
+      PAYMENT_NOT_VERIFIED: 'Die Zahlung konnte nicht bestätigt werden. Es wurde nichts abgebucht.',
+      PAYMENT_METHOD_UNAVAILABLE:
+        'Diese Zahlungsmethode ist derzeit nicht verfügbar. Wählen Sie eine andere oder versuchen Sie es später erneut.',
+      SUBSCRIPTION_NOT_FOUND: 'Sie haben kein aktives Abonnement.',
+    },
     checkout: {
       startFailed:
         'Der Bezahlvorgang konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',

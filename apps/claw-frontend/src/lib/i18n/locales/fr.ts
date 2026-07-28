@@ -3580,6 +3580,14 @@ export const fr: TranslationDictionary = {
       title: 'Une erreur est survenue',
       dismiss: 'Masquer',
     },
+    errors: {
+      PLAN_NOT_PURCHASABLE: "Ce forfait n'est pas disponible à l'achat.",
+      PAYMENT_NOT_VERIFIED:
+        "Le paiement n'a pas pu être vérifié. Aucun montant ne vous a été débité.",
+      PAYMENT_METHOD_UNAVAILABLE:
+        'Ce mode de paiement est actuellement indisponible. Choisissez-en un autre ou réessayez plus tard.',
+      SUBSCRIPTION_NOT_FOUND: "Vous n'avez aucun abonnement actif.",
+    },
     checkout: {
       startFailed: 'Nous n’avons pas pu démarrer le paiement. Veuillez réessayer.',
     },

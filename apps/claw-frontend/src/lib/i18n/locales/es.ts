@@ -3566,6 +3566,13 @@ export const es: TranslationDictionary = {
       title: 'Algo ha salido mal',
       dismiss: 'Descartar',
     },
+    errors: {
+      PLAN_NOT_PURCHASABLE: 'Este plan no está disponible para su compra.',
+      PAYMENT_NOT_VERIFIED: 'No se pudo verificar el pago. No se le ha cobrado nada.',
+      PAYMENT_METHOD_UNAVAILABLE:
+        'Este método de pago no está disponible en este momento. Elija otro o inténtelo más tarde.',
+      SUBSCRIPTION_NOT_FOUND: 'No tiene una suscripción activa.',
+    },
     checkout: {
       startFailed: 'No pudimos iniciar el pago. Inténtelo de nuevo.',
     },

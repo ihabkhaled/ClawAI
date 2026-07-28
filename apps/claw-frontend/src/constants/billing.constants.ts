@@ -23,6 +23,8 @@ export const CHECKOUT_POLL_INTERVAL_MS = 2_000;
 // minutes, which comfortably exceeds a hosted-checkout round trip.
 export const CHECKOUT_POLL_MAX_ATTEMPTS = 150;
 
+export const PAYPAL_STATE_PATTERN = /^[a-f0-9]{64}$/;
+
 // Usage bar turns amber here and red at the ceiling, so a user sees a limit
 // approaching rather than discovering it mid-request.
 export const USAGE_WARNING_THRESHOLD = 0.8;

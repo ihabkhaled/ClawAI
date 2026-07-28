@@ -13,6 +13,7 @@ import { CHECKOUT_SESSION_TTL_MS } from '../../billing/constants/billing.constan
 import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
 import { PaymobAdapter } from '../../gateways/paymob/paymob.adapter';
 import { CHECKOUT_STATE_NONCE_BYTES } from '../constants/checkout.constants';
+import { PAYMOB_SETUP_AMOUNT_MINOR } from '../../gateways/paymob/constants/paymob.constants';
 import {
   type PaymentMethodSetupSessionView,
   type StartPaymentMethodSetupInput,
@@ -47,10 +48,10 @@ export class PaymentMethodSetupService {
       planSlug: null,
       planPriceVersionId: null,
       billingInterval: null,
-      baseAmountMinor: null,
-      baseCurrency: null,
-      chargeAmountMinor: null,
-      chargeCurrency: null,
+      baseAmountMinor: PAYMOB_SETUP_AMOUNT_MINOR,
+      baseCurrency: AppConfig.get().PAYMOB_CURRENCY,
+      chargeAmountMinor: PAYMOB_SETUP_AMOUNT_MINOR,
+      chargeCurrency: AppConfig.get().PAYMOB_CURRENCY,
       idempotencyKey: input.idempotencyKey,
       stateNonce: randomBytes(CHECKOUT_STATE_NONCE_BYTES).toString('hex'),
       paymentMethodConsentedAt: new Date(),

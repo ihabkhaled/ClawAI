@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 2 identical headings (19594 vs 4892 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 2 identical headings (19914 vs 4892 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -1761,6 +1761,11 @@
         {
           "method": "GET",
           "route": "/billing/checkout-sessions/:id",
+          "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/billing/checkout-sessions/:id/complete-paypal",
           "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
         },
         {
@@ -6051,9 +6056,19 @@
         "route": "/authorize/vscode"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/billing/cancelled/page.tsx",
+        "kind": "page",
+        "route": "/billing/cancelled"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/billing/page.tsx",
         "kind": "page",
         "route": "/billing"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/billing/return/page.tsx",
+        "kind": "page",
+        "route": "/billing/return"
       },
       {
         "file": "apps/claw-frontend/src/app/(portal)/chat/[threadId]/page.tsx",
@@ -6389,7 +6404,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 19594,
+          "bytes": 19914,
           "file": "CLAUDE.md"
         },
         {
@@ -6830,7 +6845,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4279
+        "value": 4284
       },
       "localeCount": 13,
       "locales": [
@@ -8383,7 +8398,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 218
+        "testFiles": 220
       },
       "claw-health-service": {
         "runner": "jest",
@@ -8407,7 +8422,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 76
+        "testFiles": 81
       },
       "claw-research-service": {
         "runner": "jest",
@@ -9123,10 +9138,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 546,
+    "endpointCount": 547,
     "envVarCount": 335,
     "eventCount": 165,
-    "frontendRouteCount": 110,
+    "frontendRouteCount": 112,
     "localeCount": 13,
     "nginxRouteCount": 52,
     "permissionCount": 38,
@@ -9135,7 +9150,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 691,
+    "totalTestFiles": 698,
     "workspaceCount": 25
   }
 }

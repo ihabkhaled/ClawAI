@@ -3514,6 +3514,13 @@ export const en: TranslationDictionary = {
       title: 'Something went wrong',
       dismiss: 'Dismiss',
     },
+    errors: {
+      PLAN_NOT_PURCHASABLE: 'This plan is not available for purchase.',
+      PAYMENT_NOT_VERIFIED: 'The payment could not be verified. You have not been charged.',
+      PAYMENT_METHOD_UNAVAILABLE:
+        'This payment method is currently unavailable. Choose another method or try again later.',
+      SUBSCRIPTION_NOT_FOUND: 'You do not have an active subscription.',
+    },
     checkout: {
       startFailed: 'We could not start checkout. Please try again.',
     },

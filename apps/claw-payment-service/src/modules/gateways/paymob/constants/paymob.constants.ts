@@ -35,6 +35,17 @@ export const PAYMOB_HMAC_FIELD_ORDER: ReadonlyArray<string> = [
   'success',
 ];
 
+export const PAYMOB_CARD_TOKEN_HMAC_FIELD_ORDER: ReadonlyArray<string> = [
+  'card_subtype',
+  'created_at',
+  'email',
+  'id',
+  'masked_pan',
+  'merchant_id',
+  'order_id',
+  'token',
+];
+
 export const PAYMOB_HMAC_ALGORITHM = 'sha512';
 
 // A transaction only counts as paid when success is true AND none of the
@@ -50,8 +61,8 @@ export const PAYMOB_RETRYABLE_STATUS_CODES: ReadonlyArray<number> = [408, 429, 5
 export const PAYMOB_MAX_RETRY_ATTEMPTS = 3;
 export const PAYMOB_RETRY_BASE_DELAY_MS = 250;
 
-// Paymob's hosted card-tokenization flow requires an intention even when no
-// purchase is taking place. Zero explicitly means "vault only": no amount is
-// persisted locally and no transaction may enter subscription activation.
-export const PAYMOB_SETUP_AMOUNT_MINOR = 0;
+// Paymob rejects intentions below 10 minor units. This verification charge is
+// never subscription revenue: its transaction callback is compensated by an
+// automatic refund and both movements are written to the payment ledger.
+export const PAYMOB_SETUP_AMOUNT_MINOR = 10;
 export const PAYMOB_SETUP_DESCRIPTION = 'ClawAI saved payment method';

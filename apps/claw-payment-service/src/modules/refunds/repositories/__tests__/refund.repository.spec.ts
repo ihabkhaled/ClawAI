@@ -29,6 +29,8 @@ describe('RefundRepository', () => {
     gateway: BillingGateway.PAYPAL,
     amountMinor: 10_000,
     currency: 'USD',
+    providerAmountMinor: 10_000,
+    providerCurrency: 'USD',
     providerTransactionId: 'capture-1',
   };
   const refund = {
@@ -42,11 +44,16 @@ describe('RefundRepository', () => {
     status: RefundStatus.PENDING,
     amountMinor: 2_500,
     currency: 'USD',
+    providerAmountMinor: 2_500,
+    providerCurrency: 'USD',
     idempotencyKey: 'request-1',
     providerIdempotencyKey: 'provider-request-1',
     providerRefundId: null,
     reason: 'Customer request',
     failureCode: null,
+    automatic: false,
+    attempts: 0,
+    nextAttemptAt: null,
     completedAt: null,
     createdAt: new Date('2026-07-27T10:00:00.000Z'),
     updatedAt: new Date('2026-07-27T10:00:00.000Z'),
@@ -128,6 +135,8 @@ describe('RefundRepository', () => {
         gateway: BillingGateway.PAYPAL,
         amountMinor: 10_000,
         currency: 'USD',
+        providerAmountMinor: 10_000,
+        providerCurrency: 'USD',
         capturedAt,
         refunds: [{ amountMinor: 2_500 }],
       },
@@ -141,6 +150,8 @@ describe('RefundRepository', () => {
         gateway: BillingGateway.PAYPAL,
         amountMinor: 10_000,
         currency: 'USD',
+        providerAmountMinor: 10_000,
+        providerCurrency: 'USD',
         capturedAt,
         reservedAmounts: [2_500],
       },
@@ -197,6 +208,8 @@ describe('RefundRepository', () => {
         providerIdempotencyKey: 'provider-request-1',
         reason: 'Customer request',
         charge: capturedCharge,
+        providerAmountMinor: 2_500,
+        providerCurrency: 'USD',
       }),
     ).resolves.toBe(refund);
     expect(prisma.refund.create).toHaveBeenCalledWith({
@@ -210,6 +223,8 @@ describe('RefundRepository', () => {
         status: RefundStatus.PENDING,
         amountMinor: 2_500,
         currency: 'USD',
+        providerAmountMinor: 2_500,
+        providerCurrency: 'USD',
         idempotencyKey: 'request-1',
         providerIdempotencyKey: 'provider-request-1',
         reason: 'Customer request',
@@ -227,7 +242,12 @@ describe('RefundRepository', () => {
     );
     expect(prisma.refund.update).toHaveBeenNthCalledWith(1, {
       where: { id: 'refund-1' },
-      data: { providerRefundId: 'provider-refund-1' },
+      data: {
+        providerRefundId: 'provider-refund-1',
+        failureCode: null,
+        nextAttemptAt: null,
+        attempts: { increment: 1 },
+      },
     });
 
     prisma.refund.update.mockResolvedValueOnce({

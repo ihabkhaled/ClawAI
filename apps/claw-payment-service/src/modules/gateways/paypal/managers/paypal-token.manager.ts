@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BillingErrorCode, HttpMethod } from '@claw/shared-types';
-import { httpRequest } from '@claw/shared-utilities';
+import { BillingErrorCode } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { BillingException } from '../../../../common/errors';
@@ -54,16 +53,15 @@ export class PaypalTokenManager {
       `${config.PAYPAL_CLIENT_ID}:${config.PAYPAL_CLIENT_SECRET}`,
     ).toString('base64');
 
-    const response = await httpRequest<unknown>({
-      url: `${PaypalTokenManager.baseUrl()}${PAYPAL_PATHS.OAUTH_TOKEN}`,
-      method: HttpMethod.POST,
+    const response = await fetch(`${PaypalTokenManager.baseUrl()}${PAYPAL_PATHS.OAUTH_TOKEN}`, {
+      method: 'POST',
       headers: {
         // The token endpoint is form-encoded, not JSON.
         'Content-Type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${credential}`,
       },
       body: 'grant_type=client_credentials',
-      timeoutMs: config.PAYMENT_GATEWAY_TIMEOUT_MS,
+      signal: AbortSignal.timeout(config.PAYMENT_GATEWAY_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -72,7 +70,7 @@ export class PaypalTokenManager {
       throw new BillingException(BillingErrorCode.PAYMENT_NOT_VERIFIED);
     }
 
-    const parsed = paypalTokenResponseSchema.safeParse(response.data);
+    const parsed = paypalTokenResponseSchema.safeParse(await response.json());
     if (!parsed.success) {
       this.logger.error('fetchToken: PayPal token response failed schema validation');
       throw new BillingException(BillingErrorCode.PAYMENT_NOT_VERIFIED);

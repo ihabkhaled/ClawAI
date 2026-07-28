@@ -58,7 +58,7 @@
     },
     "claw-frontend": {
       "runner": "vitest",
-      "testFiles": 218
+      "testFiles": 220
     },
     "claw-health-service": {
       "runner": "jest",
@@ -82,7 +82,7 @@
     },
     "claw-payment-service": {
       "runner": "jest",
-      "testFiles": 76
+      "testFiles": 81
     },
     "claw-research-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 691
+  "total": 698
 }

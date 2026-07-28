@@ -21,7 +21,7 @@ import {
   type PaymobTransaction,
   paymobTransactionSchema,
 } from './schemas/paymob-response.schema';
-import { verifyPaymobHmac } from './utilities/paymob-hmac.utility';
+import { verifyPaymobCardTokenHmac, verifyPaymobHmac } from './utilities/paymob-hmac.utility';
 import {
   type PaymobIntentionInput,
   type PaymobIntentionResult,
@@ -100,7 +100,13 @@ export class PaymobAdapter {
         currency: config.PAYMOB_CURRENCY,
         payment_methods: [Number.parseInt(config.PAYMOB_CARD_INTEGRATION_ID, 10)],
         special_reference: input.checkoutSessionId,
-        items: [],
+        items: [
+          {
+            name: PAYMOB_SETUP_DESCRIPTION,
+            amount: PAYMOB_SETUP_AMOUNT_MINOR,
+            quantity: 1,
+          },
+        ],
         billing_data: {
           email: input.billingEmail,
           first_name: 'ClawAI',
@@ -226,7 +232,7 @@ export class PaymobAdapter {
     const config = AppConfig.get();
     if (
       config.PAYMOB_HMAC_SECRET === undefined ||
-      !verifyPaymobHmac(payload, receivedHmac, config.PAYMOB_HMAC_SECRET)
+      !verifyPaymobCardTokenHmac(payload, receivedHmac, config.PAYMOB_HMAC_SECRET)
     ) {
       this.logger.warn('extractSavedCard: refusing an unverified card-token callback');
       return null;
@@ -309,7 +315,7 @@ export class PaymobAdapter {
       }
     }
     this.logger.error(`send: ${method} ${path} failed status=${String(lastStatus)}`);
-    throw new BillingException(BillingErrorCode.PAYMENT_NOT_VERIFIED);
+    throw new BillingException(BillingErrorCode.GATEWAY_UNAVAILABLE);
   }
 
   private static async delay(ms: number): Promise<void> {
