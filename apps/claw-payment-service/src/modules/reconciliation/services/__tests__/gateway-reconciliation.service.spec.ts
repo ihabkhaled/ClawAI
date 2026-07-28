@@ -7,6 +7,7 @@ import {
 import type { CheckoutSessionRepository } from '../../../billing/repositories/checkout-session.repository';
 import type { PaymobAdapter } from '../../../gateways/paymob/paymob.adapter';
 import type { PaypalAdapter } from '../../../gateways/paypal/paypal.adapter';
+import type { PaymentCompensationService } from '../../../refunds/services/payment-compensation.service';
 import type { PaymentActivationService } from '../../../webhooks/services/payment-activation.service';
 import type { ReconciliationRepository } from '../../repositories/reconciliation.repository';
 import { GatewayReconciliationService } from '../gateway-reconciliation.service';
@@ -48,10 +49,15 @@ function checkout(id: string, overrides: Partial<CheckoutSession> = {}): Checkou
 }
 
 describe('GatewayReconciliationService', () => {
-  let sessions: { countExpiredPending: jest.Mock; listExpiredPending: jest.Mock };
+  let sessions: {
+    countExpiredPending: jest.Mock;
+    listExpiredPending: jest.Mock;
+    markFailed: jest.Mock;
+  };
   let paypal: { getOrder: jest.Mock };
   let paymob: { fetchTransactionByReference: jest.Mock };
   let activation: { activate: jest.Mock };
+  let compensation: { compensate: jest.Mock };
   let reconciliation: { recordFinding: jest.Mock };
   let service: GatewayReconciliationService;
 
@@ -59,6 +65,7 @@ describe('GatewayReconciliationService', () => {
     sessions = {
       countExpiredPending: jest.fn().mockResolvedValue(1),
       listExpiredPending: jest.fn().mockResolvedValue([checkout('checkout-1')]),
+      markFailed: jest.fn(),
     };
     paypal = {
       getOrder: jest.fn().mockResolvedValue({
@@ -73,13 +80,37 @@ describe('GatewayReconciliationService', () => {
     };
     paymob = { fetchTransactionByReference: jest.fn() };
     activation = { activate: jest.fn().mockResolvedValue('subscription-1') };
+    compensation = { compensate: jest.fn() };
     reconciliation = { recordFinding: jest.fn() };
     service = new GatewayReconciliationService(
       sessions as unknown as CheckoutSessionRepository,
       paypal as unknown as PaypalAdapter,
       paymob as unknown as PaymobAdapter,
       activation as unknown as PaymentActivationService,
+      compensation as unknown as PaymentCompensationService,
       reconciliation as unknown as ReconciliationRepository,
+    );
+  });
+
+  it('refunds a provider-paid failed session when local activation cannot be completed', async () => {
+    sessions.listExpiredPending.mockResolvedValueOnce([
+      checkout('checkout-1', {
+        status: CheckoutSessionStatus.FAILED,
+        failureCode: 'PAYMENT_NOT_VERIFIED',
+      }),
+    ]);
+    activation.activate.mockRejectedValueOnce(new Error('active subscription already exists'));
+
+    await expect(
+      service.reconcile('run-1', new Date('2026-07-26T00:00:00.000Z')),
+    ).resolves.toMatchObject({ repairedCount: 1, quarantinedCount: 0 });
+
+    expect(compensation.compensate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        checkoutSessionId: 'checkout-1',
+        providerTransactionId: 'capture-1',
+        reason: 'RECONCILIATION_ACTIVATION_FAILURE',
+      }),
     );
   });
 

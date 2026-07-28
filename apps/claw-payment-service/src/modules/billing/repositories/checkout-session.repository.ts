@@ -140,8 +140,13 @@ export class CheckoutSessionRepository {
             CheckoutSessionStatus.AWAITING_PAYMENT,
             CHECKOUT_CAPTURING_STATUS,
             CheckoutSessionStatus.VERIFIED,
+            CheckoutSessionStatus.FAILED,
           ],
         },
+        OR: [
+          { status: { not: CheckoutSessionStatus.FAILED } },
+          { failureCode: 'PAYMENT_NOT_VERIFIED' },
+        ],
         expiresAt: { lt: new Date(nowMs) },
       },
       orderBy: { createdAt: 'asc' },
@@ -159,8 +164,13 @@ export class CheckoutSessionRepository {
             CheckoutSessionStatus.AWAITING_PAYMENT,
             CHECKOUT_CAPTURING_STATUS,
             CheckoutSessionStatus.VERIFIED,
+            CheckoutSessionStatus.FAILED,
           ],
         },
+        OR: [
+          { status: { not: CheckoutSessionStatus.FAILED } },
+          { failureCode: 'PAYMENT_NOT_VERIFIED' },
+        ],
         expiresAt: { lt: new Date(nowMs) },
       },
     });

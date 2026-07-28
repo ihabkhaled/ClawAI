@@ -13,6 +13,7 @@ import {
 } from '../../billing/utilities/checkout-session-purpose.utility';
 import { PaymobAdapter } from '../../gateways/paymob/paymob.adapter';
 import { PaypalAdapter } from '../../gateways/paypal/paypal.adapter';
+import { PaymentCompensationService } from '../../refunds/services/payment-compensation.service';
 import { PaymentActivationService } from '../../webhooks/services/payment-activation.service';
 import { RECONCILIATION_BATCH_SIZE } from '../constants/reconciliation.constants';
 import { ReconciliationRepository } from '../repositories/reconciliation.repository';
@@ -36,6 +37,7 @@ export class GatewayReconciliationService {
     private readonly paypal: PaypalAdapter,
     private readonly paymob: PaymobAdapter,
     private readonly activation: PaymentActivationService,
+    private readonly compensation: PaymentCompensationService,
     private readonly reconciliation: ReconciliationRepository,
   ) {}
 
@@ -140,13 +142,30 @@ export class GatewayReconciliationService {
         result.providerStatus,
       );
     }
-    await this.activation.activate({
-      checkoutSessionId: session.id,
-      providerTransactionId: result.providerTransactionId,
-      amountMinor: result.amountMinor,
-      currency: result.currency,
-      correlationId: `reconcile:${runId}:${session.id}`,
-    });
+    try {
+      await this.activation.activate({
+        checkoutSessionId: session.id,
+        providerTransactionId: result.providerTransactionId,
+        amountMinor: result.amountMinor,
+        currency: result.currency,
+        correlationId: `reconcile:${runId}:${session.id}`,
+      });
+    } catch {
+      await this.sessions.markFailed(session.id, 'RECONCILIATION_ACTIVATION_FAILURE');
+      const gateway =
+        session.gateway === BillingGateway.PAYPAL ? BillingGateway.PAYPAL : BillingGateway.PAYMOB;
+      await this.compensation.compensate({
+        checkoutSessionId: session.id,
+        userId: session.userId,
+        gateway,
+        providerTransactionId: result.providerTransactionId,
+        providerOrderId: session.providerOrderId,
+        amountMinor: result.amountMinor,
+        currency: result.currency,
+        failureCode: 'RECONCILIATION_ACTIVATION_FAILURE',
+        reason: 'RECONCILIATION_ACTIVATION_FAILURE',
+      });
+    }
     await this.record(
       runId,
       session,
