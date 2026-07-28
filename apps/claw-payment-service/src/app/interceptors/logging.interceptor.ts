@@ -10,6 +10,8 @@ import {
 import { EventPattern, LogLevel } from '@claw/shared-types';
 import type { Request, Response } from 'express';
 
+import { toLogRoute } from '../../common/utilities/log-route.utility';
+
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(LoggingInterceptor.name);
@@ -37,7 +39,7 @@ export class LoggingInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
     const method = request.method;
-    const url = request.url;
+    const url = toLogRoute(request.url);
     const now = Date.now();
     const requestId = (request.headers['x-request-id'] as string | undefined) ?? randomUUID();
     const traceId = (request.headers['x-trace-id'] as string | undefined) ?? randomUUID();

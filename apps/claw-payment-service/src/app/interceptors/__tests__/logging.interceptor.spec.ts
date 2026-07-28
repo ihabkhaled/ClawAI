@@ -143,6 +143,28 @@ describe('LoggingInterceptor', () => {
     expect(payload['route']).toBe('/api/v1/payments/paymob/intention');
   });
 
+  it('strips sensitive query parameters from local and published logs', async () => {
+    const publish = buildPublishMock();
+    const request: MockRequest = {
+      method: 'POST',
+      url: '/api/v1/payments/webhooks/paymob?hmac=super-secret&session=session-secret',
+      headers: {},
+    };
+    const interceptor = new LoggingInterceptor(buildModuleRef(publish));
+    const localLog = jest.spyOn(interceptor['logger'], 'log').mockImplementation(() => {});
+
+    await drain(interceptor.intercept(buildContext(request, response), buildHandler()));
+
+    const payload = publish.mock.calls[0]?.[1] as Record<string, unknown>;
+    expect(localLog).toHaveBeenCalledWith(
+      expect.objectContaining({ url: '/api/v1/payments/webhooks/paymob' }),
+      expect.not.stringContaining('super-secret'),
+    );
+    expect(payload['route']).toBe('/api/v1/payments/webhooks/paymob');
+    expect(JSON.stringify(payload)).not.toContain('super-secret');
+    expect(JSON.stringify(payload)).not.toContain('session-secret');
+  });
+
   it('still serves the request when RabbitMQ is unavailable', async () => {
     const request: MockRequest = { method: 'GET', url: '/api/v1/health', headers: {} };
     const interceptor = new LoggingInterceptor(buildModuleRef(null));
