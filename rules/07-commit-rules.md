@@ -36,6 +36,16 @@ git push origin <branch>
 
 **One commit, one push. Never build a local stack of unpushed commits.**
 
+### Flagship and gigantic features must ship as pushed checkpoints
+
+For a flagship, multi-surface, or otherwise gigantic feature, divide the work
+into independently testable vertical checkpoints before implementation starts.
+Each checkpoint must complete its scoped tests, commit, and push before coding
+continues on the next checkpoint. A large feature is never permission to keep a
+large local commit stack; it is a stronger reason to land smaller remote-backed
+increments so CI, reviewers, and collaborators can validate the work while it
+is still easy to isolate.
+
 After every `git commit` that passes its hook, the very next git command is
 `git push`. Do not stage the next change, do not start the next task, until the
 commit you just made is on the remote.
