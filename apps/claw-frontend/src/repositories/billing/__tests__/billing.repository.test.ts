@@ -83,4 +83,16 @@ describe('billingRepository payment-method setup', () => {
       state: 'a'.repeat(64),
     });
   });
+
+  it('completes Paymob using only the owned session reference', async () => {
+    const response = {
+      status: 'COMPLETED',
+      subscriptionId: 'subscription-1',
+      paymentMethodPending: false,
+    };
+    mockPost.mockResolvedValue({ data: response });
+
+    await expect(billingRepository.completePaymobCheckout('checkout-1')).resolves.toEqual(response);
+    expect(mockPost).toHaveBeenCalledWith('/billing/checkout-sessions/checkout-1/complete-paymob');
+  });
 });

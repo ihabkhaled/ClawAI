@@ -6,6 +6,7 @@ import type {
   CurrentSubscription,
   InvoiceView,
   PaymentMethodSetupSessionView,
+  PaymobCompletionView,
   PaymentMethodView,
   ProrationQuoteView,
 } from '@/types/billing.types';
@@ -63,6 +64,13 @@ class BillingRepository {
     const response = await apiClient.post<CheckoutSessionView>(
       `/billing/checkout-sessions/${id}/complete-paypal`,
       input,
+    );
+    return response.data;
+  }
+
+  async completePaymobCheckout(id: string): Promise<PaymobCompletionView> {
+    const response = await apiClient.post<PaymobCompletionView>(
+      `/billing/checkout-sessions/${id}/complete-paymob`,
     );
     return response.data;
   }

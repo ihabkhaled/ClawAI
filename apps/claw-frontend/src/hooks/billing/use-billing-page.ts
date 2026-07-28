@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useBillingInvoices } from '@/hooks/billing/use-billing-invoices';
 import { useBillingPlans } from '@/hooks/billing/use-billing-plans';
@@ -30,6 +30,21 @@ export function useBillingPage(): UseBillingPageReturn {
   const view = useBillingViewState();
 
   const hasSubscription = isSubscriptionEntitling(subscription.subscription);
+
+  useEffect(() => {
+    if (
+      checkout.gatewaySession !== null ||
+      planChange.gatewaySession !== null ||
+      paymentMethods.gatewaySession !== null
+    ) {
+      view.closePlanChange();
+    }
+  }, [
+    checkout.gatewaySession,
+    paymentMethods.gatewaySession,
+    planChange.gatewaySession,
+    view.closePlanChange,
+  ]);
 
   const selectPlan = useCallback(
     (plan: BillingPlan) => {

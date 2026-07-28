@@ -3551,6 +3551,17 @@ export const pt: TranslationDictionary = {
     checkout: {
       startFailed: 'Não foi possível iniciar o pagamento. Tente novamente.',
     },
+    gatewayDialog: {
+      title: 'Pagamento seguro',
+      paymobDescription: 'Conclua o pagamento com segurança sem sair do ClawAI.',
+      paypalDescription:
+        'O PayPal abre em uma janela segura enquanto este diálogo acompanha a confirmação.',
+      openPaypal: 'Abrir PayPal',
+      verifying: 'Verificando o pagamento…',
+      verifyFailed: 'Não foi possível verificar o pagamento. Tente novamente.',
+      loadFailed: 'Não foi possível carregar o formulário de pagamento seguro.',
+      popupBlocked: 'Seu navegador bloqueou a janela do PayPal. Permita pop-ups e tente novamente.',
+    },
     planChange: {
       quoteFailed: 'Não foi possível calcular o preço dessa alteração. Tente novamente.',
       confirmFailed: 'Não foi possível aplicar essa alteração. Nada foi cobrado de você.',
@@ -3566,7 +3577,7 @@ export const pt: TranslationDictionary = {
       add: 'Adicionar método',
       adding: 'Abrindo…',
       consent:
-        'Continuar abre o Paymob. Ao salvar o token verificado do cartão, você concorda em armazenar este método de pagamento.',
+        'O Paymob abre aqui com segurança. Ao salvar o token verificado do cartão, você concorda em armazenar este método de pagamento.',
       title: 'Métodos de pagamento',
       empty: 'Nenhum método de pagamento salvo ainda.',
       error: 'Não foi possível carregar seus métodos de pagamento.',

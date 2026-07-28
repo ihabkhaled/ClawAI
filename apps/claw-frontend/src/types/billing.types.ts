@@ -117,6 +117,20 @@ export type PaymentMethodSetupSessionView = {
   expiresAt: string;
 };
 
+export type PaymobCompletionView = {
+  status: string;
+  subscriptionId: string | null;
+  paymentMethodPending: boolean;
+};
+
+export type GatewayCheckoutSession =
+  CheckoutSessionView | (PaymentMethodSetupSessionView & { purpose: 'PAYMENT_METHOD_SETUP' });
+
+export type PaymobPixelCredentials = {
+  publicKey: string;
+  clientSecret: string;
+};
+
 export type InvoiceView = {
   id: string;
   number: string;

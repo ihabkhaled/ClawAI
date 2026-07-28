@@ -3514,6 +3514,16 @@ export const en: TranslationDictionary = {
     checkout: {
       startFailed: 'We could not start checkout. Please try again.',
     },
+    gatewayDialog: {
+      title: 'Secure checkout',
+      paymobDescription: 'Complete payment securely without leaving ClawAI.',
+      paypalDescription: 'PayPal opens in a secure popup while this dialog tracks completion.',
+      openPaypal: 'Open PayPal',
+      verifying: 'Verifying payment…',
+      verifyFailed: 'We could not verify the payment. Please try again.',
+      loadFailed: 'We could not load the secure payment form.',
+      popupBlocked: 'Your browser blocked the PayPal popup. Allow popups and try again.',
+    },
     planChange: {
       quoteFailed: 'We could not price that change. Please try again.',
       confirmFailed: 'We could not apply that change. You have not been charged.',
@@ -3529,7 +3539,7 @@ export const en: TranslationDictionary = {
       add: 'Add method',
       adding: 'Opening…',
       consent:
-        'Continuing opens Paymob. Saving the verified card token confirms your consent to store this payment method.',
+        'Paymob opens securely here. Saving the verified card token confirms your consent to store this payment method.',
       title: 'Payment methods',
       empty: 'No saved payment method yet.',
       error: 'We could not load your payment methods.',

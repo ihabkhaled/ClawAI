@@ -5,6 +5,7 @@ import { BillingReturnPhase } from '@/enums/billing.enum';
 import { usePaypalReturn } from '@/hooks/billing/use-paypal-return';
 
 const mockComplete = vi.fn();
+const mockCompletePaymob = vi.fn();
 const mockReplace = vi.fn();
 const searchParams = new URLSearchParams();
 
@@ -16,6 +17,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/repositories/billing/billing.repository', () => ({
   billingRepository: {
     completePaypalCheckout: (...args: unknown[]) => mockComplete(...args),
+    completePaymobCheckout: (...args: unknown[]) => mockCompletePaymob(...args),
   },
 }));
 
@@ -25,6 +27,22 @@ describe('usePaypalReturn', () => {
     searchParams.delete('session');
     searchParams.delete('state');
     searchParams.delete('token');
+    searchParams.delete('gateway');
+  });
+
+  it('completes a Paymob return from the server-owned checkout session', async () => {
+    searchParams.set('session', 'checkout-1');
+    searchParams.set('gateway', 'PAYMOB');
+    mockCompletePaymob.mockResolvedValue({ status: 'COMPLETED' });
+
+    const { result } = renderHook(() => usePaypalReturn());
+
+    await waitFor(() => {
+      expect(result.current.phase).toBe(BillingReturnPhase.SUCCESS);
+    });
+    expect(mockCompletePaymob).toHaveBeenCalledWith('checkout-1');
+    expect(mockComplete).not.toHaveBeenCalled();
+    expect(mockReplace).toHaveBeenCalledWith('/billing');
   });
 
   it('completes the bound checkout once and returns to billing', async () => {

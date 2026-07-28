@@ -32,6 +32,19 @@ describe('buildContentSecurityPolicy', () => {
     expect(csp).toContain(`script-src 'self' 'nonce-abc123' 'strict-dynamic'`);
   });
 
+  it('allows the pinned Paymob Pixel runtime to reach only Paymob checkout hosts', () => {
+    const csp = buildContentSecurityPolicy({
+      nonce: 'abc123',
+      isDev: true,
+      adsenseEnabled: false,
+      upgradeInsecureRequests: false,
+    });
+
+    expect(csp).toContain('https://cdn.jsdelivr.net');
+    expect(csp).toContain('https://accept.paymob.com');
+    expect(csp).toContain('https://eg.checkout.paymob.com');
+  });
+
   it('never allows unsafe-inline for scripts', () => {
     const csp = buildContentSecurityPolicy(baseOptions);
     const scriptDirective = csp.split(';').find((d) => d.trim().startsWith('script-src'));

@@ -5,7 +5,7 @@ import { useTranslation } from '@/lib/i18n';
 import { billingRepository } from '@/repositories/billing/billing.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UsePlanChangeReturn } from '@/types/billing-hook.types';
-import type { ProrationQuoteView } from '@/types/billing.types';
+import type { GatewayCheckoutSession, ProrationQuoteView } from '@/types/billing.types';
 import { resolveBillingErrorMessage } from '@/utilities/billing-error.utility';
 import { showToast } from '@/utilities/toast.utility';
 
@@ -20,6 +20,7 @@ export function usePlanChange(): UsePlanChangeReturn {
   const queryClient = useQueryClient();
   const [quote, setQuote] = useState<ProrationQuoteView | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [gatewaySession, setGatewaySession] = useState<GatewayCheckoutSession | null>(null);
 
   const quoteMutation = useMutation({
     mutationFn: (input: { targetPlanId: string; billingInterval: string }) =>
@@ -55,7 +56,7 @@ export function usePlanChange(): UsePlanChangeReturn {
       // A downgrade or a zero-amount upgrade has no gateway step: it takes
       // effect directly, so there is nothing to redirect to.
       if (session?.hostedCheckoutUrl !== null && session?.hostedCheckoutUrl !== undefined) {
-        window.location.assign(session.hostedCheckoutUrl);
+        setGatewaySession(session);
         return;
       }
       setQuote(null);
@@ -96,6 +97,16 @@ export function usePlanChange(): UsePlanChangeReturn {
     setError(null);
   }, []);
 
+  const closeGateway = useCallback(() => {
+    setGatewaySession(null);
+  }, []);
+
+  const completeGateway = useCallback(async () => {
+    setGatewaySession(null);
+    setQuote(null);
+    await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
+  }, [queryClient]);
+
   return {
     quote,
     requestQuote,
@@ -105,5 +116,8 @@ export function usePlanChange(): UsePlanChangeReturn {
     error,
     clearError,
     reset,
+    gatewaySession,
+    closeGateway,
+    completeGateway,
   };
 }

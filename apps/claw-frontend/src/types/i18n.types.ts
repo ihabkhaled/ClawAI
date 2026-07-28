@@ -3460,6 +3460,16 @@ export type TranslationDictionary = {
     checkout: {
       startFailed: string;
     };
+    gatewayDialog: {
+      title: string;
+      paymobDescription: string;
+      paypalDescription: string;
+      openPaypal: string;
+      verifying: string;
+      verifyFailed: string;
+      loadFailed: string;
+      popupBlocked: string;
+    };
     planChange: {
       quoteFailed: string;
       confirmFailed: string;

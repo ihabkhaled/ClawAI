@@ -6,6 +6,7 @@ import type {
   InvoiceView,
   PaymentMethodView,
   ProrationQuoteView,
+  GatewayCheckoutSession,
 } from '@/types/billing.types';
 import type { TranslateFunction } from '@/types/i18n.types';
 
@@ -36,6 +37,9 @@ export type UseStartCheckoutReturn = {
   // failure on a payment screen is a delivery blocker.
   error: string | null;
   clearError: () => void;
+  gatewaySession: GatewayCheckoutSession | null;
+  closeGateway: () => void;
+  completeGateway: () => Promise<void>;
 };
 
 export type UsePlanChangeReturn = {
@@ -47,6 +51,9 @@ export type UsePlanChangeReturn = {
   error: string | null;
   clearError: () => void;
   reset: () => void;
+  gatewaySession: GatewayCheckoutSession | null;
+  closeGateway: () => void;
+  completeGateway: () => Promise<void>;
 };
 
 export type UseBillingInvoicesReturn = {
@@ -70,6 +77,9 @@ export type UsePaymentMethodsReturn = {
   pendingId: string | null;
   error: string | null;
   clearError: () => void;
+  gatewaySession: GatewayCheckoutSession | null;
+  closeGateway: () => void;
+  completeGateway: () => Promise<void>;
 };
 
 export type UseCancelSubscriptionReturn = {

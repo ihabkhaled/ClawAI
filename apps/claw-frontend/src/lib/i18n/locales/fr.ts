@@ -3581,6 +3581,18 @@ export const fr: TranslationDictionary = {
     checkout: {
       startFailed: 'Nous n’avons pas pu démarrer le paiement. Veuillez réessayer.',
     },
+    gatewayDialog: {
+      title: 'Paiement sécurisé',
+      paymobDescription: 'Finalisez le paiement en toute sécurité sans quitter ClawAI.',
+      paypalDescription:
+        'PayPal s’ouvre dans une fenêtre sécurisée pendant que cette boîte de dialogue suit la confirmation.',
+      openPaypal: 'Ouvrir PayPal',
+      verifying: 'Vérification du paiement…',
+      verifyFailed: 'Nous n’avons pas pu vérifier le paiement. Veuillez réessayer.',
+      loadFailed: 'Nous n’avons pas pu charger le formulaire de paiement sécurisé.',
+      popupBlocked:
+        'Votre navigateur a bloqué la fenêtre PayPal. Autorisez les fenêtres contextuelles et réessayez.',
+    },
     planChange: {
       quoteFailed: 'Nous n’avons pas pu chiffrer ce changement. Veuillez réessayer.',
       confirmFailed:
@@ -3597,7 +3609,7 @@ export const fr: TranslationDictionary = {
       add: 'Ajouter un moyen',
       adding: 'Ouverture…',
       consent:
-        'Continuer ouvre Paymob. En enregistrant le jeton de carte vérifié, vous acceptez de conserver ce moyen de paiement.',
+        'Paymob s’ouvre ici de manière sécurisée. En enregistrant le jeton de carte vérifié, vous acceptez de conserver ce moyen de paiement.',
       title: 'Moyens de paiement',
       empty: 'Aucun moyen de paiement enregistré pour l’instant.',
       error: 'Nous n’avons pas pu charger vos moyens de paiement.',
