@@ -153,7 +153,11 @@ export class PaypalCheckoutCompletionService {
       checkoutSessionId: session.id,
     };
     try {
-      return await this.paypal.captureOrder(session.providerOrderId ?? '', expected);
+      const captured = await this.paypal.captureOrder(session.providerOrderId ?? '', expected);
+      if (captured.verified) {
+        return captured;
+      }
+      this.logger.warn(`captureOrResolve: capture response incomplete session=${session.id}`);
     } catch (error: unknown) {
       this.logger.warn(`captureOrResolve: capture ambiguous session=${session.id}`);
       try {
@@ -162,5 +166,6 @@ export class PaypalCheckoutCompletionService {
         throw error;
       }
     }
+    return this.paypal.getOrder(session.providerOrderId ?? '', expected);
   }
 }
