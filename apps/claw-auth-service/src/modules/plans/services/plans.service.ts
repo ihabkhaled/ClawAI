@@ -147,6 +147,8 @@ export class PlansService {
       allowWorkspaces: plan.allowWorkspaces,
       allowMemory: plan.allowMemory,
       allowContextPacks: plan.allowContextPacks,
+      modelAccessMode: plan.modelAccessMode,
+      allowedCostClasses: plan.allowedCostClasses,
       modelAccess: plan.modelAccess.map((m) => ({
         provider: m.provider,
         model: m.model,

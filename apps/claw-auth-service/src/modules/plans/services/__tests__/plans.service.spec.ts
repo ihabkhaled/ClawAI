@@ -1,5 +1,6 @@
 import { PlansService } from '../plans.service';
 import { type PlansRepository } from '../../repositories/plans.repository';
+import { PlanModelAccessMode } from '../../../../generated/prisma';
 
 const freePlan = {
   id: 'plan-free',
@@ -26,6 +27,8 @@ const freePlan = {
   allowWorkspaces: true,
   allowMemory: true,
   allowContextPacks: true,
+  modelAccessMode: PlanModelAccessMode.ALLOW_ALL,
+  allowedCostClasses: [],
   createdAt: new Date(),
   updatedAt: new Date(),
   modelAccess: [],
@@ -100,5 +103,6 @@ describe('PlansService', () => {
     const view = await service.getPlan('plan-pro');
     expect(view.priceMonthly).toBe(20);
     expect(view.dailyTokenQuota).toBe(500000);
+    expect(view.modelAccessMode).toBe(PlanModelAccessMode.ALLOW_ALL);
   });
 });

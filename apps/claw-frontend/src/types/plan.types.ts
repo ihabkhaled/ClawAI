@@ -1,3 +1,5 @@
+import type { PlanModelAccessMode } from '@claw/shared-types';
+
 import type { UserRole } from '../enums/user-role.enum';
 
 import type { TranslateFunction } from './i18n.types';
@@ -41,6 +43,8 @@ export type PlanView = {
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
+  modelAccessMode?: PlanModelAccessMode;
+  allowedCostClasses?: string[];
   modelAccess: PlanModelAccessView[];
   createdAt: string;
   updatedAt: string;
@@ -125,6 +129,7 @@ export type UserEntitlements = {
   isAdmin: boolean;
   permissions: string[];
   plan: EntitlementPlan | null;
+  modelAccessMode?: PlanModelAccessMode;
   allowedModels: PlanModelAccessView[];
   allowedProviders: string[];
   quota: EntitlementQuota;

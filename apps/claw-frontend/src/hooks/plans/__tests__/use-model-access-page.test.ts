@@ -1,3 +1,4 @@
+import { PlanModelAccessMode } from '@claw/shared-types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
@@ -12,6 +13,20 @@ const mockUpdateModelAccess = vi.fn();
 const mockPush = vi.fn();
 const mockShowToastSuccess = vi.fn();
 const mockShowToastApiError = vi.fn();
+const mockGroupedModels = [
+  {
+    provider: 'OPENAI',
+    label: 'OpenAI',
+    models: [
+      { provider: 'OPENAI', model: 'gpt-4o', displayName: 'GPT-4o' },
+      { provider: 'OPENAI', model: 'gpt-4.1', displayName: 'GPT-4.1' },
+    ],
+  },
+];
+
+vi.mock('@/hooks/chat/use-available-models', () => ({
+  useAvailableModels: () => ({ groupedModels: mockGroupedModels, isLoading: false }),
+}));
 
 vi.mock('@/repositories/admin/plans.repository', () => ({
   plansRepository: {
@@ -59,6 +74,7 @@ function makeWrapper(): (props: { children: ReactNode }) => ReactElement {
 
 const planWithAccess = {
   id: 'pl1',
+  modelAccessMode: PlanModelAccessMode.ALLOW_LIST,
   modelAccess: [
     {
       provider: 'openai',
@@ -86,6 +102,32 @@ describe('useModelAccessPage', () => {
     });
     expect(result.current.rows[0]?.provider).toBe('openai');
     expect(result.current.rows[0]?.dailyTokenLimitOverride).toBe('5000');
+  });
+
+  it('hydrates every live model as allowed when the plan defaults to ALLOW_ALL', async () => {
+    mockGet.mockResolvedValue({
+      ...planWithAccess,
+      modelAccessMode: PlanModelAccessMode.ALLOW_ALL,
+      modelAccess: [],
+    });
+    const { result } = renderHook(() => useModelAccessPage(), { wrapper: makeWrapper() });
+    await waitFor(() => {
+      expect(result.current.rows).toHaveLength(2);
+    });
+    expect(result.current.rows.map((row) => `${row.provider}/${row.model}`)).toEqual([
+      'OPENAI/gpt-4o',
+      'OPENAI/gpt-4.1',
+    ]);
+    expect(result.current.rows.every((row) => row.isAllowed)).toBe(true);
+  });
+
+  it('does not restore a removed catalog model for an explicit ALLOW_LIST', async () => {
+    mockGet.mockResolvedValue(planWithAccess);
+    const { result } = renderHook(() => useModelAccessPage(), { wrapper: makeWrapper() });
+    await waitFor(() => {
+      expect(result.current.rows).toHaveLength(1);
+    });
+    expect(result.current.rows[0]?.model).toBe('gpt-4o');
   });
 
   it('addRow appends an empty editable row', async () => {

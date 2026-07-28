@@ -116,10 +116,9 @@ model Plan {
   allowWorkspaces                    Boolean             @default(true) @map("allow_workspaces")
   allowMemory                        Boolean             @default(true) @map("allow_memory")
   allowContextPacks                  Boolean             @default(true) @map("allow_context_packs")
-  // Replaces the unsafe legacy rule where an EMPTY PlanModelAccess array meant
-  // "unrestricted". Existing rows migrate as LEGACY_UNRESTRICTED so no install
-  // loses access on deploy; the seeded plans get explicit modes.
-  modelAccessMode                    PlanModelAccessMode @default(LEGACY_UNRESTRICTED) @map("model_access_mode")
+  // New and seeded plans expose every discovered model until an administrator
+  // saves an explicit allow-list or deny-all policy.
+  modelAccessMode                    PlanModelAccessMode @default(ALLOW_ALL) @map("model_access_mode")
   // Routing cost classes permitted under ALLOW_COST_CLASSES. Explicit per-model
   // rows still override this set.
   allowedCostClasses                 String[]            @default([]) @map("allowed_cost_classes")

@@ -1,5 +1,7 @@
-import type { Permission } from '@claw/shared-types';
+import { type Permission, PlanModelAccessMode } from '@claw/shared-types';
 import { ModelUsageType, type PlanFeature, type UserEntitlements } from './types';
+
+const DENY_ALL_ROUTING_KEY = '__CLAW_PLAN_DENY_ALL__';
 
 // ADMIN implicitly holds every permission.
 export function hasPermission(ent: UserEntitlements, permission: Permission): boolean {
@@ -16,8 +18,7 @@ export function hasPlanFeature(ent: UserEntitlements, feature: PlanFeature): boo
   return ent.plan?.featureGates[feature] ?? false;
 }
 
-// Is the given provider/model allowed for a usage type? ADMIN bypasses. An
-// empty allowedModels list means "no restriction configured" → allow all.
+// Is the given provider/model allowed for a usage type? ADMIN bypasses.
 export function isModelAllowedForUsage(
   ent: UserEntitlements,
   provider: string,
@@ -27,7 +28,16 @@ export function isModelAllowedForUsage(
   if (ent.isAdmin) {
     return true;
   }
-  if (ent.allowedModels.length === 0) {
+  if (
+    ent.modelAccessMode === PlanModelAccessMode.ALLOW_ALL ||
+    ent.modelAccessMode === PlanModelAccessMode.LEGACY_UNRESTRICTED
+  ) {
+    return true;
+  }
+  if (ent.modelAccessMode === PlanModelAccessMode.DENY_ALL) {
+    return false;
+  }
+  if (ent.modelAccessMode === undefined && ent.allowedModels.length === 0) {
     return true;
   }
   const entry = ent.allowedModels.find(
@@ -49,7 +59,17 @@ export function isModelAllowedForUsage(
 }
 
 // Flatten allowed models to "provider/model" keys the router can filter on.
-// Empty result means "no restriction" — callers must treat [] as allow-all.
+// Empty is reserved for explicit/legacy unrestricted access.
 export function allowedModelKeys(ent: UserEntitlements): string[] {
-  return ent.allowedModels.filter((m) => m.isAllowed).map((m) => `${m.provider}/${m.model}`);
+  if (
+    ent.modelAccessMode === PlanModelAccessMode.ALLOW_ALL ||
+    ent.modelAccessMode === PlanModelAccessMode.LEGACY_UNRESTRICTED ||
+    (ent.modelAccessMode === undefined && ent.allowedModels.length === 0)
+  ) {
+    return [];
+  }
+  const keys = ent.allowedModels
+    .filter((model) => model.isAllowed)
+    .map((model) => `${model.provider}/${model.model}`);
+  return keys.length === 0 ? [DENY_ALL_ROUTING_KEY] : keys;
 }

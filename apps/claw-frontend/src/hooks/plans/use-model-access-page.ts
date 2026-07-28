@@ -1,3 +1,4 @@
+import { PlanModelAccessMode } from '@claw/shared-types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -5,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ROUTES } from '@/constants/routes.constants';
 import { UserRole } from '@/enums';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
+import { useAvailableModels } from '@/hooks/chat/use-available-models';
 import { useTranslation } from '@/lib/i18n';
 import { plansRepository } from '@/repositories/admin/plans.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
@@ -44,6 +46,18 @@ const emptyRow = (): ModelAccessRowState => ({
   dailyTokenLimitOverride: '',
 });
 
+const toDefaultRow = (provider: string, model: string): ModelAccessRowState => ({
+  rowKey: crypto.randomUUID(),
+  provider,
+  model,
+  isAllowed: true,
+  allowAsPrimary: true,
+  allowAsFallback: true,
+  allowAsJudge: true,
+  allowInCompare: true,
+  dailyTokenLimitOverride: '',
+});
+
 const toInput = (row: ModelAccessRowState): PlanModelAccessInput => {
   const trimmed = row.dailyTokenLimitOverride.trim();
   const parsed = trimmed.length === 0 ? null : Number.parseInt(trimmed, 10);
@@ -70,6 +84,7 @@ export function useModelAccessPage(): UseModelAccessPageResult & {
   const params = useParams<{ id: string }>();
   const planId = params.id ?? '';
   const isAdmin = user?.role === UserRole.ADMIN;
+  const { groupedModels, isLoading: isCatalogLoading } = useAvailableModels();
 
   const [rows, setRows] = useState<ModelAccessRowState[]>([]);
   const [saveError, setSaveError] = useState<Error | null>(null);
@@ -83,9 +98,20 @@ export function useModelAccessPage(): UseModelAccessPageResult & {
 
   useEffect(() => {
     if (query.data) {
-      setRows(query.data.modelAccess.map(toRow));
+      if (
+        query.data.modelAccessMode === PlanModelAccessMode.ALLOW_LIST ||
+        query.data.modelAccessMode === PlanModelAccessMode.DENY_ALL
+      ) {
+        setRows(query.data.modelAccess.map(toRow));
+        return;
+      }
+      setRows(
+        groupedModels.flatMap((group) =>
+          group.models.map((model) => toDefaultRow(model.provider, model.model)),
+        ),
+      );
     }
-  }, [query.data]);
+  }, [groupedModels, query.data]);
 
   const addRow = useCallback((): void => {
     setRows((prev) => [...prev, emptyRow()]);
@@ -148,7 +174,7 @@ export function useModelAccessPage(): UseModelAccessPageResult & {
     user: user ?? null,
     plan: query.data ?? null,
     rows,
-    isLoading: query.isLoading,
+    isLoading: query.isLoading || isCatalogLoading,
     isError: query.isError,
     error: (query.error as Error | null) ?? null,
     isSaving: saveMutation.isPending,

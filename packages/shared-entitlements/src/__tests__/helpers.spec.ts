@@ -1,4 +1,4 @@
-import { Permission } from '@claw/shared-types';
+import { Permission, PlanModelAccessMode } from '@claw/shared-types';
 import {
   allowedModelKeys,
   hasPermission,
@@ -26,6 +26,7 @@ const base: UserEntitlements = {
       allowContextPacks: true,
     },
   },
+  modelAccessMode: PlanModelAccessMode.ALLOW_ALL,
   allowedModels: [],
   allowedProviders: [],
   quota: { dailyLimit: 50000, used: 0, remaining: 50000, unlimited: false },
@@ -37,6 +38,7 @@ const withModel = (
   overrides: Partial<UserEntitlements['allowedModels'][number]>,
 ): UserEntitlements => ({
   ...base,
+  modelAccessMode: PlanModelAccessMode.ALLOW_LIST,
   allowedModels: [
     {
       provider: 'OPENAI',
@@ -86,6 +88,10 @@ describe('entitlements helpers', () => {
     it('empty allowedModels = allow all (v1 hot path)', () => {
       expect(isModelAllowedForUsage(base, 'ANYTHING', 'any', ModelUsageType.PRIMARY)).toBe(true);
     });
+    it('DENY_ALL rejects every model even when the row list is empty', () => {
+      const ent = { ...base, modelAccessMode: PlanModelAccessMode.DENY_ALL };
+      expect(isModelAllowedForUsage(ent, 'OPENAI', 'gpt-4o', ModelUsageType.PRIMARY)).toBe(false);
+    });
     it('restricted plan allows only listed models in the right mode', () => {
       const ent = withModel({});
       expect(isModelAllowedForUsage(ent, 'OPENAI', 'gpt-4o', ModelUsageType.PRIMARY)).toBe(true);
@@ -102,6 +108,10 @@ describe('entitlements helpers', () => {
     });
     it('returns [] when unrestricted', () => {
       expect(allowedModelKeys(base)).toEqual([]);
+    });
+    it('returns a restrictive key when the plan denies every model', () => {
+      const ent = { ...base, modelAccessMode: PlanModelAccessMode.DENY_ALL };
+      expect(allowedModelKeys(ent)).not.toEqual([]);
     });
   });
 });

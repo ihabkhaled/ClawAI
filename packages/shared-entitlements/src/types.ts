@@ -1,4 +1,4 @@
-import type { Permission } from '@claw/shared-types';
+import type { Permission, PlanModelAccessMode } from '@claw/shared-types';
 
 export type PlanFeatureGates = {
   allowCompareMode: boolean;
@@ -38,8 +38,9 @@ export type UserEntitlements = {
     name: string;
     featureGates: PlanFeatureGates;
   } | null;
-  // Empty array = no model restriction configured (allow all). Populated = the
-  // user may only use exactly these provider/model entries.
+  // Optional during rolling upgrades; explicit modes disambiguate unrestricted
+  // access from an empty allow-list or deny-all policy.
+  modelAccessMode?: PlanModelAccessMode;
   allowedModels: AllowedModel[];
   allowedProviders: string[];
   quota: {
