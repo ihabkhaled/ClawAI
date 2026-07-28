@@ -33,6 +33,21 @@ const paypalCaptureSchema = z.object({
   invoice_id: z.string().optional(),
 });
 
+const paypalLinkSchema = z.object({
+  href: z.string().url(),
+  rel: z.string().min(1),
+  method: z.string().min(1),
+});
+
+// PayPal returns this minimal representation from create-order unless the
+// caller requests a full representation. The approval link is the only
+// operation-specific field we need before the buyer leaves Claw.
+export const paypalCreateOrderResponseSchema = z.object({
+  id: z.string().min(1),
+  status: z.string().min(1),
+  links: z.array(paypalLinkSchema).min(1),
+});
+
 export const paypalOrderResponseSchema = z.object({
   id: z.string().min(1),
   status: z.string().min(1),
@@ -51,15 +66,7 @@ export const paypalOrderResponseSchema = z.object({
       }),
     )
     .min(1),
-  links: z
-    .array(
-      z.object({
-        href: z.string().url(),
-        rel: z.string().min(1),
-        method: z.string().min(1),
-      }),
-    )
-    .optional(),
+  links: z.array(paypalLinkSchema).optional(),
 });
 
 export type PaypalOrderResponse = z.infer<typeof paypalOrderResponseSchema>;

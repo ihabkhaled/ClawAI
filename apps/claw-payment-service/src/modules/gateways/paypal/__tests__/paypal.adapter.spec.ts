@@ -82,6 +82,37 @@ describe('PaypalAdapter', () => {
   });
 
   describe('createOrder', () => {
+    it('accepts PayPal default minimal create-order representation', async () => {
+      mockHttp.mockResolvedValue(
+        okResponse({
+          id: 'ORDER1',
+          status: 'CREATED',
+          links: [
+            {
+              href: 'https://www.sandbox.paypal.com/checkoutnow?token=ORDER1',
+              rel: 'approve',
+              method: 'GET',
+            },
+          ],
+        }),
+      );
+
+      await expect(
+        adapter.createOrder({
+          amountMinor: 500,
+          currency: 'USD',
+          checkoutSessionId: 'cs_1',
+          idempotencyKey: 'idem-minimal',
+          returnUrl: 'https://claw.local/billing/return',
+          cancelUrl: 'https://claw.local/billing/cancelled',
+          description: 'Starter monthly',
+        }),
+      ).resolves.toMatchObject({
+        orderId: 'ORDER1',
+        status: 'CREATED',
+      });
+    });
+
     it('returns the trusted PayPal approval URL', async () => {
       mockHttp.mockResolvedValue(okResponse(orderResponse({ status: 'CREATED' })));
 

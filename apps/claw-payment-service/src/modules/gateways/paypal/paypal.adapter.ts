@@ -16,6 +16,7 @@ import {
 } from './constants/paypal.constants';
 import { PaypalTokenManager } from './managers/paypal-token.manager';
 import {
+  paypalCreateOrderResponseSchema,
   paypalOrderResponseSchema,
   paypalRefundResponseSchema,
   paypalSubscriptionResponseSchema,
@@ -75,7 +76,7 @@ export class PaypalAdapter {
     const order = await this.send(
       HttpMethod.POST,
       PAYPAL_PATHS.ORDERS,
-      paypalOrderResponseSchema,
+      paypalCreateOrderResponseSchema,
       body,
       input.idempotencyKey,
       // Safe to retry: the request id makes a repeat idempotent at PayPal.

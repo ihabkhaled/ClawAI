@@ -134,7 +134,7 @@ export class FxService {
     const config = AppConfig.get();
     try {
       const response = await httpRequest<unknown>({
-        url: `${config.EXCHANGE_RATE_API_BASE_URL}/${baseCurrency}`,
+        url: `${config.EXCHANGE_RATE_API_BASE_URL}/latest/${baseCurrency}`,
         method: HttpMethod.GET,
         timeoutMs: config.PAYMENT_GATEWAY_TIMEOUT_MS,
       });
