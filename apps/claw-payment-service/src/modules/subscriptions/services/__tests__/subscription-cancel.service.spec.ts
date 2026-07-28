@@ -10,9 +10,11 @@ function makeSubscription(overrides: Record<string, unknown> = {}): Record<strin
   return {
     id: 'sub-1',
     userId: 'user-1',
+    version: 4,
     status: SubscriptionStatus.ACTIVE,
     planId: 'plan-pro',
     planSlug: 'pro',
+    planPriceVersionId: 'price-pro-1',
     billingInterval: 'MONTHLY',
     currency: 'USD',
     amountMinor: 1999,
@@ -33,14 +35,32 @@ describe('SubscriptionCancelService', () => {
   let outbox: { enqueue: jest.Mock };
   let catalog: { listCatalog: jest.Mock };
   let txUpdate: jest.Mock;
+  let txUpdateMany: jest.Mock;
+  let txFindUnique: jest.Mock;
   let service: SubscriptionCancelService;
 
   beforeEach(() => {
     txUpdate = jest.fn();
+    txUpdateMany = jest.fn();
+    txFindUnique = jest.fn();
     prisma = {
       $transaction: jest.fn(
-        async (fn: (tx: { subscription: { update: jest.Mock } }) => Promise<unknown>) =>
-          fn({ subscription: { update: txUpdate } }),
+        async (
+          fn: (tx: {
+            subscription: {
+              update: jest.Mock;
+              updateMany: jest.Mock;
+              findUnique: jest.Mock;
+            };
+          }) => Promise<unknown>,
+        ) =>
+          fn({
+            subscription: {
+              update: txUpdate,
+              updateMany: txUpdateMany,
+              findUnique: txFindUnique,
+            },
+          }),
       ),
       subscription: { update: jest.fn() },
     };
@@ -54,6 +74,10 @@ describe('SubscriptionCancelService', () => {
       outbox as unknown as OutboxRepository,
       catalog as unknown as PlanCatalogClient,
     );
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   describe('cancelAtPeriodEnd', () => {
@@ -146,6 +170,71 @@ describe('SubscriptionCancelService', () => {
       await expect(service.resume('user-1')).rejects.toMatchObject({
         code: BillingErrorCode.SUBSCRIPTION_CHANGE_CONFLICT,
       });
+    });
+  });
+
+  describe('endNow', () => {
+    it('immediately revokes entitlement but preserves the subscription row', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-07-28T19:30:00.000Z'));
+      txUpdateMany.mockResolvedValue({ count: 1 });
+      txFindUnique.mockResolvedValue(
+        makeSubscription({
+          status: SubscriptionStatus.CANCELLED,
+          cancelAtPeriodEnd: false,
+          cancelledAt: new Date('2026-07-28T19:30:00.000Z'),
+          entitlementValidUntil: new Date('2026-07-28T19:30:00.000Z'),
+          uniqueActiveKey: null,
+          version: 5,
+        }),
+      );
+
+      const view = await service.endNow('user-1');
+
+      expect(txUpdateMany).toHaveBeenCalledWith({
+        where: { id: 'sub-1', version: 4 },
+        data: expect.objectContaining({
+          status: SubscriptionStatus.CANCELLED,
+          cancelAtPeriodEnd: false,
+          entitlementValidUntil: new Date('2026-07-28T19:30:00.000Z'),
+          uniqueActiveKey: null,
+          version: { increment: 1 },
+        }),
+      });
+      expect(txFindUnique).toHaveBeenCalledWith({ where: { id: 'sub-1' } });
+      expect(view.status).toBe(SubscriptionStatus.CANCELLED);
+    });
+
+    it('publishes immediate revocation in the same transaction', async () => {
+      txUpdateMany.mockResolvedValue({ count: 1 });
+      txFindUnique.mockResolvedValue(
+        makeSubscription({
+          status: SubscriptionStatus.CANCELLED,
+          entitlementValidUntil: new Date('2026-07-28T19:30:00.000Z'),
+        }),
+      );
+
+      await service.endNow('user-1');
+
+      const event = outbox.enqueue.mock.calls[0]?.[1] as {
+        pattern: string;
+        payloadJson: { cancelAtPeriodEnd: boolean; entitlementValidUntil: string };
+      };
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(event.pattern).toBe(EventPattern.BILLING_SUBSCRIPTION_CANCELLED);
+      expect(event.payloadJson.cancelAtPeriodEnd).toBe(false);
+      expect(new Date(event.payloadJson.entitlementValidUntil).getTime()).toBeLessThanOrEqual(
+        Date.now(),
+      );
+    });
+
+    it('rejects a concurrent state change rather than overwriting it', async () => {
+      txUpdateMany.mockResolvedValue({ count: 0 });
+
+      await expect(service.endNow('user-1')).rejects.toMatchObject({
+        code: BillingErrorCode.SUBSCRIPTION_CHANGE_CONFLICT,
+      });
+      expect(outbox.enqueue).not.toHaveBeenCalled();
     });
   });
 

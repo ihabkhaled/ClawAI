@@ -34,3 +34,25 @@ describe('SubscriptionsController invoice documents', () => {
     expect(file.getStream()).toBeDefined();
   });
 });
+
+describe('SubscriptionsController cancellation', () => {
+  it('ends only the authenticated user subscription immediately', async () => {
+    const cancellation = {
+      endNow: jest.fn().mockResolvedValue({ id: 'subscription-1', status: 'CANCELLED' }),
+    };
+    const controller = new SubscriptionsController(
+      {} as never,
+      {} as never,
+      cancellation as never,
+      {} as never,
+      {} as never,
+    );
+    const user = { id: 'user-1', email: 'buyer@example.com', role: UserRole.USER };
+
+    await expect(controller.endNow(user)).resolves.toMatchObject({
+      id: 'subscription-1',
+      status: 'CANCELLED',
+    });
+    expect(cancellation.endNow).toHaveBeenCalledWith('user-1');
+  });
+});

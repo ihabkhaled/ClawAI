@@ -1743,6 +1743,11 @@
         "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
       },
       {
+        "method": "DELETE",
+        "route": "/billing/subscription",
+        "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/billing/subscription/cancel",
         "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
@@ -2758,5 +2763,5 @@
     ]
   },
   "generated": true,
-  "total": 544
+  "total": 545
 }
