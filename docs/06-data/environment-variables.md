@@ -13,7 +13,7 @@ All variables are defined in `.env.example` at the project root. Copy it to `.en
 | `NODE_ENV`       | No       | `development`           | `development` or `production`            |
 | `CORS_ORIGINS`   | Yes      | `http://localhost:3000` | Comma-separated allowed origins for CORS |
 | `THROTTLE_TTL`   | No       | `60000`                 | Rate-limit window in milliseconds        |
-| `THROTTLE_LIMIT` | No       | `100`                   | Max requests per window per user/IP      |
+| `THROTTLE_LIMIT` | No       | `2500`                  | Max requests per window per user/IP      |
 
 ---
 

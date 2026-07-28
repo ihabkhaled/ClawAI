@@ -75,7 +75,7 @@ import { ChainsModule } from '../modules/chains/chains.module';
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60_000),
-        limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+        limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
       },
     ]),
     ScheduleModule.forRoot(),

@@ -96,7 +96,7 @@ import { MarketplaceModule } from '../modules/marketplace/marketplace.module';
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60_000),
-        limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+        limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
       },
     ]),
     ScheduleModule.forRoot(),

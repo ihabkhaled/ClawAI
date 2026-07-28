@@ -10,9 +10,11 @@ import type { UserProfile } from '@/types';
 const mockReplace = vi.fn();
 
 vi.mock('next/navigation', () => ({
+  usePathname: () => '/chat',
   useRouter: (): { replace: typeof mockReplace } => ({
     replace: mockReplace,
   }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 const mockUser: UserProfile = {
@@ -64,7 +66,7 @@ describe('useAuthGuard', () => {
     renderHook(() => useAuthGuard());
 
     // After hydration the effect should redirect
-    expect(mockReplace).toHaveBeenCalledWith(ROUTES.LOGIN);
+    expect(mockReplace).toHaveBeenCalledWith(`${ROUTES.LOGIN}?returnTo=%2Fchat`);
   });
 
   it('does not redirect when authenticated', () => {
@@ -95,6 +97,6 @@ describe('useAuthGuard', () => {
     const { result } = renderHook(() => useAuthGuard());
 
     expect(result.current.isReady).toBe(false);
-    expect(mockReplace).toHaveBeenCalledWith(ROUTES.LOGIN);
+    expect(mockReplace).toHaveBeenCalledWith(`${ROUTES.LOGIN}?returnTo=%2Fchat`);
   });
 });

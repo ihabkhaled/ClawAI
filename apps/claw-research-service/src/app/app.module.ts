@@ -56,7 +56,7 @@ import { SearchModule } from '../modules/search/search.module';
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60_000),
-        limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+        limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
       },
     ]),
     EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),

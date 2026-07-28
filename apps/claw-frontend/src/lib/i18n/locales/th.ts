@@ -32,6 +32,16 @@ export const th: TranslationDictionary = {
     langPersian: 'ภาษาเปอร์เซีย',
     langSimplifiedChinese: 'ภาษาจีนตัวย่อ',
   },
+  vscodeAuthorization: {
+    title: 'อนุญาต ClawAI สำหรับ VS Code',
+    description: 'อนุญาตให้เอเจนต์เขียนโค้ดใช้บัญชี ClawAI ของคุณใน VS Code',
+    requestFor: 'คำขออนุญาตจาก {client}',
+    approve: 'อนุญาต VS Code',
+    approving: 'กำลังอนุญาต...',
+    successTitle: 'อนุญาต VS Code แล้ว',
+    successDescription: 'กลับไปที่ VS Code คุณสามารถปิดแท็บนี้ได้แล้ว',
+    errorTitle: 'ไม่สามารถดำเนินการอนุญาตให้เสร็จสิ้น',
+  },
   nav: {
     ...en.nav,
     adminRefunds: 'การคืนเงิน',

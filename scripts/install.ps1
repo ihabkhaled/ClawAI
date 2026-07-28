@@ -713,7 +713,7 @@ NODE_EXTRA_CA_CERTS=/certs/rootCA.pem
 
 # --- Rate Limiting ---
 THROTTLE_TTL=60000
-THROTTLE_LIMIT=100
+THROTTLE_LIMIT=2500
 
 # =============================================================================
 # PostgreSQL Credentials

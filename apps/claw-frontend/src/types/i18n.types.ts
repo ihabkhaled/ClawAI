@@ -96,6 +96,16 @@ export type TranslationDictionary = {
     feature3Title: string;
     feature3Desc: string;
   };
+  vscodeAuthorization: {
+    title: string;
+    description: string;
+    requestFor: string;
+    approve: string;
+    approving: string;
+    successTitle: string;
+    successDescription: string;
+    errorTitle: string;
+  };
   nav: {
     dashboard: string;
     chat: string;

@@ -83,7 +83,7 @@ import { RuntimeProgressModule } from '../modules/runtime-progress/runtime-progr
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60_000),
-        limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+        limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
       },
     ]),
   ],

@@ -32,6 +32,16 @@ export const fa: TranslationDictionary = {
     langPersian: 'فارسی',
     langSimplifiedChinese: 'چینی ساده‌شده',
   },
+  vscodeAuthorization: {
+    title: 'اجازه دادن ClawAI برای VS Code',
+    description: 'به عامل برنامه‌نویسی اجازه دهید از حساب ClawAI شما در VS Code استفاده کند.',
+    requestFor: 'درخواست مجوز توسط {client}.',
+    approve: 'اجازه به VS Code',
+    approving: 'در حال تأیید...',
+    successTitle: 'VS Code مجاز شد',
+    successDescription: 'به VS Code برگردید. اکنون می‌توانید این زبانه را ببندید.',
+    errorTitle: 'تکمیل مجوز ممکن نشد',
+  },
   nav: {
     ...en.nav,
     adminRefunds: 'بازپرداخت‌ها',

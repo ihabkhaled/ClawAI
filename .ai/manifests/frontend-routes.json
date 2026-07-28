@@ -222,6 +222,11 @@
       "route": "/audits"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/authorize/vscode/page.tsx",
+      "kind": "page",
+      "route": "/authorize/vscode"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/billing/page.tsx",
       "kind": "page",
       "route": "/billing"

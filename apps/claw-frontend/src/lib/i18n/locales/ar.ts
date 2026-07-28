@@ -101,6 +101,16 @@ export const ar: TranslationDictionary = {
     feature3Desc:
       'Anthropic وOpenAI وGoogle وMoonshot وZhipu وAlibaba وDeepSeek وxAI وAmazon Bedrock — جميعها في مكان واحد.',
   },
+  vscodeAuthorization: {
+    title: 'تفويض ClawAI لـ VS Code',
+    description: 'اسمح لوكيل البرمجة باستخدام حساب ClawAI الخاص بك في VS Code.',
+    requestFor: 'طلب التفويض بواسطة {client}.',
+    approve: 'تفويض VS Code',
+    approving: 'جارٍ التفويض...',
+    successTitle: 'تم تفويض VS Code',
+    successDescription: 'ارجع إلى VS Code. يمكنك الآن إغلاق علامة التبويب هذه.',
+    errorTitle: 'تعذر إكمال التفويض',
+  },
   nav: {
     dashboard: 'لوحة التحكم',
     chat: 'المحادثة',

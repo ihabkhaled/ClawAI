@@ -637,6 +637,26 @@
           "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/auth/vscode/authorize/approve",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/vscode/authorize/details",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/vscode/authorize/exchange",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/vscode/authorize/init",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
@@ -6026,6 +6046,11 @@
         "route": "/audits"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/authorize/vscode/page.tsx",
+        "kind": "page",
+        "route": "/authorize/vscode"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/billing/page.tsx",
         "kind": "page",
         "route": "/billing"
@@ -6805,7 +6830,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4270
+        "value": 4279
       },
       "localeCount": 13,
       "locales": [
@@ -8334,7 +8359,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 37
+        "testFiles": 39
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8358,7 +8383,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 216
+        "testFiles": 218
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9098,10 +9123,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 542,
+    "endpointCount": 546,
     "envVarCount": 335,
     "eventCount": 165,
-    "frontendRouteCount": 109,
+    "frontendRouteCount": 110,
     "localeCount": 13,
     "nginxRouteCount": 52,
     "permissionCount": 38,
@@ -9110,7 +9135,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 687,
+    "totalTestFiles": 691,
     "workspaceCount": 25
   }
 }

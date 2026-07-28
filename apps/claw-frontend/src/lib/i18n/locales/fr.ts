@@ -102,6 +102,16 @@ export const fr: TranslationDictionary = {
     feature3Desc:
       'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI et Amazon Bedrock — tout au même endroit.',
   },
+  vscodeAuthorization: {
+    title: 'Autoriser ClawAI pour VS Code',
+    description: 'Autorisez l’agent de codage à utiliser votre compte ClawAI dans VS Code.',
+    requestFor: 'Autorisation demandée par {client}.',
+    approve: 'Autoriser VS Code',
+    approving: 'Autorisation...',
+    successTitle: 'VS Code autorisé',
+    successDescription: 'Revenez dans VS Code. Vous pouvez fermer cet onglet.',
+    errorTitle: 'Impossible de terminer l’autorisation',
+  },
   nav: {
     dashboard: 'Tableau de bord',
     chat: 'Chat',

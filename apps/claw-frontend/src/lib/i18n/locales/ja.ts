@@ -32,6 +32,16 @@ export const ja: TranslationDictionary = {
     langPersian: 'ペルシア語',
     langSimplifiedChinese: '簡体字中国語',
   },
+  vscodeAuthorization: {
+    title: 'VS Code で ClawAI を認証',
+    description: 'コーディングエージェントに VS Code での ClawAI アカウント利用を許可します。',
+    requestFor: '{client} から認証が要求されました。',
+    approve: 'VS Code を認証',
+    approving: '認証中...',
+    successTitle: 'VS Code を認証しました',
+    successDescription: 'VS Code に戻ってください。このタブは閉じられます。',
+    errorTitle: '認証を完了できませんでした',
+  },
   nav: {
     ...en.nav,
     adminRefunds: '返金',

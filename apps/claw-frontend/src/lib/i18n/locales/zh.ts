@@ -32,6 +32,16 @@ export const zh: TranslationDictionary = {
     langPersian: '波斯语',
     langSimplifiedChinese: '简体中文',
   },
+  vscodeAuthorization: {
+    title: '授权 ClawAI 用于 VS Code',
+    description: '允许编码代理在 VS Code 中使用您的 ClawAI 帐户。',
+    requestFor: '授权请求来自 {client}。',
+    approve: '授权 VS Code',
+    approving: '正在授权...',
+    successTitle: 'VS Code 已授权',
+    successDescription: '请返回 VS Code。现在可以关闭此浏览器标签页。',
+    errorTitle: '无法完成授权',
+  },
   nav: {
     ...en.nav,
     adminRefunds: '退款',
