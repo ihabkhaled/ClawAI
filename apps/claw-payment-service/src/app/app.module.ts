@@ -10,6 +10,7 @@ import { PAYMENT_SERVICE } from '@claw/shared-constants';
 import type { IncomingMessage } from 'node:http';
 
 import { AppConfig } from './config/app.config';
+import { PAYMENT_LOG_REDACTION_PATHS } from './config/payment-log-redaction.constants';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
@@ -42,30 +43,7 @@ import { BillingDashboardModule } from '../modules/billing-dashboard/billing-das
         // secret-shaped fields than any other, and a leaked gateway token or
         // signature header in a log is a full compromise of that credential.
         redact: {
-          paths: [
-            'req.headers.authorization',
-            'req.headers.cookie',
-            'req.headers["paypal-auth-algo"]',
-            'req.headers["paypal-cert-url"]',
-            'req.headers["paypal-transmission-sig"]',
-            'req.headers["paypal-transmission-id"]',
-            'req.headers["x-paymob-signature"]',
-            'req.body',
-            'res.body',
-            '*.clientSecret',
-            '*.secretKey',
-            '*.apiKey',
-            '*.hmac',
-            '*.hmacSecret',
-            '*.encryptedToken',
-            '*.gatewayCustomerId',
-            '*.gatewaySubscriptionId',
-            '*.providerPaymentMethodToken',
-            '*.accessToken',
-            '*.refreshToken',
-            '*.cardNumber',
-            '*.cvv',
-          ],
+          paths: PAYMENT_LOG_REDACTION_PATHS,
           censor: '[REDACTED]',
         },
         customProps: (req: IncomingMessage) => ({
