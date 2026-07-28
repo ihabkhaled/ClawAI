@@ -6,3 +6,6 @@ export const VSCODE_AUTHORIZATION_PATH = '/authorize/vscode';
 export const VSCODE_AUTHORIZATION_CLIENT_KIND = 'VSCODE' as const;
 export const VSCODE_CALLBACK_SCHEMES = new Set(['vscode:', 'vscode-insiders:']);
 export const VSCODE_CALLBACK_AUTHORITY = 'clawai.clawai-coding-agent';
+export const VSCODE_LOOPBACK_CALLBACK_HOST = '127.0.0.1';
+export const VSCODE_LOOPBACK_CALLBACK_PATH = '/auth/callback';
+export const VSCODE_LOOPBACK_MIN_PORT = 1024;
