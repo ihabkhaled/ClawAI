@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UserRole } from '@claw/shared-types';
 import { EntityNotFoundException } from '../../../common/errors';
+import { PlanModelAccessMode } from '../../../generated/prisma';
 import { AuthRepository } from '../../auth/repositories/auth.repository';
 import { RolesService } from '../../roles/services/roles.service';
 import { PlansRepository } from '../../plans/repositories/plans.repository';
@@ -36,13 +37,9 @@ export class EntitlementsService {
       ? { dailyLimit: 0, used: 0, remaining: 0, unlimited: true }
       : { ...(await this.quotaService.getSnapshot(userId, dailyLimit)), unlimited: false };
 
-    // PlanModelAccess contract: an EMPTY rows array means "no model restriction
-    // configured" — every plan tier sees every connector model. A POPULATED rows
-    // array restricts the user to ONLY those entries with isAllowed=true. This is
-    // an admin-only restriction surface; until an admin explicitly inserts
-    // restrictive rows for a plan, the frontend ModelSelector receives the full
-    // catalog from GET /connectors/available-models (no plan-feature gating on
-    // model SELECTION — feature gates govern WORKFLOWS like compare/judge).
+    // ALLOW_ALL plans use an empty model list as the unrestricted routing hot
+    // path. Explicit policies return only enabled rows; their access mode keeps
+    // an empty allow-list or DENY_ALL policy restrictive downstream.
     const modelAccess = (plan?.modelAccess ?? []).filter((m) => m.isAllowed);
 
     return {
@@ -66,6 +63,7 @@ export class EntitlementsService {
             },
           }
         : null,
+      modelAccessMode: this.resolveModelAccessMode(isAdmin, plan?.modelAccessMode),
       allowedModels: modelAccess.map((m) => ({
         provider: m.provider,
         model: m.model,
@@ -79,6 +77,16 @@ export class EntitlementsService {
       allowedProviders: [...new Set(modelAccess.map((m) => m.provider))],
       quota,
     };
+  }
+
+  private resolveModelAccessMode(
+    isAdmin: boolean,
+    mode: PlanModelAccessMode | undefined,
+  ): PlanModelAccessMode {
+    if (isAdmin) {
+      return PlanModelAccessMode.ALLOW_ALL;
+    }
+    return mode ?? PlanModelAccessMode.DENY_ALL;
   }
 
   // Resolves the user's daily token limit for quota reservation (0 = ADMIN /

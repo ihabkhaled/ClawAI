@@ -10,6 +10,7 @@ import { CheckoutController } from './controllers/checkout.controller';
 import { ChargeResolverService } from './services/charge-resolver.service';
 import { CheckoutService } from './services/checkout.service';
 import { PaymentMethodSetupService } from './services/payment-method-setup.service';
+import { PaymobCheckoutCompletionService } from './services/paymob-checkout-completion.service';
 import { PaypalCheckoutCompletionService } from './services/paypal-checkout-completion.service';
 
 @Module({
@@ -26,6 +27,7 @@ import { PaypalCheckoutCompletionService } from './services/paypal-checkout-comp
     CheckoutService,
     ChargeResolverService,
     PaymentMethodSetupService,
+    PaymobCheckoutCompletionService,
     PaypalCheckoutCompletionService,
   ],
   exports: [CheckoutService, ChargeResolverService],

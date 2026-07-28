@@ -6,6 +6,7 @@ import type {
   CurrentSubscription,
   InvoiceView,
   PaymentMethodSetupSessionView,
+  PaymobCompletionView,
   PaymentMethodView,
   ProrationQuoteView,
 } from '@/types/billing.types';
@@ -67,6 +68,13 @@ class BillingRepository {
     return response.data;
   }
 
+  async completePaymobCheckout(id: string): Promise<PaymobCompletionView> {
+    const response = await apiClient.post<PaymobCompletionView>(
+      `/billing/checkout-sessions/${id}/complete-paymob`,
+    );
+    return response.data;
+  }
+
   // Quote and confirm are separate calls on purpose: the user is shown an exact
   // amount and confirms THAT number. Re-deriving it at confirm time would let
   // the price move between the two steps.
@@ -103,6 +111,11 @@ class BillingRepository {
 
   async resume(): Promise<CurrentSubscription> {
     const response = await apiClient.post<CurrentSubscription>('/billing/subscription/resume');
+    return response.data;
+  }
+
+  async endSubscriptionNow(): Promise<CurrentSubscription> {
+    const response = await apiClient.delete<CurrentSubscription>('/billing/subscription');
     return response.data;
   }
 

@@ -33,6 +33,12 @@ const GOOGLE_AD_IMG_HOSTS: ReadonlyArray<string> = [
   'https://tpc.googlesyndication.com',
 ];
 
+const PAYMOB_SCRIPT_HOST = 'https://cdn.jsdelivr.net';
+const PAYMOB_CHECKOUT_HOSTS: ReadonlyArray<string> = [
+  'https://accept.paymob.com',
+  'https://eg.checkout.paymob.com',
+];
+
 // Generates a fresh, cryptographically-random nonce for a single response.
 // Uses Web Crypto so it runs on both the Edge (middleware) and Node runtimes.
 export function generateCspNonce(): string {
@@ -74,6 +80,7 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
         "'self'",
         "'unsafe-inline'",
         "'unsafe-eval'",
+        PAYMOB_SCRIPT_HOST,
         ...(adsenseEnabled ? GOOGLE_AD_SCRIPT_HOSTS : []),
       ]
     : ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"];
@@ -82,11 +89,22 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
     "'self'",
     ...(isDev ? ['ws:', 'wss:'] : []),
     ...(adsenseEnabled ? GOOGLE_AD_CONNECT_HOSTS : []),
+    ...PAYMOB_CHECKOUT_HOSTS,
   ];
 
-  const frameSrc = ["'self'", ...(adsenseEnabled ? GOOGLE_AD_FRAME_HOSTS : [])];
+  const frameSrc = [
+    "'self'",
+    ...PAYMOB_CHECKOUT_HOSTS,
+    ...(adsenseEnabled ? GOOGLE_AD_FRAME_HOSTS : []),
+  ];
 
-  const imgSrc = ["'self'", 'data:', 'blob:', ...(adsenseEnabled ? GOOGLE_AD_IMG_HOSTS : [])];
+  const imgSrc = [
+    "'self'",
+    'data:',
+    'blob:',
+    ...PAYMOB_CHECKOUT_HOSTS,
+    ...(adsenseEnabled ? GOOGLE_AD_IMG_HOSTS : []),
+  ];
 
   const directives: ReadonlyArray<string> = [
     `default-src 'self'`,

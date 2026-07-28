@@ -5,6 +5,7 @@ import { useTranslation } from '@/lib/i18n';
 import { billingRepository } from '@/repositories/billing/billing.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UsePaymentMethodsReturn } from '@/types/billing-hook.types';
+import type { GatewayCheckoutSession } from '@/types/billing.types';
 import { resolveBillingErrorMessage } from '@/utilities/billing-error.utility';
 import { showToast } from '@/utilities/toast.utility';
 
@@ -15,6 +16,7 @@ export function usePaymentMethods(): UsePaymentMethodsReturn {
   // disable every row while a single card is being removed.
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [gatewaySession, setGatewaySession] = useState<GatewayCheckoutSession | null>(null);
 
   const query = useQuery({
     queryKey: queryKeys.billing.paymentMethods(),
@@ -53,7 +55,7 @@ export function usePaymentMethods(): UsePaymentMethodsReturn {
     onSuccess: (session) => {
       setError(null);
       if (session.hostedCheckoutUrl !== null) {
-        window.location.assign(session.hostedCheckoutUrl);
+        setGatewaySession({ ...session, purpose: 'PAYMENT_METHOD_SETUP' });
       }
     },
     onError: (mutationError: unknown) => {
@@ -82,6 +84,15 @@ export function usePaymentMethods(): UsePaymentMethodsReturn {
     setupMutation.mutate();
   }, [setupMutation]);
 
+  const closeGateway = useCallback(() => {
+    setGatewaySession(null);
+  }, []);
+
+  const completeGateway = useCallback(async () => {
+    setGatewaySession(null);
+    await queryClient.invalidateQueries({ queryKey: queryKeys.billing.paymentMethods() });
+  }, [queryClient]);
+
   return {
     methods: query.data ?? [],
     isLoading: query.isLoading,
@@ -92,5 +103,8 @@ export function usePaymentMethods(): UsePaymentMethodsReturn {
     pendingId,
     error,
     clearError,
+    gatewaySession,
+    closeGateway,
+    completeGateway,
   };
 }

@@ -71,6 +71,18 @@ export const zh: TranslationDictionary = {
   },
   billing: {
     ...en.billing,
+    actions: {
+      ...en.billing.actions,
+      remove: '删除订阅',
+      removing: '正在删除…',
+    },
+    remove: {
+      title: '立即删除订阅？',
+      description: '您的付费访问权限将立即终止，且无法撤销。您的发票和付款历史仍可查看。',
+      confirm: '删除订阅',
+      done: '您的订阅已终止。',
+      failed: '无法删除您的订阅。',
+    },
     errors: {
       PLAN_NOT_PURCHASABLE: '此套餐目前不可购买。',
       PAYMENT_NOT_VERIFIED: '无法验证付款，尚未向您收取任何费用。',

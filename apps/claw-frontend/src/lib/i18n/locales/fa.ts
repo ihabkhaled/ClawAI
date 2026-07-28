@@ -71,6 +71,19 @@ export const fa: TranslationDictionary = {
   },
   billing: {
     ...en.billing,
+    actions: {
+      ...en.billing.actions,
+      remove: 'حذف اشتراک',
+      removing: 'در حال حذف…',
+    },
+    remove: {
+      title: 'اشتراک شما اکنون حذف شود؟',
+      description:
+        'دسترسی پولی شما فوراً پایان می‌یابد. این کار قابل بازگشت نیست. فاکتورها و سابقه پرداخت شما همچنان در دسترس خواهند بود.',
+      confirm: 'حذف اشتراک',
+      done: 'اشتراک شما پایان یافت.',
+      failed: 'حذف اشتراک شما انجام نشد.',
+    },
     errors: {
       PLAN_NOT_PURCHASABLE: 'این طرح برای خرید در دسترس نیست.',
       PAYMENT_NOT_VERIFIED: 'پرداخت تأیید نشد. هیچ مبلغی از شما کسر نشده است.',

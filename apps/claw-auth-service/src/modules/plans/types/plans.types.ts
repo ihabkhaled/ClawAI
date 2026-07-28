@@ -1,4 +1,8 @@
-import { type Plan, type PlanModelAccess } from '../../../generated/prisma';
+import {
+  type Plan,
+  type PlanModelAccess,
+  type PlanModelAccessMode,
+} from '../../../generated/prisma';
 
 // Prisma Plan joined with its model-access rows — the shape repositories
 // return and services map to PlanView.
@@ -51,6 +55,8 @@ export type PlanView = {
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
+  modelAccessMode: PlanModelAccessMode;
+  allowedCostClasses: string[];
   modelAccess: PlanModelAccessView[];
   createdAt: Date;
   updatedAt: Date;

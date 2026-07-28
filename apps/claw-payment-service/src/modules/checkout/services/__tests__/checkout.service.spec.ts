@@ -90,9 +90,11 @@ describe('CheckoutService', () => {
       }),
     };
     paymob = {
-      createIntention: jest
-        .fn()
-        .mockResolvedValue({ intentionId: 'PM-1', clientSecret: 'cs_secret' }),
+      createIntention: jest.fn().mockResolvedValue({
+        intentionId: 'PM-1',
+        providerOrderId: 'PM-ORDER-1',
+        clientSecret: 'cs_secret',
+      }),
     };
     jest.spyOn(AppConfig, 'get').mockReturnValue({
       FRONTEND_URL: 'https://claw.local',
@@ -208,6 +210,11 @@ describe('CheckoutService', () => {
       expect.objectContaining({ billingEmail: 'buyer@example.com' }),
     );
     expect(view.hostedCheckoutUrl).toContain('clientSecret=cs_secret');
+    expect(sessions.attachProviderOrder).toHaveBeenCalledWith(
+      'cs-1',
+      'PM-ORDER-1',
+      expect.any(String),
+    );
   });
 
   describe('findOwned', () => {

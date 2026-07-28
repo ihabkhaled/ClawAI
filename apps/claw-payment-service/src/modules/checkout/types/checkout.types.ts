@@ -47,6 +47,17 @@ export type CompletePaypalCheckoutInput = {
   providerOrderId: string;
 };
 
+export type CompletePaymobCheckoutInput = {
+  userId: string;
+  sessionId: string;
+};
+
+export type PaymobCompletionView = {
+  status: string;
+  subscriptionId: string | null;
+  paymentMethodPending: boolean;
+};
+
 // The minimum a gateway order needs from its caller. Narrower than the full
 // start input so the upgrade path can reuse it without inventing a plan id it
 // does not have.

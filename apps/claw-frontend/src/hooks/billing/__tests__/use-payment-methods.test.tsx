@@ -49,7 +49,7 @@ describe('usePaymentMethods', () => {
       id: 'setup-1',
       status: 'AWAITING_PAYMENT',
       gateway: 'PAYMOB',
-      hostedCheckoutUrl: null,
+      hostedCheckoutUrl: 'https://accept.paymob.com/unifiedcheckout/?clientSecret=test',
       expiresAt: '2026-07-28T00:00:00.000Z',
     });
   });
@@ -67,6 +67,10 @@ describe('usePaymentMethods', () => {
     expect(mockCreateSetup).toHaveBeenCalledWith({
       idempotencyKey: expect.any(String),
       consentToStore: true,
+    });
+    expect(result.current.gatewaySession).toMatchObject({
+      id: 'setup-1',
+      purpose: 'PAYMENT_METHOD_SETUP',
     });
   });
 

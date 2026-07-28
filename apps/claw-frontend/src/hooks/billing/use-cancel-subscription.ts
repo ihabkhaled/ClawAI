@@ -8,12 +8,11 @@ import type { UseCancelSubscriptionReturn } from '@/types/billing-hook.types';
 import { resolveBillingErrorMessage } from '@/utilities/billing-error.utility';
 import { showToast } from '@/utilities/toast.utility';
 
-// Cancel and resume.
+// Schedule, undo, or immediately complete cancellation.
 //
-// Cancelling always requests `atPeriodEnd: true` — the user keeps what they
-// paid for until the period they already bought runs out. Immediate revocation
-// would be a refund question, and that is an operator decision, not a
-// self-service button.
+// Each successful response is written to the current-subscription cache before
+// broad invalidation. The UI reacts immediately while the background refetch
+// confirms payment-service truth.
 export function useCancelSubscription(): UseCancelSubscriptionReturn {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -21,8 +20,9 @@ export function useCancelSubscription(): UseCancelSubscriptionReturn {
 
   const cancelMutation = useMutation({
     mutationFn: () => billingRepository.cancel({ atPeriodEnd: true }),
-    onSuccess: async () => {
+    onSuccess: async (subscription) => {
       setError(null);
+      queryClient.setQueryData(queryKeys.billing.current(), subscription);
       await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
       showToast.success({ description: t('billing.cancel.scheduled') });
     },
@@ -35,13 +35,29 @@ export function useCancelSubscription(): UseCancelSubscriptionReturn {
 
   const resumeMutation = useMutation({
     mutationFn: () => billingRepository.resume(),
-    onSuccess: async () => {
+    onSuccess: async (subscription) => {
       setError(null);
+      queryClient.setQueryData(queryKeys.billing.current(), subscription);
       await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
       showToast.success({ description: t('billing.resume.done') });
     },
     onError: (mutationError: unknown) => {
       const message = resolveBillingErrorMessage(mutationError, t, t('billing.resume.failed'));
+      setError(message);
+      showToast.error({ title: t('billing.error.title'), description: message });
+    },
+  });
+
+  const endNowMutation = useMutation({
+    mutationFn: () => billingRepository.endSubscriptionNow(),
+    onSuccess: async () => {
+      setError(null);
+      queryClient.setQueryData(queryKeys.billing.current(), null);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
+      showToast.success({ description: t('billing.remove.done') });
+    },
+    onError: (mutationError: unknown) => {
+      const message = resolveBillingErrorMessage(mutationError, t, t('billing.remove.failed'));
       setError(message);
       showToast.error({ title: t('billing.error.title'), description: message });
     },
@@ -55,6 +71,10 @@ export function useCancelSubscription(): UseCancelSubscriptionReturn {
     resumeMutation.mutate();
   }, [resumeMutation]);
 
+  const endNow = useCallback(() => {
+    endNowMutation.mutate();
+  }, [endNowMutation]);
+
   const clearError = useCallback(() => {
     setError(null);
   }, []);
@@ -62,8 +82,10 @@ export function useCancelSubscription(): UseCancelSubscriptionReturn {
   return {
     cancel,
     resume,
+    endNow,
     isCancelPending: cancelMutation.isPending,
     isResumePending: resumeMutation.isPending,
+    isEndNowPending: endNowMutation.isPending,
     error,
     clearError,
   };

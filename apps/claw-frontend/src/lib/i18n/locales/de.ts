@@ -3582,6 +3582,18 @@ export const de: TranslationDictionary = {
       startFailed:
         'Der Bezahlvorgang konnte nicht gestartet werden. Bitte versuchen Sie es erneut.',
     },
+    gatewayDialog: {
+      title: 'Sicher bezahlen',
+      paymobDescription: 'Schließen Sie die Zahlung sicher ab, ohne ClawAI zu verlassen.',
+      paypalDescription:
+        'PayPal wird in einem sicheren Pop-up geöffnet, während dieses Fenster den Abschluss verfolgt.',
+      openPaypal: 'PayPal öffnen',
+      verifying: 'Zahlung wird überprüft…',
+      verifyFailed: 'Die Zahlung konnte nicht überprüft werden. Bitte versuchen Sie es erneut.',
+      loadFailed: 'Das sichere Zahlungsformular konnte nicht geladen werden.',
+      popupBlocked:
+        'Ihr Browser hat das PayPal-Pop-up blockiert. Erlauben Sie Pop-ups und versuchen Sie es erneut.',
+    },
     planChange: {
       quoteFailed: 'Diese Änderung konnte nicht berechnet werden. Bitte versuchen Sie es erneut.',
       confirmFailed: 'Diese Änderung konnte nicht angewendet werden. Es wurde nichts abgebucht.',
@@ -3597,7 +3609,7 @@ export const de: TranslationDictionary = {
       add: 'Methode hinzufügen',
       adding: 'Wird geöffnet…',
       consent:
-        'Sie werden zu Paymob weitergeleitet. Mit dem Speichern des verifizierten Kartentokens stimmen Sie der Speicherung dieser Zahlungsmethode zu.',
+        'Paymob wird hier sicher geöffnet. Mit dem Speichern des verifizierten Kartentokens stimmen Sie der Speicherung dieser Zahlungsmethode zu.',
       title: 'Zahlungsmethoden',
       empty: 'Noch keine Zahlungsmethode gespeichert.',
       error: 'Ihre Zahlungsmethoden konnten nicht geladen werden.',
@@ -3652,6 +3664,8 @@ export const de: TranslationDictionary = {
       cancelling: 'Wird gekündigt…',
       resume: 'Abonnement behalten',
       resuming: 'Wird fortgesetzt…',
+      remove: 'Abonnement entfernen',
+      removing: 'Wird entfernt…',
     },
     plans: {
       title: 'Tarife',
@@ -3729,6 +3743,14 @@ export const de: TranslationDictionary = {
     resume: {
       done: 'Ihr Abonnement läuft weiter.',
       failed: 'Ihr Abonnement konnte nicht fortgesetzt werden.',
+    },
+    remove: {
+      title: 'Abonnement jetzt entfernen?',
+      description:
+        'Ihr bezahlter Zugang endet sofort. Dies kann nicht rückgängig gemacht werden. Rechnungen und Zahlungsverlauf bleiben verfügbar.',
+      confirm: 'Abonnement entfernen',
+      done: 'Ihr Abonnement wurde beendet.',
+      failed: 'Ihr Abonnement konnte nicht entfernt werden.',
     },
   },
   marketing: {

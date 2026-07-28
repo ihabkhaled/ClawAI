@@ -1,8 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { BillingErrorCode, EventPattern, SubscriptionStatus } from '@claw/shared-types';
+import {
+  BillingErrorCode,
+  EntitlementGrantType,
+  EventPattern,
+  SubscriptionStatus,
+} from '@claw/shared-types';
 
 import { BillingException } from '../../../common/errors';
+import { assertTransition } from '../../../common/utilities/subscription-state-machine.utility';
+import { type Prisma, type Subscription } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { OutboxRepository } from '../../outbox/repositories/outbox.repository';
 import {
@@ -16,13 +23,11 @@ import { type CurrentSubscriptionView } from '../types/subscription-view.types';
 import { toCurrentSubscriptionView } from '../utilities/subscription-view.utility';
 
 /**
- * Self-service cancellation and its undo.
+ * Self-service scheduled cancellation, immediate termination, and resume.
  *
- * Cancelling is always at period end. The customer paid for a period and keeps
- * it; ending access early would be a refund decision, and that belongs to an
- * operator with a policy, not to a button. So the status stays
- * entitlement-bearing and only `cancelAtPeriodEnd` flips — which is also what
- * makes resume a clean reversal rather than a re-purchase.
+ * Scheduled cancellation retains paid entitlement through period end and can
+ * be resumed. Immediate termination is an explicit forfeiture: entitlement is
+ * revoked now while the append-only financial record remains auditable.
  */
 @Injectable()
 export class SubscriptionCancelService {
@@ -38,32 +43,17 @@ export class SubscriptionCancelService {
   async cancelAtPeriodEnd(userId: string): Promise<CurrentSubscriptionView> {
     this.logger.debug(`cancelAtPeriodEnd: user=${userId}`);
     const subscription = await this.requireCancellable(userId);
+    const cancelledAt = new Date();
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const row = await tx.subscription.update({
         where: { id: subscription.id },
-        data: { cancelAtPeriodEnd: true, cancelledAt: new Date(), version: { increment: 1 } },
+        data: { cancelAtPeriodEnd: true, cancelledAt, version: { increment: 1 } },
       });
       // Auth is told when entitlement ENDS, not that it ended now: the payload
       // carries currentPeriodEnd, so the user keeps the plan for the period
       // they already bought and auth drops it exactly when that runs out.
-      await this.outbox.enqueue(tx, {
-        pattern: EventPattern.BILLING_SUBSCRIPTION_CANCELLED,
-        eventId: randomUUID(),
-        aggregateType: 'Subscription',
-        aggregateId: row.id,
-        payloadJson: {
-          schemaVersion: BILLING_EVENT_SCHEMA_VERSION,
-          producer: PAYMENT_PRODUCER,
-          userId,
-          subscriptionId: row.id,
-          planId: row.planId,
-          effectiveAt: new Date().toISOString(),
-          entitlementValidUntil: row.currentPeriodEnd.toISOString(),
-          correlationId: row.id,
-          causationId: row.id,
-        },
-      });
+      await this.enqueueCancellation(tx, row, userId, cancelledAt, row.currentPeriodEnd, true);
       return row;
     });
 
@@ -71,6 +61,55 @@ export class SubscriptionCancelService {
       `cancelAtPeriodEnd: subscription=${updated.id} ends ${updated.currentPeriodEnd.toISOString()}`,
     );
     return toCurrentSubscriptionView(updated, await this.resolvePlanName(updated.planId));
+  }
+
+  async endNow(userId: string): Promise<CurrentSubscriptionView> {
+    this.logger.debug(`endNow: user=${userId}`);
+    const subscription = await this.requireTerminable(userId);
+    assertTransition(subscription.status as SubscriptionStatus, SubscriptionStatus.CANCELLED);
+    const cancelledAt = new Date();
+
+    const updated = await this.commitImmediateTermination(subscription, cancelledAt, userId);
+
+    this.logger.log(`endNow: subscription=${updated.id} entitlement revoked`);
+    return toCurrentSubscriptionView(updated, await this.resolvePlanName(updated.planId));
+  }
+
+  private async commitImmediateTermination(
+    subscription: Subscription,
+    cancelledAt: Date,
+    userId: string,
+  ): Promise<Subscription> {
+    return this.prisma.$transaction(async (tx) => {
+      const result = await tx.subscription.updateMany({
+        where: { id: subscription.id, version: subscription.version },
+        data: {
+          status: SubscriptionStatus.CANCELLED,
+          cancelAtPeriodEnd: false,
+          cancelledAt,
+          entitlementValidUntil: cancelledAt,
+          gracePeriodEndsAt: null,
+          scheduledPlanId: null,
+          scheduledPlanSlug: null,
+          scheduledPlanPriceVersionId: null,
+          scheduledAmountMinor: null,
+          scheduledBillingInterval: null,
+          scheduledEffectiveAt: null,
+          uniqueActiveKey: null,
+          version: { increment: 1 },
+        },
+      });
+      if (result.count === 0) {
+        throw new BillingException(BillingErrorCode.SUBSCRIPTION_CHANGE_CONFLICT);
+      }
+
+      const row = await tx.subscription.findUnique({ where: { id: subscription.id } });
+      if (row === null) {
+        throw new BillingException(BillingErrorCode.SUBSCRIPTION_CHANGE_CONFLICT);
+      }
+      await this.enqueueCancellation(tx, row, userId, cancelledAt, cancelledAt, false);
+      return row;
+    });
   }
 
   async resume(userId: string): Promise<CurrentSubscriptionView> {
@@ -109,6 +148,49 @@ export class SubscriptionCancelService {
       throw new BillingException(BillingErrorCode.SUBSCRIPTION_CHANGE_CONFLICT);
     }
     return subscription;
+  }
+
+  private async requireTerminable(userId: string): Promise<Subscription> {
+    const subscription = await this.subscriptions.findActiveByUserId(userId);
+    if (subscription === null) {
+      throw new BillingException(BillingErrorCode.SUBSCRIPTION_NOT_FOUND);
+    }
+    if (!CANCELLABLE_STATUSES.includes(subscription.status as SubscriptionStatus)) {
+      throw new BillingException(BillingErrorCode.SUBSCRIPTION_CHANGE_CONFLICT);
+    }
+    return subscription;
+  }
+
+  private async enqueueCancellation(
+    tx: Prisma.TransactionClient,
+    subscription: Subscription,
+    userId: string,
+    cancelledAt: Date,
+    entitlementValidUntil: Date,
+    cancelAtPeriodEnd: boolean,
+  ): Promise<void> {
+    await this.outbox.enqueue(tx, {
+      pattern: EventPattern.BILLING_SUBSCRIPTION_CANCELLED,
+      eventId: randomUUID(),
+      aggregateType: 'Subscription',
+      aggregateId: subscription.id,
+      payloadJson: {
+        schemaVersion: BILLING_EVENT_SCHEMA_VERSION,
+        producer: PAYMENT_PRODUCER,
+        userId,
+        subscriptionId: subscription.id,
+        planId: subscription.planId,
+        planSlug: subscription.planSlug,
+        planPriceVersionId: subscription.planPriceVersionId,
+        grantType: EntitlementGrantType.PAID_SUBSCRIPTION,
+        effectiveAt: cancelledAt.toISOString(),
+        entitlementValidUntil: entitlementValidUntil.toISOString(),
+        cancelAtPeriodEnd,
+        cancelledAt: cancelledAt.toISOString(),
+        correlationId: subscription.id,
+        causationId: null,
+      },
+    });
   }
 
   private async resolvePlanName(planId: string): Promise<string | null> {

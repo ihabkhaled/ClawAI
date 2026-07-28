@@ -103,9 +103,8 @@ const SYSTEM_ROLES = [
   },
 ];
 
-// Default plans (Phase B). A plan with ZERO PlanModelAccess rows means "no
-// model restriction" — admins opt into restriction by adding rows, which keeps
-// the v1 hot path working out of the box.
+// Default plans start in ALLOW_ALL via the schema default. Saving model access
+// in the admin UI switches a plan to an explicit allow-list or deny-all mode.
 const SYSTEM_PLANS = [
   {
     slug: 'free',

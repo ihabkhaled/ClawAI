@@ -3571,6 +3571,17 @@ export const it: TranslationDictionary = {
     checkout: {
       startFailed: 'Non è stato possibile avviare il pagamento. Riprova.',
     },
+    gatewayDialog: {
+      title: 'Pagamento sicuro',
+      paymobDescription: 'Completa il pagamento in sicurezza senza lasciare ClawAI.',
+      paypalDescription:
+        'PayPal si apre in una finestra sicura mentre questa finestra verifica il completamento.',
+      openPaypal: 'Apri PayPal',
+      verifying: 'Verifica del pagamento…',
+      verifyFailed: 'Non è stato possibile verificare il pagamento. Riprova.',
+      loadFailed: 'Non è stato possibile caricare il modulo di pagamento sicuro.',
+      popupBlocked: 'Il browser ha bloccato la finestra PayPal. Consenti i popup e riprova.',
+    },
     planChange: {
       quoteFailed: 'Non è stato possibile calcolare il prezzo di questa modifica. Riprova.',
       confirmFailed:
@@ -3589,7 +3600,7 @@ export const it: TranslationDictionary = {
       add: 'Aggiungi metodo',
       adding: 'Apertura…',
       consent:
-        'Continuando si apre Paymob. Salvando il token verificato della carta acconsenti alla memorizzazione di questo metodo di pagamento.',
+        'Paymob si apre qui in modo sicuro. Salvando il token verificato della carta acconsenti alla memorizzazione di questo metodo di pagamento.',
       title: 'Metodi di pagamento',
       empty: 'Nessun metodo di pagamento salvato per ora.',
       error: 'Non è stato possibile caricare i tuoi metodi di pagamento.',
@@ -3644,6 +3655,8 @@ export const it: TranslationDictionary = {
       cancelling: 'Annullamento…',
       resume: 'Mantieni il mio abbonamento',
       resuming: 'Ripresa…',
+      remove: 'Rimuovi abbonamento',
+      removing: 'Rimozione…',
     },
     plans: {
       title: 'Piani',
@@ -3721,6 +3734,14 @@ export const it: TranslationDictionary = {
     resume: {
       done: 'Il tuo abbonamento proseguirà.',
       failed: 'Non è stato possibile riprendere il tuo abbonamento.',
+    },
+    remove: {
+      title: 'Rimuovere subito il tuo abbonamento?',
+      description:
+        'Il tuo accesso a pagamento termina immediatamente. Questa azione non può essere annullata. Le fatture e la cronologia dei pagamenti resteranno disponibili.',
+      confirm: 'Rimuovi abbonamento',
+      done: 'Il tuo abbonamento è terminato.',
+      failed: 'Non è stato possibile rimuovere il tuo abbonamento.',
     },
   },
   marketing: {

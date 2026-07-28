@@ -1,9 +1,11 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
 import { useTranslation } from '@/lib/i18n';
 import { billingRepository } from '@/repositories/billing/billing.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UseStartCheckoutReturn } from '@/types/billing-hook.types';
+import type { GatewayCheckoutSession } from '@/types/billing.types';
 import { resolveBillingErrorMessage } from '@/utilities/billing-error.utility';
 import { showToast } from '@/utilities/toast.utility';
 
@@ -14,7 +16,9 @@ import { showToast } from '@/utilities/toast.utility';
 // order for the same intent.
 export function useStartCheckout(): UseStartCheckoutReturn {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
+  const [gatewaySession, setGatewaySession] = useState<GatewayCheckoutSession | null>(null);
 
   const mutation = useMutation({
     mutationFn: (input: { planId: string; billingInterval: string; gateway: string }) =>
@@ -25,8 +29,7 @@ export function useStartCheckout(): UseStartCheckoutReturn {
     onSuccess: (session) => {
       setError(null);
       if (session.hostedCheckoutUrl !== null) {
-        // Full navigation, not a router push: the gateway is a different origin.
-        window.location.assign(session.hostedCheckoutUrl);
+        setGatewaySession(session);
       }
     },
     onError: (mutationError: unknown) => {
@@ -53,5 +56,22 @@ export function useStartCheckout(): UseStartCheckoutReturn {
     setError(null);
   }, []);
 
-  return { startCheckout, isPending: mutation.isPending, error, clearError };
+  const closeGateway = useCallback(() => {
+    setGatewaySession(null);
+  }, []);
+
+  const completeGateway = useCallback(async () => {
+    setGatewaySession(null);
+    await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
+  }, [queryClient]);
+
+  return {
+    startCheckout,
+    isPending: mutation.isPending,
+    error,
+    clearError,
+    gatewaySession,
+    closeGateway,
+    completeGateway,
+  };
 }

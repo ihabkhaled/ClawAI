@@ -6,10 +6,12 @@ import { BillingPlanCard } from '@/components/billing/billing-plan-card';
 import { InvoiceTable } from '@/components/billing/invoice-table';
 import { PaymentMethodList } from '@/components/billing/payment-method-list';
 import { ProrationBreakdown } from '@/components/billing/proration-breakdown';
+import { SubscriptionSummaryCard } from '@/components/billing/subscription-summary-card';
 import { UsageWindowBar } from '@/components/billing/usage-window-bar';
-import { BillingInterval } from '@/enums/billing.enum';
+import { BillingInterval, SubscriptionStatus } from '@/enums/billing.enum';
 import type {
   BillingPlan,
+  CurrentSubscription,
   InvoiceView,
   PaymentMethodView,
   ProrationQuoteView,
@@ -110,6 +112,47 @@ describe('BillingPlanCard', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'billing.plans.selectCta' }));
     expect(onSelect).toHaveBeenCalledWith(plan);
+  });
+});
+
+describe('SubscriptionSummaryCard', () => {
+  it('offers immediate removal beside resume after period-end cancellation', async () => {
+    const onEndNow = vi.fn();
+    const cancellingSubscription: CurrentSubscription = {
+      id: 'subscription-1',
+      planId: 'plan-1',
+      planSlug: 'starter',
+      planName: 'Starter',
+      status: SubscriptionStatus.ACTIVE,
+      billingInterval: BillingInterval.MONTHLY,
+      currency: 'USD',
+      amountMinor: 500,
+      currentPeriodStart: '2026-07-01T00:00:00.000Z',
+      currentPeriodEnd: '2026-08-01T00:00:00.000Z',
+      cancelAtPeriodEnd: true,
+      gracePeriodEndsAt: null,
+      scheduledPlanSlug: null,
+      scheduledEffectiveAt: null,
+    };
+
+    render(
+      <SubscriptionSummaryCard
+        subscription={cancellingSubscription}
+        onCancel={vi.fn()}
+        onResume={vi.fn()}
+        onEndNow={onEndNow}
+        isCancelPending={false}
+        isResumePending={false}
+        isEndNowPending={false}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'billing.actions.resume' })).toBeEnabled();
+    const removeButton = screen.getByRole('button', { name: 'billing.actions.remove' });
+    expect(removeButton).toHaveClass('bg-destructive');
+    await userEvent.click(removeButton);
+    expect(onEndNow).toHaveBeenCalledOnce();
   });
 });
 

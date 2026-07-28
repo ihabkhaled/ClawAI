@@ -22,6 +22,7 @@ type CatalogEntry = {
   costCeilingMicroUsd: string;
   chatsPerDay: number | null;
   messagesPerDay: number | null;
+  modelAccessMode: string;
   allowedCostClasses: string[];
   features: Record<string, { accessMode: string; limit: number | null; window: string }>;
 };
@@ -132,23 +133,10 @@ describe('plan catalog', () => {
     expect(bySlug('free').features['WORKSPACES']?.accessMode).toBe('DISABLED');
   });
 
-  it('never grants ULTRA models below Team', () => {
-    for (const slug of ['free', 'starter', 'plus', 'pro']) {
-      expect(bySlug(slug).allowedCostClasses).not.toContain('ULTRA');
-    }
-    for (const slug of ['team', 'scale', 'unlimited']) {
-      expect(bySlug(slug).allowedCostClasses).toContain('ULTRA');
-    }
-  });
-
-  it('widens model access monotonically with price', () => {
-    for (let i = 1; i < catalog.length; i += 1) {
-      const previous = catalog[i - 1]?.allowedCostClasses ?? [];
-      const current = catalog[i]?.allowedCostClasses ?? [];
-      expect(current.length).toBeGreaterThanOrEqual(previous.length);
-      for (const cls of previous) {
-        expect(current).toContain(cls);
-      }
+  it('allows every discovered model on every seeded plan by default', () => {
+    for (const plan of catalog) {
+      expect(plan.modelAccessMode).toBe('ALLOW_ALL');
+      expect(plan.allowedCostClasses).toEqual([]);
     }
   });
 
@@ -199,7 +187,6 @@ describe('catalog integrity', () => {
     // through the migration window; a seeded plan must never rely on it.
     for (const plan of catalogData.plans) {
       expect(plan.modelAccessMode).not.toBe('LEGACY_UNRESTRICTED');
-      expect(plan.allowedCostClasses.length).toBeGreaterThan(0);
     }
   });
 });

@@ -11,6 +11,7 @@ export type PaymobIntentionInput = {
 
 export type PaymobIntentionResult = {
   intentionId: string;
+  providerOrderId: string;
   clientSecret: string;
 };
 

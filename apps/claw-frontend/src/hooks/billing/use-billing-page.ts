@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useBillingInvoices } from '@/hooks/billing/use-billing-invoices';
 import { useBillingPlans } from '@/hooks/billing/use-billing-plans';
@@ -28,8 +28,36 @@ export function useBillingPage(): UseBillingPageReturn {
   const checkout = useStartCheckout();
   const cancellation = useCancelSubscription();
   const view = useBillingViewState();
+  const { closePlanChange, setIsCancelOpen, setIsEndNowOpen } = view;
 
   const hasSubscription = isSubscriptionEntitling(subscription.subscription);
+
+  useEffect(() => {
+    if (
+      checkout.gatewaySession !== null ||
+      planChange.gatewaySession !== null ||
+      paymentMethods.gatewaySession !== null
+    ) {
+      closePlanChange();
+    }
+  }, [
+    checkout.gatewaySession,
+    paymentMethods.gatewaySession,
+    planChange.gatewaySession,
+    closePlanChange,
+  ]);
+
+  useEffect(() => {
+    if (subscription.subscription?.cancelAtPeriodEnd === true && !cancellation.isCancelPending) {
+      setIsCancelOpen(false);
+    }
+  }, [cancellation.isCancelPending, subscription.subscription?.cancelAtPeriodEnd, setIsCancelOpen]);
+
+  useEffect(() => {
+    if (subscription.subscription === null && !cancellation.isEndNowPending) {
+      setIsEndNowOpen(false);
+    }
+  }, [cancellation.isEndNowPending, setIsEndNowOpen, subscription.subscription]);
 
   const selectPlan = useCallback(
     (plan: BillingPlan) => {

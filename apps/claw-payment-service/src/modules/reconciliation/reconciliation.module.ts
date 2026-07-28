@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { BillingModule } from '../billing/billing.module';
 import { GatewaysModule } from '../gateways/gateways.module';
+import { RefundsModule } from '../refunds/refunds.module';
 import { ScheduledJobsModule } from '../scheduled-jobs/scheduled-jobs.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { WebhooksModule } from '../webhooks/webhooks.module';
@@ -19,6 +20,7 @@ import { TransactionReconciliationService } from './services/transaction-reconci
   imports: [
     BillingModule,
     GatewaysModule,
+    RefundsModule,
     ScheduledJobsModule,
     SubscriptionsModule,
     WebhooksModule,

@@ -249,8 +249,43 @@ describe('PaypalCheckoutCompletionService', () => {
     expect(activation.activate).toHaveBeenCalledTimes(1);
   });
 
-  it('records a stable failure when PayPal cannot verify the capture', async () => {
+  it('reads the order back when the capture response omits completed capture details', async () => {
     paypal.captureOrder.mockResolvedValue({
+      verified: false,
+      captureId: null,
+      status: 'COMPLETED',
+      amountMinor: null,
+      currency: null,
+      checkoutSessionId: null,
+      mismatchReason: 'NO_CAPTURE',
+    });
+    paypal.getOrder.mockResolvedValue({
+      verified: true,
+      captureId: 'CAPTURE-1',
+      status: 'COMPLETED',
+      amountMinor: 500,
+      currency: 'USD',
+      checkoutSessionId: SESSION_ID,
+      mismatchReason: null,
+    });
+
+    await service.complete({
+      userId: USER_ID,
+      sessionId: SESSION_ID,
+      state: STATE,
+      providerOrderId: ORDER_ID,
+    });
+
+    expect(paypal.getOrder).toHaveBeenCalledWith(
+      ORDER_ID,
+      expect.objectContaining({ checkoutSessionId: SESSION_ID }),
+    );
+    expect(activation.activate).toHaveBeenCalledTimes(1);
+    expect(sessions.markFailed).not.toHaveBeenCalled();
+  });
+
+  it('records a stable failure when PayPal cannot verify the capture', async () => {
+    const unverified = {
       verified: false,
       captureId: null,
       status: 'APPROVED',
@@ -258,7 +293,9 @@ describe('PaypalCheckoutCompletionService', () => {
       currency: null,
       checkoutSessionId: null,
       mismatchReason: 'NO_CAPTURE',
-    });
+    };
+    paypal.captureOrder.mockResolvedValue(unverified);
+    paypal.getOrder.mockResolvedValue(unverified);
 
     await expect(
       service.complete({

@@ -5,6 +5,7 @@ import type {
   CurrentSubscription,
   FeatureAllowance,
   InvoiceView,
+  GatewayCheckoutSession,
   PaymentMethodView,
   ProrationQuoteView,
   UsageWindow,
@@ -26,8 +27,10 @@ export type SubscriptionSummaryCardProps = {
   subscription: CurrentSubscription | null;
   onCancel: () => void;
   onResume: () => void;
+  onEndNow: () => void;
   isCancelPending: boolean;
   isResumePending: boolean;
+  isEndNowPending: boolean;
   t: TranslateFunction;
 };
 
@@ -117,5 +120,12 @@ export type PlanChangeDialogProps = {
 
 export type ProrationBreakdownProps = {
   quote: ProrationQuoteView;
+  t: TranslateFunction;
+};
+
+export type GatewayCheckoutDialogProps = {
+  session: GatewayCheckoutSession | null;
+  onClose: () => void;
+  onComplete: () => Promise<void>;
   t: TranslateFunction;
 };

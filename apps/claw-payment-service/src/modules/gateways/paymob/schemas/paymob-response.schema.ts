@@ -12,6 +12,10 @@ export const paymobIntentionResponseSchema = z.object({
 
 export type PaymobIntentionResponse = z.infer<typeof paymobIntentionResponseSchema>;
 
+export const paymobTokenResponseSchema = z.object({
+  token: z.string().min(1),
+});
+
 // Paymob reports money in integer piastres (amount_cents) — already minor
 // units, so no decimal parsing is needed and none is done.
 export const paymobTransactionSchema = z.object({

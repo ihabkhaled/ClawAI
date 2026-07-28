@@ -5,13 +5,14 @@ import { billingRepository } from '@/repositories/billing/billing.repository';
 const mockPost = vi.fn();
 const mockGet = vi.fn();
 const mockGetBlob = vi.fn();
+const mockDelete = vi.fn();
 
 vi.mock('@/services/shared/api-client', () => ({
   apiClient: {
     get: (...args: unknown[]) => mockGet(...args),
     getBlob: (...args: unknown[]) => mockGetBlob(...args),
     post: (...args: unknown[]) => mockPost(...args),
-    delete: vi.fn(),
+    delete: (...args: unknown[]) => mockDelete(...args),
   },
 }));
 
@@ -82,5 +83,25 @@ describe('billingRepository payment-method setup', () => {
       providerOrderId: '5O190127TN364715T',
       state: 'a'.repeat(64),
     });
+  });
+
+  it('completes Paymob using only the owned session reference', async () => {
+    const response = {
+      status: 'COMPLETED',
+      subscriptionId: 'subscription-1',
+      paymentMethodPending: false,
+    };
+    mockPost.mockResolvedValue({ data: response });
+
+    await expect(billingRepository.completePaymobCheckout('checkout-1')).resolves.toEqual(response);
+    expect(mockPost).toHaveBeenCalledWith('/billing/checkout-sessions/checkout-1/complete-paymob');
+  });
+
+  it('immediately ends only the authenticated subscription', async () => {
+    const response = { id: 'subscription-1', status: 'CANCELLED' };
+    mockDelete.mockResolvedValue({ data: response });
+
+    await expect(billingRepository.endSubscriptionNow()).resolves.toEqual(response);
+    expect(mockDelete).toHaveBeenCalledWith('/billing/subscription');
   });
 });

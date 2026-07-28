@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { Prisma } from '../../../generated/prisma';
+import { PlanModelAccessMode, Prisma } from '../../../generated/prisma';
 import { type PlanWithAccess } from '../types/plans.types';
 
 @Injectable()
@@ -68,13 +68,20 @@ export class PlansRepository {
     planId: string,
     rows: Array<Omit<Prisma.PlanModelAccessCreateManyInput, 'planId'>>,
   ): Promise<PlanWithAccess> {
-    await this.prisma.$transaction([
+    const mode = rows.length === 0 ? PlanModelAccessMode.DENY_ALL : PlanModelAccessMode.ALLOW_LIST;
+    const operations = [
+      this.prisma.plan.update({ where: { id: planId }, data: { modelAccessMode: mode } }),
       this.prisma.planModelAccess.deleteMany({ where: { planId } }),
-      this.prisma.planModelAccess.createMany({
-        data: rows.map((r) => ({ ...r, planId })),
-        skipDuplicates: true,
-      }),
-    ]);
+    ];
+    if (rows.length > 0) {
+      operations.push(
+        this.prisma.planModelAccess.createMany({
+          data: rows.map((row) => ({ ...row, planId })),
+          skipDuplicates: true,
+        }),
+      );
+    }
+    await this.prisma.$transaction(operations);
     return this.findById(planId) as Promise<PlanWithAccess>;
   }
 

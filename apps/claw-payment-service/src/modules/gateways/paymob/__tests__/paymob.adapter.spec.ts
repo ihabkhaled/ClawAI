@@ -2,6 +2,7 @@ import { httpRequest } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { PaymobAdapter } from '../paymob.adapter';
+import { type PaymobTokenManager } from '../managers/paymob-token.manager';
 import { computePaymobCardTokenHmac, computePaymobHmac } from '../utilities/paymob-hmac.utility';
 
 jest.mock('@claw/shared-utilities', () => ({
@@ -28,19 +29,23 @@ const transaction = (overrides: Record<string, unknown> = {}): Record<string, un
 
 describe('PaymobAdapter', () => {
   let adapter: PaymobAdapter;
+  let tokens: { getAccessToken: jest.Mock };
 
   beforeEach(() => {
     mockHttp.mockReset();
+    tokens = { getAccessToken: jest.fn().mockResolvedValue('paymob-access-token') };
     jest.spyOn(AppConfig, 'get').mockReturnValue({
       PAYMOB_SECRET_KEY: 'sk',
       PAYMOB_PUBLIC_KEY: 'pk',
+      PAYMOB_API_KEY: 'api-key',
       PAYMOB_HMAC_SECRET: SECRET,
       PAYMOB_CARD_INTEGRATION_ID: '4242',
       PAYMOB_CURRENCY: 'EGP',
+      FRONTEND_URL: 'https://claw.local',
       PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
       PAYMENT_GATEWAY_MAX_RETRIES: 3,
     } as unknown as ReturnType<typeof AppConfig.get>);
-    adapter = new PaymobAdapter();
+    adapter = new PaymobAdapter(tokens as unknown as PaymobTokenManager);
   });
 
   afterEach(() => {
@@ -52,7 +57,7 @@ describe('PaymobAdapter', () => {
       mockHttp.mockResolvedValue({
         ok: true,
         status: 200,
-        data: { id: 'INT1', client_secret: 'cs_secret' },
+        data: { id: 'INT1', client_secret: 'cs_secret', intention_order_id: 987 },
       });
       const result = await adapter.createIntention({
         amountMinor: 50_000,
@@ -62,10 +67,18 @@ describe('PaymobAdapter', () => {
         billingEmail: 'user@example.com',
         description: 'Pro monthly',
       });
-      expect(result).toEqual({ intentionId: 'INT1', clientSecret: 'cs_secret' });
+      expect(result).toEqual({
+        intentionId: 'INT1',
+        providerOrderId: '987',
+        clientSecret: 'cs_secret',
+      });
       const body = mockHttp.mock.calls[0]?.[0]?.body as Record<string, unknown>;
       expect(body['amount']).toBe(50_000);
       expect(body['special_reference']).toBe('cs_9');
+      expect(body['notification_url']).toBe('https://claw.local/api/v1/payments/webhooks/paymob');
+      expect(body['redirection_url']).toBe(
+        'https://claw.local/billing/return?session=cs_9&gateway=PAYMOB',
+      );
     });
 
     it('refuses when Paymob is not fully configured', async () => {
@@ -91,7 +104,7 @@ describe('PaymobAdapter', () => {
       mockHttp.mockResolvedValue({
         ok: true,
         status: 200,
-        data: { id: 'SETUP1', client_secret: 'setup_secret' },
+        data: { id: 'SETUP1', client_secret: 'setup_secret', intention_order_id: 654 },
       });
 
       await expect(
@@ -99,7 +112,11 @@ describe('PaymobAdapter', () => {
           checkoutSessionId: 'setup-1',
           billingEmail: 'user@example.com',
         }),
-      ).resolves.toEqual({ intentionId: 'SETUP1', clientSecret: 'setup_secret' });
+      ).resolves.toEqual({
+        intentionId: 'SETUP1',
+        providerOrderId: '654',
+        clientSecret: 'setup_secret',
+      });
 
       const body = mockHttp.mock.calls[0]?.[0]?.body as Record<string, unknown>;
       expect(body).toMatchObject({
@@ -231,6 +248,28 @@ describe('PaymobAdapter', () => {
       mockHttp.mockResolvedValue({ ok: true, status: 200, data: transaction() });
       const result = await adapter.fetchTransaction('123456', EXPECTED);
       expect(result.verified).toBe(true);
+      expect(tokens.getAccessToken).toHaveBeenCalledTimes(1);
+      expect(mockHttp.mock.calls[0]?.[0]?.headers).toMatchObject({
+        Authorization: 'Bearer paymob-access-token',
+      });
+    });
+
+    it('reads the last transaction by the immutable merchant reference', async () => {
+      mockHttp.mockResolvedValue({ ok: true, status: 200, data: transaction() });
+
+      await expect(adapter.fetchTransactionByReference('cs_1', EXPECTED)).resolves.toMatchObject({
+        verified: true,
+        transactionId: '123456',
+      });
+
+      expect(mockHttp.mock.calls[0]?.[0]).toMatchObject({
+        url: 'https://accept.paymob.com/api/ecommerce/orders/transaction_inquiry',
+        method: 'POST',
+        body: {
+          auth_token: 'paymob-access-token',
+          merchant_order_id: 'cs_1',
+        },
+      });
     });
 
     it('rejects a response that fails schema validation', async () => {

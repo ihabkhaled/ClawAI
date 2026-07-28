@@ -5,6 +5,7 @@ import type { ReactElement } from 'react';
 import { BillingErrorBanner } from '@/components/billing/billing-error-banner';
 import { BillingIntervalToggle } from '@/components/billing/billing-interval-toggle';
 import { BillingStatusBanner } from '@/components/billing/billing-status-banner';
+import { GatewayCheckoutDialog } from '@/components/billing/gateway-checkout-dialog';
 import { InvoiceTable } from '@/components/billing/invoice-table';
 import { PaymentMethodList } from '@/components/billing/payment-method-list';
 import { PlanChangeDialog } from '@/components/billing/plan-change-dialog';
@@ -67,8 +68,10 @@ export default function BillingPage(): ReactElement {
             subscription={subscription.subscription}
             onCancel={() => view.setIsCancelOpen(true)}
             onResume={cancellation.resume}
+            onEndNow={() => view.setIsEndNowOpen(true)}
             isCancelPending={cancellation.isCancelPending}
             isResumePending={cancellation.isResumePending}
+            isEndNowPending={cancellation.isEndNowPending}
             t={t}
           />
         )}
@@ -155,6 +158,36 @@ export default function BillingPage(): ReactElement {
         cancelLabel={t('common.cancel')}
         onConfirm={cancellation.cancel}
         isConfirming={cancellation.isCancelPending}
+      />
+
+      <ConfirmDialog
+        open={view.isEndNowOpen}
+        onOpenChange={view.setIsEndNowOpen}
+        title={t('billing.remove.title')}
+        description={t('billing.remove.description')}
+        confirmLabel={t('billing.remove.confirm')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={cancellation.endNow}
+        isConfirming={cancellation.isEndNowPending}
+      />
+
+      <GatewayCheckoutDialog
+        session={checkout.gatewaySession}
+        onClose={checkout.closeGateway}
+        onComplete={checkout.completeGateway}
+        t={t}
+      />
+      <GatewayCheckoutDialog
+        session={planChange.gatewaySession}
+        onClose={planChange.closeGateway}
+        onComplete={planChange.completeGateway}
+        t={t}
+      />
+      <GatewayCheckoutDialog
+        session={paymentMethods.gatewaySession}
+        onClose={paymentMethods.closeGateway}
+        onComplete={paymentMethods.completeGateway}
+        t={t}
       />
     </div>
   );

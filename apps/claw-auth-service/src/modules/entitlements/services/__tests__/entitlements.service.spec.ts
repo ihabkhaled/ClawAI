@@ -1,4 +1,4 @@
-import { UserRole } from '@claw/shared-types';
+import { PlanModelAccessMode, UserRole } from '@claw/shared-types';
 import { EntitlementsService } from '../entitlements.service';
 import { type AuthRepository } from '../../../auth/repositories/auth.repository';
 import { type RolesService } from '../../../roles/services/roles.service';
@@ -58,6 +58,8 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     allowWorkspaces: true,
     allowMemory: true,
     allowContextPacks: true,
+    modelAccessMode: PlanModelAccessMode.ALLOW_ALL,
+    allowedCostClasses: [],
     createdAt: new Date(),
     updatedAt: new Date(),
     modelAccess: [],
@@ -96,6 +98,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     // comment in entitlements.types.ts pins as the default behaviour.
     expect(result.allowedModels).toEqual([]);
     expect(result.allowedProviders).toEqual([]);
+    expect(result.modelAccessMode).toBe(PlanModelAccessMode.ALLOW_ALL);
     expect(result.plan).not.toBeNull();
     expect(result.plan?.slug).toBe('free');
   });
@@ -103,6 +106,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
   it('returns only isAllowed=true rows when PlanModelAccess is populated', async () => {
     const planWithMixedAccess: PlanWithAccess = {
       ...freePlanWithNoModelAccess,
+      modelAccessMode: PlanModelAccessMode.ALLOW_LIST,
       modelAccess: [
         {
           id: 'pma1',
@@ -143,6 +147,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     expect(result.allowedModels[0]?.provider).toBe('OPENAI');
     expect(result.allowedModels[0]?.model).toBe('gpt-4.1');
     expect(result.allowedProviders).toEqual(['OPENAI']);
+    expect(result.modelAccessMode).toBe(PlanModelAccessMode.ALLOW_LIST);
   });
 
   it('returns allowedModels=[] when the user has no active plan', async () => {
@@ -154,6 +159,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     const result = await service.getForUser('u1');
 
     expect(result.allowedModels).toEqual([]);
+    expect(result.modelAccessMode).toBe(PlanModelAccessMode.DENY_ALL);
     expect(result.plan).toBeNull();
   });
 });

@@ -3509,6 +3509,16 @@ export const ar: TranslationDictionary = {
     checkout: {
       startFailed: 'تعذّر بدء عملية الدفع. يُرجى المحاولة مرة أخرى.',
     },
+    gatewayDialog: {
+      title: 'دفع آمن',
+      paymobDescription: 'أكمل الدفع بأمان دون مغادرة ClawAI.',
+      paypalDescription: 'يفتح PayPal في نافذة منبثقة آمنة بينما نتابع اكتمال الدفع هنا.',
+      openPaypal: 'فتح PayPal',
+      verifying: 'جارٍ التحقق من الدفع…',
+      verifyFailed: 'تعذّر التحقق من الدفع. يُرجى المحاولة مرة أخرى.',
+      loadFailed: 'تعذّر تحميل نموذج الدفع الآمن.',
+      popupBlocked: 'حظر المتصفح نافذة PayPal. اسمح بالنوافذ المنبثقة وحاول مرة أخرى.',
+    },
     planChange: {
       quoteFailed: 'تعذّر تسعير هذا التغيير. يُرجى المحاولة مرة أخرى.',
       confirmFailed: 'تعذّر تطبيق هذا التغيير. لم يتم خصم أي مبلغ منك.',
@@ -3524,7 +3534,7 @@ export const ar: TranslationDictionary = {
       add: 'إضافة طريقة',
       adding: 'جارٍ الفتح…',
       consent:
-        'ستنتقل إلى Paymob للمتابعة. حفظ رمز البطاقة الموثّق يعني موافقتك على تخزين طريقة الدفع هذه.',
+        'سيُفتح Paymob بأمان هنا. حفظ رمز البطاقة الموثّق يعني موافقتك على تخزين طريقة الدفع هذه.',
       title: 'طرق الدفع',
       empty: 'لا توجد طريقة دفع محفوظة بعد.',
       error: 'تعذّر تحميل طرق الدفع الخاصة بك.',
@@ -3575,6 +3585,8 @@ export const ar: TranslationDictionary = {
       cancelling: 'جارٍ الإلغاء…',
       resume: 'الاحتفاظ باشتراكي',
       resuming: 'جارٍ الاستئناف…',
+      remove: 'إزالة الاشتراك',
+      removing: 'جارٍ الإزالة…',
     },
     plans: {
       title: 'الخطط',
@@ -3651,6 +3663,14 @@ export const ar: TranslationDictionary = {
     resume: {
       done: 'سيستمر اشتراكك.',
       failed: 'تعذّر استئناف اشتراكك.',
+    },
+    remove: {
+      title: 'إزالة اشتراكك الآن؟',
+      description:
+        'سينتهي وصولك المدفوع فورًا. لا يمكن التراجع عن ذلك. ستظل فواتيرك وسجل مدفوعاتك متاحة.',
+      confirm: 'إزالة الاشتراك',
+      done: 'انتهى اشتراكك.',
+      failed: 'تعذّرت إزالة اشتراكك.',
     },
   },
   marketing: {

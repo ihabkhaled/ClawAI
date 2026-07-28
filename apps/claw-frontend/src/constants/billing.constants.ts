@@ -25,6 +25,13 @@ export const CHECKOUT_POLL_MAX_ATTEMPTS = 150;
 
 export const PAYPAL_STATE_PATTERN = /^[a-f0-9]{64}$/;
 
+export const PAYMOB_PIXEL_URL = 'https://cdn.jsdelivr.net/npm/paymob-pixel@1.2.7/main.js';
+export const PAYMOB_PIXEL_INTEGRITY =
+  'sha384-7MtBbtvCaAPz+WSXmp7mCMKgBGrC7PKG0BK8HbCri6UQ1YZKEcxxNVPIjwCuiyZl';
+export const PAYMOB_SCRIPT_ID = 'paymob-pixel-sdk';
+export const PAYPAL_COMPLETION_MESSAGE_TYPE = 'claw:billing:paypal-completed';
+export const PAYMOB_COMPLETION_MESSAGE_TYPE = 'claw:billing:paymob-completed';
+
 // Usage bar turns amber here and red at the ceiling, so a user sees a limit
 // approaching rather than discovering it mid-request.
 export const USAGE_WARNING_THRESHOLD = 0.8;
@@ -41,6 +48,8 @@ export const BILLING_GATEWAY_ORDER: BillingGateway[] = [
   BillingGateway.PAYPAL,
   BillingGateway.PAYMOB,
 ];
+
+export const SUPPORTED_PLAN_CURRENCIES: string[] = ['USD', 'EUR', 'EGP'];
 
 // Statuses that mean the account is in trouble and the user must act. Anything
 // not listed renders no banner at all.

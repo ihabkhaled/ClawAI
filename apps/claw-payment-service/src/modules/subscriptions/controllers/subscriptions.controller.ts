@@ -128,6 +128,12 @@ export class SubscriptionsController {
     return this.cancellation.cancelAtPeriodEnd(user.id);
   }
 
+  @Delete('subscription')
+  @HttpCode(HttpStatus.OK)
+  async endNow(@CurrentUser() user: AuthenticatedUser): Promise<CurrentSubscriptionView> {
+    return this.cancellation.endNow(user.id);
+  }
+
   @Post('subscription/resume')
   @HttpCode(HttpStatus.OK)
   async resume(@CurrentUser() user: AuthenticatedUser): Promise<CurrentSubscriptionView> {

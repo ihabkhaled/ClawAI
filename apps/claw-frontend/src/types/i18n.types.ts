@@ -3470,6 +3470,16 @@ export type TranslationDictionary = {
     checkout: {
       startFailed: string;
     };
+    gatewayDialog: {
+      title: string;
+      paymobDescription: string;
+      paypalDescription: string;
+      openPaypal: string;
+      verifying: string;
+      verifyFailed: string;
+      loadFailed: string;
+      popupBlocked: string;
+    };
     planChange: {
       quoteFailed: string;
       confirmFailed: string;
@@ -3537,6 +3547,8 @@ export type TranslationDictionary = {
       cancelling: string;
       resume: string;
       resuming: string;
+      remove: string;
+      removing: string;
     };
     plans: {
       title: string;
@@ -3610,6 +3622,13 @@ export type TranslationDictionary = {
       failed: string;
     };
     resume: {
+      done: string;
+      failed: string;
+    };
+    remove: {
+      title: string;
+      description: string;
+      confirm: string;
       done: string;
       failed: string;
     };

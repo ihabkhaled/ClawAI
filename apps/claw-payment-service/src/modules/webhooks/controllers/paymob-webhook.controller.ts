@@ -12,6 +12,7 @@ import { Public } from '@claw/shared-auth';
 import type { Request } from 'express';
 
 import { WEBHOOK_ACK_BODY } from '../constants/webhook.constants';
+import { PaymobCallbackRouterService } from '../services/paymob-callback-router.service';
 import { PaymobCardTokenService } from '../services/paymob-card-token.service';
 import { PaymobWebhookService } from '../services/paymob-webhook.service';
 import { type WebhookAck } from '../types/webhook-ack.types';
@@ -29,6 +30,7 @@ import { type WebhookAck } from '../types/webhook-ack.types';
 @SkipThrottle()
 export class PaymobWebhookController {
   constructor(
+    private readonly callbacks: PaymobCallbackRouterService,
     private readonly webhooks: PaymobWebhookService,
     private readonly cardTokens: PaymobCardTokenService,
   ) {}
@@ -39,7 +41,7 @@ export class PaymobWebhookController {
     @Req() request: RawBodyRequest<Request>,
     @Query('hmac') hmac: string,
   ): Promise<WebhookAck> {
-    await this.webhooks.handle(request.rawBody?.toString('utf8') ?? '', hmac ?? '');
+    await this.callbacks.handle(request.rawBody?.toString('utf8') ?? '', hmac ?? '');
     return WEBHOOK_ACK_BODY;
   }
 
