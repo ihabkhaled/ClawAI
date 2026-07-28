@@ -64,11 +64,11 @@ export class PaymentMethodSetupService {
         billingEmail: input.userEmail,
       });
       const hostedUrl = PaymentMethodSetupService.buildHostedUrl(intention.clientSecret);
-      await this.sessions.attachProviderOrder(session.id, intention.intentionId, hostedUrl);
+      await this.sessions.attachProviderOrder(session.id, intention.providerOrderId, hostedUrl);
       return PaymentMethodSetupService.toView({
         ...session,
         status: CheckoutSessionStatus.AWAITING_PAYMENT,
-        providerOrderId: intention.intentionId,
+        providerOrderId: intention.providerOrderId,
         hostedCheckoutUrl: hostedUrl,
       });
     } catch (error: unknown) {

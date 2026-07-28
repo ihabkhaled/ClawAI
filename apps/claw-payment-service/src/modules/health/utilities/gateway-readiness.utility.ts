@@ -18,6 +18,7 @@ export function isPaymobConfigured(config: AppConfigType): boolean {
   return (
     isPresent(config.PAYMOB_SECRET_KEY) &&
     isPresent(config.PAYMOB_PUBLIC_KEY) &&
+    isPresent(config.PAYMOB_API_KEY) &&
     isPresent(config.PAYMOB_HMAC_SECRET) &&
     isPresent(config.PAYMOB_CARD_INTEGRATION_ID)
   );

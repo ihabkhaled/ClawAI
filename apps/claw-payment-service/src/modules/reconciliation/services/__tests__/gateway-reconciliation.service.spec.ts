@@ -50,7 +50,7 @@ function checkout(id: string, overrides: Partial<CheckoutSession> = {}): Checkou
 describe('GatewayReconciliationService', () => {
   let sessions: { countExpiredPending: jest.Mock; listExpiredPending: jest.Mock };
   let paypal: { getOrder: jest.Mock };
-  let paymob: { fetchTransaction: jest.Mock };
+  let paymob: { fetchTransactionByReference: jest.Mock };
   let activation: { activate: jest.Mock };
   let reconciliation: { recordFinding: jest.Mock };
   let service: GatewayReconciliationService;
@@ -71,7 +71,7 @@ describe('GatewayReconciliationService', () => {
         mismatchReason: null,
       }),
     };
-    paymob = { fetchTransaction: jest.fn() };
+    paymob = { fetchTransactionByReference: jest.fn() };
     activation = { activate: jest.fn().mockResolvedValue('subscription-1') };
     reconciliation = { recordFinding: jest.fn() };
     service = new GatewayReconciliationService(
@@ -155,7 +155,7 @@ describe('GatewayReconciliationService', () => {
     sessions.listExpiredPending.mockResolvedValueOnce([
       checkout('checkout-1', { gateway: BillingGateway.PAYMOB }),
     ]);
-    paymob.fetchTransaction.mockResolvedValueOnce({
+    paymob.fetchTransactionByReference.mockResolvedValueOnce({
       verified: false,
       transactionId: 'transaction-1',
       amountMinor: null,
@@ -166,7 +166,10 @@ describe('GatewayReconciliationService', () => {
 
     await service.reconcile('run-1', new Date('2026-07-26T00:00:00.000Z'));
 
-    expect(paymob.fetchTransaction).toHaveBeenCalledTimes(1);
+    expect(paymob.fetchTransactionByReference).toHaveBeenCalledWith(
+      'checkout-1',
+      expect.objectContaining({ checkoutSessionId: 'checkout-1' }),
+    );
     expect(reconciliation.recordFinding).toHaveBeenCalledWith(
       expect.objectContaining({
         classification: ReconciliationClassification.LOCAL_PENDING_PROVIDER_PENDING,

@@ -110,7 +110,7 @@ export class GatewayReconciliationService {
       return classifyPaypalResult(result);
     }
     if (session.gateway === BillingGateway.PAYMOB) {
-      const result = await this.paymob.fetchTransaction(session.providerOrderId ?? '', expected);
+      const result = await this.paymob.fetchTransactionByReference(session.id, expected);
       return classifyPaymobResult(result);
     }
     return {

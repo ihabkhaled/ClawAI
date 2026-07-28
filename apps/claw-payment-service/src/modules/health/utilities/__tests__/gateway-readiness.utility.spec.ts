@@ -87,8 +87,8 @@ describe('gateway-readiness.utility', () => {
       expect(isPaymobConfigured(buildConfig({ PAYMOB_PUBLIC_KEY: undefined }))).toBe(false);
     });
 
-    it('does not require the legacy API key, which newer merchants lack', () => {
-      expect(isPaymobConfigured(buildConfig({ PAYMOB_API_KEY: undefined }))).toBe(true);
+    it('rejects a missing API key required for authoritative transaction inquiry', () => {
+      expect(isPaymobConfigured(buildConfig({ PAYMOB_API_KEY: undefined }))).toBe(false);
     });
   });
 });

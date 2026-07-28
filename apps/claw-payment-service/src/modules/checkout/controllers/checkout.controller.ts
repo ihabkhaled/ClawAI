@@ -15,10 +15,12 @@ import {
 } from '../dto/checkout.dto';
 import { CheckoutService } from '../services/checkout.service';
 import { PaymentMethodSetupService } from '../services/payment-method-setup.service';
+import { PaymobCheckoutCompletionService } from '../services/paymob-checkout-completion.service';
 import { PaypalCheckoutCompletionService } from '../services/paypal-checkout-completion.service';
 import {
   type CheckoutSessionView,
   type PaymentMethodSetupSessionView,
+  type PaymobCompletionView,
 } from '../types/checkout.types';
 import { PlanCatalogClient } from '../../plan-catalog/plan-catalog.client';
 import { type PlanCatalogEntry } from '../../plan-catalog/types/plan-catalog.types';
@@ -33,6 +35,7 @@ export class CheckoutController {
     private readonly paymentMethodSetup: PaymentMethodSetupService,
     private readonly catalog: PlanCatalogClient,
     private readonly paypalCompletion: PaypalCheckoutCompletionService,
+    private readonly paymobCompletion: PaymobCheckoutCompletionService,
   ) {}
 
   @Get('plans')
@@ -91,6 +94,17 @@ export class CheckoutController {
       sessionId: params.id,
       providerOrderId: dto.providerOrderId,
       state: dto.state,
+    });
+  }
+
+  @Post('checkout-sessions/:id/complete-paymob')
+  async completePaymob(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param(new ZodValidationPipe(checkoutSessionParamSchema)) params: CheckoutSessionParamDto,
+  ): Promise<PaymobCompletionView> {
+    return this.paymobCompletion.complete({
+      userId: user.id,
+      sessionId: params.id,
     });
   }
 }

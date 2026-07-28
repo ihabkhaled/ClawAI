@@ -242,7 +242,7 @@ export class CheckoutService {
       description: `${CHECKOUT_DESCRIPTION_PREFIX} — ${session.billingInterval.toLowerCase()}`,
     });
     return {
-      providerOrderId: result.intentionId,
+      providerOrderId: result.providerOrderId,
       hostedUrl: CheckoutService.buildPaymobCheckoutUrl(result.clientSecret),
     };
   }

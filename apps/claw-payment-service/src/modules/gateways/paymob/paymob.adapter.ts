@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BillingErrorCode, HttpMethod } from '@claw/shared-types';
+import { BillingErrorCode, BillingGateway, HttpMethod } from '@claw/shared-types';
 import { httpRequest } from '@claw/shared-utilities';
 import { type ZodType } from 'zod';
 
@@ -21,6 +21,7 @@ import {
   type PaymobTransaction,
   paymobTransactionSchema,
 } from './schemas/paymob-response.schema';
+import { PaymobTokenManager } from './managers/paymob-token.manager';
 import { verifyPaymobCardTokenHmac, verifyPaymobHmac } from './utilities/paymob-hmac.utility';
 import {
   type PaymobIntentionInput,
@@ -38,6 +39,8 @@ import {
 @Injectable()
 export class PaymobAdapter {
   private readonly logger = new Logger(PaymobAdapter.name);
+
+  constructor(private readonly tokens: PaymobTokenManager) {}
 
   // Creates a server-priced intention. The checkout session id travels as
   // special_reference / merchant_order_id so the callback can be tied back to
@@ -67,6 +70,7 @@ export class PaymobAdapter {
         phone_number: 'NA',
       },
       extras: { checkoutSessionId: input.checkoutSessionId },
+      ...PaymobAdapter.callbackUrls(input.checkoutSessionId),
     };
 
     const intention = await this.send(
@@ -82,6 +86,7 @@ export class PaymobAdapter {
 
     return {
       intentionId: String(intention.id),
+      providerOrderId: String(intention.intention_order_id ?? intention.id),
       clientSecret: intention.client_secret,
     };
   }
@@ -118,11 +123,13 @@ export class PaymobAdapter {
           paymentMethodSetup: true,
         },
         description: PAYMOB_SETUP_DESCRIPTION,
+        ...PaymobAdapter.callbackUrls(input.checkoutSessionId),
       },
       true,
     );
     return {
       intentionId: String(intention.id),
+      providerOrderId: String(intention.intention_order_id ?? intention.id),
       clientSecret: intention.client_secret,
     };
   }
@@ -158,12 +165,35 @@ export class PaymobAdapter {
     transactionId: string,
     expected: { amountMinor: number; currency: string; checkoutSessionId: string },
   ): Promise<PaymobVerificationResult> {
+    const accessToken = await this.tokens.getAccessToken();
     const transaction = await this.send(
       HttpMethod.GET,
       `${PAYMOB_PATHS.TRANSACTION}/${transactionId}`,
       paymobTransactionSchema,
       undefined,
       true,
+      { Authorization: `Bearer ${accessToken}` },
+      false,
+    );
+    return PaymobAdapter.verifyTransaction(transaction, expected);
+  }
+
+  async fetchTransactionByReference(
+    merchantOrderId: string,
+    expected: { amountMinor: number; currency: string; checkoutSessionId: string },
+  ): Promise<PaymobVerificationResult> {
+    const accessToken = await this.tokens.getAccessToken();
+    const transaction = await this.send(
+      HttpMethod.POST,
+      PAYMOB_PATHS.TRANSACTION_INQUIRY,
+      paymobTransactionSchema,
+      {
+        auth_token: accessToken,
+        merchant_order_id: merchantOrderId,
+      },
+      true,
+      {},
+      false,
     );
     return PaymobAdapter.verifyTransaction(transaction, expected);
   }
@@ -275,6 +305,7 @@ export class PaymobAdapter {
     body: unknown,
     retryable: boolean,
     additionalHeaders: Readonly<Record<string, string>> = {},
+    useSecretAuthorization: boolean = true,
   ): Promise<T> {
     const config = AppConfig.get();
     if (config.PAYMOB_SECRET_KEY === undefined) {
@@ -290,7 +321,7 @@ export class PaymobAdapter {
         url: `${PAYMOB_BASE_URL}${path}`,
         method,
         headers: {
-          Authorization: `Token ${config.PAYMOB_SECRET_KEY}`,
+          ...(useSecretAuthorization ? { Authorization: `Token ${config.PAYMOB_SECRET_KEY}` } : {}),
           ...additionalHeaders,
         },
         body,
@@ -322,5 +353,20 @@ export class PaymobAdapter {
     return new Promise((resolve) => {
       setTimeout(resolve, ms);
     });
+  }
+
+  private static callbackUrls(checkoutSessionId: string): {
+    notification_url: string;
+    redirection_url: string;
+  } {
+    const base = AppConfig.get().FRONTEND_URL.replace(/\/+$/, '');
+    const redirectQuery = new URLSearchParams({
+      session: checkoutSessionId,
+      gateway: BillingGateway.PAYMOB,
+    });
+    return {
+      notification_url: `${base}/api/v1/payments/webhooks/paymob`,
+      redirection_url: `${base}/billing/return?${redirectQuery.toString()}`,
+    };
   }
 }

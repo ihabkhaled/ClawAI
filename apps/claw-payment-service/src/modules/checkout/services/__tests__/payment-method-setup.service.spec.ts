@@ -45,6 +45,7 @@ describe('PaymentMethodSetupService', () => {
     sessions.create.mockResolvedValue(setupSession());
     paymob.createSetupIntention.mockResolvedValue({
       intentionId: 'intention-1',
+      providerOrderId: 'provider-order-1',
       clientSecret: 'client-secret',
     });
     service = new PaymentMethodSetupService(
@@ -84,12 +85,21 @@ describe('PaymentMethodSetupService', () => {
     });
     paymob.createSetupIntention.mockImplementation(async () => {
       order.push('gateway');
-      return { intentionId: 'intention-1', clientSecret: 'client-secret' };
+      return {
+        intentionId: 'intention-1',
+        providerOrderId: 'provider-order-1',
+        clientSecret: 'client-secret',
+      };
     });
 
     await service.start(INPUT);
 
     expect(order).toEqual(['session', 'gateway']);
+    expect(sessions.attachProviderOrder).toHaveBeenCalledWith(
+      'setup-1',
+      'provider-order-1',
+      expect.any(String),
+    );
   });
 
   it('replays only a setup session for the same idempotency key', async () => {

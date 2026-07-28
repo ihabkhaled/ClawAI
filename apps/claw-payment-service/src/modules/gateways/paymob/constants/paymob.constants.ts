@@ -3,10 +3,14 @@
 export const PAYMOB_BASE_URL = 'https://accept.paymob.com';
 
 export const PAYMOB_PATHS = {
+  AUTH_TOKEN: '/api/auth/tokens',
   INTENTION: '/v1/intention/',
   TRANSACTION: '/api/acceptance/transactions',
+  TRANSACTION_INQUIRY: '/api/ecommerce/orders/transaction_inquiry',
   REFUND: '/api/acceptance/void_refund/refund',
 } as const;
+
+export const PAYMOB_ACCESS_TOKEN_CACHE_MS = 55 * 60 * 1000;
 
 // Paymob computes the callback HMAC over these fields, concatenated in EXACTLY
 // this order with no separator. The order is part of the protocol — sorting or

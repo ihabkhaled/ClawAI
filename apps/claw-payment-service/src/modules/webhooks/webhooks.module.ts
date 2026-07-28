@@ -12,6 +12,7 @@ import { BillingCustomerRepository } from './repositories/billing-customer.repos
 import { WebhookEventRepository } from './repositories/webhook-event.repository';
 import { PaymentActivationService } from './services/payment-activation.service';
 import { PaymentReversalService } from './services/payment-reversal.service';
+import { PaymobCallbackRouterService } from './services/paymob-callback-router.service';
 import { PaymobCardTokenService } from './services/paymob-card-token.service';
 import { PaymobWebhookService } from './services/paymob-webhook.service';
 import { PaypalWebhookService } from './services/paypal-webhook.service';
@@ -28,6 +29,7 @@ import { PaypalWebhookService } from './services/paypal-webhook.service';
     PaypalWebhookService,
     PaymobWebhookService,
     PaymobCardTokenService,
+    PaymobCallbackRouterService,
     PaymentActivationService,
     PaymentReversalService,
     PaymentMethodVaultService,
