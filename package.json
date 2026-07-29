@@ -71,7 +71,7 @@
     "@typescript/native-preview": "^7.0.0-dev.20260607.1",
     "eslint": "^9.39.4",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.7",
+    "lint-staged": "^17.2.0",
     "prettier": "^3.9.5",
     "prisma": "^7.8.0",
     "vitest": "^4.1.10",
