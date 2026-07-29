@@ -173,6 +173,10 @@
       "to": "@claw/shared-utilities"
     },
     {
+      "from": "claw-frontend",
+      "to": "@claw/shared-types"
+    },
+    {
       "from": "claw-health-service",
       "to": "@claw/shared-utilities"
     },

@@ -8699,7 +8699,9 @@
       },
       {
         "dir": "apps/claw-frontend",
-        "internalDeps": [],
+        "internalDeps": [
+          "@claw/shared-types"
+        ],
         "name": "claw-frontend",
         "scripts": [
           "build",
