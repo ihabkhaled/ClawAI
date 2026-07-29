@@ -8697,7 +8697,6 @@
           "lint-staged",
           "lint:fix",
           "lint:strict",
-          "prepare",
           "start",
           "test",
           "test:cov",

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "clear-cache": "rm -rf .next",
+    "clear-cache": "node -e \"require('node:fs').rmSync('.next', { recursive: true, force: true })\"",
     "dev": "npm run clear-cache && next dev --turbopack --port 3000",
     "build": "npm run clear-cache && next build --turbopack",
     "build:vercel": "next build --turbopack",
@@ -19,7 +19,6 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "prepare": "cd ../.. && node apps/claw-frontend/.husky/install.mjs 2>/dev/null || true",
     "lint-staged": "lint-staged"
   },
   "dependencies": {
