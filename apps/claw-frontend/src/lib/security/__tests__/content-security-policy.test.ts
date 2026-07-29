@@ -45,6 +45,19 @@ describe('buildContentSecurityPolicy', () => {
     expect(csp).toContain('https://eg.checkout.paymob.com');
   });
 
+  it('allows PayPal SDK scripts, checkout frames, images, and provider calls', () => {
+    const csp = buildContentSecurityPolicy({
+      nonce: 'abc123',
+      isDev: true,
+      adsenseEnabled: false,
+      upgradeInsecureRequests: false,
+    });
+
+    expect(csp).toContain('https://www.paypal.com');
+    expect(csp).toContain('https://www.paypalobjects.com');
+    expect(csp).toContain('https://*.paypal.com');
+  });
+
   it('never allows unsafe-inline for scripts', () => {
     const csp = buildContentSecurityPolicy(baseOptions);
     const scriptDirective = csp.split(';').find((d) => d.trim().startsWith('script-src'));

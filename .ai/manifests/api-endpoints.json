@@ -1728,6 +1728,11 @@
         "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/billing/checkout-sessions/:id/complete-paypal-sdk",
+        "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/billing/invoices",
         "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
@@ -2783,5 +2788,5 @@
     ]
   },
   "generated": true,
-  "total": 549
+  "total": 550
 }

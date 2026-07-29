@@ -44,6 +44,14 @@ export const completePaypalCheckoutSchema = z
 
 export type CompletePaypalCheckoutDto = z.infer<typeof completePaypalCheckoutSchema>;
 
+export const completePaypalSdkCheckoutSchema = z
+  .object({
+    providerOrderId: z.string().min(1).max(64),
+  })
+  .strict();
+
+export type CompletePaypalSdkCheckoutDto = z.infer<typeof completePaypalSdkCheckoutSchema>;
+
 export const planChangeQuoteSchema = z.object({
   targetPlanId: z.string().min(1).max(64),
   billingInterval: z.nativeEnum(BillingInterval),

@@ -3,7 +3,6 @@
 import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -19,6 +18,7 @@ import { BillingGateway } from '@/enums/billing.enum';
 import { billingRepository } from '@/repositories/billing/billing.repository';
 import type { GatewayCheckoutDialogProps } from '@/types/billing-component.types';
 import { loadPaymobPixel, readPaymobCredentials } from '@/utilities/paymob-pixel.utility';
+import { readPaypalOrderId, renderPaypalButtons } from '@/utilities/paypal-buttons.utility';
 
 export function GatewayCheckoutDialog({
   session,
@@ -29,6 +29,7 @@ export function GatewayCheckoutDialog({
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const completed = useRef(false);
+  const [paypalElement, setPaypalElement] = useState<HTMLDivElement | null>(null);
   const elementId = useMemo(() => `paymob-elements-${session?.id ?? 'closed'}`, [session?.id]);
   const isSetup = session !== null && 'purpose' in session;
 
@@ -93,6 +94,65 @@ export function GatewayCheckoutDialog({
   }, [completePaymob, elementId, isSetup, onClose, session, t]);
 
   useEffect(() => {
+    if (
+      session === null ||
+      session.gateway !== BillingGateway.PAYPAL ||
+      session.hostedCheckoutUrl === null ||
+      !('chargeCurrency' in session) ||
+      paypalElement === null
+    ) {
+      return;
+    }
+    const orderId = readPaypalOrderId(session.hostedCheckoutUrl);
+    if (orderId === null) {
+      setError(t('billing.gatewayDialog.loadFailed'));
+      return;
+    }
+    let active = true;
+    let closeButtons: (() => void) | undefined;
+    const completePaypal = async (providerOrderId: string): Promise<void> => {
+      if (completed.current) {
+        return;
+      }
+      completed.current = true;
+      setIsVerifying(true);
+      setError(null);
+      try {
+        await billingRepository.completePaypalSdkCheckout(session.id, { providerOrderId });
+        await onComplete();
+      } catch {
+        completed.current = false;
+        setIsVerifying(false);
+        setError(t('billing.gatewayDialog.verifyFailed'));
+      }
+    };
+    void renderPaypalButtons({
+      container: paypalElement,
+      currency: session.chargeCurrency,
+      createOrder: () => Promise.resolve(orderId),
+      onApprove: (data) => completePaypal(data.orderID),
+      onCancel: onClose,
+      onError: () => {
+        if (active) {
+          setError(t('billing.gatewayDialog.loadFailed'));
+        }
+      },
+    })
+      .then((handle) => {
+        closeButtons = handle.close;
+      })
+      .catch(() => {
+        if (active) {
+          setError(t('billing.gatewayDialog.loadFailed'));
+        }
+      });
+    return () => {
+      active = false;
+      closeButtons?.();
+    };
+  }, [onClose, onComplete, paypalElement, session, t]);
+
+  useEffect(() => {
     if (session === null) {
       return;
     }
@@ -119,20 +179,6 @@ export function GatewayCheckoutDialog({
     };
   }, [onComplete, session]);
 
-  const openPaypal = useCallback(() => {
-    if (session?.hostedCheckoutUrl === null || session?.hostedCheckoutUrl === undefined) {
-      return;
-    }
-    const popup = window.open(
-      session.hostedCheckoutUrl,
-      'claw-paypal-checkout',
-      'popup,width=520,height=720,resizable=yes,scrollbars=yes',
-    );
-    if (popup === null) {
-      setError(t('billing.gatewayDialog.popupBlocked'));
-    }
-  }, [session, t]);
-
   return (
     <Dialog
       open={session !== null}
@@ -153,11 +199,15 @@ export function GatewayCheckoutDialog({
         </DialogHeader>
 
         {session?.gateway === BillingGateway.PAYMOB ? (
-          <div id={elementId} className="min-h-80 w-full overflow-y-auto" />
+          <div
+            id={elementId}
+            className="min-h-80 w-full overflow-y-auto rounded-xl bg-white p-3 [color-scheme:light]"
+          />
         ) : (
-          <Button type="button" onClick={openPaypal}>
-            {t('billing.gatewayDialog.openPaypal')}
-          </Button>
+          <div
+            ref={setPaypalElement}
+            className="min-h-24 w-full rounded-xl bg-white p-3 [color-scheme:light]"
+          />
         )}
 
         {isVerifying ? (

@@ -340,7 +340,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-payment-service",
-      "endpointCount": 29,
+      "endpointCount": 30,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",

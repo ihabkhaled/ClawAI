@@ -34,6 +34,7 @@ describe('usePaypalReturn', () => {
     searchParams.set('session', 'checkout-1');
     searchParams.set('gateway', 'PAYMOB');
     mockCompletePaymob.mockResolvedValue({ status: 'COMPLETED' });
+    const close = vi.spyOn(window, 'close').mockImplementation(() => undefined);
 
     const { result } = renderHook(() => usePaypalReturn());
 
@@ -42,14 +43,16 @@ describe('usePaypalReturn', () => {
     });
     expect(mockCompletePaymob).toHaveBeenCalledWith('checkout-1');
     expect(mockComplete).not.toHaveBeenCalled();
-    expect(mockReplace).toHaveBeenCalledWith('/billing');
+    expect(close).toHaveBeenCalledOnce();
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 
-  it('completes the bound checkout once and returns to billing', async () => {
+  it('completes the bound checkout once and closes the payment window', async () => {
     searchParams.set('session', 'checkout-1');
     searchParams.set('state', 'a'.repeat(64));
     searchParams.set('token', '5O190127TN364715T');
     mockComplete.mockResolvedValue({ id: 'checkout-1', status: 'COMPLETED' });
+    const close = vi.spyOn(window, 'close').mockImplementation(() => undefined);
 
     const { result, rerender } = renderHook(() => usePaypalReturn());
     rerender();
@@ -62,7 +65,8 @@ describe('usePaypalReturn', () => {
       providerOrderId: '5O190127TN364715T',
       state: 'a'.repeat(64),
     });
-    expect(mockReplace).toHaveBeenCalledWith('/billing');
+    expect(close).toHaveBeenCalledOnce();
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 
   it('rejects a malformed return locally without calling the API', async () => {

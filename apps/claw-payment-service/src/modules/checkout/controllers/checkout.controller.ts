@@ -8,6 +8,8 @@ import {
   checkoutSessionParamSchema,
   type CompletePaypalCheckoutDto,
   completePaypalCheckoutSchema,
+  type CompletePaypalSdkCheckoutDto,
+  completePaypalSdkCheckoutSchema,
   type CreateCheckoutSessionDto,
   createCheckoutSessionSchema,
   type CreatePaymentMethodSetupSessionDto,
@@ -94,6 +96,20 @@ export class CheckoutController {
       sessionId: params.id,
       providerOrderId: dto.providerOrderId,
       state: dto.state,
+    });
+  }
+
+  @Post('checkout-sessions/:id/complete-paypal-sdk')
+  async completePaypalSdk(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param(new ZodValidationPipe(checkoutSessionParamSchema)) params: CheckoutSessionParamDto,
+    @Body(new ZodValidationPipe(completePaypalSdkCheckoutSchema))
+    dto: CompletePaypalSdkCheckoutDto,
+  ): Promise<CheckoutSessionView> {
+    return this.paypalCompletion.completeSdk({
+      userId: user.id,
+      sessionId: params.id,
+      providerOrderId: dto.providerOrderId,
     });
   }
 

@@ -1774,6 +1774,11 @@
           "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/billing/checkout-sessions/:id/complete-paypal-sdk",
+          "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/billing/invoices",
           "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
@@ -9153,7 +9158,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 549,
+    "endpointCount": 550,
     "envVarCount": 335,
     "eventCount": 165,
     "frontendRouteCount": 112,

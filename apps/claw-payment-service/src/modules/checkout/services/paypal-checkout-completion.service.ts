@@ -14,6 +14,7 @@ import { PaymentActivationService } from '../../webhooks/services/payment-activa
 import {
   type CheckoutSessionView,
   type CompletePaypalCheckoutInput,
+  type CompletePaypalSdkCheckoutInput,
 } from '../types/checkout.types';
 import { toCheckoutSessionView } from '../utilities/checkout-view.utility';
 import { type PaypalCaptureVerification } from '../../gateways/paypal/types/paypal.types';
@@ -30,17 +31,32 @@ export class PaypalCheckoutCompletionService {
   ) {}
 
   async complete(input: CompletePaypalCheckoutInput): Promise<CheckoutSessionView> {
+    this.logger.debug(`complete: session=${input.sessionId}`);
     const session = await this.requireOwnedSession(input);
     if (session.status === CheckoutSessionStatus.COMPLETED) {
       return toCheckoutSessionView(session);
     }
     PaypalCheckoutCompletionService.assertReturnBinding(session, input);
+    return this.captureAndActivate(session, input.userId, input.sessionId, input.providerOrderId);
+  }
 
-    const claimed = await this.sessions.claimForCapture(
-      input.userId,
-      input.sessionId,
-      input.providerOrderId,
-    );
+  async completeSdk(input: CompletePaypalSdkCheckoutInput): Promise<CheckoutSessionView> {
+    this.logger.debug(`completeSdk: session=${input.sessionId}`);
+    const session = await this.requireOwnedSession(input);
+    if (session.status === CheckoutSessionStatus.COMPLETED) {
+      return toCheckoutSessionView(session);
+    }
+    PaypalCheckoutCompletionService.assertSdkBinding(session, input);
+    return this.captureAndActivate(session, input.userId, input.sessionId, input.providerOrderId);
+  }
+
+  private async captureAndActivate(
+    session: SubscriptionCheckoutSession,
+    userId: string,
+    sessionId: string,
+    providerOrderId: string,
+  ): Promise<CheckoutSessionView> {
+    const claimed = await this.sessions.claimForCapture(userId, sessionId, providerOrderId);
     if (!claimed) {
       return toCheckoutSessionView(session);
     }
@@ -108,7 +124,7 @@ export class PaypalCheckoutCompletionService {
   }
 
   private async requireOwnedSession(
-    input: CompletePaypalCheckoutInput,
+    input: CompletePaypalCheckoutInput | CompletePaypalSdkCheckoutInput,
   ): Promise<SubscriptionCheckoutSession> {
     const session = await this.sessions.findById(input.sessionId);
     if (
@@ -125,10 +141,17 @@ export class PaypalCheckoutCompletionService {
     session: SubscriptionCheckoutSession,
     input: CompletePaypalCheckoutInput,
   ): void {
-    if (
-      session.providerOrderId !== input.providerOrderId ||
-      !PaypalCheckoutCompletionService.statesMatch(session.stateNonce, input.state)
-    ) {
+    PaypalCheckoutCompletionService.assertSdkBinding(session, input);
+    if (!PaypalCheckoutCompletionService.statesMatch(session.stateNonce, input.state)) {
+      throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
+    }
+  }
+
+  private static assertSdkBinding(
+    session: SubscriptionCheckoutSession,
+    input: CompletePaypalSdkCheckoutInput,
+  ): void {
+    if (session.providerOrderId !== input.providerOrderId) {
       throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
     }
     if (session.expiresAt.getTime() <= Date.now()) {

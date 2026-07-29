@@ -2,6 +2,7 @@ import {
   completePaypalCheckoutSchema,
   createPaymentMethodSetupSessionSchema,
 } from '../checkout.dto';
+import * as checkoutDto from '../checkout.dto';
 
 describe('createPaymentMethodSetupSessionSchema', () => {
   it('accepts explicit consent with a bounded idempotency key', () => {
@@ -45,5 +46,26 @@ describe('completePaypalCheckoutSchema', () => {
     { ...validInput, amountMinor: 1 },
   ])('rejects an unsafe PayPal completion request', (input) => {
     expect(completePaypalCheckoutSchema.safeParse(input).success).toBe(false);
+  });
+});
+
+describe('completePaypalSdkCheckoutSchema', () => {
+  it('accepts only the bounded provider order approved by the PayPal SDK', () => {
+    const schema: unknown = Reflect.get(checkoutDto, 'completePaypalSdkCheckoutSchema');
+
+    expect(schema).toBeDefined();
+    if (
+      typeof schema !== 'object' ||
+      schema === null ||
+      !('safeParse' in schema) ||
+      typeof schema.safeParse !== 'function'
+    ) {
+      return;
+    }
+
+    expect(schema.safeParse({ providerOrderId: '5O190127TN364715T' }).success).toBe(true);
+    expect(schema.safeParse({ providerOrderId: '5O190127TN364715T', amountMinor: 1 }).success).toBe(
+      false,
+    );
   });
 });

@@ -185,6 +185,51 @@ describe('PaypalCheckoutCompletionService', () => {
     expect(paypal.captureOrder).not.toHaveBeenCalled();
   });
 
+  it('captures an SDK-approved owned order without trusting redirect state', async () => {
+    const completeSdk: unknown = Reflect.get(service, 'completeSdk');
+
+    expect(completeSdk).toBeInstanceOf(Function);
+    if (typeof completeSdk !== 'function') {
+      return;
+    }
+
+    await completeSdk.call(service, {
+      userId: USER_ID,
+      sessionId: SESSION_ID,
+      providerOrderId: ORDER_ID,
+    });
+
+    expect(sessions.claimForCapture).toHaveBeenCalledWith(USER_ID, SESSION_ID, ORDER_ID);
+    expect(paypal.captureOrder).toHaveBeenCalledWith(
+      ORDER_ID,
+      expect.objectContaining({
+        amountMinor: 500,
+        currency: 'USD',
+        checkoutSessionId: SESSION_ID,
+      }),
+    );
+    expect(activation.activate).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a substituted SDK order before contacting PayPal', async () => {
+    const completeSdk: unknown = Reflect.get(service, 'completeSdk');
+
+    expect(completeSdk).toBeInstanceOf(Function);
+    if (typeof completeSdk !== 'function') {
+      return;
+    }
+
+    await expect(
+      completeSdk.call(service, {
+        userId: USER_ID,
+        sessionId: SESSION_ID,
+        providerOrderId: 'ORDER-ATTACKER',
+      }),
+    ).rejects.toMatchObject({ code: 'PAYMENT_REFERENCE_MISMATCH' });
+    expect(sessions.claimForCapture).not.toHaveBeenCalled();
+    expect(paypal.captureOrder).not.toHaveBeenCalled();
+  });
+
   it('returns a completed replay without capturing again', async () => {
     sessions.findById.mockResolvedValue(
       session({
