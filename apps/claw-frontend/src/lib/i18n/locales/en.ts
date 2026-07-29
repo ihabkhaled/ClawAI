@@ -3529,10 +3529,11 @@ export const en: TranslationDictionary = {
       paymobDescription: 'Complete payment securely without leaving ClawAI.',
       paypalDescription: 'PayPal opens in a secure popup while this dialog tracks completion.',
       openPaypal: 'Open PayPal',
+      openPaymob: 'Open Paymob',
       verifying: 'Verifying payment…',
       verifyFailed: 'We could not verify the payment. Please try again.',
       loadFailed: 'We could not load the secure payment form.',
-      popupBlocked: 'Your browser blocked the PayPal popup. Allow popups and try again.',
+      popupBlocked: 'Your browser blocked the payment popup. Allow popups and try again.',
     },
     planChange: {
       quoteFailed: 'We could not price that change. Please try again.',

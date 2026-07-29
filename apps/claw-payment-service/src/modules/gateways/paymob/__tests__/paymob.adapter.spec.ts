@@ -81,6 +81,39 @@ describe('PaymobAdapter', () => {
       );
     });
 
+    it('sends server callbacks to the dedicated public webhook URL', async () => {
+      jest.spyOn(AppConfig, 'get').mockReturnValue({
+        PAYMOB_SECRET_KEY: 'sk',
+        PAYMOB_CARD_INTEGRATION_ID: '4242',
+        PAYMOB_WEBHOOK_URL: 'https://billing-webhooks.example.com/payments/webhooks/paymob',
+        FRONTEND_URL: 'https://claw.local',
+        PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
+        PAYMENT_GATEWAY_MAX_RETRIES: 3,
+      } as unknown as ReturnType<typeof AppConfig.get>);
+      mockHttp.mockResolvedValue({
+        ok: true,
+        status: 200,
+        data: { id: 'INT1', client_secret: 'cs_secret', intention_order_id: 987 },
+      });
+
+      await adapter.createIntention({
+        amountMinor: 50_000,
+        currency: 'EGP',
+        checkoutSessionId: 'cs_9',
+        idempotencyKey: 'idem',
+        billingEmail: 'user@example.com',
+        description: 'Pro monthly',
+      });
+
+      const body = mockHttp.mock.calls[0]?.[0]?.body as Record<string, unknown>;
+      expect(body['notification_url']).toBe(
+        'https://billing-webhooks.example.com/payments/webhooks/paymob',
+      );
+      expect(body['redirection_url']).toBe(
+        'https://claw.local/billing/return?session=cs_9&gateway=PAYMOB',
+      );
+    });
+
     it('refuses when Paymob is not fully configured', async () => {
       jest.spyOn(AppConfig, 'get').mockReturnValue({
         PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,

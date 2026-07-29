@@ -127,6 +127,19 @@ describe('AppConfig', () => {
       expect(AppConfig.validate().PAYMOB_CURRENCY).toBe('EGP');
     });
 
+    it('accepts a dedicated HTTPS Paymob webhook URL', () => {
+      process.env['PAYMOB_WEBHOOK_URL'] =
+        'https://billing-webhooks.example.com/payments/webhooks/paymob';
+      expect(AppConfig.validate().PAYMOB_WEBHOOK_URL).toBe(
+        'https://billing-webhooks.example.com/payments/webhooks/paymob',
+      );
+    });
+
+    it('rejects an insecure Paymob webhook URL', () => {
+      process.env['PAYMOB_WEBHOOK_URL'] = 'http://billing-webhooks.example.com/paymob';
+      expect(() => AppConfig.validate()).toThrow(/PAYMOB_WEBHOOK_URL/);
+    });
+
     it('rejects a malformed currency code', () => {
       process.env['PAYMOB_CURRENCY'] = 'EGYP';
       expect(() => AppConfig.validate()).toThrow();

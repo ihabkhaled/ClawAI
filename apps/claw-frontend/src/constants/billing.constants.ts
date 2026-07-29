@@ -23,6 +23,11 @@ export const CHECKOUT_POLL_INTERVAL_MS = 2_000;
 // minutes, which comfortably exceeds a hosted-checkout round trip.
 export const CHECKOUT_POLL_MAX_ATTEMPTS = 150;
 
+// A Paymob popup closes as soon as its browser callback fires, while the signed
+// webhook may still be in flight. Keep the parent checking for one minute so
+// verified completion can refresh billing without trusting the browser callback.
+export const CHECKOUT_CLOSED_POLL_MAX_ATTEMPTS = 30;
+
 export const PAYPAL_STATE_PATTERN = /^[a-f0-9]{64}$/;
 
 export const PAYMOB_PIXEL_URL = 'https://cdn.jsdelivr.net/npm/paymob-pixel@1.2.7/main.js';

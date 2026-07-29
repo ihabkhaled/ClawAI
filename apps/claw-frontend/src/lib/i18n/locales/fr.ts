@@ -3597,11 +3597,12 @@ export const fr: TranslationDictionary = {
       paypalDescription:
         'PayPal s’ouvre dans une fenêtre sécurisée pendant que cette boîte de dialogue suit la confirmation.',
       openPaypal: 'Ouvrir PayPal',
+      openPaymob: 'Ouvrir Paymob',
       verifying: 'Vérification du paiement…',
       verifyFailed: 'Nous n’avons pas pu vérifier le paiement. Veuillez réessayer.',
       loadFailed: 'Nous n’avons pas pu charger le formulaire de paiement sécurisé.',
       popupBlocked:
-        'Votre navigateur a bloqué la fenêtre PayPal. Autorisez les fenêtres contextuelles et réessayez.',
+        'Votre navigateur a bloqué la fenêtre de paiement. Autorisez les fenêtres contextuelles et réessayez.',
     },
     planChange: {
       quoteFailed: 'Nous n’avons pas pu chiffrer ce changement. Veuillez réessayer.',

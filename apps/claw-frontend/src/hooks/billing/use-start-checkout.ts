@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
+import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { billingRepository } from '@/repositories/billing/billing.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
@@ -17,6 +19,7 @@ import { showToast } from '@/utilities/toast.utility';
 export function useStartCheckout(): UseStartCheckoutReturn {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [gatewaySession, setGatewaySession] = useState<GatewayCheckoutSession | null>(null);
 
@@ -63,7 +66,9 @@ export function useStartCheckout(): UseStartCheckoutReturn {
   const completeGateway = useCallback(async () => {
     setGatewaySession(null);
     await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
-  }, [queryClient]);
+    router.replace(ROUTES.BILLING);
+    router.refresh();
+  }, [queryClient, router]);
 
   return {
     startCheckout,

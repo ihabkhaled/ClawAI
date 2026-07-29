@@ -3475,6 +3475,7 @@ export type TranslationDictionary = {
       paymobDescription: string;
       paypalDescription: string;
       openPaypal: string;
+      openPaymob: string;
       verifying: string;
       verifyFailed: string;
       loadFailed: string;

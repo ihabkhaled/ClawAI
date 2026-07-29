@@ -3514,10 +3514,11 @@ export const ar: TranslationDictionary = {
       paymobDescription: 'أكمل الدفع بأمان دون مغادرة ClawAI.',
       paypalDescription: 'يفتح PayPal في نافذة منبثقة آمنة بينما نتابع اكتمال الدفع هنا.',
       openPaypal: 'فتح PayPal',
+      openPaymob: 'فتح Paymob',
       verifying: 'جارٍ التحقق من الدفع…',
       verifyFailed: 'تعذّر التحقق من الدفع. يُرجى المحاولة مرة أخرى.',
       loadFailed: 'تعذّر تحميل نموذج الدفع الآمن.',
-      popupBlocked: 'حظر المتصفح نافذة PayPal. اسمح بالنوافذ المنبثقة وحاول مرة أخرى.',
+      popupBlocked: 'حظر المتصفح نافذة الدفع. اسمح بالنوافذ المنبثقة وحاول مرة أخرى.',
     },
     planChange: {
       quoteFailed: 'تعذّر تسعير هذا التغيير. يُرجى المحاولة مرة أخرى.',

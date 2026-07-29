@@ -3582,11 +3582,12 @@ export const es: TranslationDictionary = {
       paypalDescription:
         'PayPal se abre en una ventana emergente segura mientras este diálogo confirma el resultado.',
       openPaypal: 'Abrir PayPal',
+      openPaymob: 'Abrir Paymob',
       verifying: 'Verificando el pago…',
       verifyFailed: 'No pudimos verificar el pago. Inténtelo de nuevo.',
       loadFailed: 'No pudimos cargar el formulario de pago seguro.',
       popupBlocked:
-        'Su navegador bloqueó la ventana de PayPal. Permita ventanas emergentes e inténtelo de nuevo.',
+        'Su navegador bloqueó la ventana de pago. Permita ventanas emergentes e inténtelo de nuevo.',
     },
     planChange: {
       quoteFailed: 'No pudimos calcular el precio de ese cambio. Inténtelo de nuevo.',

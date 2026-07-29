@@ -97,6 +97,11 @@
       "route": "/use-cases"
     },
     {
+      "file": "apps/claw-frontend/src/app/(payment)/billing/payment-window/page.tsx",
+      "kind": "page",
+      "route": "/billing/payment-window"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/admin/ai-action-policies/page.tsx",
       "kind": "page",
       "route": "/admin/ai-action-policies"
