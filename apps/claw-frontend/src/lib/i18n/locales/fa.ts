@@ -25,6 +25,15 @@ export const fa: TranslationDictionary = {
     success: 'موفق',
     warning: 'هشدار',
   },
+  chat: {
+    ...en.chat,
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'این مدل نمی‌تواند پیوست‌های ویدیویی را پردازش کند. Gemini 2.5 Flash یا Pro را انتخاب کنید، یا به حالت خودکار بروید.',
+      videoAttachmentLocalModelUnavailable:
+        'پیوست‌های ویدیویی در حالت فقط محلی یا اولویت حریم خصوصی در دسترس نیستند، زیرا هیچ مدل محلی با قابلیت ویدیو پیکربندی نشده است.',
+    },
+  },
   settings: {
     ...en.settings,
     langJapanese: 'ژاپنی',

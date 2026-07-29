@@ -254,6 +254,12 @@ export const ar: TranslationDictionary = {
     providerFailed: 'فشل',
     tryingProvider: 'جار المحاولة',
     allProvidersFailed: 'فشل جميع المزودين في توليد رد',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'لا يستطيع هذا النموذج معالجة مرفقات الفيديو. اختر Gemini 2.5 Flash أو Pro، أو انتقل إلى الوضع التلقائي.',
+      videoAttachmentLocalModelUnavailable:
+        'مرفقات الفيديو غير متاحة في وضع التشغيل المحلي فقط أو وضع الخصوصية أولاً لعدم إعداد نموذج محلي يدعم الفيديو.',
+    },
     imageGeneration: 'توليد الصور',
     generatedImage: 'الصورة المُولَّدة',
     downloadImage: 'تنزيل الصورة',

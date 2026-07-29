@@ -153,6 +153,38 @@ describe('ConsensusExecutionManager', () => {
   });
 
   describe('background synthesis', () => {
+    it('clears the candidate timeout after a model completes', async () => {
+      jest.useFakeTimers();
+      try {
+        mockChatExecutionManager.callProvider.mockResolvedValue({
+          provider: 'ANTHROPIC',
+          model: 'claude-sonnet-4',
+          content: 'Response',
+          latencyMs: 100,
+          inputTokens: 5,
+          outputTokens: 10,
+        });
+        const executeWithTimeout = Reflect.get(manager, 'executeWithTimeout');
+        expect(typeof executeWithTimeout).toBe('function');
+        if (typeof executeWithTimeout !== 'function') {
+          throw new Error('Consensus candidate executor is unavailable');
+        }
+
+        await Reflect.apply(executeWithTimeout, manager, [
+          'thread-1',
+          sampleModels[0],
+          1,
+          1,
+          mockContext,
+          undefined,
+        ]);
+
+        expect(jest.getTimerCount()).toBe(0);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
     it('should store model messages and synthesis message when all models succeed', async () => {
       // Use isolated mocks to prevent call-count leakage from other tests' background tasks
       const isolatedCreate = jest.fn().mockResolvedValue({ id: 'msg-1', content: 'test' });

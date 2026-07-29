@@ -254,6 +254,12 @@ export const en: TranslationDictionary = {
     providerFailed: 'failed',
     tryingProvider: 'trying',
     allProvidersFailed: 'All providers failed to generate a response',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'This model cannot process video attachments. Choose Gemini 2.5 Flash or Pro, or switch to Auto.',
+      videoAttachmentLocalModelUnavailable:
+        'Video attachments are not available in local-only or privacy-first mode because no local video-capable model is configured.',
+    },
     imageGeneration: 'Image Generation',
     generatedImage: 'Generated Image',
     downloadImage: 'Download Image',

@@ -71,8 +71,6 @@ describe('buildGeminiRequestBody', () => {
     const result = await buildGeminiRequestBody(source, uploadFn, 10_000);
 
     expect(uploadFn).not.toHaveBeenCalled();
-    expect(result.inlineCount).toBe(1);
-    expect(result.fileDataCount).toBe(0);
     const parts = result.body.contents[0]!.parts;
     expect(parts).toHaveLength(2);
     expect((parts[0] as GeminiTextPart).text).toBe('Tiny image');
@@ -110,6 +108,63 @@ describe('buildGeminiRequestBody', () => {
     const fileDataPart = parts[0] as GeminiFileDataPart;
     expect(fileDataPart.file_data.mime_type).toBe('image/png');
     expect(fileDataPart.file_data.file_uri).toBe(fileUri);
+  });
+
+  it('inlines a small video with its original MIME type without decoding it as text', async () => {
+    const uploadFn = jest.fn<Promise<string>, [Buffer, string]>();
+    const videoBase64 = Buffer.from('small-video-bytes').toString('base64');
+    const source: OpenAiChatMessage[] = [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Describe this clip' },
+          {
+            type: 'image_url',
+            image_url: { url: `data:video/mp4;base64,${videoBase64}` },
+          },
+        ],
+      },
+    ];
+
+    const result = await buildGeminiRequestBody(source, uploadFn, 10_000);
+
+    expect(uploadFn).not.toHaveBeenCalled();
+    expect(result.inlineCount).toBe(1);
+    const inlinePart = result.body.contents[0]!.parts[1] as GeminiInlineDataPart;
+    expect(inlinePart.inline_data).toEqual({
+      mime_type: 'video/mp4',
+      data: videoBase64,
+    });
+  });
+
+  it('uploads a large video through the Gemini Files API path', async () => {
+    const uploadFn = jest
+      .fn<Promise<string>, [Buffer, string]>()
+      .mockResolvedValue('files/video-123');
+    const videoBase64 = base64OfSize(50_000);
+    const source: OpenAiChatMessage[] = [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image_url',
+            image_url: { url: `data:video/webm;base64,${videoBase64}` },
+          },
+        ],
+      },
+    ];
+
+    const result = await buildGeminiRequestBody(source, uploadFn, 10_000);
+
+    expect(uploadFn).toHaveBeenCalledTimes(1);
+    expect(uploadFn.mock.calls[0]![0]).toEqual(Buffer.from(videoBase64, 'base64'));
+    expect(uploadFn.mock.calls[0]![1]).toBe('video/webm');
+    expect(result.fileDataCount).toBe(1);
+    const filePart = result.body.contents[0]!.parts[0] as GeminiFileDataPart;
+    expect(filePart.file_data).toEqual({
+      mime_type: 'video/webm',
+      file_uri: 'files/video-123',
+    });
   });
 
   it('routes a mix of small + large attachments correctly (some inline, some uploaded)', async () => {
@@ -161,7 +216,7 @@ describe('buildGeminiRequestBody', () => {
     expect((parts[3] as GeminiFileDataPart).file_data.file_uri).toBe('files/large-pdf');
   });
 
-  it('surfaces an upload error via a FILE_UPLOAD_FAILED warning rather than swallowing it silently (inline fallback retained on the part)', async () => {
+  it('does not inline an oversized attachment when the Files API upload fails', async () => {
     const bigPng = base64OfSize(50_000);
     const uploadErr = new Error('Files API: 503 Service Unavailable');
     const uploadFn = jest.fn<Promise<string>, [Buffer, string]>().mockRejectedValue(uploadErr);
@@ -177,17 +232,61 @@ describe('buildGeminiRequestBody', () => {
       },
     ];
 
-    const result = await buildGeminiRequestBody(source, uploadFn, 10_000);
+    await expect(buildGeminiRequestBody(source, uploadFn, 10_000)).rejects.toThrow(
+      'Files API: 503 Service Unavailable',
+    );
 
     expect(uploadFn).toHaveBeenCalledTimes(1);
-    expect(result.warnings).toHaveLength(1);
-    expect(result.warnings[0]!.reason).toBe('FILE_UPLOAD_FAILED');
-    expect(result.warnings[0]!.detail).toContain('Files API: 503 Service Unavailable');
-    // The builder falls back to inline so the caller still sees an inline part
-    // rather than a dropped attachment — surfacing the error AND keeping the
-    // attachment delivery best-effort.
+    // Oversized content must never be copied back into inline_data after an
+    // upload failure; rejecting the request preserves the hard size boundary.
+  });
+
+  it('uses Files API when aggregate encoded inline bytes exceed the request ceiling', async () => {
+    const first = base64OfSize(6);
+    const second = base64OfSize(6);
+    const uploadFn = jest.fn<Promise<string>, [Buffer, string]>().mockResolvedValue('files/second');
+    const source: OpenAiChatMessage[] = [
+      {
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:image/png;base64,${first}` } },
+          { type: 'image_url', image_url: { url: `data:image/png;base64,${second}` } },
+        ],
+      },
+    ];
+
+    const result = await buildGeminiRequestBody(source, uploadFn, 12);
+
     expect(result.inlineCount).toBe(1);
-    expect(result.fileDataCount).toBe(0);
+    expect(result.fileDataCount).toBe(1);
+    expect(uploadFn).toHaveBeenCalledTimes(1);
+    expect((result.body.contents[0]!.parts[0] as GeminiInlineDataPart).inline_data.data).toBe(
+      first,
+    );
+    expect((result.body.contents[0]!.parts[1] as GeminiFileDataPart).file_data.file_uri).toBe(
+      'files/second',
+    );
+  });
+
+  it.each([
+    ['video/quicktime', 'video/mov'],
+    ['video/x-msvideo', 'video/avi'],
+  ])('normalizes %s to Gemini provider MIME %s', async (inputMime, providerMime) => {
+    const payload = base64OfSize(50_000);
+    const uploadFn = jest.fn<Promise<string>, [Buffer, string]>().mockResolvedValue('files/video');
+    const source: OpenAiChatMessage[] = [
+      {
+        role: 'user',
+        content: [{ type: 'image_url', image_url: { url: `data:${inputMime};base64,${payload}` } }],
+      },
+    ];
+
+    const result = await buildGeminiRequestBody(source, uploadFn, 10_000);
+
+    expect(uploadFn).toHaveBeenCalledWith(expect.any(Buffer), providerMime);
+    expect((result.body.contents[0]!.parts[0] as GeminiFileDataPart).file_data.mime_type).toBe(
+      providerMime,
+    );
   });
 
   it('maps assistant role to "model" and user role to "user"', async () => {

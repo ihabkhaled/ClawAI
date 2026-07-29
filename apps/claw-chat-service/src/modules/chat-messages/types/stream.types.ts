@@ -144,6 +144,7 @@ export type StreamEvent = {
   usage?: StreamUsage;
   // Error semantics for partial-output handling.
   code?: string;
+  messageKey?: string;
   retryable?: boolean;
   partialContentPreserved?: boolean;
   // RESEARCH_PROGRESS payload (compare-mode research-enricher lifecycle).
@@ -192,9 +193,15 @@ export type UsageEmitInput = StreamRunRef & {
 export type StreamErrorEmitInput = StreamRunRef & {
   stage: AiStreamStage;
   code: string;
+  messageKey?: string;
   safeMessage: string;
   retryable: boolean;
   partialContentPreserved: boolean;
+};
+
+export type StreamErrorMetadata = {
+  code?: string;
+  messageKey?: string;
 };
 
 export type ResearchProgressEmitInput = {

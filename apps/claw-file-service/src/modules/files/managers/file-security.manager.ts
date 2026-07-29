@@ -30,7 +30,7 @@ export class FileSecurityManager {
       reason: filenameCheck.reason,
     });
 
-    const magicCheck = validateMagicBytes(buffer, mimeType);
+    const magicCheck = await validateMagicBytes(buffer, mimeType);
     checks.push({ name: 'magic_bytes', passed: magicCheck.valid, reason: magicCheck.reason });
 
     const bombCheck = detectZipBomb(buffer);

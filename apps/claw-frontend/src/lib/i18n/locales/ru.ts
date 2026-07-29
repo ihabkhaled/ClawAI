@@ -256,6 +256,12 @@ export const ru: TranslationDictionary = {
     providerFailed: 'сбой',
     tryingProvider: 'пробуем',
     allProvidersFailed: 'Все провайдеры не смогли сгенерировать ответ',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'Эта модель не может обрабатывать видеофайлы. Выберите Gemini 2.5 Flash или Pro либо переключитесь в автоматический режим.',
+      videoAttachmentLocalModelUnavailable:
+        'Видеофайлы недоступны в режимах «Только локально» и «Сначала конфиденциальность», поскольку локальная модель с поддержкой видео не настроена.',
+    },
     imageGeneration: 'Генерация изображений',
     generatedImage: 'Сгенерированное изображение',
     downloadImage: 'Скачать изображение',

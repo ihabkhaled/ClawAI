@@ -6,17 +6,26 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
   Res,
   UseGuards,
 } from '@nestjs/common';
 import { type Response } from 'express';
 import { Public } from '../../../app/decorators/public.decorator';
 import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
+import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { type File, type FileChunk } from '../../../generated/prisma';
+import {
+  type InternalFileContentQueryDto,
+  internalFileContentQuerySchema,
+} from '../dto/internal-file-content-query.dto';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
 import { FilesRepository } from '../repositories/files.repository';
 import { FilesService } from '../services/files.service';
-import type { CreateInternalFileBody } from '../types/internal-file.types';
+import type {
+  CreateInternalFileBody,
+  InternalFileContentResponse,
+} from '../types/internal-file.types';
 
 @Controller('internal/files')
 export class FilesInternalController {
@@ -38,17 +47,10 @@ export class FilesInternalController {
   @Get(':id/content')
   async getContent(
     @Param('id') fileId: string,
-  ): Promise<{ id: string; filename: string; mimeType: string; content: string | null }> {
-    const file = await this.filesRepository.findById(fileId);
-    if (!file) {
-      return { id: fileId, filename: '', mimeType: '', content: null };
-    }
-    return {
-      id: file.id,
-      filename: file.filename,
-      mimeType: file.mimeType,
-      content: file.content,
-    };
+    @Query(new ZodValidationPipe(internalFileContentQuerySchema))
+    query: InternalFileContentQueryDto,
+  ): Promise<InternalFileContentResponse> {
+    return this.filesService.getFileContent(fileId, query.userId);
   }
 
   @Public()

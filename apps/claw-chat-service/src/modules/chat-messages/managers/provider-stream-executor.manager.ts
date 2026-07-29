@@ -87,18 +87,28 @@ export class ProviderStreamExecutor {
     this.transitionStage(ctx, state, AiStreamStage.CONNECTING_PROVIDER, 'Connecting to provider');
     if (input.reasoningContent !== undefined && input.reasoningContent.length > 0) {
       for (const piece of this.chunkText(input.reasoningContent)) {
+        if (this.stopCancelledSimulation(input, state)) {
+          break;
+        }
         this.applyReasoning(piece, AiReasoningVisibility.MODEL_EMITTED, ctx, state);
-        await this.delay(SIMULATED_CHUNK_DELAY_MS);
+        await this.delay(SIMULATED_CHUNK_DELAY_MS, input.abortSignal);
       }
     }
-    for (const piece of this.chunkText(input.fullContent)) {
-      const scanned = scanner.push(piece);
-      this.applyReasoning(scanned.reasoning, AiReasoningVisibility.MODEL_EMITTED, ctx, state);
-      this.applyContent(scanned.content, ctx, tracker, state);
-      this.maybeEmitMetrics(ctx, tracker, state);
-      await this.delay(SIMULATED_CHUNK_DELAY_MS);
+    if (!state.cancelled) {
+      for (const piece of this.chunkText(input.fullContent)) {
+        if (this.stopCancelledSimulation(input, state)) {
+          break;
+        }
+        const scanned = scanner.push(piece);
+        this.applyReasoning(scanned.reasoning, AiReasoningVisibility.MODEL_EMITTED, ctx, state);
+        this.applyContent(scanned.content, ctx, tracker, state);
+        this.maybeEmitMetrics(ctx, tracker, state);
+        await this.delay(SIMULATED_CHUNK_DELAY_MS, input.abortSignal);
+      }
     }
-    this.drainScanner(scanner, ctx, tracker, state);
+    if (!state.cancelled) {
+      this.drainScanner(scanner, ctx, tracker, state);
+    }
     state.inputTokens = input.inputTokens;
     state.outputTokens = input.outputTokens;
     this.finalize(ctx, tracker, state);
@@ -229,11 +239,7 @@ export class ProviderStreamExecutor {
     this.applyContent(tail.content, ctx, tracker, state);
   }
 
-  private maybeEmitMetrics(
-    ctx: EmitCtx,
-    tracker: StreamProgressTracker,
-    state: LoopState,
-  ): void {
+  private maybeEmitMetrics(ctx: EmitCtx, tracker: StreamProgressTracker, state: LoopState): void {
     const now = Date.now();
     if (now - state.lastMetricsAt < METRICS_THROTTLE_MS) {
       return;
@@ -376,8 +382,30 @@ export class ProviderStreamExecutor {
     return chunks;
   }
 
-  private async delay(ms: number): Promise<void> {
-    await new Promise<void>((resolve) => setTimeout(resolve, ms));
+  private stopCancelledSimulation(input: SimulatedStreamInput, state: LoopState): boolean {
+    if (input.abortSignal?.aborted !== true) {
+      return false;
+    }
+    state.cancelled = true;
+    return true;
+  }
+
+  private async delay(ms: number, signal?: AbortSignal): Promise<void> {
+    if (signal?.aborted === true) {
+      return;
+    }
+    await new Promise<void>((resolve) => {
+      const finish = (): void => {
+        clearTimeout(timer);
+        signal?.removeEventListener('abort', finish);
+        resolve();
+      };
+      const timer = setTimeout(finish, ms);
+      signal?.addEventListener('abort', finish, { once: true });
+      if (signal?.aborted === true) {
+        finish();
+      }
+    });
   }
 
   private truncateError(body: string | undefined): string | undefined {

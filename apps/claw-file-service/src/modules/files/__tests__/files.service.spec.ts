@@ -5,6 +5,7 @@ import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { FileIngestionStatus } from '../../../generated/prisma';
+import { MAX_FILE_SIZE } from '../types/files.types';
 
 jest.mock('../../../common/utilities', () => ({
   verifyAccessToken: jest.fn(),
@@ -104,13 +105,57 @@ describe('FilesService', () => {
   });
 
   describe('uploadFile', () => {
+    it.each([
+      'video/mp4',
+      'video/quicktime',
+      'video/mov',
+      'video/webm',
+      'video/x-msvideo',
+      'video/avi',
+      'video/mpeg',
+    ])('accepts the supported video MIME type %s', async (mimeType) => {
+      const videoFile = {
+        ...mockFile,
+        filename: 'clip.bin',
+        mimeType,
+        content: 'AAAA',
+      };
+      filesRepo.create.mockResolvedValue(videoFile);
+
+      const result = await service.uploadFile('user-1', {
+        filename: 'clip.bin',
+        mimeType,
+        sizeBytes: 3,
+        content: 'AAAA',
+      });
+
+      expect(result.mimeType).toBe(mimeType);
+      expect(filesRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ mimeType, content: 'AAAA' }),
+      );
+    });
+
+    it.each(['video/x-matroska', 'video/ogg'])(
+      'rejects the Gemini-unsupported video MIME type %s',
+      async (mimeType) => {
+        await expect(
+          service.uploadFile('user-1', {
+            filename: 'clip.bin',
+            mimeType,
+            sizeBytes: 3,
+            content: 'AAAA',
+          }),
+        ).rejects.toThrow(BusinessException);
+      },
+    );
+
     it('should upload a file and publish event', async () => {
       filesRepo.create.mockResolvedValue(mockFile);
 
       const result = await service.uploadFile('user-1', {
         filename: 'test.txt',
         mimeType: 'text/plain',
-        sizeBytes: 1024,
+        sizeBytes: 12,
         content: Buffer.from('test content').toString('base64'),
       });
 
@@ -120,7 +165,7 @@ describe('FilesService', () => {
           userId: 'user-1',
           filename: 'test.txt',
           mimeType: 'text/plain',
-          sizeBytes: 1024,
+          sizeBytes: 12,
         }),
       );
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
@@ -139,7 +184,7 @@ describe('FilesService', () => {
       await service.uploadFile('user-1', {
         filename: 'test.txt',
         mimeType: 'text/plain',
-        sizeBytes: 1024,
+        sizeBytes: 5,
         content: 'SGVsbG8=',
       });
 
@@ -166,6 +211,30 @@ describe('FilesService', () => {
           sizeBytes: 60 * 1024 * 1024, // 60MB
         }),
       ).rejects.toThrow(BusinessException);
+    });
+
+    it('rejects decoded content that exceeds the file limit despite small declared metadata', async () => {
+      const oversizedContent = Buffer.alloc(MAX_FILE_SIZE + 1).toString('base64');
+
+      await expect(
+        service.uploadFile('user-1', {
+          filename: 'oversized.txt',
+          mimeType: 'text/plain',
+          sizeBytes: 1,
+          content: oversizedContent,
+        }),
+      ).rejects.toThrow(BusinessException);
+    });
+
+    it('rejects size metadata that does not match the decoded content', async () => {
+      await expect(
+        service.uploadFile('user-1', {
+          filename: 'mismatch.txt',
+          mimeType: 'text/plain',
+          sizeBytes: 100,
+          content: Buffer.from('small').toString('base64'),
+        }),
+      ).rejects.toMatchObject({ code: 'FILE_SIZE_MISMATCH' });
     });
   });
 
@@ -225,6 +294,38 @@ describe('FilesService', () => {
       filesRepo.findById.mockResolvedValue(mockFileWithChunks);
 
       await expect(service.getFile('file-1', 'other-user')).rejects.toThrow(BusinessException);
+    });
+  });
+
+  describe('getFileContent', () => {
+    it('returns only the owned file content contract', async () => {
+      filesRepo.findById.mockResolvedValue({
+        ...mockFile,
+        content: Buffer.from('private tenant content').toString('base64'),
+      });
+
+      const result = await service.getFileContent('file-1', 'user-1');
+
+      expect(result).toEqual({
+        id: 'file-1',
+        filename: 'test.txt',
+        mimeType: 'text/plain',
+        content: Buffer.from('private tenant content').toString('base64'),
+      });
+    });
+
+    it('hides an existing file from a different tenant', async () => {
+      filesRepo.findById.mockResolvedValue(mockFile);
+
+      await expect(service.getFileContent('file-1', 'other-user')).rejects.toThrow(
+        EntityNotFoundException,
+      );
+    });
+
+    it('rejects a missing requester identity', async () => {
+      filesRepo.findById.mockResolvedValue(mockFile);
+
+      await expect(service.getFileContent('file-1', '')).rejects.toThrow(EntityNotFoundException);
     });
   });
 

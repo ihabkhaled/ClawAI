@@ -254,6 +254,12 @@ export const hi: TranslationDictionary = {
     providerFailed: 'विफल',
     tryingProvider: 'प्रयासरत',
     allProvidersFailed: 'सभी प्रोवाइडर प्रतिक्रिया उत्पन्न करने में विफल',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'यह मॉडल वीडियो अटैचमेंट प्रोसेस नहीं कर सकता। Gemini 2.5 Flash या Pro चुनें, या Auto पर स्विच करें।',
+      videoAttachmentLocalModelUnavailable:
+        'वीडियो अटैचमेंट केवल-स्थानीय या गोपनीयता-प्रथम मोड में उपलब्ध नहीं हैं, क्योंकि कोई स्थानीय वीडियो-सक्षम मॉडल कॉन्फ़िगर नहीं है।',
+    },
     imageGeneration: 'छवि जनरेशन',
     generatedImage: 'जनरेट की गई छवि',
     downloadImage: 'छवि डाउनलोड करें',

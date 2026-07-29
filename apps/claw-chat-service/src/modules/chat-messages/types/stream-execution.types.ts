@@ -58,4 +58,5 @@ export type SimulatedStreamInput = {
   startMs: number;
   promptTokensEstimate: number;
   maxOutputTokens?: number;
+  abortSignal?: AbortSignal;
 };

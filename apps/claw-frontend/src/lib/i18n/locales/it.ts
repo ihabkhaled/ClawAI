@@ -255,6 +255,12 @@ export const it: TranslationDictionary = {
     providerFailed: 'fallito',
     tryingProvider: 'tentativo',
     allProvidersFailed: 'Tutti i provider non sono riusciti a generare una risposta',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'Questo modello non può elaborare gli allegati video. Scegli Gemini 2.5 Flash o Pro oppure passa alla modalità Auto.',
+      videoAttachmentLocalModelUnavailable:
+        'Gli allegati video non sono disponibili nelle modalità Solo locale o Privacy prima di tutto perché non è configurato alcun modello locale compatibile con i video.',
+    },
     imageGeneration: 'Generazione immagini',
     generatedImage: 'Immagine generata',
     downloadImage: 'Scarica immagine',

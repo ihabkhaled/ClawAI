@@ -25,6 +25,15 @@ export const zh: TranslationDictionary = {
     success: '成功',
     warning: '警告',
   },
+  chat: {
+    ...en.chat,
+    errors: {
+      videoAttachmentProviderUnsupported:
+        '此模型无法处理视频附件。请选择 Gemini 2.5 Flash 或 Pro，或切换为自动模式。',
+      videoAttachmentLocalModelUnavailable:
+        '在仅本地或隐私优先模式下无法使用视频附件，因为尚未配置支持视频的本地模型。',
+    },
+  },
   settings: {
     ...en.settings,
     langJapanese: '日语',

@@ -11,6 +11,7 @@ import type {
   VisibleProgressStage,
 } from '@/types';
 import { connectSse, logger } from '@/utilities';
+import { resolveChatStreamError } from '@/utilities/chat-stream-error.utility';
 
 export function useChatStream(threadId: string, isActive: boolean) {
   const { t } = useTranslation();
@@ -188,15 +189,23 @@ export function useChatStream(threadId: string, isActive: boolean) {
           }
 
           if (parsed.type === StreamEventType.ERROR) {
+            const localizedError = resolveChatStreamError(parsed, t);
             logger.error({
               component: 'chat',
               action: 'stream-error',
               message: 'Stream error received',
-              details: { threadId, error: parsed.error },
+              details: {
+                threadId,
+                code: parsed.code,
+                messageKey: parsed.messageKey,
+              },
             });
-            setStreamError(parsed.error ?? t('chat.allProvidersFailed'));
+            setStreamError(localizedError);
             flushLive(parsed, false);
-            upsertStage(parsed, VisibleProgressStageStatus.ERROR);
+            upsertStage(
+              { ...parsed, description: localizedError },
+              VisibleProgressStageStatus.ERROR,
+            );
           }
         } catch {
           // Ignore parse errors from SSE heartbeats

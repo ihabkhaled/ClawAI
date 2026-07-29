@@ -249,6 +249,10 @@ export type TranslationDictionary = {
     providerFailed: string;
     tryingProvider: string;
     allProvidersFailed: string;
+    errors: {
+      videoAttachmentProviderUnsupported: string;
+      videoAttachmentLocalModelUnavailable: string;
+    };
     imageGeneration: string;
     generatedImage: string;
     downloadImage: string;

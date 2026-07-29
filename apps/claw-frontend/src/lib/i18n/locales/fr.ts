@@ -255,6 +255,12 @@ export const fr: TranslationDictionary = {
     providerFailed: 'échoué',
     tryingProvider: 'tentative',
     allProvidersFailed: 'Tous les fournisseurs ont échoué à générer une réponse',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'Ce modèle ne peut pas traiter les vidéos jointes. Choisissez Gemini 2.5 Flash ou Pro, ou passez en mode Automatique.',
+      videoAttachmentLocalModelUnavailable:
+        'Les vidéos jointes ne sont pas disponibles en mode Local uniquement ou Confidentialité d’abord, car aucun modèle local compatible avec la vidéo n’est configuré.',
+    },
     imageGeneration: "Génération d'image",
     generatedImage: 'Image générée',
     downloadImage: "Télécharger l'image",

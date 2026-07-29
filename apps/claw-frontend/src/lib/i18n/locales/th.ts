@@ -25,6 +25,15 @@ export const th: TranslationDictionary = {
     success: 'สำเร็จ',
     warning: 'คำเตือน',
   },
+  chat: {
+    ...en.chat,
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'โมเดลนี้ไม่สามารถประมวลผลไฟล์วิดีโอแนบได้ โปรดเลือก Gemini 2.5 Flash หรือ Pro หรือเปลี่ยนเป็นอัตโนมัติ',
+      videoAttachmentLocalModelUnavailable:
+        'ไฟล์วิดีโอแนบไม่พร้อมใช้งานในโหมดเฉพาะภายในเครื่องหรือเน้นความเป็นส่วนตัว เนื่องจากยังไม่ได้กำหนดค่าโมเดลภายในเครื่องที่รองรับวิดีโอ',
+    },
+  },
   settings: {
     ...en.settings,
     langJapanese: 'ภาษาญี่ปุ่น',

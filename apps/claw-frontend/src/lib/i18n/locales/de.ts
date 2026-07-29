@@ -255,6 +255,12 @@ export const de: TranslationDictionary = {
     providerFailed: 'fehlgeschlagen',
     tryingProvider: 'versucht',
     allProvidersFailed: 'Alle Provider konnten keine Antwort generieren',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'Dieses Modell kann keine Videoanhänge verarbeiten. Wähle Gemini 2.5 Flash oder Pro oder wechsle zu „Auto“.',
+      videoAttachmentLocalModelUnavailable:
+        'Videoanhänge sind im Modus „Nur lokal“ oder „Datenschutz zuerst“ nicht verfügbar, da kein lokales videofähiges Modell konfiguriert ist.',
+    },
     imageGeneration: 'Bildgenerierung',
     generatedImage: 'Generiertes Bild',
     downloadImage: 'Bild herunterladen',

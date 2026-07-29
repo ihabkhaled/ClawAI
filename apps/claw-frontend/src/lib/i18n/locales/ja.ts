@@ -25,6 +25,15 @@ export const ja: TranslationDictionary = {
     success: '完了',
     warning: '警告',
   },
+  chat: {
+    ...en.chat,
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'このモデルは動画の添付ファイルを処理できません。Gemini 2.5 Flash または Pro を選択するか、自動に切り替えてください。',
+      videoAttachmentLocalModelUnavailable:
+        'ローカルのみまたはプライバシー優先モードでは、動画対応のローカルモデルが設定されていないため、動画の添付ファイルを利用できません。',
+    },
+  },
   settings: {
     ...en.settings,
     langJapanese: '日本語',

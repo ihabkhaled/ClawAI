@@ -66,6 +66,20 @@ describe('dictionary parity', () => {
       );
     },
   );
+
+  it.each(Object.values(Locale))('%s localizes structured video errors', (locale) => {
+    const providerKey = 'chat.errors.videoAttachmentProviderUnsupported';
+    const localModelKey = 'chat.errors.videoAttachmentLocalModelUnavailable';
+    const providerMessage = getTranslation(locale, providerKey);
+    const localModelMessage = getTranslation(locale, localModelKey);
+
+    expect(providerMessage).not.toBe(providerKey);
+    expect(localModelMessage).not.toBe(localModelKey);
+    if (locale !== Locale.EN) {
+      expect(providerMessage).not.toBe(getTranslation(Locale.EN, providerKey));
+      expect(localModelMessage).not.toBe(getTranslation(Locale.EN, localModelKey));
+    }
+  });
 });
 
 describe('getTranslation', () => {

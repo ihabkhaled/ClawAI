@@ -8,12 +8,20 @@ describe('FilesInternalController', () => {
   let controller: FilesInternalController;
   let chunksMock: jest.Mocked<{ findByFileId: jest.Mock }>;
   let filesRepoMock: jest.Mocked<{ findById: jest.Mock }>;
-  let serviceMock: jest.Mocked<{ downloadFilePublic: jest.Mock; storeImage: jest.Mock }>;
+  let serviceMock: jest.Mocked<{
+    downloadFilePublic: jest.Mock;
+    getFileContent: jest.Mock;
+    storeImage: jest.Mock;
+  }>;
 
   beforeEach(async () => {
     chunksMock = { findByFileId: jest.fn() };
     filesRepoMock = { findById: jest.fn() };
-    serviceMock = { downloadFilePublic: jest.fn(), storeImage: jest.fn() };
+    serviceMock = {
+      downloadFilePublic: jest.fn(),
+      getFileContent: jest.fn(),
+      storeImage: jest.fn(),
+    };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FilesInternalController],
       providers: [
@@ -32,26 +40,23 @@ describe('FilesInternalController', () => {
     expect(result).toEqual([{ id: 'c1' }]);
   });
 
-  it('getContent returns file metadata + content when found', async () => {
-    filesRepoMock.findById.mockResolvedValue({
+  it('getContent delegates ownership enforcement to FilesService', async () => {
+    serviceMock.getFileContent.mockResolvedValue({
       id: 'f1',
       filename: 'a.pdf',
       mimeType: 'application/pdf',
       content: 'hello',
     });
-    const result = await controller.getContent('f1');
+    const result = await controller.getContent('f1', { userId: 'user-1' });
+
+    expect(serviceMock.getFileContent).toHaveBeenCalledWith('f1', 'user-1');
+    expect(filesRepoMock.findById).not.toHaveBeenCalled();
     expect(result).toEqual({
       id: 'f1',
       filename: 'a.pdf',
       mimeType: 'application/pdf',
       content: 'hello',
     });
-  });
-
-  it('getContent returns empty stub when not found', async () => {
-    filesRepoMock.findById.mockResolvedValue(null);
-    const result = await controller.getContent('missing');
-    expect(result).toEqual({ id: 'missing', filename: '', mimeType: '', content: null });
   });
 
   it('download delegates to FilesService.downloadFilePublic', async () => {

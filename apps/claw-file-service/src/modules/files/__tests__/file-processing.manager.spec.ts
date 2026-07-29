@@ -144,6 +144,28 @@ describe('FileProcessingManager', () => {
       );
     });
 
+    it('should never UTF-8 decode video bytes into file chunks', async () => {
+      readFile.mockReturnValue(Buffer.from('secret-binary-payload'));
+      const videoFile = {
+        ...mockFile,
+        filename: 'demo.mp4',
+        mimeType: 'video/mp4',
+      };
+
+      await manager.processFile(videoFile);
+
+      expect(chunksRepo.createMany).toHaveBeenCalledWith([
+        {
+          fileId: 'file-1',
+          chunkIndex: 0,
+          content: '[Video file: demo.mp4]',
+        },
+      ]);
+      expect(chunksRepo.createMany).not.toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ content: 'secret-binary-payload' })]),
+      );
+    });
+
     it('should publish file.chunked event on success', async () => {
       readFile.mockReturnValue(Buffer.from(MOCK_TEXT_CONTENT));
 

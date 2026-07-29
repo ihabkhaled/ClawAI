@@ -203,6 +203,7 @@ export type StreamEvent = {
   metrics?: StreamMetrics;
   usage?: StreamUsage;
   code?: string;
+  messageKey?: string;
   retryable?: boolean;
   partialContentPreserved?: boolean;
 };
@@ -339,8 +340,7 @@ export type JudgeModelOption = {
 };
 
 export type MessageRenderItem =
-  | { kind: 'single'; message: ChatMessage }
-  | { kind: 'parallel'; messages: ChatMessage[] };
+  { kind: 'single'; message: ChatMessage } | { kind: 'parallel'; messages: ChatMessage[] };
 
 export type ParallelExpandedMessage = {
   message: ChatMessage;

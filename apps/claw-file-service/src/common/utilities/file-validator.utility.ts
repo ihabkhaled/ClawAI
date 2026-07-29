@@ -4,6 +4,8 @@ import {
   DANGEROUS_EXTENSIONS,
   MAX_FILENAME_LENGTH,
   MIME_TO_MAGIC_BYTES,
+  MP4_MAJOR_BRANDS,
+  VIDEO_MIME_DETECTION_ALIASES,
 } from '../../modules/files/constants/file-security.constants';
 
 const logger = new Logger('FileValidator');
@@ -45,7 +47,13 @@ export function sanitizeFilename(filename: string): string {
   return collapsed.slice(0, MAX_FILENAME_LENGTH);
 }
 
-export function validateMagicBytes(buffer: Buffer, declaredMimeType: string): FileValidationResult {
+export async function validateMagicBytes(
+  buffer: Buffer,
+  declaredMimeType: string,
+): Promise<FileValidationResult> {
+  if (declaredMimeType.startsWith('video/')) {
+    return validateDetectedVideoContainer(buffer, declaredMimeType);
+  }
   const expectedSignatures = Object.entries(MIME_TO_MAGIC_BYTES).find(
     ([k]) => k === declaredMimeType,
   )?.[1];
@@ -64,6 +72,77 @@ export function validateMagicBytes(buffer: Buffer, declaredMimeType: string): Fi
     `validateMagicBytes: MISMATCH — declared ${declaredMimeType} but magic bytes don't match`,
   );
   return { valid: false, reason: `mime_magic_mismatch: declared ${declaredMimeType}` };
+}
+
+async function validateDetectedVideoContainer(
+  buffer: Buffer,
+  declaredMimeType: string,
+): Promise<FileValidationResult> {
+  const acceptedDetectedMimes = Object.entries(VIDEO_MIME_DETECTION_ALIASES).find(
+    ([mimeType]) => mimeType === declaredMimeType,
+  )?.[1];
+  const detectedMime = detectVideoMimeType(buffer);
+  if (acceptedDetectedMimes?.includes(detectedMime ?? '') === true) {
+    return { valid: true, reason: 'magic_bytes_match' };
+  }
+  logger.warn(
+    `validateMagicBytes: MISMATCH — declared ${declaredMimeType} but magic bytes don't match`,
+  );
+  return { valid: false, reason: `mime_magic_mismatch: declared ${declaredMimeType}` };
+}
+
+function detectVideoMimeType(buffer: Buffer): string | undefined {
+  if (isIsoBaseMedia(buffer)) {
+    return buffer.toString('ascii', 8, 12).toLowerCase() === 'qt  '
+      ? 'video/quicktime'
+      : 'video/mp4';
+  }
+  if (isWebm(buffer)) {
+    return 'video/webm';
+  }
+  if (isAvi(buffer)) {
+    return 'video/vnd.avi';
+  }
+  if (isMpeg(buffer)) {
+    return 'video/mpeg';
+  }
+  return undefined;
+}
+
+function isIsoBaseMedia(buffer: Buffer): boolean {
+  if (buffer.length < 12 || buffer.toString('ascii', 4, 8) !== 'ftyp') {
+    return false;
+  }
+  const majorBrand = buffer.toString('ascii', 8, 12).toLowerCase();
+  return majorBrand === 'qt  ' || MP4_MAJOR_BRANDS.has(majorBrand);
+}
+
+function isWebm(buffer: Buffer): boolean {
+  const hasEbmlHeader =
+    buffer.length >= 4 &&
+    buffer[0] === 0x1a &&
+    buffer[1] === 0x45 &&
+    buffer[2] === 0xdf &&
+    buffer[3] === 0xa3;
+  return hasEbmlHeader && buffer.subarray(0, 4096).includes(Buffer.from('webm'));
+}
+
+function isAvi(buffer: Buffer): boolean {
+  return (
+    buffer.length >= 12 &&
+    buffer.toString('ascii', 0, 4) === 'RIFF' &&
+    buffer.toString('ascii', 8, 12) === 'AVI '
+  );
+}
+
+function isMpeg(buffer: Buffer): boolean {
+  return (
+    buffer.length >= 4 &&
+    buffer[0] === 0x00 &&
+    buffer[1] === 0x00 &&
+    buffer[2] === 0x01 &&
+    (buffer[3] === 0xb3 || buffer[3] === 0xba)
+  );
 }
 
 export function detectZipBomb(buffer: Buffer): FileValidationResult {

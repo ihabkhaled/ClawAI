@@ -1,9 +1,10 @@
 export type HttpRequestOptions = {
   url: string;
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
   body?: unknown;
   timeoutMs?: number;
+  signal?: AbortSignal;
 };
 
 export type HttpResponse<T> = {
@@ -14,7 +15,7 @@ export type HttpResponse<T> = {
 
 export type HttpStreamOptions = {
   url: string;
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
   body?: unknown;
   timeoutMs?: number;

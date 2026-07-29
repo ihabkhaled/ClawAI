@@ -41,15 +41,34 @@ export type GeminiRequestBody = {
   };
 };
 
+export type GeminiGenerateContentResponse = {
+  candidates?: Array<{
+    content?: {
+      role?: string;
+      parts?: Array<{ text?: string }>;
+    };
+    finishReason?: string;
+  }>;
+  usageMetadata?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+    totalTokenCount?: number;
+  };
+};
+
 // Result of a single Files API upload — file_uri is the canonical reference
 // the generateContent endpoint uses; expiresAt is filled from server response
 // when available, else from the configured TTL.
 export type GeminiFilesApiUploadResult = {
   fileUri: string;
+  fileName?: string;
+  state?: GeminiFileState;
   expiresAt: Date;
   sizeBytes: number;
   mimeType: string;
 };
+
+export type GeminiFileState = 'STATE_UNSPECIFIED' | 'PROCESSING' | 'ACTIVE' | 'FAILED';
 
 // Internal cache entry used by GeminiFilesApiManager.
 export type GeminiFilesApiCacheEntry = {
@@ -62,14 +81,11 @@ export type GeminiFilesApiCacheEntry = {
 
 // Signature of the file-upload function callers inject into the request
 // builder. Returns the canonical `file_uri` to be referenced in a file_data
-// part. Implementations may cache, throttle, and fall back as they see fit.
+// part. Implementations may cache and throttle uploads.
 export type GeminiFileUploadFn = (data: Buffer, mimeType: string) => Promise<string>;
 
 export type GeminiRequestShapeWarningReason =
-  | 'MALFORMED_DATA_URL'
-  | 'NON_DATA_URL_IMAGE'
-  | 'EMPTY_IMAGE_PAYLOAD'
-  | 'FILE_UPLOAD_FAILED';
+  'MALFORMED_DATA_URL' | 'NON_DATA_URL_IMAGE' | 'EMPTY_IMAGE_PAYLOAD';
 
 export type GeminiRequestShapeWarning = {
   reason: GeminiRequestShapeWarningReason;
@@ -88,6 +104,7 @@ export type GeminiTransformedMessage = {
   content: GeminiContent;
   inlineDelta: number;
   fileDataDelta: number;
+  inlineBytesDelta: number;
 };
 
 // Internal per-part transform result.
@@ -95,21 +112,26 @@ export type GeminiBuiltPart = {
   part: GeminiContentPart;
   inlineDelta: number;
   fileDataDelta: number;
+  inlineBytesDelta: number;
 };
 
 // Internal "system-vs-conversation" partition shape.
 export type GeminiSystemTextFilter = { type: 'text'; text: string };
 
-// Native Gemini Files API response body shape. Documented at
+// Native Gemini Files API response shapes. Documented at
 // https://ai.google.dev/api/rest/v1beta/files#File — the manager only reads
-// the `file.uri` + optional `file.expirationTime` for caching.
+// Upload responses wrap the resource in `file`; GET returns it top-level.
+export type GeminiFileResource = {
+  uri?: string;
+  name?: string;
+  sizeBytes?: string | number;
+  mimeType?: string;
+  expirationTime?: string;
+  state?: GeminiFileState;
+  error?: { message?: string };
+};
+
 export type GeminiFilesApiResponseBody = {
-  file?: {
-    uri?: string;
-    name?: string;
-    sizeBytes?: string | number;
-    mimeType?: string;
-    expirationTime?: string;
-  };
+  file?: GeminiFileResource;
   error?: { message?: string; status?: string };
 };
