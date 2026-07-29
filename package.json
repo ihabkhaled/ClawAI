@@ -98,6 +98,9 @@
     "shell-quote": "^1.10.0",
     "sharp": "^0.35.3",
     "js-yaml": "^4.3.0",
+    "next": {
+      "sharp": "^0.35.3"
+    },
     "@angular-devkit/core": {
       "rxjs": "^7.8.2"
     },
