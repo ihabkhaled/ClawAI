@@ -68,6 +68,17 @@ class BillingRepository {
     return response.data;
   }
 
+  async completePaypalSdkCheckout(
+    id: string,
+    input: { providerOrderId: string },
+  ): Promise<CheckoutSessionView> {
+    const response = await apiClient.post<CheckoutSessionView>(
+      `/billing/checkout-sessions/${id}/complete-paypal-sdk`,
+      input,
+    );
+    return response.data;
+  }
+
   async completePaymobCheckout(id: string): Promise<PaymobCompletionView> {
     const response = await apiClient.post<PaymobCompletionView>(
       `/billing/checkout-sessions/${id}/complete-paymob`,

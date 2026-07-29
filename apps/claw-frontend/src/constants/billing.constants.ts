@@ -29,6 +29,10 @@ export const PAYMOB_PIXEL_URL = 'https://cdn.jsdelivr.net/npm/paymob-pixel@1.2.7
 export const PAYMOB_PIXEL_INTEGRITY =
   'sha384-7MtBbtvCaAPz+WSXmp7mCMKgBGrC7PKG0BK8HbCri6UQ1YZKEcxxNVPIjwCuiyZl';
 export const PAYMOB_SCRIPT_ID = 'paymob-pixel-sdk';
+export const PAYPAL_SDK_URL = 'https://www.paypal.com/sdk/js';
+export const PAYPAL_SDK_SCRIPT_ID_PREFIX = 'paypal-sdk';
+export const PAYPAL_SDK_NAMESPACE_PREFIX = 'clawPaypal';
+export const PAYPAL_ORDER_ID_QUERY_KEY = 'token';
 export const PAYPAL_COMPLETION_MESSAGE_TYPE = 'claw:billing:paypal-completed';
 export const PAYMOB_COMPLETION_MESSAGE_TYPE = 'claw:billing:paymob-completed';
 

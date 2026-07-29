@@ -85,6 +85,40 @@ describe('billingRepository payment-method setup', () => {
     });
   });
 
+  it('completes PayPal SDK approval with only the owned session and provider order', async () => {
+    const response = {
+      id: 'checkout-1',
+      status: 'COMPLETED',
+      gateway: 'PAYPAL',
+      chargeAmountMinor: 500,
+      chargeCurrency: 'USD',
+      hostedCheckoutUrl: null,
+      expiresAt: '2026-07-28T00:00:00.000Z',
+    };
+    mockPost.mockResolvedValue({ data: response });
+    const completePaypalSdkCheckout: unknown = Reflect.get(
+      billingRepository,
+      'completePaypalSdkCheckout',
+    );
+
+    expect(completePaypalSdkCheckout).toBeInstanceOf(Function);
+    if (typeof completePaypalSdkCheckout !== 'function') {
+      return;
+    }
+
+    await expect(
+      completePaypalSdkCheckout.call(billingRepository, 'checkout-1', {
+        providerOrderId: '5O190127TN364715T',
+      }),
+    ).resolves.toEqual(response);
+    expect(mockPost).toHaveBeenCalledWith(
+      '/billing/checkout-sessions/checkout-1/complete-paypal-sdk',
+      {
+        providerOrderId: '5O190127TN364715T',
+      },
+    );
+  });
+
   it('completes Paymob using only the owned session reference', async () => {
     const response = {
       status: 'COMPLETED',

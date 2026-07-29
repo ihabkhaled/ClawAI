@@ -38,6 +38,12 @@ const PAYMOB_CHECKOUT_HOSTS: ReadonlyArray<string> = [
   'https://accept.paymob.com',
   'https://eg.checkout.paymob.com',
 ];
+const PAYPAL_SCRIPT_HOST = 'https://www.paypal.com';
+const PAYPAL_CHECKOUT_HOSTS: ReadonlyArray<string> = [
+  'https://www.paypal.com',
+  'https://www.paypalobjects.com',
+  'https://*.paypal.com',
+];
 
 // Generates a fresh, cryptographically-random nonce for a single response.
 // Uses Web Crypto so it runs on both the Edge (middleware) and Node runtimes.
@@ -81,6 +87,7 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
         "'unsafe-inline'",
         "'unsafe-eval'",
         PAYMOB_SCRIPT_HOST,
+        PAYPAL_SCRIPT_HOST,
         ...(adsenseEnabled ? GOOGLE_AD_SCRIPT_HOSTS : []),
       ]
     : ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"];
@@ -90,11 +97,13 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
     ...(isDev ? ['ws:', 'wss:'] : []),
     ...(adsenseEnabled ? GOOGLE_AD_CONNECT_HOSTS : []),
     ...PAYMOB_CHECKOUT_HOSTS,
+    ...PAYPAL_CHECKOUT_HOSTS,
   ];
 
   const frameSrc = [
     "'self'",
     ...PAYMOB_CHECKOUT_HOSTS,
+    ...PAYPAL_CHECKOUT_HOSTS,
     ...(adsenseEnabled ? GOOGLE_AD_FRAME_HOSTS : []),
   ];
 
@@ -103,6 +112,7 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
     'data:',
     'blob:',
     ...PAYMOB_CHECKOUT_HOSTS,
+    ...PAYPAL_CHECKOUT_HOSTS,
     ...(adsenseEnabled ? GOOGLE_AD_IMG_HOSTS : []),
   ];
 

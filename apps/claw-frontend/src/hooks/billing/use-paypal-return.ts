@@ -1,7 +1,6 @@
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
-import { ROUTES } from '@/constants';
 import {
   PAYMOB_COMPLETION_MESSAGE_TYPE,
   PAYPAL_COMPLETION_MESSAGE_TYPE,
@@ -13,7 +12,6 @@ import type { UsePaypalReturnReturn } from '@/types/billing-hook.types';
 
 export function usePaypalReturn(): UsePaypalReturnReturn {
   const params = useSearchParams();
-  const router = useRouter();
   const started = useRef(false);
   const [phase, setPhase] = useState<BillingReturnPhase>(BillingReturnPhase.COMPLETING);
 
@@ -62,19 +60,16 @@ export function usePaypalReturn(): UsePaypalReturnReturn {
         };
         if (window.opener !== null && window.opener !== undefined && !window.opener.closed) {
           window.opener.postMessage(message, window.location.origin);
-          window.close();
-          return;
         }
         if (window.parent !== window) {
           window.parent.postMessage(message, window.location.origin);
-          return;
         }
-        router.replace(ROUTES.BILLING);
+        window.close();
       })
       .catch(() => {
         setPhase(BillingReturnPhase.ERROR);
       });
-  }, [params, router]);
+  }, [params]);
 
   return { phase };
 }
