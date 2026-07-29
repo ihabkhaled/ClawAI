@@ -1,0 +1,1 @@
+export const CHAT_REQUEST_BODY_LIMIT_BYTES = 1_048_576;
