@@ -125,14 +125,16 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
         >
           {/* Drag-to-resize is a pointer affordance — hidden on touch/mobile
               where the composer is natural-height and the gesture has no effect. */}
-          <button
+          <Button
+            variant="unstyled"
+            size="unstyled"
             type="button"
             aria-label={props.resizeAriaLabel}
             className="hover:bg-muted/50 absolute inset-x-0 top-0 z-10 hidden h-3 cursor-ns-resize items-center justify-center md:flex"
             onMouseDown={props.onResizeHandleMouseDown}
           >
             <div className="bg-muted-foreground/30 h-1 w-10 rounded-full" />
-          </button>
+          </Button>
           <div className="flex flex-col p-3 pt-3 sm:p-4 md:h-full">
             <MessageComposer {...props.composerProps} />
           </div>

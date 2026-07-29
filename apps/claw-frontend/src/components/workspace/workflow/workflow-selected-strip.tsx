@@ -11,7 +11,7 @@ export function WorkflowSelectedStrip({
   t,
 }: WorkflowSelectedStripProps): React.ReactElement {
   return (
-    <div className="rounded-md border border-border bg-muted/30 p-3">
+    <div className="border-border bg-muted/30 rounded-md border p-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-medium">
           {selectedItems.length} {t('workflow.object.selected_count')}
@@ -24,14 +24,16 @@ export function WorkflowSelectedStrip({
         {selectedItems.map((item) => (
           <Badge key={item.id} variant="secondary" className="flex items-center gap-1 text-xs">
             <span className="max-w-[160px] truncate">{item.title}</span>
-            <button
+            <Button
+              variant="unstyled"
+              size="unstyled"
               type="button"
               onClick={() => onRemove(item.id)}
               aria-label={t('workflow.object.remove')}
-              className="ml-0.5 rounded-full hover:text-destructive"
+              className="hover:text-destructive ml-0.5 rounded-full"
             >
               <X className="size-3" aria-hidden="true" />
-            </button>
+            </Button>
           </Badge>
         ))}
       </div>

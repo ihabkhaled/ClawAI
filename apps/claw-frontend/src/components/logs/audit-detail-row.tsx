@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { useToggle } from '@/hooks/common/use-toggle';
 import type { AuditDetailRowProps } from '@/types';
 
@@ -13,7 +14,7 @@ export function AuditDetailRow({ row }: AuditDetailRowProps): React.ReactElement
 
   if (!isLong) {
     return (
-      <span className="block max-w-[300px] truncate font-mono text-xs text-muted-foreground">
+      <span className="text-muted-foreground block max-w-[300px] truncate font-mono text-xs">
         {detailsStr}
       </span>
     );
@@ -22,21 +23,23 @@ export function AuditDetailRow({ row }: AuditDetailRowProps): React.ReactElement
   return (
     <div className="max-w-[300px]">
       {isExpanded ? (
-        <pre className="whitespace-pre-wrap break-all font-mono text-xs text-muted-foreground">
+        <pre className="text-muted-foreground font-mono text-xs break-all whitespace-pre-wrap">
           {detailsStr}
         </pre>
       ) : (
-        <span className="block truncate font-mono text-xs text-muted-foreground">
+        <span className="text-muted-foreground block truncate font-mono text-xs">
           {detailsStr.slice(0, 80)}...
         </span>
       )}
-      <button
+      <Button
+        variant="unstyled"
+        size="unstyled"
         type="button"
-        className="mt-1 text-xs text-primary underline"
+        className="text-primary mt-1 text-xs underline"
         onClick={toggle}
       >
         {isExpanded ? 'Collapse' : 'Expand'}
-      </button>
+      </Button>
     </div>
   );
 }

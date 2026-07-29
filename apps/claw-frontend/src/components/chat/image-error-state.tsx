@@ -1,5 +1,6 @@
 import { ChevronDown, RefreshCw, XCircle } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { IMAGE_MODEL_OPTIONS } from '@/constants';
 import { useImageErrorState } from '@/hooks/chat/use-image-error-state';
 import { useTranslation } from '@/lib/i18n';
@@ -19,12 +20,12 @@ export function ImageErrorState({
   const currentKey = `${provider ?? ''}/${model ?? ''}`;
 
   return (
-    <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+    <div className="border-destructive/30 bg-destructive/5 rounded-xl border p-4">
       <div className="flex items-center gap-2">
-        <XCircle className="h-4 w-4 text-destructive" />
-        <span className="text-sm font-medium text-destructive">{status}</span>
+        <XCircle className="text-destructive h-4 w-4" />
+        <span className="text-destructive text-sm font-medium">{status}</span>
       </div>
-      <div className="mt-1 text-xs text-muted-foreground">
+      <div className="text-muted-foreground mt-1 text-xs">
         {error ?? t('chat.imageGenerationFailedRetry')}
         {provider ? (
           <span className="ms-1 opacity-60">
@@ -33,33 +34,39 @@ export function ImageErrorState({
         ) : null}
       </div>
       <div className="relative mt-3 flex items-center gap-2">
-        <button
-          className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs hover:bg-muted"
+        <Button
+          variant="unstyled"
+          size="unstyled"
+          className="hover:bg-muted flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs"
           onClick={onRetry}
           type="button"
         >
           <RefreshCw className="h-3 w-3" />
           {t('common.retry')}
-        </button>
+        </Button>
         {showModelPicker && onRetryWithModel ? (
           <div className="relative">
-            <button
-              className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs text-primary hover:bg-primary/10"
+            <Button
+              variant="unstyled"
+              size="unstyled"
+              className="border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs"
               onClick={togglePicker}
               type="button"
             >
               <RefreshCw className="h-3 w-3" />
               {t('chat.tryAnotherModel')}
               <ChevronDown className="h-3 w-3" />
-            </button>
+            </Button>
             {isPickerOpen ? (
-              <div className="absolute start-0 top-full z-10 mt-1 min-w-48 rounded-lg border bg-popover p-1 shadow-md">
+              <div className="bg-popover absolute start-0 top-full z-10 mt-1 min-w-48 rounded-lg border p-1 shadow-md">
                 {IMAGE_MODEL_OPTIONS.filter(
                   (opt) => `${opt.provider}/${opt.model}` !== currentKey,
                 ).map((opt) => (
-                  <button
+                  <Button
+                    variant="unstyled"
+                    size="unstyled"
                     key={`${opt.provider}-${opt.model}`}
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-start text-xs hover:bg-muted"
+                    className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-3 py-2 text-start text-xs"
                     onClick={() => {
                       onRetryWithModel(opt.provider, opt.model);
                       closePicker();
@@ -67,7 +74,7 @@ export function ImageErrorState({
                     type="button"
                   >
                     <span className="font-medium">{opt.label}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             ) : null}

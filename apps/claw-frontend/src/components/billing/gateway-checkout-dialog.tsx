@@ -65,6 +65,9 @@ export function GatewayCheckoutDialog({
       paymobPollAttempts.current += 1;
       const popupWasClosed = paymobPopup.current?.closed ?? false;
       paymobClosedPollAttempts.current = popupWasClosed ? paymobClosedPollAttempts.current + 1 : 0;
+      if (popupWasClosed) {
+        setIsVerifying(false);
+      }
       try {
         const latest =
           'purpose' in session
@@ -231,7 +234,7 @@ export function GatewayCheckoutDialog({
     <Dialog
       open={session !== null}
       onOpenChange={(open) => {
-        if (!open && !isVerifying) {
+        if (!open) {
           paymobPopup.current?.close();
           onClose();
         }

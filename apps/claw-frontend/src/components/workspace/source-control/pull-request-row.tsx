@@ -1,6 +1,7 @@
 import { GitPullRequest } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { PR_STATE_COLORS } from '@/constants/source-control.constants';
 import { cn } from '@/lib/utils';
 import type { PullRequestRowProps } from '@/types/component.types';
@@ -17,11 +18,13 @@ export function PullRequestRow({
     PR_STATE_COLORS[metadata.state] ?? 'bg-green-500/15 text-green-600 border-green-500/30';
 
   return (
-    <button
+    <Button
+      variant="unstyled"
+      size="unstyled"
       type="button"
       onClick={onClick}
       className={cn(
-        'flex w-full items-start gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent',
+        'border-border hover:bg-accent flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors',
         metadata.isDraft && 'opacity-70',
       )}
     >
@@ -42,7 +45,7 @@ export function PullRequestRow({
             {stateLabel}
           </Badge>
         </div>
-        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="text-muted-foreground mt-0.5 flex items-center gap-2 text-xs">
           <span>
             {t('source_control.pr.source_branch')}: {metadata.sourceBranch}
           </span>
@@ -56,6 +59,6 @@ export function PullRequestRow({
           )}
         </div>
       </div>
-    </button>
+    </Button>
   );
 }

@@ -5,6 +5,7 @@ import type { ReactElement } from 'react';
 
 import { RiskBadge } from '@/components/agent/risk-badge';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAgentCapabilitiesPage } from '@/hooks/agent/use-agent-capabilities-page';
 import { useTranslation } from '@/lib/i18n';
@@ -34,11 +35,13 @@ export function CapabilityInvocationsSection(): ReactElement | null {
               {inv.capabilityClass}.{inv.capabilityOperation}
             </Badge>
             <RiskBadge label={inv.riskLabel} score={inv.riskScore} />
-            <code className="flex-1 truncate text-xs text-muted-foreground">
+            <code className="text-muted-foreground flex-1 truncate text-xs">
               {JSON.stringify(inv.targetDescriptor)}
             </code>
             <div className="flex shrink-0 gap-2">
-              <button
+              <Button
+                variant="unstyled"
+                size="unstyled"
                 type="button"
                 disabled={isApproving}
                 onClick={() => handleApprove(inv.id)}
@@ -46,15 +49,17 @@ export function CapabilityInvocationsSection(): ReactElement | null {
               >
                 <CheckCircle className="size-3" />
                 {t('agent.approve')}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="unstyled"
+                size="unstyled"
                 type="button"
                 onClick={() => handleReject(inv.id, t('agent.rejectedByUser'))}
-                className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
+                className="text-destructive hover:bg-destructive/10 flex items-center gap-1 rounded px-2 py-1 text-xs font-medium"
               >
                 <XCircle className="size-3" />
                 {t('agent.reject')}
-              </button>
+              </Button>
             </div>
           </CardContent>
         </Card>

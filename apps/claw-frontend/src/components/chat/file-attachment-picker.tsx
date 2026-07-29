@@ -78,9 +78,7 @@ export function FileAttachmentPicker({
                 variant="secondary"
                 className={cn(
                   'h-5 min-w-5 px-1 text-[10px]',
-                  isCompact && !showLabel
-                    ? 'absolute -right-1 -top-1 ml-0'
-                    : 'ml-1',
+                  isCompact && !showLabel ? 'absolute -top-1 -right-1 ml-0' : 'ml-1',
                 )}
               >
                 {selectedCount}
@@ -109,14 +107,14 @@ export function FileAttachmentPicker({
               {isUploading ? t('files.uploading') : t('files.uploadNewFile')}
             </Button>
             {dragOver ? (
-              <div className="mt-2 rounded border-2 border-dashed border-primary bg-primary/5 p-3 text-center text-xs text-muted-foreground">
+              <div className="border-primary bg-primary/5 text-muted-foreground mt-2 rounded border-2 border-dashed p-3 text-center text-xs">
                 {t('files.dropFileHere')}
               </div>
             ) : null}
           </div>
           <DropdownMenuSeparator />
           {files.length === 0 ? (
-            <div className="px-2 py-3 text-center text-xs text-muted-foreground">
+            <div className="text-muted-foreground px-2 py-3 text-center text-xs">
               {t('chat.noFiles')}
             </div>
           ) : (
@@ -132,9 +130,11 @@ export function FileAttachmentPicker({
                           indented={false}
                           onToggle={handleToggle}
                         />
-                        <button
+                        <Button
+                          variant="unstyled"
+                          size="unstyled"
                           type="button"
-                          className="flex items-center gap-1.5 px-2 py-1 text-left text-[11px] text-muted-foreground hover:bg-accent/40"
+                          className="text-muted-foreground hover:bg-accent/40 flex items-center gap-1.5 px-2 py-1 text-left text-[11px]"
                           onClick={() => toggleParentExpansion(group.parent.id)}
                           aria-expanded={expanded}
                         >
@@ -151,7 +151,7 @@ export function FileAttachmentPicker({
                           <Badge variant="secondary" className="ml-auto h-4 px-1 text-[10px]">
                             {t('files.zip.childCountLabel', { count: group.children.length })}
                           </Badge>
-                        </button>
+                        </Button>
                         {expanded
                           ? group.children.map((child) => (
                               <FileAttachmentRow

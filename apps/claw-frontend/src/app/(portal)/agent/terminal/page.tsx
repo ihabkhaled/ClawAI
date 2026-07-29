@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { TerminalCommandStatus } from '@/enums';
 import { useAgentTerminalPage } from '@/hooks/agent/use-agent-terminal-page';
@@ -30,7 +31,7 @@ export default function AgentTerminalPage(): React.ReactElement {
       <div>
         <PageHeader title={t('agent.terminal')} description={t('agent.terminalDesc')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">
+          <p className="text-destructive text-sm">
             {error instanceof Error ? error.message : t('agent.loadFailed')}
           </p>
         </div>
@@ -65,7 +66,9 @@ export default function AgentTerminalPage(): React.ReactElement {
               <CardContent className="flex flex-col gap-3 py-3">
                 <TerminalOutputBlock command={cmd} />
                 <div className="flex items-center justify-end gap-2">
-                  <button
+                  <Button
+                    variant="unstyled"
+                    size="unstyled"
                     type="button"
                     disabled={isApproving}
                     onClick={() => handleApprove(cmd.id)}
@@ -73,15 +76,17 @@ export default function AgentTerminalPage(): React.ReactElement {
                   >
                     <CheckCircle className="size-3" />
                     {t('agent.approve')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="unstyled"
+                    size="unstyled"
                     type="button"
                     onClick={() => handleReject(cmd.id, t('agent.rejectedByUser'))}
-                    className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
+                    className="text-destructive hover:bg-destructive/10 flex items-center gap-1 rounded px-2 py-1 text-xs font-medium"
                   >
                     <XCircle className="size-3" />
                     {t('agent.reject')}
-                  </button>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -105,7 +110,7 @@ export default function AgentTerminalPage(): React.ReactElement {
                     {cmd.status}
                   </Badge>
                   {cmd.exitCode !== null && (
-                    <span className="text-xs text-muted-foreground">exit {cmd.exitCode}</span>
+                    <span className="text-muted-foreground text-xs">exit {cmd.exitCode}</span>
                   )}
                 </div>
                 <TerminalOutputBlock command={cmd} />
