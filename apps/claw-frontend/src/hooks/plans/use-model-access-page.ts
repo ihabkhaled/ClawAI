@@ -1,10 +1,9 @@
-import { PlanModelAccessMode } from '@claw/shared-types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { ROUTES } from '@/constants/routes.constants';
-import { UserRole } from '@/enums';
+import { PlanModelAccessMode, UserRole } from '@/enums';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useAvailableModels } from '@/hooks/chat/use-available-models';
 import { useTranslation } from '@/lib/i18n';

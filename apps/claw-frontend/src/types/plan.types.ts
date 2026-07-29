@@ -1,5 +1,4 @@
-import type { PlanModelAccessMode } from '@claw/shared-types';
-
+import type { PlanModelAccessMode } from '../enums/plan-model-access-mode.enum';
 import type { UserRole } from '../enums/user-role.enum';
 
 import type { TranslateFunction } from './i18n.types';

@@ -2,6 +2,7 @@ export { ExecutionProfile } from './execution-profile.enum';
 export { UserRole } from './user-role.enum';
 export { Permission } from './permission.enum';
 export { PlanFeature } from './plan-feature.enum';
+export { PlanModelAccessMode } from './plan-model-access-mode.enum';
 export { ApiErrorCode } from './api-error-code.enum';
 export { DashboardStatGradient } from './dashboard-stat-gradient.enum';
 export { DashboardOperationalState } from './dashboard-operational-state.enum';
