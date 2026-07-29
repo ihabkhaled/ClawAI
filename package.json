@@ -85,7 +85,7 @@
     "@nestjs/common": "^11.1.26",
     "@nestjs/core": "^11.1.21",
     "@nestjs/platform-express": "^11.1.26",
-    "better-sqlite3": "^12.11.1",
+    "better-sqlite3": "^13.0.1",
     "rxjs": "^7.8.2",
     "zod": "^4.4.3",
     "mongoose": "^9.7.4"
