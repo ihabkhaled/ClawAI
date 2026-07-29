@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { LOG_LEVEL_COLORS } from '@/constants';
 import type { LogLevel } from '@/enums';
 import { useToggle } from '@/hooks/common/use-toggle';
@@ -18,7 +19,7 @@ export function ClientLogEntryRow({ entry }: ClientLogEntryRowProps): React.Reac
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{entry.message}</span>
           </div>
-          <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-1 flex flex-wrap gap-3 text-xs">
             <span>{new Date(entry.createdAt).toLocaleString()}</span>
             <span className="font-mono">{entry.component}</span>
             <span>{entry.action}</span>
@@ -28,17 +29,19 @@ export function ClientLogEntryRow({ entry }: ClientLogEntryRowProps): React.Reac
           {entry.metadata && Object.keys(entry.metadata).length > 0 ? (
             <div className="mt-2">
               {isExpanded ? (
-                <pre className="whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">
+                <pre className="bg-muted rounded p-2 font-mono text-xs break-all whitespace-pre-wrap">
                   {JSON.stringify(entry.metadata, null, 2)}
                 </pre>
               ) : null}
-              <button
+              <Button
+                variant="unstyled"
+                size="unstyled"
                 type="button"
-                className="mt-1 text-xs text-primary underline"
+                className="text-primary mt-1 text-xs underline"
                 onClick={toggle}
               >
                 {isExpanded ? 'Hide details' : 'Show details'}
-              </button>
+              </Button>
             </div>
           ) : null}
         </div>

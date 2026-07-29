@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { LOG_LEVEL_COLORS } from '@/constants';
 import type { LogLevel } from '@/enums';
 import { useToggle } from '@/hooks/common/use-toggle';
@@ -23,7 +24,7 @@ export function ServerLogEntryRow({ entry }: ServerLogEntryRowProps): React.Reac
               </Badge>
             ) : null}
           </div>
-          <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-1 flex flex-wrap gap-3 text-xs">
             <span>{new Date(entry.createdAt).toLocaleString()}</span>
             <span className="font-mono">{entry.serviceName}</span>
             {entry.controller ? <span>{entry.controller}</span> : null}
@@ -35,7 +36,7 @@ export function ServerLogEntryRow({ entry }: ServerLogEntryRowProps): React.Reac
             ) : null}
             {entry.latencyMs ? <span>{entry.latencyMs}ms</span> : null}
           </div>
-          <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-1 flex flex-wrap gap-3 text-xs">
             {entry.requestId ? (
               <span className="font-mono">req: {entry.requestId.slice(0, 8)}</span>
             ) : null}
@@ -45,16 +46,14 @@ export function ServerLogEntryRow({ entry }: ServerLogEntryRowProps): React.Reac
             {entry.userId ? (
               <span className="font-mono">user: {entry.userId.slice(0, 8)}</span>
             ) : null}
-            {entry.errorCode ? (
-              <span className="text-destructive">{entry.errorCode}</span>
-            ) : null}
+            {entry.errorCode ? <span className="text-destructive">{entry.errorCode}</span> : null}
           </div>
           {entry.errorMessage ? (
-            <p className="mt-1 text-xs text-destructive">{entry.errorMessage}</p>
+            <p className="text-destructive mt-1 text-xs">{entry.errorMessage}</p>
           ) : null}
           <div className="mt-2">
             {isExpanded ? (
-              <pre className="whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs">
+              <pre className="bg-muted rounded p-2 font-mono text-xs break-all whitespace-pre-wrap">
                 {JSON.stringify(
                   {
                     provider: entry.provider || undefined,
@@ -68,13 +67,15 @@ export function ServerLogEntryRow({ entry }: ServerLogEntryRowProps): React.Reac
                 )}
               </pre>
             ) : null}
-            <button
+            <Button
+              variant="unstyled"
+              size="unstyled"
               type="button"
-              className="mt-1 text-xs text-primary underline"
+              className="text-primary mt-1 text-xs underline"
               onClick={toggle}
             >
               {isExpanded ? 'Hide details' : 'Show details'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

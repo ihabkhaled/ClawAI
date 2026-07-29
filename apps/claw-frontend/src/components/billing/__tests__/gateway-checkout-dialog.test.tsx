@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GatewayCheckoutDialog } from '@/components/billing/gateway-checkout-dialog';
@@ -152,10 +152,47 @@ describe('GatewayCheckoutDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'billing.gatewayDialog.openPaymob' }));
     await vi.waitFor(() => expect(mockGetCheckoutSession).toHaveBeenCalledOnce());
     popup.closed = true;
-    await vi.advanceTimersByTimeAsync(2_000);
+    await act(() => vi.advanceTimersByTimeAsync(2_000));
     await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
 
     expect(mockGetCheckoutSession).toHaveBeenCalledTimes(2);
+  });
+
+  it('restores dialog controls when the Paymob popup is closed without payment', async () => {
+    vi.useFakeTimers();
+    const closeDialog = vi.fn();
+    const popup = { close: vi.fn(), closed: false };
+    vi.spyOn(window, 'open').mockReturnValue(popup as unknown as Window);
+    mockGetCheckoutSession.mockResolvedValue({
+      id: 'checkout-1',
+      status: 'AWAITING_PAYMENT',
+    });
+
+    render(
+      <GatewayCheckoutDialog
+        session={{
+          id: 'checkout-1',
+          status: 'AWAITING_PAYMENT',
+          gateway: BillingGateway.PAYMOB,
+          chargeAmountMinor: 103,
+          chargeCurrency: 'EGP',
+          hostedCheckoutUrl: 'https://accept.paymob.com/unifiedcheckout/',
+          expiresAt: '2026-07-28T00:00:00.000Z',
+        }}
+        onClose={closeDialog}
+        onComplete={vi.fn().mockResolvedValue(undefined)}
+        t={t}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'billing.gatewayDialog.openPaymob' }));
+    await vi.waitFor(() => expect(mockGetCheckoutSession).toHaveBeenCalledOnce());
+    popup.closed = true;
+    await act(() => vi.advanceTimersByTimeAsync(2_000));
+
+    expect(screen.queryByText('billing.gatewayDialog.verifying')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(closeDialog).toHaveBeenCalledOnce();
   });
 
   it('renders eligible PayPal wallet and card buttons inside the modal', async () => {

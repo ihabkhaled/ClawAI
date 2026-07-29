@@ -1,6 +1,7 @@
 import { Mail } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { GmailMessageRowProps } from '@/types/component.types';
 
@@ -16,17 +17,19 @@ export function GmailMessageRow({
       : '';
 
   return (
-    <button
+    <Button
+      variant="unstyled"
+      size="unstyled"
       type="button"
       onClick={onClick}
       className={cn(
-        'flex w-full items-start gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent',
+        'border-border hover:bg-accent flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors',
         metadata.isUnread && 'border-primary/30 bg-primary/5',
       )}
     >
       <Mail
         className={cn(
-          'mt-0.5 size-4 shrink-0 text-muted-foreground',
+          'text-muted-foreground mt-0.5 size-4 shrink-0',
           metadata.isUnread && 'text-primary',
         )}
         aria-hidden="true"
@@ -38,13 +41,13 @@ export function GmailMessageRow({
           >
             {metadata.from}
           </span>
-          <span className="shrink-0 text-xs text-muted-foreground">{date}</span>
+          <span className="text-muted-foreground shrink-0 text-xs">{date}</span>
         </div>
-        <p className="truncate text-sm text-muted-foreground">
+        <p className="text-muted-foreground truncate text-sm">
           {metadata.subject || message.title}
         </p>
         {metadata.snippet.length > 0 && (
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">{metadata.snippet}</p>
+          <p className="text-muted-foreground mt-0.5 truncate text-xs">{metadata.snippet}</p>
         )}
       </div>
       {metadata.isUnread && (
@@ -52,6 +55,6 @@ export function GmailMessageRow({
           {t('gmail.message.unread')}
         </Badge>
       )}
-    </button>
+    </Button>
   );
 }

@@ -3,6 +3,7 @@
 import { Menu } from 'lucide-react';
 
 import { MobileBottomNavItem } from '@/components/layout/mobile-bottom-nav-item';
+import { Button } from '@/components/ui/button';
 import { MOBILE_BOTTOM_NAV_ITEMS } from '@/constants';
 import { useMobileBottomNav } from '@/hooks/layout/use-mobile-bottom-nav';
 import { useTranslation } from '@/lib/i18n';
@@ -39,7 +40,7 @@ export function MobileBottomNav(): React.ReactElement {
       className={cn(
         'surface-glass safe-bottom fixed inset-x-0 bottom-0 z-50 md:hidden',
         // override .surface-glass radius so the bar hugs the screen edges
-        'rounded-none border-x-0 border-b-0 border-t',
+        'rounded-none border-x-0 border-t border-b-0',
       )}
       style={{ height: 'calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom))' }}
     >
@@ -50,19 +51,21 @@ export function MobileBottomNav(): React.ReactElement {
           </li>
         ))}
         <li className="flex flex-1">
-          <button
+          <Button
+            variant="unstyled"
+            size="unstyled"
             type="button"
             onClick={openSidebar}
             aria-label={t('nav.more')}
             className={cn(
               'relative flex h-full min-h-11 w-full flex-col items-center justify-center gap-1 px-1 text-xs font-medium',
-              'text-muted-foreground transition-colors hover:text-foreground',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+              'text-muted-foreground hover:text-foreground transition-colors',
+              'focus-visible:ring-primary/40 focus-visible:ring-2 focus-visible:outline-none',
             )}
           >
             <Menu className="h-5 w-5 shrink-0" />
             <span className="truncate">{t('nav.more')}</span>
-          </button>
+          </Button>
         </li>
       </ul>
     </nav>

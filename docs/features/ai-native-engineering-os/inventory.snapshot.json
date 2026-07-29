@@ -8433,7 +8433,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 227
+        "testFiles": 228
       },
       "claw-health-service": {
         "runner": "jest",
@@ -8729,7 +8729,9 @@
       },
       {
         "dir": "apps/claw-frontend",
-        "internalDeps": [],
+        "internalDeps": [
+          "@claw/shared-types"
+        ],
         "name": "claw-frontend",
         "scripts": [
           "build",
@@ -9185,7 +9187,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 715,
+    "totalTestFiles": 716,
     "workspaceCount": 25
   }
 }

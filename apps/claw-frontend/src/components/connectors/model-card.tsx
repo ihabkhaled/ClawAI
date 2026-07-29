@@ -5,6 +5,7 @@
 import { Check } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { LIFECYCLE_LABELS, PROVIDER_DISPLAY_NAMES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -18,7 +19,8 @@ export function ModelCard({ model, selected, onToggleSelect }: ModelCardProps): 
 
   const baseClass = cn(
     'group relative flex flex-col gap-3 rounded-lg border bg-card p-4 text-start text-card-foreground transition-all duration-fast ease-quint-out',
-    isSelectable && 'cursor-pointer hover:border-primary/60 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+    isSelectable &&
+      'cursor-pointer hover:border-primary/60 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
     isSelectable && isSelected && 'border-primary ring-2 ring-primary/40',
   );
 
@@ -45,7 +47,7 @@ export function ModelCard({ model, selected, onToggleSelect }: ModelCardProps): 
         <span
           aria-hidden="true"
           className={cn(
-            'absolute end-3 top-3 flex h-5 w-5 items-center justify-center rounded-full border bg-background transition-colors',
+            'bg-background absolute end-3 top-3 flex h-5 w-5 items-center justify-center rounded-full border transition-colors',
             isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-input',
           )}
         >
@@ -55,7 +57,7 @@ export function ModelCard({ model, selected, onToggleSelect }: ModelCardProps): 
 
       <div className="flex flex-col gap-0.5 pe-6">
         <h3 className="truncate text-sm font-semibold">{model.displayName}</h3>
-        <p className="truncate text-xs text-muted-foreground">{model.modelKey}</p>
+        <p className="text-muted-foreground truncate text-xs">{model.modelKey}</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
@@ -85,9 +87,9 @@ export function ModelCard({ model, selected, onToggleSelect }: ModelCardProps): 
         ) : null}
       </div>
 
-      <div className="mt-auto flex items-center justify-between text-xs text-muted-foreground">
+      <div className="text-muted-foreground mt-auto flex items-center justify-between text-xs">
         <span>{t('models.context')}</span>
-        <span className="font-medium text-foreground">
+        <span className="text-foreground font-medium">
           {formatContextTokens(model.maxContextTokens)}
         </span>
       </div>
@@ -102,7 +104,9 @@ export function ModelCard({ model, selected, onToggleSelect }: ModelCardProps): 
   }
 
   return (
-    <button
+    <Button
+      variant="unstyled"
+      size="unstyled"
       type="button"
       onClick={handleClick}
       onKeyDown={handleKey}
@@ -110,6 +114,6 @@ export function ModelCard({ model, selected, onToggleSelect }: ModelCardProps): 
       className={baseClass}
     >
       {body}
-    </button>
+    </Button>
   );
 }

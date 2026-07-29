@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AgentSessionStatus } from '@/enums';
 import { useAgentPage } from '@/hooks/agent/use-agent-page';
@@ -30,7 +31,7 @@ export default function AgentPage(): React.ReactElement {
       <div>
         <PageHeader title={t('agent.title')} description={t('agent.description')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">
+          <p className="text-destructive text-sm">
             {error instanceof Error ? error.message : t('agent.loadFailed')}
           </p>
         </div>
@@ -71,7 +72,7 @@ export default function AgentPage(): React.ReactElement {
                   </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-xs text-muted-foreground">
+              <CardContent className="text-muted-foreground text-xs">
                 <p>{session.platform}</p>
                 <p>
                   {t('agent.version')}: {session.agentVersion}
@@ -100,29 +101,33 @@ export default function AgentPage(): React.ReactElement {
                 <div className="flex flex-1 flex-col gap-1 overflow-hidden">
                   <code className="truncate text-xs">{cmd.command}</code>
                   {cmd.riskReasons !== null && cmd.riskReasons.length > 0 ? (
-                    <span className="truncate text-[10px] text-muted-foreground">
+                    <span className="text-muted-foreground truncate text-[10px]">
                       {cmd.riskReasons}
                     </span>
                   ) : null}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <RiskBadge label={cmd.riskLabel} score={cmd.riskScore} />
-                  <button
+                  <Button
+                    variant="unstyled"
+                    size="unstyled"
                     type="button"
                     disabled={isCommandActionPending}
                     onClick={() => handleApprove(cmd.id)}
                     className="rounded px-2 py-1 text-xs font-medium text-green-600 hover:bg-green-50"
                   >
                     {t('agent.approve')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="unstyled"
+                    size="unstyled"
                     type="button"
                     disabled={isCommandActionPending}
                     onClick={() => handleReject(cmd.id, t('agent.rejectedByUser'))}
-                    className="rounded px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
+                    className="text-destructive hover:bg-destructive/10 rounded px-2 py-1 text-xs font-medium"
                   >
                     {t('agent.reject')}
-                  </button>
+                  </Button>
                 </div>
               </CardContent>
             </Card>

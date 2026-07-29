@@ -38,7 +38,8 @@ fi
 cd "${REPO_ROOT}"
 
 if [[ "${WORKSPACE}" == "claw-frontend" ]]; then
-  echo "==> frontend has no shared workspace dependencies — skipping shared package builds"
+  echo "==> building frontend shared workspace dependencies"
+  npm run build --workspace=@claw/shared-types
 else
   echo "==> building shared packages"
   npm run vercel:build:shared
