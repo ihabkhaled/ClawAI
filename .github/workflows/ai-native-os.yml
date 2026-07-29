@@ -16,8 +16,8 @@ jobs:
     name: Knowledge freshness (generated .ai layer)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       # No install needed: the tooling is dependency-light Node ESM (stdlib).
@@ -30,8 +30,8 @@ jobs:
     name: Knowledge integrity (links, no hook-bypass, contradictions)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - name: knowledge:verify
@@ -41,8 +41,8 @@ jobs:
     name: Tooling tests (audit, knowledge, affected)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - name: knowledge tooling tests
@@ -52,8 +52,8 @@ jobs:
     name: Architecture ESLint rule tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - name: Install (eslint for RuleTester)

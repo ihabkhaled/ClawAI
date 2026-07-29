@@ -1,3 +1,4 @@
+import { fixupConfigRules } from '@eslint/compat';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 import react from 'eslint-plugin-react';
@@ -6,6 +7,11 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import security from 'eslint-plugin-security';
 import unicorn from 'eslint-plugin-unicorn';
 import importX from 'eslint-plugin-import-x';
+
+const [reactRecommended, reactJsxRuntime] = fixupConfigRules([
+  react.configs.flat.recommended,
+  react.configs.flat['jsx-runtime'],
+]);
 
 // ─── Shared separation-of-concerns selectors ────────────────────────────────
 const banStringLiteralUnion = {
@@ -116,7 +122,7 @@ export default defineConfig([
   // React recommended (flat config)
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
-    ...react.configs.flat.recommended,
+    ...reactRecommended,
     settings: {
       react: { version: 'detect' },
     },
@@ -125,7 +131,7 @@ export default defineConfig([
   // React JSX runtime (no need to import React in scope)
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
-    ...react.configs.flat['jsx-runtime'],
+    ...reactJsxRuntime,
   },
 
   // JSX Accessibility
