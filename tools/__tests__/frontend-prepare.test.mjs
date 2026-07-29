@@ -4,13 +4,14 @@ import { test } from 'node:test';
 
 import { repoPath } from '../lib/repo.mjs';
 
-function runFrontendLifecycle(script) {
+function runLifecycle(script, workspace) {
   const isWindows = process.platform === 'win32';
   const executable = isWindows ? process.env.ComSpec : 'npm';
   assert.ok(executable, 'ComSpec must be available on Windows');
+  const workspaceArgument = workspace ? ` --workspace=${workspace}` : '';
   const arguments_ = isWindows
-    ? ['/d', '/s', '/c', `npm run ${script} --workspace=claw-frontend`]
-    : ['run', script, '--workspace=claw-frontend'];
+    ? ['/d', '/s', '/c', `npm run ${script}${workspaceArgument}`]
+    : ['run', script, ...(workspace ? [`--workspace=${workspace}`] : [])];
   return spawnSync(executable, arguments_, {
     cwd: repoPath(),
     encoding: 'utf8',
@@ -21,15 +22,15 @@ function runFrontendLifecycle(script) {
   });
 }
 
-function assertLifecycleSucceeds(script) {
-  const result = runFrontendLifecycle(script);
+function assertLifecycleSucceeds(script, workspace) {
+  const result = runLifecycle(script, workspace);
   assert.equal(result.status, 0, result.error?.message ?? result.stdout + result.stderr);
 }
 
-test('frontend prepare lifecycle succeeds on the current platform', () => {
+test('repository prepare lifecycle succeeds on the current platform', () => {
   assertLifecycleSucceeds('prepare');
 });
 
 test('frontend cache cleanup succeeds on the current platform', () => {
-  assertLifecycleSucceeds('clear-cache');
+  assertLifecycleSucceeds('clear-cache', 'claw-frontend');
 });
