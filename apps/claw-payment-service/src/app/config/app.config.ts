@@ -19,6 +19,14 @@ const paymobConfigSchema = z.object({
   PAYMOB_API_KEY: z.string().min(1).optional(),
   PAYMOB_HMAC_SECRET: z.string().min(1).optional(),
   PAYMOB_CARD_INTEGRATION_ID: z.string().min(1).optional(),
+  // Paymob must reach this endpoint from the public internet. It is separate
+  // from FRONTEND_URL so local checkout returns can stay on claw.local while
+  // signed server callbacks use a narrowly exposed HTTPS ingress.
+  PAYMOB_WEBHOOK_URL: z
+    .string()
+    .url()
+    .regex(/^https:\/\//)
+    .optional(),
   PAYMOB_CURRENCY: z.string().length(3).default('EGP'),
 });
 

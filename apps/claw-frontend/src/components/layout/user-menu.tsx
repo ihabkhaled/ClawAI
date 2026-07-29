@@ -4,6 +4,7 @@ import { LogOut, Settings, User } from 'lucide-react';
 import Link from 'next/link';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,29 +31,33 @@ export function UserMenu(): React.ReactElement | null {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-accent">
+        <Button
+          variant="unstyled"
+          size="unstyled"
+          className="hover:bg-accent flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
+        >
           {/* Avatar wrapper carries the primary-tinted ring + an online status
            * dot anchored to the bottom-end corner. The dot uses `end-0` so it
            * mirrors automatically under RTL, and a 2px card-colored border
            * around it punches it visually away from the avatar circle. */}
           <span className="relative inline-flex">
-            <Avatar className="h-8 w-8 ring-2 ring-primary/20 transition-shadow duration-fast ease-expo-out hover:ring-primary/40">
+            <Avatar className="ring-primary/20 duration-fast ease-expo-out hover:ring-primary/40 h-8 w-8 ring-2 transition-shadow">
               <AvatarFallback className="text-xs">{getInitials(user.username)}</AvatarFallback>
             </Avatar>
             <span
-              className="absolute bottom-0 end-0 inline-block h-2.5 w-2.5 rounded-full border-2 border-card bg-[hsl(var(--success))]"
+              className="border-card absolute end-0 bottom-0 inline-block h-2.5 w-2.5 rounded-full border-2 bg-[hsl(var(--success))]"
               role="status"
               aria-label={t('accessibility.userStatusOnline')}
             />
           </span>
           <span className="max-w-[120px] truncate font-medium">{user.username}</span>
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium">{user.username}</p>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
+            <p className="text-muted-foreground text-xs">{user.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -70,7 +75,7 @@ export function UserMenu(): React.ReactElement | null {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="cursor-pointer text-destructive focus:text-destructive"
+          className="text-destructive focus:text-destructive cursor-pointer"
           disabled={isPending}
           onClick={() => logout()}
         >

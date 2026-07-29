@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useRecipesPage } from '@/hooks/agent/use-recipes-page';
 import { useTranslation } from '@/lib/i18n';
@@ -21,7 +22,7 @@ export default function AgentRecipesPage(): ReactElement {
       <div>
         <PageHeader title={t('agent.recipes')} description={t('agent.recipesDesc')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">
+          <p className="text-destructive text-sm">
             {error instanceof Error ? error.message : t('agent.loadFailed')}
           </p>
         </div>
@@ -34,7 +35,7 @@ export default function AgentRecipesPage(): ReactElement {
       <PageHeader
         title={t('agent.recipes')}
         description={t('agent.recipesDesc')}
-        actions={<span className="text-xs text-muted-foreground">{total} total</span>}
+        actions={<span className="text-muted-foreground text-xs">{total} total</span>}
       />
 
       {isLoading && <LoadingSpinner label={t('agent.loading')} />}
@@ -55,14 +56,17 @@ export default function AgentRecipesPage(): ReactElement {
                 {r.isEnabled ? (
                   <ToggleRight className="size-4 text-green-500" />
                 ) : (
-                  <ToggleLeft className="size-4 text-muted-foreground" />
+                  <ToggleLeft className="text-muted-foreground size-4" />
                 )}
                 <div className="flex flex-1 flex-col gap-1 truncate">
-                  <Link href={`/agent/recipes/${r.id}`} className="text-sm font-semibold hover:underline">
+                  <Link
+                    href={`/agent/recipes/${r.id}`}
+                    className="text-sm font-semibold hover:underline"
+                  >
                     {r.name}
                   </Link>
                   {r.description !== null && (
-                    <p className="truncate text-xs text-muted-foreground">{r.description}</p>
+                    <p className="text-muted-foreground truncate text-xs">{r.description}</p>
                   )}
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="font-mono text-xs">
@@ -73,15 +77,17 @@ export default function AgentRecipesPage(): ReactElement {
                     </Badge>
                   </div>
                 </div>
-                <button
+                <Button
+                  variant="unstyled"
+                  size="unstyled"
                   type="button"
                   disabled={isDeleting}
                   onClick={() => handleDelete(r.id)}
-                  className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
+                  className="text-destructive hover:bg-destructive/10 flex items-center gap-1 rounded px-2 py-1 text-xs font-medium"
                 >
                   <Trash2 className="size-3" />
                   {t('common.delete')}
-                </button>
+                </Button>
               </CardContent>
             </Card>
           ))}

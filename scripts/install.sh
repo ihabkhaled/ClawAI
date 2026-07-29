@@ -943,6 +943,9 @@ PAYMOB_PUBLIC_KEY=
 PAYMOB_API_KEY=
 PAYMOB_HMAC_SECRET=
 PAYMOB_CARD_INTEGRATION_ID=
+# Optional public HTTPS callback endpoint. Required when the app hostname is
+# local-only; expose only the Paymob webhook route through a tunnel.
+PAYMOB_WEBHOOK_URL=
 PAYMOB_CURRENCY=EGP
 NEXT_PUBLIC_PAYMOB_PUBLIC_KEY=
 

@@ -322,6 +322,10 @@ export default defineConfig([
         banUtilityFunctions,
         banInlineConstInComponent,
         banNonExportedFunctionInComponent,
+        {
+          selector: "JSXOpeningElement[name.name='button']",
+          message: 'Use the shared Button component from @/components/ui/button.',
+        },
       ],
     },
   },

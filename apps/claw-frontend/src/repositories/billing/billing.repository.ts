@@ -156,6 +156,13 @@ class BillingRepository {
     return response.data;
   }
 
+  async getPaymentMethodSetupSession(id: string): Promise<PaymentMethodSetupSessionView> {
+    const response = await apiClient.get<PaymentMethodSetupSessionView>(
+      `/billing/payment-method-setup-sessions/${id}`,
+    );
+    return response.data;
+  }
+
   async deletePaymentMethod(id: string): Promise<void> {
     await apiClient.delete(`/billing/payment-methods/${id}`);
   }

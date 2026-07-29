@@ -10,7 +10,7 @@ import { CheckoutController } from '../checkout.controller';
 
 describe('CheckoutController', () => {
   const checkout = { findOwned: jest.fn(), start: jest.fn() };
-  const paymentMethodSetup = { start: jest.fn() };
+  const paymentMethodSetup = { start: jest.fn(), findOwned: jest.fn() };
   const catalog = { listCatalog: jest.fn() };
   const paypalCompletion = { complete: jest.fn(), completeSdk: jest.fn() };
   const paymobCompletion = { complete: jest.fn() };
@@ -96,5 +96,19 @@ describe('CheckoutController', () => {
       sessionId: 'session-1',
       providerOrderId: '5O190127TN364715T',
     });
+  });
+
+  it('binds payment-method setup polling to the authenticated owner', async () => {
+    paymentMethodSetup.findOwned.mockResolvedValue({
+      id: 'setup-1',
+      status: 'COMPLETED',
+    });
+
+    await controller.getPaymentMethodSetupSession(
+      { id: 'user-1', email: 'owner@example.com', role: UserRole.USER },
+      { id: 'setup-1' },
+    );
+
+    expect(paymentMethodSetup.findOwned).toHaveBeenCalledWith('user-1', 'setup-1');
   });
 });

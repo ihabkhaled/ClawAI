@@ -1,6 +1,7 @@
 import { FileText } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import type { ConfluencePageRowProps } from '@/types/component.types';
 import { resolveSpaceLabel } from '@/utilities/confluence.utility';
 
@@ -16,18 +17,20 @@ export function ConfluencePageRow({
   const spaceLabel = resolveSpaceLabel(metadata.spaceKey, metadata.spaceName);
 
   return (
-    <button
+    <Button
+      variant="unstyled"
+      size="unstyled"
       type="button"
       onClick={onClick}
-      className="flex w-full items-start gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent"
+      className="border-border hover:bg-accent flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors"
     >
-      <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+      <FileText className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <span className="truncate text-sm font-medium">{page.title}</span>
-          <span className="shrink-0 text-xs text-muted-foreground">{date}</span>
+          <span className="text-muted-foreground shrink-0 text-xs">{date}</span>
         </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2 text-xs">
           {spaceLabel !== null && (
             <span>
               {t('confluence.article.space')}: {spaceLabel}
@@ -49,6 +52,6 @@ export function ConfluencePageRow({
           </div>
         )}
       </div>
-    </button>
+    </Button>
   );
 }

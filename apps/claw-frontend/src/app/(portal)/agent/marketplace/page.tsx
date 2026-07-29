@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMarketplacePage } from '@/hooks/agent/use-marketplace-page';
 import { useTranslation } from '@/lib/i18n';
@@ -21,7 +22,7 @@ export default function AgentMarketplacePage(): ReactElement {
       <div>
         <PageHeader title={t('agent.marketplace')} description={t('agent.marketplaceDesc')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">
+          <p className="text-destructive text-sm">
             {error instanceof Error ? error.message : t('agent.loadFailed')}
           </p>
         </div>
@@ -34,7 +35,7 @@ export default function AgentMarketplacePage(): ReactElement {
       <PageHeader
         title={t('agent.marketplace')}
         description={t('agent.marketplaceDesc')}
-        actions={<span className="text-xs text-muted-foreground">{total} listed</span>}
+        actions={<span className="text-muted-foreground text-xs">{total} listed</span>}
       />
 
       {isLoading && <LoadingSpinner label={t('agent.loading')} />}
@@ -53,14 +54,14 @@ export default function AgentMarketplacePage(): ReactElement {
             <Card key={l.id}>
               <CardContent className="flex flex-col gap-2 py-3">
                 <div className="flex items-center gap-2">
-                  <Store className="size-4 text-muted-foreground" />
+                  <Store className="text-muted-foreground size-4" />
                   <span className="text-sm font-semibold">{l.name}</span>
                   <Badge variant="outline" className="ml-auto text-xs">
                     {l.installs} installs
                   </Badge>
                 </div>
                 {l.description !== null && (
-                  <p className="line-clamp-2 text-xs text-muted-foreground">{l.description}</p>
+                  <p className="text-muted-foreground line-clamp-2 text-xs">{l.description}</p>
                 )}
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="font-mono text-xs">
@@ -69,15 +70,17 @@ export default function AgentMarketplacePage(): ReactElement {
                   <Badge variant="outline" className="font-mono text-xs">
                     {l.signatureAlgorithm}
                   </Badge>
-                  <button
+                  <Button
+                    variant="unstyled"
+                    size="unstyled"
                     type="button"
                     disabled={isInstalling}
                     onClick={() => handleInstall(l.id)}
-                    className="ml-auto flex items-center gap-1 rounded bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 ml-auto flex items-center gap-1 rounded px-3 py-1 text-xs font-medium disabled:opacity-50"
                   >
                     <Download className="size-3" />
                     {t('agent.install')}
-                  </button>
+                  </Button>
                 </div>
               </CardContent>
             </Card>

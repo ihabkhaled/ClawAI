@@ -20,24 +20,32 @@ export function ModelFilterPills({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 p-2">
+    <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-md border p-2">
       <Badge variant="default" className="text-[11px]">
         {t('models.filters.activeCount', { count: pills.length })}
       </Badge>
       {pills.map((pill) => (
         <Badge key={pill.id} variant="secondary" className="gap-1 ps-2 pe-1 text-[11px]">
           {pill.label}
-          <button
+          <Button
+            variant="unstyled"
+            size="unstyled"
             type="button"
             onClick={pill.onClear}
             aria-label={pill.label}
-            className="rounded-sm p-0.5 hover:bg-background/60"
+            className="hover:bg-background/60 rounded-sm p-0.5"
           >
             <X className="h-3 w-3" />
-          </button>
+          </Button>
         </Badge>
       ))}
-      <Button type="button" variant="ghost" size="sm" onClick={onClearAll} className="ms-auto h-7 px-2 text-xs">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={onClearAll}
+        className="ms-auto h-7 px-2 text-xs"
+      >
         {t('models.filters.clearAll')}
       </Button>
     </div>

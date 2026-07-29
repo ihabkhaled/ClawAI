@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { Button } from '@/components/ui/button';
 import { useSidebarNavItemState } from '@/hooks/layout/use-sidebar-nav-item-state';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -37,7 +38,7 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
   const activeIndicator = isActive ? (
     <span
       aria-hidden
-      className="animate-nav-indicator absolute start-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-e-full bg-primary"
+      className="animate-nav-indicator bg-primary absolute start-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-e-full"
     />
   ) : null;
 
@@ -48,7 +49,7 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
         <item.icon className="h-4 w-4 shrink-0" />
         <span>{t(item.labelKey)}</span>
         {item.badge ? (
-          <span className="ms-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+          <span className="bg-primary/10 text-primary ms-auto rounded-full px-2 py-0.5 text-xs">
             {item.badge}
           </span>
         ) : null}
@@ -64,20 +65,22 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
           <item.icon className="h-4 w-4 shrink-0" />
           <span>{t(item.labelKey)}</span>
         </Link>
-        <button
+        <Button
+          variant="unstyled"
+          size="unstyled"
           type="button"
           onClick={toggle}
           aria-label={expanded ? 'Collapse' : 'Expand'}
           aria-expanded={expanded}
-          className="ms-1 flex min-h-11 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground ms-1 flex min-h-11 w-8 items-center justify-center rounded-lg transition-colors"
         >
           <ChevronDown
             className={cn(
-              'h-4 w-4 transition-transform duration-normal ease-expo-out',
+              'duration-normal ease-expo-out h-4 w-4 transition-transform',
               expanded ? 'rotate-0' : '-rotate-90',
             )}
           />
-        </button>
+        </Button>
       </div>
       {expanded ? (
         <div className="mt-1 space-y-1 ps-6">

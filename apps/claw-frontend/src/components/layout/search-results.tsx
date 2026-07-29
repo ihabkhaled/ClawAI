@@ -1,5 +1,6 @@
 import { MessageSquare } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 import type { SearchResultsProps } from '@/types';
 import { formatRelativeDate } from '@/utilities';
@@ -12,7 +13,7 @@ export function SearchResults({
   const { t } = useTranslation();
   if (isLoading) {
     return (
-      <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+      <div className="text-muted-foreground px-3 py-4 text-center text-sm">
         {t('chat.searching')}
       </div>
     );
@@ -20,7 +21,7 @@ export function SearchResults({
 
   if (threads.length === 0) {
     return (
-      <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+      <div className="text-muted-foreground px-3 py-4 text-center text-sm">
         {t('chat.globalSearchNoResults')}
       </div>
     );
@@ -29,23 +30,25 @@ export function SearchResults({
   return (
     <div className="max-h-64 overflow-y-auto">
       {threads.map((thread) => (
-        <button
+        <Button
+          variant="unstyled"
+          size="unstyled"
           key={thread.id}
           type="button"
-          className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-start text-sm transition-colors hover:bg-accent"
+          className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-2 text-start text-sm transition-colors"
           onClick={() => onSelect(thread.id)}
         >
-          <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <MessageSquare className="text-muted-foreground h-4 w-4 shrink-0" />
           <div className="min-w-0 flex-1">
             <div className="truncate font-medium">{thread.title ?? t('chat.untitled')}</div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-muted-foreground text-xs">
               {formatRelativeDate(thread.updatedAt)}
               {thread._count?.messages !== undefined
                 ? ` \u00B7 ${thread._count.messages} messages`
                 : ''}
             </div>
           </div>
-        </button>
+        </Button>
       ))}
     </div>
   );

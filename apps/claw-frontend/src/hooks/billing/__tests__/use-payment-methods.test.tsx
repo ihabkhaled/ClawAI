@@ -9,6 +9,12 @@ import { usePaymentMethods } from '@/hooks/billing/use-payment-methods';
 const mockList = vi.fn();
 const mockCreateSetup = vi.fn();
 const mockDelete = vi.fn();
+const mockReplace = vi.fn();
+const mockRefresh = vi.fn();
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: mockReplace, refresh: mockRefresh }),
+}));
 
 vi.mock('@/repositories/billing/billing.repository', () => ({
   billingRepository: {
@@ -85,5 +91,16 @@ describe('usePaymentMethods', () => {
     await waitFor(() => {
       expect(result.current.error).toBe('billing.paymentMethods.setupFailed');
     });
+  });
+
+  it('refreshes the main billing window after verified popup completion', async () => {
+    const { result } = renderHook(() => usePaymentMethods(), { wrapper: makeWrapper() });
+
+    await act(async () => {
+      await result.current.completeGateway();
+    });
+
+    expect(mockReplace).toHaveBeenCalledWith('/billing');
+    expect(mockRefresh).toHaveBeenCalledOnce();
   });
 });

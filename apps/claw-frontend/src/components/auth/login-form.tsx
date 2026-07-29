@@ -34,11 +34,11 @@ export function LoginForm(): React.ReactElement {
     <div className="flex w-full max-w-sm flex-col">
       {/* Mobile-only logo + welcome — replaces the branding panel on small screens */}
       <div className="mb-6 flex flex-col items-center text-center lg:hidden">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-          <Zap className="h-6 w-6 text-primary-foreground" aria-hidden="true" />
+        <div className="bg-primary flex h-12 w-12 items-center justify-center rounded-xl">
+          <Zap className="text-primary-foreground h-6 w-6" aria-hidden="true" />
         </div>
         <h1 className="mt-4 text-2xl font-bold">{t('auth.welcomeTitle')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t('auth.welcomeSubtitle')}</p>
+        <p className="text-muted-foreground mt-1 text-sm">{t('auth.welcomeSubtitle')}</p>
       </div>
 
       <Card>
@@ -54,7 +54,7 @@ export function LoginForm(): React.ReactElement {
             className="space-y-4"
           >
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium leading-none">
+              <label htmlFor="email" className="text-sm leading-none font-medium">
                 {t('auth.email')}
               </label>
               <Input
@@ -66,12 +66,12 @@ export function LoginForm(): React.ReactElement {
                 {...form.register('email')}
               />
               {form.formState.errors.email ? (
-                <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+                <p className="text-destructive text-xs">{form.formState.errors.email.message}</p>
               ) : null}
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium leading-none">
+              <label htmlFor="password" className="text-sm leading-none font-medium">
                 {t('auth.password')}
               </label>
               <div className="relative">
@@ -84,7 +84,9 @@ export function LoginForm(): React.ReactElement {
                   className="pe-10"
                   {...form.register('password')}
                 />
-                <button
+                <Button
+                  variant="unstyled"
+                  size="unstyled"
                   type="button"
                   onClick={togglePasswordVisibility}
                   disabled={isPending}
@@ -92,26 +94,24 @@ export function LoginForm(): React.ReactElement {
                     showPassword ? t('auth.hidePasswordAria') : t('auth.showPasswordAria')
                   }
                   aria-pressed={showPassword}
-                  className="absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  className="text-muted-foreground hover:text-foreground focus-visible:text-foreground absolute inset-y-0 end-0 flex items-center pe-3 transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" aria-hidden="true" />
                   ) : (
                     <Eye className="h-4 w-4" aria-hidden="true" />
                   )}
-                </button>
+                </Button>
               </div>
               {form.formState.errors.password ? (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.password.message}
-                </p>
+                <p className="text-destructive text-xs">{form.formState.errors.password.message}</p>
               ) : null}
             </div>
 
             <div className="flex items-center justify-between">
               <label
                 htmlFor="rememberMe"
-                className="flex cursor-pointer select-none items-center gap-2 text-sm text-muted-foreground"
+                className="text-muted-foreground flex cursor-pointer items-center gap-2 text-sm select-none"
               >
                 <Checkbox
                   id="rememberMe"
@@ -123,14 +123,16 @@ export function LoginForm(): React.ReactElement {
                 />
                 <span>{t('auth.rememberMe')}</span>
               </label>
-              <button
+              <Button
+                variant="unstyled"
+                size="unstyled"
                 type="button"
                 onClick={handleForgotPasswordClick}
                 disabled={isPending}
-                className="text-sm font-medium text-primary hover:underline focus-visible:underline focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                className="text-primary text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {t('auth.forgotPassword')}
-              </button>
+              </Button>
             </div>
 
             {isError ? (
@@ -148,15 +150,15 @@ export function LoginForm(): React.ReactElement {
         </CardContent>
       </Card>
 
-      <p className="mt-4 text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground mt-4 text-center text-sm">
         {t('auth.noAccount')}{' '}
-        <Link href={ROUTES.REGISTER} className="font-medium text-primary hover:underline">
+        <Link href={ROUTES.REGISTER} className="text-primary font-medium hover:underline">
           {t('auth.signUpLink')}
         </Link>
       </p>
 
       {/* Mobile-only tagline — desktop renders inside the branding panel */}
-      <p className="mt-6 text-center text-xs text-muted-foreground lg:hidden">
+      <p className="text-muted-foreground mt-6 text-center text-xs lg:hidden">
         {t('auth.tagline')}
       </p>
     </div>

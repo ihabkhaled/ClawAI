@@ -823,7 +823,7 @@
       "portVariable": "FRONTEND_PORT",
       "serviceUrlVariable": "NEXT_PUBLIC_APP_URL",
       "buildCommand": "bash ../../scripts/vercel/build-service.sh claw-frontend",
-      "installCommand": "cd ../.. && npm ci --workspace=claw-frontend --include-workspace-root=false",
+      "installCommand": "cd ../.. && npm ci",
       "outputDirectory": ".next",
       "healthPath": "/",
       "protectedProbePath": null,

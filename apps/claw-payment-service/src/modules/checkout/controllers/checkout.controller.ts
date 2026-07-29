@@ -60,6 +60,14 @@ export class CheckoutController {
     });
   }
 
+  @Get('payment-method-setup-sessions/:id')
+  async getPaymentMethodSetupSession(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param(new ZodValidationPipe(checkoutSessionParamSchema)) params: CheckoutSessionParamDto,
+  ): Promise<PaymentMethodSetupSessionView> {
+    return this.paymentMethodSetup.findOwned(user.id, params.id);
+  }
+
   @Post('checkout-sessions')
   @HttpCode(HttpStatus.CREATED)
   async createSession(

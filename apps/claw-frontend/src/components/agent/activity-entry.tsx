@@ -5,6 +5,7 @@ import { type ReactElement, useState } from 'react';
 
 import { RiskBadge } from '@/components/agent/risk-badge';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   SEVERITY_ICON_MAP,
@@ -22,57 +23,54 @@ export function AgentActivityEntry({ t, invocation }: AgentActivityEntryProps): 
   const entryId = `activity-entry-${invocation.id}`;
 
   return (
-    <Card className={cn('overflow-hidden border-border', styles.bgClass)}>
+    <Card className={cn('border-border overflow-hidden', styles.bgClass)}>
       {/* 3px accent rule on the left edge — color comes from the --accent-* token */}
       <div className="flex">
         <div className={cn('w-[3px] shrink-0', styles.accentClass)} aria-hidden="true" />
         <div className="flex-1">
-          <button
+          <Button
+            variant="unstyled"
+            size="unstyled"
             type="button"
             onClick={() => setExpanded((prev) => !prev)}
             aria-expanded={expanded}
             aria-controls={entryId}
-            className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="hover:bg-muted/40 focus-visible:ring-ring flex w-full items-center gap-3 px-3 py-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
           >
             <Icon aria-hidden="true" className={cn('size-4 shrink-0', styles.iconClass)} />
             <Badge variant="outline" className="shrink-0 font-mono text-xs">
               {invocation.capabilityClass}.{invocation.capabilityOperation}
             </Badge>
-            <code className="flex-1 truncate text-xs text-muted-foreground">
+            <code className="text-muted-foreground flex-1 truncate text-xs">
               {JSON.stringify(invocation.targetDescriptor)}
             </code>
             <RiskBadge label={invocation.riskLabel} score={invocation.riskScore} />
-            <Badge
-              variant="outline"
-              className="shrink-0 text-[10px] uppercase tracking-wider"
-            >
+            <Badge variant="outline" className="shrink-0 text-[10px] tracking-wider uppercase">
               {invocation.status}
             </Badge>
             <ChevronDown
               aria-hidden="true"
               className={cn(
-                'size-4 shrink-0 text-muted-foreground transition-transform duration-fast ease-expo-out',
+                'text-muted-foreground duration-fast ease-expo-out size-4 shrink-0 transition-transform',
                 expanded && 'rotate-180',
               )}
             />
-          </button>
+          </Button>
           {expanded && (
             <CardContent
               id={entryId}
-              className="flex flex-col gap-2 border-t border-border/60 px-3 py-3 text-xs"
+              className="border-border/60 flex flex-col gap-2 border-t px-3 py-3 text-xs"
             >
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
-                <span className="font-medium text-foreground">{t('agent.blastRadius')}</span>
+              <div className="text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-1">
+                <span className="text-foreground font-medium">{t('agent.blastRadius')}</span>
                 <span className="font-mono">{invocation.blastRadius}</span>
-                <span className="font-medium text-foreground">{t('agent.reversibility')}</span>
+                <span className="text-foreground font-medium">{t('agent.reversibility')}</span>
                 <span className="font-mono">{invocation.reversibility}</span>
-                <span className="font-medium text-foreground">{t('agent.riskScore')}</span>
+                <span className="text-foreground font-medium">{t('agent.riskScore')}</span>
                 <span className="font-mono">{invocation.riskScore}</span>
                 {invocation.matchedPolicyName !== null && (
                   <>
-                    <span className="font-medium text-foreground">
-                      {t('agent.matchedPolicy')}
-                    </span>
+                    <span className="text-foreground font-medium">{t('agent.matchedPolicy')}</span>
                     <span className="font-mono">{invocation.matchedPolicyName}</span>
                   </>
                 )}
@@ -83,7 +81,7 @@ export function AgentActivityEntry({ t, invocation }: AgentActivityEntryProps): 
                 </p>
               )}
               {invocation.rejectionReason !== null && (
-                <p className="rounded bg-muted px-2 py-1 font-mono text-muted-foreground">
+                <p className="bg-muted text-muted-foreground rounded px-2 py-1 font-mono">
                   {invocation.rejectionReason}
                 </p>
               )}

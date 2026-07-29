@@ -54,7 +54,7 @@ export default function ContextPage() {
       <div>
         <PageHeader title={t('context.title')} description={t('context.description')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">{error?.message ?? t('context.loadFailed')}</p>
+          <p className="text-destructive text-sm">{error?.message ?? t('context.loadFailed')}</p>
         </div>
       </div>
     );
@@ -65,18 +65,20 @@ export default function ContextPage() {
       <div>
         <nav
           aria-label="Breadcrumb"
-          className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground"
+          className="text-muted-foreground mb-2 flex items-center gap-1.5 text-sm"
         >
-          <button
+          <Button
+            variant="unstyled"
+            size="unstyled"
             type="button"
             onClick={() => setSelectedPackId(null)}
-            className="inline-flex items-center gap-1 rounded px-1 py-0.5 transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="hover:text-foreground focus:ring-ring inline-flex items-center gap-1 rounded px-1 py-0.5 transition-colors focus:ring-2 focus:outline-none"
           >
             <Home className="h-3.5 w-3.5" aria-hidden="true" />
             <span>{t('context.title')}</span>
-          </button>
+          </Button>
           <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
-          <span className="truncate font-medium text-foreground">
+          <span className="text-foreground truncate font-medium">
             {selectedPack?.name ?? t('context.contextPack')}
           </span>
         </nav>
@@ -100,7 +102,7 @@ export default function ContextPage() {
 
         <div className="relative mb-4">
           <Search
-            className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            className="text-muted-foreground absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2"
             aria-hidden="true"
           />
           <Input
@@ -168,7 +170,7 @@ export default function ContextPage() {
       {contextPacks.length > 0 ? (
         <div className="relative mb-4">
           <Search
-            className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            className="text-muted-foreground absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2"
             aria-hidden="true"
           />
           <Input

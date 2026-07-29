@@ -16,6 +16,9 @@ npm run build
 npm run dev
 ```
 
+## Dependencies (generated)
+- Depends on: @claw/shared-types
+
 ## Before editing
 1. `npm run knowledge:context -- --task="<task>" --service=frontend`
 2. Read `.ai/local/current-context.md`.

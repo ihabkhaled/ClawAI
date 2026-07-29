@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 
 import { repoPath } from '../lib/repo.mjs';
 
-test('frontend Vercel install is workspace-scoped without changing backend installs', () => {
+test('frontend Vercel install includes declared workspaces without changing backend installs', () => {
   const manifest = JSON.parse(readFileSync(repoPath('deploy/vercel/projects.json'), 'utf8'));
   const frontend = manifest.projects.find((project) => project.key === 'frontend');
   const auth = manifest.projects.find((project) => project.key === 'auth');
@@ -15,7 +15,7 @@ test('frontend Vercel install is workspace-scoped without changing backend insta
 
   assert.equal(
     frontend.installCommand,
-    'cd ../.. && npm ci --workspace=claw-frontend --include-workspace-root=false',
+    'cd ../.. && npm ci',
   );
   assert.equal(auth.installCommand, 'cd ../.. && npm ci');
   assert.equal(generated.installCommand, frontend.installCommand);
@@ -49,7 +49,7 @@ test('Turbopack production filesystem caching is enabled only on Vercel', async 
   }
 });
 
-test('frontend Vercel build skips unrelated shared package compilation', () => {
+test('frontend Vercel build compiles only its declared shared workspace dependency', () => {
   const buildScript = readFileSync(repoPath('scripts/vercel/build-service.sh'), 'utf8');
   const frontendPackage = JSON.parse(
     readFileSync(repoPath('apps/claw-frontend/package.json'), 'utf8'),
@@ -62,10 +62,10 @@ test('frontend Vercel build skips unrelated shared package compilation', () => {
   };
 
   assert.match(buildScript, /if \[\[ "\$\{WORKSPACE\}" == "claw-frontend" \]\]/);
-  assert.match(buildScript, /skipping shared package builds/);
+  assert.match(buildScript, /npm run build --workspace=@claw\/shared-types/);
   assert.deepEqual(
     Object.keys(declaredDependencies).filter((name) => name.startsWith('@claw/')),
-    [],
+    ['@claw/shared-types'],
   );
 });
 
