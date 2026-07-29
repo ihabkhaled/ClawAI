@@ -1780,6 +1780,11 @@
         },
         {
           "method": "GET",
+          "route": "/billing/payment-method-setup-sessions/:id",
+          "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/billing/payment-methods",
           "source": "apps/claw-payment-service/src/modules/subscriptions/controllers/subscriptions.controller.ts"
         },
@@ -4324,6 +4329,11 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "PAYMOB_WEBHOOK_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "PAYPAL_CLIENT_ID"
       },
       {
@@ -5921,6 +5931,11 @@
         "route": "/use-cases"
       },
       {
+        "file": "apps/claw-frontend/src/app/(payment)/billing/payment-window/page.tsx",
+        "kind": "page",
+        "route": "/billing/payment-window"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/ai-action-policies/page.tsx",
         "kind": "page",
         "route": "/admin/ai-action-policies"
@@ -6835,7 +6850,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4292
+        "value": 4293
       },
       "localeCount": 13,
       "locales": [
@@ -8388,7 +8403,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 222
+        "testFiles": 223
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9127,10 +9142,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 546,
-    "envVarCount": 335,
+    "endpointCount": 547,
+    "envVarCount": 336,
     "eventCount": 165,
-    "frontendRouteCount": 111,
+    "frontendRouteCount": 112,
     "localeCount": 13,
     "nginxRouteCount": 52,
     "permissionCount": 38,
@@ -9139,7 +9154,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 700,
+    "totalTestFiles": 701,
     "workspaceCount": 25
   }
 }

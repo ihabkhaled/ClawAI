@@ -78,6 +78,17 @@ export class PaymentMethodSetupService {
     }
   }
 
+  async findOwned(userId: string, sessionId: string): Promise<PaymentMethodSetupSessionView> {
+    const session = await this.sessions.findById(sessionId);
+    if (
+      session?.userId !== userId ||
+      session?.purpose !== CheckoutSessionPurpose.PAYMENT_METHOD_SETUP
+    ) {
+      throw new BillingException(BillingErrorCode.CHECKOUT_SESSION_NOT_FOUND);
+    }
+    return PaymentMethodSetupService.toView(session);
+  }
+
   private static buildHostedUrl(clientSecret: string): string {
     const publicKey = AppConfig.get().PAYMOB_PUBLIC_KEY;
     if (publicKey === undefined) {

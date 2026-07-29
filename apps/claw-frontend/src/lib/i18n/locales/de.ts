@@ -3578,11 +3578,12 @@ export const de: TranslationDictionary = {
       paypalDescription:
         'PayPal wird in einem sicheren Pop-up geöffnet, während dieses Fenster den Abschluss verfolgt.',
       openPaypal: 'PayPal öffnen',
+      openPaymob: 'Paymob öffnen',
       verifying: 'Zahlung wird überprüft…',
       verifyFailed: 'Die Zahlung konnte nicht überprüft werden. Bitte versuchen Sie es erneut.',
       loadFailed: 'Das sichere Zahlungsformular konnte nicht geladen werden.',
       popupBlocked:
-        'Ihr Browser hat das PayPal-Pop-up blockiert. Erlauben Sie Pop-ups und versuchen Sie es erneut.',
+        'Ihr Browser hat das Zahlungs-Pop-up blockiert. Erlauben Sie Pop-ups und versuchen Sie es erneut.',
     },
     planChange: {
       quoteFailed: 'Diese Änderung konnte nicht berechnet werden. Bitte versuchen Sie es erneut.',

@@ -1,8 +1,9 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -11,13 +12,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  CHECKOUT_CLOSED_POLL_MAX_ATTEMPTS,
+  CHECKOUT_POLL_INTERVAL_MS,
+  CHECKOUT_POLL_MAX_ATTEMPTS,
   PAYMOB_COMPLETION_MESSAGE_TYPE,
   PAYPAL_COMPLETION_MESSAGE_TYPE,
 } from '@/constants/billing.constants';
 import { BillingGateway } from '@/enums/billing.enum';
 import { billingRepository } from '@/repositories/billing/billing.repository';
 import type { GatewayCheckoutDialogProps } from '@/types/billing-component.types';
-import { loadPaymobPixel, readPaymobCredentials } from '@/utilities/paymob-pixel.utility';
 import { readPaypalOrderId, renderPaypalButtons } from '@/utilities/paypal-buttons.utility';
 
 export function GatewayCheckoutDialog({
@@ -27,71 +30,87 @@ export function GatewayCheckoutDialog({
   t,
 }: GatewayCheckoutDialogProps): React.ReactElement {
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isPaymobPolling, setIsPaymobPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const completed = useRef(false);
   const [paypalElement, setPaypalElement] = useState<HTMLDivElement | null>(null);
-  const elementId = useMemo(() => `paymob-elements-${session?.id ?? 'closed'}`, [session?.id]);
-  const isSetup = session !== null && 'purpose' in session;
-
-  const completePaymob = useCallback(async () => {
-    if (session === null || completed.current) {
-      return;
-    }
-    completed.current = true;
-    setIsVerifying(true);
-    setError(null);
-    try {
-      await billingRepository.completePaymobCheckout(session.id);
-      await onComplete();
-    } catch {
-      completed.current = false;
-      setIsVerifying(false);
-      setError(t('billing.gatewayDialog.verifyFailed'));
-    }
-  }, [onComplete, session, t]);
+  const completed = useRef(false);
+  const paymobPopup = useRef<Window | null>(null);
+  const paymobPollAttempts = useRef(0);
+  const paymobClosedPollAttempts = useRef(0);
 
   useEffect(() => {
     completed.current = false;
     setIsVerifying(false);
+    setIsPaymobPolling(false);
     setError(null);
-    if (
-      session === null ||
-      session.gateway !== BillingGateway.PAYMOB ||
-      session.hostedCheckoutUrl === null
-    ) {
-      return;
-    }
-    const credentials = readPaymobCredentials(session.hostedCheckoutUrl);
-    if (credentials === null) {
-      setError(t('billing.gatewayDialog.loadFailed'));
+    paymobPollAttempts.current = 0;
+    paymobClosedPollAttempts.current = 0;
+  }, [session]);
+
+  useEffect(() => {
+    if (!isPaymobPolling || session === null || session.gateway !== BillingGateway.PAYMOB) {
       return;
     }
     let active = true;
-    void loadPaymobPixel()
-      .then(() => {
-        if (!active || window.Pixel === undefined) {
+    let requestInFlight = false;
+    const stopPolling = (): void => {
+      setIsPaymobPolling(false);
+      setIsVerifying(false);
+    };
+    const verify = async (): Promise<void> => {
+      if (requestInFlight) {
+        return;
+      }
+      requestInFlight = true;
+      paymobPollAttempts.current += 1;
+      const popupWasClosed = paymobPopup.current?.closed ?? false;
+      paymobClosedPollAttempts.current = popupWasClosed ? paymobClosedPollAttempts.current + 1 : 0;
+      try {
+        const latest =
+          'purpose' in session
+            ? await billingRepository.getPaymentMethodSetupSession(session.id)
+            : await billingRepository.getCheckoutSession(session.id);
+        if (!active) {
           return;
         }
-        new window.Pixel({
-          ...credentials,
-          paymentMethods: ['card'],
-          elementId,
-          disablePay: false,
-          showSaveCard: isSetup,
-          forceSaveCard: isSetup,
-          afterPaymentComplete: completePaymob,
-          onPaymentCancel: onClose,
-        });
-      })
-      .catch(() => {
-        if (active) {
-          setError(t('billing.gatewayDialog.loadFailed'));
+        if (latest.status === 'COMPLETED' && !completed.current) {
+          completed.current = true;
+          setIsPaymobPolling(false);
+          paymobPopup.current?.close();
+          await onComplete();
+          return;
         }
-      });
+        if (latest.status === 'FAILED' || latest.status === 'EXPIRED') {
+          stopPolling();
+          paymobPopup.current?.close();
+          setError(t('billing.gatewayDialog.verifyFailed'));
+          return;
+        }
+        if (
+          paymobPollAttempts.current >= CHECKOUT_POLL_MAX_ATTEMPTS ||
+          paymobClosedPollAttempts.current >= CHECKOUT_CLOSED_POLL_MAX_ATTEMPTS
+        ) {
+          stopPolling();
+        }
+      } catch {
+        if (
+          active &&
+          (paymobPollAttempts.current >= CHECKOUT_POLL_MAX_ATTEMPTS ||
+            paymobClosedPollAttempts.current >= CHECKOUT_CLOSED_POLL_MAX_ATTEMPTS)
+        ) {
+          stopPolling();
+        }
+      } finally {
+        requestInFlight = false;
+      }
+    };
+    void verify();
+    const interval = window.setInterval(() => void verify(), CHECKOUT_POLL_INTERVAL_MS);
     return () => {
       active = false;
+      window.clearInterval(interval);
     };
-  }, [completePaymob, elementId, isSetup, onClose, session, t]);
+  }, [isPaymobPolling, onComplete, session, t]);
 
   useEffect(() => {
     if (
@@ -169,21 +188,51 @@ export function GatewayCheckoutDialog({
         session.gateway === BillingGateway.PAYMOB
           ? PAYMOB_COMPLETION_MESSAGE_TYPE
           : PAYPAL_COMPLETION_MESSAGE_TYPE;
-      if (message.type === expectedType && message.sessionId === session.id) {
+      if (message.type !== expectedType || message.sessionId !== session.id) {
+        return;
+      }
+      if (session.gateway === BillingGateway.PAYMOB) {
+        setIsPaymobPolling(true);
+      } else {
         void onComplete();
       }
     };
     window.addEventListener('message', receive);
-    return () => {
-      window.removeEventListener('message', receive);
-    };
+    return () => window.removeEventListener('message', receive);
   }, [onComplete, session]);
+
+  const openPaymob = (): void => {
+    if (session === null) {
+      return;
+    }
+    const url = new URL('/billing/payment-window', window.location.origin);
+    url.searchParams.set('session', session.id);
+    if ('purpose' in session) {
+      url.searchParams.set('setup', 'true');
+    }
+    const popup = window.open(
+      url.toString(),
+      'claw-paymob-checkout',
+      'popup,width=720,height=760,resizable=yes,scrollbars=yes',
+    );
+    if (popup === null) {
+      setError(t('billing.gatewayDialog.popupBlocked'));
+      return;
+    }
+    paymobPopup.current = popup;
+    paymobPollAttempts.current = 0;
+    paymobClosedPollAttempts.current = 0;
+    setError(null);
+    setIsVerifying(true);
+    setIsPaymobPolling(true);
+  };
 
   return (
     <Dialog
       open={session !== null}
       onOpenChange={(open) => {
         if (!open && !isVerifying) {
+          paymobPopup.current?.close();
           onClose();
         }
       }}
@@ -199,10 +248,9 @@ export function GatewayCheckoutDialog({
         </DialogHeader>
 
         {session?.gateway === BillingGateway.PAYMOB ? (
-          <div
-            id={elementId}
-            className="min-h-80 w-full overflow-y-auto rounded-xl bg-white p-3 [color-scheme:light]"
-          />
+          <Button type="button" onClick={openPaymob}>
+            {t('billing.gatewayDialog.openPaymob')}
+          </Button>
         ) : (
           <div
             ref={setPaypalElement}

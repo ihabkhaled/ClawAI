@@ -131,6 +131,22 @@ describe('billingRepository payment-method setup', () => {
     expect(mockPost).toHaveBeenCalledWith('/billing/checkout-sessions/checkout-1/complete-paymob');
   });
 
+  it('reads an owned payment-method setup status without completing it', async () => {
+    const response = {
+      id: 'setup-1',
+      status: 'COMPLETED',
+      gateway: 'PAYMOB',
+      hostedCheckoutUrl: null,
+      expiresAt: '2026-07-28T00:00:00.000Z',
+    };
+    mockGet.mockResolvedValue({ data: response });
+
+    await expect(billingRepository.getPaymentMethodSetupSession('setup-1')).resolves.toEqual(
+      response,
+    );
+    expect(mockGet).toHaveBeenCalledWith('/billing/payment-method-setup-sessions/setup-1');
+  });
+
   it('immediately ends only the authenticated subscription', async () => {
     const response = { id: 'subscription-1', status: 'CANCELLED' };
     mockDelete.mockResolvedValue({ data: response });

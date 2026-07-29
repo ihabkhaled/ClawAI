@@ -359,13 +359,14 @@ export class PaymobAdapter {
     notification_url: string;
     redirection_url: string;
   } {
-    const base = AppConfig.get().FRONTEND_URL.replace(/\/+$/, '');
+    const config = AppConfig.get();
+    const base = config.FRONTEND_URL.replace(/\/+$/, '');
     const redirectQuery = new URLSearchParams({
       session: checkoutSessionId,
       gateway: BillingGateway.PAYMOB,
     });
     return {
-      notification_url: `${base}/api/v1/payments/webhooks/paymob`,
+      notification_url: config.PAYMOB_WEBHOOK_URL ?? `${base}/api/v1/payments/webhooks/paymob`,
       redirection_url: `${base}/billing/return?${redirectQuery.toString()}`,
     };
   }

@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
+import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { billingRepository } from '@/repositories/billing/billing.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
@@ -12,6 +14,7 @@ import { showToast } from '@/utilities/toast.utility';
 export function usePaymentMethods(): UsePaymentMethodsReturn {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const router = useRouter();
   // Per-row pending state, not a single page-wide boolean: one flag would
   // disable every row while a single card is being removed.
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -91,7 +94,9 @@ export function usePaymentMethods(): UsePaymentMethodsReturn {
   const completeGateway = useCallback(async () => {
     setGatewaySession(null);
     await queryClient.invalidateQueries({ queryKey: queryKeys.billing.paymentMethods() });
-  }, [queryClient]);
+    router.replace(ROUTES.BILLING);
+    router.refresh();
+  }, [queryClient, router]);
 
   return {
     methods: query.data ?? [],

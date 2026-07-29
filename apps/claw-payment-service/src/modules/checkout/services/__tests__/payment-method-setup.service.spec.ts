@@ -26,6 +26,7 @@ const setupSession = (overrides: Record<string, unknown> = {}): Record<string, u
 describe('PaymentMethodSetupService', () => {
   const sessions = {
     findByIdempotencyKey: jest.fn(),
+    findById: jest.fn(),
     create: jest.fn(),
     attachProviderOrder: jest.fn(),
     markFailed: jest.fn(),
@@ -129,5 +130,28 @@ describe('PaymentMethodSetupService', () => {
 
     await expect(service.start(INPUT)).rejects.toThrow('provider body');
     expect(sessions.markFailed).toHaveBeenCalledWith('setup-1', 'GATEWAY_UNAVAILABLE');
+  });
+
+  it('returns only an authenticated owner setup session for popup polling', async () => {
+    sessions.findById.mockResolvedValue(
+      setupSession({
+        status: CheckoutSessionStatus.COMPLETED,
+        hostedCheckoutUrl: 'https://paymob.test/setup',
+      }),
+    );
+
+    await expect(service.findOwned('user-1', 'setup-1')).resolves.toMatchObject({
+      id: 'setup-1',
+      status: CheckoutSessionStatus.COMPLETED,
+      hostedCheckoutUrl: 'https://paymob.test/setup',
+    });
+  });
+
+  it('hides another users setup session from popup polling', async () => {
+    sessions.findById.mockResolvedValue(setupSession({ userId: 'another-user' }));
+
+    await expect(service.findOwned('user-1', 'setup-1')).rejects.toMatchObject({
+      code: 'CHECKOUT_SESSION_NOT_FOUND',
+    });
   });
 });

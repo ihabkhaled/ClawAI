@@ -3557,10 +3557,12 @@ export const pt: TranslationDictionary = {
       paypalDescription:
         'O PayPal abre em uma janela segura enquanto este diálogo acompanha a confirmação.',
       openPaypal: 'Abrir PayPal',
+      openPaymob: 'Abrir Paymob',
       verifying: 'Verificando o pagamento…',
       verifyFailed: 'Não foi possível verificar o pagamento. Tente novamente.',
       loadFailed: 'Não foi possível carregar o formulário de pagamento seguro.',
-      popupBlocked: 'Seu navegador bloqueou a janela do PayPal. Permita pop-ups e tente novamente.',
+      popupBlocked:
+        'Seu navegador bloqueou a janela de pagamento. Permita pop-ups e tente novamente.',
     },
     planChange: {
       quoteFailed: 'Não foi possível calcular o preço dessa alteração. Tente novamente.',
