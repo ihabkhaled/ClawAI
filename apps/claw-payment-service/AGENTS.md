@@ -20,7 +20,7 @@ npm run dev
 - Port: 4018
 - Database: postgresql
 - Prisma models: BillingCustomer, CheckoutSession, FxQuote, GatewayPlanMapping, IdempotencyRecord, InboxEvent, Invoice, InvoiceDelivery, InvoiceLine, OutboxEvent, PaymentMethod, PaymentTransaction, ProrationQuote, ReconciliationDivergence, ReconciliationRun, Refund, SeedExecution, Subscription, WebhookEvent
-- API endpoints: 29 (see `.ai/manifests/api-endpoints.json`)
+- API endpoints: 30 (see `.ai/manifests/api-endpoints.json`)
 - Test files: 85 (jest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 

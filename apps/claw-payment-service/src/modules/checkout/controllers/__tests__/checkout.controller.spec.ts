@@ -12,7 +12,7 @@ describe('CheckoutController', () => {
   const checkout = { findOwned: jest.fn(), start: jest.fn() };
   const paymentMethodSetup = { start: jest.fn() };
   const catalog = { listCatalog: jest.fn() };
-  const paypalCompletion = { complete: jest.fn() };
+  const paypalCompletion = { complete: jest.fn(), completeSdk: jest.fn() };
   const paymobCompletion = { complete: jest.fn() };
   let controller: CheckoutController;
 
@@ -69,6 +69,32 @@ describe('CheckoutController', () => {
     expect(paymobCompletion.complete).toHaveBeenCalledWith({
       userId: 'user-1',
       sessionId: 'session-1',
+    });
+  });
+
+  it('binds PayPal SDK approval to the authenticated user and route session', async () => {
+    paypalCompletion.completeSdk.mockResolvedValue({
+      id: 'session-1',
+      status: 'COMPLETED',
+    });
+    const completePaypalSdk: unknown = Reflect.get(controller, 'completePaypalSdk');
+
+    expect(completePaypalSdk).toBeInstanceOf(Function);
+    if (typeof completePaypalSdk !== 'function') {
+      return;
+    }
+
+    await completePaypalSdk.call(
+      controller,
+      { id: 'user-1', email: 'owner@example.com', role: UserRole.USER },
+      { id: 'session-1' },
+      { providerOrderId: '5O190127TN364715T' },
+    );
+
+    expect(paypalCompletion.completeSdk).toHaveBeenCalledWith({
+      userId: 'user-1',
+      sessionId: 'session-1',
+      providerOrderId: '5O190127TN364715T',
     });
   });
 });

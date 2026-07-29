@@ -47,6 +47,12 @@ export type CompletePaypalCheckoutInput = {
   providerOrderId: string;
 };
 
+export type CompletePaypalSdkCheckoutInput = {
+  userId: string;
+  sessionId: string;
+  providerOrderId: string;
+};
+
 export type CompletePaymobCheckoutInput = {
   userId: string;
   sessionId: string;
