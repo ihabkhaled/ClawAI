@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { type ConnectorModel, type ConnectorProvider } from '../../../generated/prisma';
+import {
+  type ConnectorModel,
+  type ConnectorProvider,
+  ModelUsageTier,
+} from '../../../generated/prisma';
 import { type NormalizedModel } from '../types/connectors.types';
 
 @Injectable()
@@ -26,6 +30,10 @@ export class ConnectorModelsRepository {
           supportsAudio: model.capabilities.supportsAudio,
           supportsStructuredOutput: model.capabilities.supportsStructuredOutput,
           maxContextTokens: model.capabilities.maxContextTokens,
+          usageTier: model.usage?.tier ?? ModelUsageTier.UNKNOWN,
+          inputUsdPerMillion: model.usage?.inputUsdPerMillion,
+          cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
+          outputUsdPerMillion: model.usage?.outputUsdPerMillion,
           syncedAt: new Date(),
         },
         create: {
@@ -40,6 +48,10 @@ export class ConnectorModelsRepository {
           supportsAudio: model.capabilities.supportsAudio,
           supportsStructuredOutput: model.capabilities.supportsStructuredOutput,
           maxContextTokens: model.capabilities.maxContextTokens,
+          usageTier: model.usage?.tier ?? ModelUsageTier.UNKNOWN,
+          inputUsdPerMillion: model.usage?.inputUsdPerMillion,
+          cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
+          outputUsdPerMillion: model.usage?.outputUsdPerMillion,
         },
       }),
     );
@@ -77,6 +89,10 @@ export class ConnectorModelsRepository {
             supportsAudio: model.capabilities.supportsAudio,
             supportsStructuredOutput: model.capabilities.supportsStructuredOutput,
             maxContextTokens: model.capabilities.maxContextTokens,
+            usageTier: model.usage?.tier ?? ModelUsageTier.UNKNOWN,
+            inputUsdPerMillion: model.usage?.inputUsdPerMillion,
+            cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
+            outputUsdPerMillion: model.usage?.outputUsdPerMillion,
             syncedAt: new Date(),
           },
           create: {
@@ -91,6 +107,10 @@ export class ConnectorModelsRepository {
             supportsAudio: model.capabilities.supportsAudio,
             supportsStructuredOutput: model.capabilities.supportsStructuredOutput,
             maxContextTokens: model.capabilities.maxContextTokens,
+            usageTier: model.usage?.tier ?? ModelUsageTier.UNKNOWN,
+            inputUsdPerMillion: model.usage?.inputUsdPerMillion,
+            cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
+            outputUsdPerMillion: model.usage?.outputUsdPerMillion,
           },
         }),
       ),

@@ -324,6 +324,8 @@ export class ChatMessagesService implements OnModuleInit {
         providerId,
         result.sources,
         Math.max(1, Date.now() - startedAt),
+        result.searchRequestCount,
+        result.fetchRequestCount,
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'unknown';
@@ -351,6 +353,8 @@ export class ChatMessagesService implements OnModuleInit {
       extracted?: string;
     }>,
     latencyMs: number,
+    searchRequestCount: number,
+    fetchRequestCount: number,
   ): ResearchTranscript {
     const sources: ResearchTranscriptSource[] = rawSources.map((source) => ({
       title: source.title,
@@ -365,6 +369,8 @@ export class ChatMessagesService implements OnModuleInit {
       sources,
       latencyMs,
       warnings: [],
+      searchRequestCount,
+      fetchRequestCount,
     };
   }
 
@@ -382,6 +388,8 @@ export class ChatMessagesService implements OnModuleInit {
       sources: [],
       latencyMs,
       warnings,
+      searchRequestCount: 0,
+      fetchRequestCount: 0,
     };
   }
 
@@ -1244,6 +1252,8 @@ export class ChatMessagesService implements OnModuleInit {
         sources: [],
         latencyMs: 0,
         warnings: [],
+        searchRequestCount: 0,
+        fetchRequestCount: 0,
       };
     }
     const items = recordGet(bundleRecord, 'items');
@@ -1264,6 +1274,8 @@ export class ChatMessagesService implements OnModuleInit {
       sources,
       latencyMs: 0,
       warnings,
+      searchRequestCount: 0,
+      fetchRequestCount: 0,
     };
   }
 

@@ -1928,6 +1928,8 @@ export const ru: TranslationDictionary = {
       title: 'Использовано {count} источников',
       expand: 'Показать источники',
       sourcesCount: '{count} источников',
+      searchRequests: '{count} поисков',
+      fetchRequests: '{count} загрузок',
     },
     lifecycle: {
       started: 'Поиск в интернете...',

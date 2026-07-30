@@ -1936,6 +1936,8 @@ export const de: TranslationDictionary = {
       title: '{count} Quellen verwendet',
       expand: 'Quellen anzeigen',
       sourcesCount: '{count} Quellen',
+      searchRequests: '{count} Suchen',
+      fetchRequests: '{count} Abrufe',
     },
     lifecycle: {
       started: 'Webrecherche läuft...',

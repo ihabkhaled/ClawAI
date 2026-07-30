@@ -84,6 +84,10 @@ model ConnectorModel {
   supportsAudio            Boolean           @default(false) @map("supports_audio")
   supportsStructuredOutput Boolean           @default(false) @map("supports_structured_output")
   maxContextTokens         Int?              @map("max_context_tokens")
+  usageTier                ModelUsageTier    @default(UNKNOWN) @map("usage_tier")
+  inputUsdPerMillion       Decimal?          @map("input_usd_per_million") @db.Decimal(12, 6)
+  cachedInputUsdPerMillion Decimal?          @map("cached_input_usd_per_million") @db.Decimal(12, 6)
+  outputUsdPerMillion      Decimal?          @map("output_usd_per_million") @db.Decimal(12, 6)
   syncedAt                 DateTime          @default(now()) @map("synced_at")
 
   connector Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
@@ -93,6 +97,14 @@ model ConnectorModel {
   @@index([provider])
   @@index([lifecycle])
   @@map("connector_models")
+}
+
+enum ModelUsageTier {
+  UNKNOWN
+  LOW
+  MEDIUM
+  HIGH
+  EXTRA_HIGH
 }
 
 model ConnectorHealthEvent {

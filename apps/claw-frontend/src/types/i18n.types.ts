@@ -2137,6 +2137,8 @@ export type TranslationDictionary = {
       title: string;
       expand: string;
       sourcesCount: string;
+      searchRequests: string;
+      fetchRequests: string;
     };
     lifecycle: {
       started: string;

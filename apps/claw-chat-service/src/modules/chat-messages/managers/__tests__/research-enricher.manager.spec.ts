@@ -47,7 +47,13 @@ describe('ResearchEnricherManager', () => {
       threadId: 'thread-none',
     });
 
-    expect(result).toEqual({ evidence: '', sources: [], mode: ResearchMode.NONE });
+    expect(result).toEqual({
+      evidence: '',
+      sources: [],
+      mode: ResearchMode.NONE,
+      searchRequestCount: 0,
+      fetchRequestCount: 0,
+    });
     expect(httpRequest).not.toHaveBeenCalled();
     expect(emitResearchProgress).not.toHaveBeenCalled();
   });
@@ -60,8 +66,18 @@ describe('ResearchEnricherManager', () => {
         runId: 'run-1',
         providerKind: 'tavily',
         results: [
-          { id: 'r1', title: 'GPT-5 launches', url: 'https://news/gpt5', snippet: 'OpenAI shipped GPT-5 today.' },
-          { id: 'r2', title: 'Reactions', url: 'https://news/reactions', snippet: 'Industry reacts.' },
+          {
+            id: 'r1',
+            title: 'GPT-5 launches',
+            url: 'https://news/gpt5',
+            snippet: 'OpenAI shipped GPT-5 today.',
+          },
+          {
+            id: 'r2',
+            title: 'Reactions',
+            url: 'https://news/reactions',
+            snippet: 'Industry reacts.',
+          },
         ],
       },
     });
@@ -199,6 +215,8 @@ describe('ResearchEnricherManager', () => {
       evidence: '## Web search returned no results.',
       sources: [],
       mode: ResearchMode.SEARCH,
+      searchRequestCount: 1,
+      fetchRequestCount: 0,
     });
   });
 
@@ -272,7 +290,10 @@ describe('ResearchEnricherManager', () => {
     expect(sourcesFoundPayload.details.sourcesCount).toBe(2);
 
     const fetchingUrls = emitResearchProgress.mock.calls
-      .filter((call: [string, { stage: AiStreamStage }]) => call[1].stage === AiStreamStage.RESEARCH_FETCHING)
+      .filter(
+        (call: [string, { stage: AiStreamStage }]) =>
+          call[1].stage === AiStreamStage.RESEARCH_FETCHING,
+      )
       .map((call: [string, { details: { currentUrl?: string } }]) => call[1].details.currentUrl);
     expect(fetchingUrls).toEqual(['https://a/1', 'https://a/2']);
 

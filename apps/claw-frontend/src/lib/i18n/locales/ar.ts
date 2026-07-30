@@ -1889,6 +1889,8 @@ export const ar: TranslationDictionary = {
       title: 'تم استخدام {count} مصادر',
       expand: 'إظهار المصادر',
       sourcesCount: '{count} مصادر',
+      searchRequests: '{count} عمليات بحث',
+      fetchRequests: '{count} عمليات جلب',
     },
     lifecycle: {
       started: 'جارٍ البحث على الويب...',

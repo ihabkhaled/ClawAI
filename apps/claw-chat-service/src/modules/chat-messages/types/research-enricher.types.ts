@@ -74,6 +74,13 @@ export type ResearchEnrichResult = {
   evidence: string;
   sources: ResearchSource[];
   mode: ResearchMode;
+  searchRequestCount: number;
+  fetchRequestCount: number;
+};
+
+export type ResearchSearchOutcome = {
+  entries: ResearchSearchEntry[];
+  requestCount: number;
 };
 
 // ─── Wire shapes for research-service HTTP responses ───────────────────────
@@ -92,6 +99,7 @@ export type ResearchSearchWireResponse = {
   providerKind?: string;
   results?: ResearchSearchEntry[];
   warnings?: string[];
+  searchRequestCount?: number;
 };
 
 export type ResearchFetchWireResponse = {

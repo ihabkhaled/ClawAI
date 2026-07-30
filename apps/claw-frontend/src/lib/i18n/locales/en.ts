@@ -1895,6 +1895,8 @@ export const en: TranslationDictionary = {
       title: 'Used {count} sources',
       expand: 'Show sources',
       sourcesCount: '{count} sources',
+      searchRequests: '{count} searches',
+      fetchRequests: '{count} fetches',
     },
     lifecycle: {
       started: 'Searching the web...',

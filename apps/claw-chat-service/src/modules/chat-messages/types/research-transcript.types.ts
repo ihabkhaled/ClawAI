@@ -24,4 +24,6 @@ export type ResearchTranscript = {
   sources: ResearchTranscriptSource[];
   latencyMs: number;
   warnings: string[];
+  searchRequestCount: number;
+  fetchRequestCount: number;
 };

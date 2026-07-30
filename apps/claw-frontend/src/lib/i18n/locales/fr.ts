@@ -1940,6 +1940,8 @@ export const fr: TranslationDictionary = {
       title: '{count} sources utilisées',
       expand: 'Afficher les sources',
       sourcesCount: '{count} sources',
+      searchRequests: '{count} recherches',
+      fetchRequests: '{count} récupérations',
     },
     lifecycle: {
       started: 'Recherche sur le web...',

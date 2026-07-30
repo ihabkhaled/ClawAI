@@ -19,6 +19,8 @@ vi.mock('@/lib/i18n', () => ({
 }));
 
 const populatedTranscript: ResearchTranscript = {
+  searchRequestCount: 2,
+  fetchRequestCount: 2,
   sources: [
     {
       title: 'Anthropic launches new model',
@@ -50,6 +52,8 @@ describe('ResearchTranscriptPanel', () => {
     const toggle = screen.getByRole('button', { name: /research\.transcript\.title/ });
     expect(toggle).toBeInTheDocument();
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('research.transcript.searchRequests(count=2)')).toBeInTheDocument();
+    expect(screen.getByText('research.transcript.fetchRequests(count=2)')).toBeInTheDocument();
 
     // Source list is hidden when collapsed.
     expect(screen.queryByText('Anthropic launches new model')).not.toBeInTheDocument();

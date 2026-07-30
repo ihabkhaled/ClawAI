@@ -118,12 +118,7 @@ export class ParallelExecutionManager {
       });
       const { context, threadSettings } = await this.buildContext(userId, threadId, fileIds);
       const { context: enrichedContext, transcript: researchTranscript } =
-        await this.applyResearchEnrichment(
-          context,
-          userMessageContent,
-          researchOptions,
-          threadId,
-        );
+        await this.applyResearchEnrichment(context, userMessageContent, researchOptions, threadId);
       const responsesRaw = await this.executeAllModels(
         userId,
         models,
@@ -294,7 +289,15 @@ export class ParallelExecutionManager {
       ...(source.snippet !== undefined ? { snippet: source.snippet } : {}),
       ...(source.extracted !== undefined ? { extracted: source.extracted } : {}),
     }));
-    return { mode, query, sources, latencyMs, warnings: [] };
+    return {
+      mode,
+      query,
+      sources,
+      latencyMs,
+      warnings: [],
+      searchRequestCount: result.searchRequestCount,
+      fetchRequestCount: result.fetchRequestCount,
+    };
   }
 
   private buildSkippedTranscript(
@@ -303,7 +306,15 @@ export class ParallelExecutionManager {
     warning: string,
     latencyMs = 0,
   ): ResearchTranscript {
-    return { mode, query, sources: [], latencyMs, warnings: [warning] };
+    return {
+      mode,
+      query,
+      sources: [],
+      latencyMs,
+      warnings: [warning],
+      searchRequestCount: 0,
+      fetchRequestCount: 0,
+    };
   }
 
   private applyTranscriptToResponses(

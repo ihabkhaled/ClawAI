@@ -111,7 +111,6 @@ import type { ExecutionOptions } from '../types/execution-options.types';
 import { OLLAMA_TOOL_LOOP_WRAPUP_INSTRUCTION } from '../constants/agentic-loop.constants';
 import {
   executeOllamaCloudToolCall,
-  OLLAMA_CLOUD_TOOL_DEFINITIONS,
   truncateResult,
 } from '../utilities/ollama-cloud-tool-runner.utility';
 import { TOOL_WEB_FETCH, TOOL_WEB_SEARCH } from '../constants/ollama-cloud-tools.constants';
@@ -1800,7 +1799,7 @@ export class ChatExecutionManager implements OnModuleInit {
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
     executionOptions?: ExecutionOptions,
-    streamContext?: StreamContext,
+    _streamContext?: StreamContext,
     abortSignal?: AbortSignal,
   ): Promise<LlmResponse> {
     this.logger.log(`callCloudProvider: calling ${provider}/${model}`);
@@ -1826,23 +1825,6 @@ export class ChatExecutionManager implements OnModuleInit {
       `callCloudProvider: request body built — messageCount=${String(this.countCloudRequestMessages(requestBody))}`,
     );
     this.logger.debug(`callCloudProvider: sending POST to ${url}`);
-    if (isOllamaConnector) {
-      // Ollama Cloud agentic models (deepseek-v4-pro / kimi-k2 / GLM-5.1)
-      // emit message.tool_calls and rely on the client to execute web
-      // search/fetch and loop. Run the dedicated tool loop instead of a
-      // single-shot POST.
-      return this.runOllamaCloudToolLoop({
-        provider,
-        model,
-        initialBody: requestBody as OllamaChatRequest,
-        baseUrl,
-        apiKey,
-        startTime,
-        usedFallback,
-        context,
-        streamThreadId: streamContext?.threadId,
-      });
-    }
     const responseData = await this.postCloudProviderRequest(
       provider,
       url,
@@ -1935,23 +1917,34 @@ export class ChatExecutionManager implements OnModuleInit {
     usedFallback: boolean,
     promptText: string,
   ): LlmResponse {
-    return isNativeGemini
-      ? this.parseGeminiResponse(
-          data as GeminiGenerateContentResponse,
-          provider,
-          model,
-          startTime,
-          usedFallback,
-          promptText,
-        )
-      : this.parseCloudResponse(
-          data as OpenAiChatResponse,
-          provider,
-          model,
-          startTime,
-          usedFallback,
-          promptText,
-        );
+    if (isNativeGemini) {
+      return this.parseGeminiResponse(
+        data as GeminiGenerateContentResponse,
+        provider,
+        model,
+        startTime,
+        usedFallback,
+        promptText,
+      );
+    }
+    if (provider === OLLAMA_CONNECTOR_PROVIDER) {
+      return this.parseOllamaChatResponse(
+        data as OllamaChatResponse,
+        provider,
+        model,
+        startTime,
+        usedFallback,
+        promptText,
+      );
+    }
+    return this.parseCloudResponse(
+      data as OpenAiChatResponse,
+      provider,
+      model,
+      startTime,
+      usedFallback,
+      promptText,
+    );
   }
 
   // Ollama Cloud agentic tool loop.
@@ -1972,7 +1965,7 @@ export class ChatExecutionManager implements OnModuleInit {
   // that path. If the wrap-up POST itself fails, the partial accumulated
   // content is returned with `gracefullyWrapped=false` so the FE can
   // render a clear error hint instead of a misleading complete answer.
-  private async runOllamaCloudToolLoop(args: {
+  async runOllamaCloudToolLoop(args: {
     provider: string;
     model: string;
     initialBody: OllamaChatRequest;
@@ -2899,8 +2892,6 @@ export class ChatExecutionManager implements OnModuleInit {
     // can do real web access end-to-end. The client (this service) is
     // responsible for executing the emitted tool_calls — see
     // runOllamaCloudToolLoop.
-    requestBody.tools = OLLAMA_CLOUD_TOOL_DEFINITIONS;
-
     return requestBody;
   }
 

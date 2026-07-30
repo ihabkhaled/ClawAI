@@ -1923,6 +1923,8 @@ export const pt: TranslationDictionary = {
       title: '{count} fontes usadas',
       expand: 'Mostrar fontes',
       sourcesCount: '{count} fontes',
+      searchRequests: '{count} pesquisas',
+      fetchRequests: '{count} buscas',
     },
     lifecycle: {
       started: 'Pesquisando na web...',

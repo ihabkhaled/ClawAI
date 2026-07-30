@@ -5,6 +5,7 @@ import {
   type ConnectorStatus,
   type ModelLifecycle,
   type ModelSyncStatus,
+  type ModelUsageTier,
 } from '../../../generated/prisma';
 
 export interface CreateConnectorData {
@@ -56,6 +57,14 @@ export interface NormalizedModel {
   displayName: string;
   lifecycle: ModelLifecycle;
   capabilities: ModelCapabilities;
+  usage?: ModelUsageMetadata;
+}
+
+export interface ModelUsageMetadata {
+  tier: ModelUsageTier;
+  inputUsdPerMillion: number | null;
+  cachedInputUsdPerMillion: number | null;
+  outputUsdPerMillion: number | null;
 }
 
 export interface CreateHealthEventData {

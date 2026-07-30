@@ -9,6 +9,7 @@ export type SearchExecutionResult = {
   selectionMode: ProviderSelectionMode;
   fallbackUsed: boolean;
   attemptedProviders: string[];
+  searchRequestCount: number;
   query: string;
   results: SearchResult[];
   latencyMs: number;

@@ -1280,8 +1280,8 @@ describe('ChatExecutionManager', () => {
     });
   });
 
-  describe('Ollama Cloud agentic tool loop', () => {
-    it('passes through with no toolTranscript when the model emits no tool_calls', async () => {
+  describe('Ollama Cloud quota safety', () => {
+    it('does not expose provider-native web tools during model generation', async () => {
       const context = makeContext('plain prompt with no web access required');
       httpRequest
         .mockResolvedValueOnce({
@@ -1319,19 +1319,13 @@ describe('ChatExecutionManager', () => {
       const firstChatBody = httpRequest.mock.calls[1][0].body as {
         tools?: Array<{ type: string; function: { name: string } }>;
       };
-      expect(firstChatBody.tools?.map((t) => t.function.name)).toEqual(['web_search', 'web_fetch']);
+      expect(firstChatBody.tools).toBeUndefined();
     });
 
-    it('runs a single tool turn and re-POSTs with the tool result', async () => {
+    it('runs a single explicitly requested tool turn and re-POSTs with the tool result', async () => {
       const context = makeContext('what is the latest react version?');
       httpRequest
-        // 1: connector config
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          data: { provider: 'OLLAMA', apiKey: 'k', baseUrl: 'http://localhost:11434' },
-        })
-        // 2: first /api/chat — model emits a tool_call
+        // 1: first /api/chat — model emits a tool_call
         .mockResolvedValueOnce({
           ok: true,
           status: 200,
@@ -1373,16 +1367,20 @@ describe('ChatExecutionManager', () => {
           },
         });
 
-      const result = await manager.callProvider(
-        'OLLAMA',
-        'deepseek-v4-pro',
+      const result = await manager.runOllamaCloudToolLoop({
+        provider: 'OLLAMA',
+        model: 'deepseek-v4-pro',
+        initialBody: {
+          model: 'deepseek-v4-pro',
+          messages: [{ role: 'user', content: 'what is the latest react version?' }],
+          stream: false,
+        },
+        baseUrl: 'https://ollama.com/api',
+        apiKey: 'k',
+        startTime: Date.now(),
+        usedFallback: false,
         context,
-        Date.now(),
-        false,
-        undefined,
-        'MANUAL_MODEL',
-        { fastPathEnabled: false, maxOutputTokens: 256, applyShortResponseConstraint: false },
-      );
+      });
 
       expect(result.content).toBe('React 19 is the latest release.');
       expect(result.toolTranscript).toBeDefined();
@@ -1399,11 +1397,11 @@ describe('ChatExecutionManager', () => {
       // resolveOllamaConnectorBaseUrl pins the cloud connector baseUrl to
       // 'https://ollama.com/api' regardless of what the connector record
       // stores, so tool dispatch lands there too.
-      const toolUrl = httpRequest.mock.calls[2][0].url as string;
+      const toolUrl = httpRequest.mock.calls[1][0].url as string;
       expect(toolUrl).toBe('https://ollama.com/api/web_search');
 
       // The follow-up chat carries the tool result as a `tool` message.
-      const secondChatBody = httpRequest.mock.calls[3][0].body as {
+      const secondChatBody = httpRequest.mock.calls[2][0].body as {
         messages: Array<{ role: string; content: string; tool_call_id?: string }>;
       };
       const toolMessage = secondChatBody.messages.find((m) => m.role === 'tool');
@@ -1412,7 +1410,7 @@ describe('ChatExecutionManager', () => {
       expect(toolMessage?.tool_call_id).toBe('tool-1');
     });
 
-    it('bails with capReached=true AND gracefully wraps up when the model never stops calling tools', async () => {
+    it('caps and wraps up an explicitly requested tool loop', async () => {
       // Pin the iteration cap to 10 for THIS test so the existing
       // assertion arithmetic stays readable (the canonical runtime cap is
       // now 50). The graceful wrap-up POST adds ONE extra non-tool /chat
@@ -1429,12 +1427,6 @@ describe('ChatExecutionManager', () => {
         OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS: 600_000,
       });
       const context = makeContext('infinite-loop scenario');
-      // 1 connector config
-      httpRequest.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        data: { provider: 'OLLAMA', apiKey: 'k', baseUrl: 'http://localhost:11434' },
-      });
       // Each /api/chat turn returns a tool_call; the matching /api/web_search
       // returns an empty result. With OLLAMA_TOOL_LOOP_MAX_ITERATIONS=10 and
       // (chat + tool) per turn we expect 1 (config) + 10 (chat) + 10 (tool)
@@ -1476,16 +1468,20 @@ describe('ChatExecutionManager', () => {
         },
       });
 
-      const result = await manager.callProvider(
-        'OLLAMA',
-        'deepseek-v4-pro',
+      const result = await manager.runOllamaCloudToolLoop({
+        provider: 'OLLAMA',
+        model: 'deepseek-v4-pro',
+        initialBody: {
+          model: 'deepseek-v4-pro',
+          messages: [{ role: 'user', content: 'infinite-loop scenario' }],
+          stream: false,
+        },
+        baseUrl: 'https://ollama.com/api',
+        apiKey: 'k',
+        startTime: Date.now(),
+        usedFallback: false,
         context,
-        Date.now(),
-        false,
-        undefined,
-        'MANUAL_MODEL',
-        { fastPathEnabled: false, maxOutputTokens: 128, applyShortResponseConstraint: false },
-      );
+      });
 
       expect(result.toolTranscript).toBeDefined();
       expect(result.toolTranscript?.capReached).toBe(true);
@@ -1507,8 +1503,8 @@ describe('ChatExecutionManager', () => {
       const lastMessage = wrapUpCall.body.messages.at(-1);
       expect(lastMessage?.role).toBe('system');
       expect(lastMessage?.content).toContain('maximum allowed research budget');
-      // 1 (connector) + 10 (chat) + 10 (web_search) + 1 (wrap-up) = 22 calls
-      expect(httpRequest).toHaveBeenCalledTimes(22);
+      // 10 (chat) + 10 (web_search) + 1 (wrap-up) = 21 calls
+      expect(httpRequest).toHaveBeenCalledTimes(21);
     });
   });
 });

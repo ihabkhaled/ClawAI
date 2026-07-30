@@ -33,10 +33,7 @@ import {
 } from '../constants/research-enricher.constants';
 import { ResearchEnricherManager } from '../managers/research-enricher.manager';
 import { type ChatStreamService } from '../services/chat-stream.service';
-import type {
-  ResearchEnrichResult,
-  ResearchSource,
-} from '../types/research-enricher.types';
+import type { ResearchEnrichResult, ResearchSource } from '../types/research-enricher.types';
 import type {
   ResearchTranscript,
   ResearchTranscriptSource,
@@ -86,7 +83,15 @@ function buildTranscriptFromEnricher(
     ...(source.snippet === undefined ? {} : { snippet: source.snippet }),
     ...(source.extracted === undefined ? {} : { extracted: source.extracted }),
   }));
-  return { mode, query, sources, latencyMs, warnings: [] };
+  return {
+    mode,
+    query,
+    sources,
+    latencyMs,
+    warnings: [],
+    searchRequestCount: 1,
+    fetchRequestCount: mode === ResearchMode.SEARCH ? 0 : sources.length,
+  };
 }
 
 function searchPayload(results: Array<Partial<ResearchSource> & { url: string }>): {
@@ -121,7 +126,13 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
       threadId: 'thread-none',
     });
 
-    expect(result).toEqual({ evidence: '', sources: [], mode: ResearchMode.NONE });
+    expect(result).toEqual({
+      evidence: '',
+      sources: [],
+      mode: ResearchMode.NONE,
+      searchRequestCount: 0,
+      fetchRequestCount: 0,
+    });
     expect(httpRequest).not.toHaveBeenCalled();
     expect(stream.emitResearchProgress).not.toHaveBeenCalled();
   });
@@ -161,7 +172,11 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
     );
 
     expect(result.mode).toBe(ResearchMode.SEARCH);
+    expect(result.searchRequestCount).toBe(1);
+    expect(result.fetchRequestCount).toBe(0);
     expect(result.sources).toHaveLength(2);
+    expect(result.searchRequestCount).toBe(1);
+    expect(result.fetchRequestCount).toBe(0);
     for (const source of result.sources) {
       expect(source.title.length).toBeGreaterThan(0);
       expect(source.url.length).toBeGreaterThan(0);
@@ -207,6 +222,8 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
     expect(httpRequest.mock.calls[2][0].url).toBe(FETCH_URL);
 
     expect(result.sources).toHaveLength(2);
+    expect(result.searchRequestCount).toBe(1);
+    expect(result.fetchRequestCount).toBe(2);
     const [a, b] = result.sources;
     if (!a || !b) {
       throw new Error('expected 2 sources');
@@ -413,7 +430,7 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
   });
 
   // ─── Bonus case: fetch-side error falls back to snippet without thrown ───
-  it('SEARCH_FETCH partial-failure: when one URL fetch throws, falls back to that source\'s snippet — never throws', async () => {
+  it("SEARCH_FETCH partial-failure: when one URL fetch throws, falls back to that source's snippet — never throws", async () => {
     httpRequest.mockResolvedValueOnce(
       searchPayload([
         { title: 'OK', url: 'https://ok/1', snippet: 'ok-snippet' },

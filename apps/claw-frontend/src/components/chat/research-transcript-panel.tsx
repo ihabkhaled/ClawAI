@@ -23,27 +23,35 @@ export function ResearchTranscriptPanel({
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 self-start px-2 text-xs text-muted-foreground"
+        className="text-muted-foreground h-7 self-start px-2 text-xs"
         onClick={toggle}
         aria-expanded={open}
       >
         <Globe className="me-1 h-3.5 w-3.5" />
         {t('research.transcript.title', { count: String(transcript.sources.length) })}
-        {open ? (
-          <ChevronUp className="ms-1 h-3 w-3" />
-        ) : (
-          <ChevronDown className="ms-1 h-3 w-3" />
-        )}
+        {open ? <ChevronUp className="ms-1 h-3 w-3" /> : <ChevronDown className="ms-1 h-3 w-3" />}
       </Button>
+      <div className="text-muted-foreground flex flex-wrap gap-1 ps-2 text-[10px]">
+        <Badge variant="outline" className="border-sky-500/40 bg-sky-500/10 text-[10px]">
+          {t('research.transcript.searchRequests', {
+            count: String(transcript.searchRequestCount ?? 0),
+          })}
+        </Badge>
+        <Badge variant="outline" className="border-violet-500/40 bg-violet-500/10 text-[10px]">
+          {t('research.transcript.fetchRequests', {
+            count: String(transcript.fetchRequestCount ?? 0),
+          })}
+        </Badge>
+      </div>
       {open ? (
-        <div className="flex flex-col gap-2 rounded-md border border-border bg-card/50 px-3 py-2 text-xs">
+        <div className="border-border bg-card/50 flex flex-col gap-2 rounded-md border px-3 py-2 text-xs">
           {transcript.sources.map((source, index) => (
             <div
               key={`${source.url}-${String(index)}`}
-              className="flex flex-col gap-1 rounded border border-border/50 px-2 py-1.5"
+              className="border-border/50 flex flex-col gap-1 rounded border px-2 py-1.5"
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium text-foreground">
+                <span className="text-foreground font-medium">
                   {source.title.length > 0 ? source.title : source.url}
                 </span>
                 {typeof source.score === 'number' ? (
@@ -52,7 +60,7 @@ export function ResearchTranscriptPanel({
                   </Badge>
                 ) : null}
                 {typeof source.latencyMs === 'number' ? (
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-muted-foreground text-[10px]">
                     {String(source.latencyMs)}ms
                   </span>
                 ) : null}
@@ -60,19 +68,19 @@ export function ResearchTranscriptPanel({
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+                  className="text-primary inline-flex items-center gap-1 text-[11px] hover:underline"
                 >
                   <ExternalLink className="h-3 w-3" />
                   {source.url}
                 </a>
               </div>
               {source.snippet.length > 0 ? (
-                <p className="text-[11px] text-muted-foreground">{source.snippet}</p>
+                <p className="text-muted-foreground text-[11px]">{source.snippet}</p>
               ) : null}
               {source.extracted !== undefined && source.extracted.length > 0 ? (
-                <details className="text-[11px] text-muted-foreground">
+                <details className="text-muted-foreground text-[11px]">
                   <summary className="cursor-pointer">{t('research.transcript.expand')}</summary>
-                  <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[10px]">
+                  <pre className="mt-1 font-mono text-[10px] break-words whitespace-pre-wrap">
                     {source.extracted}
                   </pre>
                 </details>

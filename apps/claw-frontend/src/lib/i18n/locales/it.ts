@@ -1931,6 +1931,8 @@ export const it: TranslationDictionary = {
       title: '{count} fonti utilizzate',
       expand: 'Mostra fonti',
       sourcesCount: '{count} fonti',
+      searchRequests: '{count} ricerche',
+      fetchRequests: '{count} recuperi',
     },
     lifecycle: {
       started: 'Ricerca sul web in corso...',

@@ -120,6 +120,7 @@ describe('SearchExecutionService', () => {
     expect(result.selectionMode).toBe('auto');
     expect(result.fallbackUsed).toBe(true);
     expect(result.attemptedProviders).toEqual(['Firecrawl', 'Exa']);
+    expect(result.searchRequestCount).toBe(2);
     expect(result.warnings).toEqual(
       expect.arrayContaining([
         'Provider Firecrawl failed: timeout',
@@ -148,6 +149,7 @@ describe('SearchExecutionService', () => {
     expect(result.selectionMode).toBe('explicit');
     expect(result.fallbackUsed).toBe(false);
     expect(result.attemptedProviders).toEqual(['Brave']);
+    expect(result.searchRequestCount).toBe(1);
   });
 
   it('fails with NO_ENABLED_PROVIDER when auto mode has no providers', async () => {
