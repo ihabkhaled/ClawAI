@@ -9,7 +9,18 @@ import {
   Sse,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
-import { from, map, Observable, switchMap } from 'rxjs';
+import {
+  endWith,
+  from,
+  ignoreElements,
+  interval,
+  map,
+  merge,
+  Observable,
+  share,
+  switchMap,
+  takeUntil,
+} from 'rxjs';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { SkipLogging } from '../../../app/decorators/skip-logging.decorator';
 import { type AuthenticatedUser } from '../../../common/types';
@@ -39,7 +50,15 @@ export class ChatStreamController {
     // can never subscribe to another user's thread. A rejection errors the
     // observable, closing the SSE connection.
     return from(this.streamControl.assertOwnership(threadId, user.id)).pipe(
-      switchMap(() => this.chatStreamService.streamEvents(threadId, replay)),
+      switchMap(() => {
+        const events = this.chatStreamService.streamEvents(threadId, replay).pipe(share());
+        const completed = events.pipe(ignoreElements(), endWith(null));
+        const heartbeat = interval(15_000).pipe(
+          map(() => ({ type: 'HEARTBEAT' })),
+          takeUntil(completed),
+        );
+        return merge(events, heartbeat);
+      }),
       map((event): MessageEvent => ({ data: JSON.stringify(event) })),
     );
   }

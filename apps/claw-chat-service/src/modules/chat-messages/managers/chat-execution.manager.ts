@@ -70,6 +70,7 @@ import {
   StreamEventType,
 } from '../../../common/enums';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
+import { boundImageGenerationPrompt } from '../utilities/image-generation-prompt.utility';
 import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-shape.utility';
 import { transformOpenAiMessagesToAnthropic } from '../utilities/anthropic-message-shape.utility';
 import { buildGeminiRequestBody } from '../utilities/gemini-request-builder.utility';
@@ -3094,6 +3095,8 @@ export class ChatExecutionManager implements OnModuleInit {
     } else {
       this.logger.debug('callImageService: no image files attached — using text prompt only');
     }
+
+    prompt = boundImageGenerationPrompt(prompt);
 
     this.logger.debug(
       `callImageService: sending request to image service at ${config.IMAGE_SERVICE_URL}`,

@@ -1718,6 +1718,9 @@ export class ChatMessagesService implements OnModuleInit {
     researchRun: ResearchRunResponse | null,
   ): UserMessageMetadata | undefined {
     const metadata: UserMessageMetadata = {};
+    if (typeof dto.clientIntent === 'string' && dto.clientIntent.length > 0) {
+      metadata.clientIntent = dto.clientIntent;
+    }
     if (dto.fileIds && dto.fileIds.length > 0) {
       metadata.fileIds = dto.fileIds;
     }
@@ -1860,10 +1863,10 @@ export class ChatMessagesService implements OnModuleInit {
     if (payload.selectedProvider.startsWith('IMAGE_')) return payload;
     const lastUser = [...messages].reverse().find((m) => m.role === 'USER');
     if (!lastUser) return payload;
-    const meta = lastUser.metadata as Record<string, unknown> | null;
-    const fileIds = Array.isArray(meta?.['fileIds']) ? (meta['fileIds'] as string[]) : [];
+    const meta = lastUser.metadata as UserMessageMetadata | null;
+    const fileIds = Array.isArray(meta?.fileIds) ? meta.fileIds : [];
     if (fileIds.length === 0) return payload;
-    const lower = lastUser.content.toLowerCase();
+    const lower = (meta?.clientIntent ?? lastUser.content).toLowerCase();
     if (!IMAGE_INTENT_PHRASES.some((p) => lower.includes(p))) return payload;
     this.logger.log(
       `Image-from-attachment detected: "${lower.slice(0, 50)}" with ${String(fileIds.length)} files → overriding to IMAGE_GEMINI`,
