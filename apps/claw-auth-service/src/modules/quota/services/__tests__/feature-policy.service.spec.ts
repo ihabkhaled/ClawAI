@@ -205,4 +205,38 @@ describe('FeaturePolicyService', () => {
     await service.release('rec-1');
     expect(usage.release).toHaveBeenCalledWith('rec-1');
   });
+
+  it('records an idempotent lifetime observation without consulting plan limits', async () => {
+    await service.observe({
+      userId: 'admin-1',
+      feature: 'WEB_SEARCH',
+      requestId: 'search-1:provider-1',
+    });
+
+    expect(planBilling.findFeatureRule).not.toHaveBeenCalled();
+    expect(usage.reserve).toHaveBeenCalledWith({
+      userId: 'admin-1',
+      planId: null,
+      feature: 'WEB_SEARCH',
+      requestId: 'search-1:provider-1',
+      window: 'LIFETIME',
+      periodKey: 'LIFETIME',
+    });
+    expect(usage.consume).toHaveBeenCalledWith('rec-1');
+  });
+
+  it('returns lifetime observed operation counts without inventing a token limit', async () => {
+    usage.countActive.mockResolvedValue(23);
+
+    await expect(
+      service.evaluateObserved({ userId: 'admin-1', feature: 'WEB_SEARCH' }),
+    ).resolves.toEqual({
+      feature: 'WEB_SEARCH',
+      allowed: true,
+      limit: null,
+      used: 23,
+      remaining: null,
+      window: null,
+    });
+  });
 });

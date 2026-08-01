@@ -112,3 +112,20 @@ export type FeatureReservationResult =
       used: number;
       limit: number;
     };
+
+export type ObservedFeatureUsageInput = {
+  userId: string;
+  feature: PlanFeatureKey;
+  requestId: string;
+};
+
+export type ObservedFeatureSnapshotInput = {
+  userId: string;
+  feature: PlanFeatureKey;
+};
+
+export type TokenUsageRangeInput = {
+  userId: string;
+  fromDate: string;
+  throughDate: string;
+};

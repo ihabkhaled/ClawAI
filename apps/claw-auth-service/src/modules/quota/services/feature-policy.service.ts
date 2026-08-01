@@ -3,11 +3,17 @@ import {
   PlanFeatureAccessMode,
   type PlanFeatureKey,
   type PlanFeatureRule,
+  PlanFeatureWindow,
 } from '../../../generated/prisma';
 import { PlanBillingRepository } from '../../plans/repositories/plan-billing.repository';
 import { FeatureUsageRepository } from '../repositories/feature-usage.repository';
 import { featurePeriodKey } from '../utilities/feature-window.utility';
-import { type FeatureAllowanceSnapshot, type FeatureReservationResult } from '../types/quota.types';
+import {
+  type FeatureAllowanceSnapshot,
+  type FeatureReservationResult,
+  type ObservedFeatureSnapshotInput,
+  type ObservedFeatureUsageInput,
+} from '../types/quota.types';
 
 // Feature allowances are enforced here, on the server, against a durable
 // ledger. A cleared browser, a second device or a replayed request must never
@@ -140,5 +146,33 @@ export class FeaturePolicyService {
   async release(reservationId: string): Promise<void> {
     await this.usage.release(reservationId);
     this.logger.debug(`release: reservation=${reservationId}`);
+  }
+
+  async observe(params: ObservedFeatureUsageInput): Promise<void> {
+    this.logger.debug(`observe: user=${params.userId} feature=${params.feature}`);
+    const record = await this.usage.reserve({
+      ...params,
+      planId: null,
+      window: PlanFeatureWindow.LIFETIME,
+      periodKey: 'LIFETIME',
+    });
+    await this.usage.consume(record.id);
+    this.logger.log(`observe: recorded user=${params.userId} feature=${params.feature}`);
+  }
+
+  async evaluateObserved(params: ObservedFeatureSnapshotInput): Promise<FeatureAllowanceSnapshot> {
+    this.logger.debug(`evaluateObserved: user=${params.userId} feature=${params.feature}`);
+    const used = await this.usage.countActive({
+      ...params,
+      periodKey: 'LIFETIME',
+    });
+    return {
+      feature: params.feature,
+      allowed: true,
+      limit: null,
+      used,
+      remaining: null,
+      window: null,
+    };
   }
 }

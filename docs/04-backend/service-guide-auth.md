@@ -93,6 +93,24 @@ catalog, or database failures stay pending and retry during the next
 owner-locked reconciliation run; deterministic user overrides are marked
 superseded.
 
+### Effective entitlements and usage truth
+
+`GET /api/v1/auth/me/entitlements` returns effective access, not a raw plan
+assignment. An administrator always receives the virtual `admin` entitlement:
+all feature gates enabled, `ALLOW_ALL` model access, and `null` daily, weekly,
+monthly, and chat limits. A commercial plan assignment never narrows admin
+access or makes the My Plan page present a paid tier as the effective limit.
+
+`GET /api/v1/auth/me/usage` reads finalized raw model-token totals from the
+durable `TokenUsageLedger` over inclusive UTC day, ISO-week, and month date
+ranges. Redis remains the atomic reservation/enforcement store; it is not the
+reporting source of truth because in-flight estimates are not consumed tokens.
+
+Search, fetch, and extract remain explicit operation counters in
+`FeatureUsageRecord`. Admin and no-plan executions are recorded in an
+unlimited lifetime observation bucket without reserving or enforcing a feature
+allowance. They are never converted into invented token equivalents.
+
 ## JWT Flow
 
 1. User POSTs email + password to `/auth/login`

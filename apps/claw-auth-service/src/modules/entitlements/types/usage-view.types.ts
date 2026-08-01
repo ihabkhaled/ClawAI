@@ -51,3 +51,19 @@ export type UsagePlanLimits = {
   weeklyTokenQuota: number | null;
   monthlyTokenQuota: number | null;
 };
+
+export type UsageDateRange = {
+  fromDate: string;
+  throughDate: string;
+};
+
+export type UsageDateRanges = {
+  day: UsageDateRange;
+  week: UsageDateRange;
+  month: UsageDateRange;
+};
+
+export type UsagePlanContext = {
+  plan: UsagePlanLimits | null;
+  observeUnmeteredFeatures: boolean;
+};

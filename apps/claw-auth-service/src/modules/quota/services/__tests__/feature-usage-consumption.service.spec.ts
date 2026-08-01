@@ -27,4 +27,30 @@ describe('FeatureUsageConsumptionService', () => {
     });
     expect(policy.consume).toHaveBeenCalledWith('usage-1');
   });
+
+  it.each([
+    { isAdmin: true, plan: null, label: 'an administrator' },
+    { isAdmin: false, plan: null, label: 'a user without a plan' },
+  ])('records observed provider operations for $label without reserving a limit', async (state) => {
+    const entitlements = { getForUser: jest.fn().mockResolvedValue(state) };
+    const policy = {
+      reserve: jest.fn(),
+      consume: jest.fn(),
+      observe: jest.fn(async () => {}),
+    };
+    const service = new FeatureUsageConsumptionService(entitlements as never, policy as never);
+
+    await service.record({
+      userId: 'user-1',
+      feature: PlanFeatureKey.WEB_SEARCH,
+      requestId: 'search-1:provider-1',
+    });
+
+    expect(policy.observe).toHaveBeenCalledWith({
+      userId: 'user-1',
+      feature: PlanFeatureKey.WEB_SEARCH,
+      requestId: 'search-1:provider-1',
+    });
+    expect(policy.reserve).not.toHaveBeenCalled();
+  });
 });

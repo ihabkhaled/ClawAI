@@ -187,4 +187,59 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     expect(result.plan?.slug).toBe('free');
     expect(plansRepoMock.findById).not.toHaveBeenCalled();
   });
+
+  it('returns one centralized unlimited effective plan for an admin assigned a restricted plan', async () => {
+    authRepoMock.findUserById.mockResolvedValue({
+      ...baseUser,
+      role: UserRole.ADMIN,
+      activePlanId: 'plan-team',
+    } as unknown as Awaited<ReturnType<AuthRepository['findUserById']>>);
+    plansRepoMock.findEffectiveForUser.mockResolvedValue({
+      ...freePlanWithNoModelAccess,
+      id: 'plan-team',
+      name: 'Team',
+      slug: 'team',
+      dailyTokenQuota: 5000,
+      weeklyTokenQuota: 10_000,
+      monthlyTokenQuota: 20_000,
+      maxChatsPerDay: 5,
+      allowResearchMode: false,
+      allowCriticReview: false,
+    } as unknown as PlanWithAccess);
+
+    const result = await service.getForUser('u1');
+
+    expect(result.plan).toEqual({
+      id: 'admin-unlimited',
+      slug: 'admin',
+      name: 'Admin',
+      limits: {
+        dailyTokens: null,
+        weeklyTokens: null,
+        monthlyTokens: null,
+        chatsPerDay: null,
+      },
+      featureGates: {
+        allowCompareMode: true,
+        allowJudgeMode: true,
+        allowResearchMode: true,
+        allowCriticReview: true,
+        allowWorkspaces: true,
+        allowMemory: true,
+        allowContextPacks: true,
+      },
+    });
+    expect(result.modelAccessMode).toBe(PlanModelAccessMode.ALLOW_ALL);
+    expect(result.allowedModels).toEqual([]);
+    expect(result.allowedProviders).toEqual([]);
+    expect(result.quota).toEqual({
+      dailyLimit: 0,
+      used: 0,
+      remaining: 0,
+      unlimited: true,
+      adminBypass: true,
+    });
+    expect(plansRepoMock.findEffectiveForUser).not.toHaveBeenCalled();
+    expect(quotaServiceMock.getSnapshot).not.toHaveBeenCalled();
+  });
 });

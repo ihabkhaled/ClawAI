@@ -8,6 +8,7 @@ import { PlansRepository } from '../../plans/repositories/plans.repository';
 import { type PlanWithAccess } from '../../plans/types/plans.types';
 import { QuotaService } from '../../quota/services/quota.service';
 import { type UserEntitlements } from '../types/entitlements.types';
+import { ADMIN_ENTITLEMENT_PLAN } from '../constants/admin-entitlements.constants';
 
 @Injectable()
 export class EntitlementsService {
@@ -31,7 +32,7 @@ export class EntitlementsService {
 
     const isAdmin = user.role === UserRole.ADMIN;
     const permissions = await this.rolesService.resolvePermissionsForUser(user.roleId, user.role);
-    const plan = await this.resolvePlan(userId, user.activePlanId);
+    const plan = isAdmin ? null : await this.resolvePlan(userId, user.activePlanId);
 
     const dailyLimit = plan?.dailyTokenQuota ?? 0;
     const quota = isAdmin
@@ -52,7 +53,7 @@ export class EntitlementsService {
       role: user.role,
       isAdmin,
       permissions,
-      plan: plan === null ? null : this.toEntitlementPlan(plan),
+      plan: this.resolveEntitlementPlan(isAdmin, plan),
       modelAccessMode: this.resolveModelAccessMode(isAdmin, plan?.modelAccessMode),
       allowedModels: modelAccess.map((m) => ({
         provider: m.provider,
@@ -67,6 +68,16 @@ export class EntitlementsService {
       allowedProviders: [...new Set(modelAccess.map((m) => m.provider))],
       quota,
     };
+  }
+
+  private resolveEntitlementPlan(
+    isAdmin: boolean,
+    plan: PlanWithAccess | null,
+  ): UserEntitlements['plan'] {
+    if (isAdmin) {
+      return ADMIN_ENTITLEMENT_PLAN;
+    }
+    return plan === null ? null : this.toEntitlementPlan(plan);
   }
 
   private async resolvePlan(
