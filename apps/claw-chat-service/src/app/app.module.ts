@@ -32,7 +32,7 @@ import { ContextPreviewModule } from '../modules/context-preview/context-preview
         autoLogging: {
           ignore: (req: IncomingMessage): boolean => {
             const url = req.url ?? '';
-            return url.includes('/stream/');
+            return url.split('?')[0] === '/api/v1/health' || url.includes('/stream/');
           },
         },
         redact: {

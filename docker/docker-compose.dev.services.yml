@@ -7,6 +7,13 @@
 
 name: claw
 
+x-development-watch-environment: &development-watch-environment
+  # Docker Desktop does not reliably forward host filesystem events from
+  # Windows/macOS bind mounts. TypeScript polling keeps the existing
+  # tsgo -> tsc-alias -> nodemon pipeline responsive on every dev host.
+  TSC_WATCHFILE: DynamicPriorityPolling
+  TSC_WATCHDIRECTORY: RecursiveDirectoryUsingDynamicPriorityPolling
+
 services:
   # ---------------------------------------------------------------------------
   # Nginx Reverse Proxy
@@ -59,9 +66,12 @@ services:
     container_name: claw-auth-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4001:4001'
     volumes:
+      - ../apps/claw-auth-service/package.json:/app/apps/claw-auth-service/package.json:ro
       - ../apps/claw-auth-service/src:/app/apps/claw-auth-service/src
       - ../apps/claw-auth-service/prisma:/app/apps/claw-auth-service/prisma
       - ../certs:/certs:ro
@@ -86,9 +96,12 @@ services:
     container_name: claw-chat-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4002:4002'
     volumes:
+      - ../apps/claw-chat-service/package.json:/app/apps/claw-chat-service/package.json:ro
       - ../apps/claw-chat-service/src:/app/apps/claw-chat-service/src
       - ../apps/claw-chat-service/prisma:/app/apps/claw-chat-service/prisma
       - ../certs:/certs:ro
@@ -113,9 +126,12 @@ services:
     container_name: claw-connector-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4003:4003'
     volumes:
+      - ../apps/claw-connector-service/package.json:/app/apps/claw-connector-service/package.json:ro
       - ../apps/claw-connector-service/src:/app/apps/claw-connector-service/src
       - ../apps/claw-connector-service/prisma:/app/apps/claw-connector-service/prisma
       - ../certs:/certs:ro
@@ -140,9 +156,12 @@ services:
     container_name: claw-routing-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4004:4004'
     volumes:
+      - ../apps/claw-routing-service/package.json:/app/apps/claw-routing-service/package.json:ro
       - ../apps/claw-routing-service/src:/app/apps/claw-routing-service/src
       - ../apps/claw-routing-service/prisma:/app/apps/claw-routing-service/prisma
       - ../certs:/certs:ro
@@ -167,9 +186,12 @@ services:
     container_name: claw-memory-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4005:4005'
     volumes:
+      - ../apps/claw-memory-service/package.json:/app/apps/claw-memory-service/package.json:ro
       - ../apps/claw-memory-service/src:/app/apps/claw-memory-service/src
       - ../apps/claw-memory-service/prisma:/app/apps/claw-memory-service/prisma
       - ../certs:/certs:ro
@@ -199,10 +221,12 @@ services:
     # so future maintainers see OCR is a file-service concern. Values are
     # interpolated from the root .env at compose-up time.
     environment:
+      <<: *development-watch-environment
       OCR_ENABLED: ${OCR_ENABLED:-false}
     ports:
       - '4006:4006'
     volumes:
+      - ../apps/claw-file-service/package.json:/app/apps/claw-file-service/package.json:ro
       - ../apps/claw-file-service/src:/app/apps/claw-file-service/src
       - ../apps/claw-file-service/prisma:/app/apps/claw-file-service/prisma
       - file-storage-data:/data/files
@@ -234,9 +258,12 @@ services:
     container_name: claw-audit-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4007:4007'
     volumes:
+      - ../apps/claw-audit-service/package.json:/app/apps/claw-audit-service/package.json:ro
       - ../apps/claw-audit-service/src:/app/apps/claw-audit-service/src
       - ../certs:/certs:ro
     command: npm run dev
@@ -263,9 +290,12 @@ services:
     container_name: claw-ollama-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4008:4008'
     volumes:
+      - ../apps/claw-ollama-service/package.json:/app/apps/claw-ollama-service/package.json:ro
       - ../apps/claw-ollama-service/src:/app/apps/claw-ollama-service/src
       - ../apps/claw-ollama-service/prisma:/app/apps/claw-ollama-service/prisma
       - ../certs:/certs:ro
@@ -295,9 +325,12 @@ services:
     container_name: claw-client-logs-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4010:4010'
     volumes:
+      - ../apps/claw-client-logs-service/package.json:/app/apps/claw-client-logs-service/package.json:ro
       - ../apps/claw-client-logs-service/src:/app/apps/claw-client-logs-service/src
       - ../certs:/certs:ro
     command: npm run dev
@@ -321,9 +354,12 @@ services:
     container_name: claw-server-logs-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4011:4011'
     volumes:
+      - ../apps/claw-server-logs-service/package.json:/app/apps/claw-server-logs-service/package.json:ro
       - ../apps/claw-server-logs-service/src:/app/apps/claw-server-logs-service/src
       - ../certs:/certs:ro
     command: npm run dev
@@ -347,9 +383,12 @@ services:
     container_name: claw-health-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4009:4009'
     volumes:
+      - ../apps/claw-health-service/package.json:/app/apps/claw-health-service/package.json:ro
       - ../apps/claw-health-service/src:/app/apps/claw-health-service/src
       - ../certs:/certs:ro
     command: npm run dev
@@ -376,9 +415,12 @@ services:
     container_name: claw-image-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4012:4012'
     volumes:
+      - ../apps/claw-image-service/package.json:/app/apps/claw-image-service/package.json:ro
       - ../apps/claw-image-service/src:/app/apps/claw-image-service/src
       - ../apps/claw-image-service/prisma:/app/apps/claw-image-service/prisma
       - ../certs:/certs:ro
@@ -406,9 +448,12 @@ services:
     container_name: claw-workspace-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4014:4014'
     volumes:
+      - ../apps/claw-workspace-service/package.json:/app/apps/claw-workspace-service/package.json:ro
       - ../apps/claw-workspace-service/src:/app/apps/claw-workspace-service/src
       - ../apps/claw-workspace-service/prisma:/app/apps/claw-workspace-service/prisma
       - ../certs:/certs:ro
@@ -436,9 +481,12 @@ services:
     container_name: claw-agent-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4015:4015'
     volumes:
+      - ../apps/claw-agent-service/package.json:/app/apps/claw-agent-service/package.json:ro
       - ../apps/claw-agent-service/src:/app/apps/claw-agent-service/src
       - ../apps/claw-agent-service/prisma:/app/apps/claw-agent-service/prisma
       - ../certs:/certs:ro
@@ -466,9 +514,12 @@ services:
     container_name: claw-research-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4016:4016'
     volumes:
+      - ../apps/claw-research-service/package.json:/app/apps/claw-research-service/package.json:ro
       - ../apps/claw-research-service/src:/app/apps/claw-research-service/src
       - ../apps/claw-research-service/prisma:/app/apps/claw-research-service/prisma
       - ../certs:/certs:ro
@@ -494,9 +545,12 @@ services:
     container_name: claw-payment-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4018:4018'
     volumes:
+      - ../apps/claw-payment-service/package.json:/app/apps/claw-payment-service/package.json:ro
       - ../apps/claw-payment-service/src:/app/apps/claw-payment-service/src
       - ../apps/claw-payment-service/prisma:/app/apps/claw-payment-service/prisma
       - ../certs:/certs:ro
@@ -525,9 +579,12 @@ services:
     container_name: claw-llamacpp-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4017:4017'
     volumes:
+      - ../apps/claw-llamacpp-service/package.json:/app/apps/claw-llamacpp-service/package.json:ro
       - ../apps/claw-llamacpp-service/src:/app/apps/claw-llamacpp-service/src
       - ../apps/claw-llamacpp-service/prisma:/app/apps/claw-llamacpp-service/prisma
       - llamacpp-data:/var/lib/claw/llamacpp
@@ -553,9 +610,12 @@ services:
     container_name: claw-file-generation-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      <<: *development-watch-environment
     ports:
       - '4013:4013'
     volumes:
+      - ../apps/claw-file-generation-service/package.json:/app/apps/claw-file-generation-service/package.json:ro
       - ../apps/claw-file-generation-service/src:/app/apps/claw-file-generation-service/src
       - ../apps/claw-file-generation-service/prisma:/app/apps/claw-file-generation-service/prisma
       - ../certs:/certs:ro

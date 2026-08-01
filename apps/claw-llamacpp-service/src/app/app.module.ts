@@ -38,6 +38,7 @@ import { RuntimeProgressModule } from '../modules/runtime-progress/runtime-progr
           ignore: (req): boolean => {
             const url = req.url ?? '';
             return (
+              url.split('?')[0] === '/api/v1/health' ||
               url.includes('/v1/chat/completions') ||
               url.includes('/v1/completions') ||
               /\/pull-jobs\/[^/]+\/progress/.test(url)

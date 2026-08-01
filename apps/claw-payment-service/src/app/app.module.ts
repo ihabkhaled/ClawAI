@@ -38,7 +38,10 @@ import { BillingDashboardModule } from '../modules/billing-dashboard/billing-das
             ? { target: 'pino-pretty', options: { colorize: true } }
             : undefined,
         level: process.env['NODE_ENV'] !== 'production' ? 'debug' : 'info',
-        autoLogging: true,
+        autoLogging: {
+          ignore: (req: IncomingMessage): boolean =>
+            (req.url ?? '').split('?')[0] === '/api/v1/health',
+        },
         // Redaction list is deliberately broad. A payment service handles more
         // secret-shaped fields than any other, and a leaked gateway token or
         // signature header in a log is a full compromise of that credential.

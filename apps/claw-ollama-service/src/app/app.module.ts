@@ -29,7 +29,10 @@ import { RuntimeProgressModule } from '../modules/runtime-progress/runtime-progr
             ? { target: 'pino-pretty', options: { colorize: true } }
             : undefined,
         level: process.env['NODE_ENV'] !== 'production' ? 'debug' : 'info',
-        autoLogging: true,
+        autoLogging: {
+          ignore: (req: IncomingMessage): boolean =>
+            (req.url ?? '').split('?')[0] === '/api/v1/health',
+        },
         redact: {
           paths: [
             'req.headers.authorization',
