@@ -49,6 +49,7 @@ export class SerpApiAdapter implements SearchAdapter {
     }
 
     const start = Date.now();
+    await context.onNetworkCall?.();
     const response = await fetch(
       this.buildUrl(context.baseUrl, request.query, request.maxResults, context),
       {

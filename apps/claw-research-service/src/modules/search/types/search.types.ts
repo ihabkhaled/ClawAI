@@ -61,4 +61,6 @@ export type SearchAdapterContext = {
   credentials: SearchAdapterCredentials;
   publicConfig: SearchAdapterPublicConfig;
   timeoutMs: number;
+  /** Fail-soft accounting hook invoked once immediately before each search network request. */
+  onNetworkCall?: () => Promise<void>;
 };

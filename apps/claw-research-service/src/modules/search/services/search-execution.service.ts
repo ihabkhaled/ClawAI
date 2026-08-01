@@ -21,7 +21,7 @@ import { SearchProviderService } from './search-provider.service';
 import type { ExecuteSearchDto } from '../dto/execute-search.dto';
 import type { Prisma, SearchProvider, SearchRun } from '../../../generated/prisma';
 import type { SearchExecutionResult } from '../types/search-execution-result.types';
-import type { SearchResult } from '../types/search.types';
+import type { SearchAdapterContext, SearchResult } from '../types/search.types';
 
 @Injectable()
 export class SearchExecutionService {
@@ -48,6 +48,7 @@ export class SearchExecutionService {
 
     const warnings: string[] = [];
     const attemptedProviders: string[] = [];
+    const networkCallIds: string[] = [];
     try {
       const result = await this.executeWithFallbackChain(
         selection,
@@ -56,6 +57,7 @@ export class SearchExecutionService {
         maxResults,
         attemptedProviders,
         warnings,
+        networkCallIds,
       );
       if (result) {
         return result;
@@ -73,7 +75,14 @@ export class SearchExecutionService {
       if (error instanceof BusinessException) {
         throw error;
       }
-      return this.buildEmptyResult(run, selection, dto.query, attemptedProviders, warnings);
+      return this.buildEmptyResult(
+        run,
+        selection,
+        dto.query,
+        attemptedProviders,
+        warnings,
+        networkCallIds,
+      );
     }
   }
 
@@ -88,6 +97,7 @@ export class SearchExecutionService {
     maxResults: number,
     attemptedProviders: string[],
     warnings: string[],
+    networkCallIds: string[],
   ): Promise<SearchExecutionResult | null> {
     for (const provider of selection.candidates) {
       attemptedProviders.push(provider.name);
@@ -99,6 +109,7 @@ export class SearchExecutionService {
         selection,
         attemptedProviders,
         warnings,
+        networkCallIds,
       );
       if (result) {
         return result;
@@ -115,10 +126,11 @@ export class SearchExecutionService {
     selection: { primary: SearchProvider; mode: ProviderSelectionMode },
     attemptedProviders: string[],
     warnings: string[],
+    networkCallIds: string[],
   ): Promise<SearchExecutionResult | null> {
     try {
       const adapter = this.adapterFactory.getAdapter(provider.kind);
-      const context = this.providerService.buildContext(provider);
+      const context = this.buildMeteredContext(provider, run, networkCallIds);
       const response = await adapter.search(
         { query: dto.query, maxResults, filters: dto.filters },
         context,
@@ -141,7 +153,7 @@ export class SearchExecutionService {
         selectionMode: selection.mode,
         fallbackUsed: attemptedProviders.length > 1,
         attemptedProviders,
-        searchRequestCount: attemptedProviders.length,
+        searchRequestCount: networkCallIds.length,
         query: dto.query,
         results: filteredResults,
         latencyMs: response.latencyMs,
@@ -151,9 +163,23 @@ export class SearchExecutionService {
       const lastError = error instanceof Error ? error.message : 'Unknown error';
       warnings.push(`Provider ${provider.name} failed: ${lastError}`);
       return null;
-    } finally {
-      await this.researchUsage.record(run.userId, 'WEB_SEARCH', `${run.id}:${provider.id}`);
     }
+  }
+
+  private buildMeteredContext(
+    provider: SearchProvider,
+    run: SearchRun,
+    networkCallIds: string[],
+  ): SearchAdapterContext {
+    const baseContext = this.providerService.buildContext(provider);
+    return {
+      ...baseContext,
+      onNetworkCall: async (): Promise<void> => {
+        const requestId = `${run.id}:${provider.id}:${String(networkCallIds.length + 1)}`;
+        networkCallIds.push(requestId);
+        await this.researchUsage.record(run.userId, 'WEB_SEARCH', requestId);
+      },
+    };
   }
 
   private buildEmptyResult(
@@ -162,6 +188,7 @@ export class SearchExecutionService {
     query: string,
     attemptedProviders: string[],
     warnings: string[],
+    networkCallIds: string[],
   ): SearchExecutionResult {
     return {
       runId: run.id,
@@ -171,7 +198,7 @@ export class SearchExecutionService {
       selectionMode: selection.mode,
       fallbackUsed: attemptedProviders.length > 1,
       attemptedProviders,
-      searchRequestCount: attemptedProviders.length,
+      searchRequestCount: networkCallIds.length,
       query,
       results: [],
       latencyMs: 0,

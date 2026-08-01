@@ -9,6 +9,7 @@ import { ExtractionProfile } from '../../scrape/enums/extraction-profile.enum';
 import { ScrapeService } from '../../scrape/services/scrape.service';
 import { SearchExecutionService } from '../../search/services/search-execution.service';
 import { ResearchRunRepository } from '../repositories/research-run.repository';
+import { ResearchUsageService } from '../../../common/services/research-usage.service';
 import { buildEvidenceBundle, traceEntry } from '../utilities/evidence-builder.utility';
 import type { ExecuteResearchDto } from '../dto/execute-research.dto';
 import type { Prisma, ResearchRun } from '../../../generated/prisma';
@@ -29,6 +30,7 @@ export class ResearchManager {
     private readonly searchService: SearchExecutionService,
     private readonly fetchService: FetchService,
     private readonly scrapeService: ScrapeService,
+    private readonly researchUsage: ResearchUsageService,
   ) {}
 
   async run(userId: string, dto: ExecuteResearchDto): Promise<ResearchRun> {
@@ -54,7 +56,16 @@ export class ResearchManager {
         const fetch = await this.runFetch(userId, search.items, trace, toolsUsed, warnings);
         items.push(...fetch.items);
         if (this.needsExtract(dto.workflow)) {
-          this.runExtract(fetch.items, fetch.rawByUrl, dto, trace, toolsUsed, warnings);
+          await this.runExtract(
+            userId,
+            run.id,
+            fetch.items,
+            fetch.rawByUrl,
+            dto,
+            trace,
+            toolsUsed,
+            warnings,
+          );
         }
       }
 
@@ -176,14 +187,16 @@ export class ResearchManager {
     return { items: fetched, rawByUrl };
   }
 
-  private runExtract(
+  private async runExtract(
+    userId: string,
+    runId: string,
     fetchItems: EvidenceItem[],
     rawByUrl: Map<string, string>,
     dto: ExecuteResearchDto,
     trace: ResearchTraceEntry[],
     toolsUsed: string[],
     warnings: string[],
-  ): void {
+  ): Promise<void> {
     const profile = dto.extractionProfile ?? ExtractionProfile.ARTICLE;
     if (fetchItems.length === 0) {
       trace.push(traceEntry('extract', 'skipped', 0, 'No fetched items available'));
@@ -195,6 +208,7 @@ export class ResearchManager {
     toolsUsed.push('web_extract', profileTool);
     let extractedCount = 0;
     let skippedCount = 0;
+    let attemptedCount = 0;
 
     for (const item of fetchItems) {
       const start = Date.now();
@@ -204,6 +218,7 @@ export class ResearchManager {
         trace.push(traceEntry(profileTool, 'skipped', 0, `${item.url}: empty html/content`));
         continue;
       }
+      attemptedCount += 1;
       try {
         const out = this.scrapeService.extract(rawHtml, item.url, profile);
         item.source = 'scrape';
@@ -229,6 +244,12 @@ export class ResearchManager {
         skippedCount += 1;
         warnings.push(`Scrape failed for ${item.url}: ${message}`);
         trace.push(traceEntry(profileTool, 'warning', Date.now() - start, message));
+      } finally {
+        await this.researchUsage.record(
+          userId,
+          'WEB_EXTRACT',
+          `${runId}:extract:${String(attemptedCount)}:${sha1Short(item.url)}`,
+        );
       }
     }
 

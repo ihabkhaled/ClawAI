@@ -52,6 +52,7 @@ export class FirecrawlAdapter implements SearchAdapter {
     }
 
     const start = Date.now();
+    await context.onNetworkCall?.();
     const response = await fetch(this.buildUrl(context.baseUrl), {
       method: 'POST',
       headers: this.buildHeaders(context),

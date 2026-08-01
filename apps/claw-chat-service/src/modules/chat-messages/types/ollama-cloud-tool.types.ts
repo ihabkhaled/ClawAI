@@ -69,4 +69,6 @@ export type ExecuteOllamaCloudToolCallOptions = {
   baseUrl: string;
   apiKey: string;
   timeoutMs: number;
+  /** Called immediately before a validated tool request reaches the network. */
+  onDispatch?: () => Promise<void>;
 };

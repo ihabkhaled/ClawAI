@@ -74,6 +74,7 @@ describe('ChatExecutionManager', () => {
   let judgeManager: Partial<Record<keyof JudgeRefereeManager, jest.Mock>>;
   let streamService: Partial<Record<keyof ChatStreamService, jest.Mock>>;
   let localModelSelection: Partial<Record<keyof LocalModelSelectionService, jest.Mock>>;
+  let accessControl: { recordUsage: jest.Mock; recordFeatureUsage: jest.Mock };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -117,6 +118,10 @@ describe('ChatExecutionManager', () => {
       resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
       resolveModelList: jest.fn().mockResolvedValue(['qwen3:7b', 'llama3.3:8b']),
     };
+    accessControl = {
+      recordUsage: jest.fn(),
+      recordFeatureUsage: jest.fn(async () => {}),
+    };
 
     manager = new ChatExecutionManager(
       contextAssembly as unknown as ContextAssemblyManager,
@@ -132,7 +137,7 @@ describe('ChatExecutionManager', () => {
           outcome: { applied: false, results: [], runId: null, warning: null },
         })),
       } as any,
-      { recordUsage: jest.fn() } as unknown as AccessControlService,
+      accessControl as unknown as AccessControlService,
       // Slice D — Gemini Files API manager. Default mock matches the
       // ENABLE_GEMINI_FILES_API=false path (no uploads), so no test should
       // hit it unless it explicitly flips the flag.
@@ -1367,6 +1372,7 @@ describe('ChatExecutionManager', () => {
           },
         });
 
+      const startTime = Date.now();
       const result = await manager.runOllamaCloudToolLoop({
         provider: 'OLLAMA',
         model: 'deepseek-v4-pro',
@@ -1377,7 +1383,7 @@ describe('ChatExecutionManager', () => {
         },
         baseUrl: 'https://ollama.com/api',
         apiKey: 'k',
-        startTime: Date.now(),
+        startTime,
         usedFallback: false,
         context,
       });
@@ -1399,6 +1405,11 @@ describe('ChatExecutionManager', () => {
       // stores, so tool dispatch lands there too.
       const toolUrl = httpRequest.mock.calls[1][0].url as string;
       expect(toolUrl).toBe('https://ollama.com/api/web_search');
+      expect(accessControl.recordFeatureUsage).toHaveBeenCalledWith(
+        'user-1',
+        'WEB_SEARCH',
+        `buffered:${String(startTime)}:1:tool-1`,
+      );
 
       // The follow-up chat carries the tool result as a `tool` message.
       const secondChatBody = httpRequest.mock.calls[2][0].body as {

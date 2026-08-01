@@ -6,6 +6,7 @@ import {
   isModelAllowedForUsage,
   ModelUsageType,
   type PlanFeature,
+  type ResearchUsageFeature,
   type UserEntitlements,
 } from '@claw/shared-entitlements';
 import { Permission } from '@claw/shared-types';
@@ -127,6 +128,20 @@ export class AccessControlService {
     } catch (error) {
       this.logger.warn(
         `recordUsage: failed for user=${params.userId} — ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async recordFeatureUsage(
+    userId: string,
+    feature: ResearchUsageFeature,
+    requestId: string,
+  ): Promise<void> {
+    try {
+      await this.adapter.recordFeatureUsage({ userId, feature, requestId });
+    } catch (error) {
+      this.logger.warn(
+        `recordFeatureUsage: feature=${feature} request=${requestId} failed - ${(error as Error).message}`,
       );
     }
   }

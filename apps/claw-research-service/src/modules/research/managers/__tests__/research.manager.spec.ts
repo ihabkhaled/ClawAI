@@ -6,6 +6,7 @@ import type { FetchService } from '../../../fetch/services/fetch.service';
 import type { SearchExecutionService } from '../../../search/services/search-execution.service';
 import type { ScrapeService } from '../../../scrape/services/scrape.service';
 import type { ResearchRunRepository } from '../../repositories/research-run.repository';
+import type { ResearchUsageService } from '../../../../common/services/research-usage.service';
 
 describe('ResearchManager', () => {
   let runs: {
@@ -24,6 +25,7 @@ describe('ResearchManager', () => {
     extract: jest.Mock;
   };
   let manager: ResearchManager;
+  let researchUsage: { record: jest.Mock };
 
   beforeEach(() => {
     runs = {
@@ -78,12 +80,14 @@ describe('ResearchManager', () => {
         warnings: [],
       })),
     };
+    researchUsage = { record: jest.fn(async () => {}) };
 
     manager = new ResearchManager(
       runs as unknown as ResearchRunRepository,
       search as unknown as SearchExecutionService,
       fetchService as unknown as FetchService,
       scrapeService as unknown as ScrapeService,
+      researchUsage as unknown as ResearchUsageService,
     );
   });
 
@@ -94,6 +98,11 @@ describe('ResearchManager', () => {
     });
 
     expect(scrapeService.extract).toHaveBeenCalledTimes(1);
+    expect(researchUsage.record).toHaveBeenCalledWith(
+      'u1',
+      'WEB_EXTRACT',
+      expect.stringMatching(/^run-1:extract:/),
+    );
     const updatePayload = runs.update.mock.calls.at(-1)?.[1] as {
       bundle?: { toolsUsed?: string[]; providerSelection?: { providerKind?: string | null } };
       trace?: Array<{ phase?: string }>;
@@ -137,5 +146,23 @@ describe('ResearchManager', () => {
     };
     const extractTrace = (updatePayload.trace ?? []).find((entry) => entry.phase === 'extract');
     expect(extractTrace?.status).toBe('skipped');
+    expect(researchUsage.record).not.toHaveBeenCalled();
+  });
+
+  it('meters an attempted non-empty extraction even when scraping fails', async () => {
+    scrapeService.extract.mockImplementationOnce(() => {
+      throw new Error('parser failed');
+    });
+
+    await manager.run('u1', {
+      intent: 'parser failure case',
+      workflow: ResearchWorkflowKind.SEARCH_FETCH_EXTRACT,
+    });
+
+    expect(researchUsage.record).toHaveBeenCalledWith(
+      'u1',
+      'WEB_EXTRACT',
+      expect.stringMatching(/^run-1:extract:/),
+    );
   });
 });

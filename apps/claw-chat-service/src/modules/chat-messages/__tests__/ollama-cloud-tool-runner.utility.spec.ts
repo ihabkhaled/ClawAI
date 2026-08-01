@@ -1,7 +1,7 @@
 import { BusinessException } from '../../../common/errors';
 import {
-  OLLAMA_CLOUD_TOOL_DEFINITIONS,
   executeOllamaCloudToolCall,
+  OLLAMA_CLOUD_TOOL_DEFINITIONS,
   truncateResult,
 } from '../utilities/ollama-cloud-tool-runner.utility';
 import { OLLAMA_TOOL_RESULT_MAX_CHARS } from '../constants/agentic-loop.constants';
@@ -30,6 +30,7 @@ describe('OllamaCloudToolRunner', () => {
   });
 
   it('executes a web_search call and returns the stringified result', async () => {
+    const onDispatch = jest.fn(async () => {});
     httpRequest.mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -40,7 +41,12 @@ describe('OllamaCloudToolRunner', () => {
         id: 'call-1',
         function: { name: 'web_search', arguments: { query: 'react server components' } },
       },
-      { baseUrl: 'https://ollama.com/api', apiKey: 'test-key', timeoutMs: 5_000 },
+      {
+        baseUrl: 'https://ollama.com/api',
+        apiKey: 'test-key',
+        timeoutMs: 5_000,
+        onDispatch,
+      },
     );
     expect(httpRequest).toHaveBeenCalledWith({
       url: 'https://ollama.com/api/web_search',
@@ -51,6 +57,7 @@ describe('OllamaCloudToolRunner', () => {
     });
     expect(result).toContain('example.com');
     expect(result).toContain('"results"');
+    expect(onDispatch).toHaveBeenCalledTimes(1);
   });
 
   it('passes max_results through when provided', async () => {
@@ -85,6 +92,7 @@ describe('OllamaCloudToolRunner', () => {
   });
 
   it('throws BusinessException with OLLAMA_TOOL_CALL_FAILED on non-2xx', async () => {
+    const onDispatch = jest.fn(async () => {});
     httpRequest.mockResolvedValueOnce({
       ok: false,
       status: 503,
@@ -93,11 +101,12 @@ describe('OllamaCloudToolRunner', () => {
     await expect(
       executeOllamaCloudToolCall(
         { function: { name: 'web_search', arguments: { query: 'x' } } },
-        { baseUrl: 'https://ollama.com/api', apiKey: 'k', timeoutMs: 5_000 },
+        { baseUrl: 'https://ollama.com/api', apiKey: 'k', timeoutMs: 5_000, onDispatch },
       ),
     ).rejects.toMatchObject({
       code: 'OLLAMA_TOOL_CALL_FAILED',
     });
+    expect(onDispatch).toHaveBeenCalledTimes(1);
   });
 
   it('throws BusinessException for an unknown tool name', async () => {
@@ -111,12 +120,29 @@ describe('OllamaCloudToolRunner', () => {
   });
 
   it('rejects web_search calls missing the required query argument', async () => {
+    const onDispatch = jest.fn(async () => {});
     await expect(
       executeOllamaCloudToolCall(
         { function: { name: 'web_search', arguments: {} } },
-        { baseUrl: 'https://ollama.com/api', apiKey: 'k', timeoutMs: 5_000 },
+        { baseUrl: 'https://ollama.com/api', apiKey: 'k', timeoutMs: 5_000, onDispatch },
       ),
     ).rejects.toMatchObject({ code: 'OLLAMA_TOOL_CALL_FAILED' });
+    expect(onDispatch).not.toHaveBeenCalled();
+  });
+
+  it('continues the tool request when accounting is unavailable', async () => {
+    const onDispatch = jest.fn(async () => {
+      throw new Error('meter unavailable');
+    });
+    httpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: { results: [] } });
+
+    await expect(
+      executeOllamaCloudToolCall(
+        { function: { name: 'web_search', arguments: { query: 'resilient metering' } } },
+        { baseUrl: 'https://ollama.com/api', apiKey: 'k', timeoutMs: 5_000, onDispatch },
+      ),
+    ).resolves.toContain('results');
+    expect(httpRequest).toHaveBeenCalledTimes(1);
   });
 
   it('rejects web_fetch calls with a non-http URL', async () => {

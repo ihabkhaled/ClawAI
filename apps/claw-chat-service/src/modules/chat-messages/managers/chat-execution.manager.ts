@@ -1993,6 +1993,8 @@ export class ChatExecutionManager implements OnModuleInit {
       maxIterations,
       totalTimeoutMs,
       generateTimeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
+      userId: args.context.userId,
+      usageRunId: `${streamThreadId ?? 'buffered'}:${String(startTime)}`,
     });
     // Graceful wrap-up — when we hit either cap with pending tool_calls,
     // issue one final POST with NO `tools` so the model is forced to
@@ -2050,6 +2052,8 @@ export class ChatExecutionManager implements OnModuleInit {
     maxIterations: number;
     totalTimeoutMs: number;
     generateTimeoutMs: number;
+    userId: string;
+    usageRunId: string;
   }): Promise<{
     iteration: number;
     capReached: boolean;
@@ -2093,6 +2097,8 @@ export class ChatExecutionManager implements OnModuleInit {
         provider: args.provider,
         model: args.model,
         iteration,
+        userId: args.userId,
+        usageRunId: args.usageRunId,
       });
     }
     if (this.toolLoopExhaustedWithPendingCalls(iteration, lastData, args.maxIterations)) {
@@ -2253,6 +2259,8 @@ export class ChatExecutionManager implements OnModuleInit {
     provider: string;
     model: string;
     iteration: number;
+    userId: string;
+    usageRunId: string;
   }): Promise<void> {
     const { messages, turns, turnContent, toolCalls } = args;
     messages.push({ role: 'assistant', content: turnContent, tool_calls: toolCalls });
@@ -2265,6 +2273,8 @@ export class ChatExecutionManager implements OnModuleInit {
       provider: args.provider,
       model: args.model,
       iteration: args.iteration,
+      userId: args.userId,
+      usageRunId: args.usageRunId,
     });
     for (const entry of toolResults) {
       messages.push({ role: 'tool', content: entry.result, tool_call_id: entry.toolCallId });
@@ -2366,6 +2376,8 @@ export class ChatExecutionManager implements OnModuleInit {
     provider: string;
     model: string;
     iteration: number;
+    userId: string;
+    usageRunId: string;
   }): Promise<
     Array<{ toolCallId: string; result: string; transcriptTurn: OllamaToolTranscriptTurn }>
   > {
@@ -2395,6 +2407,12 @@ export class ChatExecutionManager implements OnModuleInit {
           baseUrl: args.baseUrl,
           apiKey: args.apiKey,
           timeoutMs: args.timeoutMs,
+          onDispatch: async () =>
+            this.accessControlService.recordFeatureUsage(
+              args.userId,
+              toolName === TOOL_WEB_SEARCH ? 'WEB_SEARCH' : 'WEB_FETCH',
+              `${args.usageRunId}:${String(args.iteration)}:${callId}`,
+            ),
         });
       } catch (error: unknown) {
         ok = false;

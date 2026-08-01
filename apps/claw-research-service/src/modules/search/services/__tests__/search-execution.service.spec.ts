@@ -46,6 +46,7 @@ describe('SearchExecutionService', () => {
     getAdapter: jest.Mock;
   };
   let service: SearchExecutionService;
+  let recordUsage: jest.Mock;
 
   beforeEach(() => {
     providerRepository = {
@@ -65,12 +66,13 @@ describe('SearchExecutionService', () => {
       getAdapter: jest.fn(),
     };
 
+    recordUsage = jest.fn(async () => {});
     service = new SearchExecutionService(
       providerRepository as unknown as SearchProviderRepository,
       runRepository as unknown as SearchRunRepository,
       providerService as unknown as SearchProviderService,
       adapterFactory as unknown as SearchAdapterFactory,
-      { record: jest.fn(async () => {}) } as never,
+      { record: recordUsage } as never,
     );
   });
 
@@ -84,26 +86,30 @@ describe('SearchExecutionService', () => {
     providerRepository.findEnabled.mockResolvedValue([exa, firecrawl]);
 
     const firecrawlAdapter = {
-      search: jest.fn(async () => {
+      search: jest.fn(async (_request, adapterContext: SearchAdapterContext) => {
+        await adapterContext.onNetworkCall?.();
         throw new Error('timeout');
       }),
     };
     const exaAdapter = {
-      search: jest.fn(async () => ({
-        results: [
-          {
-            id: 'r1',
-            title: 'Doc',
-            url: 'https://example.com/doc',
-            snippet: 'Snippet',
-            publishedAt: null,
-            freshness: null,
-            score: 0.8,
-            providerKind: SearchProviderKind.EXA,
-          },
-        ],
-        latencyMs: 42,
-      })),
+      search: jest.fn(async (_request, adapterContext: SearchAdapterContext) => {
+        await adapterContext.onNetworkCall?.();
+        return {
+          results: [
+            {
+              id: 'r1',
+              title: 'Doc',
+              url: 'https://example.com/doc',
+              snippet: 'Snippet',
+              publishedAt: null,
+              freshness: null,
+              score: 0.8,
+              providerKind: SearchProviderKind.EXA,
+            },
+          ],
+          latencyMs: 42,
+        };
+      }),
     };
     adapterFactory.getAdapter.mockImplementation((kind: SearchProviderKind) => {
       if (kind === SearchProviderKind.FIRECRAWL) {
@@ -122,6 +128,10 @@ describe('SearchExecutionService', () => {
     expect(result.fallbackUsed).toBe(true);
     expect(result.attemptedProviders).toEqual(['Firecrawl', 'Exa']);
     expect(result.searchRequestCount).toBe(2);
+    expect(recordUsage.mock.calls).toEqual([
+      ['user-1', 'WEB_SEARCH', 'run-1:provider-firecrawl:1'],
+      ['user-1', 'WEB_SEARCH', 'run-1:provider-exa:2'],
+    ]);
     expect(result.warnings).toEqual(
       expect.arrayContaining([
         'Provider Firecrawl failed: timeout',
@@ -138,7 +148,11 @@ describe('SearchExecutionService', () => {
     });
     providerRepository.findById.mockResolvedValue(brave);
     adapterFactory.getAdapter.mockReturnValue({
-      search: jest.fn(async () => ({ results: [], latencyMs: 10 })),
+      search: jest.fn(async (_request, adapterContext: SearchAdapterContext) => {
+        await adapterContext.onNetworkCall?.();
+        await adapterContext.onNetworkCall?.();
+        return { results: [], latencyMs: 10 };
+      }),
     });
 
     const result = await service.execute('user-1', {
@@ -150,7 +164,11 @@ describe('SearchExecutionService', () => {
     expect(result.selectionMode).toBe('explicit');
     expect(result.fallbackUsed).toBe(false);
     expect(result.attemptedProviders).toEqual(['Brave']);
-    expect(result.searchRequestCount).toBe(1);
+    expect(result.searchRequestCount).toBe(2);
+    expect(recordUsage.mock.calls).toEqual([
+      ['user-1', 'WEB_SEARCH', 'run-1:provider-brave:1'],
+      ['user-1', 'WEB_SEARCH', 'run-1:provider-brave:2'],
+    ]);
   });
 
   it('fails with NO_ENABLED_PROVIDER when auto mode has no providers', async () => {
