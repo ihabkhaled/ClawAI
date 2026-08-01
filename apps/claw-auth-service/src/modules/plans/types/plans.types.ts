@@ -1,5 +1,6 @@
 import {
   type Plan,
+  type PlanLifecycleStatus,
   type PlanModelAccess,
   type PlanModelAccessMode,
 } from '../../../generated/prisma';
@@ -41,6 +42,9 @@ export type PlanView = {
   isDefault: boolean;
   isActive: boolean;
   isPublic: boolean;
+  lifecycleStatus: PlanLifecycleStatus;
+  replacementPlanId: string | null;
+  retiredAt: Date | null;
   dailyTokenQuota: number;
   monthlyTokenQuota: number | null;
   maxChatsPerDay: number | null;
@@ -88,3 +92,20 @@ export type CreatePlanData = {
 };
 
 export type UpdatePlanData = Partial<Omit<CreatePlanData, 'slug'>>;
+
+export type PlanRetirementResult = {
+  sourcePlanId: string;
+  replacementPlanId: string;
+  migratedAssignments: number;
+  billingPending: number;
+  alreadyRetired: boolean;
+};
+
+export type PendingPlanRetirementMigration = {
+  id: string;
+  userId: string;
+  sourcePlanId: string;
+  replacementPlanId: string;
+  replacementPlanSlug: string;
+  sourceSubscriptionId: string;
+};

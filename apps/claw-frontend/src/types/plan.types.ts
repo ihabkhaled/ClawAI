@@ -1,3 +1,4 @@
+import type { PlanLifecycleStatus } from '../enums/plan-lifecycle-status.enum';
 import type { PlanModelAccessMode } from '../enums/plan-model-access-mode.enum';
 import type { UserRole } from '../enums/user-role.enum';
 
@@ -28,6 +29,9 @@ export type PlanView = {
   isDefault: boolean;
   isActive: boolean;
   isPublic: boolean;
+  lifecycleStatus: PlanLifecycleStatus;
+  replacementPlanId: string | null;
+  retiredAt: string | null;
   dailyTokenQuota: number;
   monthlyTokenQuota: number | null;
   maxChatsPerDay: number | null;
@@ -47,6 +51,19 @@ export type PlanView = {
   modelAccess: PlanModelAccessView[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type PlanRetirementResult = {
+  sourcePlanId: string;
+  replacementPlanId: string;
+  migratedAssignments: number;
+  billingPending: number;
+  alreadyRetired: boolean;
+};
+
+export type PlanRetirementCandidate = {
+  id: string;
+  name: string;
 };
 
 export type PlanModelAccessInput = {
@@ -204,6 +221,10 @@ export type UsePlansPageResult = {
   onActivate: (id: string) => void;
   onDeactivate: (id: string) => void;
   onSetDefault: (id: string) => void;
+  retirementCandidate: PlanRetirementCandidate | null;
+  onRequestRetirement: (plan: PlanRetirementCandidate) => void;
+  onCancelRetirement: () => void;
+  onConfirmRetirement: () => void;
   onRetry: () => void;
 };
 
@@ -305,6 +326,7 @@ export type PlanRowProps = {
   onActivate: (id: string) => void;
   onDeactivate: (id: string) => void;
   onSetDefault: (id: string) => void;
+  onRetire: (id: string, name: string) => void;
   onEditHref: string;
   onModelAccessHref: string;
   onPricesHref: string;

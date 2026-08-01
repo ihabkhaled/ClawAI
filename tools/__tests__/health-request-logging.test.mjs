@@ -25,7 +25,7 @@ const SERVICES = [
   'file-generation',
 ];
 
-test('routine health probes are excluded from verbose pino request logs', () => {
+test('pino silences only successful health probes and preserves failed probes', () => {
   for (const service of SERVICES) {
     const source = readFileSync(
       repoPath('apps', `claw-${service}-service`, 'src', 'app', 'app.module.ts'),
@@ -33,8 +33,15 @@ test('routine health probes are excluded from verbose pino request logs', () => 
     );
     assert.match(
       source,
-      /autoLogging:[\s\S]{0,300}\/api\/v1\/health/u,
-      `${service}-service does not exclude routine health probes from pino`,
+      /customLogLevel:[\s\S]{0,500}\/api\/v1\/health[\s\S]{0,500}statusCode < 400[\s\S]{0,500}return 'silent'/u,
+      `${service}-service does not silence successful health probes`,
+    );
+    assert.match(source, /statusCode >= 500[\s\S]{0,200}return 'error'/u);
+    assert.match(source, /statusCode >= 400[\s\S]{0,200}return 'warn'/u);
+    assert.doesNotMatch(
+      source,
+      /autoLogging:\s*\{[^}]*\/api\/v1\/health/u,
+      `${service}-service still hides failed health probes through autoLogging.ignore`,
     );
   }
 });

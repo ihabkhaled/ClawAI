@@ -92,6 +92,19 @@ enum PlanAssignmentStatus {
   PAUSED
 }
 
+enum PlanLifecycleStatus {
+  ACTIVE
+  RETIRED
+}
+
+enum PlanRetirementMigrationStatus {
+  APPLIED
+  BILLING_SCHEDULE_PENDING
+  BILLING_SCHEDULED
+  SUPERSEDED
+  FAILED
+}
+
 // Admin-managed subscription plan (Phase B). Prices are modeled so billing can
 // be added later; no payment integration ships now.
 model Plan {
@@ -106,6 +119,9 @@ model Plan {
   isDefault                          Boolean             @default(false) @map("is_default")
   isActive                           Boolean             @default(true) @map("is_active")
   isPublic                           Boolean             @default(true) @map("is_public")
+  lifecycleStatus                    PlanLifecycleStatus @default(ACTIVE) @map("lifecycle_status")
+  replacementPlanId                  String?             @map("replacement_plan_id")
+  retiredAt                          DateTime?           @map("retired_at")
   dailyTokenQuota                    Int                 @default(0) @map("daily_token_quota")
   weeklyTokenQuota                   Int?                @map("weekly_token_quota")
   monthlyTokenQuota                  Int?                @map("monthly_token_quota")
@@ -146,6 +162,27 @@ model Plan {
   @@index([isActive])
   @@index([displayOrder])
   @@map("plans")
+}
+
+// Durable, idempotent provenance for a removed plan. Financial history remains
+// in payment-service; paid migrations stay pending until that service schedules
+// the immutable replacement price at the existing renewal boundary.
+model PlanRetirementMigration {
+  id                      String                        @id @default(cuid())
+  sourceAssignmentId      String                        @unique @map("source_assignment_id")
+  userId                  String                        @map("user_id")
+  sourcePlanId            String                        @map("source_plan_id")
+  replacementPlanId       String                        @map("replacement_plan_id")
+  replacementAssignmentId String                        @unique @map("replacement_assignment_id")
+  sourceSubscriptionId    String?                       @map("source_subscription_id")
+  status                  PlanRetirementMigrationStatus
+  errorCode               String?                       @map("error_code")
+  createdAt               DateTime                      @default(now()) @map("created_at")
+  updatedAt               DateTime                      @updatedAt @map("updated_at")
+
+  @@index([sourcePlanId, status])
+  @@index([sourceSubscriptionId])
+  @@map("plan_retirement_migrations")
 }
 
 // Per-plan provider/model access. Backend source of truth for what a plan's

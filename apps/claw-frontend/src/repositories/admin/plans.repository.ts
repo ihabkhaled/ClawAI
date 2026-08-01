@@ -2,6 +2,7 @@ import { apiClient } from '@/services/shared/api-client';
 import type {
   CreatePlanRequest,
   PlanUserIds,
+  PlanRetirementResult,
   PlanView,
   ReorderPlansRequest,
   UpdatePlanModelAccessRequest,
@@ -48,6 +49,13 @@ export const plansRepository = {
   async deactivate(id: string): Promise<PlanView> {
     const response = await apiClient.post<PlanView>(
       `${PLANS_BASE}/${encodeURIComponent(id)}/deactivate`,
+    );
+    return response.data;
+  },
+
+  async retire(id: string): Promise<PlanRetirementResult> {
+    const response = await apiClient.delete<PlanRetirementResult>(
+      `${PLANS_BASE}/${encodeURIComponent(id)}`,
     );
     return response.data;
   },

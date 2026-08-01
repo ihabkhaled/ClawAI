@@ -4,6 +4,7 @@ import type { ReactElement, ReactNode } from 'react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { PlanLifecycleStatus } from '@/enums';
 import { usePlanFormPage } from '@/hooks/plans/use-plan-form-page';
 import type { PlanView } from '@/types';
 
@@ -72,6 +73,9 @@ const samplePlan = {
   isDefault: false,
   isActive: true,
   isPublic: true,
+  lifecycleStatus: PlanLifecycleStatus.ACTIVE,
+  replacementPlanId: null,
+  retiredAt: null,
   dailyTokenQuota: 100000,
   monthlyTokenQuota: null,
   maxChatsPerDay: null,

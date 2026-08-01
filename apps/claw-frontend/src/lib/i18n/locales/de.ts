@@ -2800,7 +2800,7 @@ export const de: TranslationDictionary = {
     page: {
       title: 'Arbeitsbereich-Posteingang',
       description:
-        'Cross-provider feed of every recent workspace object — filter by provider, type, attention.',
+        'Anbieterübergreifender Feed aller aktuellen Workspace-Objekte — filterbar nach Anbieter, Typ und Aufmerksamkeitsbedarf.',
       loading: 'Posteingang wird geladen…',
       loadingMore: 'Lade weitere…',
       loadMore: 'Mehr laden',
@@ -2835,7 +2835,7 @@ export const de: TranslationDictionary = {
     page: {
       title: 'Semantische Suche',
       description: 'Suche in allen Workspace-Objekten — datenschutzfreundliche lokale Embeddings.',
-      placeholder: 'Type a natural-language question…',
+      placeholder: 'Eine Frage in natürlicher Sprache eingeben…',
       submit: 'Suche',
       searching: 'Suche läuft…',
       reset: 'Zurücksetzen',
@@ -3002,7 +3002,7 @@ export const de: TranslationDictionary = {
     page: {
       title: 'Coding-Übergaben',
       description:
-        'Approved IMPL_PROMPT actions delivered to chat threads, agent terminals, or clipboard.',
+        'Genehmigte IMPL_PROMPT-Aktionen, die an Chat-Threads, Agent-Terminals oder die Zwischenablage übermittelt wurden.',
       loading: 'Übergaben werden geladen…',
       error: 'Übergaben konnten nicht geladen werden.',
       empty: 'Noch keine Übergaben. Genehmigen Sie IMPL_PROMPT in der Warteschlange.',
@@ -3028,7 +3028,7 @@ export const de: TranslationDictionary = {
       title: 'Was wir gelernt haben',
       subtitle: '{count} preferences',
       description:
-        'Patterns derived from your approve / reject / edit decisions. Used to personalise future suggestions.',
+        'Muster aus Ihren Genehmigungs-, Ablehnungs- und Bearbeitungsentscheidungen. Sie werden verwendet, um zukünftige Vorschläge zu personalisieren.',
       loading: 'Wird geladen…',
       error: 'Einstellungen konnten nicht geladen werden.',
       empty: 'Wir lernen aus Ihren Genehmigungen — noch keine Präferenzen.',

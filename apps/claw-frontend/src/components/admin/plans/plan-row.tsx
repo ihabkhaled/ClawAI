@@ -14,6 +14,7 @@ export function PlanRow({
   onActivate,
   onDeactivate,
   onSetDefault,
+  onRetire,
   onEditHref,
   onModelAccessHref,
   onPricesHref,
@@ -100,15 +101,26 @@ export function PlanRow({
             </Button>
           )}
           {plan.isDefault ? null : (
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => onSetDefault(plan.id)}
-              disabled={isPending}
-            >
-              {t('adminPlans.setDefault')}
-            </Button>
+            <>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => onSetDefault(plan.id)}
+                disabled={isPending}
+              >
+                {t('adminPlans.setDefault')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                onClick={() => onRetire(plan.id, plan.name)}
+                disabled={isPending}
+              >
+                {t('common.delete')}
+              </Button>
+            </>
           )}
         </div>
       </CardContent>

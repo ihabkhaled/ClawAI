@@ -18,6 +18,7 @@ const mockGet = vi.fn();
 const mockPost = vi.fn();
 const mockPatch = vi.fn();
 const mockPut = vi.fn();
+const mockDelete = vi.fn();
 
 vi.mock('@/services/shared/api-client', () => ({
   apiClient: {
@@ -25,6 +26,7 @@ vi.mock('@/services/shared/api-client', () => ({
     post: (...args: unknown[]) => mockPost(...args),
     patch: (...args: unknown[]) => mockPatch(...args),
     put: (...args: unknown[]) => mockPut(...args),
+    delete: (...args: unknown[]) => mockDelete(...args),
   },
 }));
 
@@ -77,6 +79,20 @@ describe('plans repository', () => {
     const result = await plansRepository.deactivate('p1');
     expect(mockPost).toHaveBeenCalledWith('/admin/plans/p1/deactivate');
     expect(result).toEqual(samplePlan);
+  });
+
+  it('retire DELETEs the encoded plan and returns migration counts', async () => {
+    const retirement = {
+      sourcePlanId: 'p/1',
+      replacementPlanId: 'p2',
+      migratedAssignments: 3,
+      billingPending: 1,
+      alreadyRetired: false,
+    };
+    mockDelete.mockResolvedValue({ data: retirement });
+
+    await expect(plansRepository.retire('p/1')).resolves.toEqual(retirement);
+    expect(mockDelete).toHaveBeenCalledWith('/admin/plans/p%2F1');
   });
 
   it('setDefault POSTs to the set-default sub-path', async () => {

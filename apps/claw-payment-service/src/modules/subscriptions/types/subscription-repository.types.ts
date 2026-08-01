@@ -1,4 +1,17 @@
 import type { SubscriptionStatus } from '@claw/shared-types';
+import type { ScheduledPlanChangeReason } from '../enums/scheduled-plan-change-reason.enum';
+
+export type SchedulePlanRetirementInput = {
+  subscriptionId: string;
+  expectedVersion: number;
+  replacementPlanId: string;
+  replacementPlanSlug: string;
+  replacementPlanPriceVersionId: string;
+  replacementAmountMinor: number;
+  billingInterval: string;
+  effectiveAt: Date;
+  reason: ScheduledPlanChangeReason;
+};
 
 // Everything needed to open a subscription. `uniqueActiveKey` is deliberately
 // absent: it is derived from the status by the repository, never supplied.
@@ -43,6 +56,7 @@ export type SubscriptionMutableFields = {
   scheduledAmountMinor?: number | null;
   scheduledBillingInterval?: string | null;
   scheduledEffectiveAt?: Date | null;
+  scheduledChangeReason?: string | null;
   encryptedGatewaySubscriptionId?: string | null;
   gatewaySubscriptionLookupHash?: string | null;
 };

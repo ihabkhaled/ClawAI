@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { Roles } from '../../../app/decorators/roles.decorator';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -17,7 +17,8 @@ import {
 } from '../dto/plan-misc.dto';
 import { type PublishPlanPriceDto, publishPlanPriceSchema } from '../dto/plan-price.dto';
 import { PlanCatalogService } from '../services/plan-catalog.service';
-import { type PlanView } from '../types/plans.types';
+import { type PlanRetirementResult, type PlanView } from '../types/plans.types';
+import { type RetirePlanDto, retirePlanSchema } from '../dto/plan-retirement.dto';
 import { type PlanPriceVersionView } from '../types/plan-catalog.types';
 
 @Controller('admin/plans')
@@ -61,6 +62,14 @@ export class PlansController {
   @Post(':id/deactivate')
   async deactivate(@Param('id') id: string): Promise<PlanView> {
     return this.plansService.deactivatePlan(id);
+  }
+
+  @Delete(':id')
+  async retire(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(retirePlanSchema)) dto: RetirePlanDto,
+  ): Promise<PlanRetirementResult> {
+    return this.plansService.retirePlan(id, dto.replacementPlanId);
   }
 
   @Post(':id/set-default')

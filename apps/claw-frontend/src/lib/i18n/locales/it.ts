@@ -4662,7 +4662,7 @@ export const it: TranslationDictionary = {
           'Il lavoro che non deve concludersi prima che tu veda una risposta viene pubblicato come evento su un topic exchange RabbitMQ e gestito dai servizi che se ne interessano. Conteggio dell’utilizzo, registrazioni di audit ed estrazione della memoria funzionano tutti così.',
         body2:
           'Gli eventi sono il motivo per cui la chat non ha bisogno di sapere che l’audit esiste. La chat dichiara cos’è successo; chi deve reagire si iscrive. Aggiungere un consumatore non richiede alcuna modifica al pubblicatore.',
-        topicName: 'Topic exchange',
+        topicName: 'Exchange di tipo topic',
         topicDesc:
           'I pubblicatori dichiarano cos’è successo, non chi debba ascoltarlo. I consumatori si legano ai pattern che li interessano.',
         retryName: 'Nuovi tentativi con attesa crescente',

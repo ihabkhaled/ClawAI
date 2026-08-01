@@ -38,12 +38,24 @@ import { RuntimeProgressModule } from '../modules/runtime-progress/runtime-progr
           ignore: (req): boolean => {
             const url = req.url ?? '';
             return (
-              url.split('?')[0] === '/api/v1/health' ||
               url.includes('/v1/chat/completions') ||
               url.includes('/v1/completions') ||
               /\/pull-jobs\/[^/]+\/progress/.test(url)
             );
           },
+        },
+        customLogLevel: (req, res, error) => {
+          const isRoutineHealth = (req.url ?? '').split('?')[0] === '/api/v1/health';
+          if (isRoutineHealth && res.statusCode < 400 && error === undefined) {
+            return 'silent';
+          }
+          if (res.statusCode >= 500 || error !== undefined) {
+            return 'error';
+          }
+          if (res.statusCode >= 400) {
+            return 'warn';
+          }
+          return 'info';
         },
         redact: {
           paths: [

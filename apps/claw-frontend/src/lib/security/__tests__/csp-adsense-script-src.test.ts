@@ -17,7 +17,7 @@ describe('CSP script-src for AdSense', () => {
       upgradeInsecureRequests: true,
     });
     expect(directive(csp, 'connect-src')).toContain('http://127.0.0.1:*');
-    expect(directive(csp, 'connect-src')).toContain('http://[::1]:*');
+    expect(directive(csp, 'connect-src')).not.toContain('http://[::1]:*');
   });
 
   it('names the loader host in development, where strict-dynamic is absent', () => {

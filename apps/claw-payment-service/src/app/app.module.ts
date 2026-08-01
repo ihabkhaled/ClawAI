@@ -38,9 +38,18 @@ import { BillingDashboardModule } from '../modules/billing-dashboard/billing-das
             ? { target: 'pino-pretty', options: { colorize: true } }
             : undefined,
         level: process.env['NODE_ENV'] !== 'production' ? 'debug' : 'info',
-        autoLogging: {
-          ignore: (req: IncomingMessage): boolean =>
-            (req.url ?? '').split('?')[0] === '/api/v1/health',
+        customLogLevel: (req, res, error) => {
+          const isRoutineHealth = (req.url ?? '').split('?')[0] === '/api/v1/health';
+          if (isRoutineHealth && res.statusCode < 400 && error === undefined) {
+            return 'silent';
+          }
+          if (res.statusCode >= 500 || error !== undefined) {
+            return 'error';
+          }
+          if (res.statusCode >= 400) {
+            return 'warn';
+          }
+          return 'info';
         },
         // Redaction list is deliberately broad. A payment service handles more
         // secret-shaped fields than any other, and a leaked gateway token or

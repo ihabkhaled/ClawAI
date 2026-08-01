@@ -5,6 +5,7 @@ import type { GatewayReconciliationService } from '../../services/gateway-reconc
 import type { LifecycleReconciliationService } from '../../services/lifecycle-reconciliation.service';
 import type { ProviderSubscriptionReconciliationService } from '../../services/provider-subscription-reconciliation.service';
 import type { TransactionReconciliationService } from '../../services/transaction-reconciliation.service';
+import type { PlanRetirementReconciliationService } from '../../services/plan-retirement-reconciliation.service';
 import { ReconciliationManager } from '../reconciliation.manager';
 import type { ScheduledJobCallback } from '../../../scheduled-jobs/types/scheduled-job.types';
 
@@ -21,6 +22,7 @@ describe('ReconciliationManager', () => {
   let lifecycle: { reconcile: jest.Mock };
   let transactions: { reconcile: jest.Mock };
   let providerSubscriptions: { reconcile: jest.Mock };
+  let planRetirements: { reconcile: jest.Mock };
   let manager: ReconciliationManager;
 
   beforeEach(() => {
@@ -65,6 +67,14 @@ describe('ReconciliationManager', () => {
         unprocessedCount: 0,
       }),
     };
+    planRetirements = {
+      reconcile: jest.fn().mockResolvedValue({
+        scannedCount: 2,
+        repairedCount: 1,
+        quarantinedCount: 0,
+        unprocessedCount: 0,
+      }),
+    };
     manager = new ReconciliationManager(
       jobs as unknown as ScheduledJobRunnerService,
       repository as unknown as ReconciliationRepository,
@@ -72,13 +82,14 @@ describe('ReconciliationManager', () => {
       transactions as unknown as TransactionReconciliationService,
       providerSubscriptions as unknown as ProviderSubscriptionReconciliationService,
       lifecycle as unknown as LifecycleReconciliationService,
+      planRetirements as unknown as PlanRetirementReconciliationService,
     );
   });
 
   it('persists combined counts, including partial work', async () => {
     await expect(manager.reconcile(new Date('2026-07-26T00:00:00.000Z'))).resolves.toEqual({
-      scannedCount: 7,
-      repairedCount: 5,
+      scannedCount: 9,
+      repairedCount: 6,
       quarantinedCount: 2,
       unprocessedCount: 3,
     });
@@ -86,8 +97,8 @@ describe('ReconciliationManager', () => {
       runId: 'run-1',
       status: ReconciliationRunStatus.SUCCEEDED,
       errorCode: null,
-      scannedCount: 7,
-      repairedCount: 5,
+      scannedCount: 9,
+      repairedCount: 6,
       quarantinedCount: 2,
       unprocessedCount: 3,
     });

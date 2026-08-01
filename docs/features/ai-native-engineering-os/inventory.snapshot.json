@@ -512,6 +512,11 @@
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
         },
         {
+          "method": "DELETE",
+          "route": "/admin/plans/:id",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/admin/plans/:id",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
@@ -679,6 +684,16 @@
         {
           "method": "GET",
           "route": "/internal/plans/price-versions/:id",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/plans/retirement-migrations/:id/outcome",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/plans/retirement-migrations/pending",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
         },
         {
@@ -7666,6 +7681,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "PlanRetirementMigration"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "Role"
           },
           {
@@ -8414,7 +8434,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 45
+        "testFiles": 46
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8438,7 +8458,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 231
+        "testFiles": 236
       },
       "claw-health-service": {
         "runner": "jest",
@@ -8462,7 +8482,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 85
+        "testFiles": 89
       },
       "claw-research-service": {
         "runner": "jest",
@@ -9179,7 +9199,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 552,
+    "endpointCount": 555,
     "envVarCount": 336,
     "eventCount": 165,
     "frontendRouteCount": 113,
@@ -9191,7 +9211,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 729,
+    "totalTestFiles": 739,
     "workspaceCount": 25
   }
 }

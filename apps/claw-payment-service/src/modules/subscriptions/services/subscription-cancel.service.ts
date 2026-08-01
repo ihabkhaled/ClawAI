@@ -96,6 +96,7 @@ export class SubscriptionCancelService {
           scheduledAmountMinor: null,
           scheduledBillingInterval: null,
           scheduledEffectiveAt: null,
+          scheduledChangeReason: null,
           uniqueActiveKey: null,
           version: { increment: 1 },
         },

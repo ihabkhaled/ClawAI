@@ -6,12 +6,17 @@ import { BillingException } from '../../../common/errors';
 import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
 import { SubscriptionLifecycleService } from '../../billing/services/subscription-lifecycle.service';
 import {
+  type ActivateSubscriptionInput,
+  type ActivationResult,
+} from '../../billing/types/subscription-lifecycle.types';
+import {
   isSubscriptionCheckoutSession,
   type SubscriptionCheckoutSession,
 } from '../../billing/utilities/checkout-session-purpose.utility';
 import { BillingCustomerRepository } from '../repositories/billing-customer.repository';
 import { resolvePeriodEndMs } from '../utilities/billing-period.utility';
 import { type VerifiedPayment } from '../types/verified-payment.types';
+import { CheckoutSessionPurpose } from '../../../generated/prisma';
 
 /**
  * The single door between "a gateway says money moved" and "this user has a
@@ -54,16 +59,60 @@ export class PaymentActivationService {
     }
 
     await this.assertPaymentMatchesSession(session, payment);
-
+    this.assertUpgradeBinding(session);
     const customer = await this.customers.ensureForUser(session.userId, session.gateway);
+    const activation = await this.activateMatchedSession(session, payment, customer.id);
+
+    this.logger.log(
+      `activate: subscription=${activation.subscriptionId} invoice=${activation.invoiceNumber} ` +
+        `from session=${session.id}`,
+    );
+    return activation.subscriptionId;
+  }
+
+  private assertUpgradeBinding(session: SubscriptionCheckoutSession): void {
+    if (
+      session.purpose !== CheckoutSessionPurpose.UPGRADE ||
+      (session.subscriptionId !== null && session.prorationQuoteId !== null)
+    ) {
+      return;
+    }
+    this.logger.error(`assertUpgradeBinding: incomplete upgrade binding session=${session.id}`);
+    throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
+  }
+
+  private async activateMatchedSession(
+    session: SubscriptionCheckoutSession,
+    payment: VerifiedPayment,
+    billingCustomerId: string,
+  ): Promise<ActivationResult> {
+    const activationInput = this.buildActivationInput(session, payment, billingCustomerId);
+    if (session.purpose !== CheckoutSessionPurpose.UPGRADE) {
+      return this.lifecycle.activateFromVerifiedPayment(activationInput);
+    }
+    if (session.subscriptionId === null || session.prorationQuoteId === null) {
+      this.logger.error(`activateMatchedSession: incomplete upgrade binding session=${session.id}`);
+      throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
+    }
+    return this.lifecycle.activatePlanChangeFromVerifiedPayment({
+      ...activationInput,
+      existingSubscriptionId: session.subscriptionId,
+      prorationQuoteId: session.prorationQuoteId,
+    });
+  }
+
+  private buildActivationInput(
+    session: SubscriptionCheckoutSession,
+    payment: VerifiedPayment,
+    billingCustomerId: string,
+  ): ActivateSubscriptionInput {
     const periodStartMs = Date.now();
     const periodEndMs = resolvePeriodEndMs(periodStartMs, session.billingInterval);
-
-    const activation = await this.lifecycle.activateFromVerifiedPayment({
+    return {
       paymentVerified: true,
       userId: session.userId,
       invoiceRecipientEmail: session.billingEmail,
-      billingCustomerId: customer.id,
+      billingCustomerId,
       checkoutSessionId: session.id,
       planId: session.planId,
       planSlug: session.planSlug,
@@ -86,13 +135,7 @@ export class PaymentActivationService {
       providerOrderId: session.providerOrderId,
       providerAmountMinor: payment.amountMinor,
       providerCurrency: payment.currency,
-    });
-
-    this.logger.log(
-      `activate: subscription=${activation.subscriptionId} invoice=${activation.invoiceNumber} ` +
-        `from session=${session.id}`,
-    );
-    return activation.subscriptionId;
+    };
   }
 
   private async assertPaymentMatchesSession(

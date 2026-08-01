@@ -2,13 +2,13 @@
 
 ## Overview
 
-| Property       | Value                            |
-| -------------- | -------------------------------- |
-| Port           | 4001                             |
-| Database       | PostgreSQL (`claw_auth`)         |
-| ORM            | Prisma 5.20                      |
-| Env prefix     | `AUTH_`                          |
-| Nginx route    | `/api/v1/auth/*`, `/api/v1/users/*` |
+| Property    | Value                               |
+| ----------- | ----------------------------------- |
+| Port        | 4001                                |
+| Database    | PostgreSQL (`claw_auth`)            |
+| ORM         | Prisma 5.20                         |
+| Env prefix  | `AUTH_`                             |
+| Nginx route | `/api/v1/auth/*`, `/api/v1/users/*` |
 
 The auth service handles user registration, login, JWT issuance, refresh token rotation, session management, and RBAC. It is the only service that stores user credentials.
 
@@ -48,24 +48,50 @@ Key-value store for runtime configuration (e.g., maintenance mode, feature flags
 
 ### Auth (`/api/v1/auth`)
 
-| Method | Path       | Auth     | Description                |
-| ------ | ---------- | -------- | -------------------------- |
-| POST   | /login     | Public   | Email + password login     |
-| POST   | /refresh   | Public   | Refresh token rotation     |
-| POST   | /logout    | Bearer   | Invalidate session         |
-| GET    | /me        | Bearer   | Current user profile       |
-| PATCH  | /me        | Bearer   | Update own profile/prefs   |
-| PATCH  | /me/password | Bearer | Change own password        |
+| Method | Path         | Auth   | Description              |
+| ------ | ------------ | ------ | ------------------------ |
+| POST   | /login       | Public | Email + password login   |
+| POST   | /refresh     | Public | Refresh token rotation   |
+| POST   | /logout      | Bearer | Invalidate session       |
+| GET    | /me          | Bearer | Current user profile     |
+| PATCH  | /me          | Bearer | Update own profile/prefs |
+| PATCH  | /me/password | Bearer | Change own password      |
 
 ### Users (`/api/v1/users`)
 
-| Method | Path       | Auth          | Description              |
-| ------ | ---------- | ------------- | ------------------------ |
-| GET    | /          | ADMIN         | List users (paginated)   |
-| GET    | /:id       | ADMIN         | Get user by ID           |
-| POST   | /          | ADMIN         | Create new user          |
-| PATCH  | /:id       | ADMIN         | Update user (role, status)|
-| DELETE | /:id       | ADMIN         | Deactivate user          |
+| Method | Path | Auth  | Description                |
+| ------ | ---- | ----- | -------------------------- |
+| GET    | /    | ADMIN | List users (paginated)     |
+| GET    | /:id | ADMIN | Get user by ID             |
+| POST   | /    | ADMIN | Create new user            |
+| PATCH  | /:id | ADMIN | Update user (role, status) |
+| DELETE | /:id | ADMIN | Deactivate user            |
+
+### Plan retirement
+
+`DELETE /api/v1/admin/plans/:id` requires the admin role and retires a plan
+without deleting financial or entitlement history. The request may provide an
+optional `replacementPlanId`; otherwise the service deterministically chooses
+the nearest active plan with a higher display order. The default plan is
+protected until another default is selected.
+
+The retirement transaction hides the source plan, expires each active source
+assignment, creates a provenance-preserving replacement assignment, updates
+the user's active plan, and writes one idempotent migration row. Non-paid
+assignments are applied immediately. Paid assignments remain
+`BILLING_SCHEDULE_PENDING` until payment-service schedules the replacement
+price at the current subscription period end.
+
+Payment-service consumes the service-token-only internal endpoints below;
+neither route is exposed through nginx:
+
+- `GET /api/v1/internal/plans/retirement-migrations/pending?limit=50`
+- `POST /api/v1/internal/plans/retirement-migrations/:id/outcome`
+
+Outcome recording is a pending-only compare-and-set. Transient transport,
+catalog, or database failures stay pending and retry during the next
+owner-locked reconciliation run; deterministic user overrides are marked
+superseded.
 
 ## JWT Flow
 
@@ -80,7 +106,7 @@ Key-value store for runtime configuration (e.g., maintenance mode, feature flags
 
 ```typescript
 type JwtPayload = {
-  sub: string;      // User ID
+  sub: string; // User ID
   email: string;
   role: UserRole;
   iat: number;

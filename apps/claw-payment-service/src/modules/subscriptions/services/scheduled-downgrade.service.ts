@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
   type BillingSubscriptionDowngradedPayload,
+  type BillingSubscriptionUpgradedPayload,
   EntitlementGrantType,
   EventPattern,
 } from '@claw/shared-types';
@@ -14,6 +15,7 @@ import {
 } from '../../billing/constants/billing.constants';
 import { type ProrationQuoteView } from '../../billing/types/proration.types';
 import { type Prisma, type Subscription } from '../../../generated/prisma';
+import { ScheduledPlanChangeReason } from '../enums/scheduled-plan-change-reason.enum';
 
 /**
  * Applies a plan change that takes no money.
@@ -53,6 +55,7 @@ export class ScheduledDowngradeService {
           scheduledAmountMinor: quote.targetAmountMinor,
           scheduledBillingInterval: quote.targetBillingInterval,
           scheduledEffectiveAt: effectiveAt,
+          scheduledChangeReason: ScheduledPlanChangeReason.USER_REQUESTED_DOWNGRADE,
           version: { increment: 1 },
         },
       });
@@ -95,6 +98,15 @@ export class ScheduledDowngradeService {
           planId: quote.targetPlanId,
           planSlug: quote.targetPlanSlug,
           planPriceVersionId: quote.targetPriceVersionId,
+          amountMinor: quote.targetAmountMinor,
+          billingInterval: quote.targetBillingInterval,
+          scheduledPlanId: null,
+          scheduledPlanSlug: null,
+          scheduledPlanPriceVersionId: null,
+          scheduledAmountMinor: null,
+          scheduledBillingInterval: null,
+          scheduledEffectiveAt: null,
+          scheduledChangeReason: null,
           version: { increment: 1 },
         },
       });
@@ -155,14 +167,50 @@ export class ScheduledDowngradeService {
           scheduledAmountMinor: null,
           scheduledBillingInterval: null,
           scheduledEffectiveAt: null,
+          scheduledChangeReason: null,
           version: { increment: 1 },
         },
       });
       if (updated.count === 0) {
         return false;
       }
-      await this.enqueueAppliedDowngrade(tx, subscription, now, correlationId);
+      await this.enqueueAppliedChange(tx, subscription, now, correlationId);
       return true;
+    });
+  }
+
+  private async enqueueAppliedChange(
+    tx: Prisma.TransactionClient,
+    subscription: Subscription,
+    now: Date,
+    correlationId: string,
+  ): Promise<void> {
+    if (subscription.scheduledChangeReason === ScheduledPlanChangeReason.PLAN_RETIREMENT) {
+      await this.enqueueAppliedRetirement(tx, subscription, now, correlationId);
+      return;
+    }
+    await this.enqueueAppliedDowngrade(tx, subscription, now, correlationId);
+  }
+
+  private async enqueueAppliedRetirement(
+    tx: Prisma.TransactionClient,
+    subscription: Subscription,
+    now: Date,
+    correlationId: string,
+  ): Promise<void> {
+    const eventId = randomUUID();
+    const effectiveAt = now.toISOString();
+    const payload: BillingSubscriptionUpgradedPayload = {
+      ...this.appliedPayload(subscription, eventId, effectiveAt, correlationId),
+      prorationAmountMinor: 0,
+      currency: subscription.currency,
+    };
+    await this.outbox.enqueue(tx, {
+      pattern: EventPattern.BILLING_SUBSCRIPTION_UPGRADED,
+      eventId,
+      aggregateType: 'Subscription',
+      aggregateId: subscription.id,
+      payloadJson: payload,
     });
   }
 
@@ -175,6 +223,24 @@ export class ScheduledDowngradeService {
     const eventId = randomUUID();
     const effectiveAt = now.toISOString();
     const payload: BillingSubscriptionDowngradedPayload = {
+      ...this.appliedPayload(subscription, eventId, effectiveAt, correlationId),
+    };
+    await this.outbox.enqueue(tx, {
+      pattern: EventPattern.BILLING_SUBSCRIPTION_DOWNGRADED,
+      eventId,
+      aggregateType: 'Subscription',
+      aggregateId: subscription.id,
+      payloadJson: payload,
+    });
+  }
+
+  private appliedPayload(
+    subscription: Subscription,
+    eventId: string,
+    effectiveAt: string,
+    correlationId: string,
+  ): BillingSubscriptionDowngradedPayload {
+    return {
       eventId,
       schemaVersion: BILLING_EVENT_SCHEMA_VERSION,
       producer: PAYMENT_PRODUCER,
@@ -194,12 +260,5 @@ export class ScheduledDowngradeService {
       previousPlanSlug: subscription.planSlug,
       previousPlanPriceVersionId: subscription.planPriceVersionId,
     };
-    await this.outbox.enqueue(tx, {
-      pattern: EventPattern.BILLING_SUBSCRIPTION_DOWNGRADED,
-      eventId,
-      aggregateType: 'Subscription',
-      aggregateId: subscription.id,
-      payloadJson: payload,
-    });
   }
 }

@@ -42,6 +42,7 @@ function subscription(overrides: Partial<Subscription> = {}): Subscription {
     scheduledAmountMinor: null,
     scheduledBillingInterval: null,
     scheduledEffectiveAt: null,
+    scheduledChangeReason: null,
     version: 3,
     uniqueActiveKey: 'user-1',
     createdAt: new Date('2026-06-26T12:00:00.000Z'),

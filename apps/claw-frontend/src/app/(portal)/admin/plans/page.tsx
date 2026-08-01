@@ -6,6 +6,7 @@ import type { ReactElement } from 'react';
 
 import { AccessDenied } from '@/components/admin/access-denied';
 import { PlanRow } from '@/components/admin/plans/plan-row';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants/routes.constants';
@@ -26,6 +27,10 @@ export default function AdminPlansPage(): ReactElement {
     onActivate,
     onDeactivate,
     onSetDefault,
+    retirementCandidate,
+    onRequestRetirement,
+    onCancelRetirement,
+    onConfirmRetirement,
     onRetry,
   } = usePlansPage();
 
@@ -92,6 +97,7 @@ export default function AdminPlansPage(): ReactElement {
               onActivate={onActivate}
               onDeactivate={onDeactivate}
               onSetDefault={onSetDefault}
+              onRetire={(id, name) => onRequestRetirement({ id, name })}
               onEditHref={ROUTES.ADMIN_PLAN_EDIT(plan.id)}
               onModelAccessHref={ROUTES.ADMIN_PLAN_MODEL_ACCESS(plan.id)}
               onPricesHref={ROUTES.ADMIN_PLAN_PRICES(plan.id)}
@@ -100,6 +106,25 @@ export default function AdminPlansPage(): ReactElement {
           ))}
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={retirementCandidate !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            onCancelRetirement();
+          }
+        }}
+        title={t('common.confirm')}
+        description={
+          retirementCandidate === null
+            ? undefined
+            : `${t('common.delete')}: ${retirementCandidate.name}`
+        }
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={onConfirmRetirement}
+        isConfirming={retirementCandidate !== null && pendingId === retirementCandidate.id}
+      />
     </div>
   );
 }

@@ -2784,7 +2784,7 @@ export const pt: TranslationDictionary = {
     page: {
       title: 'Caixa de entrada do espaço',
       description:
-        'Cross-provider feed of every recent workspace object — filter by provider, type, attention.',
+        'Feed entre provedores de todos os objetos recentes do espaço de trabalho — filtre por provedor, tipo ou atenção.',
       loading: 'Carregando caixa…',
       loadingMore: 'Carregando mais…',
       loadMore: 'Carregar mais',
@@ -2819,7 +2819,7 @@ export const pt: TranslationDictionary = {
     page: {
       title: 'Busca semântica',
       description: 'Pesquise todos os seus objetos — embeddings locais com privacidade.',
-      placeholder: 'Type a natural-language question…',
+      placeholder: 'Digite uma pergunta em linguagem natural…',
       submit: 'Pesquisar',
       searching: 'Pesquisando…',
       reset: 'Redefinir',
@@ -2984,7 +2984,7 @@ export const pt: TranslationDictionary = {
     page: {
       title: 'Entregas de código',
       description:
-        'Approved IMPL_PROMPT actions delivered to chat threads, agent terminals, or clipboard.',
+        'Ações IMPL_PROMPT aprovadas e enviadas para conversas, terminais de agentes ou a área de transferência.',
       loading: 'Carregando entregas…',
       error: 'Não foi possível carregar as entregas.',
       empty: 'Sem entregas. Aprove um IMPL_PROMPT na fila.',
@@ -3010,7 +3010,7 @@ export const pt: TranslationDictionary = {
       title: 'O que aprendemos',
       subtitle: '{count} preferences',
       description:
-        'Patterns derived from your approve / reject / edit decisions. Used to personalise future suggestions.',
+        'Padrões derivados das suas decisões de aprovar, rejeitar ou editar. Usados para personalizar sugestões futuras.',
       loading: 'Carregando…',
       error: 'Não foi possível carregar as preferências.',
       empty: 'Vamos aprender com suas aprovações — sem preferências ainda.',

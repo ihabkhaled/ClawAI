@@ -18,10 +18,7 @@ const GOOGLE_AD_CONNECT_HOSTS: ReadonlyArray<string> = [
   'https://www.google-analytics.com',
 ];
 
-const VSCODE_LOOPBACK_CONNECT_HOSTS: ReadonlyArray<string> = [
-  'http://127.0.0.1:*',
-  'http://[::1]:*',
-];
+const VSCODE_LOOPBACK_CONNECT_HOSTS: ReadonlyArray<string> = ['http://127.0.0.1:*'];
 
 // Only needed in DEVELOPMENT. Production script-src uses 'strict-dynamic',
 // under which host allowlists are ignored entirely and trust flows from the

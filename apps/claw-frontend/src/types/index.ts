@@ -824,6 +824,8 @@ export type {
   PlanLimitsProps,
   AllowedModelsListProps,
   PlanRowProps,
+  PlanRetirementResult,
+  PlanRetirementCandidate,
   PlanCardProps,
 } from './plan.types';
 export type {

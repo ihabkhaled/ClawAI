@@ -14,6 +14,9 @@ import { LifecycleReconciliationService } from './services/lifecycle-reconciliat
 import { GatewaySubscriptionVaultService } from './services/gateway-subscription-vault.service';
 import { ProviderSubscriptionReconciliationService } from './services/provider-subscription-reconciliation.service';
 import { TransactionReconciliationService } from './services/transaction-reconciliation.service';
+import { PlanCatalogModule } from '../plan-catalog/plan-catalog.module';
+import { PlanRetirementClient } from './clients/plan-retirement.client';
+import { PlanRetirementReconciliationService } from './services/plan-retirement-reconciliation.service';
 
 @Module({
   controllers: [ReconciliationAdminController],
@@ -24,6 +27,7 @@ import { TransactionReconciliationService } from './services/transaction-reconci
     ScheduledJobsModule,
     SubscriptionsModule,
     WebhooksModule,
+    PlanCatalogModule,
   ],
   providers: [
     ReconciliationManager,
@@ -33,6 +37,8 @@ import { TransactionReconciliationService } from './services/transaction-reconci
     GatewaySubscriptionVaultService,
     ProviderSubscriptionReconciliationService,
     TransactionReconciliationService,
+    PlanRetirementClient,
+    PlanRetirementReconciliationService,
   ],
 })
 export class ReconciliationModule {}

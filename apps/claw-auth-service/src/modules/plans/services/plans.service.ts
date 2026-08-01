@@ -4,7 +4,14 @@ import { PlansRepository } from '../repositories/plans.repository';
 import { type CreatePlanDto } from '../dto/create-plan.dto';
 import { type UpdatePlanDto } from '../dto/update-plan.dto';
 import { type SetPlanModelAccessDto } from '../dto/plan-misc.dto';
-import { type PlanView, type PlanWithAccess } from '../types/plans.types';
+import { pendingRetirementMigrationsSchema } from '../dto/plan-retirement.dto';
+import { PlanLifecycleStatus, type PlanRetirementMigrationStatus } from '../../../generated/prisma';
+import {
+  type PendingPlanRetirementMigration,
+  type PlanRetirementResult,
+  type PlanView,
+  type PlanWithAccess,
+} from '../types/plans.types';
 
 @Injectable()
 export class PlansService {
@@ -61,7 +68,14 @@ export class PlansService {
   }
 
   async activatePlan(id: string): Promise<PlanView> {
-    await this.getPlan(id);
+    const plan = await this.getPlan(id);
+    if (plan.lifecycleStatus === PlanLifecycleStatus.RETIRED) {
+      throw new BusinessException(
+        'A retired plan cannot be activated',
+        'PLAN_RETIRED',
+        HttpStatus.CONFLICT,
+      );
+    }
     await this.plansRepository.setActive(id, true);
     return this.getPlan(id);
   }
@@ -77,6 +91,50 @@ export class PlansService {
     }
     await this.plansRepository.setActive(id, false);
     return this.getPlan(id);
+  }
+
+  async retirePlan(id: string, requestedReplacementId?: string): Promise<PlanRetirementResult> {
+    const source = await this.getPlan(id);
+    if (source.isDefault) {
+      throw new BusinessException(
+        'Set another plan as default before removing this one',
+        'PLAN_IS_DEFAULT',
+        HttpStatus.CONFLICT,
+      );
+    }
+    if (
+      source.lifecycleStatus === PlanLifecycleStatus.RETIRED &&
+      source.replacementPlanId !== null
+    ) {
+      return this.plansRepository.retirePlan(id, source.replacementPlanId);
+    }
+    const replacement = requestedReplacementId
+      ? await this.plansRepository.findById(requestedReplacementId)
+      : await this.plansRepository.findRetirementReplacement(id);
+    if (!replacement || replacement.id === id || !replacement.isActive) {
+      throw new BusinessException(
+        'An active upper replacement plan is required',
+        'PLAN_REPLACEMENT_REQUIRED',
+        HttpStatus.CONFLICT,
+      );
+    }
+    this.logger.warn(`retirePlan: source=${id} replacement=${replacement.id}`);
+    return this.plansRepository.retirePlan(id, replacement.id);
+  }
+
+  async listPendingRetirementMigrations(limit: number): Promise<PendingPlanRetirementMigration[]> {
+    const migrations = await this.plansRepository.listPendingRetirementMigrations(limit);
+    return pendingRetirementMigrationsSchema.parse(migrations);
+  }
+
+  async recordRetirementMigrationOutcome(
+    id: string,
+    status: PlanRetirementMigrationStatus,
+    errorCode?: string,
+  ): Promise<{ applied: boolean }> {
+    return {
+      applied: await this.plansRepository.recordRetirementMigrationOutcome(id, status, errorCode),
+    };
   }
 
   async setDefault(id: string): Promise<PlanView> {
@@ -133,6 +191,9 @@ export class PlansService {
       isDefault: plan.isDefault,
       isActive: plan.isActive,
       isPublic: plan.isPublic,
+      lifecycleStatus: plan.lifecycleStatus,
+      replacementPlanId: plan.replacementPlanId,
+      retiredAt: plan.retiredAt,
       dailyTokenQuota: plan.dailyTokenQuota,
       monthlyTokenQuota: plan.monthlyTokenQuota,
       maxChatsPerDay: plan.maxChatsPerDay,

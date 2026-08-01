@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PlanRow } from '@/components/admin/plans/plan-row';
+import { PlanLifecycleStatus } from '@/enums';
 import type { PlanView } from '@/types';
 
 function makePlan(overrides: Partial<PlanView> = {}): PlanView {
@@ -18,6 +19,9 @@ function makePlan(overrides: Partial<PlanView> = {}): PlanView {
     isDefault: false,
     isActive: true,
     isPublic: true,
+    lifecycleStatus: PlanLifecycleStatus.ACTIVE,
+    replacementPlanId: null,
+    retiredAt: null,
     dailyTokenQuota: 100000,
     monthlyTokenQuota: 2000000,
     maxChatsPerDay: null,
@@ -44,6 +48,7 @@ const baseProps = {
   onActivate: vi.fn(),
   onDeactivate: vi.fn(),
   onSetDefault: vi.fn(),
+  onRetire: vi.fn(),
   onEditHref: '/admin/plans/pl1/edit',
   onModelAccessHref: '/admin/plans/pl1/model-access',
   onPricesHref: '/admin/plans/pl1/prices',
@@ -98,5 +103,16 @@ describe('PlanRow', () => {
   it('disables action buttons while the row is pending', () => {
     render(<PlanRow plan={makePlan({ isActive: true })} {...baseProps} pendingId="pl1" />);
     expect(screen.getByRole('button', { name: 'adminPlans.deactivate' })).toBeDisabled();
+  });
+
+  it('offers permanent removal only for a non-default plan', async () => {
+    const onRetire = vi.fn();
+    const user = userEvent.setup();
+    const { rerender } = render(<PlanRow plan={makePlan()} {...baseProps} onRetire={onRetire} />);
+    await user.click(screen.getByRole('button', { name: 'common.delete' }));
+    expect(onRetire).toHaveBeenCalledWith('pl1', 'Pro');
+
+    rerender(<PlanRow plan={makePlan({ isDefault: true })} {...baseProps} />);
+    expect(screen.queryByRole('button', { name: 'common.delete' })).not.toBeInTheDocument();
   });
 });

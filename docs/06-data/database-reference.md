@@ -718,3 +718,19 @@ Connector API keys and secrets are stored encrypted:
 - Key: `ENCRYPTION_KEY` (64 hex characters = 32 bytes)
 - Stored in: `connectors.encrypted_config`
 - Encrypted/decrypted at the service layer -- never stored in plaintext
+
+---
+
+## 8. Plan retirement
+
+Plans are never physically deleted. Auth-service marks a removed plan `RETIRED`,
+hides it from the public catalog, records its replacement and retirement time,
+and retains the original row for assignment, invoice and subscription history.
+
+`plan_retirement_migrations` is the idempotent per-assignment audit trail. Free,
+promotional and admin grants are `APPLIED` in the auth transaction. Paid rows are
+`BILLING_SCHEDULE_PENDING` until payment-service schedules the replacement's
+immutable active price at the existing period end. Payment-service reports
+`BILLING_SCHEDULED`, `SUPERSEDED` (the user changed/cancelled first), or `FAILED`
+through the service-token-only internal contract. A pending row must never be
+presented as a completed billing migration.

@@ -295,6 +295,15 @@ Redis owner-token locks: acquire with `SET NX EX`, release with atomic
 compare-and-delete, and release from `finally`. Work remains bounded,
 idempotent, and resumable if a replica dies.
 
+Plan retirement is part of the same reconciliation owner scope. Payment polls
+auth-service with `Authorization: Service`, runtime-validates the bounded
+response, preserves any user-scheduled plan override, and optimistically stores
+the replacement plan/slug/immutable price/amount for the current period end.
+The existing paid period is unchanged. When the snapshot becomes effective, a
+retirement replacement emits `billing.subscription.upgraded` with zero
+proration rather than falsely describing the administrative migration as a
+customer downgrade.
+
 ## Related
 
 - `apps/claw-payment-service/CLAUDE.md` — service rules

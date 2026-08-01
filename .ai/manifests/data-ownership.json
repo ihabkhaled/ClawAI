@@ -47,6 +47,7 @@
         "PlanFeatureRule",
         "PlanModelAccess",
         "PlanPriceVersion",
+        "PlanRetirementMigration",
         "Role",
         "RolePermission",
         "SeedExecution",
