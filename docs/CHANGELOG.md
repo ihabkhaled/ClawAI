@@ -33,7 +33,7 @@ observable across service boundaries.
   authoritative catalog is unavailable.
 - **Newest-model discovery** on the landing page for eight models verified against
   the connector catalog, including Kimi K3 and DeepSeek V4 variants.
-- **VS Code coding-agent integration through 0.16.1**, including parallel model
+- **VS Code coding-agent integration through 0.17.0**, including parallel model
   runs, integrated research for local models, refreshed visual hierarchy, visible
   usage, authentication renewal, external-output grants, and localized controls.
 
@@ -47,6 +47,9 @@ observable across service boundaries.
 - **VS Code authorization stays inside the branded ClawAI flow.** The extension
   refreshes expired access tokens automatically, and the browser completion page no
   longer exposes a raw loopback callback as the final experience.
+- **VS Code frontend and backend environments are configured independently.** Local
+  and custom URLs persist separately, while both unfinished Cloud choices remain
+  visibly disabled until their production endpoints are finalized.
 - **Plan, billing, and usage views now use authoritative subscription state** and
   finite daily/monthly quotas instead of stale or incorrectly unlimited values.
 - **Admin accounts now receive explicit unlimited entitlements** for every feature,
