@@ -23,3 +23,19 @@ export async function approveVscodeAuthorization(
   });
   return response.data;
 }
+
+export async function deliverVscodeAuthorization(
+  redirectUri: string,
+  fetcher: typeof fetch = globalThis.fetch,
+): Promise<void> {
+  const callback = new URL(redirectUri);
+  const isLoopback = callback.hostname === '127.0.0.1' || callback.hostname === '[::1]';
+  if (callback.protocol !== 'http:' || !isLoopback || callback.pathname !== '/auth/callback') {
+    throw new Error('Invalid VS Code authorization callback.');
+  }
+  await fetcher(callback.href, {
+    cache: 'no-store',
+    credentials: 'omit',
+    mode: 'no-cors',
+  });
+}

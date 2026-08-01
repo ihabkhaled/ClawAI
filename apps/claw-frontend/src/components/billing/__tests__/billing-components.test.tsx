@@ -3,12 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { BillingPlanCard } from '@/components/billing/billing-plan-card';
+import { FeatureAllowanceList } from '@/components/billing/feature-allowance-list';
 import { InvoiceTable } from '@/components/billing/invoice-table';
 import { PaymentMethodList } from '@/components/billing/payment-method-list';
 import { ProrationBreakdown } from '@/components/billing/proration-breakdown';
 import { SubscriptionSummaryCard } from '@/components/billing/subscription-summary-card';
 import { UsageWindowBar } from '@/components/billing/usage-window-bar';
-import { BillingInterval, SubscriptionStatus } from '@/enums/billing.enum';
+import { BillingInterval, PlanFeature, SubscriptionStatus } from '@/enums/billing.enum';
 import type {
   BillingPlan,
   CurrentSubscription,
@@ -20,6 +21,29 @@ import type {
 
 const t = (key: string, params?: Record<string, string | number>): string =>
   params === undefined ? key : `${key}:${JSON.stringify(params)}`;
+
+describe('FeatureAllowanceList', () => {
+  it('shows observed request consumption for unlimited research features', () => {
+    render(
+      <FeatureAllowanceList
+        features={[
+          {
+            feature: PlanFeature.WEB_SEARCH,
+            allowed: true,
+            limit: null,
+            used: 23,
+            remaining: null,
+            window: null,
+          },
+        ]}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('billing.features.WEB_SEARCH')).toBeInTheDocument();
+    expect(screen.getByText('billing.usage.usedUnlimited:{"used":"23"}')).toBeInTheDocument();
+  });
+});
 
 function makeQuote(overrides: Partial<ProrationQuoteView> = {}): ProrationQuoteView {
   return {

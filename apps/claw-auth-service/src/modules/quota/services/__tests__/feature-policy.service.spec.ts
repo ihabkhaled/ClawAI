@@ -59,19 +59,20 @@ describe('FeaturePolicyService', () => {
       expect(snapshot.allowed).toBe(false);
     });
 
-    it('allows an ENABLED rule with no limit', async () => {
+    it('reports observed usage for an ENABLED rule without imposing a limit', async () => {
       planBilling.findFeatureRule.mockResolvedValue({
         accessMode: 'ENABLED',
         limit: null,
         window: 'MONTH',
       });
+      usage.countActive.mockResolvedValue(23);
       const snapshot = await service.evaluate({
         userId: 'u1',
         planId: 'p1',
         feature: 'MEMORY',
         billingPeriodKey: null,
       });
-      expect(snapshot).toMatchObject({ allowed: true, limit: null, remaining: null });
+      expect(snapshot).toMatchObject({ allowed: true, limit: null, used: 23, remaining: null });
     });
 
     it('reports remaining runs for a LIMITED rule', async () => {

@@ -637,6 +637,11 @@
       },
       {
         "method": "POST",
+        "route": "/internal/quota/features/consume",
+        "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/internal/quota/finalize",
         "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
       },
@@ -2793,5 +2798,5 @@
     ]
   },
   "generated": true,
-  "total": 551
+  "total": 552
 }

@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Code2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { useTranslation } from '@/lib/i18n';
 import {
   approveVscodeAuthorization,
+  deliverVscodeAuthorization,
   getVscodeAuthorizationDetails,
 } from '@/repositories/auth/vscode-authorization.repository';
 
@@ -25,12 +26,21 @@ export default function VscodeAuthorizationPage(): React.ReactElement {
     retry: false,
   });
   const approval = useMutation({
-    mutationFn: () => approveVscodeAuthorization(requestId ?? ''),
-    onSuccess: (result) => {
+    mutationFn: async () => {
+      const result = await approveVscodeAuthorization(requestId ?? '');
+      await deliverVscodeAuthorization(result.redirectUri);
+    },
+    onSuccess: () => {
       setCompleted(true);
-      window.location.assign(result.redirectUri);
     },
   });
+  useEffect(() => {
+    if (!completed) {
+      return;
+    }
+    const closeTimer = window.setTimeout(() => window.close(), 10_000);
+    return () => window.clearTimeout(closeTimer);
+  }, [completed]);
   const error =
     requestId === null ? new Error(t('common.error')) : (details.error ?? approval.error);
 

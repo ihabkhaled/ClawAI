@@ -21,7 +21,7 @@ npm run dev
 - Database: postgresql
 - Prisma models: FetchJob, PageCache, ResearchRun, SearchProvider, SearchRun
 - API endpoints: 16 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 14 (jest)
+- Test files: 15 (jest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

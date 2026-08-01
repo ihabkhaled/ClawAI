@@ -3590,6 +3590,9 @@ export type TranslationDictionary = {
       COMPARE_MODE: string;
       JUDGE_MODE: string;
       RESEARCH_MODE: string;
+      WEB_SEARCH: string;
+      WEB_FETCH: string;
+      WEB_EXTRACT: string;
       CRITIC_REVIEW: string;
       WORKSPACES: string;
       MEMORY: string;

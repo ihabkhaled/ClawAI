@@ -13,6 +13,7 @@ import { EntityNotFoundException } from '../../../common/errors/entity-not-found
 import { DomainPolicyOutcome } from '../../fetch/enums/domain-policy-outcome.enum';
 import { evaluateDomainPolicy } from '../../fetch/utilities/domain-policy.utility';
 import { toInputJson } from '../../../common/utilities/prisma-json.utility';
+import { ResearchUsageService } from '../../../common/services/research-usage.service';
 import { SearchAdapterFactory } from '../adapters/search-adapter.factory';
 import { SearchProviderRepository } from '../repositories/search-provider.repository';
 import { SearchRunRepository } from '../repositories/search-run.repository';
@@ -31,6 +32,7 @@ export class SearchExecutionService {
     private readonly runRepository: SearchRunRepository,
     private readonly providerService: SearchProviderService,
     private readonly adapterFactory: SearchAdapterFactory,
+    private readonly researchUsage: ResearchUsageService,
   ) {}
 
   async execute(userId: string, dto: ExecuteSearchDto): Promise<SearchExecutionResult> {
@@ -149,6 +151,8 @@ export class SearchExecutionService {
       const lastError = error instanceof Error ? error.message : 'Unknown error';
       warnings.push(`Provider ${provider.name} failed: ${lastError}`);
       return null;
+    } finally {
+      await this.researchUsage.record(run.userId, 'WEB_SEARCH', `${run.id}:${provider.id}`);
     }
   }
 

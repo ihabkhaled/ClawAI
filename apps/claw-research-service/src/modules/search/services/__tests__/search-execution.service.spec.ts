@@ -53,7 +53,7 @@ describe('SearchExecutionService', () => {
       findEnabled: jest.fn(),
     };
     runRepository = {
-      create: jest.fn(async () => ({ id: 'run-1' })),
+      create: jest.fn(async () => ({ id: 'run-1', userId: 'user-1' })),
       update: jest.fn(async () => ({})),
       findById: jest.fn(),
       listByUser: jest.fn(),
@@ -70,6 +70,7 @@ describe('SearchExecutionService', () => {
       runRepository as unknown as SearchRunRepository,
       providerService as unknown as SearchProviderService,
       adapterFactory as unknown as SearchAdapterFactory,
+      { record: jest.fn(async () => {}) } as never,
     );
   });
 

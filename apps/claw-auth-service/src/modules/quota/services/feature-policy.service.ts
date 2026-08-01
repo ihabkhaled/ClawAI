@@ -41,11 +41,17 @@ export class FeaturePolicyService {
       return this.deniedSnapshot(params.feature);
     }
     if (rule.accessMode === PlanFeatureAccessMode.ENABLED) {
+      const periodKey = featurePeriodKey(rule.window, new Date(), params.billingPeriodKey);
+      const used = await this.usage.countActive({
+        userId: params.userId,
+        feature: params.feature,
+        periodKey,
+      });
       return {
         feature: params.feature,
         allowed: true,
         limit: null,
-        used: 0,
+        used,
         remaining: null,
         window: null,
       };

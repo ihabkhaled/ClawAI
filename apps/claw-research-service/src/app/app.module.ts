@@ -17,6 +17,7 @@ import { HealthModule } from '../modules/health/health.module';
 import { ResearchModule } from '../modules/research/research.module';
 import { ScrapeModule } from '../modules/scrape/scrape.module';
 import { SearchModule } from '../modules/search/search.module';
+import { ResearchUsageModule } from '../common/services/research-usage.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { SearchModule } from '../modules/search/search.module';
       },
     ]),
     EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
+    ResearchUsageModule,
     PrismaModule,
     RedisModule,
     HealthModule,

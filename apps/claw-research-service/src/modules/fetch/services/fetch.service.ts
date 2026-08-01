@@ -6,6 +6,7 @@ import { ResearchErrorCode } from '../../../common/enums/research-error-code.enu
 import { BusinessException } from '../../../common/errors/business.exception';
 import { EntityNotFoundException } from '../../../common/errors/entity-not-found.exception';
 import { sha256Hex } from '../../../common/utilities/crypto.utility';
+import { ResearchUsageService } from '../../../common/services/research-usage.service';
 import { HttpFetchAdapter } from '../adapters/http-fetch.adapter';
 import { DomainPolicyOutcome } from '../enums/domain-policy-outcome.enum';
 import { FetchJobRepository } from '../repositories/fetch-job.repository';
@@ -23,6 +24,7 @@ export class FetchService {
     private readonly adapter: HttpFetchAdapter,
     private readonly jobs: FetchJobRepository,
     private readonly cache: PageCacheRepository,
+    private readonly researchUsage: ResearchUsageService,
   ) {}
 
   async fetchPage(userId: string, dto: FetchRequestDto): Promise<FetchResult> {
@@ -64,6 +66,8 @@ export class FetchService {
         HttpStatus.BAD_GATEWAY,
         { url: normalized, message },
       );
+    } finally {
+      await this.researchUsage.record(userId, 'WEB_FETCH', job.id);
     }
   }
 

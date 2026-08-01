@@ -9,6 +9,17 @@ const directive = (csp: string, name: string): string =>
     .find((part) => part.startsWith(`${name} `)) ?? '';
 
 describe('CSP script-src for AdSense', () => {
+  it('allows the authorization page to notify the local VS Code callback without navigation', () => {
+    const csp = buildContentSecurityPolicy({
+      nonce: 'n',
+      isDev: false,
+      adsenseEnabled: false,
+      upgradeInsecureRequests: true,
+    });
+    expect(directive(csp, 'connect-src')).toContain('http://127.0.0.1:*');
+    expect(directive(csp, 'connect-src')).toContain('http://[::1]:*');
+  });
+
   it('names the loader host in development, where strict-dynamic is absent', () => {
     // Without this the script tag renders and the browser blocks it, which
     // looks exactly like AdSense "not being implemented".

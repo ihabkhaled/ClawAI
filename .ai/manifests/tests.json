@@ -10,7 +10,7 @@
     },
     "@claw/shared-entitlements": {
       "runner": "jest",
-      "testFiles": 2
+      "testFiles": 3
     },
     "@claw/shared-rabbitmq": {
       "runner": "jest",
@@ -34,7 +34,7 @@
     },
     "claw-auth-service": {
       "runner": "jest",
-      "testFiles": 44
+      "testFiles": 45
     },
     "claw-chat-service": {
       "runner": "jest",
@@ -86,7 +86,7 @@
     },
     "claw-research-service": {
       "runner": "jest",
-      "testFiles": 14
+      "testFiles": 15
     },
     "claw-routing-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 724
+  "total": 727
 }

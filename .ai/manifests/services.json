@@ -66,7 +66,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 49,
+      "endpointCount": 50,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",
@@ -95,7 +95,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 44,
+      "testFiles": 45,
       "testRunner": "jest"
     },
     {
@@ -400,7 +400,7 @@
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 14,
+      "testFiles": 15,
       "testRunner": "jest"
     },
     {
