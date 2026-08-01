@@ -61,13 +61,12 @@ test('every development backend service enables cross-platform polling watchers'
     );
     assert.match(manifest.scripts.dev, /nodemon --legacy-watch --watch src/u);
     assert.match(manifest.scripts.dev, /--exec "npm run build && node dist\/main\.js"/u);
-    assert.match(
-      block,
-      new RegExp(
-        `^ {6}- \.\.\/apps\/claw-${serviceName}\/package\\.json:` +
-          `\/app\/apps\/claw-${serviceName}\/package\\.json:ro$`,
-        'mu',
-      ),
+    assert.ok(
+      block
+        .split(/\r?\n/u)
+        .includes(
+          `      - ../apps/claw-${serviceName}/package.json:/app/apps/claw-${serviceName}/package.json:ro`,
+        ),
       `${serviceName} does not bind-mount its development script`,
     );
   }
