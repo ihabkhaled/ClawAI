@@ -26,7 +26,13 @@ observable across service boundaries.
   Simplified Chinese now contain every English key without fallback spreads;
   completeness, placeholder, RTL, and untranslated-copy regressions are tested.
 - **Research usage accounting** for search, extraction, and crawl operations so
-  external provider requests contribute to user quota alongside model tokens.
+  every real external dispatch contributes to user quota alongside model tokens,
+  including Ollama primary and fallback searches plus failed fetch/extract attempts.
+- **Resilient public pricing** with the canonical seven seeded plans as a frontend
+  fallback, a localized temporary-data disclaimer, and retry controls when the
+  authoritative catalog is unavailable.
+- **Newest-model discovery** on the landing page for eight models verified against
+  the connector catalog, including Kimi K3 and DeepSeek V4 variants.
 - **VS Code coding-agent integration through 0.16.1**, including parallel model
   runs, integrated research for local models, refreshed visual hierarchy, visible
   usage, authentication renewal, external-output grants, and localized controls.
@@ -43,6 +49,15 @@ observable across service boundaries.
   longer exposes a raw loopback callback as the final experience.
 - **Plan, billing, and usage views now use authoritative subscription state** and
   finite daily/monthly quotas instead of stale or incorrectly unlimited values.
+- **Admin accounts now receive explicit unlimited entitlements** for every feature,
+  every model/provider, chats, and daily, weekly, and monthly usage, independent of
+  an assigned customer plan.
+- **Usage views now read finalized durable token ledgers**, while web search, fetch,
+  and extraction remain visible as operation counters instead of invented token
+  conversions.
+- **Pricing cards now keep equal heights and CTA dimensions**, contain oversized
+  copy in a bounded accessible scroll region, and synchronize language changes
+  immediately across open tabs while preserving path, query, and hash.
 - **Frontend security policy accepts valid local development origins only**, removing
   an invalid IPv6 wildcard source that lowered Lighthouse best-practices scores.
 
