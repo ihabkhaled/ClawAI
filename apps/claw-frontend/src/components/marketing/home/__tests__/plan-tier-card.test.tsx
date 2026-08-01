@@ -48,6 +48,24 @@ const PLAN: PublicPlan = {
 };
 
 describe('PlanTierCard', () => {
+  it('keeps every card and call to action at stable dimensions while long copy scrolls', () => {
+    render(
+      <PlanTierCard
+        plan={{ ...PLAN, description: 'A very long plan description. '.repeat(40) }}
+        isYearly={false}
+      />,
+    );
+
+    expect(screen.getByRole('article')).toHaveClass('h-full', 'min-h-[22rem]');
+    expect(screen.getByTestId('plan-copy-scroll')).toHaveClass(
+      'h-24',
+      'overflow-y-auto',
+      'overscroll-contain',
+    );
+    expect(screen.getByRole('link')).toHaveClass('mt-auto', 'h-12', 'shrink-0', 'cursor-pointer');
+    expect(screen.getByRole('link')).not.toHaveClass('flex-1');
+  });
+
   it('preserves the selected plan and monthly interval through registration', () => {
     render(<PlanTierCard plan={PLAN} isYearly={false} />);
 

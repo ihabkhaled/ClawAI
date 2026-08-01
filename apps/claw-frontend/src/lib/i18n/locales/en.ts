@@ -3780,6 +3780,8 @@ export const en: TranslationDictionary = {
       monthlyTokens: 'Monthly allowance',
       ctaFree: 'Start free',
       ctaPaid: 'Choose this plan',
+      temporaryCatalogDisclaimer:
+        'Live pricing is temporarily unavailable. These fallback prices may be inaccurate and can change when service returns.',
       freeName: 'Free',
       freeTagline: 'Try ClawAI with a small daily allowance.',
       freeHighlight1: 'Access to entry-tier models',
@@ -3860,6 +3862,9 @@ export const en: TranslationDictionary = {
         lastReviewed: 'Last reviewed',
       },
       modelRoster: {
+        newestTitle: 'Newest models in the catalog',
+        newestIntro:
+          'A concise snapshot of recently added models available through current connectors.',
         title: 'The models you get',
         intro:
           'One subscription covers every provider below. Switch models mid-conversation, or let ClawAI pick the best one for each message.',

@@ -3858,6 +3858,8 @@ export const fr: TranslationDictionary = {
       monthlyTokens: 'Quota mensuel',
       ctaFree: 'Commencer gratuitement',
       ctaPaid: 'Choisir ce forfait',
+      temporaryCatalogDisclaimer:
+        'Les tarifs en direct sont temporairement indisponibles. Ces tarifs de secours peuvent être inexacts et changer au rétablissement du service.',
       freeName: 'Free',
       freeTagline: 'Essayez ClawAI avec un petit quota quotidien.',
       freeHighlight1: "Accès aux modèles d'entrée de gamme",
@@ -3942,6 +3944,8 @@ export const fr: TranslationDictionary = {
         lastReviewed: 'Dernière révision',
       },
       modelRoster: {
+        newestTitle: 'Modèles les plus récents du catalogue',
+        newestIntro: 'Un aperçu concis des modèles récemment ajoutés via les connecteurs actuels.',
         title: 'Les modèles auxquels vous avez accès',
         intro:
           'Un seul abonnement couvre tous les fournisseurs ci-dessous. Changez de modèle en cours de conversation, ou laissez ClawAI choisir le meilleur pour chaque message.',

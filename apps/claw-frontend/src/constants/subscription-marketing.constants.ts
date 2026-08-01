@@ -1,4 +1,7 @@
-import type { MarketingModelFamily } from '@/types/subscription-marketing.types';
+import type {
+  MarketingModelFamily,
+  MarketingNewestModel,
+} from '@/types/subscription-marketing.types';
 
 // Provider and model names are brand names and stay identical in every locale.
 // The translated strength key supplies the human-readable positioning.
@@ -48,4 +51,15 @@ export const MARKETING_MODEL_FAMILIES: ReadonlyArray<MarketingModelFamily> = [
     models: ['Nova Pro', 'Titan', 'Bedrock-hosted Claude'],
     strengthKey: 'marketing.models.bedrockStrength',
   },
+];
+
+export const MARKETING_NEWEST_MODELS: ReadonlyArray<MarketingNewestModel> = [
+  { id: 'glm-5.2', label: 'GLM-5.2', provider: 'Zhipu' },
+  { id: 'kimi-k3', label: 'Kimi K3', provider: 'Moonshot' },
+  { id: 'qwen3.5', label: 'Qwen3.5', provider: 'Alibaba' },
+  { id: 'minimax-m2.7', label: 'MiniMax M2.7', provider: 'MiniMax' },
+  { id: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro', provider: 'DeepSeek' },
+  { id: 'deepseek-v4-flash', label: 'DeepSeek V4 Flash', provider: 'DeepSeek' },
+  { id: 'gemini-3-flash-preview', label: 'Gemini 3 Flash Preview', provider: 'Google' },
+  { id: 'nemotron-3-super', label: 'Nemotron 3 Super', provider: 'NVIDIA' },
 ];

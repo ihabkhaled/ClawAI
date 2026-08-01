@@ -51,6 +51,7 @@ export type UsePublicPricingResult = {
   plans: PublicPlan[];
   isLoading: boolean;
   isError: boolean;
+  isFallback: boolean;
   error: Error | null;
   isYearly: boolean;
   selectMonthly: () => void;

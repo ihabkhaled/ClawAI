@@ -23,9 +23,9 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
   const interval = isYearly ? 'yearly' : 'monthly';
 
   return (
-    <div
+    <article
       className={cn(
-        'border-border bg-card flex flex-col rounded-lg border p-6',
+        'border-border bg-card flex h-full min-h-[22rem] flex-col rounded-lg border p-6',
         plan.isDefault && 'border-primary ring-primary/30 shadow-sm ring-1',
       )}
     >
@@ -35,10 +35,17 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
         </span>
       ) : null}
 
-      <h3 className="text-foreground text-lg font-semibold">{plan.name}</h3>
-      {plan.description === null ? null : (
-        <p className="text-muted-foreground mt-1 text-sm">{plan.description}</p>
-      )}
+      <div
+        data-testid="plan-copy-scroll"
+        role="region"
+        aria-label={plan.name}
+        className="focus-visible:ring-ring h-24 overflow-y-auto overscroll-contain pe-2 focus-visible:ring-2 focus-visible:outline-none"
+      >
+        <h3 className="text-foreground text-lg font-semibold">{plan.name}</h3>
+        {plan.description === null ? null : (
+          <p className="text-muted-foreground mt-1 text-sm">{plan.description}</p>
+        )}
+      </div>
 
       <p className="mt-5 flex items-baseline gap-1">
         <span className="text-foreground text-3xl font-bold tracking-tight">
@@ -71,12 +78,12 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
         aria-disabled={price === null}
         className={cn(
           buttonVariants({ variant: plan.isDefault ? 'default' : 'outline' }),
-          'mt-6 w-full flex-1 self-end',
+          'mt-auto h-12 w-full shrink-0 cursor-pointer self-end text-center leading-tight whitespace-normal',
           price === null && 'pointer-events-none opacity-50',
         )}
       >
         {isFree ? t('marketing.pricing.ctaFree') : t('marketing.pricing.ctaPaid')}
       </Link>
-    </div>
+    </article>
   );
 }

@@ -63,7 +63,7 @@ describe('Thai dictionary completeness', () => {
     const thai = flatten(th);
 
     expect(Object.keys(thai).sort()).toEqual(Object.keys(english).sort());
-    expect(Object.keys(thai)).toHaveLength(3945);
+    expect(Object.keys(thai)).toHaveLength(3948);
     expect(source).not.toContain("from './en'");
     expect(source).not.toContain('...en');
     expect(source).not.toContain('à¸');

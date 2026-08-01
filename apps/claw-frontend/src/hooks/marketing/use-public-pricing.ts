@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
+import { PUBLIC_PRICING_FALLBACK_PLANS } from '@/constants/public-pricing-fallback.constants';
 import { usePricingToggle } from '@/hooks/marketing/use-pricing-toggle';
 import { useTranslation } from '@/lib/i18n';
 import { publicPricingRepository } from '@/repositories/marketing/public-pricing.repository';
@@ -22,12 +23,13 @@ export function usePublicPricing(initialPlans: PublicPlan[] | null): UsePublicPr
   const retry = useCallback((): void => {
     void query.refetch();
   }, [query]);
+  const isFallback = query.data === undefined;
 
   return {
-    plans: query.data ?? [],
-    isLoading: query.isLoading,
-    isError:
-      query.data === undefined && !query.isFetching && (initialPlans === null || query.isError),
+    plans: query.data ?? PUBLIC_PRICING_FALLBACK_PLANS,
+    isLoading: query.isLoading && !isFallback,
+    isError: false,
+    isFallback,
     error: (query.error as Error | null) ?? null,
     isYearly: toggle.isYearly,
     selectMonthly: toggle.selectMonthly,

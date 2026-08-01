@@ -3717,6 +3717,7 @@ export type TranslationDictionary = {
       monthlyTokens: string;
       ctaFree: string;
       ctaPaid: string;
+      temporaryCatalogDisclaimer: string;
       freeName: string;
       freeTagline: string;
       freeHighlight1: string;
@@ -3794,6 +3795,8 @@ export type TranslationDictionary = {
       modelRoster: {
         title: string;
         intro: string;
+        newestTitle: string;
+        newestIntro: string;
         footnote: string;
         linkFeatures: string;
         linkArchitecture: string;

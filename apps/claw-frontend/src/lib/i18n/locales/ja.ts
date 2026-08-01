@@ -3815,6 +3815,8 @@ export const ja: TranslationDictionary = {
       monthlyTokens: '月額手当',
       ctaFree: '無料で始める',
       ctaPaid: 'このプランを選択してください',
+      temporaryCatalogDisclaimer:
+        '最新の料金情報は一時的に利用できません。表示中の代替料金は正確でない場合があり、サービス復旧後に変更されることがあります。',
       freeName: '無料',
       freeTagline: '少額の日当で ClawAI をお試しください。',
       freeHighlight1: 'エントリー層モデルへのアクセス',
@@ -3897,6 +3899,8 @@ export const ja: TranslationDictionary = {
         lastReviewed: '最終レビュー日',
       },
       modelRoster: {
+        newestTitle: 'カタログの最新モデル',
+        newestIntro: '現在のコネクターから利用できる、最近追加されたモデルの簡潔な一覧です。',
         title: '入手できるモデル',
         intro:
           '1 つのサブスクリプションで、以下のすべてのプロバイダーがカバーされます。会話の途中でモデルを切り替えるか、ClawAI にメッセージごとに最適なモデルを選択させます。',

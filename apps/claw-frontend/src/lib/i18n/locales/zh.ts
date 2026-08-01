@@ -3702,6 +3702,8 @@ export const zh: TranslationDictionary = {
       monthlyTokens: '每月津贴',
       ctaFree: '免费开始',
       ctaPaid: '选择此计划',
+      temporaryCatalogDisclaimer:
+        '实时价格暂时不可用。当前显示的备用价格可能不准确，并可能在服务恢复后更新。',
       freeName: '自由的',
       freeTagline: '尝试 ClawAI 每日少量津贴。',
       freeHighlight1: '访问入门级型号',
@@ -3780,6 +3782,8 @@ export const zh: TranslationDictionary = {
         lastReviewed: '最后评论',
       },
       modelRoster: {
+        newestTitle: '目录中的最新模型',
+        newestIntro: '简要展示通过当前连接器新近加入并可用的模型。',
         title: '您获得的模型',
         intro:
           '一份订阅涵盖以下所有提供商。在对话中切换模型，或者让 ClawAI 为每条消息选择最好的模型。',

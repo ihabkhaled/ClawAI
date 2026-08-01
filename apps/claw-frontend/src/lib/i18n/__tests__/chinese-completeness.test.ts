@@ -58,7 +58,7 @@ describe('Simplified Chinese dictionary completeness', () => {
     const english = flatten(en);
     const chinese = flatten(zh);
     expect(Object.keys(chinese).sort()).toEqual(Object.keys(english).sort());
-    expect(Object.keys(chinese)).toHaveLength(3945);
+    expect(Object.keys(chinese)).toHaveLength(3948);
     expect(source).not.toContain("from './en'");
     expect(source).not.toContain('...en');
     expect(source).not.toContain('ZXPH');

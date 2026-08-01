@@ -3846,6 +3846,8 @@ export const de: TranslationDictionary = {
       monthlyTokens: 'Monatliches Kontingent',
       ctaFree: 'Kostenlos starten',
       ctaPaid: 'Diesen Tarif wählen',
+      temporaryCatalogDisclaimer:
+        'Die Live-Preise sind vorübergehend nicht verfügbar. Diese Ersatzpreise können ungenau sein und sich ändern, sobald der Dienst wieder verfügbar ist.',
       freeName: 'Free',
       freeTagline: 'Testen Sie ClawAI mit einem kleinen täglichen Kontingent.',
       freeHighlight1: 'Zugang zu Modellen der Einstiegsstufe',
@@ -3930,6 +3932,9 @@ export const de: TranslationDictionary = {
         lastReviewed: 'Zuletzt geprüft',
       },
       modelRoster: {
+        newestTitle: 'Neueste Modelle im Katalog',
+        newestIntro:
+          'Eine kompakte Übersicht kürzlich hinzugefügter Modelle aus den aktuellen Konnektoren.',
         title: 'Die Modelle, die Sie erhalten',
         intro:
           'Ein Abonnement deckt jeden der folgenden Anbieter ab. Wechseln Sie Modelle mitten in der Unterhaltung, oder lassen Sie ClawAI für jede Nachricht das beste auswählen.',
