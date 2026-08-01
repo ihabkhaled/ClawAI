@@ -5,10 +5,10 @@ import { useCallback, useState } from 'react';
 import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { billingRepository } from '@/repositories/billing/billing.repository';
-import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UseStartCheckoutReturn } from '@/types/billing-hook.types';
 import type { GatewayCheckoutSession } from '@/types/billing.types';
 import { resolveBillingErrorMessage } from '@/utilities/billing-error.utility';
+import { invalidateUserPlanQueries } from '@/utilities/plan-cache.utility';
 import { showToast } from '@/utilities/toast.utility';
 
 // Starts a checkout and hands the browser to the gateway.
@@ -65,7 +65,7 @@ export function useStartCheckout(): UseStartCheckoutReturn {
 
   const completeGateway = useCallback(async () => {
     setGatewaySession(null);
-    await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
+    await invalidateUserPlanQueries(queryClient);
     router.replace(ROUTES.BILLING);
     router.refresh();
   }, [queryClient, router]);

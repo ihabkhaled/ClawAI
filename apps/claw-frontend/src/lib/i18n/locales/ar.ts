@@ -3266,6 +3266,11 @@ export const ar: TranslationDictionary = {
     modelPrimary: 'أساسي',
     modelCompare: 'مقارنة',
     modelOverride: 'الحد {limit} رمز/يوم',
+    planLimits: 'حدود الخطة',
+    dailyLimitLabel: 'الرموز يوميًا',
+    weeklyLimitLabel: 'الرموز أسبوعيًا',
+    monthlyLimitLabel: 'الرموز شهريًا',
+    chatsLimitLabel: 'المحادثات يوميًا',
   },
   userUsage: {
     title: 'الاستخدام',
@@ -3283,6 +3288,8 @@ export const ar: TranslationDictionary = {
     remaining: 'متبقٍّ {remaining}',
     unlimited: 'غير محدود',
     unlimitedHint: 'خطتك بلا حد يومي للرموز.',
+    adminBypass: 'صلاحية المسؤول',
+    adminBypassHint: 'يتجاوز دور المسؤول قيود التنفيذ، بينما تظل حدود الخطة أعلاه دون تغيير.',
   },
   runtimeProgress: {
     metrics: {

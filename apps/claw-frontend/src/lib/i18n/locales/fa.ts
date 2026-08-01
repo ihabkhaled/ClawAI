@@ -4,6 +4,20 @@ import { en } from './en';
 
 export const fa: TranslationDictionary = {
   ...en,
+  userPlan: {
+    ...en.userPlan,
+    planLimits: 'محدودیت‌های طرح',
+    dailyLimitLabel: 'توکن روزانه',
+    weeklyLimitLabel: 'توکن هفتگی',
+    monthlyLimitLabel: 'توکن ماهانه',
+    chatsLimitLabel: 'گفتگو در روز',
+  },
+  userUsage: {
+    ...en.userUsage,
+    adminBypass: 'دسترسی مدیر',
+    adminBypassHint:
+      'نقش مدیر از اعمال محدودیت‌ها عبور می‌کند. محدودیت‌های طرح بالا بدون تغییر می‌مانند.',
+  },
   common: {
     ...en.common,
     save: 'ذخیره',

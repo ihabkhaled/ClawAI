@@ -4,6 +4,20 @@ import { en } from './en';
 
 export const th: TranslationDictionary = {
   ...en,
+  userPlan: {
+    ...en.userPlan,
+    planLimits: 'ขีดจำกัดแพ็กเกจ',
+    dailyLimitLabel: 'โทเค็นต่อวัน',
+    weeklyLimitLabel: 'โทเค็นต่อสัปดาห์',
+    monthlyLimitLabel: 'โทเค็นต่อเดือน',
+    chatsLimitLabel: 'แชตต่อวัน',
+  },
+  userUsage: {
+    ...en.userUsage,
+    adminBypass: 'สิทธิ์ผู้ดูแลระบบ',
+    adminBypassHint:
+      'บทบาทผู้ดูแลระบบข้ามการบังคับใช้ขีดจำกัด โดยขีดจำกัดแพ็กเกจด้านบนไม่เปลี่ยนแปลง',
+  },
   common: {
     ...en.common,
     save: 'บันทึก',

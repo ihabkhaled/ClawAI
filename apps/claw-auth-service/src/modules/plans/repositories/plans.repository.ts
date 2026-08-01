@@ -29,6 +29,19 @@ export class PlansRepository {
     });
   }
 
+  async findEffectiveForUser(userId: string, now: Date): Promise<PlanWithAccess | null> {
+    const assignment = await this.prisma.userPlanAssignment.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        OR: [{ entitlementValidUntil: null }, { entitlementValidUntil: { gt: now } }],
+      },
+      orderBy: { startsAt: 'desc' },
+      include: { plan: { include: { modelAccess: true } } },
+    });
+    return assignment?.plan ?? null;
+  }
+
   async create(data: Prisma.PlanCreateInput): Promise<PlanWithAccess> {
     const plan = await this.prisma.plan.create({ data });
     return this.findById(plan.id) as Promise<PlanWithAccess>;

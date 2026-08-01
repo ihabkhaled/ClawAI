@@ -3340,6 +3340,11 @@ export const fr: TranslationDictionary = {
     modelPrimary: 'Principal',
     modelCompare: 'Comparaison',
     modelOverride: 'Limite {limit} jetons/jour',
+    planLimits: 'Limites du forfait',
+    dailyLimitLabel: 'Jetons par jour',
+    weeklyLimitLabel: 'Jetons par semaine',
+    monthlyLimitLabel: 'Jetons par mois',
+    chatsLimitLabel: 'Discussions par jour',
   },
   userUsage: {
     title: 'Utilisation',
@@ -3358,6 +3363,9 @@ export const fr: TranslationDictionary = {
     remaining: '{remaining} restants',
     unlimited: 'Illimité',
     unlimitedHint: 'Votre forfait n’a pas de limite quotidienne de jetons.',
+    adminBypass: 'Accès administrateur',
+    adminBypassHint:
+      'Votre rôle administrateur contourne l’application des limites. Les limites du forfait ci-dessus restent inchangées.',
   },
   runtimeProgress: {
     metrics: {

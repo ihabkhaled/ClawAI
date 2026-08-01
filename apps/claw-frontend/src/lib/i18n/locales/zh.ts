@@ -4,6 +4,19 @@ import { en } from './en';
 
 export const zh: TranslationDictionary = {
   ...en,
+  userPlan: {
+    ...en.userPlan,
+    planLimits: '套餐限额',
+    dailyLimitLabel: '每日令牌',
+    weeklyLimitLabel: '每周令牌',
+    monthlyLimitLabel: '每月令牌',
+    chatsLimitLabel: '每日对话数',
+  },
+  userUsage: {
+    ...en.userUsage,
+    adminBypass: '管理员访问',
+    adminBypassHint: '管理员角色不受限额强制约束，但上方套餐限额保持不变。',
+  },
   common: {
     ...en.common,
     save: '保存',

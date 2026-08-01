@@ -113,6 +113,14 @@ export type EntitlementPlan = {
   slug: string;
   name: string;
   featureGates: EntitlementFeatureGates;
+  limits: EntitlementPlanLimits;
+};
+
+export type EntitlementPlanLimits = {
+  dailyTokens: number | null;
+  weeklyTokens: number | null;
+  monthlyTokens: number | null;
+  chatsPerDay: number | null;
 };
 
 export type EntitlementQuota = {
@@ -120,6 +128,7 @@ export type EntitlementQuota = {
   used: number;
   remaining: number;
   unlimited: boolean;
+  adminBypass: boolean;
 };
 
 export type UserEntitlements = {
@@ -277,6 +286,11 @@ export type UsageMeterProps = {
 
 export type PlanFeatureGatesProps = {
   featureGates: EntitlementFeatureGates;
+  t: TranslateFunction;
+};
+
+export type PlanLimitsProps = {
+  limits: EntitlementPlanLimits;
   t: TranslateFunction;
 };
 

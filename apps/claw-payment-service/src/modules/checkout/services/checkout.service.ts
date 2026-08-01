@@ -108,6 +108,7 @@ export class CheckoutService {
       input.currency,
       input.gateway,
       input.targetPriceVersionId,
+      input.targetPlanSlug,
     );
     const session = await this.sessions.create({
       userId: input.userId,
@@ -175,7 +176,7 @@ export class CheckoutService {
       status: CheckoutSessionStatus.CREATED,
       gateway: input.gateway,
       planId: input.planId,
-      planSlug: input.planId,
+      planSlug: charge.planSlug,
       planPriceVersionId: charge.planPriceVersionId,
       billingInterval: input.billingInterval,
       baseAmountMinor: charge.baseAmountMinor,

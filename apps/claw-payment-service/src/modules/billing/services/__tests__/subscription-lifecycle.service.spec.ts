@@ -74,4 +74,33 @@ describe('SubscriptionLifecycleService grace expiry', () => {
     ).resolves.toBe(false);
     expect(outbox.enqueue).not.toHaveBeenCalled();
   });
+
+  it('expires only the exact active entitlement window and releases the active key', async () => {
+    const deadline = new Date('2026-07-26T12:00:00.000Z');
+
+    await expect(
+      service.expireLapsedIfVersionMatches(
+        'subscription-1',
+        'user-1',
+        4,
+        deadline,
+        deadline,
+        'run-lapsed',
+      ),
+    ).resolves.toBe(true);
+
+    expect(updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'subscription-1',
+        version: 4,
+        uniqueActiveKey: 'user-1',
+        entitlementValidUntil: { equals: deadline, lte: deadline },
+      },
+      data: {
+        status: SubscriptionStatus.EXPIRED,
+        uniqueActiveKey: null,
+        version: { increment: 1 },
+      },
+    });
+  });
 });

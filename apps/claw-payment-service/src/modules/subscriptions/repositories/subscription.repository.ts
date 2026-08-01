@@ -140,6 +140,12 @@ export class SubscriptionRepository {
     });
   }
 
+  async countLapsedEntitlements(now: Date): Promise<number> {
+    return this.prisma.subscription.count({
+      where: { uniqueActiveKey: { not: null }, entitlementValidUntil: { lte: now } },
+    });
+  }
+
   async countByStatus(status: SubscriptionStatus): Promise<number> {
     this.logger.debug(`countByStatus: ${status}`);
     return this.prisma.subscription.count({ where: { status } });

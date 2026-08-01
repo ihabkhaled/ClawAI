@@ -207,6 +207,14 @@ describe('SubscriptionRepository', () => {
         take: 10,
       });
     });
+
+    it('counts lapsed entitlements with the same inclusive boundary', async () => {
+      const now = new Date('2026-07-25T00:00:00.000Z');
+      await repository.countLapsedEntitlements(now);
+      expect(subscription.count).toHaveBeenCalledWith({
+        where: { uniqueActiveKey: { not: null }, entitlementValidUntil: { lte: now } },
+      });
+    });
   });
 
   it('lists a user history newest first', async () => {

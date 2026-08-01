@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import type { PlanCardProps } from '@/types';
 
 import { PlanFeatureGates } from './plan-feature-gates';
+import { PlanLimits } from './plan-limits';
 
 export function PlanCard({ plan, t }: PlanCardProps): ReactElement {
   return (
@@ -13,12 +14,13 @@ export function PlanCard({ plan, t }: PlanCardProps): ReactElement {
       <CardHeader>
         <div className="flex items-center gap-2">
           <CardTitle className="text-lg">{plan.name}</CardTitle>
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{plan.slug}</code>
+          <code className="bg-muted rounded px-1.5 py-0.5 text-xs">{plan.slug}</code>
         </div>
         <CardDescription>{t('userPlan.featuresIncluded')}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="grid gap-4">
         <PlanFeatureGates featureGates={plan.featureGates} t={t} />
+        <PlanLimits limits={plan.limits} t={t} />
       </CardContent>
     </Card>
   );

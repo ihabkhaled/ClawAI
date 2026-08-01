@@ -90,3 +90,17 @@ test('development frontend uses polling with source and public bind mounts', () 
   assert.match(block, /^ {6}- \.\.\/apps\/claw-frontend\/src:\/app\/src$/mu);
   assert.match(block, /^ {6}- \.\.\/apps\/claw-frontend\/public:\/app\/public$/mu);
 });
+
+test('research development image compiles shared entitlements before startup', () => {
+  const developmentSource = readFileSync(
+    repoPath('apps', 'claw-research-service', 'Dockerfile.dev'),
+    'utf8',
+  );
+  const productionSource = readFileSync(
+    repoPath('apps', 'claw-research-service', 'Dockerfile'),
+    'utf8',
+  );
+
+  assert.match(developmentSource, /^RUN cd packages\/shared-entitlements && npx tsgo$/mu);
+  assert.match(productionSource, /cd \/app\/packages\/shared-entitlements && npx tsgo/u);
+});

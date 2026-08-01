@@ -12,7 +12,8 @@ import type {
   PlanModelAccessView,
 } from '@/types';
 
-const t = (key: string): string => key;
+const t = (key: string, params?: Record<string, string | number>): string =>
+  params?.value === undefined ? key : `${key}:${String(params.value)}`;
 
 const gates: EntitlementFeatureGates = {
   allowCompareMode: true,
@@ -26,9 +27,16 @@ const gates: EntitlementFeatureGates = {
 
 describe('UsageMeter', () => {
   it('renders the unlimited state when quota.unlimited is true', () => {
-    const quota: EntitlementQuota = { dailyLimit: 0, used: 0, remaining: 0, unlimited: true };
+    const quota: EntitlementQuota = {
+      dailyLimit: 0,
+      used: 0,
+      remaining: 0,
+      unlimited: true,
+      adminBypass: true,
+    };
     render(<UsageMeter quota={quota} t={t} />);
-    expect(screen.getByText('userUsage.unlimited')).toBeInTheDocument();
+    expect(screen.getByText('userUsage.adminBypass')).toBeInTheDocument();
+    expect(screen.getByText('userUsage.adminBypassHint')).toBeInTheDocument();
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });
 
@@ -38,6 +46,7 @@ describe('UsageMeter', () => {
       used: 250,
       remaining: 750,
       unlimited: false,
+      adminBypass: false,
     };
     render(<UsageMeter quota={quota} t={t} />);
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
@@ -54,11 +63,25 @@ describe('PlanFeatureGates', () => {
 
 describe('PlanCard', () => {
   it('renders the plan name, slug and feature gates', () => {
-    const plan: EntitlementPlan = { id: 'pl1', slug: 'pro', name: 'Pro', featureGates: gates };
+    const plan: EntitlementPlan = {
+      id: 'pl1',
+      slug: 'pro',
+      name: 'Pro',
+      featureGates: gates,
+      limits: {
+        dailyTokens: 10_000,
+        weeklyTokens: 50_000,
+        monthlyTokens: 200_000,
+        chatsPerDay: 20,
+      },
+    };
     render(<PlanCard plan={plan} t={t} />);
     expect(screen.getByText('Pro')).toBeInTheDocument();
     expect(screen.getByText('pro')).toBeInTheDocument();
     expect(screen.getByText('userPlan.featuresIncluded')).toBeInTheDocument();
+    expect(screen.getByText('userPlan.planLimits')).toBeInTheDocument();
+    expect(screen.getByText('10,000')).toBeInTheDocument();
+    expect(screen.getByText('200,000')).toBeInTheDocument();
   });
 });
 

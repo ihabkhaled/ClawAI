@@ -56,8 +56,13 @@ describe('LifecycleReconciliationService', () => {
     findGraceExpired: jest.Mock;
     countDueScheduledChanges: jest.Mock;
     findDueScheduledChanges: jest.Mock;
+    countLapsedEntitlements: jest.Mock;
+    findLapsedEntitlements: jest.Mock;
   };
-  let lifecycle: { expirePastDueIfVersionMatches: jest.Mock };
+  let lifecycle: {
+    expirePastDueIfVersionMatches: jest.Mock;
+    expireLapsedIfVersionMatches: jest.Mock;
+  };
   let downgrades: { applyDue: jest.Mock };
   let reconciliation: { recordFinding: jest.Mock };
   let service: LifecycleReconciliationService;
@@ -68,8 +73,13 @@ describe('LifecycleReconciliationService', () => {
       findGraceExpired: jest.fn().mockResolvedValue([]),
       countDueScheduledChanges: jest.fn().mockResolvedValue(0),
       findDueScheduledChanges: jest.fn().mockResolvedValue([]),
+      countLapsedEntitlements: jest.fn().mockResolvedValue(0),
+      findLapsedEntitlements: jest.fn().mockResolvedValue([]),
     };
-    lifecycle = { expirePastDueIfVersionMatches: jest.fn().mockResolvedValue(true) };
+    lifecycle = {
+      expirePastDueIfVersionMatches: jest.fn().mockResolvedValue(true),
+      expireLapsedIfVersionMatches: jest.fn().mockResolvedValue(true),
+    };
     downgrades = { applyDue: jest.fn().mockResolvedValue(true) };
     reconciliation = { recordFinding: jest.fn() };
     service = new LifecycleReconciliationService(
@@ -167,6 +177,34 @@ describe('LifecycleReconciliationService', () => {
     expect(downgrades.applyDue).not.toHaveBeenCalled();
     expect(reconciliation.recordFinding).toHaveBeenCalledWith(
       expect.objectContaining({ resolution: ReconciliationResolution.QUARANTINED }),
+    );
+  });
+
+  it('expires an active entitlement whose paid window lapsed without renewal', async () => {
+    const lapsed = subscription({
+      status: SubscriptionStatus.ACTIVE,
+      entitlementValidUntil: GRACE_DEADLINE,
+      gracePeriodEndsAt: null,
+    });
+    subscriptions.countLapsedEntitlements.mockResolvedValueOnce(1);
+    subscriptions.findLapsedEntitlements.mockResolvedValueOnce([lapsed]);
+
+    const result = await service.reconcile('run-1', GRACE_DEADLINE);
+
+    expect(result.repairedCount).toBe(1);
+    expect(lifecycle.expireLapsedIfVersionMatches).toHaveBeenCalledWith(
+      lapsed.id,
+      lapsed.userId,
+      lapsed.version,
+      GRACE_DEADLINE,
+      GRACE_DEADLINE,
+      'reconcile:run-1:lapsed:subscription-1',
+    );
+    expect(reconciliation.recordFinding).toHaveBeenCalledWith(
+      expect.objectContaining({
+        classification: ReconciliationClassification.ENTITLEMENT_WINDOW_LAPSED,
+        resolution: ReconciliationResolution.REPAIRED,
+      }),
     );
   });
 });

@@ -4,6 +4,19 @@ import { en } from './en';
 
 export const ja: TranslationDictionary = {
   ...en,
+  userPlan: {
+    ...en.userPlan,
+    planLimits: 'プランの上限',
+    dailyLimitLabel: '1日のトークン',
+    weeklyLimitLabel: '週間トークン',
+    monthlyLimitLabel: '月間トークン',
+    chatsLimitLabel: '1日のチャット数',
+  },
+  userUsage: {
+    ...en.userUsage,
+    adminBypass: '管理者アクセス',
+    adminBypassHint: '管理者ロールでは制限の適用が免除されます。上記のプラン上限は変更されません。',
+  },
   common: {
     ...en.common,
     save: '保存',

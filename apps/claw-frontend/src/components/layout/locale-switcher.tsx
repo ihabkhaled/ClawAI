@@ -36,7 +36,7 @@ export function LocaleSwitcher(): React.ReactElement {
           className="h-9 gap-1 px-2 text-xs font-medium"
           disabled={isPending}
         >
-          {currentConfig?.label.slice(0, 2).toUpperCase() ?? locale.toUpperCase()}
+          {currentConfig?.shortLabel ?? locale.toUpperCase()}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">

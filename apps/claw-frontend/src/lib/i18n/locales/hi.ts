@@ -3297,6 +3297,11 @@ export const hi: TranslationDictionary = {
     modelPrimary: 'प्राथमिक',
     modelCompare: 'तुलना',
     modelOverride: 'सीमा {limit} टोकन/दिन',
+    planLimits: 'योजना सीमाएँ',
+    dailyLimitLabel: 'दैनिक टोकन',
+    weeklyLimitLabel: 'साप्ताहिक टोकन',
+    monthlyLimitLabel: 'मासिक टोकन',
+    chatsLimitLabel: 'प्रतिदिन चैट',
   },
   userUsage: {
     title: 'उपयोग',
@@ -3314,6 +3319,9 @@ export const hi: TranslationDictionary = {
     remaining: '{remaining} शेष',
     unlimited: 'असीमित',
     unlimitedHint: 'आपकी योजना में कोई दैनिक टोकन सीमा नहीं है।',
+    adminBypass: 'व्यवस्थापक पहुँच',
+    adminBypassHint:
+      'आपकी व्यवस्थापक भूमिका सीमा लागू होने से छूट देती है। ऊपर दी गई योजना सीमाएँ अपरिवर्तित रहती हैं।',
   },
   runtimeProgress: {
     metrics: {

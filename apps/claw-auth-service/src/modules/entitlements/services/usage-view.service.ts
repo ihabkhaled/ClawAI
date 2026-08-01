@@ -53,7 +53,10 @@ export class UsageViewService {
   private async resolvePlan(userId: string): Promise<UsagePlanLimits | null> {
     const user = await this.users.findUserById(userId);
     const activePlanId = user?.activePlanId ?? null;
-    return activePlanId === null ? null : this.plans.findById(activePlanId);
+    if (activePlanId === null) {
+      return null;
+    }
+    return (await this.plans.findEffectiveForUser(userId, new Date())) ?? this.plans.findDefault();
   }
 
   private async readWindow(

@@ -8,6 +8,7 @@ import { plansRepository } from '@/repositories/admin/plans.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { TranslateFunction, UsePlansPageResult, UserProfile } from '@/types';
 import { logger, showToast } from '@/utilities';
+import { invalidateUserPlanQueries } from '@/utilities/plan-cache.utility';
 
 export function usePlansPage(): UsePlansPageResult & {
   t: TranslateFunction;
@@ -30,6 +31,8 @@ export function usePlansPage(): UsePlansPageResult & {
 
   const invalidate = useCallback((): void => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.adminPlans.lists() });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.publicPricing.all });
+    void invalidateUserPlanQueries(queryClient);
   }, [queryClient]);
 
   const activateMutation = useMutation({

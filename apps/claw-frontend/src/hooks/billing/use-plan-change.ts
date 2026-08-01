@@ -5,10 +5,10 @@ import { useCallback, useState } from 'react';
 import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { billingRepository } from '@/repositories/billing/billing.repository';
-import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UsePlanChangeReturn } from '@/types/billing-hook.types';
 import type { GatewayCheckoutSession, ProrationQuoteView } from '@/types/billing.types';
 import { resolveBillingErrorMessage } from '@/utilities/billing-error.utility';
+import { invalidateUserPlanQueries } from '@/utilities/plan-cache.utility';
 import { showToast } from '@/utilities/toast.utility';
 
 // Two-step plan change: quote, then confirm.
@@ -63,7 +63,7 @@ export function usePlanChange(): UsePlanChangeReturn {
         return;
       }
       setQuote(null);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
+      await invalidateUserPlanQueries(queryClient);
       showToast.success({ description: t('billing.planChange.scheduled') });
     },
     onError: (mutationError: unknown) => {
@@ -107,7 +107,7 @@ export function usePlanChange(): UsePlanChangeReturn {
   const completeGateway = useCallback(async () => {
     setGatewaySession(null);
     setQuote(null);
-    await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
+    await invalidateUserPlanQueries(queryClient);
     router.replace(ROUTES.BILLING);
     router.refresh();
   }, [queryClient, router]);

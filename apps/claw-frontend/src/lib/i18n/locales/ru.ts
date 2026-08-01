@@ -3318,6 +3318,11 @@ export const ru: TranslationDictionary = {
     modelPrimary: 'Основная',
     modelCompare: 'Сравнение',
     modelOverride: 'Лимит {limit} токенов/день',
+    planLimits: 'Лимиты тарифа',
+    dailyLimitLabel: 'Токены в день',
+    weeklyLimitLabel: 'Токены в неделю',
+    monthlyLimitLabel: 'Токены в месяц',
+    chatsLimitLabel: 'Чаты в день',
   },
   userUsage: {
     title: 'Использование',
@@ -3335,6 +3340,9 @@ export const ru: TranslationDictionary = {
     remaining: 'Осталось {remaining}',
     unlimited: 'Без ограничений',
     unlimitedHint: 'У вашего тарифа нет дневного лимита токенов.',
+    adminBypass: 'Доступ администратора',
+    adminBypassHint:
+      'Роль администратора обходит применение ограничений. Указанные выше лимиты тарифа не меняются.',
   },
   runtimeProgress: {
     metrics: {

@@ -58,6 +58,8 @@ describe('useCancelSubscription', () => {
     const updated = { id: 'subscription-1', cancelAtPeriodEnd: true };
     mockCancel.mockResolvedValue(updated);
     const harness = makeHarness();
+    harness.queryClient.setQueryData(queryKeys.myEntitlements.all, { plan: { id: 'plan-1' } });
+    harness.queryClient.setQueryData(queryKeys.auth.me, { id: 'user-1' });
     const { result } = renderHook(() => useCancelSubscription(), {
       wrapper: harness.wrapper,
     });
@@ -67,6 +69,10 @@ describe('useCancelSubscription', () => {
     await waitFor(() => {
       expect(harness.queryClient.getQueryData(queryKeys.billing.current())).toEqual(updated);
     });
+    expect(harness.queryClient.getQueryState(queryKeys.myEntitlements.all)?.isInvalidated).toBe(
+      true,
+    );
+    expect(harness.queryClient.getQueryState(queryKeys.auth.me)?.isInvalidated).toBe(true);
   });
 
   it('updates the current subscription immediately after resume', async () => {

@@ -19,6 +19,7 @@ import type {
   UserProfile,
 } from '@/types';
 import { logger, showToast } from '@/utilities';
+import { invalidateUserPlanQueries } from '@/utilities/plan-cache.utility';
 
 const toRow = (model: PlanModelAccessView): ModelAccessRowState => ({
   rowKey: crypto.randomUUID(),
@@ -145,6 +146,7 @@ export function useModelAccessPage(): UseModelAccessPageResult & {
       showToast.success({ description: t('adminPlans.modelAccess.saveSucceeded') });
       void queryClient.invalidateQueries({ queryKey: queryKeys.adminPlans.detail(planId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.adminPlans.lists() });
+      void invalidateUserPlanQueries(queryClient);
       goBack();
     },
     onError: (err: Error) => {

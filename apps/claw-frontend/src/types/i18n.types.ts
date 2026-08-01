@@ -3232,6 +3232,11 @@ export type TranslationDictionary = {
     modelPrimary: string;
     modelCompare: string;
     modelOverride: string;
+    planLimits: string;
+    dailyLimitLabel: string;
+    weeklyLimitLabel: string;
+    monthlyLimitLabel: string;
+    chatsLimitLabel: string;
   };
   userUsage: {
     title: string;
@@ -3249,6 +3254,8 @@ export type TranslationDictionary = {
     remaining: string;
     unlimited: string;
     unlimitedHint: string;
+    adminBypass: string;
+    adminBypassHint: string;
   };
   runtimeProgress: {
     metrics: {
@@ -4660,6 +4667,7 @@ export type FlatTranslationKey = {
 export type LocaleConfig = {
   locale: Locale;
   label: string;
+  shortLabel: string;
   dir: Direction;
 };
 

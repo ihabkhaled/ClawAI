@@ -3329,6 +3329,11 @@ export const es: TranslationDictionary = {
     modelPrimary: 'Principal',
     modelCompare: 'Comparar',
     modelOverride: 'Límite {limit} tokens/día',
+    planLimits: 'Límites del plan',
+    dailyLimitLabel: 'Tokens diarios',
+    weeklyLimitLabel: 'Tokens semanales',
+    monthlyLimitLabel: 'Tokens mensuales',
+    chatsLimitLabel: 'Chats por día',
   },
   userUsage: {
     title: 'Uso',
@@ -3346,6 +3351,9 @@ export const es: TranslationDictionary = {
     remaining: '{remaining} restantes',
     unlimited: 'Ilimitado',
     unlimitedHint: 'Tu plan no tiene límite diario de tokens.',
+    adminBypass: 'Acceso de administrador',
+    adminBypassHint:
+      'Tu rol de administrador omite la aplicación de límites. Los límites del plan anteriores no cambian.',
   },
   runtimeProgress: {
     metrics: {

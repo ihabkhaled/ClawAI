@@ -84,11 +84,20 @@ export class EntitlementInboxService {
       planId?: string;
       subscriptionId?: string;
       isFullRefund?: boolean;
+      cancelAtPeriodEnd?: boolean;
     },
   ): Promise<InboxApplyOutcome> {
     if (pattern === EventPattern.BILLING_PAYMENT_REFUNDED && event.isFullRefund === false) {
       await this.repository.markProcessed(event.eventId);
       this.logger.log(`applyClaimed: partial refund ${event.eventId} recorded without revocation`);
+      return 'APPLIED';
+    }
+    if (
+      pattern === EventPattern.BILLING_SUBSCRIPTION_CANCELLED &&
+      event.cancelAtPeriodEnd === true
+    ) {
+      await this.repository.markProcessed(event.eventId);
+      this.logger.log(`applyClaimed: scheduled cancellation ${event.eventId} recorded`);
       return 'APPLIED';
     }
     try {

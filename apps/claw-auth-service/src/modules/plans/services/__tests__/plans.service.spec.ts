@@ -46,6 +46,7 @@ const mockRepo = (): Record<keyof PlansRepository, jest.Mock> => ({
   findById: jest.fn(),
   findBySlug: jest.fn(),
   findDefault: jest.fn(),
+  findEffectiveForUser: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),
   setActive: jest.fn(),
