@@ -46,6 +46,7 @@ const mockRepo = (): Record<keyof PlansRepository, jest.Mock> => ({
   findById: jest.fn(),
   findBySlug: jest.fn(),
   findDefault: jest.fn(),
+  findEffectiveForUser: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),
   setActive: jest.fn(),
@@ -55,6 +56,10 @@ const mockRepo = (): Record<keyof PlansRepository, jest.Mock> => ({
   replaceModelAccess: jest.fn(),
   assignUserToPlan: jest.fn(),
   listUserIdsOnPlan: jest.fn(),
+  findRetirementReplacement: jest.fn(),
+  retirePlan: jest.fn(),
+  listPendingRetirementMigrations: jest.fn(),
+  recordRetirementMigrationOutcome: jest.fn(),
 });
 
 describe('PlansService', () => {
@@ -77,6 +82,55 @@ describe('PlansService', () => {
     repo.findById.mockResolvedValue(freePlan);
     await expect(service.deactivatePlan('plan-free')).rejects.toThrow(/default/);
     expect(repo.setActive).not.toHaveBeenCalled();
+  });
+
+  it('retirePlan migrates users to the deterministic upper replacement', async () => {
+    repo.findById.mockResolvedValue(proPlan);
+    repo.findRetirementReplacement.mockResolvedValue({ ...proPlan, id: 'plan-team', slug: 'team' });
+    repo.retirePlan.mockResolvedValue({
+      sourcePlanId: 'plan-pro',
+      replacementPlanId: 'plan-team',
+      migratedAssignments: 3,
+      billingPending: 2,
+      alreadyRetired: false,
+    });
+
+    const result = await service.retirePlan('plan-pro');
+
+    expect(repo.findRetirementReplacement).toHaveBeenCalledWith('plan-pro');
+    expect(repo.retirePlan).toHaveBeenCalledWith('plan-pro', 'plan-team');
+    expect(result.billingPending).toBe(2);
+  });
+
+  it('retirePlan refuses to retire the default plan', async () => {
+    repo.findById.mockResolvedValue(freePlan);
+    await expect(service.retirePlan('plan-free')).rejects.toThrow(/default/);
+    expect(repo.retirePlan).not.toHaveBeenCalled();
+  });
+
+  it('activatePlan refuses to resurrect a retired plan', async () => {
+    repo.findById.mockResolvedValue({ ...proPlan, lifecycleStatus: 'RETIRED' });
+    await expect(service.activatePlan('plan-pro')).rejects.toThrow(/retired/);
+    expect(repo.setActive).not.toHaveBeenCalled();
+  });
+
+  it('retirePlan replays the persisted replacement without selecting again', async () => {
+    repo.findById.mockResolvedValue({
+      ...proPlan,
+      lifecycleStatus: 'RETIRED',
+      replacementPlanId: 'plan-persisted',
+    });
+    repo.retirePlan.mockResolvedValue({
+      sourcePlanId: 'plan-pro',
+      replacementPlanId: 'plan-persisted',
+      migratedAssignments: 1,
+      billingPending: 1,
+      alreadyRetired: true,
+    });
+    const result = await service.retirePlan('plan-pro');
+    expect(repo.findRetirementReplacement).not.toHaveBeenCalled();
+    expect(repo.retirePlan).toHaveBeenCalledWith('plan-pro', 'plan-persisted');
+    expect(result.alreadyRetired).toBe(true);
   });
 
   it('assignUserToPlan refuses an inactive plan', async () => {

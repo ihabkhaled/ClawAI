@@ -2,6 +2,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../../services/auth.service';
 import { UserRole } from '../../../../common/enums';
+import { SessionClientKind } from '../../enums/session-client-kind.enum';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -33,8 +34,30 @@ describe('AuthController', () => {
     };
     serviceMock.login.mockResolvedValue(expected);
     const result = await controller.login({ email: 'a@b', password: 'p' });
-    expect(serviceMock.login).toHaveBeenCalledWith('a@b', 'p');
+    expect(serviceMock.login).toHaveBeenCalledWith('a@b', 'p', {
+      kind: SessionClientKind.WEB,
+      name: 'ClawAI Web',
+    });
     expect(result).toBe(expected);
+  });
+
+  it('forwards validated VS Code session provenance', async () => {
+    serviceMock.login.mockResolvedValue({
+      tokens: { accessToken: 'a', refreshToken: 'r' },
+      user: { id: 'u1', email: 'a@b' },
+    });
+
+    await controller.login({
+      email: 'a@b',
+      password: 'p',
+      clientKind: SessionClientKind.VSCODE,
+      clientName: 'ClawAI for VS Code',
+    });
+
+    expect(serviceMock.login).toHaveBeenCalledWith('a@b', 'p', {
+      kind: SessionClientKind.VSCODE,
+      name: 'ClawAI for VS Code',
+    });
   });
 
   it('refresh forwards token', async () => {
@@ -45,9 +68,14 @@ describe('AuthController', () => {
     expect(result).toBe(expected);
   });
 
-  it('logout forwards user.id', async () => {
-    await controller.logout({ id: 'u1', email: 'a', role: UserRole.OPERATOR } as never);
-    expect(serviceMock.logout).toHaveBeenCalledWith('u1');
+  it('logout forwards the authenticated user and session IDs', async () => {
+    await controller.logout({
+      id: 'u1',
+      email: 'a',
+      role: UserRole.OPERATOR,
+      sessionId: 'session-1',
+    });
+    expect(serviceMock.logout).toHaveBeenCalledWith('u1', 'session-1');
   });
 
   it('me returns profile from service', async () => {

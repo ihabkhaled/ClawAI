@@ -42,6 +42,12 @@ describe('buildPublicPageMetadata', () => {
       expect.objectContaining({
         locale: 'en_US',
         url: 'https://claw.example/en/features',
+        images: [
+          expect.objectContaining({
+            url: 'https://claw.example/opengraph-image',
+            alt: 'Routing, context, and orchestration features',
+          }),
+        ],
       }),
     );
     expect(metadata.robots).toEqual(expect.objectContaining({ index: true, follow: true }));

@@ -324,6 +324,8 @@ export class ChatMessagesService implements OnModuleInit {
         providerId,
         result.sources,
         Math.max(1, Date.now() - startedAt),
+        result.searchRequestCount,
+        result.fetchRequestCount,
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'unknown';
@@ -351,6 +353,8 @@ export class ChatMessagesService implements OnModuleInit {
       extracted?: string;
     }>,
     latencyMs: number,
+    searchRequestCount: number,
+    fetchRequestCount: number,
   ): ResearchTranscript {
     const sources: ResearchTranscriptSource[] = rawSources.map((source) => ({
       title: source.title,
@@ -365,6 +369,8 @@ export class ChatMessagesService implements OnModuleInit {
       sources,
       latencyMs,
       warnings: [],
+      searchRequestCount,
+      fetchRequestCount,
     };
   }
 
@@ -382,6 +388,8 @@ export class ChatMessagesService implements OnModuleInit {
       sources: [],
       latencyMs,
       warnings,
+      searchRequestCount: 0,
+      fetchRequestCount: 0,
     };
   }
 
@@ -766,13 +774,17 @@ export class ChatMessagesService implements OnModuleInit {
       this.chatThreadsRepository.findById(payload.threadId),
     ]);
     const chronologicalMessages = [...threadMessages].reverse();
+    const routedMessages = this.resolveRoutedMessageWindow(
+      chronologicalMessages,
+      payload.messageId,
+    );
     const threadSettings = this.extractThreadSettings(thread);
-    const fileIds = this.extractFileIdsFromMessages(chronologicalMessages);
-    const latestUserMetadata = this.extractLatestUserMetadata(chronologicalMessages);
-    const effectivePayload = this.applyFollowUpOverrides(payload, thread, chronologicalMessages);
+    const fileIds = this.extractFileIdsFromMessages(routedMessages);
+    const latestUserMetadata = this.extractLatestUserMetadata(routedMessages);
+    const effectivePayload = this.applyFollowUpOverrides(payload, thread, routedMessages);
     const context = await this.contextAssemblyManager.assemble(
       thread?.userId ?? 'system',
-      chronologicalMessages,
+      routedMessages,
       threadSettings,
       thread?.contextPackIds ?? undefined,
       fileIds,
@@ -787,17 +799,11 @@ export class ChatMessagesService implements OnModuleInit {
         threadSettings,
         fileIds,
         thread,
-        chronologicalMessages,
+        routedMessages,
         latestUserMetadata,
       );
     } catch (error: unknown) {
-      await this.handleMessageRoutedFailure(
-        error,
-        payload,
-        thread,
-        chronologicalMessages,
-        startedAt,
-      );
+      await this.handleMessageRoutedFailure(error, payload, thread, routedMessages, startedAt);
       throw error;
     }
   }
@@ -810,9 +816,20 @@ export class ChatMessagesService implements OnModuleInit {
     startedAt: number,
   ): Promise<void> {
     const errorMsg = error instanceof Error ? error.message : 'All providers failed';
+    const errorCode = error instanceof BusinessException ? error.code : undefined;
+    const errorMessageKey = error instanceof BusinessException ? error.messageKey : undefined;
     const failureLatencyMs = Math.max(1, Date.now() - startedAt);
     this.logger.error(`handleMessageRouted: failed for message ${payload.messageId} - ${errorMsg}`);
-    const errorMessage = await this.storeErrorResponse(payload, errorMsg);
+    const errorMessage = await this.storeErrorResponse(
+      payload,
+      errorMsg,
+      errorCode,
+      errorMessageKey,
+    );
+    this.chatStreamService.emitError(payload.threadId, errorMsg, {
+      ...(errorCode === undefined ? {} : { code: errorCode }),
+      ...(errorMessageKey === undefined ? {} : { messageKey: errorMessageKey }),
+    });
     this.publishMessageCompleted(
       payload,
       errorMessage,
@@ -963,8 +980,7 @@ export class ChatMessagesService implements OnModuleInit {
       fallbackProvider: payload['fallbackProvider'] as string | undefined,
       fallbackModel: payload['fallbackModel'] as string | undefined,
       fallbackChain: payload['fallbackChain'] as
-        | Array<{ provider: string; model: string }>
-        | undefined,
+        Array<{ provider: string; model: string }> | undefined,
       timestamp: (payload['timestamp'] as string | undefined) ?? new Date().toISOString(),
       detectedCategory: payload['detectedCategory'] as string | undefined,
       // Phase 6 — workflow live wiring. Routing-service v1 didn't emit
@@ -988,6 +1004,23 @@ export class ChatMessagesService implements OnModuleInit {
     };
   }
 
+  private resolveRoutedMessageWindow(
+    messages: ChatMessage[],
+    routedMessageId: string,
+  ): ChatMessage[] {
+    const routedMessageIndex = messages.findIndex(
+      (message) => message.id === routedMessageId && message.role === 'USER',
+    );
+    if (routedMessageIndex < 0) {
+      throw new BusinessException(
+        'The routed user message is no longer available in the conversation window',
+        'ROUTED_MESSAGE_NOT_FOUND',
+        HttpStatus.CONFLICT,
+      );
+    }
+    return messages.slice(0, routedMessageIndex + 1);
+  }
+
   private extractFileIdsFromMessages(messages: ChatMessage[]): string[] | undefined {
     const latestUserMsg = [...messages].reverse().find((m) => m.role === 'USER');
     const metadata = latestUserMsg?.metadata as Record<string, unknown> | null;
@@ -1002,6 +1035,8 @@ export class ChatMessagesService implements OnModuleInit {
   private async storeErrorResponse(
     payload: MessageRoutedData,
     errorMsg: string,
+    errorCode?: string,
+    errorMessageKey?: string,
   ): Promise<ChatMessage> {
     return this.chatMessagesRepository.create({
       threadId: payload.threadId,
@@ -1012,7 +1047,12 @@ export class ChatMessagesService implements OnModuleInit {
       routingMode: payload.routingMode as RoutingMode,
       routerModel: payload.routerModel ?? null,
       usedFallback: true,
-      metadata: { error: true, sourceMessageId: payload.messageId },
+      metadata: {
+        error: true,
+        sourceMessageId: payload.messageId,
+        ...(errorCode === undefined ? {} : { errorCode }),
+        ...(errorMessageKey === undefined ? {} : { errorMessageKey }),
+      },
     });
   }
 
@@ -1212,12 +1252,16 @@ export class ChatMessagesService implements OnModuleInit {
         sources: [],
         latencyMs: 0,
         warnings: [],
+        searchRequestCount: 0,
+        fetchRequestCount: 0,
       };
     }
     const items = recordGet(bundleRecord, 'items');
     const sources: ResearchTranscriptSource[] = Array.isArray(items)
       ? items
-          .filter((item): item is Record<string, unknown> => item !== null && typeof item === 'object')
+          .filter(
+            (item): item is Record<string, unknown> => item !== null && typeof item === 'object',
+          )
           .map((item) => this.toTranscriptSource(item))
       : [];
     const warningsRaw = recordGet(bundleRecord, 'warnings');
@@ -1230,6 +1274,8 @@ export class ChatMessagesService implements OnModuleInit {
       sources,
       latencyMs: 0,
       warnings,
+      searchRequestCount: 0,
+      fetchRequestCount: 0,
     };
   }
 
@@ -1684,6 +1730,9 @@ export class ChatMessagesService implements OnModuleInit {
     researchRun: ResearchRunResponse | null,
   ): UserMessageMetadata | undefined {
     const metadata: UserMessageMetadata = {};
+    if (typeof dto.clientIntent === 'string' && dto.clientIntent.length > 0) {
+      metadata.clientIntent = dto.clientIntent;
+    }
     if (dto.fileIds && dto.fileIds.length > 0) {
       metadata.fileIds = dto.fileIds;
     }
@@ -1826,10 +1875,10 @@ export class ChatMessagesService implements OnModuleInit {
     if (payload.selectedProvider.startsWith('IMAGE_')) return payload;
     const lastUser = [...messages].reverse().find((m) => m.role === 'USER');
     if (!lastUser) return payload;
-    const meta = lastUser.metadata as Record<string, unknown> | null;
-    const fileIds = Array.isArray(meta?.['fileIds']) ? (meta['fileIds'] as string[]) : [];
+    const meta = lastUser.metadata as UserMessageMetadata | null;
+    const fileIds = Array.isArray(meta?.fileIds) ? meta.fileIds : [];
     if (fileIds.length === 0) return payload;
-    const lower = lastUser.content.toLowerCase();
+    const lower = (meta?.clientIntent ?? lastUser.content).toLowerCase();
     if (!IMAGE_INTENT_PHRASES.some((p) => lower.includes(p))) return payload;
     this.logger.log(
       `Image-from-attachment detected: "${lower.slice(0, 50)}" with ${String(fileIds.length)} files → overriding to IMAGE_GEMINI`,

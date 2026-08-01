@@ -102,6 +102,16 @@ export const fr: TranslationDictionary = {
     feature3Desc:
       'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI et Amazon Bedrock — tout au même endroit.',
   },
+  vscodeAuthorization: {
+    title: 'Autoriser ClawAI pour VS Code',
+    description: 'Autorisez l’agent de codage à utiliser votre compte ClawAI dans VS Code.',
+    requestFor: 'Autorisation demandée par {client}.',
+    approve: 'Autoriser VS Code',
+    approving: 'Autorisation...',
+    successTitle: 'VS Code autorisé',
+    successDescription: 'Revenez dans VS Code. Vous pouvez fermer cet onglet.',
+    errorTitle: 'Impossible de terminer l’autorisation',
+  },
   nav: {
     dashboard: 'Tableau de bord',
     chat: 'Chat',
@@ -245,6 +255,12 @@ export const fr: TranslationDictionary = {
     providerFailed: 'échoué',
     tryingProvider: 'tentative',
     allProvidersFailed: 'Tous les fournisseurs ont échoué à générer une réponse',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'Ce modèle ne peut pas traiter les vidéos jointes. Choisissez Gemini 2.5 Flash ou Pro, ou passez en mode Automatique.',
+      videoAttachmentLocalModelUnavailable:
+        'Les vidéos jointes ne sont pas disponibles en mode Local uniquement ou Confidentialité d’abord, car aucun modèle local compatible avec la vidéo n’est configuré.',
+    },
     imageGeneration: "Génération d'image",
     generatedImage: 'Image générée',
     downloadImage: "Télécharger l'image",
@@ -1924,6 +1940,8 @@ export const fr: TranslationDictionary = {
       title: '{count} sources utilisées',
       expand: 'Afficher les sources',
       sourcesCount: '{count} sources',
+      searchRequests: '{count} recherches',
+      fetchRequests: '{count} récupérations',
     },
     lifecycle: {
       started: 'Recherche sur le web...',
@@ -3322,6 +3340,11 @@ export const fr: TranslationDictionary = {
     modelPrimary: 'Principal',
     modelCompare: 'Comparaison',
     modelOverride: 'Limite {limit} jetons/jour',
+    planLimits: 'Limites du forfait',
+    dailyLimitLabel: 'Jetons par jour',
+    weeklyLimitLabel: 'Jetons par semaine',
+    monthlyLimitLabel: 'Jetons par mois',
+    chatsLimitLabel: 'Discussions par jour',
   },
   userUsage: {
     title: 'Utilisation',
@@ -3340,6 +3363,9 @@ export const fr: TranslationDictionary = {
     remaining: '{remaining} restants',
     unlimited: 'Illimité',
     unlimitedHint: 'Votre forfait n’a pas de limite quotidienne de jetons.',
+    adminBypass: 'Accès administrateur',
+    adminBypassHint:
+      'Votre rôle administrateur contourne l’application des limites. Les limites du forfait ci-dessus restent inchangées.',
   },
   runtimeProgress: {
     metrics: {
@@ -3701,6 +3727,9 @@ export const fr: TranslationDictionary = {
       COMPARE_MODE: 'Mode comparaison',
       JUDGE_MODE: 'Mode arbitrage',
       RESEARCH_MODE: 'Mode recherche',
+      WEB_SEARCH: 'Recherches web',
+      WEB_FETCH: 'Pages web récupérées',
+      WEB_EXTRACT: 'Pages web extraites',
       CRITIC_REVIEW: 'Revue critique',
       WORKSPACES: 'Espaces de travail',
       MEMORY: 'Mémoire',
@@ -3829,6 +3858,8 @@ export const fr: TranslationDictionary = {
       monthlyTokens: 'Quota mensuel',
       ctaFree: 'Commencer gratuitement',
       ctaPaid: 'Choisir ce forfait',
+      temporaryCatalogDisclaimer:
+        'Les tarifs en direct sont temporairement indisponibles. Ces tarifs de secours peuvent être inexacts et changer au rétablissement du service.',
       freeName: 'Free',
       freeTagline: 'Essayez ClawAI avec un petit quota quotidien.',
       freeHighlight1: "Accès aux modèles d'entrée de gamme",
@@ -3913,6 +3944,8 @@ export const fr: TranslationDictionary = {
         lastReviewed: 'Dernière révision',
       },
       modelRoster: {
+        newestTitle: 'Modèles les plus récents du catalogue',
+        newestIntro: 'Un aperçu concis des modèles récemment ajoutés via les connecteurs actuels.',
         title: 'Les modèles auxquels vous avez accès',
         intro:
           'Un seul abonnement couvre tous les fournisseurs ci-dessous. Changez de modèle en cours de conversation, ou laissez ClawAI choisir le meilleur pour chaque message.',

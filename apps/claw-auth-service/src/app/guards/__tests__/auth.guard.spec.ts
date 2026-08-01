@@ -70,6 +70,8 @@ describe('AuthGuard', () => {
         sub: 'user-1',
         email: 'test@example.com',
         role: UserRole.ADMIN,
+        tokenKind: 'user' as const,
+        sessionId: 'session-1',
       };
       verifyAccessToken.mockReturnValue(mockPayload);
 
@@ -84,6 +86,7 @@ describe('AuthGuard', () => {
         id: 'user-1',
         email: 'test@example.com',
         role: UserRole.ADMIN,
+        sessionId: 'session-1',
       });
       expect(verifyAccessToken).toHaveBeenCalledWith(
         'valid-token',

@@ -31,7 +31,14 @@ export class ChargeResolverService {
     gateway: BillingGateway,
   ): Promise<ResolvedCharge> {
     this.logger.debug(`resolve: plan=${planId} interval=${billingInterval} gateway=${gateway}`);
-    const price = await this.catalog.requireActivePrice(planId, billingInterval);
+    const [price, catalog] = await Promise.all([
+      this.catalog.requireActivePrice(planId, billingInterval),
+      this.catalog.listCatalog(),
+    ]);
+    const plan = catalog.find((entry) => entry.id === planId);
+    if (plan === undefined) {
+      throw new BillingException(BillingErrorCode.PLAN_NOT_PURCHASABLE);
+    }
 
     // A zero-amount plan must not reach a gateway at all — some providers
     // accept it and produce a "paid" order for nothing.
@@ -42,9 +49,9 @@ export class ChargeResolverService {
 
     const settlementCurrency = resolveSettlementCurrency(gateway);
     if (settlementCurrency === null || settlementCurrency === price.currency) {
-      return ChargeResolverService.sameCurrency(price);
+      return ChargeResolverService.sameCurrency(price, plan.slug);
     }
-    return this.converted(price, settlementCurrency);
+    return this.converted(price, settlementCurrency, plan.slug);
   }
 
   /**
@@ -60,6 +67,7 @@ export class ChargeResolverService {
     currency: string,
     gateway: BillingGateway,
     planPriceVersionId: string,
+    planSlug: string,
   ): Promise<ResolvedCharge> {
     this.logger.debug(
       `convertQuotedAmount: ${String(amountDueMinor)} ${currency} gateway=${gateway}`,
@@ -71,17 +79,21 @@ export class ChargeResolverService {
     const price = { id: planPriceVersionId, amountMinor: amountDueMinor, currency };
     const settlementCurrency = resolveSettlementCurrency(gateway);
     if (settlementCurrency === null || settlementCurrency === currency) {
-      return ChargeResolverService.sameCurrency(price);
+      return ChargeResolverService.sameCurrency(price, planSlug);
     }
-    return this.converted(price, settlementCurrency);
+    return this.converted(price, settlementCurrency, planSlug);
   }
 
-  private static sameCurrency(price: {
-    id: string;
-    amountMinor: number;
-    currency: string;
-  }): ResolvedCharge {
+  private static sameCurrency(
+    price: {
+      id: string;
+      amountMinor: number;
+      currency: string;
+    },
+    planSlug: string,
+  ): ResolvedCharge {
     return {
+      planSlug,
       planPriceVersionId: price.id,
       baseAmountMinor: price.amountMinor,
       baseCurrency: price.currency,
@@ -95,6 +107,7 @@ export class ChargeResolverService {
   private async converted(
     price: { id: string; amountMinor: number; currency: string },
     settlementCurrency: string,
+    planSlug: string,
   ): Promise<ResolvedCharge> {
     const quote = await this.fx.quote(price.amountMinor, price.currency, settlementCurrency);
     this.logger.log(
@@ -102,6 +115,7 @@ export class ChargeResolverService {
         `${String(quote.convertedAmountMinor)} ${settlementCurrency} quote=${quote.quoteId}`,
     );
     return {
+      planSlug,
       planPriceVersionId: price.id,
       baseAmountMinor: price.amountMinor,
       baseCurrency: price.currency,

@@ -75,8 +75,19 @@ export function PricingSection({
           {controller.t('billing.plans.empty')}
         </p>
       ) : null}
+      {controller.isFallback ? (
+        <div
+          role="status"
+          className="border-warning/40 bg-warning/10 text-foreground mx-auto mt-8 flex max-w-4xl flex-wrap items-center justify-center gap-3 rounded-lg border px-4 py-3 text-center text-sm"
+        >
+          <span>{controller.t('marketing.pricing.temporaryCatalogDisclaimer')}</span>
+          <Button type="button" size="sm" variant="outline" onClick={controller.retry}>
+            {controller.t('common.retry')}
+          </Button>
+        </div>
+      ) : null}
       {!controller.isLoading && !controller.isError && plans.length > 0 ? (
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-10 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {plans.map((plan) => (
             <PlanTierCard key={plan.id} plan={plan} isYearly={controller.isYearly} />
           ))}

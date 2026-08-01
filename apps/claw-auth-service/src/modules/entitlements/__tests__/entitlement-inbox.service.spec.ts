@@ -161,6 +161,29 @@ describe('EntitlementInboxService', () => {
     );
   });
 
+  it('accepts a root cancellation with a null causation id', async () => {
+    const outcome = await service.handle(
+      'billing.subscription.cancelled',
+      validEvent({ eventId: 'evt-cancel', causationId: null, cancelAtPeriodEnd: false }),
+    );
+
+    expect(outcome).toBe('APPLIED');
+    expect(applier.apply).toHaveBeenCalledWith(
+      expect.objectContaining({ pattern: 'billing.subscription.cancelled' }),
+    );
+  });
+
+  it('records a scheduled cancellation without revoking paid access', async () => {
+    const outcome = await service.handle(
+      'billing.subscription.cancelled',
+      validEvent({ eventId: 'evt-scheduled', causationId: null, cancelAtPeriodEnd: true }),
+    );
+
+    expect(outcome).toBe('APPLIED');
+    expect(repository.markProcessed).toHaveBeenCalledWith('evt-scheduled');
+    expect(applier.apply).not.toHaveBeenCalled();
+  });
+
   it('recognizes an applied downgrade as a paid entitlement plan change', () => {
     expect(ENTITLEMENT_GRANTING_PATTERNS).toContain('billing.subscription.downgraded');
   });

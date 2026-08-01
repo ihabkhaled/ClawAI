@@ -4,6 +4,7 @@ import { type ReactElement, type ReactNode } from 'react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { PUBLIC_PRICING_FALLBACK_PLANS } from '@/constants/public-pricing-fallback.constants';
 import { usePublicPricing } from '@/hooks/marketing/use-public-pricing';
 
 const mockList = vi.fn();
@@ -47,7 +48,9 @@ describe('usePublicPricing', () => {
   it('does not repeat a server-side catalog failure until the visitor retries', async () => {
     const { result } = renderHook(() => usePublicPricing(null), { wrapper: makeWrapper() });
 
-    expect(result.current.isError).toBe(true);
+    expect(result.current.isError).toBe(false);
+    expect(result.current.isFallback).toBe(true);
+    expect(result.current.plans).toEqual(PUBLIC_PRICING_FALLBACK_PLANS);
     expect(mockList).not.toHaveBeenCalled();
 
     await act(async () => {
@@ -55,5 +58,12 @@ describe('usePublicPricing', () => {
     });
 
     expect(mockList).toHaveBeenCalledOnce();
+  });
+
+  it('keeps a successful empty catalog authoritative instead of replacing it with fallback plans', async () => {
+    const { result } = renderHook(() => usePublicPricing([]), { wrapper: makeWrapper() });
+
+    expect(result.current.plans).toEqual([]);
+    expect(result.current.isFallback).toBe(false);
   });
 });

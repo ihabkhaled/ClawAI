@@ -101,6 +101,16 @@ export const en: TranslationDictionary = {
     feature3Desc:
       'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI and Amazon Bedrock — all in one place.',
   },
+  vscodeAuthorization: {
+    title: 'Authorize ClawAI for VS Code',
+    description: 'Allow the coding agent to use your ClawAI account in VS Code.',
+    requestFor: 'Authorization requested by {client}.',
+    approve: 'Authorize VS Code',
+    approving: 'Authorizing...',
+    successTitle: 'VS Code authorized',
+    successDescription: 'Return to VS Code. This browser tab can now be closed.',
+    errorTitle: 'Authorization could not be completed',
+  },
   nav: {
     dashboard: 'Dashboard',
     chat: 'Chat',
@@ -244,6 +254,12 @@ export const en: TranslationDictionary = {
     providerFailed: 'failed',
     tryingProvider: 'trying',
     allProvidersFailed: 'All providers failed to generate a response',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'This model cannot process video attachments. Choose Gemini 2.5 Flash or Pro, or switch to Auto.',
+      videoAttachmentLocalModelUnavailable:
+        'Video attachments are not available in local-only or privacy-first mode because no local video-capable model is configured.',
+    },
     imageGeneration: 'Image Generation',
     generatedImage: 'Generated Image',
     downloadImage: 'Download Image',
@@ -1879,6 +1895,8 @@ export const en: TranslationDictionary = {
       title: 'Used {count} sources',
       expand: 'Show sources',
       sourcesCount: '{count} sources',
+      searchRequests: '{count} searches',
+      fetchRequests: '{count} fetches',
     },
     lifecycle: {
       started: 'Searching the web...',
@@ -3260,6 +3278,11 @@ export const en: TranslationDictionary = {
     modelPrimary: 'Primary',
     modelCompare: 'Compare',
     modelOverride: 'Limit {limit} tokens/day',
+    planLimits: 'Plan limits',
+    dailyLimitLabel: 'Daily tokens',
+    weeklyLimitLabel: 'Weekly tokens',
+    monthlyLimitLabel: 'Monthly tokens',
+    chatsLimitLabel: 'Chats per day',
   },
   userUsage: {
     title: 'Usage',
@@ -3277,6 +3300,9 @@ export const en: TranslationDictionary = {
     remaining: '{remaining} remaining',
     unlimited: 'Unlimited',
     unlimitedHint: 'Your plan has no daily token limit.',
+    adminBypass: 'Admin access',
+    adminBypassHint:
+      'Your administrator role bypasses enforcement. The plan limits above remain unchanged.',
   },
   runtimeProgress: {
     metrics: {
@@ -3628,6 +3654,9 @@ export const en: TranslationDictionary = {
       COMPARE_MODE: 'Compare mode',
       JUDGE_MODE: 'Judge mode',
       RESEARCH_MODE: 'Research mode',
+      WEB_SEARCH: 'Web searches',
+      WEB_FETCH: 'Web pages fetched',
+      WEB_EXTRACT: 'Web pages extracted',
       CRITIC_REVIEW: 'Critic review',
       WORKSPACES: 'Workspaces',
       MEMORY: 'Memory',
@@ -3751,6 +3780,8 @@ export const en: TranslationDictionary = {
       monthlyTokens: 'Monthly allowance',
       ctaFree: 'Start free',
       ctaPaid: 'Choose this plan',
+      temporaryCatalogDisclaimer:
+        'Live pricing is temporarily unavailable. These fallback prices may be inaccurate and can change when service returns.',
       freeName: 'Free',
       freeTagline: 'Try ClawAI with a small daily allowance.',
       freeHighlight1: 'Access to entry-tier models',
@@ -3831,6 +3862,9 @@ export const en: TranslationDictionary = {
         lastReviewed: 'Last reviewed',
       },
       modelRoster: {
+        newestTitle: 'Newest models in the catalog',
+        newestIntro:
+          'A concise snapshot of recently added models available through current connectors.',
         title: 'The models you get',
         intro:
           'One subscription covers every provider below. Switch models mid-conversation, or let ClawAI pick the best one for each message.',

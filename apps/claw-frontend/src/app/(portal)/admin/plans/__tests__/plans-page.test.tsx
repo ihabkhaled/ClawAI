@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AdminPlansPage from '@/app/(portal)/admin/plans/page';
+import { PlanLifecycleStatus } from '@/enums';
 import type { PlanView, UsePlansPageResult } from '@/types';
 
 const mockHook = vi.fn();
@@ -22,6 +23,9 @@ const samplePlan = {
   isDefault: false,
   isActive: true,
   isPublic: true,
+  lifecycleStatus: PlanLifecycleStatus.ACTIVE,
+  replacementPlanId: null,
+  retiredAt: null,
   dailyTokenQuota: 100000,
   monthlyTokenQuota: null,
   maxChatsPerDay: null,
@@ -60,6 +64,10 @@ function baseHook(overrides: Partial<HookShape> = {}): HookShape {
     onActivate: vi.fn(),
     onDeactivate: vi.fn(),
     onSetDefault: vi.fn(),
+    retirementCandidate: null,
+    onRequestRetirement: vi.fn(),
+    onCancelRetirement: vi.fn(),
+    onConfirmRetirement: vi.fn(),
     onRetry: vi.fn(),
     ...overrides,
   } as HookShape;

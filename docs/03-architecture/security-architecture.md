@@ -282,7 +282,7 @@ Rate limiting prevents abuse and ensures fair resource usage across all services
 Default: 100 requests per minute per IP
 Configurable via:
   THROTTLE_TTL=60000    (time window in milliseconds)
-  THROTTLE_LIMIT=100    (max requests per window)
+  THROTTLE_LIMIT=2500    (max requests per window)
 ```
 
 ### Implementation

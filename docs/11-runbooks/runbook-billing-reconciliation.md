@@ -77,6 +77,21 @@ provider payloads, payer details, or lock owner tokens into logs or tickets.
 - The billing dashboard and the affected user's subscription agree with the
   verified gateway state.
 
+### Retired-plan migrations
+
+The owner-locked reconciliation run also polls at most 50 pending retirement
+migrations from auth-service through the service-authenticated internal API.
+Payment verifies the subscription id, user id, and source plan before freezing
+the replacement plan's active price for the subscription's current interval.
+The replacement becomes effective at `current_period_end`; no charge or credit
+is created during the paid period.
+
+A pre-existing scheduled plan choice is a user override and is never replaced:
+the migration is reported `SUPERSEDED`. A compatible optimistic update is
+reported `BILLING_SCHEDULED`; a validated scheduling failure is reported with
+the sanitized `PLAN_RETIREMENT_SCHEDULE_FAILED` code. Outcome writes in auth
+are pending-only compare-and-set operations, so replay is idempotent.
+
 ## Escalate
 
 Escalate when the provider result is ambiguous, a full refund/chargeback and

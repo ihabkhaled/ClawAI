@@ -54,6 +54,7 @@ export class SearxngAdapter implements SearchAdapter {
         ? { time_range: request.filters['timeRange'] as string }
         : {}),
     });
+    await context.onNetworkCall?.();
     const response = await fetch(`${this.buildUrl(context.baseUrl)}?${params.toString()}`, {
       headers: this.buildHeaders(context),
       signal: AbortSignal.timeout(context.timeoutMs),

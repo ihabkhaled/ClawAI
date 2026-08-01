@@ -5,6 +5,7 @@ import type { OutboxRepository } from '../../../outbox/repositories/outbox.repos
 import type { ProrationQuoteView } from '../../../billing/types/proration.types';
 import { ScheduledDowngradeService } from '../scheduled-downgrade.service';
 import type { Subscription } from '../../../../generated/prisma';
+import { ScheduledPlanChangeReason } from '../../enums/scheduled-plan-change-reason.enum';
 
 function subscription(overrides: Partial<Subscription> = {}): Subscription {
   return {
@@ -35,6 +36,7 @@ function subscription(overrides: Partial<Subscription> = {}): Subscription {
     scheduledAmountMinor: 1000,
     scheduledBillingInterval: 'MONTHLY',
     scheduledEffectiveAt: new Date('2026-08-01T00:00:00.000Z'),
+    scheduledChangeReason: ScheduledPlanChangeReason.USER_REQUESTED_DOWNGRADE,
     version: 4,
     uniqueActiveKey: 'user-1',
     createdAt: new Date('2026-07-01T00:00:00.000Z'),
@@ -95,6 +97,7 @@ describe('ScheduledDowngradeService', () => {
         scheduledAmountMinor: null,
         scheduledBillingInterval: null,
         scheduledEffectiveAt: null,
+        scheduledChangeReason: null,
       }),
       quote(),
     );
@@ -104,6 +107,7 @@ describe('ScheduledDowngradeService', () => {
       data: expect.objectContaining({
         scheduledAmountMinor: 1000,
         scheduledBillingInterval: 'MONTHLY',
+        scheduledChangeReason: ScheduledPlanChangeReason.USER_REQUESTED_DOWNGRADE,
       }),
     });
   });
@@ -148,6 +152,40 @@ describe('ScheduledDowngradeService', () => {
       service.applyDue(subscription(), new Date('2026-08-01T00:00:00.000Z'), 'run-1'),
     ).resolves.toBe(false);
     expect(outbox.enqueue).not.toHaveBeenCalled();
+  });
+
+  it('emits an upgrade event when a retired plan replacement becomes effective', async () => {
+    await service.applyDue(
+      subscription({ scheduledChangeReason: ScheduledPlanChangeReason.PLAN_RETIREMENT }),
+      new Date('2026-08-01T00:00:00.000Z'),
+      'retirement:migration-1',
+    );
+
+    expect(outbox.enqueue).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ pattern: EventPattern.BILLING_SUBSCRIPTION_UPGRADED }),
+    );
+  });
+
+  it('clears a retirement schedule when a zero-amount upgrade takes effect immediately', async () => {
+    await service.applyImmediately(
+      subscription({ scheduledChangeReason: ScheduledPlanChangeReason.PLAN_RETIREMENT }),
+      { ...quote(), isScheduledForPeriodEnd: false },
+    );
+
+    expect(update).toHaveBeenCalledWith({
+      where: { id: 'subscription-1' },
+      data: expect.objectContaining({
+        planId: 'plan-starter',
+        scheduledPlanId: null,
+        scheduledPlanSlug: null,
+        scheduledPlanPriceVersionId: null,
+        scheduledAmountMinor: null,
+        scheduledBillingInterval: null,
+        scheduledEffectiveAt: null,
+        scheduledChangeReason: null,
+      }),
+    });
   });
 
   it('quarantines an incomplete scheduled snapshot before opening a transaction', async () => {

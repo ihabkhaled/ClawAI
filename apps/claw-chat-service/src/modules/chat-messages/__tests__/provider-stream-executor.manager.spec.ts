@@ -71,7 +71,7 @@ describe('ProviderStreamExecutor — rich final metrics', () => {
 
     const metricsEvents = collectMetricsEvents(captured);
     expect(metricsEvents.length).toBeGreaterThan(0);
-    const finalMetrics = metricsEvents[metricsEvents.length - 1]?.metrics;
+    const finalMetrics = metricsEvents.at(-1)?.metrics;
     expect(finalMetrics).toBeDefined();
     expect(finalMetrics?.modelLoadMs).toBe(500);
     expect(finalMetrics?.promptEvalMs).toBe(200);
@@ -94,7 +94,7 @@ describe('ProviderStreamExecutor — rich final metrics', () => {
     await executor.run(buildInput());
 
     const metricsEvents = collectMetricsEvents(captured);
-    const finalMetrics = metricsEvents[metricsEvents.length - 1]?.metrics;
+    const finalMetrics = metricsEvents.at(-1)?.metrics;
     expect(finalMetrics?.stageTimings).toBeDefined();
     const timings = finalMetrics?.stageTimings ?? {};
     expect(timings[AiStreamStage.CONNECTING_PROVIDER]).toBeDefined();
@@ -120,7 +120,7 @@ describe('ProviderStreamExecutor — rich final metrics', () => {
     await executor.run(buildInput({ protocol: AiStreamProtocol.OPENAI_SSE }));
 
     const metricsEvents = collectMetricsEvents(captured);
-    const finalMetrics = metricsEvents[metricsEvents.length - 1]?.metrics;
+    const finalMetrics = metricsEvents.at(-1)?.metrics;
     expect(finalMetrics?.modelLoadMs).toBeUndefined();
     expect(finalMetrics?.promptEvalMs).toBeUndefined();
     expect(finalMetrics?.generationMs).toBeUndefined();
@@ -142,8 +142,36 @@ describe('ProviderStreamExecutor — rich final metrics', () => {
     await executor.run(buildInput());
 
     const metricsEvents = collectMetricsEvents(captured);
-    const finalMetrics = metricsEvents[metricsEvents.length - 1]?.metrics;
+    const finalMetrics = metricsEvents.at(-1)?.metrics;
     expect(finalMetrics?.bottleneck?.stage).toBe('modelLoad');
     expect(finalMetrics?.bottleneck?.percentOfTotal).toBeGreaterThan(0.8);
+  });
+
+  it('stops a simulated buffered replay when the run is cancelled', async () => {
+    jest.useFakeTimers();
+    try {
+      const controller = new AbortController();
+      const fullContent = 'A cancellable buffered response. '.repeat(30);
+      const replay = executor.runSimulated({
+        threadId: 'thread-cancel',
+        messageId: 'message-cancel',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        fullContent,
+        startMs: Date.now(),
+        promptTokensEstimate: 20,
+        abortSignal: controller.signal,
+      });
+      await Promise.resolve();
+      controller.abort();
+      await jest.runAllTimersAsync();
+
+      const result = await replay;
+
+      expect(result.cancelled).toBe(true);
+      expect(result.content.length).toBeLessThan(fullContent.length);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

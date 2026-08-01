@@ -95,6 +95,7 @@ export type StartPlanChangeCheckoutInput = {
 // Server-resolved money for a checkout. Produced from an immutable price
 // version plus, for a non-USD gateway, a bound FX quote.
 export type ResolvedCharge = {
+  planSlug: string;
   planPriceVersionId: string;
   baseAmountMinor: number;
   baseCurrency: string;

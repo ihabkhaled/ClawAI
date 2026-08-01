@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { PlanFeatureKey } from '../../../generated/prisma';
+
 export const reserveQuotaSchema = z.object({
   userId: z.string().min(1).max(64),
   estimatedTokens: z.number().int().min(0).max(10_000_000),
@@ -22,3 +24,10 @@ export const releaseQuotaSchema = z.object({
   estimatedTokens: z.number().int().min(0).max(10_000_000),
 });
 export type ReleaseQuotaDto = z.infer<typeof releaseQuotaSchema>;
+
+export const consumeFeatureUsageSchema = z.object({
+  userId: z.string().min(1).max(64),
+  feature: z.nativeEnum(PlanFeatureKey),
+  requestId: z.string().min(1).max(200),
+});
+export type ConsumeFeatureUsageDto = z.infer<typeof consumeFeatureUsageSchema>;

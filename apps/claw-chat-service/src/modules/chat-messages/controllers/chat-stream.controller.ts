@@ -1,6 +1,26 @@
-import { Controller, Logger, MessageEvent, Param, Post, Sse } from '@nestjs/common';
+import {
+  Controller,
+  Logger,
+  MessageEvent,
+  Param,
+  ParseBoolPipe,
+  Post,
+  Query,
+  Sse,
+} from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
-import { concat, filter, from, map, Observable, switchMap } from 'rxjs';
+import {
+  endWith,
+  from,
+  ignoreElements,
+  interval,
+  map,
+  merge,
+  Observable,
+  share,
+  switchMap,
+  takeUntil,
+} from 'rxjs';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { SkipLogging } from '../../../app/decorators/skip-logging.decorator';
 import { type AuthenticatedUser } from '../../../common/types';
@@ -23,6 +43,7 @@ export class ChatStreamController {
   stream(
     @Param('threadId') threadId: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Query('replay', new ParseBoolPipe({ optional: true })) replay?: boolean,
   ): Observable<MessageEvent> {
     this.logger.debug(`SSE connection opened for thread ${threadId} by user ${user.id}`);
     // Ownership is asserted before any event is replayed/streamed, so a user
@@ -30,11 +51,13 @@ export class ChatStreamController {
     // observable, closing the SSE connection.
     return from(this.streamControl.assertOwnership(threadId, user.id)).pipe(
       switchMap(() => {
-        const replayEvents = from(this.chatStreamService.getRecentEvents(threadId));
-        const liveEvents = this.chatStreamService.eventBus.pipe(
-          filter((event) => event.threadId === threadId),
+        const events = this.chatStreamService.streamEvents(threadId, replay).pipe(share());
+        const completed = events.pipe(ignoreElements(), endWith(null));
+        const heartbeat = interval(15_000).pipe(
+          map(() => ({ type: 'HEARTBEAT' })),
+          takeUntil(completed),
         );
-        return concat(replayEvents, liveEvents);
+        return merge(events, heartbeat);
       }),
       map((event): MessageEvent => ({ data: JSON.stringify(event) })),
     );

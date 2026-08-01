@@ -1,11 +1,18 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { env, execPath } from 'node:process';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 
 import { repoPath } from '../lib/repo.mjs';
+
+function filesUnder(directory) {
+  return readdirSync(directory).flatMap((name) => {
+    const path = `${directory}/${name}`;
+    return statSync(path).isDirectory() ? filesUnder(path) : [path];
+  });
+}
 
 test('frontend Vercel install includes declared workspaces without changing backend installs', () => {
   const manifest = JSON.parse(readFileSync(repoPath('deploy/vercel/projects.json'), 'utf8'));
@@ -13,10 +20,7 @@ test('frontend Vercel install includes declared workspaces without changing back
   const auth = manifest.projects.find((project) => project.key === 'auth');
   const generated = JSON.parse(readFileSync(repoPath('apps/claw-frontend/vercel.json'), 'utf8'));
 
-  assert.equal(
-    frontend.installCommand,
-    'cd ../.. && npm ci',
-  );
+  assert.equal(frontend.installCommand, 'cd ../.. && npm ci');
   assert.equal(auth.installCommand, 'cd ../.. && npm ci');
   assert.equal(generated.installCommand, frontend.installCommand);
   assert.equal(generated.git.deploymentEnabled, true);
@@ -67,6 +71,14 @@ test('frontend Vercel build compiles only its declared shared workspace dependen
     Object.keys(declaredDependencies).filter((name) => name.startsWith('@claw/')),
     ['@claw/shared-types'],
   );
+
+  const workspaceImports = filesUnder(repoPath('apps/claw-frontend/src'))
+    .filter((path) => /\.[cm]?[jt]sx?$/u.test(path))
+    .flatMap((path) => {
+      const source = readFileSync(path, 'utf8');
+      return source.includes("from '@claw/") || source.includes('from "@claw/') ? [path] : [];
+    });
+  assert.deepEqual(workspaceImports, [], 'frontend source imports undeclared @claw workspaces');
 });
 
 test('Vercel preserves the frontend build cache without changing local build behavior', () => {

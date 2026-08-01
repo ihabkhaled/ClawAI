@@ -17,6 +17,7 @@ import { HealthModule } from '../modules/health/health.module';
 import { ResearchModule } from '../modules/research/research.module';
 import { ScrapeModule } from '../modules/scrape/scrape.module';
 import { SearchModule } from '../modules/search/search.module';
+import { ResearchUsageModule } from '../common/services/research-usage.module';
 
 @Module({
   imports: [
@@ -27,7 +28,19 @@ import { SearchModule } from '../modules/search/search.module';
             ? { target: 'pino-pretty', options: { colorize: true } }
             : undefined,
         level: process.env['NODE_ENV'] !== 'production' ? 'debug' : 'info',
-        autoLogging: true,
+        customLogLevel: (req, res, error) => {
+          const isRoutineHealth = (req.url ?? '').split('?')[0] === '/api/v1/health';
+          if (isRoutineHealth && res.statusCode < 400 && error === undefined) {
+            return 'silent';
+          }
+          if (res.statusCode >= 500 || error !== undefined) {
+            return 'error';
+          }
+          if (res.statusCode >= 400) {
+            return 'warn';
+          }
+          return 'info';
+        },
         redact: {
           paths: [
             'req.headers.authorization',
@@ -56,10 +69,11 @@ import { SearchModule } from '../modules/search/search.module';
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60_000),
-        limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+        limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
       },
     ]),
     EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
+    ResearchUsageModule,
     PrismaModule,
     RedisModule,
     HealthModule,

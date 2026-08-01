@@ -9,6 +9,7 @@ import {
 import { Response } from 'express';
 import { BusinessException } from '../../common/errors';
 import { ErrorResponseBody } from './types/error-response-body.type';
+import type { MiddlewareHttpError } from './types/middleware-http-error.type';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -42,7 +43,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         message = exception.message;
       }
     } else if (exception instanceof Error) {
-      this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
+      const middlewareError = exception as MiddlewareHttpError;
+      const middlewareStatus = middlewareError.statusCode ?? middlewareError.status;
+      if (
+        typeof middlewareStatus === 'number' &&
+        middlewareStatus >= 400 &&
+        middlewareStatus < 600
+      ) {
+        status = middlewareStatus;
+        message = exception.message;
+        code = middlewareError.type;
+      } else {
+        this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
+      }
     } else {
       this.logger.error('Unknown exception thrown', String(exception));
     }

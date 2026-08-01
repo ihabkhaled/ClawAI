@@ -1,6 +1,12 @@
 import * as jwt from 'jsonwebtoken';
 import { Logger } from '@nestjs/common';
-import { JWT_ALGORITHM } from '@claw/shared-constants';
+import {
+  JWT_ALGORITHM,
+  USER_JWT_AUDIENCE,
+  USER_JWT_ISSUER,
+  USER_TOKEN_KIND,
+} from '@claw/shared-constants';
+import { type UserAccessTokenPayload, UserRole } from '@claw/shared-types';
 
 const logger = new Logger('JwtVerifier');
 
@@ -31,4 +37,42 @@ export function verifyAccessToken<TPayload extends object>(
     logger.error(`verifyAccessToken: failed — ${(error as Error).message}`);
     throw error;
   }
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
+
+function isUserRole(value: unknown): value is UserRole {
+  return (
+    value === UserRole.ADMIN ||
+    value === UserRole.USER ||
+    value === UserRole.OPERATOR ||
+    value === UserRole.VIEWER
+  );
+}
+
+function isUserAccessTokenPayload(value: string | jwt.JwtPayload): value is UserAccessTokenPayload {
+  return (
+    typeof value !== 'string' &&
+    isNonEmptyString(value.sub) &&
+    isNonEmptyString(value.email) &&
+    isUserRole(value.role) &&
+    value.tokenKind === USER_TOKEN_KIND &&
+    isNonEmptyString(value.sessionId)
+  );
+}
+
+export function verifyUserAccessToken(token: string, secret: string): UserAccessTokenPayload {
+  const decoded = jwt.verify(token, secret, {
+    algorithms: [JWT_ALGORITHM],
+    audience: USER_JWT_AUDIENCE,
+    issuer: USER_JWT_ISSUER,
+  });
+
+  if (!isUserAccessTokenPayload(decoded)) {
+    throw new jwt.JsonWebTokenError('Invalid user access token payload');
+  }
+
+  return decoded;
 }

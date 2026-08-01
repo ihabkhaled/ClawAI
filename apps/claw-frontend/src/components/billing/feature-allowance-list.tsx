@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 
 import { Separator } from '@/components/ui/separator';
 import type { FeatureAllowanceListProps } from '@/types/billing-component.types';
-import { formatQuotaLimit } from '@/utilities/billing.utility';
+import { formatFeatureAllowanceUsage } from '@/utilities/billing.utility';
 
 export function FeatureAllowanceList({
   features,
@@ -32,12 +32,7 @@ export function FeatureAllowanceList({
                 "3 of 5 used" is the difference between planning and being cut
                 off mid-task. */}
             <span className="text-muted-foreground">
-              {allowance.limit === null
-                ? t('billing.quota.unlimited')
-                : t('billing.features.usedOfLimit', {
-                    used: allowance.used.toLocaleString(),
-                    limit: formatQuotaLimit(allowance.limit, t),
-                  })}
+              {formatFeatureAllowanceUsage(allowance, t)}
             </span>
           </li>
         ))}

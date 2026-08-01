@@ -1,7 +1,6 @@
-export interface TokenPair {
-  accessToken: string;
-  refreshToken: string;
-}
+import type { TokenPair } from './token-session.types';
+
+export type { TokenPair } from './token-session.types';
 
 export interface AuthUserSummary {
   id: string;

@@ -29,6 +29,16 @@ export type FileWithChunks = File & {
   chunks: FileChunk[];
 };
 
+export const VIDEO_MIME_TYPES = [
+  'video/mp4',
+  'video/quicktime',
+  'video/mov',
+  'video/webm',
+  'video/x-msvideo',
+  'video/avi',
+  'video/mpeg',
+] as const;
+
 export const ALLOWED_MIME_TYPES = [
   // Text & documents
   'text/plain',
@@ -86,6 +96,7 @@ export const ALLOWED_MIME_TYPES = [
   'image/webp',
   'image/gif',
   'image/svg+xml',
+  ...VIDEO_MIME_TYPES,
   // Archives (expanded server-side via ZipExpansionManager — Slice C backend 2)
   'application/zip',
   'application/x-zip-compressed',

@@ -2,9 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
   BillingErrorCode,
+  type BillingSubscriptionUpgradedPayload,
   CheckoutSessionStatus,
+  EntitlementGrantType,
   EventPattern,
   PaymentTransactionType,
+  ProrationQuoteStatus,
   SubscriptionStatus,
 } from '@claw/shared-types';
 
@@ -16,10 +19,14 @@ import { resolveUniqueActiveKey } from '../../../common/utilities/subscription-s
 import { BILLING_EVENT_SCHEMA_VERSION, PAYMENT_PRODUCER } from '../constants/billing.constants';
 import { BillingRecordService } from './billing-record.service';
 import {
+  type ActivatePlanChangeInput,
   type ActivateSubscriptionInput,
   type ActivationResult,
+  type PaidPlanChangeState,
   type ReverseSubscriptionInput,
 } from '../types/subscription-lifecycle.types';
+import { type Prisma } from '../../../generated/prisma';
+import { type RecordedCharge } from '../types/billing-record.types';
 
 // Commits the subscription, the checkout session and the entitlement event in
 // ONE database transaction.
@@ -147,6 +154,206 @@ export class SubscriptionLifecycleService {
         transactionId: charge.transactionId,
         invoiceNumber: charge.invoiceNumber,
       };
+    });
+  }
+
+  async activatePlanChangeFromVerifiedPayment(
+    input: ActivatePlanChangeInput,
+  ): Promise<ActivationResult> {
+    this.logger.debug(`activatePlanChangeFromVerifiedPayment: session=${input.checkoutSessionId}`);
+    if (!input.paymentVerified) {
+      this.logger.error('activatePlanChangeFromVerifiedPayment: payment was not verified');
+      throw new BillingException(BillingErrorCode.PAYMENT_NOT_VERIFIED);
+    }
+    return this.prisma.$transaction(async (tx) => {
+      const state = await this.requirePaidPlanChange(tx, input);
+      await this.applyPaidPlanChange(tx, input, state);
+      const charge = await this.recordPlanChangeCharge(tx, input, state);
+      await this.enqueuePaidPlanChange(tx, input, state);
+      return {
+        subscriptionId: state.subscription.id,
+        transactionId: charge.transactionId,
+        invoiceNumber: charge.invoiceNumber,
+      };
+    });
+  }
+
+  private async requirePaidPlanChange(
+    tx: Prisma.TransactionClient,
+    input: ActivatePlanChangeInput,
+  ): Promise<PaidPlanChangeState> {
+    const [subscription, quote] = await Promise.all([
+      tx.subscription.findUnique({ where: { id: input.existingSubscriptionId } }),
+      tx.prorationQuote.findUnique({ where: { id: input.prorationQuoteId } }),
+    ]);
+    if (
+      subscription === null ||
+      quote === null ||
+      !this.matchesPaidPlanChange(input, subscription, quote)
+    ) {
+      throw new BillingException(BillingErrorCode.SUBSCRIPTION_CHANGE_CONFLICT);
+    }
+    return { subscription, quote };
+  }
+
+  private matchesPaidPlanChange(
+    input: ActivatePlanChangeInput,
+    subscription: PaidPlanChangeState['subscription'],
+    quote: PaidPlanChangeState['quote'],
+  ): boolean {
+    return (
+      this.matchesPaidPlanChangeSource(input, subscription, quote) &&
+      this.matchesPaidPlanChangeTarget(input, quote)
+    );
+  }
+
+  private matchesPaidPlanChangeSource(
+    input: ActivatePlanChangeInput,
+    subscription: PaidPlanChangeState['subscription'],
+    quote: PaidPlanChangeState['quote'],
+  ): boolean {
+    return (
+      subscription.userId === input.userId &&
+      subscription.uniqueActiveKey === input.userId &&
+      subscription.status === SubscriptionStatus.ACTIVE &&
+      quote.status === ProrationQuoteStatus.CONSUMED &&
+      !quote.isScheduledForPeriodEnd &&
+      quote.userId === input.userId &&
+      quote.subscriptionId === subscription.id &&
+      quote.currentPlanId === subscription.planId &&
+      quote.currentPlanPriceVersionId === subscription.planPriceVersionId
+    );
+  }
+
+  private matchesPaidPlanChangeTarget(
+    input: ActivatePlanChangeInput,
+    quote: PaidPlanChangeState['quote'],
+  ): boolean {
+    return (
+      quote.targetPlanId === input.planId &&
+      quote.targetPlanSlug === input.planSlug &&
+      quote.targetPlanPriceVersionId === input.planPriceVersionId &&
+      quote.targetBillingInterval === input.billingInterval &&
+      quote.currency === input.baseCurrency &&
+      quote.amountDueMinor === input.baseAmountMinor
+    );
+  }
+
+  private async applyPaidPlanChange(
+    tx: Prisma.TransactionClient,
+    input: ActivatePlanChangeInput,
+    state: PaidPlanChangeState,
+  ): Promise<void> {
+    const updated = await tx.subscription.updateMany({
+      where: {
+        id: state.subscription.id,
+        userId: input.userId,
+        planId: state.subscription.planId,
+        planPriceVersionId: state.subscription.planPriceVersionId,
+        uniqueActiveKey: input.userId,
+        version: state.subscription.version,
+      },
+      data: {
+        billingCustomerId: input.billingCustomerId,
+        planId: state.quote.targetPlanId,
+        planSlug: state.quote.targetPlanSlug,
+        planPriceVersionId: state.quote.targetPlanPriceVersionId,
+        gateway: input.gateway,
+        billingInterval: state.quote.targetBillingInterval,
+        currency: state.quote.currency,
+        amountMinor: state.quote.targetAmountMinor,
+        scheduledPlanId: null,
+        scheduledPlanSlug: null,
+        scheduledPlanPriceVersionId: null,
+        scheduledAmountMinor: null,
+        scheduledBillingInterval: null,
+        scheduledEffectiveAt: null,
+        scheduledChangeReason: null,
+        version: { increment: 1 },
+      },
+    });
+    if (updated.count === 0) {
+      throw new BillingException(BillingErrorCode.SUBSCRIPTION_CHANGE_CONFLICT);
+    }
+    await tx.checkoutSession.update({
+      where: { id: input.checkoutSessionId },
+      data: {
+        status: CheckoutSessionStatus.COMPLETED,
+        subscriptionId: state.subscription.id,
+        verifiedAt: new Date(),
+        completedAt: new Date(),
+      },
+    });
+  }
+
+  private async recordPlanChangeCharge(
+    tx: Prisma.TransactionClient,
+    input: ActivatePlanChangeInput,
+    state: PaidPlanChangeState,
+  ): Promise<RecordedCharge> {
+    return this.records.recordCharge(tx, {
+      userId: input.userId,
+      invoiceRecipientEmail: input.invoiceRecipientEmail,
+      subscriptionId: state.subscription.id,
+      checkoutSessionId: input.checkoutSessionId,
+      gateway: input.gateway,
+      type: PaymentTransactionType.PRORATION_CHARGE,
+      amountMinor: input.baseAmountMinor,
+      currency: input.baseCurrency,
+      providerAmountMinor: input.providerAmountMinor,
+      providerCurrency: input.providerCurrency,
+      providerTransactionId: input.providerTransactionId,
+      providerOrderId: input.providerOrderId,
+      idempotencyKey: `charge:${input.checkoutSessionId}`,
+      priceSnapshot: {
+        planId: input.planId,
+        planSlug: input.planSlug,
+        planPriceVersionId: input.planPriceVersionId,
+        billingInterval: input.billingInterval,
+        amountMinor: state.quote.targetAmountMinor,
+        currency: input.baseCurrency,
+      },
+      fxSnapshot: null,
+      periodStart: state.subscription.currentPeriodStart,
+      periodEnd: state.subscription.currentPeriodEnd,
+      lineDescription: `${input.planSlug} â€” prorated upgrade`,
+    });
+  }
+
+  private async enqueuePaidPlanChange(
+    tx: Prisma.TransactionClient,
+    input: ActivatePlanChangeInput,
+    state: PaidPlanChangeState,
+  ): Promise<void> {
+    const eventId = randomUUID();
+    const effectiveAt = new Date().toISOString();
+    const payload: BillingSubscriptionUpgradedPayload = {
+      eventId,
+      schemaVersion: BILLING_EVENT_SCHEMA_VERSION,
+      producer: PAYMENT_PRODUCER,
+      userId: input.userId,
+      subscriptionId: state.subscription.id,
+      planId: input.planId,
+      planSlug: input.planSlug,
+      planPriceVersionId: input.planPriceVersionId,
+      grantType: EntitlementGrantType.PAID_SUBSCRIPTION,
+      effectiveAt,
+      entitlementValidUntil: state.subscription.entitlementValidUntil.toISOString(),
+      correlationId: input.correlationId,
+      causationId: input.checkoutSessionId,
+      occurredAt: effectiveAt,
+      previousPlanId: state.subscription.planId,
+      previousPlanSlug: state.subscription.planSlug,
+      previousPlanPriceVersionId: state.subscription.planPriceVersionId,
+      prorationAmountMinor: input.baseAmountMinor,
+      currency: input.baseCurrency,
+    };
+    await this.outbox.enqueue(tx, {
+      pattern: EventPattern.BILLING_SUBSCRIPTION_UPGRADED,
+      eventId,
+      aggregateType: 'Subscription',
+      aggregateId: state.subscription.id,
+      payloadJson: payload,
     });
   }
 
@@ -324,6 +531,52 @@ export class SubscriptionLifecycleService {
         data: {
           status: SubscriptionStatus.EXPIRED,
           uniqueActiveKey: resolveUniqueActiveKey(SubscriptionStatus.EXPIRED, userId),
+          version: { increment: 1 },
+        },
+      });
+      if (updated.count === 0) {
+        return false;
+      }
+      await this.outbox.enqueue(tx, {
+        pattern: EventPattern.BILLING_SUBSCRIPTION_EXPIRED,
+        eventId: randomUUID(),
+        aggregateType: 'Subscription',
+        aggregateId: subscriptionId,
+        payloadJson: {
+          schemaVersion: BILLING_EVENT_SCHEMA_VERSION,
+          producer: PAYMENT_PRODUCER,
+          userId,
+          subscriptionId,
+          effectiveAt: now.toISOString(),
+          entitlementValidUntil: now.toISOString(),
+          correlationId,
+          causationId: subscriptionId,
+        },
+      });
+      return true;
+    });
+  }
+
+  async expireLapsedIfVersionMatches(
+    subscriptionId: string,
+    userId: string,
+    expectedVersion: number,
+    entitlementDeadline: Date,
+    now: Date,
+    correlationId: string,
+  ): Promise<boolean> {
+    this.logger.warn(`expireLapsedIfVersionMatches: subscription=${subscriptionId}`);
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.subscription.updateMany({
+        where: {
+          id: subscriptionId,
+          version: expectedVersion,
+          uniqueActiveKey: userId,
+          entitlementValidUntil: { equals: entitlementDeadline, lte: now },
+        },
+        data: {
+          status: SubscriptionStatus.EXPIRED,
+          uniqueActiveKey: null,
           version: { increment: 1 },
         },
       });

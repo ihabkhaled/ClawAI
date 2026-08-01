@@ -15,6 +15,7 @@ import { GatewayReconciliationService } from '../services/gateway-reconciliation
 import { LifecycleReconciliationService } from '../services/lifecycle-reconciliation.service';
 import { ProviderSubscriptionReconciliationService } from '../services/provider-subscription-reconciliation.service';
 import { TransactionReconciliationService } from '../services/transaction-reconciliation.service';
+import { PlanRetirementReconciliationService } from '../services/plan-retirement-reconciliation.service';
 import type { ReconciliationCounts } from '../types/reconciliation.types';
 
 @Injectable()
@@ -28,6 +29,7 @@ export class ReconciliationManager {
     private readonly transactions: TransactionReconciliationService,
     private readonly providerSubscriptions: ProviderSubscriptionReconciliationService,
     private readonly lifecycle: LifecycleReconciliationService,
+    private readonly planRetirements: PlanRetirementReconciliationService,
   ) {}
 
   @Cron(RECONCILIATION_CRON())
@@ -58,11 +60,13 @@ export class ReconciliationManager {
       const transactions = await this.transactions.reconcile(run.id);
       const providerSubscriptions = await this.providerSubscriptions.reconcile(run.id);
       const lifecycle = await this.lifecycle.reconcile(run.id, now);
+      const planRetirements = await this.planRetirements.reconcile();
       const counts = ReconciliationManager.combine([
         gateways,
         transactions,
         providerSubscriptions,
         lifecycle,
+        planRetirements,
       ]);
       await this.repository.completeRun({
         runId: run.id,

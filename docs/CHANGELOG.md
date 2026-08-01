@@ -10,6 +10,82 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [1.1.0] - 2026-08-01
+
+This release turns the VS Code integration and the local development stack into
+first-class parts of ClawAI, while making billing lifecycle changes durable and
+observable across service boundaries.
+
+### Added
+
+- **Safe plan retirement** with an admin delete action, deterministic replacement
+  selection, durable per-subscription migration records, retryable auth/payment
+  reconciliation, and an upgrade-at-renewal path that does not charge users during
+  the current period. Historical plans remain as tombstones for invoices and audit.
+- **Complete 13-locale frontend dictionaries.** Japanese, Thai, Persian, and
+  Simplified Chinese now contain every English key without fallback spreads;
+  completeness, placeholder, RTL, and untranslated-copy regressions are tested.
+- **Research usage accounting** for search, extraction, and crawl operations so
+  every real external dispatch contributes to user quota alongside model tokens,
+  including Ollama primary and fallback searches plus failed fetch/extract attempts.
+- **Resilient public pricing** with the canonical seven seeded plans as a frontend
+  fallback, a localized temporary-data disclaimer, and retry controls when the
+  authoritative catalog is unavailable.
+- **Newest-model discovery** on the landing page for eight models verified against
+  the connector catalog, including Kimi K3 and DeepSeek V4 variants.
+- **VS Code coding-agent integration through 0.17.0**, including parallel model
+  runs, integrated research for local models, refreshed visual hierarchy, visible
+  usage, authentication renewal, external-output grants, and localized controls.
+
+### Changed
+
+- **Developer containers now watch bind-mounted source reliably** on Docker Desktop,
+  including every NestJS service and the Next.js frontend. Development edits rebuild
+  and restart the affected process without recreating the whole stack.
+- **Routine successful health probes are silent** in service and centralized logs;
+  failed probes retain warning/error visibility and diagnostic context.
+- **VS Code authorization stays inside the branded ClawAI flow.** The extension
+  refreshes expired access tokens automatically, and the browser completion page no
+  longer exposes a raw loopback callback as the final experience.
+- **VS Code frontend and backend environments are configured independently.** Local
+  and custom URLs persist separately, while both unfinished Cloud choices remain
+  visibly disabled until their production endpoints are finalized.
+- **Plan, billing, and usage views now use authoritative subscription state** and
+  finite daily/monthly quotas instead of stale or incorrectly unlimited values.
+- **Admin accounts now receive explicit unlimited entitlements** for every feature,
+  every model/provider, chats, and daily, weekly, and monthly usage, independent of
+  an assigned customer plan.
+- **Usage views now read finalized durable token ledgers**, while web search, fetch,
+  and extraction remain visible as operation counters instead of invented token
+  conversions.
+- **Pricing cards now keep equal heights and CTA dimensions**, contain oversized
+  copy in a bounded accessible scroll region, and synchronize language changes
+  immediately across open tabs while preserving path, query, and hash.
+- **Frontend security policy accepts valid local development origins only**, removing
+  an invalid IPv6 wildcard source that lowered Lighthouse best-practices scores.
+
+### Fixed
+
+- Cancelled subscriptions remaining visible as active until cache expiry.
+- Deactivated plans lingering in public catalog and billing responses.
+- Immediate user upgrades being vulnerable to a previously scheduled retirement
+  migration; explicit user choices now supersede the automated migration.
+- Retryable billing/catalog failures being recorded as terminal plan-migration
+  failures, and frozen scheduled prices being invalidated by later price rotation.
+- Missing or incorrect language abbreviations, including Arabic now displaying `ع`.
+- Initial extension authentication surfacing an unhelpful `fetch failed` state and
+  authenticated sessions later failing with an unrecovered HTTP 401.
+
+### Verification
+
+- Auth, payment, frontend, localization, migration, Docker watcher, and health-log
+  regression suites cover the new behavior.
+- Release validation includes generated-knowledge integrity, inventory freshness,
+  the complete workspace matrix, Lighthouse, Docker Compose configuration, and
+  installed VSIX smoke testing.
+
+---
+
 ## [1.0.0] - 2026-07-26
 
 First stable release. The platform reaches feature completeness across

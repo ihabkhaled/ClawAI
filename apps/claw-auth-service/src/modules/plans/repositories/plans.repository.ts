@@ -1,7 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { PlanModelAccessMode, Prisma } from '../../../generated/prisma';
-import { type PlanWithAccess } from '../types/plans.types';
+import {
+  PlanModelAccessMode,
+  type PlanRetirementMigrationStatus,
+  Prisma,
+} from '../../../generated/prisma';
+import {
+  type PendingPlanRetirementMigration,
+  type PlanRetirementResult,
+  type PlanWithAccess,
+} from '../types/plans.types';
 
 @Injectable()
 export class PlansRepository {
@@ -9,6 +17,7 @@ export class PlansRepository {
 
   async findAll(): Promise<PlanWithAccess[]> {
     return this.prisma.plan.findMany({
+      where: { lifecycleStatus: 'ACTIVE' },
       include: { modelAccess: true },
       orderBy: { displayOrder: 'asc' },
     });
@@ -27,6 +36,19 @@ export class PlansRepository {
       where: { isDefault: true, isActive: true },
       include: { modelAccess: true },
     });
+  }
+
+  async findEffectiveForUser(userId: string, now: Date): Promise<PlanWithAccess | null> {
+    const assignment = await this.prisma.userPlanAssignment.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        OR: [{ entitlementValidUntil: null }, { entitlementValidUntil: { gt: now } }],
+      },
+      orderBy: { startsAt: 'desc' },
+      include: { plan: { include: { modelAccess: true } } },
+    });
+    return assignment?.plan ?? null;
   }
 
   async create(data: Prisma.PlanCreateInput): Promise<PlanWithAccess> {
@@ -106,5 +128,142 @@ export class PlansRepository {
       select: { id: true },
     });
     return rows.map((r) => r.id);
+  }
+
+  async findRetirementReplacement(sourcePlanId: string): Promise<PlanWithAccess | null> {
+    const source = await this.prisma.plan.findUnique({ where: { id: sourcePlanId } });
+    if (!source) return null;
+    return this.prisma.plan.findFirst({
+      where: {
+        id: { not: sourcePlanId },
+        lifecycleStatus: 'ACTIVE',
+        isActive: true,
+        displayOrder: { gt: source.displayOrder },
+      },
+      include: { modelAccess: true },
+      orderBy: [{ displayOrder: 'asc' }, { id: 'asc' }],
+    });
+  }
+
+  async retirePlan(sourcePlanId: string, replacementPlanId: string): Promise<PlanRetirementResult> {
+    return this.prisma.$transaction(async (tx) => {
+      const retiredAt = new Date();
+      const transition = await tx.plan.updateMany({
+        where: { id: sourcePlanId, lifecycleStatus: 'ACTIVE' },
+        data: {
+          lifecycleStatus: 'RETIRED',
+          replacementPlanId,
+          retiredAt,
+          isActive: false,
+          isPublic: false,
+        },
+      });
+      if (transition.count === 0) {
+        const persisted = await tx.plan.findUnique({
+          where: { id: sourcePlanId },
+          select: { replacementPlanId: true },
+        });
+        const persistedReplacementId = persisted?.replacementPlanId ?? replacementPlanId;
+        const existing = await tx.planRetirementMigration.count({ where: { sourcePlanId } });
+        const pending = await tx.planRetirementMigration.count({
+          where: { sourcePlanId, status: 'BILLING_SCHEDULE_PENDING' },
+        });
+        return {
+          sourcePlanId,
+          replacementPlanId: persistedReplacementId,
+          migratedAssignments: existing,
+          billingPending: pending,
+          alreadyRetired: true,
+        };
+      }
+      const assignments = await tx.userPlanAssignment.findMany({
+        where: { planId: sourcePlanId, status: 'ACTIVE' },
+      });
+      let billingPending = 0;
+      for (const assignment of assignments) {
+        await tx.userPlanAssignment.update({
+          where: { id: assignment.id },
+          data: { status: 'EXPIRED', endsAt: retiredAt },
+        });
+        const replacement = await tx.userPlanAssignment.create({
+          data: {
+            userId: assignment.userId,
+            planId: replacementPlanId,
+            status: 'ACTIVE',
+            assignedByUserId: assignment.assignedByUserId,
+            grantType: assignment.grantType,
+            grantReason: assignment.grantReason,
+            entitlementValidUntil: assignment.entitlementValidUntil,
+            sourceSubscriptionId: assignment.sourceSubscriptionId,
+            sourceEventId: assignment.sourceEventId,
+            startsAt: retiredAt,
+          },
+        });
+        const paid = assignment.sourceSubscriptionId !== null;
+        if (paid) billingPending += 1;
+        await tx.planRetirementMigration.create({
+          data: {
+            sourceAssignmentId: assignment.id,
+            replacementAssignmentId: replacement.id,
+            userId: assignment.userId,
+            sourcePlanId,
+            replacementPlanId,
+            sourceSubscriptionId: assignment.sourceSubscriptionId,
+            status: paid ? 'BILLING_SCHEDULE_PENDING' : 'APPLIED',
+          },
+        });
+        await tx.user.update({
+          where: { id: assignment.userId },
+          data: { activePlanId: replacementPlanId },
+        });
+      }
+      return {
+        sourcePlanId,
+        replacementPlanId,
+        migratedAssignments: assignments.length,
+        billingPending,
+        alreadyRetired: false,
+      };
+    });
+  }
+
+  async listPendingRetirementMigrations(limit: number): Promise<PendingPlanRetirementMigration[]> {
+    const rows = await this.prisma.planRetirementMigration.findMany({
+      where: { status: 'BILLING_SCHEDULE_PENDING', sourceSubscriptionId: { not: null } },
+      orderBy: { createdAt: 'asc' },
+      take: limit,
+    });
+    const replacementIds = [...new Set(rows.map((row) => row.replacementPlanId))];
+    const replacements = await this.prisma.plan.findMany({
+      where: { id: { in: replacementIds } },
+      select: { id: true, slug: true },
+    });
+    const slugs = new Map(replacements.map((plan) => [plan.id, plan.slug]));
+    return rows.flatMap((row) =>
+      row.sourceSubscriptionId === null || !slugs.has(row.replacementPlanId)
+        ? []
+        : [
+            {
+              id: row.id,
+              userId: row.userId,
+              sourcePlanId: row.sourcePlanId,
+              replacementPlanId: row.replacementPlanId,
+              replacementPlanSlug: slugs.get(row.replacementPlanId) ?? '',
+              sourceSubscriptionId: row.sourceSubscriptionId,
+            },
+          ],
+    );
+  }
+
+  async recordRetirementMigrationOutcome(
+    id: string,
+    status: PlanRetirementMigrationStatus,
+    errorCode?: string,
+  ): Promise<boolean> {
+    const result = await this.prisma.planRetirementMigration.updateMany({
+      where: { id, status: 'BILLING_SCHEDULE_PENDING' },
+      data: { status, errorCode: errorCode ?? null },
+    });
+    return result.count === 1;
   }
 }

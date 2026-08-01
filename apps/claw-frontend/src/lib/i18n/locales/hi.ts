@@ -101,6 +101,16 @@ export const hi: TranslationDictionary = {
     feature3Desc:
       'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI और Amazon Bedrock — सब एक ही जगह।',
   },
+  vscodeAuthorization: {
+    title: 'VS Code के लिए ClawAI अधिकृत करें',
+    description: 'कोडिंग एजेंट को VS Code में आपका ClawAI खाता उपयोग करने दें।',
+    requestFor: '{client} ने अनुमति का अनुरोध किया है।',
+    approve: 'VS Code अधिकृत करें',
+    approving: 'अधिकृत किया जा रहा है...',
+    successTitle: 'VS Code अधिकृत है',
+    successDescription: 'VS Code पर लौटें। अब यह ब्राउज़र टैब बंद किया जा सकता है।',
+    errorTitle: 'अनुमति पूरी नहीं हो सकी',
+  },
   nav: {
     dashboard: 'डैशबोर्ड',
     chat: 'चैट',
@@ -244,6 +254,12 @@ export const hi: TranslationDictionary = {
     providerFailed: 'विफल',
     tryingProvider: 'प्रयासरत',
     allProvidersFailed: 'सभी प्रोवाइडर प्रतिक्रिया उत्पन्न करने में विफल',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'यह मॉडल वीडियो अटैचमेंट प्रोसेस नहीं कर सकता। Gemini 2.5 Flash या Pro चुनें, या Auto पर स्विच करें।',
+      videoAttachmentLocalModelUnavailable:
+        'वीडियो अटैचमेंट केवल-स्थानीय या गोपनीयता-प्रथम मोड में उपलब्ध नहीं हैं, क्योंकि कोई स्थानीय वीडियो-सक्षम मॉडल कॉन्फ़िगर नहीं है।',
+    },
     imageGeneration: 'छवि जनरेशन',
     generatedImage: 'जनरेट की गई छवि',
     downloadImage: 'छवि डाउनलोड करें',
@@ -1891,6 +1907,8 @@ export const hi: TranslationDictionary = {
       title: '{count} स्रोतों का उपयोग किया',
       expand: 'स्रोत दिखाएँ',
       sourcesCount: '{count} स्रोत',
+      searchRequests: '{count} खोज',
+      fetchRequests: '{count} फ़ेच',
     },
     lifecycle: {
       started: 'वेब पर खोज की जा रही है...',
@@ -3279,6 +3297,11 @@ export const hi: TranslationDictionary = {
     modelPrimary: 'प्राथमिक',
     modelCompare: 'तुलना',
     modelOverride: 'सीमा {limit} टोकन/दिन',
+    planLimits: 'योजना सीमाएँ',
+    dailyLimitLabel: 'दैनिक टोकन',
+    weeklyLimitLabel: 'साप्ताहिक टोकन',
+    monthlyLimitLabel: 'मासिक टोकन',
+    chatsLimitLabel: 'प्रतिदिन चैट',
   },
   userUsage: {
     title: 'उपयोग',
@@ -3296,6 +3319,9 @@ export const hi: TranslationDictionary = {
     remaining: '{remaining} शेष',
     unlimited: 'असीमित',
     unlimitedHint: 'आपकी योजना में कोई दैनिक टोकन सीमा नहीं है।',
+    adminBypass: 'व्यवस्थापक पहुँच',
+    adminBypassHint:
+      'आपकी व्यवस्थापक भूमिका सीमा लागू होने से छूट देती है। ऊपर दी गई योजना सीमाएँ अपरिवर्तित रहती हैं।',
   },
   runtimeProgress: {
     metrics: {
@@ -3649,6 +3675,9 @@ export const hi: TranslationDictionary = {
       COMPARE_MODE: 'तुलना मोड',
       JUDGE_MODE: 'निर्णायक मोड',
       RESEARCH_MODE: 'शोध मोड',
+      WEB_SEARCH: 'वेब खोजें',
+      WEB_FETCH: 'प्राप्त वेब पेज',
+      WEB_EXTRACT: 'निकाले गए वेब पेज',
       CRITIC_REVIEW: 'आलोचनात्मक समीक्षा',
       WORKSPACES: 'कार्यक्षेत्र',
       MEMORY: 'स्मृति',
@@ -3772,6 +3801,8 @@ export const hi: TranslationDictionary = {
       monthlyTokens: 'मासिक टोकन सीमा',
       ctaFree: 'निःशुल्क शुरू करें',
       ctaPaid: 'यह प्लान चुनें',
+      temporaryCatalogDisclaimer:
+        'लाइव कीमतें अस्थायी रूप से उपलब्ध नहीं हैं। ये वैकल्पिक कीमतें सटीक न हो सकती हैं और सेवा लौटने पर बदल सकती हैं।',
       freeName: 'Free',
       freeTagline: 'छोटी दैनिक टोकन सीमा के साथ ClawAI आज़माएँ।',
       freeHighlight1: 'एंट्री-स्तरीय मॉडलों तक पहुँच',
@@ -3853,6 +3884,8 @@ export const hi: TranslationDictionary = {
         lastReviewed: 'अंतिम बार समीक्षित',
       },
       modelRoster: {
+        newestTitle: 'कैटलॉग में नवीनतम मॉडल',
+        newestIntro: 'मौजूदा कनेक्टरों से हाल में जोड़े गए मॉडलों की संक्षिप्त झलक।',
         title: 'आपको मिलने वाले मॉडल',
         intro:
           'एक सब्सक्रिप्शन नीचे दिए हर प्रोवाइडर को कवर करता है। बातचीत के बीच में मॉडल बदलें, या ClawAI को हर संदेश के लिए सबसे अच्छा मॉडल चुनने दें।',

@@ -58,6 +58,7 @@ export class ExaAdapter implements SearchAdapter {
       contents: { text: true, summary: true, highlights: { maxCharacters: 1200 } },
     });
 
+    await context.onNetworkCall?.();
     const response = await fetch(this.buildUrl(context.baseUrl), {
       method: 'POST',
       headers: this.buildHeaders(context),

@@ -8,6 +8,7 @@ describe('RefundController', () => {
   const queries = { listRefundableTransactions: jest.fn() };
   const admin = {
     id: 'admin-1',
+    sessionId: 'session-1',
     email: 'admin@example.com',
     username: 'admin',
     role: UserRole.ADMIN,

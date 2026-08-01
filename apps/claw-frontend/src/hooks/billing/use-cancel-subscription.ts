@@ -6,6 +6,7 @@ import { billingRepository } from '@/repositories/billing/billing.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { UseCancelSubscriptionReturn } from '@/types/billing-hook.types';
 import { resolveBillingErrorMessage } from '@/utilities/billing-error.utility';
+import { invalidateUserPlanQueries } from '@/utilities/plan-cache.utility';
 import { showToast } from '@/utilities/toast.utility';
 
 // Schedule, undo, or immediately complete cancellation.
@@ -23,7 +24,7 @@ export function useCancelSubscription(): UseCancelSubscriptionReturn {
     onSuccess: async (subscription) => {
       setError(null);
       queryClient.setQueryData(queryKeys.billing.current(), subscription);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
+      await invalidateUserPlanQueries(queryClient);
       showToast.success({ description: t('billing.cancel.scheduled') });
     },
     onError: (mutationError: unknown) => {
@@ -38,7 +39,7 @@ export function useCancelSubscription(): UseCancelSubscriptionReturn {
     onSuccess: async (subscription) => {
       setError(null);
       queryClient.setQueryData(queryKeys.billing.current(), subscription);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
+      await invalidateUserPlanQueries(queryClient);
       showToast.success({ description: t('billing.resume.done') });
     },
     onError: (mutationError: unknown) => {
@@ -53,7 +54,7 @@ export function useCancelSubscription(): UseCancelSubscriptionReturn {
     onSuccess: async () => {
       setError(null);
       queryClient.setQueryData(queryKeys.billing.current(), null);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.billing.all });
+      await invalidateUserPlanQueries(queryClient);
       showToast.success({ description: t('billing.remove.done') });
     },
     onError: (mutationError: unknown) => {

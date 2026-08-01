@@ -114,6 +114,7 @@ describe('OllamaWebSearchAdapter', () => {
   });
 
   it('withholds evidence when both providers return weakly matched results', async () => {
+    const onNetworkCall = jest.fn(async () => {});
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({
         ok: true,
@@ -155,10 +156,26 @@ describe('OllamaWebSearchAdapter', () => {
 
     const response = await adapter.search(
       { query: 'Windows 11 24H2 known issues', maxResults: 5 },
-      context,
+      { ...context, onNetworkCall },
     );
 
     expect(response.results).toHaveLength(0);
     expect(response.warnings?.[0]).toMatch(/withheld/i);
+    expect(onNetworkCall).toHaveBeenCalledTimes(3);
+  });
+
+  it('counts a failed primary request and both fallback dispatches', async () => {
+    const onNetworkCall = jest.fn(async () => {});
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: false, status: 429 })
+      .mockResolvedValueOnce({ ok: false, status: 503 })
+      .mockResolvedValueOnce({ ok: false, status: 503 });
+
+    await adapter.search(
+      { query: 'latest platform release', maxResults: 5 },
+      { ...context, onNetworkCall },
+    );
+
+    expect(onNetworkCall).toHaveBeenCalledTimes(3);
   });
 });

@@ -6,3 +6,10 @@ export type CreateInternalFileBody = {
   contentBase64: string;
   sourceWorkspaceObjectId?: string;
 };
+
+export type InternalFileContentResponse = {
+  id: string;
+  filename: string;
+  mimeType: string;
+  content: string | null;
+};

@@ -151,4 +151,65 @@ describe('ContextAssemblyManager', () => {
     expect(prompt).not.toContain('SseClientService');
     expect(prompt).toContain('review this API design for race conditions');
   });
+
+  it('never decodes a video attachment as UTF-8 prompt text', () => {
+    const context = buildContext();
+    const rawVideoMarker = 'raw-video-secret-that-must-not-enter-the-prompt';
+    context.fileContents = [
+      {
+        id: 'video-1',
+        filename: 'demo.mp4',
+        mimeType: 'video/mp4',
+        content: Buffer.from(rawVideoMarker).toString('base64'),
+      },
+    ];
+
+    const prompt = manager.buildPromptString(context);
+
+    expect(prompt).not.toContain(rawVideoMarker);
+    expect(prompt).toContain('Binary file "demo.mp4"');
+    expect(prompt).toContain('video/mp4');
+  });
+
+  it('keeps video bytes out of provider-neutral chat messages', () => {
+    const context = buildContext();
+    const videoBase64 = Buffer.from('provider-neutral-video').toString('base64');
+    context.fileContents = [
+      {
+        id: 'video-1',
+        filename: 'demo.mp4',
+        mimeType: 'video/mp4',
+        content: videoBase64,
+      },
+    ];
+
+    const messages = manager.buildChatMessages(context);
+
+    expect(JSON.stringify(messages)).not.toContain(`data:video/mp4;base64,${videoBase64}`);
+    expect(JSON.stringify(messages)).toContain('content not extractable as text');
+  });
+
+  it('adds video attachments to the latest user message only for Gemini-native requests', () => {
+    const context = buildContext();
+    const videoBase64 = Buffer.from('gemini-video').toString('base64');
+    context.fileContents = [
+      {
+        id: 'video-1',
+        filename: 'demo.mp4',
+        mimeType: 'video/mp4',
+        content: videoBase64,
+      },
+    ];
+
+    const messages = manager.buildGeminiChatMessages(context);
+    const userMessage = messages.find((message) => message.role === 'user');
+
+    expect(userMessage?.content).toEqual([
+      { type: 'text', text: 'Find the latest Windows 11 24H2 issues.' },
+      {
+        type: 'image_url',
+        image_url: { url: `data:video/mp4;base64,${videoBase64}` },
+      },
+    ]);
+  });
 });

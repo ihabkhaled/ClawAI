@@ -16,6 +16,7 @@ export const createMessageSchema = z.object({
     .string()
     .min(1, 'Content must not be empty')
     .max(100000, 'Content must be at most 100000 characters'),
+  clientIntent: z.string().max(20000, 'Client intent must be at most 20000 characters').optional(),
   routingMode: z.nativeEnum(RoutingMode).optional(),
   provider: z.string().max(50, 'Provider must be at most 50 characters').optional(),
   model: z.string().max(255, 'Model must be at most 255 characters').optional(),

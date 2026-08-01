@@ -111,13 +111,13 @@ describe('FilesService lifecycle events (Slice D backend 3)', () => {
 
   describe('uploadFile', () => {
     it('publishes FILE_UPLOAD_STARTED exactly once at the start of the upload', async () => {
-      const created = buildFile();
+      const created = buildFile({ sizeBytes: 5 });
       filesRepo.create.mockResolvedValue(created);
 
       await service.uploadFile('user-1', {
         filename: 'doc.txt',
         mimeType: 'text/plain',
-        sizeBytes: 1024,
+        sizeBytes: 5,
         content: Buffer.from('hello').toString('base64'),
       });
 
@@ -133,20 +133,20 @@ describe('FilesService lifecycle events (Slice D backend 3)', () => {
           userId: 'user-1',
           filename: 'doc.txt',
           mimeType: 'text/plain',
-          sizeBytes: 1024,
+          sizeBytes: 5,
           timestamp: expect.any(String),
         }),
       );
     });
 
     it('publishes FILE_UPLOAD_COMPLETED + (deprecated) FILE_UPLOADED on success — same payload', async () => {
-      const created = buildFile({ id: 'file-xyz', userId: 'user-1' });
+      const created = buildFile({ id: 'file-xyz', userId: 'user-1', sizeBytes: 5 });
       filesRepo.create.mockResolvedValue(created);
 
       await service.uploadFile('user-1', {
         filename: 'doc.txt',
         mimeType: 'text/plain',
-        sizeBytes: 1024,
+        sizeBytes: 5,
         content: Buffer.from('hello').toString('base64'),
       });
 
@@ -166,7 +166,7 @@ describe('FilesService lifecycle events (Slice D backend 3)', () => {
         userId: 'user-1',
         fileName: 'doc.txt',
         mimeType: 'text/plain',
-        sizeBytes: 1024,
+        sizeBytes: 5,
         threadId: '',
         timestamp: expect.any(String),
       });
@@ -175,13 +175,13 @@ describe('FilesService lifecycle events (Slice D backend 3)', () => {
     });
 
     it('publishes FILE_UPLOAD_STARTED before FILE_UPLOAD_COMPLETED in publish order', async () => {
-      const created = buildFile({ id: 'file-order' });
+      const created = buildFile({ id: 'file-order', sizeBytes: 5 });
       filesRepo.create.mockResolvedValue(created);
 
       await service.uploadFile('user-1', {
         filename: 'doc.txt',
         mimeType: 'text/plain',
-        sizeBytes: 1024,
+        sizeBytes: 5,
         content: Buffer.from('hello').toString('base64'),
       });
 

@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { CrossTabLocaleSync } from '@/components/common/cross-tab-locale-sync';
 import { Toaster } from '@/components/ui/toaster';
 import { LocaleProvider } from '@/lib/i18n';
 import { ThemeProvider } from '@/lib/theme';
@@ -30,6 +31,7 @@ export function Providers({
 
   return (
     <LocaleProvider initialLocale={initialLocale} initialDictionary={initialDictionary}>
+      <CrossTabLocaleSync />
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           {children}

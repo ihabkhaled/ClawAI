@@ -1,6 +1,6 @@
 {
   "name": "@claw/shared-utilities",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,13 +18,13 @@
     "typecheck": "tsgo --noEmit",
     "build": "tsgo -p tsconfig.build.json",
     "test": "jest --passWithNoTests",
-    "lint": "eslint src/ --concurrency=4",
+    "lint": "eslint src/ --concurrency=1",
     "lint:fix": "eslint src/ --fix",
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@claw/shared-constants": "1.0.0",
-    "@claw/shared-types": "1.0.0",
+    "@claw/shared-constants": "1.1.0",
+    "@claw/shared-types": "1.1.0",
     "@nestjs/common": "^11.1.26",
     "axios": "^1.18.1",
     "jsonwebtoken": "^9.0.2",

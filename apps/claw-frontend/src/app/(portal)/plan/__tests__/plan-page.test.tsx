@@ -19,6 +19,12 @@ const sampleEntitlements = {
     id: 'pl1',
     slug: 'pro',
     name: 'Pro',
+    limits: {
+      dailyTokens: 1000,
+      weeklyTokens: 5000,
+      monthlyTokens: 20_000,
+      chatsPerDay: 10,
+    },
     featureGates: {
       allowCompareMode: true,
       allowJudgeMode: false,

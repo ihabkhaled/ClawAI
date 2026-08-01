@@ -2,21 +2,26 @@ import * as crypto from 'node:crypto';
 import * as jwt from 'jsonwebtoken';
 import { Logger } from '@nestjs/common';
 import type { SignOptions } from 'jsonwebtoken';
-import { verifyAccessToken as verifyAccessTokenGeneric } from '@claw/shared-utilities';
-import type { JwtPayload } from '../types';
-import { JWT_ALGORITHM } from '../constants';
+import { JWT_ALGORITHM, USER_JWT_AUDIENCE, USER_JWT_ISSUER } from '@claw/shared-constants';
+import { verifyUserAccessToken } from '@claw/shared-utilities';
+import type { UserAccessTokenPayload } from '@claw/shared-types';
 
 const logger = new Logger('JwtUtility');
 
 export function signAccessToken(
-  payload: Record<string, unknown>,
+  payload: UserAccessTokenPayload,
   secret: string,
   expiresIn: SignOptions['expiresIn'],
 ): string {
   logger.debug(
     `signAccessToken: signing token for sub=${String(payload['sub'] ?? 'unknown')} expiresIn=${String(expiresIn)}`,
   );
-  const token = jwt.sign(payload, secret, { expiresIn, algorithm: JWT_ALGORITHM });
+  const token = jwt.sign(payload, secret, {
+    algorithm: JWT_ALGORITHM,
+    audience: USER_JWT_AUDIENCE,
+    expiresIn,
+    issuer: USER_JWT_ISSUER,
+  });
   logger.debug('signAccessToken: token signed successfully');
   return token;
 }
@@ -27,8 +32,8 @@ export function signAccessToken(
  * but delegates verification to `@claw/shared-utilities` so the JWT
  * library is wrapped exactly once across the monorepo.
  */
-export function verifyAccessToken(token: string, secret: string): JwtPayload {
-  return verifyAccessTokenGeneric<JwtPayload>(token, secret);
+export function verifyAccessToken(token: string, secret: string): UserAccessTokenPayload {
+  return verifyUserAccessToken(token, secret);
 }
 
 export function signRefreshToken(): string {

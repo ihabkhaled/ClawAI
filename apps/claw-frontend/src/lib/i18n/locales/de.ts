@@ -102,6 +102,16 @@ export const de: TranslationDictionary = {
     feature3Desc:
       'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI und Amazon Bedrock — alles an einem Ort.',
   },
+  vscodeAuthorization: {
+    title: 'ClawAI für VS Code autorisieren',
+    description: 'Erlaube dem Coding-Agenten, dein ClawAI-Konto in VS Code zu verwenden.',
+    requestFor: 'Autorisierung angefordert von {client}.',
+    approve: 'VS Code autorisieren',
+    approving: 'Autorisierung läuft...',
+    successTitle: 'VS Code autorisiert',
+    successDescription: 'Kehre zu VS Code zurück. Dieser Browser-Tab kann geschlossen werden.',
+    errorTitle: 'Autorisierung konnte nicht abgeschlossen werden',
+  },
   nav: {
     dashboard: 'Übersicht',
     chat: 'Chat',
@@ -245,6 +255,12 @@ export const de: TranslationDictionary = {
     providerFailed: 'fehlgeschlagen',
     tryingProvider: 'versucht',
     allProvidersFailed: 'Alle Provider konnten keine Antwort generieren',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'Dieses Modell kann keine Videoanhänge verarbeiten. Wähle Gemini 2.5 Flash oder Pro oder wechsle zu „Auto“.',
+      videoAttachmentLocalModelUnavailable:
+        'Videoanhänge sind im Modus „Nur lokal“ oder „Datenschutz zuerst“ nicht verfügbar, da kein lokales videofähiges Modell konfiguriert ist.',
+    },
     imageGeneration: 'Bildgenerierung',
     generatedImage: 'Generiertes Bild',
     downloadImage: 'Bild herunterladen',
@@ -1920,6 +1936,8 @@ export const de: TranslationDictionary = {
       title: '{count} Quellen verwendet',
       expand: 'Quellen anzeigen',
       sourcesCount: '{count} Quellen',
+      searchRequests: '{count} Suchen',
+      fetchRequests: '{count} Abrufe',
     },
     lifecycle: {
       started: 'Webrecherche läuft...',
@@ -2782,7 +2800,7 @@ export const de: TranslationDictionary = {
     page: {
       title: 'Arbeitsbereich-Posteingang',
       description:
-        'Cross-provider feed of every recent workspace object — filter by provider, type, attention.',
+        'Anbieterübergreifender Feed aller aktuellen Workspace-Objekte — filterbar nach Anbieter, Typ und Aufmerksamkeitsbedarf.',
       loading: 'Posteingang wird geladen…',
       loadingMore: 'Lade weitere…',
       loadMore: 'Mehr laden',
@@ -2817,7 +2835,7 @@ export const de: TranslationDictionary = {
     page: {
       title: 'Semantische Suche',
       description: 'Suche in allen Workspace-Objekten — datenschutzfreundliche lokale Embeddings.',
-      placeholder: 'Type a natural-language question…',
+      placeholder: 'Eine Frage in natürlicher Sprache eingeben…',
       submit: 'Suche',
       searching: 'Suche läuft…',
       reset: 'Zurücksetzen',
@@ -2984,7 +3002,7 @@ export const de: TranslationDictionary = {
     page: {
       title: 'Coding-Übergaben',
       description:
-        'Approved IMPL_PROMPT actions delivered to chat threads, agent terminals, or clipboard.',
+        'Genehmigte IMPL_PROMPT-Aktionen, die an Chat-Threads, Agent-Terminals oder die Zwischenablage übermittelt wurden.',
       loading: 'Übergaben werden geladen…',
       error: 'Übergaben konnten nicht geladen werden.',
       empty: 'Noch keine Übergaben. Genehmigen Sie IMPL_PROMPT in der Warteschlange.',
@@ -3010,7 +3028,7 @@ export const de: TranslationDictionary = {
       title: 'Was wir gelernt haben',
       subtitle: '{count} preferences',
       description:
-        'Patterns derived from your approve / reject / edit decisions. Used to personalise future suggestions.',
+        'Muster aus Ihren Genehmigungs-, Ablehnungs- und Bearbeitungsentscheidungen. Sie werden verwendet, um zukünftige Vorschläge zu personalisieren.',
       loading: 'Wird geladen…',
       error: 'Einstellungen konnten nicht geladen werden.',
       empty: 'Wir lernen aus Ihren Genehmigungen — noch keine Präferenzen.',
@@ -3314,6 +3332,11 @@ export const de: TranslationDictionary = {
     modelPrimary: 'Primär',
     modelCompare: 'Vergleich',
     modelOverride: 'Limit {limit} Tokens/Tag',
+    planLimits: 'Tariflimits',
+    dailyLimitLabel: 'Tokens pro Tag',
+    weeklyLimitLabel: 'Tokens pro Woche',
+    monthlyLimitLabel: 'Tokens pro Monat',
+    chatsLimitLabel: 'Chats pro Tag',
   },
   userUsage: {
     title: 'Nutzung',
@@ -3331,6 +3354,9 @@ export const de: TranslationDictionary = {
     remaining: '{remaining} verbleibend',
     unlimited: 'Unbegrenzt',
     unlimitedHint: 'Ihr Tarif hat kein tägliches Token-Limit.',
+    adminBypass: 'Administratorzugriff',
+    adminBypassHint:
+      'Ihre Administratorrolle umgeht die Durchsetzung. Die obigen Tariflimits bleiben unverändert.',
   },
   runtimeProgress: {
     metrics: {
@@ -3691,6 +3717,9 @@ export const de: TranslationDictionary = {
       COMPARE_MODE: 'Vergleichsmodus',
       JUDGE_MODE: 'Bewertungsmodus',
       RESEARCH_MODE: 'Recherchemodus',
+      WEB_SEARCH: 'Websuchen',
+      WEB_FETCH: 'Abgerufene Webseiten',
+      WEB_EXTRACT: 'Extrahierte Webseiten',
       CRITIC_REVIEW: 'Kritische Prüfung',
       WORKSPACES: 'Arbeitsbereiche',
       MEMORY: 'Gedächtnis',
@@ -3817,6 +3846,8 @@ export const de: TranslationDictionary = {
       monthlyTokens: 'Monatliches Kontingent',
       ctaFree: 'Kostenlos starten',
       ctaPaid: 'Diesen Tarif wählen',
+      temporaryCatalogDisclaimer:
+        'Die Live-Preise sind vorübergehend nicht verfügbar. Diese Ersatzpreise können ungenau sein und sich ändern, sobald der Dienst wieder verfügbar ist.',
       freeName: 'Free',
       freeTagline: 'Testen Sie ClawAI mit einem kleinen täglichen Kontingent.',
       freeHighlight1: 'Zugang zu Modellen der Einstiegsstufe',
@@ -3901,6 +3932,9 @@ export const de: TranslationDictionary = {
         lastReviewed: 'Zuletzt geprüft',
       },
       modelRoster: {
+        newestTitle: 'Neueste Modelle im Katalog',
+        newestIntro:
+          'Eine kompakte Übersicht kürzlich hinzugefügter Modelle aus den aktuellen Konnektoren.',
         title: 'Die Modelle, die Sie erhalten',
         intro:
           'Ein Abonnement deckt jeden der folgenden Anbieter ab. Wechseln Sie Modelle mitten in der Unterhaltung, oder lassen Sie ClawAI für jede Nachricht das beste auswählen.',

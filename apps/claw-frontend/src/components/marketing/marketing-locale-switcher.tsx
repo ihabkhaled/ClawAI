@@ -23,6 +23,7 @@ export function MarketingLocaleSwitcher(): React.ReactElement {
   const { t } = useTranslation();
 
   const currentConfig = options.find((option) => option.locale === locale);
+  const currentLabel = currentConfig?.label ?? locale.toUpperCase();
 
   return (
     <DropdownMenu>
@@ -31,10 +32,10 @@ export function MarketingLocaleSwitcher(): React.ReactElement {
           variant="outline"
           size="sm"
           className="h-9 gap-1.5 px-2.5 text-sm font-medium"
-          aria-label={t('marketing.header.languageSwitcherLabel')}
+          aria-label={`${currentLabel}, ${t('marketing.header.languageSwitcherLabel')}`}
         >
           <Languages className="h-4 w-4" aria-hidden="true" />
-          <span className="hidden sm:inline">{currentConfig?.label ?? locale.toUpperCase()}</span>
+          <span className="hidden sm:inline">{currentLabel}</span>
           <span className="sm:hidden">{locale.toUpperCase()}</span>
           <ChevronDown className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
         </Button>

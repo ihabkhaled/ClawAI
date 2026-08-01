@@ -806,6 +806,7 @@ export type {
   PlanUserIds,
   EntitlementFeatureGates,
   EntitlementPlan,
+  EntitlementPlanLimits,
   EntitlementQuota,
   UserEntitlements,
   PlanFormState,
@@ -820,8 +821,11 @@ export type {
   ModelAccessEditorProps,
   UsageMeterProps,
   PlanFeatureGatesProps,
+  PlanLimitsProps,
   AllowedModelsListProps,
   PlanRowProps,
+  PlanRetirementResult,
+  PlanRetirementCandidate,
   PlanCardProps,
 } from './plan.types';
 export type {

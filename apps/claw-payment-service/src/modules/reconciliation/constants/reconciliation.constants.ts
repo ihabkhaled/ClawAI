@@ -8,3 +8,4 @@ export const RECONCILIATION_LOCK_KEY = 'locks:payment:billing-reconciliation';
 // minute keeps healthy replicas mutually exclusive and permits crash recovery.
 export const RECONCILIATION_LOCK_TTL_SECONDS = 300;
 export const RECONCILIATION_FAILURE_CODE = 'RECONCILIATION_RUN_FAILED';
+export const PLAN_RETIREMENT_FAILURE_CODE = 'PLAN_RETIREMENT_SCHEDULE_FAILED';

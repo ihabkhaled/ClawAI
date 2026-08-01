@@ -20,7 +20,12 @@ describe('SubscriptionsController invoice documents', () => {
     );
 
     const file = await controller.downloadInvoice(
-      { id: 'user-1', email: 'buyer@example.com', role: UserRole.USER },
+      {
+        id: 'user-1',
+        sessionId: 'session-1',
+        email: 'buyer@example.com',
+        role: UserRole.USER,
+      },
       { id: 'invoice-1' },
       response as never,
     );
@@ -47,7 +52,12 @@ describe('SubscriptionsController cancellation', () => {
       {} as never,
       {} as never,
     );
-    const user = { id: 'user-1', email: 'buyer@example.com', role: UserRole.USER };
+    const user = {
+      id: 'user-1',
+      email: 'buyer@example.com',
+      role: UserRole.USER,
+      sessionId: 'session-1',
+    };
 
     await expect(controller.endNow(user)).resolves.toMatchObject({
       id: 'subscription-1',

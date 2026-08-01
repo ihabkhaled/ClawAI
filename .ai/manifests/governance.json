@@ -9,7 +9,7 @@
       "file": "CODEX.md"
     },
     {
-      "bytes": 25527,
+      "bytes": 25592,
       "file": "cursor.md"
     },
     {
@@ -95,7 +95,7 @@
       "file": "rules/05-frontend-components-and-hooks.md"
     },
     {
-      "bytes": 13761,
+      "bytes": 13826,
       "file": "rules/05-infra-rules.md"
     },
     {
@@ -111,7 +111,7 @@
       "file": "rules/07-backend-controllers-and-transport.md"
     },
     {
-      "bytes": 10789,
+      "bytes": 11358,
       "file": "rules/07-commit-rules.md"
     },
     {

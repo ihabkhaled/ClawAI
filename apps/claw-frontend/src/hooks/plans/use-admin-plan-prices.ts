@@ -15,6 +15,7 @@ import type {
 } from '@/types/admin-plan-price.types';
 import { showToast } from '@/utilities';
 import { parsePlanPriceMajorToMinor } from '@/utilities/billing.utility';
+import { invalidateUserPlanQueries } from '@/utilities/plan-cache.utility';
 
 export function useAdminPlanPrices(): UseAdminPlanPricesResult {
   const params = useParams<{ id: string }>();
@@ -57,6 +58,7 @@ export function useAdminPlanPrices(): UseAdminPlanPricesResult {
       void queryClient.invalidateQueries({ queryKey: queryKeys.adminPlans.prices(planId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.publicPricing.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.billing.plans() });
+      void invalidateUserPlanQueries(queryClient);
     },
     onError: (error: Error) => {
       setSaveError(error);

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Subject } from 'rxjs';
+import { concat, filter, from, type Observable, Subject } from 'rxjs';
 import {
   type ContentDeltaEmitInput,
   type LifecycleEmitInput,
@@ -7,6 +7,7 @@ import {
   type ReasoningDeltaEmitInput,
   type ResearchProgressEmitInput,
   type StreamErrorEmitInput,
+  type StreamErrorMetadata,
   type StreamEvent,
   type UsageEmitInput,
 } from '../types/stream.types';
@@ -318,11 +319,13 @@ export class ChatStreamService {
     );
   }
 
-  emitError(threadId: string, error: string): void {
+  emitError(threadId: string, error: string, metadata: StreamErrorMetadata = {}): void {
     this.emit({
       threadId,
       type: StreamEventType.ERROR,
       error,
+      ...(metadata.code === undefined ? {} : { code: metadata.code }),
+      ...(metadata.messageKey === undefined ? {} : { messageKey: metadata.messageKey }),
       label: 'Response failed',
       description: error,
       actorType: ProgressActorType.SYSTEM,
@@ -483,6 +486,7 @@ export class ChatStreamService {
       parallelGroupId: input.parallelGroupId,
       stage: input.stage,
       code: input.code,
+      ...(input.messageKey === undefined ? {} : { messageKey: input.messageKey }),
       retryable: input.retryable,
       partialContentPreserved: input.partialContentPreserved,
       label: 'Response failed',
@@ -496,6 +500,14 @@ export class ChatStreamService {
 
   getRecentEvents(threadId: string): StreamEvent[] {
     return [...(this.recentEvents.get(threadId) ?? [])];
+  }
+
+  streamEvents(threadId: string, replayRecent = true): Observable<StreamEvent> {
+    const liveEvents = this.eventBus.pipe(filter((event) => event.threadId === threadId));
+    if (!replayRecent) {
+      return liveEvents;
+    }
+    return concat(from(this.getRecentEvents(threadId)), liveEvents);
   }
 
   private emit(event: StreamEvent): void {

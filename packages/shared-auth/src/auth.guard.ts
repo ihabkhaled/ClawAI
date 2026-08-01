@@ -1,13 +1,8 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import * as jwt from "jsonwebtoken";
-import { IS_PUBLIC_KEY } from "./decorators";
-import { type AuthenticatedRequest, type JwtPayload } from "@claw/shared-types";
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { IS_PUBLIC_KEY } from './decorators';
+import { type AuthenticatedRequest } from '@claw/shared-types';
+import { verifyUserAccessToken } from '@claw/shared-utilities';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -27,17 +22,17 @@ export class AuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader) {
-      throw new UnauthorizedException("Missing authorization header");
+      throw new UnauthorizedException('Missing authorization header');
     }
 
-    const parts = authHeader.split(" ");
-    if (parts.length !== 2 || parts[0] !== "Bearer") {
-      throw new UnauthorizedException("Invalid authorization header format");
+    const parts = authHeader.split(' ');
+    if (parts.length !== 2 || parts[0] !== 'Bearer') {
+      throw new UnauthorizedException('Invalid authorization header format');
     }
 
     const token = parts[1];
     if (!token) {
-      throw new UnauthorizedException("Missing token");
+      throw new UnauthorizedException('Missing token');
     }
 
     const secret = process.env['JWT_SECRET'];
@@ -46,15 +41,16 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      const payload = jwt.verify(token, secret) as JwtPayload;
+      const payload = verifyUserAccessToken(token, secret);
       request.user = {
         id: payload.sub,
         email: payload.email,
         role: payload.role,
+        sessionId: payload.sessionId,
       };
       return true;
     } catch {
-      throw new UnauthorizedException("Invalid or expired token");
+      throw new UnauthorizedException('Invalid or expired token');
     }
   }
 }

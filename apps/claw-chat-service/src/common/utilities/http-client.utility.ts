@@ -1,13 +1,24 @@
-import { Logger } from "@nestjs/common";
-import { type HttpRequestOptions, type HttpResponse, type HttpStreamOptions, type HttpStreamResult } from "../types";
+import { Logger } from '@nestjs/common';
+import {
+  type HttpRequestOptions,
+  type HttpResponse,
+  type HttpStreamOptions,
+  type HttpStreamResult,
+} from '../types';
 
-const logger = new Logger("HttpClient");
+const logger = new Logger('HttpClient');
 
 export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
-  const { url, method, headers, body, timeoutMs = 120_000 } = options;
+  const { url, method, headers, body, timeoutMs = 120_000, signal } = options;
 
   logger.debug(`httpRequest: ${method} ${url} (timeout=${String(timeoutMs)}ms)`);
   const controller = new AbortController();
+  const onExternalAbort = (): void => controller.abort();
+  if (signal?.aborted === true) {
+    controller.abort();
+  } else {
+    signal?.addEventListener('abort', onExternalAbort, { once: true });
+  }
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const startTime = Date.now();
 
@@ -16,7 +27,7 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
     const response = await fetch(url, {
       method,
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         ...headers,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -26,7 +37,9 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
     logger.debug(`httpRequest: received response status=${String(response.status)} from ${url}`);
     const data = (await response.json()) as T;
     const durationMs = Date.now() - startTime;
-    logger.debug(`httpRequest: ${method} ${url} completed — status=${String(response.status)} durationMs=${String(durationMs)}`);
+    logger.debug(
+      `httpRequest: ${method} ${url} completed — status=${String(response.status)} durationMs=${String(durationMs)}`,
+    );
 
     return {
       status: response.status,
@@ -35,11 +48,12 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
     };
   } catch (error: unknown) {
     const durationMs = Date.now() - startTime;
-    const message = error instanceof Error ? error.message : "Unknown HTTP error";
+    const message = error instanceof Error ? error.message : 'Unknown HTTP error';
     logger.error(`httpRequest: ${method} ${url} failed after ${String(durationMs)}ms — ${message}`);
     throw error;
   } finally {
     clearTimeout(timeout);
+    signal?.removeEventListener('abort', onExternalAbort);
   }
 }
 
@@ -58,7 +72,7 @@ export async function httpStream(options: HttpStreamOptions): Promise<HttpStream
     if (signal.aborted) {
       controller.abort();
     } else {
-      signal.addEventListener("abort", onExternalAbort, { once: true });
+      signal.addEventListener('abort', onExternalAbort, { once: true });
     }
   }
 
@@ -76,7 +90,7 @@ export async function httpStream(options: HttpStreamOptions): Promise<HttpStream
       clearTimeout(idleTimer);
     }
     if (signal !== undefined) {
-      signal.removeEventListener("abort", onExternalAbort);
+      signal.removeEventListener('abort', onExternalAbort);
     }
   };
 
@@ -84,19 +98,19 @@ export async function httpStream(options: HttpStreamOptions): Promise<HttpStream
   try {
     response = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: { 'Content-Type': 'application/json', ...headers },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });
   } catch (error: unknown) {
     cleanup();
-    const message = error instanceof Error ? error.message : "Unknown HTTP error";
+    const message = error instanceof Error ? error.message : 'Unknown HTTP error';
     logger.error(`httpStream: ${method} ${url} connect failed — ${message}`);
     throw error;
   }
 
   if (!response.ok) {
-    const errorBody = await response.text().catch(() => "");
+    const errorBody = await response.text().catch(() => '');
     cleanup();
     logger.error(`httpStream: ${method} ${url} returned ${String(response.status)}`);
     return { status: response.status, ok: false, errorBody, chunks: emptyChunks() };
@@ -105,7 +119,12 @@ export async function httpStream(options: HttpStreamOptions): Promise<HttpStream
   const reader = response.body?.getReader();
   if (reader === undefined) {
     cleanup();
-    return { status: response.status, ok: false, errorBody: "No response body", chunks: emptyChunks() };
+    return {
+      status: response.status,
+      ok: false,
+      errorBody: 'No response body',
+      chunks: emptyChunks(),
+    };
   }
 
   return { status: response.status, ok: true, chunks: readChunks(reader, armIdleTimer, cleanup) };

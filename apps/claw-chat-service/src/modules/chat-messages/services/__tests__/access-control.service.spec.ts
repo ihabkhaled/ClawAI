@@ -2,6 +2,7 @@ import { AccessControlService } from '../access-control.service';
 
 const getEntitlements = jest.fn();
 const finalizeQuota = jest.fn();
+const recordFeatureUsage = jest.fn();
 
 jest.mock('@claw/shared-entitlements', () => {
   const actual = jest.requireActual('@claw/shared-entitlements');
@@ -10,6 +11,7 @@ jest.mock('@claw/shared-entitlements', () => {
     EntitlementsAdapter: jest.fn().mockImplementation(() => ({
       getEntitlements: (...args: unknown[]) => getEntitlements(...args),
       finalizeQuota: (...args: unknown[]) => finalizeQuota(...args),
+      recordFeatureUsage: (...args: unknown[]) => recordFeatureUsage(...args),
     })),
   };
 });
@@ -105,10 +107,32 @@ describe('AccessControlService', () => {
     ).resolves.toBeUndefined();
   });
 
+  it('records feature usage with the caller-provided idempotency key', async () => {
+    recordFeatureUsage.mockImplementationOnce(async () => {});
+
+    await service.recordFeatureUsage('u1', 'WEB_SEARCH', 'message-1:1:tool-1');
+
+    expect(recordFeatureUsage).toHaveBeenCalledWith({
+      userId: 'u1',
+      feature: 'WEB_SEARCH',
+      requestId: 'message-1:1:tool-1',
+    });
+  });
+
+  it('keeps feature accounting fail-soft', async () => {
+    recordFeatureUsage.mockRejectedValue(new Error('auth down'));
+
+    await expect(
+      service.recordFeatureUsage('u1', 'WEB_FETCH', 'message-1:1:tool-2'),
+    ).resolves.toBeUndefined();
+  });
+
   describe('plan feature gating (PLAN_FEATURE_DISABLED)', () => {
     it('rejects when allowCompareMode is locked (403)', async () => {
       getEntitlements.mockResolvedValue(
-        ent({ plan: { id: 'p1', slug: 'free', name: 'Free', featureGates: { allowCompareMode: false } } }),
+        ent({
+          plan: { id: 'p1', slug: 'free', name: 'Free', featureGates: { allowCompareMode: false } },
+        }),
       );
       await expect(
         service.assertCanSendMessage('u1', { requireFeature: 'allowCompareMode' }),
@@ -117,7 +141,9 @@ describe('AccessControlService', () => {
 
     it('rejects when allowJudgeMode is locked (403)', async () => {
       getEntitlements.mockResolvedValue(
-        ent({ plan: { id: 'p1', slug: 'free', name: 'Free', featureGates: { allowJudgeMode: false } } }),
+        ent({
+          plan: { id: 'p1', slug: 'free', name: 'Free', featureGates: { allowJudgeMode: false } },
+        }),
       );
       await expect(
         service.assertCanSendMessage('u1', { requireFeature: 'allowJudgeMode' }),
@@ -133,7 +159,9 @@ describe('AccessControlService', () => {
 
     it('allows when allowCompareMode is true', async () => {
       getEntitlements.mockResolvedValue(
-        ent({ plan: { id: 'p1', slug: 'pro', name: 'Pro', featureGates: { allowCompareMode: true } } }),
+        ent({
+          plan: { id: 'p1', slug: 'pro', name: 'Pro', featureGates: { allowCompareMode: true } },
+        }),
       );
       await expect(
         service.assertCanSendMessage('u1', { requireFeature: 'allowCompareMode' }),
@@ -142,7 +170,10 @@ describe('AccessControlService', () => {
 
     it('ADMIN bypasses the feature gate even when the plan locks it', async () => {
       getEntitlements.mockResolvedValue(
-        ent({ isAdmin: true, plan: { id: 'p1', slug: 'free', name: 'Free', featureGates: { allowCompareMode: false } } }),
+        ent({
+          isAdmin: true,
+          plan: { id: 'p1', slug: 'free', name: 'Free', featureGates: { allowCompareMode: false } },
+        }),
       );
       await expect(
         service.assertCanSendMessage('u1', { requireFeature: 'allowCompareMode' }),

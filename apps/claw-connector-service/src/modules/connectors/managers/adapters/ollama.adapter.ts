@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { httpGet, httpGetText } from '../../../../common/utilities/http.utility';
 import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import { isOllamaMultimodalModel } from '../../constants/ollama-vision-heuristics.constants';
+import { resolveOllamaCloudModelMetadata } from '../../constants/ollama-cloud-models.constants';
 import {
   OLLAMA_CATALOG_CLOUD_URL,
   OLLAMA_CATALOG_LIBRARY_LINK_REGEX,
@@ -150,6 +151,7 @@ export class OllamaAdapter implements ProviderAdapter {
   }
 
   private buildNormalizedModel(modelKey: string, displayName: string): NormalizedModel {
+    const metadata = resolveOllamaCloudModelMetadata(modelKey);
     return {
       modelKey,
       displayName,
@@ -160,7 +162,9 @@ export class OllamaAdapter implements ProviderAdapter {
         supportsVision: isOllamaMultimodalModel(modelKey),
         supportsAudio: false,
         supportsStructuredOutput: false,
+        ...(metadata.contextTokens > 0 ? { maxContextTokens: metadata.contextTokens } : {}),
       },
+      usage: metadata.usage,
     };
   }
 

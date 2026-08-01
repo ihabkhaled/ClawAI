@@ -1,5 +1,7 @@
 'use client';
 
+import { ChevronDown, Languages } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,15 +13,17 @@ import type { Locale } from '@/enums/locale.enum';
 import { useUpdatePreferences } from '@/hooks/settings/use-update-preferences';
 import { useLocale } from '@/hooks/use-locale';
 import { useLocaleNavigation } from '@/hooks/use-locale-navigation';
-import { SUPPORTED_LOCALES } from '@/lib/i18n';
+import { SUPPORTED_LOCALES, useTranslation } from '@/lib/i18n';
 import { localeToLanguage } from '@/utilities/preference.utility';
 
 export function LocaleSwitcher(): React.ReactElement {
   const { locale, setLocale } = useLocale();
   const { updatePreferences, isPending } = useUpdatePreferences();
   const { replaceLocale } = useLocaleNavigation();
+  const { t } = useTranslation();
 
   const currentConfig = SUPPORTED_LOCALES.find((l) => l.locale === locale);
+  const currentLabel = currentConfig?.label ?? locale.toUpperCase();
 
   function handleLocaleChange(newLocale: Locale): void {
     setLocale(newLocale);
@@ -31,22 +35,27 @@ export function LocaleSwitcher(): React.ReactElement {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="h-9 gap-1 px-2 text-xs font-medium"
+          className="h-9 gap-1.5 px-2.5 text-sm font-medium"
           disabled={isPending}
+          aria-label={`${currentLabel}, ${t('marketing.header.languageSwitcherLabel')}`}
         >
-          {currentConfig?.label.slice(0, 2).toUpperCase() ?? locale.toUpperCase()}
+          <Languages className="h-4 w-4" aria-hidden="true" />
+          <span>{currentLabel}</span>
+          <ChevronDown className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="max-h-80 w-52 overflow-y-auto">
         {SUPPORTED_LOCALES.map((config) => (
           <DropdownMenuItem
             key={config.locale}
             onClick={() => handleLocaleChange(config.locale)}
-            className={locale === config.locale ? 'bg-accent' : ''}
+            className={locale === config.locale ? 'bg-accent font-medium' : ''}
           >
-            <span className="me-2 text-xs font-medium uppercase">{config.locale}</span>
+            <span className="text-muted-foreground me-2 w-6 text-xs font-medium uppercase">
+              {config.locale}
+            </span>
             {config.label}
           </DropdownMenuItem>
         ))}

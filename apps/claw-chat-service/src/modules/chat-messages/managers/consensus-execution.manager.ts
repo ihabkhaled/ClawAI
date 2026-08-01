@@ -254,8 +254,9 @@ export class ConsensusExecutionManager {
       });
       return result;
     });
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
     const timeoutPromise = new Promise<never>((_resolve, reject) => {
-      setTimeout(
+      timeoutHandle = setTimeout(
         () => reject(new Error(`Timeout after ${String(this.timeoutMs)}ms`)),
         this.timeoutMs,
       );
@@ -275,6 +276,10 @@ export class ConsensusExecutionManager {
         return this.buildTimedOutResponse(target.provider, target.model);
       }
       throw error;
+    } finally {
+      if (timeoutHandle !== undefined) {
+        clearTimeout(timeoutHandle);
+      }
     }
   }
 

@@ -101,6 +101,16 @@ export const es: TranslationDictionary = {
     feature3Desc:
       'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI y Amazon Bedrock, todo en un solo lugar.',
   },
+  vscodeAuthorization: {
+    title: 'Autorizar ClawAI para VS Code',
+    description: 'Permite que el agente de código use tu cuenta de ClawAI en VS Code.',
+    requestFor: 'Autorización solicitada por {client}.',
+    approve: 'Autorizar VS Code',
+    approving: 'Autorizando...',
+    successTitle: 'VS Code autorizado',
+    successDescription: 'Vuelve a VS Code. Ya puedes cerrar esta pestaña.',
+    errorTitle: 'No se pudo completar la autorización',
+  },
   nav: {
     dashboard: 'Panel',
     chat: 'Chat',
@@ -244,6 +254,12 @@ export const es: TranslationDictionary = {
     providerFailed: 'falló',
     tryingProvider: 'probando',
     allProvidersFailed: 'Todos los proveedores fallaron al generar una respuesta',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'Este modelo no puede procesar archivos de vídeo adjuntos. Elige Gemini 2.5 Flash o Pro, o cambia a Automático.',
+      videoAttachmentLocalModelUnavailable:
+        'Los archivos de vídeo adjuntos no están disponibles en los modos Solo local o Privacidad primero porque no hay ningún modelo local compatible con vídeo configurado.',
+    },
     imageGeneration: 'Generación de imagen',
     generatedImage: 'Imagen generada',
     downloadImage: 'Descargar imagen',
@@ -1916,6 +1932,8 @@ export const es: TranslationDictionary = {
       title: 'Se usaron {count} fuentes',
       expand: 'Mostrar fuentes',
       sourcesCount: '{count} fuentes',
+      searchRequests: '{count} búsquedas',
+      fetchRequests: '{count} extracciones',
     },
     lifecycle: {
       started: 'Buscando en la web...',
@@ -2779,7 +2797,7 @@ export const es: TranslationDictionary = {
     page: {
       title: 'Bandeja del espacio de trabajo',
       description:
-        'Cross-provider feed of every recent workspace object — filter by provider, type, attention.',
+        'Feed entre proveedores de todos los objetos recientes del espacio de trabajo; filtra por proveedor, tipo o atención.',
       loading: 'Cargando bandeja…',
       loadingMore: 'Cargando más…',
       loadMore: 'Cargar más',
@@ -2815,7 +2833,7 @@ export const es: TranslationDictionary = {
       title: 'Búsqueda semántica',
       description:
         'Busca en todos tus objetos del workspace — embeddings locales que preservan privacidad.',
-      placeholder: 'Type a natural-language question…',
+      placeholder: 'Escribe una pregunta en lenguaje natural…',
       submit: 'Buscar',
       searching: 'Buscando…',
       reset: 'Restablecer',
@@ -2981,7 +2999,7 @@ export const es: TranslationDictionary = {
     page: {
       title: 'Entregas de código',
       description:
-        'Approved IMPL_PROMPT actions delivered to chat threads, agent terminals, or clipboard.',
+        'Acciones IMPL_PROMPT aprobadas y entregadas a hilos de chat, terminales de agentes o al portapapeles.',
       loading: 'Cargando entregas…',
       error: 'No se pudieron cargar las entregas.',
       empty: 'Aún no hay entregas. Aprueba un IMPL_PROMPT en la cola.',
@@ -3007,7 +3025,7 @@ export const es: TranslationDictionary = {
       title: 'Lo que hemos aprendido',
       subtitle: '{count} preferences',
       description:
-        'Patterns derived from your approve / reject / edit decisions. Used to personalise future suggestions.',
+        'Patrones derivados de tus decisiones de aprobar, rechazar o editar. Se usan para personalizar futuras sugerencias.',
       loading: 'Cargando…',
       error: 'No se pudieron cargar las preferencias.',
       empty: 'Aprenderemos de tus aprobaciones — aún no hay preferencias.',
@@ -3311,6 +3329,11 @@ export const es: TranslationDictionary = {
     modelPrimary: 'Principal',
     modelCompare: 'Comparar',
     modelOverride: 'Límite {limit} tokens/día',
+    planLimits: 'Límites del plan',
+    dailyLimitLabel: 'Tokens diarios',
+    weeklyLimitLabel: 'Tokens semanales',
+    monthlyLimitLabel: 'Tokens mensuales',
+    chatsLimitLabel: 'Chats por día',
   },
   userUsage: {
     title: 'Uso',
@@ -3328,6 +3351,9 @@ export const es: TranslationDictionary = {
     remaining: '{remaining} restantes',
     unlimited: 'Ilimitado',
     unlimitedHint: 'Tu plan no tiene límite diario de tokens.',
+    adminBypass: 'Acceso de administrador',
+    adminBypassHint:
+      'Tu rol de administrador omite la aplicación de límites. Los límites del plan anteriores no cambian.',
   },
   runtimeProgress: {
     metrics: {
@@ -3684,6 +3710,9 @@ export const es: TranslationDictionary = {
       COMPARE_MODE: 'Modo comparación',
       JUDGE_MODE: 'Modo juez',
       RESEARCH_MODE: 'Modo investigación',
+      WEB_SEARCH: 'Búsquedas web',
+      WEB_FETCH: 'Páginas web obtenidas',
+      WEB_EXTRACT: 'Páginas web extraídas',
       CRITIC_REVIEW: 'Revisión crítica',
       WORKSPACES: 'Espacios de trabajo',
       MEMORY: 'Memoria',
@@ -3810,6 +3839,8 @@ export const es: TranslationDictionary = {
       monthlyTokens: 'Cupo mensual',
       ctaFree: 'Empezar gratis',
       ctaPaid: 'Elegir este plan',
+      temporaryCatalogDisclaimer:
+        'Los precios en vivo no están disponibles temporalmente. Estos precios alternativos pueden ser inexactos y cambiar cuando se restablezca el servicio.',
       freeName: 'Free',
       freeTagline: 'Pruebe ClawAI con un pequeño cupo diario.',
       freeHighlight1: 'Acceso a modelos de nivel básico',
@@ -3891,6 +3922,9 @@ export const es: TranslationDictionary = {
         lastReviewed: 'Última revisión',
       },
       modelRoster: {
+        newestTitle: 'Modelos más recientes del catálogo',
+        newestIntro:
+          'Un resumen conciso de los modelos añadidos recientemente mediante los conectores actuales.',
         title: 'Los modelos que obtiene',
         intro:
           'Una sola suscripción cubre todos los proveedores a continuación. Cambie de modelo a mitad de la conversación, o deje que ClawAI elija el mejor para cada mensaje.',

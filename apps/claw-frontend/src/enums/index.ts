@@ -2,6 +2,7 @@ export { ExecutionProfile } from './execution-profile.enum';
 export { UserRole } from './user-role.enum';
 export { Permission } from './permission.enum';
 export { PlanFeature } from './plan-feature.enum';
+export { PlanModelAccessMode } from './plan-model-access-mode.enum';
 export { ApiErrorCode } from './api-error-code.enum';
 export { DashboardStatGradient } from './dashboard-stat-gradient.enum';
 export { DashboardOperationalState } from './dashboard-operational-state.enum';
@@ -137,6 +138,7 @@ export { AdEligibility } from './ad-eligibility.enum';
 export { ContentReviewStatus } from './content-review-status.enum';
 export { StructuredDataType } from './structured-data-type.enum';
 export { ContentLifecycleStatus } from './content-lifecycle-status.enum';
+export { PlanLifecycleStatus } from './plan-lifecycle-status.enum';
 export { ContactEmailProvider } from './contact-email-provider.enum';
 export { ContactResponseCode } from './contact-response-code.enum';
 export {

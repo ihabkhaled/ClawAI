@@ -25,6 +25,14 @@ export type QuotaFinalizeInput = {
   model: string;
 };
 
+export type ResearchUsageFeature = 'WEB_SEARCH' | 'WEB_FETCH' | 'WEB_EXTRACT';
+
+export type FeatureUsageInput = {
+  userId: string;
+  feature: ResearchUsageFeature;
+  requestId: string;
+};
+
 // Thin client over the auth-service internal entitlement + quota endpoints.
 // Fetches fresh per call (no stale cache) so a plan/role change applies on the
 // very next request — the user's stated requirement. Framework-agnostic; it
@@ -68,6 +76,10 @@ export class EntitlementsAdapter {
       userId,
       estimatedTokens,
     });
+  }
+
+  async recordFeatureUsage(input: FeatureUsageInput): Promise<void> {
+    await this.request<undefined>('POST', '/api/v1/internal/quota/features/consume', input);
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {

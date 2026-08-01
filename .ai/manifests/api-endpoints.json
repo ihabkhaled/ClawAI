@@ -466,6 +466,11 @@
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
       },
       {
+        "method": "DELETE",
+        "route": "/admin/plans/:id",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/admin/plans/:id",
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
@@ -591,6 +596,26 @@
         "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/auth/vscode/authorize/approve",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/auth/vscode/authorize/details",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/auth/vscode/authorize/exchange",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/auth/vscode/authorize/init",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
@@ -614,6 +639,21 @@
         "method": "GET",
         "route": "/internal/plans/price-versions/:id",
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/plans/retirement-migrations/:id/outcome",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/plans/retirement-migrations/pending",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/quota/features/consume",
+        "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
       },
       {
         "method": "POST",
@@ -2773,5 +2813,5 @@
     ]
   },
   "generated": true,
-  "total": 547
+  "total": 555
 }

@@ -14,6 +14,14 @@ export const ANTHROPIC_PROVIDER = 'ANTHROPIC';
 
 export const GEMINI_PROVIDER = 'GEMINI';
 
+export const GEMINI_VIDEO_DEFAULT_MODEL = 'gemini-2.5-flash';
+
+export const GEMINI_VIDEO_CAPABLE_MODELS = new Set([GEMINI_VIDEO_DEFAULT_MODEL, 'gemini-2.5-pro']);
+
+export const GEMINI_OPENAI_COMPATIBILITY_SUFFIX = '/openai';
+
+export const VIDEO_MIME_PREFIX = 'video/';
+
 export const IMAGE_PROVIDER_PREFIX = 'IMAGE_';
 
 export const FILE_GENERATION_PROVIDER = 'FILE_GENERATION';

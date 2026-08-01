@@ -6,8 +6,14 @@ import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useTranslation } from '@/lib/i18n';
 import { plansRepository } from '@/repositories/admin/plans.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import type { TranslateFunction, UsePlansPageResult, UserProfile } from '@/types';
+import type {
+  PlanRetirementCandidate,
+  TranslateFunction,
+  UsePlansPageResult,
+  UserProfile,
+} from '@/types';
 import { logger, showToast } from '@/utilities';
+import { invalidateUserPlanQueries } from '@/utilities/plan-cache.utility';
 
 export function usePlansPage(): UsePlansPageResult & {
   t: TranslateFunction;
@@ -18,6 +24,9 @@ export function usePlansPage(): UsePlansPageResult & {
   const queryClient = useQueryClient();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<Error | null>(null);
+  const [retirementCandidate, setRetirementCandidate] = useState<PlanRetirementCandidate | null>(
+    null,
+  );
 
   const isAdmin = user?.role === UserRole.ADMIN;
 
@@ -30,6 +39,8 @@ export function usePlansPage(): UsePlansPageResult & {
 
   const invalidate = useCallback((): void => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.adminPlans.lists() });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.publicPricing.all });
+    void invalidateUserPlanQueries(queryClient);
   }, [queryClient]);
 
   const activateMutation = useMutation({
@@ -83,6 +94,24 @@ export function usePlansPage(): UsePlansPageResult & {
     onSettled: () => setPendingId(null),
   });
 
+  const retireMutation = useMutation({
+    mutationFn: (id: string) => plansRepository.retire(id),
+    onMutate: (id: string) => {
+      setPendingId(id);
+      setMutationError(null);
+    },
+    onSuccess: () => {
+      setRetirementCandidate(null);
+      showToast.success({ description: t('common.success') });
+      invalidate();
+    },
+    onError: (err: Error) => {
+      setMutationError(err);
+      showToast.apiError(err, t('common.error'));
+    },
+    onSettled: () => setPendingId(null),
+  });
+
   const onActivate = useCallback(
     (id: string): void => {
       logger.info({
@@ -122,6 +151,18 @@ export function usePlansPage(): UsePlansPageResult & {
     [setDefaultMutation],
   );
 
+  const onRequestRetirement = useCallback(
+    (plan: PlanRetirementCandidate): void =>
+      setRetirementCandidate({ id: plan.id, name: plan.name }),
+    [],
+  );
+  const onCancelRetirement = useCallback((): void => setRetirementCandidate(null), []);
+  const onConfirmRetirement = useCallback((): void => {
+    if (retirementCandidate !== null) {
+      retireMutation.mutate(retirementCandidate.id);
+    }
+  }, [retireMutation, retirementCandidate]);
+
   const clearMutationError = useCallback((): void => setMutationError(null), []);
   const onRetry = useCallback((): void => {
     void query.refetch();
@@ -140,6 +181,10 @@ export function usePlansPage(): UsePlansPageResult & {
     onActivate,
     onDeactivate,
     onSetDefault,
+    retirementCandidate,
+    onRequestRetirement,
+    onCancelRetirement,
+    onConfirmRetirement,
     onRetry,
   };
 }

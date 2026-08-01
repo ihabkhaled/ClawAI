@@ -17,6 +17,7 @@ import type {
   UserProfile,
 } from '@/types';
 import { logger, showToast } from '@/utilities';
+import { invalidateUserPlanQueries } from '@/utilities/plan-cache.utility';
 
 export function usePlanFormPage(): UsePlanFormPageResult & {
   t: TranslateFunction;
@@ -58,6 +59,8 @@ export function usePlanFormPage(): UsePlanFormPageResult & {
     onSuccess: () => {
       showToast.success({ description: t('adminPlans.createSucceeded') });
       void queryClient.invalidateQueries({ queryKey: queryKeys.adminPlans.lists() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.publicPricing.all });
+      void invalidateUserPlanQueries(queryClient);
       goBack();
     },
     onError: (err: Error) => {
@@ -77,6 +80,8 @@ export function usePlanFormPage(): UsePlanFormPageResult & {
     onSuccess: () => {
       showToast.success({ description: t('adminPlans.updateSucceeded') });
       void queryClient.invalidateQueries({ queryKey: queryKeys.adminPlans.lists() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.publicPricing.all });
+      void invalidateUserPlanQueries(queryClient);
       if (planId !== null) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.adminPlans.detail(planId) });
       }

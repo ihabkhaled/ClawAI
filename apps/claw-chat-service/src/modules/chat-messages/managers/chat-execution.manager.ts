@@ -5,13 +5,18 @@ import {
   type TokenUsage,
   TokenUsageSource,
 } from '@claw/shared-types';
-import { extractOllamaUsage, extractOpenAiCompatibleUsage } from '@claw/shared-utilities';
+import {
+  extractGeminiUsage,
+  extractOllamaUsage,
+  extractOpenAiCompatibleUsage,
+} from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest, recordGet } from '../../../common/utilities';
 import { BusinessException } from '../../../common/errors';
 import {
   ANTHROPIC_PROVIDER,
   FILE_GENERATION_PROVIDER,
+  GEMINI_OPENAI_COMPATIBILITY_SUFFIX,
   GEMINI_PROVIDER,
   IMAGE_PROVIDER_PREFIX,
   LLAMACPP_CONNECTOR_PROVIDER,
@@ -23,6 +28,7 @@ import {
 } from '../../../common/constants';
 import {
   type AnthropicMessagesRequest,
+  type CloudProviderRequestBody,
   type ConnectorConfigResponse,
   type FileGenerateResponse,
   type GeminiNativeChatRequest,
@@ -64,10 +70,15 @@ import {
   StreamEventType,
 } from '../../../common/enums';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
+import { boundImageGenerationPrompt } from '../utilities/image-generation-prompt.utility';
 import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-shape.utility';
 import { transformOpenAiMessagesToAnthropic } from '../utilities/anthropic-message-shape.utility';
 import { buildGeminiRequestBody } from '../utilities/gemini-request-builder.utility';
-import type { GeminiFileUploadFn } from '../types/gemini.types';
+import {
+  hasVideoAttachment,
+  resolveVideoAttachmentCandidates,
+} from '../utilities/video-attachment-routing.utility';
+import type { GeminiFileUploadFn, GeminiGenerateContentResponse } from '../types/gemini.types';
 import { GeminiFilesApiManager } from './gemini-files-api.manager';
 import type { StreamContext, StreamExecutionInput } from '../types/stream-execution.types';
 import type { VisibleProgressStatus } from '../types/stream.types';
@@ -100,13 +111,9 @@ import type { ExecutionOptions } from '../types/execution-options.types';
 import { OLLAMA_TOOL_LOOP_WRAPUP_INSTRUCTION } from '../constants/agentic-loop.constants';
 import {
   executeOllamaCloudToolCall,
-  OLLAMA_CLOUD_TOOL_DEFINITIONS,
   truncateResult,
 } from '../utilities/ollama-cloud-tool-runner.utility';
-import {
-  TOOL_WEB_FETCH,
-  TOOL_WEB_SEARCH,
-} from '../constants/ollama-cloud-tools.constants';
+import { TOOL_WEB_FETCH, TOOL_WEB_SEARCH } from '../constants/ollama-cloud-tools.constants';
 import type {
   OllamaCloudToolCall,
   OllamaToolTranscript,
@@ -146,7 +153,11 @@ export class ChatExecutionManager implements OnModuleInit {
       this.chatStreamService.emitRouterStarted(payload.threadId, payload.routerModel);
     }
     const startTime = Date.now();
-    const candidates = this.buildCandidateChain(payload, payload.routingMode);
+    const candidates = resolveVideoAttachmentCandidates(
+      payload,
+      context,
+      this.buildCandidateChain(payload, payload.routingMode),
+    );
     const userPrompt = this.extractUserPrompt(context);
     const executionOptions = this.resolveExecutionOptions(payload, userPrompt, threadSettings);
     const baseExecutionContext = this.buildExecutionContext(
@@ -213,7 +224,7 @@ export class ChatExecutionManager implements OnModuleInit {
       lastError = outcome.error;
     }
 
-    return this.failExecution(payload, lastError, attempts);
+    return this.failExecution(lastError, attempts);
   }
 
   // Phase 5 — converts the existing CandidateOutcome union into the
@@ -291,6 +302,9 @@ export class ChatExecutionManager implements OnModuleInit {
     try {
       return await this.runCandidateInner(args);
     } catch (error: unknown) {
+      if (error instanceof BusinessException && error.code === 'STREAM_CANCELLED') {
+        throw error;
+      }
       this.emitCandidateFailure(
         error,
         args.candidate,
@@ -312,6 +326,15 @@ export class ChatExecutionManager implements OnModuleInit {
       args.payload,
       args.executionOptions,
     );
+    if (response.finishReason === 'cancelled') {
+      return {
+        kind: 'success',
+        response: {
+          ...response,
+          ...this.buildExecutionMetadata(args.executionOptions, false),
+        },
+      };
+    }
     const escalation = await this.maybeEscalateFastPath(
       response,
       args.candidate,
@@ -435,6 +458,13 @@ export class ChatExecutionManager implements OnModuleInit {
     return true;
   }
 
+  private shouldUseGeminiNativeRequest(provider: string, context: AssembledContext): boolean {
+    return (
+      provider === GEMINI_PROVIDER &&
+      (AppConfig.get().ENABLE_GEMINI_FILES_API || hasVideoAttachment(context))
+    );
+  }
+
   // Dispatches a streamable candidate to the right transport: native SSE for
   // cloud + llama.cpp, native NDJSON for the Ollama connector, and a simulated
   // chunked replay for local Ollama (ollama-service has no streaming endpoint).
@@ -507,6 +537,18 @@ export class ChatExecutionManager implements OnModuleInit {
     executionOptions: ExecutionOptions | undefined,
     streamContext: StreamContext,
   ): Promise<LlmResponse> {
+    if (this.shouldUseGeminiNativeRequest(candidate.provider, context)) {
+      return this.simulateGeminiNativeStream(
+        candidate.provider,
+        candidate.model,
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        executionOptions,
+        streamContext,
+      );
+    }
     if (candidate.provider === OLLAMA_PROVIDER) {
       return this.simulateOllamaStream(
         candidate.model,
@@ -647,20 +689,6 @@ export class ChatExecutionManager implements OnModuleInit {
         headers: { Authorization: `Bearer ${apiKey}` },
       };
     }
-    if (provider === GEMINI_PROVIDER && config.ENABLE_GEMINI_FILES_API) {
-      const geminiBody = await this.buildGeminiNativeStreamingBody(
-        model,
-        context,
-        threadSettings,
-        executionOptions,
-      );
-      return {
-        url: `${baseUrl}/chat/completions`,
-        body: geminiBody,
-        protocol: AiStreamProtocol.OPENAI_SSE,
-        headers: { Authorization: `Bearer ${apiKey}` },
-      };
-    }
     return {
       url: `${baseUrl}/chat/completions`,
       body: this.buildStreamingChatBody(provider, model, context, threadSettings, executionOptions),
@@ -689,7 +717,13 @@ export class ChatExecutionManager implements OnModuleInit {
         provider,
         model,
         url: `${config.LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions`,
-        body: this.buildStreamingChatBody(provider, model, context, threadSettings, executionOptions),
+        body: this.buildStreamingChatBody(
+          provider,
+          model,
+          context,
+          threadSettings,
+          executionOptions,
+        ),
         protocol: AiStreamProtocol.OPENAI_SSE,
         startMs: startTime,
         promptTokensEstimate: this.estimatePromptTokens(context),
@@ -783,6 +817,71 @@ export class ChatExecutionManager implements OnModuleInit {
       });
     }
     return buffered;
+  }
+
+  private async simulateGeminiNativeStream(
+    provider: string,
+    model: string,
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+    streamContext: StreamContext,
+  ): Promise<LlmResponse> {
+    const executor = this.providerStreamExecutor;
+    const cancellation = this.streamCancellation;
+    if (cancellation === undefined) {
+      throw new BusinessException('Streaming dependencies unavailable', 'STREAM_NOT_AVAILABLE');
+    }
+    const cancelKey = streamContext.laneId ?? streamContext.threadId;
+    const controller = cancellation.register(cancelKey);
+    try {
+      const buffered = await this.callCloudProvider(
+        provider,
+        model,
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        executionOptions,
+        streamContext,
+        controller.signal,
+      );
+      if (executor === undefined) {
+        return buffered;
+      }
+      const replay = await executor.runSimulated({
+        threadId: streamContext.threadId,
+        messageId: streamContext.messageId,
+        laneId: streamContext.laneId,
+        parallelGroupId: streamContext.parallelGroupId,
+        provider,
+        model: buffered.model,
+        fullContent: buffered.content,
+        inputTokens: buffered.inputTokens,
+        outputTokens: buffered.outputTokens,
+        startMs: startTime,
+        promptTokensEstimate: this.estimatePromptTokens(context),
+        maxOutputTokens: executionOptions?.maxOutputTokens,
+        abortSignal: controller.signal,
+      });
+      return replay.cancelled
+        ? {
+            ...buffered,
+            content: replay.content,
+            outputTokens: replay.outputTokens ?? estimateTokensFromText(replay.content),
+            finishReason: 'cancelled',
+          }
+        : buffered;
+    } catch (error: unknown) {
+      if (controller.signal.aborted) {
+        throw new BusinessException('Generation cancelled', 'STREAM_CANCELLED');
+      }
+      throw error;
+    } finally {
+      cancellation.release(cancelKey);
+    }
   }
 
   private async runExecutor(
@@ -1013,11 +1112,12 @@ export class ChatExecutionManager implements OnModuleInit {
     executionOptions: ExecutionOptions,
     fastPathEscalated: boolean,
   ): ExecutionMetadata {
-    const executionPath: ExecutionMetadata['executionPath'] = fastPathEscalated
-      ? 'fast_escalated'
-      : (executionOptions.fastPathEnabled
-        ? 'fast'
-        : 'standard');
+    let executionPath: ExecutionMetadata['executionPath'] = 'standard';
+    if (fastPathEscalated) {
+      executionPath = 'fast_escalated';
+    } else if (executionOptions.fastPathEnabled) {
+      executionPath = 'fast';
+    }
     return {
       fastPathUsed: executionOptions.fastPathEnabled,
       fastPathEscalated,
@@ -1051,19 +1151,13 @@ export class ChatExecutionManager implements OnModuleInit {
     });
   }
 
-  private failExecution(
-    payload: MessageRoutedData,
-    lastError: unknown,
-    attempts: AttemptRecord[],
-  ): never {
+  private failExecution(lastError: unknown, attempts: AttemptRecord[]): never {
     const finalError =
       lastError ??
       new BusinessException(
         'All LLM providers failed to generate a response',
         'LLM_EXECUTION_FAILED',
       );
-    const finalErrorMsg = finalError instanceof Error ? finalError.message : 'All providers failed';
-    this.chatStreamService.emitError(payload.threadId, finalErrorMsg);
     // Phase 5 — surface the per-attempt log on the error so callers
     // (chat-messages.service / SSE listeners) can render the developer
     // drawer even on full chain exhaustion.
@@ -1705,7 +1799,8 @@ export class ChatExecutionManager implements OnModuleInit {
     usedFallback: boolean,
     threadSettings?: ThreadSettings,
     executionOptions?: ExecutionOptions,
-    streamContext?: StreamContext,
+    _streamContext?: StreamContext,
+    abortSignal?: AbortSignal,
   ): Promise<LlmResponse> {
     this.logger.log(`callCloudProvider: calling ${provider}/${model}`);
     const config = AppConfig.get();
@@ -1714,59 +1809,36 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(`callCloudProvider: config resolved — baseUrl=${baseUrl}`);
 
     const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
+    const isNativeGemini = this.shouldUseGeminiNativeRequest(provider, context);
     const requestBody = await this.buildCloudProviderRequestBody({
       provider,
       model,
       context,
+      apiKey,
       threadSettings,
       executionOptions,
       isOllamaConnector,
+      abortSignal,
     });
-    const url = isOllamaConnector ? `${baseUrl}/chat` : `${baseUrl}/chat/completions`;
+    const url = this.resolveCloudProviderUrl(baseUrl, model, isOllamaConnector, isNativeGemini);
     this.logger.debug(
-      `callCloudProvider: request body built — messageCount=${String(requestBody.messages.length)}`,
+      `callCloudProvider: request body built — messageCount=${String(this.countCloudRequestMessages(requestBody))}`,
     );
     this.logger.debug(`callCloudProvider: sending POST to ${url}`);
-    if (isOllamaConnector) {
-      // Ollama Cloud agentic models (deepseek-v4-pro / kimi-k2 / GLM-5.1)
-      // emit message.tool_calls and rely on the client to execute web
-      // search/fetch and loop. Run the dedicated tool loop instead of a
-      // single-shot POST.
-      return this.runOllamaCloudToolLoop({
-        provider,
-        model,
-        initialBody: requestBody as OllamaChatRequest,
-        baseUrl,
-        apiKey,
-        startTime,
-        usedFallback,
-        context,
-        streamThreadId: streamContext?.threadId,
-      });
-    }
-    const response = await httpRequest<OpenAiChatResponse | OllamaChatResponse>({
+    const responseData = await this.postCloudProviderRequest(
+      provider,
       url,
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}` },
-      body: requestBody,
-      timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
-    });
-
-    if (!response.ok) {
-      const errorMessage = this.extractHttpErrorMessage(
-        response.data,
-        `Cloud provider ${provider} returned status ${String(response.status)}`,
-      );
-      this.logger.error(
-        `callCloudProvider: ${provider} returned error status=${String(response.status)} message=${errorMessage}`,
-      );
-      throw new BusinessException(errorMessage, 'CLOUD_PROVIDER_REQUEST_FAILED');
-    }
-
+      apiKey,
+      isNativeGemini,
+      requestBody,
+      config.OLLAMA_GENERATE_TIMEOUT_MS,
+      abortSignal,
+    );
     this.logger.debug('callCloudProvider: parsing cloud response');
     const promptText = this.buildPromptTextForEstimate(context);
-    const result = this.parseCloudResponse(
-      response.data as OpenAiChatResponse,
+    const result = this.parseCloudProviderResponse(
+      responseData,
+      isNativeGemini,
       provider,
       model,
       startTime,
@@ -1777,6 +1849,102 @@ export class ChatExecutionManager implements OnModuleInit {
       `callCloudProvider: completed ${provider}/${model} latencyMs=${String(result.latencyMs)} inputTokens=${String(result.inputTokens ?? 0)} outputTokens=${String(result.outputTokens ?? 0)}`,
     );
     return result;
+  }
+
+  private resolveCloudProviderUrl(
+    baseUrl: string,
+    model: string,
+    isOllamaConnector: boolean,
+    isNativeGemini: boolean,
+  ): string {
+    if (isOllamaConnector) {
+      return `${baseUrl}/chat`;
+    }
+    if (isNativeGemini) {
+      const trimmedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+      const nativeBaseUrl = trimmedBaseUrl.endsWith(GEMINI_OPENAI_COMPATIBILITY_SUFFIX)
+        ? trimmedBaseUrl.slice(0, -GEMINI_OPENAI_COMPATIBILITY_SUFFIX.length)
+        : trimmedBaseUrl;
+      return `${nativeBaseUrl}/models/${encodeURIComponent(model)}:generateContent`;
+    }
+    return `${baseUrl}/chat/completions`;
+  }
+
+  private countCloudRequestMessages(requestBody: CloudProviderRequestBody): number {
+    return 'messages' in requestBody ? requestBody.messages.length : requestBody.contents.length;
+  }
+
+  private async postCloudProviderRequest(
+    provider: string,
+    url: string,
+    apiKey: string,
+    isNativeGemini: boolean,
+    requestBody: CloudProviderRequestBody,
+    timeoutMs: number,
+    abortSignal?: AbortSignal,
+  ): Promise<OpenAiChatResponse | OllamaChatResponse | GeminiGenerateContentResponse> {
+    const response = await httpRequest<
+      OpenAiChatResponse | OllamaChatResponse | GeminiGenerateContentResponse
+    >({
+      url,
+      method: 'POST',
+      headers: isNativeGemini
+        ? { 'x-goog-api-key': apiKey }
+        : { Authorization: `Bearer ${apiKey}` },
+      body: requestBody,
+      timeoutMs,
+      signal: abortSignal,
+    });
+    if (!response.ok) {
+      const errorMessage = this.extractHttpErrorMessage(
+        response.data,
+        `Cloud provider ${provider} returned status ${String(response.status)}`,
+      );
+      this.logger.error(
+        `callCloudProvider: ${provider} returned error status=${String(response.status)} message=${errorMessage}`,
+      );
+      throw new BusinessException(errorMessage, 'CLOUD_PROVIDER_REQUEST_FAILED');
+    }
+    return response.data;
+  }
+
+  private parseCloudProviderResponse(
+    data: OpenAiChatResponse | OllamaChatResponse | GeminiGenerateContentResponse,
+    isNativeGemini: boolean,
+    provider: string,
+    model: string,
+    startTime: number,
+    usedFallback: boolean,
+    promptText: string,
+  ): LlmResponse {
+    if (isNativeGemini) {
+      return this.parseGeminiResponse(
+        data as GeminiGenerateContentResponse,
+        provider,
+        model,
+        startTime,
+        usedFallback,
+        promptText,
+      );
+    }
+    if (provider === OLLAMA_CONNECTOR_PROVIDER) {
+      return this.parseOllamaChatResponse(
+        data as OllamaChatResponse,
+        provider,
+        model,
+        startTime,
+        usedFallback,
+        promptText,
+      );
+    }
+    return this.parseCloudResponse(
+      data as OpenAiChatResponse,
+      provider,
+      model,
+      startTime,
+      usedFallback,
+      promptText,
+    );
   }
 
   // Ollama Cloud agentic tool loop.
@@ -1797,7 +1965,7 @@ export class ChatExecutionManager implements OnModuleInit {
   // that path. If the wrap-up POST itself fails, the partial accumulated
   // content is returned with `gracefullyWrapped=false` so the FE can
   // render a clear error hint instead of a misleading complete answer.
-  private async runOllamaCloudToolLoop(args: {
+  async runOllamaCloudToolLoop(args: {
     provider: string;
     model: string;
     initialBody: OllamaChatRequest;
@@ -1825,6 +1993,8 @@ export class ChatExecutionManager implements OnModuleInit {
       maxIterations,
       totalTimeoutMs,
       generateTimeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
+      userId: args.context.userId,
+      usageRunId: `${streamThreadId ?? 'buffered'}:${String(startTime)}`,
     });
     // Graceful wrap-up — when we hit either cap with pending tool_calls,
     // issue one final POST with NO `tools` so the model is forced to
@@ -1882,6 +2052,8 @@ export class ChatExecutionManager implements OnModuleInit {
     maxIterations: number;
     totalTimeoutMs: number;
     generateTimeoutMs: number;
+    userId: string;
+    usageRunId: string;
   }): Promise<{
     iteration: number;
     capReached: boolean;
@@ -1925,6 +2097,8 @@ export class ChatExecutionManager implements OnModuleInit {
         provider: args.provider,
         model: args.model,
         iteration,
+        userId: args.userId,
+        usageRunId: args.usageRunId,
       });
     }
     if (this.toolLoopExhaustedWithPendingCalls(iteration, lastData, args.maxIterations)) {
@@ -2016,11 +2190,7 @@ export class ChatExecutionManager implements OnModuleInit {
   // Wall-clock guard for the agentic loop. Returns true (and warns) when
   // the cumulative elapsed time since loop entry exceeds the configured
   // total budget, so the outer loop can flip capReached and bail.
-  private toolLoopTimedOut(
-    startTime: number,
-    iteration: number,
-    totalTimeoutMs: number,
-  ): boolean {
+  private toolLoopTimedOut(startTime: number, iteration: number, totalTimeoutMs: number): boolean {
     const elapsed = Date.now() - startTime;
     if (elapsed >= totalTimeoutMs) {
       this.logger.warn(
@@ -2089,6 +2259,8 @@ export class ChatExecutionManager implements OnModuleInit {
     provider: string;
     model: string;
     iteration: number;
+    userId: string;
+    usageRunId: string;
   }): Promise<void> {
     const { messages, turns, turnContent, toolCalls } = args;
     messages.push({ role: 'assistant', content: turnContent, tool_calls: toolCalls });
@@ -2101,6 +2273,8 @@ export class ChatExecutionManager implements OnModuleInit {
       provider: args.provider,
       model: args.model,
       iteration: args.iteration,
+      userId: args.userId,
+      usageRunId: args.usageRunId,
     });
     for (const entry of toolResults) {
       messages.push({ role: 'tool', content: entry.result, tool_call_id: entry.toolCallId });
@@ -2202,7 +2376,11 @@ export class ChatExecutionManager implements OnModuleInit {
     provider: string;
     model: string;
     iteration: number;
-  }): Promise<Array<{ toolCallId: string; result: string; transcriptTurn: OllamaToolTranscriptTurn }>> {
+    userId: string;
+    usageRunId: string;
+  }): Promise<
+    Array<{ toolCallId: string; result: string; transcriptTurn: OllamaToolTranscriptTurn }>
+  > {
     const results: Array<{
       toolCallId: string;
       result: string;
@@ -2229,6 +2407,12 @@ export class ChatExecutionManager implements OnModuleInit {
           baseUrl: args.baseUrl,
           apiKey: args.apiKey,
           timeoutMs: args.timeoutMs,
+          onDispatch: async () =>
+            this.accessControlService.recordFeatureUsage(
+              args.userId,
+              toolName === TOOL_WEB_SEARCH ? 'WEB_SEARCH' : 'WEB_FETCH',
+              `${args.usageRunId}:${String(args.iteration)}:${callId}`,
+            ),
         });
       } catch (error: unknown) {
         ok = false;
@@ -2427,12 +2611,14 @@ export class ChatExecutionManager implements OnModuleInit {
     provider: string;
     model: string;
     context: AssembledContext;
+    apiKey: string;
     threadSettings: ThreadSettings | undefined;
     executionOptions: ExecutionOptions | undefined;
     isOllamaConnector: boolean;
-  }): Promise<{ messages: ReadonlyArray<unknown> } & Record<string, unknown>> {
+    abortSignal?: AbortSignal;
+  }): Promise<CloudProviderRequestBody> {
     const config = AppConfig.get();
-    const { provider, model, context, threadSettings, executionOptions } = args;
+    const { provider, model, context, apiKey, threadSettings, executionOptions } = args;
     if (args.isOllamaConnector) {
       return this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions);
     }
@@ -2445,17 +2631,15 @@ export class ChatExecutionManager implements OnModuleInit {
         false,
       );
     }
-    if (provider === GEMINI_PROVIDER && config.ENABLE_GEMINI_FILES_API) {
-      const geminiBody = await this.buildGeminiNativeRequestBody(
+    if (this.shouldUseGeminiNativeRequest(provider, context)) {
+      return this.buildGeminiNativeRequestBody(
         model,
         context,
+        apiKey,
         threadSettings,
         executionOptions,
-        false,
+        args.abortSignal,
       );
-      // Mirror the OpenAI-compat "messages" field so logging in callCloudProvider
-      // (which reads requestBody.messages.length) keeps working uniformly.
-      return { ...geminiBody, messages: geminiBody.contents };
     }
     return this.buildChatRequestBody(model, context, threadSettings, executionOptions);
   }
@@ -2572,21 +2756,23 @@ export class ChatExecutionManager implements OnModuleInit {
   // Slice D — Gemini native generateContent body builder. Routes every
   // OpenAI image_url part through buildGeminiRequestBody, uploading large
   // payloads to the Files API via GeminiFilesApiManager and inlining the
-  // rest as base64. Falls back to inline_data on any upload failure.
+  // rest as base64. Upload failures propagate so oversized data is never
+  // copied back into an invalid inline request.
   private async buildGeminiNativeRequestBody(
     model: string,
     context: AssembledContext,
+    apiKey: string,
     threadSettings: ThreadSettings | undefined,
     executionOptions: ExecutionOptions | undefined,
-    stream: boolean,
+    abortSignal?: AbortSignal,
   ): Promise<GeminiNativeChatRequest> {
     const config = AppConfig.get();
-    const openAiMessages = this.contextAssembly.buildChatMessages(context);
+    const openAiMessages = this.contextAssembly.buildGeminiChatMessages(context);
     const baseMessages = this.applyShortConstraintToOpenAiMessages(
       openAiMessages,
       executionOptions,
     );
-    const fileUploadFn = this.buildGeminiFileUploadFn(context);
+    const fileUploadFn = this.buildGeminiFileUploadFn(context, apiKey, abortSignal);
     const shape = await buildGeminiRequestBody(
       baseMessages,
       fileUploadFn,
@@ -2603,9 +2789,7 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
     const requestBody: GeminiNativeChatRequest = {
-      model,
       contents: shape.body.contents,
-      stream,
     };
     if (shape.body.systemInstruction !== undefined) {
       requestBody.systemInstruction = shape.body.systemInstruction;
@@ -2621,31 +2805,20 @@ export class ChatExecutionManager implements OnModuleInit {
     return requestBody;
   }
 
-  private async buildGeminiNativeStreamingBody(
-    model: string,
-    context: AssembledContext,
-    threadSettings: ThreadSettings | undefined,
-    executionOptions: ExecutionOptions | undefined,
-  ): Promise<GeminiNativeChatRequest> {
-    return this.buildGeminiNativeRequestBody(
-      model,
-      context,
-      threadSettings,
-      executionOptions,
-      true,
-    );
-  }
-
   // Builds the per-attachment upload function the Gemini request builder
   // invokes for each large `image_url` part. We look up the matching file
   // from the assembled context (matching by base64 content) so we can pass
   // its `id` as the cache key — same attachment across compare lanes is
   // uploaded once.
-  private buildGeminiFileUploadFn(context: AssembledContext): GeminiFileUploadFn {
+  private buildGeminiFileUploadFn(
+    context: AssembledContext,
+    apiKey: string,
+    abortSignal?: AbortSignal,
+  ): GeminiFileUploadFn {
     const manager = this.geminiFilesApiManager;
     return async (data: Buffer, mimeType: string): Promise<string> => {
       const fileId = this.resolveGeminiFileIdForUpload(context, data, mimeType);
-      return manager.getCachedOrUpload(fileId, data, mimeType);
+      return manager.getCachedOrUpload(fileId, data, mimeType, apiKey, abortSignal);
     };
   }
 
@@ -2714,9 +2887,7 @@ export class ChatExecutionManager implements OnModuleInit {
     // OLLAMA_CONNECTOR_PROVIDER baseline (32_768) here. The local-Ollama
     // path goes through buildOllamaRequest, not this method.
     const promptTokensEstimate = estimateTokensFromText(
-      shape.messages
-        .map((m) => (typeof m.content === 'string' ? m.content : ''))
-        .join('\n'),
+      shape.messages.map((m) => (typeof m.content === 'string' ? m.content : '')).join('\n'),
     );
     const numPredict =
       explicitMaxOutputTokens ??
@@ -2739,9 +2910,44 @@ export class ChatExecutionManager implements OnModuleInit {
     // can do real web access end-to-end. The client (this service) is
     // responsible for executing the emitted tool_calls — see
     // runOllamaCloudToolLoop.
-    requestBody.tools = OLLAMA_CLOUD_TOOL_DEFINITIONS;
-
     return requestBody;
+  }
+
+  private parseGeminiResponse(
+    data: GeminiGenerateContentResponse,
+    provider: string,
+    model: string,
+    startTime: number,
+    usedFallback: boolean,
+    promptText?: string,
+  ): LlmResponse {
+    const firstCandidate = data.candidates?.at(0);
+    const responseContent = (firstCandidate?.content?.parts ?? [])
+      .map((part) => part.text ?? '')
+      .join('');
+    if (responseContent.trim().length === 0) {
+      throw new BusinessException(
+        `Cloud provider ${provider} returned no candidate content`,
+        'CLOUD_PROVIDER_EMPTY_RESPONSE',
+      );
+    }
+    const usage = extractGeminiUsage(data, {
+      promptText,
+      completionText: responseContent,
+    });
+    const finishReason =
+      firstCandidate?.finishReason === 'MAX_TOKENS'
+        ? 'length'
+        : firstCandidate?.finishReason?.toLowerCase();
+    return {
+      content: responseContent,
+      provider,
+      model,
+      ...this.buildTokenUsageFields(usage),
+      latencyMs: Date.now() - startTime,
+      finishReason,
+      usedFallback,
+    };
   }
 
   private parseCloudResponse(
@@ -2898,6 +3104,8 @@ export class ChatExecutionManager implements OnModuleInit {
     } else {
       this.logger.debug('callImageService: no image files attached — using text prompt only');
     }
+
+    prompt = boundImageGenerationPrompt(prompt);
 
     this.logger.debug(
       `callImageService: sending request to image service at ${config.IMAGE_SERVICE_URL}`,

@@ -66,7 +66,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 45,
+      "endpointCount": 53,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",
@@ -78,12 +78,14 @@
       "port": 4001,
       "portSource": "shared-constants",
       "prismaModels": [
+        "DeviceAuthorizationGrant",
         "EntitlementInboxEvent",
         "FeatureUsageRecord",
         "Plan",
         "PlanFeatureRule",
         "PlanModelAccess",
         "PlanPriceVersion",
+        "PlanRetirementMigration",
         "Role",
         "RolePermission",
         "SeedExecution",
@@ -94,7 +96,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 38,
+      "testFiles": 48,
       "testRunner": "jest"
     },
     {
@@ -121,7 +123,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 64,
+      "testFiles": 70,
       "testRunner": "jest"
     },
     {
@@ -209,7 +211,7 @@
         "File",
         "FileChunk"
       ],
-      "testFiles": 15,
+      "testFiles": 17,
       "testRunner": "jest"
     },
     {
@@ -373,7 +375,7 @@
         "Subscription",
         "WebhookEvent"
       ],
-      "testFiles": 85,
+      "testFiles": 89,
       "testRunner": "jest"
     },
     {
@@ -399,7 +401,7 @@
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 14,
+      "testFiles": 16,
       "testRunner": "jest"
     },
     {

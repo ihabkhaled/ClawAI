@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
+import { SOCIAL_PREVIEW_IMAGE_PATH } from '@/constants/site-metadata.constants';
 import { Locale } from '@/enums/locale.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
@@ -15,8 +16,6 @@ import {
   isSupportedLocale,
   localisePath,
 } from '@/utilities/locale.utility';
-
-const OPEN_GRAPH_IMAGE_PATH = '/opengraph-image';
 
 function absoluteUrl(siteUrl: string, path: string): string {
   return new URL(path, siteUrl).toString();
@@ -45,7 +44,7 @@ export function buildPublicPageMetadata(slug: string, locale: Locale): Metadata 
   const alternateLocales = Object.keys(languageAlternates)
     .filter((alternateLocale) => alternateLocale !== locale)
     .map((alternateLocale) => getOpenGraphLocale(alternateLocale as Locale));
-  const imageUrl = absoluteUrl(siteUrl, OPEN_GRAPH_IMAGE_PATH);
+  const imageUrl = absoluteUrl(siteUrl, SOCIAL_PREVIEW_IMAGE_PATH);
 
   return {
     title,

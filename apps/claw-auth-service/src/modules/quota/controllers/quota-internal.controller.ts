@@ -3,7 +3,10 @@ import { Public } from '../../../app/decorators/public.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { EntitlementsService } from '../../entitlements/services/entitlements.service';
 import { QuotaService } from '../services/quota.service';
+import { FeatureUsageConsumptionService } from '../services/feature-usage-consumption.service';
 import {
+  ConsumeFeatureUsageDto,
+  consumeFeatureUsageSchema,
   FinalizeQuotaDto,
   finalizeQuotaSchema,
   ReleaseQuotaDto,
@@ -22,6 +25,7 @@ export class QuotaInternalController {
   constructor(
     private readonly quotaService: QuotaService,
     private readonly entitlementsService: EntitlementsService,
+    private readonly featureUsage: FeatureUsageConsumptionService,
   ) {}
 
   @Post('reserve')
@@ -60,5 +64,13 @@ export class QuotaInternalController {
     @Body(new ZodValidationPipe(releaseQuotaSchema)) dto: ReleaseQuotaDto,
   ): Promise<void> {
     await this.quotaService.release(dto.userId, dto.estimatedTokens);
+  }
+
+  @Post('features/consume')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async consumeFeature(
+    @Body(new ZodValidationPipe(consumeFeatureUsageSchema)) dto: ConsumeFeatureUsageDto,
+  ): Promise<void> {
+    await this.featureUsage.record(dto);
   }
 }

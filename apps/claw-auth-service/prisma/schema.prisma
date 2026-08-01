@@ -36,6 +36,18 @@ enum UserLanguagePreference {
   ZH
 }
 
+enum SessionClientKind {
+  WEB
+  VSCODE
+}
+
+enum DeviceAuthorizationStatus {
+  PENDING
+  APPROVED
+  DENIED
+  CONSUMED
+}
+
 enum UserAppearancePreference {
   SYSTEM
   LIGHT
@@ -80,6 +92,19 @@ enum PlanAssignmentStatus {
   PAUSED
 }
 
+enum PlanLifecycleStatus {
+  ACTIVE
+  RETIRED
+}
+
+enum PlanRetirementMigrationStatus {
+  APPLIED
+  BILLING_SCHEDULE_PENDING
+  BILLING_SCHEDULED
+  SUPERSEDED
+  FAILED
+}
+
 // Admin-managed subscription plan (Phase B). Prices are modeled so billing can
 // be added later; no payment integration ships now.
 model Plan {
@@ -94,6 +119,9 @@ model Plan {
   isDefault                          Boolean             @default(false) @map("is_default")
   isActive                           Boolean             @default(true) @map("is_active")
   isPublic                           Boolean             @default(true) @map("is_public")
+  lifecycleStatus                    PlanLifecycleStatus @default(ACTIVE) @map("lifecycle_status")
+  replacementPlanId                  String?             @map("replacement_plan_id")
+  retiredAt                          DateTime?           @map("retired_at")
   dailyTokenQuota                    Int                 @default(0) @map("daily_token_quota")
   weeklyTokenQuota                   Int?                @map("weekly_token_quota")
   monthlyTokenQuota                  Int?                @map("monthly_token_quota")
@@ -134,6 +162,27 @@ model Plan {
   @@index([isActive])
   @@index([displayOrder])
   @@map("plans")
+}
+
+// Durable, idempotent provenance for a removed plan. Financial history remains
+// in payment-service; paid migrations stay pending until that service schedules
+// the immutable replacement price at the existing renewal boundary.
+model PlanRetirementMigration {
+  id                      String                        @id @default(cuid())
+  sourceAssignmentId      String                        @unique @map("source_assignment_id")
+  userId                  String                        @map("user_id")
+  sourcePlanId            String                        @map("source_plan_id")
+  replacementPlanId       String                        @map("replacement_plan_id")
+  replacementAssignmentId String                        @unique @map("replacement_assignment_id")
+  sourceSubscriptionId    String?                       @map("source_subscription_id")
+  status                  PlanRetirementMigrationStatus
+  errorCode               String?                       @map("error_code")
+  createdAt               DateTime                      @default(now()) @map("created_at")
+  updatedAt               DateTime                      @updatedAt @map("updated_at")
+
+  @@index([sourcePlanId, status])
+  @@index([sourceSubscriptionId])
+  @@map("plan_retirement_migrations")
 }
 
 // Per-plan provider/model access. Backend source of truth for what a plan's
@@ -249,17 +298,48 @@ model RolePermission {
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  refreshToken String   @unique @map("refresh_token")
-  expiresAt    DateTime @map("expires_at")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id                  String            @id @default(cuid())
+  userId              String            @map("user_id")
+  refreshTokenHash    String            @unique @map("refresh_token_hash")
+  familyId            String            @map("family_id")
+  clientKind          SessionClientKind @default(WEB) @map("client_kind")
+  clientName          String?           @map("client_name")
+  usedAt              DateTime?         @map("used_at")
+  revokedAt           DateTime?         @map("revoked_at")
+  replacedBySessionId String?           @map("replaced_by_session_id")
+  expiresAt           DateTime          @map("expires_at")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([familyId])
   @@index([expiresAt])
   @@map("sessions")
+}
+
+model DeviceAuthorizationGrant {
+  id                 String                    @id @default(cuid())
+  deviceCodeHash     String                    @unique @map("device_code_hash")
+  userCode           String                    @unique @map("user_code")
+  clientName         String                    @map("client_name")
+  clientVersion      String                    @map("client_version")
+  status             DeviceAuthorizationStatus @default(PENDING)
+  approvedByUserId   String?                   @map("approved_by_user_id")
+  intervalSeconds    Int                       @default(5) @map("interval_seconds")
+  lastPolledAt       DateTime?                 @map("last_polled_at")
+  pollViolationCount Int                       @default(0) @map("poll_violation_count")
+  expiresAt          DateTime                  @map("expires_at")
+  approvedAt         DateTime?                 @map("approved_at")
+  deniedAt           DateTime?                 @map("denied_at")
+  consumedAt         DateTime?                 @map("consumed_at")
+  createdAt          DateTime                  @default(now()) @map("created_at")
+  updatedAt          DateTime                  @updatedAt @map("updated_at")
+
+  @@index([status, expiresAt])
+  @@index([approvedByUserId])
+  @@map("device_authorization_grants")
 }
 
 model SystemSetting {
@@ -300,6 +380,9 @@ enum PlanFeatureKey {
   COMPARE_MODE
   JUDGE_MODE
   RESEARCH_MODE
+  WEB_SEARCH
+  WEB_FETCH
+  WEB_EXTRACT
   CRITIC_REVIEW
   WORKSPACES
   MEMORY

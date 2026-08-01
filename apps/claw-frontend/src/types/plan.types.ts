@@ -1,5 +1,5 @@
-import type { PlanModelAccessMode } from '@claw/shared-types';
-
+import type { PlanLifecycleStatus } from '../enums/plan-lifecycle-status.enum';
+import type { PlanModelAccessMode } from '../enums/plan-model-access-mode.enum';
 import type { UserRole } from '../enums/user-role.enum';
 
 import type { TranslateFunction } from './i18n.types';
@@ -29,6 +29,9 @@ export type PlanView = {
   isDefault: boolean;
   isActive: boolean;
   isPublic: boolean;
+  lifecycleStatus: PlanLifecycleStatus;
+  replacementPlanId: string | null;
+  retiredAt: string | null;
   dailyTokenQuota: number;
   monthlyTokenQuota: number | null;
   maxChatsPerDay: number | null;
@@ -48,6 +51,19 @@ export type PlanView = {
   modelAccess: PlanModelAccessView[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type PlanRetirementResult = {
+  sourcePlanId: string;
+  replacementPlanId: string;
+  migratedAssignments: number;
+  billingPending: number;
+  alreadyRetired: boolean;
+};
+
+export type PlanRetirementCandidate = {
+  id: string;
+  name: string;
 };
 
 export type PlanModelAccessInput = {
@@ -114,6 +130,14 @@ export type EntitlementPlan = {
   slug: string;
   name: string;
   featureGates: EntitlementFeatureGates;
+  limits: EntitlementPlanLimits;
+};
+
+export type EntitlementPlanLimits = {
+  dailyTokens: number | null;
+  weeklyTokens: number | null;
+  monthlyTokens: number | null;
+  chatsPerDay: number | null;
 };
 
 export type EntitlementQuota = {
@@ -121,6 +145,7 @@ export type EntitlementQuota = {
   used: number;
   remaining: number;
   unlimited: boolean;
+  adminBypass: boolean;
 };
 
 export type UserEntitlements = {
@@ -196,6 +221,10 @@ export type UsePlansPageResult = {
   onActivate: (id: string) => void;
   onDeactivate: (id: string) => void;
   onSetDefault: (id: string) => void;
+  retirementCandidate: PlanRetirementCandidate | null;
+  onRequestRetirement: (plan: PlanRetirementCandidate) => void;
+  onCancelRetirement: () => void;
+  onConfirmRetirement: () => void;
   onRetry: () => void;
 };
 
@@ -281,6 +310,11 @@ export type PlanFeatureGatesProps = {
   t: TranslateFunction;
 };
 
+export type PlanLimitsProps = {
+  limits: EntitlementPlanLimits;
+  t: TranslateFunction;
+};
+
 export type AllowedModelsListProps = {
   models: PlanModelAccessView[];
   t: TranslateFunction;
@@ -292,6 +326,7 @@ export type PlanRowProps = {
   onActivate: (id: string) => void;
   onDeactivate: (id: string) => void;
   onSetDefault: (id: string) => void;
+  onRetire: (id: string, name: string) => void;
   onEditHref: string;
   onModelAccessHref: string;
   onPricesHref: string;

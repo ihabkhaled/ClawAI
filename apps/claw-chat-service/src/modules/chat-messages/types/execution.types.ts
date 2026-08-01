@@ -317,12 +317,13 @@ export type AnthropicMessagesRequest = {
 // ENABLE_GEMINI_FILES_API is on). Gemini expects `contents` (not
 // `messages`), with each `content` carrying typed `parts`.
 export type GeminiNativeChatRequest = {
-  model: string;
   contents: GeminiContent[];
-  stream: boolean;
   systemInstruction?: { parts: Array<{ text: string }> };
   generationConfig?: {
     temperature?: number;
     maxOutputTokens?: number;
   };
 };
+
+export type CloudProviderRequestBody =
+  OpenAiChatRequest | OllamaChatRequest | AnthropicMessagesRequest | GeminiNativeChatRequest;

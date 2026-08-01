@@ -1,15 +1,16 @@
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/services/auth/auth.service';
 import type { LoginRequest } from '@/types';
 import { logger, showToast } from '@/utilities';
 import { saveCredential } from '@/utilities/credential-storage.utility';
+import { safeReturnRoute } from '@/utilities/safe-return-route.utility';
 
 export function useLogin() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
 
   const mutation = useMutation({
@@ -21,7 +22,7 @@ export function useLogin() {
       void saveCredential({ email: variables.email, password: variables.password });
       logger.info({ component: 'auth', action: 'login', message: 'User logged in successfully' });
       showToast.success({ title: t('toast.loginSuccess') });
-      router.push(ROUTES.CHAT);
+      router.push(safeReturnRoute(searchParams.get('returnTo')));
     },
     onError: (error: Error) => {
       logger.error({ component: 'auth', action: 'login-error', message: 'Login failed' });

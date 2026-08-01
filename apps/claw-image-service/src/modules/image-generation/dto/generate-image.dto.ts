@@ -13,7 +13,10 @@ export const generateImageSchema = z.object({
   quality: z.string().max(20).optional(),
   style: z.string().max(20).optional(),
   isAutoMode: z.boolean().optional(),
-  referenceImageBase64: z.string().max(20_000_000).optional(),
+  referenceImageBase64: z
+    .string()
+    .max(Math.ceil((25 * 1024 * 1024 * 4) / 3) + 4)
+    .optional(),
   referenceImageMimeType: z.string().max(50).optional(),
 });
 

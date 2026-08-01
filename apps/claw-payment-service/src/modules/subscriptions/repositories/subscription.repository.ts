@@ -6,6 +6,7 @@ import { resolveUniqueActiveKey } from '../../../common/utilities/subscription-s
 import type { Subscription } from '../../../generated/prisma';
 import type {
   CreateSubscriptionData,
+  SchedulePlanRetirementInput,
   SubscriptionStatusChange,
 } from '../types/subscription-repository.types';
 
@@ -47,6 +48,29 @@ export class SubscriptionRepository {
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async schedulePlanRetirementIfUnchanged(input: SchedulePlanRetirementInput): Promise<boolean> {
+    this.logger.debug(`schedulePlanRetirementIfUnchanged: id=${input.subscriptionId}`);
+    const result = await this.prisma.subscription.updateMany({
+      where: {
+        id: input.subscriptionId,
+        version: input.expectedVersion,
+        scheduledPlanId: null,
+        scheduledEffectiveAt: null,
+      },
+      data: {
+        scheduledPlanId: input.replacementPlanId,
+        scheduledPlanSlug: input.replacementPlanSlug,
+        scheduledPlanPriceVersionId: input.replacementPlanPriceVersionId,
+        scheduledAmountMinor: input.replacementAmountMinor,
+        scheduledBillingInterval: input.billingInterval,
+        scheduledEffectiveAt: input.effectiveAt,
+        scheduledChangeReason: input.reason,
+        version: { increment: 1 },
+      },
+    });
+    return result.count === 1;
   }
 
   // Looks a subscription up from a webhook by the blind index of its gateway
@@ -137,6 +161,12 @@ export class SubscriptionRepository {
       },
       orderBy: { entitlementValidUntil: 'asc' },
       take: limit,
+    });
+  }
+
+  async countLapsedEntitlements(now: Date): Promise<number> {
+    return this.prisma.subscription.count({
+      where: { uniqueActiveKey: { not: null }, entitlementValidUntil: { lte: now } },
     });
   }
 

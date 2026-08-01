@@ -74,6 +74,7 @@ describe('ChatExecutionManager', () => {
   let judgeManager: Partial<Record<keyof JudgeRefereeManager, jest.Mock>>;
   let streamService: Partial<Record<keyof ChatStreamService, jest.Mock>>;
   let localModelSelection: Partial<Record<keyof LocalModelSelectionService, jest.Mock>>;
+  let accessControl: { recordUsage: jest.Mock; recordFeatureUsage: jest.Mock };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -85,6 +86,9 @@ describe('ChatExecutionManager', () => {
     contextAssembly = {
       buildPromptString: jest.fn().mockReturnValue('user prompt'),
       buildChatMessages: jest
+        .fn()
+        .mockReturnValue([{ role: 'user', content: 'Explain this briefly' }]),
+      buildGeminiChatMessages: jest
         .fn()
         .mockReturnValue([{ role: 'user', content: 'Explain this briefly' }]),
     };
@@ -114,6 +118,10 @@ describe('ChatExecutionManager', () => {
       resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
       resolveModelList: jest.fn().mockResolvedValue(['qwen3:7b', 'llama3.3:8b']),
     };
+    accessControl = {
+      recordUsage: jest.fn(),
+      recordFeatureUsage: jest.fn(async () => {}),
+    };
 
     manager = new ChatExecutionManager(
       contextAssembly as unknown as ContextAssemblyManager,
@@ -129,7 +137,7 @@ describe('ChatExecutionManager', () => {
           outcome: { applied: false, results: [], runId: null, warning: null },
         })),
       } as any,
-      { recordUsage: jest.fn() } as unknown as AccessControlService,
+      accessControl as unknown as AccessControlService,
       // Slice D — Gemini Files API manager. Default mock matches the
       // ENABLE_GEMINI_FILES_API=false path (no uploads), so no test should
       // hit it unless it explicitly flips the flag.
@@ -271,6 +279,240 @@ describe('ChatExecutionManager', () => {
     expect(completionRequest.messages[0]?.role).toBe('system');
     expect(completionRequest.messages[0]?.content).toContain('Respond briefly in 2-4 sentences');
   });
+
+  it('routes an AUTO video attachment to Gemini and sends native video data', async () => {
+    const videoPrompt =
+      'Provide a comprehensive frame-by-frame analysis of this video and identify important events.';
+    const context = makeContext(videoPrompt);
+    const videoBase64 = Buffer.from('video-bytes').toString('base64');
+    context.fileContents = [
+      {
+        id: 'video-1',
+        filename: 'demo.mp4',
+        mimeType: 'video/mp4',
+        content: videoBase64,
+      },
+    ];
+    contextAssembly.buildGeminiChatMessages?.mockReturnValue([
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: videoPrompt },
+          {
+            type: 'image_url',
+            image_url: { url: `data:video/mp4;base64,${videoBase64}` },
+          },
+        ],
+      },
+    ]);
+    AppConfig.get.mockReturnValue({
+      ...DEFAULT_APP_CONFIG,
+      ENABLE_GEMINI_FILES_API: false,
+      GEMINI_FILES_API_SIZE_THRESHOLD_BYTES: 10_000,
+    });
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          provider: 'GEMINI',
+          apiKey: 'gemini-key',
+          baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          candidates: [
+            {
+              content: {
+                role: 'model',
+                parts: [{ text: 'The clip shows a demo.' }],
+              },
+              finishReason: 'STOP',
+            },
+          ],
+          usageMetadata: {
+            promptTokenCount: 12,
+            candidatesTokenCount: 7,
+            totalTokenCount: 19,
+          },
+        },
+      });
+
+    const result = await manager.execute(
+      {
+        messageId: 'msg-video',
+        threadId: 'thread-1',
+        selectedProvider: 'local-ollama',
+        selectedModel: 'qwen3:1.7b',
+        routingMode: 'AUTO',
+        fallbackChain: [{ provider: 'OPENAI', model: 'gpt-4o' }],
+        timestamp: new Date().toISOString(),
+      },
+      context,
+    );
+
+    expect(result.provider).toBe('GEMINI');
+    expect(result.model).toBe('gemini-2.5-flash');
+    expect(result.content).toBe('The clip shows a demo.');
+    expect(httpRequest).toHaveBeenCalledTimes(2);
+    expect(httpRequest.mock.calls[1][0]).toEqual(
+      expect.objectContaining({
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+        headers: { 'x-goog-api-key': 'gemini-key' },
+      }),
+    );
+    const providerRequest = httpRequest.mock.calls[1][0].body as {
+      contents: Array<{
+        parts: Array<{
+          inline_data?: { mime_type: string; data: string };
+        }>;
+      }>;
+    };
+    expect(providerRequest.contents[0]?.parts[1]?.inline_data).toEqual({
+      mime_type: 'video/mp4',
+      data: videoBase64,
+    });
+    expect(providerRequest).not.toHaveProperty('messages');
+    expect(providerRequest).not.toHaveProperty('model');
+    expect(providerRequest).not.toHaveProperty('stream');
+  });
+
+  it('cancels a buffered Gemini generate request without attempting the fallback chain', async () => {
+    const cancellationController = new AbortController();
+    const runSimulated = jest.fn();
+    const simulatedExecutor = { runSimulated };
+    const releaseCancellation = jest.fn();
+    const cancellation = {
+      register: jest.fn().mockReturnValue(cancellationController),
+      release: releaseCancellation,
+    };
+    const cancellableManager = new ChatExecutionManager(
+      contextAssembly as unknown as ContextAssemblyManager,
+      qualityManager as unknown as QualityCheckManager,
+      judgeManager as unknown as JudgeRefereeManager,
+      streamService as unknown as ChatStreamService,
+      {
+        run: jest.fn().mockImplementation(async (_query: string, requestContext: unknown) => ({
+          context: requestContext,
+          outcome: { applied: false, results: [], runId: null, warning: null },
+        })),
+      } as unknown as ConstructorParameters<typeof ChatExecutionManager>[4],
+      { recordUsage: jest.fn() } as unknown as AccessControlService,
+      {
+        uploadFile: jest.fn(),
+        getCachedOrUpload: jest.fn(),
+      } as unknown as ConstructorParameters<typeof ChatExecutionManager>[6],
+      localModelSelection as unknown as LocalModelSelectionService,
+      simulatedExecutor as unknown as ConstructorParameters<typeof ChatExecutionManager>[8],
+      cancellation as unknown as ConstructorParameters<typeof ChatExecutionManager>[9],
+    );
+    AppConfig.get.mockReturnValue({
+      ...DEFAULT_APP_CONFIG,
+      ENABLE_GEMINI_FILES_API: true,
+      GEMINI_FILES_API_SIZE_THRESHOLD_BYTES: 10_000,
+    });
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          provider: 'GEMINI',
+          apiKey: 'gemini-key',
+          baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+        },
+      })
+      .mockImplementationOnce(async (options: { signal?: AbortSignal }) => {
+        if (options.signal?.aborted === true) {
+          throw new Error('aborted');
+        }
+        return new Promise((_resolve, reject) => {
+          options.signal?.addEventListener('abort', () => reject(new Error('aborted')), {
+            once: true,
+          });
+        });
+      });
+
+    const execution = cancellableManager.execute(
+      {
+        messageId: 'msg-cancel',
+        threadId: 'thread-cancel',
+        selectedProvider: 'GEMINI',
+        selectedModel: 'gemini-2.5-flash',
+        routingMode: 'MANUAL_MODEL',
+        fallbackChain: [{ provider: 'OPENAI', model: 'gpt-4o' }],
+        timestamp: new Date().toISOString(),
+      },
+      makeContext('Describe the attached media.'),
+    );
+    cancellationController.abort();
+
+    await expect(execution).rejects.toMatchObject({ code: 'STREAM_CANCELLED' });
+    expect(httpRequest).toHaveBeenCalledTimes(2);
+    expect(streamService.emitFallbackAttempt).not.toHaveBeenCalled();
+    expect(runSimulated).not.toHaveBeenCalled();
+    expect(releaseCancellation).toHaveBeenCalledWith('thread-cancel');
+  });
+
+  it('rejects a manually selected non-video provider before making a request', async () => {
+    const context = makeContext('Describe this video.');
+    context.fileContents = [
+      {
+        id: 'video-1',
+        filename: 'demo.mp4',
+        mimeType: 'video/mp4',
+        content: Buffer.from('video').toString('base64'),
+      },
+    ];
+
+    await expect(
+      manager.execute(
+        {
+          messageId: 'msg-video',
+          threadId: 'thread-1',
+          selectedProvider: 'OPENAI',
+          selectedModel: 'gpt-4o',
+          routingMode: 'MANUAL_MODEL',
+          timestamp: new Date().toISOString(),
+        },
+        context,
+      ),
+    ).rejects.toThrow('OPENAI/gpt-4o cannot process video attachments');
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
+  it.each(['LOCAL_ONLY', 'PRIVACY_FIRST'])(
+    'rejects video in %s mode instead of falling back to a cloud provider',
+    async (routingMode) => {
+      const context = makeContext('Describe this video.');
+      context.fileContents = [
+        {
+          id: 'video-1',
+          filename: 'demo.mp4',
+          mimeType: 'video/mp4',
+          content: Buffer.from('video').toString('base64'),
+        },
+      ];
+
+      await expect(
+        manager.execute(
+          {
+            messageId: 'msg-video',
+            threadId: 'thread-1',
+            selectedProvider: 'local-ollama',
+            selectedModel: 'qwen3:1.7b',
+            routingMode,
+            fallbackChain: [{ provider: 'GEMINI', model: 'gemini-2.5-flash' }],
+            timestamp: new Date().toISOString(),
+          },
+          context,
+        ),
+      ).rejects.toThrow(`Video attachments cannot be processed in ${routingMode} mode`);
+      expect(httpRequest).not.toHaveBeenCalled();
+    },
+  );
 
   it('routes local-ollama models through the local Ollama runtime path', async () => {
     const context = makeContext('compare local ollama behavior');
@@ -917,6 +1159,58 @@ describe('ChatExecutionManager', () => {
   // so the universal truncatedAtContextLimit metadata flag fires for
   // every provider, not just local Ollama.
   describe('Cloud truncation propagation (truncation telemetry, buffered)', () => {
+    it('parseGeminiResponse: maps finishReason="MAX_TOKENS" to the shared "length" signal', async () => {
+      const context = makeContext('long Gemini prompt');
+      AppConfig.get.mockReturnValue({
+        ...DEFAULT_APP_CONFIG,
+        ENABLE_GEMINI_FILES_API: true,
+        GEMINI_FILES_API_SIZE_THRESHOLD_BYTES: 10_000,
+      });
+      httpRequest
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: {
+            provider: 'GEMINI',
+            apiKey: 'gemini-key',
+            baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+          },
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          data: {
+            candidates: [
+              {
+                content: {
+                  role: 'model',
+                  parts: [{ text: 'A Gemini answer cut at the token limit' }],
+                },
+                finishReason: 'MAX_TOKENS',
+              },
+            ],
+            usageMetadata: {
+              promptTokenCount: 5800,
+              candidatesTokenCount: 256,
+              totalTokenCount: 6056,
+            },
+          },
+        });
+
+      const result = await manager.callProvider(
+        'GEMINI',
+        'gemini-2.5-flash',
+        context,
+        Date.now(),
+        false,
+        undefined,
+        'MANUAL_MODEL',
+        { fastPathEnabled: false, maxOutputTokens: 256, applyShortResponseConstraint: false },
+      );
+
+      expect(result.finishReason).toBe('length');
+    });
+
     it('parseCloudResponse: round-trips finish_reason="length" for OpenAI-compat cloud providers', async () => {
       const context = makeContext('long openai prompt');
       httpRequest
@@ -991,8 +1285,8 @@ describe('ChatExecutionManager', () => {
     });
   });
 
-  describe('Ollama Cloud agentic tool loop', () => {
-    it('passes through with no toolTranscript when the model emits no tool_calls', async () => {
+  describe('Ollama Cloud quota safety', () => {
+    it('does not expose provider-native web tools during model generation', async () => {
       const context = makeContext('plain prompt with no web access required');
       httpRequest
         .mockResolvedValueOnce({
@@ -1030,22 +1324,13 @@ describe('ChatExecutionManager', () => {
       const firstChatBody = httpRequest.mock.calls[1][0].body as {
         tools?: Array<{ type: string; function: { name: string } }>;
       };
-      expect(firstChatBody.tools?.map((t) => t.function.name)).toEqual([
-        'web_search',
-        'web_fetch',
-      ]);
+      expect(firstChatBody.tools).toBeUndefined();
     });
 
-    it('runs a single tool turn and re-POSTs with the tool result', async () => {
+    it('runs a single explicitly requested tool turn and re-POSTs with the tool result', async () => {
       const context = makeContext('what is the latest react version?');
       httpRequest
-        // 1: connector config
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          data: { provider: 'OLLAMA', apiKey: 'k', baseUrl: 'http://localhost:11434' },
-        })
-        // 2: first /api/chat — model emits a tool_call
+        // 1: first /api/chat — model emits a tool_call
         .mockResolvedValueOnce({
           ok: true,
           status: 200,
@@ -1087,16 +1372,21 @@ describe('ChatExecutionManager', () => {
           },
         });
 
-      const result = await manager.callProvider(
-        'OLLAMA',
-        'deepseek-v4-pro',
+      const startTime = Date.now();
+      const result = await manager.runOllamaCloudToolLoop({
+        provider: 'OLLAMA',
+        model: 'deepseek-v4-pro',
+        initialBody: {
+          model: 'deepseek-v4-pro',
+          messages: [{ role: 'user', content: 'what is the latest react version?' }],
+          stream: false,
+        },
+        baseUrl: 'https://ollama.com/api',
+        apiKey: 'k',
+        startTime,
+        usedFallback: false,
         context,
-        Date.now(),
-        false,
-        undefined,
-        'MANUAL_MODEL',
-        { fastPathEnabled: false, maxOutputTokens: 256, applyShortResponseConstraint: false },
-      );
+      });
 
       expect(result.content).toBe('React 19 is the latest release.');
       expect(result.toolTranscript).toBeDefined();
@@ -1113,11 +1403,16 @@ describe('ChatExecutionManager', () => {
       // resolveOllamaConnectorBaseUrl pins the cloud connector baseUrl to
       // 'https://ollama.com/api' regardless of what the connector record
       // stores, so tool dispatch lands there too.
-      const toolUrl = httpRequest.mock.calls[2][0].url as string;
+      const toolUrl = httpRequest.mock.calls[1][0].url as string;
       expect(toolUrl).toBe('https://ollama.com/api/web_search');
+      expect(accessControl.recordFeatureUsage).toHaveBeenCalledWith(
+        'user-1',
+        'WEB_SEARCH',
+        `buffered:${String(startTime)}:1:tool-1`,
+      );
 
       // The follow-up chat carries the tool result as a `tool` message.
-      const secondChatBody = httpRequest.mock.calls[3][0].body as {
+      const secondChatBody = httpRequest.mock.calls[2][0].body as {
         messages: Array<{ role: string; content: string; tool_call_id?: string }>;
       };
       const toolMessage = secondChatBody.messages.find((m) => m.role === 'tool');
@@ -1126,7 +1421,7 @@ describe('ChatExecutionManager', () => {
       expect(toolMessage?.tool_call_id).toBe('tool-1');
     });
 
-    it('bails with capReached=true AND gracefully wraps up when the model never stops calling tools', async () => {
+    it('caps and wraps up an explicitly requested tool loop', async () => {
       // Pin the iteration cap to 10 for THIS test so the existing
       // assertion arithmetic stays readable (the canonical runtime cap is
       // now 50). The graceful wrap-up POST adds ONE extra non-tool /chat
@@ -1143,12 +1438,6 @@ describe('ChatExecutionManager', () => {
         OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS: 600_000,
       });
       const context = makeContext('infinite-loop scenario');
-      // 1 connector config
-      httpRequest.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        data: { provider: 'OLLAMA', apiKey: 'k', baseUrl: 'http://localhost:11434' },
-      });
       // Each /api/chat turn returns a tool_call; the matching /api/web_search
       // returns an empty result. With OLLAMA_TOOL_LOOP_MAX_ITERATIONS=10 and
       // (chat + tool) per turn we expect 1 (config) + 10 (chat) + 10 (tool)
@@ -1190,16 +1479,20 @@ describe('ChatExecutionManager', () => {
         },
       });
 
-      const result = await manager.callProvider(
-        'OLLAMA',
-        'deepseek-v4-pro',
+      const result = await manager.runOllamaCloudToolLoop({
+        provider: 'OLLAMA',
+        model: 'deepseek-v4-pro',
+        initialBody: {
+          model: 'deepseek-v4-pro',
+          messages: [{ role: 'user', content: 'infinite-loop scenario' }],
+          stream: false,
+        },
+        baseUrl: 'https://ollama.com/api',
+        apiKey: 'k',
+        startTime: Date.now(),
+        usedFallback: false,
         context,
-        Date.now(),
-        false,
-        undefined,
-        'MANUAL_MODEL',
-        { fastPathEnabled: false, maxOutputTokens: 128, applyShortResponseConstraint: false },
-      );
+      });
 
       expect(result.toolTranscript).toBeDefined();
       expect(result.toolTranscript?.capReached).toBe(true);
@@ -1221,8 +1514,8 @@ describe('ChatExecutionManager', () => {
       const lastMessage = wrapUpCall.body.messages.at(-1);
       expect(lastMessage?.role).toBe('system');
       expect(lastMessage?.content).toContain('maximum allowed research budget');
-      // 1 (connector) + 10 (chat) + 10 (web_search) + 1 (wrap-up) = 22 calls
-      expect(httpRequest).toHaveBeenCalledTimes(22);
+      // 10 (chat) + 10 (web_search) + 1 (wrap-up) = 21 calls
+      expect(httpRequest).toHaveBeenCalledTimes(21);
     });
   });
 });

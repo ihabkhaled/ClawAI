@@ -12,7 +12,7 @@ The npm-workspace inventory. Ground truth: root `package.json`
 | --------------------------- | ------------------------------ | ------------------------------------------------------------- |
 | `@claw/shared-types`        | —                              | types, enums, event payloads, EventPattern, Permission enum   |
 | `@claw/shared-constants`    | —                              | ports, exchange name, API prefix, service names, pagination   |
-| `@claw/shared-auth`         | shared-types                   | AuthGuard, RolesGuard, `@Public`, `@Roles`, `@CurrentUser`    |
+| `@claw/shared-auth`         | shared-types, shared-utilities | AuthGuard, RolesGuard, `@Public`, `@Roles`, `@CurrentUser`    |
 | `@claw/shared-rabbitmq`     | shared-constants, shared-types | RabbitMQModule, RabbitMQService (retry+DLQ), StructuredLogger |
 | `@claw/shared-utilities`    | shared-constants, shared-types | jwt, http-client, crypto, url-safety, retry, time helpers     |
 | `@claw/shared-entitlements` | shared-types                   | plan feature gates (`allow*` fields)                          |
@@ -62,8 +62,8 @@ services + shared packages use **jest**; the frontend uses **vitest**. See
 ## Dependency directionality
 
 - Shared packages depend only on other shared packages (a small DAG:
-  types/constants are leaves; auth/entitlements/rabbitmq/utilities depend on
-  them).
+  types/constants are leaves; utilities/rabbitmq/entitlements depend on them;
+  auth depends on types and utilities).
 - Every service depends on `@claw/shared-constants`, `@claw/shared-types`,
   `@claw/shared-utilities`; all except health also use `@claw/shared-rabbitmq`.
 - Only `agent`, `payment`, `research`, and `workspace` additionally import `@claw/shared-auth`

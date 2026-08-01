@@ -100,6 +100,7 @@ describe('ChatMessagesService', () => {
   let executionManager: ReturnType<typeof mockExecutionManager>;
   let contextAssembly: ReturnType<typeof mockContextAssembly>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
+  let streamService: Partial<Record<keyof ChatStreamService, jest.Mock>>;
 
   beforeEach(() => {
     messagesRepo = mockMessagesRepository();
@@ -107,6 +108,11 @@ describe('ChatMessagesService', () => {
     executionManager = mockExecutionManager();
     contextAssembly = mockContextAssembly();
     rabbitMQ = mockRabbitMQ();
+    streamService = {
+      emitRequestAccepted: jest.fn(),
+      emitCompletion: jest.fn(),
+      emitError: jest.fn(),
+    };
     service = new ChatMessagesService(
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
@@ -122,10 +128,7 @@ describe('ChatMessagesService', () => {
       { executeVerify: jest.fn() } as unknown as VerifierManager,
       { executePipeline: jest.fn() } as unknown as PipelineManager,
       { executeRolePack: jest.fn() } as unknown as RolePackManager,
-      {
-        emitRequestAccepted: jest.fn(),
-        emitCompletion: jest.fn(),
-      } as unknown as ChatStreamService,
+      streamService as unknown as ChatStreamService,
       rabbitMQ as unknown as RabbitMQService,
       { write: jest.fn(), getByMessageId: jest.fn() } as unknown as ConstructorParameters<
         typeof ChatMessagesService
@@ -436,6 +439,129 @@ describe('ChatMessagesService', () => {
   });
 
   describe('handleMessageRouted', () => {
+    it('preserves localizable business error metadata on the stored assistant response', async () => {
+      const routedPayload = {
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        selectedProvider: 'GEMINI',
+        selectedModel: 'gemini-2.5-flash',
+        routingMode: 'MANUAL_MODEL',
+        timestamp: new Date().toISOString(),
+      };
+      const localizableError = new BusinessException(
+        'The selected model cannot process video attachments',
+        'VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED',
+        undefined,
+        'chat.errors.videoAttachmentProviderUnsupported',
+      );
+      messagesRepo.findRecentByThreadId.mockResolvedValue([mockMessage]);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      executionManager.execute!.mockRejectedValue(localizableError);
+      messagesRepo.create.mockResolvedValue({
+        ...mockMessage,
+        role: 'ASSISTANT',
+        content: localizableError.message,
+      });
+
+      await expect(service.handleMessageRouted(routedPayload)).rejects.toBe(localizableError);
+
+      expect(messagesRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: {
+            error: true,
+            sourceMessageId: 'msg-1',
+            errorCode: 'VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED',
+            errorMessageKey: 'chat.errors.videoAttachmentProviderUnsupported',
+          },
+        }),
+      );
+      expect(streamService.emitError).toHaveBeenCalledWith(
+        'thread-1',
+        'The selected model cannot process video attachments',
+        {
+          code: 'VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED',
+          messageKey: 'chat.errors.videoAttachmentProviderUnsupported',
+        },
+      );
+    });
+
+    it('assembles context and attachments from the routed user message, excluding newer turns', async () => {
+      const olderAssistant = {
+        ...mockMessage,
+        id: 'msg-assistant-old',
+        role: 'ASSISTANT' as const,
+        content: 'Earlier answer',
+      };
+      const routedUserMessage = {
+        ...mockMessage,
+        id: 'msg-routed',
+        content: 'Describe old-video.mp4',
+        metadata: { fileIds: ['file-old'] },
+      };
+      const newerUserMessage = {
+        ...mockMessage,
+        id: 'msg-newer',
+        content: 'Describe new-video.mp4',
+        metadata: { fileIds: ['file-new'] },
+      };
+      const errorAssistant = {
+        ...mockMessage,
+        id: 'msg-error',
+        role: 'ASSISTANT' as const,
+        content: 'Provider failed',
+      };
+      const routedPayload = {
+        messageId: 'msg-routed',
+        threadId: 'thread-1',
+        selectedProvider: 'GEMINI',
+        selectedModel: 'gemini-2.5-flash',
+        routingMode: 'AUTO',
+        timestamp: new Date().toISOString(),
+      };
+
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        newerUserMessage,
+        routedUserMessage,
+        olderAssistant,
+      ]);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      executionManager.execute!.mockRejectedValue(new Error('Provider failed'));
+      messagesRepo.create.mockResolvedValue(errorAssistant);
+
+      await expect(service.handleMessageRouted(routedPayload)).rejects.toThrow('Provider failed');
+
+      expect(contextAssembly.assemble).toHaveBeenCalledWith(
+        'user-1',
+        [olderAssistant, routedUserMessage],
+        expect.any(Object),
+        undefined,
+        ['file-old'],
+        undefined,
+        'AUTO',
+      );
+    });
+
+    it('fails closed when the routed message is absent from the recent thread window', async () => {
+      messagesRepo.findRecentByThreadId.mockResolvedValue([
+        { ...mockMessage, id: 'msg-different' },
+      ]);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await expect(
+        service.handleMessageRouted({
+          messageId: 'msg-missing',
+          threadId: 'thread-1',
+          selectedProvider: 'GEMINI',
+          selectedModel: 'gemini-2.5-flash',
+          routingMode: 'AUTO',
+          timestamp: new Date().toISOString(),
+        }),
+      ).rejects.toMatchObject({ code: 'ROUTED_MESSAGE_NOT_FOUND' });
+
+      expect(contextAssembly.assemble).not.toHaveBeenCalled();
+      expect(executionManager.execute).not.toHaveBeenCalled();
+    });
+
     it('publishes message.completed even when execution fails after storing an error response', async () => {
       const routedPayload = {
         messageId: 'msg-1',

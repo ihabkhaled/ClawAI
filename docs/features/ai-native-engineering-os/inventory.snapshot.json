@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CODEX.md and cursor.md share 1 identical headings (4892 vs 25527 bytes) — candidates for compact routing",
+        "message": "CODEX.md and cursor.md share 1 identical headings (4892 vs 25592 bytes) — candidates for compact routing",
         "severity": "medium"
       }
     ],
@@ -512,6 +512,11 @@
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
         },
         {
+          "method": "DELETE",
+          "route": "/admin/plans/:id",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/admin/plans/:id",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
@@ -637,6 +642,26 @@
           "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/auth/vscode/authorize/approve",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/vscode/authorize/details",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/vscode/authorize/exchange",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/vscode/authorize/init",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
@@ -660,6 +685,21 @@
           "method": "GET",
           "route": "/internal/plans/price-versions/:id",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/plans/retirement-migrations/:id/outcome",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/internal/plans/retirement-migrations/pending",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/quota/features/consume",
+          "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
         },
         {
           "method": "POST",
@@ -6061,6 +6101,11 @@
         "route": "/audits"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/authorize/vscode/page.tsx",
+        "kind": "page",
+        "route": "/authorize/vscode"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/billing/cancelled/page.tsx",
         "kind": "page",
         "route": "/billing/cancelled"
@@ -6417,7 +6462,7 @@
           "file": "CODEX.md"
         },
         {
-          "bytes": 25527,
+          "bytes": 25592,
           "file": "cursor.md"
         },
         {
@@ -6502,7 +6547,7 @@
           "file": "rules/05-frontend-components-and-hooks.md"
         },
         {
-          "bytes": 13761,
+          "bytes": 13826,
           "file": "rules/05-infra-rules.md"
         },
         {
@@ -6518,7 +6563,7 @@
           "file": "rules/07-backend-controllers-and-transport.md"
         },
         {
-          "bytes": 10789,
+          "bytes": 11358,
           "file": "rules/07-commit-rules.md"
         },
         {
@@ -6850,7 +6895,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4293
+        "value": 4320
       },
       "localeCount": 13,
       "locales": [
@@ -7601,6 +7646,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "DeviceAuthorizationGrant"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "EntitlementInboxEvent"
           },
           {
@@ -7627,6 +7677,11 @@
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "PlanPriceVersion"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "PlanRetirementMigration"
           },
           {
             "confidence": "verified",
@@ -8347,7 +8402,7 @@
     "tests": {
       "@claw/shared-auth": {
         "runner": "jest",
-        "testFiles": 0
+        "testFiles": 1
       },
       "@claw/shared-constants": {
         "runner": "jest",
@@ -8355,7 +8410,7 @@
       },
       "@claw/shared-entitlements": {
         "runner": "jest",
-        "testFiles": 2
+        "testFiles": 3
       },
       "@claw/shared-rabbitmq": {
         "runner": "jest",
@@ -8367,7 +8422,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "jest",
-        "testFiles": 23
+        "testFiles": 25
       },
       "claw-agent-service": {
         "runner": "jest",
@@ -8379,11 +8434,11 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 38
+        "testFiles": 48
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 64
+        "testFiles": 70
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -8399,11 +8454,11 @@
       },
       "claw-file-service": {
         "runner": "jest",
-        "testFiles": 15
+        "testFiles": 17
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 224
+        "testFiles": 243
       },
       "claw-health-service": {
         "runner": "jest",
@@ -8427,11 +8482,11 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 85
+        "testFiles": 89
       },
       "claw-research-service": {
         "runner": "jest",
-        "testFiles": 14
+        "testFiles": 16
       },
       "claw-routing-service": {
         "runner": "jest",
@@ -9039,7 +9094,8 @@
       {
         "dir": "packages/shared-auth",
         "internalDeps": [
-          "@claw/shared-types"
+          "@claw/shared-types",
+          "@claw/shared-utilities"
         ],
         "name": "@claw/shared-auth",
         "scripts": [
@@ -9143,10 +9199,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 547,
+    "endpointCount": 555,
     "envVarCount": 336,
     "eventCount": 165,
-    "frontendRouteCount": 112,
+    "frontendRouteCount": 113,
     "localeCount": 13,
     "nginxRouteCount": 52,
     "permissionCount": 38,
@@ -9155,7 +9211,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 702,
+    "totalTestFiles": 749,
     "workspaceCount": 25
   }
 }

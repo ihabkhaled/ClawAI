@@ -152,7 +152,7 @@ describe('useChatStream', () => {
         nextModel: 'qwen3:1.7b',
       }),
     ]);
-    expect(result.current.streamError).toBe('All providers failed');
+    expect(result.current.streamError).toBe('chat.allProvidersFailed');
     expect(result.current.progressStages).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -161,7 +161,36 @@ describe('useChatStream', () => {
         }),
         expect.objectContaining({
           type: StreamEventType.ERROR,
+          description: 'chat.allProvidersFailed',
           status: VisibleProgressStageStatus.ERROR,
+        }),
+      ]),
+    );
+  });
+
+  it('localizes a known structured stream error without exposing the backend message', () => {
+    const { result } = renderHook(() => useChatStream('thread-video', true));
+
+    act(() => {
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-video',
+          type: StreamEventType.ERROR,
+          error: 'Opaque provider detail that must not be shown',
+          code: 'VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED',
+          messageKey: 'chat.errors.videoAttachmentProviderUnsupported',
+          label: 'Response failed',
+        }),
+      );
+    });
+
+    expect(result.current.streamError).toBe('chat.errors.videoAttachmentProviderUnsupported');
+    expect(result.current.streamError).not.toContain('Opaque provider detail');
+    expect(result.current.progressStages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: StreamEventType.ERROR,
+          description: 'chat.errors.videoAttachmentProviderUnsupported',
         }),
       ]),
     );

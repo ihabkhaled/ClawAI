@@ -593,7 +593,8 @@
     {
       "dir": "packages/shared-auth",
       "internalDeps": [
-        "@claw/shared-types"
+        "@claw/shared-types",
+        "@claw/shared-utilities"
       ],
       "name": "@claw/shared-auth",
       "scripts": [

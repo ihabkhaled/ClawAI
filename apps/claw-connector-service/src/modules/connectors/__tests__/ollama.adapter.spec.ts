@@ -70,8 +70,8 @@ describe('OllamaAdapter', () => {
             },
           },
           {
-            name: 'gpt-oss:120b',
-            model: 'gpt-oss:120b',
+            name: 'gpt-oss:120b-cloud',
+            model: 'gpt-oss:120b-cloud',
             modified_at: '2026-04-22T00:00:00Z',
             size: 120000000000,
             digest: 'sha256-gptoss120',
@@ -82,8 +82,8 @@ describe('OllamaAdapter', () => {
             },
           },
           {
-            name: 'gpt-oss:20b',
-            model: 'gpt-oss:20b',
+            name: 'gpt-oss:20b-cloud',
+            model: 'gpt-oss:20b-cloud',
             modified_at: '2026-04-22T00:00:00Z',
             size: 20000000000,
             digest: 'sha256-gptoss20',
@@ -136,10 +136,25 @@ describe('OllamaAdapter', () => {
       'glm-5.1',
       'deepseek-v3.2',
       'gemma4:31b',
-      'gpt-oss:120b',
-      'gpt-oss:20b',
+      'gpt-oss:120b-cloud',
+      'gpt-oss:20b-cloud',
     ]);
     expect(result.every((model) => model.lifecycle === ModelLifecycle.ACTIVE)).toBe(true);
+    expect(result.find((model) => model.modelKey === 'gpt-oss:20b-cloud')?.usage).toEqual({
+      tier: 'LOW',
+      inputUsdPerMillion: null,
+      cachedInputUsdPerMillion: null,
+      outputUsdPerMillion: null,
+    });
+    expect(result.find((model) => model.modelKey === 'gpt-oss:120b-cloud')?.usage).toEqual({
+      tier: 'MEDIUM',
+      inputUsdPerMillion: null,
+      cachedInputUsdPerMillion: null,
+      outputUsdPerMillion: null,
+    });
+    expect(
+      result.find((model) => model.modelKey === 'gemma4:31b')?.capabilities.maxContextTokens,
+    ).toBe(256_000);
   });
 
   it('reports health from the Ollama public API', async () => {

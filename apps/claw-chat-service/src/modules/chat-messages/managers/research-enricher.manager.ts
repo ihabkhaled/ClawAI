@@ -39,6 +39,7 @@ import {
   type ResearchOrchestrationInput,
   type ResearchOrchestrationResult,
   type ResearchSearchEntry,
+  type ResearchSearchOutcome,
   type ResearchSearchWireResponse,
   type ResearchSource,
 } from '../types/research-enricher.types';
@@ -58,17 +59,24 @@ export class ResearchEnricherManager {
       `enrich: mode=${input.mode} queryPreview="${input.query.slice(0, RESEARCH_ENRICHER_QUERY_LOG_PREVIEW_CHARS)}"`,
     );
     if (input.mode === ResearchMode.NONE) {
-      return { evidence: '', sources: [], mode: ResearchMode.NONE };
+      return {
+        evidence: '',
+        sources: [],
+        mode: ResearchMode.NONE,
+        searchRequestCount: 0,
+        fetchRequestCount: 0,
+      };
     }
     this.emitResearch(input, AiStreamStage.RESEARCH_STARTED, {
       mode: input.mode,
       query: input.query,
     });
     try {
-      const searchResults = await this.runSearch(
+      const searchOutcome = await this.runSearch(
         input,
         input.topResults ?? RESEARCH_ENRICHER_DEFAULT_TOP_RESULTS,
       );
+      const searchResults = searchOutcome.entries;
       this.emitResearch(input, AiStreamStage.RESEARCH_SOURCES_FOUND, {
         mode: input.mode,
         query: input.query,
@@ -85,19 +93,29 @@ export class ResearchEnricherManager {
           evidence: RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK,
           sources: [],
           mode: input.mode,
+          searchRequestCount: searchOutcome.requestCount,
+          fetchRequestCount: 0,
         };
       }
       const sources = await this.enrichSourcesByMode(input, searchResults);
+      const fetchRequestCount =
+        input.mode === ResearchMode.SEARCH
+          ? 0
+          : Math.min(searchResults.length, input.topFetch ?? RESEARCH_ENRICHER_DEFAULT_TOP_FETCH);
       const evidence = this.buildEvidenceBlock(input.mode, sources);
-      this.logger.log(
-        `enrich: mode=${input.mode} sources=${String(sources.length)} (completed)`,
-      );
+      this.logger.log(`enrich: mode=${input.mode} sources=${String(sources.length)} (completed)`);
       this.emitResearch(input, AiStreamStage.RESEARCH_COMPLETED, {
         mode: input.mode,
         query: input.query,
         sourcesCount: sources.length,
       });
-      return { evidence, sources, mode: input.mode };
+      return {
+        evidence,
+        sources,
+        mode: input.mode,
+        searchRequestCount: searchOutcome.requestCount,
+        fetchRequestCount,
+      };
     } catch (error) {
       const message = (error as Error).message;
       this.logger.error(`enrich: failed mode=${input.mode} — ${message}`);
@@ -199,6 +217,8 @@ export class ResearchEnricherManager {
       sources,
       latencyMs,
       warnings: [],
+      searchRequestCount: result.searchRequestCount,
+      fetchRequestCount: result.fetchRequestCount,
     };
   }
 
@@ -216,6 +236,8 @@ export class ResearchEnricherManager {
       sources: [],
       latencyMs,
       warnings: [warning],
+      searchRequestCount: 0,
+      fetchRequestCount: 0,
     };
   }
 
@@ -225,7 +247,13 @@ export class ResearchEnricherManager {
   private emitResearch(
     input: ResearchEnrichInput,
     stage: AiStreamStage,
-    details: { mode?: ResearchMode; query?: string; sourcesCount?: number; currentUrl?: string; error?: string },
+    details: {
+      mode?: ResearchMode;
+      query?: string;
+      sourcesCount?: number;
+      currentUrl?: string;
+      error?: string;
+    },
   ): void {
     if (input.threadId === undefined || input.threadId.length === 0) {
       return;
@@ -254,9 +282,7 @@ export class ResearchEnricherManager {
       input.topFetch ?? RESEARCH_ENRICHER_DEFAULT_TOP_FETCH,
     );
     const fetchTargets = searchResults.slice(0, topFetch);
-    const carryThrough = searchResults
-      .slice(topFetch)
-      .map((entry) => this.toSnippetSource(entry));
+    const carryThrough = searchResults.slice(topFetch).map((entry) => this.toSnippetSource(entry));
     const fetched = await Promise.all(
       fetchTargets.map((entry) => this.fetchSourceWithFallback(input, entry)),
     );
@@ -266,7 +292,7 @@ export class ResearchEnricherManager {
   private async runSearch(
     input: ResearchEnrichInput,
     topResults: number,
-  ): Promise<ResearchSearchEntry[]> {
+  ): Promise<ResearchSearchOutcome> {
     try {
       const config = AppConfig.get();
       const url = `${config.RESEARCH_SERVICE_URL}/api/v1/research/search`;
@@ -278,16 +304,20 @@ export class ResearchEnricherManager {
         timeoutMs: RESEARCH_ENRICHER_SEARCH_TIMEOUT_MS,
       });
       if (!response.ok) {
-        this.logger.warn(
-          `runSearch: research-service returned status=${String(response.status)}`,
-        );
-        return [];
+        this.logger.warn(`runSearch: research-service returned status=${String(response.status)}`);
+        return { entries: [], requestCount: 1 };
       }
       const results = Array.isArray(response.data.results) ? response.data.results : [];
-      return results.slice(0, topResults);
+      return {
+        entries: results.slice(0, topResults),
+        requestCount:
+          typeof response.data.searchRequestCount === 'number'
+            ? Math.max(1, Math.floor(response.data.searchRequestCount))
+            : 1,
+      };
     } catch (error) {
       this.logger.error(`runSearch: exception — ${(error as Error).message}`);
-      return [];
+      return { entries: [], requestCount: 1 };
     }
   }
 
@@ -330,9 +360,7 @@ export class ResearchEnricherManager {
         extracted: content.slice(0, limit),
       };
     } catch (error) {
-      this.logger.warn(
-        `fetchSource: exception url=${entry.url} — ${(error as Error).message}`,
-      );
+      this.logger.warn(`fetchSource: exception url=${entry.url} — ${(error as Error).message}`);
       return this.toSnippetSource(entry);
     }
   }

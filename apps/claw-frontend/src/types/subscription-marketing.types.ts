@@ -13,6 +13,12 @@ export type MarketingModelFamily = {
   strengthKey: string;
 };
 
+export type MarketingNewestModel = {
+  id: string;
+  label: string;
+  provider: string;
+};
+
 export type MarketingPlanTier = {
   /// Plan slug, matching the billing catalog (free, starter, plus, …).
   slug: string;

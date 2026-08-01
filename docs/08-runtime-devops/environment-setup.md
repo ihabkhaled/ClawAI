@@ -6,20 +6,20 @@
 
 ## 1. Prerequisites
 
-| Software         | Minimum Version | Check Command             | Purpose                    |
-| ---------------- | --------------- | ------------------------- | -------------------------- |
-| Node.js          | 20.x            | `node --version`          | Running services           |
-| npm              | 10.x            | `npm --version`           | Package management         |
-| Docker           | 24.x            | `docker --version`        | Container runtime          |
-| Docker Compose   | 2.x             | `docker compose version`  | Container orchestration    |
-| Git              | 2.40+           | `git --version`           | Version control            |
+| Software       | Minimum Version | Check Command            | Purpose                 |
+| -------------- | --------------- | ------------------------ | ----------------------- |
+| Node.js        | 20.x            | `node --version`         | Running services        |
+| npm            | 10.x            | `npm --version`          | Package management      |
+| Docker         | 24.x            | `docker --version`       | Container runtime       |
+| Docker Compose | 2.x             | `docker compose version` | Container orchestration |
+| Git            | 2.40+           | `git --version`          | Version control         |
 
 ### Optional
 
-| Software         | Purpose                    | When Needed                  |
-| ---------------- | -------------------------- | ---------------------------- |
-| GPU drivers      | Ollama GPU acceleration    | If using GPU for local LLMs  |
-| NVIDIA Container Toolkit | GPU in Docker      | If using GPU for Ollama      |
+| Software                 | Purpose                 | When Needed                 |
+| ------------------------ | ----------------------- | --------------------------- |
+| GPU drivers              | Ollama GPU acceleration | If using GPU for local LLMs |
+| NVIDIA Container Toolkit | GPU in Docker           | If using GPU for Ollama     |
 
 ---
 
@@ -69,7 +69,7 @@ cp .env.example .env
 NODE_ENV=development
 CORS_ORIGINS=http://localhost:3000,http://localhost:80,http://localhost
 THROTTLE_TTL=60000           # Rate limit window (ms)
-THROTTLE_LIMIT=100           # Max requests per window
+THROTTLE_LIMIT=2500           # Max requests per window
 ```
 
 #### PostgreSQL Databases (9 instances)
@@ -222,29 +222,29 @@ FILE_GENERATION_PORT=4013
 
 ## 5. Port Reference
 
-| Port  | Service                  | Access URL                     |
-| ----- | ------------------------ | ------------------------------ |
-| 3000  | Frontend (Next.js)       | http://localhost:3000           |
-| 4000  | Nginx (API proxy)        | http://localhost:4000/api/v1/  |
-| 4001  | Auth service             | Direct (not through nginx)     |
-| 4002  | Chat service             | Direct                         |
-| 4003  | Connector service        | Direct                         |
-| 4004  | Routing service          | Direct                         |
-| 4005  | Memory service           | Direct                         |
-| 4006  | File service             | Direct                         |
-| 4007  | Audit service            | Direct                         |
-| 4008  | Ollama service           | Direct                         |
-| 4009  | Health service           | Direct                         |
-| 4010  | Client logs service      | Direct                         |
-| 4011  | Server logs service      | Direct                         |
-| 4012  | Image service            | Direct                         |
-| 4013  | File generation service  | Direct                         |
-| 5441-5449 | PostgreSQL instances | Database connections           |
-| 27018 | MongoDB                  | Database connection            |
-| 6380  | Redis                    | Cache connection               |
-| 5672  | RabbitMQ (AMQP)          | Message broker                 |
-| 15672 | RabbitMQ Management      | http://localhost:15672          |
-| 11434 | Ollama                   | http://localhost:11434          |
+| Port      | Service                 | Access URL                    |
+| --------- | ----------------------- | ----------------------------- |
+| 3000      | Frontend (Next.js)      | http://localhost:3000         |
+| 4000      | Nginx (API proxy)       | http://localhost:4000/api/v1/ |
+| 4001      | Auth service            | Direct (not through nginx)    |
+| 4002      | Chat service            | Direct                        |
+| 4003      | Connector service       | Direct                        |
+| 4004      | Routing service         | Direct                        |
+| 4005      | Memory service          | Direct                        |
+| 4006      | File service            | Direct                        |
+| 4007      | Audit service           | Direct                        |
+| 4008      | Ollama service          | Direct                        |
+| 4009      | Health service          | Direct                        |
+| 4010      | Client logs service     | Direct                        |
+| 4011      | Server logs service     | Direct                        |
+| 4012      | Image service           | Direct                        |
+| 4013      | File generation service | Direct                        |
+| 5441-5449 | PostgreSQL instances    | Database connections          |
+| 27018     | MongoDB                 | Database connection           |
+| 6380      | Redis                   | Cache connection              |
+| 5672      | RabbitMQ (AMQP)         | Message broker                |
+| 15672     | RabbitMQ Management     | http://localhost:15672        |
+| 11434     | Ollama                  | http://localhost:11434        |
 
 ---
 

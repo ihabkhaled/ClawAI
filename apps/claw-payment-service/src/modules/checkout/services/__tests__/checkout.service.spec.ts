@@ -81,7 +81,7 @@ describe('CheckoutService', () => {
       attachProviderOrder: jest.fn(),
       markFailed: jest.fn(),
     };
-    charges = { resolve: jest.fn().mockResolvedValue(CHARGE) };
+    charges = { resolve: jest.fn().mockResolvedValue({ ...CHARGE, planSlug: 'pro' }) };
     paypal = {
       createOrder: jest.fn().mockResolvedValue({
         orderId: 'PP-1',
@@ -166,6 +166,17 @@ describe('CheckoutService', () => {
 
     expect(sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({ billingEmail: 'buyer@example.com' }),
+    );
+  });
+
+  it('stores the server-resolved plan slug rather than copying the opaque plan id', async () => {
+    sessions.findByIdempotencyKey.mockResolvedValue(null);
+    sessions.create.mockResolvedValue(makeSession());
+
+    await service.start(INPUT);
+
+    expect(sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({ planId: 'plan-pro', planSlug: 'pro' }),
     );
   });
 

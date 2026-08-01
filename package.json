@@ -1,11 +1,12 @@
 {
   "name": "claw",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Claw — Local-first AI orchestration platform (microservices)",
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/claw-*-service",
+    "apps/claw-frontend"
   ],
   "scripts": {
     "dev:frontend": "npm run dev --workspace=claw-frontend",
@@ -18,7 +19,8 @@
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,json,md,css}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,json,md,css}\"",
+    "format:check": "node tools/format/ratchet.mjs check",
+    "format:baseline": "node tools/format/ratchet.mjs baseline",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:build": "docker compose build",
@@ -47,7 +49,7 @@
     "docs:check": "node tools/knowledge/verify.mjs",
     "release:preflight": "node tools/release/preflight.mjs",
     "lighthouse": "cd apps/claw-frontend && npx --yes @lhci/cli@0.15.x autorun --config=lighthouserc.json",
-    "vercel:build:shared": "npm run build --workspace=@claw/shared-types --workspace=@claw/shared-constants --workspace=@claw/shared-rabbitmq --workspace=@claw/shared-auth --workspace=@claw/shared-utilities --workspace=@claw/shared-entitlements --if-present",
+    "vercel:build:shared": "npm run build --workspace=@claw/shared-types --workspace=@claw/shared-constants --workspace=@claw/shared-utilities --workspace=@claw/shared-rabbitmq --workspace=@claw/shared-auth --workspace=@claw/shared-entitlements --if-present",
     "vercel:generate-configs": "node scripts/vercel/generate-configs.mjs",
     "vercel:validate": "node scripts/vercel/validate.mjs",
     "vercel:provision": "node scripts/vercel/provision.mjs",

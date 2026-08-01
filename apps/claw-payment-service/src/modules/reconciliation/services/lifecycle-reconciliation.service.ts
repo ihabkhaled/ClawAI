@@ -25,11 +25,46 @@ export class LifecycleReconciliationService {
   async reconcile(runId: string, now: Date): Promise<ReconciliationCounts> {
     const grace = await this.reconcileGrace(runId, now);
     const downgrades = await this.reconcileDowngrades(runId, now);
+    const lapsed = await this.reconcileLapsed(runId, now);
     return {
-      scannedCount: grace.scannedCount + downgrades.scannedCount,
-      repairedCount: grace.repairedCount + downgrades.repairedCount,
-      quarantinedCount: grace.quarantinedCount + downgrades.quarantinedCount,
-      unprocessedCount: grace.unprocessedCount + downgrades.unprocessedCount,
+      scannedCount: grace.scannedCount + downgrades.scannedCount + lapsed.scannedCount,
+      repairedCount: grace.repairedCount + downgrades.repairedCount + lapsed.repairedCount,
+      quarantinedCount:
+        grace.quarantinedCount + downgrades.quarantinedCount + lapsed.quarantinedCount,
+      unprocessedCount:
+        grace.unprocessedCount + downgrades.unprocessedCount + lapsed.unprocessedCount,
+    };
+  }
+
+  private async reconcileLapsed(runId: string, now: Date): Promise<ReconciliationCounts> {
+    const total = await this.subscriptions.countLapsedEntitlements(now);
+    const candidates = await this.subscriptions.findLapsedEntitlements(
+      now,
+      RECONCILIATION_BATCH_SIZE,
+    );
+    let repairedCount = 0;
+    for (const subscription of candidates) {
+      const repaired = await this.lifecycle.expireLapsedIfVersionMatches(
+        subscription.id,
+        subscription.userId,
+        subscription.version,
+        subscription.entitlementValidUntil,
+        now,
+        `reconcile:${runId}:lapsed:${subscription.id}`,
+      );
+      repairedCount += repaired ? 1 : 0;
+      await this.recordLifecycleFinding(
+        runId,
+        subscription,
+        ReconciliationClassification.ENTITLEMENT_WINDOW_LAPSED,
+        repaired ? ReconciliationResolution.REPAIRED : ReconciliationResolution.SUPERSEDED,
+      );
+    }
+    return {
+      scannedCount: candidates.length,
+      repairedCount,
+      quarantinedCount: 0,
+      unprocessedCount: Math.max(0, total - candidates.length),
     };
   }
 

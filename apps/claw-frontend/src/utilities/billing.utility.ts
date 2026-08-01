@@ -9,6 +9,7 @@ import type {
   BillingPlan,
   BillingPlanPrice,
   CurrentSubscription,
+  FeatureAllowance,
   UsageWindow,
 } from '@/types/billing.types';
 import type { TranslateFunction } from '@/types/i18n.types';
@@ -132,6 +133,21 @@ export function formatQuotaLimit(limit: number | null, t: TranslateFunction): st
     return t('billing.quota.disabled');
   }
   return limit.toLocaleString();
+}
+
+export function formatFeatureAllowanceUsage(
+  allowance: FeatureAllowance,
+  t: TranslateFunction,
+): string {
+  if (allowance.limit !== null) {
+    return t('billing.features.usedOfLimit', {
+      used: allowance.used.toLocaleString(),
+      limit: formatQuotaLimit(allowance.limit, t),
+    });
+  }
+  return allowance.used > 0
+    ? t('billing.usage.usedUnlimited', { used: allowance.used.toLocaleString() })
+    : t('billing.quota.unlimited');
 }
 
 export function findPlanPrice(

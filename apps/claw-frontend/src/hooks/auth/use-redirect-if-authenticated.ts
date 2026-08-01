@@ -1,12 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { ROUTES } from '@/constants';
 import { useAuthStore } from '@/stores/auth.store';
 import type { UseRedirectIfAuthenticatedReturn } from '@/types/hook.types';
 import { logger } from '@/utilities';
+import { safeReturnRoute } from '@/utilities/safe-return-route.utility';
 
 // Mirror image of useAuthGuard: on the PUBLIC auth pages (login/register), an
 // already-authenticated visitor should be sent into the app rather than shown
@@ -17,6 +17,7 @@ import { logger } from '@/utilities';
 // (/dashboard is permission-gated, so it is not safe as a universal target).
 export function useRedirectIfAuthenticated(): UseRedirectIfAuthenticatedReturn {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const accessToken = useAuthStore((state) => state.accessToken);
   const [hydrated, setHydrated] = useState(false);
@@ -40,9 +41,9 @@ export function useRedirectIfAuthenticated(): UseRedirectIfAuthenticatedReturn {
         action: 'auth-page-redirect',
         message: 'Authenticated user redirected away from auth page',
       });
-      router.replace(ROUTES.CHAT);
+      router.replace(safeReturnRoute(searchParams.get('returnTo')));
     }
-  }, [hydrated, isAuthed, router]);
+  }, [hydrated, isAuthed, router, searchParams]);
 
   return { shouldRenderAuthPage: hydrated && !isAuthed };
 }

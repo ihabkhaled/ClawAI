@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { UserTable } from '@/components/admin/user-table';
+import { PlanLifecycleStatus } from '@/enums';
 import type { AdminUser } from '@/types/audit.types';
 import type { PlanView } from '@/types/plan.types';
 
@@ -39,6 +40,9 @@ function makePlan(overrides: Partial<PlanView> = {}): PlanView {
     isDefault: false,
     isActive: true,
     isPublic: true,
+    lifecycleStatus: PlanLifecycleStatus.ACTIVE,
+    replacementPlanId: null,
+    retiredAt: null,
     dailyTokenQuota: 100000,
     monthlyTokenQuota: null,
     maxChatsPerDay: null,
@@ -95,9 +99,7 @@ describe('UserTable plan column', () => {
 
   it('exposes the plan select trigger with an assign-plan aria-label', () => {
     render(<UserTable users={[makeUser()]} {...baseProps} />);
-    expect(screen.getAllByRole('combobox', { name: 'admin.assignPlan' }).length).toBeGreaterThan(
-      0,
-    );
+    expect(screen.getAllByRole('combobox', { name: 'admin.assignPlan' }).length).toBeGreaterThan(0);
   });
 
   it('disables the plan select for the row that is pending assignment', () => {

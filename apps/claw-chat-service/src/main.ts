@@ -3,12 +3,14 @@
 import { register as registerTsConfigPaths } from 'tsconfig-paths';
 
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import * as fs from 'node:fs';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
 import { RabbitMQLoggerService, RabbitMQService } from '@claw/shared-rabbitmq';
 import { AppModule } from './app/app.module';
 import { AppConfig } from './app/config/app.config';
+import { configureChatBodyParser } from './app/utilities/chat-body-parser.utility';
 
 registerTsConfigPaths({
   baseUrl: __dirname,
@@ -20,7 +22,6 @@ registerTsConfigPaths({
   },
 });
 
-
 // --- Inline HTTPS bootstrap (no-rebuild path; see scripts/_patch-main-ts-inline.cjs) ---
 function resolveHttpsOptions(): { cert: Buffer; key: Buffer } | undefined {
   const certPath = process.env['HTTPS_CERT_PATH'];
@@ -31,7 +32,9 @@ function resolveHttpsOptions(): { cert: Buffer; key: Buffer } | undefined {
   try {
     return { cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) };
   } catch (error) {
-    process.stderr.write(`[https-bootstrap] cert read failed: ${error instanceof Error ? error.message : String(error)} â€” HTTP fallback\n`);
+    process.stderr.write(
+      `[https-bootstrap] cert read failed: ${error instanceof Error ? error.message : String(error)} â€” HTTP fallback\n`,
+    );
     return undefined;
   }
 }
@@ -39,17 +42,19 @@ function resolveHttpsOptions(): { cert: Buffer; key: Buffer } | undefined {
 async function bootstrap(): Promise<void> {
   const config = AppConfig.validate();
 
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
     httpsOptions: resolveHttpsOptions(),
   });
 
+  configureChatBodyParser(app);
   app.useLogger(app.get(Logger));
   app.use(helmet());
   app.setGlobalPrefix('api/v1');
   const clawHost = process.env['CLAW_HOSTNAME'] ?? 'claw.local';
   const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [
-    `https://${clawHost}`,`https://${clawHost}:3000`,
+    `https://${clawHost}`,
+    `https://${clawHost}:3000`,
   ];
   app.enableCors({
     origin: corsOrigins,

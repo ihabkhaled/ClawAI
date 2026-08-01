@@ -20,7 +20,10 @@ import { FileChunksRepository } from '../repositories/file-chunks.repository';
 import { FileSecurityManager } from '../managers/file-security.manager';
 import { type UploadFileDto } from '../dto/upload-file.dto';
 import { type ListFilesQueryDto } from '../dto/list-files-query.dto';
-import { type CreateInternalFileBody } from '../types/internal-file.types';
+import {
+  type CreateInternalFileBody,
+  type InternalFileContentResponse,
+} from '../types/internal-file.types';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '../types/files.types';
 
 @Injectable()
@@ -68,6 +71,8 @@ export class FilesService {
     );
     this.validateMimeType(dto.mimeType);
     this.validateFileSize(dto.sizeBytes);
+    const contentBuffer = dto.content ? Buffer.from(dto.content, 'base64') : Buffer.alloc(0);
+    this.validateDecodedFileSize(dto.sizeBytes, contentBuffer.length);
 
     this.publishUploadStarted({
       // fileId is unknown until the row is created — use empty string until then;
@@ -77,10 +82,9 @@ export class FilesService {
       userId,
       filename: dto.filename,
       mimeType: dto.mimeType,
-      sizeBytes: dto.sizeBytes,
+      sizeBytes: contentBuffer.length,
     });
 
-    const contentBuffer = dto.content ? Buffer.from(dto.content, 'base64') : Buffer.alloc(0);
     await this.runSecurityChecks(dto.filename, dto.mimeType, contentBuffer);
 
     const safeName = this.fileSecurityManager.getSanitizedFilename(dto.filename);
@@ -90,7 +94,7 @@ export class FilesService {
       userId,
       filename: safeName,
       mimeType: dto.mimeType,
-      sizeBytes: dto.sizeBytes,
+      sizeBytes: contentBuffer.length,
       storagePath,
       content: dto.content ?? null,
       retentionExpiresAt: this.computeRetentionExpiry(),
@@ -199,6 +203,20 @@ export class FilesService {
     return file;
   }
 
+  async getFileContent(id: string, userId: string): Promise<InternalFileContentResponse> {
+    this.logger.debug(`getFileContent: fetching owned content for file ${id}, user ${userId}`);
+    const file = await this.filesRepository.findById(id);
+    if (file?.userId !== userId) {
+      throw new EntityNotFoundException('File', id);
+    }
+    return {
+      id: file.id,
+      filename: file.filename,
+      mimeType: file.mimeType,
+      content: file.content,
+    };
+  }
+
   async deleteFile(id: string, userId: string): Promise<File> {
     this.logger.log(`deleteFile: deleting file ${id} for user ${userId}`);
     const file = await this.filesRepository.findById(id);
@@ -267,6 +285,17 @@ export class FilesService {
       throw new BusinessException(
         `File size ${sizeBytes} exceeds maximum of ${MAX_FILE_SIZE} bytes (50MB)`,
         'FILE_TOO_LARGE',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  private validateDecodedFileSize(declaredSizeBytes: number, decodedSizeBytes: number): void {
+    this.validateFileSize(decodedSizeBytes);
+    if (declaredSizeBytes !== decodedSizeBytes) {
+      throw new BusinessException(
+        `Declared file size ${String(declaredSizeBytes)} does not match decoded size ${String(decodedSizeBytes)}`,
+        'FILE_SIZE_MISMATCH',
         HttpStatus.BAD_REQUEST,
       );
     }

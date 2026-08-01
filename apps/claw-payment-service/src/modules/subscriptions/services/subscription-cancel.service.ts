@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
   BillingErrorCode,
+  type BillingSubscriptionCancelledPayload,
   EntitlementGrantType,
   EventPattern,
   SubscriptionStatus,
@@ -95,6 +96,7 @@ export class SubscriptionCancelService {
           scheduledAmountMinor: null,
           scheduledBillingInterval: null,
           scheduledEffectiveAt: null,
+          scheduledChangeReason: null,
           uniqueActiveKey: null,
           version: { increment: 1 },
         },
@@ -169,27 +171,32 @@ export class SubscriptionCancelService {
     entitlementValidUntil: Date,
     cancelAtPeriodEnd: boolean,
   ): Promise<void> {
+    const eventId = randomUUID();
+    const effectiveAt = cancelledAt.toISOString();
+    const payload: BillingSubscriptionCancelledPayload = {
+      eventId,
+      schemaVersion: BILLING_EVENT_SCHEMA_VERSION,
+      producer: PAYMENT_PRODUCER,
+      userId,
+      subscriptionId: subscription.id,
+      planId: subscription.planId,
+      planSlug: subscription.planSlug,
+      planPriceVersionId: subscription.planPriceVersionId,
+      grantType: EntitlementGrantType.PAID_SUBSCRIPTION,
+      effectiveAt,
+      entitlementValidUntil: entitlementValidUntil.toISOString(),
+      cancelAtPeriodEnd,
+      cancelledAt: effectiveAt,
+      correlationId: subscription.id,
+      causationId: null,
+      occurredAt: effectiveAt,
+    };
     await this.outbox.enqueue(tx, {
       pattern: EventPattern.BILLING_SUBSCRIPTION_CANCELLED,
-      eventId: randomUUID(),
+      eventId,
       aggregateType: 'Subscription',
       aggregateId: subscription.id,
-      payloadJson: {
-        schemaVersion: BILLING_EVENT_SCHEMA_VERSION,
-        producer: PAYMENT_PRODUCER,
-        userId,
-        subscriptionId: subscription.id,
-        planId: subscription.planId,
-        planSlug: subscription.planSlug,
-        planPriceVersionId: subscription.planPriceVersionId,
-        grantType: EntitlementGrantType.PAID_SUBSCRIPTION,
-        effectiveAt: cancelledAt.toISOString(),
-        entitlementValidUntil: entitlementValidUntil.toISOString(),
-        cancelAtPeriodEnd,
-        cancelledAt: cancelledAt.toISOString(),
-        correlationId: subscription.id,
-        causationId: null,
-      },
+      payloadJson: payload,
     });
   }
 

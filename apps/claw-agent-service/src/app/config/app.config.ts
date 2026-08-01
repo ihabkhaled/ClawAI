@@ -14,7 +14,7 @@ const appConfigSchema = z.object({
   CLAW_HOSTNAME: z.string().min(1).default('claw.local'),
   CORS_ORIGINS: z.string().default('https://claw.local'),
   THROTTLE_TTL: z.coerce.number().int().positive().default(60_000),
-  THROTTLE_LIMIT: z.coerce.number().int().positive().default(100),
+  THROTTLE_LIMIT: z.coerce.number().int().positive().default(2500),
   AGENT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   AGENT_REFRESH_TTL_DAYS: z.coerce.number().int().positive().default(30),
   AGENT_PAIRING_TTL_SECONDS: z.coerce.number().int().positive().default(120),

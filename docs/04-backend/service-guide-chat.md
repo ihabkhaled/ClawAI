@@ -71,22 +71,22 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
 
 ### Messages (`/api/v1/chat-messages`)
 
-| Method | Path              | Description                              |
-| ------ | ----------------- | ---------------------------------------- |
-| GET    | /thread/:threadId | List messages (paginated)                |
-| POST   | /                 | Send new message (triggers flow)         |
-| PATCH  | /:id/feedback     | Submit feedback on a message             |
-| POST   | /:id/regenerate   | Regenerate an assistant response         |
-| POST   | /parallel         | Send prompt to 2-5 models simultaneously |
+| Method | Path              | Description                                   |
+| ------ | ----------------- | --------------------------------------------- |
+| GET    | /thread/:threadId | List messages (paginated)                     |
+| POST   | /                 | Send new message (triggers flow)              |
+| PATCH  | /:id/feedback     | Submit feedback on a message                  |
+| POST   | /:id/regenerate   | Regenerate an assistant response              |
+| POST   | /parallel         | Send prompt to 2-5 models simultaneously      |
 | POST   | /consensus        | Build a consensus answer from multiple models |
-| POST   | /escalation-chain | Escalate to stronger models if needed    |
-| POST   | /repair           | Repair or critique an answer             |
-| POST   | /decompose        | Decompose a task into structured subtasks |
-| POST   | /best-of-n        | Generate multiple candidates and choose one |
-| POST   | /cost-ensemble    | Balance answer quality against spend     |
-| POST   | /verify           | Run verification checks on an answer     |
-| POST   | /role-pack        | Execute multi-role prompt pack workflows |
-| POST   | /pipeline         | Execute staged prompt pipelines          |
+| POST   | /escalation-chain | Escalate to stronger models if needed         |
+| POST   | /repair           | Repair or critique an answer                  |
+| POST   | /decompose        | Decompose a task into structured subtasks     |
+| POST   | /best-of-n        | Generate multiple candidates and choose one   |
+| POST   | /cost-ensemble    | Balance answer quality against spend          |
+| POST   | /verify           | Run verification checks on an answer          |
+| POST   | /role-pack        | Execute multi-role prompt pack workflows      |
+| POST   | /pipeline         | Execute staged prompt pipelines               |
 
 ## Message Flow (End-to-End)
 
@@ -122,6 +122,15 @@ The chat service uses SSE for real-time message delivery. Key implementation det
 
 When all providers fail, the service stores an error message as an ASSISTANT record with `metadata: { error: true }`. This ensures the frontend's polling logic finds a terminal message and stops the "AI is thinking..." indicator.
 
+## Request Body Bounds
+
+Chat bootstrap installs an explicit 1 MiB JSON parser bound before Nest's
+default parser. The application DTOs remain the narrower semantic limits
+(`content` is at most 100,000 characters for the standard message contract);
+the larger transport envelope accounts for UTF-8 and JSON escaping when coding
+clients attach bounded workspace context. Requests above the transport bound
+return HTTP 413 with the middleware error code instead of being masked as a 500.
+
 ## Events
 
 | Event             | Direction | Notes                          |
@@ -133,13 +142,13 @@ When all providers fail, the service stores an error message as an ASSISTANT rec
 
 ## Inter-Service HTTP Calls
 
-| Target Service    | Purpose                         |
-| ----------------- | ------------------------------- |
-| memory-service    | Fetch user memories, pack items |
+| Target Service    | Purpose                                 |
+| ----------------- | --------------------------------------- |
+| memory-service    | Fetch user memories, pack items         |
 | workspace-service | Fetch grounded workspace search results |
-| file-service      | Fetch file chunks               |
-| connector-service | Execute LLM calls               |
-| ollama-service    | Execute local Ollama calls      |
+| file-service      | Fetch file chunks                       |
+| connector-service | Execute LLM calls                       |
+| ollama-service    | Execute local Ollama calls              |
 
 ## Key Managers
 
@@ -197,7 +206,7 @@ sometimes wrap JSON in prose or fenced code blocks. The parser:
 4. **On any failure**, returns
    `{ feedback: [], score: 1.0, summary: CRITIC_PARSE_FAILURE_SUMMARY, parseFailed: true }`
    and logs `parseCriticOutput: failed to parse critic output. Persisting
-   parse-failure marker.` so the failure is observable without poisoning the
+parse-failure marker.` so the failure is observable without poisoning the
    downstream Judge decision.
 
 ### Persistence into ChatMessage.metadata

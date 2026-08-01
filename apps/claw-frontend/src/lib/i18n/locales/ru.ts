@@ -102,6 +102,17 @@ export const ru: TranslationDictionary = {
     feature3Desc:
       'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI и Amazon Bedrock — всё в одном месте.',
   },
+  vscodeAuthorization: {
+    title: 'Авторизовать ClawAI для VS Code',
+    description:
+      'Разрешите агенту программирования использовать вашу учетную запись ClawAI в VS Code.',
+    requestFor: 'Авторизацию запросил {client}.',
+    approve: 'Авторизовать VS Code',
+    approving: 'Авторизация...',
+    successTitle: 'VS Code авторизован',
+    successDescription: 'Вернитесь в VS Code. Эту вкладку можно закрыть.',
+    errorTitle: 'Не удалось завершить авторизацию',
+  },
   nav: {
     dashboard: 'Панель управления',
     chat: 'Чат',
@@ -245,6 +256,12 @@ export const ru: TranslationDictionary = {
     providerFailed: 'сбой',
     tryingProvider: 'пробуем',
     allProvidersFailed: 'Все провайдеры не смогли сгенерировать ответ',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'Эта модель не может обрабатывать видеофайлы. Выберите Gemini 2.5 Flash или Pro либо переключитесь в автоматический режим.',
+      videoAttachmentLocalModelUnavailable:
+        'Видеофайлы недоступны в режимах «Только локально» и «Сначала конфиденциальность», поскольку локальная модель с поддержкой видео не настроена.',
+    },
     imageGeneration: 'Генерация изображений',
     generatedImage: 'Сгенерированное изображение',
     downloadImage: 'Скачать изображение',
@@ -1911,6 +1928,8 @@ export const ru: TranslationDictionary = {
       title: 'Использовано {count} источников',
       expand: 'Показать источники',
       sourcesCount: '{count} источников',
+      searchRequests: '{count} поисков',
+      fetchRequests: '{count} загрузок',
     },
     lifecycle: {
       started: 'Поиск в интернете...',
@@ -3299,6 +3318,11 @@ export const ru: TranslationDictionary = {
     modelPrimary: 'Основная',
     modelCompare: 'Сравнение',
     modelOverride: 'Лимит {limit} токенов/день',
+    planLimits: 'Лимиты тарифа',
+    dailyLimitLabel: 'Токены в день',
+    weeklyLimitLabel: 'Токены в неделю',
+    monthlyLimitLabel: 'Токены в месяц',
+    chatsLimitLabel: 'Чаты в день',
   },
   userUsage: {
     title: 'Использование',
@@ -3316,6 +3340,9 @@ export const ru: TranslationDictionary = {
     remaining: 'Осталось {remaining}',
     unlimited: 'Без ограничений',
     unlimitedHint: 'У вашего тарифа нет дневного лимита токенов.',
+    adminBypass: 'Доступ администратора',
+    adminBypassHint:
+      'Роль администратора обходит применение ограничений. Указанные выше лимиты тарифа не меняются.',
   },
   runtimeProgress: {
     metrics: {
@@ -3670,6 +3697,9 @@ export const ru: TranslationDictionary = {
       COMPARE_MODE: 'Режим сравнения',
       JUDGE_MODE: 'Режим арбитра',
       RESEARCH_MODE: 'Режим исследования',
+      WEB_SEARCH: 'Поиски в интернете',
+      WEB_FETCH: 'Загруженные веб-страницы',
+      WEB_EXTRACT: 'Извлечённые веб-страницы',
       CRITIC_REVIEW: 'Критическая проверка',
       WORKSPACES: 'Рабочие пространства',
       MEMORY: 'Память',
@@ -3795,6 +3825,8 @@ export const ru: TranslationDictionary = {
       monthlyTokens: 'Месячный лимит',
       ctaFree: 'Начать бесплатно',
       ctaPaid: 'Выбрать этот тариф',
+      temporaryCatalogDisclaimer:
+        'Актуальные цены временно недоступны. Эти резервные цены могут быть неточными и измениться после восстановления сервиса.',
       freeName: 'Free',
       freeTagline: 'Попробуйте ClawAI с небольшим дневным лимитом.',
       freeHighlight1: 'Доступ к моделям начального уровня',
@@ -3877,6 +3909,9 @@ export const ru: TranslationDictionary = {
         lastReviewed: 'Последняя проверка',
       },
       modelRoster: {
+        newestTitle: 'Новейшие модели в каталоге',
+        newestIntro:
+          'Краткий обзор недавно добавленных моделей, доступных через текущие коннекторы.',
         title: 'Модели, которые вы получаете',
         intro:
           'Одна подписка покрывает всех перечисленных ниже провайдеров. Меняйте модель прямо посреди беседы или позвольте ClawAI выбрать лучшую для каждого сообщения.',

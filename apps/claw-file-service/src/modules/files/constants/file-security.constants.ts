@@ -59,3 +59,42 @@ export const MIME_TO_MAGIC_BYTES: Record<string, Buffer[]> = {
     Buffer.from([0x50, 0x4b, 0x03, 0x04]),
   ],
 };
+
+export const VIDEO_MIME_DETECTION_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  'video/mp4': ['video/mp4'],
+  'video/quicktime': ['video/quicktime'],
+  'video/mov': ['video/quicktime'],
+  'video/webm': ['video/webm'],
+  'video/x-msvideo': ['video/vnd.avi'],
+  'video/avi': ['video/vnd.avi'],
+  'video/mpeg': ['video/mpeg'],
+};
+
+export const MP4_MAJOR_BRANDS = new Set([
+  '3g2a',
+  '3g2b',
+  '3g2c',
+  '3ge6',
+  '3ge7',
+  '3gg6',
+  '3gp1',
+  '3gp2',
+  '3gp3',
+  '3gp4',
+  '3gp5',
+  '3gp6',
+  '3gp7',
+  'avc1',
+  'dash',
+  'f4v ',
+  'iso2',
+  'iso3',
+  'iso4',
+  'iso5',
+  'iso6',
+  'isom',
+  'm4v ',
+  'mp41',
+  'mp42',
+  'msnv',
+]);

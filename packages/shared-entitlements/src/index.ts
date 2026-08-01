@@ -3,6 +3,8 @@ export {
   type EntitlementsAdapterOptions,
   type QuotaReserveResult,
   type QuotaFinalizeInput,
+  type FeatureUsageInput,
+  type ResearchUsageFeature,
 } from './entitlements-adapter';
 export { hasPermission, hasPlanFeature, isModelAllowedForUsage, allowedModelKeys } from './helpers';
 export {

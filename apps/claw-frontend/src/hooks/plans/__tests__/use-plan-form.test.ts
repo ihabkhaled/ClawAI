@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { PlanLifecycleStatus } from '@/enums';
 import { usePlanForm } from '@/hooks/plans/use-plan-form';
 import type { PlanView } from '@/types';
 
@@ -16,6 +17,9 @@ const seedPlan = {
   isDefault: false,
   isActive: true,
   isPublic: true,
+  lifecycleStatus: PlanLifecycleStatus.ACTIVE,
+  replacementPlanId: null,
+  retiredAt: null,
   dailyTokenQuota: 100000,
   monthlyTokenQuota: 2000000,
   maxChatsPerDay: 50,

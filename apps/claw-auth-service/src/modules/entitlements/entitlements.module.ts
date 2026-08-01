@@ -15,6 +15,7 @@ import { BillingEntitlementConsumer } from './consumers/billing-entitlement.cons
 import { BillingEntitlementReconcileConsumer } from './consumers/billing-entitlement-reconcile.consumer';
 import { EntitlementReconciliationService } from './services/entitlement-reconciliation.service';
 import { PaymentEntitlementClient } from './clients/payment-entitlement.client';
+import { FeatureUsageConsumptionService } from '../quota/services/feature-usage-consumption.service';
 
 @Module({
   imports: [RolesModule, PlansModule, QuotaModule],
@@ -30,6 +31,7 @@ import { PaymentEntitlementClient } from './clients/payment-entitlement.client';
     BillingEntitlementReconcileConsumer,
     EntitlementReconciliationService,
     PaymentEntitlementClient,
+    FeatureUsageConsumptionService,
   ],
   exports: [EntitlementsService, EntitlementInboxService, UsageViewService],
 })

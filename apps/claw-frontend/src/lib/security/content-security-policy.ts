@@ -18,6 +18,8 @@ const GOOGLE_AD_CONNECT_HOSTS: ReadonlyArray<string> = [
   'https://www.google-analytics.com',
 ];
 
+const VSCODE_LOOPBACK_CONNECT_HOSTS: ReadonlyArray<string> = ['http://127.0.0.1:*'];
+
 // Only needed in DEVELOPMENT. Production script-src uses 'strict-dynamic',
 // under which host allowlists are ignored entirely and trust flows from the
 // nonce on the loader tag instead.
@@ -94,6 +96,7 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
 
   const connectSrc = [
     "'self'",
+    ...VSCODE_LOOPBACK_CONNECT_HOSTS,
     ...(isDev ? ['ws:', 'wss:'] : []),
     ...(adsenseEnabled ? GOOGLE_AD_CONNECT_HOSTS : []),
     ...PAYMOB_CHECKOUT_HOSTS,

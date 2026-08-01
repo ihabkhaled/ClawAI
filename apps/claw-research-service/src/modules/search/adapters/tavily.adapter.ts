@@ -70,6 +70,7 @@ export class TavilyAdapter implements SearchAdapter {
       include_domains: (request.filters?.['includeDomains'] as string[] | undefined) ?? [],
       exclude_domains: (request.filters?.['excludeDomains'] as string[] | undefined) ?? [],
     });
+    await context.onNetworkCall?.();
     const response = await fetch(this.buildUrl(context.baseUrl), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

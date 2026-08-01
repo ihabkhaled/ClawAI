@@ -96,6 +96,16 @@ export type TranslationDictionary = {
     feature3Title: string;
     feature3Desc: string;
   };
+  vscodeAuthorization: {
+    title: string;
+    description: string;
+    requestFor: string;
+    approve: string;
+    approving: string;
+    successTitle: string;
+    successDescription: string;
+    errorTitle: string;
+  };
   nav: {
     dashboard: string;
     chat: string;
@@ -239,6 +249,10 @@ export type TranslationDictionary = {
     providerFailed: string;
     tryingProvider: string;
     allProvidersFailed: string;
+    errors: {
+      videoAttachmentProviderUnsupported: string;
+      videoAttachmentLocalModelUnavailable: string;
+    };
     imageGeneration: string;
     generatedImage: string;
     downloadImage: string;
@@ -2123,6 +2137,8 @@ export type TranslationDictionary = {
       title: string;
       expand: string;
       sourcesCount: string;
+      searchRequests: string;
+      fetchRequests: string;
     };
     lifecycle: {
       started: string;
@@ -3216,6 +3232,11 @@ export type TranslationDictionary = {
     modelPrimary: string;
     modelCompare: string;
     modelOverride: string;
+    planLimits: string;
+    dailyLimitLabel: string;
+    weeklyLimitLabel: string;
+    monthlyLimitLabel: string;
+    chatsLimitLabel: string;
   };
   userUsage: {
     title: string;
@@ -3233,6 +3254,8 @@ export type TranslationDictionary = {
     remaining: string;
     unlimited: string;
     unlimitedHint: string;
+    adminBypass: string;
+    adminBypassHint: string;
   };
   runtimeProgress: {
     metrics: {
@@ -3574,6 +3597,9 @@ export type TranslationDictionary = {
       COMPARE_MODE: string;
       JUDGE_MODE: string;
       RESEARCH_MODE: string;
+      WEB_SEARCH: string;
+      WEB_FETCH: string;
+      WEB_EXTRACT: string;
       CRITIC_REVIEW: string;
       WORKSPACES: string;
       MEMORY: string;
@@ -3691,6 +3717,7 @@ export type TranslationDictionary = {
       monthlyTokens: string;
       ctaFree: string;
       ctaPaid: string;
+      temporaryCatalogDisclaimer: string;
       freeName: string;
       freeTagline: string;
       freeHighlight1: string;
@@ -3768,6 +3795,8 @@ export type TranslationDictionary = {
       modelRoster: {
         title: string;
         intro: string;
+        newestTitle: string;
+        newestIntro: string;
         footnote: string;
         linkFeatures: string;
         linkArchitecture: string;
@@ -4641,6 +4670,7 @@ export type FlatTranslationKey = {
 export type LocaleConfig = {
   locale: Locale;
   label: string;
+  shortLabel: string;
   dir: Direction;
 };
 

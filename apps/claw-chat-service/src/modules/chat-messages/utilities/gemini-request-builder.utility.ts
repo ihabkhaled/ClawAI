@@ -30,6 +30,7 @@ import {
   GEMINI_ROLE_MODEL,
   GEMINI_ROLE_SYSTEM,
   GEMINI_ROLE_USER,
+  GEMINI_VIDEO_MIME_NORMALIZATION,
 } from '../constants/gemini-files-api.constants';
 
 export type {
@@ -51,6 +52,7 @@ export async function buildGeminiRequestBody(
   const warnings: GeminiRequestShapeWarning[] = [];
   let inlineCount = 0;
   let fileDataCount = 0;
+  let inlineBytes = 0;
 
   for (const original of messages) {
     if (isSystemRole(original.role)) {
@@ -58,12 +60,20 @@ export async function buildGeminiRequestBody(
       if (text.length > 0) {
         systemInstructionText =
           systemInstructionText === null ? text : `${systemInstructionText}\n${text}`;
+        inlineBytes += Buffer.byteLength(text);
       }
       continue;
     }
-    const transformed = await transformMessage(original, fileUploadFn, sizeThreshold, warnings);
+    const transformed = await transformMessage(
+      original,
+      fileUploadFn,
+      sizeThreshold,
+      inlineBytes,
+      warnings,
+    );
     inlineCount += transformed.inlineDelta;
     fileDataCount += transformed.fileDataDelta;
+    inlineBytes += transformed.inlineBytesDelta;
     contents.push(transformed.content);
   }
 
@@ -93,6 +103,7 @@ async function transformMessage(
   source: OpenAiChatMessage,
   fileUploadFn: GeminiFileUploadFn,
   sizeThreshold: number,
+  existingInlineBytes: number,
   warnings: GeminiRequestShapeWarning[],
 ): Promise<GeminiTransformedMessage> {
   const role = mapRoleToGemini(source.role);
@@ -101,27 +112,36 @@ async function transformMessage(
       content: { role, parts: [{ text: source.content }] },
       inlineDelta: 0,
       fileDataDelta: 0,
+      inlineBytesDelta: Buffer.byteLength(source.content),
     };
   }
 
   const parts: GeminiContentPart[] = [];
   let inlineDelta = 0;
   let fileDataDelta = 0;
+  let inlineBytesDelta = 0;
 
   for (const part of source.content) {
-    const built = await buildPart(part, fileUploadFn, sizeThreshold, warnings);
+    const built = await buildPart(
+      part,
+      fileUploadFn,
+      sizeThreshold,
+      existingInlineBytes + inlineBytesDelta,
+      warnings,
+    );
     if (built === null) {
       continue;
     }
     parts.push(built.part);
     inlineDelta += built.inlineDelta;
     fileDataDelta += built.fileDataDelta;
+    inlineBytesDelta += built.inlineBytesDelta;
   }
 
   if (parts.length === 0) {
     parts.push({ text: '' });
   }
-  return { content: { role, parts }, inlineDelta, fileDataDelta };
+  return { content: { role, parts }, inlineDelta, fileDataDelta, inlineBytesDelta };
 }
 
 function mapRoleToGemini(role: string): string {
@@ -139,13 +159,19 @@ async function buildPart(
   part: OpenAiContentPart,
   fileUploadFn: GeminiFileUploadFn,
   sizeThreshold: number,
+  existingInlineBytes: number,
   warnings: GeminiRequestShapeWarning[],
 ): Promise<GeminiBuiltPart | null> {
   if (part.type === 'text') {
     if (part.text.length === 0) {
       return null;
     }
-    return { part: { text: part.text }, inlineDelta: 0, fileDataDelta: 0 };
+    return {
+      part: { text: part.text },
+      inlineDelta: 0,
+      fileDataDelta: 0,
+      inlineBytesDelta: Buffer.byteLength(part.text),
+    };
   }
 
   const url = part.image_url.url;
@@ -168,35 +194,29 @@ async function buildPart(
     return null;
   }
 
-  const effectiveMediaType = mediaType.length > 0 ? mediaType : GEMINI_DEFAULT_BINARY_MIME_TYPE;
+  const parsedMediaType = mediaType.length > 0 ? mediaType : GEMINI_DEFAULT_BINARY_MIME_TYPE;
+  const effectiveMediaType =
+    Object.entries(GEMINI_VIDEO_MIME_NORMALIZATION).find(
+      ([sourceMime]) => sourceMime === parsedMediaType,
+    )?.[1] ?? parsedMediaType;
   const decoded = Buffer.from(payload, 'base64');
   const sizeBytes = decoded.length;
+  const encodedBytes = Buffer.byteLength(payload);
 
-  if (sizeBytes < sizeThreshold) {
+  if (sizeBytes < sizeThreshold && existingInlineBytes + encodedBytes < sizeThreshold) {
     return {
       part: { inline_data: { mime_type: effectiveMediaType, data: payload } },
       inlineDelta: 1,
       fileDataDelta: 0,
+      inlineBytesDelta: encodedBytes,
     };
   }
 
-  try {
-    const fileUri = await fileUploadFn(decoded, effectiveMediaType);
-    return {
-      part: { file_data: { mime_type: effectiveMediaType, file_uri: fileUri } },
-      inlineDelta: 0,
-      fileDataDelta: 1,
-    };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown upload error';
-    warnings.push({
-      reason: 'FILE_UPLOAD_FAILED',
-      detail: `Gemini Files API upload failed (${message}) — falling back to inline_data`,
-    });
-    return {
-      part: { inline_data: { mime_type: effectiveMediaType, data: payload } },
-      inlineDelta: 1,
-      fileDataDelta: 0,
-    };
-  }
+  const fileUri = await fileUploadFn(decoded, effectiveMediaType);
+  return {
+    part: { file_data: { mime_type: effectiveMediaType, file_uri: fileUri } },
+    inlineDelta: 0,
+    fileDataDelta: 1,
+    inlineBytesDelta: 0,
+  };
 }

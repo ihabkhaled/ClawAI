@@ -124,6 +124,7 @@ model Subscription {
   scheduledAmountMinor        Int?      @map("scheduled_amount_minor")
   scheduledBillingInterval    String?   @map("scheduled_billing_interval")
   scheduledEffectiveAt        DateTime? @map("scheduled_effective_at")
+  scheduledChangeReason       String?   @map("scheduled_change_reason")
 
   /// Optimistic concurrency. Two simultaneous upgrades cannot both commit:
   /// the second sees a changed version and is rejected as a conflict.

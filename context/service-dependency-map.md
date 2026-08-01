@@ -18,9 +18,10 @@ Every service imports `@claw/shared-constants`, `@claw/shared-types`,
 - **`@claw/shared-auth`** — only agent, payment, research, workspace.
 - **`health`** — depends on `@claw/shared-utilities` **only**.
 
-Package-to-package: `shared-auth`, `shared-entitlements` → `shared-types`;
-`shared-rabbitmq`, `shared-utilities` → `shared-constants` + `shared-types`;
-`shared-types` and `shared-constants` are leaves.
+Package-to-package: `shared-auth` → `shared-types` + `shared-utilities`;
+`shared-entitlements` → `shared-types`; `shared-rabbitmq`, `shared-utilities` →
+`shared-constants` + `shared-types`; `shared-types` and `shared-constants` are
+leaves.
 
 ## 2. Event edges (async, via `claw.events`)
 

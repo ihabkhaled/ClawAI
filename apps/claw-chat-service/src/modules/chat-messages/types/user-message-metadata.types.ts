@@ -7,6 +7,7 @@ import type { ResearchTranscript } from './research-transcript.types';
  * etc.) handled elsewhere — this type is only for the user-facing payload.
  */
 export type UserMessageMetadata = {
+  clientIntent?: string;
   fileIds?: string[];
   modelDisplayName?: string;
   research?: {

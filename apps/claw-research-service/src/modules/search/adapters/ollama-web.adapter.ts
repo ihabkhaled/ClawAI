@@ -103,6 +103,7 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
 
   async search(request: SearchRequest, context: SearchAdapterContext): Promise<SearchResponse> {
     const start = Date.now();
+    await context.onNetworkCall?.();
     const response = await fetch(this.buildUrl(context.baseUrl), {
       method: 'POST',
       headers: this.buildHeaders(context),
@@ -131,11 +132,11 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
       this.logger.warn(
         `Ollama web search returned low-relevance results for "${request.query.slice(0, 120)}" (best=${primaryQuality.bestScore.toFixed(2)}, avgTop=${primaryQuality.averageTopScore.toFixed(2)}); trying DuckDuckGo HTML fallback`,
       );
-      return this.resolveLowRelevanceFallback(request, context.timeoutMs, start, primaryResults);
+      return this.resolveLowRelevanceFallback(request, context, start, primaryResults);
     }
 
     if (response.status === 401 || response.status === 403 || response.status === 429) {
-      return this.resolveLowRelevanceFallback(request, context.timeoutMs, start, []);
+      return this.resolveLowRelevanceFallback(request, context, start, []);
     }
 
     throw new Error(`Ollama web search failed: HTTP ${response.status}`);
@@ -187,18 +188,22 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
     }
   }
 
-  private async searchBingRss(request: SearchRequest, timeoutMs: number): Promise<SearchResponse> {
+  private async searchBingRss(
+    request: SearchRequest,
+    context: SearchAdapterContext,
+  ): Promise<SearchResponse> {
     const params = new URLSearchParams({
       q: request.query,
       format: 'rss',
     });
+    await context.onNetworkCall?.();
     const response = await fetch(`${OllamaWebSearchAdapter.BING_SEARCH_URL}?${params.toString()}`, {
       method: 'GET',
       headers: {
         'User-Agent': 'ClawAI-ResearchBot/1.0',
         Accept: 'application/rss+xml, application/xml, text/xml',
       },
-      signal: AbortSignal.timeout(timeoutMs),
+      signal: AbortSignal.timeout(context.timeoutMs),
     });
     if (!response.ok) {
       throw new Error(`Bing RSS fallback failed: HTTP ${response.status}`);
@@ -382,12 +387,12 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
 
   private async resolveLowRelevanceFallback(
     request: SearchRequest,
-    timeoutMs: number,
+    context: SearchAdapterContext,
     start: number,
     primaryResults: SearchResult[],
   ): Promise<SearchResponse> {
     try {
-      const duckDuckGoFallback = await this.searchDuckDuckGoHtml(request, timeoutMs);
+      const duckDuckGoFallback = await this.searchDuckDuckGoHtml(request, context);
       const duckDuckGoQuality = this.measureResultSet(duckDuckGoFallback.results);
       if (!this.isLowRelevance(duckDuckGoQuality)) {
         return { results: duckDuckGoFallback.results, latencyMs: Date.now() - start };
@@ -397,7 +402,7 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
       );
 
       try {
-        const bingFallback = await this.searchBingRss(request, timeoutMs);
+        const bingFallback = await this.searchBingRss(request, context);
         const bingQuality = this.measureResultSet(bingFallback.results);
         if (!this.isLowRelevance(bingQuality)) {
           return { results: bingFallback.results, latencyMs: Date.now() - start };
@@ -433,7 +438,7 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
       );
 
       try {
-        const bingFallback = await this.searchBingRss(request, timeoutMs);
+        const bingFallback = await this.searchBingRss(request, context);
         const bingQuality = this.measureResultSet(bingFallback.results);
         if (!this.isLowRelevance(bingQuality)) {
           return { results: bingFallback.results, latencyMs: Date.now() - start };
@@ -471,9 +476,10 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
 
   private async searchDuckDuckGoHtml(
     request: SearchRequest,
-    timeoutMs: number,
+    context: SearchAdapterContext,
   ): Promise<SearchResponse> {
     const params = new URLSearchParams({ q: request.query });
+    await context.onNetworkCall?.();
     const response = await fetch(
       `${OllamaWebSearchAdapter.DUCKDUCKGO_HTML_URL}?${params.toString()}`,
       {
@@ -482,7 +488,7 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
           'User-Agent': 'Mozilla/5.0',
           Accept: 'text/html,application/xhtml+xml',
         },
-        signal: AbortSignal.timeout(timeoutMs),
+        signal: AbortSignal.timeout(context.timeoutMs),
       },
     );
     if (!response.ok) {

@@ -19,6 +19,7 @@ function controller(overrides: Record<string, unknown> = {}): Record<string, unk
     plans: [],
     isLoading: false,
     isError: false,
+    isFallback: false,
     error: null,
     isYearly: false,
     selectMonthly: vi.fn(),
@@ -72,5 +73,31 @@ describe('PricingSection', () => {
     render(<PricingSection initialPlans={[]} />);
     expect(screen.getByRole('article')).toHaveTextContent('Pro');
     expect(screen.queryByText('billing.plans.empty')).not.toBeInTheDocument();
+  });
+
+  it('prominently identifies temporary fallback prices and keeps retry available', () => {
+    mockController.mockReturnValue(
+      controller({
+        isFallback: true,
+        plans: [
+          {
+            id: 'fallback-free',
+            slug: 'free',
+            name: 'Free',
+            prices: [],
+            features: [],
+          },
+        ],
+      }),
+    );
+
+    render(<PricingSection initialPlans={null} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'marketing.pricing.temporaryCatalogDisclaimer',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(retry).toHaveBeenCalledOnce();
+    expect(screen.getByRole('article')).toHaveTextContent('Free');
   });
 });

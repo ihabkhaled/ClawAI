@@ -6,18 +6,18 @@
 
 ## 1. Hot Reload Decision Matrix
 
-| Change Type               | Action Required                                   | Downtime | Command                                                  |
-| ------------------------- | ------------------------------------------------- | -------- | -------------------------------------------------------- |
-| Backend source (`src/`)   | None -- auto-detected by `node --watch`           | 0s       | (automatic)                                              |
-| Frontend source (`src/`)  | None -- auto-detected by Turbopack HMR            | 0s       | (automatic)                                              |
-| Prisma schema             | Rebuild container (migration runs in entrypoint)  | ~30s     | `docker compose up -d --build <service>`                 |
-| `package.json` deps       | Rebuild container                                 | ~60s     | `docker compose up -d --build <service>`                 |
-| Dockerfile changes        | Rebuild container                                 | ~60s     | `docker compose up -d --build <service>`                 |
-| Docker Compose config     | Recreate containers                               | ~10s     | `docker compose up -d`                                   |
-| `.env` values             | Restart containers                                | ~5s      | `docker compose restart <service>`                       |
-| Shared packages           | Rebuild package + restart dependents              | ~30s     | See section 3                                            |
-| Nginx config              | Restart nginx                                     | ~2s      | `docker compose restart nginx`                           |
-| New test files             | None -- test runner watches automatically         | 0s       | (automatic in watch mode)                                |
+| Change Type              | Action Required                                  | Downtime | Command                                  |
+| ------------------------ | ------------------------------------------------ | -------- | ---------------------------------------- |
+| Backend source (`src/`)  | None -- auto-detected by `node --watch`          | 0s       | (automatic)                              |
+| Frontend source (`src/`) | None -- auto-detected by Turbopack HMR           | 0s       | (automatic)                              |
+| Prisma schema            | Rebuild container (migration runs in entrypoint) | ~30s     | `docker compose up -d --build <service>` |
+| `package.json` deps      | Rebuild container                                | ~60s     | `docker compose up -d --build <service>` |
+| Dockerfile changes       | Rebuild container                                | ~60s     | `docker compose up -d --build <service>` |
+| Docker Compose config    | Recreate containers                              | ~10s     | `docker compose up -d`                   |
+| `.env` values            | Restart containers                               | ~5s      | `docker compose restart <service>`       |
+| Shared packages          | Rebuild package + restart dependents             | ~30s     | See section 3                            |
+| Nginx config             | Restart nginx                                    | ~2s      | `docker compose restart nginx`           |
+| New test files           | None -- test runner watches automatically        | 0s       | (automatic in watch mode)                |
 
 ---
 
@@ -81,10 +81,12 @@ Shared packages (`packages/shared-*`) are NOT mounted as volumes. They are copie
 **Build order matters** for shared packages:
 
 ```
-1. packages/shared-types      (no dependencies)
-2. packages/shared-constants  (depends on shared-types)
-3. packages/shared-rabbitmq   (depends on shared-types, shared-constants)
-4. packages/shared-auth       (depends on shared-types, shared-constants)
+1. packages/shared-types        (no dependencies)
+2. packages/shared-constants    (no dependencies)
+3. packages/shared-utilities    (depends on shared-types, shared-constants)
+4. packages/shared-rabbitmq     (depends on shared-types, shared-constants)
+5. packages/shared-auth         (depends on shared-types, shared-utilities)
+6. packages/shared-entitlements (depends on shared-types)
 ```
 
 ---

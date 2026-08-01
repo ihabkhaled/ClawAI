@@ -5,8 +5,10 @@ import { PlanModelAccessMode } from '../../../generated/prisma';
 import { AuthRepository } from '../../auth/repositories/auth.repository';
 import { RolesService } from '../../roles/services/roles.service';
 import { PlansRepository } from '../../plans/repositories/plans.repository';
+import { type PlanWithAccess } from '../../plans/types/plans.types';
 import { QuotaService } from '../../quota/services/quota.service';
 import { type UserEntitlements } from '../types/entitlements.types';
+import { ADMIN_ENTITLEMENT_PLAN } from '../constants/admin-entitlements.constants';
 
 @Injectable()
 export class EntitlementsService {
@@ -30,12 +32,16 @@ export class EntitlementsService {
 
     const isAdmin = user.role === UserRole.ADMIN;
     const permissions = await this.rolesService.resolvePermissionsForUser(user.roleId, user.role);
-    const plan = user.activePlanId ? await this.plansRepository.findById(user.activePlanId) : null;
+    const plan = isAdmin ? null : await this.resolvePlan(userId, user.activePlanId);
 
     const dailyLimit = plan?.dailyTokenQuota ?? 0;
     const quota = isAdmin
-      ? { dailyLimit: 0, used: 0, remaining: 0, unlimited: true }
-      : { ...(await this.quotaService.getSnapshot(userId, dailyLimit)), unlimited: false };
+      ? { dailyLimit: 0, used: 0, remaining: 0, unlimited: true, adminBypass: true }
+      : {
+          ...(await this.quotaService.getSnapshot(userId, dailyLimit)),
+          unlimited: false,
+          adminBypass: false,
+        };
 
     // ALLOW_ALL plans use an empty model list as the unrestricted routing hot
     // path. Explicit policies return only enabled rows; their access mode keeps
@@ -47,22 +53,7 @@ export class EntitlementsService {
       role: user.role,
       isAdmin,
       permissions,
-      plan: plan
-        ? {
-            id: plan.id,
-            slug: plan.slug,
-            name: plan.name,
-            featureGates: {
-              allowCompareMode: plan.allowCompareMode,
-              allowJudgeMode: plan.allowJudgeMode,
-              allowResearchMode: plan.allowResearchMode,
-              allowCriticReview: plan.allowCriticReview,
-              allowWorkspaces: plan.allowWorkspaces,
-              allowMemory: plan.allowMemory,
-              allowContextPacks: plan.allowContextPacks,
-            },
-          }
-        : null,
+      plan: this.resolveEntitlementPlan(isAdmin, plan),
       modelAccessMode: this.resolveModelAccessMode(isAdmin, plan?.modelAccessMode),
       allowedModels: modelAccess.map((m) => ({
         provider: m.provider,
@@ -76,6 +67,50 @@ export class EntitlementsService {
       })),
       allowedProviders: [...new Set(modelAccess.map((m) => m.provider))],
       quota,
+    };
+  }
+
+  private resolveEntitlementPlan(
+    isAdmin: boolean,
+    plan: PlanWithAccess | null,
+  ): UserEntitlements['plan'] {
+    if (isAdmin) {
+      return ADMIN_ENTITLEMENT_PLAN;
+    }
+    return plan === null ? null : this.toEntitlementPlan(plan);
+  }
+
+  private async resolvePlan(
+    userId: string,
+    activePlanId: string | null,
+  ): Promise<PlanWithAccess | null> {
+    if (activePlanId === null) {
+      return null;
+    }
+    const effectivePlan = await this.plansRepository.findEffectiveForUser(userId, new Date());
+    return effectivePlan ?? this.plansRepository.findDefault();
+  }
+
+  private toEntitlementPlan(plan: PlanWithAccess): NonNullable<UserEntitlements['plan']> {
+    return {
+      id: plan.id,
+      slug: plan.slug,
+      name: plan.name,
+      limits: {
+        dailyTokens: plan.dailyTokenQuota ?? null,
+        weeklyTokens: plan.weeklyTokenQuota ?? null,
+        monthlyTokens: plan.monthlyTokenQuota ?? null,
+        chatsPerDay: plan.maxChatsPerDay ?? null,
+      },
+      featureGates: {
+        allowCompareMode: plan.allowCompareMode,
+        allowJudgeMode: plan.allowJudgeMode,
+        allowResearchMode: plan.allowResearchMode,
+        allowCriticReview: plan.allowCriticReview,
+        allowWorkspaces: plan.allowWorkspaces,
+        allowMemory: plan.allowMemory,
+        allowContextPacks: plan.allowContextPacks,
+      },
     };
   }
 
@@ -99,7 +134,9 @@ export class EntitlementsService {
     if (user.role === UserRole.ADMIN) {
       return { dailyLimit: 0, isAdmin: true };
     }
-    const plan = user.activePlanId ? await this.plansRepository.findById(user.activePlanId) : null;
+    const plan = user.activePlanId
+      ? await this.plansRepository.findEffectiveForUser(userId, new Date())
+      : null;
     return { dailyLimit: plan?.dailyTokenQuota ?? 0, isAdmin: false };
   }
 }

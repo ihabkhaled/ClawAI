@@ -175,6 +175,18 @@ describe('LoggingInterceptor', () => {
     ).resolves.toBeUndefined();
   });
 
+  it('does not emit routine successful health probe logs', async () => {
+    const publish = buildPublishMock();
+    const request: MockRequest = { method: 'GET', url: '/api/v1/health', headers: {} };
+    const interceptor = new LoggingInterceptor(buildModuleRef(publish));
+    const localLog = jest.spyOn(interceptor['logger'], 'log').mockImplementation(() => {});
+
+    await drain(interceptor.intercept(buildContext(request, response), buildHandler()));
+
+    expect(localLog).not.toHaveBeenCalled();
+    expect(publish).not.toHaveBeenCalled();
+  });
+
   it('resolves RabbitMQ once and reuses it across requests', async () => {
     // The ModuleRef lookup happens on the first request only; repeating it per
     // request would add a container resolution to every payment call.

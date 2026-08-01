@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { ROUTES } from '@/constants';
@@ -9,6 +9,8 @@ import { logger } from '@/utilities';
 
 export function useAuthGuard(): { isReady: boolean } {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const accessToken = useAuthStore((state) => state.accessToken);
   const [hydrated, setHydrated] = useState(false);
@@ -28,10 +30,16 @@ export function useAuthGuard(): { isReady: boolean } {
   // Only redirect after hydration is complete
   useEffect(() => {
     if (hydrated && (!isAuthenticated || !accessToken)) {
-      logger.info({ component: 'auth', action: 'guard-redirect', message: 'Unauthenticated user redirected to login' });
-      router.replace(ROUTES.LOGIN);
+      logger.info({
+        component: 'auth',
+        action: 'guard-redirect',
+        message: 'Unauthenticated user redirected to login',
+      });
+      const query = searchParams.toString();
+      const returnTo = `${pathname}${query.length > 0 ? `?${query}` : ''}`;
+      router.replace(`${ROUTES.LOGIN}?returnTo=${encodeURIComponent(returnTo)}`);
     }
-  }, [hydrated, isAuthenticated, accessToken, router]);
+  }, [hydrated, isAuthenticated, accessToken, pathname, router, searchParams]);
 
   return { isReady: hydrated && isAuthenticated && !!accessToken };
 }

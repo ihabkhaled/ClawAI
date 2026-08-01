@@ -16,12 +16,20 @@ const USD_PRICE = {
 };
 
 describe('ChargeResolverService', () => {
-  let catalog: { requireActivePrice: jest.Mock; requirePriceVersion: jest.Mock };
+  let catalog: {
+    requireActivePrice: jest.Mock;
+    requirePriceVersion: jest.Mock;
+    listCatalog: jest.Mock;
+  };
   let fx: { quote: jest.Mock; requireFresh: jest.Mock };
   let service: ChargeResolverService;
 
   beforeEach(() => {
-    catalog = { requireActivePrice: jest.fn(), requirePriceVersion: jest.fn() };
+    catalog = {
+      requireActivePrice: jest.fn(),
+      requirePriceVersion: jest.fn(),
+      listCatalog: jest.fn().mockResolvedValue([{ id: 'plan-pro', slug: 'pro' }]),
+    };
     fx = { quote: jest.fn(), requireFresh: jest.fn() };
     service = new ChargeResolverService(
       catalog as unknown as PlanCatalogClient,
@@ -49,6 +57,16 @@ describe('ChargeResolverService', () => {
     const charge = await service.resolve('plan-pro', 'MONTHLY', BillingGateway.PAYPAL);
 
     expect(charge.planPriceVersionId).toBe('ppv-1');
+    expect(charge.planSlug).toBe('pro');
+  });
+
+  it('refuses checkout when the priced plan is no longer purchasable', async () => {
+    catalog.requireActivePrice.mockResolvedValue(USD_PRICE);
+    catalog.listCatalog.mockResolvedValue([]);
+
+    await expect(
+      service.resolve('plan-pro', 'MONTHLY', BillingGateway.PAYPAL),
+    ).rejects.toMatchObject({ code: BillingErrorCode.PLAN_NOT_PURCHASABLE });
   });
 
   it('converts to the settlement currency and freezes the rate for Paymob', async () => {

@@ -82,6 +82,25 @@ describe('ChatStreamService', () => {
     );
   });
 
+  it('emits structured localizable error metadata', () => {
+    const nextSpy = jest.spyOn(service.eventBus, 'next');
+
+    service.emitError('thread-video', 'The selected model cannot process video attachments', {
+      code: 'VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED',
+      messageKey: 'chat.errors.videoAttachmentProviderUnsupported',
+    });
+
+    expect(nextSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        threadId: 'thread-video',
+        type: StreamEventType.ERROR,
+        error: 'The selected model cannot process video attachments',
+        code: 'VIDEO_ATTACHMENT_PROVIDER_UNSUPPORTED',
+        messageKey: 'chat.errors.videoAttachmentProviderUnsupported',
+      }),
+    );
+  });
+
   it('emits research completion with a fallback tool label when no tools are present', () => {
     const nextSpy = jest.spyOn(service.eventBus, 'next');
 
@@ -139,6 +158,31 @@ describe('ChatStreamService', () => {
       expect.objectContaining({ sequence: 2, type: StreamEventType.ROUTER_STARTED }),
       expect.objectContaining({ sequence: 3, type: StreamEventType.PROVIDER_SELECTED }),
     ]);
+  });
+
+  it('can subscribe live-only without replaying events from a prior run on the thread', () => {
+    service.emitCompletion('thread-reused', 'OLLAMA', 'gemma3:4b');
+    const received: StreamEventType[] = [];
+    const subscription = service
+      .streamEvents('thread-reused', false)
+      .subscribe((event) => received.push(event.type));
+
+    service.emitProviderSelected('thread-reused', 'OLLAMA', 'qwen3:1.7b');
+    subscription.unsubscribe();
+
+    expect(received).toEqual([StreamEventType.PROVIDER_SELECTED]);
+  });
+
+  it('preserves recent-event replay by default for existing browser clients', () => {
+    service.emitRequestAccepted('thread-browser');
+    const received: StreamEventType[] = [];
+    const subscription = service
+      .streamEvents('thread-browser')
+      .subscribe((event) => received.push(event.type));
+
+    subscription.unsubscribe();
+
+    expect(received).toEqual([StreamEventType.REQUEST_ACCEPTED]);
   });
 
   it('emitResearchProgress(STARTED) puts a RESEARCH_PROGRESS frame on the bus with mode+query details', () => {

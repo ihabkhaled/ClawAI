@@ -3,6 +3,7 @@ import {
   type PaymentTransactionType,
   type SubscriptionStatus,
 } from '@claw/shared-types';
+import type { ProrationQuote, Subscription } from '../../../generated/prisma';
 
 // Everything needed to open a paid subscription from a VERIFIED payment.
 //
@@ -41,6 +42,16 @@ export type ActivateSubscriptionInput = {
   /** What the provider actually reported charging, in its own currency. */
   providerAmountMinor: number | null;
   providerCurrency: string | null;
+};
+
+export type ActivatePlanChangeInput = ActivateSubscriptionInput & {
+  existingSubscriptionId: string;
+  prorationQuoteId: string;
+};
+
+export type PaidPlanChangeState = {
+  subscription: Subscription;
+  quote: ProrationQuote;
 };
 
 /** Outcome of an activation: the subscription plus its financial record. */

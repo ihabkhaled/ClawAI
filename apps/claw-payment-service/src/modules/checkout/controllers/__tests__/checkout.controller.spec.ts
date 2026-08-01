@@ -38,7 +38,12 @@ describe('CheckoutController', () => {
     });
 
     await controller.completePaypal(
-      { id: 'user-1', email: 'owner@example.com', role: UserRole.USER },
+      {
+        id: 'user-1',
+        email: 'owner@example.com',
+        role: UserRole.USER,
+        sessionId: 'auth-session-1',
+      },
       { id: 'session-1' },
       {
         providerOrderId: '5O190127TN364715T',
@@ -62,7 +67,12 @@ describe('CheckoutController', () => {
     });
 
     await controller.completePaymob(
-      { id: 'user-1', email: 'owner@example.com', role: UserRole.USER },
+      {
+        id: 'user-1',
+        email: 'owner@example.com',
+        role: UserRole.USER,
+        sessionId: 'auth-session-1',
+      },
       { id: 'session-1' },
     );
 
@@ -86,7 +96,12 @@ describe('CheckoutController', () => {
 
     await completePaypalSdk.call(
       controller,
-      { id: 'user-1', email: 'owner@example.com', role: UserRole.USER },
+      {
+        id: 'user-1',
+        email: 'owner@example.com',
+        role: UserRole.USER,
+        sessionId: 'auth-session-1',
+      },
       { id: 'session-1' },
       { providerOrderId: '5O190127TN364715T' },
     );
@@ -105,7 +120,12 @@ describe('CheckoutController', () => {
     });
 
     await controller.getPaymentMethodSetupSession(
-      { id: 'user-1', email: 'owner@example.com', role: UserRole.USER },
+      {
+        id: 'user-1',
+        email: 'owner@example.com',
+        role: UserRole.USER,
+        sessionId: 'auth-session-1',
+      },
       { id: 'setup-1' },
     );
 

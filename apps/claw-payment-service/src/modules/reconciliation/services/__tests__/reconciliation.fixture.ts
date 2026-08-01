@@ -108,6 +108,7 @@ export function subscriptionFixture(overrides: Partial<Subscription> = {}): Subs
     scheduledAmountMinor: null,
     scheduledBillingInterval: null,
     scheduledEffectiveAt: null,
+    scheduledChangeReason: null,
     version: 1,
     uniqueActiveKey: 'user-1',
     createdAt: new Date('2026-07-01T00:00:00.000Z'),

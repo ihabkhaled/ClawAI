@@ -102,6 +102,16 @@ export const pt: TranslationDictionary = {
     feature3Desc:
       'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI e Amazon Bedrock — tudo em um só lugar.',
   },
+  vscodeAuthorization: {
+    title: 'Autorizar o ClawAI para VS Code',
+    description: 'Permita que o agente de código use sua conta ClawAI no VS Code.',
+    requestFor: 'Autorização solicitada por {client}.',
+    approve: 'Autorizar VS Code',
+    approving: 'Autorizando...',
+    successTitle: 'VS Code autorizado',
+    successDescription: 'Volte ao VS Code. Esta aba já pode ser fechada.',
+    errorTitle: 'Não foi possível concluir a autorização',
+  },
   nav: {
     dashboard: 'Painel',
     chat: 'Chat',
@@ -245,6 +255,12 @@ export const pt: TranslationDictionary = {
     providerFailed: 'falhou',
     tryingProvider: 'tentando',
     allProvidersFailed: 'Todos os provedores falharam em gerar uma resposta',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'Este modelo não consegue processar anexos de vídeo. Escolha o Gemini 2.5 Flash ou Pro, ou mude para Automático.',
+      videoAttachmentLocalModelUnavailable:
+        'Os anexos de vídeo não estão disponíveis nos modos Somente local ou Privacidade primeiro porque nenhum modelo local compatível com vídeo está configurado.',
+    },
     imageGeneration: 'Geração de Imagem',
     generatedImage: 'Imagem Gerada',
     downloadImage: 'Baixar Imagem',
@@ -1907,6 +1923,8 @@ export const pt: TranslationDictionary = {
       title: '{count} fontes usadas',
       expand: 'Mostrar fontes',
       sourcesCount: '{count} fontes',
+      searchRequests: '{count} pesquisas',
+      fetchRequests: '{count} buscas',
     },
     lifecycle: {
       started: 'Pesquisando na web...',
@@ -2766,7 +2784,7 @@ export const pt: TranslationDictionary = {
     page: {
       title: 'Caixa de entrada do espaço',
       description:
-        'Cross-provider feed of every recent workspace object — filter by provider, type, attention.',
+        'Feed entre provedores de todos os objetos recentes do espaço de trabalho — filtre por provedor, tipo ou atenção.',
       loading: 'Carregando caixa…',
       loadingMore: 'Carregando mais…',
       loadMore: 'Carregar mais',
@@ -2801,7 +2819,7 @@ export const pt: TranslationDictionary = {
     page: {
       title: 'Busca semântica',
       description: 'Pesquise todos os seus objetos — embeddings locais com privacidade.',
-      placeholder: 'Type a natural-language question…',
+      placeholder: 'Digite uma pergunta em linguagem natural…',
       submit: 'Pesquisar',
       searching: 'Pesquisando…',
       reset: 'Redefinir',
@@ -2966,7 +2984,7 @@ export const pt: TranslationDictionary = {
     page: {
       title: 'Entregas de código',
       description:
-        'Approved IMPL_PROMPT actions delivered to chat threads, agent terminals, or clipboard.',
+        'Ações IMPL_PROMPT aprovadas e enviadas para conversas, terminais de agentes ou a área de transferência.',
       loading: 'Carregando entregas…',
       error: 'Não foi possível carregar as entregas.',
       empty: 'Sem entregas. Aprove um IMPL_PROMPT na fila.',
@@ -2992,7 +3010,7 @@ export const pt: TranslationDictionary = {
       title: 'O que aprendemos',
       subtitle: '{count} preferences',
       description:
-        'Patterns derived from your approve / reject / edit decisions. Used to personalise future suggestions.',
+        'Padrões derivados das suas decisões de aprovar, rejeitar ou editar. Usados para personalizar sugestões futuras.',
       loading: 'Carregando…',
       error: 'Não foi possível carregar as preferências.',
       empty: 'Vamos aprender com suas aprovações — sem preferências ainda.',
@@ -3295,6 +3313,11 @@ export const pt: TranslationDictionary = {
     modelPrimary: 'Primário',
     modelCompare: 'Comparar',
     modelOverride: 'Limite {limit} tokens/dia',
+    planLimits: 'Limites do plano',
+    dailyLimitLabel: 'Tokens diários',
+    weeklyLimitLabel: 'Tokens semanais',
+    monthlyLimitLabel: 'Tokens mensais',
+    chatsLimitLabel: 'Conversas por dia',
   },
   userUsage: {
     title: 'Uso',
@@ -3312,6 +3335,9 @@ export const pt: TranslationDictionary = {
     remaining: '{remaining} restantes',
     unlimited: 'Ilimitado',
     unlimitedHint: 'Seu plano não tem limite diário de tokens.',
+    adminBypass: 'Acesso de administrador',
+    adminBypassHint:
+      'Sua função de administrador ignora a aplicação dos limites. Os limites do plano acima permanecem inalterados.',
   },
   runtimeProgress: {
     metrics: {
@@ -3670,6 +3696,9 @@ export const pt: TranslationDictionary = {
       COMPARE_MODE: 'Modo comparação',
       JUDGE_MODE: 'Modo juiz',
       RESEARCH_MODE: 'Modo pesquisa',
+      WEB_SEARCH: 'Pesquisas na web',
+      WEB_FETCH: 'Páginas web obtidas',
+      WEB_EXTRACT: 'Páginas web extraídas',
       CRITIC_REVIEW: 'Revisão crítica',
       WORKSPACES: 'Espaços de trabalho',
       MEMORY: 'Memória',
@@ -3794,6 +3823,8 @@ export const pt: TranslationDictionary = {
       monthlyTokens: 'Cota mensal',
       ctaFree: 'Começar grátis',
       ctaPaid: 'Escolher este plano',
+      temporaryCatalogDisclaimer:
+        'Os preços em tempo real estão temporariamente indisponíveis. Estes preços alternativos podem estar incorretos e mudar quando o serviço voltar.',
       freeName: 'Free',
       freeTagline: 'Experimente o ClawAI com uma pequena cota diária.',
       freeHighlight1: 'Acesso a modelos de nível básico',
@@ -3875,6 +3906,9 @@ export const pt: TranslationDictionary = {
         lastReviewed: 'Última revisão',
       },
       modelRoster: {
+        newestTitle: 'Modelos mais recentes do catálogo',
+        newestIntro:
+          'Uma visão concisa dos modelos adicionados recentemente pelos conectores atuais.',
         title: 'Os modelos que você recebe',
         intro:
           'Uma assinatura cobre todos os provedores abaixo. Troque de modelo no meio da conversa, ou deixe o ClawAI escolher o melhor para cada mensagem.',

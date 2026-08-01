@@ -1,4 +1,9 @@
-import { BillingErrorCode, BillingInterval, CheckoutSessionStatus } from '@claw/shared-types';
+import {
+  BillingErrorCode,
+  BillingInterval,
+  CheckoutPurpose,
+  CheckoutSessionStatus,
+} from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { PaymentActivationService } from '../payment-activation.service';
@@ -29,7 +34,9 @@ function makeSession(overrides: Record<string, unknown> = {}): Record<string, un
     chargeAmountMinor: 1999,
     chargeCurrency: 'USD',
     billingEmail: 'buyer@example.com',
+    purpose: CheckoutPurpose.NEW_SUBSCRIPTION,
     subscriptionId: null,
+    prorationQuoteId: null,
     ...overrides,
   };
 }
@@ -37,7 +44,10 @@ function makeSession(overrides: Record<string, unknown> = {}): Record<string, un
 describe('PaymentActivationService', () => {
   let sessions: { findById: jest.Mock; markFailed: jest.Mock };
   let customers: { ensureForUser: jest.Mock };
-  let lifecycle: { activateFromVerifiedPayment: jest.Mock };
+  let lifecycle: {
+    activateFromVerifiedPayment: jest.Mock;
+    activatePlanChangeFromVerifiedPayment: jest.Mock;
+  };
   let service: PaymentActivationService;
 
   beforeEach(() => {
@@ -51,6 +61,11 @@ describe('PaymentActivationService', () => {
         subscriptionId: 'sub-1',
         transactionId: 'tx-1',
         invoiceNumber: 'CLAW-00000001',
+      }),
+      activatePlanChangeFromVerifiedPayment: jest.fn().mockResolvedValue({
+        subscriptionId: 'sub-existing',
+        transactionId: 'tx-upgrade',
+        invoiceNumber: 'CLAW-00000002',
       }),
     };
     jest
@@ -82,6 +97,42 @@ describe('PaymentActivationService', () => {
         invoiceRecipientEmail: 'buyer@example.com',
       }),
     );
+  });
+
+  it('applies a paid upgrade to its existing subscription instead of creating another one', async () => {
+    sessions.findById.mockResolvedValue(
+      makeSession({
+        purpose: CheckoutPurpose.UPGRADE,
+        subscriptionId: 'sub-existing',
+        prorationQuoteId: 'quote-1',
+        baseAmountMinor: 500,
+        chargeAmountMinor: 500,
+      }),
+    );
+
+    await expect(service.activate({ ...PAYMENT, amountMinor: 500 })).resolves.toBe('sub-existing');
+
+    expect(lifecycle.activatePlanChangeFromVerifiedPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        existingSubscriptionId: 'sub-existing',
+        prorationQuoteId: 'quote-1',
+        baseAmountMinor: 500,
+      }),
+    );
+    expect(lifecycle.activateFromVerifiedPayment).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when an upgrade session is missing its bound proration quote', async () => {
+    sessions.findById.mockResolvedValue(
+      makeSession({ purpose: CheckoutPurpose.UPGRADE, subscriptionId: 'sub-existing' }),
+    );
+
+    await expect(service.activate(PAYMENT)).rejects.toMatchObject({
+      code: BillingErrorCode.PAYMENT_REFERENCE_MISMATCH,
+    });
+    expect(lifecycle.activatePlanChangeFromVerifiedPayment).not.toHaveBeenCalled();
+    expect(lifecycle.activateFromVerifiedPayment).not.toHaveBeenCalled();
+    expect(customers.ensureForUser).not.toHaveBeenCalled();
   });
 
   it('refuses a payment whose amount differs from what we recorded', async () => {

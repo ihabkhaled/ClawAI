@@ -101,6 +101,16 @@ export const ar: TranslationDictionary = {
     feature3Desc:
       'Anthropic وOpenAI وGoogle وMoonshot وZhipu وAlibaba وDeepSeek وxAI وAmazon Bedrock — جميعها في مكان واحد.',
   },
+  vscodeAuthorization: {
+    title: 'تفويض ClawAI لـ VS Code',
+    description: 'اسمح لوكيل البرمجة باستخدام حساب ClawAI الخاص بك في VS Code.',
+    requestFor: 'طلب التفويض بواسطة {client}.',
+    approve: 'تفويض VS Code',
+    approving: 'جارٍ التفويض...',
+    successTitle: 'تم تفويض VS Code',
+    successDescription: 'ارجع إلى VS Code. يمكنك الآن إغلاق علامة التبويب هذه.',
+    errorTitle: 'تعذر إكمال التفويض',
+  },
   nav: {
     dashboard: 'لوحة التحكم',
     chat: 'المحادثة',
@@ -244,6 +254,12 @@ export const ar: TranslationDictionary = {
     providerFailed: 'فشل',
     tryingProvider: 'جار المحاولة',
     allProvidersFailed: 'فشل جميع المزودين في توليد رد',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'لا يستطيع هذا النموذج معالجة مرفقات الفيديو. اختر Gemini 2.5 Flash أو Pro، أو انتقل إلى الوضع التلقائي.',
+      videoAttachmentLocalModelUnavailable:
+        'مرفقات الفيديو غير متاحة في وضع التشغيل المحلي فقط أو وضع الخصوصية أولاً لعدم إعداد نموذج محلي يدعم الفيديو.',
+    },
     imageGeneration: 'توليد الصور',
     generatedImage: 'الصورة المُولَّدة',
     downloadImage: 'تنزيل الصورة',
@@ -1873,6 +1889,8 @@ export const ar: TranslationDictionary = {
       title: 'تم استخدام {count} مصادر',
       expand: 'إظهار المصادر',
       sourcesCount: '{count} مصادر',
+      searchRequests: '{count} عمليات بحث',
+      fetchRequests: '{count} عمليات جلب',
     },
     lifecycle: {
       started: 'جارٍ البحث على الويب...',
@@ -3248,6 +3266,11 @@ export const ar: TranslationDictionary = {
     modelPrimary: 'أساسي',
     modelCompare: 'مقارنة',
     modelOverride: 'الحد {limit} رمز/يوم',
+    planLimits: 'حدود الخطة',
+    dailyLimitLabel: 'الرموز يوميًا',
+    weeklyLimitLabel: 'الرموز أسبوعيًا',
+    monthlyLimitLabel: 'الرموز شهريًا',
+    chatsLimitLabel: 'المحادثات يوميًا',
   },
   userUsage: {
     title: 'الاستخدام',
@@ -3265,6 +3288,8 @@ export const ar: TranslationDictionary = {
     remaining: 'متبقٍّ {remaining}',
     unlimited: 'غير محدود',
     unlimitedHint: 'خطتك بلا حد يومي للرموز.',
+    adminBypass: 'صلاحية المسؤول',
+    adminBypassHint: 'يتجاوز دور المسؤول قيود التنفيذ، بينما تظل حدود الخطة أعلاه دون تغيير.',
   },
   runtimeProgress: {
     metrics: {
@@ -3612,6 +3637,9 @@ export const ar: TranslationDictionary = {
       COMPARE_MODE: 'وضع المقارنة',
       JUDGE_MODE: 'وضع التحكيم',
       RESEARCH_MODE: 'وضع البحث',
+      WEB_SEARCH: 'عمليات بحث الويب',
+      WEB_FETCH: 'صفحات الويب المحمّلة',
+      WEB_EXTRACT: 'صفحات الويب المستخرجة',
       CRITIC_REVIEW: 'المراجعة النقدية',
       WORKSPACES: 'مساحات العمل',
       MEMORY: 'الذاكرة',
@@ -3735,6 +3763,8 @@ export const ar: TranslationDictionary = {
       monthlyTokens: 'الرصيد الشهري',
       ctaFree: 'ابدأ مجانًا',
       ctaPaid: 'اختر هذه الخطة',
+      temporaryCatalogDisclaimer:
+        'التسعير المباشر غير متاح مؤقتًا. قد تكون هذه الأسعار الاحتياطية غير دقيقة وقد تتغير عند عودة الخدمة.',
       freeName: 'مجانية',
       freeTagline: 'جرّب ClawAI برصيد يومي صغير.',
       freeHighlight1: 'الوصول إلى نماذج الفئة الأساسية',
@@ -3815,6 +3845,8 @@ export const ar: TranslationDictionary = {
         lastReviewed: 'آخر مراجعة',
       },
       modelRoster: {
+        newestTitle: 'أحدث النماذج في الدليل',
+        newestIntro: 'لمحة موجزة عن النماذج المضافة حديثًا والمتاحة عبر الموصلات الحالية.',
         title: 'النماذج التي تحصل عليها',
         intro:
           'يغطي اشتراك واحد جميع المزوّدين أدناه. بدّل النماذج في منتصف المحادثة، أو دع ClawAI يختار الأنسب لكل رسالة.',

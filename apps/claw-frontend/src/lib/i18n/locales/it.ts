@@ -102,6 +102,16 @@ export const it: TranslationDictionary = {
     feature3Desc:
       'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI e Amazon Bedrock — tutti in un unico posto.',
   },
+  vscodeAuthorization: {
+    title: 'Autorizza ClawAI per VS Code',
+    description: 'Consenti all’agente di programmazione di usare il tuo account ClawAI in VS Code.',
+    requestFor: 'Autorizzazione richiesta da {client}.',
+    approve: 'Autorizza VS Code',
+    approving: 'Autorizzazione...',
+    successTitle: 'VS Code autorizzato',
+    successDescription: 'Torna a VS Code. Ora puoi chiudere questa scheda.',
+    errorTitle: 'Impossibile completare l’autorizzazione',
+  },
   nav: {
     dashboard: 'Dashboard',
     chat: 'Chat',
@@ -245,6 +255,12 @@ export const it: TranslationDictionary = {
     providerFailed: 'fallito',
     tryingProvider: 'tentativo',
     allProvidersFailed: 'Tutti i provider non sono riusciti a generare una risposta',
+    errors: {
+      videoAttachmentProviderUnsupported:
+        'Questo modello non può elaborare gli allegati video. Scegli Gemini 2.5 Flash o Pro oppure passa alla modalità Auto.',
+      videoAttachmentLocalModelUnavailable:
+        'Gli allegati video non sono disponibili nelle modalità Solo locale o Privacy prima di tutto perché non è configurato alcun modello locale compatibile con i video.',
+    },
     imageGeneration: 'Generazione immagini',
     generatedImage: 'Immagine generata',
     downloadImage: 'Scarica immagine',
@@ -1915,6 +1931,8 @@ export const it: TranslationDictionary = {
       title: '{count} fonti utilizzate',
       expand: 'Mostra fonti',
       sourcesCount: '{count} fonti',
+      searchRequests: '{count} ricerche',
+      fetchRequests: '{count} recuperi',
     },
     lifecycle: {
       started: 'Ricerca sul web in corso...',
@@ -3303,6 +3321,11 @@ export const it: TranslationDictionary = {
     modelPrimary: 'Primario',
     modelCompare: 'Confronto',
     modelOverride: 'Limite {limit} token/giorno',
+    planLimits: 'Limiti del piano',
+    dailyLimitLabel: 'Token giornalieri',
+    weeklyLimitLabel: 'Token settimanali',
+    monthlyLimitLabel: 'Token mensili',
+    chatsLimitLabel: 'Chat al giorno',
   },
   userUsage: {
     title: 'Utilizzo',
@@ -3320,6 +3343,9 @@ export const it: TranslationDictionary = {
     remaining: '{remaining} rimanenti',
     unlimited: 'Illimitato',
     unlimitedHint: 'Il tuo piano non ha un limite giornaliero di token.',
+    adminBypass: 'Accesso amministratore',
+    adminBypassHint:
+      'Il ruolo amministratore ignora l’applicazione dei limiti. I limiti del piano sopra restano invariati.',
   },
   runtimeProgress: {
     metrics: {
@@ -3682,6 +3708,9 @@ export const it: TranslationDictionary = {
       COMPARE_MODE: 'Modalità confronto',
       JUDGE_MODE: 'Modalità giudice',
       RESEARCH_MODE: 'Modalità ricerca',
+      WEB_SEARCH: 'Ricerche web',
+      WEB_FETCH: 'Pagine web recuperate',
+      WEB_EXTRACT: 'Pagine web estratte',
       CRITIC_REVIEW: 'Revisione critica',
       WORKSPACES: 'Spazi di lavoro',
       MEMORY: 'Memoria',
@@ -3809,6 +3838,8 @@ export const it: TranslationDictionary = {
       monthlyTokens: 'Plafond mensile',
       ctaFree: 'Inizia gratis',
       ctaPaid: 'Scegli questo piano',
+      temporaryCatalogDisclaimer:
+        'I prezzi in tempo reale non sono temporaneamente disponibili. Questi prezzi di riserva potrebbero non essere accurati e cambiare al ripristino del servizio.',
       freeName: 'Free',
       freeTagline: 'Prova ClawAI con un piccolo plafond giornaliero.',
       freeHighlight1: 'Accesso ai modelli di fascia base',
@@ -3891,6 +3922,9 @@ export const it: TranslationDictionary = {
         lastReviewed: 'Ultima revisione',
       },
       modelRoster: {
+        newestTitle: 'Modelli più recenti nel catalogo',
+        newestIntro:
+          'Una panoramica concisa dei modelli aggiunti di recente tramite i connettori attuali.',
         title: 'I modelli che ottieni',
         intro:
           'Un solo abbonamento copre tutti i provider qui sotto. Cambia modello a metà conversazione, oppure lascia che ClawAI scelga il migliore per ogni messaggio.',
@@ -4633,7 +4667,7 @@ export const it: TranslationDictionary = {
           'Il lavoro che non deve concludersi prima che tu veda una risposta viene pubblicato come evento su un topic exchange RabbitMQ e gestito dai servizi che se ne interessano. Conteggio dell’utilizzo, registrazioni di audit ed estrazione della memoria funzionano tutti così.',
         body2:
           'Gli eventi sono il motivo per cui la chat non ha bisogno di sapere che l’audit esiste. La chat dichiara cos’è successo; chi deve reagire si iscrive. Aggiungere un consumatore non richiede alcuna modifica al pubblicatore.',
-        topicName: 'Topic exchange',
+        topicName: 'Exchange di tipo topic',
         topicDesc:
           'I pubblicatori dichiarano cos’è successo, non chi debba ascoltarlo. I consumatori si legano ai pattern che li interessano.',
         retryName: 'Nuovi tentativi con attesa crescente',

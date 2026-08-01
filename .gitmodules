@@ -1,0 +1,3 @@
+[submodule "apps/claw-coding-agent"]
+	path = apps/claw-coding-agent
+	url = https://github.com/ihabkhaled/ClawAI-Coding-Agent.git

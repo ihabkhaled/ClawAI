@@ -42,7 +42,7 @@ Lint, Typecheck, and Test run in parallel. Build runs only after all three pass.
 1. Checkout code
 2. Setup Node.js 20 with npm cache
 3. Install dependencies (`npm ci --ignore-scripts`)
-4. Build shared packages (shared-types, shared-constants, shared-rabbitmq, shared-auth)
+4. Build shared packages in dependency order (types, constants, utilities, rabbitmq, auth, entitlements)
 5. Generate Prisma clients for all 8 Prisma services (auth, chat, connector, routing, memory, file, ollama, image)
 6. Run `npm run lint`
 
@@ -91,10 +91,12 @@ Every job repeats these prerequisites because GitHub Actions jobs run on separat
 npm ci --ignore-scripts
 
 # 2. Build shared packages (order matters)
-cd packages/shared-types && npx tsc
-cd ../shared-constants && npx tsc
-cd ../shared-rabbitmq && npx tsc
-cd ../shared-auth && npx tsc
+cd packages/shared-types && npx tsgo -p tsconfig.build.json
+cd ../shared-constants && npx tsgo -p tsconfig.build.json
+cd ../shared-utilities && npx tsgo -p tsconfig.build.json
+cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
+cd ../shared-auth && npx tsgo -p tsconfig.build.json
+cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
 
 # 3. Generate Prisma clients
 for svc in auth chat connector routing memory file ollama image; do
@@ -175,10 +177,12 @@ procedure with explicit human sign-off (`docs/exceptions/README.md`).
 ### Shared Packages (build order matters)
 
 ```
-1. packages/shared-types      (enums, event payloads, auth types)
-2. packages/shared-constants   (exchange name, ports, API prefix)
-3. packages/shared-rabbitmq    (RabbitMQModule, StructuredLogger)
-4. packages/shared-auth        (AuthGuard, RolesGuard, decorators)
+1. packages/shared-types        (enums, event payloads, auth types)
+2. packages/shared-constants    (exchange name, ports, API prefix)
+3. packages/shared-utilities    (cross-service functions)
+4. packages/shared-rabbitmq     (RabbitMQModule, StructuredLogger)
+5. packages/shared-auth         (AuthGuard, RolesGuard, decorators)
+6. packages/shared-entitlements (plan and feature gates)
 ```
 
 Each package compiles TypeScript to JavaScript in its `dist/` folder. Downstream packages and services reference these via npm workspace resolution.

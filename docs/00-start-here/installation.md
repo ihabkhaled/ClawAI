@@ -277,8 +277,10 @@ Shared packages must be built before services can import them:
 ```bash
 npm run build -w packages/shared-types
 npm run build -w packages/shared-constants
+npm run build -w packages/shared-utilities
 npm run build -w packages/shared-rabbitmq
 npm run build -w packages/shared-auth
+npm run build -w packages/shared-entitlements
 ```
 
 ### 4. Run a Single Service

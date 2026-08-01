@@ -5,6 +5,10 @@
       "to": "@claw/shared-types"
     },
     {
+      "from": "@claw/shared-auth",
+      "to": "@claw/shared-utilities"
+    },
+    {
       "from": "@claw/shared-entitlements",
       "to": "@claw/shared-types"
     },

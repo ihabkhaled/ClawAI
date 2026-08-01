@@ -13,7 +13,7 @@ import {
   THREAD_CONTEXT_LIMIT,
   WORKSPACE_CONTEXT_LIMIT,
 } from '../../../common/constants';
-import { RoutingMode, type ChatMessage } from '../../../generated/prisma';
+import { type ChatMessage, RoutingMode } from '../../../generated/prisma';
 import {
   type OpenAiChatMessage,
   type OpenAiContentPart,
@@ -42,9 +42,7 @@ import { LocalModelSelectionService } from '../services/local-model-selection.se
 export class ContextAssemblyManager {
   private readonly logger = new Logger(ContextAssemblyManager.name);
 
-  constructor(
-    @Optional() private readonly localModelSelection?: LocalModelSelectionService,
-  ) {}
+  constructor(@Optional() private readonly localModelSelection?: LocalModelSelectionService) {}
 
   async assemble(
     userId: string,
@@ -168,7 +166,7 @@ export class ContextAssemblyManager {
         args.skipExpensiveContext
           ? Promise.resolve([])
           : this.fetchContextPackItems(args.contextPackIds ?? []),
-        this.fetchFileContents(args.fileIds ?? []),
+        this.fetchFileContents(args.fileIds ?? [], args.userId),
         args.skipExpensiveContext
           ? Promise.resolve([])
           : this.fetchWorkspaceContext(args.userId, args.lastUserContent),
@@ -346,6 +344,17 @@ export class ContextAssemblyManager {
   }
 
   buildChatMessages(context: AssembledContext): OpenAiChatMessage[] {
+    return this.buildProviderChatMessages(context, false);
+  }
+
+  buildGeminiChatMessages(context: AssembledContext): OpenAiChatMessage[] {
+    return this.buildProviderChatMessages(context, true);
+  }
+
+  private buildProviderChatMessages(
+    context: AssembledContext,
+    includeVideo: boolean,
+  ): OpenAiChatMessage[] {
     const currentIntent = this.extractCurrentIntent(context.threadMessages);
     const relevantMessages = this.filterThreadMessagesForIntent(
       context.threadMessages,
@@ -365,12 +374,14 @@ export class ContextAssemblyManager {
     if (systemParts.length > 0) {
       messages.push({ role: 'system', content: systemParts.join('\n\n') });
     }
-    const imageFiles = context.fileContents.filter((f) => this.isImageFile(f));
+    const mediaFiles = context.fileContents.filter(
+      (file) => this.isImageFile(file) || (includeVideo && this.isVideoFile(file)),
+    );
     for (const msg of relevantMessages) {
       const role = this.mapRole(msg.role);
       const isLastUser = role === 'user' && msg === relevantMessages.at(-1);
-      if (isLastUser && imageFiles.length > 0) {
-        messages.push({ role, content: this.buildMultimodalUserParts(msg.content, imageFiles) });
+      if (isLastUser && mediaFiles.length > 0) {
+        messages.push({ role, content: this.buildMultimodalUserParts(msg.content, mediaFiles) });
       } else {
         messages.push({ role, content: msg.content });
       }
@@ -416,14 +427,14 @@ export class ContextAssemblyManager {
 
   private buildMultimodalUserParts(
     text: string,
-    imageFiles: AssembledContext['fileContents'],
+    mediaFiles: AssembledContext['fileContents'],
   ): OpenAiContentPart[] {
     const parts: OpenAiContentPart[] = [{ type: 'text', text }];
-    for (const img of imageFiles) {
-      if (img.content) {
+    for (const file of mediaFiles) {
+      if (file.content) {
         parts.push({
           type: 'image_url',
-          image_url: { url: `data:${img.mimeType};base64,${img.content}` },
+          image_url: { url: `data:${file.mimeType};base64,${file.content}` },
         });
       }
     }
@@ -432,6 +443,10 @@ export class ContextAssemblyManager {
 
   private isImageFile(file: FileContentResponse): boolean {
     return file.mimeType.startsWith('image/');
+  }
+
+  private isVideoFile(file: FileContentResponse): boolean {
+    return file.mimeType.startsWith('video/');
   }
 
   private async fetchMemories(userId: string): Promise<MemoryRecordResponse[]> {
@@ -509,7 +524,10 @@ export class ContextAssemblyManager {
     }
   }
 
-  private async fetchFileContents(fileIds: string[]): Promise<FileContentResponse[]> {
+  private async fetchFileContents(
+    fileIds: string[],
+    userId: string,
+  ): Promise<FileContentResponse[]> {
     if (fileIds.length === 0) {
       this.logger.debug('fetchFileContents: no file IDs provided — skipping');
       return [];
@@ -521,7 +539,7 @@ export class ContextAssemblyManager {
       const results: FileContentResponse[] = [];
 
       for (const fileId of fileIds) {
-        const url = `${config.FILE_SERVICE_URL}/api/v1/internal/files/${encodeURIComponent(fileId)}/content`;
+        const url = `${config.FILE_SERVICE_URL}/api/v1/internal/files/${encodeURIComponent(fileId)}/content?userId=${encodeURIComponent(userId)}`;
 
         this.logger.debug(`fetchFileContents: fetching file ${fileId}`);
         const response = await httpRequest<FileContentResponse>({

@@ -37,6 +37,13 @@ export async function executeOllamaCloudToolCall(
   const payload = buildPayload(toolName, args);
   const url = `${stripTrailingSlash(options.baseUrl)}/${endpointPath}`;
 
+  try {
+    await options.onDispatch?.();
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'unknown';
+    logger.warn(`executeOllamaCloudToolCall: tool=${toolName} accounting failed - ${message}`);
+  }
+
   let response: Awaited<ReturnType<typeof httpRequest<unknown>>>;
   try {
     response = await httpRequest<unknown>({

@@ -1814,6 +1814,7 @@ Every route below requires `ADMIN_PLANS_MANAGE`.
 | ------ | ------------------------------------------------------- | ----------------------------------------- |
 | GET    | `/api/v1/admin/plans/:id/price-versions`                | Read append-only price history            |
 | POST   | `/api/v1/admin/plans/:id/price-versions`                | Publish a future/current price version    |
+| DELETE | `/api/v1/admin/plans/:id`                               | Retire a plan and migrate assignments     |
 | GET    | `/api/v1/admin/billing/dashboard`                       | Revenue, cost, margin, refund, drift data |
 | GET    | `/api/v1/admin/billing/dashboard/price-version-counts`  | Subscribers by immutable price version    |
 | GET    | `/api/v1/admin/billing/refunds/refundable-transactions` | Refundable ledger                         |
@@ -1824,9 +1825,30 @@ All monetary fields are integer minor units or integer microUSD. Refund writes
 require an operator idempotency key; cumulative pending/completed refunds may
 not exceed the captured amount.
 
+Plan deletion is a durable retirement, never a physical history deletion. An
+optional `{ "replacementPlanId": "..." }` body selects an active replacement;
+without it, auth selects the nearest active plan with a higher display order.
+The default plan cannot be retired. Active assignments move immediately so
+users receive the replacement without a mid-period charge, while paid rows
+remain billing-pending until payment schedules the immutable replacement price
+at the existing period boundary.
+
 ### Private internal contracts
 
 Payment status and entitlement reads live under `/internal/payments/*`;
 auth-service plan/price/provider-cost projections live under `/internal/*`.
 They require `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>`, validate
 bounded Zod projections, and are intentionally absent from every nginx config.
+
+Plan retirement adds two auth-owned internal contracts used only by the
+owner-locked payment reconciliation job:
+
+| Method | Route                                                           | Purpose                                      |
+| ------ | --------------------------------------------------------------- | -------------------------------------------- |
+| GET    | `/api/v1/internal/plans/retirement-migrations/pending?limit=50` | Read a bounded batch of pending paid moves   |
+| POST   | `/api/v1/internal/plans/retirement-migrations/:id/outcome`      | CAS-record scheduled/superseded/failed state |
+
+The pending response includes auth-derived source/replacement plan IDs,
+replacement slug, user ID, and the opaque payment subscription ID. Outcome
+writes apply only while the row is still `BILLING_SCHEDULE_PENDING`, so a user
+override or replay cannot rewrite an already-decided migration.

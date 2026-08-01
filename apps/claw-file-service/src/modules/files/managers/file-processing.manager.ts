@@ -102,6 +102,11 @@ export class FileProcessingManager {
       return this.extractImageText(file, storagePath);
     }
 
+    if (mimeType.startsWith('video/')) {
+      this.logger.debug(`extractText: video "${filename}" — preserving binary payload`);
+      return `[Video file: ${filename}]`;
+    }
+
     this.logger.debug(`extractText: text file "${filename}" (${mimeType}) — UTF-8 decode`);
     return buffer.toString('utf-8');
   }

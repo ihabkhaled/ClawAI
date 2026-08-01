@@ -56,6 +56,9 @@ export class LoggingInterceptor implements NestInterceptor {
       tap(() => {
         const duration = Date.now() - now;
         const statusCode = response.statusCode;
+        if (url.split('?')[0] === '/api/v1/health' && statusCode < 400) {
+          return;
+        }
         this.logger.log(
           {
             requestId,

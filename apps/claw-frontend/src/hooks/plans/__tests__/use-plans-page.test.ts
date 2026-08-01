@@ -10,6 +10,7 @@ import type { PlanView } from '@/types';
 const mockList = vi.fn();
 const mockActivate = vi.fn();
 const mockDeactivate = vi.fn();
+const mockRetire = vi.fn();
 const mockSetDefault = vi.fn();
 const mockShowToastSuccess = vi.fn();
 const mockShowToastApiError = vi.fn();
@@ -19,6 +20,7 @@ vi.mock('@/repositories/admin/plans.repository', () => ({
     list: (...args: unknown[]) => mockList(...args),
     activate: (...args: unknown[]) => mockActivate(...args),
     deactivate: (...args: unknown[]) => mockDeactivate(...args),
+    retire: (...args: unknown[]) => mockRetire(...args),
     setDefault: (...args: unknown[]) => mockSetDefault(...args),
   },
 }));
@@ -132,6 +134,27 @@ describe('usePlansPage', () => {
     await waitFor(() => {
       expect(mockSetDefault).toHaveBeenCalledWith('pl1');
     });
+  });
+
+  it('requires confirmation before retiring a plan and then invalidates it', async () => {
+    mockList.mockResolvedValue([samplePlan]);
+    mockRetire.mockResolvedValue({
+      sourcePlanId: 'pl1',
+      replacementPlanId: 'pl2',
+      migratedAssignments: 2,
+      billingPending: 1,
+      alreadyRetired: false,
+    });
+    const { result } = renderHook(() => usePlansPage(), { wrapper: makeWrapper() });
+    await waitFor(() => expect(result.current.plans).toHaveLength(1));
+
+    act(() => result.current.onRequestRetirement(samplePlan));
+    expect(result.current.retirementCandidate).toEqual({ id: 'pl1', name: 'Pro' });
+
+    act(() => result.current.onConfirmRetirement());
+    await waitFor(() => expect(mockRetire).toHaveBeenCalledWith('pl1'));
+    await waitFor(() => expect(result.current.retirementCandidate).toBeNull());
+    expect(mockShowToastSuccess).toHaveBeenCalled();
   });
 
   it('surfaces mutation errors via mutationError + apiError toast', async () => {

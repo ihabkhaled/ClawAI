@@ -13,6 +13,12 @@ export type UserEntitlements = {
     id: string;
     slug: string;
     name: string;
+    limits: {
+      dailyTokens: number | null;
+      weeklyTokens: number | null;
+      monthlyTokens: number | null;
+      chatsPerDay: number | null;
+    };
     featureGates: PlanFeatureGates;
   } | null;
   // The explicit mode disambiguates unrestricted access from an empty
@@ -26,5 +32,6 @@ export type UserEntitlements = {
     remaining: number;
     // ADMIN bypasses quota entirely.
     unlimited: boolean;
+    adminBypass: boolean;
   };
 };

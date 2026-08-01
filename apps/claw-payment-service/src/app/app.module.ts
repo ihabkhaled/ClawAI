@@ -38,7 +38,19 @@ import { BillingDashboardModule } from '../modules/billing-dashboard/billing-das
             ? { target: 'pino-pretty', options: { colorize: true } }
             : undefined,
         level: process.env['NODE_ENV'] !== 'production' ? 'debug' : 'info',
-        autoLogging: true,
+        customLogLevel: (req, res, error) => {
+          const isRoutineHealth = (req.url ?? '').split('?')[0] === '/api/v1/health';
+          if (isRoutineHealth && res.statusCode < 400 && error === undefined) {
+            return 'silent';
+          }
+          if (res.statusCode >= 500 || error !== undefined) {
+            return 'error';
+          }
+          if (res.statusCode >= 400) {
+            return 'warn';
+          }
+          return 'info';
+        },
         // Redaction list is deliberately broad. A payment service handles more
         // secret-shaped fields than any other, and a leaked gateway token or
         // signature header in a log is a full compromise of that credential.
@@ -62,7 +74,7 @@ import { BillingDashboardModule } from '../modules/billing-dashboard/billing-das
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60_000),
-        limit: Number(process.env['THROTTLE_LIMIT'] ?? 100),
+        limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
       },
     ]),
     ScheduleModule.forRoot(),

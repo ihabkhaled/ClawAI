@@ -15,7 +15,9 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
   let service: EntitlementsService;
   let authRepoMock: jest.Mocked<Pick<AuthRepository, 'findUserById'>>;
   let rolesServiceMock: jest.Mocked<Pick<RolesService, 'resolvePermissionsForUser'>>;
-  let plansRepoMock: jest.Mocked<Pick<PlansRepository, 'findById'>>;
+  let plansRepoMock: jest.Mocked<
+    Pick<PlansRepository, 'findById' | 'findDefault' | 'findEffectiveForUser'>
+  >;
   let quotaServiceMock: jest.Mocked<Pick<QuotaService, 'getSnapshot'>>;
 
   const baseUser = {
@@ -68,7 +70,11 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
   beforeEach(() => {
     authRepoMock = { findUserById: jest.fn() };
     rolesServiceMock = { resolvePermissionsForUser: jest.fn() };
-    plansRepoMock = { findById: jest.fn() };
+    plansRepoMock = {
+      findById: jest.fn(),
+      findDefault: jest.fn().mockResolvedValue(null),
+      findEffectiveForUser: jest.fn(),
+    };
     quotaServiceMock = { getSnapshot: jest.fn() };
 
     service = new EntitlementsService(
@@ -89,6 +95,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
 
   it('returns allowedModels=[] (no restriction) when the plan has zero PlanModelAccess rows', async () => {
     plansRepoMock.findById.mockResolvedValue(freePlanWithNoModelAccess);
+    plansRepoMock.findEffectiveForUser.mockResolvedValue(freePlanWithNoModelAccess);
 
     const result = await service.getForUser('u1');
 
@@ -101,6 +108,13 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     expect(result.modelAccessMode).toBe(PlanModelAccessMode.ALLOW_ALL);
     expect(result.plan).not.toBeNull();
     expect(result.plan?.slug).toBe('free');
+    expect(result.plan?.limits).toEqual({
+      dailyTokens: 50000,
+      weeklyTokens: null,
+      monthlyTokens: null,
+      chatsPerDay: null,
+    });
+    expect(result.quota.adminBypass).toBe(false);
   });
 
   it('returns only isAllowed=true rows when PlanModelAccess is populated', async () => {
@@ -140,6 +154,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     } as unknown as PlanWithAccess;
 
     plansRepoMock.findById.mockResolvedValue(planWithMixedAccess);
+    plansRepoMock.findEffectiveForUser.mockResolvedValue(planWithMixedAccess);
 
     const result = await service.getForUser('u1');
 
@@ -161,5 +176,70 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     expect(result.allowedModels).toEqual([]);
     expect(result.modelAccessMode).toBe(PlanModelAccessMode.DENY_ALL);
     expect(result.plan).toBeNull();
+  });
+
+  it('falls back to the free plan when the paid assignment has expired', async () => {
+    plansRepoMock.findEffectiveForUser.mockResolvedValue(null);
+    plansRepoMock.findDefault.mockResolvedValue(freePlanWithNoModelAccess);
+
+    const result = await service.getForUser('u1');
+
+    expect(result.plan?.slug).toBe('free');
+    expect(plansRepoMock.findById).not.toHaveBeenCalled();
+  });
+
+  it('returns one centralized unlimited effective plan for an admin assigned a restricted plan', async () => {
+    authRepoMock.findUserById.mockResolvedValue({
+      ...baseUser,
+      role: UserRole.ADMIN,
+      activePlanId: 'plan-team',
+    } as unknown as Awaited<ReturnType<AuthRepository['findUserById']>>);
+    plansRepoMock.findEffectiveForUser.mockResolvedValue({
+      ...freePlanWithNoModelAccess,
+      id: 'plan-team',
+      name: 'Team',
+      slug: 'team',
+      dailyTokenQuota: 5000,
+      weeklyTokenQuota: 10_000,
+      monthlyTokenQuota: 20_000,
+      maxChatsPerDay: 5,
+      allowResearchMode: false,
+      allowCriticReview: false,
+    } as unknown as PlanWithAccess);
+
+    const result = await service.getForUser('u1');
+
+    expect(result.plan).toEqual({
+      id: 'admin-unlimited',
+      slug: 'admin',
+      name: 'Admin',
+      limits: {
+        dailyTokens: null,
+        weeklyTokens: null,
+        monthlyTokens: null,
+        chatsPerDay: null,
+      },
+      featureGates: {
+        allowCompareMode: true,
+        allowJudgeMode: true,
+        allowResearchMode: true,
+        allowCriticReview: true,
+        allowWorkspaces: true,
+        allowMemory: true,
+        allowContextPacks: true,
+      },
+    });
+    expect(result.modelAccessMode).toBe(PlanModelAccessMode.ALLOW_ALL);
+    expect(result.allowedModels).toEqual([]);
+    expect(result.allowedProviders).toEqual([]);
+    expect(result.quota).toEqual({
+      dailyLimit: 0,
+      used: 0,
+      remaining: 0,
+      unlimited: true,
+      adminBypass: true,
+    });
+    expect(plansRepoMock.findEffectiveForUser).not.toHaveBeenCalled();
+    expect(quotaServiceMock.getSnapshot).not.toHaveBeenCalled();
   });
 });

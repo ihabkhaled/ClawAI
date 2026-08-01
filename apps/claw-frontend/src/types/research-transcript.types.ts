@@ -21,6 +21,8 @@ export type ResearchTranscriptSource = {
 
 export type ResearchTranscript = {
   sources: ResearchTranscriptSource[];
+  searchRequestCount?: number;
+  fetchRequestCount?: number;
 };
 
 export type ResearchTranscriptPanelProps = {

@@ -2,6 +2,7 @@ import { SubscriptionStatus } from '@claw/shared-types';
 
 import type { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
 import { SubscriptionRepository } from '../subscription.repository';
+import { ScheduledPlanChangeReason } from '../../enums/scheduled-plan-change-reason.enum';
 
 type SubscriptionDelegate = {
   create: jest.Mock;
@@ -76,6 +77,36 @@ describe('SubscriptionRepository', () => {
     it('returns null for a free user rather than throwing', async () => {
       // Repositories return data or null; the service decides what that means.
       await expect(repository.findActiveByUserId('free_user')).resolves.toBeNull();
+    });
+  });
+
+  it('schedules a retirement only when version and empty user override still match', async () => {
+    await expect(
+      repository.schedulePlanRetirementIfUnchanged({
+        subscriptionId: 'sub_1',
+        expectedVersion: 4,
+        replacementPlanId: 'plan_new',
+        replacementPlanSlug: 'new',
+        replacementPlanPriceVersionId: 'price_new',
+        replacementAmountMinor: 3000,
+        billingInterval: 'MONTHLY',
+        effectiveAt: new Date('2026-09-01T00:00:00.000Z'),
+        reason: ScheduledPlanChangeReason.PLAN_RETIREMENT,
+      }),
+    ).resolves.toBe(true);
+    expect(subscription.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'sub_1',
+        version: 4,
+        scheduledPlanId: null,
+        scheduledEffectiveAt: null,
+      },
+      data: expect.objectContaining({
+        scheduledPlanId: 'plan_new',
+        scheduledAmountMinor: 3000,
+        scheduledChangeReason: ScheduledPlanChangeReason.PLAN_RETIREMENT,
+        version: { increment: 1 },
+      }),
     });
   });
 
@@ -205,6 +236,14 @@ describe('SubscriptionRepository', () => {
         where: { uniqueActiveKey: { not: null }, entitlementValidUntil: { lte: now } },
         orderBy: { entitlementValidUntil: 'asc' },
         take: 10,
+      });
+    });
+
+    it('counts lapsed entitlements with the same inclusive boundary', async () => {
+      const now = new Date('2026-07-25T00:00:00.000Z');
+      await repository.countLapsedEntitlements(now);
+      expect(subscription.count).toHaveBeenCalledWith({
+        where: { uniqueActiveKey: { not: null }, entitlementValidUntil: { lte: now } },
       });
     });
   });
