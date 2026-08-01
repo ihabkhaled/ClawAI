@@ -8,47 +8,52 @@ import type {
 export const MARKETING_MODEL_FAMILIES: ReadonlyArray<MarketingModelFamily> = [
   {
     name: 'Anthropic Claude',
-    models: ['Claude Opus 5', 'Claude Sonnet 5', 'Claude Fable 5', 'Claude Haiku 4.5'],
+    models: ['Claude Fable 5', 'Claude Opus 5', 'Claude Sonnet 5', 'Claude Haiku 4.5'],
     strengthKey: 'marketing.models.anthropicStrength',
   },
   {
     name: 'OpenAI GPT',
-    models: ['GPT-5', 'GPT-5 mini', 'GPT-4o', 'o4-mini'],
+    models: ['GPT-5.6 Sol', 'GPT-5.6 Terra', 'GPT-5.6 Luna', 'GPT-5.5'],
     strengthKey: 'marketing.models.openaiStrength',
   },
   {
     name: 'Google Gemini',
-    models: ['Gemini 3 Pro', 'Gemini 3 Flash', 'Gemini 2.5 Flash'],
+    models: [
+      'Gemini 3.6 Flash',
+      'Gemini 3.5 Flash',
+      'Gemini 3.5 Flash-Lite',
+      'Gemini 3.1 Pro Preview',
+    ],
     strengthKey: 'marketing.models.geminiStrength',
   },
   {
     name: 'Moonshot Kimi',
-    models: ['Kimi K2', 'Kimi K2 Thinking'],
+    models: ['Kimi K3', 'Kimi K2.7 Code', 'Kimi K2.6'],
     strengthKey: 'marketing.models.kimiStrength',
   },
   {
     name: 'Zhipu GLM',
-    models: ['GLM-5.1', 'GLM-5', 'GLM-4.7 Thinking'],
+    models: ['GLM-5.2', 'GLM-5.1', 'GLM-5 Turbo', 'GLM-5'],
     strengthKey: 'marketing.models.glmStrength',
   },
   {
     name: 'Alibaba Qwen',
-    models: ['Qwen3 235B', 'Qwen3 80B', 'Qwen3-Coder-Next'],
+    models: ['Qwen3.7 Plus', 'Qwen3.6 Plus', 'Qwen3.5 Plus', 'Qwen3 Coder Next'],
     strengthKey: 'marketing.models.qwenStrength',
   },
   {
     name: 'DeepSeek',
-    models: ['DeepSeek V3.2', 'DeepSeek R1 0528'],
+    models: ['DeepSeek V4 Pro', 'DeepSeek V4 Flash'],
     strengthKey: 'marketing.models.deepseekStrength',
   },
   {
     name: 'xAI Grok',
-    models: ['Grok 4', 'Grok 4 Fast'],
+    models: ['Grok 4.5', 'Grok 4.20', 'Grok 4.3'],
     strengthKey: 'marketing.models.grokStrength',
   },
   {
     name: 'Amazon Bedrock',
-    models: ['Nova Pro', 'Titan', 'Bedrock-hosted Claude'],
+    models: ['Nova 2 Lite', 'GPT-5.6 Sol', 'Claude Opus 5', 'Grok 4.3'],
     strengthKey: 'marketing.models.bedrockStrength',
   },
 ];
