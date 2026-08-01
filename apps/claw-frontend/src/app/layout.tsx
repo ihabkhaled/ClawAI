@@ -3,7 +3,6 @@ import { Archivo, IBM_Plex_Mono, Inter } from 'next/font/google';
 import { headers } from 'next/headers';
 
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
-import { SITE_DESCRIPTION, SITE_TITLE } from '@/constants/site-metadata.constants';
 import { THEME_INIT_SCRIPT } from '@/constants/theme.constants';
 // Imported directly from i18n.constants rather than the `@/lib/i18n` barrel
 // — this is a server component, and that barrel also re-exports the
@@ -11,7 +10,7 @@ import { THEME_INIT_SCRIPT } from '@/constants/theme.constants';
 // createContext into the server bundle and break the production build.
 import { loadDictionary } from '@/lib/i18n/dictionary-loader';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
-import { getSiteUrl } from '@/lib/site/site-config';
+import { buildRootMetadata } from '@/lib/seo/root-metadata';
 import { getDirection, getHtmlLanguage, isSupportedLocale } from '@/utilities/locale.utility';
 
 import './globals.css';
@@ -47,28 +46,7 @@ const editorialMono = IBM_Plex_Mono({
   preload: false,
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(getSiteUrl()),
-  title: { default: SITE_TITLE, template: '%s | ClawAI' },
-  description: SITE_DESCRIPTION,
-  icons: {
-    icon: '/icon.png',
-    apple: '/apple-icon.png',
-    shortcut: '/favicon.ico',
-  },
-  manifest: '/manifest.webmanifest',
-  openGraph: {
-    type: 'website',
-    siteName: 'ClawAI',
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
-  },
-};
+export const metadata: Metadata = buildRootMetadata();
 
 export default async function RootLayout({
   children,

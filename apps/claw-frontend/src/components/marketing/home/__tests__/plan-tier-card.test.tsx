@@ -57,6 +57,7 @@ describe('PlanTierCard', () => {
     );
 
     expect(screen.getByRole('article')).toHaveClass('h-full', 'min-h-[22rem]');
+    expect(screen.getByRole('heading', { level: 2, name: 'Pro' })).toBeInTheDocument();
     expect(screen.getByTestId('plan-copy-scroll')).toHaveClass(
       'h-24',
       'overflow-y-auto',

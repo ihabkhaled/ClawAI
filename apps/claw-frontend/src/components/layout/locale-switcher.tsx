@@ -23,6 +23,7 @@ export function LocaleSwitcher(): React.ReactElement {
   const { t } = useTranslation();
 
   const currentConfig = SUPPORTED_LOCALES.find((l) => l.locale === locale);
+  const currentLabel = currentConfig?.label ?? locale.toUpperCase();
 
   function handleLocaleChange(newLocale: Locale): void {
     setLocale(newLocale);
@@ -38,10 +39,10 @@ export function LocaleSwitcher(): React.ReactElement {
           size="sm"
           className="h-9 gap-1.5 px-2.5 text-sm font-medium"
           disabled={isPending}
-          aria-label={t('marketing.header.languageSwitcherLabel')}
+          aria-label={`${currentLabel}, ${t('marketing.header.languageSwitcherLabel')}`}
         >
           <Languages className="h-4 w-4" aria-hidden="true" />
-          <span>{currentConfig?.label ?? locale.toUpperCase()}</span>
+          <span>{currentLabel}</span>
           <ChevronDown className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>

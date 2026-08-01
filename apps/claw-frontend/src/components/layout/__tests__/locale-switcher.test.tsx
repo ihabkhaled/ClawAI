@@ -47,7 +47,7 @@ describe('LocaleSwitcher', () => {
   it('presents the current language as a labeled language control', () => {
     render(<LocaleSwitcher />);
 
-    const trigger = screen.getByRole('button', { name: 'Select language' });
+    const trigger = screen.getByRole('button', { name: 'English, Select language' });
     expect(trigger).toHaveTextContent('English');
     expect(trigger.querySelectorAll('svg')).toHaveLength(2);
     expect(trigger).toHaveClass('border');
@@ -57,7 +57,7 @@ describe('LocaleSwitcher', () => {
     const user = userEvent.setup();
     render(<LocaleSwitcher />);
 
-    await user.click(screen.getByRole('button', { name: 'Select language' }));
+    await user.click(screen.getByRole('button', { name: 'English, Select language' }));
     expect(screen.getAllByRole('menuitem')).toHaveLength(13);
     await user.click(screen.getByRole('menuitem', { name: /ar\s*العربية/i }));
 

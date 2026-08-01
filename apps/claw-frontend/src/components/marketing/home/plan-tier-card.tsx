@@ -41,7 +41,7 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
         aria-label={plan.name}
         className="focus-visible:ring-ring h-24 overflow-y-auto overscroll-contain pe-2 focus-visible:ring-2 focus-visible:outline-none"
       >
-        <h3 className="text-foreground text-lg font-semibold">{plan.name}</h3>
+        <h2 className="text-foreground text-lg font-semibold">{plan.name}</h2>
         {plan.description === null ? null : (
           <p className="text-muted-foreground mt-1 text-sm">{plan.description}</p>
         )}
