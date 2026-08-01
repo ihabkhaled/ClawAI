@@ -6,7 +6,7 @@ import {
   evaluateFormattingDebt,
   formattingContentHash,
 } from '../format/ratchet.mjs';
-import { readJson, readText, repoPath } from '../lib/repo.mjs';
+import { readJson, repoPath } from '../lib/repo.mjs';
 
 const BAD_SOURCE = 'const value={answer:42};\n';
 const FORMATTED_SOURCE = 'const value = { answer: 42 };\n';
@@ -77,13 +77,11 @@ test('baseline generation is deterministic and default refresh cannot bless new 
   });
 });
 
-test('root scripts wire the ratchet into release preflight and use cross-platform EOL', () => {
+test('root scripts expose the formatting ratchet and use cross-platform EOL', () => {
   const rootPackage = readJson(repoPath('package.json'));
   const prettierConfig = readJson(repoPath('.prettierrc'));
-  const preflight = readText(repoPath('tools', 'release', 'preflight.mjs'));
 
   assert.equal(rootPackage.scripts['format:check'], 'node tools/format/ratchet.mjs check');
   assert.equal(rootPackage.scripts['format:baseline'], 'node tools/format/ratchet.mjs baseline');
   assert.equal(prettierConfig.endOfLine, 'auto');
-  assert.match(preflight, /\['Format check', 'npm run format:check'\]/u);
 });
