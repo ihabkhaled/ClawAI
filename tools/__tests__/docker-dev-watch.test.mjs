@@ -85,10 +85,36 @@ test('development frontend uses polling with source and public bind mounts', () 
   const source = readFileSync(repoPath('docker', 'docker-compose.dev.services.yml'), 'utf8');
   const block = serviceBlock(source, 'frontend');
 
+  assert.match(block, /^ {6}context: \.\.$/mu);
+  assert.match(block, /^ {6}dockerfile: apps\/claw-frontend\/Dockerfile\.dev$/mu);
   assert.match(block, /^ {6}WATCHPACK_POLLING: 'true'$/mu);
   assert.match(block, /^ {6}CHOKIDAR_USEPOLLING: 'true'$/mu);
-  assert.match(block, /^ {6}- \.\.\/apps\/claw-frontend\/src:\/app\/src$/mu);
-  assert.match(block, /^ {6}- \.\.\/apps\/claw-frontend\/public:\/app\/public$/mu);
+  assert.match(block, /^ {6}- \.\.\/apps\/claw-frontend\/src:\/app\/apps\/claw-frontend\/src$/mu);
+  assert.match(
+    block,
+    /^ {6}- \.\.\/apps\/claw-frontend\/public:\/app\/apps\/claw-frontend\/public$/mu,
+  );
+});
+
+test('development frontend installs its local workspace dependency from the build context', () => {
+  const source = readFileSync(repoPath('apps', 'claw-frontend', 'Dockerfile.dev'), 'utf8');
+  const installIndex = source.indexOf('RUN npm install --ignore-scripts --legacy-peer-deps');
+
+  assert.notEqual(installIndex, -1, 'frontend development image must install dependencies');
+  for (const requiredCopy of [
+    'COPY package.json ./package.json',
+    'COPY packages/ ./packages/',
+    'COPY apps/claw-frontend/ ./apps/claw-frontend/',
+  ]) {
+    const copyIndex = source.indexOf(requiredCopy);
+    assert.notEqual(copyIndex, -1, `missing workspace build input: ${requiredCopy}`);
+    assert.ok(copyIndex < installIndex, `${requiredCopy} must run before npm install`);
+  }
+  assert.match(source, /^RUN cd packages\/shared-types && npx tsgo$/mu);
+
+  const frontendWorkdirIndex = source.indexOf('WORKDIR /app/apps/claw-frontend');
+  assert.ok(installIndex < frontendWorkdirIndex, 'enter the frontend workspace after installation');
+  assert.doesNotMatch(source, /ln -s/u, 'Turbopack rejects dependencies linked outside its root');
 });
 
 test('research development image compiles shared entitlements before startup', () => {

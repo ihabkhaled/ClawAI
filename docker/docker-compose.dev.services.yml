@@ -636,8 +636,8 @@ services:
   # ---------------------------------------------------------------------------
   frontend:
     build:
-      context: ../apps/claw-frontend
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: apps/claw-frontend/Dockerfile.dev
     container_name: claw-frontend
     restart: unless-stopped
     env_file: ../.env
@@ -647,8 +647,8 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - ../apps/claw-frontend/src:/app/src
-      - ../apps/claw-frontend/public:/app/public
+      - ../apps/claw-frontend/src:/app/apps/claw-frontend/src
+      - ../apps/claw-frontend/public:/app/apps/claw-frontend/public
       - ../certs:/certs:ro
     command: npm run dev
     depends_on:
