@@ -112,6 +112,7 @@ apps/claw-*-service/public/
 # Generated .ai knowledge layer is COMMITTED except the per-developer local
 # context bundle, which is machine-specific and regenerated on demand.
 .ai/local/
+.worktrees/
 # Audit working copy (the committed snapshot lives under docs/features/).
 .audit/
 
