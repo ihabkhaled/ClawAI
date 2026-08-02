@@ -348,6 +348,11 @@
       },
       {
         "method": "GET",
+        "route": "/agent/runtime/protocol",
+        "source": "apps/claw-agent-service/src/modules/agent/controllers/runtime-protocol.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/agent/scheduled-commands",
         "source": "apps/claw-agent-service/src/modules/agent/controllers/agent-scheduled-command.controller.ts"
       },
@@ -2813,5 +2818,5 @@
     ]
   },
   "generated": true,
-  "total": 555
+  "total": 556
 }

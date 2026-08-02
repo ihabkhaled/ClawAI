@@ -13,6 +13,7 @@ import { CapabilityController } from './controllers/capability.controller';
 import { CapabilityCliController } from './controllers/capability-cli.controller';
 import { CapabilityStreamController } from './controllers/capability-stream.controller';
 import { AgentTerminalInternalController } from './controllers/agent-terminal-internal.controller';
+import { RuntimeProtocolController } from './controllers/runtime-protocol.controller';
 import { AgentSessionService } from './services/agent-session.service';
 import { AgentCommandService } from './services/agent-command.service';
 import { AgentRepoService } from './services/agent-repo.service';
@@ -32,6 +33,7 @@ import { CapabilityService } from './services/capability.service';
 import { CommandStreamService } from './services/command-stream.service';
 import { ScheduledCommandService } from './services/scheduled-command.service';
 import { AgentTerminalSeedService } from './services/agent-terminal-seed.service';
+import { RuntimeProtocolService } from './services/runtime-protocol.service';
 import { AgentSessionManager } from './managers/agent-session.manager';
 import { AgentCommandManager } from './managers/agent-command.manager';
 import { PairingCleanupManager } from './managers/pairing-cleanup.manager';
@@ -70,6 +72,7 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
     CapabilityCliController,
     CapabilityStreamController,
     AgentTerminalInternalController,
+    RuntimeProtocolController,
   ],
   providers: [
     AgentSessionService,
@@ -91,6 +94,7 @@ import { CompatAgentGuard } from '../../common/guards/compat-agent.guard';
     CommandStreamService,
     ScheduledCommandService,
     AgentTerminalSeedService,
+    RuntimeProtocolService,
     AgentSessionManager,
     AgentCommandManager,
     PairingCleanupManager,

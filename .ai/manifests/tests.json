@@ -26,7 +26,7 @@
     },
     "claw-agent-service": {
       "runner": "jest",
-      "testFiles": 9
+      "testFiles": 11
     },
     "claw-audit-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 749
+  "total": 751
 }
