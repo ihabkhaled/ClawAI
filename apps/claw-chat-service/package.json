@@ -18,6 +18,8 @@
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
+    "test:runtime-v2:redis": "jest --config jest.runtime-v2.config.ts --runInBand",
+    "test:runtime-v2:coverage": "jest --config jest.runtime-v2.coverage.config.ts --runInBand",
     "migrate": "prisma migrate deploy",
     "migrate:dev": "prisma migrate dev",
     "db:reset": "prisma migrate reset --force",

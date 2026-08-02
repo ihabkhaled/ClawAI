@@ -676,6 +676,16 @@
         "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/internal/runtime/admissions",
+        "source": "apps/claw-auth-service/src/modules/entitlements/controllers/runtime-admission-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/runtime/admissions/release",
+        "source": "apps/claw-auth-service/src/modules/entitlements/controllers/runtime-admission-internal.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/internal/users/:id/entitlements",
         "source": "apps/claw-auth-service/src/modules/entitlements/controllers/entitlements-internal.controller.ts"
@@ -801,6 +811,26 @@
         "method": "POST",
         "route": "/chat-messages/role-pack",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/runtime/runs",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-run.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/runtime/runs/:runId/cancel",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-command.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/runtime/runs/:runId/results",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-command.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/chat-messages/runtime/runs/:runId/steering",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-command.controller.ts"
       },
       {
         "method": "POST",
@@ -2818,5 +2848,5 @@
     ]
   },
   "generated": true,
-  "total": 556
+  "total": 562
 }

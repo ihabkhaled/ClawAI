@@ -722,6 +722,16 @@
           "source": "apps/claw-auth-service/src/modules/quota/controllers/quota-internal.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/internal/runtime/admissions",
+          "source": "apps/claw-auth-service/src/modules/entitlements/controllers/runtime-admission-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/runtime/admissions/release",
+          "source": "apps/claw-auth-service/src/modules/entitlements/controllers/runtime-admission-internal.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/internal/users/:id/entitlements",
           "source": "apps/claw-auth-service/src/modules/entitlements/controllers/entitlements-internal.controller.ts"
@@ -847,6 +857,26 @@
           "method": "POST",
           "route": "/chat-messages/role-pack",
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/chat-messages/runtime/runs",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-run.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/chat-messages/runtime/runs/:runId/cancel",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-command.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/chat-messages/runtime/runs/:runId/results",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-command.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/chat-messages/runtime/runs/:runId/steering",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/runtime-v2-command.controller.ts"
         },
         {
           "method": "POST",
@@ -4839,6 +4869,11 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "RUNTIME_V2_REDIS_DEADLINE_MS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "SCANNED_PDF_CHAR_THRESHOLD"
       },
       {
@@ -8443,7 +8478,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 70
+        "testFiles": 76
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -8627,6 +8662,8 @@
           "start",
           "test",
           "test:cov",
+          "test:runtime-v2:coverage",
+          "test:runtime-v2:redis",
           "test:watch",
           "typecheck",
           "validate"
@@ -9204,8 +9241,8 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 556,
-    "envVarCount": 336,
+    "endpointCount": 562,
+    "envVarCount": 337,
     "eventCount": 165,
     "frontendRouteCount": 113,
     "localeCount": 13,
@@ -9216,7 +9253,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 751,
+    "totalTestFiles": 757,
     "workspaceCount": 25
   }
 }

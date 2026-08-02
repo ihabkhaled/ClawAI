@@ -3,6 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { UserRole } from '../../../../common/enums';
 import { ChatStreamController } from '../chat-stream.controller';
 import { ChatStreamService } from '../../services/chat-stream.service';
+import { RuntimeV2StreamService } from '../../services/runtime-v2-stream.service';
 import { StreamControlService } from '../../services/stream-control.service';
 
 describe('ChatStreamController', () => {
@@ -13,6 +14,15 @@ describe('ChatStreamController', () => {
       controllers: [ChatStreamController],
       providers: [
         { provide: ChatStreamService, useValue: streamService },
+        {
+          provide: RuntimeV2StreamService,
+          useValue: {
+            selectEvents: jest.fn(
+              (_ownerId: string, threadId: string, query: Record<string, string>) =>
+                streamService.streamEvents(threadId, query['replay'] !== 'false'),
+            ),
+          },
+        },
         {
           provide: StreamControlService,
           useValue: {
@@ -27,7 +37,7 @@ describe('ChatStreamController', () => {
       controller.stream(
         'thread-reused',
         { id: 'user-1', email: 'user@example.com', role: UserRole.OPERATOR },
-        false,
+        { replay: 'false' },
       ),
     );
 

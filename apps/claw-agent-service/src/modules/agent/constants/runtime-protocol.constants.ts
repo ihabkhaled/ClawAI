@@ -3,7 +3,7 @@ import type { RuntimeProtocolDescriptor } from '../types/runtime-protocol.types'
 const RUNTIME_PROTOCOL_FEATURES = Object.freeze({
   capabilityManifest: true,
   orderedRunEvents: true,
-  toolExecution: false,
+  toolExecution: true,
 });
 
 const RUNTIME_PROTOCOL_LIMITS = Object.freeze({

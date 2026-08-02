@@ -1,6 +1,7 @@
 import { type MessageRole, type Prisma, type RoutingMode } from '../../../generated/prisma';
 
 export type CreateMessageData = {
+  id?: string;
   threadId: string;
   role: MessageRole;
   content: string;

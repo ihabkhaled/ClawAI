@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { type ChatMessage } from '../../../generated/prisma';
+import { type ChatMessage, type Prisma } from '../../../generated/prisma';
 import { type CreateMessageData } from '../types/chat-messages.types';
 
 @Injectable()
@@ -62,5 +62,13 @@ export class ChatMessagesRepository {
   async deleteByThreadId(threadId: string): Promise<number> {
     const result = await this.prisma.chatMessage.deleteMany({ where: { threadId } });
     return result.count;
+  }
+
+  async deleteById(id: string): Promise<void> {
+    await this.prisma.chatMessage.delete({ where: { id } });
+  }
+
+  async updateMetadata(id: string, metadata: Prisma.InputJsonValue): Promise<void> {
+    await this.prisma.chatMessage.update({ where: { id }, data: { metadata } });
   }
 }

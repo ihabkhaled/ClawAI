@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { RuntimeProtocolService } from '../runtime-protocol.service';
 
 describe('RuntimeProtocolService', () => {
-  it('returns the immutable 0.18 protocol descriptor without enabling tool execution', () => {
+  it('advertises the wired Runtime V2 tool-execution contract', () => {
     const service = new RuntimeProtocolService();
 
     expect(service.getDescriptor()).toEqual({
@@ -13,7 +13,7 @@ describe('RuntimeProtocolService', () => {
       features: {
         capabilityManifest: true,
         orderedRunEvents: true,
-        toolExecution: false,
+        toolExecution: true,
       },
       limits: {
         maxEventBytes: 1_048_576,

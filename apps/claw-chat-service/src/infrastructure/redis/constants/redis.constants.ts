@@ -1,1 +1,2 @@
-export const REDIS_CLIENT = Symbol("REDIS_CLIENT");
+export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
+export const RUNTIME_V2_REDIS_CLIENT = Symbol('RUNTIME_V2_REDIS_CLIENT');

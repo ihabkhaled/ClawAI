@@ -20,7 +20,7 @@ npm run dev
 - Port: 4001
 - Database: postgresql
 - Prisma models: DeviceAuthorizationGrant, EntitlementInboxEvent, FeatureUsageRecord, Plan, PlanFeatureRule, PlanModelAccess, PlanPriceVersion, PlanRetirementMigration, Role, RolePermission, SeedExecution, Session, SystemSetting, TokenUsageLedger, User, UserPlanAssignment, WeightedUsageRecord
-- API endpoints: 53 (see `.ai/manifests/api-endpoints.json`)
+- API endpoints: 55 (see `.ai/manifests/api-endpoints.json`)
 - Test files: 48 (jest)
 - Depends on: @claw/shared-constants, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 

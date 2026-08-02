@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Logger,
-  MessageEvent,
-  Param,
-  ParseBoolPipe,
-  Post,
-  Query,
-  Sse,
-} from '@nestjs/common';
+import { Controller, Logger, MessageEvent, Param, Post, Query, Sse } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import {
   endWith,
@@ -24,17 +15,18 @@ import {
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { SkipLogging } from '../../../app/decorators/skip-logging.decorator';
 import { type AuthenticatedUser } from '../../../common/types';
-import { ChatStreamService } from '../services/chat-stream.service';
 import { StreamControlService } from '../services/stream-control.service';
 import { type CancelStreamResult } from '../types/stream.types';
+import { RuntimeV2StreamService } from '../services/runtime-v2-stream.service';
+import type { RuntimeV2RawStreamQuery } from '../types/runtime-v2-stream.types';
 
 @Controller('chat-messages')
 export class ChatStreamController {
   private readonly logger = new Logger(ChatStreamController.name);
 
   constructor(
-    private readonly chatStreamService: ChatStreamService,
     private readonly streamControl: StreamControlService,
+    private readonly runtimeV2Stream: RuntimeV2StreamService,
   ) {}
 
   @Sse('stream/:threadId')
@@ -43,7 +35,7 @@ export class ChatStreamController {
   stream(
     @Param('threadId') threadId: string,
     @CurrentUser() user: AuthenticatedUser,
-    @Query('replay', new ParseBoolPipe({ optional: true })) replay?: boolean,
+    @Query() query: RuntimeV2RawStreamQuery,
   ): Observable<MessageEvent> {
     this.logger.debug(`SSE connection opened for thread ${threadId} by user ${user.id}`);
     // Ownership is asserted before any event is replayed/streamed, so a user
@@ -51,7 +43,9 @@ export class ChatStreamController {
     // observable, closing the SSE connection.
     return from(this.streamControl.assertOwnership(threadId, user.id)).pipe(
       switchMap(() => {
-        const events = this.chatStreamService.streamEvents(threadId, replay).pipe(share());
+        const events = this.runtimeV2Stream
+          .selectEvents(user.id, threadId, query, user.expiresAtEpochSeconds)
+          .pipe(share());
         const completed = events.pipe(ignoreElements(), endWith(null));
         const heartbeat = interval(15_000).pipe(
           map(() => ({ type: 'HEARTBEAT' })),

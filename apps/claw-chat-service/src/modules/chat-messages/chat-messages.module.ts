@@ -33,10 +33,24 @@ import { FileDeliveryRecordRepository } from './repositories/file-delivery-recor
 import { FileDeliveryRecordService } from './services/file-delivery-record.service';
 import { ChatThreadsRepository } from '../chat-threads/repositories/chat-threads.repository';
 import { ContextReceiptsModule } from '../context-receipts/context-receipts.module';
+import { RuntimeV2RunController } from './controllers/runtime-v2-run.controller';
+import { RuntimeV2Store } from './repositories/runtime-v2.store';
+import { RuntimeV2AccessService } from './services/runtime-v2-access.service';
+import { RuntimeV2RunService } from './services/runtime-v2-run.service';
+import { RuntimeV2StreamService } from './services/runtime-v2-stream.service';
+import { RuntimeV2CommandController } from './controllers/runtime-v2-command.controller';
+import { RuntimeV2CommandService } from './services/runtime-v2-command.service';
+import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
 
 @Module({
   imports: [ContextReceiptsModule],
-  controllers: [ChatMessagesController, ChatStreamController, ChatInternalController],
+  controllers: [
+    ChatMessagesController,
+    ChatStreamController,
+    ChatInternalController,
+    RuntimeV2RunController,
+    RuntimeV2CommandController,
+  ],
   providers: [
     ChatMessagesService,
     AnswerRepairManager,
@@ -68,6 +82,12 @@ import { ContextReceiptsModule } from '../context-receipts/context-receipts.modu
     FileDeliveryRecordRepository,
     FileDeliveryRecordService,
     ChatThreadsRepository,
+    RuntimeV2Store,
+    RuntimeV2AccessService,
+    RuntimeV2RunService,
+    RuntimeV2StreamService,
+    RuntimeV2CommandService,
+    RuntimeV2LoopManager,
   ],
   exports: [ChatMessagesService, ChatMessagesRepository, FileDeliveryRecordService],
 })

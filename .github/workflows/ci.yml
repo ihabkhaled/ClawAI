@@ -406,6 +406,52 @@ jobs:
       - name: Run tests
         run: npm run test --workspace=${{ matrix.workspace }}
 
+  runtime-v2-coverage:
+    name: Runtime V2 security coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Enforce Runtime V2 security coverage
+        run: npm run test:runtime-v2:coverage --workspace=claw-chat-service
+
+  runtime-v2-redis:
+    name: Runtime V2 Redis authority
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 20
+    env:
+      RUNTIME_V2_TEST_REDIS_URL: redis://127.0.0.1:6379/15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Execute Runtime V2 Lua on Redis 7
+        run: npm run test:runtime-v2:redis --workspace=claw-chat-service
+
   build:
     name: Build (${{ matrix.service }})
     runs-on: ubuntu-latest

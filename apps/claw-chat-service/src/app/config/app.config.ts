@@ -6,9 +6,12 @@ import {
   OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS_HARD_CAP,
 } from '../../modules/chat-messages/constants/agentic-loop.constants';
 
+const runtimeV2RedisDeadlineMsSchema = z.coerce.number().int().min(50).max(10_000).default(2_000);
+
 const appConfigSchema = z.object({
   CHAT_DATABASE_URL: z.string().min(1, 'CHAT_DATABASE_URL is required'),
   REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
+  RUNTIME_V2_REDIS_DEADLINE_MS: runtimeV2RedisDeadlineMsSchema,
   RABBITMQ_URL: z.string().min(1, 'RABBITMQ_URL is required'),
 
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
@@ -134,11 +137,37 @@ const appConfigSchema = z.object({
   GEMINI_CONCURRENT_UPLOADS_LIMIT: z.coerce.number().int().positive().max(20).default(3),
 });
 
+const runtimeV2RedisTestUrlSchema = z
+  .string()
+  .url()
+  .superRefine((value, context) => {
+    const parsed = new URL(value);
+    const database = Number(parsed.pathname.slice(1));
+    if (
+      parsed.protocol !== 'redis:' ||
+      !['127.0.0.1', 'localhost', '::1'].includes(parsed.hostname)
+    )
+      context.addIssue({ code: 'custom', message: 'Runtime V2 test Redis must be loopback-only' });
+    if (!Number.isInteger(database) || database <= 0)
+      context.addIssue({
+        code: 'custom',
+        message: 'Runtime V2 test Redis requires a nonzero database',
+      });
+  });
+
 export type AppConfigType = z.infer<typeof appConfigSchema>;
 
 let cachedConfig: AppConfigType | undefined;
 
 export class AppConfig {
+  static runtimeV2RedisDeadlineMs(): number {
+    return runtimeV2RedisDeadlineMsSchema.parse(process.env.RUNTIME_V2_REDIS_DEADLINE_MS);
+  }
+
+  static runtimeV2RedisTestUrl(): string {
+    return runtimeV2RedisTestUrlSchema.parse(process.env.RUNTIME_V2_TEST_REDIS_URL);
+  }
+
   static validate(): AppConfigType {
     const result = appConfigSchema.safeParse(process.env);
     if (!result.success) {

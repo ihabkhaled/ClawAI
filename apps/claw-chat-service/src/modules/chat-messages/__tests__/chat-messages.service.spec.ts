@@ -63,6 +63,8 @@ const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, jest.Moc
   findAllByThreadIdAscending: jest.fn(),
   countByThreadId: jest.fn(),
   updateFeedback: jest.fn(),
+  updateMetadata: jest.fn(),
+  deleteById: jest.fn(),
   deleteByThreadId: jest.fn(),
 });
 
@@ -143,6 +145,9 @@ describe('ChatMessagesService', () => {
       {
         enrich: jest.fn().mockResolvedValue({ evidence: '', sources: [], mode: 'NONE' }),
       } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
+      { tryHandleRouted: jest.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
+        typeof ChatMessagesService
+      >[19],
     );
   });
 
@@ -352,6 +357,9 @@ describe('ChatMessagesService', () => {
         {
           enrich: jest.fn().mockResolvedValue({ evidence: '', sources: [], mode: 'NONE' }),
         } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
+        { tryHandleRouted: jest.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
+          typeof ChatMessagesService
+        >[19],
       );
 
       const result = await localService.executeVerify(

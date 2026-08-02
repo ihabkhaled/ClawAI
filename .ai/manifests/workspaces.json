@@ -121,6 +121,8 @@
         "start",
         "test",
         "test:cov",
+        "test:runtime-v2:coverage",
+        "test:runtime-v2:redis",
         "test:watch",
         "typecheck",
         "validate"

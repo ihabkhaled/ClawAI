@@ -1,0 +1,1 @@
+export const RUNTIME_V2_ACTIVE_TTL_SECONDS = 900;

@@ -20,8 +20,8 @@ npm run dev
 - Port: 4002
 - Database: postgresql
 - Prisma models: ChatMessage, ChatMessageContextReceipt, ChatShare, ChatShareMessage, ChatThread, FileDeliveryRecord, MessageAttachment
-- API endpoints: 37 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 70 (jest)
+- API endpoints: 41 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 76 (jest)
 - Depends on: @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

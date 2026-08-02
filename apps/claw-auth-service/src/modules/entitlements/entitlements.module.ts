@@ -16,10 +16,17 @@ import { BillingEntitlementReconcileConsumer } from './consumers/billing-entitle
 import { EntitlementReconciliationService } from './services/entitlement-reconciliation.service';
 import { PaymentEntitlementClient } from './clients/payment-entitlement.client';
 import { FeatureUsageConsumptionService } from '../quota/services/feature-usage-consumption.service';
+import { RuntimeAdmissionInternalController } from './controllers/runtime-admission-internal.controller';
+import { RuntimeAdmissionService } from './services/runtime-admission.service';
 
 @Module({
   imports: [RolesModule, PlansModule, QuotaModule],
-  controllers: [EntitlementsInternalController, MeEntitlementsController, QuotaInternalController],
+  controllers: [
+    EntitlementsInternalController,
+    MeEntitlementsController,
+    QuotaInternalController,
+    RuntimeAdmissionInternalController,
+  ],
   providers: [
     EntitlementsService,
     UsageViewService,
@@ -32,6 +39,7 @@ import { FeatureUsageConsumptionService } from '../quota/services/feature-usage-
     EntitlementReconciliationService,
     PaymentEntitlementClient,
     FeatureUsageConsumptionService,
+    RuntimeAdmissionService,
   ],
   exports: [EntitlementsService, EntitlementInboxService, UsageViewService],
 })

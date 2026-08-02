@@ -29,6 +29,7 @@ import { VerifierManager } from '../managers/verifier.manager';
 import { PipelineManager } from '../managers/pipeline.manager';
 import { RolePackManager } from '../managers/role-pack.manager';
 import { ResearchEnricherManager } from '../managers/research-enricher.manager';
+import { RuntimeV2LoopManager } from '../managers/runtime-v2-loop.manager';
 import { ChatStreamService } from './chat-stream.service';
 import { AccessControlService } from './access-control.service';
 import { type CreateMessageDto } from '../dto/create-message.dto';
@@ -101,6 +102,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly contextReceiptService: ContextReceiptService,
     private readonly accessControlService: AccessControlService,
     private readonly researchEnricherManager: ResearchEnricherManager,
+    private readonly runtimeV2LoopManager: RuntimeV2LoopManager,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -942,6 +944,7 @@ export class ChatMessagesService implements OnModuleInit {
       model: parsed.selectedModel,
     });
     try {
+      if (await this.runtimeV2LoopManager.tryHandleRouted(parsed)) return;
       await this.handleMessageRouted(parsed);
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';

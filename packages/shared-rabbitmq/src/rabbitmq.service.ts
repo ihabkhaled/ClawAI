@@ -17,6 +17,7 @@ const DEFAULT_PREFETCH_COUNT = 50;
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private connection: amqplib.ChannelModel | null = null;
   private channel: amqplib.Channel | null = null;
+  private confirmChannel: amqplib.ConfirmChannel | null = null;
   private readonly logger = new Logger(RabbitMQService.name);
   private readonly exchangeName: string;
   private readonly queuePrefix: string;
@@ -42,7 +43,9 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     try {
       this.connection = await amqplib.connect(this.options.url);
       this.channel = await this.connection.createChannel();
+      this.confirmChannel = await this.connection.createConfirmChannel();
       await this.channel.assertExchange(this.exchangeName, 'topic', { durable: true });
+      await this.confirmChannel.assertExchange(this.exchangeName, 'topic', { durable: true });
       // Cap unacked-in-flight messages per consumer. Without this RabbitMQ delivers
       // the entire queue at once and high-volume consumers (server-logs ingesting
       // log.server from 16 services) blow their heap before MongoDB drains.
@@ -61,6 +64,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       this.connection.on('close', () => {
         this.logger.warn('RabbitMQ connection closed, attempting reconnect...');
         this.channel = null;
+        this.confirmChannel = null;
         setTimeout(() => {
           void this.connect();
         }, 5000);
@@ -78,6 +82,10 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       if (this.channel) {
         await this.channel.close();
         this.channel = null;
+      }
+      if (this.confirmChannel) {
+        await this.confirmChannel.close();
+        this.confirmChannel = null;
       }
       if (this.connection) {
         await this.connection.close();
@@ -110,6 +118,32 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.logger.debug(`Published event: ${pattern}`);
+  }
+
+  async publishConfirmed(pattern: EventPattern | string, payload: unknown): Promise<void> {
+    if (!this.confirmChannel) {
+      throw new Error('RabbitMQ confirmed publisher is unavailable');
+    }
+
+    const message = Buffer.from(
+      JSON.stringify({
+        pattern,
+        data: payload,
+        timestamp: new Date().toISOString(),
+        source: this.options.serviceName,
+      }),
+    );
+
+    const accepted = this.confirmChannel.publish(this.exchangeName, pattern, message, {
+      persistent: true,
+      contentType: 'application/json',
+      expiration: String(MESSAGE_TTL_MS),
+    });
+    if (!accepted) {
+      await new Promise<void>((resolve) => this.confirmChannel?.once('drain', resolve));
+    }
+    await this.confirmChannel.waitForConfirms();
+    this.logger.debug(`Confirmed event: ${pattern}`);
   }
 
   async subscribe(
