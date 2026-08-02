@@ -680,13 +680,13 @@ describe('Runtime V2 Redis Lua authority', () => {
         },
       }),
     ).rejects.toMatchObject({ code: 'RUNTIME_TRANSITION_DENIED' });
-    const persisted = [
-      JSON.stringify(await client.hgetall(family.invocations)),
-      JSON.stringify(await client.hgetall(family.results)),
-      JSON.stringify(await client.zrange(family.events, 0, -1)),
-    ].join('|');
-    expect(persisted).not.toContain(firstInvocation.arguments.pathHandle);
-    expect(persisted).not.toContain(modelText);
+    const invocationLedger = JSON.stringify(await client.hgetall(family.invocations));
+    const resultLedger = JSON.stringify(await client.hgetall(family.results));
+    const eventJournal = JSON.stringify(await client.zrange(family.events, 0, -1));
+    expect(invocationLedger).not.toContain(firstInvocation.arguments.pathHandle);
+    expect(eventJournal).toContain(firstInvocation.arguments.pathHandle);
+    expect(resultLedger).not.toContain(modelText);
+    expect(eventJournal).not.toContain(modelText);
     expect(await client.hget(family.state, 'toolCalls')).toBe('1');
     expect(await client.hget(family.state, 'toolResultBytes')).toBe('0');
   });
