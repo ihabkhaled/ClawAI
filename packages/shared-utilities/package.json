@@ -34,7 +34,7 @@
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^26.1.2",
-    "@types/nodemailer": "^7.0.12",
+    "@types/nodemailer": "^8.0.1",
     "@typescript/native-preview": "^7.0.0-dev.20260607.1",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.12",
