@@ -35,7 +35,7 @@
     "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "^7.9.0",
     "amqplib": "^2.0.1",
-    "axios": "^1.18.1",
+    "axios": "^1.19.0",
     "csv-stringify": "^6.8.1",
     "docx": "^9.7.1",
     "helmet": "^8.3.0",
