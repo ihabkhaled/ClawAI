@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { httpGet, httpGetText } from '../../../../common/utilities/http.utility';
 import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import { isOllamaMultimodalModel } from '../../constants/ollama-vision-heuristics.constants';
+import { isOllamaToolCapableModel } from '../../constants/ollama-tool-heuristics.constants';
 import { resolveOllamaCloudModelMetadata } from '../../constants/ollama-cloud-models.constants';
 import {
   OLLAMA_CATALOG_CLOUD_URL,
@@ -103,7 +104,12 @@ export class OllamaAdapter implements ProviderAdapter {
   getCapabilities(): ProviderCapabilities {
     return {
       supportsStreaming: true,
-      supportsTools: false,
+      // Provider-level capability: Ollama's `/api/chat` accepts `tools` and
+      // returns `message.tool_calls`. Whether a *given model* honours them is a
+      // per-model question answered in buildNormalizedModel. Reporting false
+      // here made the whole provider look tool-less and is what kept
+      // capability-aware routing from ever selecting an Ollama agent lane.
+      supportsTools: true,
       supportsVision: false,
     };
   }
@@ -158,7 +164,7 @@ export class OllamaAdapter implements ProviderAdapter {
       lifecycle: ModelLifecycle.ACTIVE,
       capabilities: {
         supportsStreaming: true,
-        supportsTools: false,
+        supportsTools: isOllamaToolCapableModel(modelKey),
         supportsVision: isOllamaMultimodalModel(modelKey),
         supportsAudio: false,
         supportsStructuredOutput: false,
