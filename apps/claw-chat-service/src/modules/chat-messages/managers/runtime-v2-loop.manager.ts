@@ -13,7 +13,9 @@ import type { RuntimeV2BoundInput } from '../types/runtime-v2-store.types';
 import { createRuntimeV2Identity } from '../utilities/runtime-v2-identity.utility';
 import {
   buildRuntimeV2ModelInstruction,
+  isCapabilityDenial,
   parseRuntimeV2ModelOutput,
+  RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
   RUNTIME_V2_REPAIR_INSTRUCTION,
 } from '../utilities/runtime-v2-model-output.utility';
 import { ChatExecutionManager } from './chat-execution.manager';
@@ -141,6 +143,42 @@ export class RuntimeV2LoopManager {
     });
   }
 
+  // Runtime 2.1 §7.4 drift correction. A capability denial is only false when the admitted catalog
+  // actually granted that authority, and only before any tool has run in this turn. Correct exactly
+  // once; a second denial fails the run rather than persisting a lie as a completed answer.
+  private async correctCapabilityDrift(
+    binding: RuntimeV2BoundInput,
+    runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
+    payload: MessageRoutedData,
+  ): Promise<{
+    response: Awaited<ReturnType<ChatExecutionManager['callProvider']>>;
+    output: ReturnType<typeof parseRuntimeV2ModelOutput>;
+  }> {
+    const response = await this.execution.callProvider(
+      binding.provider,
+      binding.model,
+      {
+        ...runtimeContext,
+        systemPrompt: `${runtimeContext.systemPrompt}\n\n${RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION}`,
+      },
+      Date.now(),
+      false,
+      undefined,
+      payload.routingMode,
+      undefined,
+      TokenLedgerContext.CHAT,
+    );
+    const output = parseRuntimeV2ModelOutput(response.content, binding.toolDefinitions);
+    if (output.kind === 'final' && isCapabilityDenial(output.content)) {
+      throw new BusinessException(
+        'The model denied a capability the admitted tool catalog grants.',
+        'MODEL_CAPABILITY_DRIFT',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+    return { response, output };
+  }
+
   private async executeClaimedRun(
     binding: RuntimeV2BoundInput,
     payload: MessageRoutedData,
@@ -216,6 +254,15 @@ export class RuntimeV2LoopManager {
           TokenLedgerContext.CHAT,
         );
         output = parseRuntimeV2ModelOutput(response.content, binding.toolDefinitions);
+      }
+      if (
+        output.kind === 'final' &&
+        binding.toolDefinitions.length > 0 &&
+        isCapabilityDenial(output.content)
+      ) {
+        const corrected = await this.correctCapabilityDrift(binding, runtimeContext, payload);
+        response = corrected.response;
+        output = corrected.output;
       }
       if (output.kind === 'tool') {
         const invocation = toolInvocationSchema.parse({

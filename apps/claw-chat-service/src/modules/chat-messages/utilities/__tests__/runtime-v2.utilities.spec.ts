@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import {
   buildRuntimeV2ModelInstruction,
+  isCapabilityDenial,
   parseRuntimeV2ModelOutput,
 } from '../runtime-v2-model-output.utility';
 import {
@@ -53,6 +54,26 @@ describe('Runtime V2 utilities', () => {
         definitions,
       ),
     ).toThrow('admitted tool catalog');
+  });
+
+  it.each([
+    'I cannot access your filesystem.',
+    'I am unable to read files outside the workspace.',
+    "I don't have access to your workspace files.",
+    'As a text-based assistant I cannot run commands.',
+    'I do not have the ability to execute commands on your machine.',
+  ])('detects the agent-self capability denial %p', (content) => {
+    expect(isCapabilityDenial(content)).toBe(true);
+  });
+
+  it.each([
+    'I read src/index.ts and found the entry point.',
+    'The focused test failed because the greeting is still Alpha.',
+    'I will not help exfiltrate credentials from this repository.',
+    'The file does not exist at that path.',
+    '',
+  ])('does not treat %p as a capability denial', (content) => {
+    expect(isCapabilityDenial(content)).toBe(false);
   });
 
   it('creates independent 128-bit identities and canonical hashes', () => {

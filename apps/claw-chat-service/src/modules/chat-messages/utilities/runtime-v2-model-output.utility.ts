@@ -1,4 +1,6 @@
 import {
+  RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
+  RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS,
   RUNTIME_V2_MODEL_INSTRUCTION,
   RUNTIME_V2_REPAIR_INSTRUCTION,
   runtimeV2ToolRequestSchema,
@@ -6,7 +8,11 @@ import {
 import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
 import type { RuntimeV2ModelOutput } from '../types/runtime-v2-model-output.types';
 
-export { RUNTIME_V2_MODEL_INSTRUCTION, RUNTIME_V2_REPAIR_INSTRUCTION };
+export {
+  RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
+  RUNTIME_V2_MODEL_INSTRUCTION,
+  RUNTIME_V2_REPAIR_INSTRUCTION,
+};
 export type { RuntimeV2ModelOutput };
 
 export function buildRuntimeV2ModelInstruction(definitions: readonly ToolDefinitionDto[]): string {
@@ -23,6 +29,12 @@ export function buildRuntimeV2ModelInstruction(definitions: readonly ToolDefinit
     'Use only a tool, version, operation, and targetId listed in this admitted catalog:',
     JSON.stringify(catalog),
   ].join('\n');
+}
+
+export function isCapabilityDenial(content: string): boolean {
+  const normalized = content.replaceAll(/\s+/gu, ' ').trim();
+  if (normalized.length === 0) return false;
+  return RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS.some((pattern) => pattern.test(normalized));
 }
 
 function jsonDocument(content: string): unknown {
