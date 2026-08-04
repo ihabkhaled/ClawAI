@@ -664,6 +664,7 @@ export class ChatExecutionManager implements OnModuleInit {
         timeoutMs: AppConfig.get().OLLAMA_GENERATE_TIMEOUT_MS,
       },
       usedFallback,
+      executionOptions,
     );
   }
 
@@ -685,17 +686,15 @@ export class ChatExecutionManager implements OnModuleInit {
     const config = AppConfig.get();
     const { provider, model, context, threadSettings, executionOptions, baseUrl, apiKey } = args;
     if (args.isOllamaConnector) {
-      const { tools: _tools, ...toolFreeBody } = this.buildOllamaChatRequestBody(
-        model,
-        context,
-        threadSettings,
-        executionOptions,
-      );
-      // Same guard as buildStreamingChatBody: the NDJSON reader has no
-      // tool_call accumulation, so tools must not ride a streaming request.
+      // Native Ollama emits `message.tool_calls` complete in a single NDJSON
+      // frame rather than fragmented, and the reader accumulates it the same
+      // way it does OpenAI deltas.
       return {
         url: `${baseUrl}/chat`,
-        body: { ...toolFreeBody, stream: true },
+        body: {
+          ...this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions),
+          stream: true,
+        },
         protocol: AiStreamProtocol.OLLAMA_NDJSON,
         headers: { Authorization: `Bearer ${apiKey}` },
       };
@@ -755,6 +754,7 @@ export class ChatExecutionManager implements OnModuleInit {
         timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
       },
       usedFallback,
+      executionOptions,
     );
   }
 
@@ -911,6 +911,7 @@ export class ChatExecutionManager implements OnModuleInit {
   private async runExecutor(
     base: Omit<StreamExecutionInput, 'abortSignal'>,
     usedFallback: boolean,
+    executionOptions?: ExecutionOptions,
   ): Promise<LlmResponse> {
     const executor = this.providerStreamExecutor;
     const cancellation = this.streamCancellation;
@@ -923,7 +924,23 @@ export class ChatExecutionManager implements OnModuleInit {
     const controller = cancellation.register(cancelKey);
     try {
       const result = await executor.run({ ...base, abortSignal: controller.signal });
-      if (result.content.trim().length === 0 && !result.cancelled) {
+      // The stream's protocol determines the tool dialect: an OpenAI-SSE run
+      // fragments `arguments` as a JSON string, an Ollama-NDJSON run delivers
+      // it as an object. The reader emits whichever its protocol produced.
+      const toolCalls = this.extractNativeToolCalls(
+        result.toolCalls,
+        base.provider,
+        base.protocol === AiStreamProtocol.OLLAMA_NDJSON
+          ? ProviderToolDialect.OLLAMA
+          : ProviderToolDialect.OPENAI,
+        executionOptions,
+      );
+      // A tool-call turn streams NO content — the model is requesting a tool,
+      // not answering. This is the streaming twin of the buffered
+      // CLOUD_PROVIDER_EMPTY_RESPONSE trap: without the tool-call check, every
+      // successful streamed tool call would terminate the run as an empty
+      // response.
+      if (result.content.trim().length === 0 && !result.cancelled && toolCalls.length === 0) {
         throw new BusinessException(
           `Provider ${base.provider} returned no content`,
           'STREAM_EMPTY_RESPONSE',
@@ -949,6 +966,12 @@ export class ChatExecutionManager implements OnModuleInit {
         latencyMs: Date.now() - base.startMs,
         finishReason,
         usedFallback,
+        ...(toolCalls.length > 0
+          ? {
+              toolCalls,
+              finishedForTools: finishReason === OPENAI_TOOL_CALLS_FINISH_REASON,
+            }
+          : {}),
       };
     } finally {
       cancellation.release(cancelKey);
@@ -983,22 +1006,13 @@ export class ChatExecutionManager implements OnModuleInit {
       pickDefaultCtxSizeForProvider(provider),
       this.estimatePromptTokens(context),
     );
-    const { tools: _tools, tool_choice: _toolChoice, ...toolFreeBody } = body;
     if (body.tools !== undefined) {
-      // Native tools are deliberately stripped from every streaming request.
-      // provider-stream-reader.utility.ts accumulates content and usage deltas
-      // only — it has no tool_call delta handling — so a streamed tool call
-      // would be silently swallowed and the run would look like an empty
-      // answer. Runtime V2 always calls the buffered path, so this is a
-      // defensive guard rather than a live lane; keeping it explicit means a
-      // future streaming caller fails loudly in the log instead of silently
-      // losing tool calls.
-      this.logger.warn(
-        `buildStreamingChatBody: stripped ${String(body.tools.length)} native tool(s) — streaming has no tool_call delta reader`,
+      this.logger.debug(
+        `buildStreamingChatBody: streaming with ${String(body.tools.length)} native tool(s) — ProviderStreamReader merges tool_call deltas by index`,
       );
     }
     return {
-      ...toolFreeBody,
+      ...body,
       stream: true,
       stream_options: { include_usage: true },
     };

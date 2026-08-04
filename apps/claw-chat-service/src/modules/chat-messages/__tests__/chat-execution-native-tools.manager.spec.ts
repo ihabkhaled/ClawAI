@@ -519,6 +519,62 @@ describe('ChatExecutionManager — native tool transport', () => {
     });
   });
 
+  describe('streaming', () => {
+    // Tools used to be stripped from every streaming request because the
+    // reader had no tool_call delta handling. It does now, so they ride along.
+    it('keeps native tools on a streaming OpenAI request', async () => {
+      httpRequest.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { provider: 'OPENAI', apiKey: 'test-key', baseUrl: 'https://api.openai.com/v1' },
+      });
+
+      const body = (
+        manager as unknown as {
+          buildStreamingChatBody: (
+            provider: string,
+            model: string,
+            context: AssembledContext,
+            threadSettings: undefined,
+            executionOptions: ExecutionOptions,
+          ) => OpenAiChatRequest;
+        }
+      ).buildStreamingChatBody(
+        'OPENAI',
+        'gpt-4o-mini',
+        makeContext('read main.ts'),
+        undefined,
+        withTools(),
+      );
+
+      expect(body.stream).toBe(true);
+      expect(body.tools).toHaveLength(1);
+      expect(body.tools?.[0]?.function.name).toBe('workspace_files');
+    });
+
+    it('omits tools from a streaming request that carries no catalog', () => {
+      const body = (
+        manager as unknown as {
+          buildStreamingChatBody: (
+            provider: string,
+            model: string,
+            context: AssembledContext,
+            threadSettings: undefined,
+            executionOptions: ExecutionOptions,
+          ) => OpenAiChatRequest;
+        }
+      ).buildStreamingChatBody(
+        'OPENAI',
+        'gpt-4o-mini',
+        makeContext('hi'),
+        undefined,
+        withoutTools(),
+      );
+
+      expect(body.tools).toBeUndefined();
+    });
+  });
+
   describe('token chokepoint', () => {
     // Every tool turn is an ordinary callProvider call, so deduction must fire
     // exactly once per turn — not zero times (free tools) and not twice.

@@ -1,5 +1,8 @@
 import { type AiStreamProtocol, type AiStreamStage } from '../../../common/enums';
-import { type ProviderStreamFinalTimings } from './provider-stream.types';
+import {
+  type ProviderStreamFinalTimings,
+  type StreamToolCallPayload,
+} from './provider-stream.types';
 import { type StreamStageTimestamps } from './stream.types';
 
 // Per-emit context: identifies which stream + lane an emitted fragment belongs
@@ -34,4 +37,7 @@ export type LoopState = {
   currentStage?: AiStreamStage;
   stageTimings: Map<AiStreamStage, StreamStageTimestamps>;
   finalTimings?: ProviderStreamFinalTimings;
+  // Native tool calls the model requested, released whole by the reader at the
+  // terminal frame. Empty on every ordinary streamed answer.
+  toolCalls?: readonly StreamToolCallPayload[];
 };

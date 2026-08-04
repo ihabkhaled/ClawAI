@@ -220,10 +220,9 @@ Stated explicitly rather than applied silently, per the intake protocol.
    env var would gate nothing. Adding it would itself be scaffolding by the
    intake protocol's own test. The degradation is documented and tested instead.
 
-5. **Streaming + tools is unimplemented, not merely untested.** Tools are
-   stripped from streaming requests with a WARN. Implementing tool-call delta
-   accumulation in the stream reader is real work and is not on the critical
-   path — Runtime V2 uses the buffered lane.
+5. ~~**Streaming + tools is unimplemented.**~~ **CLOSED** — see §8. Tools now
+   ride streaming requests on both protocols and the reader reassembles
+   fragmented deltas.
 
 6. **Curated capability lists, not live probes**, for Ollama tool support. A
    probe means an inference call per model across a ~250-model catalog on every
@@ -285,7 +284,6 @@ untouched and remain unstaged in the working tree.
 
 ## 7. Open items this lane did not close
 
-- Streaming tool-call delta accumulation (deviation 5).
 - A true Anthropic Messages-API transport (deviation 3).
 - Cached behavioral tool probe on first actual use (deviation 6).
 - Per-turn catalog pruning — the catalog is re-sent every turn and is the
@@ -298,3 +296,64 @@ untouched and remain unstaged in the working tree.
   blocker-class and should not be lost.
 - Live provider conformance (the six rounds in master plan §22) requires a
   running stack and real model access; not run, and therefore not claimed.
+
+---
+
+## 8. Follow-up: streaming + native tools (closes deviation 5)
+
+Originally deferred as a scope call — Runtime V2 calls the buffered path
+exclusively, so streaming + tools had no consumer and shipping it would have
+been the same "present is not wired" scaffolding rejected elsewhere in this
+lane. It is now implemented because the deferral only justified _not
+half-shipping it_, never _not building it_.
+
+### Why it was real work rather than a field pass-through
+
+OpenAI-SSE fragments a single tool call across many frames: `id` and
+`function.name` arrive once, `arguments` is emitted as an arbitrarily split
+JSON string, and the only correlation key is `index`. Merging that is a
+stateful accumulator, not a copied field. Native Ollama, by contrast, delivers
+`message.tool_calls` complete in one frame with `arguments` already an object.
+
+`ProviderStreamReader` now holds a `Map<index, MutableToolCall>`, concatenates
+`arguments` rather than replacing it, and releases every call whole as one
+`tool-calls` fragment immediately before the terminal `done`.
+
+### Third instance of the same bug class
+
+`runExecutor` raised `STREAM_EMPTY_RESPONSE` whenever accumulated content was
+blank — but a streamed tool-call turn carries no content by design. This is the
+same defect already found and fixed twice on the buffered lanes
+(`CLOUD_PROVIDER_EMPTY_RESPONSE` in `parseOllamaChatResponse`, and the Ollama
+`/api/chat` adapter). Every successful streamed tool call would have terminated
+the run as an empty response. The check now fires only when there is neither
+content nor a tool call.
+
+That the same mistake appeared independently in three places is worth naming:
+**"empty content" is not a valid emptiness test on any lane that can carry
+tools.** Anywhere else that assumption is encoded should be treated as suspect.
+
+### Deliberately not done
+
+Tool calls are **not** emitted onto the SSE channel. Tool arguments can carry
+workspace paths and file contents, and the SSE channel is the user-visible
+transcript. A tool request becomes visible on the Runtime V2 timeline — after
+policy evaluation and approval — which is the boundary that exists to make that
+decision.
+
+### Guarantees now under test (13 reader cases + 2 manager cases)
+
+| Guarantee                                                        | Why it matters                                                 |
+| ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| Arguments split across 4 frames reassemble into valid JSON       | The core defect                                                |
+| A frame split mid-JSON across a network chunk boundary survives  | Chunk boundaries are independent of frame boundaries           |
+| Two interleaved parallel calls stay separate, ordered by `index` | Merging by array position would splice them together           |
+| Calls are released _before_ `done`                               | A consumer that stops at the terminal fragment still sees them |
+| Release is idempotent across `finish_reason` + `[DONE]`          | Emitting twice would double-dispatch every tool                |
+| A stream ending with no terminal marker still releases           | Otherwise a complete call is stranded and the run looks empty  |
+| Ordinary text answers emit no `tool-calls` fragment              | No regression on the overwhelmingly common path                |
+| Ollama object-shaped arguments are preserved, not stringified    | The reader emits whatever its own protocol produced            |
+| A malformed call is skipped, not emitted nameless                | A nameless call cannot be reverse-mapped safely                |
+| Final timings still reported on a tool-call turn                 | Rich-progress metrics must not regress                         |
+
+Gate: typecheck 0 errors, lint 0 errors, **1009 tests / 79 suites**, build OK.

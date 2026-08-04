@@ -1,4 +1,5 @@
 import { type AiStreamProtocol } from '../../../common/enums';
+import { type StreamToolCallPayload } from './provider-stream.types';
 
 // Fully-built streaming request handed to ProviderStreamExecutor. The caller
 // (ChatExecutionManager) owns request construction + provider config so the
@@ -28,6 +29,10 @@ export type StreamExecutionResult = {
   outputTokens?: number;
   finishReason?: string;
   cancelled: boolean;
+  // Native tool calls, in the raw shape the stream's own protocol produced.
+  // The caller reverse-maps them with `normalizeToolCalls` under the matching
+  // dialect. Absent on every ordinary streamed answer.
+  toolCalls?: readonly StreamToolCallPayload[];
 };
 
 // Per-run identity threaded from the execution loop into the leaf provider

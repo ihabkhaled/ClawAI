@@ -1,7 +1,9 @@
 import { AiReasoningVisibility, AiStreamProtocol } from '../../../common/enums';
 import {
+  type MutableToolCall,
   type NormalizedStreamFragment,
   type ProviderStreamFinalTimings,
+  type StreamToolCallPayload,
 } from '../types/provider-stream.types';
 
 // Stateful, chunk-boundary-safe reader that normalizes a provider's raw stream
@@ -11,6 +13,14 @@ import {
 // JSON frame split across network chunks is parsed correctly.
 export class ProviderStreamReader {
   private buffer = '';
+  // OpenAI-SSE streams a single tool call across many frames: the id and
+  // function name arrive once, then `arguments` is emitted as an arbitrarily
+  // split JSON string, correlated only by `index`. Nothing downstream can use
+  // a partial call, so they are merged here and released whole at the terminal
+  // frame. Keyed by the provider's `index` — never by array position, which
+  // is not stable across frames.
+  private readonly pendingToolCalls = new Map<number, MutableToolCall>();
+  private releasedToolCalls = false;
 
   constructor(private readonly protocol: AiStreamProtocol) {}
 
@@ -34,7 +44,28 @@ export class ProviderStreamReader {
     if (remainder.length > 0) {
       this.parseLine(remainder, fragments);
     }
+    // Safety net: a provider that ends the stream without `[DONE]` or a
+    // finish_reason would otherwise strand fully-assembled tool calls in the
+    // accumulator, and the run would look like an empty answer.
+    this.releaseToolCalls(fragments);
     return fragments;
+  }
+
+  // Drains the accumulator into a single `tool-calls` fragment. Idempotent:
+  // the terminal frame and flush() can both reach here, and emitting twice
+  // would double-dispatch every tool.
+  private releaseToolCalls(out: NormalizedStreamFragment[]): void {
+    if (this.releasedToolCalls || this.pendingToolCalls.size === 0) {
+      return;
+    }
+    this.releasedToolCalls = true;
+    // Sorted by the provider's index so call order is deterministic and
+    // matches the order the model emitted them.
+    const calls = [...this.pendingToolCalls.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([, call]) => toStreamToolCall(call));
+    this.pendingToolCalls.clear();
+    out.push({ kind: 'tool-calls', calls });
   }
 
   private parseLine(rawLine: string, out: NormalizedStreamFragment[]): void {
@@ -58,6 +89,7 @@ export class ProviderStreamReader {
     }
     const payload = line.slice('data:'.length).trim();
     if (payload === '[DONE]') {
+      this.releaseToolCalls(out);
       out.push({ kind: 'done' });
       return;
     }
@@ -85,6 +117,7 @@ export class ProviderStreamReader {
       if (content !== undefined && content.length > 0) {
         out.push({ kind: 'content', text: content });
       }
+      this.accumulateOpenAiToolCallDeltas(delta);
     }
     const usage = getRecord(frame, 'usage');
     if (usage !== null) {
@@ -97,7 +130,53 @@ export class ProviderStreamReader {
     }
     const finishReason = firstChoice !== null ? getString(firstChoice, 'finish_reason') : undefined;
     if (finishReason !== undefined && finishReason.length > 0) {
+      // Before `done`, so a consumer that stops reading at the terminal
+      // fragment still sees the calls.
+      this.releaseToolCalls(out);
       out.push({ kind: 'done', finishReason });
+    }
+  }
+
+  // Merges one frame's `delta.tool_calls[]` into the accumulator. Every field
+  // is optional on any given frame — a provider may send `{index, id, name}`
+  // with an empty `arguments`, then a dozen frames carrying only argument
+  // fragments — so each is merged only when present rather than overwritten.
+  private accumulateOpenAiToolCallDeltas(delta: Record<string, unknown>): void {
+    const deltas = getArray(delta, 'tool_calls');
+    if (deltas === null) {
+      return;
+    }
+    for (const [position, raw] of deltas.entries()) {
+      const entry = asRecord(raw);
+      if (entry === null) {
+        continue;
+      }
+      // `index` is the provider's correlation key. Falling back to array
+      // position is only correct for the single-call case, but it is strictly
+      // better than dropping a call from a provider that omits the field.
+      const index = getNumber(entry, 'index') ?? position;
+      const existing = this.pendingToolCalls.get(index) ?? { name: '', argumentsText: '' };
+      const id = getString(entry, 'id');
+      if (id !== undefined && id.length > 0) {
+        existing.id = id;
+      }
+      const type = getString(entry, 'type');
+      if (type !== undefined && type.length > 0) {
+        existing.type = type;
+      }
+      const fn = getRecord(entry, 'function');
+      if (fn !== null) {
+        const name = getString(fn, 'name');
+        if (name !== undefined && name.length > 0) {
+          existing.name = name;
+        }
+        const argumentsFragment = getString(fn, 'arguments');
+        if (argumentsFragment !== undefined) {
+          // Concatenated, never replaced: this is the fragmented JSON string.
+          existing.argumentsText += argumentsFragment;
+        }
+      }
+      this.pendingToolCalls.set(index, existing);
     }
   }
 
@@ -115,9 +194,18 @@ export class ProviderStreamReader {
       });
     }
     const message = getRecord(frame, 'message');
-    const content = getString(frame, 'response') ?? (message !== null ? getString(message, 'content') : undefined);
+    const content =
+      getString(frame, 'response') ??
+      (message !== null ? getString(message, 'content') : undefined);
     if (content !== undefined && content.length > 0) {
       out.push({ kind: 'content', text: content });
+    }
+    // Native Ollama does NOT fragment tool calls — `message.tool_calls` arrives
+    // complete in a single frame, with `arguments` already an object. It still
+    // goes through the accumulator so release/ordering/idempotency behave
+    // identically on both protocols.
+    if (message !== null) {
+      this.accumulateOllamaToolCalls(message);
     }
     if (getBoolean(frame, 'done') === true) {
       out.push({
@@ -125,6 +213,7 @@ export class ProviderStreamReader {
         promptTokens: getNumber(frame, 'prompt_eval_count'),
         completionTokens: getNumber(frame, 'eval_count'),
       });
+      this.releaseToolCalls(out);
       const finalTimings = extractOllamaFinalTimings(frame);
       out.push({
         kind: 'done',
@@ -133,6 +222,45 @@ export class ProviderStreamReader {
       });
     }
   }
+
+  private accumulateOllamaToolCalls(message: Record<string, unknown>): void {
+    const calls = getArray(message, 'tool_calls');
+    if (calls === null) {
+      return;
+    }
+    for (const [position, raw] of calls.entries()) {
+      const entry = asRecord(raw);
+      const fn = entry !== null ? getRecord(entry, 'function') : null;
+      const name = fn !== null ? getString(fn, 'name') : undefined;
+      if (entry === null || fn === null || name === undefined) {
+        continue;
+      }
+      // Offset so a malformed mixed stream cannot collide with an OpenAI index.
+      const index = this.pendingToolCalls.size + position;
+      const argumentsObject = getRecord(fn, 'arguments');
+      this.pendingToolCalls.set(index, {
+        ...(getString(entry, 'id') === undefined ? {} : { id: getString(entry, 'id') }),
+        ...(getString(entry, 'type') === undefined ? {} : { type: getString(entry, 'type') }),
+        name,
+        argumentsText: '',
+        argumentsObject: argumentsObject ?? {},
+      });
+    }
+  }
+}
+
+// Emits the shape the reader's own protocol produced: a JSON string for
+// OpenAI-compatible providers, an object for native Ollama. `normalizeToolCalls`
+// is called with the matching dialect and already accepts both.
+function toStreamToolCall(call: MutableToolCall): StreamToolCallPayload {
+  return {
+    ...(call.id === undefined ? {} : { id: call.id }),
+    ...(call.type === undefined ? {} : { type: call.type }),
+    function: {
+      name: call.name,
+      arguments: call.argumentsObject ?? call.argumentsText,
+    },
+  };
 }
 
 // Reads the nanosecond-precision Ollama final-frame timing fields into a

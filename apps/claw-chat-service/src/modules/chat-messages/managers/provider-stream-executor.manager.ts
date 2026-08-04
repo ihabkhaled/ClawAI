@@ -169,6 +169,14 @@ export class ProviderStreamExecutor {
       state.outputTokens = fragment.completionTokens ?? state.outputTokens;
       return;
     }
+    if (fragment.kind === 'tool-calls') {
+      // The reader releases these exactly once, already merged. No emit: tool
+      // arguments can carry workspace paths and file contents, and the SSE
+      // channel is the user-visible transcript. The Runtime V2 timeline is
+      // where a tool request becomes visible, after policy and approval.
+      state.toolCalls = fragment.calls;
+      return;
+    }
     state.finishReason = fragment.finishReason ?? state.finishReason;
     if (fragment.finalTimings !== undefined) {
       state.finalTimings = fragment.finalTimings;
@@ -371,6 +379,7 @@ export class ProviderStreamExecutor {
       outputTokens: state.outputTokens,
       finishReason: state.finishReason,
       cancelled: state.cancelled,
+      ...(state.toolCalls === undefined ? {} : { toolCalls: state.toolCalls }),
     };
   }
 

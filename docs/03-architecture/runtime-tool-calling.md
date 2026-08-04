@@ -164,13 +164,36 @@ now also considers `tool_calls`.
 
 ## Streaming
 
-Native tools are **stripped from every streaming request**, on both the
-OpenAI-SSE and Ollama-NDJSON paths, with a WARN.
-`provider-stream-reader.utility.ts` accumulates content and usage deltas only —
-it has no `tool_call` delta handling — so a streamed tool call would be
-silently swallowed. Runtime V2 always uses the buffered path, so this is a
-defensive guard; a future streaming caller fails loudly in the log instead of
-losing tool calls.
+Native tools ride streaming requests on both protocols.
+`ProviderStreamReader` accumulates tool calls and releases them whole as a
+single `tool-calls` fragment immediately before the terminal `done`.
+
+The two protocols differ in a way that dictates the design:
+
+- **OpenAI-SSE fragments a single call across many frames.** The `id` and
+  `function.name` arrive once; `arguments` is emitted as an arbitrarily split
+  JSON string; the only correlation key is `index`. A per-delta fragment would
+  hand consumers unusable partial JSON, so deltas are merged in a
+  `Map<index, MutableToolCall>` and `arguments` is **concatenated, never
+  replaced**. Merging by array position instead of `index` would splice two
+  parallel calls together — asserted by a test that interleaves them.
+- **Native Ollama does not fragment.** `message.tool_calls` arrives complete in
+  one NDJSON frame with `arguments` already an object. It still goes through
+  the same accumulator so release, ordering and idempotency behave identically.
+
+Release is **idempotent and exhaustive**: `finish_reason`, `[DONE]` and
+`flush()` can all reach it, emitting twice would double-dispatch every tool,
+and a stream that ends with no terminal marker would otherwise strand a
+fully-assembled call and look like an empty answer.
+
+Tool calls are deliberately **not emitted on the SSE channel**. Tool arguments
+can carry workspace paths and file contents, and that channel is the
+user-visible transcript. The Runtime V2 timeline is where a tool request
+becomes visible — after policy evaluation and approval.
+
+`runExecutor` applies the same emptiness rule as the buffered path: a streamed
+tool-call turn carries no content, so `STREAM_EMPTY_RESPONSE` is raised only
+when there is neither content nor a tool call.
 
 ## Known gaps
 
