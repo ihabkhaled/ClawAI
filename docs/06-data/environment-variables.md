@@ -242,6 +242,8 @@ Claw uses 14 separate PostgreSQL instances, one per data-owning service.
 | `OLLAMA_ROUTER_TIMEOUT_MS`   | No       | `10000`                    | Timeout for router model calls (ms)                                        |
 | `ROUTER_COMPACT_PROMPT`      | No       | `true`                     | Toggles compact vs expanded AUTO router prompt layout                      |
 | `OLLAMA_GENERATE_TIMEOUT_MS` | No       | `300000`                   | Timeout for non-router generation calls (ms)                               |
+| `OLLAMA_CHAT_TIMEOUT_MS`     | No       | `300000`                   | Timeout for native `/api/chat` calls — the tool-calling surface (ms)       |
+| `OLLAMA_API_KEY`             | No       | —                          | Bearer key for a signed-in local Ollama proxying to Cloud models           |
 | `OLLAMA_KEEP_ALIVE`          | No       | `-1m`                      | How long the runtime keeps a model resident; `-1m` = forever until evicted |
 | `OLLAMA_MAX_LOADED_MODELS`   | No       | `2`                        | Max number of models loaded into VRAM concurrently                         |
 | `OLLAMA_NUM_PARALLEL`        | No       | `1`                        | Parallel generation slots per loaded model                                 |

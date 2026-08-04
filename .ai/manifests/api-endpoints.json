@@ -1626,6 +1626,11 @@
         "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/ollama/chat",
+        "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/ollama/discovery/candidates",
         "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
@@ -2848,5 +2853,5 @@
     ]
   },
   "generated": true,
-  "total": 562
+  "total": 563
 }

@@ -22,6 +22,8 @@ import { CatalogRemoteMetadataService } from './services/catalog-remote-metadata
 import { type PullModelDto } from './dto/pull-model.dto';
 import { type AssignRoleDto } from './dto/assign-role.dto';
 import { type GenerateDto } from './dto/generate.dto';
+import { type ChatDto } from './dto/chat.dto';
+import { type ChatResponse } from './types/ollama-chat.types';
 import { type ListModelsQueryDto } from './dto/list-models-query.dto';
 import { type ListCatalogQueryDto } from './dto/list-catalog-query.dto';
 import {
@@ -169,6 +171,22 @@ export class OllamaService implements OnModuleInit {
     });
   }
 
+  async chat(dto: ChatDto): Promise<ChatResponse> {
+    this.logger.debug(
+      `chat: model=${dto.model} messages=${String(dto.messages.length)} tools=${String(dto.tools?.length ?? 0)}`,
+    );
+    return this.ollamaManager.chat({
+      model: dto.model,
+      messages: dto.messages,
+      stream: dto.stream,
+      think: dto.think,
+      tools: dto.tools,
+      options: dto.options,
+      format: dto.format,
+      keepAlive: dto.keepAlive ?? dto.keep_alive,
+    });
+  }
+
   async checkHealth(runtime: string): Promise<RuntimeHealth> {
     this.logger.debug(`checkHealth: checking runtime=${runtime}`);
     return this.ollamaManager.checkRuntimeHealth(runtime as RuntimeType);
@@ -247,12 +265,10 @@ export class OllamaService implements OnModuleInit {
     }
 
     return subject.asObservable().pipe(
-      map(
-        (event): MessageEvent => ({
-          type: SSE_EVENT_PULL_PROGRESS,
-          data: JSON.stringify(event),
-        }),
-      ),
+      map((event): MessageEvent => ({
+        type: SSE_EVENT_PULL_PROGRESS,
+        data: JSON.stringify(event),
+      })),
     );
   }
 

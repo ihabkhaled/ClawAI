@@ -8,12 +8,18 @@ import {
   type PullJobStatus,
   type RuntimeType,
 } from '../../../generated/prisma';
+import type { ChatRequest, ChatResponse } from './ollama-chat.types';
 
 export interface RuntimeAdapter {
   listModels(): Promise<LocalModelInfo[]>;
   pullModel(name: string): Promise<PullJobInfo>;
   healthCheck(): Promise<RuntimeHealth>;
   generate(request: GenerateRequest): Promise<GenerateResponse>;
+  // Optional on purpose: a chat surface with native tool support is not
+  // universal across runtimes (ComfyUI has no chat at all). Callers must check
+  // for it rather than assume it, so an unsupported runtime fails with a clear
+  // message instead of a TypeError.
+  chat?(request: ChatRequest): Promise<ChatResponse>;
 }
 
 export interface LocalModelInfo {

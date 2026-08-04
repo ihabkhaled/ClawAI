@@ -22,6 +22,8 @@ import { OllamaService } from './ollama.service';
 import { type PullModelDto, pullModelSchema } from './dto/pull-model.dto';
 import { type AssignRoleDto, assignRoleSchema } from './dto/assign-role.dto';
 import { type GenerateDto, generateSchema } from './dto/generate.dto';
+import { type ChatDto, chatSchema } from './dto/chat.dto';
+import { type ChatResponse } from './types/ollama-chat.types';
 import { type ListModelsQueryDto, listModelsQuerySchema } from './dto/list-models-query.dto';
 import { type ListCatalogQueryDto, listCatalogQuerySchema } from './dto/list-catalog-query.dto';
 import {
@@ -107,6 +109,12 @@ export class OllamaController {
     @Body(new ZodValidationPipe(generateSchema)) dto: GenerateDto,
   ): Promise<GenerateResponse> {
     return this.ollamaService.generate(dto);
+  }
+
+  @Public()
+  @Post('chat')
+  async chat(@Body(new ZodValidationPipe(chatSchema)) dto: ChatDto): Promise<ChatResponse> {
+    return this.ollamaService.chat(dto);
   }
 
   @Public()

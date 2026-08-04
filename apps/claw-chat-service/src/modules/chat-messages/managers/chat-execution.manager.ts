@@ -1667,6 +1667,20 @@ export class ChatExecutionManager implements OnModuleInit {
     const resolvedModel = await this.resolveModel(model);
     this.logger.log(`callOllama: calling model=${resolvedModel}`);
     const config = AppConfig.get();
+    // `/api/generate` is prompt-completion — no message array, no roles,
+    // nothing to attach tools to. When this call carries a Runtime V2 tool
+    // catalog it must go to the native `/chat` surface instead, which is the
+    // only local-Ollama path that can express a tool call at all.
+    if (this.hasNativeToolCatalog(executionOptions)) {
+      return this.callOllamaChat(
+        resolvedModel,
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        executionOptions,
+      );
+    }
     const requestBody = this.buildOllamaRequest(
       resolvedModel,
       context,
@@ -1691,6 +1705,52 @@ export class ChatExecutionManager implements OnModuleInit {
       throw new BusinessException(errorMessage, 'OLLAMA_REQUEST_FAILED');
     }
     return this.buildOllamaResponse(response.data, startTime, usedFallback, requestBody.prompt);
+  }
+
+  // Local-Ollama agent lane. Reuses the exact same translation, transcript
+  // rendering and reverse mapping as the Cloud-Ollama lane — the only
+  // difference is the hop through ollama-service rather than a direct call.
+  private async callOllamaChat(
+    resolvedModel: string,
+    context: AssembledContext,
+    startTime: number,
+    usedFallback: boolean,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+  ): Promise<LlmResponse> {
+    const config = AppConfig.get();
+    const body = this.buildOllamaChatRequestBody(
+      resolvedModel,
+      context,
+      threadSettings,
+      executionOptions,
+    );
+    this.logger.log(
+      `callOllamaChat: POST /ollama/chat model=${resolvedModel} tools=${String(body.tools?.length ?? 0)}`,
+    );
+    const response = await httpRequest<OllamaChatResponse>({
+      url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/chat`,
+      method: 'POST',
+      body: { ...body, model: resolvedModel, keepAlive: config.OLLAMA_KEEP_ALIVE },
+      timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
+    });
+    if (!response.ok) {
+      const errorMessage = this.extractHttpErrorMessage(
+        response.data,
+        `Ollama service returned status ${String(response.status)}`,
+      );
+      this.logger.error(`callOllamaChat: failed status=${String(response.status)}`);
+      throw new BusinessException(errorMessage, 'OLLAMA_REQUEST_FAILED');
+    }
+    return this.parseOllamaChatResponse(
+      response.data,
+      OLLAMA_PROVIDER,
+      resolvedModel,
+      startTime,
+      usedFallback,
+      this.buildPromptTextForEstimate(context),
+      executionOptions,
+    );
   }
 
   private buildOllamaRequest(

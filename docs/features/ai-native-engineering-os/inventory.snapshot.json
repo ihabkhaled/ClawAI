@@ -1672,6 +1672,11 @@
           "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/ollama/chat",
+          "source": "apps/claw-ollama-service/src/modules/ollama/ollama.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/ollama/discovery/candidates",
           "source": "apps/claw-ollama-service/src/modules/ollama/ollama-discovery.controller.ts"
@@ -4275,6 +4280,11 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "OLLAMA_BASE_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "OLLAMA_CHAT_TIMEOUT_MS"
       },
       {
         "confidence": "verified",
@@ -8533,7 +8543,7 @@
       },
       "claw-ollama-service": {
         "runner": "jest",
-        "testFiles": 17
+        "testFiles": 18
       },
       "claw-payment-service": {
         "runner": "jest",
@@ -9256,8 +9266,8 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 562,
-    "envVarCount": 340,
+    "endpointCount": 563,
+    "envVarCount": 341,
     "eventCount": 165,
     "frontendRouteCount": 113,
     "localeCount": 13,
@@ -9268,7 +9278,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 761,
+    "totalTestFiles": 762,
     "workspaceCount": 25
   }
 }

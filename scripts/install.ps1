@@ -951,6 +951,9 @@ OLLAMA_ROUTER_MODEL=qwen3:1.7b
 OLLAMA_ROUTER_TIMEOUT_MS=10000
 ROUTER_COMPACT_PROMPT=true
 OLLAMA_GENERATE_TIMEOUT_MS=300000
+# Native /api/chat — the tool-calling surface. Own budget: an agent turn is a
+# full model call plus tool-result context.
+OLLAMA_CHAT_TIMEOUT_MS=300000
 OLLAMA_KEEP_ALIVE=-1m
 OLLAMA_MAX_LOADED_MODELS=2
 OLLAMA_NUM_PARALLEL=1

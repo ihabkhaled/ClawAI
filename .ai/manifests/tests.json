@@ -78,7 +78,7 @@
     },
     "claw-ollama-service": {
       "runner": "jest",
-      "testFiles": 17
+      "testFiles": 18
     },
     "claw-payment-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 761
+  "total": 762
 }

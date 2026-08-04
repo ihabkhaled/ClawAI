@@ -35,6 +35,7 @@ import {
   type RuntimeAdapter,
   type RuntimeHealth,
 } from '../types/ollama.types';
+import type { ChatRequest, ChatResponse } from '../types/ollama-chat.types';
 import type { PullProgressBase, PullProgressEvent } from '../types/pull-progress.types';
 import { type DownloadStatsState } from '../types/download-stats.types';
 import { createStatsState, tickStats } from '../utilities/download-stats.utility';
@@ -188,11 +189,7 @@ export class OllamaManager {
     try {
       const adapter = getRuntimeAdapter(catalogEntry.runtime);
 
-      if (adapter instanceof OllamaRuntimeAdapter) {
-        await this.runOllamaPullWithRetries(adapter, modelFullName, pullJobId, subject, isResume);
-      } else {
-        await adapter.pullModel(modelFullName);
-      }
+      await (adapter instanceof OllamaRuntimeAdapter ? this.runOllamaPullWithRetries(adapter, modelFullName, pullJobId, subject, isResume) : adapter.pullModel(modelFullName));
 
       // installCatalogModel wraps resolution + DB upsert in a retry loop
       // (agent #1's INSTALL_RETRY_MAX) and is ComfyUI-aware (synthesizes
@@ -559,6 +556,40 @@ export class OllamaManager {
     } catch (error: unknown) {
       const errorMessage = this.extractGenerateErrorMessage(error);
       this.logger.error(`generate: failed model=${request.model} error=${errorMessage}`);
+      throw new BusinessException(errorMessage, 'OLLAMA_REQUEST_FAILED', HttpStatus.BAD_GATEWAY);
+    }
+  }
+
+  // Native /api/chat. Separate from generate() because only this surface can
+  // carry `tools` and return `message.tool_calls` — /api/generate is
+  // prompt-completion with nothing to attach tools to.
+  async chat(request: ChatRequest): Promise<ChatResponse> {
+    const toolCount = request.tools?.length ?? 0;
+    try {
+      this.logger.debug(
+        `chat: calling Ollama model=${request.model} messages=${String(request.messages.length)} tools=${String(toolCount)}`,
+      );
+      const startTime = Date.now();
+      const adapter = getRuntimeAdapter(RuntimeType.OLLAMA);
+      if (!adapter.chat) {
+        throw new BusinessException(
+          'Ollama runtime adapter does not implement a chat surface',
+          'OLLAMA_CHAT_UNSUPPORTED',
+          HttpStatus.NOT_IMPLEMENTED,
+        );
+      }
+      const response = await adapter.chat(request);
+      const durationMs = Date.now() - startTime;
+      this.logger.debug(
+        `chat: completed model=${request.model} durationMs=${String(durationMs)} contentLen=${String(response.message.content.length)} toolCalls=${String(response.message.tool_calls?.length ?? 0)}`,
+      );
+      return response;
+    } catch (error: unknown) {
+      if (error instanceof BusinessException) {
+        throw error;
+      }
+      const errorMessage = this.extractGenerateErrorMessage(error);
+      this.logger.error(`chat: failed model=${request.model} error=${errorMessage}`);
       throw new BusinessException(errorMessage, 'OLLAMA_REQUEST_FAILED', HttpStatus.BAD_GATEWAY);
     }
   }

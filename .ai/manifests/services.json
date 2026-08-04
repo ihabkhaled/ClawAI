@@ -313,7 +313,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-ollama-service",
-      "endpointCount": 34,
+      "endpointCount": 35,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -335,7 +335,7 @@
         "PullJob",
         "RuntimeConfig"
       ],
-      "testFiles": 17,
+      "testFiles": 18,
       "testRunner": "jest"
     },
     {

@@ -8,6 +8,15 @@ const appConfigSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
   OLLAMA_GENERATE_TIMEOUT_MS: z.coerce.number().default(300_000),
+  // Native /api/chat is the tool-calling surface. An agent turn is a full
+  // model call plus tool-result context, so it gets its own budget rather than
+  // inheriting the single-shot generate timeout.
+  OLLAMA_CHAT_TIMEOUT_MS: z.coerce.number().default(300_000),
+  // Optional. A signed-in local Ollama proxies to Cloud models and needs the
+  // key on every request; a plain local install needs none. Until now this
+  // variable was documented in .env.example with ZERO consumers anywhere in
+  // the codebase — this is its first one.
+  OLLAMA_API_KEY: z.string().optional(),
   OLLAMA_PORT: z.string().default('4008'),
   DISCOVERY_AUTO_REFRESH_ENABLED: z
     .string()

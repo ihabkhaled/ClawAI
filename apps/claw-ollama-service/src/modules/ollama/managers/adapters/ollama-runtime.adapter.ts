@@ -2,11 +2,17 @@ import { type AxiosInstance, createHttpClient } from '@common/utilities';
 import { AppConfig } from '../../../../app/config/app.config';
 import { PullJobPhase } from '../../../../common/enums';
 import {
+  OLLAMA_API_CHAT,
   OLLAMA_API_DELETE,
   OLLAMA_API_GENERATE,
   OLLAMA_API_PULL,
   OLLAMA_API_TAGS,
 } from '../../ollama.constants';
+import type {
+  ChatRequest,
+  ChatResponse,
+  OllamaNativeChatResponse,
+} from '../../types/ollama-chat.types';
 import type {
   GenerateRequest,
   GenerateResponse,
@@ -27,14 +33,21 @@ import { INSTALL_PHASE_STATUS_KEYWORDS } from '../../constants/pull-resilience.c
 export class OllamaRuntimeAdapter implements RuntimeAdapter {
   private readonly client: AxiosInstance;
   private readonly generateTimeout: number;
+  private readonly chatTimeout: number;
 
   constructor() {
     const config = AppConfig.get();
     this.client = createHttpClient({
       baseURL: config.OLLAMA_BASE_URL,
       timeout: 120_000,
+      // A signed-in local Ollama proxies to Cloud models, which need the key.
+      // Omitted entirely when unset so a plain local install is unaffected.
+      ...(config.OLLAMA_API_KEY
+        ? { headers: { Authorization: `Bearer ${config.OLLAMA_API_KEY}` } }
+        : {}),
     });
     this.generateTimeout = config.OLLAMA_GENERATE_TIMEOUT_MS;
+    this.chatTimeout = config.OLLAMA_CHAT_TIMEOUT_MS;
   }
 
   async listModels(): Promise<LocalModelInfo[]> {
@@ -102,6 +115,62 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
       promptEvalCount: data.prompt_eval_count,
       evalCount: data.eval_count,
       evalDuration: data.eval_duration,
+    };
+  }
+
+  // Native `/api/chat`. Unlike generate(), this carries a message array and can
+  // therefore carry `tools` — the only local-Ollama path an agent run can use.
+  //
+  // Deliberately a passthrough: the tool catalog is authored and validated by
+  // chat-service, and rewriting it here would let the model be shown a schema
+  // this service invented rather than the one the executor enforces.
+  async chat(request: ChatRequest): Promise<ChatResponse> {
+    const body: Record<string, unknown> = {
+      model: request.model,
+      messages: request.messages,
+      stream: request.stream ?? false,
+      options: request.options,
+    };
+    if (typeof request.think === 'boolean') {
+      body['think'] = request.think;
+    }
+    if (request.tools && request.tools.length > 0) {
+      body['tools'] = request.tools;
+    }
+    if (request.format !== undefined) {
+      body['format'] = request.format;
+    }
+    if (request.keepAlive) {
+      // Normalize bare "-1" (no unit) to "-1m" — Go's time.ParseDuration
+      // requires a unit. Same normalization generate() applies.
+      body['keep_alive'] = request.keepAlive === '-1' ? '-1m' : request.keepAlive;
+    }
+    const response = await this.client.post<OllamaNativeChatResponse>(OLLAMA_API_CHAT, body, {
+      timeout: this.chatTimeout,
+    });
+    return this.mapChatResponse(response.data);
+  }
+
+  private mapChatResponse(data: OllamaNativeChatResponse): ChatResponse {
+    const message = data.message ?? {};
+    return {
+      model: data.model,
+      createdAt: data.created_at ?? '',
+      message: {
+        role: message.role ?? 'assistant',
+        // A tool-call turn legitimately has no content — the model is asking
+        // for a tool, not answering. Never treat that as an error here.
+        content: message.content ?? '',
+        ...(message.thinking === undefined ? {} : { thinking: message.thinking }),
+        ...(message.tool_calls === undefined ? {} : { tool_calls: message.tool_calls }),
+      },
+      done: data.done ?? true,
+      ...(data.done_reason === undefined ? {} : { doneReason: data.done_reason }),
+      ...(data.total_duration === undefined ? {} : { totalDuration: data.total_duration }),
+      ...(data.load_duration === undefined ? {} : { loadDuration: data.load_duration }),
+      ...(data.prompt_eval_count === undefined ? {} : { promptEvalCount: data.prompt_eval_count }),
+      ...(data.eval_count === undefined ? {} : { evalCount: data.eval_count }),
+      ...(data.eval_duration === undefined ? {} : { evalDuration: data.eval_duration }),
     };
   }
 

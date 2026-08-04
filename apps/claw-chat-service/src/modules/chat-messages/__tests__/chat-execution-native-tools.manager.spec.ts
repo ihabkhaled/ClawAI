@@ -445,6 +445,80 @@ describe('ChatExecutionManager — native tool transport', () => {
     });
   });
 
+  describe('local Ollama lane', () => {
+    // `/api/generate` is prompt-completion: no message array, no roles, nothing
+    // to attach tools to. A local agent run therefore has to switch surfaces
+    // entirely, not just add a field.
+    it('routes to /ollama/chat instead of /ollama/generate when tools are present', async () => {
+      httpRequest.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          model: 'qwen3-coder:30b',
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                function: {
+                  name: 'workspace_files',
+                  arguments: {
+                    operation: 'read',
+                    targetId: 'target:workspace',
+                    arguments: { path: 'src/main.ts' },
+                  },
+                },
+              },
+            ],
+          },
+          done: true,
+          prompt_eval_count: 10,
+          eval_count: 4,
+        },
+      });
+
+      const result = await manager.callProvider(
+        'local-ollama',
+        'qwen3-coder:30b',
+        makeContext('read main.ts'),
+        Date.now(),
+        false,
+        undefined,
+        'AUTO',
+        withTools(),
+      );
+
+      expect(httpRequest.mock.calls[0][0].url).toContain('/api/v1/ollama/chat');
+      expect(httpRequest.mock.calls[0][0].url).not.toContain('/generate');
+      const body = httpRequest.mock.calls[0][0].body as OllamaChatRequest;
+      expect(body.tools).toHaveLength(1);
+      expect(body.messages).toBeDefined();
+      expect(result.toolCalls).toHaveLength(1);
+      expect(result.toolCalls?.[0]?.toolName).toBe('workspace.files');
+    });
+
+    it('still uses /ollama/generate when no tool catalog is attached', async () => {
+      httpRequest.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { model: 'qwen3:8b', response: 'Hello.', done: true },
+      });
+
+      await manager.callProvider(
+        'local-ollama',
+        'qwen3:8b',
+        makeContext('hi'),
+        Date.now(),
+        false,
+        undefined,
+        'AUTO',
+        withoutTools(),
+      );
+
+      expect(httpRequest.mock.calls[0][0].url).toContain('/api/v1/ollama/generate');
+    });
+  });
+
   describe('token chokepoint', () => {
     // Every tool turn is an ordinary callProvider call, so deduction must fire
     // exactly once per turn — not zero times (free tools) and not twice.
