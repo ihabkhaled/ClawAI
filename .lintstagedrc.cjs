@@ -2,8 +2,32 @@ const path = require('path');
 
 const toForwardSlash = (p) => p.split(path.sep).join('/');
 
-const buildEslintFixCommand = (fileNames) =>
-  `eslint ${fileNames.map((f) => toForwardSlash(path.relative(process.cwd(), f))).join(' ')} --fix`;
+// A commit spanning two workspaces makes ESLint load BOTH tsconfig projects in
+// a single process, and typed linting holds the whole program graph in memory.
+// On the default ~4 GB heap that reliably dies with
+// "FATAL ERROR: Ineffective mark-compacts near heap limit" — which reads like a
+// broken commit but is really just the hook running out of room. CI already
+// raises this for the same reason (ci.yml sets NODE_OPTIONS on the build job);
+// the hook needs the same headroom to stay honest, because a gate that OOMs is
+// a gate people learn to bypass.
+const ESLINT_HEAP_MB = 8192;
+
+// Invoked as `node --max-old-space-size=… <bin>` rather than plain `eslint`,
+// because lint-staged runs commands without a shell, so an inline
+// `NODE_OPTIONS=…` prefix would be parsed as part of the command name.
+// ESLint 10 does not expose ./bin/eslint.js through package `exports`, so the
+// path is resolved from the package root instead of require.resolve.
+const ESLINT_BIN = path.join('node_modules', 'eslint', 'bin', 'eslint.js');
+
+const buildEslintFixCommand = (fileNames) => {
+  const files = fileNames.map((f) => toForwardSlash(path.relative(process.cwd(), f))).join(' ');
+  // Fall back to the plain binary if the layout ever moves; a hook that cannot
+  // find ESLint should still lint rather than silently pass.
+  if (!require('fs').existsSync(path.join(process.cwd(), ESLINT_BIN))) {
+    return `eslint ${files} --fix`;
+  }
+  return `node --max-old-space-size=${ESLINT_HEAP_MB} ${toForwardSlash(ESLINT_BIN)} ${files} --fix`;
+};
 
 const buildPrettierCommand = (fileNames) =>
   `prettier --write ${fileNames.map((f) => toForwardSlash(path.relative(process.cwd(), f))).join(' ')}`;

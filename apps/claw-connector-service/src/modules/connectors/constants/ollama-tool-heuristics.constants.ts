@@ -66,3 +66,20 @@ export function isOllamaToolCapableModel(modelName: string): boolean {
   }
   return OLLAMA_TOOL_CAPABLE_MODEL_PATTERNS.some((pattern) => pattern.test(lower));
 }
+
+/**
+ * Why this list produces `ADVERTISED` and never `PROVEN`.
+ *
+ * A family-name match is a claim, not a demonstration — nothing here has
+ * watched the model emit a tool call. The master prompt's rule is "never route
+ * Agent work from a hard-coded model-name guess", and this IS that guess; it
+ * is honest only while it is labelled as one. A behavioural probe against the
+ * exact model/digest is what upgrades a record to PROVEN, and until that runs,
+ * routing must be able to see that this claim is the weaker kind.
+ */
+export function describeOllamaToolCapability(modelName: string): string {
+  const capable = isOllamaToolCapableModel(modelName);
+  return capable
+    ? 'Model family is on the curated tool-capable list; not yet behaviourally probed.'
+    : 'Model family is not on the curated tool-capable list, or is explicitly excluded.';
+}

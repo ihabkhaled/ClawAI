@@ -1,4 +1,5 @@
 import {
+  describeOllamaToolCapability,
   isOllamaToolCapableModel,
   OLLAMA_TOOL_CAPABLE_MODEL_PATTERNS,
   OLLAMA_TOOL_INCAPABLE_MODEL_PATTERNS,
@@ -87,6 +88,27 @@ describe('ollama-tool-heuristics', () => {
     it('is case-insensitive', () => {
       expect(isOllamaToolCapableModel('QWEN3-Coder:480B-Cloud')).toBe(true);
       expect(isOllamaToolCapableModel('GEMMA3:4b')).toBe(false);
+    });
+  });
+
+  describe('describeOllamaToolCapability', () => {
+    // The master prompt's §9 opens with "never route Agent work from a
+    // hard-coded model-name guess". This list IS that guess — it is honest
+    // only while it is labelled as one, so the rationale must never imply the
+    // model was actually exercised.
+    it('never claims the model was probed', () => {
+      const capable = describeOllamaToolCapability('qwen3-coder:480b-cloud');
+      const incapable = describeOllamaToolCapability('gemma3:4b');
+
+      expect(capable).toMatch(/not yet behaviourally probed/u);
+      expect(capable).not.toMatch(/proven|verified|probed successfully/iu);
+      expect(incapable).toMatch(/curated tool-capable list/u);
+    });
+
+    it('distinguishes a capable match from an exclusion', () => {
+      expect(describeOllamaToolCapability('kimi-k2.7-code')).not.toBe(
+        describeOllamaToolCapability('gemma3:4b'),
+      );
     });
   });
 });

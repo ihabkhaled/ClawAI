@@ -42,3 +42,15 @@ export type {
   QuotaReservationOutcome,
   RawTokenBreakdown,
 } from './weighted-usage.type';
+export type {
+  ModelBehaviorProbeResult,
+  ModelCapabilityCacheKey,
+  ModelCapabilityEvidence,
+  ModelCapabilityFlags,
+} from './model-capability-evidence.type';
+export type {
+  EffortBudgetEnvelope,
+  EffortOrchestration,
+  EffortProviderParameter,
+  ResolvedEffort,
+} from './effort-resolution.type';

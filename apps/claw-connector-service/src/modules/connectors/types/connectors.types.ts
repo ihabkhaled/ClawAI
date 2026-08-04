@@ -7,6 +7,7 @@ import {
   type ModelSyncStatus,
   type ModelUsageTier,
 } from '../../../generated/prisma';
+import type { CapabilityConfidence, CapabilityEvidenceSource } from '@claw/shared-types';
 
 export interface CreateConnectorData {
   name: string;
@@ -91,6 +92,28 @@ export interface ModelCapabilities {
   supportsAudio: boolean;
   supportsStructuredOutput: boolean;
   maxContextTokens?: number;
+  /**
+   * Provenance for `supportsTools`.
+   *
+   * The bare boolean cannot answer the question routing actually needs to ask,
+   * which is not "does this model have tools" but "how do we know, and is that
+   * good enough to stake an agent run on". A curated family list and a
+   * successful behavioural probe both produce `true`, and routing must be able
+   * to tell them apart — otherwise a run lands on a model that silently
+   * ignores `tools` and then cannot explain why it did nothing.
+   *
+   * Optional so every existing adapter keeps compiling; absent means UNKNOWN.
+   */
+  toolEvidence?: ModelToolEvidence;
+}
+
+/** Minimal capability provenance carried alongside a normalized model. */
+export interface ModelToolEvidence {
+  source: CapabilityEvidenceSource;
+  confidence: CapabilityConfidence;
+  checkedAt: string;
+  /** Short, safe explanation of how the claim was reached. Never a raw body. */
+  rationale: string;
 }
 
 export interface ConnectorConfigResult {

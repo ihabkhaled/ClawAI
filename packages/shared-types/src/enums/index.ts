@@ -70,3 +70,10 @@ export { RefundStatus } from './refund-status.enum';
 export { SeedExecutionStatus } from './seed-execution-status.enum';
 export { SubscriptionStatus } from './subscription-status.enum';
 export { WebhookEventStatus } from './webhook-event-status.enum';
+export { CapabilityEvidenceSource } from './capability-evidence-source.enum';
+export { CapabilityConfidence } from './capability-confidence.enum';
+export {
+  ClawEffortProfile,
+  EffortResolutionKind,
+  EffortResearchDepth,
+} from './claw-effort-profile.enum';

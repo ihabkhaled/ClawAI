@@ -8487,7 +8487,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "jest",
-        "testFiles": 25
+        "testFiles": 26
       },
       "claw-agent-service": {
         "runner": "jest",
@@ -9278,7 +9278,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 763,
+    "totalTestFiles": 764,
     "workspaceCount": 25
   }
 }

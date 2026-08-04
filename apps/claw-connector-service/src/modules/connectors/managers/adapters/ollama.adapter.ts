@@ -3,7 +3,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { httpGet, httpGetText } from '../../../../common/utilities/http.utility';
 import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import { isOllamaMultimodalModel } from '../../constants/ollama-vision-heuristics.constants';
-import { isOllamaToolCapableModel } from '../../constants/ollama-tool-heuristics.constants';
+import {
+  describeOllamaToolCapability,
+  isOllamaToolCapableModel,
+} from '../../constants/ollama-tool-heuristics.constants';
+import { CapabilityConfidence, CapabilityEvidenceSource } from '@claw/shared-types';
 import { resolveOllamaCloudModelMetadata } from '../../constants/ollama-cloud-models.constants';
 import {
   OLLAMA_CATALOG_CLOUD_URL,
@@ -165,6 +169,15 @@ export class OllamaAdapter implements ProviderAdapter {
       capabilities: {
         supportsStreaming: true,
         supportsTools: isOllamaToolCapableModel(modelKey),
+        // Carry the provenance, not just the verdict. A curated-list match and
+        // a successful behavioural probe both yield `true`; routing has to be
+        // able to tell them apart before staking an agent run on either.
+        toolEvidence: {
+          source: CapabilityEvidenceSource.PROVIDER_ADVERTISED,
+          confidence: CapabilityConfidence.ADVERTISED,
+          checkedAt: new Date().toISOString(),
+          rationale: describeOllamaToolCapability(modelKey),
+        },
         supportsVision: isOllamaMultimodalModel(modelKey),
         supportsAudio: false,
         supportsStructuredOutput: false,
