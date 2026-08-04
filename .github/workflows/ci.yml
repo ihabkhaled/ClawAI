@@ -569,3 +569,59 @@ jobs:
 
       - name: Build
         run: npm run build --workspace=${{ matrix.workspace }}
+
+  # The Coding Agent is a submodule with its own repository, which runs its own
+  # lint / typecheck / test / bundle / VSIX gates. Re-running those here would
+  # duplicate them and require checking out the extension's large test fixtures.
+  #
+  # What the PARENT uniquely owns is the pointer itself. The failure mode this
+  # catches is a submodule pointer committed here that references an extension
+  # commit which was never pushed: the parent looks green locally, and every
+  # fresh clone or CI checkout then fails with
+  # "fatal: remote error: upload-pack: not our ref". That is precisely the
+  # ordering rule "update the parent submodule pointer only after the extension
+  # commit is pushed and verified" — enforced instead of merely documented.
+  submodule-integrity:
+    name: Submodule pointer integrity (coding-agent)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Resolve recorded pointer
+        id: pointer
+        shell: bash
+        run: |
+          sha="$(git ls-tree HEAD apps/claw-coding-agent | awk '{print $3}')"
+          if [ -z "${sha}" ]; then
+            echo "::error::No gitlink recorded for apps/claw-coding-agent"
+            exit 1
+          fi
+          echo "sha=${sha}" >> "${GITHUB_OUTPUT}"
+          echo "Recorded submodule pointer: ${sha}"
+
+      - name: Verify the pointer was pushed and is on the default branch
+        env:
+          POINTER: ${{ steps.pointer.outputs.sha }}
+          URL: https://github.com/ihabkhaled/ClawAI-Coding-Agent.git
+        shell: bash
+        run: |
+          # Fetching the exact object proves it was pushed. Without this, a
+          # pointer to a local-only commit stays invisible until someone clones.
+          mkdir -p "${RUNNER_TEMP}/submodule" && cd "${RUNNER_TEMP}/submodule"
+          git init -q
+          git remote add origin "${URL}"
+          if ! git fetch -q --depth=1 origin "${POINTER}"; then
+            echo "::error::Submodule pointer ${POINTER} is not present on ${URL}."
+            echo "::error::Push the extension commit before updating the parent pointer."
+            exit 1
+          fi
+          echo "Pointer ${POINTER} exists on the remote."
+
+          # Reachable from the default branch => not an orphan or a
+          # force-push casualty.
+          git fetch -q --depth=100 origin main
+          if git merge-base --is-ancestor "${POINTER}" origin/main; then
+            echo "Pointer is an ancestor of origin/main."
+          else
+            echo "::warning::Pointer ${POINTER} is not an ancestor of the extension's main within the last 100 commits. It exists, but verify it is not orphaned."
+          fi
