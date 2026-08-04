@@ -37,7 +37,7 @@
     "@prisma/client": "^7.9.0",
     "amqplib": "^2.0.1",
     "async-mutex": "^0.5.0",
-    "axios": "^1.18.1",
+    "axios": "^1.19.0",
     "helmet": "^8.3.0",
     "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.2",
