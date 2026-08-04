@@ -37,7 +37,50 @@ type SeedProfile = {
   searchSuitability?: boolean;
   fallbackSuitability?: boolean;
   privacySupport?: PrivacyClass;
+  supportsTools?: boolean;
 };
+
+// Every profile below landed on `@default(false)` because the seed never set
+// this column, which made RouterModelRegistry.supportsTools uniformly false and
+// therefore useless for routing an agent run.
+//
+// Listed by exact modelKey rather than by family pattern so each entry is an
+// auditable claim rather than a guess. Anything absent is false: routing an
+// agent run onto a model that silently ignores `tools` produces a run that
+// cannot call anything and cannot explain why, so optimism is the expensive
+// direction.
+//
+// Notable exclusions:
+//   o1-mini      — the o1 family supports tools, o1-mini specifically does not.
+//   gemma3:4b    — no generation of gemma ships tool support.
+//   medgemma:27b — gemma-derived, same limitation.
+//   qwen3:1.7b   — router-only and far too small to have proven long-horizon
+//                  tool behaviour; it is excluded from execution anyway.
+const TOOL_CAPABLE_MODEL_KEYS = new Set<string>([
+  'gpt-4o',
+  'gpt-4o-mini',
+  'o1',
+  'claude-opus-4',
+  'claude-sonnet-4',
+  'claude-haiku-4',
+  'anthropic.claude-sonnet-4-v1:0',
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  'deepseek-chat',
+  'deepseek-reasoner',
+  'grok-3',
+  'qwen2.5-coder:32b',
+  'deepseek-r1:32b',
+  'llama3.3:70b',
+  'phi-4-mini',
+  'kimi-k2',
+  'glm-5.1',
+  'deepseek-v3.2',
+]);
+
+function resolveSupportsTools(profile: SeedProfile): boolean {
+  return profile.supportsTools ?? TOOL_CAPABLE_MODEL_KEYS.has(profile.modelKey);
+}
 
 const TEXT_BOTH: ModalityKind[] = [ModalityKind.TEXT];
 const TEXT_AND_VISION: ModalityKind[] = [
@@ -548,10 +591,15 @@ async function main(): Promise<void> {
         searchSuitability: profile.searchSuitability ?? false,
         fallbackSuitability: profile.fallbackSuitability ?? true,
         privacySupport: profile.privacySupport ?? PrivacyClass.CLOUD_PERMITTED,
+        supportsTools: resolveSupportsTools(profile),
         metadataSource: 'seed',
       },
       update: {
         displayName: profile.displayName,
+        // Also set on update: every existing row is sitting on the column
+        // default of false, so a create-only assignment would leave every
+        // already-seeded deployment exactly as broken as before.
+        supportsTools: resolveSupportsTools(profile),
       },
     });
   }

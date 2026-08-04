@@ -176,6 +176,7 @@ export class RoutingService implements OnModuleInit {
       providerCircuitOpenUntil: this.getActiveProviderCircuits(),
       localDegradeLatencyMs: config.localDegradeLatencyMs,
       latencyPenaltyStepMs: config.latencyPenaltyStepMs,
+      requiresToolCalling: dto.requiresToolCalling,
     };
 
     const rawDecision = await this.routingManager.evaluateRoute(context);

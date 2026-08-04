@@ -26,6 +26,16 @@ export interface RoutingContext {
   forcedModel?: string;
   forcedProvider?: string;
   complexity?: ComplexityClassification;
+  /**
+   * Set by the caller when this request will execute through the Runtime V2
+   * agent lane and therefore needs a model that can emit native tool calls.
+   *
+   * Deliberately an explicit flag rather than a keyword heuristic. The other
+   * capability signals are inferred from message text, which is already the
+   * least reliable part of routing; whether a run is an agent run is something
+   * the caller *knows*, so it should not be re-guessed from prose.
+   */
+  requiresToolCalling?: boolean;
 }
 
 export interface RoutingDecisionResult {

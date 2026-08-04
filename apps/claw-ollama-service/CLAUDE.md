@@ -10,6 +10,13 @@ Ollama microservice for the Claw platform. Manages local AI model lifecycle: pul
 - **Model Pull**: Download models with real-time SSE progress tracking
 - **Role Assignment**: Assign models to roles (Router, Coding, Reasoning, Thinking, etc.)
 - **Generation**: Proxy text generation requests to Ollama runtime
+- **Chat**: Proxy native `/api/chat` — the only Ollama surface that accepts
+  tool definitions and returns `message.tool_calls`. `/api/generate` is
+  prompt-completion (no message array, no roles) so tools cannot be retrofitted
+  onto it; an agent run has to switch surfaces, not just add a field. The tool
+  catalog is passed through unmodified — it is authored and validated by
+  chat-service, and rewriting it here would show the model a schema this
+  service invented rather than the one the executor enforces.
 - **Health**: Runtime health checks
 
 ## Tech Details
@@ -35,7 +42,8 @@ Ollama microservice for the Claw platform. Manages local AI model lifecycle: pul
 | /ollama/models                    | GET       | Yes    | List installed models (paginated)      |
 | /ollama/pull                      | POST      | Yes    | Pull model by name                     |
 | /ollama/assign-role               | POST      | Yes    | Assign role to model                   |
-| /ollama/generate                  | POST      | Public | Generate text                          |
+| /ollama/generate                  | POST      | Public | Generate text (prompt-completion)      |
+| /ollama/chat                      | POST      | Public | Native `/api/chat` — messages + tools  |
 | /ollama/health                    | GET       | Public | Runtime health check                   |
 | /ollama/runtimes                  | GET       | Yes    | List runtime configs                   |
 | /ollama/catalog                   | GET       | Yes    | Browse model catalog with filters      |

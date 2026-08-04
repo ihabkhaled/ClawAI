@@ -19,7 +19,7 @@ export class CapabilityRouterManager {
 
   route(context: RoutingContext): CapabilityRoutingResult | null {
     const lower = context.message.toLowerCase();
-    const required = this.detectRequiredCapability(lower);
+    const required = this.detectRequiredCapability(lower, context.requiresToolCalling ?? false);
 
     if (!required) {
       return null;
@@ -30,7 +30,21 @@ export class CapabilityRouterManager {
     return this.selectProviderForCapability(required, context);
   }
 
-  detectRequiredCapability(lowerMessage: string): ModelCapability | null {
+  detectRequiredCapability(
+    lowerMessage: string,
+    requiresToolCalling = false,
+  ): ModelCapability | null {
+    // Checked before the modality patterns on purpose. Every check below is a
+    // keyword guess over user prose; this one is an explicit fact the caller
+    // supplied. An agent prompt that happens to say "show me an image of the
+    // architecture" must not lose its tool requirement to a substring match.
+    //
+    // This is also the first time CAPABILITY_PROVIDER_PRIORITY[TOOL_CALLING]
+    // has been reachable — the entry existed in the matrix but nothing could
+    // ever return the capability that selects it.
+    if (requiresToolCalling) {
+      return ModelCapability.TOOL_CALLING;
+    }
     if (AUDIO_MODALITY_PATTERNS.some((p) => lowerMessage.includes(p))) {
       return ModelCapability.AUDIO_INPUT;
     }
@@ -79,8 +93,15 @@ export class CapabilityRouterManager {
       };
     }
 
+    // Returning null degrades to ordinary routing rather than failing the
+    // request. That is deliberate and load-bearing for TOOL_CALLING: hard-
+    // filtering on a capability flag turns a data gap (a provider marked
+    // unhealthy, a seed not yet backfilled) into a total agent-run outage.
+    // Rank, do not filter — the run then proceeds on the best available model
+    // and the drift guard reports a degraded lane rather than nothing running
+    // at all.
     this.logger.warn(
-      `CapabilityRouterManager: no healthy provider found for capability=${capability}`,
+      `CapabilityRouterManager: no healthy provider found for capability=${capability} — degrading to standard routing`,
     );
     return null;
   }

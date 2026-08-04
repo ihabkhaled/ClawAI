@@ -60,7 +60,7 @@ Prefers local processing. Falls back to the most privacy-respecting cloud provid
 - Fallback: `anthropic` / `claude-sonnet-4` (Anthropic has strong data privacy commitments)
 - Privacy class: HIGH
 
-The `LOCAL_ONLY + attachments` rule above applies verbatim to `PRIVACY_FIRST` whenever the local primary is healthy and the cloud fallback is *not* taken. Once the cloud fallback engages (e.g., the user did not opt into the local-only forward), the cloud provider's native vision support handles attachments normally and no drop/warn is emitted.
+The `LOCAL_ONLY + attachments` rule above applies verbatim to `PRIVACY_FIRST` whenever the local primary is healthy and the cloud fallback is _not_ taken. Once the cloud fallback engages (e.g., the user did not opt into the local-only forward), the cloud provider's native vision support handles attachments normally and no drop/warn is emitted.
 
 ### LOW_LATENCY
 
@@ -567,6 +567,40 @@ Modality detection follows a strict priority hierarchy (highest to lowest):
 | IMAGE_INPUT | GEMINI → ANTHROPIC → OPENAI → GROK → local-ollama |
 
 The capability router skips unhealthy providers and selects the first healthy one. If no cloud provider is healthy for the capability, returns `null` and routing continues to category-based detection.
+
+### TOOL_CALLING — explicit, not inferred
+
+`ModelCapability.TOOL_CALLING` is the seventh capability, and it is detected
+differently from the six above on purpose.
+
+The six modality capabilities are inferred from message text. `TOOL_CALLING` is
+driven by an explicit `RoutingContext.requiresToolCalling` flag, set by callers
+whose request will execute through the Runtime V2 agent lane and therefore
+needs a model that can emit native tool calls. Whether a run is an agent run is
+something the caller _knows_; re-guessing it from prose would re-introduce
+exactly the unreliability that makes keyword routing fragile.
+
+The flag is checked **before** the modality patterns, so an agent prompt that
+happens to say "show me an image of the architecture" does not lose its tool
+requirement to a substring match. Callers reach it through
+`POST /routing/evaluate` → `requiresToolCalling` on `evaluateRouteSchema`.
+
+`CAPABILITY_PROVIDER_PRIORITY[TOOL_CALLING]` has always existed in the provider
+matrix, but nothing could return the capability that selects it — the entire
+branch was unreachable until this flag landed.
+
+**Rank, do not filter.** When no tool-capable provider is healthy the router
+returns `null` and ordinary routing proceeds, exactly as it does for the
+modality capabilities. Hard-filtering on a capability flag would turn a data
+gap — an unhealthy connector, a registry row not yet backfilled — into a total
+agent-run outage. The run proceeds on the best available model and the drift
+guard reports a degraded lane rather than nothing running at all.
+
+`RouterModelRegistry.supportsTools` is now populated by
+`prisma/seed-router-models.ts` from an explicit, auditable list of model keys.
+Before that every one of the 23 seeded profiles sat on the column default of
+`false`, which made the flag uniformly useless. The seed sets it on **update**
+as well as create, so re-seeding backfills already-deployed rows.
 
 ### Pipeline Position
 

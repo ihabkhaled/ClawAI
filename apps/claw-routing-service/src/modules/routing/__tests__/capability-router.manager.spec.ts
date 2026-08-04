@@ -337,4 +337,65 @@ describe('CapabilityRouterManager', () => {
       expect(result).toBeNull();
     });
   });
+
+  // ─── TOOL_CALLING ─────────────────────────────────────────────────────────
+  describe('TOOL_CALLING', () => {
+    it('returns TOOL_CALLING when the caller sets requiresToolCalling', () => {
+      // CAPABILITY_PROVIDER_PRIORITY has always had a TOOL_CALLING entry, but
+      // detectRequiredCapability could never return the capability that
+      // selects it — the whole branch was unreachable.
+      expect(manager.detectRequiredCapability('write a function', true)).toBe(
+        ModelCapability.TOOL_CALLING,
+      );
+    });
+
+    it('does not infer TOOL_CALLING from message text', () => {
+      // The flag is an explicit caller fact. Guessing "agent run" from prose
+      // would re-introduce exactly the unreliability that makes keyword
+      // routing fragile.
+      expect(manager.detectRequiredCapability('use your tools to call the api')).toBeNull();
+      expect(manager.detectRequiredCapability('run the tests and commit')).toBeNull();
+    });
+
+    it('lets the explicit flag win over a keyword-inferred modality', () => {
+      // An agent prompt that happens to mention an image must not lose its
+      // tool requirement to a substring match.
+      expect(manager.detectRequiredCapability('what is in this image?', true)).toBe(
+        ModelCapability.TOOL_CALLING,
+      );
+    });
+
+    it('leaves the six existing modality detections unchanged when the flag is off', () => {
+      expect(manager.detectRequiredCapability('transcribe this audio file', false)).toBe(
+        ModelCapability.AUDIO_INPUT,
+      );
+      expect(manager.detectRequiredCapability('analyze this video', false)).toBe(
+        ModelCapability.VIDEO_INPUT,
+      );
+      expect(manager.detectRequiredCapability('what is in this image?', false)).toBe(
+        ModelCapability.IMAGE_INPUT,
+      );
+    });
+
+    it('defaults the flag to false so every existing caller is unaffected', () => {
+      expect(manager.detectRequiredCapability('write a function')).toBeNull();
+    });
+
+    it('selects a tool-capable provider for an agent run', () => {
+      const result = manager.route({ ...healthyContext, requiresToolCalling: true });
+
+      expect(result?.capability).toBe(ModelCapability.TOOL_CALLING);
+      expect(result?.reason).toBe('capability_tool_calling');
+      expect(result?.provider).toBeDefined();
+    });
+
+    it('DEGRADES to standard routing rather than failing when no provider is healthy', () => {
+      // Rank, do not filter. Hard-filtering on a capability flag would turn a
+      // data gap — an unhealthy connector, a seed not yet backfilled — into a
+      // total agent-run outage. Returning null lets normal routing proceed.
+      const result = manager.route({ ...noCloudContext, requiresToolCalling: true });
+
+      expect(result).toBeNull();
+    });
+  });
 });
