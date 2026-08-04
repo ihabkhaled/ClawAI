@@ -8,6 +8,14 @@ import type {
   OllamaCloudToolDefinition,
   OllamaToolTranscript,
 } from './ollama-cloud-tool.types';
+import type {
+  AnthropicToolChoice,
+  AnthropicToolSpec,
+  NormalizedToolCall,
+  OpenAiToolCallPayload,
+  OpenAiToolChoice,
+  OpenAiToolSpec,
+} from './provider-tool.types';
 
 export type RouteRoadmapStep = {
   stage: 'router' | 'decision' | 'research' | 'tool' | 'execution' | 'fallback';
@@ -119,6 +127,15 @@ export type LlmResponse = {
   // renders this as an expandable "Used X web tools" trace under the
   // message bubble.
   toolTranscript?: OllamaToolTranscript;
+  // Runtime V2 native tool calling. `toolCalls` carries provider tool calls
+  // already reverse-mapped to Runtime tool/version/operation/target identity;
+  // `finishedForTools` records that the provider stopped *because* it wanted a
+  // tool, which is a normal turn boundary and not an empty response.
+  //
+  // Both are optional so every existing LlmResponse construction site keeps
+  // compiling untouched; absent means "this call carried no tool catalog".
+  toolCalls?: readonly NormalizedToolCall[];
+  finishedForTools?: boolean;
 };
 
 export type OllamaGenerateRequest = {
@@ -180,10 +197,11 @@ export type OllamaChatRequest = {
     temperature?: number;
     num_predict?: number;
   };
-  // Ollama Cloud agentic tool descriptors. Passing this enables the model
-  // to emit `message.tool_calls` for web_search / web_fetch. Non-agentic
-  // models ignore the field — safe to pass unconditionally for the
-  // OLLAMA cloud connector.
+  // Native tool descriptors. Two producers share this field because the wire
+  // shape is identical: the built-in web_search / web_fetch descriptors, and
+  // the translated Runtime V2 catalog (OpenAiToolSpec — same
+  // `{type, function:{name, description, parameters}}` envelope). Non-agentic
+  // models ignore the field, so it is safe to pass unconditionally.
   tools?: OllamaCloudToolDefinition[];
 };
 
@@ -218,6 +236,12 @@ export type OpenAiContentPart = OpenAiTextContent | OpenAiImageContent;
 export type OpenAiChatMessage = {
   role: string;
   content: string | OpenAiContentPart[];
+  // Native tool calling. `tool_calls` is echoed back on the assistant turn that
+  // requested them; `tool_call_id` correlates a `role: 'tool'` result message
+  // to its call. Both are required for a multi-turn tool loop to keep working
+  // across the SSE hop where Runtime V2 tools actually execute.
+  tool_calls?: OpenAiToolCallPayload[];
+  tool_call_id?: string;
 };
 
 export type OpenAiChatRequest = {
@@ -229,6 +253,8 @@ export type OpenAiChatRequest = {
   // Asks OpenAI-compatible providers to include a final usage chunk while
   // streaming (token totals). Ignored by providers that don't support it.
   stream_options?: { include_usage: boolean };
+  tools?: OpenAiToolSpec[];
+  tool_choice?: OpenAiToolChoice;
 };
 
 export type ThreadSettings = {
@@ -310,7 +336,12 @@ export type AnthropicMessagesRequest = {
   stream: boolean;
   system?: string;
   temperature?: number;
+  // Anthropic REQUIRES max_tokens on every request, and rejects outright when
+  // `tools` is present without it. buildAnthropicMessagesRequestBody supplies a
+  // default rather than omitting it whenever a tool catalog is attached.
   max_tokens?: number;
+  tools?: AnthropicToolSpec[];
+  tool_choice?: AnthropicToolChoice;
 };
 
 // Slice D — Gemini native generateContent request body shape (when

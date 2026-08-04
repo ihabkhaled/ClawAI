@@ -51,6 +51,23 @@ import type {
   RunCandidateArgs,
 } from '../types/execution-outcome.types';
 import type { AttemptRecord } from '../types/fallback-executor.types';
+import type { NormalizedToolCall, TranslatedToolCatalog } from '../types/provider-tool.types';
+import {
+  resolveToolChoicePayload,
+  resolveToolDialect,
+} from '../utilities/provider-tool-dialect.utility';
+import {
+  buildAnthropicToolTurnMessages,
+  buildOllamaToolTurnMessages,
+  buildOpenAiToolTurnMessages,
+  normalizeToolCalls,
+  toOpenAiToolSpecs,
+  translateToolCatalog,
+} from '../utilities/provider-tool-translation.utility';
+import {
+  ANTHROPIC_TOOL_DEFAULT_MAX_TOKENS,
+  OPENAI_TOOL_CALLS_FINISH_REASON,
+} from '../constants/provider-tool.constants';
 import type { JudgeRefereeConfig, JudgeRefereeResult } from '../types/judge-referee.types';
 import type { InternalGenerateResponse } from '../types/internal-generate.types';
 import { type AssembledContext } from '../types/context.types';
@@ -67,7 +84,9 @@ import {
   AiStreamProtocol,
   OllamaToolPhase,
   ProgressActorType,
+  ProviderToolDialect,
   StreamEventType,
+  ToolChoiceMode,
 } from '../../../common/enums';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import { boundImageGenerationPrompt } from '../utilities/image-generation-prompt.utility';
@@ -666,12 +685,17 @@ export class ChatExecutionManager implements OnModuleInit {
     const config = AppConfig.get();
     const { provider, model, context, threadSettings, executionOptions, baseUrl, apiKey } = args;
     if (args.isOllamaConnector) {
+      const { tools: _tools, ...toolFreeBody } = this.buildOllamaChatRequestBody(
+        model,
+        context,
+        threadSettings,
+        executionOptions,
+      );
+      // Same guard as buildStreamingChatBody: the NDJSON reader has no
+      // tool_call accumulation, so tools must not ride a streaming request.
       return {
         url: `${baseUrl}/chat`,
-        body: {
-          ...this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions),
-          stream: true,
-        },
+        body: { ...toolFreeBody, stream: true },
         protocol: AiStreamProtocol.OLLAMA_NDJSON,
         headers: { Authorization: `Bearer ${apiKey}` },
       };
@@ -938,7 +962,13 @@ export class ChatExecutionManager implements OnModuleInit {
     threadSettings: ThreadSettings | undefined,
     executionOptions: ExecutionOptions | undefined,
   ): OpenAiChatRequest {
-    const body = this.buildChatRequestBody(model, context, threadSettings, executionOptions);
+    const body = this.buildChatRequestBody(
+      provider,
+      model,
+      context,
+      threadSettings,
+      executionOptions,
+    );
     // Bug-hunt 2026-05-31, Fix 3 — when neither the caller nor the thread
     // pinned a max_tokens, compute a safe default from the resident
     // ctx size minus the prompt estimate minus a safety margin. This
@@ -953,8 +983,22 @@ export class ChatExecutionManager implements OnModuleInit {
       pickDefaultCtxSizeForProvider(provider),
       this.estimatePromptTokens(context),
     );
+    const { tools: _tools, tool_choice: _toolChoice, ...toolFreeBody } = body;
+    if (body.tools !== undefined) {
+      // Native tools are deliberately stripped from every streaming request.
+      // provider-stream-reader.utility.ts accumulates content and usage deltas
+      // only — it has no tool_call delta handling — so a streamed tool call
+      // would be silently swallowed and the run would look like an empty
+      // answer. Runtime V2 always calls the buffered path, so this is a
+      // defensive guard rather than a live lane; keeping it explicit means a
+      // future streaming caller fails loudly in the log instead of silently
+      // losing tool calls.
+      this.logger.warn(
+        `buildStreamingChatBody: stripped ${String(body.tools.length)} native tool(s) — streaming has no tool_call delta reader`,
+      );
+    }
     return {
-      ...body,
+      ...toolFreeBody,
       stream: true,
       stream_options: { include_usage: true },
     };
@@ -1755,7 +1799,13 @@ export class ChatExecutionManager implements OnModuleInit {
   ): Promise<LlmResponse> {
     this.logger.log(`callLlamacpp: provider=${provider} model=${model}`);
     const config = AppConfig.get();
-    const requestBody = this.buildChatRequestBody(model, context, threadSettings, executionOptions);
+    const requestBody = this.buildChatRequestBody(
+      provider,
+      model,
+      context,
+      threadSettings,
+      executionOptions,
+    );
     const url = `${config.LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions`;
     this.logger.debug(`callLlamacpp: POST ${url}`);
     const response = await httpRequest<OpenAiChatResponse>({
@@ -1784,6 +1834,7 @@ export class ChatExecutionManager implements OnModuleInit {
       startTime,
       usedFallback,
       promptText,
+      executionOptions,
     );
     this.logger.log(
       `callLlamacpp: completed model=${model} latencyMs=${String(result.latencyMs)} inputTokens=${String(result.inputTokens ?? 0)} outputTokens=${String(result.outputTokens ?? 0)}`,
@@ -1844,6 +1895,7 @@ export class ChatExecutionManager implements OnModuleInit {
       startTime,
       usedFallback,
       promptText,
+      executionOptions,
     );
     this.logger.log(
       `callCloudProvider: completed ${provider}/${model} latencyMs=${String(result.latencyMs)} inputTokens=${String(result.inputTokens ?? 0)} outputTokens=${String(result.outputTokens ?? 0)}`,
@@ -1916,6 +1968,7 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number,
     usedFallback: boolean,
     promptText: string,
+    executionOptions?: ExecutionOptions,
   ): LlmResponse {
     if (isNativeGemini) {
       return this.parseGeminiResponse(
@@ -1935,6 +1988,7 @@ export class ChatExecutionManager implements OnModuleInit {
         startTime,
         usedFallback,
         promptText,
+        executionOptions,
       );
     }
     return this.parseCloudResponse(
@@ -1944,6 +1998,7 @@ export class ChatExecutionManager implements OnModuleInit {
       startTime,
       usedFallback,
       promptText,
+      executionOptions,
     );
   }
 
@@ -2562,7 +2617,64 @@ export class ChatExecutionManager implements OnModuleInit {
     return { baseUrl, apiKey: connectorConfig.apiKey };
   }
 
+  // Translates the admitted Runtime V2 tool catalog for one request shape.
+  //
+  // The dialect is a property of the request SHAPE we are about to build, not
+  // of the provider: an Anthropic model sent through the OpenAI-compatible
+  // body speaks the OpenAI tool dialect. Callers therefore pass the dialect of
+  // the branch they took rather than letting this derive it from the provider.
+  //
+  // Deterministic on its inputs, so calling it again in the response parser
+  // reproduces exactly the same reverse-lookup table without threading state.
+  private resolveNativeToolCatalog(
+    provider: string,
+    dialect: ProviderToolDialect,
+    executionOptions: ExecutionOptions | undefined,
+  ): TranslatedToolCatalog | undefined {
+    const definitions = executionOptions?.toolCatalog;
+    if (!definitions || definitions.length === 0) {
+      return undefined;
+    }
+    const config = AppConfig.get();
+    if (!config.CHAT_NATIVE_TOOL_CALLING_ENABLED || dialect === ProviderToolDialect.NONE) {
+      return undefined;
+    }
+    // Two independent conditions, both required. The shape dialect says the
+    // request body CAN carry tools; the provider table says this provider is
+    // known to serve them. An unrecognized provider gets no tools even on an
+    // OpenAI-compatible body, because we have no evidence it will not simply
+    // reject the field.
+    if (resolveToolDialect(provider, true) === ProviderToolDialect.NONE) {
+      this.logger.warn(
+        `resolveNativeToolCatalog: provider ${provider} has no known native tool surface — falling back to the prompt-JSON lane`,
+      );
+      return undefined;
+    }
+    const translated = translateToolCatalog(definitions, dialect);
+    if (translated.byteSize > config.CHAT_TOOL_CATALOG_MAX_BYTES) {
+      throw new BusinessException(
+        `Native tool catalog is ${String(translated.byteSize)} bytes, over the ${String(config.CHAT_TOOL_CATALOG_MAX_BYTES)} byte budget`,
+        'RUNTIME_TOOL_CATALOG_TOO_LARGE',
+      );
+    }
+    return translated;
+  }
+
+  // True when this call is carrying a Runtime V2 tool catalog at all. Used to
+  // steer away from request shapes that cannot express our schemas.
+  private hasNativeToolCatalog(executionOptions: ExecutionOptions | undefined): boolean {
+    return (
+      AppConfig.get().CHAT_NATIVE_TOOL_CALLING_ENABLED &&
+      (executionOptions?.toolCatalog?.length ?? 0) > 0
+    );
+  }
+
+  private resolveToolChoiceMode(executionOptions: ExecutionOptions | undefined): ToolChoiceMode {
+    return executionOptions?.toolChoice ?? ToolChoiceMode.AUTO;
+  }
+
   private buildChatRequestBody(
+    provider: string,
     model: string,
     context: AssembledContext,
     threadSettings?: ThreadSettings,
@@ -2581,7 +2693,31 @@ export class ChatExecutionManager implements OnModuleInit {
           ]
         : messages;
     this.logger.debug(`buildChatRequestBody: built ${String(messages.length)} chat messages`);
-    const requestBody: OpenAiChatRequest = { model, messages: requestMessages, stream: false };
+    // This builder always emits the OpenAI-compatible shape, so the tool
+    // dialect here is unconditionally OPENAI — including for Anthropic models
+    // routed through their OpenAI-compatibility surface.
+    const toolCatalog = this.resolveNativeToolCatalog(
+      provider,
+      ProviderToolDialect.OPENAI,
+      executionOptions,
+    );
+    const requestBody: OpenAiChatRequest = {
+      model,
+      messages: [...requestMessages, ...buildOpenAiToolTurnMessages(context.toolTurns ?? [])],
+      stream: false,
+    };
+
+    if (toolCatalog) {
+      const choice = resolveToolChoicePayload(
+        this.resolveToolChoiceMode(executionOptions),
+        ProviderToolDialect.OPENAI,
+      );
+      requestBody.tools = toOpenAiToolSpecs(toolCatalog.specs);
+      requestBody.tool_choice = choice.openAi;
+      this.logger.debug(
+        `buildChatRequestBody: attached ${String(toolCatalog.specs.length)} native tools (${String(toolCatalog.byteSize)} bytes) toolChoice=${String(choice.openAi)}`,
+      );
+    }
 
     if (threadSettings?.temperature !== null && threadSettings?.temperature !== undefined) {
       this.logger.debug(
@@ -2622,7 +2758,24 @@ export class ChatExecutionManager implements OnModuleInit {
     if (args.isOllamaConnector) {
       return this.buildOllamaChatRequestBody(model, context, threadSettings, executionOptions);
     }
+    const carriesTools = this.hasNativeToolCatalog(executionOptions);
     if (provider === ANTHROPIC_PROVIDER && config.ENABLE_ANTHROPIC_NATIVE_PDF) {
+      if (carriesTools) {
+        // The Anthropic-native branch posts a Messages-shaped body to
+        // `/chat/completions` and parses the reply with parseCloudResponse
+        // (OpenAI shape). Attaching Anthropic-shaped tools here would produce
+        // `tool_use` blocks that this parser cannot read, so the run would
+        // look like a silent no-op. Leaving tools off is the truthful outcome:
+        // the drift guard then reports a degraded lane instead of a fake one.
+        // The ANTHROPIC dialect is fully implemented and tested in
+        // provider-tool-translation.utility.ts, ready for a real Messages-API
+        // transport. Note that with ENABLE_ANTHROPIC_NATIVE_PDF off (the
+        // default) Anthropic falls through to the OpenAI branch below and DOES
+        // get native tools.
+        this.logger.warn(
+          `buildCloudProviderRequestBody: native tools suppressed for ${provider} — the ENABLE_ANTHROPIC_NATIVE_PDF body shape has no matching tool-call parser`,
+        );
+      }
       return this.buildAnthropicMessagesRequestBody(
         model,
         context,
@@ -2631,7 +2784,11 @@ export class ChatExecutionManager implements OnModuleInit {
         false,
       );
     }
-    if (this.shouldUseGeminiNativeRequest(provider, context)) {
+    // Gemini's native generateContent shape uses an OpenAPI subset that rejects
+    // `additionalProperties` and `maxLength` — which every Runtime V2
+    // inputSchema carries. When tools are in play we must take the
+    // OpenAI-compatible branch instead, which accepts the schemas verbatim.
+    if (!carriesTools && this.shouldUseGeminiNativeRequest(provider, context)) {
       return this.buildGeminiNativeRequestBody(
         model,
         context,
@@ -2641,7 +2798,7 @@ export class ChatExecutionManager implements OnModuleInit {
         args.abortSignal,
       );
     }
-    return this.buildChatRequestBody(model, context, threadSettings, executionOptions);
+    return this.buildChatRequestBody(provider, model, context, threadSettings, executionOptions);
   }
 
   // Slice D — Anthropic native Messages API body builder. Routes every
@@ -2672,9 +2829,10 @@ export class ChatExecutionManager implements OnModuleInit {
         `buildAnthropicMessagesRequestBody: dropped part (reason=${warning.reason}) — ${warning.detail}`,
       );
     }
+    const toolTurnMessages = buildAnthropicToolTurnMessages(context.toolTurns ?? []);
     const requestBody: AnthropicMessagesRequest = {
       model,
-      messages: shape.messages,
+      messages: [...shape.messages, ...toolTurnMessages],
       stream,
     };
     if (system.length > 0) {
@@ -2686,6 +2844,10 @@ export class ChatExecutionManager implements OnModuleInit {
     const resolvedMaxTokens = this.resolveBoundedMaxTokens(threadSettings, executionOptions);
     if (resolvedMaxTokens !== undefined) {
       requestBody.max_tokens = resolvedMaxTokens;
+    } else if (toolTurnMessages.length > 0) {
+      // Anthropic rejects any Messages request that omits max_tokens, and a
+      // tool-loop continuation must never be the request that discovers this.
+      requestBody.max_tokens = ANTHROPIC_TOOL_DEFAULT_MAX_TOKENS;
     }
     return requestBody;
   }
@@ -2859,7 +3021,7 @@ export class ChatExecutionManager implements OnModuleInit {
     }
     const requestBody: OllamaChatRequest = {
       model: this.normalizeCloudOllamaModel(model),
-      messages: shape.messages,
+      messages: [...shape.messages, ...buildOllamaToolTurnMessages(context.toolTurns ?? [])],
       stream: false,
     };
 
@@ -2904,12 +3066,35 @@ export class ChatExecutionManager implements OnModuleInit {
       num_predict: numPredict,
     };
 
-    // Ollama Cloud agentic tool descriptors. The model decides whether to
-    // call them; non-agentic models silently ignore the field. We pass
-    // them unconditionally so deepseek-v4-pro / kimi-k2 / GLM-5.1 / etc.
-    // can do real web access end-to-end. The client (this service) is
-    // responsible for executing the emitted tool_calls — see
-    // runOllamaCloudToolLoop.
+    // Native Ollama tool descriptors. The model decides whether to call them;
+    // non-agentic models ignore the field. This service is responsible for
+    // executing the emitted tool_calls — for Runtime V2 that execution happens
+    // client-side in the extension, across the SSE hop.
+    //
+    // Until now this comment promised an assignment that the code never made
+    // (removed in 9c4106e2, comment left behind), which is why no model on
+    // this lane has ever been offered a tool. The assignment below is that
+    // promise, kept.
+    //
+    // Native Ollama `/api/chat` has no forced-tool-choice field, so
+    // ToolChoiceMode.REQUIRED cannot be expressed here — resolveToolChoicePayload
+    // reports that as `degraded` rather than silently pretending it applied.
+    const toolCatalog = this.resolveNativeToolCatalog(
+      OLLAMA_CONNECTOR_PROVIDER,
+      ProviderToolDialect.OLLAMA,
+      executionOptions,
+    );
+    if (toolCatalog) {
+      const choice = resolveToolChoicePayload(
+        this.resolveToolChoiceMode(executionOptions),
+        ProviderToolDialect.OLLAMA,
+      );
+      requestBody.tools = toOpenAiToolSpecs(toolCatalog.specs);
+      this.logger.debug(
+        `buildOllamaChatRequestBody: attached ${String(toolCatalog.specs.length)} native tools (${String(toolCatalog.byteSize)} bytes) toolChoiceDegraded=${String(choice.degraded)}`,
+      );
+    }
+
     return requestBody;
   }
 
@@ -2957,6 +3142,7 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number,
     usedFallback: boolean,
     promptText?: string,
+    executionOptions?: ExecutionOptions,
   ): LlmResponse {
     this.logger.debug(`parseCloudResponse: parsing response from ${provider}/${model}`);
     const latencyMs = Date.now() - startTime;
@@ -2986,6 +3172,13 @@ export class ChatExecutionManager implements OnModuleInit {
       `parseCloudResponse: responseContentLen=${String(responseContent.length)} inputTokens=${String(usage.promptTokens)} outputTokens=${String(usage.completionTokens)} tokenSource=${usage.source}`,
     );
 
+    const toolCalls = this.extractNativeToolCalls(
+      firstChoice.message.tool_calls,
+      provider,
+      ProviderToolDialect.OPENAI,
+      executionOptions,
+    );
+
     return {
       content: responseContent,
       provider,
@@ -2994,7 +3187,36 @@ export class ChatExecutionManager implements OnModuleInit {
       latencyMs,
       finishReason: firstChoice.finish_reason,
       usedFallback,
+      ...(toolCalls.length > 0
+        ? {
+            toolCalls,
+            finishedForTools: firstChoice.finish_reason === OPENAI_TOOL_CALLS_FINISH_REASON,
+          }
+        : {}),
     };
+  }
+
+  // Reverse-maps provider tool calls onto Runtime tool identity. Rebuilding the
+  // catalog here is intentional: translateToolCatalog is deterministic, so the
+  // lookup is byte-identical to the one used to build the request, with no run
+  // state threaded through the request/response boundary.
+  private extractNativeToolCalls(
+    raw: unknown,
+    provider: string,
+    dialect: ProviderToolDialect,
+    executionOptions: ExecutionOptions | undefined,
+  ): readonly NormalizedToolCall[] {
+    const toolCatalog = this.resolveNativeToolCatalog(provider, dialect, executionOptions);
+    if (!toolCatalog) {
+      return [];
+    }
+    const calls = normalizeToolCalls(raw, dialect, toolCatalog.lookup);
+    if (calls.length > 0) {
+      this.logger.debug(
+        `extractNativeToolCalls: ${String(calls.length)} native tool call(s) — ${calls.map((call) => `${call.toolName}/${call.operation}`).join(', ')}`,
+      );
+    }
+    return calls;
   }
 
   private parseOllamaChatResponse(
@@ -3004,11 +3226,22 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number,
     usedFallback: boolean,
     promptText?: string,
+    executionOptions?: ExecutionOptions,
   ): LlmResponse {
     const latencyMs = Date.now() - startTime;
     const responseContent = data.message?.content ?? '';
+    const toolCalls = this.extractNativeToolCalls(
+      data.message?.tool_calls,
+      provider,
+      ProviderToolDialect.OLLAMA,
+      executionOptions,
+    );
 
-    if (responseContent.trim().length === 0) {
+    // A native tool-call turn legitimately carries EMPTY content — the model
+    // is asking for a tool, not answering. Treating that as an empty response
+    // is what produced the terminal "Cloud provider OLLAMA returned no message
+    // content" failure, so the emptiness check must consider tool calls too.
+    if (responseContent.trim().length === 0 && toolCalls.length === 0) {
       throw new BusinessException(
         `Cloud provider ${provider} returned no message content`,
         'CLOUD_PROVIDER_EMPTY_RESPONSE',
@@ -3027,6 +3260,7 @@ export class ChatExecutionManager implements OnModuleInit {
       latencyMs,
       finishReason: data.done_reason ?? (data.done ? 'stop' : undefined),
       usedFallback,
+      ...(toolCalls.length > 0 ? { toolCalls, finishedForTools: true } : {}),
     };
   }
 

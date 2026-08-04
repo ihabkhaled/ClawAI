@@ -250,6 +250,20 @@ Claw uses 14 separate PostgreSQL instances, one per data-owning service.
 | `MEMORY_EXTRACTION_MODEL`    | No       | `AUTO`                     | Model used for memory extraction (`AUTO` picks best installed)             |
 | `AUTO_PULL_MODELS`           | No       | `qwen3:1.7b`               | Space-separated list of models to auto-pull on startup                     |
 
+### Runtime V2 provider-native tool calling (chat-service)
+
+| Variable                           | Required | Default  | Description                                                                                                      |
+| ---------------------------------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `CHAT_NATIVE_TOOL_CALLING_ENABLED` | No       | `true`   | Translate the admitted Runtime V2 tool catalog into the provider's native tool dialect and parse tool calls back |
+| `CHAT_TOOL_CATALOG_MAX_BYTES`      | No       | `262144` | Byte budget for the serialized catalog, which is re-sent on every turn of a tool loop                            |
+
+When `CHAT_NATIVE_TOOL_CALLING_ENABLED` is `false`, every provider resolves to
+the `NONE` tool dialect and Runtime V2 falls back to the prompt-JSON
+compatibility lane. That lane serializes the catalog into the system prompt as
+text and cannot express a real tool call, so a model on it will truthfully
+report that it has no filesystem, terminal or browser. Keep it on unless a
+deployment has a specific reason to degrade.
+
 **Notes:**
 
 - Inside Docker, use the container service name as host (`claw-ollama`).

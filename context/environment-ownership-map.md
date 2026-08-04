@@ -29,6 +29,7 @@ single root `.env` (copy from `.env.example`) drives everything; all services us
 | Workspace                 | `GITHUB_*`, `GITLAB_*`, `JIRA_*`, `SLACK_*`, `GOOGLE_*`, `*_WEBHOOK_SECRET`, `WORKSPACE_SYNC_*`, `AUTO_SUGGEST_*`          |
 | Routing feature flags     | `ROUTING_*_ENABLED`, `ROUTING_V2_CANARY_PERCENT`, `ROUTER_COMPACT_PROMPT`                                                  |
 | Compare/Judge/file attach | `ENABLE_ANTHROPIC_NATIVE_PDF`, `ENABLE_GEMINI_FILES_API`, `GEMINI_FILES_API_*`                                             |
+| Runtime V2 native tools   | `CHAT_NATIVE_TOOL_CALLING_ENABLED`, `CHAT_TOOL_CATALOG_MAX_BYTES`                                                          |
 
 Ports for **client-logs (`CLIENT_LOGS_PORT`) and server-logs
 (`SERVER_LOGS_PORT`) are env-only** — no shared-constants constant. See

@@ -27,17 +27,34 @@ export type AnthropicDocumentBlock = {
   source: AnthropicBase64Source;
 };
 
+// Native tool calling. A tool *call* is an assistant-turn block; a tool
+// *result* is a USER-turn block — Anthropic has no `tool` role, which is the
+// single most common way to get a 400 on this API.
+export type AnthropicToolUseContentBlock = {
+  type: 'tool_use';
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+};
+
+export type AnthropicToolResultContentBlock = {
+  type: 'tool_result';
+  tool_use_id: string;
+  content: string;
+  is_error: boolean;
+};
+
 export type AnthropicContentBlock =
   | AnthropicTextBlock
   | AnthropicImageBlock
-  | AnthropicDocumentBlock;
+  | AnthropicDocumentBlock
+  | AnthropicToolUseContentBlock
+  | AnthropicToolResultContentBlock;
 
 // Reason codes for an OpenAI image_url part that could not be transformed
 // into an Anthropic block (malformed data URL, empty payload, non-data URL).
 export type AnthropicMessageShapeWarningReason =
-  | 'MALFORMED_DATA_URL'
-  | 'NON_DATA_URL_IMAGE'
-  | 'EMPTY_IMAGE_PAYLOAD';
+  'MALFORMED_DATA_URL' | 'NON_DATA_URL_IMAGE' | 'EMPTY_IMAGE_PAYLOAD';
 
 export type AnthropicMessageShapeWarning = {
   reason: AnthropicMessageShapeWarningReason;

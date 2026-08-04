@@ -13,10 +13,7 @@
       "name": "JWT_SECRET",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Shared HS256 JWT signing secret. Minimum 32 characters. Every service verifies access tokens with this value, so it must be byte-identical across all projects.",
       "appliesTo": [
         "auth",
@@ -39,44 +36,23 @@
       "name": "ENCRYPTION_KEY",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "AES-256-GCM key as 64 hex characters. Encrypts connector API keys, workspace OAuth tokens, research provider credentials, and agent secrets. Rotating it makes existing ciphertext unreadable.",
-      "appliesTo": [
-        "auth",
-        "connector",
-        "workspace",
-        "agent",
-        "research"
-      ]
+      "appliesTo": ["auth", "connector", "workspace", "agent", "research"]
     },
     {
       "name": "INTER_SERVICE_AUTH_TOKEN",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Shared bearer for `Authorization: Service <token>` calls into guarded /api/v1/internal/* endpoints. Minimum 32 characters. Must match across every project that appears here.",
-      "appliesTo": [
-        "chat",
-        "file",
-        "file-generation",
-        "image",
-        "workspace"
-      ]
+      "appliesTo": ["chat", "file", "file-generation", "image", "workspace"]
     },
     {
       "name": "REDIS_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Redis connection string (rediss:// recommended). Use a serverless-friendly provider such as Upstash — a per-invocation TCP pool against a single-node Redis will exhaust connections.",
       "appliesTo": [
         "auth",
@@ -99,10 +75,7 @@
       "name": "RABBITMQ_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "AMQP connection string for the claw.events topic exchange (e.g. CloudAMQP). Publishing works from a serverless function; durable consumption does not — see the runtimeCaveats on audit and server-logs in projects.json.",
       "appliesTo": [
         "auth",
@@ -125,44 +98,23 @@
       "name": "OLLAMA_BASE_URL",
       "required": true,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Base URL of the EXTERNAL Ollama-compatible API (for example https://ollama.com or a self-hosted gateway). ClawAI on Vercel never runs a local Ollama runtime.",
-      "appliesTo": [
-        "chat",
-        "routing",
-        "memory",
-        "connector",
-        "workspace"
-      ]
+      "appliesTo": ["chat", "routing", "memory", "connector", "workspace"]
     },
     {
       "name": "OLLAMA_API_KEY",
       "required": false,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Bearer credential for the external Ollama-compatible API. NEVER expose this through a NEXT_PUBLIC_* variable and never send it to the frontend project.",
-      "appliesTo": [
-        "chat",
-        "routing",
-        "memory",
-        "connector",
-        "workspace"
-      ]
+      "appliesTo": ["chat", "routing", "memory", "connector", "workspace"]
     },
     {
       "name": "CORS_ORIGINS",
       "required": true,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Comma-separated list of allowed browser origins. On Vercel this is the frontend production URL plus any custom domain. Preview deployments need the preview frontend origin.",
       "appliesTo": [
         "auth",
@@ -185,10 +137,7 @@
       "name": "NODE_ENV",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Node environment. Vercel sets this automatically; declare it only to override.",
       "appliesTo": [
         "auth",
@@ -233,158 +182,97 @@
       "name": "CHAT_SERVICE_URL",
       "producedBy": "chat",
       "description": "Resolved deployment URL of claw-chat-service.",
-      "appliesTo": [
-        "workspace",
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["workspace", "health", "frontend"]
     },
     {
       "name": "CONNECTOR_SERVICE_URL",
       "producedBy": "connector",
       "description": "Resolved deployment URL of claw-connector-service.",
-      "appliesTo": [
-        "chat",
-        "image",
-        "workspace",
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["chat", "image", "workspace", "health", "frontend"]
     },
     {
       "name": "ROUTING_SERVICE_URL",
       "producedBy": "routing",
       "description": "Resolved deployment URL of claw-routing-service.",
-      "appliesTo": [
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["health", "frontend"]
     },
     {
       "name": "HEALTH_SERVICE_URL",
       "producedBy": "health",
       "description": "Resolved deployment URL of claw-health-service.",
-      "appliesTo": [
-        "frontend"
-      ]
+      "appliesTo": ["frontend"]
     },
     {
       "name": "MEMORY_SERVICE_URL",
       "producedBy": "memory",
       "description": "Resolved deployment URL of claw-memory-service.",
-      "appliesTo": [
-        "chat",
-        "workspace",
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["chat", "workspace", "health", "frontend"]
     },
     {
       "name": "FILE_SERVICE_URL",
       "producedBy": "file",
       "description": "Resolved deployment URL of claw-file-service.",
-      "appliesTo": [
-        "chat",
-        "image",
-        "file-generation",
-        "workspace",
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["chat", "image", "file-generation", "workspace", "health", "frontend"]
     },
     {
       "name": "AUDIT_SERVICE_URL",
       "producedBy": "audit",
       "description": "Resolved deployment URL of claw-audit-service.",
-      "appliesTo": [
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["health", "frontend"]
     },
     {
       "name": "CLIENT_LOGS_SERVICE_URL",
       "producedBy": "client-logs",
       "description": "Resolved deployment URL of claw-client-logs-service.",
-      "appliesTo": [
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["health", "frontend"]
     },
     {
       "name": "SERVER_LOGS_SERVICE_URL",
       "producedBy": "server-logs",
       "description": "Resolved deployment URL of claw-server-logs-service.",
-      "appliesTo": [
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["health", "frontend"]
     },
     {
       "name": "IMAGE_SERVICE_URL",
       "producedBy": "image",
       "description": "Resolved deployment URL of claw-image-service.",
-      "appliesTo": [
-        "chat",
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["chat", "health", "frontend"]
     },
     {
       "name": "FILE_GENERATION_SERVICE_URL",
       "producedBy": "file-generation",
       "description": "Resolved deployment URL of claw-file-generation-service.",
-      "appliesTo": [
-        "chat",
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["chat", "health", "frontend"]
     },
     {
       "name": "WORKSPACE_SERVICE_URL",
       "producedBy": "workspace",
       "description": "Resolved deployment URL of claw-workspace-service.",
-      "appliesTo": [
-        "chat",
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["chat", "health", "frontend"]
     },
     {
       "name": "AGENT_SERVICE_URL",
       "producedBy": "agent",
       "description": "Resolved deployment URL of claw-agent-service.",
-      "appliesTo": [
-        "workspace",
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["workspace", "health", "frontend"]
     },
     {
       "name": "RESEARCH_SERVICE_URL",
       "producedBy": "research",
       "description": "Resolved deployment URL of claw-research-service.",
-      "appliesTo": [
-        "chat",
-        "health",
-        "frontend"
-      ]
+      "appliesTo": ["chat", "health", "frontend"]
     },
     {
       "name": "NEXT_PUBLIC_API_URL",
       "producedBy": "frontend",
       "description": "Public base URL the browser calls. Set to the frontend's own origin so the vercel.json rewrites proxy /api/v1/* through to each backend project.",
-      "appliesTo": [
-        "frontend"
-      ]
+      "appliesTo": ["frontend"]
     },
     {
       "name": "NEXT_PUBLIC_APP_URL",
       "producedBy": "frontend",
       "description": "Public origin of the ClawAI web app. agent-service uses it to build device-pairing links.",
-      "appliesTo": [
-        "frontend",
-        "agent"
-      ]
+      "appliesTo": ["frontend", "agent"]
     }
   ],
   "auth": [
@@ -392,67 +280,49 @@
       "name": "AUTH_DATABASE_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Pooled PostgreSQL connection string for the claw_auth database (runtime queries)."
     },
     {
       "name": "JWT_ACCESS_EXPIRY",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Access-token lifetime. Default 15m."
     },
     {
       "name": "JWT_REFRESH_EXPIRY",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Refresh-token lifetime. Default 7d."
     },
     {
       "name": "ADMIN_EMAIL",
       "required": false,
       "secret": false,
-      "targets": [
-        "production"
-      ],
+      "targets": ["production"],
       "description": "Bootstrap admin email, seeded on first boot only."
     },
     {
       "name": "ADMIN_USERNAME",
       "required": false,
       "secret": false,
-      "targets": [
-        "production"
-      ],
+      "targets": ["production"],
       "description": "Bootstrap admin username, seeded on first boot only."
     },
     {
       "name": "ADMIN_PASSWORD",
       "required": false,
       "secret": true,
-      "targets": [
-        "production"
-      ],
+      "targets": ["production"],
       "description": "Bootstrap admin password (argon2-hashed at seed time). Rotate immediately after the first login."
     },
     {
       "name": "SEED_RECONCILE_PERMISSIONS",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "'true' hard-reconciles system-role permissions on boot (adds AND removes). Default 'false' is add-only."
     }
   ],
@@ -461,90 +331,77 @@
       "name": "CHAT_DATABASE_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Pooled PostgreSQL connection string for the claw_chat database."
     },
     {
       "name": "OLLAMA_GENERATE_TIMEOUT_MS",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Upper bound on a single external-Ollama generation call. Must stay below the Vercel function maxDuration or the request is cut off first."
+    },
+    {
+      "name": "CHAT_NATIVE_TOOL_CALLING_ENABLED",
+      "required": false,
+      "secret": false,
+      "targets": ["production", "preview"],
+      "description": "Translate the admitted Runtime V2 tool catalog into the provider's native tool dialect. Default true; false falls back to the prompt-JSON lane, which cannot express a real tool call."
+    },
+    {
+      "name": "CHAT_TOOL_CATALOG_MAX_BYTES",
+      "required": false,
+      "secret": false,
+      "targets": ["production", "preview"],
+      "description": "Byte budget for the serialized native tool catalog. It is re-sent on every turn of a tool loop, so it is the dominant recurring payload. Default 262144."
     },
     {
       "name": "OLLAMA_TOOL_LOOP_MAX_ITERATIONS",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Agentic tool-loop iteration cap. Default 50; lower it on Vercel so the loop fits inside maxDuration."
     },
     {
       "name": "OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Wall-clock cap for the whole agentic tool loop."
     },
     {
       "name": "ENABLE_ANTHROPIC_NATIVE_PDF",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Forward PDFs to Anthropic as a native document part instead of extracted text. Default false."
     },
     {
       "name": "ENABLE_GEMINI_FILES_API",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Upload large attachments through Gemini's Files API. Default false."
     },
     {
       "name": "ALLOW_LOCAL_ONLY_ATTACHMENTS_WITHOUT_VISION",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Allow image attachments in LOCAL_ONLY / PRIVACY_FIRST modes with no local vision model. Default false."
     },
     {
       "name": "ROUTING_THREAD_CONTEXT_INJECTION_ENABLED",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Semantic-router thread-context injection flag. Default true."
     },
     {
       "name": "ROUTING_FOLLOW_UP_DETECTION_ENABLED",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Semantic-router follow-up detection flag. Default true."
     }
   ],
@@ -553,10 +410,7 @@
       "name": "CONNECTOR_DATABASE_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Pooled PostgreSQL connection string for the claw_connectors database."
     }
   ],
@@ -565,40 +419,28 @@
       "name": "ROUTING_DATABASE_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Pooled PostgreSQL connection string for the claw_routing database."
     },
     {
       "name": "OLLAMA_ROUTER_MODEL",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Model the AUTO router asks for a classification. Must exist on the external Ollama endpoint."
     },
     {
       "name": "OLLAMA_ROUTER_TIMEOUT_MS",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Router call timeout before falling back to the heuristic classifier. Default 5000."
     },
     {
       "name": "OLLAMA_ROUTER_WARMUP_ENABLED",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Set to 'false' on Vercel. The warmup interval timer cannot persist between serverless invocations."
     }
   ],
@@ -607,50 +449,35 @@
       "name": "MEMORY_DATABASE_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Pooled PostgreSQL connection string for the claw_memory database. Requires the pgvector extension."
     },
     {
       "name": "MEMORY_EXTRACTION_MODEL",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Model used to extract FACT/PREFERENCE/INSTRUCTION/SUMMARY memories. Default 'AUTO'."
     },
     {
       "name": "MEMORY_SENSITIVITY_MODEL",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Model for ambiguous-case sensitivity classification. Default gemma3:4b."
     },
     {
       "name": "EMBEDDING_MODEL",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Embedding model for semantic memory search. Default nomic-embed-text."
     },
     {
       "name": "EMBEDDING_DIMENSIONS",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Embedding vector width. Must match the pgvector column dimension. Default 768."
     }
   ],
@@ -659,80 +486,56 @@
       "name": "FILES_DATABASE_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Pooled PostgreSQL connection string for the claw_files database."
     },
     {
       "name": "BLOB_READ_WRITE_TOKEN",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Vercel Blob (or S3-compatible) read/write token. Required because the Vercel filesystem is ephemeral — uploads must land in object storage, not FILE_STORAGE_PATH."
     },
     {
       "name": "FILE_STORAGE_PATH",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Scratch directory for in-flight uploads. MUST be under /tmp on Vercel; nothing written here survives the invocation."
     },
     {
       "name": "CLAMAV_ENABLED",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Set to 'false' on Vercel unless CLAMAV_HOST points at an externally reachable ClamAV TCP endpoint. There is no ClamAV sidecar."
     },
     {
       "name": "CLAMAV_HOST",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Hostname of an external ClamAV daemon. Only meaningful when CLAMAV_ENABLED is true."
     },
     {
       "name": "OCR_ENABLED",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Set to 'false' on Vercel — the tesseract worker pool needs native binaries and a persistent process."
     },
     {
       "name": "ZIP_TEMP_EXTRACTION_PATH",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "ZIP extraction sandbox. MUST be under /tmp on Vercel."
     },
     {
       "name": "FILE_RETENTION_DAYS",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Days before an uploaded file is eligible for retention deletion. 0 disables retention."
     }
   ],
@@ -741,10 +544,7 @@
       "name": "AUDIT_MONGODB_URI",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "MongoDB connection string for the audit database (Atlas recommended)."
     }
   ],
@@ -753,10 +553,7 @@
       "name": "CLIENT_LOGS_MONGODB_URI",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "MongoDB connection string for the client-logs database. TTL index created by scripts/vercel/migrate.mjs."
     }
   ],
@@ -765,10 +562,7 @@
       "name": "SERVER_LOGS_MONGODB_URI",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "MongoDB connection string for the server-logs database. TTL index created by scripts/vercel/migrate.mjs."
     }
   ],
@@ -777,20 +571,14 @@
       "name": "IMAGE_DATABASE_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Pooled PostgreSQL connection string for the claw_images database."
     },
     {
       "name": "CLAW_IMAGE_PROGRESS_PREVIEW_ENABLED",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Emit intermediate image previews over the progress channel. Default false."
     }
   ],
@@ -799,10 +587,7 @@
       "name": "FILE_GENERATION_DATABASE_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Pooled PostgreSQL connection string for the claw_file_generations database."
     }
   ],
@@ -811,169 +596,119 @@
       "name": "WORKSPACE_DATABASE_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Pooled PostgreSQL connection string for the claw_workspace database."
     },
     {
       "name": "WORKSPACE_SCHEDULER_ENABLED",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Set to 'false' on Vercel. The in-process sync ticker cannot run between serverless invocations; scheduled background sync is a known gap until trigger endpoints exist."
     },
     {
       "name": "GITHUB_CLIENT_ID",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "GitHub OAuth app client id for workspace connectors."
     },
     {
       "name": "GITHUB_CLIENT_SECRET",
       "required": false,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "GitHub OAuth app client secret."
     },
     {
       "name": "GITHUB_WEBHOOK_SECRET",
       "required": false,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "HMAC secret for verifying inbound GitHub webhook deliveries."
     },
     {
       "name": "GITLAB_WEBHOOK_SECRET",
       "required": false,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Secret token for verifying inbound GitLab webhook deliveries."
     },
     {
       "name": "BITBUCKET_WEBHOOK_SECRET",
       "required": false,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Secret for verifying inbound Bitbucket webhook deliveries."
     },
     {
       "name": "SLACK_CLIENT_ID",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Slack app client id."
     },
     {
       "name": "SLACK_CLIENT_SECRET",
       "required": false,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Slack app client secret."
     },
     {
       "name": "SLACK_SIGNING_SECRET",
       "required": false,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Slack request signing secret."
     },
     {
       "name": "JIRA_CLIENT_ID",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Atlassian OAuth2 client id."
     },
     {
       "name": "JIRA_CLIENT_SECRET",
       "required": false,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Atlassian OAuth2 client secret."
     },
     {
       "name": "JIRA_WEBHOOK_SECRET",
       "required": false,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Secret for verifying inbound Jira webhook deliveries."
     },
     {
       "name": "GOOGLE_CLIENT_ID",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Google OAuth client id (Drive, Gmail connectors)."
     },
     {
       "name": "GOOGLE_CLIENT_SECRET",
       "required": false,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Google OAuth client secret."
     },
     {
       "name": "FIGMA_WEBHOOK_SECRET",
       "required": false,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Secret for verifying inbound Figma webhook deliveries."
     },
     {
       "name": "ADMIN_IP_ALLOWLIST",
       "required": false,
       "secret": false,
-      "targets": [
-        "production"
-      ],
+      "targets": ["production"],
       "description": "Comma-separated CIDR allowlist for workspace admin endpoints. Empty disables the check."
     }
   ],
@@ -982,30 +717,21 @@
       "name": "AGENT_DATABASE_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Pooled PostgreSQL connection string for the claw_agent database."
     },
     {
       "name": "AGENT_ACCESS_TTL_SECONDS",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Desktop-agent access-token lifetime. Default 900."
     },
     {
       "name": "AGENT_REFRESH_TTL_DAYS",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Desktop-agent refresh-token lifetime in days. Default 30."
     }
   ],
@@ -1014,50 +740,35 @@
       "name": "RESEARCH_DATABASE_URL",
       "required": true,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Pooled PostgreSQL connection string for the claw_research database."
     },
     {
       "name": "TAVILY_API_KEY",
       "required": false,
       "secret": true,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Tavily search provider API key."
     },
     {
       "name": "SEARXNG_BASE_URL",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Base URL of an externally hosted SearXNG instance. There is no local SearXNG on Vercel."
     },
     {
       "name": "RESEARCH_DOMAIN_ALLOWLIST",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Comma-separated domains research fetch/scrape is allowed to reach."
     },
     {
       "name": "RESEARCH_DOMAIN_BLOCKLIST",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Comma-separated domains research fetch/scrape must never reach."
     }
   ],
@@ -1067,19 +778,14 @@
       "name": "NEXT_PUBLIC_APP_NAME",
       "required": false,
       "secret": false,
-      "targets": [
-        "production",
-        "preview"
-      ],
+      "targets": ["production", "preview"],
       "description": "Display name shown in the UI shell. Default 'ClawAI'."
     },
     {
       "name": "NEXT_PUBLIC_ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED",
       "required": false,
       "secret": false,
-      "targets": [
-        "preview"
-      ],
+      "targets": ["preview"],
       "description": "Shows the router context inspector panel. Preview only — never enable in production."
     }
   ]

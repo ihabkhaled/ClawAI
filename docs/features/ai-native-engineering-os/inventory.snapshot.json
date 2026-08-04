@@ -3559,12 +3559,22 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "CHAT_NATIVE_TOOL_CALLING_ENABLED"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "CHAT_PORT"
       },
       {
         "confidence": "verified",
         "source": ".env.example",
         "value": "CHAT_SERVICE_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "CHAT_TOOL_CATALOG_MAX_BYTES"
       },
       {
         "confidence": "verified",
@@ -8478,7 +8488,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 76
+        "testFiles": 78
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -9242,7 +9252,7 @@
     "contradictionCount": 0,
     "dockerServiceCount": 41,
     "endpointCount": 562,
-    "envVarCount": 337,
+    "envVarCount": 339,
     "eventCount": 165,
     "frontendRouteCount": 113,
     "localeCount": 13,
@@ -9253,7 +9263,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 757,
+    "totalTestFiles": 759,
     "workspaceCount": 25
   }
 }

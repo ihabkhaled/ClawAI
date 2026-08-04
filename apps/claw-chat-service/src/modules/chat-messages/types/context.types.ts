@@ -1,4 +1,5 @@
 import { type ChatMessage } from '../../../generated/prisma';
+import type { ToolTurn } from './tool-turn.types';
 
 export type FileChunkResponse = {
   id: string;
@@ -37,6 +38,19 @@ export type AssembledContext = {
   researchRunId: string | null;
   /** Warnings produced by the research run (e.g. fetch failures). */
   researchWarnings: string[];
+  /**
+   * Completed Runtime V2 tool rounds, oldest first.
+   *
+   * Runtime V2 tools execute client-side across an SSE hop, so the provider
+   * transcript cannot live on a call stack — it is rebuilt from here on every
+   * continuation. Each request builder renders these into its own dialect
+   * (Anthropic's tool result is a `user` turn, which no role-preserving
+   * transform can produce from an OpenAI `tool` turn).
+   *
+   * Optional so every existing construction site keeps compiling; absent and
+   * empty both mean "no tool rounds yet".
+   */
+  toolTurns?: readonly ToolTurn[];
   tokenBudget: number;
 };
 

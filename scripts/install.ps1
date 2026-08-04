@@ -966,6 +966,14 @@ MEMORY_EXTRACTION_MODEL=AUTO
 OLLAMA_TOOL_LOOP_MAX_ITERATIONS=50
 OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS=600000
 
+# --- Runtime V2 provider-native tool calling ---
+# When true, the admitted Runtime V2 tool catalog is translated into the
+# provider's native tool dialect and attached to the request. When false the
+# run falls back to the prompt-JSON lane, which cannot express a real tool
+# call. The catalog is re-sent on every turn, so it is budgeted in bytes.
+CHAT_NATIVE_TOOL_CALLING_ENABLED=true
+CHAT_TOOL_CATALOG_MAX_BYTES=262144
+
 # --- Local-only vision attachment policy (Slice B) ---
 # When LOCAL_ONLY/PRIVACY_FIRST routing has no vision-capable local model
 # (llava, bakllava, moondream, minicpm-v, llama3.2-vision, *-vision,

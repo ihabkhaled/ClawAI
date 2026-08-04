@@ -56,6 +56,24 @@ const appConfigSchema = z.object({
     .max(OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS_HARD_CAP)
     .default(OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS_DEFAULT),
 
+  // ─── Runtime V2 provider-native tool calling ─────────────────────────────
+  // When true, an admitted Runtime V2 tool catalog is translated into the
+  // selected provider's native tool dialect and attached to the request, and
+  // tool calls are parsed back off the response. When false, every provider
+  // resolves to the NONE dialect and the run falls back to the prompt-JSON
+  // compatibility lane. Defaults ON: the prompt-JSON lane cannot express a
+  // real tool call, so leaving it as the only lane is the defect this flag
+  // exists to close. Flip to false to disable native tools per deployment.
+  CHAT_NATIVE_TOOL_CALLING_ENABLED: z
+    .string()
+    .default('true')
+    .transform((value) => value.toLowerCase() === 'true'),
+  // Upper bound on the serialized native tool catalog. The catalog is re-sent
+  // on EVERY turn of a multi-turn tool loop, so it is the dominant recurring
+  // payload; exceeding this budget fails admission loudly instead of silently
+  // burning the context window.
+  CHAT_TOOL_CATALOG_MAX_BYTES: z.coerce.number().int().positive().default(262_144),
+
   // ─── Semantic Router Flagship feature flags consumed by chat-service ─────
   // See docs/03-architecture/semantic-router-flagship-plan.md. Defaults
   // preserve current behavior — flip to advance a phase.
