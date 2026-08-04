@@ -4019,6 +4019,11 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "LLAMACPP_ENABLE_JINJA"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "LLAMACPP_FORCE_PINNED_BINARY"
       },
       {
@@ -8520,7 +8525,7 @@
       },
       "claw-llamacpp-service": {
         "runner": "jest",
-        "testFiles": 16
+        "testFiles": 17
       },
       "claw-memory-service": {
         "runner": "jest",
@@ -9252,7 +9257,7 @@
     "contradictionCount": 0,
     "dockerServiceCount": 41,
     "endpointCount": 562,
-    "envVarCount": 339,
+    "envVarCount": 340,
     "eventCount": 165,
     "frontendRouteCount": 113,
     "localeCount": 13,
@@ -9263,7 +9268,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 760,
+    "totalTestFiles": 761,
     "workspaceCount": 25
   }
 }

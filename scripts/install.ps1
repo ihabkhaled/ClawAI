@@ -1182,6 +1182,11 @@ LLAMACPP_LOAD_TIMEOUT_MS=600000
 LLAMACPP_BIND_HOST=127.0.0.1
 LLAMACPP_PROCESS_PORT_MIN=48500
 LLAMACPP_PROCESS_PORT_MAX=48999
+# Launch tool-capable catalog entries with `--jinja` so llama-server parses
+# emitted tool calls into `message.tool_calls`. Applied per catalog entry (only
+# entries advertising the `tools` capability), never globally — a GGUF whose
+# template is not tool-aware can fail to start under --jinja.
+LLAMACPP_ENABLE_JINJA=true
 HUGGINGFACE_TOKEN=
 HUGGINGFACE_API_BASE=https://huggingface.co
 

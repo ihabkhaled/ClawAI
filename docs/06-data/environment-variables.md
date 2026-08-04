@@ -257,6 +257,17 @@ Claw uses 14 separate PostgreSQL instances, one per data-owning service.
 | `CHAT_NATIVE_TOOL_CALLING_ENABLED` | No       | `true`   | Translate the admitted Runtime V2 tool catalog into the provider's native tool dialect and parse tool calls back |
 | `CHAT_TOOL_CATALOG_MAX_BYTES`      | No       | `262144` | Byte budget for the serialized catalog, which is re-sent on every turn of a tool loop                            |
 
+| Variable                | Required | Default | Description                                                                                  |
+| ----------------------- | -------- | ------- | -------------------------------------------------------------------------------------------- |
+| `LLAMACPP_ENABLE_JINJA` | No       | `true`  | Launch tool-capable catalog entries with `--jinja` so llama-server parses emitted tool calls |
+
+`--jinja` is applied **per catalog entry** — only entries whose
+`capabilities` include `tools` — never globally. A GGUF whose embedded chat
+template is not tool-aware can fail to start under `--jinja`, so gating per
+entry means a bad template can never take down a model that never needed tools.
+`LLAMACPP_ENABLE_JINJA=false` is the kill switch if an upstream llama.cpp
+release regresses.
+
 When `CHAT_NATIVE_TOOL_CALLING_ENABLED` is `false`, every provider resolves to
 the `NONE` tool dialect and Runtime V2 falls back to the prompt-JSON
 compatibility lane. That lane serializes the catalog into the system prompt as

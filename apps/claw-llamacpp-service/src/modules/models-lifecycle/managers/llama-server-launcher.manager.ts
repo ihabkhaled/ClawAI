@@ -6,7 +6,12 @@ import { resolveSafePath, spawnDetached } from '../../../common/utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { type CatalogEntry } from '../../catalog/types/catalog.types';
 import { BinaryService } from '../../binary/services/binary.service';
-import { ALLOWED_CUSTOM_ARGS, FORBIDDEN_ARG_TOKENS } from '../constants/launcher.constants';
+import {
+  ALLOWED_CUSTOM_ARGS,
+  CATALOG_TOOLS_CAPABILITY,
+  FORBIDDEN_ARG_TOKENS,
+  LLAMA_JINJA_ARG,
+} from '../constants/launcher.constants';
 import { type RuntimeConfig, type SpawnedLlamaServer } from '../types/process.types';
 
 @Injectable()
@@ -79,11 +84,30 @@ export class LlamaServerLauncherManager {
     if (model.chatTemplate) {
       args.push('--chat-template', model.chatTemplate);
     }
+    if (this.shouldEnableJinja(model, appConfig.LLAMACPP_ENABLE_JINJA)) {
+      args.push(LLAMA_JINJA_ARG);
+      this.logger.log(
+        `buildArgs: ${LLAMA_JINJA_ARG} enabled for ${model.name}:${model.tag} — tool-call parsing active`,
+      );
+    }
     if (config.customArgs) {
       const safe = this.parseCustomArgs(config.customArgs);
       args.push(...safe);
     }
     return args;
+  }
+
+  // Per-entry gate, deliberately not a global switch. `--jinja` is what makes
+  // llama-server parse an emitted tool call into `message.tool_calls`; without
+  // it a tool-capable model emits the call as raw text and it is invisible
+  // downstream. But a GGUF whose embedded template is not tool-aware can fail
+  // to start under `--jinja`, so only entries advertising the capability get
+  // it. LLAMACPP_ENABLE_JINJA is the kill switch if a release regresses.
+  private shouldEnableJinja(model: CatalogEntry, enabled: boolean): boolean {
+    if (!enabled) {
+      return false;
+    }
+    return model.capabilities.includes(CATALOG_TOOLS_CAPABILITY);
   }
 
   private firstGgufPath(dir: string): string {

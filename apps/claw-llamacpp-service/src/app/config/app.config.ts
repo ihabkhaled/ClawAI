@@ -34,6 +34,19 @@ const appConfigSchema = z.object({
     .string()
     .default('true')
     .transform((value) => value.toLowerCase() === 'true'),
+  // Launch tool-capable catalog entries with `--jinja`, which is what makes
+  // llama-server render the GGUF's embedded chat template and PARSE emitted
+  // tool calls into `message.tool_calls`. Without it a tool-capable model
+  // still emits its call as raw text and nothing downstream can see it.
+  //
+  // Applied per catalog entry (only entries advertising the `tools`
+  // capability), never globally — a GGUF whose template is not tool-aware can
+  // fail to start under `--jinja`. This flag is the kill switch if an upstream
+  // llama.cpp release regresses.
+  LLAMACPP_ENABLE_JINJA: z
+    .string()
+    .default('true')
+    .transform((value) => value.toLowerCase() === 'true'),
   LLAMACPP_PROCESS_PORT_MIN: z.coerce.number().default(48_500),
   LLAMACPP_PROCESS_PORT_MAX: z.coerce.number().default(48_999),
   HUGGINGFACE_TOKEN: z.string().optional(),
