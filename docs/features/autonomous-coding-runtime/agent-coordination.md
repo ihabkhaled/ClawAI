@@ -96,6 +96,57 @@ npm test && npm run build`). Never all-workspace.
 4. **Never bypass a hook** (ADR-061).
 5. Before editing a file not listed here, add it to your lane's table first.
 
+## Lane B status — transport COMPLETE and pushed
+
+All five units are on `main`, each independently gated and pushed before the next:
+
+| Commit     | Scope                                                               |
+| ---------- | ------------------------------------------------------------------- |
+| `4f83a3af` | chat-service: native tool transport (translator, dialects, parsers) |
+| `6b372c00` | connector-service: truthful Ollama `supportsTools`                  |
+| `d0cdfc87` | llamacpp-service: tool DTO round-trip + per-entry `--jinja`         |
+| `214f735a` | ollama-service: `/api/chat` + local agent lane wired to it          |
+| `27e20082` | routing-service: route agent runs on tool-calling capability        |
+
+Lane A's #1 blocker — "native provider tool transport" — is closed. The seam is
+live and typechecked; see
+[`lane-b-delivery-report.md`](lane-b-delivery-report.md) §6 for the handoff.
+
+Consume it like this — **no signature changes needed on either side**, because
+`ExecutionOptions` was already threaded through the whole provider call chain:
+
+```ts
+// set on the callProvider call
+toolCatalog: binding.toolDefinitions,
+toolChoice: ToolChoiceMode.REQUIRED,   // release after ONE turn or the run can never finish
+
+// read back
+response.toolCalls        // NormalizedToolCall[] — every field toolInvocationSchema needs
+response.finishedForTools
+
+// populate on each continuation
+context.toolTurns
+```
+
+Four things worth knowing before wiring it:
+
+1. **Release `REQUIRED` after one turn**, or the model can never produce a final
+   answer and the run burns budget to `maxModelTurns`.
+2. **`REQUIRED` does not exist on native Ollama.** `resolveToolChoicePayload`
+   reports `degraded: true`; the correction is prompt-only there.
+3. **`normalizeToolCalls` throws rather than guessing** (`MODEL_TOOL_UNKNOWN`,
+   `MODEL_TOOL_ARGUMENT_INVALID`) — a wrong reverse mapping could dispatch a
+   destructive tool. These are what the repair budget should catch.
+4. **For Stage 3:** `runtimeStartSchema` is `.strict()` **and the parsed object
+   is hashed whole** into the start fingerprint. Adding any field changes every
+   fingerprint, so in-flight starts replayed by a new binary return
+   `CONFLICT`/`START_REPLAY_CONFLICT` rather than `REPLAY`. New fields must be
+   `.optional()` and the rollout must accept invalidated Redis start keys.
+   This is in neither pack.
+
 ## Cross-lane requests
 
 _(none open)_
+
+No file owned by Lane A was modified. The four chat-service files and the whole
+`apps/claw-coding-agent` submodule are untouched and remain unstaged.
