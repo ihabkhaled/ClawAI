@@ -22,7 +22,7 @@ Lane A's items as such rather than claiming them.
 | **R1**  | P0 correctness, observability, CI                | `PARTIAL`                           | see below                                                        |
 | **R2**  | Runtime 2.1, effective catalog, auth             | `OPEN`                              | no 2.1 schema exists; `runtimeStartSchema` still `.strict()` 2.0 |
 | **R3**  | Native tool gateway, transcript, anti-drift      | `PARTIAL` — transport `IMPLEMENTED` | 7 commits, below                                                 |
-| **R4**  | Effort/speed/capability registry, stream lines   | `OPEN`                              | no capability-evidence table exists                              |
+| **R4**  | Effort/speed/capability registry, stream lines   | `PARTIAL`                           | contracts landed in `80ecf396`; see below                        |
 | **R5**  | All provider/data-plane lanes                    | `PARTIAL`                           | 4 of 4 lanes carry tools; bridge/residency `OPEN`                |
 | **R6**  | Governed research, re-search, crawl              | `OPEN`                              | research-service exists, not exposed as Runtime tools            |
 | **R7**  | Unified context/modes, receipt-backed completion | `OPEN`                              | Lane A                                                           |
@@ -163,3 +163,66 @@ Running containers currently serve the **pre-bump** dependency set: their
 `node_modules` is baked into the image (only `src`, `package.json` and `prisma`
 are bind-mounted), so the bumps land on the next image rebuild. All 8 restarted
 containers report healthy.
+
+---
+
+## R4 — Effort, speed, model evidence, stream lines
+
+### §9 capability evidence — contract `IMPLEMENTED`, probes `OPEN`
+
+| Item                                                            | Status        | Evidence                                                   |
+| --------------------------------------------------------------- | ------------- | ---------------------------------------------------------- |
+| `ModelCapabilityEvidence` record shape                          | `IMPLEMENTED` | `shared-types/src/types/model-capability-evidence.type.ts` |
+| Source + confidence vocabulary                                  | `IMPLEMENTED` | `CapabilityEvidenceSource`, `CapabilityConfidence`         |
+| Cache key = connection + version + model + digest               | `IMPLEMENTED` | `ModelCapabilityCacheKey`                                  |
+| Connector emits provenance, not a bare boolean                  | `IMPLEMENTED` | `ollama.adapter.ts` → `toolEvidence`                       |
+| §9.2 probe sequence (`/api/show`, warm, `/api/ps`, behavioural) | `OPEN`        | nothing probes yet; every record is `ADVERTISED`           |
+| §9.3 routing filters/ranks on evidence                          | `OPEN`        | needs a connector→routing transport for evidence           |
+
+**The honest state.** `6b372c00` gave the Ollama connector a curated family
+list, which §9 explicitly names as the anti-pattern ("never route Agent work
+from a hard-coded model-name guess"). The curated list is still the only
+source — what changed is that it now _says so_: every record carries
+`PROVIDER_ADVERTISED` / `ADVERTISED` and a rationale ending "not yet
+behaviourally probed", asserted by a test that the rationale never claims
+otherwise. That converts a silent guess into a labelled one. It does not
+convert it into evidence, and this file will not claim otherwise until a probe
+actually runs.
+
+`CapabilityConfidence.FAILED` is deliberately distinct from `UNKNOWN` so a
+model that failed a probe can never be re-ranked upward by a later
+curated-list match.
+
+### §10 effort contract — `IMPLEMENTED` (no callers yet)
+
+| Item                                            | Status        | Evidence                                 |
+| ----------------------------------------------- | ------------- | ---------------------------------------- |
+| `ClawEffortProfile` ladder incl. `ULTRA` preset | `IMPLEMENTED` | `claw-effort-profile.enum.ts`            |
+| `ResolvedEffort` with resolution kind + warning | `IMPLEMENTED` | `effort-resolution.type.ts`              |
+| Orchestration table (§10.3)                     | `IMPLEMENTED` | `EFFORT_ORCHESTRATION`                   |
+| Budget envelopes (§10.5)                        | `IMPLEMENTED` | `EFFORT_BUDGET`, monotonicity asserted   |
+| Never silently map an unsupported profile       | `IMPLEMENTED` | every downgrade sets `warning`; 19 tests |
+| Never send `ultra` to a provider                | `IMPLEMENTED` | asserted directly                        |
+| Resolve downward, never upward                  | `IMPLEMENTED` | asserted                                 |
+| Provider adapters call the resolver             | `OPEN`        | contract only; no lane consumes it yet   |
+
+The resolver has **no production callers**. That is stated plainly rather than
+buried: by this repository's own "present is not wired" test it is currently a
+contract, not a behaviour. It was built ahead of its consumers deliberately —
+§10 is the thing R4's provider work has to agree on, and agreeing on it after
+four lanes have each invented their own mapping is how the mappings diverge.
+The next unit wires it into the provider adapters.
+
+### §11 speed contract
+
+`OPEN`. Same shape as §10 and should follow the same rule: a speed tier that
+cannot be honoured must be reported, never silently ignored.
+
+---
+
+## Tooling fixes made along the way
+
+| Item                                                              | Evidence                                                                                                                                                                                                                        |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pre-commit hook OOM on multi-workspace commits                    | `80ecf396` — ESLint heap 4 GB → 8 GB, matching what CI already sets. A gate that dies with "Ineffective mark-compacts near heap limit" reads like a broken commit and teaches people to reach for `--no-verify`.                |
+| `unicorn/no-useless-undefined` autofix broke a required parameter | Surfaced by the hook's own typecheck step. `resolveEffort`'s third parameter is now genuinely optional, which is also the more accurate signature — "this lane has no effort parameter" is a real case, not a missing argument. |
