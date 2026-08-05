@@ -22,7 +22,7 @@ Lane A's items as such rather than claiming them.
 | **R1**  | P0 correctness, observability, CI                | `PARTIAL`                           | see below                                                        |
 | **R2**  | Runtime 2.1, effective catalog, auth             | `OPEN`                              | no 2.1 schema exists; `runtimeStartSchema` still `.strict()` 2.0 |
 | **R3**  | Native tool gateway, transcript, anti-drift      | `PARTIAL` — transport `IMPLEMENTED` | 7 commits, below                                                 |
-| **R4**  | Effort/speed/capability registry, stream lines   | `PARTIAL`                           | contracts landed in `80ecf396`; see below                        |
+| **R4**  | Effort/speed/capability registry, stream lines   | `PARTIAL`                           | §10 + §11 wired; §9 probes OPEN — see below                      |
 | **R5**  | All provider/data-plane lanes                    | `PARTIAL`                           | 4 of 4 lanes carry tools; bridge/residency `OPEN`                |
 | **R6**  | Governed research, re-search, crawl              | `OPEN`                              | research-service exists, not exposed as Runtime tools            |
 | **R7**  | Unified context/modes, receipt-backed completion | `OPEN`                              | Lane A                                                           |
@@ -213,10 +213,43 @@ contract, not a behaviour. It was built ahead of its consumers deliberately —
 four lanes have each invented their own mapping is how the mappings diverge.
 The next unit wires it into the provider adapters.
 
-### §11 speed contract
+### §11 speed contract — `IMPLEMENTED` and wired
 
-`OPEN`. Same shape as §10 and should follow the same rule: a speed tier that
-cannot be honoured must be reported, never silently ignored.
+| Item                                            | Status        | Evidence                                          |
+| ----------------------------------------------- | ------------- | ------------------------------------------------- |
+| `ClawSpeedProfile` + `SpeedProviderMode`        | `IMPLEMENTED` | `claw-speed-profile.enum.ts`                      |
+| `ResolvedSpeed` with multiplier + concurrency   | `IMPLEMENTED` | `speed-resolution.type.ts`                        |
+| Never claim 2× while running standard           | `IMPLEMENTED` | multiplier stays 1 when ungranted; asserted       |
+| `UNSUPPORTED` distinct from `STANDARD`          | `IMPLEMENTED` | asserted — otherwise the degradation is invisible |
+| Concurrency drops back when the tier is refused | `IMPLEMENTED` | asserted                                          |
+| Mutating ops never parallelised for speed       | `IMPLEMENTED` | only read-only ceilings scale                     |
+| OpenAI `service_tier` on the wire               | `IMPLEMENTED` | `132c6010`                                        |
+| Anthropic `speed` / local acceleration profiles | `OPEN`        | path constant exists; lane not wired              |
+| Observed TTFT / tokens-per-second recorded      | `OPEN`        | `withObservedSpeed` exists, nothing measures yet  |
+
+The multiplier is deliberately the _granted_ envelope rather than the requested
+one. It is both what the user is shown and what a cost reservation is sized
+from, so reporting 2× on a run that received standard throughput would
+overcharge for speed nobody got.
+
+---
+
+## R6 — why it is not started
+
+R6 exposes search / fetch / crawl as **server-owned** Runtime tools (§15.1):
+tools the backend dispatches directly, with no extension roundtrip.
+`claw-research-service` already has the endpoints (`search`, `fetch`, `scrape`,
+`research`), so the capability exists.
+
+What is missing is the dispatch half. A server-owned tool has to be admitted
+into the catalog and then executed from the Runtime V2 loop —
+`runtime-v2-loop.manager.ts`, which is **Lane A's file** in the ownership
+ledger. Writing the tool definitions without the dispatch would produce exactly
+the "present is not wired" scaffolding this repository's intake protocol
+rejects, and which this lane has already had to correct once.
+
+This is a genuine cross-lane dependency, not a scheduling choice. It unblocks
+as soon as Lane A's loop can dispatch a server-owned target.
 
 ---
 
