@@ -37,22 +37,65 @@ export function isCapabilityDenial(content: string): boolean {
   return RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS.some((pattern) => pattern.test(normalized));
 }
 
-function jsonDocument(content: string): unknown {
+/**
+ * Returns the JSON text that could carry a tool request, or null when the reply
+ * is plainly an answer.
+ *
+ * A fence only qualifies when it is untagged or tagged `json`. This matters
+ * most for a CODING agent: answers routinely open with ```bash, ```ts or
+ * ```python, and treating every fence as a candidate meant the raw markdown was
+ * handed to JSON.parse, which threw `Unexpected token 'b', "bash` and failed
+ * the whole run. A fenced shell snippet is an answer, not a malformed tool
+ * request, and must not be routed through the repair path.
+ */
+function jsonCandidate(content: string): string | null {
   const trimmed = content.trim();
-  const fenced = /^```(?:json)?\s*([\s\S]*?)\s*```$/iu.exec(trimmed);
-  const parsed: unknown = JSON.parse(fenced?.[1] ?? trimmed);
-  return parsed;
+  const fenced = /^```([A-Za-z0-9_-]*)\r?\n?([\s\S]*?)\s*```$/u.exec(trimmed);
+  if (fenced !== null) {
+    const language = (fenced[1] ?? '').toLowerCase();
+    if (language !== '' && language !== 'json') return null;
+    const body = (fenced[2] ?? '').trim();
+    return body.startsWith('{') ? body : null;
+  }
+  return trimmed.startsWith('{') ? trimmed : null;
+}
+
+function isToolRequestAttempt(document: unknown): boolean {
+  return (
+    document !== null &&
+    typeof document === 'object' &&
+    !Array.isArray(document) &&
+    (document as Record<string, unknown>)['kind'] === 'tool'
+  );
 }
 
 export function parseRuntimeV2ModelOutput(
   content: string,
   definitions?: readonly ToolDefinitionDto[],
 ): RuntimeV2ModelOutput {
-  const trimmed = content.trim();
-  if (!trimmed.startsWith('{') && !trimmed.startsWith('```')) {
+  const candidate = jsonCandidate(content);
+  if (candidate === null) return { kind: 'final', content };
+
+  let document: unknown;
+  try {
+    document = JSON.parse(candidate);
+  } catch {
+    // Looked like JSON and is not. That is prose or code the model happened to
+    // start with a brace, not an attempt at a tool request, so it is answered
+    // rather than repaired.
     return { kind: 'final', content };
   }
-  const parsed = runtimeV2ToolRequestSchema.safeParse(jsonDocument(content));
+
+  // `kind: "tool"` is the schema's discriminator, so it is also the only honest
+  // signal that the model was ATTEMPTING a tool request. A model asked to
+  // produce a JSON config answers with a perfectly good JSON object that has no
+  // `kind` — that is an answer, and sending it to the repair loop would fail a
+  // correct response.
+  if (!isToolRequestAttempt(document)) return { kind: 'final', content };
+
+  // Past this point the model declared a tool request, so a schema failure is a
+  // genuinely malformed one and still raises for the repair loop.
+  const parsed = runtimeV2ToolRequestSchema.safeParse(document);
   if (!parsed.success) throw parsed.error;
   if (definitions !== undefined) assertAdmittedTool(parsed.data, definitions);
   return parsed.data;

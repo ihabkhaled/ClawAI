@@ -130,3 +130,64 @@ describe('Runtime V2 utilities', () => {
     });
   });
 });
+
+describe('parseRuntimeV2ModelOutput — a code answer is an answer, not a tool request', () => {
+  // Caught in a live 20-round lab: asking for a bash one-liner failed the whole
+  // run with `Unexpected token 'b', "bash`. Any reply opening with a fence was
+  // treated as a possible tool request, and the extractor only understood
+  // ```json, so raw markdown reached JSON.parse. For a CODING agent this is the
+  // common case, not an edge case.
+  it.each([
+    ['bash', '```bash\nfind . -name "*.ts" | xargs wc -l\n```'],
+    ['ts', '```ts\nexport const add = (a: number, b: number): number => a + b;\n```'],
+    ['python', '```python\nprint("hello")\n```'],
+    ['sql', '```sql\nSELECT * FROM users;\n```'],
+    ['no language', '```\nplain fenced text\n```'],
+  ])('treats a fenced %s block as final content', (_language, content) => {
+    const output = parseRuntimeV2ModelOutput(content);
+
+    expect(output.kind).toBe('final');
+    expect(output).toMatchObject({ content });
+  });
+
+  it('treats a JSON answer without kind="tool" as final content', () => {
+    // Asking a coding agent for a JSON config produces a valid JSON object.
+    // Routing that to the repair loop would fail a correct answer.
+    const content = '{"name":"claw","version":"1.0.0"}';
+
+    expect(parseRuntimeV2ModelOutput(content)).toEqual({ kind: 'final', content });
+  });
+
+  it('treats a json-fenced answer without kind="tool" as final content', () => {
+    const content = '```json\n{"port":4002}\n```';
+
+    expect(parseRuntimeV2ModelOutput(content)).toEqual({ kind: 'final', content });
+  });
+
+  it('treats prose that merely starts with a brace as final content', () => {
+    const content = '{ this is not valid json at all';
+
+    expect(parseRuntimeV2ModelOutput(content)).toEqual({ kind: 'final', content });
+  });
+
+  it('still parses a real tool request, bare and json-fenced', () => {
+    const request = {
+      kind: 'tool',
+      toolName: 'workspace.read',
+      toolVersion: '1.0.0',
+      operation: 'read',
+      arguments: { pathHandle: 'opaque_handle_1' },
+      targetId: 'runtime_target_00001',
+    };
+
+    expect(parseRuntimeV2ModelOutput(JSON.stringify(request))).toEqual(request);
+    expect(parseRuntimeV2ModelOutput(`\`\`\`json\n${JSON.stringify(request)}\n\`\`\``)).toEqual(
+      request,
+    );
+  });
+
+  it('still raises on a declared but malformed tool request so repair can run', () => {
+    // Widening the "this is an answer" path must not swallow a genuine attempt.
+    expect(() => parseRuntimeV2ModelOutput('{"kind":"tool","toolName":"x"}')).toThrow();
+  });
+});
