@@ -1,13 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { httpGet, httpGetText } from '../../../../common/utilities/http.utility';
+import { httpGet, httpGetText, httpPost } from '../../../../common/utilities/http.utility';
 import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import { isOllamaMultimodalModel } from '../../constants/ollama-vision-heuristics.constants';
 import {
   describeOllamaToolCapability,
   isOllamaToolCapableModel,
 } from '../../constants/ollama-tool-heuristics.constants';
-import { CapabilityConfidence, CapabilityEvidenceSource } from '@claw/shared-types';
+import {
+  CapabilityConfidence,
+  CapabilityEvidenceSource,
+  type ModelBehaviorProbeResult,
+} from '@claw/shared-types';
 import { resolveOllamaCloudModelMetadata } from '../../constants/ollama-cloud-models.constants';
 import {
   OLLAMA_CATALOG_CLOUD_URL,
@@ -18,8 +22,21 @@ import {
   OLLAMA_CLOUD_API_BASE_URL,
   OLLAMA_LOCALHOST_PATTERNS,
 } from '../../constants/ollama.constants';
+import {
+  OLLAMA_TOOL_PROBE_FAILURE_NO_CALL,
+  OLLAMA_TOOL_PROBE_FAILURE_REQUEST,
+  OLLAMA_TOOL_PROBE_FAILURE_WRONG_TOOL,
+  OLLAMA_TOOL_PROBE_ID,
+  OLLAMA_TOOL_PROBE_OPTIONS,
+  OLLAMA_TOOL_PROBE_PROMPT,
+  OLLAMA_TOOL_PROBE_TIMEOUT_MS,
+  OLLAMA_TOOL_PROBE_TOOL,
+} from '../../constants/ollama-tool-probe.constants';
 import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
-import { type OllamaModelsResponse } from '../../types/provider-api.types';
+import {
+  type OllamaModelsResponse,
+  type OllamaProbeChatResponse,
+} from '../../types/provider-api.types';
 import {
   type ConnectorConfig,
   type ProviderAdapter,
@@ -157,6 +174,81 @@ export class OllamaAdapter implements ProviderAdapter {
 
     return {
       Authorization: `Bearer ${apiKey}`,
+    };
+  }
+
+  /**
+   * Runs the deterministic native-tool probe against one exact model (§9.2).
+   *
+   * This is what turns an ADVERTISED claim into PROVEN or FAILED. It costs one
+   * small inference call, which is exactly why it is NOT run during syncModels:
+   * a ~250-model catalog would mean 250 inference calls per sync. It is invoked
+   * on demand instead, and the result is cached against the model identity.
+   *
+   * Never throws. A probe that cannot complete is itself evidence — it returns
+   * a FAILED result with a stable code rather than propagating an error that
+   * would look like a broken connector.
+   */
+  async probeToolCapability(
+    config: ConnectorConfig,
+    modelKey: string,
+  ): Promise<ModelBehaviorProbeResult> {
+    const baseUrl = this.resolveBaseUrl(config.baseUrl);
+    const startedAt = Date.now();
+    this.logger.debug(`probeToolCapability: probing ${modelKey} at ${baseUrl}`);
+
+    try {
+      const response = await httpPost<OllamaProbeChatResponse>({
+        url: `${baseUrl}/chat`,
+        headers: this.buildHeaders(config.apiKey),
+        timeoutMs: OLLAMA_TOOL_PROBE_TIMEOUT_MS,
+        body: {
+          model: modelKey,
+          messages: [{ role: 'user', content: OLLAMA_TOOL_PROBE_PROMPT }],
+          tools: [OLLAMA_TOOL_PROBE_TOOL],
+          stream: false,
+          options: OLLAMA_TOOL_PROBE_OPTIONS,
+        },
+      });
+
+      if (!response.ok) {
+        return this.probeFailure(startedAt, OLLAMA_TOOL_PROBE_FAILURE_REQUEST);
+      }
+
+      const calls = response.data.message?.tool_calls ?? [];
+      if (calls.length === 0) {
+        // The model answered in prose instead of calling. That is precisely
+        // the drift this whole feature exists to prevent, and here it is
+        // caught before any agent run depends on it.
+        return this.probeFailure(startedAt, OLLAMA_TOOL_PROBE_FAILURE_NO_CALL);
+      }
+      if (calls[0]?.function?.name !== OLLAMA_TOOL_PROBE_TOOL.function.name) {
+        // Emitting a call for a tool that was never offered is worse than
+        // emitting none — it means names cannot be trusted for dispatch.
+        return this.probeFailure(startedAt, OLLAMA_TOOL_PROBE_FAILURE_WRONG_TOOL);
+      }
+
+      this.logger.log(`probeToolCapability: ${modelKey} PROVEN tool-capable`);
+      return {
+        probeId: OLLAMA_TOOL_PROBE_ID,
+        passed: true,
+        checkedAt: new Date().toISOString(),
+        durationMs: Date.now() - startedAt,
+      };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'unknown error';
+      this.logger.warn(`probeToolCapability: ${modelKey} probe errored — ${message}`);
+      return this.probeFailure(startedAt, OLLAMA_TOOL_PROBE_FAILURE_REQUEST);
+    }
+  }
+
+  private probeFailure(startedAt: number, failureCode: string): ModelBehaviorProbeResult {
+    return {
+      probeId: OLLAMA_TOOL_PROBE_ID,
+      passed: false,
+      checkedAt: new Date().toISOString(),
+      durationMs: Date.now() - startedAt,
+      failureCode,
     };
   }
 

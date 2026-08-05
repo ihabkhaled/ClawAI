@@ -69,3 +69,13 @@ export type OllamaModelEntry = {
     quantization_level?: string;
   };
 };
+
+// Minimal slice of a native Ollama /api/chat response — only what the tool
+// probe reads. Deliberately narrow: the probe is a yes/no mechanical check and
+// has no business depending on the rest of the payload.
+export interface OllamaProbeChatResponse {
+  message?: {
+    content?: string;
+    tool_calls?: Array<{ function?: { name?: string } }>;
+  };
+}

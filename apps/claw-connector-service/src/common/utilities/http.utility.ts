@@ -63,3 +63,30 @@ export function httpGetText(options: HttpRequestOptions): Promise<HttpResponse<s
       clearTimeout(timeout);
     });
 }
+
+export function httpPost<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
+  const { url, headers, body, timeoutMs = DEFAULT_HTTP_TIMEOUT_MS } = options;
+  logger.debug(`httpPost: requesting ${url} (timeout=${String(timeoutMs)}ms)`);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const startTime = Date.now();
+
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(body),
+    signal: controller.signal,
+  })
+    .then(async (response) => {
+      const data = (await response.json()) as T;
+      const durationMs = Date.now() - startTime;
+      logger.debug(
+        `httpPost: completed ${url} status=${String(response.status)} durationMs=${String(durationMs)}`,
+      );
+      return { ok: response.ok, status: response.status, data };
+    })
+    .finally(() => {
+      clearTimeout(timeout);
+    });
+}

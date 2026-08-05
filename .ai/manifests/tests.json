@@ -46,7 +46,7 @@
     },
     "claw-connector-service": {
       "runner": "jest",
-      "testFiles": 17
+      "testFiles": 18
     },
     "claw-file-generation-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 765
+  "total": 766
 }

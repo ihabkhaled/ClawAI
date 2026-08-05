@@ -3,6 +3,7 @@ export type HttpRequestOptions = {
   method?: string;
   headers?: Record<string, string>;
   timeoutMs?: number;
+  body?: unknown;
 };
 
 export type HttpResponse<T> = {
