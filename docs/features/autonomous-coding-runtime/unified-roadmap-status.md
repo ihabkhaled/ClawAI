@@ -170,14 +170,16 @@ containers report healthy.
 
 ### §9 capability evidence — contract `IMPLEMENTED`, probes `OPEN`
 
-| Item                                                            | Status        | Evidence                                                   |
-| --------------------------------------------------------------- | ------------- | ---------------------------------------------------------- |
-| `ModelCapabilityEvidence` record shape                          | `IMPLEMENTED` | `shared-types/src/types/model-capability-evidence.type.ts` |
-| Source + confidence vocabulary                                  | `IMPLEMENTED` | `CapabilityEvidenceSource`, `CapabilityConfidence`         |
-| Cache key = connection + version + model + digest               | `IMPLEMENTED` | `ModelCapabilityCacheKey`                                  |
-| Connector emits provenance, not a bare boolean                  | `IMPLEMENTED` | `ollama.adapter.ts` → `toolEvidence`                       |
-| §9.2 probe sequence (`/api/show`, warm, `/api/ps`, behavioural) | `OPEN`        | nothing probes yet; every record is `ADVERTISED`           |
-| §9.3 routing filters/ranks on evidence                          | `OPEN`        | needs a connector→routing transport for evidence           |
+| Item                                                   | Status        | Evidence                                                                               |
+| ------------------------------------------------------ | ------------- | -------------------------------------------------------------------------------------- |
+| `ModelCapabilityEvidence` record shape                 | `IMPLEMENTED` | `shared-types/src/types/model-capability-evidence.type.ts`                             |
+| Source + confidence vocabulary                         | `IMPLEMENTED` | `CapabilityEvidenceSource`, `CapabilityConfidence`                                     |
+| Cache key = connection + version + model + digest      | `IMPLEMENTED` | `ModelCapabilityCacheKey`                                                              |
+| Connector emits provenance, not a bare boolean         | `IMPLEMENTED` | `ollama.adapter.ts` → `toolEvidence`                                                   |
+| §9.2 behavioural tool probe                            | `IMPLEMENTED` | `a12a5249` + `69ccd21f` — `POST /connectors/:id/models/:modelKey/probe-tools`; 7 tests |
+| §9.2 discovery sequence (`/api/show`, warm, `/api/ps`) | `OPEN`        | context allocation not yet read from `/api/ps`                                         |
+| Probe result persisted onto the model record           | `OPEN`        | probe returns evidence; storing it needs a schema column                               |
+| §9.3 routing filters/ranks on evidence                 | `OPEN`        | needs a connector→routing transport for evidence                                       |
 
 **The honest state.** `6b372c00` gave the Ollama connector a curated family
 list, which §9 explicitly names as the anti-pattern ("never route Agent work
