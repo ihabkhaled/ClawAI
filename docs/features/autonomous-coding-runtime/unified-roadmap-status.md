@@ -215,17 +215,18 @@ The next unit wires it into the provider adapters.
 
 ### §11 speed contract — `IMPLEMENTED` and wired
 
-| Item                                            | Status        | Evidence                                          |
-| ----------------------------------------------- | ------------- | ------------------------------------------------- |
-| `ClawSpeedProfile` + `SpeedProviderMode`        | `IMPLEMENTED` | `claw-speed-profile.enum.ts`                      |
-| `ResolvedSpeed` with multiplier + concurrency   | `IMPLEMENTED` | `speed-resolution.type.ts`                        |
-| Never claim 2× while running standard           | `IMPLEMENTED` | multiplier stays 1 when ungranted; asserted       |
-| `UNSUPPORTED` distinct from `STANDARD`          | `IMPLEMENTED` | asserted — otherwise the degradation is invisible |
-| Concurrency drops back when the tier is refused | `IMPLEMENTED` | asserted                                          |
-| Mutating ops never parallelised for speed       | `IMPLEMENTED` | only read-only ceilings scale                     |
-| OpenAI `service_tier` on the wire               | `IMPLEMENTED` | `132c6010`                                        |
-| Anthropic `speed` / local acceleration profiles | `OPEN`        | path constant exists; lane not wired              |
-| Observed TTFT / tokens-per-second recorded      | `OPEN`        | `withObservedSpeed` exists, nothing measures yet  |
+| Item                                            | Status        | Evidence                                                                         |
+| ----------------------------------------------- | ------------- | -------------------------------------------------------------------------------- |
+| `ClawSpeedProfile` + `SpeedProviderMode`        | `IMPLEMENTED` | `claw-speed-profile.enum.ts`                                                     |
+| `ResolvedSpeed` with multiplier + concurrency   | `IMPLEMENTED` | `speed-resolution.type.ts`                                                       |
+| Never claim 2× while running standard           | `IMPLEMENTED` | multiplier stays 1 when ungranted; asserted                                      |
+| `UNSUPPORTED` distinct from `STANDARD`          | `IMPLEMENTED` | asserted — otherwise the degradation is invisible                                |
+| Concurrency drops back when the tier is refused | `IMPLEMENTED` | asserted                                                                         |
+| Mutating ops never parallelised for speed       | `IMPLEMENTED` | only read-only ceilings scale                                                    |
+| OpenAI `service_tier` on the wire               | `IMPLEMENTED` | `132c6010`                                                                       |
+| Anthropic `speed` lane                          | `IMPLEMENTED` | `a2d226c9`                                                                       |
+| Observed TTFT / tokens-per-second recorded      | `IMPLEMENTED` | measured at finalize, on `LlmResponse.speed.observed`; omitted when not measured |
+| llama.cpp local acceleration profiles           | `OPEN`        | needs benchmarked per-model server profiles                                      |
 
 The multiplier is deliberately the _granted_ envelope rather than the requested
 one. It is both what the user is shown and what a cost reservation is sized
