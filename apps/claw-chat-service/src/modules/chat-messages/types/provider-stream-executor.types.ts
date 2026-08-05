@@ -3,7 +3,7 @@ import {
   type ProviderStreamFinalTimings,
   type StreamToolCallPayload,
 } from './provider-stream.types';
-import { type StreamStageTimestamps } from './stream.types';
+import { type StreamMetrics, type StreamStageTimestamps } from './stream.types';
 
 // Per-emit context: identifies which stream + lane an emitted fragment belongs
 // to so the SSE channel can route it. parallelGroupId/laneId are set only for
@@ -40,4 +40,7 @@ export type LoopState = {
   // Native tool calls the model requested, released whole by the reader at the
   // terminal frame. Empty on every ordinary streamed answer.
   toolCalls?: readonly StreamToolCallPayload[];
+  // The metrics emitted at finalize, kept so the caller can report measured
+  // throughput instead of a number derived from the requested tier.
+  finalMetrics?: StreamMetrics;
 };

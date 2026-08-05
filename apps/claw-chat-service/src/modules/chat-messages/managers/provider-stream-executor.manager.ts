@@ -269,6 +269,10 @@ export class ProviderStreamExecutor {
     this.closeStageIfActive(state, Date.now());
     const baseMetrics = tracker.snapshot(stage, Date.now());
     const enriched = this.buildFinalMetrics(baseMetrics, state);
+    // Stashed so the caller can report MEASURED speed rather than inferring it
+    // from the requested tier — §11.5 requires the figures to be tracked, and
+    // a number derived from a profile name is not a measurement.
+    state.finalMetrics = enriched;
     this.streamService.emitMetrics(ctx.threadId, {
       provider: ctx.provider,
       model: ctx.model,
@@ -380,6 +384,7 @@ export class ProviderStreamExecutor {
       finishReason: state.finishReason,
       cancelled: state.cancelled,
       ...(state.toolCalls === undefined ? {} : { toolCalls: state.toolCalls }),
+      ...(state.finalMetrics === undefined ? {} : { finalMetrics: state.finalMetrics }),
     };
   }
 

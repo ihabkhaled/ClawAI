@@ -135,3 +135,14 @@ describe('withObservedSpeed', () => {
     expect(withObservedSpeed(resolved)).toEqual(resolved);
   });
 });
+
+describe('observed speed is measured, never inferred', () => {
+  it('is omitted when the figures were not measured', () => {
+    // §11.5 requires throughput to be TRACKED. Filling a missing measurement
+    // with a zero, or with a number derived from the requested tier, turns
+    // "we did not measure" into a false claim that we did.
+    const resolved = resolveSpeed(ClawSpeedProfile.TURBO_2X, TIERED, 'service_tier');
+
+    expect(withObservedSpeed(resolved).observed).toBeUndefined();
+  });
+});

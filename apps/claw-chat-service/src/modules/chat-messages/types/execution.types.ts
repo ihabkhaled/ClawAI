@@ -1,4 +1,4 @@
-import type { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
+import type { ResolvedSpeed, TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 import type { AttemptRecord } from './fallback-executor.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
 import type { AnthropicMessage } from './anthropic-message-shape.types';
@@ -136,6 +136,11 @@ export type LlmResponse = {
   // compiling untouched; absent means "this call carried no tool catalog".
   toolCalls?: readonly NormalizedToolCall[];
   finishedForTools?: boolean;
+  // What the speed contract actually granted, plus measured throughput when it
+  // was measured. Carrying the resolution (not just the request) is what lets
+  // the UI say "requested turbo, ran standard" instead of silently showing a
+  // tier that never happened.
+  speed?: ResolvedSpeed;
 };
 
 export type OllamaGenerateRequest = {
@@ -359,6 +364,10 @@ export type AnthropicMessagesRequest = {
   // top-level field. Same rule as every other lane: only a value this model
   // is known to accept.
   output_config?: { effort: string };
+  // Anthropic's speed tier, on supported models/accounts. Absent means
+  // standard service — including when a tier was requested but not granted,
+  // which the resolution reports as UNSUPPORTED so it stays visible.
+  speed?: string;
 };
 
 // Slice D — Gemini native generateContent request body shape (when

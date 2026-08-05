@@ -11,7 +11,9 @@ import {
   extractGeminiUsage,
   extractOllamaUsage,
   extractOpenAiCompatibleUsage,
+  SPEED_PATH_ANTHROPIC_SPEED,
   SPEED_PATH_OPENAI_SERVICE_TIER,
+  withObservedSpeed,
 } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest, recordGet } from '../../../common/utilities';
@@ -60,6 +62,7 @@ import {
   resolveToolDialect,
 } from '../utilities/provider-tool-dialect.utility';
 import {
+  buildObservedSpeed,
   effortFlagForRequest,
   effortLevelForRequest,
   isEffortDowngraded,
@@ -111,7 +114,11 @@ import {
 } from '../utilities/video-attachment-routing.utility';
 import type { GeminiFileUploadFn, GeminiGenerateContentResponse } from '../types/gemini.types';
 import { GeminiFilesApiManager } from './gemini-files-api.manager';
-import type { StreamContext, StreamExecutionInput } from '../types/stream-execution.types';
+import type {
+  StreamContext,
+  StreamExecutionInput,
+  StreamExecutionResult,
+} from '../types/stream-execution.types';
 import type { VisibleProgressStatus } from '../types/stream.types';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 import { AccessControlService } from '../services/access-control.service';
@@ -984,6 +991,7 @@ export class ChatExecutionManager implements OnModuleInit {
               finishedForTools: finishReason === OPENAI_TOOL_CALLS_FINISH_REASON,
             }
           : {}),
+        ...this.buildSpeedReport(base, result, executionOptions),
       };
     } finally {
       cancellation.release(cancelKey);
@@ -2786,6 +2794,29 @@ export class ChatExecutionManager implements OnModuleInit {
   // and leaves the request at standard service with a 1x multiplier — never a
   // 2x label on a standard run, which would both mislead the user and
   // over-reserve cost for throughput nobody received.
+  // Reports what the speed contract granted, with MEASURED throughput attached
+  // when the stream actually measured it. Absent when no tier was requested,
+  // so ordinary responses are unchanged.
+  private buildSpeedReport(
+    base: Omit<StreamExecutionInput, 'abortSignal'>,
+    result: StreamExecutionResult,
+    executionOptions: ExecutionOptions | undefined,
+  ): { speed?: ResolvedSpeed } {
+    const resolved = resolveExecutionSpeed(
+      executionOptions,
+      base.protocol === AiStreamProtocol.OLLAMA_NDJSON ? undefined : SPEED_PATH_OPENAI_SERVICE_TIER,
+    );
+    if (resolved === undefined) {
+      return {};
+    }
+    const observed = buildObservedSpeed(
+      result.finalMetrics?.timeToFirstTokenMs,
+      result.finalMetrics?.tokensPerSecond,
+      Date.now() - base.startMs,
+    );
+    return { speed: withObservedSpeed(resolved, observed) };
+  }
+
   private resolveSpeedForLane(
     executionOptions: ExecutionOptions | undefined,
     parameterPath: string | undefined,
@@ -2997,6 +3028,12 @@ export class ChatExecutionManager implements OnModuleInit {
     );
     if (anthropicEffort !== undefined) {
       requestBody.output_config = { effort: anthropicEffort };
+    }
+    const anthropicSpeed = speedTierForRequest(
+      this.resolveSpeedForLane(executionOptions, SPEED_PATH_ANTHROPIC_SPEED),
+    );
+    if (anthropicSpeed !== undefined) {
+      requestBody.speed = anthropicSpeed;
     }
     return requestBody;
   }

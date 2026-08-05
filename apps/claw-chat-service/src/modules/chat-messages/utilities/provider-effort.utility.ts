@@ -17,6 +17,7 @@
 import {
   ClawEffortProfile,
   EffortResolutionKind,
+  type ObservedSpeed,
   type ResolvedEffort,
   type ResolvedSpeed,
   SpeedProviderMode,
@@ -118,4 +119,24 @@ export function speedTierForRequest(resolved: ResolvedSpeed | undefined): string
 /** True when the requested tier could not be granted. */
 export function isSpeedUnavailable(resolved: ResolvedSpeed | undefined): boolean {
   return resolved?.providerMode === SpeedProviderMode.UNSUPPORTED;
+}
+
+/**
+ * Builds an ObservedSpeed from MEASURED stream metrics.
+ *
+ * Returns undefined unless both figures were actually measured. §11.5 requires
+ * throughput to be tracked rather than inferred, so a missing measurement is
+ * reported as missing — filling it with a zero, or with a number derived from
+ * the requested tier, would turn "we did not measure" into a false claim that
+ * we did.
+ */
+export function buildObservedSpeed(
+  timeToFirstTokenMs: number | undefined,
+  tokensPerSecond: number | undefined,
+  wallTimeMs: number,
+): ObservedSpeed | undefined {
+  if (timeToFirstTokenMs === undefined || tokensPerSecond === undefined) {
+    return undefined;
+  }
+  return { timeToFirstTokenMs, outputTokensPerSecond: tokensPerSecond, wallTimeMs };
 }

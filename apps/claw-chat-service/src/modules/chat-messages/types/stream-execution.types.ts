@@ -1,5 +1,6 @@
 import { type AiStreamProtocol } from '../../../common/enums';
 import { type StreamToolCallPayload } from './provider-stream.types';
+import { type StreamMetrics } from './stream.types';
 
 // Fully-built streaming request handed to ProviderStreamExecutor. The caller
 // (ChatExecutionManager) owns request construction + provider config so the
@@ -33,6 +34,9 @@ export type StreamExecutionResult = {
   // The caller reverse-maps them with `normalizeToolCalls` under the matching
   // dialect. Absent on every ordinary streamed answer.
   toolCalls?: readonly StreamToolCallPayload[];
+  // Measured stream metrics, so the caller can report OBSERVED throughput
+  // rather than a figure inferred from the requested speed tier.
+  finalMetrics?: StreamMetrics;
 };
 
 // Per-run identity threaded from the execution loop into the leaf provider
