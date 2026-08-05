@@ -542,8 +542,10 @@ services:
   # ---------------------------------------------------------------------------
   frontend:
     build:
-      context: ../apps/claw-frontend
-      dockerfile: Dockerfile
+      # Repo root, not apps/claw-frontend — the frontend workspace depends on
+      # @claw/shared-types, which only resolves when npm installs from the root.
+      context: ..
+      dockerfile: apps/claw-frontend/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
     container_name: claw-frontend
