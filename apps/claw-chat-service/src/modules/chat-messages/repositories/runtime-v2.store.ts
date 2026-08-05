@@ -25,6 +25,7 @@ import type {
   RuntimeV2DispatchInput,
   RuntimeV2InvocationInput,
   RuntimeV2MessageBindingLookup,
+  RuntimeV2ModelOutputInput,
   RuntimeV2MutationAck,
   RuntimeV2MutationDraft,
   RuntimeV2ReadAck,
@@ -41,6 +42,7 @@ import {
   runtimeV2Sha256,
   stableRuntimeV2Json,
 } from '../utilities/runtime-v2-identity.utility';
+import { buildRuntimeV2ModelEvents } from '../utilities/runtime-v2-model-events.utility';
 import {
   runtimeV2ClientRequestKey,
   runtimeV2KeyFamily,
@@ -547,6 +549,31 @@ export class RuntimeV2Store {
         ack.eventId,
         input.reason === undefined ? {} : { reason: { ...input.reason } },
       ),
+      ttlMilliseconds(input.ttlSeconds),
+    ]);
+  }
+
+  /**
+   * Publishes one model turn's output onto the run journal.
+   *
+   * Every event is allocated its own sequence inside the script, so the turn
+   * marker, the text and the summary keep the order they happened in and a
+   * client reading by cursor never sees a delta before its turn opens.
+   */
+  async appendModelOutput(input: RuntimeV2ModelOutputInput): Promise<RuntimeV2MutationAck> {
+    const ack = this.mutationDraft(input);
+    const events = buildRuntimeV2ModelEvents(input.turnId, input.text).map((event) =>
+      JSON.parse(
+        eventJson(input, event.type, createRuntimeV2Identity('evt'), { ...event.payload }),
+      ),
+    );
+    return this.mutationReply(RuntimeV2RedisOperation.APPEND_MODEL_OUTPUT, input, [
+      binding(input),
+      input.idempotencyKey,
+      runtimeV2Sha256(stableRuntimeV2Json(input)),
+      input.claimId,
+      JSON.stringify(ack),
+      JSON.stringify(events),
       ttlMilliseconds(input.ttlSeconds),
     ]);
   }

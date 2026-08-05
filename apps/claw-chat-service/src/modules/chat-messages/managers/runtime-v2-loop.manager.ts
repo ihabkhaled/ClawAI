@@ -135,6 +135,16 @@ export class RuntimeV2LoopManager {
       usedFallback: false,
       metadata: { runtimeV2: { runId: binding.runId, generation: binding.generation } },
     });
+    // The continuation path is the one a coding agent actually finishes on:
+    // the model called tools, got results, and is now answering. Its answer
+    // needs publishing to the journal exactly like the direct path's.
+    await this.store.appendModelOutput({
+      ...binding,
+      claimId: binding.claimId,
+      idempotencyKey: `${command.idempotencyKey}:continuation-output`,
+      turnId: command.result.continuation.nextTurnId ?? createRuntimeV2Identity('turn'),
+      text: output.content,
+    });
     await this.store.terminalize({
       ...binding,
       claimId: binding.claimId,
@@ -297,6 +307,18 @@ export class RuntimeV2LoopManager {
         latencyMs: response.latencyMs,
         usedFallback: false,
         metadata: { runtimeV2: { runId: binding.runId, generation: binding.generation } },
+      });
+      // Publish the answer onto the run journal BEFORE terminalizing, so a
+      // client reading the stream by cursor receives the text ahead of
+      // `run.completed` and never has to reconcile a finished run that never
+      // said anything. Persisting the message alone left the answer visible
+      // only to whoever queried the database.
+      await this.store.appendModelOutput({
+        ...binding,
+        claimId: claim.claimId,
+        idempotencyKey: createRuntimeV2Identity('model-output'),
+        turnId: createRuntimeV2Identity('turn'),
+        text: output.content,
       });
       await this.store.terminalize({
         ...binding,

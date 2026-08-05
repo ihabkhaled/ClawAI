@@ -279,6 +279,33 @@ return {'OK', '{"runId":' .. cjson.encode(expected.runId) ..
   ',"events":' .. eventsJson .. '}'}
 `;
 
+// Appends the model's own output to the journal: the turn marker, the answer
+// text, and the closing summary.
+//
+// Without these the run streamed lifecycle and tool events only, so a client
+// watching the stream saw a run start, dispatch, call tools and complete —
+// while the assistant's actual answer went to the database and nowhere else.
+// The three events are appended under one sequence allocation each so their
+// order on the journal is the order they happened.
+export const RUNTIME_V2_MODEL_OUTPUT_SCRIPT = `-- runtime-v2:model-output
+${loadBinding}
+${replayCheck}
+if bound.lifecycle ~= 'active' then return {'DENIED', 'RUN_TERMINAL'} end
+if not bound.claimId or bound.claimId ~= ARGV[4] then return {'MISSING', 'STALE_CLAIM'} end
+local payloads = cjson.decode(ARGV[6])
+local sequence = 0
+for index = 1, #payloads do
+  sequence = redis.call('HINCRBY', KEYS[1], 'sequence', 1)
+  local event = payloads[index]; event.sequence = sequence
+  ${appendBoundedEvent}
+end
+local ack = cjson.decode(ARGV[5]); ack.sequence = sequence
+local ackJson = cjson.encode(ack)
+redis.call('HSET', KEYS[3], ARGV[2], cjson.encode({fingerprint=ARGV[3], ack=ackJson}))
+${refreshKeys}
+return {'OK', ackJson}
+`;
+
 export const RUNTIME_V2_BINDING_SCRIPT = `-- runtime-v2:binding
 if redis.call('EXISTS', unpack(KEYS)) ~= #KEYS then return {'MISSING', 'STALE_RUN'} end
 local ownerId = redis.call('HGET', KEYS[1], 'ownerId')
@@ -333,6 +360,7 @@ export const RUNTIME_V2_REDIS_SCRIPTS: Readonly<Record<RuntimeV2RedisOperation, 
   [RuntimeV2RedisOperation.CANCEL]: RUNTIME_V2_CANCEL_SCRIPT,
   [RuntimeV2RedisOperation.CLAIM_ROUTED]: RUNTIME_V2_CLAIM_SCRIPT,
   [RuntimeV2RedisOperation.MARK_DISPATCHED]: RUNTIME_V2_DISPATCH_SCRIPT,
+  [RuntimeV2RedisOperation.APPEND_MODEL_OUTPUT]: RUNTIME_V2_MODEL_OUTPUT_SCRIPT,
   [RuntimeV2RedisOperation.TERMINAL]: RUNTIME_V2_TERMINAL_SCRIPT,
   [RuntimeV2RedisOperation.READ_EVENTS]: RUNTIME_V2_READ_SCRIPT,
   [RuntimeV2RedisOperation.READ_BINDING]: RUNTIME_V2_BINDING_SCRIPT,

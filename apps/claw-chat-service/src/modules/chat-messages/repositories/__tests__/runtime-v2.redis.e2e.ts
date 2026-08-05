@@ -827,6 +827,81 @@ describe('Runtime V2 Redis Lua authority', () => {
     expect(empty.runId).toBe(start.runId);
   });
 
+  // The answer has to reach the JOURNAL, not just the database.
+  //
+  // Runtime V2 appended lifecycle and tool events only, so a client watching the
+  // stream saw a run start, dispatch, call tools and complete while the
+  // assistant's text went to the database and nowhere else — the agent looked
+  // like it did nothing. The protocol already defined these three event types
+  // and clients already projected them; the server never emitted any of them.
+  it('appends the model turn, its text and its summary to the journal', async () => {
+    const input = {
+      ownerId,
+      messageId: 'runtime_e2e_message_08',
+      request: {
+        ...request,
+        clientRequestId: 'runtime_e2e_request_08',
+        idempotencyKey: 'runtime_e2e_start_key8',
+      },
+      ttlSeconds: 60,
+    };
+    const start = await store.start(input);
+    const family = runtimeV2KeyFamily(start.runId);
+    for (const key of [
+      family.state,
+      family.events,
+      family.acknowledgements,
+      family.invocations,
+      family.results,
+      family.steering,
+      family.steeringData,
+      runtimeV2MessageKey(input.messageId),
+      runtimeV2StartKey(ownerId, input.request.idempotencyKey),
+      runtimeV2ClientRequestKey(ownerId, input.request.clientRequestId),
+    ]) {
+      cleanupKeys.add(key);
+    }
+
+    const bound = await store.resolveBinding({
+      ownerId,
+      threadId,
+      runId: start.runId,
+      generation: start.generation,
+      ttlSeconds: 60,
+    });
+    const claim = await store.claimRouted({
+      ...bound,
+      messageId: input.messageId,
+      provider: input.request.provider,
+      model: input.request.model,
+      deliveryId: 'runtime_e2e_delivery08',
+    });
+
+    const answer = 'Here is the loop:\n\n```ts\nfor (const x of xs) {}\n```';
+    await store.appendModelOutput({
+      ...bound,
+      claimId: claim.claimId,
+      idempotencyKey: 'runtime_e2e_output_key_8',
+      turnId: 'runtime_e2e_turn_00008',
+      text: answer,
+    });
+
+    const page = await store.readEvents({ ...bound, after: start.sequence });
+    const modelEvents = page.events.filter((event) => event.type.startsWith('model.'));
+
+    expect(modelEvents.map((event) => event.type)).toEqual([
+      'model.turn.started',
+      'model.delta',
+      'model.summary',
+    ]);
+    // Sequences must be strictly increasing, or a cursor-reading client can
+    // receive a delta before the turn that owns it.
+    const sequences = modelEvents.map((event) => event.sequence);
+    expect(sequences).toEqual([...sequences].sort((left, right) => left - right));
+    expect(new Set(sequences).size).toBe(sequences.length);
+    expect(modelEvents[1]?.payload).toMatchObject({ text: answer });
+  });
+
   // resolveBinding is what the SSE stream calls on every reconnect, and it
   // validates the stored blob against a schema that requires the tool catalog.
   // The start script did not persist toolDefinitions and the binding script did

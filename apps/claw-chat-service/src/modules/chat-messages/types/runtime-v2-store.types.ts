@@ -100,6 +100,22 @@ export interface RuntimeV2TerminalInput extends RuntimeV2BoundInput {
   readonly reason?: RuntimeV2TerminalReason;
 }
 
+/**
+ * The model's own output for one turn, as journal events.
+ *
+ * Runtime V2 streamed lifecycle and tool events only, so a client watching the
+ * stream saw a run start, dispatch, call tools and complete while the
+ * assistant's actual answer went to the database and nowhere else. The protocol
+ * already defines `model.turn.started`, `model.delta` and `model.summary`, and
+ * clients already project them — the server simply never emitted any of them.
+ */
+export interface RuntimeV2ModelOutputInput extends RuntimeV2BoundInput {
+  readonly claimId: string;
+  readonly idempotencyKey: string;
+  readonly turnId: string;
+  readonly text: string;
+}
+
 export interface RuntimeV2DispatchInput extends RuntimeV2BoundInput {
   readonly claimId: string;
   readonly idempotencyKey: string;
