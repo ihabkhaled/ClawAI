@@ -356,4 +356,40 @@ describe('RuntimeV2Store atomic behavior', () => {
       message: 'Runtime state is unavailable',
     });
   });
+
+  // Round-trips the binding through the SAME blob `start` writes.
+  //
+  // The existing coverage for `resolveMessageBinding` hand-wrote the mapped
+  // object it expected to read back, so it proved the reader accepts a
+  // correctly shaped blob — never that the writer produces one. It did not.
+  // `start` spread the start ack into the message binding, which carried the
+  // ack's `sequence` field into a blob read back by a STRICT schema that has no
+  // such field. Every routed message then failed with
+  // `Unrecognized key: "sequence"`: the run was admitted and acknowledged, and
+  // died before its first model call, so the client showed "Request accepted"
+  // and then a dead stream.
+  it('reads back the message binding that start actually wrote', async () => {
+    const machine = new RuntimeV2RedisStateMachine();
+    const store = new RuntimeV2Store(machine);
+    const request = startRequest();
+
+    const acknowledgement = await store.start({
+      ownerId,
+      messageId,
+      request,
+      ttlSeconds: 900,
+    });
+
+    const bound = await store.resolveMessageBinding({
+      messageId,
+      threadId,
+      provider: request.provider,
+      model: request.model,
+      ttlSeconds: 900,
+    });
+
+    expect(bound.runId).toBe(acknowledgement.runId);
+    expect(bound.generation).toBe(acknowledgement.generation);
+    expect(bound.ownerId).toBe(ownerId);
+  });
 });

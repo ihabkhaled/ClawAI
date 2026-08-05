@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { Permission } from '@claw/shared-types';
 
 import { BusinessException } from '../../../common/errors';
@@ -6,6 +6,7 @@ import { RedisService } from '../../../infrastructure/redis/redis.service';
 import {
   RUNTIME_ADMISSION_RELEASE_LUA,
   RUNTIME_ADMISSION_RESERVE_LUA,
+  RUNTIME_ADMISSION_UNLIMITED,
 } from '../constants/runtime-admission.constants';
 import {
   runtimeAdmissionAckSchema,
@@ -27,6 +28,8 @@ import { EntitlementsService } from './entitlements.service';
 
 @Injectable()
 export class RuntimeAdmissionService {
+  private readonly logger = new Logger(RuntimeAdmissionService.name);
+
   constructor(
     private readonly entitlements: EntitlementsService,
     private readonly redis: RedisService,
@@ -51,7 +54,9 @@ export class RuntimeAdmissionService {
       entitlement.isAdmin,
     );
     const reservedTokens = entitlement.isAdmin ? 0 : input.estimatedTokens;
-    const dailyLimit = entitlement.isAdmin ? 0 : entitlement.quota.dailyLimit;
+    const dailyLimit = entitlement.isAdmin
+      ? RUNTIME_ADMISSION_UNLIMITED
+      : entitlement.quota.dailyLimit;
 
     const reply = await this.reserveInRedis(
       input,
@@ -121,7 +126,16 @@ export class RuntimeAdmissionService {
           JSON.stringify(acknowledgement),
         );
       return this.parseReply(raw);
-    } catch {
+    } catch (error) {
+      // Log the cause before collapsing it into a generic 503. Swallowing it
+      // silently meant a Redis or Lua fault surfaced to the user as
+      // "temporarily unavailable" with nothing on the server to explain it,
+      // which is indistinguishable from the service simply being down.
+      this.logger.error(
+        `Runtime admission reserve failed userId=${input.userId} requestId=${input.requestId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
       throw new BusinessException(
         'Runtime admission is temporarily unavailable',
         'RUNTIME_ADMISSION_UNAVAILABLE',

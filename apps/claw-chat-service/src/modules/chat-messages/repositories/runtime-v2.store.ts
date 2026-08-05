@@ -267,8 +267,20 @@ export class RuntimeV2Store {
           createRuntimeV2Identity('evt'),
           {},
         ),
+        // The message binding is a DIFFERENT shape from the start ack, and it
+        // is read back through `runtimeV2BindingSchema`, which is strict and
+        // declares no `sequence`. Spreading `ack` here leaked the ack's cursor
+        // field into the stored blob, so `resolveMessageBinding` rejected every
+        // routed message with `Unrecognized key: "sequence"` — the run was
+        // admitted, then died before the first model call, and the client sat
+        // on "Request accepted" until the stream gave up.
+        //
+        // Only the two identifiers the ack and the binding genuinely share are
+        // spread; everything else is named explicitly so the next field added
+        // to the ack cannot leak in the same way.
         JSON.stringify({
-          ...ack,
+          ...proposed,
+          messageId: input.messageId,
           ownerId: input.ownerId,
           threadId: request.threadId,
           clientRequestId: request.clientRequestId,
