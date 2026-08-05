@@ -11,6 +11,7 @@ import {
   toolReceiptSchema,
   toolResultSchema,
 } from '../runtime-v2.dto';
+import { RUNTIME_V2_JSON_DEPTH } from '../../constants/runtime-v2.constants';
 
 const epochs = { account: 1, workspace: 2, target: 3, policy: 4 };
 const id = 'runtime_identifier_0001';
@@ -100,7 +101,15 @@ describe('Runtime V2 DTO boundary', () => {
 
   it('enforces UTF-8 byte and recursive JSON bounds', () => {
     const oversized = 'ðŸ˜€'.repeat(8_193);
-    const deep = { a: { a: { a: { a: { a: { a: { a: { a: { a: { a: 1 } } } } } } } } } };
+    // Built from the constant rather than hand-nested to a literal count. The
+    // previous fixture was exactly 10 deep, which silently encoded the old
+    // limit of 8 — so raising the limit to admit the real runtime.agents
+    // schema turned this assertion from "rejects over-deep JSON" into
+    // "rejects 10-deep JSON", and it failed for the wrong reason.
+    let deep: unknown = 1;
+    for (let level = 0; level < RUNTIME_V2_JSON_DEPTH + 4; level++) {
+      deep = { a: deep };
+    }
     const start = {
       schemaVersion: '2.0',
       threadId: id,
