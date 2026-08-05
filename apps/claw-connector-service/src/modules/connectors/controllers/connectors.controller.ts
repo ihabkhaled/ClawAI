@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { Permission } from '@claw/shared-types';
+import { type ModelBehaviorProbeResult, Permission } from '@claw/shared-types';
 import { RequirePermissions } from '@claw/shared-entitlements';
 import { type ConnectorModel } from '../../../generated/prisma';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -71,6 +71,17 @@ export class ConnectorsController {
   @RequirePermissions(Permission.ADMIN_CONNECTORS_MANAGE)
   async test(@Param('id') id: string): Promise<HealthCheckResult> {
     return this.connectorsService.testConnector(id);
+  }
+
+  // Behavioural tool probe for one model (§9.2). On-demand rather than part
+  // of sync: a ~250-model catalog would mean 250 inference calls per sync.
+  @Post(':id/models/:modelKey/probe-tools')
+  @RequirePermissions(Permission.ADMIN_CONNECTORS_MANAGE)
+  async probeTools(
+    @Param('id') id: string,
+    @Param('modelKey') modelKey: string,
+  ): Promise<ModelBehaviorProbeResult> {
+    return this.connectorsService.probeModelToolCapability(id, modelKey);
   }
 
   @Post(':id/sync')

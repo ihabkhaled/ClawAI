@@ -64,3 +64,13 @@ export const OLLAMA_TOOL_PROBE_FAILURE_WRONG_TOOL = 'PROBE_WRONG_TOOL_NAME';
  * trusted forever.
  */
 export const OLLAMA_TOOL_PROBE_TTL_MS = 7 * 24 * 60 * 60 * 1_000;
+
+/**
+ * Reported when the selected provider has no probe implementation at all.
+ *
+ * Deliberately a FAILED result rather than a pass: an unprobed model must
+ * never look proven. "We cannot check this" and "we checked and it works" are
+ * different claims, and only one of them justifies routing an agent run.
+ */
+export const CAPABILITY_PROBE_UNSUPPORTED_ID = 'probe-unsupported';
+export const CAPABILITY_PROBE_UNSUPPORTED_CODE = 'PROBE_NOT_IMPLEMENTED_FOR_PROVIDER';

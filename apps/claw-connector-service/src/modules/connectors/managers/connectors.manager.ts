@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type { ModelBehaviorProbeResult } from '@claw/shared-types';
 import { type Connector, ModelSyncStatus } from '../../../generated/prisma';
+import {
+  CAPABILITY_PROBE_UNSUPPORTED_CODE,
+  CAPABILITY_PROBE_UNSUPPORTED_ID,
+} from '../constants/ollama-tool-probe.constants';
 import { AppConfig } from '../../../app/config/app.config';
 import { decrypt } from '../../../common/utilities';
 import { ConnectorModelsRepository } from '../repositories/connector-models.repository';
@@ -20,6 +25,34 @@ export class ConnectorsManager {
     private readonly healthEventsRepository: HealthEventsRepository,
     private readonly syncRunsRepository: SyncRunsRepository,
   ) {}
+
+  /**
+   * Runs the behavioural tool probe for one model on this connector (§9.2).
+   *
+   * Only the Ollama adapter implements a probe today, so this reports an
+   * explicit unsupported result for the others rather than silently returning
+   * a pass — an unprobed model must never look proven.
+   */
+  async probeModelToolCapability(
+    connector: Connector,
+    modelKey: string,
+  ): Promise<ModelBehaviorProbeResult> {
+    const config = this.getDecryptedConfig(connector);
+    const adapter = getAdapter(connector.provider);
+    if (typeof adapter.probeToolCapability !== 'function') {
+      this.logger.warn(
+        `probeModelToolCapability: provider ${connector.provider} has no probe implementation`,
+      );
+      return {
+        probeId: CAPABILITY_PROBE_UNSUPPORTED_ID,
+        passed: false,
+        checkedAt: new Date().toISOString(),
+        failureCode: CAPABILITY_PROBE_UNSUPPORTED_CODE,
+      };
+    }
+    this.logger.log(`probeModelToolCapability: probing ${modelKey} on connector ${connector.id}`);
+    return adapter.probeToolCapability(config, modelKey);
+  }
 
   async testConnector(connector: Connector): Promise<HealthCheckResult> {
     this.logger.log(

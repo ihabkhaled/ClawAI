@@ -1008,6 +1008,11 @@
       },
       {
         "method": "POST",
+        "route": "/connectors/:id/models/:modelKey/probe-tools",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/connectors/:id/sync",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
       },
@@ -2853,5 +2858,5 @@
     ]
   },
   "generated": true,
-  "total": 563
+  "total": 564
 }

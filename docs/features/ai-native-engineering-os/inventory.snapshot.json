@@ -1054,6 +1054,11 @@
         },
         {
           "method": "POST",
+          "route": "/connectors/:id/models/:modelKey/probe-tools",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/connectors/:id/sync",
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
         },
@@ -9266,7 +9271,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 563,
+    "endpointCount": 564,
     "envVarCount": 341,
     "eventCount": 165,
     "frontendRouteCount": 113,

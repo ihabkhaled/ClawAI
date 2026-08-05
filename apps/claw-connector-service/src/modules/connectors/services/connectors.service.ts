@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
-import { EventPattern, LogLevel } from '@claw/shared-types';
+import { EventPattern, LogLevel, type ModelBehaviorProbeResult } from '@claw/shared-types';
 import { type ConnectorModel } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
 import { encrypt } from '../../../common/utilities';
@@ -165,6 +165,14 @@ export class ConnectorsService {
 
     this.logger.log(`deleteConnector: completed — connectorId=${id}, provider=${deleted.provider}`);
     return { ...deleted, _count: { models: 0 } };
+  }
+
+  async probeModelToolCapability(id: string, modelKey: string): Promise<ModelBehaviorProbeResult> {
+    const connector = await this.connectorsRepository.findById(id);
+    if (!connector) {
+      throw new EntityNotFoundException('Connector', id);
+    }
+    return this.connectorsManager.probeModelToolCapability(connector, modelKey);
   }
 
   async testConnector(id: string): Promise<HealthCheckResult> {
