@@ -1,6 +1,7 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import {
   LocalModelRole,
+  type ResolvedEffort,
   TokenLedgerContext,
   type TokenUsage,
   TokenUsageSource,
@@ -56,6 +57,12 @@ import {
   resolveToolChoicePayload,
   resolveToolDialect,
 } from '../utilities/provider-tool-dialect.utility';
+import {
+  effortFlagForRequest,
+  effortLevelForRequest,
+  isEffortDowngraded,
+  resolveExecutionEffort,
+} from '../utilities/provider-effort.utility';
 import {
   buildAnthropicToolTurnMessages,
   buildOllamaToolTurnMessages,
@@ -2747,6 +2754,29 @@ export class ChatExecutionManager implements OnModuleInit {
     return executionOptions?.toolChoice ?? ToolChoiceMode.AUTO;
   }
 
+  // Resolves the requested effort against what this exact model accepts and
+  // writes the provider parameter, if any. A downgrade is logged at WARN
+  // rather than applied silently: asking for MAX and quietly receiving `low`
+  // is indistinguishable from a model that simply reasoned less, and the user
+  // paid for the former.
+  private resolveEffortForDialect(
+    executionOptions: ExecutionOptions | undefined,
+    dialect: ProviderToolDialect,
+  ): ResolvedEffort | undefined {
+    const resolved = resolveExecutionEffort(executionOptions, dialect);
+    if (resolved === undefined) {
+      return undefined;
+    }
+    if (isEffortDowngraded(resolved)) {
+      this.logger.warn(
+        `resolveEffortForDialect: requested ${resolved.requested} resolved to ${resolved.resolvedProfile} (${resolved.resolutionKind}) — ${resolved.warning ?? 'no detail'}`,
+      );
+    } else if (resolved.warning !== undefined) {
+      this.logger.debug(`resolveEffortForDialect: ${resolved.warning}`);
+    }
+    return resolved;
+  }
+
   private buildChatRequestBody(
     provider: string,
     model: string,
@@ -2791,6 +2821,13 @@ export class ChatExecutionManager implements OnModuleInit {
       this.logger.debug(
         `buildChatRequestBody: attached ${String(toolCatalog.specs.length)} native tools (${String(toolCatalog.byteSize)} bytes) toolChoice=${String(choice.openAi)}`,
       );
+    }
+
+    const openAiEffort = effortLevelForRequest(
+      this.resolveEffortForDialect(executionOptions, ProviderToolDialect.OPENAI),
+    );
+    if (openAiEffort !== undefined) {
+      requestBody.reasoning = { effort: openAiEffort };
     }
 
     if (threadSettings?.temperature !== null && threadSettings?.temperature !== undefined) {
@@ -2922,6 +2959,12 @@ export class ChatExecutionManager implements OnModuleInit {
       // Anthropic rejects any Messages request that omits max_tokens, and a
       // tool-loop continuation must never be the request that discovers this.
       requestBody.max_tokens = ANTHROPIC_TOOL_DEFAULT_MAX_TOKENS;
+    }
+    const anthropicEffort = effortLevelForRequest(
+      this.resolveEffortForDialect(executionOptions, ProviderToolDialect.ANTHROPIC),
+    );
+    if (anthropicEffort !== undefined) {
+      requestBody.output_config = { effort: anthropicEffort };
     }
     return requestBody;
   }
@@ -3167,6 +3210,17 @@ export class ChatExecutionManager implements OnModuleInit {
       this.logger.debug(
         `buildOllamaChatRequestBody: attached ${String(toolCatalog.specs.length)} native tools (${String(toolCatalog.byteSize)} bytes) toolChoiceDegraded=${String(choice.degraded)}`,
       );
+    }
+
+    // Native Ollama exposes reasoning as `think`. When the capability registry
+    // has proven level values for this model the resolver returns a level
+    // instead, and the level lane is not expressible here — so only the
+    // boolean form is applied, and the resolver's own warning records that
+    // intermediate levels are indistinguishable on this lane.
+    const ollamaEffort = this.resolveEffortForDialect(executionOptions, ProviderToolDialect.OLLAMA);
+    const thinkFlag = effortFlagForRequest(ollamaEffort);
+    if (thinkFlag !== undefined) {
+      requestBody.think = thinkFlag;
     }
 
     return requestBody;

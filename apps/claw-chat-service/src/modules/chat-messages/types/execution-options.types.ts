@@ -1,3 +1,4 @@
+import type { ClawEffortProfile } from '@claw/shared-types';
 import type { ToolChoiceMode } from '../../../common/enums';
 import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
 
@@ -24,4 +25,15 @@ export type ExecutionOptions = {
   // AUTO when a catalog is present. REQUIRED must be released after one turn
   // or the run can never produce a final answer.
   toolChoice?: ToolChoiceMode;
+  // Requested reasoning effort. Resolved per provider against the exact values
+  // that model accepts — never mapped silently, so a request for MAX that the
+  // model cannot honour is reported rather than quietly served as `low`.
+  //
+  // Undefined leaves every existing path exactly as it was: no effort
+  // parameter is added to any request.
+  effortProfile?: ClawEffortProfile;
+  // Effort values this exact model is known to accept, from the capability
+  // evidence registry. Empty or absent means nothing is proven, which resolves
+  // to ClawAI-side orchestration rather than an invented provider value.
+  effortSupportedValues?: readonly string[];
 };

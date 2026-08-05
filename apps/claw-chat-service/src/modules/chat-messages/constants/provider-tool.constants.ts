@@ -89,6 +89,22 @@ export const ANTHROPIC_TOOL_DEFAULT_MAX_TOKENS = 8_192;
 
 export const OPENAI_TOOL_CALLS_FINISH_REASON = 'tool_calls';
 
+// Where each dialect accepts a reasoning-effort control, and therefore where
+// resolveEffort is allowed to put one. A dialect absent from this map has no
+// proven effort parameter, so effort resolves to ClawAI-side orchestration
+// instead of an invented request field.
+//
+// Native Ollama is deliberately absent from the *path* map even though it has
+// `think`: on that lane the control is frequently a boolean rather than a
+// level, so it goes through resolveBooleanEffort, which reports the coarseness
+// rather than pretending MEDIUM and HIGH are distinguishable.
+export const EFFORT_PATH_BY_DIALECT: Readonly<Partial<Record<ProviderToolDialect, string>>> = {
+  [ProviderToolDialect.OPENAI]: 'reasoning.effort',
+  [ProviderToolDialect.ANTHROPIC]: 'output_config.effort',
+};
+
+export const OLLAMA_THINK_FIELD = 'think';
+
 export const ROLE_ASSISTANT = 'assistant';
 
 export const ROLE_TOOL = 'tool';

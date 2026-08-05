@@ -19,6 +19,7 @@ import type { ExecutionOptions } from '../types/execution-options.types';
 import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
 import type { OllamaChatRequest, OpenAiChatRequest } from '../types/execution.types';
 import { ToolChoiceMode } from '../../../common/enums';
+import { ClawEffortProfile } from '@claw/shared-types';
 
 jest.mock('../../../common/utilities', () => ({
   httpRequest: jest.fn(),
@@ -86,6 +87,50 @@ const withoutTools = (): ExecutionOptions => ({
   fastPathEnabled: false,
   applyShortResponseConstraint: false,
 });
+
+// Minimal manager for tests that only exercise request-body construction and
+// never reach a provider.
+const buildManager = (): ChatExecutionManager =>
+  new ChatExecutionManager(
+    {
+      buildPromptString: jest.fn().mockReturnValue('user prompt'),
+      buildChatMessages: jest.fn().mockReturnValue([{ role: 'user', content: 'hi' }]),
+      buildGeminiChatMessages: jest.fn().mockReturnValue([{ role: 'user', content: 'hi' }]),
+    } as unknown as ContextAssemblyManager,
+    {
+      checkResponseQuality: jest.fn().mockReturnValue({ score: 0.9, reasons: [] }),
+      shouldReRoute: jest.fn().mockReturnValue({ shouldReRoute: false }),
+    } as unknown as QualityCheckManager,
+    {
+      setExecutionManager: jest.fn(),
+      shouldActivate: jest.fn().mockReturnValue(false),
+      evaluate: jest.fn(),
+      buildMetadata: jest.fn().mockReturnValue({}),
+    } as unknown as JudgeRefereeManager,
+    {
+      emitRouterStarted: jest.fn(),
+      emitProviderSelected: jest.fn(),
+      emitResponseStreaming: jest.fn(),
+      startResponseProgressHeartbeat: jest.fn().mockReturnValue(jest.fn()),
+      emitFallbackAttempt: jest.fn(),
+      emitError: jest.fn(),
+    } as unknown as ChatStreamService,
+    {
+      run: jest.fn().mockImplementation(async (_q: string, ctx: unknown) => ({
+        context: ctx,
+        outcome: { applied: false, results: [], runId: null, warning: null },
+      })),
+    } as any,
+    {
+      recordUsage: jest.fn(),
+      recordFeatureUsage: jest.fn(async () => {}),
+    } as unknown as AccessControlService,
+    { uploadFile: jest.fn(), getCachedOrUpload: jest.fn() } as any,
+    {
+      resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
+      resolveModelList: jest.fn().mockResolvedValue(['qwen3:7b']),
+    } as unknown as LocalModelSelectionService,
+  );
 
 describe('ChatExecutionManager — native tool transport', () => {
   let manager: ChatExecutionManager;
@@ -614,5 +659,84 @@ describe('ChatExecutionManager — native tool transport', () => {
 
       expect(accessControl.recordUsage).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe('ChatExecutionManager — reasoning effort', () => {
+  let manager: ChatExecutionManager;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    httpRequest.mockReset();
+    AppConfig.get.mockReturnValue(DEFAULT_APP_CONFIG);
+    manager = buildManager();
+  });
+
+  const buildOpenAi = (options: ExecutionOptions): OpenAiChatRequest =>
+    (
+      manager as unknown as {
+        buildChatRequestBody: (
+          provider: string,
+          model: string,
+          context: AssembledContext,
+          threadSettings: undefined,
+          executionOptions: ExecutionOptions,
+        ) => OpenAiChatRequest;
+      }
+    ).buildChatRequestBody('OPENAI', 'gpt-4o', makeContext('hi'), undefined, options);
+
+  const base = (): ExecutionOptions => ({
+    fastPathEnabled: false,
+    applyShortResponseConstraint: false,
+  });
+
+  it('adds no effort field at all when none was requested', () => {
+    // Every pre-existing path must be byte-identical to before this feature.
+    expect(buildOpenAi(base()).reasoning).toBeUndefined();
+  });
+
+  it('sends the exact level when the model proves it accepts it', () => {
+    const body = buildOpenAi({
+      ...base(),
+      effortProfile: ClawEffortProfile.HIGH,
+      effortSupportedValues: ['low', 'medium', 'high'],
+    });
+
+    expect(body.reasoning).toEqual({ effort: 'high' });
+  });
+
+  it('sends the highest accepted level when the requested one is unsupported', () => {
+    const body = buildOpenAi({
+      ...base(),
+      effortProfile: ClawEffortProfile.MAX,
+      effortSupportedValues: ['low', 'medium'],
+    });
+
+    // Downgraded rather than refused — but never silently: the manager logs a
+    // WARN, which is the user-visible half of the guarantee.
+    expect(body.reasoning).toEqual({ effort: 'medium' });
+  });
+
+  it('sends NOTHING when the capability registry has no proven values', () => {
+    // Guessing a level here would be the "hard-coded model-name guess" the
+    // pack forbids. The effort is supplied by ClawAI orchestration instead.
+    const body = buildOpenAi({
+      ...base(),
+      effortProfile: ClawEffortProfile.HIGH,
+      effortSupportedValues: [],
+    });
+
+    expect(body.reasoning).toBeUndefined();
+  });
+
+  it('never puts the literal string "ultra" on the wire', () => {
+    const body = buildOpenAi({
+      ...base(),
+      effortProfile: ClawEffortProfile.ULTRA,
+      effortSupportedValues: ['low', 'medium', 'high', 'xhigh', 'max'],
+    });
+
+    expect(body.reasoning?.effort).toBe('max');
+    expect(body.reasoning?.effort).not.toBe('ultra');
   });
 });

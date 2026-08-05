@@ -203,6 +203,11 @@ export type OllamaChatRequest = {
   // `{type, function:{name, description, parameters}}` envelope). Non-agentic
   // models ignore the field, so it is safe to pass unconditionally.
   tools?: OllamaCloudToolDefinition[];
+  // Reasoning toggle. Native Ollama frequently exposes this as a boolean
+  // rather than a level, which is why effort on this lane resolves through
+  // the boolean resolver and reports that intermediate levels are not
+  // distinguishable here.
+  think?: boolean;
 };
 
 export type OllamaChatResponse = {
@@ -255,6 +260,10 @@ export type OpenAiChatRequest = {
   stream_options?: { include_usage: boolean };
   tools?: OpenAiToolSpec[];
   tool_choice?: OpenAiToolChoice;
+  // Reasoning effort, where the model accepts one. Only ever set from a value
+  // the capability registry says this exact model takes — never a guess, and
+  // never a profile the model does not support.
+  reasoning?: { effort: string };
 };
 
 export type ThreadSettings = {
@@ -342,6 +351,10 @@ export type AnthropicMessagesRequest = {
   max_tokens?: number;
   tools?: AnthropicToolSpec[];
   tool_choice?: AnthropicToolChoice;
+  // Anthropic expresses reasoning effort under output_config rather than a
+  // top-level field. Same rule as every other lane: only a value this model
+  // is known to accept.
+  output_config?: { effort: string };
 };
 
 // Slice D — Gemini native generateContent request body shape (when
