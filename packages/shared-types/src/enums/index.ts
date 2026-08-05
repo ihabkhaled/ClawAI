@@ -77,3 +77,4 @@ export {
   EffortResolutionKind,
   EffortResearchDepth,
 } from './claw-effort-profile.enum';
+export { ClawSpeedProfile, SpeedProviderMode } from './claw-speed-profile.enum';

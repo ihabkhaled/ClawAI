@@ -264,6 +264,10 @@ export type OpenAiChatRequest = {
   // the capability registry says this exact model takes — never a guess, and
   // never a profile the model does not support.
   reasoning?: { effort: string };
+  // Provider service tier for the speed contract. Absent means standard
+  // service — which is also what an unavailable tier resolves to, except that
+  // the resolution reports UNSUPPORTED so the degradation stays visible.
+  service_tier?: string;
 };
 
 export type ThreadSettings = {

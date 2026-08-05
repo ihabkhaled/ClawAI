@@ -19,7 +19,7 @@ import type { ExecutionOptions } from '../types/execution-options.types';
 import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
 import type { OllamaChatRequest, OpenAiChatRequest } from '../types/execution.types';
 import { ToolChoiceMode } from '../../../common/enums';
-import { ClawEffortProfile } from '@claw/shared-types';
+import { ClawEffortProfile, ClawSpeedProfile } from '@claw/shared-types';
 
 jest.mock('../../../common/utilities', () => ({
   httpRequest: jest.fn(),
@@ -738,5 +738,85 @@ describe('ChatExecutionManager — reasoning effort', () => {
 
     expect(body.reasoning?.effort).toBe('max');
     expect(body.reasoning?.effort).not.toBe('ultra');
+  });
+});
+
+describe('ChatExecutionManager — speed tier', () => {
+  let manager: ChatExecutionManager;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    httpRequest.mockReset();
+    AppConfig.get.mockReturnValue(DEFAULT_APP_CONFIG);
+    manager = buildManager();
+  });
+
+  const buildOpenAi = (options: ExecutionOptions): OpenAiChatRequest =>
+    (
+      manager as unknown as {
+        buildChatRequestBody: (
+          provider: string,
+          model: string,
+          context: AssembledContext,
+          threadSettings: undefined,
+          executionOptions: ExecutionOptions,
+        ) => OpenAiChatRequest;
+      }
+    ).buildChatRequestBody('OPENAI', 'gpt-4o', makeContext('hi'), undefined, options);
+
+  const base = (): ExecutionOptions => ({
+    fastPathEnabled: false,
+    applyShortResponseConstraint: false,
+  });
+
+  it('adds no service_tier when no speed was requested', () => {
+    expect(buildOpenAi(base()).service_tier).toBeUndefined();
+  });
+
+  it('sets the granted tier when the account proves it accepts one', () => {
+    const body = buildOpenAi({
+      ...base(),
+      speedProfile: ClawSpeedProfile.TURBO_2X,
+      speedSupportedValues: ['fast', 'priority'],
+    });
+
+    expect(body.service_tier).toBe('priority');
+  });
+
+  it('sends NO tier when the requested one is unavailable', () => {
+    // Standard service is what actually runs, so no tier field is sent — and
+    // the manager logs a WARN rather than letting a 2x label ride on a
+    // standard run.
+    const body = buildOpenAi({
+      ...base(),
+      speedProfile: ClawSpeedProfile.TURBO_2X,
+      speedSupportedValues: [],
+    });
+
+    expect(body.service_tier).toBeUndefined();
+  });
+
+  it('leaves standard requests without a tier field', () => {
+    const body = buildOpenAi({
+      ...base(),
+      speedProfile: ClawSpeedProfile.STANDARD_1X,
+      speedSupportedValues: ['fast'],
+    });
+
+    expect(body.service_tier).toBeUndefined();
+  });
+
+  it('carries effort and speed independently on the same request', () => {
+    // Orthogonal by contract: high effort at standard speed is valid.
+    const body = buildOpenAi({
+      ...base(),
+      effortProfile: ClawEffortProfile.HIGH,
+      effortSupportedValues: ['low', 'medium', 'high'],
+      speedProfile: ClawSpeedProfile.ACCELERATED_1_5X,
+      speedSupportedValues: ['fast'],
+    });
+
+    expect(body.reasoning).toEqual({ effort: 'high' });
+    expect(body.service_tier).toBe('fast');
   });
 });

@@ -14,8 +14,14 @@
 //
 // Pure: no I/O, no logger, no vendor SDK.
 
-import { ClawEffortProfile, EffortResolutionKind, type ResolvedEffort } from '@claw/shared-types';
-import { resolveBooleanEffort, resolveEffort } from '@claw/shared-utilities';
+import {
+  ClawEffortProfile,
+  EffortResolutionKind,
+  type ResolvedEffort,
+  type ResolvedSpeed,
+  SpeedProviderMode,
+} from '@claw/shared-types';
+import { resolveBooleanEffort, resolveEffort, resolveSpeed } from '@claw/shared-utilities';
 import { ProviderToolDialect } from '../../../common/enums';
 import type { ExecutionOptions } from '../types/execution-options.types';
 import { EFFORT_PATH_BY_DIALECT, OLLAMA_THINK_FIELD } from '../constants/provider-tool.constants';
@@ -81,4 +87,35 @@ export function isEffortDowngraded(resolved: ResolvedEffort | undefined): boolea
   if (resolved === undefined) return false;
   if (resolved.requested === ClawEffortProfile.AUTO) return false;
   return resolved.resolvedProfile !== resolved.requested;
+}
+
+// ── Speed ───────────────────────────────────────────────────────────────────
+
+/**
+ * Resolves the requested speed tier for a lane.
+ *
+ * Returns undefined when no tier was requested, which leaves the request
+ * exactly as it was before this feature existed. Lanes with no tier mechanism
+ * pass no path, and the resolver reports UNSUPPORTED rather than pretending
+ * standard service satisfied the request.
+ */
+export function resolveExecutionSpeed(
+  executionOptions: ExecutionOptions | undefined,
+  parameterPath: string | undefined,
+): ResolvedSpeed | undefined {
+  const requested = executionOptions?.speedProfile;
+  if (requested === undefined) {
+    return undefined;
+  }
+  return resolveSpeed(requested, executionOptions?.speedSupportedValues ?? [], parameterPath);
+}
+
+/** The tier value to put on a request, or undefined when none was granted. */
+export function speedTierForRequest(resolved: ResolvedSpeed | undefined): string | undefined {
+  return resolved?.providerParameter?.value;
+}
+
+/** True when the requested tier could not be granted. */
+export function isSpeedUnavailable(resolved: ResolvedSpeed | undefined): boolean {
+  return resolved?.providerMode === SpeedProviderMode.UNSUPPORTED;
 }

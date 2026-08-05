@@ -54,3 +54,4 @@ export type {
   EffortProviderParameter,
   ResolvedEffort,
 } from './effort-resolution.type';
+export type { ObservedSpeed, ResolvedSpeed, SpeedProviderParameter } from './speed-resolution.type';

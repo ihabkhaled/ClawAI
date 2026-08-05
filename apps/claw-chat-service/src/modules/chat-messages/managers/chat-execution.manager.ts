@@ -2,6 +2,7 @@ import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import {
   LocalModelRole,
   type ResolvedEffort,
+  type ResolvedSpeed,
   TokenLedgerContext,
   type TokenUsage,
   TokenUsageSource,
@@ -10,6 +11,7 @@ import {
   extractGeminiUsage,
   extractOllamaUsage,
   extractOpenAiCompatibleUsage,
+  SPEED_PATH_OPENAI_SERVICE_TIER,
 } from '@claw/shared-utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest, recordGet } from '../../../common/utilities';
@@ -61,7 +63,10 @@ import {
   effortFlagForRequest,
   effortLevelForRequest,
   isEffortDowngraded,
+  isSpeedUnavailable,
   resolveExecutionEffort,
+  resolveExecutionSpeed,
+  speedTierForRequest,
 } from '../utilities/provider-effort.utility';
 import {
   buildAnthropicToolTurnMessages,
@@ -2777,6 +2782,26 @@ export class ChatExecutionManager implements OnModuleInit {
     return resolved;
   }
 
+  // Resolves the requested speed tier. An unavailable tier is logged at WARN
+  // and leaves the request at standard service with a 1x multiplier — never a
+  // 2x label on a standard run, which would both mislead the user and
+  // over-reserve cost for throughput nobody received.
+  private resolveSpeedForLane(
+    executionOptions: ExecutionOptions | undefined,
+    parameterPath: string | undefined,
+  ): ResolvedSpeed | undefined {
+    const resolved = resolveExecutionSpeed(executionOptions, parameterPath);
+    if (resolved === undefined) {
+      return undefined;
+    }
+    if (isSpeedUnavailable(resolved)) {
+      this.logger.warn(
+        `resolveSpeedForLane: requested ${resolved.requested} unavailable — running standard at ${String(resolved.resourceMultiplier)}x. ${resolved.warning ?? ''}`,
+      );
+    }
+    return resolved;
+  }
+
   private buildChatRequestBody(
     provider: string,
     model: string,
@@ -2828,6 +2853,13 @@ export class ChatExecutionManager implements OnModuleInit {
     );
     if (openAiEffort !== undefined) {
       requestBody.reasoning = { effort: openAiEffort };
+    }
+
+    const speedTier = speedTierForRequest(
+      this.resolveSpeedForLane(executionOptions, SPEED_PATH_OPENAI_SERVICE_TIER),
+    );
+    if (speedTier !== undefined) {
+      requestBody.service_tier = speedTier;
     }
 
     if (threadSettings?.temperature !== null && threadSettings?.temperature !== undefined) {

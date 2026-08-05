@@ -1,4 +1,4 @@
-import type { ClawEffortProfile } from '@claw/shared-types';
+import type { ClawEffortProfile, ClawSpeedProfile } from '@claw/shared-types';
 import type { ToolChoiceMode } from '../../../common/enums';
 import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
 
@@ -36,4 +36,11 @@ export type ExecutionOptions = {
   // evidence registry. Empty or absent means nothing is proven, which resolves
   // to ClawAI-side orchestration rather than an invented provider value.
   effortSupportedValues?: readonly string[];
+  // Requested speed tier. Orthogonal to effort: high effort at standard speed
+  // and medium effort on an accelerated tier are both valid combinations.
+  speedProfile?: ClawSpeedProfile;
+  // Tier values this exact model/account is known to accept. Empty means the
+  // tier cannot be granted, which is reported rather than silently served as
+  // standard-with-a-2x-label.
+  speedSupportedValues?: readonly string[];
 };

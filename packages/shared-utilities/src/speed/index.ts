@@ -1,0 +1,13 @@
+export {
+  SPEED_MODE_BY_VALUE,
+  SPEED_PARALLEL_READ_ONLY_TOOLS,
+  SPEED_PARALLEL_SUB_AGENTS,
+  SPEED_PATH_ANTHROPIC_SPEED,
+  SPEED_PATH_OPENAI_SERVICE_TIER,
+  SPEED_PREFERRED_VALUES,
+  SPEED_RESOURCE_MULTIPLIER,
+  SPEED_VALUE_FAST,
+  SPEED_VALUE_FLEX,
+  SPEED_VALUE_PRIORITY,
+} from './speed-profile.constants';
+export { resolveSpeed, withObservedSpeed } from './speed-resolver.utility';
