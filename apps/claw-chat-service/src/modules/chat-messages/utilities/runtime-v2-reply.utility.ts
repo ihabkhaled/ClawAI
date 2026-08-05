@@ -37,6 +37,30 @@ export function parseRuntimeV2TaggedReply(value: unknown): RuntimeV2TaggedReply 
   );
 }
 
+/**
+ * Normalizes a stored binding blob before schema validation.
+ *
+ * The two binding readers store `toolDefinitions` differently and both are
+ * correct. The message binding keeps the whole blob as one JSON document, so
+ * the catalog arrives already decoded. The run-state binding keeps it as an
+ * opaque string in a Redis hash field, deliberately, so the exact bytes the
+ * catalog hash was computed over survive the round trip — the binding schema
+ * re-hashes `JSON.stringify(toolDefinitions)` and a `cjson` decode/encode pass
+ * in Lua could reorder object keys and fail a catalog that is perfectly valid.
+ *
+ * Parsing here rather than in the schema keeps that storage detail out of the
+ * contract: callers get an array either way.
+ */
+export function parseStoredBinding(body: string): unknown {
+  const parsed: unknown = JSON.parse(body);
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return parsed;
+
+  const record = parsed as Record<string, unknown>;
+  const catalog = record['toolDefinitions'];
+  if (typeof catalog !== 'string') return parsed;
+  return { ...record, toolDefinitions: JSON.parse(catalog) };
+}
+
 export function runtimeV2Unavailable(): BusinessException {
   return new BusinessException(
     'Runtime state is unavailable',

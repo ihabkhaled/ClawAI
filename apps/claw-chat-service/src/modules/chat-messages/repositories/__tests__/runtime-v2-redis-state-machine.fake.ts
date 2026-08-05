@@ -409,7 +409,11 @@ export class RuntimeV2RedisStateMachine implements RuntimeV2RedisPort {
       this.text(stored.runId) === this.text(expected.runId) &&
       this.text(stored.manifestHash) === this.text(expected.manifestHash) &&
       this.text(stored.toolCatalogHash) === this.text(expected.toolCatalogHash) &&
-      JSON.stringify(stored.toolDefinitions) === JSON.stringify(expected.toolDefinitions) &&
+      // Deliberately does NOT compare toolDefinitions, mirroring the real
+      // `loadBinding` guard: the catalog's identity is carried by
+      // toolCatalogHash, and the state hash stores the catalog as an opaque
+      // string while the caller supplies it as an array. Comparing the two
+      // shapes made this fake stricter than the Lua it stands in for.
       this.text(stored.provider) === this.text(expected.provider) &&
       this.text(stored.model) === this.text(expected.model)
     );

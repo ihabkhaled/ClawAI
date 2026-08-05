@@ -766,4 +766,121 @@ describe('Runtime V2 Redis Lua authority', () => {
     expect(retained.events[0]?.sequence).toBe(2);
     expect(retained.events.at(-1)?.sequence).toBe(1_001);
   });
+
+  // The steady state of a live stream, which nothing covered.
+  //
+  // The stream polls on an interval and MOST polls have nothing new, so an
+  // empty read is the common case rather than an edge case. Lua's cjson cannot
+  // distinguish an empty array from an empty object and encodes both as `{}`,
+  // so the read reply failed its schema with "expected array, received object",
+  // errored the SSE observable, and surfaced in the extension as "ClawAI stream
+  // returned an invalid event". Every existing read assertion happened to have
+  // events waiting, so none of them saw it — and the JS fake always returns a
+  // real array, so the unit suite could not see it either. Only real Redis can.
+  it('returns an empty event array, not an empty object, when the cursor is current', async () => {
+    const input = {
+      ownerId,
+      messageId: 'runtime_e2e_message_06',
+      request: {
+        ...request,
+        clientRequestId: 'runtime_e2e_request_06',
+        idempotencyKey: 'runtime_e2e_start_key6',
+      },
+      ttlSeconds: 60,
+    };
+    const start = await store.start(input);
+    const family = runtimeV2KeyFamily(start.runId);
+    for (const key of [
+      family.state,
+      family.events,
+      family.acknowledgements,
+      family.invocations,
+      family.results,
+      family.steering,
+      family.steeringData,
+      runtimeV2MessageKey(input.messageId),
+      runtimeV2StartKey(ownerId, input.request.idempotencyKey),
+      runtimeV2ClientRequestKey(ownerId, input.request.clientRequestId),
+    ]) {
+      cleanupKeys.add(key);
+    }
+
+    const bound = await store.resolveBinding({
+      ownerId,
+      threadId,
+      runId: start.runId,
+      generation: start.generation,
+      ttlSeconds: 60,
+    });
+
+    // Drain the one run.created event, then read again from the new cursor.
+    const first = await store.readEvents({ ...bound, after: 0 });
+    expect(first.events).toHaveLength(0);
+
+    const drained = await store.readEvents({ ...bound, after: -0 });
+    expect(Array.isArray(drained.events)).toBe(true);
+
+    const empty = await store.readEvents({ ...bound, after: start.sequence });
+    expect(Array.isArray(empty.events)).toBe(true);
+    expect(empty.events).toHaveLength(0);
+    expect(empty.terminal).toBe(false);
+    expect(empty.runId).toBe(start.runId);
+  });
+
+  // resolveBinding is what the SSE stream calls on every reconnect, and it
+  // validates the stored blob against a schema that requires the tool catalog.
+  // The start script did not persist toolDefinitions and the binding script did
+  // not return them, so this failed 100% of the time in production while every
+  // unit test passed — the fake reconstructed the catalog the Lua never stored.
+  it('round-trips the tool catalog through the run-state binding', async () => {
+    const input = {
+      ownerId,
+      messageId: 'runtime_e2e_message_07',
+      request: {
+        ...request,
+        clientRequestId: 'runtime_e2e_request_07',
+        idempotencyKey: 'runtime_e2e_start_key7',
+      },
+      ttlSeconds: 60,
+    };
+    const start = await store.start(input);
+    const family = runtimeV2KeyFamily(start.runId);
+    for (const key of [
+      family.state,
+      family.events,
+      family.acknowledgements,
+      family.invocations,
+      family.results,
+      family.steering,
+      family.steeringData,
+      runtimeV2MessageKey(input.messageId),
+      runtimeV2StartKey(ownerId, input.request.idempotencyKey),
+      runtimeV2ClientRequestKey(ownerId, input.request.clientRequestId),
+    ]) {
+      cleanupKeys.add(key);
+    }
+
+    const bound = await store.resolveBinding({
+      ownerId,
+      threadId,
+      runId: start.runId,
+      generation: start.generation,
+      ttlSeconds: 60,
+    });
+
+    // Byte-identical, because the binding schema re-hashes the catalog and
+    // compares it to toolCatalogHash — any key reordering in storage fails here.
+    expect(bound.toolDefinitions).toEqual(input.request.toolDefinitions);
+    expect(bound.toolCatalogHash).toBe(input.request.toolCatalogHash);
+
+    // The routed-message path must resolve the same run.
+    const viaMessage = await store.resolveMessageBinding({
+      messageId: input.messageId,
+      threadId,
+      provider: input.request.provider,
+      model: input.request.model,
+      ttlSeconds: 60,
+    });
+    expect(viaMessage.runId).toBe(start.runId);
+  });
 });

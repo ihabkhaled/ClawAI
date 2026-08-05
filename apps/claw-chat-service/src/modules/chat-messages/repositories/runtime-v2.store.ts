@@ -49,6 +49,7 @@ import {
 } from '../utilities/runtime-v2-key.utility';
 import {
   parseRuntimeV2TaggedReply,
+  parseStoredBinding,
   runtimeV2Unavailable,
 } from '../utilities/runtime-v2-reply.utility';
 
@@ -237,7 +238,10 @@ export class RuntimeV2Store {
       idempotencyKey: request.idempotencyKey,
       manifestHash: request.manifestHash,
       toolCatalogHash: request.toolCatalogHash,
-      toolDefinitions: request.toolDefinitions,
+      // Stored pre-serialized, the same way `epochs` is, so the Lua can HSET it
+      // as an opaque string and hand back the exact bytes the catalog hash was
+      // computed over.
+      toolDefinitions: JSON.stringify(request.toolDefinitions),
       provider: request.provider,
       model: request.model,
       budget: request.budget,
@@ -330,7 +334,7 @@ export class RuntimeV2Store {
       [input.ownerId, input.threadId, input.runId, input.generation],
     );
     return {
-      ...runtimeV2BindingSchema.parse(JSON.parse(reply.body)),
+      ...runtimeV2BindingSchema.parse(parseStoredBinding(reply.body)),
       ttlSeconds: input.ttlSeconds,
     };
   }
@@ -341,7 +345,7 @@ export class RuntimeV2Store {
       [runtimeV2MessageKey(input.messageId)],
       [input.messageId, input.threadId, input.provider, input.model],
     );
-    const mapped = runtimeV2BindingSchema.parse(JSON.parse(reply.body));
+    const mapped = runtimeV2BindingSchema.parse(parseStoredBinding(reply.body));
     return this.resolveBinding({
       ownerId: mapped.ownerId,
       threadId: mapped.threadId,

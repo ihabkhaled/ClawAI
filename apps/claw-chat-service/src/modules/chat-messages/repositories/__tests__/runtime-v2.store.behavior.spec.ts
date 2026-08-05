@@ -391,5 +391,13 @@ describe('RuntimeV2Store atomic behavior', () => {
     expect(bound.runId).toBe(acknowledgement.runId);
     expect(bound.generation).toBe(acknowledgement.generation);
     expect(bound.ownerId).toBe(ownerId);
+
+    // The tool catalog has to survive the round trip as an array, byte-identical
+    // to what was sent. The run-state binding stores it as an opaque string so
+    // the bytes the catalog hash was computed over are preserved; the binding
+    // schema re-hashes it and rejects any drift, so this also proves the hash
+    // still matches after storage.
+    expect(bound.toolDefinitions).toEqual(request.toolDefinitions);
+    expect(bound.toolCatalogHash).toBe(request.toolCatalogHash);
   });
 });

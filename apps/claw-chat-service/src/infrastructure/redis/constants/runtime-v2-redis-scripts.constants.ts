@@ -76,6 +76,7 @@ redis.call('HSET', KEYS[2],
   'clientRequestId', snapshot.clientRequestId, 'idempotencyKey', snapshot.idempotencyKey,
   'runId', proposed.runId, 'generation', proposed.generation, 'epochs', snapshot.epochs,
   'manifestHash', snapshot.manifestHash, 'toolCatalogHash', snapshot.toolCatalogHash,
+  'toolDefinitions', snapshot.toolDefinitions,
   'provider', snapshot.provider, 'model', snapshot.model, 'lifecycle', 'active',
   'sequence', '0', 'nextSteeringSequence', '0', 'terminalized', '0', 'claimed', '0',
   'budget', cjson.encode(snapshot.budget), 'toolCalls', '0', 'toolResultBytes', '0')
@@ -265,7 +266,17 @@ local after = tonumber(ARGV[2])
 local oldest = redis.call('ZRANGE', KEYS[2], 0, 0, 'WITHSCORES')
 if #oldest == 2 and after < tonumber(oldest[2]) - 1 then return {'CONFLICT', 'REPLAY_GAP'} end
 local members = redis.call('ZRANGEBYSCORE', KEYS[2], '(' .. after, '+inf', 'LIMIT', 0, 1000)
-return {'OK', cjson.encode({runId=expected.runId, terminal=bound.lifecycle ~= 'active', events=members})}
+-- The events list is assembled as JSON text rather than handed to cjson.encode
+-- inside a table, because cjson cannot tell an empty ARRAY from an empty OBJECT
+-- and encodes both as {}. The stream polls on an interval and most polls return
+-- nothing new, so "events":{} was the common case, not an edge case — it failed
+-- the read schema ("expected array, received object"), errored the SSE
+-- observable, and reached the extension as "stream returned an invalid event".
+local eventsJson = '[]'
+if #members > 0 then eventsJson = cjson.encode(members) end
+return {'OK', '{"runId":' .. cjson.encode(expected.runId) ..
+  ',"terminal":' .. tostring(bound.lifecycle ~= 'active') ..
+  ',"events":' .. eventsJson .. '}'}
 `;
 
 export const RUNTIME_V2_BINDING_SCRIPT = `-- runtime-v2:binding
@@ -288,6 +299,14 @@ local result = {
   epochs=cjson.decode(redis.call('HGET', KEYS[1], 'epochs')),
   manifestHash=redis.call('HGET', KEYS[1], 'manifestHash'),
   toolCatalogHash=redis.call('HGET', KEYS[1], 'toolCatalogHash'),
+  -- Deliberately returned as the STORED JSON STRING, not cjson.decode'd. The
+  -- binding is validated by a schema whose superRefine re-hashes
+  -- JSON.stringify(toolDefinitions) and compares it to toolCatalogHash, so a
+  -- cjson decode/encode round trip could reorder object keys and fail a catalog
+  -- that is perfectly valid. The caller parses this field itself, which keeps
+  -- the exact bytes that produced the hash. This mirrors the message-binding
+  -- script, which returns its blob verbatim for the same reason.
+  toolDefinitions=redis.call('HGET', KEYS[1], 'toolDefinitions'),
   provider=redis.call('HGET', KEYS[1], 'provider'),
   model=redis.call('HGET', KEYS[1], 'model')
 }
