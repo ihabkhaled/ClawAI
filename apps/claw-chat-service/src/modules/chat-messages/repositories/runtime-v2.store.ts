@@ -541,7 +541,12 @@ export class RuntimeV2Store {
       input.claimId,
       JSON.stringify({ status: input.status, completedAt: input.completedAt }),
       JSON.stringify(ack),
-      eventJson(input, `run.${input.status}`, ack.eventId, {}),
+      eventJson(
+        input,
+        `run.${input.status}`,
+        ack.eventId,
+        input.reason === undefined ? {} : { reason: { ...input.reason } },
+      ),
       ttlMilliseconds(input.ttlSeconds),
     ]);
   }

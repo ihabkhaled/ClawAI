@@ -11,6 +11,7 @@ import { RuntimeV2Store } from '../repositories/runtime-v2.store';
 import type { MessageRoutedData } from '../types/execution.types';
 import type { RuntimeV2BoundInput } from '../types/runtime-v2-store.types';
 import { createRuntimeV2Identity } from '../utilities/runtime-v2-identity.utility';
+import { runtimeV2TerminalReason } from '../utilities/runtime-v2-failure.utility';
 import {
   buildRuntimeV2ModelInstruction,
   isCapabilityDenial,
@@ -311,6 +312,10 @@ export class RuntimeV2LoopManager {
         idempotencyKey: createRuntimeV2Identity('terminal'),
         status: 'failed',
         completedAt: new Date().toISOString(),
+        // Without this the client received `run.failed` with an empty payload:
+        // it could show that the run died but never why, which made every live
+        // failure a log-diving exercise.
+        reason: runtimeV2TerminalReason(error),
       });
       throw error;
     }

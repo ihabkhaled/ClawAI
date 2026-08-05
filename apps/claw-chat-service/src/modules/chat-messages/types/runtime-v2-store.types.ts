@@ -80,11 +80,24 @@ export interface RuntimeV2ClaimInput extends RuntimeV2BoundInput {
   readonly deliveryId: string;
 }
 
+/**
+ * Why a run ended, carried on the terminal event.
+ *
+ * A failed run used to emit `run.failed` with an empty payload, so the client
+ * could show that the run died but never why. Both fields are bounded and the
+ * event is already marked sensitive-redacted.
+ */
+export interface RuntimeV2TerminalReason {
+  readonly code: string;
+  readonly message: string;
+}
+
 export interface RuntimeV2TerminalInput extends RuntimeV2BoundInput {
   readonly claimId: string;
   readonly idempotencyKey: string;
   readonly status: 'completed' | 'failed';
   readonly completedAt: string;
+  readonly reason?: RuntimeV2TerminalReason;
 }
 
 export interface RuntimeV2DispatchInput extends RuntimeV2BoundInput {

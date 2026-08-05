@@ -1,6 +1,7 @@
 import { Controller, Logger, MessageEvent, Param, Post, Query, Sse } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import {
+  catchError,
   endWith,
   from,
   ignoreElements,
@@ -8,6 +9,7 @@ import {
   map,
   merge,
   Observable,
+  of,
   share,
   switchMap,
   takeUntil,
@@ -18,6 +20,7 @@ import { type AuthenticatedUser } from '../../../common/types';
 import { StreamControlService } from '../services/stream-control.service';
 import { type CancelStreamResult } from '../types/stream.types';
 import { RuntimeV2StreamService } from '../services/runtime-v2-stream.service';
+import { runtimeV2StreamErrorEvent } from '../utilities/runtime-v2-failure.utility';
 import type { RuntimeV2RawStreamQuery } from '../types/runtime-v2-stream.types';
 
 @Controller('chat-messages')
@@ -54,6 +57,15 @@ export class ChatStreamController {
         return merge(events, heartbeat);
       }),
       map((event): MessageEvent => ({ data: JSON.stringify(event) })),
+      // An errored SSE observable is otherwise serialized by Nest as the raw
+      // error message on the data line, which no consumer can parse — the real
+      // cause was replaced by a JSON parse failure and surfaced in the
+      // extension as "stream returned an invalid event". Emitting a
+      // well-formed terminal event keeps the failure readable and still ends
+      // the stream.
+      catchError((error: unknown) =>
+        of<MessageEvent>({ data: JSON.stringify(runtimeV2StreamErrorEvent(error)) }),
+      ),
     );
   }
 

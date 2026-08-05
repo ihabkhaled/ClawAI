@@ -1,0 +1,54 @@
+import { BusinessException } from '../../../common/errors';
+import {
+  RUNTIME_V2_FAILURE_MESSAGE_CHARACTERS,
+  RUNTIME_V2_STREAM_ERROR_EVENT_TYPE,
+  RUNTIME_V2_UNKNOWN_FAILURE_CODE,
+} from '../constants/runtime-v2-failure.constants';
+import type { RuntimeV2TerminalReason } from '../types/runtime-v2-store.types';
+
+/**
+ * Turns a thrown value into the bounded reason carried on `run.failed`.
+ *
+ * A failed run used to terminalize with an empty payload, so the client could
+ * show that the run died but never why — every live failure meant reading
+ * server logs. The message is truncated because it ends up on an event whose
+ * payload is size-bounded, and it is never allowed to carry a stack trace,
+ * which is where incidental paths and values tend to leak.
+ */
+export function runtimeV2TerminalReason(error: unknown): RuntimeV2TerminalReason {
+  if (error instanceof BusinessException) {
+    return { code: error.code, message: truncate(error.message) };
+  }
+  if (error instanceof Error) {
+    return { code: RUNTIME_V2_UNKNOWN_FAILURE_CODE, message: truncate(error.message) };
+  }
+  return { code: RUNTIME_V2_UNKNOWN_FAILURE_CODE, message: truncate(String(error)) };
+}
+
+/**
+ * The terminal event emitted when the SSE observable itself errors.
+ *
+ * NestJS serializes an errored SSE observable by writing the raw error message
+ * onto the data line, so the client received `data: Runtime state is
+ * unavailable` — not JSON. Every consumer parses the data line as JSON, so the
+ * real error was replaced by a parse failure, and the extension reported the
+ * useless "ClawAI stream returned an invalid event" instead of the actual
+ * cause. Emitting a well-formed object keeps the failure legible.
+ */
+export function runtimeV2StreamErrorEvent(error: unknown): Readonly<Record<string, unknown>> {
+  const reason = runtimeV2TerminalReason(error);
+  return {
+    type: RUNTIME_V2_STREAM_ERROR_EVENT_TYPE,
+    code: reason.code,
+    message: reason.message,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+function truncate(message: string): string {
+  const normalized = message.replaceAll(/\s+/gu, ' ').trim();
+  if (normalized.length === 0) return 'Runtime run failed without a message';
+  return normalized.length <= RUNTIME_V2_FAILURE_MESSAGE_CHARACTERS
+    ? normalized
+    : `${normalized.slice(0, RUNTIME_V2_FAILURE_MESSAGE_CHARACTERS - 1)}…`;
+}
