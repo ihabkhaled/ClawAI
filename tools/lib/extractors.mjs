@@ -154,25 +154,37 @@ export function extractPermissions() {
   return [...new Set(perms)].sort().map((p) => verified(p, 'packages/shared-types/src/enums/permission.enum.ts'));
 }
 
-/** Nginx location→backend routes parsed from the main config. */
+/**
+ * Nginx location→backend routes.
+ *
+ * Reads BOTH config files. The routing table lives in locations.conf because a
+ * production server serves it under two certificates (mkcert internally, Let's
+ * Encrypt for the public domain) and each TLS server block `include`s the same
+ * file — see docs/08-runtime-devops/tls-setup.md. nginx.conf is still scanned
+ * so a route added directly to a server block is not silently dropped from the
+ * manifest.
+ */
 export function extractNginxRoutes() {
-  const src = readText(repoPath('infra/nginx/nginx.conf')) ?? '';
+  const sources = ['infra/nginx/nginx.conf', 'infra/nginx/locations.conf'];
   const routes = [];
-  const lines = src.split(/\r?\n/);
-  let currentLocation = null;
-  let currentBackend = null;
-  for (const line of lines) {
-    const loc = /location\s+([^\s{]+)/.exec(line);
-    if (loc) {
-      currentLocation = loc[1];
-      currentBackend = null;
-      continue;
-    }
-    const set = /set\s+\$\w+_backend\s+(https?:\/\/([a-z0-9-]+):(\d+))/.exec(line);
-    if (set && currentLocation) currentBackend = { url: set[1], service: set[2], port: Number(set[3]) };
-    if (/proxy_pass/.test(line) && currentLocation && currentBackend) {
-      routes.push({ location: currentLocation, service: currentBackend.service, port: currentBackend.port });
-      currentLocation = null;
+  for (const source of sources) {
+    const src = readText(repoPath(source)) ?? '';
+    const lines = src.split(/\r?\n/);
+    let currentLocation = null;
+    let currentBackend = null;
+    for (const line of lines) {
+      const loc = /location\s+([^\s{]+)/.exec(line);
+      if (loc) {
+        currentLocation = loc[1];
+        currentBackend = null;
+        continue;
+      }
+      const set = /set\s+\$\w+_backend\s+(https?:\/\/([a-z0-9-]+):(\d+))/.exec(line);
+      if (set && currentLocation) currentBackend = { url: set[1], service: set[2], port: Number(set[3]) };
+      if (/proxy_pass/.test(line) && currentLocation && currentBackend) {
+        routes.push({ location: currentLocation, service: currentBackend.service, port: currentBackend.port, source });
+        currentLocation = null;
+      }
     }
   }
   // Dedupe identical location→service pairs (nginx repeats blocks per verb).
@@ -182,7 +194,7 @@ export function extractNginxRoutes() {
     const key = `${r.location}|${r.service}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    deduped.push({ ...r, source: 'infra/nginx/nginx.conf' });
+    deduped.push(r);
   }
   return deduped;
 }

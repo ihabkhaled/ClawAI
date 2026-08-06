@@ -174,7 +174,7 @@ function Get-StepLabel {
         'secrets'  { 'Secrets' }
         'admin'    { 'Admin configuration' }
         'ai'       { 'AI mode & GPU' }
-        'tls'      { 'TLS certificates' }
+        'tls'      { 'TLS certificates (internal)' }
         'env'      { '.env file' }
         'tooling'  { 'Desktop-agent tooling' }
         'start'    { 'Stack start' }
@@ -611,6 +611,33 @@ $clawBaseUrl = "https://$clawHostname"
 $corsOriginsValue = "https://$clawHostname,https://${clawHostname}:3000"
 $env:CLAW_HOSTNAME = $clawHostname
 
+# A name a public CA is able to validate. Kept in sync with the identical check
+# in scripts/install.sh and scripts/install-letsencrypt.sh. Everything excluded
+# here resolves only on this machine or inside a LAN, where mkcert is correct.
+function Test-PublicDomain {
+    param([string]$Name)
+    if ([string]::IsNullOrWhiteSpace($Name)) { return $false }
+    if ($Name -match '^(\d{1,3}\.){3}\d{1,3}$') { return $false }
+    if ($Name -notmatch '\.') { return $false }
+    if ($Name -match '(?i)^(localhost|.*\.localhost)$') { return $false }
+    if ($Name -match '(?i)\.(local|internal|lan|home|corp|test|example|invalid)$') { return $false }
+    return $true
+}
+
+# Carried into .env so a later Linux run of install-letsencrypt.sh already has
+# the contact address. Windows itself cannot issue the certificate (see the
+# note printed after startup), but it must not silently drop the setting.
+$letsEncryptEmail = ''
+if ((Test-PublicDomain $clawHostname) -and $ClawMode -eq 'prod') {
+    $existingLeEmail = $null
+    if (Test-Path $envFile) {
+        $existingLeEmail = Get-EnvValue -Path $envFile -Key "LETSENCRYPT_EMAIL"
+    }
+    $leFallback = if ($env:LETSENCRYPT_EMAIL) { $env:LETSENCRYPT_EMAIL } elseif ($existingLeEmail) { $existingLeEmail } else { '' }
+    $letsEncryptEmail = (Read-StateAnswer -Key 'ANSWER_LE_EMAIL' `
+        -Prompt 'Email for certificate-expiry warnings (blank to skip)' -Fallback $leFallback).Trim()
+}
+
 Write-Ok "Hostname: $clawHostname"
 Write-Ok "Base URL: $clawBaseUrl"
 Set-StateValue -Key 'ANSWER_HOSTNAME' -Value $clawHostname
@@ -636,9 +663,50 @@ if ([string]::IsNullOrWhiteSpace($paymentTokenEncryptionKey)) {
 } else {
     Write-Ok "Preserved PAYMENT_TOKEN_ENCRYPTION_KEY from existing .env"
 }
-$dbPassword = New-Password
-$mongoPass = New-Password
-$rabbitPass = New-Password
+# Every Postgres database gets its OWN password.
+#
+# One shared credential defeats the reason each service owns a separate
+# database: a single leaked connection string - a log line, a stack trace, one
+# compromised service - would hand an attacker every other database in the
+# platform. Per-database passwords keep that blast radius to the data the
+# leaking service already had.
+#
+# Each value is preserved INDEPENDENTLY from any existing .env, because a
+# Postgres named volume is initialised with the first password its container
+# ever sees; regenerating on a re-run would leave every service failing with
+# `password authentication failed for user "claw"`. That per-key read is also
+# the upgrade path for installs predating this change, which have the same
+# value repeated across every PG_*_PASSWORD: each is carried forward unchanged.
+# A database whose variable is absent (a service added since the last run, so
+# its volume does not exist yet) gets a fresh, distinct password.
+#
+# The keys are the contract - they must match the PG_<KEY>_PASSWORD names in
+# the .env template below and the POSTGRES_PASSWORD each container reads in
+# docker/docker-compose.*.databases.yml.
+$pgDbKeys = @(
+    'AUTH', 'CHAT', 'CONNECTOR', 'ROUTING', 'MEMORY', 'FILES', 'OLLAMA',
+    'IMAGES', 'FILE_GENERATIONS', 'WORKSPACE', 'AGENT', 'RESEARCH',
+    'PAYMENTS', 'LLAMACPP'
+)
+$pgPasswords = @{}
+$pgPreservedCount = 0
+foreach ($pgKey in $pgDbKeys) {
+    $existingPgPassword = Get-EnvValue -Path $envFile -Key "PG_${pgKey}_PASSWORD"
+    if ([string]::IsNullOrWhiteSpace($existingPgPassword)) {
+        $pgPasswords[$pgKey] = New-Password
+    } else {
+        $pgPasswords[$pgKey] = $existingPgPassword
+        $pgPreservedCount++
+    }
+}
+
+# Same reasoning as the Postgres passwords above: the Mongo and RabbitMQ named
+# volumes bake in the credential they were created with, so a re-run must reuse
+# it rather than mint a new one.
+$mongoPass = Get-EnvValue -Path $envFile -Key 'MONGO_PASSWORD'
+if ([string]::IsNullOrWhiteSpace($mongoPass)) { $mongoPass = New-Password }
+$rabbitPass = Get-EnvValue -Path $envFile -Key 'RABBITMQ_PASSWORD'
+if ([string]::IsNullOrWhiteSpace($rabbitPass)) { $rabbitPass = New-Password }
 $adminPass = New-Password
 $interServiceToken = New-SecretHex
 $githubWebhookSecret = New-SecretHex
@@ -650,7 +718,10 @@ $figmaWebhookSecret = New-SecretHex
 
 Write-Ok "JWT secret generated ($($jwtSecret.Length) chars)"
 Write-Ok "Encryption key generated ($($encryptionKey.Length) hex chars)"
-Write-Ok "Database passwords generated"
+Write-Ok "Database passwords generated (one distinct password per Postgres database)"
+if ($pgPreservedCount -gt 0) {
+    Write-Ok "Preserved $pgPreservedCount PG_*_PASSWORD value(s) from existing .env (those volumes already use them)"
+}
 Write-Ok "Admin password generated"
 Write-Ok "Inter-service auth token generated ($($interServiceToken.Length) hex chars)"
 Write-Ok "Workspace webhook secrets generated (6 providers)"
@@ -934,12 +1005,20 @@ CLAW_LOCAL_AI=$localAiValue
 CLAW_HOSTNAME=$clawHostname
 CORS_ORIGINS=$corsOriginsValue
 
-# --- TLS / SSL (mkcert-managed - see scripts/install-tls.ps1) ---
+# --- Internal TLS / SSL (mkcert-managed - see scripts/install-tls.ps1) ---
 # Containers always look here. The leaf cert + private key + root CA are
 # regenerated by install-tls.ps1 and bind-mounted via docker compose.
+# These are the INTERNAL identity of the stack (SANs are container hostnames)
+# and are never what a browser sees on a public domain.
 HTTPS_CERT_PATH=/certs/claw.crt
 HTTPS_KEY_PATH=/certs/claw.key
 NODE_EXTRA_CA_CERTS=/certs/rootCA.pem
+
+# --- Public TLS (Let's Encrypt - see scripts/install-letsencrypt.sh) ---
+# Contact address Let's Encrypt uses for certificate-expiry warnings. Issuance
+# runs on a Linux host; this value is recorded here so that run needs no extra
+# input. Ignored unless CLAW_HOSTNAME is a publicly resolvable domain.
+LETSENCRYPT_EMAIL=$letsEncryptEmail
 
 # --- Rate Limiting ---
 THROTTLE_TTL=60000
@@ -949,74 +1028,74 @@ THROTTLE_LIMIT=2500
 # PostgreSQL Credentials
 # =============================================================================
 PG_AUTH_USER=claw
-PG_AUTH_PASSWORD=$dbPassword
+PG_AUTH_PASSWORD=$($pgPasswords.AUTH)
 PG_AUTH_DB=claw_auth
 PG_AUTH_PORT=5441
 
 PG_CHAT_USER=claw
-PG_CHAT_PASSWORD=$dbPassword
+PG_CHAT_PASSWORD=$($pgPasswords.CHAT)
 PG_CHAT_DB=claw_chat
 PG_CHAT_PORT=5442
 
 PG_CONNECTOR_USER=claw
-PG_CONNECTOR_PASSWORD=$dbPassword
+PG_CONNECTOR_PASSWORD=$($pgPasswords.CONNECTOR)
 PG_CONNECTOR_DB=claw_connectors
 PG_CONNECTOR_PORT=5443
 
 PG_ROUTING_USER=claw
-PG_ROUTING_PASSWORD=$dbPassword
+PG_ROUTING_PASSWORD=$($pgPasswords.ROUTING)
 PG_ROUTING_DB=claw_routing
 PG_ROUTING_PORT=5444
 
 PG_MEMORY_USER=claw
-PG_MEMORY_PASSWORD=$dbPassword
+PG_MEMORY_PASSWORD=$($pgPasswords.MEMORY)
 PG_MEMORY_DB=claw_memory
 PG_MEMORY_PORT=5445
 
 PG_FILES_USER=claw
-PG_FILES_PASSWORD=$dbPassword
+PG_FILES_PASSWORD=$($pgPasswords.FILES)
 PG_FILES_DB=claw_files
 PG_FILES_PORT=5446
 
 PG_OLLAMA_USER=claw
-PG_OLLAMA_PASSWORD=$dbPassword
+PG_OLLAMA_PASSWORD=$($pgPasswords.OLLAMA)
 PG_OLLAMA_DB=claw_ollama
 PG_OLLAMA_PORT=5447
 
 PG_IMAGES_USER=claw
-PG_IMAGES_PASSWORD=$dbPassword
+PG_IMAGES_PASSWORD=$($pgPasswords.IMAGES)
 PG_IMAGES_DB=claw_images
 PG_IMAGES_PORT=5448
 
 PG_FILE_GENERATIONS_USER=claw
-PG_FILE_GENERATIONS_PASSWORD=$dbPassword
+PG_FILE_GENERATIONS_PASSWORD=$($pgPasswords.FILE_GENERATIONS)
 PG_FILE_GENERATIONS_DB=claw_file_generations
 PG_FILE_GENERATIONS_PORT=5449
 
 PG_WORKSPACE_USER=claw
-PG_WORKSPACE_PASSWORD=$dbPassword
+PG_WORKSPACE_PASSWORD=$($pgPasswords.WORKSPACE)
 PG_WORKSPACE_DB=claw_workspace
 PG_WORKSPACE_PORT=5450
 
 PG_AGENT_USER=claw
-PG_AGENT_PASSWORD=$dbPassword
+PG_AGENT_PASSWORD=$($pgPasswords.AGENT)
 PG_AGENT_DB=claw_agent
 PG_AGENT_PORT=5451
 
 PG_RESEARCH_USER=claw
-PG_RESEARCH_PASSWORD=$dbPassword
+PG_RESEARCH_PASSWORD=$($pgPasswords.RESEARCH)
 PG_RESEARCH_DB=claw_research
 PG_RESEARCH_PORT=5452
 
 # Payment Service - a separate instance from claw_auth by design: the payment
 # service must never read or write user/plan rows directly.
 PG_PAYMENTS_USER=claw
-PG_PAYMENTS_PASSWORD=$dbPassword
+PG_PAYMENTS_PASSWORD=$($pgPasswords.PAYMENTS)
 PG_PAYMENTS_DB=claw_payments
 PG_PAYMENTS_PORT=5453
 
 PG_LLAMACPP_USER=claw
-PG_LLAMACPP_PASSWORD=$dbPassword
+PG_LLAMACPP_PASSWORD=$($pgPasswords.LLAMACPP)
 PG_LLAMACPP_DB=claw_llamacpp
 PG_LLAMACPP_PORT=5440
 
@@ -1384,20 +1463,20 @@ CAPABILITY_DEPRECATED_TERMINAL_COMMAND_DUAL_WRITE=true
 # =============================================================================
 # Per-Service Database URLs
 # =============================================================================
-AUTH_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-auth:5432/claw_auth?schema=public
-CHAT_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-chat:5432/claw_chat?schema=public
-CONNECTOR_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-connector:5432/claw_connectors?schema=public
-ROUTING_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-routing:5432/claw_routing?schema=public
-MEMORY_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-memory:5432/claw_memory?schema=public
-FILES_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-files:5432/claw_files?schema=public
-OLLAMA_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-ollama:5432/claw_ollama?schema=public
-IMAGE_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-images:5432/claw_images?schema=public
-FILE_GENERATION_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-file-generations:5432/claw_file_generations?schema=public
-WORKSPACE_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-workspace:5432/claw_workspace?schema=public
-AGENT_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-agent:5432/claw_agent?schema=public
-RESEARCH_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-research:5432/claw_research?schema=public
-PAYMENT_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-payments:5432/claw_payments?schema=public
-LLAMACPP_DATABASE_URL=postgresql://claw:$($dbPassword)@pg-llamacpp:5432/claw_llamacpp?schema=public
+AUTH_DATABASE_URL=postgresql://claw:$($pgPasswords.AUTH)@pg-auth:5432/claw_auth?schema=public
+CHAT_DATABASE_URL=postgresql://claw:$($pgPasswords.CHAT)@pg-chat:5432/claw_chat?schema=public
+CONNECTOR_DATABASE_URL=postgresql://claw:$($pgPasswords.CONNECTOR)@pg-connector:5432/claw_connectors?schema=public
+ROUTING_DATABASE_URL=postgresql://claw:$($pgPasswords.ROUTING)@pg-routing:5432/claw_routing?schema=public
+MEMORY_DATABASE_URL=postgresql://claw:$($pgPasswords.MEMORY)@pg-memory:5432/claw_memory?schema=public
+FILES_DATABASE_URL=postgresql://claw:$($pgPasswords.FILES)@pg-files:5432/claw_files?schema=public
+OLLAMA_DATABASE_URL=postgresql://claw:$($pgPasswords.OLLAMA)@pg-ollama:5432/claw_ollama?schema=public
+IMAGE_DATABASE_URL=postgresql://claw:$($pgPasswords.IMAGES)@pg-images:5432/claw_images?schema=public
+FILE_GENERATION_DATABASE_URL=postgresql://claw:$($pgPasswords.FILE_GENERATIONS)@pg-file-generations:5432/claw_file_generations?schema=public
+WORKSPACE_DATABASE_URL=postgresql://claw:$($pgPasswords.WORKSPACE)@pg-workspace:5432/claw_workspace?schema=public
+AGENT_DATABASE_URL=postgresql://claw:$($pgPasswords.AGENT)@pg-agent:5432/claw_agent?schema=public
+RESEARCH_DATABASE_URL=postgresql://claw:$($pgPasswords.RESEARCH)@pg-research:5432/claw_research?schema=public
+PAYMENT_DATABASE_URL=postgresql://claw:$($pgPasswords.PAYMENTS)@pg-payments:5432/claw_payments?schema=public
+LLAMACPP_DATABASE_URL=postgresql://claw:$($pgPasswords.LLAMACPP)@pg-llamacpp:5432/claw_llamacpp?schema=public
 
 # claw-llamacpp-service (Local Frontier LLM runtime)
 # Path matches the `llamacpp-data` Docker named volume so binary + weights
@@ -1751,6 +1830,31 @@ while ($elapsed -lt $maxWait) {
 Write-Ok "[100%] Finalizing containers: complete"
 Write-Host ""
 Write-Host ""
+
+# =============================================================================
+# Step 9b: Public TLS certificate (Let's Encrypt)
+# =============================================================================
+# Deliberately guidance-only on Windows rather than a silent gap.
+#
+# Issuance itself is not portable here: the ACME client is certbot, whose
+# Windows builds were discontinued, and the flow this project uses writes the
+# challenge into a Linux path (/var/www/certbot) that the nginx container
+# bind-mounts. Pretending to run it would produce a confusing failure at the
+# end of an otherwise successful install; saying plainly that the mkcert
+# certificate is in force, and naming the one command that replaces it, does
+# not. See scripts/install-letsencrypt.sh and docs/08-runtime-devops/tls-setup.md.
+if ((Test-PublicDomain $clawHostname) -and $ClawMode -eq 'prod') {
+    Write-Host "Step 9b/9: Public TLS certificate (Let's Encrypt)" -ForegroundColor White
+    Write-Warn "'$clawHostname' is a public domain, but this host is serving the mkcert certificate."
+    Write-Info "  Browsers will show a 'not trusted' warning on $clawBaseUrl until a public"
+    Write-Info "  certificate is issued. That step runs on the Linux host serving the domain:"
+    Write-Info ""
+    Write-Info "    bash scripts/install-letsencrypt.sh --verify-renewal"
+    Write-Info ""
+    Write-Info "  It leaves the mkcert certificate in place for service-to-service TLS and"
+    Write-Info "  adds the trusted one at the edge. Nothing here needs to change first."
+    Write-Host ""
+}
 
 # Final status
 $unhealthy = (docker compose --env-file $envFile $ComposeFiles ps 2>$null | Select-String "unhealthy").Count

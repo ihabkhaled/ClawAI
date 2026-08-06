@@ -1,0 +1,11 @@
+# Drop-in directory for generated public (Let's Encrypt) nginx server blocks.
+#
+# scripts/install-letsencrypt.sh writes <domain>.conf here after certbot issues
+# a certificate, and docker compose mounts this directory into the nginx
+# container at /etc/nginx/claw/public-tls. infra/nginx/nginx.conf includes
+# */*.conf from it with a wildcard, which nginx accepts even when it matches
+# nothing — that is what lets a laptop and a production server share one config.
+#
+# The generated .conf files are host-specific and are NOT committed (.gitignore).
+# This placeholder exists only so the directory survives a clean checkout; a
+# missing mount source would otherwise be created by Docker as root.

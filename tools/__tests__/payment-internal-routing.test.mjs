@@ -3,14 +3,30 @@ import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { URL } from 'node:url';
 
+/**
+ * The docker-mode routing table lives in infra/nginx/locations.conf, which
+ * every TLS server block in nginx.conf `include`s — a production server serves
+ * the same routes under both the mkcert and the Let's Encrypt certificate, and
+ * one shared file is what stops those two copies drifting. Reading only
+ * nginx.conf here would assert against a file that no longer holds any route,
+ * so both are concatenated into the config the container effectively runs.
+ */
+async function readLocalNginxConfig() {
+  const parts = await Promise.all([
+    readFile(new URL('../../infra/nginx/nginx.conf', import.meta.url), 'utf8'),
+    readFile(new URL('../../infra/nginx/locations.conf', import.meta.url), 'utf8'),
+  ]);
+  return parts.join('\n');
+}
+
 test('nginx does not expose the payment service internal API', async () => {
-  const nginx = await readFile(new URL('../../infra/nginx/nginx.conf', import.meta.url), 'utf8');
+  const nginx = await readLocalNginxConfig();
   assert.doesNotMatch(nginx, /location\s+\/api\/v1\/internal\/payments(?:\s|\/|\{)/u);
 });
 
 test('both nginx deployment modes expose every public payment route', async () => {
   const configs = await Promise.all([
-    readFile(new URL('../../infra/nginx/nginx.conf', import.meta.url), 'utf8'),
+    readLocalNginxConfig(),
     readFile(new URL('../../infra/nginx/nginx.distributed.conf.template', import.meta.url), 'utf8'),
   ]);
 

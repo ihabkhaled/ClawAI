@@ -35,8 +35,60 @@ RUN cd /app/packages/shared-types && npx tsgo \
 
 WORKDIR /app/apps/claw-frontend
 
+# NEXT_PUBLIC_* values are INLINED INTO THE CLIENT BUNDLE AT BUILD TIME.
+#
+# This is the part that catches people: putting one in .env or compose `env_file`
+# makes it visible to the Node process at runtime, but the browser never reads
+# that — Next replaced `process.env.NEXT_PUBLIC_X` with a literal during
+# `npm run build`. If the value was absent then, the literal is `undefined`
+# forever, and no amount of restarting the container changes it.
+#
+# That is exactly how PayPal checkout broke: NEXT_PUBLIC_PAYPAL_CLIENT_ID was
+# set in .env and present in `docker exec claw-frontend printenv`, yet the
+# client bundle carried `undefined`, so the SDK loader rejected with "PayPal
+# client ID is not configured" and the dialog showed "We could not load the
+# secure payment form".
+#
+# So EVERY NEXT_PUBLIC_* the client references must be declared here AND passed
+# as a build arg in docker/docker-compose.prod.services.yml. Adding a new one to
+# .env alone is not enough — it must be added in both places, and the image
+# rebuilt (not restarted) for the change to reach a browser.
+#
+# These are public by definition: they ship to every visitor in the JS bundle.
+# Never pass a secret through this path — PAYPAL_CLIENT_SECRET and friends stay
+# server-side, read at runtime by the payment service.
 ARG NEXT_PUBLIC_API_URL=http://localhost:4000
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
+ARG NEXT_PUBLIC_PAYPAL_CLIENT_ID=
+ENV NEXT_PUBLIC_PAYPAL_CLIENT_ID=${NEXT_PUBLIC_PAYPAL_CLIENT_ID}
+
+ARG NEXT_PUBLIC_ADSENSE_CLIENT_ID=
+ENV NEXT_PUBLIC_ADSENSE_CLIENT_ID=${NEXT_PUBLIC_ADSENSE_CLIENT_ID}
+ARG NEXT_PUBLIC_ADSENSE_SERVING_ENABLED=
+ENV NEXT_PUBLIC_ADSENSE_SERVING_ENABLED=${NEXT_PUBLIC_ADSENSE_SERVING_ENABLED}
+ARG NEXT_PUBLIC_ADSENSE_REVIEW_MODE=
+ENV NEXT_PUBLIC_ADSENSE_REVIEW_MODE=${NEXT_PUBLIC_ADSENSE_REVIEW_MODE}
+ARG NEXT_PUBLIC_ADSENSE_HOME_SLOT=
+ENV NEXT_PUBLIC_ADSENSE_HOME_SLOT=${NEXT_PUBLIC_ADSENSE_HOME_SLOT}
+ARG NEXT_PUBLIC_ADSENSE_CONTENT_SLOT=
+ENV NEXT_PUBLIC_ADSENSE_CONTENT_SLOT=${NEXT_PUBLIC_ADSENSE_CONTENT_SLOT}
+ARG NEXT_PUBLIC_ADSENSE_SHARED_CHAT_TOP_SLOT=
+ENV NEXT_PUBLIC_ADSENSE_SHARED_CHAT_TOP_SLOT=${NEXT_PUBLIC_ADSENSE_SHARED_CHAT_TOP_SLOT}
+ARG NEXT_PUBLIC_ADSENSE_SHARED_CHAT_INLINE_SLOT=
+ENV NEXT_PUBLIC_ADSENSE_SHARED_CHAT_INLINE_SLOT=${NEXT_PUBLIC_ADSENSE_SHARED_CHAT_INLINE_SLOT}
+ARG NEXT_PUBLIC_ADSENSE_SHARED_CHAT_BOTTOM_SLOT=
+ENV NEXT_PUBLIC_ADSENSE_SHARED_CHAT_BOTTOM_SLOT=${NEXT_PUBLIC_ADSENSE_SHARED_CHAT_BOTTOM_SLOT}
+
+ARG NEXT_PUBLIC_SOCIAL_X_URL=
+ENV NEXT_PUBLIC_SOCIAL_X_URL=${NEXT_PUBLIC_SOCIAL_X_URL}
+ARG NEXT_PUBLIC_SOCIAL_LINKEDIN_URL=
+ENV NEXT_PUBLIC_SOCIAL_LINKEDIN_URL=${NEXT_PUBLIC_SOCIAL_LINKEDIN_URL}
+ARG NEXT_PUBLIC_SOCIAL_DISCORD_URL=
+ENV NEXT_PUBLIC_SOCIAL_DISCORD_URL=${NEXT_PUBLIC_SOCIAL_DISCORD_URL}
+
+ARG NEXT_PUBLIC_ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED=
+ENV NEXT_PUBLIC_ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED=${NEXT_PUBLIC_ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED}
 
 RUN npm run build
 

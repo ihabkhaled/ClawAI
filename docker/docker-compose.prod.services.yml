@@ -314,11 +314,32 @@ services:
     container_name: claw-nginx
     restart: unless-stopped
     ports:
+      # Port 80 is published on a production host for two reasons: Let's Encrypt
+      # fetches the HTTP-01 challenge over plain HTTP on the standard port and
+      # nowhere else, and a visitor typing the bare domain arrives on :80 and
+      # must be redirected rather than refused. 4000 is kept so existing
+      # bookmarks and internal references keep working.
+      - '80:80'
       - '4000:80'
       - '443:443'
     volumes:
       - ../infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Shared routing table, included by both the mkcert block and every
+      # generated public-domain block so the two can never drift apart.
+      - ../infra/nginx/locations.conf:/etc/nginx/claw/locations.conf:ro
+      # Generated Let's Encrypt server blocks (one per domain). Empty on a host
+      # that has not issued a public certificate; the wildcard include tolerates
+      # that, so this mount is safe unconditionally.
+      - ../infra/nginx/public-tls:/etc/nginx/claw/public-tls:ro
       - ../certs:/etc/nginx/certs:ro
+      # Let's Encrypt material. live/ and archive/ are root-owned 0700; the nginx
+      # master process runs as root and reads the leaf at startup, so a read-only
+      # mount of the real directory is correct and avoids the stale-copy failure
+      # mode where nginx keeps serving a certificate certbot already renewed.
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # ACME HTTP-01 webroot. certbot writes the challenge token here as root;
+      # nginx only ever reads it.
+      - /var/www/certbot:/var/www/certbot:ro
     depends_on:
       auth-service:
         condition: service_healthy
@@ -547,7 +568,26 @@ services:
       context: ..
       dockerfile: apps/claw-frontend/Dockerfile
       args:
+        # Every NEXT_PUBLIC_* the browser reads must be passed HERE, not just
+        # left in .env. Next inlines these into the client bundle during the
+        # build; `env_file` below only reaches the server process, so a value
+        # that is missing at build time stays `undefined` in the browser no
+        # matter how often the container is restarted. Adding one to .env alone
+        # silently does nothing — see the comment block in the Dockerfile.
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+        NEXT_PUBLIC_PAYPAL_CLIENT_ID: ${NEXT_PUBLIC_PAYPAL_CLIENT_ID:-}
+        NEXT_PUBLIC_ADSENSE_CLIENT_ID: ${NEXT_PUBLIC_ADSENSE_CLIENT_ID:-}
+        NEXT_PUBLIC_ADSENSE_SERVING_ENABLED: ${NEXT_PUBLIC_ADSENSE_SERVING_ENABLED:-}
+        NEXT_PUBLIC_ADSENSE_REVIEW_MODE: ${NEXT_PUBLIC_ADSENSE_REVIEW_MODE:-}
+        NEXT_PUBLIC_ADSENSE_HOME_SLOT: ${NEXT_PUBLIC_ADSENSE_HOME_SLOT:-}
+        NEXT_PUBLIC_ADSENSE_CONTENT_SLOT: ${NEXT_PUBLIC_ADSENSE_CONTENT_SLOT:-}
+        NEXT_PUBLIC_ADSENSE_SHARED_CHAT_TOP_SLOT: ${NEXT_PUBLIC_ADSENSE_SHARED_CHAT_TOP_SLOT:-}
+        NEXT_PUBLIC_ADSENSE_SHARED_CHAT_INLINE_SLOT: ${NEXT_PUBLIC_ADSENSE_SHARED_CHAT_INLINE_SLOT:-}
+        NEXT_PUBLIC_ADSENSE_SHARED_CHAT_BOTTOM_SLOT: ${NEXT_PUBLIC_ADSENSE_SHARED_CHAT_BOTTOM_SLOT:-}
+        NEXT_PUBLIC_SOCIAL_X_URL: ${NEXT_PUBLIC_SOCIAL_X_URL:-}
+        NEXT_PUBLIC_SOCIAL_LINKEDIN_URL: ${NEXT_PUBLIC_SOCIAL_LINKEDIN_URL:-}
+        NEXT_PUBLIC_SOCIAL_DISCORD_URL: ${NEXT_PUBLIC_SOCIAL_DISCORD_URL:-}
+        NEXT_PUBLIC_ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED: ${NEXT_PUBLIC_ROUTING_DEBUG_CONTEXT_INSPECTOR_ENABLED:-}
     container_name: claw-frontend
     restart: unless-stopped
     env_file: ../.env
@@ -558,7 +598,13 @@ services:
     volumes:
       - ../certs:/certs:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 || exit 1']
+      # 127.0.0.1, not localhost: Next binds IPv4 only (0.0.0.0:3000), while
+      # `localhost` inside the container resolves to ::1 first. wget has no
+      # happy-eyeballs fallback, so it fails with "Connection refused" and the
+      # container is marked unhealthy forever even though it is serving every
+      # request nginx sends it. That false negative blocks `depends_on:
+      # service_healthy` on the next bring-up.
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000 || exit 1']
       interval: 15s
       timeout: 10s
       retries: 5

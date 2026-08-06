@@ -209,21 +209,22 @@ echo ""
 # ─── Progress report ────────────────────────────────────────────────────────
 # The ordered list of steps, so --status and the resume banner describe the
 # install in the same words the run itself uses.
-STEP_KEYS="prereqs mode ports hostname secrets admin ai tls env tooling start"
+STEP_KEYS="prereqs mode ports hostname secrets admin ai tls env tooling start publictls"
 step_label() {
   case "$1" in
-    prereqs)  echo "Prerequisites" ;;
-    mode)     echo "Deployment mode" ;;
-    ports)    echo "Port availability" ;;
-    hostname) echo "Hostname" ;;
-    secrets)  echo "Secrets" ;;
-    admin)    echo "Admin configuration" ;;
-    ai)       echo "AI mode & GPU" ;;
-    tls)      echo "TLS certificates" ;;
-    env)      echo ".env file" ;;
-    tooling)  echo "Desktop-agent tooling" ;;
-    start)    echo "Stack start" ;;
-    *)        echo "$1" ;;
+    prereqs)   echo "Prerequisites" ;;
+    mode)      echo "Deployment mode" ;;
+    ports)     echo "Port availability" ;;
+    hostname)  echo "Hostname" ;;
+    secrets)   echo "Secrets" ;;
+    admin)     echo "Admin configuration" ;;
+    ai)        echo "AI mode & GPU" ;;
+    tls)       echo "TLS certificates (internal)" ;;
+    env)       echo ".env file" ;;
+    tooling)   echo "Desktop-agent tooling" ;;
+    start)     echo "Stack start" ;;
+    publictls) echo "Public TLS (Let's Encrypt)" ;;
+    *)         echo "$1" ;;
   esac
 }
 
@@ -579,6 +580,14 @@ check_port 4000 "API Gateway (Nginx)"
 check_port 5672 "RabbitMQ"
 check_port 6380 "Redis"
 check_port 27018 "MongoDB"
+# Only the production stack publishes the privileged ports. 80 is not optional
+# there: it carries the Let's Encrypt HTTP-01 challenge, which the CA will only
+# ever request on the standard port, and a host nginx or Apache squatting on it
+# fails the whole public-TLS step much later with a confusing 404.
+if [ "$CLAW_MODE" = "prod" ]; then
+  check_port 80 "HTTP / ACME challenge (Nginx)"
+  check_port 443 "HTTPS (Nginx)"
+fi
 state_mark_done "ports"
 echo ""
 
@@ -614,6 +623,38 @@ CORS_ORIGINS_VALUE="https://${CLAW_HOSTNAME},https://${CLAW_HOSTNAME}:3000"
 export CLAW_HOSTNAME
 
 state_set "ANSWER_HOSTNAME" "$CLAW_HOSTNAME"
+
+# A name a public CA is able to validate. Everything excluded here resolves
+# only on this machine or inside a LAN, so Let's Encrypt cannot be used and the
+# mkcert certificate remains the right answer. Kept in sync with the identical
+# check in scripts/install-letsencrypt.sh, which makes the final decision.
+hostname_is_public_domain() {
+  local d="$1"
+  [ -n "$d" ] || return 1
+  [[ "$d" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] && return 1
+  [[ "$d" == *.* ]] || return 1
+  case "$d" in
+    localhost|*.localhost) return 1 ;;
+    *.local|*.internal|*.lan|*.home|*.corp|*.test|*.example|*.invalid) return 1 ;;
+  esac
+  return 0
+}
+
+# Asked here rather than at issuance time so the whole interview stays in one
+# place and an unattended --yes run never stalls waiting for it later.
+LETSENCRYPT_EMAIL_VALUE=""
+if hostname_is_public_domain "$CLAW_HOSTNAME" && [ "$CLAW_MODE" = "prod" ]; then
+  EXISTING_LE_EMAIL=""
+  if [ -f "$ENV_FILE" ]; then
+    EXISTING_LE_EMAIL="$(get_env_value "LETSENCRYPT_EMAIL" "$ENV_FILE")"
+  fi
+  info "'$CLAW_HOSTNAME' is a public domain — a Let's Encrypt certificate will be"
+  info "issued for it after the stack starts, so browsers trust it without warnings."
+  LETSENCRYPT_EMAIL_VALUE="$(state_answer "ANSWER_LE_EMAIL" \
+    "Email for certificate-expiry warnings (blank to skip)" \
+    "${LETSENCRYPT_EMAIL:-$EXISTING_LE_EMAIL}")"
+fi
+
 state_mark_done "hostname"
 ok "Hostname: $CLAW_HOSTNAME"
 ok "Base URL: $CLAW_BASE_URL"
@@ -701,7 +742,24 @@ ENCRYPTION_KEY=$(gen_secret_hex)
 # encrypted under their own key so a payment-token compromise does not also
 # expose connector API keys, and so the two can be rotated independently.
 PAYMENT_TOKEN_ENCRYPTION_KEY=$(gen_secret_hex)
-DB_PASSWORD=$(gen_password)
+
+# Every Postgres database gets its OWN password.
+#
+# One shared credential defeats the reason each service owns a separate
+# database: a single leaked connection string — a log line, a stack trace, one
+# compromised service — would hand an attacker every other database in the
+# platform. Per-database passwords keep that blast radius to the data the
+# leaking service already had.
+#
+# The suffixes are the contract. They must match the PG_<KEY>_PASSWORD names
+# written to .env below, which are exactly the variables each container reads
+# as POSTGRES_PASSWORD in docker/docker-compose.*.databases.yml. Adding a
+# database means adding its key here and in all three places.
+PG_DB_KEYS="AUTH CHAT CONNECTOR ROUTING MEMORY FILES OLLAMA IMAGES FILE_GENERATIONS WORKSPACE AGENT RESEARCH PAYMENTS LLAMACPP"
+for pg_key in $PG_DB_KEYS; do
+  printf -v "PG_PW_${pg_key}" '%s' "$(gen_password)"
+done
+
 MONGO_PASS=$(gen_password)
 RABBIT_PASS=$(gen_password)
 ADMIN_PASS=$(gen_password)
@@ -716,7 +774,7 @@ FIGMA_WEBHOOK_SECRET=$(gen_secret_hex)
 ok "JWT secret generated (${#JWT_SECRET} chars)"
 ok "Encryption key generated (${#ENCRYPTION_KEY} hex chars)"
 ok "Payment token encryption key generated (${#PAYMENT_TOKEN_ENCRYPTION_KEY} hex chars)"
-ok "Database passwords generated"
+ok "Database passwords generated (one distinct password per Postgres database)"
 ok "Admin password generated"
 ok "Inter-service auth token generated (${#INTER_SERVICE_AUTH_TOKEN} hex chars)"
 ok "Workspace webhook secrets generated (6 providers)"
@@ -732,15 +790,31 @@ ok "Workspace webhook secrets generated (6 providers)"
 # regenerate. If the user wants new secrets they MUST also wipe the docker
 # volumes (the script warns about this in Step 7).
 if [ -f "$ENV_FILE" ]; then
-  PREV_DB_PASSWORD="$(get_env_value "PG_AUTH_PASSWORD" "$ENV_FILE")"
+  # Each Postgres password is preserved INDEPENDENTLY, because each named
+  # volume was initialised with whatever password its own container first saw.
+  #
+  # This is also the upgrade path for installs that predate per-database
+  # passwords: those have the same value repeated across every PG_*_PASSWORD,
+  # and reading them key by key carries each one forward unchanged, so an
+  # existing deployment keeps booting with no manual migration. A database
+  # whose variable is absent — a service added since the last run, whose volume
+  # does not exist yet — keeps the fresh distinct password generated above.
+  PG_PRESERVED_COUNT=0
+  for pg_key in $PG_DB_KEYS; do
+    prev_pg_password="$(get_env_value "PG_${pg_key}_PASSWORD" "$ENV_FILE")"
+    if [ -n "$prev_pg_password" ]; then
+      printf -v "PG_PW_${pg_key}" '%s' "$prev_pg_password"
+      PG_PRESERVED_COUNT=$((PG_PRESERVED_COUNT + 1))
+    fi
+  done
+
   PREV_MONGO_PASS="$(get_env_value "MONGO_PASSWORD" "$ENV_FILE")"
   PREV_RABBIT_PASS="$(get_env_value "RABBITMQ_PASSWORD" "$ENV_FILE")"
   PREV_JWT_SECRET="$(get_env_value "JWT_SECRET" "$ENV_FILE")"
   PREV_ENCRYPTION_KEY="$(get_env_value "ENCRYPTION_KEY" "$ENV_FILE")"
   PREV_PAYMENT_TOKEN_KEY="$(get_env_value "PAYMENT_TOKEN_ENCRYPTION_KEY" "$ENV_FILE")"
-  if [ -n "$PREV_DB_PASSWORD" ]; then
-    DB_PASSWORD="$PREV_DB_PASSWORD"
-    ok "Preserved PG_*_PASSWORD from existing .env (postgres volumes already use this)"
+  if [ "$PG_PRESERVED_COUNT" -gt 0 ]; then
+    ok "Preserved $PG_PRESERVED_COUNT PG_*_PASSWORD value(s) from existing .env (those volumes already use them)"
   fi
   if [ -n "$PREV_MONGO_PASS" ]; then
     MONGO_PASS="$PREV_MONGO_PASS"
@@ -946,8 +1020,14 @@ fi
 state_mark_done "ai"
 echo ""
 
-# ─── Step 6: Local TLS / SSL certificates (forced — no prompt) ──────────────
-echo "${BOLD}Step 6/9: Installing local TLS certificates${NC}"
+# ─── Step 6: Internal TLS / SSL certificates (forced — no prompt) ───────────
+# This is the mkcert leaf, and it is the stack's INTERNAL identity: every
+# service presents it on its own HTTPS listener and nginx verifies upstreams
+# against the matching root CA. Its SANs are container hostnames, so no public
+# CA can issue a replacement — this step is mandatory even on a production
+# server with a real domain. Browser-facing TLS for that domain is issued
+# separately in step 9b and layered on top; it never replaces this.
+echo "${BOLD}Step 6/9: Installing internal TLS certificates${NC}"
 echo ""
 
 # Certificate generation is the slowest optional step and it touches the system
@@ -1004,10 +1084,11 @@ echo ""
 echo "${BOLD}Step 7/9: Generating .env file${NC}"
 echo ""
 
-# Detect the dangerous scenario where .env is missing (so we generated fresh
-# DB_PASSWORD this run) but Postgres named-volumes from a previous install
-# still exist — those volumes were initialised with the OLD password and will
-# reject every service connection. Offer to wipe them so the new secrets stick.
+# Detect the dangerous scenario where .env is missing (so a fresh password was
+# generated for every database this run) but Postgres named-volumes from a
+# previous install still exist — those volumes were initialised with the OLD
+# passwords and will reject every service connection. Offer to wipe them so the
+# new secrets stick.
 if [ ! -f "$ENV_FILE" ] && command -v docker >/dev/null 2>&1; then
   STALE_VOLUMES="$(docker volume ls --format '{{.Name}}' 2>/dev/null | grep -E '^claw_pg-|^claw_mongo|^claw_rabbitmq' || true)"
   if [ -n "$STALE_VOLUMES" ]; then
@@ -1023,7 +1104,7 @@ if [ ! -f "$ENV_FILE" ] && command -v docker >/dev/null 2>&1; then
         docker volume rm "$v" >/dev/null 2>&1 && ok "Removed $v" || warn "Could not remove $v (still in use?)"
       done <<<"$STALE_VOLUMES"
     else
-      warn "Volumes kept. Restore the prior .env (or its DB_PASSWORD) before continuing"
+      warn "Volumes kept. Restore the prior .env (or its PG_*_PASSWORD values) before continuing"
       warn "or re-run with 'WIPE' to clear the data."
     fi
   fi
@@ -1085,12 +1166,21 @@ CLAW_LOCAL_AI=${LOCAL_AI}
 CLAW_HOSTNAME=${CLAW_HOSTNAME}
 CORS_ORIGINS=${CORS_ORIGINS_VALUE}
 
-# --- TLS / SSL (mkcert-managed — see scripts/install-tls.sh) ---
+# --- Internal TLS / SSL (mkcert-managed — see scripts/install-tls.sh) ---
 # Containers always look here. The leaf cert + private key + root CA are
 # regenerated by install-tls.sh and bind-mounted via docker compose.
+# These are the INTERNAL identity of the stack (SANs are container hostnames)
+# and are never what a browser sees on a public domain.
 HTTPS_CERT_PATH=/certs/claw.crt
 HTTPS_KEY_PATH=/certs/claw.key
 NODE_EXTRA_CA_CERTS=/certs/rootCA.pem
+
+# --- Public TLS (Let's Encrypt — see scripts/install-letsencrypt.sh) ---
+# Contact address Let's Encrypt uses for certificate-expiry warnings. Leave it
+# blank to register without one; the certificate still issues and renews, but a
+# renewal that silently breaks will not be reported to anyone before it expires.
+# Ignored unless CLAW_HOSTNAME is a publicly resolvable domain.
+LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL_VALUE}
 
 # --- Rate Limiting ---
 THROTTLE_TTL=60000
@@ -1100,73 +1190,73 @@ THROTTLE_LIMIT=2500
 # PostgreSQL Credentials
 # =============================================================================
 PG_AUTH_USER=claw
-PG_AUTH_PASSWORD=${DB_PASSWORD}
+PG_AUTH_PASSWORD=${PG_PW_AUTH}
 PG_AUTH_DB=claw_auth
 PG_AUTH_PORT=5441
 
 PG_CHAT_USER=claw
-PG_CHAT_PASSWORD=${DB_PASSWORD}
+PG_CHAT_PASSWORD=${PG_PW_CHAT}
 PG_CHAT_DB=claw_chat
 PG_CHAT_PORT=5442
 
 PG_CONNECTOR_USER=claw
-PG_CONNECTOR_PASSWORD=${DB_PASSWORD}
+PG_CONNECTOR_PASSWORD=${PG_PW_CONNECTOR}
 PG_CONNECTOR_DB=claw_connectors
 PG_CONNECTOR_PORT=5443
 
 PG_ROUTING_USER=claw
-PG_ROUTING_PASSWORD=${DB_PASSWORD}
+PG_ROUTING_PASSWORD=${PG_PW_ROUTING}
 PG_ROUTING_DB=claw_routing
 PG_ROUTING_PORT=5444
 
 PG_MEMORY_USER=claw
-PG_MEMORY_PASSWORD=${DB_PASSWORD}
+PG_MEMORY_PASSWORD=${PG_PW_MEMORY}
 PG_MEMORY_DB=claw_memory
 PG_MEMORY_PORT=5445
 
 PG_FILES_USER=claw
-PG_FILES_PASSWORD=${DB_PASSWORD}
+PG_FILES_PASSWORD=${PG_PW_FILES}
 PG_FILES_DB=claw_files
 PG_FILES_PORT=5446
 
 PG_OLLAMA_USER=claw
-PG_OLLAMA_PASSWORD=${DB_PASSWORD}
+PG_OLLAMA_PASSWORD=${PG_PW_OLLAMA}
 PG_OLLAMA_DB=claw_ollama
 PG_OLLAMA_PORT=5447
 
 PG_IMAGES_USER=claw
-PG_IMAGES_PASSWORD=${DB_PASSWORD}
+PG_IMAGES_PASSWORD=${PG_PW_IMAGES}
 PG_IMAGES_DB=claw_images
 PG_IMAGES_PORT=5448
 
 PG_FILE_GENERATIONS_USER=claw
-PG_FILE_GENERATIONS_PASSWORD=${DB_PASSWORD}
+PG_FILE_GENERATIONS_PASSWORD=${PG_PW_FILE_GENERATIONS}
 PG_FILE_GENERATIONS_DB=claw_file_generations
 PG_FILE_GENERATIONS_PORT=5449
 
 PG_WORKSPACE_USER=claw
-PG_WORKSPACE_PASSWORD=${DB_PASSWORD}
+PG_WORKSPACE_PASSWORD=${PG_PW_WORKSPACE}
 PG_WORKSPACE_DB=claw_workspace
 PG_WORKSPACE_PORT=5450
 
 PG_AGENT_USER=claw
-PG_AGENT_PASSWORD=${DB_PASSWORD}
+PG_AGENT_PASSWORD=${PG_PW_AGENT}
 PG_AGENT_DB=claw_agent
 PG_AGENT_PORT=5451
 
 PG_RESEARCH_USER=claw
-PG_RESEARCH_PASSWORD=${DB_PASSWORD}
+PG_RESEARCH_PASSWORD=${PG_PW_RESEARCH}
 PG_RESEARCH_DB=claw_research
 PG_RESEARCH_PORT=5452
 
 # PostgreSQL — Payment Service (separate instance from claw_auth by design)
 PG_PAYMENTS_USER=claw
-PG_PAYMENTS_PASSWORD=${DB_PASSWORD}
+PG_PAYMENTS_PASSWORD=${PG_PW_PAYMENTS}
 PG_PAYMENTS_DB=claw_payments
 PG_PAYMENTS_PORT=5453
 
 PG_LLAMACPP_USER=claw
-PG_LLAMACPP_PASSWORD=${DB_PASSWORD}
+PG_LLAMACPP_PASSWORD=${PG_PW_LLAMACPP}
 PG_LLAMACPP_DB=claw_llamacpp
 PG_LLAMACPP_PORT=5440
 
@@ -1534,20 +1624,20 @@ CAPABILITY_DEPRECATED_TERMINAL_COMMAND_DUAL_WRITE=true
 # =============================================================================
 # Per-Service Database URLs
 # =============================================================================
-AUTH_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-auth:5432/claw_auth?schema=public
-CHAT_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-chat:5432/claw_chat?schema=public
-CONNECTOR_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-connector:5432/claw_connectors?schema=public
-ROUTING_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-routing:5432/claw_routing?schema=public
-MEMORY_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-memory:5432/claw_memory?schema=public
-FILES_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-files:5432/claw_files?schema=public
-OLLAMA_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-ollama:5432/claw_ollama?schema=public
-IMAGE_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-images:5432/claw_images?schema=public
-FILE_GENERATION_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-file-generations:5432/claw_file_generations?schema=public
-WORKSPACE_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-workspace:5432/claw_workspace?schema=public
-AGENT_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-agent:5432/claw_agent?schema=public
-RESEARCH_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-research:5432/claw_research?schema=public
-PAYMENT_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-payments:5432/claw_payments?schema=public
-LLAMACPP_DATABASE_URL=postgresql://claw:${DB_PASSWORD}@pg-llamacpp:5432/claw_llamacpp?schema=public
+AUTH_DATABASE_URL=postgresql://claw:${PG_PW_AUTH}@pg-auth:5432/claw_auth?schema=public
+CHAT_DATABASE_URL=postgresql://claw:${PG_PW_CHAT}@pg-chat:5432/claw_chat?schema=public
+CONNECTOR_DATABASE_URL=postgresql://claw:${PG_PW_CONNECTOR}@pg-connector:5432/claw_connectors?schema=public
+ROUTING_DATABASE_URL=postgresql://claw:${PG_PW_ROUTING}@pg-routing:5432/claw_routing?schema=public
+MEMORY_DATABASE_URL=postgresql://claw:${PG_PW_MEMORY}@pg-memory:5432/claw_memory?schema=public
+FILES_DATABASE_URL=postgresql://claw:${PG_PW_FILES}@pg-files:5432/claw_files?schema=public
+OLLAMA_DATABASE_URL=postgresql://claw:${PG_PW_OLLAMA}@pg-ollama:5432/claw_ollama?schema=public
+IMAGE_DATABASE_URL=postgresql://claw:${PG_PW_IMAGES}@pg-images:5432/claw_images?schema=public
+FILE_GENERATION_DATABASE_URL=postgresql://claw:${PG_PW_FILE_GENERATIONS}@pg-file-generations:5432/claw_file_generations?schema=public
+WORKSPACE_DATABASE_URL=postgresql://claw:${PG_PW_WORKSPACE}@pg-workspace:5432/claw_workspace?schema=public
+AGENT_DATABASE_URL=postgresql://claw:${PG_PW_AGENT}@pg-agent:5432/claw_agent?schema=public
+RESEARCH_DATABASE_URL=postgresql://claw:${PG_PW_RESEARCH}@pg-research:5432/claw_research?schema=public
+PAYMENT_DATABASE_URL=postgresql://claw:${PG_PW_PAYMENTS}@pg-payments:5432/claw_payments?schema=public
+LLAMACPP_DATABASE_URL=postgresql://claw:${PG_PW_LLAMACPP}@pg-llamacpp:5432/claw_llamacpp?schema=public
 
 # claw-llamacpp-service (Local Frontier LLM runtime)
 # Path matches the `llamacpp-data` Docker named volume so binary + weights
@@ -1905,6 +1995,39 @@ done
 info "[100%] Finalizing containers: complete"
 echo ""
 echo ""
+
+# ─── Step 9b: Public TLS certificate (Let's Encrypt) ────────────────────────
+# Runs AFTER the stack is up, and that ordering is load-bearing. Validation is
+# HTTP-01: the CA fetches a token over plain HTTP from the running nginx
+# container. Attempting this alongside the mkcert step — before anything is
+# listening — could only work by binding port 80 standalone, which then
+# collides with nginx at every renewal and takes the site down to renew.
+#
+# Non-fatal by design. A DNS record that has not propagated, a blocked port 80
+# or a Let's Encrypt rate limit must not fail an otherwise working install: the
+# stack keeps serving the mkcert certificate and the operator re-runs
+# scripts/install-letsencrypt.sh once the cause is fixed.
+if step_done "publictls"; then
+  skip_step "Public TLS certificate for $CLAW_HOSTNAME"
+elif [ "$CLAW_MODE" != "prod" ]; then
+  info "Dev mode — skipping the public certificate (mkcert covers local browsing)."
+elif [ ! -f "$SCRIPT_DIR/install-letsencrypt.sh" ]; then
+  warn "scripts/install-letsencrypt.sh missing — skipping public TLS."
+else
+  echo "${BOLD}Step 9b/9: Public TLS certificate (Let's Encrypt)${NC}"
+  # The script decides for itself whether CLAW_HOSTNAME is a name a public CA
+  # can validate, and exits 0 with an explanation when it is not, so an
+  # IP-hosted or claw.local install passes through here cleanly.
+  if bash "$SCRIPT_DIR/install-letsencrypt.sh"; then
+    state_mark_done "publictls"
+  else
+    warn "Public TLS setup did not complete — the stack is still serving the mkcert cert."
+    info "  Browsers will warn on ${CLAW_BASE_URL} until this succeeds."
+    info "  Re-run on its own once the cause is fixed:"
+    info "    bash scripts/install-letsencrypt.sh --verify-renewal"
+  fi
+  echo ""
+fi
 
 # Final status
 UNHEALTHY=$(docker compose --env-file "$ENV_FILE" $COMPOSE_FILES ps 2>/dev/null | grep -c "unhealthy" || echo "0")
