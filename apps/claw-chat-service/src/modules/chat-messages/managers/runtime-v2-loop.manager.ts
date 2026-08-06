@@ -8,7 +8,12 @@ import {
   RUNTIME_V2_BUDGET_EXHAUSTED_CODE,
   RUNTIME_V2_BUDGET_EXHAUSTED_MESSAGE,
 } from '../constants/runtime-v2-failure.constants';
-import { RUNTIME_V2_ACTIVE_TTL_SECONDS } from '../constants/runtime-v2-run.constants';
+import {
+  RUNTIME_V2_ACTIVE_TTL_SECONDS,
+  RUNTIME_V2_CONTINUATION_HISTORY_MESSAGES,
+} from '../constants/runtime-v2-run.constants';
+import { THREAD_CONTEXT_LIMIT } from '../../../common/constants';
+import { RUNTIME_V2_CONTEXT_TOKEN_BUDGET } from '../constants/runtime-v2-transcript.constants';
 import { type RuntimeResultDto, toolInvocationSchema } from '../dto/runtime-v2.dto';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { RuntimeV2Store } from '../repositories/runtime-v2.store';
@@ -75,11 +80,38 @@ export class RuntimeV2LoopManager {
     if (thread?.userId !== binding.ownerId) {
       throw new EntityNotFoundException('ChatThread', binding.threadId);
     }
-    // Recorded BEFORE the history is read so this turn sees the full
-    // transcript — its own earlier requests, their results, and this one — in
-    // one place, instead of a single result injected out of context.
-    await this.recordToolResult(binding, command);
+    try {
+      await this.continueClaimedRun(binding, command, thread, binding.claimId);
+    } catch (error: unknown) {
+      // Any failure here used to escape as a bare HTTP error while the run
+      // stayed active with no terminal event, so the client sat on a stream
+      // that would never produce anything again — the agent simply stopped. A
+      // provider returning empty content did exactly that. Ending the run with
+      // the cause is what turns a hang into something the user can read.
+      await this.store.terminalize({
+        ...binding,
+        claimId: binding.claimId,
+        idempotencyKey: `${command.idempotencyKey}:continuation-failed`,
+        status: 'failed',
+        completedAt: new Date().toISOString(),
+        reason: runtimeV2TerminalReason(error),
+      });
+      throw error;
+    }
+  }
+
+  private async continueClaimedRun(
+    binding: RuntimeV2BoundInput,
+    command: RuntimeResultDto,
+    thread: { contextPackIds?: string[] | null },
+    claimId: string,
+  ): Promise<void> {
+    // The context carries this result IN FULL, so the transcript copy is
+    // written afterwards. Recording it first put the same result in the prompt
+    // twice — once bounded in history and once complete — which is wasted
+    // context and gives the model two slightly different views of one fact.
     const runtimeContext = await this.buildContinuationContext(binding, command, thread);
+    await this.recordToolResult(binding, command);
     const response = await this.execution.callProvider(
       binding.provider,
       binding.model,
@@ -108,10 +140,39 @@ export class RuntimeV2LoopManager {
         requestedAt: new Date().toISOString(),
       });
       await this.recordToolRequest(binding, invocation);
-      await this.admitOrEndExhaustedRun(binding, command, invocation, binding.claimId);
+      await this.admitOrEndExhaustedRun(binding, command, invocation, claimId);
       return;
     }
-    await this.finishContinuation(binding, command, output.content, response, binding.claimId);
+    await this.finishContinuation(binding, command, output.content, response, claimId);
+  }
+
+  /**
+   * Recent history for a continuation, with the run's own question guaranteed.
+   *
+   * Each tool call now adds two transcript entries, so a task that makes a
+   * dozen of them fills a 20-message window with nothing but its own tool
+   * traffic and evicts the user's actual request. The model is then asked to
+   * continue with no question in view and answers with nothing at all — the
+   * provider returned empty content and the run died. Pinning the originating
+   * message keeps the request in front of the model no matter how long the
+   * tool trail gets.
+   */
+  private async continuationHistory(
+    binding: RuntimeV2BoundInput,
+  ): Promise<Parameters<ContextAssemblyManager['assemble']>[1]> {
+    // Exactly THREAD_CONTEXT_LIMIT messages, because `assemble` slices to that
+    // many and would otherwise drop the pinned origin sitting at index 0.
+    const recent = await this.messages.findRecentByThreadId(
+      binding.threadId,
+      RUNTIME_V2_CONTINUATION_HISTORY_MESSAGES,
+    );
+    const ordered = [...recent].reverse();
+    if (ordered.some((message) => message.id === binding.messageId)) {
+      return ordered.slice(-THREAD_CONTEXT_LIMIT);
+    }
+    const origin = await this.messages.findById(binding.messageId);
+    if (origin === null) return ordered.slice(-THREAD_CONTEXT_LIMIT);
+    return [origin, ...ordered.slice(-(THREAD_CONTEXT_LIMIT - 1))];
   }
 
   /**
@@ -126,11 +187,11 @@ export class RuntimeV2LoopManager {
     command: RuntimeResultDto,
     thread: { contextPackIds?: string[] | null },
   ): Promise<Awaited<ReturnType<ContextAssemblyManager['assemble']>>> {
-    const recent = await this.messages.findRecentByThreadId(binding.threadId, 20);
+    const history = await this.continuationHistory(binding);
     const context = await this.contextAssembly.assemble(
       binding.ownerId,
-      [...recent].reverse(),
-      undefined,
+      history,
+      { maxTokens: RUNTIME_V2_CONTEXT_TOKEN_BUDGET },
       thread.contextPackIds ?? undefined,
       undefined,
       undefined,

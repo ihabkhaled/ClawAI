@@ -35,6 +35,7 @@ import {
   TEXT_FILE_EXTENSIONS,
   TEXT_MIME_PREFIXES,
 } from '../constants/file-content.constants';
+import { RUNTIME_V2_TRANSCRIPT_RETAINED_ENTRIES } from '../constants/runtime-v2-transcript.constants';
 import { filterImagesForLocalOnly } from '../validators/local-only-attachment.validator';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
 
@@ -738,6 +739,28 @@ export class ContextAssemblyManager {
       return messages;
     }
 
+    // An agent's tool trail is working memory for the task in flight, not
+    // conversation history, so it is never subject to intent relevance. A tool
+    // result shares almost no tokens with the question that prompted it, and
+    // dropping it made the agent reissue calls it had already made until its
+    // budget died. Kept whole, bounded, and in chronological order.
+    const toolTrail = messages
+      .filter((msg) => msg.role === 'TOOL')
+      .slice(-RUNTIME_V2_TRANSCRIPT_RETAINED_ENTRIES);
+    const conversation = messages.filter((msg) => msg.role !== 'TOOL');
+
+    const keep =
+      conversation.length <= 2
+        ? conversation
+        : this.selectRelevantConversation(conversation, currentIntent);
+    const retained = new Set([...keep, ...toolTrail].map((msg) => msg.id));
+    return messages.filter((msg) => retained.has(msg.id));
+  }
+
+  private selectRelevantConversation(
+    messages: ChatMessage[],
+    currentIntent: string,
+  ): ChatMessage[] {
     if (this.isLikelyFollowUp(currentIntent)) {
       return messages.slice(-6);
     }

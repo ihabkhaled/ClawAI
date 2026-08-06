@@ -11,6 +11,7 @@ const config: Config = {
     '<rootDir>/src/modules/chat-messages/repositories/__tests__/runtime-v2.store.spec.ts',
     '<rootDir>/src/modules/chat-messages/repositories/__tests__/runtime-v2.store.behavior.spec.ts',
     '<rootDir>/src/modules/chat-messages/utilities/__tests__/runtime-v2.utilities.spec.ts',
+    '<rootDir>/src/modules/chat-messages/utilities/__tests__/runtime-v2-reply.utility.spec.ts',
   ],
   collectCoverage: true,
   collectCoverageFrom: [

@@ -12,9 +12,30 @@
 // already travels to the model on the turn it arrives; the transcript copy only
 // has to be enough to recognise "I already did this", and ~16 unbounded results
 // would crowd out the conversation they are meant to inform.
-export const RUNTIME_V2_TRANSCRIPT_RESULT_CHARACTERS = 2_000;
+export const RUNTIME_V2_TRANSCRIPT_RESULT_CHARACTERS = 800;
 
 export const RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE = '…[result truncated in transcript]';
 
 export const RUNTIME_V2_TRANSCRIPT_REQUEST_PREFIX = 'Tool request';
 export const RUNTIME_V2_TRANSCRIPT_RESULT_PREFIX = 'Tool result';
+
+// How many of the most recent transcript entries survive intent filtering.
+//
+// The thread filter keeps a message only when it shares ~45% of its tokens with
+// the current question, then caps the survivors at four. That is reasonable for
+// ordinary chat history and exactly wrong for an agent's working memory: a tool
+// result shares almost no words with "list scripts/ and tell me what claw.sh
+// does", so the entire transcript was dropped before it reached the model and
+// the agent kept reissuing calls it had already made. The trail is kept whole
+// up to this bound, which covers a full tool budget of request/result pairs.
+export const RUNTIME_V2_TRANSCRIPT_RETAINED_ENTRIES = 24;
+
+// Context budget for an agent continuation, in tokens.
+//
+// The default is 4096, and the assembler truncates the whole prompt to
+// budget x 4 characters by splicing out the middle. A tool trail pushed the
+// prompt far past 16 KB, so the splice removed part of the instruction and the
+// question, and the provider answered with nothing at all -- surfacing as
+// CLOUD_PROVIDER_EMPTY_RESPONSE and a dead run. An agent turn legitimately
+// carries its whole working trail, so it gets a budget sized for one.
+export const RUNTIME_V2_CONTEXT_TOKEN_BUDGET = 32_000;

@@ -635,7 +635,11 @@ describe('Runtime V2 Redis Lua authority', () => {
           idempotencyKey: 'runtime_e2e_invoke_key5',
         },
       }),
-    ).rejects.toMatchObject({ code: 'RUNTIME_TRANSITION_DENIED' });
+      // Budget exhaustion is the one denial a run can never recover from, so it
+      // carries its own code rather than the generic transition-denied. The
+      // caller ends the run on it instead of leaving the client on a stream
+      // that will never produce another event.
+    ).rejects.toMatchObject({ code: 'RUNTIME_BUDGET_EXHAUSTED' });
 
     const modelText = 'RESULT_SENTINEL_NOT_STORED_04'.repeat(45);
     const canonical = stableRuntimeV2Json({ error: null, modelText, structured: null });
@@ -664,8 +668,10 @@ describe('Runtime V2 Redis Lua authority', () => {
         continuation: { action: 'final' as const },
       },
     };
+    // Over-budget result bytes are budget exhaustion too, and carry the same
+    // specific code so the caller can end the run instead of retrying.
     await expect(store.submitResult({ ...bound, command })).rejects.toMatchObject({
-      code: 'RUNTIME_TRANSITION_DENIED',
+      code: 'RUNTIME_BUDGET_EXHAUSTED',
     });
     await expect(
       store.submitResult({

@@ -63,6 +63,23 @@ const startReply = (runId: string, generation: string): readonly [string, string
   JSON.stringify({ runId, generation, messageId: 'runtime_message_0001', sequence: 0 }),
 ];
 
+const boundFixture = () => ({
+  ownerId: 'runtime_owner_000001',
+  threadId: startRequest.threadId,
+  messageId: 'runtime_message_0001',
+  clientRequestId: startRequest.clientRequestId,
+  startIdempotencyKey: startRequest.idempotencyKey,
+  runId: 'runtime_run_existing1',
+  generation: 'runtime_generation_1',
+  epochs,
+  manifestHash: startRequest.manifestHash,
+  toolCatalogHash: startRequest.toolCatalogHash,
+  toolDefinitions,
+  provider: startRequest.provider,
+  model: startRequest.model,
+  ttlSeconds: 900,
+});
+
 describe('RuntimeV2Store', () => {
   it('rejects a tool catalog whose digest does not match the admitted hash', async () => {
     const redis = new QueueRedis();
@@ -665,5 +682,107 @@ describe('RuntimeV2Store', () => {
         },
       }),
     ).resolves.toMatchObject({ sequence: 4 });
+  });
+  it('binds every model event to its turn at the top level of the envelope', async () => {
+    // A client routes and validates model events on `event.turnId`. The store
+    // put the turn only inside the payload, so the first model.turn.started of
+    // every run was rejected with a mismatched-turn error and the run then had
+    // no active turn for later tool calls to attach to.
+    const redis = new QueueRedis();
+    redis.replies.push([
+      'OK',
+      JSON.stringify({
+        runId: 'runtime_run_existing1',
+        sequence: 7,
+        eventId: 'runtime_event_00001',
+      }),
+    ]);
+    const store = new RuntimeV2Store(redis);
+    await store.appendModelOutput({
+      ...boundFixture(),
+      claimId: 'runtime_claim_00001',
+      idempotencyKey: 'runtime_output_key_01',
+      turnId: 'runtime_turn_0000001',
+      text: 'Here is the answer.',
+    });
+
+    const command = redis.commands.at(-1);
+    const events: { type: string; turnId?: string; payload: { turnId?: string } }[] = JSON.parse(
+      command?.arguments[5] ?? '[]',
+    );
+    expect(events.map((event) => event.type)).toEqual([
+      'model.turn.started',
+      'model.delta',
+      'model.summary',
+    ]);
+    for (const event of events) {
+      expect(event.turnId).toBe('runtime_turn_0000001');
+      expect(event.turnId).toBe(event.payload.turnId);
+    }
+  });
+
+  it('leaves a lifecycle event unbound rather than inventing a turn for it', async () => {
+    const redis = new QueueRedis();
+    redis.replies.push([
+      'OK',
+      JSON.stringify({
+        runId: 'runtime_run_existing1',
+        sequence: 8,
+        eventId: 'runtime_event_00002',
+      }),
+    ]);
+    await new RuntimeV2Store(redis).markProviderDispatched({
+      ...boundFixture(),
+      claimId: 'runtime_claim_00001',
+      idempotencyKey: 'runtime_dispatch_key1',
+      dispatchedAt: new Date().toISOString(),
+    });
+
+    const event: { turnId?: string } = JSON.parse(redis.commands.at(-1)?.arguments[5] ?? '{}');
+    expect(event.turnId).toBeUndefined();
+  });
+
+  it('reports an unreachable Redis as unavailable state without leaking the cause', async () => {
+    const redis = new QueueRedis();
+    redis.failure = new Error('raw redis secret');
+    await expect(
+      new RuntimeV2Store(redis).appendModelOutput({
+        ...boundFixture(),
+        claimId: 'runtime_claim_00001',
+        idempotencyKey: 'runtime_output_key_02',
+        turnId: 'runtime_turn_0000001',
+        text: 'Here is the answer.',
+      }),
+    ).rejects.toMatchObject({ code: 'RUNTIME_STATE_UNAVAILABLE' });
+    await expect(
+      new RuntimeV2Store(redis).appendModelOutput({
+        ...boundFixture(),
+        claimId: 'runtime_claim_00001',
+        idempotencyKey: 'runtime_output_key_03',
+        turnId: 'runtime_turn_0000001',
+        text: 'Here is the answer.',
+      }),
+    ).rejects.not.toThrow('raw redis secret');
+  });
+  it('refuses a stored binding whose catalog no longer matches its admitted hash', async () => {
+    // The binding blob carries both the tool catalog and the hash it was
+    // admitted under. If a stored catalog were ever swapped, honouring it would
+    // let a run execute tools the user never approved, so the mismatch is a
+    // hard rejection rather than a silent re-admission.
+    const redis = new QueueRedis();
+    const { ttlSeconds, ...stored } = boundFixture();
+    void ttlSeconds;
+    const forged = { ...stored, toolCatalogHash: hash };
+    redis.replies.push(['OK', JSON.stringify(forged)]);
+
+    await expect(
+      new RuntimeV2Store(redis).resolveBinding({
+        ownerId: forged.ownerId,
+        threadId: forged.threadId,
+        runId: forged.runId,
+        generation: forged.generation,
+        ttlSeconds: 900,
+      }),
+    ).rejects.toThrow(/catalog/i);
   });
 });
