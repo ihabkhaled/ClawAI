@@ -1,6 +1,10 @@
 import { RuntimeV2RedisOperation } from '../enums/runtime-v2-redis-operation.enum';
 
-const loadBinding = `
+// Identity of a run: who owns it, which thread and message it answers, which
+// run and generation it is, and the capability surface it was admitted with.
+// The model is deliberately NOT part of this, because a client that asked the
+// platform to route cannot know the model until routing has chosen one.
+const bindingIdentity = `
 for index = 1, #KEYS do
   if redis.call('EXISTS', KEYS[index]) == 0 then return {'MISSING', 'STALE_RUN'} end
 end
@@ -13,10 +17,30 @@ if bound.ownerId ~= expected.ownerId or bound.threadId ~= expected.threadId or b
   return {'MISSING', 'STALE_RUN'}
 end
 if bound.epochs ~= expected.epochs then return {'CONFLICT', 'STALE_EPOCH'} end
-if bound.manifestHash ~= expected.manifestHash or bound.toolCatalogHash ~= expected.toolCatalogHash or bound.provider ~= expected.provider or bound.model ~= expected.model then
+if bound.manifestHash ~= expected.manifestHash or bound.toolCatalogHash ~= expected.toolCatalogHash then
   return {'CONFLICT', 'IMMUTABLE_BINDING_MISMATCH'}
 end
 `;
+
+// Once the run is claimed the provider and model are pinned for its lifetime:
+// every later mutation must present the same pair.
+const bindingModelPinned = `
+if bound.provider ~= expected.provider or bound.model ~= expected.model then
+  return {'CONFLICT', 'IMMUTABLE_BINDING_MISMATCH'}
+end
+`;
+
+// A claim may write the pair only when the client did NOT name one. A run the
+// client pinned to a specific provider and model rejects any substitution, so a
+// forged or drifted routing decision can never move a pinned run to another
+// model. `providerPinned` is written at start and is never cleared.
+const bindingModelPinnedUnlessRouting = `
+if bound.providerPinned ~= '0' then
+${bindingModelPinned}
+end
+`;
+
+const loadBinding = `${bindingIdentity}${bindingModelPinned}`;
 
 const refreshKeys = `
 for index = 1, #KEYS do
@@ -77,7 +101,8 @@ redis.call('HSET', KEYS[2],
   'runId', proposed.runId, 'generation', proposed.generation, 'epochs', snapshot.epochs,
   'manifestHash', snapshot.manifestHash, 'toolCatalogHash', snapshot.toolCatalogHash,
   'toolDefinitions', snapshot.toolDefinitions,
-  'provider', snapshot.provider, 'model', snapshot.model, 'lifecycle', 'active',
+  'provider', snapshot.provider, 'model', snapshot.model,
+  'providerPinned', snapshot.providerPinned, 'lifecycle', 'active',
   'sequence', '0', 'nextSteeringSequence', '0', 'terminalized', '0', 'claimed', '0',
   'budget', cjson.encode(snapshot.budget), 'toolCalls', '0', 'toolResultBytes', '0')
 redis.call('ZADD', KEYS[3], 0, ARGV[4])
@@ -199,13 +224,14 @@ return {'OK', ackJson}
 `;
 
 export const RUNTIME_V2_CLAIM_SCRIPT = `-- runtime-v2:claim
-${loadBinding}
+${bindingIdentity}
+${bindingModelPinnedUnlessRouting}
 if bound.lifecycle ~= 'active' then return {'DENIED', 'RUN_TERMINAL'} end
 local mappingJson = redis.call('GET', KEYS[8])
 if not mappingJson then return {'MISSING', 'STALE_RUN'} end
 local mapping = cjson.decode(mappingJson)
 local expectedMapping = cjson.decode(ARGV[4])
-if mapping.runId ~= expectedMapping.runId or mapping.generation ~= expectedMapping.generation or mapping.ownerId ~= expectedMapping.ownerId or mapping.threadId ~= expectedMapping.threadId or mapping.messageId ~= expectedMapping.messageId or mapping.clientRequestId ~= expectedMapping.clientRequestId or mapping.manifestHash ~= expectedMapping.manifestHash or mapping.toolCatalogHash ~= expectedMapping.toolCatalogHash or mapping.provider ~= expectedMapping.provider or mapping.model ~= expectedMapping.model then
+if mapping.runId ~= expectedMapping.runId or mapping.generation ~= expectedMapping.generation or mapping.ownerId ~= expectedMapping.ownerId or mapping.threadId ~= expectedMapping.threadId or mapping.messageId ~= expectedMapping.messageId or mapping.clientRequestId ~= expectedMapping.clientRequestId or mapping.manifestHash ~= expectedMapping.manifestHash or mapping.toolCatalogHash ~= expectedMapping.toolCatalogHash then
   return {'MISSING', 'STALE_RUN'}
 end
 local prior = redis.call('HGET', KEYS[3], ARGV[2])
@@ -219,7 +245,11 @@ local sequence = redis.call('HINCRBY', KEYS[1], 'sequence', 1)
 local ack = cjson.decode(ARGV[5]); ack.sequence = sequence
 local ackJson = cjson.encode(ack)
 local event = cjson.decode(ARGV[6]); event.sequence = sequence
-redis.call('HSET', KEYS[1], 'claimed', '1', 'claimId', ack.claimId, 'providerDispatch', 'not-started')
+-- The claim is where a routed provider and model become the run's own. The
+-- start stored whatever the client asked for, which for automatic routing is a
+-- sentinel and not a model at all. Writing providerPinned here makes the pair
+-- immutable from this point on, exactly as it already was for a pinned run.
+redis.call('HSET', KEYS[1], 'claimed', '1', 'claimId', ack.claimId, 'providerDispatch', 'not-started', 'provider', expected.provider, 'model', expected.model, 'providerPinned', '1')
 redis.call('HSET', KEYS[3], ARGV[2], cjson.encode({fingerprint=ARGV[3], ack=ackJson}))
 ${appendBoundedEvent}
 ${refreshKeys}
@@ -260,8 +290,13 @@ ${refreshKeys}
 return {'OK', ackJson}
 `;
 
+// Reading the journal is authorised by owner, thread, run, generation, epochs
+// and capability hashes — never by the model. The SSE reader resolves its
+// binding once and then polls, so demanding the model here rejected every poll
+// issued after the claim pinned a routed model, and the stream died on a
+// binding mismatch a second after the run started.
 export const RUNTIME_V2_READ_SCRIPT = `-- runtime-v2:read
-${loadBinding}
+${bindingIdentity}
 local after = tonumber(ARGV[2])
 local oldest = redis.call('ZRANGE', KEYS[2], 0, 0, 'WITHSCORES')
 if #oldest == 2 and after < tonumber(oldest[2]) - 1 then return {'CONFLICT', 'REPLAY_GAP'} end
@@ -342,11 +377,17 @@ if claimId then result.claimId = claimId end
 return {'OK', cjson.encode(result)}
 `;
 
+// A routed message is matched to its run by message and thread. Comparing the
+// routed provider and model here rejected every run the platform routed for
+// itself: the mapping held the client's `AUTO` sentinel, the routed decision
+// held a real model, so the lookup reported STALE_RUN and the request fell
+// through to the legacy chat lane while the Runtime V2 run sat at run.created
+// until the stream gave up.
 export const RUNTIME_V2_MESSAGE_BINDING_SCRIPT = `-- runtime-v2:message-binding
 local mappingJson = redis.call('GET', KEYS[1])
 if not mappingJson then return {'MISSING', 'STALE_RUN'} end
 local mapping = cjson.decode(mappingJson)
-if mapping.messageId ~= ARGV[1] or mapping.threadId ~= ARGV[2] or mapping.provider ~= ARGV[3] or mapping.model ~= ARGV[4] then
+if mapping.messageId ~= ARGV[1] or mapping.threadId ~= ARGV[2] then
   return {'MISSING', 'STALE_RUN'}
 end
 return {'OK', mappingJson}

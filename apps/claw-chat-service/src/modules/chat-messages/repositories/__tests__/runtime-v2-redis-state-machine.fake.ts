@@ -10,7 +10,8 @@ interface ReplayRecord {
 }
 
 interface FakeRuntimeState {
-  readonly binding: Readonly<Record<string, unknown>>;
+  binding: Readonly<Record<string, unknown>>;
+  providerPinned: boolean;
   readonly keys: Set<string>;
   readonly events: Record<string, unknown>[];
   readonly replays: Map<string, ReplayRecord>;
@@ -166,6 +167,7 @@ export class RuntimeV2RedisStateMachine implements RuntimeV2RedisPort {
     };
     const state: FakeRuntimeState = {
       binding,
+      providerPinned: this.text(snapshot.providerPinned) !== '0',
       keys: new Set(command.keys),
       events: [{ ...event, sequence: 0 }],
       replays: new Map(),
@@ -218,13 +220,11 @@ export class RuntimeV2RedisStateMachine implements RuntimeV2RedisPort {
     const messageKey = command.keys[0];
     if (messageKey === undefined) return ['MISSING', 'STALE_RUN'];
     const mapped = this.object(this.messages.get(messageKey));
-    const [messageId, threadId, provider, model] = command.arguments;
-    if (
-      mapped.messageId !== messageId ||
-      mapped.threadId !== threadId ||
-      mapped.provider !== provider ||
-      mapped.model !== model
-    )
+    // Mirrors the Lua: a routed message is matched to its run by message and
+    // thread only. The routed model may legitimately differ from the sentinel
+    // the client sent when it asked the platform to route.
+    const [messageId, threadId] = command.arguments;
+    if (mapped.messageId !== messageId || mapped.threadId !== threadId)
       return ['MISSING', 'STALE_RUN'];
     return ['OK', JSON.stringify(mapped)];
   }
@@ -235,7 +235,16 @@ export class RuntimeV2RedisStateMachine implements RuntimeV2RedisPort {
     const state = this.states.get(stateKey);
     if (state === undefined || state.expiresAt <= this.now) return ['MISSING', 'STALE_RUN'];
     const expected = this.object(command.arguments[0]);
-    if (!this.mappingMatches(state.binding, expected)) return ['MISSING', 'STALE_RUN'];
+    if (!this.mappingIdentityMatches(state.binding, expected)) return ['MISSING', 'STALE_RUN'];
+    // The claim is the one operation allowed to write the pair, and only for a
+    // run whose model the platform was asked to choose. Reads are authorised by
+    // identity alone, because the SSE reader binds once and then polls across
+    // the moment the claim pins the routed model.
+    const modelIrrelevant =
+      command.operation === RuntimeV2RedisOperation.READ_EVENTS ||
+      (!state.providerPinned && command.operation === RuntimeV2RedisOperation.CLAIM_ROUTED);
+    if (!modelIrrelevant && !this.mappingMatches(state.binding, expected))
+      return ['MISSING', 'STALE_RUN'];
     return state;
   }
 
@@ -345,9 +354,17 @@ export class RuntimeV2RedisStateMachine implements RuntimeV2RedisPort {
     if (prior !== undefined) return prior;
     const storedMapping = this.object(this.messages.get(command.keys[7] ?? ''));
     const expectedMapping = this.object(command.arguments[3]);
-    if (!this.mappingMatches(storedMapping, expectedMapping)) return ['MISSING', 'STALE_RUN'];
+    if (!this.mappingIdentityMatches(storedMapping, expectedMapping))
+      return ['MISSING', 'STALE_RUN'];
     if (state.claimId !== undefined) return ['DENIED', 'ALREADY_CLAIMED'];
     const acknowledgement = this.append(command, state, command.arguments[4], command.arguments[5]);
+    // The routed decision becomes the run's own pair, and is pinned from here.
+    state.binding = {
+      ...state.binding,
+      provider: this.text(expectedMapping.provider),
+      model: this.text(expectedMapping.model),
+    };
+    state.providerPinned = true;
     state.claimId = this.text(this.object(acknowledgement).claimId);
     state.claimFingerprint = fingerprint;
     state.replays.set(key, { fingerprint, acknowledgement });
@@ -395,7 +412,7 @@ export class RuntimeV2RedisStateMachine implements RuntimeV2RedisPort {
     ];
   }
 
-  private mappingMatches(
+  private mappingIdentityMatches(
     stored: Readonly<Record<string, unknown>>,
     expected: Readonly<Record<string, unknown>>,
   ): boolean {
@@ -408,12 +425,21 @@ export class RuntimeV2RedisStateMachine implements RuntimeV2RedisPort {
       this.text(stored.epochs) === this.text(expected.epochs) &&
       this.text(stored.runId) === this.text(expected.runId) &&
       this.text(stored.manifestHash) === this.text(expected.manifestHash) &&
-      this.text(stored.toolCatalogHash) === this.text(expected.toolCatalogHash) &&
+      this.text(stored.toolCatalogHash) === this.text(expected.toolCatalogHash)
       // Deliberately does NOT compare toolDefinitions, mirroring the real
       // `loadBinding` guard: the catalog's identity is carried by
       // toolCatalogHash, and the state hash stores the catalog as an opaque
       // string while the caller supplies it as an array. Comparing the two
       // shapes made this fake stricter than the Lua it stands in for.
+    );
+  }
+
+  private mappingMatches(
+    stored: Readonly<Record<string, unknown>>,
+    expected: Readonly<Record<string, unknown>>,
+  ): boolean {
+    return (
+      this.mappingIdentityMatches(stored, expected) &&
       this.text(stored.provider) === this.text(expected.provider) &&
       this.text(stored.model) === this.text(expected.model)
     );

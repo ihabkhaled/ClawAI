@@ -1,12 +1,13 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { type Connector, Prisma } from "../../../generated/prisma";
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type Connector, Prisma } from '../../../generated/prisma';
 import {
   type ConnectorFilters,
   type ConnectorWithModels,
   type CreateConnectorData,
   type UpdateConnectorData,
-} from "../types/connectors.types";
+} from '../types/connectors.types';
+import { isConnectorProvider } from '../utilities/connector-provider.utility';
 
 @Injectable()
 export class ConnectorsRepository {
@@ -32,7 +33,7 @@ export class ConnectorsRepository {
       where,
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
       include: { _count: { select: { models: true } } },
     }) as Promise<ConnectorWithModels[]>;
   }
@@ -42,9 +43,16 @@ export class ConnectorsRepository {
   }
 
   async findByProvider(provider: string): Promise<Connector | null> {
+    // A provider outside the enum (the routing sentinel "AUTO" reached here for
+    // every auto-routed Runtime V2 run) makes Prisma raise a validation error
+    // that surfaced as an opaque 500. An unknown provider simply has no
+    // connector.
+    if (!isConnectorProvider(provider)) {
+      return null;
+    }
     return this.prisma.connector.findFirst({
-      where: { provider: provider as Prisma.EnumConnectorProviderFilter["equals"], isEnabled: true },
-      orderBy: { createdAt: "desc" },
+      where: { provider, isEnabled: true },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -73,7 +81,7 @@ export class ConnectorsRepository {
     }
 
     if (filters.search) {
-      where.name = { contains: filters.search, mode: "insensitive" };
+      where.name = { contains: filters.search, mode: 'insensitive' };
     }
 
     return where;

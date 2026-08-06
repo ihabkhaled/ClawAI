@@ -562,6 +562,87 @@ describe('Runtime V2 Redis Lua authority', () => {
     ).rejects.toMatchObject({ code: 'RUNTIME_RUN_NOT_FOUND' });
   });
 
+  it('binds an automatically routed run to the model routing chose, then pins it', async () => {
+    // A run started with the AUTO sentinel used to be unclaimable: the routed
+    // decision named a real model, the stored binding named the sentinel, and
+    // the mismatch reported STALE_RUN, so the run sat at run.created while the
+    // request quietly executed on the legacy chat lane instead.
+    const autoRequest = {
+      ...request,
+      clientRequestId: 'runtime_e2e_request_09',
+      idempotencyKey: 'runtime_e2e_start_key9',
+      prompt: 'Automatic routing fixture.',
+      provider: 'AUTO',
+      model: 'AUTO',
+    };
+    const autoMessageId = 'runtime_e2e_message_09';
+    const start = await store.start({
+      ownerId,
+      messageId: autoMessageId,
+      request: autoRequest,
+      ttlSeconds: 60,
+    });
+    const family = runtimeV2KeyFamily(start.runId);
+    for (const key of [
+      family.state,
+      family.events,
+      family.acknowledgements,
+      family.invocations,
+      family.results,
+      family.steering,
+      family.steeringData,
+      runtimeV2MessageKey(autoMessageId),
+      runtimeV2StartKey(ownerId, autoRequest.idempotencyKey),
+      runtimeV2ClientRequestKey(ownerId, autoRequest.clientRequestId),
+    ]) {
+      cleanupKeys.add(key);
+    }
+    expect(await client.hget(family.state, 'providerPinned')).toBe('0');
+
+    const routed = await store.resolveMessageBinding({
+      messageId: autoMessageId,
+      threadId,
+      provider: 'OLLAMA',
+      model: 'qwen3:1.7b',
+      ttlSeconds: 60,
+    });
+    expect(routed).toMatchObject({
+      runId: start.runId,
+      provider: 'OLLAMA',
+      model: 'qwen3:1.7b',
+    });
+
+    // The SSE reader resolves its binding once, before the claim, and then
+    // polls. Its stale pair must not break the stream: reading a journal is
+    // authorised by identity, not by the model.
+    const readerBinding = await store.resolveBinding({
+      ownerId,
+      threadId,
+      runId: start.runId,
+      generation: start.generation,
+      ttlSeconds: 60,
+    });
+    expect(readerBinding.provider).toBe('AUTO');
+
+    const claim = await store.claimRouted({ ...routed, deliveryId: 'runtime_e2e_delivery09' });
+    expect(claim.claimed).toBe(true);
+
+    const afterClaim = await store.readEvents({ ...readerBinding, after: -1 });
+    expect(afterClaim.events.map((event) => event.type)).toEqual(['run.created', 'run.claimed']);
+    expect(await client.hget(family.state, 'provider')).toBe('OLLAMA');
+    expect(await client.hget(family.state, 'model')).toBe('qwen3:1.7b');
+    // Pinned from the claim onwards: a second, different routing decision for
+    // the same run is refused exactly as it is for a manually pinned run.
+    expect(await client.hget(family.state, 'providerPinned')).toBe('1');
+    await expect(
+      store.claimRouted({
+        ...routed,
+        provider: 'FORGED',
+        deliveryId: 'runtime_e2e_delivery09b',
+      }),
+    ).rejects.toMatchObject({ code: 'RUNTIME_REPLAY_CONFLICT' });
+  });
+
   it('debits server-computed tool budgets once and rejects unknown or mismatched receipts', async () => {
     const budgetRequest = {
       ...request,

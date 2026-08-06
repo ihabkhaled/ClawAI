@@ -43,6 +43,7 @@ import {
   stableRuntimeV2Json,
 } from '../utilities/runtime-v2-identity.utility';
 import { buildRuntimeV2ModelEvents } from '../utilities/runtime-v2-model-events.utility';
+import { isAutoRouteSentinel } from '../utilities/runtime-v2-routing.utility';
 import {
   runtimeV2ClientRequestKey,
   runtimeV2KeyFamily,
@@ -278,6 +279,12 @@ export class RuntimeV2Store {
       toolDefinitions: JSON.stringify(request.toolDefinitions),
       provider: request.provider,
       model: request.model,
+      // A client that names a provider and model pins the run to them: the
+      // routed decision may not substitute anything else. A client that asks
+      // the platform to route sends a sentinel, so the model is only decided —
+      // and only becomes immutable — when the run is claimed.
+      providerPinned:
+        isAutoRouteSentinel(request.provider) || isAutoRouteSentinel(request.model) ? '0' : '1',
       budget: request.budget,
     };
     const ack = { ...proposed, messageId: input.messageId, sequence: 0 };
@@ -377,16 +384,20 @@ export class RuntimeV2Store {
     const reply = await this.execute(
       RuntimeV2RedisOperation.READ_MESSAGE_BINDING,
       [runtimeV2MessageKey(input.messageId)],
-      [input.messageId, input.threadId, input.provider, input.model],
+      [input.messageId, input.threadId],
     );
     const mapped = runtimeV2BindingSchema.parse(parseStoredBinding(reply.body));
-    return this.resolveBinding({
+    const bound = await this.resolveBinding({
       ownerId: mapped.ownerId,
       threadId: mapped.threadId,
       runId: mapped.runId,
       generation: mapped.generation,
       ttlSeconds: input.ttlSeconds,
     });
+    // The stored binding records what the client asked for; the routed decision
+    // records what will actually run. The claim writes this pair back into the
+    // run state, after which it is immutable for every later mutation.
+    return { ...bound, provider: input.provider, model: input.model };
   }
 
   private async mutationReply(

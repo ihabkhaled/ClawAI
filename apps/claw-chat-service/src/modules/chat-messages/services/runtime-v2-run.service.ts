@@ -4,14 +4,16 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { randomBytes } from 'node:crypto';
 
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
-import { MessageRole, RoutingMode } from '../../../generated/prisma';
+import { MessageRole } from '../../../generated/prisma';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { RUNTIME_V2_ACTIVE_TTL_SECONDS } from '../constants/runtime-v2-run.constants';
 import type { RuntimeStartDto } from '../dto/runtime-v2.dto';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { RuntimeV2Store } from '../repositories/runtime-v2.store';
+import type { RuntimeV2RoutingSelection } from '../types/runtime-v2-routing.types';
 import type { RuntimeV2BoundInput, RuntimeV2StartAck } from '../types/runtime-v2-store.types';
 import { runtimeV2MessageMetadataSchema } from '../types/runtime-v2-run.types';
+import { resolveRuntimeRouting } from '../utilities/runtime-v2-routing.utility';
 import { RuntimeV2AccessService } from './runtime-v2-access.service';
 
 @Injectable()
@@ -46,28 +48,9 @@ export class RuntimeV2RunService {
     }
 
     const binding = this.binding(ownerId, acknowledgement, request);
+    const routing = resolveRuntimeRouting(request.provider, request.model);
     if (acknowledgement.replayed) {
-      const existing = await this.messages.findById(acknowledgement.messageId);
-      if (existing !== null) {
-        const metadata = runtimeV2MessageMetadataSchema.safeParse(existing.metadata);
-        if (!metadata.success) {
-          throw new BusinessException(
-            'The earlier Runtime V2 start has invalid state',
-            'RUNTIME_START_INCOMPLETE',
-            HttpStatus.CONFLICT,
-          );
-        }
-        if (metadata.data.runtimeV2.publicationState === 'pending') {
-          await this.publish(ownerId, request, acknowledgement);
-          await this.markPublished(acknowledgement, request);
-        }
-        return acknowledgement;
-      }
-      throw new BusinessException(
-        'The earlier Runtime V2 start did not complete',
-        'RUNTIME_START_INCOMPLETE',
-        HttpStatus.CONFLICT,
-      );
+      return this.completeReplay(ownerId, request, acknowledgement, routing);
     }
 
     try {
@@ -76,9 +59,9 @@ export class RuntimeV2RunService {
         threadId: request.threadId,
         role: MessageRole.USER,
         content: request.prompt,
-        routingMode: RoutingMode.MANUAL_MODEL,
-        provider: request.provider,
-        model: request.model,
+        routingMode: routing.routingMode,
+        ...(routing.provider === undefined ? {} : { provider: routing.provider }),
+        ...(routing.model === undefined ? {} : { model: routing.model }),
         metadata: {
           runtimeV2: {
             runId: acknowledgement.runId,
@@ -94,7 +77,7 @@ export class RuntimeV2RunService {
     }
 
     try {
-      await this.publish(ownerId, request, acknowledgement);
+      await this.publish(ownerId, request, acknowledgement, routing);
     } catch {
       await this.compensate(binding, true);
       throw new BusinessException(
@@ -116,20 +99,55 @@ export class RuntimeV2RunService {
     return acknowledgement;
   }
 
+  /** Finishes a start the caller already made, publishing it if that step never landed. */
+  private async completeReplay(
+    ownerId: string,
+    request: RuntimeStartDto,
+    acknowledgement: RuntimeV2StartAck,
+    routing: RuntimeV2RoutingSelection,
+  ): Promise<RuntimeV2StartAck> {
+    const existing = await this.messages.findById(acknowledgement.messageId);
+    if (existing === null) {
+      throw new BusinessException(
+        'The earlier Runtime V2 start did not complete',
+        'RUNTIME_START_INCOMPLETE',
+        HttpStatus.CONFLICT,
+      );
+    }
+    const metadata = runtimeV2MessageMetadataSchema.safeParse(existing.metadata);
+    if (!metadata.success) {
+      throw new BusinessException(
+        'The earlier Runtime V2 start has invalid state',
+        'RUNTIME_START_INCOMPLETE',
+        HttpStatus.CONFLICT,
+      );
+    }
+    if (metadata.data.runtimeV2.publicationState === 'pending') {
+      await this.publish(ownerId, request, acknowledgement, routing);
+      await this.markPublished(acknowledgement, request);
+    }
+    return acknowledgement;
+  }
+
   private publish(
     ownerId: string,
     request: RuntimeStartDto,
     acknowledgement: RuntimeV2StartAck,
+    routing: RuntimeV2RoutingSelection,
   ): Promise<void> {
     return this.rabbit.publishConfirmed(EventPattern.MESSAGE_CREATED, {
       messageId: acknowledgement.messageId,
       threadId: request.threadId,
       userId: ownerId,
       content: request.prompt,
-      routingMode: RoutingMode.MANUAL_MODEL,
-      forcedProvider: request.provider,
-      forcedModel: request.model,
-      allowedModels: [`${request.provider}/${request.model}`],
+      routingMode: routing.routingMode,
+      ...(routing.provider === undefined
+        ? {}
+        : {
+            forcedProvider: routing.provider,
+            forcedModel: routing.model,
+            allowedModels: routing.allowedModels,
+          }),
       timestamp: new Date().toISOString(),
     });
   }

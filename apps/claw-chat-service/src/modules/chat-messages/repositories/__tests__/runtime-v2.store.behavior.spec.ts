@@ -400,4 +400,47 @@ describe('RuntimeV2Store atomic behavior', () => {
     expect(bound.toolDefinitions).toEqual(request.toolDefinitions);
     expect(bound.toolCatalogHash).toBe(request.toolCatalogHash);
   });
+
+  // A run started with the automatic-routing sentinel must accept the model the
+  // platform chose. It previously did not: the binding lookup compared the
+  // routed pair against the stored sentinel, reported STALE_RUN, and the routed
+  // message fell through to the legacy chat lane while the run never left
+  // run.created.
+  it('lets a routed model bind a run the client asked the platform to route', async () => {
+    const machine = new RuntimeV2RedisStateMachine();
+    const store = new RuntimeV2Store(machine);
+    const request = { ...startRequest(), provider: 'AUTO', model: 'AUTO' };
+
+    const acknowledgement = await store.start({
+      ownerId,
+      messageId,
+      request,
+      ttlSeconds: 900,
+    });
+
+    const routed = await store.resolveMessageBinding({
+      messageId,
+      threadId,
+      provider: 'OLLAMA',
+      model: 'qwen3:1.7b',
+      ttlSeconds: 900,
+    });
+    expect(routed).toMatchObject({
+      runId: acknowledgement.runId,
+      provider: 'OLLAMA',
+      model: 'qwen3:1.7b',
+    });
+
+    const claim = await store.claimRouted({ ...routed, deliveryId: 'runtime_delivery_auto_1' });
+    expect(claim.claimed).toBe(true);
+
+    // Pinned from the claim onwards, exactly as a manually selected run is.
+    await expect(
+      store.claimRouted({
+        ...routed,
+        provider: 'FORGED',
+        deliveryId: 'runtime_delivery_auto_2',
+      }),
+    ).rejects.toMatchObject({ code: 'RUNTIME_RUN_NOT_FOUND' });
+  });
 });
