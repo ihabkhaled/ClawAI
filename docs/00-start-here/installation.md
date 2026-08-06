@@ -84,6 +84,34 @@ implies `--yes`. Previously `read` there got EOF, every answer silently became
 empty, and the result was a half-configured install that looked like it had
 succeeded.
 
+### Small servers: builds go one at a time
+
+Compose hands every image to BuildKit at once, and each Node build peaks near a
+gigabyte. On a small host that is an OOM kill of the whole bake — the build dies
+with `failed to execute bake: signal: killed` and **nothing** is kept, not even
+the images that had already finished.
+
+When the memory available to the build is under ~12 GB, the installer builds
+services one at a time instead. It is slower, but it finishes. The figure comes
+from the Docker daemon itself, which is the right number on every platform — on
+macOS and Windows the build runs inside the Docker Desktop VM, whose allocation
+is configured in Docker rather than reported by the host.
+
+Swap is deliberately **not** counted toward that budget. Swap decides whether
+the build survives; it does not make a parallel build a good idea. Measured on
+an 8 GB server with 8 GB of swap, the parallel bake stopped being OOM-killed but
+sat at 3.5 GB swapped with under 1 GB free, thrashing — sequential is both
+faster and safer there.
+
+Add swap anyway on a small VM: it is the safety net underneath the guard, and
+turns a lost build into a slow one.
+
+```bash
+sudo fallocate -l 8G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab   # survive reboot
+```
+
 ---
 
 ## Quick Start (Manual)

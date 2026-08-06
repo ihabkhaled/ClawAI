@@ -526,6 +526,39 @@ state_mark_done "mode"
 echo ""
 
 # ─── Step 2: Check port availability ────────────────────────────────────────
+# Below this, images are built one at a time instead of all at once. Each Node
+# service build peaks near a gigabyte and Compose starts them together.
+LOW_MEMORY_BUILD_THRESHOLD_MB=12000
+
+# PHYSICAL memory available to the build, in MB — deliberately NOT counting swap.
+#
+# Swap decides whether the bake survives; it does not make a parallel build a
+# good idea. Measured on an 8 GB server with 8 GB of swap: the parallel bake
+# stopped being OOM-killed, but sat at 3.5 GB swapped with under 1 GB free,
+# thrashing. Counting swap toward the budget put that host on the parallel path
+# when sequential would have been both faster and safer, so the decision uses
+# real memory and swap stays what it should be — the safety net underneath it.
+#
+# On macOS and Windows the build runs inside the Docker Desktop VM, whose
+# allocation is configured in Docker rather than reported by the host, so the
+# daemon's own figure is the right one on every platform.
+#
+# Returns a large number when it cannot tell, so an unreadable daemon keeps the
+# faster parallel path rather than being silently degraded.
+build_memory_budget_mb() {
+  local daemon_bytes=""
+  daemon_bytes="$(docker info --format '{{.MemTotal}}' 2>/dev/null || true)"
+  if [ -n "$daemon_bytes" ] && [ "$daemon_bytes" -gt 0 ] 2>/dev/null; then
+    echo $((daemon_bytes / 1024 / 1024))
+    return 0
+  fi
+  if command -v free &>/dev/null; then
+    free -m 2>/dev/null | awk '/^Mem:/ { print int($2); exit }'
+    return 0
+  fi
+  echo "999999"
+}
+
 check_port() {
   local port=$1 name=$2
   if (echo >/dev/tcp/localhost/"$port") 2>/dev/null; then
@@ -1784,13 +1817,31 @@ if [ "$TOTAL_TASKS" -gt 0 ]; then
   fi
 
   if [ "$BUILD_COUNT" -gt 0 ]; then
-    info "[50%] Building $BUILD_COUNT service(s) in parallel:"
-    for entry in "${BUILD_DETAILS[@]}"; do
-      info "  - $entry"
-    done
-    # Docker Compose v2 builds services concurrently when given multiple names.
-    # `--progress plain` keeps per-service log lines visible while they run.
-    docker compose --env-file "$ENV_FILE" $COMPOSE_FILES build --progress plain "${BUILD_NAMES[@]}"
+    if [ "$(build_memory_budget_mb)" -lt "$LOW_MEMORY_BUILD_THRESHOLD_MB" ]; then
+      # Compose hands every target to BuildKit at once, and each Node build
+      # peaks around a gigabyte. On a small VM that is an OOM kill of the whole
+      # bake — `failed to execute bake: signal: killed` — after which NOTHING is
+      # built, not even the images that had finished, so the operator waits out
+      # a long build for nothing. Building one at a time is slower and finishes.
+      warn "Low build memory — building services one at a time instead of in parallel."
+      info "      RAM + swap available is under ${LOW_MEMORY_BUILD_THRESHOLD_MB} MB. Adding swap makes this much faster."
+      info "[50%] Building $BUILD_COUNT service(s) sequentially:"
+      for entry in "${BUILD_DETAILS[@]}"; do
+        info "  - $entry"
+      done
+      for build_name in "${BUILD_NAMES[@]}"; do
+        info "  building $build_name ..."
+        docker compose --env-file "$ENV_FILE" $COMPOSE_FILES build --progress plain "$build_name"
+      done
+    else
+      info "[50%] Building $BUILD_COUNT service(s) in parallel:"
+      for entry in "${BUILD_DETAILS[@]}"; do
+        info "  - $entry"
+      done
+      # Docker Compose v2 builds services concurrently when given multiple names.
+      # `--progress plain` keeps per-service log lines visible while they run.
+      docker compose --env-file "$ENV_FILE" $COMPOSE_FILES build --progress plain "${BUILD_NAMES[@]}"
+    fi
   fi
 
   ok "Docker progress plan: $DOWNLOAD_COUNT downloads, $BUILD_COUNT builds, $CACHED_BUILD_COUNT cached builds"
@@ -1799,7 +1850,20 @@ else
   info "Pulling Docker images (this may take a few minutes on first run)..."
   docker compose --env-file "$ENV_FILE" $COMPOSE_FILES pull --ignore-pull-failures
   info "Building any service images that aren't on the registry..."
-  docker compose --env-file "$ENV_FILE" $COMPOSE_FILES build
+  # Same low-memory guard as the planned path above. This fallback is the branch
+  # a real server actually took, so protecting only the planned path would have
+  # left the OOM-killed bake exactly as it was.
+  if [ "$(build_memory_budget_mb)" -lt "$LOW_MEMORY_BUILD_THRESHOLD_MB" ]; then
+    warn "Low build memory — building services one at a time instead of in parallel."
+    for fallback_service in $(docker compose --env-file "$ENV_FILE" $COMPOSE_FILES config --services 2>/dev/null); do
+      # `|| true`: not every service has a build context (databases, redis,
+      # rabbitmq are image-only), and asking to build one is a no-op error that
+      # must not abort the whole install.
+      docker compose --env-file "$ENV_FILE" $COMPOSE_FILES build "$fallback_service" 2>/dev/null || true
+    done
+  else
+    docker compose --env-file "$ENV_FILE" $COMPOSE_FILES build
+  fi
   info "Starting containers..."
   docker compose --env-file "$ENV_FILE" $COMPOSE_FILES up -d
 fi

@@ -141,6 +141,28 @@ if (Test-Path $StateFile) {
     Set-StateValue -Key 'STARTED_AT' -Value ((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))
 }
 
+# Below this, images are built one at a time instead of all at once. Each Node
+# service build peaks near a gigabyte and Compose starts them together, so a
+# small host OOM-kills the entire bake rather than any single build.
+$LowMemoryBuildThresholdMb = 12000
+
+# Memory available to the BUILD, which on Windows and macOS is the Docker
+# Desktop VM's allocation, not host RAM - the host can have 64 GB while the VM
+# is capped at 4. `docker info` reports the daemon's own figure, so it is the
+# right number on every platform.
+#
+# Returns a large number when it cannot tell, so an unreadable daemon keeps the
+# faster parallel path rather than being silently degraded.
+function Get-BuildMemoryBudgetMb {
+    try {
+        $raw = docker info --format '{{.MemTotal}}' 2>$null
+        if ($raw -and [long]::TryParse($raw.Trim(), [ref]$null)) {
+            return [int]([long]$raw.Trim() / 1MB)
+        }
+    } catch { }
+    return 999999
+}
+
 $StepKeys = @('prereqs','mode','ports','hostname','secrets','admin','ai','tls','env','tooling','start')
 function Get-StepLabel {
     param([string]$Key)
@@ -1652,14 +1674,28 @@ if ($totalTasks -gt 0) {
     }
 
     if ($buildCount -gt 0) {
-        Write-Info "[50%] Building $buildCount service(s) in parallel:"
-        foreach ($entry in $buildDetails) {
-            Write-Info "  - $entry"
+        if ((Get-BuildMemoryBudgetMb) -lt $LowMemoryBuildThresholdMb) {
+            # Compose hands every target to BuildKit at once and each Node build
+            # peaks around a gigabyte. On a small host that is an OOM kill of
+            # the whole bake, after which NOTHING is built - not even the images
+            # that had finished. Building one at a time is slower and finishes.
+            Write-Warn "Low build memory - building services one at a time instead of in parallel."
+            Write-Info "[50%] Building $buildCount service(s) sequentially:"
+            foreach ($entry in $buildDetails) { Write-Info "  - $entry" }
+            foreach ($buildName in $buildNames) {
+                Write-Info "  building $buildName ..."
+                docker compose --env-file $envFile $ComposeFiles build --progress plain $buildName
+            }
+        } else {
+            Write-Info "[50%] Building $buildCount service(s) in parallel:"
+            foreach ($entry in $buildDetails) {
+                Write-Info "  - $entry"
+            }
+            # Docker Compose v2 builds services concurrently when given multiple
+            # names. `--progress plain` keeps per-service log lines visible.
+            $buildArgs = $buildNames.ToArray()
+            docker compose --env-file $envFile $ComposeFiles build --progress plain $buildArgs
         }
-        # Docker Compose v2 builds services concurrently when given multiple
-        # names. `--progress plain` keeps per-service log lines visible.
-        $buildArgs = $buildNames.ToArray()
-        docker compose --env-file $envFile $ComposeFiles build --progress plain $buildArgs
     }
 
     Write-Ok "Docker progress plan: $downloadCount downloads, $buildCount builds, $cachedBuildCount cached builds"
@@ -1668,7 +1704,20 @@ if ($totalTasks -gt 0) {
     Write-Info "Pulling Docker images (this may take a few minutes on first run)..."
     docker compose --env-file $envFile $ComposeFiles pull --ignore-pull-failures
     Write-Info "Building any service images that aren't on the registry..."
-    docker compose --env-file $envFile $ComposeFiles build
+    # Same low-memory guard as the planned path above. This fallback is the
+    # branch a real server actually took, so protecting only the planned path
+    # would have left the OOM-killed bake exactly as it was.
+    if ((Get-BuildMemoryBudgetMb) -lt $LowMemoryBuildThresholdMb) {
+        Write-Warn "Low build memory - building services one at a time instead of in parallel."
+        foreach ($fallbackService in (docker compose --env-file $envFile $ComposeFiles config --services)) {
+            # Not every service has a build context (databases, redis, rabbitmq
+            # are image-only); asking to build one is a no-op error that must
+            # not abort the install.
+            try { docker compose --env-file $envFile $ComposeFiles build $fallbackService } catch { }
+        }
+    } else {
+        docker compose --env-file $envFile $ComposeFiles build
+    }
     Write-Info "Starting containers..."
     docker compose --env-file $envFile $ComposeFiles up -d
 }
