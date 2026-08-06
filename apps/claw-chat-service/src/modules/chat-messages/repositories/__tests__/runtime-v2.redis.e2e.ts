@@ -900,6 +900,24 @@ describe('Runtime V2 Redis Lua authority', () => {
     expect(sequences).toEqual([...sequences].sort((left, right) => left - right));
     expect(new Set(sequences).size).toBe(sequences.length);
     expect(modelEvents[1]?.payload).toMatchObject({ text: answer });
+
+    // Every turn-scoped event must be bound to its turn at the TOP LEVEL of the
+    // envelope, not only inside the payload. The coding agent routes and
+    // validates model events on `event.turnId` and rejects any whose top-level
+    // turn disagrees with the payload's. Emitting these with `turnId`
+    // undefined killed every agent run on its first `model.turn.started`
+    // ("mismatched turn identifier"), and the run then had no active turn for
+    // later tool calls to attach to ("No runtime run is active").
+    for (const event of modelEvents) {
+      expect(event.turnId).toBe('runtime_e2e_turn_00008');
+      expect(event.turnId).toBe((event.payload as { turnId?: string }).turnId);
+    }
+
+    // Lifecycle events belong to no turn, so the binding must NOT be invented
+    // for them — a bogus turnId would make the client project phantom turns.
+    for (const event of page.events.filter((candidate) => candidate.type.startsWith('run.'))) {
+      expect(event.turnId).toBeUndefined();
+    }
   });
 
   // resolveBinding is what the SSE stream calls on every reconnect, and it

@@ -13,11 +13,20 @@ export const runtimeV2ToolRequestSchema = z
   })
   .strict();
 
+// "Return only one JSON object" was already here and models still emitted four
+// of them concatenated, because the instruction never said what happens next. A
+// model that believes it gets a single shot batches every call it can foresee.
+// Stating the loop — one call, then you are asked again with the result — is
+// what makes one-per-turn the obviously correct move rather than a restriction
+// to work around.
 export const RUNTIME_V2_MODEL_INSTRUCTION = [
   'You are operating through ClawAI Runtime Protocol 2.0.',
+  'This is a multi-turn loop: request ONE tool, ClawAI executes it, and you are called again with the result.',
+  'You may request as many tools as the task needs, but only ever one per response.',
   'When a tool is required, return only one JSON object with keys kind="tool", toolName, toolVersion, operation, arguments, and targetId.',
+  'Never concatenate several tool objects in one response; every object after the first is discarded.',
   'Never invent credentials or embed secrets. Tool arguments must contain only JSON values.',
-  'When no tool is required, respond normally with the final user-facing answer.',
+  'Once the results answer the question, respond normally with the final user-facing answer and no JSON.',
 ].join(' ');
 
 export const RUNTIME_V2_REPAIR_INSTRUCTION =

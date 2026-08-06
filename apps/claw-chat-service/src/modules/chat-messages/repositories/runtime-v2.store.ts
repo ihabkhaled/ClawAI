@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 
 import { RuntimeV2RedisOperation } from '../../../infrastructure/redis/enums/runtime-v2-redis-operation.enum';
@@ -134,9 +134,28 @@ function eventJson(
     visibility,
     sensitivity: 'sensitive-redacted',
     epochs: input.epochs,
+    ...turnBinding(payload),
     payload,
     ...(correlation === undefined ? {} : { correlation }),
   });
+}
+
+/**
+ * Binds a turn-scoped event to its turn at the top level of the envelope.
+ *
+ * `turnId` is where clients route and validate a model event; the payload copy
+ * alone is not enough. The coding agent rejects any `model.*` event whose
+ * top-level turn does not equal the one in its payload, so omitting it made
+ * every agent run die on its first `model.turn.started` with a mismatched-turn
+ * error, and every later tool call then had no active run to attach to.
+ *
+ * Deriving the binding from the payload here, rather than at each call site,
+ * is what makes the two structurally unable to disagree. Only turn-scoped
+ * payloads carry a `turnId` key, so lifecycle and tool events are unaffected.
+ */
+function turnBinding(payload: RuntimeV2JsonObject): RuntimeV2JsonObject {
+  const turnId = payload['turnId'];
+  return typeof turnId === 'string' ? { turnId } : {};
 }
 
 function assertEpochs(actual: RuntimeV2BoundInput['epochs'], expected: RuntimeV2BoundInput): void {
@@ -185,6 +204,8 @@ function ttlMilliseconds(ttlSeconds: number): string {
 
 @Injectable()
 export class RuntimeV2Store {
+  private readonly logger = new Logger(RuntimeV2Store.name);
+
   constructor(@Inject(RedisService) private readonly redis: RuntimeV2RedisPort) {}
 
   private async execute(
@@ -195,7 +216,18 @@ export class RuntimeV2Store {
     let raw: unknown;
     try {
       raw = await this.redis.executeRuntimeV2({ operation, keys, arguments: arguments_ });
-    } catch {
+    } catch (error) {
+      // The CLIENT message stays deliberately opaque: a raw Redis or Lua error
+      // can echo back argument fragments, so it must never cross the wire.
+      // Discarding it on the server as well is a different mistake — it made
+      // every RUNTIME_STATE_UNAVAILABLE undiagnosable, with no way to tell a
+      // dropped connection from a Lua bug. The operation and the message are
+      // recorded here; the arguments deliberately are not.
+      this.logger.error(
+        `Runtime V2 Redis operation ${operation} failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
       throw runtimeV2Unavailable();
     }
     return parseRuntimeV2TaggedReply(raw);

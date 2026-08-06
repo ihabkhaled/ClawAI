@@ -60,6 +60,48 @@ function jsonCandidate(content: string): string | null {
   return trimmed.startsWith('{') ? trimmed : null;
 }
 
+/**
+ * Extracts the first complete top-level JSON object from a candidate string.
+ *
+ * Models routinely answer a multi-part question with several tool requests
+ * concatenated — `{…} {…} {…}` — because nothing in the instruction says one
+ * per turn. `JSON.parse` rejects that outright, the reply fell through to the
+ * "this is a final answer" branch, and the raw JSON was streamed to the user as
+ * the assistant's response. Asking for context on a workspace answered with a
+ * wall of tool JSON and did no work at all.
+ *
+ * The protocol carries one invocation per turn, so the first request is taken
+ * and the rest are dropped: the loop asks again with the result in hand, and
+ * the model reissues whatever it still needs. Brace matching honours string
+ * literals and escapes so a brace inside an argument value cannot end the scan
+ * early.
+ */
+function firstJsonObject(text: string): string | null {
+  if (!text.startsWith('{')) return null;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text.charAt(index);
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (inString) {
+      if (character === '\\') escaped = true;
+      else if (character === '"') inString = false;
+      continue;
+    }
+    if (character === '"') inString = true;
+    else if (character === '{') depth += 1;
+    else if (character === '}') {
+      depth -= 1;
+      if (depth === 0) return text.slice(0, index + 1);
+    }
+  }
+  return null;
+}
+
 function isToolRequestAttempt(document: unknown): boolean {
   return (
     document !== null &&
@@ -80,10 +122,19 @@ export function parseRuntimeV2ModelOutput(
   try {
     document = JSON.parse(candidate);
   } catch {
-    // Looked like JSON and is not. That is prose or code the model happened to
-    // start with a brace, not an attempt at a tool request, so it is answered
-    // rather than repaired.
-    return { kind: 'final', content };
+    // Not one JSON document. It may still be several concatenated tool
+    // requests, which is the common shape when the model plans a multi-part
+    // task, so retry against the first complete object before giving up.
+    const first = firstJsonObject(candidate);
+    if (first === null) return { kind: 'final', content };
+    try {
+      document = JSON.parse(first);
+    } catch {
+      // Looked like JSON and is not. That is prose or code the model happened
+      // to start with a brace, not an attempt at a tool request, so it is
+      // answered rather than repaired.
+      return { kind: 'final', content };
+    }
   }
 
   // `kind: "tool"` is the schema's discriminator, so it is also the only honest

@@ -1,7 +1,8 @@
 import {
   RUNTIME_V2_EMPTY_SUMMARY,
-  RUNTIME_V2_MODEL_DELTA_CHARACTERS,
   RUNTIME_V2_MODEL_SUMMARY_CHARACTERS,
+  RUNTIME_V2_MODEL_TURN_BYTES,
+  RUNTIME_V2_TRUNCATION_NOTICE,
 } from '../constants/runtime-v2-model-events.constants';
 import type { RuntimeV2ModelEventDraft } from '../types/runtime-v2-model-events.types';
 
@@ -16,29 +17,45 @@ export function buildRuntimeV2ModelEvents(
   turnId: string,
   text: string,
 ): RuntimeV2ModelEventDraft[] {
-  const chunks = splitForDeltas(text);
+  const deliverable = clampToTurnBytes(text);
   return [
     { type: 'model.turn.started', payload: { turnId } },
-    ...chunks.map((chunk) => ({ type: 'model.delta' as const, payload: { turnId, text: chunk } })),
+    ...(deliverable === ''
+      ? []
+      : [{ type: 'model.delta' as const, payload: { turnId, text: deliverable } }]),
     { type: 'model.summary', payload: { turnId, summary: buildSummary(text) } },
   ];
 }
 
 /**
- * Splits on the delta cap.
+ * Bounds a turn's whole answer to what a client will actually accept.
  *
- * Clients bound CUMULATIVE text per turn at the same figure they bound a single
- * delta, so this cannot make an over-long answer deliverable — it keeps each
- * individual event inside the contract and lets the client apply its own limit
- * rather than having the server emit one event the client is obliged to reject.
+ * The previous behaviour chunked a long answer across several deltas. That
+ * looks right but is not deliverable: a client caps the turn's CUMULATIVE text
+ * at the same 64 KiB it caps one delta at, so the second chunk always pushed
+ * the total over and was rejected — the run died part-way through the answer
+ * instead of showing a shorter one. Truncating with a visible notice keeps the
+ * user's answer, and the notice is what tells them it was cut.
+ *
+ * The walk is per code point and counts UTF-8 bytes, so a multi-byte character
+ * is never split across the boundary and a non-ASCII answer is measured the
+ * same way the client measures it.
  */
-function splitForDeltas(text: string): string[] {
-  if (text.length === 0) return [];
-  const chunks: string[] = [];
-  for (let index = 0; index < text.length; index += RUNTIME_V2_MODEL_DELTA_CHARACTERS) {
-    chunks.push(text.slice(index, index + RUNTIME_V2_MODEL_DELTA_CHARACTERS));
+function clampToTurnBytes(text: string): string {
+  const encoder = new TextEncoder();
+  if (encoder.encode(text).byteLength <= RUNTIME_V2_MODEL_TURN_BYTES) return text;
+
+  const budget =
+    RUNTIME_V2_MODEL_TURN_BYTES - encoder.encode(RUNTIME_V2_TRUNCATION_NOTICE).byteLength;
+  let bytes = 0;
+  let kept = '';
+  for (const character of text) {
+    const size = encoder.encode(character).byteLength;
+    if (bytes + size > budget) break;
+    bytes += size;
+    kept += character;
   }
-  return chunks;
+  return `${kept}${RUNTIME_V2_TRUNCATION_NOTICE}`;
 }
 
 /**
