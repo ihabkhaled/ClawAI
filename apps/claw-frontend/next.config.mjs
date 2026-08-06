@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 /** @type {import('next').NextConfig} */
 // The user-configured hostname (claw.local by default). Wildcard form is only
 // added when the value looks like a DNS name (skipped for bare IPs).
@@ -10,6 +12,13 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   output: 'standalone',
+  // This app is one workspace of a monorepo and imports @claw/shared-types from
+  // packages/, which lives above the app directory. Pinning the tracing root to
+  // the repo root keeps those files in the standalone bundle and — more
+  // importantly — makes the bundle layout deterministic rather than inferred:
+  // the production Dockerfile's runner stage copies from and starts
+  // apps/claw-frontend/server.js on the strength of this value.
+  outputFileTracingRoot: path.join(import.meta.dirname, '..', '..'),
   // Next.js dev server (turbopack) rejects HMR WebSocket connections
   // whose Host header isn't an explicitly trusted dev origin. Without
   // this list, `wss://<host>/_next/webpack-hmr` fails repeatedly and
