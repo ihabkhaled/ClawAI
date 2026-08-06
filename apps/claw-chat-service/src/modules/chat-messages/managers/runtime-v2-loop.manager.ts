@@ -5,6 +5,8 @@ import { BusinessException, EntityNotFoundException } from '../../../common/erro
 import { MessageRole, RoutingMode } from '../../../generated/prisma';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import {
+  RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_CODE,
+  RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_MESSAGE,
   RUNTIME_V2_BUDGET_EXHAUSTED_CODE,
   RUNTIME_V2_BUDGET_EXHAUSTED_MESSAGE,
 } from '../constants/runtime-v2-failure.constants';
@@ -25,7 +27,7 @@ import {
   buildRuntimeV2ToolRequestRecord,
   buildRuntimeV2ToolResultRecord,
 } from '../utilities/runtime-v2-transcript.utility';
-import { runtimeV2TerminalReason } from '../utilities/runtime-v2-failure.utility';
+import { excerpt, runtimeV2TerminalReason } from '../utilities/runtime-v2-failure.utility';
 import {
   buildRuntimeV2ModelInstruction,
   isCapabilityDenial,
@@ -397,9 +399,10 @@ export class RuntimeV2LoopManager {
   /**
    * Asks once more when the model announced work and then stopped.
    *
-   * Unlike a capability denial this is not a lie, so a second announcement is
-   * accepted as the answer rather than failing the run: the user still sees
-   * what the model said, and the run terminalizes either way.
+   * A model that announces again after being told the loop exists has not
+   * answered the request, and storing that as a completed answer is the silent
+   * stop users report: the panel shows "I'll start by…" and the task is over.
+   * Failing with the model's own words is honest and actionable.
    */
   private async correctUnfulfilledIntent(
     binding: RuntimeV2BoundInput,
@@ -460,17 +463,39 @@ export class RuntimeV2LoopManager {
       return this.correctCapabilityDrift(binding, runtimeContext, routingMode);
     }
     if (isUnfulfilledIntent(turn.output.content)) {
-      try {
-        return await this.correctUnfulfilledIntent(binding, runtimeContext, routingMode);
-      } catch {
-        // The nudge is best effort. An answer already exists, and a provider
-        // that returns nothing to the extra call must not cost the user the
-        // answer it already gave — that turned a merely incomplete run into a
-        // failed one.
-        return turn;
-      }
+      return this.nudgeIntoActing(binding, runtimeContext, routingMode, turn);
     }
     return turn;
+  }
+
+  /**
+   * Asks the model to act, and refuses to call a second announcement an answer.
+   *
+   * The nudge itself is best effort: a provider that returns nothing to the
+   * extra call must not cost the user the answer the first call already gave.
+   * But a model that announces again after being told the loop exists has done
+   * no work, and storing that as a completed answer is the silent stop.
+   */
+  private async nudgeIntoActing(
+    binding: RuntimeV2BoundInput,
+    runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
+    routingMode: string,
+    turn: RuntimeV2ModelTurn,
+  ): Promise<RuntimeV2ModelTurn> {
+    let corrected: RuntimeV2ModelTurn;
+    try {
+      corrected = await this.correctUnfulfilledIntent(binding, runtimeContext, routingMode);
+    } catch {
+      return turn;
+    }
+    if (corrected.output.kind === 'final' && isUnfulfilledIntent(corrected.output.content)) {
+      throw new BusinessException(
+        `${RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_MESSAGE} ${excerpt(corrected.output.content)}`,
+        RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_CODE,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+    return corrected;
   }
 
   /** Context for the run's first turn, before any tool has been called. */

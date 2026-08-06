@@ -1,5 +1,6 @@
 import { BusinessException } from '../../../common/errors';
 import {
+  RUNTIME_V2_ANNOUNCEMENT_EXCERPT_CHARACTERS,
   RUNTIME_V2_FAILURE_MESSAGE_CHARACTERS,
   RUNTIME_V2_STREAM_ERROR_EVENT_TYPE,
   RUNTIME_V2_UNKNOWN_FAILURE_CODE,
@@ -51,4 +52,18 @@ function truncate(message: string): string {
   return normalized.length <= RUNTIME_V2_FAILURE_MESSAGE_CHARACTERS
     ? normalized
     : `${normalized.slice(0, RUNTIME_V2_FAILURE_MESSAGE_CHARACTERS - 1)}…`;
+}
+
+/**
+ * A bounded, single-line quote of what the model actually said.
+ *
+ * The reason travels on a size-bounded event and is shown to the user, so the
+ * announcement is quoted rather than paraphrased — hiding it would leave the
+ * user guessing why nothing ran.
+ */
+export function excerpt(content: string): string {
+  const normalized = content.replaceAll(/\s+/gu, ' ').trim();
+  return normalized.length <= RUNTIME_V2_ANNOUNCEMENT_EXCERPT_CHARACTERS
+    ? normalized
+    : `${normalized.slice(0, RUNTIME_V2_ANNOUNCEMENT_EXCERPT_CHARACTERS)}…`;
 }

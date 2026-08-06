@@ -13,6 +13,16 @@ export const RUNTIME_V2_STREAM_ERROR_EVENT_TYPE = 'stream.error';
 // will produce nothing more.
 export const RUNTIME_V2_BUDGET_EXHAUSTED_REASON = 'BUDGET_EXHAUSTED';
 
+// A model that announces work, is told the loop exists, and announces again has
+// not answered the request. Storing that as a completed answer is the silent
+// stop users see: the panel shows "I'll start by…" and the task is over.
+export const RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_CODE = 'MODEL_ANNOUNCED_WITHOUT_ACTING';
+
+export const RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_MESSAGE =
+  'The model described the work but never requested a tool, so nothing ran. Try again, or choose a model proven to use tools. It said:';
+
+export const RUNTIME_V2_ANNOUNCEMENT_EXCERPT_CHARACTERS = 300;
+
 export const RUNTIME_V2_BUDGET_EXHAUSTED_CODE = 'RUNTIME_BUDGET_EXHAUSTED';
 
 // Shown to the user in place of a run that would otherwise stop mid-task with

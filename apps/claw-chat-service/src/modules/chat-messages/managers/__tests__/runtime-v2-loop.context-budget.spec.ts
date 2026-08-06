@@ -157,3 +157,58 @@ describe('RuntimeV2LoopManager intent correction fallback', () => {
     expect(result.output).toMatchObject({ kind: 'tool', operation: 'list' });
   });
 });
+
+describe('RuntimeV2LoopManager announced-without-acting', () => {
+  const binding = {
+    ownerId: 'owner_1',
+    threadId: 'thread_1',
+    messageId: 'message_1',
+    provider: 'OLLAMA',
+    model: 'kimi-k2.7-code',
+    toolDefinitions: [
+      {
+        schemaVersion: '2.0',
+        name: 'workspace.files',
+        version: '2.0.0',
+        description: 'Bounded workspace discovery.',
+        operations: ['list'],
+        riskClasses: ['inspect'],
+        targetIds: ['target:workspace'],
+        inputSchema: {},
+      },
+    ],
+  };
+
+  it('fails visibly, quoting the model, when it announces again after the nudge', async () => {
+    // Storing a second announcement as a completed answer is the silent stop:
+    // the panel shows "I'll start by…" and the task is simply over.
+    const announcement = 'I will now read the configuration files to understand the layout.';
+    const callProvider = jest.fn().mockResolvedValue({ content: announcement });
+    const loop = new RuntimeV2LoopManager(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { callProvider } as never,
+    );
+
+    await expect(
+      (
+        loop as unknown as {
+          turnWithDriftCorrection: (
+            bound: unknown,
+            context: unknown,
+            routingMode: string,
+            turn: unknown,
+          ) => Promise<unknown>;
+        }
+      ).turnWithDriftCorrection(binding, { systemPrompt: 'base' }, 'MANUAL_MODEL', {
+        response: { content: 'Let me start by listing the workspace.' },
+        output: { kind: 'final', content: 'Let me start by listing the workspace.' },
+      }),
+    ).rejects.toMatchObject({
+      code: 'MODEL_ANNOUNCED_WITHOUT_ACTING',
+      message: expect.stringContaining(announcement),
+    });
+  });
+});
