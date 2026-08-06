@@ -3288,9 +3288,13 @@ export class ChatExecutionManager implements OnModuleInit {
     // intermediate levels are indistinguishable on this lane.
     const ollamaEffort = this.resolveEffortForDialect(executionOptions, ProviderToolDialect.OLLAMA);
     const thinkFlag = effortFlagForRequest(ollamaEffort);
-    if (thinkFlag !== undefined) {
-      requestBody.think = thinkFlag;
-    }
+    // Off unless the caller asked for reasoning, mirroring the local lane which
+    // made the same choice for the same reason. Left to think by default a
+    // reasoning model spends the entire turn in `thinking` and returns empty
+    // `content`: kimi-k2.7-code answered with 148 tokens of reasoning,
+    // done_reason "stop", and nothing to show the user, which surfaced as
+    // CLOUD_PROVIDER_EMPTY_RESPONSE and killed the run.
+    requestBody.think = thinkFlag ?? false;
 
     return requestBody;
   }
@@ -3439,8 +3443,26 @@ export class ChatExecutionManager implements OnModuleInit {
     // is what produced the terminal "Cloud provider OLLAMA returned no message
     // content" failure, so the emptiness check must consider tool calls too.
     if (responseContent.trim().length === 0 && toolCalls.length === 0) {
+      // Bounded shape only — never the text itself. A reasoning model that
+      // spends the turn thinking and answers nothing is a different fault from
+      // a provider that returned an empty envelope, and the two were
+      // indistinguishable in the logs.
+      const thinkingLength = data.message?.thinking?.length ?? 0;
+      // promptEvalCount separates the two ways this can happen, which read
+      // identically without it: a positive count means the provider did read
+      // our prompt and the model chose to say nothing, while zero alongside
+      // doneReason=load means it never evaluated a prompt at all — the request
+      // reached it as a bare model load.
+      this.logger.warn(
+        `callCloudProvider: ${provider}/${model} returned no content ` +
+          `(thinkingChars=${String(thinkingLength)} doneReason=${data.done_reason ?? 'none'} ` +
+          `evalCount=${String(data.eval_count ?? 0)} ` +
+          `promptEvalCount=${String(data.prompt_eval_count ?? 0)})`,
+      );
       throw new BusinessException(
-        `Cloud provider ${provider} returned no message content`,
+        thinkingLength > 0
+          ? `Model ${model} reasoned but produced no answer. Retry, or choose a model that returns a direct answer.`
+          : `Cloud provider ${provider} returned no message content`,
         'CLOUD_PROVIDER_EMPTY_RESPONSE',
       );
     }

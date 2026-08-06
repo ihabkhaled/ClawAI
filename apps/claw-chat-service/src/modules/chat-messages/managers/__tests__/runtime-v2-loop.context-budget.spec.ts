@@ -1,4 +1,9 @@
-import { RUNTIME_V2_CONTEXT_TOKEN_BUDGET } from '../../constants/runtime-v2-transcript.constants';
+import { BusinessException } from '../../../../common/errors';
+import { RUNTIME_V2_EMPTY_RESPONSE_RETRIES } from '../../constants/runtime-v2-failure.constants';
+import {
+  RUNTIME_V2_CONTEXT_TOKEN_BUDGET,
+  RUNTIME_V2_MAX_OUTPUT_TOKENS,
+} from '../../constants/runtime-v2-transcript.constants';
 import { RuntimeV2LoopManager } from '../runtime-v2-loop.manager';
 
 /**
@@ -210,5 +215,98 @@ describe('RuntimeV2LoopManager announced-without-acting', () => {
       code: 'MODEL_ANNOUNCED_WITHOUT_ACTING',
       message: expect.stringContaining(announcement),
     });
+  });
+});
+
+describe('RuntimeV2LoopManager empty-response retry', () => {
+  const binding = {
+    ownerId: 'owner_1',
+    threadId: 'thread_1',
+    messageId: 'message_1',
+    provider: 'OLLAMA',
+    model: 'kimi-k2.7-code',
+    toolDefinitions: [],
+  };
+
+  function callRuntime(callProvider: jest.Mock): Promise<{ content: string }> {
+    const loop = new RuntimeV2LoopManager(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { callProvider } as never,
+    );
+    return (
+      loop as unknown as {
+        callRuntimeProvider: (
+          bound: unknown,
+          context: unknown,
+          routingMode: string,
+        ) => Promise<{ content: string }>;
+      }
+    ).callRuntimeProvider(binding, { systemPrompt: 'base' }, 'MANUAL_MODEL');
+  }
+
+  it('asks again when the provider returns nothing, rather than discarding the run', async () => {
+    // A tool had already executed and its result was in hand when the
+    // continuation came back empty; giving up there threw the work away.
+    const callProvider = jest
+      .fn()
+      .mockRejectedValueOnce(
+        new BusinessException(
+          'Cloud provider OLLAMA returned no message content',
+          'CLOUD_PROVIDER_EMPTY_RESPONSE',
+        ),
+      )
+      .mockResolvedValueOnce({ content: 'The workspace has 7 rule files.' });
+
+    await expect(callRuntime(callProvider)).resolves.toMatchObject({
+      content: 'The workspace has 7 rule files.',
+    });
+    expect(callProvider).toHaveBeenCalledTimes(2);
+  });
+
+  it('gives up after the bounded retry rather than looping', async () => {
+    const callProvider = jest
+      .fn()
+      .mockRejectedValue(
+        new BusinessException(
+          'Cloud provider OLLAMA returned no message content',
+          'CLOUD_PROVIDER_EMPTY_RESPONSE',
+        ),
+      );
+
+    await expect(callRuntime(callProvider)).rejects.toMatchObject({
+      code: 'CLOUD_PROVIDER_EMPTY_RESPONSE',
+    });
+    expect(callProvider).toHaveBeenCalledTimes(RUNTIME_V2_EMPTY_RESPONSE_RETRIES + 1);
+  });
+
+  it('bounds what one turn may emit, instead of reserving the whole window', async () => {
+    // With no cap the cloud lane fell back to the default written for
+    // single-shot chat: reserve ctx - prompt - 256 for the answer, about 26,000
+    // tokens. Around the tenth tool step Ollama stopped generating at all,
+    // answering in under a second with done_reason=load and, decisively,
+    // prompt_eval_count=0 — it never evaluated a prompt.
+    const callProvider = jest.fn().mockResolvedValue({ content: 'Seven rule files.' });
+
+    await callRuntime(callProvider);
+
+    expect(callProvider.mock.calls[0]?.[7]).toMatchObject({
+      maxOutputTokens: RUNTIME_V2_MAX_OUTPUT_TOKENS,
+      fastPathEnabled: false,
+      applyShortResponseConstraint: false,
+    });
+  });
+
+  it('does not retry a failure that is not emptiness', async () => {
+    const callProvider = jest
+      .fn()
+      .mockRejectedValue(new BusinessException('Unauthorized', 'OLLAMA_REQUEST_FAILED'));
+
+    await expect(callRuntime(callProvider)).rejects.toMatchObject({
+      code: 'OLLAMA_REQUEST_FAILED',
+    });
+    expect(callProvider).toHaveBeenCalledTimes(1);
   });
 });

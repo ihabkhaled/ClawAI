@@ -1,9 +1,14 @@
 import {
   RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
   RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS,
+  RUNTIME_V2_DIALECT_TOOL_CALL_MESSAGE,
   RUNTIME_V2_INTENT_CORRECTION_INSTRUCTION,
   RUNTIME_V2_MODEL_INSTRUCTION,
   RUNTIME_V2_REPAIR_INSTRUCTION,
+  RUNTIME_V2_TOOL_CALL_DIALECT_MARKERS,
+  RUNTIME_V2_TOOL_CALL_TAG_PATTERN,
+  RUNTIME_V2_TRUNCATED_TOOL_CALL_MESSAGE,
+  RUNTIME_V2_TRUNCATED_TOOL_REQUEST_PATTERN,
   RUNTIME_V2_UNFULFILLED_INTENT_MAX_CHARACTERS,
   RUNTIME_V2_UNFULFILLED_INTENT_PATTERNS,
   runtimeV2ToolRequestSchema,
@@ -82,7 +87,15 @@ function jsonCandidate(content: string): string | null {
     const body = (fenced[2] ?? '').trim();
     return body.startsWith('{') ? body : null;
   }
-  return trimmed.startsWith('{') ? trimmed : null;
+  if (trimmed.startsWith('{')) return trimmed;
+  // A model that has read its own transcript sometimes labels the object it
+  // emits — `Tool request: {"kind":"tool",…}` — and qwen3.5 did exactly that
+  // with an otherwise perfect request, which was then shown to the user as the
+  // answer because the text did not begin with a brace. Scanning is safe
+  // because the `kind: "tool"` discriminator below is what actually decides:
+  // an object without it is still treated as an answer.
+  const brace = trimmed.indexOf('{');
+  return brace === -1 ? null : trimmed.slice(brace);
 }
 
 /**
@@ -136,12 +149,40 @@ function isToolRequestAttempt(document: unknown): boolean {
   );
 }
 
+/**
+ * The model announced a tool call in its own dialect instead of the protocol's.
+ *
+ * Raising sends the turn to the repair loop, which asks for one valid protocol
+ * object. The alternative — what happened before — is that the dialect text is
+ * treated as the answer and shown to the user, so the run ends having done
+ * nothing while displaying raw tool syntax.
+ */
+function assertNotDialectToolCall(content: string): void {
+  const normalized = content.toLowerCase();
+  if (
+    RUNTIME_V2_TOOL_CALL_DIALECT_MARKERS.some((marker) => normalized.includes(marker)) ||
+    RUNTIME_V2_TOOL_CALL_TAG_PATTERN.test(content)
+  ) {
+    throw new Error(RUNTIME_V2_DIALECT_TOOL_CALL_MESSAGE);
+  }
+  // A reply that opens with the protocol's own discriminator and then fails to
+  // parse is a tool request that did not survive, not an answer. glm-5.2 sent
+  // one whose object never closed, and half a tool request was shown to the
+  // user as the assistant's response.
+  if (RUNTIME_V2_TRUNCATED_TOOL_REQUEST_PATTERN.test(content)) {
+    throw new Error(RUNTIME_V2_TRUNCATED_TOOL_CALL_MESSAGE);
+  }
+}
+
 export function parseRuntimeV2ModelOutput(
   content: string,
   definitions?: readonly ToolDefinitionDto[],
 ): RuntimeV2ModelOutput {
   const candidate = jsonCandidate(content);
-  if (candidate === null) return { kind: 'final', content };
+  if (candidate === null) {
+    assertNotDialectToolCall(content);
+    return { kind: 'final', content };
+  }
 
   let document: unknown;
   try {
@@ -151,13 +192,17 @@ export function parseRuntimeV2ModelOutput(
     // requests, which is the common shape when the model plans a multi-part
     // task, so retry against the first complete object before giving up.
     const first = firstJsonObject(candidate);
-    if (first === null) return { kind: 'final', content };
+    if (first === null) {
+      assertNotDialectToolCall(content);
+      return { kind: 'final', content };
+    }
     try {
       document = JSON.parse(first);
     } catch {
       // Looked like JSON and is not. That is prose or code the model happened
       // to start with a brace, not an attempt at a tool request, so it is
       // answered rather than repaired.
+      assertNotDialectToolCall(content);
       return { kind: 'final', content };
     }
   }
@@ -167,7 +212,10 @@ export function parseRuntimeV2ModelOutput(
   // produce a JSON config answers with a perfectly good JSON object that has no
   // `kind` — that is an answer, and sending it to the repair loop would fail a
   // correct response.
-  if (!isToolRequestAttempt(document)) return { kind: 'final', content };
+  if (!isToolRequestAttempt(document)) {
+    assertNotDialectToolCall(content);
+    return { kind: 'final', content };
+  }
 
   // Past this point the model declared a tool request, so a schema failure is a
   // genuinely malformed one and still raises for the repair loop.

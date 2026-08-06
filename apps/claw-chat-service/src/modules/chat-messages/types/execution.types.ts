@@ -221,6 +221,11 @@ export type OllamaChatResponse = {
   message?: {
     role?: string;
     content?: string;
+    // A reasoning model on Ollama Cloud puts its chain of thought here and can
+    // spend the whole turn on it, leaving `content` empty. The local generate
+    // path already carried this field; the cloud chat path did not, so such a
+    // turn was indistinguishable from a provider that answered nothing at all.
+    thinking?: string;
     // Ollama Cloud agentic tool-call output. Populated only when the
     // model wants the client to execute a web_search / web_fetch call.
     tool_calls?: OllamaCloudToolCall[];

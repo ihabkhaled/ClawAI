@@ -26,11 +26,73 @@ export const RUNTIME_V2_MODEL_INSTRUCTION = [
   'When a tool is required, return only one JSON object with keys kind="tool", toolName, toolVersion, operation, arguments, and targetId.',
   'Never concatenate several tool objects in one response; every object after the first is discarded.',
   'Never invent credentials or embed secrets. Tool arguments must contain only JSON values.',
-  'Once the results answer the question, respond normally with the final user-facing answer and no JSON.',
+  // Models routinely read a workspace, summarise it, and stop — the file the
+  // user asked for is described in the answer instead of created. Nothing in
+  // the instruction said that describing an effect is not performing it.
+  'If the request asks you to create or change a file, you must do it with a tool call: describing the file, or pasting its contents into your answer, does not create it.',
+  'Once the results answer the question and every requested change is applied, respond normally with the final user-facing answer and no JSON.',
 ].join(' ');
 
-export const RUNTIME_V2_REPAIR_INSTRUCTION =
-  'Your previous tool request was invalid. Return exactly one valid Runtime Protocol 2.0 tool JSON object and no markdown.';
+// The second line is what makes the correction land. Told only that its request
+// was invalid, minimax-m2.7 sent the same `[TOOL_CALL] {toolName="…"}` again —
+// its own trained dialect looks correct to it, so "invalid" is not information.
+// Naming the shapes ClawAI does not accept, and showing the one it does, is the
+// difference between a corrected turn and a run that ends having done nothing.
+export const RUNTIME_V2_REPAIR_INSTRUCTION = [
+  'Your previous tool request was invalid. Return exactly one valid Runtime Protocol 2.0 tool JSON object and no markdown.',
+  'Do not use any other tool-call syntax: not [TOOL_CALL], not <tool_call>, not <function_call>, not functools, and no key=value pairs.',
+  'The only accepted shape is a JSON object exactly like this, with real values:',
+  '{"kind":"tool","toolName":"…","toolVersion":"…","operation":"…","arguments":{},"targetId":"…"}',
+].join(' ');
+
+// Markers a model uses to announce a tool call in its own dialect rather than
+// in the protocol's JSON. minimax-m2.7 answered the very first turn with
+// `I'll start by exploring the workspace structure. [TOOL_CALL]
+// {toolName="workspace.files", toolVersion=…}` — key=value, not JSON, so the
+// parser could make nothing of it and handed the whole thing to the user as the
+// assistant's answer. The task ended there, having done nothing, and what the
+// user read was raw tool syntax.
+//
+// A response carrying one of these was ATTEMPTING to call a tool, which is the
+// same signal `kind: "tool"` gives for a well-formed request, and it belongs in
+// the repair turn. Being wrong here costs one extra turn; missing it costs the
+// user their answer. Compared lower-cased, so each entry is written that way.
+export const RUNTIME_V2_TOOL_CALL_DIALECT_MARKERS: readonly string[] = [
+  '[tool_call]',
+  '<|tool_call|>',
+  '<tool▁call>',
+  'functools[',
+];
+
+// The tag forms, matched by shape rather than by exact spelling. A literal list
+// could not keep up: `<tool_call>` was in it and `<minimax:tool_call>` was not,
+// so an Enterprise-locked run answered with
+// `<minimax:tool_call> <kind>"tool","toolName":"workspace.files"…` and the tag
+// soup was shown to the user as the assistant's response. Any element whose name
+// ends in some spelling of tool-call or function-call is the same attempt.
+export const RUNTIME_V2_TOOL_CALL_TAG_PATTERN =
+  /<\/?[a-z0-9_.:-]*(?:tool|function)[_▁-]?call[^>]*>/iu;
+
+export const RUNTIME_V2_DIALECT_TOOL_CALL_MESSAGE =
+  'The model asked for a tool in a format Runtime Protocol 2.0 does not accept.';
+
+// A reply that opens with the protocol's own discriminator and then fails to
+// parse. glm-5.2 answered with
+// `{"kind":"tool","toolName":"workspace.files",…,"arguments":{…,"targetId":…`
+// and the object never closed, so JSON.parse rejected it, the reply fell through
+// to the final-answer branch, and a half-written tool request was shown to the
+// user as the assistant's response. No real answer begins this way; this is an
+// attempt at a tool call that did not survive, and it belongs in the repair turn.
+// Deliberately unanchored. It is consulted only after parsing has already
+// failed, so a reply carrying the protocol's own discriminator anywhere in it is
+// a tool call that did not survive, wherever it sits. An Ask-mode run answered
+// with `${JSON.stringify({"kind":"tool","toolName":"workspace.files"…})}` — the
+// object wrapped in a JavaScript template literal — and an anchored pattern let
+// that reach the user as the answer.
+export const RUNTIME_V2_TRUNCATED_TOOL_REQUEST_PATTERN = /"kind"\s*:\s*"tool"/u;
+
+export const RUNTIME_V2_TRUNCATED_TOOL_CALL_MESSAGE =
+  'The model started a Runtime Protocol 2.0 tool object and did not finish it.';
 
 // An agent-self capability denial: the model claiming it has no filesystem, command, workspace, or
 // tool authority. When a tool catalog was admitted that claim is false, and recording it as a
@@ -53,10 +115,20 @@ export const RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS: readonly RegExp[] = [
 // and then ends its turn, so the runtime stores "I'll start by discovering the workspace structure"
 // as the completed answer and the task stops after one step. Every multi-step request died this
 // way. Deliberately narrow, and only ever applied together with the length bound below.
+// Models write "I’ll" with a typographic apostrophe as often as "I'll", and a
+// pattern that accepts only the straight quote silently misses half of them —
+// observed live: "I’ll start by discovering the workspace layout" sailed through
+// as a completed answer. Every apostrophe here matches both forms.
 export const RUNTIME_V2_UNFULFILLED_INTENT_PATTERNS: readonly RegExp[] = [
-  /\b(?:i'll|i will|let me|i'm going to|i am going to)(?: now)?(?: start by| begin by| first)? (?:read|list|inspect|analyz|analys|explor|discover|search|scan|check|examin|gather|review|look|open|write|creat|generat|build|map)/iu,
+  // `compil` and `assembl` are here because an Auto-edit run made twelve real
+  // tool calls and then ended with "Now I'll compile all the gathered
+  // information into the document" — every verb in this list except the one it
+  // reached for. The leading "Now" needs nothing: `\b` matches at "I'll"
+  // whatever precedes it, and an optional prefix group here would only add the
+  // ambiguity these patterns are deliberately written without.
+  /\b(?:i['’]ll|i will|let me|i['’]m going to|i am going to)(?: now)?(?: start by| begin by| first)? (?:read|list|inspect|analyz|analys|explor|discover|search|scan|check|examin|gather|review|look|open|write|creat|generat|build|map|compil|assembl)/iu,
   /\b(?:starting|beginning) (?:the )?(?:analysis|review|scan|exploration|discovery)\b/iu,
-  /\bnext,? i'll\b/iu,
+  /\bnext,? i['’]ll\b/iu,
 ];
 
 // An announcement is short by nature. A genuine answer that happens to use "I'll list them here"

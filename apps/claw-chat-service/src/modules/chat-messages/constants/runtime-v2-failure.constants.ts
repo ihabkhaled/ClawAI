@@ -29,3 +29,21 @@ export const RUNTIME_V2_BUDGET_EXHAUSTED_CODE = 'RUNTIME_BUDGET_EXHAUSTED';
 // no answer and no error, so it has to say what to do next, not just what broke.
 export const RUNTIME_V2_BUDGET_EXHAUSTED_MESSAGE =
   'The run used all of its allowed tool calls before finishing. Narrow the request or raise the tool budget, then try again.';
+
+// A provider that returns an empty completion kills an agent run outright, even
+// when the run has already done real work — a tool had executed and its result
+// was in hand. Emptiness is usually transient, so one bounded retry recovers the
+// run instead of discarding it.
+export const RUNTIME_V2_EMPTY_RESPONSE_CODE = 'CLOUD_PROVIDER_EMPTY_RESPONSE';
+
+export const RUNTIME_V2_EMPTY_RESPONSE_RETRIES = 2;
+
+// The model was asked once more for a valid Runtime Protocol tool object and
+// still did not produce one. The run cannot continue, but nothing here is a
+// fault in this service: raising the parse error let it reach the exception
+// filter, and the user was shown "Internal server error" fourteen tool steps
+// into a run that had been going well, with nothing to act on.
+export const RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE = 'MODEL_TOOL_REQUEST_UNREPAIRABLE';
+
+export const RUNTIME_V2_UNREPAIRABLE_REQUEST_MESSAGE =
+  'The model asked for a tool ClawAI could not act on, and its corrected attempt was no better. Try again, or choose a model proven to use tools. It sent:';

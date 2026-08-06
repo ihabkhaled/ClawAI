@@ -16,9 +16,6 @@ export const RUNTIME_V2_TRANSCRIPT_RESULT_CHARACTERS = 800;
 
 export const RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE = '…[result truncated in transcript]';
 
-export const RUNTIME_V2_TRANSCRIPT_REQUEST_PREFIX = 'Tool request';
-export const RUNTIME_V2_TRANSCRIPT_RESULT_PREFIX = 'Tool result';
-
 // How many of the most recent transcript entries survive intent filtering.
 //
 // The thread filter keeps a message only when it shares ~45% of its tokens with
@@ -39,3 +36,17 @@ export const RUNTIME_V2_TRANSCRIPT_RETAINED_ENTRIES = 24;
 // CLOUD_PROVIDER_EMPTY_RESPONSE and a dead run. An agent turn legitimately
 // carries its whole working trail, so it gets a budget sized for one.
 export const RUNTIME_V2_CONTEXT_TOKEN_BUDGET = 32_000;
+
+// Output budget for one agent turn, in tokens.
+//
+// An agent turn produces one small tool object or a final answer, and the tool
+// object is the largest of the two only when it carries a file's contents. The
+// cloud lane had no explicit cap here, so it fell back to the defensive default
+// meant for single-shot chat: reserve `ctx - prompt - 256` for the answer,
+// which came to roughly 26,000 tokens. Reserving almost the whole window for
+// output leaves nothing for the prompt, and around the tenth tool step Ollama
+// stopped generating altogether — answering in under a second with
+// `done_reason: load`, `eval_count: 0` and, decisively, `prompt_eval_count: 0`:
+// it never evaluated a prompt at all. A turn is bounded here instead, which is
+// both generous for what a turn emits and honest about what the window holds.
+export const RUNTIME_V2_MAX_OUTPUT_TOKENS = 8_192;

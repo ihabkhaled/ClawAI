@@ -9,12 +9,17 @@ import {
   RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_MESSAGE,
   RUNTIME_V2_BUDGET_EXHAUSTED_CODE,
   RUNTIME_V2_BUDGET_EXHAUSTED_MESSAGE,
+  RUNTIME_V2_EMPTY_RESPONSE_CODE,
+  RUNTIME_V2_EMPTY_RESPONSE_RETRIES,
+  RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE,
+  RUNTIME_V2_UNREPAIRABLE_REQUEST_MESSAGE,
 } from '../constants/runtime-v2-failure.constants';
 import {
   RUNTIME_V2_ACTIVE_TTL_SECONDS,
   RUNTIME_V2_CONTINUATION_HISTORY_MESSAGES,
 } from '../constants/runtime-v2-run.constants';
 import { THREAD_CONTEXT_LIMIT } from '../../../common/constants';
+import { RUNTIME_V2_TURN_EXECUTION_OPTIONS } from '../constants/runtime-v2-execution.constants';
 import { RUNTIME_V2_CONTEXT_TOKEN_BUDGET } from '../constants/runtime-v2-transcript.constants';
 import { type RuntimeResultDto, toolInvocationSchema } from '../dto/runtime-v2.dto';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
@@ -117,27 +122,20 @@ export class RuntimeV2LoopManager {
     // context and gives the model two slightly different views of one fact.
     const runtimeContext = await this.buildContinuationContext(binding, command, thread);
     await this.recordToolResult(binding, command);
-    const first = await this.execution.callProvider(
-      binding.provider,
-      binding.model,
-      runtimeContext,
-      Date.now(),
-      false,
-      undefined,
-      RoutingMode.MANUAL_MODEL,
-      undefined,
-      TokenLedgerContext.CHAT,
-    );
+    // Through the repair path, exactly like the first turn. Continuations used
+    // to parse the reply inline, outside any try, so a model that asked for a
+    // tool outside the admitted catalog — an ordinary mistake the repair turn
+    // exists to correct — threw straight out of the loop. Fourteen tool steps
+    // into a run that was going well, the user was shown "Internal server
+    // error" and the work was lost.
+    const first = await this.callWithRepair(binding, runtimeContext, RoutingMode.MANUAL_MODEL);
     // A continuation is exactly where "I'll now read the next file" appears,
     // and accepting it ended the task one step in while reporting success.
     const { response, output } = await this.turnWithDriftCorrection(
       binding,
       runtimeContext,
       RoutingMode.MANUAL_MODEL,
-      {
-        response: first,
-        output: parseRuntimeV2ModelOutput(first.content, binding.toolDefinitions),
-      },
+      first,
     );
     if (output.kind === 'tool') {
       const invocation = toolInvocationSchema.parse({
@@ -175,19 +173,26 @@ export class RuntimeV2LoopManager {
   private async continuationHistory(
     binding: RuntimeV2BoundInput,
   ): Promise<Parameters<ContextAssemblyManager['assemble']>[1]> {
-    // Exactly THREAD_CONTEXT_LIMIT messages, because `assemble` slices to that
-    // many and would otherwise drop the pinned origin sitting at index 0.
     const recent = await this.messages.findRecentByThreadId(
       binding.threadId,
       RUNTIME_V2_CONTINUATION_HISTORY_MESSAGES,
     );
     const ordered = [...recent].reverse();
-    if (ordered.some((message) => message.id === binding.messageId)) {
-      return ordered.slice(-THREAD_CONTEXT_LIMIT);
-    }
-    const origin = await this.messages.findById(binding.messageId);
-    if (origin === null) return ordered.slice(-THREAD_CONTEXT_LIMIT);
-    return [origin, ...ordered.slice(-(THREAD_CONTEXT_LIMIT - 1))];
+    // The window that actually reaches the model is exactly THREAD_CONTEXT_LIMIT
+    // long, because `assemble` slices to that many. The question of whether the
+    // origin needs pinning has to be asked of THAT window and not of the wider
+    // fetch: asking the wider one meant that from the moment the trail grew past
+    // twenty entries — about the tenth tool step — the origin was still inside
+    // the forty rows read from the database, so this said "no pin needed", and
+    // the slice then cut it off anyway. The model was handed twenty of its own
+    // tool records and no question at all.
+    const window = ordered.slice(-THREAD_CONTEXT_LIMIT);
+    if (window.some((message) => message.id === binding.messageId)) return window;
+    const origin =
+      ordered.find((message) => message.id === binding.messageId) ??
+      (await this.messages.findById(binding.messageId));
+    if (origin === null) return window;
+    return [origin, ...window.slice(-(THREAD_CONTEXT_LIMIT - 1))];
   }
 
   /**
@@ -417,25 +422,53 @@ export class RuntimeV2LoopManager {
     );
   }
 
+  /**
+   * One model turn, retried once when the provider returns nothing at all.
+   *
+   * An empty completion used to kill the run outright, discarding work already
+   * done — a tool had executed and its result was in hand when the continuation
+   * came back empty. Emptiness is usually transient, so the turn is asked for
+   * again before the run is given up.
+   */
+  private async callRuntimeProvider(
+    binding: RuntimeV2BoundInput,
+    runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
+    routingMode: string,
+  ): Promise<Awaited<ReturnType<ChatExecutionManager['callProvider']>>> {
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        return await this.execution.callProvider(
+          binding.provider,
+          binding.model,
+          runtimeContext,
+          Date.now(),
+          false,
+          undefined,
+          routingMode,
+          RUNTIME_V2_TURN_EXECUTION_OPTIONS,
+          TokenLedgerContext.CHAT,
+        );
+      } catch (error: unknown) {
+        const empty =
+          error instanceof BusinessException && error.code === RUNTIME_V2_EMPTY_RESPONSE_CODE;
+        if (!empty || attempt >= RUNTIME_V2_EMPTY_RESPONSE_RETRIES) throw error;
+      }
+    }
+  }
+
   private async correctDrift(
     binding: RuntimeV2BoundInput,
     runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
     routingMode: string,
     instruction: string,
   ): Promise<RuntimeV2ModelTurn> {
-    const response = await this.execution.callProvider(
-      binding.provider,
-      binding.model,
+    const response = await this.callRuntimeProvider(
+      binding,
       {
         ...runtimeContext,
         systemPrompt: `${runtimeContext.systemPrompt}\n\n${instruction}`,
       },
-      Date.now(),
-      false,
-      undefined,
       routingMode,
-      undefined,
-      TokenLedgerContext.CHAT,
     );
     return {
       response,
@@ -536,22 +569,12 @@ export class RuntimeV2LoopManager {
   private async callWithRepair(
     binding: RuntimeV2BoundInput,
     runtimeContext: Awaited<ReturnType<ContextAssemblyManager['assemble']>>,
-    payload: MessageRoutedData,
+    routingMode: string,
   ): Promise<{
     response: Awaited<ReturnType<ChatExecutionManager['callProvider']>>;
     output: ReturnType<typeof parseRuntimeV2ModelOutput>;
   }> {
-    const response = await this.execution.callProvider(
-      binding.provider,
-      binding.model,
-      runtimeContext,
-      Date.now(),
-      false,
-      undefined,
-      payload.routingMode,
-      undefined,
-      TokenLedgerContext.CHAT,
-    );
+    const response = await this.callRuntimeProvider(binding, runtimeContext, routingMode);
     try {
       return {
         response,
@@ -568,14 +591,27 @@ export class RuntimeV2LoopManager {
         Date.now(),
         false,
         undefined,
-        payload.routingMode,
-        undefined,
+        routingMode,
+        RUNTIME_V2_TURN_EXECUTION_OPTIONS,
         TokenLedgerContext.CHAT,
       );
-      return {
-        response: repaired,
-        output: parseRuntimeV2ModelOutput(repaired.content, binding.toolDefinitions),
-      };
+      try {
+        return {
+          response: repaired,
+          output: parseRuntimeV2ModelOutput(repaired.content, binding.toolDefinitions),
+        };
+      } catch {
+        // The repair turn was the second chance and it did not take it. That is
+        // a run that cannot continue, but it is still a model failing to follow
+        // a protocol — not a fault in this service. Raising the raw parse error
+        // here reached the exception filter and the user was shown "Internal
+        // server error" with nothing to act on.
+        throw new BusinessException(
+          `${RUNTIME_V2_UNREPAIRABLE_REQUEST_MESSAGE} ${excerpt(repaired.content)}`,
+          RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE,
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
     }
   }
 
@@ -652,7 +688,7 @@ export class RuntimeV2LoopManager {
         binding,
         runtimeContext,
         payload.routingMode,
-        await this.callWithRepair(binding, runtimeContext, payload),
+        await this.callWithRepair(binding, runtimeContext, payload.routingMode),
       );
       if (output.kind === 'tool') {
         const invocation = toolInvocationSchema.parse({
