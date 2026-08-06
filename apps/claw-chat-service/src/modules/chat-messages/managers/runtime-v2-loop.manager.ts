@@ -19,6 +19,7 @@ import { ChatMessagesRepository } from '../repositories/chat-messages.repository
 import { RuntimeV2Store } from '../repositories/runtime-v2.store';
 import type { MessageRoutedData } from '../types/execution.types';
 import type { RuntimeV2BoundInput } from '../types/runtime-v2-store.types';
+import type { RuntimeV2ModelTurn } from '../types/runtime-v2-turn.types';
 import { createRuntimeV2Identity } from '../utilities/runtime-v2-identity.utility';
 import {
   buildRuntimeV2ToolRequestRecord,
@@ -28,8 +29,10 @@ import { runtimeV2TerminalReason } from '../utilities/runtime-v2-failure.utility
 import {
   buildRuntimeV2ModelInstruction,
   isCapabilityDenial,
+  isUnfulfilledIntent,
   parseRuntimeV2ModelOutput,
   RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
+  RUNTIME_V2_INTENT_CORRECTION_INSTRUCTION,
   RUNTIME_V2_REPAIR_INSTRUCTION,
 } from '../utilities/runtime-v2-model-output.utility';
 import { ChatExecutionManager } from './chat-execution.manager';
@@ -112,7 +115,7 @@ export class RuntimeV2LoopManager {
     // context and gives the model two slightly different views of one fact.
     const runtimeContext = await this.buildContinuationContext(binding, command, thread);
     await this.recordToolResult(binding, command);
-    const response = await this.execution.callProvider(
+    const first = await this.execution.callProvider(
       binding.provider,
       binding.model,
       runtimeContext,
@@ -123,7 +126,17 @@ export class RuntimeV2LoopManager {
       undefined,
       TokenLedgerContext.CHAT,
     );
-    const output = parseRuntimeV2ModelOutput(response.content, binding.toolDefinitions);
+    // A continuation is exactly where "I'll now read the next file" appears,
+    // and accepting it ended the task one step in while reporting success.
+    const { response, output } = await this.turnWithDriftCorrection(
+      binding,
+      runtimeContext,
+      RoutingMode.MANUAL_MODEL,
+      {
+        response: first,
+        output: parseRuntimeV2ModelOutput(first.content, binding.toolDefinitions),
+      },
+    );
     if (output.kind === 'tool') {
       const invocation = toolInvocationSchema.parse({
         schemaVersion: '2.0',
@@ -363,34 +376,101 @@ export class RuntimeV2LoopManager {
   private async correctCapabilityDrift(
     binding: RuntimeV2BoundInput,
     runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
-    payload: MessageRoutedData,
-  ): Promise<{
-    response: Awaited<ReturnType<ChatExecutionManager['callProvider']>>;
-    output: ReturnType<typeof parseRuntimeV2ModelOutput>;
-  }> {
-    const response = await this.execution.callProvider(
-      binding.provider,
-      binding.model,
-      {
-        ...runtimeContext,
-        systemPrompt: `${runtimeContext.systemPrompt}\n\n${RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION}`,
-      },
-      Date.now(),
-      false,
-      undefined,
-      payload.routingMode,
-      undefined,
-      TokenLedgerContext.CHAT,
+    routingMode: string,
+  ): Promise<RuntimeV2ModelTurn> {
+    const turn = await this.correctDrift(
+      binding,
+      runtimeContext,
+      routingMode,
+      RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
     );
-    const output = parseRuntimeV2ModelOutput(response.content, binding.toolDefinitions);
-    if (output.kind === 'final' && isCapabilityDenial(output.content)) {
+    if (turn.output.kind === 'final' && isCapabilityDenial(turn.output.content)) {
       throw new BusinessException(
         'The model denied a capability the admitted tool catalog grants.',
         'MODEL_CAPABILITY_DRIFT',
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
-    return { response, output };
+    return turn;
+  }
+
+  /**
+   * Asks once more when the model announced work and then stopped.
+   *
+   * Unlike a capability denial this is not a lie, so a second announcement is
+   * accepted as the answer rather than failing the run: the user still sees
+   * what the model said, and the run terminalizes either way.
+   */
+  private async correctUnfulfilledIntent(
+    binding: RuntimeV2BoundInput,
+    runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
+    routingMode: string,
+  ): Promise<RuntimeV2ModelTurn> {
+    return this.correctDrift(
+      binding,
+      runtimeContext,
+      routingMode,
+      RUNTIME_V2_INTENT_CORRECTION_INSTRUCTION,
+    );
+  }
+
+  private async correctDrift(
+    binding: RuntimeV2BoundInput,
+    runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
+    routingMode: string,
+    instruction: string,
+  ): Promise<RuntimeV2ModelTurn> {
+    const response = await this.execution.callProvider(
+      binding.provider,
+      binding.model,
+      {
+        ...runtimeContext,
+        systemPrompt: `${runtimeContext.systemPrompt}\n\n${instruction}`,
+      },
+      Date.now(),
+      false,
+      undefined,
+      routingMode,
+      undefined,
+      TokenLedgerContext.CHAT,
+    );
+    return {
+      response,
+      output: parseRuntimeV2ModelOutput(response.content, binding.toolDefinitions),
+    };
+  }
+
+  /**
+   * One model turn, corrected once if it drifted.
+   *
+   * A run that answers with an announcement — "I'll start by listing the
+   * workspace" — did no work at all, so accepting it ends every multi-step task
+   * after one step.
+   */
+  private async turnWithDriftCorrection(
+    binding: RuntimeV2BoundInput,
+    runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
+    routingMode: string,
+    turn: RuntimeV2ModelTurn,
+  ): Promise<RuntimeV2ModelTurn> {
+    if (turn.output.kind !== 'final' || binding.toolDefinitions.length === 0) {
+      return turn;
+    }
+    if (isCapabilityDenial(turn.output.content)) {
+      return this.correctCapabilityDrift(binding, runtimeContext, routingMode);
+    }
+    if (isUnfulfilledIntent(turn.output.content)) {
+      try {
+        return await this.correctUnfulfilledIntent(binding, runtimeContext, routingMode);
+      } catch {
+        // The nudge is best effort. An answer already exists, and a provider
+        // that returns nothing to the extra call must not cost the user the
+        // answer it already gave — that turned a merely incomplete run into a
+        // failed one.
+        return turn;
+      }
+    }
+    return turn;
   }
 
   /** Context for the run's first turn, before any tool has been called. */
@@ -403,7 +483,14 @@ export class RuntimeV2LoopManager {
     const context = await this.contextAssembly.assemble(
       binding.ownerId,
       [...recent].reverse(),
-      undefined,
+      // The first turn carries the entire admitted tool catalog in its system
+      // prompt — around 17 KB on its own. On the default 4096-token budget the
+      // assembler spliced the middle out of that catalog, the model received a
+      // truncated instruction it could not act on, and the provider answered
+      // with nothing: CLOUD_PROVIDER_EMPTY_RESPONSE on the very first call.
+      // Continuations were given a runtime-sized budget; the turn that needs it
+      // most was not.
+      { maxTokens: RUNTIME_V2_CONTEXT_TOKEN_BUDGET },
       thread.contextPackIds ?? undefined,
       undefined,
       undefined,
@@ -536,16 +623,12 @@ export class RuntimeV2LoopManager {
 
     try {
       const runtimeContext = await this.buildFirstTurnContext(binding, payload, thread);
-      let { response, output } = await this.callWithRepair(binding, runtimeContext, payload);
-      if (
-        output.kind === 'final' &&
-        binding.toolDefinitions.length > 0 &&
-        isCapabilityDenial(output.content)
-      ) {
-        const corrected = await this.correctCapabilityDrift(binding, runtimeContext, payload);
-        response = corrected.response;
-        output = corrected.output;
-      }
+      const { response, output } = await this.turnWithDriftCorrection(
+        binding,
+        runtimeContext,
+        payload.routingMode,
+        await this.callWithRepair(binding, runtimeContext, payload),
+      );
       if (output.kind === 'tool') {
         const invocation = toolInvocationSchema.parse({
           schemaVersion: '2.0',

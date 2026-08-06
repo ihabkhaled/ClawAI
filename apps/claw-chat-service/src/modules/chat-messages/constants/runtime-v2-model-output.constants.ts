@@ -49,6 +49,31 @@ export const RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS: readonly RegExp[] = [
   /\bi (?:can't|cannot) (?:interact with|operate on) (?:your|the) (?:file system|filesystem|machine|computer|workspace)\b/iu,
 ];
 
+// An announced-but-unfulfilled intent: the model says it is about to read, list or write something
+// and then ends its turn, so the runtime stores "I'll start by discovering the workspace structure"
+// as the completed answer and the task stops after one step. Every multi-step request died this
+// way. Deliberately narrow, and only ever applied together with the length bound below.
+export const RUNTIME_V2_UNFULFILLED_INTENT_PATTERNS: readonly RegExp[] = [
+  /\b(?:i'll|i will|let me|i'm going to|i am going to)(?: now)?(?: start by| begin by| first)? (?:read|list|inspect|analyz|analys|explor|discover|search|scan|check|examin|gather|review|look|open|write|creat|generat|build|map)/iu,
+  /\b(?:starting|beginning) (?:the )?(?:analysis|review|scan|exploration|discovery)\b/iu,
+  /\bnext,? i'll\b/iu,
+];
+
+// An announcement is short by nature. A genuine answer that happens to use "I'll list them here"
+// carries the list with it, so bounding the length keeps a real deliverable out of the correction
+// path. A false positive costs exactly one extra model turn and then accepts whatever comes back.
+export const RUNTIME_V2_UNFULFILLED_INTENT_MAX_CHARACTERS = 1_200;
+
+// Sent once when the model announced work and then stopped. It restates the loop rather than
+// scolding: the model usually stops because it believes the turn is its only chance to speak.
+export const RUNTIME_V2_INTENT_CORRECTION_INSTRUCTION = [
+  'Your previous response announced work but ended the turn without requesting a tool, so nothing ran.',
+  'Announcing an action does not perform it. ClawAI only acts when you return a tool JSON object.',
+  'This is a loop: request ONE tool now, ClawAI executes it, and you are called again with the result.',
+  'Return exactly one Runtime Protocol 2.0 tool JSON object for the next step you described, and no prose.',
+  'Answer in prose only when the work is actually finished and you are reporting the result.',
+].join(' ');
+
 // Sent once when the model denies a capability the admitted catalog actually grants. The statement
 // must stay truthful: it asserts only what the catalog above already admitted.
 export const RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION = [

@@ -1,8 +1,11 @@
 import {
   RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
   RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS,
+  RUNTIME_V2_INTENT_CORRECTION_INSTRUCTION,
   RUNTIME_V2_MODEL_INSTRUCTION,
   RUNTIME_V2_REPAIR_INSTRUCTION,
+  RUNTIME_V2_UNFULFILLED_INTENT_MAX_CHARACTERS,
+  RUNTIME_V2_UNFULFILLED_INTENT_PATTERNS,
   runtimeV2ToolRequestSchema,
 } from '../constants/runtime-v2-model-output.constants';
 import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
@@ -10,6 +13,7 @@ import type { RuntimeV2ModelOutput } from '../types/runtime-v2-model-output.type
 
 export {
   RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
+  RUNTIME_V2_INTENT_CORRECTION_INSTRUCTION,
   RUNTIME_V2_MODEL_INSTRUCTION,
   RUNTIME_V2_REPAIR_INSTRUCTION,
 };
@@ -35,6 +39,27 @@ export function isCapabilityDenial(content: string): boolean {
   const normalized = content.replaceAll(/\s+/gu, ' ').trim();
   if (normalized.length === 0) return false;
   return RUNTIME_V2_CAPABILITY_DENIAL_PATTERNS.some((pattern) => pattern.test(normalized));
+}
+
+/**
+ * The model announced work and then ended its turn without requesting a tool.
+ *
+ * Observed repeatedly against a live workspace: "I'll explore the workspace to
+ * understand its structure", "Let me start by discovering the workspace
+ * structure", "Starting analysis now — first reading the top-level README".
+ * Each was stored as the completed answer, so every multi-step task stopped
+ * after one step while claiming success.
+ *
+ * The length bound is what keeps a genuine deliverable out of this path: an
+ * announcement is short, and an answer that says "I'll list them here" carries
+ * the list with it.
+ */
+export function isUnfulfilledIntent(content: string): boolean {
+  const normalized = content.replaceAll(/\s+/gu, ' ').trim();
+  if (normalized.length === 0 || normalized.length > RUNTIME_V2_UNFULFILLED_INTENT_MAX_CHARACTERS) {
+    return false;
+  }
+  return RUNTIME_V2_UNFULFILLED_INTENT_PATTERNS.some((pattern) => pattern.test(normalized));
 }
 
 /**

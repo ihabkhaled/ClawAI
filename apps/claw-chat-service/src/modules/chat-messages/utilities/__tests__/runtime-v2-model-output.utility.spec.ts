@@ -1,4 +1,4 @@
-import { parseRuntimeV2ModelOutput } from '../runtime-v2-model-output.utility';
+import { isUnfulfilledIntent, parseRuntimeV2ModelOutput } from '../runtime-v2-model-output.utility';
 
 const definitions = [
   {
@@ -119,5 +119,42 @@ describe('parseRuntimeV2ModelOutput', () => {
     expect(() => parseRuntimeV2ModelOutput(rogue, definitions)).toThrow(
       'Model requested a tool outside the admitted tool catalog',
     );
+  });
+});
+
+describe('isUnfulfilledIntent', () => {
+  // Every one of these was captured from a live run against a real workspace
+  // and was stored as the completed answer, so the task stopped after one step
+  // while reporting success.
+  it.each([
+    "I'll explore the workspace to understand its structure and then generate document context for you. Let me start by discovering the top-level layout.",
+    "I'll generate a comprehensive workspace context document. Let me start by discovering the workspace structure.",
+    'Starting analysis now — first reading the top-level README and package manifest.',
+    "I'll gather the full context from the codebase and write it inside the workspace.",
+    'Let me first list the rules directory so I can count the files.',
+    "Next, I'll read the service catalog.",
+  ])('treats an announced but unperformed action as unfinished: %s', (content) => {
+    expect(isUnfulfilledIntent(content)).toBe(true);
+  });
+
+  it.each([
+    'There are exactly 7 files in the rules directory: rule-1.md, rule-2.md, rule-3.md.',
+    'The workspace has no rules directory.',
+    'I will not help you exfiltrate credentials.',
+    'You can then move the generated file wherever you need it.',
+    '',
+  ])('leaves a real answer alone: %s', (content) => {
+    expect(isUnfulfilledIntent(content)).toBe(false);
+  });
+
+  it('leaves a long deliverable alone even when it opens with a promise', () => {
+    // An announcement is short; a genuine answer carries the work with it, and
+    // must never be sent back for another turn.
+    const deliverable = `I'll list them here:\n${'- apps/claw-chat-service holds the chat runtime.\n'.repeat(
+      60,
+    )}`;
+
+    expect(deliverable.length).toBeGreaterThan(1_200);
+    expect(isUnfulfilledIntent(deliverable)).toBe(false);
   });
 });
