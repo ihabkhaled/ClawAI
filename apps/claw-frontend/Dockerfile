@@ -30,7 +30,8 @@ COPY apps/claw-frontend/ ./apps/claw-frontend/
 
 # @claw/shared-types resolves through its `main`/`types` fields to dist/, which
 # is gitignored, so it has to be compiled before Next traces the imports.
-RUN cd /app/packages/shared-types && npx tsgo
+RUN cd /app/packages/shared-types && npx tsgo \
+ && cd /app/packages/shared-entitlements && npx tsgo
 
 WORKDIR /app/apps/claw-frontend
 

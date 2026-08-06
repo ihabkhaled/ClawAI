@@ -23,7 +23,8 @@ RUN cd /app/packages/shared-types && npx tsgo \
  && cd /app/packages/shared-constants && npx tsgo \
  && cd /app/packages/shared-utilities && npx tsgo \
  && cd /app/packages/shared-rabbitmq && npx tsgo \
- && cd /app/packages/shared-auth && npx tsgo
+ && cd /app/packages/shared-auth && npx tsgo \
+ && cd /app/packages/shared-entitlements && npx tsgo
 RUN npx prisma generate
 RUN npm run build
 RUN mkdir -p dist/generated && cp -r src/generated/prisma dist/generated/prisma
