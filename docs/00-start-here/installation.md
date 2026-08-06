@@ -48,6 +48,42 @@ The script will:
 - Build and start the full development stack
 - Wait for health checks and print access URLs
 
+### Re-running the installer (it resumes)
+
+Every completed step and every answer you gave is recorded in
+`.claw-install.state`. Re-running the installer **resumes**: finished steps are
+skipped and answered questions are not asked again. This matters most on a
+server, where a dropped SSH session or a failed image build used to mean
+starting the whole interview from scratch.
+
+| Flag            | Effect                                                            |
+| --------------- | ----------------------------------------------------------------- |
+| _(none)_        | Resume — skip finished steps, reuse saved answers                 |
+| `--status`      | Print which steps are done and which answers are saved, then exit |
+| `--reconfigure` | Ask the questions again, but keep work that already succeeded     |
+| `--fresh`       | Forget all recorded state and start over                          |
+| `--yes` / `-y`  | Never prompt; use saved answers and defaults                      |
+
+```bash
+bash scripts/install.sh --status        # what is done so far
+bash scripts/install.sh                 # continue from the first pending step
+```
+
+PowerShell uses the same names as switches: `-Status`, `-Reconfigure`,
+`-Fresh`, `-Yes`.
+
+Two things the state file deliberately does **not** do. It holds no secrets —
+passwords and keys live only in `.env`, and duplicating them into a second file
+would widen the blast radius of a stray copy. And it never lets a resumed run
+rewrite an existing `.env`, because rotating the admin and webhook secrets
+underneath a stack that is already seeded with them is the opposite of
+resuming.
+
+Running without a terminal (`ssh host 'bash scripts/install.sh'`, CI, a pipe)
+implies `--yes`. Previously `read` there got EOF, every answer silently became
+empty, and the result was a half-configured install that looked like it had
+succeeded.
+
 ---
 
 ## Quick Start (Manual)

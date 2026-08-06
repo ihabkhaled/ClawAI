@@ -8,6 +8,18 @@
 #   bash scripts/install.sh --dev                    # force development stack
 #   CLAW_MODE=prod bash scripts/install.sh           # env-var equivalent
 #   CLAW_MODE=dev  bash scripts/install.sh
+#
+# Resuming:
+#   The installer records every completed step and every answer you gave in
+#   .claw-install.state. Re-running it RESUMES: finished steps are skipped and
+#   answered questions are not asked again. This matters most over SSH, where a
+#   dropped session used to mean starting the whole interview from scratch.
+#
+#   bash scripts/install.sh --resume                 # explicit; also the default
+#   bash scripts/install.sh --reconfigure            # ask the questions again, keep finished work
+#   bash scripts/install.sh --fresh                  # forget all state and start over
+#   bash scripts/install.sh --yes                    # never prompt; use saved answers/defaults
+#   bash scripts/install.sh --status                 # print what is done and exit
 # =============================================================================
 set -euo pipefail
 
@@ -16,6 +28,10 @@ set -euo pipefail
 CLAW_MODE_ARG=""
 DISABLE_GPU="false"
 LOCAL_AI_ARG=""   # "", "true", or "false" — empty means "ask"
+FRESH_INSTALL="false"
+RECONFIGURE="false"
+ASSUME_YES="false"
+STATUS_ONLY="false"
 for arg in "$@"; do
   case "$arg" in
     --prod)        CLAW_MODE_ARG="prod" ;;
@@ -23,13 +39,33 @@ for arg in "$@"; do
     --no-gpu)      DISABLE_GPU="true"   ;;
     --local-ai)    LOCAL_AI_ARG="true"  ;;
     --no-local-ai) LOCAL_AI_ARG="false" ;;
+    --fresh)       FRESH_INSTALL="true" ;;
+    --reconfigure) RECONFIGURE="true"   ;;
+    --resume)      FRESH_INSTALL="false" ;;
+    --yes|-y)      ASSUME_YES="true"    ;;
+    --status)      STATUS_ONLY="true"   ;;
   esac
 done
 CLAW_MODE="${CLAW_MODE_ARG:-${CLAW_MODE:-}}"
 
+# A non-interactive shell (`ssh host 'bash install.sh'`, CI, a pipe) cannot
+# answer a prompt: `read` gets EOF and the answer silently becomes empty, which
+# previously produced a half-configured install that looked like it succeeded.
+# Treat that as --yes so saved answers and defaults are used deliberately.
+if [ ! -t 0 ] && [ "$ASSUME_YES" != "true" ]; then
+  ASSUME_YES="true"
+  NON_INTERACTIVE_AUTOYES="true"
+else
+  NON_INTERACTIVE_AUTOYES="false"
+fi
+
 # ─── Colors ──────────────────────────────────────────────────────────────────
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
-BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
+# ANSI-C quoted so the variables hold real escape characters. With plain
+# single quotes they hold the literal text \033[1m, which printf expands but
+# bash's builtin echo does not — so every `echo "${BOLD}Step ...${NC}"` in this
+# script printed raw escape codes at the user instead of bold text.
+RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'
+BLUE=$'\033[0;34m'; CYAN=$'\033[0;36m'; BOLD=$'\033[1m'; NC=$'\033[0m'
 
 info()  { printf "${BLUE}[INFO]${NC}  %s\n" "$1"; }
 ok()    { printf "${GREEN}[OK]${NC}    %s\n" "$1"; }
@@ -42,6 +78,94 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 ENV_FILE="$PROJECT_ROOT/.env"
+
+# ─── Install state ──────────────────────────────────────────────────────────
+# Records which steps finished and which questions were answered, so a re-run
+# resumes instead of restarting the interview. Deliberately a SEPARATE file from
+# .env: .env is the running configuration, this is the installer's own progress,
+# and conflating them made "did this step run?" indistinguishable from "is this
+# value set?".
+#
+# NO SECRETS are written here. Passwords and keys live only in .env, which
+# already has the right handling; duplicating them into a second file would
+# widen the blast radius of a stray copy for no benefit.
+STATE_FILE="$PROJECT_ROOT/.claw-install.state"
+STATE_VERSION="1"
+
+state_get() {
+  local key="$1"
+  [ -f "$STATE_FILE" ] || return 0
+  awk -F= -v key="$key" '$1 == key { sub(/^[^=]*=/, "", $0); print; exit }' "$STATE_FILE"
+}
+
+# Rewrites the key in place so the file never accumulates duplicate entries that
+# would make the last-write-wins ordering matter.
+state_set() {
+  local key="$1" value="$2" tmp
+  tmp="$(mktemp "${STATE_FILE}.XXXXXX")"
+  if [ -f "$STATE_FILE" ]; then
+    grep -v "^${key}=" "$STATE_FILE" > "$tmp" 2>/dev/null || true
+  fi
+  printf '%s=%s\n' "$key" "$value" >> "$tmp"
+  mv "$tmp" "$STATE_FILE"
+  chmod 600 "$STATE_FILE" 2>/dev/null || true
+}
+
+state_mark_done() { state_set "STEP_$1" "done"; }
+step_done() { [ "$(state_get "STEP_$1")" = "done" ]; }
+
+# True when a finished step should be skipped. --reconfigure re-asks the
+# questions but must NOT undo work that already succeeded, so only the question
+# steps consult RECONFIGURE; the doing steps consult this.
+step_skip() {
+  step_done "$1"
+}
+
+# Announces a skip so a resumed run still shows what it is standing on, rather
+# than appearing to have silently missed a step.
+skip_step() {
+  printf "${GREEN}[DONE]${NC}  %s ${BLUE}(already completed — skipping)${NC}\n" "$1"
+}
+
+# Reads an answer, preferring one already recorded. An answered question is
+# never asked again unless --reconfigure was passed.
+#   state_answer <state-key> <prompt> <default> [secret]
+state_answer() {
+  local key="$1" prompt="$2" fallback="$3" saved="" reply=""
+  saved="$(state_get "$key")"
+
+  if [ -n "$saved" ] && [ "$RECONFIGURE" != "true" ]; then
+    printf '%s\n' "$saved"
+    return 0
+  fi
+
+  local suggestion="${saved:-$fallback}"
+  if [ "$ASSUME_YES" = "true" ]; then
+    state_set "$key" "$suggestion"
+    printf '%s\n' "$suggestion"
+    return 0
+  fi
+
+  ask "$prompt [${suggestion}]: " >&2
+  read -r reply
+  [ -n "$reply" ] || reply="$suggestion"
+  state_set "$key" "$reply"
+  printf '%s\n' "$reply"
+}
+
+if [ "$FRESH_INSTALL" = "true" ] && [ -f "$STATE_FILE" ]; then
+  rm -f "$STATE_FILE"
+fi
+
+RESUMING="false"
+if [ -f "$STATE_FILE" ]; then
+  RESUMING="true"
+elif [ "$STATUS_ONLY" != "true" ]; then
+  # --status must not create the file it is reporting on, or "nothing has been
+  # started yet" becomes unreportable after the first --status.
+  state_set "STATE_VERSION" "$STATE_VERSION"
+  state_set "STARTED_AT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+fi
 
 # ─── Compose files (resolved AFTER mode prompt below) ───────────────────────
 # Placeholders so later sections compile; actual values are set once we know
@@ -81,6 +205,74 @@ printf "${NC}"
 echo "  Local-first AI Orchestration Platform"
 echo "  ─────────────────────────────────────"
 echo ""
+
+# ─── Progress report ────────────────────────────────────────────────────────
+# The ordered list of steps, so --status and the resume banner describe the
+# install in the same words the run itself uses.
+STEP_KEYS="prereqs mode ports hostname secrets admin ai tls env tooling start"
+step_label() {
+  case "$1" in
+    prereqs)  echo "Prerequisites" ;;
+    mode)     echo "Deployment mode" ;;
+    ports)    echo "Port availability" ;;
+    hostname) echo "Hostname" ;;
+    secrets)  echo "Secrets" ;;
+    admin)    echo "Admin configuration" ;;
+    ai)       echo "AI mode & GPU" ;;
+    tls)      echo "TLS certificates" ;;
+    env)      echo ".env file" ;;
+    tooling)  echo "Desktop-agent tooling" ;;
+    start)    echo "Stack start" ;;
+    *)        echo "$1" ;;
+  esac
+}
+
+print_install_status() {
+  echo "${BOLD}Install progress${NC}"
+  echo ""
+  local key
+  for key in $STEP_KEYS; do
+    if step_done "$key"; then
+      printf "  ${GREEN}✔${NC} %s\n" "$(step_label "$key")"
+    else
+      printf "  ${YELLOW}·${NC} %s ${BLUE}(pending)${NC}\n" "$(step_label "$key")"
+    fi
+  done
+  echo ""
+  local saved_mode saved_host saved_ai
+  saved_mode="$(state_get "ANSWER_MODE")"
+  saved_host="$(state_get "ANSWER_HOSTNAME")"
+  saved_ai="$(state_get "ANSWER_LOCAL_AI")"
+  if [ -n "$saved_mode$saved_host$saved_ai" ]; then
+    echo "${BOLD}Saved answers${NC}"
+    [ -n "$saved_mode" ] && echo "  mode:     $saved_mode"
+    [ -n "$saved_host" ] && echo "  hostname: $saved_host"
+    [ -n "$saved_ai" ]   && echo "  local AI: $saved_ai"
+    echo ""
+  fi
+}
+
+if [ "$STATUS_ONLY" = "true" ]; then
+  if [ ! -f "$STATE_FILE" ]; then
+    info "No install has been started yet (no .claw-install.state)."
+    exit 0
+  fi
+  print_install_status
+  info "Re-run without --status to continue from the first pending step."
+  exit 0
+fi
+
+if [ "$RESUMING" = "true" ]; then
+  info "Resuming a previous install — completed steps are skipped and answered questions are not repeated."
+  info "Use --reconfigure to change your answers, or --fresh to start over."
+  echo ""
+  print_install_status
+fi
+
+if [ "$NON_INTERACTIVE_AUTOYES" = "true" ]; then
+  info "No terminal attached — running non-interactively with saved answers and defaults."
+  echo ""
+fi
 
 # ─── Helper: generate random string ─────────────────────────────────────────
 gen_secret_b64() {
@@ -270,8 +462,13 @@ fi
 if [ "$MISSING" -ne 0 ]; then
   echo ""
   fail "Missing prerequisites. Please install them and re-run this script."
+  info "Answers you already gave are saved — re-running resumes from here."
   exit 1
 fi
+# Re-verified on every run rather than skipped: this describes the machine as
+# it is now, and a Docker daemon that has since stopped must fail the run
+# rather than be assumed from a previous success.
+state_mark_done "prereqs"
 echo ""
 
 # ─── Step 1b: Choose dev or prod ────────────────────────────────────────────
@@ -293,11 +490,16 @@ if [ -z "$CLAW_MODE" ] && [ -f "$ENV_FILE" ]; then
   esac
 fi
 
+# An explicit flag or env var always wins over a saved answer, so an operator
+# can override a resumed install without editing the state file.
 if [ -z "$CLAW_MODE" ]; then
-  if [ -t 0 ]; then
-    ask "Mode [dev/prod] (default: dev): "
-    read -r MODE_INPUT
-    MODE_INPUT="$(echo "${MODE_INPUT:-dev}" | tr '[:upper:]' '[:lower:]')"
+  SAVED_MODE="$(state_get "ANSWER_MODE")"
+  if [ -n "$SAVED_MODE" ] && [ "$RECONFIGURE" != "true" ]; then
+    CLAW_MODE="$SAVED_MODE"
+    info "Mode answered on a previous run: ${BOLD}${CLAW_MODE}${NC}"
+  else
+    MODE_INPUT="$(state_answer "ANSWER_MODE" "Mode [dev/prod]" "${SAVED_MODE:-dev}")"
+    MODE_INPUT="$(echo "$MODE_INPUT" | tr '[:upper:]' '[:lower:]')"
     case "$MODE_INPUT" in
       prod|production) CLAW_MODE="prod" ;;
       dev|development|"") CLAW_MODE="dev" ;;
@@ -306,11 +508,9 @@ if [ -z "$CLAW_MODE" ]; then
         exit 1
         ;;
     esac
-  else
-    CLAW_MODE="dev"  # non-interactive default
-    info "Non-interactive run — defaulting to dev. Override with --prod or CLAW_MODE=prod."
   fi
 fi
+state_set "ANSWER_MODE" "$CLAW_MODE"
 
 apply_mode_compose_paths
 
@@ -322,12 +522,10 @@ else
   ok "Mode: ${BOLD}development${NC} (compose files: docker/docker-compose.dev.*.yml)"
 fi
 export CLAW_MODE NODE_ENV_VALUE
+state_mark_done "mode"
 echo ""
 
 # ─── Step 2: Check port availability ────────────────────────────────────────
-echo "${BOLD}Step 2/9: Checking port availability${NC}"
-echo ""
-
 check_port() {
   local port=$1 name=$2
   if (echo >/dev/tcp/localhost/"$port") 2>/dev/null; then
@@ -337,11 +535,18 @@ check_port() {
   fi
 }
 
+# Re-checked on every run rather than skipped: ports are a property of the
+# machine right now, not a decision that was made once, and a port that freed
+# up or got taken since the last attempt is exactly what an operator needs to
+# see before starting the stack.
+echo "${BOLD}Step 2/9: Checking port availability${NC}"
+echo ""
 check_port 3000 "Frontend"
 check_port 4000 "API Gateway (Nginx)"
 check_port 5672 "RabbitMQ"
 check_port 6380 "Redis"
 check_port 27018 "MongoDB"
+state_mark_done "ports"
 echo ""
 
 # ─── Step 2b: Hostname / public URL ─────────────────────────────────────────
@@ -358,12 +563,10 @@ if [ -f "$ENV_FILE" ]; then
 fi
 DEFAULT_HOSTNAME="${CLAW_HOSTNAME:-${EXISTING_HOSTNAME:-claw.local}}"
 
-if [ -t 0 ] && [ -z "${CLAW_HOSTNAME:-}" ]; then
-  ask "Hostname [default: $DEFAULT_HOSTNAME]: "
-  read -r CLAW_HOSTNAME_INPUT
-  CLAW_HOSTNAME="${CLAW_HOSTNAME_INPUT:-$DEFAULT_HOSTNAME}"
+if [ -n "${CLAW_HOSTNAME:-}" ]; then
+  : # explicit env var wins over anything recorded
 else
-  CLAW_HOSTNAME="${CLAW_HOSTNAME:-$DEFAULT_HOSTNAME}"
+  CLAW_HOSTNAME="$(state_answer "ANSWER_HOSTNAME" "Hostname" "$DEFAULT_HOSTNAME")"
 fi
 
 # Basic sanity check — no spaces, no protocol prefix, non-empty
@@ -377,6 +580,8 @@ CLAW_BASE_URL="https://${CLAW_HOSTNAME}"
 CORS_ORIGINS_VALUE="https://${CLAW_HOSTNAME},https://${CLAW_HOSTNAME}:3000"
 export CLAW_HOSTNAME
 
+state_set "ANSWER_HOSTNAME" "$CLAW_HOSTNAME"
+state_mark_done "hostname"
 ok "Hostname: $CLAW_HOSTNAME"
 ok "Base URL: $CLAW_BASE_URL"
 echo ""
@@ -525,6 +730,7 @@ if [ -f "$ENV_FILE" ]; then
     ok "Preserved PAYMENT_TOKEN_ENCRYPTION_KEY from existing .env (changing it would orphan every vaulted payment method)"
   fi
 fi
+state_mark_done "secrets"
 echo ""
 
 # ─── Step 4: Admin configuration ────────────────────────────────────────────
@@ -545,8 +751,18 @@ if [ -f "$ENV_FILE" ]; then
 fi
 
 if [ -n "$EXISTING_ADMIN_EMAIL" ] && [ -n "$EXISTING_ADMIN_USERNAME" ] && [ -n "$EXISTING_ADMIN_PASS" ]; then
-  ask "Reuse admin credentials from the previous install? [Y/n]: "
-  read -r reuse_admin
+  # Credentials that already exist and already work are reused by default. A
+  # resumed install must never silently rotate the admin password: the operator
+  # may have saved it, and the seeded account in the database still holds the
+  # old one until it is re-seeded.
+  if step_done "admin" && [ "$RECONFIGURE" != "true" ]; then
+    reuse_admin="y"
+  elif [ "$ASSUME_YES" = "true" ]; then
+    reuse_admin="y"
+  else
+    ask "Reuse admin credentials from the previous install? [Y/n]: "
+    read -r reuse_admin
+  fi
   if [[ "$reuse_admin" != "n" && "$reuse_admin" != "N" ]]; then
     REUSE_EXISTING_ADMIN="true"
     ADMIN_EMAIL="${EXISTING_ADMIN_EMAIL:-$ADMIN_EMAIL}"
@@ -557,19 +773,22 @@ if [ -n "$EXISTING_ADMIN_EMAIL" ] && [ -n "$EXISTING_ADMIN_USERNAME" ] && [ -n "
 fi
 
 if [ "$REUSE_EXISTING_ADMIN" != "true" ]; then
-  ask "Admin email [${ADMIN_EMAIL}]: "
-  read -r input
-  if [ -n "$input" ]; then ADMIN_EMAIL="$input"; fi
+  # Email and username are recorded so they survive a re-run. The PASSWORD is
+  # not: it lives in .env only, and writing it to a second file would duplicate
+  # a secret for no gain.
+  ADMIN_EMAIL="$(state_answer "ANSWER_ADMIN_EMAIL" "Admin email" "$ADMIN_EMAIL")"
+  ADMIN_USERNAME="$(state_answer "ANSWER_ADMIN_USERNAME" "Admin username" "$ADMIN_USERNAME")"
 
-  ask "Admin username [${ADMIN_USERNAME}]: "
-  read -r input
-  if [ -n "$input" ]; then ADMIN_USERNAME="$input"; fi
-
-  ask "Admin password [auto-generated]: "
-  read -r input
-  if [ -n "$input" ]; then ADMIN_PASS="$input"; fi
+  if [ "$ASSUME_YES" = "true" ]; then
+    info "Admin password: auto-generated (non-interactive run)"
+  else
+    ask "Admin password [auto-generated]: "
+    read -r input
+    if [ -n "$input" ]; then ADMIN_PASS="$input"; fi
+  fi
 fi
 
+state_mark_done "admin"
 echo ""
 
 # ─── Step 5: AI mode + GPU detection ────────────────────────────────────────
@@ -583,21 +802,33 @@ echo ""
 # runs on external AI providers configured in the Connectors UI.
 LOCAL_AI="$LOCAL_AI_ARG"
 if [ -z "$LOCAL_AI" ]; then
-  echo "How should Claw run AI models?"
-  echo "  1) API only (recommended, default) — external providers via the"
-  echo "     Connectors UI (OpenAI, Anthropic, Gemini, DeepSeek, Grok, or an"
-  echo "     Ollama-compatible API key). No local downloads, fast install."
-  echo "  2) Local + API — also run Ollama, llamacpp, ComfyUI and Stable"
-  echo "     Diffusion locally. Offline-capable, GPU-accelerated, pulls several"
-  echo "     GB of model weights on first start."
-  echo ""
-  ask "Choose [1]: "
-  read -r ai_choice
-  case "$ai_choice" in
-    2) LOCAL_AI="true" ;;
-    *) LOCAL_AI="false" ;;
-  esac
+  SAVED_LOCAL_AI="$(state_get "ANSWER_LOCAL_AI")"
+  if [ -n "$SAVED_LOCAL_AI" ] && [ "$RECONFIGURE" != "true" ]; then
+    LOCAL_AI="$SAVED_LOCAL_AI"
+    info "AI mode answered on a previous run: $([ "$LOCAL_AI" = "true" ] && echo "local + API" || echo "API only")"
+  else
+    echo "How should Claw run AI models?"
+    echo "  1) API only (recommended, default) — external providers via the"
+    echo "     Connectors UI (OpenAI, Anthropic, Gemini, DeepSeek, Grok, or an"
+    echo "     Ollama-compatible API key). No local downloads, fast install."
+    echo "  2) Local + API — also run Ollama, llamacpp, ComfyUI and Stable"
+    echo "     Diffusion locally. Offline-capable, GPU-accelerated, pulls several"
+    echo "     GB of model weights on first start."
+    echo ""
+    if [ "$ASSUME_YES" = "true" ]; then
+      ai_choice="1"
+      info "Non-interactive run — choosing API only."
+    else
+      ask "Choose [1]: "
+      read -r ai_choice
+    fi
+    case "$ai_choice" in
+      2) LOCAL_AI="true" ;;
+      *) LOCAL_AI="false" ;;
+    esac
+  fi
 fi
+state_set "ANSWER_LOCAL_AI" "$LOCAL_AI"
 
 if [ "$LOCAL_AI" = "true" ]; then
   ok "Local-AI runtime ENABLED — Ollama / llamacpp / ComfyUI / Stable Diffusion"
@@ -677,13 +908,30 @@ if [ "$USE_GPU" = "true" ]; then
     GPU_STATUS="NVIDIA GPU detected: $GPU_NAME (GPU overlays missing; CPU mode selected)"
   fi
 fi
+# GPU detection itself is re-run every time (hardware and the container toolkit
+# can change between attempts); it is the ANSWER above that is preserved.
+state_mark_done "ai"
 echo ""
 
 # ─── Step 6: Local TLS / SSL certificates (forced — no prompt) ──────────────
 echo "${BOLD}Step 6/9: Installing local TLS certificates${NC}"
 echo ""
 
-if [ -x "$SCRIPT_DIR/install-tls.sh" ]; then
+# Certificate generation is the slowest optional step and it touches the system
+# trust store, so it is not repeated once it has produced usable certs for the
+# hostname still in effect. The verification gate below runs either way, so a
+# skipped step can never mean an unverified one.
+TLS_ALREADY_DONE="false"
+if step_done "tls" \
+  && [ -f "$PROJECT_ROOT/certs/claw.crt" ] \
+  && [ -f "$PROJECT_ROOT/certs/claw.key" ] \
+  && [ "$(state_get "TLS_HOSTNAME")" = "$CLAW_HOSTNAME" ]; then
+  TLS_ALREADY_DONE="true"
+fi
+
+if [ "$TLS_ALREADY_DONE" = "true" ]; then
+  skip_step "TLS certificates for $CLAW_HOSTNAME"
+elif [ -x "$SCRIPT_DIR/install-tls.sh" ]; then
   bash "$SCRIPT_DIR/install-tls.sh" || true   # don't propagate exit; we verify by file presence below
 elif [ -f "$SCRIPT_DIR/install-tls.sh" ]; then
   warn "scripts/install-tls.sh is not executable — running with bash"
@@ -714,6 +962,8 @@ if [ ! -f "$PROJECT_ROOT/certs/claw.crt" ] || [ ! -f "$PROJECT_ROOT/certs/claw.k
   echo ""
   exit 1
 fi
+state_set "TLS_HOSTNAME" "$CLAW_HOSTNAME"
+state_mark_done "tls"
 ok "TLS certs present at certs/claw.crt"
 echo ""
 
@@ -758,8 +1008,19 @@ if [ -f "$ENV_FILE" ]; then
     info "      are PRESERVED from the existing .env regardless of your answer below"
     info "      so docker volumes keep working. Only admin/hostname/webhook secrets"
     info "      are rewritten on overwrite."
-    ask "Overwrite it with the recreated credentials? [y/N]: "
-    read -r overwrite
+    # A resumed run keeps the .env it already wrote. Rewriting it would rotate
+    # the webhook/admin secrets underneath a stack that may already be seeded
+    # with them, which is the opposite of resuming.
+    if step_done "env" && [ "$RECONFIGURE" != "true" ]; then
+      overwrite="n"
+      info "Resuming — keeping the .env written by the previous run."
+    elif [ "$ASSUME_YES" = "true" ]; then
+      overwrite="n"
+      info "Non-interactive run — keeping the existing .env."
+    else
+      ask "Overwrite it with the recreated credentials? [y/N]: "
+      read -r overwrite
+    fi
     if [[ "$overwrite" != "y" && "$overwrite" != "Y" ]]; then
       info "Keeping existing .env — skipping generation"
       if [ -n "$EXISTING_ADMIN_EMAIL" ]; then ADMIN_EMAIL="$EXISTING_ADMIN_EMAIL"; fi
@@ -1359,6 +1620,7 @@ ENVEOF
 
   ok ".env file generated"
 fi
+state_mark_done "env"
 echo ""
 
 # ─── Summary before launch ──────────────────────────────────────────────────
@@ -1388,8 +1650,13 @@ echo ""
 echo "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-ask "Start Claw? [Y/n]: "
-read -r start_answer
+if [ "$ASSUME_YES" = "true" ]; then
+  start_answer="y"
+  info "Non-interactive run — starting Claw."
+else
+  ask "Start Claw? [Y/n]: "
+  read -r start_answer
+fi
 if [[ "$start_answer" == "n" || "$start_answer" == "N" ]]; then
   info "Aborted. Run 'docker compose --env-file "$ENV_FILE" $COMPOSE_FILES up -d' when ready."
   exit 0
@@ -1403,8 +1670,22 @@ info "The desktop agent uses native binaries for OCR / STT / TTS / browser / GUI
 info "This step installs: Tesseract, ffmpeg, whisper-cli + base.en model, Piper, Playwright Chromium, Rust + Tauri CLI."
 info "It is idempotent — components already present are skipped."
 echo ""
-ask "Install desktop-agent native tooling now? [Y/n]: "
-read -r tooling_answer
+# Recorded like any other answer: this pulls Rust, Playwright Chromium and
+# model weights, so a resumed run must not start it again just because the
+# session dropped the first time.
+if step_done "tooling" && [ "$RECONFIGURE" != "true" ]; then
+  tooling_answer="n"
+  skip_step "Desktop-agent native tooling"
+elif [ "$ASSUME_YES" = "true" ]; then
+  # Defaults to NO without a terminal. It is a long, network-heavy install and
+  # an unattended run (CI, `ssh host 'bash install.sh'`) should not silently
+  # commit to it; --reconfigure or an interactive run opts in.
+  tooling_answer="n"
+  info "Non-interactive run — skipping desktop-agent native tooling."
+else
+  ask "Install desktop-agent native tooling now? [Y/n]: "
+  read -r tooling_answer
+fi
 if [[ "$tooling_answer" != "n" && "$tooling_answer" != "N" ]]; then
   if [ -x "$SCRIPT_DIR/install-agent-tooling.sh" ]; then
     bash "$SCRIPT_DIR/install-agent-tooling.sh" || warn "Some agent-tooling components failed; rerun scripts/install-agent-tooling.sh later."
@@ -1433,6 +1714,7 @@ if [[ "$tooling_answer" != "n" && "$tooling_answer" != "N" ]]; then
 else
   info "Skipped. You can run scripts/install-agent-tooling.sh anytime."
 fi
+state_mark_done "tooling"
 echo ""
 
 # ─── Step 8: Launch ─────────────────────────────────────────────────────────
@@ -1591,4 +1873,8 @@ echo "  ${BOLD}Useful commands:${NC}"
 echo "    ./scripts/claw.sh${CLAW_FLAG} status        Check service status"
 echo "    ./scripts/claw.sh${CLAW_FLAG} logs <name>   Follow service logs"
 echo "    ./scripts/claw.sh${CLAW_FLAG} down          Stop everything"
+echo "    bash scripts/install.sh --status            Show install progress"
 echo ""
+
+state_mark_done "start"
+state_set "COMPLETED_AT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"

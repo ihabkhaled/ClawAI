@@ -27,6 +27,11 @@ out/
 # Prisma generated client (regenerated from schema)
 **/src/generated/
 
+# Installer progress — records which steps finished and which questions were
+# answered so a re-run resumes instead of restarting the interview. Per-machine
+# state, never shared. Holds no secrets (those stay in .env).
+.claw-install.state
+
 # Environment (secrets)
 .env
 .env.local

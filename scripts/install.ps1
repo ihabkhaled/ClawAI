@@ -6,13 +6,29 @@
 #   powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Prod      # force prod
 #   powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Dev       # force dev
 #   $env:CLAW_MODE='prod'; powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+#
+# Resuming:
+#   The installer records every completed step and every answer you gave in
+#   .claw-install.state. Re-running it RESUMES: finished steps are skipped and
+#   answered questions are not asked again.
+#
+#   ... -File scripts\install.ps1 -Resume         # explicit; also the default
+#   ... -File scripts\install.ps1 -Reconfigure    # ask the questions again, keep finished work
+#   ... -File scripts\install.ps1 -Fresh          # forget all state and start over
+#   ... -File scripts\install.ps1 -Yes            # never prompt; use saved answers/defaults
+#   ... -File scripts\install.ps1 -Status         # print what is done and exit
 # =============================================================================
 param(
     [switch]$Dev,
     [switch]$Prod,
     [switch]$NoGpu,
     [switch]$LocalAi,
-    [switch]$NoLocalAi
+    [switch]$NoLocalAi,
+    [switch]$Fresh,
+    [switch]$Reconfigure,
+    [switch]$Resume,
+    [switch]$Yes,
+    [switch]$Status
 )
 
 $ErrorActionPreference = "Stop"
@@ -43,6 +59,139 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Split-Path -Parent $ScriptDir
 Set-Location $ProjectRoot
 $envFile = Join-Path $ProjectRoot ".env"
+
+# --- Install state ---
+# Mirrors scripts/install.sh. Records which steps finished and which questions
+# were answered, so a re-run resumes instead of restarting the interview.
+# Deliberately a SEPARATE file from .env: .env is the running configuration,
+# this is the installer's own progress.
+#
+# NO SECRETS are written here. Passwords and keys live only in .env.
+$StateFile = Join-Path $ProjectRoot ".claw-install.state"
+$StateVersion = "1"
+
+# A host without an interactive console cannot answer a prompt, and Read-Host
+# there either throws or returns empty — which previously produced a
+# half-configured install that looked like it succeeded. Treat it as -Yes.
+$NonInteractiveAutoYes = $false
+if (-not $Yes -and [Console]::IsInputRedirected) {
+    $Yes = $true
+    $NonInteractiveAutoYes = $true
+}
+
+function Get-StateValue {
+    param([string]$Key)
+    if (-not (Test-Path $StateFile)) { return '' }
+    foreach ($line in (Get-Content $StateFile -ErrorAction SilentlyContinue)) {
+        if ($line -match "^$([regex]::Escape($Key))=(.*)$") { return $Matches[1] }
+    }
+    return ''
+}
+
+# Rewrites the key in place so the file never accumulates duplicates.
+function Set-StateValue {
+    param([string]$Key, [string]$Value)
+    $lines = @()
+    if (Test-Path $StateFile) {
+        $lines = @(Get-Content $StateFile | Where-Object { $_ -notmatch "^$([regex]::Escape($Key))=" })
+    }
+    $lines += "$Key=$Value"
+    Set-Content -Path $StateFile -Value $lines -Encoding utf8
+}
+
+function Set-StepDone { param([string]$Step) Set-StateValue -Key "STEP_$Step" -Value 'done' }
+function Test-StepDone { param([string]$Step) return (Get-StateValue -Key "STEP_$Step") -eq 'done' }
+
+function Write-SkipStep {
+    param([string]$Label)
+    Write-Host "[DONE]  $Label (already completed - skipping)" -ForegroundColor Green
+}
+
+# Reads an answer, preferring one already recorded. An answered question is
+# never asked again unless -Reconfigure was passed.
+function Read-StateAnswer {
+    param([string]$Key, [string]$Prompt, [string]$Fallback)
+
+    $saved = Get-StateValue -Key $Key
+    if ($saved -and -not $Reconfigure) { return $saved }
+
+    $suggestion = if ($saved) { $saved } else { $Fallback }
+    if ($Yes) {
+        Set-StateValue -Key $Key -Value $suggestion
+        return $suggestion
+    }
+
+    Write-Ask "$Prompt [$suggestion]: "
+    $reply = Read-Host
+    if ([string]::IsNullOrWhiteSpace($reply)) { $reply = $suggestion }
+    Set-StateValue -Key $Key -Value $reply
+    return $reply
+}
+
+if ($Fresh -and (Test-Path $StateFile)) {
+    Remove-Item $StateFile -Force
+}
+
+$Resuming = $false
+if (Test-Path $StateFile) {
+    $Resuming = $true
+} elseif (-not $Status) {
+    # -Status must not create the file it is reporting on.
+    Set-StateValue -Key 'STATE_VERSION' -Value $StateVersion
+    Set-StateValue -Key 'STARTED_AT' -Value ((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))
+}
+
+$StepKeys = @('prereqs','mode','ports','hostname','secrets','admin','ai','tls','env','tooling','start')
+function Get-StepLabel {
+    param([string]$Key)
+    switch ($Key) {
+        'prereqs'  { 'Prerequisites' }
+        'mode'     { 'Deployment mode' }
+        'ports'    { 'Port availability' }
+        'hostname' { 'Hostname' }
+        'secrets'  { 'Secrets' }
+        'admin'    { 'Admin configuration' }
+        'ai'       { 'AI mode & GPU' }
+        'tls'      { 'TLS certificates' }
+        'env'      { '.env file' }
+        'tooling'  { 'Desktop-agent tooling' }
+        'start'    { 'Stack start' }
+        default    { $Key }
+    }
+}
+
+function Write-InstallStatus {
+    Write-Host "Install progress" -ForegroundColor White
+    Write-Host ""
+    foreach ($key in $StepKeys) {
+        if (Test-StepDone $key) {
+            Write-Host ("  [x] " + (Get-StepLabel $key)) -ForegroundColor Green
+        } else {
+            Write-Host ("  [ ] " + (Get-StepLabel $key) + " (pending)") -ForegroundColor Yellow
+        }
+    }
+    Write-Host ""
+    $savedMode = Get-StateValue -Key 'ANSWER_MODE'
+    $savedHost = Get-StateValue -Key 'ANSWER_HOSTNAME'
+    $savedAi   = Get-StateValue -Key 'ANSWER_LOCAL_AI'
+    if ($savedMode -or $savedHost -or $savedAi) {
+        Write-Host "Saved answers" -ForegroundColor White
+        if ($savedMode) { Write-Host "  mode:     $savedMode" }
+        if ($savedHost) { Write-Host "  hostname: $savedHost" }
+        if ($savedAi)   { Write-Host "  local AI: $savedAi" }
+        Write-Host ""
+    }
+}
+
+if ($Status) {
+    if (-not (Test-Path $StateFile)) {
+        Write-Info "No install has been started yet (no .claw-install.state)."
+        exit 0
+    }
+    Write-InstallStatus
+    Write-Info "Re-run without -Status to continue from the first pending step."
+    exit 0
+}
 
 # --- Compose files (resolved AFTER mode prompt below) ---
 $BaseComposeFiles = ''
@@ -328,8 +477,12 @@ try {
 if ($missing -gt 0) {
     Write-Host ""
     Write-Fail "Missing prerequisites. Please install them and re-run this script."
+    Write-Info "Answers you already gave are saved - re-running resumes from here."
     exit 1
 }
+# Re-verified on every run rather than skipped: this describes the machine as it
+# is now, and a Docker daemon that has since stopped must fail the run.
+Set-StepDone 'prereqs'
 Write-Host ""
 
 # =============================================================================
@@ -352,11 +505,16 @@ if (-not $ClawMode -and (Test-Path $envFile)) {
     }
 }
 
+# An explicit flag or env var always wins over a saved answer, so an operator
+# can override a resumed install without editing the state file.
 if (-not $ClawMode) {
-    if ([Environment]::UserInteractive) {
-        Write-Ask 'Mode [dev/prod] (default: dev): '
-        $modeInput = Read-Host
-        $modeInput = if ([string]::IsNullOrWhiteSpace($modeInput)) { 'dev' } else { $modeInput.ToLowerInvariant() }
+    $savedMode = Get-StateValue -Key 'ANSWER_MODE'
+    if ($savedMode -and -not $Reconfigure) {
+        $ClawMode = $savedMode
+        Write-Info "Mode answered on a previous run: $ClawMode"
+    } else {
+        $fallbackMode = if ($savedMode) { $savedMode } else { 'dev' }
+        $modeInput = (Read-StateAnswer -Key 'ANSWER_MODE' -Prompt 'Mode [dev/prod]' -Fallback $fallbackMode).ToLowerInvariant()
         switch ($modeInput) {
             { $_ -in 'prod','production' }       { $ClawMode = 'prod' }
             { $_ -in 'dev','development','' }    { $ClawMode = 'dev'  }
@@ -365,11 +523,9 @@ if (-not $ClawMode) {
                 exit 1
             }
         }
-    } else {
-        $ClawMode = 'dev'
-        Write-Info "Non-interactive run - defaulting to dev. Override with -Prod or `$env:CLAW_MODE='prod'."
     }
 }
+Set-StateValue -Key 'ANSWER_MODE' -Value $ClawMode
 
 Apply-ModeComposePaths
 
@@ -381,6 +537,7 @@ if ($ClawMode -eq 'prod') {
     Write-Ok "Mode: development (compose files: docker/docker-compose.dev.*.yml)"
 }
 $env:CLAW_MODE = $ClawMode
+Set-StepDone 'mode'
 Write-Host ""
 
 # =============================================================================
@@ -394,6 +551,9 @@ Test-PortAvailable 4000 "API Gateway (Nginx)"
 Test-PortAvailable 5672 "RabbitMQ"
 Test-PortAvailable 6380 "Redis"
 Test-PortAvailable 27018 "MongoDB"
+# Re-checked on every run rather than skipped: ports describe the machine right
+# now, not a decision made once.
+Set-StepDone 'ports'
 Write-Host ""
 
 # =============================================================================
@@ -412,16 +572,11 @@ if (Test-Path $envFile) {
 }
 $defaultHostname = if ($env:CLAW_HOSTNAME) { $env:CLAW_HOSTNAME } elseif ($existingHostname) { $existingHostname } else { "claw.local" }
 
-if (-not $env:CLAW_HOSTNAME -and [Environment]::UserInteractive) {
-    Write-Ask "Hostname [default: $defaultHostname]: "
-    $hostnameInput = Read-Host
-    if ([string]::IsNullOrWhiteSpace($hostnameInput)) {
-        $clawHostname = $defaultHostname
-    } else {
-        $clawHostname = $hostnameInput.Trim()
-    }
+if ($env:CLAW_HOSTNAME) {
+    # Explicit env var wins over anything recorded.
+    $clawHostname = $env:CLAW_HOSTNAME
 } else {
-    $clawHostname = if ($env:CLAW_HOSTNAME) { $env:CLAW_HOSTNAME } else { $defaultHostname }
+    $clawHostname = (Read-StateAnswer -Key 'ANSWER_HOSTNAME' -Prompt 'Hostname' -Fallback $defaultHostname).Trim()
 }
 
 if ([string]::IsNullOrWhiteSpace($clawHostname) -or $clawHostname -match '\s' -or $clawHostname -match '^https?://') {
@@ -436,6 +591,8 @@ $env:CLAW_HOSTNAME = $clawHostname
 
 Write-Ok "Hostname: $clawHostname"
 Write-Ok "Base URL: $clawBaseUrl"
+Set-StateValue -Key 'ANSWER_HOSTNAME' -Value $clawHostname
+Set-StepDone 'hostname'
 Write-Host ""
 
 # =============================================================================
@@ -475,6 +632,7 @@ Write-Ok "Database passwords generated"
 Write-Ok "Admin password generated"
 Write-Ok "Inter-service auth token generated ($($interServiceToken.Length) hex chars)"
 Write-Ok "Workspace webhook secrets generated (6 providers)"
+Set-StepDone 'secrets'
 Write-Host ""
 
 # =============================================================================
@@ -497,8 +655,17 @@ if (Test-Path $envFile) {
 }
 
 if ($existingAdminEmail -and $existingAdminUsername -and $existingAdminPass) {
-    Write-Ask "Reuse admin credentials from the previous install? [Y/n]: "
-    $reuseAnswer = Read-Host
+    # Credentials that already exist and already work are reused by default. A
+    # resumed install must never silently rotate the admin password: the
+    # operator may have saved it, and the seeded account still holds the old one.
+    if ((Test-StepDone 'admin') -and -not $Reconfigure) {
+        $reuseAnswer = 'y'
+    } elseif ($Yes) {
+        $reuseAnswer = 'y'
+    } else {
+        Write-Ask "Reuse admin credentials from the previous install? [Y/n]: "
+        $reuseAnswer = Read-Host
+    }
     if ($reuseAnswer -ne "n" -and $reuseAnswer -ne "N") {
         $reuseExistingAdmin = $true
         if ($existingAdminEmail) { $adminEmail = $existingAdminEmail }
@@ -509,19 +676,22 @@ if ($existingAdminEmail -and $existingAdminUsername -and $existingAdminPass) {
 }
 
 if (-not $reuseExistingAdmin) {
-    Write-Ask "Admin email [$adminEmail]: "
-    $input = Read-Host
-    if ($input) { $adminEmail = $input }
+    # Email and username are recorded so they survive a re-run. The PASSWORD is
+    # not: it lives in .env only, and writing it to a second file would
+    # duplicate a secret for no gain.
+    $adminEmail = Read-StateAnswer -Key 'ANSWER_ADMIN_EMAIL' -Prompt 'Admin email' -Fallback $adminEmail
+    $adminUsername = Read-StateAnswer -Key 'ANSWER_ADMIN_USERNAME' -Prompt 'Admin username' -Fallback $adminUsername
 
-    Write-Ask "Admin username [$adminUsername]: "
-    $input = Read-Host
-    if ($input) { $adminUsername = $input }
-
-    Write-Ask "Admin password [auto-generated]: "
-    $input = Read-Host
-    if ($input) { $adminPass = $input }
+    if ($Yes) {
+        Write-Info "Admin password: auto-generated (non-interactive run)"
+    } else {
+        Write-Ask "Admin password [auto-generated]: "
+        $input = Read-Host
+        if ($input) { $adminPass = $input }
+    }
 }
 
+Set-StepDone 'admin'
 Write-Host ""
 
 # =============================================================================
@@ -538,19 +708,32 @@ if ($LocalAi) {
 } elseif ($NoLocalAi) {
     $localAi = $false
 } else {
-    Write-Host "How should Claw run AI models?"
-    Write-Host "  1) API only (recommended, default) - external providers via the"
-    Write-Host "     Connectors UI (OpenAI, Anthropic, Gemini, DeepSeek, Grok, or an"
-    Write-Host "     Ollama-compatible API key). No local downloads, fast install."
-    Write-Host "  2) Local + API - also run Ollama, llamacpp, ComfyUI and Stable"
-    Write-Host "     Diffusion locally. Offline-capable, GPU-accelerated, pulls"
-    Write-Host "     several GB of model weights on first start."
-    Write-Host ""
-    $aiChoice = Read-Host "Choose [1]"
-    $localAi = ($aiChoice -eq "2")
+    $savedLocalAi = Get-StateValue -Key 'ANSWER_LOCAL_AI'
+    if ($savedLocalAi -and -not $Reconfigure) {
+        $localAi = ($savedLocalAi -eq 'true')
+        $modeText = if ($localAi) { 'local + API' } else { 'API only' }
+        Write-Info "AI mode answered on a previous run: $modeText"
+    } else {
+        Write-Host "How should Claw run AI models?"
+        Write-Host "  1) API only (recommended, default) - external providers via the"
+        Write-Host "     Connectors UI (OpenAI, Anthropic, Gemini, DeepSeek, Grok, or an"
+        Write-Host "     Ollama-compatible API key). No local downloads, fast install."
+        Write-Host "  2) Local + API - also run Ollama, llamacpp, ComfyUI and Stable"
+        Write-Host "     Diffusion locally. Offline-capable, GPU-accelerated, pulls"
+        Write-Host "     several GB of model weights on first start."
+        Write-Host ""
+        if ($Yes) {
+            $aiChoice = '1'
+            Write-Info "Non-interactive run - choosing API only."
+        } else {
+            $aiChoice = Read-Host "Choose [1]"
+        }
+        $localAi = ($aiChoice -eq "2")
+    }
 }
 
 $localAiValue = if ($localAi) { "true" } else { "false" }
+Set-StateValue -Key 'ANSWER_LOCAL_AI' -Value $localAiValue
 if ($localAi) {
     Write-Ok "Local-AI runtime ENABLED - Ollama / llamacpp / ComfyUI / Stable Diffusion"
     $env:COMPOSE_PROFILES = "local-ai"
@@ -633,6 +816,9 @@ if ($useGpu) {
         $gpuStatus = "NVIDIA GPU detected: $gpuName (GPU overlays missing; CPU mode selected)"
     }
 }
+# GPU detection itself is re-run every time (hardware and the container toolkit
+# can change between attempts); it is the ANSWER above that is preserved.
+Set-StepDone 'ai'
 Write-Host ""
 
 # =============================================================================
@@ -641,8 +827,18 @@ Write-Host ""
 Write-Host "Step 6/9: Installing local TLS certificates" -ForegroundColor White
 Write-Host ""
 
+# Certificate generation is the slowest optional step and it touches the system
+# trust store, so it is not repeated once it has produced usable certs for the
+# hostname still in effect.
+$certCrt = Join-Path $ProjectRoot 'certs\claw.crt'
+$certKey = Join-Path $ProjectRoot 'certs\claw.key'
+$tlsAlreadyDone = (Test-StepDone 'tls') -and (Test-Path $certCrt) -and (Test-Path $certKey) `
+    -and ((Get-StateValue -Key 'TLS_HOSTNAME') -eq $clawHostname)
+
 $installTlsScript = Join-Path $ScriptDir 'install-tls.ps1'
-if (Test-Path $installTlsScript) {
+if ($tlsAlreadyDone) {
+    Write-SkipStep "TLS certificates for $clawHostname"
+} elseif (Test-Path $installTlsScript) {
     try {
         & powershell -ExecutionPolicy Bypass -NoProfile -File $installTlsScript
         if ($LASTEXITCODE -ne 0) {
@@ -654,6 +850,8 @@ if (Test-Path $installTlsScript) {
 } else {
     Write-Warn "scripts/install-tls.ps1 missing - skipping TLS setup."
 }
+Set-StateValue -Key 'TLS_HOSTNAME' -Value $clawHostname
+Set-StepDone 'tls'
 Write-Host ""
 
 # =============================================================================
@@ -670,8 +868,18 @@ if (Test-Path $envFile) {
         $skipEnv = $true
     } else {
         Write-Warn "Existing .env file found"
-        Write-Ask "Overwrite it with the recreated credentials? [y/N]: "
-        $overwrite = Read-Host
+        # A resumed run keeps the .env it already wrote. Rewriting it would
+        # rotate secrets underneath a stack that may already be seeded with them.
+        if ((Test-StepDone 'env') -and -not $Reconfigure) {
+            $overwrite = 'n'
+            Write-Info "Resuming - keeping the .env written by the previous run."
+        } elseif ($Yes) {
+            $overwrite = 'n'
+            Write-Info "Non-interactive run - keeping the existing .env."
+        } else {
+            Write-Ask "Overwrite it with the recreated credentials? [y/N]: "
+            $overwrite = Read-Host
+        }
         if ($overwrite -ne "y" -and $overwrite -ne "Y") {
             Write-Info "Keeping existing .env - skipping generation"
             if ($existingAdminEmail) { $adminEmail = $existingAdminEmail }
@@ -1273,6 +1481,7 @@ TESSERACT_BIN_PATH=
     Set-Content -Path $envFile -Value $envContent -Encoding UTF8
     Write-Ok ".env file generated"
 }
+Set-StepDone 'env'
 Write-Host ""
 
 # =============================================================================
@@ -1305,8 +1514,13 @@ Write-Host ""
 Write-Host ("=" * 64) -ForegroundColor Cyan
 Write-Host ""
 
-Write-Ask "Start Claw? [Y/n]: "
-$startAnswer = Read-Host
+if ($Yes) {
+    $startAnswer = 'y'
+    Write-Info "Non-interactive run - starting Claw."
+} else {
+    Write-Ask "Start Claw? [Y/n]: "
+    $startAnswer = Read-Host
+}
 if ($startAnswer -eq "n" -or $startAnswer -eq "N") {
     Write-Info "Aborted. Run 'docker compose --env-file $envFile $ComposeFiles up -d' when ready."
     exit 0
@@ -1322,8 +1536,21 @@ Write-Info "The desktop agent uses native binaries for OCR / STT / TTS / browser
 Write-Info "This step installs: Tesseract, ffmpeg, whisper-cli + base.en model, Piper, Playwright Chromium, Rust + Tauri CLI."
 Write-Info "It is idempotent - components already present are skipped."
 Write-Host ""
-Write-Ask "Install desktop-agent native tooling now? [Y/n]: "
-$toolingAnswer = Read-Host
+# Recorded like any other answer: this pulls Rust, Playwright Chromium and model
+# weights, so a resumed run must not start it again just because the session
+# dropped the first time.
+if ((Test-StepDone 'tooling') -and -not $Reconfigure) {
+    $toolingAnswer = 'n'
+    Write-SkipStep "Desktop-agent native tooling"
+} elseif ($Yes) {
+    # Defaults to NO without a console: it is a long, network-heavy install and
+    # an unattended run should not silently commit to it.
+    $toolingAnswer = 'n'
+    Write-Info "Non-interactive run - skipping desktop-agent native tooling."
+} else {
+    Write-Ask "Install desktop-agent native tooling now? [Y/n]: "
+    $toolingAnswer = Read-Host
+}
 if ($toolingAnswer -ne "n" -and $toolingAnswer -ne "N") {
     $toolingScript = Join-Path $PSScriptRoot "install-agent-tooling.ps1"
     if (Test-Path $toolingScript) {
@@ -1356,6 +1583,7 @@ if ($toolingAnswer -ne "n" -and $toolingAnswer -ne "N") {
 } else {
     Write-Info "Skipped. You can run scripts\install-agent-tooling.ps1 anytime."
 }
+Set-StepDone 'tooling'
 Write-Host ""
 
 # =============================================================================
@@ -1504,4 +1732,8 @@ Write-Host "  Useful commands:" -ForegroundColor White
 Write-Host "    .\scripts\claw.sh$clawFlag status        Check service status"
 Write-Host "    .\scripts\claw.sh$clawFlag logs <name>   Follow service logs"
 Write-Host "    .\scripts\claw.sh$clawFlag down          Stop everything"
+Write-Host "    ...\install.ps1 -Status                  Show install progress"
 Write-Host ""
+
+Set-StepDone 'start'
+Set-StateValue -Key 'COMPLETED_AT' -Value ((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))
