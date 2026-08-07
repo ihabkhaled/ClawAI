@@ -13,9 +13,11 @@ export function UsersContent({
   pendingId,
   onChangeRole,
   onDeactivate,
+  onReactivate,
   onAssignPlan,
   isRoleChangePending,
   isDeactivatePending,
+  isReactivatePending,
   isAssignPlanPending,
   t,
 }: UsersContentProps): React.ReactElement {
@@ -40,9 +42,11 @@ export function UsersContent({
       pendingId={pendingId}
       onChangeRole={onChangeRole}
       onDeactivate={onDeactivate}
+      onReactivate={onReactivate}
       onAssignPlan={onAssignPlan}
       isRoleChangePending={isRoleChangePending}
       isDeactivatePending={isDeactivatePending}
+      isReactivatePending={isReactivatePending}
       isAssignPlanPending={isAssignPlanPending}
     />
   );

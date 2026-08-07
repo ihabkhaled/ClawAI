@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { UserTable } from '@/components/admin/user-table';
@@ -69,9 +70,11 @@ const baseProps = {
   pendingId: null,
   onChangeRole: vi.fn(),
   onDeactivate: vi.fn(),
+  onReactivate: vi.fn(),
   onAssignPlan: vi.fn(),
   isRoleChangePending: false,
   isDeactivatePending: false,
+  isReactivatePending: false,
   isAssignPlanPending: false,
 };
 
@@ -131,6 +134,76 @@ describe('UserTable plan column', () => {
     expect(selects.length).toBeGreaterThan(0);
     for (const select of selects) {
       expect(select).not.toBeDisabled();
+    }
+  });
+});
+
+describe('UserTable lifecycle actions', () => {
+  it('offers Deactivate for an active user', () => {
+    render(<UserTable users={[makeUser({ status: 'ACTIVE' })]} {...baseProps} />);
+    expect(screen.getAllByRole('button', { name: 'admin.deactivate' }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'admin.reactivate' })).toBeNull();
+  });
+
+  // The regression this column was rewritten for: a suspended account used to
+  // render a permanently disabled Deactivate button, leaving no way back from
+  // the admin page at all.
+  it('offers Reactivate for a suspended user instead of a dead Deactivate button', () => {
+    render(<UserTable users={[makeUser({ status: 'SUSPENDED' })]} {...baseProps} />);
+    const buttons = screen.getAllByRole('button', { name: 'admin.reactivate' });
+    expect(buttons.length).toBeGreaterThan(0);
+    for (const button of buttons) {
+      expect(button).not.toBeDisabled();
+    }
+    expect(screen.queryByRole('button', { name: 'admin.deactivate' })).toBeNull();
+  });
+
+  // A pending account has never been suspended, so "reactivate" would be the
+  // wrong verb for it — approving a signup is a different decision.
+  it('keeps Deactivate for a pending user rather than offering Reactivate', () => {
+    render(<UserTable users={[makeUser({ status: 'PENDING' })]} {...baseProps} />);
+    expect(screen.getAllByRole('button', { name: 'admin.deactivate' }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'admin.reactivate' })).toBeNull();
+  });
+
+  it('calls onReactivate with the user id', async () => {
+    const onReactivate = vi.fn();
+    render(
+      <UserTable
+        users={[makeUser({ id: 'u9', status: 'SUSPENDED' })]}
+        {...baseProps}
+        onReactivate={onReactivate}
+      />,
+    );
+
+    const [button] = screen.getAllByRole('button', { name: 'admin.reactivate' });
+    await userEvent.click(button as HTMLElement);
+
+    expect(onReactivate).toHaveBeenCalledWith('u9');
+  });
+
+  it('calls onDeactivate with the user id', async () => {
+    const onDeactivate = vi.fn();
+    render(
+      <UserTable
+        users={[makeUser({ id: 'u9', status: 'ACTIVE' })]}
+        {...baseProps}
+        onDeactivate={onDeactivate}
+      />,
+    );
+
+    const [button] = screen.getAllByRole('button', { name: 'admin.deactivate' });
+    await userEvent.click(button as HTMLElement);
+
+    expect(onDeactivate).toHaveBeenCalledWith('u9');
+  });
+
+  it('disables Reactivate while a reactivation is in flight', () => {
+    render(
+      <UserTable users={[makeUser({ status: 'SUSPENDED' })]} {...baseProps} isReactivatePending />,
+    );
+    for (const button of screen.getAllByRole('button', { name: 'admin.reactivate' })) {
+      expect(button).toBeDisabled();
     }
   });
 });

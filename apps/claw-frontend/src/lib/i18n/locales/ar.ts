@@ -963,6 +963,8 @@ export const ar: TranslationDictionary = {
     userRoleUpdateFailed: 'فشل تحديث دور المستخدم',
     userDeactivated: 'تم إلغاء تفعيل المستخدم',
     userDeactivateFailed: 'فشل إلغاء تفعيل المستخدم',
+    userReactivated: 'تم إعادة تفعيل المستخدم',
+    userReactivateFailed: 'فشل إعادة تفعيل المستخدم',
     userStats: 'إحصاءات المستخدمين',
     userStatsDesc: 'نظرة عامة على مستخدمي المنصة',
     totalUsers: 'إجمالي المستخدمين',

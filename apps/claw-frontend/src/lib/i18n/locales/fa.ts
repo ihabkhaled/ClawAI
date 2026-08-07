@@ -967,6 +967,8 @@ export const fa: TranslationDictionary = {
     userRoleUpdateFailed: 'نقش کاربر به‌روزرسانی نشد',
     userDeactivated: 'کاربر غیرفعال شد',
     userDeactivateFailed: 'کاربر غیرفعال نشد',
+    userReactivated: 'کاربر دوباره فعال شد',
+    userReactivateFailed: 'کاربر دوباره فعال نشد',
     userStats: 'آمار کاربر',
     userStatsDesc: 'مروری بر کاربران پلتفرم',
     totalUsers: 'مجموع کاربران',

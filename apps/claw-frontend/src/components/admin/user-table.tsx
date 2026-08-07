@@ -24,9 +24,11 @@ export function UserTable({
   pendingId,
   onChangeRole,
   onDeactivate,
+  onReactivate,
   onAssignPlan,
   isRoleChangePending,
   isDeactivatePending,
+  isReactivatePending,
   isAssignPlanPending,
 }: UserTableProps): React.ReactElement {
   const { editingUserId, setEditingUserId, handleRoleSelect } = useUserTableState();
@@ -40,7 +42,7 @@ export function UserTable({
       render: (user) => (
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
+            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
               {resolveUserInitial(user)}
             </AvatarFallback>
           </Avatar>
@@ -50,15 +52,13 @@ export function UserTable({
       renderMobileTitle: (user) => (
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
+            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
               {resolveUserInitial(user)}
             </AvatarFallback>
           </Avatar>
           <div className="flex min-w-0 flex-col">
             <span className="truncate">{user.username}</span>
-            <span className="truncate text-xs font-normal text-muted-foreground">
-              {user.email}
-            </span>
+            <span className="text-muted-foreground truncate text-xs font-normal">{user.email}</span>
           </div>
         </div>
       ),
@@ -66,7 +66,7 @@ export function UserTable({
     {
       key: 'email',
       header: t('admin.colEmail'),
-      render: (user) => <span className="text-sm text-muted-foreground">{user.email}</span>,
+      render: (user) => <span className="text-muted-foreground text-sm">{user.email}</span>,
     },
     {
       key: 'role',
@@ -150,7 +150,7 @@ export function UserTable({
       key: 'joined',
       header: t('admin.colJoined'),
       render: (user) => (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-muted-foreground text-sm">
           {new Date(user.createdAt).toLocaleDateString()}
         </span>
       ),
@@ -159,16 +159,36 @@ export function UserTable({
       key: 'actions',
       header: t('admin.colActions'),
       className: 'text-end',
-      render: (user) => (
-        <Button
-          variant="destructive"
-          size="sm"
-          disabled={isDeactivatePending || isRoleChangePending || user.status !== UserStatus.ACTIVE}
-          onClick={() => onDeactivate(user.id)}
-        >
-          {t('admin.deactivate')}
-        </Button>
-      ),
+      // Suspension is reversible, so the action cell follows the account's
+      // status instead of offering a single button that greys out forever. A
+      // suspended user previously had no action available here at all, which
+      // made the admin page a one-way door and forced a database round trip to
+      // undo an ordinary mistake.
+      //
+      // Reactivate appears only for SUSPENDED, because that is precisely what
+      // it undoes. A PENDING account has not been suspended, so it keeps the
+      // Deactivate action rather than being silently approved by a button
+      // labelled "reactivate".
+      render: (user) =>
+        user.status === UserStatus.SUSPENDED ? (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isReactivatePending || isRoleChangePending}
+            onClick={() => onReactivate(user.id)}
+          >
+            {t('admin.reactivate')}
+          </Button>
+        ) : (
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={isDeactivatePending || isRoleChangePending}
+            onClick={() => onDeactivate(user.id)}
+          >
+            {t('admin.deactivate')}
+          </Button>
+        ),
     },
   ];
 

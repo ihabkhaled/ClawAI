@@ -492,9 +492,11 @@ export type UserTableProps = {
   pendingId: string | null;
   onChangeRole: (userId: string, role: string) => void;
   onDeactivate: (userId: string) => void;
+  onReactivate: (userId: string) => void;
   onAssignPlan: (userId: string, planId: string) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
+  isReactivatePending: boolean;
   isAssignPlanPending: boolean;
 };
 
@@ -1257,9 +1259,11 @@ export type UsersContentProps = {
   pendingId: string | null;
   onChangeRole: (userId: string, role: string) => void;
   onDeactivate: (userId: string) => void;
+  onReactivate: (userId: string) => void;
   onAssignPlan: (userId: string, planId: string) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
+  isReactivatePending: boolean;
   isAssignPlanPending: boolean;
   t: TranslateFunction;
 };

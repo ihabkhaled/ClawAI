@@ -955,6 +955,8 @@ export const zh: TranslationDictionary = {
     userRoleUpdateFailed: '更新用户角色失败',
     userDeactivated: '用户已停用',
     userDeactivateFailed: '无法停用用户',
+    userReactivated: '用户已重新激活',
+    userReactivateFailed: '无法重新激活用户',
     userStats: '用户统计',
     userStatsDesc: '平台用户概况',
     totalUsers: '用户总数',

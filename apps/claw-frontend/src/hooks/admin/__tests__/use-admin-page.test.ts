@@ -9,6 +9,7 @@ import { useAdminPage } from '@/hooks/admin/use-admin-page';
 const mockGetAdminUsers = vi.fn();
 const mockUpdateUserRole = vi.fn();
 const mockDeactivateUser = vi.fn();
+const mockReactivateUser = vi.fn();
 const mockGetAggregatedHealth = vi.fn();
 const mockPlansList = vi.fn();
 const mockAssignUser = vi.fn();
@@ -27,6 +28,7 @@ vi.mock('@/repositories/audit/audit.repository', () => ({
     getAdminUsers: (...args: unknown[]) => mockGetAdminUsers(...args),
     updateUserRole: (...args: unknown[]) => mockUpdateUserRole(...args),
     deactivateUser: (...args: unknown[]) => mockDeactivateUser(...args),
+    reactivateUser: (...args: unknown[]) => mockReactivateUser(...args),
   },
 }));
 
@@ -188,5 +190,39 @@ describe('useAdminPage', () => {
       resolveAssign(samplePlan);
     });
     await waitFor(() => expect(result.current.actionPending).toBeNull());
+  });
+
+  it('reactivates a suspended user and reports success', async () => {
+    mockReactivateUser.mockResolvedValue(undefined);
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useAdminPage(), { wrapper });
+
+    await waitFor(() => expect(result.current.users).toHaveLength(1));
+
+    act(() => {
+      result.current.handleReactivate('u1');
+    });
+
+    await waitFor(() => expect(mockReactivateUser).toHaveBeenCalledWith('u1'));
+    await waitFor(() =>
+      expect(mockShowToastSuccess).toHaveBeenCalledWith({ description: 'admin.userReactivated' }),
+    );
+    expect(result.current.actionPending).toBeNull();
+  });
+
+  it('clears the pending state and surfaces the error when reactivation fails', async () => {
+    mockReactivateUser.mockRejectedValue(new Error('boom'));
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useAdminPage(), { wrapper });
+
+    await waitFor(() => expect(result.current.users).toHaveLength(1));
+
+    act(() => {
+      result.current.handleReactivate('u1');
+    });
+
+    await waitFor(() => expect(mockShowToastApiError).toHaveBeenCalled());
+    expect(result.current.actionPending).toBeNull();
+    expect(result.current.isReactivatePending).toBe(false);
   });
 });

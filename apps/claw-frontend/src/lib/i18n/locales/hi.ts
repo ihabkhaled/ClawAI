@@ -971,6 +971,8 @@ export const hi: TranslationDictionary = {
     userRoleUpdateFailed: 'उपयोगकर्ता भूमिका अद्यतन करने में विफल',
     userDeactivated: 'उपयोगकर्ता निष्क्रिय',
     userDeactivateFailed: 'उपयोगकर्ता निष्क्रिय करने में विफल',
+    userReactivated: 'उपयोगकर्ता पुन: सक्रिय',
+    userReactivateFailed: 'उपयोगकर्ता पुन: सक्रिय करने में विफल',
     userStats: 'उपयोगकर्ता आँकड़े',
     userStatsDesc: 'प्लेटफ़ॉर्म उपयोगकर्ताओं का अवलोकन',
     totalUsers: 'कुल उपयोगकर्ता',

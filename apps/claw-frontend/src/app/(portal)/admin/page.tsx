@@ -24,9 +24,11 @@ export default function AdminPage(): React.ReactElement {
     usersQuery,
     handleChangeRole,
     handleDeactivate,
+    handleReactivate,
     handleAssignPlan,
     isRoleChangePending,
     isDeactivatePending,
+    isReactivatePending,
     isAssignPlanPending,
   } = useAdminPage();
 
@@ -42,7 +44,7 @@ export default function AdminPage(): React.ReactElement {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+              <Users className="text-muted-foreground h-5 w-5" aria-hidden="true" />
               <CardTitle className="text-lg">{t('admin.userStats')}</CardTitle>
             </div>
             <CardDescription>{t('admin.userStatsDesc')}</CardDescription>
@@ -50,11 +52,11 @@ export default function AdminPage(): React.ReactElement {
           <CardContent>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{t('admin.totalUsers')}</span>
+                <span className="text-muted-foreground text-sm">{t('admin.totalUsers')}</span>
                 <span className="font-medium">{users.length}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{t('admin.activeUsers')}</span>
+                <span className="text-muted-foreground text-sm">{t('admin.activeUsers')}</span>
                 <span className="font-medium">{activeCount}</span>
               </div>
             </div>
@@ -64,13 +66,13 @@ export default function AdminPage(): React.ReactElement {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+              <ShieldCheck className="text-muted-foreground h-5 w-5" aria-hidden="true" />
               <CardTitle className="text-lg">{t('admin.platformHealth')}</CardTitle>
             </div>
             <CardDescription>{t('admin.platformHealthLinkDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="mb-4 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mb-4 text-sm">
               {t('admin.platformHealthLinkBody')}
             </p>
             <Button asChild variant="outline">
@@ -93,9 +95,11 @@ export default function AdminPage(): React.ReactElement {
           pendingId={actionPending}
           onChangeRole={handleChangeRole}
           onDeactivate={handleDeactivate}
+          onReactivate={handleReactivate}
           onAssignPlan={handleAssignPlan}
           isRoleChangePending={isRoleChangePending}
           isDeactivatePending={isDeactivatePending}
+          isReactivatePending={isReactivatePending}
           isAssignPlanPending={isAssignPlanPending}
           t={t}
         />
