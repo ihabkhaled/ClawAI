@@ -31,32 +31,38 @@ The pack names `0.52.0` as reference evidence, not as an assumption. Inspection
 agreed with it: source, changelog, newest VSIX and installed extension were all
 `0.52.0`, so there was no stale-build ambiguity to resolve at baseline.
 
-## Standing limitation — the mentor cannot drive the real VS Code UI
+## Resolved limitation - the mentor CAN drive the real VS Code UI
 
-Pack §15 makes real-UI execution the certification bar: an HTTP harness may
-diagnose, but only the installed extension in a real VS Code window certifies.
-This mentor session runs as a terminal agent. It can install a VSIX, run the
-extension's own harnesses, read logs and journals, query the backend and review
-diffs. It cannot type into the extension's composer, press Send, watch the
-activity stream, answer an approval modal, or reload the window.
+Earlier rounds recorded that a terminal session could not drive the extension's
+webview, and treated the whole agent ladder as operator-only. That was wrong, and
+the way through was available all along: `code serve-web` runs the real VS Code in
+a browser, and a browser is drivable.
 
-That is not a product defect and it is not a lab defect. It is a boundary of
-this session, and it means the Password Reset ladder (pack §10) cannot start
-here. Everything the mentor owns on the product side can proceed; every rung of
-the agent ladder needs an operator at the window. `CURRENT_BENCHMARK_STATE.md`
-carries the exact handoff.
+Verified 2026-08-07:
 
-Rejected alternatives, so they are not re-litigated:
+```
+code serve-web --without-connection-token --accept-server-license-terms \
+  --port 9888 --host 127.0.0.1 \
+  --server-data-dir <dir> --default-folder d:/Freelance/Claw
+```
 
-- **Drive the runtime over HTTP** (`POST /api/v1/chat-messages/runtime`). Works
-  as a diagnostic, and pack §15 explicitly refuses it as certification. It
-  would also produce feature commits with no agent-run provenance in the UI
-  sense the pack means.
-- **Use `agent-cli/`.** That is the ClawAI desktop agent — screen, clipboard,
-  terminal and browser capability providers. It is a different product and does
-  not drive the VS Code extension.
-- **Have the mentor implement Password Reset.** Prohibited by the pack's one
-  rule.
+The VSIX installs into the server's own extension directory using the
+`code-server` CLI shipped under `~/.vscode/cli/serve-web/<commit>/bin/`, and
+`--list-extensions --show-versions` confirms which build is live. The webview sits
+behind two nested iframes - `iframe.webview` then `iframe#active-frame` - so
+Playwright can click `#connectButton`, fill `#prompt` and press `#sendButton`
+against the real markup, in the real extension host, against the real backend.
+
+The browser authorization round trip works the same way: Connect -> VS Code's
+trusted-domain dialog -> the ClawAI login page on `https://claw.local` (the mkcert
+leaf is trusted by the browser) -> sign in -> Authorize VS Code -> loopback
+callback -> connected, status bar reading `ClawAI - AUTO`, real models attached.
+
+One honest caveat that bears on every finding below: in `serve-web` the extension
+host runs on the server rather than in an Electron renderer. A failure seen here
+must be re-checked on the desktop before it is called a product defect in
+general. It is still the real extension, the real webview, the real tool loop and
+the real backend - far more than the HTTP harness the pack refuses.
 
 ## Iterations
 
@@ -257,3 +263,107 @@ the next product gap rather than half-built.
 Not started. Blocked on the standing limitation above. The prompt is staged at
 `prompts/agent/00_DISCOVER_PASSWORD_RESET_ARCHITECTURE.txt` in the pack and the
 exact operator handoff is in `CURRENT_BENCHMARK_STATE.md`.
+
+### ITERATION-005 - popover clipping and speed modes, 0.54.0 -> 0.55.0
+
+- Prompt: operator report that the UI was "not appearing and shifted in
+  background or trimmed", with a screenshot.
+- Confirmed and root-caused rather than guessed. `.secondary-controls` is
+  absolutely positioned above its summary inside `.composer-card`, which clips
+  its own overflow. Four controls fitted; the Effort control added in 0.54.0
+  pushed the panel to three rows, and a browser measurement put the panel top at
+  505px against a card top of 537px - 32px clipped, exactly the row of labels -
+  with `getComputedStyle(card).overflow` reading `hidden`. AGENT / EFFORT /
+  APPROVAL therefore rendered as unlabelled selects. This was a regression I
+  introduced in 0.54.0.
+- Fix: the clip is released only while the popover is open, via
+  `:has(.more-settings[open])`, so every other state keeps its rounded corners.
+  Columns became auto-fit with a height cap, because they had also squeezed "Ask
+  for Approval" down to "Ask for Appro".
+- Speed modes (pack section 14) now exist. Assembling workspace context did a
+  containment check, a stat, then a read - strictly one file at a time for up to
+  forty candidates. `clawAI.speedMode` issues the containment checks and stats
+  four at a time at 1.5X and eight at 2X.
+- What speed does not do, and why. The first implementation prefetched file
+  contents in parallel. The existing suite caught it: a test asserting that only
+  one file is loaded when only one fits went from 1 read to 20. Byte reads stay
+  serial and conditional on the running total, and the contracts say "metadata
+  lookups" rather than "reads" so the wording cannot overclaim.
+- Correctness proof: the produced context is asserted identical at 1X, 1.5X and
+  2X under a truncating byte limit, plus an assertion that something was actually
+  excluded so the comparison cannot pass vacuously.
+- Gates: 869/869 tests, Playwright 44/44, host exit 0, `npm run check` green.
+  Commit 1a04b5d, pushed.
+
+### ITERATION-006 - Password Reset Phase 0, first real agent runs
+
+Two rounds, same prompt, different model lane, both observed in the real UI with
+the backend logs open beside them.
+
+Round A - AUTO routing. FAILED.
+
+- Run `run_d816d077577fa660b69a9bc962eb7659`, protocol v2, 17 tools advertised,
+  effortMode ULTRA.
+- The UI sat on "Reading workspace" for over three minutes with no tool
+  activity - the exact signature the pack's own evidence screenshots are named
+  after (`01_activity_workspace_list_completed_but_answer_stuck.png`).
+- Root cause from `claw-chat-service`: `[message_routed_received] ... via
+local-ollama/AUTO`, then `LocalModelSelectionService resolveDefaultModel:
+selected gemma3:27b`, then `callOllama: calling model=gemma3:27b`, then
+  `callOllama: building prompt string from context`, `prompt built -
+length=24147 chars`, then `POST /api/v1/ollama/generate (timeout=300000ms)`
+  with no completion line. Still in flight five minutes later. The run span
+  closed `status: error` at 3m16s.
+- Two distinct problems in that one trace. AUTO sent a coding-agent run to a
+  general local model on an 8 GB GPU with a 24k-character prompt. And it went
+  through `callOllama` building a flat prompt string - the plain chat path - not
+  the tool-calling runtime loop, so the 17 advertised tools were never usable.
+- Classification: MODEL_PROVIDER_DEFECT with a router-capability cause, pack
+  sections 24 and 25 ("router capability awareness", "no silent provider
+  substitution"). The router lives in the backend, not the extension, so this is
+  parent-repo work and is OPEN.
+- Also seen, low severity: `WARN [ContextAssemblyManager] fetchWorkspaceContext:
+failed with status 400` from `POST /internal/workspace/search`. That is
+  connector-workspace enrichment, it is caught, and it is not the stall - but it
+  is noise in every run.
+
+Round B - manual kimi-k2.7-code:cloud. The loop works; one tool fails.
+
+- Run `run_8a42cf8fe61bb08bff204165dabdd4b9`.
+- The real agentic loop ran: repeated `POST https://ollama.com/api/chat` 200s
+  (1394 ms, 1595 ms) and, decisively,
+  `POST /api/v1/chat-messages/runtime/runs/<id>/results` 201 - the extension
+  executing a tool and posting the result back to the platform.
+- The activity stream showed genuine tool phases: `workspace.files list`
+  Requested, Running, then failed - 166 bytes in 23 ms - followed by
+  `workspace.files read` Requested.
+- So the agent's very first attempt to enumerate the workspace fails, in 23 ms,
+  with a 166-byte error body. Invocation
+  `invocation_e0cf8155fd21f844550cf18ea5dbebc7`, receipt
+  `receipt:a9ec9f33-b516-438a-888c-8f36165e4837`.
+- The run then terminalized `cancelled`, which was my own cancel click from Round
+  A landing late rather than a product decision. The tool failure is independent
+  of it.
+- The error body is not recoverable from the logs. The ClawAI Output channel
+  records the run span opening and closing and nothing about the failed
+  invocation, so a mentor cannot diagnose a failed tool from logs. That is its
+  own observability gap and it blocks the next step of this diagnosis.
+- Classification: candidate WORKSPACE_LIST_WRONG, scope NOT yet established. This
+  was observed under `serve-web`, where the extension host runs on the server, so
+  it may or may not reproduce on the desktop. Calling it a general product defect
+  before checking the desktop would be exactly the unverified claim this ledger
+  exists to prevent.
+
+Confirmed working, incidentally: the live span carries
+`"attributes":{"threadId":"...","toolCount":17,"effortMode":"ULTRA"}`. The 0.54.0
+effort instrumentation is real in the shipped product, observed in production
+logs rather than in a test.
+
+Next mentor actions, in order.
+
+1. Surface the failed invocation's error body in the Output channel. Everything
+   else is blocked on knowing why `workspace.files list` fails.
+2. Re-run Round B on desktop VS Code to establish whether the failure is web-only.
+3. Fix `workspace.files list`, release, resume Phase 0.
+4. Separately, in the parent repo: make AUTO routing refuse to send a
+   tool-calling agent run to a model that cannot serve the tool protocol.

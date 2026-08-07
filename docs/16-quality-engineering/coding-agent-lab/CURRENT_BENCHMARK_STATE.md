@@ -2,7 +2,7 @@
 
 Updated 2026-08-07. Read this first when resuming; do not redo completed work.
 
-- **Current extension version:** source `0.54.0`, installed `0.54.0`, **active
+- **Current extension version:** source `0.55.0`, installed `0.55.0`, **active
   Extension Host still `0.52.0`** — the window has not been reloaded across
   either release.
 - **Current feature stage:** pre-Phase-0. Password Reset has not started.
@@ -21,7 +21,21 @@ Updated 2026-08-07. Read this first when resuming; do not redo completed work.
 - **Last product release:** `0.54.0` — see
   [`CODING_AGENT_RELEASE_LEDGER.md`](CODING_AGENT_RELEASE_LEDGER.md).
 
-## Why the ladder has not started
+## The ladder has started
+
+`code serve-web` drives the real extension UI from a browser. Phase 0 has been
+sent twice and observed. See ITERATION-006 in the ledger.
+
+**Blocking the benchmark right now:** `workspace.files list` fails in 23 ms on
+the agent's first tool call, and the failed invocation's error body is not
+written to the Output channel, so it cannot yet be diagnosed. Fixing that
+observability gap is the next product change.
+
+**Also open:** AUTO routing sends coding-agent runs to `gemma3:27b` through the
+plain chat path, so the 17 advertised tools are unusable in that lane. Backend
+router work, parent repo.
+
+## Superseded note — why the ladder was thought impossible
 
 Pack §15 sets the certification bar at the installed extension in a real VS Code
 window: composer sends the request, activity stream updates, approval UI works,
