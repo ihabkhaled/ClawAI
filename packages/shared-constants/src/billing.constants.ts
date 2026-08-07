@@ -26,6 +26,14 @@ export const FX_RATE_SCALE = 10_000_000;
 export const PRORATION_RATIO_SCALE = 1_000_000;
 export const BASIS_POINTS_DENOMINATOR = 10_000;
 
+// Version of the plan-change arithmetic. Persisted on every quote so a charge
+// stays reproducible after the calculator changes: without it, re-deriving an
+// old amount would silently apply today's rules to yesterday's money.
+//
+//   1 - KEEP_CYCLE_PRORATE_DIFFERENCE only (pre-v2 behaviour)
+//   2 - adds RESET_CYCLE_WITH_UNUSED_CREDIT, explicit line items, credit surplus
+export const PRORATION_CALCULATOR_VERSION = 2;
+
 // ---- Currency ----
 
 // Plan prices are canonical in USD. Paymob may settle in EGP via an FxQuote.
@@ -93,3 +101,16 @@ export const PRORATION_QUOTE_TTL_MS = 15 * 60 * 1000;
 // the replay window a captured request stays useful for.
 export const WEBHOOK_REPLAY_TOLERANCE_MS = 10 * 60 * 1000;
 export const DEFAULT_GRACE_PERIOD_MS = 3 * 24 * 60 * 60 * 1000;
+
+// ---- Cooling-off ----
+
+export const MS_PER_HOUR = 60 * 60 * 1000;
+
+// A captured subscription payment is fully refundable through
+// `capturedAt + this`, INCLUSIVE of the exact boundary instant. Plans may widen
+// or narrow it through their policy revision; this is the default and the value
+// the published refund policy states.
+//
+// The window is measured from provider-confirmed capture, never from checkout
+// creation, invoice issue, or the arrival time of the refund request.
+export const DEFAULT_COOLING_OFF_HOURS = 48;

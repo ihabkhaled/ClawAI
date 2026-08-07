@@ -17,10 +17,17 @@ export {
 } from './money.utility';
 export {
   calculateProration,
+  calculateProrationBreakdown,
   calculateRemainingRatioScaled,
   isZeroValueChange,
   monthlyEquivalentMinor,
 } from './proration.utility';
+export {
+  calculateRefundSettlement,
+  calculateRemainingRefundableMinor,
+  coolingOffExpiresAtMs,
+  isWithinCoolingOff,
+} from './refund-settlement.utility';
 export {
   applySafetyMarginToRate,
   convertMinorUnits,
