@@ -83,12 +83,6 @@ certs/
 *.key
 !apps/claw-frontend/public/**/*.key
 
-# Generated public-domain nginx server blocks (Let's Encrypt). Written by
-# scripts/install-letsencrypt.sh, one per domain, and specific to the host that
-# holds the certificate — committing one would point every other install at a
-# /etc/letsencrypt path that does not exist there and break nginx startup.
-infra/nginx/public-tls/*.conf
-
 # Misc
 *.tsbuildinfo
 .turbo/
