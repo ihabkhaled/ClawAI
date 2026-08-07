@@ -2,20 +2,23 @@
 
 Updated 2026-08-07. Read this first when resuming; do not redo completed work.
 
-- **Current extension version:** source `0.53.0`, installed `0.53.0`, **active
-  Extension Host still `0.52.0`** — the window has not been reloaded.
+- **Current extension version:** source `0.54.0`, installed `0.54.0`, **active
+  Extension Host still `0.52.0`** — the window has not been reloaded across
+  either release.
 - **Current feature stage:** pre-Phase-0. Password Reset has not started.
 - **Current benchmark branch/worktree:** none. Work is on `main` in both repos
   by operator instruction; no lab branch was created.
 - **Current agent thread:** none.
 - **Last agent run:** none. Zero runs have been issued in this lab.
-- **Completed stages:** baseline capture (ITERATION-001); one product release,
-  `0.53.0`, the Cloud connection lane (ITERATION-002). Both repos committed and
-  pushed on `main`, nothing unpushed.
+- **Completed stages:** baseline capture (ITERATION-001); `0.53.0`, the Cloud
+  connection lane (ITERATION-002); `0.54.0`, effort modes (ITERATION-003). Both
+  repos committed and pushed on `main`, nothing unpushed.
 - **Unresolved feature findings:** none — there is no feature code yet.
-- **Open product defects:** none observed. None have been _looked for_ through
-  the real UI either, which is not the same thing.
-- **Last product release:** `0.53.0` — see
+- **Open product defects:** none observed through the real UI, which has not
+  been exercised. Two qualification gaps were found by audit: effort modes did
+  not exist (closed in `0.54.0`) and **speed modes 1X / 1.5X / 2X still do not
+  exist** (pack §14, open).
+- **Last product release:** `0.54.0` — see
   [`CODING_AGENT_RELEASE_LEDGER.md`](CODING_AGENT_RELEASE_LEDGER.md).
 
 ## Why the ladder has not started
@@ -45,23 +48,29 @@ The mentor-owned half of the lab can continue without one.
    loopback callback returns, and the workbench appears. Then switch back to
    Local and confirm the local session is still there — sessions are keyed per
    backend origin and switching must not destroy the one left behind.
-4. **Report what happened.** If the round trip fails, the failure class matters:
+4. **Exercise the Effort control.** Open **More settings** in the composer. Six
+   options must be present and Ultra selected. Run the same prompt at Ultra and
+   at Low and confirm the difference is visible — Low should stop earlier on a
+   task that needs more than six model turns, and should say so rather than
+   hanging. That is the §13 measurement this release cannot make from here.
+5. **Report what happened.** If the round trip fails, the failure class matters:
    a broken PKCE loop is `AGENT_PRODUCT_DEFECT` and triggers the repair loop; a
    backend route that 404s on the cloud host is an infrastructure defect in the
-   parent repo.
+   parent repo; an effort mode with no observable effect is
+   `EFFORT_MODE_NO_EFFECT` and reopens §13.
 
 ## Next actions — mentor, once the operator is at the window
 
-5. Run the capability probes from pack §17 before spending hours on the
+6. Run the capability probes from pack §17 before spending hours on the
    feature: list workspace root, read an exact file, create one disposable
    file, run one command, follow up once, retry after a forced failure. A basic
    probe that fails is cheaper to find now than inside Phase 4.
-6. Send Phase 0 — the discovery prompt, staged verbatim at
+7. Send Phase 0 — the discovery prompt, staged verbatim at
    `prompts/agent/00_DISCOVER_PASSWORD_RESET_ARCHITECTURE.txt` in the pack.
    No code changes in that phase; the deliverable is an evidence-backed map of
    auth service, persistence, frontend routes, mail abstraction, i18n, test
    frameworks and governing rules.
-7. Review the discovery output against the actual tree before allowing Phase 1.
+8. Review the discovery output against the actual tree before allowing Phase 1.
    Pack §4: do not advance on unverified prose.
 
 ## Exact next agent prompt file
@@ -74,6 +83,7 @@ Pack §13 requires the two goals to stay separate and never collapse into one
 vague "done".
 
 - **Goal A — market-ready coding-agent product:** NOT ASSESSED. No 100-round
-  conformance, no effort-mode measurement, no speed-mode measurement, no
-  follow-up/retry/resume labs. One qualification gap was closed.
+  conformance for any option family, no measured effort-mode timings, no speed
+  modes at all, no follow-up/retry/resume labs. Two qualification gaps found by
+  audit; one closed (`0.54.0`), one open (speed).
 - **Goal B — Password Reset by the agent:** NOT STARTED.

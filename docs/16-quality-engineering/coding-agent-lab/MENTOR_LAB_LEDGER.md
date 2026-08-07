@@ -163,8 +163,97 @@ commands, 13 locales, strict CSP, no secret settings`. Playwright **41/41**.
   response.
 - Result: shipped, installed, unverified in a live window.
 
-### ITERATION-003 — Password Reset Phase 0
+### ITERATION-003 — effort modes audit and release, `0.53.0` → `0.54.0`
+
+- Extension version: `0.53.0` → `0.54.0`
+- Prompt: none. Mentor-side product qualification against pack §13 and §14,
+  which the standing limitation does not block — auditing whether a mode exists
+  and whether it changes behaviour is a source and test question, not a
+  clicking question.
+- Agent run: none. Product scope.
+
+**Audit result — two findings, both concrete.**
+
+`grep -ri effort src/` returned three files. Every hit was the English phrase
+"best effort" in a comment. There was no effort-mode feature of any kind.
+`grep -ri 'speed\|1\.5X\|2X\|turbo' src/` returned nothing at all. Pack §13
+requires Low, Medium, High, Max, xHigh and Ultra with measurable behavioural
+differences; §14 requires 1X, 1.5X and 2X. Neither existed.
+
+The pack anticipates this: "If modes are absent or fake, that is a product
+enhancement opportunity."
+
+**The seam.** `RunBudget` already carried exactly the dimensions §13 asks a mode
+to vary — model turns, tool calls, tool rounds, repair attempts, wall clock,
+output bytes, tool-result bytes — and `runtime-studio-execution.ts` held a
+single module-level constant handed to every run. One hardcoded budget for a
+one-line rename and for a cross-service feature alike.
+
+**Fixed in `0.54.0`.** `src/core/effort-mode.ts` defines the six modes, a
+documented orchestration contract for each, and six distinct budget profiles.
+`clawAI.effortMode` (resource scope) selects one; the composer gained an
+**Effort** control; the runtime starts the run with the selected budget.
+
+Design decisions worth recording:
+
+- **Ultra is byte-identical to the old constant and is the default.** An
+  upgraded install behaves exactly as before. Spending less is opt-in — the safe
+  direction, because a default that quietly lowered a limit would fail long runs
+  that never had to respect one. A test writes the historical literal out
+  longhand so the two cannot silently diverge.
+- **Two limits belong to the schema, not the ladder.** `maxRepairAttempts` is
+  bounded `0..1`, so it cannot form a six-step ladder; LOW spends it and the
+  rest keep their single repair. Wall clock, output bytes and tool-result bytes
+  were already at the schema ceiling before this change, so the ladder reaches
+  that ceiling at Ultra rather than exceeding what the product already did.
+- **A second gate found by reading, not by failing.** The webview→extension
+  message schema is an allow-list; `selectEffortMode` had to be added or an
+  enabled control would have posted a message the extension refused. Same class
+  of quiet second gate as the CLOUD enum in ITERATION-002.
+- **`effortMode` was deliberately kept out of `SessionConfiguration`.** That
+  interface feeds `SessionPolicySnapshot` and `decidePermission`. How much a run
+  may spend has nothing to do with whether it may write a file. Adding it there
+  compiled, and was reverted.
+
+**Measurability (pack §13: "the mentor must measure actual behavioural
+differences").** The run's observability trace and durable journal now record
+the mode, and two runs at different efforts produce different policy snapshot
+hashes. Without that, comparing modes is guesswork.
+
+**The tests are the anti-fake clause.** The suite fails if any two modes share a
+budget, if a stronger mode buys less of any dimension than a weaker one, if a
+scaling dimension takes fewer than four distinct values across six modes, if
+Ultra stops matching the historical constant, or if the runtime stops sending
+the selected budget to the transport.
+
+- Gates: `npm run check` green — format:check, lint, typecheck, scan:paths,
+  **852/852** tests, build, `package:audit OK`. Playwright **42/42** including a
+  new six-option round trip that also proves a pending selection survives a
+  state frame still reporting the old mode. Extension host activation exit 0.
+- Release: `builds/clawai-coding-agent-0.54.0.vsix`, installed with `--force`.
+  `code --list-extensions --show-versions` reports `0.54.0`. Installed
+  `dist/extension.js` contains `effortMode` ×16 and `XHIGH` ×4; the `0.53.0`
+  bundle has zero of each.
+- Not done: **the VS Code window has still not been reloaded**, so the running
+  Extension Host predates both releases. No confirmation rounds, no 100-round
+  conformance for the new option family.
+- Commits: submodule `53985b5` (a prettier-only fix to a page a concurrent
+  session had committed unformatted, kept separate so the feature diff would not
+  carry it) and `324eb4c`, both on `main`, pushed.
+- Primary classification: n/a — qualification gap closed, not a failure
+  response.
+- Result: shipped, installed, unverified in a live window.
+
+**Still open against §14.** Speed modes 1X / 1.5X / 2X do not exist. They are a
+different kind of change from effort: §14 asks for orchestration strategies —
+parallel independent reads, batched metadata collection, concurrent
+non-mutating searches — with writes still serialized, plus median and p95
+measurement over a stable corpus. That is a scheduler change, not a budget
+change, and it needs the real-UI measurement loop to demonstrate. Recorded as
+the next product gap rather than half-built.
+
+### ITERATION-004 — Password Reset Phase 0
 
 Not started. Blocked on the standing limitation above. The prompt is staged at
-`prompts/00_DISCOVER_PASSWORD_RESET_ARCHITECTURE.txt` in the pack and the exact
-operator handoff is in `CURRENT_BENCHMARK_STATE.md`.
+`prompts/agent/00_DISCOVER_PASSWORD_RESET_ARCHITECTURE.txt` in the pack and the
+exact operator handoff is in `CURRENT_BENCHMARK_STATE.md`.

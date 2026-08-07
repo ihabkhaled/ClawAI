@@ -9,6 +9,43 @@ was rerun.
 | ------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------- |
 | 0.52.0 | 0.53.0 | The product could not connect to its own production deployment. Both Cloud radios rendered `disabled`/"Coming soon" and `resolveConnectionEndpoint('…','CLOUD',…)` threw, while `https://claw-ai.co` had been live since parent `b78f9352`. A second, quieter gate: the webview→extension schema accepted only `LOCAL` and `CUSTOM`, so enabling the radio alone would have been rejected at the boundary. | Cloud resolves to `https://claw-ai.co` for backend and frontend independently, in the connection gate and the App connections dialog. Schema accepts the three lanes the UI can produce. `clawAI.backendEnvironment` / `clawAI.frontendEnvironment` accept `CLOUD`. Gate labels read the resolver's own exported constants instead of six hard-coded literals, and no longer clip the origin to `https://claw.lo…`. | `configuration.test.ts` ×3, `chat-markup.test.ts` ×2, `chat-inbound-message.test.ts` ×1, `connection.e2e.ts` ×2 round trips + refreshed snapshot | `builds/clawai-coding-agent-0.53.0.vsix` | Playwright 41/41 against the real webview markup; **live VS Code window not yet reloaded** | submodule `e158a6e`, parent pointer `90c767f6` |
 
+| 0.53.0 | 0.54.0 | Pack §13 requires six effort modes with measurable behavioural differences. `grep -ri effort src/` matched three files and every hit was the English phrase "best effort" — the feature did not exist. Every run took one hardcoded `RunBudget` from a module constant, so a one-line rename and a cross-service feature were allowed to spend identically. | `clawAI.effortMode` selects one of six distinct budget profiles; the composer gained an **Effort** control; the runtime starts each run with the selected budget and records the mode in its trace and durable journal. Ultra is byte-identical to the old constant and is the default, so upgrading changes nothing until a lower mode is chosen. | `effort-mode.test.ts` ×9, `runtime-studio-effort-budget.test.ts` ×5, `chat-inbound-message.test.ts` ×1, `chat-markup.test.ts` ×1, `session-control-service.test.ts` ×2, `webview.e2e.ts` ×1 | `builds/clawai-coding-agent-0.54.0.vsix` | Playwright 42/42; **live VS Code window still not reloaded** | submodule `324eb4c` (+ `53985b5`), parent pointer pending |
+
+## 0.54.0 — full release record (pack §21)
+
+- **Previous version:** 0.53.0
+- **New version:** 0.54.0 — minor. A new user-visible control and a new setting.
+- **Root cause:** the budget was written as a single constant when there was one
+  kind of run, and nothing forced it to become a choice as the runtime grew.
+- **Changed product code:** `src/core/effort-mode.ts` (new),
+  `src/core/extension-state.ts`, `src/extension.ts`,
+  `src/services/configuration-service.ts`,
+  `src/services/runtime-studio-execution.ts`,
+  `src/services/session-control-service.ts`,
+  `src/services/session-control.types.ts`,
+  `src/webview/chat-inbound-message.ts`, `src/webview/chat-markup.ts`,
+  `src/webview/chat-public-state.ts`, `src/webview/chat-view-actions.ts`,
+  `src/webview/chat-view-provider.ts`, `media/chat.js`, `package.json`,
+  `package.nls.json`.
+- **Docs:** `CHANGELOG.md`, `README.md`, `docs/RUNTIME_ONBOARDING.md` (the full
+  budget table). Locales regenerated across all 13 bundles.
+- **Focused gates:** `npm run check` → 852/852 tests, `package:audit OK`.
+- **VSIX path:** `apps/claw-coding-agent/builds/clawai-coding-agent-0.54.0.vsix`
+- **Proof the installed build is the new one:**
+  `clawai.clawai-coding-agent@0.54.0`; installed `dist/extension.js` has
+  `effortMode` ×16 and `XHIGH` ×4 against zero of each in the `0.53.0` bundle.
+- **Proof the Extension Host is running it:** **absent.** No reload has
+  happened. Pack §7.
+- **10 confirmation rounds / 100 affected-option rounds:** not run — both need
+  the live window. The affected option family is
+  effort ∈ {LOW, MEDIUM, HIGH, MAX, XHIGH, ULTRA}.
+- **Unresolved risk:** the budgets are reasoned, not calibrated. The ladder is
+  provably distinct and monotonic, but no run has yet been executed at LOW to
+  confirm 6 model turns is enough for the tasks LOW claims to serve. The first
+  real measurement may move the numbers; the contract and its tests are built to
+  survive that.
+- **Also unresolved:** speed modes 1X / 1.5X / 2X (pack §14) still do not exist.
+
 ## 0.53.0 — full release record (pack §21)
 
 - **Previous version:** 0.52.0
