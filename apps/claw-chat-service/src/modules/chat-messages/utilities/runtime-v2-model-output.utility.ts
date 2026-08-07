@@ -7,6 +7,7 @@ import {
   RUNTIME_V2_REPAIR_INSTRUCTION,
   RUNTIME_V2_TOOL_CALL_DIALECT_MARKERS,
   RUNTIME_V2_TOOL_CALL_TAG_PATTERN,
+  RUNTIME_V2_TOOL_REQUEST_KEY_ALIASES,
   RUNTIME_V2_TRUNCATED_TOOL_CALL_MESSAGE,
   RUNTIME_V2_TRUNCATED_TOOL_REQUEST_PATTERN,
   RUNTIME_V2_UNFULFILLED_INTENT_MAX_CHARACTERS,
@@ -218,11 +219,41 @@ export function parseRuntimeV2ModelOutput(
   }
 
   // Past this point the model declared a tool request, so a schema failure is a
-  // genuinely malformed one and still raises for the repair loop.
-  const parsed = runtimeV2ToolRequestSchema.safeParse(document);
+  // genuinely malformed one and still raises for the repair loop — but not
+  // before the right value under a known wrong name has been put where the
+  // schema expects it.
+  const parsed = runtimeV2ToolRequestSchema.safeParse(withCanonicalToolKeys(document));
   if (!parsed.success) throw parsed.error;
   if (definitions !== undefined) assertAdmittedTool(parsed.data, definitions);
   return parsed.data;
+}
+
+/**
+ * Renames the aliases in `RUNTIME_V2_TOOL_REQUEST_KEY_ALIASES` to the key the
+ * protocol uses, leaving everything else exactly as the model wrote it.
+ *
+ * A canonical key the model already supplied always wins, so a request carrying
+ * both `toolVersion` and `version` keeps `toolVersion` and drops the alias
+ * rather than letting the order of keys decide. A non-object is handed back
+ * untouched for the schema to reject.
+ */
+export function withCanonicalToolKeys(document: unknown): unknown {
+  if (typeof document !== 'object' || document === null || Array.isArray(document)) {
+    return document;
+  }
+  const source = document as Record<string, unknown>;
+  const canonical: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(source)) {
+    const alias = RUNTIME_V2_TOOL_REQUEST_KEY_ALIASES[key];
+    if (alias === undefined) {
+      canonical[key] = value;
+      continue;
+    }
+    if (!Object.hasOwn(source, alias)) {
+      canonical[alias] = value;
+    }
+  }
+  return canonical;
 }
 
 function assertAdmittedTool(

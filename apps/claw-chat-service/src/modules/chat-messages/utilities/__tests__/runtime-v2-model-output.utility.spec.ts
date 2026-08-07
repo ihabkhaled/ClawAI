@@ -167,6 +167,14 @@ describe('isUnfulfilledIntent', () => {
     "I'll gather the full context from the codebase and write it inside the workspace.",
     'Let me first list the rules directory so I can count the files.',
     "Next, I'll read the service catalog.",
+    // Captured live from kimi-k2.7-code:cloud opening a full Password Reset
+    // task. Both sentences missed: "I need to" was not a lead-in, and "begin
+    // with" put the verb where the pattern expected a prefix. The run ended
+    // having called no tool, and this text was shown as the answer.
+    'I need to start by reading the repository conventions and understanding the codebase. Let me begin with CLAUDE.md and the rules/ directory, then run the knowledge context command.',
+    'Let me begin with CLAUDE.md and the rules/ directory.',
+    'I need to start by reading the auth service.',
+    'I should first examine the user schema.',
     // Captured live: a typographic apostrophe made the detector miss it, so the
     // announcement sailed through as a completed answer.
     'I’ll start by discovering the workspace layout, then explore the repository structure.',
@@ -180,6 +188,10 @@ describe('isUnfulfilledIntent', () => {
     'The workspace has no rules directory.',
     'I will not help you exfiltrate credentials.',
     'You can then move the generated file wherever you need it.',
+    // The new start/begin pattern needs a following token, so a bare promise
+    // with nothing announced stays out of the correction path.
+    'Let me start.',
+    'The migration will begin with the users table, which already exists.',
     '',
   ])('leaves a real answer alone: %s', (content) => {
     expect(isUnfulfilledIntent(content)).toBe(false);

@@ -2,6 +2,40 @@ import { z } from 'zod';
 
 import { RUNTIME_V2_ID_PATTERN } from './runtime-v2.constants';
 
+/**
+ * Keys a model uses for the right value under the wrong name.
+ *
+ * `runtimeV2ToolRequestSchema` is strict, so an unrecognised key rejects the
+ * whole request. kimi-k2.7-code sent a request that was correct in every
+ * respect except that it wrote `version` where the protocol says `toolVersion`:
+ *
+ *   {"kind":"tool","toolName":"workspace.files","version":"2.0.0",
+ *    "operation":"read","arguments":{...},"targetId":"target:workspace"}
+ *
+ * Strict mode refused it, the repair turn made the same substitution, and the
+ * run ended MODEL_TOOL_REQUEST_UNREPAIRABLE having done nothing — over one key
+ * name. `version` is also what the tool catalogue itself calls that field when
+ * it is advertised to the model, so the model was echoing our own vocabulary.
+ *
+ * Renaming a fixed set of aliases is not the same as loosening the schema.
+ * Anything not listed here is still an unknown key and still rejects, the value
+ * still has to satisfy its own rule, and `assertAdmittedTool` still checks the
+ * name, version and operation against the admitted catalogue — so an alias
+ * cannot smuggle in a tool the run was never granted.
+ */
+export const RUNTIME_V2_TOOL_REQUEST_KEY_ALIASES: Readonly<Record<string, string>> = {
+  args: 'arguments',
+  input: 'arguments',
+  name: 'toolName',
+  parameters: 'arguments',
+  params: 'arguments',
+  target: 'targetId',
+  tool: 'toolName',
+  tool_name: 'toolName',
+  tool_version: 'toolVersion',
+  version: 'toolVersion',
+};
+
 export const runtimeV2ToolRequestSchema = z
   .object({
     kind: z.literal('tool'),
@@ -40,6 +74,7 @@ export const RUNTIME_V2_MODEL_INSTRUCTION = [
 // difference between a corrected turn and a run that ends having done nothing.
 export const RUNTIME_V2_REPAIR_INSTRUCTION = [
   'Your previous tool request was invalid. Return exactly one valid Runtime Protocol 2.0 tool JSON object and no markdown.',
+  'Every key is required and spelled exactly as shown; "version" is not "toolVersion" and an unknown key rejects the whole request.',
   'Do not use any other tool-call syntax: not [TOOL_CALL], not <tool_call>, not <function_call>, not functools, and no key=value pairs.',
   'The only accepted shape is a JSON object exactly like this, with real values:',
   '{"kind":"tool","toolName":"…","toolVersion":"…","operation":"…","arguments":{},"targetId":"…"}',
@@ -126,7 +161,19 @@ export const RUNTIME_V2_UNFULFILLED_INTENT_PATTERNS: readonly RegExp[] = [
   // reached for. The leading "Now" needs nothing: `\b` matches at "I'll"
   // whatever precedes it, and an optional prefix group here would only add the
   // ambiguity these patterns are deliberately written without.
-  /\b(?:i['’]ll|i will|let me|i['’]m going to|i am going to)(?: now)?(?: start by| begin by| first)? (?:read|list|inspect|analyz|analys|explor|discover|search|scan|check|examin|gather|review|look|open|write|creat|generat|build|map|compil|assembl)/iu,
+  /\b(?:i['’]ll|i will|let me|i['’]m going to|i am going to|i need to|i should)(?: now)?(?: start by| begin by| first)? (?:read|list|inspect|analyz|analys|explor|discover|search|scan|check|examin|gather|review|look|open|write|creat|generat|build|map|compil|assembl)/iu,
+  // `i need to` and `i should` joined the lead-ins above because
+  // kimi-k2.7-code opened a full feature task with "I need to start by
+  // reading the repository conventions" and stopped there: no tool call, and
+  // the announcement was handed to the user as the answer.
+  //
+  // This pattern catches the second sentence of that same turn, "Let me begin
+  // with CLAUDE.md and the rules/ directory". There `begin` is the verb rather
+  // than the optional prefix and the preposition is `with`, so neither the
+  // verb list nor `begin by` reaches it. Requiring a following non-space token
+  // keeps a bare "let me start" - an announcement of nothing in particular -
+  // out of the correction path.
+  /\b(?:i['’]ll|i will|let me|i['’]m going to|i am going to|i need to|i should)(?: now)? (?:start|begin|proceed|continue)(?: with| by)? \S/iu,
   /\b(?:starting|beginning) (?:the )?(?:analysis|review|scan|exploration|discovery)\b/iu,
   /\bnext,? i['’]ll\b/iu,
 ];
