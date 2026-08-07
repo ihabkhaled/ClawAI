@@ -86,9 +86,11 @@ export type UseAdminPageReturn = {
   };
   handleChangeRole: (userId: string, role: string) => void;
   handleDeactivate: (userId: string) => void;
+  handleReactivate: (userId: string) => void;
   handleAssignPlan: (userId: string, planId: string) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
+  isReactivatePending: boolean;
   isAssignPlanPending: boolean;
 };
 

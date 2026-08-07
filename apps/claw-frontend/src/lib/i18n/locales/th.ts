@@ -962,6 +962,8 @@ export const th: TranslationDictionary = {
     userRoleUpdateFailed: 'อัปเดตบทบาทของผู้ใช้ไม่สำเร็จ',
     userDeactivated: 'ผู้ใช้ปิดการใช้งาน',
     userDeactivateFailed: 'ไม่สามารถปิดการใช้งานผู้ใช้',
+    userReactivated: 'เปิดใช้งานผู้ใช้อีกครั้งแล้ว',
+    userReactivateFailed: 'ไม่สามารถเปิดใช้งานผู้ใช้อีกครั้ง',
     userStats: 'สถิติผู้ใช้',
     userStatsDesc: 'ภาพรวมของผู้ใช้แพลตฟอร์ม',
     totalUsers: 'ผู้ใช้ทั้งหมด',

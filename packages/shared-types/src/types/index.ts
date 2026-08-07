@@ -26,6 +26,12 @@ export type {
 export type { BillingOverview, SubscriptionSummary } from './subscription.type';
 export type { CheckoutGatewayHandoff, CheckoutSessionView } from './checkout.type';
 export type { ProrationInput, ProrationQuote, ProrationResult } from './proration.type';
+export type {
+  ProrationBreakdown,
+  ProrationBreakdownInput,
+  ProrationLineItem,
+} from './proration-breakdown.type';
+export type { RefundSettlement, RefundSettlementInput } from './refund-settlement.type';
 export type { InvoiceLineView, InvoiceView } from './invoice.type';
 export type { PaymentMethodView } from './payment-method.type';
 export type { CreateRefundRequest, RefundableTransactionView, RefundView } from './refund.type';

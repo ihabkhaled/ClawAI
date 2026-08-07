@@ -969,6 +969,8 @@ export const ja: TranslationDictionary = {
     userRoleUpdateFailed: 'ユーザーの役割を更新できませんでした',
     userDeactivated: 'ユーザーが非アクティブになりました',
     userDeactivateFailed: 'ユーザーの非アクティブ化に失敗しました',
+    userReactivated: 'ユーザーが再アクティブになりました',
+    userReactivateFailed: 'ユーザーの再アクティブ化に失敗しました',
     userStats: 'ユーザー統計',
     userStatsDesc: 'プラットフォームユーザーの概要',
     totalUsers: '総ユーザー数',

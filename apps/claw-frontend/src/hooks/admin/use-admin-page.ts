@@ -63,6 +63,19 @@ export function useAdminPage(): UseAdminPageReturn {
     },
   });
 
+  const reactivateMutation = useMutation({
+    mutationFn: (userId: string) => auditRepository.reactivateUser(userId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.users });
+      setActionPending(null);
+      showToast.success({ description: t('admin.userReactivated') });
+    },
+    onError: (err: unknown) => {
+      setActionPending(null);
+      showToast.apiError(err, t('admin.userReactivateFailed'));
+    },
+  });
+
   const assignPlanMutation = useMutation({
     mutationFn: ({ userId, planId }: { userId: string; planId: string }) =>
       plansRepository.assignUser(userId, planId),
@@ -103,6 +116,17 @@ export function useAdminPage(): UseAdminPageReturn {
     deactivateMutation.mutate(userId);
   };
 
+  const handleReactivate = (userId: string): void => {
+    logger.info({
+      component: 'admin',
+      action: 'reactivate-user',
+      message: 'Reactivating user',
+      details: { userId },
+    });
+    setActionPending(userId);
+    reactivateMutation.mutate(userId);
+  };
+
   const handleAssignPlan = (userId: string, planId: string): void => {
     logger.info({
       component: 'admin',
@@ -132,9 +156,11 @@ export function useAdminPage(): UseAdminPageReturn {
     },
     handleChangeRole,
     handleDeactivate,
+    handleReactivate,
     handleAssignPlan,
     isRoleChangePending: changeRoleMutation.isPending && actionPending !== null,
     isDeactivatePending: deactivateMutation.isPending && actionPending !== null,
+    isReactivatePending: reactivateMutation.isPending && actionPending !== null,
     isAssignPlanPending: assignPlanMutation.isPending && actionPending !== null,
   };
 }

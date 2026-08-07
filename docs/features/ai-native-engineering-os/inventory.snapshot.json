@@ -6572,6 +6572,7 @@
         "docs/deployment",
         "docs/exceptions",
         "docs/features",
+        "docs/implementation",
         "docs/security",
         "docs/superpowers"
       ],
@@ -6970,7 +6971,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4320
+        "value": 4322
       },
       "localeCount": 13,
       "locales": [
@@ -8503,7 +8504,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "jest",
-        "testFiles": 27
+        "testFiles": 29
       },
       "claw-agent-service": {
         "runner": "jest",
@@ -8539,7 +8540,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 244
+        "testFiles": 245
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9294,7 +9295,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 778,
+    "totalTestFiles": 781,
     "workspaceCount": 25
   }
 }

@@ -966,6 +966,8 @@ export const en: TranslationDictionary = {
     userRoleUpdateFailed: 'Failed to update user role',
     userDeactivated: 'User deactivated',
     userDeactivateFailed: 'Failed to deactivate user',
+    userReactivated: 'User reactivated',
+    userReactivateFailed: 'Failed to reactivate user',
     userStats: 'User Stats',
     userStatsDesc: 'Overview of platform users',
     totalUsers: 'Total Users',

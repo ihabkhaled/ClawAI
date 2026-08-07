@@ -978,6 +978,8 @@ export const ru: TranslationDictionary = {
     userRoleUpdateFailed: 'Не удалось обновить роль пользователя',
     userDeactivated: 'Пользователь деактивирован',
     userDeactivateFailed: 'Не удалось деактивировать пользователя',
+    userReactivated: 'Пользователь реактивирован',
+    userReactivateFailed: 'Не удалось реактивировать пользователя',
     userStats: 'Статистика пользователей',
     userStatsDesc: 'Обзор пользователей платформы',
     totalUsers: 'Всего пользователей',

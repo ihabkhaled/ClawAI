@@ -978,6 +978,8 @@ export const it: TranslationDictionary = {
     userRoleUpdateFailed: 'Aggiornamento ruolo utente non riuscito',
     userDeactivated: 'Utente disattivato',
     userDeactivateFailed: 'Disattivazione utente non riuscita',
+    userReactivated: 'Utente riattivato',
+    userReactivateFailed: 'Riattivazione utente non riuscita',
     userStats: 'Statistiche utenti',
     userStatsDesc: 'Panoramica degli utenti della piattaforma',
     totalUsers: 'Utenti totali',

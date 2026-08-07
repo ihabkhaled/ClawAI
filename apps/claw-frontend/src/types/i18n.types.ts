@@ -974,6 +974,8 @@ export type TranslationDictionary = {
     userRoleUpdateFailed: string;
     userDeactivated: string;
     userDeactivateFailed: string;
+    userReactivated: string;
+    userReactivateFailed: string;
     userStats: string;
     userStatsDesc: string;
     totalUsers: string;
