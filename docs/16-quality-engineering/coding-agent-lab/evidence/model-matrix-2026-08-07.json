@@ -1,0 +1,107 @@
+[
+  {
+    "modelKey": "OLLAMA:kimi-k2.7-code:cloud",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 4000
+  },
+  {
+    "modelKey": "OLLAMA:kimi-k2.6:cloud",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 8000
+  },
+  {
+    "modelKey": "OLLAMA:deepseek-v4-flash",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 4000
+  },
+  {
+    "modelKey": "OLLAMA:deepseek-v4-pro",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 4000
+  },
+  {
+    "modelKey": "OLLAMA:gemma4:31b",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 22000
+  },
+  {
+    "modelKey": "OLLAMA:glm-5.1",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 6000
+  },
+  {
+    "modelKey": "OLLAMA:glm-5.2",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 6000
+  },
+  {
+    "modelKey": "OLLAMA:gpt-oss:120b",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 8000
+  },
+  {
+    "modelKey": "OLLAMA:gpt-oss:20b",
+    "outcome": "FAIL_NO_TOOL_CALL",
+    "ms": 8000
+  },
+  {
+    "modelKey": "OLLAMA:kimi-k2.5",
+    "outcome": "FAIL_NO_TOOL_CALL",
+    "ms": 4000
+  },
+  {
+    "modelKey": "OLLAMA:kimi-k2.6",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 8000
+  },
+  {
+    "modelKey": "OLLAMA:kimi-k2.7-code",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 6000
+  },
+  {
+    "modelKey": "OLLAMA:kimi-k3",
+    "outcome": "FAIL_NO_TOOL_CALL",
+    "ms": 4000
+  },
+  {
+    "modelKey": "OLLAMA:minimax-m2.5",
+    "outcome": "FAIL_NO_TOOL_CALL",
+    "ms": 4000
+  },
+  {
+    "modelKey": "OLLAMA:minimax-m2.7",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 12000
+  },
+  {
+    "modelKey": "OLLAMA:minimax-m3",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 8000
+  },
+  {
+    "modelKey": "OLLAMA:mistral-large-3:675b",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 14000
+  },
+  {
+    "modelKey": "OLLAMA:nemotron-3-nano:30b",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 10000
+  },
+  {
+    "modelKey": "OLLAMA:nemotron-3-super",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 12000
+  },
+  {
+    "modelKey": "OLLAMA:nemotron-3-ultra",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 10000
+  },
+  {
+    "modelKey": "OLLAMA:qwen3.5:397b",
+    "outcome": "FAIL_TOOL_EXECUTION",
+    "ms": 10000
+  }
+]
