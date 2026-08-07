@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 import { connectorRepository } from '@/repositories/connectors/connector.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
@@ -16,5 +17,11 @@ export function useAvailableConnectorModels(): {
     queryFn: () => connectorRepository.getAvailableModels(),
   });
 
-  return { models: data ?? [], isLoading };
+  // Memoised rather than `data ?? []` so an unresolved or failed query keeps one
+  // stable empty array instead of minting a new identity every render. See the
+  // note in use-local-models.ts: an unstable empty array here propagates into
+  // useAvailableModels' useMemo and can drive a render loop downstream.
+  const models = useMemo(() => data ?? [], [data]);
+
+  return { models, isLoading };
 }

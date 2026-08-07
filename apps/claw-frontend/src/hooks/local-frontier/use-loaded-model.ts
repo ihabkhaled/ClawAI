@@ -11,6 +11,11 @@ export function useLoadedModel(): UseQueryResult<LoadedModel | null, Error> {
   return useQuery({
     queryKey: queryKeys.localFrontier.loadedModel(),
     queryFn: () => localFrontierRepository.getLoadedModel(),
-    refetchInterval: POLL_INTERVAL_MS * 5,
+    // llama.cpp is an OPTIONAL local runtime. Where it is not deployed every
+    // call answers 502, so polling on forever is a permanent request flood
+    // against an endpoint that cannot recover on its own. Stop once the query
+    // has settled into an error; a user action or navigation refetches it.
+    refetchInterval: (query) => (query.state.status === 'error' ? false : POLL_INTERVAL_MS * 5),
+    retry: false,
   });
 }

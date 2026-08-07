@@ -11,5 +11,7 @@ export function useHardwareSnapshot(): UseQueryResult<HardwareSnapshot, Error> {
     queryKey: queryKeys.localFrontier.hardware(),
     queryFn: () => localFrontierRepository.getHardware(),
     staleTime: 60_000,
+    // See use-frontier-catalog.ts: optional runtime, fail fast.
+    retry: false,
   });
 }

@@ -11,6 +11,8 @@ export function usePullJobs(): UseQueryResult<{ rows: PullJob[]; total: number }
   return useQuery({
     queryKey: queryKeys.localFrontier.pullJobs(),
     queryFn: () => localFrontierRepository.listPullJobs(),
-    refetchInterval: POLL_INTERVAL_MS,
+    // See use-loaded-model.ts: do not poll an absent optional runtime forever.
+    refetchInterval: (query) => (query.state.status === 'error' ? false : POLL_INTERVAL_MS),
+    retry: false,
   });
 }

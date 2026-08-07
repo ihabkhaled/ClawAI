@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ROUTES } from '@/constants/routes.constants';
 import { PlanModelAccessMode, UserRole } from '@/enums';
@@ -96,22 +96,51 @@ export function useModelAccessPage(): UseModelAccessPageResult & {
     staleTime: 30_000,
   });
 
+  // Seeding is deliberately once-per-plan-load rather than "whenever a
+  // dependency changes".
+  //
+  // Every row carries a freshly generated rowKey, so re-running this effect
+  // always produces a new array and therefore always a new render. If any
+  // dependency churns identity between renders -- as `groupedModels` did while
+  // the optional local-model services were unreachable -- that becomes an
+  // unbounded loop and React aborts the tree with "Maximum update depth
+  // exceeded". The guard makes the effect converge no matter what upstream
+  // does, and has the second benefit that a late-arriving model catalogue can
+  // no longer discard edits the administrator has already made.
+  const seededForRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (query.data) {
-      if (
-        query.data.modelAccessMode === PlanModelAccessMode.ALLOW_LIST ||
-        query.data.modelAccessMode === PlanModelAccessMode.DENY_ALL
-      ) {
-        setRows(query.data.modelAccess.map(toRow));
-        return;
-      }
-      setRows(
-        groupedModels.flatMap((group) =>
-          group.models.map((model) => toDefaultRow(model.provider, model.model)),
-        ),
-      );
+    if (!query.data) {
+      return;
     }
-  }, [groupedModels, query.data]);
+    const seedKey = `${planId}:${query.data.updatedAt}`;
+    if (seededForRef.current === seedKey) {
+      return;
+    }
+
+    if (
+      query.data.modelAccessMode === PlanModelAccessMode.ALLOW_LIST ||
+      query.data.modelAccessMode === PlanModelAccessMode.DENY_ALL
+    ) {
+      seededForRef.current = seedKey;
+      setRows(query.data.modelAccess.map(toRow));
+      return;
+    }
+
+    // Every other mode seeds from the model catalogue. Wait for it rather than
+    // seeding an empty list and then replacing it, but never block on it
+    // forever: a catalogue that failed to load is simply empty, and the
+    // administrator can still add rows by hand.
+    if (isCatalogLoading) {
+      return;
+    }
+    seededForRef.current = seedKey;
+    setRows(
+      groupedModels.flatMap((group) =>
+        group.models.map((model) => toDefaultRow(model.provider, model.model)),
+      ),
+    );
+  }, [groupedModels, isCatalogLoading, planId, query.data]);
 
   const addRow = useCallback((): void => {
     setRows((prev) => [...prev, emptyRow()]);

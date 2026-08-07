@@ -11,5 +11,7 @@ export function useRuntimeInfo(): UseQueryResult<RuntimeInfo, Error> {
     queryKey: queryKeys.localFrontier.runtimeInfo(),
     queryFn: () => localFrontierRepository.getRuntimeInfo(),
     staleTime: 60_000,
+    // See use-frontier-catalog.ts: optional runtime, fail fast.
+    retry: false,
   });
 }
