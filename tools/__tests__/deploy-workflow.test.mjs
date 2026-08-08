@@ -28,6 +28,16 @@ test('deploy-production triggers only on CI workflow_run completion', () => {
   assert.match(workflow, /types:\s*\[completed\]/u);
 });
 
+test('deploy-production also supports manual exact-SHA deployment with the dispatch ref as default', () => {
+  assert.match(workflow, /workflow_dispatch:\s*\n\s*inputs:\s*\n\s*target_sha:/u);
+  assert.match(workflow, /target_sha:[\s\S]*?required:\s*false/u);
+  assert.match(
+    workflow,
+    /github\.event_name == 'workflow_dispatch' && \(inputs\.target_sha \|\| github\.sha\) \|\| github\.event\.workflow_run\.head_sha/u,
+  );
+  assert.match(workflow, /Target production SHA: \$TARGET_SHA/u);
+});
+
 test('deploy-production gates on success, push event, and main branch — not PRs, not develop', () => {
   const condition = workflow.split('if: >')[1]?.split('steps:')[0] ?? '';
   assert.match(condition, /workflow_run\.conclusion == 'success'/u);
@@ -36,10 +46,17 @@ test('deploy-production gates on success, push event, and main branch — not PR
 });
 
 test('deploy-production deploys the exact head_sha, not a fresh checkout of main', () => {
-  assert.match(workflow, /TARGET_SHA:\s*\$\{\{\s*github\.event\.workflow_run\.head_sha\s*\}\}/u);
+  assert.match(workflow, /TARGET_SHA:[^\n]*github\.event\.workflow_run\.head_sha/u);
   assert.match(workflow, /deploy-prod\.sh '\$TARGET_SHA'/u);
   // Never a plain `git pull` or an unpinned `main` checkout on the server side.
   assert.doesNotMatch(workflow, /git pull(?!\S)/u);
+});
+
+test('deploy-production validates a manual target before interpolating it into SSH', () => {
+  const validation = workflow.indexOf('^[0-9a-fA-F]{40}$');
+  const ssh = workflow.indexOf('ssh -i ~/.ssh/deploy_key');
+  assert.ok(validation >= 0, 'missing exact SHA validation');
+  assert.ok(validation < ssh, 'target must be validated before SSH interpolation');
 });
 
 test('deploy-production declares the production environment', () => {
@@ -61,6 +78,21 @@ test('deploy-production reads exactly the five documented secrets', () => {
 test('deploy-production never disables host key checking', () => {
   assert.doesNotMatch(workflow, /StrictHostKeyChecking=no/u);
   assert.match(workflow, /UserKnownHostsFile=~\/\.ssh\/known_hosts/u);
+});
+
+test('deploy-production retries only SSH connectivity failures with bounded backoff', () => {
+  assert.match(workflow, /ConnectTimeout=20/u);
+  assert.match(workflow, /retry_delays=\(10 20 40 60 90\)/u);
+  assert.match(workflow, /for attempt in 1 2 3 4 5 6/u);
+  assert.match(workflow, /ssh_status" -ne 255/u);
+  assert.match(workflow, /CLAW_SSH_CONNECTED/u);
+  assert.match(workflow, /grep -q 'CLAW_SSH_CONNECTED' "\$ssh_output"/u);
+  assert.match(
+    workflow,
+    /Connection timed out\|Connection refused\|No route to host\|Could not resolve hostname/u,
+  );
+  assert.match(workflow, /exit "\$ssh_status"/u);
+  assert.doesNotMatch(workflow, /deploy-prod\.sh[^\n]*\|\|\s*true/u);
 });
 
 test('deploy-production serializes on a single concurrency group without cancelling in-flight runs', () => {
