@@ -6575,7 +6575,7 @@
         "docs/security",
         "docs/superpowers"
       ],
-      "looseDocs": 22,
+      "looseDocs": 23,
       "rules": [
         {
           "bytes": 10980,

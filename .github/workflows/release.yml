@@ -1,0 +1,156 @@
+name: Release
+
+# Publishes a GitHub Release for every push to main whose CI run succeeded.
+# The version is bumped automatically from conventional commits — floored at
+# a patch bump, so every push produces a releasable version — and the notes
+# are generated from the commit range since the previous vX.Y.Z tag. See
+# tools/release/version.mjs and tools/release/notes.mjs.
+#
+# Runs independently of, and in parallel with, deploy-production.yml. Both are
+# triggered by the same "CI succeeded on a push to main" signal but serve
+# different purposes: this workflow publishes a version marker, deploy-
+# production ships the exact tested commit to the VPS. A release existing does
+# NOT by itself mean that version is live in production — see
+# docs/PRODUCTION_DEPLOYMENT.md.
+#
+# Loop safety: the version-bump commit is pushed using the checkout step's
+# GITHUB_TOKEN. GitHub does not start a new `push`-triggered workflow run for a
+# commit pushed by the built-in GITHUB_TOKEN — this is the platform's own
+# anti-recursion guarantee — so CI never re-runs on the bump commit and this
+# workflow never re-triggers itself. The commit message also carries
+# `[skip ci]` as an explicit second guard, in case this workflow is ever
+# reconfigured to push with a personal access token instead.
+#
+# Requires that branch protection on `main` permits this workflow to push a
+# commit and a tag directly (no required pull request for the Actions bot).
+# If that is not the case, add an explicit bypass for the Actions actor in the
+# branch's ruleset — this is a repository setting, not something this
+# workflow can configure for itself.
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+
+permissions:
+  contents: write
+
+# Serialized, not cancelled: a release for an older commit must still be
+# allowed to finish (or fail cleanly) before a newer one starts, so the
+# fast-forward-only push below has a stable target to race against.
+concurrency:
+  group: clawai-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Bump version and publish release
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Configure release bot identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version, generate notes, tag and push
+        id: release
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -Eeuo pipefail
+
+          # A concurrent run of this same workflow (two pushes to main close
+          # together) can land its bump commit on origin/main while this run
+          # is still computing. Retry a bounded number of times: re-fetch,
+          # rebase this commit onto the new tip (a no-op or trivial fast-
+          # forward on the normal linear-history case), and recompute the
+          # bump from whatever the previous-tag lookup now resolves to. If
+          # origin/main truly diverged (a real conflict), the rebase fails and
+          # this run reports it rather than guessing.
+          ATTEMPTS=5
+          RELEASED=false
+          for attempt in $(seq 1 "$ATTEMPTS"); do
+            echo "── attempt $attempt/$ATTEMPTS ──"
+
+            git fetch --quiet origin main
+            git checkout --quiet --detach "$HEAD_SHA"
+            if ! git rebase --quiet origin/main >"$RUNNER_TEMP/rebase.log" 2>&1; then
+              echo "::warning::rebase onto origin/main failed on attempt $attempt — retrying"
+              cat "$RUNNER_TEMP/rebase.log"
+              git rebase --abort >/dev/null 2>&1 || true
+              sleep $((attempt * 5))
+              continue
+            fi
+
+            PREV_TAG="$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --merged HEAD \
+              | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)"
+
+            if [ -n "$PREV_TAG" ] && [ "$(git rev-list -n1 "$PREV_TAG")" = "$(git rev-parse HEAD)" ]; then
+              echo "Tip of main is already released as $PREV_TAG — nothing new since the last release."
+              echo "released=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            node tools/release/version.mjs --from "$PREV_TAG" --to HEAD > "$RUNNER_TEMP/version.json"
+            cat "$RUNNER_TEMP/version.json"
+            NEXT="$(jq -r '.next' "$RUNNER_TEMP/version.json")"
+            CHANGED="$(jq -r '.changed | join(" ")' "$RUNNER_TEMP/version.json")"
+
+            if [ -z "$CHANGED" ]; then
+              echo "::error::version bump produced no file changes for v$NEXT — refusing an empty release commit"
+              exit 1
+            fi
+
+            node tools/release/notes.mjs \
+              --version "$NEXT" \
+              --from "$PREV_TAG" \
+              --to HEAD \
+              --repository "$REPOSITORY" \
+              --output "$RUNNER_TEMP/RELEASE_NOTES.md"
+
+            # shellcheck disable=SC2086
+            git add $CHANGED
+            git commit --quiet -m "chore(release): v$NEXT [skip ci]"
+            git tag "v$NEXT"
+
+            if git push origin HEAD:refs/heads/main && git push origin "refs/tags/v$NEXT"; then
+              echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+              echo "released=true" >> "$GITHUB_OUTPUT"
+              RELEASED=true
+              break
+            fi
+
+            echo "::warning::push rejected on attempt $attempt (main moved) — retrying"
+            git tag -d "v$NEXT" >/dev/null 2>&1 || true
+            git push origin ":refs/tags/v$NEXT" >/dev/null 2>&1 || true
+            sleep $((attempt * 5))
+          done
+
+          if [ "$RELEASED" != "true" ]; then
+            echo "::error::could not publish a release after $ATTEMPTS attempts — main kept moving faster than this job"
+            exit 1
+          fi
+
+      - name: Publish GitHub release
+        if: steps.release.outputs.released == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "v${{ steps.release.outputs.next }}" \
+            --title "v${{ steps.release.outputs.next }}" \
+            --notes-file "$RUNNER_TEMP/RELEASE_NOTES.md"

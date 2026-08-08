@@ -1,0 +1,73 @@
+name: Deploy production
+
+# Ships the EXACT commit CI just proved green to the GoDaddy VPS at
+# /srv/clawai. Never fires for a pull request, never fires for `develop`, and
+# never deploys whatever `origin/main` happens to be by the time this runs —
+# only github.event.workflow_run.head_sha, the commit CI actually tested.
+#
+# All the real work — selective service detection, build, health
+# verification, and recording the deployed SHA — lives in
+# scripts/deploy-prod.sh so it is identical whether GitHub Actions runs it or
+# an operator runs it by hand on the box. See docs/PRODUCTION_DEPLOYMENT.md.
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+
+permissions:
+  contents: read
+
+# Two production deployments must never run against the VPS simultaneously.
+# cancel-in-progress stays false: a queued deployment for a newer commit still
+# has to wait for the currently running one to finish (or fail) rather than
+# racing it — scripts/deploy-prod.sh also holds a server-side flock as a
+# second, independent guard against concurrent runs.
+concurrency:
+  group: clawai-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ github.event.workflow_run.head_sha }}
+    runs-on: ubuntu-latest
+    environment: production
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          # Written from a secret, never logged. StrictHostKeyChecking stays
+          # on the default (yes); the provided known_hosts is what makes that
+          # succeed instead of hanging on an interactive prompt.
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy over SSH
+        env:
+          PROD_HOST: ${{ secrets.PROD_HOST }}
+          PROD_USER: ${{ secrets.PROD_USER }}
+          PROD_PORT: ${{ secrets.PROD_PORT }}
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key \
+              -o UserKnownHostsFile=~/.ssh/known_hosts \
+              -o BatchMode=yes \
+              -p "$PROD_PORT" \
+              "$PROD_USER@$PROD_HOST" \
+              "cd /srv/clawai && bash ./scripts/deploy-prod.sh '$TARGET_SHA'"
+
+      - name: Clean up SSH material
+        if: always()
+        run: rm -rf ~/.ssh/deploy_key ~/.ssh/known_hosts
