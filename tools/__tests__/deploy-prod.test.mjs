@@ -7,8 +7,17 @@ import { repoPath } from '../lib/repo.mjs';
 
 const script = readFileSync(repoPath('scripts/deploy-prod.sh'), 'utf8');
 
+function bashPath(path) {
+  if (process.platform !== 'win32') return path;
+  return path
+    .replace(/^([A-Za-z]):[\\/]/u, (_, drive) => `/mnt/${drive.toLowerCase()}/`)
+    .replaceAll('\\', '/');
+}
+
 test('deploy-prod.sh is syntactically valid bash', () => {
-  const result = spawnSync('bash', ['-n', repoPath('scripts/deploy-prod.sh')], { encoding: 'utf8' });
+  const result = spawnSync('bash', ['-n', bashPath(repoPath('scripts/deploy-prod.sh'))], {
+    encoding: 'utf8',
+  });
   assert.equal(result.status, 0, result.stderr);
 });
 
@@ -60,7 +69,10 @@ test('deploy-prod.sh only calls record_deployment after health has been verified
   const healthIndex = body.indexOf('wait_for_service_health');
   const recordIndex = body.lastIndexOf('record_deployment');
   assert.ok(healthIndex > -1 && recordIndex > -1);
-  assert.ok(healthIndex < recordIndex, 'record_deployment appears before health verification in main()');
+  assert.ok(
+    healthIndex < recordIndex,
+    'record_deployment appears before health verification in main()',
+  );
 });
 
 test('deploy-prod.sh validates the target argument as a hex commit SHA before doing anything else', () => {
@@ -68,7 +80,10 @@ test('deploy-prod.sh validates the target argument as a hex commit SHA before do
 });
 
 test('deploy-prod.sh refuses to deploy over tracked working-tree modifications', () => {
-  assert.match(script, /git -C "\$PROJECT_ROOT" status --porcelain --untracked-files=no --ignore-submodules=all/u);
+  assert.match(
+    script,
+    /git -C "\$PROJECT_ROOT" status --porcelain --untracked-files=no --ignore-submodules=all/u,
+  );
 });
 
 test('deploy-prod.sh guards against deploying an older commit without an explicit opt-in', () => {
@@ -81,15 +96,23 @@ test('deploy-prod.sh takes a deploy lock before touching the checkout', () => {
   assert.match(script, /flock/u);
 });
 
-test('end-to-end rehearsal: first deploy, selective deploy, shared-package fan-out, no-op, rollback guard, build/health failure, locking', { timeout: 120_000 }, () => {
-  const result = spawnSync('bash', [repoPath('tools/__tests__/deploy-prod-e2e.sh')], {
-    encoding: 'utf8',
-    cwd: repoPath(),
-  });
-  if (result.status !== 0) {
-    process.stderr.write(result.stdout ?? '');
-    process.stderr.write(result.stderr ?? '');
-  }
-  assert.equal(result.status, 0, 'deploy-prod-e2e.sh reported at least one failing assertion — see output above');
-  assert.doesNotMatch(result.stdout ?? '', /FAIL/u);
-});
+test(
+  'end-to-end rehearsal: first deploy, selective deploy, shared-package fan-out, no-op, rollback guard, build/health failure, locking',
+  { timeout: 120_000 },
+  () => {
+    const result = spawnSync('bash', [bashPath(repoPath('tools/__tests__/deploy-prod-e2e.sh'))], {
+      encoding: 'utf8',
+      cwd: repoPath(),
+    });
+    if (result.status !== 0) {
+      process.stderr.write(result.stdout ?? '');
+      process.stderr.write(result.stderr ?? '');
+    }
+    assert.equal(
+      result.status,
+      0,
+      'deploy-prod-e2e.sh reported at least one failing assertion — see output above',
+    );
+    assert.doesNotMatch(result.stdout ?? '', /FAIL/u);
+  },
+);

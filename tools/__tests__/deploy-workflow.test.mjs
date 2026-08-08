@@ -1,10 +1,27 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 import { repoPath } from '../lib/repo.mjs';
 
 const workflow = readFileSync(repoPath('.github/workflows/deploy-production.yml'), 'utf8');
+
+test('tracked Dockerfiles contain real instructions, not escaped newline text', () => {
+  const dockerfiles = execFileSync('git', ['ls-files', 'apps/**/Dockerfile*'], {
+    cwd: repoPath('.'),
+    encoding: 'utf8',
+  })
+    .trim()
+    .split(/\r?\n/u)
+    .filter(Boolean);
+
+  assert.ok(dockerfiles.length > 0, 'expected tracked application Dockerfiles');
+  for (const dockerfile of dockerfiles) {
+    const contents = readFileSync(repoPath(dockerfile), 'utf8');
+    assert.doesNotMatch(contents, /\\n(?:COPY|RUN|FROM|WORKDIR|CMD|ENTRYPOINT)\b/u, dockerfile);
+  }
+});
 
 test('deploy-production triggers only on CI workflow_run completion', () => {
   assert.match(workflow, /on:\s*\n\s*workflow_run:\s*\n\s*workflows:\s*\['CI'\]/u);
@@ -30,7 +47,13 @@ test('deploy-production declares the production environment', () => {
 });
 
 test('deploy-production reads exactly the five documented secrets', () => {
-  for (const secret of ['PROD_HOST', 'PROD_USER', 'PROD_PORT', 'PROD_SSH_PRIVATE_KEY', 'PROD_SSH_KNOWN_HOSTS']) {
+  for (const secret of [
+    'PROD_HOST',
+    'PROD_USER',
+    'PROD_PORT',
+    'PROD_SSH_PRIVATE_KEY',
+    'PROD_SSH_KNOWN_HOSTS',
+  ]) {
     assert.match(workflow, new RegExp(`secrets\\.${secret}\\b`, 'u'), `missing secrets.${secret}`);
   }
 });

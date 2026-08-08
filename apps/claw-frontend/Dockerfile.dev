@@ -3,7 +3,8 @@ WORKDIR /app
 
 # Install from the monorepo so npm resolves @claw/* to local workspaces instead
 # of attempting to download private workspace packages from the public registry.
-COPY package.json ./package.json\nCOPY tools/typescript/ ./tools/typescript/
+COPY package.json ./package.json
+COPY tools/typescript/ ./tools/typescript/
 COPY package-lock.json ./package-lock.json
 COPY .npmrc ./.npmrc
 COPY packages/ ./packages/

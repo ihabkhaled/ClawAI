@@ -10,7 +10,8 @@ WORKDIR /app
 # Install dependencies from the monorepo root so npm resolves @claw/* to the
 # local workspaces instead of the public registry.
 FROM base AS deps
-COPY package.json ./package.json\nCOPY tools/typescript/ ./tools/typescript/
+COPY package.json ./package.json
+COPY tools/typescript/ ./tools/typescript/
 COPY package-lock.json ./package-lock.json
 COPY .npmrc ./.npmrc
 COPY packages/ ./packages/

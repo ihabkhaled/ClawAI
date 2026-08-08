@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 WORKDIR /app
 
 # Copy entire monorepo structure for workspace resolution
-COPY package.json ./package.json\nCOPY tools/typescript/ ./tools/typescript/
+COPY package.json ./package.json
+COPY tools/typescript/ ./tools/typescript/
 COPY .npmrc ./.npmrc
 COPY packages/ ./packages/
 COPY apps/claw-auth-service/ ./apps/claw-auth-service/
