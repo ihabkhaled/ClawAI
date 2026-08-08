@@ -58,10 +58,11 @@ describe('buildContentSecurityPolicy', () => {
     expect(csp).toContain('https://*.paypal.com');
   });
 
-  it('never allows unsafe-inline for scripts', () => {
-    const csp = buildContentSecurityPolicy(baseOptions);
+  it('uses unsafe-inline only as a strict-dynamic legacy fallback', () => {
+    const csp = buildContentSecurityPolicy({ ...baseOptions, adsenseEnabled: true });
     const scriptDirective = csp.split(';').find((d) => d.trim().startsWith('script-src'));
-    expect(scriptDirective).not.toContain("'unsafe-inline'");
+    expect(scriptDirective).toContain("'unsafe-inline'");
+    expect(scriptDirective).toContain("'strict-dynamic'");
   });
 
   it('locks down object-src, base-uri, form-action and frame-ancestors', () => {

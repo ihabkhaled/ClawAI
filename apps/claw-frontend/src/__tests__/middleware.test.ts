@@ -9,6 +9,23 @@ function buildRequest(pathname: string): NextRequest {
 }
 
 describe('middleware X-Robots-Tag enforcement', () => {
+  it('explicitly excludes crawler discovery files from middleware', () => {
+    const matchers = config.matcher.join('\n');
+
+    expect(matchers).toContain('ads\\.txt');
+    expect(matchers).toContain('robots\\.txt');
+    expect(matchers).toContain('sitemap\\.xml');
+    for (const path of ['/ads.txt', '/robots.txt', '/sitemap.xml']) {
+      expect(
+        unstable_doesMiddlewareMatch({
+          config,
+          nextConfig: {},
+          url: `https://claw.example${path}`,
+        }),
+      ).toBe(false);
+    }
+  });
+
   it('does not tag the public homepage as noindex', () => {
     const response = middleware(buildRequest('/en'));
     expect(response.headers.get('X-Robots-Tag')).toBeNull();

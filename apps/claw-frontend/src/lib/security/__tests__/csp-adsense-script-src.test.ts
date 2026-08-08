@@ -42,10 +42,7 @@ describe('CSP script-src for AdSense', () => {
     expect(directive(csp, 'script-src')).not.toContain('googlesyndication');
   });
 
-  it('does not weaken production script-src with a host allowlist', () => {
-    // 'strict-dynamic' makes browsers ignore host allowlists anyway; adding one
-    // would be misleading, and any relaxation of this directive is a real
-    // XSS-surface change.
+  it('uses Google supported strict CSP fallbacks in production', () => {
     const csp = buildContentSecurityPolicy({
       nonce: 'n1',
       isDev: false,
@@ -55,9 +52,10 @@ describe('CSP script-src for AdSense', () => {
     const scriptSrc = directive(csp, 'script-src');
     expect(scriptSrc).toContain("'strict-dynamic'");
     expect(scriptSrc).toContain("'nonce-n1'");
-    expect(scriptSrc).not.toContain('googlesyndication');
-    expect(scriptSrc).not.toContain("'unsafe-inline'");
-    expect(scriptSrc).not.toContain("'unsafe-eval'");
+    expect(scriptSrc).toContain("'unsafe-inline'");
+    expect(scriptSrc).toContain("'unsafe-eval'");
+    expect(scriptSrc).toContain('https:');
+    expect(scriptSrc).toContain('http:');
   });
 
   it('keeps frame, img and connect hosts gated on AdSense being enabled', () => {

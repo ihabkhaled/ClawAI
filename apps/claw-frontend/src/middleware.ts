@@ -126,6 +126,6 @@ export const config = {
      * - _next (static files)
      * - public files with an extension (images, fonts, and other assets)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|ads\\.txt$|robots\\.txt$|sitemap\\.xml$|.*\\..*$).*)',
   ],
 };

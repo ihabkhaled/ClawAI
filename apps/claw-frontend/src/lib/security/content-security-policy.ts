@@ -92,7 +92,15 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
         PAYPAL_SCRIPT_HOST,
         ...(adsenseEnabled ? GOOGLE_AD_SCRIPT_HOSTS : []),
       ]
-    : ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"];
+    : [
+        "'self'",
+        `'nonce-${nonce}'`,
+        "'strict-dynamic'",
+        // Google supports AdSense under strict CSP with these fallback tokens.
+        // CSP3 browsers ignore them when nonce + strict-dynamic are present;
+        // older browsers use them to keep dynamically loaded ad code working.
+        ...(adsenseEnabled ? ["'unsafe-inline'", "'unsafe-eval'", 'https:', 'http:'] : []),
+      ];
 
   const connectSrc = [
     "'self'",

@@ -6,12 +6,9 @@ import {
   SOCIAL_PREVIEW_IMAGE_ALT,
   SOCIAL_PREVIEW_IMAGE_PATH,
 } from '@/constants/site-metadata.constants';
-import { getAdSenseConfig } from '@/lib/adsense/adsense-config';
 import { getSiteUrl } from '@/lib/site/site-config';
 
 export function buildRootMetadata(): Metadata {
-  const adsenseClientId = getAdSenseConfig().clientId;
-
   return {
     metadataBase: new URL(getSiteUrl()),
     title: { default: SITE_TITLE, template: '%s | ClawAI' },
@@ -27,7 +24,6 @@ export function buildRootMetadata(): Metadata {
     publisher: 'ClawAI',
     category: 'technology',
     referrer: 'origin-when-cross-origin',
-    ...(adsenseClientId === null ? {} : { other: { 'google-adsense-account': adsenseClientId } }),
     openGraph: {
       type: 'website',
       siteName: 'ClawAI',

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Archivo, IBM_Plex_Mono, Inter } from 'next/font/google';
 import { headers } from 'next/headers';
 
+import { AdSenseHead } from '@/components/adsense/adsense-head';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import { THEME_INIT_SCRIPT } from '@/constants/theme.constants';
 // Imported directly from i18n.constants rather than the `@/lib/i18n` barrel
@@ -71,6 +72,7 @@ export default async function RootLayout({
       className={`${inter.variable} ${editorialDisplay.variable} ${editorialMono.variable}`}
     >
       <head>
+        <AdSenseHead />
         {/*
          * suppressHydrationWarning is REQUIRED here, not cosmetic.
          *

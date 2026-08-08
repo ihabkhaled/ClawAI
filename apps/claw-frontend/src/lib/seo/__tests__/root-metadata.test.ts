@@ -32,8 +32,6 @@ describe('buildRootMetadata', () => {
         images: ['/clawai-social-preview.png'],
       }),
     );
-    expect(metadata.other).toEqual({
-      'google-adsense-account': 'ca-pub-2415314275784926',
-    });
+    expect(metadata.other).toBeUndefined();
   });
 });

@@ -22,7 +22,7 @@ export function GET(): Response {
     return new Response('Not found', { status: 404 });
   }
 
-  const record = `google.com, ${publisherId}, DIRECT, ${GOOGLE_ADSENSE_CERTIFICATION_ID}\n`;
+  const record = `google.com, ${publisherId}, DIRECT, ${GOOGLE_ADSENSE_CERTIFICATION_ID}`;
 
   return new Response(record, {
     status: 200,
