@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import test from 'node:test';
 
 import { computeAffectedFromFiles, createCiMatrix } from '../affected/index.mjs';
+import { buildManifests } from '../lib/manifests.mjs';
+import { repoPath } from '../lib/repo.mjs';
 
 const workspaces = [
   {
@@ -79,6 +82,16 @@ test('matrix metadata is derived from workspace manifests', () => {
   assert.deepEqual(createCiMatrix(result, workspaces), {
     include: [{ prisma: true, service: 'auth', workspace: 'claw-auth-service' }],
   });
+});
+
+test('every Prisma workspace exposes the generation script used by CI', () => {
+  const prismaWorkspaces = buildManifests().workspaces.workspaces.filter(({ dir }) =>
+    existsSync(repoPath(dir, 'prisma/schema.prisma')),
+  );
+
+  for (const workspace of prismaWorkspaces) {
+    assert.ok(workspace.scripts.includes('prisma:generate'), workspace.name);
+  }
 });
 
 test('two direct service edits select exactly those services', () => {

@@ -19,6 +19,7 @@
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
+    "prisma:generate": "prisma generate",
     "seed:catalog": "npx tsx --tsconfig prisma/tsconfig.seed.json prisma/seed-catalog.ts"
   },
   "dependencies": {
