@@ -16,6 +16,9 @@ export function useFrontierCatalog(
     // Optional local runtime: a deployment without llama.cpp answers 502 on
     // every attempt, so retrying only holds dependent pages in a loading state
     // for the length of the backoff. Fail fast and degrade to cloud models.
+    // retry:false alone does not stop the app-wide 10s refetchInterval default
+    // (providers.tsx) from polling a permanently-502ing endpoint forever.
     retry: false,
+    refetchInterval: false,
   });
 }

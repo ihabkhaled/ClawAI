@@ -19,15 +19,21 @@ export function useLocalModelsPage() {
   const { pullModel, isPending: isPullPending } = usePullModel();
   const { assignRole, isPending: isAssignPending } = useAssignRole();
 
+  // Ollama is an OPTIONAL local runtime; a deployment without it answers 502 on
+  // every call, so these must opt out of the app-wide 10s refetchInterval
+  // default (providers.tsx) or they poll a permanently-502ing endpoint forever.
   const runtimesQuery = useQuery({
     queryKey: queryKeys.runtimes.all,
     queryFn: () => ollamaRepository.getRuntimes(),
+    retry: false,
+    refetchInterval: false,
   });
 
   const healthQuery = useQuery({
     queryKey: ['ollama', 'health'] as const,
     queryFn: () => ollamaRepository.getHealth(),
-    refetchInterval: 30000,
+    retry: false,
+    refetchInterval: (q) => (q.state.status === 'error' ? false : 30000),
   });
 
   const runtimes = runtimesQuery.data ?? [];

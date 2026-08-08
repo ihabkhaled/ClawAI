@@ -16,7 +16,10 @@ export function usePullJobs() {
       });
       return ollamaRepository.getPullJobs();
     },
-    refetchInterval: PULL_JOB_POLL_INTERVAL_MS,
+    // See local-frontier/use-pull-jobs.ts: stop polling once the query has
+    // settled into an error so an unavailable backend isn't hammered forever.
+    refetchInterval: (q) => (q.state.status === 'error' ? false : PULL_JOB_POLL_INTERVAL_MS),
+    retry: false,
   });
 
   const jobs = query.data ?? [];

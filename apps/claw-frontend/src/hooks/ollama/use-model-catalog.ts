@@ -60,6 +60,11 @@ export function useModelCatalog(params: CatalogFilterParams) {
       }
       return undefined;
     },
+    // Ollama is an OPTIONAL local runtime; a deployment without it answers 502
+    // on every call. Without these, the app-wide 10s refetchInterval default
+    // (providers.tsx) polls a permanently-502ing endpoint forever.
+    retry: false,
+    refetchInterval: false,
   });
 
   const entries = query.data?.pages.flatMap((p) => p.data) ?? [];

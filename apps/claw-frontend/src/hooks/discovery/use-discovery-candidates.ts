@@ -22,7 +22,11 @@ export function useDiscoveryCandidates(filters: CandidateListFilters = {}): Cand
   const query = useQuery<CandidateListResponse>({
     queryKey: queryKeys.discovery.candidates.list(filterKey),
     queryFn: () => discoveryRepository.listCandidates(filters),
-    refetchInterval: 5_000,
+    // Discovery lives on the optional ollama-service; stop polling once the
+    // query has settled into an error so an unavailable backend isn't
+    // hammered forever.
+    retry: false,
+    refetchInterval: (q) => (q.state.status === 'error' ? false : 5_000),
   });
 
   return {

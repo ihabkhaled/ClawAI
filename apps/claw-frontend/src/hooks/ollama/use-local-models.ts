@@ -19,8 +19,11 @@ export function useLocalModels() {
     // Ollama is an OPTIONAL local runtime. A deployment without it answers 502
     // on every call, so retrying cannot succeed -- it only keeps the dependent
     // pages in a loading state for the length of the backoff. Fail fast and let
-    // callers degrade to cloud models.
+    // callers degrade to cloud models. retry:false alone does not stop the
+    // app-wide 10s refetchInterval default (providers.tsx) from polling a
+    // permanently-502ing endpoint forever.
     retry: false,
+    refetchInterval: false,
   });
 
   // `query.data?.data ?? []` looks harmless but returns a NEW array on every

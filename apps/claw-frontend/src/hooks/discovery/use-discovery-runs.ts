@@ -15,7 +15,14 @@ export function useDiscoveryRuns(filters: RunListFilters = {}): DiscoveryRunsQue
   const query = useQuery<DiscoveryRunListResponse>({
     queryKey: queryKeys.discovery.runs.list(filterKey),
     queryFn: () => discoveryRepository.listRuns(filters),
+    // Discovery lives on the optional ollama-service; stop polling once the
+    // query has settled into an error so an unavailable backend isn't
+    // hammered forever.
+    retry: false,
     refetchInterval: (q) => {
+      if (q.state.status === 'error') {
+        return false;
+      }
       const data = q.state.data;
       if (data === undefined) {
         return 5_000;

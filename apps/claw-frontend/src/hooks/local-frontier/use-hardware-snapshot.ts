@@ -11,7 +11,11 @@ export function useHardwareSnapshot(): UseQueryResult<HardwareSnapshot, Error> {
     queryKey: queryKeys.localFrontier.hardware(),
     queryFn: () => localFrontierRepository.getHardware(),
     staleTime: 60_000,
-    // See use-frontier-catalog.ts: optional runtime, fail fast.
+    // See use-frontier-catalog.ts: optional runtime, fail fast. A manual
+    // refresh (useRefreshHardware) is the only intended way to re-fetch —
+    // without an explicit `false` here this would inherit the global 10s
+    // refetchInterval default and poll an absent runtime forever.
+    refetchInterval: false,
     retry: false,
   });
 }
