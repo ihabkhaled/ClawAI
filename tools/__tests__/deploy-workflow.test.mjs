@@ -23,30 +23,20 @@ test('tracked Dockerfiles contain real instructions, not escaped newline text', 
   }
 });
 
-test('deploy-production triggers only on CI workflow_run completion', () => {
-  assert.match(workflow, /on:\s*\n\s*workflow_run:\s*\n\s*workflows:\s*\['CI'\]/u);
-  assert.match(workflow, /types:\s*\[completed\]/u);
+test('deploy-production is reusable and manual, not triggered by normal CI completion', () => {
+  assert.match(workflow, /on:\s*\n\s*workflow_call:\s*\n\s*inputs:\s*\n\s*target_sha:/u);
+  assert.doesNotMatch(workflow, /workflow_run:/u);
 });
 
 test('deploy-production also supports manual exact-SHA deployment with the dispatch ref as default', () => {
   assert.match(workflow, /workflow_dispatch:\s*\n\s*inputs:\s*\n\s*target_sha:/u);
   assert.match(workflow, /target_sha:[\s\S]*?required:\s*false/u);
-  assert.match(
-    workflow,
-    /github\.event_name == 'workflow_dispatch' && \(inputs\.target_sha \|\| github\.sha\) \|\| github\.event\.workflow_run\.head_sha/u,
-  );
+  assert.match(workflow, /inputs\.target_sha \|\| github\.sha/u);
   assert.match(workflow, /Target production SHA: \$TARGET_SHA/u);
 });
 
-test('deploy-production gates on success, push event, and main branch — not PRs, not develop', () => {
-  const condition = workflow.split('if: >')[1]?.split('steps:')[0] ?? '';
-  assert.match(condition, /workflow_run\.conclusion == 'success'/u);
-  assert.match(condition, /workflow_run\.event == 'push'/u);
-  assert.match(condition, /workflow_run\.head_branch == 'main'/u);
-});
-
-test('deploy-production deploys the exact head_sha, not a fresh checkout of main', () => {
-  assert.match(workflow, /TARGET_SHA:[^\n]*github\.event\.workflow_run\.head_sha/u);
+test('deploy-production deploys the exact caller or manual SHA, not an unpinned main checkout', () => {
+  assert.match(workflow, /TARGET_SHA:[^\n]*inputs\.target_sha/u);
   assert.match(workflow, /deploy-prod\.sh '\$TARGET_SHA'/u);
   // Never a plain `git pull` or an unpinned `main` checkout on the server side.
   assert.doesNotMatch(workflow, /git pull(?!\S)/u);

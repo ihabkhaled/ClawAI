@@ -1,9 +1,9 @@
 name: Deploy production
 
-# Ships the EXACT commit CI just proved green to the GoDaddy VPS at
-# /srv/clawai. Never fires for a pull request, never fires for `develop`, and
-# never deploys whatever `origin/main` happens to be by the time this runs —
-# only github.event.workflow_run.head_sha, the commit CI actually tested.
+# Ships an exact release commit to the GoDaddy VPS at /srv/clawai. Normal CI
+# completions do not invoke this workflow. release.yml calls it only after it
+# creates and publishes a versioned release commit; operators can also invoke
+# it manually with an exact SHA for recovery.
 #
 # All the real work — selective service detection, build, health
 # verification, and recording the deployed SHA — lives in
@@ -11,9 +11,12 @@ name: Deploy production
 # an operator runs it by hand on the box. See docs/PRODUCTION_DEPLOYMENT.md.
 
 on:
-  workflow_run:
-    workflows: ['CI']
-    types: [completed]
+  workflow_call:
+    inputs:
+      target_sha:
+        description: Exact release commit SHA to deploy
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       target_sha:
@@ -35,14 +38,9 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy ${{ github.event_name == 'workflow_dispatch' && (inputs.target_sha || github.sha) || github.event.workflow_run.head_sha }}
+    name: Deploy ${{ inputs.target_sha || github.sha }}
     runs-on: ubuntu-latest
     environment: production
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'push' &&
-       github.event.workflow_run.head_branch == 'main')
     steps:
       - name: Configure SSH
         env:
@@ -65,7 +63,7 @@ jobs:
           PROD_HOST: ${{ secrets.PROD_HOST }}
           PROD_USER: ${{ secrets.PROD_USER }}
           PROD_PORT: ${{ secrets.PROD_PORT }}
-          TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && (inputs.target_sha || github.sha) || github.event.workflow_run.head_sha }}
+          TARGET_SHA: ${{ inputs.target_sha || github.sha }}
         run: |
           set -euo pipefail
           if [[ ! "$TARGET_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then

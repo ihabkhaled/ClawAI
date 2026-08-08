@@ -6,7 +6,7 @@ import { repoPath } from '../lib/repo.mjs';
 
 const workflow = readFileSync(repoPath('.github/workflows/release.yml'), 'utf8');
 
-test('release triggers on the same CI workflow_run signal as deploy-production', () => {
+test('release triggers on successful CI workflow_run completion', () => {
   assert.match(workflow, /on:\s*\n\s*workflow_run:\s*\n\s*workflows:\s*\['CI'\]/u);
   assert.match(workflow, /types:\s*\[completed\]/u);
 });
@@ -54,4 +54,13 @@ test('release refuses to commit an empty version bump', () => {
 test('release publishes only after the push step reports success', () => {
   const publish = workflow.split('Publish GitHub release')[1] ?? '';
   assert.match(publish.split('run:')[0], /if:\s*steps\.release\.outputs\.released == 'true'/u);
+});
+
+test('release deploys only the newly created release SHA through the reusable SSH workflow', () => {
+  assert.match(workflow, /target_sha=\$\(git rev-parse HEAD\)/u);
+  assert.match(workflow, /deploy:\s*\n\s*needs:\s*release/u);
+  assert.match(workflow, /needs\.release\.outputs\.released == 'true'/u);
+  assert.match(workflow, /uses:\s*\.\/\.github\/workflows\/deploy-production\.yml/u);
+  assert.match(workflow, /target_sha:\s*\$\{\{\s*needs\.release\.outputs\.target_sha\s*\}\}/u);
+  assert.match(workflow, /secrets:\s*inherit/u);
 });

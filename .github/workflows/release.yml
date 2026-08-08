@@ -6,12 +6,9 @@ name: Release
 # are generated from the commit range since the previous vX.Y.Z tag. See
 # tools/release/version.mjs and tools/release/notes.mjs.
 #
-# Runs independently of, and in parallel with, deploy-production.yml. Both are
-# triggered by the same "CI succeeded on a push to main" signal but serve
-# different purposes: this workflow publishes a version marker, deploy-
-# production ships the exact tested commit to the VPS. A release existing does
-# NOT by itself mean that version is live in production — see
-# docs/PRODUCTION_DEPLOYMENT.md.
+# After publishing the version marker, this workflow calls deploy-production
+# with the exact generated release-commit SHA. Normal commits are never sent to
+# production; only the versioned chore(release) commit is deployed.
 #
 # Loop safety: the version-bump commit is pushed using the checkout step's
 # GITHUB_TOKEN. GitHub does not start a new `push`-triggered workflow run for a
@@ -46,6 +43,9 @@ jobs:
   release:
     name: Bump version and publish release
     runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.release.outputs.released }}
+      target_sha: ${{ steps.release.outputs.target_sha }}
     if: >
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
@@ -130,6 +130,7 @@ jobs:
             if git push origin HEAD:refs/heads/main && git push origin "refs/tags/v$NEXT"; then
               echo "next=$NEXT" >> "$GITHUB_OUTPUT"
               echo "released=true" >> "$GITHUB_OUTPUT"
+              echo "target_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
               RELEASED=true
               break
             fi
@@ -154,3 +155,11 @@ jobs:
           gh release create "v${{ steps.release.outputs.next }}" \
             --title "v${{ steps.release.outputs.next }}" \
             --notes-file "$RUNNER_TEMP/RELEASE_NOTES.md"
+
+  deploy:
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    uses: ./.github/workflows/deploy-production.yml
+    with:
+      target_sha: ${{ needs.release.outputs.target_sha }}
+    secrets: inherit
