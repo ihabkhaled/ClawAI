@@ -13,8 +13,11 @@
     "test:watch": "jest --watch"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/jest": "^30.0.0",
-    "@typescript/native-preview": "^7.0.0-dev.20260607.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260707.2",
+    "eslint": "^10.8.1",
+    "eslint-plugin-unicorn": "^65.0.0",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.12",
     "typescript": "^6.0.3"

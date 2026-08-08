@@ -104,7 +104,7 @@ describe('Runtime V2 Redis Lua authority', () => {
     for (const key of allKeys) cleanupKeys.add(key);
     expect(start.sequence).toBe(0);
     expect(await client.zscore(family.events, 'missing')).toBeNull();
-    const initialEvents = await client.zrange(family.events, 0, -1);
+    const initialEvents = await client.zrange(family.events, '0', '-1');
     expect(JSON.parse(initialEvents[0] ?? '{}')).toMatchObject({
       sequence: 0,
       schemaVersion: '2.0',
@@ -532,7 +532,7 @@ describe('Runtime V2 Redis Lua authority', () => {
       JSON.stringify(await client.hgetall(family.invocations)),
       JSON.stringify(await client.hgetall(family.results)),
       JSON.stringify(await client.hgetall(family.steeringData)),
-      JSON.stringify(await client.zrange(family.events, 0, -1)),
+      JSON.stringify(await client.zrange(family.events, '0', '-1')),
       (await client.get(runtimeV2MessageKey(guardedMessageId))) ?? '',
       (await client.get(runtimeV2StartKey(ownerId, guardedRequest.idempotencyKey))) ?? '',
       (await client.get(runtimeV2ClientRequestKey(ownerId, guardedRequest.clientRequestId))) ?? '',
@@ -769,7 +769,7 @@ describe('Runtime V2 Redis Lua authority', () => {
     ).rejects.toMatchObject({ code: 'RUNTIME_TRANSITION_DENIED' });
     const invocationLedger = JSON.stringify(await client.hgetall(family.invocations));
     const resultLedger = JSON.stringify(await client.hgetall(family.results));
-    const eventJournal = JSON.stringify(await client.zrange(family.events, 0, -1));
+    const eventJournal = JSON.stringify(await client.zrange(family.events, '0', '-1'));
     expect(invocationLedger).not.toContain(firstInvocation.arguments.pathHandle);
     expect(eventJournal).toContain(firstInvocation.arguments.pathHandle);
     expect(resultLedger).not.toContain(modelText);
