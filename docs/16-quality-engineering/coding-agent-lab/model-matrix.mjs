@@ -29,7 +29,14 @@ const { chromium } = createRequire(import.meta.url)(
   '../../../apps/claw-coding-agent/node_modules/@playwright/test',
 );
 
-const SERVE_WEB = 'http://127.0.0.1:9888/?folder=d:/Freelance/Claw';
+// The folder must be given in path form with a leading slash. `?folder=d:/…`
+// parses `d:` as a URI scheme, the drive letter is dropped, and the extension
+// host resolves the workspace to `C:\Freelance\Claw` — which does not exist.
+// Every workspace tool then fails identically in ~20 ms, which is exactly the
+// 0-of-21 result of 2026-08-07: an environment defect wearing a model-failure
+// costume. Workspace Trust granted in that state attaches to the phantom
+// folder, so the badge reads Trusted while the real folder stays restricted.
+const SERVE_WEB = 'http://127.0.0.1:9888/?folder=/d:/Freelance/Claw';
 const PER_MODEL_TIMEOUT_MS = 120_000;
 const POLL_MS = 2_000;
 
