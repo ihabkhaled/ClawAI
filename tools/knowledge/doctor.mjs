@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 
 import { computeGeneratedFiles } from './build.mjs';
 import { repoPath, isMain } from '../lib/repo.mjs';
@@ -23,6 +23,24 @@ export function inspectRepository() {
   const contextSize = existsSync(repoPath('.ai/local/current-context.md'))
     ? statSync(repoPath('.ai/local/current-context.md')).size
     : 0;
+  const ignoreFile = repoPath('.aiignore');
+  const ignoreText = existsSync(ignoreFile) ? readFileSync(ignoreFile, 'utf8') : '';
+  const requiredExclusions = ['node_modules/', 'dist/', '.next/', 'coverage/', '.ai/local/'];
+  const missingExclusions = requiredExclusions.filter((entry) => !ignoreText.includes(entry));
+  const missingGeneratedReferences = Object.keys(expected).filter(
+    (file) => !existsSync(repoPath(file)),
+  );
+  const cacheDirectory = repoPath('.ai/local/cache/context');
+  let invalidCacheFiles = 0;
+  if (existsSync(cacheDirectory)) {
+    for (const file of readdirSync(cacheDirectory).filter((entry) => entry.endsWith('.json'))) {
+      try {
+        JSON.parse(readFileSync(repoPath('.ai/local/cache/context', file), 'utf8'));
+      } catch {
+        invalidCacheFiles += 1;
+      }
+    }
+  }
   const checks = [
     check(
       'generated knowledge',
@@ -40,14 +58,25 @@ export function inspectRepository() {
       `${contextSize} bytes; limit 80000`,
     ),
     check(
-      'search policy',
-      existsSync(repoPath('.aiignore')),
-      existsSync(repoPath('.aiignore')) ? '.aiignore present' : 'create .aiignore',
+      'search exclusions',
+      missingExclusions.length === 0,
+      missingExclusions.length === 0
+        ? `${requiredExclusions.length} mandatory exclusions enforced`
+        : `add missing .aiignore entries: ${missingExclusions.join(', ')}`,
     ),
     check(
-      'local cache',
-      existsSync(repoPath('.ai/local/cache')),
-      existsSync(repoPath('.ai/local/cache')) ? 'available' : 'created on first context run',
+      'cache health',
+      existsSync(repoPath('.ai/local/cache')) && invalidCacheFiles === 0,
+      invalidCacheFiles === 0
+        ? 'available; cached contexts parse successfully'
+        : `${invalidCacheFiles} invalid cache files; remove .ai/local/cache`,
+    ),
+    check(
+      'generated references',
+      missingGeneratedReferences.length === 0,
+      missingGeneratedReferences.length === 0
+        ? `${Object.keys(expected).length} generated targets resolve`
+        : `${missingGeneratedReferences.length} generated targets missing; run npm run knowledge:build`,
     ),
   ];
   const status = checks.some((item) => item.status === 'WARN') ? 'WARN' : 'PASS';

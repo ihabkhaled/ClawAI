@@ -183,6 +183,12 @@ test('context doctor reports actionable bounded findings', () => {
   assert.ok(report.checks.length >= 5);
   assert.ok(report.checks.every((check) => check.name && check.message));
   assert.ok(report.checks.length <= 12);
+  assert.equal(report.checks.find((check) => check.name === 'search exclusions')?.status, 'PASS');
+  assert.equal(report.checks.find((check) => check.name === 'cache health')?.status, 'PASS');
+  assert.equal(
+    report.checks.find((check) => check.name === 'generated references')?.status,
+    'PASS',
+  );
 });
 
 test('benchmark defines all representative tasks without historical claims', () => {
