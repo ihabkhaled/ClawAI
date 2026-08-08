@@ -7,16 +7,10 @@ import { repoPath } from '../lib/repo.mjs';
 
 const script = readFileSync(repoPath('scripts/deploy-prod.sh'), 'utf8');
 
-function bashPath(path) {
-  if (process.platform !== 'win32') return path;
-  return path
-    .replace(/^([A-Za-z]):[\\/]/u, (_, drive) => `/mnt/${drive.toLowerCase()}/`)
-    .replaceAll('\\', '/');
-}
-
 test('deploy-prod.sh is syntactically valid bash', () => {
-  const result = spawnSync('bash', ['-n', bashPath(repoPath('scripts/deploy-prod.sh'))], {
+  const result = spawnSync('bash', ['-n', 'scripts/deploy-prod.sh'], {
     encoding: 'utf8',
+    cwd: repoPath(),
   });
   assert.equal(result.status, 0, result.stderr);
 });
@@ -100,7 +94,7 @@ test(
   'end-to-end rehearsal: first deploy, selective deploy, shared-package fan-out, no-op, rollback guard, build/health failure, locking',
   { timeout: 120_000 },
   () => {
-    const result = spawnSync('bash', [bashPath(repoPath('tools/__tests__/deploy-prod-e2e.sh'))], {
+    const result = spawnSync('bash', ['tools/__tests__/deploy-prod-e2e.sh'], {
       encoding: 'utf8',
       cwd: repoPath(),
     });
