@@ -1,0 +1,27 @@
+# AI search is tracked-source first (`git ls-files`). These exclusions protect
+# fallback search tools from runtime, generated, dependency, and media noise.
+.git/
+.ai/local/
+.audit/
+.claude/
+.lighthouseci/
+.next/
+.turbo/
+.worktrees/
+artifacts/
+build/
+cache/
+coverage/
+dist/
+dist-tsgo/
+logs/
+node_modules/
+out/
+playwright-report/
+screenshots/
+test-results/
+tmp/
+vendor/
+videos/
+**/src/generated/
+*.log

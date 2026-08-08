@@ -5,6 +5,9 @@ import { buildManifests } from '../lib/manifests.mjs';
 import { computeGeneratedFiles } from '../knowledge/build.mjs';
 import { resolveContext } from '../knowledge/context.mjs';
 import { classifyTask } from '../knowledge/classify-task.mjs';
+import { compileSourceNeighborhood } from '../knowledge/source-neighborhood.mjs';
+import { inspectRepository } from '../knowledge/doctor.mjs';
+import { benchmarkScenarios } from '../knowledge/benchmark.mjs';
 import { hash } from '../lib/fact.mjs';
 
 test('manifests include the core derivable set', () => {
@@ -132,4 +135,63 @@ test('billing task pack scopes the two billing data owners', () => {
 test('resolveContext flags missing info for an unscoped, empty task', () => {
   const ctx = resolveContext({ task: '', maxTokens: 6000 });
   assert.ok(ctx.missingInformation.length > 0);
+});
+
+test('context compiler selects risk-sized modes and compiles decision-ready sections', () => {
+  const fast = resolveContext({ task: 'fix typo in README', maxTokens: 6000, noCache: true });
+  const deep = resolveContext({
+    task: 'rotate auth refresh tokens and change the session database schema',
+    maxTokens: 6000,
+    noCache: true,
+  });
+
+  assert.equal(fast.mode, 'FAST');
+  assert.equal(deep.mode, 'DEEP');
+  assert.match(deep.risk, /HIGH/u);
+  assert.ok(deep.compiledConstraints.length > 0);
+  assert.ok(deep.likelySourceFiles.length > 0);
+  assert.ok(deep.likelyTests.length > 0);
+  assert.equal(deep.efficiency.estimatedTokens, Math.ceil(deep.outputCharacters / 4));
+  assert.equal(deep.efficiency.baseline, 'not measured');
+});
+
+test('explicit mode controls bounded tracked-source neighborhoods', () => {
+  const fast = compileSourceNeighborhood('fix auth token rotation', { mode: 'FAST' });
+  const deep = compileSourceNeighborhood('fix auth token rotation', { mode: 'DEEP' });
+
+  assert.ok(fast.files.length > 0);
+  assert.ok(fast.files.length < deep.files.length);
+  assert.ok(fast.files.every((file) => !file.includes('node_modules')));
+  assert.ok(fast.tests.some((file) => /test|spec/u.test(file)));
+});
+
+test('context cache reuses byte-stable results for identical inputs', () => {
+  const args = { task: 'fix chat streaming disconnect', mode: 'NORMAL', maxTokens: 6000 };
+  const first = resolveContext({ ...args, refreshCache: true });
+  const second = resolveContext(args);
+
+  assert.equal(first.cache.status, 'MISS');
+  assert.equal(second.cache.status, 'HIT');
+  assert.equal(first.cache.key, second.cache.key);
+  assert.deepEqual({ ...first, cache: { ...first.cache, status: 'HIT' } }, second);
+});
+
+test('context doctor reports actionable bounded findings', () => {
+  const report = inspectRepository();
+
+  assert.ok(['PASS', 'WARN', 'FAIL'].includes(report.status));
+  assert.ok(report.checks.length >= 5);
+  assert.ok(report.checks.every((check) => check.name && check.message));
+  assert.ok(report.checks.length <= 12);
+});
+
+test('benchmark defines all representative tasks without historical claims', () => {
+  const scenarios = benchmarkScenarios();
+
+  assert.deepEqual(
+    scenarios.map((scenario) => scenario.kind),
+    ['tiny', 'backend', 'frontend', 'api', 'database', 'security', 'cross-workspace'],
+  );
+  assert.ok(scenarios.every((scenario) => scenario.task.length > 10));
+  assert.ok(scenarios.every((scenario) => !('oldEstimate' in scenario)));
 });
