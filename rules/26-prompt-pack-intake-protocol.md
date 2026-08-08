@@ -112,7 +112,6 @@ Before writing code, know what will reject it:
   | knowledge freshness | GitHub Actions   | `knowledge:check` / `knowledge:verify` — a generated file's hash drifted                                                                              |
   | inventory audit     | GitHub Actions   | `audit:check` — the inventory snapshot drifted                                                                                                        |
   | **Lighthouse CI**   | GitHub Actions   | `@lhci/cli autorun` against every public marketing URL — performance, SEO, best-practices AND **accessibility assertions including `color-contrast`** |
-  | Vercel build        | on push          | anything the frontend build rejects                                                                                                                   |
 
   **Every GitHub gate must be green before a push is considered done** — a red gate
   is not "someone else's follow-up", it is the change not having landed.

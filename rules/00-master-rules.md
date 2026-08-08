@@ -114,7 +114,7 @@ the deliverable is the remainder. Hence the non-negotiable middle steps: audit e
 deliverable **against the code** (done / partial / missing — and _present is not
 wired_), and review the constraint surface (ESLint, TypeScript, Prettier, coverage,
 security, i18n × 9, the delivery checklist, and every gate including pre-commit,
-pre-push, CI and Vercel) **before** writing code rather than after.
+pre-push and CI) **before** writing code rather than after.
 
 Where a pack conflicts with repository policy, **policy wins** — and the deviation is
 stated explicitly in the plan, never applied silently.

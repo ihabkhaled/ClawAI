@@ -117,7 +117,7 @@ next batch; never accumulate an entire flagship feature as one unpushed worktree
 **Every GitHub gate must be green before a push counts as done**: CI matrix
 (lint → typecheck → test → build), knowledge freshness, inventory audit,
 **Lighthouse CI** (including accessibility assertions such as `color-contrast` over
-every public marketing URL), CodeQL, and the Vercel build. Release lane:
+every public marketing URL), and CodeQL. Release lane:
 `npm run release:preflight`.
 
 Full policy: [`rules/07-commit-rules.md`](rules/07-commit-rules.md) ·

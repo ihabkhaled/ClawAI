@@ -26,6 +26,6 @@ authority order; audit every deliverable done/partial/missing against the CODE
 (present is not wired — a repo method with no callers is scaffolding); review the
 constraint surface up front (eslint flat config, TS strict, prettier, coverage
 floors, security, i18n x9 + i18n.types.ts, the CLAUDE.md delivery checklist, and
-the gate topology incl. pre-commit/pre-push/CI/freshness/Vercel); write the plan
+the gate topology incl. pre-commit/pre-push/CI/freshness); write the plan
 and state deviations — policy outranks the pack, never silently; then implement
 with scoped gates, one gated commit per change, each pushed before the next.

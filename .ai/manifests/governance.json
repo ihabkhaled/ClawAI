@@ -1,23 +1,23 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 19914,
+      "bytes": 19896,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 4892,
+      "bytes": 4870,
       "file": "CODEX.md"
     },
     {
-      "bytes": 25592,
+      "bytes": 25570,
       "file": "cursor.md"
     },
     {
-      "bytes": 8220,
+      "bytes": 8198,
       "file": "AGENTS.md"
     },
     {
-      "bytes": 1733,
+      "bytes": 1726,
       "file": ".cursorrules"
     }
   ],
@@ -41,7 +41,6 @@
     "docs/15-ai-context",
     "docs/16-quality-engineering",
     "docs/adrs",
-    "docs/deployment",
     "docs/exceptions",
     "docs/features",
     "docs/implementation",
@@ -52,7 +51,7 @@
   "looseDocs": 22,
   "rules": [
     {
-      "bytes": 10988,
+      "bytes": 10980,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -196,7 +195,7 @@
       "file": "rules/25-exceptions-and-waivers.md"
     },
     {
-      "bytes": 11630,
+      "bytes": 11433,
       "file": "rules/26-prompt-pack-intake-protocol.md"
     },
     {

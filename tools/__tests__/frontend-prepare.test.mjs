@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 import { repoPath } from '../lib/repo.mjs';
@@ -33,4 +34,12 @@ test('repository prepare lifecycle succeeds on the current platform', () => {
 
 test('frontend cache cleanup succeeds on the current platform', () => {
   assertLifecycleSucceeds('clear-cache', 'claw-frontend');
+});
+
+test('Tailwind config is explicitly loaded as an ES module', () => {
+  const globals = readFileSync(repoPath('apps/claw-frontend/src/app/globals.css'), 'utf8');
+
+  assert.match(globals, /@config '\.\.\/\.\.\/tailwind\.config\.mts';/);
+  assert.equal(existsSync(repoPath('apps/claw-frontend/tailwind.config.mts')), true);
+  assert.equal(existsSync(repoPath('apps/claw-frontend/tailwind.config.ts')), false);
 });

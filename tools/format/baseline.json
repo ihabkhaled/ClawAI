@@ -1031,7 +1031,6 @@
     "apps/claw-workspace-service/src/modules/workspace/services/workspace-object.service.ts": "ca5ef65a3860b074a71a7bac1ce208b1230d706286c611aabeecdda2327a5c61",
     "apps/claw-workspace-service/src/modules/workspace/types/sync-cadence.types.ts": "c50bdf83b124d42caa7c44f7c3729ec9ccace4c708221f59027e2270ddaeae25",
     "apps/claw-workspace-service/src/modules/workspace/utilities/file-content-stream.utility.ts": "49c8f6127d000d050833dc0d98d3b451caa0e976c5a55cb4d6e477fbc1701747",
-    "deploy/vercel/environment.json": "8ab56dd7e149234609d41bbab1e778dc9645e8b38fa56774dedff0e7f8a4b8c5",
     "docs/01-executive-context/cost-model.md": "6c2dbdbce57525cd0cc3477a362aa2e1cb701ddc03802aec46570cd0dc8f48ed",
     "docs/02-business-product/desktop-agent-v2-roadmap-and-positioning.md": "411d658bf1254cd5d34fbeaf9960266c16e3139fd2711c4f5316b611489b8415",
     "docs/02-business-product/desktop-agent-vision.md": "1b0d5e84b3fb9cff2525e28a50328be26b0399b1f3717f66da6eaa300bc77b32",

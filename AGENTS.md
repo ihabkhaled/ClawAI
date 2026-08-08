@@ -157,7 +157,7 @@ runs BEFORE the first line of code. Runbook:
    generated-artifact regeneration → affected typecheck), pre-push, the CI matrix
    (lint/typecheck/test/build), knowledge-freshness + inventory-audit checks,
    **Lighthouse CI** (performance/SEO/best-practices AND accessibility assertions
-   such as `color-contrast` over every public marketing URL), and the Vercel build.
+   such as `color-contrast` over every public marketing URL).
    **Every GitHub gate must be green before a push counts as done.** Lighthouse is
    the one most often forgotten because it fails on things that compile fine — a
    colour pair under 4.5:1, a missing landmark, an unlabelled control.

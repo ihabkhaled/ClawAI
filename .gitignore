@@ -35,13 +35,12 @@ out/
 # Environment (secrets)
 .env
 .env.local
-# Vercel deployment secrets — filled from .env.vercel.example, NEVER committed.
-.env.vercel
-.env.vercel.*
-!.env.vercel.example
 .env.development.local
 .env.test.local
 .env.production.local
+# Leftover local secrets from the retired Vercel deployment path — never
+# committed even though the automation that read it is gone.
+.env.vercel*
 
 # IDE
 .vscode/
@@ -109,16 +108,6 @@ apps/claw-frontend/scripts/*
 # Local runtime probe dumps (operator diagnostics; never committed).
 # Populated by scripts/local-runtime-probes/probe-*.mjs.
 .local-runtime-probes/
-
-# Vercel deployment automation outputs. Everything under generated/ is derived
-# from live Vercel state (deployment URLs, verification reports) and must never
-# be committed — that is what keeps generated hostnames out of source control.
-deploy/vercel/generated/
-.vercel/
-
-# Empty static output dir the Vercel buildCommand creates for Nest services.
-# The frontend has a real, committed public/ — only service dirs are ignored.
-apps/claw-*-service/public/
 
 # --- AI-native engineering OS ---
 # Generated .ai knowledge layer is COMMITTED except the per-developer local

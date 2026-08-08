@@ -34,55 +34,11 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  experimental: {
-    // Vercel restores .next/cache between deployments. Keep production build
-    // caching opt-in to Vercel so local builds retain their current behavior.
-    turbopackFileSystemCacheForBuild: process.env.VERCEL === '1',
-  },
   // NOTE: Next 16 removed the `eslint` config key and the built-in `next lint`
   // pass, so there is no eslint block here. Linting runs via `npm run lint`.
-  // On Vercel there is no nginx, so the reverse-proxy route map lives here.
-  // Each destination comes from a *_SERVICE_URL environment variable written by
-  // scripts/vercel/resolve-service-urls.mjs — never a hardcoded deployment URL.
-  // A service with no URL set contributes no rewrite, which surfaces as a clean
-  // 404 from Next rather than a proxy attempt against `undefined`.
-  // Locally these variables are unset and the browser talks to nginx as before.
-  async rewrites() {
-    const routes = [
-      ['AUTH_SERVICE_URL', ['auth', 'users', 'admin']],
-      ['CHAT_SERVICE_URL', ['chat-threads', 'chat-messages']],
-      ['CONNECTOR_SERVICE_URL', ['connectors']],
-      ['ROUTING_SERVICE_URL', ['routing']],
-      ['MEMORY_SERVICE_URL', ['memories', 'context-packs']],
-      ['FILE_SERVICE_URL', ['files']],
-      ['AUDIT_SERVICE_URL', ['audits', 'usage']],
-      ['CLIENT_LOGS_SERVICE_URL', ['client-logs']],
-      ['SERVER_LOGS_SERVICE_URL', ['server-logs']],
-      ['IMAGE_SERVICE_URL', ['images']],
-      ['FILE_GENERATION_SERVICE_URL', ['file-generations']],
-      ['WORKSPACE_SERVICE_URL', ['workspace']],
-      ['AGENT_SERVICE_URL', ['agent']],
-      ['RESEARCH_SERVICE_URL', ['research']],
-      ['HEALTH_SERVICE_URL', ['health']],
-    ];
-
-    const rewrites = [];
-    for (const [variable, prefixes] of routes) {
-      const base = (process.env[variable] || '').replace(/\/$/, '');
-      if (base === '') continue;
-      for (const prefix of prefixes) {
-        rewrites.push({
-          source: `/api/v1/${prefix}/:path*`,
-          destination: `${base}/api/v1/${prefix}/:path*`,
-        });
-        rewrites.push({
-          source: `/api/v1/${prefix}`,
-          destination: `${base}/api/v1/${prefix}`,
-        });
-      }
-    }
-    return rewrites;
-  },
+  // All deployments (local dev and self-hosted production) run behind nginx,
+  // which proxies /api/v1/* to each backend service — see
+  // infra/nginx/nginx.conf. This app never proxies API routes itself.
 
   // Static, request-independent security headers. The per-request
   // Content-Security-Policy (with its nonce) is set in middleware.ts because
