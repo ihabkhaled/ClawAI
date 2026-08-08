@@ -234,6 +234,37 @@ so committing one would break nginx startup everywhere else. The wildcard
 include tolerates an empty directory, which is what lets a laptop and a
 production server share one `nginx.conf`.
 
+### Surviving a rebuild — self-healing by default
+
+Because that drop-in lives only in the working tree, it is the one piece of
+public TLS a fresh clone, a `git clean`, or a restored backup can lose while
+the certificate itself sits untouched in `/etc/letsencrypt`. Losing it is
+silent: nginx falls through to the mkcert block, nothing is unhealthy, no
+container restarts, and the only symptom is a visitor's browser warning.
+
+`scripts/claw.sh` closes that gap on its own. Every `up`, `services:up`, and
+`services:rebuild` calls `ensure_public_tls`, which checks whether
+`infra/nginx/public-tls/<CLAW_HOSTNAME>.conf` exists and, if not, regenerates
+it from the certificate already on disk:
+
+```bash
+bash scripts/install-letsencrypt.sh --restore-only
+```
+
+This mode reads the domain names out of the certificate's SANs — never
+re-derived, so the block can't claim a name the leaf doesn't cover — and does
+**only** that: no CA request, no rate-limit slot consumed, no DNS lookup, no
+firewall change. It fails soft: if there is no certificate on disk yet, or the
+restore can't get a non-interactive `sudo`, `claw.sh` prints a warning and
+keeps starting the stack on mkcert rather than blocking the deploy.
+
+Running it by hand is safe at any time and is the fix if a rebuild ever
+outpaces a `claw.sh` version that predates this:
+
+```bash
+bash scripts/install-letsencrypt.sh --restore-only
+```
+
 ### Renewal
 
 certbot's snap installs a systemd timer; renewal is automatic inside the 30-day
@@ -273,6 +304,7 @@ curl -sS -o /dev/null -w "%{http_code}\n" http://claw-ai.co/.well-known/acme-cha
 | ACME challenge returns 404 from outside              | Host port 80 is not published. The container predates the compose change — recreate it: `./scripts/claw.sh --prod up`.                                              |
 | Certificate renewed but the browser sees the old one | The deploy hook is missing, so nginx was never reloaded.                                                                                                            |
 | `www` shows a certificate warning                    | `www` was not included at issuance. Re-run with `--domain example.com --domain www.example.com`.                                                                    |
+| mkcert warning reappears on a domain that had Let's Encrypt working | The generated block was lost (fresh clone, `git clean`, restored backup). `claw.sh up`/`services:up`/`services:rebuild` restore it automatically; to fix it without a restart, run `bash scripts/install-letsencrypt.sh --restore-only`. |
 
 ### Windows
 

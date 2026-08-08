@@ -44,9 +44,21 @@
 #   bash scripts/install-letsencrypt.sh --skip-dns-check       # split-horizon DNS
 #   bash scripts/install-letsencrypt.sh --verify-renewal       # + renew --dry-run
 #   bash scripts/install-letsencrypt.sh --force-renewal        # reissue early
+#   bash scripts/install-letsencrypt.sh --restore-only         # rebuild the block only
 #
 # Idempotent: re-running with a valid certificate in place re-writes the nginx
 # block and reloads, but does not ask the CA for a new certificate.
+#
+# --restore-only exists because the generated server block is the one piece of
+# this setup that lives ONLY in the working tree. It is host-specific, so it is
+# gitignored rather than committed, which means a fresh clone, a `git clean`, or
+# a restored backup leaves infra/nginx/public-tls/ empty while the certificate
+# itself is still sitting in /etc/letsencrypt. nginx then falls through to the
+# default mkcert block and serves a certificate no browser trusts — silently,
+# because nothing is down and no log line says the public leaf went missing.
+# This mode rebuilds the block from the certificate already on disk and touches
+# nothing else: no ufw rules, no DNS lookups, no ACME traffic, no CA rate limit.
+# scripts/claw.sh runs it on every start so a rebuild can never lose public TLS.
 # =============================================================================
 set -euo pipefail
 
@@ -74,6 +86,7 @@ STAGING="false"
 SKIP_DNS_CHECK="false"
 VERIFY_RENEWAL="false"
 FORCE_RENEWAL="false"
+RESTORE_ONLY="false"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -85,7 +98,8 @@ while [ $# -gt 0 ]; do
     --skip-dns-check)  SKIP_DNS_CHECK="true"; shift ;;
     --verify-renewal)  VERIFY_RENEWAL="true"; shift ;;
     --force-renewal)   FORCE_RENEWAL="true"; shift ;;
-    -h|--help)         sed -n '1,52p' "$0"; exit 0 ;;
+    --restore-only)    RESTORE_ONLY="true"; shift ;;
+    -h|--help)         sed -n '1,62p' "$0"; exit 0 ;;
     *)                 fail "Unknown argument: $1"; exit 2 ;;
   esac
 done
@@ -201,7 +215,11 @@ fi
 # Add the www form for an apex domain when it resolves. A certificate that
 # covers only the apex means every visitor who types www gets a name-mismatch
 # error, which looks exactly like the problem this script exists to fix.
-if [ "${#CLI_DOMAINS[@]}" -eq 0 ]; then
+#
+# Skipped under --restore-only: that mode reads the name set out of the existing
+# certificate instead, which is both exact and free of a DNS round trip on a
+# host that may be offline or mid-boot.
+if [ "${#CLI_DOMAINS[@]}" -eq 0 ] && [ "$RESTORE_ONLY" != "true" ]; then
   LABEL_COUNT="$(printf '%s' "$PRIMARY_DOMAIN" | awk -F. '{print NF}')"
   if [ "$LABEL_COUNT" -eq 2 ] && [ -n "$(resolve_public_a "www.$PRIMARY_DOMAIN" || true)" ]; then
     DOMAINS+=("www.$PRIMARY_DOMAIN")
@@ -209,11 +227,57 @@ if [ "${#CLI_DOMAINS[@]}" -eq 0 ]; then
   fi
 fi
 
+# ─── Restore-only: recover the name set from the certificate on disk ────────
+# Reading /etc/letsencrypt needs root — live/ and archive/ are 0700. This mode
+# usually runs unattended from scripts/claw.sh, where a sudo password prompt
+# would hang a stack start indefinitely, so probe non-interactively first and
+# only fall back to a prompt when there is a terminal to answer it.
+if [ "$RESTORE_ONLY" = "true" ]; then
+  # Prefer a non-interactive sudo for every privileged step that follows, so an
+  # unattended restore fails fast and loudly instead of blocking on a prompt
+  # nobody is watching.
+  if [ -n "$SUDO" ]; then
+    if sudo -n true 2>/dev/null; then
+      SUDO="sudo -n"
+    elif [ ! -t 0 ]; then
+      warn "Cannot read /etc/letsencrypt without an interactive sudo prompt — skipping restore."
+      info "  Run it by hand once:  bash scripts/install-letsencrypt.sh --restore-only"
+      exit 1
+    fi
+  fi
+
+  LIVE_DIR="/etc/letsencrypt/live/$PRIMARY_DOMAIN"
+  if ! $SUDO test -f "$LIVE_DIR/fullchain.pem"; then
+    warn "No Let's Encrypt certificate on this host for $PRIMARY_DOMAIN — nothing to restore."
+    info "  Issue one with:  bash scripts/install-letsencrypt.sh"
+    exit 1
+  fi
+
+  # The certificate is the authority on which names the block may claim. Taking
+  # the SANs rather than re-deriving them means the regenerated server_name can
+  # never drift from what was actually issued — a name in server_name that the
+  # leaf does not cover is a mismatch error on exactly one hostname.
+  CERT_SANS="$($SUDO openssl x509 -in "$LIVE_DIR/fullchain.pem" -noout -ext subjectAltName 2>/dev/null \
+               | tr ',' '\n' | sed -n 's/.*DNS://p' | tr -d ' ' | sed '/^$/d' | sort -u || true)"
+  if [ -n "$CERT_SANS" ]; then
+    DOMAINS=("$PRIMARY_DOMAIN")
+    while IFS= read -r san; do
+      if [ -n "$san" ] && [ "$san" != "$PRIMARY_DOMAIN" ]; then
+        DOMAINS+=("$san")
+      fi
+    done <<< "$CERT_SANS"
+  fi
+fi
+
 echo ""
 echo "${BOLD}Public TLS certificate (Let's Encrypt)${NC}"
 echo ""
 info "Domains:   ${DOMAINS[*]}"
-info "Webroot:   $WEBROOT"
+if [ "$RESTORE_ONLY" = "true" ]; then
+  info "Mode:      restore-only (no CA request, no firewall or DNS changes)"
+else
+  info "Webroot:   $WEBROOT"
+fi
 info "nginx:     container '$NGINX_CONTAINER'"
 [ "$STAGING" = "true" ] && warn "Staging CA — the issued certificate will NOT be publicly trusted."
 
@@ -221,28 +285,38 @@ info "nginx:     container '$NGINX_CONTAINER'"
 # Let's Encrypt uses it only for expiry warnings, but an unreachable address is
 # worse than none: it silently drops the one warning that catches a broken
 # renewal before the certificate expires.
-LE_EMAIL="$CLI_EMAIL"
-[ -n "$LE_EMAIL" ] || LE_EMAIL="${LETSENCRYPT_EMAIL:-}"
-[ -n "$LE_EMAIL" ] || LE_EMAIL="$(read_env_value LETSENCRYPT_EMAIL)"
+#
+# Only ever passed to certbot, so --restore-only skips resolving it entirely.
 EMAIL_ARGS=()
-if [ -n "$LE_EMAIL" ] && [[ "$LE_EMAIL" == *@* ]] && ! is_public_domain "${LE_EMAIL##*@}" ; then
-  warn "Ignoring contact address '$LE_EMAIL' — '${LE_EMAIL##*@}' is not a real mail domain."
-  LE_EMAIL=""
-fi
-if [ -n "$LE_EMAIL" ]; then
-  EMAIL_ARGS=(--email "$LE_EMAIL")
-  info "Contact:   $LE_EMAIL"
-else
-  EMAIL_ARGS=(--register-unsafely-without-email)
-  warn "No contact address — registering without one. You will NOT get expiry warnings."
-  info "  Set LETSENCRYPT_EMAIL in .env or pass --email to fix this."
+if [ "$RESTORE_ONLY" != "true" ]; then
+  LE_EMAIL="$CLI_EMAIL"
+  [ -n "$LE_EMAIL" ] || LE_EMAIL="${LETSENCRYPT_EMAIL:-}"
+  [ -n "$LE_EMAIL" ] || LE_EMAIL="$(read_env_value LETSENCRYPT_EMAIL)"
+  if [ -n "$LE_EMAIL" ] && [[ "$LE_EMAIL" == *@* ]] && ! is_public_domain "${LE_EMAIL##*@}" ; then
+    warn "Ignoring contact address '$LE_EMAIL' — '${LE_EMAIL##*@}' is not a real mail domain."
+    LE_EMAIL=""
+  fi
+  if [ -n "$LE_EMAIL" ]; then
+    EMAIL_ARGS=(--email "$LE_EMAIL")
+    info "Contact:   $LE_EMAIL"
+  else
+    EMAIL_ARGS=(--register-unsafely-without-email)
+    warn "No contact address — registering without one. You will NOT get expiry warnings."
+    info "  Set LETSENCRYPT_EMAIL in .env or pass --email to fix this."
+  fi
 fi
 
 # ─── Firewall: allow HTTP + HTTPS ───────────────────────────────────────────
 # HTTP-01 validation is only ever performed against port 80; there is no way to
 # move it. If ufw is inactive these rules are recorded and take effect when it
 # is enabled later, which is why they are added either way.
-if command -v ufw >/dev/null 2>&1; then
+#
+# --restore-only changes no firewall state: the ports it would open are already
+# open on a host that has a certificate, and an unattended start is the wrong
+# place to be editing a firewall.
+if [ "$RESTORE_ONLY" = "true" ]; then
+  :
+elif command -v ufw >/dev/null 2>&1; then
   # 'Nginx Full' is an application profile shipped by the nginx APT package.
   # This host runs nginx in a container, so the profile usually does not exist
   # and the documented `ufw allow 'Nginx Full'` fails. Fall back to the ports
@@ -286,20 +360,28 @@ install_certbot() {
   fail "Could not install certbot. Install it manually and re-run this script."
   return 1
 }
-install_certbot || exit 1
+# --restore-only never talks to the CA, so it does not need certbot present.
+[ "$RESTORE_ONLY" = "true" ] || install_certbot || exit 1
 
 # ─── Webroot ────────────────────────────────────────────────────────────────
 # Shared with the nginx container read-only. World-readable on purpose: the
 # challenge token is public by design and nginx serves it to an anonymous CA.
-$SUDO mkdir -p "$WEBROOT/.well-known/acme-challenge"
-$SUDO chmod -R 755 "$WEBROOT"
-ok "Webroot ready at $WEBROOT"
+# Only the ACME exchange uses it, so --restore-only leaves it alone.
+if [ "$RESTORE_ONLY" != "true" ]; then
+  $SUDO mkdir -p "$WEBROOT/.well-known/acme-challenge"
+  $SUDO chmod -R 755 "$WEBROOT"
+  ok "Webroot ready at $WEBROOT"
+fi
 
 # ─── DNS precheck ───────────────────────────────────────────────────────────
 # Let's Encrypt rate-limits failed authorisations. Catching a wrong A record
 # here costs a DNS lookup; catching it at the CA costs one of five failures per
 # hostname per hour.
-if [ "$SKIP_DNS_CHECK" != "true" ]; then
+#
+# Skipped under --restore-only. That mode re-serves a certificate this host was
+# already issued; whether DNS still points here is a question for the next
+# renewal, not a reason to refuse to install a block that is already paid for.
+if [ "$SKIP_DNS_CHECK" != "true" ] && [ "$RESTORE_ONLY" != "true" ]; then
   SERVER_IP="$(curl -fsS --max-time 10 https://api.ipify.org 2>/dev/null || true)"
   [ -n "$SERVER_IP" ] || SERVER_IP="$(curl -fsS --max-time 10 https://ifconfig.me 2>/dev/null || true)"
   if [ -z "$SERVER_IP" ]; then
@@ -335,72 +417,77 @@ if [ "$SKIP_DNS_CHECK" != "true" ]; then
   fi
 fi
 
-# ─── Challenge-path preflight ───────────────────────────────────────────────
-# Proves the whole HTTP-01 chain — public :80 → container → webroot — before
-# the CA depends on it. Without this, a missing port publish shows up as an
-# opaque "Invalid response ... 404" from the ACME server.
-PROBE_NAME="claw-preflight-$$"
-PROBE_FILE="$WEBROOT/.well-known/acme-challenge/$PROBE_NAME"
-printf 'claw-acme-preflight\n' | $SUDO tee "$PROBE_FILE" >/dev/null
-$SUDO chmod 644 "$PROBE_FILE"
-PROBE_OK="false"
-for d in "${DOMAINS[@]}"; do
-  BODY="$(curl -fsS --max-time 15 "http://$d/.well-known/acme-challenge/$PROBE_NAME" 2>/dev/null || true)"
-  if [ "$BODY" = "claw-acme-preflight" ]; then
-    ok "  HTTP-01 path reachable on $d"
-    PROBE_OK="true"
-  else
-    fail "  HTTP-01 path NOT reachable on http://$d/.well-known/acme-challenge/"
-    PROBE_OK="false"
-    break
+# ─── Challenge-path preflight and issuance ──────────────────────────────────
+# Everything from here to the certificate is ACME work. --restore-only has
+# already resolved LIVE_DIR and DOMAINS from the certificate on disk, so it
+# skips the lot: no probe file, no CA request, no rate-limit slot consumed.
+if [ "$RESTORE_ONLY" != "true" ]; then
+  # Proves the whole HTTP-01 chain — public :80 → container → webroot — before
+  # the CA depends on it. Without this, a missing port publish shows up as an
+  # opaque "Invalid response ... 404" from the ACME server.
+  PROBE_NAME="claw-preflight-$$"
+  PROBE_FILE="$WEBROOT/.well-known/acme-challenge/$PROBE_NAME"
+  printf 'claw-acme-preflight\n' | $SUDO tee "$PROBE_FILE" >/dev/null
+  $SUDO chmod 644 "$PROBE_FILE"
+  PROBE_OK="false"
+  for d in "${DOMAINS[@]}"; do
+    BODY="$(curl -fsS --max-time 15 "http://$d/.well-known/acme-challenge/$PROBE_NAME" 2>/dev/null || true)"
+    if [ "$BODY" = "claw-acme-preflight" ]; then
+      ok "  HTTP-01 path reachable on $d"
+      PROBE_OK="true"
+    else
+      fail "  HTTP-01 path NOT reachable on http://$d/.well-known/acme-challenge/"
+      PROBE_OK="false"
+      break
+    fi
+  done
+  $SUDO rm -f "$PROBE_FILE"
+
+  if [ "$PROBE_OK" != "true" ]; then
+    echo ""
+    fail "The ACME challenge path is not being served on port 80."
+    echo ""
+    info "  The nginx container must publish host port 80 and mount the webroot."
+    info "  Both are in docker/docker-compose.prod.services.yml; an older container"
+    info "  predates them and has to be recreated:"
+    info "    ./scripts/claw.sh --prod up"
+    info "  Then check nothing else holds :80 —  sudo ss -tlnp '( sport = :80 )'"
+    echo ""
+    exit 1
   fi
-done
-$SUDO rm -f "$PROBE_FILE"
 
-if [ "$PROBE_OK" != "true" ]; then
+  # ─── Request the certificate ──────────────────────────────────────────────
+  CERTBOT_ARGS=(
+    certonly
+    --webroot -w "$WEBROOT"
+    --non-interactive
+    --agree-tos
+    --keep-until-expiring
+    --cert-name "$PRIMARY_DOMAIN"
+  )
+  for d in "${DOMAINS[@]}"; do CERTBOT_ARGS+=(-d "$d"); done
+  CERTBOT_ARGS+=("${EMAIL_ARGS[@]}")
+  [ "$STAGING" = "true" ]       && CERTBOT_ARGS+=(--staging)
+  [ "$FORCE_RENEWAL" = "true" ] && CERTBOT_ARGS+=(--force-renewal)
+
   echo ""
-  fail "The ACME challenge path is not being served on port 80."
-  echo ""
-  info "  The nginx container must publish host port 80 and mount the webroot."
-  info "  Both are in docker/docker-compose.prod.services.yml; an older container"
-  info "  predates them and has to be recreated:"
-  info "    ./scripts/claw.sh --prod up"
-  info "  Then check nothing else holds :80 —  sudo ss -tlnp '( sport = :80 )'"
-  echo ""
-  exit 1
+  info "Requesting certificate from Let's Encrypt..."
+  if ! $SUDO certbot "${CERTBOT_ARGS[@]}"; then
+    echo ""
+    fail "certbot could not issue a certificate for ${DOMAINS[*]}."
+    info "  Full log: /var/log/letsencrypt/letsencrypt.log"
+    info "  The stack keeps serving the mkcert certificate, so nothing is down —"
+    info "  browsers just continue to show the untrusted-certificate warning."
+    exit 1
+  fi
+
+  LIVE_DIR="/etc/letsencrypt/live/$PRIMARY_DOMAIN"
+  if ! $SUDO test -f "$LIVE_DIR/fullchain.pem"; then
+    fail "certbot reported success but $LIVE_DIR/fullchain.pem is missing."
+    exit 1
+  fi
+  ok "Certificate stored at $LIVE_DIR"
 fi
-
-# ─── Request the certificate ────────────────────────────────────────────────
-CERTBOT_ARGS=(
-  certonly
-  --webroot -w "$WEBROOT"
-  --non-interactive
-  --agree-tos
-  --keep-until-expiring
-  --cert-name "$PRIMARY_DOMAIN"
-)
-for d in "${DOMAINS[@]}"; do CERTBOT_ARGS+=(-d "$d"); done
-CERTBOT_ARGS+=("${EMAIL_ARGS[@]}")
-[ "$STAGING" = "true" ]       && CERTBOT_ARGS+=(--staging)
-[ "$FORCE_RENEWAL" = "true" ] && CERTBOT_ARGS+=(--force-renewal)
-
-echo ""
-info "Requesting certificate from Let's Encrypt..."
-if ! $SUDO certbot "${CERTBOT_ARGS[@]}"; then
-  echo ""
-  fail "certbot could not issue a certificate for ${DOMAINS[*]}."
-  info "  Full log: /var/log/letsencrypt/letsencrypt.log"
-  info "  The stack keeps serving the mkcert certificate, so nothing is down —"
-  info "  browsers just continue to show the untrusted-certificate warning."
-  exit 1
-fi
-
-LIVE_DIR="/etc/letsencrypt/live/$PRIMARY_DOMAIN"
-if ! $SUDO test -f "$LIVE_DIR/fullchain.pem"; then
-  fail "certbot reported success but $LIVE_DIR/fullchain.pem is missing."
-  exit 1
-fi
-ok "Certificate stored at $LIVE_DIR"
 
 # ─── Generate the nginx server block ────────────────────────────────────────
 # Written into the wildcard-included drop-in directory rather than edited into
