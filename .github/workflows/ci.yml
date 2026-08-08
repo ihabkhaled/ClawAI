@@ -14,102 +14,73 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Detect affected workspaces
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.affected.outputs.matrix }}
+      has_affected: ${{ steps.affected.outputs.has_affected }}
+      includes_chat: ${{ steps.affected.outputs.includes_chat }}
+      full: ${{ steps.affected.outputs.full }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Calculate affected matrix
+        id: affected
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="$PUSH_BASE_SHA"
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            base="$PR_BASE_SHA"
+          fi
+
+          full=false
+          if [ -z "$base" ] || [[ "$base" =~ ^0+$ ]] || ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
+            echo "Comparison base is unavailable; safely selecting every workspace."
+            full=true
+          elif ! git merge-base "$base" "$HEAD_SHA" >/dev/null 2>&1; then
+            echo "Comparison base has no merge-base with HEAD; safely selecting every workspace."
+            full=true
+          fi
+
+          if [ "$full" = true ]; then
+            result="$(node tools/affected/index.mjs ci-matrix --full)"
+          else
+            result="$(node tools/affected/index.mjs ci-matrix --base="$base" --head="$HEAD_SHA")"
+          fi
+
+          echo "matrix=$(jq -c '.matrix' <<<"$result")" >> "$GITHUB_OUTPUT"
+          echo "has_affected=$(jq -r '.hasAffected' <<<"$result")" >> "$GITHUB_OUTPUT"
+          echo "includes_chat=$(jq -r '.includesChat' <<<"$result")" >> "$GITHUB_OUTPUT"
+          echo "full=$(jq -r '.full' <<<"$result")" >> "$GITHUB_OUTPUT"
+          jq . <<<"$result"
+
   lint:
     name: Lint (${{ matrix.service }})
+    needs: changes
+    if: needs.changes.outputs.has_affected == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - service: auth
-            workspace: claw-auth-service
-            prisma: true
-          - service: chat
-            workspace: claw-chat-service
-            prisma: true
-          - service: connector
-            workspace: claw-connector-service
-            prisma: true
-          - service: routing
-            workspace: claw-routing-service
-            prisma: true
-          - service: memory
-            workspace: claw-memory-service
-            prisma: true
-          - service: file
-            workspace: claw-file-service
-            prisma: true
-          - service: ollama
-            workspace: claw-ollama-service
-            prisma: true
-          - service: audit
-            workspace: claw-audit-service
-            prisma: false
-          - service: image
-            workspace: claw-image-service
-            prisma: true
-          - service: file-generation
-            workspace: claw-file-generation-service
-            prisma: true
-          - service: workspace
-            workspace: claw-workspace-service
-            prisma: true
-          - service: agent
-            workspace: claw-agent-service
-            prisma: true
-          - service: research
-            workspace: claw-research-service
-            prisma: true
-          - service: llamacpp
-            workspace: claw-llamacpp-service
-            prisma: true
-          - service: payment
-            workspace: claw-payment-service
-            prisma: true
-          - service: client-logs
-            workspace: claw-client-logs-service
-            prisma: false
-          - service: server-logs
-            workspace: claw-server-logs-service
-            prisma: false
-          - service: health
-            workspace: claw-health-service
-            prisma: false
-          - service: frontend
-            workspace: claw-frontend
-            prisma: false
-          - service: shared-types
-            workspace: '@claw/shared-types'
-            prisma: false
-          - service: shared-constants
-            workspace: '@claw/shared-constants'
-            prisma: false
-          - service: shared-rabbitmq
-            workspace: '@claw/shared-rabbitmq'
-            prisma: false
-          - service: shared-auth
-            workspace: '@claw/shared-auth'
-            prisma: false
-          - service: shared-utilities
-            workspace: '@claw/shared-utilities'
-            prisma: false
-          - service: shared-entitlements
-            workspace: '@claw/shared-entitlements'
-            prisma: false
+      matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v7
-
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
-
       - name: Install dependencies
         run: npm ci --ignore-scripts
-
       - name: Link tsgo binary (@typescript/native-preview)
         run: npm rebuild @typescript/native-preview
-
       - name: Build shared packages
         run: |
           cd packages/shared-types && npx tsgo -p tsconfig.build.json
@@ -118,227 +89,58 @@ jobs:
           cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
           cd ../shared-auth && npx tsgo -p tsconfig.build.json
           cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
-
       - name: Generate Prisma client
         if: matrix.prisma == true
-        run: cd apps/claw-${{ matrix.service }}-service && npx prisma generate
-
+        run: npm run prisma:generate --workspace=${{ matrix.workspace }}
       - name: Lint
         run: npm run lint --workspace=${{ matrix.workspace }}
 
   typecheck:
     name: Typecheck (${{ matrix.service }})
+    needs: changes
+    if: needs.changes.outputs.has_affected == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - service: auth
-            workspace: claw-auth-service
-            prisma: true
-          - service: chat
-            workspace: claw-chat-service
-            prisma: true
-          - service: connector
-            workspace: claw-connector-service
-            prisma: true
-          - service: routing
-            workspace: claw-routing-service
-            prisma: true
-          - service: memory
-            workspace: claw-memory-service
-            prisma: true
-          - service: file
-            workspace: claw-file-service
-            prisma: true
-          - service: ollama
-            workspace: claw-ollama-service
-            prisma: true
-          - service: audit
-            workspace: claw-audit-service
-            prisma: false
-          - service: image
-            workspace: claw-image-service
-            prisma: true
-          - service: file-generation
-            workspace: claw-file-generation-service
-            prisma: true
-          - service: workspace
-            workspace: claw-workspace-service
-            prisma: true
-          - service: agent
-            workspace: claw-agent-service
-            prisma: true
-          - service: research
-            workspace: claw-research-service
-            prisma: true
-          - service: llamacpp
-            workspace: claw-llamacpp-service
-            prisma: true
-          - service: payment
-            workspace: claw-payment-service
-            prisma: true
-          - service: client-logs
-            workspace: claw-client-logs-service
-            prisma: false
-          - service: server-logs
-            workspace: claw-server-logs-service
-            prisma: false
-          - service: health
-            workspace: claw-health-service
-            prisma: false
-          - service: frontend
-            workspace: claw-frontend
-            prisma: false
-          - service: shared-types
-            workspace: '@claw/shared-types'
-            prisma: false
-          - service: shared-constants
-            workspace: '@claw/shared-constants'
-            prisma: false
-          - service: shared-rabbitmq
-            workspace: '@claw/shared-rabbitmq'
-            prisma: false
-          - service: shared-auth
-            workspace: '@claw/shared-auth'
-            prisma: false
-          - service: shared-utilities
-            workspace: '@claw/shared-utilities'
-            prisma: false
-          - service: shared-entitlements
-            workspace: '@claw/shared-entitlements'
-            prisma: false
+      matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v7
-
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Link tsgo binary (@typescript/native-preview)
-        run: npm rebuild @typescript/native-preview
-
+      - run: npm ci --ignore-scripts
+      - run: npm rebuild @typescript/native-preview
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npx tsgo -p tsconfig.build.json
-          cd ../shared-constants && npx tsgo -p tsconfig.build.json
-          cd ../shared-utilities && npx tsgo -p tsconfig.build.json
-          cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
-          cd ../shared-auth && npx tsgo -p tsconfig.build.json
-          cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
-
+          npm run build --workspace=@claw/shared-types
+          npm run build --workspace=@claw/shared-constants
+          npm run build --workspace=@claw/shared-utilities
+          npm run build --workspace=@claw/shared-rabbitmq
+          npm run build --workspace=@claw/shared-auth
+          npm run build --workspace=@claw/shared-entitlements
       - name: Generate Prisma client
         if: matrix.prisma == true
-        run: cd apps/claw-${{ matrix.service }}-service && npx prisma generate
-
-      - name: Typecheck
-        run: npm run typecheck --workspace=${{ matrix.workspace }}
+        run: npm run prisma:generate --workspace=${{ matrix.workspace }}
+      - run: npm run typecheck --workspace=${{ matrix.workspace }}
 
   test:
     name: Test (${{ matrix.service }})
+    needs: changes
+    if: needs.changes.outputs.has_affected == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - service: auth
-            workspace: claw-auth-service
-            prisma: true
-          - service: chat
-            workspace: claw-chat-service
-            prisma: true
-          - service: connector
-            workspace: claw-connector-service
-            prisma: true
-          - service: routing
-            workspace: claw-routing-service
-            prisma: true
-          - service: memory
-            workspace: claw-memory-service
-            prisma: true
-          - service: file
-            workspace: claw-file-service
-            prisma: true
-          - service: ollama
-            workspace: claw-ollama-service
-            prisma: true
-          - service: audit
-            workspace: claw-audit-service
-            prisma: false
-          - service: image
-            workspace: claw-image-service
-            prisma: true
-          - service: file-generation
-            workspace: claw-file-generation-service
-            prisma: true
-          - service: workspace
-            workspace: claw-workspace-service
-            prisma: true
-          - service: agent
-            workspace: claw-agent-service
-            prisma: true
-          - service: research
-            workspace: claw-research-service
-            prisma: true
-          - service: llamacpp
-            workspace: claw-llamacpp-service
-            prisma: true
-          - service: payment
-            workspace: claw-payment-service
-            prisma: true
-          - service: client-logs
-            workspace: claw-client-logs-service
-            prisma: false
-          - service: server-logs
-            workspace: claw-server-logs-service
-            prisma: false
-          - service: health
-            workspace: claw-health-service
-            prisma: false
-          - service: frontend
-            workspace: claw-frontend
-            prisma: false
-          - service: shared-types
-            workspace: '@claw/shared-types'
-            prisma: false
-          - service: shared-constants
-            workspace: '@claw/shared-constants'
-            prisma: false
-          - service: shared-rabbitmq
-            workspace: '@claw/shared-rabbitmq'
-            prisma: false
-          - service: shared-auth
-            workspace: '@claw/shared-auth'
-            prisma: false
-          - service: shared-utilities
-            workspace: '@claw/shared-utilities'
-            prisma: false
-          - service: shared-entitlements
-            workspace: '@claw/shared-entitlements'
-            prisma: false
+      matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
     env:
-      # vitest (claw-frontend) on Node v24 + tinypool 1.x exhausts the
-      # default ~4GB v8 heap during worker-pool teardown. All tests pass,
-      # but the post-run cleanup OOMs and the npm script exits 1. Bump
-      # the heap to 8GB for every test job — backend services unchanged
-      # (jest is well under 1GB) and only the frontend job actually
-      # benefits, but keeping it global avoids per-matrix divergence.
       NODE_OPTIONS: --max-old-space-size=8192
-      # Auth
       JWT_SECRET: this_is_a_test_secret_that_is_32chars_long
       ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-      # Infrastructure (fake — unit tests mock all connections)
       REDIS_URL: redis://localhost:6379
       RABBITMQ_URL: amqp://guest:guest@localhost:5672
       OLLAMA_BASE_URL: http://localhost:11434
-      # Inter-service URLs
       FILE_SERVICE_URL: http://localhost:4006
       CONNECTOR_SERVICE_URL: http://localhost:4003
-      # PostgreSQL — each service reads only its own var
       AUTH_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
       CHAT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
       CONNECTOR_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
@@ -356,78 +158,60 @@ jobs:
       LLAMACPP_DATA_PATH: /tmp/llamacpp-test
       PAYMENT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
       PAYMENT_SERVICE_URL: http://localhost:4018
-      # Test-only key. Distinct from ENCRYPTION_KEY so a test that asserts the
-      # two are separate cannot pass by accident.
       PAYMENT_TOKEN_ENCRYPTION_KEY: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
-      # Gateway credentials are intentionally ABSENT: CI must never reach a real
-      # payment endpoint. Adapter tests mock at the HTTP boundary instead.
-      # MongoDB
       AUDIT_MONGODB_URI: mongodb://localhost:27017/test
       CLIENT_LOGS_MONGODB_URI: mongodb://localhost:27017/test
       SERVER_LOGS_MONGODB_URI: mongodb://localhost:27017/test
-      # Workspace runtime gates (Phase E close-out, 2026-05-02)
-      # These all have Zod defaults; the explicit values here mirror prod and
-      # ensure the spec env-fixture types match without relying on defaults.
       WORKSPACE_SUGGESTION_FACTORY_RATE_PER_HOUR: '100'
       WEBHOOK_CONNECTOR_REQUESTS_PER_MINUTE: '60'
       AUTO_SUGGEST_INBOX_REPLY_CRON: '0 */15 * * * *'
       AUTO_SUGGEST_INBOX_REPLY_LOOKBACK_HOURS: '48'
     steps:
       - uses: actions/checkout@v7
-
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Link tsgo binary (@typescript/native-preview)
-        run: npm rebuild @typescript/native-preview
-
+      - run: npm ci --ignore-scripts
+      - run: npm rebuild @typescript/native-preview
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npx tsgo -p tsconfig.build.json
-          cd ../shared-constants && npx tsgo -p tsconfig.build.json
-          cd ../shared-utilities && npx tsgo -p tsconfig.build.json
-          cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
-          cd ../shared-auth && npx tsgo -p tsconfig.build.json
-          cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
-
+          npm run build --workspace=@claw/shared-types
+          npm run build --workspace=@claw/shared-constants
+          npm run build --workspace=@claw/shared-utilities
+          npm run build --workspace=@claw/shared-rabbitmq
+          npm run build --workspace=@claw/shared-auth
+          npm run build --workspace=@claw/shared-entitlements
       - name: Generate Prisma client
         if: matrix.prisma == true
-        run: cd apps/claw-${{ matrix.service }}-service && npx prisma generate
-
+        run: npm run prisma:generate --workspace=${{ matrix.workspace }}
       - name: Hoist vite to root (frontend hoisting fix)
         if: matrix.service == 'frontend'
         run: npm install --no-save vite
-
-      - name: Run tests
-        run: npm run test --workspace=${{ matrix.workspace }}
+      - run: npm run test --workspace=${{ matrix.workspace }}
 
   runtime-v2-coverage:
     name: Runtime V2 security coverage
+    needs: changes
+    if: needs.changes.outputs.includes_chat == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
-
       - name: Install dependencies
         run: npm ci --ignore-scripts
-
       - name: Generate chat Prisma client
         run: npm run prisma:generate --workspace=claw-chat-service
-
       - name: Enforce Runtime V2 security coverage
         run: npm run test:runtime-v2:coverage --workspace=claw-chat-service
 
   runtime-v2-redis:
     name: Runtime V2 Redis authority
+    needs: changes
+    if: needs.changes.outputs.includes_chat == 'true'
     runs-on: ubuntu-latest
     services:
       redis:
@@ -443,191 +227,110 @@ jobs:
       RUNTIME_V2_TEST_REDIS_URL: redis://127.0.0.1:6379/15
     steps:
       - uses: actions/checkout@v7
-
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
-
       - name: Install dependencies
         run: npm ci --ignore-scripts
-
       - name: Generate chat Prisma client
         run: npm run prisma:generate --workspace=claw-chat-service
-
       - name: Execute Runtime V2 Lua on Redis 7
         run: npm run test:runtime-v2:redis --workspace=claw-chat-service
 
   build:
     name: Build (${{ matrix.service }})
+    needs: [changes, lint, typecheck, test, runtime-v2-coverage, runtime-v2-redis]
+    if: >-
+      always() &&
+      needs.changes.result == 'success' &&
+      needs.changes.outputs.has_affected == 'true' &&
+      needs.lint.result == 'success' &&
+      needs.typecheck.result == 'success' &&
+      needs.test.result == 'success' &&
+      (needs.runtime-v2-coverage.result == 'success' || needs.runtime-v2-coverage.result == 'skipped') &&
+      (needs.runtime-v2-redis.result == 'success' || needs.runtime-v2-redis.result == 'skipped')
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test]
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - service: auth
-            workspace: claw-auth-service
-            prisma: true
-          - service: chat
-            workspace: claw-chat-service
-            prisma: true
-          - service: connector
-            workspace: claw-connector-service
-            prisma: true
-          - service: routing
-            workspace: claw-routing-service
-            prisma: true
-          - service: memory
-            workspace: claw-memory-service
-            prisma: true
-          - service: file
-            workspace: claw-file-service
-            prisma: true
-          - service: ollama
-            workspace: claw-ollama-service
-            prisma: true
-          - service: audit
-            workspace: claw-audit-service
-            prisma: false
-          - service: image
-            workspace: claw-image-service
-            prisma: true
-          - service: file-generation
-            workspace: claw-file-generation-service
-            prisma: true
-          - service: workspace
-            workspace: claw-workspace-service
-            prisma: true
-          - service: agent
-            workspace: claw-agent-service
-            prisma: true
-          - service: research
-            workspace: claw-research-service
-            prisma: true
-          - service: llamacpp
-            workspace: claw-llamacpp-service
-            prisma: true
-          - service: payment
-            workspace: claw-payment-service
-            prisma: true
-          - service: client-logs
-            workspace: claw-client-logs-service
-            prisma: false
-          - service: server-logs
-            workspace: claw-server-logs-service
-            prisma: false
-          - service: health
-            workspace: claw-health-service
-            prisma: false
-          - service: frontend
-            workspace: claw-frontend
-            prisma: false
-          - service: shared-types
-            workspace: '@claw/shared-types'
-            prisma: false
-          - service: shared-constants
-            workspace: '@claw/shared-constants'
-            prisma: false
-          - service: shared-rabbitmq
-            workspace: '@claw/shared-rabbitmq'
-            prisma: false
-          - service: shared-auth
-            workspace: '@claw/shared-auth'
-            prisma: false
-          - service: shared-utilities
-            workspace: '@claw/shared-utilities'
-            prisma: false
-          - service: shared-entitlements
-            workspace: '@claw/shared-entitlements'
-            prisma: false
+      matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
     env:
-      # next build (claw-frontend) hits the same v8-heap ceiling that
-      # the test job documents. Apply globally for parity — backend
-      # builds are small and don't notice.
       NODE_OPTIONS: --max-old-space-size=8192
     steps:
       - uses: actions/checkout@v7
-
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Link tsgo binary (@typescript/native-preview)
-        run: npm rebuild @typescript/native-preview
-
+      - run: npm ci --ignore-scripts
+      - run: npm rebuild @typescript/native-preview
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npx tsgo -p tsconfig.build.json
-          cd ../shared-constants && npx tsgo -p tsconfig.build.json
-          cd ../shared-utilities && npx tsgo -p tsconfig.build.json
-          cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
-          cd ../shared-auth && npx tsgo -p tsconfig.build.json
-          cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
-
+          npm run build --workspace=@claw/shared-types
+          npm run build --workspace=@claw/shared-constants
+          npm run build --workspace=@claw/shared-utilities
+          npm run build --workspace=@claw/shared-rabbitmq
+          npm run build --workspace=@claw/shared-auth
+          npm run build --workspace=@claw/shared-entitlements
       - name: Generate Prisma client
         if: matrix.prisma == true
-        run: cd apps/claw-${{ matrix.service }}-service && npx prisma generate
+        run: npm run prisma:generate --workspace=${{ matrix.workspace }}
+      - run: npm run build --workspace=${{ matrix.workspace }}
 
-      - name: Build
-        run: npm run build --workspace=${{ matrix.workspace }}
-
-  # The Coding Agent is a submodule with its own repository, which runs its own
-  # lint / typecheck / test / bundle / VSIX gates. Re-running those here would
-  # duplicate them and require checking out the extension's large test fixtures.
-  #
-  # What the PARENT uniquely owns is the pointer itself. The failure mode this
-  # catches is a submodule pointer committed here that references an extension
-  # commit which was never pushed: the parent looks green locally, and every
-  # fresh clone or CI checkout then fails with
-  # "fatal: remote error: upload-pack: not our ref". That is precisely the
-  # ordering rule "update the parent submodule pointer only after the extension
-  # commit is pushed and verified" — enforced instead of merely documented.
   submodule-integrity:
     name: Submodule pointer integrity (coding-agent)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-
-      - name: Resolve recorded pointer
-        id: pointer
+      - name: Verify recorded pointer exists remotely
         shell: bash
         run: |
+          set -euo pipefail
           sha="$(git ls-tree HEAD apps/claw-coding-agent | awk '{print $3}')"
-          if [ -z "${sha}" ]; then
+          if [ -z "$sha" ]; then
             echo "::error::No gitlink recorded for apps/claw-coding-agent"
             exit 1
           fi
-          echo "sha=${sha}" >> "${GITHUB_OUTPUT}"
-          echo "Recorded submodule pointer: ${sha}"
+          git init -q "${RUNNER_TEMP}/submodule"
+          git -C "${RUNNER_TEMP}/submodule" remote add origin https://github.com/ihabkhaled/ClawAI-Coding-Agent.git
+          git -C "${RUNNER_TEMP}/submodule" fetch -q --depth=1 origin "$sha"
 
-      - name: Verify the pointer was pushed and is on the default branch
+  ci-success:
+    name: CI success
+    if: always()
+    needs:
+      [
+        changes,
+        lint,
+        typecheck,
+        test,
+        runtime-v2-coverage,
+        runtime-v2-redis,
+        build,
+        submodule-integrity,
+      ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every applicable gate
         env:
-          POINTER: ${{ steps.pointer.outputs.sha }}
-          URL: https://github.com/ihabkhaled/ClawAI-Coding-Agent.git
-        shell: bash
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+          HAS_AFFECTED: ${{ needs.changes.outputs.has_affected }}
+          INCLUDES_CHAT: ${{ needs.changes.outputs.includes_chat }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          RUNTIME_COVERAGE_RESULT: ${{ needs.runtime-v2-coverage.result }}
+          RUNTIME_REDIS_RESULT: ${{ needs.runtime-v2-redis.result }}
         run: |
-          # Fetching the exact object proves it was pushed. Without this, a
-          # pointer to a local-only commit stays invisible until someone clones.
-          mkdir -p "${RUNNER_TEMP}/submodule" && cd "${RUNNER_TEMP}/submodule"
-          git init -q
-          git remote add origin "${URL}"
-          if ! git fetch -q --depth=1 origin "${POINTER}"; then
-            echo "::error::Submodule pointer ${POINTER} is not present on ${URL}."
-            echo "::error::Push the extension commit before updating the parent pointer."
+          for result in $RESULTS; do
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
+              echo "A required CI job ended with: $result"
+              exit 1
+            fi
+          done
+          if [ "$HAS_AFFECTED" = "true" ] && [ "$BUILD_RESULT" != "success" ]; then
+            echo "Affected workspaces exist, but the build gate did not succeed."
             exit 1
           fi
-          echo "Pointer ${POINTER} exists on the remote."
-
-          # Reachable from the default branch => not an orphan or a
-          # force-push casualty.
-          git fetch -q --depth=100 origin main
-          if git merge-base --is-ancestor "${POINTER}" origin/main; then
-            echo "Pointer is an ancestor of origin/main."
-          else
-            echo "::warning::Pointer ${POINTER} is not an ancestor of the extension's main within the last 100 commits. It exists, but verify it is not orphaned."
+          if [ "$INCLUDES_CHAT" = "true" ] && { [ "$RUNTIME_COVERAGE_RESULT" != "success" ] || [ "$RUNTIME_REDIS_RESULT" != "success" ]; }; then
+            echo "Chat is affected, but a Runtime V2 security gate did not succeed."
+            exit 1
           fi

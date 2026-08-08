@@ -41,6 +41,10 @@ function changedFiles(base, stagedOnly) {
   return [...new Set(parts)].sort();
 }
 
+function changedFilesBetween(base, head) {
+  return gitLines(['diff', '--name-only', `${base}...${head}`]).sort();
+}
+
 /** Reverse dependency map: package -> [workspaces depending on it]. */
 function reverseDeps(workspaces) {
   const rev = {};
@@ -53,14 +57,8 @@ function reverseDeps(workspaces) {
   return rev;
 }
 
-export function computeAffected(base, stagedOnly = false) {
-  const manifests = buildManifests();
-  const workspaces = manifests.workspaces.workspaces;
-  const files = changedFiles(base, stagedOnly);
-  const byDir = {};
-  for (const ws of workspaces) byDir[ws.dir] = ws;
+export function computeAffectedFromFiles(files, workspaces) {
   const rev = reverseDeps(workspaces);
-  const nameByDir = Object.fromEntries(workspaces.map((w) => [w.dir, w.name]));
 
   const affected = new Map(); // name -> reason
   const add = (name, reason) => {
@@ -79,14 +77,27 @@ export function computeAffected(base, stagedOnly = false) {
       add(owner.name, `direct edit: ${f}`);
       // Shared package changed → every dependent workspace is affected.
       if (owner.type === 'shared-package') {
-        for (const dependent of rev[owner.name] ?? []) {
-          add(dependent, `depends on changed package ${owner.name}`);
+        const queue = [owner.name];
+        const visited = new Set(queue);
+        while (queue.length > 0) {
+          const dependency = queue.shift();
+          for (const dependent of rev[dependency] ?? []) {
+            add(dependent, `depends on changed package ${owner.name}`);
+            if (!visited.has(dependent)) {
+              visited.add(dependent);
+              queue.push(dependent);
+            }
+          }
         }
       }
       continue;
     }
     // Root/infra changes → broad invariant validation.
-    if (/^(package\.json|package-lock\.json|eslint|tsconfig|\.github\/|docker\/|infra\/|tools\/|rules\/|skills\/|context\/|\.env)/.test(f)) {
+    if (
+      /^(package\.json|package-lock\.json|\.npmrc|[^/]+\.config\.(?:js|mjs|cjs|ts)|eslint|tsconfig|\.github\/|docker\/|infra\/|tools\/|rules\/|skills\/|context\/|\.env)/.test(
+        f,
+      )
+    ) {
       rootInvariant = true;
       add('__root__', `root/infra/governance change: ${f}`);
     }
@@ -97,7 +108,36 @@ export function computeAffected(base, stagedOnly = false) {
     .map(([name, reason]) => ({ name, reason }))
     .sort((a, b) => cmp(a.name, b.name));
 
-  return { base, changedFileCount: files.length, rootInvariant, affected: result, nameByDir };
+  return { changedFileCount: files.length, rootInvariant, affected: result };
+}
+
+export function computeAffected(base, stagedOnly = false, head) {
+  const workspaces = buildManifests().workspaces.workspaces;
+  const files = head ? changedFilesBetween(base, head) : changedFiles(base, stagedOnly);
+  return { base, ...computeAffectedFromFiles(files, workspaces) };
+}
+
+function serviceName(workspace) {
+  if (workspace.name === 'claw-frontend') return 'frontend';
+  if (workspace.name.startsWith('@claw/')) return workspace.name.slice('@claw/'.length);
+  return workspace.name.replace(/^claw-/, '').replace(/-service$/, '');
+}
+
+export function createCiMatrix(result, workspaces, full = false) {
+  const selected = new Set(
+    full || result.rootInvariant
+      ? workspaces.map(({ name }) => name)
+      : result.affected.map(({ name }) => name),
+  );
+  return {
+    include: workspaces
+      .filter(({ name }) => selected.has(name))
+      .map((workspace) => ({
+        prisma: workspace.scripts.includes('prisma:generate'),
+        service: serviceName(workspace),
+        workspace: workspace.name,
+      })),
+  };
 }
 
 function runGate(script, base, expandRoot, stagedOnly) {
@@ -113,7 +153,9 @@ function runGate(script, base, expandRoot, stagedOnly) {
   // unrelated in-flight work, while CI still does the full broad pass.
   const list =
     rootInvariant && expandRoot
-      ? buildManifests().workspaces.workspaces.map((w) => w.name).filter((name) => scriptExists(name, script))
+      ? buildManifests()
+          .workspaces.workspaces.map((w) => w.name)
+          .filter((name) => scriptExists(name, script))
       : names;
   const scope = rootInvariant
     ? expandRoot
@@ -155,9 +197,30 @@ function main() {
   const base = baseArg ? baseArg.split('=')[1] : 'main';
   const expandRoot = process.argv.includes('--all-on-root');
   const stagedOnly = process.argv.includes('--staged');
+  const headArg = process.argv.find((a) => a.startsWith('--head='));
+  const head = headArg ? headArg.split('=')[1] : undefined;
+  const full = process.argv.includes('--full');
+  if (cmdArg === 'ci-matrix') {
+    const workspaces = buildManifests().workspaces.workspaces;
+    const result = full
+      ? { affected: [], changedFileCount: 0, rootInvariant: true }
+      : computeAffected(base, false, head);
+    const matrix = createCiMatrix(result, workspaces, full);
+    process.stdout.write(
+      JSON.stringify({
+        full: full || result.rootInvariant,
+        hasAffected: matrix.include.length > 0,
+        includesChat: matrix.include.some(({ workspace }) => workspace === 'claw-chat-service'),
+        matrix,
+      }),
+    );
+    return;
+  }
   if (cmdArg === 'list') {
     const { affected, rootInvariant, changedFileCount } = computeAffected(base, stagedOnly);
-    console.log(`Affected vs ${base} (${changedFileCount} changed files)${rootInvariant ? ' [root invariant]' : ''}:`);
+    console.log(
+      `Affected vs ${base} (${changedFileCount} changed files)${rootInvariant ? ' [root invariant]' : ''}:`,
+    );
     if (affected.length === 0 && !rootInvariant) console.log('  (none)');
     for (const a of affected) console.log(`  ${a.name} — ${a.reason}`);
     return;
