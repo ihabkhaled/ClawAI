@@ -6,6 +6,7 @@ vi.mock('@/lib/site/site-config', () => ({
 
 describe('buildRootMetadata', () => {
   it('publishes a branded large-image preview for every application route', async () => {
+    vi.stubEnv('NEXT_PUBLIC_ADSENSE_CLIENT_ID', 'ca-pub-2415314275784926');
     const { buildRootMetadata } = await import('@/lib/seo/root-metadata');
     const metadata = buildRootMetadata();
 
@@ -17,7 +18,7 @@ describe('buildRootMetadata', () => {
         description: expect.any(String),
         images: [
           expect.objectContaining({
-            url: '/opengraph-image',
+            url: '/clawai-social-preview.png',
             width: 1200,
             height: 630,
             alt: expect.stringContaining('ClawAI'),
@@ -26,7 +27,13 @@ describe('buildRootMetadata', () => {
       }),
     );
     expect(metadata.twitter).toEqual(
-      expect.objectContaining({ card: 'summary_large_image', images: ['/opengraph-image'] }),
+      expect.objectContaining({
+        card: 'summary_large_image',
+        images: ['/clawai-social-preview.png'],
+      }),
     );
+    expect(metadata.other).toEqual({
+      'google-adsense-account': 'ca-pub-2415314275784926',
+    });
   });
 });

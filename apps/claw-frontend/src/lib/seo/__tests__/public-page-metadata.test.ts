@@ -44,7 +44,7 @@ describe('buildPublicPageMetadata', () => {
         url: 'https://claw.example/en/features',
         images: [
           expect.objectContaining({
-            url: 'https://claw.example/opengraph-image',
+            url: 'https://claw.example/clawai-social-preview.png',
             alt: 'Routing, context, and orchestration features',
           }),
         ],

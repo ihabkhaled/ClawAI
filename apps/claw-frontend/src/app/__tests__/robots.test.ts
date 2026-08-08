@@ -6,6 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const DYNAMIC_IMPORT_TIMEOUT_MS = 20_000;
 
 describe('robots', () => {
+  it('is rendered at request time so production runtime configuration controls crawling', async () => {
+    const route = await import('../robots');
+    expect(route.dynamic).toBe('force-dynamic');
+  });
+
   beforeEach(() => {
     vi.resetModules();
   });

@@ -8,6 +8,11 @@ vi.mock('@/lib/chat-shares/public-chat-share.service', () => ({
 }));
 
 describe('sitemap index route', () => {
+  it('is rendered at request time so production runtime configuration controls discovery', async () => {
+    const route = await import('../sitemap.xml/route');
+    expect(route.dynamic).toBe('force-dynamic');
+  });
+
   beforeEach(() => {
     vi.resetModules();
     mockCountIndexableChatShares.mockReset();

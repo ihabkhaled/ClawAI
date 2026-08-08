@@ -9,6 +9,9 @@ import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
 import { getIndexablePagesForLocale } from '@/utilities/content-registry.utility';
 import { buildSitemapIndexXml } from '@/utilities/xml.utility';
 
+// Discovery depends on runtime SITE_URL and live public-share counts.
+export const dynamic = 'force-dynamic';
+
 export async function GET(): Promise<Response> {
   if (shouldNoIndexEverything()) {
     return new Response(buildSitemapIndexXml([]), {
