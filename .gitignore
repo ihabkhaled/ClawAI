@@ -96,6 +96,7 @@ qa-run.log
 apps/claw-frontend/scripts/*
 !apps/claw-frontend/scripts/run-vitest.cjs
 !apps/claw-frontend/scripts/clear-cache.mjs
+!apps/claw-frontend/scripts/typecheck-ts7.mjs
 # ESLint cache
 .eslintcache
 

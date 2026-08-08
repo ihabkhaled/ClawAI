@@ -62,7 +62,7 @@ describe('Japanese dictionary completeness', () => {
     const japanese = flatten(ja);
 
     expect(Object.keys(japanese).sort()).toEqual(Object.keys(english).sort());
-    expect(Object.keys(japanese)).toHaveLength(3948);
+    expect(Object.keys(japanese)).toHaveLength(3950);
     expect(source).not.toContain("from './en'");
     expect(source).not.toContain('...en');
     expect(source).not.toContain('ã');
