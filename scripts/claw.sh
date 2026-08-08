@@ -161,6 +161,63 @@ ensure_network() {
   fi
 }
 
+# Public TLS (Let's Encrypt) has to survive a rebuild.
+#
+# The server block in infra/nginx/public-tls/ points at this host's
+# /etc/letsencrypt paths, so it is generated rather than committed. That makes
+# it the one piece of the TLS setup living only in the working tree: a fresh
+# clone, a `git clean`, or a restored backup wipes it while the certificate
+# itself sits untouched in /etc/letsencrypt. nginx then falls through to the
+# default mkcert block and serves a certificate no browser trusts.
+#
+# That failure is silent. Nothing is down, no container is unhealthy, and no
+# service logs a line about it — the first report comes from a visitor staring
+# at a security warning. So put the block back from the certificate already on
+# disk before anything starts, and say so out loud when it cannot be done.
+#
+# Never fatal: a laptop on claw.local has no public certificate and must still
+# come up normally.
+ensure_public_tls() {
+  local hostname_value dropin
+
+  hostname_value="${CLAW_HOSTNAME:-}"
+  if [ -z "$hostname_value" ] && [ -f "$PROJECT_ROOT/.env" ]; then
+    hostname_value="$(grep -E '^CLAW_HOSTNAME=' "$PROJECT_ROOT/.env" | tail -1 | cut -d= -f2- | tr -d '\r')"
+  fi
+  if [ -z "$hostname_value" ]; then
+    return 0
+  fi
+
+  # The same names install-letsencrypt.sh refuses to send to a public CA. A
+  # laptop is a supported configuration, not a warning to print on every start.
+  case "$hostname_value" in
+    localhost|*.localhost|*.local|*.internal|*.lan|*.home|*.corp|*.test|*.example|*.invalid)
+      return 0 ;;
+  esac
+  if [[ "$hostname_value" != *.* ]] || [[ "$hostname_value" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+    return 0
+  fi
+
+  dropin="$PROJECT_ROOT/infra/nginx/public-tls/$hostname_value.conf"
+  if [ -f "$dropin" ]; then
+    return 0
+  fi
+
+  echo "Public TLS block for $hostname_value is missing — restoring it from the certificate on disk..."
+  if bash "$SCRIPT_DIR/install-letsencrypt.sh" --restore-only; then
+    echo "Public TLS restored for $hostname_value."
+  else
+    echo "" >&2
+    echo "WARNING: could not restore public TLS for $hostname_value." >&2
+    echo "         nginx will serve the mkcert certificate, which no browser trusts" >&2
+    echo "         on a public hostname. The stack still runs; visitors get a" >&2
+    echo "         certificate warning until this is fixed:" >&2
+    echo "           bash scripts/install-letsencrypt.sh" >&2
+    echo "" >&2
+  fi
+  return 0
+}
+
 # Preflight checks for any `up`-style command. Catches the two most common
 # server-side failures BEFORE compose runs and burns the user 60s of pointless
 # container starts that crash with cryptic messages:
@@ -243,6 +300,7 @@ case "$1" in
       echo "  Configure a provider (Ollama API key, OpenAI, Gemini, ...) in the Connectors UI."
       echo "  Enable local models later with:  ./scripts/claw.sh --local-ai up"
     fi
+    ensure_public_tls
     echo "All services started."
     ;;
   down)
@@ -329,6 +387,7 @@ case "$1" in
     echo "Starting backend + frontend services ($MODE mode, gpu=$GPU_VENDOR)..."
     # shellcheck disable=SC2086
     docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d
+    ensure_public_tls
     ;;
   services:down)
     SVC_FLAGS=$(build_svc_compose_flags)
@@ -352,6 +411,7 @@ case "$1" in
     echo "Starting backend + frontend services..."
     # shellcheck disable=SC2086
     docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d --no-build
+    ensure_public_tls
     ;;
   ollama:up)
     # Explicit request for the local runtime — always activate the profile,
