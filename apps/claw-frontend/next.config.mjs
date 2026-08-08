@@ -26,10 +26,10 @@ const nextConfig = {
   // navigation, producing an "infinite loading" UX.
   // localhost stays in the list so dev access via either host works.
   allowedDevOrigins: devOrigins,
-  // The `typescript` dependency is aliased to `@typescript/native-preview`
-  // (tsgo, TS 7), which ships the tsgo CLI but does NOT expose the TypeScript
+  // The `typescript` dependency is aliased to `the TypeScript 7 npm compiler`
+  // (the TypeScript 7 compiler, TS 7), which ships the the TypeScript 7 compiler CLI but does NOT expose the TypeScript
   // compiler API Next's built-in type-check needs. SWC handles the TS → JS
-  // transpile during the build; `npm run typecheck` (tsgo --noEmit) enforces
+  // transpile during the build; `npm run typecheck` (the TypeScript 7 compiler --noEmit) enforces
   // type safety separately, so we skip Next's type-check here.
   typescript: {
     ignoreBuildErrors: true,

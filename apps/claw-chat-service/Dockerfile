@@ -1,12 +1,12 @@
 FROM node:26-bookworm-slim AS base
-# Debian base (not Alpine) — @typescript/native-preview ships glibc-linked
-# binaries with no musl variant. Alpine would fail to load tsgo.
+# Debian base (not Alpine) — the TypeScript 7 npm compiler ships glibc-linked
+# binaries with no musl variant. Alpine would fail to load the TypeScript 7 compiler.
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/apps/claw-chat-service
 
 FROM base AS deps
-COPY package.json /app/package.json
+COPY package.json /app/package.json\nCOPY tools/typescript/ /app/tools/typescript/
 COPY .npmrc /app/.npmrc
 COPY packages/ /app/packages/
 COPY apps/claw-chat-service/package.json ./package.json
@@ -15,14 +15,14 @@ RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-chat-service &&
 FROM base AS builder
 COPY --from=deps /app /app
 COPY apps/claw-chat-service/ .
-RUN cd /app/packages/shared-types && npx tsgo \
- && cd /app/packages/shared-constants && npx tsgo \
- && cd /app/packages/shared-utilities && npx tsgo \
- && cd /app/packages/shared-rabbitmq && npx tsgo \
- && cd /app/packages/shared-auth && npx tsgo \
- && cd /app/packages/shared-entitlements && npx tsgo
+RUN cd /app/packages/shared-types && npm run build \
+ && cd /app/packages/shared-constants && npm run build \
+ && cd /app/packages/shared-utilities && npm run build \
+ && cd /app/packages/shared-rabbitmq && npm run build \
+ && cd /app/packages/shared-auth && npm run build \
+ && cd /app/packages/shared-entitlements && npm run build
 RUN npx prisma generate
-# npm run build = tsgo -p tsconfig.build.json && node scripts/rewrite-paths.mjs dist && node scripts/copy-assets.mjs
+# npm run build = the TypeScript 7 compiler -p tsconfig.build.json && node scripts/rewrite-paths.mjs dist && node scripts/copy-assets.mjs
 RUN npm run build
 RUN mkdir -p dist/generated && cp -r src/generated/prisma dist/generated/prisma
 

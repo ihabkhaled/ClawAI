@@ -79,16 +79,16 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci --ignore-scripts
-      - name: Link tsgo binary (@typescript/native-preview)
-        run: npm rebuild @typescript/native-preview
+      - name: Verify TypeScript 7 compiler
+        run: node tools/typescript/run-ts7.mjs --version
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npx tsgo -p tsconfig.build.json
-          cd ../shared-constants && npx tsgo -p tsconfig.build.json
-          cd ../shared-utilities && npx tsgo -p tsconfig.build.json
-          cd ../shared-rabbitmq && npx tsgo -p tsconfig.build.json
-          cd ../shared-auth && npx tsgo -p tsconfig.build.json
-          cd ../shared-entitlements && npx tsgo -p tsconfig.build.json
+          cd packages/shared-types && npm run build
+          cd ../shared-constants && npm run build
+          cd ../shared-utilities && npm run build
+          cd ../shared-rabbitmq && npm run build
+          cd ../shared-auth && npm run build
+          cd ../shared-entitlements && npm run build
       - name: Generate Prisma client
         if: matrix.prisma == true
         run: npm run prisma:generate --workspace=${{ matrix.workspace }}
@@ -110,7 +110,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npm rebuild @typescript/native-preview
+      - run: node tools/typescript/run-ts7.mjs --version
       - name: Build shared packages
         run: |
           npm run build --workspace=@claw/shared-types
@@ -173,7 +173,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npm rebuild @typescript/native-preview
+      - run: node tools/typescript/run-ts7.mjs --version
       - name: Build shared packages
         run: |
           npm run build --workspace=@claw/shared-types
@@ -263,7 +263,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npm rebuild @typescript/native-preview
+      - run: node tools/typescript/run-ts7.mjs --version
       - name: Build shared packages
         run: |
           npm run build --workspace=@claw/shared-types

@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import { repoPath } from '../lib/repo.mjs';
 
 const SHARED_PACKAGE_PREFIX = '@claw/shared-';
-const BUILD_COMMAND_PATTERN = /(?:npx tsgo|npm run build --workspace=)/u;
+const BUILD_COMMAND_PATTERN = /npm run build(?: --workspace=)?/u;
 const SHARED_PACKAGE_PATTERN = /(?:packages\/|\.\.\/|@claw\/)(shared-[a-z-]+)/gu;
 
 function listDockerfiles(directory) {

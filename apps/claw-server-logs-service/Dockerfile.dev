@@ -1,28 +1,28 @@
 FROM node:26-bookworm-slim
-# Debian base (not Alpine) — @typescript/native-preview ships glibc-linked
-# binaries with no musl variant. Alpine would fail to load tsgo.
+# Debian base (not Alpine) — the TypeScript 7 npm compiler ships glibc-linked
+# binaries with no musl variant. Alpine would fail to load the TypeScript 7 compiler.
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy entire monorepo structure for workspace resolution
-COPY package.json ./package.json
+COPY package.json ./package.json\nCOPY tools/typescript/ ./tools/typescript/
 COPY .npmrc ./.npmrc
 COPY packages/ ./packages/
 COPY apps/claw-server-logs-service/ ./apps/claw-server-logs-service/
 
 # Install workspace deps FIRST so all @types/* are hoisted at root AND all
 # @claw/* workspace packages get symlinked into /app/node_modules. Also pulls
-# @typescript/native-preview-linux-x64 (glibc binary) via the typescript alias.
+# the TypeScript 7 npm compiler-linux-x64 (glibc binary) via the typescript alias.
 WORKDIR /app
 RUN npm install --ignore-scripts
 
 # Compile shared packages with workspace-hoisted types available
-RUN cd packages/shared-types && npx tsgo
-RUN cd packages/shared-constants && npx tsgo
-RUN cd packages/shared-utilities && npx tsgo
-RUN cd packages/shared-rabbitmq && npx tsgo
-RUN cd packages/shared-auth && npx tsgo
+RUN cd packages/shared-types && npm run build
+RUN cd packages/shared-constants && npm run build
+RUN cd packages/shared-utilities && npm run build
+RUN cd packages/shared-rabbitmq && npm run build
+RUN cd packages/shared-auth && npm run build
 
 WORKDIR /app/apps/claw-server-logs-service
 RUN chmod +x docker-entrypoint.dev.sh

@@ -10,7 +10,7 @@ WORKDIR /app
 # Install dependencies from the monorepo root so npm resolves @claw/* to the
 # local workspaces instead of the public registry.
 FROM base AS deps
-COPY package.json ./package.json
+COPY package.json ./package.json\nCOPY tools/typescript/ ./tools/typescript/
 COPY package-lock.json ./package-lock.json
 COPY .npmrc ./.npmrc
 COPY packages/ ./packages/
@@ -30,8 +30,8 @@ COPY apps/claw-frontend/ ./apps/claw-frontend/
 
 # @claw/shared-types resolves through its `main`/`types` fields to dist/, which
 # is gitignored, so it has to be compiled before Next traces the imports.
-RUN cd /app/packages/shared-types && npx tsgo \
- && cd /app/packages/shared-entitlements && npx tsgo
+RUN cd /app/packages/shared-types && npm run build \
+ && cd /app/packages/shared-entitlements && npm run build
 
 WORKDIR /app/apps/claw-frontend
 

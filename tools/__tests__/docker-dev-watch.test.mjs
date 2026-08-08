@@ -109,7 +109,7 @@ test('development frontend installs its local workspace dependency from the buil
     assert.notEqual(copyIndex, -1, `missing workspace build input: ${requiredCopy}`);
     assert.ok(copyIndex < installIndex, `${requiredCopy} must run before npm install`);
   }
-  assert.match(source, /^RUN cd packages\/shared-types && npx tsgo$/mu);
+  assert.match(source, /^RUN cd packages\/shared-types && npm run build$/mu);
 
   const frontendWorkdirIndex = source.indexOf('WORKDIR /app/apps/claw-frontend');
   assert.ok(installIndex < frontendWorkdirIndex, 'enter the frontend workspace after installation');
@@ -126,6 +126,6 @@ test('research development image compiles shared entitlements before startup', (
     'utf8',
   );
 
-  assert.match(developmentSource, /^RUN cd packages\/shared-entitlements && npx tsgo$/mu);
-  assert.match(productionSource, /cd \/app\/packages\/shared-entitlements && npx tsgo/u);
+  assert.match(developmentSource, /^RUN cd packages\/shared-entitlements && npm run build$/mu);
+  assert.match(productionSource, /cd \/app\/packages\/shared-entitlements && npm run build/u);
 });

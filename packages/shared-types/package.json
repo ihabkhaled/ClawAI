@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "typecheck": "tsgo --noEmit",
-    "build": "tsgo -p tsconfig.build.json",
+    "typecheck": "node ../../tools/typescript/run-ts7.mjs --noEmit",
+    "build": "node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json",
     "lint": "eslint src/ --concurrency=1",
     "lint:fix": "eslint src/ --fix",
     "test": "jest --passWithNoTests",
@@ -15,7 +15,6 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@types/jest": "^30.0.0",
-    "@typescript/native-preview": "^7.0.0-dev.20260707.2",
     "eslint": "^10.8.1",
     "eslint-plugin-unicorn": "^65.0.0",
     "jest": "^30.4.2",

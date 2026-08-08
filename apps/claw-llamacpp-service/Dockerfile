@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 WORKDIR /app/apps/claw-llamacpp-service
 
 FROM base AS deps
-COPY package.json /app/package.json
+COPY package.json /app/package.json\nCOPY tools/typescript/ /app/tools/typescript/
 COPY .npmrc /app/.npmrc
 COPY packages/ /app/packages/
 COPY apps/claw-llamacpp-service/package.json ./package.json
@@ -19,12 +19,12 @@ RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-llamacpp-servic
 FROM base AS builder
 COPY --from=deps /app /app
 COPY apps/claw-llamacpp-service/ .
-RUN cd /app/packages/shared-types && npx tsgo \
- && cd /app/packages/shared-constants && npx tsgo \
- && cd /app/packages/shared-utilities && npx tsgo \
- && cd /app/packages/shared-rabbitmq && npx tsgo \
- && cd /app/packages/shared-auth && npx tsgo \
- && cd /app/packages/shared-entitlements && npx tsgo
+RUN cd /app/packages/shared-types && npm run build \
+ && cd /app/packages/shared-constants && npm run build \
+ && cd /app/packages/shared-utilities && npm run build \
+ && cd /app/packages/shared-rabbitmq && npm run build \
+ && cd /app/packages/shared-auth && npm run build \
+ && cd /app/packages/shared-entitlements && npm run build
 RUN npx prisma generate
 RUN npm run build
 RUN mkdir -p dist/generated && cp -r src/generated/prisma dist/generated/prisma
