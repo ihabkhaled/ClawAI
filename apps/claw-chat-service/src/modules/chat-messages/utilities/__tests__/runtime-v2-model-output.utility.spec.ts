@@ -1,15 +1,43 @@
 import { isUnfulfilledIntent, parseRuntimeV2ModelOutput } from '../runtime-v2-model-output.utility';
 
-const definitions = [
+const fileDefinition = {
+  schemaVersion: '2.0' as const,
+  name: 'workspace.files',
+  version: '2.0.0',
+  description: 'Bounded workspace discovery.',
+  operations: ['list', 'read', 'search'],
+  riskClasses: ['inspect' as const],
+  targetIds: ['target:workspace'],
+  inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+};
+
+const definitions = [fileDefinition];
+
+const targetArgumentDefinitions = [
   {
-    schemaVersion: '2.0' as const,
-    name: 'workspace.files',
-    version: '2.0.0',
-    description: 'Bounded workspace discovery.',
-    operations: ['list', 'read', 'search'],
-    riskClasses: ['inspect' as const],
-    targetIds: ['target:workspace'],
-    inputSchema: {},
+    ...fileDefinition,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string' },
+        rootKey: { type: 'string' },
+        targetId: { type: 'string' },
+      },
+      required: ['targetId'],
+      additionalProperties: false,
+    },
+  },
+];
+
+const patternTargetDefinitions = [
+  {
+    ...fileDefinition,
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      patternProperties: { '^targetId$': { type: 'string' } },
+      additionalProperties: false,
+    },
   },
 ];
 
@@ -21,6 +49,20 @@ const toolRequest = (operation: string, path: string): string =>
     operation,
     arguments: { rootKey: 'workspace-1', path },
     targetId: 'target:workspace',
+  });
+
+const nestedTargetRequest = (nestedTarget: unknown, outerTarget?: unknown): string =>
+  JSON.stringify({
+    kind: 'tool',
+    toolName: 'workspace.files',
+    toolVersion: '2.0.0',
+    operation: 'read',
+    arguments: {
+      rootKey: 'workspace-1',
+      path: 'docs/16-quality-engineering/coding-agent-lab/password-reset-notes.md',
+      targetId: nestedTarget,
+    },
+    ...(outerTarget === undefined ? {} : { targetId: outerTarget }),
   });
 
 describe('parseRuntimeV2ModelOutput', () => {
@@ -153,6 +195,103 @@ describe('parseRuntimeV2ModelOutput', () => {
     expect(() => parseRuntimeV2ModelOutput(rogue, definitions)).toThrow(
       'Model requested a tool outside the admitted tool catalog',
     );
+  });
+});
+
+describe('parseRuntimeV2ModelOutput nested target compatibility', () => {
+  it('canonicalizes the live nested-only target request without a repair turn', () => {
+    const output = parseRuntimeV2ModelOutput(nestedTargetRequest('target:workspace'), definitions);
+
+    expect(output).toEqual({
+      kind: 'tool',
+      toolName: 'workspace.files',
+      toolVersion: '2.0.0',
+      operation: 'read',
+      arguments: {
+        rootKey: 'workspace-1',
+        path: 'docs/16-quality-engineering/coding-agent-lab/password-reset-notes.md',
+      },
+      targetId: 'target:workspace',
+    });
+  });
+
+  it('strips an equal nested duplicate from a canonical request', () => {
+    const output = parseRuntimeV2ModelOutput(
+      nestedTargetRequest('target:workspace', 'target:workspace'),
+      definitions,
+    );
+
+    expect(output.kind).toBe('tool');
+    if (output.kind !== 'tool') throw new Error('expected a tool request');
+    expect(output.arguments).not.toHaveProperty('targetId');
+    expect(output.targetId).toBe('target:workspace');
+  });
+
+  it('rejects conflicting outer and nested targets without choosing either', () => {
+    expect(() =>
+      parseRuntimeV2ModelOutput(
+        nestedTargetRequest('target:production-db', 'target:workspace'),
+        definitions,
+      ),
+    ).toThrow('Model supplied conflicting targetId values');
+  });
+
+  it('still rejects a lifted target outside the admitted catalog', () => {
+    expect(() =>
+      parseRuntimeV2ModelOutput(nestedTargetRequest('target:production-db'), definitions),
+    ).toThrow('Model requested a tool outside the admitted tool catalog');
+  });
+
+  it.each([42, null, { value: 'target:workspace' }])(
+    'still rejects a malformed nested target: %p',
+    (targetId) => {
+      expect(() => parseRuntimeV2ModelOutput(nestedTargetRequest(targetId), definitions)).toThrow();
+    },
+  );
+
+  it('still rejects a request with no target in either location', () => {
+    const request = JSON.stringify({
+      kind: 'tool',
+      toolName: 'workspace.files',
+      toolVersion: '2.0.0',
+      operation: 'read',
+      arguments: { rootKey: 'workspace-1', path: 'README.md' },
+    });
+
+    expect(() => parseRuntimeV2ModelOutput(request, definitions)).toThrow();
+  });
+
+  it('preserves a targetId that belongs to the admitted tool input schema', () => {
+    const output = parseRuntimeV2ModelOutput(
+      nestedTargetRequest('resource:customer', 'target:workspace'),
+      targetArgumentDefinitions,
+    );
+
+    expect(output.kind).toBe('tool');
+    if (output.kind !== 'tool') throw new Error('expected a tool request');
+    expect(output.targetId).toBe('target:workspace');
+    expect(output.arguments).toHaveProperty('targetId', 'resource:customer');
+  });
+
+  it('does not promote a tool-owned targetId when envelope authority is missing', () => {
+    expect(() =>
+      parseRuntimeV2ModelOutput(
+        nestedTargetRequest('resource:customer'),
+        targetArgumentDefinitions,
+      ),
+    ).toThrow();
+  });
+
+  it('does not rewrite a targetId accepted through an unsupported schema keyword', () => {
+    const output = parseRuntimeV2ModelOutput(
+      nestedTargetRequest('resource:customer', 'target:workspace'),
+      patternTargetDefinitions,
+    );
+
+    expect(output.kind).toBe('tool');
+    if (output.kind !== 'tool') throw new Error('expected a tool request');
+    expect(output.targetId).toBe('target:workspace');
+    expect(output.arguments).toHaveProperty('targetId', 'resource:customer');
   });
 });
 

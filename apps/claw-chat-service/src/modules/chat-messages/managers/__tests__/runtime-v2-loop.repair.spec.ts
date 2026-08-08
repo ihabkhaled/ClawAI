@@ -20,7 +20,7 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
     operations: ['list'],
     riskClasses: ['inspect'],
     targetIds: ['target:workspace'],
-    inputSchema: {},
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
   };
   const binding = {
     ownerId: 'owner_1',
@@ -87,6 +87,26 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
 
     expect(callProvider).toHaveBeenCalledTimes(2);
     expect(result.output).toMatchObject({ kind: 'tool' });
+  });
+
+  it('accepts the live nested-target dialect without spending the repair turn', async () => {
+    const nestedTargetRequest = JSON.stringify({
+      kind: 'tool',
+      toolName: 'workspace.files',
+      toolVersion: '2.0.0',
+      operation: 'list',
+      arguments: { rootKey: 'workspace-1', path: '', targetId: 'target:workspace' },
+    });
+    const callProvider = jest.fn().mockResolvedValue({ content: nestedTargetRequest });
+
+    const result = await repair(callProvider);
+
+    expect(callProvider).toHaveBeenCalledTimes(1);
+    expect(result.output).toMatchObject({
+      kind: 'tool',
+      targetId: 'target:workspace',
+      arguments: { rootKey: 'workspace-1', path: '' },
+    });
   });
 
   it('reports something a person can act on when the corrected turn is no better', async () => {

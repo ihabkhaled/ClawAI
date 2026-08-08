@@ -189,6 +189,36 @@ describe('ContextAssemblyManager', () => {
     expect(JSON.stringify(messages)).toContain('content not extractable as text');
   });
 
+  it('renders Runtime V2 requests and results as an assistant-user exchange', () => {
+    const context = buildContext();
+    context.researchRunId = null;
+    context.researchWarnings = [];
+    context.threadMessages = [
+      context.threadMessages[0] as ChatMessage,
+      {
+        ...context.threadMessages[0],
+        id: 'tool-request-1',
+        role: 'TOOL',
+        content: '{"kind":"tool","toolName":"workspace.files"}',
+        metadata: { runtimeV2: { kind: 'tool-request' } },
+      } as ChatMessage,
+      {
+        ...context.threadMessages[0],
+        id: 'tool-result-1',
+        role: 'TOOL',
+        content: '{"status":"succeeded","structured":{"path":"README.md"}}',
+        metadata: { runtimeV2: { kind: 'tool-result' } },
+      } as ChatMessage,
+    ];
+
+    const messages = manager.buildChatMessages(context);
+    const prompt = manager.buildPromptString(context);
+
+    expect(messages.map((message) => message.role)).toEqual(['user', 'assistant', 'user']);
+    expect(prompt).toContain('ASSISTANT: {"kind":"tool"');
+    expect(prompt).toContain('USER: {"status":"succeeded"');
+  });
+
   it('adds video attachments to the latest user message only for Gemini-native requests', () => {
     const context = buildContext();
     const videoBase64 = Buffer.from('gemini-video').toString('base64');

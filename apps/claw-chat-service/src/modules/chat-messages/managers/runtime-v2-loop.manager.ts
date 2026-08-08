@@ -116,12 +116,14 @@ export class RuntimeV2LoopManager {
     thread: { contextPackIds?: string[] | null },
     claimId: string,
   ): Promise<void> {
-    // The context carries this result IN FULL, so the transcript copy is
-    // written afterwards. Recording it first put the same result in the prompt
-    // twice — once bounded in history and once complete — which is wasted
-    // context and gives the model two slightly different views of one fact.
-    const runtimeContext = await this.buildContinuationContext(binding, command, thread);
+    // Close the current request in chronological order before assembling the
+    // next model turn. When the result was written afterwards, every prompt
+    // ended with an apparently unanswered request while its result appeared at
+    // the start of the system prompt. Models then repeated the same reads.
+    // The bounded transcript copy preserves causality; the full system copy
+    // below preserves the complete result payload.
     await this.recordToolResult(binding, command);
+    const runtimeContext = await this.buildContinuationContext(binding, command, thread);
     // Through the repair path, exactly like the first turn. Continuations used
     // to parse the reply inline, outside any try, so a model that asked for a
     // tool outside the admitted catalog — an ordinary mistake the repair turn
@@ -198,9 +200,9 @@ export class RuntimeV2LoopManager {
   /**
    * Assembles the context for a continuation turn.
    *
-   * The recent thread now carries the agent's own transcript, so the injected
-   * result below is the FULL, unbounded copy of the step just completed while
-   * the transcript keeps a bounded trail of every earlier one.
+   * The recent thread carries a bounded, chronological transcript including
+   * the current result. The injected result below is the FULL, unbounded copy
+   * of that step so truncating its durable transcript record loses no evidence.
    */
   private async buildContinuationContext(
     binding: RuntimeV2BoundInput,

@@ -222,7 +222,7 @@ export function parseRuntimeV2ModelOutput(
   // genuinely malformed one and still raises for the repair loop — but not
   // before the right value under a known wrong name has been put where the
   // schema expects it.
-  const parsed = runtimeV2ToolRequestSchema.safeParse(withCanonicalToolKeys(document));
+  const parsed = runtimeV2ToolRequestSchema.safeParse(withCanonicalToolKeys(document, definitions));
   if (!parsed.success) throw parsed.error;
   if (definitions !== undefined) assertAdmittedTool(parsed.data, definitions);
   return parsed.data;
@@ -230,30 +230,104 @@ export function parseRuntimeV2ModelOutput(
 
 /**
  * Renames the aliases in `RUNTIME_V2_TOOL_REQUEST_KEY_ALIASES` to the key the
- * protocol uses, leaving everything else exactly as the model wrote it.
+ * protocol uses. For an admitted tool whose strict input schema cannot own a
+ * `targetId` argument, it also lifts the observed legacy nested value into the
+ * required outer field and removes that duplicate from strict tool input.
  *
  * A canonical key the model already supplied always wins, so a request carrying
  * both `toolVersion` and `version` keeps `toolVersion` and drops the alias
- * rather than letting the order of keys decide. A non-object is handed back
+ * rather than letting the order of keys decide. Conflicting outer and nested
+ * authority rejects instead of choosing one. A non-object is handed back
  * untouched for the schema to reject.
  */
-export function withCanonicalToolKeys(document: unknown): unknown {
-  if (typeof document !== 'object' || document === null || Array.isArray(document)) {
-    return document;
-  }
-  const source = document as Record<string, unknown>;
-  const canonical: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(source)) {
-    const alias = RUNTIME_V2_TOOL_REQUEST_KEY_ALIASES[key];
+export function withCanonicalToolKeys(
+  document: unknown,
+  definitions?: readonly ToolDefinitionDto[],
+): unknown {
+  if (!isRecord(document)) return document;
+  const canonicalEntries: [string, unknown][] = [];
+  for (const [key, value] of Object.entries(document)) {
+    const alias = Object.entries(RUNTIME_V2_TOOL_REQUEST_KEY_ALIASES).find(
+      ([candidate]) => candidate === key,
+    )?.[1];
     if (alias === undefined) {
-      canonical[key] = value;
+      canonicalEntries.push([key, value]);
       continue;
     }
-    if (!Object.hasOwn(source, alias)) {
-      canonical[alias] = value;
+    if (!Object.hasOwn(document, alias)) {
+      canonicalEntries.push([alias, value]);
     }
   }
-  return canonical;
+  return withCanonicalNestedTarget(Object.fromEntries(canonicalEntries), definitions);
+}
+
+function withCanonicalNestedTarget(
+  canonical: Record<string, unknown>,
+  definitions?: readonly ToolDefinitionDto[],
+): Record<string, unknown> {
+  const argumentsValue = canonical['arguments'];
+  if (
+    !isRecord(argumentsValue) ||
+    !Object.hasOwn(argumentsValue, 'targetId') ||
+    !canLiftNestedTarget(canonical, definitions)
+  ) {
+    return canonical;
+  }
+  const nestedTarget = argumentsValue['targetId'];
+  if (Object.hasOwn(canonical, 'targetId') && canonical['targetId'] !== nestedTarget) {
+    throw new Error('Model supplied conflicting targetId values');
+  }
+  return {
+    ...canonical,
+    arguments: withoutNestedTarget(argumentsValue),
+    targetId: nestedTarget,
+  };
+}
+
+function canLiftNestedTarget(
+  canonical: Record<string, unknown>,
+  definitions?: readonly ToolDefinitionDto[],
+): boolean {
+  if (definitions === undefined) return false;
+  const toolName = canonical['toolName'];
+  const toolVersion = canonical['toolVersion'];
+  const definition = definitions.find(
+    (candidate) => candidate.name === toolName && candidate.version === toolVersion,
+  );
+  if (definition === undefined) return false;
+  const schema = definition.inputSchema;
+  const properties = schema['properties'];
+  return (
+    schema['type'] === 'object' &&
+    schema['additionalProperties'] === false &&
+    Object.keys(schema).every(isSupportedObjectSchemaKeyword) &&
+    isRecord(properties) &&
+    !Object.hasOwn(properties, 'targetId')
+  );
+}
+
+function isSupportedObjectSchemaKeyword(key: string): boolean {
+  switch (key) {
+    case 'additionalProperties':
+    case 'description':
+    case 'enum':
+    case 'maxProperties':
+    case 'minProperties':
+    case 'properties':
+    case 'required':
+    case 'type':
+      return true;
+    default:
+      return false;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function withoutNestedTarget(argumentsValue: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(argumentsValue).filter(([key]) => key !== 'targetId'));
 }
 
 function assertAdmittedTool(

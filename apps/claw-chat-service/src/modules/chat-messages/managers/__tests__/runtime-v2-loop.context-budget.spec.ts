@@ -85,6 +85,91 @@ describe('RuntimeV2LoopManager context budget', () => {
   });
 });
 
+describe('RuntimeV2LoopManager continuation ordering', () => {
+  it('puts the current result after its request in the provider context', async () => {
+    const largeContent = 'x'.repeat(900);
+    const origin = { id: 'message_1', role: 'USER', content: 'Complete the mission.' };
+    const request = { id: 'request_1', role: 'TOOL', content: '{"kind":"tool"}' };
+    const stored = [origin, request];
+    const create = jest.fn().mockImplementation((data: { role: string; content: string }) => {
+      const created = { ...data, id: `message_${String(stored.length + 1)}` };
+      if (data.role === 'TOOL') stored.push(created);
+      return Promise.resolve(created);
+    });
+    const messages = {
+      create,
+      findRecentByThreadId: jest
+        .fn()
+        .mockImplementation(() => Promise.resolve([...stored].reverse())),
+      findById: jest.fn().mockResolvedValue(origin),
+    };
+    const assemble = jest
+      .fn()
+      .mockImplementation((_ownerId, history) =>
+        Promise.resolve({ systemPrompt: 'base', threadMessages: history }),
+      );
+    const callProvider = jest.fn().mockResolvedValue({
+      content: '{"kind":"final","content":"finished"}',
+      provider: 'OLLAMA',
+      model: 'kimi-k2.7-code:cloud',
+      latencyMs: 1,
+    });
+    const store = {
+      appendModelOutput: jest.fn().mockResolvedValue(void 0),
+      terminalize: jest.fn().mockResolvedValue(void 0),
+    };
+    const loop = new RuntimeV2LoopManager(
+      messages as never,
+      {} as never,
+      store as never,
+      { assemble } as never,
+      { callProvider } as never,
+    );
+    const binding = {
+      ownerId: 'owner_1',
+      threadId: 'thread_1',
+      messageId: origin.id,
+      runId: 'run_1',
+      generation: 'generation_1',
+      provider: 'OLLAMA',
+      model: 'kimi-k2.7-code:cloud',
+      toolDefinitions: [],
+    };
+    const command = {
+      idempotencyKey: 'result_key_1',
+      result: {
+        invocationId: 'invocation_1',
+        status: 'succeeded',
+        structured: { content: largeContent },
+        receipt: { invocationId: 'invocation_1' },
+        continuation: { action: 'continue', nextTurnId: 'turn_2' },
+      },
+    };
+
+    await (
+      loop as unknown as {
+        continueClaimedRun: (
+          bound: unknown,
+          result: unknown,
+          thread: unknown,
+          claimId: string,
+        ) => Promise<void>;
+      }
+    ).continueClaimedRun(binding, command, {}, 'claim_1');
+
+    const providerContext = callProvider.mock.calls[0]?.[2] as {
+      systemPrompt: string;
+      threadMessages: Array<{ role: string; content: string }>;
+    };
+    expect(providerContext.systemPrompt).toContain(largeContent);
+    expect(providerContext.threadMessages.at(-2)).toEqual(request);
+    expect(providerContext.threadMessages.at(-1)).toMatchObject({
+      role: 'TOOL',
+      content: expect.stringContaining('"status":"succeeded"'),
+    });
+  });
+});
+
 /**
  * The intent nudge asks the model once more when it announced work and stopped.
  * It is best effort: a provider that answers the extra call with nothing must

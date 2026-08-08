@@ -311,7 +311,7 @@ export class ContextAssemblyManager {
   }
 
   private formatMessageLines(messages: AssembledContext['threadMessages']): string[] {
-    return messages.map((msg) => `${msg.role}: ${msg.content}`);
+    return messages.map((message) => `${this.mapRole(message).toUpperCase()}: ${message.content}`);
   }
 
   private formatWorkspaceCitations(
@@ -379,7 +379,7 @@ export class ContextAssemblyManager {
       (file) => this.isImageFile(file) || (includeVideo && this.isVideoFile(file)),
     );
     for (const msg of relevantMessages) {
-      const role = this.mapRole(msg.role);
+      const role = this.mapRole(msg);
       const isLastUser = role === 'user' && msg === relevantMessages.at(-1);
       if (isLastUser && mediaFiles.length > 0) {
         messages.push({ role, content: this.buildMultimodalUserParts(msg.content, mediaFiles) });
@@ -716,14 +716,28 @@ export class ContextAssemblyManager {
     return filename.slice(dotIndex).toLowerCase();
   }
 
-  private mapRole(role: string): string {
-    if (role === 'USER') {
+  private mapRole(message: ChatMessage): string {
+    if (message.role === 'TOOL') {
+      const kind = this.runtimeV2TranscriptKind(message.metadata);
+      if (kind === 'tool-request') return 'assistant';
+      if (kind === 'tool-result') return 'user';
+    }
+    if (message.role === 'USER') {
       return 'user';
     }
-    if (role === 'ASSISTANT') {
+    if (message.role === 'ASSISTANT') {
       return 'assistant';
     }
     return 'system';
+  }
+
+  private runtimeV2TranscriptKind(metadata: ChatMessage['metadata']): string | null {
+    if (metadata === null || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
+    const runtimeV2 = metadata['runtimeV2'];
+    if (runtimeV2 === null || typeof runtimeV2 !== 'object' || Array.isArray(runtimeV2))
+      return null;
+    const kind = runtimeV2['kind'];
+    return typeof kind === 'string' ? kind : null;
   }
 
   private extractCurrentIntent(messages: ChatMessage[]): string {
