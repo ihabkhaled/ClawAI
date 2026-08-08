@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import type { Locale } from '@/enums/locale.enum';
 import { useLocale } from '@/hooks/use-locale';
@@ -14,15 +14,24 @@ import type { UseMarketingLocaleSwitcherReturn } from '@/types';
 // anonymous visitors have no session to persist a preference against.
 export function useMarketingLocaleSwitcher(): UseMarketingLocaleSwitcherReturn {
   const { locale, setLocale } = useLocale();
-  const { replaceLocale } = useLocaleNavigation();
+  const { pathname, replaceLocale } = useLocaleNavigation();
+  const [isPending, setIsPending] = useState(false);
+
+  useEffect(() => {
+    setIsPending(false);
+  }, [pathname]);
 
   const handleLocaleChange = useCallback(
     (newLocale: Locale): void => {
+      if (newLocale === locale) {
+        return;
+      }
+      setIsPending(true);
       setLocale(newLocale);
       replaceLocale(newLocale);
     },
-    [replaceLocale, setLocale],
+    [locale, replaceLocale, setLocale],
   );
 
-  return { locale, options: SUPPORTED_LOCALES, handleLocaleChange };
+  return { locale, options: SUPPORTED_LOCALES, isPending, handleLocaleChange };
 }

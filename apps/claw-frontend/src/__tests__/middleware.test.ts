@@ -31,6 +31,25 @@ describe('middleware X-Robots-Tag enforcement', () => {
     expect(response.headers.get('X-Robots-Tag')).toBeNull();
   });
 
+  it('serves the root homepage directly in English', () => {
+    const response = middleware(buildRequest('/'));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('location')).toBeNull();
+    expect(response.headers.get('x-middleware-request-x-claw-locale')).toBe('en');
+    expect(response.headers.get('X-Robots-Tag')).toBeNull();
+  });
+
+  it('preserves explicit English and Arabic homepage routes', () => {
+    const english = middleware(buildRequest('/en'));
+    const arabic = middleware(buildRequest('/ar'));
+
+    expect(english.status).toBe(200);
+    expect(english.headers.get('x-middleware-rewrite')).toBe('https://claw.example/');
+    expect(arabic.status).toBe(200);
+    expect(arabic.headers.get('x-middleware-rewrite')).toBe('https://claw.example/');
+  });
+
   it('tags every portal route as noindex', () => {
     for (const path of ['/en/chat', '/en/dashboard', '/en/admin/plans', '/en/settings']) {
       const response = middleware(buildRequest(path));

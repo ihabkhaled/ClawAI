@@ -895,6 +895,7 @@ export type {
   PublicContentDefinition,
 } from './content-registry.types';
 export type {
+  MarketingLocaleLoadingOverlayProps,
   UseMarketingLocaleSwitcherReturn,
   UseMarketingThemeToggleReturn,
   MarketingNavLink,

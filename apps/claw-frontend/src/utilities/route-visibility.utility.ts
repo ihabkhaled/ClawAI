@@ -1,5 +1,6 @@
 import { SHARE_CHAT_PATH_PREFIX } from '@/constants/chat-share.constants';
 import { RouteVisibility } from '@/enums/route-visibility.enum';
+import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { isKnownPublicPathForLocale } from '@/utilities/content-registry.utility';
 import { parseLocaleFromPathname, stripLocaleFromPathname } from '@/utilities/locale.utility';
 
@@ -44,6 +45,9 @@ export function classifyRouteVisibility(pathname: string): RouteVisibility {
   }
   const locale = parseLocaleFromPathname(pathname);
   const unlocalizedPath = stripLocaleFromPathname(pathname);
+  if (pathname === '/' && isKnownPublicPathForLocale(pathname, DEFAULT_LOCALE)) {
+    return RouteVisibility.STATIC_PUBLIC;
+  }
   if (isSharedChatPath(pathname)) {
     return locale === null ? RouteVisibility.UNKNOWN : RouteVisibility.DYNAMIC_PUBLIC_CANDIDATE;
   }

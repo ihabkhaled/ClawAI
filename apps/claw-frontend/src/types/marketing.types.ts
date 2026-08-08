@@ -6,7 +6,12 @@ import type { MarketingModelFamily, MarketingPlanTier } from '@/types/subscripti
 export type UseMarketingLocaleSwitcherReturn = {
   locale: Locale;
   options: ReadonlyArray<LocaleConfig>;
+  isPending: boolean;
   handleLocaleChange: (locale: Locale) => void;
+};
+
+export type MarketingLocaleLoadingOverlayProps = {
+  label: string;
 };
 
 export type UseMarketingThemeToggleReturn = {

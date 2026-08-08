@@ -23,5 +23,5 @@ export function useLocaleNavigation(): UseLocaleNavigationReturn {
     [pathname, router, searchParams],
   );
 
-  return { replaceLocale };
+  return { pathname, replaceLocale };
 }

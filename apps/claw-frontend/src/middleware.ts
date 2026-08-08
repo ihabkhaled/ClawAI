@@ -43,6 +43,7 @@ export function middleware(request: NextRequest): NextResponse {
   if (
     locale === null &&
     apparentLocale === undefined &&
+    pathname !== '/' &&
     !isLocaleNeutral &&
     (request.method === 'GET' || request.method === 'HEAD')
   ) {
@@ -73,8 +74,9 @@ export function middleware(request: NextRequest): NextResponse {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('content-security-policy', csp);
-  if (locale !== null) {
-    requestHeaders.set(LOCALE_REQUEST_HEADER, locale);
+  const requestLocale = locale ?? (pathname === '/' ? DEFAULT_LOCALE : null);
+  if (requestLocale !== null) {
+    requestHeaders.set(LOCALE_REQUEST_HEADER, requestLocale);
   }
 
   const rewriteUrl = request.nextUrl.clone();

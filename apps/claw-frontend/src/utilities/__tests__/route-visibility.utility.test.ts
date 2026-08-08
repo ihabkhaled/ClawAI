@@ -4,6 +4,7 @@ import { isPublicPath } from '@/utilities/route-visibility.utility';
 
 describe('isPublicPath', () => {
   it('treats the homepage as public', () => {
+    expect(isPublicPath('/')).toBe(true);
     expect(isPublicPath('/en')).toBe(true);
   });
 
