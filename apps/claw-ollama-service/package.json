@@ -1,6 +1,6 @@
 {
   "name": "claw-ollama-service",
-  "version": "1.11.4",
+  "version": "1.12.0",
   "private": true,
   "description": "Claw Ollama Service - Local Ollama runtime proxy",
   "license": "UNLICENSED",
