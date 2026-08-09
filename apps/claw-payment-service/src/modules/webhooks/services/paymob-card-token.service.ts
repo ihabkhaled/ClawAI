@@ -61,7 +61,7 @@ export class PaymobCardTokenService {
 
     // Step 1 — verification. `extractSavedCard` returns null unless the HMAC
     // checks out, so an unverified payload can never reach the vault.
-    const saved = this.paymob.extractSavedCard(card, receivedHmac);
+    const saved = await this.paymob.extractSavedCard(card, receivedHmac);
     if (saved === null) {
       await this.events.recordInvalidSignature({
         gateway: BillingGateway.PAYMOB,

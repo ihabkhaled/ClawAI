@@ -96,6 +96,9 @@ describe('CheckoutService', () => {
         clientSecret: 'cs_secret',
       }),
     };
+    const runtimeConfig = {
+      getPaymobCheckout: jest.fn().mockResolvedValue({ publicKey: 'pk_test' }),
+    };
     jest.spyOn(AppConfig, 'get').mockReturnValue({
       FRONTEND_URL: 'https://claw.local',
       PAYMOB_PUBLIC_KEY: 'pk_test',
@@ -106,6 +109,7 @@ describe('CheckoutService', () => {
       charges as unknown as ChargeResolverService,
       paypal as unknown as PaypalAdapter,
       paymob as unknown as PaymobAdapter,
+      runtimeConfig as never,
     );
   });
 

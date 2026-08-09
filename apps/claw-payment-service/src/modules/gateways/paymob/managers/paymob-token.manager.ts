@@ -4,6 +4,7 @@ import { httpRequest } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { BillingException } from '../../../../common/errors';
+import { GatewayRuntimeConfigService } from '../../../gateway-config/services/gateway-runtime-config.service';
 import {
   PAYMOB_ACCESS_TOKEN_CACHE_MS,
   PAYMOB_BASE_URL,
@@ -21,20 +22,20 @@ export class PaymobTokenManager {
   private cachedToken: string | null = null;
   private expiresAtMs = 0;
 
+  constructor(private readonly runtimeConfig: GatewayRuntimeConfigService) {}
+
   async getAccessToken(nowMs: number = Date.now()): Promise<string> {
     if (this.cachedToken !== null && nowMs < this.expiresAtMs) {
       return this.cachedToken;
     }
 
     const config = AppConfig.get();
-    if (config.PAYMOB_API_KEY === undefined) {
-      throw new BillingException(BillingErrorCode.PAYMENT_METHOD_UNAVAILABLE);
-    }
+    const paymob = await this.runtimeConfig.getPaymobOperations();
     const response = await httpRequest<unknown>({
       url: `${PAYMOB_BASE_URL}${PAYMOB_PATHS.AUTH_TOKEN}`,
       method: HttpMethod.POST,
       headers: { 'Content-Type': 'application/json' },
-      body: { api_key: config.PAYMOB_API_KEY },
+      body: { api_key: paymob.apiKey },
       timeoutMs: config.PAYMENT_GATEWAY_TIMEOUT_MS,
     });
     if (!response.ok) {

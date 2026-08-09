@@ -28,6 +28,7 @@ import { ReconciliationModule } from '../modules/reconciliation/reconciliation.m
 import { InternalPaymentsModule } from '../modules/internal-payments/internal-payments.module';
 import { RefundsModule } from '../modules/refunds/refunds.module';
 import { BillingDashboardModule } from '../modules/billing-dashboard/billing-dashboard.module';
+import { GatewayConfigModule } from '../modules/gateway-config/gateway-config.module';
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { BillingDashboardModule } from '../modules/billing-dashboard/billing-das
     InternalPaymentsModule,
     RefundsModule,
     BillingDashboardModule,
+    GatewayConfigModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

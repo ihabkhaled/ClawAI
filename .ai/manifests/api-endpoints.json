@@ -1773,6 +1773,16 @@
         "source": "apps/claw-payment-service/src/modules/refunds/controllers/refund.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/admin/payment-gateways",
+        "source": "apps/claw-payment-service/src/modules/gateway-config/controllers/admin-gateway-config.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/admin/payment-gateways/:gateway",
+        "source": "apps/claw-payment-service/src/modules/gateway-config/controllers/admin-gateway-config.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/billing/checkout-sessions",
         "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
@@ -1796,6 +1806,11 @@
         "method": "POST",
         "route": "/billing/checkout-sessions/:id/complete-paypal-sdk",
         "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/billing/gateways",
+        "source": "apps/claw-payment-service/src/modules/gateway-config/controllers/checkout-gateways.controller.ts"
       },
       {
         "method": "GET",
@@ -2858,5 +2873,5 @@
     ]
   },
   "generated": true,
-  "total": 564
+  "total": 567
 }

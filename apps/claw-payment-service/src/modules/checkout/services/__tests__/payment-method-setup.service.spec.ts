@@ -34,6 +34,9 @@ describe('PaymentMethodSetupService', () => {
   const paymob = {
     createSetupIntention: jest.fn(),
   };
+  const runtimeConfig = {
+    getPaymobCheckout: jest.fn(),
+  };
   let service: PaymentMethodSetupService;
 
   beforeEach(() => {
@@ -49,9 +52,14 @@ describe('PaymentMethodSetupService', () => {
       providerOrderId: 'provider-order-1',
       clientSecret: 'client-secret',
     });
+    runtimeConfig.getPaymobCheckout.mockResolvedValue({
+      publicKey: 'pk_test',
+      currency: 'EGP',
+    });
     service = new PaymentMethodSetupService(
       sessions as unknown as CheckoutSessionRepository,
       paymob as unknown as PaymobAdapter,
+      runtimeConfig as never,
     );
   });
 

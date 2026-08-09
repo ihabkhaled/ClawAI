@@ -1819,6 +1819,16 @@
           "source": "apps/claw-payment-service/src/modules/refunds/controllers/refund.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/admin/payment-gateways",
+          "source": "apps/claw-payment-service/src/modules/gateway-config/controllers/admin-gateway-config.controller.ts"
+        },
+        {
+          "method": "PUT",
+          "route": "/admin/payment-gateways/:gateway",
+          "source": "apps/claw-payment-service/src/modules/gateway-config/controllers/admin-gateway-config.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/billing/checkout-sessions",
           "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
@@ -1842,6 +1852,11 @@
           "method": "POST",
           "route": "/billing/checkout-sessions/:id/complete-paypal-sdk",
           "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/billing/gateways",
+          "source": "apps/claw-payment-service/src/modules/gateway-config/controllers/checkout-gateways.controller.ts"
         },
         {
           "method": "GET",
@@ -8143,6 +8158,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-payment-service/prisma/schema.prisma",
+            "value": "GatewayConfiguration"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-payment-service/prisma/schema.prisma",
             "value": "GatewayPlanMapping"
           },
           {
@@ -8568,7 +8588,7 @@
       },
       "claw-payment-service": {
         "runner": "jest",
-        "testFiles": 89
+        "testFiles": 94
       },
       "claw-research-service": {
         "runner": "jest",
@@ -9288,7 +9308,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 564,
+    "endpointCount": 567,
     "envVarCount": 342,
     "eventCount": 165,
     "frontendRouteCount": 113,
@@ -9300,7 +9320,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 794,
+    "totalTestFiles": 799,
     "workspaceCount": 25
   }
 }

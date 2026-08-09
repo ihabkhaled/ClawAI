@@ -68,7 +68,7 @@ export class PaymobWebhookService {
 
     // HMAC is checked over the payload's own canonical field order before any
     // of it becomes trusted state.
-    const callback = this.paymob.verifyCallback(transaction, receivedHmac, expected);
+    const callback = await this.paymob.verifyCallback(transaction, receivedHmac, expected);
     if (callback.mismatchReason === 'HMAC_INVALID') {
       await this.recordForgery(providerEventId, payloadHash);
       return PaymobWebhookService.result(WebhookOutcome.SIGNATURE_INVALID);

@@ -652,6 +652,29 @@ model GatewayPlanMapping {
   @@map("gateway_plan_mappings")
 }
 
+/// Administrative runtime configuration for one payment gateway.
+///
+/// `encryptedCredentials` contains only AES-256-GCM envelopes. The encryption
+/// root remains environment-owned and plaintext credentials never reach this
+/// database. `options` is limited to provider-safe operational values such as
+/// currency and callback URL.
+model GatewayConfiguration {
+  id String @id @default(cuid())
+
+  gateway              String  @unique
+  isEnabled            Boolean @default(false) @map("is_enabled")
+  mode                 String
+  encryptedCredentials Json    @default("{}") @map("encrypted_credentials")
+  options              Json    @default("{}")
+  encryptionKeyVersion Int     @default(1) @map("encryption_key_version")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isEnabled])
+  @@map("gateway_configurations")
+}
+
 /// Run-once seeding history.
 ///
 /// A seeder is identified by (name, version). Once a row reaches COMPLETED it

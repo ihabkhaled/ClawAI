@@ -5,6 +5,7 @@ import { type ZodType } from 'zod';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { BillingException } from '../../../common/errors';
+import { GatewayRuntimeConfigService } from '../../gateway-config/services/gateway-runtime-config.service';
 import {
   PAYPAL_ACTIVE_SUBSCRIPTION_STATUSES,
   PAYPAL_MAX_RETRY_ATTEMPTS,
@@ -44,13 +45,17 @@ import {
 export class PaypalAdapter {
   private readonly logger = new Logger(PaypalAdapter.name);
 
-  constructor(private readonly tokens: PaypalTokenManager) {}
+  constructor(
+    private readonly tokens: PaypalTokenManager,
+    private readonly runtimeConfig: GatewayRuntimeConfigService,
+  ) {}
 
   // Creates a server-priced order. `custom_id` binds it to our checkout session
   // so the later capture (or webhook) can be matched to exactly one session;
   // `PayPal-Request-Id` makes a retry return the SAME order instead of a
   // second one the customer could also pay.
   async createOrder(input: PaypalCreateOrderInput): Promise<PaypalOrderResult> {
+    await this.runtimeConfig.getPaypalCheckout();
     this.logger.debug(`createOrder: session=${input.checkoutSessionId}`);
     const body = {
       intent: 'CAPTURE',
@@ -207,10 +212,11 @@ export class PaypalAdapter {
   // bytes received — re-serializing the parsed JSON changes key order and
   // whitespace, and the signature then fails for a genuine event.
   async verifyWebhookSignature(headers: PaypalWebhookHeaders, rawBody: string): Promise<boolean> {
-    const config = AppConfig.get();
-    if (config.PAYPAL_WEBHOOK_ID === undefined) {
-      // No webhook id means no way to verify. Refuse rather than trust.
-      this.logger.error('verifyWebhookSignature: PAYPAL_WEBHOOK_ID is not configured');
+    let paypal;
+    try {
+      paypal = await this.runtimeConfig.getPaypalOperations();
+    } catch {
+      this.logger.error('verifyWebhookSignature: PayPal webhook configuration is unavailable');
       return false;
     }
     const body = {
@@ -219,7 +225,7 @@ export class PaypalAdapter {
       transmission_id: headers.transmissionId,
       transmission_sig: headers.transmissionSig,
       transmission_time: headers.transmissionTime,
-      webhook_id: config.PAYPAL_WEBHOOK_ID,
+      webhook_id: paypal.webhookId,
       webhook_event: JSON.parse(rawBody) as unknown,
     };
     const result = await this.send(
@@ -312,6 +318,7 @@ export class PaypalAdapter {
     retryable: boolean,
   ): Promise<unknown> {
     const config = AppConfig.get();
+    const paypal = await this.runtimeConfig.getPaypalOperations();
     const maxAttempts = retryable
       ? Math.min(PAYPAL_MAX_RETRY_ATTEMPTS, config.PAYMENT_GATEWAY_MAX_RETRIES)
       : 1;
@@ -320,7 +327,7 @@ export class PaypalAdapter {
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       const token = await this.tokens.getAccessToken();
       const response = await httpRequest<unknown>({
-        url: `${PaypalTokenManager.baseUrl()}${path}`,
+        url: `${PaypalTokenManager.baseUrl(paypal.mode)}${path}`,
         method,
         headers: {
           Authorization: `Bearer ${token}`,

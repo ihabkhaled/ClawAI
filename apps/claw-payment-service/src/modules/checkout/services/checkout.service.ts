@@ -17,6 +17,7 @@ import {
 } from '../../billing/utilities/checkout-session-purpose.utility';
 import { PaymobAdapter } from '../../gateways/paymob/paymob.adapter';
 import { PaypalAdapter } from '../../gateways/paypal/paypal.adapter';
+import { GatewayRuntimeConfigService } from '../../gateway-config/services/gateway-runtime-config.service';
 import {
   CHECKOUT_CANCEL_PATH,
   CHECKOUT_DESCRIPTION_PREFIX,
@@ -50,6 +51,7 @@ export class CheckoutService {
     private readonly charges: ChargeResolverService,
     private readonly paypal: PaypalAdapter,
     private readonly paymob: PaymobAdapter,
+    private readonly runtimeConfig: GatewayRuntimeConfigService,
   ) {}
 
   async start(input: StartCheckoutInput): Promise<CheckoutSessionView> {
@@ -234,6 +236,7 @@ export class CheckoutService {
     session: SubscriptionCheckoutSession,
     billingEmail: string,
   ): Promise<{ providerOrderId: string; hostedUrl: string | null }> {
+    const config = await this.runtimeConfig.getPaymobCheckout();
     const result = await this.paymob.createIntention({
       amountMinor: session.chargeAmountMinor,
       currency: session.chargeCurrency,
@@ -244,7 +247,7 @@ export class CheckoutService {
     });
     return {
       providerOrderId: result.providerOrderId,
-      hostedUrl: CheckoutService.buildPaymobCheckoutUrl(result.clientSecret),
+      hostedUrl: CheckoutService.buildPaymobCheckoutUrl(config.publicKey, result.clientSecret),
     };
   }
 
@@ -257,11 +260,7 @@ export class CheckoutService {
     return `${base}${path}?${query.toString()}`;
   }
 
-  private static buildPaymobCheckoutUrl(clientSecret: string): string {
-    const publicKey = AppConfig.get().PAYMOB_PUBLIC_KEY;
-    if (publicKey === undefined) {
-      throw new BillingException(BillingErrorCode.GATEWAY_NOT_CONFIGURED);
-    }
+  private static buildPaymobCheckoutUrl(publicKey: string, clientSecret: string): string {
     return `https://accept.paymob.com/unifiedcheckout/?publicKey=${publicKey}&clientSecret=${clientSecret}`;
   }
 }

@@ -6,6 +6,7 @@ import { GatewaysModule } from '../gateways/gateways.module';
 import { PlanCatalogModule } from '../plan-catalog/plan-catalog.module';
 import { RefundsModule } from '../refunds/refunds.module';
 import { WebhooksModule } from '../webhooks/webhooks.module';
+import { GatewayConfigModule } from '../gateway-config/gateway-config.module';
 import { CheckoutController } from './controllers/checkout.controller';
 import { ChargeResolverService } from './services/charge-resolver.service';
 import { CheckoutService } from './services/checkout.service';
@@ -21,6 +22,7 @@ import { PaypalCheckoutCompletionService } from './services/paypal-checkout-comp
     PlanCatalogModule,
     RefundsModule,
     WebhooksModule,
+    GatewayConfigModule,
   ],
   controllers: [CheckoutController],
   providers: [

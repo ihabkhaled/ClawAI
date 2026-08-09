@@ -3,6 +3,8 @@ import { BillingErrorCode } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { BillingException } from '../../../../common/errors';
+import { GatewayMode } from '../../../gateway-config/enums/gateway-mode.enum';
+import { GatewayRuntimeConfigService } from '../../../gateway-config/services/gateway-runtime-config.service';
 import {
   PAYPAL_LIVE_BASE_URL,
   PAYPAL_PATHS,
@@ -25,8 +27,10 @@ export class PaypalTokenManager {
   private cachedToken: string | null = null;
   private expiresAtMs = 0;
 
-  static baseUrl(): string {
-    return AppConfig.get().PAYPAL_ENV === 'live' ? PAYPAL_LIVE_BASE_URL : PAYPAL_SANDBOX_BASE_URL;
+  constructor(private readonly runtimeConfig: GatewayRuntimeConfigService) {}
+
+  static baseUrl(mode: GatewayMode): string {
+    return mode === GatewayMode.LIVE ? PAYPAL_LIVE_BASE_URL : PAYPAL_SANDBOX_BASE_URL;
   }
 
   async getAccessToken(nowMs: number = Date.now()): Promise<string> {
@@ -46,23 +50,22 @@ export class PaypalTokenManager {
 
   private async fetchToken(nowMs: number): Promise<string> {
     const config = AppConfig.get();
-    if (config.PAYPAL_CLIENT_ID === undefined || config.PAYPAL_CLIENT_SECRET === undefined) {
-      throw new BillingException(BillingErrorCode.PAYMENT_METHOD_UNAVAILABLE);
-    }
-    const credential = Buffer.from(
-      `${config.PAYPAL_CLIENT_ID}:${config.PAYPAL_CLIENT_SECRET}`,
-    ).toString('base64');
+    const paypal = await this.runtimeConfig.getPaypalOperations();
+    const credential = Buffer.from(`${paypal.clientId}:${paypal.clientSecret}`).toString('base64');
 
-    const response = await fetch(`${PaypalTokenManager.baseUrl()}${PAYPAL_PATHS.OAUTH_TOKEN}`, {
-      method: 'POST',
-      headers: {
-        // The token endpoint is form-encoded, not JSON.
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${credential}`,
+    const response = await fetch(
+      `${PaypalTokenManager.baseUrl(paypal.mode)}${PAYPAL_PATHS.OAUTH_TOKEN}`,
+      {
+        method: 'POST',
+        headers: {
+          // The token endpoint is form-encoded, not JSON.
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: `Basic ${credential}`,
+        },
+        body: 'grant_type=client_credentials',
+        signal: AbortSignal.timeout(config.PAYMENT_GATEWAY_TIMEOUT_MS),
       },
-      body: 'grant_type=client_credentials',
-      signal: AbortSignal.timeout(config.PAYMENT_GATEWAY_TIMEOUT_MS),
-    });
+    );
 
     if (!response.ok) {
       // Status only — the body may echo credentials back.

@@ -5,6 +5,8 @@ import { type ZodType } from 'zod';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { BillingException } from '../../../common/errors';
+import { GatewayRuntimeConfigService } from '../../gateway-config/services/gateway-runtime-config.service';
+import type { PaymobRuntimeConfig } from '../../gateway-config/types/gateway-config.types';
 import {
   PAYMOB_BASE_URL,
   PAYMOB_MAX_RETRY_ATTEMPTS,
@@ -40,21 +42,21 @@ import {
 export class PaymobAdapter {
   private readonly logger = new Logger(PaymobAdapter.name);
 
-  constructor(private readonly tokens: PaymobTokenManager) {}
+  constructor(
+    private readonly tokens: PaymobTokenManager,
+    private readonly runtimeConfig: GatewayRuntimeConfigService,
+  ) {}
 
   // Creates a server-priced intention. The checkout session id travels as
   // special_reference / merchant_order_id so the callback can be tied back to
   // exactly one session.
   async createIntention(input: PaymobIntentionInput): Promise<PaymobIntentionResult> {
     this.logger.debug(`createIntention: session=${input.checkoutSessionId}`);
-    const config = AppConfig.get();
-    if (config.PAYMOB_SECRET_KEY === undefined || config.PAYMOB_CARD_INTEGRATION_ID === undefined) {
-      throw new BillingException(BillingErrorCode.PAYMENT_METHOD_UNAVAILABLE);
-    }
+    const config = await this.runtimeConfig.getPaymobCheckout();
     const body = {
       amount: input.amountMinor,
       currency: input.currency,
-      payment_methods: [Number.parseInt(config.PAYMOB_CARD_INTEGRATION_ID, 10)],
+      payment_methods: [Number.parseInt(config.cardIntegrationId, 10)],
       special_reference: input.checkoutSessionId,
       items: [
         {
@@ -70,7 +72,7 @@ export class PaymobAdapter {
         phone_number: 'NA',
       },
       extras: { checkoutSessionId: input.checkoutSessionId },
-      ...PaymobAdapter.callbackUrls(input.checkoutSessionId),
+      ...PaymobAdapter.callbackUrls(input.checkoutSessionId, config),
     };
 
     const intention = await this.send(
@@ -92,18 +94,15 @@ export class PaymobAdapter {
   }
 
   async createSetupIntention(input: PaymobSetupIntentionInput): Promise<PaymobIntentionResult> {
-    const config = AppConfig.get();
-    if (config.PAYMOB_SECRET_KEY === undefined || config.PAYMOB_CARD_INTEGRATION_ID === undefined) {
-      throw new BillingException(BillingErrorCode.PAYMENT_METHOD_UNAVAILABLE);
-    }
+    const config = await this.runtimeConfig.getPaymobCheckout();
     const intention = await this.send(
       HttpMethod.POST,
       PAYMOB_PATHS.INTENTION,
       paymobIntentionResponseSchema,
       {
         amount: PAYMOB_SETUP_AMOUNT_MINOR,
-        currency: config.PAYMOB_CURRENCY,
-        payment_methods: [Number.parseInt(config.PAYMOB_CARD_INTEGRATION_ID, 10)],
+        currency: config.currency,
+        payment_methods: [Number.parseInt(config.cardIntegrationId, 10)],
         special_reference: input.checkoutSessionId,
         items: [
           {
@@ -123,7 +122,7 @@ export class PaymobAdapter {
           paymentMethodSetup: true,
         },
         description: PAYMOB_SETUP_DESCRIPTION,
-        ...PaymobAdapter.callbackUrls(input.checkoutSessionId),
+        ...PaymobAdapter.callbackUrls(input.checkoutSessionId, config),
       },
       true,
     );
@@ -137,17 +136,19 @@ export class PaymobAdapter {
   // Verifies a callback: HMAC first, then the business facts. Parsing the
   // payload into trusted state before the signature check would mean acting on
   // attacker-controlled data.
-  verifyCallback(
+  async verifyCallback(
     payload: Record<string, unknown>,
     receivedHmac: string,
     expected: { amountMinor: number; currency: string; checkoutSessionId: string },
-  ): PaymobVerificationResult {
-    const config = AppConfig.get();
-    if (config.PAYMOB_HMAC_SECRET === undefined) {
-      this.logger.error('verifyCallback: PAYMOB_HMAC_SECRET is not configured');
+  ): Promise<PaymobVerificationResult> {
+    let config;
+    try {
+      config = await this.runtimeConfig.getPaymobOperations();
+    } catch {
+      this.logger.error('verifyCallback: Paymob HMAC configuration is unavailable');
       return PaymobAdapter.mismatch('HMAC_INVALID');
     }
-    if (!verifyPaymobHmac(payload, receivedHmac, config.PAYMOB_HMAC_SECRET)) {
+    if (!verifyPaymobHmac(payload, receivedHmac, config.hmacSecret)) {
       this.logger.warn('verifyCallback: HMAC verification failed');
       return PaymobAdapter.mismatch('HMAC_INVALID');
     }
@@ -258,12 +259,18 @@ export class PaymobAdapter {
   // Extracts a saved-card record from a verified card-token callback. Only the
   // gateway token and masked metadata are returned — a PAN never reaches this
   // service, and the return type has nowhere to put one.
-  extractSavedCard(payload: Record<string, unknown>, receivedHmac: string): PaymobSavedCard | null {
-    const config = AppConfig.get();
-    if (
-      config.PAYMOB_HMAC_SECRET === undefined ||
-      !verifyPaymobCardTokenHmac(payload, receivedHmac, config.PAYMOB_HMAC_SECRET)
-    ) {
+  async extractSavedCard(
+    payload: Record<string, unknown>,
+    receivedHmac: string,
+  ): Promise<PaymobSavedCard | null> {
+    let config;
+    try {
+      config = await this.runtimeConfig.getPaymobOperations();
+    } catch {
+      this.logger.error('extractSavedCard: Paymob HMAC configuration is unavailable');
+      return null;
+    }
+    if (!verifyPaymobCardTokenHmac(payload, receivedHmac, config.hmacSecret)) {
       this.logger.warn('extractSavedCard: refusing an unverified card-token callback');
       return null;
     }
@@ -308,9 +315,7 @@ export class PaymobAdapter {
     useSecretAuthorization: boolean = true,
   ): Promise<T> {
     const config = AppConfig.get();
-    if (config.PAYMOB_SECRET_KEY === undefined) {
-      throw new BillingException(BillingErrorCode.PAYMENT_METHOD_UNAVAILABLE);
-    }
+    const paymob = await this.runtimeConfig.getPaymobOperations();
     const maxAttempts = retryable
       ? Math.min(PAYMOB_MAX_RETRY_ATTEMPTS, config.PAYMENT_GATEWAY_MAX_RETRIES)
       : 1;
@@ -321,7 +326,7 @@ export class PaymobAdapter {
         url: `${PAYMOB_BASE_URL}${path}`,
         method,
         headers: {
-          ...(useSecretAuthorization ? { Authorization: `Token ${config.PAYMOB_SECRET_KEY}` } : {}),
+          ...(useSecretAuthorization ? { Authorization: `Token ${paymob.secretKey}` } : {}),
           ...additionalHeaders,
         },
         body,
@@ -355,18 +360,17 @@ export class PaymobAdapter {
     });
   }
 
-  private static callbackUrls(checkoutSessionId: string): {
-    notification_url: string;
-    redirection_url: string;
-  } {
-    const config = AppConfig.get();
-    const base = config.FRONTEND_URL.replace(/\/+$/, '');
+  private static callbackUrls(
+    checkoutSessionId: string,
+    config: PaymobRuntimeConfig,
+  ): { notification_url: string; redirection_url: string } {
+    const base = AppConfig.get().FRONTEND_URL.replace(/\/+$/, '');
     const redirectQuery = new URLSearchParams({
       session: checkoutSessionId,
       gateway: BillingGateway.PAYMOB,
     });
     return {
-      notification_url: config.PAYMOB_WEBHOOK_URL ?? `${base}/api/v1/payments/webhooks/paymob`,
+      notification_url: config.webhookUrl ?? `${base}/api/v1/payments/webhooks/paymob`,
       redirection_url: `${base}/billing/return?${redirectQuery.toString()}`,
     };
   }

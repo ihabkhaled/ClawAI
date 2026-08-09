@@ -1,5 +1,6 @@
 import { AppConfig } from '../../../../app/config/app.config';
 import { PaypalTokenManager } from '../managers/paypal-token.manager';
+import { GatewayMode } from '../../../gateway-config/enums/gateway-mode.enum';
 
 const fetchMock = jest.fn();
 
@@ -11,6 +12,9 @@ const tokenOk = (expiresIn: number): Response =>
 
 describe('PaypalTokenManager', () => {
   let manager: PaypalTokenManager;
+  const runtimeConfig = {
+    getPaypalOperations: jest.fn(),
+  };
 
   beforeEach(() => {
     fetchMock.mockReset();
@@ -22,7 +26,13 @@ describe('PaypalTokenManager', () => {
       PAYPAL_WEBHOOK_ID: 'WH1',
       PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
     } as unknown as ReturnType<typeof AppConfig.get>);
-    manager = new PaypalTokenManager();
+    runtimeConfig.getPaypalOperations.mockResolvedValue({
+      clientId: 'id',
+      clientSecret: 'secret',
+      webhookId: 'WH1',
+      mode: GatewayMode.SANDBOX,
+    });
+    manager = new PaypalTokenManager(runtimeConfig as never);
   });
 
   afterEach(() => {
@@ -72,10 +82,7 @@ describe('PaypalTokenManager', () => {
   });
 
   it('refuses when PayPal credentials are absent', async () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
-      PAYPAL_ENV: 'sandbox',
-      PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
-    } as unknown as ReturnType<typeof AppConfig.get>);
+    runtimeConfig.getPaypalOperations.mockRejectedValue(new Error('missing credentials'));
     await expect(manager.getAccessToken(0)).rejects.toThrow();
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -91,10 +98,7 @@ describe('PaypalTokenManager', () => {
   });
 
   it('targets the sandbox host in sandbox mode and the live host in live mode', () => {
-    expect(PaypalTokenManager.baseUrl()).toContain('sandbox');
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
-      PAYPAL_ENV: 'live',
-    } as unknown as ReturnType<typeof AppConfig.get>);
-    expect(PaypalTokenManager.baseUrl()).not.toContain('sandbox');
+    expect(PaypalTokenManager.baseUrl(GatewayMode.SANDBOX)).toContain('sandbox');
+    expect(PaypalTokenManager.baseUrl(GatewayMode.LIVE)).not.toContain('sandbox');
   });
 });

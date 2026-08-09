@@ -3,6 +3,7 @@ import { httpRequest } from '@claw/shared-utilities';
 import { AppConfig } from '../../../../app/config/app.config';
 import { PaypalAdapter } from '../paypal.adapter';
 import { PaypalTokenManager } from '../managers/paypal-token.manager';
+import { GatewayMode } from '../../../gateway-config/enums/gateway-mode.enum';
 
 // Mocked at the HTTP boundary, not the service boundary: the point of these
 // tests is that the adapter's own request-building, response-validation and
@@ -61,6 +62,10 @@ const okResponse = (data: unknown) => ({ ok: true, status: 200, data });
 describe('PaypalAdapter', () => {
   let adapter: PaypalAdapter;
   let tokens: PaypalTokenManager;
+  const runtimeConfig = {
+    getPaypalCheckout: jest.fn(),
+    getPaypalOperations: jest.fn(),
+  };
 
   beforeEach(() => {
     mockHttp.mockReset();
@@ -72,9 +77,17 @@ describe('PaypalAdapter', () => {
       PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
       PAYMENT_GATEWAY_MAX_RETRIES: 3,
     } as unknown as ReturnType<typeof AppConfig.get>);
-    tokens = new PaypalTokenManager();
+    const paypalConfig = {
+      clientId: 'id',
+      clientSecret: 'secret',
+      webhookId: 'WH1',
+      mode: GatewayMode.SANDBOX,
+    };
+    runtimeConfig.getPaypalCheckout.mockResolvedValue(paypalConfig);
+    runtimeConfig.getPaypalOperations.mockResolvedValue(paypalConfig);
+    tokens = new PaypalTokenManager(runtimeConfig as never);
     jest.spyOn(tokens, 'getAccessToken').mockResolvedValue('tok');
-    adapter = new PaypalAdapter(tokens);
+    adapter = new PaypalAdapter(tokens, runtimeConfig as never);
   });
 
   afterEach(() => {
@@ -286,6 +299,7 @@ describe('PaypalAdapter', () => {
         PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
         PAYMENT_GATEWAY_MAX_RETRIES: 3,
       } as unknown as ReturnType<typeof AppConfig.get>);
+      runtimeConfig.getPaypalOperations.mockRejectedValue(new Error('missing webhook id'));
       await expect(adapter.verifyWebhookSignature(headers, '{"id":"evt"}')).resolves.toBe(false);
       expect(mockHttp).not.toHaveBeenCalled();
     });

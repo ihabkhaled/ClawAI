@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { GatewayConfigModule } from '../gateway-config/gateway-config.module';
 
 import { PaymobAdapter } from './paymob/paymob.adapter';
 import { PaymobTokenManager } from './paymob/managers/paymob-token.manager';
@@ -10,6 +11,7 @@ import { PaypalTokenManager } from './paypal/managers/paypal-token.manager';
 // boundary enforceable: a service that wants to reach PayPal has to go through
 // PaypalAdapter, where response validation and amount verification live.
 @Module({
+  imports: [GatewayConfigModule],
   providers: [PaypalAdapter, PaypalTokenManager, PaymobAdapter, PaymobTokenManager],
   exports: [PaypalAdapter, PaymobAdapter],
 })

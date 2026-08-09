@@ -10,6 +10,7 @@ function buildPrisma(queryImpl: () => Promise<unknown>): PrismaService {
 
 describe('HealthService', () => {
   const originalEnv = process.env;
+  const gatewayConfig = { listAdmin: jest.fn() };
 
   beforeEach(() => {
     process.env = {
@@ -21,6 +22,20 @@ describe('HealthService', () => {
       INTER_SERVICE_AUTH_TOKEN: 't'.repeat(48),
     } as NodeJS.ProcessEnv;
     AppConfig.validate();
+    gatewayConfig.listAdmin.mockResolvedValue([
+      {
+        gateway: BillingGateway.PAYPAL,
+        isEnabled: false,
+        mode: 'SANDBOX',
+        fields: [{ configured: false }],
+      },
+      {
+        gateway: BillingGateway.PAYMOB,
+        isEnabled: false,
+        mode: 'TESTING',
+        fields: [{ configured: false }],
+      },
+    ]);
   });
 
   afterEach(() => {
@@ -32,7 +47,10 @@ describe('HealthService', () => {
   });
 
   it('reports ok when the database answers', async () => {
-    const service = new HealthService(buildPrisma(async () => [{ '?column?': 1 }]));
+    const service = new HealthService(
+      buildPrisma(async () => [{ '?column?': 1 }]),
+      gatewayConfig as never,
+    );
     const report = await service.report();
     expect(report.status).toBe('ok');
     expect(report.database).toBe('ok');
@@ -44,6 +62,7 @@ describe('HealthService', () => {
     // the health aggregator is how an operator learns payments are impaired.
     const service = new HealthService(
       buildPrisma(() => Promise.reject(new Error('connection refused'))),
+      gatewayConfig as never,
     );
     const report = await service.report();
     expect(report.status).toBe('degraded');
@@ -51,7 +70,10 @@ describe('HealthService', () => {
   });
 
   it('lists both gateways with their configuration state', async () => {
-    const service = new HealthService(buildPrisma(async () => []));
+    const service = new HealthService(
+      buildPrisma(async () => []),
+      gatewayConfig as never,
+    );
     const report = await service.report();
     expect(report.gateways).toHaveLength(2);
     expect(report.gateways.map((g) => g.gateway)).toEqual([
@@ -61,7 +83,10 @@ describe('HealthService', () => {
   });
 
   it('reports an unconfigured gateway as not configured', async () => {
-    const service = new HealthService(buildPrisma(async () => []));
+    const service = new HealthService(
+      buildPrisma(async () => []),
+      gatewayConfig as never,
+    );
     const report = await service.report();
     for (const gateway of report.gateways) {
       expect(gateway.configured).toBe(false);
@@ -73,11 +98,28 @@ describe('HealthService', () => {
     process.env['PAYPAL_CLIENT_SECRET'] = 'secret';
     process.env['PAYPAL_WEBHOOK_ID'] = 'wh';
     AppConfig.validate();
-    const service = new HealthService(buildPrisma(async () => []));
+    gatewayConfig.listAdmin.mockResolvedValue([
+      {
+        gateway: BillingGateway.PAYPAL,
+        isEnabled: true,
+        mode: 'SANDBOX',
+        fields: [{ configured: true }, { configured: true }, { configured: true }],
+      },
+      {
+        gateway: BillingGateway.PAYMOB,
+        isEnabled: false,
+        mode: 'TESTING',
+        fields: [{ configured: false }],
+      },
+    ]);
+    const service = new HealthService(
+      buildPrisma(async () => []),
+      gatewayConfig as never,
+    );
     const report = await service.report();
     const paypal = report.gateways.find((g) => g.gateway === BillingGateway.PAYPAL);
     expect(paypal?.configured).toBe(true);
-    expect(paypal?.mode).toBe('sandbox');
+    expect(paypal?.mode).toBe('SANDBOX');
   });
 
   it('never leaks a credential through the health endpoint', async () => {
@@ -86,7 +128,10 @@ describe('HealthService', () => {
     process.env['PAYPAL_WEBHOOK_ID'] = 'wh';
     process.env['PAYMOB_HMAC_SECRET'] = 'hmac-secret-value';
     AppConfig.validate();
-    const service = new HealthService(buildPrisma(async () => []));
+    const service = new HealthService(
+      buildPrisma(async () => []),
+      gatewayConfig as never,
+    );
     const serialized = JSON.stringify(await service.report());
     expect(serialized).not.toContain('super-secret-value');
     expect(serialized).not.toContain('super-secret-client-id');

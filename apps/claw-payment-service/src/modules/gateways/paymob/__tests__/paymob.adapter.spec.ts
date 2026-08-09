@@ -30,10 +30,24 @@ const transaction = (overrides: Record<string, unknown> = {}): Record<string, un
 describe('PaymobAdapter', () => {
   let adapter: PaymobAdapter;
   let tokens: { getAccessToken: jest.Mock };
+  const runtimeConfig = {
+    getPaymobCheckout: jest.fn(),
+    getPaymobOperations: jest.fn(),
+  };
 
   beforeEach(() => {
     mockHttp.mockReset();
     tokens = { getAccessToken: jest.fn().mockResolvedValue('paymob-access-token') };
+    const paymobConfig = {
+      secretKey: 'sk',
+      publicKey: 'pk',
+      apiKey: 'api-key',
+      hmacSecret: SECRET,
+      cardIntegrationId: '4242',
+      currency: 'EGP',
+    };
+    runtimeConfig.getPaymobCheckout.mockResolvedValue(paymobConfig);
+    runtimeConfig.getPaymobOperations.mockResolvedValue(paymobConfig);
     jest.spyOn(AppConfig, 'get').mockReturnValue({
       PAYMOB_SECRET_KEY: 'sk',
       PAYMOB_PUBLIC_KEY: 'pk',
@@ -45,7 +59,7 @@ describe('PaymobAdapter', () => {
       PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
       PAYMENT_GATEWAY_MAX_RETRIES: 3,
     } as unknown as ReturnType<typeof AppConfig.get>);
-    adapter = new PaymobAdapter(tokens as unknown as PaymobTokenManager);
+    adapter = new PaymobAdapter(tokens as unknown as PaymobTokenManager, runtimeConfig as never);
   });
 
   afterEach(() => {
@@ -82,6 +96,15 @@ describe('PaymobAdapter', () => {
     });
 
     it('sends server callbacks to the dedicated public webhook URL', async () => {
+      runtimeConfig.getPaymobCheckout.mockResolvedValue({
+        secretKey: 'sk',
+        publicKey: 'pk',
+        apiKey: 'api-key',
+        hmacSecret: SECRET,
+        cardIntegrationId: '4242',
+        currency: 'EGP',
+        webhookUrl: 'https://billing-webhooks.example.com/payments/webhooks/paymob',
+      });
       jest.spyOn(AppConfig, 'get').mockReturnValue({
         PAYMOB_SECRET_KEY: 'sk',
         PAYMOB_CARD_INTEGRATION_ID: '4242',
@@ -181,95 +204,112 @@ describe('PaymobAdapter', () => {
   describe('verifyCallback', () => {
     const signed = (payload: Record<string, unknown>): string => computePaymobHmac(payload, SECRET);
 
-    it('accepts a correctly signed, successful, matching transaction', () => {
+    it('accepts a correctly signed, successful, matching transaction', async () => {
       const payload = transaction();
-      const result = adapter.verifyCallback(payload, signed(payload), EXPECTED);
+      const result = await adapter.verifyCallback(payload, signed(payload), EXPECTED);
       expect(result).toMatchObject({ verified: true, transactionId: '123456' });
     });
 
-    it('rejects a bad HMAC before looking at the business fields', () => {
+    it('rejects a bad HMAC before looking at the business fields', async () => {
       // Parsing attacker-controlled data into trusted state before the
       // signature check is the whole vulnerability.
       const payload = transaction();
-      const result = adapter.verifyCallback(payload, 'deadbeef', EXPECTED);
+      const result = await adapter.verifyCallback(payload, 'deadbeef', EXPECTED);
       expect(result).toMatchObject({ verified: false, mismatchReason: 'HMAC_INVALID' });
     });
 
-    it('rejects a tampered amount even though the rest is intact', () => {
+    it('rejects a tampered amount even though the rest is intact', async () => {
       const original = transaction();
       const digest = signed(original);
       const tampered = transaction({ amount_cents: 1 });
-      expect(adapter.verifyCallback(tampered, digest, EXPECTED)).toMatchObject({
+      await expect(adapter.verifyCallback(tampered, digest, EXPECTED)).resolves.toMatchObject({
         verified: false,
         mismatchReason: 'HMAC_INVALID',
       });
     });
 
-    it('rejects a successful-but-refunded transaction', () => {
+    it('rejects a successful-but-refunded transaction', async () => {
       // success alone is not enough: a payment can succeed and then be reversed.
       const payload = transaction({ is_refunded: true });
-      expect(adapter.verifyCallback(payload, signed(payload), EXPECTED)).toMatchObject({
+      await expect(
+        adapter.verifyCallback(payload, signed(payload), EXPECTED),
+      ).resolves.toMatchObject({
         verified: false,
         mismatchReason: 'REVERSED',
       });
     });
 
-    it('rejects a voided transaction', () => {
+    it('rejects a voided transaction', async () => {
       const payload = transaction({ is_voided: true });
-      expect(adapter.verifyCallback(payload, signed(payload), EXPECTED)).toMatchObject({
+      await expect(
+        adapter.verifyCallback(payload, signed(payload), EXPECTED),
+      ).resolves.toMatchObject({
         mismatchReason: 'REVERSED',
       });
     });
 
-    it('rejects a pending transaction', () => {
+    it('rejects a pending transaction', async () => {
       const payload = transaction({ pending: true });
-      expect(adapter.verifyCallback(payload, signed(payload), EXPECTED)).toMatchObject({
+      await expect(
+        adapter.verifyCallback(payload, signed(payload), EXPECTED),
+      ).resolves.toMatchObject({
         mismatchReason: 'PENDING',
       });
     });
 
-    it('rejects an unsuccessful transaction', () => {
+    it('rejects an unsuccessful transaction', async () => {
       const payload = transaction({ success: false });
-      expect(adapter.verifyCallback(payload, signed(payload), EXPECTED)).toMatchObject({
+      await expect(
+        adapter.verifyCallback(payload, signed(payload), EXPECTED),
+      ).resolves.toMatchObject({
         mismatchReason: 'NOT_SUCCESSFUL',
       });
     });
 
-    it('rejects a signed payload that fails the transaction schema', () => {
+    it('rejects a signed payload that fails the transaction schema', async () => {
       const payload = { id: 123456 };
 
-      expect(adapter.verifyCallback(payload, signed(payload), EXPECTED)).toMatchObject({
+      await expect(
+        adapter.verifyCallback(payload, signed(payload), EXPECTED),
+      ).resolves.toMatchObject({
         mismatchReason: 'NOT_SUCCESSFUL',
       });
     });
 
-    it('rejects the wrong amount', () => {
+    it('rejects the wrong amount', async () => {
       const payload = transaction({ amount_cents: 100 });
-      expect(adapter.verifyCallback(payload, signed(payload), EXPECTED)).toMatchObject({
+      await expect(
+        adapter.verifyCallback(payload, signed(payload), EXPECTED),
+      ).resolves.toMatchObject({
         mismatchReason: 'AMOUNT_MISMATCH',
       });
     });
 
-    it('rejects the wrong currency', () => {
+    it('rejects the wrong currency', async () => {
       const payload = transaction({ currency: 'USD' });
-      expect(adapter.verifyCallback(payload, signed(payload), EXPECTED)).toMatchObject({
+      await expect(
+        adapter.verifyCallback(payload, signed(payload), EXPECTED),
+      ).resolves.toMatchObject({
         mismatchReason: 'CURRENCY_MISMATCH',
       });
     });
 
-    it('rejects a callback bound to a different checkout session', () => {
+    it('rejects a callback bound to a different checkout session', async () => {
       const payload = transaction({ order: { id: 987, merchant_order_id: 'cs_other' } });
-      expect(adapter.verifyCallback(payload, signed(payload), EXPECTED)).toMatchObject({
+      await expect(
+        adapter.verifyCallback(payload, signed(payload), EXPECTED),
+      ).resolves.toMatchObject({
         mismatchReason: 'SESSION_MISMATCH',
       });
     });
 
-    it('refuses everything when no HMAC secret is configured', () => {
+    it('refuses everything when no HMAC secret is configured', async () => {
       jest.spyOn(AppConfig, 'get').mockReturnValue({
         PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
       } as unknown as ReturnType<typeof AppConfig.get>);
+      runtimeConfig.getPaymobOperations.mockRejectedValue(new Error('missing HMAC secret'));
       const payload = transaction();
-      expect(adapter.verifyCallback(payload, 'anything', EXPECTED)).toMatchObject({
+      await expect(adapter.verifyCallback(payload, 'anything', EXPECTED)).resolves.toMatchObject({
         verified: false,
         mismatchReason: 'HMAC_INVALID',
       });
@@ -335,9 +375,12 @@ describe('PaymobAdapter', () => {
       order_id: 987,
     });
 
-    it('returns only the gateway token and masked metadata', () => {
+    it('returns only the gateway token and masked metadata', async () => {
       const payload = cardPayload();
-      const result = adapter.extractSavedCard(payload, computePaymobCardTokenHmac(payload, SECRET));
+      const result = await adapter.extractSavedCard(
+        payload,
+        computePaymobCardTokenHmac(payload, SECRET),
+      );
       expect(result).toEqual({
         gatewayToken: 'tok_abc',
         maskedPan: 'xxxx-xxxx-xxxx-2346',
@@ -347,16 +390,16 @@ describe('PaymobAdapter', () => {
       expect(JSON.stringify(result)).not.toContain('cvv');
     });
 
-    it('refuses an unverified card-token callback', () => {
-      expect(adapter.extractSavedCard(cardPayload(), 'bogus')).toBeNull();
+    it('refuses an unverified card-token callback', async () => {
+      await expect(adapter.extractSavedCard(cardPayload(), 'bogus')).resolves.toBeNull();
     });
 
-    it('refuses a verified callback that does not contain saved-card fields', () => {
+    it('refuses a verified callback that does not contain saved-card fields', async () => {
       const payload = { order_id: 987 };
 
-      expect(
+      await expect(
         adapter.extractSavedCard(payload, computePaymobCardTokenHmac(payload, SECRET)),
-      ).toBeNull();
+      ).resolves.toBeNull();
     });
   });
 

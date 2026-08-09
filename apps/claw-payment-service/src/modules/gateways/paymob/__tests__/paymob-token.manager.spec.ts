@@ -11,12 +11,15 @@ jest.mock('@claw/shared-utilities', () => ({
 const mockHttp = httpRequest as unknown as jest.Mock;
 
 describe('PaymobTokenManager', () => {
+  const runtimeConfig = { getPaymobOperations: jest.fn() };
+
   beforeEach(() => {
     mockHttp.mockReset();
     jest.spyOn(AppConfig, 'get').mockReturnValue({
       PAYMOB_API_KEY: 'api-key',
       PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
     } as unknown as ReturnType<typeof AppConfig.get>);
+    runtimeConfig.getPaymobOperations.mockResolvedValue({ apiKey: 'api-key' });
   });
 
   afterEach(() => {
@@ -29,7 +32,7 @@ describe('PaymobTokenManager', () => {
       status: 201,
       data: { token: 'short-lived-access-token' },
     });
-    const manager = new PaymobTokenManager();
+    const manager = new PaymobTokenManager(runtimeConfig as never);
 
     await expect(manager.getAccessToken(1_000)).resolves.toBe('short-lived-access-token');
 
@@ -48,7 +51,7 @@ describe('PaymobTokenManager', () => {
       status: 201,
       data: { token: 'short-lived-access-token' },
     });
-    const manager = new PaymobTokenManager();
+    const manager = new PaymobTokenManager(runtimeConfig as never);
 
     await manager.getAccessToken(1_000);
     await manager.getAccessToken(2_000);
@@ -57,10 +60,8 @@ describe('PaymobTokenManager', () => {
   });
 
   it('refuses inquiry when the API key is missing', async () => {
-    jest.spyOn(AppConfig, 'get').mockReturnValue({
-      PAYMENT_GATEWAY_TIMEOUT_MS: 10_000,
-    } as unknown as ReturnType<typeof AppConfig.get>);
-    const manager = new PaymobTokenManager();
+    runtimeConfig.getPaymobOperations.mockRejectedValue(new Error('missing credentials'));
+    const manager = new PaymobTokenManager(runtimeConfig as never);
 
     await expect(manager.getAccessToken()).rejects.toThrow();
     expect(mockHttp).not.toHaveBeenCalled();
