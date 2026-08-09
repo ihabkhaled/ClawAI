@@ -177,6 +177,78 @@ function assertNotDialectToolCall(content: string): void {
   }
 }
 
+/**
+ * Escapes control characters a model left raw inside a JSON string.
+ *
+ * Writing a file means putting source code in a JSON string, and models
+ * routinely emit the newlines in that code literally instead of as `\n`. JSON
+ * forbids a raw control character inside a string, so `JSON.parse` rejects the
+ * whole document and a request that was otherwise perfect — right tool, right
+ * operation, right transaction shape — was reported as a tool object the model
+ * "did not finish". kimi-k2.7-code lost a schema edit to exactly that.
+ *
+ * Only characters INSIDE a string literal are touched, and only ones that are
+ * illegal there, so a document that already parses is never altered and no
+ * structural character can be introduced.
+ */
+export function repairUnescapedControlCharacters(text: string): string {
+  const escapes: Readonly<Record<string, string>> = {
+    '\n': '\\n',
+    '\r': '\\r',
+    '\t': '\\t',
+    '\b': '\\b',
+    '\f': '\\f',
+  };
+  let output = '';
+  let insideString = false;
+  let escaped = false;
+  for (const character of text) {
+    if (escaped) {
+      output += character;
+      escaped = false;
+      continue;
+    }
+    if (character === '\\') {
+      output += character;
+      escaped = true;
+      continue;
+    }
+    if (character === '"') {
+      insideString = !insideString;
+      output += character;
+      continue;
+    }
+    if (insideString) {
+      const replacement = escapes[character];
+      if (replacement !== undefined) {
+        output += replacement;
+        continue;
+      }
+      const code = character.codePointAt(0) ?? 0;
+      if (code < 0x20) {
+        output += `\\u${code.toString(16).padStart(4, '0')}`;
+        continue;
+      }
+    }
+    output += character;
+  }
+  return output;
+}
+
+/** Parses JSON, retrying once with raw control characters escaped. */
+function parseJsonAllowingRawControls(text: string): { readonly value: unknown } | null {
+  try {
+    return { value: JSON.parse(text) };
+  } catch {
+    // Fall through to the repair below.
+  }
+  try {
+    return { value: JSON.parse(repairUnescapedControlCharacters(text)) };
+  } catch {
+    return null;
+  }
+}
+
 export function parseRuntimeV2ModelOutput(
   content: string,
   definitions?: readonly ToolDefinitionDto[],
@@ -188,9 +260,10 @@ export function parseRuntimeV2ModelOutput(
   }
 
   let document: unknown;
-  try {
-    document = JSON.parse(candidate);
-  } catch {
+  const decoded = parseJsonAllowingRawControls(candidate);
+  if (decoded !== null) {
+    document = decoded.value;
+  } else {
     // Not one JSON document. It may still be several concatenated tool
     // requests, which is the common shape when the model plans a multi-part
     // task, so retry against the first complete object before giving up.
@@ -199,15 +272,15 @@ export function parseRuntimeV2ModelOutput(
       assertNotDialectToolCall(content);
       return { kind: 'final', content };
     }
-    try {
-      document = JSON.parse(first);
-    } catch {
+    const decodedFirst = parseJsonAllowingRawControls(first);
+    if (decodedFirst === null) {
       // Looked like JSON and is not. That is prose or code the model happened
       // to start with a brace, not an attempt at a tool request, so it is
       // answered rather than repaired.
       assertNotDialectToolCall(content);
       return { kind: 'final', content };
     }
+    document = decodedFirst.value;
   }
 
   // `kind: "tool"` is the schema's discriminator, so it is also the only honest

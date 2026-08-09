@@ -634,11 +634,15 @@ export class RuntimeV2LoopManager {
         // The reason is carried too: a quoted request that is cut off before
         // the offending key leaves whoever reads this unable to tell what was
         // actually wrong with it.
+        // The diagnosis comes before the quote. The whole message is truncated
+        // to a bounded length, and the quoted request is the long part — put
+        // the reason last and it is the first thing lost, which is exactly the
+        // information needed to act.
         throw new BusinessException(
           [
             RUNTIME_V2_UNREPAIRABLE_REQUEST_MESSAGE,
-            excerpt(repaired.content),
             repairDiagnosis(secondRejection),
+            excerpt(repaired.content),
           ]
             .filter((value) => value.length > 0)
             .join(' '),

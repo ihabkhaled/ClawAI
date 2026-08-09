@@ -67,4 +67,12 @@ export const RUNTIME_V2_CONTEXT_TOKEN_BUDGET = 96_000;
 // `done_reason: load`, `eval_count: 0` and, decisively, `prompt_eval_count: 0`:
 // it never evaluated a prompt at all. A turn is bounded here instead, which is
 // both generous for what a turn emits and honest about what the window holds.
-export const RUNTIME_V2_MAX_OUTPUT_TOKENS = 8_192;
+//
+// Raised once the agent started mutating files. A turn that only reads emits a
+// tiny object, but a `patch` carries the exact text being replaced AND its
+// replacement, and a `create` carries a whole file — with JSON escaping on top.
+// At 8_192 those turns were cut off mid-object, which surfaced as the model
+// "starting a tool object and not finishing it" and ended runs that were
+// otherwise doing the right thing. Still far below the context budget above, so
+// the prompt keeps its room.
+export const RUNTIME_V2_MAX_OUTPUT_TOKENS = 16_384;
