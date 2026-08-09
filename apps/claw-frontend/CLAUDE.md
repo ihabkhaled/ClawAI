@@ -271,7 +271,7 @@ After implementing any frontend change:
 - [ ] All new pages have: loading state, empty state, error state, success state
 - [ ] All form controls use shadcn/ui (NO raw `<select>`, `<input>`, `<textarea>`)
 - [ ] All page component functions have explicit `React.ReactElement` return type
-- [ ] All new text has i18n keys in ALL 8 locale files (en, ar, de, es, fr, it, pt, ru)
+- [ ] All new text has i18n keys in ALL 13 locale files (en, ar, de, es, fa, fr, hi, it, ja, pt, ru, th, zh)
 - [ ] No React hooks directly in `.tsx` files (all in controller hook)
 - [ ] No inline types/enums/constants in any `.tsx` or hook file
 - [ ] All poll hooks detect `meta?.['error'] === true` to stop polling
@@ -298,4 +298,4 @@ Route: `/models/local-frontier`. Sidebar nav entry: `nav.modelLocalFrontier`. Pa
 - Controller hook: `useLocalFrontierCatalogPage` (`src/hooks/local-frontier/use-local-frontier-catalog-page.ts`) — composes 14 sub-hooks (catalog, hardware, runtime info, loaded model, pull jobs, initiate/cancel/retry pull, refresh catalog/hardware, load/unload/delete model, update runtime config, SSE progress).
 - Components: `HardwarePanel`, `FilterBar`, `DownloadsDrawer` (with live SSE progress via `usePullProgressSse`), 3 dialogs (`DeleteWeightsDialog`, `OverridePromptDialog`, `RuntimeConfigDialog`).
 - Chat ModelSelector (`useAvailableModels`) shows `local-llamacpp` group with READY frontier models, sorted right after `local-ollama` group.
-- All ~80 new strings added to all 9 locales (`en/ar/de/es/fr/hi/it/pt/ru`).
+- All ~80 new strings added to all 13 locales (`en/ar/de/es/fa/fr/hi/it/ja/pt/ru/th/zh`).

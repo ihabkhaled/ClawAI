@@ -192,7 +192,7 @@ Template in `rules/06-docs-rules.md`.
 
 ## Step 12 — i18n (if user-facing)
 
-Add all new user-visible text to all 9 locale files:
+Add all new user-visible text to all 13 locale files:
 
 ```
 apps/claw-frontend/src/lib/i18n/locales/{en,ar,de,es,fr,hi,it,pt,ru}.ts

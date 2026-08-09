@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 19896,
+      "bytes": 19897,
       "file": "CLAUDE.md"
     },
     {
@@ -13,7 +13,7 @@
       "file": "cursor.md"
     },
     {
-      "bytes": 8198,
+      "bytes": 8450,
       "file": "AGENTS.md"
     },
     {
@@ -51,15 +51,15 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 10980,
+      "bytes": 10981,
       "file": "rules/00-master-rules.md"
     },
     {
-      "bytes": 4395,
+      "bytes": 4412,
       "file": "rules/00-non-negotiable-rules.md"
     },
     {
-      "bytes": 4392,
+      "bytes": 4393,
       "file": "rules/01-planning-rules.md"
     },
     {
@@ -75,7 +75,7 @@
       "file": "rules/02-monorepo-and-workspace-ownership.md"
     },
     {
-      "bytes": 8708,
+      "bytes": 8709,
       "file": "rules/03-frontend-rules.md"
     },
     {
@@ -83,7 +83,7 @@
       "file": "rules/03-microservice-boundaries.md"
     },
     {
-      "bytes": 2834,
+      "bytes": 2835,
       "file": "rules/04-nextjs-app-router.md"
     },
     {
@@ -171,7 +171,7 @@
       "file": "rules/19-logging-observability-and-redaction.md"
     },
     {
-      "bytes": 3062,
+      "bytes": 3064,
       "file": "rules/20-i18n-and-user-facing-messages.md"
     },
     {
@@ -199,7 +199,7 @@
       "file": "rules/26-prompt-pack-intake-protocol.md"
     },
     {
-      "bytes": 15363,
+      "bytes": 15364,
       "file": "rules/27-engineering-mindsets.md"
     },
     {
@@ -221,11 +221,11 @@
       "file": "skills/01-codebase-navigation.md"
     },
     {
-      "bytes": 5269,
+      "bytes": 5270,
       "file": "skills/02-service-scaffold.md"
     },
     {
-      "bytes": 9060,
+      "bytes": 9061,
       "file": "skills/03-feature-scaffold.md"
     },
     {
@@ -261,7 +261,7 @@
       "file": "skills/add-a-payment-gateway-flow.md"
     },
     {
-      "bytes": 3615,
+      "bytes": 3616,
       "file": "skills/add-app-route.md"
     },
     {
@@ -325,7 +325,7 @@
       "file": "skills/create-dto.md"
     },
     {
-      "bytes": 4879,
+      "bytes": 4881,
       "file": "skills/create-frontend-module.md"
     },
     {
@@ -337,7 +337,7 @@
       "file": "skills/create-microservice.md"
     },
     {
-      "bytes": 3678,
+      "bytes": 3679,
       "file": "skills/create-presentational-component.md"
     },
     {
@@ -365,7 +365,7 @@
       "file": "skills/debug-flaky-test.md"
     },
     {
-      "bytes": 6172,
+      "bytes": 6173,
       "file": "skills/execute-prompt-pack.md"
     },
     {
@@ -373,7 +373,7 @@
       "file": "skills/find-canonical-owner.md"
     },
     {
-      "bytes": 4238,
+      "bytes": 4256,
       "file": "skills/frontend-architecture-review.md"
     },
     {
@@ -409,7 +409,7 @@
       "file": "skills/trace-event-end-to-end.md"
     },
     {
-      "bytes": 4430,
+      "bytes": 4431,
       "file": "skills/trace-frontend-feature.md"
     },
     {

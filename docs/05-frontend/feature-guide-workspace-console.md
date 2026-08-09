@@ -19,7 +19,7 @@ Both pages are authenticated and live in the portal shell.
 - Sidebar entries (`src/constants/sidebar.constants.ts`) use `Package` and
   `KeyRound` lucide icons.
 - All labels are driven by i18n keys `nav.workspaceProviders` and
-  `nav.workspaceAppConfigs`, with strings in all 9 locales.
+  `nav.workspaceAppConfigs`, with strings in all 13 locales.
 
 ## Data Layer
 

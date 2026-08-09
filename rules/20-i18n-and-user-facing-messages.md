@@ -15,7 +15,7 @@ end it.
 ## Mandatory rules
 
 1. **No hardcoded user-facing text.** Render via `t('key')` from `useTranslation()`.
-2. **A new key is added to ALL 9 locales** — `en` first with the real English copy,
+2. **A new key is added to ALL 13 locales** — `en` first with the real English copy,
    then a real native translation for `ar, de, es, fr, hi, it, pt, ru`. Never copy
    English into the other files as a placeholder.
 3. **`i18n.types.ts` is updated in the SAME change** as any locale key addition —
@@ -66,6 +66,6 @@ node tools/audit-untranslated-i18n.cjs      // 0 unexplained EN===locale entries
 
 ## Definition of done
 
-- [ ] Every new string via `t()`, present in all 9 locales as real translations.
+- [ ] Every new string via `t()`, present in all 13 locales as real translations.
 - [ ] `i18n.types.ts` updated in the same change.
 - [ ] Audit script clean; one non-EN locale spot-checked in the browser.

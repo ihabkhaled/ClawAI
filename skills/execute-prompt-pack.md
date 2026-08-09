@@ -101,7 +101,7 @@ grep -n "coverageThreshold" apps/<workspace>/jest.config.ts
 
 Plus, from `CLAUDE.md`: the mandatory delivery checklist (`.env.example`, both
 installers, every compose file, nginx, shared constants/types, health service, CI
-matrix, TLS SANs, docs, i18n × 9), and the full gate topology — pre-commit
+matrix, TLS SANs, docs, i18n × 13), and the full gate topology — pre-commit
 (lint-staged → generated-artifact regeneration → affected typecheck), pre-push, the
 CI matrix, knowledge-freshness + inventory-audit checks, **Lighthouse CI**, and the
 Vercel build.

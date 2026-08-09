@@ -121,7 +121,7 @@ GLM, Qwen, DeepSeek, Mistral, or any other).
   - `.env` and `.env.example`
   - `scripts/install.sh` + `scripts/install.ps1`
   - `.github/workflows/ci.yml`
-  - i18n (all 9 locales) if user-facing
+  - i18n (all 13 locales) if user-facing
   - `docs/04-backend/services-index.md`
   - `CLAUDE.md` workspace layout
   - Frontend types, hooks, and pages if user-facing

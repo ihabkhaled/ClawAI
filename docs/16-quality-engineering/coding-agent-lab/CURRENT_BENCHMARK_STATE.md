@@ -17,10 +17,10 @@ Updated 2026-08-09. Read this first when resuming; do not redo completed work.
 - **Unresolved feature findings:** this audit did not assess the password-reset
   implementation or provenance.
 - **Open product defects:** none observed through the real UI, which has not
-  been exercised. Two qualification gaps were found by audit: effort modes did
-  not exist (closed in `0.54.0`) and **speed modes 1X / 1.5X / 2X still do not
-  exist** (pack §14, open).
-- **Last product release:** `0.54.0` — see
+  been exercised. Effort modes shipped in `0.54.0`; speed modes 1X / 1.5X / 2X
+  shipped in `0.55.0` and have unit plus Playwright coverage. Their remaining
+  gap is measured 100-round and human desktop qualification, not implementation.
+- **Last product release:** `0.57.3` — see
   [`CODING_AGENT_RELEASE_LEDGER.md`](CODING_AGENT_RELEASE_LEDGER.md).
 
 ## The ladder has started

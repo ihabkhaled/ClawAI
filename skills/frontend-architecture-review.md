@@ -57,7 +57,7 @@ validation_lane: cd apps/claw-frontend && npm run typecheck && npm run lint && n
 3. **Component**: shadcn/ui for ALL form inputs — NO raw `<select>`/`<input>`/`<textarea>`; NO `dangerouslySetInnerHTML`; props-only data flow.
 4. **Extraction**: no inline `type`/`interface`/`enum`/screaming-`const`/utility-fn/sub-component in `.tsx`/hook/store files — extracted per the extraction table.
 5. **Mutation surfacing**: every `useMutation` has `onError` calling `showToast.apiError(err, t('…'))` plus a user-visible banner; per-row state via `pendingId: string | null` (not a single `isMutating` bool).
-6. **i18n**: all user-facing text via `t('key')`; keys added to ALL 9 locales (en, ar, de, es, fr, hi, it, pt, ru) with NATIVE translations (no English leaked into non-EN); `src/types/i18n.types.ts` updated in the SAME change (atomic).
+6. **i18n**: all user-facing text via `t('key')`; keys added to ALL 13 locales (en, ar, de, es, fa, fr, hi, it, ja, pt, ru, th, zh) with NATIVE translations (no English leaked into non-EN); `src/types/i18n.types.ts` updated in the SAME change (atomic).
 7. **FE↔BE parity**: FE type field names mirror BE DTO/Prisma verbatim (e.g. `createdAt`, not a renamed `receivedAt`); filter types are the exact `.strict()` intersection, no superset dead fields.
 8. **Styling**: semantic Tailwind + CSS variables, no `dark:` prefixes, no raw color classes, `cn()` for conditionals.
 
@@ -85,4 +85,4 @@ validation_lane: cd apps/claw-frontend && npm run typecheck && npm run lint && n
 
 **Definition of done**
 
-- All checklist items pass, 9 locales native + `i18n.types.ts` atomic, gate lane green.
+- All checklist items pass, 13 locales native + `i18n.types.ts` atomic, gate lane green.

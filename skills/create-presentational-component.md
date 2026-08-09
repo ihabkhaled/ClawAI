@@ -57,7 +57,7 @@ state, and never defines inline sub-components. All form controls come from shad
 3. Use shadcn/ui for ALL form controls — no raw `<select>`/`<input>`/`<textarea>`. No `dangerouslySetInnerHTML`.
 4. Style with semantic Tailwind classes (`bg-card`, `text-muted-foreground`, `border-border`) + `cn()` from `@/lib/utils`; no `dark:` prefixes (CSS variables handle theme); mobile-first `sm:/md:/lg:`.
 5. Extract any repeated sub-view to its own `.tsx` — no inline sub-component functions.
-6. All text via `t('key')`; register in 9 locales + `i18n.types.ts` (`./add-i18n-key.md`).
+6. All text via `t('key')`; register in 13 locales + `i18n.types.ts` (`./add-i18n-key.md`).
 7. Emit event handlers via props (`onSelect`, `onDelete`) — the component never mutates or fetches.
 
 ## Security considerations

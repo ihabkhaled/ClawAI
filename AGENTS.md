@@ -59,7 +59,7 @@ Before release: `npm run release:preflight`.
 - **NEVER** put business logic in controllers or DB calls outside repositories.
 - **NEVER** use `process.env` outside `AppConfig`; **NEVER** `console.log`.
 - **NEVER** log or expose secrets/tokens/passwords.
-- **NEVER** add user-facing text without i18n in all 9 locales.
+- **NEVER** add user-facing text without i18n in all 13 locales.
 - **NEVER** add code without a test.
 - **DO NOT invent repository facts** — derive them from `.ai/manifests/` and the
   real code. If a fact is missing, run `knowledge:context` or read the source.
@@ -73,18 +73,17 @@ anything under `.ai/` except `.ai/local/` (gitignored).
 
 _This router is intentionally short. Detail lives in the canonical sources above._
 
-
 ## Generated artifacts are a HARD GATE (never optional)
 
 `.ai/**`, every workspace `AGENTS.md`, and
 `docs/features/ai-native-engineering-os/inventory.snapshot.json` are
 **generated from the tree**. CI verifies them on every push:
 
-| CI job | Command | Fails when |
-| --- | --- | --- |
-| Knowledge freshness | `npm run knowledge:check` | a generated file's hash no longer matches the tree |
+| CI job              | Command                    | Fails when                                                           |
+| ------------------- | -------------------------- | -------------------------------------------------------------------- |
+| Knowledge freshness | `npm run knowledge:check`  | a generated file's hash no longer matches the tree                   |
 | Knowledge integrity | `npm run knowledge:verify` | stale file, broken link, orphan reviewer, hook-bypass, contradiction |
-| Inventory audit | `npm run audit:check` | the inventory snapshot hash has drifted |
+| Inventory audit     | `npm run audit:check`      | the inventory snapshot hash has drifted                              |
 
 **A stale artifact turns the build red on every subsequent push**, for everyone,
 until someone regenerates it. It is not a warning and it is not deferrable.
@@ -151,7 +150,7 @@ runs BEFORE the first line of code. Runbook:
 5. **Review the constraint surface first**: ESLint flat config (banned syntax,
    inline-declaration bans, size ceilings, import order), TypeScript strict,
    Prettier, coverage floors, security (secrets/authz/IDOR/validation/redaction/CSP),
-   i18n × 9 locales + `i18n.types.ts`, the `CLAUDE.md` delivery checklist (env,
+   i18n × 13 locales + `i18n.types.ts`, the `CLAUDE.md` delivery checklist (env,
    installers, every compose file, nginx, shared packages, health service, CI
    matrix, TLS SANs, docs), and the FULL gate topology: pre-commit (lint-staged →
    generated-artifact regeneration → affected typecheck), pre-push, the CI matrix

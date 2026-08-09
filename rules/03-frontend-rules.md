@@ -81,7 +81,7 @@ useState/useRef → Component-level local state only
 ```
 1.  ALL user-facing text uses t('key') from useTranslation()
 2.  NEVER hardcode text strings in components or pages
-3.  Add new keys to ALL 9 locale files:
+3.  Add new keys to ALL 13 locale files:
     - src/lib/i18n/locales/en.ts
     - src/lib/i18n/locales/ar.ts (RTL)
     - src/lib/i18n/locales/de.ts

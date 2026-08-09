@@ -238,11 +238,6 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
         icon: CreditCard,
       },
       {
-        labelKey: 'nav.adminPaymentGateways',
-        href: ROUTES.ADMIN_PAYMENT_GATEWAYS,
-        icon: CreditCard,
-      },
-      {
         labelKey: 'nav.adminRoles',
         href: ROUTES.ADMIN_ROLES,
         icon: UserCog,

@@ -113,7 +113,7 @@ instead of what this repo needs** (a second engine where a seam exists), and
 the deliverable is the remainder. Hence the non-negotiable middle steps: audit every
 deliverable **against the code** (done / partial / missing — and _present is not
 wired_), and review the constraint surface (ESLint, TypeScript, Prettier, coverage,
-security, i18n × 9, the delivery checklist, and every gate including pre-commit,
+security, i18n × 13, the delivery checklist, and every gate including pre-commit,
 pre-push and CI) **before** writing code rather than after.
 
 Where a pack conflicts with repository policy, **policy wins** — and the deviation is

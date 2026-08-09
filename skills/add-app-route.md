@@ -58,7 +58,7 @@ The page is pure render composition: ONE controller hook, four states, zero busi
 4. Render all four states explicitly: loading spinner, empty state, error state, success content. Extract any sub-view to its own `.tsx` (no inline sub-components).
 5. Style with semantic Tailwind classes + `cn()` from `@/lib/utils`; no `dark:` prefixes; mobile-first.
 6. Add a route constant to `src/constants/routes.constants.ts` and a sidebar entry to `src/constants/sidebar.constants.ts`.
-7. Add all visible text via `t('key')` and register keys in 9 locales + `i18n.types.ts` (`./add-i18n-key.md`).
+7. Add all visible text via `t('key')` and register keys in 13 locales + `i18n.types.ts` (`./add-i18n-key.md`).
 
 ## Security considerations
 

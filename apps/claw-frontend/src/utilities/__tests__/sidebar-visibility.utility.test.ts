@@ -89,6 +89,15 @@ describe('sidebar-visibility.utility', () => {
   });
 
   describe('filterSidebarItems for an ADMIN', () => {
+    it('contains one payment gateways navigation item', () => {
+      const admin = SIDEBAR_NAV_ITEMS.find((item) => item.labelKey === 'nav.admin');
+      const paymentGatewayItems = (admin?.children ?? []).filter(
+        (item) => item.labelKey === 'nav.adminPaymentGateways',
+      );
+
+      expect(paymentGatewayItems).toHaveLength(1);
+    });
+
     it('keeps every top-level item and every child (admin can do all)', () => {
       const visible = filterSidebarItems(SIDEBAR_NAV_ITEMS, adminCan, adminFeatures);
       expect(visible.length).toBe(SIDEBAR_NAV_ITEMS.length);

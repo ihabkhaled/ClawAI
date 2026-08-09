@@ -26,7 +26,7 @@ These rules apply to ALL frontend code without exception:
 | 14  | NEVER use `==` or `!=` -- always use `===` and `!==`                                           | No type coercion bugs                                        |
 | 15  | NEVER use `var` -- use `const`, or `let` only when reassignment is required                    | Block scoping                                                |
 | 16  | NEVER add features without tests -- every new function needs a test                            | Quality gate                                                 |
-| 17  | NEVER add user-facing text without i18n -- extract to translation files                        | All 9 locales must stay in sync                              |
+| 17  | NEVER add user-facing text without i18n -- extract to translation files                        | All 13 locales must stay in sync                             |
 | 18  | NEVER import 3rd-party libraries directly -- wrap in `src/utilities/<name>.utility.ts`         | If the library changes, only the wrapper file needs updating |
 | 19  | NEVER use `dangerouslySetInnerHTML`                                                            | XSS prevention                                               |
 | 20  | NEVER use raw HTML form elements (`<select>`, `<input>`, `<textarea>`) -- use shadcn/ui        | Consistent UI, accessible by default                         |
@@ -373,7 +373,7 @@ Before submitting any frontend change, verify:
 - [ ] No `eslint-disable` comments
 - [ ] No `console.log` statements
 - [ ] All type imports use `import type` syntax
-- [ ] All new user-facing text added to ALL 9 locale files
+- [ ] All new user-facing text added to ALL 13 locale files
 - [ ] All new API calls go through repositories
 - [ ] All new hooks extracted to `src/hooks/<domain>/`
 - [ ] All new types extracted to `src/types/`

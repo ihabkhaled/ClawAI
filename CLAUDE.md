@@ -55,7 +55,7 @@ Seven steps: read the pack end to end → `knowledge:context` → read governing
 in authority order → **audit every deliverable against the code**
 (done/partial/missing; _present is not wired_ — a repository method with no callers
 is scaffolding) → **review the constraint surface up front** (ESLint, TypeScript,
-Prettier, coverage, security, i18n × 9, the delivery checklist, and every gate) →
+Prettier, coverage, security, i18n × 13, the delivery checklist, and every gate) →
 write the plan and state deviations → implement.
 
 **Policy outranks the pack.** Where they conflict, policy wins and the deviation is

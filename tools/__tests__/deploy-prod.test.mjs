@@ -51,6 +51,12 @@ test('deploy-prod.sh recreates containers with --no-deps so unrelated healthy se
   assert.match(script, /compose up -d --no-deps --no-build/u);
 });
 
+test('deploy-prod.sh bounds Docker Compose build concurrency with a conservative override', () => {
+  assert.match(script, /BUILD_PARALLEL_LIMIT="\$\{COMPOSE_PARALLEL_LIMIT:-2\}"/u);
+  assert.match(script, /COMPOSE_PARALLEL_LIMIT="\$BUILD_PARALLEL_LIMIT" compose build/u);
+  assert.match(script, /must be an integer from 1 to 4/u);
+});
+
 test('deploy-prod.sh writes the deployed SHA only via the atomic record_deployment helper', () => {
   const writesToStateFile = [...script.matchAll(/>\s*"?\$STATE_FILE"?(?!\.tmp)/gu)];
   assert.deepEqual(writesToStateFile, [], 'a direct, non-atomic write to $STATE_FILE was found');

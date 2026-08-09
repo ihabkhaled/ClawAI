@@ -68,7 +68,8 @@ happens to be by the time the SSH session runs.
    using `docker/docker-compose.prod.services.yml` **as committed at the
    target commit** (§2.3), checks out the target commit
    (`git checkout --detach`, then asserts `HEAD == target`), builds only the
-   affected services, and recreates only those containers
+   affected services with at most two concurrent image builds, and recreates
+   only those containers
    (`up -d --no-deps --no-build`, never `--remove-orphans`).
 9. Waits for every recreated service's Docker healthcheck to report
    `healthy` (bounded timeout, `CLAW_DEPLOY_HEALTH_TIMEOUT`, default 420s).
@@ -79,6 +80,12 @@ A failed build never touches a running container. A failed health check dumps
 `docker compose ps` and the last 200 log lines per affected service, exits
 non-zero, and leaves `.deploy/deployed-sha` unchanged — the workflow run goes
 red, production keeps serving the previous commit.
+
+Docker Compose build concurrency defaults to `2` so a broad-impact release
+cannot start every service image build at once and starve the VPS or its SSH
+session. An operator may set the standard Compose variable
+`COMPOSE_PARALLEL_LIMIT` to an integer from `1` through `4` for a single deploy;
+values outside that safety range are rejected before the build starts.
 
 **Never**, under any normal deployment: `docker compose down`, `docker rm`,
 `docker volume rm`, `docker system prune`, `--remove-orphans`, `git clean`,

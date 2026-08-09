@@ -17,6 +17,8 @@
 #   CLAW_DEPLOY_HEALTH_TIMEOUT  seconds to wait per service healthcheck (default 420)
 #   CLAW_DEPLOY_ALLOW_ROLLBACK  1 = permit deploying a commit older than the one
 #                               currently deployed (emergency rollback)
+#   COMPOSE_PARALLEL_LIMIT      concurrent service image builds (default 2,
+#                               accepted range 1-4)
 #   CLAW_LOCAL_AI               true|false override for the local-AI profile;
 #                               default reads the production .env, the same
 #                               precedence rule scripts/claw.sh applies
@@ -86,6 +88,7 @@ DEP_GRAPH_REL=".ai/manifests/workspace-dependency-graph.json"
 
 LOCK_WAIT_SECONDS="${CLAW_DEPLOY_LOCK_WAIT:-1800}"
 HEALTH_TIMEOUT_SECONDS="${CLAW_DEPLOY_HEALTH_TIMEOUT:-420}"
+BUILD_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-2}"
 
 # Files that reach EVERY application image. Each service Dockerfile does
 # `COPY package.json`, `COPY .npmrc` and `COPY packages/`, and the build context
@@ -760,6 +763,11 @@ main() {
     die "expected exactly one argument (the target commit SHA), got $#"
   fi
 
+  case "$BUILD_PARALLEL_LIMIT" in
+    1 | 2 | 3 | 4) ;;
+    *) die "COMPOSE_PARALLEL_LIMIT must be an integer from 1 to 4" ;;
+  esac
+
   local target_rev="$1"
   case "$target_rev" in
     *[!0-9a-fA-F]* | '') die "not a commit SHA: '$target_rev' (expected 7-40 hex characters)" ;;
@@ -928,7 +936,11 @@ main() {
   # and zero downtime.
   section "Building services..."
   log ""
-  if ! compose build "${PLAN_SERVICES[@]}"; then
+  # Compose otherwise builds every selected image concurrently. A broad-impact
+  # release can fan out to all application services and exhaust VPS CPU long
+  # enough for the controlling SSH connection to time out. Keep the default
+  # deliberately conservative; operators may choose a value from 1 to 4.
+  if ! COMPOSE_PARALLEL_LIMIT="$BUILD_PARALLEL_LIMIT" compose build "${PLAN_SERVICES[@]}"; then
     err ""
     err "Build failed. No container was recreated; production is still serving"
     err "the previously deployed commit ${old_sha:-<unknown>}."

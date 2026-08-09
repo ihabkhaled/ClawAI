@@ -67,7 +67,7 @@ i18n contracts. Backend must already expose the endpoints (behind nginx `/api/v1
 7. **Hooks** → `src/hooks/<domain>/use-<name>.ts`, one responsibility, ≤50 lines. Query hooks (`./create-query.md`) + mutation hooks (`./create-mutation.md`) + the controller hook (`./create-view-model-hook.md`).
 8. **Components** → `src/components/<domain>/*.tsx`, props-only render (`./create-presentational-component.md`). No inline sub-components.
 9. **Page** → `src/app/(portal)/<route>/page.tsx`, ONE controller hook, loading/empty/error/success, `React.ReactElement` return (`./add-app-route.md`).
-10. **i18n** → all 9 locales + `src/types/i18n.types.ts`, atomically (`./add-i18n-key.md`).
+10. **i18n** → all 13 locales + `src/types/i18n.types.ts`, atomically (`./add-i18n-key.md`).
 11. **Navigation** → `src/constants/sidebar.constants.ts` + `src/constants/routes.constants.ts`.
 
 ## Security considerations
@@ -92,4 +92,4 @@ Then `node tools/audit-untranslated-i18n.cjs`. Never `--no-verify`.
 
 ## Definition of done
 
-- All 4 states render; per-row pending state on mutations; 9 locales + i18n.types.ts atomic; nav entries added; validation lane green; audit script clean.
+- All 4 states render; per-row pending state on mutations; 13 locales + i18n.types.ts atomic; nav entries added; validation lane green; audit script clean.

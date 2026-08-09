@@ -319,7 +319,7 @@ export default function NewEntitiesPage(): React.ReactElement {
 
 ### 9. i18n Keys
 
-Add to ALL 9 locale files:
+Add to ALL 13 locale files:
 
 ```typescript
 // en.ts

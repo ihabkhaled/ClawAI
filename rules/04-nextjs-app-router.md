@@ -21,7 +21,7 @@ keeps routes thin, testable, and free of the "giant page component" anti-pattern
    (or the correct Next type). No implicit returns.
 4. **Server state comes from hooks, not the page.** Data is fetched by the
    controller hook via TanStack Query (see [06](06-frontend-queries-and-cache.md)).
-5. **All visible text via `t()`** and present in all 9 locales (see [20](20-i18n-and-user-facing-messages.md)).
+5. **All visible text via `t()`** and present in all 13 locales (see [20](20-i18n-and-user-facing-messages.md)).
 6. **Navigation entries are extracted** — new routes register in
    `src/constants/routes.constants.ts` and `src/constants/sidebar.constants.ts`,
    not inline in a component.

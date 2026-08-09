@@ -237,7 +237,7 @@ Repository (src/repositories/)  — all API calls, query key factories
 - **Zustand** — minimal client state (auth, sidebar, log filters)
 - **shadcn/ui + Radix UI** — all form controls and interactive components
 - **Tailwind + CSS variables** — theming; no `dark:` prefixes needed
-- **i18n** — 9 locales (EN, AR, DE, ES, FR, HI, IT, PT, RU), Arabic is RTL
+- **i18n** — 13 locales (EN, AR, DE, ES, FA, FR, HI, IT, JA, PT, RU, TH, ZH), Arabic is RTL
 
 ## Database Isolation
 

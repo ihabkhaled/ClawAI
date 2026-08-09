@@ -77,7 +77,7 @@
 ## 3. What's Genuinely Well-Built
 
 - **Dark mode**: CSS variables with system preference detection, persistent
-- **i18n**: 9 languages (EN, ES, FR, DE, IT, PT, RU, AR) with RTL support for Arabic
+- **i18n**: 13 languages (EN, AR, DE, ES, FA, FR, HI, IT, JA, PT, RU, TH, ZH) with RTL support for Arabic
 - **Mobile responsiveness**: Collapsible sidebar, responsive grids, hidden text on small screens
 - **Routing transparency**: Full decision visibility (confidence, reasons, privacy/cost class, fallback)
 - **Provider/model attribution**: Every assistant message shows which model answered
@@ -141,6 +141,6 @@ Sync frontend types with backend schema changes.
 | Context pack selection in threads | FAIL (not implemented) |
 | Mobile responsive                 | PASS                   |
 | Dark mode works                   | PASS                   |
-| i18n complete                     | PASS (9 languages)     |
+| i18n complete                     | PASS (13 languages)    |
 | Routing transparency visible      | PASS                   |
 | Provider/model attribution        | PASS                   |

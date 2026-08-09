@@ -44,7 +44,9 @@ was rerun.
   confirm 6 model turns is enough for the tasks LOW claims to serve. The first
   real measurement may move the numbers; the contract and its tests are built to
   survive that.
-- **Also unresolved:** speed modes 1X / 1.5X / 2X (pack §14) still do not exist.
+- **Qualification still unresolved:** speed modes 1X / 1.5X / 2X shipped in
+  `0.55.0` with automated coverage, but the pack's measured 100-round and human
+  desktop certification evidence has not been recorded.
 
 ## 0.53.0 — full release record (pack §21)
 

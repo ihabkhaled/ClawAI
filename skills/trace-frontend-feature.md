@@ -54,7 +54,7 @@ single-responsibility hooks) → `useQuery`/`useMutation` hooks → repository i
 `src/repositories/<domain>/<domain>.repository.ts` → API via nginx. Query keys
 live in `src/repositories/shared/query-keys.ts`. Server state = TanStack Query;
 minimal client state = Zustand stores in `src/stores/`. UI = shadcn/ui; text via
-i18n (9 locales).
+i18n (13 locales).
 
 ## Tests-first plan
 
