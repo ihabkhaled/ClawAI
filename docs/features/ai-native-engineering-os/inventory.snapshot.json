@@ -772,6 +772,16 @@
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
         },
         {
+          "method": "DELETE",
+          "route": "/users/me",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/users/me",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
           "method": "PATCH",
           "route": "/users/me/password",
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
@@ -8540,7 +8550,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 49
+        "testFiles": 51
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -9308,7 +9318,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 567,
+    "endpointCount": 569,
     "envVarCount": 342,
     "eventCount": 165,
     "frontendRouteCount": 113,
@@ -9320,7 +9330,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 799,
+    "totalTestFiles": 801,
     "workspaceCount": 25
   }
 }

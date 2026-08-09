@@ -1,24 +1,44 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from "@nestjs/common";
-import { UsersService } from "../services/users.service";
-import { type SafeUser } from "../types/users.types";
-import { ZodValidationPipe } from "../../../app/pipes/zod-validation.pipe";
-import { CreateUserDto, createUserSchema } from "../dto/create-user.dto";
-import { UpdateUserDto, updateUserSchema } from "../dto/update-user.dto";
-import { ListUsersQueryDto, listUsersQuerySchema } from "../dto/list-users-query.dto";
-import { ChangeRoleDto, changeRoleSchema } from "../dto/change-role.dto";
-import { ChangePasswordDto, changePasswordSchema } from "../dto/change-password.dto";
-import { UpdatePreferencesDto, updatePreferencesSchema } from "../dto/update-preferences.dto";
-import { Roles } from "../../../app/decorators/roles.decorator";
-import { CurrentUser } from "../../../app/decorators/current-user.decorator";
-import { UserRole } from "../../../common/enums";
-import { type AuthenticatedUser, type PaginatedResult } from "../../../common/types";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { UsersService } from '../services/users.service';
+import { type SafeUser } from '../types/users.types';
+import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import { CreateUserDto, createUserSchema } from '../dto/create-user.dto';
+import { UpdateUserDto, updateUserSchema } from '../dto/update-user.dto';
+import { ListUsersQueryDto, listUsersQuerySchema } from '../dto/list-users-query.dto';
+import { ChangeRoleDto, changeRoleSchema } from '../dto/change-role.dto';
+import { ChangePasswordDto, changePasswordSchema } from '../dto/change-password.dto';
+import { UpdatePreferencesDto, updatePreferencesSchema } from '../dto/update-preferences.dto';
+import { Roles } from '../../../app/decorators/roles.decorator';
+import { CurrentUser } from '../../../app/decorators/current-user.decorator';
+import { UserRole } from '../../../common/enums';
+import { Permission } from '@claw/shared-types';
+import { RequirePermissions } from '../../../app/decorators/permissions.decorator';
+import {
+  type DeleteOwnAccountDto,
+  deleteOwnAccountSchema,
+  type UpdateOwnProfileDto,
+  updateOwnProfileSchema,
+} from '../dto/account-profile.dto';
+import { type AuthenticatedUser, type PaginatedResult } from '../../../common/types';
 
-@Controller("users")
+@Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
   async create(
     @Body(new ZodValidationPipe(createUserSchema)) dto: CreateUserDto,
   ): Promise<SafeUser> {
@@ -27,13 +47,14 @@ export class UsersController {
 
   @Get()
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
   async findAll(
     @Query(new ZodValidationPipe(listUsersQuerySchema)) query: ListUsersQueryDto,
   ): Promise<PaginatedResult<SafeUser>> {
     return this.usersService.findAll(query);
   }
 
-  @Patch("me/preferences")
+  @Patch('me/preferences')
   async updateMyPreferences(
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(updatePreferencesSchema)) dto: UpdatePreferencesDto,
@@ -41,7 +62,7 @@ export class UsersController {
     return this.usersService.updatePreferences(user.id, dto);
   }
 
-  @Patch("me/password")
+  @Patch('me/password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async changeMyPassword(
     @CurrentUser() user: AuthenticatedUser,
@@ -50,44 +71,66 @@ export class UsersController {
     return this.usersService.changePassword(user.id, dto);
   }
 
-  @Get(":id")
+  @Patch('me')
+  async updateMyProfile(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(updateOwnProfileSchema)) dto: UpdateOwnProfileDto,
+  ): Promise<SafeUser> {
+    return this.usersService.updateOwnProfile(user.id, dto);
+  }
+
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteMyAccount(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(deleteOwnAccountSchema)) dto: DeleteOwnAccountDto,
+  ): Promise<void> {
+    return this.usersService.deleteOwnAccount(user.id, dto);
+  }
+
+  @Get(':id')
   @Roles(UserRole.ADMIN)
-  async findOne(@Param("id") id: string): Promise<SafeUser> {
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
+  async findOne(@Param('id') id: string): Promise<SafeUser> {
     return this.usersService.findById(id);
   }
 
-  @Patch(":id")
+  @Patch(':id')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
   async update(
-    @Param("id") id: string,
+    @Param('id') id: string,
     @Body(new ZodValidationPipe(updateUserSchema)) dto: UpdateUserDto,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<SafeUser> {
     return this.usersService.updateUser(id, dto, user.id);
   }
 
-  @Delete(":id")
+  @Delete(':id')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
   async deactivate(
-    @Param("id") id: string,
+    @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<SafeUser> {
     return this.usersService.deactivateUser(id, user.id);
   }
 
-  @Patch(":id/reactivate")
+  @Patch(':id/reactivate')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
   async reactivate(
-    @Param("id") id: string,
+    @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<SafeUser> {
     return this.usersService.reactivateUser(id, user.id);
   }
 
-  @Patch(":id/role")
+  @Patch(':id/role')
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
   async changeRole(
-    @Param("id") id: string,
+    @Param('id') id: string,
     @Body(new ZodValidationPipe(changeRoleSchema)) dto: ChangeRoleDto,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<SafeUser> {

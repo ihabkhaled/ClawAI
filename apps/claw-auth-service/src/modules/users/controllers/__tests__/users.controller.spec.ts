@@ -2,6 +2,8 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { UsersController } from '../users.controller';
 import { UsersService } from '../../services/users.service';
 import { UserRole } from '../../../../common/enums';
+import { Permission } from '@claw/shared-types';
+import { PERMISSIONS_KEY } from '../../../../app/decorators/permissions.decorator';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -15,6 +17,8 @@ describe('UsersController', () => {
     changeRole: jest.Mock;
     changePassword: jest.Mock;
     updatePreferences: jest.Mock;
+    updateOwnProfile: jest.Mock;
+    deleteOwnAccount: jest.Mock;
   }>;
 
   beforeEach(async () => {
@@ -28,6 +32,8 @@ describe('UsersController', () => {
       changeRole: jest.fn(),
       changePassword: jest.fn(),
       updatePreferences: jest.fn(),
+      updateOwnProfile: jest.fn(),
+      deleteOwnAccount: jest.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
@@ -66,6 +72,28 @@ describe('UsersController', () => {
     await controller.changeMyPassword(adminUser as never, dto as never);
     expect(usersMock.changePassword).toHaveBeenCalledWith('admin-1', dto);
   });
+
+  it('updateMyProfile forwards the authenticated user id and body', async () => {
+    const dto = { currentPassword: 'CurrentPass1!', username: 'renamed' };
+    await controller.updateMyProfile(adminUser as never, dto);
+    expect(usersMock.updateOwnProfile).toHaveBeenCalledWith('admin-1', dto);
+  });
+
+  it('deleteMyAccount forwards the authenticated user id and body', async () => {
+    const dto = { currentPassword: 'CurrentPass1!' };
+    await controller.deleteMyAccount(adminUser as never, dto);
+    expect(usersMock.deleteOwnAccount).toHaveBeenCalledWith('admin-1', dto);
+  });
+
+  it.each(['create', 'findAll', 'findOne', 'update', 'deactivate', 'reactivate', 'changeRole'])(
+    '%s requires ADMIN_USERS_MANAGE',
+    (methodName) => {
+      const handler = UsersController.prototype[methodName as keyof UsersController];
+      expect(Reflect.getMetadata(PERMISSIONS_KEY, handler)).toEqual([
+        Permission.ADMIN_USERS_MANAGE,
+      ]);
+    },
+  );
 
   it('findOne forwards id', async () => {
     usersMock.findById.mockResolvedValue({ id: 'u1' });

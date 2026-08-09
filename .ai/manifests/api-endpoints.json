@@ -726,6 +726,16 @@
         "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
       },
       {
+        "method": "DELETE",
+        "route": "/users/me",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/users/me",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
         "method": "PATCH",
         "route": "/users/me/password",
         "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
@@ -2873,5 +2883,5 @@
     ]
   },
   "generated": true,
-  "total": 567
+  "total": 569
 }

@@ -5,6 +5,12 @@ import { EventPattern } from '@claw/shared-types';
 import { DuplicateEntityException, EntityNotFoundException } from '../../../common/errors';
 import { UserRole, UserStatus } from '../../../common/enums';
 import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
+import { verifyPassword } from '@common/utilities';
+
+jest.mock('@common/utilities', () => ({
+  hashPassword: jest.fn().mockResolvedValue('hashed-password'),
+  verifyPassword: jest.fn(),
+}));
 
 const mockUser = {
   id: 'user-1',
@@ -30,6 +36,7 @@ const mockRepository = (): Record<keyof UsersRepository, jest.Mock> => ({
   deleteById: jest.fn(),
   countAll: jest.fn(),
   updatePreferences: jest.fn(),
+  revokeSessionsByUserId: jest.fn(),
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
@@ -86,6 +93,64 @@ describe('UsersService', () => {
     });
   });
 
+  describe('updateOwnProfile', () => {
+    it('verifies the current password, updates only profile fields, and revokes sessions', async () => {
+      const updatedUser = { ...mockUser, username: 'renamed' };
+      repository.findById.mockResolvedValue(mockUser);
+      jest.mocked(verifyPassword).mockResolvedValue(true);
+      repository.findByUsername.mockResolvedValue(null);
+      repository.updateById.mockResolvedValue(updatedUser);
+
+      const result = await service.updateOwnProfile('user-1', {
+        currentPassword: 'CurrentPass1!',
+        username: 'renamed',
+      });
+
+      expect(result.username).toBe('renamed');
+      expect(repository.updateById).toHaveBeenCalledWith('user-1', {
+        email: undefined,
+        username: 'renamed',
+      });
+      expect(repository.revokeSessionsByUserId).toHaveBeenCalledWith('user-1');
+    });
+
+    it('rejects an incorrect current password without changing the profile', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      jest.mocked(verifyPassword).mockResolvedValue(false);
+
+      await expect(
+        service.updateOwnProfile('user-1', {
+          currentPassword: 'WrongPass1!',
+          email: 'new@example.com',
+        }),
+      ).rejects.toMatchObject({ code: 'INVALID_CURRENT_PASSWORD' });
+      expect(repository.updateById).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteOwnAccount', () => {
+    it('verifies the current password, revokes sessions, and deletes the user', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      jest.mocked(verifyPassword).mockResolvedValue(true);
+      repository.deleteById.mockResolvedValue(mockUser);
+
+      await service.deleteOwnAccount('user-1', { currentPassword: 'CurrentPass1!' });
+
+      expect(repository.revokeSessionsByUserId).toHaveBeenCalledWith('user-1');
+      expect(repository.deleteById).toHaveBeenCalledWith('user-1');
+    });
+
+    it('rejects an incorrect password without deleting the user', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      jest.mocked(verifyPassword).mockResolvedValue(false);
+
+      await expect(
+        service.deleteOwnAccount('user-1', { currentPassword: 'WrongPass1!' }),
+      ).rejects.toMatchObject({ code: 'INVALID_CURRENT_PASSWORD' });
+      expect(repository.deleteById).not.toHaveBeenCalled();
+    });
+  });
+
   describe('deactivateUser', () => {
     it('should deactivate user and publish event', async () => {
       const deactivated = { ...mockUser, status: UserStatus.SUSPENDED };
@@ -98,6 +163,7 @@ describe('UsersService', () => {
       expect(repository.updateById).toHaveBeenCalledWith('user-1', {
         status: UserStatus.SUSPENDED,
       });
+      expect(repository.revokeSessionsByUserId).toHaveBeenCalledWith('user-1');
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
         EventPattern.USER_DEACTIVATED,
         expect.objectContaining({

@@ -1,23 +1,25 @@
-import { HttpStatus, Injectable, Logger } from "@nestjs/common";
-import { RabbitMQService } from "@claw/shared-rabbitmq";
-import { EventPattern } from "@claw/shared-types";
-import { UsersRepository } from "../repositories/users.repository";
-import { hashPassword, verifyPassword } from "@common/utilities";
-import { CreateUserDto } from "../dto/create-user.dto";
-import { type ChangePasswordDto } from "../dto/change-password.dto";
-import { type UpdateUserDto } from "../dto/update-user.dto";
-import { type UpdatePreferencesDto } from "../dto/update-preferences.dto";
-import { type ListUsersQueryDto } from "../dto/list-users-query.dto";
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { RabbitMQService } from '@claw/shared-rabbitmq';
+import { EventPattern } from '@claw/shared-types';
+import { UsersRepository } from '../repositories/users.repository';
+import { hashPassword, verifyPassword } from '@common/utilities';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { type ChangePasswordDto } from '../dto/change-password.dto';
+import { type UpdateUserDto } from '../dto/update-user.dto';
+import { type UpdatePreferencesDto } from '../dto/update-preferences.dto';
+import { type ListUsersQueryDto } from '../dto/list-users-query.dto';
+import { type DeleteOwnAccountDto, type UpdateOwnProfileDto } from '../dto/account-profile.dto';
 import {
   BusinessException,
   DuplicateEntityException,
   EntityNotFoundException,
-} from "../../../common/errors";
-import { type PaginatedResult } from "../../../common/types";
-import { UserRole, UserStatus } from "../../../common/enums";
-import { type SafeUser } from "../types/users.types";
-import { toSafeUser } from "../service.utilities/to-safe-user.utility";
-import { validatePasswordStrength } from "../service.utilities/password-policy.utility";
+} from '../../../common/errors';
+import { type PaginatedResult } from '../../../common/types';
+import { UserRole, UserStatus } from '../../../common/enums';
+import { type User } from '../../../generated/prisma';
+import { type SafeUser } from '../types/users.types';
+import { toSafeUser } from '../service.utilities/to-safe-user.utility';
+import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
 
 @Injectable()
 export class UsersService {
@@ -33,20 +35,20 @@ export class UsersService {
     const passwordResult = validatePasswordStrength(dto.password);
     if (!passwordResult.valid) {
       throw new BusinessException(
-        passwordResult.errors.join("; "),
-        "WEAK_PASSWORD",
+        passwordResult.errors.join('; '),
+        'WEAK_PASSWORD',
         HttpStatus.BAD_REQUEST,
       );
     }
 
     const existingByEmail = await this.usersRepository.findByEmail(dto.email);
     if (existingByEmail) {
-      throw new DuplicateEntityException("User", "email");
+      throw new DuplicateEntityException('User', 'email');
     }
 
     const existingByUsername = await this.usersRepository.findByUsername(dto.username);
     if (existingByUsername) {
-      throw new DuplicateEntityException("User", "username");
+      throw new DuplicateEntityException('User', 'username');
     }
 
     const passwordHash = await hashPassword(dto.password);
@@ -56,7 +58,7 @@ export class UsersService {
       username: dto.username,
       passwordHash,
       role: dto.role,
-      status: "ACTIVE",
+      status: 'ACTIVE',
     });
 
     this.logger.log(`create: created user ${user.id}`);
@@ -73,7 +75,7 @@ export class UsersService {
   async findById(id: string): Promise<SafeUser> {
     const user = await this.usersRepository.findById(id);
     if (!user) {
-      throw new EntityNotFoundException("User", id);
+      throw new EntityNotFoundException('User', id);
     }
     return toSafeUser(user);
   }
@@ -103,20 +105,20 @@ export class UsersService {
     this.logger.log(`updateUser: updating user ${id} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
-      throw new EntityNotFoundException("User", id);
+      throw new EntityNotFoundException('User', id);
     }
 
     if (dto.email && dto.email !== user.email) {
       const existing = await this.usersRepository.findByEmail(dto.email);
       if (existing) {
-        throw new DuplicateEntityException("User", "email");
+        throw new DuplicateEntityException('User', 'email');
       }
     }
 
     if (dto.username && dto.username !== user.username) {
       const existing = await this.usersRepository.findByUsername(dto.username);
       if (existing) {
-        throw new DuplicateEntityException("User", "username");
+        throw new DuplicateEntityException('User', 'username');
       }
     }
 
@@ -136,16 +138,37 @@ export class UsersService {
     return toSafeUser(updated);
   }
 
+  async updateOwnProfile(userId: string, dto: UpdateOwnProfileDto): Promise<SafeUser> {
+    const user = await this.requireUserWithValidPassword(userId, dto.currentPassword);
+    await this.ensureProfileFieldsAvailable(user.email, user.username, dto);
+    const updated = await this.usersRepository.updateById(userId, {
+      email: dto.email,
+      username: dto.username,
+    });
+    await this.usersRepository.revokeSessionsByUserId(userId);
+    this.logger.log(`updateOwnProfile: updated user ${userId} and revoked sessions`);
+    return toSafeUser(updated);
+  }
+
+  async deleteOwnAccount(userId: string, dto: DeleteOwnAccountDto): Promise<void> {
+    await this.requireUserWithValidPassword(userId, dto.currentPassword);
+    await this.usersRepository.revokeSessionsByUserId(userId);
+    await this.usersRepository.deleteById(userId);
+    this.logger.log(`deleteOwnAccount: deleted user ${userId}`);
+  }
+
   async deactivateUser(id: string, actorId: string): Promise<SafeUser> {
     this.logger.log(`deactivateUser: deactivating user ${id} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
-      throw new EntityNotFoundException("User", id);
+      throw new EntityNotFoundException('User', id);
     }
 
     const updated = await this.usersRepository.updateById(id, {
       status: UserStatus.SUSPENDED,
     });
+
+    await this.usersRepository.revokeSessionsByUserId(id);
 
     await this.rabbitMQService.publish(EventPattern.USER_DEACTIVATED, {
       userId: id,
@@ -160,7 +183,7 @@ export class UsersService {
     this.logger.log(`reactivateUser: reactivating user ${id} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
-      throw new EntityNotFoundException("User", id);
+      throw new EntityNotFoundException('User', id);
     }
 
     const updated = await this.usersRepository.updateById(id, {
@@ -179,7 +202,7 @@ export class UsersService {
   async updatePreferences(userId: string, dto: UpdatePreferencesDto): Promise<SafeUser> {
     const user = await this.usersRepository.findById(userId);
     if (!user) {
-      throw new EntityNotFoundException("User", userId);
+      throw new EntityNotFoundException('User', userId);
     }
 
     const updated = await this.usersRepository.updatePreferences(userId, dto);
@@ -190,19 +213,23 @@ export class UsersService {
     this.logger.log(`changePassword: changing password for user ${userId}`);
     const user = await this.usersRepository.findById(userId);
     if (!user) {
-      throw new EntityNotFoundException("User", userId);
+      throw new EntityNotFoundException('User', userId);
     }
 
     const isCurrentValid = await verifyPassword(user.passwordHash, dto.currentPassword);
     if (!isCurrentValid) {
-      throw new BusinessException("Current password is incorrect", "INVALID_CURRENT_PASSWORD", HttpStatus.BAD_REQUEST);
+      throw new BusinessException(
+        'Current password is incorrect',
+        'INVALID_CURRENT_PASSWORD',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const passwordResult = validatePasswordStrength(dto.newPassword);
     if (!passwordResult.valid) {
       throw new BusinessException(
-        passwordResult.errors.join("; "),
-        "WEAK_PASSWORD",
+        passwordResult.errors.join('; '),
+        'WEAK_PASSWORD',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -216,7 +243,7 @@ export class UsersService {
     this.logger.log(`changeRole: changing role for user ${id} to ${role} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
-      throw new EntityNotFoundException("User", id);
+      throw new EntityNotFoundException('User', id);
     }
 
     const previousRole = user.role;
@@ -232,5 +259,41 @@ export class UsersService {
     });
 
     return toSafeUser(updated);
+  }
+
+  private async requireUserWithValidPassword(userId: string, password: string): Promise<User> {
+    const user = await this.usersRepository.findById(userId);
+    if (!user) {
+      throw new EntityNotFoundException('User', userId);
+    }
+    if (!(await verifyPassword(user.passwordHash, password))) {
+      throw new BusinessException(
+        'Current password is incorrect',
+        'INVALID_CURRENT_PASSWORD',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return user;
+  }
+
+  private async ensureProfileFieldsAvailable(
+    currentEmail: string,
+    currentUsername: string,
+    dto: UpdateOwnProfileDto,
+  ): Promise<void> {
+    if (
+      dto.email &&
+      dto.email !== currentEmail &&
+      (await this.usersRepository.findByEmail(dto.email))
+    ) {
+      throw new DuplicateEntityException('User', 'email');
+    }
+    if (
+      dto.username &&
+      dto.username !== currentUsername &&
+      (await this.usersRepository.findByUsername(dto.username))
+    ) {
+      throw new DuplicateEntityException('User', 'username');
+    }
   }
 }

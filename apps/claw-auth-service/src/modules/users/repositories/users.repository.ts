@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { Prisma, User, UserAppearancePreference, UserLanguagePreference } from '../../../generated/prisma';
+import {
+  Prisma,
+  User,
+  UserAppearancePreference,
+  UserLanguagePreference,
+} from '../../../generated/prisma';
 import { SortOrder } from '../../../common/enums';
 import { type UpdateUserData, type UserFilters } from '../types/users.types';
 
@@ -54,6 +59,14 @@ export class UsersRepository {
     return this.prisma.user.delete({ where: { id } });
   }
 
+  async revokeSessionsByUserId(userId: string, revokedAt = new Date()): Promise<number> {
+    const result = await this.prisma.session.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt },
+    });
+    return result.count;
+  }
+
   async countAll(filters?: UserFilters): Promise<number> {
     const where = this.buildWhereClause(filters);
     return this.prisma.user.count({ where });
@@ -61,7 +74,10 @@ export class UsersRepository {
 
   async updatePreferences(
     userId: string,
-    data: { languagePreference?: UserLanguagePreference; appearancePreference?: UserAppearancePreference },
+    data: {
+      languagePreference?: UserLanguagePreference;
+      appearancePreference?: UserAppearancePreference;
+    },
   ): Promise<User> {
     return this.prisma.user.update({
       where: { id: userId },

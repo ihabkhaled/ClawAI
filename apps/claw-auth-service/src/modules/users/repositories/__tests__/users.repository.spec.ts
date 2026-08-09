@@ -14,6 +14,7 @@ describe('UsersRepository', () => {
       update: jest.Mock;
       delete: jest.Mock;
     };
+    session: { updateMany: jest.Mock };
     $transaction: jest.Mock;
   };
 
@@ -27,6 +28,7 @@ describe('UsersRepository', () => {
         update: jest.fn().mockResolvedValue({ id: 'u1' }),
         delete: jest.fn().mockResolvedValue({ id: 'u1' }),
       },
+      session: { updateMany: jest.fn().mockResolvedValue({ count: 2 }) },
       $transaction: jest.fn().mockResolvedValue([[{ id: 'u1' }, { id: 'u2' }], 2]),
     };
 
@@ -121,6 +123,15 @@ describe('UsersRepository', () => {
   it('deleteById delegates to prisma delete', async () => {
     await repository.deleteById('u1');
     expect(prismaMock.user.delete).toHaveBeenCalledWith({ where: { id: 'u1' } });
+  });
+
+  it('revokeSessionsByUserId revokes only active sessions for the user', async () => {
+    const revokedAt = new Date('2026-08-09T00:00:00.000Z');
+    await repository.revokeSessionsByUserId('u1', revokedAt);
+    expect(prismaMock.session.updateMany).toHaveBeenCalledWith({
+      where: { userId: 'u1', revokedAt: null },
+      data: { revokedAt },
+    });
   });
 
   it('countAll delegates to prisma count with no filters', async () => {
