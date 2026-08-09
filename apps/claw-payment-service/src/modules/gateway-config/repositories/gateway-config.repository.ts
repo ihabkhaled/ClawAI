@@ -44,7 +44,7 @@ export class GatewayConfigRepository {
   importEnvironmentOnce(input: GatewayBootstrapInput): Promise<GatewayBootstrapOutcome> {
     return this.prisma.$transaction(async (transaction) => {
       await transaction.$queryRaw(
-        Prisma.sql`SELECT pg_advisory_xact_lock(${GATEWAY_CONFIG_SEED_LOCK_ID})`,
+        Prisma.sql`SELECT pg_advisory_xact_lock(${GATEWAY_CONFIG_SEED_LOCK_ID})::text`,
       );
       const execution = await transaction.seedExecution.findUnique({
         where: { name_version: { name: input.name, version: input.version } },
