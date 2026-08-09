@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 
 import { OLLAMA_PROVIDER } from '../../../common/constants';
-import { JudgeDecision } from '../../../common/enums';
+import { AiStreamStage, JudgeDecision } from '../../../common/enums';
+import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import {
   buildAttachedFilesManifest,
   buildCriticSystemPrompt,
@@ -116,18 +117,42 @@ export class JudgeRefereeManager {
 
     // Execution order is generator -> critic -> judge: the critic's score and
     // feedback are an input to callJudge below, so the judge always rules on a
-    // draft the critic has already been given a chance to improve.
-    const criticEvaluation =
-      criticModelInfo !== null
-        ? await this.callCriticWithModel(
-            response,
-            context,
-            config,
-            criticModelInfo,
-            deliveryRecords,
-          )
-        : this.buildSkippedCriticEvaluation(config);
+    // draft the critic has already been given a chance to improve. Each step
+    // gets its own active/completed pair on the orchestration timeline so the
+    // UI shows which of the two is running, not one merged "verifying" blob —
+    // and nothing is emitted for the critic step when it is disabled.
+    let criticEvaluation: CriticEvaluation;
+    if (criticModelInfo !== null) {
+      const resolvedCriticLabel = `${criticModelInfo.provider}/${criticModelInfo.model}`;
+      this.emitReviewStage(
+        payload.threadId,
+        AiStreamStage.CRITIQUING,
+        resolvedCriticLabel,
+        OrchestrationStageStatus.ACTIVE,
+      );
+      criticEvaluation = await this.callCriticWithModel(
+        response,
+        context,
+        config,
+        criticModelInfo,
+        deliveryRecords,
+      );
+      this.emitReviewStage(
+        payload.threadId,
+        AiStreamStage.CRITIQUING,
+        resolvedCriticLabel,
+        OrchestrationStageStatus.COMPLETED,
+      );
+    } else {
+      criticEvaluation = this.buildSkippedCriticEvaluation(config);
+    }
 
+    this.emitReviewStage(
+      payload.threadId,
+      AiStreamStage.JUDGING,
+      judgeModelLabel,
+      OrchestrationStageStatus.ACTIVE,
+    );
     const judgeVerdict = await this.callJudge(
       response,
       criticEvaluation,
@@ -135,6 +160,12 @@ export class JudgeRefereeManager {
       config,
       judgeTarget,
       deliveryRecords,
+    );
+    this.emitReviewStage(
+      payload.threadId,
+      AiStreamStage.JUDGING,
+      judgeModelLabel,
+      OrchestrationStageStatus.COMPLETED,
     );
 
     const totalLatencyMs = Date.now() - startTime;
@@ -313,6 +344,27 @@ export class JudgeRefereeManager {
       model: '',
       latencyMs: 0,
     };
+  }
+
+  // Puts the critic and judge steps on the orchestration timeline as their own
+  // active -> completed entries (reusing the same channel every other manager
+  // in this module uses for step-by-step visibility), so the UI can show
+  // "Critiquing" and "Judging" as distinct, sequential steps instead of one
+  // merged "Verifying answer" span with no indication of which model is
+  // running or how long each half took.
+  private emitReviewStage(
+    threadId: string,
+    stage: typeof AiStreamStage.CRITIQUING | typeof AiStreamStage.JUDGING,
+    modelLabel: string,
+    status: OrchestrationStageStatus,
+  ): void {
+    const isCritic = stage === AiStreamStage.CRITIQUING;
+    this.chatStreamService.emitOrchestrationStage(threadId, {
+      label: isCritic ? 'Critiquing the draft' : 'Judging the response',
+      status,
+      detail: modelLabel,
+      stageId: `${stage}:${modelLabel}`,
+    });
   }
 
   private async callJudge(

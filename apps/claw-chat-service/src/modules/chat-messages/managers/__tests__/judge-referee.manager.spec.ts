@@ -48,12 +48,14 @@ const buildPayload = (): MessageRoutedData => ({
 
 describe('JudgeRefereeManager — critic invocation', () => {
   let manager: JudgeRefereeManager;
-  let chatStream: jest.Mocked<Pick<ChatStreamService, 'emitJudgeEvaluating'>>;
+  let chatStream: jest.Mocked<
+    Pick<ChatStreamService, 'emitJudgeEvaluating' | 'emitOrchestrationStage'>
+  >;
   let localSelection: jest.Mocked<Pick<LocalModelSelectionService, 'resolveDefaultModel'>>;
   let executionManager: jest.Mocked<Pick<ChatExecutionManager, 'callProvider'>>;
 
   beforeEach(() => {
-    chatStream = { emitJudgeEvaluating: jest.fn() };
+    chatStream = { emitJudgeEvaluating: jest.fn(), emitOrchestrationStage: jest.fn() };
     localSelection = { resolveDefaultModel: jest.fn().mockResolvedValue('gemma3:4b') };
     executionManager = { callProvider: jest.fn() };
     manager = new JudgeRefereeManager(
@@ -294,5 +296,80 @@ describe('JudgeRefereeManager — critic invocation', () => {
     // The judge's assembled context carries the critic's findings, which is
     // only possible if the critic completed first.
     expect(JSON.stringify(judgeCall?.[2])).toContain('add sources');
+  });
+
+  // The critic and judge steps must be individually visible in the stream —
+  // not one merged "verifying" span — so the user can see which model is
+  // running right now and for how long each half of the review took.
+  it('emits critic active/completed then judge active/completed, in that order', async () => {
+    executionManager.callProvider
+      .mockResolvedValueOnce({
+        content: '{"score": 0.8, "summary": "fine", "feedback": []}',
+        provider: 'OPENAI',
+        model: 'gpt-4o-mini',
+        latencyMs: 50,
+        usedFallback: false,
+      })
+      .mockResolvedValueOnce({
+        content:
+          '{"decision": "ACCEPT", "summary": "ok", "confidence": 0.9, "reasoning": "fine", "response": "ok", "responseType": "verification_note", "recommendedChanges": []}',
+        provider: 'local-ollama',
+        model: 'gemma3:4b',
+        latencyMs: 60,
+        usedFallback: false,
+      });
+
+    await manager.evaluate(
+      buildResponse(),
+      buildContext(),
+      {
+        enabled: true,
+        category: undefined,
+        routingMode: 'MANUAL_MODEL',
+        isLocalOnly: false,
+        criticEnabled: true,
+        criticModel: 'OPENAI:gpt-4o-mini',
+      },
+      buildPayload(),
+    );
+
+    const stages = chatStream.emitOrchestrationStage.mock.calls.map(([, payload]) => ({
+      label: payload.label,
+      status: payload.status,
+    }));
+    expect(stages).toEqual([
+      { label: 'Critiquing the draft', status: 'active' },
+      { label: 'Critiquing the draft', status: 'completed' },
+      { label: 'Judging the response', status: 'active' },
+      { label: 'Judging the response', status: 'completed' },
+    ]);
+  });
+
+  it('emits only judge stages, no critic stage, when the critic is disabled', async () => {
+    executionManager.callProvider.mockResolvedValueOnce({
+      content:
+        '{"decision": "ACCEPT", "summary": "ok", "confidence": 0.9, "reasoning": "fine", "response": "ok", "responseType": "verification_note", "recommendedChanges": []}',
+      provider: 'local-ollama',
+      model: 'gemma3:4b',
+      latencyMs: 60,
+      usedFallback: false,
+    });
+
+    await manager.evaluate(
+      buildResponse(),
+      buildContext(),
+      {
+        enabled: true,
+        category: undefined,
+        routingMode: 'MANUAL_MODEL',
+        isLocalOnly: false,
+        criticEnabled: false,
+        criticModel: null,
+      },
+      buildPayload(),
+    );
+
+    const labels = chatStream.emitOrchestrationStage.mock.calls.map(([, payload]) => payload.label);
+    expect(labels).toEqual(['Judging the response', 'Judging the response']);
   });
 });

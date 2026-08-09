@@ -219,6 +219,8 @@ export const it: TranslationDictionary = {
         thinking: 'Sta pensando',
         generating: 'Generazione in corso',
         toolCalling: 'Chiamata agli strumenti',
+        critiquing: 'Critica della bozza',
+        judging: 'Valutazione della risposta',
         researchStarted: 'Ricerca sul web in corso...',
         researchSourcesFound: '{count} fonti trovate',
         researchFetching: 'Recupero di {host}',

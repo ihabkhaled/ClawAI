@@ -219,6 +219,8 @@ export const fa: TranslationDictionary = {
         thinking: 'فکر کردن',
         generating: 'در حال تولید',
         toolCalling: 'ابزار تماس',
+        critiquing: 'نقد پیش‌نویس',
+        judging: 'داوری پاسخ',
         researchStarted: 'جستجو در وب...',
         researchSourcesFound: 'منابع {count} پیدا شد',
         researchFetching: 'در حال واکشی {host}',

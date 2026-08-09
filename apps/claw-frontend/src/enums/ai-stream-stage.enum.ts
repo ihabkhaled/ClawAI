@@ -9,6 +9,10 @@ export enum AiStreamStage {
   THINKING = 'thinking',
   GENERATING = 'generating',
   TOOL_CALLING = 'tool_calling',
+  // Mirrors the chat-service enum: critic and judge are separate sequential
+  // model calls, so they get separate stages rather than one "verifying" label.
+  CRITIQUING = 'critiquing',
+  JUDGING = 'judging',
   // Research-enricher lifecycle stages. Emitted before/during/after the
   // research-enricher pipeline so the FE rich-progress panel can show live
   // web-research activity (search, per-URL fetch, completion, failure)

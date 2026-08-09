@@ -218,6 +218,8 @@ export const hi: TranslationDictionary = {
         thinking: 'सोच रहा है',
         generating: 'उत्पन्न हो रहा है',
         toolCalling: 'टूल कॉल किए जा रहे हैं',
+        critiquing: 'ड्राफ़्ट की समीक्षा हो रही है',
+        judging: 'प्रतिक्रिया का मूल्यांकन हो रहा है',
         researchStarted: 'वेब पर खोज की जा रही है...',
         researchSourcesFound: '{count} स्रोत मिले',
         researchFetching: '{host} प्राप्त किया जा रहा है',

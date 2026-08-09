@@ -220,6 +220,8 @@ export const ru: TranslationDictionary = {
         thinking: 'Размышление',
         generating: 'Генерация',
         toolCalling: 'Вызов инструментов',
+        critiquing: 'Критика черновика',
+        judging: 'Оценка ответа',
         researchStarted: 'Поиск в интернете...',
         researchSourcesFound: 'Найдено {count} источников',
         researchFetching: 'Загрузка {host}',

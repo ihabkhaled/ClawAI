@@ -9,7 +9,7 @@
     ".ai/manifests/event-graph.json": "bed612fc",
     ".ai/manifests/frontend-routes.json": "beaf92d4",
     ".ai/manifests/governance.json": "3e2bfa10",
-    ".ai/manifests/i18n.json": "b2785aee",
+    ".ai/manifests/i18n.json": "efc0f83c",
     ".ai/manifests/nginx-routes.json": "ecdfc11d",
     ".ai/manifests/packages.json": "072ba1db",
     ".ai/manifests/permissions.json": "8d007c60",

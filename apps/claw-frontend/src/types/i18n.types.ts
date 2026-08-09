@@ -213,6 +213,8 @@ export type TranslationDictionary = {
         thinking: string;
         generating: string;
         toolCalling: string;
+        critiquing: string;
+        judging: string;
         researchStarted: string;
         researchSourcesFound: string;
         researchFetching: string;

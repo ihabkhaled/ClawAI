@@ -82,7 +82,7 @@ describe('JudgeRefereeManager — cloud judge + token capture', () => {
 
   beforeEach(() => {
     callProvider = jest.fn();
-    chatStream = { emitJudgeEvaluating: jest.fn() };
+    chatStream = { emitJudgeEvaluating: jest.fn(), emitOrchestrationStage: jest.fn() };
     localSelection = { resolveDefaultModel: jest.fn().mockResolvedValue('gemma3:4b') };
 
     manager = new JudgeRefereeManager(
@@ -252,9 +252,15 @@ describe('JudgeRefereeManager — cloud judge + token capture', () => {
       } as LlmResponse)
       .mockRejectedValueOnce(new Error('cloud judge 500'));
 
-    const result = await manager.evaluate(makeOriginalResponse(), makeContext(), config, makePayload(), {
-      judgeModel: 'OPENAI:gpt-4o-mini',
-    });
+    const result = await manager.evaluate(
+      makeOriginalResponse(),
+      makeContext(),
+      config,
+      makePayload(),
+      {
+        judgeModel: 'OPENAI:gpt-4o-mini',
+      },
+    );
 
     expect(result.judgeVerdict.wasFallback).toBe(true);
     expect(result.judgeVerdict.fallbackState).toBe('unavailable');

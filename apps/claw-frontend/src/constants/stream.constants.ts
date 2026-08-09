@@ -12,6 +12,8 @@ export const STREAM_STAGE_LABEL_KEYS: Readonly<Record<AiStreamStage, string>> = 
   [AiStreamStage.THINKING]: 'chat.stream.stage.thinking',
   [AiStreamStage.GENERATING]: 'chat.stream.stage.generating',
   [AiStreamStage.TOOL_CALLING]: 'chat.stream.stage.toolCalling',
+  [AiStreamStage.CRITIQUING]: 'chat.stream.stage.critiquing',
+  [AiStreamStage.JUDGING]: 'chat.stream.stage.judging',
   [AiStreamStage.RESEARCH_STARTED]: 'chat.stream.stage.researchStarted',
   [AiStreamStage.RESEARCH_SOURCES_FOUND]: 'chat.stream.stage.researchSourcesFound',
   [AiStreamStage.RESEARCH_FETCHING]: 'chat.stream.stage.researchFetching',

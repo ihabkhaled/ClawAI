@@ -9,7 +9,10 @@ describe('JudgeRefereeManager', () => {
   let manager: JudgeRefereeManager;
 
   beforeEach(() => {
-    const mockStreamService = { emitJudgeEvaluating: jest.fn() } as any;
+    const mockStreamService = {
+      emitJudgeEvaluating: jest.fn(),
+      emitOrchestrationStage: jest.fn(),
+    } as any;
     manager = new JudgeRefereeManager(mockStreamService);
   });
 
@@ -311,15 +314,13 @@ describe('JudgeRefereeManager', () => {
     // renders "Critic was not requested for this review.".
     it('skips the critic call entirely when criticEnabled is unset and judges via local', async () => {
       const executionManager = {
-        callProvider: jest
-          .fn()
-          .mockResolvedValueOnce({
-            content: '{"decision":"ACCEPT","reasoning":"Looks good","confidence":0.95}',
-            provider: 'local-ollama',
-            model: 'AUTO',
-            latencyMs: 25,
-            usedFallback: false,
-          }),
+        callProvider: jest.fn().mockResolvedValueOnce({
+          content: '{"decision":"ACCEPT","reasoning":"Looks good","confidence":0.95}',
+          provider: 'local-ollama',
+          model: 'AUTO',
+          latencyMs: 25,
+          usedFallback: false,
+        }),
       } as any;
 
       manager.setExecutionManager(executionManager);

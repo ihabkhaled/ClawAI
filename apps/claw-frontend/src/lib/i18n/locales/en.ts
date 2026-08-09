@@ -218,6 +218,8 @@ export const en: TranslationDictionary = {
         thinking: 'Thinking',
         generating: 'Generating',
         toolCalling: 'Calling tools',
+        critiquing: 'Critiquing the draft',
+        judging: 'Judging the response',
         researchStarted: 'Searching the web...',
         researchSourcesFound: 'Found {count} sources',
         researchFetching: 'Fetching {host}',

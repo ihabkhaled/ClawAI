@@ -81,6 +81,7 @@ describe('JudgeRefereeManager — attachments injection', () => {
 
     chatStream = Object.create(ChatStreamService.prototype) as ChatStreamService;
     chatStream.emitJudgeEvaluating = emitJudgeEvaluatingMock;
+    chatStream.emitOrchestrationStage = jest.fn();
 
     localSelection = Object.create(
       LocalModelSelectionService.prototype,

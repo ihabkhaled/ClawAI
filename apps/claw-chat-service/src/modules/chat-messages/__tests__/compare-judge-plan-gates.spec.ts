@@ -108,10 +108,7 @@ async function runCompareGate(
   } = {},
 ): Promise<void> {
   type PlanFeature =
-    | 'allowCompareMode'
-    | 'allowJudgeMode'
-    | 'allowCriticReview'
-    | 'allowResearchMode';
+    'allowCompareMode' | 'allowJudgeMode' | 'allowCriticReview' | 'allowResearchMode';
   const features: PlanFeature[] = ['allowCompareMode'];
   if (opts.judgeEnabled === true) {
     features.push('allowJudgeMode');
@@ -277,6 +274,7 @@ describe('Slice C — compare + judge + critic plan gates', () => {
       } as LlmResponse);
       const chatStream: Partial<Record<keyof ChatStreamService, jest.Mock>> = {
         emitJudgeEvaluating: jest.fn(),
+        emitOrchestrationStage: jest.fn(),
       };
       const localSelection: Partial<Record<keyof LocalModelSelectionService, jest.Mock>> = {
         resolveDefaultModel: jest.fn().mockResolvedValue('gemma3:4b'),
@@ -380,6 +378,7 @@ describe('Slice C — compare + judge + critic plan gates', () => {
 
       const chatStream: Partial<Record<keyof ChatStreamService, jest.Mock>> = {
         emitJudgeEvaluating: jest.fn(),
+        emitOrchestrationStage: jest.fn(),
       };
       const localSelection: Partial<Record<keyof LocalModelSelectionService, jest.Mock>> = {
         resolveDefaultModel: jest.fn().mockResolvedValue('gemma3:4b'),

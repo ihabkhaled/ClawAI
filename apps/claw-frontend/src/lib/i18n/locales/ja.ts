@@ -219,6 +219,8 @@ export const ja: TranslationDictionary = {
         thinking: '思考',
         generating: '生成中',
         toolCalling: '通話ツール',
+        critiquing: '下書きを批評中',
+        judging: '応答を評価中',
         researchStarted: 'ウェブを検索しています...',
         researchSourcesFound: '{count} ソースが見つかりました',
         researchFetching: '{host} を取得しています',

@@ -214,6 +214,8 @@ export const zh: TranslationDictionary = {
         thinking: '思维',
         generating: '生成',
         toolCalling: '调用工具',
+        critiquing: '正在评审草稿',
+        judging: '正在评判回答',
         researchStarted: '正在网上搜索...',
         researchSourcesFound: '找到{count}来源',
         researchFetching: '正在获取{host}',

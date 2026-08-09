@@ -216,6 +216,8 @@ export const th: TranslationDictionary = {
         thinking: 'กำลังคิด',
         generating: 'กำลังสร้าง',
         toolCalling: 'เครื่องมือเรียก',
+        critiquing: 'กำลังวิจารณ์ร่าง',
+        judging: 'กำลังตัดสินคำตอบ',
         researchStarted: 'กำลังค้นหาเว็บ...',
         researchSourcesFound: 'พบแหล่ง {count}',
         researchFetching: 'กำลังดึงข้อมูล {host}',

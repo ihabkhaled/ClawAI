@@ -218,6 +218,8 @@ export const ar: TranslationDictionary = {
         thinking: 'يفكّر',
         generating: 'جارٍ التوليد',
         toolCalling: 'استدعاء الأدوات',
+        critiquing: 'نقد المسودة',
+        judging: 'الحكم على الاستجابة',
         researchStarted: 'جارٍ البحث على الويب...',
         researchSourcesFound: 'تم العثور على {count} مصادر',
         researchFetching: 'جلب {host}',

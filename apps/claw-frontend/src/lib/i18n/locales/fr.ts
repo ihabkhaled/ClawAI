@@ -219,6 +219,8 @@ export const fr: TranslationDictionary = {
         thinking: 'Réflexion',
         generating: 'Génération',
         toolCalling: 'Appel des outils',
+        critiquing: 'Critique du brouillon',
+        judging: 'Évaluation de la réponse',
         researchStarted: 'Recherche sur le web...',
         researchSourcesFound: '{count} sources trouvées',
         researchFetching: 'Récupération de {host}',

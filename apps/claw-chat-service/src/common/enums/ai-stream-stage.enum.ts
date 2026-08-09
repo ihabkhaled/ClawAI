@@ -11,6 +11,12 @@ export enum AiStreamStage {
   THINKING = 'thinking',
   GENERATING = 'generating',
   TOOL_CALLING = 'tool_calling',
+  // Review lifecycle. The critic and the judge are SEPARATE stages because they
+  // are separate model calls that run in sequence (generator -> critic ->
+  // judge); collapsing them into one "verifying" label hid which of the two was
+  // actually running, and for how long.
+  CRITIQUING = 'critiquing',
+  JUDGING = 'judging',
   // Research-enricher lifecycle stages. Emitted before/during/after the
   // compare-mode research-enricher pipeline so the FE rich-progress panel
   // can show live web-research activity (search, per-URL fetch, completion,
