@@ -638,6 +638,16 @@
         },
         {
           "method": "POST",
+          "route": "/auth/password-reset/confirm",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/password-reset/request",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/auth/refresh",
           "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
         },
@@ -7782,6 +7792,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "PasswordResetToken"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "Plan"
           },
           {
@@ -9333,7 +9348,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 569,
+    "endpointCount": 571,
     "envVarCount": 342,
     "eventCount": 165,
     "frontendRouteCount": 115,

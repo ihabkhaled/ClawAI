@@ -66,7 +66,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 57,
+      "endpointCount": 59,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",
@@ -81,6 +81,7 @@
         "DeviceAuthorizationGrant",
         "EntitlementInboxEvent",
         "FeatureUsageRecord",
+        "PasswordResetToken",
         "Plan",
         "PlanFeatureRule",
         "PlanModelAccess",

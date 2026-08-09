@@ -1,6 +1,7 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../../services/auth.service';
+import { PasswordResetService } from '../../services/password-reset.service';
 import { UserRole } from '../../../../common/enums';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
 
@@ -12,6 +13,10 @@ describe('AuthController', () => {
     logout: jest.Mock;
     getProfile: jest.Mock;
   }>;
+  let passwordResetServiceMock: jest.Mocked<{
+    requestReset: jest.Mock;
+    confirmReset: jest.Mock;
+  }>;
 
   beforeEach(async () => {
     serviceMock = {
@@ -20,9 +25,16 @@ describe('AuthController', () => {
       logout: jest.fn(),
       getProfile: jest.fn(),
     };
+    passwordResetServiceMock = {
+      requestReset: jest.fn(),
+      confirmReset: jest.fn(),
+    };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: serviceMock }],
+      providers: [
+        { provide: AuthService, useValue: serviceMock },
+        { provide: PasswordResetService, useValue: passwordResetServiceMock },
+      ],
     }).compile();
     controller = module.get<AuthController>(AuthController);
   });

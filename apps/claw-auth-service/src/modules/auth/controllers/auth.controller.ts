@@ -6,12 +6,22 @@ import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { LoginDto, loginSchema, loginSessionClient } from '../dto/login.dto';
 import { RegisterDto, registerSchema } from '../dto/register.dto';
 import { RefreshTokenDto, refreshTokenSchema } from '../dto/refresh-token.dto';
+import { PasswordResetService } from '../services/password-reset.service';
+import {
+  ConfirmPasswordResetDto,
+  confirmPasswordResetSchema,
+  RequestPasswordResetDto,
+  requestPasswordResetSchema,
+} from '../dto/password-reset.dto';
 import { AuthenticatedUser } from '../../../common/types';
 import { LoginResult, RefreshResult, RegisterResult, UserProfile } from '../types/auth.types';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly passwordResetService: PasswordResetService,
+  ) {}
 
   @Public()
   @Post('register')
@@ -46,5 +56,21 @@ export class AuthController {
   @Get('me')
   async me(@CurrentUser() user: AuthenticatedUser): Promise<UserProfile> {
     return this.authService.getProfile(user.id);
+  }
+
+  @Public()
+  @Post('password-reset/request')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(requestPasswordResetSchema))
+  async requestPasswordReset(@Body() dto: RequestPasswordResetDto): Promise<{ accepted: true }> {
+    return this.passwordResetService.requestReset(dto.email);
+  }
+
+  @Public()
+  @Post('password-reset/confirm')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(confirmPasswordResetSchema))
+  async confirmPasswordReset(@Body() dto: ConfirmPasswordResetDto): Promise<{ reset: boolean }> {
+    return this.passwordResetService.confirmReset(dto.token, dto.password);
   }
 }

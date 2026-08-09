@@ -43,6 +43,7 @@
         "DeviceAuthorizationGrant",
         "EntitlementInboxEvent",
         "FeatureUsageRecord",
+        "PasswordResetToken",
         "Plan",
         "PlanFeatureRule",
         "PlanModelAccess",

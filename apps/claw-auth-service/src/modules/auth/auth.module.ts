@@ -7,6 +7,10 @@ import { VscodeAuthorizationService } from './services/vscode-authorization.serv
 import { AuthManager } from './managers/auth.manager';
 import { TokenSessionManager } from './managers/token-session.manager';
 import { AuthRepository } from './repositories/auth.repository';
+import { PasswordResetService } from './services/password-reset.service';
+import { PasswordResetManager } from './managers/password-reset.manager';
+import { PasswordResetRepository } from './repositories/password-reset.repository';
+import { UsersRepository } from '../users/repositories/users.repository';
 import { RolesModule } from '../roles/roles.module';
 import { PlansModule } from '../plans/plans.module';
 
@@ -19,6 +23,10 @@ import { PlansModule } from '../plans/plans.module';
     AuthManager,
     TokenSessionManager,
     AuthRepository,
+    PasswordResetService,
+    PasswordResetManager,
+    PasswordResetRepository,
+    UsersRepository,
   ],
   exports: [AuthService],
 })

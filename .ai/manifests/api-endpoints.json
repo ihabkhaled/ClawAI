@@ -592,6 +592,16 @@
       },
       {
         "method": "POST",
+        "route": "/auth/password-reset/confirm",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/auth/password-reset/request",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/auth/refresh",
         "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
       },
@@ -2883,5 +2893,5 @@
     ]
   },
   "generated": true,
-  "total": 569
+  "total": 571
 }
