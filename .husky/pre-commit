@@ -45,12 +45,8 @@ if git diff --cached --name-only | grep -qE '^(packages/|apps/|infra/|docker/|do
   fi
   restore_stash() {
     if [ "$STASHED" = "1" ]; then
-      CURRENT_STASH=$(git rev-parse -q --verify refs/stash 2>/dev/null || true)
-      if [ "$CURRENT_STASH" = "$STASH_REF" ]; then
-        git stash pop --quiet || echo "→ WARNING: could not restore '$STASH_MSG'; recover it with 'git stash list'"
-      else
-        echo "→ WARNING: stash order changed; recover $STASH_REF without popping another stash"
-      fi
+      STASHED=0
+      sh scripts/hooks/restore-stash.sh "$STASH_REF" "$STASH_MSG"
     fi
   }
   trap 'restore_stash' EXIT INT TERM

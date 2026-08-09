@@ -14,9 +14,10 @@
 # is a nuisance, losing a developer's uncommitted work to a hook is not.
 STASHED=0
 STASH_REF=""
+STASH_MSG="pre-push-verify-$$"
 if ! git diff --quiet HEAD || [ -n "$(git ls-files --others --exclude-standard)" ]; then
   STASH_BEFORE=$(git rev-parse -q --verify refs/stash 2>/dev/null || true)
-  if git stash push --quiet --include-untracked --message "pre-push-verify-$$"; then
+  if git stash push --quiet --include-untracked --message "$STASH_MSG"; then
     STASH_AFTER=$(git rev-parse -q --verify refs/stash 2>/dev/null || true)
     if [ -n "$STASH_AFTER" ] && [ "$STASH_AFTER" != "$STASH_BEFORE" ]; then
       STASHED=1
@@ -29,12 +30,7 @@ fi
 restore_stash() {
   if [ "$STASHED" = "1" ]; then
     STASHED=0
-    CURRENT_STASH=$(git rev-parse -q --verify refs/stash 2>/dev/null || true)
-    if [ "$CURRENT_STASH" = "$STASH_REF" ]; then
-      git stash pop --quiet || echo "→ WARNING: could not restore your work; recover it with 'git stash list'"
-    else
-      echo "→ WARNING: stash order changed; recover $STASH_REF without popping another stash"
-    fi
+    sh scripts/hooks/restore-stash.sh "$STASH_REF" "$STASH_MSG"
   fi
 }
 trap 'restore_stash' EXIT INT TERM
