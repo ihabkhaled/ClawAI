@@ -1,6 +1,6 @@
 {
   "name": "claw-connector-service",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "private": true,
   "description": "Claw Connector Service - manages AI provider connectors and models",
   "license": "UNLICENSED",
