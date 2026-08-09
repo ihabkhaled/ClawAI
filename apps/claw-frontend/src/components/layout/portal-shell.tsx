@@ -7,6 +7,7 @@ import { PortalContent } from '@/components/layout/portal-content';
 import { Sidebar } from '@/components/layout/sidebar';
 import { SkipToContent } from '@/components/layout/skip-to-content';
 import { Topbar } from '@/components/layout/topbar';
+import { TrialStatusBanner } from '@/components/layout/trial-status-banner';
 import { ComponentSize } from '@/enums';
 import { useAuthGuard } from '@/hooks/auth/use-auth-guard';
 import { useLayoutShortcuts } from '@/hooks/layout/use-layout-shortcuts';
@@ -52,6 +53,7 @@ export function PortalShell({ children }: { children: React.ReactNode }): React.
         ].join(' ')}
       >
         <Topbar />
+        <TrialStatusBanner />
         <main
           id="main-content"
           tabIndex={-1}

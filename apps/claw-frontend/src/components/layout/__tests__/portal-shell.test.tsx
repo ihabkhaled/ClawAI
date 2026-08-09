@@ -13,6 +13,9 @@ vi.mock('@/hooks/settings/use-preference-bootstrap', () => ({ usePreferenceBoots
 vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('@/components/layout/sidebar', () => ({ Sidebar: () => <nav data-testid="sidebar" /> }));
 vi.mock('@/components/layout/topbar', () => ({ Topbar: () => <div data-testid="topbar" /> }));
+vi.mock('@/components/layout/trial-status-banner', () => ({
+  TrialStatusBanner: () => <div data-testid="trial-banner" />,
+}));
 vi.mock('@/components/layout/mobile-bottom-nav', () => ({
   MobileBottomNav: () => <div data-testid="mobile-nav" />,
 }));
@@ -51,6 +54,9 @@ describe('PortalShell (regression: behavior-preserving extraction from the old c
     );
     expect(screen.getByTestId('sidebar')).toBeInTheDocument();
     expect(screen.getByTestId('topbar')).toBeInTheDocument();
+    expect(screen.getByTestId('topbar').nextElementSibling).toBe(
+      screen.getByTestId('trial-banner'),
+    );
     expect(screen.getByTestId('mobile-nav')).toBeInTheDocument();
     expect(screen.getByTestId('skip-link')).toBeInTheDocument();
     expect(screen.getByText('page content')).toBeInTheDocument();

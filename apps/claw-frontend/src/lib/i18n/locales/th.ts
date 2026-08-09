@@ -256,6 +256,7 @@ export const th: TranslationDictionary = {
     tryingProvider: 'การพยายาม',
     allProvidersFailed: 'ผู้ให้บริการทั้งหมดไม่สามารถสร้างการตอบกลับได้',
     errors: {
+      planTrialExpired: 'ช่วงทดลองใช้ฟรีของคุณสิ้นสุดแล้ว เลือกแผนแบบชำระเงินเพื่อใช้ AI ต่อ',
       videoAttachmentProviderUnsupported:
         'โมเดลนี้ไม่สามารถประมวลผลไฟล์แนบวิดีโอได้เลือก Gemini 2.5 Flash หรือ Pro หรือสลับเป็นอัตโนมัติ',
       videoAttachmentLocalModelUnavailable:
@@ -3174,6 +3175,13 @@ export const th: TranslationDictionary = {
       cardIntegrationId: 'รหัสการเชื่อมต่อบัตร',
     },
   },
+  trialStatus: {
+    activeTitle: 'ช่วงทดลองใช้ฟรีของคุณกำลังใช้งาน',
+    activeBody: 'เหลืออีก {days} วัน ช่วงทดลองจะสิ้นสุดในวันที่ {date}',
+    expiredTitle: 'ช่วงทดลองใช้ฟรีของคุณสิ้นสุดแล้ว',
+    expiredBody: 'เลือกแผนแบบชำระเงินเพื่อใช้ฟีเจอร์ AI ต่อ',
+    upgrade: 'ดูแผนแบบชำระเงิน',
+  },
   adminPlans: {
     title: 'แผน',
     description: 'กำหนดแผนการสมัครสมาชิก โควต้า ประตูคุณลักษณะ และการเข้าถึงโมเดล',
@@ -3234,6 +3242,8 @@ export const th: TranslationDictionary = {
       maxContextPacks: 'แพ็กบริบทสูงสุด',
       maxMemoryItems: 'รายการหน่วยความจำสูงสุด',
       isPublic: 'จดทะเบียนในที่สาธารณะ',
+      isTrial: 'ทดลองใช้ 30 วัน',
+      trialHelp: 'ช่วงทดลองใช้มีระยะเวลา 30 วันและใช้ได้หนึ่งครั้งต่อบัญชีเท่านั้น',
       featureGates: 'คุณลักษณะประตู',
       unlimitedPlaceholder: 'ไม่จำกัด',
       submitting: 'ประหยัด...',

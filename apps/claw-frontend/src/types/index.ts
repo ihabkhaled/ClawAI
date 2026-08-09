@@ -464,6 +464,7 @@ export type {
   UseRichPromptTextareaReturn,
   UseThreadDataControllerParams,
   UseThreadDataControllerReturn,
+  UseSendMessageResult,
   UseThreadDetailPageParams,
   UseThreadDetailPageReturn,
   UseThreadSettingsReturn,
@@ -843,6 +844,11 @@ export type {
   PlanRetirementCandidate,
   PlanCardProps,
 } from './plan.types';
+export type {
+  HiddenTrialStatusBannerView,
+  VisibleTrialStatusBannerView,
+  TrialStatusBannerView,
+} from './trial-status.types';
 export type {
   RoleWithPermissions,
   PermissionCatalog,

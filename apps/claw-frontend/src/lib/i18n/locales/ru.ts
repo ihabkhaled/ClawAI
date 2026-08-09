@@ -260,6 +260,8 @@ export const ru: TranslationDictionary = {
     tryingProvider: 'пробуем',
     allProvidersFailed: 'Все провайдеры не смогли сгенерировать ответ',
     errors: {
+      planTrialExpired:
+        'Бесплатный пробный период завершён. Выберите платный тариф, чтобы продолжить пользоваться ИИ.',
       videoAttachmentProviderUnsupported:
         'Эта модель не может обрабатывать видеофайлы. Выберите Gemini 2.5 Flash или Pro либо переключитесь в автоматический режим.',
       videoAttachmentLocalModelUnavailable:
@@ -3213,6 +3215,13 @@ export const ru: TranslationDictionary = {
       cardIntegrationId: 'ID интеграции карты',
     },
   },
+  trialStatus: {
+    activeTitle: 'Бесплатный пробный период активен',
+    activeBody: 'Осталось дней: {days}. Пробный период завершится {date}.',
+    expiredTitle: 'Бесплатный пробный период завершён',
+    expiredBody: 'Выберите платный тариф, чтобы продолжить пользоваться функциями ИИ.',
+    upgrade: 'Посмотреть платные тарифы',
+  },
   adminPlans: {
     title: 'Тарифы',
     description: 'Определите тарифы подписки, квоты, ограничения функций и доступ к моделям.',
@@ -3273,6 +3282,8 @@ export const ru: TranslationDictionary = {
       maxContextPacks: 'Макс. пакетов контекста',
       maxMemoryItems: 'Макс. элементов памяти',
       isPublic: 'В публичном списке',
+      isTrial: '30-дневный пробный период',
+      trialHelp: 'Пробный период длится 30 дней и доступен один раз для каждой учётной записи.',
       featureGates: 'Ограничения функций',
       unlimitedPlaceholder: 'Без ограничений',
       submitting: 'Сохранение...',

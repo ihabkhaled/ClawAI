@@ -86,6 +86,7 @@
         "PlanModelAccess",
         "PlanPriceVersion",
         "PlanRetirementMigration",
+        "PlanTrialRedemption",
         "Role",
         "RolePermission",
         "SeedExecution",
@@ -96,7 +97,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 51,
+      "testFiles": 52,
       "testRunner": "jest"
     },
     {

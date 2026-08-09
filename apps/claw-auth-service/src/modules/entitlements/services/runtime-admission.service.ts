@@ -36,7 +36,7 @@ export class RuntimeAdmissionService {
   ) {}
 
   async reserve(input: RuntimeAdmissionDto): Promise<RuntimeAdmissionAck> {
-    const entitlement = await this.entitlements.getForUser(input.userId);
+    const entitlement = await this.entitlements.getEnforcedForUser(input.userId);
     this.assertPermission(entitlement.isAdmin, entitlement.permissions, Permission.AGENT_USE);
     this.assertPermission(entitlement.isAdmin, entitlement.permissions, Permission.CHAT_USE);
     if (!this.isPrimaryModelAllowed(entitlement, input.provider, input.model)) {

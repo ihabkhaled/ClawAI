@@ -4,7 +4,7 @@ import { FeatureUsageConsumptionService } from '../feature-usage-consumption.ser
 describe('FeatureUsageConsumptionService', () => {
   it('idempotently reserves and consumes one research request', async () => {
     const entitlements = {
-      getForUser: jest.fn().mockResolvedValue({ isAdmin: false, plan: { id: 'plan-1' } }),
+      getEnforcedForUser: jest.fn().mockResolvedValue({ isAdmin: false, plan: { id: 'plan-1' } }),
     };
     const policy = {
       reserve: jest.fn().mockResolvedValue({ ok: true, reservationId: 'usage-1' }),
@@ -32,7 +32,7 @@ describe('FeatureUsageConsumptionService', () => {
     { isAdmin: true, plan: null, label: 'an administrator' },
     { isAdmin: false, plan: null, label: 'a user without a plan' },
   ])('records observed provider operations for $label without reserving a limit', async (state) => {
-    const entitlements = { getForUser: jest.fn().mockResolvedValue(state) };
+    const entitlements = { getEnforcedForUser: jest.fn().mockResolvedValue(state) };
     const policy = {
       reserve: jest.fn(),
       consume: jest.fn(),

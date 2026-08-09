@@ -100,7 +100,12 @@ function toApiClientError(error: unknown): ApiClientError {
     const axiosError = error as {
       response?: {
         status: number;
-        data?: { message?: string; code?: string; errors?: Record<string, string[]> };
+        data?: {
+          message?: string;
+          code?: string;
+          errorCode?: string;
+          errors?: Record<string, string[]>;
+        };
       };
     };
 
@@ -115,7 +120,9 @@ function toApiClientError(error: unknown): ApiClientError {
       errors: isServerError ? undefined : axiosError.response?.data?.errors,
       // 5xx codes (if any) are intentionally suppressed alongside details so
       // we never leak internals via the `code` field either.
-      code: isServerError ? undefined : axiosError.response?.data?.code,
+      code: isServerError
+        ? undefined
+        : (axiosError.response?.data?.errorCode ?? axiosError.response?.data?.code),
     });
   }
   return new ApiClientError({ message: 'Network error', status: 0 });

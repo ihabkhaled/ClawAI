@@ -14,6 +14,7 @@ import type { AdminUserUpdateRequest } from './auth.types';
 import type {
   ChatMessage,
   ChatThread,
+  CreateMessageRequest,
   FallbackAttemptInfo,
   JudgeModelOption,
   MessageRenderItem,
@@ -264,6 +265,14 @@ export type UseThreadDetailPageParams = {
 export type UseThreadDataControllerParams = {
   threadId: string;
   t: TranslateFunction;
+};
+
+export type UseSendMessageResult = {
+  sendMessage: (data: CreateMessageRequest) => void;
+  isPending: boolean;
+  isError: boolean;
+  error: Error | null;
+  errorMessage: string | null;
 };
 
 export type UseThreadDataControllerReturn = {
@@ -653,6 +662,7 @@ export type UseVirtualizedMessagesControllerReturn = {
   isEmpty: boolean;
   loadingLabel: string;
   emptyLabel: string;
+  persistentError: string | null;
   // Virtuoso wiring.
   virtuosoRef: React.Ref<VirtuosoHandle>;
   renderItems: MessageRenderItem[];

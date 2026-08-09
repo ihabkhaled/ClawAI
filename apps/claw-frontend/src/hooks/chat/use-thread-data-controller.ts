@@ -30,10 +30,11 @@ export const useThreadDataController = ({
 }: UseThreadDataControllerParams): UseThreadDataControllerReturn => {
   const detail = useThreadDetail(threadId);
   const { cancel: cancelStream, isCancelling: isCancellingStream } = useCancelStream(threadId);
-  const { sendMessage, isPending: isSending } = useSendMessage(
-    threadId,
-    detail.startWaitingForResponse,
-  );
+  const {
+    sendMessage,
+    isPending: isSending,
+    errorMessage: sendError,
+  } = useSendMessage(threadId, detail.startWaitingForResponse, detail.stopWaitingForResponse);
   const { deleteThread, isPending: isDeleting } = useDeleteThread();
   const { setFeedback } = useMessageFeedback(threadId);
   const { regenerate } = useRegenerateMessage(threadId, detail.startWaitingForResponse);
@@ -122,7 +123,7 @@ export const useThreadDataController = ({
     firstItemIndex: detail.virtualizedMessages.firstItemIndex,
     isWaitingForResponse: detail.isWaitingForResponse,
     fallbackAttempts: detail.fallbackAttempts,
-    streamError: detail.streamError,
+    streamError: sendError ?? detail.streamError,
     judgeEvaluating: detail.judgeEvaluating,
     executingModel: detail.executingModel,
     judgeModel: detail.judgeModel,
@@ -148,7 +149,7 @@ export const useThreadDataController = ({
     isLoadingMessages: detail.isLoadingMessages,
     isWaitingForResponse: detail.isWaitingForResponse,
     fallbackAttempts: detail.fallbackAttempts,
-    streamError: detail.streamError,
+    streamError: sendError ?? detail.streamError,
     judgeEvaluating: detail.judgeEvaluating,
     executingModel: detail.executingModel,
     judgeModel: detail.judgeModel,

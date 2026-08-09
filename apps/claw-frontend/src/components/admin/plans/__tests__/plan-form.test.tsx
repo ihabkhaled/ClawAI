@@ -70,4 +70,16 @@ describe('PlanForm', () => {
     await user.type(screen.getByLabelText('adminPlans.form.name'), 'X');
     expect(setField).toHaveBeenCalledWith('name', 'X');
   });
+
+  it('renders and toggles the fixed 30-day trial switch', async () => {
+    const setField = vi.fn();
+    const user = userEvent.setup();
+    render(<PlanForm {...makeProps({ setField })} />);
+
+    const trialSwitch = screen.getByRole('switch', { name: 'adminPlans.form.isTrial' });
+    expect(trialSwitch).not.toBeChecked();
+    expect(screen.getByText('adminPlans.form.trialHelp')).toBeInTheDocument();
+    await user.click(trialSwitch);
+    expect(setField).toHaveBeenCalledWith('isTrial', true);
+  });
 });

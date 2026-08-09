@@ -253,6 +253,7 @@ export type TranslationDictionary = {
     tryingProvider: string;
     allProvidersFailed: string;
     errors: {
+      planTrialExpired: string;
       videoAttachmentProviderUnsupported: string;
       videoAttachmentLocalModelUnavailable: string;
     };
@@ -3126,6 +3127,13 @@ export type TranslationDictionary = {
       cardIntegrationId: string;
     };
   };
+  trialStatus: {
+    activeTitle: string;
+    activeBody: string;
+    expiredTitle: string;
+    expiredBody: string;
+    upgrade: string;
+  };
   adminPlans: {
     title: string;
     description: string;
@@ -3185,6 +3193,8 @@ export type TranslationDictionary = {
       maxContextPacks: string;
       maxMemoryItems: string;
       isPublic: string;
+      isTrial: string;
+      trialHelp: string;
       featureGates: string;
       unlimitedPlaceholder: string;
       submitting: string;

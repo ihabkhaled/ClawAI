@@ -888,6 +888,7 @@ export type VirtualizedMessagesProps = {
   isEmpty: boolean;
   loadingLabel: string;
   emptyLabel: string;
+  persistentError: string | null;
   // Virtuoso wiring (controller-owned).
   virtuosoRef: React.Ref<VirtuosoHandle>;
   renderItems: MessageRenderItem[];

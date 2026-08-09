@@ -258,6 +258,7 @@ export const en: TranslationDictionary = {
     tryingProvider: 'trying',
     allProvidersFailed: 'All providers failed to generate a response',
     errors: {
+      planTrialExpired: 'Your free trial has ended. Choose a paid plan to continue using AI.',
       videoAttachmentProviderUnsupported:
         'This model cannot process video attachments. Choose Gemini 2.5 Flash or Pro, or switch to Auto.',
       videoAttachmentLocalModelUnavailable:
@@ -3174,6 +3175,13 @@ export const en: TranslationDictionary = {
       cardIntegrationId: 'Card integration ID',
     },
   },
+  trialStatus: {
+    activeTitle: 'Your free trial is active',
+    activeBody: '{days} days remaining. Your trial ends on {date}.',
+    expiredTitle: 'Your free trial has ended',
+    expiredBody: 'Choose a paid plan to continue using AI features.',
+    upgrade: 'View paid plans',
+  },
   adminPlans: {
     title: 'Plans',
     description: 'Define subscription plans, quotas, feature gates and model access.',
@@ -3234,6 +3242,8 @@ export const en: TranslationDictionary = {
       maxContextPacks: 'Max context packs',
       maxMemoryItems: 'Max memory items',
       isPublic: 'Publicly listed',
+      isTrial: '30-day trial',
+      trialHelp: 'Trial access is fixed at 30 days and can be used once per account.',
       featureGates: 'Feature gates',
       unlimitedPlaceholder: 'Unlimited',
       submitting: 'Saving...',

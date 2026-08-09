@@ -4,7 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { VirtualizedMessagesFooter } from '@/components/chat/virtualized-messages-footer';
 
 vi.mock('@/components/chat/thinking-indicator', () => ({
-  ThinkingIndicator: () => <div data-testid="thinking-indicator" />,
+  ThinkingIndicator: ({ streamError }: { streamError?: string | null }) => (
+    <div data-testid="thinking-indicator">{streamError}</div>
+  ),
 }));
 
 describe('VirtualizedMessagesFooter', () => {
@@ -32,5 +34,18 @@ describe('VirtualizedMessagesFooter', () => {
       />,
     );
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('keeps a send error visible after the waiting state stops', () => {
+    render(
+      <VirtualizedMessagesFooter
+        isWaitingForResponse={false}
+        fallbackAttempts={[]}
+        streamError="Your trial ended"
+        progressStages={[]}
+        currentStageLabel={null}
+      />,
+    );
+    expect(screen.getByText('Your trial ended')).toBeInTheDocument();
   });
 });

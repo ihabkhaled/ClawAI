@@ -68,7 +68,9 @@ export class AuthManager {
     // handled downstream), but normally the default plan exists from seed.
     const defaultPlan = await this.plansRepository.findDefault();
     if (defaultPlan) {
-      await this.plansRepository.assignUserToPlan(user.id, defaultPlan.id);
+      await (defaultPlan.isTrial
+        ? this.plansRepository.assignTrialPlanOnce(user.id, defaultPlan.id, undefined, new Date())
+        : this.plansRepository.assignUserToPlan(user.id, defaultPlan.id));
     }
 
     this.logger.log(

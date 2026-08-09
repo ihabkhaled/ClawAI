@@ -259,6 +259,8 @@ export const fr: TranslationDictionary = {
     tryingProvider: 'tentative',
     allProvidersFailed: 'Tous les fournisseurs ont échoué à générer une réponse',
     errors: {
+      planTrialExpired:
+        'Votre essai gratuit est terminé. Choisissez une offre payante pour continuer à utiliser l’IA.',
       videoAttachmentProviderUnsupported:
         'Ce modèle ne peut pas traiter les vidéos jointes. Choisissez Gemini 2.5 Flash ou Pro, ou passez en mode Automatique.',
       videoAttachmentLocalModelUnavailable:
@@ -3236,6 +3238,13 @@ export const fr: TranslationDictionary = {
       cardIntegrationId: 'ID d’intégration de carte',
     },
   },
+  trialStatus: {
+    activeTitle: 'Votre essai gratuit est actif',
+    activeBody: 'Il reste {days} jours. Votre essai se termine le {date}.',
+    expiredTitle: 'Votre essai gratuit est terminé',
+    expiredBody: 'Choisissez une offre payante pour continuer à utiliser les fonctionnalités d’IA.',
+    upgrade: 'Voir les offres payantes',
+  },
   adminPlans: {
     title: 'Forfaits',
     description:
@@ -3297,6 +3306,8 @@ export const fr: TranslationDictionary = {
       maxContextPacks: 'Max. de packs de contexte',
       maxMemoryItems: 'Max. d’éléments de mémoire',
       isPublic: 'Répertorié publiquement',
+      isTrial: 'Essai de 30 jours',
+      trialHelp: 'L’essai dure 30 jours et ne peut être utilisé qu’une fois par compte.',
       featureGates: 'Options de fonctionnalités',
       unlimitedPlaceholder: 'Illimité',
       submitting: 'Enregistrement...',

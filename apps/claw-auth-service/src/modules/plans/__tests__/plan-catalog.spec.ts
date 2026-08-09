@@ -14,6 +14,8 @@ import catalogData from '../../../../prisma/seeders/plan-catalog.json';
 
 type CatalogEntry = {
   slug: string;
+  isTrial: boolean;
+  trialDurationDays: number | null;
   monthlyMinor: number;
   yearlyMinor: number | null;
   dailyTokens: number;
@@ -154,6 +156,12 @@ describe('plan catalog', () => {
 });
 
 describe('catalog integrity', () => {
+  it('flags only Free as the fixed 30-day trial', () => {
+    expect(bySlug('free')).toMatchObject({ isTrial: true, trialDurationDays: 30 });
+    for (const plan of catalog.filter((entry) => entry.slug !== 'free')) {
+      expect(plan).toMatchObject({ isTrial: false, trialDurationDays: null });
+    }
+  });
   it('declares every feature key on every plan, so no plan falls through to a default', () => {
     const expected = [
       'COMPARE_MODE',

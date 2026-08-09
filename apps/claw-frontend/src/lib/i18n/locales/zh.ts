@@ -254,6 +254,7 @@ export const zh: TranslationDictionary = {
     tryingProvider: '尝试',
     allProvidersFailed: '所有提供商均未能生成响应',
     errors: {
+      planTrialExpired: '您的免费试用已结束。请选择付费方案以继续使用 AI。',
       videoAttachmentProviderUnsupported:
         '该模型无法处理视频附件。选择 Gemini 2.5 Flash 或 Pro，或切换到自动。',
       videoAttachmentLocalModelUnavailable:
@@ -3112,6 +3113,13 @@ export const zh: TranslationDictionary = {
       cardIntegrationId: '银行卡集成 ID',
     },
   },
+  trialStatus: {
+    activeTitle: '您的免费试用正在生效',
+    activeBody: '还剩 {days} 天。试用将于 {date} 结束。',
+    expiredTitle: '您的免费试用已结束',
+    expiredBody: '请选择付费方案以继续使用 AI 功能。',
+    upgrade: '查看付费方案',
+  },
   adminPlans: {
     title: '计划',
     description: '定义订阅计划、配额、功能门限和模型访问权限。',
@@ -3171,6 +3179,8 @@ export const zh: TranslationDictionary = {
       maxContextPacks: '最大上下文包',
       maxMemoryItems: '最大内存项',
       isPublic: '公开上市',
+      isTrial: '30 天试用',
+      trialHelp: '试用期固定为 30 天，每个账户只能使用一次。',
       featureGates: '特色门',
       unlimitedPlaceholder: '无限',
       submitting: '保存...',

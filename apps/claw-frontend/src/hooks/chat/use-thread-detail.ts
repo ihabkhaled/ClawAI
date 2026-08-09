@@ -14,6 +14,7 @@ export function useThreadDetail(threadId: string) {
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const messageCountBeforeSend = useRef(0);
+  const waitingSuppressedRef = useRef(false);
 
   const threadQuery = useQuery({
     queryKey: queryKeys.threads.detail(threadId),
@@ -127,6 +128,7 @@ export function useThreadDetail(threadId: string) {
   useEffect(() => {
     if (
       !isWaitingForResponse &&
+      !waitingSuppressedRef.current &&
       messagesList.length > 0 &&
       lastMessage?.role === MessageRole.USER &&
       !virtualizedMessages.isLoading
@@ -144,9 +146,15 @@ export function useThreadDetail(threadId: string) {
       details: { threadId, currentMessageCount: messagesList.length },
     });
     messageCountBeforeSend.current = messagesList.length;
+    waitingSuppressedRef.current = false;
     resetStream();
     setIsWaitingForResponse(true);
   }, [messagesList.length, resetStream, threadId]);
+
+  const stopWaitingForResponse = useCallback((): void => {
+    waitingSuppressedRef.current = true;
+    setIsWaitingForResponse(false);
+  }, []);
 
   return {
     thread: threadQuery.data ?? null,
@@ -157,6 +165,7 @@ export function useThreadDetail(threadId: string) {
     error: threadQuery.error ?? null,
     isWaitingForResponse,
     startWaitingForResponse,
+    stopWaitingForResponse,
     fallbackAttempts,
     streamError,
     judgeEvaluating,

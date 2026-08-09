@@ -16,8 +16,18 @@ export function VirtualizedMessages(props: VirtualizedMessagesProps): React.Reac
     return <LoadingSpinner label={props.loadingLabel} />;
   }
   if (props.isEmpty) {
+    if (props.persistentError !== null) {
+      return (
+        <div
+          className="text-destructive flex items-center justify-center px-4 py-12 text-sm"
+          role="alert"
+        >
+          {props.persistentError}
+        </div>
+      );
+    }
     return (
-      <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex items-center justify-center py-12 text-sm">
         {props.emptyLabel}
       </div>
     );

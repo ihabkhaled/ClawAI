@@ -1,5 +1,6 @@
 export {
   EntitlementsAdapter,
+  EntitlementsRequestError,
   type EntitlementsAdapterOptions,
   type QuotaReserveResult,
   type QuotaFinalizeInput,

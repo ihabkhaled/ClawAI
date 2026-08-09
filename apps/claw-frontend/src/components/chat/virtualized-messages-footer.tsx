@@ -21,7 +21,7 @@ export function VirtualizedMessagesFooter({
   onCancelStream,
   isCancellingStream,
 }: VirtualizedMessagesFooterProps): React.ReactElement | null {
-  if (!isWaitingForResponse) {
+  if (!isWaitingForResponse && !streamError) {
     return null;
   }
   return (

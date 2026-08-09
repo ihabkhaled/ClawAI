@@ -95,6 +95,9 @@ export class EntitlementApplierService {
       return false;
     }
 
+    const trialStartedAt = new Date();
+    const newTrialExpiresAt = new Date(trialStartedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+
     await this.prisma.$transaction(async (tx) => {
       if (current) {
         await tx.userPlanAssignment.update({
@@ -105,9 +108,12 @@ export class EntitlementApplierService {
           },
         });
       }
-      // Downgrade to Free rather than leaving the user plan-less: a null plan
-      // would fail closed on every gate and look like an outage to them.
-      await tx.userPlanAssignment.create({
+      const redemption = await tx.planTrialRedemption.findUnique({
+        where: { userId: input.userId },
+        select: { expiresAt: true },
+      });
+      const entitlementValidUntil = redemption?.expiresAt ?? newTrialExpiresAt;
+      const assignment = await tx.userPlanAssignment.create({
         data: {
           userId: input.userId,
           planId: freePlan.id,
@@ -116,8 +122,20 @@ export class EntitlementApplierService {
           grantReason: `Revoked by ${input.pattern}`,
           sourceEventId: input.sourceEventId,
           startsAt: new Date(input.effectiveAtMs),
+          entitlementValidUntil,
         },
       });
+      if (redemption === null) {
+        await tx.planTrialRedemption.create({
+          data: {
+            userId: input.userId,
+            planId: freePlan.id,
+            assignmentId: assignment.id,
+            startedAt: trialStartedAt,
+            expiresAt: newTrialExpiresAt,
+          },
+        });
+      }
       await tx.user.update({
         where: { id: input.userId },
         data: { activePlanId: freePlan.id },

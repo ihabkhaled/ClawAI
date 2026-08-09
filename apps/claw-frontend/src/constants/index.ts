@@ -227,7 +227,12 @@ export {
   ROUTING_PLAYGROUND_TAB_SEMANTIC,
 } from './routing-playground.constants';
 export { THREAD_CONTEXT_INSPECTOR_ENABLED } from './thread-context-inspector.constants';
-export { PLAN_FORM_DEFAULTS, PLAN_FEATURE_GATE_FIELDS } from './plan.constants';
+export {
+  PLAN_FORM_DEFAULTS,
+  PLAN_FEATURE_GATE_FIELDS,
+  PLAN_TRIAL_DURATION_DAYS,
+} from './plan.constants';
+export { MILLISECONDS_PER_TRIAL_DAY } from './trial-status.constants';
 export { PERMISSION_GROUP_PREFIXES, PERMISSION_GROUP_ORDER } from './role.constants';
 export { STREAM_STAGE_LABEL_KEYS, REASONING_VISIBILITY_LABEL_KEYS } from './stream.constants';
 export {

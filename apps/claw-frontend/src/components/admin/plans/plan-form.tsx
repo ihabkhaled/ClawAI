@@ -210,6 +210,19 @@ export function PlanForm({
           />
         </div>
         <div className="flex items-center justify-between gap-2">
+          <div className="space-y-0.5">
+            <label htmlFor="plan-is-trial" className="text-sm">
+              {t('adminPlans.form.isTrial')}
+            </label>
+            <p className="text-muted-foreground text-xs">{t('adminPlans.form.trialHelp')}</p>
+          </div>
+          <Switch
+            id="plan-is-trial"
+            checked={state.isTrial}
+            onCheckedChange={(next) => setField('isTrial', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
           <label htmlFor="plan-allow-compare" className="text-sm">
             {t('adminPlans.gate.allowCompareMode')}
           </label>

@@ -36,6 +36,9 @@ export type UserEntitlements = {
     id: string;
     slug: string;
     name: string;
+    isTrial: boolean;
+    trialEndsAt: string | null;
+    isTrialExpired: boolean;
     featureGates: PlanFeatureGates;
   } | null;
   // Optional during rolling upgrades; explicit modes disambiguate unrestricted
@@ -48,6 +51,7 @@ export type UserEntitlements = {
     used: number;
     remaining: number;
     unlimited: boolean;
+    adminBypass: boolean;
   };
 };
 

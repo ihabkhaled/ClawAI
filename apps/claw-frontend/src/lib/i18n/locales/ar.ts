@@ -258,6 +258,8 @@ export const ar: TranslationDictionary = {
     tryingProvider: 'جار المحاولة',
     allProvidersFailed: 'فشل جميع المزودين في توليد رد',
     errors: {
+      planTrialExpired:
+        'انتهت فترتك التجريبية المجانية. اختر خطة مدفوعة لمواصلة استخدام الذكاء الاصطناعي.',
       videoAttachmentProviderUnsupported:
         'لا يستطيع هذا النموذج معالجة مرفقات الفيديو. اختر Gemini 2.5 Flash أو Pro، أو انتقل إلى الوضع التلقائي.',
       videoAttachmentLocalModelUnavailable:
@@ -3160,6 +3162,13 @@ export const ar: TranslationDictionary = {
       cardIntegrationId: 'معرّف تكامل البطاقة',
     },
   },
+  trialStatus: {
+    activeTitle: 'فترتك التجريبية المجانية نشطة',
+    activeBody: 'متبقٍ {days} يومًا. تنتهي فترتك التجريبية في {date}.',
+    expiredTitle: 'انتهت فترتك التجريبية المجانية',
+    expiredBody: 'اختر خطة مدفوعة لمواصلة استخدام ميزات الذكاء الاصطناعي.',
+    upgrade: 'عرض الخطط المدفوعة',
+  },
   adminPlans: {
     title: 'الخطط',
     description: 'حدِّد خطط الاشتراك والحصص وبوابات الميزات والوصول إلى النماذج.',
@@ -3220,6 +3229,8 @@ export const ar: TranslationDictionary = {
       maxContextPacks: 'أقصى عدد حزم السياق',
       maxMemoryItems: 'أقصى عدد عناصر الذاكرة',
       isPublic: 'مُدرجة علنًا',
+      isTrial: 'تجربة لمدة 30 يومًا',
+      trialHelp: 'تستمر التجربة 30 يومًا ويمكن استخدامها مرة واحدة فقط لكل حساب.',
       featureGates: 'بوابات الميزات',
       unlimitedPlaceholder: 'غير محدود',
       submitting: 'جارٍ الحفظ...',

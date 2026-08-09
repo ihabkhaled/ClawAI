@@ -16,6 +16,9 @@ const base: UserEntitlements = {
     id: 'p1',
     slug: 'free',
     name: 'Free',
+    isTrial: true,
+    trialEndsAt: '2026-09-08T00:00:00.000Z',
+    isTrialExpired: false,
     featureGates: {
       allowCompareMode: false,
       allowJudgeMode: false,
@@ -29,7 +32,13 @@ const base: UserEntitlements = {
   modelAccessMode: PlanModelAccessMode.ALLOW_ALL,
   allowedModels: [],
   allowedProviders: [],
-  quota: { dailyLimit: 50000, used: 0, remaining: 50000, unlimited: false },
+  quota: {
+    dailyLimit: 50000,
+    used: 0,
+    remaining: 50000,
+    unlimited: false,
+    adminBypass: false,
+  },
 };
 
 const admin: UserEntitlements = { ...base, role: 'ADMIN', isAdmin: true, permissions: [] };

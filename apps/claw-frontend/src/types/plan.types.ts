@@ -29,6 +29,8 @@ export type PlanView = {
   isDefault: boolean;
   isActive: boolean;
   isPublic: boolean;
+  isTrial: boolean;
+  trialDurationDays: number | null;
   lifecycleStatus: PlanLifecycleStatus;
   replacementPlanId: string | null;
   retiredAt: string | null;
@@ -83,6 +85,8 @@ export type CreatePlanRequest = {
   description?: string;
   displayOrder?: number;
   isPublic?: boolean;
+  isTrial: boolean;
+  trialDurationDays: number | null;
   dailyTokenQuota: number;
   monthlyTokenQuota?: number;
   maxChatsPerDay?: number;
@@ -129,6 +133,9 @@ export type EntitlementPlan = {
   id: string;
   slug: string;
   name: string;
+  isTrial: boolean;
+  trialEndsAt: string | null;
+  isTrialExpired: boolean;
   featureGates: EntitlementFeatureGates;
   limits: EntitlementPlanLimits;
 };
@@ -168,6 +175,7 @@ export type PlanFormState = {
   description: string;
   displayOrder: string;
   isPublic: boolean;
+  isTrial: boolean;
   dailyTokenQuota: string;
   monthlyTokenQuota: string;
   maxChatsPerDay: string;

@@ -12,6 +12,6 @@ export class EntitlementsInternalController {
 
   @Get(':id/entitlements')
   async getEntitlements(@Param('id') id: string): Promise<UserEntitlements> {
-    return this.entitlementsService.getForUser(id);
+    return this.entitlementsService.getEnforcedForUser(id);
   }
 }

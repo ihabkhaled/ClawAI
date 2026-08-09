@@ -169,6 +169,8 @@ export {
   isAdEligiblePath,
 } from './content-registry.utility';
 export { isPublicPath } from './route-visibility.utility';
+export { resolveApiErrorMessage } from './api-error-message.utility';
+export { resolveTrialStatusBanner } from './trial-status.utility';
 export { getConfiguredSocialLinks } from './social-links.utility';
 export {
   buildWebsiteJsonLd,

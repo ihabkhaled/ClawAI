@@ -259,6 +259,8 @@ export const de: TranslationDictionary = {
     tryingProvider: 'versucht',
     allProvidersFailed: 'Alle Provider konnten keine Antwort generieren',
     errors: {
+      planTrialExpired:
+        'Deine kostenlose Testphase ist beendet. Wähle einen kostenpflichtigen Tarif, um KI weiter zu nutzen.',
       videoAttachmentProviderUnsupported:
         'Dieses Modell kann keine Videoanhänge verarbeiten. Wähle Gemini 2.5 Flash oder Pro oder wechsle zu „Auto“.',
       videoAttachmentLocalModelUnavailable:
@@ -3228,6 +3230,13 @@ export const de: TranslationDictionary = {
       cardIntegrationId: 'Kartenintegrations-ID',
     },
   },
+  trialStatus: {
+    activeTitle: 'Deine kostenlose Testphase ist aktiv',
+    activeBody: 'Noch {days} Tage. Deine Testphase endet am {date}.',
+    expiredTitle: 'Deine kostenlose Testphase ist beendet',
+    expiredBody: 'Wähle einen kostenpflichtigen Tarif, um die KI-Funktionen weiter zu nutzen.',
+    upgrade: 'Kostenpflichtige Tarife ansehen',
+  },
   adminPlans: {
     title: 'Tarife',
     description: 'Abonnement-Tarife, Kontingente, Funktionsfreigaben und Modellzugriff festlegen.',
@@ -3288,6 +3297,8 @@ export const de: TranslationDictionary = {
       maxContextPacks: 'Max. Kontextpakete',
       maxMemoryItems: 'Max. Speicherelemente',
       isPublic: 'Öffentlich gelistet',
+      isTrial: '30-tägige Testphase',
+      trialHelp: 'Die Testphase dauert 30 Tage und kann pro Konto nur einmal genutzt werden.',
       featureGates: 'Funktionsfreigaben',
       unlimitedPlaceholder: 'Unbegrenzt',
       submitting: 'Wird gespeichert...',

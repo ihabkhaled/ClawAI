@@ -1,5 +1,15 @@
 import type { UserEntitlements } from './types';
 
+export class EntitlementsRequestError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly errorCode: string,
+  ) {
+    super(`Entitlements request failed with ${errorCode}`);
+    this.name = 'EntitlementsRequestError';
+  }
+}
+
 export type EntitlementsAdapterOptions = {
   // Base URL of the auth-service, e.g. https://auth-service:4001
   authServiceUrl: string;
@@ -93,6 +103,17 @@ export class EntitlementsAdapter {
         signal: controller.signal,
       });
       if (!response.ok) {
+        const payload: unknown = await response.json().catch(() => null);
+        if (
+          typeof payload === 'object' &&
+          payload !== null &&
+          ('errorCode' in payload || 'code' in payload)
+        ) {
+          const code = 'errorCode' in payload ? payload.errorCode : payload.code;
+          if (code === 'PLAN_TRIAL_EXPIRED' || code === 'PLAN_TRIAL_ALREADY_USED') {
+            throw new EntitlementsRequestError(response.status, code);
+          }
+        }
         throw new Error(
           `Entitlements request failed: ${method} ${path} → ${String(response.status)}`,
         );

@@ -150,3 +150,4 @@ export {
 } from './chat-share.enum';
 export { BadgeTone } from './badge-tone.enum';
 export { OptionalService } from './optional-service.enum';
+export { TrialStatus } from './trial-status.enum';

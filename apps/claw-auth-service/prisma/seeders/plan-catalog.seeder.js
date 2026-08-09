@@ -17,10 +17,18 @@ const FREE = 'free';
 // returned to a normal user.
 const catalogData = require('./plan-catalog.json');
 
+for (const plan of catalogData.plans) {
+  if (plan.isTrial === true && plan.trialDurationDays !== 30) {
+    throw new Error(`Trial plan ${plan.slug} must have exactly 30 days`);
+  }
+}
+
 // costCeilingMicroUsd arrives as a STRING because JSON has no BigInt. Money is
 // never a float here, so it is widened to BigInt rather than Number.
 const PLAN_CATALOG = catalogData.plans.map((plan) => ({
   ...plan,
+  isTrial: plan.isTrial === true,
+  trialDurationDays: plan.isTrial === true ? plan.trialDurationDays : null,
   monthlyCostCeilingMicroUsd: BigInt(plan.costCeilingMicroUsd),
 }));
 
@@ -61,6 +69,8 @@ function planColumns(definition) {
     description: definition.description,
     displayOrder: definition.displayOrder,
     isDefault: definition.isDefault,
+    isTrial: definition.isTrial,
+    trialDurationDays: definition.trialDurationDays,
     isActive: true,
     isPublic: true,
     currency: 'USD',

@@ -53,9 +53,21 @@ describe('plans repository', () => {
 
   it('create POSTs the payload to the base path', async () => {
     mockPost.mockResolvedValue({ data: samplePlan });
-    const payload = { name: 'Pro', slug: 'pro', dailyTokenQuota: 1000 } as CreatePlanRequest;
+    const payload = {
+      name: 'Pro',
+      slug: 'pro',
+      dailyTokenQuota: 1000,
+      isTrial: true,
+      trialDurationDays: 30,
+    } as CreatePlanRequest;
     const result = await plansRepository.create(payload);
-    expect(mockPost).toHaveBeenCalledWith('/admin/plans', payload);
+    expect(mockPost).toHaveBeenCalledWith('/admin/plans', {
+      name: 'Pro',
+      slug: 'pro',
+      dailyTokenQuota: 1000,
+      isTrial: true,
+      trialDurationDays: 30,
+    });
     expect(result).toEqual(samplePlan);
   });
 

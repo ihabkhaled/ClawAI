@@ -8,6 +8,7 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   description: '',
   displayOrder: '0',
   isPublic: true,
+  isTrial: false,
   dailyTokenQuota: '100000',
   monthlyTokenQuota: '',
   maxChatsPerDay: '',
@@ -23,6 +24,8 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   allowMemory: true,
   allowContextPacks: true,
 };
+
+export const PLAN_TRIAL_DURATION_DAYS = 30;
 
 // Feature-gate toggle field names rendered as Switches in the PlanForm and as
 // badges on the user-facing plan card. Each entry carries the EntitlementFeatureGates

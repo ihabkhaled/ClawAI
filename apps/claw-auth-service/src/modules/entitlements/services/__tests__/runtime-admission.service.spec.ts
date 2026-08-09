@@ -50,7 +50,7 @@ function entitlement(overrides: Partial<UserEntitlements>): UserEntitlements {
 describe('RuntimeAdmissionService — admin quota lockout', () => {
   let evalMock: jest.Mock;
   let service: RuntimeAdmissionService;
-  let entitlementsMock: { getForUser: jest.Mock };
+  let entitlementsMock: { getEnforcedForUser: jest.Mock };
 
   const input = {
     userId: 'u1',
@@ -62,7 +62,7 @@ describe('RuntimeAdmissionService — admin quota lockout', () => {
 
   beforeEach(() => {
     evalMock = jest.fn().mockResolvedValue(['OK', JSON.stringify({})]);
-    entitlementsMock = { getForUser: jest.fn() };
+    entitlementsMock = { getEnforcedForUser: jest.fn() };
     service = new RuntimeAdmissionService(
       entitlementsMock as unknown as EntitlementsService,
       { getClient: () => ({ eval: evalMock }) } as unknown as RedisService,
@@ -81,7 +81,7 @@ describe('RuntimeAdmissionService — admin quota lockout', () => {
   it('sends the unlimited sentinel for an admin, not 0', async () => {
     // The whole defect in one assertion: 0 is "disabled", and the script is
     // right to deny it. An admin has to be marked unlimited instead.
-    entitlementsMock.getForUser.mockResolvedValue(
+    entitlementsMock.getEnforcedForUser.mockResolvedValue(
       entitlement({
         isAdmin: true,
         role: UserRole.ADMIN,
@@ -99,7 +99,7 @@ describe('RuntimeAdmissionService — admin quota lockout', () => {
 
   it('still sends a non-admin their real plan limit', async () => {
     // Widening the admin path must not widen anybody else's.
-    entitlementsMock.getForUser.mockResolvedValue(
+    entitlementsMock.getEnforcedForUser.mockResolvedValue(
       entitlement({
         quota: {
           dailyLimit: 50_000,
@@ -119,7 +119,7 @@ describe('RuntimeAdmissionService — admin quota lockout', () => {
   it('keeps a disabled plan at 0 so it is still denied', async () => {
     // A plan with no allowance must not be laundered into "unlimited" by the
     // same change that fixed admins — 0 has to keep reaching the script as 0.
-    entitlementsMock.getForUser.mockResolvedValue(
+    entitlementsMock.getEnforcedForUser.mockResolvedValue(
       entitlement({
         quota: { dailyLimit: 0, used: 0, remaining: 0, unlimited: false, adminBypass: false },
       }),

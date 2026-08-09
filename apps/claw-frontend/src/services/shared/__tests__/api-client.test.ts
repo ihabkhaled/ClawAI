@@ -63,7 +63,12 @@ function mockResponse(data: unknown, status = 200): void {
 
 function mockError(
   status: number,
-  data?: { message?: string; errors?: Record<string, string[]> },
+  data?: {
+    message?: string;
+    code?: string;
+    errorCode?: string;
+    errors?: Record<string, string[]>;
+  },
 ): void {
   mockHandlers.push({ error: { response: { status, data } } });
 }
@@ -140,6 +145,7 @@ describe('apiClient', () => {
   it('returns correct error message and status', async () => {
     mockError(422, {
       message: 'Validation failed',
+      errorCode: 'PLAN_TRIAL_EXPIRED',
       errors: { email: ['Email is required'] },
     });
 
@@ -151,6 +157,7 @@ describe('apiClient', () => {
       const apiError = error as ApiClientError;
       expect(apiError.status).toBe(422);
       expect(apiError.message).toBe('Validation failed');
+      expect(apiError.code).toBe('PLAN_TRIAL_EXPIRED');
       expect(apiError.errors).toEqual({ email: ['Email is required'] });
     }
   });

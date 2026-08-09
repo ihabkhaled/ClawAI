@@ -4,5 +4,6 @@
 // Keep in lock-step with apps/claw-*-service/src/common/errors/*.exception.ts.
 export enum ApiErrorCode {
   PLAN_FEATURE_DISABLED = 'PLAN_FEATURE_DISABLED',
+  PLAN_TRIAL_EXPIRED = 'PLAN_TRIAL_EXPIRED',
   INSUFFICIENT_PERMISSIONS = 'INSUFFICIENT_PERMISSIONS',
 }

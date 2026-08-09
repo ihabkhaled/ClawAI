@@ -77,6 +77,7 @@ model User {
   roleRef         Role?                @relation(fields: [roleId], references: [id])
   activePlan      Plan?                @relation("UserActivePlan", fields: [activePlanId], references: [id])
   planAssignments UserPlanAssignment[]
+  trialRedemption PlanTrialRedemption?
 
   @@index([email])
   @@index([status])
@@ -117,6 +118,8 @@ model Plan {
   currency                           String?             @default("USD")
   displayOrder                       Int                 @default(0) @map("display_order")
   isDefault                          Boolean             @default(false) @map("is_default")
+  isTrial                            Boolean             @default(false) @map("is_trial")
+  trialDurationDays                  Int?                @map("trial_duration_days")
   isActive                           Boolean             @default(true) @map("is_active")
   isPublic                           Boolean             @default(true) @map("is_public")
   lifecycleStatus                    PlanLifecycleStatus @default(ACTIVE) @map("lifecycle_status")
@@ -158,6 +161,7 @@ model Plan {
   priceVersions  PlanPriceVersion[]
   featureRules   PlanFeatureRule[]
   activeForUsers User[]               @relation("UserActivePlan")
+  trialRedemptions PlanTrialRedemption[]
 
   @@index([isActive])
   @@index([displayOrder])
@@ -234,11 +238,29 @@ model UserPlanAssignment {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan Plan @relation(fields: [planId], references: [id])
+  trialRedemption PlanTrialRedemption?
 
   @@index([userId])
   @@index([planId])
   @@index([status])
   @@map("user_plan_assignments")
+}
+
+model PlanTrialRedemption {
+  id           String   @id @default(cuid())
+  userId       String   @unique @map("user_id")
+  planId       String   @map("plan_id")
+  assignmentId String   @unique @map("assignment_id")
+  startedAt    DateTime @map("started_at")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan       Plan               @relation(fields: [planId], references: [id])
+  assignment UserPlanAssignment @relation(fields: [assignmentId], references: [id])
+
+  @@index([planId])
+  @@map("plan_trial_redemptions")
 }
 
 // Durable per-user/day token ledger (source of truth + admin reporting). The

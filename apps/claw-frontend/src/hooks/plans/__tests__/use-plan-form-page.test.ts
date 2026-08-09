@@ -73,6 +73,8 @@ const samplePlan = {
   isDefault: false,
   isActive: true,
   isPublic: true,
+  isTrial: false,
+  trialDurationDays: null,
   lifecycleStatus: PlanLifecycleStatus.ACTIVE,
   replacementPlanId: null,
   retiredAt: null,

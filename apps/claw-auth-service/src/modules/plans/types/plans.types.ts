@@ -42,6 +42,8 @@ export type PlanView = {
   isDefault: boolean;
   isActive: boolean;
   isPublic: boolean;
+  isTrial: boolean;
+  trialDurationDays: number | null;
   lifecycleStatus: PlanLifecycleStatus;
   replacementPlanId: string | null;
   retiredAt: Date | null;
@@ -75,6 +77,8 @@ export type CreatePlanData = {
   currency?: string;
   displayOrder?: number;
   isPublic?: boolean;
+  isTrial?: boolean;
+  trialDurationDays?: number | null;
   dailyTokenQuota: number;
   monthlyTokenQuota?: number;
   maxChatsPerDay?: number;
@@ -92,6 +96,11 @@ export type CreatePlanData = {
 };
 
 export type UpdatePlanData = Partial<Omit<CreatePlanData, 'slug'>>;
+
+export type ActiveTrialState = {
+  isTrial: boolean;
+  expiresAt: Date | null;
+};
 
 export type PlanRetirementResult = {
   sourcePlanId: string;

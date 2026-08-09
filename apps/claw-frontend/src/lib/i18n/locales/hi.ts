@@ -258,6 +258,8 @@ export const hi: TranslationDictionary = {
     tryingProvider: 'प्रयासरत',
     allProvidersFailed: 'सभी प्रोवाइडर प्रतिक्रिया उत्पन्न करने में विफल',
     errors: {
+      planTrialExpired:
+        'आपका मुफ़्त परीक्षण समाप्त हो गया है। AI का उपयोग जारी रखने के लिए सशुल्क प्लान चुनें।',
       videoAttachmentProviderUnsupported:
         'यह मॉडल वीडियो अटैचमेंट प्रोसेस नहीं कर सकता। Gemini 2.5 Flash या Pro चुनें, या Auto पर स्विच करें।',
       videoAttachmentLocalModelUnavailable:
@@ -3192,6 +3194,13 @@ export const hi: TranslationDictionary = {
       cardIntegrationId: 'कार्ड इंटीग्रेशन आईडी',
     },
   },
+  trialStatus: {
+    activeTitle: 'आपका मुफ़्त परीक्षण सक्रिय है',
+    activeBody: '{days} दिन शेष हैं। आपका परीक्षण {date} को समाप्त होगा।',
+    expiredTitle: 'आपका मुफ़्त परीक्षण समाप्त हो गया है',
+    expiredBody: 'AI सुविधाओं का उपयोग जारी रखने के लिए सशुल्क प्लान चुनें।',
+    upgrade: 'सशुल्क प्लान देखें',
+  },
   adminPlans: {
     title: 'योजनाएँ',
     description: 'सदस्यता योजनाएँ, कोटा, फ़ीचर गेट और मॉडल एक्सेस परिभाषित करें।',
@@ -3252,6 +3261,8 @@ export const hi: TranslationDictionary = {
       maxContextPacks: 'अधिकतम कॉन्टेक्स्ट पैक',
       maxMemoryItems: 'अधिकतम मेमोरी आइटम',
       isPublic: 'सार्वजनिक रूप से सूचीबद्ध',
+      isTrial: '30-दिन का परीक्षण',
+      trialHelp: 'परीक्षण 30 दिनों का है और प्रत्येक खाते पर केवल एक बार उपयोग किया जा सकता है।',
       featureGates: 'फ़ीचर गेट',
       unlimitedPlaceholder: 'असीमित',
       submitting: 'सहेजा जा रहा है...',

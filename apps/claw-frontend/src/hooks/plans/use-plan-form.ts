@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { PLAN_FORM_DEFAULTS } from '@/constants/plan.constants';
+import { PLAN_FORM_DEFAULTS, PLAN_TRIAL_DURATION_DAYS } from '@/constants/plan.constants';
 import { createPlanSchema, updatePlanSchema } from '@/lib/validation/plan.schema';
 import type {
   CreatePlanRequest,
@@ -19,6 +19,7 @@ const fromPlan = (plan: PlanView): PlanFormState => ({
   description: plan.description ?? '',
   displayOrder: String(plan.displayOrder),
   isPublic: plan.isPublic,
+  isTrial: plan.isTrial,
   dailyTokenQuota: String(plan.dailyTokenQuota),
   monthlyTokenQuota: numToStr(plan.monthlyTokenQuota),
   maxChatsPerDay: numToStr(plan.maxChatsPerDay),
@@ -41,6 +42,8 @@ const buildPayload = (state: PlanFormState): Record<string, unknown> => ({
   description: state.description.length === 0 ? undefined : state.description,
   displayOrder: state.displayOrder,
   isPublic: state.isPublic,
+  isTrial: state.isTrial,
+  trialDurationDays: state.isTrial ? PLAN_TRIAL_DURATION_DAYS : null,
   dailyTokenQuota: state.dailyTokenQuota,
   monthlyTokenQuota: state.monthlyTokenQuota,
   maxChatsPerDay: state.maxChatsPerDay,

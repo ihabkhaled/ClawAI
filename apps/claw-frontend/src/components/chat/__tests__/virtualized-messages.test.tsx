@@ -58,6 +58,7 @@ function makeProps(overrides: Partial<VirtualizedMessagesProps> = {}): Virtualiz
     isEmpty: false,
     loadingLabel: 'chat.loadingMessages',
     emptyLabel: 'chat.noMessagesYet',
+    persistentError: null,
     virtuosoRef,
     renderItems,
     itemContent: () => <div data-testid="row" />,
@@ -116,9 +117,7 @@ describe('VirtualizedMessages (pure render)', () => {
 
   it('shows JumpToLatestButton and invokes onJumpToLatest when clicked', () => {
     const onJumpToLatest = vi.fn();
-    render(
-      <VirtualizedMessages {...makeProps({ showJumpToLatest: true, onJumpToLatest })} />,
-    );
+    render(<VirtualizedMessages {...makeProps({ showJumpToLatest: true, onJumpToLatest })} />);
     const button = screen.getByRole('button', { name: 'chat.jumpToLatest' });
     expect(button).toBeInTheDocument();
     fireEvent.click(button);

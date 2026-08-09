@@ -4,6 +4,9 @@ export const ADMIN_ENTITLEMENT_PLAN: NonNullable<UserEntitlements['plan']> = {
   id: 'admin-unlimited',
   slug: 'admin',
   name: 'Admin',
+  isTrial: false,
+  trialEndsAt: null,
+  isTrialExpired: false,
   limits: {
     dailyTokens: null,
     weeklyTokens: null,

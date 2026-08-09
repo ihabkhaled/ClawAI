@@ -16,7 +16,10 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
   let authRepoMock: jest.Mocked<Pick<AuthRepository, 'findUserById'>>;
   let rolesServiceMock: jest.Mocked<Pick<RolesService, 'resolvePermissionsForUser'>>;
   let plansRepoMock: jest.Mocked<
-    Pick<PlansRepository, 'findById' | 'findDefault' | 'findEffectiveForUser'>
+    Pick<
+      PlansRepository,
+      'findById' | 'findDefault' | 'findEffectiveForUser' | 'findActiveTrialState'
+    >
   >;
   let quotaServiceMock: jest.Mocked<Pick<QuotaService, 'getSnapshot'>>;
 
@@ -44,6 +47,8 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
     currency: 'USD',
     displayOrder: 0,
     isDefault: true,
+    isTrial: true,
+    trialDurationDays: 30,
     isActive: true,
     isPublic: true,
     dailyTokenQuota: 50000,
@@ -74,6 +79,7 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
       findById: jest.fn(),
       findDefault: jest.fn().mockResolvedValue(null),
       findEffectiveForUser: jest.fn(),
+      findActiveTrialState: jest.fn().mockResolvedValue(null),
     };
     quotaServiceMock = { getSnapshot: jest.fn() };
 
@@ -115,6 +121,23 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
       chatsPerDay: null,
     });
     expect(result.quota.adminBypass).toBe(false);
+  });
+
+  it('returns presentation-safe expired trial state at the inclusive deadline', async () => {
+    plansRepoMock.findActiveTrialState.mockResolvedValue({
+      isTrial: true,
+      expiresAt: new Date('2026-08-09T12:00:00.000Z'),
+    });
+    jest.useFakeTimers().setSystemTime(new Date('2026-08-09T12:00:00.000Z'));
+    plansRepoMock.findEffectiveForUser.mockResolvedValue(null);
+    plansRepoMock.findDefault.mockResolvedValue(freePlanWithNoModelAccess);
+    const result = await service.getForUser('u1');
+    expect(result.plan).toMatchObject({
+      isTrial: true,
+      trialEndsAt: '2026-08-09T12:00:00.000Z',
+      isTrialExpired: true,
+    });
+    jest.useRealTimers();
   });
 
   it('returns only isAllowed=true rows when PlanModelAccess is populated', async () => {
@@ -213,6 +236,9 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
       id: 'admin-unlimited',
       slug: 'admin',
       name: 'Admin',
+      isTrial: false,
+      trialEndsAt: null,
+      isTrialExpired: false,
       limits: {
         dailyTokens: null,
         weeklyTokens: null,

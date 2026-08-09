@@ -4,8 +4,10 @@ import {
   PlanModelAccessMode,
   type PlanRetirementMigrationStatus,
   Prisma,
+  type UserPlanAssignment,
 } from '../../../generated/prisma';
 import {
+  type ActiveTrialState,
   type PendingPlanRetirementMigration,
   type PlanRetirementResult,
   type PlanWithAccess,
@@ -49,6 +51,17 @@ export class PlansRepository {
       include: { plan: { include: { modelAccess: true } } },
     });
     return assignment?.plan ?? null;
+  }
+
+  async findActiveTrialState(userId: string): Promise<ActiveTrialState | null> {
+    const assignment = await this.prisma.userPlanAssignment.findFirst({
+      where: { userId, status: 'ACTIVE' },
+      select: { entitlementValidUntil: true, plan: { select: { isTrial: true } } },
+      orderBy: { startsAt: 'desc' },
+    });
+    return assignment === null
+      ? null
+      : { isTrial: assignment.plan.isTrial, expiresAt: assignment.entitlementValidUntil };
   }
 
   async create(data: Prisma.PlanCreateInput): Promise<PlanWithAccess> {
@@ -120,6 +133,55 @@ export class PlansRepository {
       }),
       this.prisma.user.update({ where: { id: userId }, data: { activePlanId: planId } }),
     ]);
+  }
+
+  async assignTrialPlanOnce(
+    userId: string,
+    planId: string,
+    assignedByUserId: string | undefined,
+    now: Date,
+  ): Promise<UserPlanAssignment | null> {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const trialPlan = await tx.plan.findFirst({
+          where: { id: planId, isActive: true, isTrial: true, trialDurationDays: 30 },
+          select: { id: true },
+        });
+        if (trialPlan === null) {
+          return null;
+        }
+        const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        await tx.userPlanAssignment.updateMany({
+          where: { userId, status: 'ACTIVE' },
+          data: { status: 'EXPIRED', endsAt: now },
+        });
+        const assignment = await tx.userPlanAssignment.create({
+          data: {
+            userId,
+            planId,
+            status: 'ACTIVE',
+            assignedByUserId,
+            startsAt: now,
+            entitlementValidUntil: expiresAt,
+          },
+        });
+        await tx.planTrialRedemption.create({
+          data: { userId, planId, assignmentId: assignment.id, startedAt: now, expiresAt },
+        });
+        await tx.user.update({ where: { id: userId }, data: { activePlanId: planId } });
+        return assignment;
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002' &&
+        Array.isArray(error.meta?.target) &&
+        error.meta.target.includes('user_id')
+      ) {
+        return null;
+      }
+      return Promise.reject(error);
+    }
   }
 
   async listUserIdsOnPlan(planId: string): Promise<string[]> {

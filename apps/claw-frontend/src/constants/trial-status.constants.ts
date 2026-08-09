@@ -1,0 +1,1 @@
+export const MILLISECONDS_PER_TRIAL_DAY = 24 * 60 * 60 * 1000;

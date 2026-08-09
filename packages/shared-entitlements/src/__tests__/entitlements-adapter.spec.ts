@@ -1,4 +1,4 @@
-import { EntitlementsAdapter } from '../entitlements-adapter';
+import { EntitlementsAdapter, EntitlementsRequestError } from '../entitlements-adapter';
 
 describe('EntitlementsAdapter feature usage', () => {
   afterEach(() => {
@@ -27,6 +27,19 @@ describe('EntitlementsAdapter feature usage', () => {
           requestId: 'search-run-1:provider-1',
         }),
       }),
+    );
+  });
+
+  it('preserves a bounded auth business error code', async () => {
+    jest.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ errorCode: 'PLAN_TRIAL_EXPIRED' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    const adapter = new EntitlementsAdapter({ authServiceUrl: 'http://auth:4001' });
+    await expect(adapter.reserveQuota('user-1', 1)).rejects.toEqual(
+      new EntitlementsRequestError(403, 'PLAN_TRIAL_EXPIRED'),
     );
   });
 });

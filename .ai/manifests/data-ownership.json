@@ -48,6 +48,7 @@
         "PlanModelAccess",
         "PlanPriceVersion",
         "PlanRetirementMigration",
+        "PlanTrialRedemption",
         "Role",
         "RolePermission",
         "SeedExecution",

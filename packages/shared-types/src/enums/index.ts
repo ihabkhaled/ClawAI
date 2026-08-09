@@ -64,6 +64,7 @@ export { PlanFeature } from './plan-feature.enum';
 export { PlanFeatureAccessMode } from './plan-feature-access-mode.enum';
 export { PlanFeatureWindow } from './plan-feature-window.enum';
 export { PlanModelAccessMode } from './plan-model-access-mode.enum';
+export { ApiErrorCode } from './api-error-code.enum';
 export { ProrationQuoteStatus } from './proration-quote-status.enum';
 export { ProrationMode } from './proration-mode.enum';
 export { ProrationLineItemType } from './proration-line-item-type.enum';

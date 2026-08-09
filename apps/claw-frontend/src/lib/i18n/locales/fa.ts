@@ -259,6 +259,8 @@ export const fa: TranslationDictionary = {
     tryingProvider: 'تلاش کردن',
     allProvidersFailed: 'همه ارائه دهندگان نتوانستند پاسخی ایجاد کنند',
     errors: {
+      planTrialExpired:
+        'دوره آزمایشی رایگان شما پایان یافته است. برای ادامه استفاده از هوش مصنوعی یک طرح پولی انتخاب کنید.',
       videoAttachmentProviderUnsupported:
         'این مدل نمی‌تواند پیوست‌های ویدیویی را پردازش کند.Gemini 2.5 Flash یا Pro را انتخاب کنید یا به Auto بروید.',
       videoAttachmentLocalModelUnavailable:
@@ -3194,6 +3196,13 @@ export const fa: TranslationDictionary = {
       cardIntegrationId: 'شناسه یکپارچه‌سازی کارت',
     },
   },
+  trialStatus: {
+    activeTitle: 'دوره آزمایشی رایگان شما فعال است',
+    activeBody: '{days} روز باقی مانده است. دوره آزمایشی شما در {date} پایان می‌یابد.',
+    expiredTitle: 'دوره آزمایشی رایگان شما پایان یافته است',
+    expiredBody: 'برای ادامه استفاده از قابلیت‌های هوش مصنوعی یک طرح پولی انتخاب کنید.',
+    upgrade: 'مشاهده طرح‌های پولی',
+  },
   adminPlans: {
     title: 'طرح ها',
     description: 'برنامه های اشتراک، سهمیه ها، گیت های ویژگی و دسترسی مدل را تعریف کنید.',
@@ -3254,6 +3263,8 @@ export const fa: TranslationDictionary = {
       maxContextPacks: 'حداکثر بسته های زمینه',
       maxMemoryItems: 'حداکثر موارد حافظه',
       isPublic: 'به صورت عمومی فهرست شده است',
+      isTrial: 'دوره آزمایشی ۳۰ روزه',
+      trialHelp: 'دوره آزمایشی ۳۰ روز است و هر حساب فقط یک‌بار می‌تواند از آن استفاده کند.',
       featureGates: 'دروازه های ویژه',
       unlimitedPlaceholder: 'نامحدود',
       submitting: 'در حال ذخیره...',

@@ -161,7 +161,23 @@ export class PlansService {
         HttpStatus.CONFLICT,
       );
     }
-    await this.plansRepository.assignUserToPlan(userId, planId, assignedBy);
+    if (plan.isTrial) {
+      const assignment = await this.plansRepository.assignTrialPlanOnce(
+        userId,
+        planId,
+        assignedBy,
+        new Date(),
+      );
+      if (assignment === null) {
+        throw new BusinessException(
+          'Plan trial already used',
+          'PLAN_TRIAL_ALREADY_USED',
+          HttpStatus.CONFLICT,
+        );
+      }
+    } else {
+      await this.plansRepository.assignUserToPlan(userId, planId, assignedBy);
+    }
     this.logger.log(`assignUserToPlan: user=${userId} plan=${planId}`);
     return this.toView(plan);
   }
@@ -191,6 +207,8 @@ export class PlansService {
       isDefault: plan.isDefault,
       isActive: plan.isActive,
       isPublic: plan.isPublic,
+      isTrial: plan.isTrial,
+      trialDurationDays: plan.trialDurationDays,
       lifecycleStatus: plan.lifecycleStatus,
       replacementPlanId: plan.replacementPlanId,
       retiredAt: plan.retiredAt,

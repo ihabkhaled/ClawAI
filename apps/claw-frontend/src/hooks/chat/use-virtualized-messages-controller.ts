@@ -158,6 +158,7 @@ export function useVirtualizedMessagesController(
     isEmpty: params.messages.length === 0,
     loadingLabel: params.loadingLabel,
     emptyLabel: params.emptyLabel,
+    persistentError: params.streamError,
     virtuosoRef,
     renderItems,
     itemContent,

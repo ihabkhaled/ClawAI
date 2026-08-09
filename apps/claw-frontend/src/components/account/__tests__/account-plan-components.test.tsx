@@ -67,6 +67,9 @@ describe('PlanCard', () => {
       id: 'pl1',
       slug: 'pro',
       name: 'Pro',
+      isTrial: false,
+      trialEndsAt: null,
+      isTrialExpired: false,
       featureGates: gates,
       limits: {
         dailyTokens: 10_000,

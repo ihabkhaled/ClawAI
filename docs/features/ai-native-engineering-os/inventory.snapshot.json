@@ -7010,7 +7010,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4375
+        "value": 4384
       },
       "localeCount": 13,
       "locales": [
@@ -7807,6 +7807,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "PlanTrialRedemption"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "Role"
           },
           {
@@ -8560,7 +8565,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 51
+        "testFiles": 52
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8584,7 +8589,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 265
+        "testFiles": 269
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9340,7 +9345,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 809,
+    "totalTestFiles": 814,
     "workspaceCount": 25
   }
 }

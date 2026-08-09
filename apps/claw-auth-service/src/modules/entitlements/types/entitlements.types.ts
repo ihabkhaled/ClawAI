@@ -13,6 +13,9 @@ export type UserEntitlements = {
     id: string;
     slug: string;
     name: string;
+    isTrial: boolean;
+    trialEndsAt: string | null;
+    isTrialExpired: boolean;
     limits: {
       dailyTokens: number | null;
       weeklyTokens: number | null;

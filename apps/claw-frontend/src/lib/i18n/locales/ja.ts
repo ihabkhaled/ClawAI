@@ -259,6 +259,8 @@ export const ja: TranslationDictionary = {
     tryingProvider: '試しています',
     allProvidersFailed: 'すべてのプロバイダーが応答の生成に失敗しました',
     errors: {
+      planTrialExpired:
+        '無料トライアルは終了しました。AI を引き続き利用するには有料プランを選択してください。',
       videoAttachmentProviderUnsupported:
         'このモデルはビデオ添付ファイルを処理できません。 Gemini 2.5 Flash または Pro を選択するか、Auto に切り替えます。',
       videoAttachmentLocalModelUnavailable:
@@ -3203,6 +3205,13 @@ export const ja: TranslationDictionary = {
       cardIntegrationId: 'カード統合 ID',
     },
   },
+  trialStatus: {
+    activeTitle: '無料トライアルは有効です',
+    activeBody: '残り {days} 日です。トライアルは {date} に終了します。',
+    expiredTitle: '無料トライアルは終了しました',
+    expiredBody: 'AI 機能を引き続き利用するには有料プランを選択してください。',
+    upgrade: '有料プランを見る',
+  },
   adminPlans: {
     title: '計画',
     description: 'サブスクリプション プラン、クォータ、機能ゲート、モデル アクセスを定義します。',
@@ -3263,6 +3272,8 @@ export const ja: TranslationDictionary = {
       maxContextPacks: '最大コンテキスト パック数',
       maxMemoryItems: '最大メモリ項目数',
       isPublic: '上場',
+      isTrial: '30日間トライアル',
+      trialHelp: 'トライアル期間は30日間で、各アカウントにつき1回のみ利用できます。',
       featureGates: 'フィーチャーゲート',
       unlimitedPlaceholder: '無制限',
       submitting: '保存中...',

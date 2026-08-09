@@ -18,7 +18,7 @@ export class FeatureUsageConsumptionService {
     feature: PlanFeatureKey;
     requestId: string;
   }): Promise<void> {
-    const entitlements = await this.entitlements.getForUser(input.userId);
+    const entitlements = await this.entitlements.getEnforcedForUser(input.userId);
     if (entitlements.isAdmin || entitlements.plan === null) {
       await this.policy.observe(input);
       this.logger.debug(`record: observed unmetered user=${input.userId} feature=${input.feature}`);

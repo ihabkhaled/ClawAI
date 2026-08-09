@@ -47,6 +47,7 @@ const mockRepo = (): Record<keyof PlansRepository, jest.Mock> => ({
   findBySlug: jest.fn(),
   findDefault: jest.fn(),
   findEffectiveForUser: jest.fn(),
+  findActiveTrialState: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),
   setActive: jest.fn(),
@@ -55,6 +56,7 @@ const mockRepo = (): Record<keyof PlansRepository, jest.Mock> => ({
   countActiveAssignments: jest.fn(),
   replaceModelAccess: jest.fn(),
   assignUserToPlan: jest.fn(),
+  assignTrialPlanOnce: jest.fn(),
   listUserIdsOnPlan: jest.fn(),
   findRetirementReplacement: jest.fn(),
   retirePlan: jest.fn(),
@@ -142,6 +144,14 @@ describe('PlansService', () => {
     repo.findById.mockResolvedValue(proPlan);
     await service.assignUserToPlan('u1', 'plan-pro', 'admin');
     expect(repo.assignUserToPlan).toHaveBeenCalledWith('u1', 'plan-pro', 'admin');
+  });
+
+  it('rejects a trial plan already redeemed by the account', async () => {
+    repo.findById.mockResolvedValue({ ...freePlan, isTrial: true, trialDurationDays: 30 });
+    repo.assignTrialPlanOnce.mockResolvedValue(null);
+    await expect(service.assignUserToPlan('u1', 'plan-free', 'admin')).rejects.toThrow(
+      /already used/i,
+    );
   });
 
   it('getDefaultPlan throws when none configured', async () => {

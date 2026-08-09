@@ -17,6 +17,8 @@ const seedPlan = {
   isDefault: false,
   isActive: true,
   isPublic: true,
+  isTrial: true,
+  trialDurationDays: 30,
   lifecycleStatus: PlanLifecycleStatus.ACTIVE,
   replacementPlanId: null,
   retiredAt: null,
@@ -51,6 +53,7 @@ describe('usePlanForm', () => {
     expect(result.current.state.name).toBe('Pro');
     expect(result.current.state.monthlyTokenQuota).toBe('2000000');
     expect(result.current.state.allowJudgeMode).toBe(false);
+    expect(result.current.state.isTrial).toBe(true);
   });
 
   it('maps null numeric fields to empty strings when seeding', () => {
@@ -88,6 +91,21 @@ describe('usePlanForm', () => {
     expect(payload).not.toBeNull();
     expect(payload?.name).toBe('Starter');
     expect(payload?.slug).toBe('starter');
+    expect(payload).toMatchObject({ isTrial: false, trialDurationDays: null });
+  });
+
+  it('serializes an enabled trial with the fixed 30-day duration', () => {
+    const { result } = renderHook(() => usePlanForm(null));
+    act(() => {
+      result.current.setField('name', 'Trial');
+      result.current.setField('slug', 'trial');
+      result.current.setField('isTrial', true);
+    });
+
+    expect(result.current.buildCreateRequest()).toMatchObject({
+      isTrial: true,
+      trialDurationDays: 30,
+    });
   });
 
   it('buildCreateRequest returns null and collects field errors for invalid input', () => {
