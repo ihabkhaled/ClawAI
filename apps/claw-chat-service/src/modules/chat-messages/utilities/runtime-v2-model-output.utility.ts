@@ -8,6 +8,7 @@ import {
   RUNTIME_V2_REPAIR_INSTRUCTION,
   RUNTIME_V2_TOOL_CALL_DIALECT_MARKERS,
   RUNTIME_V2_TOOL_CALL_TAG_PATTERN,
+  RUNTIME_V2_TOOL_OBJECT_SCAN_LIMIT,
   RUNTIME_V2_TOOL_REQUEST_KEY_ALIASES,
   RUNTIME_V2_TRUNCATED_TOOL_CALL_MESSAGE,
   RUNTIME_V2_TRUNCATED_TOOL_REQUEST_PATTERN,
@@ -249,6 +250,32 @@ function parseJsonAllowingRawControls(text: string): { readonly value: unknown }
   }
 }
 
+/**
+ * Finds the tool object when the reply also contains prose.
+ *
+ * `jsonCandidate` slices from the FIRST brace in the reply. Once a model starts
+ * explaining itself — "I'll add the method { ... }" — or writes code around its
+ * request, that first brace belongs to the prose, the slice is unbalanced, and a
+ * perfectly good tool request is reported as an object the model "did not
+ * finish". Every brace is tried instead, and the first balanced object that
+ * actually declares `kind: "tool"` wins. Bounded so a long reply cannot turn
+ * into a quadratic scan.
+ */
+function findToolRequestDocument(text: string): { readonly value: unknown } | null {
+  let from = 0;
+  for (let attempt = 0; attempt < RUNTIME_V2_TOOL_OBJECT_SCAN_LIMIT; attempt += 1) {
+    const brace = text.indexOf('{', from);
+    if (brace < 0) return null;
+    const object = firstJsonObject(text.slice(brace));
+    if (object !== null) {
+      const decoded = parseJsonAllowingRawControls(object);
+      if (decoded !== null && isToolRequestAttempt(decoded.value)) return decoded;
+    }
+    from = brace + 1;
+  }
+  return null;
+}
+
 export function parseRuntimeV2ModelOutput(
   content: string,
   definitions?: readonly ToolDefinitionDto[],
@@ -268,19 +295,17 @@ export function parseRuntimeV2ModelOutput(
     // requests, which is the common shape when the model plans a multi-part
     // task, so retry against the first complete object before giving up.
     const first = firstJsonObject(candidate);
-    if (first === null) {
-      assertNotDialectToolCall(content);
-      return { kind: 'final', content };
-    }
-    const decodedFirst = parseJsonAllowingRawControls(first);
-    if (decodedFirst === null) {
+    const decodedFirst = first === null ? null : parseJsonAllowingRawControls(first);
+    // The first brace may have belonged to prose rather than to the request.
+    const scanned = decodedFirst ?? findToolRequestDocument(content);
+    if (scanned === null) {
       // Looked like JSON and is not. That is prose or code the model happened
       // to start with a brace, not an attempt at a tool request, so it is
       // answered rather than repaired.
       assertNotDialectToolCall(content);
       return { kind: 'final', content };
     }
-    document = decodedFirst.value;
+    document = scanned.value;
   }
 
   // `kind: "tool"` is the schema's discriminator, so it is also the only honest
@@ -289,8 +314,14 @@ export function parseRuntimeV2ModelOutput(
   // `kind` — that is an answer, and sending it to the repair loop would fail a
   // correct response.
   if (!isToolRequestAttempt(document)) {
-    assertNotDialectToolCall(content);
-    return { kind: 'final', content };
+    // A parseable object that is not a tool request can still be prose the
+    // model wrote around one, so look for a real request before answering.
+    const embedded = findToolRequestDocument(content);
+    if (embedded === null) {
+      assertNotDialectToolCall(content);
+      return { kind: 'final', content };
+    }
+    document = embedded.value;
   }
 
   // Past this point the model declared a tool request, so a schema failure is a

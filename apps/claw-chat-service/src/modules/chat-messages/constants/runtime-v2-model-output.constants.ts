@@ -236,3 +236,13 @@ export const RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION = [
   'If you need information from the workspace, return one Runtime Protocol 2.0 tool JSON object now.',
   'Only state an inability after an admitted tool has actually returned an error.',
 ].join(' ');
+
+/**
+ * How many opening braces are tried when looking for the tool object.
+ *
+ * The candidate slice starts at the FIRST brace in the reply, which belongs to
+ * the prose as soon as a model explains itself or shows a code sample. Every
+ * brace is tried instead, bounded so a long reply cannot become a quadratic
+ * scan.
+ */
+export const RUNTIME_V2_TOOL_OBJECT_SCAN_LIMIT = 32;
