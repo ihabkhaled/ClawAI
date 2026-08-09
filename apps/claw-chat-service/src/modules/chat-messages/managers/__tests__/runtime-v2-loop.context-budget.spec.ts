@@ -301,6 +301,50 @@ describe('RuntimeV2LoopManager announced-without-acting', () => {
       message: expect.stringContaining(announcement),
     });
   });
+
+  // One nudge was too few. Narration is a habit, not a refusal: glm-5.2 said
+  // "I need to see the exact lines… Let me read the specific line ranges" — the
+  // right next step, described instead of requested — and a single correction
+  // ended a run that had already read the file it was asked to change.
+  it('keeps asking, and accepts the tool call when a later nudge lands', async () => {
+    const toolCall = JSON.stringify({
+      kind: 'tool',
+      toolName: 'workspace.files',
+      toolVersion: '2.0.0',
+      operation: 'list',
+      arguments: {},
+      targetId: 'target:workspace',
+    });
+    const callProvider = jest
+      .fn()
+      .mockResolvedValueOnce({ content: 'Let me read the specific line ranges first.' })
+      .mockResolvedValueOnce({ content: toolCall });
+    const loop = new RuntimeV2LoopManager(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { callProvider } as never,
+    );
+
+    const result = (await (
+      loop as unknown as {
+        turnWithDriftCorrection: (
+          bound: unknown,
+          context: unknown,
+          routingMode: string,
+          turn: unknown,
+        ) => Promise<{ output: { kind: string; toolName?: string } }>;
+      }
+    ).turnWithDriftCorrection(binding, { systemPrompt: 'base' }, 'MANUAL_MODEL', {
+      response: { content: 'Let me start by listing the workspace.' },
+      output: { kind: 'final', content: 'Let me start by listing the workspace.' },
+    })) as { output: { kind: string; toolName?: string } };
+
+    expect(result.output.kind).toBe('tool');
+    expect(result.output.toolName).toBe('workspace.files');
+    expect(callProvider).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('RuntimeV2LoopManager empty-response retry', () => {

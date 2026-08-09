@@ -12,7 +12,11 @@
 // already travels to the model on the turn it arrives; the transcript copy only
 // has to be enough to recognise "I already did this", and ~16 unbounded results
 // would crowd out the conversation they are meant to inform.
-export const RUNTIME_V2_TRANSCRIPT_RESULT_CHARACTERS = 800;
+// Shortened as the retained trail grew. What an older entry has to answer is
+// "did I already read this?", which the head of the result settles; the full
+// result still travels to the model on the turn it arrives. Trading depth per
+// entry for many more entries is what keeps a long run from re-reading.
+export const RUNTIME_V2_TRANSCRIPT_RESULT_CHARACTERS = 400;
 
 export const RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE = '…[result truncated in transcript]';
 
@@ -25,7 +29,15 @@ export const RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE = '…[result truncated in 
 // does", so the entire transcript was dropped before it reached the model and
 // the agent kept reissuing calls it had already made. The trail is kept whole
 // up to this bound, which covers a full tool budget of request/result pairs.
-export const RUNTIME_V2_TRANSCRIPT_RETAINED_ENTRIES = 24;
+//
+// This bound has to track the effort budget, and it stopped doing so. It was
+// sized for the legacy 40-turn run; ULTRA now buys 100 model turns and 250 tool
+// calls. At two entries per step — request and result — 24 entries remembered
+// only twelve steps, so a feature-scale run on a large monorepo forgot its
+// early discovery and re-read files it had already read. A live run was
+// observed reading one file six times in a row and then dying of the turn
+// budget without writing anything. Sized for the whole ceiling instead.
+export const RUNTIME_V2_TRANSCRIPT_RETAINED_ENTRIES = 200;
 
 // Context budget for an agent continuation, in tokens.
 //
@@ -35,7 +47,13 @@ export const RUNTIME_V2_TRANSCRIPT_RETAINED_ENTRIES = 24;
 // question, and the provider answered with nothing at all -- surfacing as
 // CLOUD_PROVIDER_EMPTY_RESPONSE and a dead run. An agent turn legitimately
 // carries its whole working trail, so it gets a budget sized for one.
-export const RUNTIME_V2_CONTEXT_TOKEN_BUDGET = 32_000;
+//
+// Raised with the retained trail above: 200 entries of up to 400 characters is
+// roughly 30k tokens of transcript before the instruction, the tool catalog and
+// the pinned user message are added. 32k left no room for them and the splice
+// would have eaten the instruction again. Every model this lane targets carries
+// a window far larger than this.
+export const RUNTIME_V2_CONTEXT_TOKEN_BUDGET = 96_000;
 
 // Output budget for one agent turn, in tokens.
 //

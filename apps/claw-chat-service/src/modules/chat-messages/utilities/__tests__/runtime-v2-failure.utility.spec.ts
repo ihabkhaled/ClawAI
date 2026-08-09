@@ -2,7 +2,11 @@ import { HttpStatus } from '@nestjs/common';
 
 import { BusinessException } from '../../../../common/errors';
 import { RUNTIME_V2_FAILURE_MESSAGE_CHARACTERS } from '../../constants/runtime-v2-failure.constants';
-import { runtimeV2StreamErrorEvent, runtimeV2TerminalReason } from '../runtime-v2-failure.utility';
+import {
+  repairDiagnosis,
+  runtimeV2StreamErrorEvent,
+  runtimeV2TerminalReason,
+} from '../runtime-v2-failure.utility';
 
 // Two failure paths that told the user nothing.
 //
@@ -93,5 +97,42 @@ describe('runtimeV2StreamErrorEvent', () => {
     const event = runtimeV2StreamErrorEvent(new Error('boom'));
 
     expect(Number.isNaN(Date.parse(String(event['timestamp'])))).toBe(false);
+  });
+});
+
+// The repair turn used to be told only that the request was invalid, because
+// the first parse failure was caught and discarded. glm-5.2 lost a run to that:
+// told nothing specific, its corrected attempt repeated the same mistake.
+describe('repairDiagnosis', () => {
+  it('quotes the parser reason so the repair turn has something to correct', () => {
+    expect(repairDiagnosis(new Error('Unrecognized key: "rootKey"'))).toBe(
+      'The exact validation error was: Unrecognized key: "rootKey"',
+    );
+  });
+
+  it('flattens a multi-line validation report onto one line', () => {
+    // Zod reports span several lines; the reason travels on a bounded event.
+    const messy = `invalid
+  at   arguments
+`;
+
+    expect(repairDiagnosis(new Error(messy))).toBe(
+      'The exact validation error was: invalid at arguments',
+    );
+  });
+
+  it('bounds a runaway message', () => {
+    const diagnosis = repairDiagnosis(new Error('x'.repeat(5_000)));
+
+    expect(diagnosis.length).toBeLessThan(700);
+    expect(diagnosis.endsWith('…')).toBe(true);
+  });
+
+  it('says nothing rather than something empty', () => {
+    expect(repairDiagnosis(new Error('   '))).toBe('');
+  });
+
+  it('handles a thrown non-error', () => {
+    expect(repairDiagnosis('plain string failure')).toContain('plain string failure');
   });
 });

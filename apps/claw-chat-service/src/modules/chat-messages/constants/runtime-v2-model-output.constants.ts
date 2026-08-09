@@ -80,6 +80,24 @@ export const RUNTIME_V2_REPAIR_INSTRUCTION = [
   '{"kind":"tool","toolName":"…","toolVersion":"…","operation":"…","arguments":{},"targetId":"…"}',
 ].join(' ');
 
+/**
+ * Introduces the real validation error on the repair turn.
+ *
+ * The repair instruction already learned that "invalid" is not information — it
+ * names the dialects and shows the accepted shape. It still never said what was
+ * actually wrong with THIS request, because the first parse failure was caught
+ * and discarded. glm-5.2 lost a run that way: its request carried a correct
+ * nested transaction and every required key, and the only thing it could be
+ * told was that the request was invalid, so its corrected attempt repeated the
+ * same mistake and the run ended having done nothing.
+ *
+ * The parser's own message names the offending key or the failing rule, which
+ * is exactly the missing information, so it is quoted verbatim and bounded.
+ */
+export const RUNTIME_V2_REPAIR_DIAGNOSIS_PREFIX = 'The exact validation error was:';
+
+export const RUNTIME_V2_REPAIR_DIAGNOSIS_CHARACTERS = 600;
+
 // Markers a model uses to announce a tool call in its own dialect rather than
 // in the protocol's JSON. minimax-m2.7 answered the very first turn with
 // `I'll start by exploring the workspace structure. [TOOL_CALL]
@@ -192,6 +210,22 @@ export const RUNTIME_V2_INTENT_CORRECTION_INSTRUCTION = [
   'Return exactly one Runtime Protocol 2.0 tool JSON object for the next step you described, and no prose.',
   'Answer in prose only when the work is actually finished and you are reporting the result.',
 ].join(' ');
+
+/**
+ * How many times a run may be nudged back into acting before it is failed.
+ *
+ * One nudge was too few. Narration is a habit, not a refusal: glm-5.2 answered
+ * "I need to see the exact lines around the two patch targets. Let me read the
+ * specific line ranges…" — a correct next step, described instead of requested
+ * — and a single correction ended a run that had already read the file it was
+ * asked to change. A model that has issued a valid tool call has proven it can,
+ * so the loop asks again rather than discarding the work done so far.
+ *
+ * Bounded, because a model that narrates three times running is not going to
+ * act on the fourth ask, and each attempt costs a model turn from the same
+ * budget the real work needs.
+ */
+export const RUNTIME_V2_INTENT_CORRECTION_ATTEMPTS = 3;
 
 // Sent once when the model denies a capability the admitted catalog actually grants. The statement
 // must stay truthful: it asserts only what the catalog above already admitted.

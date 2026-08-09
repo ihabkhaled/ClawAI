@@ -32,13 +32,18 @@ import {
   buildRuntimeV2ToolRequestRecord,
   buildRuntimeV2ToolResultRecord,
 } from '../utilities/runtime-v2-transcript.utility';
-import { excerpt, runtimeV2TerminalReason } from '../utilities/runtime-v2-failure.utility';
+import {
+  excerpt,
+  repairDiagnosis,
+  runtimeV2TerminalReason,
+} from '../utilities/runtime-v2-failure.utility';
 import {
   buildRuntimeV2ModelInstruction,
   isCapabilityDenial,
   isUnfulfilledIntent,
   parseRuntimeV2ModelOutput,
   RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
+  RUNTIME_V2_INTENT_CORRECTION_ATTEMPTS,
   RUNTIME_V2_INTENT_CORRECTION_INSTRUCTION,
   RUNTIME_V2_REPAIR_INSTRUCTION,
 } from '../utilities/runtime-v2-model-output.utility';
@@ -517,20 +522,30 @@ export class RuntimeV2LoopManager {
     routingMode: string,
     turn: RuntimeV2ModelTurn,
   ): Promise<RuntimeV2ModelTurn> {
-    let corrected: RuntimeV2ModelTurn;
-    try {
-      corrected = await this.correctUnfulfilledIntent(binding, runtimeContext, routingMode);
-    } catch {
-      return turn;
+    let latest = turn;
+    let announcement = turn.output.kind === 'final' ? turn.output.content : '';
+    for (let attempt = 0; attempt < RUNTIME_V2_INTENT_CORRECTION_ATTEMPTS; attempt += 1) {
+      let corrected: RuntimeV2ModelTurn;
+      try {
+        corrected = await this.correctUnfulfilledIntent(binding, runtimeContext, routingMode);
+      } catch {
+        // Best effort: a provider that returns nothing to the extra call must
+        // not cost the user the answer the first call already gave.
+        return latest;
+      }
+      if (corrected.output.kind !== 'final' || !isUnfulfilledIntent(corrected.output.content)) {
+        return corrected;
+      }
+      latest = corrected;
+      announcement = corrected.output.content;
     }
-    if (corrected.output.kind === 'final' && isUnfulfilledIntent(corrected.output.content)) {
-      throw new BusinessException(
-        `${RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_MESSAGE} ${excerpt(corrected.output.content)}`,
-        RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_CODE,
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
-    return corrected;
+    // Asked repeatedly and narrated every time. Storing that as a completed
+    // answer is the silent stop this exists to prevent.
+    throw new BusinessException(
+      `${RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_MESSAGE} ${excerpt(announcement)}`,
+      RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_CODE,
+      HttpStatus.UNPROCESSABLE_ENTITY,
+    );
   }
 
   /** Context for the run's first turn, before any tool has been called. */
@@ -582,13 +597,20 @@ export class RuntimeV2LoopManager {
         response,
         output: parseRuntimeV2ModelOutput(response.content, binding.toolDefinitions),
       };
-    } catch {
+    } catch (rejection: unknown) {
+      // The parser's message names the offending key or the failing rule. It
+      // used to be discarded here, so the repair turn could only say "invalid"
+      // — and a model that believes its request is correct repeats it. Quoting
+      // the real reason is what turns the second attempt into a correction.
+      const diagnosis = repairDiagnosis(rejection);
       const repaired = await this.execution.callProvider(
         binding.provider,
         binding.model,
         {
           ...runtimeContext,
-          systemPrompt: `${runtimeContext.systemPrompt}\n\n${RUNTIME_V2_REPAIR_INSTRUCTION}`,
+          systemPrompt: [runtimeContext.systemPrompt, RUNTIME_V2_REPAIR_INSTRUCTION, diagnosis]
+            .filter((value): value is string => value !== null && value.length > 0)
+            .join('\n\n'),
         },
         Date.now(),
         false,
@@ -602,14 +624,24 @@ export class RuntimeV2LoopManager {
           response: repaired,
           output: parseRuntimeV2ModelOutput(repaired.content, binding.toolDefinitions),
         };
-      } catch {
+      } catch (secondRejection: unknown) {
         // The repair turn was the second chance and it did not take it. That is
         // a run that cannot continue, but it is still a model failing to follow
         // a protocol — not a fault in this service. Raising the raw parse error
         // here reached the exception filter and the user was shown "Internal
         // server error" with nothing to act on.
+        //
+        // The reason is carried too: a quoted request that is cut off before
+        // the offending key leaves whoever reads this unable to tell what was
+        // actually wrong with it.
         throw new BusinessException(
-          `${RUNTIME_V2_UNREPAIRABLE_REQUEST_MESSAGE} ${excerpt(repaired.content)}`,
+          [
+            RUNTIME_V2_UNREPAIRABLE_REQUEST_MESSAGE,
+            excerpt(repaired.content),
+            repairDiagnosis(secondRejection),
+          ]
+            .filter((value) => value.length > 0)
+            .join(' '),
           RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE,
           HttpStatus.UNPROCESSABLE_ENTITY,
         );

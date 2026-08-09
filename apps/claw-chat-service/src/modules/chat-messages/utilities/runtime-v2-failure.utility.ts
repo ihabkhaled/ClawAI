@@ -5,6 +5,10 @@ import {
   RUNTIME_V2_STREAM_ERROR_EVENT_TYPE,
   RUNTIME_V2_UNKNOWN_FAILURE_CODE,
 } from '../constants/runtime-v2-failure.constants';
+import {
+  RUNTIME_V2_REPAIR_DIAGNOSIS_CHARACTERS,
+  RUNTIME_V2_REPAIR_DIAGNOSIS_PREFIX,
+} from '../constants/runtime-v2-model-output.constants';
 import type { RuntimeV2TerminalReason } from '../types/runtime-v2-store.types';
 
 /**
@@ -66,4 +70,22 @@ export function excerpt(content: string): string {
   return normalized.length <= RUNTIME_V2_ANNOUNCEMENT_EXCERPT_CHARACTERS
     ? normalized
     : `${normalized.slice(0, RUNTIME_V2_ANNOUNCEMENT_EXCERPT_CHARACTERS)}…`;
+}
+
+/**
+ * The parser's own account of why a tool request was refused.
+ *
+ * Handed to the model on the repair turn and included in the terminal failure,
+ * because "your request was invalid" is not something either a model or a user
+ * can act on — and the first parse failure used to be caught and thrown away.
+ */
+export function repairDiagnosis(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const normalized = message.replaceAll(/\s+/gu, ' ').trim();
+  if (normalized.length === 0) return '';
+  const bounded =
+    normalized.length <= RUNTIME_V2_REPAIR_DIAGNOSIS_CHARACTERS
+      ? normalized
+      : `${normalized.slice(0, RUNTIME_V2_REPAIR_DIAGNOSIS_CHARACTERS)}…`;
+  return `${RUNTIME_V2_REPAIR_DIAGNOSIS_PREFIX} ${bounded}`;
 }
