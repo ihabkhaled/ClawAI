@@ -20,21 +20,23 @@ export function CompareCriticControls({
   onCriticModelChange,
   criticModelOptions,
   criticModelOptionsLoading,
+  criticEnablementDisabled = false,
   t,
 }: CompareCriticControlsProps): React.ReactElement {
   return (
-    <div className="ms-4 space-y-4 rounded-lg border border-border/60 bg-muted/10 p-4">
+    <div className="border-border/60 bg-muted/10 ms-4 space-y-4 rounded-lg border p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-0.5">
           <label className="text-sm font-medium" htmlFor="compare-critic-enabled">
             {t('compare.critic.enabled')}
           </label>
-          <p className="text-xs text-muted-foreground">{t('compare.critic.enabledHint')}</p>
+          <p className="text-muted-foreground text-xs">{t('compare.critic.enabledHint')}</p>
         </div>
         <Switch
           id="compare-critic-enabled"
           checked={criticEnabled}
           onCheckedChange={onCriticEnabledChange}
+          disabled={criticEnablementDisabled}
         />
       </div>
 
@@ -43,14 +45,18 @@ export function CompareCriticControls({
           <label className="text-sm font-medium">{t('compare.critic.modelLabel')}</label>
           <Select
             value={criticModel ?? MODEL_AUTO_VALUE}
-            onValueChange={(value) => onCriticModelChange(value === MODEL_AUTO_VALUE ? null : value)}
+            onValueChange={(value) =>
+              onCriticModelChange(value === MODEL_AUTO_VALUE ? null : value)
+            }
             disabled={criticModelOptionsLoading}
           >
             <SelectTrigger>
               <SelectValue placeholder={t('compare.critic.modelPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={MODEL_AUTO_VALUE}>{t('compare.critic.modelPlaceholder')}</SelectItem>
+              <SelectItem value={MODEL_AUTO_VALUE}>
+                {t('compare.critic.modelPlaceholder')}
+              </SelectItem>
               {criticModelOptions.map((option) => (
                 <SelectItem
                   key={option.value ?? MODEL_AUTO_VALUE}

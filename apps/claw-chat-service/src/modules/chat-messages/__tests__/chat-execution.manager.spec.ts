@@ -845,6 +845,8 @@ describe('ChatExecutionManager', () => {
         selectedModel: 'AUTO',
         routingMode: 'AUTO',
         judgeEnabled: true,
+        criticEnabled: true,
+        criticModel: 'ANTHROPIC:claude-sonnet-4',
         timestamp: new Date().toISOString(),
       },
       context,
@@ -852,6 +854,17 @@ describe('ChatExecutionManager', () => {
 
     expect(qualityManager.checkResponseQuality).toHaveBeenCalledTimes(1);
     expect(judgeManager.shouldActivate).toHaveBeenCalledTimes(1);
+    expect(judgeManager.evaluate).toHaveBeenCalledWith(
+      expect.anything(),
+      context,
+      expect.objectContaining({
+        enabled: true,
+        criticEnabled: true,
+        criticModel: 'ANTHROPIC:claude-sonnet-4',
+      }),
+      expect.anything(),
+      undefined,
+    );
     expect(result.fastPathUsed).toBe(false);
   });
 

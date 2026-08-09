@@ -45,6 +45,8 @@ model ChatThread {
   maxTokens          Int?        @map("max_tokens")
   judgeEnabled       Boolean     @default(false) @map("judge_enabled")
   judgeModel         String?     @map("judge_model")
+  criticEnabled      Boolean     @default(false) @map("critic_enabled")
+  criticModel        String?     @map("critic_model")
   qualityThreshold   Float?      @map("quality_threshold")
   maxReRouteAttempts Int?        @map("max_reroute_attempts")
   // === Integration V2 — per-thread memory/context switches ===

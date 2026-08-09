@@ -454,6 +454,12 @@ export type ThreadSettingsProps = {
   judgeModel: string | null;
   onJudgeModelChange: (value: string | null) => void;
   judgeModelOptions: JudgeModelOption[];
+  judgeModelOptionsLoading: boolean;
+  criticEnabled: boolean;
+  onCriticEnabledChange: (value: boolean) => void;
+  criticModel: string | null;
+  onCriticModelChange: (value: string | null) => void;
+  criticEnablementDisabled: boolean;
   qualityThreshold: number;
   onQualityThresholdChange: (value: number) => void;
   maxReRouteAttempts: number;
@@ -468,6 +474,7 @@ export type ThreadSettingsProps = {
   // Plan-feature gate: when false the judge toggle + judge-model selector are
   // hidden entirely. ADMIN passes true via usePlanFeatures.
   allowJudgeMode: boolean;
+  allowCriticReview: boolean;
   // Already-translated inline error for the maxTokens field, or null when the
   // value is acceptable to the update-thread Zod schema.
   maxTokensError: string | null;
@@ -1516,6 +1523,7 @@ export type CompareCriticControlsProps = {
   onCriticModelChange: (value: string | null) => void;
   criticModelOptions: JudgeModelOption[];
   criticModelOptionsLoading: boolean;
+  criticEnablementDisabled?: boolean;
   t: TranslateFunction;
 };
 

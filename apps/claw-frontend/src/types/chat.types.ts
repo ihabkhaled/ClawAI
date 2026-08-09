@@ -32,6 +32,8 @@ export type ChatThread = {
   maxTokens: number | null;
   judgeEnabled: boolean;
   judgeModel: string | null;
+  criticEnabled: boolean;
+  criticModel: string | null;
   qualityThreshold: number | null;
   maxReRouteAttempts: number | null;
   // Integration V2 — per-thread toggles
@@ -118,6 +120,8 @@ export type UpdateThreadRequest = {
   contextPackIds?: string[];
   judgeEnabled?: boolean;
   judgeModel?: string | null;
+  criticEnabled?: boolean;
+  criticModel?: string | null;
   qualityThreshold?: number | null;
   maxReRouteAttempts?: number | null;
   // Integration V2 — per-thread toggles

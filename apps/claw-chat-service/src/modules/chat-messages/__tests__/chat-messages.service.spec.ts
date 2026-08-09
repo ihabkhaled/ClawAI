@@ -32,6 +32,10 @@ const mockThread = {
   systemPrompt: null,
   temperature: 0.7,
   maxTokens: null,
+  judgeEnabled: false,
+  judgeModel: null,
+  criticEnabled: false,
+  criticModel: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -103,6 +107,7 @@ describe('ChatMessagesService', () => {
   let contextAssembly: ReturnType<typeof mockContextAssembly>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
   let streamService: Partial<Record<keyof ChatStreamService, jest.Mock>>;
+  let assertCanSendMessage: jest.Mock;
 
   beforeEach(() => {
     messagesRepo = mockMessagesRepository();
@@ -115,6 +120,7 @@ describe('ChatMessagesService', () => {
       emitCompletion: jest.fn(),
       emitError: jest.fn(),
     };
+    assertCanSendMessage = jest.fn();
     service = new ChatMessagesService(
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
@@ -136,7 +142,7 @@ describe('ChatMessagesService', () => {
         typeof ChatMessagesService
       >[16],
       {
-        assertCanSendMessage: jest.fn(),
+        assertCanSendMessage,
         assertResearchAccess: jest.fn(),
         recordUsage: jest.fn(),
       } as unknown as ConstructorParameters<typeof ChatMessagesService>[17],
@@ -198,6 +204,29 @@ describe('ChatMessagesService', () => {
           routingMode: 'AUTO',
         }),
       );
+    });
+
+    it('gates normal critic threads on judge, critic, and judge permission', async () => {
+      threadsRepo.findById!.mockResolvedValue({
+        ...mockThread,
+        judgeEnabled: true,
+        criticEnabled: true,
+        criticModel: 'ANTHROPIC:claude-sonnet-4',
+      });
+      messagesRepo.create.mockResolvedValue(mockMessage);
+
+      await service.createMessage(
+        'user-1',
+        { threadId: 'thread-1', content: 'Review this answer' },
+        '',
+      );
+
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requireFeature: ['allowJudgeMode', 'allowCriticReview'],
+      });
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requirePermission: 'JUDGE_USE',
+      });
     });
 
     it('should throw EntityNotFoundException when thread not found', async () => {
@@ -293,6 +322,25 @@ describe('ChatMessagesService', () => {
           regenerate: true,
         }),
       );
+    });
+
+    it('gates regeneration when critic review is enabled on the thread', async () => {
+      messagesRepo.findById.mockResolvedValue(mockMessage);
+      threadsRepo.findById!.mockResolvedValue({
+        ...mockThread,
+        judgeEnabled: true,
+        criticEnabled: true,
+        criticModel: 'ANTHROPIC:claude-sonnet-4',
+      });
+
+      await service.regenerateMessage('msg-1', 'user-1');
+
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requireFeature: ['allowJudgeMode', 'allowCriticReview'],
+      });
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requirePermission: 'JUDGE_USE',
+      });
     });
 
     it('should throw EntityNotFoundException when message not found', async () => {
@@ -463,7 +511,12 @@ describe('ChatMessagesService', () => {
         'chat.errors.videoAttachmentProviderUnsupported',
       );
       messagesRepo.findRecentByThreadId.mockResolvedValue([mockMessage]);
-      threadsRepo.findById!.mockResolvedValue(mockThread);
+      threadsRepo.findById!.mockResolvedValue({
+        ...mockThread,
+        judgeEnabled: true,
+        criticEnabled: true,
+        criticModel: 'ANTHROPIC:claude-sonnet-4',
+      });
       executionManager.execute!.mockRejectedValue(localizableError);
       messagesRepo.create.mockResolvedValue({
         ...mockMessage,
@@ -472,6 +525,19 @@ describe('ChatMessagesService', () => {
       });
 
       await expect(service.handleMessageRouted(routedPayload)).rejects.toBe(localizableError);
+
+      expect(executionManager.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          judgeEnabled: true,
+          criticEnabled: true,
+          criticModel: 'ANTHROPIC:claude-sonnet-4',
+        }),
+        expect.anything(),
+        expect.objectContaining({
+          criticEnabled: true,
+          criticModel: 'ANTHROPIC:claude-sonnet-4',
+        }),
+      );
 
       expect(messagesRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({

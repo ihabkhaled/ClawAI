@@ -11,7 +11,8 @@ import { useUpdateThread } from './use-update-thread';
 export function useThreadSettings(thread: ChatThread | null) {
   const { t } = useTranslation();
   const { updateThread, isPending } = useUpdateThread();
-  const { options: judgeModelOptions } = useJudgeModelOptions();
+  const { options: judgeModelOptions, isLoading: judgeModelOptionsLoading } =
+    useJudgeModelOptions();
   const [isOpen, setIsOpen] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState('');
   const [temperature, setTemperature] = useState(0.7);
@@ -20,6 +21,8 @@ export function useThreadSettings(thread: ChatThread | null) {
   const [contextPackIds, setContextPackIds] = useState<string[]>([]);
   const [judgeEnabled, setJudgeEnabled] = useState(false);
   const [judgeModel, setJudgeModel] = useState<string | null>(null);
+  const [criticEnabled, setCriticEnabled] = useState(false);
+  const [criticModel, setCriticModel] = useState<string | null>(null);
   const [qualityThreshold, setQualityThreshold] = useState(0.4);
   const [maxReRouteAttempts, setMaxReRouteAttempts] = useState(2);
   const [useMemory, setUseMemory] = useState(true);
@@ -45,6 +48,8 @@ export function useThreadSettings(thread: ChatThread | null) {
       setContextPackIds(thread.contextPackIds ?? []);
       setJudgeEnabled(thread.judgeEnabled ?? false);
       setJudgeModel(thread.judgeModel ?? null);
+      setCriticEnabled(thread.judgeEnabled ? (thread.criticEnabled ?? false) : false);
+      setCriticModel(thread.judgeEnabled ? (thread.criticModel ?? null) : null);
       setQualityThreshold(thread.qualityThreshold ?? 0.4);
       setMaxReRouteAttempts(thread.maxReRouteAttempts ?? 2);
       setUseMemory(thread.useMemory ?? true);
@@ -79,6 +84,42 @@ export function useThreadSettings(thread: ChatThread | null) {
     [thread, updateThread],
   );
 
+  const handleJudgeEnabledChange = useCallback((enabled: boolean): void => {
+    setJudgeEnabled(enabled);
+    if (!enabled) {
+      setCriticEnabled(false);
+      setCriticModel(null);
+    }
+  }, []);
+
+  const handleCriticEnabledChange = useCallback(
+    (enabled: boolean): void => {
+      if (!enabled) {
+        setCriticEnabled(false);
+        return;
+      }
+      const firstModel = judgeModelOptions.find((option) => option.value !== null)?.value ?? null;
+      if (firstModel === null) {
+        setCriticEnabled(false);
+        setCriticModel(null);
+        return;
+      }
+      setCriticModel((current) =>
+        judgeModelOptions.some((option) => option.value === current) ? current : firstModel,
+      );
+      setCriticEnabled(true);
+    },
+    [judgeModelOptions],
+  );
+
+  const handleCriticModelChange = useCallback(
+    (model: string | null): void => {
+      const firstModel = judgeModelOptions.find((option) => option.value !== null)?.value ?? null;
+      setCriticModel(model ?? firstModel);
+    },
+    [judgeModelOptions],
+  );
+
   const handleSave = useCallback((): void => {
     if (!thread) {
       return;
@@ -111,6 +152,8 @@ export function useThreadSettings(thread: ChatThread | null) {
           contextPackIds,
           judgeEnabled,
           judgeModel,
+          criticEnabled: judgeEnabled && criticEnabled && criticModel !== null,
+          criticModel: judgeEnabled && criticEnabled ? criticModel : null,
           qualityThreshold,
           maxReRouteAttempts,
           useMemory,
@@ -134,6 +177,8 @@ export function useThreadSettings(thread: ChatThread | null) {
     contextPackIds,
     judgeEnabled,
     judgeModel,
+    criticEnabled,
+    criticModel,
     qualityThreshold,
     maxReRouteAttempts,
     useMemory,
@@ -157,10 +202,17 @@ export function useThreadSettings(thread: ChatThread | null) {
     contextPackIds,
     setContextPackIds,
     judgeEnabled,
-    setJudgeEnabled,
+    setJudgeEnabled: handleJudgeEnabledChange,
     judgeModel,
     setJudgeModel,
     judgeModelOptions,
+    judgeModelOptionsLoading,
+    criticEnabled,
+    setCriticEnabled: handleCriticEnabledChange,
+    criticModel,
+    setCriticModel: handleCriticModelChange,
+    criticEnablementDisabled:
+      judgeModelOptionsLoading || !judgeModelOptions.some((option) => option.value !== null),
     qualityThreshold,
     setQualityThreshold,
     maxReRouteAttempts,

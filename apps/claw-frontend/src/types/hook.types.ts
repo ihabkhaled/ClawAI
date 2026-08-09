@@ -326,6 +326,12 @@ export type UseThreadSettingsReturn = {
   judgeModel: string | null;
   setJudgeModel: (value: string | null) => void;
   judgeModelOptions: JudgeModelOption[];
+  judgeModelOptionsLoading: boolean;
+  criticEnabled: boolean;
+  setCriticEnabled: (value: boolean) => void;
+  criticModel: string | null;
+  setCriticModel: (value: string | null) => void;
+  criticEnablementDisabled: boolean;
   qualityThreshold: number;
   setQualityThreshold: (value: number) => void;
   maxReRouteAttempts: number;

@@ -111,6 +111,13 @@ export class ChatThreadsService {
       contextPackIds: dto.contextPackIds,
       judgeEnabled: dto.judgeEnabled,
       judgeModel: dto.judgeModel,
+      criticEnabled:
+        (dto.judgeEnabled ?? thread.judgeEnabled) === false ? false : dto.criticEnabled,
+      criticModel:
+        (dto.judgeEnabled ?? thread.judgeEnabled) === false ||
+        (dto.criticEnabled ?? thread.criticEnabled) === false
+          ? null
+          : dto.criticModel,
       qualityThreshold: dto.qualityThreshold,
       maxReRouteAttempts: dto.maxReRouteAttempts,
       useMemory: dto.useMemory,

@@ -1,3 +1,4 @@
+import { CompareCriticControls } from '@/components/chat/compare-critic-controls';
 import { ContextPackSelector } from '@/components/chat/context-pack-selector';
 import { ModelSelector } from '@/components/chat/model-selector';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,12 @@ export function ThreadSettings({
   judgeModel,
   onJudgeModelChange,
   judgeModelOptions,
+  judgeModelOptionsLoading,
+  criticEnabled,
+  onCriticEnabledChange,
+  criticModel,
+  onCriticModelChange,
+  criticEnablementDisabled,
   qualityThreshold,
   onQualityThresholdChange,
   maxReRouteAttempts,
@@ -43,6 +50,7 @@ export function ThreadSettings({
   onSave,
   isPending,
   allowJudgeMode,
+  allowCriticReview,
   maxTokensError,
   canSave,
 }: ThreadSettingsProps): React.ReactElement {
@@ -171,6 +179,19 @@ export function ThreadSettings({
               </SelectContent>
             </Select>
           </div>
+        ) : null}
+
+        {allowJudgeMode && allowCriticReview && judgeEnabled ? (
+          <CompareCriticControls
+            criticEnabled={criticEnabled}
+            onCriticEnabledChange={onCriticEnabledChange}
+            criticModel={criticModel}
+            onCriticModelChange={onCriticModelChange}
+            criticModelOptions={judgeModelOptions}
+            criticModelOptionsLoading={judgeModelOptionsLoading}
+            criticEnablementDisabled={criticEnablementDisabled}
+            t={t}
+          />
         ) : null}
 
         <div className="space-y-2">

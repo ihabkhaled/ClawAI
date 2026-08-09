@@ -14,6 +14,10 @@ const mockThread = {
   lastModel: null,
   isPinned: false,
   isArchived: false,
+  judgeEnabled: false,
+  judgeModel: null,
+  criticEnabled: false,
+  criticModel: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -160,6 +164,8 @@ describe('ChatThreadsService', () => {
         isPinned: undefined,
         isArchived: undefined,
         routingMode: undefined,
+        criticEnabled: false,
+        criticModel: null,
       });
     });
 
@@ -197,6 +203,26 @@ describe('ChatThreadsService', () => {
       expect(threadsRepo.update).toHaveBeenCalledWith(
         'thread-1',
         expect.objectContaining({ qualityThreshold: null, maxReRouteAttempts: null }),
+      );
+    });
+
+    it('should persist critic settings and clear them when judge is disabled', async () => {
+      threadsRepo.findById.mockResolvedValue(mockThread);
+      threadsRepo.update.mockResolvedValue(mockThread);
+
+      await service.updateThread('thread-1', 'user-1', {
+        judgeEnabled: false,
+        criticEnabled: true,
+        criticModel: 'ANTHROPIC:claude-sonnet-4',
+      });
+
+      expect(threadsRepo.update).toHaveBeenCalledWith(
+        'thread-1',
+        expect.objectContaining({
+          judgeEnabled: false,
+          criticEnabled: false,
+          criticModel: null,
+        }),
       );
     });
 
@@ -269,6 +295,8 @@ describe('ChatThreadsService', () => {
         isPinned: true,
         isArchived: false,
         routingMode: 'LOCAL_ONLY',
+        criticEnabled: false,
+        criticModel: null,
       });
     });
   });

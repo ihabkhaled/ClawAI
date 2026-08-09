@@ -27,6 +27,8 @@ export interface UpdateThreadData {
   contextPackIds?: string[];
   judgeEnabled?: boolean;
   judgeModel?: string | null;
+  criticEnabled?: boolean;
+  criticModel?: string | null;
   qualityThreshold?: number | null;
   maxReRouteAttempts?: number | null;
   useMemory?: boolean;

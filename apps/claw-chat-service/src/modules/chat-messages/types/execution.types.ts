@@ -68,6 +68,8 @@ export type MessageRoutedData = {
   timestamp: string;
   detectedCategory?: string;
   judgeEnabled?: boolean;
+  criticEnabled?: boolean;
+  criticModel?: string | null;
   // Phase 6 — workflow live wiring. Null when the routing-service was
   // built before Phase 6, so consumers MUST tolerate `undefined` and
   // fall back to DIRECT_LLM execution (backward compatible).
@@ -285,6 +287,8 @@ export type ThreadSettings = {
   temperature?: number | null;
   maxTokens?: number | null;
   judgeModel?: string | null;
+  criticEnabled?: boolean;
+  criticModel?: string | null;
   qualityThreshold?: number | null;
   maxReRouteAttempts?: number | null;
 };

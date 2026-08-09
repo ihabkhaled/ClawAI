@@ -34,6 +34,8 @@ const mockThread: ChatThread = {
   maxTokens: null,
   judgeEnabled: false,
   judgeModel: null,
+  criticEnabled: false,
+  criticModel: null,
   qualityThreshold: null,
   maxReRouteAttempts: null,
   useMemory: true,

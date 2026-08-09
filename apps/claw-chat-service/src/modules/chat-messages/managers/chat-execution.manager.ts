@@ -1441,6 +1441,11 @@ export class ChatExecutionManager implements OnModuleInit {
 
     const config: JudgeRefereeConfig = {
       enabled: payload.judgeEnabled ?? false,
+      criticEnabled: payload.judgeEnabled === true && payload.criticEnabled === true,
+      criticModel:
+        payload.judgeEnabled === true && payload.criticEnabled === true
+          ? (payload.criticModel ?? threadSettings?.criticModel ?? null)
+          : null,
       category: payload.detectedCategory,
       routingMode: payload.routingMode,
       isLocalOnly: LOCAL_ONLY_ROUTING_MODES.has(payload.routingMode),

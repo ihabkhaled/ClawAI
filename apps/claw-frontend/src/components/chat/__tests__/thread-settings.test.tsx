@@ -40,6 +40,13 @@ const baseProps = {
   judgeModel: null,
   onJudgeModelChange: vi.fn(),
   judgeModelOptions: [],
+  judgeModelOptionsLoading: false,
+  criticEnabled: false,
+  onCriticEnabledChange: vi.fn(),
+  criticModel: null,
+  onCriticModelChange: vi.fn(),
+  allowCriticReview: false,
+  criticEnablementDisabled: false,
   qualityThreshold: 0.7,
   onQualityThresholdChange: vi.fn(),
   maxReRouteAttempts: 0,
@@ -81,6 +88,61 @@ describe('ThreadSettings — plan-feature gate (judge mode)', () => {
   it('hides judge-model selector when allowJudgeMode is true but judgeEnabled is false', () => {
     render(withQueryClient(<ThreadSettings {...baseProps} allowJudgeMode judgeEnabled={false} />));
     expect(screen.queryByText('chat.judgeModelLabel')).not.toBeInTheDocument();
+  });
+});
+
+describe('ThreadSettings — critic controls', () => {
+  it('shows critic controls only when both plan gates and judge mode are enabled', () => {
+    render(
+      withQueryClient(
+        <ThreadSettings {...baseProps} allowJudgeMode allowCriticReview judgeEnabled />,
+      ),
+    );
+
+    expect(screen.getByText('compare.critic.enabled')).toBeInTheDocument();
+  });
+
+  it('hides critic controls when critic review is unavailable', () => {
+    render(
+      withQueryClient(
+        <ThreadSettings {...baseProps} allowJudgeMode judgeEnabled allowCriticReview={false} />,
+      ),
+    );
+
+    expect(screen.queryByText('compare.critic.enabled')).not.toBeInTheDocument();
+  });
+
+  it('shows the critic model selector only after critic review is enabled', () => {
+    render(
+      withQueryClient(
+        <ThreadSettings
+          {...baseProps}
+          allowJudgeMode
+          allowCriticReview
+          judgeEnabled
+          criticEnabled
+        />,
+      ),
+    );
+
+    expect(screen.getByText('compare.critic.modelLabel')).toBeInTheDocument();
+  });
+
+  it('disables critic enablement when no concrete model is available', () => {
+    render(
+      withQueryClient(
+        <ThreadSettings
+          {...baseProps}
+          allowJudgeMode
+          allowCriticReview
+          judgeEnabled
+          judgeModelOptions={[]}
+          criticEnablementDisabled
+        />,
+      ),
+    );
+
+    expect(screen.getByRole('switch', { name: 'compare.critic.enabled' })).toBeDisabled();
   });
 });
 

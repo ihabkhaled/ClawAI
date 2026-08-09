@@ -136,7 +136,13 @@ export class ChatMessagesService implements OnModuleInit {
     // user whose daily quota is exhausted, before any work is done. The
     // returned entitlements feed AUTO-mode router gating below. Research mode
     // additionally requires the plan-level allowResearchMode unlock.
-    const entitlements = await this.assertSendAccess(userId, dto, forcedProvider, forcedModel);
+    const entitlements = await this.assertSendAccess(
+      userId,
+      dto,
+      thread,
+      forcedProvider,
+      forcedModel,
+    );
     const allowedModels = entitlements ? allowedModelKeys(entitlements) : [];
 
     this.chatStreamService.emitRequestAccepted(dto.threadId);
@@ -179,6 +185,7 @@ export class ChatMessagesService implements OnModuleInit {
   private async assertSendAccess(
     userId: string,
     dto: CreateMessageDto,
+    thread: ChatThread,
     forcedProvider: string | undefined,
     forcedModel: string | undefined,
   ): Promise<Awaited<ReturnType<AccessControlService['assertCanSendMessage']>>> {
@@ -197,7 +204,22 @@ export class ChatMessagesService implements OnModuleInit {
     if (requireFeature !== undefined) {
       await this.accessControlService.assertResearchAccess(userId);
     }
+    await this.assertThreadReviewAccess(userId, thread);
     return entitlements;
+  }
+
+  private async assertThreadReviewAccess(userId: string, thread: ChatThread): Promise<void> {
+    if (thread.judgeEnabled !== true) {
+      return;
+    }
+    const features: PlanFeature[] = ['allowJudgeMode'];
+    if (thread.criticEnabled === true) {
+      features.push('allowCriticReview');
+    }
+    await this.accessControlService.assertCanSendMessage(userId, { requireFeature: features });
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requirePermission: Permission.JUDGE_USE,
+    });
   }
 
   // Centralized research-mode gate for the 9 orchestration entry points
@@ -741,6 +763,7 @@ export class ChatMessagesService implements OnModuleInit {
       throw new EntityNotFoundException('ChatThread', message.threadId);
     }
     this.validateOwnership(thread, userId);
+    await this.assertThreadReviewAccess(userId, thread);
 
     const regenProvider = thread.preferredProvider ?? undefined;
     const regenModel = thread.preferredModel ?? undefined;
@@ -861,7 +884,12 @@ export class ChatMessagesService implements OnModuleInit {
     );
     effectivePayload = this.detectImageFromAttachment(effectivePayload, chronologicalMessages);
     if (thread?.judgeEnabled) {
-      effectivePayload = { ...effectivePayload, judgeEnabled: true };
+      effectivePayload = {
+        ...effectivePayload,
+        judgeEnabled: true,
+        criticEnabled: thread.criticEnabled,
+        criticModel: thread.criticEnabled ? thread.criticModel : null,
+      };
     }
     return effectivePayload;
   }
@@ -1002,6 +1030,8 @@ export class ChatMessagesService implements OnModuleInit {
       temperature: thread.temperature,
       maxTokens: thread.maxTokens,
       judgeModel: thread.judgeModel,
+      criticEnabled: thread.criticEnabled,
+      criticModel: thread.criticModel,
       qualityThreshold: thread.qualityThreshold,
       maxReRouteAttempts: thread.maxReRouteAttempts,
     };
