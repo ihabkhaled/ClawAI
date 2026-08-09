@@ -69,6 +69,22 @@ test('deploy-prod.sh only calls record_deployment after health has been verified
   );
 });
 
+test('deploy-prod.sh bounds unused Docker build cache only after health succeeds', () => {
+  const body = script.split('main() {')[1] ?? '';
+  const healthIndex = body.lastIndexOf('wait_for_service_health');
+  const cleanupIndex = body.lastIndexOf('cleanup_build_cache');
+  const recordIndex = body.lastIndexOf('record_deployment');
+
+  assert.match(
+    script,
+    /docker builder prune --all --force --keep-storage 20GB/u,
+    'expected a bounded build-cache cleanup',
+  );
+  assert.ok(healthIndex > -1 && cleanupIndex > -1 && recordIndex > -1);
+  assert.ok(healthIndex < cleanupIndex, 'build cache cleanup appears before health verification');
+  assert.ok(cleanupIndex < recordIndex, 'deployment is recorded before build cache cleanup runs');
+});
+
 test('deploy-prod.sh validates the target argument as a hex commit SHA before doing anything else', () => {
   assert.match(script, /\*\[!0-9a-fA-F\]\* \| ''\)/u);
 });

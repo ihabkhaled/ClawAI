@@ -34,6 +34,11 @@
 #     forward only (scripts/docker-entrypoint.prod.sh)
 #   * print .env or any secret
 #
+# After every successful application deployment, unused BuildKit cache is
+# bounded to 20 GB. This does not remove images, containers, networks, or
+# volumes; it only evicts rebuildable cache after every selected service is
+# healthy.
+#
 # Requires bash 4.4+ (empty-array expansion under `set -u`), git, docker,
 # docker compose v2. flock is used when present; a POSIX mkdir lock is the
 # fallback.
@@ -667,6 +672,21 @@ record_deployment() {
   printf '%s %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$sha" "$services" >>"$HISTORY_FILE"
 }
 
+# Docker Compose builds can create hundreds of gigabytes of short-lived
+# BuildKit layers during a multi-service release. Keep a useful warm cache for
+# the next deployment without allowing those rebuildable layers to consume the
+# host disk. Cleanup is deliberately post-health and excludes every persistent
+# Docker resource. A cleanup failure is loud but must not turn a healthy
+# production rollout into a failed deployment.
+cleanup_build_cache() {
+  section "Cleaning Docker build cache..."
+  if docker builder prune --all --force --keep-storage 20GB; then
+    log "Docker build cache is bounded to 20 GB."
+  else
+    err "WARNING: Docker build cache cleanup failed; production remains healthy."
+  fi
+}
+
 # =============================================================================
 # Plan-only mode — no git, no docker. Used by the test suite and by an operator
 # who wants to know what a commit would touch before deploying it.
@@ -953,6 +973,7 @@ main() {
     die "health verification failed"
   fi
 
+  cleanup_build_cache
   record_deployment "$new_sha" "${PLAN_SERVICES[*]}"
 
   log ""
