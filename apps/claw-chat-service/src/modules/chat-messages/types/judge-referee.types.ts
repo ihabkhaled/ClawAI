@@ -24,6 +24,9 @@ export type CriticEvaluation = {
   // distinguish "no feedback because the parse failed" from "no feedback".
   parseFailed?: boolean;
   category: string;
+  // "provider/model" of the critic that actually ran. EMPTY STRING when
+  // `requested` is false — no critic ran, so none is attributed. Consumers must
+  // branch on `requested`, never assume this names a model.
   model: string;
   latencyMs: number;
   // Feature 2 — token usage from the critic call (cloud or local).
@@ -34,10 +37,7 @@ export type CriticEvaluation = {
 };
 
 export type JudgeResponseType =
-  | 'summary'
-  | 'revised_answer'
-  | 'escalated_answer'
-  | 'verification_note';
+  'summary' | 'revised_answer' | 'escalated_answer' | 'verification_note';
 
 export type JudgeVerdict = {
   decision: JudgeDecision;

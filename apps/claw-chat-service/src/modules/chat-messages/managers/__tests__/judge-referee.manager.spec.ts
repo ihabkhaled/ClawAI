@@ -29,7 +29,10 @@ const buildContext = (): AssembledContext => ({
   researchWarnings: [],
   tokenBudget: 4096,
   threadMessages: [
-    { role: 'USER', content: 'What is the capital of France?' } as AssembledContext['threadMessages'][0],
+    {
+      role: 'USER',
+      content: 'What is the capital of France?',
+    } as AssembledContext['threadMessages'][0],
   ],
 });
 
@@ -73,7 +76,8 @@ describe('JudgeRefereeManager — critic invocation', () => {
         outputTokens: 12,
       })
       .mockResolvedValueOnce({
-        content: '{"decision": "ACCEPT", "summary": "ok", "confidence": 0.9, "reasoning": "fine", "response": "ok", "responseType": "verification_note", "recommendedChanges": []}',
+        content:
+          '{"decision": "ACCEPT", "summary": "ok", "confidence": 0.9, "reasoning": "fine", "response": "ok", "responseType": "verification_note", "recommendedChanges": []}',
         provider: 'local-ollama',
         model: 'gemma3:4b',
         latencyMs: 60,
@@ -82,14 +86,19 @@ describe('JudgeRefereeManager — critic invocation', () => {
         outputTokens: 20,
       });
 
-    const result = await manager.evaluate(buildResponse(), buildContext(), {
-      enabled: true,
-      category: undefined,
-      routingMode: 'MANUAL_MODEL',
-      isLocalOnly: false,
-      criticEnabled: true,
-      criticModel: 'OPENAI:gpt-4o-mini',
-    }, buildPayload());
+    const result = await manager.evaluate(
+      buildResponse(),
+      buildContext(),
+      {
+        enabled: true,
+        category: undefined,
+        routingMode: 'MANUAL_MODEL',
+        isLocalOnly: false,
+        criticEnabled: true,
+        criticModel: 'OPENAI:gpt-4o-mini',
+      },
+      buildPayload(),
+    );
 
     expect(executionManager.callProvider).toHaveBeenCalled();
     const criticCall = executionManager.callProvider.mock.calls[0]!;
@@ -112,21 +121,27 @@ describe('JudgeRefereeManager — critic invocation', () => {
         usedFallback: false,
       })
       .mockResolvedValueOnce({
-        content: '{"decision": "ACCEPT", "summary": "ok", "confidence": 0.9, "reasoning": "fine", "response": "ok", "responseType": "verification_note", "recommendedChanges": []}',
+        content:
+          '{"decision": "ACCEPT", "summary": "ok", "confidence": 0.9, "reasoning": "fine", "response": "ok", "responseType": "verification_note", "recommendedChanges": []}',
         provider: 'local-ollama',
         model: 'gemma3:4b',
         latencyMs: 60,
         usedFallback: false,
       });
 
-    const result = await manager.evaluate(buildResponse(), buildContext(), {
-      enabled: true,
-      category: undefined,
-      routingMode: 'MANUAL_MODEL',
-      isLocalOnly: false,
-      criticEnabled: true,
-      criticModel: 'OPENAI:gpt-4o-mini',
-    }, buildPayload());
+    const result = await manager.evaluate(
+      buildResponse(),
+      buildContext(),
+      {
+        enabled: true,
+        category: undefined,
+        routingMode: 'MANUAL_MODEL',
+        isLocalOnly: false,
+        criticEnabled: true,
+        criticModel: 'OPENAI:gpt-4o-mini',
+      },
+      buildPayload(),
+    );
 
     expect(result.criticEvaluation.requested).toBe(true);
     expect(result.criticEvaluation.parseFailed).toBe(true);
@@ -136,25 +151,148 @@ describe('JudgeRefereeManager — critic invocation', () => {
 
   it('skips the critic call entirely when criticEnabled is false and marks requested=false', async () => {
     executionManager.callProvider.mockResolvedValueOnce({
-      content: '{"decision": "ACCEPT", "summary": "ok", "confidence": 0.9, "reasoning": "fine", "response": "ok", "responseType": "verification_note", "recommendedChanges": []}',
+      content:
+        '{"decision": "ACCEPT", "summary": "ok", "confidence": 0.9, "reasoning": "fine", "response": "ok", "responseType": "verification_note", "recommendedChanges": []}',
       provider: 'local-ollama',
       model: 'gemma3:4b',
       latencyMs: 60,
       usedFallback: false,
     });
 
-    const result = await manager.evaluate(buildResponse(), buildContext(), {
-      enabled: true,
-      category: undefined,
-      routingMode: 'MANUAL_MODEL',
-      isLocalOnly: false,
-      criticEnabled: false,
-      criticModel: null,
-    }, buildPayload());
+    const result = await manager.evaluate(
+      buildResponse(),
+      buildContext(),
+      {
+        enabled: true,
+        category: undefined,
+        routingMode: 'MANUAL_MODEL',
+        isLocalOnly: false,
+        criticEnabled: false,
+        criticModel: null,
+      },
+      buildPayload(),
+    );
 
     // Only the judge call should have happened — not the critic.
     expect(executionManager.callProvider).toHaveBeenCalledTimes(1);
     expect(result.criticEvaluation.requested).toBe(false);
     expect(result.criticEvaluation.feedback).toEqual([]);
+  });
+
+  // Regression: with the critic disabled, resolveCriticTarget still ran and
+  // auto-picked a cloud model from CRITIC_CLOUD_MODELS, so the judge panel
+  // attributed the review to "ANTHROPIC/claude-sonnet-4" — a model that was
+  // never called.
+  it('attributes no critic model when the critic is disabled', async () => {
+    executionManager.callProvider.mockResolvedValueOnce({
+      content:
+        '{"decision": "ACCEPT", "summary": "ok", "confidence": 0.9, "reasoning": "fine", "response": "ok", "responseType": "verification_note", "recommendedChanges": []}',
+      provider: 'local-ollama',
+      model: 'gemma3:4b',
+      latencyMs: 60,
+      usedFallback: false,
+    });
+
+    const result = await manager.evaluate(
+      buildResponse(),
+      buildContext(),
+      {
+        enabled: true,
+        category: undefined,
+        routingMode: 'MANUAL_MODEL',
+        isLocalOnly: false,
+        criticEnabled: false,
+        criticModel: null,
+      },
+      buildPayload(),
+    );
+
+    expect(result.criticEvaluation.model).toBe('');
+    expect(result.criticEvaluation.model).not.toContain('claude');
+
+    // The live progress envelope must not name a critic either.
+    expect(chatStream.emitJudgeEvaluating).toHaveBeenCalledTimes(1);
+    const [, criticLabel] = chatStream.emitJudgeEvaluating.mock.calls[0]!;
+    expect(criticLabel).toBeNull();
+  });
+
+  it('names the critic that actually ran when the critic is enabled', async () => {
+    executionManager.callProvider
+      .mockResolvedValueOnce({
+        content: '{"score": 0.8, "summary": "fine", "feedback": []}',
+        provider: 'OPENAI',
+        model: 'gpt-4o-mini',
+        latencyMs: 50,
+        usedFallback: false,
+      })
+      .mockResolvedValueOnce({
+        content:
+          '{"decision": "ACCEPT", "summary": "ok", "confidence": 0.9, "reasoning": "fine", "response": "ok", "responseType": "verification_note", "recommendedChanges": []}',
+        provider: 'local-ollama',
+        model: 'gemma3:4b',
+        latencyMs: 60,
+        usedFallback: false,
+      });
+
+    const result = await manager.evaluate(
+      buildResponse(),
+      buildContext(),
+      {
+        enabled: true,
+        category: undefined,
+        routingMode: 'MANUAL_MODEL',
+        isLocalOnly: false,
+        criticEnabled: true,
+        criticModel: 'OPENAI:gpt-4o-mini',
+      },
+      buildPayload(),
+    );
+
+    expect(result.criticEvaluation.model).toBe('OPENAI/gpt-4o-mini');
+    const [, criticLabel] = chatStream.emitJudgeEvaluating.mock.calls[0]!;
+    expect(criticLabel).toBe('OPENAI/gpt-4o-mini');
+  });
+
+  // Execution order is the contract: generator -> critic -> judge. The judge
+  // must receive the critic's output, never run before or beside it.
+  it('runs the critic before the judge and feeds its verdict into the judge call', async () => {
+    executionManager.callProvider
+      .mockResolvedValueOnce({
+        content: '{"score": 0.4, "summary": "needs work", "feedback": ["add sources"]}',
+        provider: 'OPENAI',
+        model: 'gpt-4o-mini',
+        latencyMs: 50,
+        usedFallback: false,
+      })
+      .mockResolvedValueOnce({
+        content:
+          '{"decision": "ACCEPT", "summary": "ok", "confidence": 0.9, "reasoning": "fine", "response": "ok", "responseType": "verification_note", "recommendedChanges": []}',
+        provider: 'local-ollama',
+        model: 'gemma3:4b',
+        latencyMs: 60,
+        usedFallback: false,
+      });
+
+    await manager.evaluate(
+      buildResponse(),
+      buildContext(),
+      {
+        enabled: true,
+        category: undefined,
+        routingMode: 'MANUAL_MODEL',
+        isLocalOnly: false,
+        criticEnabled: true,
+        criticModel: 'OPENAI:gpt-4o-mini',
+      },
+      buildPayload(),
+    );
+
+    expect(executionManager.callProvider).toHaveBeenCalledTimes(2);
+    const [criticCall, judgeCall] = executionManager.callProvider.mock.calls;
+    expect(criticCall?.[0]).toBe('OPENAI');
+    expect(judgeCall?.[0]).toBe('local-ollama');
+    // The judge's assembled context carries the critic's findings, which is
+    // only possible if the critic completed first.
+    expect(JSON.stringify(judgeCall?.[2])).toContain('add sources');
   });
 });

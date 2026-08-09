@@ -50,9 +50,9 @@ function ReviewSection({
   }
 
   return (
-    <section className="space-y-2 rounded-lg border border-border/60 bg-muted/30 p-4">
-      <h3 className="text-sm font-medium text-foreground">{title}</h3>
-      <div className="max-h-80 overflow-y-auto text-sm text-foreground">
+    <section className="border-border/60 bg-muted/30 space-y-2 rounded-lg border p-4">
+      <h3 className="text-foreground text-sm font-medium">{title}</h3>
+      <div className="text-foreground max-h-80 overflow-y-auto text-sm">
         <MarkdownRenderer content={content} />
       </div>
     </section>
@@ -118,48 +118,48 @@ export function JudgeRefereeDetails({
           </DialogHeader>
 
           <div className="space-y-4">
-            <section className="grid gap-3 rounded-lg border border-border/60 bg-muted/30 p-4 md:grid-cols-2">
+            <section className="border-border/60 bg-muted/30 grid gap-3 rounded-lg border p-4 md:grid-cols-2">
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">
+                <p className="text-muted-foreground text-xs font-medium">
                   {t('chat.judgeExecutionModel')}
                 </p>
-                <p className="text-sm text-foreground">
+                <p className="text-foreground text-sm">
                   {judgeReview.originalExecutionDisplayName}
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">
+                <p className="text-muted-foreground text-xs font-medium">
                   {t('chat.judgeJudgeModel')}
                 </p>
-                <p className="text-sm text-foreground">{judgeReview.judgeDisplayName}</p>
+                <p className="text-foreground text-sm">{judgeReview.judgeDisplayName}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">
+                <p className="text-muted-foreground text-xs font-medium">
                   {t('chat.judgeDecisionLabel')}
                 </p>
-                <p className="text-sm text-foreground">{decisionLabel}</p>
+                <p className="text-foreground text-sm">{decisionLabel}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">
+                <p className="text-muted-foreground text-xs font-medium">
                   {t('chat.judgeConfidenceLabel')}
                 </p>
-                <p className="text-sm text-foreground">
+                <p className="text-foreground text-sm">
                   {String(Math.round(judgeReview.judgeConfidence * 100))}%
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">
+                <p className="text-muted-foreground text-xs font-medium">
                   {t('chat.judgeJudgeLatency')}
                 </p>
-                <p className="text-sm text-foreground">
+                <p className="text-foreground text-sm">
                   {formatLatency(judgeReview.judgeLatencyMs)}
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">
+                <p className="text-muted-foreground text-xs font-medium">
                   {t('chat.judgeTotalLatency')}
                 </p>
-                <p className="text-sm text-foreground">
+                <p className="text-foreground text-sm">
                   {formatLatency(judgeReview.judgeTotalLatencyMs)}
                 </p>
               </div>
@@ -168,14 +168,14 @@ export function JudgeRefereeDetails({
             <ReviewSection title={t('chat.judgeSummary')} content={judgeReview.judgeSummary} />
             <ReviewSection title={t('chat.judgeReasoning')} content={judgeReview.judgeReasoning} />
 
-            <section className="space-y-2 rounded-lg border border-border/60 bg-muted/30 p-4">
+            <section className="border-border/60 bg-muted/30 space-y-2 rounded-lg border p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-sm font-medium text-foreground">{t('chat.judgeResponse')}</h3>
+                <h3 className="text-foreground text-sm font-medium">{t('chat.judgeResponse')}</h3>
                 <Badge variant="secondary" className="text-[10px]">
                   {responseTypeLabel}
                 </Badge>
               </div>
-              <div className="max-h-80 overflow-y-auto text-sm text-foreground">
+              <div className="text-foreground max-h-80 overflow-y-auto text-sm">
                 <MarkdownRenderer content={judgeReview.judgeResponse} />
               </div>
             </section>
@@ -193,29 +193,35 @@ export function JudgeRefereeDetails({
               content={judgeReview.escalatedAnswer}
             />
 
-            <section className="space-y-3 rounded-lg border border-border/60 bg-muted/30 p-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    {t('chat.judgeCriticModel')}
-                  </p>
-                  <p className="text-sm text-foreground">
-                    {judgeReview.criticDisplayName || judgeReview.criticModel}
-                  </p>
+            <section className="border-border/60 bg-muted/30 space-y-3 rounded-lg border p-4">
+              {/* Only attribute a critic model and score when a critic actually
+               * ran. With the critic disabled these rows used to show the
+               * auto-picked cloud model and a synthetic 100%, which read as a
+               * review that never happened. */}
+              {judgeReview.criticRequested ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground text-xs font-medium">
+                      {t('chat.judgeCriticModel')}
+                    </p>
+                    <p className="text-foreground text-sm">
+                      {judgeReview.criticDisplayName || judgeReview.criticModel}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground text-xs font-medium">
+                      {t('chat.judgeCriticScore')}
+                    </p>
+                    <p className="text-foreground text-sm">
+                      {String(Math.round(judgeReview.criticScore * 100))}%
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    {t('chat.judgeCriticScore')}
-                  </p>
-                  <p className="text-sm text-foreground">
-                    {String(Math.round(judgeReview.criticScore * 100))}%
-                  </p>
-                </div>
-              </div>
+              ) : null}
 
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-sm font-medium text-foreground">
+                  <h3 className="text-foreground text-sm font-medium">
                     {t('judgeReview.criticHeader')}
                   </h3>
                   {fileCount > 0 ? (
@@ -236,10 +242,10 @@ export function JudgeRefereeDetails({
 
               {judgeReview.judgeMetadata.recommendedChanges.length > 0 ? (
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-foreground">
+                  <h3 className="text-foreground text-sm font-medium">
                     {t('chat.judgeRecommendedChanges')}
                   </h3>
-                  <ul className="space-y-1 text-sm text-muted-foreground">
+                  <ul className="text-muted-foreground space-y-1 text-sm">
                     {judgeReview.judgeMetadata.recommendedChanges.map((item) => (
                       <li key={item}>• {item}</li>
                     ))}

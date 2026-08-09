@@ -301,21 +301,27 @@ export class ChatStreamService {
     this.logger.debug(`Emitted provider_selected for thread ${threadId}: ${provider}/${model}`);
   }
 
-  emitJudgeEvaluating(threadId: string, criticModel: string, judgeModel: string): void {
+  // `criticModel` is null when the critic is disabled for this run. The field is
+  // then omitted from the envelope entirely so the UI has nothing to render,
+  // rather than naming a model that was never called.
+  emitJudgeEvaluating(threadId: string, criticModel: string | null, judgeModel: string): void {
     this.emit({
       threadId,
       type: StreamEventType.JUDGE_EVALUATING,
-      criticModel,
+      ...(criticModel === null ? {} : { criticModel }),
       judgeModel,
       label: 'Verifying answer',
-      description: `Checking the draft with ${judgeModel}.`,
+      description:
+        criticModel === null
+          ? `Checking the draft with ${judgeModel}.`
+          : `Critiquing with ${criticModel}, then checking with ${judgeModel}.`,
       actorType: ProgressActorType.JUDGE,
       actorName: judgeModel,
       stageId: `judge:${judgeModel}`,
       status: 'active',
     });
     this.logger.debug(
-      `Emitted judge_evaluating for thread ${threadId}: critic=${criticModel} judge=${judgeModel}`,
+      `Emitted judge_evaluating for thread ${threadId}: critic=${criticModel ?? 'disabled'} judge=${judgeModel}`,
     );
   }
 

@@ -448,11 +448,12 @@ export class ParallelExecutionManager {
     criticConfig: ParallelCriticConfig,
   ): Promise<ParallelModelResponse> {
     const judgeModel = judgeConfig.model ?? null;
-    this.chatStreamService.emitJudgeEvaluating(
-      threadId,
-      `${response.provider}/${response.model}`,
-      judgeModel ?? 'AUTO',
-    );
+    // The critic label must name the CRITIC. This passed the generator's own
+    // provider/model, so every compare lane reported the model under review as
+    // its own critic — and did so even with the critic switched off. Null means
+    // no critic ran and the field is omitted from the stream envelope.
+    const criticLabel = criticConfig.enabled ? (criticConfig.model ?? 'AUTO') : null;
+    this.chatStreamService.emitJudgeEvaluating(threadId, criticLabel, judgeModel ?? 'AUTO');
 
     try {
       const judgeResult = await this.judgeRefereeManager.evaluate(

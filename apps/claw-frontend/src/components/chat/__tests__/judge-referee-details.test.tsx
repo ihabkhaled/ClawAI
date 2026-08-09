@@ -103,4 +103,38 @@ describe('JudgeRefereeDetails', () => {
     fireEvent.click(screen.getByRole('button', { name: 'chat.judgeOpenReview' }));
     expect(screen.getByText('compare.critic.notRequested')).toBeInTheDocument();
   });
+
+  // Regression: with the critic disabled the backend still auto-picked a cloud
+  // critic and reported it, so this panel showed a critic model and a synthetic
+  // 100% score for a review that never ran.
+  it('does not attribute a critic model or score when criticRequested is false', () => {
+    const messageNoCritic: ChatMessage = {
+      ...message,
+      metadata: {
+        ...message.metadata,
+        judgeReview: {
+          ...(message.metadata as { judgeReview: Record<string, unknown> }).judgeReview,
+          criticRequested: false,
+          criticModel: '',
+          criticDisplayName: '',
+          criticFeedback: [],
+          criticSummary: '',
+          criticParseFailed: false,
+        },
+      },
+    };
+    render(<JudgeRefereeDetails message={messageNoCritic} />);
+    fireEvent.click(screen.getByRole('button', { name: 'chat.judgeOpenReview' }));
+
+    expect(screen.queryByText('chat.judgeCriticModel')).not.toBeInTheDocument();
+    expect(screen.queryByText('chat.judgeCriticScore')).not.toBeInTheDocument();
+  });
+
+  it('shows the critic model and score when a critic did run', () => {
+    render(<JudgeRefereeDetails message={message} />);
+    fireEvent.click(screen.getByRole('button', { name: 'chat.judgeOpenReview' }));
+
+    expect(screen.getByText('chat.judgeCriticModel')).toBeInTheDocument();
+    expect(screen.getByText('chat.judgeCriticScore')).toBeInTheDocument();
+  });
 });

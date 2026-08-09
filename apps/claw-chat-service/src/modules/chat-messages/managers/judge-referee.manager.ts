@@ -91,8 +91,16 @@ export class JudgeRefereeManager {
       `evaluate: starting judge-referee for ${payload.messageId} category=${config.category ?? 'none'}`,
     );
 
-    const criticModelInfo = await this.resolveCriticTarget(response.provider, config);
-    const criticModelLabel = `${criticModelInfo.provider}/${criticModelInfo.model}`;
+    // Resolve a critic ONLY when one was actually requested. Resolving
+    // unconditionally meant a disabled critic still auto-picked a cloud model
+    // from CRITIC_CLOUD_MODELS and reported it, so the judge panel displayed
+    // "ANTHROPIC/claude-sonnet-4" as the critic for a critic that never ran.
+    const criticEnabled = config.criticEnabled === true;
+    const criticModelInfo = criticEnabled
+      ? await this.resolveCriticTarget(response.provider, config)
+      : null;
+    const criticModelLabel =
+      criticModelInfo === null ? null : `${criticModelInfo.provider}/${criticModelInfo.model}`;
     const overrideJudgeModel = threadSettings?.judgeModel ?? null;
     // Feature 1 — a user-chosen cloud connector model now runs through the
     // normal provider path. AUTO / unset keeps the local-first default.
@@ -106,10 +114,19 @@ export class JudgeRefereeManager {
     // messages) or the service is unavailable (tests).
     const deliveryRecords = await this.loadDeliveryRecords(payload.messageId, context.userId);
 
+    // Execution order is generator -> critic -> judge: the critic's score and
+    // feedback are an input to callJudge below, so the judge always rules on a
+    // draft the critic has already been given a chance to improve.
     const criticEvaluation =
-      config.criticEnabled === true
-        ? await this.callCriticWithModel(response, context, config, criticModelInfo, deliveryRecords)
-        : this.buildSkippedCriticEvaluation(config, criticModelInfo);
+      criticModelInfo !== null
+        ? await this.callCriticWithModel(
+            response,
+            context,
+            config,
+            criticModelInfo,
+            deliveryRecords,
+          )
+        : this.buildSkippedCriticEvaluation(config);
 
     const judgeVerdict = await this.callJudge(
       response,
@@ -283,10 +300,9 @@ export class JudgeRefereeManager {
   // record a CriticEvaluation row so the JudgeReview payload has a stable
   // shape and the UI can render "Critic was not requested." instead of
   // pretending the critic produced an empty review.
-  private buildSkippedCriticEvaluation(
-    config: JudgeRefereeConfig,
-    criticModel: { provider: string; model: string },
-  ): CriticEvaluation {
+  // No critic ran, so no critic model is reported. Naming a model here made the
+  // UI attribute a review to a model that was never called.
+  private buildSkippedCriticEvaluation(config: JudgeRefereeConfig): CriticEvaluation {
     return {
       feedback: [],
       score: 1.0,
@@ -294,7 +310,7 @@ export class JudgeRefereeManager {
       requested: false,
       parseFailed: false,
       category: config.category ?? 'generic',
-      model: `${criticModel.provider}/${criticModel.model}`,
+      model: '',
       latencyMs: 0,
     };
   }
