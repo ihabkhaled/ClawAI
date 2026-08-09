@@ -836,6 +836,14 @@ export const de: TranslationDictionary = {
     },
   },
   models: {
+    serviceUnavailable: {
+      title: 'Modelldienst nicht verfügbar',
+      checking: 'Verfügbarkeit des Modelldienstes wird geprüft',
+      ollamaDescription:
+        'Starte den Ollama-Dienst und aktualisiere diese Seite, um Ollama-Modelle zu verwalten.',
+      llamacppDescription:
+        'Starte den llama.cpp-Dienst und aktualisiere diese Seite, um lokale Frontier-Modelle zu verwalten.',
+    },
     title: 'Modelle',
     description: 'Alle verfügbaren KI-Modelle anzeigen',
     localTitle: 'Lokale Modelle',

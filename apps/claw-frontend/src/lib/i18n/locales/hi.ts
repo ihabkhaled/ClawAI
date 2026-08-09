@@ -829,6 +829,14 @@ export const hi: TranslationDictionary = {
     },
   },
   models: {
+    serviceUnavailable: {
+      title: 'मॉडल सेवा उपलब्ध नहीं है',
+      checking: 'मॉडल सेवा की उपलब्धता जाँची जा रही है',
+      ollamaDescription:
+        'Ollama सेवा शुरू करें, फिर उसके मॉडल प्रबंधित करने के लिए यह पृष्ठ रीफ़्रेश करें।',
+      llamacppDescription:
+        'llama.cpp सेवा शुरू करें, फिर स्थानीय उन्नत मॉडल प्रबंधित करने के लिए यह पृष्ठ रीफ़्रेश करें।',
+    },
     title: 'मॉडल',
     description: 'सभी उपलब्ध AI मॉडल देखें',
     localTitle: 'लोकल मॉडल',

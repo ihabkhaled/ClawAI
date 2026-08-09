@@ -815,6 +815,12 @@ export const zh: TranslationDictionary = {
     },
   },
   models: {
+    serviceUnavailable: {
+      title: '模型服务不可用',
+      checking: '正在检查模型服务可用性',
+      ollamaDescription: '请启动 Ollama 服务，然后刷新此页面以管理 Ollama 模型。',
+      llamacppDescription: '请启动 llama.cpp 服务，然后刷新此页面以管理本地前沿模型。',
+    },
     title: '型号',
     description: '查看所有可用的人工智能模型',
     localTitle: '本地型号',

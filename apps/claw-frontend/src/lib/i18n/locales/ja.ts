@@ -827,6 +827,14 @@ export const ja: TranslationDictionary = {
     },
   },
   models: {
+    serviceUnavailable: {
+      title: 'モデルサービスを利用できません',
+      checking: 'モデルサービスの稼働状況を確認しています',
+      ollamaDescription:
+        'Ollamaサービスを起動し、このページを再読み込みしてモデルを管理してください。',
+      llamacppDescription:
+        'llama.cppサービスを起動し、このページを再読み込みしてローカル先端モデルを管理してください。',
+    },
     title: 'モデル',
     description: '利用可能なすべての AI モデルを表示',
     localTitle: 'ローカル モデル',

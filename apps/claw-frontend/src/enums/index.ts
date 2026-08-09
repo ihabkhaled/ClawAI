@@ -149,3 +149,4 @@ export {
   ChatShareConfirmAction,
 } from './chat-share.enum';
 export { BadgeTone } from './badge-tone.enum';
+export { OptionalService } from './optional-service.enum';

@@ -822,6 +822,12 @@ export const th: TranslationDictionary = {
     },
   },
   models: {
+    serviceUnavailable: {
+      title: 'บริการโมเดลไม่พร้อมใช้งาน',
+      checking: 'กำลังตรวจสอบความพร้อมของบริการโมเดล',
+      ollamaDescription: 'เริ่มบริการ Ollama แล้วรีเฟรชหน้านี้เพื่อจัดการโมเดล Ollama',
+      llamacppDescription: 'เริ่มบริการ llama.cpp แล้วรีเฟรชหน้านี้เพื่อจัดการโมเดลภายในขั้นสูง',
+    },
     title: 'โมเดล',
     description: 'ดูโมเดล AI ที่มีอยู่ทั้งหมด',
     localTitle: 'โมเดลท้องถิ่น',

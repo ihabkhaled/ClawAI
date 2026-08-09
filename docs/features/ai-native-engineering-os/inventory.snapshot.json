@@ -6306,6 +6306,11 @@
         "route": "/models/discovery"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/models/layout.tsx",
+        "kind": "layout",
+        "route": "/models"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/models/local-frontier/page.tsx",
         "kind": "page",
         "route": "/models/local-frontier"
@@ -6970,7 +6975,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4326
+        "value": 4331
       },
       "localeCount": 13,
       "locales": [
@@ -8539,7 +8544,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 255
+        "testFiles": 258
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9295,7 +9300,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 791,
+    "totalTestFiles": 794,
     "workspaceCount": 25
   }
 }

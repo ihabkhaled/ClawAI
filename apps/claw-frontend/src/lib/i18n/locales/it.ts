@@ -835,6 +835,14 @@ export const it: TranslationDictionary = {
     },
   },
   models: {
+    serviceUnavailable: {
+      title: 'Servizio modelli non disponibile',
+      checking: 'Verifica della disponibilità del servizio modelli',
+      ollamaDescription:
+        'Avvia il servizio Ollama, quindi aggiorna questa pagina per gestirne i modelli.',
+      llamacppDescription:
+        'Avvia il servizio llama.cpp, quindi aggiorna questa pagina per gestire i modelli locali avanzati.',
+    },
     title: 'Modelli',
     description: 'Visualizza tutti i modelli IA disponibili',
     localTitle: 'Modelli locali',

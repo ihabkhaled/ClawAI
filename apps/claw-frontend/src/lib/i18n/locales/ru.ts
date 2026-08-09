@@ -837,6 +837,14 @@ export const ru: TranslationDictionary = {
     },
   },
   models: {
+    serviceUnavailable: {
+      title: 'Сервис моделей недоступен',
+      checking: 'Проверка доступности сервиса моделей',
+      ollamaDescription:
+        'Запустите сервис Ollama и обновите страницу, чтобы управлять моделями Ollama.',
+      llamacppDescription:
+        'Запустите сервис llama.cpp и обновите страницу, чтобы управлять локальными передовыми моделями.',
+    },
     title: 'Модели',
     description: 'Просмотр всех доступных моделей ИИ',
     localTitle: 'Локальные модели',

@@ -201,6 +201,7 @@ export type {
   DashboardPageResult,
 } from './dashboard.types';
 export type { ServiceHealthResult, AggregatedHealth } from './health.types';
+export type { UseServiceAvailabilityReturn } from './service-availability.types';
 export type { ApiRequestConfig, ApiResponse, ApiError, ApiClientRequestOptions } from './api.types';
 export type {
   AuthStoreState,
@@ -232,6 +233,8 @@ export type {
   StatusBadgeProps,
   KbdHintProps,
   SidebarNavItemProps,
+  ServiceAvailabilityBoundaryProps,
+  ModelsAvailabilityLayoutProps,
   BreadcrumbCrumb,
   BreadcrumbProps,
   ResolvedCrumb,

@@ -833,6 +833,12 @@ export type TranslationDictionary = {
   models: {
     title: string;
     description: string;
+    serviceUnavailable: {
+      title: string;
+      checking: string;
+      ollamaDescription: string;
+      llamacppDescription: string;
+    };
     localTitle: string;
     localDescription: string;
     pullModel: string;

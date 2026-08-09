@@ -823,6 +823,13 @@ export const ar: TranslationDictionary = {
     },
   },
   models: {
+    serviceUnavailable: {
+      title: 'خدمة النماذج غير متاحة',
+      checking: 'جارٍ التحقق من توفر خدمة النماذج',
+      ollamaDescription: 'شغّل خدمة Ollama ثم حدّث هذه الصفحة لإدارة نماذج Ollama.',
+      llamacppDescription:
+        'شغّل خدمة llama.cpp ثم حدّث هذه الصفحة لإدارة النماذج المحلية المتقدمة.',
+    },
     title: 'النماذج',
     description: 'عرض جميع نماذج الذكاء الاصطناعي المتاحة',
     localTitle: 'النماذج المحلية',

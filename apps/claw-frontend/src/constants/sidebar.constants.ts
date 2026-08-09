@@ -47,6 +47,8 @@ import {
   UserCog,
 } from 'lucide-react';
 
+import { OptionalService } from '@/enums/optional-service.enum';
+
 import { ROUTES } from './routes.constants';
 
 export type SidebarItem = {
@@ -55,6 +57,8 @@ export type SidebarItem = {
   icon: typeof MessageSquare;
   badge?: string;
   children?: SidebarItem[];
+  requiredService?: OptionalService;
+  disabled?: boolean;
 };
 
 export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
@@ -154,10 +158,26 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
     labelKey: 'nav.models',
     href: ROUTES.MODELS,
     icon: Cpu,
+    requiredService: OptionalService.OLLAMA,
     children: [
-      { labelKey: 'nav.modelCatalog', href: ROUTES.MODELS_CATALOG, icon: Store },
-      { labelKey: 'nav.discovery', href: ROUTES.MODELS_DISCOVERY, icon: Radar },
-      { labelKey: 'nav.modelLocalFrontier', href: ROUTES.MODELS_LOCAL_FRONTIER, icon: Cpu },
+      {
+        labelKey: 'nav.modelCatalog',
+        href: ROUTES.MODELS_CATALOG,
+        icon: Store,
+        requiredService: OptionalService.OLLAMA,
+      },
+      {
+        labelKey: 'nav.discovery',
+        href: ROUTES.MODELS_DISCOVERY,
+        icon: Radar,
+        requiredService: OptionalService.OLLAMA,
+      },
+      {
+        labelKey: 'nav.modelLocalFrontier',
+        href: ROUTES.MODELS_LOCAL_FRONTIER,
+        icon: Cpu,
+        requiredService: OptionalService.LLAMACPP,
+      },
     ],
   },
   {

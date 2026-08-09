@@ -826,6 +826,14 @@ export const fa: TranslationDictionary = {
     },
   },
   models: {
+    serviceUnavailable: {
+      title: 'سرویس مدل در دسترس نیست',
+      checking: 'در حال بررسی دسترس‌پذیری سرویس مدل',
+      ollamaDescription:
+        'سرویس Ollama را اجرا کنید و برای مدیریت مدل‌های آن، صفحه را تازه‌سازی کنید.',
+      llamacppDescription:
+        'سرویس llama.cpp را اجرا کنید و برای مدیریت مدل‌های محلی پیشرفته، صفحه را تازه‌سازی کنید.',
+    },
     title: 'مدل ها',
     description: 'تمام مدل‌های هوش مصنوعی موجود را مشاهده کنید',
     localTitle: 'مدل های محلی',

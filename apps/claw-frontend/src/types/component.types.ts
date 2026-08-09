@@ -18,6 +18,7 @@ import type {
   HealthStatus,
   MessageFeedback,
   ModelCatalogViewMode,
+  OptionalService,
   PlanFeature,
   RepairType,
   ReplayOutcomeLabel,
@@ -316,6 +317,15 @@ export type KbdHintProps = {
 
 export type SidebarNavItemProps = {
   item: SidebarItem;
+};
+
+export type ServiceAvailabilityBoundaryProps = {
+  service: OptionalService;
+  children: React.ReactNode;
+};
+
+export type ModelsAvailabilityLayoutProps = {
+  children: React.ReactNode;
 };
 
 // One node in the topbar breadcrumb trail. `labelKey` is an i18n key; `href` is

@@ -26,9 +26,12 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
 
   const leafClass = cn(
     'relative flex min-h-12 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-fast ease-expo-out md:min-h-11',
-    isActive
-      ? 'bg-primary/10 font-semibold text-primary'
-      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+    {
+      'cursor-not-allowed text-muted-foreground/50': item.disabled === true,
+      'bg-primary/10 font-semibold text-primary': item.disabled !== true && isActive,
+      'text-muted-foreground hover:bg-accent hover:text-accent-foreground':
+        item.disabled !== true && !isActive,
+    },
   );
 
   // Animated active indicator: 3px-wide, 60%-tall pill anchored to the
@@ -43,6 +46,14 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
   ) : null;
 
   if (!hasChildren) {
+    if (item.disabled === true) {
+      return (
+        <span aria-disabled="true" className={leafClass}>
+          <item.icon className="h-4 w-4 shrink-0" />
+          <span>{t(item.labelKey)}</span>
+        </span>
+      );
+    }
     return (
       <Link href={item.href} className={leafClass}>
         {activeIndicator}
@@ -60,11 +71,18 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
   return (
     <div>
       <div className="flex items-stretch">
-        <Link href={item.href} className={cn(leafClass, 'flex-1')}>
-          {activeIndicator}
-          <item.icon className="h-4 w-4 shrink-0" />
-          <span>{t(item.labelKey)}</span>
-        </Link>
+        {item.disabled === true ? (
+          <span aria-disabled="true" className={cn(leafClass, 'flex-1')}>
+            <item.icon className="h-4 w-4 shrink-0" />
+            <span>{t(item.labelKey)}</span>
+          </span>
+        ) : (
+          <Link href={item.href} className={cn(leafClass, 'flex-1')}>
+            {activeIndicator}
+            <item.icon className="h-4 w-4 shrink-0" />
+            <span>{t(item.labelKey)}</span>
+          </Link>
+        )}
         <Button
           variant="unstyled"
           size="unstyled"
