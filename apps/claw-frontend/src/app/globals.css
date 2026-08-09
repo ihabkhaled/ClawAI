@@ -906,6 +906,22 @@
     }
   }
 
+  /*
+   * Hairline between consecutive chat messages. Built from --border so it
+   * follows the theme, and faded at both ends so it reads as a soft rule
+   * rather than a hard table border running edge to edge.
+   */
+  .chat-message-separator {
+    height: 1px;
+    background-image: linear-gradient(
+      to right,
+      transparent,
+      hsl(var(--border) / 0.9) 15%,
+      hsl(var(--border) / 0.9) 85%,
+      transparent
+    );
+  }
+
   /* Fade the tail of long scroll regions (e.g. sidebar nav) */
   .scroll-fade-y {
     mask-image: linear-gradient(
