@@ -72,6 +72,8 @@ const dataControllerMock = {
     setUseContext: vi.fn(),
     handleSave: vi.fn(),
     isPending: false,
+    maxTokensError: null,
+    canSave: true,
   },
   handleSend: vi.fn(),
   handleDelete: vi.fn(),

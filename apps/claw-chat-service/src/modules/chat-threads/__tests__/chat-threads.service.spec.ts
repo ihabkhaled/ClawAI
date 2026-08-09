@@ -163,6 +163,43 @@ describe('ChatThreadsService', () => {
       });
     });
 
+    // Regression: the service used to whitelist fields into the repository call
+    // and silently drop qualityThreshold/maxReRouteAttempts, so the slider always
+    // read back as the 0.4 default no matter how many times the user pressed Save.
+    it('should forward qualityThreshold and maxReRouteAttempts to the repository', async () => {
+      const updated = { ...mockThread, qualityThreshold: 0.8, maxReRouteAttempts: 4 };
+      threadsRepo.findById.mockResolvedValue(mockThread);
+      threadsRepo.update.mockResolvedValue(updated);
+
+      const result = await service.updateThread('thread-1', 'user-1', {
+        qualityThreshold: 0.8,
+        maxReRouteAttempts: 4,
+      });
+
+      expect(result.qualityThreshold).toBe(0.8);
+      expect(result.maxReRouteAttempts).toBe(4);
+      expect(threadsRepo.update).toHaveBeenCalledWith(
+        'thread-1',
+        expect.objectContaining({ qualityThreshold: 0.8, maxReRouteAttempts: 4 }),
+      );
+    });
+
+    it('should allow clearing qualityThreshold and maxReRouteAttempts back to null', async () => {
+      const updated = { ...mockThread, qualityThreshold: null, maxReRouteAttempts: null };
+      threadsRepo.findById.mockResolvedValue(mockThread);
+      threadsRepo.update.mockResolvedValue(updated);
+
+      await service.updateThread('thread-1', 'user-1', {
+        qualityThreshold: null,
+        maxReRouteAttempts: null,
+      });
+
+      expect(threadsRepo.update).toHaveBeenCalledWith(
+        'thread-1',
+        expect.objectContaining({ qualityThreshold: null, maxReRouteAttempts: null }),
+      );
+    });
+
     it('should throw EntityNotFoundException when not found', async () => {
       threadsRepo.findById.mockResolvedValue(null);
 

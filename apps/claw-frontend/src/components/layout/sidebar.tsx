@@ -80,7 +80,11 @@ export function Sidebar() {
           ))}
         </nav>
         <Separator />
-        <div className="flex items-center justify-between gap-2 px-4 py-3">
+        {/* On mobile the sidebar is a bottom sheet pinned to `bottom-0`, and the
+         * mobile bottom nav is fixed at `bottom-0` with the SAME z-50 — so it
+         * paints over this row and swallowed both the version pill and the
+         * GPU/CPU badge. Reserve the nav's height below `md`, where it exists. */}
+        <div className="safe-bottom safe-bottom-base-nav flex flex-wrap items-center justify-between gap-2 px-4 pt-3">
           <span className="bg-muted/60 text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
             {/* APP_VERSION reads package.json. The literal that was here said
                 0.1.0 while the package said 1.0.0 — a hardcoded version is a

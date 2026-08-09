@@ -15,9 +15,9 @@ import { cn } from '@/lib/utils';
 
 const ToastProvider = ToastPrimitives.Provider;
 
-// Mobile (default) viewport: pinned to the top with safe-area padding so it
-// never clashes with the new mobile bottom nav. From `sm:` up we float it to
-// the bottom-right corner — the historical desktop position — but keep a
+// Mobile (default) viewport: pinned to the BOTTOM, within thumb reach, sitting
+// above the mobile bottom nav via `safe-bottom-base-nav`. From `sm:` up it
+// stays in the bottom-right corner — the historical desktop position — with a
 // max-width so multi-line toasts stay readable.
 const ToastViewport = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Viewport>,
@@ -26,7 +26,7 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      'safe-top safe-top-base-4 fixed top-0 z-[100] flex max-h-screen w-full flex-col gap-2 px-4 pb-4 sm:top-auto sm:right-0 sm:bottom-0 sm:flex-col-reverse md:max-w-[420px]',
+      'safe-bottom safe-bottom-base-nav fixed bottom-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 px-4 sm:right-0 sm:bottom-0 md:max-w-[420px]',
       className,
     )}
     {...props}
@@ -47,8 +47,10 @@ const TOAST_BASE_CLASSES = cn(
   'data-[state=open]:animate-in data-[state=closed]:animate-out',
   'data-[swipe=end]:animate-out data-[state=closed]:fade-out-80',
   'data-[state=closed]:slide-out-to-right-full',
-  'data-[state=open]:slide-in-from-top-full',
-  'data-[state=open]:sm:slide-in-from-bottom-full',
+  // Enters from the bottom at every breakpoint now that the viewport is
+  // bottom-anchored on mobile too — sliding down from the top would have the
+  // toast travel the whole screen before landing.
+  'data-[state=open]:slide-in-from-bottom-full',
 );
 
 type ToastRootProps = React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & {

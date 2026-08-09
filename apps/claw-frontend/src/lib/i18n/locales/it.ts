@@ -303,6 +303,8 @@ export const it: TranslationDictionary = {
       'Controlla la casualità. Più basso = più mirato, più alto = più creativo.',
     maxTokens: 'Token massimi',
     maxTokensDescription: "Lunghezza massima della risposta dell'IA.",
+    maxTokensErrorInteger: 'Il numero massimo di token deve essere un numero intero.',
+    maxTokensErrorRange: 'Il numero massimo di token deve essere compreso tra 1 e 32000.',
     threadSettings: 'Impostazioni conversazione',
     preferredModel: 'Modello IA predefinito',
     preferredModelDescription:

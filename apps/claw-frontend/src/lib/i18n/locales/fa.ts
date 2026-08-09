@@ -302,6 +302,8 @@ export const fa: TranslationDictionary = {
     temperatureDescription: 'تصادفی بودن را کنترل می کند.پایین تر = متمرکز تر، بالاتر = خلاق تر.',
     maxTokens: 'مکس توکن ها',
     maxTokensDescription: 'حداکثر طول پاسخ هوش مصنوعی',
+    maxTokensErrorInteger: 'حداکثر توکن باید یک عدد صحیح باشد.',
+    maxTokensErrorRange: 'حداکثر توکن باید بین ۱ و ۳۲۰۰۰ باشد.',
     threadSettings: 'تنظیمات موضوع',
     preferredModel: 'مدل پیش فرض هوش مصنوعی',
     preferredModelDescription: 'مدل پیش فرض برای این موضوعمی تواند در هر پیام لغو شود.',

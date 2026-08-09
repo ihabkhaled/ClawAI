@@ -12,7 +12,12 @@ export function useUpdateThread() {
 
   const mutation = useMutation({
     mutationFn: ({ id, data }: UpdateThreadMutationParams) => {
-      logger.info({ component: 'chat', action: 'update-thread', message: 'Updating thread', details: { threadId: id } });
+      logger.info({
+        component: 'chat',
+        action: 'update-thread',
+        message: 'Updating thread',
+        details: { threadId: id },
+      });
       return chatRepository.updateThread(id, data);
     },
     onSuccess: (_result, variables) => {
@@ -25,7 +30,10 @@ export function useUpdateThread() {
     },
     onError: (error: Error) => {
       logger.error({ component: 'chat', action: 'update-thread-error', message: error.message });
-      showToast.apiError(error, t('chat.threadUpdateFailed'));
+      // Title is passed explicitly so the backend's validation detail is shown
+      // under a translated heading — showToast falls back to a hardcoded
+      // English "Error" when no title is given.
+      showToast.apiError(error, t('chat.threadUpdateFailed'), { title: t('common.error') });
     },
   });
 

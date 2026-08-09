@@ -27,6 +27,17 @@ export const COMPOSER_MAX_HEIGHT_RATIO = 0.5;
 export const COMPOSER_DEFAULT_HEIGHT = 200;
 export const VIRTUOSO_START_INDEX = 1_000_000;
 
+// Thread-settings bounds. These MUST stay in step with the Zod schema in
+// apps/claw-chat-service/src/modules/chat-threads/dto/update-thread.dto.ts —
+// when they drift, the form posts a value the API rejects with a 400 and the
+// user reads it as "Save does nothing".
+export const THREAD_MAX_TOKENS_MIN = 1;
+export const THREAD_MAX_TOKENS_MAX = 32000;
+export const THREAD_QUALITY_THRESHOLD_MIN = 0;
+export const THREAD_QUALITY_THRESHOLD_MAX = 1;
+export const THREAD_MAX_REROUTE_ATTEMPTS_MIN = 0;
+export const THREAD_MAX_REROUTE_ATTEMPTS_MAX = 5;
+
 // Pixel threshold below which the chat scroll container is considered "at the
 // bottom" — used by useStickyBottomScroll to decide whether to auto-follow
 // streaming tokens. Matches the visual breathing room of the last message

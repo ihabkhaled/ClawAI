@@ -317,6 +317,15 @@ export type UseThreadSettingsReturn = {
   setUseContext: (value: boolean) => void;
   handleSave: () => void;
   isPending: boolean;
+  maxTokensError: string | null;
+  canSave: boolean;
+};
+
+// Field-level validation state for the thread-settings form. `maxTokensError`
+// carries already-translated text so the .tsx stays a pure render.
+export type ThreadSettingsValidation = {
+  maxTokensError: string | null;
+  canSave: boolean;
 };
 
 // Return shape of the page-bootstrap controller hook. The .tsx renders a
@@ -358,6 +367,9 @@ export type UseFileUploadZoneStateReturn = {
 
 export type UseGlobalSearchControllerReturn = {
   inputRef: React.RefObject<HTMLInputElement | null>;
+  // Wraps the trigger, the expanded field and the results popover, so an
+  // outside-press can be distinguished from a press on the search itself.
+  containerRef: React.RefObject<HTMLDivElement | null>;
   threads: ChatThread[];
   isLoading: boolean;
   search: string;

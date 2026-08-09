@@ -301,6 +301,8 @@ export const hi: TranslationDictionary = {
     temperatureDescription: 'रैंडमनेस नियंत्रित करता है। कम = अधिक केंद्रित, अधिक = अधिक रचनात्मक।',
     maxTokens: 'अधिकतम टोकन',
     maxTokensDescription: 'AI प्रतिक्रिया की अधिकतम लंबाई।',
+    maxTokensErrorInteger: 'अधिकतम टोकन एक पूर्ण संख्या होनी चाहिए।',
+    maxTokensErrorRange: 'अधिकतम टोकन 1 और 32000 के बीच होना चाहिए।',
     threadSettings: 'थ्रेड सेटिंग्स',
     preferredModel: 'डिफ़ॉल्ट AI मॉडल',
     preferredModelDescription:

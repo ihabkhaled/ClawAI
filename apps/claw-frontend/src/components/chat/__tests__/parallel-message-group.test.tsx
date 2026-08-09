@@ -62,12 +62,14 @@ describe('ParallelMessageGroup — in-thread compare card parity', () => {
 
     render(withQueryClient(<ParallelMessageGroup messages={messages} t={t} />));
 
-    // Toolbar (one row per card) — these labels come from CompareResultCard
-    // (the SAME card used by /chat/compare). Two cards => two of each.
-    expect(screen.getAllByText('compare.viewRaw')).toHaveLength(2);
-    expect(screen.getAllByText('compare.copy')).toHaveLength(2);
-    expect(screen.getAllByText('compare.exportMd')).toHaveLength(2);
-    expect(screen.getAllByText('compare.expand')).toHaveLength(2);
+    // Toolbar — these labels come from CompareResultCard (the SAME card used by
+    // /chat/compare). The toolbar is deliberately rendered TWICE per card, above
+    // and below the output, so the controls stay reachable without scrolling a
+    // long response. Two cards x two toolbars => four of each.
+    expect(screen.getAllByText('compare.viewRaw')).toHaveLength(4);
+    expect(screen.getAllByText('compare.copy')).toHaveLength(4);
+    expect(screen.getAllByText('compare.exportMd')).toHaveLength(4);
+    expect(screen.getAllByText('compare.expand')).toHaveLength(4);
 
     // Footer-strip latency badge ("Latency: 56.2s") — one per card.
     expect(screen.getAllByText(/compare\.latency.*56\.2s/).length).toBeGreaterThanOrEqual(2);

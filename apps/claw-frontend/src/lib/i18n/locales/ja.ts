@@ -303,6 +303,8 @@ export const ja: TranslationDictionary = {
       'ランダム性を制御します。低いほど集中力が高まり、高いほどクリエイティブになります。',
     maxTokens: '最大トークン数',
     maxTokensDescription: 'AI 応答の最大長。',
+    maxTokensErrorInteger: '最大トークン数は整数である必要があります。',
+    maxTokensErrorRange: '最大トークン数は 1〜32000 の範囲で指定してください。',
     threadSettings: 'スレッド設定',
     preferredModel: 'デフォルトの AI モデル',
     preferredModelDescription:

@@ -299,6 +299,8 @@ export const th: TranslationDictionary = {
     temperatureDescription: 'ควบคุมการสุ่มต่ำ = มีสมาธิมากขึ้น สูงขึ้น = สร้างสรรค์มากขึ้น',
     maxTokens: 'โทเค็นสูงสุด',
     maxTokensDescription: 'ความยาวสูงสุดของการตอบสนอง AI',
+    maxTokensErrorInteger: 'จำนวนโทเค็นสูงสุดต้องเป็นจำนวนเต็ม',
+    maxTokensErrorRange: 'จำนวนโทเค็นสูงสุดต้องอยู่ระหว่าง 1 ถึง 32000',
     threadSettings: 'การตั้งค่าเธรด',
     preferredModel: 'โมเดล AI เริ่มต้น',
     preferredModelDescription: 'โมเดลเริ่มต้นสำหรับเธรดนี้สามารถแทนที่ได้ต่อข้อความ',

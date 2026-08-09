@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { MODEL_AUTO_VALUE } from '@/constants';
+import { MODEL_AUTO_VALUE, THREAD_MAX_TOKENS_MAX, THREAD_MAX_TOKENS_MIN } from '@/constants';
 import type { ThreadSettingsProps } from '@/types';
 
 export function ThreadSettings({
@@ -43,6 +43,8 @@ export function ThreadSettings({
   onSave,
   isPending,
   allowJudgeMode,
+  maxTokensError,
+  canSave,
 }: ThreadSettingsProps): React.ReactElement {
   return (
     <Card>
@@ -52,16 +54,12 @@ export function ThreadSettings({
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <label className="text-sm font-medium">{t('chat.preferredModel')}</label>
-          <p className="text-xs text-muted-foreground">{t('chat.preferredModelDescription')}</p>
+          <p className="text-muted-foreground text-xs">{t('chat.preferredModelDescription')}</p>
           {/* Symmetric with MessageComposer: pass `disabled={isPending}` so both */}
           {/* selectors share IDENTICAL runtime gating. Model SELECTION is never */}
           {/* gated by plan features — compare/judge/critic/research gate workflows, */}
           {/* not which model you can pick. See model-selector.tsx for full rules. */}
-          <ModelSelector
-            value={selectedModel}
-            onChange={onModelChange}
-            disabled={isPending}
-          />
+          <ModelSelector value={selectedModel} onChange={onModelChange} disabled={isPending} />
         </div>
 
         <div className="space-y-2">
@@ -82,7 +80,7 @@ export function ThreadSettings({
           <label className="text-sm font-medium" htmlFor="temperature">
             {t('chat.temperature')}: {temperature.toFixed(1)}
           </label>
-          <p className="text-xs text-muted-foreground">{t('chat.temperatureDescription')}</p>
+          <p className="text-muted-foreground text-xs">{t('chat.temperatureDescription')}</p>
           <input
             id="temperature"
             type="range"
@@ -91,9 +89,9 @@ export function ThreadSettings({
             step={0.1}
             value={temperature}
             onChange={(e) => onTemperatureChange(Number(e.target.value))}
-            className="w-full accent-primary"
+            className="accent-primary w-full"
           />
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex justify-between text-xs">
             <span>0</span>
             <span>1</span>
             <span>2</span>
@@ -104,21 +102,28 @@ export function ThreadSettings({
           <label className="text-sm font-medium" htmlFor="max-tokens">
             {t('chat.maxTokens')}
           </label>
-          <p className="text-xs text-muted-foreground">{t('chat.maxTokensDescription')}</p>
+          <p className="text-muted-foreground text-xs">{t('chat.maxTokensDescription')}</p>
           <Input
             id="max-tokens"
             type="number"
-            min={1}
-            max={32000}
-            placeholder="32000"
+            min={THREAD_MAX_TOKENS_MIN}
+            max={THREAD_MAX_TOKENS_MAX}
+            placeholder={String(THREAD_MAX_TOKENS_MAX)}
             value={maxTokens}
             onChange={(e) => onMaxTokensChange(e.target.value)}
+            aria-invalid={maxTokensError !== null}
+            aria-describedby={maxTokensError !== null ? 'max-tokens-error' : undefined}
           />
+          {maxTokensError !== null ? (
+            <p id="max-tokens-error" role="alert" className="text-destructive text-xs">
+              {maxTokensError}
+            </p>
+          ) : null}
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">{t('chat.contextPacks')}</label>
-          <p className="text-xs text-muted-foreground">{t('chat.contextPacksDescription')}</p>
+          <p className="text-muted-foreground text-xs">{t('chat.contextPacksDescription')}</p>
           <ContextPackSelector
             t={t}
             selectedIds={contextPackIds}
@@ -132,7 +137,7 @@ export function ThreadSettings({
               <label className="text-sm font-medium" htmlFor="judge-enabled">
                 {t('chat.judgeReferee')}
               </label>
-              <p className="text-xs text-muted-foreground">{t('chat.judgeRefereeDescription')}</p>
+              <p className="text-muted-foreground text-xs">{t('chat.judgeRefereeDescription')}</p>
             </div>
             <Switch
               id="judge-enabled"
@@ -145,7 +150,7 @@ export function ThreadSettings({
         {allowJudgeMode && judgeEnabled ? (
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('chat.judgeModelLabel')}</label>
-            <p className="text-xs text-muted-foreground">{t('chat.judgeModelDescription')}</p>
+            <p className="text-muted-foreground text-xs">{t('chat.judgeModelDescription')}</p>
             <Select
               value={judgeModel ?? MODEL_AUTO_VALUE}
               onValueChange={(v) => onJudgeModelChange(v === MODEL_AUTO_VALUE ? null : v)}
@@ -172,7 +177,7 @@ export function ThreadSettings({
           <label className="text-sm font-medium" htmlFor="quality-threshold">
             {t('chat.qualityThreshold')}: {qualityThreshold.toFixed(1)}
           </label>
-          <p className="text-xs text-muted-foreground">{t('chat.qualityThresholdDescription')}</p>
+          <p className="text-muted-foreground text-xs">{t('chat.qualityThresholdDescription')}</p>
           <input
             id="quality-threshold"
             type="range"
@@ -181,9 +186,9 @@ export function ThreadSettings({
             step={0.1}
             value={qualityThreshold}
             onChange={(e) => onQualityThresholdChange(Number(e.target.value))}
-            className="w-full accent-primary"
+            className="accent-primary w-full"
           />
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex justify-between text-xs">
             <span>0</span>
             <span>0.5</span>
             <span>1</span>
@@ -194,7 +199,7 @@ export function ThreadSettings({
           <label className="text-sm font-medium" htmlFor="max-reroute-attempts">
             {t('chat.maxReRouteAttempts')}: {maxReRouteAttempts}
           </label>
-          <p className="text-xs text-muted-foreground">{t('chat.maxReRouteAttemptsDescription')}</p>
+          <p className="text-muted-foreground text-xs">{t('chat.maxReRouteAttemptsDescription')}</p>
           <Input
             id="max-reroute-attempts"
             type="number"
@@ -208,7 +213,7 @@ export function ThreadSettings({
         <div className="flex items-center justify-between gap-3">
           <div>
             <label className="text-sm font-medium">{t('chat.useMemoryLabel')}</label>
-            <p className="text-xs text-muted-foreground">{t('chat.useMemoryDescription')}</p>
+            <p className="text-muted-foreground text-xs">{t('chat.useMemoryDescription')}</p>
           </div>
           <Switch
             checked={useMemory}
@@ -220,7 +225,7 @@ export function ThreadSettings({
         <div className="flex items-center justify-between gap-3">
           <div>
             <label className="text-sm font-medium">{t('chat.useContextLabel')}</label>
-            <p className="text-xs text-muted-foreground">{t('chat.useContextDescription')}</p>
+            <p className="text-muted-foreground text-xs">{t('chat.useContextDescription')}</p>
           </div>
           <Switch
             checked={useContext}
@@ -229,7 +234,7 @@ export function ThreadSettings({
           />
         </div>
 
-        <Button onClick={onSave} disabled={isPending} size="sm">
+        <Button onClick={onSave} disabled={isPending || !canSave} size="sm">
           {isPending ? t('common.loading') : t('common.save')}
         </Button>
       </CardContent>

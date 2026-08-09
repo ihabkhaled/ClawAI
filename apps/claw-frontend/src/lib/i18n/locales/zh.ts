@@ -297,6 +297,8 @@ export const zh: TranslationDictionary = {
     temperatureDescription: '控制随机性。较低=更专注，较高=更具创造力。',
     maxTokens: '最大代币数',
     maxTokensDescription: 'AI 响应的最大长度。',
+    maxTokensErrorInteger: '最大令牌数必须为整数。',
+    maxTokensErrorRange: '最大令牌数必须介于 1 和 32000 之间。',
     threadSettings: '线程设置',
     preferredModel: '默认AI模型',
     preferredModelDescription: '该线程的默认模型。可以按消息覆盖。',

@@ -301,6 +301,8 @@ export const es: TranslationDictionary = {
     temperatureDescription: 'Controla la aleatoriedad. Menor = más centrado, mayor = más creativo.',
     maxTokens: 'Tokens máximos',
     maxTokensDescription: 'Longitud máxima de la respuesta de la IA.',
+    maxTokensErrorInteger: 'El máximo de tokens debe ser un número entero.',
+    maxTokensErrorRange: 'El máximo de tokens debe estar entre 1 y 32000.',
     threadSettings: 'Ajustes de la conversación',
     preferredModel: 'Modelo de IA predeterminado',
     preferredModelDescription:

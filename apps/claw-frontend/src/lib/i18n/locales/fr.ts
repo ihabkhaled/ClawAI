@@ -303,6 +303,8 @@ export const fr: TranslationDictionary = {
       "Contrôle l'aléatoire. Plus bas = plus focalisé, plus haut = plus créatif.",
     maxTokens: 'Jetons maximum',
     maxTokensDescription: "Longueur maximale de la réponse de l'IA.",
+    maxTokensErrorInteger: 'Le nombre maximal de jetons doit être un entier.',
+    maxTokensErrorRange: 'Le nombre maximal de jetons doit être compris entre 1 et 32000.',
     threadSettings: 'Paramètres du fil',
     preferredModel: 'Modèle IA par défaut',
     preferredModelDescription: 'Modèle par défaut pour ce fil. Peut être remplacé par message.',

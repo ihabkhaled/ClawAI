@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useJudgeModelOptions } from '@/hooks/chat/use-judge-model-options';
+import { useThreadSettingsValidation } from '@/hooks/chat/use-thread-settings-validation';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { ChatThread, ModelSelection } from '@/types';
 import { logger, showToast } from '@/utilities';
@@ -23,6 +24,7 @@ export function useThreadSettings(thread: ChatThread | null) {
   const [maxReRouteAttempts, setMaxReRouteAttempts] = useState(2);
   const [useMemory, setUseMemory] = useState(true);
   const [useContext, setUseContext] = useState(true);
+  const { maxTokensError, canSave } = useThreadSettingsValidation(maxTokens);
 
   useEffect(() => {
     if (thread) {
@@ -81,6 +83,13 @@ export function useThreadSettings(thread: ChatThread | null) {
     if (!thread) {
       return;
     }
+    // Block the request when a field is already known-invalid. Posting it would
+    // 400 on the Zod schema and the user would read a rejected save as "Save
+    // does nothing" — the inline error plus this toast name the actual problem.
+    if (maxTokensError !== null) {
+      showToast.error({ title: t('common.error'), description: maxTokensError });
+      return;
+    }
     logger.info({
       component: 'chat',
       action: 'save-thread-settings',
@@ -117,6 +126,7 @@ export function useThreadSettings(thread: ChatThread | null) {
     );
   }, [
     thread,
+    maxTokensError,
     systemPrompt,
     temperature,
     maxTokens,
@@ -161,5 +171,7 @@ export function useThreadSettings(thread: ChatThread | null) {
     setUseContext,
     handleSave,
     isPending,
+    maxTokensError,
+    canSave,
   };
 }

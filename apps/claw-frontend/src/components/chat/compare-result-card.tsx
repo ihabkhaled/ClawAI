@@ -1,24 +1,12 @@
 'use client';
 
-import {
-  Check,
-  CheckCircle,
-  Clock,
-  Code,
-  Copy,
-  Download,
-  FileText,
-  Maximize2,
-  Trophy,
-  XCircle,
-  Zap,
-} from 'lucide-react';
+import { CheckCircle, Clock, Trophy, XCircle, Zap } from 'lucide-react';
 
 import { AttachmentDeliveryChip } from '@/components/chat/attachments/attachment-delivery-chip';
 import { CompareJudgeBadges } from '@/components/chat/compare-judge-badges';
+import { CompareResultActions } from '@/components/chat/compare-result-actions';
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CompareJudgeState, CompareResultViewMode, ParallelModelStatus } from '@/enums';
@@ -68,24 +56,24 @@ export function CompareResultCard({
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             {isFastest ? (
-              <Badge className="gap-1 bg-success/10 text-xs text-success">
+              <Badge className="bg-success/10 text-success gap-1 text-xs">
                 <Zap className="h-3 w-3" />
                 {t('compare.fastest')}
               </Badge>
             ) : null}
             {isBest ? (
-              <Badge className="gap-1 bg-warning/10 text-xs text-warning">
+              <Badge className="bg-warning/10 text-warning gap-1 text-xs">
                 <Trophy className="h-3 w-3" />
                 {t('compare.bestResponse')}
               </Badge>
             ) : null}
-            {isCompleted ? <CheckCircle className="h-4 w-4 text-success" /> : null}
-            {isFailed ? <XCircle className="h-4 w-4 text-destructive" /> : null}
-            {isTimeout ? <Clock className="h-4 w-4 text-warning" /> : null}
+            {isCompleted ? <CheckCircle className="text-success h-4 w-4" /> : null}
+            {isFailed ? <XCircle className="text-destructive h-4 w-4" /> : null}
+            {isTimeout ? <Clock className="text-warning h-4 w-4" /> : null}
           </div>
         </div>
 
-        <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <div className="text-muted-foreground mt-1 flex flex-wrap gap-2 text-xs">
           {isCompleted ? (
             <span>
               {t('compare.latency')}: {formatLatency(response.latencyMs)}
@@ -107,10 +95,26 @@ export function CompareResultCard({
 
       <CardContent className="flex-1">
         {isFailed && response.errorMessage ? (
-          <p className="text-sm text-destructive">{response.errorMessage}</p>
+          <p className="text-destructive text-sm">{response.errorMessage}</p>
         ) : null}
         {!isFailed && response.content.length === 0 ? (
-          <p className="text-sm italic text-muted-foreground">{t('compare.noContent')}</p>
+          <p className="text-muted-foreground text-sm italic">{t('compare.noContent')}</p>
+        ) : null}
+        {/* Same actions as the footer, repeated ABOVE the output. With two
+         * panels side by side the response body scrolls independently, so the
+         * footer controls can sit a long way from where the user is reading —
+         * expand in particular needs to be reachable without scrolling first. */}
+        {hasContent ? (
+          <CompareResultActions
+            isMarkdown={isMarkdown}
+            copied={copied}
+            onToggleViewMode={toggleViewMode}
+            onCopy={copyContent}
+            onExport={exportMarkdown}
+            onExpand={() => setExpanded(true)}
+            className="border-border/60 mb-2 border-b pb-2"
+            t={t}
+          />
         ) : null}
         {hasContent ? (
           <div className="max-h-96 overflow-y-auto">
@@ -119,55 +123,28 @@ export function CompareResultCard({
                 <MarkdownRenderer content={response.content} />
               </div>
             ) : (
-              <pre className="whitespace-pre-wrap break-words text-sm">{response.content}</pre>
+              <pre className="text-sm break-words whitespace-pre-wrap">{response.content}</pre>
             )}
           </div>
         ) : null}
         {hasJudgeDetails && judgeMessage ? (
-          <div className="mt-4 border-t border-border/60 pt-3">
+          <div className="border-border/60 mt-4 border-t pt-3">
             <JudgeRefereeDetails message={judgeMessage} />
           </div>
         ) : null}
       </CardContent>
 
       {hasContent ? (
-        <CardFooter className="shrink-0 flex-wrap gap-1.5 pt-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 px-2 text-xs"
-            onClick={toggleViewMode}
-          >
-            {isMarkdown ? <Code className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
-            {isMarkdown ? t('compare.viewRaw') : t('compare.viewMarkdown')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 px-2 text-xs"
-            onClick={copyContent}
-          >
-            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            {copied ? t('compare.copied') : t('compare.copy')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 px-2 text-xs"
-            onClick={exportMarkdown}
-          >
-            <Download className="h-3.5 w-3.5" />
-            {t('compare.exportMd')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 px-2 text-xs"
-            onClick={() => setExpanded(true)}
-          >
-            <Maximize2 className="h-3.5 w-3.5" />
-            {t('compare.expand')}
-          </Button>
+        <CardFooter className="shrink-0 pt-2">
+          <CompareResultActions
+            isMarkdown={isMarkdown}
+            copied={copied}
+            onToggleViewMode={toggleViewMode}
+            onCopy={copyContent}
+            onExport={exportMarkdown}
+            onExpand={() => setExpanded(true)}
+            t={t}
+          />
         </CardFooter>
       ) : null}
 
@@ -181,7 +158,7 @@ export function CompareResultCard({
               <Badge variant="outline" className="text-xs">
                 {response.provider}
               </Badge>
-              <span className="text-sm font-normal text-muted-foreground">
+              <span className="text-muted-foreground text-sm font-normal">
                 {t('compare.fullOutput')}
               </span>
             </DialogTitle>
@@ -192,7 +169,7 @@ export function CompareResultCard({
                 <MarkdownRenderer content={response.content} />
               </div>
             ) : (
-              <pre className="whitespace-pre-wrap break-words text-sm">{response.content}</pre>
+              <pre className="text-sm break-words whitespace-pre-wrap">{response.content}</pre>
             )}
           </div>
         </DialogContent>

@@ -9,6 +9,7 @@ export { DashboardOperationalState } from './dashboard-operational-state.enum';
 export { DashboardGreetingKey } from './dashboard-greeting-key.enum';
 export { PermissionGroupKey } from './permission-group.enum';
 export { UserStatus } from './user-status.enum';
+export { ThreadSettingsError } from './thread-settings-error.enum';
 export { ConnectorProvider } from './connector-provider.enum';
 export { ConnectorStatus } from './connector-status.enum';
 export { RoutingMode } from './routing-mode.enum';

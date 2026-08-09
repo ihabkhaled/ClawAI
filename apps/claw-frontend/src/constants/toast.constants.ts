@@ -1,10 +1,4 @@
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Info,
-  XCircle,
-  type LucideIcon,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info, XCircle, type LucideIcon } from 'lucide-react';
 
 import { ToastVariant } from '@/enums/toast-variant.enum';
 
@@ -37,18 +31,21 @@ export const TOAST_VARIANT_ICONS: Record<ToastVariant, LucideIcon | null> = {
 // surface so success looks green, error looks red, etc. The historical
 // `destructive` variant is preserved exactly to avoid breaking any consumers
 // still styling via `group-[.destructive]`.
+// `toast-surface` (globals.css) replaces the old `bg-<variant>/10` so the tint
+// composites over an OPAQUE base on mobile and over the page from `sm:` up.
+// Desktop is pixel-identical to the previous translucent treatment.
 export const TOAST_VARIANT_CONTAINER_CLASSES: Record<ToastVariant, string> = {
   [ToastVariant.Default]: 'border bg-background text-foreground',
   [ToastVariant.Success]:
-    'success group border-success/40 bg-success/10 text-foreground',
+    'success group border-success/40 toast-surface [--toast-tint:var(--success)] text-foreground',
   [ToastVariant.Error]:
-    'destructive group border-destructive/40 bg-destructive/10 text-foreground',
+    'destructive group border-destructive/40 toast-surface [--toast-tint:var(--destructive)] text-foreground',
   [ToastVariant.Destructive]:
     'destructive group border-destructive bg-destructive text-destructive-foreground',
   [ToastVariant.Warning]:
-    'warning group border-warning/40 bg-warning/10 text-foreground',
+    'warning group border-warning/40 toast-surface [--toast-tint:var(--warning)] text-foreground',
   [ToastVariant.Info]:
-    'info group border-info/40 bg-info/10 text-foreground',
+    'info group border-info/40 toast-surface [--toast-tint:var(--info)] text-foreground',
 };
 
 // Tailwind classes that recolor the leading icon for each variant. These line

@@ -847,6 +847,49 @@
   }
 
   /*
+   * Clears the mobile bottom nav for anything anchored to the bottom of the
+   * viewport (toasts) or to the bottom of a full-height mobile sheet (the
+   * sidebar footer). Reserves the nav height plus 1rem of breathing room;
+   * `.safe-bottom` adds the home-indicator inset on top of that.
+   *
+   * The reset breakpoint is `md` (768px), NOT `sm` — the nav itself is
+   * `md:hidden`, so releasing the reservation at `sm` would let content slide
+   * back under a nav that is still on screen between 640px and 767px.
+   */
+  .safe-bottom-base-nav {
+    --safe-bottom-base: calc(var(--mobile-bottom-nav-height, 4rem) + 1rem);
+  }
+
+  @media (min-width: 768px) {
+    .safe-bottom-base-nav {
+      --safe-bottom-base: 1rem;
+    }
+  }
+
+  /*
+   * Mobile toasts are OPAQUE; desktop keeps the translucent tinted glass.
+   *
+   * The tinted variants are 10% alpha, which over a dense chat transcript is
+   * unreadable on a small screen. The tint is painted as a gradient LAYER so it
+   * can sit on top of an opaque background-color on mobile and on top of
+   * nothing (i.e. the page) from `sm:` up — the variant hue survives in both,
+   * and desktop renders pixel-identical to the previous `bg-<variant>/10`.
+   *
+   * Only the four tinted variants use this. Default and Destructive already
+   * paint a fully opaque surface.
+   */
+  .toast-surface {
+    background-color: hsl(var(--background));
+    background-image: linear-gradient(hsl(var(--toast-tint) / 0.1), hsl(var(--toast-tint) / 0.1));
+  }
+
+  @media (min-width: 640px) {
+    .toast-surface {
+      background-color: transparent;
+    }
+  }
+
+  /*
    * The chat thread header's vertical rhythm.
    *
    * The breakpoint lives here rather than as `sm:pt-7` on the element because

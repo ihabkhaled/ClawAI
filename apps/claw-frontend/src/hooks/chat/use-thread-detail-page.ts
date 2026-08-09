@@ -130,6 +130,8 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
       onUseContextChange: data.threadSettings.setUseContext,
       onSave: data.threadSettings.handleSave,
       isPending: data.threadSettings.isPending,
+      maxTokensError: data.threadSettings.maxTokensError,
+      canSave: data.threadSettings.canSave,
     },
     virtualizedMessagesProps: data.virtualizedMessagesProps,
     composerHeight,

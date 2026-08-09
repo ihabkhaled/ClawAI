@@ -301,6 +301,8 @@ export const en: TranslationDictionary = {
     temperatureDescription: 'Controls randomness. Lower = more focused, higher = more creative.',
     maxTokens: 'Max Tokens',
     maxTokensDescription: 'Maximum length of the AI response.',
+    maxTokensErrorInteger: 'Max tokens must be a whole number.',
+    maxTokensErrorRange: 'Max tokens must be between 1 and 32000.',
     threadSettings: 'Thread Settings',
     preferredModel: 'Default AI Model',
     preferredModelDescription: 'Default model for this thread. Can be overridden per message.',

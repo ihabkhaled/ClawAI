@@ -16,6 +16,7 @@ import { SearchResults } from './search-results';
 export function GlobalSearch({ className }: GlobalSearchProps) {
   const {
     inputRef,
+    containerRef,
     threads,
     isLoading,
     search,
@@ -30,24 +31,28 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
   const { t } = useTranslation();
 
   return (
-    <div className={cn('relative', className)}>
+    <div ref={containerRef} className={cn('relative min-w-0', className)}>
       {isOpen ? (
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="relative min-w-0">
+            <Search className="text-muted-foreground absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2" />
+            {/* The expanded field is capped to a share of the viewport on
+             * mobile. At a fixed w-64 it pushed the locale / theme / user
+             * controls off the end of the topbar, and they only came back when
+             * the search was closed again. */}
             <Input
               ref={inputRef}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={t('chat.globalSearchPlaceholder')}
-              className="h-9 w-64 ps-8 text-sm"
+              className="h-9 w-[38vw] max-w-64 min-w-0 ps-8 text-sm sm:w-64"
             />
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9"
+            className="h-9 w-9 shrink-0"
             onClick={() => handleOpenChange(false)}
             aria-label={t('accessibility.closeSearch')}
           >
@@ -73,7 +78,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
             variant="ghost"
             onClick={handleToggle}
             aria-label={t('accessibility.openSearch')}
-            className="hidden h-9 items-center gap-2 px-2.5 text-sm font-normal text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+            className="text-muted-foreground hover:text-foreground hidden h-9 items-center gap-2 px-2.5 text-sm font-normal transition-colors sm:inline-flex"
           >
             <Search className="h-4 w-4" />
             <span>{t('accessibility.search')}</span>
@@ -83,7 +88,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
       )}
 
       {showResults ? (
-        <div className="absolute end-0 top-full z-50 mt-1 w-80 rounded-md border bg-popover p-1 shadow-md">
+        <div className="bg-popover absolute end-0 top-full z-50 mt-1 w-[min(20rem,calc(100vw-2rem))] rounded-md border p-1 shadow-md">
           <SearchResults isLoading={isLoading} threads={threads} onSelect={handleSelect} />
         </div>
       ) : null}

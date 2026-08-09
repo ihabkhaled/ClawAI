@@ -50,6 +50,8 @@ const baseProps = {
   onUseContextChange: vi.fn(),
   onSave: vi.fn(),
   isPending: false,
+  maxTokensError: null,
+  canSave: true,
 };
 
 function withQueryClient(children: ReactNode): ReactElement {
@@ -77,9 +79,7 @@ describe('ThreadSettings — plan-feature gate (judge mode)', () => {
   });
 
   it('hides judge-model selector when allowJudgeMode is true but judgeEnabled is false', () => {
-    render(
-      withQueryClient(<ThreadSettings {...baseProps} allowJudgeMode judgeEnabled={false} />),
-    );
+    render(withQueryClient(<ThreadSettings {...baseProps} allowJudgeMode judgeEnabled={false} />));
     expect(screen.queryByText('chat.judgeModelLabel')).not.toBeInTheDocument();
   });
 });
@@ -112,11 +112,7 @@ describe('ThreadSettings — model selector is never gated by plan features', ()
   });
 
   it('renders the model selector DISABLED only while the save mutation is pending', () => {
-    render(
-      withQueryClient(
-        <ThreadSettings {...baseProps} allowJudgeMode={false} isPending />,
-      ),
-    );
+    render(withQueryClient(<ThreadSettings {...baseProps} allowJudgeMode={false} isPending />));
     const comboboxes = screen.getAllByRole('combobox');
     const modelSelectorTrigger = comboboxes[0];
     // Radix Select reflects disabled state via the native `disabled` attribute

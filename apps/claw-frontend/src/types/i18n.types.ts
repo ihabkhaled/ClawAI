@@ -294,6 +294,8 @@ export type TranslationDictionary = {
     temperatureDescription: string;
     maxTokens: string;
     maxTokensDescription: string;
+    maxTokensErrorInteger: string;
+    maxTokensErrorRange: string;
     threadSettings: string;
     preferredModel: string;
     preferredModelDescription: string;

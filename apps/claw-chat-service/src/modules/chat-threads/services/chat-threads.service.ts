@@ -111,6 +111,8 @@ export class ChatThreadsService {
       contextPackIds: dto.contextPackIds,
       judgeEnabled: dto.judgeEnabled,
       judgeModel: dto.judgeModel,
+      qualityThreshold: dto.qualityThreshold,
+      maxReRouteAttempts: dto.maxReRouteAttempts,
       useMemory: dto.useMemory,
       useContext: dto.useContext,
     });

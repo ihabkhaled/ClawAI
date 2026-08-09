@@ -47,6 +47,11 @@ export { showToast } from './toast.utility';
 export { detectPlanFeatureGate } from './plan-feature-error.utility';
 export { logger } from './logger.utility';
 export { estimateCost } from './cost.utility';
+export {
+  validateMaxTokens,
+  validateQualityThreshold,
+  validateMaxReRouteAttempts,
+} from './thread-settings-validation.utility';
 export { isAdmin, hasPermission, hasAnyPermission } from './permissions.utility';
 export { requiredPermissionForPath, requiredRequirementForPath } from './route-permission.utility';
 export { connectSse } from './sse.utility';

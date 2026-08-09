@@ -301,6 +301,8 @@ export const ar: TranslationDictionary = {
     temperatureDescription: 'تتحكم بالعشوائية. أقل = أكثر تركيزاً، أعلى = أكثر إبداعاً.',
     maxTokens: 'الحد الأقصى للرموز',
     maxTokensDescription: 'الحد الأقصى لطول رد الذكاء الاصطناعي.',
+    maxTokensErrorInteger: 'يجب أن يكون الحد الأقصى للرموز عددًا صحيحًا.',
+    maxTokensErrorRange: 'يجب أن يكون الحد الأقصى للرموز بين 1 و32000.',
     threadSettings: 'إعدادات المحادثة',
     preferredModel: 'النموذج الافتراضي',
     preferredModelDescription: 'النموذج الافتراضي لهذه المحادثة. يمكن تجاوزه لكل رسالة.',

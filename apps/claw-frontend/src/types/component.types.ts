@@ -457,6 +457,10 @@ export type ThreadSettingsProps = {
   // Plan-feature gate: when false the judge toggle + judge-model selector are
   // hidden entirely. ADMIN passes true via usePlanFeatures.
   allowJudgeMode: boolean;
+  // Already-translated inline error for the maxTokens field, or null when the
+  // value is acceptable to the update-thread Zod schema.
+  maxTokensError: string | null;
+  canSave: boolean;
 };
 
 export type JudgeRefereeDetailsProps = {
@@ -1476,6 +1480,19 @@ export type CompareJudgeControlsProps = {
 // in the Judge Review modal. The user-supplied model is encoded the same way
 // the judge picker encodes its selection — `PROVIDER:model` for cloud, plain
 // model name for local — and parsed by the backend via parseJudgeModel.
+// Action bar for a single compare panel. Rendered at BOTH ends of the card so
+// the controls are reachable without scrolling past a long response.
+export type CompareResultActionsProps = {
+  isMarkdown: boolean;
+  copied: boolean;
+  onToggleViewMode: () => void;
+  onCopy: () => void;
+  onExport: () => void;
+  onExpand: () => void;
+  className?: string;
+  t: TranslateFunction;
+};
+
 export type CompareCriticControlsProps = {
   criticEnabled: boolean;
   onCriticEnabledChange: (value: boolean) => void;

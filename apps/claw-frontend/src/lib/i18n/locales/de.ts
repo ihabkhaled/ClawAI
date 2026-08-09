@@ -303,6 +303,8 @@ export const de: TranslationDictionary = {
       'Steuert die Zufälligkeit. Niedriger = fokussierter, höher = kreativer.',
     maxTokens: 'Max. Tokens',
     maxTokensDescription: 'Maximale Länge der KI-Antwort.',
+    maxTokensErrorInteger: 'Max. Tokens muss eine ganze Zahl sein.',
+    maxTokensErrorRange: 'Max. Tokens muss zwischen 1 und 32000 liegen.',
     threadSettings: 'Thread-Einstellungen',
     preferredModel: 'Standard-KI-Modell',
     preferredModelDescription:

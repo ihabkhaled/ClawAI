@@ -303,6 +303,8 @@ export const ru: TranslationDictionary = {
     temperatureDescription: 'Управляет случайностью. Ниже = сфокусированнее, выше = креативнее.',
     maxTokens: 'Макс. токенов',
     maxTokensDescription: 'Максимальная длина ответа ИИ.',
+    maxTokensErrorInteger: 'Максимальное число токенов должно быть целым числом.',
+    maxTokensErrorRange: 'Максимальное число токенов должно быть от 1 до 32000.',
     threadSettings: 'Настройки чата',
     preferredModel: 'Модель ИИ по умолчанию',
     preferredModelDescription:
