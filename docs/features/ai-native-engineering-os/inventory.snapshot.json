@@ -6091,6 +6091,11 @@
         "route": "/admin"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/payment-gateways/page.tsx",
+        "kind": "page",
+        "route": "/admin/payment-gateways"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/plans/[id]/edit/page.tsx",
         "kind": "page",
         "route": "/admin/plans/[id]/edit"
@@ -6209,6 +6214,11 @@
         "file": "apps/claw-frontend/src/app/(portal)/billing/cancelled/page.tsx",
         "kind": "page",
         "route": "/billing/cancelled"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/billing/checkout/page.tsx",
+        "kind": "page",
+        "route": "/billing/checkout"
       },
       {
         "file": "apps/claw-frontend/src/app/(portal)/billing/page.tsx",
@@ -7000,7 +7010,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4331
+        "value": 4375
       },
       "localeCount": 13,
       "locales": [
@@ -8574,7 +8584,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 258
+        "testFiles": 265
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9321,7 +9331,7 @@
     "endpointCount": 569,
     "envVarCount": 342,
     "eventCount": 165,
-    "frontendRouteCount": 113,
+    "frontendRouteCount": 115,
     "localeCount": 13,
     "nginxRouteCount": 53,
     "permissionCount": 38,
@@ -9330,7 +9340,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 802,
+    "totalTestFiles": 809,
     "workspaceCount": 25
   }
 }

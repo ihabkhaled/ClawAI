@@ -21,6 +21,8 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
   const disabled = t('billing.quota.disabled');
   const unlimited = t('billing.quota.unlimited');
   const interval = isYearly ? 'yearly' : 'monthly';
+  const checkoutRoute = `${ROUTES.BILLING_CHECKOUT}?plan=${encodeURIComponent(plan.slug)}&interval=${interval}`;
+  const returnRoute = isFree ? ROUTES.CHAT : checkoutRoute;
 
   return (
     <article
@@ -74,7 +76,7 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
       </dl>
 
       <Link
-        href={`${ROUTES.REGISTER}?plan=${plan.slug}&interval=${interval}`}
+        href={`${ROUTES.REGISTER}?returnTo=${encodeURIComponent(returnRoute)}`}
         aria-disabled={price === null}
         className={cn(
           buttonVariants({ variant: plan.isDefault ? 'default' : 'outline' }),

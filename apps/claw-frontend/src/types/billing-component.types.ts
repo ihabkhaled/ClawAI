@@ -2,6 +2,7 @@ import type { BillingGateway, BillingInterval } from '@/enums/billing.enum';
 import type {
   BillingPlan,
   BillingUsage,
+  CheckoutGatewayView,
   CurrentSubscription,
   FeatureAllowance,
   InvoiceView,
@@ -102,6 +103,7 @@ export type GatewaySelectProps = {
   value: BillingGateway;
   onChange: (gateway: BillingGateway) => void;
   disabled: boolean;
+  gateways: CheckoutGatewayView[];
   t: TranslateFunction;
 };
 
@@ -111,6 +113,7 @@ export type PlanChangeDialogProps = {
   targetPlan: BillingPlan | null;
   quote: ProrationQuoteView | null;
   gateway: BillingGateway;
+  gateways: CheckoutGatewayView[];
   onGatewayChange: (gateway: BillingGateway) => void;
   onConfirm: () => void;
   isQuoting: boolean;
@@ -125,6 +128,7 @@ export type ProrationBreakdownProps = {
 
 export type GatewayCheckoutDialogProps = {
   session: GatewayCheckoutSession | null;
+  gateways: CheckoutGatewayView[];
   onClose: () => void;
   onComplete: () => Promise<void>;
   t: TranslateFunction;

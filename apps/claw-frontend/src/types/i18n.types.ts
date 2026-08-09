@@ -177,6 +177,7 @@ export type TranslationDictionary = {
     adminPlans: string;
     adminRoles: string;
     adminRuntimeProgress: string;
+    adminPaymentGateways: string;
     plan: string;
     billing: string;
     usage: string;
@@ -994,6 +995,12 @@ export type TranslationDictionary = {
     systemStatusOverview: string;
     userManagement: string;
     colUsername: string;
+    editUser: string;
+    saveUser: string;
+    editUsername: string;
+    editEmail: string;
+    userUpdated: string;
+    userUpdateFailed: string;
     colEmail: string;
     colRole: string;
     colStatus: string;
@@ -1024,6 +1031,12 @@ export type TranslationDictionary = {
     description: string;
     profile: string;
     profileDescription: string;
+    saveProfile: string;
+    profileSessionNotice: string;
+    profileUpdateFailed: string;
+    deleteAccount: string;
+    deleteAccountDescription: string;
+    accountDeleteFailed: string;
     username: string;
     email: string;
     emailReadOnly: string;
@@ -3084,6 +3097,35 @@ export type TranslationDictionary = {
     period: string;
     nonUsdRevenue: string;
   };
+  adminGatewayConfig: {
+    title: string;
+    description: string;
+    loading: string;
+    error: string;
+    empty: string;
+    enabled: string;
+    mode: string;
+    secretHint: string;
+    configured: string;
+    notConfigured: string;
+    currency: string;
+    webhookUrl: string;
+    save: string;
+    saving: string;
+    saved: string;
+    saveError: string;
+    fields: {
+      credential: string;
+      clientId: string;
+      clientSecret: string;
+      webhookId: string;
+      secretKey: string;
+      publicKey: string;
+      apiKey: string;
+      hmacSecret: string;
+      cardIntegrationId: string;
+    };
+  };
   adminPlans: {
     title: string;
     description: string;
@@ -3505,6 +3547,7 @@ export type TranslationDictionary = {
       verifyFailed: string;
       loadFailed: string;
       popupBlocked: string;
+      loadingPaypal: string;
     };
     planChange: {
       quoteFailed: string;
@@ -3635,6 +3678,9 @@ export type TranslationDictionary = {
       placeholder: string;
       PAYPAL: string;
       PAYMOB: string;
+      paypalCard: string;
+      paymobTestingSoon: string;
+      unavailable: string;
     };
     proration: {
       unusedCredit: string;

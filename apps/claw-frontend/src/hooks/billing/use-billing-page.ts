@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react';
 
+import { useBillingGateways } from '@/hooks/billing/use-billing-gateways';
 import { useBillingInvoices } from '@/hooks/billing/use-billing-invoices';
 import { useBillingPlans } from '@/hooks/billing/use-billing-plans';
 import { useBillingUsage } from '@/hooks/billing/use-billing-usage';
@@ -22,6 +23,7 @@ export function useBillingPage(): UseBillingPageReturn {
   const subscription = useCurrentSubscription();
   const usage = useBillingUsage();
   const invoices = useBillingInvoices();
+  const gateways = useBillingGateways();
   const paymentMethods = usePaymentMethods();
   const planChange = usePlanChange();
   const plans = useBillingPlans();
@@ -29,6 +31,13 @@ export function useBillingPage(): UseBillingPageReturn {
   const cancellation = useCancelSubscription();
   const view = useBillingViewState();
   const { closePlanChange, setIsCancelOpen, setIsEndNowOpen } = view;
+
+  useEffect(() => {
+    const first = gateways.gateways[0];
+    if (first !== undefined && !gateways.gateways.some((item) => item.gateway === view.gateway)) {
+      view.setGateway(first.gateway);
+    }
+  }, [gateways.gateways, view]);
 
   const hasSubscription = isSubscriptionEntitling(subscription.subscription);
 
@@ -92,6 +101,7 @@ export function useBillingPage(): UseBillingPageReturn {
     subscription,
     usage,
     invoices,
+    gateways,
     paymentMethods,
     planChange,
     plans,

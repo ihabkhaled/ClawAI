@@ -31,10 +31,18 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
   const { t } = useTranslation();
 
   return (
-    <div ref={containerRef} className={cn('relative min-w-0', className)}>
+    <div
+      ref={containerRef}
+      className={cn(
+        'relative min-w-0',
+        isOpen &&
+          'max-sm:bg-card max-sm:absolute max-sm:inset-x-2 max-sm:z-40 max-sm:rounded-md max-sm:p-1',
+        className,
+      )}
+    >
       {isOpen ? (
-        <div className="flex min-w-0 items-center gap-2">
-          <div className="relative min-w-0">
+        <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+          <div className="relative min-w-0 max-sm:flex-1">
             <Search className="text-muted-foreground absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2" />
             {/* The expanded field is capped to a share of the viewport on
              * mobile. At a fixed w-64 it pushed the locale / theme / user
@@ -46,7 +54,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={t('chat.globalSearchPlaceholder')}
-              className="h-9 w-[38vw] max-w-64 min-w-0 ps-8 text-sm sm:w-64"
+              className="h-9 min-w-0 ps-8 text-sm max-sm:w-full sm:w-64"
             />
           </div>
           <Button

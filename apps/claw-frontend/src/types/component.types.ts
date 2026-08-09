@@ -55,6 +55,7 @@ import type {
 } from './adaptive-learning.types';
 import type { RepairResultState } from './answer-repair.types';
 import type { AdminUser, AuditLog } from './audit.types';
+import type { AdminUserUpdateRequest } from './auth.types';
 import type { BestOfNResultState, CandidateResult } from './best-of-n.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
 import type {
@@ -508,10 +509,12 @@ export type UserTableProps = {
   onDeactivate: (userId: string) => void;
   onReactivate: (userId: string) => void;
   onAssignPlan: (userId: string, planId: string) => void;
+  onUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
   isReactivatePending: boolean;
   isAssignPlanPending: boolean;
+  isUpdateUserPending: boolean;
 };
 
 // ─── Chat component props ───────────────────────────────────────────────────
@@ -1275,10 +1278,12 @@ export type UsersContentProps = {
   onDeactivate: (userId: string) => void;
   onReactivate: (userId: string) => void;
   onAssignPlan: (userId: string, planId: string) => void;
+  onUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
   isReactivatePending: boolean;
   isAssignPlanPending: boolean;
+  isUpdateUserPending: boolean;
   t: TranslateFunction;
 };
 

@@ -22,7 +22,7 @@ import { isPublicPath } from '@/utilities/route-visibility.utility';
 
 const PUBLIC_AUTH_PATHS = ['/login', '/register'];
 
-export function middleware(request: NextRequest): NextResponse {
+export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   const locale = parseLocaleFromPathname(pathname);
   const isLocaleNeutral = LOCALE_NEUTRAL_PREFIXES.some(

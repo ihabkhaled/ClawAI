@@ -9,7 +9,7 @@ describe('safeReturnRoute', () => {
     );
   });
 
-  it.each([null, 'https://evil.example', '//evil.example'])(
+  it.each([null, 'https://evil.example', '//evil.example', '/\\evil.example', ' /billing'])(
     'falls back to chat for unsafe return route %s',
     (value) => {
       expect(safeReturnRoute(value)).toBe('/chat');

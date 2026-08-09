@@ -9,6 +9,7 @@ import type {
   AuditListParams,
   UsageListParams,
   AdminUsersResponse,
+  AdminUserUpdateRequest,
 } from '@/types';
 
 function toStringParams(params: Record<string, unknown>): Record<string, string> {
@@ -65,6 +66,10 @@ export const auditRepository = {
 
   async updateUserRole(userId: string, role: string): Promise<void> {
     await apiClient.patch(`/users/${userId}/role`, { role });
+  },
+
+  async updateUser(userId: string, data: AdminUserUpdateRequest): Promise<void> {
+    await apiClient.patch(`/users/${userId}`, data);
   },
 
   async deactivateUser(userId: string): Promise<void> {

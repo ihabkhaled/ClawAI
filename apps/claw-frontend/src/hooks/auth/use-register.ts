@@ -1,15 +1,16 @@
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/services/auth/auth.service';
 import type { RegisterRequest } from '@/types';
 import { logger, showToast } from '@/utilities';
 import { saveCredential } from '@/utilities/credential-storage.utility';
+import { safeReturnRoute } from '@/utilities/safe-return-route.utility';
 
 export function useRegister() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
 
   const mutation = useMutation({
@@ -25,7 +26,7 @@ export function useRegister() {
         message: 'User registered successfully',
       });
       showToast.success({ title: t('toast.registerSuccess') });
-      router.push(ROUTES.CHAT);
+      router.push(safeReturnRoute(searchParams.get('returnTo')));
     },
     onError: (error: Error) => {
       logger.error({ component: 'auth', action: 'register-error', message: 'Registration failed' });

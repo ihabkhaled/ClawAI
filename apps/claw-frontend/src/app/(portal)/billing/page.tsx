@@ -22,6 +22,7 @@ export default function BillingPage(): ReactElement {
     subscription,
     usage,
     invoices,
+    gateways,
     paymentMethods,
     planChange,
     plans,
@@ -142,6 +143,7 @@ export default function BillingPage(): ReactElement {
         targetPlan={view.targetPlan}
         quote={planChange.quote}
         gateway={view.gateway}
+        gateways={gateways.gateways}
         onGatewayChange={view.setGateway}
         onConfirm={confirmPlanSelection}
         isQuoting={planChange.isQuoting}
@@ -173,18 +175,21 @@ export default function BillingPage(): ReactElement {
 
       <GatewayCheckoutDialog
         session={checkout.gatewaySession}
+        gateways={gateways.gateways}
         onClose={checkout.closeGateway}
         onComplete={checkout.completeGateway}
         t={t}
       />
       <GatewayCheckoutDialog
         session={planChange.gatewaySession}
+        gateways={gateways.gateways}
         onClose={planChange.closeGateway}
         onComplete={planChange.completeGateway}
         t={t}
       />
       <GatewayCheckoutDialog
         session={paymentMethods.gatewaySession}
+        gateways={gateways.gateways}
         onClose={paymentMethods.closeGateway}
         onComplete={paymentMethods.completeGateway}
         t={t}

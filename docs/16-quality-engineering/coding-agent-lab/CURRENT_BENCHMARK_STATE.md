@@ -1,19 +1,21 @@
 # Current Benchmark State
 
-Updated 2026-08-07. Read this first when resuming; do not redo completed work.
+Updated 2026-08-09. Read this first when resuming; do not redo completed work.
 
-- **Current extension version:** source `0.55.0`, installed `0.55.0`, **active
-  Extension Host still `0.52.0`** — the window has not been reloaded across
-  either release.
-- **Current feature stage:** pre-Phase-0. Password Reset has not started.
+- **Current extension version:** source `0.57.3`. The repository contains the
+  matching versioned VSIX, but this audit did not install it or prove which
+  version a human-operated Extension Host is running.
+- **Current feature stage:** not established by this audit; the user-owned
+  password-reset notes were deliberately excluded from inspection.
 - **Current benchmark branch/worktree:** none. Work is on `main` in both repos
   by operator instruction; no lab branch was created.
 - **Current agent thread:** none.
 - **Last agent run:** none. Zero runs have been issued in this lab.
-- **Completed stages:** baseline capture (ITERATION-001); `0.53.0`, the Cloud
-  connection lane (ITERATION-002); `0.54.0`, effort modes (ITERATION-003). Both
-  repos committed and pushed on `main`, nothing unpushed.
-- **Unresolved feature findings:** none — there is no feature code yet.
+- **Completed product changes recorded in history:** `0.53.0` Cloud connection,
+  `0.54.0` effort modes, `0.55.0` speed modes, and the subsequent Runtime V2
+  reliability releases through `0.57.3`.
+- **Unresolved feature findings:** this audit did not assess the password-reset
+  implementation or provenance.
 - **Open product defects:** none observed through the real UI, which has not
   been exercised. Two qualification gaps were found by audit: effort modes did
   not exist (closed in `0.54.0`) and **speed modes 1X / 1.5X / 2X still do not
@@ -26,14 +28,26 @@ Updated 2026-08-07. Read this first when resuming; do not redo completed work.
 `code serve-web` drives the real extension UI from a browser. Phase 0 has been
 sent twice and observed. See ITERATION-006 in the ledger.
 
-**Blocking the benchmark right now:** `workspace.files list` fails in 23 ms on
-the agent's first tool call, and the failed invocation's error body is not
-written to the Output channel, so it cannot yet be diagnosed. Fixing that
-observability gap is the next product change.
+The two defects that previously blocked the benchmark are closed in code:
 
-**Also open:** AUTO routing sends coding-agent runs to `gemma3:27b` through the
-plain chat path, so the 17 advertised tools are unusable in that lane. Backend
-router work, parent repo.
+- Coding-agent commits `d1a1b78` and `901a811` preserve a trusted executor's
+  bounded failure reason and let the model continue after a failed tool step.
+  `runtime-tool-dispatcher.test.ts` covers reason propagation, empty reasons,
+  redaction, and continuation after failure.
+- Parent commits `27e20082` and `66772c3f` make agent AUTO routing capability
+  aware and preserve the AUTO sentinel through Runtime V2 admission. The
+  extension still correctly sends `provider: "AUTO"` and `model: "AUTO"`; the
+  backend owns model selection.
+
+The workspace-list incident itself was a harness addressing error, not a
+general executor defect: `?folder=d:/Freelance/Claw` created a phantom root,
+while `?folder=/d:/Freelance/Claw` addressed the real workspace. The corrected
+harness produced a successful `workspace.files list` result in 14 ms. See
+[`evidence/model-matrix-2026-08-08-root-cause.md`](evidence/model-matrix-2026-08-08-root-cause.md).
+
+**Blocking certification now:** the repaired AUTO lane and current `0.57.3`
+VSIX have not been certified through a human-operated desktop VS Code window.
+Code tests and served-web harness evidence do not substitute for that proof.
 
 ## Superseded note — why the ladder was thought impossible
 
@@ -49,12 +63,11 @@ The mentor-owned half of the lab can continue without one.
 
 ## Next actions — operator
 
-1. **Reload the VS Code window** (`Developer: Reload Window`). Until this
-   happens the running Extension Host is `0.52.0` and anything observed is
-   observing the old build.
+1. Install `apps/claw-coding-agent/builds/clawai-coding-agent-0.57.3.vsix`, then
+   **reload the VS Code window** (`Developer: Reload Window`).
 2. **Confirm the loaded version.** ClawAI output channel or the Extensions view
-   must read `0.53.0`. Pack §7: never test an installed VSIX without reloading
-   and then assume new code is active.
+   must read `0.57.3`. Pack §7: never infer the active Extension Host version
+   from source files, an installed VSIX, or a successful package test.
 3. **Exercise the Cloud lane end to end** — the one thing `0.53.0` ships that
    has not been proven through a live browser round trip. On the connection
    gate select Backend **Cloud** and Frontend **Cloud**, press Connect, and
@@ -96,8 +109,9 @@ The mentor-owned half of the lab can continue without one.
 Pack §13 requires the two goals to stay separate and never collapse into one
 vague "done".
 
-- **Goal A — market-ready coding-agent product:** NOT ASSESSED. No 100-round
-  conformance for any option family, no measured effort-mode timings, no speed
-  modes at all, no follow-up/retry/resume labs. Two qualification gaps found by
-  audit; one closed (`0.54.0`), one open (speed).
-- **Goal B — Password Reset by the agent:** NOT STARTED.
+- **Goal A — market-ready coding-agent product:** NOT CERTIFIED. No 100-round
+  conformance for any option family, no measured effort/speed-mode timings, and
+  no human desktop follow-up/retry/resume qualification are recorded here.
+- **Goal B — Password Reset by the agent:** NOT CERTIFIED. This audit did not
+  inspect or alter the user-owned password-reset notes and does not infer agent
+  provenance from repository contents.

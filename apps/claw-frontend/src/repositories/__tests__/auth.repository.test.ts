@@ -5,11 +5,15 @@ import type { LoginResponse, RefreshResponse, UserProfile } from '@/types';
 
 const mockGet = vi.fn();
 const mockPost = vi.fn();
+const mockPatch = vi.fn();
+const mockDelete = vi.fn();
 
 vi.mock('@/services/shared/api-client', () => ({
   apiClient: {
     get: (...args: unknown[]) => mockGet(...args),
     post: (...args: unknown[]) => mockPost(...args),
+    patch: (...args: unknown[]) => mockPatch(...args),
+    delete: (...args: unknown[]) => mockDelete(...args),
   },
 }));
 
@@ -99,6 +103,32 @@ describe('authRepository', () => {
 
       expect(mockGet).toHaveBeenCalledWith('/auth/me');
       expect(result).toEqual(mockUser);
+    });
+  });
+
+  it('updates the authenticated profile with current-password confirmation', async () => {
+    mockPatch.mockResolvedValueOnce({ data: { ...mockUser, username: 'renamed' } });
+
+    await authRepository.updateOwnProfile({
+      username: 'renamed',
+      email: 'test@example.com',
+      currentPassword: 'CurrentPass1!',
+    });
+
+    expect(mockPatch).toHaveBeenCalledWith('/users/me', {
+      username: 'renamed',
+      email: 'test@example.com',
+      currentPassword: 'CurrentPass1!',
+    });
+  });
+
+  it('deletes the authenticated account with current-password confirmation', async () => {
+    mockDelete.mockResolvedValueOnce({ data: undefined });
+
+    await authRepository.deleteOwnAccount({ currentPassword: 'CurrentPass1!' });
+
+    expect(mockDelete).toHaveBeenCalledWith('/users/me', {
+      data: { currentPassword: 'CurrentPass1!' },
     });
   });
 });

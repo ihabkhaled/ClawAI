@@ -20,6 +20,7 @@ export function PlanChangeDialog({
   targetPlan,
   quote,
   gateway,
+  gateways,
   onGatewayChange,
   onConfirm,
   isQuoting,
@@ -33,7 +34,8 @@ export function PlanChangeDialog({
   // An existing subscriber must have a quote before confirming: the confirm
   // call is keyed by quote id, and the amount shown here is the amount that
   // will be charged. Never let the button through on a pending quote.
-  const isBlocked = isQuoting || isConfirming;
+  const requiresGateway = quote === null || !quote.isScheduledForPeriodEnd;
+  const isBlocked = isQuoting || isConfirming || (requiresGateway && gateways.length === 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,8 +50,19 @@ export function PlanChangeDialog({
           {!isQuoting && quote !== null ? <ProrationBreakdown quote={quote} t={t} /> : null}
 
           {/* A scheduled downgrade takes no payment, so it needs no gateway. */}
-          {quote === null || !quote.isScheduledForPeriodEnd ? (
-            <GatewaySelect value={gateway} onChange={onGatewayChange} disabled={isBlocked} t={t} />
+          {requiresGateway && gateways.length > 0 ? (
+            <GatewaySelect
+              value={gateway}
+              onChange={onGatewayChange}
+              disabled={isBlocked}
+              gateways={gateways}
+              t={t}
+            />
+          ) : null}
+          {requiresGateway && gateways.length === 0 ? (
+            <p className="text-muted-foreground text-sm" role="status">
+              {t('billing.gateway.unavailable')}
+            </p>
           ) : null}
         </div>
 

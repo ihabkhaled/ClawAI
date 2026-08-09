@@ -28,8 +28,21 @@ test('release uses its own concurrency group, independent of deploy-production',
   assert.match(workflow, /cancel-in-progress:\s*false/u);
 });
 
-test('release commit carries [skip ci] as a second loop-prevention guard', () => {
-  assert.match(workflow, /chore\(release\): v\$NEXT \[skip ci\]/u);
+test('release commit and GitHub release use the deployment release label', () => {
+  assert.match(workflow, /git commit --quiet -m "chore\(release\): Deployment Release v\$NEXT"/u);
+  assert.match(
+    workflow,
+    /--title "chore\(release\): Deployment Release v\$\{\{ steps\.release\.outputs\.next \}\}"/u,
+  );
+});
+
+test('release relies on the built-in token and workflow_run gates for loop prevention, not skip directives', () => {
+  const checkout =
+    workflow.split('- uses: actions/checkout@v7')[1]?.split('- uses: actions/setup-node@v7')[0] ??
+    '';
+  assert.doesNotMatch(checkout, /token:/u);
+  assert.doesNotMatch(checkout, /persist-credentials:\s*false/u);
+  assert.doesNotMatch(workflow, /\[skip ci\]/iu);
 });
 
 test('release never force-pushes to main', () => {

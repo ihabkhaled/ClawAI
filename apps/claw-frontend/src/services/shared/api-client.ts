@@ -1,5 +1,5 @@
 import { httpClient } from '@/lib/http-client';
-import type { ApiClientRequestOptions, ApiResponse } from '@/types';
+import type { ApiClientDeleteOptions, ApiClientRequestOptions, ApiResponse } from '@/types';
 
 export class ApiClientError extends Error {
   status: number;
@@ -77,9 +77,11 @@ export const apiClient = {
     }
   },
 
-  async delete<T>(path: string): Promise<ApiResponse<T>> {
+  async delete<T>(path: string, options?: ApiClientDeleteOptions): Promise<ApiResponse<T>> {
     try {
-      const response = await httpClient.delete<T>(path);
+      const response = options
+        ? await httpClient.delete<T>(path, options)
+        : await httpClient.delete<T>(path);
       return { data: response.data, status: response.status };
     } catch (error) {
       throw toApiClientError(error);

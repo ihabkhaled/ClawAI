@@ -1,4 +1,9 @@
-import type { BillingInterval, PlanFeature, SubscriptionStatus } from '@/enums/billing.enum';
+import type {
+  BillingGateway,
+  BillingInterval,
+  PlanFeature,
+  SubscriptionStatus,
+} from '@/enums/billing.enum';
 
 // Field names mirror the backend DTOs verbatim. Renaming one on the way in is
 // how date and money rendering breaks silently: new Date(undefined) is
@@ -150,4 +155,32 @@ export type PaymentMethodView = {
   expiryMonth: number | null;
   expiryYear: number | null;
   isDefault: boolean;
+};
+
+export type CheckoutGatewayView = {
+  gateway: BillingGateway;
+  mode: string;
+  testingSoon: boolean;
+  publicIdentifier: string | null;
+};
+
+export type GatewayConfigFieldView = {
+  key: string;
+  configured: boolean;
+};
+
+export type GatewayAdminView = {
+  gateway: BillingGateway;
+  isEnabled: boolean;
+  mode: string;
+  fields: GatewayConfigFieldView[];
+  options: { currency?: string; webhookUrl?: string };
+  updatedAt: string;
+};
+
+export type GatewayConfigUpdate = {
+  isEnabled?: boolean;
+  mode?: string;
+  credentials?: Record<string, string>;
+  options?: { currency?: string; webhookUrl?: string };
 };

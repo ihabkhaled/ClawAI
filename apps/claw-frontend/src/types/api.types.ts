@@ -1,4 +1,4 @@
-import type { HttpMethod } from "@/enums";
+import type { HttpMethod } from '@/enums';
 
 export type ApiRequestConfig = {
   method: HttpMethod;
@@ -25,4 +25,8 @@ export type ApiError = {
 export type ApiClientRequestOptions = {
   timeout?: number;
   signal?: AbortSignal;
+};
+
+export type ApiClientDeleteOptions = {
+  data?: unknown;
 };

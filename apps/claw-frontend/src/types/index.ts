@@ -6,6 +6,10 @@ export type {
   RegisterResponse,
   RefreshResponse,
   AuthState,
+  UpdateOwnProfileRequest,
+  DeleteOwnAccountRequest,
+  AdminUserUpdateRequest,
+  AdminUserUpdateMutationVariables,
 } from './auth.types';
 export type {
   RoutePermission,
@@ -202,7 +206,13 @@ export type {
 } from './dashboard.types';
 export type { ServiceHealthResult, AggregatedHealth } from './health.types';
 export type { UseServiceAvailabilityReturn } from './service-availability.types';
-export type { ApiRequestConfig, ApiResponse, ApiError, ApiClientRequestOptions } from './api.types';
+export type {
+  ApiRequestConfig,
+  ApiResponse,
+  ApiError,
+  ApiClientRequestOptions,
+  ApiClientDeleteOptions,
+} from './api.types';
 export type {
   AuthStoreState,
   AuthStoreActions,

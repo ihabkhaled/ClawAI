@@ -2,6 +2,7 @@ import type { BillingGateway, BillingInterval, BillingReturnPhase } from '@/enum
 import type {
   BillingPlan,
   BillingUsage,
+  CheckoutGatewayView,
   CurrentSubscription,
   InvoiceView,
   PaymentMethodView,
@@ -15,6 +16,12 @@ export type UseBillingPlansReturn = {
   isLoading: boolean;
   isError: boolean;
   error: unknown;
+};
+
+export type UseBillingGatewaysReturn = {
+  gateways: CheckoutGatewayView[];
+  isLoading: boolean;
+  isError: boolean;
 };
 
 export type UseCurrentSubscriptionReturn = {
@@ -31,7 +38,7 @@ export type UseBillingUsageReturn = {
 };
 
 export type UseStartCheckoutReturn = {
-  startCheckout: (input: { planId: string; billingInterval: string; gateway: string }) => void;
+  startCheckout: (input: CheckoutStartInput) => void;
   isPending: boolean;
   // Surfaced as a dismissable banner as well as a toast. A silent mutation
   // failure on a payment screen is a delivery blocker.
@@ -40,6 +47,31 @@ export type UseStartCheckoutReturn = {
   gatewaySession: GatewayCheckoutSession | null;
   closeGateway: () => void;
   completeGateway: () => Promise<void>;
+};
+
+export type CheckoutStartInput = {
+  planId: string;
+  billingInterval: string;
+  gateway: string;
+};
+
+export type CheckoutMutationInput = CheckoutStartInput & {
+  idempotencyKey: string;
+};
+
+export type UseBillingCheckoutPageReturn = {
+  t: TranslateFunction;
+  plan: BillingPlan | null;
+  formattedPrice: string | null;
+  gateways: CheckoutGatewayView[];
+  hasAvailableGateways: boolean;
+  gateway: BillingGateway;
+  setGateway: (gateway: BillingGateway) => void;
+  isLoading: boolean;
+  hasCatalogError: boolean;
+  canCheckout: boolean;
+  checkout: UseStartCheckoutReturn;
+  handleCheckout: () => void;
 };
 
 export type UsePlanChangeReturn = {
@@ -112,6 +144,7 @@ export type UseBillingPageReturn = {
   subscription: UseCurrentSubscriptionReturn;
   usage: UseBillingUsageReturn;
   invoices: UseBillingInvoicesReturn;
+  gateways: UseBillingGatewaysReturn;
   paymentMethods: UsePaymentMethodsReturn;
   planChange: UsePlanChangeReturn;
   plans: UseBillingPlansReturn;

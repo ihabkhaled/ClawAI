@@ -29,6 +29,26 @@ export type RefreshResponse = {
   tokens: TokenPair;
 };
 
+export type UpdateOwnProfileRequest = {
+  currentPassword: string;
+  email?: string;
+  username?: string;
+};
+
+export type DeleteOwnAccountRequest = {
+  currentPassword: string;
+};
+
+export type AdminUserUpdateRequest = {
+  email?: string;
+  username?: string;
+};
+
+export type AdminUserUpdateMutationVariables = {
+  userId: string;
+  data: AdminUserUpdateRequest;
+};
+
 export interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;

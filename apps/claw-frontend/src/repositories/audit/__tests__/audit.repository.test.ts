@@ -48,6 +48,20 @@ describe('audit repository — user lifecycle', () => {
     expect(mockPatch).toHaveBeenCalledWith('/users/user-1/role', { role: 'OPERATOR' });
   });
 
+  it('updates editable user profile fields through the admin user resource', async () => {
+    mockPatch.mockResolvedValueOnce({ data: undefined });
+
+    await auditRepository.updateUser('user-1', {
+      username: 'renamed',
+      email: 'renamed@example.com',
+    });
+
+    expect(mockPatch).toHaveBeenCalledWith('/users/user-1', {
+      username: 'renamed',
+      email: 'renamed@example.com',
+    });
+  });
+
   it('reads the admin user list from the users collection', async () => {
     mockGet.mockResolvedValueOnce({ data: { data: [], total: 0 } });
 

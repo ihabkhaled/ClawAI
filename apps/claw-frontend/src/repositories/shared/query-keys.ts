@@ -6,6 +6,7 @@ export const queryKeys = {
     usage: () => [...queryKeys.billing.all, 'usage'] as const,
     invoices: () => [...queryKeys.billing.all, 'invoices'] as const,
     paymentMethods: () => [...queryKeys.billing.all, 'payment-methods'] as const,
+    gateways: () => [...queryKeys.billing.all, 'gateways'] as const,
     checkoutSession: (id: string) => [...queryKeys.billing.all, 'checkout', id] as const,
   },
   auth: {
@@ -103,6 +104,9 @@ export const queryKeys = {
     dashboard: () => ['adminBilling', 'dashboard'] as const,
     priceVersionCounts: (planId: string) =>
       ['adminBilling', 'price-version-counts', planId] as const,
+  },
+  adminGateways: {
+    all: ['adminGateways'] as const,
   },
   publicPricing: {
     all: ['publicPricing'] as const,
@@ -415,5 +419,9 @@ export const queryKeys = {
     probes: () => [...queryKeys.runtimeProgress.all, 'probe'] as const,
     ollamaProbe: () => [...queryKeys.runtimeProgress.probes(), 'ollama'] as const,
     llamacppProbe: () => [...queryKeys.runtimeProgress.probes(), 'llamacpp'] as const,
+  },
+  gatewayConfig: {
+    all: ['gatewayConfig'] as const,
+    list: () => ['gatewayConfig', 'list'] as const,
   },
 } as const;

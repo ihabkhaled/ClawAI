@@ -2,7 +2,9 @@ import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server';
 import { NextRequest } from 'next/server';
 import { describe, expect, it } from 'vitest';
 
-import { config, middleware } from '../middleware';
+import { config, proxy } from '../proxy';
+
+const middleware = proxy;
 
 function buildRequest(pathname: string): NextRequest {
   return new NextRequest(new URL(pathname, 'https://claw.example'));

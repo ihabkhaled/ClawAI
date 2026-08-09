@@ -31,6 +31,7 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set([
   'Claw',
   'Claw v{version}',
   'PayPal',
+  'PayPal/Card',
   'Paymob',
   'Jira',
   'Slack',
@@ -63,7 +64,7 @@ describe('Thai dictionary completeness', () => {
     const thai = flatten(th);
 
     expect(Object.keys(thai).sort()).toEqual(Object.keys(english).sort());
-    expect(Object.keys(thai)).toHaveLength(3958);
+    expect(Object.keys(thai)).toHaveLength(4000);
     expect(source).not.toContain("from './en'");
     expect(source).not.toContain('...en');
     expect(source).not.toContain('à¸');

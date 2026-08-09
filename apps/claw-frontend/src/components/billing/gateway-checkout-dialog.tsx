@@ -25,12 +25,14 @@ import { readPaypalOrderId, renderPaypalButtons } from '@/utilities/paypal-butto
 
 export function GatewayCheckoutDialog({
   session,
+  gateways,
   onClose,
   onComplete,
   t,
 }: GatewayCheckoutDialogProps): React.ReactElement {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isPaymobPolling, setIsPaymobPolling] = useState(false);
+  const [paypalReadySessionId, setPaypalReadySessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [paypalElement, setPaypalElement] = useState<HTMLDivElement | null>(null);
   const completed = useRef(false);
@@ -42,6 +44,7 @@ export function GatewayCheckoutDialog({
     completed.current = false;
     setIsVerifying(false);
     setIsPaymobPolling(false);
+    setPaypalReadySessionId(null);
     setError(null);
     paymobPollAttempts.current = 0;
     paymobClosedPollAttempts.current = 0;
@@ -126,7 +129,10 @@ export function GatewayCheckoutDialog({
       return;
     }
     const orderId = readPaypalOrderId(session.hostedCheckoutUrl);
-    if (orderId === null) {
+    const paypalClientId = gateways.find(
+      (gateway) => gateway.gateway === BillingGateway.PAYPAL,
+    )?.publicIdentifier;
+    if (orderId === null || paypalClientId === null || paypalClientId === undefined) {
       setError(t('billing.gatewayDialog.loadFailed'));
       return;
     }
@@ -150,6 +156,7 @@ export function GatewayCheckoutDialog({
     };
     void renderPaypalButtons({
       container: paypalElement,
+      clientId: paypalClientId,
       currency: session.chargeCurrency,
       createOrder: () => Promise.resolve(orderId),
       onApprove: (data) => completePaypal(data.orderID),
@@ -162,9 +169,13 @@ export function GatewayCheckoutDialog({
     })
       .then((handle) => {
         closeButtons = handle.close;
+        if (active) {
+          setPaypalReadySessionId(session.id);
+        }
       })
       .catch(() => {
         if (active) {
+          setPaypalReadySessionId(session.id);
           setError(t('billing.gatewayDialog.loadFailed'));
         }
       });
@@ -172,7 +183,7 @@ export function GatewayCheckoutDialog({
       active = false;
       closeButtons?.();
     };
-  }, [onClose, onComplete, paypalElement, session, t]);
+  }, [gateways, onClose, onComplete, paypalElement, session, t]);
 
   useEffect(() => {
     if (session === null) {
@@ -230,6 +241,9 @@ export function GatewayCheckoutDialog({
     setIsPaymobPolling(true);
   };
 
+  const isPaypalLoading =
+    session?.gateway === BillingGateway.PAYPAL && paypalReadySessionId !== session.id;
+
   return (
     <Dialog
       open={session !== null}
@@ -255,10 +269,22 @@ export function GatewayCheckoutDialog({
             {t('billing.gatewayDialog.openPaymob')}
           </Button>
         ) : (
-          <div
-            ref={setPaypalElement}
-            className="min-h-24 w-full rounded-xl bg-white p-3 [color-scheme:light]"
-          />
+          <div className="relative min-h-24 w-full rounded-xl bg-white p-3 [color-scheme:light]">
+            {isPaypalLoading ? (
+              <div
+                className="absolute inset-0 z-10 flex items-center justify-center gap-2 text-slate-700"
+                role="status"
+              >
+                <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                {t('billing.gatewayDialog.loadingPaypal')}
+              </div>
+            ) : null}
+            <div
+              ref={setPaypalElement}
+              data-testid="paypal-buttons"
+              className={`min-h-20 w-full ${isPaypalLoading ? 'invisible' : 'visible'}`}
+            />
+          </div>
         )}
 
         {isVerifying ? (

@@ -13,11 +13,6 @@ import type {
 
 let paypalLoaders: Record<string, Promise<PaypalSdk>> = {};
 
-function readPaypalClientId(): string | null {
-  const clientId = process.env['NEXT_PUBLIC_PAYPAL_CLIENT_ID']?.trim();
-  return clientId === undefined || clientId.length === 0 ? null : clientId;
-}
-
 function readPaypalSdk(value: unknown): PaypalSdk | null {
   if (typeof value !== 'object' || value === null) {
     return null;
@@ -32,7 +27,7 @@ function readPaypalSdk(value: unknown): PaypalSdk | null {
   return typeof paypal === 'string' && typeof card === 'string' ? (value as PaypalSdk) : null;
 }
 
-function loadPaypalSdk(currency: string): Promise<PaypalSdk> {
+function loadPaypalSdk(clientId: string, currency: string): Promise<PaypalSdk> {
   const globalSdk = readPaypalSdk(Reflect.get(window, 'paypal'));
   if (globalSdk !== null) {
     return Promise.resolve(globalSdk);
@@ -49,14 +44,13 @@ function loadPaypalSdk(currency: string): Promise<PaypalSdk> {
   }
 
   paypalLoaders[namespace] = new Promise((resolve, reject) => {
-    const clientId = readPaypalClientId();
-    if (clientId === null) {
+    if (clientId.trim().length === 0) {
       reject(new Error('PayPal client ID is not configured'));
       return;
     }
     const script = document.createElement('script');
     const query = new URLSearchParams({
-      'client-id': clientId,
+      'client-id': clientId.trim(),
       currency: normalizedCurrency,
       components: 'buttons,funding-eligibility',
       'enable-funding': 'card',
@@ -100,7 +94,7 @@ export function readPaypalOrderId(hostedCheckoutUrl: string): string | null {
 export async function renderPaypalButtons(
   input: RenderPaypalButtonsInput,
 ): Promise<PaypalButtonsHandle> {
-  const sdk = await loadPaypalSdk(input.currency);
+  const sdk = await loadPaypalSdk(input.clientId, input.currency);
   const instances: PaypalButtonInstance[] = [];
   for (const fundingSource of [sdk.FUNDING.PAYPAL, sdk.FUNDING.CARD]) {
     const instance = sdk.Buttons({

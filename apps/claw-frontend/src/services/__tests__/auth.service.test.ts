@@ -25,6 +25,8 @@ const mockLogin = vi.fn();
 const mockLogout = vi.fn();
 const mockMe = vi.fn();
 const mockRefresh = vi.fn();
+const mockUpdateOwnProfile = vi.fn();
+const mockDeleteOwnAccount = vi.fn();
 
 vi.mock('@/repositories/auth/auth.repository', () => ({
   authRepository: {
@@ -39,6 +41,12 @@ vi.mock('@/repositories/auth/auth.repository', () => ({
     },
     get refresh() {
       return mockRefresh;
+    },
+    get updateOwnProfile() {
+      return mockUpdateOwnProfile;
+    },
+    get deleteOwnAccount() {
+      return mockDeleteOwnAccount;
     },
   },
 }));
@@ -181,5 +189,27 @@ describe('authService', () => {
 
       expect(useAuthStore.getState().isAuthenticated).toBe(false);
     });
+  });
+
+  it('updates the profile and clears the revoked local session', async () => {
+    mockUpdateOwnProfile.mockResolvedValueOnce({ ...mockUser, username: 'renamed' });
+    act(() =>
+      useAuthStore.getState().setAuth({ accessToken: 'a', refreshToken: 'r', user: mockUser }),
+    );
+
+    await authService.updateOwnProfile({ currentPassword: 'CurrentPass1!', username: 'renamed' });
+
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it('deletes the account and clears the local session', async () => {
+    mockDeleteOwnAccount.mockResolvedValueOnce(undefined);
+    act(() =>
+      useAuthStore.getState().setAuth({ accessToken: 'a', refreshToken: 'r', user: mockUser }),
+    );
+
+    await authService.deleteOwnAccount({ currentPassword: 'CurrentPass1!' });
+
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
   });
 });

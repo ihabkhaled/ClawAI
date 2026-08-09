@@ -32,6 +32,12 @@ export default function SettingsPage() {
     passwordForm,
     handlePasswordSubmit,
     isPasswordPending,
+    profileForm,
+    deleteForm,
+    updateProfile,
+    deleteAccount,
+    isProfilePending,
+    isDeletePending,
   } = useSettingsPage();
   const { t } = useTranslation();
 
@@ -54,26 +60,80 @@ export default function SettingsPage() {
             <CardTitle className="text-lg">{t('settings.profile')}</CardTitle>
             <CardDescription>{t('settings.profileDescription')}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="settings-username" className="text-sm font-medium">
-                {t('settings.username')}
-              </label>
-              <Input id="settings-username" value={user?.username ?? ''} disabled readOnly />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="settings-email" className="text-sm font-medium">
-                {t('settings.email')}
-              </label>
-              <Input id="settings-email" value={user?.email ?? ''} disabled readOnly />
-              <p className="text-xs text-muted-foreground">{t('settings.emailReadOnly')}</p>
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="settings-role" className="text-sm font-medium">
-                {t('settings.role')}
-              </label>
-              <Input id="settings-role" value={user?.role ?? ''} disabled readOnly />
-            </div>
+          <CardContent>
+            <form onSubmit={updateProfile} className="max-w-sm space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="settings-username" className="text-sm font-medium">
+                  {t('settings.username')}
+                </label>
+                <Input
+                  id="settings-username"
+                  disabled={isProfilePending}
+                  {...profileForm.register('username')}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="settings-email" className="text-sm font-medium">
+                  {t('settings.email')}
+                </label>
+                <Input
+                  id="settings-email"
+                  type="email"
+                  disabled={isProfilePending}
+                  {...profileForm.register('email')}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="settings-role" className="text-sm font-medium">
+                  {t('settings.role')}
+                </label>
+                <Input id="settings-role" value={user?.role ?? ''} disabled readOnly />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="profile-current-password" className="text-sm font-medium">
+                  {t('settings.currentPassword')}
+                </label>
+                <Input
+                  id="profile-current-password"
+                  type="password"
+                  autoComplete="current-password"
+                  disabled={isProfilePending}
+                  {...profileForm.register('currentPassword')}
+                />
+              </div>
+              <p className="text-muted-foreground text-xs">{t('settings.profileSessionNotice')}</p>
+              <Button type="submit" disabled={isProfilePending}>
+                {isProfilePending ? t('common.loading') : t('settings.saveProfile')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle className="text-lg">{t('settings.deleteAccount')}</CardTitle>
+            <CardDescription>{t('settings.deleteAccountDescription')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={deleteAccount} className="max-w-sm space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="delete-current-password" className="text-sm font-medium">
+                  {t('settings.currentPassword')}
+                </label>
+                <Input
+                  id="delete-current-password"
+                  type="password"
+                  autoComplete="current-password"
+                  disabled={isDeletePending}
+                  {...deleteForm.register('currentPassword')}
+                />
+              </div>
+              <Button type="submit" variant="destructive" disabled={isDeletePending}>
+                {isDeletePending ? t('common.loading') : t('settings.deleteAccount')}
+              </Button>
+            </form>
           </CardContent>
         </Card>
 
@@ -101,7 +161,7 @@ export default function SettingsPage() {
                   {...passwordForm.register('currentPassword')}
                 />
                 {passwordForm.formState.errors.currentPassword ? (
-                  <p className="text-xs text-destructive">
+                  <p className="text-destructive text-xs">
                     {passwordForm.formState.errors.currentPassword.message}
                   </p>
                 ) : null}
@@ -119,7 +179,7 @@ export default function SettingsPage() {
                   {...passwordForm.register('newPassword')}
                 />
                 {passwordForm.formState.errors.newPassword ? (
-                  <p className="text-xs text-destructive">
+                  <p className="text-destructive text-xs">
                     {passwordForm.formState.errors.newPassword.message}
                   </p>
                 ) : null}
@@ -137,7 +197,7 @@ export default function SettingsPage() {
                   {...passwordForm.register('confirmPassword')}
                 />
                 {passwordForm.formState.errors.confirmPassword ? (
-                  <p className="text-xs text-destructive">
+                  <p className="text-destructive text-xs">
                     {passwordForm.formState.errors.confirmPassword.message}
                   </p>
                 ) : null}

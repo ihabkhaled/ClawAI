@@ -28,6 +28,7 @@ const TECHNICAL_VALUE_ALLOWLIST = new Set([
   'Ollama',
   'OpenAI',
   'PayPal',
+  'PayPal/Card',
   'Paymob',
   'Qwen',
   'Stripe',

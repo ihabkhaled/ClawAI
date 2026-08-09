@@ -6,6 +6,8 @@ import type {
   RegisterRequest,
   RegisterResponse,
   UserProfile,
+  UpdateOwnProfileRequest,
+  DeleteOwnAccountRequest,
 } from '@/types';
 
 export const authService = {
@@ -63,5 +65,21 @@ export const authService = {
       accessToken: response.tokens.accessToken,
       refreshToken: response.tokens.refreshToken,
     });
+  },
+
+  async updateOwnProfile(data: UpdateOwnProfileRequest): Promise<void> {
+    await authRepository.updateOwnProfile(data);
+    useAuthStore.getState().clearAuth();
+    if (typeof document !== 'undefined') {
+      document.cookie = 'claw-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
+  },
+
+  async deleteOwnAccount(data: DeleteOwnAccountRequest): Promise<void> {
+    await authRepository.deleteOwnAccount(data);
+    useAuthStore.getState().clearAuth();
+    if (typeof document !== 'undefined') {
+      document.cookie = 'claw-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
   },
 };

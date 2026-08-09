@@ -35,6 +35,7 @@ export type PaypalButtonsHandle = {
 
 export type RenderPaypalButtonsInput = {
   container: HTMLElement;
+  clientId: string;
   currency: string;
   createOrder: () => Promise<string>;
   onApprove: (data: PaypalApprovalData) => Promise<void>;

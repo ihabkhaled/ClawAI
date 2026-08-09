@@ -367,3 +367,21 @@ Next mentor actions, in order.
 3. Fix `workspace.files list`, release, resume Phase 0.
 4. Separately, in the parent repo: make AUTO routing refuse to send a
    tool-calling agent run to a model that cannot serve the tool protocol.
+
+### 2026-08-09 repository audit update
+
+The four actions above are no longer an implementation queue:
+
+- `d1a1b78` surfaces the bounded, subsequently redacted executor reason;
+  `901a811` keeps a continuing Runtime V2 run active after a failed tool step.
+- The apparent universal `workspace.files list` failure was traced to the
+  served-web folder URL. `?folder=/d:/Freelance/Claw` plus trust for the real
+  folder produced `workspace.files list succeeded` in the recorded retest.
+- Parent `27e20082` routes agent work on tool-calling capability, and
+  `66772c3f` preserves AUTO routing through Runtime V2 instead of treating
+  `AUTO` as a literal provider/model.
+
+These are repository and harness facts, not desktop certification. No claim is
+made that a human installed `0.57.3`, reloaded VS Code, exercised the repaired
+AUTO lane, approved an edit, or completed the password-reset ladder. Those
+remain operator-only qualification steps.

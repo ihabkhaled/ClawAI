@@ -16,6 +16,19 @@ vi.mock('@/services/shared/api-client', () => ({
   },
 }));
 
+describe('billingRepository gateway discovery', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('loads checkout-safe gateways from the billing API', async () => {
+    mockGet.mockResolvedValue({ data: [{ gateway: 'PAYPAL', publicIdentifier: 'client-id' }] });
+
+    await expect(billingRepository.listGateways()).resolves.toEqual([
+      { gateway: 'PAYPAL', publicIdentifier: 'client-id' },
+    ]);
+    expect(mockGet).toHaveBeenCalledWith('/billing/gateways');
+  });
+});
+
 describe('billingRepository payment-method setup', () => {
   beforeEach(() => {
     vi.clearAllMocks();

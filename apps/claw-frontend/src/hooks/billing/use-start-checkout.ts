@@ -1,11 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { billingRepository } from '@/repositories/billing/billing.repository';
-import type { UseStartCheckoutReturn } from '@/types/billing-hook.types';
+import type {
+  CheckoutMutationInput,
+  CheckoutStartInput,
+  UseStartCheckoutReturn,
+} from '@/types/billing-hook.types';
 import type { GatewayCheckoutSession } from '@/types/billing.types';
 import { resolveBillingErrorMessage } from '@/utilities/billing-error.utility';
 import { invalidateUserPlanQueries } from '@/utilities/plan-cache.utility';
@@ -22,13 +26,10 @@ export function useStartCheckout(): UseStartCheckoutReturn {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [gatewaySession, setGatewaySession] = useState<GatewayCheckoutSession | null>(null);
+  const inFlightRef = useRef(false);
 
   const mutation = useMutation({
-    mutationFn: (input: { planId: string; billingInterval: string; gateway: string }) =>
-      billingRepository.createCheckoutSession({
-        ...input,
-        idempotencyKey: crypto.randomUUID(),
-      }),
+    mutationFn: (input: CheckoutMutationInput) => billingRepository.createCheckoutSession(input),
     onSuccess: (session) => {
       setError(null);
       if (session.hostedCheckoutUrl !== null) {
@@ -46,11 +47,18 @@ export function useStartCheckout(): UseStartCheckoutReturn {
       setError(message);
       showToast.error({ title: t('billing.error.title'), description: message });
     },
+    onSettled: () => {
+      inFlightRef.current = false;
+    },
   });
 
   const startCheckout = useCallback(
-    (input: { planId: string; billingInterval: string; gateway: string }) => {
-      mutation.mutate(input);
+    (input: CheckoutStartInput) => {
+      if (inFlightRef.current) {
+        return;
+      }
+      inFlightRef.current = true;
+      mutation.mutate({ ...input, idempotencyKey: crypto.randomUUID() });
     },
     [mutation],
   );

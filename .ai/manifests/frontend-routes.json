@@ -117,6 +117,11 @@
       "route": "/admin"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/payment-gateways/page.tsx",
+      "kind": "page",
+      "route": "/admin/payment-gateways"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/admin/plans/[id]/edit/page.tsx",
       "kind": "page",
       "route": "/admin/plans/[id]/edit"
@@ -235,6 +240,11 @@
       "file": "apps/claw-frontend/src/app/(portal)/billing/cancelled/page.tsx",
       "kind": "page",
       "route": "/billing/cancelled"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/billing/checkout/page.tsx",
+      "kind": "page",
+      "route": "/billing/checkout"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/billing/page.tsx",

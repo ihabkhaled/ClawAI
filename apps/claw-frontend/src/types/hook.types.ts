@@ -10,6 +10,7 @@ import type { ResearchProviderKind } from '../enums/research-provider-kind.enum'
 
 import type { AdaptiveLearningInsights } from './adaptive-learning.types';
 import type { AdminUser, AuditLog } from './audit.types';
+import type { AdminUserUpdateRequest } from './auth.types';
 import type {
   ChatMessage,
   ChatThread,
@@ -88,10 +89,12 @@ export type UseAdminPageReturn = {
   handleDeactivate: (userId: string) => void;
   handleReactivate: (userId: string) => void;
   handleAssignPlan: (userId: string, planId: string) => void;
+  handleUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
   isReactivatePending: boolean;
   isAssignPlanPending: boolean;
+  isUpdateUserPending: boolean;
 };
 
 export type UseUserTableStateReturn = {
@@ -102,6 +105,13 @@ export type UseUserTableStateReturn = {
     role: string,
     onChangeRole: (userId: string, role: string) => void,
   ) => void;
+  profileEditingId: string | null;
+  editUsername: string;
+  editEmail: string;
+  setEditUsername: (value: string) => void;
+  setEditEmail: (value: string) => void;
+  startProfileEdit: (user: AdminUser) => void;
+  finishProfileEdit: (onUpdate: (userId: string, data: AdminUserUpdateRequest) => void) => void;
 };
 
 export type UseRecentAuditEventsReturn = {

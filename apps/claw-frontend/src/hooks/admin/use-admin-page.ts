@@ -8,7 +8,11 @@ import { plansRepository } from '@/repositories/admin/plans.repository';
 import { auditRepository } from '@/repositories/audit/audit.repository';
 import { healthRepository } from '@/repositories/health/health.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import type { UseAdminPageReturn } from '@/types';
+import type {
+  AdminUserUpdateMutationVariables,
+  AdminUserUpdateRequest,
+  UseAdminPageReturn,
+} from '@/types';
 import { logger, showToast } from '@/utilities';
 
 export function useAdminPage(): UseAdminPageReturn {
@@ -89,6 +93,19 @@ export function useAdminPage(): UseAdminPageReturn {
       showToast.apiError(err, t('admin.planAssignFailed'));
     },
   });
+  const updateUserMutation = useMutation({
+    mutationFn: ({ userId, data }: AdminUserUpdateMutationVariables) =>
+      auditRepository.updateUser(userId, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.users });
+      setActionPending(null);
+      showToast.success({ description: t('admin.userUpdated') });
+    },
+    onError: (err: unknown) => {
+      setActionPending(null);
+      showToast.apiError(err, t('admin.userUpdateFailed'));
+    },
+  });
 
   const users = usersQuery.data?.data ?? [];
   const plans = plansQuery.data ?? [];
@@ -137,6 +154,10 @@ export function useAdminPage(): UseAdminPageReturn {
     setActionPending(userId);
     assignPlanMutation.mutate({ userId, planId });
   };
+  const handleUpdateUser = (userId: string, data: AdminUserUpdateRequest): void => {
+    setActionPending(userId);
+    updateUserMutation.mutate({ userId, data });
+  };
 
   return {
     t,
@@ -158,9 +179,11 @@ export function useAdminPage(): UseAdminPageReturn {
     handleDeactivate,
     handleReactivate,
     handleAssignPlan,
+    handleUpdateUser,
     isRoleChangePending: changeRoleMutation.isPending && actionPending !== null,
     isDeactivatePending: deactivateMutation.isPending && actionPending !== null,
     isReactivatePending: reactivateMutation.isPending && actionPending !== null,
     isAssignPlanPending: assignPlanMutation.isPending && actionPending !== null,
+    isUpdateUserPending: updateUserMutation.isPending && actionPending !== null,
   };
 }

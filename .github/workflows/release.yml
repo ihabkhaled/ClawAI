@@ -14,9 +14,8 @@ name: Release
 # GITHUB_TOKEN. GitHub does not start a new `push`-triggered workflow run for a
 # commit pushed by the built-in GITHUB_TOKEN — this is the platform's own
 # anti-recursion guarantee — so CI never re-runs on the bump commit and this
-# workflow never re-triggers itself. The commit message also carries
-# `[skip ci]` as an explicit second guard, in case this workflow is ever
-# reconfigured to push with a personal access token instead.
+# workflow never re-triggers itself. Keep checkout's persisted built-in token:
+# replacing it with a PAT would remove this structural loop guard.
 #
 # Requires that branch protection on `main` permits this workflow to push a
 # commit and a tag directly (no required pull request for the Actions bot).
@@ -124,7 +123,7 @@ jobs:
 
             # shellcheck disable=SC2086
             git add $CHANGED
-            git commit --quiet -m "chore(release): v$NEXT [skip ci]"
+            git commit --quiet -m "chore(release): Deployment Release v$NEXT"
             git tag "v$NEXT"
 
             if git push origin HEAD:refs/heads/main && git push origin "refs/tags/v$NEXT"; then
@@ -153,7 +152,7 @@ jobs:
         run: |
           set -euo pipefail
           gh release create "v${{ steps.release.outputs.next }}" \
-            --title "v${{ steps.release.outputs.next }}" \
+            --title "chore(release): Deployment Release v${{ steps.release.outputs.next }}" \
             --notes-file "$RUNNER_TEMP/RELEASE_NOTES.md"
 
   deploy:

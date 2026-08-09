@@ -72,10 +72,12 @@ const baseProps = {
   onDeactivate: vi.fn(),
   onReactivate: vi.fn(),
   onAssignPlan: vi.fn(),
+  onUpdateUser: vi.fn(),
   isRoleChangePending: false,
   isDeactivatePending: false,
   isReactivatePending: false,
   isAssignPlanPending: false,
+  isUpdateUserPending: false,
 };
 
 // UserTable now uses the responsive DataTable wrapper which mounts BOTH
@@ -139,6 +141,25 @@ describe('UserTable plan column', () => {
 });
 
 describe('UserTable lifecycle actions', () => {
+  it('lets an administrator edit and save username and email', async () => {
+    const onUpdateUser = vi.fn();
+    render(<UserTable users={[makeUser()]} {...baseProps} onUpdateUser={onUpdateUser} />);
+
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'admin.editUser' })[0] as HTMLElement,
+    );
+    const username = screen.getAllByLabelText('admin.editUsername')[0] as HTMLInputElement;
+    await userEvent.clear(username);
+    await userEvent.type(username, 'renamed');
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'admin.saveUser' })[0] as HTMLElement,
+    );
+
+    expect(onUpdateUser).toHaveBeenCalledWith('u1', {
+      username: 'renamed',
+      email: 'alice@example.com',
+    });
+  });
   it('offers Deactivate for an active user', () => {
     render(<UserTable users={[makeUser({ status: 'ACTIVE' })]} {...baseProps} />);
     expect(screen.getAllByRole('button', { name: 'admin.deactivate' }).length).toBeGreaterThan(0);

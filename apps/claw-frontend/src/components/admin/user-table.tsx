@@ -4,6 +4,7 @@ import { DataTable } from '@/components/common/data-table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -26,12 +27,25 @@ export function UserTable({
   onDeactivate,
   onReactivate,
   onAssignPlan,
+  onUpdateUser,
   isRoleChangePending,
   isDeactivatePending,
   isReactivatePending,
   isAssignPlanPending,
+  isUpdateUserPending,
 }: UserTableProps): React.ReactElement {
-  const { editingUserId, setEditingUserId, handleRoleSelect } = useUserTableState();
+  const {
+    editingUserId,
+    setEditingUserId,
+    handleRoleSelect,
+    profileEditingId,
+    editUsername,
+    editEmail,
+    setEditUsername,
+    setEditEmail,
+    startProfileEdit,
+    finishProfileEdit,
+  } = useUserTableState();
   const { t } = useTranslation();
   const activePlans = plans.filter((plan) => plan.isActive);
 
@@ -39,34 +53,68 @@ export function UserTable({
     {
       key: 'username',
       header: t('admin.colUsername'),
-      render: (user) => (
-        <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-              {resolveUserInitial(user)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="font-medium">{user.username}</span>
-        </div>
-      ),
-      renderMobileTitle: (user) => (
-        <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-              {resolveUserInitial(user)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex min-w-0 flex-col">
-            <span className="truncate">{user.username}</span>
-            <span className="text-muted-foreground truncate text-xs font-normal">{user.email}</span>
+      render: (user) =>
+        profileEditingId === user.id ? (
+          <Input
+            aria-label={t('admin.editUsername')}
+            value={editUsername}
+            onChange={(event) => setEditUsername(event.target.value)}
+          />
+        ) : (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-9 w-9">
+              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                {resolveUserInitial(user)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="font-medium">{user.username}</span>
           </div>
-        </div>
-      ),
+        ),
+      renderMobileTitle: (user) =>
+        profileEditingId === user.id ? (
+          <div className="space-y-2">
+            <Input
+              aria-label={t('admin.editUsername')}
+              value={editUsername}
+              onChange={(event) => setEditUsername(event.target.value)}
+            />
+            <Input
+              aria-label={t('admin.editEmail')}
+              type="email"
+              value={editEmail}
+              onChange={(event) => setEditEmail(event.target.value)}
+            />
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-9 w-9">
+              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                {resolveUserInitial(user)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate">{user.username}</span>
+              <span className="text-muted-foreground truncate text-xs font-normal">
+                {user.email}
+              </span>
+            </div>
+          </div>
+        ),
     },
     {
       key: 'email',
       header: t('admin.colEmail'),
-      render: (user) => <span className="text-muted-foreground text-sm">{user.email}</span>,
+      render: (user) =>
+        profileEditingId === user.id ? (
+          <Input
+            aria-label={t('admin.editEmail')}
+            type="email"
+            value={editEmail}
+            onChange={(event) => setEditEmail(event.target.value)}
+          />
+        ) : (
+          <span className="text-muted-foreground text-sm">{user.email}</span>
+        ),
     },
     {
       key: 'role',
@@ -169,26 +217,48 @@ export function UserTable({
       // it undoes. A PENDING account has not been suspended, so it keeps the
       // Deactivate action rather than being silently approved by a button
       // labelled "reactivate".
-      render: (user) =>
-        user.status === UserStatus.SUSPENDED ? (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isReactivatePending || isRoleChangePending}
-            onClick={() => onReactivate(user.id)}
-          >
-            {t('admin.reactivate')}
-          </Button>
-        ) : (
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={isDeactivatePending || isRoleChangePending}
-            onClick={() => onDeactivate(user.id)}
-          >
-            {t('admin.deactivate')}
-          </Button>
-        ),
+      render: (user) => (
+        <div className="flex justify-end gap-2">
+          {profileEditingId === user.id ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isUpdateUserPending}
+              onClick={() => finishProfileEdit(onUpdateUser)}
+            >
+              {t('admin.saveUser')}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isUpdateUserPending}
+              onClick={() => startProfileEdit(user)}
+            >
+              {t('admin.editUser')}
+            </Button>
+          )}
+          {user.status === UserStatus.SUSPENDED ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isReactivatePending || isRoleChangePending}
+              onClick={() => onReactivate(user.id)}
+            >
+              {t('admin.reactivate')}
+            </Button>
+          ) : (
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={isDeactivatePending || isRoleChangePending}
+              onClick={() => onDeactivate(user.id)}
+            >
+              {t('admin.deactivate')}
+            </Button>
+          )}
+        </div>
+      ),
     },
   ];
 

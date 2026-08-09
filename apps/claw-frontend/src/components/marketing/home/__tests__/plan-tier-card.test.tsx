@@ -70,12 +70,29 @@ describe('PlanTierCard', () => {
   it('preserves the selected plan and monthly interval through registration', () => {
     render(<PlanTierCard plan={PLAN} isYearly={false} />);
 
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/register?plan=pro&interval=monthly');
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      '/register?returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dmonthly',
+    );
   });
 
   it('preserves the selected plan and yearly interval through registration', () => {
     render(<PlanTierCard plan={PLAN} isYearly />);
 
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/register?plan=pro&interval=yearly');
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      '/register?returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dyearly',
+    );
+  });
+
+  it('sends a free signup to chat instead of opening a rejected zero-value checkout', () => {
+    const freePlan: PublicPlan = {
+      ...PLAN,
+      prices: PLAN.prices.map((price) => ({ ...price, amountMinor: 0 })),
+    };
+
+    render(<PlanTierCard plan={freePlan} isYearly={false} />);
+
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/register?returnTo=%2Fchat');
   });
 });

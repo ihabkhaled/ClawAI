@@ -34,7 +34,7 @@ export function UserMenu(): React.ReactElement | null {
         <Button
           variant="unstyled"
           size="unstyled"
-          className="hover:bg-accent flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
+          className="hover:bg-accent flex items-center gap-2 rounded-lg px-1 py-1.5 text-sm transition-colors sm:px-2"
         >
           {/* Avatar wrapper carries the primary-tinted ring + an online status
            * dot anchored to the bottom-end corner. The dot uses `end-0` so it
@@ -50,7 +50,9 @@ export function UserMenu(): React.ReactElement | null {
               aria-label={t('accessibility.userStatusOnline')}
             />
           </span>
-          <span className="max-w-[120px] truncate font-medium">{user.username}</span>
+          <span className="hidden max-w-[120px] truncate font-medium sm:inline">
+            {user.username}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

@@ -26,10 +26,12 @@ export default function AdminPage(): React.ReactElement {
     handleDeactivate,
     handleReactivate,
     handleAssignPlan,
+    handleUpdateUser,
     isRoleChangePending,
     isDeactivatePending,
     isReactivatePending,
     isAssignPlanPending,
+    isUpdateUserPending,
   } = useAdminPage();
 
   if (user && user.role !== UserRole.ADMIN) {
@@ -97,10 +99,12 @@ export default function AdminPage(): React.ReactElement {
           onDeactivate={handleDeactivate}
           onReactivate={handleReactivate}
           onAssignPlan={handleAssignPlan}
+          onUpdateUser={handleUpdateUser}
           isRoleChangePending={isRoleChangePending}
           isDeactivatePending={isDeactivatePending}
           isReactivatePending={isReactivatePending}
           isAssignPlanPending={isAssignPlanPending}
+          isUpdateUserPending={isUpdateUserPending}
           t={t}
         />
       </div>

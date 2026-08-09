@@ -62,6 +62,18 @@ function baseHook(overrides: Partial<UseBillingPageReturn> = {}): UseBillingPage
     subscription: { subscription: null, isLoading: false, isError: false },
     usage: { usage: null, isLoading: false, isError: false },
     invoices: { invoices: [], isLoading: false, isError: false },
+    gateways: {
+      gateways: [
+        {
+          gateway: BillingGateway.PAYPAL,
+          mode: 'sandbox',
+          publicIdentifier: 'client-id',
+          testingSoon: false,
+        },
+      ],
+      isLoading: false,
+      isError: false,
+    },
     paymentMethods: {
       methods: [],
       isLoading: false,

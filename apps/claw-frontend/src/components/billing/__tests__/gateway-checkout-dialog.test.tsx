@@ -3,12 +3,28 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GatewayCheckoutDialog } from '@/components/billing/gateway-checkout-dialog';
 import { BillingGateway } from '@/enums/billing.enum';
+import type { CheckoutGatewayView } from '@/types/billing.types';
 
 const mockCompletePaymob = vi.fn();
 const mockCompletePaypalSdk = vi.fn();
 const mockLoadPixel = vi.fn();
 const mockGetCheckoutSession = vi.fn();
 const mockGetSetupSession = vi.fn();
+const mockGatewayList: CheckoutGatewayView[] = [
+  {
+    gateway: BillingGateway.PAYPAL,
+    mode: 'sandbox',
+    publicIdentifier: 'paypal-client-test',
+    testingSoon: false,
+  },
+];
+
+function createPopupWindow(): Window {
+  const popup = Object.create(window) as Window;
+  Object.defineProperty(popup, 'closed', { configurable: true, value: false, writable: true });
+  popup.close = vi.fn();
+  return popup;
+}
 
 vi.mock('@/repositories/billing/billing.repository', () => ({
   billingRepository: {
@@ -51,8 +67,8 @@ describe('GatewayCheckoutDialog', () => {
 
   it('opens Paymob in an app-controlled popup instead of rendering the provider in billing', async () => {
     const complete = vi.fn().mockResolvedValue(undefined);
-    const popup = { close: vi.fn(), closed: false };
-    const open = vi.spyOn(window, 'open').mockReturnValue(popup as unknown as Window);
+    const popup = createPopupWindow();
+    const open = vi.spyOn(window, 'open').mockReturnValue(popup);
     mockGetCheckoutSession.mockResolvedValue({
       id: 'checkout-1',
       status: 'AWAITING_PAYMENT',
@@ -69,6 +85,7 @@ describe('GatewayCheckoutDialog', () => {
           hostedCheckoutUrl: 'https://accept.paymob.com/unifiedcheckout/',
           expiresAt: '2026-07-28T00:00:00.000Z',
         }}
+        gateways={mockGatewayList}
         onClose={vi.fn()}
         onComplete={complete}
         t={t}
@@ -89,8 +106,8 @@ describe('GatewayCheckoutDialog', () => {
 
   it('closes the Paymob popup and refreshes main billing only after verified completion', async () => {
     const complete = vi.fn().mockResolvedValue(undefined);
-    const popup = { close: vi.fn(), closed: false };
-    vi.spyOn(window, 'open').mockReturnValue(popup as unknown as Window);
+    const popup = createPopupWindow();
+    vi.spyOn(window, 'open').mockReturnValue(popup);
     mockGetCheckoutSession.mockResolvedValue({
       id: 'checkout-1',
       status: 'COMPLETED',
@@ -107,6 +124,7 @@ describe('GatewayCheckoutDialog', () => {
           hostedCheckoutUrl: 'https://accept.paymob.com/unifiedcheckout/',
           expiresAt: '2026-07-28T00:00:00.000Z',
         }}
+        gateways={mockGatewayList}
         onClose={vi.fn()}
         onComplete={complete}
         t={t}
@@ -126,8 +144,8 @@ describe('GatewayCheckoutDialog', () => {
   it('keeps polling after Paymob closes until the webhook is verified', async () => {
     vi.useFakeTimers();
     const complete = vi.fn().mockResolvedValue(undefined);
-    const popup = { close: vi.fn(), closed: false };
-    vi.spyOn(window, 'open').mockReturnValue(popup as unknown as Window);
+    const popup = createPopupWindow();
+    vi.spyOn(window, 'open').mockReturnValue(popup);
     mockGetCheckoutSession
       .mockResolvedValueOnce({ id: 'checkout-1', status: 'AWAITING_PAYMENT' })
       .mockResolvedValueOnce({ id: 'checkout-1', status: 'COMPLETED' });
@@ -143,6 +161,7 @@ describe('GatewayCheckoutDialog', () => {
           hostedCheckoutUrl: 'https://accept.paymob.com/unifiedcheckout/',
           expiresAt: '2026-07-28T00:00:00.000Z',
         }}
+        gateways={mockGatewayList}
         onClose={vi.fn()}
         onComplete={complete}
         t={t}
@@ -151,7 +170,7 @@ describe('GatewayCheckoutDialog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'billing.gatewayDialog.openPaymob' }));
     await vi.waitFor(() => expect(mockGetCheckoutSession).toHaveBeenCalledOnce());
-    popup.closed = true;
+    Reflect.set(popup, 'closed', true);
     await act(() => vi.advanceTimersByTimeAsync(2_000));
     await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
 
@@ -161,8 +180,8 @@ describe('GatewayCheckoutDialog', () => {
   it('restores dialog controls when the Paymob popup is closed without payment', async () => {
     vi.useFakeTimers();
     const closeDialog = vi.fn();
-    const popup = { close: vi.fn(), closed: false };
-    vi.spyOn(window, 'open').mockReturnValue(popup as unknown as Window);
+    const popup = createPopupWindow();
+    vi.spyOn(window, 'open').mockReturnValue(popup);
     mockGetCheckoutSession.mockResolvedValue({
       id: 'checkout-1',
       status: 'AWAITING_PAYMENT',
@@ -179,6 +198,7 @@ describe('GatewayCheckoutDialog', () => {
           hostedCheckoutUrl: 'https://accept.paymob.com/unifiedcheckout/',
           expiresAt: '2026-07-28T00:00:00.000Z',
         }}
+        gateways={mockGatewayList}
         onClose={closeDialog}
         onComplete={vi.fn().mockResolvedValue(undefined)}
         t={t}
@@ -187,7 +207,7 @@ describe('GatewayCheckoutDialog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'billing.gatewayDialog.openPaymob' }));
     await vi.waitFor(() => expect(mockGetCheckoutSession).toHaveBeenCalledOnce());
-    popup.closed = true;
+    Reflect.set(popup, 'closed', true);
     await act(() => vi.advanceTimersByTimeAsync(2_000));
 
     expect(screen.queryByText('billing.gatewayDialog.verifying')).not.toBeInTheDocument();
@@ -197,7 +217,18 @@ describe('GatewayCheckoutDialog', () => {
 
   it('renders eligible PayPal wallet and card buttons inside the modal', async () => {
     const complete = vi.fn().mockResolvedValue(undefined);
-    const renderButton = vi.fn().mockResolvedValue(undefined);
+    let resolvePaypalRender: (() => void) | undefined;
+    let resolveCardRender: (() => void) | undefined;
+    const paypalRender = new Promise<void>((resolve) => {
+      resolvePaypalRender = resolve;
+    });
+    const cardRender = new Promise<void>((resolve) => {
+      resolveCardRender = resolve;
+    });
+    const renderButton = vi
+      .fn()
+      .mockImplementationOnce(() => paypalRender)
+      .mockImplementationOnce(() => cardRender);
     const buttonOptions: Array<Record<string, unknown>> = [];
     const buttons = vi.fn((options: Record<string, unknown>) => {
       buttonOptions.push(options);
@@ -223,15 +254,27 @@ describe('GatewayCheckoutDialog', () => {
           hostedCheckoutUrl: 'https://www.paypal.com/checkoutnow?token=ORDER-1',
           expiresAt: '2026-07-28T00:00:00.000Z',
         }}
+        gateways={mockGatewayList}
         onClose={vi.fn()}
         onComplete={complete}
         t={t}
       />,
     );
 
+    expect(screen.getByRole('status')).toHaveTextContent('billing.gatewayDialog.loadingPaypal');
+    expect(screen.getByTestId('paypal-buttons')).toHaveClass('invisible');
+
     await waitFor(() => {
-      expect(buttons).toHaveBeenCalledTimes(2);
+      expect(buttons).toHaveBeenCalledOnce();
     });
+    resolvePaypalRender?.();
+    await waitFor(() => expect(buttons).toHaveBeenCalledTimes(2));
+    expect(screen.getByTestId('paypal-buttons')).toHaveClass('invisible');
+    resolveCardRender?.();
+    await waitFor(() => {
+      expect(screen.queryByText('billing.gatewayDialog.loadingPaypal')).not.toBeInTheDocument();
+    });
+    expect(screen.getByTestId('paypal-buttons')).toHaveClass('visible');
     expect(buttonOptions.map((options) => options['fundingSource'])).toEqual(['paypal', 'card']);
     const cardOptions = buttonOptions[1];
     expect(cardOptions).toBeDefined();

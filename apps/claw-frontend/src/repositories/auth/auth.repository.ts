@@ -7,6 +7,8 @@ import type {
   RegisterResponse,
   UserEntitlements,
   UserProfile,
+  UpdateOwnProfileRequest,
+  DeleteOwnAccountRequest,
 } from '@/types';
 
 export const authRepository = {
@@ -39,5 +41,14 @@ export const authRepository = {
   async entitlements(): Promise<UserEntitlements> {
     const response = await apiClient.get<UserEntitlements>('/auth/me/entitlements');
     return response.data;
+  },
+
+  async updateOwnProfile(data: UpdateOwnProfileRequest): Promise<UserProfile> {
+    const response = await apiClient.patch<UserProfile>('/users/me', data);
+    return response.data;
+  },
+
+  async deleteOwnAccount(data: DeleteOwnAccountRequest): Promise<void> {
+    await apiClient.delete('/users/me', { data });
   },
 };

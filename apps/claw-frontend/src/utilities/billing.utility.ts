@@ -157,6 +157,10 @@ export function findPlanPrice(
   return plan.prices.find((price) => price.billingInterval === interval) ?? null;
 }
 
+export function readCheckoutInterval(value: string | null): BillingInterval {
+  return value === 'yearly' ? BillingInterval.YEARLY : BillingInterval.MONTHLY;
+}
+
 export function isCurrentPlan(
   plan: BillingPlan,
   subscription: CurrentSubscription | null,
