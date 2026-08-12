@@ -68,6 +68,7 @@ export function useThreadDetail(threadId: string) {
     // sent, and on a thread that already fills a page the count does not grow,
     // so the spinner and the three-minute poll would keep running after the
     // answer had already rendered.
+    waitingSuppressedRef.current = true;
     setIsWaitingForResponse(false);
   }, [streamCompletedAt, isWaitingForResponse, queryClient, threadId]);
 
