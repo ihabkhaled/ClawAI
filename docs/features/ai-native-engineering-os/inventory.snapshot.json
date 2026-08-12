@@ -1104,6 +1104,11 @@
         },
         {
           "method": "GET",
+          "route": "/internal/connectors/health-snapshot",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/internal/connectors/models-snapshot",
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
         }
@@ -9348,7 +9353,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 571,
+    "endpointCount": 572,
     "envVarCount": 342,
     "eventCount": 165,
     "frontendRouteCount": 115,

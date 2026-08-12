@@ -18,6 +18,7 @@ const appConfigSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
 
   AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
+  CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
   OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
   OLLAMA_ROUTER_MODEL: z.string().min(1).default('qwen3:1.7b'),
   OLLAMA_ROUTER_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),

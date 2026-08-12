@@ -1058,6 +1058,11 @@
       },
       {
         "method": "GET",
+        "route": "/internal/connectors/health-snapshot",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/internal/connectors/models-snapshot",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
       }
@@ -2893,5 +2898,5 @@
     ]
   },
   "generated": true,
-  "total": 571
+  "total": 572
 }

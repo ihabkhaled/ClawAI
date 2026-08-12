@@ -120,6 +120,17 @@ describe('ConnectorsService', () => {
     });
   });
 
+  it('returns enabled cloud connector health for routing startup hydration', async () => {
+    connectorsRepo.findEnabled.mockResolvedValue([
+      { ...mockConnector, status: ConnectorStatus.HEALTHY },
+      { ...mockConnector, id: 'local', provider: ConnectorProvider.OLLAMA },
+    ]);
+
+    await expect(service.getHealthSnapshot()).resolves.toMatchObject({
+      connectors: [{ provider: ConnectorProvider.OPENAI, status: ConnectorStatus.HEALTHY }],
+    });
+  });
+
   describe('createConnector', () => {
     it('should create connector with encrypted API key and publish event', async () => {
       connectorsRepo.create.mockResolvedValue(mockConnector);

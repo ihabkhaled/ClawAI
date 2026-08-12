@@ -14,6 +14,7 @@ import { type UpdateConnectorDto } from '../dto/update-connector.dto';
 import { type ListConnectorsQueryDto } from '../dto/list-connectors-query.dto';
 import {
   type ConnectorConfigResult,
+  type ConnectorHealthSnapshotResult,
   type ConnectorWithModels,
   type HealthCheckResult,
   type SyncModelsResult,
@@ -60,6 +61,19 @@ export class ConnectorsService implements OnApplicationBootstrap {
         `onApplicationBootstrap: ${String(failed)} cloud connector health checks failed`,
       );
     }
+  }
+
+  async getHealthSnapshot(): Promise<ConnectorHealthSnapshotResult> {
+    const connectors = await this.connectorsRepository.findEnabled();
+    return {
+      connectors: connectors
+        .filter(
+          ({ provider }) =>
+            provider !== ConnectorProvider.OLLAMA && provider !== ConnectorProvider.LLAMACPP,
+        )
+        .map(({ provider, status }) => ({ provider, status })),
+      generatedAt: new Date().toISOString(),
+    };
   }
 
   async createConnector(dto: CreateConnectorDto): Promise<ConnectorWithModels> {

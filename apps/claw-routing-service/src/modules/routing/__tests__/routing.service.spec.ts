@@ -8,6 +8,25 @@ import { EventPattern } from '@claw/shared-types';
 import { EntityNotFoundException } from '../../../common/errors';
 import { RoutingMode } from '../../../generated/prisma';
 
+jest.mock('../../../common/utilities', () => ({
+  ...jest.requireActual('../../../common/utilities'),
+  httpRequest: jest.fn(),
+}));
+
+const { httpRequest } = jest.requireMock('../../../common/utilities') as {
+  httpRequest: jest.Mock;
+};
+
+// Connector-health hydration reads AppConfig for the connector service URL, and
+// AppConfig validates the whole environment on first access. Jest runs with no
+// env file, so without these the very first hydration throws
+// "Invalid environment configuration" and the health cache silently stays empty.
+// Only the four required keys are needed; every service URL has a default.
+process.env['ROUTING_DATABASE_URL'] = 'postgresql://user:pass@localhost:5444/claw_routing';
+process.env['REDIS_URL'] = 'redis://localhost:6379';
+process.env['RABBITMQ_URL'] = 'amqp://localhost:5672';
+process.env['JWT_SECRET'] = 'test-jwt-secret-value-at-least-32-characters-long';
+
 const mockPolicy = {
   id: 'policy-1',
   name: 'Default Auto',
@@ -133,6 +152,7 @@ describe('RoutingService', () => {
   let routerEducationManager: ReturnType<typeof mockRouterEducationManager>;
 
   beforeEach(() => {
+    httpRequest.mockResolvedValue({ ok: true, status: 200, data: { connectors: [] } });
     policiesRepo = mockPoliciesRepo();
     decisionsRepo = mockDecisionsRepo();
     routingManager = mockRoutingManager();
@@ -168,6 +188,26 @@ describe('RoutingService', () => {
           alternatives: [],
         }),
       } as any,
+    );
+  });
+
+  it('hydrates cloud connector health after subscribing on startup', async () => {
+    httpRequest.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: {
+        connectors: [
+          { provider: 'OPENAI', status: 'HEALTHY' },
+          { provider: 'GEMINI', status: 'UNHEALTHY' },
+        ],
+      },
+    });
+
+    await service.onModuleInit();
+    await service.evaluateRoute({ messageContent: 'hello' });
+
+    expect(routingManager.evaluateRoute).toHaveBeenLastCalledWith(
+      expect.objectContaining({ connectorHealth: { OPENAI: true, GEMINI: false } }),
     );
   });
 

@@ -123,6 +123,14 @@ export interface ConnectorConfigResult {
   region?: string;
 }
 
+export interface ConnectorHealthSnapshotResult {
+  connectors: Array<{
+    provider: string;
+    status: ConnectorStatus;
+  }>;
+  generatedAt: string;
+}
+
 export interface UpstreamModelSnapshotEntry {
   provider: string;
   modelKey: string;

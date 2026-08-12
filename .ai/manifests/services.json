@@ -151,7 +151,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-connector-service",
-      "endpointCount": 14,
+      "endpointCount": 15,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",

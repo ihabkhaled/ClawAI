@@ -4,6 +4,7 @@ import { ModelsSnapshotManager } from '../managers/models-snapshot.manager';
 import { ConnectorsService } from '../services/connectors.service';
 import {
   type ConnectorConfigResult,
+  type ConnectorHealthSnapshotResult,
   type ConnectorModelsSnapshotResult,
 } from '../types/connectors.types';
 
@@ -24,5 +25,11 @@ export class ConnectorsInternalController {
   @Get('models-snapshot')
   async getModelsSnapshot(): Promise<ConnectorModelsSnapshotResult> {
     return this.modelsSnapshotManager.build();
+  }
+
+  @Public()
+  @Get('health-snapshot')
+  async getHealthSnapshot(): Promise<ConnectorHealthSnapshotResult> {
+    return this.connectorsService.getHealthSnapshot();
   }
 }
