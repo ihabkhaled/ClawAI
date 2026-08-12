@@ -1,6 +1,6 @@
 {
   "name": "claw-health-service",
-  "version": "1.12.2",
+  "version": "1.12.3",
   "private": true,
   "description": "Claw Health Service - Aggregated health checks for all microservices",
   "license": "UNLICENSED",
