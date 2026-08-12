@@ -119,6 +119,10 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
       weeklyTokens: null,
       monthlyTokens: null,
       chatsPerDay: null,
+      messagesPerDay: null,
+      workspaceConnections: null,
+      contextPacks: null,
+      memoryItems: null,
     });
     expect(result.quota.adminBypass).toBe(false);
   });
@@ -244,6 +248,10 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
         weeklyTokens: null,
         monthlyTokens: null,
         chatsPerDay: null,
+        messagesPerDay: null,
+        workspaceConnections: null,
+        contextPacks: null,
+        memoryItems: null,
       },
       featureGates: {
         allowCompareMode: true,
