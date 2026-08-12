@@ -36,6 +36,7 @@ const mockConnectorWithStats = {
 
 const mockRepo = {
   create: jest.fn().mockResolvedValue(mockConnectorWithStats),
+  createWithinLimit: jest.fn().mockResolvedValue(mockConnectorWithStats),
   findById: jest.fn(),
   findByIdWithStats: jest.fn().mockResolvedValue(mockConnectorWithStats),
   findAllByUser: jest.fn(),
@@ -128,7 +129,7 @@ describe('WorkspaceConnectorService', () => {
       };
       const result = await service.create('u1', dto);
       expect(result).toBeDefined();
-      expect(mockRepo.create).toHaveBeenCalled();
+      expect(mockRepo.createWithinLimit).toHaveBeenCalled();
     });
 
     it('should encrypt tokens when accessToken provided', async () => {
@@ -277,7 +278,7 @@ describe('WorkspaceConnectorService', () => {
         state: 'valid',
         redirectUri: 'https://cb',
       });
-      expect(mockRepo.create).toHaveBeenCalled();
+      expect(mockRepo.createWithinLimit).toHaveBeenCalled();
     });
   });
 });

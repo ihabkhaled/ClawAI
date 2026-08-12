@@ -56,7 +56,9 @@ describe('useRegister', () => {
       result.current.registerAsync({ email: 'buyer@example.com', password: 'Secret123!' }),
     );
 
-    expect(mocks.push).toHaveBeenCalledWith('/billing/checkout?plan=pro&interval=yearly');
+    expect(mocks.push).toHaveBeenCalledWith(
+      '/login?returnTo=%2Fbilling%2Fcheckout%3Fplan%3Dpro%26interval%3Dyearly',
+    );
   });
 
   it('falls back to chat when registration receives an external return route', async () => {
@@ -67,6 +69,6 @@ describe('useRegister', () => {
       result.current.registerAsync({ email: 'buyer@example.com', password: 'Secret123!' }),
     );
 
-    expect(mocks.push).toHaveBeenCalledWith('/chat');
+    expect(mocks.push).toHaveBeenCalledWith('/login?returnTo=%2Fchat');
   });
 });
