@@ -21,6 +21,11 @@ export function useChatStream(threadId: string, isActive: boolean) {
   const [executingModel, setExecutingModel] = useState<string | null>(null);
   const [judgeModel, setJudgeModel] = useState<string | null>(null);
   const [progressStages, setProgressStages] = useState<VisibleProgressStage[]>([]);
+  // The success path had no deterministic completion signal: the page waited
+  // for a poll to happen to notice the assistant message, so a finished answer
+  // could sit invisible until the user refreshed. DONE now stamps a value the
+  // page can react to immediately, exactly as the error path already did.
+  const [streamCompletedAt, setStreamCompletedAt] = useState<number | null>(null);
   const [currentStageLabel, setCurrentStageLabel] = useState<string | null>(null);
   const [streamLive, setStreamLive] = useState<StreamLiveState>({
     content: '',
@@ -35,6 +40,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
 
   const resetStream = useCallback((): void => {
     setFallbackAttempts([]);
+    setStreamCompletedAt(null);
     setStreamError(null);
     setJudgeEvaluating(false);
     setExecutingModel(null);
@@ -56,6 +62,16 @@ export function useChatStream(threadId: string, isActive: boolean) {
       usage: event.usage ?? prev.usage,
       isStreaming,
     }));
+  }, []);
+
+  const settleActiveStages = useCallback((): void => {
+    setProgressStages((prev) =>
+      prev.map((stage) =>
+        stage.status === VisibleProgressStageStatus.ACTIVE
+          ? { ...stage, status: VisibleProgressStageStatus.COMPLETED }
+          : stage,
+      ),
+    );
   }, []);
 
   const upsertStage = useCallback((event: StreamEvent, status: VisibleProgressStage['status']) => {
@@ -186,6 +202,8 @@ export function useChatStream(threadId: string, isActive: boolean) {
             setJudgeModel(null);
             flushLive(parsed, false);
             upsertStage(parsed, VisibleProgressStageStatus.COMPLETED);
+            settleActiveStages();
+            setStreamCompletedAt(Date.now());
           }
 
           if (parsed.type === StreamEventType.ERROR) {
@@ -206,6 +224,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
               { ...parsed, description: localizedError },
               VisibleProgressStageStatus.ERROR,
             );
+            settleActiveStages();
           }
         } catch {
           // Ignore parse errors from SSE heartbeats
@@ -227,7 +246,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
       connection.close();
       connectionRef.current = null;
     };
-  }, [threadId, isActive, resetStream, upsertStage, flushLive, t]);
+  }, [threadId, isActive, resetStream, upsertStage, flushLive, settleActiveStages, t]);
 
   // Clean up when no longer waiting
   useEffect(() => {
@@ -239,6 +258,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
 
   return {
     fallbackAttempts,
+    streamCompletedAt,
     streamError,
     judgeEvaluating,
     executingModel,

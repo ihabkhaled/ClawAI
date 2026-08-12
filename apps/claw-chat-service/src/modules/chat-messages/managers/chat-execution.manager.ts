@@ -151,6 +151,10 @@ import {
   executeOllamaCloudToolCall,
   truncateResult,
 } from '../utilities/ollama-cloud-tool-runner.utility';
+import {
+  describeProviderErrorResponse,
+  isProviderErrorResponse,
+} from '../utilities/provider-error-response.utility';
 import { TOOL_WEB_FETCH, TOOL_WEB_SEARCH } from '../constants/ollama-cloud-tools.constants';
 import type {
   OllamaCloudToolCall,
@@ -370,6 +374,26 @@ export class ChatExecutionManager implements OnModuleInit {
       args.payload,
       args.executionOptions,
     );
+    // A provider can answer 200 with an error body. Gemini returned a
+    // RESOURCE_EXHAUSTED envelope that was stored and shown as the assistant's
+    // reply, and because nothing threw, the chain never advanced to a provider
+    // that was working. Treat it as this candidate failing so the next one runs.
+    if (
+      response.finishReason !== 'cancelled' &&
+      !this.isGenerationResponse(response) &&
+      isProviderErrorResponse(response.content)
+    ) {
+      const reason = describeProviderErrorResponse(response.content);
+      const error = new BusinessException(reason, 'PROVIDER_ERROR_RESPONSE');
+      this.emitCandidateFailure(
+        error,
+        args.candidate,
+        args.candidateIndex,
+        args.candidates,
+        args.payload,
+      );
+      return { kind: 'failure', error };
+    }
     if (response.finishReason === 'cancelled') {
       return {
         kind: 'success',
@@ -1212,6 +1236,55 @@ export class ChatExecutionManager implements OnModuleInit {
     };
   }
 
+  /**
+   * The error a caller should see when every candidate failed.
+   *
+   * A specific failure is worth keeping: a manual model selection has no
+   * fallback, and "request failed with status 401" tells the user exactly what
+   * to fix, where a generic chain message would not. What must NOT survive is
+   * the vendor's own response body — a credit-exhausted Gemini put raw JSON
+   * with a billing URL into the chat transcript as though the assistant had
+   * said it. So the original error is preserved unless its message is itself a
+   * provider payload, which is precisely the leak.
+   */
+  private buildChainFailureError(lastError: unknown, attempts: AttemptRecord[]): unknown {
+    if (lastError === undefined || lastError === null) {
+      return new BusinessException(
+        this.describeChainFailure(attempts, lastError),
+        'LLM_EXECUTION_FAILED',
+      );
+    }
+    const message = lastError instanceof Error ? lastError.message : String(lastError);
+    if (isProviderErrorResponse(message)) {
+      return new BusinessException(
+        this.describeChainFailure(attempts, lastError),
+        'LLM_EXECUTION_FAILED',
+      );
+    }
+    return lastError;
+  }
+
+  /**
+   * A user-facing summary of an exhausted fallback chain.
+   *
+   * Names which providers were tried, because "all providers failed" with a
+   * one-provider chain and with a six-provider chain are very different
+   * situations and the difference is what the operator needs. Vendor text is
+   * deliberately excluded: it is unbounded, it has carried billing URLs and
+   * account identifiers, and it reads as though the assistant said it.
+   */
+  private describeChainFailure(attempts: AttemptRecord[], lastError: unknown): string {
+    const tried = attempts
+      .map((attempt) => `${attempt.provider}/${attempt.model}`)
+      .filter((label, index, all) => all.indexOf(label) === index);
+    if (tried.length === 0) {
+      return lastError instanceof BusinessException
+        ? lastError.message
+        : 'No AI provider could be reached. Please try again shortly.';
+    }
+    return `Every available AI provider failed to respond (tried ${tried.join(', ')}). Please try again shortly.`;
+  }
+
   private emitCandidateFailure(
     error: unknown,
     candidate: { provider: string; model: string },
@@ -1236,12 +1309,7 @@ export class ChatExecutionManager implements OnModuleInit {
   }
 
   private failExecution(lastError: unknown, attempts: AttemptRecord[]): never {
-    const finalError =
-      lastError ??
-      new BusinessException(
-        'All LLM providers failed to generate a response',
-        'LLM_EXECUTION_FAILED',
-      );
+    const finalError = this.buildChainFailureError(lastError, attempts);
     // Phase 5 — surface the per-attempt log on the error so callers
     // (chat-messages.service / SSE listeners) can render the developer
     // drawer even on full chain exhaustion.

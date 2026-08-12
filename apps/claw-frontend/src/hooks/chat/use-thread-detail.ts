@@ -37,6 +37,7 @@ export function useThreadDetail(threadId: string) {
 
   const {
     fallbackAttempts,
+    streamCompletedAt,
     streamError,
     judgeEvaluating,
     executingModel,
@@ -46,6 +47,29 @@ export function useThreadDetail(threadId: string) {
     streamLive,
     resetStream,
   } = useChatStream(threadId, isWaitingForResponse);
+
+  // A completed stream refetches immediately instead of waiting for the next
+  // poll tick. Without this the answer was already stored and streamed, but the
+  // page kept showing the in-flight state until a poll happened to land — or
+  // until the user refreshed, which is how this was reported.
+  useEffect(() => {
+    if (streamCompletedAt === null || !isWaitingForResponse) {
+      return;
+    }
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.threads.messagesInfinite(threadId),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.threads.detail(threadId),
+    });
+    // DONE is the authoritative end of the run, so it must also end the waiting
+    // state. Leaving that to the message-count effect below is not equivalent:
+    // that effect compares against the count captured when the message was
+    // sent, and on a thread that already fills a page the count does not grow,
+    // so the spinner and the three-minute poll would keep running after the
+    // answer had already rendered.
+    setIsWaitingForResponse(false);
+  }, [streamCompletedAt, isWaitingForResponse, queryClient, threadId]);
 
   // When SSE reports an error, immediately refetch messages and stop polling.
   // The backend stores an error ASSISTANT message, so the refetch will pick it up.

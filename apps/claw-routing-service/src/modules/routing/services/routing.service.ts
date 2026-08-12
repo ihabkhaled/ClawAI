@@ -9,7 +9,7 @@ import {
 } from '../../../generated/prisma';
 import { EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
-import { toInputJson } from '../../../common/utilities';
+import { httpRequest, toInputJson } from '../../../common/utilities';
 import { RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
 import { RoutingManager } from '../managers/routing.manager';
@@ -32,6 +32,7 @@ import type {
 } from '../../intelligence/types/semantic-intent-analysis.types';
 import { LiveWorkflowSelectorManager } from '../../workflows/managers/live-workflow-selector.manager';
 import { LLAMACPP_RUNTIME } from '../constants/llamacpp.constants';
+import { CONNECTOR_HEALTH_REHYDRATE_INTERVAL_MS } from '../constants/routing.constants';
 import { type CreatePolicyDto } from '../dto/create-policy.dto';
 import { type ReplayRoutingDto } from '../dto/replay-routing.dto';
 import { type UpdatePolicyDto } from '../dto/update-policy.dto';
@@ -65,6 +66,7 @@ export class RoutingService implements OnModuleInit {
   private readonly logger = new Logger(RoutingService.name);
   private readonly structuredLogger: StructuredLogger;
   private readonly connectorHealthCache = new Map<string, boolean>();
+  private lastConnectorHealthAttemptMs = 0;
   private readonly runtimeHealthCache = new Map<string, boolean>();
   private readonly providerLatencyCache = new Map<string, number>();
   private readonly providerSlowStreakCache = new Map<string, number>();
@@ -94,6 +96,50 @@ export class RoutingService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     await this.subscribeToEvents();
+    await this.hydrateConnectorHealth();
+  }
+
+  /**
+   * Refreshes the cache when it is empty.
+   *
+   * Health was hydrated exactly once, at boot. If the connector service was
+   * still starting, or briefly unreachable, the cache stayed empty for the
+   * whole life of the process — and every routing decision after that answered
+   * "no reachable execution model" while healthy connectors sat unused. A cold
+   * cache now heals itself on the next request instead of poisoning all of
+   * them, rate-limited so a genuinely down connector service is not hammered.
+   */
+  private async ensureConnectorHealthHydrated(): Promise<void> {
+    if (this.connectorHealthCache.size > 0) return;
+    const now = Date.now();
+    if (now - this.lastConnectorHealthAttemptMs < CONNECTOR_HEALTH_REHYDRATE_INTERVAL_MS) return;
+    this.lastConnectorHealthAttemptMs = now;
+    await this.hydrateConnectorHealth();
+  }
+
+  private async hydrateConnectorHealth(): Promise<void> {
+    try {
+      // Read config inside the guard. This runs on the request path now, not
+      // only at boot, so a missing or invalid configuration must degrade to
+      // "no health data" — which is attemptable — rather than throw out of
+      // routing entirely.
+      const url = `${AppConfig.get().CONNECTOR_SERVICE_URL}/api/v1/internal/connectors/health-snapshot`;
+      const response = await httpRequest<{
+        connectors: Array<{ provider: string; status: string }>;
+      }>({ url, method: 'GET', timeoutMs: 5000 });
+      if (!response.ok) {
+        this.logger.warn(`hydrateConnectorHealth: snapshot returned ${String(response.status)}`);
+        return;
+      }
+      for (const connector of response.data.connectors) {
+        this.connectorHealthCache.set(connector.provider, connector.status === 'HEALTHY');
+      }
+      this.logger.log(
+        `hydrateConnectorHealth: loaded ${String(response.data.connectors.length)} cloud connector states`,
+      );
+    } catch (error) {
+      this.logger.warn(`hydrateConnectorHealth: unavailable — ${(error as Error).message}`);
+    }
   }
 
   async createPolicy(dto: CreatePolicyDto): Promise<RoutingPolicy> {
@@ -163,6 +209,7 @@ export class RoutingService implements OnModuleInit {
     this.logger.log(
       `evaluateRoute: evaluating route for thread ${dto.threadId ?? 'none'} mode=${dto.routingMode ?? 'AUTO'}`,
     );
+    await this.ensureConnectorHealthHydrated();
     this.runtimeHealthCache.set(LLAMACPP_RUNTIME, this.llamacppHealth.isFrontierAvailable());
     const context: RoutingContext = {
       message: dto.messageContent,

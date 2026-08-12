@@ -14,6 +14,10 @@ export const CLOUD_PROVIDER_DEEPSEEK = 'DEEPSEEK';
 export const CLOUD_PROVIDER_GROK = 'GROK';
 export const CLOUD_MODEL_GROK_DEFAULT = 'grok-3-mini';
 
+export const CLOUD_PROVIDER_OLLAMA = 'OLLAMA';
+export const CLOUD_MODEL_OLLAMA_DEFAULT = 'glm-5.2';
+export const CLOUD_MODEL_OLLAMA_SECONDARY = 'kimi-k2.6';
+
 export const CLOUD_MODEL_REASONING = 'claude-opus-4';
 export const CLOUD_MODEL_FAST = 'gpt-4o-mini';
 export const CLOUD_MODEL_CHEAP = 'gpt-4o-mini';
@@ -174,6 +178,7 @@ export const VALID_PROVIDERS = new Set([
   CLOUD_PROVIDER_GEMINI,
   CLOUD_PROVIDER_DEEPSEEK,
   CLOUD_PROVIDER_GROK,
+  CLOUD_PROVIDER_OLLAMA,
   IMAGE_PROVIDER_OPENAI,
   IMAGE_PROVIDER_GEMINI,
   IMAGE_PROVIDER_LOCAL,
@@ -2375,3 +2380,9 @@ export const MULTI_INTENT_PRIORITY: Record<string, number> = {
 export const MULTI_INTENT_CONFIDENCE_SINGLE = 0.95;
 export const MULTI_INTENT_CONFIDENCE_DOUBLE = 0.85;
 export const MULTI_INTENT_CONFIDENCE_MULTI = 0.75;
+
+// How often a cold connector-health cache may retry hydration. Health is
+// hydrated at boot; if that failed the cache was empty forever and every route
+// answered "no reachable execution model". Retrying on demand heals it, and
+// the interval keeps a genuinely down connector service from being hammered.
+export const CONNECTOR_HEALTH_REHYDRATE_INTERVAL_MS = 15_000;

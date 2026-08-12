@@ -21,10 +21,13 @@ import {
   CLOUD_MODEL_FAST,
   CLOUD_MODEL_GEMINI_DEFAULT,
   CLOUD_MODEL_GROK_DEFAULT,
+  CLOUD_MODEL_OLLAMA_DEFAULT,
+  CLOUD_MODEL_OLLAMA_SECONDARY,
   CLOUD_MODEL_REASONING,
   CLOUD_PROVIDER_ANTHROPIC,
   CLOUD_PROVIDER_GEMINI,
   CLOUD_PROVIDER_GROK,
+  CLOUD_PROVIDER_OLLAMA,
   CLOUD_PROVIDER_OPENAI,
   CODING_KEYWORDS,
   CONFIDENCE_CATEGORY_KEYWORD,
@@ -189,6 +192,12 @@ export class RoutingManager {
       { provider: CLOUD_PROVIDER_OPENAI, model: CLOUD_MODEL_FAST },
       { provider: CLOUD_PROVIDER_GEMINI, model: CLOUD_MODEL_GEMINI_DEFAULT },
       { provider: CLOUD_PROVIDER_GROK, model: CLOUD_MODEL_GROK_DEFAULT },
+      // Ollama Cloud was absent here, so a run whose only healthy provider was
+      // Ollama ended as "no reachable execution model". A quota-exhausted
+      // OpenAI and a credit-depleted Gemini could take the whole request down
+      // while nineteen usable Ollama models were reachable.
+      { provider: CLOUD_PROVIDER_OLLAMA, model: CLOUD_MODEL_OLLAMA_DEFAULT },
+      { provider: CLOUD_PROVIDER_OLLAMA, model: CLOUD_MODEL_OLLAMA_SECONDARY },
     ];
 
     if (isLocalPrimary) {
@@ -230,10 +239,18 @@ export class RoutingManager {
       this.logger.debug('buildFallbackChain: sorted fallbacks by cost (cheapest first)');
     }
 
-    cloudFallbacks.sort(
-      (a, b) =>
-        this.getLatencyPenalty(a.provider, context) - this.getLatencyPenalty(b.provider, context),
-    );
+    // Confirmed-healthy providers go ahead of merely-attemptable ones, so the
+    // optimistic path costs at most one wasted attempt at the tail of the
+    // chain rather than delaying every request.
+    cloudFallbacks.sort((a, b) => {
+      const confirmed =
+        Number(this.isConnectorConfirmedHealthy(b.provider, context)) -
+        Number(this.isConnectorConfirmedHealthy(a.provider, context));
+      if (confirmed !== 0) return confirmed;
+      return (
+        this.getLatencyPenalty(a.provider, context) - this.getLatencyPenalty(b.provider, context)
+      );
+    });
 
     const chain = [...cloudFallbacks, ...localFallbacks];
     this.logger.debug(`buildFallbackChain: chain built with ${String(chain.length)} entries`);
@@ -314,7 +331,16 @@ export class RoutingManager {
         reasonTags: ['privacy_first', 'local_preferred'],
         privacyClass: 'local',
         costClass: 'free',
-        fallbackChain: this.buildFallbackChain(primary, context),
+        // A privacy-first request must never egress. This chain was returned
+        // unfiltered while handleLocalOnly filtered its own, so a local model
+        // that simply failed to load would hand the prompt to whatever cloud
+        // provider came next. The execution side does not filter either: it
+        // logs "never add cloud providers for privacy-sensitive routing modes"
+        // and then returns the chain unchanged. Filter it here, at the source,
+        // exactly as handleLocalOnly does.
+        fallbackChain: this.buildFallbackChain(primary, context).filter(
+          (entry) => entry.provider === LOCAL_PROVIDER,
+        ),
       };
     }
 
@@ -1368,12 +1394,25 @@ export class RoutingManager {
       return null;
     }
 
-    healthyCandidates.sort(
+    // Prefer a provider we KNOW is healthy for the primary route.
+    //
+    // Making unknown providers attemptable fixed the outage, but applied here
+    // it also promoted them ahead of a confirmed one: on a Gemini-only install
+    // the primary became the unconfigured ANTHROPIC on every request, so each
+    // message burned a guaranteed-failing first attempt and recorded the wrong
+    // provider in RoutingDecision. Unknown providers stay available — they are
+    // simply the fallback, which is what "attemptable" was meant to mean.
+    const confirmed = healthyCandidates.filter((candidate) =>
+      this.isConnectorConfirmedHealthy(candidate.provider, context),
+    );
+    const preferred = confirmed.length > 0 ? confirmed : healthyCandidates;
+
+    preferred.sort(
       (a, b) =>
         this.getLatencyPenalty(a.provider, context) - this.getLatencyPenalty(b.provider, context),
     );
 
-    return healthyCandidates[0] ?? null;
+    return preferred[0] ?? null;
   }
 
   private getLatencyPenalty(provider: string, context: RoutingContext): number {
@@ -1441,14 +1480,25 @@ export class RoutingManager {
     return healthy;
   }
 
+  /**
+   * Whether a provider may be attempted.
+   *
+   * This used to fail CLOSED: an empty health map, or simply a provider the map
+   * had never heard of, meant "unavailable". The map is hydrated once at boot
+   * from the connector service, so a single slow start left it empty for the
+   * lifetime of the process and every request answered
+   * `NO_REACHABLE_EXECUTION_MODEL` while three healthy connectors sat there
+   * unused. Users saw "UNAVAILABLE / NONE" with a working OpenAI, Gemini and
+   * Ollama Cloud configured.
+   *
+   * Absence of evidence is not evidence of absence, so an unknown provider is
+   * now attemptable. Only a provider explicitly recorded as unhealthy, or one
+   * whose latency circuit is open, is excluded — and execution still verifies
+   * by actually calling it, falling through the chain when it fails. Known-good
+   * providers are ordered ahead of unknown ones by the caller, so this costs a
+   * wasted attempt at worst and prevents a total outage at best.
+   */
   private isConnectorHealthy(provider: string, context: RoutingContext): boolean {
-    // If no health data exists, treat connectors as unavailable
-    const healthMap = context.connectorHealth;
-    if (!healthMap || Object.keys(healthMap).length === 0) {
-      this.logger.debug(`isConnectorHealthy: no health data - treating ${provider} as unavailable`);
-      return false;
-    }
-
     if (this.isProviderCircuitOpen(provider, context)) {
       this.logger.debug(
         `isConnectorHealthy: provider=${provider} unhealthy (latency circuit open)`,
@@ -1456,9 +1506,23 @@ export class RoutingManager {
       return false;
     }
 
-    const healthy = recordGet(healthMap, provider) ?? false;
-    this.logger.debug(`isConnectorHealthy: provider=${provider} healthy=${String(healthy)}`);
-    return healthy;
+    const healthMap = context.connectorHealth;
+    const recorded = healthMap ? recordGet(healthMap, provider) : undefined;
+    if (recorded === undefined) {
+      this.logger.debug(
+        `isConnectorHealthy: provider=${provider} has no health record — attemptable`,
+      );
+      return true;
+    }
+
+    this.logger.debug(`isConnectorHealthy: provider=${provider} healthy=${String(recorded)}`);
+    return recorded;
+  }
+
+  /** True only when the provider is recorded healthy, used for ordering. */
+  private isConnectorConfirmedHealthy(provider: string, context: RoutingContext): boolean {
+    const healthMap = context.connectorHealth;
+    return healthMap ? recordGet(healthMap, provider) === true : false;
   }
 
   resolveMultipleCategories(message: string): MultiIntentResult {

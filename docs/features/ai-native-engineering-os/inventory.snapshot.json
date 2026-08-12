@@ -8584,7 +8584,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 91
+        "testFiles": 92
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -9360,7 +9360,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 820,
+    "totalTestFiles": 821,
     "workspaceCount": 25
   }
 }

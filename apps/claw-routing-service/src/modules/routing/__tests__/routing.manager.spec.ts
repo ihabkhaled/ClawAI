@@ -58,7 +58,35 @@ describe('RoutingManager', () => {
   });
 
   describe('evaluateRoute - AUTO', () => {
-    it('returns an explicit unavailable decision when no execution provider is reachable', async () => {
+    it('returns an explicit unavailable decision when every provider is known unhealthy', async () => {
+      promptBuilder.getInstalledModels.mockResolvedValue([]);
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'hi',
+        userMode: RoutingMode.AUTO,
+        // Explicitly unhealthy, not merely unknown. Only a positive "this is
+        // down" signal may take a provider out of the running.
+        connectorHealth: {
+          ANTHROPIC: false,
+          OPENAI: false,
+          GEMINI: false,
+          GROK: false,
+          OLLAMA: false,
+        },
+        runtimeHealth: { OLLAMA: false, LLAMACPP: false },
+      });
+
+      expect(result.selectedProvider).toBe('UNAVAILABLE');
+      expect(result.selectedModel).toBe('NONE');
+      expect(result.fallbackChain).toEqual([]);
+      expect(result.reasonTags).toContain('no_reachable_execution_model');
+    });
+
+    // The outage: connector health is hydrated once at boot, so a slow start
+    // left the map empty for the life of the process. Treating "no record" as
+    // "unavailable" meant every request answered UNAVAILABLE / NONE while
+    // OpenAI, Gemini and Ollama were all healthy and configured.
+    it('still routes when connector health is simply unknown', async () => {
       promptBuilder.getInstalledModels.mockResolvedValue([]);
       const result = await manager.evaluateRoute({
         ...baseContext,
@@ -68,10 +96,45 @@ describe('RoutingManager', () => {
         runtimeHealth: { OLLAMA: false, LLAMACPP: false },
       });
 
-      expect(result.selectedProvider).toBe('UNAVAILABLE');
-      expect(result.selectedModel).toBe('NONE');
-      expect(result.fallbackChain).toEqual([]);
-      expect(result.reasonTags).toContain('no_reachable_execution_model');
+      expect(result.selectedProvider).not.toBe('UNAVAILABLE');
+      expect(result.selectedModel).not.toBe('NONE');
+      expect(result.reasonTags).not.toContain('no_reachable_execution_model');
+    });
+
+    // Ollama Cloud was absent from the fallback list entirely, so a depleted
+    // Gemini and a rate-limited OpenAI could end the request while nineteen
+    // usable Ollama models sat behind a healthy connector.
+    // Making unknown providers attemptable fixed the outage, but applied to the
+    // primary it promoted an unconfigured provider ahead of a working one: on a
+    // Gemini-only install every request opened with a guaranteed-failing
+    // ANTHROPIC attempt and recorded the wrong provider on the decision.
+    it('prefers a confirmed-healthy provider over an unknown one for the primary', async () => {
+      promptBuilder.getInstalledModels.mockResolvedValue([]);
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'hi',
+        userMode: RoutingMode.AUTO,
+        connectorHealth: { GEMINI: true },
+        runtimeHealth: { OLLAMA: false, LLAMACPP: false },
+      });
+
+      expect(result.selectedProvider).toBe('GEMINI');
+      // The unknown providers remain usable — as the fallback, which is what
+      // "attemptable" was meant to mean.
+      expect(result.fallbackChain.some((entry) => entry.provider === 'OPENAI')).toBe(true);
+    });
+
+    it('offers Ollama Cloud as a fallback when the primary is a cloud provider', async () => {
+      promptBuilder.getInstalledModels.mockResolvedValue([]);
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'hi',
+        userMode: RoutingMode.AUTO,
+        connectorHealth: { OPENAI: true, GEMINI: true, OLLAMA: true },
+        runtimeHealth: { OLLAMA: false, LLAMACPP: false },
+      });
+
+      expect(result.fallbackChain.some((entry) => entry.provider === 'OLLAMA')).toBe(true);
     });
 
     it('should route SIMPLE messages to cloud when only heavy local models are installed', async () => {
@@ -493,6 +556,23 @@ describe('RoutingManager', () => {
 
       expect(result.selectedProvider).toBe('local-ollama');
       expect(result.reasonTags).toContain('local_preferred');
+    });
+
+    // A privacy-first request must never egress. This chain was returned
+    // unfiltered while handleLocalOnly filtered its own, so a local model that
+    // merely failed to load would hand the prompt to Anthropic, OpenAI, Gemini
+    // and — after Ollama Cloud joined the cloud list — to ollama.com as well.
+    // The execution side does not filter either, so the source must.
+    it('never offers a cloud fallback for a privacy-first request', async () => {
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        userMode: RoutingMode.PRIVACY_FIRST,
+        connectorHealth: { OPENAI: true, GEMINI: true, OLLAMA: true, ANTHROPIC: true },
+      });
+
+      expect(result.selectedProvider).toBe('local-ollama');
+      expect(result.fallbackChain.every((entry) => entry.provider === 'local-ollama')).toBe(true);
+      expect(result.fallbackChain.some((entry) => entry.provider === 'OLLAMA')).toBe(false);
     });
 
     it('should fall back to cloud when local is unavailable', async () => {

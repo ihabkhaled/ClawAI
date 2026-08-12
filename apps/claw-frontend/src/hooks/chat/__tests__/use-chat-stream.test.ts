@@ -95,17 +95,20 @@ describe('useChatStream', () => {
 
     expect(result.current.executingModel).toBeNull();
     expect(result.current.currentStageLabel).toBe('Response complete');
+    // A finished run leaves nothing in flight. Every earlier stage used to keep
+    // the ACTIVE status it was created with, so a completed answer rendered as
+    // permanently running and only a page refresh cleared it.
     expect(result.current.progressStages).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           type: StreamEventType.REQUEST_ACCEPTED,
-          status: VisibleProgressStageStatus.ACTIVE,
+          status: VisibleProgressStageStatus.COMPLETED,
         }),
         expect.objectContaining({
           type: StreamEventType.PROVIDER_SELECTED,
           provider: 'local-ollama',
           model: 'qwen3:1.7b',
-          status: VisibleProgressStageStatus.ACTIVE,
+          status: VisibleProgressStageStatus.COMPLETED,
         }),
         expect.objectContaining({
           type: StreamEventType.DONE,
@@ -113,6 +116,12 @@ describe('useChatStream', () => {
         }),
       ]),
     );
+    expect(
+      result.current.progressStages.some(
+        (stage) => stage.status === VisibleProgressStageStatus.ACTIVE,
+      ),
+    ).toBe(false);
+    expect(result.current.streamCompletedAt).not.toBeNull();
   });
 
   it('records fallback attempts and stream errors with the correct failure types', () => {
@@ -155,9 +164,11 @@ describe('useChatStream', () => {
     expect(result.current.streamError).toBe('chat.allProvidersFailed');
     expect(result.current.progressStages).toEqual(
       expect.arrayContaining([
+        // The fallback hop is finished once the run has errored; only the
+        // ERROR stage keeps its own status, because that is the outcome.
         expect.objectContaining({
           type: StreamEventType.FALLBACK_ATTEMPT,
-          status: VisibleProgressStageStatus.ACTIVE,
+          status: VisibleProgressStageStatus.COMPLETED,
         }),
         expect.objectContaining({
           type: StreamEventType.ERROR,

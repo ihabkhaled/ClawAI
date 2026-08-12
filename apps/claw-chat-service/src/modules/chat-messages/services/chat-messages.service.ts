@@ -1212,6 +1212,15 @@ export class ChatMessagesService implements OnModuleInit {
       ...this.buildResearchTranscriptMetaPart(latestUserMetadata),
       ...this.buildGenerationMetaPart(llmResponse),
       sourceMessageId: payload.messageId,
+      // What the user asked for versus what actually answered. With AUTO the
+      // two differ whenever the chain falls over, and the transcript only ever
+      // recorded the winner — so a reply that quietly came from the third
+      // provider was indistinguishable from one the router picked first.
+      requestedRoutingMode: payload.routingMode,
+      requestedProvider: payload.selectedProvider,
+      requestedModel: payload.selectedModel,
+      respondedProvider: llmResponse.provider,
+      respondedModel: llmResponse.model,
       ...this.buildReRouteMetaPart(llmResponse),
       ...this.buildFastPathMetaPart(llmResponse),
       ...this.buildTokenUsageMetaPart(llmResponse),
