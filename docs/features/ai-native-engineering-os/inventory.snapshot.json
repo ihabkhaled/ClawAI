@@ -7787,6 +7787,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "EmailVerificationToken"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "EntitlementInboxEvent"
           },
           {

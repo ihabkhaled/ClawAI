@@ -11,6 +11,8 @@ export interface SafeUser {
   username: string;
   role: string;
   status: string;
+  isSuperAdmin: boolean;
+  emailVerifiedAt: Date | null;
   mustChangePassword: boolean;
   languagePreference: string;
   appearancePreference: string;
@@ -25,6 +27,8 @@ export interface UpdateUserData {
   role?: UserRole;
   status?: UserStatus;
   passwordHash?: string;
+  mustChangePassword?: boolean;
+  emailVerifiedAt?: Date | null;
 }
 
 export interface UserFilters {

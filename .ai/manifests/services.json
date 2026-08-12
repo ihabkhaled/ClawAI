@@ -79,6 +79,7 @@
       "portSource": "shared-constants",
       "prismaModels": [
         "DeviceAuthorizationGrant",
+        "EmailVerificationToken",
         "EntitlementInboxEvent",
         "FeatureUsageRecord",
         "PasswordResetToken",

@@ -24,6 +24,7 @@
     ],
     "claw-auth-service": [
       "DeviceAuthorizationGrant",
+      "EmailVerificationToken",
       "EntitlementInboxEvent",
       "FeatureUsageRecord",
       "PasswordResetToken",

@@ -107,6 +107,7 @@ export class UsersService {
     if (!user) {
       throw new EntityNotFoundException('User', id);
     }
+    this.assertMutableUser(user);
 
     if (dto.email && dto.email !== user.email) {
       const existing = await this.usersRepository.findByEmail(dto.email);
@@ -151,7 +152,8 @@ export class UsersService {
   }
 
   async deleteOwnAccount(userId: string, dto: DeleteOwnAccountDto): Promise<void> {
-    await this.requireUserWithValidPassword(userId, dto.currentPassword);
+    const user = await this.requireUserWithValidPassword(userId, dto.currentPassword);
+    this.assertMutableUser(user);
     await this.usersRepository.revokeSessionsByUserId(userId);
     await this.usersRepository.deleteById(userId);
     this.logger.log(`deleteOwnAccount: deleted user ${userId}`);
@@ -163,6 +165,7 @@ export class UsersService {
     if (!user) {
       throw new EntityNotFoundException('User', id);
     }
+    this.assertMutableUser(user);
 
     const updated = await this.usersRepository.updateById(id, {
       status: UserStatus.SUSPENDED,
@@ -185,6 +188,7 @@ export class UsersService {
     if (!user) {
       throw new EntityNotFoundException('User', id);
     }
+    this.assertMutableUser(user);
 
     const updated = await this.usersRepository.updateById(id, {
       status: UserStatus.ACTIVE,
@@ -245,6 +249,7 @@ export class UsersService {
     if (!user) {
       throw new EntityNotFoundException('User', id);
     }
+    this.assertMutableUser(user);
 
     const previousRole = user.role;
     this.logger.log(`changeRole: user ${id} role changing from ${previousRole} to ${role}`);
@@ -274,6 +279,16 @@ export class UsersService {
       );
     }
     return user;
+  }
+
+  private assertMutableUser(user: User): void {
+    if (user.isSuperAdmin) {
+      throw new BusinessException(
+        'The seeded super administrator is immutable',
+        'SUPER_ADMIN_IMMUTABLE',
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 
   private async ensureProfileFieldsAvailable(

@@ -19,7 +19,11 @@ const mockUser = {
   passwordHash: 'hashed',
   role: UserRole.VIEWER,
   status: UserStatus.ACTIVE,
+  isSuperAdmin: false,
+  emailVerifiedAt: new Date(),
   mustChangePassword: false,
+  roleId: null,
+  activePlanId: null,
   languagePreference: 'EN' as const,
   appearancePreference: 'SYSTEM' as const,
   createdAt: new Date(),
@@ -152,6 +156,16 @@ describe('UsersService', () => {
   });
 
   describe('deactivateUser', () => {
+    it('rejects every attempt to deactivate the immutable super admin', async () => {
+      repository.findById.mockResolvedValue({ ...mockUser, isSuperAdmin: true });
+
+      await expect(service.deactivateUser('super-admin', 'admin-1')).rejects.toMatchObject({
+        code: 'SUPER_ADMIN_IMMUTABLE',
+      });
+      expect(repository.updateById).not.toHaveBeenCalled();
+      expect(repository.revokeSessionsByUserId).not.toHaveBeenCalled();
+    });
+
     it('should deactivate user and publish event', async () => {
       const deactivated = { ...mockUser, status: UserStatus.SUSPENDED };
       repository.findById.mockResolvedValue(mockUser);
@@ -207,6 +221,15 @@ describe('UsersService', () => {
   });
 
   describe('changeRole', () => {
+    it('rejects every attempt to demote the immutable super admin', async () => {
+      repository.findById.mockResolvedValue({ ...mockUser, isSuperAdmin: true });
+
+      await expect(
+        service.changeRole('super-admin', UserRole.USER, 'admin-1'),
+      ).rejects.toMatchObject({ code: 'SUPER_ADMIN_IMMUTABLE' });
+      expect(repository.updateById).not.toHaveBeenCalled();
+    });
+
     it('should change role and publish event', async () => {
       const updated = { ...mockUser, role: UserRole.OPERATOR };
       repository.findById.mockResolvedValue(mockUser);
