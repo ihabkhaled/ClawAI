@@ -28,11 +28,13 @@ export function UserTable({
   onReactivate,
   onAssignPlan,
   onUpdateUser,
+  onTemporaryPassword,
   isRoleChangePending,
   isDeactivatePending,
   isReactivatePending,
   isAssignPlanPending,
   isUpdateUserPending,
+  isTemporaryPasswordPending,
 }: UserTableProps): React.ReactElement {
   const {
     editingUserId,
@@ -140,7 +142,11 @@ export function UserTable({
           <Badge
             variant={resolveRoleBadgeVariant(user.role)}
             className="cursor-pointer"
-            onClick={() => setEditingUserId(user.id)}
+            onClick={() => {
+              if (!user.isSuperAdmin) {
+                setEditingUserId(user.id);
+              }
+            }}
           >
             {user.role}
           </Badge>
@@ -178,7 +184,7 @@ export function UserTable({
       render: (user) => (
         <Select
           value={user.activePlanId ?? undefined}
-          disabled={isAssignPlanPending && pendingId === user.id}
+          disabled={user.isSuperAdmin || (isAssignPlanPending && pendingId === user.id)}
           onValueChange={(value) => onAssignPlan(user.id, value)}
         >
           <SelectTrigger className="w-[160px]" aria-label={t('admin.assignPlan')}>
@@ -219,11 +225,19 @@ export function UserTable({
       // labelled "reactivate".
       render: (user) => (
         <div className="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={user.isSuperAdmin || isTemporaryPasswordPending}
+            onClick={() => onTemporaryPassword(user.id)}
+          >
+            {t('settings.changePassword')}
+          </Button>
           {profileEditingId === user.id ? (
             <Button
               variant="outline"
               size="sm"
-              disabled={isUpdateUserPending}
+              disabled={user.isSuperAdmin || isUpdateUserPending}
               onClick={() => finishProfileEdit(onUpdateUser)}
             >
               {t('admin.saveUser')}
@@ -232,7 +246,7 @@ export function UserTable({
             <Button
               variant="outline"
               size="sm"
-              disabled={isUpdateUserPending}
+              disabled={user.isSuperAdmin || isUpdateUserPending}
               onClick={() => startProfileEdit(user)}
             >
               {t('admin.editUser')}
@@ -242,7 +256,7 @@ export function UserTable({
             <Button
               variant="outline"
               size="sm"
-              disabled={isReactivatePending || isRoleChangePending}
+              disabled={user.isSuperAdmin || isReactivatePending || isRoleChangePending}
               onClick={() => onReactivate(user.id)}
             >
               {t('admin.reactivate')}
@@ -251,7 +265,7 @@ export function UserTable({
             <Button
               variant="destructive"
               size="sm"
-              disabled={isDeactivatePending || isRoleChangePending}
+              disabled={user.isSuperAdmin || isDeactivatePending || isRoleChangePending}
               onClick={() => onDeactivate(user.id)}
             >
               {t('admin.deactivate')}

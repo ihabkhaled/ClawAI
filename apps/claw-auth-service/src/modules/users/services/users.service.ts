@@ -20,6 +20,8 @@ import { type User } from '../../../generated/prisma';
 import { type SafeUser } from '../types/users.types';
 import { toSafeUser } from '../service.utilities/to-safe-user.utility';
 import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
+import { randomBytes } from 'node:crypto';
+import { AuthEmailAdapter } from '../../auth/adapters/auth-email.adapter';
 
 @Injectable()
 export class UsersService {
@@ -28,6 +30,7 @@ export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly rabbitMQService: RabbitMQService,
+    private readonly authEmailAdapter: AuthEmailAdapter,
   ) {}
 
   async create(dto: CreateUserDto): Promise<SafeUser> {
@@ -85,7 +88,13 @@ export class UsersService {
     const { users, total } = await this.usersRepository.findAll({
       skip,
       take: query.limit,
-      filters: { search: query.search, role: query.role, status: query.status },
+      filters: {
+        search: query.search,
+        role: query.role,
+        status: query.status,
+        planId: query.planId,
+        verification: query.verification,
+      },
       sortBy: query.sortBy,
       sortOrder: query.sortOrder,
     });
@@ -239,7 +248,10 @@ export class UsersService {
     }
 
     const newHash = await hashPassword(dto.newPassword);
-    await this.usersRepository.updateById(userId, { passwordHash: newHash });
+    await this.usersRepository.updateById(userId, {
+      passwordHash: newHash,
+      mustChangePassword: false,
+    });
     this.logger.log(`changePassword: completed for user ${userId}`);
   }
 
@@ -250,6 +262,10 @@ export class UsersService {
       throw new EntityNotFoundException('User', id);
     }
     this.assertMutableUser(user);
+    await this.assertSuperAdminActorForAdminMutation(
+      actorId,
+      user.role === UserRole.ADMIN || role === UserRole.ADMIN,
+    );
 
     const previousRole = user.role;
     this.logger.log(`changeRole: user ${id} role changing from ${previousRole} to ${role}`);
@@ -264,6 +280,18 @@ export class UsersService {
     });
 
     return toSafeUser(updated);
+  }
+
+  async issueTemporaryPassword(id: string, actorId: string): Promise<void> {
+    const user = await this.usersRepository.findById(id);
+    if (!user) throw new EntityNotFoundException('User', id);
+    this.assertMutableUser(user);
+    await this.assertSuperAdminActorForAdminMutation(actorId, user.role === UserRole.ADMIN);
+    const temporaryPassword = `${randomBytes(12).toString('base64url')}!Aa1`;
+    const passwordHash = await hashPassword(temporaryPassword);
+    await this.usersRepository.updateById(id, { passwordHash, mustChangePassword: true });
+    await this.usersRepository.revokeSessionsByUserId(id);
+    await this.authEmailAdapter.sendTemporaryPassword(user.email, temporaryPassword);
   }
 
   private async requireUserWithValidPassword(userId: string, password: string): Promise<User> {
@@ -286,6 +314,21 @@ export class UsersService {
       throw new BusinessException(
         'The seeded super administrator is immutable',
         'SUPER_ADMIN_IMMUTABLE',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+  }
+
+  private async assertSuperAdminActorForAdminMutation(
+    actorId: string,
+    adminMutation: boolean,
+  ): Promise<void> {
+    if (!adminMutation) return;
+    const actor = await this.usersRepository.findById(actorId);
+    if (!actor?.isSuperAdmin) {
+      throw new BusinessException(
+        'Only the super administrator may manage administrators',
+        'SUPER_ADMIN_REQUIRED',
         HttpStatus.FORBIDDEN,
       );
     }

@@ -613,6 +613,16 @@
         },
         {
           "method": "POST",
+          "route": "/auth/email-verification/confirm",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/email-verification/resend",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/auth/login",
           "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
         },
@@ -779,6 +789,11 @@
         {
           "method": "PATCH",
           "route": "/users/:id/role",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/users/:id/temporary-password",
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
         },
         {
@@ -3559,12 +3574,37 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "AUTH_EMAIL_FROM"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "AUTH_PORT"
       },
       {
         "confidence": "verified",
         "source": ".env.example",
         "value": "AUTH_SERVICE_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "AUTH_SMTP_HOST"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "AUTH_SMTP_PASS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "AUTH_SMTP_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "AUTH_SMTP_USER"
       },
       {
         "confidence": "verified",
@@ -5994,6 +6034,11 @@
         "file": "apps/claw-frontend/src/app/(auth)/register/page.tsx",
         "kind": "page",
         "route": "/register"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(auth)/verify-email/page.tsx",
+        "kind": "page",
+        "route": "/verify-email"
       },
       {
         "file": "apps/claw-frontend/src/app/(marketing)/about/page.tsx",
@@ -9358,10 +9403,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 572,
-    "envVarCount": 342,
+    "endpointCount": 575,
+    "envVarCount": 347,
     "eventCount": 165,
-    "frontendRouteCount": 115,
+    "frontendRouteCount": 116,
     "localeCount": 13,
     "nginxRouteCount": 53,
     "permissionCount": 38,

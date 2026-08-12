@@ -4,6 +4,7 @@ import { AuthService } from '../../services/auth.service';
 import { PasswordResetService } from '../../services/password-reset.service';
 import { UserRole } from '../../../../common/enums';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
+import { EmailVerificationService } from '../../services/email-verification.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -34,6 +35,10 @@ describe('AuthController', () => {
       providers: [
         { provide: AuthService, useValue: serviceMock },
         { provide: PasswordResetService, useValue: passwordResetServiceMock },
+        {
+          provide: EmailVerificationService,
+          useValue: { resend: jest.fn(), verify: jest.fn() },
+        },
       ],
     }).compile();
     controller = module.get<AuthController>(AuthController);

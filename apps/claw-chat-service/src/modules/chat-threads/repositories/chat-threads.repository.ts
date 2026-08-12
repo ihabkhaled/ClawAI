@@ -17,6 +17,24 @@ export class ChatThreadsRepository {
     return this.prisma.chatThread.create({ data });
   }
 
+  async createWithinDailyLimit(
+    data: CreateThreadData,
+    limit: number | null,
+  ): Promise<ChatThread | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`chat:${data.userId}`}, 0))`;
+      if (limit !== null) {
+        const start = new Date();
+        start.setUTCHours(0, 0, 0, 0);
+        const count = await transaction.chatThread.count({
+          where: { userId: data.userId, createdAt: { gte: start } },
+        });
+        if (count >= limit) return null;
+      }
+      return transaction.chatThread.create({ data });
+    });
+  }
+
   async findById(id: string): Promise<ChatThread | null> {
     return this.prisma.chatThread.findUnique({ where: { id } });
   }

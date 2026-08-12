@@ -1,4 +1,5 @@
 import type { AuditAction, AuditSeverity } from '@/enums';
+import type { EmailVerificationFilter } from '@/enums/email-verification-filter.enum';
 
 export interface AuditLog {
   _id: string;
@@ -113,6 +114,18 @@ export interface AdminUser {
   status: string;
   createdAt: string;
   activePlanId: string | null;
+  isSuperAdmin: boolean;
+  emailVerifiedAt: string | null;
+}
+
+export interface AdminUserQuery {
+  page: number;
+  limit: number;
+  search?: string;
+  role?: string;
+  status?: string;
+  planId?: string;
+  verification?: EmailVerificationFilter;
 }
 
 export interface AdminUsersResponse {

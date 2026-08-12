@@ -4,10 +4,21 @@ import { ContextPacksInternalController } from './controllers/context-packs-inte
 import { ContextPackEmbeddingManager } from './managers/context-pack-embedding.manager';
 import { ContextPacksRepository } from './repositories/context-packs.repository';
 import { ContextPacksService } from './services/context-packs.service';
+import { ResourceEntitlementService } from '../../common/services/resource-entitlement.service';
 
 @Module({
   controllers: [ContextPacksController, ContextPacksInternalController],
-  providers: [ContextPacksService, ContextPacksRepository, ContextPackEmbeddingManager],
-  exports: [ContextPacksService, ContextPacksRepository, ContextPackEmbeddingManager],
+  providers: [
+    ContextPacksService,
+    ContextPacksRepository,
+    ContextPackEmbeddingManager,
+    ResourceEntitlementService,
+  ],
+  exports: [
+    ContextPacksService,
+    ContextPacksRepository,
+    ContextPackEmbeddingManager,
+    ResourceEntitlementService,
+  ],
 })
 export class ContextPacksModule {}

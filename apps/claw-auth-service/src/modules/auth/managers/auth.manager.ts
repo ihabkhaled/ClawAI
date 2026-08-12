@@ -34,7 +34,7 @@ export class AuthManager {
     private readonly tokenSessionManager: TokenSessionManager,
   ) {}
 
-  // Self-registration: always creates a USER, status ACTIVE, on the default
+  // Self-registration: always creates a pending USER on the default
   // role. Any client-supplied role is impossible to inject — the DTO only
   // accepts email+password and we hard-code role here.
   async register(email: string, password: string): Promise<RegisterResult> {
@@ -59,7 +59,7 @@ export class AuthManager {
       passwordHash,
       role: UserRole.USER,
       ...(roleId ? { roleRef: { connect: { id: roleId } } } : {}),
-      status: UserStatus.ACTIVE,
+      status: UserStatus.PENDING,
       mustChangePassword: false,
     });
 
@@ -76,8 +76,7 @@ export class AuthManager {
     this.logger.log(
       `register: created user ${user.id} role=USER plan=${defaultPlan?.slug ?? 'none'}`,
     );
-    const tokens = await this.tokenSessionManager.issue(user, WEB_SESSION_CLIENT);
-    return { tokens, user: await this.toUserSummary(user) };
+    return { verificationRequired: true, user: await this.toUserSummary(user) };
   }
 
   async login(

@@ -16,11 +16,13 @@ export function UsersContent({
   onReactivate,
   onAssignPlan,
   onUpdateUser,
+  onTemporaryPassword,
   isRoleChangePending,
   isDeactivatePending,
   isReactivatePending,
   isAssignPlanPending,
   isUpdateUserPending,
+  isTemporaryPasswordPending,
   t,
 }: UsersContentProps): React.ReactElement {
   if (isLoading) {
@@ -47,11 +49,13 @@ export function UsersContent({
       onReactivate={onReactivate}
       onAssignPlan={onAssignPlan}
       onUpdateUser={onUpdateUser}
+      onTemporaryPassword={onTemporaryPassword}
       isRoleChangePending={isRoleChangePending}
       isDeactivatePending={isDeactivatePending}
       isReactivatePending={isReactivatePending}
       isAssignPlanPending={isAssignPlanPending}
       isUpdateUserPending={isUpdateUserPending}
+      isTemporaryPasswordPending={isTemporaryPasswordPending}
     />
   );
 }

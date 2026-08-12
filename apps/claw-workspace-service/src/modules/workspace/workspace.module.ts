@@ -53,6 +53,7 @@ import { FigmaDesignService } from './services/figma-design.service';
 import { WorkspaceConnectorService } from './services/workspace-connector.service';
 import { WorkspaceObjectService } from './services/workspace-object.service';
 import { WorkspaceSearchService } from './services/workspace-search.service';
+import { WorkspaceEntitlementService } from './services/workspace-entitlement.service';
 
 @Module({
   controllers: [
@@ -75,6 +76,7 @@ import { WorkspaceSearchService } from './services/workspace-search.service';
     ConnectorAccessService,
     ConnectorGrantRepository,
     WorkspaceConnectorService,
+    WorkspaceEntitlementService,
     WorkspaceObjectService,
     WorkspaceSearchService,
     ProviderRegistryService,

@@ -23,6 +23,22 @@ export class WorkspaceConnectorRepository {
     return this.prisma.workspaceConnector.create({ data });
   }
 
+  async createWithinLimit(
+    userId: string,
+    data: Prisma.WorkspaceConnectorCreateInput,
+    limit: number | null,
+  ): Promise<WorkspaceConnector | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`workspace:${userId}`}, 0))`;
+      if (
+        limit !== null &&
+        (await transaction.workspaceConnector.count({ where: { userId } })) >= limit
+      )
+        return null;
+      return transaction.workspaceConnector.create({ data });
+    });
+  }
+
   async findById(id: string): Promise<WorkspaceConnector | null> {
     return this.prisma.workspaceConnector.findUnique({ where: { id } });
   }

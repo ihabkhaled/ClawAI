@@ -567,6 +567,16 @@
       },
       {
         "method": "POST",
+        "route": "/auth/email-verification/confirm",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/auth/email-verification/resend",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/auth/login",
         "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
       },
@@ -733,6 +743,11 @@
       {
         "method": "PATCH",
         "route": "/users/:id/role",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/users/:id/temporary-password",
         "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
       },
       {
@@ -2898,5 +2913,5 @@
     ]
   },
   "generated": true,
-  "total": 572
+  "total": 575
 }

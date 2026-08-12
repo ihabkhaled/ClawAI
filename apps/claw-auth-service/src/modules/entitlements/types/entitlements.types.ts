@@ -21,6 +21,10 @@ export type UserEntitlements = {
       weeklyTokens: number | null;
       monthlyTokens: number | null;
       chatsPerDay: number | null;
+      messagesPerDay: number | null;
+      workspaceConnections: number | null;
+      contextPacks: number | null;
+      memoryItems: number | null;
     };
     featureGates: PlanFeatureGates;
   } | null;

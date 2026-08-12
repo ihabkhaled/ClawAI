@@ -22,6 +22,21 @@ export const authRepository = {
     return response.data;
   },
 
+  async verifyEmail(token: string): Promise<{ verified: boolean }> {
+    const response = await apiClient.post<{ verified: boolean }>(
+      '/auth/email-verification/confirm',
+      { token },
+    );
+    return response.data;
+  },
+
+  async resendVerification(email: string): Promise<{ accepted: true }> {
+    const response = await apiClient.post<{ accepted: true }>('/auth/email-verification/resend', {
+      email,
+    });
+    return response.data;
+  },
+
   async refresh(refreshToken: string): Promise<RefreshResponse> {
     const response = await apiClient.post<RefreshResponse>('/auth/refresh', {
       refreshToken,

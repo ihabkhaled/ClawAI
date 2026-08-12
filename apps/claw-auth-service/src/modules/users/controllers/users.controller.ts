@@ -136,4 +136,15 @@ export class UsersController {
   ): Promise<SafeUser> {
     return this.usersService.changeRole(id, dto.role, user.id);
   }
+
+  @Post(':id/temporary-password')
+  @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
+  @HttpCode(HttpStatus.ACCEPTED)
+  async issueTemporaryPassword(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<void> {
+    return this.usersService.issueTemporaryPassword(id, user.id);
+  }
 }

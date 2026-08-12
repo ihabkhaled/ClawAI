@@ -100,6 +100,7 @@ describe('WorkspaceConnectorService', () => {
       mockSyncManager,
       mockProviderAppConfigs,
       mockRabbitMQ,
+      { resolve: jest.fn().mockResolvedValue({ isAdmin: true }) } as never,
     );
   });
 

@@ -13,6 +13,9 @@ import { PasswordResetRepository } from './repositories/password-reset.repositor
 import { UsersRepository } from '../users/repositories/users.repository';
 import { RolesModule } from '../roles/roles.module';
 import { PlansModule } from '../plans/plans.module';
+import { EmailVerificationService } from './services/email-verification.service';
+import { EmailVerificationRepository } from './repositories/email-verification.repository';
+import { AuthEmailAdapter } from './adapters/auth-email.adapter';
 
 @Module({
   imports: [RolesModule, PlansModule, RedisModule],
@@ -27,6 +30,9 @@ import { PlansModule } from '../plans/plans.module';
     PasswordResetManager,
     PasswordResetRepository,
     UsersRepository,
+    EmailVerificationService,
+    EmailVerificationRepository,
+    AuthEmailAdapter,
   ],
   exports: [AuthService],
 })

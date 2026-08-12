@@ -20,8 +20,8 @@ export interface LoginResult {
 }
 
 export interface RegisterResult {
-  tokens: TokenPair;
   user: AuthUserSummary;
+  verificationRequired: true;
 }
 
 export interface RefreshResult {

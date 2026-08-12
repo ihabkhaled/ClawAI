@@ -128,6 +128,10 @@ export class EntitlementsService {
         weeklyTokens: plan.weeklyTokenQuota ?? null,
         monthlyTokens: plan.monthlyTokenQuota ?? null,
         chatsPerDay: plan.maxChatsPerDay ?? null,
+        messagesPerDay: plan.maxMessagesPerDay ?? null,
+        workspaceConnections: plan.maxWorkspaceConnections ?? null,
+        contextPacks: plan.maxContextPacks ?? null,
+        memoryItems: plan.maxMemoryItems ?? null,
       },
       featureGates: {
         allowCompareMode: plan.allowCompareMode,

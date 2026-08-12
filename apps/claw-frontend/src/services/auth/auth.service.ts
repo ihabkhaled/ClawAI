@@ -25,16 +25,7 @@ export const authService = {
   },
 
   async register(data: RegisterRequest): Promise<RegisterResponse> {
-    const response = await authRepository.register(data);
-    useAuthStore.getState().setAuth({
-      accessToken: response.tokens.accessToken,
-      refreshToken: response.tokens.refreshToken,
-      user: response.user,
-    });
-    if (typeof document !== 'undefined') {
-      document.cookie = 'claw-auth-token=1; path=/; SameSite=Lax';
-    }
-    return response;
+    return authRepository.register(data);
   },
 
   async logout(): Promise<void> {

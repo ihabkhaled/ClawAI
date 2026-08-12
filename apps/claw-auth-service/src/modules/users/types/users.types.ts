@@ -26,6 +26,8 @@ export interface UpdateUserData {
   username?: string;
   role?: UserRole;
   status?: UserStatus;
+  planId?: string;
+  verification?: 'VERIFIED' | 'UNVERIFIED';
   passwordHash?: string;
   mustChangePassword?: boolean;
   emailVerifiedAt?: Date | null;
@@ -35,6 +37,8 @@ export interface UserFilters {
   search?: string;
   role?: UserRole;
   status?: UserStatus;
+  planId?: string;
+  verification?: 'VERIFIED' | 'UNVERIFIED';
 }
 
 export interface ListUsersQuery {

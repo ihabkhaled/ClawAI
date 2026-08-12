@@ -6,7 +6,6 @@ import { authService } from '@/services/auth/auth.service';
 import type { RegisterRequest } from '@/types';
 import { logger, showToast } from '@/utilities';
 import { saveCredential } from '@/utilities/credential-storage.utility';
-import { safeReturnRoute } from '@/utilities/safe-return-route.utility';
 
 export function useRegister() {
   const router = useRouter();
@@ -26,7 +25,8 @@ export function useRegister() {
         message: 'User registered successfully',
       });
       showToast.success({ title: t('toast.registerSuccess') });
-      router.push(safeReturnRoute(searchParams.get('returnTo')));
+      const returnTo = searchParams.get('returnTo');
+      router.push(returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login');
     },
     onError: (error: Error) => {
       logger.error({ component: 'auth', action: 'register-error', message: 'Registration failed' });

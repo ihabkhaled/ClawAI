@@ -12,6 +12,10 @@ export const ADMIN_ENTITLEMENT_PLAN: NonNullable<UserEntitlements['plan']> = {
     weeklyTokens: null,
     monthlyTokens: null,
     chatsPerDay: null,
+    messagesPerDay: null,
+    workspaceConnections: null,
+    contextPacks: null,
+    memoryItems: null,
   },
   featureGates: {
     allowCompareMode: true,

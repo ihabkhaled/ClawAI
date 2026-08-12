@@ -19,6 +19,16 @@ const base: UserEntitlements = {
     isTrial: true,
     trialEndsAt: '2026-09-08T00:00:00.000Z',
     isTrialExpired: false,
+    limits: {
+      dailyTokens: 50_000,
+      weeklyTokens: null,
+      monthlyTokens: null,
+      chatsPerDay: 2,
+      messagesPerDay: 12,
+      workspaceConnections: 0,
+      contextPacks: 1,
+      memoryItems: 5,
+    },
     featureGates: {
       allowCompareMode: false,
       allowJudgeMode: false,

@@ -15,6 +15,7 @@ import { WorkspaceSyncManager } from '../managers/workspace-sync.manager';
 import { ProviderAppConfigService } from './provider-app-config.service';
 import {
   type Prisma,
+  type WorkspaceConnector,
   WorkspaceProviderAppConfigStatus,
   WorkspaceProviderAuthMode,
 } from '../../../generated/prisma';
@@ -42,6 +43,7 @@ import type {
 } from '../types/workspace.types';
 import type { ProviderAppConfigPublic } from '../types/provider-config.types';
 import type { WorkspaceProvider } from '../../../common/enums/workspace-provider.enum';
+import { WorkspaceEntitlementService } from './workspace-entitlement.service';
 
 @Injectable()
 export class WorkspaceConnectorService {
@@ -55,6 +57,7 @@ export class WorkspaceConnectorService {
     private readonly syncManager: WorkspaceSyncManager,
     private readonly providerAppConfigs: ProviderAppConfigService,
     private readonly rabbitMQ: RabbitMQService,
+    private readonly entitlementService: WorkspaceEntitlementService,
   ) {}
 
   async create(
@@ -83,7 +86,7 @@ export class WorkspaceConnectorService {
         })
       : undefined;
 
-    const connector = await this.repository.create({
+    const connector = await this.createWithinLimit(userId, {
       userId,
       name: dto.name,
       provider: dto.provider,
@@ -296,6 +299,33 @@ export class WorkspaceConnectorService {
     }
   }
 
+  private async createWithinLimit(
+    userId: string,
+    data: Prisma.WorkspaceConnectorCreateInput,
+  ): Promise<WorkspaceConnector> {
+    const entitlements = await this.entitlementService.resolve(userId);
+    if (!entitlements.isAdmin && entitlements.plan?.featureGates.allowWorkspaces !== true) {
+      throw new BusinessException(
+        'Workspaces are unavailable on this plan',
+        'PLAN_FEATURE_DISABLED',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    const connector = await this.repository.createWithinLimit(
+      userId,
+      data,
+      entitlements.isAdmin ? null : (entitlements.plan?.limits.workspaceConnections ?? 0),
+    );
+    if (!connector) {
+      throw new BusinessException(
+        'Workspace connection limit exceeded',
+        'PLAN_WORKSPACE_CONNECTION_LIMIT_EXCEEDED',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    return connector;
+  }
+
   private requireClientId(appConfig: ProviderAppConfigPublic): string {
     const publicConfig = appConfig.publicConfig as Record<string, unknown>;
     const clientId = typeof publicConfig['clientId'] === 'string' ? publicConfig['clientId'] : '';
@@ -317,7 +347,7 @@ export class WorkspaceConnectorService {
     const appConfig = await this.requireReadyAppConfig(stateData.providerAppConfigId);
     const tokens = await this.exchangeOAuthTokens(stateData, dto);
     const encryptedTokens = this.tokenManager.encryptTokenSet(tokens);
-    const connector = await this.repository.create({
+    const connector = await this.createWithinLimit(userId, {
       userId,
       name: `${stateData.provider} — ${appConfig.name}`,
       provider: stateData.provider as WorkspaceProvider,

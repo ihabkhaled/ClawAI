@@ -22,6 +22,8 @@ import { type CreateMemoryDto } from '../dto/create-memory.dto';
 import { type UpdateMemoryDto } from '../dto/update-memory.dto';
 import { type ListMemoriesQueryDto } from '../dto/list-memories-query.dto';
 import { parseOptionalDate } from '../../../common/utilities/date-coerce.utility';
+import { ResourceEntitlementService } from '../../../common/services/resource-entitlement.service';
+import { type CreateMemoryData } from '../types/memory.types';
 
 @Injectable()
 export class MemoryService implements OnModuleInit {
@@ -36,6 +38,7 @@ export class MemoryService implements OnModuleInit {
     private readonly auditService: MemoryAuditService,
     private readonly preferenceService: MemoryPreferenceService,
     private readonly rabbitMQService: RabbitMQService,
+    private readonly entitlementService: ResourceEntitlementService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -51,7 +54,7 @@ export class MemoryService implements OnModuleInit {
       // Even on manual creation, we never persist raw redacted content without
       // explicit override. Store the redacted preview instead.
       const redacted = this.sensitivityManager.classify(dto.content);
-      const memory = await this.memoryRepository.create({
+      const memory = await this.createWithinLimit(userId, {
         userId,
         type: dto.type,
         content: redacted.redactedPreview ?? '[REDACTED]',
@@ -85,7 +88,7 @@ export class MemoryService implements OnModuleInit {
       });
       return memory;
     }
-    const memory = await this.memoryRepository.create({
+    const memory = await this.createWithinLimit(userId, {
       userId,
       type: dto.type,
       content: dto.content,
@@ -328,8 +331,31 @@ export class MemoryService implements OnModuleInit {
     }
   }
 
+  private async createWithinLimit(userId: string, data: CreateMemoryData): Promise<MemoryRecord> {
+    const entitlements = await this.entitlementService.resolve(userId);
+    if (!entitlements.isAdmin && entitlements.plan?.featureGates.allowMemory !== true) {
+      throw new BusinessException(
+        'Memory is unavailable on this plan',
+        'PLAN_FEATURE_DISABLED',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    const memory = await this.memoryRepository.createWithinLimit(
+      data,
+      entitlements.isAdmin ? null : (entitlements.plan?.limits.memoryItems ?? 0),
+    );
+    if (!memory) {
+      throw new BusinessException(
+        'Memory item limit exceeded',
+        'PLAN_MEMORY_ITEM_LIMIT_EXCEEDED',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    return memory;
+  }
+
   private async autoApproveSuggestion(suggestion: MemorySuggestion, userId: string): Promise<void> {
-    const memory = await this.memoryRepository.create({
+    const memory = await this.createWithinLimit(userId, {
       userId,
       type: suggestion.type,
       content: suggestion.content,

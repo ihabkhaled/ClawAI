@@ -12,6 +12,11 @@
       "route": "/register"
     },
     {
+      "file": "apps/claw-frontend/src/app/(auth)/verify-email/page.tsx",
+      "kind": "page",
+      "route": "/verify-email"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/about/page.tsx",
       "kind": "page",
       "route": "/about"

@@ -11,6 +11,7 @@ import { type PaginatedResult } from '../../../common/types';
 import { type ThreadWithMessageCount } from '../types/chat-threads.types';
 import { type ChatThread } from '../../../generated/prisma';
 import { THREAD_CREATED_EVENT } from '../constants/chat-threads.constants';
+import { DailyLimitService } from '../../chat-messages/services/daily-limit.service';
 
 @Injectable()
 export class ChatThreadsService {
@@ -20,23 +21,35 @@ export class ChatThreadsService {
     private readonly chatThreadsRepository: ChatThreadsRepository,
     private readonly chatMessagesRepository: ChatMessagesRepository,
     private readonly rabbitMQService: RabbitMQService,
+    private readonly dailyLimitService: DailyLimitService,
   ) {}
 
   async createThread(userId: string, dto: CreateThreadDto): Promise<ChatThread> {
     this.logger.log(
       `createThread: creating thread for user ${userId} with mode=${dto.routingMode ?? 'default'}`,
     );
-    const thread = await this.chatThreadsRepository.create({
-      userId,
-      title: dto.title,
-      routingMode: dto.routingMode,
-      systemPrompt: dto.systemPrompt,
-      temperature: dto.temperature,
-      maxTokens: dto.maxTokens,
-      preferredProvider: dto.preferredProvider,
-      preferredModel: dto.preferredModel,
-      contextPackIds: dto.contextPackIds,
-    });
+    const entitlements = await this.dailyLimitService.resolve(userId);
+    const thread = await this.chatThreadsRepository.createWithinDailyLimit(
+      {
+        userId,
+        title: dto.title,
+        routingMode: dto.routingMode,
+        systemPrompt: dto.systemPrompt,
+        temperature: dto.temperature,
+        maxTokens: dto.maxTokens,
+        preferredProvider: dto.preferredProvider,
+        preferredModel: dto.preferredModel,
+        contextPackIds: dto.contextPackIds,
+      },
+      entitlements.isAdmin ? null : (entitlements.plan?.limits.chatsPerDay ?? 0),
+    );
+    if (!thread) {
+      throw new BusinessException(
+        'Daily chat limit exceeded',
+        'PLAN_DAILY_CHAT_LIMIT_EXCEEDED',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
 
     this.logger.log(`createThread: created thread ${thread.id} for user ${userId}`);
     void this.rabbitMQService.publish(THREAD_CREATED_EVENT, {

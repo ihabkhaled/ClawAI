@@ -15,12 +15,20 @@ import {
 } from '../dto/password-reset.dto';
 import { AuthenticatedUser } from '../../../common/types';
 import { LoginResult, RefreshResult, RegisterResult, UserProfile } from '../types/auth.types';
+import { EmailVerificationService } from '../services/email-verification.service';
+import {
+  ResendVerificationDto,
+  resendVerificationSchema,
+  VerifyEmailDto,
+  verifyEmailSchema,
+} from '../dto/email-verification.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly passwordResetService: PasswordResetService,
+    private readonly emailVerificationService: EmailVerificationService,
   ) {}
 
   @Public()
@@ -72,5 +80,21 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(confirmPasswordResetSchema))
   async confirmPasswordReset(@Body() dto: ConfirmPasswordResetDto): Promise<{ reset: boolean }> {
     return this.passwordResetService.confirmReset(dto.token, dto.password);
+  }
+
+  @Public()
+  @Post('email-verification/resend')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(resendVerificationSchema))
+  async resendVerification(@Body() dto: ResendVerificationDto): Promise<{ accepted: true }> {
+    return this.emailVerificationService.resend(dto.email);
+  }
+
+  @Public()
+  @Post('email-verification/confirm')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(verifyEmailSchema))
+  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<{ verified: boolean }> {
+    return this.emailVerificationService.verify(dto.token);
   }
 }

@@ -6,6 +6,7 @@ import { DuplicateEntityException, EntityNotFoundException } from '../../../comm
 import { UserRole, UserStatus } from '../../../common/enums';
 import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
 import { verifyPassword } from '@common/utilities';
+import { type AuthEmailAdapter } from '../../auth/adapters/auth-email.adapter';
 
 jest.mock('@common/utilities', () => ({
   hashPassword: jest.fn().mockResolvedValue('hashed-password'),
@@ -58,6 +59,7 @@ describe('UsersService', () => {
     service = new UsersService(
       repository as unknown as UsersRepository,
       rabbitMQ as unknown as RabbitMQService,
+      { sendTemporaryPassword: jest.fn() } as unknown as AuthEmailAdapter,
     );
   });
 

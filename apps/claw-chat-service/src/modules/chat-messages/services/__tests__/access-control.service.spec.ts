@@ -88,9 +88,11 @@ describe('AccessControlService', () => {
     ).resolves.toMatchObject({ isAdmin: true });
   });
 
-  it('fails OPEN (returns null) when the entitlements service is unreachable', async () => {
+  it('fails closed when the entitlements service is unreachable', async () => {
     getEntitlements.mockRejectedValue(new Error('auth down'));
-    await expect(service.assertCanSendMessage('u1', {})).resolves.toBeNull();
+    await expect(service.assertCanSendMessage('u1', {})).rejects.toMatchObject({
+      code: 'ENTITLEMENTS_UNAVAILABLE',
+    });
   });
 
   it('recordUsage swallows adapter errors (fail-soft)', async () => {
@@ -180,11 +182,11 @@ describe('AccessControlService', () => {
       ).resolves.toMatchObject({ isAdmin: true });
     });
 
-    it('fails OPEN (returns null) on entitlements outage — does not block compare', async () => {
+    it('fails closed on entitlements outage', async () => {
       getEntitlements.mockRejectedValue(new Error('auth down'));
       await expect(
         service.assertCanSendMessage('u1', { requireFeature: 'allowCompareMode' }),
-      ).resolves.toBeNull();
+      ).rejects.toMatchObject({ code: 'ENTITLEMENTS_UNAVAILABLE' });
     });
 
     it('rejects when judgeEnabled=true but allowJudgeMode plan gate is locked', async () => {
