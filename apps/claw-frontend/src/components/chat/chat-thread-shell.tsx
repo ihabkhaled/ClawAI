@@ -1,11 +1,12 @@
 'use client';
 
-import { ArrowLeft, GitCompareArrows, Settings, Trash2 } from 'lucide-react';
+import { ArrowLeft, Gavel, GitCompareArrows, Settings, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 import { EditableTitle } from '@/components/chat/editable-title';
 import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel';
 import { MessageComposer } from '@/components/chat/message-composer';
+import { ThreadQualityPanel } from '@/components/chat/thread-quality-panel';
 import { ThreadSettings } from '@/components/chat/thread-settings';
 import { VirtualizedMessages } from '@/components/chat/virtualized-messages';
 import { ShareChatButton } from '@/components/chat-shares/share-chat-button';
@@ -71,6 +72,19 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
               <span className="hidden sm:inline">{props.compareLabel}</span>
             </Button>
           ) : null}
+          {props.canUseQualityControls ? (
+            <Button
+              variant={props.qualityControlsOpen ? 'default' : 'ghost'}
+              size="icon-sm"
+              className="sm:size-auto sm:h-9 sm:w-auto sm:px-3"
+              onClick={props.qualityControlsToggleOpen}
+              aria-label={props.qualityControlsLabel}
+              aria-expanded={props.qualityControlsOpen}
+            >
+              <Gavel className="h-4 w-4 sm:me-2" />
+              <span className="hidden sm:inline">{props.qualityControlsLabel}</span>
+            </Button>
+          ) : null}
           <ShareChatButton {...props.shareButtonProps} />
           <Button
             variant="ghost"
@@ -106,6 +120,10 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
 
       {props.compareIsOpen && props.canCompare ? (
         <InThreadComparePanel {...props.inThreadComparePanelProps} />
+      ) : null}
+
+      {props.qualityControlsOpen && props.canUseQualityControls ? (
+        <ThreadQualityPanel {...props.threadQualityPanelProps} />
       ) : null}
 
       {props.threadSettingsOpen ? (

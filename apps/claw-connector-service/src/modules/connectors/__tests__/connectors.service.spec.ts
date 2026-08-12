@@ -227,6 +227,7 @@ describe('ConnectorsService', () => {
         EventPattern.CONNECTOR_HEALTH_CHECKED,
         expect.objectContaining({
           connectorId: 'conn-1',
+          provider: ConnectorProvider.OPENAI,
           status: ConnectorStatus.HEALTHY,
         }),
       );
@@ -247,6 +248,7 @@ describe('ConnectorsService', () => {
         EventPattern.CONNECTOR_SYNCED,
         expect.objectContaining({
           connectorId: 'conn-1',
+          provider: ConnectorProvider.OPENAI,
           modelsFound: 3,
         }),
       );

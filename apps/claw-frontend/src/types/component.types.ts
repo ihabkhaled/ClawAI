@@ -449,6 +449,23 @@ export type ThreadSettingsProps = {
   onModelChange: (selection: ModelSelection | null) => void;
   contextPackIds: string[];
   onContextPackIdsChange: (ids: string[]) => void;
+  // Integration V2 — per-thread toggles
+  useMemory: boolean;
+  onUseMemoryChange: (value: boolean) => void;
+  useContext: boolean;
+  onUseContextChange: (value: boolean) => void;
+  onSave: () => void;
+  isPending: boolean;
+  // Plan-feature gate: when false the judge toggle + judge-model selector are
+  // hidden entirely. ADMIN passes true via usePlanFeatures.
+  // Already-translated inline error for the maxTokens field, or null when the
+  // value is acceptable to the update-thread Zod schema.
+  maxTokensError: string | null;
+  canSave: boolean;
+};
+
+export type ThreadQualityPanelProps = {
+  t: TranslateFunction;
   judgeEnabled: boolean;
   onJudgeEnabledChange: (value: boolean) => void;
   judgeModel: string | null;
@@ -464,21 +481,11 @@ export type ThreadSettingsProps = {
   onQualityThresholdChange: (value: number) => void;
   maxReRouteAttempts: number;
   onMaxReRouteAttemptsChange: (value: number) => void;
-  // Integration V2 — per-thread toggles
-  useMemory: boolean;
-  onUseMemoryChange: (value: boolean) => void;
-  useContext: boolean;
-  onUseContextChange: (value: boolean) => void;
   onSave: () => void;
   isPending: boolean;
-  // Plan-feature gate: when false the judge toggle + judge-model selector are
-  // hidden entirely. ADMIN passes true via usePlanFeatures.
+  canSave: boolean;
   allowJudgeMode: boolean;
   allowCriticReview: boolean;
-  // Already-translated inline error for the maxTokens field, or null when the
-  // value is acceptable to the update-thread Zod schema.
-  maxTokensError: string | null;
-  canSave: boolean;
 };
 
 export type JudgeRefereeDetailsProps = {
@@ -1678,6 +1685,10 @@ export type ChatThreadShellProps = {
   threadSettingsLabel: string;
   deleteLabel: string;
   compareLabel: string;
+  canUseQualityControls: boolean;
+  qualityControlsOpen: boolean;
+  qualityControlsToggleOpen: () => void;
+  qualityControlsLabel: string;
   // Public-share management: header entry point + its dialog.
   shareButtonProps: ShareChatButtonProps;
   shareDialogProps: ShareChatDialogProps;
@@ -1685,6 +1696,7 @@ export type ChatThreadShellProps = {
   inThreadComparePanelProps: InThreadComparePanelProps;
   // Thread settings card (only rendered when threadSettingsOpen).
   threadSettingsProps: ThreadSettingsProps;
+  threadQualityPanelProps: ThreadQualityPanelProps;
   // Virtualized messages.
   virtualizedMessagesProps: VirtualizedMessagesProps;
   // Composer + resize handle.

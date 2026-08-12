@@ -166,10 +166,12 @@ describe('useThreadDetailPage — composes every page-level hook', () => {
     expect(result.current.shellProps.threadId).toBe('thread-123');
     expect(result.current.shellProps.title).toBe('Test Thread');
     expect(result.current.shellProps.canCompare).toBe(true);
+    expect(result.current.shellProps.canUseQualityControls).toBe(true);
     expect(result.current.shellProps.composerHeight).toBe(200);
     expect(result.current.shellProps.editableTitle).toBe(editableTitleMock);
     expect(result.current.shellProps.composerProps.threadId).toBe('thread-123');
     expect(result.current.shellProps.threadSettingsProps.systemPrompt).toBe('');
+    expect(result.current.shellProps.threadQualityPanelProps.judgeEnabled).toBe(false);
     expect(result.current.shellProps.inThreadComparePanelProps.allowJudgeMode).toBe(true);
     expect(result.current.shellProps.backToThreadsHref).toBe('/chat');
   });

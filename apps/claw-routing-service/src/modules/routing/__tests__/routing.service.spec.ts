@@ -4,6 +4,7 @@ import { type RoutingDecisionsRepository } from '../repositories/routing-decisio
 import { type RoutingManager } from '../managers/routing.manager';
 import { type ReplayManager } from '../managers/replay.manager';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
+import { EventPattern } from '@claw/shared-types';
 import { EntityNotFoundException } from '../../../common/errors';
 import { RoutingMode } from '../../../generated/prisma';
 
@@ -106,7 +107,7 @@ const mockReplayManager = (): Partial<Record<keyof ReplayManager, jest.Mock>> =>
   }),
 });
 
-const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
+const mockRabbitMQ = (): { publish: jest.Mock; subscribe: jest.Mock } => ({
   publish: jest.fn().mockResolvedValue(void 0),
   subscribe: jest.fn().mockResolvedValue(void 0),
 });
@@ -317,6 +318,22 @@ describe('RoutingService', () => {
       await service.onModuleInit();
 
       expect(rabbitMQ.subscribe).toHaveBeenCalledTimes(10);
+    });
+
+    it('marks a successfully synced provider as reachable', async () => {
+      await service.onModuleInit();
+      const syncCall = rabbitMQ.subscribe.mock.calls.find(
+        ([pattern]) => pattern === EventPattern.CONNECTOR_SYNCED,
+      );
+
+      expect(syncCall).toBeDefined();
+      const handler = syncCall?.[1] as (data: unknown) => Promise<void>;
+      await handler({ provider: 'openai' });
+      await service.evaluateRoute({ messageContent: 'Hello' });
+
+      expect(routingManager.evaluateRoute).toHaveBeenCalledWith(
+        expect.objectContaining({ connectorHealth: { openai: true } }),
+      );
     });
   });
 });

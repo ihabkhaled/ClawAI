@@ -272,7 +272,7 @@ export function GatewayCheckoutDialog({
           <div className="relative min-h-24 w-full rounded-xl bg-white p-3 [color-scheme:light]">
             {isPaypalLoading ? (
               <div
-                className="absolute inset-0 z-10 flex items-center justify-center gap-2 text-slate-700"
+                className="absolute inset-0 z-20 flex items-center justify-center gap-2 bg-white text-slate-700"
                 role="status"
               >
                 <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
@@ -282,7 +282,10 @@ export function GatewayCheckoutDialog({
             <div
               ref={setPaypalElement}
               data-testid="paypal-buttons"
-              className={`min-h-20 w-full ${isPaypalLoading ? 'invisible' : 'visible'}`}
+              aria-hidden={isPaypalLoading}
+              className={`min-h-20 w-full ${
+                isPaypalLoading ? 'pointer-events-none opacity-0' : 'opacity-100'
+              }`}
             />
           </div>
         )}

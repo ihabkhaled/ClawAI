@@ -262,19 +262,22 @@ describe('GatewayCheckoutDialog', () => {
     );
 
     expect(screen.getByRole('status')).toHaveTextContent('billing.gatewayDialog.loadingPaypal');
-    expect(screen.getByTestId('paypal-buttons')).toHaveClass('invisible');
+    expect(screen.getByTestId('paypal-buttons')).toHaveClass('opacity-0', 'pointer-events-none');
+    expect(screen.getByTestId('paypal-buttons')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByRole('status')).toHaveClass('z-20', 'bg-white');
 
     await waitFor(() => {
       expect(buttons).toHaveBeenCalledOnce();
     });
     resolvePaypalRender?.();
     await waitFor(() => expect(buttons).toHaveBeenCalledTimes(2));
-    expect(screen.getByTestId('paypal-buttons')).toHaveClass('invisible');
+    expect(screen.getByTestId('paypal-buttons')).toHaveClass('opacity-0', 'pointer-events-none');
     resolveCardRender?.();
     await waitFor(() => {
       expect(screen.queryByText('billing.gatewayDialog.loadingPaypal')).not.toBeInTheDocument();
     });
-    expect(screen.getByTestId('paypal-buttons')).toHaveClass('visible');
+    expect(screen.getByTestId('paypal-buttons')).toHaveClass('opacity-100');
+    expect(screen.getByTestId('paypal-buttons')).toHaveAttribute('aria-hidden', 'false');
     expect(buttonOptions.map((options) => options['fundingSource'])).toEqual(['paypal', 'card']);
     const cardOptions = buttonOptions[1];
     expect(cardOptions).toBeDefined();

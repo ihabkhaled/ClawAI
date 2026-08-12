@@ -337,6 +337,7 @@ export type {
   UseAppThemeReturn,
   UseThemeSwitcherReturn,
   ThreadSettingsProps,
+  ThreadQualityPanelProps,
   GroupedModels,
   AdvancedModuleModelSelectorProps,
   CatalogModelCardProps,

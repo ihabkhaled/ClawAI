@@ -68,81 +68,18 @@ function withQueryClient(children: ReactNode): ReactElement {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
 
-describe('ThreadSettings — plan-feature gate (judge mode)', () => {
+describe('ThreadSettings — focused responsibilities', () => {
   it('hides judge toggle + judge-model selector when allowJudgeMode is false', () => {
-    render(withQueryClient(<ThreadSettings {...baseProps} allowJudgeMode={false} />));
+    render(withQueryClient(<ThreadSettings {...baseProps} />));
     expect(screen.queryByText('chat.judgeReferee')).not.toBeInTheDocument();
     expect(screen.queryByText('chat.judgeModelLabel')).not.toBeInTheDocument();
   });
 
-  it('shows judge toggle when allowJudgeMode is true', () => {
-    render(withQueryClient(<ThreadSettings {...baseProps} allowJudgeMode />));
-    expect(screen.getByText('chat.judgeReferee')).toBeInTheDocument();
-  });
-
-  it('shows judge-model selector when allowJudgeMode is true AND judgeEnabled is true', () => {
-    render(withQueryClient(<ThreadSettings {...baseProps} allowJudgeMode judgeEnabled />));
-    expect(screen.getByText('chat.judgeModelLabel')).toBeInTheDocument();
-  });
-
-  it('hides judge-model selector when allowJudgeMode is true but judgeEnabled is false', () => {
-    render(withQueryClient(<ThreadSettings {...baseProps} allowJudgeMode judgeEnabled={false} />));
-    expect(screen.queryByText('chat.judgeModelLabel')).not.toBeInTheDocument();
-  });
-});
-
-describe('ThreadSettings — critic controls', () => {
-  it('shows critic controls only when both plan gates and judge mode are enabled', () => {
-    render(
-      withQueryClient(
-        <ThreadSettings {...baseProps} allowJudgeMode allowCriticReview judgeEnabled />,
-      ),
-    );
-
-    expect(screen.getByText('compare.critic.enabled')).toBeInTheDocument();
-  });
-
-  it('hides critic controls when critic review is unavailable', () => {
-    render(
-      withQueryClient(
-        <ThreadSettings {...baseProps} allowJudgeMode judgeEnabled allowCriticReview={false} />,
-      ),
-    );
-
-    expect(screen.queryByText('compare.critic.enabled')).not.toBeInTheDocument();
-  });
-
-  it('shows the critic model selector only after critic review is enabled', () => {
-    render(
-      withQueryClient(
-        <ThreadSettings
-          {...baseProps}
-          allowJudgeMode
-          allowCriticReview
-          judgeEnabled
-          criticEnabled
-        />,
-      ),
-    );
-
-    expect(screen.getByText('compare.critic.modelLabel')).toBeInTheDocument();
-  });
-
-  it('disables critic enablement when no concrete model is available', () => {
-    render(
-      withQueryClient(
-        <ThreadSettings
-          {...baseProps}
-          allowJudgeMode
-          allowCriticReview
-          judgeEnabled
-          judgeModelOptions={[]}
-          criticEnablementDisabled
-        />,
-      ),
-    );
-
-    expect(screen.getByRole('switch', { name: 'compare.critic.enabled' })).toBeDisabled();
+  it('keeps quality workflow controls out of thread settings', () => {
+    render(withQueryClient(<ThreadSettings {...baseProps} />));
+    expect(screen.queryByText('chat.judgeReferee')).not.toBeInTheDocument();
+    expect(screen.queryByText('chat.qualityThreshold')).not.toBeInTheDocument();
+    expect(screen.queryByText('chat.maxReRouteAttempts')).not.toBeInTheDocument();
   });
 });
 
@@ -152,16 +89,7 @@ describe('ThreadSettings — model selector is never gated by plan features', ()
     // The MAIN model selector (preferredModel) must STILL be enabled — it is
     // gated only by runtime concerns (isPending / loading / zero options), never
     // by plan features. This mirrors the MessageComposer's bottom selector.
-    render(
-      withQueryClient(
-        <ThreadSettings
-          {...baseProps}
-          allowJudgeMode={false}
-          judgeEnabled={false}
-          isPending={false}
-        />,
-      ),
-    );
+    render(withQueryClient(<ThreadSettings {...baseProps} isPending={false} />));
 
     // The first combobox in the rendered output is the preferred-model selector.
     const comboboxes = screen.getAllByRole('combobox');
@@ -174,7 +102,7 @@ describe('ThreadSettings — model selector is never gated by plan features', ()
   });
 
   it('renders the model selector DISABLED only while the save mutation is pending', () => {
-    render(withQueryClient(<ThreadSettings {...baseProps} allowJudgeMode={false} isPending />));
+    render(withQueryClient(<ThreadSettings {...baseProps} isPending />));
     const comboboxes = screen.getAllByRole('combobox');
     const modelSelectorTrigger = comboboxes[0];
     // Radix Select reflects disabled state via the native `disabled` attribute

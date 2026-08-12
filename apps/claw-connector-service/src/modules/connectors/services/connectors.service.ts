@@ -197,6 +197,7 @@ export class ConnectorsService {
 
     void this.rabbitMQService.publish(EventPattern.CONNECTOR_HEALTH_CHECKED, {
       connectorId: connector.id,
+      provider: connector.provider,
       status: result.status,
       latencyMs: result.latencyMs,
       timestamp: new Date().toISOString(),
@@ -230,6 +231,7 @@ export class ConnectorsService {
 
     void this.rabbitMQService.publish(EventPattern.CONNECTOR_SYNCED, {
       connectorId: connector.id,
+      provider: connector.provider,
       modelsFound: result.modelsFound,
       modelsAdded: result.modelsAdded,
       modelsRemoved: result.modelsRemoved,

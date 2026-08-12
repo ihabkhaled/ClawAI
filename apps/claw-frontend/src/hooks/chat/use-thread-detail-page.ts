@@ -37,6 +37,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
   const canCritic = planFeatures.has(PlanFeature.ALLOW_CRITIC_REVIEW);
   const title = data.thread?.title ?? t('chat.untitled');
   const deleteConfirm = useToggle(false);
+  const qualityControls = useToggle(false);
   const share = useShareChatController(threadId.length > 0 ? threadId : null);
 
   const shellProps: ChatThreadShellProps = {
@@ -70,6 +71,10 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     threadSettingsLabel: t('chat.threadSettings'),
     deleteLabel: t('common.delete'),
     compareLabel: t('compare.title'),
+    canUseQualityControls: canJudge || canCritic,
+    qualityControlsOpen: qualityControls.isOpen,
+    qualityControlsToggleOpen: qualityControls.toggle,
+    qualityControlsLabel: t('chat.judgeReferee'),
     shareButtonProps: share.buttonProps,
     shareDialogProps: share.dialogProps,
     inThreadComparePanelProps: {
@@ -114,6 +119,17 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
       onModelChange: data.threadSettings.handleModelChange,
       contextPackIds: data.threadSettings.contextPackIds,
       onContextPackIdsChange: data.threadSettings.setContextPackIds,
+      useMemory: data.threadSettings.useMemory,
+      onUseMemoryChange: data.threadSettings.setUseMemory,
+      useContext: data.threadSettings.useContext,
+      onUseContextChange: data.threadSettings.setUseContext,
+      onSave: data.threadSettings.handleSave,
+      isPending: data.threadSettings.isPending,
+      maxTokensError: data.threadSettings.maxTokensError,
+      canSave: data.threadSettings.canSave,
+    },
+    threadQualityPanelProps: {
+      t,
       judgeEnabled: data.threadSettings.judgeEnabled,
       onJudgeEnabledChange: data.threadSettings.setJudgeEnabled,
       judgeModel: data.threadSettings.judgeModel,
@@ -125,20 +141,15 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
       criticModel: data.threadSettings.criticModel,
       onCriticModelChange: data.threadSettings.setCriticModel,
       criticEnablementDisabled: data.threadSettings.criticEnablementDisabled,
-      allowJudgeMode: canJudge,
-      allowCriticReview: canCritic,
       qualityThreshold: data.threadSettings.qualityThreshold,
       onQualityThresholdChange: data.threadSettings.setQualityThreshold,
       maxReRouteAttempts: data.threadSettings.maxReRouteAttempts,
       onMaxReRouteAttemptsChange: data.threadSettings.setMaxReRouteAttempts,
-      useMemory: data.threadSettings.useMemory,
-      onUseMemoryChange: data.threadSettings.setUseMemory,
-      useContext: data.threadSettings.useContext,
-      onUseContextChange: data.threadSettings.setUseContext,
       onSave: data.threadSettings.handleSave,
       isPending: data.threadSettings.isPending,
-      maxTokensError: data.threadSettings.maxTokensError,
       canSave: data.threadSettings.canSave,
+      allowJudgeMode: canJudge,
+      allowCriticReview: canCritic,
     },
     virtualizedMessagesProps: data.virtualizedMessagesProps,
     composerHeight,

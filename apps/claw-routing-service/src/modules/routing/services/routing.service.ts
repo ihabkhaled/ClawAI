@@ -820,10 +820,15 @@ export class RoutingService implements OnModuleInit {
   private handleConnectorSynced(data: unknown): void {
     const payload = data as Record<string, unknown>;
     const runtime = payload['runtime'] as string | undefined;
+    const provider = payload['provider'] as string | undefined;
 
     if (runtime) {
       this.logger.debug(`handleConnectorSynced: runtime=${runtime} marked healthy`);
       this.runtimeHealthCache.set(runtime, true);
+    }
+    if (provider) {
+      this.logger.debug(`handleConnectorSynced: provider=${provider} marked healthy`);
+      this.connectorHealthCache.set(provider, true);
     }
     this.promptBuilder.invalidateCache();
   }
