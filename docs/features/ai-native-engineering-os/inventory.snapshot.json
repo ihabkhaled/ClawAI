@@ -3574,37 +3574,12 @@
       {
         "confidence": "verified",
         "source": ".env.example",
-        "value": "AUTH_EMAIL_FROM"
-      },
-      {
-        "confidence": "verified",
-        "source": ".env.example",
         "value": "AUTH_PORT"
       },
       {
         "confidence": "verified",
         "source": ".env.example",
         "value": "AUTH_SERVICE_URL"
-      },
-      {
-        "confidence": "verified",
-        "source": ".env.example",
-        "value": "AUTH_SMTP_HOST"
-      },
-      {
-        "confidence": "verified",
-        "source": ".env.example",
-        "value": "AUTH_SMTP_PASS"
-      },
-      {
-        "confidence": "verified",
-        "source": ".env.example",
-        "value": "AUTH_SMTP_PORT"
-      },
-      {
-        "confidence": "verified",
-        "source": ".env.example",
-        "value": "AUTH_SMTP_USER"
       },
       {
         "confidence": "verified",
@@ -9404,7 +9379,7 @@
     "contradictionCount": 0,
     "dockerServiceCount": 41,
     "endpointCount": 575,
-    "envVarCount": 347,
+    "envVarCount": 342,
     "eventCount": 165,
     "frontendRouteCount": 116,
     "localeCount": 13,

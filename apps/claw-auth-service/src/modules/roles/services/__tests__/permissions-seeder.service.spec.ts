@@ -41,8 +41,11 @@ const stubAppConfig = (seedReconcile: boolean): void => {
     INTER_SERVICE_AUTH_TOKEN: 's'.repeat(32),
     PAYMENT_SERVICE_URL: 'http://payment-service:4018',
     PUBLIC_SITE_URL: 'https://claw.local',
-    AUTH_EMAIL_FROM: 'no-reply@claw.local',
-    AUTH_SMTP_PORT: 587,
+    CONTACT_EMAIL_ENABLED: 'false',
+    CONTACT_EMAIL_PROVIDER: 'none',
+    CONTACT_EMAIL_FROM: 'no-reply@claw.local',
+    CONTACT_SMTP_PORT: 587,
+    CONTACT_SMTP_SECURE: 'false',
     SEED_RECONCILE_PERMISSIONS: seedReconcile,
   });
 };
