@@ -99,6 +99,15 @@ describe('ConnectorsRepository', () => {
     expect(args.orderBy).toEqual({ createdAt: 'desc' });
   });
 
+  it('findEnabled returns every enabled connector', async () => {
+    await repository.findEnabled();
+
+    expect(prismaMock.connector.findMany).toHaveBeenCalledWith({
+      where: { isEnabled: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  });
+
   it('delete delegates to prisma', async () => {
     await repository.delete('c1');
     expect(prismaMock.connector.delete).toHaveBeenCalledWith({ where: { id: 'c1' } });

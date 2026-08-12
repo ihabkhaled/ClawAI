@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
 import { EventPattern, LogLevel, type ModelBehaviorProbeResult } from '@claw/shared-types';
-import { type ConnectorModel } from '../../../generated/prisma';
+import { type Connector, type ConnectorModel, ConnectorProvider } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
 import { encrypt } from '../../../common/utilities';
 import { EntityNotFoundException } from '../../../common/errors';
@@ -20,7 +20,7 @@ import {
 } from '../types/connectors.types';
 
 @Injectable()
-export class ConnectorsService {
+export class ConnectorsService implements OnApplicationBootstrap {
   private readonly logger = new Logger(ConnectorsService.name);
   private readonly structuredLogger: StructuredLogger;
 
@@ -36,6 +36,30 @@ export class ConnectorsService {
       EventPattern.LOG_SERVER,
       ConnectorsService.name,
     );
+  }
+
+  async onApplicationBootstrap(): Promise<void> {
+    const connectors = await this.connectorsRepository.findEnabled();
+    const cloudConnectors = connectors.filter(
+      ({ provider }) =>
+        provider !== ConnectorProvider.OLLAMA && provider !== ConnectorProvider.LLAMACPP,
+    );
+
+    this.logger.log(
+      `onApplicationBootstrap: checking ${String(cloudConnectors.length)} enabled cloud connectors`,
+    );
+    const results = await Promise.allSettled(
+      cloudConnectors.map(async (connector) => {
+        const result = await this.connectorsManager.testConnector(connector);
+        await this.publishHealthResult(connector, result);
+      }),
+    );
+    const failed = results.filter(({ status }) => status === 'rejected').length;
+    if (failed > 0) {
+      this.logger.warn(
+        `onApplicationBootstrap: ${String(failed)} cloud connector health checks failed`,
+      );
+    }
   }
 
   async createConnector(dto: CreateConnectorDto): Promise<ConnectorWithModels> {
@@ -195,15 +219,22 @@ export class ConnectorsService {
       metadata: { status: result.status },
     });
 
-    void this.rabbitMQService.publish(EventPattern.CONNECTOR_HEALTH_CHECKED, {
+    await this.publishHealthResult(connector, result);
+
+    return result;
+  }
+
+  private async publishHealthResult(
+    connector: Connector,
+    result: HealthCheckResult,
+  ): Promise<void> {
+    await this.rabbitMQService.publish(EventPattern.CONNECTOR_HEALTH_CHECKED, {
       connectorId: connector.id,
       provider: connector.provider,
       status: result.status,
       latencyMs: result.latencyMs,
       timestamp: new Date().toISOString(),
     });
-
-    return result;
   }
 
   async syncModels(id: string): Promise<SyncModelsResult> {

@@ -56,6 +56,13 @@ export class ConnectorsRepository {
     });
   }
 
+  async findEnabled(): Promise<Connector[]> {
+    return this.prisma.connector.findMany({
+      where: { isEnabled: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async delete(id: string): Promise<Connector> {
     return this.prisma.connector.delete({ where: { id } });
   }

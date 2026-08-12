@@ -45,6 +45,7 @@ const mockConnectorsRepository = (): Record<keyof ConnectorsRepository, jest.Moc
   create: jest.fn(),
   findById: jest.fn(),
   findByProvider: jest.fn(),
+  findEnabled: jest.fn(),
   findAll: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
@@ -88,6 +89,35 @@ describe('ConnectorsService', () => {
       manager as unknown as ConnectorsManager,
       rabbitMQ as unknown as RabbitMQService,
     );
+  });
+
+  describe('onApplicationBootstrap', () => {
+    it('publishes fresh health for every enabled cloud connector', async () => {
+      const localConnector = {
+        ...mockConnector,
+        id: 'conn-local',
+        provider: ConnectorProvider.OLLAMA,
+      };
+      connectorsRepo.findEnabled.mockResolvedValue([mockConnectorWithModels, localConnector]);
+      manager.testConnector?.mockResolvedValue({
+        status: ConnectorStatus.HEALTHY,
+        latencyMs: 25,
+      });
+
+      await service.onApplicationBootstrap();
+
+      expect(connectorsRepo.findEnabled).toHaveBeenCalledTimes(1);
+      expect(manager.testConnector).toHaveBeenCalledTimes(1);
+      expect(manager.testConnector).toHaveBeenCalledWith(mockConnectorWithModels);
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.CONNECTOR_HEALTH_CHECKED,
+        expect.objectContaining({
+          connectorId: 'conn-1',
+          provider: ConnectorProvider.OPENAI,
+          status: ConnectorStatus.HEALTHY,
+        }),
+      );
+    });
   });
 
   describe('createConnector', () => {
