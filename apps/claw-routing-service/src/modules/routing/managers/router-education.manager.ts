@@ -154,6 +154,9 @@ export class RouterEducationManager {
     decision: RoutingDecisionResult,
     context: RoutingContext,
   ): Promise<LearnedDecisionCalibration> {
+    if (decision.selectedProvider === 'UNAVAILABLE') {
+      return { decision, changed: false };
+    }
     const taskFamily = decision.detectedCategory ?? 'general';
     const currentProfile = await this.repository.findModelProfile(
       decision.selectedProvider,
@@ -656,7 +659,7 @@ export class RouterEducationManager {
 
   private isProviderUsable(provider: string, context: RoutingContext): boolean {
     if (provider === 'local-ollama') {
-      return context.runtimeHealth?.['OLLAMA'] ?? true;
+      return context.runtimeHealth?.['OLLAMA'] ?? false;
     }
     const healthMap = context.connectorHealth;
     if (!healthMap) {

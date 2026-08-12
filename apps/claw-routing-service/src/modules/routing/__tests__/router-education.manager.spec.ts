@@ -185,6 +185,29 @@ describe('RouterEducationManager', () => {
     expect(result.decision.reasonTags).toContain('learned_profile_override');
   });
 
+  it('does not override an explicit no-reachable-model decision', async () => {
+    const repository = mockRepository();
+    const manager = new RouterEducationManager(repository as never);
+
+    const result = await manager.calibrateDecision(
+      {
+        selectedProvider: 'UNAVAILABLE',
+        selectedModel: 'NONE',
+        routingMode: 'AUTO' as never,
+        confidence: 0,
+        reasonTags: ['auto', 'no_reachable_execution_model'],
+        privacyClass: 'unknown',
+        costClass: 'unknown',
+        fallbackChain: [],
+      },
+      { message: 'hi', connectorHealth: {}, runtimeHealth: {} },
+    );
+
+    expect(result.changed).toBe(false);
+    expect(result.decision.selectedProvider).toBe('UNAVAILABLE');
+    expect(result.decision.selectedModel).toBe('NONE');
+  });
+
   it('links thumbs feedback through assistant message ids when the routing decision uses the user message id', async () => {
     const repository = mockRepository();
     repository.findDecisionByAssistantMessageId.mockResolvedValue({

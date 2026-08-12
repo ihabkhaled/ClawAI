@@ -619,7 +619,7 @@ export class RoutingManager {
     if (cloudResult) {
       return cloudResult;
     }
-    return this.buildUltimateLocalFallback();
+    return this.buildNoReachableModelDecision();
   }
 
   private tryExpertComplexityRoute(
@@ -705,35 +705,19 @@ export class RoutingManager {
         fallbackChain: this.buildFallbackChain(state.bestAvailable, context),
       };
     }
-    const firstCloud = state.cloudPriority[0];
-    if (!firstCloud) {
-      return null;
-    }
-    this.logger.debug(
-      `handleAutoHeuristic: no healthy connector — best-effort with ${firstCloud.provider}`,
-    );
-    return {
-      selectedProvider: firstCloud.provider,
-      selectedModel: firstCloud.model,
-      routingMode: RoutingMode.AUTO,
-      confidence: 0.5,
-      reasonTags: ['auto', 'cloud_preferred', 'no_healthy_connector'],
-      privacyClass: 'cloud',
-      costClass: 'medium',
-      fallbackChain: this.buildFallbackChain(firstCloud, context),
-    };
+    return null;
   }
 
-  private buildUltimateLocalFallback(): RoutingDecisionResult {
-    this.logger.debug('handleAutoHeuristic: no cloud available — ultimate fallback to local');
+  private buildNoReachableModelDecision(): RoutingDecisionResult {
+    this.logger.warn('handleAutoHeuristic: no reachable execution model');
     return {
-      selectedProvider: LOCAL_PROVIDER,
-      selectedModel: LOCAL_MODEL_DEFAULT,
+      selectedProvider: 'UNAVAILABLE',
+      selectedModel: 'NONE',
       routingMode: RoutingMode.AUTO,
-      confidence: 0.4,
-      reasonTags: ['auto', 'no_cloud_available', 'local_fallback'],
-      privacyClass: 'local',
-      costClass: 'free',
+      confidence: 0,
+      reasonTags: ['auto', 'no_reachable_execution_model'],
+      privacyClass: 'unknown',
+      costClass: 'unknown',
       fallbackChain: [],
     };
   }
@@ -1451,8 +1435,8 @@ export class RoutingManager {
       return false;
     }
 
-    // If no health data exists, assume healthy (best-effort — same as connectors)
-    const healthy = recordGet(context.runtimeHealth, runtime) ?? true;
+    // Missing health is not evidence that a runtime can execute a request.
+    const healthy = recordGet(context.runtimeHealth, runtime) ?? false;
     this.logger.debug(`isRuntimeHealthy: runtime=${runtime} healthy=${String(healthy)}`);
     return healthy;
   }

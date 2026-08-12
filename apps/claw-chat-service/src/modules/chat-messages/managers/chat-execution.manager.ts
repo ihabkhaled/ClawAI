@@ -187,6 +187,12 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.log(
       `execute: starting for message ${payload.messageId} with provider=${payload.selectedProvider} model=${payload.selectedModel}`,
     );
+    if (payload.selectedProvider === 'UNAVAILABLE') {
+      throw new BusinessException(
+        'No reachable AI text model is available. Enable a cloud connector or start a local model runtime, then retry.',
+        'NO_REACHABLE_EXECUTION_MODEL',
+      );
+    }
     if (payload.routingMode === 'AUTO') {
       this.chatStreamService.emitRouterStarted(payload.threadId, payload.routerModel);
     }

@@ -58,6 +58,22 @@ describe('RoutingManager', () => {
   });
 
   describe('evaluateRoute - AUTO', () => {
+    it('returns an explicit unavailable decision when no execution provider is reachable', async () => {
+      promptBuilder.getInstalledModels.mockResolvedValue([]);
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'hi',
+        userMode: RoutingMode.AUTO,
+        connectorHealth: {},
+        runtimeHealth: { OLLAMA: false, LLAMACPP: false },
+      });
+
+      expect(result.selectedProvider).toBe('UNAVAILABLE');
+      expect(result.selectedModel).toBe('NONE');
+      expect(result.fallbackChain).toEqual([]);
+      expect(result.reasonTags).toContain('no_reachable_execution_model');
+    });
+
     it('should route SIMPLE messages to cloud when only heavy local models are installed', async () => {
       const context: RoutingContext = {
         ...baseContext,

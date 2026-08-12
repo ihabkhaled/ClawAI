@@ -149,6 +149,23 @@ describe('ChatExecutionManager', () => {
     );
   });
 
+  it('fails before provider execution when routing reports no reachable model', async () => {
+    await expect(
+      manager.execute(
+        {
+          messageId: 'msg-unavailable',
+          threadId: 'thread-1',
+          selectedProvider: 'UNAVAILABLE',
+          selectedModel: 'NONE',
+          routingMode: 'AUTO',
+          timestamp: new Date().toISOString(),
+        },
+        makeContext('hi'),
+      ),
+    ).rejects.toMatchObject({ code: 'NO_REACHABLE_EXECUTION_MODEL' });
+    expect(httpRequest).not.toHaveBeenCalled();
+  });
+
   it('uses fast path for short AUTO operational prompts and skips heavy checks', async () => {
     const context = makeContext('status?');
     httpRequest.mockResolvedValue({
