@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import Link from 'next/link';
 
+import { MarketingAdUnit } from '@/components/adsense/marketing-ad-unit';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
 import { EvidenceNote } from '@/components/marketing/shared/evidence-note';
@@ -16,6 +17,7 @@ import {
   PUBLIC_LAUNCH_EFFECTIVE_DATE,
 } from '@/constants/public-launch-page.constants';
 import { PublicLaunchPageSlug } from '@/enums/public-launch-page-slug.enum';
+import { getAdSenseSlots } from '@/lib/adsense/adsense-config';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { PublicLaunchPageProps } from '@/types/public-launch-content.types';
@@ -74,6 +76,7 @@ export async function PublicLaunchPage({
     language: getHtmlLanguage(locale),
     lastReviewed: registryEntry?.lastReviewed ?? PUBLIC_LAUNCH_EFFECTIVE_DATE,
   });
+  const slots = getAdSenseSlots();
 
   return (
     <>
@@ -144,6 +147,8 @@ export async function PublicLaunchPage({
           >
             <p>{page.evidence}</p>
           </EvidenceNote>
+
+          <MarketingAdUnit slot={slots.content} pathname={registryEntry?.canonicalPath ?? ''} />
 
           <section
             aria-label={labels.startFree}

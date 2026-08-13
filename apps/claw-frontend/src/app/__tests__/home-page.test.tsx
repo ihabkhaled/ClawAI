@@ -8,6 +8,16 @@ import { LocaleProvider } from '@/lib/i18n';
 import { en } from '@/lib/i18n/locales/en';
 import { getPageBySlug } from '@/utilities/content-registry.utility';
 
+vi.mock('@/components/adsense/marketing-ad-unit', () => ({
+  MarketingAdUnit: ({ slot }: { slot: string | null }) => (
+    <aside data-testid="marketing-ad-unit" data-slot={slot ?? ''} />
+  ),
+}));
+
+vi.mock('@/lib/adsense/adsense-config', () => ({
+  getAdSenseSlots: () => ({ home: '1234567890' }),
+}));
+
 vi.mock('next/headers', () => ({
   headers: async (): Promise<Headers> => new Headers({ 'x-claw-locale': Locale.EN }),
 }));
@@ -75,6 +85,12 @@ describe('HomePage', () => {
     const lastReviewed = getPageBySlug('home')?.lastReviewed ?? '';
     expect(lastReviewed).not.toBe('');
     expect(document.body.textContent).toContain(lastReviewed);
+  });
+
+  it('wires the configured home AdSense slot into the homepage', async () => {
+    await renderHome();
+
+    expect(screen.getByTestId('marketing-ad-unit')).toHaveAttribute('data-slot', '1234567890');
   });
 });
 

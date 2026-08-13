@@ -7,3 +7,5 @@
  * obvious gap when the unit is absent.
  */
 export const SHARED_CHAT_AD_RESERVED_HEIGHT = 280;
+
+export const MARKETING_AD_RESERVED_HEIGHT = 280;
