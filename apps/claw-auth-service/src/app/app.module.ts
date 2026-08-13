@@ -20,6 +20,7 @@ import { QuotaModule } from '../modules/quota/quota.module';
 import { EntitlementsModule } from '../modules/entitlements/entitlements.module';
 import { UsersModule } from '../modules/users/users.module';
 import { HealthModule } from '../modules/health/health.module';
+import { DeploymentModule } from '../modules/deployment/deployment.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { HealthModule } from '../modules/health/health.module';
     EntitlementsModule,
     UsersModule,
     HealthModule,
+    DeploymentModule,
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),

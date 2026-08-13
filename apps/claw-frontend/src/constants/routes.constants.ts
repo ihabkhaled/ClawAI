@@ -78,6 +78,7 @@ export const ROUTES = {
   ADMIN_ROLES: '/admin/roles',
   ADMIN_ROLE_DETAIL: (id: string) => `/admin/roles/${id}` as const,
   ADMIN_RUNTIME_PROGRESS: '/admin/runtime-progress',
+  ADMIN_DEPLOYMENT: '/admin/deployment',
   USAGE: '/usage',
   PLAN: '/plan',
   BILLING: '/billing',

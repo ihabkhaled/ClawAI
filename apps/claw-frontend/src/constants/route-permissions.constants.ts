@@ -19,6 +19,7 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
     permission: Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE,
   },
   { prefix: ROUTES.ADMIN_WEBHOOK_DELIVERIES, permission: Permission.ADMIN_SYSTEM_VIEW },
+  { prefix: ROUTES.ADMIN_DEPLOYMENT, permission: Permission.ADMIN_SYSTEM_VIEW },
   { prefix: ROUTES.ADMIN_REFUNDS, permission: Permission.ADMIN_PLANS_MANAGE },
   { prefix: ROUTES.ADMIN_BILLING, permission: Permission.ADMIN_PLANS_MANAGE },
   { prefix: ROUTES.ADMIN_PAYMENT_GATEWAYS, permission: Permission.ADMIN_PLANS_MANAGE },

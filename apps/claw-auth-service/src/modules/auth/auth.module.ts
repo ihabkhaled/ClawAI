@@ -34,6 +34,6 @@ import { AuthEmailAdapter } from './adapters/auth-email.adapter';
     EmailVerificationRepository,
     AuthEmailAdapter,
   ],
-  exports: [AuthService],
+  exports: [AuthService, AuthEmailAdapter],
 })
 export class AuthModule {}

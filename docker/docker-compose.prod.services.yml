@@ -32,6 +32,7 @@ services:
       - '4001:4001'
     volumes:
       - ../certs:/certs:ro
+      - ../.deploy:/app/.deploy:ro
     healthcheck:
       test:
         [

@@ -48,11 +48,12 @@ jobs:
     if: >
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main'
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: main
           fetch-depth: 0
 
       - uses: actions/setup-node@v7
@@ -71,6 +72,21 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           set -Eeuo pipefail
+
+          if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::CI head must be an exact 40-character commit SHA"
+            exit 2
+          fi
+
+          git fetch --quiet origin main
+          if ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+            echo "::error::CI head does not identify a fetched commit"
+            exit 2
+          fi
+          if ! git merge-base --is-ancestor "$HEAD_SHA" origin/main; then
+            echo "::error::CI head is not part of origin/main"
+            exit 2
+          fi
 
           # A concurrent run of this same workflow (two pushes to main close
           # together) can land its bump commit on origin/main while this run
@@ -149,10 +165,15 @@ jobs:
         if: steps.release.outputs.released == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.release.outputs.next }}
         run: |
           set -euo pipefail
-          gh release create "v${{ steps.release.outputs.next }}" \
-            --title "chore(release): Deployment Release v${{ steps.release.outputs.next }}" \
+          if [[ ! "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::release version must use numeric semantic-version format"
+            exit 2
+          fi
+          gh release create "v$RELEASE_VERSION" \
+            --title "chore(release): Deployment Release v$RELEASE_VERSION" \
             --notes-file "$RUNNER_TEMP/RELEASE_NOTES.md"
 
   deploy:

@@ -11,7 +11,11 @@ function canAccessItem(
   item: SidebarItem,
   canPermission: (permission: Permission) => boolean,
   canFeature: (feature: PlanFeature) => boolean,
+  isSuperAdmin: boolean,
 ): boolean {
+  if (item.superAdminOnly === true && !isSuperAdmin) {
+    return false;
+  }
   const required = requiredRequirementForPath(item.href);
   if (required === null) {
     return true;
@@ -38,13 +42,14 @@ export function filterSidebarItems(
   items: SidebarItem[],
   canPermission: (permission: Permission) => boolean,
   canFeature: (feature: PlanFeature) => boolean,
+  isSuperAdmin = false,
 ): SidebarItem[] {
   const visible: SidebarItem[] = [];
 
   for (const item of items) {
     const hasChildren = item.children !== undefined && item.children.length > 0;
 
-    if (!canAccessItem(item, canPermission, canFeature)) {
+    if (!canAccessItem(item, canPermission, canFeature, isSuperAdmin)) {
       continue;
     }
 
@@ -53,7 +58,12 @@ export function filterSidebarItems(
       continue;
     }
 
-    const visibleChildren = filterSidebarItems(item.children ?? [], canPermission, canFeature);
+    const visibleChildren = filterSidebarItems(
+      item.children ?? [],
+      canPermission,
+      canFeature,
+      isSuperAdmin,
+    );
     visible.push({ ...item, children: visibleChildren });
   }
 

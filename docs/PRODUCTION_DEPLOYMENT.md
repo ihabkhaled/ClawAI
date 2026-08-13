@@ -117,6 +117,18 @@ SSH is unavailable, the summary still reports the target and workflow outcome
 while marking server fields unavailable. `.deploy/` is host-owned ignored state;
 the deployer never commits or removes it.
 
+The immutable seeded super admin can also inspect the same validated state at
+`/<locale>/admin/deployment`. The page polls every five seconds while a rollout
+is running, slows to 30 seconds for terminal states, and warns when a running
+deployment has not reported progress for 30 minutes. Ordinary admins cannot see
+the navigation item or access the API.
+
+Terminal success and failure email uses the existing contact-mail settings. Set
+`CONTACT_EMAIL_ENABLED=true`, `CONTACT_EMAIL_PROVIDER=smtp`,
+`CONTACT_EMAIL_TO=<operations recipient>`, and the existing `CONTACT_SMTP_*`
+values in the server environment. Delivery is best effort and never changes the
+deployment result.
+
 **Never**, under any normal deployment: `docker compose down`, `docker rm`,
 `docker volume rm`, `docker system prune`, `--remove-orphans`, `git clean`,
 `git reset --hard`, or a reversed Prisma migration. Databases, MongoDB, Redis,

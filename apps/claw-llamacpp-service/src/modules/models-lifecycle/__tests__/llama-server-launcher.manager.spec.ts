@@ -2,14 +2,12 @@ import { LlamaServerLauncherManager } from '../managers/llama-server-launcher.ma
 
 describe('LlamaServerLauncherManager - argv safety', () => {
   const binaryService = {
-    snapshot: jest
-      .fn()
-      .mockReturnValue({
-        installed: true,
-        path: '/tmp/llama-server',
-        version: 'b4123',
-        platform: 'linux-x64-cpu',
-      }),
+    snapshot: jest.fn().mockReturnValue({
+      installed: true,
+      path: '/tmp/llama-server',
+      version: 'b4123',
+      platform: 'linux-x64-cpu',
+    }),
   };
   const launcher = new LlamaServerLauncherManager(binaryService as any);
 

@@ -105,6 +105,10 @@ export const queryKeys = {
     priceVersionCounts: (planId: string) =>
       ['adminBilling', 'price-version-counts', planId] as const,
   },
+  adminDeployment: {
+    all: ['adminDeployment'] as const,
+    status: () => ['adminDeployment', 'status'] as const,
+  },
   adminGateways: {
     all: ['adminGateways'] as const,
   },

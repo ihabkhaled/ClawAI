@@ -1,5 +1,6 @@
 import type Redis from 'ioredis';
 
+import { RUNTIME_V2_REDIS_DEADLINE_MS_MAX } from './constants/redis.constants';
 import type { RedisClientPort } from './types/redis-client.types';
 
 export class RedisClientAdapter implements RedisClientPort {
@@ -33,6 +34,10 @@ export class RedisClientAdapter implements RedisClientPort {
     deadlineMs: number,
     ...values: string[]
   ): Promise<unknown> {
+    const boundedDeadlineMs =
+      Number.isFinite(deadlineMs) && deadlineMs >= 0
+        ? Math.min(deadlineMs, RUNTIME_V2_REDIS_DEADLINE_MS_MAX)
+        : RUNTIME_V2_REDIS_DEADLINE_MS_MAX;
     return new Promise((resolve, reject) => {
       let settled = false;
       const timer = setTimeout(() => {
@@ -40,7 +45,7 @@ export class RedisClientAdapter implements RedisClientPort {
         settled = true;
         this.client.disconnect(true);
         reject(new Error('Runtime V2 Redis deadline exceeded'));
-      }, deadlineMs);
+      }, boundedDeadlineMs);
       this.client.eval(script, numberOfKeys, ...values).then(
         (value) => {
           if (settled) return;

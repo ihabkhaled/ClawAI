@@ -255,6 +255,17 @@ export class UsersService {
     this.logger.log(`changePassword: completed for user ${userId}`);
   }
 
+  async assertSuperAdminActor(actorId: string): Promise<void> {
+    const actor = await this.usersRepository.findById(actorId);
+    if (!actor?.isSuperAdmin) {
+      throw new BusinessException(
+        'Only the super administrator may view deployment operations',
+        'SUPER_ADMIN_REQUIRED',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+  }
+
   async changeRole(id: string, role: UserRole, actorId: string): Promise<SafeUser> {
     this.logger.log(`changeRole: changing role for user ${id} to ${role} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
@@ -324,14 +335,7 @@ export class UsersService {
     adminMutation: boolean,
   ): Promise<void> {
     if (!adminMutation) return;
-    const actor = await this.usersRepository.findById(actorId);
-    if (!actor?.isSuperAdmin) {
-      throw new BusinessException(
-        'Only the super administrator may manage administrators',
-        'SUPER_ADMIN_REQUIRED',
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    await this.assertSuperAdminActor(actorId);
   }
 
   private async ensureProfileFieldsAvailable(

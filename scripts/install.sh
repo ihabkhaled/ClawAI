@@ -78,6 +78,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 ENV_FILE="$PROJECT_ROOT/.env"
+mkdir -p "$PROJECT_ROOT/.deploy"
 
 # ─── Install state ──────────────────────────────────────────────────────────
 # Records which steps finished and which questions were answered, so a re-run
@@ -1400,6 +1401,7 @@ CONTACT_EMAIL_ENABLED=false
 CONTACT_EMAIL_PROVIDER=none
 CONTACT_EMAIL_FROM=no-reply@claw.local
 CONTACT_EMAIL_TO=
+DEPLOYMENT_STATUS_FILE=/app/.deploy/status.json
 CONTACT_RATE_LIMIT_MAX=3
 CONTACT_RATE_LIMIT_WINDOW_MS=3600000
 CONTACT_SMTP_HOST=

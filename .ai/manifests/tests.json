@@ -18,7 +18,7 @@
     },
     "@claw/shared-types": {
       "runner": "jest",
-      "testFiles": 1
+      "testFiles": 2
     },
     "@claw/shared-utilities": {
       "runner": "jest",
@@ -34,7 +34,7 @@
     },
     "claw-auth-service": {
       "runner": "jest",
-      "testFiles": 52
+      "testFiles": 58
     },
     "claw-chat-service": {
       "runner": "jest",
@@ -58,7 +58,7 @@
     },
     "claw-frontend": {
       "runner": "vitest",
-      "testFiles": 274
+      "testFiles": 278
     },
     "claw-health-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 824
+  "total": 835
 }

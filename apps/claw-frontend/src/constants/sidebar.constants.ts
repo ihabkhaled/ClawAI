@@ -45,6 +45,7 @@ import {
   CreditCard,
   Gauge,
   UserCog,
+  Rocket,
 } from 'lucide-react';
 
 import { OptionalService } from '@/enums/optional-service.enum';
@@ -59,6 +60,7 @@ export type SidebarItem = {
   children?: SidebarItem[];
   requiredService?: OptionalService;
   disabled?: boolean;
+  superAdminOnly?: boolean;
 };
 
 export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
@@ -246,6 +248,12 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
         labelKey: 'nav.adminRuntimeProgress',
         href: ROUTES.ADMIN_RUNTIME_PROGRESS,
         icon: Gauge,
+      },
+      {
+        labelKey: 'nav.adminDeployment',
+        href: ROUTES.ADMIN_DEPLOYMENT,
+        icon: Rocket,
+        superAdminOnly: true,
       },
     ],
   },

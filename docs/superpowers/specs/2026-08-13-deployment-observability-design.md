@@ -67,14 +67,14 @@ The summary-writing step uses `if: always()` and must not print SSH credentials,
 
 Notifications reuse `CONTACT_EMAIL_ENABLED`, `CONTACT_EMAIL_PROVIDER`, `CONTACT_EMAIL_FROM`, `CONTACT_EMAIL_TO`, and `CONTACT_SMTP_*`. No second SMTP stack or provider-specific dependency is introduced.
 
-The workflow invokes a repository-owned notification script after the deployment attempt. That script uses the existing shared SMTP utility and sends to `CONTACT_EMAIL_TO` only when email is enabled, provider is `smtp`, the recipient is present, and SMTP configuration is valid. It sends one concise notification per workflow attempt:
+After writing a terminal deployment status, `deploy-prod.sh` invokes the auth service's internal notification endpoint inside the running auth container. The endpoint is protected by the existing inter-service token and delegates to the existing auth email adapter, which sends to `CONTACT_EMAIL_TO` only when email is enabled, provider is `smtp`, the recipient is present, and SMTP configuration is valid. It sends one concise notification per deployment attempt:
 
-- success: version, deployed SHA, duration, production URL, workflow link;
-- failure: target SHA, safe failure phase/code when available, duration, workflow link.
+- success: version, deployed SHA, start/finish times, workflow link;
+- failure: target SHA, safe failure phase/code when available, start/finish times, workflow link.
 
-Notification delivery is best effort. A mail failure is visible in the workflow summary but never changes a successful deployment into a failure. Subjects and bodies contain no credentials, environment values, command output, user data, or private logs.
+Notification delivery is best effort and never changes the deployment result. Subjects and bodies contain no credentials, environment values, command output, user data, or private logs.
 
-The production workflow obtains SMTP values from GitHub Environment secrets. The same variable names are used so operators can copy the already-configured production SMTP values without learning a second configuration model. Secrets are never read back from the server.
+SMTP values remain in the auth service's existing server environment; no duplicate GitHub SMTP secrets or second configuration path is introduced. The deploy script reads the inter-service token only inside the auth container, so it is not exposed in host command arguments or logs.
 
 ## Protected status API
 

@@ -228,12 +228,37 @@ set_deployment_phase() {
   write_deployment_status
 }
 
+notify_deployment_status() {
+  local container_id
+  container_id="$(docker ps --filter 'name=claw-auth-service' --filter 'status=running' --format '{{.ID}}' | head -n 1)" || true
+  if [ -z "$container_id" ]; then
+    err "Deployment notification skipped: auth-service is not running."
+    return 0
+  fi
+  if docker exec "$container_id" node -e '
+const https = require("node:https");
+const request = https.request({ hostname: "localhost", port: 4001, path: "/api/v1/internal/deployment/notify", method: "POST", rejectUnauthorized: false, headers: { authorization: `Service ${process.env.INTER_SERVICE_AUTH_TOKEN ?? ""}` } }, (response) => {
+  response.resume();
+  response.on("end", () => process.exit(response.statusCode >= 200 && response.statusCode < 300 ? 0 : 1));
+});
+request.on("error", () => process.exit(1));
+request.setTimeout(10000, () => request.destroy());
+request.end();
+' >/dev/null 2>&1; then
+    log "Deployment notification request accepted."
+  else
+    err "Deployment notification could not be delivered; deployment status remains authoritative."
+  fi
+  return 0
+}
+
 record_failed_deployment() {
   DEPLOYMENT_STATUS_STATE="failed"
   DEPLOYMENT_COMPLETED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   DEPLOYMENT_STATUS_FAILURE_CODE="$DEPLOYMENT_FAILURE_CODE"
   write_deployment_status
   DEPLOYMENT_STATUS_ACTIVE=0
+  notify_deployment_status
 }
 
 record_completed_deployment_status() {
@@ -245,6 +270,7 @@ record_completed_deployment_status() {
   DEPLOYMENT_STATUS_FAILURE_CODE=""
   write_deployment_status
   DEPLOYMENT_STATUS_ACTIVE=0
+  notify_deployment_status
 }
 
 build_services() {

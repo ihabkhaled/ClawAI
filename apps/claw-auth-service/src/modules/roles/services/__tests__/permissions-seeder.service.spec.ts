@@ -44,8 +44,10 @@ const stubAppConfig = (seedReconcile: boolean): void => {
     CONTACT_EMAIL_ENABLED: 'false',
     CONTACT_EMAIL_PROVIDER: 'none',
     CONTACT_EMAIL_FROM: 'no-reply@claw.local',
+    CONTACT_EMAIL_TO: '',
     CONTACT_SMTP_PORT: 587,
     CONTACT_SMTP_SECURE: 'false',
+    DEPLOYMENT_STATUS_FILE: '/app/.deploy/status.json',
     SEED_RECONCILE_PERMISSIONS: seedReconcile,
   });
 };

@@ -1,5 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+
 export const de: TranslationDictionary = {
   common: {
     save: 'Speichern',
@@ -183,6 +185,7 @@ export const de: TranslationDictionary = {
     adminPlans: 'Tarife',
     adminRoles: 'Rollen',
     adminRuntimeProgress: 'Laufzeitdiagnose',
+    adminDeployment: DEPLOYMENT_TRANSLATIONS.de.navigationLabel,
     adminPaymentGateways: 'Zahlungs-Gateways',
     plan: 'Mein Tarif',
     billing: 'Abrechnung',
@@ -3185,6 +3188,7 @@ export const de: TranslationDictionary = {
     success: 'Rückerstattung angefordert.',
     failed: 'Rückerstattung konnte nicht ausgelöst werden.',
   },
+  adminDeployment: DEPLOYMENT_TRANSLATIONS.de.section,
   adminBilling: {
     title: 'Abrechnungsübersicht',
     description: 'Umsatz, Anbieterkosten, Marge und Zustand der Abonnements.',

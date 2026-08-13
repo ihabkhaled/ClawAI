@@ -24,6 +24,7 @@ const mockUser = {
   role: UserRole.VIEWER,
   status: UserStatus.ACTIVE,
   mustChangePassword: false,
+  isSuperAdmin: false,
   createdAt: new Date('2025-01-01'),
   updatedAt: new Date('2025-01-01'),
 };
@@ -173,6 +174,7 @@ describe('AuthManager', () => {
       expect(result.user.email).toBe('test@example.com');
       expect(result.user.username).toBe('testuser');
       expect(result.user.role).toBe(UserRole.VIEWER);
+      expect(result.user.isSuperAdmin).toBe(false);
       expect(repository.findUserByEmail).toHaveBeenCalledWith('test@example.com');
       expect(mockedUtilities.verifyPassword).toHaveBeenCalledWith(
         'hashed-password',
@@ -243,6 +245,14 @@ describe('AuthManager', () => {
       await manager.logout('user-1', 'session-1');
 
       expect(tokenSessionManager.revokeCurrent).toHaveBeenCalledWith('user-1', 'session-1');
+    });
+  });
+
+  describe('getProfile', () => {
+    it('exposes the immutable super-admin marker to authenticated clients', async () => {
+      repository.findUserById.mockResolvedValue({ ...mockUser, isSuperAdmin: true });
+
+      await expect(manager.getProfile('user-1')).resolves.toMatchObject({ isSuperAdmin: true });
     });
   });
 });

@@ -1,5 +1,7 @@
 ﻿import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+
 export const zh: TranslationDictionary = {
   common: {
     save: '节省',
@@ -178,6 +180,7 @@ export const zh: TranslationDictionary = {
     adminPlans: '计划',
     adminRoles: '角色',
     adminRuntimeProgress: '运行时诊断',
+    adminDeployment: DEPLOYMENT_TRANSLATIONS.zh.navigationLabel,
     adminPaymentGateways: '支付网关',
     plan: '我的计划',
     billing: '计费',
@@ -3069,6 +3072,7 @@ export const zh: TranslationDictionary = {
     success: '要求退款。',
     failed: '无法退款。',
   },
+  adminDeployment: DEPLOYMENT_TRANSLATIONS.zh.section,
   adminBilling: {
     title: '计费仪表板',
     description: '收入、提供商成本、利润和订阅健康状况。',

@@ -79,6 +79,7 @@ services:
       - ../apps/claw-auth-service/src:/app/apps/claw-auth-service/src
       - ../apps/claw-auth-service/prisma:/app/apps/claw-auth-service/prisma
       - ../certs:/certs:ro
+      - ../.deploy:/app/.deploy:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
       test:

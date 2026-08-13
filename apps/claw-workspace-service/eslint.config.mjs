@@ -114,7 +114,7 @@ export default tseslint.config(
       'security/detect-pseudoRandomBytes': 'warn',
       'security/detect-unsafe-regex': 'warn',
       'unicorn/prefer-node-protocol': 'error',
-      'unicorn/no-array-for-each': 'warn',
+      'unicorn/no-for-each': 'warn',
       'unicorn/no-useless-undefined': 'warn',
       'unicorn/prefer-ternary': 'warn',
       'unicorn/no-nested-ternary': 'error',

@@ -49,6 +49,22 @@ describe('RedisClientAdapter', () => {
     expect(disconnect).toHaveBeenCalledWith(true);
   });
 
+  it('caps an oversized Runtime V2 deadline before scheduling its timer', async () => {
+    jest.useFakeTimers();
+    const schedule = jest.spyOn(globalThis, 'setTimeout');
+    const client = new Redis({ lazyConnect: true });
+    jest.spyOn(client, 'eval').mockResolvedValue('OK');
+    const adapter = new RedisClientAdapter(client);
+
+    await expect(adapter.evalRuntimeV2('script', 1, Number.MAX_SAFE_INTEGER, 'key')).resolves.toBe(
+      'OK',
+    );
+    expect(schedule).toHaveBeenLastCalledWith(expect.any(Function), 10_000);
+
+    schedule.mockRestore();
+    jest.useRealTimers();
+  });
+
   it('disconnects and preserves Runtime V2 Redis errors', async () => {
     const client = new Redis({ lazyConnect: true });
     const failure = new Error('redis unavailable');

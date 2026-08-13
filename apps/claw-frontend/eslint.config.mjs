@@ -233,7 +233,7 @@ export default defineConfig([
       ],
       'unicorn/no-null': 'off',
       'unicorn/prevent-abbreviations': 'off',
-      'unicorn/no-array-for-each': 'warn',
+      'unicorn/no-for-each': 'warn',
       'unicorn/prefer-node-protocol': 'error',
       'unicorn/no-useless-undefined': 'off',
       'unicorn/prefer-string-replace-all': 'warn',
@@ -301,7 +301,7 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': 'off',
       'jsx-a11y/heading-has-content': 'off',
       curly: 'off',
-      'unicorn/no-array-for-each': 'off',
+      'unicorn/no-for-each': 'off',
     },
   },
 

@@ -1,5 +1,7 @@
 ﻿import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+
 export const en: TranslationDictionary = {
   common: {
     save: 'Save',
@@ -182,6 +184,7 @@ export const en: TranslationDictionary = {
     adminPlans: 'Plans',
     adminRoles: 'Roles',
     adminRuntimeProgress: 'Runtime diagnostics',
+    adminDeployment: DEPLOYMENT_TRANSLATIONS.en.navigationLabel,
     adminPaymentGateways: 'Payment gateways',
     plan: 'My Plan',
     billing: 'Billing',
@@ -3130,6 +3133,7 @@ export const en: TranslationDictionary = {
     success: 'Refund requested.',
     failed: 'Could not issue the refund.',
   },
+  adminDeployment: DEPLOYMENT_TRANSLATIONS.en.section,
   adminBilling: {
     title: 'Billing dashboard',
     description: 'Revenue, provider cost, margin and subscription health.',

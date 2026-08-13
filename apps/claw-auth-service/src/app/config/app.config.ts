@@ -26,11 +26,13 @@ const appConfigSchema = z.object({
   CONTACT_EMAIL_ENABLED: z.enum(['true', 'false']).default('false'),
   CONTACT_EMAIL_PROVIDER: z.enum(['none', 'smtp']).default('none'),
   CONTACT_EMAIL_FROM: z.string().email().default('no-reply@claw.local'),
+  CONTACT_EMAIL_TO: z.union([z.string().email(), z.literal('')]).default(''),
   CONTACT_SMTP_HOST: z.string().min(1).optional(),
   CONTACT_SMTP_PORT: z.coerce.number().int().positive().default(587),
   CONTACT_SMTP_SECURE: z.enum(['true', 'false']).default('false'),
   CONTACT_SMTP_USER: z.string().min(1).optional(),
   CONTACT_SMTP_PASS: z.string().min(1).optional(),
+  DEPLOYMENT_STATUS_FILE: z.string().min(1).default('/app/.deploy/status.json'),
 
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_USERNAME: z.string().min(1).optional(),
