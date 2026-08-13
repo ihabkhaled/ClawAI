@@ -1,6 +1,6 @@
 {
   "name": "claw-llamacpp-service",
-  "version": "1.15.0",
+  "version": "1.15.1",
   "private": true,
   "description": "Claw Llama.cpp Service - Local Frontier LLM runtime (llama-server proxy + lifecycle)",
   "license": "UNLICENSED",
