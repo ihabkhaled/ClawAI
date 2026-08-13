@@ -4,6 +4,7 @@ import { type ChatMessagesRepository } from '../../chat-messages/repositories/ch
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { SortOrder } from '../../../common/enums';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
+import { type DailyLimitService } from '../../chat-messages/services/daily-limit.service';
 
 const mockThread = {
   id: 'thread-1',
@@ -29,6 +30,7 @@ const mockThreadWithCount = {
 
 const mockThreadsRepository = (): Record<keyof ChatThreadsRepository, jest.Mock> => ({
   create: jest.fn(),
+  createWithinDailyLimit: jest.fn(),
   findById: jest.fn(),
   findAll: jest.fn(),
   update: jest.fn(),
@@ -52,27 +54,36 @@ describe('ChatThreadsService', () => {
 
   beforeEach(() => {
     threadsRepo = mockThreadsRepository();
+    threadsRepo.createWithinDailyLimit.mockResolvedValue(mockThread);
     messagesRepo = mockMessagesRepository();
     rabbitMQ = mockRabbitMQ();
     service = new ChatThreadsService(
       threadsRepo as unknown as ChatThreadsRepository,
       messagesRepo as unknown as ChatMessagesRepository,
       rabbitMQ as unknown as RabbitMQService,
+      {
+        resolve: jest
+          .fn()
+          .mockResolvedValue({ isAdmin: false, plan: { limits: { chatsPerDay: 2 } } }),
+      } as unknown as DailyLimitService,
     );
   });
 
   describe('createThread', () => {
     it('should create a thread and publish event', async () => {
-      threadsRepo.create.mockResolvedValue(mockThread);
+      threadsRepo.createWithinDailyLimit.mockResolvedValue(mockThread);
 
       const result = await service.createThread('user-1', { title: 'Test Thread' });
 
       expect(result).toEqual(mockThread);
-      expect(threadsRepo.create).toHaveBeenCalledWith({
-        userId: 'user-1',
-        title: 'Test Thread',
-        routingMode: undefined,
-      });
+      expect(threadsRepo.createWithinDailyLimit).toHaveBeenCalledWith(
+        {
+          userId: 'user-1',
+          title: 'Test Thread',
+          routingMode: undefined,
+        },
+        2,
+      );
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
         'thread.created',
         expect.objectContaining({
@@ -337,7 +348,7 @@ describe('ChatThreadsService', () => {
   describe('createThread - edge cases', () => {
     it('should create thread with routing mode', async () => {
       const threadWithMode = { ...mockThread, routingMode: 'HIGH_REASONING' as const };
-      threadsRepo.create.mockResolvedValue(threadWithMode);
+      threadsRepo.createWithinDailyLimit.mockResolvedValue(threadWithMode);
 
       const result = await service.createThread('user-1', {
         title: 'Test',
@@ -345,23 +356,29 @@ describe('ChatThreadsService', () => {
       });
 
       expect(result.routingMode).toBe('HIGH_REASONING');
-      expect(threadsRepo.create).toHaveBeenCalledWith({
-        userId: 'user-1',
-        title: 'Test',
-        routingMode: 'HIGH_REASONING',
-      });
+      expect(threadsRepo.createWithinDailyLimit).toHaveBeenCalledWith(
+        {
+          userId: 'user-1',
+          title: 'Test',
+          routingMode: 'HIGH_REASONING',
+        },
+        2,
+      );
     });
 
     it('should create thread without optional fields', async () => {
-      threadsRepo.create.mockResolvedValue(mockThread);
+      threadsRepo.createWithinDailyLimit.mockResolvedValue(mockThread);
 
       await service.createThread('user-1', {});
 
-      expect(threadsRepo.create).toHaveBeenCalledWith({
-        userId: 'user-1',
-        title: undefined,
-        routingMode: undefined,
-      });
+      expect(threadsRepo.createWithinDailyLimit).toHaveBeenCalledWith(
+        {
+          userId: 'user-1',
+          title: undefined,
+          routingMode: undefined,
+        },
+        2,
+      );
     });
   });
 });

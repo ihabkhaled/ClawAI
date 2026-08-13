@@ -7,6 +7,8 @@ export const listUsersQuerySchema = z.object({
   search: z.string().max(255, 'Search must be at most 255 characters').optional(),
   role: z.nativeEnum(UserRole).optional(),
   status: z.nativeEnum(UserStatus).optional(),
+  planId: z.string().min(1).max(255).optional(),
+  verification: z.enum(['VERIFIED', 'UNVERIFIED']).optional(),
   sortBy: z.enum(['createdAt', 'email', 'username', 'role', 'status']).default('createdAt'),
   sortOrder: z.nativeEnum(SortOrder).default(SortOrder.DESC),
 });

@@ -15,6 +15,7 @@ import { type AddContextPackItemDto } from '../dto/add-context-pack-item.dto';
 import { type ContextPackWithItems } from '../types/context-packs.types';
 import { CONTEXT_PACK_UPDATED_EVENT } from '../constants/context-packs.constants';
 import { parsePausedUntil } from '../../../common/utilities/date-coerce.utility';
+import { ResourceEntitlementService } from '../../../common/services/resource-entitlement.service';
 
 @Injectable()
 export class ContextPacksService {
@@ -24,25 +25,43 @@ export class ContextPacksService {
     private readonly contextPacksRepository: ContextPacksRepository,
     private readonly rabbitMQService: RabbitMQService,
     private readonly embeddingManager: ContextPackEmbeddingManager,
+    private readonly entitlementService: ResourceEntitlementService,
   ) {}
 
   async createContextPack(userId: string, dto: CreateContextPackDto): Promise<ContextPack> {
     this.logger.log(`createContextPack: pack="${dto.name}" userId=${userId}`);
-    const pack = await this.contextPacksRepository.create({
-      userId,
-      ownerUserId: userId,
-      name: dto.name,
-      description: dto.description,
-      scope: dto.scope,
-      scopeRef: dto.scopeRef,
-      legacyScope: dto.legacyScope,
-      tags: dto.tags,
-      visibility: dto.visibility,
-      color: dto.color,
-      icon: dto.icon,
-      templateId: dto.templateId,
-      pinned: dto.pinned,
-    });
+    const entitlements = await this.entitlementService.resolve(userId);
+    if (!entitlements.isAdmin && entitlements.plan?.featureGates.allowContextPacks !== true) {
+      throw new BusinessException(
+        'Context packs are unavailable on this plan',
+        'PLAN_FEATURE_DISABLED',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    const pack = await this.contextPacksRepository.createWithinLimit(
+      {
+        userId,
+        ownerUserId: userId,
+        name: dto.name,
+        description: dto.description,
+        scope: dto.scope,
+        scopeRef: dto.scopeRef,
+        legacyScope: dto.legacyScope,
+        tags: dto.tags,
+        visibility: dto.visibility,
+        color: dto.color,
+        icon: dto.icon,
+        templateId: dto.templateId,
+        pinned: dto.pinned,
+      },
+      entitlements.isAdmin ? null : (entitlements.plan?.limits.contextPacks ?? 0),
+    );
+    if (!pack)
+      throw new BusinessException(
+        'Context pack limit exceeded',
+        'PLAN_CONTEXT_PACK_LIMIT_EXCEEDED',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     void this.rabbitMQService.publish(CONTEXT_PACK_UPDATED_EVENT, {
       contextPackId: pack.id,
       userId,

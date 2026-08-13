@@ -67,6 +67,8 @@ model User {
   // plans entirely, and the column is backfilled for existing users.
   activePlanId         String?                  @map("active_plan_id")
   status               UserStatus               @default(PENDING)
+  isSuperAdmin         Boolean                  @default(false) @map("is_super_admin")
+  emailVerifiedAt      DateTime?                @map("email_verified_at")
   mustChangePassword   Boolean                  @default(false) @map("must_change_password")
   languagePreference   UserLanguagePreference   @default(EN) @map("language_preference")
   appearancePreference UserAppearancePreference @default(SYSTEM) @map("appearance_preference")
@@ -75,6 +77,7 @@ model User {
 
   sessions        Session[]
   passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
   roleRef         Role?                @relation(fields: [roleId], references: [id])
   activePlan      Plan?                @relation("UserActivePlan", fields: [activePlanId], references: [id])
   planAssignments UserPlanAssignment[]
@@ -378,6 +381,21 @@ model PasswordResetToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id         String    @id @default(cuid())
+  userId     String    @map("user_id")
+  tokenHash  String    @unique @map("token_hash")
+  expiresAt  DateTime  @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
 }
 
 model SystemSetting {

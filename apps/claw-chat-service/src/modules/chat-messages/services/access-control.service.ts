@@ -35,11 +35,8 @@ export class AccessControlService {
   async assertCanSendMessage(
     userId: string,
     opts: SendMessageAccessOptions = {},
-  ): Promise<UserEntitlements | null> {
+  ): Promise<UserEntitlements> {
     const ent = await this.resolve(userId);
-    if (!ent) {
-      return null; // fail-open
-    }
     if (opts.requireFeature !== undefined) {
       this.assertFeaturesEnabled(ent, opts.requireFeature, userId);
     }
@@ -212,14 +209,16 @@ export class AccessControlService {
     );
   }
 
-  private async resolve(userId: string): Promise<UserEntitlements | null> {
+  private async resolve(userId: string): Promise<UserEntitlements> {
     try {
       return await this.adapter.getEntitlements(userId);
-    } catch (error) {
-      this.logger.warn(
-        `resolve: entitlements unavailable for user=${userId} — failing open: ${(error as Error).message}`,
+    } catch {
+      this.logger.error(`resolve: entitlements unavailable for user=${userId}`);
+      throw new BusinessException(
+        'Entitlements are temporarily unavailable',
+        'ENTITLEMENTS_UNAVAILABLE',
+        HttpStatus.SERVICE_UNAVAILABLE,
       );
-      return null;
     }
   }
 }

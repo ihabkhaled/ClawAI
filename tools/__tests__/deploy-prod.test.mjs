@@ -114,7 +114,13 @@ test('deploy-prod.sh takes a deploy lock before touching the checkout', () => {
 
 test(
   'end-to-end rehearsal: first deploy, selective deploy, shared-package fan-out, no-op, rollback guard, build/health failure, locking',
-  { timeout: 120_000 },
+  {
+    timeout: 120_000,
+    skip:
+      process.platform === 'win32'
+        ? 'Unix deployment rehearsal is unsafe with Windows Git and bash /tmp paths'
+        : false,
+  },
   () => {
     const result = spawnSync('bash', ['tools/__tests__/deploy-prod-e2e.sh'], {
       encoding: 'utf8',

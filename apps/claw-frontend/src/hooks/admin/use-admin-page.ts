@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { UserRole, UserStatus } from '@/enums';
+import type { EmailVerificationFilter } from '@/enums/email-verification-filter.enum';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useTranslation } from '@/lib/i18n';
 import { plansRepository } from '@/repositories/admin/plans.repository';
@@ -20,10 +21,26 @@ export function useAdminPage(): UseAdminPageReturn {
   const { user } = useCurrentUser();
   const queryClient = useQueryClient();
   const [actionPending, setActionPending] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [planFilter, setPlanFilter] = useState('');
+  const [verificationFilter, setVerificationFilter] = useState('');
+
+  const userQuery = {
+    page,
+    limit: 20,
+    search: search || undefined,
+    role: roleFilter || undefined,
+    status: statusFilter || undefined,
+    planId: planFilter || undefined,
+    verification: (verificationFilter || undefined) as EmailVerificationFilter | undefined,
+  };
 
   const usersQuery = useQuery({
-    queryKey: queryKeys.admin.users,
-    queryFn: () => auditRepository.getAdminUsers(),
+    queryKey: [...queryKeys.admin.users, userQuery],
+    queryFn: () => auditRepository.getAdminUsers(userQuery),
     enabled: user?.role === UserRole.ADMIN,
   });
 
@@ -106,6 +123,10 @@ export function useAdminPage(): UseAdminPageReturn {
       showToast.apiError(err, t('admin.userUpdateFailed'));
     },
   });
+  const temporaryPasswordMutation = useMutation({
+    mutationFn: (userId: string) => auditRepository.issueTemporaryPassword(userId),
+    onSettled: () => setActionPending(null),
+  });
 
   const users = usersQuery.data?.data ?? [];
   const plans = plansQuery.data ?? [];
@@ -158,12 +179,44 @@ export function useAdminPage(): UseAdminPageReturn {
     setActionPending(userId);
     updateUserMutation.mutate({ userId, data });
   };
+  const handleTemporaryPassword = (userId: string): void => {
+    setActionPending(userId);
+    temporaryPasswordMutation.mutate(userId);
+  };
 
   return {
     t,
     user: user ?? null,
     actionPending,
     users,
+    usersMeta: usersQuery.data?.meta,
+    page,
+    setPage,
+    search,
+    setSearch: (value: string) => {
+      setSearch(value);
+      setPage(1);
+    },
+    roleFilter,
+    setRoleFilter: (value: string) => {
+      setRoleFilter(value);
+      setPage(1);
+    },
+    statusFilter,
+    setStatusFilter: (value: string) => {
+      setStatusFilter(value);
+      setPage(1);
+    },
+    planFilter,
+    setPlanFilter: (value: string) => {
+      setPlanFilter(value);
+      setPage(1);
+    },
+    verificationFilter,
+    setVerificationFilter: (value: string) => {
+      setVerificationFilter(value);
+      setPage(1);
+    },
     plans,
     activeCount,
     usersQuery: {
@@ -180,10 +233,12 @@ export function useAdminPage(): UseAdminPageReturn {
     handleReactivate,
     handleAssignPlan,
     handleUpdateUser,
+    handleTemporaryPassword,
     isRoleChangePending: changeRoleMutation.isPending && actionPending !== null,
     isDeactivatePending: deactivateMutation.isPending && actionPending !== null,
     isReactivatePending: reactivateMutation.isPending && actionPending !== null,
     isAssignPlanPending: assignPlanMutation.isPending && actionPending !== null,
     isUpdateUserPending: updateUserMutation.isPending && actionPending !== null,
+    isTemporaryPasswordPending: temporaryPasswordMutation.isPending && actionPending !== null,
   };
 }

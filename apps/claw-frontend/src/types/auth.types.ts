@@ -21,8 +21,8 @@ export type LoginResponse = {
 };
 
 export type RegisterResponse = {
-  tokens: TokenPair;
   user: UserProfile;
+  verificationRequired: true;
 };
 
 export type RefreshResponse = {

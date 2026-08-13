@@ -35,6 +35,37 @@ export class ContextPacksRepository {
     });
   }
 
+  async createWithinLimit(
+    data: CreateContextPackData,
+    limit: number | null,
+  ): Promise<ContextPack | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`context-pack:${data.userId}`}, 0))`;
+      if (
+        limit !== null &&
+        (await transaction.contextPack.count({ where: { userId: data.userId } })) >= limit
+      )
+        return null;
+      return transaction.contextPack.create({
+        data: {
+          userId: data.userId,
+          ownerUserId: data.ownerUserId ?? data.userId,
+          name: data.name,
+          description: data.description,
+          scope: data.scope,
+          scopeRef: data.scopeRef,
+          legacyScope: data.legacyScope,
+          tags: data.tags ?? undefined,
+          visibility: data.visibility,
+          color: data.color,
+          icon: data.icon,
+          templateId: data.templateId,
+          pinned: data.pinned,
+        },
+      });
+    });
+  }
+
   async findById(id: string): Promise<ContextPackWithItems | null> {
     return this.prisma.contextPack.findUnique({
       where: { id },

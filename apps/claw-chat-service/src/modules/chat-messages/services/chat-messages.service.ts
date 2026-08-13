@@ -156,13 +156,24 @@ export class ChatMessagesService implements OnModuleInit {
       forcedModel,
     );
 
-    const message = await this.chatMessagesRepository.create({
-      threadId: dto.threadId,
-      role: 'USER',
-      content: dto.content,
-      routingMode: effectiveRoutingMode,
-      metadata: this.buildMessageMetadata(dto, researchBundle),
-    });
+    const message = await this.chatMessagesRepository.createUserMessageWithinDailyLimit(
+      userId,
+      {
+        threadId: dto.threadId,
+        role: 'USER',
+        content: dto.content,
+        routingMode: effectiveRoutingMode,
+        metadata: this.buildMessageMetadata(dto, researchBundle),
+      },
+      entitlements?.isAdmin ? null : (entitlements?.plan?.limits.messagesPerDay ?? 0),
+    );
+    if (!message) {
+      throw new BusinessException(
+        'Daily message limit exceeded',
+        'PLAN_DAILY_MESSAGE_LIMIT_EXCEEDED',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
 
     this.logger.log(`createMessage: created message ${message.id} in thread ${dto.threadId}`);
     this.logMessageCreated(userId, dto.threadId, message.id);

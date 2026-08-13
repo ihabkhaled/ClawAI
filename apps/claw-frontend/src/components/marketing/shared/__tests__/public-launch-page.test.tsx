@@ -4,6 +4,16 @@ import { describe, expect, it, vi } from 'vitest';
 import { PublicLaunchPage } from '@/components/marketing/shared/public-launch-page';
 import { PublicLaunchPageSlug } from '@/enums/public-launch-page-slug.enum';
 
+vi.mock('@/components/adsense/marketing-ad-unit', () => ({
+  MarketingAdUnit: ({ slot }: { slot: string | null }) => (
+    <aside data-testid="marketing-ad-unit" data-slot={slot ?? ''} />
+  ),
+}));
+
+vi.mock('@/lib/adsense/adsense-config', () => ({
+  getAdSenseSlots: () => ({ content: '2345678901' }),
+}));
+
 vi.mock('next/headers', () => ({
   headers: async (): Promise<Headers> => new Headers({ 'x-claw-locale': 'en' }),
 }));
@@ -29,5 +39,11 @@ describe('PublicLaunchPage', () => {
     expect(screen.getByText('Ollama')).toBeInTheDocument();
     expect(screen.queryByRole('listitem', { name: /Bedrock/i })).not.toBeInTheDocument();
     expect(screen.getByText(/exact catalog depends/i)).toBeInTheDocument();
+  });
+
+  it('wires the configured content AdSense slot into editorial pages', async () => {
+    render(await PublicLaunchPage({ slug: PublicLaunchPageSlug.SECURITY_AND_PRIVACY }));
+
+    expect(screen.getByTestId('marketing-ad-unit')).toHaveAttribute('data-slot', '2345678901');
   });
 });

@@ -39,6 +39,16 @@ export type UserEntitlements = {
     isTrial: boolean;
     trialEndsAt: string | null;
     isTrialExpired: boolean;
+    limits: {
+      dailyTokens: number | null;
+      weeklyTokens: number | null;
+      monthlyTokens: number | null;
+      chatsPerDay: number | null;
+      messagesPerDay: number | null;
+      workspaceConnections: number | null;
+      contextPacks: number | null;
+      memoryItems: number | null;
+    };
     featureGates: PlanFeatureGates;
   } | null;
   // Optional during rolling upgrades; explicit modes disambiguate unrestricted

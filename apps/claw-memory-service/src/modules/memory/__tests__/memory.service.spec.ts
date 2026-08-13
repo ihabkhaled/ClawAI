@@ -90,12 +90,13 @@ describe('MemoryService (V2)', () => {
       auditService,
       preferenceService,
       rabbit as unknown as ConstructorParameters<typeof MemoryService>[7],
+      { resolve: jest.fn().mockResolvedValue({ isAdmin: true }) } as never,
     );
   });
 
   it('creates a normal memory and records audit', async () => {
     const created = buildMemoryRecord();
-    (memoryRepo.create as unknown as jest.Mock).mockResolvedValue(created);
+    (memoryRepo.createWithinLimit as unknown as jest.Mock).mockResolvedValue(created);
 
     const dto: CreateMemoryDto = {
       type: MemoryType.FACT,
@@ -105,7 +106,7 @@ describe('MemoryService (V2)', () => {
     const result = await service.createMemory('user-1', dto);
 
     expect(result).toEqual(created);
-    expect(memoryRepo.create).toHaveBeenCalled();
+    expect(memoryRepo.createWithinLimit).toHaveBeenCalled();
     expect(auditService.record).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 'user-1',
@@ -119,7 +120,7 @@ describe('MemoryService (V2)', () => {
       content: 'AK********0000',
       sensitivity: MemorySensitivity.REDACTED,
     });
-    (memoryRepo.create as unknown as jest.Mock).mockResolvedValue(created);
+    (memoryRepo.createWithinLimit as unknown as jest.Mock).mockResolvedValue(created);
 
     const dto: CreateMemoryDto = {
       type: MemoryType.FACT,

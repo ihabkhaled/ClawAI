@@ -109,7 +109,7 @@ describe('AuthManager', () => {
   });
 
   describe('register', () => {
-    it('creates a USER, status ACTIVE, on the default role and returns tokens', async () => {
+    it('creates a pending USER without issuing login tokens', async () => {
       repository.findUserByEmail.mockResolvedValue(null);
       repository.findUserByUsername.mockResolvedValue(null);
       repository.createUser.mockResolvedValue({
@@ -124,14 +124,15 @@ describe('AuthManager', () => {
 
       const result = await manager.register('new@example.com', 'Str0ng!Pass');
 
-      expect(result.tokens.accessToken).toBe('mock-access-token');
+      expect(result.verificationRequired).toBe(true);
       expect(result.user.email).toBe('new@example.com');
       expect(result.user.role).toBe(UserRole.USER);
       expect(result.user.permissions).toEqual(['CHAT_USE']);
       const created = repository.createUser.mock.calls[0]?.[0];
       expect(created.role).toBe(UserRole.USER);
-      expect(created.status).toBe(UserStatus.ACTIVE);
+      expect(created.status).toBe(UserStatus.PENDING);
       expect(created.roleRef).toEqual({ connect: { id: 'role-user' } });
+      expect(tokenSessionManager.issue).not.toHaveBeenCalled();
     });
 
     it('rejects a duplicate email', async () => {

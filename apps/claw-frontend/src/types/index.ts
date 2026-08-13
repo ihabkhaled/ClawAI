@@ -131,6 +131,7 @@ export type {
   UsageListParams,
   AdminUser,
   AdminUsersResponse,
+  AdminUserQuery,
   ProviderAggregation,
   ModelAggregation,
   AggregationResult,

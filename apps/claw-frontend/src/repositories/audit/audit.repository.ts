@@ -10,6 +10,7 @@ import type {
   UsageListParams,
   AdminUsersResponse,
   AdminUserUpdateRequest,
+  AdminUserQuery,
 } from '@/types';
 
 function toStringParams(params: Record<string, unknown>): Record<string, string> {
@@ -59,9 +60,23 @@ export const auditRepository = {
     return response.data;
   },
 
-  async getAdminUsers(): Promise<AdminUsersResponse> {
-    const response = await apiClient.get<AdminUsersResponse>('/users');
+  async getAdminUsers(query?: AdminUserQuery): Promise<AdminUsersResponse> {
+    const params = new URLSearchParams();
+    if (query) {
+      for (const [key, value] of Object.entries(query)) {
+        if (value !== undefined && value !== '') {
+          params.set(key, String(value));
+        }
+      }
+    }
+    const response = await apiClient.get<AdminUsersResponse>(
+      params.size > 0 ? `/users?${params.toString()}` : '/users',
+    );
     return response.data;
+  },
+
+  async issueTemporaryPassword(userId: string): Promise<void> {
+    await apiClient.post(`/users/${userId}/temporary-password`);
   },
 
   async updateUserRole(userId: string, role: string): Promise<void> {

@@ -524,11 +524,13 @@ export type UserTableProps = {
   onReactivate: (userId: string) => void;
   onAssignPlan: (userId: string, planId: string) => void;
   onUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
+  onTemporaryPassword: (userId: string) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
   isReactivatePending: boolean;
   isAssignPlanPending: boolean;
   isUpdateUserPending: boolean;
+  isTemporaryPasswordPending: boolean;
 };
 
 // ─── Chat component props ───────────────────────────────────────────────────
@@ -1294,11 +1296,13 @@ export type UsersContentProps = {
   onReactivate: (userId: string) => void;
   onAssignPlan: (userId: string, planId: string) => void;
   onUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
+  onTemporaryPassword: (userId: string) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
   isReactivatePending: boolean;
   isAssignPlanPending: boolean;
   isUpdateUserPending: boolean;
+  isTemporaryPasswordPending: boolean;
   t: TranslateFunction;
 };
 

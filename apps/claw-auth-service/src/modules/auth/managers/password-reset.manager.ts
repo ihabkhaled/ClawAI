@@ -60,7 +60,10 @@ export class PasswordResetManager {
     }
 
     const passwordHash = await hashPassword(newPassword);
-    await this.usersRepository.updateById(token.userId, { passwordHash });
+    await this.usersRepository.updateById(token.userId, {
+      passwordHash,
+      mustChangePassword: false,
+    });
     await this.authRepository.deleteSessionsByUserId(token.userId);
 
     return true;

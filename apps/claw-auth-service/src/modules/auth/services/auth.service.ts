@@ -10,6 +10,7 @@ import {
   type UserProfile,
 } from '../types/auth.types';
 import type { SessionClient } from '../types/token-session.types';
+import { EmailVerificationService } from './email-verification.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
   constructor(
     private readonly authManager: AuthManager,
     private readonly rabbitMQService: RabbitMQService,
+    private readonly emailVerificationService: EmailVerificationService,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -32,6 +34,7 @@ export class AuthService {
     this.logger.log(`register: attempting registration for email=${email}`);
     try {
       const result = await this.authManager.register(email, password);
+      await this.emailVerificationService.sendForUser(result.user.id, result.user.email);
       this.structuredLogger.logAction({
         level: LogLevel.INFO,
         message: `User registered: ${result.user.email}`,

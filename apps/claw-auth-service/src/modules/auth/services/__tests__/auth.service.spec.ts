@@ -5,6 +5,7 @@ import { AuthService } from '../auth.service';
 import { AuthManager } from '../../managers/auth.manager';
 import { UserRole } from '../../../../common/enums';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
+import { EmailVerificationService } from '../email-verification.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -30,6 +31,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: AuthManager, useValue: managerMock },
         { provide: RabbitMQService, useValue: rabbitMock },
+        { provide: EmailVerificationService, useValue: { sendForUser: jest.fn() } },
       ],
     }).compile();
 

@@ -41,6 +41,7 @@
       "mongooseModels": [],
       "prismaModels": [
         "DeviceAuthorizationGrant",
+        "EmailVerificationToken",
         "EntitlementInboxEvent",
         "FeatureUsageRecord",
         "PasswordResetToken",

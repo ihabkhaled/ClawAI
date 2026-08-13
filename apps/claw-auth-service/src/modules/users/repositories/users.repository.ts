@@ -96,6 +96,14 @@ export class UsersRepository {
       where.status = filters.status;
     }
 
+    if (filters?.planId) {
+      where.activePlanId = filters.planId;
+    }
+
+    if (filters?.verification) {
+      where.emailVerifiedAt = filters.verification === 'VERIFIED' ? { not: null } : null;
+    }
+
     if (filters?.search) {
       where.OR = [
         { email: { contains: filters.search, mode: 'insensitive' } },

@@ -26,7 +26,9 @@ export function useRegister() {
         message: 'User registered successfully',
       });
       showToast.success({ title: t('toast.registerSuccess') });
-      router.push(safeReturnRoute(searchParams.get('returnTo')));
+      const requestedReturnTo = searchParams.get('returnTo');
+      const returnTo = requestedReturnTo ? safeReturnRoute(requestedReturnTo) : null;
+      router.push(returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login');
     },
     onError: (error: Error) => {
       logger.error({ component: 'auth', action: 'register-error', message: 'Registration failed' });

@@ -42,6 +42,44 @@ export class MemoryRepository {
     });
   }
 
+  async createWithinLimit(
+    data: CreateMemoryData,
+    limit: number | null,
+  ): Promise<MemoryRecord | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`memory:${data.userId}`}, 0))`;
+      if (
+        limit !== null &&
+        (await transaction.memoryRecord.count({ where: { userId: data.userId } })) >= limit
+      )
+        return null;
+      return transaction.memoryRecord.create({
+        data: {
+          userId: data.userId,
+          type: data.type,
+          content: data.content,
+          sourceThreadId: data.sourceThreadId,
+          sourceMessageId: data.sourceMessageId,
+          scope: data.scope,
+          scopeRef: data.scopeRef,
+          tags: data.tags ?? undefined,
+          category: data.category,
+          priority: data.priority,
+          confidence: data.confidence,
+          source: data.source,
+          sensitivity: data.sensitivity,
+          retentionPolicy: data.retentionPolicy,
+          expiresAt: data.expiresAt,
+          pinned: data.pinned,
+          provenanceJson:
+            data.provenanceJson === undefined
+              ? undefined
+              : (data.provenanceJson as Prisma.InputJsonValue),
+        },
+      });
+    });
+  }
+
   async findById(id: string): Promise<MemoryRecord | null> {
     return this.prisma.memoryRecord.findUnique({ where: { id } });
   }

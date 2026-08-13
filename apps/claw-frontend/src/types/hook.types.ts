@@ -75,6 +75,19 @@ export type UseAdminPageReturn = {
   user: { role: string } | null;
   actionPending: string | null;
   users: AdminUser[];
+  usersMeta: { total: number; page: number; limit: number; totalPages: number } | undefined;
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  search: string;
+  setSearch: (value: string) => void;
+  roleFilter: string;
+  setRoleFilter: (value: string) => void;
+  statusFilter: string;
+  setStatusFilter: (value: string) => void;
+  planFilter: string;
+  setPlanFilter: (value: string) => void;
+  verificationFilter: string;
+  setVerificationFilter: (value: string) => void;
   plans: PlanView[];
   activeCount: number;
   usersQuery: {
@@ -91,11 +104,13 @@ export type UseAdminPageReturn = {
   handleReactivate: (userId: string) => void;
   handleAssignPlan: (userId: string, planId: string) => void;
   handleUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
+  handleTemporaryPassword: (userId: string) => void;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
   isReactivatePending: boolean;
   isAssignPlanPending: boolean;
   isUpdateUserPending: boolean;
+  isTemporaryPasswordPending: boolean;
 };
 
 export type UseUserTableStateReturn = {

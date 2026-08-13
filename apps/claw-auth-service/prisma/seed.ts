@@ -79,9 +79,24 @@ async function seed(): Promise<void> {
     data: { roleId: userRoleId },
   });
 
-  const existingCount = await prisma.user.count();
-  if (existingCount > 0) {
-    console.warn('Users already exist — skipping admin creation.');
+  const existingAdmin = await prisma.user.findUnique({ where: { email: DEFAULT_ADMIN_EMAIL } });
+  const existingSuperAdmin = await prisma.user.findFirst({ where: { isSuperAdmin: true } });
+  if (existingSuperAdmin && existingSuperAdmin.id !== existingAdmin?.id) {
+    console.warn(`Immutable super admin already exists: ${existingSuperAdmin.email}`);
+    return;
+  }
+  if (existingAdmin) {
+    await prisma.user.update({
+      where: { id: existingAdmin.id },
+      data: {
+        role: 'ADMIN',
+        roleId: adminRoleId,
+        status: 'ACTIVE',
+        isSuperAdmin: true,
+        emailVerifiedAt: existingAdmin.emailVerifiedAt ?? new Date(),
+      },
+    });
+    console.warn(`Reconciled immutable super admin: ${DEFAULT_ADMIN_EMAIL}`);
     return;
   }
 
@@ -94,6 +109,8 @@ async function seed(): Promise<void> {
       role: 'ADMIN',
       roleId: adminRoleId,
       status: 'ACTIVE',
+      isSuperAdmin: true,
+      emailVerifiedAt: new Date(),
       mustChangePassword: true,
     },
   });

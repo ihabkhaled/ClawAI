@@ -24,6 +24,8 @@ function makeUser(overrides: Partial<AdminUser> = {}): AdminUser {
     status: 'ACTIVE',
     createdAt: '2026-05-01T00:00:00.000Z',
     activePlanId: null,
+    isSuperAdmin: false,
+    emailVerifiedAt: '2026-05-01T00:00:00.000Z',
     ...overrides,
   };
 }
@@ -75,11 +77,13 @@ const baseProps = {
   onReactivate: vi.fn(),
   onAssignPlan: vi.fn(),
   onUpdateUser: vi.fn(),
+  onTemporaryPassword: vi.fn(),
   isRoleChangePending: false,
   isDeactivatePending: false,
   isReactivatePending: false,
   isAssignPlanPending: false,
   isUpdateUserPending: false,
+  isTemporaryPasswordPending: false,
 };
 
 // UserTable now uses the responsive DataTable wrapper which mounts BOTH

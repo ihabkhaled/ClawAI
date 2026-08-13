@@ -530,14 +530,12 @@ describe('Slice C — compare + judge + critic plan gates', () => {
   });
 
   describe('entitlements outage', () => {
-    it('compare-boundary fails OPEN (no throw) when entitlements adapter is unreachable', async () => {
-      // Documented behaviour in AccessControlService.resolve — fail-OPEN so an
-      // auth-service outage never breaks chat. Compare lane stays usable.
+    it('compare-boundary fails closed when entitlements adapter is unreachable', async () => {
       getEntitlements.mockRejectedValue(new Error('auth down'));
 
       await expect(
         runCompareGate(access, 'u1', { judgeEnabled: true, criticEnabled: true }),
-      ).resolves.toBeUndefined();
+      ).rejects.toMatchObject({ code: 'ENTITLEMENTS_UNAVAILABLE', status: 503 });
     });
   });
 });

@@ -61,6 +61,7 @@ const mockMessage = {
 
 const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, jest.Mock> => ({
   create: jest.fn(),
+  createUserMessageWithinDailyLimit: jest.fn(),
   findById: jest.fn(),
   findByThreadId: jest.fn(),
   findRecentByThreadId: jest.fn(),
@@ -111,6 +112,7 @@ describe('ChatMessagesService', () => {
 
   beforeEach(() => {
     messagesRepo = mockMessagesRepository();
+    messagesRepo.createUserMessageWithinDailyLimit.mockResolvedValue(mockMessage);
     threadsRepo = mockThreadsRepository();
     executionManager = mockExecutionManager();
     contextAssembly = mockContextAssembly();
@@ -120,7 +122,11 @@ describe('ChatMessagesService', () => {
       emitCompletion: jest.fn(),
       emitError: jest.fn(),
     };
-    assertCanSendMessage = jest.fn();
+    assertCanSendMessage = jest.fn().mockResolvedValue({
+      isAdmin: false,
+      plan: { limits: { messagesPerDay: 12 } },
+      allowedModels: [],
+    });
     service = new ChatMessagesService(
       messagesRepo as unknown as ChatMessagesRepository,
       threadsRepo as unknown as ChatThreadsRepository,
@@ -169,12 +175,16 @@ describe('ChatMessagesService', () => {
       );
 
       expect(result).toEqual(mockMessage);
-      expect(messagesRepo.create).toHaveBeenCalledWith({
-        threadId: 'thread-1',
-        role: 'USER',
-        content: 'Hello world',
-        routingMode: 'AUTO',
-      });
+      expect(messagesRepo.createUserMessageWithinDailyLimit).toHaveBeenCalledWith(
+        'user-1',
+        {
+          threadId: 'thread-1',
+          role: 'USER',
+          content: 'Hello world',
+          routingMode: 'AUTO',
+        },
+        12,
+      );
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
         EventPattern.MESSAGE_CREATED,
         expect.objectContaining({
@@ -199,10 +209,12 @@ describe('ChatMessagesService', () => {
         '',
       );
 
-      expect(messagesRepo.create).toHaveBeenCalledWith(
+      expect(messagesRepo.createUserMessageWithinDailyLimit).toHaveBeenCalledWith(
+        'user-1',
         expect.objectContaining({
           routingMode: 'AUTO',
         }),
+        12,
       );
     });
 

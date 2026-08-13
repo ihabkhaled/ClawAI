@@ -11,6 +11,25 @@ export class ChatMessagesRepository {
     return this.prisma.chatMessage.create({ data });
   }
 
+  async createUserMessageWithinDailyLimit(
+    userId: string,
+    data: CreateMessageData,
+    limit: number | null,
+  ): Promise<ChatMessage | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`message:${userId}`}, 0))`;
+      if (limit !== null) {
+        const start = new Date();
+        start.setUTCHours(0, 0, 0, 0);
+        const count = await transaction.chatMessage.count({
+          where: { role: 'USER', createdAt: { gte: start }, thread: { userId } },
+        });
+        if (count >= limit) return null;
+      }
+      return transaction.chatMessage.create({ data });
+    });
+  }
+
   async findById(id: string): Promise<ChatMessage | null> {
     return this.prisma.chatMessage.findUnique({ where: { id } });
   }

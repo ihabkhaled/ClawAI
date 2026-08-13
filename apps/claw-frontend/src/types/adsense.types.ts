@@ -32,6 +32,12 @@ export type AdUnitProps = {
   label: string;
 };
 
+export type MarketingAdUnitProps = {
+  slot: string | null;
+  pathname: string;
+  className?: string;
+};
+
 // Validated `data-ad-slot` ids, one per placement. `null` when the corresponding
 // environment variable is unset or malformed — the unit then renders nothing
 // rather than requesting an ad against a bad slot.

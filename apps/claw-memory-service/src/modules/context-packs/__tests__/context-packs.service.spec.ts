@@ -52,12 +52,13 @@ describe('ContextPacksService (V2)', () => {
     const repo = makeStub<ContextPacksRepository>();
     const rabbit = { publish: jest.fn(), subscribe: jest.fn() };
     const created = buildPack({ name: 'Engineering' });
-    (repo.create as unknown as jest.Mock).mockResolvedValue(created);
+    (repo.createWithinLimit as unknown as jest.Mock).mockResolvedValue(created);
 
     const service = new ContextPacksService(
       repo,
       rabbit as unknown as ConstructorParameters<typeof ContextPacksService>[1],
       makeStub(),
+      { resolve: jest.fn().mockResolvedValue({ isAdmin: true }) } as never,
     );
 
     const pack = await service.createContextPack('user-1', {
@@ -70,7 +71,7 @@ describe('ContextPacksService (V2)', () => {
     });
 
     expect(pack).toEqual(created);
-    expect(repo.create).toHaveBeenCalledWith(
+    expect(repo.createWithinLimit).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 'user-1',
         ownerUserId: 'user-1',
@@ -78,6 +79,7 @@ describe('ContextPacksService (V2)', () => {
         scopeRef: 'workspace-9',
         visibility: ContextPackVisibility.WORKSPACE,
       }),
+      null,
     );
   });
 
@@ -110,6 +112,7 @@ describe('ContextPacksService (V2)', () => {
       repo,
       rabbit as unknown as ConstructorParameters<typeof ContextPacksService>[1],
       makeStub(),
+      { resolve: jest.fn().mockResolvedValue({ isAdmin: true }) } as never,
     );
 
     const item = await service.addItem('pack-1', 'user-1', {
@@ -137,6 +140,7 @@ describe('ContextPacksService (V2)', () => {
         repo,
         rabbit as unknown as ConstructorParameters<typeof ContextPacksService>[1],
         makeStub(),
+        { resolve: jest.fn().mockResolvedValue({ isAdmin: true }) } as never,
       );
       return { service, repo };
     };
