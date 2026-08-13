@@ -163,7 +163,7 @@ export default tseslint.config(
 
       // ── Unicorn ──────────────────────────────────────────────────────────
       'unicorn/prefer-node-protocol': 'error',
-      'unicorn/no-for-each': 'warn',
+      'unicorn/no-array-for-each': 'warn',
       'unicorn/no-useless-undefined': 'warn',
       'unicorn/prefer-ternary': 'warn',
       'unicorn/no-nested-ternary': 'error',
@@ -215,7 +215,7 @@ export default tseslint.config(
       // cleanup ships, otherwise CI breaks.
       // Marked rules: consistent-type-imports, explicit-function-return-type,
       // no-shadow, prefer-nullish-coalescing, prefer-optional-chain,
-      // unicorn/no-for-each, unicorn/no-useless-undefined,
+      // unicorn/no-array-for-each, unicorn/no-useless-undefined,
       // unicorn/prefer-ternary, unicorn/prefer-array-find/some/includes,
       // unicorn/no-array-push-push, unicorn/prefer-spread,
       // unicorn/prefer-string-replace-all, unicorn/prefer-at,

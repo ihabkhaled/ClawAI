@@ -140,7 +140,7 @@ export default tseslint.config(
 
       // ── Unicorn ──────────────────────────────────────────────────────────
       'unicorn/prefer-node-protocol': 'error',
-      'unicorn/no-for-each': 'warn',
+      'unicorn/no-array-for-each': 'warn',
       'unicorn/no-useless-undefined': 'warn',
       'unicorn/prefer-ternary': 'warn',
       'unicorn/no-nested-ternary': 'error',
