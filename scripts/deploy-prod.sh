@@ -89,6 +89,7 @@ DEP_GRAPH_REL=".ai/manifests/workspace-dependency-graph.json"
 LOCK_WAIT_SECONDS="${CLAW_DEPLOY_LOCK_WAIT:-1800}"
 HEALTH_TIMEOUT_SECONDS="${CLAW_DEPLOY_HEALTH_TIMEOUT:-420}"
 BUILD_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-2}"
+BUILD_RETRY_DELAYS=(10 30)
 
 # Files that reach EVERY application image. Each service Dockerfile does
 # `COPY package.json`, `COPY .npmrc` and `COPY packages/`, and the build context
@@ -145,6 +146,38 @@ die() {
   err "DEPLOYMENT FAILED: $*"
   err ""
   exit 1
+}
+
+build_services() {
+  local output_file="$TMP_DIR/build-output"
+  local attempt status delay
+
+  for attempt in 1 2 3; do
+    : >"$output_file"
+    set +e
+    COMPOSE_PARALLEL_LIMIT="$BUILD_PARALLEL_LIMIT" compose build "${PLAN_SERVICES[@]}" \
+      2>&1 | tee "$output_file"
+    status="${PIPESTATUS[0]}"
+    set -e
+
+    if [ "$status" -eq 0 ]; then
+      return 0
+    fi
+
+    if ! grep -Eqi 'ECONNRESET|ETIMEDOUT|EAI_AGAIN|network (is )?unreachable|temporary failure in name resolution|TLS handshake timeout|connection reset by peer' "$output_file"; then
+      err "docker compose build failed with a non-transient error; refusing to retry."
+      return "$status"
+    fi
+
+    if [ "$attempt" -eq 3 ]; then
+      err "docker compose build exhausted 3 attempts after transient network failures."
+      return "$status"
+    fi
+
+    delay="${BUILD_RETRY_DELAYS[$((attempt - 1))]}"
+    err "docker compose build hit a transient network failure; retrying in ${delay}s."
+    sleep "$delay"
+  done
 }
 
 usage() {
@@ -387,7 +420,7 @@ compute_plan() {
         esac
         continue
         ;;
-      infra/nginx/nginx.conf | infra/nginx/locations.conf)
+      infra/nginx/nginx.conf | infra/nginx/locations.conf | infra/nginx/public-tls/maintenance.html)
         PLAN_NGINX_RELOAD=1
         continue
         ;;
@@ -940,7 +973,7 @@ main() {
   # release can fan out to all application services and exhaust VPS CPU long
   # enough for the controlling SSH connection to time out. Keep the default
   # deliberately conservative; operators may choose a value from 1 to 4.
-  if ! COMPOSE_PARALLEL_LIMIT="$BUILD_PARALLEL_LIMIT" compose build "${PLAN_SERVICES[@]}"; then
+  if ! build_services; then
     err ""
     err "Build failed. No container was recreated; production is still serving"
     err "the previously deployed commit ${old_sha:-<unknown>}."

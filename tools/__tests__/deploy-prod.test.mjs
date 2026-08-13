@@ -57,6 +57,21 @@ test('deploy-prod.sh bounds Docker Compose build concurrency with a conservative
   assert.match(script, /must be an integer from 1 to 4/u);
 });
 
+test('deploy-prod.sh retries only transient build-network failures with bounded backoff', () => {
+  assert.match(script, /BUILD_RETRY_DELAYS=\(10 30\)/u);
+  assert.match(script, /for attempt in 1 2 3/u);
+  assert.match(script, /ECONNRESET\|ETIMEDOUT\|EAI_AGAIN/u);
+  assert.match(script, /docker compose build failed with a non-transient error/u);
+  assert.match(script, /transient network failure; retrying in/u);
+});
+
+test('deploy-prod.sh reloads nginx when the tracked maintenance asset changes', () => {
+  assert.match(
+    script,
+    /infra\/nginx\/nginx\.conf \| infra\/nginx\/locations\.conf \| infra\/nginx\/public-tls\/maintenance\.html/u,
+  );
+});
+
 test('deploy-prod.sh writes the deployed SHA only via the atomic record_deployment helper', () => {
   const writesToStateFile = [...script.matchAll(/>\s*"?\$STATE_FILE"?(?!\.tmp)/gu)];
   assert.deepEqual(writesToStateFile, [], 'a direct, non-atomic write to $STATE_FILE was found');

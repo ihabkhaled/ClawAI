@@ -68,7 +68,10 @@ happens to be by the time the SSH session runs.
    using `docker/docker-compose.prod.services.yml` **as committed at the
    target commit** (§2.3), checks out the target commit
    (`git checkout --detach`, then asserts `HEAD == target`), builds only the
-   affected services with at most two concurrent image builds, and recreates
+   affected services with at most two concurrent image builds. A failed build
+   is retried at most twice, with bounded backoff, only when its output proves
+   a transient registry/network failure such as `ECONNRESET`, `ETIMEDOUT`, or
+   temporary DNS failure. Deterministic failures are never retried. The script then recreates
    only those containers
    (`up -d --no-deps --no-build`, never `--remove-orphans`).
 9. Waits for every recreated service's Docker healthcheck to report
@@ -86,6 +89,16 @@ cannot start every service image build at once and starve the VPS or its SSH
 session. An operator may set the standard Compose variable
 `COMPOSE_PARALLEL_LIMIT` to an integer from `1` through `4` for a single deploy;
 values outside that safety range are rejected before the build starts.
+
+### 2.6 Frontend maintenance response
+
+The frontend catch-all intercepts upstream 502, 503, and 504 responses and
+returns `/etc/nginx/claw/public-tls/maintenance.html` as HTTP 503 with
+`Retry-After: 60` and `Cache-Control: no-store`. The self-contained page is
+tracked in the repository and arrives through the existing read-only nginx
+mount, so a validated `nginx -s reload` activates it without recreating the
+proxy. API routes are not intercepted and preserve their original status and
+response bodies.
 
 **Never**, under any normal deployment: `docker compose down`, `docker rm`,
 `docker volume rm`, `docker system prune`, `--remove-orphans`, `git clean`,
