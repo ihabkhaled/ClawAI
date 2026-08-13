@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { AuthAppVersion } from '@/components/auth/auth-app-version';
+
 // Login/registration are never indexable — they carry no unique public
 // content and must not appear in search results. See src/middleware.ts for
 // the matching X-Robots-Tag header enforcement.
@@ -16,5 +18,10 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
-  return <>{children}</>;
+  return (
+    <div className="relative min-h-dvh">
+      {children}
+      <AuthAppVersion />
+    </div>
+  );
 }
