@@ -3422,6 +3422,7 @@ export const th: TranslationDictionary = {
       stepOf: '{current} ของ {total}',
     },
     diagnostics: {
+      serviceDisabled: 'บริการ AI ภายในถูกปิดใช้งานสำหรับการปรับใช้นี้',
       title: 'การวินิจฉัยรันไทม์',
       description:
         'ตรวจสอบรันไทม์ AI ในพื้นที่ ตรวจสอบโมเดลที่ติดตั้ง และตรวจสอบเหตุการณ์รันไทม์ล่าสุด',

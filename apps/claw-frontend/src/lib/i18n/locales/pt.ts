@@ -3458,6 +3458,7 @@ export const pt: TranslationDictionary = {
       stepOf: '{current} de {total}',
     },
     diagnostics: {
+      serviceDisabled: 'Os serviços de IA local estão desativados nesta implantação.',
       title: 'Diagnóstico de runtime',
       description:
         'Investigue runtimes de IA locais, inspecione modelos instalados e revise eventos recentes do runtime.',

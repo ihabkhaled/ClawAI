@@ -3,8 +3,8 @@
 // client from dist/, where it lands in both modes after the build step.
 //
 // Idempotent: safe to run repeatedly. Seeds the two system roles + their
-// permission grants, backfills roleId on existing users, and creates the
-// default admin only when the users table is empty.
+// permission grants, backfills roleId on existing users, and reconciles the
+// configured immutable super administrator.
 //
 // Permission lists MUST stay in sync with
 // src/common/constants/rbac.constants.ts (the typed source of truth). They are
@@ -15,6 +15,7 @@ const { PrismaPg } = require('@prisma/adapter-pg');
 const argon2 = require('argon2');
 const path = require('path');
 const { runVersionedSeeder } = require('./seed-runner');
+const { reconcileExistingSuperAdmin } = require('./seed-super-admin');
 const planCatalogSeeder = require('./seeders/plan-catalog.seeder');
 
 const distPrismaPath = path.resolve(__dirname, '..', 'dist', 'generated', 'prisma');
@@ -275,10 +276,18 @@ async function seed() {
     console.warn(`Assigned ${planless.length} user(s) to the Free plan`);
   }
 
-  // 4. Create the default admin only when there are no users at all.
-  const existingCount = await prisma.user.count();
-  if (existingCount > 0) {
-    console.warn('Users already exist — skipping admin creation.');
+  // 4. Reconcile the configured immutable super administrator. This repairs
+  // deployments seeded before isSuperAdmin was introduced while preserving an
+  // already-established super administrator.
+  const verifiedAt = new Date();
+  const superAdminHandled = await reconcileExistingSuperAdmin({
+    prisma,
+    adminEmail: ADMIN_EMAIL,
+    adminRoleId,
+    verifiedAt,
+  });
+  if (superAdminHandled) {
+    console.warn('Reconciled immutable super administrator.');
     return;
   }
 
@@ -298,6 +307,8 @@ async function seed() {
       roleId: adminRoleId,
       status: 'ACTIVE',
       mustChangePassword: true,
+      isSuperAdmin: true,
+      emailVerifiedAt: verifiedAt,
     },
   });
 

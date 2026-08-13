@@ -7102,7 +7102,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4386
+        "value": 4387
       },
       "localeCount": 14,
       "locales": [
@@ -7166,6 +7166,12 @@
       },
       {
         "location": "/api/v1/admin/billing",
+        "port": 4018,
+        "service": "payment-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "/api/v1/admin/payment-gateways",
         "port": 4018,
         "service": "payment-service",
         "source": "infra/nginx/locations.conf"
@@ -8692,7 +8698,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 278
+        "testFiles": 281
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9441,14 +9447,14 @@
     "eventCount": 165,
     "frontendRouteCount": 117,
     "localeCount": 14,
-    "nginxRouteCount": 53,
+    "nginxRouteCount": 54,
     "permissionCount": 38,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 835,
+    "totalTestFiles": 838,
     "workspaceCount": 25
   }
 }

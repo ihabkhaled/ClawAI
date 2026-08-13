@@ -3358,6 +3358,7 @@ export const zh: TranslationDictionary = {
       stepOf: '{total}的{current}',
     },
     diagnostics: {
+      serviceDisabled: '此部署已禁用本地 AI 服务。',
       title: '运行时诊断',
       description: '探测本地 AI 运行时、检查已安装的模型并查看最近的运行时事件。',
       refreshAll: '全部刷新',

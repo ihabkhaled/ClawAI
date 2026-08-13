@@ -31,7 +31,12 @@ export type RuntimeProbeCardProps = {
   report: RuntimeProbeReport | undefined;
   isLoading: boolean;
   error: Error | null;
+  isDisabled: boolean;
   onRefresh: () => void;
+};
+
+export type RuntimeProgressPageClientProps = {
+  localAiEnabled: boolean;
 };
 
 export type RuntimeProbeStatusIconProps = {

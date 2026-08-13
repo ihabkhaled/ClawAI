@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 
 export default function AdminDeploymentPage(): React.ReactElement {
   const controller = useDeploymentPage();
-  if (controller.user && controller.user.isSuperAdmin !== true) {
+  if (!controller.isLoading && controller.user && controller.user.isSuperAdmin !== true) {
     return <AccessDenied t={controller.t} />;
   }
 
