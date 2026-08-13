@@ -32,6 +32,9 @@ out/
 # state, never shared. Holds no secrets (those stay in .env).
 .claw-install.state
 
+# Host-owned deployment state (SHA, lock, history, and safe status projection).
+.deploy/
+
 # Environment (secrets)
 .env
 .env.local

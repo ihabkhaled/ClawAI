@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import { repoPath } from '../lib/repo.mjs';
 
 const script = readFileSync(repoPath('scripts/deploy-prod.sh'), 'utf8');
+const gitignore = readFileSync(repoPath('.gitignore'), 'utf8');
 
 test('deploy-prod.sh is syntactically valid bash', () => {
   const result = spawnSync('bash', ['-n', 'scripts/deploy-prod.sh'], {
@@ -125,6 +126,42 @@ test('deploy-prod.sh guards against deploying an older commit without an explici
 test('deploy-prod.sh takes a deploy lock before touching the checkout', () => {
   assert.match(script, /acquire_lock/u);
   assert.match(script, /flock/u);
+});
+
+test('deployment host state is explicitly ignored by git', () => {
+  assert.match(gitignore, /^\.deploy\/$/mu);
+});
+
+test('deploy-prod.sh writes a bounded status document atomically', () => {
+  assert.match(script, /DEPLOYMENT_STATUS_FILE="\$STATE_DIR\/status\.json"/u);
+  assert.match(script, /write_deployment_status\(\)/u);
+  assert.match(script, />"\$DEPLOYMENT_STATUS_FILE\.tmp"/u);
+  assert.match(script, /mv -f "\$DEPLOYMENT_STATUS_FILE\.tmp" "\$DEPLOYMENT_STATUS_FILE"/u);
+  assert.match(script, /"schemaVersion":1/u);
+  assert.doesNotMatch(script, /"(?:error|logs|output)":/u);
+});
+
+test('deploy-prod.sh records phases, verification heartbeats, and bounded failure state', () => {
+  for (const phase of [
+    'preparing',
+    'planning',
+    'building',
+    'deploying',
+    'reloading_nginx',
+    'verifying',
+    'finalizing',
+  ]) {
+    assert.match(script, new RegExp(`set_deployment_phase "${phase}"`, 'u'), phase);
+  }
+  assert.match(script, /DEPLOYMENT_PHASE="completed"/u);
+  assert.match(script, /set_deployment_phase "verifying" "\$svc"/u);
+  assert.match(script, /DEPLOYMENT_FAILURE_CODE="DEPLOYMENT_FAILED"/u);
+  assert.match(script, /record_failed_deployment/u);
+});
+
+test('deploy-prod.sh accepts only a GitHub workflow URL as optional status metadata', () => {
+  assert.match(script, /CLAW_DEPLOY_WORKFLOW_URL/u);
+  assert.match(script, /https:\/\/github\.com\//u);
 });
 
 test(

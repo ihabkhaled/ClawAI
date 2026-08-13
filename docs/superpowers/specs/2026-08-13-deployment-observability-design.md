@@ -33,6 +33,7 @@ The server writes `.deploy/status.json` atomically. It contains only non-secret 
   "deployedSha": "40-character commit SHA or null",
   "version": "semantic version or null",
   "services": ["claw-frontend", "claw-nginx"],
+  "currentService": "service currently being verified or null",
   "startedAt": "ISO-8601 timestamp",
   "updatedAt": "ISO-8601 timestamp",
   "completedAt": "ISO-8601 timestamp or null",
@@ -77,11 +78,11 @@ The production workflow obtains SMTP values from GitHub Environment secrets. The
 
 ## Protected status API
 
-The health service owns the internal operational status endpoint because it already aggregates system health. A new admin endpoint reads the status record through its configured read-only mount and validates it against a strict shared contract. It returns only the bounded status document plus an `isStale` calculation.
+The auth service owns the protected operational status endpoint because it already resolves the immutable super-admin identity and enforces `ADMIN_SYSTEM_VIEW`. A new admin endpoint reads the status record through its configured read-only mount and validates it against a strict shared contract. It returns only the bounded status document plus an `isStale` calculation.
 
-Authorization requires the existing `ADMIN_SYSTEM_VIEW` permission and super-admin identity. Ordinary admins and users receive the existing forbidden response. The endpoint never accepts a filesystem path, returns raw files, exposes environment configuration, or proxies GitHub credentials.
+Authorization requires the existing `ADMIN_SYSTEM_VIEW` permission and super-admin identity. Ordinary admins and users receive the existing forbidden response. The endpoint never accepts a filesystem path, returns raw files, exposes environment configuration, or proxies GitHub credentials. Deployment notification delivery uses a separate internal auth-service endpoint protected by the existing constant-time `INTER_SERVICE_AUTH_TOKEN` guard; the deploy script invokes it inside the auth container so the secret never appears in host command arguments or logs.
 
-If the file is absent, malformed, or unreadable, the endpoint returns a safe `unknown` projection rather than server internals. A running state becomes stale after 30 minutes without an update. Completed and failed states remain historical and are not marked stale solely due to age.
+If the file is absent, malformed, or unreadable, the endpoint returns a safe `unknown` projection rather than server internals. A running state becomes stale after 30 minutes without an update. The deployment script refreshes `updatedAt` while verifying each selected service so a long but progressing rollout does not look abandoned. Completed and failed states remain historical and are not marked stale solely due to age.
 
 ## Admin page
 

@@ -100,6 +100,23 @@ mount, so a validated `nginx -s reload` activates it without recreating the
 proxy. API routes are not intercepted and preserve their original status and
 response bodies.
 
+### 2.7 Deployment visibility
+
+After the server resolves the exact target commit, `deploy-prod.sh` atomically
+maintains `.deploy/status.json`. The secret-free document reports the target and
+previous/deployed SHAs, application version, selected services, current phase,
+current health-check service, timestamps, workflow link, and a bounded failure
+code. Running phases are `preparing`, `planning`, `building`, `deploying`,
+`reloading_nginx`, `verifying`, and `finalizing`; terminal states are
+`completed` and `failed`. Verification refreshes the timestamp for each service,
+so a broad rollout remains visibly active while its health checks finish.
+
+The production GitHub Actions job captures that document after either success or
+failure and always publishes a concise run summary with the production URL. If
+SSH is unavailable, the summary still reports the target and workflow outcome
+while marking server fields unavailable. `.deploy/` is host-owned ignored state;
+the deployer never commits or removes it.
+
 **Never**, under any normal deployment: `docker compose down`, `docker rm`,
 `docker volume rm`, `docker system prune`, `--remove-orphans`, `git clean`,
 `git reset --hard`, or a reversed Prisma migration. Databases, MongoDB, Redis,
