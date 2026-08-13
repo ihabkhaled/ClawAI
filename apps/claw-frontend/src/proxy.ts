@@ -5,6 +5,7 @@ import {
   LOCALE_NEUTRAL_PREFIXES,
   LOCALE_PREFERENCE_COOKIE,
   LOCALE_REQUEST_HEADER,
+  LOCALE_REWRITE_HEADER,
 } from '@/constants/locale-routing.constants';
 import { getAdSenseConfig } from '@/lib/adsense/adsense-config';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
@@ -25,6 +26,9 @@ const PUBLIC_AUTH_PATHS = ['/login', '/register'];
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   const locale = parseLocaleFromPathname(pathname);
+  const internalRewriteLocale = request.headers.get(LOCALE_REQUEST_HEADER);
+  const isInternalLocaleRewrite =
+    request.headers.get(LOCALE_REWRITE_HEADER) === '1' && isSupportedLocale(internalRewriteLocale);
   const isLocaleNeutral = LOCALE_NEUTRAL_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
@@ -45,6 +49,7 @@ export function proxy(request: NextRequest): NextResponse {
     apparentLocale === undefined &&
     pathname !== '/' &&
     !isLocaleNeutral &&
+    !isInternalLocaleRewrite &&
     (request.method === 'GET' || request.method === 'HEAD')
   ) {
     const redirectUrl = request.nextUrl.clone();
@@ -77,6 +82,9 @@ export function proxy(request: NextRequest): NextResponse {
   const requestLocale = locale ?? (pathname === '/' ? DEFAULT_LOCALE : null);
   if (requestLocale !== null) {
     requestHeaders.set(LOCALE_REQUEST_HEADER, requestLocale);
+  }
+  if (locale !== null) {
+    requestHeaders.set(LOCALE_REWRITE_HEADER, '1');
   }
 
   const rewriteUrl = request.nextUrl.clone();
