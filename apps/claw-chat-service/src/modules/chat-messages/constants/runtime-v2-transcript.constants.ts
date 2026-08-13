@@ -20,6 +20,55 @@ export const RUNTIME_V2_TRANSCRIPT_RESULT_CHARACTERS = 400;
 
 export const RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE = '…[result truncated in transcript]';
 
+// How long a single string leaf may be before the transcript copy clips it.
+//
+// The bound above used to be applied by slicing the SERIALISED result at 400
+// characters. That cut wherever 400 landed, which is inside `structured` — and
+// `structured` is where a read result carries its `hash`, the value `patch`
+// requires to write the file back. So the one field the next turn genuinely
+// needed was the field most reliably destroyed, while a file's `content` (which
+// the model had already seen in full on the turn it arrived) was what consumed
+// the budget.
+//
+// Observed live, in the agent's own words, mid-run:
+//   "The transcript is truncating the `content` field so I can't see the `hash`
+//    value. The initial system message gave me the hash: sha256:9720087b… Let
+//    me use that."
+// It then patched with a hash captured many edits earlier, the write was
+// rejected as stale, it re-read, and the loop closed. That cost more turns in
+// this mission than any other single cause.
+//
+// Clipping per-leaf instead of per-document keeps every short scalar — hash,
+// path, byteLength, status, lineCount — and spends the truncation budget only
+// on the bulky values nobody needs a second time.
+export const RUNTIME_V2_TRANSCRIPT_FIELD_CHARACTERS = 120;
+
+// How many elements of an array leaf survive. A `list`/`glob`/`search` result is
+// a long array of short strings: the head answers "did I already run this?", and
+// the count in the notice keeps the size honest.
+export const RUNTIME_V2_TRANSCRIPT_ARRAY_ELEMENTS = 8;
+
+// The floor a string leaf is never clipped below.
+//
+// `sha256:` plus 64 hex digits is 71 characters, so any budget under that
+// destroys the very field this whole mechanism exists to protect. When the
+// clipped document still exceeds the bound, leaves LONGER than this are dropped
+// outright rather than shortened further, and everything at or under it — hash,
+// path, status, counts — survives whole. Truncation must never again be able to
+// eat an identifier while keeping a fragment of a payload.
+export const RUNTIME_V2_TRANSCRIPT_IDENTITY_CHARACTERS = 96;
+
+// Progressive tightening applied until the record fits the bound above: string
+// budget paired with array-element budget, loosest first.
+export const RUNTIME_V2_TRANSCRIPT_CLIP_STEPS = [
+  {
+    strings: RUNTIME_V2_TRANSCRIPT_FIELD_CHARACTERS,
+    elements: RUNTIME_V2_TRANSCRIPT_ARRAY_ELEMENTS,
+  },
+  { strings: RUNTIME_V2_TRANSCRIPT_IDENTITY_CHARACTERS, elements: 2 },
+  { strings: RUNTIME_V2_TRANSCRIPT_IDENTITY_CHARACTERS, elements: 0 },
+] as const;
+
 // How many of the most recent transcript entries survive intent filtering.
 //
 // The thread filter keeps a message only when it shares ~45% of its tokens with
