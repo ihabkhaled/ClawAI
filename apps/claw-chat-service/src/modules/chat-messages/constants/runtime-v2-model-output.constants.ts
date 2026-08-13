@@ -142,7 +142,21 @@ export const RUNTIME_V2_DIALECT_TOOL_CALL_MESSAGE =
 // with `${JSON.stringify({"kind":"tool","toolName":"workspace.files"…})}` — the
 // object wrapped in a JavaScript template literal — and an anchored pattern let
 // that reach the user as the answer.
-export const RUNTIME_V2_TRUNCATED_TOOL_REQUEST_PATTERN = /"kind"\s*:\s*"tool"/u;
+// The closing quote is NOT required, and that is the whole point. This guard is
+// consulted only after parsing failed, so the discriminator it is looking for is
+// itself likely to be damaged — and when the damage lands on that exact quote,
+// a pattern demanding `"tool"` misses the one case it exists to catch. Observed
+// live: glm-5.2 emitted
+//     {"kind":"tool,"toolName":"workspace.files","operation":"read",…}
+// — a single missing quote after `tool`. The document did not parse, the guard
+// did not recognise it, the reply fell through to the "final answer" branch, and
+// that raw JSON was shown to the user as the assistant's response while the run
+// ended having done nothing. One character.
+//
+// `\b` keeps it honest: it matches `"tool"`, `"tool,` and a bare `"tool` at the
+// end of a truncated reply, but not `"toolbox"`, because there is no word
+// boundary between `l` and `b`.
+export const RUNTIME_V2_TRUNCATED_TOOL_REQUEST_PATTERN = /"kind"\s*:\s*"tool\b/u;
 
 export const RUNTIME_V2_TRUNCATED_TOOL_CALL_MESSAGE =
   'The model started a Runtime Protocol 2.0 tool object and did not finish it.';
@@ -179,7 +193,29 @@ export const RUNTIME_V2_UNFULFILLED_INTENT_PATTERNS: readonly RegExp[] = [
   // reached for. The leading "Now" needs nothing: `\b` matches at "I'll"
   // whatever precedes it, and an optional prefix group here would only add the
   // ambiguity these patterns are deliberately written without.
-  /\b(?:i['’]ll|i will|let me|i['’]m going to|i am going to|i need to|i should)(?: now)?(?: start by| begin by| first)? (?:read|list|inspect|analyz|analys|explor|discover|search|scan|check|examin|gather|review|look|open|write|creat|generat|build|map|compil|assembl)/iu,
+  //
+  // The adverb group and the second half of the verb list were added after a
+  // supervised password-reset run stalled three times, each on an announcement
+  // this pattern did not reach:
+  //   "Let me ALSO READ the reset-password-form.tsx imports"  — the adverb sits
+  //      between the lead-in and the verb, and only ` now` was tolerated there
+  //   "Let me TRY invoking npm directly instead"              — verb not listed
+  //   "Let me APPLY Patch B"                                  — verb not listed
+  // Each ended the run and cost a supervisor turn to restart. The original list
+  // was drawn from DISCOVERY runs, so it covers reading and analysing well and
+  // omits the vocabulary of an agent that is MUTATING code — apply, patch, fix,
+  // add, replace, run. A coding agent spends most of its turns in that second
+  // register, which is exactly where the safety net had a hole.
+  //
+  // A fourth stall — "I'll INSERT const router = useRouter()" — arrived after
+  // the first widening and is the honest limit of this approach: an allow-list
+  // of verbs will always have another hole, because the set of things a model
+  // can announce is the set of English verbs. The principled fix is to make a
+  // final answer explicit in the protocol — a `kind: "final"` document mirroring
+  // `kind: "tool"` — so that bare prose is a continuation by definition and no
+  // vocabulary has to be guessed. Until that lands, this list is kept wide
+  // across the mutation register and every live miss is added as a regression.
+  /\b(?:i['’]ll|i will|let me|i['’]m going to|i am going to|i need to|i should)(?: (?:now|also|just|then|next|quickly|simply|instead))?(?: start by| begin by| first)? (?:read|list|inspect|analyz|analys|explor|discover|search|scan|check|examin|gather|review|look|open|write|creat|generat|build|map|compil|assembl|try|apply|add|fix|updat|patch|swap|replac|implement|remov|delet|run|execut|invok|send|use|verify|test|install|refactor|renam|move|extract|wire|finish|complet|insert|place|put|modif|chang|adjust|correct|handle|address|do|make|set|defin|declar|import|export|call|switch|revert|restor|clean|split|merg|bump|stage|commit)/iu,
   // `i need to` and `i should` joined the lead-ins above because
   // kimi-k2.7-code opened a full feature task with "I need to start by
   // reading the repository conventions" and stopped there: no tool call, and

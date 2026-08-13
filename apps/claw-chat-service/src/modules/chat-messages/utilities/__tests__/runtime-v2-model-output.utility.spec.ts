@@ -198,6 +198,38 @@ describe('parseRuntimeV2ModelOutput', () => {
   });
 });
 
+describe('parseRuntimeV2ModelOutput damaged tool requests', () => {
+  // Captured live from glm-5.2 mid-run: one missing quote after `tool`. The
+  // document did not parse, so the guard that exists to catch exactly this was
+  // consulted — and it demanded `"kind":"tool"` with the closing quote, which is
+  // the character that was missing. The reply became the "final answer", the raw
+  // JSON was shown to the user, and the run ended having done nothing.
+  it('sends a request damaged in the discriminator itself to the repair loop', () => {
+    const damaged =
+      '{"kind":"tool,"toolName":"workspace.files","toolVersion":"2.0.0","operation":"read","arguments":{"path":"a.ts","rootKey":"workspace-1"},"targetId":"target:workspace"}';
+
+    expect(() => parseRuntimeV2ModelOutput(damaged)).toThrow(
+      'The model started a Runtime Protocol 2.0 tool object and did not finish it.',
+    );
+  });
+
+  it('still catches a request whose object simply never closed', () => {
+    const unclosed = '{"kind":"tool","toolName":"workspace.files","operation":"read"';
+
+    expect(() => parseRuntimeV2ModelOutput(unclosed)).toThrow(
+      'The model started a Runtime Protocol 2.0 tool object and did not finish it.',
+    );
+  });
+
+  it('does not mistake an answer about a toolbox for a damaged request', () => {
+    // The word boundary is what keeps the widened pattern honest: `"toolbox"`
+    // shares a prefix with `"tool` and must stay an ordinary answer.
+    const answer = '{"kind":"toolbox","items":["hammer"]}';
+
+    expect(parseRuntimeV2ModelOutput(answer)).toEqual({ kind: 'final', content: answer });
+  });
+});
+
 describe('parseRuntimeV2ModelOutput nested target compatibility', () => {
   it('canonicalizes the live nested-only target request without a repair turn', () => {
     const output = parseRuntimeV2ModelOutput(nestedTargetRequest('target:workspace'), definitions);
@@ -318,6 +350,22 @@ describe('isUnfulfilledIntent', () => {
     // announcement sailed through as a completed answer.
     'I’ll start by discovering the workspace layout, then explore the repository structure.',
     'I’m going to read the configuration first.',
+    // Captured live from glm-5.2 during a supervised Password Reset run. All
+    // three ended the run and cost a supervisor turn to restart. The verb list
+    // had been drawn from DISCOVERY runs, so it knew "read" and "analyse" and
+    // not the vocabulary of an agent MUTATING code.
+    'The read result is getting truncated in the transcript. Let me also read the reset-password-form.tsx imports for the second fix.',
+    'The `npx` executable is failing with `spawn EINVAL`. Let me try invoking `npm` directly instead, which is typically more reliable.',
+    "I need to add `import { ROUTES } from '@/constants';` before the login constants line. Let me apply Patch B.",
+    'Let me fix the import order in the page component.',
+    "I'll run the typecheck and see what it reports.",
+    'Let me just update the remaining two locale files.',
+    // Arrived AFTER the first widening — the fourth distinct verb this run, and
+    // the reason the comment beside the pattern now says an allow-list will
+    // always have another hole.
+    "I'll insert `const router = useRouter();` right after the useTranslation() call for Patch D.",
+    'Let me place the import in the correct group.',
+    'I should change the return type before continuing.',
   ])('treats an announced but unperformed action as unfinished: %s', (content) => {
     expect(isUnfulfilledIntent(content)).toBe(true);
   });
@@ -331,6 +379,13 @@ describe('isUnfulfilledIntent', () => {
     // with nothing announced stays out of the correction path.
     'Let me start.',
     'The migration will begin with the users table, which already exists.',
+    // The widened verb list must not start swallowing ordinary sign-offs and
+    // reports. A wrong hit here costs a real answer an extra turn and can turn
+    // a finished run into a failed one, so these are the guard rails.
+    'Let me know if you want the migration applied to staging as well.',
+    'I will not run that command — it would delete the production database.',
+    'The reset link expires after 30 minutes; users can request a new one.',
+    'Done. I added the two routes and all 13 locales, and every gate is green.',
     '',
   ])('leaves a real answer alone: %s', (content) => {
     expect(isUnfulfilledIntent(content)).toBe(false);
