@@ -1,6 +1,6 @@
 {
   "name": "@claw/shared-utilities",
-  "version": "1.15.0",
+  "version": "1.15.1",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,8 +23,8 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@claw/shared-constants": "1.15.0",
-    "@claw/shared-types": "1.15.0",
+    "@claw/shared-constants": "1.15.1",
+    "@claw/shared-types": "1.15.1",
     "@nestjs/common": "^11.1.28",
     "axios": "^1.19.0",
     "jsonwebtoken": "^9.0.3",
@@ -37,7 +37,7 @@
     "@types/node": "^26.2.0",
     "@types/nodemailer": "^8.0.1",
     "eslint": "^10.8.1",
-    "eslint-plugin-unicorn": "^65.0.0",
+    "eslint-plugin-unicorn": "73.0.0",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.12",
     "typescript": "^6.0.3"

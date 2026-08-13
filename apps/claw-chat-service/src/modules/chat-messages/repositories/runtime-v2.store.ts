@@ -40,6 +40,7 @@ import type { RuntimeV2JsonObject } from '../types/runtime-v2.types';
 import {
   createRuntimeV2Identity,
   runtimeV2Sha256,
+  runtimeV2TerminalFingerprint,
   stableRuntimeV2Json,
 } from '../utilities/runtime-v2-identity.utility';
 import { buildRuntimeV2ModelEvents } from '../utilities/runtime-v2-model-events.utility';
@@ -579,10 +580,11 @@ export class RuntimeV2Store {
 
   async terminalize(input: RuntimeV2TerminalInput): Promise<RuntimeV2MutationAck> {
     const ack = this.mutationDraft(input);
+    const fingerprint = await runtimeV2TerminalFingerprint(input);
     return this.mutationReply(RuntimeV2RedisOperation.TERMINAL, input, [
       binding(input),
       input.idempotencyKey,
-      runtimeV2Sha256(stableRuntimeV2Json(input)),
+      fingerprint,
       input.claimId,
       JSON.stringify({ status: input.status, completedAt: input.completedAt }),
       JSON.stringify(ack),

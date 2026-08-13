@@ -39,9 +39,8 @@ export class RedisService implements OnModuleDestroy, RuntimeV2RedisPort {
     return (this.runtimeV2Client ?? this.client).evalRuntimeV2(
       RUNTIME_V2_REDIS_SCRIPTS[command.operation],
       command.keys.length,
+      [...command.keys, ...command.arguments],
       AppConfig.runtimeV2RedisDeadlineMs(),
-      ...command.keys,
-      ...command.arguments,
     );
   }
 

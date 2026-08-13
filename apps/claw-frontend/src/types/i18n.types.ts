@@ -177,6 +177,7 @@ export type TranslationDictionary = {
     adminPlans: string;
     adminRoles: string;
     adminRuntimeProgress: string;
+    adminDeployment: string;
     adminPaymentGateways: string;
     plan: string;
     billing: string;
@@ -3083,6 +3084,40 @@ export type TranslationDictionary = {
     success: string;
     failed: string;
   };
+  adminDeployment: {
+    title: string;
+    description: string;
+    refresh: string;
+    loading: string;
+    error: string;
+    staleWarning: string;
+    flightRecorder: string;
+    version: string;
+    commit: string;
+    lastUpdate: string;
+    services: string;
+    selectedServices: string;
+    noServices: string;
+    openWorkflow: string;
+    notAvailable: string;
+    state: {
+      unknown: string;
+      running: string;
+      completed: string;
+      failed: string;
+    };
+    phase: {
+      unknown: string;
+      preparing: string;
+      planning: string;
+      building: string;
+      deploying: string;
+      reloading_nginx: string;
+      verifying: string;
+      finalizing: string;
+      completed: string;
+    };
+  };
   adminBilling: {
     title: string;
     description: string;
@@ -4725,6 +4760,11 @@ export type TranslationDictionary = {
       };
     };
   };
+};
+
+export type DeploymentLocaleTranslation = {
+  navigationLabel: string;
+  section: TranslationDictionary['adminDeployment'];
 };
 
 export type TranslationNamespace = keyof TranslationDictionary;

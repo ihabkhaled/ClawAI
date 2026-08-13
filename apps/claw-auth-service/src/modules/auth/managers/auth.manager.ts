@@ -136,6 +136,7 @@ export class AuthManager {
       permissions,
       status: user.status,
       mustChangePassword: user.mustChangePassword,
+      isSuperAdmin: user.isSuperAdmin,
       languagePreference: user.languagePreference,
       appearancePreference: user.appearancePreference,
       createdAt: user.createdAt,
@@ -153,6 +154,7 @@ export class AuthManager {
       role: user.role,
       permissions,
       mustChangePassword: user.mustChangePassword,
+      isSuperAdmin: user.isSuperAdmin,
       languagePreference: user.languagePreference,
       appearancePreference: user.appearancePreference,
     };

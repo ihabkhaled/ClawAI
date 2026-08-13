@@ -22,6 +22,8 @@
 #   CLAW_LOCAL_AI               true|false override for the local-AI profile;
 #                               default reads the production .env, the same
 #                               precedence rule scripts/claw.sh applies
+#   CLAW_DEPLOY_WORKFLOW_URL     optional https://github.com/... Actions run URL
+#                               recorded as non-secret deployment metadata
 #
 # What this script will NEVER do:
 #   * `docker compose down`, `docker rm`, `docker volume rm`, `docker system prune`
@@ -79,6 +81,7 @@ PROJECT_ROOT="${CLAW_DEPLOY_ROOT:-$DEFAULT_ROOT}"
 ENV_FILE="$PROJECT_ROOT/.env"
 STATE_DIR="$PROJECT_ROOT/.deploy"
 STATE_FILE="$STATE_DIR/deployed-sha"
+DEPLOYMENT_STATUS_FILE="$STATE_DIR/status.json"
 HISTORY_FILE="$STATE_DIR/history.log"
 LOCK_FILE="$STATE_DIR/deploy.lock"
 LOCK_DIR="$STATE_DIR/deploy.lock.d"
@@ -120,9 +123,27 @@ PLAN_NGINX_RELOAD=0
 PLAN_REASON=""
 PLAN_SELECTED='|'
 
+# Safe deployment-status projection. Raw errors and command output never enter
+# this state; failureCode is deliberately bounded and machine-readable.
+DEPLOYMENT_STATUS_ACTIVE=0
+DEPLOYMENT_STATUS_STATE="running"
+DEPLOYMENT_PHASE="preparing"
+DEPLOYMENT_TARGET_SHA=""
+DEPLOYMENT_PREVIOUS_SHA=""
+DEPLOYMENT_VERSION=""
+DEPLOYMENT_SERVICES=""
+DEPLOYMENT_CURRENT_SERVICE=""
+DEPLOYMENT_STARTED_AT=""
+DEPLOYMENT_COMPLETED_AT=""
+DEPLOYMENT_FAILURE_CODE="DEPLOYMENT_FAILED"
+DEPLOYMENT_WORKFLOW_URL="${CLAW_DEPLOY_WORKFLOW_URL:-}"
+
 cleanup() {
   local status=$?
   trap - EXIT
+  if [ "$status" -ne 0 ] && [ "$DEPLOYMENT_STATUS_ACTIVE" = "1" ]; then
+    record_failed_deployment || true
+  fi
   if [ "$LOCK_DIR_HELD" = "1" ]; then
     rm -f "$LOCK_DIR/pid" 2>/dev/null || true
     rmdir "$LOCK_DIR" 2>/dev/null || true
@@ -146,6 +167,110 @@ die() {
   err "DEPLOYMENT FAILED: $*"
   err ""
   exit 1
+}
+
+json_string_or_null() {
+  local value="${1:-}"
+  if [ -z "$value" ]; then
+    printf 'null'
+    return 0
+  fi
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  value="${value//$'\n'/ }"
+  value="${value//$'\r'/ }"
+  printf '"%s"' "$value"
+}
+
+deployment_services_json() {
+  local service first=1
+  printf '['
+  for service in $DEPLOYMENT_SERVICES; do
+    if [ "$first" = "0" ]; then
+      printf ','
+    fi
+    json_string_or_null "$service"
+    first=0
+  done
+  printf ']'
+}
+
+write_deployment_status() {
+  local updated_at services_json
+  updated_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  services_json="$(deployment_services_json)"
+  mkdir -p "$STATE_DIR"
+  {
+    printf '{'
+    printf '"schemaVersion":1,'
+    printf '"state":'; json_string_or_null "$DEPLOYMENT_STATUS_STATE"; printf ','
+    printf '"phase":'; json_string_or_null "$DEPLOYMENT_PHASE"; printf ','
+    printf '"targetSha":'; json_string_or_null "$DEPLOYMENT_TARGET_SHA"; printf ','
+    printf '"previousSha":'; json_string_or_null "$DEPLOYMENT_PREVIOUS_SHA"; printf ','
+    printf '"deployedSha":'; json_string_or_null "${DEPLOYMENT_DEPLOYED_SHA:-}"; printf ','
+    printf '"version":'; json_string_or_null "$DEPLOYMENT_VERSION"; printf ','
+    printf '"services":%s,' "$services_json"
+    printf '"currentService":'; json_string_or_null "$DEPLOYMENT_CURRENT_SERVICE"; printf ','
+    printf '"startedAt":'; json_string_or_null "$DEPLOYMENT_STARTED_AT"; printf ','
+    printf '"updatedAt":'; json_string_or_null "$updated_at"; printf ','
+    printf '"completedAt":'; json_string_or_null "$DEPLOYMENT_COMPLETED_AT"; printf ','
+    printf '"workflowUrl":'; json_string_or_null "$DEPLOYMENT_WORKFLOW_URL"; printf ','
+    printf '"failureCode":'; json_string_or_null "${DEPLOYMENT_STATUS_FAILURE_CODE:-}"
+    printf '}\n'
+  } >"$DEPLOYMENT_STATUS_FILE.tmp"
+  mv -f "$DEPLOYMENT_STATUS_FILE.tmp" "$DEPLOYMENT_STATUS_FILE"
+}
+
+set_deployment_phase() {
+  DEPLOYMENT_STATUS_STATE="running"
+  DEPLOYMENT_PHASE="$1"
+  DEPLOYMENT_CURRENT_SERVICE="${2:-}"
+  write_deployment_status
+}
+
+notify_deployment_status() {
+  local container_id
+  container_id="$(docker ps --filter 'name=claw-auth-service' --filter 'status=running' --format '{{.ID}}' | head -n 1)" || true
+  if [ -z "$container_id" ]; then
+    err "Deployment notification skipped: auth-service is not running."
+    return 0
+  fi
+  if docker exec "$container_id" node -e '
+const https = require("node:https");
+const request = https.request({ hostname: "localhost", port: 4001, path: "/api/v1/internal/deployment/notify", method: "POST", rejectUnauthorized: false, headers: { authorization: `Service ${process.env.INTER_SERVICE_AUTH_TOKEN ?? ""}` } }, (response) => {
+  response.resume();
+  response.on("end", () => process.exit(response.statusCode >= 200 && response.statusCode < 300 ? 0 : 1));
+});
+request.on("error", () => process.exit(1));
+request.setTimeout(10000, () => request.destroy());
+request.end();
+' >/dev/null 2>&1; then
+    log "Deployment notification request accepted."
+  else
+    err "Deployment notification could not be delivered; deployment status remains authoritative."
+  fi
+  return 0
+}
+
+record_failed_deployment() {
+  DEPLOYMENT_STATUS_STATE="failed"
+  DEPLOYMENT_COMPLETED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  DEPLOYMENT_STATUS_FAILURE_CODE="$DEPLOYMENT_FAILURE_CODE"
+  write_deployment_status
+  DEPLOYMENT_STATUS_ACTIVE=0
+  notify_deployment_status
+}
+
+record_completed_deployment_status() {
+  DEPLOYMENT_STATUS_STATE="completed"
+  DEPLOYMENT_PHASE="completed"
+  DEPLOYMENT_CURRENT_SERVICE=""
+  DEPLOYMENT_DEPLOYED_SHA="$DEPLOYMENT_TARGET_SHA"
+  DEPLOYMENT_COMPLETED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  DEPLOYMENT_STATUS_FAILURE_CODE=""
+  write_deployment_status
+  DEPLOYMENT_STATUS_ACTIVE=0
+  notify_deployment_status
 }
 
 build_services() {
@@ -584,6 +709,11 @@ preflight() {
     die "$ENV_FILE is missing. Production configuration is host-local and never committed; restore it before deploying."
   [ -r "$ENV_FILE" ] || die "$ENV_FILE exists but is not readable by $(id -un)"
 
+  case "$DEPLOYMENT_WORKFLOW_URL" in
+    '' | https://github.com/*) ;;
+    *) die "CLAW_DEPLOY_WORKFLOW_URL must be an https://github.com/ URL" ;;
+  esac
+
   command -v docker >/dev/null 2>&1 || die "docker is not installed"
   docker version >/dev/null 2>&1 ||
     die "cannot reach the Docker daemon as $(id -un) — is the user in the docker group?"
@@ -706,6 +836,7 @@ record_deployment() {
   printf '%s\n' "$sha" >"$STATE_FILE.tmp"
   mv -f "$STATE_FILE.tmp" "$STATE_FILE"
   printf '%s %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$sha" "$services" >>"$HISTORY_FILE"
+  record_completed_deployment_status
 }
 
 # Docker Compose builds can create hundreds of gigabytes of short-lived
@@ -852,6 +983,14 @@ main() {
   log "Previous:  ${old_sha:-<none — first automated deployment>}"
   log "Target:    $new_sha"
 
+  DEPLOYMENT_TARGET_SHA="$new_sha"
+  DEPLOYMENT_PREVIOUS_SHA="$old_sha"
+  DEPLOYMENT_DEPLOYED_SHA="$old_sha"
+  DEPLOYMENT_VERSION="$(git show "$new_sha:package.json" | sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' | head -n 1)"
+  DEPLOYMENT_STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  DEPLOYMENT_STATUS_ACTIVE=1
+  set_deployment_phase "preparing"
+
   # Ordering guard. A CI run that finishes late must not overwrite a newer
   # deployment with an older commit. Rollback stays possible, but only when an
   # operator asks for it explicitly.
@@ -866,6 +1005,7 @@ main() {
   fi
 
   # ─── Changed files ─────────────────────────────────────────────────────────
+  set_deployment_phase "planning"
   CHANGED_FILES_FILE="$TMP_DIR/changed"
   if [ "$FIRST_DEPLOYMENT" = "1" ]; then
     : >"$CHANGED_FILES_FILE"
@@ -888,6 +1028,11 @@ main() {
   resolve_local_ai
   compute_plan
   warn_removed_services "$old_sha" "$new_sha"
+  DEPLOYMENT_SERVICES="${PLAN_SERVICES[*]}"
+  if [ "$PLAN_NGINX_RELOAD" = "1" ]; then
+    DEPLOYMENT_SERVICES="${DEPLOYMENT_SERVICES:+$DEPLOYMENT_SERVICES }nginx"
+  fi
+  set_deployment_phase "planning"
 
   section "Changed files:"
   if [ "$FIRST_DEPLOYMENT" = "1" ]; then
@@ -950,11 +1095,14 @@ main() {
   local svc
   if [ "${#PLAN_SERVICES[@]}" -eq 0 ]; then
     if [ "$PLAN_NGINX_RELOAD" = "1" ]; then
+      set_deployment_phase "reloading_nginx"
       reload_nginx
+      set_deployment_phase "finalizing"
       record_deployment "$new_sha" "nginx-reload"
     else
       log ""
       log "No service is affected by this commit — nothing to build or recreate."
+      set_deployment_phase "finalizing"
       record_deployment "$new_sha" "(no service impact)"
     fi
     log ""
@@ -969,6 +1117,7 @@ main() {
   # and zero downtime.
   section "Building services..."
   log ""
+  set_deployment_phase "building"
   # Compose otherwise builds every selected image concurrently. A broad-impact
   # release can fan out to all application services and exhaust VPS CPU long
   # enough for the controlling SSH connection to time out. Keep the default
@@ -982,6 +1131,7 @@ main() {
 
   section "Deploying services..."
   log ""
+  set_deployment_phase "deploying"
   # --no-deps: recreate ONLY these services. Without it compose walks nginx's
   #            depends_on chain and restarts healthy, unrelated containers.
   # --no-build: use exactly the images the step above produced.
@@ -995,13 +1145,16 @@ main() {
   fi
 
   if [ "$PLAN_NGINX_RELOAD" = "1" ]; then
+    set_deployment_phase "reloading_nginx"
     reload_nginx
   fi
 
   # ─── Health ────────────────────────────────────────────────────────────────
   section "Health:"
+  set_deployment_phase "verifying"
   local failed=()
   for svc in "${PLAN_SERVICES[@]}"; do
+    set_deployment_phase "verifying" "$svc"
     if ! wait_for_service_health "$svc"; then
       failed+=("$svc")
     fi
@@ -1018,6 +1171,7 @@ main() {
     die "health verification failed"
   fi
 
+  set_deployment_phase "finalizing"
   cleanup_build_cache
   record_deployment "$new_sha" "${PLAN_SERVICES[*]}"
 

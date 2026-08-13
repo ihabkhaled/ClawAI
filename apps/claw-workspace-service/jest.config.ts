@@ -5,8 +5,28 @@ const config: Config = {
   rootDir: '.',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          isolatedModules: true,
+        },
+      },
+    ],
+    '^.+\\.m?js$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          allowJs: true,
+          isolatedModules: true,
+          module: 'CommonJS',
+        },
+      },
+    ],
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(?:@asamuzakjp|@bramus|@csstools|@exodus|css-tree|entities|lru-cache|parse5|tough-cookie)/)',
+  ],
   setupFiles: ['<rootDir>/jest.setup.ts'],
   testPathIgnorePatterns: ['/node_modules/'],
   collectCoverageFrom: [

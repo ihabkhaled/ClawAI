@@ -1,5 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+
 export const it: TranslationDictionary = {
   common: {
     save: 'Salva',
@@ -183,6 +185,7 @@ export const it: TranslationDictionary = {
     adminPlans: 'Piani',
     adminRoles: 'Ruoli',
     adminRuntimeProgress: 'Diagnostica runtime',
+    adminDeployment: DEPLOYMENT_TRANSLATIONS.it.navigationLabel,
     adminPaymentGateways: 'Gateway di pagamento',
     plan: 'Il mio piano',
     billing: 'Fatturazione',
@@ -3173,6 +3176,7 @@ export const it: TranslationDictionary = {
     success: 'Rimborso richiesto.',
     failed: 'Impossibile emettere il rimborso.',
   },
+  adminDeployment: DEPLOYMENT_TRANSLATIONS.it.section,
   adminBilling: {
     title: 'Dashboard di fatturazione',
     description: 'Ricavi, costi dei fornitori, margine e stato degli abbonamenti.',

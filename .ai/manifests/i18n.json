@@ -1,9 +1,10 @@
 {
-  "approxKeyCount": 4384,
+  "approxKeyCount": 4386,
   "generated": true,
   "locales": [
     "ar",
     "de",
+    "deployment-translations",
     "en",
     "es",
     "fa",

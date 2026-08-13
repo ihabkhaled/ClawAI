@@ -42,7 +42,44 @@
         "severity": "medium"
       }
     ],
-    "staleClaims": []
+    "staleClaims": [
+      {
+        "evidence": [
+          "CLAUDE.md",
+          "apps/claw-frontend/src/lib/i18n/locales"
+        ],
+        "kind": "stale-locale-count",
+        "message": "CLAUDE.md claims 13 locales but 14 locale files exist",
+        "severity": "low"
+      },
+      {
+        "evidence": [
+          "CODEX.md",
+          "apps/claw-frontend/src/lib/i18n/locales"
+        ],
+        "kind": "stale-locale-count",
+        "message": "CODEX.md claims 13 locales but 14 locale files exist",
+        "severity": "low"
+      },
+      {
+        "evidence": [
+          "CODEX.md",
+          "apps/claw-frontend/src/lib/i18n/locales"
+        ],
+        "kind": "stale-locale-count",
+        "message": "CODEX.md claims 13 locales but 14 locale files exist",
+        "severity": "low"
+      },
+      {
+        "evidence": [
+          "README.md",
+          "apps/claw-frontend/src/lib/i18n/locales"
+        ],
+        "kind": "stale-locale-count",
+        "message": "README.md claims 13 locales but 14 locale files exist",
+        "severity": "low"
+      }
+    ]
   },
   "inventory": {
     "apiEndpoints": {
@@ -508,6 +545,11 @@
       "claw-auth-service": [
         {
           "method": "GET",
+          "route": "/admin/deployment",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/admin/plans",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
         },
@@ -695,6 +737,11 @@
           "method": "GET",
           "route": "/internal/billing-metrics/provider-costs",
           "source": "apps/claw-auth-service/src/modules/quota/controllers/provider-cost-metrics-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/deployment/notify",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-internal.controller.ts"
         },
         {
           "method": "GET",
@@ -3809,6 +3856,11 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "DEPLOYMENT_STATUS_FILE"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "DISCOVERY_AUTO_APPROVE_CONFIDENCE"
       },
       {
@@ -6121,6 +6173,11 @@
         "route": "/admin/billing"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/deployment/page.tsx",
+        "kind": "page",
+        "route": "/admin/deployment"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/page.tsx",
         "kind": "page",
         "route": "/admin"
@@ -7045,12 +7102,13 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4384
+        "value": 4386
       },
-      "localeCount": 13,
+      "localeCount": 14,
       "locales": [
         "ar",
         "de",
+        "deployment-translations",
         "en",
         "es",
         "fa",
@@ -8594,7 +8652,7 @@
       },
       "@claw/shared-types": {
         "runner": "jest",
-        "testFiles": 1
+        "testFiles": 2
       },
       "@claw/shared-utilities": {
         "runner": "jest",
@@ -8610,7 +8668,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 52
+        "testFiles": 58
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8634,7 +8692,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 274
+        "testFiles": 278
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9378,19 +9436,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 575,
-    "envVarCount": 342,
+    "endpointCount": 577,
+    "envVarCount": 343,
     "eventCount": 165,
-    "frontendRouteCount": 116,
-    "localeCount": 13,
+    "frontendRouteCount": 117,
+    "localeCount": 14,
     "nginxRouteCount": 53,
     "permissionCount": 38,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
-    "staleClaimCount": 0,
-    "totalTestFiles": 824,
+    "staleClaimCount": 4,
+    "totalTestFiles": 835,
     "workspaceCount": 25
   }
 }

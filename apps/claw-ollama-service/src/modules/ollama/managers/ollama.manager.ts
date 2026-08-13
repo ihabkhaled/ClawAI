@@ -189,7 +189,9 @@ export class OllamaManager {
     try {
       const adapter = getRuntimeAdapter(catalogEntry.runtime);
 
-      await (adapter instanceof OllamaRuntimeAdapter ? this.runOllamaPullWithRetries(adapter, modelFullName, pullJobId, subject, isResume) : adapter.pullModel(modelFullName));
+      await (adapter instanceof OllamaRuntimeAdapter
+        ? this.runOllamaPullWithRetries(adapter, modelFullName, pullJobId, subject, isResume)
+        : adapter.pullModel(modelFullName));
 
       // installCatalogModel wraps resolution + DB upsert in a retry loop
       // (agent #1's INSTALL_RETRY_MAX) and is ComfyUI-aware (synthesizes

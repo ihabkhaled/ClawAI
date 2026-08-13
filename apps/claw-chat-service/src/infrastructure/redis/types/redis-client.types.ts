@@ -9,8 +9,8 @@ export interface RedisClientPort {
   evalRuntimeV2(
     script: string,
     numberOfKeys: number,
+    values: readonly string[],
     deadlineMs: number,
-    ...values: string[]
   ): Promise<unknown>;
   disconnect(reconnect: boolean): void;
   quit(): Promise<string>;

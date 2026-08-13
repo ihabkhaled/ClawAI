@@ -81,6 +81,7 @@ describe('route-permission.utility', () => {
       expect(requiredPermissionForPath('/admin/plans')).toBe(Permission.ADMIN_PLANS_MANAGE);
       expect(requiredPermissionForPath('/admin/plans/new')).toBe(Permission.ADMIN_PLANS_MANAGE);
       expect(requiredPermissionForPath('/admin/billing')).toBe(Permission.ADMIN_PLANS_MANAGE);
+      expect(requiredPermissionForPath('/admin/deployment')).toBe(Permission.ADMIN_SYSTEM_VIEW);
       expect(requiredPermissionForPath('/admin/roles')).toBe(Permission.ADMIN_PERMISSIONS_MANAGE);
       expect(requiredPermissionForPath('/admin/roles/r-1')).toBe(
         Permission.ADMIN_PERMISSIONS_MANAGE,

@@ -1,5 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+
 export const ru: TranslationDictionary = {
   common: {
     save: 'Сохранить',
@@ -184,6 +186,7 @@ export const ru: TranslationDictionary = {
     adminPlans: 'Тарифы',
     adminRoles: 'Роли',
     adminRuntimeProgress: 'Диагностика среды выполнения',
+    adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.navigationLabel,
     adminPaymentGateways: 'Платёжные шлюзы',
     plan: 'Мой тариф',
     billing: 'Оплата',
@@ -3171,6 +3174,7 @@ export const ru: TranslationDictionary = {
     success: 'Возврат запрошен.',
     failed: 'Не удалось оформить возврат.',
   },
+  adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.section,
   adminBilling: {
     title: 'Панель биллинга',
     description: 'Выручка, расходы на провайдеров, маржа и состояние подписок.',

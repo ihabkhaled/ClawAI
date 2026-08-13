@@ -81,7 +81,8 @@ test('deploy-production retries only SSH connectivity failures with bounded back
     workflow,
     /Connection timed out\|Connection refused\|No route to host\|Could not resolve hostname/u,
   );
-  assert.match(workflow, /exit "\$ssh_status"/u);
+  assert.match(workflow, /deploy_status="\$ssh_status"/u);
+  assert.match(workflow, /exit "\$deploy_status"/u);
   assert.doesNotMatch(workflow, /deploy-prod\.sh[^\n]*\|\|\s*true/u);
 });
 
@@ -99,4 +100,20 @@ test('deploy-production cleans up SSH key material even on failure', () => {
 test('deploy-production never prints the private key or known_hosts content', () => {
   assert.doesNotMatch(workflow, /echo.*SSH_PRIVATE_KEY/u);
   assert.doesNotMatch(workflow, /cat.*deploy_key/u);
+});
+
+test('deploy-production propagates the workflow URL and captures safe status on every outcome', () => {
+  assert.match(workflow, /CLAW_DEPLOY_WORKFLOW_URL=/u);
+  assert.match(workflow, /github\.server_url.*github\.repository.*github\.run_id/u);
+  assert.match(workflow, /cat \.deploy\/status\.json/u);
+  assert.match(workflow, /deployment-status\.json/u);
+});
+
+test('deploy-production always publishes a concise GitHub job summary', () => {
+  const summary = workflow.split('Publish deployment summary')[1] ?? '';
+  assert.match(summary.split('run:')[0], /if:\s*always\(\)/u);
+  assert.match(summary, /GITHUB_STEP_SUMMARY/u);
+  assert.match(summary, /Deployment status/u);
+  assert.match(summary, /Production URL/u);
+  assert.doesNotMatch(summary, /SSH_PRIVATE_KEY|CONTACT_SMTP_PASS|INTER_SERVICE_AUTH_TOKEN/u);
 });

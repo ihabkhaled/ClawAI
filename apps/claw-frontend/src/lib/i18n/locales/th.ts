@@ -1,5 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+
 export const th: TranslationDictionary = {
   common: {
     save: 'บันทึก',
@@ -180,6 +182,7 @@ export const th: TranslationDictionary = {
     adminPlans: 'แผน',
     adminRoles: 'บทบาท',
     adminRuntimeProgress: 'การวินิจฉัยรันไทม์',
+    adminDeployment: DEPLOYMENT_TRANSLATIONS.th.navigationLabel,
     adminPaymentGateways: 'เกตเวย์การชำระเงิน',
     plan: 'แผนของฉัน',
     billing: 'การเรียกเก็บเงิน',
@@ -3131,6 +3134,7 @@ export const th: TranslationDictionary = {
     success: 'ขอเงินคืนแล้ว',
     failed: 'ไม่สามารถออกเงินคืนได้',
   },
+  adminDeployment: DEPLOYMENT_TRANSLATIONS.th.section,
   adminBilling: {
     title: 'แดชบอร์ดการเรียกเก็บเงิน',
     description: 'รายได้ ต้นทุนผู้ให้บริการ อัตรากำไร และสถานะการสมัครสมาชิก',

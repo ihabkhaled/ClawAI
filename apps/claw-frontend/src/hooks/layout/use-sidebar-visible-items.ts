@@ -17,14 +17,14 @@ import { filterSidebarItems } from '@/utilities/sidebar-visibility.utility';
 // with children are kept only if the parent itself is allowed; admin
 // implicitly satisfies every permission and every plan feature gate.
 export function useSidebarVisibleItems(): UseSidebarVisibleItemsReturn {
-  const { can } = usePermissions();
+  const { can, isSuperAdmin } = usePermissions();
   const { has } = usePlanFeatures();
   const { health, isLoading } = useServiceAvailability();
 
   const items = useMemo<SidebarItem[]>(() => {
-    const visible = filterSidebarItems(SIDEBAR_NAV_ITEMS, can, has);
+    const visible = filterSidebarItems(SIDEBAR_NAV_ITEMS, can, has, isSuperAdmin);
     return isLoading ? visible : applyServiceAvailability(visible, health);
-  }, [can, has, health, isLoading]);
+  }, [can, has, health, isLoading, isSuperAdmin]);
 
   return { items };
 }

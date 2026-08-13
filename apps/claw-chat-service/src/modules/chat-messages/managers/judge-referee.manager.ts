@@ -566,11 +566,10 @@ export class JudgeRefereeManager {
       result.judgeVerdict.response ??
       result.judgeVerdict.summary ??
       result.judgeVerdict.reasoning;
-    const judgeResponseType: JudgeResponseType = escalatedAnswer
-      ? 'escalated_answer'
-      : (revisedAnswer
-        ? 'revised_answer'
-        : result.judgeVerdict.responseType);
+    let judgeResponseType = revisedAnswer ? 'revised_answer' : result.judgeVerdict.responseType;
+    if (escalatedAnswer) {
+      judgeResponseType = 'escalated_answer';
+    }
 
     return {
       version: 1,
@@ -736,11 +735,12 @@ export class JudgeRefereeManager {
       criticSource === TokenUsageSource.NATIVE && judgeSource === TokenUsageSource.NATIVE;
     const allEstimated =
       criticSource === TokenUsageSource.ESTIMATED && judgeSource === TokenUsageSource.ESTIMATED;
-    const source = allNative
-      ? TokenUsageSource.NATIVE
-      : (allEstimated
-        ? TokenUsageSource.ESTIMATED
-        : TokenUsageSource.MIXED);
+    let source = TokenUsageSource.MIXED;
+    if (allNative) {
+      source = TokenUsageSource.NATIVE;
+    } else if (allEstimated) {
+      source = TokenUsageSource.ESTIMATED;
+    }
     return {
       inputTokens: (critic.inputTokens ?? 0) + (judge.inputTokens ?? 0),
       outputTokens: (critic.outputTokens ?? 0) + (judge.outputTokens ?? 0),
@@ -757,12 +757,12 @@ export class JudgeRefereeManager {
 
     const decision = this.inferJudgeDecision(normalizedContent);
     const summary = this.buildJudgeSummary(normalizedContent);
-    const responseType: JudgeResponseType =
-      decision === JudgeDecision.ESCALATE
-        ? 'escalated_answer'
-        : (decision === JudgeDecision.REVISE
-          ? 'summary'
-          : 'verification_note');
+    let responseType: JudgeResponseType = 'verification_note';
+    if (decision === JudgeDecision.REVISE) {
+      responseType = 'summary';
+    } else if (decision === JudgeDecision.ESCALATE) {
+      responseType = 'escalated_answer';
+    }
 
     return {
       decision,
@@ -877,6 +877,13 @@ export class JudgeRefereeManager {
     const response = parsed['response'];
     const responseType = parsed['responseType'];
     const recommendedChangesRaw = parsed['recommendedChanges'];
+    let resolvedResponse =
+      decision === JudgeDecision.ESCALATE
+        ? 'A stronger answer is required for this request.'
+        : 'The answer passed review.';
+    if (typeof response === 'string' && response.trim().length > 0) {
+      resolvedResponse = response;
+    }
     return {
       decision,
       summary:
@@ -888,12 +895,7 @@ export class JudgeRefereeManager {
         typeof confidence === 'number'
           ? Math.max(0, Math.min(1, confidence))
           : JUDGE_CONFIDENCE_THRESHOLD,
-      response:
-        typeof response === 'string' && response.trim().length > 0
-          ? response
-          : (decision === JudgeDecision.ESCALATE
-            ? 'A stronger answer is required for this request.'
-            : 'The answer passed review.'),
+      response: resolvedResponse,
       responseType: this.resolveJudgeResponseType(responseType, decision),
       recommendedChanges: Array.isArray(recommendedChangesRaw)
         ? recommendedChangesRaw.filter(

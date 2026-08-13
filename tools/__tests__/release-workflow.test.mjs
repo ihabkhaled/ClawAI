@@ -16,6 +16,7 @@ test('release gates on success, push event, and main branch — not PRs, not dev
   assert.match(condition, /workflow_run\.conclusion == 'success'/u);
   assert.match(condition, /workflow_run\.event == 'push'/u);
   assert.match(condition, /workflow_run\.head_branch == 'main'/u);
+  assert.match(condition, /workflow_run\.head_repository\.full_name == github\.repository/u);
 });
 
 test('release declares contents: write, required to push the bump commit and tag', () => {
@@ -32,7 +33,7 @@ test('release commit and GitHub release use the deployment release label', () =>
   assert.match(workflow, /git commit --quiet -m "chore\(release\): Deployment Release v\$NEXT"/u);
   assert.match(
     workflow,
-    /--title "chore\(release\): Deployment Release v\$\{\{ steps\.release\.outputs\.next \}\}"/u,
+    /--title "chore\(release\): Deployment Release v\$RELEASE_VERSION"/u,
   );
 });
 
@@ -50,8 +51,44 @@ test('release never force-pushes to main', () => {
   assert.doesNotMatch(workflow, /push[^\n]*-f\b/u);
 });
 
-test('release uses the invoking commit as its basis, not an unpinned main checkout', () => {
-  assert.match(workflow, /ref:\s*\$\{\{\s*github\.event\.workflow_run\.head_sha\s*\}\}/u);
+test('privileged release checks out trusted main before accepting the exact CI commit', () => {
+  const checkout =
+    workflow.split('- uses: actions/checkout@v7')[1]?.split('- uses: actions/setup-node@v7')[0] ??
+    '';
+  const releaseScript = workflow.split('id: release')[1]?.split('Publish GitHub release')[0] ?? '';
+
+  assert.match(checkout, /ref:\s*main/u);
+  assert.doesNotMatch(checkout, /workflow_run\.head_sha/u);
+
+  const validatesSha = releaseScript.indexOf('[[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]');
+  const fetchesMain = releaseScript.indexOf('git fetch --quiet origin main');
+  const verifiesCommit = releaseScript.indexOf('git cat-file -e "${HEAD_SHA}^{commit}"');
+  const verifiesMainAncestry = releaseScript.indexOf(
+    'git merge-base --is-ancestor "$HEAD_SHA" origin/main',
+  );
+  const checksOutTarget = releaseScript.indexOf('git checkout --quiet --detach "$HEAD_SHA"');
+
+  assert.ok(validatesSha >= 0, 'release must validate the event SHA format');
+  assert.ok(fetchesMain > validatesSha, 'release must fetch trusted main after validating the SHA');
+  assert.ok(verifiesCommit > fetchesMain, 'release must verify that the event SHA names a commit');
+  assert.ok(
+    verifiesMainAncestry > verifiesCommit,
+    'release must verify that the event SHA belongs to main',
+  );
+  assert.ok(
+    checksOutTarget > verifiesMainAncestry,
+    'release must establish trust before checking out the event SHA',
+  );
+});
+
+test('release passes the generated version to the shell through env and validates it', () => {
+  const publish = workflow.split('Publish GitHub release')[1] ?? '';
+  const [metadata = '', run = ''] = publish.split('run: |');
+
+  assert.match(metadata, /RELEASE_VERSION:\s*\$\{\{\s*steps\.release\.outputs\.next\s*\}\}/u);
+  assert.doesNotMatch(run, /\$\{\{\s*steps\.release\.outputs\.next\s*\}\}/u);
+  assert.match(run, /\[\[ ! "\$RELEASE_VERSION" =~ \^\[0-9\]\+\\\.\[0-9\]\+\\\.\[0-9\]\+\$ \]\]/u);
+  assert.match(run, /gh release create "v\$RELEASE_VERSION"/u);
 });
 
 test('release calls the version and notes tooling with a repository argument for changelog links', () => {
