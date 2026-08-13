@@ -1,5 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+
 export const fa: TranslationDictionary = {
   common: {
     save: 'ذخیره کنید',
@@ -183,6 +185,7 @@ export const fa: TranslationDictionary = {
     adminPlans: 'طرح ها',
     adminRoles: 'نقش ها',
     adminRuntimeProgress: 'تشخیص زمان اجرا',
+    adminDeployment: DEPLOYMENT_TRANSLATIONS.fa.navigationLabel,
     adminPaymentGateways: 'درگاه‌های پرداخت',
     plan: 'طرح من',
     billing: 'صورتحساب',
@@ -3152,6 +3155,7 @@ export const fa: TranslationDictionary = {
     success: 'بازپرداخت درخواست شد.',
     failed: 'بازپرداخت صادر نشد.',
   },
+  adminDeployment: DEPLOYMENT_TRANSLATIONS.fa.section,
   adminBilling: {
     title: 'داشبورد صورتحساب',
     description: 'درآمد، هزینه ارائه دهنده، حاشیه و سلامت اشتراک.',

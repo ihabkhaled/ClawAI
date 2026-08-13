@@ -10,6 +10,7 @@ export interface AuthUserSummary {
   // Effective permissions resolved from the user's role grants (DB-backed).
   permissions: string[];
   mustChangePassword: boolean;
+  isSuperAdmin: boolean;
   languagePreference: string;
   appearancePreference: string;
 }
@@ -36,6 +37,7 @@ export interface UserProfile {
   permissions: string[];
   status: string;
   mustChangePassword: boolean;
+  isSuperAdmin: boolean;
   languagePreference: string;
   appearancePreference: string;
   createdAt: Date;

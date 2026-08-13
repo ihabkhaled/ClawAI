@@ -1,5 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+
 export const ja: TranslationDictionary = {
   common: {
     save: '保存',
@@ -183,6 +185,7 @@ export const ja: TranslationDictionary = {
     adminPlans: '計画',
     adminRoles: 'の役割',
     adminRuntimeProgress: 'ランタイム診断',
+    adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.navigationLabel,
     adminPaymentGateways: '決済ゲートウェイ',
     plan: '私の計画',
     billing: '請求',
@@ -3161,6 +3164,7 @@ export const ja: TranslationDictionary = {
     success: '返金がリクエストされました。',
     failed: '払い戻しを行うことができませんでした。',
   },
+  adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.section,
   adminBilling: {
     title: '請求ダッシュボード',
     description: '収益、プロバイダーのコスト、マージン、サブスクリプションの健全性。',

@@ -1,4 +1,5 @@
 export type { User, UserProfile } from './user.types';
+export type { UseDeploymentPageResult } from './deployment-page.types';
 export type {
   LoginRequest,
   LoginResponse,

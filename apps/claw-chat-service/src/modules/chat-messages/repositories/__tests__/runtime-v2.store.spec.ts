@@ -416,6 +416,37 @@ describe('RuntimeV2Store', () => {
     expect(redis.commands[0]?.operation).toBe(RuntimeV2RedisOperation.READ_EVENTS);
   });
 
+  it('uses a slow digest for the Redis failed-terminal conflict fingerprint', async () => {
+    const redis = new QueueRedis();
+    const bound = boundFixture();
+    const reason = {
+      code: 'MISSING_PROVIDER_API_KEY',
+      message: 'No API key configured for provider OPENAI',
+    };
+    redis.replies.push([
+      'OK',
+      JSON.stringify({
+        runId: bound.runId,
+        sequence: 1,
+        eventId: 'runtime_event_00001',
+      }),
+    ]);
+
+    await new RuntimeV2Store(redis).terminalize({
+      ...bound,
+      claimId: 'runtime_claim_00001',
+      idempotencyKey: 'runtime_terminal_key1',
+      status: 'failed',
+      completedAt: '2026-08-02T10:00:04.000Z',
+      reason,
+    });
+
+    const fingerprint = redis.commands[0]?.arguments[2];
+    expect(fingerprint).toMatch(/^sha256:[a-f0-9]{64}\.scrypt:[a-f0-9]{64}$/u);
+    expect(fingerprint).not.toContain(reason.code);
+    expect(fingerprint).not.toContain(reason.message);
+  });
+
   it('resolves a complete bound run through the atomic state authority', async () => {
     const redis = new QueueRedis();
     const mapped = {

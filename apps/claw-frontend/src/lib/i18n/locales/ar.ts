@@ -1,5 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+
 export const ar: TranslationDictionary = {
   common: {
     save: 'حفظ',
@@ -182,6 +184,7 @@ export const ar: TranslationDictionary = {
     adminPlans: 'الخطط',
     adminRoles: 'الأدوار',
     adminRuntimeProgress: 'تشخيص بيئة التشغيل',
+    adminDeployment: DEPLOYMENT_TRANSLATIONS.ar.navigationLabel,
     adminPaymentGateways: 'بوابات الدفع',
     plan: 'خطتي',
     billing: 'الفوترة',
@@ -3118,6 +3121,7 @@ export const ar: TranslationDictionary = {
     success: 'تم طلب الاسترداد.',
     failed: 'تعذر إصدار الاسترداد.',
   },
+  adminDeployment: DEPLOYMENT_TRANSLATIONS.ar.section,
   adminBilling: {
     title: 'لوحة الفوترة',
     description: 'الإيرادات وتكلفة المزوّد والهامش وصحة الاشتراكات.',

@@ -462,6 +462,11 @@
     "claw-auth-service": [
       {
         "method": "GET",
+        "route": "/admin/deployment",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/admin/plans",
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
       },
@@ -649,6 +654,11 @@
         "method": "GET",
         "route": "/internal/billing-metrics/provider-costs",
         "source": "apps/claw-auth-service/src/modules/quota/controllers/provider-cost-metrics-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/deployment/notify",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-internal.controller.ts"
       },
       {
         "method": "GET",
@@ -2913,5 +2923,5 @@
     ]
   },
   "generated": true,
-  "total": 575
+  "total": 577
 }

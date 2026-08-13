@@ -52,10 +52,8 @@ describe('RedisService atomic boundary', () => {
     expect(runtimeV2Client.evalRuntimeV2).toHaveBeenCalledWith(
       expect.stringContaining('runtime-v2:start'),
       2,
+      ['key:a', 'key:b', 'safe'],
       250,
-      'key:a',
-      'key:b',
-      'safe',
     );
     deadline.mockRestore();
   });

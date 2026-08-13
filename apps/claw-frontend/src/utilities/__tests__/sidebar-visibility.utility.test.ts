@@ -98,13 +98,19 @@ describe('sidebar-visibility.utility', () => {
       expect(paymentGatewayItems).toHaveLength(1);
     });
 
-    it('keeps every top-level item and every child (admin can do all)', () => {
+    it('hides the deployment monitor from an ordinary administrator', () => {
       const visible = filterSidebarItems(SIDEBAR_NAV_ITEMS, adminCan, adminFeatures);
       expect(visible.length).toBe(SIDEBAR_NAV_ITEMS.length);
 
       const admin = visible.find((i) => i.labelKey === 'nav.admin');
-      const originalAdmin = SIDEBAR_NAV_ITEMS.find((i) => i.labelKey === 'nav.admin');
-      expect(admin?.children?.length).toBe(originalAdmin?.children?.length);
+      expect(labelKeys(admin?.children ?? [])).not.toContain('nav.adminDeployment');
+    });
+
+    it('reveals the deployment monitor only to the seeded super administrator', () => {
+      const visible = filterSidebarItems(SIDEBAR_NAV_ITEMS, adminCan, adminFeatures, true);
+      const admin = visible.find((i) => i.labelKey === 'nav.admin');
+
+      expect(labelKeys(admin?.children ?? [])).toContain('nav.adminDeployment');
     });
 
     it('reveals Compare and Verify children for admin even with no features bypass needed', () => {

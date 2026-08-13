@@ -59,6 +59,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Split-Path -Parent $ScriptDir
 Set-Location $ProjectRoot
 $envFile = Join-Path $ProjectRoot ".env"
+New-Item -ItemType Directory -Path (Join-Path $ProjectRoot ".deploy") -Force | Out-Null
 
 # --- Install state ---
 # Mirrors scripts/install.sh. Records which steps finished and which questions
@@ -1239,6 +1240,7 @@ CONTACT_EMAIL_ENABLED=false
 CONTACT_EMAIL_PROVIDER=none
 CONTACT_EMAIL_FROM=no-reply@claw.local
 CONTACT_EMAIL_TO=
+DEPLOYMENT_STATUS_FILE=/app/.deploy/status.json
 CONTACT_RATE_LIMIT_MAX=3
 CONTACT_RATE_LIMIT_WINDOW_MS=3600000
 CONTACT_SMTP_HOST=

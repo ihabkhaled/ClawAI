@@ -131,6 +131,7 @@ cp "$REPO_ROOT/.ai/manifests/workspace-dependency-graph.json" "$SRC/.ai/manifest
 cp "$DEPLOY_SCRIPT" "$SRC/scripts/deploy-prod.sh"
 chmod +x "$SRC/scripts/deploy-prod.sh"
 printf 'entry\n' >"$SRC/scripts/docker-entrypoint.prod.sh"
+printf '{ "name": "claw-e2e", "version": "9.8.7" }\n' >"$SRC/package.json"
 printf '{ "name": "@claw/shared-auth" }\n' >"$SRC/packages/shared-auth/package.json"
 printf 'v1\n' >"$SRC/apps/claw-payment-service/src/main.ts"
 printf 'v1\n' >"$SRC/apps/claw-frontend/src/page.tsx"
@@ -215,6 +216,8 @@ out="$(deploy "$SHA_BASE")"
 assert_contains "first deployment reports no previous SHA" "$out" "first automated deployment"
 assert_contains "first deployment succeeds" "$out" "Deployment successful"
 assert_equals "first deployment records the SHA" "$(deployed_sha)" "$SHA_BASE"
+assert_contains "first deployment records completed status" "$(cat "$PROD/.deploy/status.json")" '"state":"completed"'
+assert_contains "deployment status records the target version" "$(cat "$PROD/.deploy/status.json")" '"version":"9.8.7"'
 assert_equals "first deployment checks out the exact SHA" "$(git -C "$PROD" rev-parse HEAD)" "$SHA_BASE"
 build_line="$(grep -m1 ' build ' "$CLAW_STUB_LOG" || true)"
 assert_contains "first deployment builds auth-service" "$build_line" "auth-service"
@@ -279,6 +282,8 @@ assert_contains "a failed build fails the deployment" "$out" "docker compose bui
 assert_contains "a failed build says production is untouched" "$out" "production is still serving"
 assert_not_contains "a failed build never reaches compose up" "$(cat "$CLAW_STUB_LOG")" "up -d"
 assert_equals "a failed build leaves the recorded SHA alone" "$(deployed_sha)" "$SHA_BASE"
+assert_contains "a failed build records failed status" "$(cat "$PROD/.deploy/status.json")" '"state":"failed"'
+assert_contains "a failed build records a bounded failure code" "$(cat "$PROD/.deploy/status.json")" '"failureCode":"DEPLOYMENT_FAILED"'
 
 # ─── Health failure leaves the recorded SHA alone ────────────────────────────
 reset_docker_log

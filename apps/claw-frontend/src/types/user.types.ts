@@ -13,6 +13,7 @@ export type User = {
   role: UserRole;
   status: UserStatus;
   mustChangePassword: boolean;
+  isSuperAdmin?: boolean;
   languagePreference: UserLanguagePreference;
   appearancePreference: UserAppearancePreference;
   createdAt: string;
@@ -28,6 +29,7 @@ export type UserProfile = {
   // back-compat with any cached pre-flagship session).
   permissions?: Permission[];
   mustChangePassword: boolean;
+  isSuperAdmin?: boolean;
   languagePreference: UserLanguagePreference;
   appearancePreference: UserAppearancePreference;
 };

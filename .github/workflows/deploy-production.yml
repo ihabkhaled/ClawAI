@@ -59,21 +59,28 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
       - name: Deploy over SSH
+        id: deploy
         env:
           PROD_HOST: ${{ secrets.PROD_HOST }}
           PROD_USER: ${{ secrets.PROD_USER }}
           PROD_PORT: ${{ secrets.PROD_PORT }}
           TARGET_SHA: ${{ inputs.target_sha || github.sha }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
           if [[ ! "$TARGET_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
             echo "Target must be an exact 40-character commit SHA." >&2
             exit 2
           fi
+          if [[ "$WORKFLOW_URL" != https://github.com/* ]]; then
+            echo "Workflow URL must be an https://github.com/ URL." >&2
+            exit 2
+          fi
           echo "Target production SHA: $TARGET_SHA"
           retry_delays=(10 20 40 60 90)
           ssh_output="$(mktemp)"
           trap 'rm -f "$ssh_output"' EXIT
+          deploy_status=1
 
           # One initial attempt plus five bounded retries. Only OpenSSH exit 255
           # with a recognized transport diagnostic is retried. A remote deploy,
@@ -87,31 +94,92 @@ jobs:
                 -o ConnectTimeout=20 \
                 -p "$PROD_PORT" \
                 "$PROD_USER@$PROD_HOST" \
-                "cd /srv/clawai && echo 'CLAW_SSH_CONNECTED' && echo 'Server deployed SHA before:' && (cat .deploy/deployed-sha 2>/dev/null || echo '<none>') && bash ./scripts/deploy-prod.sh '$TARGET_SHA' && echo 'Server deployed SHA after:' && cat .deploy/deployed-sha" \
+                "cd /srv/clawai && echo 'CLAW_SSH_CONNECTED' && echo 'Server deployed SHA before:' && (cat .deploy/deployed-sha 2>/dev/null || echo '<none>') && CLAW_DEPLOY_WORKFLOW_URL='$WORKFLOW_URL' bash ./scripts/deploy-prod.sh '$TARGET_SHA' && echo 'Server deployed SHA after:' && cat .deploy/deployed-sha" \
                 2>&1 | tee "$ssh_output"
             ssh_status="${PIPESTATUS[0]}"
             set -e
 
             if [ "$ssh_status" -eq 0 ]; then
-              exit 0
+              deploy_status=0
+              break
             fi
 
             if [ "$ssh_status" -ne 255 ] || grep -q 'CLAW_SSH_CONNECTED' "$ssh_output" || ! grep -Eq \
               'Connection timed out|Connection refused|No route to host|Could not resolve hostname|Connection reset by peer|Connection closed by remote host|kex_exchange_identification' \
               "$ssh_output"; then
               echo "Deployment failed after SSH connected; refusing to retry application failure." >&2
-              exit "$ssh_status"
+              deploy_status="$ssh_status"
+              break
             fi
 
             if [ "$attempt" -eq 6 ]; then
               echo "SSH connectivity failed after 6 attempts (5 retries)." >&2
-              exit "$ssh_status"
+              deploy_status="$ssh_status"
+              break
             fi
 
             delay="${retry_delays[$((attempt - 1))]}"
             echo "SSH connectivity attempt $attempt failed; retrying in ${delay}s." >&2
             sleep "$delay"
           done
+
+          # status.json is intentionally secret-free. Capture it even when the
+          # deploy failed so the always-running summary can show the last phase.
+          set +e
+          ssh -i ~/.ssh/deploy_key \
+              -o UserKnownHostsFile=~/.ssh/known_hosts \
+              -o BatchMode=yes \
+              -o ConnectTimeout=20 \
+              -p "$PROD_PORT" \
+              "$PROD_USER@$PROD_HOST" \
+              "cd /srv/clawai && cat .deploy/status.json" \
+              > deployment-status.json 2>/dev/null
+          capture_status=$?
+          set -e
+          if [ "$capture_status" -ne 0 ]; then
+            rm -f deployment-status.json
+          fi
+          exit "$deploy_status"
+
+      - name: Publish deployment summary
+        if: always()
+        env:
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+          TARGET_SHA: ${{ inputs.target_sha || github.sha }}
+          PRODUCTION_URL: https://claw-ai.co
+        run: |
+          set -euo pipefail
+          state="unavailable"
+          phase="unavailable"
+          version="unavailable"
+          deployed_sha="unavailable"
+          started_at="unavailable"
+          completed_at="unavailable"
+          workflow_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if [ -s deployment-status.json ] && jq -e '.schemaVersion == 1' deployment-status.json >/dev/null 2>&1; then
+            state="$(jq -r '.state // "unavailable"' deployment-status.json)"
+            phase="$(jq -r '.phase // "unavailable"' deployment-status.json)"
+            version="$(jq -r '.version // "unavailable"' deployment-status.json)"
+            deployed_sha="$(jq -r '.deployedSha // "unavailable"' deployment-status.json)"
+            started_at="$(jq -r '.startedAt // "unavailable"' deployment-status.json)"
+            completed_at="$(jq -r '.completedAt // "unavailable"' deployment-status.json)"
+          fi
+          {
+            echo "## Production deployment"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Workflow result | $DEPLOY_OUTCOME |"
+            echo "| Deployment status | $state |"
+            echo "| Last phase | $phase |"
+            echo "| Version | $version |"
+            echo "| Target SHA | \`$TARGET_SHA\` |"
+            echo "| Deployed SHA | \`$deployed_sha\` |"
+            echo "| Started | $started_at |"
+            echo "| Completed | $completed_at |"
+            echo "| Production URL | [$PRODUCTION_URL]($PRODUCTION_URL) |"
+            echo "| Workflow | [Open run]($workflow_url) |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Clean up SSH material
         if: always()

@@ -1,2 +1,3 @@
 export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
 export const RUNTIME_V2_REDIS_CLIENT = Symbol('RUNTIME_V2_REDIS_CLIENT');
+export const RUNTIME_V2_REDIS_DEADLINE_MS_MAX = 10_000;

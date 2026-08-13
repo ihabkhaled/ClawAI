@@ -417,10 +417,10 @@ All 17 backend services share an identical ESLint configuration. ESLint 9 flat c
 
 ### Unicorn Plugin Rules
 
-| Level        | Rules                                                                                                                                                                                                     |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Errors**   | prefer-node-protocol, no-nested-ternary, prefer-string-slice                                                                                                                                              |
-| **Warnings** | no-array-for-each, no-useless-undefined, prefer-ternary, prefer-array-find/some/includes, prefer-number-properties, no-lonely-if, no-array-push-push, prefer-spread, prefer-string-replace-all, prefer-at |
+| Level        | Rules                                                                                                                                                                                               |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Errors**   | prefer-node-protocol, no-nested-ternary, prefer-string-slice                                                                                                                                        |
+| **Warnings** | no-for-each, no-useless-undefined, prefer-ternary, prefer-array-find/some/includes, prefer-number-properties, no-lonely-if, no-array-push-push, prefer-spread, prefer-string-replace-all, prefer-at |
 
 ### Import Plugin Rules (Errors)
 

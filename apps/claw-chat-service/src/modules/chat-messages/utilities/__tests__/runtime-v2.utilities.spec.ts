@@ -8,6 +8,7 @@ import {
 import {
   createRuntimeV2Identity,
   runtimeV2Sha256,
+  runtimeV2TerminalFingerprint,
   stableRuntimeV2Json,
 } from '../runtime-v2-identity.utility';
 import {
@@ -82,6 +83,213 @@ describe('Runtime V2 utilities', () => {
     expect(first).toMatch(/^run_[a-f0-9]{32}$/u);
     expect(second).not.toBe(first);
     expect(runtimeV2Sha256('safe')).toMatch(/^sha256:[a-f0-9]{64}$/u);
+  });
+
+  it('keeps completed terminal fingerprints byte-compatible with SHA-256', async () => {
+    const terminal = {
+      ownerId: 'runtime_owner_000001',
+      threadId: 'runtime_thread_00001',
+      messageId: 'runtime_message_0001',
+      clientRequestId: 'runtime_request_00001',
+      startIdempotencyKey: 'runtime_idempotency_1',
+      runId: 'runtime_run_existing1',
+      generation: 'runtime_generation_1',
+      epochs: { account: 1, workspace: 2, target: 3, policy: 4 },
+      manifestHash: `sha256:${'a'.repeat(64)}`,
+      toolCatalogHash: `sha256:${'b'.repeat(64)}`,
+      toolDefinitions: [],
+      provider: 'OLLAMA',
+      model: 'qwen3:1.7b',
+      claimId: 'runtime_claim_00001',
+      ttlSeconds: 900,
+      idempotencyKey: 'runtime_terminal_key1',
+      status: 'completed' as const,
+      completedAt: '2026-08-02T10:00:04.000Z',
+    };
+
+    await expect(runtimeV2TerminalFingerprint(terminal)).resolves.toBe(
+      runtimeV2Sha256(stableRuntimeV2Json(terminal)),
+    );
+  });
+
+  it('protects a failed terminal reason with a deterministic salted slow digest', async () => {
+    const reason = {
+      code: 'MISSING_PROVIDER_API_KEY',
+      message: 'No API key configured for provider OPENAI',
+    };
+    const terminal = {
+      ownerId: 'runtime_owner_000001',
+      threadId: 'runtime_thread_00001',
+      messageId: 'runtime_message_0001',
+      clientRequestId: 'runtime_request_00001',
+      startIdempotencyKey: 'runtime_idempotency_1',
+      runId: 'runtime_run_existing1',
+      generation: 'runtime_generation_1',
+      epochs: { account: 1, workspace: 2, target: 3, policy: 4 },
+      manifestHash: `sha256:${'a'.repeat(64)}`,
+      toolCatalogHash: `sha256:${'b'.repeat(64)}`,
+      toolDefinitions: [],
+      provider: 'OPENAI',
+      model: 'gpt-4.1',
+      claimId: 'runtime_claim_00001',
+      ttlSeconds: 900,
+      idempotencyKey: 'runtime_terminal_key1',
+      status: 'failed' as const,
+      completedAt: '2026-08-02T10:00:04.000Z',
+      reason,
+    };
+
+    const first = await runtimeV2TerminalFingerprint(terminal);
+    const second = await runtimeV2TerminalFingerprint(terminal);
+    const otherRun = await runtimeV2TerminalFingerprint({
+      ...terminal,
+      runId: 'runtime_run_existing2',
+    });
+
+    expect(first).toMatch(/^sha256:[a-f0-9]{64}\.scrypt:[a-f0-9]{64}$/u);
+    expect(second).toBe(first);
+    expect(otherRun.split('.scrypt:')[1]).not.toBe(first.split('.scrypt:')[1]);
+    expect(first).not.toContain(reason.code);
+    expect(first).not.toContain(reason.message);
+  });
+
+  it('protects a failed terminal without optional reason metadata', async () => {
+    const terminal = {
+      ownerId: 'runtime_owner_000001',
+      threadId: 'runtime_thread_00001',
+      messageId: 'runtime_message_0001',
+      clientRequestId: 'runtime_request_00001',
+      startIdempotencyKey: 'runtime_idempotency_1',
+      runId: 'runtime_run_existing1',
+      generation: 'runtime_generation_1',
+      epochs: { account: 1, workspace: 2, target: 3, policy: 4 },
+      manifestHash: `sha256:${'a'.repeat(64)}`,
+      toolCatalogHash: `sha256:${'b'.repeat(64)}`,
+      toolDefinitions: [],
+      provider: 'OPENAI',
+      model: 'gpt-4.1',
+      claimId: 'runtime_claim_00001',
+      ttlSeconds: 900,
+      idempotencyKey: 'runtime_terminal_key1',
+      status: 'failed' as const,
+      completedAt: '2026-08-02T10:00:04.000Z',
+    };
+
+    await expect(runtimeV2TerminalFingerprint(terminal)).resolves.toMatch(
+      /^sha256:[a-f0-9]{64}\.scrypt:[a-f0-9]{64}$/u,
+    );
+  });
+
+  it('rejects an oversized failed terminal reason code', async () => {
+    const terminal = {
+      ownerId: 'runtime_owner_000001',
+      threadId: 'runtime_thread_00001',
+      messageId: 'runtime_message_0001',
+      clientRequestId: 'runtime_request_00001',
+      startIdempotencyKey: 'runtime_idempotency_1',
+      runId: 'runtime_run_existing1',
+      generation: 'runtime_generation_1',
+      epochs: { account: 1, workspace: 2, target: 3, policy: 4 },
+      manifestHash: `sha256:${'a'.repeat(64)}`,
+      toolCatalogHash: `sha256:${'b'.repeat(64)}`,
+      toolDefinitions: [],
+      provider: 'OPENAI',
+      model: 'gpt-4.1',
+      claimId: 'runtime_claim_00001',
+      ttlSeconds: 900,
+      idempotencyKey: 'runtime_terminal_key1',
+      status: 'failed' as const,
+      completedAt: '2026-08-02T10:00:04.000Z',
+      reason: { code: 'X'.repeat(81), message: 'Provider failed' },
+    };
+
+    await expect(runtimeV2TerminalFingerprint(terminal)).rejects.toThrow(
+      'Runtime V2 terminal reason exceeds the fingerprint budget',
+    );
+  });
+
+  it('rejects a failed terminal reason outside the slow-digest input budget', async () => {
+    const terminal = {
+      ownerId: 'runtime_owner_000001',
+      threadId: 'runtime_thread_00001',
+      messageId: 'runtime_message_0001',
+      clientRequestId: 'runtime_request_00001',
+      startIdempotencyKey: 'runtime_idempotency_1',
+      runId: 'runtime_run_existing1',
+      generation: 'runtime_generation_1',
+      epochs: { account: 1, workspace: 2, target: 3, policy: 4 },
+      manifestHash: `sha256:${'a'.repeat(64)}`,
+      toolCatalogHash: `sha256:${'b'.repeat(64)}`,
+      toolDefinitions: [],
+      provider: 'OPENAI',
+      model: 'gpt-4.1',
+      claimId: 'runtime_claim_00001',
+      ttlSeconds: 900,
+      idempotencyKey: 'runtime_terminal_key1',
+      status: 'failed' as const,
+      completedAt: '2026-08-02T10:00:04.000Z',
+      reason: { code: 'FAILED', message: 'x'.repeat(401) },
+    };
+
+    await expect(runtimeV2TerminalFingerprint(terminal)).rejects.toThrow(
+      'Runtime V2 terminal reason exceeds the fingerprint budget',
+    );
+  });
+
+  it('rejects an escaped failed reason outside the byte budget', async () => {
+    const terminal = {
+      ownerId: 'runtime_owner_000001',
+      threadId: 'runtime_thread_00001',
+      messageId: 'runtime_message_0001',
+      clientRequestId: 'runtime_request_00001',
+      startIdempotencyKey: 'runtime_idempotency_1',
+      runId: 'runtime_run_existing1',
+      generation: 'runtime_generation_1',
+      epochs: { account: 1, workspace: 2, target: 3, policy: 4 },
+      manifestHash: `sha256:${'a'.repeat(64)}`,
+      toolCatalogHash: `sha256:${'b'.repeat(64)}`,
+      toolDefinitions: [],
+      provider: 'OPENAI',
+      model: 'gpt-4.1',
+      claimId: 'runtime_claim_00001',
+      ttlSeconds: 900,
+      idempotencyKey: 'runtime_terminal_key1',
+      status: 'failed' as const,
+      completedAt: '2026-08-02T10:00:04.000Z',
+      reason: { code: 'FAILED', message: '\0'.repeat(400) },
+    };
+
+    await expect(runtimeV2TerminalFingerprint(terminal)).rejects.toThrow(
+      'Runtime V2 terminal reason exceeds the fingerprint budget',
+    );
+  });
+
+  it('rejects a failed terminal run identity outside the salt input budget', async () => {
+    const terminal = {
+      ownerId: 'runtime_owner_000001',
+      threadId: 'runtime_thread_00001',
+      messageId: 'runtime_message_0001',
+      clientRequestId: 'runtime_request_00001',
+      startIdempotencyKey: 'runtime_idempotency_1',
+      runId: 'r'.repeat(129),
+      generation: 'runtime_generation_1',
+      epochs: { account: 1, workspace: 2, target: 3, policy: 4 },
+      manifestHash: `sha256:${'a'.repeat(64)}`,
+      toolCatalogHash: `sha256:${'b'.repeat(64)}`,
+      toolDefinitions: [],
+      provider: 'OPENAI',
+      model: 'gpt-4.1',
+      claimId: 'runtime_claim_00001',
+      ttlSeconds: 900,
+      idempotencyKey: 'runtime_terminal_key1',
+      status: 'failed' as const,
+      completedAt: '2026-08-02T10:00:04.000Z',
+      reason: { code: 'FAILED', message: 'Provider failed' },
+    };
+
+    await expect(runtimeV2TerminalFingerprint(terminal)).rejects.toThrow(
+      'Runtime V2 terminal reason exceeds the fingerprint budget',
+    );
   });
 
   it('canonicalizes every JSON value shape and rejects non-JSON values', () => {

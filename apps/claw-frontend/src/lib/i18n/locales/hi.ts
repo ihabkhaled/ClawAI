@@ -1,5 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+
 export const hi: TranslationDictionary = {
   common: {
     save: 'सहेजें',
@@ -182,6 +184,7 @@ export const hi: TranslationDictionary = {
     adminPlans: 'योजनाएँ',
     adminRoles: 'भूमिकाएँ',
     adminRuntimeProgress: 'रनटाइम डायग्नोस्टिक्स',
+    adminDeployment: DEPLOYMENT_TRANSLATIONS.hi.navigationLabel,
     adminPaymentGateways: 'भुगतान गेटवे',
     plan: 'मेरी योजना',
     billing: 'बिलिंग',
@@ -3150,6 +3153,7 @@ export const hi: TranslationDictionary = {
     success: 'रिफ़ंड का अनुरोध किया गया।',
     failed: 'रिफ़ंड जारी नहीं किया जा सका।',
   },
+  adminDeployment: DEPLOYMENT_TRANSLATIONS.hi.section,
   adminBilling: {
     title: 'बिलिंग डैशबोर्ड',
     description: 'राजस्व, प्रदाता लागत, मार्जिन और सदस्यता की स्थिति।',

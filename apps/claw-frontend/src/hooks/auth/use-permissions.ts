@@ -8,6 +8,7 @@ import { hasAnyPermission, hasPermission, isAdmin } from '@/utilities/permission
 // auth store and exposes ergonomic checks. Backend still enforces everything.
 export function usePermissions(): {
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   can: (permission: Permission) => boolean;
   canAny: (permissions: Permission[]) => boolean;
 } {
@@ -19,5 +20,5 @@ export function usePermissions(): {
     [user],
   );
 
-  return { isAdmin: isAdmin(user), can, canAny };
+  return { isAdmin: isAdmin(user), isSuperAdmin: user?.isSuperAdmin === true, can, canAny };
 }

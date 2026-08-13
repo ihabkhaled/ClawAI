@@ -368,6 +368,22 @@ describe('UsersService', () => {
     });
   });
 
+  describe('assertSuperAdminActor', () => {
+    it('accepts only the immutable seeded super administrator', async () => {
+      repository.findById.mockResolvedValue({ ...mockUser, isSuperAdmin: true });
+
+      await expect(service.assertSuperAdminActor('super-admin')).resolves.toBeUndefined();
+    });
+
+    it('rejects an ordinary administrator', async () => {
+      repository.findById.mockResolvedValue({ ...mockUser, role: UserRole.ADMIN });
+
+      await expect(service.assertSuperAdminActor('admin-1')).rejects.toMatchObject({
+        code: 'SUPER_ADMIN_REQUIRED',
+      });
+    });
+  });
+
   describe('updatePreferences', () => {
     it('throws when user not found', async () => {
       repository.findById.mockResolvedValue(null);

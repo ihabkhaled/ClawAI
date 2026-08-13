@@ -6,8 +6,8 @@ import { config, proxy } from '../proxy';
 
 const middleware = proxy;
 
-function buildRequest(pathname: string): NextRequest {
-  return new NextRequest(new URL(pathname, 'https://claw.example'));
+function buildRequest(pathname: string, headers?: HeadersInit): NextRequest {
+  return new NextRequest(new URL(pathname, 'https://claw.example'), { headers });
 }
 
 describe('middleware X-Robots-Tag enforcement', () => {
@@ -50,6 +50,25 @@ describe('middleware X-Robots-Tag enforcement', () => {
     expect(english.headers.get('x-middleware-rewrite')).toBe('https://claw.example/');
     expect(arabic.status).toBe(200);
     expect(arabic.headers.get('x-middleware-rewrite')).toBe('https://claw.example/');
+  });
+
+  it('renders the internal locale rewrite without redirecting back to the public path', () => {
+    const localized = middleware(buildRequest('/en/login'));
+    const locale = localized.headers.get('x-middleware-request-x-claw-locale');
+    const rewriteMarker = localized.headers.get('x-middleware-request-x-claw-locale-rewrite');
+
+    expect(locale).toBe('en');
+    expect(rewriteMarker).toBe('1');
+
+    const internal = middleware(
+      buildRequest('/login', {
+        'x-claw-locale': locale ?? '',
+        'x-claw-locale-rewrite': rewriteMarker ?? '',
+      }),
+    );
+
+    expect(internal.status).toBe(200);
+    expect(internal.headers.get('location')).toBeNull();
   });
 
   it('tags every portal route as noindex', () => {

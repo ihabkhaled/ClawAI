@@ -1,5 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+
 export const fr: TranslationDictionary = {
   common: {
     save: 'Enregistrer',
@@ -183,6 +185,7 @@ export const fr: TranslationDictionary = {
     adminPlans: 'Forfaits',
     adminRoles: 'Rôles',
     adminRuntimeProgress: 'Diagnostic du runtime',
+    adminDeployment: DEPLOYMENT_TRANSLATIONS.fr.navigationLabel,
     adminPaymentGateways: 'Passerelles de paiement',
     plan: 'Mon forfait',
     billing: 'Facturation',
@@ -3193,6 +3196,7 @@ export const fr: TranslationDictionary = {
     success: 'Remboursement demandé.',
     failed: 'Impossible d’émettre le remboursement.',
   },
+  adminDeployment: DEPLOYMENT_TRANSLATIONS.fr.section,
   adminBilling: {
     title: 'Tableau de bord de facturation',
     description: 'Revenus, coûts fournisseurs, marge et santé des abonnements.',
