@@ -1,4 +1,5 @@
-import { createHash, randomBytes, scrypt } from 'node:crypto';
+import { createHash, randomBytes, scrypt, type ScryptOptions } from 'node:crypto';
+import { promisify } from 'node:util';
 
 import {
   RUNTIME_V2_TERMINAL_REASON_CODE_CHARACTERS,
@@ -13,6 +14,16 @@ import {
   RUNTIME_V2_TERMINAL_REASON_SCRYPT_PARALLELIZATION,
 } from '../constants/runtime-v2-identity.constants';
 import type { RuntimeV2TerminalInput } from '../types/runtime-v2-store.types';
+
+function deriveRuntimeV2Reason(
+  protectedInput: string,
+  salt: Buffer,
+  keyLength: number,
+  options: ScryptOptions,
+  callback: (error: Error | null, derivedKey: Buffer) => void,
+): void {
+  scrypt(protectedInput, salt, keyLength, options, callback);
+}
 
 export function createRuntimeV2Identity(prefix: string): string {
   return `${prefix}_${randomBytes(16).toString('hex')}`;
@@ -47,27 +58,18 @@ export async function runtimeV2TerminalFingerprint(input: RuntimeV2TerminalInput
   return `${structuralDigest}.scrypt:${protectedDigest.toString('hex')}`;
 }
 
-function runtimeV2ReasonScrypt(protectedInput: string, salt: Buffer): Promise<Buffer> {
-  return new Promise<Buffer>((resolve, reject) => {
-    scrypt(
-      protectedInput,
-      salt,
-      RUNTIME_V2_TERMINAL_REASON_SCRYPT_KEY_BYTES,
-      {
-        N: RUNTIME_V2_TERMINAL_REASON_SCRYPT_COST,
-        r: RUNTIME_V2_TERMINAL_REASON_SCRYPT_BLOCK_SIZE,
-        p: RUNTIME_V2_TERMINAL_REASON_SCRYPT_PARALLELIZATION,
-        maxmem: RUNTIME_V2_TERMINAL_REASON_SCRYPT_MAX_MEMORY_BYTES,
-      },
-      (error, derivedKey) => {
-        if (error === null) {
-          resolve(derivedKey);
-          return;
-        }
-        reject(error);
-      },
-    );
-  });
+async function runtimeV2ReasonScrypt(protectedInput: string, salt: Buffer): Promise<Buffer> {
+  return promisify(deriveRuntimeV2Reason)(
+    protectedInput,
+    salt,
+    RUNTIME_V2_TERMINAL_REASON_SCRYPT_KEY_BYTES,
+    {
+      N: RUNTIME_V2_TERMINAL_REASON_SCRYPT_COST,
+      r: RUNTIME_V2_TERMINAL_REASON_SCRYPT_BLOCK_SIZE,
+      p: RUNTIME_V2_TERMINAL_REASON_SCRYPT_PARALLELIZATION,
+      maxmem: RUNTIME_V2_TERMINAL_REASON_SCRYPT_MAX_MEMORY_BYTES,
+    },
+  );
 }
 
 export function stableRuntimeV2Json(value: unknown): string {

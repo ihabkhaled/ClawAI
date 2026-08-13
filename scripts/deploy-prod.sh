@@ -986,7 +986,7 @@ main() {
   DEPLOYMENT_TARGET_SHA="$new_sha"
   DEPLOYMENT_PREVIOUS_SHA="$old_sha"
   DEPLOYMENT_DEPLOYED_SHA="$old_sha"
-  DEPLOYMENT_VERSION="$(git show "$new_sha:package.json" | awk -F '"' '/"version"[[:space:]]*:/ { print $4; exit }')"
+  DEPLOYMENT_VERSION="$(git show "$new_sha:package.json" | sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' | head -n 1)"
   DEPLOYMENT_STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   DEPLOYMENT_STATUS_ACTIVE=1
   set_deployment_phase "preparing"

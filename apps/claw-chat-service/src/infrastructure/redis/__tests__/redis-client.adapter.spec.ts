@@ -21,7 +21,7 @@ describe('RedisClientAdapter', () => {
     await expect(adapter.set('expiring', 'value', 'EX', 60)).resolves.toBe('OK');
     await expect(adapter.del('one', 'two')).resolves.toBe(2);
     await expect(adapter.eval('script', 1, 'key', 'argument')).resolves.toEqual(['OK', 'ack']);
-    await expect(adapter.evalRuntimeV2('script', 1, 100, 'key', 'argument')).resolves.toEqual([
+    await expect(adapter.evalRuntimeV2('script', 1, ['key', 'argument'], 100)).resolves.toEqual([
       'OK',
       'ack',
     ]);
@@ -43,7 +43,7 @@ describe('RedisClientAdapter', () => {
     const disconnect = jest.spyOn(client, 'disconnect').mockImplementation(() => {});
     const adapter = new RedisClientAdapter(client);
 
-    await expect(adapter.evalRuntimeV2('script', 1, 20, 'key')).rejects.toThrow(
+    await expect(adapter.evalRuntimeV2('script', 1, ['key'], 20)).rejects.toThrow(
       'Runtime V2 Redis deadline exceeded',
     );
     expect(disconnect).toHaveBeenCalledWith(true);
@@ -56,9 +56,23 @@ describe('RedisClientAdapter', () => {
     jest.spyOn(client, 'eval').mockResolvedValue('OK');
     const adapter = new RedisClientAdapter(client);
 
-    await expect(adapter.evalRuntimeV2('script', 1, Number.MAX_SAFE_INTEGER, 'key')).resolves.toBe(
-      'OK',
-    );
+    await expect(
+      adapter.evalRuntimeV2('script', 1, ['key'], Number.MAX_SAFE_INTEGER),
+    ).resolves.toBe('OK');
+    expect(schedule).toHaveBeenLastCalledWith(expect.any(Function), 10_000);
+
+    schedule.mockRestore();
+    jest.useRealTimers();
+  });
+
+  it.each([Number.NaN, -1])('uses the hard cap for an invalid deadline %p', async (deadlineMs) => {
+    jest.useFakeTimers();
+    const schedule = jest.spyOn(globalThis, 'setTimeout');
+    const client = new Redis({ lazyConnect: true });
+    jest.spyOn(client, 'eval').mockResolvedValue('OK');
+    const adapter = new RedisClientAdapter(client);
+
+    await expect(adapter.evalRuntimeV2('script', 1, ['key'], deadlineMs)).resolves.toBe('OK');
     expect(schedule).toHaveBeenLastCalledWith(expect.any(Function), 10_000);
 
     schedule.mockRestore();
@@ -72,7 +86,7 @@ describe('RedisClientAdapter', () => {
     const disconnect = jest.spyOn(client, 'disconnect').mockImplementation(() => {});
     const adapter = new RedisClientAdapter(client);
 
-    await expect(adapter.evalRuntimeV2('script', 1, 100, 'key')).rejects.toBe(failure);
+    await expect(adapter.evalRuntimeV2('script', 1, ['key'], 100)).rejects.toBe(failure);
     expect(disconnect).toHaveBeenCalledWith(true);
   });
 
@@ -82,7 +96,7 @@ describe('RedisClientAdapter', () => {
     jest.spyOn(client, 'disconnect').mockImplementation(() => {});
     const adapter = new RedisClientAdapter(client);
 
-    await expect(adapter.evalRuntimeV2('script', 1, 100, 'key')).rejects.toThrow(
+    await expect(adapter.evalRuntimeV2('script', 1, ['key'], 100)).rejects.toThrow(
       'Runtime V2 Redis command failed',
     );
   });
@@ -99,7 +113,7 @@ describe('RedisClientAdapter', () => {
     );
     jest.spyOn(client, 'disconnect').mockImplementation(() => {});
     const adapter = new RedisClientAdapter(client);
-    const result = adapter.evalRuntimeV2('script', 1, 10, 'key');
+    const result = adapter.evalRuntimeV2('script', 1, ['key'], 10);
     const rejection = expect(result).rejects.toThrow('Runtime V2 Redis deadline exceeded');
 
     await jest.advanceTimersByTimeAsync(10);
@@ -121,7 +135,7 @@ describe('RedisClientAdapter', () => {
     );
     jest.spyOn(client, 'disconnect').mockImplementation(() => {});
     const adapter = new RedisClientAdapter(client);
-    const result = adapter.evalRuntimeV2('script', 1, 10, 'key');
+    const result = adapter.evalRuntimeV2('script', 1, ['key'], 10);
     const rejection = expect(result).rejects.toThrow('Runtime V2 Redis deadline exceeded');
 
     await jest.advanceTimersByTimeAsync(10);
@@ -139,7 +153,7 @@ describe('RedisClientAdapter', () => {
     const disconnect = jest.spyOn(client, 'disconnect').mockImplementation(() => {});
     const adapter = new RedisClientAdapter(client);
 
-    await expect(adapter.evalRuntimeV2('script', 1, 10, 'key')).resolves.toBe('OK');
+    await expect(adapter.evalRuntimeV2('script', 1, ['key'], 10)).resolves.toBe('OK');
     await jest.advanceTimersByTimeAsync(10);
     expect(disconnect).not.toHaveBeenCalled();
     clearTimer.mockRestore();

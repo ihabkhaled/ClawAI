@@ -31,8 +31,8 @@ export class RedisClientAdapter implements RedisClientPort {
   evalRuntimeV2(
     script: string,
     numberOfKeys: number,
+    values: readonly string[],
     deadlineMs: number,
-    ...values: string[]
   ): Promise<unknown> {
     const boundedDeadlineMs =
       Number.isFinite(deadlineMs) && deadlineMs >= 0
