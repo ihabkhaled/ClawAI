@@ -216,6 +216,47 @@ enum BillingModel {
   UNKNOWN
 }
 
+/// Deployment policy for a router configuration. CLOUD_FIRST is the new SaaS
+/// default; the local and private modes stay first-class so an air-gapped
+/// install is a configuration choice rather than a fork.
+enum RouterConfigurationMode {
+  CLOUD_FIRST
+  HYBRID
+  PRIVATE_CLOUD
+  LOCAL_ONLY
+}
+
+/// A revision is immutable once PUBLISHED. Editing produces a new revision, so
+/// "what was the router doing at 14:03" always has an answer, and rollback is
+/// publishing an older revision's content as a newer one rather than mutating
+/// history.
+enum RouterConfigurationStatus {
+  DRAFT
+  PUBLISHED
+  SUPERSEDED
+}
+
+/// What a chain entry is for. Role is documentation for operators and a
+/// validation aid — the coordinator branches on canonical error scope, never on
+/// this — but a chain whose roles contradict its order is a misconfiguration
+/// worth refusing.
+enum RouterChainEntryRole {
+  PRIMARY
+  MODEL_FALLBACK
+  PROVIDER_FALLBACK
+  PROVIDER_MODEL_FALLBACK
+  LAST_RESORT
+  QUALITY_ESCALATION
+}
+
+/// What happens when a decision is valid but under the confidence floor.
+/// Distinct from provider failure throughout: the call succeeded.
+enum LowConfidenceAction {
+  QUALITY_ESCALATION_THEN_DETERMINISTIC
+  DETERMINISTIC_ONLY
+  FAIL_CLOSED
+}
+
 /// Where a capability claim came from. A provider marketing page and a measured
 /// lab probe must never be indistinguishable once stored.
 enum EvidenceSource {
@@ -650,6 +691,108 @@ model ModelDeployment {
   @@index([activationState, provider])
   @@index([deploymentType])
   @@map("model_deployments")
+}
+
+/// One immutable revision of the router's configuration.
+///
+/// RoutingPolicy, the existing config aggregate, is mutated in place: there is
+/// no way to see what the router was doing before an edit, and no way to roll
+/// one back. Revisions here are append-only — an edit publishes revision N+1 and
+/// marks N SUPERSEDED — which is also what makes optimistic concurrency
+/// possible: a save carries the revision it was based on and loses the race
+/// rather than silently overwriting a concurrent admin.
+///
+/// `scope` is GLOBAL today. routing-service has no tenant columns anywhere, so
+/// per-tenant configuration needs a scoping migration first; the column exists
+/// so that arrives as data rather than as a schema change.
+model RouterConfiguration {
+  id       String                    @id @default(cuid())
+  scope    String                    @default("GLOBAL")
+  revision Int
+  status   RouterConfigurationStatus @default(DRAFT)
+
+  mode    RouterConfigurationMode @default(CLOUD_FIRST)
+  enabled Boolean                 @default(false)
+
+  // ── budgets, all hard ceilings ──
+  totalDeadlineMs       Int @default(5000) @map("total_deadline_ms")
+  maxAttempts           Int @default(6) @map("max_attempts")
+  maxRouterInputTokens  Int @default(1800) @map("max_router_input_tokens")
+  maxRouterOutputTokens Int @default(320) @map("max_router_output_tokens")
+
+  // ── decision policy ──
+  minConfidence                     Decimal             @default(0.75) @map("min_confidence") @db.Decimal(4, 3)
+  lowConfidenceAction               LowConfidenceAction @default(QUALITY_ESCALATION_THEN_DETERMINISTIC) @map("low_confidence_action")
+  /// With no usable router, fail with a typed error rather than picking
+  /// arbitrarily — an unexplained model choice is worse than an honest refusal.
+  failClosedWhenNoEligibleRouter    Boolean             @default(true) @map("fail_closed_when_no_eligible_router")
+  skipProviderOnProviderWideFailure Boolean             @default(true) @map("skip_provider_on_provider_wide_failure")
+
+  safeTraceLevel             String  @default("DETAILED_FACTORS") @map("safe_trace_level")
+  /// Keeps the legacy local router reachable by chain order alone, so rollback
+  /// is a configuration change rather than a deploy.
+  legacyLocalRollbackEnabled Boolean @default(true) @map("legacy_local_rollback_enabled")
+
+  // ── revision bookkeeping ──
+  supersedesRevision Int?      @map("supersedes_revision")
+  publishedAt        DateTime? @map("published_at")
+  publishedBy        String?   @map("published_by")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  entries RouterChainEntry[]
+
+  @@unique([scope, revision])
+  @@index([scope, status])
+  @@map("router_configurations")
+}
+
+/// One ordered attempt target within a configuration revision.
+///
+/// Entries belong to a revision rather than to a mutable configuration, so the
+/// chain a decision used can be reconstructed exactly.
+model RouterChainEntry {
+  id              String              @id @default(cuid())
+  configurationId String              @map("configuration_id")
+  configuration   RouterConfiguration @relation(fields: [configurationId], references: [id], onDelete: Cascade)
+
+  order   Int
+  enabled Boolean              @default(true)
+  role    RouterChainEntryRole @default(PROVIDER_FALLBACK)
+
+  /// The endpoint this entry calls. Nullable so a seeded bootstrap alias can be
+  /// recorded before discovery has confirmed the model exists — the entry is
+  /// simply not runnable until it resolves.
+  deploymentId String?        @map("deployment_id")
+  /// The alias the seed was written against, kept for the admin UI and for
+  /// discovery to match on. Never used to call a provider directly.
+  modelAlias   String         @map("model_alias")
+  provider     RouterProvider
+
+  attemptTimeoutMs Int @default(1600) @map("attempt_timeout_ms")
+  retries          Int @default(0)
+
+  /// Canonical RouterErrorCode names that route TO this entry. Empty means the
+  /// entry is reachable by ordinary chain order.
+  triggers                    String[] @default([])
+  skipWhenProviderCircuitOpen Boolean  @default(true) @map("skip_when_provider_circuit_open")
+
+  /// Per-entry overrides; NULL inherits the configuration.
+  minConfidence   Decimal? @map("min_confidence") @db.Decimal(4, 3)
+  maxCostMicroUsd BigInt?  @map("max_cost_micro_usd")
+
+  /// Billing model of the endpoint as configured, so a subscription entry is
+  /// never costed as if it were per-token.
+  billingModel BillingModel @default(UNKNOWN) @map("billing_model")
+
+  lastValidatedAt DateTime? @map("last_validated_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@unique([configurationId, order])
+  @@index([configurationId, enabled])
+  @@index([provider])
+  @@map("router_chain_entries")
 }
 
 /// Ledger of versioned seeds that have run against this database.

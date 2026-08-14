@@ -59,6 +59,13 @@ Controller -> Service -> Repository
 - CapabilityEvidence — one sourced capability claim about a definition or a
   deployment, carrying provenance, confidence and expiry so a marketing claim is
   never indistinguishable from a measured probe.
+- RouterConfiguration + RouterChainEntry — immutable revisions of the router's
+  ordered fallback chain. An edit publishes revision N+1 and supersedes N, so a
+  decision can always be traced back to the exact chain that produced it. A
+  partial unique index enforces at most one PUBLISHED revision per scope.
+- SeedExecution — ledger for versioned seeds (`cloud-smart-router-default-v1`,
+  `router-model-deployments-backfill`). Seeds take a transaction-scoped advisory
+  lock and never overwrite admin edits.
 
 ## Commands
 

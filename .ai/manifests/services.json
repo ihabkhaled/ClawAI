@@ -430,7 +430,9 @@
         "ReplayCase",
         "ReplayRun",
         "RouterAdminOverride",
+        "RouterChainEntry",
         "RouterCircuitBreaker",
+        "RouterConfiguration",
         "RouterLearnedScore",
         "RouterModelProfile",
         "RouterModelRegistry",
@@ -444,7 +446,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 58,
+      "testFiles": 59,
       "testRunner": "jest"
     },
     {
