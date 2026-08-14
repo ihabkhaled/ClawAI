@@ -9,6 +9,7 @@ vi.mock('@/hooks/admin/use-deployment-page', () => ({ useDeploymentPage: () => m
 vi.mock('@/components/admin/deployment/deployment-status-content', () => ({
   DeploymentStatusContent: () => <div data-testid="deployment-status" />,
 }));
+vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 function controller(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -39,5 +40,18 @@ describe('AdminDeploymentPage', () => {
     render(<AdminDeploymentPage />);
     expect(screen.getByText('common.accessDeniedTitle')).toBeInTheDocument();
     expect(screen.queryByTestId('deployment-status')).not.toBeInTheDocument();
+  });
+
+  it('waits for a fresh profile before denying a cached pre-migration administrator', () => {
+    mockHook.mockReturnValue(
+      controller({
+        user: { role: 'ADMIN', isSuperAdmin: false },
+        isLoading: true,
+        status: null,
+      }),
+    );
+    render(<AdminDeploymentPage />);
+    expect(screen.getByText('adminDeployment.loading')).toBeInTheDocument();
+    expect(screen.queryByText('common.accessDeniedTitle')).not.toBeInTheDocument();
   });
 });

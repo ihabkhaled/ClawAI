@@ -3478,6 +3478,7 @@ export const de: TranslationDictionary = {
       stepOf: '{current} von {total}',
     },
     diagnostics: {
+      serviceDisabled: 'Lokale KI-Dienste sind für diese Bereitstellung deaktiviert.',
       title: 'Laufzeitdiagnose',
       description:
         'Lokale KI-Laufzeiten prüfen, installierte Modelle einsehen und letzte Ereignisse durchgehen.',

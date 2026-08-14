@@ -21,12 +21,9 @@
     "test:cov": "jest --coverage",
     "migrate": "prisma migrate deploy",
     "migrate:dev": "prisma migrate dev",
-    "seed": "ts-node prisma/seed.ts",
+    "seed": "node prisma/seed.js",
     "seed:permissions": "node prisma/seed-permissions.js",
     "prisma:generate": "prisma generate"
-  },
-  "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
     "@claw/shared-constants": "*",

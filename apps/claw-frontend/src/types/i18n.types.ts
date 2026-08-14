@@ -3409,6 +3409,7 @@ export type TranslationDictionary = {
       refresh: string;
       loading: string;
       error: string;
+      serviceDisabled: string;
       ollamaTitle: string;
       llamacppTitle: string;
       runtimeUrl: string;

@@ -35,6 +35,7 @@ test('both nginx deployment modes expose every public payment route', async () =
     assert.match(nginx, /location\s+\/api\/v1\/payments\s*\{/u);
     assert.match(nginx, /location\s+\/api\/v1\/billing\s*\{/u);
     assert.match(nginx, /location\s+\/api\/v1\/admin\/billing\s*\{/u);
+    assert.match(nginx, /location\s+\/api\/v1\/admin\/payment-gateways\s*\{/u);
     assert.doesNotMatch(nginx, /location\s+\/api\/v1\/internal\/payments(?:\s|\/|\{)/u);
   }
 });

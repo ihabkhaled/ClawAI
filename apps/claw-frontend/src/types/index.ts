@@ -881,6 +881,7 @@ export type {
   RuntimeProgressProbeState,
   UseRuntimeProgressPageReturn,
   RuntimeProbeCardProps,
+  RuntimeProgressPageClientProps,
   RuntimeProbeStatusIconProps,
   RuntimeProbeCapabilityRowProps,
   RuntimeProbeCapabilitiesListProps,

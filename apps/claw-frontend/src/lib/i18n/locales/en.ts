@@ -3422,6 +3422,7 @@ export const en: TranslationDictionary = {
       stepOf: '{current} of {total}',
     },
     diagnostics: {
+      serviceDisabled: 'Local AI services are disabled for this deployment.',
       title: 'Runtime diagnostics',
       description:
         'Probe local AI runtimes, inspect installed models, and review recent runtime events.',

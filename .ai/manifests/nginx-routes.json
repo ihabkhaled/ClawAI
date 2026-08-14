@@ -20,6 +20,12 @@
       "source": "infra/nginx/locations.conf"
     },
     {
+      "location": "/api/v1/admin/payment-gateways",
+      "port": 4018,
+      "service": "payment-service",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
       "location": "/api/v1/agent",
       "port": 4015,
       "service": "agent-service",

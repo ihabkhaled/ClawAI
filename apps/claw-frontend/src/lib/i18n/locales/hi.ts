@@ -3441,6 +3441,7 @@ export const hi: TranslationDictionary = {
       stepOf: '{current} / {total}',
     },
     diagnostics: {
+      serviceDisabled: 'इस परिनियोजन के लिए स्थानीय AI सेवाएँ अक्षम हैं।',
       title: 'रनटाइम डायग्नोस्टिक्स',
       description:
         'स्थानीय AI रनटाइम की जाँच करें, स्थापित मॉडलों का निरीक्षण करें, और हाल की रनटाइम घटनाओं की समीक्षा करें।',
