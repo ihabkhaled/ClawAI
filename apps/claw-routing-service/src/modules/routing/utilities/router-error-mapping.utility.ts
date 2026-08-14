@@ -9,6 +9,7 @@ import {
   HTTP_STATUS_TOO_MANY_REQUESTS,
   HTTP_STATUS_UNAUTHORIZED,
   HTTP_STATUS_UNPROCESSABLE,
+  JSON_PARSE_ERROR_NAME,
   MODEL_RETIRED_HINTS,
   NETWORK_ERROR_HINTS,
   QUARANTINING_ROUTER_ERRORS,
@@ -77,6 +78,17 @@ export function mapThrownErrorToRouterError(error: unknown, cancelled = false): 
   if (includesAnyHint(error.message, NETWORK_ERROR_HINTS)) {
     return RouterErrorCode.NETWORK;
   }
+
+  // `httpRequest` parses every response as JSON, so a provider answering with
+  // HTML — a proxy's 502 page is the usual case — throws here and the status is
+  // already lost. Classifying that UNKNOWN made it neither retryable nor
+  // provider-scoped, so the chain kept hammering a dead provider. These
+  // adapters only ever call JSON endpoints, so a non-JSON body is a provider
+  // malfunction by definition.
+  if (error.name === JSON_PARSE_ERROR_NAME) {
+    return RouterErrorCode.PROVIDER_5XX;
+  }
+
   return RouterErrorCode.UNKNOWN;
 }
 

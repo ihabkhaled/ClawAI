@@ -133,7 +133,11 @@ export class ModelDiscoveryRepository {
     }
     const result = await this.prisma.modelDeployment.updateMany({
       where: { id: { in: [...deploymentIds] }, activationState: 'REQUIRES_VALIDATION' },
-      data: { activationState: 'ACTIVE', lastValidatedAt: new Date(), lastHealthyAt: new Date() },
+      // lastHealthyAt is deliberately NOT set: discovery proves a model is
+      // LISTED, and no request has been made to this endpoint. Claiming health
+      // here would contradict this method's own contract and make an
+      // unreachable endpoint look recently verified.
+      data: { activationState: 'ACTIVE', lastValidatedAt: new Date() },
     });
     return result.count;
   }

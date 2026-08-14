@@ -103,3 +103,6 @@ export const MODEL_RETIRED_HINTS: readonly string[] = [
   'has been discontinued',
   'sunset',
 ];
+
+/** Error name Node raises when a response body is not valid JSON. */
+export const JSON_PARSE_ERROR_NAME = 'SyntaxError';

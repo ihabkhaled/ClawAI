@@ -9,7 +9,8 @@ export const LEARNED_BIAS_REASON_PRIVACY_OVERRIDE = 'learned_bias_privacy_overri
 export const LEARNED_BIAS_REASON_CAPABILITY_OVERRIDE = 'learned_bias_capability_override_beat_bias';
 export const LEARNED_BIAS_REASON_MANUAL_OVERRIDE = 'learned_bias_manual_user_model_beat_bias';
 export const LEARNED_BIAS_REASON_THREAD_STICKY = 'learned_bias_thread_sticky';
-export const LEARNED_BIAS_REASON_THREAD_STICKY_UNHEALTHY = 'learned_bias_sticky_unhealthy_fallthrough';
+export const LEARNED_BIAS_REASON_THREAD_STICKY_UNHEALTHY =
+  'learned_bias_sticky_unhealthy_fallthrough';
 
 export const LEARNED_BIAS_CACHE_TTL_MS = 5 * 60 * 1000;
 export const LEARNED_BIAS_FETCH_LIMIT = 50;

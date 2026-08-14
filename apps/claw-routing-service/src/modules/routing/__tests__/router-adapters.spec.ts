@@ -157,7 +157,13 @@ describe('GeminiRouterAdapter', () => {
       request({ timeoutMs: 250 }),
     );
 
-    expect(httpRequestMock.mock.calls[0]?.[0]?.timeoutMs).toBe(250);
+    // Never MORE than the budget. Credential resolution is a separate network
+    // hop that happens inside the attempt, so its cost is deducted — an entry
+    // must not overrun the walk's total deadline by the time it spent looking
+    // up a key.
+    const sent = httpRequestMock.mock.calls[0]?.[0]?.timeoutMs as number;
+    expect(sent).toBeLessThanOrEqual(250);
+    expect(sent).toBeGreaterThan(0);
   });
 
   it.each([

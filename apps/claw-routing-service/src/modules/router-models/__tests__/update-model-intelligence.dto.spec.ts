@@ -113,12 +113,12 @@ describe('updateModelIntelligenceSchema', () => {
     });
 
     it('accepts privacyClassLabel="local" or "cloud"', () => {
-      expect(
-        updateModelIntelligenceSchema.safeParse({ privacyClassLabel: 'local' }).success,
-      ).toBe(true);
-      expect(
-        updateModelIntelligenceSchema.safeParse({ privacyClassLabel: 'cloud' }).success,
-      ).toBe(true);
+      expect(updateModelIntelligenceSchema.safeParse({ privacyClassLabel: 'local' }).success).toBe(
+        true,
+      );
+      expect(updateModelIntelligenceSchema.safeParse({ privacyClassLabel: 'cloud' }).success).toBe(
+        true,
+      );
     });
   });
 });

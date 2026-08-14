@@ -66,9 +66,7 @@ export function mapPrismaToRecord(row: PrismaRouterModelRegistry): RouterModelRe
     latencyClassLabel: row.latencyClassLabel,
     privacyClassLabel: row.privacyClassLabel,
     adminOverrideJson:
-      row.adminOverrideJson === null
-        ? null
-        : (row.adminOverrideJson as Record<string, unknown>),
+      row.adminOverrideJson === null ? null : (row.adminOverrideJson as Record<string, unknown>),
     lastEnrichedAt: row.lastEnrichedAt,
   };
 }

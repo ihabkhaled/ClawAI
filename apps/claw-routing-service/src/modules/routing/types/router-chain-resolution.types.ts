@@ -80,4 +80,10 @@ export interface ResolvedChainEntry {
   deploymentId: string;
   attemptTimeoutMs: number;
   retries: number;
+  /**
+   * Canonical RouterErrorCode names that route TO this entry. Empty means the
+   * entry is reachable by ordinary chain order. Dropping this made every
+   * trigger-gated entry reachable unconditionally.
+   */
+  triggers: readonly string[];
 }

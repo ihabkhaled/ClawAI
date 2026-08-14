@@ -58,6 +58,7 @@ export function resolveChain(
       deploymentId: entry.deploymentId ?? '',
       attemptTimeoutMs: entry.attemptTimeoutMs,
       retries: entry.retries,
+      triggers: entry.triggers,
     });
   }
 
@@ -118,6 +119,7 @@ export function resolveEscalationEntry(
     deploymentId: candidate.deploymentId,
     attemptTimeoutMs: candidate.attemptTimeoutMs,
     retries: candidate.retries,
+    triggers: candidate.triggers,
   };
 }
 

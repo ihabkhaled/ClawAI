@@ -20,6 +20,7 @@ import {
   failureFromHttpStatus,
   failureFromThrown,
 } from '../utilities/router-adapter-response.utility';
+import { resolveProviderBaseUrl } from '../utilities/router-base-url.utility';
 
 /**
  * Router inference through Gemini's OpenAI-compatible surface.
@@ -40,10 +41,20 @@ export class GeminiRouterAdapter implements RouterInferenceProvider {
   constructor(private readonly credentials: ConnectorCredentialService) {}
 
   async invoke(request: RouterInferenceRequest): Promise<RouterInferenceResponse> {
-    const startedAt = Date.now();
+    // Credential resolution is a separate network hop. Timing it as provider
+    // latency would blame Gemini for a connector-service round trip, and
+    // spending the entry's whole timeout on it would let one attempt overrun
+    // the walk's total deadline. It is measured separately and deducted.
+    const resolveStartedAt = Date.now();
     const credential = await this.credentials.resolve(this.provider);
+    const resolveMs = Date.now() - resolveStartedAt;
+    const startedAt = Date.now();
 
-    if (!credential?.baseUrl) {
+    // baseUrl is optional on the connector and connector-service defaults it
+    // only inside its own adapters, so a valid key with no stored URL is normal.
+    const baseUrl = resolveProviderBaseUrl(this.provider, credential?.baseUrl ?? null);
+
+    if (!credential?.apiKey || !baseUrl) {
       // A missing credential is an auth failure, not a transport one: retrying
       // cannot conjure a key, and the coordinator must skip the provider rather
       // than spend the entry's retry budget on it.
@@ -56,13 +67,15 @@ export class GeminiRouterAdapter implements RouterInferenceProvider {
       };
     }
 
+    const remainingMs = Math.max(0, request.timeoutMs - resolveMs);
+
     const prompt = request.repairHint
       ? `${request.prompt}\n\n${request.repairHint}`
       : request.prompt;
 
     try {
       const response = await httpRequest<OpenAiCompatibleResponse>({
-        url: `${credential.baseUrl}${OPENAI_COMPATIBLE_CHAT_PATH}`,
+        url: `${baseUrl}${OPENAI_COMPATIBLE_CHAT_PATH}`,
         method: 'POST',
         headers: { Authorization: `Bearer ${credential.apiKey}` },
         body: {
@@ -74,7 +87,7 @@ export class GeminiRouterAdapter implements RouterInferenceProvider {
           response_format: { type: 'json_object' },
           reasoning_effort: GEMINI_MINIMAL_THINKING_EFFORT,
         },
-        timeoutMs: request.timeoutMs,
+        timeoutMs: remainingMs,
       });
 
       const latencyMs = Date.now() - startedAt;

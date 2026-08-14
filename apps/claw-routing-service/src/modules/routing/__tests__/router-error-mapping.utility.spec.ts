@@ -206,3 +206,26 @@ describe('quarantine policy', () => {
     }
   });
 });
+
+describe('non-JSON provider responses', () => {
+  // httpRequest parses every response as JSON, so a provider answering with an
+  // HTML 502 page throws and the status is already lost. Classifying that
+  // UNKNOWN made it neither retryable nor provider-scoped, so the chain kept
+  // hammering a dead provider. These adapters only call JSON endpoints, so a
+  // non-JSON body is a provider malfunction by definition.
+  it('maps a JSON parse failure to PROVIDER_5XX', () => {
+    const error = new SyntaxError('Unexpected token < in JSON at position 0');
+    expect(mapThrownErrorToRouterError(error)).toBe(RouterErrorCode.PROVIDER_5XX);
+  });
+
+  it('makes that failure retryable and provider-scoped', () => {
+    const code = mapThrownErrorToRouterError(new SyntaxError('Unexpected token <'));
+    expect(isRetryableRouterError(code)).toBe(true);
+    expect(shouldSkipProvider(code)).toBe(true);
+  });
+
+  // Cancellation still wins: a user pressing stop is not a provider fault.
+  it('still reports a cancelled parse failure as CANCELLED', () => {
+    expect(mapThrownErrorToRouterError(new SyntaxError('x'), true)).toBe(RouterErrorCode.CANCELLED);
+  });
+});

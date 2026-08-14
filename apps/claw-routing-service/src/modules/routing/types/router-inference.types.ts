@@ -13,6 +13,11 @@ export interface RouterChainEntryInput {
   attemptTimeoutMs: number;
   /** Retries WITHIN this entry, spent only on retryable failures. */
   retries: number;
+  /**
+   * Canonical RouterErrorCode names that route TO this entry. Empty means the
+   * entry is reachable by ordinary chain order.
+   */
+  triggers: readonly string[];
 }
 
 /** What the coordinator hands an adapter. Never carries credentials. */

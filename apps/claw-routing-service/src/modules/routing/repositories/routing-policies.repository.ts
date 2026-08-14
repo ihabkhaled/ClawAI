@@ -1,11 +1,11 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../../infrastructure/database/prisma/prisma.service";
-import { type Prisma, type RoutingPolicy } from "../../../generated/prisma";
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type Prisma, type RoutingPolicy } from '../../../generated/prisma';
 import {
   type CreatePolicyData,
   type PolicyFilters,
   type UpdatePolicyData,
-} from "../types/routing.types";
+} from '../types/routing.types';
 
 @Injectable()
 export class RoutingPoliciesRepository {
@@ -19,11 +19,7 @@ export class RoutingPoliciesRepository {
     return this.prisma.routingPolicy.findUnique({ where: { id } });
   }
 
-  async findAll(
-    filters: PolicyFilters,
-    page: number,
-    limit: number,
-  ): Promise<RoutingPolicy[]> {
+  async findAll(filters: PolicyFilters, page: number, limit: number): Promise<RoutingPolicy[]> {
     const where = this.buildWhereClause(filters);
     const skip = (page - 1) * limit;
 
@@ -31,7 +27,7 @@ export class RoutingPoliciesRepository {
       where,
       skip,
       take: limit,
-      orderBy: { priority: "asc" },
+      orderBy: { priority: 'asc' },
     });
   }
 
@@ -43,7 +39,7 @@ export class RoutingPoliciesRepository {
   async findActivePolicies(): Promise<RoutingPolicy[]> {
     return this.prisma.routingPolicy.findMany({
       where: { isActive: true },
-      orderBy: { priority: "asc" },
+      orderBy: { priority: 'asc' },
     });
   }
 

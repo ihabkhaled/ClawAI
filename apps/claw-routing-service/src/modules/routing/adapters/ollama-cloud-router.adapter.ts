@@ -20,6 +20,7 @@ import {
   failureFromHttpStatus,
   failureFromThrown,
 } from '../utilities/router-adapter-response.utility';
+import { normalizeOllamaCloudBaseUrl } from '../utilities/router-base-url.utility';
 
 /**
  * Router inference through Ollama Cloud's native chat endpoint.
@@ -40,12 +41,24 @@ export class OllamaCloudRouterAdapter implements RouterInferenceProvider {
   constructor(private readonly credentials: ConnectorCredentialService) {}
 
   async invoke(request: RouterInferenceRequest): Promise<RouterInferenceResponse> {
-    const startedAt = Date.now();
+    // Credential resolution is its own network hop; timing it as provider
+    // latency would misattribute a connector-service round trip, and spending
+    // the entry's whole timeout on it would overrun the walk's total deadline.
+    const resolveStartedAt = Date.now();
     // The registry provider is OLLAMA_CLOUD, but connector-service knows this
     // connector as OLLAMA — one enum value still serves both there.
     const credential = await this.credentials.resolve(RouterProvider.OLLAMA);
+    const resolveMs = Date.now() - resolveStartedAt;
+    const startedAt = Date.now();
 
-    if (!credential?.baseUrl) {
+    // connector-service rewrites a localhost Ollama base URL to ollama.com ONLY
+    // inside its own private adapter — the /internal/connectors/config payload
+    // returns whatever the row stores. Without mirroring that here, a connector
+    // saved with the UI's default `http://localhost:11434` would have the cloud
+    // API key POSTed at the local runtime, on a path it does not serve.
+    const baseUrl = normalizeOllamaCloudBaseUrl(credential?.baseUrl ?? null);
+
+    if (!credential?.apiKey) {
       this.logger.warn('invoke: no Ollama Cloud credential configured');
       return {
         ok: false,
@@ -61,7 +74,7 @@ export class OllamaCloudRouterAdapter implements RouterInferenceProvider {
 
     try {
       const response = await httpRequest<OllamaChatResponse>({
-        url: `${credential.baseUrl}${OLLAMA_CHAT_PATH}`,
+        url: `${baseUrl}${OLLAMA_CHAT_PATH}`,
         method: 'POST',
         headers: { Authorization: `Bearer ${credential.apiKey}` },
         body: {
@@ -76,7 +89,7 @@ export class OllamaCloudRouterAdapter implements RouterInferenceProvider {
             num_predict: ROUTER_MAX_OUTPUT_TOKENS,
           },
         },
-        timeoutMs: request.timeoutMs,
+        timeoutMs: Math.max(0, request.timeoutMs - resolveMs),
       });
 
       const latencyMs = Date.now() - startedAt;

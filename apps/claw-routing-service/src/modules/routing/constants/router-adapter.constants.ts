@@ -47,3 +47,28 @@ export const UNKNOWN_PROVIDER_MESSAGE = 'provider returned an unreadable error';
 
 /** Longest provider error message kept on an attempt record. */
 export const SAFE_MESSAGE_MAX_LENGTH = 200;
+
+/**
+ * Provider base URLs when a connector row stores none.
+ *
+ * `baseUrl` is optional on the connector DTO and nullable in its schema, and
+ * connector-service defaults it only INSIDE its own private adapters — the
+ * `/internal/connectors/config` payload returns `connector.baseUrl ?? undefined`
+ * verbatim. A perfectly valid connector (API key, no base URL) therefore reaches
+ * routing-service with nothing to call, and the adapters were reporting that as
+ * AUTHENTICATION_FAILED: a provider-scoped, quarantining code that killed the
+ * whole chain on a correct configuration.
+ *
+ * Mirrors connector-service's own defaults so both services agree on where a
+ * provider lives.
+ */
+export const PROVIDER_DEFAULT_BASE_URLS: Readonly<Record<string, string>> = Object.freeze({
+  GEMINI: 'https://generativelanguage.googleapis.com/v1beta/openai',
+  OLLAMA_CLOUD: 'https://ollama.com/api',
+});
+
+/** Hosts that mean "the local runtime", never the hosted cloud endpoint. */
+export const OLLAMA_LOCALHOST_PATTERNS: readonly string[] = ['localhost', '127.0.0.1', '0.0.0.0'];
+
+export const OLLAMA_CLOUD_API_BASE_URL = 'https://ollama.com/api';
+export const OLLAMA_CLOUD_HOSTNAME = 'ollama.com';

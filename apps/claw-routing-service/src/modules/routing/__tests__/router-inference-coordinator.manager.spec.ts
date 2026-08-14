@@ -58,6 +58,7 @@ const entry = (overrides: Partial<RouterChainEntryInput> = {}): RouterChainEntry
   deploymentId: 'dep_a',
   attemptTimeoutMs: 1_600,
   retries: 0,
+  triggers: [],
   ...overrides,
 });
 
@@ -518,5 +519,114 @@ describe('RouterInferenceCoordinatorManager', () => {
         expect(attempt.safeMessage ?? '').not.toContain('totally');
       }
     });
+  });
+});
+
+describe('trigger gating', () => {
+  let gated: RouterInferenceCoordinatorManager;
+
+  beforeEach(() => {
+    gated = new RouterInferenceCoordinatorManager();
+  });
+
+  // A non-empty trigger list means "reach this entry only for these failures".
+  // Ignoring it made every gated entry reachable by ordinary order, so the
+  // seeded chain's model-fallback would answer a timeout it was never meant to.
+  it('skips a gated entry whose trigger did not occur', async () => {
+    const primary = fakeProvider(RouterProvider.GEMINI, [fail(RouterErrorCode.MODEL_NOT_FOUND)]);
+    const gatedOnMalformed = fakeProvider(RouterProvider.OLLAMA_CLOUD, [ok(goodAnswer('dep_c'))]);
+
+    await gated.run(
+      new Map([
+        [RouterProvider.GEMINI, primary.adapter],
+        [RouterProvider.OLLAMA_CLOUD, gatedOnMalformed.adapter],
+      ]),
+      options({
+        chain: [
+          entry({ entryId: 'e1', order: 1 }),
+          entry({
+            entryId: 'e2',
+            order: 2,
+            provider: RouterProvider.OLLAMA_CLOUD,
+            deploymentId: 'dep_c',
+            triggers: [RouterErrorCode.MALFORMED_STRUCTURED_OUTPUT],
+          }),
+        ],
+      }),
+    );
+
+    expect(gatedOnMalformed.requests).toHaveLength(0);
+  });
+
+  it('runs a gated entry when its trigger did occur', async () => {
+    const primary = fakeProvider(RouterProvider.GEMINI, [fail(RouterErrorCode.MODEL_NOT_FOUND)]);
+    const gatedEntry = fakeProvider(RouterProvider.OLLAMA_CLOUD, [ok(goodAnswer('dep_c'))]);
+
+    const result = await gated.run(
+      new Map([
+        [RouterProvider.GEMINI, primary.adapter],
+        [RouterProvider.OLLAMA_CLOUD, gatedEntry.adapter],
+      ]),
+      options({
+        chain: [
+          entry({ entryId: 'e1', order: 1 }),
+          entry({
+            entryId: 'e2',
+            order: 2,
+            provider: RouterProvider.OLLAMA_CLOUD,
+            deploymentId: 'dep_c',
+            triggers: [RouterErrorCode.MODEL_NOT_FOUND],
+          }),
+        ],
+      }),
+    );
+
+    expect(gatedEntry.requests).toHaveLength(1);
+    expect(result.ok).toBe(true);
+  });
+
+  it('treats an empty trigger list as unconditional', async () => {
+    const primary = fakeProvider(RouterProvider.GEMINI, [fail(RouterErrorCode.MODEL_NOT_FOUND)]);
+    const open = fakeProvider(RouterProvider.OLLAMA_CLOUD, [ok(goodAnswer('dep_c'))]);
+
+    await gated.run(
+      new Map([
+        [RouterProvider.GEMINI, primary.adapter],
+        [RouterProvider.OLLAMA_CLOUD, open.adapter],
+      ]),
+      options({
+        chain: [
+          entry({ entryId: 'e1', order: 1 }),
+          entry({
+            entryId: 'e2',
+            order: 2,
+            provider: RouterProvider.OLLAMA_CLOUD,
+            deploymentId: 'dep_c',
+            triggers: [],
+          }),
+        ],
+      }),
+    );
+
+    expect(open.requests).toHaveLength(1);
+  });
+
+  // The hint belongs to the malformed answer that prompted it; carrying it into
+  // an ordinary retry re-sent a stale correction and inflated wasRepair.
+  it('does not carry a spent repair hint into a later retry', async () => {
+    const flaky = fakeProvider(RouterProvider.GEMINI, [
+      ok('not json'),
+      fail(RouterErrorCode.TIMEOUT),
+      ok(goodAnswer()),
+    ]);
+
+    const result = await gated.run(
+      new Map([[RouterProvider.GEMINI, flaky.adapter]]),
+      options({ chain: [entry({ retries: 2 })] }),
+    );
+
+    expect(flaky.requests[1]?.repairHint).toBeDefined();
+    expect(flaky.requests[2]?.repairHint).toBeUndefined();
+    expect(result.attempts.filter((a) => a.wasRepair)).toHaveLength(1);
   });
 });

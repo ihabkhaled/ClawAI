@@ -60,9 +60,7 @@ export function mergeEnrichmentRespectingOverrides(
 /// Picks the override-managed fields from a partial enrichment input. Used
 /// when persisting `adminOverrideJson` so the freeze block contains only
 /// the planner-facing intelligence keys, not arbitrary input.
-export function pickOverrideFields(
-  input: Record<string, unknown>,
-): Record<string, unknown> {
+export function pickOverrideFields(input: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const key of INTELLIGENCE_OVERRIDE_FIELDS) {
     if (Object.prototype.hasOwnProperty.call(input, key)) {

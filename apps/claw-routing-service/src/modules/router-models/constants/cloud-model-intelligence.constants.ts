@@ -170,14 +170,7 @@ export const CURATED_CLOUD_MODEL_INTELLIGENCE: ReadonlyArray<CuratedCloudModelIn
         supportsLongContext: true,
         maxContextTokens: 200_000,
         maxOutputTokensIntel: 8_192,
-        domainStrengths: [
-          'reasoning',
-          'legal',
-          'medical',
-          'finance',
-          'research',
-          'coding',
-        ],
+        domainStrengths: ['reasoning', 'legal', 'medical', 'finance', 'research', 'coding'],
         roleStrengths: ['lawyer', 'doctor', 'analyst', 'senior_engineer'],
         weakDomains: ['real_time_audio'],
         bestFor: ['high_risk_drafting', 'judge', 'deep_analysis'],
@@ -570,8 +563,5 @@ export const CURATED_CLOUD_MODEL_INTELLIGENCE_BY_KEY: ReadonlyMap<
   string,
   CuratedCloudModelIntelligence
 > = new Map(
-  CURATED_CLOUD_MODEL_INTELLIGENCE.map((entry) => [
-    `${entry.provider}::${entry.modelKey}`,
-    entry,
-  ]),
+  CURATED_CLOUD_MODEL_INTELLIGENCE.map((entry) => [`${entry.provider}::${entry.modelKey}`, entry]),
 );

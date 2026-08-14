@@ -77,6 +77,16 @@ export class RouterInferenceCoordinatorManager {
         continue;
       }
 
+      // A non-empty trigger list means "reach this entry only for these
+      // failures". Ignoring it made every gated entry reachable by ordinary
+      // order — so the seeded chain's model-fallback would run after a timeout
+      // it was never meant to answer, spending budget on the wrong remedy.
+      // An empty list stays unconditional.
+      if (entry.triggers.length > 0 && !entry.triggers.includes(state.lastCode)) {
+        this.logger.debug(`run: entry ${String(entry.order)} not triggered by ${state.lastCode}`);
+        continue;
+      }
+
       const outcome = await this.runEntry(adapter, entry, options, state, now);
       if (outcome.ok) {
         return {
@@ -153,6 +163,11 @@ export class RouterInferenceCoordinatorManager {
         // that survives that condemns the provider. Checking scope first would
         // make `retries` dead configuration for every transient error.
         if (isRetryableRouterError(response.code) && attemptNumber <= entry.retries) {
+          // The repair hint belongs to the malformed answer that prompted it.
+          // Carrying it into an ordinary retry re-sent a stale correction and
+          // recorded that retry as wasRepair=true, overstating how often the
+          // repair path fired.
+          repairHint = undefined;
           continue;
         }
 

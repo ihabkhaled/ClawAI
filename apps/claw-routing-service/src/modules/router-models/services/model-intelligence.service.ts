@@ -24,17 +24,11 @@ export class ModelIntelligenceService {
 
   constructor(private readonly registryRepo: RouterModelRegistryRepository) {}
 
-  async getIntelligence(
-    provider: string,
-    modelKey: string,
-  ): Promise<ResolvedModelIntelligence> {
+  async getIntelligence(provider: string, modelKey: string): Promise<ResolvedModelIntelligence> {
     this.logger.debug(`getIntelligence provider=${provider} modelKey=${modelKey}`);
     const row = await this.registryRepo.findByProviderAndModelKey(provider, modelKey);
     if (row === null) {
-      throw new EntityNotFoundException(
-        'RouterModelRegistry',
-        `${provider}::${modelKey}`,
-      );
+      throw new EntityNotFoundException('RouterModelRegistry', `${provider}::${modelKey}`);
     }
     return resolveModelIntelligenceView(row);
   }
@@ -47,10 +41,7 @@ export class ModelIntelligenceService {
     this.logger.debug(`patchIntelligence provider=${provider} modelKey=${modelKey}`);
     const row = await this.registryRepo.findByProviderAndModelKey(provider, modelKey);
     if (row === null) {
-      throw new EntityNotFoundException(
-        'RouterModelRegistry',
-        `${provider}::${modelKey}`,
-      );
+      throw new EntityNotFoundException('RouterModelRegistry', `${provider}::${modelKey}`);
     }
     const overrideKeysInPayload = this.overrideKeysIn(dto);
     const nextOverride = {
@@ -66,17 +57,11 @@ export class ModelIntelligenceService {
     return resolveModelIntelligenceView(updated);
   }
 
-  async resetOverride(
-    provider: string,
-    modelKey: string,
-  ): Promise<ResolvedModelIntelligence> {
+  async resetOverride(provider: string, modelKey: string): Promise<ResolvedModelIntelligence> {
     this.logger.debug(`resetOverride provider=${provider} modelKey=${modelKey}`);
     const row = await this.registryRepo.findByProviderAndModelKey(provider, modelKey);
     if (row === null) {
-      throw new EntityNotFoundException(
-        'RouterModelRegistry',
-        `${provider}::${modelKey}`,
-      );
+      throw new EntityNotFoundException('RouterModelRegistry', `${provider}::${modelKey}`);
     }
     const updated = await this.registryRepo.patchIntelligence(row.id, {
       adminOverrideJson: Prisma.DbNull,
@@ -88,10 +73,7 @@ export class ModelIntelligenceService {
   /// Returns the keys in the freeze block for a (provider, modelKey). Used
   /// by `RouterSyncManager` to skip protected columns. Returns an empty set
   /// if the row has no override block or the row doesn't exist.
-  async getProtectedIntelligenceKeys(
-    provider: string,
-    modelKey: string,
-  ): Promise<Set<string>> {
+  async getProtectedIntelligenceKeys(provider: string, modelKey: string): Promise<Set<string>> {
     const row = await this.registryRepo.findByProviderAndModelKey(provider, modelKey);
     if (row === null || row.adminOverrideJson === null) {
       return new Set<string>();
@@ -101,9 +83,7 @@ export class ModelIntelligenceService {
 
   private overrideKeysIn(dto: UpdateModelIntelligenceDto): string[] {
     const dtoMap = dto as Record<string, unknown>;
-    return INTELLIGENCE_OVERRIDE_FIELDS.filter(
-      (key) => dtoMap[key] !== undefined,
-    );
+    return INTELLIGENCE_OVERRIDE_FIELDS.filter((key) => dtoMap[key] !== undefined);
   }
 
   private toRegistryUpdateInput(
@@ -118,5 +98,4 @@ export class ModelIntelligenceService {
     }
     return out as Prisma.RouterModelRegistryUpdateInput;
   }
-
 }
