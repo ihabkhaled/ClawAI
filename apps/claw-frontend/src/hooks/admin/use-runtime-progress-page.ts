@@ -15,7 +15,7 @@ import type { UseRuntimeProgressPageReturn } from '@/types';
 // parallel, exposes one onRefreshAll that invalidates the namespace, and
 // computes lastUpdatedAt = max(both dataUpdatedAt). Queries are gated on the
 // caller being ADMIN so non-admin renders never trigger a 403.
-export function useRuntimeProgressPage(): UseRuntimeProgressPageReturn {
+export function useRuntimeProgressPage(localAiEnabled: boolean): UseRuntimeProgressPageReturn {
   const { t } = useTranslation();
   const { user } = useCurrentUser();
   const queryClient = useQueryClient();
@@ -24,7 +24,7 @@ export function useRuntimeProgressPage(): UseRuntimeProgressPageReturn {
   const ollamaQuery = useQuery({
     queryKey: queryKeys.runtimeProgress.ollamaProbe(),
     queryFn: () => getOllamaProbeReport(),
-    enabled: isAdmin,
+    enabled: isAdmin && localAiEnabled,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
   });
@@ -32,7 +32,7 @@ export function useRuntimeProgressPage(): UseRuntimeProgressPageReturn {
   const llamacppQuery = useQuery({
     queryKey: queryKeys.runtimeProgress.llamacppProbe(),
     queryFn: () => getLlamacppProbeReport(),
-    enabled: isAdmin,
+    enabled: isAdmin && localAiEnabled,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
   });

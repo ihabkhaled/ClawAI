@@ -185,6 +185,11 @@ http {
             proxy_pass $backend;
         }
 
+        location /api/v1/admin/payment-gateways {
+            set $backend https://$origin_payment;
+            proxy_pass $backend;
+        }
+
         # Admin RBAC: plans + roles CRUD (auth-service, ADMIN-gated controllers).
         location /api/v1/admin {
             set $backend https://$origin_auth;

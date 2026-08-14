@@ -3408,6 +3408,7 @@ export const ar: TranslationDictionary = {
       stepOf: '{current} من {total}',
     },
     diagnostics: {
+      serviceDisabled: 'خدمات الذكاء الاصطناعي المحلية معطلة في هذا النشر.',
       title: 'تشخيص بيئة التشغيل',
       description:
         'فحص بيئات تشغيل الذكاء الاصطناعي المحلية، وعرض النماذج المثبتة، ومراجعة الأحداث الأخيرة.',

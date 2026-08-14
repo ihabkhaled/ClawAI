@@ -3451,6 +3451,7 @@ export const ja: TranslationDictionary = {
       stepOf: '{current}/{total}',
     },
     diagnostics: {
+      serviceDisabled: 'このデプロイではローカル AI サービスが無効です。',
       title: 'ランタイム診断',
       description:
         'ローカル AI ランタイムを調査し、インストールされているモデルを検査し、最近のランタイム イベントを確認します。',

@@ -3443,6 +3443,7 @@ export const fa: TranslationDictionary = {
       stepOf: '{current} از {total}',
     },
     diagnostics: {
+      serviceDisabled: 'سرویس‌های هوش مصنوعی محلی برای این استقرار غیرفعال هستند.',
       title: 'تشخیص زمان اجرا',
       description:
         'زمان‌های اجرای هوش مصنوعی محلی را بررسی کنید، مدل‌های نصب‌شده را بررسی کنید، و رویدادهای زمان اجرا اخیر را مرور کنید.',
