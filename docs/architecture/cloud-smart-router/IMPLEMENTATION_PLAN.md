@@ -30,9 +30,24 @@ Swapping in a Gemini or Ollama-Cloud router without moving that filter in front 
 **silently exfiltrates medical, legal, financial and government prompt text to a third party.** It
 would compile, pass every existing test, and produce no visible symptom.
 
-The pack states the requirement correctly ("hard filters precede AI ranking") but frames it as a
-ranking-quality concern. In this codebase it is a data-egress defect. **It is fixed first, in its own
-commit, before any cloud adapter exists** (Batch 0).
+### 0b. And a second, live defect found while verifying the first
+
+Privacy enforcement is currently **weaker when the router succeeds than when it fails.**
+
+- `buildFallbackChain` with a local primary deliberately appends every healthy cloud provider
+  ([routing.manager.ts:202-212](../../../apps/claw-routing-service/src/modules/routing/managers/routing.manager.ts#L202)) — Anthropic, OpenAI, Gemini, Grok, Ollama Cloud.
+- `buildLocalPrivacyDecision` — the path taken when the router is **unavailable** — filters that chain
+  with `.filter(f => f.provider === LOCAL_PROVIDER)` ([routing.manager.ts:1060](../../../apps/claw-routing-service/src/modules/routing/managers/routing.manager.ts#L1060)).
+- `tryOllamaAssistedRouting` — the path taken when the router **succeeds** — returns the chain
+  **unfiltered**, even when `enforcedLocal` is true.
+- The emitted `routingMode` is `AUTO`, and chat-service only suppresses cloud candidates for
+  `LOCAL_ONLY`/`PRIVACY_FIRST` (`execution.constants.ts:37`, applied at `chat-execution.manager.ts:1346`).
+
+Net effect **in production today**: a medical/legal/finance/government prompt that goes through the
+Ollama-assisted path yields a local primary with a cloud fallback chain, and chat-service will execute
+on a cloud provider if the local model fails. This is independent of the cloud-router work.
+
+Both defects are fixed first, in one commit, before any cloud adapter exists (Batch 0).
 
 ---
 
@@ -117,7 +132,16 @@ Extend, don't duplicate. Existing coverage first:
 The audit found four places where two mechanisms already disagree. Adding a third is the default
 failure mode; each gets an explicit decision recorded in an ADR.
 
-1. **Two learned-metric stores.** `RouterModelProfile`/`RouterTopicProfile` (written by routing-education) vs `RouterLearnedScore` (written only by an HTTP endpoint **nothing calls**). → V5 adopts `RouterLearnedScore`; the education profiles become read-only legacy.
+1. **Two learned-metric stores.** `RouterModelProfile`/`RouterTopicProfile`, written by
+   `router-education.manager.ts:109-128` and applied to live routes via `calibrateDecision`
+   (`routing.service.ts:230,:437`) — **the only learning system in the repo with production effect**,
+   and it already carries `sampleSize`, `confidenceInProfile`, `calibrationTrustScore` and
+   `weightedSuccessScore`. Versus `RouterLearnedScore`, whose sole writer is an HTTP endpoint
+   **nothing calls**.
+   → **V5/V6 build on the education profiles**, whose fields already match the pack's
+   minimum-samples/confidence requirements. `RouterLearnedScore` is the unwired duplicate: either
+   wire it as the versioned aggregate layer over those profiles, or retire it — decided in the V5 ADR,
+   never left as a third store.
 2. **Two admin-override mechanisms on the same table.** `RouterAdminOverride` rows vs `RouterModelRegistry.adminOverrideJson`. They can disagree about which fields are frozen. → `RouterAdminOverride` wins.
 3. **Two cost sources.** `RouterModelRegistry.inputCostPer1M` (Decimal, seeded, **actually used for ranking**) vs `ModelCostVersion` (integer micro-USD, correct, versioned, **empty and unconsumed**). → migrate ranking onto `ModelCostVersion`; seed it.
 4. **Two SSE protocols on one URL.** Legacy in-memory (per-process sequence, 100-event ring buffer, **cannot survive horizontal scaling**) vs Runtime V2 (Redis journal, cursor resume, idempotent). → **Runtime V2 is the sole carrier for router trace events.** Its event-type regex already admits `router.*`.

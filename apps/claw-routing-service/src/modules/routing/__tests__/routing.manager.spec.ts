@@ -1161,6 +1161,92 @@ describe('RoutingManager', () => {
     });
   });
 
+  // Every test above mocks `ollamaRouter.route` to resolve null, so they only
+  // ever exercise the router-UNAVAILABLE path, which reaches
+  // buildLocalPrivacyDecision and filters its own chain. The router-SUCCEEDS
+  // path was never covered, and it was the unsafe one: it shipped the prompt to
+  // the router and returned an unfiltered chain.
+  describe('privacy-enforced routing never reaches the router', () => {
+    const PRIVACY_MESSAGES: ReadonlyArray<[string, string]> = [
+      ['privacy', 'analyze my patient diagnosis records'],
+      ['medical', 'review the clinical trial data for the new medication dosage'],
+      ['legal', 'review the contract clause about indemnification and liability'],
+      ['finance', 'analyze the P&L and EBITDA for Q3 earnings'],
+      ['government', 'review the national security intelligence analysis report'],
+      ['executive', 'prepare for the M&A board meeting about the acquisition'],
+    ];
+
+    // The router prompt carries the user's message. While the router is a local
+    // model that is contained; the moment it becomes Gemini or Ollama Cloud the
+    // same call is third-party egress of regulated content. The filter must gate
+    // the INVOCATION, not just rewrite the answer.
+    it.each(PRIVACY_MESSAGES)(
+      'does not invoke the router model for %s content',
+      async (_domain, message) => {
+        const route = jest.fn().mockResolvedValue({
+          provider: 'ANTHROPIC',
+          model: 'claude-sonnet-4',
+          confidence: 0.9,
+          reason: 'best for analysis',
+          routerModel: 'qwen3:1.7b',
+        });
+        const privacyManager = new RoutingManager(
+          policiesRepo as unknown as RoutingPoliciesRepository,
+          { route } as unknown as OllamaRouterManager,
+          promptBuilder as unknown as PromptBuilderManager,
+          new ComplexityClassifierManager(),
+          new CapabilityRouterManager(),
+          new ImageDetectionManager(),
+        );
+
+        const result = await privacyManager.evaluateRoute({
+          ...baseContext,
+          message,
+          userMode: RoutingMode.AUTO,
+        });
+
+        expect(route).not.toHaveBeenCalled();
+        expect(result.selectedProvider).toBe('local-ollama');
+        expect(result.reasonTags).toContain('privacy_enforced');
+      },
+    );
+
+    // buildFallbackChain deliberately appends every healthy cloud provider to a
+    // local primary. buildLocalPrivacyDecision filtered that back out;
+    // tryOllamaAssistedRouting did not. Because the emitted routingMode is AUTO
+    // — not LOCAL_ONLY/PRIVACY_FIRST — chat-service's own guard does not fire
+    // either, so a local model that merely failed to load handed regulated
+    // content to Anthropic, OpenAI, Gemini, Grok or ollama.com.
+    it('never offers a cloud fallback even when the router returns a cloud choice', async () => {
+      const route = jest.fn().mockResolvedValue({
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        confidence: 0.95,
+        reason: 'multimodal analysis',
+        routerModel: 'qwen3:1.7b',
+      });
+      const privacyManager = new RoutingManager(
+        policiesRepo as unknown as RoutingPoliciesRepository,
+        { route } as unknown as OllamaRouterManager,
+        promptBuilder as unknown as PromptBuilderManager,
+        new ComplexityClassifierManager(),
+        new CapabilityRouterManager(),
+        new ImageDetectionManager(),
+      );
+
+      const result = await privacyManager.evaluateRoute({
+        ...baseContext,
+        message: 'analyze my patient diagnosis records and lab results',
+        userMode: RoutingMode.AUTO,
+        connectorHealth: { OPENAI: true, GEMINI: true, OLLAMA: true, ANTHROPIC: true },
+      });
+
+      expect(result.selectedProvider).toBe('local-ollama');
+      expect(result.privacyClass).toBe('local');
+      expect(result.fallbackChain.every((entry) => entry.provider === 'local-ollama')).toBe(true);
+    });
+  });
+
   describe('category fallback to default local model', () => {
     it('should use default local model when no specialized model is installed for detected category', async () => {
       promptBuilder.fetchInstalledModels.mockResolvedValue([]);

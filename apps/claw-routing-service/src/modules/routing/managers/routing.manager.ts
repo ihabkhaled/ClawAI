@@ -438,16 +438,23 @@ export class RoutingManager {
       }
     }
 
-    const ollamaResult = await this.tryOllamaAssistedRouting(context, localEnforcementDomain);
-    if (ollamaResult) {
-      return ollamaResult;
-    }
-
+    // Hard privacy filter gates the INVOCATION, not just the answer. The router
+    // prompt embeds the user's message, so consulting the router at all is an
+    // egress of the very content this domain forbids egressing — harmless while
+    // the router is local, third-party disclosure the moment it is not.
+    // buildLocalPrivacyDecision is also the only path that filters cloud entries
+    // out of the fallback chain, which the emitted AUTO mode does not cause
+    // chat-service to do for us.
     if (localEnforcementDomain) {
       this.logger.log(
-        `handleAuto: Ollama router unavailable - forcing local for ${localEnforcementDomain}`,
+        `handleAuto: ${localEnforcementDomain} is enforced-local - skipping router invocation`,
       );
       return this.buildLocalPrivacyDecision(context, localEnforcementDomain);
+    }
+
+    const ollamaResult = await this.tryOllamaAssistedRouting(context);
+    if (ollamaResult) {
+      return ollamaResult;
     }
 
     const categoryResult = await this.detectCategoryRoute(context);
@@ -516,9 +523,11 @@ export class RoutingManager {
     };
   }
 
+  // Only reached for non-enforced domains: handleAuto returns before this for
+  // anything detectLocalEnforcementDomain flags, so the router never sees
+  // regulated content.
   private async tryOllamaAssistedRouting(
     context: RoutingContext,
-    localEnforcementDomain: string | null,
   ): Promise<RoutingDecisionResult | null> {
     this.logger.debug('handleAuto: attempting Ollama-assisted routing');
     const ollamaDecision = await this.ollamaRouter.route(context);
@@ -534,23 +543,17 @@ export class RoutingManager {
       );
       return null;
     }
-    const enforcedLocal = Boolean(localEnforcementDomain);
-    const selectedProvider = enforcedLocal ? LOCAL_PROVIDER : ollamaDecision.provider;
-    const selectedModel = enforcedLocal ? LOCAL_MODEL_DEFAULT : ollamaDecision.model;
+    const selectedProvider = ollamaDecision.provider;
+    const selectedModel = ollamaDecision.model;
     const primary = { provider: selectedProvider, model: selectedModel };
-    const reasonTags = ['auto', 'ollama_router', ollamaDecision.reason];
-    if (enforcedLocal && localEnforcementDomain) {
-      reasonTags.push('privacy_enforced', 'local_only', localEnforcementDomain);
-    }
     return {
       selectedProvider,
       selectedModel,
       routingMode: RoutingMode.AUTO,
       confidence: ollamaDecision.confidence,
-      reasonTags,
+      reasonTags: ['auto', 'ollama_router', ollamaDecision.reason],
       privacyClass: selectedProvider === LOCAL_PROVIDER ? 'local' : 'cloud',
       costClass: selectedProvider === LOCAL_PROVIDER ? 'free' : 'medium',
-      detectedCategory: localEnforcementDomain?.replace('domain_', ''),
       fallbackChain: this.buildFallbackChain(primary, context),
       routerModel: ollamaDecision.routerModel,
     };
