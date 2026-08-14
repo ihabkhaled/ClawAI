@@ -39,8 +39,21 @@ Reviewer roles are defined under `agents/`. Rules are `rules/0N-*.md`; skills ar
 
 ## Universal lane (every task)
 
-Regardless of pack, before committing run the per-folder gates on the folders you
-touched (see [stack-and-toolchain.md](stack-and-toolchain.md)):
+Regardless of pack, keep the task itself bounded and sufficiently reasoned:
+nesting/retry/verification budgets, discovery classification, anti-gaming
+semantics, and the reasoning floor apply to every pack the same way —
+[rules/30](../rules/30-agent-self-regulation-and-loop-prevention.md) (loop
+prevention), [rules/31](../rules/31-anti-gaming-and-semantic-compliance.md)
+(anti-gaming), [rules/32](../rules/32-underthinking-and-reasoning-balance.md)
+(reasoning balance); runbooks
+[skills/deadlock-recovery.md](../skills/deadlock-recovery.md),
+[skills/reasoning-balance.md](../skills/reasoning-balance.md),
+[skills/blocker-validation.md](../skills/blocker-validation.md); worked
+scenarios
+[context/agent-self-regulation-scenarios.md](agent-self-regulation-scenarios.md).
+
+Before committing, run the per-folder gates on the folders you touched (see
+[stack-and-toolchain.md](stack-and-toolchain.md)):
 
 ```bash
 cd <touched-workspace>

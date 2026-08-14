@@ -8,20 +8,24 @@
 
 ## Rule Files
 
-| File                                        | Domain                                                                                   |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `01-planning-rules.md`                      | Phase 0–0g: planning gate before every change                                            |
-| `02-backend-rules.md`                       | NestJS architecture: controllers, services, managers, repos                              |
-| `03-frontend-rules.md`                      | Next.js architecture: pages, hooks, components, state                                    |
-| `04-testing-rules.md`                       | **Mandatory testing**: TDD, unit, API (20-25×), UI, QA, UAT, coverage                    |
-| `05-infra-rules.md`                         | Docker, Nginx, CI, .env, shared packages                                                 |
-| `06-docs-rules.md`                          | Documentation: when, where, what format                                                  |
-| `07-commit-rules.md`                        | Conventional commits, PR rules, branch rules                                             |
-| `08-security-rules.md`                      | Security: secrets, auth, input validation, OWASP                                         |
-| `09-refactor-rules.md`                      | **Refactor discipline**: extraction, dedup, logging, coverage, splits                    |
-| `26-prompt-pack-intake-protocol.md`         | **Prompt-pack intake**: what MUST happen before code when work arrives as a document     |
-| `27-engineering-mindsets.md`                | **The 26 mindsets**: the default operating mode for every agent (moved out of CLAUDE.md) |
-| `28-billing-integrity-and-api-contracts.md` | Billing immutability, refund entitlement, exact FE/BE contract tests                     |
+| File                                              | Domain                                                                                                                                           |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `01-planning-rules.md`                            | Phase 0–0g: planning gate before every change                                                                                                    |
+| `02-backend-rules.md`                             | NestJS architecture: controllers, services, managers, repos                                                                                      |
+| `03-frontend-rules.md`                            | Next.js architecture: pages, hooks, components, state                                                                                            |
+| `04-testing-rules.md`                             | **Mandatory testing**: TDD, unit, API (20-25×), UI, QA, UAT, coverage                                                                            |
+| `05-infra-rules.md`                               | Docker, Nginx, CI, .env, shared packages                                                                                                         |
+| `06-docs-rules.md`                                | Documentation: when, where, what format                                                                                                          |
+| `07-commit-rules.md`                              | Conventional commits, PR rules, branch rules                                                                                                     |
+| `08-security-rules.md`                            | Security: secrets, auth, input validation, OWASP                                                                                                 |
+| `09-refactor-rules.md`                            | **Refactor discipline**: extraction, dedup, logging, coverage, splits                                                                            |
+| `26-prompt-pack-intake-protocol.md`               | **Prompt-pack intake**: what MUST happen before code when work arrives as a document                                                             |
+| `27-engineering-mindsets.md`                      | **The 26 mindsets**: the default operating mode for every agent (moved out of CLAUDE.md)                                                         |
+| `28-billing-integrity-and-api-contracts.md`       | Billing immutability, refund entitlement, exact FE/BE contract tests                                                                             |
+| `29-communication-style.md`                       | **Short, plain, concrete replies**; stay foreground and keep streaming                                                                           |
+| `30-agent-self-regulation-and-loop-prevention.md` | **Loop/drift prevention**: nesting, retry, and verification budgets; discovery classification; deadlock/livelock recovery                        |
+| `31-anti-gaming-and-semantic-compliance.md`       | **Anti-gaming**: rule 30's budgets enforced by intent, not literal syntax; false progress/completion/blocker guards; executive override protocol |
+| `32-underthinking-and-reasoning-balance.md`       | **Reasoning floor**: the counterweight to rule 30 — architecture/root-cause/evidence/security floors, decision-readiness gate                    |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 
