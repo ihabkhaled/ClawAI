@@ -6701,6 +6701,7 @@
         "docs/15-ai-context",
         "docs/16-quality-engineering",
         "docs/adrs",
+        "docs/architecture",
         "docs/exceptions",
         "docs/features",
         "docs/implementation",
