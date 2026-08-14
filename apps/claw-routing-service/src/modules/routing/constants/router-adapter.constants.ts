@@ -27,11 +27,17 @@ export const ROUTER_MAX_OUTPUT_TOKENS = 320;
 export const ROUTER_TEMPERATURE = 0;
 
 /**
- * Gemini 3.x exposes a thinking budget. Routing wants the cheapest, fastest
- * answer rather than deliberation, and the pack seeds the primary entry as a
- * minimal-thinking model precisely for that.
+ * Gemini's thinking budget, as its OpenAI-compatible surface expects it.
+ *
+ * A STRING, not a number. Sending `0` returns
+ * `400 Invalid value at 'reasoning_effort' (TYPE_STRING)` and fails every call
+ * — which mocked tests cannot catch, because a mock never validates the body.
+ * Confirmed against the live API: 'low' and 'minimal' are both accepted.
+ *
+ * Routing wants the cheapest fast answer rather than deliberation, so the
+ * lowest accepted setting is used.
  */
-export const GEMINI_MINIMAL_THINKING_BUDGET = 0;
+export const GEMINI_MINIMAL_THINKING_EFFORT = 'minimal';
 
 /** Value Ollama accepts to force a JSON-only answer. */
 export const OLLAMA_JSON_FORMAT = 'json';

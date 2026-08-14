@@ -94,6 +94,23 @@ describe('GeminiRouterAdapter', () => {
     expect(body['temperature']).toBe(0);
   });
 
+  // Caught live, not by a mock: sending a NUMBER here returns
+  // `400 Invalid value at 'reasoning_effort' (TYPE_STRING)` and fails every
+  // call. A mock accepts any payload, so only a type assertion catches it.
+  it('sends reasoning_effort as a string, which the API requires', async () => {
+    httpRequestMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { choices: [{ message: { content: '{}' } }] },
+    });
+
+    await new GeminiRouterAdapter(credentialService(GEMINI_CRED)).invoke(request());
+
+    const body = httpRequestMock.mock.calls[0]?.[0]?.body as Record<string, unknown>;
+    expect(typeof body['reasoning_effort']).toBe('string');
+    expect(['low', 'minimal']).toContain(body['reasoning_effort']);
+  });
+
   it('sends the credential as a bearer token and never in the url', async () => {
     httpRequestMock.mockResolvedValue({
       ok: true,

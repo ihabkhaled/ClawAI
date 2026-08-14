@@ -3,7 +3,7 @@ import { RouterErrorCode } from '../../../common/enums';
 import { httpRequest } from '../../../common/utilities';
 import { RouterProvider } from '../../../generated/prisma';
 import {
-  GEMINI_MINIMAL_THINKING_BUDGET,
+  GEMINI_MINIMAL_THINKING_EFFORT,
   OPENAI_COMPATIBLE_CHAT_PATH,
   ROUTER_MAX_OUTPUT_TOKENS,
   ROUTER_TEMPERATURE,
@@ -72,7 +72,7 @@ export class GeminiRouterAdapter implements RouterInferenceProvider {
           max_tokens: ROUTER_MAX_OUTPUT_TOKENS,
           // Ask for JSON at the protocol level rather than trusting the prompt.
           response_format: { type: 'json_object' },
-          reasoning_effort: GEMINI_MINIMAL_THINKING_BUDGET,
+          reasoning_effort: GEMINI_MINIMAL_THINKING_EFFORT,
         },
         timeoutMs: request.timeoutMs,
       });

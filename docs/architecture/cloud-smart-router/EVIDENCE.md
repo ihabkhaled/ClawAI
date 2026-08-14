@@ -132,3 +132,72 @@ Stated plainly so it is not mistaken for coverage:
   keyword/heuristic router.
 - **Discovery does not exist**, so no chain alias can resolve and the chain
   cannot run even if enabled.
+
+---
+
+## 6. Live provider smoke test — Gemini
+
+Run from inside the docker network, through the real credential path, against
+the deployment discovery resolved for chain entry 1.
+
+### Credential resolution
+
+```
+GET https://connector-service:4003/api/v1/internal/connectors/config?provider=GEMINI
+-> 200 | baseUrl: https://generativelanguage.googleapis.com/v1beta/openai | key present (53 chars)
+```
+
+Worth recording: internal service URLs are **https**, not http. `AppConfig`
+supplies this, so the adapters were already correct, but anything hand-rolling
+`http://` against a sibling service will fail.
+
+### A real bug the mocks could not catch
+
+First live call:
+
+```
+HTTP 400 | 199ms
+{"error":{"code":400,"message":"Invalid value at 'reasoning_effort' (TYPE_STRING), 0",
+ "status":"INVALID_ARGUMENT"}}
+```
+
+`GeminiRouterAdapter` sent `reasoning_effort: 0` — a number. Gemini requires a
+string. **Every live Gemini call would have failed**, while all 31 adapter unit
+tests passed, because a mocked `httpRequest` accepts any payload and never
+validates it.
+
+Fixed to `'minimal'`, and a regression test now asserts the _type_ of the field
+rather than only its presence.
+
+### Working call
+
+```
+model: gemini-3.5-flash-lite   effort=minimal   716ms   HTTP 200
+
+{
+  "deploymentId": "dep_sonnet",
+  "workflow": "coding",
+  "confidence": 0.99,
+  "reasonCodes": ["CODE_REFACTOR", "TYPESCRIPT_SUPPORT"]
+}
+```
+
+Prompt asked it to choose between `dep_sonnet` (coding) and `dep_flash` (chat)
+for "refactor this TypeScript function". It chose the coding model, returned
+strict JSON matching `routerDecisionSchema`, and named a deployment from the
+eligible set.
+
+`'low'` (859ms) and `'minimal'` (716ms) are both accepted.
+
+### What this proves
+
+- the credential path works end to end;
+- the OpenAI-compatible surface and `response_format: json_object` produce
+  schema-valid output;
+- the router returns a usable decision in well under the 1,600ms budget
+  configured for entry 1.
+
+### What it does not prove
+
+One call, one model, one prompt. No fallback path, no Ollama Cloud call (its
+three drifted aliases are still unresolved), and no budgeted multi-case run.
