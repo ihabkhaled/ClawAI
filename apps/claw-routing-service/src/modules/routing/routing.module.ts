@@ -7,6 +7,7 @@ import { OllamaCloudRouterAdapter } from './adapters/ollama-cloud-router.adapter
 import { RoutingController } from './controllers/routing.controller';
 import { ConnectorCredentialService } from './services/connector-credential.service';
 import { RoutingService } from './services/routing.service';
+import { CloudRouterManager } from './managers/cloud-router.manager';
 import { RouterInferenceCoordinatorManager } from './managers/router-inference-coordinator.manager';
 import { RoutingManager } from './managers/routing.manager';
 import { OllamaRouterManager } from './managers/ollama-router.manager';
@@ -18,6 +19,7 @@ import { ComplexityClassifierManager } from './managers/complexity-classifier.ma
 import { CapabilityRouterManager } from './managers/capability-router.manager';
 import { ImageDetectionManager } from './managers/image-detection.manager';
 import { LlamacppHealthManager } from './managers/llamacpp-health.manager';
+import { RouterConfigurationRepository } from './repositories/router-configuration.repository';
 import { RoutingPoliciesRepository } from './repositories/routing-policies.repository';
 import { RoutingDecisionsRepository } from './repositories/routing-decisions.repository';
 import { RoutingEducationRepository } from './repositories/routing-education.repository';
@@ -30,9 +32,12 @@ import { ReplayCasesRepository } from './repositories/replay-cases.repository';
   providers: [
     RoutingService,
     RoutingManager,
-    // Cloud Smart Router inference layer. Registered but not yet on the hot
-    // path — the chain configuration that drives it lands in a later batch.
+    // Cloud Smart Router inference layer. Reachable through CloudRouterManager
+    // but not yet called by the v1 hot path; the seeded chain is disabled and
+    // its entries are unresolved aliases until discovery runs.
     RouterInferenceCoordinatorManager,
+    CloudRouterManager,
+    RouterConfigurationRepository,
     ConnectorCredentialService,
     GeminiRouterAdapter,
     OllamaCloudRouterAdapter,
