@@ -161,6 +161,71 @@ enum DomainTag {
   LITERATURE
 }
 
+// ─── Cloud Smart Router — model definition vs deployment ─────────────────
+//
+// RouterModelRegistry answers "what model is this". ModelDeployment answers
+// "how do we reach it". The distinction matters because one definition can be
+// reachable through several endpoints with different credentials, region,
+// privacy class, price and health — and because `provider` on the legacy
+// tables is a free-form String whose allowed values live only in a comment.
+// These enums are additive: no existing String column is migrated here.
+
+/// Canonical provider identity. OLLAMA and OLLAMA_CLOUD are deliberately
+/// distinct: connector-service already rewrites any localhost Ollama base URL
+/// to https://ollama.com/api, so one identifier was covering both a local
+/// runtime and a third-party cloud endpoint with completely different privacy
+/// and billing semantics.
+enum RouterProvider {
+  OPENAI
+  ANTHROPIC
+  GEMINI
+  DEEPSEEK
+  GROK
+  AWS_BEDROCK
+  OLLAMA
+  OLLAMA_CLOUD
+  LLAMACPP
+}
+
+enum DeploymentType {
+  CLOUD_API
+  CLOUD_SUBSCRIPTION
+  PRIVATE_CLOUD
+  LOCAL
+  AIR_GAPPED
+}
+
+/// A deployment is never eligible on the word of a seed alone. Seeded rows land
+/// in REQUIRES_VALIDATION and only discovery + a health check can promote them.
+enum DeploymentActivationState {
+  REQUIRES_VALIDATION
+  ACTIVE
+  UNHEALTHY
+  QUARANTINED
+  DISABLED
+  RETIRED
+}
+
+/// Ollama Cloud bills by subscription/usage-limit rather than per token, so a
+/// fabricated per-token price would be worse than admitting the unknown.
+enum BillingModel {
+  TOKEN
+  REQUEST
+  SUBSCRIPTION
+  USAGE_LIMIT
+  UNKNOWN
+}
+
+/// Where a capability claim came from. A provider marketing page and a measured
+/// lab probe must never be indistinguishable once stored.
+enum EvidenceSource {
+  PROVIDER_DECLARED
+  MANUAL_VERIFIED
+  LAB_MEASURED
+  PRODUCTION_OBSERVED
+  LEARNED_AGGREGATE
+}
+
 // ─── Models ──────────────────────────────────────────────
 
 model RoutingDecision {
@@ -506,7 +571,9 @@ model RouterModelRegistry {
   updatedAt                DateTime       @updatedAt @map("updated_at")
   lastSyncedAt             DateTime?      @map("last_synced_at")
 
-  overrides RouterAdminOverride[]
+  overrides   RouterAdminOverride[]
+  deployments ModelDeployment[]
+  evidence    CapabilityEvidence[]
 
   @@unique([provider, modelKey])
   @@index([provider])
@@ -514,6 +581,116 @@ model RouterModelRegistry {
   @@index([isExecutionCapable, lifecycle])
   @@index([isRouterOnly])
   @@map("router_model_registry")
+}
+
+/// One reachable endpoint for one model definition.
+///
+/// A definition can have many deployments — the same underlying model behind a
+/// direct API key, behind a private-cloud gateway, and behind a local runtime —
+/// each with its own credentials, region, privacy class, limits, price and
+/// health. Nothing here stores a secret: `connectorId` references a
+/// connector-service record and the key never leaves that service.
+model ModelDeployment {
+  id String @id @default(cuid())
+
+  definitionId String              @map("definition_id")
+  definition   RouterModelRegistry @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  // ── identity ──
+  /// Stable composite identity, e.g. "GEMINI:gemini-2.5-flash:conn_abc123".
+  /// An explicit column rather than a multi-column unique because connectorId
+  /// and runtimeId are nullable, and Postgres treats NULLs as distinct — a
+  /// composite unique would silently permit duplicate local deployments.
+  deploymentKey   String         @unique @map("deployment_key")
+  provider        RouterProvider
+  /// The id the provider itself expects on the wire, which is not always the
+  /// definition's modelKey (aliases, dated snapshots, ":cloud" suffixes).
+  providerModelId String         @map("provider_model_id")
+  connectorId     String?        @map("connector_id")
+  runtimeId       String?        @map("runtime_id")
+
+  // ── placement ──
+  deploymentType   DeploymentType            @map("deployment_type")
+  region           String?
+  privacyClass     PrivacyClass              @default(CLOUD_PERMITTED) @map("privacy_class")
+  activationState  DeploymentActivationState @default(REQUIRES_VALIDATION) @map("activation_state")
+  quarantineReason String?                   @map("quarantine_reason")
+
+  // ── per-endpoint capability overrides; NULL means "inherit the definition" ──
+  contextWindowTokens      Int?     @map("context_window_tokens")
+  maxOutputTokens          Int?     @map("max_output_tokens")
+  supportsTools            Boolean? @map("supports_tools")
+  supportsStructuredOutput Boolean? @map("supports_structured_output")
+  supportsStreaming        Boolean? @map("supports_streaming")
+  supportsVision           Boolean? @map("supports_vision")
+
+  // ── limits and economics ──
+  rateLimitRpm   Int?         @map("rate_limit_rpm")
+  rateLimitTpm   Int?         @map("rate_limit_tpm")
+  billingModel   BillingModel @default(UNKNOWN) @map("billing_model")
+  /// Points at ModelCostVersion.activeKey rather than duplicating rates, so
+  /// pricing stays immutable and versioned in one place.
+  costVersionKey String?      @map("cost_version_key")
+
+  // ── health ──
+  lastHealthyAt     DateTime? @map("last_healthy_at")
+  lastHealthCheckAt DateTime? @map("last_health_check_at")
+  lastValidatedAt   DateTime? @map("last_validated_at")
+
+  // ── bookkeeping ──
+  metadataSource String   @default("seed") @map("metadata_source")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  evidence CapabilityEvidence[]
+
+  @@index([definitionId])
+  @@index([provider])
+  @@index([activationState])
+  @@index([activationState, provider])
+  @@index([deploymentType])
+  @@map("model_deployments")
+}
+
+/// A single sourced capability claim about a definition or a deployment.
+///
+/// Capability flags on RouterModelRegistry are unsourced booleans: a wrong one
+/// has no audit trail, no expiry and no way to tell a marketing claim from a
+/// measured probe. Each row here carries its provenance, confidence and
+/// staleness so ranking can discount weak evidence instead of trusting it.
+model CapabilityEvidence {
+  id String @id @default(cuid())
+
+  /// Subject is EITHER a deployment or a definition. Endpoint-specific facts
+  /// (this connector's tool support) hang off the deployment; model-intrinsic
+  /// facts (this family reasons well) hang off the definition.
+  deploymentId String?              @map("deployment_id")
+  deployment   ModelDeployment?     @relation(fields: [deploymentId], references: [id], onDelete: Cascade)
+  definitionId String?              @map("definition_id")
+  definition   RouterModelRegistry? @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  capability String
+  value      Json
+  source     EvidenceSource
+  /// Where the claim came from — a provider doc URL, a lab run id, an admin id.
+  sourceRef  String?        @map("source_ref")
+  confidence Decimal        @default(0.500) @db.Decimal(4, 3)
+
+  observedAt DateTime  @map("observed_at")
+  validFrom  DateTime? @map("valid_from")
+  expiresAt  DateTime? @map("expires_at")
+
+  benchmarkVersion String? @map("benchmark_version")
+  rubricVersion    String? @map("rubric_version")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([deploymentId, capability])
+  @@index([definitionId, capability])
+  @@index([source])
+  @@index([expiresAt])
+  @@map("capability_evidence")
 }
 
 /// Phase 10: Learned-score table. Per-(profile, domain, taskFamily) success

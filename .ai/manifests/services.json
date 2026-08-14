@@ -424,7 +424,9 @@
       "port": 4004,
       "portSource": "shared-constants",
       "prismaModels": [
+        "CapabilityEvidence",
         "ModelCostVersion",
+        "ModelDeployment",
         "ReplayCase",
         "ReplayRun",
         "RouterAdminOverride",
@@ -441,7 +443,7 @@
         "RoutingPolicy",
         "TaxonomyRole"
       ],
-      "testFiles": 50,
+      "testFiles": 51,
       "testRunner": "jest"
     },
     {

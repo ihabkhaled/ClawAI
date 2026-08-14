@@ -136,7 +136,9 @@
       "SearchRun"
     ],
     "claw-routing-service": [
+      "CapabilityEvidence",
       "ModelCostVersion",
+      "ModelDeployment",
       "ReplayCase",
       "ReplayRun",
       "RouterAdminOverride",

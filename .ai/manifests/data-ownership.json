@@ -216,7 +216,9 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "CapabilityEvidence",
         "ModelCostVersion",
+        "ModelDeployment",
         "ReplayCase",
         "ReplayRun",
         "RouterAdminOverride",

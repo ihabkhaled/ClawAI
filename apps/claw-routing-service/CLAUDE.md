@@ -52,6 +52,13 @@ Controller -> Service -> Repository
 
 - RoutingDecision
 - RoutingPolicy
+- ModelDeployment — one reachable endpoint for one RouterModelRegistry definition.
+  A definition can have several (direct API, private cloud, local runtime) with
+  their own credentials, region, privacy class, limits, price and health. Stores
+  only a `connectorId` reference; provider keys stay in connector-service.
+- CapabilityEvidence — one sourced capability claim about a definition or a
+  deployment, carrying provenance, confidence and expiry so a marketing claim is
+  never indistinguishable from a measured probe.
 
 ## Commands
 
