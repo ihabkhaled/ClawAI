@@ -795,6 +795,87 @@ model RouterChainEntry {
   @@map("router_chain_entries")
 }
 
+/// One router-inference attempt, whatever its outcome.
+///
+/// The only durable fallback evidence today is RoutingDecision's flat
+/// fallbackProvider/fallbackModel pair, which cannot say how many attempts were
+/// made, which failed, why, or how long each took. Without that, "the router
+/// fell back" is unanswerable after the fact and the pack's fault-injection
+/// evidence has nothing to assert against.
+///
+/// Carries safe codes and a truncated provider message only — never a payload,
+/// never a prompt, because these rows feed a trace event.
+model RouterProviderAttempt {
+  id         String  @id @default(cuid())
+  /// Correlates every attempt of one routing decision.
+  traceId    String  @map("trace_id")
+  /// Set once the decision row exists; an attempt is recorded even when the
+  /// walk never produced one.
+  decisionId String? @map("decision_id")
+
+  attemptOrder    Int            @map("attempt_order")
+  chainEntryId    String?        @map("chain_entry_id")
+  chainOrder      Int?           @map("chain_order")
+  provider        RouterProvider
+  providerModelId String         @map("provider_model_id")
+  deploymentId    String?        @map("deployment_id")
+
+  succeeded   Boolean
+  /// Canonical RouterErrorCode name. Null on success.
+  errorCode   String? @map("error_code")
+  safeMessage String? @map("safe_message")
+  /// True when this attempt was the single permitted schema repair.
+  wasRepair   Boolean @default(false) @map("was_repair")
+
+  latencyMs    Int  @map("latency_ms")
+  inputTokens  Int? @map("input_tokens")
+  outputTokens Int? @map("output_tokens")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([traceId, attemptOrder])
+  @@index([decisionId])
+  @@index([provider, succeeded])
+  @@index([errorCode])
+  @@index([createdAt])
+  @@map("router_provider_attempts")
+}
+
+/// One candidate's ranking for one decision.
+///
+/// Scoring is stateless today: the engine returns a ranking and nothing keeps
+/// it, so `router.candidate.scored` and `router.candidate.excluded` have no
+/// backing store and replay can only compare winners, never rankings.
+model RoutingCandidateScore {
+  id         String  @id @default(cuid())
+  traceId    String  @map("trace_id")
+  decisionId String? @map("decision_id")
+
+  deploymentId    String         @map("deployment_id")
+  /// Denormalised so a score stays readable after a deployment is retired.
+  provider        RouterProvider
+  providerModelId String         @map("provider_model_id")
+
+  eligible        Boolean
+  /// Safe exclusion code when not eligible. Null when it was.
+  exclusionReason String? @map("exclusion_reason")
+
+  /// Aggregate 0..1. Null for a candidate excluded before scoring.
+  score       Decimal? @db.Decimal(5, 4)
+  uncertainty Decimal? @db.Decimal(5, 4)
+  /// Per-factor contributions keyed by factor code, e.g. DOMAIN_MATCH.
+  factors     Json?
+
+  rank      Int?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([traceId, deploymentId])
+  @@index([decisionId])
+  @@index([traceId, eligible])
+  @@index([exclusionReason])
+  @@map("routing_candidate_scores")
+}
+
 /// Ledger of versioned seeds that have run against this database.
 ///
 /// routing-service's three existing seed scripts have no ledger, no lock and no

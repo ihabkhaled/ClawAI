@@ -436,9 +436,11 @@
         "RouterLearnedScore",
         "RouterModelProfile",
         "RouterModelRegistry",
+        "RouterProviderAttempt",
         "RouterTopicProfile",
         "RouterWorkflow",
         "RoutingCalibrationSnapshot",
+        "RoutingCandidateScore",
         "RoutingDecision",
         "RoutingFeedbackRecord",
         "RoutingOutcomeRecord",
@@ -446,7 +448,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 62,
+      "testFiles": 63,
       "testRunner": "jest"
     },
     {

@@ -8505,6 +8505,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "RouterProviderAttempt"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
             "value": "RouterTopicProfile"
           },
           {
@@ -8516,6 +8521,11 @@
             "confidence": "verified",
             "source": "apps/claw-routing-service/prisma/schema.prisma",
             "value": "RoutingCalibrationSnapshot"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "RoutingCandidateScore"
           },
           {
             "confidence": "verified",
@@ -8780,7 +8790,7 @@
       },
       "claw-routing-service": {
         "runner": "jest",
-        "testFiles": 62
+        "testFiles": 63
       },
       "claw-server-logs-service": {
         "runner": "jest",
@@ -9504,7 +9514,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 850,
+    "totalTestFiles": 851,
     "workspaceCount": 25
   }
 }

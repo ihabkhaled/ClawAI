@@ -19,6 +19,7 @@ import { ComplexityClassifierManager } from './managers/complexity-classifier.ma
 import { CapabilityRouterManager } from './managers/capability-router.manager';
 import { ImageDetectionManager } from './managers/image-detection.manager';
 import { LlamacppHealthManager } from './managers/llamacpp-health.manager';
+import { RouterAttemptRepository } from './repositories/router-attempt.repository';
 import { RouterConfigurationRepository } from './repositories/router-configuration.repository';
 import { RoutingPoliciesRepository } from './repositories/routing-policies.repository';
 import { RoutingDecisionsRepository } from './repositories/routing-decisions.repository';
@@ -38,6 +39,7 @@ import { ReplayCasesRepository } from './repositories/replay-cases.repository';
     RouterInferenceCoordinatorManager,
     CloudRouterManager,
     RouterConfigurationRepository,
+    RouterAttemptRepository,
     ConnectorCredentialService,
     GeminiRouterAdapter,
     OllamaCloudRouterAdapter,

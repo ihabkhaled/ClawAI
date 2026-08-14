@@ -90,7 +90,7 @@
     },
     "claw-routing-service": {
       "runner": "jest",
-      "testFiles": 62
+      "testFiles": 63
     },
     "claw-server-logs-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 850
+  "total": 851
 }
