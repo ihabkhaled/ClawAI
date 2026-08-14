@@ -24,6 +24,27 @@ after `use-login-form.ts` was restored from a destructive edit, the agent never
 re-did the change it had lost, because the only record of that work was in a
 conversation turn that had scrolled out of context.
 
+**Root cause, found later in the same run, and it is not what it looks like.**
+The agent is not choosing to stop. `parseRuntimeV2ModelOutput` returns
+`{ kind: 'final' }` for any turn that carries no parseable tool request, so a
+turn spent thinking out loud IS the run's final answer. When the agent writes
+"Let me apply Patch B", the runtime files that as the completed answer and the
+task is over.
+
+The runtime already guards against this — `isUnfulfilledIntent` plus
+`nudgeIntoActing` — but the guard matched a first-person lead-in followed by a
+verb from an allow-list built out of DISCOVERY runs: read, analyse, explore,
+gather. A mutating agent does not speak that way. Four stalls, four verbs it did
+not carry: `also read`, `try`, `insert`, `re-read`. Fixed by inverting the test —
+any short intent lead-in is an announcement unless the next word is one of the
+closed set that opens a real answer (declining, hedging, explaining, signing
+off). Shipped; see `fix(chat): stop losing an agent turn to narration or a
+one-character typo`.
+
+**Why the checklist still matters.** Fixing the parser stops a narrating turn
+from ending the run, but it does not tell the runtime what remains to be done —
+so the dropped-item failure above survives it. The two fixes are complementary.
+
 **Why it happens.** The task list lives in the prompt. The prompt is subject to
 the same truncation and context pressure as everything else, so the plan decays
 exactly when the run gets long enough to need it.
@@ -148,6 +169,82 @@ The error said only "context missing or ambiguous", which does not point at the
 cause. Detail in `OPEN_DEFECTS.md` §4.
 
 ---
+
+## Tier 2.5 — a dead run must not look like a working one
+
+The single largest block of lost time in this mission was not a model failure at
+all. The agent appeared to be "still running" for **two hours** while it was in
+fact unreachable, and nothing anywhere said so.
+
+What had actually happened, in order:
+
+1. `packages/shared-types/dist` was stale — the Deployment types existed in
+   `src/` but the package was never rebuilt after the feature that added them
+   landed. `claw-auth-service` crash-looped on twelve TS2305 errors.
+2. Because auth-service was down, nginx answered the extension with **502**.
+3. The extension fell back to its "Connect to ClawAI" onboarding screen, which
+   hides the composer. The panel looked idle rather than broken.
+4. The supervisor's activity monitor reported "still running, no new activity"
+   once a minute for two hours, which is indistinguishable from a model thinking.
+
+Three things would each have cut that to minutes:
+
+- **Surface transport failure in the panel, loudly.** The 502 text existed — it
+  was in the DOM, below the fold, phrased as a connection hint. A run that cannot
+  reach its backend should say so where the user is looking, not degrade to an
+  onboarding screen that implies the user simply has not connected yet.
+- **Distinguish "waiting on the model" from "not connected".** An idle panel and
+  a disconnected panel are the same picture today.
+- **Make a stale workspace package a startup error, not a crash loop.** The
+  container rebuilt, failed the same way, and waited for file changes — forever.
+  The dev entrypoint already refreshes a stale Prisma client for exactly this
+  reason; workspace package `dist` needs the same treatment.
+
+Related, and cheap: `workspace.command` cannot spawn `npx` or `npm` on Windows —
+every attempt returns `spawn EINVAL`. The agent burned turns discovering this and
+then reasoning about it, and the supervisor had to run every gate by hand. Spawn
+through a shell on win32, or state the limitation in the tool description so the
+model does not try.
+
+## Tier 2.6 — a truncated tool object still kills the run, one repair later
+
+With the damaged-discriminator guard in place, a run died like this:
+
+    MODEL_TOOL_REQUEST_UNREPAIRABLE
+    The exact validation error was: The model started a Runtime Protocol 2.0
+    tool object and did not finish it.
+    {"kind":"tool","toolName":"workspace.files","operation":"patch","arguments":
+     {"path":"…/use-login-form.ts","transaction":{"operations":[{"beforeHash":"sha256:82a00fe9…
+
+This is the guard working exactly as intended — it recognised a truncated tool
+object and sent it to the repair loop instead of showing the JSON to the user as
+an answer. What it reveals is the layer underneath: **the repair turn produced a
+truncated object too**, and `RUNTIME_V2_INTENT_CORRECTION_ATTEMPTS`-style
+patience does not help when the second attempt fails the same way for the same
+reason.
+
+The cause is object size, not model confusion. A `patch` carries the exact text
+being replaced AND its replacement, JSON-escaped, and the emission stops
+mid-object. `RUNTIME_V2_MAX_OUTPUT_TOKENS` was already raised to 16_384 for
+precisely this failure; raising it again is not the answer, because the model
+will size its request to whatever the task appears to need.
+
+Two changes would close it:
+
+- **Tell the repair turn what actually went wrong.** The diagnosis text says the
+  object "did not finish", which describes the symptom. It should say the object
+  was too large and instruct a smaller one: one hunk, few lines, split the rest
+  across calls. A repair instruction that does not change the model's strategy
+  produces the same output twice — which is exactly what happened here.
+- **Bound the write at the tool contract.** Cap `beforeLines`/`afterLines` per
+  hunk in the tool schema and reject an oversized hunk with a message that says
+  to split it. That is the same size-delta machinery Tier 2.1 wants for
+  destruction safety, used for a second purpose.
+
+The supervisor's workaround — an explicit "one hunk, ≤3 before, ≤6 after, four
+calls not one" instruction — landed the write immediately. Reshaping beat
+rewording again, which is the pattern of this entire mission: the model is
+capable, and the request shape is what fails.
 
 ## Tier 3 — project-specific checks worth teaching the runtime
 

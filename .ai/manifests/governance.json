@@ -1,23 +1,23 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 19897,
+      "bytes": 20904,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 4870,
+      "bytes": 5877,
       "file": "CODEX.md"
     },
     {
-      "bytes": 25570,
+      "bytes": 26577,
       "file": "cursor.md"
     },
     {
-      "bytes": 8450,
+      "bytes": 9460,
       "file": "AGENTS.md"
     },
     {
-      "bytes": 1726,
+      "bytes": 2736,
       "file": ".cursorrules"
     }
   ],
@@ -207,6 +207,10 @@
       "file": "rules/28-billing-integrity-and-api-contracts.md"
     },
     {
+      "bytes": 3242,
+      "file": "rules/29-communication-style.md"
+    },
+    {
       "bytes": 8035,
       "file": "rules/30-agent-self-regulation-and-loop-prevention.md"
     },
@@ -323,6 +327,10 @@
     {
       "bytes": 4242,
       "file": "skills/commit-and-push-each-change.md"
+    },
+    {
+      "bytes": 2476,
+      "file": "skills/communicate-briefly.md"
     },
     {
       "bytes": 4749,

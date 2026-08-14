@@ -156,7 +156,14 @@ export const RUNTIME_V2_DIALECT_TOOL_CALL_MESSAGE =
 // `\b` keeps it honest: it matches `"tool"`, `"tool,` and a bare `"tool` at the
 // end of a truncated reply, but not `"toolbox"`, because there is no word
 // boundary between `l` and `b`.
-export const RUNTIME_V2_TRUNCATED_TOOL_REQUEST_PATTERN = /"kind"\s*:\s*"tool\b/u;
+// The quote is optional on BOTH sides of `tool`. This started as `"kind":"tool"`
+// with the closing quote required, which missed a reply damaged one character
+// earlier — glm-5.2 emitted `{"kind":tool","toolName":"workspace.files",…}`,
+// missing the OPENING quote. JSON.parse rejected it, the guard did not
+// recognise it, so a malformed tool request was shown to the user as the
+// assistant's answer and the run ended having done nothing. Either quote can be
+// the one that goes missing, so neither is required to match.
+export const RUNTIME_V2_TRUNCATED_TOOL_REQUEST_PATTERN = /"kind"\s*:\s*"?tool\b/u;
 
 export const RUNTIME_V2_TRUNCATED_TOOL_CALL_MESSAGE =
   'The model started a Runtime Protocol 2.0 tool object and did not finish it.';
@@ -230,12 +237,82 @@ export const RUNTIME_V2_UNFULFILLED_INTENT_PATTERNS: readonly RegExp[] = [
   /\b(?:i['’]ll|i will|let me|i['’]m going to|i am going to|i need to|i should)(?: now)? (?:start|begin|proceed|continue)(?: with| by)? \S/iu,
   /\b(?:starting|beginning) (?:the )?(?:analysis|review|scan|exploration|discovery)\b/iu,
   /\bnext,? i['’]ll\b/iu,
+  // Announcements with NO first-person lead-in at all, which every pattern above
+  // requires. Captured live: "Now starting PART B by reading the email adapter
+  // lines 1-40 to model the new sendPasswordReset method". No "I'll", no "let
+  // me" — just a bare gerund — and the run ended there with the work undone.
+  // Anchored on a task marker rather than on the bare gerund. "The migration is
+  // now starting to look correct" is an ordinary sentence and must not be sent
+  // back for another turn; "Now starting PART B" is an announcement.
+  /\b(?:starting|beginning|resuming|proceeding with|continuing with|moving on to)\s+(?:part|step|item|phase|task|section)\b/iu,
+  // "…by reading the adapter", "…by patching the service". A trailing gerund
+  // clause describing the METHOD of the next action is an announcement whatever
+  // the sentence opened with.
+  /\bby (?:read|re-read|patch|add|creat|updat|modif|check|examin|inspect|fix|appl|insert|replac|remov)\w*ing\b/iu,
+  // "Now writing the file", "Next creating the spec". Same bare-gerund shape as
+  // above but with a work verb rather than a task noun. deepseek-v4-pro ended a
+  // run with "Now writing the file — CALL 4, creating with imports…" after
+  // completing every read it needed.
+  // The `(?!-)` matters: "the token is now writing-protected in storage" is an
+  // ordinary sentence, and a hyphenated compound is never an announcement.
+  /\b(?:now|next|then)\s+(?:i\s+am\s+)?(?:writing|creating|adding|patching|reading|applying|running|building|updating|appending)(?!-)\b/iu,
+  // A reply that signs off by naming the numbered step it is about to perform,
+  // typically ending in a colon. No real answer ends "— CALL 4, creating with
+  // imports + describe + beforeEach:".
+  /\b(?:call|step|item|phase)\s*\d+\b[^.!?]*:\s*$/iu,
+  // "Sending CALL 5 now." — the same announcement, ended with a period instead
+  // of a colon, which the pattern above required. Captured live from
+  // deepseek-v4-pro after it had listed every call it intended to make.
+  /\b(?:sending|issuing|executing|running|starting|doing)\s+(?:call|step|item|phase)\s*\d+\b/iu,
+  /\b(?:call|step|item|phase)\s*\d+\s+now\b/iu,
+  // A reply that ENDS on a colon is promising something it never delivered.
+  // Captured live: "…Let me apply both edits with sed. First, replace the
+  // success test's submit block (lines 44-48):" — the announcement itself sat
+  // too far back for the tail window, but the trailing colon is unambiguous. A
+  // finished answer does not end by introducing what comes next.
+  /[^:]:\s*$/u,
+  // The allow-list above lost a race it could not win. Four live stalls, four
+  // verbs it did not carry — apply, try, insert, and finally "let me RE-READ",
+  // which the list missed because `re-read` is not `read`. Every miss ends a
+  // run mid-task, and the set of things a model can announce is the set of
+  // English verbs, so enumerating them is not a strategy.
+  //
+  // Inverted here: any short reply whose lead-in is a first-person statement of
+  // intent is an announcement, UNLESS the word after it belongs to the small
+  // set that genuinely opens an answer. That set is what needs enumerating, and
+  // unlike the verbs it is closed and short — a model declining, hedging,
+  // explaining, or signing off.
+  //
+  // Two things bound the damage of a false positive: the length cap below keeps
+  // real deliverables out entirely, and a wrong hit costs one extra model turn
+  // which then accepts whatever comes back. A false NEGATIVE, by contrast,
+  // silently ends the task — which is the failure this whole mechanism exists
+  // to prevent, so the trade is deliberately asymmetric.
+  //
+  // The trailing `\s+\S` preserves a decision the narrower pattern above already
+  // made: a bare "Let me start." announces nothing in particular and stays out
+  // of the correction path, while "Let me re-read both files" does not.
+  /\b(?:i['’]ll|i will|let me|i['’]m going to|i am going to|i need to|i should)(?: (?:now|also|just|then|next|quickly|simply|instead|first))? (?!know\b|not\b|never\b|be\b|have\b|assume\b|note\b|mention\b|clarify\b|explain\b|warn\b|recommend\b|suggest\b|avoid\b|leave\b|defer\b|skip\b|stop\b|refuse\b|decline\b|point\b|emphasi|highlight\b|reiterate\b|say\b|admit\b|caution\b)[a-z][a-z-]{1,}\s+\S/iu,
 ];
 
 // An announcement is short by nature. A genuine answer that happens to use "I'll list them here"
 // carries the list with it, so bounding the length keeps a real deliverable out of the correction
 // path. A false positive costs exactly one extra model turn and then accepts whatever comes back.
 export const RUNTIME_V2_UNFULFILLED_INTENT_MAX_CHARACTERS = 1_200;
+
+// How much of an OVER-LENGTH reply is still examined, taken from the end.
+//
+// The cap above exists so a genuine deliverable — a reply that says "I'll list
+// them here" and then lists them — is not mistaken for an announcement. But it
+// also meant a model could reason for two paragraphs, close with "Let me start
+// with FIX 1", and sail past the guard because the whole reply was too long to
+// inspect. That is still an announcement, and the run still ended having done
+// nothing.
+//
+// What makes a reply an announcement is how it ENDS. A real answer does not
+// finish by declaring its next action, so the tail is the discriminating part
+// and it is judged even when the whole is long.
+export const RUNTIME_V2_UNFULFILLED_INTENT_TAIL_CHARACTERS = 240;
 
 // Sent once when the model announced work and then stopped. It restates the loop rather than
 // scolding: the model usually stops because it believes the turn is its only chance to speak.

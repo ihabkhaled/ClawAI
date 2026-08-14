@@ -141,6 +141,47 @@ describe('TokenSessionManager', () => {
     expect(repository.revokeSessionFamily).toHaveBeenCalledWith(sessionFixture.familyId);
   });
 
+  it('rejects a refresh token no session was ever issued for', async () => {
+    repository.findSessionByRefreshTokenHash.mockResolvedValue(null);
+
+    await expect(manager.rotate('unknown-refresh-token')).rejects.toThrow(
+      InvalidRefreshTokenException,
+    );
+    expect(repository.revokeSessionFamily).not.toHaveBeenCalled();
+    expect(repository.rotateSession).not.toHaveBeenCalled();
+  });
+
+  it('revokes the token family when the account is no longer active', async () => {
+    repository.findSessionByRefreshTokenHash.mockResolvedValue(sessionFixture);
+    repository.findUserById.mockResolvedValue({
+      ...userFixture,
+      status: UserStatus.SUSPENDED,
+    });
+
+    await expect(manager.rotate('raw-refresh-token')).rejects.toThrow(InvalidRefreshTokenException);
+    expect(repository.revokeSessionFamily).toHaveBeenCalledWith(sessionFixture.familyId);
+    expect(repository.rotateSession).not.toHaveBeenCalled();
+  });
+
+  // A rejected rotation is the one path a client sees verbatim, so it must not
+  // echo the credential it was handed back to the caller or into a log line.
+  it('never echoes the presented refresh token when it rejects the rotation', async () => {
+    const presented = 'presented-refresh-token-that-must-not-leak';
+    repository.findSessionByRefreshTokenHash.mockResolvedValue({
+      ...sessionFixture,
+      usedAt: new Date(),
+    });
+
+    const failure = await manager.rotate(presented).catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(InvalidRefreshTokenException);
+    expect(String(failure)).not.toContain(presented);
+    expect(JSON.stringify((failure as InvalidRefreshTokenException).getResponse())).not.toContain(
+      presented,
+    );
+    expect(JSON.stringify(repository.revokeSessionFamily.mock.calls)).not.toContain(presented);
+  });
+
   it('revokes only the authenticated user session on logout', async () => {
     await manager.revokeCurrent(userFixture.id, sessionFixture.id);
 

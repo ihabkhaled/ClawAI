@@ -9,7 +9,16 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 2 identical headings (19897 vs 4870 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (20904 vs 5877 bytes) — candidates for compact routing",
+        "severity": "medium"
+      },
+      {
+        "evidence": [
+          "CLAUDE.md",
+          "cursor.md"
+        ],
+        "kind": "mirrored-instruction-overlap",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (20904 vs 26577 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +27,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CODEX.md and cursor.md share 1 identical headings (4870 vs 25570 bytes) — candidates for compact routing",
+        "message": "CODEX.md and cursor.md share 2 identical headings (5877 vs 26577 bytes) — candidates for compact routing",
         "severity": "medium"
       }
     ],
@@ -6048,6 +6057,11 @@
     ],
     "frontendRoutes": [
       {
+        "file": "apps/claw-frontend/src/app/(auth)/forgot-password/page.tsx",
+        "kind": "page",
+        "route": "/forgot-password"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(auth)/layout.tsx",
         "kind": "layout",
         "route": "/"
@@ -6061,6 +6075,11 @@
         "file": "apps/claw-frontend/src/app/(auth)/register/page.tsx",
         "kind": "page",
         "route": "/register"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(auth)/reset-password/page.tsx",
+        "kind": "page",
+        "route": "/reset-password"
       },
       {
         "file": "apps/claw-frontend/src/app/(auth)/verify-email/page.tsx",
@@ -6661,23 +6680,23 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 19897,
+          "bytes": 20904,
           "file": "CLAUDE.md"
         },
         {
-          "bytes": 4870,
+          "bytes": 5877,
           "file": "CODEX.md"
         },
         {
-          "bytes": 25570,
+          "bytes": 26577,
           "file": "cursor.md"
         },
         {
-          "bytes": 8450,
+          "bytes": 9460,
           "file": "AGENTS.md"
         },
         {
-          "bytes": 1726,
+          "bytes": 2736,
           "file": ".cursorrules"
         }
       ],
@@ -6866,6 +6885,10 @@
           "file": "rules/28-billing-integrity-and-api-contracts.md"
         },
         {
+          "bytes": 3242,
+          "file": "rules/29-communication-style.md"
+        },
+        {
           "bytes": 8035,
           "file": "rules/30-agent-self-regulation-and-loop-prevention.md"
         },
@@ -6982,6 +7005,10 @@
         {
           "bytes": 4242,
           "file": "skills/commit-and-push-each-change.md"
+        },
+        {
+          "bytes": 2476,
+          "file": "skills/communicate-briefly.md"
         },
         {
           "bytes": 4749,
@@ -7126,7 +7153,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4387
+        "value": 4412
       },
       "localeCount": 14,
       "locales": [
@@ -8698,7 +8725,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 58
+        "testFiles": 59
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8722,7 +8749,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 281
+        "testFiles": 283
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9469,7 +9496,7 @@
     "endpointCount": 577,
     "envVarCount": 343,
     "eventCount": 165,
-    "frontendRouteCount": 117,
+    "frontendRouteCount": 119,
     "localeCount": 14,
     "nginxRouteCount": 54,
     "permissionCount": 38,
@@ -9478,7 +9505,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 838,
+    "totalTestFiles": 841,
     "workspaceCount": 25
   }
 }

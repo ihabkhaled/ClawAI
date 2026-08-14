@@ -27,6 +27,8 @@ export class PasswordResetManager {
       return null;
     }
 
+    await this.resetRepository.deleteAllForUser(user.id);
+
     const rawToken = randomBytes(PASSWORD_RESET_TOKEN_BYTES).toString('hex');
     const tokenHash = hashBearerToken(rawToken, `password-reset:${AppConfig.get().JWT_SECRET}`);
     const expiresAt = new Date(
@@ -54,16 +56,17 @@ export class PasswordResetManager {
       return false;
     }
 
-    const consumed = await this.resetRepository.consume(token.id);
-    if (!consumed) {
-      return false;
-    }
-
     const passwordHash = await hashPassword(newPassword);
     await this.usersRepository.updateById(token.userId, {
       passwordHash,
       mustChangePassword: false,
     });
+
+    const consumed = await this.resetRepository.consume(token.id);
+    if (!consumed) {
+      return false;
+    }
+
     await this.authRepository.deleteSessionsByUserId(token.userId);
 
     return true;

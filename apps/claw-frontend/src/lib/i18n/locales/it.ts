@@ -103,6 +103,35 @@ export const it: TranslationDictionary = {
     feature3Title: 'Tutti i provider',
     feature3Desc:
       'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI e Amazon Bedrock — tutti in un unico posto.',
+    forgotPasswordTitle: 'Password dimenticata',
+    forgotPasswordDescription:
+      'Inserisci la tua email e ti invieremo un link per reimpostare la password.',
+    forgotPasswordEmailLabel: 'Email',
+    forgotPasswordEmailPlaceholder: 'nome@example.com',
+    forgotPasswordSubmit: 'Invia link di reimpostamento',
+    forgotPasswordSubmitting: 'Invio in corso…',
+    forgotPasswordBackToLogin: 'Torna al login',
+    forgotPasswordSuccessTitle: 'Controlla la tua email',
+    forgotPasswordSuccessDescription:
+      'Se esiste un account con questa email, abbiamo inviato un link per reimpostare la password.',
+    forgotPasswordErrorGeneric: 'Si è verificato un errore. Riprova.',
+    forgotPasswordErrorTitle: 'Errore',
+    resetPasswordTitle: 'Reimposta password',
+    resetPasswordDescription: 'Inserisci la tua nuova password qui sotto.',
+    resetPasswordNewPasswordLabel: 'Nuova password',
+    resetPasswordConfirmPasswordLabel: 'Conferma password',
+    resetPasswordSubmit: 'Reimposta password',
+    resetPasswordSubmitting: 'Reimpostazione in corso…',
+    resetPasswordBackToLogin: 'Torna al login',
+    resetPasswordSuccessTitle: 'Password reimpostata',
+    resetPasswordSuccessDescription:
+      'La tua password è stata reimpostata. Ora puoi accedere con la nuova password.',
+    resetPasswordErrorGeneric: 'Si è verificato un errore. Riprova.',
+    resetPasswordErrorTitle: 'Errore',
+    resetPasswordInvalidTokenTitle: 'Link non valido',
+    resetPasswordInvalidTokenDescription:
+      'Questo link per reimpostare la password non è valido o è scaduto.',
+    resetPasswordRequestNewLink: 'Richiedi un nuovo link',
   },
   vscodeAuthorization: {
     title: 'Autorizza ClawAI per VS Code',

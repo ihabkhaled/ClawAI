@@ -41,6 +41,24 @@ export class AuthEmailAdapter {
     });
   }
 
+  async sendPasswordReset(email: string, rawToken: string): Promise<void> {
+    const config = AppConfig.get();
+    const smtp = this.resolveSmtpConfig(config);
+    if (!smtp) {
+      throw new BusinessException('Email delivery is unavailable', 'EMAIL_DELIVERY_UNAVAILABLE');
+    }
+    const url = new URL('/reset-password', config.PUBLIC_SITE_URL);
+    url.searchParams.set('token', rawToken);
+    const transport = createSmtpEmailTransport(smtp);
+    await transport.send({
+      from: config.CONTACT_EMAIL_FROM,
+      to: email,
+      subject: 'Reset your ClawAI password',
+      text: `Reset your password: ${url.toString()}`,
+      html: `<p>Reset your password:</p><p><a href="${url.toString()}">Reset password</a></p>`,
+    });
+  }
+
   async sendDeploymentNotification(status: DeploymentStatusDocument): Promise<boolean> {
     const config = AppConfig.get();
     const smtp = this.resolveSmtpConfig(config);

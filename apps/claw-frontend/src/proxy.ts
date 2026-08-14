@@ -21,7 +21,7 @@ import {
 } from '@/utilities/locale.utility';
 import { isPublicPath } from '@/utilities/route-visibility.utility';
 
-const PUBLIC_AUTH_PATHS = ['/login', '/register'];
+const PUBLIC_AUTH_PATHS = ['/login', '/register', '/forgot-password', '/reset-password'];
 
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;

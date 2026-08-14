@@ -102,6 +102,35 @@ export const es: TranslationDictionary = {
     feature3Title: 'Todos los proveedores',
     feature3Desc:
       'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI y Amazon Bedrock, todo en un solo lugar.',
+    forgotPasswordTitle: '¿Olvidaste tu contraseña?',
+    forgotPasswordDescription:
+      'Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.',
+    forgotPasswordEmailLabel: 'Correo electrónico',
+    forgotPasswordEmailPlaceholder: 'you@example.com',
+    forgotPasswordSubmit: 'Enviar enlace de restablecimiento',
+    forgotPasswordBackToLogin: 'Volver a iniciar sesión',
+    forgotPasswordSuccessTitle: 'Revisa tu correo',
+    forgotPasswordSuccessDescription:
+      'Si existe una cuenta para este correo, hemos enviado un enlace para restablecer la contraseña.',
+    forgotPasswordErrorGeneric: 'Algo salió mal. Inténtalo de nuevo.',
+    forgotPasswordErrorTitle: 'Error',
+    forgotPasswordSubmitting: 'Enviando...',
+    resetPasswordTitle: 'Restablecer contraseña',
+    resetPasswordDescription: 'Introduce tu nueva contraseña a continuación.',
+    resetPasswordNewPasswordLabel: 'Nueva contraseña',
+    resetPasswordConfirmPasswordLabel: 'Confirmar contraseña',
+    resetPasswordSubmit: 'Restablecer contraseña',
+    resetPasswordSubmitting: 'Restableciendo...',
+    resetPasswordBackToLogin: 'Volver a iniciar sesión',
+    resetPasswordSuccessTitle: 'Contraseña restablecida',
+    resetPasswordSuccessDescription:
+      'Tu contraseña se ha restablecido correctamente. Ya puedes iniciar sesión.',
+    resetPasswordErrorGeneric: 'Algo salió mal. Inténtalo de nuevo.',
+    resetPasswordErrorTitle: 'Error',
+    resetPasswordInvalidTokenTitle: 'Enlace no válido',
+    resetPasswordInvalidTokenDescription:
+      'Este enlace de restablecimiento de contraseña ya no es válido.',
+    resetPasswordRequestNewLink: 'Solicitar un nuevo enlace de restablecimiento.',
   },
   vscodeAuthorization: {
     title: 'Autorizar ClawAI para VS Code',

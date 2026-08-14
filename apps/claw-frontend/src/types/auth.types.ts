@@ -29,6 +29,23 @@ export type RefreshResponse = {
   tokens: TokenPair;
 };
 
+export type RequestPasswordResetRequest = {
+  email: string;
+};
+
+export type RequestPasswordResetResponse = {
+  accepted: boolean;
+};
+
+export type ConfirmPasswordResetRequest = {
+  token: string;
+  password: string;
+};
+
+export type ConfirmPasswordResetResponse = {
+  reset: boolean;
+};
+
 export type UpdateOwnProfileRequest = {
   currentPassword: string;
   email?: string;
