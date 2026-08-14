@@ -6,21 +6,24 @@
 
 ## Available Skills
 
-| Skill                       | File                             | When to Use                                                               |
-| --------------------------- | -------------------------------- | ------------------------------------------------------------------------- |
-| Codebase Navigation         | `01-codebase-navigation.md`      | Finding files, understanding code flow, tracing a feature end-to-end      |
-| New Service Scaffolding     | `02-service-scaffold.md`         | Adding the next NestJS service (the monorepo already has 17 + a frontend) |
-| New Feature Scaffolding     | `03-feature-scaffold.md`         | Adding a backend + frontend feature within an existing service            |
-| Debug Toolkit               | `04-debug-toolkit.md`            | Diagnosing errors, tracing RabbitMQ events, checking Docker logs          |
-| QA Automation Toolkit       | `05-qa-toolkit.md`               | Writing and running QA scripts, API fuzzing, DB verification              |
-| Docker Operations           | `06-docker-toolkit.md`           | Container management, rebuild procedures, networking                      |
-| Prisma / Database Toolkit   | `07-database-toolkit.md`         | Migrations, seeding, query patterns, pgvector                             |
-| RabbitMQ Event Bus Toolkit  | `08-event-bus-toolkit.md`        | Publishing events, consuming events, DLQ inspection                       |
-| Refactor Toolkit            | `09-refactor-toolkit.md`         | Per-service refactor: dedup, extraction, splits, logging, coverage        |
-| Commit and Push Each Change | `commit-and-push-each-change.md` | Landing work: one gated commit, pushed before the next one starts         |
-| Reconcile Billing State     | `reconcile-billing-state.md`     | Diagnose, run, and verify owner-safe billing reconciliation               |
-| Debug a Stuck Scheduled Job | `debug-a-stuck-scheduled-job.md` | Recover locked, crashed, or incomplete bounded scheduled work             |
-| Add a Payment Gateway Flow  | `add-a-payment-gateway-flow.md`  | Add verified, idempotent, redacted provider payment behavior              |
+| Skill                       | File                             | When to Use                                                                            |
+| --------------------------- | -------------------------------- | -------------------------------------------------------------------------------------- |
+| Codebase Navigation         | `01-codebase-navigation.md`      | Finding files, understanding code flow, tracing a feature end-to-end                   |
+| New Service Scaffolding     | `02-service-scaffold.md`         | Adding the next NestJS service (the monorepo already has 17 + a frontend)              |
+| New Feature Scaffolding     | `03-feature-scaffold.md`         | Adding a backend + frontend feature within an existing service                         |
+| Debug Toolkit               | `04-debug-toolkit.md`            | Diagnosing errors, tracing RabbitMQ events, checking Docker logs                       |
+| QA Automation Toolkit       | `05-qa-toolkit.md`               | Writing and running QA scripts, API fuzzing, DB verification                           |
+| Docker Operations           | `06-docker-toolkit.md`           | Container management, rebuild procedures, networking                                   |
+| Prisma / Database Toolkit   | `07-database-toolkit.md`         | Migrations, seeding, query patterns, pgvector                                          |
+| RabbitMQ Event Bus Toolkit  | `08-event-bus-toolkit.md`        | Publishing events, consuming events, DLQ inspection                                    |
+| Refactor Toolkit            | `09-refactor-toolkit.md`         | Per-service refactor: dedup, extraction, splits, logging, coverage                     |
+| Commit and Push Each Change | `commit-and-push-each-change.md` | Landing work: one gated commit, pushed before the next one starts                      |
+| Reconcile Billing State     | `reconcile-billing-state.md`     | Diagnose, run, and verify owner-safe billing reconciliation                            |
+| Debug a Stuck Scheduled Job | `debug-a-stuck-scheduled-job.md` | Recover locked, crashed, or incomplete bounded scheduled work                          |
+| Add a Payment Gateway Flow  | `add-a-payment-gateway-flow.md`  | Add verified, idempotent, redacted provider payment behavior                           |
+| Deadlock Recovery           | `deadlock-recovery.md`           | Reasoning stuck (rabbit hole) or activity looping with no progress (deadlock/livelock) |
+| Reasoning Balance           | `reasoning-balance.md`           | Deciding whether to keep investigating or start executing (over- vs under-thinking)    |
+| Blocker Validation          | `blocker-validation.md`          | Before declaring "Blocked:" — checklist for a real blocker vs. an excuse to stop       |
 
 ---
 
