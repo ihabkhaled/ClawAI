@@ -1,8 +1,13 @@
 import { Module } from '@nestjs/common';
 import { IntelligenceModule } from '../intelligence/intelligence.module';
 import { WorkflowsModule } from '../workflows/workflows.module';
+import { GeminiRouterAdapter } from './adapters/gemini-router.adapter';
+import { LegacyLocalRouterAdapter } from './adapters/legacy-local-router.adapter';
+import { OllamaCloudRouterAdapter } from './adapters/ollama-cloud-router.adapter';
 import { RoutingController } from './controllers/routing.controller';
+import { ConnectorCredentialService } from './services/connector-credential.service';
 import { RoutingService } from './services/routing.service';
+import { RouterInferenceCoordinatorManager } from './managers/router-inference-coordinator.manager';
 import { RoutingManager } from './managers/routing.manager';
 import { OllamaRouterManager } from './managers/ollama-router.manager';
 import { PromptBuilderManager } from './managers/prompt-builder.manager';
@@ -25,6 +30,13 @@ import { ReplayCasesRepository } from './repositories/replay-cases.repository';
   providers: [
     RoutingService,
     RoutingManager,
+    // Cloud Smart Router inference layer. Registered but not yet on the hot
+    // path — the chain configuration that drives it lands in a later batch.
+    RouterInferenceCoordinatorManager,
+    ConnectorCredentialService,
+    GeminiRouterAdapter,
+    OllamaCloudRouterAdapter,
+    LegacyLocalRouterAdapter,
     ReplayManager,
     AdaptiveLearningManager,
     RouterEducationManager,
