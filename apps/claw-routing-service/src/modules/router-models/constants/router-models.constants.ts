@@ -66,3 +66,9 @@ export const REGISTRY_UPDATE_FIELDS: ReadonlyArray<string> = Object.freeze([
   'externalCardUrl',
   'notes',
 ]);
+
+/// SeedExecution.status is a free-form String in the schema (mirroring
+/// auth-service and payment-service), so the two values this service writes are
+/// named here rather than repeated as literals across the seed path.
+export const SEED_STATUS_RUNNING = 'RUNNING';
+export const SEED_STATUS_COMPLETED = 'COMPLETED';

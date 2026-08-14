@@ -652,6 +652,33 @@ model ModelDeployment {
   @@map("model_deployments")
 }
 
+/// Ledger of versioned seeds that have run against this database.
+///
+/// routing-service's three existing seed scripts have no ledger, no lock and no
+/// checksum, so a fresh deployment boots with an empty registry unless an
+/// operator remembers to run them by hand. A row here makes a seed replayable
+/// and observable: the same (name, version) never applies twice, and a changed
+/// payload for an already-applied version surfaces as a loud mismatch rather
+/// than silently overwriting admin edits.
+model SeedExecution {
+  id          String    @id @default(cuid())
+  name        String
+  version     Int
+  checksum    String
+  status      String
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  /// Sanitized failure reason. Never a stack trace or a provider payload.
+  error       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([name, version])
+  @@index([name])
+  @@index([status])
+  @@map("seed_executions")
+}
+
 /// A single sourced capability claim about a definition or a deployment.
 ///
 /// Capability flags on RouterModelRegistry are unsourced booleans: a wrong one

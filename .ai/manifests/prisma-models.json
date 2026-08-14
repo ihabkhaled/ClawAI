@@ -153,6 +153,7 @@
       "RoutingFeedbackRecord",
       "RoutingOutcomeRecord",
       "RoutingPolicy",
+      "SeedExecution",
       "TaxonomyRole"
     ],
     "claw-workspace-service": [

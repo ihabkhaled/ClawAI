@@ -112,15 +112,30 @@ describe('model deployment schema contract', () => {
   });
 
   describe('migration history', () => {
-    // Prisma applies migrations in lexicographic directory order, so a new
-    // migration dated before an existing one would apply out of sequence.
-    it('adds the deployment migration as the newest one', () => {
-      const dirs = readdirSync(join(PRISMA_DIR, 'migrations'), { withFileTypes: true })
+    const migrationDirs = (): string[] =>
+      readdirSync(join(PRISMA_DIR, 'migrations'), { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
         .map((entry) => entry.name)
         .sort();
 
-      expect(dirs.at(-1)).toBe(MIGRATION_NAME);
+    it('is present in the migration history', () => {
+      expect(migrationDirs()).toContain(MIGRATION_NAME);
+    });
+
+    // Prisma applies migrations in lexicographic directory order. The
+    // deployment tables must sort after every migration that predates them —
+    // notably the one creating router_model_registry, which they hold a foreign
+    // key to. Asserting it is merely *last* would break the moment any later
+    // migration lands, which is not the invariant that matters.
+    it('sorts after every migration that predates it', () => {
+      const dirs = migrationDirs();
+      const index = dirs.indexOf(MIGRATION_NAME);
+      const preExisting = dirs.filter((name) => name.startsWith('2026') && name < MIGRATION_NAME);
+
+      expect(index).toBeGreaterThan(-1);
+      for (const earlier of preExisting) {
+        expect(dirs.indexOf(earlier)).toBeLessThan(index);
+      }
     });
   });
 });

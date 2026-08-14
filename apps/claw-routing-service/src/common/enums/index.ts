@@ -6,3 +6,4 @@ export { ModelCapability } from './model-capability.enum';
 export { RiskLevel, RiskTier } from './risk-level.enum';
 export { CircuitBreakerState } from './circuit-breaker-state.enum';
 export { FeedbackSignal } from './feedback-signal.enum';
+export { SeedApplyOutcome } from './seed-apply-outcome.enum';

@@ -441,9 +441,10 @@
         "RoutingFeedbackRecord",
         "RoutingOutcomeRecord",
         "RoutingPolicy",
+        "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 51,
+      "testFiles": 54,
       "testRunner": "jest"
     },
     {

@@ -233,6 +233,7 @@
         "RoutingFeedbackRecord",
         "RoutingOutcomeRecord",
         "RoutingPolicy",
+        "SeedExecution",
         "TaxonomyRole"
       ],
       "service": "claw-routing-service"
