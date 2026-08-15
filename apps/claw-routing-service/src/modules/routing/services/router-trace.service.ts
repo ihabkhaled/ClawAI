@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ROUTER_TRACE_EVENT_PATTERNS } from '@claw/shared-constants';
-import { EventPattern, type RouterTraceEvent  } from '@claw/shared-types';
+import { EventPattern, type RouterTraceEvent } from '@claw/shared-types';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import type { CloudRouteResult } from '../types/cloud-router.types';
 import type { RouterTraceContext } from '../types/router-trace.types';
