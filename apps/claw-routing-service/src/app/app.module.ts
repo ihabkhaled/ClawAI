@@ -24,6 +24,7 @@ import { PlaygroundModule } from '../modules/playground/playground.module';
 import { ReliabilityModule } from '../modules/reliability/reliability.module';
 import { RouteEvaluatorModule } from '../modules/route-evaluator/route-evaluator.module';
 import { RouterModelsModule } from '../modules/router-models/router-models.module';
+import { RouterConfigurationAdminModule } from '../modules/router-configuration-admin/router-configuration-admin.module';
 import { ScoringModule } from '../modules/scoring/scoring.module';
 import { SyncModule } from '../modules/sync/sync.module';
 import { TaxonomyModule } from '../modules/taxonomy/taxonomy.module';
@@ -81,6 +82,7 @@ import { WorkflowsModule } from '../modules/workflows/workflows.module';
     HealthModule,
     RoutingModule,
     RouterModelsModule,
+    RouterConfigurationAdminModule,
     TaxonomyModule,
     ClassifierModule,
     ScoringModule,
