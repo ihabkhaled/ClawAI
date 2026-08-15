@@ -3,6 +3,9 @@ import type { RouterCoordinatorResult } from './router-inference.types';
 
 export interface CloudRouteRequest {
   traceId: string;
+  /** Correlates the trace with the originating request; defaults to traceId. */
+  requestId?: string;
+  threadId?: string | null;
   /** The compact router prompt. Hard privacy filtering has already run. */
   prompt: string;
   /** Deployments the decision may select, post policy filtering. */

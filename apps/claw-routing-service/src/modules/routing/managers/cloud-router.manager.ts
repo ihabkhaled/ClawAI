@@ -9,7 +9,11 @@ import {
 import { GeminiRouterAdapter } from '../adapters/gemini-router.adapter';
 import { LegacyLocalRouterAdapter } from '../adapters/legacy-local-router.adapter';
 import { OllamaCloudRouterAdapter } from '../adapters/ollama-cloud-router.adapter';
+import { RouterAttemptRepository } from '../repositories/router-attempt.repository';
 import { RouterConfigurationRepository } from '../repositories/router-configuration.repository';
+import { RouterTraceService } from '../services/router-trace.service';
+import type { RouterTraceContext } from '../types/router-trace.types';
+import { toAttemptRecords } from '../utilities/router-attempt-mapping.utility';
 import type { CloudRouteRequest, CloudRouteResult } from '../types/cloud-router.types';
 import type { RouterInferenceProvider } from '../types/router-inference.types';
 import { isChainServiceable, resolveChain } from '../utilities/router-chain-resolution.utility';
@@ -34,10 +38,43 @@ export class CloudRouterManager {
   constructor(
     private readonly configurations: RouterConfigurationRepository,
     private readonly coordinator: RouterInferenceCoordinatorManager,
+    private readonly attempts: RouterAttemptRepository,
+    private readonly trace: RouterTraceService,
     private readonly gemini: GeminiRouterAdapter,
     private readonly ollamaCloud: OllamaCloudRouterAdapter,
     private readonly legacyLocal: LegacyLocalRouterAdapter,
   ) {}
+
+  /**
+   * Routes, then records what happened.
+   *
+   * `decide` has four early returns and a walk; wrapping it means every one of
+   * them is traced and persisted, rather than only the paths someone remembered
+   * to instrument. A decline is the case an operator most needs evidence for,
+   * and it is also the easiest to leave untraced.
+   *
+   * Both side effects are best effort and awaited only so failures are logged
+   * in order. Neither can change the routing result.
+   */
+  async route(request: CloudRouteRequest): Promise<CloudRouteResult> {
+    const context: RouterTraceContext = {
+      traceId: request.traceId,
+      requestId: request.requestId ?? request.traceId,
+      threadId: request.threadId ?? null,
+      sequence: 0,
+    };
+
+    const result = await this.decide(request);
+
+    if (result.available) {
+      await this.attempts.recordAttempts(
+        toAttemptRecords(request.traceId, result.outcome.attempts),
+      );
+    }
+    await this.trace.emit(context, result);
+
+    return result;
+  }
 
   /** Adapters keyed by the provider they serve. */
   private get providers(): ReadonlyMap<RouterProvider, RouterInferenceProvider> {
@@ -48,7 +85,8 @@ export class CloudRouterManager {
     ]);
   }
 
-  async route(request: CloudRouteRequest): Promise<CloudRouteResult> {
+  /** The routing decision itself. Wrapped by route() so every path is traced. */
+  private async decide(request: CloudRouteRequest): Promise<CloudRouteResult> {
     const snapshot = await this.configurations.findPublishedSnapshot();
     if (!snapshot) {
       return { available: false, reason: CLOUD_ROUTER_UNAVAILABLE_NO_CONFIGURATION };

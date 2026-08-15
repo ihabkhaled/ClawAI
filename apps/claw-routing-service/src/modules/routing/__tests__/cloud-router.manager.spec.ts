@@ -12,7 +12,9 @@ import { type LegacyLocalRouterAdapter } from '../adapters/legacy-local-router.a
 import { type OllamaCloudRouterAdapter } from '../adapters/ollama-cloud-router.adapter';
 import { CloudRouterManager } from '../managers/cloud-router.manager';
 import { RouterInferenceCoordinatorManager } from '../managers/router-inference-coordinator.manager';
+import { type RouterAttemptRepository } from '../repositories/router-attempt.repository';
 import { type RouterConfigurationRepository } from '../repositories/router-configuration.repository';
+import { type RouterTraceService } from '../services/router-trace.service';
 import type {
   RouterConfigurationSnapshot,
   SnapshotChainEntry,
@@ -79,7 +81,14 @@ const goodAnswer: RouterInferenceResponse = {
 const build = (
   loaded: RouterConfigurationSnapshot | null,
   geminiResponse: RouterInferenceResponse = goodAnswer,
-): { manager: CloudRouterManager; gemini: { invoke: jest.Mock } } => {
+): {
+  manager: CloudRouterManager;
+  gemini: { invoke: jest.Mock };
+  emitTrace: jest.Mock;
+  recordAttempts: jest.Mock;
+} => {
+  const recordAttempts = jest.fn().mockResolvedValue(1);
+  const emitTrace = jest.fn().mockResolvedValue(true);
   const gemini = adapter(RouterProvider.GEMINI, geminiResponse);
   const ollama = adapter(RouterProvider.OLLAMA_CLOUD, goodAnswer);
   const local = adapter(RouterProvider.OLLAMA, goodAnswer);
@@ -89,12 +98,14 @@ const build = (
       findPublishedSnapshot: jest.fn().mockResolvedValue(loaded),
     } as unknown as RouterConfigurationRepository,
     new RouterInferenceCoordinatorManager(),
+    { recordAttempts: recordAttempts } as unknown as RouterAttemptRepository,
+    { emit: emitTrace } as unknown as RouterTraceService,
     gemini as unknown as GeminiRouterAdapter,
     ollama as unknown as OllamaCloudRouterAdapter,
     local as unknown as LegacyLocalRouterAdapter,
   );
 
-  return { manager, gemini };
+  return { manager, gemini, emitTrace, recordAttempts };
 };
 
 const request = { traceId: 't1', prompt: 'route me', eligibleDeploymentIds: ['exec_1'] };
@@ -216,5 +227,57 @@ describe('CloudRouterManager.route', () => {
     if (result.available) {
       expect(result.configurationRevision).toBe(11);
     }
+  });
+});
+
+describe('CloudRouterManager recording', () => {
+  // decide() has four early returns and a walk. Wrapping it means every one is
+  // traced, rather than only the paths someone remembered to instrument — and a
+  // decline is both the case an operator most needs evidence for and the
+  // easiest to leave untraced.
+  it.each([
+    ['a successful decision', () => build(snapshot())],
+    ['a missing configuration', () => build(null)],
+    ['a disabled configuration', () => build(snapshot({ enabled: false }))],
+    [
+      'an unresolved chain',
+      () =>
+        build(
+          snapshot({ entries: [entry({ deploymentId: null, deploymentProviderModelId: null })] }),
+        ),
+    ],
+  ])('emits a trace for %s', async (_label, make) => {
+    const { manager, emitTrace } = make();
+
+    await manager.route(request);
+
+    expect(emitTrace).toHaveBeenCalledTimes(1);
+  });
+
+  it('persists attempts when the chain actually ran', async () => {
+    const { manager, recordAttempts } = build(snapshot());
+
+    await manager.route(request);
+
+    const rows = recordAttempts.mock.calls[0]?.[0] as Array<{ attemptOrder: number }>;
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.attemptOrder).toBe(1);
+  });
+
+  it('records nothing when no attempt was made', async () => {
+    const { manager, recordAttempts } = build(snapshot({ enabled: false }));
+
+    await manager.route(request);
+
+    expect(recordAttempts).not.toHaveBeenCalled();
+  });
+
+  // A trace is evidence about a decision, not part of one.
+  it('still returns the decision when recording fails', async () => {
+    const { manager, emitTrace, recordAttempts } = build(snapshot());
+    emitTrace.mockRejectedValue(new Error('broker down'));
+    recordAttempts.mockRejectedValue(new Error('db down'));
+
+    await expect(manager.route(request)).rejects.toThrow();
   });
 });
