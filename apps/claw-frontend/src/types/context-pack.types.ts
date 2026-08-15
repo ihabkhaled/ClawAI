@@ -1,6 +1,7 @@
 import type { ContextPackItemType } from '@/enums';
 
 import type { FormFieldErrors } from './component.types';
+import type { UseSortableDragArgs, UseSortableDragReturn } from './drag-reorder.types';
 
 export type ContextPack = {
   id: string;
@@ -89,18 +90,9 @@ export type ContextPackItemFormStateReturn = {
   handleOpenChange: (nextOpen: boolean) => void;
 };
 
-export type UseContextPackItemDragArgs = {
-  items: ContextPackItem[];
-  isDragSupported: boolean;
-  onReorder: (itemId: string, newSortOrder: number) => void;
-};
-
-export type UseContextPackItemDragReturn = {
-  draggingIndex: number | null;
-  targetIndex: number | null;
-  handleDragStart: (index: number) => void;
-  handleDragOver: (event: React.DragEvent, index: number) => void;
-  handleDragLeave: (event: React.DragEvent) => void;
-  handleDrop: (event: React.DragEvent, index: number) => void;
-  handleDragEnd: () => void;
-};
+// Aliases over the generic drag-reorder types (drag-reorder.types.ts) so
+// every existing import of these two names keeps working unchanged — the
+// underlying hook (use-context-pack-item-drag.ts) is now generic and reused
+// verbatim by the smart-router admin's chain-entry reordering.
+export type UseContextPackItemDragArgs = UseSortableDragArgs<ContextPackItem>;
+export type UseContextPackItemDragReturn = UseSortableDragReturn;

@@ -79,6 +79,7 @@ export const ROUTES = {
   ADMIN_ROLE_DETAIL: (id: string) => `/admin/roles/${id}` as const,
   ADMIN_RUNTIME_PROGRESS: '/admin/runtime-progress',
   ADMIN_DEPLOYMENT: '/admin/deployment',
+  ADMIN_SMART_ROUTER: '/admin/smart-router',
   USAGE: '/usage',
   PLAN: '/plan',
   BILLING: '/billing',

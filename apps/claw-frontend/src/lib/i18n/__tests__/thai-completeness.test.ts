@@ -51,6 +51,15 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set([
   '{"capability": 0.2, "domain": 0.1, ...}',
   '{ms}ms',
   '© {year} ClawAI · v{version}',
+  'AWS Bedrock',
+  'Anthropic',
+  'DeepSeek',
+  'Gemini',
+  'Grok',
+  'Ollama',
+  'Ollama Cloud',
+  'OpenAI',
+  'ms',
 ]);
 
 function placeholders(value: string): string[] {
@@ -64,7 +73,7 @@ describe('Thai dictionary completeness', () => {
     const thai = flatten(th);
 
     expect(Object.keys(thai).sort()).toEqual(Object.keys(english).sort());
-    expect(Object.keys(thai)).toHaveLength(4051);
+    expect(Object.keys(thai)).toHaveLength(4163);
     expect(source).not.toContain("from './en'");
     expect(source).not.toContain('...en');
     expect(source).not.toContain('à¸');

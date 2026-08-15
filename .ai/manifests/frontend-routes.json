@@ -177,6 +177,11 @@
       "route": "/admin/runtime-progress"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/smart-router/page.tsx",
+      "kind": "page",
+      "route": "/admin/smart-router"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/admin/suggestion-rules/page.tsx",
       "kind": "page",
       "route": "/admin/suggestion-rules"

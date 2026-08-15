@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const th: TranslationDictionary = {
   common: {
@@ -185,6 +186,7 @@ export const th: TranslationDictionary = {
     adminRuntimeProgress: 'การวินิจฉัยรันไทม์',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.th.navigationLabel,
     adminPaymentGateways: 'เกตเวย์การชำระเงิน',
+    adminSmartRouter: 'สมาร์ทเราเตอร์',
     plan: 'แผนของฉัน',
     billing: 'การเรียกเก็บเงิน',
     usage: 'การใช้งาน',
@@ -3137,6 +3139,7 @@ export const th: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.th.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.th,
+  smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.th,
   adminBilling: {
     title: 'แดชบอร์ดการเรียกเก็บเงิน',
     description: 'รายได้ ต้นทุนผู้ให้บริการ อัตรากำไร และสถานะการสมัครสมาชิก',

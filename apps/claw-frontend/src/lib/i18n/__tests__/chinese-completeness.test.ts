@@ -48,6 +48,14 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set([
   '© {year} ClawAI · v{version}',
   'X',
   '18',
+  'AWS Bedrock',
+  'Anthropic',
+  'DeepSeek',
+  'Gemini',
+  'Grok',
+  'Ollama Cloud',
+  'OpenAI',
+  'llama.cpp',
 ]);
 
 const placeholders = (value: string): string[] =>
@@ -59,7 +67,7 @@ describe('Simplified Chinese dictionary completeness', () => {
     const english = flatten(en);
     const chinese = flatten(zh);
     expect(Object.keys(chinese).sort()).toEqual(Object.keys(english).sort());
-    expect(Object.keys(chinese)).toHaveLength(4051);
+    expect(Object.keys(chinese)).toHaveLength(4163);
     expect(source).not.toContain("from './en'");
     expect(source).not.toContain('...en');
     expect(source).not.toContain('ZXPH');

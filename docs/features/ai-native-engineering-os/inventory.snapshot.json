@@ -49,7 +49,7 @@
           "apps/claw-frontend/src/lib/i18n/locales"
         ],
         "kind": "stale-locale-count",
-        "message": "CLAUDE.md claims 13 locales but 15 locale files exist",
+        "message": "CLAUDE.md claims 13 locales but 16 locale files exist",
         "severity": "low"
       },
       {
@@ -58,7 +58,7 @@
           "apps/claw-frontend/src/lib/i18n/locales"
         ],
         "kind": "stale-locale-count",
-        "message": "CODEX.md claims 13 locales but 15 locale files exist",
+        "message": "CODEX.md claims 13 locales but 16 locale files exist",
         "severity": "low"
       },
       {
@@ -67,7 +67,7 @@
           "apps/claw-frontend/src/lib/i18n/locales"
         ],
         "kind": "stale-locale-count",
-        "message": "CODEX.md claims 13 locales but 15 locale files exist",
+        "message": "CODEX.md claims 13 locales but 16 locale files exist",
         "severity": "low"
       },
       {
@@ -76,7 +76,7 @@
           "apps/claw-frontend/src/lib/i18n/locales"
         ],
         "kind": "stale-locale-count",
-        "message": "README.md claims 13 locales but 15 locale files exist",
+        "message": "README.md claims 13 locales but 16 locale files exist",
         "severity": "low"
       }
     ]
@@ -6273,6 +6273,11 @@
         "route": "/admin/runtime-progress"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/smart-router/page.tsx",
+        "kind": "page",
+        "route": "/admin/smart-router"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/suggestion-rules/page.tsx",
         "kind": "page",
         "route": "/admin/suggestion-rules"
@@ -7167,9 +7172,9 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4388
+        "value": 4390
       },
-      "localeCount": 15,
+      "localeCount": 16,
       "locales": [
         "ar",
         "de",
@@ -7184,6 +7189,7 @@
         "pt",
         "router-trace-translations",
         "ru",
+        "smart-router-admin-translations",
         "th",
         "zh"
       ],
@@ -8799,7 +8805,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 281
+        "testFiles": 308
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9547,8 +9553,8 @@
     "endpointCount": 584,
     "envVarCount": 343,
     "eventCount": 166,
-    "frontendRouteCount": 117,
-    "localeCount": 15,
+    "frontendRouteCount": 118,
+    "localeCount": 16,
     "nginxRouteCount": 54,
     "permissionCount": 38,
     "portCount": 16,
@@ -9556,7 +9562,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 875,
+    "totalTestFiles": 902,
     "workspaceCount": 25
   }
 }

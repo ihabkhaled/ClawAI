@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const fa: TranslationDictionary = {
   common: {
@@ -188,6 +189,7 @@ export const fa: TranslationDictionary = {
     adminRuntimeProgress: 'تشخیص زمان اجرا',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.fa.navigationLabel,
     adminPaymentGateways: 'درگاه‌های پرداخت',
+    adminSmartRouter: 'مسیریاب هوشمند',
     plan: 'طرح من',
     billing: 'صورتحساب',
     usage: 'استفاده',
@@ -3158,6 +3160,7 @@ export const fa: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.fa.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fa,
+  smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.fa,
   adminBilling: {
     title: 'داشبورد صورتحساب',
     description: 'درآمد، هزینه ارائه دهنده، حاشیه و سلامت اشتراک.',

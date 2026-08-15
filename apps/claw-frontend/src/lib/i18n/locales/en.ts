@@ -2,6 +2,7 @@
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const en: TranslationDictionary = {
   common: {
@@ -187,6 +188,7 @@ export const en: TranslationDictionary = {
     adminRuntimeProgress: 'Runtime diagnostics',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.en.navigationLabel,
     adminPaymentGateways: 'Payment gateways',
+    adminSmartRouter: 'Smart Router',
     plan: 'My Plan',
     billing: 'Billing',
     usage: 'Usage',
@@ -3136,6 +3138,7 @@ export const en: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.en.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.en,
+  smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.en,
   adminBilling: {
     title: 'Billing dashboard',
     description: 'Revenue, provider cost, margin and subscription health.',

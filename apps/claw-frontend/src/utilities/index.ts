@@ -36,6 +36,13 @@ export {
   getContextPackItemTypeTone,
 } from './context-pack-item-style.utility';
 export { getLifecycleBadgeVariant } from './lifecycle.utility';
+export {
+  toChainEntryInput,
+  buildReorderedEntries,
+  buildEntriesWithoutEntry,
+  buildEntriesWithAppendedEntry,
+} from './router-configuration-entry.utility';
+export { diffRouterConfigurations } from './router-configuration-diff.utility';
 export { getInitials } from './string.utility';
 export {
   languageToLocale,

@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const de: TranslationDictionary = {
   common: {
@@ -188,6 +189,7 @@ export const de: TranslationDictionary = {
     adminRuntimeProgress: 'Laufzeitdiagnose',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.de.navigationLabel,
     adminPaymentGateways: 'Zahlungs-Gateways',
+    adminSmartRouter: 'Smart Router',
     plan: 'Mein Tarif',
     billing: 'Abrechnung',
     usage: 'Nutzung',
@@ -3191,6 +3193,7 @@ export const de: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.de.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.de,
+  smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.de,
   adminBilling: {
     title: 'Abrechnungsübersicht',
     description: 'Umsatz, Anbieterkosten, Marge und Zustand der Abonnements.',

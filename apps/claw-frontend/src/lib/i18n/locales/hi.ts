@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const hi: TranslationDictionary = {
   common: {
@@ -187,6 +188,7 @@ export const hi: TranslationDictionary = {
     adminRuntimeProgress: 'रनटाइम डायग्नोस्टिक्स',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.hi.navigationLabel,
     adminPaymentGateways: 'भुगतान गेटवे',
+    adminSmartRouter: 'स्मार्ट राउटर',
     plan: 'मेरी योजना',
     billing: 'बिलिंग',
     usage: 'उपयोग',
@@ -3156,6 +3158,7 @@ export const hi: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.hi.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.hi,
+  smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.hi,
   adminBilling: {
     title: 'बिलिंग डैशबोर्ड',
     description: 'राजस्व, प्रदाता लागत, मार्जिन और सदस्यता की स्थिति।',

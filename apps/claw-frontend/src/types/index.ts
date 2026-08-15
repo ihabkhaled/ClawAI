@@ -196,6 +196,11 @@ export type {
   UseContextPackItemDragReturn,
 } from './context-pack.types';
 export type {
+  SortableDragItem,
+  UseSortableDragArgs,
+  UseSortableDragReturn,
+} from './drag-reorder.types';
+export type {
   ContextPackVersion,
   VersionedItemSnapshot,
   VersionDiff,
