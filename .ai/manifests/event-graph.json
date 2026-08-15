@@ -1095,6 +1095,14 @@
       "producers": []
     },
     {
+      "consumers": [],
+      "key": "ROUTER_TRACE_EMITTED",
+      "pattern": "router.trace.emitted",
+      "producers": [
+        "claw-routing-service"
+      ]
+    },
+    {
       "consumers": [
         "claw-audit-service",
         "claw-routing-service"

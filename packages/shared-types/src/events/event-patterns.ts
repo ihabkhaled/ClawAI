@@ -141,6 +141,11 @@ export enum EventPattern {
   ROUTING_CIRCUIT_BREAKER_OPENED = 'routing.circuit_breaker.opened',
   ROUTING_CIRCUIT_BREAKER_CLOSED = 'routing.circuit_breaker.closed',
   ROUTING_CIRCUIT_BREAKER_HALF_OPEN = 'routing.circuit_breaker.half_open',
+  // === Cloud Smart Router — safe routing trace ===
+  // One batch per routing decision rather than one message per event: a walk
+  // emits up to ~30 events, and 30 separate publishes per request would put
+  // more load on the bus than the routing itself.
+  ROUTER_TRACE_EMITTED = 'router.trace.emitted',
   // === Smart Router Flagship (Phase 6 — model knowledge sync) ===
   ROUTING_MODELS_SYNCED = 'routing.models.synced',
   // === Memory V2 Flagship (suggestion queue, scopes, sensitivity, audit, usage) ===

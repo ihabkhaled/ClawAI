@@ -5816,6 +5816,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "ROUTER_TRACE_EMITTED",
+        "pattern": "router.trace.emitted",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "ROUTING_CIRCUIT_BREAKER_CLOSED",
         "pattern": "routing.circuit_breaker.closed",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -8790,7 +8795,7 @@
       },
       "claw-routing-service": {
         "runner": "jest",
-        "testFiles": 65
+        "testFiles": 66
       },
       "claw-server-logs-service": {
         "runner": "jest",
@@ -9504,7 +9509,7 @@
     "dockerServiceCount": 41,
     "endpointCount": 577,
     "envVarCount": 343,
-    "eventCount": 165,
+    "eventCount": 166,
     "frontendRouteCount": 117,
     "localeCount": 14,
     "nginxRouteCount": 54,
@@ -9514,7 +9519,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 853,
+    "totalTestFiles": 854,
     "workspaceCount": 25
   }
 }

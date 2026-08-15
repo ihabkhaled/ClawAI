@@ -8,6 +8,7 @@ import { RoutingController } from './controllers/routing.controller';
 import { ConnectorCredentialService } from './services/connector-credential.service';
 import { RoutingService } from './services/routing.service';
 import { CloudRouterManager } from './managers/cloud-router.manager';
+import { RouterTraceService } from './services/router-trace.service';
 import { RouterInferenceCoordinatorManager } from './managers/router-inference-coordinator.manager';
 import { RoutingManager } from './managers/routing.manager';
 import { OllamaRouterManager } from './managers/ollama-router.manager';
@@ -38,6 +39,7 @@ import { ReplayCasesRepository } from './repositories/replay-cases.repository';
     // its entries are unresolved aliases until discovery runs.
     RouterInferenceCoordinatorManager,
     CloudRouterManager,
+    RouterTraceService,
     RouterConfigurationRepository,
     RouterAttemptRepository,
     ConnectorCredentialService,
