@@ -4,7 +4,11 @@ import { type PromptBuilderManager } from '../managers/prompt-builder.manager';
 import { ComplexityClassifierManager } from '../managers/complexity-classifier.manager';
 import { CapabilityRouterManager } from '../managers/capability-router.manager';
 import { ImageDetectionManager } from '../managers/image-detection.manager';
-import { RoutingMode } from '../../../generated/prisma';
+import { type CloudRouterManager } from '../managers/cloud-router.manager';
+import { type CloudRouterEligibilityManager } from '../managers/cloud-router-eligibility.manager';
+import { type CloudRouterPromptManager } from '../managers/cloud-router-prompt.manager';
+import { RouterErrorCode } from '../../../common/enums';
+import { RouterProvider, RoutingMode } from '../../../generated/prisma';
 import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
 import { type RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { type RoutingContext } from '../types/routing.types';
@@ -12,6 +16,19 @@ import { LocalModelRole } from '@claw/shared-types';
 
 const mockPoliciesRepo = (): Partial<Record<keyof RoutingPoliciesRepository, jest.Mock>> => ({
   findActivePolicies: jest.fn().mockResolvedValue([]),
+});
+
+// Defaults to "nothing eligible", so every test that does not care about the
+// cloud router falls straight through to the v1 path unchanged — exactly as
+// tryCloudRouting behaves in production when no deployment qualifies.
+const mockCloudRouterDeps = (): {
+  cloudRouter: { route: jest.Mock };
+  cloudRouterEligibility: { resolveEligibleDeployments: jest.Mock };
+  cloudRouterPrompt: { buildPrompt: jest.Mock };
+} => ({
+  cloudRouter: { route: jest.fn() },
+  cloudRouterEligibility: { resolveEligibleDeployments: jest.fn().mockResolvedValue([]) },
+  cloudRouterPrompt: { buildPrompt: jest.fn().mockReturnValue('cloud router prompt') },
 });
 
 const baseContext: RoutingContext = {
@@ -34,15 +51,20 @@ describe('RoutingManager', () => {
     getInstalledModels: jest.Mock;
     invalidateCache: jest.Mock;
   };
+  let cloudRouter: { route: jest.Mock };
+  let cloudRouterEligibility: { resolveEligibleDeployments: jest.Mock };
+  let cloudRouterPrompt: { buildPrompt: jest.Mock };
+  let ollamaRouter: { route: jest.Mock };
 
   beforeEach(() => {
     policiesRepo = mockPoliciesRepo();
-    const ollamaRouter = { route: jest.fn().mockResolvedValue(null) };
+    ollamaRouter = { route: jest.fn().mockResolvedValue(null) };
     promptBuilder = {
       fetchInstalledModels: jest.fn().mockResolvedValue([]),
       getInstalledModels: jest.fn().mockResolvedValue([]),
       invalidateCache: jest.fn(),
     };
+    ({ cloudRouter, cloudRouterEligibility, cloudRouterPrompt } = mockCloudRouterDeps());
     // Use real managers (pure logic, no deps)
     const complexityClassifier = new ComplexityClassifierManager();
     const capabilityRouter = new CapabilityRouterManager();
@@ -54,6 +76,9 @@ describe('RoutingManager', () => {
       complexityClassifier,
       capabilityRouter,
       imageDetection,
+      cloudRouter as unknown as CloudRouterManager,
+      cloudRouterEligibility as unknown as CloudRouterEligibilityManager,
+      cloudRouterPrompt as unknown as CloudRouterPromptManager,
     );
   });
 
@@ -1190,6 +1215,11 @@ describe('RoutingManager', () => {
           reason: 'best for analysis',
           routerModel: 'qwen3:1.7b',
         });
+        const {
+          cloudRouter: privacyCloudRouter,
+          cloudRouterEligibility: privacyEligibility,
+          cloudRouterPrompt: privacyPrompt,
+        } = mockCloudRouterDeps();
         const privacyManager = new RoutingManager(
           policiesRepo as unknown as RoutingPoliciesRepository,
           { route } as unknown as OllamaRouterManager,
@@ -1197,6 +1227,9 @@ describe('RoutingManager', () => {
           new ComplexityClassifierManager(),
           new CapabilityRouterManager(),
           new ImageDetectionManager(),
+          privacyCloudRouter as unknown as CloudRouterManager,
+          privacyEligibility as unknown as CloudRouterEligibilityManager,
+          privacyPrompt as unknown as CloudRouterPromptManager,
         );
 
         const result = await privacyManager.evaluateRoute({
@@ -1206,6 +1239,10 @@ describe('RoutingManager', () => {
         });
 
         expect(route).not.toHaveBeenCalled();
+        // The cloud router must never even be consulted for enforced-local
+        // content: handleAuto returns via buildLocalPrivacyDecision before
+        // tryCloudRouting is reachable.
+        expect(privacyEligibility.resolveEligibleDeployments).not.toHaveBeenCalled();
         expect(result.selectedProvider).toBe('local-ollama');
         expect(result.reasonTags).toContain('privacy_enforced');
       },
@@ -1225,6 +1262,11 @@ describe('RoutingManager', () => {
         reason: 'multimodal analysis',
         routerModel: 'qwen3:1.7b',
       });
+      const {
+        cloudRouter: privacyCloudRouter,
+        cloudRouterEligibility: privacyEligibility,
+        cloudRouterPrompt: privacyPrompt,
+      } = mockCloudRouterDeps();
       const privacyManager = new RoutingManager(
         policiesRepo as unknown as RoutingPoliciesRepository,
         { route } as unknown as OllamaRouterManager,
@@ -1232,6 +1274,9 @@ describe('RoutingManager', () => {
         new ComplexityClassifierManager(),
         new CapabilityRouterManager(),
         new ImageDetectionManager(),
+        privacyCloudRouter as unknown as CloudRouterManager,
+        privacyEligibility as unknown as CloudRouterEligibilityManager,
+        privacyPrompt as unknown as CloudRouterPromptManager,
       );
 
       const result = await privacyManager.evaluateRoute({
@@ -1639,6 +1684,151 @@ describe('RoutingManager', () => {
       expect(result.detectedCategory).toBeDefined();
       expect(result.matchCount).toBeGreaterThanOrEqual(1);
       expect(result.latencySlaMs).toBeGreaterThan(0);
+    });
+  });
+
+  // Batch 5: CloudRouterManager wired behind the existing privacy early-return
+  // and ahead of tryOllamaAssistedRouting. Every decline path — nothing
+  // eligible, an unavailable cloud router, a failed chain walk, or a thrown
+  // error — must fall through to the unchanged v1 path rather than surface.
+  describe('cloud router wiring in AUTO mode', () => {
+    const eligibleDeployment = {
+      id: 'dep_1',
+      provider: RouterProvider.GEMINI,
+      providerModelId: 'gemini-2.5-flash',
+    };
+
+    const availableDecision = {
+      available: true as const,
+      configurationRevision: 5,
+      excluded: [],
+      outcome: {
+        ok: true as const,
+        decision: {
+          deploymentId: 'dep_1',
+          workflow: 'DIRECT_LLM',
+          confidence: 0.92,
+          reasonCodes: ['strong_match'],
+        },
+        attempts: [],
+        fallbackDepth: 0,
+      },
+    };
+
+    it('returns the cloud router decision and never calls the v1 Ollama-assisted path', async () => {
+      cloudRouterEligibility.resolveEligibleDeployments.mockResolvedValue([eligibleDeployment]);
+      cloudRouter.route.mockResolvedValue(availableDecision);
+
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'what is the capital of France?',
+        userMode: RoutingMode.AUTO,
+      });
+
+      expect(result.selectedProvider).toBe(RouterProvider.GEMINI);
+      expect(result.selectedModel).toBe('gemini-2.5-flash');
+      expect(result.confidence).toBe(0.92);
+      expect(result.reasonTags).toContain('cloud_router');
+      expect(result.reasonTags).toContain('strong_match');
+      expect(ollamaRouter.route).not.toHaveBeenCalled();
+    });
+
+    it('passes the traceId and eligible deployment ids the eligibility filter resolved', async () => {
+      cloudRouterEligibility.resolveEligibleDeployments.mockResolvedValue([eligibleDeployment]);
+      cloudRouter.route.mockResolvedValue(availableDecision);
+
+      await manager.evaluateRoute({
+        ...baseContext,
+        message: 'what is the capital of France?',
+        userMode: RoutingMode.AUTO,
+      });
+
+      expect(cloudRouter.route).toHaveBeenCalledWith(
+        expect.objectContaining({
+          traceId: expect.any(String),
+          prompt: 'cloud router prompt',
+          eligibleDeploymentIds: ['dep_1'],
+        }),
+      );
+    });
+
+    it.each([
+      [
+        'no published configuration',
+        { available: false as const, reason: 'NO_PUBLISHED_CONFIGURATION' },
+      ],
+      ['configuration disabled', { available: false as const, reason: 'CONFIGURATION_DISABLED' }],
+      [
+        'no runnable chain entry',
+        { available: false as const, reason: 'NO_RUNNABLE_CHAIN_ENTRY', excluded: [] },
+      ],
+    ])(
+      'falls through to the v1 path when the cloud router is unavailable (%s)',
+      async (_label, decline) => {
+        cloudRouterEligibility.resolveEligibleDeployments.mockResolvedValue([eligibleDeployment]);
+        cloudRouter.route.mockResolvedValue(decline);
+
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          message: 'hi',
+          userMode: RoutingMode.AUTO,
+        });
+
+        expect(ollamaRouter.route).toHaveBeenCalled();
+        expect(result.reasonTags).not.toContain('cloud_router');
+      },
+    );
+
+    it('falls through to the v1 path when the chain walk fails', async () => {
+      cloudRouterEligibility.resolveEligibleDeployments.mockResolvedValue([eligibleDeployment]);
+      cloudRouter.route.mockResolvedValue({
+        available: true,
+        configurationRevision: 5,
+        excluded: [],
+        outcome: {
+          ok: false,
+          code: RouterErrorCode.PROVIDER_5XX,
+          attempts: [],
+          quarantinedDeploymentIds: [],
+        },
+      });
+
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'hi',
+        userMode: RoutingMode.AUTO,
+      });
+
+      expect(ollamaRouter.route).toHaveBeenCalled();
+      expect(result.reasonTags).not.toContain('cloud_router');
+    });
+
+    it('falls through to the v1 path without propagating when the cloud router throws', async () => {
+      cloudRouterEligibility.resolveEligibleDeployments.mockResolvedValue([eligibleDeployment]);
+      cloudRouter.route.mockRejectedValue(new Error('broker down'));
+
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'hi',
+        userMode: RoutingMode.AUTO,
+      });
+
+      expect(ollamaRouter.route).toHaveBeenCalled();
+      expect(result.reasonTags).not.toContain('cloud_router');
+    });
+
+    it('skips the cloud router entirely when the eligibility filter returns nothing, without calling route()', async () => {
+      cloudRouterEligibility.resolveEligibleDeployments.mockResolvedValue([]);
+
+      const result = await manager.evaluateRoute({
+        ...baseContext,
+        message: 'hi',
+        userMode: RoutingMode.AUTO,
+      });
+
+      expect(cloudRouter.route).not.toHaveBeenCalled();
+      expect(ollamaRouter.route).toHaveBeenCalled();
+      expect(result.reasonTags).not.toContain('cloud_router');
     });
   });
 });

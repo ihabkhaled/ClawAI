@@ -1,6 +1,7 @@
+import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { LocalModelRole } from '@claw/shared-types';
-import { RoutingMode } from '../../../generated/prisma';
+import { RouterProvider, RoutingMode } from '../../../generated/prisma';
 import { ComplexityClass } from '../../../common/enums/complexity-class.enum';
 import { matchKeyword, recordGet } from '../../../common/utilities';
 import { RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
@@ -9,6 +10,11 @@ import { PromptBuilderManager } from './prompt-builder.manager';
 import { ComplexityClassifierManager } from './complexity-classifier.manager';
 import { CapabilityRouterManager } from './capability-router.manager';
 import { ImageDetectionManager } from './image-detection.manager';
+import { CloudRouterManager } from './cloud-router.manager';
+import { CloudRouterEligibilityManager } from './cloud-router-eligibility.manager';
+import { CloudRouterPromptManager } from './cloud-router-prompt.manager';
+import type { EligibleDeploymentRecord } from '../types/model-deployment.types';
+import type { RouterDecisionPayload } from '../types/router-inference.types';
 import { PROVIDER_INFERENCE_RULES } from '../constants/provider-inference.constants';
 import type { ProviderInferenceRule } from '../types/provider-inference.types';
 import type { ComplexityClassification } from '../types/complexity.types';
@@ -102,6 +108,9 @@ export class RoutingManager {
     private readonly complexityClassifier: ComplexityClassifierManager,
     private readonly capabilityRouter: CapabilityRouterManager,
     private readonly imageDetection: ImageDetectionManager,
+    private readonly cloudRouter: CloudRouterManager,
+    private readonly cloudRouterEligibility: CloudRouterEligibilityManager,
+    private readonly cloudRouterPrompt: CloudRouterPromptManager,
   ) {}
 
   async evaluateRoute(context: RoutingContext): Promise<RoutingDecisionResult> {
@@ -452,6 +461,11 @@ export class RoutingManager {
       return this.buildLocalPrivacyDecision(context, localEnforcementDomain);
     }
 
+    const cloudResult = await this.tryCloudRouting(context);
+    if (cloudResult) {
+      return cloudResult;
+    }
+
     const ollamaResult = await this.tryOllamaAssistedRouting(context);
     if (ollamaResult) {
       return ollamaResult;
@@ -520,6 +534,90 @@ export class RoutingManager {
       costClass: 'medium',
       detectedCategory: capabilityResult.capability.toLowerCase(),
       fallbackChain: this.buildFallbackChain(primary, context),
+    };
+  }
+
+  // Only reached for non-enforced domains: handleAuto returns before this for
+  // anything detectLocalEnforcementDomain flags, so the cloud router — like
+  // tryOllamaAssistedRouting below it — never sees regulated content.
+  //
+  // A null return means "use the v1 path", covering three distinct cases:
+  // nothing is eligible (skipped before ever calling CloudRouterManager —
+  // asking for a trace on a call that could not have run anything would be
+  // noise, not evidence), the admin-managed configuration is unpublished or
+  // disabled (CloudRouterManager's own rollback switch), or the call threw.
+  // A thrown error is caught here rather than left to propagate, because a
+  // cloud router failure must never take Auto mode down with it.
+  private async tryCloudRouting(context: RoutingContext): Promise<RoutingDecisionResult | null> {
+    const eligibleDeployments =
+      await this.cloudRouterEligibility.resolveEligibleDeployments(context);
+    if (eligibleDeployments.length === 0) {
+      this.logger.debug('handleAuto: no cloud-eligible deployments — skipping cloud router');
+      return null;
+    }
+
+    try {
+      const prompt = this.cloudRouterPrompt.buildPrompt(context, eligibleDeployments);
+      const result = await this.cloudRouter.route({
+        traceId: randomUUID(),
+        prompt,
+        eligibleDeploymentIds: eligibleDeployments.map((deployment) => deployment.id),
+      });
+
+      if (!result.available) {
+        this.logger.debug(
+          `handleAuto: cloud router unavailable (${result.reason}) — falling back to v1`,
+        );
+        return null;
+      }
+      const { outcome } = result;
+      if (!outcome.ok) {
+        this.logger.warn(
+          `handleAuto: cloud router chain failed (${outcome.code}) — falling back to v1`,
+        );
+        return null;
+      }
+
+      const selected = eligibleDeployments.find(
+        (deployment) => deployment.id === outcome.decision.deploymentId,
+      );
+      if (!selected) {
+        // Defensive rather than expected: the coordinator already refuses a
+        // decision naming an id outside eligibleDeploymentIds.
+        this.logger.warn(
+          `handleAuto: cloud router selected an unrecognized deployment ${outcome.decision.deploymentId} — falling back to v1`,
+        );
+        return null;
+      }
+
+      this.logger.log(
+        `handleAuto: cloud router selected ${selected.provider}/${selected.providerModelId} (confidence=${String(outcome.decision.confidence)})`,
+      );
+      return this.buildCloudRoutingDecision(selected, outcome.decision, context);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'unknown error';
+      this.logger.warn(`handleAuto: cloud router threw - ${message} — falling back to v1`);
+      return null;
+    }
+  }
+
+  private buildCloudRoutingDecision(
+    selected: EligibleDeploymentRecord,
+    decision: RouterDecisionPayload,
+    context: RoutingContext,
+  ): RoutingDecisionResult {
+    const isLocal = selected.provider === RouterProvider.OLLAMA;
+    const primary = { provider: selected.provider, model: selected.providerModelId };
+    return {
+      selectedProvider: selected.provider,
+      selectedModel: selected.providerModelId,
+      routingMode: RoutingMode.AUTO,
+      confidence: decision.confidence,
+      reasonTags: ['auto', 'cloud_router', ...decision.reasonCodes],
+      privacyClass: isLocal ? 'local' : 'cloud',
+      costClass: isLocal ? 'free' : 'medium',
+      fallbackChain: this.buildFallbackChain(primary, context),
+      estimatedCostPer1M: isLocal ? 0 : this.estimateProviderCost(selected.provider),
     };
   }
 

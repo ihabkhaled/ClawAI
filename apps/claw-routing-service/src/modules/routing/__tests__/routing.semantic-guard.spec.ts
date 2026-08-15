@@ -1,5 +1,8 @@
 import { RoutingMode } from '../../../generated/prisma';
 import { CapabilityRouterManager } from '../managers/capability-router.manager';
+import { type CloudRouterManager } from '../managers/cloud-router.manager';
+import { type CloudRouterEligibilityManager } from '../managers/cloud-router-eligibility.manager';
+import { type CloudRouterPromptManager } from '../managers/cloud-router-prompt.manager';
 import { ComplexityClassifierManager } from '../managers/complexity-classifier.manager';
 import { ImageDetectionManager } from '../managers/image-detection.manager';
 import { type OllamaRouterManager } from '../managers/ollama-router.manager';
@@ -10,6 +13,16 @@ import { type RoutingContext } from '../types/routing.types';
 
 const mockPoliciesRepo = (): Partial<Record<keyof RoutingPoliciesRepository, jest.Mock>> => ({
   findActivePolicies: jest.fn().mockResolvedValue([]),
+});
+
+const mockCloudRouterDeps = (): {
+  cloudRouter: { route: jest.Mock };
+  cloudRouterEligibility: { resolveEligibleDeployments: jest.Mock };
+  cloudRouterPrompt: { buildPrompt: jest.Mock };
+} => ({
+  cloudRouter: { route: jest.fn() },
+  cloudRouterEligibility: { resolveEligibleDeployments: jest.fn().mockResolvedValue([]) },
+  cloudRouterPrompt: { buildPrompt: jest.fn().mockReturnValue('cloud router prompt') },
 });
 
 describe('RoutingManager semantic guard', () => {
@@ -23,6 +36,7 @@ describe('RoutingManager semantic guard', () => {
       getInstalledModels: jest.fn().mockResolvedValue([]),
       invalidateCache: jest.fn(),
     };
+    const { cloudRouter, cloudRouterEligibility, cloudRouterPrompt } = mockCloudRouterDeps();
     manager = new RoutingManager(
       policiesRepo as unknown as RoutingPoliciesRepository,
       ollamaRouter as unknown as OllamaRouterManager,
@@ -30,6 +44,9 @@ describe('RoutingManager semantic guard', () => {
       new ComplexityClassifierManager(),
       new CapabilityRouterManager(),
       new ImageDetectionManager(),
+      cloudRouter as unknown as CloudRouterManager,
+      cloudRouterEligibility as unknown as CloudRouterEligibilityManager,
+      cloudRouterPrompt as unknown as CloudRouterPromptManager,
     );
   });
 

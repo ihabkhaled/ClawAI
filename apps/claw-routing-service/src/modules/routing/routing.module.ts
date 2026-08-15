@@ -27,6 +27,9 @@ import { RoutingDecisionsRepository } from './repositories/routing-decisions.rep
 import { RoutingEducationRepository } from './repositories/routing-education.repository';
 import { ReplayRunsRepository } from './repositories/replay-runs.repository';
 import { ReplayCasesRepository } from './repositories/replay-cases.repository';
+import { ModelDeploymentRepository } from './repositories/model-deployment.repository';
+import { CloudRouterEligibilityManager } from './managers/cloud-router-eligibility.manager';
+import { CloudRouterPromptManager } from './managers/cloud-router-prompt.manager';
 
 @Module({
   imports: [IntelligenceModule, WorkflowsModule],
@@ -34,11 +37,17 @@ import { ReplayCasesRepository } from './repositories/replay-cases.repository';
   providers: [
     RoutingService,
     RoutingManager,
-    // Cloud Smart Router inference layer. Reachable through CloudRouterManager
-    // but not yet called by the v1 hot path; the seeded chain is disabled and
-    // its entries are unresolved aliases until discovery runs.
+    // Cloud Smart Router inference layer. Called from handleAuto via
+    // RoutingManager (batch 5), after the hard privacy early-return and
+    // before the legacy Ollama-assisted rollback path. Every decline path —
+    // no eligible deployment, unpublished/disabled configuration, chain
+    // exhaustion, or a thrown error — falls through to that rollback path
+    // unchanged.
     RouterInferenceCoordinatorManager,
     CloudRouterManager,
+    CloudRouterEligibilityManager,
+    CloudRouterPromptManager,
+    ModelDeploymentRepository,
     RouterTraceService,
     RouterConfigurationRepository,
     RouterAttemptRepository,
