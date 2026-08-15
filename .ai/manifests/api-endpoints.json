@@ -2198,6 +2198,11 @@
       },
       {
         "method": "GET",
+        "route": "/routing/decisions/:id/legacy-vs-cloud",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/routing/decisions/:threadId",
         "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
       },
@@ -2349,6 +2354,11 @@
       {
         "method": "POST",
         "route": "/routing/replay/cases/:caseId/review",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/replay/legacy-vs-cloud",
         "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
       },
       {
@@ -2958,5 +2968,5 @@
     ]
   },
   "generated": true,
-  "total": 584
+  "total": 586
 }

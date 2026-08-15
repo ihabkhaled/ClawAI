@@ -2281,6 +2281,11 @@
         },
         {
           "method": "GET",
+          "route": "/routing/decisions/:id/legacy-vs-cloud",
+          "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/routing/decisions/:threadId",
           "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
         },
@@ -2432,6 +2437,11 @@
         {
           "method": "POST",
           "route": "/routing/replay/cases/:caseId/review",
+          "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/routing/replay/legacy-vs-cloud",
           "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
         },
         {
@@ -8837,7 +8847,7 @@
       },
       "claw-routing-service": {
         "runner": "jest",
-        "testFiles": 86
+        "testFiles": 87
       },
       "claw-server-logs-service": {
         "runner": "jest",
@@ -9550,7 +9560,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 584,
+    "endpointCount": 586,
     "envVarCount": 343,
     "eventCount": 166,
     "frontendRouteCount": 118,
@@ -9562,7 +9572,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 902,
+    "totalTestFiles": 903,
     "workspaceCount": 25
   }
 }

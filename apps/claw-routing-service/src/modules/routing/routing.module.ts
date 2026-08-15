@@ -30,6 +30,7 @@ import { ReplayCasesRepository } from './repositories/replay-cases.repository';
 import { ModelDeploymentRepository } from './repositories/model-deployment.repository';
 import { CloudRouterEligibilityManager } from './managers/cloud-router-eligibility.manager';
 import { CloudRouterPromptManager } from './managers/cloud-router-prompt.manager';
+import { RouterShadowEvaluationManager } from './managers/router-shadow-evaluation.manager';
 
 @Module({
   imports: [IntelligenceModule, WorkflowsModule],
@@ -56,6 +57,7 @@ import { CloudRouterPromptManager } from './managers/cloud-router-prompt.manager
     OllamaCloudRouterAdapter,
     LegacyLocalRouterAdapter,
     ReplayManager,
+    RouterShadowEvaluationManager,
     AdaptiveLearningManager,
     RouterEducationManager,
     OllamaRouterManager,

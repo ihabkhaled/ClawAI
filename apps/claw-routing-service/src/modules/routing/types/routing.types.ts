@@ -3,6 +3,7 @@ import {
   type ComplexityClass as PrismaComplexityClass,
   type RoutingDecision,
   type RoutingMode,
+  type RoutingOutcomeRecord,
   type RoutingPolicy,
   type WorkflowKind,
 } from '../../../generated/prisma';
@@ -176,6 +177,13 @@ export interface HeuristicState {
 export type ModeHandler = (
   ctx: RoutingContext,
 ) => Promise<RoutingDecisionResult> | RoutingDecisionResult;
+
+/**
+ * A `RoutingDecision` with its (at most one, per the unique constraint)
+ * `RoutingOutcomeRecord` included — used by shadow/replay evaluation to read
+ * the legacy judge/critic signal without a second round trip.
+ */
+export type RoutingDecisionWithOutcomes = RoutingDecision & { outcomes: RoutingOutcomeRecord[] };
 
 export type { RoutingDecision, RoutingPolicy, RoutingMode };
 export type { ComplexityClassification } from './complexity.types';

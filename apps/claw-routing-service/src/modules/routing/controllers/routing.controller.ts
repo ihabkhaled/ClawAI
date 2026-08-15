@@ -13,6 +13,10 @@ import { EvaluateRouteDto, evaluateRouteSchema } from '../dto/evaluate-route.dto
 import { type ReplayRoutingDto, replayRoutingSchema } from '../dto/replay-routing.dto';
 import { type CompareRunsDto, compareRunsSchema } from '../dto/compare-runs.dto';
 import { ListReplayRunsDto, listReplayRunsSchema } from '../dto/list-replay-runs.dto';
+import {
+  type CompareLegacyCloudBatchDto,
+  compareLegacyCloudBatchSchema,
+} from '../dto/compare-legacy-cloud-batch.dto';
 import { ReviewCaseDto, reviewCaseSchema } from '../dto/review-case.dto';
 import {
   type RoutingDecision,
@@ -27,6 +31,10 @@ import type {
   ReplayRunSummary,
   RunComparisonResult,
 } from '../types/replay-run.types';
+import type {
+  LegacyVsCloudBatchResult,
+  LegacyVsCloudComparison,
+} from '../types/legacy-cloud-comparison.types';
 import type { RecoveryStats } from '../types/recovery.types';
 import type { AdaptiveLearningInsights } from '../types/adaptive-learning.types';
 import type {
@@ -133,6 +141,20 @@ export class RoutingController {
     @Query(new ZodValidationPipe(compareRunsSchema)) query: CompareRunsDto,
   ): Promise<RunComparisonResult> {
     return this.routingService.compareRuns(query.runId1, query.runId2);
+  }
+
+  // V4 Learning Evolution — challenger pass through CloudRouterManager,
+  // shadow-only (never affects the decision that actually served the user).
+  @Get('replay/legacy-vs-cloud')
+  async compareLegacyVsCloudBatch(
+    @Query(new ZodValidationPipe(compareLegacyCloudBatchSchema)) query: CompareLegacyCloudBatchDto,
+  ): Promise<LegacyVsCloudBatchResult> {
+    return this.routingService.compareLegacyVsCloudBatch(query);
+  }
+
+  @Get('decisions/:id/legacy-vs-cloud')
+  async compareLegacyVsCloud(@Param('id') id: string): Promise<LegacyVsCloudComparison> {
+    return this.routingService.compareLegacyVsCloud(id);
   }
 
   @Get('adaptive-insights')

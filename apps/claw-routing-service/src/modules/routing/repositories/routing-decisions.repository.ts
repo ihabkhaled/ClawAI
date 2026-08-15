@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { type Prisma, type RoutingDecision, RoutingMode } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { type CreateDecisionData } from '../types/routing.types';
+import { type CreateDecisionData, type RoutingDecisionWithOutcomes } from '../types/routing.types';
 import { type ReplayFilters } from '../types/replay.types';
 import { type RawRecoveryData } from '../types/recovery.types';
 
@@ -72,6 +72,32 @@ export class RoutingDecisionsRepository {
   }
 
   async findRecent(filters: ReplayFilters): Promise<RoutingDecision[]> {
+    return this.prisma.routingDecision.findMany({
+      where: this.buildRecentWhere(filters),
+      take: filters.limit ?? 50,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /** Single decision plus its judge/critic outcome, for shadow-evaluation quality signals. */
+  async findByIdWithOutcome(id: string): Promise<RoutingDecisionWithOutcomes | null> {
+    return this.prisma.routingDecision.findUnique({
+      where: { id },
+      include: { outcomes: true },
+    });
+  }
+
+  /** Same filters as findRecent, with the judge/critic outcome included for each row. */
+  async findRecentWithOutcomes(filters: ReplayFilters): Promise<RoutingDecisionWithOutcomes[]> {
+    return this.prisma.routingDecision.findMany({
+      where: this.buildRecentWhere(filters),
+      take: filters.limit ?? 50,
+      orderBy: { createdAt: 'desc' },
+      include: { outcomes: true },
+    });
+  }
+
+  private buildRecentWhere(filters: ReplayFilters): Prisma.RoutingDecisionWhereInput {
     const where: Prisma.RoutingDecisionWhereInput = {};
 
     if (filters.threadId) {
@@ -95,11 +121,7 @@ export class RoutingDecisionsRepository {
       }
     }
 
-    return this.prisma.routingDecision.findMany({
-      where,
-      take: filters.limit ?? 50,
-      orderBy: { createdAt: 'desc' },
-    });
+    return where;
   }
 
   async findInWindow(windowDays: number): Promise<RoutingDecision[]> {
