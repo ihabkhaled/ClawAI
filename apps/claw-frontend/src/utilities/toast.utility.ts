@@ -3,6 +3,8 @@ import type { ToastAction } from '@/components/ui/use-toast';
 import { ToastVariant } from '@/enums/toast-variant.enum';
 import type { ApiClientError } from '@/services/shared/api-client';
 
+import { formatApiFieldErrors } from './api-error-fields.utility';
+
 type ToastOptions = {
   title?: string;
   description?: string;
@@ -53,9 +55,7 @@ function apiError(err: unknown, fallbackMessage?: string, options?: ToastOptions
 
     // If there are field-level validation errors, append them
     if (apiErr.errors) {
-      const fieldErrors = Object.entries(apiErr.errors)
-        .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
-        .join('; ');
+      const fieldErrors = formatApiFieldErrors(apiErr.errors);
       if (fieldErrors) {
         message = `${message} (${fieldErrors})`;
       }
