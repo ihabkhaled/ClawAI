@@ -28,7 +28,7 @@ packages, in an npm-workspace monorepo. Events flow over RabbitMQ (topic exchang
 - NEVER cross a service's database boundary — use HTTP or RabbitMQ.
 - NEVER put business logic in controllers or DB calls outside repositories.
 - NEVER log secrets/tokens/passwords; NEVER expose secrets to the frontend.
-- NEVER add user-facing text without i18n in all 14 locales.
+- NEVER add user-facing text without i18n in all 15 locales.
 - NEVER add code without a test.
 
 ## Validation (run the gates for the folders you touched ONLY)

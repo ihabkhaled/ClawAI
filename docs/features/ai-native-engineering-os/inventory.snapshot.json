@@ -49,7 +49,7 @@
           "apps/claw-frontend/src/lib/i18n/locales"
         ],
         "kind": "stale-locale-count",
-        "message": "CLAUDE.md claims 13 locales but 14 locale files exist",
+        "message": "CLAUDE.md claims 13 locales but 15 locale files exist",
         "severity": "low"
       },
       {
@@ -58,7 +58,7 @@
           "apps/claw-frontend/src/lib/i18n/locales"
         ],
         "kind": "stale-locale-count",
-        "message": "CODEX.md claims 13 locales but 14 locale files exist",
+        "message": "CODEX.md claims 13 locales but 15 locale files exist",
         "severity": "low"
       },
       {
@@ -67,7 +67,7 @@
           "apps/claw-frontend/src/lib/i18n/locales"
         ],
         "kind": "stale-locale-count",
-        "message": "CODEX.md claims 13 locales but 14 locale files exist",
+        "message": "CODEX.md claims 13 locales but 15 locale files exist",
         "severity": "low"
       },
       {
@@ -76,7 +76,7 @@
           "apps/claw-frontend/src/lib/i18n/locales"
         ],
         "kind": "stale-locale-count",
-        "message": "README.md claims 13 locales but 14 locale files exist",
+        "message": "README.md claims 13 locales but 15 locale files exist",
         "severity": "low"
       }
     ]
@@ -7134,7 +7134,7 @@
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
         "value": 4387
       },
-      "localeCount": 14,
+      "localeCount": 15,
       "locales": [
         "ar",
         "de",
@@ -7147,6 +7147,7 @@
         "it",
         "ja",
         "pt",
+        "router-trace-translations",
         "ru",
         "th",
         "zh"
@@ -9511,7 +9512,7 @@
     "envVarCount": 343,
     "eventCount": 166,
     "frontendRouteCount": 117,
-    "localeCount": 14,
+    "localeCount": 15,
     "nginxRouteCount": 54,
     "permissionCount": 38,
     "portCount": 16,

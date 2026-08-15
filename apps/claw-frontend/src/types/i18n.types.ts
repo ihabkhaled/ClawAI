@@ -4768,6 +4768,33 @@ export type DeploymentLocaleTranslation = {
   section: TranslationDictionary['adminDeployment'];
 };
 
+/**
+ * Router trace phase labels for one locale.
+ *
+ * Declared as a Record over Locale in router-trace-translations.ts, so omitting
+ * a locale is a compile error. That matters more here than usual: `t()` takes a
+ * plain string and is not checked against the dictionary, so a missing key
+ * renders the raw key path to a user instead of failing a build.
+ */
+export type RouterTraceLocaleTranslation = {
+  analyzing: string;
+  loadingRegistry: string;
+  applyingPolicy: string;
+  consultingRouter: string;
+  attemptFailed: string;
+  fallingBack: string;
+  lowConfidence: string;
+  modelSelected: string;
+  routingFailed: string;
+  /** Why the router declined, keyed by the stable codes routing-service emits. */
+  unavailable: {
+    noConfiguration: string;
+    disabled: string;
+    noRunnableEntry: string;
+    noEligibleModel: string;
+  };
+};
+
 export type TranslationNamespace = keyof TranslationDictionary;
 
 export type TranslationKey<NS extends TranslationNamespace> = keyof TranslationDictionary[NS];
