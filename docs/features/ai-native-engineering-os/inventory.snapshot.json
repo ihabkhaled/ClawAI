@@ -2211,6 +2211,41 @@
         },
         {
           "method": "GET",
+          "route": "/routing/configurations",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/routing/configurations",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/routing/configurations/:id",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/routing/configurations/:id/entries",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/routing/configurations/:id/publish",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/routing/configurations/disable",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/routing/configurations/enable",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/routing/cost-budget",
           "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
         },
@@ -8796,7 +8831,7 @@
       },
       "claw-routing-service": {
         "runner": "jest",
-        "testFiles": 66
+        "testFiles": 74
       },
       "claw-server-logs-service": {
         "runner": "jest",
@@ -9509,7 +9544,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 577,
+    "endpointCount": 584,
     "envVarCount": 343,
     "eventCount": 166,
     "frontendRouteCount": 117,
@@ -9521,7 +9556,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 855,
+    "totalTestFiles": 863,
     "workspaceCount": 25
   }
 }
