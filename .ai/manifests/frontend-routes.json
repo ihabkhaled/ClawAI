@@ -2,6 +2,11 @@
   "generated": true,
   "routes": [
     {
+      "file": "apps/claw-frontend/src/app/(auth)/forgot-password/page.tsx",
+      "kind": "page",
+      "route": "/forgot-password"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(auth)/login/page.tsx",
       "kind": "page",
       "route": "/login"
@@ -10,6 +15,11 @@
       "file": "apps/claw-frontend/src/app/(auth)/register/page.tsx",
       "kind": "page",
       "route": "/register"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(auth)/reset-password/page.tsx",
+      "kind": "page",
+      "route": "/reset-password"
     },
     {
       "file": "apps/claw-frontend/src/app/(auth)/verify-email/page.tsx",

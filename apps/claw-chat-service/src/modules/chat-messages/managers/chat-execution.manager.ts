@@ -161,6 +161,7 @@ import type {
   OllamaToolTranscript,
   OllamaToolTranscriptTurn,
 } from '../types/ollama-cloud-tool.types';
+import { providerFailureCode } from '../utilities/runtime-v2-provider-failure.utility';
 
 @Injectable()
 export class ChatExecutionManager implements OnModuleInit {
@@ -1738,7 +1739,7 @@ export class ChatExecutionManager implements OnModuleInit {
           response.data,
           `Provider ${provider} returned ${String(response.status)}`,
         ),
-        'CLOUD_PROVIDER_REQUEST_FAILED',
+        providerFailureCode(response.status),
       );
     }
     const promptTextForEstimate = `${systemPrompt}\n${userPrompt}`;
@@ -2128,7 +2129,7 @@ export class ChatExecutionManager implements OnModuleInit {
       this.logger.error(
         `callCloudProvider: ${provider} returned error status=${String(response.status)} message=${errorMessage}`,
       );
-      throw new BusinessException(errorMessage, 'CLOUD_PROVIDER_REQUEST_FAILED');
+      throw new BusinessException(errorMessage, providerFailureCode(response.status));
     }
     return response.data;
   }
@@ -2461,7 +2462,7 @@ export class ChatExecutionManager implements OnModuleInit {
       this.logger.error(
         `runOllamaCloudToolLoop: turn=${String(iteration)} ${provider} returned status=${String(response.status)} message=${errorMessage}`,
       );
-      throw new BusinessException(errorMessage, 'CLOUD_PROVIDER_REQUEST_FAILED');
+      throw new BusinessException(errorMessage, providerFailureCode(response.status));
     }
     const toolCalls = response.data.message?.tool_calls ?? [];
     const content = response.data.message?.content ?? '';

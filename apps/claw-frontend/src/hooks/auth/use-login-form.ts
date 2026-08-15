@@ -1,14 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { ROUTES } from '@/constants';
 import { REMEMBERED_EMAIL_STORAGE_KEY } from '@/constants/login.constants';
 import { useLogin } from '@/hooks/auth/use-login';
 import { useTranslation } from '@/lib/i18n';
 import { loginSchema } from '@/lib/validation/login.schema';
 import type { LoginFormValues } from '@/lib/validation/login.schema';
 import type { UseLoginFormReturn } from '@/types/hook.types';
-import { showToast } from '@/utilities';
 
 // Controller hook for the login page. Owns:
 //   1. the react-hook-form instance + submit handler
@@ -20,6 +21,7 @@ import { showToast } from '@/utilities';
 export function useLoginForm(): UseLoginFormReturn {
   const { t } = useTranslation();
   const { login, isPending, isError, error } = useLogin();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -62,10 +64,7 @@ export function useLoginForm(): UseLoginFormReturn {
     // Phase 4 placeholder — surface a coming-soon toast instead of a
     // 404 link. Forgot-password flow is tracked separately on the
     // product backlog.
-    showToast.info({
-      title: t('auth.forgotPasswordComingSoonTitle'),
-      description: t('auth.forgotPasswordComingSoonDesc'),
-    });
+    router.push(ROUTES.FORGOT_PASSWORD);
   };
 
   const onSubmit = (data: LoginFormValues): void => {

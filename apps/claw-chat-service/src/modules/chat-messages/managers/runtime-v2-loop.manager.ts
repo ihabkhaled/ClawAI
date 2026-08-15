@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { TokenLedgerContext } from '@claw/shared-types';
 
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
@@ -11,6 +11,8 @@ import {
   RUNTIME_V2_BUDGET_EXHAUSTED_MESSAGE,
   RUNTIME_V2_EMPTY_RESPONSE_CODE,
   RUNTIME_V2_EMPTY_RESPONSE_RETRIES,
+  RUNTIME_V2_TRANSIENT_PROVIDER_CODE,
+  RUNTIME_V2_TRANSIENT_PROVIDER_RETRIES,
   RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE,
   RUNTIME_V2_UNREPAIRABLE_REQUEST_MESSAGE,
 } from '../constants/runtime-v2-failure.constants';
@@ -28,6 +30,10 @@ import type { MessageRoutedData } from '../types/execution.types';
 import type { RuntimeV2BoundInput } from '../types/runtime-v2-store.types';
 import type { RuntimeV2ModelTurn } from '../types/runtime-v2-turn.types';
 import { createRuntimeV2Identity } from '../utilities/runtime-v2-identity.utility';
+import {
+  delay,
+  transientProviderBackoffMs,
+} from '../utilities/runtime-v2-provider-failure.utility';
 import {
   buildRuntimeV2ToolRequestRecord,
   buildRuntimeV2ToolResultRecord,
@@ -52,6 +58,8 @@ import { ContextAssemblyManager } from './context-assembly.manager';
 
 @Injectable()
 export class RuntimeV2LoopManager {
+  private readonly logger = new Logger(RuntimeV2LoopManager.name);
+
   constructor(
     private readonly messages: ChatMessagesRepository,
     private readonly threads: ChatThreadsRepository,
@@ -389,7 +397,7 @@ export class RuntimeV2LoopManager {
   // once; a second denial fails the run rather than persisting a lie as a completed answer.
   private async correctCapabilityDrift(
     binding: RuntimeV2BoundInput,
-    runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
+    runtimeContext: Awaited<ReturnType<ContextAssemblyManager['assemble']>>,
     routingMode: string,
   ): Promise<RuntimeV2ModelTurn> {
     const turn = await this.correctDrift(
@@ -418,7 +426,7 @@ export class RuntimeV2LoopManager {
    */
   private async correctUnfulfilledIntent(
     binding: RuntimeV2BoundInput,
-    runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
+    runtimeContext: Awaited<ReturnType<ContextAssemblyManager['assemble']>>,
     routingMode: string,
   ): Promise<RuntimeV2ModelTurn> {
     return this.correctDrift(
@@ -458,18 +466,49 @@ export class RuntimeV2LoopManager {
       } catch (error: unknown) {
         const empty =
           error instanceof BusinessException && error.code === RUNTIME_V2_EMPTY_RESPONSE_CODE;
-        if (!empty || attempt >= RUNTIME_V2_EMPTY_RESPONSE_RETRIES) throw error;
+        if (empty) {
+          if (attempt >= RUNTIME_V2_EMPTY_RESPONSE_RETRIES) throw error;
+          continue;
+        }
+        // A provider answering 500, 502, 503, 504, 429 or 408 has said nothing
+        // about the request — the identical call can succeed a second later.
+        // Ending the run on it discarded every tool already executed: a
+        // supervised run lost sixteen admitted tools and a pending edit to one
+        // `OLLAMA returned error status=500`. A 4xx still ends the run at once,
+        // because repeating a request the provider rejected is not a recovery.
+        const transient =
+          error instanceof BusinessException && error.code === RUNTIME_V2_TRANSIENT_PROVIDER_CODE;
+        if (!transient || attempt >= RUNTIME_V2_TRANSIENT_PROVIDER_RETRIES) throw error;
+        this.logger.warn(
+          `Runtime V2 provider unavailable, retry ${String(attempt + 1)}/${String(
+            RUNTIME_V2_TRANSIENT_PROVIDER_RETRIES,
+          )}: ${error.message}`,
+        );
+        await delay(transientProviderBackoffMs(attempt + 1));
       }
     }
   }
 
-  private async correctDrift(
+  /**
+   * A correction turn, repaired on the same terms as an ordinary one.
+   *
+   * This used to call the provider and parse the reply inline, outside the
+   * repair path every other turn goes through. The asymmetry decided runs. A
+   * correction instruction asks the model to stop narrating and emit a tool
+   * request, which is exactly the moment a model is most likely to produce a
+   * slightly malformed one — and here that threw instead of being repaired.
+   * The throw was then swallowed by the caller, so the announcement it was
+   * sent to correct became the run's completed answer. Observed on a
+   * supervised run that ended at "Let me also check the existing test file
+   * content." and was reported as success, with nothing logged anywhere.
+   */
+  private correctDrift(
     binding: RuntimeV2BoundInput,
-    runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
+    runtimeContext: Awaited<ReturnType<ContextAssemblyManager['assemble']>>,
     routingMode: string,
     instruction: string,
   ): Promise<RuntimeV2ModelTurn> {
-    const response = await this.callRuntimeProvider(
+    return this.callWithRepair(
       binding,
       {
         ...runtimeContext,
@@ -477,10 +516,6 @@ export class RuntimeV2LoopManager {
       },
       routingMode,
     );
-    return {
-      response,
-      output: parseRuntimeV2ModelOutput(response.content, binding.toolDefinitions),
-    };
   }
 
   /**
@@ -492,7 +527,7 @@ export class RuntimeV2LoopManager {
    */
   private async turnWithDriftCorrection(
     binding: RuntimeV2BoundInput,
-    runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
+    runtimeContext: Awaited<ReturnType<ContextAssemblyManager['assemble']>>,
     routingMode: string,
     turn: RuntimeV2ModelTurn,
   ): Promise<RuntimeV2ModelTurn> {
@@ -518,31 +553,47 @@ export class RuntimeV2LoopManager {
    */
   private async nudgeIntoActing(
     binding: RuntimeV2BoundInput,
-    runtimeContext: Parameters<ChatExecutionManager['callProvider']>[2],
+    runtimeContext: Awaited<ReturnType<ContextAssemblyManager['assemble']>>,
     routingMode: string,
     turn: RuntimeV2ModelTurn,
   ): Promise<RuntimeV2ModelTurn> {
-    let latest = turn;
     let announcement = turn.output.kind === 'final' ? turn.output.content : '';
+    let lastFailure: string | undefined;
     for (let attempt = 0; attempt < RUNTIME_V2_INTENT_CORRECTION_ATTEMPTS; attempt += 1) {
       let corrected: RuntimeV2ModelTurn;
       try {
         corrected = await this.correctUnfulfilledIntent(binding, runtimeContext, routingMode);
-      } catch {
-        // Best effort: a provider that returns nothing to the extra call must
-        // not cost the user the answer the first call already gave.
-        return latest;
+      } catch (error: unknown) {
+        // This was `catch { return latest }`: one failed correction abandoned
+        // the two attempts still owed AND stored the announcement as a
+        // completed answer, logging nothing. The reasoning was that a failed
+        // extra call must not cost the user the answer the first call gave —
+        // but the first call's answer is the announcement, which is precisely
+        // what this method exists to reject. So the guard against the silent
+        // stop was itself the silent stop, and the run was marked completed.
+        // Retry the attempt instead, and say why it failed.
+        lastFailure = error instanceof Error ? error.message : String(error);
+        this.logger.warn(
+          `Runtime V2 intent correction ${String(attempt + 1)}/${String(
+            RUNTIME_V2_INTENT_CORRECTION_ATTEMPTS,
+          )} failed: ${lastFailure}`,
+        );
+        continue;
       }
       if (corrected.output.kind !== 'final' || !isUnfulfilledIntent(corrected.output.content)) {
         return corrected;
       }
-      latest = corrected;
       announcement = corrected.output.content;
     }
     // Asked repeatedly and narrated every time. Storing that as a completed
-    // answer is the silent stop this exists to prevent.
+    // answer is the silent stop this exists to prevent. When the corrections
+    // failed rather than narrated, the last reason travels with the message —
+    // an operator reading "announced without acting" needs to know whether the
+    // model refused to act or the correction call never landed.
     throw new BusinessException(
-      `${RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_MESSAGE} ${excerpt(announcement)}`,
+      `${RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_MESSAGE} ${excerpt(announcement)}${
+        lastFailure === undefined ? '' : ` Last correction failure: ${lastFailure}`
+      }`,
       RUNTIME_V2_ANNOUNCED_WITHOUT_ACTING_CODE,
       HttpStatus.UNPROCESSABLE_ENTITY,
     );

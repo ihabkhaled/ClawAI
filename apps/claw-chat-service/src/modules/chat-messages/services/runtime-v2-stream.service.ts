@@ -1,9 +1,12 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { from, type Observable } from 'rxjs';
 
 import { BusinessException } from '../../../common/errors';
 import { RUNTIME_V2_ACTIVE_TTL_SECONDS } from '../constants/runtime-v2-run.constants';
-import { RUNTIME_V2_POLL_MS } from '../constants/runtime-v2-stream.constants';
+import {
+  RUNTIME_V2_POLL_FAILURE_TOLERANCE,
+  RUNTIME_V2_POLL_MS,
+} from '../constants/runtime-v2-stream.constants';
 import {
   type RuntimeEventDto,
   type RuntimeStreamQueryDto,
@@ -15,6 +18,8 @@ import { ChatStreamService } from './chat-stream.service';
 
 @Injectable()
 export class RuntimeV2StreamService {
+  private readonly logger = new Logger(RuntimeV2StreamService.name);
+
   constructor(
     private readonly store: RuntimeV2Store,
     private readonly chatStream: ChatStreamService,
@@ -66,9 +71,32 @@ export class RuntimeV2StreamService {
       ttlSeconds: RUNTIME_V2_ACTIVE_TTL_SECONDS,
     });
     let cursor = query.after;
+    let consecutiveFailures = 0;
     for (;;) {
       if (this.leaseExpired(expiresAtEpochSeconds)) return;
-      const page = await this.store.readEvents({ ...binding, after: cursor });
+      let page;
+      try {
+        page = await this.store.readEvents({ ...binding, after: cursor });
+      } catch (error) {
+        // A poll is idempotent: it re-reads from the same cursor, so a failed
+        // one can simply be repeated without losing or duplicating an event.
+        // Letting it escape ended the whole stream, and the client renders that
+        // as RUNTIME_STATE_UNAVAILABLE — a run that is still executing looks
+        // dead. Seen while the agent ran `git commit`: one poll reported
+        // `Connection is closed` while Redis answered PING and the service had
+        // not restarted, and the run's work was lost. Only a sustained outage
+        // should end the stream.
+        consecutiveFailures += 1;
+        if (consecutiveFailures > RUNTIME_V2_POLL_FAILURE_TOLERANCE) throw error;
+        this.logger.warn(
+          `Runtime V2 stream poll failed (${String(consecutiveFailures)}/${String(
+            RUNTIME_V2_POLL_FAILURE_TOLERANCE,
+          )}), retrying`,
+        );
+        await this.waitForNextPoll(expiresAtEpochSeconds);
+        continue;
+      }
+      consecutiveFailures = 0;
       for (const event of page.events) {
         cursor = event.sequence;
         yield event;

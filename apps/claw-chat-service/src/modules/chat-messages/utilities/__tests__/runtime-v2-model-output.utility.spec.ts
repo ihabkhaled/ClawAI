@@ -204,6 +204,19 @@ describe('parseRuntimeV2ModelOutput damaged tool requests', () => {
   // consulted — and it demanded `"kind":"tool"` with the closing quote, which is
   // the character that was missing. The reply became the "final answer", the raw
   // JSON was shown to the user, and the run ended having done nothing.
+  it('sends a request whose discriminator lost its OPENING quote to the repair loop', () => {
+    // Captured live from glm-5.2 during its own code review:
+    // {"kind":tool","toolName":"workspace.files",...} — one missing quote, a
+    // character earlier than the case below. The pattern required the opening
+    // quote, so this fell through and was shown to the user as the answer.
+    const damaged =
+      '{"kind":tool","toolName":"workspace.files","toolVersion":"2.0.0","operation":"read","arguments":{"path":"a.ts"},"targetId":"target:workspace"}';
+
+    expect(() => parseRuntimeV2ModelOutput(damaged, definitions)).toThrow(
+      'The model started a Runtime Protocol 2.0 tool object and did not finish it.',
+    );
+  });
+
   it('sends a request damaged in the discriminator itself to the repair loop', () => {
     const damaged =
       '{"kind":"tool,"toolName":"workspace.files","toolVersion":"2.0.0","operation":"read","arguments":{"path":"a.ts","rootKey":"workspace-1"},"targetId":"target:workspace"}';
@@ -366,6 +379,28 @@ describe('isUnfulfilledIntent', () => {
     "I'll insert `const router = useRouter();` right after the useTranslation() call for Patch D.",
     'Let me place the import in the correct group.',
     'I should change the return type before continuing.',
+    // No first-person lead-in at all — a bare gerund. Every earlier pattern
+    // required "I'll" / "let me", so this ended a run with the work undone.
+    'PART A is done — both import-order swaps applied. Now starting PART B by reading the email adapter lines 1-40 to model the new sendPasswordReset method.',
+    'Now starting PART B.',
+    'I have the house style and the source. Now writing the file — CALL 4, creating with imports + describe + beforeEach:',
+    'Now writing the spec.',
+    // Ends on a colon: promises something it never delivered.
+    'Let me apply both edits with sed. First, replace the success test submit block (lines 44-48):',
+    'Here is the plan:',
+    // deepseek-v4-pro listed every call it planned, then signed off with this.
+    'CALL 8: append test 3 and the closing brace. Sending CALL 5 now.',
+    'Doing step 2 now.',
+    'Executing CALL 3.',
+    'Proceeding — STEP 3, adding the remaining tests:',
+    `${'The reset token is hashed before storage. '.repeat(40)}Let me start with FIX 1 — delete the duplicate return block:`,
+    'Proceeding with step 3.',
+    'I will finish by patching the service.',
+    // The fourth escape, and the reason the allow-list was abandoned: `re-read`
+    // is not `read`, so a widened verb list still missed it.
+    'I have the manager and service files but the transcript truncated the adapter contents. Let me re-read both with their full content so I can copy the exact pattern.',
+    'Let me double-check the migration before applying it.',
+    'I will re-run the failing suite.',
   ])('treats an announced but unperformed action as unfinished: %s', (content) => {
     expect(isUnfulfilledIntent(content)).toBe(true);
   });
@@ -386,6 +421,24 @@ describe('isUnfulfilledIntent', () => {
     'I will not run that command — it would delete the production database.',
     'The reset link expires after 30 minutes; users can request a new one.',
     'Done. I added the two routes and all 13 locales, and every gate is green.',
+    // The inverted pattern matches any intent lead-in, so the deny-list is now
+    // the only thing keeping genuine answers out. These pin it: a model that
+    // declines, hedges, explains or signs off has ANSWERED, and sending that
+    // back for another turn would be the new failure mode.
+    'Let me explain why the token cannot be recovered from the database.',
+    'Let me clarify: the reset link is single-use.',
+    'I should note that the backend also enforces an uppercase letter.',
+    'I will never log the raw reset token.',
+    'I need to be clear that this deletes production data.',
+    'I would recommend rotating the secret, but I will not do it without approval.',
+    // The bare-gerund patterns must stay anchored on a task marker, or ordinary
+    // prose about work in progress gets sent back for another turn.
+    'The migration is now starting to look correct in staging.',
+    'The token is now writing-protected in storage and cannot be altered.',
+    'Call 911 if the server melts.',
+    'Step 3 completed successfully.',
+    'Phase 2 is done and verified.',
+    'Users start the flow from the login page.',
     '',
   ])('leaves a real answer alone: %s', (content) => {
     expect(isUnfulfilledIntent(content)).toBe(false);

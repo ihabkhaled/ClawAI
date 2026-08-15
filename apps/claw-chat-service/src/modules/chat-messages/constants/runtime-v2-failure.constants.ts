@@ -38,6 +38,39 @@ export const RUNTIME_V2_EMPTY_RESPONSE_CODE = 'CLOUD_PROVIDER_EMPTY_RESPONSE';
 
 export const RUNTIME_V2_EMPTY_RESPONSE_RETRIES = 2;
 
+/**
+ * An upstream failure that says nothing about the request.
+ *
+ * A provider answering 500 used to end the run exactly as a 400 did, and the
+ * two mean opposite things: a 400 says the request is wrong and repeating it is
+ * pointless, a 500 says the provider had a bad moment. Every non-2xx was
+ * flattened into CLOUD_PROVIDER_REQUEST_FAILED with the status dropped, so the
+ * runtime loop could not tell them apart and gave up on both.
+ *
+ * That cost a supervised run mid-task: sixteen tools admitted, files read, the
+ * edit about to be written, and `OLLAMA returned error status=500` discarded
+ * all of it. Separating the codes is what lets the loop retry the one worth
+ * retrying.
+ */
+export const RUNTIME_V2_TRANSIENT_PROVIDER_CODE = 'CLOUD_PROVIDER_UNAVAILABLE';
+
+/**
+ * Upstream statuses worth repeating.
+ *
+ * 408 and 504 are timeouts, 429 is a rate limit, and 500/502/503 are the
+ * provider failing on its own side. Every one of them can succeed on the next
+ * attempt with the identical request, which is the only property that makes a
+ * retry honest rather than hopeful.
+ */
+export const RUNTIME_V2_TRANSIENT_PROVIDER_STATUSES: readonly number[] = [
+  408, 429, 500, 502, 503, 504,
+];
+
+export const RUNTIME_V2_TRANSIENT_PROVIDER_RETRIES = 3;
+
+/** Backoff before each transient-provider retry, in milliseconds. */
+export const RUNTIME_V2_TRANSIENT_PROVIDER_BACKOFF_MS: readonly number[] = [500, 2_000, 5_000];
+
 // The model was asked once more for a valid Runtime Protocol tool object and
 // still did not produce one. The run cannot continue, but nothing here is a
 // fault in this service: raising the parse error let it reach the exception

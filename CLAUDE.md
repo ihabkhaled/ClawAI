@@ -197,3 +197,24 @@ Read the one for the service you are touching. It is not duplicated here.
 Where something is partially built, the docs say so rather than implying
 completeness. Report the same way: if a step was skipped, say it was skipped; if a
 test fails, show the output. "Done" means gated, committed, pushed, and green.
+
+## Communication style (MANDATORY)
+
+**Short. Plain. Concrete.** A few lines max.
+
+- Blocked? One line: `Blocked: <the actual thing>.`
+- Working? `Working — <what>.` Progress? `~70/100.`
+- Name the concrete cause: file, symbol, exact error. Never circle the problem.
+- Easy words over complex ones. Cut every reply in half before sending.
+
+Full rule: [`rules/29-communication-style.md`](rules/29-communication-style.md) ·
+Runbook: [`skills/communicate-briefly.md`](skills/communicate-briefly.md)
+
+**Stay foreground / keep streaming.** Do not go silent — silence reads as stopped.
+Foreground commands by default; background only for long jobs, announced in one line.
+
+**Show every step.** One short line per action as it happens — file changed, patch applied,
+test run, trial failed. Never batch and report at the end.
+
+**Granularity:** report every file touched, every patch (including failures), every command and
+its result, every test count, every retry, every mini-operation, every wait. One line each.

@@ -4,6 +4,7 @@ import {
   RUNTIME_V2_CONTEXT_TOKEN_BUDGET,
   RUNTIME_V2_MAX_OUTPUT_TOKENS,
 } from '../../constants/runtime-v2-transcript.constants';
+import { RUNTIME_V2_INTENT_CORRECTION_ATTEMPTS } from '../../utilities/runtime-v2-model-output.utility';
 import { RuntimeV2LoopManager } from '../runtime-v2-loop.manager';
 
 /**
@@ -171,9 +172,14 @@ describe('RuntimeV2LoopManager continuation ordering', () => {
 });
 
 /**
- * The intent nudge asks the model once more when it announced work and stopped.
- * It is best effort: a provider that answers the extra call with nothing must
- * not cost the user the answer the first call already produced.
+ * The intent nudge asks the model to act when it announced work and stopped.
+ *
+ * It is not best effort. It used to be, on the reasoning that a provider which
+ * answers the extra call with nothing must not cost the user the answer the
+ * first call produced — but that answer is the announcement, so the fallback
+ * stored exactly what the nudge exists to reject and marked the run completed.
+ * Every attempt is spent, each failure is logged, and an exhausted nudge fails
+ * the run with the model's own words and the last failure's reason.
  */
 describe('RuntimeV2LoopManager intent correction fallback', () => {
   const binding = {
@@ -220,15 +226,21 @@ describe('RuntimeV2LoopManager intent correction fallback', () => {
     });
   }
 
-  it('keeps the original answer when the corrective call fails', async () => {
+  it('fails with the announcement and the reason when every correction fails', async () => {
+    // This test used to assert the opposite — that a failed correction keeps
+    // the original answer — on the reasoning that a failed extra call must not
+    // cost the user the answer the first call gave. But the answer the first
+    // call gave is the announcement, which is the one thing this path exists to
+    // reject, and returning it marked the run `completed`. A supervised run
+    // ended on "Let me also check the existing test file content." and reported
+    // success with nothing logged. It also stopped after ONE failure, spending
+    // neither of the two attempts still owed.
     const callProvider = jest
       .fn()
       .mockRejectedValue(new Error('Cloud provider OLLAMA returned no message content'));
 
-    const result = await correct(callProvider);
-
-    expect(callProvider).toHaveBeenCalledTimes(1);
-    expect(result.output.content).toBe(announced.content);
+    await expect(correct(callProvider)).rejects.toThrow(/no message content/u);
+    expect(callProvider).toHaveBeenCalledTimes(RUNTIME_V2_INTENT_CORRECTION_ATTEMPTS);
   });
 
   it('uses the corrected turn when the model does act', async () => {

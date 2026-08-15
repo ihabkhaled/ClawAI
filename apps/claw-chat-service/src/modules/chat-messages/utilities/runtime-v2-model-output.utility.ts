@@ -14,6 +14,7 @@ import {
   RUNTIME_V2_TRUNCATED_TOOL_REQUEST_PATTERN,
   RUNTIME_V2_UNFULFILLED_INTENT_MAX_CHARACTERS,
   RUNTIME_V2_UNFULFILLED_INTENT_PATTERNS,
+  RUNTIME_V2_UNFULFILLED_INTENT_TAIL_CHARACTERS,
   runtimeV2ToolRequestSchema,
 } from '../constants/runtime-v2-model-output.constants';
 import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
@@ -65,10 +66,18 @@ export function isCapabilityDenial(content: string): boolean {
  */
 export function isUnfulfilledIntent(content: string): boolean {
   const normalized = content.replaceAll(/\s+/gu, ' ').trim();
-  if (normalized.length === 0 || normalized.length > RUNTIME_V2_UNFULFILLED_INTENT_MAX_CHARACTERS) {
-    return false;
-  }
-  return RUNTIME_V2_UNFULFILLED_INTENT_PATTERNS.some((pattern) => pattern.test(normalized));
+  if (normalized.length === 0) return false;
+  // The length bound alone let long narration through: a model that reasons for
+  // two paragraphs and CLOSES with "Let me start with FIX 1" was over the cap,
+  // so the guard never looked, and the run ended with the work undone. What
+  // decides an announcement is how the reply ENDS, not how long it is — a real
+  // answer does not finish by announcing its next action. So an over-length
+  // reply is judged on its tail instead of being skipped.
+  const inspected =
+    normalized.length <= RUNTIME_V2_UNFULFILLED_INTENT_MAX_CHARACTERS
+      ? normalized
+      : normalized.slice(-RUNTIME_V2_UNFULFILLED_INTENT_TAIL_CHARACTERS);
+  return RUNTIME_V2_UNFULFILLED_INTENT_PATTERNS.some((pattern) => pattern.test(inspected));
 }
 
 /**

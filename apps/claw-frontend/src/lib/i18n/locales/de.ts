@@ -105,6 +105,35 @@ export const de: TranslationDictionary = {
     feature3Title: 'Alle Anbieter',
     feature3Desc:
       'Anthropic, OpenAI, Google, Moonshot, Zhipu, Alibaba, DeepSeek, xAI und Amazon Bedrock — alles an einem Ort.',
+    forgotPasswordTitle: 'Passwort vergessen',
+    forgotPasswordDescription:
+      'Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum Zurücksetzen deines Passworts.',
+    forgotPasswordEmailLabel: 'E-Mail',
+    forgotPasswordEmailPlaceholder: 'you@example.com',
+    forgotPasswordSubmit: 'Link zum Zurücksetzen senden',
+    forgotPasswordBackToLogin: 'Zurück zur Anmeldung',
+    forgotPasswordSuccessTitle: 'Überprüfe deine E-Mails',
+    forgotPasswordSuccessDescription:
+      'Wenn ein Konto für diese E-Mail-Adresse existiert, haben wir einen Link zum Zurücksetzen des Passworts gesendet.',
+    forgotPasswordErrorGeneric: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
+    forgotPasswordErrorTitle: 'Fehler',
+    forgotPasswordSubmitting: 'Wird gesendet...',
+    resetPasswordTitle: 'Passwort zurücksetzen',
+    resetPasswordDescription: 'Gib unten dein neues Passwort ein.',
+    resetPasswordNewPasswordLabel: 'Neues Passwort',
+    resetPasswordConfirmPasswordLabel: 'Passwort bestätigen',
+    resetPasswordSubmit: 'Passwort zurücksetzen',
+    resetPasswordSubmitting: 'Wird zurückgesetzt...',
+    resetPasswordBackToLogin: 'Zurück zur Anmeldung',
+    resetPasswordSuccessTitle: 'Passwort zurückgesetzt',
+    resetPasswordSuccessDescription:
+      'Dein Passwort wurde erfolgreich zurückgesetzt. Du kannst dich jetzt anmelden.',
+    resetPasswordErrorGeneric: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
+    resetPasswordErrorTitle: 'Fehler',
+    resetPasswordInvalidTokenTitle: 'Ungültiger Link',
+    resetPasswordInvalidTokenDescription:
+      'Dieser Link zum Zurücksetzen des Passworts ist nicht mehr gültig.',
+    resetPasswordRequestNewLink: 'Einen neuen Link zum Zurücksetzen anfordern.',
   },
   vscodeAuthorization: {
     title: 'ClawAI für VS Code autorisieren',

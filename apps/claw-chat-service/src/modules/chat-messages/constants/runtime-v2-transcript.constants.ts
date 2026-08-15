@@ -124,4 +124,11 @@ export const RUNTIME_V2_CONTEXT_TOKEN_BUDGET = 96_000;
 // "starting a tool object and not finishing it" and ended runs that were
 // otherwise doing the right thing. Still far below the context budget above, so
 // the prompt keeps its room.
-export const RUNTIME_V2_MAX_OUTPUT_TOKENS = 16_384;
+// Raised a second time, from 16_384, when the same failure returned: a model
+// writing a unit test in one `create` was cut off mid-`operations` twice and
+// the run ended UNREPAIRABLE. A test file with real comments is a few thousand
+// tokens before escaping, and the turn also carries reasoning, so 16_384 left
+// no margin. The ceiling is not the whole answer — the truncation message now
+// tells the model to write shorter and append — but a `create` that cannot fit
+// an ordinary source file is a limit set below the job.
+export const RUNTIME_V2_MAX_OUTPUT_TOKENS = 32_768;

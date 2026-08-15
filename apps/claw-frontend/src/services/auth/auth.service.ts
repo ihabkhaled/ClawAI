@@ -8,6 +8,10 @@ import type {
   UserProfile,
   UpdateOwnProfileRequest,
   DeleteOwnAccountRequest,
+  RequestPasswordResetRequest,
+  RequestPasswordResetResponse,
+  ConfirmPasswordResetRequest,
+  ConfirmPasswordResetResponse,
 } from '@/types';
 
 export const authService = {
@@ -72,5 +76,17 @@ export const authService = {
     if (typeof document !== 'undefined') {
       document.cookie = 'claw-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
+  },
+
+  async requestPasswordReset(
+    data: RequestPasswordResetRequest,
+  ): Promise<RequestPasswordResetResponse> {
+    return authRepository.requestPasswordReset(data);
+  },
+
+  async confirmPasswordReset(
+    data: ConfirmPasswordResetRequest,
+  ): Promise<ConfirmPasswordResetResponse> {
+    return authRepository.confirmPasswordReset(data);
   },
 };

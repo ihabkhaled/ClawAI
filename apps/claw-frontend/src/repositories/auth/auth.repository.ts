@@ -9,6 +9,10 @@ import type {
   UserProfile,
   UpdateOwnProfileRequest,
   DeleteOwnAccountRequest,
+  RequestPasswordResetRequest,
+  RequestPasswordResetResponse,
+  ConfirmPasswordResetRequest,
+  ConfirmPasswordResetResponse,
 } from '@/types';
 
 export const authRepository = {
@@ -65,5 +69,25 @@ export const authRepository = {
 
   async deleteOwnAccount(data: DeleteOwnAccountRequest): Promise<void> {
     await apiClient.delete('/users/me', { data });
+  },
+
+  async requestPasswordReset(
+    data: RequestPasswordResetRequest,
+  ): Promise<RequestPasswordResetResponse> {
+    const response = await apiClient.post<RequestPasswordResetResponse>(
+      '/auth/password-reset/request',
+      data,
+    );
+    return response.data;
+  },
+
+  async confirmPasswordReset(
+    data: ConfirmPasswordResetRequest,
+  ): Promise<ConfirmPasswordResetResponse> {
+    const response = await apiClient.post<ConfirmPasswordResetResponse>(
+      '/auth/password-reset/confirm',
+      data,
+    );
+    return response.data;
   },
 };

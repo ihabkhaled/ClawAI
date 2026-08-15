@@ -3,6 +3,10 @@ import type { UseFormReturn } from 'react-hook-form';
 import type { MessageFeedback } from '@/enums';
 import type { ScrollDirection } from '@/enums/scroll-direction.enum';
 import type { LoginFormValues } from '@/lib/validation/login.schema';
+import type {
+  ForgotPasswordFormValues,
+  ResetPasswordFormValues,
+} from '@/lib/validation/password-reset.schema';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 
 import type { SidebarItem } from '../constants/sidebar.constants';
@@ -57,6 +61,26 @@ export type UseLoginFormReturn = {
   onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
   isPending: boolean;
   isError: boolean;
+  errorMessage: string | null;
+  t: TranslateFunction;
+};
+
+export type UseForgotPasswordFormReturn = {
+  form: UseFormReturn<ForgotPasswordFormValues>;
+  onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
+  isPending: boolean;
+  isSuccess: boolean;
+  errorMessage: string | null;
+  t: TranslateFunction;
+};
+
+export type UseResetPasswordFormReturn = {
+  form: UseFormReturn<ResetPasswordFormValues>;
+  onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
+  isPending: boolean;
+  isSuccess: boolean;
+  isError: boolean;
+  isInvalidToken: boolean;
   errorMessage: string | null;
   t: TranslateFunction;
 };

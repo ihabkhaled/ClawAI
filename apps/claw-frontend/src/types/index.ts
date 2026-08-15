@@ -11,6 +11,10 @@ export type {
   DeleteOwnAccountRequest,
   AdminUserUpdateRequest,
   AdminUserUpdateMutationVariables,
+  RequestPasswordResetRequest,
+  RequestPasswordResetResponse,
+  ConfirmPasswordResetRequest,
+  ConfirmPasswordResetResponse,
 } from './auth.types';
 export type {
   RoutePermission,
