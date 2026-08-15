@@ -55,6 +55,7 @@ export {
 export { isAdmin, hasPermission, hasAnyPermission } from './permissions.utility';
 export { requiredPermissionForPath, requiredRequirementForPath } from './route-permission.utility';
 export { connectSse } from './sse.utility';
+export { isSimpleProgressStreamEvent } from './stream-event-guard.utility';
 export { mapVisibleStatusToOrchestrationStatus } from './orchestration-stage.utility';
 export {
   encodeModelValue,
