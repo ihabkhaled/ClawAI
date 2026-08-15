@@ -17,8 +17,8 @@ RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-health-service 
 FROM base AS builder
 COPY --from=deps /app /app
 COPY apps/claw-health-service/ .
-RUN cd /app/packages/shared-types && npm run build \
- && cd /app/packages/shared-constants && npm run build \
+RUN cd /app/packages/shared-constants && npm run build \
+ && cd /app/packages/shared-types && npm run build \
  && cd /app/packages/shared-utilities && npm run build \
  && cd /app/packages/shared-rabbitmq && npm run build \
  && cd /app/packages/shared-auth && npm run build

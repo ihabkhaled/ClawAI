@@ -29,9 +29,12 @@ FROM base AS builder
 COPY --from=deps /app /app
 COPY apps/claw-frontend/ ./apps/claw-frontend/
 
-# @claw/shared-types resolves through its `main`/`types` fields to dist/, which
-# is gitignored, so it has to be compiled before Next traces the imports.
-RUN cd /app/packages/shared-types && npm run build \
+# @claw/shared-types and @claw/shared-constants resolve through their
+# `main`/`types` fields to dist/, which is gitignored, so they have to be
+# compiled before Next traces the imports. shared-types imports from
+# shared-constants, so it must build second.
+RUN cd /app/packages/shared-constants && npm run build \
+ && cd /app/packages/shared-types && npm run build \
  && cd /app/packages/shared-entitlements && npm run build
 
 WORKDIR /app/apps/claw-frontend

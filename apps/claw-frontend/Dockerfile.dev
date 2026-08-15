@@ -10,6 +10,7 @@ COPY .npmrc ./.npmrc
 COPY packages/ ./packages/
 COPY apps/claw-frontend/ ./apps/claw-frontend/
 RUN npm install --ignore-scripts --legacy-peer-deps
+RUN cd packages/shared-constants && npm run build
 RUN cd packages/shared-types && npm run build
 
 WORKDIR /app/apps/claw-frontend

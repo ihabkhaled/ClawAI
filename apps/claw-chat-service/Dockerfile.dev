@@ -22,8 +22,8 @@ WORKDIR /app
 RUN npm install --ignore-scripts
 
 # Now compile shared packages with workspace-hoisted types available
-RUN cd packages/shared-types && npm run build
 RUN cd packages/shared-constants && npm run build
+RUN cd packages/shared-types && npm run build
 RUN cd packages/shared-utilities && npm run build
 RUN cd packages/shared-rabbitmq && npm run build
 RUN cd packages/shared-auth && npm run build
