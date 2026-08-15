@@ -1095,7 +1095,9 @@
       "producers": []
     },
     {
-      "consumers": [],
+      "consumers": [
+        "claw-chat-service"
+      ],
       "key": "ROUTER_TRACE_EMITTED",
       "pattern": "router.trace.emitted",
       "producers": [

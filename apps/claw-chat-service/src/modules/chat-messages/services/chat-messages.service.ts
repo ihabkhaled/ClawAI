@@ -1,6 +1,12 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
-import { EventPattern, LogLevel, Permission, TokenLedgerContext } from '@claw/shared-types';
+import {
+  EventPattern,
+  LogLevel,
+  Permission,
+  type RouterTraceEvent,
+  TokenLedgerContext,
+} from '@claw/shared-types';
 import { allowedModelKeys, type PlanFeature } from '@claw/shared-entitlements';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { AppConfig } from '../../../app/config/app.config';
@@ -28,6 +34,8 @@ import { ParallelExecutionManager } from '../managers/parallel-execution.manager
 import { VerifierManager } from '../managers/verifier.manager';
 import { PipelineManager } from '../managers/pipeline.manager';
 import { RolePackManager } from '../managers/role-pack.manager';
+import { routerTraceEmittedSchema } from '../dto/router-trace.dto';
+import { RouterTraceStreamService } from './router-trace-stream.service';
 import { ResearchEnricherManager } from '../managers/research-enricher.manager';
 import { RuntimeV2LoopManager } from '../managers/runtime-v2-loop.manager';
 import { ChatStreamService } from './chat-stream.service';
@@ -98,6 +106,7 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly pipelineManager: PipelineManager,
     private readonly rolePackManager: RolePackManager,
     private readonly chatStreamService: ChatStreamService,
+    private readonly routerTraceStream: RouterTraceStreamService,
     private readonly rabbitMQService: RabbitMQService,
     private readonly contextReceiptService: ContextReceiptService,
     private readonly accessControlService: AccessControlService,
@@ -963,7 +972,36 @@ export class ChatMessagesService implements OnModuleInit {
       await this.onMessageRouted(data);
     });
 
+    await this.rabbitMQService.subscribe(EventPattern.ROUTER_TRACE_EMITTED, (data: unknown) => {
+      this.onRouterTraceEmitted(data);
+      return Promise.resolve();
+    });
+
     this.logger.log('Subscribed to chat execution events');
+  }
+
+  /**
+   * Renders a published routing trace onto the thread's stream.
+   *
+   * Parsed rather than cast: the payload crosses a service boundary. A batch
+   * with no threadId is dropped — a trace with nowhere to render is not an
+   * error, it is a route that had no live stream.
+   */
+  private onRouterTraceEmitted(data: unknown): void {
+    const parsed = routerTraceEmittedSchema.safeParse(data);
+    if (!parsed.success) {
+      this.logger.warn('Received router.trace.emitted with an unreadable payload');
+      return;
+    }
+    if (!parsed.data.threadId) {
+      return;
+    }
+
+    const events = parsed.data.events.filter(
+      (event): event is NonNullable<typeof event> => event !== null,
+    ) as unknown as RouterTraceEvent[];
+
+    this.routerTraceStream.render(parsed.data.threadId, events);
   }
 
   private async onMessageRouted(data: unknown): Promise<void> {
