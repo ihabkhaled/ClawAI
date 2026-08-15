@@ -22,7 +22,7 @@ import { AiStreamStage, FallbackFailureType, VisibleProgressStageStatus } from '
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { RuntimeProgressPanelProps } from '@/types';
-import { formatElapsed } from '@/utilities';
+import { formatElapsed, resolveRouterTraceDescription, resolveRouterTraceLabel } from '@/utilities';
 
 // Top-level pluggable progress panel. Composes the existing stream-*
 // primitives (StreamStageBadge, StreamProgressBar, StreamLiveAnswer) with
@@ -127,7 +127,7 @@ export function RuntimeProgressPanel({
           <div
             role="alert"
             aria-live="assertive"
-            className="flex items-center gap-1.5 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive"
+            className="bg-destructive/10 text-destructive flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs"
           >
             <XCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>{streamError}</span>
@@ -136,15 +136,15 @@ export function RuntimeProgressPanel({
           <>
             {hasLiveStream && streamLive !== undefined ? (
               <section
-                className="w-full min-w-[18rem] max-w-xl overflow-hidden rounded-2xl border border-sky-500/25 bg-card shadow-sm"
+                className="bg-card w-full max-w-xl min-w-[18rem] overflow-hidden rounded-2xl border border-sky-500/25 shadow-sm"
                 aria-label={t('chat.stream.liveResponse')}
                 aria-live="polite"
                 aria-atomic="false"
               >
-                <div className="flex items-center justify-between gap-3 border-b border-border/60 px-3 py-2">
+                <div className="border-border/60 flex items-center justify-between gap-3 border-b px-3 py-2">
                   <div className="flex items-center gap-2">
                     <StreamStageBadge stage={streamLive.stage} />
-                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <span className="text-muted-foreground inline-flex items-center gap-1 text-[11px]">
                       <CircleDot className="h-3 w-3 animate-pulse text-sky-500" />
                       {t('chat.live')}
                     </span>
@@ -154,7 +154,7 @@ export function RuntimeProgressPanel({
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-destructive"
+                      className="text-muted-foreground hover:text-destructive h-7 gap-1 px-2 text-xs"
                       onClick={onCancel}
                       disabled={isCancelling}
                       aria-label={t('chat.stream.cancel')}
@@ -210,101 +210,108 @@ export function RuntimeProgressPanel({
               </section>
             ) : null}
             <section
-              className="w-full min-w-[18rem] max-w-xl overflow-hidden rounded-2xl border border-sky-500/25 bg-gradient-to-br from-sky-500/10 via-background to-emerald-500/10 shadow-sm"
+              className="via-background w-full max-w-xl min-w-[18rem] overflow-hidden rounded-2xl border border-sky-500/25 bg-gradient-to-br from-sky-500/10 to-emerald-500/10 shadow-sm"
               aria-label={t('chat.currentAiProgress', { status: statusLabel })}
               aria-live="polite"
               aria-atomic="false"
             >
-              <div className="flex items-center justify-between gap-3 border-b border-border/60 px-3 py-2">
+              <div className="border-border/60 flex items-center justify-between gap-3 border-b px-3 py-2">
                 <div className="min-w-0">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-700 dark:text-sky-300">
+                  <div className="text-[11px] font-semibold tracking-[0.2em] text-sky-700 uppercase dark:text-sky-300">
                     {t('chat.visibleAiProgress')}
                   </div>
-                  <div className="truncate text-sm font-medium text-foreground">{statusLabel}</div>
+                  <div className="text-foreground truncate text-sm font-medium">{statusLabel}</div>
                 </div>
-                <div className="flex items-center gap-1.5 rounded-full bg-background/80 px-2 py-1 text-[11px] text-muted-foreground">
+                <div className="bg-background/80 text-muted-foreground flex items-center gap-1.5 rounded-full px-2 py-1 text-[11px]">
                   <CircleDot className="h-3 w-3 animate-pulse text-sky-500" />
                   {t('chat.live')}
                 </div>
               </div>
               {recentStages.length > 0 ? (
                 <div className="flex flex-col gap-2 px-3 py-2.5">
-                  {recentStages.map((stage, index) => (
-                    <div
-                      key={stage.id}
-                      className="grid grid-cols-[auto_1fr_auto] items-start gap-2 text-xs"
-                    >
+                  {recentStages.map((stage, index) => {
+                    const label = resolveRouterTraceLabel(stage.id, t, stage.label);
+                    const description = resolveRouterTraceDescription(
+                      stage.id,
+                      t,
+                      stage.description,
+                    );
+
+                    return (
                       <div
-                        className={cn(
-                          'mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border',
-                          stage.status === VisibleProgressStageStatus.COMPLETED
-                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600'
-                            : 'border-sky-500/40 bg-sky-500/10 text-sky-600',
-                        )}
+                        key={stage.id}
+                        className="grid grid-cols-[auto_1fr_auto] items-start gap-2 text-xs"
                       >
-                        {stage.status === VisibleProgressStageStatus.COMPLETED ? (
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                        ) : (
-                          <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                          <span className="font-medium text-foreground">{stage.label}</span>
-                          {stage.actorName !== undefined && stage.actorName !== null ? (
-                            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                              {stage.actorName}
-                            </span>
+                        <div
+                          className={cn(
+                            'mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border',
+                            stage.status === VisibleProgressStageStatus.COMPLETED
+                              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600'
+                              : 'border-sky-500/40 bg-sky-500/10 text-sky-600',
+                          )}
+                        >
+                          {stage.status === VisibleProgressStageStatus.COMPLETED ? (
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                          ) : (
+                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <span className="text-foreground font-medium">{label}</span>
+                            {stage.actorName !== undefined && stage.actorName !== null ? (
+                              <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px]">
+                                {stage.actorName}
+                              </span>
+                            ) : null}
+                          </div>
+                          {description !== undefined && description !== null ? (
+                            <div className="text-muted-foreground line-clamp-2">{description}</div>
                           ) : null}
                         </div>
-                        {stage.description !== undefined && stage.description !== null ? (
-                          <div className="line-clamp-2 text-muted-foreground">
-                            {stage.description}
-                          </div>
+                        <span
+                          className={cn(
+                            'shrink-0 rounded-md px-1.5 py-0.5 text-[10px] tracking-wide uppercase',
+                            {
+                              'bg-destructive/10 text-destructive':
+                                stage.status === VisibleProgressStageStatus.ERROR,
+                              'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400':
+                                stage.status === VisibleProgressStageStatus.COMPLETED,
+                              'bg-blue-500/10 text-blue-600 dark:text-blue-400':
+                                stage.status === VisibleProgressStageStatus.ACTIVE ||
+                                stage.status === VisibleProgressStageStatus.QUEUED,
+                            },
+                          )}
+                        >
+                          {stage.status}
+                        </span>
+                        {index < recentStages.length - 1 ? (
+                          <div className="border-border/80 ml-2.5 h-2 border-l" aria-hidden />
                         ) : null}
                       </div>
-                      <span
-                        className={cn(
-                          'shrink-0 rounded-md px-1.5 py-0.5 text-[10px] uppercase tracking-wide',
-                          {
-                            'bg-destructive/10 text-destructive':
-                              stage.status === VisibleProgressStageStatus.ERROR,
-                            'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400':
-                              stage.status === VisibleProgressStageStatus.COMPLETED,
-                            'bg-blue-500/10 text-blue-600 dark:text-blue-400':
-                              stage.status === VisibleProgressStageStatus.ACTIVE ||
-                              stage.status === VisibleProgressStageStatus.QUEUED,
-                          },
-                        )}
-                      >
-                        {stage.status}
-                      </span>
-                      {index < recentStages.length - 1 ? (
-                        <div className="ml-2.5 h-2 border-l border-border/80" aria-hidden />
-                      ) : null}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : null}
             </section>
-            <div className="rounded-lg bg-muted px-4 py-2.5 text-sm text-foreground">
+            <div className="bg-muted text-foreground rounded-lg px-4 py-2.5 text-sm">
               <div
                 className="flex items-center gap-2"
                 role="status"
                 aria-label={THINKING_INDICATOR_LABEL}
               >
                 <div className="flex items-center gap-1" aria-hidden="true">
-                  <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:0ms]" />
-                  <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:150ms]" />
-                  <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:300ms]" />
+                  <span className="bg-muted-foreground inline-block h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:0ms]" />
+                  <span className="bg-muted-foreground inline-block h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:150ms]" />
+                  <span className="bg-muted-foreground inline-block h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:300ms]" />
                 </div>
                 {executingModel !== null && executingModel !== undefined ? (
-                  <span className="text-xs font-medium text-muted-foreground">
+                  <span className="text-muted-foreground text-xs font-medium">
                     {executingModel}
                   </span>
                 ) : null}
                 {streamLive?.metrics?.elapsedMs !== undefined ? (
-                  <span className="ms-auto font-mono text-[11px] tabular-nums text-muted-foreground/80">
+                  <span className="text-muted-foreground/80 ms-auto font-mono text-[11px] tabular-nums">
                     {formatElapsed(streamLive.metrics.elapsedMs)}
                   </span>
                 ) : null}

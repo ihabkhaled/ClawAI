@@ -256,6 +256,7 @@
     {
       "dir": "apps/claw-frontend",
       "internalDeps": [
+        "@claw/shared-constants",
         "@claw/shared-types"
       ],
       "name": "claw-frontend",

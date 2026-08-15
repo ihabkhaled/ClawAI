@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 
 export const th: TranslationDictionary = {
   common: {
@@ -3135,6 +3136,7 @@ export const th: TranslationDictionary = {
     failed: 'ไม่สามารถออกเงินคืนได้',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.th.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.th,
   adminBilling: {
     title: 'แดชบอร์ดการเรียกเก็บเงิน',
     description: 'รายได้ ต้นทุนผู้ให้บริการ อัตรากำไร และสถานะการสมัครสมาชิก',

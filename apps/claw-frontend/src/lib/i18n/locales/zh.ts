@@ -1,6 +1,7 @@
 ﻿import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 
 export const zh: TranslationDictionary = {
   common: {
@@ -3073,6 +3074,7 @@ export const zh: TranslationDictionary = {
     failed: '无法退款。',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.zh.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.zh,
   adminBilling: {
     title: '计费仪表板',
     description: '收入、提供商成本、利润和订阅健康状况。',

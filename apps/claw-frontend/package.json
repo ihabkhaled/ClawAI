@@ -21,6 +21,7 @@
     "lint-staged": "lint-staged"
   },
   "dependencies": {
+    "@claw/shared-constants": "*",
     "@claw/shared-types": "*",
     "@hookform/resolvers": "^5.7.1",
     "@radix-ui/react-avatar": "^1.2.6",

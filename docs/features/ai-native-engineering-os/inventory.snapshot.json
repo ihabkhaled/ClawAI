@@ -7132,7 +7132,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4387
+        "value": 4388
       },
       "localeCount": 15,
       "locales": [
@@ -9063,6 +9063,7 @@
       {
         "dir": "apps/claw-frontend",
         "internalDeps": [
+          "@claw/shared-constants",
           "@claw/shared-types"
         ],
         "name": "claw-frontend",

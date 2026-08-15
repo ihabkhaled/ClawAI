@@ -146,6 +146,11 @@ export {
 } from './stream-format.utility';
 export { serializeRuntimeEvent } from './runtime-event-serializer.utility';
 export {
+  resolveRouterTraceLabel,
+  resolveRouterTraceReason,
+  resolveRouterTraceDescription,
+} from './router-trace-label.utility';
+export {
   buildBottleneckSegments,
   formatBottleneckDuration,
   getStreamMetricsBottleneck,

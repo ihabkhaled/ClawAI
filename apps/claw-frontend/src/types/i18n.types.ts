@@ -3084,6 +3084,7 @@ export type TranslationDictionary = {
     success: string;
     failed: string;
   };
+  routerTrace: RouterTraceLocaleTranslation;
   adminDeployment: {
     title: string;
     description: string;

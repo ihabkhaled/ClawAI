@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 
 export const ar: TranslationDictionary = {
   common: {
@@ -3122,6 +3123,7 @@ export const ar: TranslationDictionary = {
     failed: 'تعذر إصدار الاسترداد.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ar.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.ar,
   adminBilling: {
     title: 'لوحة الفوترة',
     description: 'الإيرادات وتكلفة المزوّد والهامش وصحة الاشتراكات.',

@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 
 export const fr: TranslationDictionary = {
   common: {
@@ -3197,6 +3198,7 @@ export const fr: TranslationDictionary = {
     failed: 'Impossible d’émettre le remboursement.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.fr.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.fr,
   adminBilling: {
     title: 'Tableau de bord de facturation',
     description: 'Revenus, coûts fournisseurs, marge et santé des abonnements.',

@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 
 export const de: TranslationDictionary = {
   common: {
@@ -3189,6 +3190,7 @@ export const de: TranslationDictionary = {
     failed: 'Rückerstattung konnte nicht ausgelöst werden.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.de.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.de,
   adminBilling: {
     title: 'Abrechnungsübersicht',
     description: 'Umsatz, Anbieterkosten, Marge und Zustand der Abonnements.',

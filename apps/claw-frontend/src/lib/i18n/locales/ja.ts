@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 
 export const ja: TranslationDictionary = {
   common: {
@@ -3165,6 +3166,7 @@ export const ja: TranslationDictionary = {
     failed: '払い戻しを行うことができませんでした。',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.ja,
   adminBilling: {
     title: '請求ダッシュボード',
     description: '収益、プロバイダーのコスト、マージン、サブスクリプションの健全性。',

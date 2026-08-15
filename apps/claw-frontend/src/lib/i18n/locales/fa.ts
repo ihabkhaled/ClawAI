@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 
 export const fa: TranslationDictionary = {
   common: {
@@ -3156,6 +3157,7 @@ export const fa: TranslationDictionary = {
     failed: 'بازپرداخت صادر نشد.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.fa.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.fa,
   adminBilling: {
     title: 'داشبورد صورتحساب',
     description: 'درآمد، هزینه ارائه دهنده، حاشیه و سلامت اشتراک.',

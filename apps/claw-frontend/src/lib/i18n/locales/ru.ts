@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 
 export const ru: TranslationDictionary = {
   common: {
@@ -3175,6 +3176,7 @@ export const ru: TranslationDictionary = {
     failed: 'Не удалось оформить возврат.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.ru,
   adminBilling: {
     title: 'Панель биллинга',
     description: 'Выручка, расходы на провайдеров, маржа и состояние подписок.',

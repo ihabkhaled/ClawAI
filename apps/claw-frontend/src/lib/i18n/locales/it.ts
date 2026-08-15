@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 
 export const it: TranslationDictionary = {
   common: {
@@ -3177,6 +3178,7 @@ export const it: TranslationDictionary = {
     failed: 'Impossibile emettere il rimborso.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.it.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.it,
   adminBilling: {
     title: 'Dashboard di fatturazione',
     description: 'Ricavi, costi dei fornitori, margine e stato degli abbonamenti.',

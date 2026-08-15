@@ -39,6 +39,20 @@ export type RouterTraceEventPattern =
 export const ROUTER_TRACE_SCHEMA_VERSION = 'router-trace-v1';
 
 /**
+ * Namespaces a router-trace progress stage id so it cannot collide with an
+ * execution stage id on the same chat stream.
+ *
+ * Shared rather than declared once in chat-service, because the frontend
+ * needs the identical prefix to recognise which stages are routing phases
+ * and translate their labels — duplicating the literal in two workspaces
+ * would only need to drift once to silently stop matching.
+ */
+export const ROUTER_TRACE_STAGE_ID_PREFIX = 'router-trace:';
+
+/** Stage id for the terminal "model selected" frame, emitted once per decision. */
+export const ROUTER_TRACE_TERMINAL_STAGE_ID = 'router:selection';
+
+/**
  * Cap on candidate-level events per request.
  *
  * A registry of 162 deployments would otherwise emit 162 scored events for one

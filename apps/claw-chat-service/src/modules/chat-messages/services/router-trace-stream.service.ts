@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ROUTER_TRACE_EVENT_PATTERNS } from '@claw/shared-constants';
+import {
+  ROUTER_TRACE_EVENT_PATTERNS,
+  ROUTER_TRACE_TERMINAL_STAGE_ID,
+} from '@claw/shared-constants';
 import type { RouterTraceEvent } from '@claw/shared-types';
 import { ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ROUTER_TRACE_MAX_EVENTS_PER_BATCH } from '../constants/router-trace-stage.constants';
@@ -84,7 +87,7 @@ export class RouterTraceStreamService {
       label: 'Model selected',
       description: decision.payload.displayName ?? decision.payload.deploymentId,
       actorType: ProgressActorType.ROUTER,
-      stageId: 'router:selection',
+      stageId: ROUTER_TRACE_TERMINAL_STAGE_ID,
       status: 'completed',
     });
   }

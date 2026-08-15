@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 
 export const es: TranslationDictionary = {
   common: {
@@ -3187,6 +3188,7 @@ export const es: TranslationDictionary = {
     failed: 'No se pudo emitir el reembolso.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.es.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.es,
   adminBilling: {
     title: 'Panel de facturación',
     description: 'Ingresos, coste de proveedores, margen y salud de las suscripciones.',

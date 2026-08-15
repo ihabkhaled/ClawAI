@@ -1,7 +1,10 @@
-import { ROUTER_TRACE_EVENT_PATTERNS, type RouterTraceEventPattern } from '@claw/shared-constants';
+import {
+  ROUTER_TRACE_EVENT_PATTERNS,
+  ROUTER_TRACE_STAGE_ID_PREFIX,
+  type RouterTraceEventPattern,
+} from '@claw/shared-constants';
 
-/** Namespaces router stages so they cannot collide with an execution stage id. */
-export const ROUTER_TRACE_STAGE_ID_PREFIX = 'router-trace:';
+export { ROUTER_TRACE_STAGE_ID_PREFIX };
 
 /**
  * User-facing label per trace event, and the allowlist of what is shown at all.
@@ -11,8 +14,11 @@ export const ROUTER_TRACE_STAGE_ID_PREFIX = 'router-trace:';
  * watching a spinner wants five lines. Showing all of it would make the
  * timeline unreadable without telling them anything they can act on.
  *
- * These strings are placeholders pending i18n; the frontend batch replaces them
- * with translated keys in all 13 locales.
+ * English fallback text only. The frontend recognises a stage id under
+ * {@link ROUTER_TRACE_STAGE_ID_PREFIX} and renders a translated label in the
+ * viewer's locale instead — these strings are what a client that does not
+ * carry the router-trace i18n keys (an older build, a non-browser consumer)
+ * falls back to, and what shows briefly before the locale dictionary resolves.
  */
 export const ROUTER_TRACE_STAGE_LABELS: Readonly<Partial<Record<RouterTraceEventPattern, string>>> =
   Object.freeze({
