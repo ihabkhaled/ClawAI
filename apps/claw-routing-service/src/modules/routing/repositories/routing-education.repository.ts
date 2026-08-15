@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  type Prisma,
   type RouterModelProfile,
   type RouterTopicProfile,
   type RoutingCalibrationSnapshot,
@@ -9,6 +8,7 @@ import {
 } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import type {
+  CommitCalibrationBatchInput,
   CreateRoutingFeedbackInput,
   CreateRoutingOutcomeInput,
   RouterModelProfileRecord,
@@ -73,6 +73,7 @@ export class RoutingEducationRepository {
         revised: input.revised ?? false,
         escalated: input.escalated ?? false,
         followUpSignal: input.followUpSignal ?? null,
+        evaluatorVersion: input.evaluatorVersion ?? null,
       },
       update: {
         messageId: input.messageId ?? null,
@@ -93,6 +94,7 @@ export class RoutingEducationRepository {
         revised: input.revised ?? false,
         escalated: input.escalated ?? false,
         followUpSignal: input.followUpSignal ?? null,
+        evaluatorVersion: input.evaluatorVersion ?? null,
       },
     });
   }
@@ -124,57 +126,79 @@ export class RoutingEducationRepository {
     }) as Promise<RoutingDecisionWithEducation[]>;
   }
 
-  async replaceModelProfiles(records: RouterModelProfileRecord[]): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.routerModelProfile.deleteMany(),
-      ...(records.length > 0
-        ? [
-            this.prisma.routerModelProfile.createMany({
-              data: records.map((record) => ({
-                ...record,
-                lastUpdated: new Date(),
-              })),
-            }),
-          ]
-        : []),
-    ]);
-  }
-
-  async replaceTopicProfiles(records: RouterTopicProfileRecord[]): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.routerTopicProfile.deleteMany(),
-      ...(records.length > 0
-        ? [
-            this.prisma.routerTopicProfile.createMany({
-              data: records.map((record) => ({
-                ...record,
-                lastUpdated: new Date(),
-              })),
-            }),
-          ]
-        : []),
-    ]);
-  }
-
-  async createCalibrationSnapshot(
-    version: string,
-    summary: Prisma.InputJsonValue,
-    promptHints: Prisma.InputJsonValue,
+  /**
+   * V5 learning evolution (ADR-069) — batch recalibration first, rollback.
+   *
+   * Writes the full computed batch (snapshot row with its own copy of the
+   * profile arrays, plus the promoted live profile tables) as a single
+   * atomic transaction. If any step fails, nothing changes — the previous
+   * calibration stays active and the live tables stay untouched, so a
+   * failed recalibration never leaves a snapshot with no matching live data
+   * or live data with no recorded version.
+   */
+  async commitCalibrationBatch(
+    input: CommitCalibrationBatchInput,
   ): Promise<RoutingCalibrationSnapshot> {
-    await this.prisma.routingCalibrationSnapshot.updateMany({
-      data: { active: false },
-      where: { active: true },
-    });
+    const now = new Date();
+    const [, snapshot] = await this.prisma.$transaction([
+      this.prisma.routingCalibrationSnapshot.updateMany({
+        data: { active: false },
+        where: { active: true },
+      }),
+      this.prisma.routingCalibrationSnapshot.create({
+        data: {
+          version: input.version,
+          windowDays: input.windowDays,
+          summary: input.summary,
+          promptHints: input.promptHints,
+          modelProfiles: input.modelProfiles,
+          topicProfiles: input.topicProfiles,
+          active: true,
+        },
+      }),
+      this.prisma.routerModelProfile.deleteMany(),
+      this.prisma.routerModelProfile.createMany({
+        data: input.modelProfileRows.map((record) => ({ ...record, lastUpdated: now })),
+      }),
+      this.prisma.routerTopicProfile.deleteMany(),
+      this.prisma.routerTopicProfile.createMany({
+        data: input.topicProfileRows.map((record) => ({ ...record, lastUpdated: now })),
+      }),
+    ]);
 
-    return this.prisma.routingCalibrationSnapshot.create({
-      data: {
-        version,
-        windowDays: 30,
-        summary,
-        promptHints,
-        active: true,
-      },
-    });
+    return snapshot;
+  }
+
+  /**
+   * V5 learning evolution (ADR-069) — rollback. Restores a previously
+   * committed snapshot's own archived profile rows to the live serving
+   * tables and reactivates that snapshot, without recomputing anything from
+   * raw RoutingOutcomeRecord/RoutingFeedbackRecord history.
+   */
+  async restoreCalibrationSnapshot(input: {
+    version: string;
+    modelProfileRows: RouterModelProfileRecord[];
+    topicProfileRows: RouterTopicProfileRecord[];
+  }): Promise<void> {
+    const now = new Date();
+    await this.prisma.$transaction([
+      this.prisma.routingCalibrationSnapshot.updateMany({
+        data: { active: false },
+        where: { active: true },
+      }),
+      this.prisma.routingCalibrationSnapshot.updateMany({
+        data: { active: true },
+        where: { version: input.version },
+      }),
+      this.prisma.routerModelProfile.deleteMany(),
+      this.prisma.routerModelProfile.createMany({
+        data: input.modelProfileRows.map((record) => ({ ...record, lastUpdated: now })),
+      }),
+      this.prisma.routerTopicProfile.deleteMany(),
+      this.prisma.routerTopicProfile.createMany({
+        data: input.topicProfileRows.map((record) => ({ ...record, lastUpdated: now })),
+      }),
+    ]);
   }
 
   async getLatestCalibrationSnapshot(): Promise<RoutingCalibrationSnapshot | null> {
@@ -182,6 +206,24 @@ export class RoutingEducationRepository {
       where: { active: true },
       orderBy: { generatedAt: 'desc' },
     });
+  }
+
+  async getCalibrationSnapshotByVersion(
+    version: string,
+  ): Promise<RoutingCalibrationSnapshot | null> {
+    return this.prisma.routingCalibrationSnapshot.findFirst({
+      where: { version },
+      orderBy: { generatedAt: 'desc' },
+    });
+  }
+
+  /** The snapshot immediately before the currently active one, if any. */
+  async getPreviousCalibrationSnapshot(): Promise<RoutingCalibrationSnapshot | null> {
+    const recent = await this.prisma.routingCalibrationSnapshot.findMany({
+      orderBy: { generatedAt: 'desc' },
+      take: 2,
+    });
+    return recent[1] ?? null;
   }
 
   async listModelProfiles(taskFamily?: string, limit = 25): Promise<RouterModelProfile[]> {

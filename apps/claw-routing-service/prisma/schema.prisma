@@ -415,6 +415,12 @@ model RoutingOutcomeRecord {
   revised                Boolean                @default(false)
   escalated              Boolean                @default(false)
   followUpSignal         String?                @map("follow_up_signal")
+  // V5 learning evolution — raw, per-observation evaluator/rubric identity.
+  // Nullable: most rows predate any judge run reporting a version, and this
+  // stays a true raw observation rather than a fabricated default. Rolls up
+  // into RouterModelProfile.evaluatorVersions / RouterTopicProfile.evaluatorVersions
+  // at aggregation time (see ADR-069).
+  evaluatorVersion       String?                @map("evaluator_version")
   createdAt              DateTime               @default(now()) @map("created_at")
   updatedAt              DateTime               @updatedAt @map("updated_at")
   routingDecision        RoutingDecision        @relation(fields: [routingDecisionId], references: [id], onDelete: Cascade)
@@ -467,11 +473,20 @@ model RouterModelProfile {
   weightedDissatisfactionScore Decimal  @default(0) @map("weighted_dissatisfaction_score") @db.Decimal(6, 4)
   sampleSize                   Int      @default(0) @map("sample_size")
   confidenceInProfile          Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
+  // V5 learning evolution (ADR-069) — versioned scores, confidence interval,
+  // evaluator attribution. Nullable/defaulted: additive migration, every row
+  // predating this batch reads as "no version / no interval / no evaluator
+  // recorded yet" rather than a fabricated value.
+  scoreVersion                 String?  @map("score_version")
+  successRateLowerBound        Decimal? @map("success_rate_lower_bound") @db.Decimal(6, 4)
+  successRateUpperBound        Decimal? @map("success_rate_upper_bound") @db.Decimal(6, 4)
+  evaluatorVersions            String[] @default([]) @map("evaluator_versions")
   lastUpdated                  DateTime @default(now()) @map("last_updated")
 
   @@unique([provider, model, taskFamily, topicKey])
   @@index([taskFamily, topicKey])
   @@index([weightedSuccessScore])
+  @@index([scoreVersion])
   @@map("router_model_profiles")
 }
 
@@ -491,24 +506,39 @@ model RouterTopicProfile {
   weightedSuccessScore Decimal  @default(0) @map("weighted_success_score") @db.Decimal(6, 4)
   ambiguityScore       Decimal  @default(0) @map("ambiguity_score") @db.Decimal(6, 4)
   confidenceInProfile  Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
+  // V5 learning evolution (ADR-069) — see RouterModelProfile for rationale.
+  scoreVersion         String?  @map("score_version")
+  successRateLowerBound Decimal? @map("success_rate_lower_bound") @db.Decimal(6, 4)
+  successRateUpperBound Decimal? @map("success_rate_upper_bound") @db.Decimal(6, 4)
+  evaluatorVersions    String[] @default([]) @map("evaluator_versions")
   lastUpdated          DateTime @default(now()) @map("last_updated")
 
   @@unique([taskFamily, topicKey])
   @@index([weightedSuccessScore])
+  @@index([scoreVersion])
   @@map("router_topic_profiles")
 }
 
 model RoutingCalibrationSnapshot {
-  id          String   @id @default(cuid())
-  version     String
-  windowDays  Int      @map("window_days")
-  summary     Json
-  promptHints Json     @map("prompt_hints")
-  active      Boolean  @default(true)
-  generatedAt DateTime @default(now()) @map("generated_at")
+  id            String   @id @default(cuid())
+  version       String
+  windowDays    Int      @map("window_days")
+  summary       Json
+  promptHints   Json     @map("prompt_hints")
+  // V5 learning evolution (ADR-069) — batch recalibration first, rollback.
+  // Full point-in-time copy of the profile rows this snapshot produced,
+  // written BEFORE those rows are promoted to the live RouterModelProfile /
+  // RouterTopicProfile tables. Nullable: pre-ADR-069 snapshot rows have none.
+  // rollbackCalibration() restores a prior version's copy without
+  // recomputing from raw RoutingOutcomeRecord/RoutingFeedbackRecord history.
+  modelProfiles Json?    @map("model_profiles")
+  topicProfiles Json?    @map("topic_profiles")
+  active        Boolean  @default(true)
+  generatedAt   DateTime @default(now()) @map("generated_at")
 
   @@index([generatedAt])
   @@index([active])
+  @@index([version])
   @@map("routing_calibration_snapshots")
 }
 
