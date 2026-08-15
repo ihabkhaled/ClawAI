@@ -9,3 +9,6 @@ export { FeedbackSignal } from './feedback-signal.enum';
 export { SeedApplyOutcome } from './seed-apply-outcome.enum';
 export { RouterErrorCode } from './router-error-code.enum';
 export { RouterFailureScope } from './router-failure-scope.enum';
+export { RoutingLabPromptLengthBucket } from './routing-lab-prompt-length-bucket.enum';
+export { RoutingLabCaseCategory } from './routing-lab-case-category.enum';
+export { RoutingLabConfigurationVariant } from './routing-lab-configuration-variant.enum';
