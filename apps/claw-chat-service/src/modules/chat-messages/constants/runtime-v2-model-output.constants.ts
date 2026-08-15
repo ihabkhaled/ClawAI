@@ -165,8 +165,27 @@ export const RUNTIME_V2_DIALECT_TOOL_CALL_MESSAGE =
 // the one that goes missing, so neither is required to match.
 export const RUNTIME_V2_TRUNCATED_TOOL_REQUEST_PATTERN = /"kind"\s*:\s*"?tool\b/u;
 
-export const RUNTIME_V2_TRUNCATED_TOOL_CALL_MESSAGE =
-  'The model started a Runtime Protocol 2.0 tool object and did not finish it.';
+/**
+ * What the model is told when its tool object was cut off mid-JSON.
+ *
+ * The old sentence stopped at "did not finish it", which describes the symptom
+ * and implies the object was malformed. A model reading that concludes it made
+ * a syntax error and sends the identical object again — the same length, the
+ * same truncation, and the run ends UNREPAIRABLE having done nothing.
+ *
+ * It is almost never a syntax error. A `create` carries an entire file inline
+ * with JSON escaping on top, so the reply simply reached the output-token
+ * ceiling. The one thing that helps is knowing the object must be SHORTER, and
+ * that a long file is written by creating a small one and appending to it.
+ * Observed with kimi-k2.7-code writing a unit test: the request was cut off in
+ * the middle of the `operations` array twice in a row.
+ */
+export const RUNTIME_V2_TRUNCATED_TOOL_CALL_MESSAGE = [
+  'The model started a Runtime Protocol 2.0 tool object and did not finish it.',
+  'This is almost always length, not syntax: the reply hit the output-token limit part-way through the JSON.',
+  'Send the same request with a SHORTER body — write a small file first and append the rest in later turns, or patch fewer lines per call.',
+  'Do not resend an object of the same size; it will be cut off at the same place.',
+].join(' ');
 
 // An agent-self capability denial: the model claiming it has no filesystem, command, workspace, or
 // tool authority. When a tool catalog was admitted that claim is false, and recording it as a
