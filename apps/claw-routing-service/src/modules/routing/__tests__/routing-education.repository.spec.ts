@@ -70,6 +70,7 @@ const buildRepo = (): {
     };
     routerModelProfile: { deleteMany: jest.Mock; createMany: jest.Mock };
     routerTopicProfile: { deleteMany: jest.Mock; createMany: jest.Mock };
+    routerWorkspacePrior: { findUnique: jest.Mock; upsert: jest.Mock };
     $transaction: jest.Mock;
   };
 } => {
@@ -91,11 +92,20 @@ const buildRepo = (): {
     deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
     createMany: jest.fn().mockResolvedValue({ count: 0 }),
   };
+  const routerWorkspacePrior = {
+    findUnique: jest.fn().mockResolvedValue(null),
+    upsert: jest
+      .fn()
+      .mockImplementation(({ create }: { create: Record<string, unknown> }) =>
+        Promise.resolve({ id: 'prior-1', ...create }),
+      ),
+  };
 
   const prisma = {
     routingCalibrationSnapshot,
     routerModelProfile,
     routerTopicProfile,
+    routerWorkspacePrior,
     // Mirrors Prisma's array-form $transaction: resolve each already-created
     // PrismaPromise and return the results in order, so commitCalibrationBatch
     // can destructure the created snapshot out of the batch.
@@ -208,5 +218,55 @@ describe('RoutingEducationRepository snapshot lookups', () => {
     const result = await repository.getPreviousCalibrationSnapshot();
 
     expect(result).toBeNull();
+  });
+});
+
+// V6 learning evolution (ADR-070)
+describe('RoutingEducationRepository workspace priors', () => {
+  it('findWorkspacePrior queries by the exact composite key, scoped to one workspace', async () => {
+    const { repository, prisma } = buildRepo();
+
+    await repository.findWorkspacePrior('ws-1', 'ANTHROPIC', 'claude-sonnet-4', 'coding');
+
+    expect(prisma.routerWorkspacePrior.findUnique).toHaveBeenCalledWith({
+      where: {
+        workspaceId_provider_model_taskFamily: {
+          workspaceId: 'ws-1',
+          provider: 'ANTHROPIC',
+          model: 'claude-sonnet-4',
+          taskFamily: 'coding',
+        },
+      },
+    });
+  });
+
+  it('upsertWorkspacePrior creates on first observation and updates on the same composite key thereafter', async () => {
+    const { repository, prisma } = buildRepo();
+
+    await repository.upsertWorkspacePrior({
+      workspaceId: 'ws-1',
+      provider: 'ANTHROPIC',
+      model: 'claude-sonnet-4',
+      taskFamily: 'coding',
+      routeCount: 1,
+      successRate: 1,
+      confidenceInPrior: 0.1,
+      scoreVersion: null,
+    });
+
+    expect(prisma.routerWorkspacePrior.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          workspaceId_provider_model_taskFamily: {
+            workspaceId: 'ws-1',
+            provider: 'ANTHROPIC',
+            model: 'claude-sonnet-4',
+            taskFamily: 'coding',
+          },
+        },
+        create: expect.objectContaining({ workspaceId: 'ws-1', routeCount: 1 }),
+        update: expect.objectContaining({ routeCount: 1 }),
+      }),
+    );
   });
 });

@@ -37,6 +37,15 @@ export interface RoutingContext {
    * the caller *knows*, so it should not be re-guessed from prose.
    */
   requiresToolCalling?: boolean;
+  /**
+   * V6 learning evolution (ADR-070) — opaque reference to claw-workspace-
+   * service's Workspace. Optional and, today, always undefined: no current
+   * caller populates it. When present, calibrateDecision consults a
+   * workspace-tier learned prior as a bounded secondary signal on top of the
+   * global RouterModelProfile calibration it already applies to every
+   * decision — never a replacement for it, never a hard override.
+   */
+  workspaceId?: string;
 }
 
 export interface RoutingDecisionResult {

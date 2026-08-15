@@ -231,6 +231,7 @@
         "RouterProviderAttempt",
         "RouterTopicProfile",
         "RouterWorkflow",
+        "RouterWorkspacePrior",
         "RoutingCalibrationSnapshot",
         "RoutingCandidateScore",
         "RoutingDecision",

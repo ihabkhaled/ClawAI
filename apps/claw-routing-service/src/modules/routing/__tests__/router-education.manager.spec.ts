@@ -1,4 +1,5 @@
 import { RouterEducationManager } from '../managers/router-education.manager';
+import { RouterWorkspacePriorManager } from '../managers/router-workspace-prior.manager';
 import type {
   RouterModelProfileRecord,
   RouterTopicProfileRecord,
@@ -161,12 +162,18 @@ const mockRepository = () => ({
     sampleSize: 4,
     calibrationTrustScore: 0.5,
   }),
+  // V6 learning evolution (ADR-070)
+  findWorkspacePrior: jest.fn().mockResolvedValue(null),
+  upsertWorkspacePrior: jest.fn().mockImplementation((input) => Promise.resolve(input)),
 });
 
 describe('RouterEducationManager', () => {
   it('builds a calibration snapshot with best models and caution models', async () => {
     const repository = mockRepository();
-    const manager = new RouterEducationManager(repository as never);
+    const manager = new RouterEducationManager(
+      repository as never,
+      new RouterWorkspacePriorManager(repository as never),
+    );
 
     const snapshot = await manager.rebuildCalibrationSnapshot();
 
@@ -180,7 +187,10 @@ describe('RouterEducationManager', () => {
 
   it('can override a weak decision using learned profiles', async () => {
     const repository = mockRepository();
-    const manager = new RouterEducationManager(repository as never);
+    const manager = new RouterEducationManager(
+      repository as never,
+      new RouterWorkspacePriorManager(repository as never),
+    );
 
     const result = await manager.calibrateDecision(
       {
@@ -209,7 +219,10 @@ describe('RouterEducationManager', () => {
 
   it('does not override an explicit no-reachable-model decision', async () => {
     const repository = mockRepository();
-    const manager = new RouterEducationManager(repository as never);
+    const manager = new RouterEducationManager(
+      repository as never,
+      new RouterWorkspacePriorManager(repository as never),
+    );
 
     const result = await manager.calibrateDecision(
       {
@@ -248,7 +261,10 @@ describe('RouterEducationManager', () => {
       feedbackRecords: [],
     });
 
-    const manager = new RouterEducationManager(repository as never);
+    const manager = new RouterEducationManager(
+      repository as never,
+      new RouterWorkspacePriorManager(repository as never),
+    );
 
     await manager.ingestFeedbackSignal({
       messageId: 'assistant-msg-1',
@@ -282,7 +298,10 @@ describe('RouterEducationManager', () => {
         sampleSize: 1,
         calibrationTrustScore: 0.1,
       });
-      const manager = new RouterEducationManager(repository as never);
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
 
       const result = await manager.calibrateDecision(
         {
@@ -318,7 +337,10 @@ describe('RouterEducationManager', () => {
         sampleSize: 5,
         calibrationTrustScore: 0.1,
       });
-      const manager = new RouterEducationManager(repository as never);
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
 
       const result = await manager.calibrateDecision(
         {
@@ -347,7 +369,10 @@ describe('RouterEducationManager', () => {
   describe('confidence intervals and evaluator attribution', () => {
     it('attaches a bounded confidence interval and evaluator versions to every committed profile row', async () => {
       const repository = mockRepository();
-      const manager = new RouterEducationManager(repository as never);
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
 
       await manager.rebuildCalibrationSnapshot();
 
@@ -381,7 +406,10 @@ describe('RouterEducationManager', () => {
 
     it('keeps every interval strictly narrower than the maximally-uncertain default', async () => {
       const repository = mockRepository();
-      const manager = new RouterEducationManager(repository as never);
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
 
       await manager.rebuildCalibrationSnapshot();
 
@@ -402,7 +430,10 @@ describe('RouterEducationManager', () => {
   describe('outlier control', () => {
     it('does not let a single 60s latency spike dominate the averaged latency', async () => {
       const repository = mockRepository();
-      const manager = new RouterEducationManager(repository as never);
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
 
       await manager.rebuildCalibrationSnapshot();
 
@@ -423,7 +454,10 @@ describe('RouterEducationManager', () => {
   describe('rollbackCalibration', () => {
     it('reports SNAPSHOT_NOT_FOUND when there is nothing to roll back to', async () => {
       const repository = mockRepository();
-      const manager = new RouterEducationManager(repository as never);
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
 
       const result = await manager.rollbackCalibration();
 
@@ -448,7 +482,10 @@ describe('RouterEducationManager', () => {
         active: false,
         generatedAt: new Date(),
       });
-      const manager = new RouterEducationManager(repository as never);
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
 
       const result = await manager.rollbackCalibration('calibration-1');
 
@@ -475,7 +512,10 @@ describe('RouterEducationManager', () => {
         active: false,
         generatedAt: new Date(),
       });
-      const manager = new RouterEducationManager(repository as never);
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
 
       const result = await manager.rollbackCalibration('calibration-1');
 
@@ -504,13 +544,141 @@ describe('RouterEducationManager', () => {
         active: false,
         generatedAt: new Date(),
       });
-      const manager = new RouterEducationManager(repository as never);
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
 
       const result = await manager.rollbackCalibration();
 
       expect(result.rolledBack).toBe(true);
       expect(result.restoredVersion).toBe('calibration-0');
       expect(repository.getCalibrationSnapshotByVersion).not.toHaveBeenCalled();
+    });
+  });
+
+  // V6 learning evolution (ADR-070) — workspace-tier hierarchical
+  // personalization, integration through RouterEducationManager's two hook
+  // points. Unit coverage of the nudge math itself lives in
+  // router-workspace-prior.manager.spec.ts; these confirm the wiring.
+  describe('V6 workspace-tier hooks', () => {
+    it('ingestExecutionOutcome rolls a workspace-attributed outcome into a prior when workspaceId is present', async () => {
+      const repository = mockRepository();
+      repository.findDecisionByMessageId.mockResolvedValue({
+        id: 'decision-1',
+        detectedCategory: 'coding',
+      });
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
+
+      await manager.ingestExecutionOutcome({
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        provider: 'ANTHROPIC',
+        model: 'claude-sonnet-4',
+        executionSuccess: true,
+        detectedCategory: 'coding',
+        workspaceId: 'ws-1',
+      } as never);
+
+      expect(repository.upsertOutcomeRecord).toHaveBeenCalledWith(
+        expect.objectContaining({ workspaceId: 'ws-1' }),
+      );
+      expect(repository.upsertWorkspacePrior).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceId: 'ws-1',
+          provider: 'ANTHROPIC',
+          model: 'claude-sonnet-4',
+        }),
+      );
+    });
+
+    it('ingestExecutionOutcome does not touch workspace priors when no workspaceId is reported (current production traffic)', async () => {
+      const repository = mockRepository();
+      repository.findDecisionByMessageId.mockResolvedValue({
+        id: 'decision-1',
+        detectedCategory: 'coding',
+      });
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
+
+      await manager.ingestExecutionOutcome({
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        provider: 'ANTHROPIC',
+        model: 'claude-sonnet-4',
+        executionSuccess: true,
+      } as never);
+
+      expect(repository.upsertWorkspacePrior).not.toHaveBeenCalled();
+    });
+
+    it('calibrateDecision tags a decision workspace_personalized when a qualifying prior nudges confidence', async () => {
+      const repository = mockRepository();
+      repository.findModelProfile.mockResolvedValue(null);
+      repository.findBestModelProfile.mockResolvedValue(null);
+      repository.findWorkspacePrior.mockResolvedValue({
+        routeCount: 20,
+        successRate: 1,
+        confidenceInPrior: 1,
+      });
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
+
+      const result = await manager.calibrateDecision(
+        {
+          selectedProvider: 'ANTHROPIC',
+          selectedModel: 'claude-sonnet-4',
+          routingMode: 'AUTO' as never,
+          confidence: 0.6,
+          reasonTags: ['auto'],
+          privacyClass: 'cloud',
+          costClass: 'medium',
+          fallbackChain: [],
+          detectedCategory: 'coding',
+        },
+        { message: 'hi', workspaceId: 'ws-1' },
+      );
+
+      expect(result.changed).toBe(true);
+      expect(result.decision.reasonTags).toContain('workspace_personalized');
+      expect(result.decision.confidence).toBeGreaterThan(0.6);
+      expect(result.decision.selectedProvider).toBe('ANTHROPIC');
+      expect(result.decision.selectedModel).toBe('claude-sonnet-4');
+    });
+
+    it('calibrateDecision does not apply workspace_personalized when context carries no workspaceId', async () => {
+      const repository = mockRepository();
+      repository.findModelProfile.mockResolvedValue(null);
+      repository.findBestModelProfile.mockResolvedValue(null);
+      const manager = new RouterEducationManager(
+        repository as never,
+        new RouterWorkspacePriorManager(repository as never),
+      );
+
+      const result = await manager.calibrateDecision(
+        {
+          selectedProvider: 'ANTHROPIC',
+          selectedModel: 'claude-sonnet-4',
+          routingMode: 'AUTO' as never,
+          confidence: 0.6,
+          reasonTags: ['auto'],
+          privacyClass: 'cloud',
+          costClass: 'medium',
+          fallbackChain: [],
+          detectedCategory: 'coding',
+        },
+        { message: 'hi' },
+      );
+
+      expect(result.decision.reasonTags).not.toContain('workspace_personalized');
+      expect(repository.findWorkspacePrior).not.toHaveBeenCalled();
     });
   });
 });

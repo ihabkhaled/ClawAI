@@ -439,6 +439,7 @@
         "RouterProviderAttempt",
         "RouterTopicProfile",
         "RouterWorkflow",
+        "RouterWorkspacePrior",
         "RoutingCalibrationSnapshot",
         "RoutingCandidateScore",
         "RoutingDecision",
@@ -448,7 +449,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 89,
+      "testFiles": 90,
       "testRunner": "jest"
     },
     {

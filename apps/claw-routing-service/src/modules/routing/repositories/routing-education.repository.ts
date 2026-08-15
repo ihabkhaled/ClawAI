@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   type RouterModelProfile,
   type RouterTopicProfile,
+  type RouterWorkspacePrior,
   type RoutingCalibrationSnapshot,
   type RoutingFeedbackRecord,
   type RoutingOutcomeRecord,
@@ -74,6 +75,7 @@ export class RoutingEducationRepository {
         escalated: input.escalated ?? false,
         followUpSignal: input.followUpSignal ?? null,
         evaluatorVersion: input.evaluatorVersion ?? null,
+        workspaceId: input.workspaceId ?? null,
       },
       update: {
         messageId: input.messageId ?? null,
@@ -95,6 +97,7 @@ export class RoutingEducationRepository {
         escalated: input.escalated ?? false,
         followUpSignal: input.followUpSignal ?? null,
         evaluatorVersion: input.evaluatorVersion ?? null,
+        workspaceId: input.workspaceId ?? null,
       },
     });
   }
@@ -256,6 +259,67 @@ export class RoutingEducationRepository {
   ): Promise<RouterModelProfile | null> {
     return this.prisma.routerModelProfile.findFirst({
       where: { provider, model, taskFamily },
+    });
+  }
+
+  // V6 learning evolution (ADR-070) ───────────────────────────────────────
+
+  async findWorkspacePrior(
+    workspaceId: string,
+    provider: string,
+    model: string,
+    taskFamily: string,
+  ): Promise<RouterWorkspacePrior | null> {
+    return this.prisma.routerWorkspacePrior.findUnique({
+      where: {
+        workspaceId_provider_model_taskFamily: { workspaceId, provider, model, taskFamily },
+      },
+    });
+  }
+
+  /**
+   * Incremental upsert, not a batch rebuild like the global tier's
+   * rebuildCalibrationSnapshot(). A workspace prior is a lighter-weight
+   * secondary signal (ADR-070) — a full versioned-snapshot/rollback
+   * architecture per workspace is unwarranted scope for what this batch
+   * delivers; the global tier's rollback already covers the calibration
+   * that matters for every request, workspace-personalized or not.
+   */
+  async upsertWorkspacePrior(input: {
+    workspaceId: string;
+    provider: string;
+    model: string;
+    taskFamily: string;
+    routeCount: number;
+    successRate: number;
+    confidenceInPrior: number;
+    scoreVersion: string | null;
+  }): Promise<RouterWorkspacePrior> {
+    return this.prisma.routerWorkspacePrior.upsert({
+      where: {
+        workspaceId_provider_model_taskFamily: {
+          workspaceId: input.workspaceId,
+          provider: input.provider,
+          model: input.model,
+          taskFamily: input.taskFamily,
+        },
+      },
+      create: {
+        workspaceId: input.workspaceId,
+        provider: input.provider,
+        model: input.model,
+        taskFamily: input.taskFamily,
+        routeCount: input.routeCount,
+        successRate: input.successRate,
+        confidenceInPrior: input.confidenceInPrior,
+        scoreVersion: input.scoreVersion,
+      },
+      update: {
+        routeCount: input.routeCount,
+        successRate: input.successRate,
+        confidenceInPrior: input.confidenceInPrior,
+        scoreVersion: input.scoreVersion,
+      },
     });
   }
 }

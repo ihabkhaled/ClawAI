@@ -421,6 +421,11 @@ model RoutingOutcomeRecord {
   // into RouterModelProfile.evaluatorVersions / RouterTopicProfile.evaluatorVersions
   // at aggregation time (see ADR-069).
   evaluatorVersion       String?                @map("evaluator_version")
+  // V6 learning evolution (ADR-070) — opaque reference to claw-workspace-
+  // service's Workspace, never joined (cross-service DB boundary). Nullable:
+  // no current caller populates it; RouterWorkspacePrior aggregation simply
+  // skips a row with no workspaceId, same as it always has.
+  workspaceId            String?                @map("workspace_id")
   createdAt              DateTime               @default(now()) @map("created_at")
   updatedAt              DateTime               @updatedAt @map("updated_at")
   routingDecision        RoutingDecision        @relation(fields: [routingDecisionId], references: [id], onDelete: Cascade)
@@ -429,6 +434,7 @@ model RoutingOutcomeRecord {
   @@index([threadId])
   @@index([executionStatus])
   @@index([judgeOutcome])
+  @@index([workspaceId])
   @@map("routing_outcome_records")
 }
 
@@ -491,32 +497,61 @@ model RouterModelProfile {
 }
 
 model RouterTopicProfile {
-  id                   String   @id @default(cuid())
-  taskFamily           String   @map("task_family")
-  topicKey             String   @map("topic_key")
-  bestProvider         String?  @map("best_provider")
-  bestModel            String?  @map("best_model")
-  routeCount           Int      @default(0) @map("route_count")
-  successRate          Decimal  @default(0) @map("success_rate") @db.Decimal(6, 4)
-  thumbsUpRate         Decimal  @default(0) @map("thumbs_up_rate") @db.Decimal(6, 4)
-  thumbsDownRate       Decimal  @default(0) @map("thumbs_down_rate") @db.Decimal(6, 4)
-  judgeVerifiedRate    Decimal  @default(0) @map("judge_verified_rate") @db.Decimal(6, 4)
-  judgeEscalatedRate   Decimal  @default(0) @map("judge_escalated_rate") @db.Decimal(6, 4)
-  fallbackSuccessRate  Decimal  @default(0) @map("fallback_success_rate") @db.Decimal(6, 4)
-  weightedSuccessScore Decimal  @default(0) @map("weighted_success_score") @db.Decimal(6, 4)
-  ambiguityScore       Decimal  @default(0) @map("ambiguity_score") @db.Decimal(6, 4)
-  confidenceInProfile  Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
+  id                    String   @id @default(cuid())
+  taskFamily            String   @map("task_family")
+  topicKey              String   @map("topic_key")
+  bestProvider          String?  @map("best_provider")
+  bestModel             String?  @map("best_model")
+  routeCount            Int      @default(0) @map("route_count")
+  successRate           Decimal  @default(0) @map("success_rate") @db.Decimal(6, 4)
+  thumbsUpRate          Decimal  @default(0) @map("thumbs_up_rate") @db.Decimal(6, 4)
+  thumbsDownRate        Decimal  @default(0) @map("thumbs_down_rate") @db.Decimal(6, 4)
+  judgeVerifiedRate     Decimal  @default(0) @map("judge_verified_rate") @db.Decimal(6, 4)
+  judgeEscalatedRate    Decimal  @default(0) @map("judge_escalated_rate") @db.Decimal(6, 4)
+  fallbackSuccessRate   Decimal  @default(0) @map("fallback_success_rate") @db.Decimal(6, 4)
+  weightedSuccessScore  Decimal  @default(0) @map("weighted_success_score") @db.Decimal(6, 4)
+  ambiguityScore        Decimal  @default(0) @map("ambiguity_score") @db.Decimal(6, 4)
+  confidenceInProfile   Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
   // V5 learning evolution (ADR-069) — see RouterModelProfile for rationale.
-  scoreVersion         String?  @map("score_version")
+  scoreVersion          String?  @map("score_version")
   successRateLowerBound Decimal? @map("success_rate_lower_bound") @db.Decimal(6, 4)
   successRateUpperBound Decimal? @map("success_rate_upper_bound") @db.Decimal(6, 4)
-  evaluatorVersions    String[] @default([]) @map("evaluator_versions")
-  lastUpdated          DateTime @default(now()) @map("last_updated")
+  evaluatorVersions     String[] @default([]) @map("evaluator_versions")
+  lastUpdated           DateTime @default(now()) @map("last_updated")
 
   @@unique([taskFamily, topicKey])
   @@index([weightedSuccessScore])
   @@index([scoreVersion])
   @@map("router_topic_profiles")
+}
+
+/// V6 learning evolution (ADR-070) — hierarchical personalization, workspace
+/// tier only. A bounded secondary signal layered ON TOP of RouterModelProfile
+/// (global tier), never a replacement for it: calibrateDecision always
+/// computes the global calibration first, and only nudges its confidence
+/// when a workspace prior exists with enough samples to trust. A separate
+/// table rather than a nullable column on RouterModelProfile so the existing
+/// global unique constraint, upsert logic, and every current reader is
+/// untouched by this batch — zero risk to the live global learning path.
+model RouterWorkspacePrior {
+  id                String   @id @default(cuid())
+  /// Opaque reference to claw-workspace-service's Workspace. Never joined
+  /// (cross-service DB boundary) — always filtered on directly, so a prior
+  /// row is never visible outside the workspace that produced it.
+  workspaceId       String   @map("workspace_id")
+  provider          String
+  model             String
+  taskFamily        String   @map("task_family")
+  routeCount        Int      @default(0) @map("route_count")
+  successRate       Decimal  @default(0) @map("success_rate") @db.Decimal(6, 4)
+  confidenceInPrior Decimal  @default(0) @map("confidence_in_prior") @db.Decimal(6, 4)
+  scoreVersion      String?  @map("score_version")
+  lastUpdated       DateTime @default(now()) @map("last_updated")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@unique([workspaceId, provider, model, taskFamily])
+  @@index([workspaceId])
+  @@map("router_workspace_priors")
 }
 
 model RoutingCalibrationSnapshot {

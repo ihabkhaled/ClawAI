@@ -15,6 +15,7 @@ import {
   UNVERSIONED_EVALUATOR,
 } from '../constants/routing-education.constants';
 import { RoutingEducationRepository } from '../repositories/routing-education.repository';
+import { RouterWorkspacePriorManager } from './router-workspace-prior.manager';
 import type {
   AggregateBucket,
   CreateRoutingFeedbackInput,
@@ -39,7 +40,10 @@ import {
 export class RouterEducationManager {
   private readonly logger = new Logger(RouterEducationManager.name);
 
-  constructor(private readonly repository: RoutingEducationRepository) {}
+  constructor(
+    private readonly repository: RoutingEducationRepository,
+    private readonly workspacePrior: RouterWorkspacePriorManager,
+  ) {}
 
   async ingestExecutionOutcome(payload: RoutingCompletedEventPayload): Promise<void> {
     const decision = await this.repository.findDecisionByMessageId(payload.messageId);
@@ -77,7 +81,22 @@ export class RouterEducationManager {
       escalated: judgeOutcome === JudgeOutcome.ESCALATED,
       followUpSignal: payload.reRouted ? 're_routed' : null,
       evaluatorVersion: payload.evaluatorVersion ?? null,
+      workspaceId: payload.workspaceId ?? null,
     });
+
+    if (payload.workspaceId) {
+      // V6 learning evolution (ADR-070) — no current caller populates this,
+      // so this branch is untaken in production today; exercised directly
+      // by unit tests.
+      await this.workspacePrior.ingestOutcome({
+        workspaceId: payload.workspaceId,
+        provider: payload.provider,
+        model: payload.model,
+        taskFamily: payload.detectedCategory ?? 'general',
+        executionSuccess,
+        scoreVersion: payload.evaluatorVersion ?? null,
+      });
+    }
 
     await this.rebuildCalibrationSnapshot();
   }
@@ -250,11 +269,37 @@ export class RouterEducationManager {
           Math.max(calibrated.confidence, Number(profile.calibrationTrustScore)),
         );
         calibrated.reasonTags = [...calibrated.reasonTags, 'learned_profile_override'];
-        return { decision: calibrated, changed: true };
+        return this.withWorkspaceNudge(calibrated, true, context);
       }
     }
 
-    return { decision: calibrated, changed: calibrated !== decision };
+    return this.withWorkspaceNudge(calibrated, calibrated !== decision, context);
+  }
+
+  /**
+   * V6 learning evolution (ADR-070) — applied last, after any global-tier
+   * override to best profile has already picked the final
+   * selectedProvider/selectedModel. This method only ever adjusts
+   * `confidence`; it has no path that can change which provider or model
+   * was selected, by construction.
+   */
+  private async withWorkspaceNudge(
+    calibrated: RoutingDecisionResult,
+    changed: boolean,
+    context: RoutingContext,
+  ): Promise<LearnedDecisionCalibration> {
+    const nudge = await this.workspacePrior.resolveNudge(context, calibrated);
+    if (!nudge.applied) {
+      return { decision: calibrated, changed };
+    }
+    return {
+      decision: {
+        ...calibrated,
+        confidence: nudge.confidence,
+        reasonTags: [...calibrated.reasonTags, 'workspace_personalized'],
+      },
+      changed: true,
+    };
   }
 
   private shouldOverrideToBestProfile(

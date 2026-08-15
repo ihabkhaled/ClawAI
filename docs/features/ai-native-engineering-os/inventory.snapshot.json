@@ -8577,6 +8577,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "RouterWorkspacePrior"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
             "value": "RoutingCalibrationSnapshot"
           },
           {
@@ -8847,7 +8852,7 @@
       },
       "claw-routing-service": {
         "runner": "jest",
-        "testFiles": 89
+        "testFiles": 90
       },
       "claw-server-logs-service": {
         "runner": "jest",
@@ -9572,7 +9577,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 905,
+    "totalTestFiles": 906,
     "workspaceCount": 25
   }
 }

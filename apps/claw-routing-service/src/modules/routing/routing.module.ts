@@ -16,6 +16,7 @@ import { PromptBuilderManager } from './managers/prompt-builder.manager';
 import { ReplayManager } from './managers/replay.manager';
 import { AdaptiveLearningManager } from './managers/adaptive-learning.manager';
 import { RouterEducationManager } from './managers/router-education.manager';
+import { RouterWorkspacePriorManager } from './managers/router-workspace-prior.manager';
 import { ComplexityClassifierManager } from './managers/complexity-classifier.manager';
 import { CapabilityRouterManager } from './managers/capability-router.manager';
 import { ImageDetectionManager } from './managers/image-detection.manager';
@@ -60,6 +61,7 @@ import { RouterShadowEvaluationManager } from './managers/router-shadow-evaluati
     RouterShadowEvaluationManager,
     AdaptiveLearningManager,
     RouterEducationManager,
+    RouterWorkspacePriorManager,
     OllamaRouterManager,
     PromptBuilderManager,
     ComplexityClassifierManager,

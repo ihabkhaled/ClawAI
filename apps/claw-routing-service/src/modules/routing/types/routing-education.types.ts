@@ -48,6 +48,9 @@ export type CreateRoutingOutcomeInput = {
   // V5 learning evolution (ADR-069) — raw per-observation evaluator/rubric
   // identity. Nullable: most callers won't report one yet.
   evaluatorVersion?: EvaluatorVersion | null;
+  // V6 learning evolution (ADR-070) — opaque workspace reference. Nullable:
+  // no current caller reports one yet.
+  workspaceId?: string | null;
 };
 
 export type CreateRoutingFeedbackInput = {
@@ -192,6 +195,10 @@ export type RoutingCompletedEventPayload = {
   // V5 learning evolution (ADR-069) — which evaluator/rubric produced
   // judgeDecision/judgeConfidence/criticScore, if the caller reports one.
   evaluatorVersion?: EvaluatorVersion;
+  // V6 learning evolution (ADR-070) — opaque workspace reference. No current
+  // caller populates it; when present, ingestExecutionOutcome also rolls
+  // this outcome into a RouterWorkspacePrior row for that workspace.
+  workspaceId?: string;
 };
 
 export type LearnedDecisionCalibration = {

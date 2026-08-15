@@ -30,3 +30,38 @@ export const MAX_COST_OUTLIER_ESTIMATE = 5;
  * RouterTopicProfile.evaluatorVersions — keeps the raw column honestly
  * nullable while the aggregate always reports an attributable value. */
 export const UNVERSIONED_EVALUATOR = 'unversioned';
+
+// V6 learning evolution (ADR-070) ─────────────────────────────────────────
+
+/**
+ * A workspace prior below this route count has not earned any pull on a
+ * decision's confidence yet — same cold-start-instability guard as
+ * MIN_PROFILE_SAMPLE_SIZE, kept as its own constant because the workspace
+ * tier is a secondary signal layered on a smaller, per-workspace sample
+ * than the global tier's whole-fleet sample, so the bar is deliberately
+ * lower.
+ */
+export const MIN_WORKSPACE_PRIOR_SAMPLE_SIZE = 3;
+
+/** Route count at which a workspace prior's confidence ramp reaches 1.0. */
+export const WORKSPACE_PRIOR_CONFIDENCE_RAMP_SAMPLES = 10;
+
+/**
+ * How much weight a workspace prior gets in the nudge, scaled further by the
+ * prior's own confidence ramp. Deliberately well below CALIBRATION_BLEND
+ * (the global tier's weight): this is a secondary, opt-in-by-evidence signal
+ * on top of an already-calibrated global decision, never a replacement for
+ * it — the overfit/leakage guard the pack requires.
+ */
+export const WORKSPACE_PRIOR_BLEND_WEIGHT = 0.15;
+
+/**
+ * Hard cap on how far a workspace prior may move a decision's confidence in
+ * either direction, independent of blend weight or sample size. Prevents a
+ * pathological or adversarial workspace history (e.g. a burst of identical
+ * feedback) from swinging confidence outside a bounded band — the pack's
+ * "prevent overfit... preference overriding hard policy" requirement applied
+ * to confidence, not just to provider/model selection (which this nudge
+ * never touches at all).
+ */
+export const MAX_WORKSPACE_PRIOR_NUDGE = 0.1;
