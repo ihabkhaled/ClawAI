@@ -325,6 +325,10 @@ export class OneDriveAdapter implements WorkspaceAdapter {
     return true;
   }
 
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [WorkspaceActionType.UPLOAD_ONEDRIVE, WorkspaceActionType.MOVE_ONEDRIVE];
+  }
+
   async executeWriteAction(
     accessToken: string,
     actionType: string,

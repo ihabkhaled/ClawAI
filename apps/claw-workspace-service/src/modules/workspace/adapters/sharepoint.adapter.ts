@@ -319,6 +319,14 @@ export class SharePointAdapter implements WorkspaceAdapter {
     return true;
   }
 
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [
+      WorkspaceActionType.UPLOAD_SHAREPOINT,
+      WorkspaceActionType.CREATE_SHAREPOINT_LIST_ITEM,
+      WorkspaceActionType.UPDATE_SHAREPOINT_LIST_ITEM,
+    ];
+  }
+
   async executeWriteAction(
     accessToken: string,
     actionType: string,

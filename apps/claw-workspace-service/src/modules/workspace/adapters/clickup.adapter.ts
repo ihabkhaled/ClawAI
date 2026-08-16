@@ -317,6 +317,14 @@ export class ClickUpAdapter implements WorkspaceAdapter {
     return true;
   }
 
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [
+      WorkspaceActionType.CREATE_CLICKUP_TASK,
+      WorkspaceActionType.UPDATE_CLICKUP_TASK,
+      WorkspaceActionType.COMMENT_CLICKUP_TASK,
+    ];
+  }
+
   async executeWriteAction(
     accessToken: string,
     actionType: string,

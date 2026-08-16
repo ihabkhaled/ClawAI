@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import {
   GITLAB_AUTH_PATH,
   GITLAB_DEFAULT_API_BASE,
@@ -422,6 +423,18 @@ export class GitLabAdapter implements WorkspaceAdapter {
 
   supportsWrite(): boolean {
     return true;
+  }
+
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [
+      WorkspaceActionType.CREATE_MR_COMMENT,
+      WorkspaceActionType.APPROVE_MR,
+      WorkspaceActionType.CREATE_GITLAB_ISSUE,
+      WorkspaceActionType.COMMENT_GITLAB_ISSUE,
+      WorkspaceActionType.UPDATE_MR_DESCRIPTION,
+      WorkspaceActionType.ADD_MR_SUGGESTION,
+      WorkspaceActionType.ADD_MR_IMAGE_COMMENT,
+    ];
   }
 
   async executeWriteAction(

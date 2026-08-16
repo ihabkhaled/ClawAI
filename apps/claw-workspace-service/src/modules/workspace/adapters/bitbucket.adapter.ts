@@ -401,6 +401,14 @@ export class BitbucketAdapter implements WorkspaceAdapter {
     return true;
   }
 
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [
+      WorkspaceActionType.CREATE_PR_COMMENT_BB,
+      WorkspaceActionType.APPROVE_PR_BB,
+      WorkspaceActionType.CREATE_BITBUCKET_ISSUE,
+    ];
+  }
+
   async executeWriteAction(
     accessToken: string,
     actionType: string,

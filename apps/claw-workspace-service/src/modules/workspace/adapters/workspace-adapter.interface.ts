@@ -1,3 +1,4 @@
+import type { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import type {
   AdapterCapabilities,
   FileContentStream,
@@ -104,6 +105,16 @@ export interface WorkspaceAdapter {
     actionType: string,
     payload: Record<string, unknown>,
   ): Promise<WriteActionResult>;
+
+  /**
+   * The exact `WorkspaceActionType` values this adapter's `executeWriteAction`
+   * dispatches on. This is the single source `provider-registry-drift.spec.ts`
+   * cross-checks against `PROVIDER_DEFINITION_SEEDS.supportedActions` — keep
+   * it in sync with the dispatch logic, not with the registry (the registry
+   * is corrected FROM this, not the other way around). Adapters without
+   * `supportsWrite` omit this entirely.
+   */
+  getSupportedActionTypes?(): WorkspaceActionType[];
 
   /**
    * Optional live-fetch for a single object by its external id. Implementors

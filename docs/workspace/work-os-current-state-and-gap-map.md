@@ -1,9 +1,9 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Pass 2)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01 + Phase 02)
 
-**Status: per-provider capability matrix complete; duplication scan, frontend route inventory,
-and RabbitMQ contract inventory still pending (see "Explicitly not yet verified" below).** This
-is the Phase 01 deliverable required by the `ClawAI_Workspace_Automation_Prompt_Pack` before any
-later phase starts.
+**Status: Phase 01 (per-provider capability matrix) and Phase 02 (capability manifest / registry
+truth) are done. Phase 01's duplication scan, frontend route inventory, and RabbitMQ contract
+inventory are still pending (see "Explicitly not yet verified" below). Phase 03 onward not
+started.**
 
 Pass 1 (below, preserved) established the structural map. Pass 2 adds the machine-actionable
 per-provider matrix the spec actually asks for, built by reading every adapter's
@@ -139,12 +139,50 @@ rebuild working foundations."). The real work is very likely concentrated in:
 - **Phase 12** (does `WorkspaceConnectorGrant` distinguish org installations from personal
   connectors, with policy inheritance, or is it still purely per-user?).
 
+## Phase 02 — Capability Manifest & Registry Truth (done)
+
+The registry-vs-adapter drift flagged above was worse than suspected: `PROVIDER_DEFINITION_SEEDS`
+(the DB-backed `WorkspaceProviderDefinition` seed data — already structurally close to the pack's
+proposed `ProviderCapabilityManifest`) was wrong for **11 of the then-12 registered providers**,
+and 2 whole providers (Google Calendar, Outlook Calendar) weren't registered at all — meaning
+`ProviderRegistryService.getByProvider(GOOGLE_CALENDAR | OUTLOOK_CALENDAR)` threw
+`EntityNotFoundException` for adapters that work end to end. Concretely:
+`supportedActions` listed the wrong action types (or none) for GitLab, Jira, ClickUp, Slack, and
+GitHub was missing 3 of 6; `capabilities.write` said `false` for Bitbucket, Confluence, Figma,
+Google Drive, Gmail, SharePoint, and OneDrive despite all seven having real, working write paths;
+`capabilities.webhooks` said `true` for ClickUp/SharePoint/OneDrive despite the receiver rejecting
+every delivery for those three (the false-advertising bug fixed in Phase 01).
+
+Fixed: corrected every provider's `supportedActions`/`capabilities` against the real per-provider
+matrix above, and added the two missing calendar providers. Reused the existing
+`onModuleInit` upsert seeder (`ProviderRegistryService`) and `GET /workspace/providers` /
+`GET /workspace/providers/:provider` API (`WorkspaceProviderRegistryController`) rather than
+building parallel infrastructure — both already matched the pack's "one canonical contract, derive
+the registry API from it" design, they just held wrong data.
+
+Added the contract test the pack's acceptance criteria ask for
+(`provider-registry-drift.spec.ts`, 43 assertions): every adapter now exposes
+`getSupportedActionTypes(): WorkspaceActionType[]` alongside its existing `supportsWrite()`, and
+the test cross-checks it against the registry seed, `supportsWrite()` against
+`capabilities.write`, and `capabilities.webhooks` against the webhook receiver's own
+`isWebhookSupported()` truth table (not the adapter's self-reported flag, which is exactly what
+was wrong before). This test would have failed CI on every one of the bugs above — it now stands
+between this class of drift and `main`.
+
+**Not done in this pass**: the frontend already types `supportedActions`/`capabilities` on its
+provider-definition model (`workspace-providers.types.ts`) via an existing repository/hook layer,
+but no UI actually reads them yet for action selection — the write-action label map fixed in
+Phase 01 (`WORKSPACE_ACTION_TYPE_LABEL`) is still a static, hand-maintained mirror, not
+capability-API-derived. Wiring the approval-queue / workflow-builder UI to the now-correct
+registry API instead is real work that belongs to Phase 08 (Work OS Command Center UX) or 09 (NL
+Automation Studio), not duplicated here. Payload JSON-schema validation per action
+(`payloadSchema` in the pack's proposed manifest shape) and per-action risk/approval defaults
+(`risk`, `defaultApproval`) were also not added — the existing `AiActionPolicy`/approval-queue
+system already carries its own risk/approval model, and reconciling the two is Phase 06's
+(Saga/compensation) territory, not Phase 02's.
+
 ## Explicitly not yet verified (next session's starting point)
 
-- **Registry vs adapter drift** — whether `WorkspaceProviderDefinition` /
-  `WorkspaceProviderAppConfig` (DB rows) agree with the per-provider matrix above, or are a third,
-  independently-drifted source of truth. The matrix above is adapter-code-only; the DB rows were
-  not diffed against it this pass.
 - Whether `chains`/`ai-actions`/`actions` module boundaries already have the duplication the
   pack warns about ("chain vs workflow overlap... duplicate action enums... duplicate approval
   queues").

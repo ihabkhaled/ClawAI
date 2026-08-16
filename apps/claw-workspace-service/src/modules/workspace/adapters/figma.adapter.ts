@@ -1,5 +1,6 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import {
   FIGMA_API_BASE,
   FIGMA_AUTH_URL,
@@ -378,6 +379,10 @@ export class FigmaAdapter implements WorkspaceAdapter {
 
   supportsWrite(): boolean {
     return true;
+  }
+
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [WorkspaceActionType.POST_FIGMA_COMMENT];
   }
 
   async executeWriteAction(
