@@ -126,7 +126,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 97,
+      "testFiles": 98,
       "testRunner": "jest"
     },
     {

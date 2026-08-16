@@ -72,12 +72,24 @@ async function runtimeV2ReasonScrypt(protectedInput: string, salt: Buffer): Prom
   );
 }
 
+// An EMPTY array serialises exactly as an empty OBJECT, matching canonicalJson
+// in the coding-agent extension. Redis 7.4's Lua cjson cannot distinguish them —
+// `cjson.encode(cjson.decode('[]'))` is `{}` — and every runtime event is
+// decoded and re-encoded inside the Lua state machine, so a tool result that
+// carried `[]` anywhere in its structured payload reaches this comparison as
+// `{}` from the Lua side, while a naive `[]` here disagreed and every
+// verifiedResult() rejected the client's receipt with "Runtime V2 result
+// receipt does not match canonical output" — an unhandled 500 with no
+// actionable message to the model. The extension already applies this rule;
+// the backend must match it or the hashes diverge again.
 export function stableRuntimeV2Json(value: unknown): string {
   if (value === null || typeof value === 'boolean' || typeof value === 'number') {
     return JSON.stringify(value);
   }
   if (typeof value === 'string') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stableRuntimeV2Json).join(',')}]`;
+  if (Array.isArray(value)) {
+    return value.length === 0 ? '{}' : `[${value.map(stableRuntimeV2Json).join(',')}]`;
+  }
   if (typeof value === 'object') {
     return `{${Object.entries(value)
       .sort(([left], [right]) => left.localeCompare(right))
