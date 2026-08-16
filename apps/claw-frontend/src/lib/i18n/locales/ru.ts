@@ -1,6 +1,8 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const ru: TranslationDictionary = {
   common: {
@@ -215,6 +217,7 @@ export const ru: TranslationDictionary = {
     adminRuntimeProgress: 'Диагностика среды выполнения',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.navigationLabel,
     adminPaymentGateways: 'Платёжные шлюзы',
+    adminSmartRouter: 'Умный маршрутизатор',
     plan: 'Мой тариф',
     billing: 'Оплата',
     usage: 'Использование',
@@ -3202,6 +3205,8 @@ export const ru: TranslationDictionary = {
     failed: 'Не удалось оформить возврат.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.ru,
+  smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ru,
   adminBilling: {
     title: 'Панель биллинга',
     description: 'Выручка, расходы на провайдеров, маржа и состояние подписок.',

@@ -51,6 +51,15 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set([
   '{"capability": 0.2, "domain": 0.1, ...}',
   '{ms}ms',
   '© {year} ClawAI · v{version}',
+  'AWS Bedrock',
+  'Anthropic',
+  'DeepSeek',
+  'Gemini',
+  'Grok',
+  'Ollama',
+  'Ollama Cloud',
+  'OpenAI',
+  'ms',
 ]);
 
 function placeholders(value: string): string[] {

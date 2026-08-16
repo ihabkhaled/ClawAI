@@ -1,6 +1,8 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const ar: TranslationDictionary = {
   common: {
@@ -212,6 +214,7 @@ export const ar: TranslationDictionary = {
     adminRuntimeProgress: 'تشخيص بيئة التشغيل',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.ar.navigationLabel,
     adminPaymentGateways: 'بوابات الدفع',
+    adminSmartRouter: 'الموجّه الذكي',
     plan: 'خطتي',
     billing: 'الفوترة',
     usage: 'الاستخدام',
@@ -3148,6 +3151,8 @@ export const ar: TranslationDictionary = {
     failed: 'تعذر إصدار الاسترداد.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ar.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.ar,
+  smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ar,
   adminBilling: {
     title: 'لوحة الفوترة',
     description: 'الإيرادات وتكلفة المزوّد والهامش وصحة الاشتراكات.',

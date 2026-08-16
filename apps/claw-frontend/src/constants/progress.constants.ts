@@ -12,3 +12,9 @@ export const PROGRESS_EVENT_TYPES = new Set<StreamEventType>([
   StreamEventType.MODEL_PROGRESS,
   StreamEventType.RESPONSE_STREAMING,
 ]);
+
+// Bound on how many recent SSE `eventId`s useChatStream remembers for
+// redelivery dedupe. A durable-journal replay/resume can redeliver a frame
+// already processed; without a cap the seen-id set would grow unboundedly
+// over a very long-lived stream.
+export const PROCESSED_STREAM_EVENT_ID_CACHE_LIMIT = 500;

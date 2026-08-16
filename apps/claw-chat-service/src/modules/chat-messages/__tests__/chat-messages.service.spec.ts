@@ -14,6 +14,7 @@ import { type VerifierManager } from '../managers/verifier.manager';
 import { type PipelineManager } from '../managers/pipeline.manager';
 import { type RolePackManager } from '../managers/role-pack.manager';
 import { type ChatStreamService } from '../services/chat-stream.service';
+import { type RouterTraceStreamService } from '../services/router-trace-stream.service';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
@@ -143,23 +144,24 @@ describe('ChatMessagesService', () => {
       { executePipeline: jest.fn() } as unknown as PipelineManager,
       { executeRolePack: jest.fn() } as unknown as RolePackManager,
       streamService as unknown as ChatStreamService,
+      { render: jest.fn().mockReturnValue(0) } as unknown as RouterTraceStreamService,
       rabbitMQ as unknown as RabbitMQService,
       { write: jest.fn(), getByMessageId: jest.fn() } as unknown as ConstructorParameters<
         typeof ChatMessagesService
-      >[16],
+      >[17],
       {
         assertCanSendMessage,
         assertResearchAccess: jest.fn(),
         recordUsage: jest.fn(),
-      } as unknown as ConstructorParameters<typeof ChatMessagesService>[17],
+      } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
       // ResearchEnricherManager — no-op for legacy tests; flows that don't set
       // researchMode never reach the enricher.
       {
         enrich: jest.fn().mockResolvedValue({ evidence: '', sources: [], mode: 'NONE' }),
-      } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
+      } as unknown as ConstructorParameters<typeof ChatMessagesService>[19],
       { tryHandleRouted: jest.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
         typeof ChatMessagesService
-      >[19],
+      >[20],
     );
   });
 
@@ -405,21 +407,22 @@ describe('ChatMessagesService', () => {
           emitRequestAccepted: jest.fn(),
           emitCompletion: jest.fn(),
         } as unknown as ChatStreamService,
+        { render: jest.fn().mockReturnValue(0) } as unknown as RouterTraceStreamService,
         rabbitMQ as unknown as RabbitMQService,
         { write: jest.fn(), getByMessageId: jest.fn() } as unknown as ConstructorParameters<
           typeof ChatMessagesService
-        >[16],
+        >[17],
         {
           assertCanSendMessage: jest.fn(),
           assertResearchAccess: jest.fn(),
           recordUsage: jest.fn(),
-        } as unknown as ConstructorParameters<typeof ChatMessagesService>[17],
+        } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
         {
           enrich: jest.fn().mockResolvedValue({ evidence: '', sources: [], mode: 'NONE' }),
-        } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
+        } as unknown as ConstructorParameters<typeof ChatMessagesService>[19],
         { tryHandleRouted: jest.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
           typeof ChatMessagesService
-        >[19],
+        >[20],
       );
 
       const result = await localService.executeVerify(

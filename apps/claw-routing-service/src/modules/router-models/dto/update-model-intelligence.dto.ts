@@ -8,13 +8,7 @@ import {
 } from '../constants/model-intelligence.constants';
 
 const nullableBoolean = z.boolean().nullable().optional();
-const nullableInt = z
-  .number()
-  .int()
-  .min(0)
-  .max(100_000_000)
-  .nullable()
-  .optional();
+const nullableInt = z.number().int().min(0).max(100_000_000).nullable().optional();
 const nullableFloat = z.number().min(0).max(1_000_000).nullable().optional();
 const stringArray = z.array(z.string().min(1).max(64)).max(50).optional();
 const enumLabel = (allowed: ReadonlyArray<string>): z.ZodOptional<z.ZodNullable<z.ZodString>> =>

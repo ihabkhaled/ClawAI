@@ -20,6 +20,10 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   },
   { prefix: ROUTES.ADMIN_WEBHOOK_DELIVERIES, permission: Permission.ADMIN_SYSTEM_VIEW },
   { prefix: ROUTES.ADMIN_DEPLOYMENT, permission: Permission.ADMIN_SYSTEM_VIEW },
+  // Reuses the routing-service's existing ADMIN_ROUTING_MANAGE permission —
+  // the router-configuration-admin API is gated by the same permission as
+  // /routing itself (see ROUTES.ROUTING below), no new permission needed.
+  { prefix: ROUTES.ADMIN_SMART_ROUTER, permission: Permission.ADMIN_ROUTING_MANAGE },
   { prefix: ROUTES.ADMIN_REFUNDS, permission: Permission.ADMIN_PLANS_MANAGE },
   { prefix: ROUTES.ADMIN_BILLING, permission: Permission.ADMIN_PLANS_MANAGE },
   { prefix: ROUTES.ADMIN_PAYMENT_GATEWAYS, permission: Permission.ADMIN_PLANS_MANAGE },

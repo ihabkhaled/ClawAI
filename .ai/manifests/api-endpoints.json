@@ -2128,6 +2128,41 @@
       },
       {
         "method": "GET",
+        "route": "/routing/configurations",
+        "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/configurations",
+        "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/configurations/:id",
+        "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/routing/configurations/:id/entries",
+        "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/configurations/:id/publish",
+        "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/configurations/disable",
+        "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/routing/configurations/enable",
+        "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/routing/cost-budget",
         "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
       },
@@ -2160,6 +2195,11 @@
         "method": "GET",
         "route": "/routing/cost-budget/me/forecast",
         "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/decisions/:id/legacy-vs-cloud",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
       },
       {
         "method": "GET",
@@ -2314,6 +2354,11 @@
       {
         "method": "POST",
         "route": "/routing/replay/cases/:caseId/review",
+        "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/routing/replay/legacy-vs-cloud",
         "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
       },
       {
@@ -2923,5 +2968,5 @@
     ]
   },
   "generated": true,
-  "total": 577
+  "total": 586
 }

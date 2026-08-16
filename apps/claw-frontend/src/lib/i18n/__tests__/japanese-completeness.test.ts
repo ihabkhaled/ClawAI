@@ -54,6 +54,16 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set([
   'X',
   'LinkedIn',
   '18',
+  'AWS Bedrock',
+  'Anthropic',
+  'DeepSeek',
+  'Gemini',
+  'Grok',
+  'Ollama',
+  'Ollama Cloud',
+  'OpenAI',
+  'llama.cpp',
+  'ms',
 ]);
 
 describe('Japanese dictionary completeness', () => {

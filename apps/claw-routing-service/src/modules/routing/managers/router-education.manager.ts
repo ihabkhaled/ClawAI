@@ -9,13 +9,18 @@ import {
 import {
   CALIBRATION_BLEND,
   EDUCATION_WINDOW_DAYS,
+  MAX_COST_OUTLIER_ESTIMATE,
+  MAX_LATENCY_OUTLIER_MS,
   MIN_PROFILE_SAMPLE_SIZE,
+  UNVERSIONED_EVALUATOR,
 } from '../constants/routing-education.constants';
 import { RoutingEducationRepository } from '../repositories/routing-education.repository';
+import { RouterWorkspacePriorManager } from './router-workspace-prior.manager';
 import type {
   AggregateBucket,
   CreateRoutingFeedbackInput,
   LearnedDecisionCalibration,
+  RollbackCalibrationResult,
   RouterModelProfileRecord,
   RouterTopicProfileRecord,
   RoutingCalibrationSummary,
@@ -26,12 +31,19 @@ import type {
   RoutingPromptHintSnapshot,
 } from '../types/routing-education.types';
 import type { RoutingContext, RoutingDecisionResult } from '../types/routing.types';
+import {
+  computeWilsonScoreInterval,
+  computeWinsorizedWeightedAverage,
+} from '../utilities/routing-education-statistics.utility';
 
 @Injectable()
 export class RouterEducationManager {
   private readonly logger = new Logger(RouterEducationManager.name);
 
-  constructor(private readonly repository: RoutingEducationRepository) {}
+  constructor(
+    private readonly repository: RoutingEducationRepository,
+    private readonly workspacePrior: RouterWorkspacePriorManager,
+  ) {}
 
   async ingestExecutionOutcome(payload: RoutingCompletedEventPayload): Promise<void> {
     const decision = await this.repository.findDecisionByMessageId(payload.messageId);
@@ -68,7 +80,23 @@ export class RouterEducationManager {
       revised: judgeOutcome === JudgeOutcome.REVISED,
       escalated: judgeOutcome === JudgeOutcome.ESCALATED,
       followUpSignal: payload.reRouted ? 're_routed' : null,
+      evaluatorVersion: payload.evaluatorVersion ?? null,
+      workspaceId: payload.workspaceId ?? null,
     });
+
+    if (payload.workspaceId) {
+      // V6 learning evolution (ADR-070) — no current caller populates this,
+      // so this branch is untaken in production today; exercised directly
+      // by unit tests.
+      await this.workspacePrior.ingestOutcome({
+        workspaceId: payload.workspaceId,
+        provider: payload.provider,
+        model: payload.model,
+        taskFamily: payload.detectedCategory ?? 'general',
+        executionSuccess,
+        scoreVersion: payload.evaluatorVersion ?? null,
+      });
+    }
 
     await this.rebuildCalibrationSnapshot();
   }
@@ -106,6 +134,17 @@ export class RouterEducationManager {
     await this.rebuildCalibrationSnapshot();
   }
 
+  /**
+   * V5 learning evolution (ADR-069) — batch recalibration first, rollback.
+   *
+   * Computes the full window's aggregates in memory (the "batch"), tags
+   * every profile row with the new version, then commits the versioned
+   * snapshot and the live profile tables as one atomic unit via
+   * `commitCalibrationBatch`. A failed commit leaves the previous
+   * calibration untouched and still active; a bad-but-successful commit can
+   * be undone with `rollbackCalibration` without recomputing from raw
+   * observations.
+   */
   async rebuildCalibrationSnapshot(
     windowDays = EDUCATION_WINDOW_DAYS,
   ): Promise<RoutingEducationSnapshot> {
@@ -114,17 +153,56 @@ export class RouterEducationManager {
     const topicProfiles = this.computeTopicProfiles(modelProfiles);
     const summary = this.buildSummary(windowDays, decisions, modelProfiles, topicProfiles);
     const promptHints = this.buildPromptHints(modelProfiles, topicProfiles);
-
-    await this.repository.replaceModelProfiles(modelProfiles);
-    await this.repository.replaceTopicProfiles(topicProfiles);
     const version = `calibration-${Date.now()}`;
-    await this.repository.createCalibrationSnapshot(
+
+    const versionedModelProfiles = modelProfiles.map((profile) => ({
+      ...profile,
+      scoreVersion: version,
+    }));
+    const versionedTopicProfiles = topicProfiles.map((profile) => ({
+      ...profile,
+      scoreVersion: version,
+    }));
+
+    await this.repository.commitCalibrationBatch({
       version,
-      summary as never,
-      promptHints as never,
-    );
+      windowDays,
+      summary: summary as never,
+      promptHints: promptHints as never,
+      modelProfiles: versionedModelProfiles as never,
+      topicProfiles: versionedTopicProfiles as never,
+      modelProfileRows: versionedModelProfiles,
+      topicProfileRows: versionedTopicProfiles,
+    });
 
     return { version, summary, promptHints };
+  }
+
+  /**
+   * V5 learning evolution (ADR-069) — rollback. Restores a previously
+   * committed batch's own profile rows to the live serving tables. Omit
+   * `targetVersion` to roll back to the snapshot immediately preceding the
+   * currently active one.
+   */
+  async rollbackCalibration(targetVersion?: string): Promise<RollbackCalibrationResult> {
+    const target = targetVersion
+      ? await this.repository.getCalibrationSnapshotByVersion(targetVersion)
+      : await this.repository.getPreviousCalibrationSnapshot();
+
+    if (!target) {
+      return { rolledBack: false, restoredVersion: null, reason: 'SNAPSHOT_NOT_FOUND' };
+    }
+    if (target.modelProfiles === null || target.topicProfiles === null) {
+      return { rolledBack: false, restoredVersion: target.version, reason: 'NO_ARCHIVED_PROFILES' };
+    }
+
+    await this.repository.restoreCalibrationSnapshot({
+      version: target.version,
+      modelProfileRows: target.modelProfiles as RouterModelProfileRecord[],
+      topicProfileRows: target.topicProfiles as RouterTopicProfileRecord[],
+    });
+
+    return { rolledBack: true, restoredVersion: target.version, reason: null };
   }
 
   async getLatestSnapshot(): Promise<RoutingEducationSnapshot | null> {
@@ -166,10 +244,16 @@ export class RouterEducationManager {
     const bestProfile = await this.repository.findBestModelProfile(taskFamily);
 
     const calibrated: RoutingDecisionResult = { ...decision };
-    if (currentProfile) {
+    // V5 learning evolution (ADR-069) — minimum-samples gating. A profile
+    // below MIN_PROFILE_SAMPLE_SIZE has not earned any pull on the decision
+    // yet; above that floor, its pull is scaled by its own confidenceInProfile
+    // rather than always applied at the fixed CALIBRATION_BLEND weight, so a
+    // thin profile can no longer sway confidence as hard as a well-sampled one.
+    if (currentProfile && Number(currentProfile.sampleSize) >= MIN_PROFILE_SAMPLE_SIZE) {
+      const effectiveBlend = CALIBRATION_BLEND * Number(currentProfile.confidenceInProfile);
       calibrated.confidence = this.clamp01(
-        decision.confidence * (1 - CALIBRATION_BLEND) +
-          Number(currentProfile.calibrationTrustScore) * CALIBRATION_BLEND,
+        decision.confidence * (1 - effectiveBlend) +
+          Number(currentProfile.calibrationTrustScore) * effectiveBlend,
       );
       calibrated.reasonTags = [...calibrated.reasonTags, 'profile_calibrated'];
     }
@@ -185,11 +269,37 @@ export class RouterEducationManager {
           Math.max(calibrated.confidence, Number(profile.calibrationTrustScore)),
         );
         calibrated.reasonTags = [...calibrated.reasonTags, 'learned_profile_override'];
-        return { decision: calibrated, changed: true };
+        return this.withWorkspaceNudge(calibrated, true, context);
       }
     }
 
-    return { decision: calibrated, changed: calibrated !== decision };
+    return this.withWorkspaceNudge(calibrated, calibrated !== decision, context);
+  }
+
+  /**
+   * V6 learning evolution (ADR-070) — applied last, after any global-tier
+   * override to best profile has already picked the final
+   * selectedProvider/selectedModel. This method only ever adjusts
+   * `confidence`; it has no path that can change which provider or model
+   * was selected, by construction.
+   */
+  private async withWorkspaceNudge(
+    calibrated: RoutingDecisionResult,
+    changed: boolean,
+    context: RoutingContext,
+  ): Promise<LearnedDecisionCalibration> {
+    const nudge = await this.workspacePrior.resolveNudge(context, calibrated);
+    if (!nudge.applied) {
+      return { decision: calibrated, changed };
+    }
+    return {
+      decision: {
+        ...calibrated,
+        confidence: nudge.confidence,
+        reasonTags: [...calibrated.reasonTags, 'workspace_personalized'],
+      },
+      changed: true,
+    };
   }
 
   private shouldOverrideToBestProfile(
@@ -279,6 +389,7 @@ export class RouterEducationManager {
     this.applyJudgeWeights(bucket, outcome, freshness);
     this.applyLatencyAndCostWeights(bucket, outcome, freshness);
     this.applyOutcomeWeights(bucket, outcome, freshness);
+    this.applyEvaluatorAttribution(bucket, outcome);
 
     aggregates.set(bucketKey, bucket);
   }
@@ -303,13 +414,12 @@ export class RouterEducationManager {
       judgeVerifiedWeight: 0,
       judgeRevisedWeight: 0,
       judgeEscalatedWeight: 0,
-      latencyWeightedSum: 0,
-      costWeightedSum: 0,
-      latencyWeight: 0,
-      costWeight: 0,
+      latencySamples: [],
+      costSamples: [],
       fallbackSuccessWeight: 0,
       fallbackWeight: 0,
       hallucinationWeight: 0,
+      evaluatorVersions: new Set(),
     };
   }
 
@@ -326,20 +436,36 @@ export class RouterEducationManager {
       (outcome?.judgeOutcome === JudgeOutcome.ESCALATED ? 1 : 0) * freshness;
   }
 
+  // V5 learning evolution (ADR-069) — outlier control. Raw freshness-weighted
+  // samples are collected here; bucketToProfile winsorizes them via
+  // computeWinsorizedWeightedAverage instead of averaging a plain running
+  // sum, so one anomalous observation (e.g. a 60s latency spike) cannot
+  // swing the whole-window aggregate on its own.
   private applyLatencyAndCostWeights(
     bucket: AggregateBucket,
     outcome: RoutingDecisionWithEducation['outcomes'][number] | null,
     freshness: number,
   ): void {
     if (typeof outcome?.actualLatencyMs === 'number') {
-      bucket.latencyWeightedSum += outcome.actualLatencyMs * freshness;
-      bucket.latencyWeight += freshness;
+      bucket.latencySamples.push({ value: outcome.actualLatencyMs, weight: freshness });
     }
     const cost = outcome?.actualCostEstimate;
     if (typeof cost === 'object' || typeof cost === 'number') {
-      bucket.costWeightedSum += Number(cost) * freshness;
-      bucket.costWeight += freshness;
+      bucket.costSamples.push({ value: Number(cost), weight: freshness });
     }
+  }
+
+  // V5 learning evolution (ADR-069) — evaluator attribution. Records which
+  // evaluator/rubric version produced each judge outcome so the aggregate
+  // is never a silent blend of scores from different evaluators.
+  private applyEvaluatorAttribution(
+    bucket: AggregateBucket,
+    outcome: RoutingDecisionWithEducation['outcomes'][number] | null,
+  ): void {
+    if (!outcome) {
+      return;
+    }
+    bucket.evaluatorVersions.add(outcome.evaluatorVersion ?? UNVERSIONED_EVALUATOR);
   }
 
   private applyOutcomeWeights(
@@ -370,6 +496,13 @@ export class RouterEducationManager {
     const confidenceInProfile = this.clamp01(
       Math.min(1, sampleSize / 12) * (1 - hallucinationRisk * 0.6) * (1 - dissatRate * 0.3),
     );
+    // V5 learning evolution (ADR-069) — approximates a Wilson score interval
+    // around the smoothed success rate using routeCount as the effective
+    // sample size. smoothedSuccess is a continuous, freshness-weighted
+    // quality score rather than a strict binomial proportion, so this is a
+    // bounded-uncertainty heuristic, not an exact statistical guarantee —
+    // documented rather than silently treated as one.
+    const successInterval = computeWilsonScoreInterval(smoothedSuccess, sampleSize);
 
     return {
       provider: bucket.provider,
@@ -383,8 +516,13 @@ export class RouterEducationManager {
       judgeVerifiedRate: bucket.judgeVerifiedWeight / Math.max(bucket.totalWeight, 1),
       judgeRevisedRate: bucket.judgeRevisedWeight / Math.max(bucket.totalWeight, 1),
       judgeEscalatedRate: bucket.judgeEscalatedWeight / Math.max(bucket.totalWeight, 1),
-      averageLatencyMs: Math.round(bucket.latencyWeightedSum / Math.max(bucket.latencyWeight, 1)),
-      averageCostEstimate: bucket.costWeightedSum / Math.max(bucket.costWeight, 1),
+      averageLatencyMs: Math.round(
+        computeWinsorizedWeightedAverage(bucket.latencySamples, MAX_LATENCY_OUTLIER_MS),
+      ),
+      averageCostEstimate: computeWinsorizedWeightedAverage(
+        bucket.costSamples,
+        MAX_COST_OUTLIER_ESTIMATE,
+      ),
       fallbackSuccessRate: bucket.fallbackSuccessWeight / Math.max(bucket.fallbackWeight, 1),
       hallucinationRiskScore: hallucinationRisk,
       calibrationTrustScore: this.clamp01(smoothedSuccess * 0.7 + confidenceInProfile * 0.3),
@@ -392,6 +530,13 @@ export class RouterEducationManager {
       weightedDissatisfactionScore: dissatRate,
       sampleSize,
       confidenceInProfile,
+      // scoreVersion is stamped by rebuildCalibrationSnapshot once the batch
+      // version is known; left null here so this method stays a pure
+      // function of the bucket.
+      scoreVersion: null,
+      successRateLowerBound: successInterval.lowerBound,
+      successRateUpperBound: successInterval.upperBound,
+      evaluatorVersions: [...bucket.evaluatorVersions].sort(),
     };
   }
 
@@ -416,6 +561,11 @@ export class RouterEducationManager {
       )[0];
       const avgSuccess =
         items.reduce((sum, item) => sum + item.weightedSuccessScore, 0) / Math.max(items.length, 1);
+      const topicRouteCount = items.reduce((sum, item) => sum + item.routeCount, 0);
+      const topicSuccessInterval = computeWilsonScoreInterval(avgSuccess, topicRouteCount);
+      const evaluatorVersions = [
+        ...new Set(items.flatMap((item) => item.evaluatorVersions)),
+      ].sort();
       const ambiguityScore =
         items.length > 1
           ? this.clamp01(
@@ -432,7 +582,7 @@ export class RouterEducationManager {
         topicKey: topicKey ?? 'general',
         bestProvider: best?.provider ?? null,
         bestModel: best?.model ?? null,
-        routeCount: items.reduce((sum, item) => sum + item.routeCount, 0),
+        routeCount: topicRouteCount,
         successRate: avgSuccess,
         thumbsUpRate:
           items.reduce((sum, item) => sum + item.thumbsUpRate, 0) / Math.max(items.length, 1),
@@ -450,6 +600,12 @@ export class RouterEducationManager {
         confidenceInProfile:
           items.reduce((sum, item) => sum + item.confidenceInProfile, 0) /
           Math.max(items.length, 1),
+        // scoreVersion is stamped by rebuildCalibrationSnapshot; see
+        // bucketToProfile for the same convention on model profiles.
+        scoreVersion: null,
+        successRateLowerBound: topicSuccessInterval.lowerBound,
+        successRateUpperBound: topicSuccessInterval.upperBound,
+        evaluatorVersions,
       };
     });
   }
@@ -695,6 +851,10 @@ export class RouterEducationManager {
       weightedDissatisfactionScore: this.decimalToNumber(profile.weightedDissatisfactionScore),
       sampleSize: profile.sampleSize,
       confidenceInProfile: this.decimalToNumber(profile.confidenceInProfile),
+      scoreVersion: profile.scoreVersion,
+      successRateLowerBound: this.decimalToNumberOrNull(profile.successRateLowerBound),
+      successRateUpperBound: this.decimalToNumberOrNull(profile.successRateUpperBound),
+      evaluatorVersions: profile.evaluatorVersions,
     };
   }
 
@@ -714,7 +874,15 @@ export class RouterEducationManager {
       weightedSuccessScore: this.decimalToNumber(profile.weightedSuccessScore),
       ambiguityScore: this.decimalToNumber(profile.ambiguityScore),
       confidenceInProfile: this.decimalToNumber(profile.confidenceInProfile),
+      scoreVersion: profile.scoreVersion,
+      successRateLowerBound: this.decimalToNumberOrNull(profile.successRateLowerBound),
+      successRateUpperBound: this.decimalToNumberOrNull(profile.successRateUpperBound),
+      evaluatorVersions: profile.evaluatorVersions,
     };
+  }
+
+  private decimalToNumberOrNull(value: { toNumber: () => number } | number | null): number | null {
+    return value === null ? null : this.decimalToNumber(value);
   }
 
   private decimalToNumber(value: { toNumber: () => number } | number): number {

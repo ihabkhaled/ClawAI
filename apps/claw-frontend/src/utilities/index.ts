@@ -36,6 +36,13 @@ export {
   getContextPackItemTypeTone,
 } from './context-pack-item-style.utility';
 export { getLifecycleBadgeVariant } from './lifecycle.utility';
+export {
+  toChainEntryInput,
+  buildReorderedEntries,
+  buildEntriesWithoutEntry,
+  buildEntriesWithAppendedEntry,
+} from './router-configuration-entry.utility';
+export { diffRouterConfigurations } from './router-configuration-diff.utility';
 export { getInitials } from './string.utility';
 export {
   languageToLocale,
@@ -55,6 +62,7 @@ export {
 export { isAdmin, hasPermission, hasAnyPermission } from './permissions.utility';
 export { requiredPermissionForPath, requiredRequirementForPath } from './route-permission.utility';
 export { connectSse } from './sse.utility';
+export { isSimpleProgressStreamEvent } from './stream-event-guard.utility';
 export { mapVisibleStatusToOrchestrationStatus } from './orchestration-stage.utility';
 export {
   encodeModelValue,
@@ -145,6 +153,11 @@ export {
   formatCostUsd,
 } from './stream-format.utility';
 export { serializeRuntimeEvent } from './runtime-event-serializer.utility';
+export {
+  resolveRouterTraceLabel,
+  resolveRouterTraceReason,
+  resolveRouterTraceDescription,
+} from './router-trace-label.utility';
 export {
   buildBottleneckSegments,
   formatBottleneckDuration,

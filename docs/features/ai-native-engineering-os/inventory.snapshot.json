@@ -58,7 +58,7 @@
           "apps/claw-frontend/src/lib/i18n/locales"
         ],
         "kind": "stale-locale-count",
-        "message": "CLAUDE.md claims 13 locales but 14 locale files exist",
+        "message": "CLAUDE.md claims 13 locales but 16 locale files exist",
         "severity": "low"
       },
       {
@@ -67,7 +67,7 @@
           "apps/claw-frontend/src/lib/i18n/locales"
         ],
         "kind": "stale-locale-count",
-        "message": "CODEX.md claims 13 locales but 14 locale files exist",
+        "message": "CODEX.md claims 13 locales but 16 locale files exist",
         "severity": "low"
       },
       {
@@ -76,7 +76,7 @@
           "apps/claw-frontend/src/lib/i18n/locales"
         ],
         "kind": "stale-locale-count",
-        "message": "CODEX.md claims 13 locales but 14 locale files exist",
+        "message": "CODEX.md claims 13 locales but 16 locale files exist",
         "severity": "low"
       },
       {
@@ -85,7 +85,7 @@
           "apps/claw-frontend/src/lib/i18n/locales"
         ],
         "kind": "stale-locale-count",
-        "message": "README.md claims 13 locales but 14 locale files exist",
+        "message": "README.md claims 13 locales but 16 locale files exist",
         "severity": "low"
       }
     ]
@@ -2220,6 +2220,41 @@
         },
         {
           "method": "GET",
+          "route": "/routing/configurations",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/routing/configurations",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/routing/configurations/:id",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/routing/configurations/:id/entries",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/routing/configurations/:id/publish",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/routing/configurations/disable",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/routing/configurations/enable",
+          "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/routing/cost-budget",
           "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
         },
@@ -2252,6 +2287,11 @@
           "method": "GET",
           "route": "/routing/cost-budget/me/forecast",
           "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/routing/decisions/:id/legacy-vs-cloud",
+          "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
         },
         {
           "method": "GET",
@@ -2406,6 +2446,11 @@
         {
           "method": "POST",
           "route": "/routing/replay/cases/:caseId/review",
+          "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/routing/replay/legacy-vs-cloud",
           "source": "apps/claw-routing-service/src/modules/routing/controllers/routing.controller.ts"
         },
         {
@@ -5825,6 +5870,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "ROUTER_TRACE_EMITTED",
+        "pattern": "router.trace.emitted",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "ROUTING_CIRCUIT_BREAKER_CLOSED",
         "pattern": "routing.circuit_breaker.closed",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -6250,6 +6300,11 @@
         "file": "apps/claw-frontend/src/app/(portal)/admin/runtime-progress/page.tsx",
         "kind": "page",
         "route": "/admin/runtime-progress"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/smart-router/page.tsx",
+        "kind": "page",
+        "route": "/admin/smart-router"
       },
       {
         "file": "apps/claw-frontend/src/app/(portal)/admin/suggestion-rules/page.tsx",
@@ -6692,7 +6747,7 @@
           "file": "cursor.md"
         },
         {
-          "bytes": 9460,
+          "bytes": 9457,
           "file": "AGENTS.md"
         },
         {
@@ -6720,6 +6775,7 @@
         "docs/15-ai-context",
         "docs/16-quality-engineering",
         "docs/adrs",
+        "docs/architecture",
         "docs/exceptions",
         "docs/features",
         "docs/implementation",
@@ -7153,9 +7209,9 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4412
+        "value": 4415
       },
-      "localeCount": 14,
+      "localeCount": 16,
       "locales": [
         "ar",
         "de",
@@ -7168,7 +7224,9 @@
         "it",
         "ja",
         "pt",
+        "router-trace-translations",
         "ru",
+        "smart-router-admin-translations",
         "th",
         "zh"
       ],
@@ -8471,7 +8529,17 @@
           {
             "confidence": "verified",
             "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "CapabilityEvidence"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
             "value": "ModelCostVersion"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "ModelDeployment"
           },
           {
             "confidence": "verified",
@@ -8491,7 +8559,17 @@
           {
             "confidence": "verified",
             "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "RouterChainEntry"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
             "value": "RouterCircuitBreaker"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "RouterConfiguration"
           },
           {
             "confidence": "verified",
@@ -8511,6 +8589,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "RouterProviderAttempt"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
             "value": "RouterTopicProfile"
           },
           {
@@ -8521,7 +8604,17 @@
           {
             "confidence": "verified",
             "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "RouterWorkspacePrior"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
             "value": "RoutingCalibrationSnapshot"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "RoutingCandidateScore"
           },
           {
             "confidence": "verified",
@@ -8542,6 +8635,11 @@
             "confidence": "verified",
             "source": "apps/claw-routing-service/prisma/schema.prisma",
             "value": "RoutingPolicy"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-routing-service/prisma/schema.prisma",
+            "value": "SeedExecution"
           },
           {
             "confidence": "verified",
@@ -8729,7 +8827,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 96
+        "testFiles": 97
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -8749,7 +8847,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 284
+        "testFiles": 311
       },
       "claw-health-service": {
         "runner": "jest",
@@ -8781,7 +8879,7 @@
       },
       "claw-routing-service": {
         "runner": "jest",
-        "testFiles": 50
+        "testFiles": 90
       },
       "claw-server-logs-service": {
         "runner": "jest",
@@ -9048,6 +9146,7 @@
       {
         "dir": "apps/claw-frontend",
         "internalDeps": [
+          "@claw/shared-constants",
           "@claw/shared-types"
         ],
         "name": "claw-frontend",
@@ -9493,11 +9592,11 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 577,
+    "endpointCount": 586,
     "envVarCount": 343,
-    "eventCount": 165,
-    "frontendRouteCount": 119,
-    "localeCount": 14,
+    "eventCount": 166,
+    "frontendRouteCount": 120,
+    "localeCount": 16,
     "nginxRouteCount": 54,
     "permissionCount": 38,
     "portCount": 16,
@@ -9505,7 +9604,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 845,
+    "totalTestFiles": 913,
     "workspaceCount": 25
   }
 }

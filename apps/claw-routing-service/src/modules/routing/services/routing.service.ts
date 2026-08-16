@@ -14,6 +14,7 @@ import { RoutingPoliciesRepository } from '../repositories/routing-policies.repo
 import { RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
 import { RoutingManager } from '../managers/routing.manager';
 import { ReplayManager } from '../managers/replay.manager';
+import { RouterShadowEvaluationManager } from '../managers/router-shadow-evaluation.manager';
 import { AdaptiveLearningManager } from '../managers/adaptive-learning.manager';
 import { PromptBuilderManager } from '../managers/prompt-builder.manager';
 import { RouterEducationManager } from '../managers/router-education.manager';
@@ -44,7 +45,7 @@ import {
   type RoutingDecisionResult,
   type RoutingPolicy,
 } from '../types/routing.types';
-import { type ReplayBatchResult } from '../types/replay.types';
+import { type ReplayBatchResult, type ReplayFilters } from '../types/replay.types';
 import type {
   ExportBundle,
   PromotedTestFixture,
@@ -52,6 +53,10 @@ import type {
   ReplayRunSummary,
   RunComparisonResult,
 } from '../types/replay-run.types';
+import type {
+  LegacyVsCloudBatchResult,
+  LegacyVsCloudComparison,
+} from '../types/legacy-cloud-comparison.types';
 import type { ProviderFailureStat, RecentFallback, RecoveryStats } from '../types/recovery.types';
 import type { AdaptiveLearningInsights } from '../types/adaptive-learning.types';
 import type {
@@ -77,6 +82,7 @@ export class RoutingService implements OnModuleInit {
     private readonly decisionsRepository: RoutingDecisionsRepository,
     private readonly routingManager: RoutingManager,
     private readonly replayManager: ReplayManager,
+    private readonly shadowEvaluationManager: RouterShadowEvaluationManager,
     private readonly adaptiveLearningManager: AdaptiveLearningManager,
     private readonly routerEducationManager: RouterEducationManager,
     private readonly rabbitMQService: RabbitMQService,
@@ -306,6 +312,17 @@ export class RoutingService implements OnModuleInit {
 
   async compareRuns(runId1: string, runId2: string): Promise<RunComparisonResult> {
     return this.replayManager.compareRuns(runId1, runId2);
+  }
+
+  // V4 Learning Evolution — shadow-replays one historical decision through
+  // CloudRouterManager and reports how it compares to what actually served
+  // the user. Never affects the served decision.
+  async compareLegacyVsCloud(decisionId: string): Promise<LegacyVsCloudComparison> {
+    return this.shadowEvaluationManager.compareLegacyVsCloud(decisionId);
+  }
+
+  async compareLegacyVsCloudBatch(filters: ReplayFilters): Promise<LegacyVsCloudBatchResult> {
+    return this.shadowEvaluationManager.compareLegacyVsCloudBatch(filters);
   }
 
   async getAdaptiveInsights(windowDays: number): Promise<AdaptiveLearningInsights> {

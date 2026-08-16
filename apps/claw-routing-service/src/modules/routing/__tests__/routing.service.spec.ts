@@ -169,6 +169,8 @@ describe('RoutingService', () => {
       decisionsRepo as unknown as RoutingDecisionsRepository,
       routingManager as unknown as RoutingManager,
       replayMgr as unknown as ReplayManager,
+      // RouterShadowEvaluationManager (V4 Learning Evolution); not exercised here.
+      {} as any,
       {} as any,
       routerEducationManager as any,
       rabbitMQ as unknown as RabbitMQService,

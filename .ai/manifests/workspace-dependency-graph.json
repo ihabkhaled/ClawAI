@@ -178,6 +178,10 @@
     },
     {
       "from": "claw-frontend",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-frontend",
       "to": "@claw/shared-types"
     },
     {

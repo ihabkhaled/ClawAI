@@ -10,6 +10,7 @@ const PERSIAN_LETTER_PATTERN = /[\u0621-\u063A\u0641-\u064A\u067E\u0686\u0698\u0
 const PLACEHOLDER_PATTERN = /\{([^}]+)\}/gu;
 const TECHNICAL_VALUE_ALLOWLIST = new Set([
   'API',
+  'Anthropic',
   'AWS Bedrock',
   'Claw',
   'ClawAI',
@@ -26,7 +27,9 @@ const TECHNICAL_VALUE_ALLOWLIST = new Set([
   'Mistral',
   'OAuth',
   'Ollama',
+  'Ollama Cloud',
   'OpenAI',
+  'Grok',
   'PayPal',
   'PayPal/Card',
   'Paymob',

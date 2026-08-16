@@ -169,6 +169,7 @@ runs BEFORE the first line of code. Runbook:
 ## Communication style (MANDATORY)
 
 **Short. Plain. Concrete.** A few lines max.
+
 - Blocked? One line: `Blocked: <the actual thing>.`
 - Working? `Working — <what>.` Progress? `~70/100.`
 - Name the concrete cause: file, symbol, exact error. Never circle the problem.
@@ -177,15 +178,11 @@ runs BEFORE the first line of code. Runbook:
 Full rule: [`rules/29-communication-style.md`](rules/29-communication-style.md) ·
 Runbook: [`skills/communicate-briefly.md`](skills/communicate-briefly.md)
 
-
 **Stay foreground / keep streaming.** Do not go silent — silence reads as stopped.
 Foreground commands by default; background only for long jobs, announced in one line.
-
 
 **Show every step.** One short line per action as it happens — file changed, patch applied,
 test run, trial failed. Never batch and report at the end.
 
-
 **Granularity:** report every file touched, every patch (including failures), every command and
 its result, every test count, every retry, every mini-operation, every wait. One line each.
-

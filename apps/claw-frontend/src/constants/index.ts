@@ -5,7 +5,7 @@ export { SEVERITY_COLORS, ALL_FILTER } from './audit.constants';
 export { AUTH_INITIAL_STATE } from './auth.constants';
 export { ROUTES, PUBLIC_ROUTES } from './routes.constants';
 export { MOBILE_BOTTOM_NAV_ITEMS } from './mobile-bottom-nav.constants';
-export { PROGRESS_EVENT_TYPES } from './progress.constants';
+export { PROGRESS_EVENT_TYPES, PROCESSED_STREAM_EVENT_ID_CACHE_LIMIT } from './progress.constants';
 export { SIDEBAR_NAV_ITEMS } from './sidebar.constants';
 export type { SidebarItem } from './sidebar.constants';
 export { ROUTE_PERMISSIONS } from './route-permissions.constants';

@@ -83,8 +83,8 @@ jobs:
         run: node tools/typescript/run-ts7.mjs --version
       - name: Build shared packages
         run: |
-          cd packages/shared-types && npm run build
-          cd ../shared-constants && npm run build
+          cd packages/shared-constants && npm run build
+          cd ../shared-types && npm run build
           cd ../shared-utilities && npm run build
           cd ../shared-rabbitmq && npm run build
           cd ../shared-auth && npm run build
@@ -113,8 +113,8 @@ jobs:
       - run: node tools/typescript/run-ts7.mjs --version
       - name: Build shared packages
         run: |
-          npm run build --workspace=@claw/shared-types
           npm run build --workspace=@claw/shared-constants
+          npm run build --workspace=@claw/shared-types
           npm run build --workspace=@claw/shared-utilities
           npm run build --workspace=@claw/shared-rabbitmq
           npm run build --workspace=@claw/shared-auth
@@ -176,8 +176,8 @@ jobs:
       - run: node tools/typescript/run-ts7.mjs --version
       - name: Build shared packages
         run: |
-          npm run build --workspace=@claw/shared-types
           npm run build --workspace=@claw/shared-constants
+          npm run build --workspace=@claw/shared-types
           npm run build --workspace=@claw/shared-utilities
           npm run build --workspace=@claw/shared-rabbitmq
           npm run build --workspace=@claw/shared-auth
@@ -266,8 +266,8 @@ jobs:
       - run: node tools/typescript/run-ts7.mjs --version
       - name: Build shared packages
         run: |
-          npm run build --workspace=@claw/shared-types
           npm run build --workspace=@claw/shared-constants
+          npm run build --workspace=@claw/shared-types
           npm run build --workspace=@claw/shared-utilities
           npm run build --workspace=@claw/shared-rabbitmq
           npm run build --workspace=@claw/shared-auth

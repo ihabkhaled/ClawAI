@@ -204,6 +204,7 @@ export type TranslationDictionary = {
     adminRuntimeProgress: string;
     adminDeployment: string;
     adminPaymentGateways: string;
+    adminSmartRouter: string;
     plan: string;
     billing: string;
     usage: string;
@@ -3109,6 +3110,8 @@ export type TranslationDictionary = {
     success: string;
     failed: string;
   };
+  routerTrace: RouterTraceLocaleTranslation;
+  smartRouterAdmin: SmartRouterAdminLocaleTranslation;
   adminDeployment: {
     title: string;
     description: string;
@@ -4791,6 +4794,187 @@ export type TranslationDictionary = {
 export type DeploymentLocaleTranslation = {
   navigationLabel: string;
   section: TranslationDictionary['adminDeployment'];
+};
+
+/**
+ * Router trace phase labels for one locale.
+ *
+ * Declared as a Record over Locale in router-trace-translations.ts, so omitting
+ * a locale is a compile error. That matters more here than usual: `t()` takes a
+ * plain string and is not checked against the dictionary, so a missing key
+ * renders the raw key path to a user instead of failing a build.
+ */
+export type RouterTraceLocaleTranslation = {
+  analyzing: string;
+  loadingRegistry: string;
+  applyingPolicy: string;
+  consultingRouter: string;
+  attemptFailed: string;
+  fallingBack: string;
+  lowConfidence: string;
+  modelSelected: string;
+  routingFailed: string;
+  /** Why the router declined, keyed by the stable codes routing-service emits. */
+  unavailable: {
+    noConfiguration: string;
+    disabled: string;
+    noRunnableEntry: string;
+    noEligibleModel: string;
+  };
+};
+
+/**
+ * Cloud smart-router admin page (revisions, chain entries, publish, compare),
+ * in one locale. Declared as a dedicated type — like RouterTraceLocaleTranslation
+ * above — so a missing locale is a compile error rather than a raw key
+ * rendered to a user.
+ */
+export type SmartRouterAdminLocaleTranslation = {
+  title: string;
+  description: string;
+  scopeLabel: string;
+  tabs: {
+    overview: string;
+    chain: string;
+    revisions: string;
+    revisionDetail: string;
+    publish: string;
+    compare: string;
+  };
+  overview: {
+    currentRevisionLabel: string;
+    noPublished: string;
+    modeLabel: string;
+    entryCountLabel: string;
+    publishedAtLabel: string;
+    publishedByLabel: string;
+    enabledToggleLabel: string;
+    enableAction: string;
+    disableAction: string;
+  };
+  chain: {
+    draftInProgress: string;
+    viewingPublishedReadOnly: string;
+    createDraftToEdit: string;
+    noEntries: string;
+  };
+  entryForm: {
+    addEntryTitle: string;
+    provider: string;
+    modelAlias: string;
+    modelAliasPlaceholder: string;
+    role: string;
+    billingModel: string;
+    deploymentId: string;
+    deploymentIdPlaceholder: string;
+    attemptTimeoutMs: string;
+    retries: string;
+    triggers: string;
+    triggersPlaceholder: string;
+    minConfidence: string;
+    minConfidencePlaceholder: string;
+    maxCostMicroUsd: string;
+    maxCostMicroUsdPlaceholder: string;
+    enabledField: string;
+    skipWhenProviderCircuitOpen: string;
+    submit: string;
+    validationError: string;
+  };
+  entryRow: {
+    orderPrefix: string;
+    timeoutSuffix: string;
+    disabledBadge: string;
+  };
+  revisions: {
+    createDraft: string;
+    filterAllStatuses: string;
+    empty: string;
+    columnRevision: string;
+    columnStatus: string;
+    columnMode: string;
+    columnEntries: string;
+    columnPublished: string;
+    view: string;
+    pageOf: string;
+  };
+  revisionDetail: {
+    emptySelection: string;
+    supersedesLabel: string;
+    supersedesNone: string;
+    totalDeadlineLabel: string;
+    maxAttemptsLabel: string;
+    minConfidenceLabel: string;
+    lowConfidenceActionLabel: string;
+  };
+  publish: {
+    emptySelection: string;
+    notDraftWarning: string;
+    supersedeWarning: string;
+    noCurrentPublished: string;
+    confirmTitle: string;
+    confirmDescription: string;
+    confirmAction: string;
+    success: string;
+    failed: string;
+  };
+  compare: {
+    fromLabel: string;
+    toLabel: string;
+    selectPlaceholder: string;
+    noSelection: string;
+    noChanges: string;
+    changedFieldsLabel: string;
+  };
+  enums: {
+    provider: {
+      OPENAI: string;
+      ANTHROPIC: string;
+      GEMINI: string;
+      DEEPSEEK: string;
+      GROK: string;
+      AWS_BEDROCK: string;
+      OLLAMA: string;
+      OLLAMA_CLOUD: string;
+      LLAMACPP: string;
+    };
+    role: {
+      PRIMARY: string;
+      MODEL_FALLBACK: string;
+      PROVIDER_FALLBACK: string;
+      PROVIDER_MODEL_FALLBACK: string;
+      LAST_RESORT: string;
+      QUALITY_ESCALATION: string;
+    };
+    status: {
+      DRAFT: string;
+      PUBLISHED: string;
+      SUPERSEDED: string;
+    };
+    mode: {
+      CLOUD_FIRST: string;
+      HYBRID: string;
+      PRIVATE_CLOUD: string;
+      LOCAL_ONLY: string;
+    };
+    lowConfidenceAction: {
+      QUALITY_ESCALATION_THEN_DETERMINISTIC: string;
+      DETERMINISTIC_ONLY: string;
+      FAIL_CLOSED: string;
+    };
+    billingModel: {
+      TOKEN: string;
+      REQUEST: string;
+      SUBSCRIPTION: string;
+      USAGE_LIMIT: string;
+      UNKNOWN: string;
+    };
+    diffStatus: {
+      ADDED: string;
+      REMOVED: string;
+      CHANGED: string;
+      UNCHANGED: string;
+    };
+  };
 };
 
 export type TranslationNamespace = keyof TranslationDictionary;

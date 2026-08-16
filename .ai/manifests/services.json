@@ -126,7 +126,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 96,
+      "testFiles": 97,
       "testRunner": "jest"
     },
     {
@@ -411,7 +411,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-routing-service",
-      "endpointCount": 63,
+      "endpointCount": 72,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -424,24 +424,32 @@
       "port": 4004,
       "portSource": "shared-constants",
       "prismaModels": [
+        "CapabilityEvidence",
         "ModelCostVersion",
+        "ModelDeployment",
         "ReplayCase",
         "ReplayRun",
         "RouterAdminOverride",
+        "RouterChainEntry",
         "RouterCircuitBreaker",
+        "RouterConfiguration",
         "RouterLearnedScore",
         "RouterModelProfile",
         "RouterModelRegistry",
+        "RouterProviderAttempt",
         "RouterTopicProfile",
         "RouterWorkflow",
+        "RouterWorkspacePrior",
         "RoutingCalibrationSnapshot",
+        "RoutingCandidateScore",
         "RoutingDecision",
         "RoutingFeedbackRecord",
         "RoutingOutcomeRecord",
         "RoutingPolicy",
+        "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 50,
+      "testFiles": 90,
       "testRunner": "jest"
     },
     {

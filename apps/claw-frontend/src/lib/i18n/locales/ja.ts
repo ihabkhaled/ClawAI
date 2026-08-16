@@ -1,6 +1,8 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const ja: TranslationDictionary = {
   common: {
@@ -214,6 +216,7 @@ export const ja: TranslationDictionary = {
     adminRuntimeProgress: 'ランタイム診断',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.navigationLabel,
     adminPaymentGateways: '決済ゲートウェイ',
+    adminSmartRouter: 'スマートルーター',
     plan: '私の計画',
     billing: '請求',
     usage: 'の使用法',
@@ -3192,6 +3195,8 @@ export const ja: TranslationDictionary = {
     failed: '払い戻しを行うことができませんでした。',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.ja,
+  smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ja,
   adminBilling: {
     title: '請求ダッシュボード',
     description: '収益、プロバイダーのコスト、マージン、サブスクリプションの健全性。',

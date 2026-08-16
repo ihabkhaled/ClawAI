@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { API_BASE_URL, PROGRESS_EVENT_TYPES } from '@/constants';
+import { API_BASE_URL, PROCESSED_STREAM_EVENT_ID_CACHE_LIMIT } from '@/constants';
 import { FallbackFailureType, StreamEventType, VisibleProgressStageStatus } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import type {
   FallbackAttemptInfo,
+  LiveFlushStreamEvent,
+  RouterProgressStageEvent,
+  RouterStreamEvent,
   SseConnection,
-  StreamEvent,
   StreamLiveState,
   VisibleProgressStage,
 } from '@/types';
-import { connectSse, logger } from '@/utilities';
+import { connectSse, isSimpleProgressStreamEvent, logger } from '@/utilities';
 import { resolveChatStreamError } from '@/utilities/chat-stream-error.utility';
 
 export function useChatStream(threadId: string, isActive: boolean) {
@@ -37,6 +39,16 @@ export function useChatStream(threadId: string, isActive: boolean) {
   // on the throttled METRICS events to avoid one React render per token.
   const contentRef = useRef('');
   const reasoningRef = useRef('');
+  // Mirrors progressStages synchronously so upsertStage can read the
+  // just-applied stage (for the sequence guard below) and decide whether to
+  // touch currentStageLabel without depending on React's setState-updater
+  // timing, which does not run synchronously inside the same call.
+  const progressStagesRef = useRef<VisibleProgressStage[]>([]);
+  // Bounded set of SSE frame `eventId`s already applied — guards against a
+  // durable-journal replay/resume redelivering a frame verbatim. Order is
+  // insertion order (native Set semantics), so the oldest id is evicted once
+  // the cache exceeds its cap.
+  const processedEventIdsRef = useRef<Set<string>>(new Set());
 
   const resetStream = useCallback((): void => {
     setFallbackAttempts([]);
@@ -49,10 +61,12 @@ export function useChatStream(threadId: string, isActive: boolean) {
     setCurrentStageLabel(null);
     contentRef.current = '';
     reasoningRef.current = '';
+    progressStagesRef.current = [];
+    processedEventIdsRef.current = new Set();
     setStreamLive({ content: '', reasoning: '', isStreaming: false });
   }, []);
 
-  const flushLive = useCallback((event: StreamEvent, isStreaming: boolean): void => {
+  const flushLive = useCallback((event: LiveFlushStreamEvent, isStreaming: boolean): void => {
     setStreamLive((prev) => ({
       content: contentRef.current,
       reasoning: reasoningRef.current,
@@ -65,45 +79,80 @@ export function useChatStream(threadId: string, isActive: boolean) {
   }, []);
 
   const settleActiveStages = useCallback((): void => {
-    setProgressStages((prev) =>
-      prev.map((stage) =>
-        stage.status === VisibleProgressStageStatus.ACTIVE
-          ? { ...stage, status: VisibleProgressStageStatus.COMPLETED }
-          : stage,
-      ),
+    const next = progressStagesRef.current.map((stage) =>
+      stage.status === VisibleProgressStageStatus.ACTIVE
+        ? { ...stage, status: VisibleProgressStageStatus.COMPLETED }
+        : stage,
     );
+    progressStagesRef.current = next;
+    setProgressStages(next);
   }, []);
 
-  const upsertStage = useCallback((event: StreamEvent, status: VisibleProgressStage['status']) => {
-    const actorKey = event.model ?? event.actorName ?? event.provider ?? event.type;
-    const stageId = event.stageId ?? `${event.type}:${actorKey}`;
-    const nextStage: VisibleProgressStage = {
-      id: stageId,
-      type: event.type,
-      label: event.label ?? event.type,
-      description: event.description,
-      actorType: event.actorType,
-      actorName: event.actorName,
-      provider: event.provider,
-      model: event.model,
-      status,
-      timestamp: Date.now(),
-      sequence: event.sequence,
-      createdAt: event.createdAt,
-    };
+  // Records a newly seen SSE frame eventId, evicting the oldest tracked id
+  // once the bounded cache is full.
+  const rememberProcessedEventId = useCallback((eventId: string): void => {
+    processedEventIdsRef.current.add(eventId);
+    if (processedEventIdsRef.current.size > PROCESSED_STREAM_EVENT_ID_CACHE_LIMIT) {
+      const oldest = processedEventIdsRef.current.values().next().value;
+      if (oldest !== undefined) {
+        processedEventIdsRef.current.delete(oldest);
+      }
+    }
+  }, []);
 
-    setProgressStages((prev) => {
+  const upsertStage = useCallback(
+    (event: RouterProgressStageEvent, status: VisibleProgressStage['status']) => {
+      const actorKey = event.model ?? event.actorName ?? event.provider ?? event.type;
+      const stageId = event.stageId ?? `${event.type}:${actorKey}`;
+      const nextStage: VisibleProgressStage = {
+        id: stageId,
+        type: event.type,
+        label: event.label ?? event.type,
+        description: event.description,
+        actorType: event.actorType,
+        actorName: event.actorName,
+        provider: event.provider,
+        model: event.model,
+        status,
+        timestamp: Date.now(),
+        sequence: event.sequence,
+        createdAt: event.createdAt,
+      };
+
+      const prev = progressStagesRef.current;
       const existingIndex = prev.findIndex((stage) => stage.id === stageId);
+
       if (existingIndex === -1) {
-        return [...prev, nextStage];
+        const next = [...prev, nextStage];
+        progressStagesRef.current = next;
+        setProgressStages(next);
+        setCurrentStageLabel(nextStage.label);
+        return;
       }
 
-      const updated = [...prev];
-      updated[existingIndex] = nextStage;
-      return updated;
-    });
-    setCurrentStageLabel(nextStage.label);
-  }, []);
+      const existingStage = prev[existingIndex];
+      const isStaleFrame =
+        existingStage !== undefined &&
+        nextStage.sequence !== undefined &&
+        existingStage.sequence !== undefined &&
+        nextStage.sequence < existingStage.sequence;
+
+      if (isStaleFrame) {
+        // A reordered or retried SSE frame arrived behind one already
+        // applied for this stage (network reorder, a retry, a duplicate
+        // publish) — drop it instead of letting it regress status (e.g.
+        // COMPLETED -> ACTIVE) or overwrite a newer label/description.
+        return;
+      }
+
+      const next = [...prev];
+      next[existingIndex] = nextStage;
+      progressStagesRef.current = next;
+      setProgressStages(next);
+      setCurrentStageLabel(nextStage.label);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!isActive || !threadId) {
@@ -124,9 +173,20 @@ export function useChatStream(threadId: string, isActive: boolean) {
     const connection = connectSse(url, {
       onMessage: (data: string) => {
         try {
-          const parsed = JSON.parse(data) as StreamEvent;
+          const parsed = JSON.parse(data) as RouterStreamEvent;
 
-          if (PROGRESS_EVENT_TYPES.has(parsed.type)) {
+          if (parsed.eventId !== undefined) {
+            if (processedEventIdsRef.current.has(parsed.eventId)) {
+              // Verbatim redelivery of a frame already applied (e.g. a
+              // durable-journal replay/resume) — skip it rather than
+              // re-running side effects (fallback list growth, stage
+              // upserts) a second time.
+              return;
+            }
+            rememberProcessedEventId(parsed.eventId);
+          }
+
+          if (isSimpleProgressStreamEvent(parsed)) {
             upsertStage(parsed, parsed.status ?? VisibleProgressStageStatus.ACTIVE);
           }
 
@@ -246,7 +306,16 @@ export function useChatStream(threadId: string, isActive: boolean) {
       connection.close();
       connectionRef.current = null;
     };
-  }, [threadId, isActive, resetStream, upsertStage, flushLive, settleActiveStages, t]);
+  }, [
+    threadId,
+    isActive,
+    resetStream,
+    upsertStage,
+    flushLive,
+    settleActiveStages,
+    rememberProcessedEventId,
+    t,
+  ]);
 
   // Clean up when no longer waiting
   useEffect(() => {

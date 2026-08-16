@@ -42,9 +42,7 @@ export type ModelIntelligenceEconomics = {
 /// `RouterSyncManager`. Every field is optional so partial updates from sync
 /// sources can be merged without overwriting unrelated columns.
 export type ModelIntelligenceEnrichment = Partial<
-  ModelIntelligenceCapabilityFlags &
-    ModelIntelligenceDomainHints &
-    ModelIntelligenceEconomics
+  ModelIntelligenceCapabilityFlags & ModelIntelligenceDomainHints & ModelIntelligenceEconomics
 > & {
   maxContextTokens?: number | null;
   maxOutputTokensIntel?: number | null;

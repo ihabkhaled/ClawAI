@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { concat, filter, from, type Observable, Subject } from 'rxjs';
+import { ROUTER_TRACE_TERMINAL_STAGE_ID } from '@claw/shared-constants';
 import {
   type ContentDeltaEmitInput,
   type LifecycleEmitInput,
@@ -73,7 +74,10 @@ export class ChatStreamService {
       actorType: ProgressActorType.ROUTER,
       actorName: routerModel ?? 'Auto router',
       model: routerModel ?? undefined,
-      stageId: 'router:selection',
+      // Same stage id the cloud-router trace closes with ROUTER_COMPLETED, so
+      // the "Routing request" frame this emits resolves into that decision
+      // instead of sitting active beside it as a second row.
+      stageId: ROUTER_TRACE_TERMINAL_STAGE_ID,
       status: 'active',
     });
     this.logger.debug(`Emitted router_started for thread ${threadId}: ${routerModel ?? 'auto'}`);

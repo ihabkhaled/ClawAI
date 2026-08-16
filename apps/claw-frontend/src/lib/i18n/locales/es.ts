@@ -1,6 +1,8 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const es: TranslationDictionary = {
   common: {
@@ -215,6 +217,7 @@ export const es: TranslationDictionary = {
     adminRuntimeProgress: 'Diagnóstico de runtime',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.es.navigationLabel,
     adminPaymentGateways: 'Pasarelas de pago',
+    adminSmartRouter: 'Enrutador inteligente',
     plan: 'Mi plan',
     billing: 'Facturación',
     usage: 'Uso',
@@ -3216,6 +3219,8 @@ export const es: TranslationDictionary = {
     failed: 'No se pudo emitir el reembolso.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.es.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.es,
+  smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.es,
   adminBilling: {
     title: 'Panel de facturación',
     description: 'Ingresos, coste de proveedores, margen y salud de las suscripciones.',

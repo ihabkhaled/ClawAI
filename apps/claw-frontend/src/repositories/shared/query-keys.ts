@@ -428,4 +428,11 @@ export const queryKeys = {
     all: ['gatewayConfig'] as const,
     list: () => ['gatewayConfig', 'list'] as const,
   },
+  smartRouterAdmin: {
+    all: ['smartRouterAdmin'] as const,
+    lists: () => [...queryKeys.smartRouterAdmin.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.smartRouterAdmin.lists(), filters] as const,
+    detail: (id: string | null) => [...queryKeys.smartRouterAdmin.all, 'detail', id] as const,
+  },
 } as const;

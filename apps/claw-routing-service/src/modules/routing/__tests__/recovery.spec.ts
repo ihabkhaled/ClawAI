@@ -36,6 +36,8 @@ describe('RoutingService.getRecoveryStats', () => {
       decisionsRepo as unknown as RoutingDecisionsRepository,
       {} as any,
       {} as any,
+      // RouterShadowEvaluationManager (V4 Learning Evolution); not exercised here.
+      {} as any,
       {} as any,
       {} as any,
       {

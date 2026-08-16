@@ -36,10 +36,20 @@ vi.mock('@/lib/i18n', () => {
   };
 });
 
-vi.mock('@/utilities', () => ({
-  connectSse: (...args: unknown[]) => mockConnectSse(...args),
-  logger: mockLogger,
-}));
+vi.mock('@/utilities', async (importOriginal) => {
+  // Only connectSse/logger need mocking (SSE transport + log assertions).
+  // isSimpleProgressStreamEvent is real business logic the hook depends on
+  // for its progress-stage dispatch — keep the actual implementation via
+  // importOriginal rather than stubbing the whole module, otherwise it
+  // resolves to `undefined` and throws inside onMessage's try/catch, which
+  // silently swallows every event the hook is meant to process.
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    connectSse: (...args: unknown[]) => mockConnectSse(...args),
+    logger: mockLogger,
+  };
+});
 
 describe('useChatStream', () => {
   let closeSpy: ReturnType<typeof vi.fn>;
@@ -267,5 +277,134 @@ describe('useChatStream', () => {
         sequence: 2,
       }),
     ]);
+  });
+
+  it('drops an out-of-order lower-sequence frame instead of regressing a completed stage', () => {
+    const { result } = renderHook(() => useChatStream('thread-sequence', true));
+
+    act(() => {
+      // Higher-sequence COMPLETED frame arrives first.
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-sequence',
+          type: StreamEventType.TOOL_COMPLETED,
+          stageId: 'tool:search',
+          status: VisibleProgressStageStatus.COMPLETED,
+          label: 'Search complete',
+          sequence: 5,
+        }),
+      );
+      // A reordered/retried lower-sequence ACTIVE frame for the SAME stage
+      // arrives behind it — this must not regress COMPLETED back to ACTIVE.
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-sequence',
+          type: StreamEventType.TOOL_STARTED,
+          stageId: 'tool:search',
+          status: VisibleProgressStageStatus.ACTIVE,
+          label: 'Searching',
+          sequence: 3,
+        }),
+      );
+    });
+
+    expect(result.current.progressStages).toEqual([
+      expect.objectContaining({
+        id: 'tool:search',
+        status: VisibleProgressStageStatus.COMPLETED,
+        label: 'Search complete',
+        sequence: 5,
+      }),
+    ]);
+    // The stale frame must not have become the displayed status label either.
+    expect(result.current.currentStageLabel).toBe('Search complete');
+  });
+
+  it('still applies an equal-or-higher-sequence frame for the same stage', () => {
+    const { result } = renderHook(() => useChatStream('thread-sequence-2', true));
+
+    act(() => {
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-sequence-2',
+          type: StreamEventType.TOOL_STARTED,
+          stageId: 'tool:search',
+          status: VisibleProgressStageStatus.ACTIVE,
+          label: 'Searching',
+          sequence: 1,
+        }),
+      );
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-sequence-2',
+          type: StreamEventType.TOOL_COMPLETED,
+          stageId: 'tool:search',
+          status: VisibleProgressStageStatus.COMPLETED,
+          label: 'Search complete',
+          sequence: 2,
+        }),
+      );
+    });
+
+    expect(result.current.progressStages).toEqual([
+      expect.objectContaining({
+        id: 'tool:search',
+        status: VisibleProgressStageStatus.COMPLETED,
+        label: 'Search complete',
+        sequence: 2,
+      }),
+    ]);
+  });
+
+  it('ignores a redelivered frame carrying an eventId already processed', () => {
+    const { result } = renderHook(() => useChatStream('thread-dedupe', true));
+
+    act(() => {
+      const frame = JSON.stringify({
+        threadId: 'thread-dedupe',
+        eventId: 'evt-1',
+        type: StreamEventType.FALLBACK_ATTEMPT,
+        failedProvider: 'OLLAMA',
+        failedModel: 'glm-5.1:cloud',
+        error: 'Weak response from upstream model',
+        attempt: 1,
+        totalCandidates: 3,
+        nextProvider: 'local-ollama',
+        nextModel: 'qwen3:1.7b',
+        label: 'Fallback in progress',
+      });
+      // Same eventId delivered twice — a durable-journal replay/resume
+      // redelivering a frame already applied.
+      capturedOptions.onMessage(frame);
+      capturedOptions.onMessage(frame);
+    });
+
+    expect(result.current.fallbackAttempts).toHaveLength(1);
+  });
+
+  it('processes two distinct eventIds normally', () => {
+    const { result } = renderHook(() => useChatStream('thread-dedupe-2', true));
+
+    act(() => {
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-dedupe-2',
+          eventId: 'evt-a',
+          type: StreamEventType.REQUEST_ACCEPTED,
+          label: 'Request accepted',
+        }),
+      );
+      capturedOptions.onMessage(
+        JSON.stringify({
+          threadId: 'thread-dedupe-2',
+          eventId: 'evt-b',
+          type: StreamEventType.DONE,
+          label: 'Response complete',
+        }),
+      );
+    });
+
+    expect(result.current.streamCompletedAt).not.toBeNull();
+    expect(result.current.currentStageLabel).toBe('Response complete');
   });
 });

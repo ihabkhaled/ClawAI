@@ -109,7 +109,20 @@ test('development frontend installs its local workspace dependency from the buil
     assert.notEqual(copyIndex, -1, `missing workspace build input: ${requiredCopy}`);
     assert.ok(copyIndex < installIndex, `${requiredCopy} must run before npm install`);
   }
-  assert.match(source, /^RUN cd packages\/shared-types && npm run build$/mu);
+  // shared-types imports from shared-constants (router-trace.types.ts), so a
+  // fresh checkout with no pre-existing dist/ must build shared-constants
+  // first or this step fails with TS2307. Locks in the fix for a real CI
+  // outage: every job failed identically because this Dockerfile (and the
+  // CI/Lighthouse workflow build steps, and every other service's
+  // Dockerfile.dev/Dockerfile) built shared-types before shared-constants.
+  const constantsIndex = source.indexOf('RUN cd packages/shared-constants && npm run build');
+  const typesIndex = source.indexOf('RUN cd packages/shared-types && npm run build');
+  assert.notEqual(constantsIndex, -1, 'frontend development image must build @claw/shared-constants');
+  assert.notEqual(typesIndex, -1, 'frontend development image must build @claw/shared-types');
+  assert.ok(
+    constantsIndex < typesIndex,
+    'shared-constants must build before shared-types, which imports from it',
+  );
 
   const frontendWorkdirIndex = source.indexOf('WORKDIR /app/apps/claw-frontend');
   assert.ok(installIndex < frontendWorkdirIndex, 'enter the frontend workspace after installation');

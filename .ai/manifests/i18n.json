@@ -1,5 +1,5 @@
 {
-  "approxKeyCount": 4412,
+  "approxKeyCount": 4415,
   "generated": true,
   "locales": [
     "ar",
@@ -13,7 +13,9 @@
     "it",
     "ja",
     "pt",
+    "router-trace-translations",
     "ru",
+    "smart-router-admin-translations",
     "th",
     "zh"
   ]

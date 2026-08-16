@@ -112,11 +112,7 @@ describe('model-intelligence-merge.utility', () => {
     it('merges incoming fields onto base when no keys are protected', () => {
       const base = { supportsTools: false, qualityTierLabel: 'BASIC' };
       const incoming = { supportsTools: true, costClassLabel: 'LOW' };
-      const result = mergeEnrichmentRespectingOverrides(
-        base,
-        incoming,
-        new Set<string>(),
-      );
+      const result = mergeEnrichmentRespectingOverrides(base, incoming, new Set<string>());
       expect(result.supportsTools).toBe(true);
       expect(result.qualityTierLabel).toBe('BASIC');
       expect(result.costClassLabel).toBe('LOW');

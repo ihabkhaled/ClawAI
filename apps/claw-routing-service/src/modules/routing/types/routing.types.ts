@@ -3,6 +3,7 @@ import {
   type ComplexityClass as PrismaComplexityClass,
   type RoutingDecision,
   type RoutingMode,
+  type RoutingOutcomeRecord,
   type RoutingPolicy,
   type WorkflowKind,
 } from '../../../generated/prisma';
@@ -36,6 +37,15 @@ export interface RoutingContext {
    * the caller *knows*, so it should not be re-guessed from prose.
    */
   requiresToolCalling?: boolean;
+  /**
+   * V6 learning evolution (ADR-070) — opaque reference to claw-workspace-
+   * service's Workspace. Optional and, today, always undefined: no current
+   * caller populates it. When present, calibrateDecision consults a
+   * workspace-tier learned prior as a bounded secondary signal on top of the
+   * global RouterModelProfile calibration it already applies to every
+   * decision — never a replacement for it, never a hard override.
+   */
+  workspaceId?: string;
 }
 
 export interface RoutingDecisionResult {
@@ -176,6 +186,13 @@ export interface HeuristicState {
 export type ModeHandler = (
   ctx: RoutingContext,
 ) => Promise<RoutingDecisionResult> | RoutingDecisionResult;
+
+/**
+ * A `RoutingDecision` with its (at most one, per the unique constraint)
+ * `RoutingOutcomeRecord` included — used by shadow/replay evaluation to read
+ * the legacy judge/critic signal without a second round trip.
+ */
+export type RoutingDecisionWithOutcomes = RoutingDecision & { outcomes: RoutingOutcomeRecord[] };
 
 export type { RoutingDecision, RoutingPolicy, RoutingMode };
 export type { ComplexityClassification } from './complexity.types';

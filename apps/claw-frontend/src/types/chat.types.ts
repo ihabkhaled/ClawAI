@@ -212,6 +212,244 @@ export type StreamEvent = {
   partialContentPreserved?: boolean;
 };
 
+// --- Discriminated stream-event union (additive, batch-8) -------------------
+// StreamEvent above stays the loose wire envelope every OTHER SSE consumer
+// (use-orchestration-stages, use-best-of-n-stream, use-parallel-stream,
+// role-pack-stage-mapping) parses events as — none of those are touched here.
+// useChatStream is the one hook that branches on nearly every
+// StreamEventType, so it is also the one place "every field optional
+// regardless of `type`" let a read of a field that type never sends compile
+// silently. RouterStreamEvent tightens exactly that surface: one member per
+// type useChatStream branches on, carrying only the fields that type's wire
+// payload actually has, plus an UnhandledStreamEvent catch-all so a
+// StreamEventType this hook does not branch on yet (StreamEventType.CHUNK)
+// still parses. This is deliberately additive/open, not a full closed
+// tightening of StreamEvent itself — see the batch-8 handoff report for the
+// scope rationale.
+type StreamEventEnvelope = {
+  eventId?: string;
+  threadId: string;
+  createdAt?: string;
+};
+
+// Fields shared by every progress-stage-shaped event (the ones useChatStream
+// feeds into upsertStage()).
+type ProgressStreamEventFields = StreamEventEnvelope & {
+  sequence?: number;
+  stageId?: string;
+  status?: VisibleProgressStageStatus;
+  label?: string;
+  description?: string;
+  actorType?: VisibleProgressActorType;
+  actorName?: string;
+  provider?: string;
+  model?: string;
+};
+
+export type RequestAcceptedStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.REQUEST_ACCEPTED;
+};
+export type RouterStartedStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.ROUTER_STARTED;
+};
+export type RouterCompletedStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.ROUTER_COMPLETED;
+};
+export type ToolStartedStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.TOOL_STARTED;
+};
+export type ToolCompletedStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.TOOL_COMPLETED;
+};
+export type ResearchStartedStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.RESEARCH_STARTED;
+};
+export type ResearchCompletedStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.RESEARCH_COMPLETED;
+};
+export type ProviderSelectedStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.PROVIDER_SELECTED;
+};
+export type ModelProgressStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.MODEL_PROGRESS;
+};
+export type ResponseStreamingStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.RESPONSE_STREAMING;
+};
+
+export type FallbackAttemptStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.FALLBACK_ATTEMPT;
+  failedProvider?: string;
+  failedModel?: string;
+  error?: string;
+  attempt?: number;
+  totalCandidates?: number;
+  nextProvider?: string;
+  nextModel?: string;
+};
+
+export type JudgeEvaluatingStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.JUDGE_EVALUATING;
+  criticModel?: string;
+  judgeModel?: string;
+};
+
+export type DoneStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.DONE;
+  reasoningVisibility?: AiReasoningVisibility;
+  stage?: AiStreamStage;
+  metrics?: StreamMetrics;
+  usage?: StreamUsage;
+};
+
+export type ErrorStreamEvent = ProgressStreamEventFields & {
+  type: StreamEventType.ERROR;
+  error?: string;
+  code?: string;
+  messageKey?: string;
+  retryable?: boolean;
+  partialContentPreserved?: boolean;
+  reasoningVisibility?: AiReasoningVisibility;
+  stage?: AiStreamStage;
+  metrics?: StreamMetrics;
+  usage?: StreamUsage;
+};
+
+export type ContentDeltaStreamEvent = StreamEventEnvelope & {
+  type: StreamEventType.CONTENT_DELTA;
+  delta?: string;
+  accumulatedChars?: number;
+};
+
+export type ReasoningDeltaStreamEvent = StreamEventEnvelope & {
+  type: StreamEventType.REASONING_DELTA;
+  reasoningDelta?: string;
+  reasoningVisibility?: AiReasoningVisibility;
+  stage?: AiStreamStage;
+  metrics?: StreamMetrics;
+  usage?: StreamUsage;
+};
+
+export type LifecycleStreamEvent = StreamEventEnvelope & {
+  type: StreamEventType.LIFECYCLE;
+  reasoningVisibility?: AiReasoningVisibility;
+  stage?: AiStreamStage;
+  metrics?: StreamMetrics;
+  usage?: StreamUsage;
+};
+
+export type MetricsStreamEvent = StreamEventEnvelope & {
+  type: StreamEventType.METRICS;
+  reasoningVisibility?: AiReasoningVisibility;
+  stage?: AiStreamStage;
+  metrics?: StreamMetrics;
+  usage?: StreamUsage;
+};
+
+export type UsageStreamEvent = StreamEventEnvelope & {
+  type: StreamEventType.USAGE;
+  reasoningVisibility?: AiReasoningVisibility;
+  stage?: AiStreamStage;
+  metrics?: StreamMetrics;
+  usage?: StreamUsage;
+};
+
+type HandledStreamEventType =
+  | StreamEventType.REQUEST_ACCEPTED
+  | StreamEventType.ROUTER_STARTED
+  | StreamEventType.ROUTER_COMPLETED
+  | StreamEventType.TOOL_STARTED
+  | StreamEventType.TOOL_COMPLETED
+  | StreamEventType.RESEARCH_STARTED
+  | StreamEventType.RESEARCH_COMPLETED
+  | StreamEventType.PROVIDER_SELECTED
+  | StreamEventType.MODEL_PROGRESS
+  | StreamEventType.RESPONSE_STREAMING
+  | StreamEventType.FALLBACK_ATTEMPT
+  | StreamEventType.JUDGE_EVALUATING
+  | StreamEventType.DONE
+  | StreamEventType.ERROR
+  | StreamEventType.CONTENT_DELTA
+  | StreamEventType.REASONING_DELTA
+  | StreamEventType.LIFECYCLE
+  | StreamEventType.METRICS
+  | StreamEventType.USAGE;
+
+// Any StreamEventType not enumerated above (currently just
+// StreamEventType.CHUNK) — kept structurally assignable from the original
+// StreamEvent shape so a frame useChatStream does not branch on still parses
+// without a cast, instead of forcing an exhaustive closed union in one batch.
+export type UnhandledStreamEvent = StreamEvent & {
+  type: Exclude<StreamEventType, HandledStreamEventType>;
+};
+
+export type RouterStreamEvent =
+  | RequestAcceptedStreamEvent
+  | RouterStartedStreamEvent
+  | RouterCompletedStreamEvent
+  | ToolStartedStreamEvent
+  | ToolCompletedStreamEvent
+  | ResearchStartedStreamEvent
+  | ResearchCompletedStreamEvent
+  | ProviderSelectedStreamEvent
+  | ModelProgressStreamEvent
+  | ResponseStreamingStreamEvent
+  | FallbackAttemptStreamEvent
+  | JudgeEvaluatingStreamEvent
+  | DoneStreamEvent
+  | ErrorStreamEvent
+  | ContentDeltaStreamEvent
+  | ReasoningDeltaStreamEvent
+  | LifecycleStreamEvent
+  | MetricsStreamEvent
+  | UsageStreamEvent
+  | UnhandledStreamEvent;
+
+// The subset of RouterStreamEvent useChatStream actually feeds into
+// upsertStage(): every SimpleProgressStreamEvent member plus the four
+// terminal/annotated types each dispatched from their own `if (parsed.type
+// === …)` branch.
+export type RouterProgressStageEvent =
+  | RequestAcceptedStreamEvent
+  | RouterStartedStreamEvent
+  | RouterCompletedStreamEvent
+  | ToolStartedStreamEvent
+  | ToolCompletedStreamEvent
+  | ResearchStartedStreamEvent
+  | ResearchCompletedStreamEvent
+  | ProviderSelectedStreamEvent
+  | ModelProgressStreamEvent
+  | ResponseStreamingStreamEvent
+  | FallbackAttemptStreamEvent
+  | JudgeEvaluatingStreamEvent
+  | DoneStreamEvent
+  | ErrorStreamEvent;
+
+// The exact subset PROGRESS_EVENT_TYPES (constants/progress.constants.ts)
+// covers — the target type of the isSimpleProgressStreamEvent() guard that
+// replaces a plain `PROGRESS_EVENT_TYPES.has(parsed.type)` check (a Set
+// membership test does not narrow a discriminated union by itself).
+export type SimpleProgressStreamEvent =
+  | RequestAcceptedStreamEvent
+  | RouterStartedStreamEvent
+  | RouterCompletedStreamEvent
+  | ToolStartedStreamEvent
+  | ToolCompletedStreamEvent
+  | ResearchStartedStreamEvent
+  | ResearchCompletedStreamEvent
+  | ProviderSelectedStreamEvent
+  | ModelProgressStreamEvent
+  | ResponseStreamingStreamEvent;
+
+// Every event type useChatStream's flushLive() is called with.
+export type LiveFlushStreamEvent =
+  | ReasoningDeltaStreamEvent
+  | LifecycleStreamEvent
+  | MetricsStreamEvent
+  | UsageStreamEvent
+  | DoneStreamEvent
+  | ErrorStreamEvent;
+
 // Per-stage wall-clock window captured by the streaming executor. Mirrors
 // the BE StreamStageTimestamps shape exactly so the FE can render a
 // stage-by-stage timeline without re-deriving the window from elapsedMs.

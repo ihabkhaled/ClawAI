@@ -161,6 +161,112 @@ enum DomainTag {
   LITERATURE
 }
 
+// ─── Cloud Smart Router — model definition vs deployment ─────────────────
+//
+// RouterModelRegistry answers "what model is this". ModelDeployment answers
+// "how do we reach it". The distinction matters because one definition can be
+// reachable through several endpoints with different credentials, region,
+// privacy class, price and health — and because `provider` on the legacy
+// tables is a free-form String whose allowed values live only in a comment.
+// These enums are additive: no existing String column is migrated here.
+
+/// Canonical provider identity. OLLAMA and OLLAMA_CLOUD are deliberately
+/// distinct: connector-service already rewrites any localhost Ollama base URL
+/// to https://ollama.com/api, so one identifier was covering both a local
+/// runtime and a third-party cloud endpoint with completely different privacy
+/// and billing semantics.
+enum RouterProvider {
+  OPENAI
+  ANTHROPIC
+  GEMINI
+  DEEPSEEK
+  GROK
+  AWS_BEDROCK
+  OLLAMA
+  OLLAMA_CLOUD
+  LLAMACPP
+}
+
+enum DeploymentType {
+  CLOUD_API
+  CLOUD_SUBSCRIPTION
+  PRIVATE_CLOUD
+  LOCAL
+  AIR_GAPPED
+}
+
+/// A deployment is never eligible on the word of a seed alone. Seeded rows land
+/// in REQUIRES_VALIDATION and only discovery + a health check can promote them.
+enum DeploymentActivationState {
+  REQUIRES_VALIDATION
+  ACTIVE
+  UNHEALTHY
+  QUARANTINED
+  DISABLED
+  RETIRED
+}
+
+/// Ollama Cloud bills by subscription/usage-limit rather than per token, so a
+/// fabricated per-token price would be worse than admitting the unknown.
+enum BillingModel {
+  TOKEN
+  REQUEST
+  SUBSCRIPTION
+  USAGE_LIMIT
+  UNKNOWN
+}
+
+/// Deployment policy for a router configuration. CLOUD_FIRST is the new SaaS
+/// default; the local and private modes stay first-class so an air-gapped
+/// install is a configuration choice rather than a fork.
+enum RouterConfigurationMode {
+  CLOUD_FIRST
+  HYBRID
+  PRIVATE_CLOUD
+  LOCAL_ONLY
+}
+
+/// A revision is immutable once PUBLISHED. Editing produces a new revision, so
+/// "what was the router doing at 14:03" always has an answer, and rollback is
+/// publishing an older revision's content as a newer one rather than mutating
+/// history.
+enum RouterConfigurationStatus {
+  DRAFT
+  PUBLISHED
+  SUPERSEDED
+}
+
+/// What a chain entry is for. Role is documentation for operators and a
+/// validation aid — the coordinator branches on canonical error scope, never on
+/// this — but a chain whose roles contradict its order is a misconfiguration
+/// worth refusing.
+enum RouterChainEntryRole {
+  PRIMARY
+  MODEL_FALLBACK
+  PROVIDER_FALLBACK
+  PROVIDER_MODEL_FALLBACK
+  LAST_RESORT
+  QUALITY_ESCALATION
+}
+
+/// What happens when a decision is valid but under the confidence floor.
+/// Distinct from provider failure throughout: the call succeeded.
+enum LowConfidenceAction {
+  QUALITY_ESCALATION_THEN_DETERMINISTIC
+  DETERMINISTIC_ONLY
+  FAIL_CLOSED
+}
+
+/// Where a capability claim came from. A provider marketing page and a measured
+/// lab probe must never be indistinguishable once stored.
+enum EvidenceSource {
+  PROVIDER_DECLARED
+  MANUAL_VERIFIED
+  LAB_MEASURED
+  PRODUCTION_OBSERVED
+  LEARNED_AGGREGATE
+}
+
 // ─── Models ──────────────────────────────────────────────
 
 model RoutingDecision {
@@ -309,6 +415,17 @@ model RoutingOutcomeRecord {
   revised                Boolean                @default(false)
   escalated              Boolean                @default(false)
   followUpSignal         String?                @map("follow_up_signal")
+  // V5 learning evolution — raw, per-observation evaluator/rubric identity.
+  // Nullable: most rows predate any judge run reporting a version, and this
+  // stays a true raw observation rather than a fabricated default. Rolls up
+  // into RouterModelProfile.evaluatorVersions / RouterTopicProfile.evaluatorVersions
+  // at aggregation time (see ADR-069).
+  evaluatorVersion       String?                @map("evaluator_version")
+  // V6 learning evolution (ADR-070) — opaque reference to claw-workspace-
+  // service's Workspace, never joined (cross-service DB boundary). Nullable:
+  // no current caller populates it; RouterWorkspacePrior aggregation simply
+  // skips a row with no workspaceId, same as it always has.
+  workspaceId            String?                @map("workspace_id")
   createdAt              DateTime               @default(now()) @map("created_at")
   updatedAt              DateTime               @updatedAt @map("updated_at")
   routingDecision        RoutingDecision        @relation(fields: [routingDecisionId], references: [id], onDelete: Cascade)
@@ -317,6 +434,7 @@ model RoutingOutcomeRecord {
   @@index([threadId])
   @@index([executionStatus])
   @@index([judgeOutcome])
+  @@index([workspaceId])
   @@map("routing_outcome_records")
 }
 
@@ -361,48 +479,101 @@ model RouterModelProfile {
   weightedDissatisfactionScore Decimal  @default(0) @map("weighted_dissatisfaction_score") @db.Decimal(6, 4)
   sampleSize                   Int      @default(0) @map("sample_size")
   confidenceInProfile          Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
+  // V5 learning evolution (ADR-069) — versioned scores, confidence interval,
+  // evaluator attribution. Nullable/defaulted: additive migration, every row
+  // predating this batch reads as "no version / no interval / no evaluator
+  // recorded yet" rather than a fabricated value.
+  scoreVersion                 String?  @map("score_version")
+  successRateLowerBound        Decimal? @map("success_rate_lower_bound") @db.Decimal(6, 4)
+  successRateUpperBound        Decimal? @map("success_rate_upper_bound") @db.Decimal(6, 4)
+  evaluatorVersions            String[] @default([]) @map("evaluator_versions")
   lastUpdated                  DateTime @default(now()) @map("last_updated")
 
   @@unique([provider, model, taskFamily, topicKey])
   @@index([taskFamily, topicKey])
   @@index([weightedSuccessScore])
+  @@index([scoreVersion])
   @@map("router_model_profiles")
 }
 
 model RouterTopicProfile {
-  id                   String   @id @default(cuid())
-  taskFamily           String   @map("task_family")
-  topicKey             String   @map("topic_key")
-  bestProvider         String?  @map("best_provider")
-  bestModel            String?  @map("best_model")
-  routeCount           Int      @default(0) @map("route_count")
-  successRate          Decimal  @default(0) @map("success_rate") @db.Decimal(6, 4)
-  thumbsUpRate         Decimal  @default(0) @map("thumbs_up_rate") @db.Decimal(6, 4)
-  thumbsDownRate       Decimal  @default(0) @map("thumbs_down_rate") @db.Decimal(6, 4)
-  judgeVerifiedRate    Decimal  @default(0) @map("judge_verified_rate") @db.Decimal(6, 4)
-  judgeEscalatedRate   Decimal  @default(0) @map("judge_escalated_rate") @db.Decimal(6, 4)
-  fallbackSuccessRate  Decimal  @default(0) @map("fallback_success_rate") @db.Decimal(6, 4)
-  weightedSuccessScore Decimal  @default(0) @map("weighted_success_score") @db.Decimal(6, 4)
-  ambiguityScore       Decimal  @default(0) @map("ambiguity_score") @db.Decimal(6, 4)
-  confidenceInProfile  Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
-  lastUpdated          DateTime @default(now()) @map("last_updated")
+  id                    String   @id @default(cuid())
+  taskFamily            String   @map("task_family")
+  topicKey              String   @map("topic_key")
+  bestProvider          String?  @map("best_provider")
+  bestModel             String?  @map("best_model")
+  routeCount            Int      @default(0) @map("route_count")
+  successRate           Decimal  @default(0) @map("success_rate") @db.Decimal(6, 4)
+  thumbsUpRate          Decimal  @default(0) @map("thumbs_up_rate") @db.Decimal(6, 4)
+  thumbsDownRate        Decimal  @default(0) @map("thumbs_down_rate") @db.Decimal(6, 4)
+  judgeVerifiedRate     Decimal  @default(0) @map("judge_verified_rate") @db.Decimal(6, 4)
+  judgeEscalatedRate    Decimal  @default(0) @map("judge_escalated_rate") @db.Decimal(6, 4)
+  fallbackSuccessRate   Decimal  @default(0) @map("fallback_success_rate") @db.Decimal(6, 4)
+  weightedSuccessScore  Decimal  @default(0) @map("weighted_success_score") @db.Decimal(6, 4)
+  ambiguityScore        Decimal  @default(0) @map("ambiguity_score") @db.Decimal(6, 4)
+  confidenceInProfile   Decimal  @default(0) @map("confidence_in_profile") @db.Decimal(6, 4)
+  // V5 learning evolution (ADR-069) — see RouterModelProfile for rationale.
+  scoreVersion          String?  @map("score_version")
+  successRateLowerBound Decimal? @map("success_rate_lower_bound") @db.Decimal(6, 4)
+  successRateUpperBound Decimal? @map("success_rate_upper_bound") @db.Decimal(6, 4)
+  evaluatorVersions     String[] @default([]) @map("evaluator_versions")
+  lastUpdated           DateTime @default(now()) @map("last_updated")
 
   @@unique([taskFamily, topicKey])
   @@index([weightedSuccessScore])
+  @@index([scoreVersion])
   @@map("router_topic_profiles")
 }
 
+/// V6 learning evolution (ADR-070) — hierarchical personalization, workspace
+/// tier only. A bounded secondary signal layered ON TOP of RouterModelProfile
+/// (global tier), never a replacement for it: calibrateDecision always
+/// computes the global calibration first, and only nudges its confidence
+/// when a workspace prior exists with enough samples to trust. A separate
+/// table rather than a nullable column on RouterModelProfile so the existing
+/// global unique constraint, upsert logic, and every current reader is
+/// untouched by this batch — zero risk to the live global learning path.
+model RouterWorkspacePrior {
+  id                String   @id @default(cuid())
+  /// Opaque reference to claw-workspace-service's Workspace. Never joined
+  /// (cross-service DB boundary) — always filtered on directly, so a prior
+  /// row is never visible outside the workspace that produced it.
+  workspaceId       String   @map("workspace_id")
+  provider          String
+  model             String
+  taskFamily        String   @map("task_family")
+  routeCount        Int      @default(0) @map("route_count")
+  successRate       Decimal  @default(0) @map("success_rate") @db.Decimal(6, 4)
+  confidenceInPrior Decimal  @default(0) @map("confidence_in_prior") @db.Decimal(6, 4)
+  scoreVersion      String?  @map("score_version")
+  lastUpdated       DateTime @default(now()) @map("last_updated")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@unique([workspaceId, provider, model, taskFamily])
+  @@index([workspaceId])
+  @@map("router_workspace_priors")
+}
+
 model RoutingCalibrationSnapshot {
-  id          String   @id @default(cuid())
-  version     String
-  windowDays  Int      @map("window_days")
-  summary     Json
-  promptHints Json     @map("prompt_hints")
-  active      Boolean  @default(true)
-  generatedAt DateTime @default(now()) @map("generated_at")
+  id            String   @id @default(cuid())
+  version       String
+  windowDays    Int      @map("window_days")
+  summary       Json
+  promptHints   Json     @map("prompt_hints")
+  // V5 learning evolution (ADR-069) — batch recalibration first, rollback.
+  // Full point-in-time copy of the profile rows this snapshot produced,
+  // written BEFORE those rows are promoted to the live RouterModelProfile /
+  // RouterTopicProfile tables. Nullable: pre-ADR-069 snapshot rows have none.
+  // rollbackCalibration() restores a prior version's copy without
+  // recomputing from raw RoutingOutcomeRecord/RoutingFeedbackRecord history.
+  modelProfiles Json?    @map("model_profiles")
+  topicProfiles Json?    @map("topic_profiles")
+  active        Boolean  @default(true)
+  generatedAt   DateTime @default(now()) @map("generated_at")
 
   @@index([generatedAt])
   @@index([active])
+  @@index([version])
   @@map("routing_calibration_snapshots")
 }
 
@@ -506,7 +677,9 @@ model RouterModelRegistry {
   updatedAt                DateTime       @updatedAt @map("updated_at")
   lastSyncedAt             DateTime?      @map("last_synced_at")
 
-  overrides RouterAdminOverride[]
+  overrides   RouterAdminOverride[]
+  deployments ModelDeployment[]
+  evidence    CapabilityEvidence[]
 
   @@unique([provider, modelKey])
   @@index([provider])
@@ -514,6 +687,326 @@ model RouterModelRegistry {
   @@index([isExecutionCapable, lifecycle])
   @@index([isRouterOnly])
   @@map("router_model_registry")
+}
+
+/// One reachable endpoint for one model definition.
+///
+/// A definition can have many deployments — the same underlying model behind a
+/// direct API key, behind a private-cloud gateway, and behind a local runtime —
+/// each with its own credentials, region, privacy class, limits, price and
+/// health. Nothing here stores a secret: `connectorId` references a
+/// connector-service record and the key never leaves that service.
+model ModelDeployment {
+  id String @id @default(cuid())
+
+  definitionId String              @map("definition_id")
+  definition   RouterModelRegistry @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  // ── identity ──
+  /// Stable composite identity, e.g. "GEMINI:gemini-2.5-flash:conn_abc123".
+  /// An explicit column rather than a multi-column unique because connectorId
+  /// and runtimeId are nullable, and Postgres treats NULLs as distinct — a
+  /// composite unique would silently permit duplicate local deployments.
+  deploymentKey   String         @unique @map("deployment_key")
+  provider        RouterProvider
+  /// The id the provider itself expects on the wire, which is not always the
+  /// definition's modelKey (aliases, dated snapshots, ":cloud" suffixes).
+  providerModelId String         @map("provider_model_id")
+  connectorId     String?        @map("connector_id")
+  runtimeId       String?        @map("runtime_id")
+
+  // ── placement ──
+  deploymentType   DeploymentType            @map("deployment_type")
+  region           String?
+  privacyClass     PrivacyClass              @default(CLOUD_PERMITTED) @map("privacy_class")
+  activationState  DeploymentActivationState @default(REQUIRES_VALIDATION) @map("activation_state")
+  quarantineReason String?                   @map("quarantine_reason")
+
+  // ── per-endpoint capability overrides; NULL means "inherit the definition" ──
+  contextWindowTokens      Int?     @map("context_window_tokens")
+  maxOutputTokens          Int?     @map("max_output_tokens")
+  supportsTools            Boolean? @map("supports_tools")
+  supportsStructuredOutput Boolean? @map("supports_structured_output")
+  supportsStreaming        Boolean? @map("supports_streaming")
+  supportsVision           Boolean? @map("supports_vision")
+
+  // ── limits and economics ──
+  rateLimitRpm   Int?         @map("rate_limit_rpm")
+  rateLimitTpm   Int?         @map("rate_limit_tpm")
+  billingModel   BillingModel @default(UNKNOWN) @map("billing_model")
+  /// Points at ModelCostVersion.activeKey rather than duplicating rates, so
+  /// pricing stays immutable and versioned in one place.
+  costVersionKey String?      @map("cost_version_key")
+
+  // ── health ──
+  lastHealthyAt     DateTime? @map("last_healthy_at")
+  lastHealthCheckAt DateTime? @map("last_health_check_at")
+  lastValidatedAt   DateTime? @map("last_validated_at")
+
+  // ── bookkeeping ──
+  metadataSource String   @default("seed") @map("metadata_source")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  evidence CapabilityEvidence[]
+
+  @@index([definitionId])
+  @@index([provider])
+  @@index([activationState])
+  @@index([activationState, provider])
+  @@index([deploymentType])
+  @@map("model_deployments")
+}
+
+/// One immutable revision of the router's configuration.
+///
+/// RoutingPolicy, the existing config aggregate, is mutated in place: there is
+/// no way to see what the router was doing before an edit, and no way to roll
+/// one back. Revisions here are append-only — an edit publishes revision N+1 and
+/// marks N SUPERSEDED — which is also what makes optimistic concurrency
+/// possible: a save carries the revision it was based on and loses the race
+/// rather than silently overwriting a concurrent admin.
+///
+/// `scope` is GLOBAL today. routing-service has no tenant columns anywhere, so
+/// per-tenant configuration needs a scoping migration first; the column exists
+/// so that arrives as data rather than as a schema change.
+model RouterConfiguration {
+  id       String                    @id @default(cuid())
+  scope    String                    @default("GLOBAL")
+  revision Int
+  status   RouterConfigurationStatus @default(DRAFT)
+
+  mode    RouterConfigurationMode @default(CLOUD_FIRST)
+  enabled Boolean                 @default(false)
+
+  // ── budgets, all hard ceilings ──
+  totalDeadlineMs       Int @default(5000) @map("total_deadline_ms")
+  maxAttempts           Int @default(6) @map("max_attempts")
+  maxRouterInputTokens  Int @default(1800) @map("max_router_input_tokens")
+  maxRouterOutputTokens Int @default(320) @map("max_router_output_tokens")
+
+  // ── decision policy ──
+  minConfidence                     Decimal             @default(0.75) @map("min_confidence") @db.Decimal(4, 3)
+  lowConfidenceAction               LowConfidenceAction @default(QUALITY_ESCALATION_THEN_DETERMINISTIC) @map("low_confidence_action")
+  /// With no usable router, fail with a typed error rather than picking
+  /// arbitrarily — an unexplained model choice is worse than an honest refusal.
+  failClosedWhenNoEligibleRouter    Boolean             @default(true) @map("fail_closed_when_no_eligible_router")
+  skipProviderOnProviderWideFailure Boolean             @default(true) @map("skip_provider_on_provider_wide_failure")
+
+  safeTraceLevel             String  @default("DETAILED_FACTORS") @map("safe_trace_level")
+  /// Keeps the legacy local router reachable by chain order alone, so rollback
+  /// is a configuration change rather than a deploy.
+  legacyLocalRollbackEnabled Boolean @default(true) @map("legacy_local_rollback_enabled")
+
+  // ── revision bookkeeping ──
+  supersedesRevision Int?      @map("supersedes_revision")
+  publishedAt        DateTime? @map("published_at")
+  publishedBy        String?   @map("published_by")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  entries RouterChainEntry[]
+
+  @@unique([scope, revision])
+  @@index([scope, status])
+  @@map("router_configurations")
+}
+
+/// One ordered attempt target within a configuration revision.
+///
+/// Entries belong to a revision rather than to a mutable configuration, so the
+/// chain a decision used can be reconstructed exactly.
+model RouterChainEntry {
+  id              String              @id @default(cuid())
+  configurationId String              @map("configuration_id")
+  configuration   RouterConfiguration @relation(fields: [configurationId], references: [id], onDelete: Cascade)
+
+  order   Int
+  enabled Boolean              @default(true)
+  role    RouterChainEntryRole @default(PROVIDER_FALLBACK)
+
+  /// The endpoint this entry calls. Nullable so a seeded bootstrap alias can be
+  /// recorded before discovery has confirmed the model exists — the entry is
+  /// simply not runnable until it resolves.
+  deploymentId String?        @map("deployment_id")
+  /// The alias the seed was written against, kept for the admin UI and for
+  /// discovery to match on. Never used to call a provider directly.
+  modelAlias   String         @map("model_alias")
+  provider     RouterProvider
+
+  attemptTimeoutMs Int @default(1600) @map("attempt_timeout_ms")
+  retries          Int @default(0)
+
+  /// Canonical RouterErrorCode names that route TO this entry. Empty means the
+  /// entry is reachable by ordinary chain order.
+  triggers                    String[] @default([])
+  skipWhenProviderCircuitOpen Boolean  @default(true) @map("skip_when_provider_circuit_open")
+
+  /// Per-entry overrides; NULL inherits the configuration.
+  minConfidence   Decimal? @map("min_confidence") @db.Decimal(4, 3)
+  maxCostMicroUsd BigInt?  @map("max_cost_micro_usd")
+
+  /// Billing model of the endpoint as configured, so a subscription entry is
+  /// never costed as if it were per-token.
+  billingModel BillingModel @default(UNKNOWN) @map("billing_model")
+
+  lastValidatedAt DateTime? @map("last_validated_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@unique([configurationId, order])
+  @@index([configurationId, enabled])
+  @@index([provider])
+  @@map("router_chain_entries")
+}
+
+/// One router-inference attempt, whatever its outcome.
+///
+/// The only durable fallback evidence today is RoutingDecision's flat
+/// fallbackProvider/fallbackModel pair, which cannot say how many attempts were
+/// made, which failed, why, or how long each took. Without that, "the router
+/// fell back" is unanswerable after the fact and the pack's fault-injection
+/// evidence has nothing to assert against.
+///
+/// Carries safe codes and a truncated provider message only — never a payload,
+/// never a prompt, because these rows feed a trace event.
+model RouterProviderAttempt {
+  id         String  @id @default(cuid())
+  /// Correlates every attempt of one routing decision.
+  traceId    String  @map("trace_id")
+  /// Set once the decision row exists; an attempt is recorded even when the
+  /// walk never produced one.
+  decisionId String? @map("decision_id")
+
+  attemptOrder    Int            @map("attempt_order")
+  chainEntryId    String?        @map("chain_entry_id")
+  chainOrder      Int?           @map("chain_order")
+  provider        RouterProvider
+  providerModelId String         @map("provider_model_id")
+  deploymentId    String?        @map("deployment_id")
+
+  succeeded   Boolean
+  /// Canonical RouterErrorCode name. Null on success.
+  errorCode   String? @map("error_code")
+  safeMessage String? @map("safe_message")
+  /// True when this attempt was the single permitted schema repair.
+  wasRepair   Boolean @default(false) @map("was_repair")
+
+  latencyMs    Int  @map("latency_ms")
+  inputTokens  Int? @map("input_tokens")
+  outputTokens Int? @map("output_tokens")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([traceId, attemptOrder])
+  @@index([decisionId])
+  @@index([provider, succeeded])
+  @@index([errorCode])
+  @@index([createdAt])
+  @@map("router_provider_attempts")
+}
+
+/// One candidate's ranking for one decision.
+///
+/// Scoring is stateless today: the engine returns a ranking and nothing keeps
+/// it, so `router.candidate.scored` and `router.candidate.excluded` have no
+/// backing store and replay can only compare winners, never rankings.
+model RoutingCandidateScore {
+  id         String  @id @default(cuid())
+  traceId    String  @map("trace_id")
+  decisionId String? @map("decision_id")
+
+  deploymentId    String         @map("deployment_id")
+  /// Denormalised so a score stays readable after a deployment is retired.
+  provider        RouterProvider
+  providerModelId String         @map("provider_model_id")
+
+  eligible        Boolean
+  /// Safe exclusion code when not eligible. Null when it was.
+  exclusionReason String? @map("exclusion_reason")
+
+  /// Aggregate 0..1. Null for a candidate excluded before scoring.
+  score       Decimal? @db.Decimal(5, 4)
+  uncertainty Decimal? @db.Decimal(5, 4)
+  /// Per-factor contributions keyed by factor code, e.g. DOMAIN_MATCH.
+  factors     Json?
+
+  rank      Int?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([traceId, deploymentId])
+  @@index([decisionId])
+  @@index([traceId, eligible])
+  @@index([exclusionReason])
+  @@map("routing_candidate_scores")
+}
+
+/// Ledger of versioned seeds that have run against this database.
+///
+/// routing-service's three existing seed scripts have no ledger, no lock and no
+/// checksum, so a fresh deployment boots with an empty registry unless an
+/// operator remembers to run them by hand. A row here makes a seed replayable
+/// and observable: the same (name, version) never applies twice, and a changed
+/// payload for an already-applied version surfaces as a loud mismatch rather
+/// than silently overwriting admin edits.
+model SeedExecution {
+  id          String    @id @default(cuid())
+  name        String
+  version     Int
+  checksum    String
+  status      String
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  /// Sanitized failure reason. Never a stack trace or a provider payload.
+  error       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([name, version])
+  @@index([name])
+  @@index([status])
+  @@map("seed_executions")
+}
+
+/// A single sourced capability claim about a definition or a deployment.
+///
+/// Capability flags on RouterModelRegistry are unsourced booleans: a wrong one
+/// has no audit trail, no expiry and no way to tell a marketing claim from a
+/// measured probe. Each row here carries its provenance, confidence and
+/// staleness so ranking can discount weak evidence instead of trusting it.
+model CapabilityEvidence {
+  id String @id @default(cuid())
+
+  /// Subject is EITHER a deployment or a definition. Endpoint-specific facts
+  /// (this connector's tool support) hang off the deployment; model-intrinsic
+  /// facts (this family reasons well) hang off the definition.
+  deploymentId String?              @map("deployment_id")
+  deployment   ModelDeployment?     @relation(fields: [deploymentId], references: [id], onDelete: Cascade)
+  definitionId String?              @map("definition_id")
+  definition   RouterModelRegistry? @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  capability String
+  value      Json
+  source     EvidenceSource
+  /// Where the claim came from — a provider doc URL, a lab run id, an admin id.
+  sourceRef  String?        @map("source_ref")
+  confidence Decimal        @default(0.500) @db.Decimal(4, 3)
+
+  observedAt DateTime  @map("observed_at")
+  validFrom  DateTime? @map("valid_from")
+  expiresAt  DateTime? @map("expires_at")
+
+  benchmarkVersion String? @map("benchmark_version")
+  rubricVersion    String? @map("rubric_version")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([deploymentId, capability])
+  @@index([definitionId, capability])
+  @@index([source])
+  @@index([expiresAt])
+  @@map("capability_evidence")
 }
 
 /// Phase 10: Learned-score table. Per-(profile, domain, taskFamily) success

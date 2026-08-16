@@ -1,16 +1,19 @@
 import { useCallback, useState } from 'react';
 
-import type { UseContextPackItemDragArgs, UseContextPackItemDragReturn } from '@/types';
+import type { SortableDragItem, UseSortableDragArgs, UseSortableDragReturn } from '@/types';
 
 // Lightweight native HTML5 drag-and-drop reordering. We compute the target
 // sortOrder using the sortOrder of the item we landed on, then call back into
 // the mutation. The dragged item gets a translucent style while in-flight.
 // We intentionally avoid @dnd-kit so we don't add a new dependency mid-experiment.
-export function useContextPackItemDrag({
+// Generic over any item with an id + sortOrder (SortableDragItem) so both
+// context pack items and router chain entries (smart-router admin) reuse
+// this one implementation rather than duplicating it.
+export function useContextPackItemDrag<T extends SortableDragItem>({
   items,
   isDragSupported,
   onReorder,
-}: UseContextPackItemDragArgs): UseContextPackItemDragReturn {
+}: UseSortableDragArgs<T>): UseSortableDragReturn {
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [targetIndex, setTargetIndex] = useState<number | null>(null);
 

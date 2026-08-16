@@ -1,6 +1,8 @@
 ﻿import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
+import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
+import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
 
 export const zh: TranslationDictionary = {
   common: {
@@ -207,6 +209,7 @@ export const zh: TranslationDictionary = {
     adminRuntimeProgress: '运行时诊断',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.zh.navigationLabel,
     adminPaymentGateways: '支付网关',
+    adminSmartRouter: '智能路由器',
     plan: '我的计划',
     billing: '计费',
     usage: '用法',
@@ -3098,6 +3101,8 @@ export const zh: TranslationDictionary = {
     failed: '无法退款。',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.zh.section,
+  routerTrace: ROUTER_TRACE_TRANSLATIONS.zh,
+  smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.zh,
   adminBilling: {
     title: '计费仪表板',
     description: '收入、提供商成本、利润和订阅健康状况。',
