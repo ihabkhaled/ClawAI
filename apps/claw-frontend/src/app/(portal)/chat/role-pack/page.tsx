@@ -2,6 +2,7 @@
 
 import { Users } from 'lucide-react';
 
+import { OrchestrationLabInfo } from '@/components/chat/orchestration/orchestration-lab-info';
 import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestration-page-shell';
 import { RolePackResultCard } from '@/components/chat/role-pack-result-card';
 import { EmptyState } from '@/components/common/empty-state';
@@ -43,7 +44,7 @@ export default function RolePackPage(): React.ReactElement {
 
   const packSelector = (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-foreground" htmlFor="role-pack-select">
+      <label className="text-foreground block text-sm font-medium" htmlFor="role-pack-select">
         {t('rolePack.packLabel')}
       </label>
       <Select
@@ -70,11 +71,18 @@ export default function RolePackPage(): React.ReactElement {
   ) : null;
 
   const emptySlot = (
-    <EmptyState
-      icon={Users}
-      title={t('rolePack.noResults')}
-      description={t('rolePack.description')}
-    />
+    <>
+      <EmptyState
+        icon={Users}
+        title={t('rolePack.noResults')}
+        description={t('rolePack.description')}
+      />
+      <OrchestrationLabInfo
+        goal={t('rolePack.goal')}
+        benefits={[t('rolePack.benefit1'), t('rolePack.benefit2'), t('rolePack.benefit3')]}
+        t={t}
+      />
+    </>
   );
 
   return (

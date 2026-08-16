@@ -10,4 +10,13 @@ export enum PlanFeature {
   ALLOW_WORKSPACES = 'allowWorkspaces',
   ALLOW_MEMORY = 'allowMemory',
   ALLOW_CONTEXT_PACKS = 'allowContextPacks',
+  ALLOW_CONSENSUS_MODE = 'allowConsensusMode',
+  ALLOW_ESCALATION_CHAIN = 'allowEscalationChain',
+  ALLOW_REPAIR_LAB = 'allowRepairLab',
+  ALLOW_TASK_DECOMPOSER = 'allowTaskDecomposer',
+  ALLOW_BEST_OF_N = 'allowBestOfN',
+  ALLOW_VERIFIER = 'allowVerifier',
+  ALLOW_PIPELINE_LAB = 'allowPipelineLab',
+  ALLOW_COST_ENSEMBLE = 'allowCostEnsemble',
+  ALLOW_ROLE_PACK = 'allowRolePack',
 }

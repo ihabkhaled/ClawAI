@@ -31,9 +31,26 @@ export enum Permission {
 
   // Model / routing usage (plan-gated)
   MODEL_USE_ALLOWED = 'MODEL_USE_ALLOWED',
+  // Deprecated: used to gate all 9 orchestration lab pages below as one
+  // coarse permission. Kept (not removed) so any role an admin already
+  // granted it to does not silently lose access — new code must use the
+  // 9 granular *_USE permissions instead. Never grant this to new roles.
   ROUTER_USE = 'ROUTER_USE',
   COMPARE_USE = 'COMPARE_USE',
   JUDGE_USE = 'JUDGE_USE',
+
+  // Advanced orchestration labs — one permission per page, each paired with
+  // a matching Plan.allowXxx feature gate (see PlanFeatureGates). Replaces
+  // the single coarse ROUTER_USE above.
+  CONSENSUS_MODE_USE = 'CONSENSUS_MODE_USE',
+  ESCALATION_CHAIN_USE = 'ESCALATION_CHAIN_USE',
+  REPAIR_LAB_USE = 'REPAIR_LAB_USE',
+  TASK_DECOMPOSER_USE = 'TASK_DECOMPOSER_USE',
+  BEST_OF_N_USE = 'BEST_OF_N_USE',
+  VERIFIER_USE = 'VERIFIER_USE',
+  PIPELINE_LAB_USE = 'PIPELINE_LAB_USE',
+  COST_ENSEMBLE_USE = 'COST_ENSEMBLE_USE',
+  ROLE_PACK_USE = 'ROLE_PACK_USE',
 
   // Feature-page access (gate whole pages + their non-admin endpoints). These
   // let the role→permission matrix decide which product surfaces a role sees,

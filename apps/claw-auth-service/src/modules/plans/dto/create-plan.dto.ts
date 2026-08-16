@@ -27,6 +27,15 @@ export const createPlanSchema = z
     allowWorkspaces: z.boolean().optional(),
     allowMemory: z.boolean().optional(),
     allowContextPacks: z.boolean().optional(),
+    allowConsensusMode: z.boolean().optional(),
+    allowEscalationChain: z.boolean().optional(),
+    allowRepairLab: z.boolean().optional(),
+    allowTaskDecomposer: z.boolean().optional(),
+    allowBestOfN: z.boolean().optional(),
+    allowVerifier: z.boolean().optional(),
+    allowPipelineLab: z.boolean().optional(),
+    allowCostEnsemble: z.boolean().optional(),
+    allowRolePack: z.boolean().optional(),
   })
   .refine(
     (value) => (value.isTrial ? value.trialDurationDays === 30 : value.trialDurationDays === null),

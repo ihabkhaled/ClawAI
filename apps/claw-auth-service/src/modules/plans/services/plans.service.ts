@@ -8,6 +8,8 @@ import { pendingRetirementMigrationsSchema } from '../dto/plan-retirement.dto';
 import { PlanLifecycleStatus, type PlanRetirementMigrationStatus } from '../../../generated/prisma';
 import {
   type PendingPlanRetirementMigration,
+  type PlanFeatureGates,
+  type PlanModelAccessView,
   type PlanRetirementResult,
   type PlanView,
   type PlanWithAccess,
@@ -219,6 +221,17 @@ export class PlansService {
       maxWorkspaceConnections: plan.maxWorkspaceConnections,
       maxContextPacks: plan.maxContextPacks,
       maxMemoryItems: plan.maxMemoryItems,
+      ...this.toFeatureGates(plan),
+      modelAccessMode: plan.modelAccessMode,
+      allowedCostClasses: plan.allowedCostClasses,
+      modelAccess: plan.modelAccess.map((m) => this.toModelAccessView(m)),
+      createdAt: plan.createdAt,
+      updatedAt: plan.updatedAt,
+    };
+  }
+
+  private toFeatureGates(plan: PlanWithAccess): PlanFeatureGates {
+    return {
       allowCompareMode: plan.allowCompareMode,
       allowJudgeMode: plan.allowJudgeMode,
       allowResearchMode: plan.allowResearchMode,
@@ -226,20 +239,28 @@ export class PlansService {
       allowWorkspaces: plan.allowWorkspaces,
       allowMemory: plan.allowMemory,
       allowContextPacks: plan.allowContextPacks,
-      modelAccessMode: plan.modelAccessMode,
-      allowedCostClasses: plan.allowedCostClasses,
-      modelAccess: plan.modelAccess.map((m) => ({
-        provider: m.provider,
-        model: m.model,
-        isAllowed: m.isAllowed,
-        allowAsPrimary: m.allowAsPrimary,
-        allowAsFallback: m.allowAsFallback,
-        allowAsJudge: m.allowAsJudge,
-        allowInCompare: m.allowInCompare,
-        dailyTokenLimitOverride: m.dailyTokenLimitOverride,
-      })),
-      createdAt: plan.createdAt,
-      updatedAt: plan.updatedAt,
+      allowConsensusMode: plan.allowConsensusMode,
+      allowEscalationChain: plan.allowEscalationChain,
+      allowRepairLab: plan.allowRepairLab,
+      allowTaskDecomposer: plan.allowTaskDecomposer,
+      allowBestOfN: plan.allowBestOfN,
+      allowVerifier: plan.allowVerifier,
+      allowPipelineLab: plan.allowPipelineLab,
+      allowCostEnsemble: plan.allowCostEnsemble,
+      allowRolePack: plan.allowRolePack,
+    };
+  }
+
+  private toModelAccessView(model: PlanWithAccess['modelAccess'][number]): PlanModelAccessView {
+    return {
+      provider: model.provider,
+      model: model.model,
+      isAllowed: model.isAllowed,
+      allowAsPrimary: model.allowAsPrimary,
+      allowAsFallback: model.allowAsFallback,
+      allowAsJudge: model.allowAsJudge,
+      allowInCompare: model.allowInCompare,
+      dailyTokenLimitOverride: model.dailyTokenLimitOverride,
     };
   }
 }

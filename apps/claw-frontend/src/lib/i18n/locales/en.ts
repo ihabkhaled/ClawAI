@@ -513,6 +513,15 @@ export const en: TranslationDictionary = {
         workspaces: 'Workspaces',
         memory: 'Memory',
         contextPacks: 'Context Packs',
+        consensusMode: 'Consensus Mode',
+        escalationChain: 'Escalation Chain',
+        repairLab: 'Repair Lab',
+        taskDecomposer: 'Task Decomposer',
+        bestOfN: 'Best-of-N Generation',
+        verifier: 'Verifier',
+        pipelineLab: 'Pipeline Lab',
+        costEnsemble: 'Cost-Aware Ensemble',
+        rolePack: 'Role Pack',
       },
     },
   },
@@ -1351,6 +1360,13 @@ export const en: TranslationDictionary = {
   consensus: {
     title: 'Consensus Mode',
     description: 'Select 2-5 models and let AI synthesize a consensus answer',
+    goal: "Get an answer that reconciles multiple models' perspectives instead of trusting a single model's take.",
+    benefit1:
+      'Surfaces where models agree and disagree, so you see the confidence behind an answer, not just the answer itself.',
+    benefit2:
+      'Reduces the risk of acting on one model’s mistake or hallucination — several different models rarely make the same error.',
+    benefit3:
+      'Best for high-stakes or ambiguous questions where a second (and third) opinion can change the outcome.',
     selectModels: 'Select Models',
     minModels: 'Select at least {min} models',
     maxModels: 'Maximum {max} models allowed',
@@ -1385,6 +1401,12 @@ export const en: TranslationDictionary = {
     title: 'Escalation Chain',
     description:
       'Define a model chain — cheapest first, most powerful last. AI escalates automatically when quality is low',
+    goal: 'Get a fast, cheap answer first and only pay for a stronger model when quality actually requires it.',
+    benefit1: 'Keeps everyday questions cheap and fast by trying the lightest model first.',
+    benefit2:
+      "Automatically escalates to a stronger model only when the answer's quality score falls short — no manual retry.",
+    benefit3:
+      'Best for cost-sensitive workloads where most requests are simple but a few need real reasoning power.',
     chainBuilder: 'Build Your Chain',
     addModel: 'Add Model',
     removeModel: 'Remove',
@@ -1423,6 +1445,12 @@ export const en: TranslationDictionary = {
     title: 'Answer Repair Lab',
     description:
       'Repair malformed, shallow, incomplete, or hallucinated answers without restarting.',
+    goal: 'Fix a bad answer in place instead of resending the whole prompt and hoping for a better roll.',
+    benefit1:
+      "Targets exactly what's wrong — malformed JSON, thin coverage, or factual errors — instead of regenerating from scratch.",
+    benefit2: 'Saves the tokens and time of a full retry when only part of the answer needs work.',
+    benefit3:
+      "Best for structured outputs (JSON, reports, code) where one section failing shouldn't cost you the whole response.",
     contentLabel: 'Answer to repair',
     contentPlaceholder: 'Paste the answer you want to repair...',
     repairTypes: 'Repair types',
@@ -1447,13 +1475,20 @@ export const en: TranslationDictionary = {
     empty: {
       title: 'Ready to repair an answer',
       description:
-        'Paste the answer above, tick the repair types you need, then pick a local model to enable the run.',
+        'Paste the answer above, tick the repair types you need, then pick a model to enable the run.',
     },
   },
   decompose: {
     title: 'Task Decomposition Router',
     description:
       'Break complex tasks into sub-tasks, execute each with the best model, then synthesize the results.',
+    goal: 'Break a large, multi-part task into sub-tasks so each piece is handled by the model best suited to it.',
+    benefit1:
+      'Splits vague, multi-step requests into concrete sub-tasks instead of one long, unfocused prompt.',
+    benefit2:
+      'Routes each sub-task to the model best matched to it, then synthesizes one coherent result.',
+    benefit3:
+      'Best for research, planning, or report-style requests that combine several different kinds of work.',
     contentLabel: 'Complex Task',
     contentPlaceholder:
       'Describe a complex task to decompose, e.g. "Research AI trends in 2025, create a 3-point action plan, and write an executive summary."',
@@ -1481,6 +1516,11 @@ export const en: TranslationDictionary = {
     title: 'Best-of-N Candidate Generation',
     description:
       'Generate multiple candidate answers and automatically select the highest quality response.',
+    goal: 'Generate several candidate answers and automatically keep the best one, when a single generation is too much of a gamble.',
+    benefit1:
+      'Samples the same prompt multiple times and scores every candidate, instead of settling for the first output.',
+    benefit2: 'Reduces the odds that a single unlucky generation is the one you act on.',
+    benefit3: 'Best for creative or open-ended prompts where output quality varies run to run.',
     contentLabel: 'Prompt',
     contentPlaceholder: 'Enter your prompt to generate multiple candidates from\u2026',
     nCandidates: 'Candidates (N)',
@@ -1524,6 +1564,13 @@ export const en: TranslationDictionary = {
   verify: {
     title: 'Verifier',
     description: 'Generate and verify a response before sending',
+    goal: "Check and, if needed, revise a response before it's ever shown to you, catching errors before they reach the conversation.",
+    benefit1:
+      'Generates a draft answer, then verifies it against the prompt before you ever see it.',
+    benefit2:
+      'Automatically revises the answer (up to your configured limit) when the verifier finds an issue.',
+    benefit3:
+      'Best for questions where a wrong or incomplete first answer would be costly to catch after the fact.',
     contentLabel: 'Your prompt',
     contentPlaceholder: 'Enter your question or task...',
     maxRevisionsLabel: 'Max revisions',
@@ -1563,6 +1610,13 @@ export const en: TranslationDictionary = {
   pipeline: {
     title: 'Multi-Stage Pipeline',
     description: 'Route your request through a chain of specialist stages',
+    goal: 'Route a request through a sequence of specialist stages (analyze, reason, format, etc.) instead of one generic pass.',
+    benefit1:
+      'Breaks a single request into ordered stages, each with its own focused instruction, instead of hoping one prompt covers everything.',
+    benefit2:
+      'Comes with ready-made templates (Analyze → Reason → Format, Code → Debug → Review, Draft → Critique → Revise) or a fully custom stage list.',
+    benefit3:
+      'Best for outputs that genuinely need multiple passes — a first draft is rarely the same quality as a reviewed one.',
     contentLabel: 'Your request',
     contentPlaceholder: 'Describe what you need...',
     templateLabel: 'Pipeline template',
@@ -1583,6 +1637,13 @@ export const en: TranslationDictionary = {
   costEnsemble: {
     title: 'Cost-Aware Ensemble',
     description: 'Smart execution: use one, two, or three models based on task complexity',
+    goal: 'Spend only as much compute as the task actually needs — one model for simple asks, more for complex or risky ones.',
+    benefit1:
+      'Estimates task complexity first, then runs a single model, a duo, or a trio — only paying for extra models when they’re warranted.',
+    benefit2:
+      'Keeps routine questions fast and cheap without a manual "how much power do I need" decision.',
+    benefit3:
+      "Best for high-volume usage where most requests are simple but you don't want to under-power the hard ones.",
     contentLabel: 'Your prompt',
     contentPlaceholder: 'Enter your question or task...',
     sendPrompt: 'Analyze & Send',
@@ -1604,6 +1665,13 @@ export const en: TranslationDictionary = {
   rolePack: {
     title: 'Role-Based Ensemble',
     description: 'Submit your request to a team of specialized AI roles',
+    goal: 'Get a request reviewed by a coordinated team of specialized roles instead of one generalist model.',
+    benefit1:
+      "Runs your request past several role-specific models in parallel (e.g. a coding team's architect, implementer, and reviewer).",
+    benefit2:
+      'Synthesizes their individual outputs into one team result, so you get the benefit of a team review without doing it yourself.',
+    benefit3:
+      'Best for work that benefits from multiple specialized perspectives — code review, research synthesis, or multi-angle analysis.',
     contentLabel: 'Your request',
     contentPlaceholder: 'Describe what you need...',
     packLabel: 'Select team',
@@ -1629,10 +1697,11 @@ export const en: TranslationDictionary = {
   },
   advancedModelSelector: {
     label: 'Execution model',
-    auto: 'Auto (choose best local model)',
+    auto: 'Auto (choose the best available model)',
     loading: 'Loading models...',
-    description: 'Choose Auto or a specific locally installed Ollama model for this lab.',
-    empty: 'No local text models are available for this lab yet.',
+    description:
+      'Choose Auto, a local model, or any connected cloud provider for this lab. Local models run free and offline; cloud models add capability where local hardware falls short.',
+    empty: 'No models are available yet — install a local model or connect a cloud provider.',
   },
   workspaceConnectors: {
     title: 'Workspace Connectors',
@@ -3282,6 +3351,9 @@ export const en: TranslationDictionary = {
       isTrial: '30-day trial',
       trialHelp: 'Trial access is fixed at 30 days and can be used once per account.',
       featureGates: 'Feature gates',
+      orchestrationLabs: 'Orchestration labs',
+      orchestrationLabsHint:
+        'Advanced multi-model workflows. Each also needs the matching permission granted to the user’s role.',
       unlimitedPlaceholder: 'Unlimited',
       submitting: 'Saving...',
       submitCreate: 'Create plan',
@@ -3295,6 +3367,15 @@ export const en: TranslationDictionary = {
       allowWorkspaces: 'Workspaces',
       allowMemory: 'Memory',
       allowContextPacks: 'Context packs',
+      allowConsensusMode: 'Consensus Mode',
+      allowEscalationChain: 'Escalation Chain',
+      allowRepairLab: 'Repair Lab',
+      allowTaskDecomposer: 'Task Decomposer',
+      allowBestOfN: 'Best-of-N Generation',
+      allowVerifier: 'Verifier',
+      allowPipelineLab: 'Pipeline Lab',
+      allowCostEnsemble: 'Cost-Aware Ensemble',
+      allowRolePack: 'Role Pack',
     },
     modelAccess: {
       title: 'Model Access',
@@ -3517,10 +3598,12 @@ export const en: TranslationDictionary = {
     outputColumnLabel: 'Output',
     promptLabel: 'Prompt',
     promptPlaceholder: 'Describe what you want this lab to run on…',
-    pickModelHint: 'Pick a local model to enable the run.',
+    pickModelHint: 'Pick a model to enable the run.',
     runningLabel: 'Running…',
     progressTitle: 'Live progress',
     errorTitle: 'Run failed',
+    goalLabel: 'Goal',
+    benefitsLabel: 'Benefits',
   },
   chatShare: {
     button: {

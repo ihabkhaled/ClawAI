@@ -18,6 +18,7 @@ import { type RouterTraceStreamService } from '../services/router-trace-stream.s
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
+import { RepairType } from '../../../common/enums/repair-type.enum';
 
 const mockThread = {
   id: 'thread-1',
@@ -443,6 +444,165 @@ describe('ChatMessagesService', () => {
         '',
       );
       expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('per-page RBAC gates for the 9 orchestration labs', () => {
+    // Every orchestration entry point used to have NO backend access check at
+    // all (only executeVerify checked ROUTER_USE) — the frontend route guard
+    // was the only thing hiding these pages. Each now asserts its own
+    // permission + plan feature before doing any work, matching the pattern
+    // /chat/compare already used (assertCompareAccess).
+    beforeEach(() => {
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+    });
+
+    it('createConsensusMessage requires CONSENSUS_MODE_USE + allowConsensusMode', async () => {
+      await service.createConsensusMessage(
+        'user-1',
+        {
+          threadId: 'thread-1',
+          content: 'compare these',
+          models: [
+            { provider: 'OPENAI', model: 'gpt-4o' },
+            { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
+          ],
+        },
+        '',
+      );
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requirePermission: 'CONSENSUS_MODE_USE',
+        requireFeature: 'allowConsensusMode',
+      });
+    });
+
+    it('createEscalationChainMessage requires ESCALATION_CHAIN_USE + allowEscalationChain', async () => {
+      await service.createEscalationChainMessage(
+        'user-1',
+        {
+          threadId: 'thread-1',
+          content: 'escalate this',
+          chain: [
+            { provider: 'OPENAI', model: 'gpt-4o-mini' },
+            { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
+          ],
+        },
+        '',
+      );
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requirePermission: 'ESCALATION_CHAIN_USE',
+        requireFeature: 'allowEscalationChain',
+      });
+    });
+
+    it('createRepairMessage requires REPAIR_LAB_USE + allowRepairLab', async () => {
+      await service.createRepairMessage(
+        'user-1',
+        {
+          threadId: 'thread-1',
+          content: 'repair this answer',
+          repairTypes: [RepairType.COMPLETENESS],
+        },
+        '',
+      );
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requirePermission: 'REPAIR_LAB_USE',
+        requireFeature: 'allowRepairLab',
+      });
+    });
+
+    it('executeDecomposition requires TASK_DECOMPOSER_USE + allowTaskDecomposer', async () => {
+      await service.executeDecomposition(
+        'user-1',
+        { threadId: 'thread-1', content: 'break this task down into steps', maxSubTasks: 3 },
+        '',
+      );
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requirePermission: 'TASK_DECOMPOSER_USE',
+        requireFeature: 'allowTaskDecomposer',
+      });
+    });
+
+    it('executeBestOfN requires BEST_OF_N_USE + allowBestOfN', async () => {
+      await service.executeBestOfN(
+        'user-1',
+        { threadId: 'thread-1', content: 'generate candidates', n: 3 },
+        '',
+      );
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requirePermission: 'BEST_OF_N_USE',
+        requireFeature: 'allowBestOfN',
+      });
+    });
+
+    it('executeCostEnsemble requires COST_ENSEMBLE_USE + allowCostEnsemble', async () => {
+      await service.executeCostEnsemble(
+        'user-1',
+        { threadId: 'thread-1', content: 'answer cheaply' },
+        '',
+      );
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requirePermission: 'COST_ENSEMBLE_USE',
+        requireFeature: 'allowCostEnsemble',
+      });
+    });
+
+    it('executeVerify requires VERIFIER_USE + allowVerifier (no longer ROUTER_USE)', async () => {
+      await service.executeVerify('user-1', { content: 'verify this', maxRevisions: 1 }, '');
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requirePermission: 'VERIFIER_USE',
+        requireFeature: 'allowVerifier',
+      });
+    });
+
+    it('executePipeline requires PIPELINE_LAB_USE + allowPipelineLab', async () => {
+      await service.executePipeline(
+        'user-1',
+        { threadId: 'thread-1', content: 'run the pipeline', template: 'analyze-reason-format' },
+        '',
+      );
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requirePermission: 'PIPELINE_LAB_USE',
+        requireFeature: 'allowPipelineLab',
+      });
+    });
+
+    it('executeRolePack requires ROLE_PACK_USE + allowRolePack', async () => {
+      await service.executeRolePack(
+        'user-1',
+        { threadId: 'thread-1', content: 'assemble the role pack', pack: 'coding-team' },
+        '',
+      );
+      expect(assertCanSendMessage).toHaveBeenCalledWith('user-1', {
+        requirePermission: 'ROLE_PACK_USE',
+        requireFeature: 'allowRolePack',
+      });
+    });
+
+    it('rejects createConsensusMessage before touching the thread or the manager when access is denied', async () => {
+      assertCanSendMessage.mockRejectedValueOnce(
+        new BusinessException(
+          'You do not have permission to perform this action',
+          'INSUFFICIENT_PERMISSIONS',
+          403,
+        ),
+      );
+
+      await expect(
+        service.createConsensusMessage(
+          'user-1',
+          {
+            threadId: 'thread-1',
+            content: 'compare these',
+            models: [
+              { provider: 'OPENAI', model: 'gpt-4o' },
+              { provider: 'ANTHROPIC', model: 'claude-sonnet-4' },
+            ],
+          },
+          '',
+        ),
+      ).rejects.toThrow(BusinessException);
+      expect(threadsRepo.findById).not.toHaveBeenCalled();
     });
   });
 

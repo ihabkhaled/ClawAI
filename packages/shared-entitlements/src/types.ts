@@ -12,6 +12,18 @@ export type PlanFeatureGates = {
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
+  // Per-lab plan-tier gates for the 9 advanced orchestration pages. Each is
+  // paired with a matching Permission (e.g. CONSENSUS_MODE_USE) — a page
+  // requires BOTH the permission and the feature gate.
+  allowConsensusMode: boolean;
+  allowEscalationChain: boolean;
+  allowRepairLab: boolean;
+  allowTaskDecomposer: boolean;
+  allowBestOfN: boolean;
+  allowVerifier: boolean;
+  allowPipelineLab: boolean;
+  allowCostEnsemble: boolean;
+  allowRolePack: boolean;
 };
 
 export type AllowedModel = {

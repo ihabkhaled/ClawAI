@@ -946,6 +946,7 @@ export type {
   OrchestrationStage,
   OrchestrationStageTimelineProps,
   OrchestrationPageHeaderProps,
+  OrchestrationLabInfoProps,
   OrchestrationSingleModelSelectProps,
   OrchestrationPageShellProps,
   UseOrchestrationStagesResult,

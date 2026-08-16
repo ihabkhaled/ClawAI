@@ -7209,7 +7209,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4415
+        "value": 4473
       },
       "localeCount": 16,
       "locales": [
@@ -7650,6 +7650,11 @@
       {
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "BEST_OF_N_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "CHAT_DELETE_OWN"
       },
       {
@@ -7670,6 +7675,11 @@
       {
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "CONSENSUS_MODE_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "CONTEXT_PACK_CREATE_OWN"
       },
       {
@@ -7686,6 +7696,16 @@
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "CONTEXT_PACK_UPDATE_OWN"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "COST_ENSEMBLE_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "ESCALATION_CHAIN_USE"
       },
       {
         "confidence": "verified",
@@ -7735,12 +7755,37 @@
       {
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "PIPELINE_LAB_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "REPAIR_LAB_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "RESEARCH_USE"
       },
       {
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "ROLE_PACK_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "ROUTER_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "TASK_DECOMPOSER_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "VERIFIER_USE"
       },
       {
         "confidence": "verified",
@@ -8847,7 +8892,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 315
+        "testFiles": 316
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9598,13 +9643,13 @@
     "frontendRouteCount": 120,
     "localeCount": 16,
     "nginxRouteCount": 54,
-    "permissionCount": 38,
+    "permissionCount": 47,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 917,
+    "totalTestFiles": 918,
     "workspaceCount": 25
   }
 }
