@@ -33,7 +33,7 @@ const paymobConfigSchema = z.object({
 const emailConfigSchema = z.object({
   CONTACT_EMAIL_ENABLED: z.enum(['true', 'false']).default('false'),
   CONTACT_EMAIL_PROVIDER: z.enum(['none', 'smtp']).default('none'),
-  CONTACT_EMAIL_FROM: z.string().email().default('no-reply@claw.local'),
+  CONTACT_EMAIL_FROM: z.string().email().default('no-reply@claw-ai.co'),
   CONTACT_SMTP_HOST: z.string().min(1).optional(),
   CONTACT_SMTP_PORT: z.coerce.number().int().positive().default(587),
   CONTACT_SMTP_SECURE: z.enum(['true', 'false']).default('false'),

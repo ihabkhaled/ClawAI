@@ -22,6 +22,9 @@ const mockUser = {
   status: UserStatus.ACTIVE,
   isSuperAdmin: false,
   emailVerifiedAt: new Date(),
+  firstName: null,
+  lastName: null,
+  phone: null,
   mustChangePassword: false,
   roleId: null,
   activePlanId: null,
@@ -339,6 +342,9 @@ describe('UsersService', () => {
       const result = await service.findById('user-1');
       expect(result.id).toBe('user-1');
       expect((result as unknown as Record<string, unknown>).passwordHash).toBeUndefined();
+      expect(result.firstName).toBeNull();
+      expect(result.lastName).toBeNull();
+      expect(result.phone).toBeNull();
     });
 
     it('throws EntityNotFoundException when not found', async () => {

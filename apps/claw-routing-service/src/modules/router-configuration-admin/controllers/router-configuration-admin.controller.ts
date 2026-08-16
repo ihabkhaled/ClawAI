@@ -20,6 +20,10 @@ import {
   type UpdateChainEntriesDto,
   updateChainEntriesSchema,
 } from '../dto/update-chain-entries.dto';
+import {
+  type UpdateRouterConfigurationFieldsDto,
+  updateRouterConfigurationFieldsSchema,
+} from '../dto/update-router-configuration-fields.dto';
 import type {
   RouterConfigurationDetail,
   RouterConfigurationSummary,
@@ -75,6 +79,15 @@ export class RouterConfigurationAdminController {
     @Body(new ZodValidationPipe(updateChainEntriesSchema)) dto: UpdateChainEntriesDto,
   ): Promise<RouterConfigurationDetail> {
     return this.service.updateEntries(id, dto);
+  }
+
+  @Patch(':id')
+  async updateFields(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateRouterConfigurationFieldsSchema))
+    dto: UpdateRouterConfigurationFieldsDto,
+  ): Promise<RouterConfigurationDetail> {
+    return this.service.updateFields(id, dto);
   }
 
   @Post(':id/publish')

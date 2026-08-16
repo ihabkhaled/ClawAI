@@ -122,6 +122,7 @@ const buildRepository = (): {
       findUnique: mocks.configFindUnique,
       findMany: mocks.configFindMany,
       count: mocks.configCount,
+      update: mocks.configUpdate,
     },
   };
 
@@ -276,6 +277,47 @@ describe('RouterConfigurationRepository (admin methods)', () => {
       const { repository, mocks } = buildRepository();
       mocks.configFindUnique.mockResolvedValue(null);
       await expect(repository.replaceEntries('missing', [])).resolves.toBeNull();
+    });
+  });
+
+  describe('updateFields', () => {
+    it('updates only the given fields, passing the rest as undefined', async () => {
+      const { repository, mocks } = buildRepository();
+      mocks.configFindUnique.mockResolvedValue(configRow());
+      mocks.configUpdate.mockResolvedValue(configRow({ totalDeadlineMs: 15_000, maxAttempts: 8 }));
+
+      await repository.updateFields('config_1', { totalDeadlineMs: 15_000, maxAttempts: 8 });
+
+      expect(mocks.configUpdate).toHaveBeenCalledWith({
+        where: { id: 'config_1' },
+        data: expect.objectContaining({
+          totalDeadlineMs: 15_000,
+          maxAttempts: 8,
+          mode: undefined,
+          maxRouterInputTokens: undefined,
+        }),
+        include: { entries: true },
+      });
+    });
+
+    it('converts minConfidence to a Decimal when provided', async () => {
+      const { repository, mocks } = buildRepository();
+      mocks.configFindUnique.mockResolvedValue(configRow());
+      mocks.configUpdate.mockResolvedValue(configRow({ minConfidence: new Prisma.Decimal(0.6) }));
+
+      await repository.updateFields('config_1', { minConfidence: 0.6 });
+
+      const call = mocks.configUpdate.mock.calls[0]?.[0] as { data: { minConfidence: unknown } };
+      expect(call.data.minConfidence).toBeInstanceOf(Prisma.Decimal);
+      expect((call.data.minConfidence as Prisma.Decimal).toNumber()).toBe(0.6);
+    });
+
+    it('returns null when the configuration does not exist', async () => {
+      const { repository, mocks } = buildRepository();
+      mocks.configFindUnique.mockResolvedValue(null);
+
+      await expect(repository.updateFields('missing', { maxAttempts: 8 })).resolves.toBeNull();
+      expect(mocks.configUpdate).not.toHaveBeenCalled();
     });
   });
 
