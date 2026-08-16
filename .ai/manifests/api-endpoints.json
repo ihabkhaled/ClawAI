@@ -2143,6 +2143,11 @@
       },
       {
         "method": "PATCH",
+        "route": "/routing/configurations/:id",
+        "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
+      },
+      {
+        "method": "PATCH",
         "route": "/routing/configurations/:id/entries",
         "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
       },
@@ -2968,5 +2973,5 @@
     ]
   },
   "generated": true,
-  "total": 586
+  "total": 587
 }

@@ -37,6 +37,7 @@ describe('RouterConfigurationAdminController delegation', () => {
     getById: jest.fn(),
     createDraft: jest.fn(),
     updateEntries: jest.fn(),
+    updateFields: jest.fn(),
     publish: jest.fn(),
     setEnabled: jest.fn(),
   };
@@ -84,6 +85,12 @@ describe('RouterConfigurationAdminController delegation', () => {
     service.updateEntries.mockResolvedValue({ id: 'config_1' });
     await controller.updateEntries('config_1', { entries: [] });
     expect(service.updateEntries).toHaveBeenCalledWith('config_1', { entries: [] });
+  });
+
+  it('updateFields forwards id and validated body', async () => {
+    service.updateFields.mockResolvedValue({ id: 'config_1', totalDeadlineMs: 15_000 });
+    await controller.updateFields('config_1', { totalDeadlineMs: 15_000 });
+    expect(service.updateFields).toHaveBeenCalledWith('config_1', { totalDeadlineMs: 15_000 });
   });
 
   it('publish forwards id and the authenticated user id', async () => {
