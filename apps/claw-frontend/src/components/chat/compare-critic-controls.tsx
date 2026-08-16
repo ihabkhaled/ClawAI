@@ -1,13 +1,8 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { ModelPicker } from '@/components/chat/model-picker';
 import { Switch } from '@/components/ui/switch';
 import { MODEL_AUTO_VALUE } from '@/constants';
 import type { CompareCriticControlsProps } from '@/types';
+import { judgeModelOptionsToPickerGroups } from '@/utilities';
 
 // Sibling of CompareJudgeControls. Visually nested under the judge controls so
 // the user reads it as "extra layer on top of judge". Parent decides whether to
@@ -23,6 +18,7 @@ export function CompareCriticControls({
   criticEnablementDisabled = false,
   t,
 }: CompareCriticControlsProps): React.ReactElement {
+  const groups = judgeModelOptionsToPickerGroups(criticModelOptions);
   return (
     <div className="border-border/60 bg-muted/10 ms-4 space-y-4 rounded-lg border p-4">
       <div className="flex items-center justify-between gap-3">
@@ -43,30 +39,18 @@ export function CompareCriticControls({
       {criticEnabled ? (
         <div className="space-y-2">
           <label className="text-sm font-medium">{t('compare.critic.modelLabel')}</label>
-          <Select
+          <ModelPicker
+            groups={groups}
             value={criticModel ?? MODEL_AUTO_VALUE}
-            onValueChange={(value) =>
-              onCriticModelChange(value === MODEL_AUTO_VALUE ? null : value)
-            }
+            onChange={(value) => onCriticModelChange(value === MODEL_AUTO_VALUE ? null : value)}
             disabled={criticModelOptionsLoading}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t('compare.critic.modelPlaceholder')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={MODEL_AUTO_VALUE}>
-                {t('compare.critic.modelPlaceholder')}
-              </SelectItem>
-              {criticModelOptions.map((option) => (
-                <SelectItem
-                  key={option.value ?? MODEL_AUTO_VALUE}
-                  value={option.value ?? MODEL_AUTO_VALUE}
-                >
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            autoOption={{ value: MODEL_AUTO_VALUE, label: t('compare.critic.modelPlaceholder') }}
+            placeholder={t('compare.critic.modelPlaceholder')}
+            loadingPlaceholder={t('compare.critic.modelPlaceholder')}
+            emptyPlaceholder={t('compare.critic.modelPlaceholder')}
+            searchPlaceholder={t('common.search')}
+            noResultsLabel={t('common.noResults')}
+          />
         </div>
       ) : null}
     </div>

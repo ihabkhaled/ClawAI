@@ -6,6 +6,7 @@ import type * as React from 'react';
 import { EscalationChainBuilder } from '@/components/chat/escalation-chain-builder';
 import { EscalationResultCard } from '@/components/chat/escalation-result-card';
 import { EscalationStepTimeline } from '@/components/chat/escalation-step-timeline';
+import { OrchestrationLabInfo } from '@/components/chat/orchestration/orchestration-lab-info';
 import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestration-page-shell';
 import { EmptyState } from '@/components/common/empty-state';
 import { useEscalationPage } from '@/hooks/chat/use-escalation-page';
@@ -67,11 +68,18 @@ export default function EscalationPage(): React.ReactElement {
   ) : null;
 
   const emptySlot = (
-    <EmptyState
-      icon={GitFork}
-      title={t('escalation.noResults')}
-      description={t('escalation.description')}
-    />
+    <>
+      <EmptyState
+        icon={GitFork}
+        title={t('escalation.noResults')}
+        description={t('escalation.description')}
+      />
+      <OrchestrationLabInfo
+        goal={t('escalation.goal')}
+        benefits={[t('escalation.benefit1'), t('escalation.benefit2'), t('escalation.benefit3')]}
+        t={t}
+      />
+    </>
   );
 
   return (

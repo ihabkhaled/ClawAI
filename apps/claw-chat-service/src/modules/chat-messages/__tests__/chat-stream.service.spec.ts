@@ -173,6 +173,24 @@ describe('ChatStreamService', () => {
     expect(received).toEqual([StreamEventType.PROVIDER_SELECTED]);
   });
 
+  it("does not replay a prior run's terminal event into the next run on the same thread", () => {
+    service.emitRequestAccepted('thread-reconnect');
+    service.emitRouterStarted('thread-reconnect', 'AUTO');
+    service.emitCompletion('thread-reconnect', 'OLLAMA', 'gemma3:4b');
+
+    // Second message on the same thread: a fresh SSE connection reconnecting
+    // with the default replay=true must only see this run's own events, not
+    // the previous run's buffered REQUEST_ACCEPTED/ROUTER_STARTED/DONE.
+    service.emitRequestAccepted('thread-reconnect');
+    const received: StreamEventType[] = [];
+    const subscription = service
+      .streamEvents('thread-reconnect')
+      .subscribe((event) => received.push(event.type));
+    subscription.unsubscribe();
+
+    expect(received).toEqual([StreamEventType.REQUEST_ACCEPTED]);
+  });
+
   it('preserves recent-event replay by default for existing browser clients', () => {
     service.emitRequestAccepted('thread-browser');
     const received: StreamEventType[] = [];

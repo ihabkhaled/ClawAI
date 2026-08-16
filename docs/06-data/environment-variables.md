@@ -28,7 +28,7 @@ disabled.
 | ------------------------ | -------------------- | --------------------- | ------------------------------------------------- |
 | `CONTACT_EMAIL_ENABLED`  | No                   | `false`               | Enables configured outbound delivery              |
 | `CONTACT_EMAIL_PROVIDER` | No                   | `none`                | `smtp` for real delivery; `none` disables it      |
-| `CONTACT_EMAIL_FROM`     | When SMTP is enabled | `no-reply@claw.local` | Verified sender used by contact and invoice mail  |
+| `CONTACT_EMAIL_FROM`     | When SMTP is enabled | `no-reply@claw-ai.co` | Verified sender used by contact and invoice mail  |
 | `CONTACT_SMTP_HOST`      | When SMTP is enabled | —                     | SMTP relay host                                   |
 | `CONTACT_SMTP_PORT`      | No                   | `587`                 | `465` implicit TLS; other ports require STARTTLS  |
 | `CONTACT_SMTP_SECURE`    | No                   | `false`               | Operator hint; TLS mode is safely derived by port |

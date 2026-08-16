@@ -32,22 +32,60 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   { prefix: '/admin/usage', permission: Permission.ADMIN_USAGE_VIEW },
 
   // Chat sub-pages (MUST precede the bare /chat which stays open).
-  // Compare is PLAN-feature gated (allowCompareMode). Verifier is a separate
-  // orchestration lab on the same access tier as Consensus / Escalation /
-  // Best-of-N: gated by ROUTER_USE (admin-grantable, NOT in the USER default
-  // permission set). It is explicitly NOT shared with the per-lane Judge or
-  // Critic toggles inside compare mode — those keep their own plan-feature
-  // gates (allowJudgeMode / allowCriticReview) and apply independently.
+  // Compare is PLAN-feature gated (allowCompareMode). Each of the 9
+  // orchestration labs below has its OWN permission + plan-feature gate —
+  // replaces the single coarse ROUTER_USE that used to cover all 9 with no
+  // per-page or per-tier distinction (see Permission.ROUTER_USE for why that
+  // enum member is kept, deprecated, rather than removed). None of these are
+  // shared with the per-lane Judge or Critic toggles inside compare mode —
+  // those keep their own plan-feature gates (allowJudgeMode /
+  // allowCriticReview) and apply independently.
   { prefix: ROUTES.CHAT_COMPARE, feature: PlanFeature.ALLOW_COMPARE_MODE },
-  { prefix: ROUTES.CHAT_VERIFY, permission: Permission.ROUTER_USE },
-  { prefix: ROUTES.CHAT_CONSENSUS, permission: Permission.ROUTER_USE },
-  { prefix: ROUTES.CHAT_ESCALATION, permission: Permission.ROUTER_USE },
-  { prefix: ROUTES.CHAT_REPAIR, permission: Permission.ROUTER_USE },
-  { prefix: ROUTES.CHAT_DECOMPOSE, permission: Permission.ROUTER_USE },
-  { prefix: ROUTES.CHAT_BEST_OF_N, permission: Permission.ROUTER_USE },
-  { prefix: ROUTES.CHAT_PIPELINE, permission: Permission.ROUTER_USE },
-  { prefix: ROUTES.CHAT_COST_ENSEMBLE, permission: Permission.ROUTER_USE },
-  { prefix: ROUTES.CHAT_ROLE_PACK, permission: Permission.ROUTER_USE },
+  {
+    prefix: ROUTES.CHAT_VERIFY,
+    permission: Permission.VERIFIER_USE,
+    feature: PlanFeature.ALLOW_VERIFIER,
+  },
+  {
+    prefix: ROUTES.CHAT_CONSENSUS,
+    permission: Permission.CONSENSUS_MODE_USE,
+    feature: PlanFeature.ALLOW_CONSENSUS_MODE,
+  },
+  {
+    prefix: ROUTES.CHAT_ESCALATION,
+    permission: Permission.ESCALATION_CHAIN_USE,
+    feature: PlanFeature.ALLOW_ESCALATION_CHAIN,
+  },
+  {
+    prefix: ROUTES.CHAT_REPAIR,
+    permission: Permission.REPAIR_LAB_USE,
+    feature: PlanFeature.ALLOW_REPAIR_LAB,
+  },
+  {
+    prefix: ROUTES.CHAT_DECOMPOSE,
+    permission: Permission.TASK_DECOMPOSER_USE,
+    feature: PlanFeature.ALLOW_TASK_DECOMPOSER,
+  },
+  {
+    prefix: ROUTES.CHAT_BEST_OF_N,
+    permission: Permission.BEST_OF_N_USE,
+    feature: PlanFeature.ALLOW_BEST_OF_N,
+  },
+  {
+    prefix: ROUTES.CHAT_PIPELINE,
+    permission: Permission.PIPELINE_LAB_USE,
+    feature: PlanFeature.ALLOW_PIPELINE_LAB,
+  },
+  {
+    prefix: ROUTES.CHAT_COST_ENSEMBLE,
+    permission: Permission.COST_ENSEMBLE_USE,
+    feature: PlanFeature.ALLOW_COST_ENSEMBLE,
+  },
+  {
+    prefix: ROUTES.CHAT_ROLE_PACK,
+    permission: Permission.ROLE_PACK_USE,
+    feature: PlanFeature.ALLOW_ROLE_PACK,
+  },
 
   // Top-level pages and admin landing catch-all.
   { prefix: ROUTES.DASHBOARD, permission: Permission.VIEW_DASHBOARD },

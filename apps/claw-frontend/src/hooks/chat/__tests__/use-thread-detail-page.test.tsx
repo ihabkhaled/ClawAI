@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CompareResearchMode } from '@/enums';
@@ -44,8 +44,6 @@ const dataControllerMock = {
   },
   virtualizedMessagesProps: {} as never,
   threadSettings: {
-    isOpen: false,
-    toggleOpen: vi.fn(),
     systemPrompt: '',
     setSystemPrompt: vi.fn(),
     temperature: 0.7,
@@ -117,8 +115,6 @@ vi.mock('@/hooks/auth/use-plan-features', () => ({
 }));
 
 const compareMock = {
-  isOpen: false,
-  toggleOpen: vi.fn(),
   selectedModels: [],
   handleToggleModel: vi.fn(),
   prompt: '',
@@ -192,5 +188,75 @@ describe('useThreadDetailPage — composes every page-level hook', () => {
     const { result } = renderHook(() => useThreadDetailPage());
     expect(result.current.shellProps.isLoadingPlaceholder).toBe(true);
     expect(result.current.shellProps.threadId).toBe('');
+  });
+});
+
+describe('useThreadDetailPage — header dialogs are mutually exclusive', () => {
+  it('opening Judge & Referee while Compare is open closes Compare', () => {
+    const { result } = renderHook(() => useThreadDetailPage());
+
+    act(() => result.current.shellProps.compareToggleOpen());
+    expect(result.current.shellProps.compareIsOpen).toBe(true);
+
+    act(() => result.current.shellProps.qualityControlsToggleOpen());
+    expect(result.current.shellProps.compareIsOpen).toBe(false);
+    expect(result.current.shellProps.qualityControlsOpen).toBe(true);
+    expect(result.current.shellProps.threadSettingsOpen).toBe(false);
+  });
+
+  it('opening Thread Settings while Judge & Referee is open closes Judge & Referee', () => {
+    const { result } = renderHook(() => useThreadDetailPage());
+
+    act(() => result.current.shellProps.qualityControlsToggleOpen());
+    act(() => result.current.shellProps.threadSettingsToggleOpen());
+
+    expect(result.current.shellProps.qualityControlsOpen).toBe(false);
+    expect(result.current.shellProps.threadSettingsOpen).toBe(true);
+  });
+
+  it('toggling the same panel twice closes it (open/close, not just switch)', () => {
+    const { result } = renderHook(() => useThreadDetailPage());
+
+    act(() => result.current.shellProps.compareToggleOpen());
+    expect(result.current.shellProps.compareIsOpen).toBe(true);
+
+    act(() => result.current.shellProps.compareToggleOpen());
+    expect(result.current.shellProps.compareIsOpen).toBe(false);
+  });
+
+  it('the Dialog onOpenChange(false) handlers close whichever panel is open', () => {
+    const { result } = renderHook(() => useThreadDetailPage());
+
+    act(() => result.current.shellProps.threadSettingsToggleOpen());
+    expect(result.current.shellProps.threadSettingsOpen).toBe(true);
+
+    act(() => result.current.shellProps.threadSettingsOnOpenChange(false));
+    expect(result.current.shellProps.threadSettingsOpen).toBe(false);
+  });
+
+  it('closes the active panel when the thread-settings save succeeds (fixes Judge & Referee not closing on Save)', async () => {
+    const { result } = renderHook(() => useThreadDetailPage());
+    act(() => result.current.shellProps.qualityControlsToggleOpen());
+    expect(result.current.shellProps.qualityControlsOpen).toBe(true);
+
+    const mod = await import('@/hooks/chat/use-thread-data-controller');
+    const lastCall = vi.mocked(mod.useThreadDataController).mock.calls.at(-1);
+    const onSettingsSaved = lastCall?.[0].onSettingsSaved;
+    act(() => onSettingsSaved?.());
+
+    expect(result.current.shellProps.qualityControlsOpen).toBe(false);
+  });
+
+  it('closes the active panel when a compare send succeeds (fixes Compare not disappearing on send)', async () => {
+    const { result } = renderHook(() => useThreadDetailPage());
+    act(() => result.current.shellProps.compareToggleOpen());
+    expect(result.current.shellProps.compareIsOpen).toBe(true);
+
+    const mod = await import('@/hooks/chat/use-in-thread-compare');
+    const lastCall = vi.mocked(mod.useInThreadCompare).mock.calls.at(-1);
+    const onSendSuccess = lastCall?.[0].onSendSuccess;
+    act(() => onSendSuccess?.());
+
+    expect(result.current.shellProps.compareIsOpen).toBe(false);
   });
 });

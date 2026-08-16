@@ -261,6 +261,15 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
         allowWorkspaces: true,
         allowMemory: true,
         allowContextPacks: true,
+        allowConsensusMode: true,
+        allowEscalationChain: true,
+        allowRepairLab: true,
+        allowTaskDecomposer: true,
+        allowBestOfN: true,
+        allowVerifier: true,
+        allowPipelineLab: true,
+        allowCostEnsemble: true,
+        allowRolePack: true,
       },
     });
     expect(result.modelAccessMode).toBe(PlanModelAccessMode.ALLOW_ALL);

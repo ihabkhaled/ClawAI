@@ -4,6 +4,7 @@ import { Trophy } from 'lucide-react';
 
 import { BestOfNCountSelector } from '@/components/chat/best-of-n-count-selector';
 import { BestOfNResultCard } from '@/components/chat/best-of-n-result-card';
+import { OrchestrationLabInfo } from '@/components/chat/orchestration/orchestration-lab-info';
 import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestration-page-shell';
 import { EmptyState } from '@/components/common/empty-state';
 import { useBestOfNPage } from '@/hooks/chat/use-best-of-n-page';
@@ -57,11 +58,18 @@ export default function BestOfNPage(): React.ReactElement {
       stages={stages}
       resultSlot={resultSlot}
       emptySlot={
-        <EmptyState
-          icon={Trophy}
-          title={t('bestOfN.noResults')}
-          description={t('bestOfN.description')}
-        />
+        <>
+          <EmptyState
+            icon={Trophy}
+            title={t('bestOfN.noResults')}
+            description={t('bestOfN.description')}
+          />
+          <OrchestrationLabInfo
+            goal={t('bestOfN.goal')}
+            benefits={[t('bestOfN.benefit1'), t('bestOfN.benefit2'), t('bestOfN.benefit3')]}
+            t={t}
+          />
+        </>
       }
       errorMessage={errorMessage}
       t={t}

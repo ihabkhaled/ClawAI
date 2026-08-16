@@ -118,4 +118,24 @@ describe('useThreadSettings critic persistence', () => {
       expect.any(Object),
     );
   });
+
+  it('calls the onSaved callback when the save mutation succeeds', () => {
+    const onSaved = vi.fn();
+    const { result } = renderHook(() => useThreadSettings(thread, onSaved));
+
+    act(() => result.current.handleSave());
+    const [, options] = updateThread.mock.calls[0] as [unknown, { onSuccess: () => void }];
+    act(() => options.onSuccess());
+
+    expect(onSaved).toHaveBeenCalledOnce();
+  });
+
+  it('does not throw when handleSave succeeds without an onSaved callback', () => {
+    const { result } = renderHook(() => useThreadSettings(thread));
+
+    act(() => result.current.handleSave());
+    const [, options] = updateThread.mock.calls[0] as [unknown, { onSuccess: () => void }];
+
+    expect(() => act(() => options.onSuccess())).not.toThrow();
+  });
 });

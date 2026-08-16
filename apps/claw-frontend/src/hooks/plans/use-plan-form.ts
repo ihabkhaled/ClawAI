@@ -34,6 +34,15 @@ const fromPlan = (plan: PlanView): PlanFormState => ({
   allowWorkspaces: plan.allowWorkspaces,
   allowMemory: plan.allowMemory,
   allowContextPacks: plan.allowContextPacks,
+  allowConsensusMode: plan.allowConsensusMode,
+  allowEscalationChain: plan.allowEscalationChain,
+  allowRepairLab: plan.allowRepairLab,
+  allowTaskDecomposer: plan.allowTaskDecomposer,
+  allowBestOfN: plan.allowBestOfN,
+  allowVerifier: plan.allowVerifier,
+  allowPipelineLab: plan.allowPipelineLab,
+  allowCostEnsemble: plan.allowCostEnsemble,
+  allowRolePack: plan.allowRolePack,
 });
 
 const buildPayload = (state: PlanFormState): Record<string, unknown> => ({
@@ -58,6 +67,15 @@ const buildPayload = (state: PlanFormState): Record<string, unknown> => ({
   allowWorkspaces: state.allowWorkspaces,
   allowMemory: state.allowMemory,
   allowContextPacks: state.allowContextPacks,
+  allowConsensusMode: state.allowConsensusMode,
+  allowEscalationChain: state.allowEscalationChain,
+  allowRepairLab: state.allowRepairLab,
+  allowTaskDecomposer: state.allowTaskDecomposer,
+  allowBestOfN: state.allowBestOfN,
+  allowVerifier: state.allowVerifier,
+  allowPipelineLab: state.allowPipelineLab,
+  allowCostEnsemble: state.allowCostEnsemble,
+  allowRolePack: state.allowRolePack,
 });
 
 export function usePlanForm(initial: PlanView | null): UsePlanFormResult {

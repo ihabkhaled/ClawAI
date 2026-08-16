@@ -48,6 +48,15 @@ export type PlanView = {
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
+  allowConsensusMode: boolean;
+  allowEscalationChain: boolean;
+  allowRepairLab: boolean;
+  allowTaskDecomposer: boolean;
+  allowBestOfN: boolean;
+  allowVerifier: boolean;
+  allowPipelineLab: boolean;
+  allowCostEnsemble: boolean;
+  allowRolePack: boolean;
   modelAccessMode?: PlanModelAccessMode;
   allowedCostClasses?: string[];
   modelAccess: PlanModelAccessView[];
@@ -101,6 +110,15 @@ export type CreatePlanRequest = {
   allowWorkspaces?: boolean;
   allowMemory?: boolean;
   allowContextPacks?: boolean;
+  allowConsensusMode?: boolean;
+  allowEscalationChain?: boolean;
+  allowRepairLab?: boolean;
+  allowTaskDecomposer?: boolean;
+  allowBestOfN?: boolean;
+  allowVerifier?: boolean;
+  allowPipelineLab?: boolean;
+  allowCostEnsemble?: boolean;
+  allowRolePack?: boolean;
 };
 
 export type UpdatePlanRequest = Partial<CreatePlanRequest>;
@@ -127,6 +145,15 @@ export type EntitlementFeatureGates = {
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
+  allowConsensusMode: boolean;
+  allowEscalationChain: boolean;
+  allowRepairLab: boolean;
+  allowTaskDecomposer: boolean;
+  allowBestOfN: boolean;
+  allowVerifier: boolean;
+  allowPipelineLab: boolean;
+  allowCostEnsemble: boolean;
+  allowRolePack: boolean;
 };
 
 export type EntitlementPlan = {
@@ -190,6 +217,15 @@ export type PlanFormState = {
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
+  allowConsensusMode: boolean;
+  allowEscalationChain: boolean;
+  allowRepairLab: boolean;
+  allowTaskDecomposer: boolean;
+  allowBestOfN: boolean;
+  allowVerifier: boolean;
+  allowPipelineLab: boolean;
+  allowCostEnsemble: boolean;
+  allowRolePack: boolean;
 };
 
 export type PlanFormFieldErrors = Partial<Record<keyof PlanFormState, string>>;

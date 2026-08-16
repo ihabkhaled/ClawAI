@@ -23,6 +23,15 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   allowWorkspaces: true,
   allowMemory: true,
   allowContextPacks: true,
+  allowConsensusMode: true,
+  allowEscalationChain: true,
+  allowRepairLab: true,
+  allowTaskDecomposer: true,
+  allowBestOfN: true,
+  allowVerifier: true,
+  allowPipelineLab: true,
+  allowCostEnsemble: true,
+  allowRolePack: true,
 };
 
 export const PLAN_TRIAL_DURATION_DAYS = 30;
@@ -41,4 +50,13 @@ export const PLAN_FEATURE_GATE_FIELDS: ReadonlyArray<{
   { field: 'allowWorkspaces', labelKey: 'adminPlans.gate.allowWorkspaces' },
   { field: 'allowMemory', labelKey: 'adminPlans.gate.allowMemory' },
   { field: 'allowContextPacks', labelKey: 'adminPlans.gate.allowContextPacks' },
+  { field: 'allowConsensusMode', labelKey: 'adminPlans.gate.allowConsensusMode' },
+  { field: 'allowEscalationChain', labelKey: 'adminPlans.gate.allowEscalationChain' },
+  { field: 'allowRepairLab', labelKey: 'adminPlans.gate.allowRepairLab' },
+  { field: 'allowTaskDecomposer', labelKey: 'adminPlans.gate.allowTaskDecomposer' },
+  { field: 'allowBestOfN', labelKey: 'adminPlans.gate.allowBestOfN' },
+  { field: 'allowVerifier', labelKey: 'adminPlans.gate.allowVerifier' },
+  { field: 'allowPipelineLab', labelKey: 'adminPlans.gate.allowPipelineLab' },
+  { field: 'allowCostEnsemble', labelKey: 'adminPlans.gate.allowCostEnsemble' },
+  { field: 'allowRolePack', labelKey: 'adminPlans.gate.allowRolePack' },
 ];

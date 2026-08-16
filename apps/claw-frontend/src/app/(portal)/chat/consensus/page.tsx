@@ -4,6 +4,7 @@ import { Layers } from 'lucide-react';
 
 import { ConsensusModelBreakdown } from '@/components/chat/consensus-model-breakdown';
 import { ConsensusSynthesisCard } from '@/components/chat/consensus-synthesis-card';
+import { OrchestrationLabInfo } from '@/components/chat/orchestration/orchestration-lab-info';
 import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestration-page-shell';
 import { ParallelModelSelector } from '@/components/chat/parallel-model-selector';
 import { EmptyState } from '@/components/common/empty-state';
@@ -84,11 +85,18 @@ export default function ConsensusPage(): React.ReactElement {
         ) : null
       }
       emptySlot={
-        <EmptyState
-          icon={Layers}
-          title={t('consensus.noResults')}
-          description={t('consensus.description')}
-        />
+        <>
+          <EmptyState
+            icon={Layers}
+            title={t('consensus.noResults')}
+            description={t('consensus.description')}
+          />
+          <OrchestrationLabInfo
+            goal={t('consensus.goal')}
+            benefits={[t('consensus.benefit1'), t('consensus.benefit2'), t('consensus.benefit3')]}
+            t={t}
+          />
+        </>
       }
       errorMessage={errorMessage}
       t={t}

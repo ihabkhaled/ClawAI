@@ -23,6 +23,15 @@ const gates: EntitlementFeatureGates = {
   allowWorkspaces: true,
   allowMemory: false,
   allowContextPacks: true,
+  allowConsensusMode: true,
+  allowEscalationChain: false,
+  allowRepairLab: false,
+  allowTaskDecomposer: true,
+  allowBestOfN: true,
+  allowVerifier: false,
+  allowPipelineLab: false,
+  allowCostEnsemble: false,
+  allowRolePack: false,
 };
 
 describe('UsageMeter', () => {

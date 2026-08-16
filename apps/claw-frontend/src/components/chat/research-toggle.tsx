@@ -35,7 +35,7 @@ export function ResearchToggle({
     <div className="flex items-center gap-1">
       <Globe
         className={
-          value.mode === ResearchMode.NONE ? 'size-4 text-muted-foreground' : 'size-4 text-primary'
+          value.mode === ResearchMode.NONE ? 'text-muted-foreground size-4' : 'text-primary size-4'
         }
         aria-hidden
       />
@@ -44,7 +44,7 @@ export function ResearchToggle({
         onValueChange={(next) => onChange({ ...value, mode: next as ResearchMode })}
         disabled={disabled}
       >
-        <SelectTrigger className="h-8 min-w-[9rem] px-2 text-xs">
+        <SelectTrigger className="h-8 min-w-[6rem] px-2 text-xs sm:min-w-[9rem]">
           <SelectValue placeholder={t('research.toggle.placeholder')} />
         </SelectTrigger>
         <SelectContent>
@@ -60,29 +60,38 @@ export function ResearchToggle({
           ))}
         </SelectContent>
       </Select>
-      <Select
-        value={providerValue}
-        onValueChange={(next) =>
-          onChange({ ...value, providerId: next === 'auto' ? undefined : next })
-        }
-        disabled={providerDisabled}
-      >
-        <SelectTrigger className="h-8 min-w-[10rem] px-2 text-xs">
-          <SelectValue
-            placeholder={getProviderPlaceholder(isProvidersLoading, selectableProviders.length, t)}
-          />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="auto" className="text-xs">
-            {t('research.toggle.autoProvider')}
-          </SelectItem>
-          {selectableProviders.map((provider) => (
-            <SelectItem key={provider.id} value={provider.id} className="text-xs">
-              {provider.name} ({RESEARCH_PROVIDER_LABELS[provider.kind] ?? provider.kind})
+      {/* The provider picker only matters once research is actually on — hiding
+          it otherwise saves the ~10rem it needs, which is most of why this row
+          used to overflow into a horizontal-scroll strip on mobile. */}
+      {value.mode !== ResearchMode.NONE ? (
+        <Select
+          value={providerValue}
+          onValueChange={(next) =>
+            onChange({ ...value, providerId: next === 'auto' ? undefined : next })
+          }
+          disabled={providerDisabled}
+        >
+          <SelectTrigger className="h-8 min-w-[8rem] px-2 text-xs sm:min-w-[10rem]">
+            <SelectValue
+              placeholder={getProviderPlaceholder(
+                isProvidersLoading,
+                selectableProviders.length,
+                t,
+              )}
+            />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto" className="text-xs">
+              {t('research.toggle.autoProvider')}
             </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+            {selectableProviders.map((provider) => (
+              <SelectItem key={provider.id} value={provider.id} className="text-xs">
+                {provider.name} ({RESEARCH_PROVIDER_LABELS[provider.kind] ?? provider.kind})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : null}
     </div>
   );
 }

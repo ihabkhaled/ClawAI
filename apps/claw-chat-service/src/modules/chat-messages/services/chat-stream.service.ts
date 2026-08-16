@@ -52,6 +52,14 @@ export class ChatStreamService {
   ] as const;
 
   emitRequestAccepted(threadId: string): void {
+    // Every run type (chat, pipeline, parallel/compare, task-decomposition)
+    // calls this first. Clearing the buffer here — instead of only capping it
+    // by count — scopes replay to "events since this run started": without
+    // it, a client reconnecting for message N+1 replays message N's terminal
+    // DONE from the shared per-thread buffer before any live event for the
+    // new run arrives, and the UI reads that stale DONE as immediate
+    // completion and stops listening.
+    this.recentEvents.delete(threadId);
     this.emit({
       threadId,
       type: StreamEventType.REQUEST_ACCEPTED,

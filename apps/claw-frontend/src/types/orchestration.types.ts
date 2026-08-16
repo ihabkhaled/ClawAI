@@ -61,6 +61,16 @@ export type OrchestrationPageHeaderProps = {
   className?: string;
 };
 
+// Goal + benefit bullets shown in a lab's empty state (before the user's
+// first submission) so a first-time visitor understands what the page is
+// for and when to reach for it, rather than an empty prompt box with no
+// context beyond the one-line header description.
+export type OrchestrationLabInfoProps = {
+  goal: string;
+  benefits: string[];
+  t: TranslateFunction;
+};
+
 // Single-model picker rendered above every orchestration prompt input.
 // Wraps the same local-Ollama dropdown the advanced module selector uses
 // but ENFORCES a non-null selection — there is no AUTO entry. The

@@ -12,3 +12,11 @@ class ResizeObserverPolyfill {
 if (typeof globalThis.ResizeObserver === 'undefined') {
   globalThis.ResizeObserver = ResizeObserverPolyfill as unknown as typeof ResizeObserver;
 }
+
+// jsdom does not implement scrollIntoView. cmdk (the ModelPicker search
+// combobox's Command primitive) calls it on every item whenever the
+// highlighted/selected item changes; without this polyfill any test that
+// opens a ModelPicker throws `scrollIntoView is not a function`.
+if (typeof Element.prototype.scrollIntoView === 'undefined') {
+  Element.prototype.scrollIntoView = (): void => {};
+}

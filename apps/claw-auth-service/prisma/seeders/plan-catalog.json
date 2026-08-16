@@ -45,6 +45,17 @@
         "WORKSPACES": { "accessMode": "DISABLED", "limit": null, "window": "MONTH" },
         "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+      },
+      "labs": {
+        "consensusMode": false,
+        "escalationChain": false,
+        "repairLab": false,
+        "taskDecomposer": false,
+        "bestOfN": false,
+        "verifier": false,
+        "pipelineLab": false,
+        "costEnsemble": false,
+        "rolePack": false
       }
     },
     {
@@ -80,6 +91,17 @@
         "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+      },
+      "labs": {
+        "consensusMode": true,
+        "escalationChain": false,
+        "repairLab": false,
+        "taskDecomposer": true,
+        "bestOfN": true,
+        "verifier": false,
+        "pipelineLab": false,
+        "costEnsemble": false,
+        "rolePack": false
       }
     },
     {
@@ -115,6 +137,17 @@
         "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+      },
+      "labs": {
+        "consensusMode": true,
+        "escalationChain": false,
+        "repairLab": false,
+        "taskDecomposer": true,
+        "bestOfN": true,
+        "verifier": false,
+        "pipelineLab": false,
+        "costEnsemble": false,
+        "rolePack": false
       }
     },
     {
@@ -150,6 +183,17 @@
         "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+      },
+      "labs": {
+        "consensusMode": true,
+        "escalationChain": false,
+        "repairLab": false,
+        "taskDecomposer": true,
+        "bestOfN": true,
+        "verifier": false,
+        "pipelineLab": false,
+        "costEnsemble": false,
+        "rolePack": false
       }
     },
     {
@@ -185,6 +229,17 @@
         "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+      },
+      "labs": {
+        "consensusMode": true,
+        "escalationChain": false,
+        "repairLab": false,
+        "taskDecomposer": true,
+        "bestOfN": true,
+        "verifier": false,
+        "pipelineLab": false,
+        "costEnsemble": false,
+        "rolePack": false
       }
     },
     {
@@ -220,6 +275,17 @@
         "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+      },
+      "labs": {
+        "consensusMode": true,
+        "escalationChain": false,
+        "repairLab": false,
+        "taskDecomposer": true,
+        "bestOfN": true,
+        "verifier": false,
+        "pipelineLab": false,
+        "costEnsemble": false,
+        "rolePack": false
       }
     },
     {
@@ -255,6 +321,17 @@
         "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
         "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+      },
+      "labs": {
+        "consensusMode": true,
+        "escalationChain": false,
+        "repairLab": false,
+        "taskDecomposer": true,
+        "bestOfN": true,
+        "verifier": false,
+        "pipelineLab": false,
+        "costEnsemble": false,
+        "rolePack": false
       }
     }
   ]

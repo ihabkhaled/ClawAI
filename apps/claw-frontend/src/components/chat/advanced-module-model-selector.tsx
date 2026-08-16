@@ -1,19 +1,12 @@
-import { Bot } from 'lucide-react';
-
-import { SelectGroupHeader } from '@/components/common/select-group-header';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { ModelPicker } from '@/components/chat/model-picker';
 import { MODEL_AUTO_VALUE } from '@/constants';
 import { useAvailableModels } from '@/hooks/chat/use-available-models';
 import type { AdvancedModuleModelSelectorProps } from '@/types';
-import { decodeModelValue, encodeModelValue } from '@/utilities';
+import { decodeModelValue, encodeModelValue, groupedModelsToPickerGroups } from '@/utilities';
 
+// Was hardcoded to the `local-ollama` group only — see the identical fix and
+// rationale in orchestration-single-model-select.tsx. Now shows every
+// provider group, same as the main composer/compare pickers.
 export function AdvancedModuleModelSelector({
   t,
   value,
@@ -21,13 +14,12 @@ export function AdvancedModuleModelSelector({
   disabled,
 }: AdvancedModuleModelSelectorProps): React.ReactElement {
   const { groupedModels, isLoading } = useAvailableModels();
-  const localGroup = groupedModels.find((group) => group.provider === 'local-ollama') ?? null;
-  const models = localGroup?.models ?? [];
+  const groups = groupedModelsToPickerGroups(groupedModels);
+  const totalModelCount = groupedModels.reduce((sum, group) => sum + group.models.length, 0);
   const selectedValue = value ? encodeModelValue(value.provider, value.model) : MODEL_AUTO_VALUE;
-  const isDisabled = disabled || isLoading || models.length === 0;
 
-  const handleChange = (nextValue: string): void => {
-    if (nextValue === MODEL_AUTO_VALUE) {
+  const handleChange = (nextValue: string | null): void => {
+    if (nextValue === null || nextValue === MODEL_AUTO_VALUE) {
       onChange(null);
       return;
     }
@@ -38,9 +30,8 @@ export function AdvancedModuleModelSelector({
       return;
     }
 
-    const match = models.find(
-      (model) => model.provider === decoded.provider && model.model === decoded.model,
-    );
+    const group = groupedModels.find((g) => g.provider === decoded.provider);
+    const match = group?.models.find((model) => model.model === decoded.model);
     onChange(match ?? null);
   };
 
@@ -49,35 +40,22 @@ export function AdvancedModuleModelSelector({
       <label className="block text-sm font-medium" htmlFor="advanced-module-model-selector">
         {t('advancedModelSelector.label')}
       </label>
-      <Select value={selectedValue} onValueChange={handleChange} disabled={isDisabled}>
-        <SelectTrigger id="advanced-module-model-selector" className="w-full">
-          <Bot className="text-muted-foreground me-2 h-4 w-4 shrink-0" />
-          <SelectValue
-            placeholder={
-              isLoading ? t('advancedModelSelector.loading') : t('advancedModelSelector.auto')
-            }
-          />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={MODEL_AUTO_VALUE}>{t('advancedModelSelector.auto')}</SelectItem>
-          {localGroup ? (
-            <SelectGroup>
-              <SelectGroupHeader>{localGroup.label}</SelectGroupHeader>
-              {models.map((model) => (
-                <SelectItem
-                  key={encodeModelValue(model.provider, model.model)}
-                  value={encodeModelValue(model.provider, model.model)}
-                  textValue={model.displayName}
-                >
-                  {model.displayName}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          ) : null}
-        </SelectContent>
-      </Select>
+      <ModelPicker
+        id="advanced-module-model-selector"
+        groups={groups}
+        value={selectedValue}
+        onChange={handleChange}
+        disabled={disabled}
+        isLoading={isLoading}
+        autoOption={{ value: MODEL_AUTO_VALUE, label: t('advancedModelSelector.auto') }}
+        placeholder={t('advancedModelSelector.auto')}
+        loadingPlaceholder={t('advancedModelSelector.loading')}
+        emptyPlaceholder={t('advancedModelSelector.empty')}
+        searchPlaceholder={t('common.search')}
+        noResultsLabel={t('common.noResults')}
+      />
       <p className="text-muted-foreground text-xs">
-        {models.length > 0
+        {totalModelCount > 0
           ? t('advancedModelSelector.description')
           : t('advancedModelSelector.empty')}
       </p>

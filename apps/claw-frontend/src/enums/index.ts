@@ -105,6 +105,7 @@ export {
   DownloadStatus,
 } from './discovery.enum';
 export { ActionGenerationMode } from './action-generation-mode.enum';
+export { ActiveThreadPanel } from './active-thread-panel.enum';
 export { FreshnessBand } from './freshness-band.enum';
 export { AiActionKind, AiActionMode, AiActionPrivacyClass } from './ai-action-kind.enum';
 export { AiActionLength, AiActionTone } from './ai-action-tone.enum';

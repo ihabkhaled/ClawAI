@@ -8,12 +8,11 @@ import { logger, showToast } from '@/utilities';
 
 import { useUpdateThread } from './use-update-thread';
 
-export function useThreadSettings(thread: ChatThread | null) {
+export function useThreadSettings(thread: ChatThread | null, onSaved?: () => void) {
   const { t } = useTranslation();
   const { updateThread, isPending } = useUpdateThread();
   const { options: judgeModelOptions, isLoading: judgeModelOptionsLoading } =
     useJudgeModelOptions();
-  const [isOpen, setIsOpen] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState('');
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState('');
@@ -56,10 +55,6 @@ export function useThreadSettings(thread: ChatThread | null) {
       setUseContext(thread.useContext ?? true);
     }
   }, [thread]);
-
-  const toggleOpen = useCallback((): void => {
-    setIsOpen((prev) => !prev);
-  }, []);
 
   const handleModelChange = useCallback(
     (model: ModelSelection | null): void => {
@@ -163,7 +158,7 @@ export function useThreadSettings(thread: ChatThread | null) {
       {
         onSuccess: () => {
           showToast.success({ title: t('chat.settingsSaved') });
-          setIsOpen(false);
+          onSaved?.();
         },
       },
     );
@@ -184,12 +179,11 @@ export function useThreadSettings(thread: ChatThread | null) {
     useMemory,
     useContext,
     updateThread,
+    onSaved,
     t,
   ]);
 
   return {
-    isOpen,
-    toggleOpen,
     systemPrompt,
     setSystemPrompt,
     temperature,

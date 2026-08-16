@@ -17,6 +17,15 @@ export type PlanFeatureGates = {
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
+  allowConsensusMode: boolean;
+  allowEscalationChain: boolean;
+  allowRepairLab: boolean;
+  allowTaskDecomposer: boolean;
+  allowBestOfN: boolean;
+  allowVerifier: boolean;
+  allowPipelineLab: boolean;
+  allowCostEnsemble: boolean;
+  allowRolePack: boolean;
 };
 
 export type PlanModelAccessView = {
@@ -61,6 +70,15 @@ export type PlanView = {
   allowWorkspaces: boolean;
   allowMemory: boolean;
   allowContextPacks: boolean;
+  allowConsensusMode: boolean;
+  allowEscalationChain: boolean;
+  allowRepairLab: boolean;
+  allowTaskDecomposer: boolean;
+  allowBestOfN: boolean;
+  allowVerifier: boolean;
+  allowPipelineLab: boolean;
+  allowCostEnsemble: boolean;
+  allowRolePack: boolean;
   modelAccessMode: PlanModelAccessMode;
   allowedCostClasses: string[];
   modelAccess: PlanModelAccessView[];
@@ -93,6 +111,15 @@ export type CreatePlanData = {
   allowWorkspaces?: boolean;
   allowMemory?: boolean;
   allowContextPacks?: boolean;
+  allowConsensusMode?: boolean;
+  allowEscalationChain?: boolean;
+  allowRepairLab?: boolean;
+  allowTaskDecomposer?: boolean;
+  allowBestOfN?: boolean;
+  allowVerifier?: boolean;
+  allowPipelineLab?: boolean;
+  allowCostEnsemble?: boolean;
+  allowRolePack?: boolean;
 };
 
 export type UpdatePlanData = Partial<Omit<CreatePlanData, 'slug'>>;

@@ -141,6 +141,15 @@ export class EntitlementsService {
         allowWorkspaces: plan.allowWorkspaces,
         allowMemory: plan.allowMemory,
         allowContextPacks: plan.allowContextPacks,
+        allowConsensusMode: plan.allowConsensusMode,
+        allowEscalationChain: plan.allowEscalationChain,
+        allowRepairLab: plan.allowRepairLab,
+        allowTaskDecomposer: plan.allowTaskDecomposer,
+        allowBestOfN: plan.allowBestOfN,
+        allowVerifier: plan.allowVerifier,
+        allowPipelineLab: plan.allowPipelineLab,
+        allowCostEnsemble: plan.allowCostEnsemble,
+        allowRolePack: plan.allowRolePack,
       },
     };
   }

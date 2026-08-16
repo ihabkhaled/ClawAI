@@ -136,10 +136,12 @@ describe('sidebar-visibility.utility', () => {
     });
 
     it('does NOT reveal nav.verifierLab when only allowJudgeMode is unlocked', () => {
-      // Verifier is now permission-gated by ROUTER_USE, independent of the
-      // per-lane Judge / Critic toggles which keep their allowJudgeMode /
-      // allowCriticReview / JUDGE_USE gates. Unlocking allowJudgeMode alone
-      // therefore does NOT make the standalone Verifier Lab visible.
+      // Verifier is gated by its OWN permission (VERIFIER_USE) + plan
+      // feature (allowVerifier), independent of the per-lane Judge / Critic
+      // toggles which keep their allowJudgeMode / allowCriticReview /
+      // JUDGE_USE gates. Unlocking allowJudgeMode alone therefore does NOT
+      // make the standalone Verifier Lab visible — neither its permission
+      // nor its feature is present here.
       const visible = filterSidebarItems(
         SIDEBAR_NAV_ITEMS,
         userCan(USER_PERMISSIONS),
@@ -160,20 +162,53 @@ describe('sidebar-visibility.utility', () => {
     });
   });
 
-  describe('filterSidebarItems with a child-only permission', () => {
-    it('reveals a gated chat lab child when the user holds the lab permission', () => {
+  describe('filterSidebarItems with a per-page lab permission + feature', () => {
+    it('granting only the permission (no feature) keeps every lab hidden', () => {
       const visible = filterSidebarItems(
         SIDEBAR_NAV_ITEMS,
-        userCan([...USER_PERMISSIONS, Permission.ROUTER_USE]),
+        userCan([...USER_PERMISSIONS, Permission.CONSENSUS_MODE_USE, Permission.VERIFIER_USE]),
         noFeatures,
       );
       const chat = visible.find((i) => i.labelKey === 'nav.chat');
-      // ROUTER_USE reveals every orchestration lab gated by it — including
-      // the standalone Verifier — but feature-gated children (Compare) stay
-      // hidden until the matching plan feature is unlocked.
-      expect(labelKeys(chat?.children ?? [])).toContain('nav.consensusMode');
-      expect(labelKeys(chat?.children ?? [])).toContain('nav.verifierLab');
-      expect(labelKeys(chat?.children ?? [])).not.toContain('nav.compareModels');
+      expect(labelKeys(chat?.children ?? [])).not.toContain('nav.consensusMode');
+      expect(labelKeys(chat?.children ?? [])).not.toContain('nav.verifierLab');
+    });
+
+    it('granting only the feature (no permission) keeps every lab hidden', () => {
+      const visible = filterSidebarItems(
+        SIDEBAR_NAV_ITEMS,
+        userCan(USER_PERMISSIONS),
+        featuresFromSet([PlanFeature.ALLOW_CONSENSUS_MODE, PlanFeature.ALLOW_VERIFIER]),
+      );
+      const chat = visible.find((i) => i.labelKey === 'nav.chat');
+      expect(labelKeys(chat?.children ?? [])).not.toContain('nav.consensusMode');
+      expect(labelKeys(chat?.children ?? [])).not.toContain('nav.verifierLab');
+    });
+
+    it('reveals only the specific lab that has BOTH its permission and its feature — siblings stay hidden', () => {
+      const visible = filterSidebarItems(
+        SIDEBAR_NAV_ITEMS,
+        userCan([...USER_PERMISSIONS, Permission.CONSENSUS_MODE_USE]),
+        featuresFromSet([PlanFeature.ALLOW_CONSENSUS_MODE]),
+      );
+      const chat = visible.find((i) => i.labelKey === 'nav.chat');
+      const childLabels = labelKeys(chat?.children ?? []);
+      expect(childLabels).toContain('nav.consensusMode');
+      // Verifier has neither its permission nor its feature here.
+      expect(childLabels).not.toContain('nav.verifierLab');
+      expect(childLabels).not.toContain('nav.compareModels');
+    });
+
+    it('the deprecated ROUTER_USE permission no longer reveals any lab', () => {
+      const visible = filterSidebarItems(
+        SIDEBAR_NAV_ITEMS,
+        userCan([...USER_PERMISSIONS, Permission.ROUTER_USE]),
+        adminFeatures,
+      );
+      const chat = visible.find((i) => i.labelKey === 'nav.chat');
+      const childLabels = labelKeys(chat?.children ?? []);
+      expect(childLabels).not.toContain('nav.consensusMode');
+      expect(childLabels).not.toContain('nav.verifierLab');
     });
   });
 });

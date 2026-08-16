@@ -25,7 +25,7 @@ const appConfigSchema = z.object({
   PUBLIC_SITE_URL: z.string().url().default('https://claw.local'),
   CONTACT_EMAIL_ENABLED: z.enum(['true', 'false']).default('false'),
   CONTACT_EMAIL_PROVIDER: z.enum(['none', 'smtp']).default('none'),
-  CONTACT_EMAIL_FROM: z.string().email().default('no-reply@claw.local'),
+  CONTACT_EMAIL_FROM: z.string().email().default('no-reply@claw-ai.co'),
   CONTACT_EMAIL_TO: z.union([z.string().email(), z.literal('')]).default(''),
   CONTACT_SMTP_HOST: z.string().min(1).optional(),
   CONTACT_SMTP_PORT: z.coerce.number().int().positive().default(587),

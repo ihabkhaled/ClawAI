@@ -2,6 +2,7 @@
 
 import { ShieldCheck } from 'lucide-react';
 
+import { OrchestrationLabInfo } from '@/components/chat/orchestration/orchestration-lab-info';
 import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestration-page-shell';
 import { VerifyResultCard } from '@/components/chat/verify-result-card';
 import { EmptyState } from '@/components/common/empty-state';
@@ -43,7 +44,7 @@ export default function VerifyPage(): React.ReactElement {
 
   const maxRevisionsField = (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-foreground" htmlFor="verify-max-revisions">
+      <label className="text-foreground block text-sm font-medium" htmlFor="verify-max-revisions">
         {t('verify.maxRevisionsLabel')}
       </label>
       <Select
@@ -62,7 +63,7 @@ export default function VerifyPage(): React.ReactElement {
           ))}
         </SelectContent>
       </Select>
-      <p className="text-xs text-muted-foreground">{t('verify.maxRevisionsHelper')}</p>
+      <p className="text-muted-foreground text-xs">{t('verify.maxRevisionsHelper')}</p>
     </div>
   );
 
@@ -71,11 +72,18 @@ export default function VerifyPage(): React.ReactElement {
   ) : null;
 
   const emptySlot = (
-    <EmptyState
-      icon={ShieldCheck}
-      title={t('verify.noResults')}
-      description={t('verify.description')}
-    />
+    <>
+      <EmptyState
+        icon={ShieldCheck}
+        title={t('verify.noResults')}
+        description={t('verify.description')}
+      />
+      <OrchestrationLabInfo
+        goal={t('verify.goal')}
+        benefits={[t('verify.benefit1'), t('verify.benefit2'), t('verify.benefit3')]}
+        t={t}
+      />
+    </>
   );
 
   return (

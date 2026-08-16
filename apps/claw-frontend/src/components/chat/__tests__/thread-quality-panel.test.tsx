@@ -6,6 +6,8 @@ import { ThreadQualityPanel } from '@/components/chat/thread-quality-panel';
 const t = (key: string): string => key;
 
 const baseProps = {
+  open: true,
+  onOpenChange: vi.fn(),
   t,
   judgeEnabled: true,
   onJudgeEnabledChange: vi.fn(),
