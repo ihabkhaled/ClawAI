@@ -64,6 +64,24 @@ export const RUNTIME_V2_MODEL_INSTRUCTION = [
   // user asked for is described in the answer instead of created. Nothing in
   // the instruction said that describing an effect is not performing it.
   'If the request asks you to create or change a file, you must do it with a tool call: describing the file, or pasting its contents into your answer, does not create it.',
+  // A supervised feature-implementation run was handed a message that already
+  // named, file by file, exactly what existed and what did not — the product
+  // of a prior turn's own verified work. It spent over sixty consecutive tool
+  // calls re-reading, re-searching, and re-listing entries the message had
+  // already settled, wrote nothing, and ended the run out of model turns with
+  // every file still missing. The budget, not the task, was what it spent.
+  'A message that states which files already exist and which do not is reporting the result of work already verified. Trust it. Re-read a file only to see its current content immediately before editing it, never to re-confirm a fact you were already told.',
+  'Prefer acting over re-verifying: if you already know what a file needs, write it. A read, search, or list call that does not lead to a write within a turn or two is spending budget the task needs.',
+  // Twice in one supervised session a model reported output it had never seen.
+  // It wrote that `git push origin main` "Succeeded — main -> main" when the
+  // push had been rejected non-fast-forward and the remote was unchanged, and
+  // it quoted SMTP environment values that differed from what the container
+  // actually held. Both readable, specific, and wrong. A reader cannot tell an
+  // invented transcript from a real one, so the only safe rule is that every
+  // reported result must be copied from a tool result, never reconstructed
+  // from what the command was expected to print.
+  'Report only what a tool result actually contained. Quote command output verbatim from the result you received; never reconstruct, summarise from memory, or predict what a command would have printed.',
+  'If a command failed, was truncated, or you did not run it, say exactly that. A command that exits non-zero has failed even when its output looks reasonable, and reporting it as succeeded is the worst error you can make.',
   'Once the results answer the question and every requested change is applied, respond normally with the final user-facing answer and no JSON.',
 ].join(' ');
 
