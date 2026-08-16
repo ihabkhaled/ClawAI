@@ -30,6 +30,7 @@ import { ProviderAppConfigService } from '../workspace/services/provider-app-con
 import { ProviderRegistryService } from '../workspace/services/provider-registry.service';
 import { ChainController } from './controllers/chain.controller';
 import { ChainExecutorManager } from './managers/chain-executor.manager';
+import { ChainOrphanRunRecoveryManager } from './managers/chain-orphan-run-recovery.manager';
 import { ChainRepository } from './repositories/chain.repository';
 import { ChainService } from './services/chain.service';
 
@@ -43,6 +44,7 @@ import { ChainService } from './services/chain.service';
     ChainRepository,
     ChainService,
     ChainExecutorManager,
+    ChainOrphanRunRecoveryManager,
     // Connector + adapter graph the executor calls into.
     WorkspaceConnectorRepository,
     WorkspaceAdapterFactory,

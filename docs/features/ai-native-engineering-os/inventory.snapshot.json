@@ -2738,6 +2738,11 @@
           "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/workspace/chains/:id/runs/:runId/resume",
+          "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/workspace/connectors",
           "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
@@ -8953,7 +8958,7 @@
       },
       "claw-workspace-service": {
         "runner": "jest",
-        "testFiles": 72
+        "testFiles": 73
       }
     },
     "workspaces": [
@@ -9658,7 +9663,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 588,
+    "endpointCount": 589,
     "envVarCount": 343,
     "eventCount": 167,
     "frontendRouteCount": 120,
@@ -9670,7 +9675,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 928,
+    "totalTestFiles": 929,
     "workspaceCount": 25
   }
 }

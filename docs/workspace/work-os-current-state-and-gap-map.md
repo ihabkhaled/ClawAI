@@ -1,15 +1,19 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–04)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–05)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
-truth), Phase 03 (canonical event fabric, webhook sources), and Phase 04 (sync→event
-reconciliation bridge) are done as real, deliberately-scoped slices — see each phase's own
-section below for exactly what's in and out of scope. Phase 01's duplication scan, frontend
-route inventory, and RabbitMQ contract inventory are still pending (see "Explicitly not yet
-verified" below). Push-subscription lifecycle management (the bulk of Phase 04's full spec) and
-Phase 05 onward are not started — each remaining phase is independently a multi-day-to-multi-week
-feature (durable workflow DAGs, saga/compensation, a knowledge graph, etc.); they're being built
-as real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
-instruction.**
+truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
+bridge), and Phase 05 (crash recovery + resume-from-failed-step on the existing sequential chain
+executor) are done as real, deliberately-scoped slices — see each phase's own section below for
+exactly what's in and out of scope. Phase 01's duplication scan, frontend route inventory, and
+RabbitMQ contract inventory are still pending (see "Explicitly not yet verified" below).
+Push-subscription lifecycle management (Phase 04's full spec), the real DAG rewrite (Phase 05's
+full spec), and Phase 06 onward are not started — each remaining phase is independently a
+multi-day-to-multi-week feature (saga/compensation, a knowledge graph, an NL automation studio,
+etc.); they're being built as real, tested, one-phase-per-batch slices rather than attempted all
+at once, per explicit instruction — and the two riskiest categories of change (push-subscription
+lifecycles touching live OAuth apps, and a DAG rewrite touching live write-action execution) are
+being deliberately scoped down rather than rushed, per explicit instruction after each was
+flagged.**
 
 Pass 1 (below, preserved) established the structural map. Pass 2 adds the machine-actionable
 per-provider matrix the spec actually asks for, built by reading every adapter's
@@ -305,6 +309,54 @@ not spam a duplicate event — verified by a dedicated test.
   pattern exists yet for the persist-then-publish step in either `WebhookIngestConsumer` or
   `WorkspaceSyncEventBridgeService`, so a crash in that exact window would silently lose one
   event. Worth a dedicated hardening pass, not fixed here.
+
+## Phase 05 — Workflow Engine V2 (safety-net slice on the existing sequential executor, done)
+
+The full Phase 05 spec asks for a genuine durable DAG engine — 19 node types (TRIGGER, BRANCH,
+PARALLEL, JOIN, FOREACH, COMPENSATE, HUMAN_INPUT, etc.), crash-safe resume, max fan-out,
+cancellation, workflow version pinning, dry-run simulation. That's a rearchitecture of how
+`ChainExecutorManager` executes real external side-effecting write actions (creating tickets,
+sending emails, posting Slack messages) — a materially higher-risk category of change than
+Phases 01–04, all of which touched read paths or added a new, additive event-logging fabric. Per
+explicit instruction, this pass deliberately did **not** attempt the full DAG rewrite; it added
+two concrete, real durability improvements to the _existing_ sequential executor instead, using
+the same reasoning `OrphanSyncRecoveryManager` already established for sync runs.
+
+**Added**:
+
+- `ChainOrphanRunRecoveryManager` — sweeps `WorkspaceChainRun` rows stuck at `status=RUNNING`
+  past a timeout and marks them `FAILED`. Necessary because `ChainExecutorManager.run()` executes
+  an entire chain synchronously within one process/request with no separate worker heartbeat — a
+  process crash mid-chain previously left the run row stuck `RUNNING` forever, blocking any
+  future recovery. Verbatim mirror of the pre-existing `OrphanSyncRecoveryManager` pattern
+  (same cron/age-threshold shape, same `WORKSPACE_SCHEDULER_ENABLED` gate — no new config surface).
+- `ChainExecutorManager.resume(userId, chainId, runId)` — real "replay from failed step," one of
+  the pack's explicitly named Durability Requirements. Resumes a `FAILED` run by replaying only
+  from its first non-`SUCCEEDED` step; already-`SUCCEEDED` steps are **never re-executed** — their
+  stored `output` is reused directly. This is what makes it safe without needing per-provider
+  idempotency keys: none of GitHub/GitLab/Jira/Slack/etc.'s write endpoints actually support an
+  idempotency key, so blindly retrying a `CREATE_ISSUE`-shaped step that already succeeded (but,
+  say, timed out on the response) would create a real duplicate ticket. Skipping already-succeeded
+  steps sidesteps that risk entirely instead of adding an idempotency field with no real
+  provider-side enforcement — exactly the kind of unenforced-metadata drift Phase 01/02 found and
+  fixed elsewhere in this codebase. Uses the run's `dslSnapshot`, not the chain's possibly-since-
+  edited live `dsl`, so a resume always continues the exact definition that was actually running.
+- `POST /workspace/chains/:id/runs/:runId/resume` — new endpoint exposing it; no frontend chain UI
+  exists yet at all (chains are currently API-only — the whole `/workspace/chains` UI is Phase 08's
+  territory), so there was nothing to wire a "Resume" button into in this pass.
+- 10 new tests, including the core safety proof: resuming a run with one already-succeeded step
+  calls `executeWriteAction` exactly once (for the failed step only), and the reused output from
+  the succeeded step correctly flows into the resumed step's resolved payload.
+
+**Explicitly not done in this slice** (real scope, not oversight): no DAG structure (still a flat
+sequential list — no BRANCH/PARALLEL/JOIN/FOREACH), no automatic retry of the write-action call
+itself (see the idempotency reasoning above — only a _manual_, explicit resume exists, keeping a
+human in the loop for the risky part, consistent with the pack's own "keep human approval
+mandatory for high-risk/destructive actions" rule), no per-step timeout, no cancellation, no
+dry-run/simulation, no cost/token usage tracking for AI steps (there are no AI steps — every
+existing chain step is a direct provider write action), no version pinning beyond the pre-existing
+`dslSnapshot`. The genuine DAG rewrite — the actual bulk of Phase 05 — remains the real next step,
+and should get its own dedicated, carefully-tested pass given what it touches.
 
 ## Explicitly not yet verified (next session's starting point)
 

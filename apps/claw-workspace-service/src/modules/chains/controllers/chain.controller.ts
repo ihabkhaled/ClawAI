@@ -70,10 +70,7 @@ export class ChainController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ): Promise<void> {
+  async remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string): Promise<void> {
     await this.service.deleteById(user.id, id);
   }
 
@@ -87,6 +84,20 @@ export class ChainController {
     @Param('id') id: string,
   ): Promise<ChainRunView> {
     return this.executor.run(user.id, id);
+  }
+
+  // Resumes a FAILED run from its first non-SUCCEEDED step (see
+  // ChainExecutorManager.resume for why this is safe: already-SUCCEEDED
+  // steps are never re-executed, so a resume can never duplicate a write
+  // action that already completed).
+  @Post(':id/runs/:runId/resume')
+  @HttpCode(HttpStatus.OK)
+  async resumeRun(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Param('runId') runId: string,
+  ): Promise<ChainRunView> {
+    return this.executor.resume(user.id, id, runId);
   }
 
   @Get(':id/runs')

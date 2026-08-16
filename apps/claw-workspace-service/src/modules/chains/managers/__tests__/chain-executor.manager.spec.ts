@@ -15,15 +15,13 @@ const twoStepDsl = {
   ],
 };
 
-const makeChainRepo = (
-  overrides: Record<string, jest.Mock> = {},
-): Record<string, jest.Mock> => ({
+const makeChainRepo = (overrides: Record<string, jest.Mock> = {}): Record<string, jest.Mock> => ({
   findById: jest.fn(),
   createRun: jest.fn().mockResolvedValue({ id: 'run-1' }),
   updateRun: jest.fn().mockResolvedValue({}),
-  createStep: jest.fn().mockImplementation((d: { stepId: string }) =>
-    Promise.resolve({ id: `step-${d.stepId}` }),
-  ),
+  createStep: jest
+    .fn()
+    .mockImplementation((d: { stepId: string }) => Promise.resolve({ id: `step-${d.stepId}` })),
   updateStep: jest.fn().mockResolvedValue({}),
   findRunWithSteps: jest.fn(),
   ...overrides,
@@ -59,9 +57,9 @@ const makeDeps = (
     ...opts.chainRepoOverrides,
   });
   const connectorRepo = {
-    findById: jest.fn().mockResolvedValue(
-      opts.connector ?? { id: 'c1', provider: 'JIRA', encryptedTokens: 'enc' },
-    ),
+    findById: jest
+      .fn()
+      .mockResolvedValue(opts.connector ?? { id: 'c1', provider: 'JIRA', encryptedTokens: 'enc' }),
   };
   const adapterFactory = {
     getAdapter: jest.fn().mockReturnValue(
@@ -71,9 +69,7 @@ const makeDeps = (
     ),
   };
   const tokenRefresh = {
-    getValidAccessToken: jest
-      .fn()
-      .mockResolvedValue(opts.token === undefined ? 'tok' : opts.token),
+    getValidAccessToken: jest.fn().mockResolvedValue(opts.token === undefined ? 'tok' : opts.token),
   };
   const accessService = {
     can: jest.fn().mockResolvedValue(opts.canAccess ?? true),
@@ -195,5 +191,123 @@ describe('ChainExecutorManager', () => {
       'run-1',
       expect.objectContaining({ status: 'FAILED' }),
     );
+  });
+
+  describe('resume', () => {
+    const failedRunWithFirstStepSucceeded = {
+      id: 'run-1',
+      chainId: 'chain-1',
+      userId: 'u1',
+      status: 'FAILED',
+      error: 'step announce: adapter error',
+      startedAt: new Date(),
+      finishedAt: new Date(),
+      dslSnapshot: twoStepDsl,
+      steps: [
+        {
+          stepId: 'make-ticket',
+          status: 'SUCCEEDED',
+          output: { externalId: 'PROJ-9', url: null, metadata: {} },
+        },
+        { stepId: 'announce', status: 'FAILED', output: null },
+      ],
+    };
+
+    it('404s when the chain does not exist', async () => {
+      const { manager } = makeDeps({ chain: null });
+      await expect(manager.resume('u1', 'missing', 'run-1')).rejects.toBeInstanceOf(
+        BusinessException,
+      );
+    });
+
+    it('404s when the run does not exist', async () => {
+      const { manager } = makeDeps({
+        chain: { id: 'chain-1', userId: 'u1', isEnabled: true, dsl: twoStepDsl },
+        runWithSteps: null,
+      });
+      await expect(manager.resume('u1', 'chain-1', 'run-1')).rejects.toBeInstanceOf(
+        BusinessException,
+      );
+    });
+
+    it('rejects resuming a run that is not FAILED (e.g. still RUNNING or already COMPLETED)', async () => {
+      const { manager } = makeDeps({
+        chain: { id: 'chain-1', userId: 'u1', isEnabled: true, dsl: twoStepDsl },
+        runWithSteps: { ...failedRunWithFirstStepSucceeded, status: 'COMPLETED' },
+      });
+      await expect(manager.resume('u1', 'chain-1', 'run-1')).rejects.toBeInstanceOf(
+        BusinessException,
+      );
+    });
+
+    it('does NOT re-execute an already-SUCCEEDED step — only resumes from the failed step onward', async () => {
+      const executeWriteAction = jest
+        .fn()
+        .mockResolvedValue({ success: true, externalId: 'msg-1' });
+      const { manager, chainRepo } = makeDeps({
+        chain: { id: 'chain-1', userId: 'u1', isEnabled: true, dsl: twoStepDsl },
+        runWithSteps: failedRunWithFirstStepSucceeded,
+        adapter: { executeWriteAction },
+      });
+
+      await manager.resume('u1', 'chain-1', 'run-1');
+
+      // Exactly one adapter call — the failed "announce" step. The
+      // already-succeeded "make-ticket" step must never be re-executed.
+      expect(executeWriteAction).toHaveBeenCalledTimes(1);
+      expect(executeWriteAction.mock.calls[0]?.[1]).toBe('SEND_SLACK');
+      // The resolved placeholder proves the reused output from the
+      // already-succeeded step flowed into the resumed step correctly.
+      expect(executeWriteAction.mock.calls[0]?.[2]).toEqual({ text: 'Filed PROJ-9' });
+      expect(chainRepo['updateRun']).toHaveBeenLastCalledWith(
+        'run-1',
+        expect.objectContaining({ status: 'COMPLETED' }),
+      );
+    });
+
+    it('marks the run RUNNING before resuming and FAILED again if the resumed step fails again', async () => {
+      const executeWriteAction = jest
+        .fn()
+        .mockResolvedValue({ success: false, errorMessage: 'still down' });
+      const { manager, chainRepo } = makeDeps({
+        chain: { id: 'chain-1', userId: 'u1', isEnabled: true, dsl: twoStepDsl },
+        runWithSteps: failedRunWithFirstStepSucceeded,
+        adapter: { executeWriteAction },
+      });
+
+      await manager.resume('u1', 'chain-1', 'run-1');
+
+      expect(chainRepo['updateRun']).toHaveBeenNthCalledWith(
+        1,
+        'run-1',
+        expect.objectContaining({ status: 'RUNNING' }),
+      );
+      expect(chainRepo['updateRun']).toHaveBeenLastCalledWith(
+        'run-1',
+        expect.objectContaining({ status: 'FAILED' }),
+      );
+    });
+
+    it('uses the run dslSnapshot, not the chain current dsl, so an edited chain does not change what a resume replays', async () => {
+      const executeWriteAction = jest
+        .fn()
+        .mockResolvedValue({ success: true, externalId: 'msg-1' });
+      const editedDsl = {
+        steps: [{ id: 'different-step', connectorId: 'x', actionType: 'Y', payload: {} }],
+      };
+      const { manager } = makeDeps({
+        // Chain's live dsl has since been edited to something unrelated...
+        chain: { id: 'chain-1', userId: 'u1', isEnabled: true, dsl: editedDsl },
+        // ...but the run's own snapshot (captured at run() time) is untouched.
+        runWithSteps: failedRunWithFirstStepSucceeded,
+        adapter: { executeWriteAction },
+      });
+
+      await manager.resume('u1', 'chain-1', 'run-1');
+
+      // Resumed using the snapshot's "announce" step, not editedDsl's step.
+      expect(executeWriteAction).toHaveBeenCalledTimes(1);
+      expect(executeWriteAction.mock.calls[0]?.[1]).toBe('SEND_SLACK');
+    });
   });
 });
