@@ -6780,7 +6780,8 @@
         "docs/features",
         "docs/implementation",
         "docs/security",
-        "docs/superpowers"
+        "docs/superpowers",
+        "docs/workspace"
       ],
       "looseDocs": 23,
       "rules": [
