@@ -27,6 +27,7 @@ import { useVirtualizedMessagesController } from './use-virtualized-messages-con
 export const useThreadDataController = ({
   threadId,
   t,
+  onSettingsSaved,
 }: UseThreadDataControllerParams): UseThreadDataControllerReturn => {
   const detail = useThreadDetail(threadId);
   const { cancel: cancelStream, isCancelling: isCancellingStream } = useCancelStream(threadId);
@@ -38,7 +39,7 @@ export const useThreadDataController = ({
   const { deleteThread, isPending: isDeleting } = useDeleteThread();
   const { setFeedback } = useMessageFeedback(threadId);
   const { regenerate } = useRegenerateMessage(threadId, detail.startWaitingForResponse);
-  const threadSettings = useThreadSettings(detail.thread);
+  const threadSettings = useThreadSettings(detail.thread, onSettingsSaved);
 
   const handleSend = useCallback(
     (

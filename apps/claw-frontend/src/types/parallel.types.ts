@@ -137,11 +137,16 @@ export type UseInThreadCompareParams = {
   threadId: string;
   initialJudgeEnabled?: boolean;
   initialJudgeModel?: string | null;
+  // Externally-controlled panel visibility. Drives the file-selection reset
+  // (a stale selection must not survive into the next open) — the hook owns
+  // no open/close state itself; the page-level panel coordinator does.
+  isOpen?: boolean;
+  // Called after a compare run is accepted, so the coordinator can close the
+  // panel and reveal the thread streaming the parallel responses.
+  onSendSuccess?: () => void;
 };
 
 export type UseInThreadCompareReturn = {
-  isOpen: boolean;
-  toggleOpen: () => void;
   selectedModels: ParallelModelTarget[];
   handleToggleModel: (provider: string, model: string, checked: boolean) => void;
   // Controlled prompt state for the in-thread compare textarea. RichPromptTextarea

@@ -160,3 +160,55 @@ describe('useInThreadCompare — researchMode round-trip', () => {
     expect(payload.researchMode).toBe(CompareResearchMode.SEARCH_EXTRACT);
   });
 });
+
+describe('useInThreadCompare — panel visibility is externally controlled', () => {
+  beforeEach(() => {
+    sendParallelMock.mockReset();
+    sendParallelMock.mockResolvedValue({
+      messageId: 'm1',
+      threadId: 't1',
+      prompt: '',
+      responses: [],
+      totalLatencyMs: 0,
+      completedCount: 0,
+      failedCount: 0,
+      judgeEnabled: false,
+      judgeModel: null,
+    });
+  });
+
+  it('calls onSendSuccess once a compare run is accepted, so the caller can close the panel', async () => {
+    const onSendSuccess = vi.fn();
+    const { result } = renderHook(() => useInThreadCompare({ threadId: 't1', onSendSuccess }), {
+      wrapper,
+    });
+
+    act(() => {
+      result.current.handleToggleModel('OPENAI', 'gpt-4o', true);
+      result.current.handleToggleModel('ANTHROPIC', 'claude-sonnet-4', true);
+    });
+    act(() => {
+      result.current.handleCompare('hello');
+    });
+
+    await waitFor(() => {
+      expect(onSendSuccess).toHaveBeenCalledOnce();
+    });
+  });
+
+  it('clears a stale file selection every time the panel transitions to open', () => {
+    const { result, rerender } = renderHook(
+      ({ isOpen }: { isOpen: boolean }) => useInThreadCompare({ threadId: 't1', isOpen }),
+      { wrapper, initialProps: { isOpen: false } },
+    );
+
+    act(() => {
+      result.current.setSelectedFileIds(['file-1']);
+    });
+    expect(result.current.selectedFileIds).toEqual(['file-1']);
+
+    rerender({ isOpen: true });
+
+    expect(result.current.selectedFileIds).toEqual([]);
+  });
+});

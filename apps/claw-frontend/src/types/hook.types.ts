@@ -304,6 +304,10 @@ export type UseThreadDetailPageParams = {
 export type UseThreadDataControllerParams = {
   threadId: string;
   t: TranslateFunction;
+  // Called after a thread-settings save succeeds, so the page-level panel
+  // coordinator (whichever of Thread Settings / Judge & Referee is showing,
+  // since both save through this same mutation) can close itself.
+  onSettingsSaved: () => void;
 };
 
 export type UseSendMessageResult = {
@@ -347,8 +351,6 @@ export type UseThreadDataControllerReturn = {
 };
 
 export type UseThreadSettingsReturn = {
-  isOpen: boolean;
-  toggleOpen: () => void;
   systemPrompt: string;
   setSystemPrompt: (value: string) => void;
   temperature: number;

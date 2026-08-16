@@ -87,11 +87,12 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
           ) : null}
           <ShareChatButton {...props.shareButtonProps} />
           <Button
-            variant="ghost"
+            variant={props.threadSettingsOpen ? 'default' : 'ghost'}
             size="icon-sm"
             className="sm:size-auto sm:h-9 sm:w-auto sm:px-3"
             onClick={props.threadSettingsToggleOpen}
             aria-label={props.threadSettingsLabel}
+            aria-expanded={props.threadSettingsOpen}
           >
             <Settings className="h-4 w-4 sm:me-2" />
             <span className="hidden sm:inline">{props.threadSettingsLabel}</span>
@@ -118,19 +119,17 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
         </div>
       </div>
 
-      {props.compareIsOpen && props.canCompare ? (
-        <InThreadComparePanel {...props.inThreadComparePanelProps} />
-      ) : null}
+      {/* Compare Models / Judge & Referee / Thread Settings are dialogs, not
+          inline panels — they overlay the chat instead of hiding the message
+          history and composer behind them. useThreadDetailPage's activePanel
+          state keeps at most one open at a time. */}
+      {props.canCompare ? <InThreadComparePanel {...props.inThreadComparePanelProps} /> : null}
 
-      {props.qualityControlsOpen && props.canUseQualityControls ? (
+      {props.canUseQualityControls ? (
         <ThreadQualityPanel {...props.threadQualityPanelProps} />
       ) : null}
 
-      {props.threadSettingsOpen ? (
-        <div className="mb-4">
-          <ThreadSettings {...props.threadSettingsProps} />
-        </div>
-      ) : null}
+      <ThreadSettings {...props.threadSettingsProps} />
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
         <div className="min-h-0 flex-1 overflow-hidden">
