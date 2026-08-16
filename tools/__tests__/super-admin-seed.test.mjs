@@ -38,6 +38,8 @@ test('production seed promotes the configured existing administrator', async () 
         roleId: 'admin-role',
         status: 'ACTIVE',
         isSuperAdmin: true,
+        firstName: 'Claw',
+        lastName: 'Administrator',
         emailVerifiedAt: new Date('2026-08-13T00:00:00.000Z'),
       },
     },
