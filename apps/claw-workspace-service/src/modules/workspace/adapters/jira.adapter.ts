@@ -435,7 +435,11 @@ export class JiraAdapter implements WorkspaceAdapter {
     }
     const baseUrl = `${JIRA_API_BASE}/ex/jira/${site.id}/rest/api/3`;
 
-    if (actionType === 'CREATE_TICKET' || actionType === 'CREATE_JIRA_FROM_FIGMA') {
+    if (
+      actionType === 'CREATE_TICKET' ||
+      actionType === 'CREATE_JIRA_FROM_FIGMA' ||
+      actionType === 'CREATE_USER_STORY_FROM_FIGMA'
+    ) {
       const response = await fetch(`${baseUrl}/issue`, {
         method: 'POST',
         headers,

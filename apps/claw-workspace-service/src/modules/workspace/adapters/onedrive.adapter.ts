@@ -192,7 +192,12 @@ export class OneDriveAdapter implements WorkspaceAdapter {
       supportsOAuth: true,
       supportsPat: false,
       supportsDeltaSync: true,
-      supportsWebhooks: true,
+      // No signature verifier is registered for this provider in
+      // webhook-signature-verifiers.utility.ts, so the generic receiver
+      // (parseWebhookProvider) rejects every inbound delivery with
+      // WEBHOOK_PROVIDER_UNSUPPORTED regardless of this flag. Advertising
+      // true here would be a lie the receiver can't back up.
+      supportsWebhooks: false,
       objectTypes: ['FILE'],
     };
   }

@@ -1,24 +1,95 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Pass 1)
+# Workspace / Work OS — Current-State Audit and Gap Map (Pass 2)
 
-**Status: initial pass, not exhaustive.** This is the Phase 01 deliverable required by the
-`ClawAI_Workspace_Automation_Prompt_Pack` before any later phase starts. It was produced by
-inventorying `apps/claw-workspace-service` (modules, Prisma schema, adapters) directly against
-the pack's 16-phase target. It intentionally stops short of a full line-by-line capability audit
-(per-provider read/write/webhook matrix, contract-test coverage, frontend route inventory) —
-that is real, multi-session work and is called out explicitly below as the next pass, not silently
-skipped.
+**Status: per-provider capability matrix complete; duplication scan, frontend route inventory,
+and RabbitMQ contract inventory still pending (see "Explicitly not yet verified" below).** This
+is the Phase 01 deliverable required by the `ClawAI_Workspace_Automation_Prompt_Pack` before any
+later phase starts.
 
-## Why this is "Pass 1" and not the final gap map
+Pass 1 (below, preserved) established the structural map. Pass 2 adds the machine-actionable
+per-provider matrix the spec actually asks for, built by reading every adapter's
+`getCapabilities()`, `executeWriteAction`/write-helper dispatch, `fetchObjectDetails`,
+`downloadFileContent`, `getDefaultScopes`, the webhook signature-verifier registry, the frontend
+action-label map, and each adapter's test coverage — plus three concrete drift bugs found and
+fixed along the way (details in "Drift found — and fixed — during this pass").
 
-The full Phase 01 spec asks for a machine-actionable gap matrix across every provider (read
-objects / write actions implemented vs advertised / webhook support / delta sync / auth modes /
-known gaps / tests) plus an inventory of frontend routes, RabbitMQ contracts, plan/entitlement
-gates, and QA/E2E coverage. Producing that honestly requires reading every adapter file, every
-frontend workspace page, and the existing test suite — not a plausible single-session task
-alongside the other three sub-projects already shipped today. This document instead establishes
-the **structural map** (what subsystems exist, what Prisma models back them, how they map to the
-pack's target architecture) so the next session can do the per-provider matrix without
-re-discovering the module layout from zero.
+## Per-provider capability matrix (Pass 2)
+
+Read/search/live-fetch/download reflect the interface's optional methods
+(`fetchObjectDetails` = Live fetch, `downloadFileContent` = Download). Search is uniform across
+every provider — `workspace-search.service.ts` queries already-synced `WorkspaceObject` rows
+filtered by provider, not a per-provider live API, so it is not a per-adapter capability gap.
+"Write actions" lists the actual `actionType` strings each adapter's `executeWriteAction`
+dispatches on. "Tests" counts dedicated `__tests__/*.adapter.spec.ts`-style files only (not the
+shared `adapter-contract.spec.ts` or `workspace-adapter.factory.spec.ts`, which exercise the
+factory wiring, not per-provider behavior).
+
+| Provider         | Read objects                             | Write actions implemented                                                                                                                                        | Webhook: implemented | Webhook: advertised (pre-fix) | Delta sync | Live fetch | Download | Auth modes      | Known gaps                                                                                                            | Dedicated tests     |
+| ---------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ----------------------------- | ---------- | ---------- | -------- | --------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| GitHub           | REPOSITORY, ISSUE, PULL_REQUEST, COMMENT | CREATE_ISSUE, CREATE_ISSUE_COMMENT, CREATE_PR_DESCRIPTION, COMMENT_PR, APPROVE_PR, ADD_PR_SUGGESTION                                                             | yes                  | yes                           | yes        | yes        | no       | OAuth + PAT     | none found                                                                                                            | 3                   |
+| GitLab           | REPOSITORY, ISSUE, PULL_REQUEST          | CREATE_MR_COMMENT, APPROVE_MR, CREATE_GITLAB_ISSUE, COMMENT_GITLAB_ISSUE, UPDATE_MR_DESCRIPTION, ADD_MR_SUGGESTION, ADD_MR_IMAGE_COMMENT                         | yes                  | yes                           | no         | yes        | no       | OAuth + PAT     | no delta sync; **6 of 7 write actions had no frontend label (fixed)**                                                 | 2                   |
+| Bitbucket        | REPOSITORY, PULL_REQUEST                 | CREATE_PR_COMMENT_BB, APPROVE_PR_BB, CREATE_BITBUCKET_ISSUE                                                                                                      | yes                  | yes                           | no         | yes        | no       | OAuth (no PKCE) | no delta sync; **all 3 write actions had no frontend label (fixed)**; 0 dedicated tests                               | 0                   |
+| Jira             | TICKET, PROJECT, COMMENT                 | CREATE_TICKET, CREATE_JIRA_FROM_FIGMA, **CREATE_USER_STORY_FROM_FIGMA (fixed — was a labeled dead action)**, UPDATE_JIRA_ISSUE, ADD_TICKET_COMMENT, COMMENT_JIRA | yes                  | yes                           | yes        | yes        | no       | OAuth           | see fix below                                                                                                         | 1 (added this pass) |
+| Confluence       | DOCUMENT                                 | CREATE_CONFLUENCE, EDIT_CONFLUENCE                                                                                                                               | no                   | false                         | no         | yes        | no       | OAuth           | no webhook, no delta sync; 0 dedicated tests                                                                          | 0                   |
+| Slack            | CHANNEL, MESSAGE, USER                   | SEND_SLACK, SEND_SLACK_MESSAGE, REPLY_SLACK                                                                                                                      | yes                  | yes                           | no         | **no**     | no       | OAuth           | no live-fetch, no delta sync; 0 dedicated tests                                                                       | 0                   |
+| ClickUp          | TICKET                                   | CREATE_CLICKUP_TASK, UPDATE_CLICKUP_TASK, COMMENT_CLICKUP_TASK                                                                                                   | **no**               | **true (fixed → false)**      | no         | yes        | no       | OAuth           | advertised webhooks it can't accept (fixed); **all 3 write actions had no frontend label (fixed)**; 0 dedicated tests | 0                   |
+| Figma            | FILE                                     | POST_FIGMA_COMMENT (CREATE_JIRA_FROM_FIGMA / CREATE_USER_STORY_FROM_FIGMA route to the Jira adapter, not this one)                                               | yes                  | yes                           | no         | yes        | no       | OAuth           | none found beyond the Jira-side fix above                                                                             | 1                   |
+| Gmail            | EMAIL                                    | SEND_EMAIL, REPLY_EMAIL, CREATE_DRAFT                                                                                                                            | no                   | false                         | yes        | yes        | no       | OAuth           | **CREATE_DRAFT had no frontend label (fixed)**                                                                        | 2                   |
+| Google Drive     | FILE, DOCUMENT                           | UPLOAD_DRIVE, MOVE_DRIVE                                                                                                                                         | no                   | false                         | yes        | yes        | yes      | OAuth           | 0 dedicated tests                                                                                                     | 0                   |
+| Google Calendar  | MEETING                                  | **none — read-only, no `supportsWrite`/`executeWriteAction` at all**                                                                                             | no                   | false                         | yes        | yes        | no       | OAuth           | no write path exists for a provider the pack expects meeting automation on; 0 dedicated tests                         | 0                   |
+| OneDrive         | FILE                                     | UPLOAD_ONEDRIVE, MOVE_ONEDRIVE                                                                                                                                   | **no**               | **true (fixed → false)**      | yes        | yes        | yes      | OAuth           | advertised webhooks it can't accept (fixed); **both write actions had no frontend label (fixed)**; 0 dedicated tests  | 0                   |
+| Outlook Calendar | MEETING                                  | **none — read-only, no `supportsWrite`/`executeWriteAction` at all**                                                                                             | no                   | false                         | no         | yes        | no       | OAuth           | same gap as Google Calendar; also no delta sync; 0 dedicated tests                                                    | 0                   |
+| SharePoint       | DOCUMENT                                 | UPLOAD_SHAREPOINT, CREATE_SHAREPOINT_LIST_ITEM, UPDATE_SHAREPOINT_LIST_ITEM                                                                                      | **no**               | **true (fixed → false)**      | no         | yes        | yes      | OAuth           | advertised webhooks it can't accept (fixed); **all 3 write actions had no frontend label (fixed)**; 0 dedicated tests | 0                   |
+
+## Drift found — and fixed — during this pass
+
+1. **Phantom write action `CREATE_USER_STORY_FROM_FIGMA`.** Labeled "Create User Story from
+   Figma" in the frontend action picker (`workspace-action.constants.ts`) and present in both the
+   backend and frontend `WorkspaceActionType` enums, but no adapter ever dispatched on it — not
+   the Figma adapter (which only handles `POST_FIGMA_COMMENT`) and not the Jira adapter (which
+   handles the sibling `CREATE_JIRA_FROM_FIGMA` via the exact same generic issue-creation branch
+   but never had the story alias added). A user picking this action would always get
+   `errorMessage: "unsupported action type"`. **Fixed**: added the alias to the Jira adapter's
+   existing `CREATE_TICKET`/`CREATE_JIRA_FROM_FIGMA` branch — it was already payload-driven on
+   `issueType`, so the story variant needed no new logic. Added
+   `jira-create-ticket.spec.ts` (the adapter had zero prior test coverage).
+
+2. **False webhook advertising — ClickUp, OneDrive, SharePoint.** All three adapters'
+   `getCapabilities()` returned `supportsWebhooks: true`, but the receiver
+   (`webhook-receiver.controller.ts` → `parseWebhookProvider` → `isWebhookSupported`) only
+   recognizes a provider if it has a registered signature verifier in
+   `webhook-signature-verifiers.utility.ts`, and only GitHub/GitLab/Bitbucket/Slack/Jira/Figma are
+   registered there. Any inbound webhook for these three providers would be rejected with
+   `WEBHOOK_PROVIDER_UNSUPPORTED` regardless of the flag. **Fixed**: flipped all three to `false`
+   with a comment pointing at the receiver's actual behavior, so the flag stops lying. Note for
+   Phase 02: `AdapterCapabilities` (including this flag) is currently **dead metadata** — grepping
+   the whole backend and frontend found zero callers of `adapter.getCapabilities()` outside the
+   adapters' own test files. There is no consuming capability manifest yet; Phase 02 is what
+   would actually make this flag matter.
+
+3. **19 real, backend-implemented write actions had no frontend label — every GitLab, Bitbucket,
+   OneDrive, SharePoint, and ClickUp write action, plus Gmail's `CREATE_DRAFT`.** The frontend's
+   `WorkspaceActionType` enum (`apps/claw-frontend/src/enums/workspace-action-type.enum.ts`) was a
+   stale, partial mirror of the backend enum — it stopped before "Stream 20" (GitLab/Bitbucket)
+   and "Stream 21" (OneDrive/SharePoint/ClickUp) were added, and was missing `CREATE_DRAFT`.
+   Because `workspace-action-row.tsx` falls back to the raw enum string
+   (`WORKSPACE_ACTION_TYPE_LABEL[action.actionType] ?? action.actionType`) rather than throwing,
+   this wasn't a crash — it silently showed users machine strings like `CREATE_GITLAB_ISSUE`
+   instead of "Create GitLab Issue" in the approval queue for over a third of all implemented
+   write actions. **Fixed**: synced the frontend enum to the backend (19 added members) and gave
+   every new value a human label in `WORKSPACE_ACTION_TYPE_LABEL`, which TypeScript now enforces
+   exhaustively (`Record<WorkspaceActionType, string>`). Added
+   `workspace-action.constants.test.ts` asserting no label falls back to its raw key, since the
+   compiler alone wouldn't have caught a _wrong_ (as opposed to missing) label.
+
+## Why this is "Pass 2" and not the final gap map
+
+The Phase 01 spec also asks for a duplication scan (chain vs workflow overlap, duplicate action
+enums, duplicate approval queues, duplicate search paths, overlapping frontend pages) and a
+frontend route / RabbitMQ contract inventory. Those are still open — see "Explicitly not yet
+verified" below. This pass fixed what it found rather than only reporting it, per the pack's "the
+audit is not the final deliverable" instruction, but a full architectural duplication scan is
+its own multi-hour pass and would have diluted the depth of the provider matrix above if rushed
+in the same session.
 
 ## What already exists (confirmed by module + schema inventory)
 
@@ -68,19 +139,26 @@ rebuild working foundations."). The real work is very likely concentrated in:
 - **Phase 12** (does `WorkspaceConnectorGrant` distinguish org installations from personal
   connectors, with policy inheritance, or is it still purely per-user?).
 
-## Explicitly not yet verified in this pass (next session's starting point)
+## Explicitly not yet verified (next session's starting point)
 
-- Per-provider read/write/webhook/delta-sync capability matrix (the actual Phase 01 deliverable
-  table) — requires reading all 14 adapter files against `WorkspaceProviderDefinition` rows.
+- **Registry vs adapter drift** — whether `WorkspaceProviderDefinition` /
+  `WorkspaceProviderAppConfig` (DB rows) agree with the per-provider matrix above, or are a third,
+  independently-drifted source of truth. The matrix above is adapter-code-only; the DB rows were
+  not diffed against it this pass.
 - Whether `chains`/`ai-actions`/`actions` module boundaries already have the duplication the
   pack warns about ("chain vs workflow overlap... duplicate action enums... duplicate approval
   queues").
 - Frontend `/workspace/*` route and hook inventory (Phase 08's redesign target).
 - RabbitMQ event contract inventory for workspace-service (`claw.events` topic exchange usage).
-- Existing QA/E2E coverage for the modules above.
+- Existing QA/E2E coverage for the modules above (the 9-of-14 adapters with zero dedicated test
+  files, noted in the matrix, is one concrete piece of this — but chains/ai-actions/digest/inbox
+  etc. are unaudited).
 - Plan/entitlement gates on Workspace features (this session's RBAC work on
   `feat/chat-experience-revamp` covered the 9 chat orchestration labs only — Workspace has its
   own, separate plan-gate surface, unaudited here).
+- Whether Google Calendar / Outlook Calendar being read-only (no write path at all) is intentional
+  scope or a genuine gap — the pack's golden recipes (Phase 07) reference meeting automation,
+  which would need a write path on at least one calendar provider.
 
 ## Recommended execution order for the remaining 15 phases
 
