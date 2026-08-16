@@ -1,9 +1,13 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01 + Phase 02)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–03)
 
-**Status: Phase 01 (per-provider capability matrix) and Phase 02 (capability manifest / registry
-truth) are done. Phase 01's duplication scan, frontend route inventory, and RabbitMQ contract
-inventory are still pending (see "Explicitly not yet verified" below). Phase 03 onward not
-started.**
+**Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
+truth), and a deliberately-scoped-down real slice of Phase 03 (canonical event fabric, webhook
+sources only) are done. Phase 01's duplication scan, frontend route inventory, and RabbitMQ
+contract inventory are still pending (see "Explicitly not yet verified" below). Phase 03's
+non-webhook sources and Phase 04 onward are not started — each remaining phase is independently
+a multi-day-to-multi-week feature (durable workflow DAGs, saga/compensation, a knowledge graph,
+etc.); they're being built as real, tested, one-phase-per-batch slices rather than attempted all
+at once, per explicit instruction.**
 
 Pass 1 (below, preserved) established the structural map. Pass 2 adds the machine-actionable
 per-provider matrix the spec actually asks for, built by reading every adapter's
@@ -180,6 +184,73 @@ Automation Studio), not duplicated here. Payload JSON-schema validation per acti
 (`risk`, `defaultApproval`) were also not added — the existing `AiActionPolicy`/approval-queue
 system already carries its own risk/approval model, and reconciling the two is Phase 06's
 (Saga/compensation) territory, not Phase 02's.
+
+## Phase 03 — Canonical Workspace Event Fabric (webhook-sourced slice, done)
+
+The full Phase 03 spec asks for a 20-field normalized event model, a mapper for ~21 canonical
+event types across every provider, and a 7-way downstream fan-out (sync, workflow triggers,
+suggestions, knowledge graph, digest, learning, audit) — genuinely multi-week scope. Shipped a
+real, honestly-scoped-down slice instead of a stub:
+
+**What exists before this pass, reused rather than duplicated**: `WebhookReceiverManager` already
+had signature verification, dedupe-by-`externalDeliveryId`, persistence to `WebhookDelivery`, and
+a publish/subscribe fan-out via RabbitMQ (`WORKSPACE_WEBHOOK_RECEIVED`) — one real consumer
+already existed (`suggestion-factory/webhook-event.consumer.ts`), operating on raw
+provider-specific payloads. What was missing was the _canonical_ layer: nothing normalized a
+GitHub `pull_request`/`action=opened` and a GitLab `Merge Request Hook`/`action=open` into the
+same `PR_OPENED` vocabulary, so every future consumer would have had to duplicate provider parsing.
+
+**Added**:
+
+- `WorkspaceEvent` Prisma model (migration `20260816220000_add_workspace_event_canonical_fabric`)
+  — id, schemaVersion, connectorId, provider, eventType (canonical), resourceType,
+  resourceExternalId, occurredAt, receivedAt, correlationId, idempotencyKey, payload, payloadHash,
+  sourceDeliveryId, processingStatus. Deliberately excludes organizationId/installationId/
+  actorExternalId/causationId (Phase 12's multi-tenant/actor-attribution territory) and
+  riskClass/privacyClass (Phase 14's redaction territory) — adding them now without those phases'
+  design would mean unused, guessed-at columns.
+- `WorkspaceCanonicalEventType` enum (`common/enums/`) — the pack's full 21-value vocabulary,
+  defined up front even though only 13 are populated by a real mapper yet, so the vocabulary is
+  stable for later phases to extend into rather than each inventing their own.
+- `WorkspaceEventMapperService` — real, provider-accurate mappers (not guessed) for GitHub,
+  GitLab, Bitbucket, Jira, Slack, and Figma — the 6 providers with a working webhook receiver
+  (Phase 01's matrix). Covers PR_OPENED/PR_UPDATED/PR_MERGED/PR_REVIEWED, ISSUE_CREATED/
+  ISSUE_UPDATED, TICKET_CREATED/TICKET_STATUS_CHANGED, COMMENT_CREATED, CI_SUCCEEDED/CI_FAILED,
+  MESSAGE_RECEIVED/MENTION_RECEIVED. Returns null (drops to raw-only) for anything unmapped rather
+  than force-fitting — e.g. GitHub `push`, Figma `LIBRARY_PUBLISH`.
+- `WebhookIngestConsumer` — subscribes to the existing `WORKSPACE_WEBHOOK_RECEIVED` event
+  alongside the suggestion-factory consumer, maps, dedupes (idempotency key = `deliveryId:
+eventType`, unique per provider), persists, and publishes the new `WORKSPACE_EVENT_INGESTED`
+  pattern for future consumers to subscribe to instead of re-parsing raw payloads.
+- Tests: `workspace-event-mapper.service.spec.ts` (30 cases covering every mapped event type per
+  provider plus unmapped-drops-safely cases) and `webhook-ingest.consumer.spec.ts`, which
+  explicitly covers the pack's two named test requirements — **duplicate delivery** (same
+  WebhookReceivedEvent handled twice creates exactly one WorkspaceEvent and publishes once) and
+  **out-of-order delivery** (two distinct deliveries for the same PR processed in reverse
+  chronological order both persist correctly, since idempotency is keyed per-delivery not
+  per-resource — this is an append-only event log, not a materialized "current state" projection).
+
+**Explicitly not done in this slice** (real scope, not oversight):
+
+- The other 8 canonical event types (EMAIL_RECEIVED/REPLIED, DOCUMENT_CREATED/UPDATED,
+  FILE_UPDATED, TASK_CREATED/UPDATED, MEETING_STARTED/ENDED) have no webhook source today —
+  Gmail/Drive/Calendar/SharePoint/OneDrive/ClickUp are poll/delta-sync only per Phase 01's matrix.
+  Populating these needs either Phase 04 (realtime push/reconciliation) or teaching the existing
+  sync pipeline to also emit canonical WorkspaceEvents — a natural next slice, not done here.
+- No downstream consumer of `WORKSPACE_EVENT_INGESTED` exists yet — workflow triggers, the
+  knowledge graph, digest, and learning modules still don't react to it (they don't react to raw
+  webhooks either, today). Wiring them is each later phase's own job (05 for workflow triggers,
+  10/11 for graph/learning) — Phase 03's job was the fabric, not its consumers.
+- No query/replay REST API for `WorkspaceEvent` (Phase 02 got one for the provider registry
+  because its own acceptance criteria demanded it; Phase 03's didn't). Cheap follow-up if needed
+  before Phase 05 needs to read the event log.
+- The migration was hand-authored, not generated via `prisma migrate dev`, because the shared dev
+  Postgres container (`claw-pg-workspace`) is drifted from migration history across several
+  concurrently-developed worktrees — resetting a shared container to unblock codegen would destroy
+  other in-progress work, so it wasn't done. The migration SQL was written to match Prisma's own
+  output conventions (compare against recent hand-verified migrations in the same folder) and the
+  Prisma Client was regenerated cleanly from the updated schema, but the migration itself has not
+  been applied-and-verified against a live database in this pass.
 
 ## Explicitly not yet verified (next session's starting point)
 

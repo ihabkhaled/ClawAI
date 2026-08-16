@@ -1270,6 +1270,14 @@
     },
     {
       "consumers": [],
+      "key": "WORKSPACE_EVENT_INGESTED",
+      "pattern": "workspace.event.ingested",
+      "producers": [
+        "claw-workspace-service"
+      ]
+    },
+    {
+      "consumers": [],
       "key": "WORKSPACE_SUGGESTION_FACTORY_PROCESSED",
       "pattern": "workspace.suggestion.factory_processed",
       "producers": [

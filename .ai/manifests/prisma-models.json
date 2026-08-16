@@ -181,6 +181,7 @@
       "WorkspaceChainRunStep",
       "WorkspaceConnector",
       "WorkspaceConnectorGrant",
+      "WorkspaceEvent",
       "WorkspaceHealthEvent",
       "WorkspaceObject",
       "WorkspaceObjectLink",

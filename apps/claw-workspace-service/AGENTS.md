@@ -19,9 +19,9 @@ npm run dev
 ## Ownership (generated)
 - Port: 4014
 - Database: postgresql
-- Prisma models: AiActionApprovalQueue, AiActionPolicy, AutoSuggestRun, DigestSnapshot, ImplPromptHandoff, SuggestionDeduplication, SuggestionTriggerRule, SyncCadenceDefault, UserAutomationPreference, UserDigestPreference, UserEmailSignature, UserEmailTemplate, WebhookDelivery, WorkspaceAction, WorkspaceChain, WorkspaceChainRun, WorkspaceChainRunStep, WorkspaceConnector, WorkspaceConnectorGrant, WorkspaceHealthEvent, WorkspaceObject, WorkspaceObjectLink, WorkspaceProviderAppConfig, WorkspaceProviderDefinition, WorkspaceSyncRun
+- Prisma models: AiActionApprovalQueue, AiActionPolicy, AutoSuggestRun, DigestSnapshot, ImplPromptHandoff, SuggestionDeduplication, SuggestionTriggerRule, SyncCadenceDefault, UserAutomationPreference, UserDigestPreference, UserEmailSignature, UserEmailTemplate, WebhookDelivery, WorkspaceAction, WorkspaceChain, WorkspaceChainRun, WorkspaceChainRunStep, WorkspaceConnector, WorkspaceConnectorGrant, WorkspaceEvent, WorkspaceHealthEvent, WorkspaceObject, WorkspaceObjectLink, WorkspaceProviderAppConfig, WorkspaceProviderDefinition, WorkspaceSyncRun
 - API endpoints: 103 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 68 (jest)
+- Test files: 70 (jest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

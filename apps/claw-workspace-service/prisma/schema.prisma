@@ -507,6 +507,53 @@ model WebhookDelivery {
   @@map("webhook_deliveries")
 }
 
+// ─── Workspace Automation Phase 03: Canonical Event Fabric ───────────────
+//
+// Provider-neutral, deduped, replayable record of "something happened" —
+// the single normalized representation every downstream consumer (workflow
+// triggers, the knowledge graph, digest, learning, audit) should subscribe
+// to instead of re-parsing raw provider webhook payloads. Populated by
+// WorkspaceEventMapperService from WebhookDelivery rows; sourceDeliveryId
+// links back to the raw payload that produced it.
+//
+// Deliberately scoped down from the pack's full proposed shape for this
+// first pass: organizationId/installationId/actorExternalId/causationId
+// (multi-tenant + actor attribution — Phase 12's territory) and
+// riskClass/privacyClass (redaction — Phase 14's territory) are not yet
+// modeled. See docs/workspace/work-os-current-state-and-gap-map.md.
+enum WorkspaceEventProcessingStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+model WorkspaceEvent {
+  id                 String                         @id @default(cuid())
+  schemaVersion      Int                             @default(1) @map("schema_version")
+  connectorId        String?                         @map("connector_id")
+  provider           WorkspaceProvider
+  eventType          String                          @map("event_type") @db.VarChar(64)
+  resourceType       WorkspaceObjectType?            @map("resource_type")
+  resourceExternalId String?                         @map("resource_external_id") @db.VarChar(256)
+  occurredAt         DateTime?                       @map("occurred_at")
+  receivedAt         DateTime                        @default(now()) @map("received_at")
+  correlationId      String                          @map("correlation_id")
+  idempotencyKey     String                          @map("idempotency_key") @db.VarChar(320)
+  payload            Json
+  payloadHash        String                          @map("payload_hash") @db.VarChar(64)
+  sourceDeliveryId   String?                         @map("source_delivery_id")
+  processingStatus   WorkspaceEventProcessingStatus  @default(PENDING) @map("processing_status")
+  processingError    String?                         @map("processing_error") @db.VarChar(2000)
+  createdAt          DateTime                        @default(now()) @map("created_at")
+
+  @@unique([provider, idempotencyKey])
+  @@index([provider, eventType, receivedAt])
+  @@index([connectorId])
+  @@index([processingStatus])
+  @@index([sourceDeliveryId])
+  @@map("workspace_events")
+}
+
 // ─── Stream 12: Auto-Suggest Scheduler ───────────────────
 
 enum AutoSuggestRunStatus {

@@ -509,6 +509,7 @@
         "WorkspaceChainRunStep",
         "WorkspaceConnector",
         "WorkspaceConnectorGrant",
+        "WorkspaceEvent",
         "WorkspaceHealthEvent",
         "WorkspaceObject",
         "WorkspaceObjectLink",
@@ -516,7 +517,7 @@
         "WorkspaceProviderDefinition",
         "WorkspaceSyncRun"
       ],
-      "testFiles": 68,
+      "testFiles": 70,
       "testRunner": "jest"
     }
   ]

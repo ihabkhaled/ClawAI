@@ -5980,6 +5980,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "WORKSPACE_EVENT_INGESTED",
+        "pattern": "workspace.event.ingested",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "WORKSPACE_SUGGESTION_FACTORY_PROCESSED",
         "pattern": "workspace.suggestion.factory_processed",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -8809,6 +8814,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-workspace-service/prisma/schema.prisma",
+            "value": "WorkspaceEvent"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-workspace-service/prisma/schema.prisma",
             "value": "WorkspaceHealthEvent"
           },
           {
@@ -8943,7 +8953,7 @@
       },
       "claw-workspace-service": {
         "runner": "jest",
-        "testFiles": 68
+        "testFiles": 70
       }
     },
     "workspaces": [
@@ -9650,7 +9660,7 @@
     "dockerServiceCount": 41,
     "endpointCount": 588,
     "envVarCount": 343,
-    "eventCount": 166,
+    "eventCount": 167,
     "frontendRouteCount": 120,
     "localeCount": 16,
     "nginxRouteCount": 54,
@@ -9660,7 +9670,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 924,
+    "totalTestFiles": 926,
     "workspaceCount": 25
   }
 }
