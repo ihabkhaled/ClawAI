@@ -514,6 +514,15 @@ export const ja: TranslationDictionary = {
         workspaces: 'ワークスペース',
         memory: 'メモリ',
         contextPacks: 'コンテキスト パック',
+        consensusMode: 'コンセンサスモード',
+        escalationChain: 'エスカレーション チェーン',
+        repairLab: '修理ラボ',
+        taskDecomposer: 'タスク デコンポーザー',
+        bestOfN: 'N 世代のベスト',
+        verifier: '検証者',
+        pipelineLab: 'パイプライン ラボ',
+        costEnsemble: 'コストを意識したアンサンブル',
+        rolePack: 'ロール パック',
       },
     },
   },
@@ -1354,6 +1363,13 @@ export const ja: TranslationDictionary = {
   consensus: {
     title: 'コンセンサスモード',
     description: '2 ～ 5 つのモデルを選択し、AI にコンセンサスのある回答を合成させます',
+    goal: '単一のモデルの判断だけに頼るのではなく、複数のモデルの見解をすり合わせた回答を得られます。',
+    benefit1:
+      'モデル間の一致点と相違点が可視化されるため、回答そのものだけでなく、その裏にある確信度も把握できます。',
+    benefit2:
+      '1つのモデルの誤りや幻覚をそのまま鵜呑みにするリスクを減らせます。複数の異なるモデルが同じ誤りをすることはまれです。',
+    benefit3:
+      'セカンドオピニオン(そしてサードオピニオン)が結果を左右しうる、重要度の高い質問や曖昧な質問に最適です。',
     selectModels: 'モデルを選択してください',
     minModels: '少なくとも {min} モデルを選択してください',
     maxModels: '許可される最大 {max} モデル',
@@ -1388,6 +1404,12 @@ export const ja: TranslationDictionary = {
     title: 'エスカレーション チェーン',
     description:
       'モデル チェーンを定義します。最初に安価、最後に最も強力です。品質が低い場合は AI が自動的にエスカレーションする',
+    goal: 'まず高速かつ低コストな回答を取得し、実際に品質が求められる場合にのみ、より強力なモデルのコストをかけます。',
+    benefit1: '最も軽量なモデルから試すことで、日常的な質問を低コストかつ高速に処理します。',
+    benefit2:
+      '回答の品質スコアが基準に満たない場合のみ、手動での再試行なしに自動的により強力なモデルへエスカレーションします。',
+    benefit3:
+      'ほとんどのリクエストは単純だが、一部に本格的な推論力が必要となる、コストに敏感なワークロードに最適です。',
     chainBuilder: 'チェーンを構築する',
     addModel: 'モデルを追加',
     removeModel: '削除',
@@ -1426,6 +1448,13 @@ export const ja: TranslationDictionary = {
   repair: {
     title: 'アンサーリペアラボ',
     description: '再起動せずに、不正な、浅い、不完全な、または幻覚的な回答を修復します。',
+    goal: 'プロンプト全体を送り直していい結果を願うのではなく、悪い回答をその場で修正します。',
+    benefit1:
+      '不正な JSON、内容の薄さ、事実誤認など、問題のある箇所だけを的確に修正します。ゼロからの再生成は不要です。',
+    benefit2:
+      '回答の一部だけに手直しが必要な場合、フルリトライにかかるトークンと時間を節約できます。',
+    benefit3:
+      '一部のセクションの失敗が回答全体を無駄にしてしまうことのない、構造化された出力(JSON、レポート、コードなど)に最適です。',
     contentLabel: '修理の回答',
     contentPlaceholder: '修復したい回答を貼り付けてください...',
     repairTypes: '修理の種類',
@@ -1452,13 +1481,20 @@ export const ja: TranslationDictionary = {
     empty: {
       title: '回答を修復する準備ができました',
       description:
-        '上記の回答を貼り付け、必要な修復タイプにチェックを入れて、実行を有効にするローカル モデルを選択します。',
+        '上記に回答を貼り付け、必要な修復タイプにチェックを入れたうえで、モデルを選択すると実行できます。',
     },
   },
   decompose: {
     title: 'タスク分解ルーター',
     description:
       '複雑なタスクをサブタスクに分割し、それぞれを最適なモデルで実行して、結果を合成します。',
+    goal: '大規模で複数の要素からなるタスクをサブタスクに分割し、それぞれに最も適したモデルで処理します。',
+    benefit1:
+      '漠然とした複数ステップのリクエストを、焦点の定まらない長いプロンプト1つではなく、具体的なサブタスクに分割します。',
+    benefit2:
+      '各サブタスクを最も適したモデルに振り分けたうえで、一貫性のある1つの結果に統合します。',
+    benefit3:
+      '複数の異なる種類の作業を組み合わせた、リサーチ、計画立案、レポート作成のようなリクエストに最適です。',
     contentLabel: '複雑なタスク',
     contentPlaceholder:
       '分解する複雑なタスクを説明します。 「2025年のAIトレンドを調査し、3つのアクションプランを作成し、エグゼクティブサマリーを作成します。」',
@@ -1485,6 +1521,12 @@ export const ja: TranslationDictionary = {
   bestOfN: {
     title: 'ベストオブ N 候補の生成',
     description: '複数の回答候補を生成し、最も品質の高い回答を自動的に選択します。',
+    goal: '1回だけの生成では賭けの要素が大きすぎる場合に、複数の候補回答を生成し、最も優れたものを自動的に採用します。',
+    benefit1:
+      '最初の出力で妥協するのではなく、同じプロンプトを複数回サンプリングし、すべての候補を採点します。',
+    benefit2: '運悪く外れた1回の生成結果をそのまま採用してしまうリスクを減らせます。',
+    benefit3:
+      '実行ごとに出力の品質がばらつく、クリエイティブまたは自由度の高いプロンプトに最適です。',
     contentLabel: 'プロンプト',
     contentPlaceholder: 'プロンプトを入力して、複数の候補を生成します…',
     nCandidates: '候補者 (N)',
@@ -1528,6 +1570,11 @@ export const ja: TranslationDictionary = {
   verify: {
     title: '検証者',
     description: '送信する前に応答を生成して検証します',
+    goal: '回答を表示する前にチェックし、必要であれば修正することで、会話に届く前に誤りを発見します。',
+    benefit1: '下書きの回答を生成し、表示される前にプロンプトと照らし合わせて検証します。',
+    benefit2: '検証者が問題を見つけた場合、設定した上限回数まで自動的に回答を修正します。',
+    benefit3:
+      '最初の回答が誤っていたり不完全だったりすると、後から気づいた際のコストが大きい質問に最適です。',
     contentLabel: 'プロンプト',
     contentPlaceholder: '質問またはタスクを入力してください...',
     maxRevisionsLabel: '最大リビジョン数',
@@ -1567,6 +1614,13 @@ export const ja: TranslationDictionary = {
   pipeline: {
     title: 'マルチステージ パイプライン',
     description: '一連の専門家ステージを通じてリクエストをルーティングします',
+    goal: '1回の汎用的な処理ではなく、専門化された一連のステージ(分析、推論、整形など)を通じてリクエストを処理します。',
+    benefit1:
+      '1つのプロンプトですべてをカバーしようとするのではなく、リクエストを焦点を絞った指示を持つ順序立てたステージに分割します。',
+    benefit2:
+      'すぐに使えるテンプレート(分析→推論→整形、コード→デバッグ→レビュー、草稿→批評→改訂)に加え、完全にカスタムなステージ構成にも対応します。',
+    benefit3:
+      '複数回の処理を本当に必要とする出力に最適です。最初の草稿がレビュー後と同じ品質になることはほとんどありません。',
     contentLabel: 'あなたのリクエスト',
     contentPlaceholder: '必要なものを説明してください...',
     templateLabel: 'パイプライン テンプレート',
@@ -1588,6 +1642,13 @@ export const ja: TranslationDictionary = {
     title: 'コストを意識したアンサンブル',
     description:
       'スマートな実行: タスクの複雑さに基づいて 1 つ、2 つ、または 3 つのモデルを使用します',
+    goal: 'タスクに本当に必要な分だけ計算資源を使う——簡単な依頼には1つのモデル、複雑・リスクの高い依頼にはより多くのモデルを。',
+    benefit1:
+      'まずタスクの複雑さを見積もり、その上で単一モデル・2モデル・3モデルのいずれかを実行——追加モデルは本当に必要なときだけ使われます。',
+    benefit2:
+      'どれだけの性能が必要かを手動で判断することなく、日常的な質問を高速かつ低コストに保ちます。',
+    benefit3:
+      'ほとんどのリクエストは単純だが、難しいものには手を抜きたくない大量利用のワークロードに最適です。',
     contentLabel: 'プロンプト',
     contentPlaceholder: '質問またはタスクを入力してください...',
     sendPrompt: '分析して送信',
@@ -1609,6 +1670,13 @@ export const ja: TranslationDictionary = {
   rolePack: {
     title: 'ロールベースのアンサンブル',
     description: '専門の AI ロールのチームにリクエストを送信してください',
+    goal: '単一の汎用モデルではなく、連携する専門ロールのチームにリクエストをレビューしてもらいます。',
+    benefit1:
+      'リクエストを複数のロール特化モデル（例: コーディングチームのアーキテクト、実装担当、レビュアー）に並行して通します。',
+    benefit2:
+      '各ロールの出力を1つのチーム結果に統合するため、自分でチームレビューを行わなくてもその恩恵を得られます。',
+    benefit3:
+      '複数の専門的な視点が役立つ作業——コードレビュー、リサーチの統合、多角的な分析——に最適です。',
     contentLabel: 'あなたのリクエスト',
     contentPlaceholder: '必要なものを説明してください...',
     packLabel: 'チームを選択',
@@ -1634,11 +1702,12 @@ export const ja: TranslationDictionary = {
   },
   advancedModelSelector: {
     label: '実行モデル',
-    auto: '自動 (最適なローカル モデルを選択)',
+    auto: '自動 (利用可能な最適なモデルを選択)',
     loading: 'モデルを読み込み中...',
     description:
-      'このラボでは、[自動] またはローカルにインストールされた特定の Ollama モデルを選択します。',
-    empty: 'このラボではまだローカル テキスト モデルを使用できません。',
+      'このラボでは、[自動]、ローカルモデル、または接続済みの任意のクラウドプロバイダーを選択できます。ローカルモデルは無料でオフラインで動作し、クラウドモデルはローカルのハードウェアで不足する能力を補います。',
+    empty:
+      '利用可能なモデルがまだありません — ローカルモデルをインストールするか、クラウドプロバイダーを接続してください。',
   },
   workspaceConnectors: {
     title: 'ワークスペース コネクタ',
@@ -3311,6 +3380,9 @@ export const ja: TranslationDictionary = {
       isTrial: '30日間トライアル',
       trialHelp: 'トライアル期間は30日間で、各アカウントにつき1回のみ利用できます。',
       featureGates: 'フィーチャーゲート',
+      orchestrationLabs: 'オーケストレーション ラボ',
+      orchestrationLabsHint:
+        '高度なマルチモデル ワークフローです。それぞれ、ユーザーのロールに対応する権限も別途付与する必要があります。',
       unlimitedPlaceholder: '無制限',
       submitting: '保存中...',
       submitCreate: 'プランの作成',
@@ -3324,6 +3396,15 @@ export const ja: TranslationDictionary = {
       allowWorkspaces: 'ワークスペース',
       allowMemory: 'メモリ',
       allowContextPacks: 'コンテキスト パック',
+      allowConsensusMode: 'コンセンサスモード',
+      allowEscalationChain: 'エスカレーション チェーン',
+      allowRepairLab: '修理ラボ',
+      allowTaskDecomposer: 'タスク デコンポーザー',
+      allowBestOfN: 'N 世代のベスト',
+      allowVerifier: '検証者',
+      allowPipelineLab: 'パイプライン ラボ',
+      allowCostEnsemble: 'コストを意識したアンサンブル',
+      allowRolePack: 'ロール パック',
     },
     modelAccess: {
       title: 'モデルアクセス',
@@ -3545,9 +3626,11 @@ export const ja: TranslationDictionary = {
     outputColumnLabel: '出力',
     promptLabel: 'プロンプト',
     promptPlaceholder: 'このラボを実行したい内容について説明してください…',
-    pickModelHint: '実行を有効にするローカル モデルを選択してください。',
+    pickModelHint: '実行を有効にするモデルを選択してください。',
     runningLabel: '実行中…',
     progressTitle: 'ライブの進行状況',
+    goalLabel: '目的',
+    benefitsLabel: 'メリット',
     errorTitle: '実行に失敗しました',
   },
   chatShare: {

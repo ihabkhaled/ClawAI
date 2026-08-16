@@ -438,6 +438,8 @@ export type UseThemeSwitcherReturn = {
 };
 
 export type ThreadSettingsProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   t: TranslateFunction;
   systemPrompt: string;
   onSystemPromptChange: (value: string) => void;
@@ -465,6 +467,8 @@ export type ThreadSettingsProps = {
 };
 
 export type ThreadQualityPanelProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   t: TranslateFunction;
   judgeEnabled: boolean;
   onJudgeEnabledChange: (value: boolean) => void;
@@ -676,6 +680,47 @@ export type ModelSelection = {
   model: string;
   displayName: string;
   specifications?: string[];
+};
+
+// Normalized shape the shared searchable ModelPicker renders — every one of
+// the 6 model-picker call sites (grouped ModelSelection[] or flat
+// JudgeModelOption[]) adapts its own data into this before rendering, then
+// decodes ModelPickerOption.value back into its own callback shape.
+export type ModelPickerOption = {
+  value: string;
+  label: string;
+  specifications?: string[];
+};
+
+export type ModelPickerGroup = {
+  key: string;
+  label: string;
+  options: ModelPickerOption[];
+};
+
+export type ModelPickerItemProps = {
+  option: ModelPickerOption;
+  isSelected: boolean;
+  onSelect: (value: string) => void;
+};
+
+export type ModelPickerProps = {
+  id?: string;
+  groups: ModelPickerGroup[];
+  value: string | null;
+  onChange: (value: string | null) => void;
+  disabled?: boolean;
+  isLoading?: boolean;
+  // A pinned, always-first option outside every group (e.g. "Auto (routing
+  // decides)"). Omit for pickers that require an explicit model (no auto).
+  autoOption?: ModelPickerOption;
+  placeholder: string;
+  loadingPlaceholder: string;
+  emptyPlaceholder: string;
+  searchPlaceholder: string;
+  noResultsLabel: string;
+  triggerClassName?: string;
+  ariaLabel?: string;
 };
 
 export type ModelSelectorProps = {
@@ -1618,6 +1663,8 @@ export type ConsensusMetadataProps = {
 };
 
 export type InThreadComparePanelProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   selectedModels: ParallelModelTarget[];
   onToggleModel: (provider: string, model: string, checked: boolean) => void;
   // Controlled prompt textarea. Wired to use-in-thread-compare's prompt /
@@ -1625,7 +1672,6 @@ export type InThreadComparePanelProps = {
   prompt: string;
   onPromptChange: (value: string) => void;
   onSend: () => void;
-  onClose: () => void;
   result: ParallelResponse | undefined;
   isPending: boolean;
   canSend: boolean;
@@ -1673,8 +1719,13 @@ export type ChatThreadShellProps = {
   canCompare: boolean;
   compareToggleOpen: () => void;
   compareIsOpen: boolean;
+  // Dialog-driven close (X / Escape / overlay click) for each of the three
+  // mutually-exclusive header panels — only one of compare / quality /
+  // thread-settings can be open at a time (see useThreadDetailPage).
+  compareOnOpenChange: (open: boolean) => void;
   threadSettingsOpen: boolean;
   threadSettingsToggleOpen: () => void;
+  threadSettingsOnOpenChange: (open: boolean) => void;
   isDeleting: boolean;
   handleDelete: () => void;
   // Delete-confirmation dialog state (data-loss guard for thread deletion).
@@ -1692,13 +1743,15 @@ export type ChatThreadShellProps = {
   canUseQualityControls: boolean;
   qualityControlsOpen: boolean;
   qualityControlsToggleOpen: () => void;
+  qualityControlsOnOpenChange: (open: boolean) => void;
   qualityControlsLabel: string;
   // Public-share management: header entry point + its dialog.
   shareButtonProps: ShareChatButtonProps;
   shareDialogProps: ShareChatDialogProps;
-  // In-thread compare panel (only rendered when compareIsOpen && canCompare).
+  // In-thread compare dialog (mounted when canCompare; its own `open` prop
+  // gates visibility). Mutually exclusive with the quality/settings dialogs.
   inThreadComparePanelProps: InThreadComparePanelProps;
-  // Thread settings card (only rendered when threadSettingsOpen).
+  // Thread settings dialog (mounted unconditionally; `open` gates visibility).
   threadSettingsProps: ThreadSettingsProps;
   threadQualityPanelProps: ThreadQualityPanelProps;
   // Virtualized messages.

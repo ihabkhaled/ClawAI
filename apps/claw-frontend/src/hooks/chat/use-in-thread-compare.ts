@@ -21,8 +21,9 @@ export function useInThreadCompare({
   threadId,
   initialJudgeEnabled = false,
   initialJudgeModel = null,
+  isOpen = false,
+  onSendSuccess,
 }: UseInThreadCompareParams): UseInThreadCompareReturn {
-  const [isOpen, setIsOpen] = useState(false);
   const [selectedModels, setSelectedModels] = useState<ParallelModelTarget[]>([]);
   const [prompt, setPrompt] = useState('');
   const { t } = useTranslation();
@@ -59,6 +60,9 @@ export function useInThreadCompare({
       await queryClient.invalidateQueries({
         queryKey: queryKeys.threads.messagesInfinite(threadId),
       });
+      // Close the panel so the thread — now streaming the parallel
+      // responses — is visible immediately instead of hidden behind it.
+      onSendSuccess?.();
     },
     onError: (error: Error) => {
       logger.error({
@@ -70,20 +74,19 @@ export function useInThreadCompare({
     },
   });
 
-  const toggleOpen = useCallback(() => {
-    setIsOpen((v) => {
-      // Reset file selection when closing the panel so a stale selection
-      // doesn't survive the next open.
-      if (v) {
-        setSelectedFileIds([]);
-      }
-      return !v;
-    });
-  }, []);
   useEffect(() => {
     setJudgeEnabled(initialJudgeEnabled);
     setJudgeModel(initialJudgeModel);
   }, [initialJudgeEnabled, initialJudgeModel]);
+
+  // Panel visibility is owned by the caller (see useThreadDetailPage), not
+  // this hook. Reset the file selection on each fresh open so a stale
+  // selection from a previous session never survives into the next one.
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedFileIds([]);
+    }
+  }, [isOpen]);
 
   const handleToggleModel = useCallback((provider: string, model: string, checked: boolean) => {
     setSelectedModels((prev) => {
@@ -138,8 +141,6 @@ export function useInThreadCompare({
   }, [canSend, prompt, handleCompare]);
 
   return {
-    isOpen,
-    toggleOpen,
     selectedModels,
     handleToggleModel,
     prompt,

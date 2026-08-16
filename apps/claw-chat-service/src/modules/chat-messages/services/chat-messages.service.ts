@@ -526,6 +526,10 @@ export class ChatMessagesService implements OnModuleInit {
     dto: ConsensusMessageDto,
     userToken: string,
   ): Promise<ConsensusResponse> {
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requirePermission: Permission.CONSENSUS_MODE_USE,
+      requireFeature: 'allowConsensusMode',
+    });
     await this.assertOrchestrationResearchGate(userId, dto.researchMode);
     const thread =
       dto.threadId && dto.threadId.length > 0
@@ -559,6 +563,10 @@ export class ChatMessagesService implements OnModuleInit {
     const chainResearchMode = dto.chain.find(
       (step) => step.researchMode !== undefined && step.researchMode !== ResearchMode.NONE,
     )?.researchMode;
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requirePermission: Permission.ESCALATION_CHAIN_USE,
+      requireFeature: 'allowEscalationChain',
+    });
     await this.assertOrchestrationResearchGate(userId, chainResearchMode);
     const thread =
       dto.threadId && dto.threadId.length > 0
@@ -585,6 +593,10 @@ export class ChatMessagesService implements OnModuleInit {
     dto: RepairMessageDto,
     userToken: string,
   ): Promise<AnswerRepairResponse> {
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requirePermission: Permission.REPAIR_LAB_USE,
+      requireFeature: 'allowRepairLab',
+    });
     await this.assertOrchestrationResearchGate(userId, dto.researchMode);
     return this.answerRepairManager.executeRepair(userId, dto, userToken);
   }
@@ -594,6 +606,10 @@ export class ChatMessagesService implements OnModuleInit {
     dto: DecomposeTaskDto,
     userToken: string,
   ): Promise<TaskDecompositionResponse> {
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requirePermission: Permission.TASK_DECOMPOSER_USE,
+      requireFeature: 'allowTaskDecomposer',
+    });
     await this.assertOrchestrationResearchGate(userId, dto.researchMode);
     return this.taskDecompositionManager.executeDecomposition(userId, dto, userToken);
   }
@@ -603,6 +619,10 @@ export class ChatMessagesService implements OnModuleInit {
     dto: BestOfNMessageDto,
     userToken: string,
   ): Promise<BestOfNResponse> {
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requirePermission: Permission.BEST_OF_N_USE,
+      requireFeature: 'allowBestOfN',
+    });
     await this.assertOrchestrationResearchGate(userId, dto.researchMode);
     return this.bestOfNManager.executeBestOfN(userId, dto, userToken);
   }
@@ -612,6 +632,10 @@ export class ChatMessagesService implements OnModuleInit {
     dto: CostEnsembleMessageDto,
     userToken: string,
   ): Promise<CostEnsembleResponse> {
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requirePermission: Permission.COST_ENSEMBLE_USE,
+      requireFeature: 'allowCostEnsemble',
+    });
     await this.assertOrchestrationResearchGate(userId, dto.researchMode);
     return this.costEnsembleManager.executeCostEnsemble(userId, dto, userToken);
   }
@@ -621,14 +645,14 @@ export class ChatMessagesService implements OnModuleInit {
     dto: VerifyMessageDto,
     userToken: string,
   ): Promise<VerifyResponse> {
-    // Verifier is a separate orchestration lab gated by ROUTER_USE — same
-    // permission tier as Consensus / Escalation / Best-of-N. It is
-    // intentionally NOT the same gate as the per-lane Judge / Critic
-    // toggles inside compare mode (those keep their own allowJudgeMode /
-    // allowCriticReview / JUDGE_USE checks), which is why this endpoint
-    // does not depend on JUDGE_USE.
+    // Verifier is a separate orchestration lab with its own permission +
+    // plan-tier gate. It is intentionally NOT the same gate as the
+    // per-lane Judge / Critic toggles inside compare mode (those keep
+    // their own allowJudgeMode / allowCriticReview / JUDGE_USE checks),
+    // which is why this endpoint does not depend on JUDGE_USE.
     await this.accessControlService.assertCanSendMessage(userId, {
-      requirePermission: Permission.ROUTER_USE,
+      requirePermission: Permission.VERIFIER_USE,
+      requireFeature: 'allowVerifier',
     });
     await this.assertOrchestrationResearchGate(userId, dto.researchMode);
     return this.verifierManager.executeVerify(userId, dto, userToken);
@@ -639,6 +663,10 @@ export class ChatMessagesService implements OnModuleInit {
     dto: PipelineMessageDto,
     userToken: string,
   ): Promise<PipelineResponse> {
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requirePermission: Permission.PIPELINE_LAB_USE,
+      requireFeature: 'allowPipelineLab',
+    });
     await this.assertOrchestrationResearchGate(userId, dto.researchMode);
     return this.pipelineManager.executePipeline(userId, dto, userToken);
   }
@@ -648,6 +676,10 @@ export class ChatMessagesService implements OnModuleInit {
     dto: RolePackMessageDto,
     userToken: string,
   ): Promise<RolePackResponse> {
+    await this.accessControlService.assertCanSendMessage(userId, {
+      requirePermission: Permission.ROLE_PACK_USE,
+      requireFeature: 'allowRolePack',
+    });
     await this.assertOrchestrationResearchGate(userId, dto.researchMode);
     return this.rolePackManager.executeRolePack(userId, dto, userToken);
   }

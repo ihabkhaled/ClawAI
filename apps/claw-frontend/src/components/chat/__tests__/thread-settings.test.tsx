@@ -24,6 +24,8 @@ vi.mock('@/hooks/chat/use-available-models', () => ({
 const t = (key: string): string => key;
 
 const baseProps = {
+  open: true,
+  onOpenChange: vi.fn(),
   t,
   systemPrompt: '',
   onSystemPromptChange: vi.fn(),

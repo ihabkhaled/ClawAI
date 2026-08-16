@@ -513,6 +513,15 @@ export type TranslationDictionary = {
         workspaces: string;
         memory: string;
         contextPacks: string;
+        consensusMode: string;
+        escalationChain: string;
+        repairLab: string;
+        taskDecomposer: string;
+        bestOfN: string;
+        verifier: string;
+        pipelineLab: string;
+        costEnsemble: string;
+        rolePack: string;
       };
     };
   };
@@ -1345,6 +1354,10 @@ export type TranslationDictionary = {
   consensus: {
     title: string;
     description: string;
+    goal: string;
+    benefit1: string;
+    benefit2: string;
+    benefit3: string;
     selectModels: string;
     minModels: string;
     maxModels: string;
@@ -1378,6 +1391,10 @@ export type TranslationDictionary = {
   escalation: {
     title: string;
     description: string;
+    goal: string;
+    benefit1: string;
+    benefit2: string;
+    benefit3: string;
     chainBuilder: string;
     addModel: string;
     removeModel: string;
@@ -1415,6 +1432,10 @@ export type TranslationDictionary = {
   repair: {
     title: string;
     description: string;
+    goal: string;
+    benefit1: string;
+    benefit2: string;
+    benefit3: string;
     contentLabel: string;
     contentPlaceholder: string;
     repairTypes: string;
@@ -1444,6 +1465,10 @@ export type TranslationDictionary = {
   decompose: {
     title: string;
     description: string;
+    goal: string;
+    benefit1: string;
+    benefit2: string;
+    benefit3: string;
     contentLabel: string;
     contentPlaceholder: string;
     maxSubTasks: string;
@@ -1469,6 +1494,10 @@ export type TranslationDictionary = {
   bestOfN: {
     title: string;
     description: string;
+    goal: string;
+    benefit1: string;
+    benefit2: string;
+    benefit3: string;
     contentLabel: string;
     contentPlaceholder: string;
     nCandidates: string;
@@ -1511,6 +1540,10 @@ export type TranslationDictionary = {
   verify: {
     title: string;
     description: string;
+    goal: string;
+    benefit1: string;
+    benefit2: string;
+    benefit3: string;
     contentLabel: string;
     contentPlaceholder: string;
     maxRevisionsLabel: string;
@@ -1550,6 +1583,10 @@ export type TranslationDictionary = {
   pipeline: {
     title: string;
     description: string;
+    goal: string;
+    benefit1: string;
+    benefit2: string;
+    benefit3: string;
     contentLabel: string;
     contentPlaceholder: string;
     templateLabel: string;
@@ -1570,6 +1607,10 @@ export type TranslationDictionary = {
   costEnsemble: {
     title: string;
     description: string;
+    goal: string;
+    benefit1: string;
+    benefit2: string;
+    benefit3: string;
     contentLabel: string;
     contentPlaceholder: string;
     sendPrompt: string;
@@ -1591,6 +1632,10 @@ export type TranslationDictionary = {
   rolePack: {
     title: string;
     description: string;
+    goal: string;
+    benefit1: string;
+    benefit2: string;
+    benefit3: string;
     contentLabel: string;
     contentPlaceholder: string;
     packLabel: string;
@@ -3259,6 +3304,8 @@ export type TranslationDictionary = {
       isTrial: string;
       trialHelp: string;
       featureGates: string;
+      orchestrationLabs: string;
+      orchestrationLabsHint: string;
       unlimitedPlaceholder: string;
       submitting: string;
       submitCreate: string;
@@ -3272,6 +3319,15 @@ export type TranslationDictionary = {
       allowWorkspaces: string;
       allowMemory: string;
       allowContextPacks: string;
+      allowConsensusMode: string;
+      allowEscalationChain: string;
+      allowRepairLab: string;
+      allowTaskDecomposer: string;
+      allowBestOfN: string;
+      allowVerifier: string;
+      allowPipelineLab: string;
+      allowCostEnsemble: string;
+      allowRolePack: string;
     };
     modelAccess: {
       title: string;
@@ -3496,6 +3552,8 @@ export type TranslationDictionary = {
     runningLabel: string;
     progressTitle: string;
     errorTitle: string;
+    goalLabel: string;
+    benefitsLabel: string;
   };
   chatShare: {
     button: {

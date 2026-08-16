@@ -1,9 +1,10 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { useCallback, useState } from 'react';
 
 import { ROUTES } from '@/constants';
-import { PlanFeature } from '@/enums';
+import { ActiveThreadPanel, PlanFeature } from '@/enums';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useEditableTitle } from '@/hooks/chat/use-editable-title';
 import { useInThreadCompare } from '@/hooks/chat/use-in-thread-compare';
@@ -21,7 +22,28 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
   const params = useParams<{ threadId: string }>();
   const threadId = params.threadId ?? '';
   const { t } = useTranslation();
-  const data = useThreadDataController({ threadId, t });
+  // Single source of truth for which of the three header dialogs (Compare
+  // Models / Judge & Referee / Thread Settings) is open. Declared before the
+  // hooks below so their close callbacks can reference it.
+  const [activePanel, setActivePanel] = useState<ActiveThreadPanel | null>(null);
+  const closePanel = useCallback((): void => {
+    setActivePanel(null);
+  }, []);
+  const togglePanel = useCallback((panel: ActiveThreadPanel): void => {
+    setActivePanel((prev) => (prev === panel ? null : panel));
+  }, []);
+  // Dialog primitives call onOpenChange(false) on close (X / Escape / overlay
+  // click); they never call it with true since we drive `open` externally.
+  const handleDialogOpenChange = useCallback(
+    (open: boolean): void => {
+      if (!open) {
+        closePanel();
+      }
+    },
+    [closePanel],
+  );
+
+  const data = useThreadDataController({ threadId, t, onSettingsSaved: closePanel });
   const editableTitle = useEditableTitle(threadId, data.thread?.title ?? undefined);
   const { composerHeight, handleMouseDown } = useResizableComposer();
   const planFeatures = usePlanFeatures();
@@ -29,6 +51,8 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     threadId,
     initialJudgeEnabled: data.threadSettings.judgeEnabled,
     initialJudgeModel: data.threadSettings.judgeModel,
+    isOpen: activePanel === ActiveThreadPanel.COMPARE,
+    onSendSuccess: closePanel,
   });
 
   const canCompare = planFeatures.has(PlanFeature.ALLOW_COMPARE_MODE);
@@ -37,7 +61,6 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
   const canCritic = planFeatures.has(PlanFeature.ALLOW_CRITIC_REVIEW);
   const title = data.thread?.title ?? t('chat.untitled');
   const deleteConfirm = useToggle(false);
-  const qualityControls = useToggle(false);
   const share = useShareChatController(threadId.length > 0 ? threadId : null);
 
   const shellProps: ChatThreadShellProps = {
@@ -48,10 +71,12 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     thread: data.thread,
     editableTitle,
     canCompare,
-    compareToggleOpen: compare.toggleOpen,
-    compareIsOpen: compare.isOpen,
-    threadSettingsOpen: data.threadSettings.isOpen,
-    threadSettingsToggleOpen: data.threadSettings.toggleOpen,
+    compareToggleOpen: () => togglePanel(ActiveThreadPanel.COMPARE),
+    compareIsOpen: activePanel === ActiveThreadPanel.COMPARE,
+    compareOnOpenChange: handleDialogOpenChange,
+    threadSettingsOpen: activePanel === ActiveThreadPanel.SETTINGS,
+    threadSettingsToggleOpen: () => togglePanel(ActiveThreadPanel.SETTINGS),
+    threadSettingsOnOpenChange: handleDialogOpenChange,
     isDeleting: data.isDeleting,
     handleDelete: data.handleDelete,
     deleteConfirmOpen: deleteConfirm.isOpen,
@@ -72,18 +97,20 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     deleteLabel: t('common.delete'),
     compareLabel: t('compare.title'),
     canUseQualityControls: canJudge || canCritic,
-    qualityControlsOpen: qualityControls.isOpen,
-    qualityControlsToggleOpen: qualityControls.toggle,
+    qualityControlsOpen: activePanel === ActiveThreadPanel.QUALITY,
+    qualityControlsToggleOpen: () => togglePanel(ActiveThreadPanel.QUALITY),
+    qualityControlsOnOpenChange: handleDialogOpenChange,
     qualityControlsLabel: t('chat.judgeReferee'),
     shareButtonProps: share.buttonProps,
     shareDialogProps: share.dialogProps,
     inThreadComparePanelProps: {
+      open: activePanel === ActiveThreadPanel.COMPARE,
+      onOpenChange: handleDialogOpenChange,
       selectedModels: compare.selectedModels,
       onToggleModel: compare.handleToggleModel,
       prompt: compare.prompt,
       onPromptChange: compare.setPrompt,
       onSend: compare.handleSend,
-      onClose: compare.toggleOpen,
       result: compare.result,
       isPending: compare.isPending,
       canSend: compare.canSend,
@@ -108,6 +135,8 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
       t,
     },
     threadSettingsProps: {
+      open: activePanel === ActiveThreadPanel.SETTINGS,
+      onOpenChange: handleDialogOpenChange,
       t,
       systemPrompt: data.threadSettings.systemPrompt,
       onSystemPromptChange: data.threadSettings.setSystemPrompt,
@@ -129,6 +158,8 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
       canSave: data.threadSettings.canSave,
     },
     threadQualityPanelProps: {
+      open: activePanel === ActiveThreadPanel.QUALITY,
+      onOpenChange: handleDialogOpenChange,
       t,
       judgeEnabled: data.threadSettings.judgeEnabled,
       onJudgeEnabledChange: data.threadSettings.setJudgeEnabled,

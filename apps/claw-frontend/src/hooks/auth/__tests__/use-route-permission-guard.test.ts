@@ -178,12 +178,13 @@ describe('useRoutePermissionGuard', () => {
     expect(result.current.requiredFeature).toBe(PlanFeature.ALLOW_COMPARE_MODE);
   });
 
-  it('blocks /chat/verify for a USER who lacks ROUTER_USE', async () => {
-    // Verifier Lab is now permission-gated by ROUTER_USE (parallel to the
-    // other orchestration labs) — independent of the per-lane Judge / Critic
+  it('blocks /chat/verify for a USER who lacks VERIFIER_USE and allowVerifier', async () => {
+    // Verifier Lab is gated by its OWN permission (VERIFIER_USE) + plan
+    // feature (allowVerifier) — independent of the per-lane Judge / Critic
     // toggles in compare mode which keep their allowJudgeMode /
     // allowCriticReview / JUDGE_USE gates. USER_PERMISSIONS does not include
-    // ROUTER_USE, so a normal user must be blocked here.
+    // VERIFIER_USE, so a normal user must be blocked here even with
+    // allowJudgeMode unlocked.
     setUser(makeUser(UserRole.USER, USER_PERMISSIONS));
     mockEntitlements.mockResolvedValue(entWithGates({ allowJudgeMode: true }));
     mockPathname = '/chat/verify';
@@ -194,7 +195,33 @@ describe('useRoutePermissionGuard', () => {
       expect(result.current.isLoading).toBe(false);
     });
     expect(result.current.allowed).toBe(false);
-    expect(result.current.requiredPermission).toBe(Permission.ROUTER_USE);
+    expect(result.current.requiredPermission).toBe(Permission.VERIFIER_USE);
+    expect(result.current.requiredFeature).toBe(PlanFeature.ALLOW_VERIFIER);
+  });
+
+  it('blocks /chat/verify when the USER holds VERIFIER_USE but the plan feature is still locked', async () => {
+    setUser(makeUser(UserRole.USER, [...USER_PERMISSIONS, Permission.VERIFIER_USE]));
+    mockEntitlements.mockResolvedValue(entWithGates({ allowVerifier: false }));
+    mockPathname = '/chat/verify';
+
+    const { result } = renderHook(() => useRoutePermissionGuard(), { wrapper: makeWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+    expect(result.current.allowed).toBe(false);
+  });
+
+  it('allows /chat/verify only once the USER holds both VERIFIER_USE and allowVerifier', async () => {
+    setUser(makeUser(UserRole.USER, [...USER_PERMISSIONS, Permission.VERIFIER_USE]));
+    mockEntitlements.mockResolvedValue(entWithGates({ allowVerifier: true }));
+    mockPathname = '/chat/verify';
+
+    const { result } = renderHook(() => useRoutePermissionGuard(), { wrapper: makeWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.allowed).toBe(true);
+    });
   });
 
   it('allows ADMIN on /chat/compare even when no entitlements have arrived (admin bypass)', async () => {

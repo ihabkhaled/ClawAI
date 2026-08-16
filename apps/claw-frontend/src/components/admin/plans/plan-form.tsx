@@ -299,6 +299,103 @@ export function PlanForm({
         </div>
       </div>
 
+      <div className="border-border grid gap-3 rounded-lg border p-4">
+        <h3 className="text-sm font-semibold">{t('adminPlans.form.orchestrationLabs')}</h3>
+        <p className="text-muted-foreground text-xs">
+          {t('adminPlans.form.orchestrationLabsHint')}
+        </p>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-consensus" className="text-sm">
+            {t('adminPlans.gate.allowConsensusMode')}
+          </label>
+          <Switch
+            id="plan-allow-consensus"
+            checked={state.allowConsensusMode}
+            onCheckedChange={(next) => setField('allowConsensusMode', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-escalation" className="text-sm">
+            {t('adminPlans.gate.allowEscalationChain')}
+          </label>
+          <Switch
+            id="plan-allow-escalation"
+            checked={state.allowEscalationChain}
+            onCheckedChange={(next) => setField('allowEscalationChain', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-repair" className="text-sm">
+            {t('adminPlans.gate.allowRepairLab')}
+          </label>
+          <Switch
+            id="plan-allow-repair"
+            checked={state.allowRepairLab}
+            onCheckedChange={(next) => setField('allowRepairLab', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-decompose" className="text-sm">
+            {t('adminPlans.gate.allowTaskDecomposer')}
+          </label>
+          <Switch
+            id="plan-allow-decompose"
+            checked={state.allowTaskDecomposer}
+            onCheckedChange={(next) => setField('allowTaskDecomposer', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-best-of-n" className="text-sm">
+            {t('adminPlans.gate.allowBestOfN')}
+          </label>
+          <Switch
+            id="plan-allow-best-of-n"
+            checked={state.allowBestOfN}
+            onCheckedChange={(next) => setField('allowBestOfN', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-verifier" className="text-sm">
+            {t('adminPlans.gate.allowVerifier')}
+          </label>
+          <Switch
+            id="plan-allow-verifier"
+            checked={state.allowVerifier}
+            onCheckedChange={(next) => setField('allowVerifier', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-pipeline" className="text-sm">
+            {t('adminPlans.gate.allowPipelineLab')}
+          </label>
+          <Switch
+            id="plan-allow-pipeline"
+            checked={state.allowPipelineLab}
+            onCheckedChange={(next) => setField('allowPipelineLab', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-cost-ensemble" className="text-sm">
+            {t('adminPlans.gate.allowCostEnsemble')}
+          </label>
+          <Switch
+            id="plan-allow-cost-ensemble"
+            checked={state.allowCostEnsemble}
+            onCheckedChange={(next) => setField('allowCostEnsemble', next)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="plan-allow-role-pack" className="text-sm">
+            {t('adminPlans.gate.allowRolePack')}
+          </label>
+          <Switch
+            id="plan-allow-role-pack"
+            checked={state.allowRolePack}
+            onCheckedChange={(next) => setField('allowRolePack', next)}
+          />
+        </div>
+      </div>
+
       {submitErrorMessage !== null ? (
         <p
           className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-2 text-sm"

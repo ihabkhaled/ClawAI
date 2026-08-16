@@ -17,6 +17,12 @@ export const ALL_PERMISSIONS: Permission[] = Object.values(Permission);
 // matrix.
 // NOTE: MODEL_USE_ALLOWED gates only the model-LIST read endpoints the chat
 // picker calls — NOT the /models management pages (MODELS_CATALOG_VIEW).
+//
+// The 9 orchestration-lab *_USE permissions follow COMPARE_USE/JUDGE_USE's
+// pattern, not the deprecated ROUTER_USE's: granted broadly at the role
+// layer so a USER role is never blocked here, with the PLAN's allowXxx
+// feature gate (see PlanFeatureGates) doing the actual per-tier gating —
+// same two-layer shape every other plan-gated feature already uses.
 export const USER_DEFAULT_PERMISSIONS: Permission[] = [
   Permission.CHAT_USE,
   Permission.CHAT_READ_OWN,
@@ -33,6 +39,15 @@ export const USER_DEFAULT_PERMISSIONS: Permission[] = [
   Permission.COMPARE_USE,
   Permission.JUDGE_USE,
   Permission.FILES_USE,
+  Permission.CONSENSUS_MODE_USE,
+  Permission.ESCALATION_CHAIN_USE,
+  Permission.REPAIR_LAB_USE,
+  Permission.TASK_DECOMPOSER_USE,
+  Permission.BEST_OF_N_USE,
+  Permission.VERIFIER_USE,
+  Permission.PIPELINE_LAB_USE,
+  Permission.COST_ENSEMBLE_USE,
+  Permission.ROLE_PACK_USE,
 ];
 
 // Slugs of the two system roles. Slugs intentionally equal the UserRole enum

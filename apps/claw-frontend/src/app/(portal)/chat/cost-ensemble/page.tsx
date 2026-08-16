@@ -3,6 +3,7 @@
 import { Coins } from 'lucide-react';
 
 import { CostEnsembleResultCard } from '@/components/chat/cost-ensemble-result-card';
+import { OrchestrationLabInfo } from '@/components/chat/orchestration/orchestration-lab-info';
 import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestration-page-shell';
 import { EmptyState } from '@/components/common/empty-state';
 import { useCostEnsemblePage } from '@/hooks/chat/use-cost-ensemble-page';
@@ -39,11 +40,22 @@ export default function CostEnsemblePage(): React.ReactElement {
     ) : null;
 
   const emptySlot = (
-    <EmptyState
-      icon={Coins}
-      title={t('costEnsemble.noResults')}
-      description={t('costEnsemble.description')}
-    />
+    <>
+      <EmptyState
+        icon={Coins}
+        title={t('costEnsemble.noResults')}
+        description={t('costEnsemble.description')}
+      />
+      <OrchestrationLabInfo
+        goal={t('costEnsemble.goal')}
+        benefits={[
+          t('costEnsemble.benefit1'),
+          t('costEnsemble.benefit2'),
+          t('costEnsemble.benefit3'),
+        ]}
+        t={t}
+      />
+    </>
   );
 
   return (

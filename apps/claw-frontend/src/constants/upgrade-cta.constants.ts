@@ -12,4 +12,13 @@ export const PLAN_FEATURE_LABEL_KEYS: Record<PlanFeature, string> = {
   [PlanFeature.ALLOW_WORKSPACES]: 'chat.upgrade.features.workspaces',
   [PlanFeature.ALLOW_MEMORY]: 'chat.upgrade.features.memory',
   [PlanFeature.ALLOW_CONTEXT_PACKS]: 'chat.upgrade.features.contextPacks',
+  [PlanFeature.ALLOW_CONSENSUS_MODE]: 'chat.upgrade.features.consensusMode',
+  [PlanFeature.ALLOW_ESCALATION_CHAIN]: 'chat.upgrade.features.escalationChain',
+  [PlanFeature.ALLOW_REPAIR_LAB]: 'chat.upgrade.features.repairLab',
+  [PlanFeature.ALLOW_TASK_DECOMPOSER]: 'chat.upgrade.features.taskDecomposer',
+  [PlanFeature.ALLOW_BEST_OF_N]: 'chat.upgrade.features.bestOfN',
+  [PlanFeature.ALLOW_VERIFIER]: 'chat.upgrade.features.verifier',
+  [PlanFeature.ALLOW_PIPELINE_LAB]: 'chat.upgrade.features.pipelineLab',
+  [PlanFeature.ALLOW_COST_ENSEMBLE]: 'chat.upgrade.features.costEnsemble',
+  [PlanFeature.ALLOW_ROLE_PACK]: 'chat.upgrade.features.rolePack',
 };

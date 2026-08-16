@@ -24,12 +24,13 @@ vi.mock('@/hooks/files/use-upload-file', () => ({
 const t = (key: string): string => key;
 
 const baseProps = {
+  open: true,
+  onOpenChange: vi.fn(),
   selectedModels: [],
   onToggleModel: vi.fn(),
   prompt: '',
   onPromptChange: vi.fn(),
   onSend: vi.fn(),
-  onClose: vi.fn(),
   result: undefined,
   isPending: false,
   canSend: false,

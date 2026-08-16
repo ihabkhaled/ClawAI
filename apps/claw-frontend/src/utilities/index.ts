@@ -68,6 +68,8 @@ export {
   encodeModelValue,
   decodeModelValue,
   getLocalModelSpecificationLabels,
+  groupedModelsToPickerGroups,
+  judgeModelOptionsToPickerGroups,
 } from './model-selector.utility';
 export { buildAdvancedModelSelectionPayload } from './advanced-model-selection.utility';
 export { buildDecomposeStages } from './decompose-stages.utility';

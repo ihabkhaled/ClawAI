@@ -40,6 +40,15 @@ const ALL_PERMISSIONS = [
   'ROUTER_USE',
   'COMPARE_USE',
   'JUDGE_USE',
+  'CONSENSUS_MODE_USE',
+  'ESCALATION_CHAIN_USE',
+  'REPAIR_LAB_USE',
+  'TASK_DECOMPOSER_USE',
+  'BEST_OF_N_USE',
+  'VERIFIER_USE',
+  'PIPELINE_LAB_USE',
+  'COST_ENSEMBLE_USE',
+  'ROLE_PACK_USE',
   'FILES_USE',
   'RESEARCH_USE',
   'AGENT_USE',
@@ -74,6 +83,15 @@ const USER_DEFAULT_PERMISSIONS = [
   'COMPARE_USE',
   'JUDGE_USE',
   'FILES_USE',
+  'CONSENSUS_MODE_USE',
+  'ESCALATION_CHAIN_USE',
+  'REPAIR_LAB_USE',
+  'TASK_DECOMPOSER_USE',
+  'BEST_OF_N_USE',
+  'VERIFIER_USE',
+  'PIPELINE_LAB_USE',
+  'COST_ENSEMBLE_USE',
+  'ROLE_PACK_USE',
 ];
 
 const SYSTEM_ROLES = [
@@ -88,7 +106,8 @@ if (!connectionString) {
 
 // Add-only by default (matches prisma/seed.ts + PermissionsSeederService): only
 // hard-reconcile (remove extras) when SEED_RECONCILE_PERMISSIONS=true.
-const reconcileEnabled = (process.env.SEED_RECONCILE_PERMISSIONS ?? 'false').toLowerCase() === 'true';
+const reconcileEnabled =
+  (process.env.SEED_RECONCILE_PERMISSIONS ?? 'false').toLowerCase() === 'true';
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 

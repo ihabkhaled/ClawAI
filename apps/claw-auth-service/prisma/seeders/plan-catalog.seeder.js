@@ -63,6 +63,25 @@ function booleanProjections(features) {
   };
 }
 
+// The 9 orchestration-lab gates are plain per-plan booleans (no quota/limit
+// tracking, unlike the features map above) — a lab is either available on a
+// tier or it isn't. Read straight off `definition.labs` rather than routing
+// through PlanFeatureKey/PlanFeatureRule, which exists for usage-limited
+// trials this simple on/off gate doesn't need.
+function labGateProjections(labs) {
+  return {
+    allowConsensusMode: labs.consensusMode === true,
+    allowEscalationChain: labs.escalationChain === true,
+    allowRepairLab: labs.repairLab === true,
+    allowTaskDecomposer: labs.taskDecomposer === true,
+    allowBestOfN: labs.bestOfN === true,
+    allowVerifier: labs.verifier === true,
+    allowPipelineLab: labs.pipelineLab === true,
+    allowCostEnsemble: labs.costEnsemble === true,
+    allowRolePack: labs.rolePack === true,
+  };
+}
+
 function planColumns(definition) {
   return {
     name: definition.name,
@@ -91,6 +110,7 @@ function planColumns(definition) {
     modelAccessMode: definition.modelAccessMode,
     allowedCostClasses: definition.allowedCostClasses,
     ...booleanProjections(definition.features),
+    ...labGateProjections(definition.labs),
   };
 }
 
@@ -200,7 +220,10 @@ async function run(prisma) {
 
 module.exports = {
   name: 'plan-catalog',
-  version: 1,
+  // v2: added the 9 orchestration-lab gates (definition.labs). Payload now
+  // includes `labs` so a future change to the per-tier lab defaults is
+  // detected by the checksum instead of silently not re-applying.
+  version: 2,
   payload: PLAN_CATALOG.map((plan) => ({
     slug: plan.slug,
     monthlyMinor: plan.monthlyMinor,
@@ -208,10 +231,12 @@ module.exports = {
     dailyTokens: plan.dailyTokens,
     weeklyTokens: plan.weeklyTokens,
     monthlyTokens: plan.monthlyTokens,
+    labs: plan.labs,
     costCeiling: String(plan.monthlyCostCeilingMicroUsd),
   })),
   run,
   PLAN_CATALOG,
   matchesLegacyFingerprint,
   booleanProjections,
+  labGateProjections,
 };

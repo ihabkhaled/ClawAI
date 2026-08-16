@@ -151,6 +151,21 @@ model Plan {
   allowWorkspaces                    Boolean             @default(true) @map("allow_workspaces")
   allowMemory                        Boolean             @default(true) @map("allow_memory")
   allowContextPacks                  Boolean             @default(true) @map("allow_context_packs")
+  // Per-lab plan-tier gates for the 9 advanced orchestration pages. Same
+  // opt-in/DEFAULT(false) shape as allowCompareMode/allowJudgeMode above —
+  // paired with a matching Permission (e.g. CONSENSUS_MODE_USE) so a page
+  // is visible only when BOTH the user's role has the permission AND their
+  // plan has the gate. Replaces the single coarse ROUTER_USE permission
+  // that previously covered all 9 pages with no plan-tier distinction.
+  allowConsensusMode                 Boolean             @default(false) @map("allow_consensus_mode")
+  allowEscalationChain               Boolean             @default(false) @map("allow_escalation_chain")
+  allowRepairLab                     Boolean             @default(false) @map("allow_repair_lab")
+  allowTaskDecomposer                Boolean             @default(false) @map("allow_task_decomposer")
+  allowBestOfN                       Boolean             @default(false) @map("allow_best_of_n")
+  allowVerifier                      Boolean             @default(false) @map("allow_verifier")
+  allowPipelineLab                   Boolean             @default(false) @map("allow_pipeline_lab")
+  allowCostEnsemble                  Boolean             @default(false) @map("allow_cost_ensemble")
+  allowRolePack                      Boolean             @default(false) @map("allow_role_pack")
   // New and seeded plans expose every discovered model until an administrator
   // saves an explicit allow-list or deny-all policy.
   modelAccessMode                    PlanModelAccessMode @default(ALLOW_ALL) @map("model_access_mode")

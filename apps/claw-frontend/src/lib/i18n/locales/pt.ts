@@ -516,6 +516,15 @@ export const pt: TranslationDictionary = {
         workspaces: 'Espaços de Trabalho',
         memory: 'Memória',
         contextPacks: 'Pacotes de Contexto',
+        consensusMode: 'Modo Consenso',
+        escalationChain: 'Cadeia de Escalonamento',
+        repairLab: 'Lab. de Reparo',
+        taskDecomposer: 'Decompositor de Tarefas',
+        bestOfN: 'Geração Best-of-N',
+        verifier: 'Verificador',
+        pipelineLab: 'Lab. de Pipeline',
+        costEnsemble: 'Conjunto por Custo',
+        rolePack: 'Pacote de Funções',
       },
     },
   },
@@ -1365,6 +1374,13 @@ export const pt: TranslationDictionary = {
   consensus: {
     title: 'Modo Consenso',
     description: 'Selecione 2-5 modelos e deixe a IA sintetizar uma resposta de consenso',
+    goal: 'Obter uma resposta que concilie a perspectiva de vários modelos em vez de confiar na opinião de um único modelo.',
+    benefit1:
+      'Mostra onde os modelos concordam e discordam, revelando a confiança por trás de uma resposta, não apenas a resposta em si.',
+    benefit2:
+      'Reduz o risco de agir com base no erro ou na alucinação de um único modelo — vários modelos diferentes raramente cometem o mesmo erro.',
+    benefit3:
+      'Ideal para perguntas de alto risco ou ambíguas, em que uma segunda (e terceira) opinião pode mudar o resultado.',
     selectModels: 'Selecionar Modelos',
     minModels: 'Selecione pelo menos {min} modelos',
     maxModels: 'Máximo de {max} modelos permitidos',
@@ -1400,6 +1416,13 @@ export const pt: TranslationDictionary = {
     title: 'Cadeia de Escalonamento',
     description:
       'Defina uma cadeia de modelos — mais barato primeiro, mais poderoso por último. A IA escalona automaticamente quando a qualidade é baixa',
+    goal: 'Obter primeiro uma resposta rápida e barata, e só pagar por um modelo mais forte quando a qualidade realmente exigir.',
+    benefit1:
+      'Mantém as perguntas do dia a dia baratas e rápidas ao tentar primeiro o modelo mais leve.',
+    benefit2:
+      'Escalona automaticamente para um modelo mais forte apenas quando a pontuação de qualidade da resposta fica abaixo do esperado — sem repetição manual.',
+    benefit3:
+      'Ideal para cargas de trabalho sensíveis a custo, em que a maioria das requisições é simples, mas algumas exigem raciocínio de verdade.',
     chainBuilder: 'Construir Sua Cadeia',
     addModel: 'Adicionar Modelo',
     removeModel: 'Remover',
@@ -1438,6 +1461,13 @@ export const pt: TranslationDictionary = {
     title: 'Laboratório de Reparo de Respostas',
     description:
       'Repare respostas malformadas, superficiais, incompletas ou alucinadas sem reiniciar.',
+    goal: 'Corrigir uma resposta ruim no lugar, em vez de reenviar todo o prompt na esperança de um resultado melhor.',
+    benefit1:
+      'Ataca exatamente o que está errado — JSON malformado, cobertura superficial ou erros factuais — em vez de gerar tudo novamente do zero.',
+    benefit2:
+      'Economiza os tokens e o tempo de uma nova tentativa completa quando apenas parte da resposta precisa de ajuste.',
+    benefit3:
+      'Ideal para saídas estruturadas (JSON, relatórios, código), nas quais a falha em uma seção não deveria custar a resposta inteira.',
     contentLabel: 'Resposta para reparar',
     contentPlaceholder: 'Cole a resposta que você deseja reparar...',
     repairTypes: 'Tipos de reparo',
@@ -1464,13 +1494,20 @@ export const pt: TranslationDictionary = {
     empty: {
       title: 'Pronto para reparar uma resposta',
       description:
-        'Cole a resposta acima, marque os tipos de reparo necessários e escolha um modelo local para habilitar a execução.',
+        'Cole a resposta acima, marque os tipos de reparo necessários e escolha um modelo para habilitar a execução.',
     },
   },
   decompose: {
     title: 'Roteador de Decomposição de Tarefas',
     description:
       'Divida tarefas complexas em subtarefas, execute cada uma com o melhor modelo e então sintetize os resultados.',
+    goal: 'Dividir uma tarefa grande e multifacetada em subtarefas, para que cada parte seja tratada pelo modelo mais adequado a ela.',
+    benefit1:
+      'Divide requisições vagas e com várias etapas em subtarefas concretas, em vez de um único prompt longo e disperso.',
+    benefit2:
+      'Encaminha cada subtarefa ao modelo mais adequado a ela e depois sintetiza um resultado coerente.',
+    benefit3:
+      'Ideal para requisições de pesquisa, planejamento ou relatórios que combinam vários tipos diferentes de trabalho.',
     contentLabel: 'Tarefa Complexa',
     contentPlaceholder:
       'Descreva uma tarefa complexa para decompor, por exemplo, "Pesquise tendências de IA em 2025, crie um plano de ação de 3 pontos e escreva um resumo executivo."',
@@ -1498,6 +1535,12 @@ export const pt: TranslationDictionary = {
     title: 'Geração de Candidatos Best-of-N',
     description:
       'Gere múltiplas respostas candidatas e selecione automaticamente a resposta de maior qualidade.',
+    goal: 'Gerar várias respostas candidatas e manter automaticamente a melhor, quando uma única geração é uma aposta arriscada demais.',
+    benefit1:
+      'Consulta o mesmo prompt várias vezes e pontua cada candidato, em vez de se contentar com a primeira saída.',
+    benefit2: 'Reduz a chance de você agir com base em uma única geração com azar.',
+    benefit3:
+      'Ideal para prompts criativos ou abertos, em que a qualidade da saída varia a cada execução.',
     contentLabel: 'Prompt',
     contentPlaceholder: 'Insira seu prompt para gerar múltiplos candidatos...',
     nCandidates: 'Candidatos (N)',
@@ -1541,6 +1584,13 @@ export const pt: TranslationDictionary = {
   verify: {
     title: 'Verificador',
     description: 'Gere e verifique uma resposta antes de enviar',
+    goal: 'Verificar e, se necessário, revisar uma resposta antes que ela chegue até você, capturando erros antes que entrem na conversa.',
+    benefit1:
+      'Gera uma resposta em rascunho e depois a verifica em relação ao prompt antes que você a veja.',
+    benefit2:
+      'Revisa automaticamente a resposta (até o limite configurado) quando o verificador encontra um problema.',
+    benefit3:
+      'Ideal para perguntas em que uma primeira resposta errada ou incompleta seria custosa de corrigir depois.',
     contentLabel: 'Seu prompt',
     contentPlaceholder: 'Insira sua pergunta ou tarefa...',
     maxRevisionsLabel: 'Máx. revisões',
@@ -1581,6 +1631,13 @@ export const pt: TranslationDictionary = {
   pipeline: {
     title: 'Pipeline Multi-Estágio',
     description: 'Roteie sua requisição por uma cadeia de estágios especializados',
+    goal: 'Encaminhar uma requisição por uma sequência de estágios especializados (analisar, raciocinar, formatar etc.) em vez de uma única passagem genérica.',
+    benefit1:
+      'Divide uma única requisição em estágios ordenados, cada um com sua própria instrução focada, em vez de esperar que um único prompt cubra tudo.',
+    benefit2:
+      'Vem com modelos prontos (Analisar → Raciocinar → Formatar, Codificar → Depurar → Revisar, Rascunhar → Criticar → Revisar) ou uma lista de estágios totalmente personalizada.',
+    benefit3:
+      'Ideal para saídas que realmente precisam de várias passagens — um primeiro rascunho raramente tem a mesma qualidade de um resultado revisado.',
     contentLabel: 'Sua requisição',
     contentPlaceholder: 'Descreva o que você precisa...',
     templateLabel: 'Modelo de pipeline',
@@ -1602,6 +1659,13 @@ export const pt: TranslationDictionary = {
     title: 'Conjunto Consciente de Custo',
     description:
       'Execução inteligente: use um, dois ou três modelos baseado na complexidade da tarefa',
+    goal: 'Gastar apenas o poder computacional que a tarefa realmente exige — um modelo para pedidos simples, mais para os complexos ou arriscados.',
+    benefit1:
+      'Estima primeiro a complexidade da tarefa e depois executa um único modelo, uma dupla ou um trio — pagando por modelos extras somente quando eles se justificam.',
+    benefit2:
+      'Mantém as perguntas de rotina rápidas e baratas, sem uma decisão manual de "quanto poder eu preciso".',
+    benefit3:
+      'Ideal para uso de alto volume, em que a maioria das requisições é simples, mas você não quer subdimensionar as mais difíceis.',
     contentLabel: 'Seu prompt',
     contentPlaceholder: 'Insira sua pergunta ou tarefa...',
     sendPrompt: 'Analisar e Enviar',
@@ -1623,6 +1687,13 @@ export const pt: TranslationDictionary = {
   rolePack: {
     title: 'Conjunto Baseado em Funções',
     description: 'Envie sua requisição a um time de funções de IA especializadas',
+    goal: 'Ter uma requisição revisada por um time coordenado de funções especializadas, em vez de um único modelo generalista.',
+    benefit1:
+      'Executa sua requisição em paralelo por vários modelos específicos de cada função (por exemplo, o arquiteto, o implementador e o revisor de um time de programação).',
+    benefit2:
+      'Sintetiza as saídas individuais em um único resultado de time, para você ter o benefício de uma revisão em equipe sem precisar fazê-la sozinho.',
+    benefit3:
+      'Ideal para trabalhos que se beneficiam de múltiplas perspectivas especializadas — revisão de código, síntese de pesquisa ou análise multiangular.',
     contentLabel: 'Sua requisição',
     contentPlaceholder: 'Descreva o que você precisa...',
     packLabel: 'Selecionar time',
@@ -1648,11 +1719,12 @@ export const pt: TranslationDictionary = {
   },
   advancedModelSelector: {
     label: 'Modelo de execução',
-    auto: 'Auto (escolher melhor modelo local)',
+    auto: 'Auto (escolher o melhor modelo disponível)',
     loading: 'Carregando modelos...',
     description:
-      'Escolha Auto ou um modelo Ollama específico instalado localmente para este laboratório.',
-    empty: 'Nenhum modelo de texto local disponível para este laboratório ainda.',
+      'Escolha Auto, um modelo local ou qualquer provedor de nuvem conectado para este laboratório. Os modelos locais são gratuitos e funcionam offline; os modelos de nuvem adicionam capacidade quando o hardware local não é suficiente.',
+    empty:
+      'Nenhum modelo disponível ainda — instale um modelo local ou conecte um provedor de nuvem.',
   },
   workspaceConnectors: {
     title: 'Conectores de Área de Trabalho',
@@ -3317,6 +3389,9 @@ export const pt: TranslationDictionary = {
       isTrial: 'Teste de 30 dias',
       trialHelp: 'O teste dura 30 dias e só pode ser usado uma vez por conta.',
       featureGates: 'Controles de recursos',
+      orchestrationLabs: 'Laboratórios de orquestração',
+      orchestrationLabsHint:
+        'Fluxos de trabalho multimodelo avançados. Cada um também exige a permissão correspondente concedida à função do usuário.',
       unlimitedPlaceholder: 'Ilimitado',
       submitting: 'Salvando...',
       submitCreate: 'Criar plano',
@@ -3330,6 +3405,15 @@ export const pt: TranslationDictionary = {
       allowWorkspaces: 'Workspaces',
       allowMemory: 'Memória',
       allowContextPacks: 'Pacotes de contexto',
+      allowConsensusMode: 'Modo Consenso',
+      allowEscalationChain: 'Cadeia de Escalonamento',
+      allowRepairLab: 'Lab. de Reparo',
+      allowTaskDecomposer: 'Decompositor de Tarefas',
+      allowBestOfN: 'Geração Best-of-N',
+      allowVerifier: 'Verificador',
+      allowPipelineLab: 'Lab. de Pipeline',
+      allowCostEnsemble: 'Conjunto por Custo',
+      allowRolePack: 'Pacote de Funções',
     },
     modelAccess: {
       title: 'Acesso a modelos',
@@ -3552,10 +3636,12 @@ export const pt: TranslationDictionary = {
     outputColumnLabel: 'Saída',
     promptLabel: 'Prompt',
     promptPlaceholder: 'Descreva o que você quer que este laboratório execute…',
-    pickModelHint: 'Escolha um modelo local para habilitar a execução.',
+    pickModelHint: 'Escolha um modelo para habilitar a execução.',
     runningLabel: 'Executando…',
     progressTitle: 'Progresso ao vivo',
     errorTitle: 'A execução falhou',
+    goalLabel: 'Objetivo',
+    benefitsLabel: 'Benefícios',
   },
   chatShare: {
     button: {

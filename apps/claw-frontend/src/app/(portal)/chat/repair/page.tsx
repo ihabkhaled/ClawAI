@@ -2,6 +2,7 @@
 
 import { Wrench } from 'lucide-react';
 
+import { OrchestrationLabInfo } from '@/components/chat/orchestration/orchestration-lab-info';
 import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestration-page-shell';
 import { RepairResultCard } from '@/components/chat/repair-result-card';
 import { RepairTypeSelector } from '@/components/chat/repair-type-selector';
@@ -67,11 +68,18 @@ export default function RepairPage(): React.ReactElement {
         ) : undefined
       }
       emptySlot={
-        <EmptyState
-          icon={Wrench}
-          title={t('repair.empty.title')}
-          description={t('repair.empty.description')}
-        />
+        <>
+          <EmptyState
+            icon={Wrench}
+            title={t('repair.empty.title')}
+            description={t('repair.empty.description')}
+          />
+          <OrchestrationLabInfo
+            goal={t('repair.goal')}
+            benefits={[t('repair.benefit1'), t('repair.benefit2'), t('repair.benefit3')]}
+            t={t}
+          />
+        </>
       }
       errorMessage={errorMessage}
       t={t}

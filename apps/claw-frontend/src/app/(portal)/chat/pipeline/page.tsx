@@ -2,6 +2,7 @@
 
 import { GitBranch, Layers } from 'lucide-react';
 
+import { OrchestrationLabInfo } from '@/components/chat/orchestration/orchestration-lab-info';
 import { OrchestrationPageShell } from '@/components/chat/orchestration/orchestration-page-shell';
 import { PipelineResultCard } from '@/components/chat/pipeline-result-card';
 import { EmptyState } from '@/components/common/empty-state';
@@ -41,7 +42,7 @@ export default function PipelinePage(): React.ReactElement {
 
   const extraFieldsSlot = (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-foreground" htmlFor="pipeline-template">
+      <label className="text-foreground block text-sm font-medium" htmlFor="pipeline-template">
         {t('pipeline.templateLabel')}
       </label>
       <Select value={template} onValueChange={setTemplate} disabled={shellIsPending}>
@@ -65,11 +66,18 @@ export default function PipelinePage(): React.ReactElement {
     ) : null;
 
   const emptySlot = (
-    <EmptyState
-      icon={Layers}
-      title={t('pipeline.noResults')}
-      description={t('pipeline.description')}
-    />
+    <>
+      <EmptyState
+        icon={Layers}
+        title={t('pipeline.noResults')}
+        description={t('pipeline.description')}
+      />
+      <OrchestrationLabInfo
+        goal={t('pipeline.goal')}
+        benefits={[t('pipeline.benefit1'), t('pipeline.benefit2'), t('pipeline.benefit3')]}
+        t={t}
+      />
+    </>
   );
 
   return (

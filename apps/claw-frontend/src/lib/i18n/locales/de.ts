@@ -519,6 +519,15 @@ export const de: TranslationDictionary = {
         workspaces: 'Arbeitsbereiche',
         memory: 'Speicher',
         contextPacks: 'Kontext-Pakete',
+        consensusMode: 'Konsensmodus',
+        escalationChain: 'Eskalationskette',
+        repairLab: 'Repair-Labor',
+        taskDecomposer: 'Aufgabenzerlegung',
+        bestOfN: 'Best-of-N-Generierung',
+        verifier: 'Verifizierer',
+        pipelineLab: 'Pipeline-Labor',
+        costEnsemble: 'Kostenbewusstes Ensemble',
+        rolePack: 'Rollen-Paket',
       },
     },
   },
@@ -1373,6 +1382,13 @@ export const de: TranslationDictionary = {
   consensus: {
     title: 'Konsensmodus',
     description: '2-5 Modelle auswählen und die KI eine Konsensantwort synthetisieren lassen',
+    goal: 'Erhalten Sie eine Antwort, die die Perspektiven mehrerer Modelle zusammenführt, statt sich auf die Einschätzung eines einzelnen Modells zu verlassen.',
+    benefit1:
+      'Zeigt auf, wo Modelle übereinstimmen und wo nicht – so sehen Sie die Sicherheit hinter einer Antwort, nicht nur die Antwort selbst.',
+    benefit2:
+      'Verringert das Risiko, einem Fehler oder einer Halluzination eines einzelnen Modells zu folgen – mehrere unterschiedliche Modelle machen selten denselben Fehler.',
+    benefit3:
+      'Ideal für wichtige oder mehrdeutige Fragen, bei denen eine zweite (und dritte) Meinung das Ergebnis verändern kann.',
     selectModels: 'Modelle auswählen',
     minModels: 'Mindestens {min} Modelle auswählen',
     maxModels: 'Maximal {max} Modelle erlaubt',
@@ -1408,6 +1424,13 @@ export const de: TranslationDictionary = {
     title: 'Eskalationskette',
     description:
       'Modellkette definieren – günstigstes zuerst, stärkstes zuletzt. KI eskaliert automatisch bei niedriger Qualität',
+    goal: 'Erhalten Sie zuerst eine schnelle, günstige Antwort und bezahlen Sie nur dann für ein stärkeres Modell, wenn die Qualität es wirklich erfordert.',
+    benefit1:
+      'Hält alltägliche Fragen günstig und schnell, indem zuerst das leichteste Modell versucht wird.',
+    benefit2:
+      'Eskaliert automatisch zu einem stärkeren Modell, sobald der Qualitäts-Score der Antwort nicht ausreicht – ganz ohne manuellen erneuten Versuch.',
+    benefit3:
+      'Ideal für kostensensible Workloads, bei denen die meisten Anfragen einfach sind, einige aber echte Denkleistung erfordern.',
     chainBuilder: 'Kette erstellen',
     addModel: 'Modell hinzufügen',
     removeModel: 'Entfernen',
@@ -1447,6 +1470,13 @@ export const de: TranslationDictionary = {
     title: 'Antwort-Repair-Labor',
     description:
       'Fehlerhafte, oberflächliche, unvollständige oder halluzinierte Antworten reparieren, ohne neu zu starten.',
+    goal: 'Reparieren Sie eine fehlerhafte Antwort direkt vor Ort, statt die gesamte Eingabe erneut zu senden und auf einen besseren Versuch zu hoffen.',
+    benefit1:
+      'Behebt gezielt das eigentliche Problem – fehlerhaftes JSON, oberflächliche Inhalte oder Sachfehler – statt alles von Grund auf neu zu generieren.',
+    benefit2:
+      'Spart Tokens und Zeit eines kompletten Neuversuchs, wenn nur ein Teil der Antwort überarbeitet werden muss.',
+    benefit3:
+      'Ideal für strukturierte Ausgaben (JSON, Berichte, Code), bei denen ein fehlerhafter Abschnitt nicht die gesamte Antwort kosten sollte.',
     contentLabel: 'Zu reparierende Antwort',
     contentPlaceholder: 'Fügen Sie die zu reparierende Antwort ein...',
     repairTypes: 'Reparatur-Typen',
@@ -1473,13 +1503,20 @@ export const de: TranslationDictionary = {
     empty: {
       title: 'Bereit, eine Antwort zu reparieren',
       description:
-        'Fügen Sie oben die Antwort ein, wählen Sie die benötigten Reparaturtypen aus und wählen Sie dann ein lokales Modell, um den Lauf zu aktivieren.',
+        'Fügen Sie oben die Antwort ein, wählen Sie die benötigten Reparaturtypen aus und wählen Sie dann ein Modell, um den Lauf zu aktivieren.',
     },
   },
   decompose: {
     title: 'Task-Decomposition-Router',
     description:
       'Komplexe Aufgaben in Teilaufgaben zerlegen, jede mit dem besten Modell ausführen und die Ergebnisse synthetisieren.',
+    goal: 'Zerlegen Sie eine große, mehrteilige Aufgabe in Teilaufgaben, sodass jeder Teil vom dafür am besten geeigneten Modell bearbeitet wird.',
+    benefit1:
+      'Teilt vage, mehrstufige Anfragen in konkrete Teilaufgaben auf, statt in einen langen, unfokussierten Prompt.',
+    benefit2:
+      'Leitet jede Teilaufgabe an das am besten passende Modell weiter und führt die Ergebnisse zu einem stimmigen Gesamtresultat zusammen.',
+    benefit3:
+      'Ideal für Recherche-, Planungs- oder Berichtsanfragen, die mehrere unterschiedliche Arten von Arbeit kombinieren.',
     contentLabel: 'Komplexe Aufgabe',
     contentPlaceholder:
       'Beschreiben Sie eine komplexe Aufgabe zum Zerlegen, z. B. „Recherchiere KI-Trends 2025, erstelle einen 3-Punkte-Aktionsplan und schreibe eine Executive Summary."',
@@ -1507,6 +1544,13 @@ export const de: TranslationDictionary = {
     title: 'Best-of-N-Kandidatengenerierung',
     description:
       'Mehrere Kandidatenantworten generieren und automatisch die qualitativ beste auswählen.',
+    goal: 'Generieren Sie mehrere Kandidatenantworten und behalten Sie automatisch die beste, wenn eine einzelne Generierung zu riskant ist.',
+    benefit1:
+      'Fragt denselben Prompt mehrfach ab und bewertet jeden Kandidaten, statt sich mit der ersten Ausgabe zu begnügen.',
+    benefit2:
+      'Verringert die Wahrscheinlichkeit, dass eine einzelne unglückliche Generierung diejenige ist, auf die Sie sich verlassen.',
+    benefit3:
+      'Ideal für kreative oder offene Prompts, bei denen die Ausgabequalität von Durchlauf zu Durchlauf schwankt.',
     contentLabel: 'Prompt',
     contentPlaceholder: 'Geben Sie Ihren Prompt ein, um mehrere Kandidaten zu generieren...',
     nCandidates: 'Kandidaten (N)',
@@ -1550,6 +1594,13 @@ export const de: TranslationDictionary = {
   verify: {
     title: 'Verifizierer',
     description: 'Antwort generieren und verifizieren, bevor sie gesendet wird',
+    goal: 'Prüft und überarbeitet eine Antwort bei Bedarf, bevor sie Ihnen angezeigt wird – Fehler werden erkannt, bevor sie die Unterhaltung erreichen.',
+    benefit1:
+      'Erstellt zunächst einen Antwortentwurf und prüft ihn gegen den Prompt, bevor Sie ihn überhaupt zu sehen bekommen.',
+    benefit2:
+      'Überarbeitet die Antwort automatisch (bis zum konfigurierten Limit), wenn der Verifizierer ein Problem findet.',
+    benefit3:
+      'Ideal für Fragen, bei denen eine falsche oder unvollständige erste Antwort im Nachhinein teuer zu korrigieren wäre.',
     contentLabel: 'Ihr Prompt',
     contentPlaceholder: 'Geben Sie Ihre Frage oder Aufgabe ein...',
     maxRevisionsLabel: 'Max. Überarbeitungen',
@@ -1591,6 +1642,13 @@ export const de: TranslationDictionary = {
   pipeline: {
     title: 'Mehrstufige Pipeline',
     description: 'Ihre Anfrage durch eine Kette spezialisierter Stufen leiten',
+    goal: 'Leiten Sie eine Anfrage durch eine Abfolge spezialisierter Stufen (analysieren, begründen, formatieren usw.), statt durch einen einzigen generischen Durchlauf.',
+    benefit1:
+      'Zerlegt eine einzelne Anfrage in geordnete Stufen mit jeweils eigener, fokussierter Anweisung, statt zu hoffen, dass ein Prompt alles abdeckt.',
+    benefit2:
+      'Enthält fertige Vorlagen (Analysieren → Reasoning → Formatieren, Code → Debug → Review, Entwurf → Kritik → Überarbeitung) oder eine vollständig anpassbare Stufenliste.',
+    benefit3:
+      'Ideal für Ausgaben, die wirklich mehrere Durchgänge benötigen – ein erster Entwurf erreicht selten die Qualität einer überarbeiteten Fassung.',
     contentLabel: 'Ihre Anfrage',
     contentPlaceholder: 'Beschreiben Sie, was Sie benötigen...',
     templateLabel: 'Pipeline-Template',
@@ -1612,6 +1670,13 @@ export const de: TranslationDictionary = {
     title: 'Kostenbewusstes Ensemble',
     description:
       'Intelligente Ausführung: ein, zwei oder drei Modelle basierend auf Aufgabenkomplexität',
+    goal: 'Setzt nur so viel Rechenleistung ein, wie die Aufgabe tatsächlich braucht – ein Modell für einfache Anfragen, mehr für komplexe oder riskante.',
+    benefit1:
+      'Schätzt zunächst die Komplexität der Aufgabe ein und führt dann ein einzelnes Modell, ein Duo oder ein Trio aus – zusätzliche Modelle werden nur bezahlt, wenn sie gerechtfertigt sind.',
+    benefit2:
+      'Hält Routinefragen schnell und günstig, ohne dass Sie manuell entscheiden müssen, wie viel Leistung nötig ist.',
+    benefit3:
+      'Ideal für Nutzung mit hohem Volumen, bei der die meisten Anfragen einfach sind, die schwierigen aber nicht unterversorgt bleiben sollen.',
     contentLabel: 'Ihr Prompt',
     contentPlaceholder: 'Geben Sie Ihre Frage oder Aufgabe ein...',
     sendPrompt: 'Analysieren & Senden',
@@ -1633,6 +1698,13 @@ export const de: TranslationDictionary = {
   rolePack: {
     title: 'Rollenbasiertes Ensemble',
     description: 'Ihre Anfrage an ein Team spezialisierter KI-Rollen senden',
+    goal: 'Lassen Sie eine Anfrage von einem koordinierten Team spezialisierter Rollen prüfen, statt von einem einzelnen Generalisten-Modell.',
+    benefit1:
+      'Führt Ihre Anfrage parallel durch mehrere rollenspezifische Modelle (z. B. Architekt, Umsetzer und Reviewer eines Coding-Teams).',
+    benefit2:
+      'Führt die einzelnen Ergebnisse zu einem gemeinsamen Teamergebnis zusammen, sodass Sie vom Nutzen eines Team-Reviews profitieren, ohne es selbst durchzuführen.',
+    benefit3:
+      'Ideal für Arbeiten, die von mehreren spezialisierten Perspektiven profitieren – Code-Reviews, Recherche-Synthesen oder Analysen aus verschiedenen Blickwinkeln.',
     contentLabel: 'Ihre Anfrage',
     contentPlaceholder: 'Beschreiben Sie, was Sie benötigen...',
     packLabel: 'Team auswählen',
@@ -1658,11 +1730,12 @@ export const de: TranslationDictionary = {
   },
   advancedModelSelector: {
     label: 'Ausführungsmodell',
-    auto: 'Auto (bestes lokales Modell wählen)',
+    auto: 'Auto (bestes verfügbares Modell wählen)',
     loading: 'Modelle werden geladen...',
     description:
-      'Wählen Sie Auto oder ein bestimmtes lokal installiertes Ollama-Modell für dieses Labor.',
-    empty: 'Noch keine lokalen Textmodelle für dieses Labor verfügbar.',
+      'Wählen Sie für dieses Labor Auto, ein lokales Modell oder einen beliebigen verbundenen Cloud-Anbieter. Lokale Modelle laufen kostenlos und offline; Cloud-Modelle erweitern die Fähigkeiten, wo die lokale Hardware an ihre Grenzen stößt.',
+    empty:
+      'Noch keine Modelle verfügbar – installieren Sie ein lokales Modell oder verbinden Sie einen Cloud-Anbieter.',
   },
   workspaceConnectors: {
     title: 'Workspace-Konnektoren',
@@ -3338,6 +3411,9 @@ export const de: TranslationDictionary = {
       isTrial: '30-tägige Testphase',
       trialHelp: 'Die Testphase dauert 30 Tage und kann pro Konto nur einmal genutzt werden.',
       featureGates: 'Funktionsfreigaben',
+      orchestrationLabs: 'Orchestrierungs-Labore',
+      orchestrationLabsHint:
+        'Erweiterte Multi-Modell-Workflows. Jede davon benötigt zusätzlich die passende Berechtigung in der Rolle des Nutzers.',
       unlimitedPlaceholder: 'Unbegrenzt',
       submitting: 'Wird gespeichert...',
       submitCreate: 'Tarif erstellen',
@@ -3351,6 +3427,15 @@ export const de: TranslationDictionary = {
       allowWorkspaces: 'Workspaces',
       allowMemory: 'Speicher',
       allowContextPacks: 'Kontextpakete',
+      allowConsensusMode: 'Konsensmodus',
+      allowEscalationChain: 'Eskalationskette',
+      allowRepairLab: 'Repair-Labor',
+      allowTaskDecomposer: 'Aufgabenzerlegung',
+      allowBestOfN: 'Best-of-N-Generierung',
+      allowVerifier: 'Verifizierer',
+      allowPipelineLab: 'Pipeline-Labor',
+      allowCostEnsemble: 'Kostenbewusstes Ensemble',
+      allowRolePack: 'Rollen-Paket',
     },
     modelAccess: {
       title: 'Modellzugriff',
@@ -3574,10 +3659,12 @@ export const de: TranslationDictionary = {
     outputColumnLabel: 'Ausgabe',
     promptLabel: 'Eingabeaufforderung',
     promptPlaceholder: 'Beschreibe, womit dieses Labor arbeiten soll…',
-    pickModelHint: 'Wähle ein lokales Modell, um die Ausführung zu aktivieren.',
+    pickModelHint: 'Wähle ein Modell aus, um die Ausführung zu aktivieren.',
     runningLabel: 'Läuft…',
     progressTitle: 'Live-Fortschritt',
     errorTitle: 'Ausführung fehlgeschlagen',
+    goalLabel: 'Ziel',
+    benefitsLabel: 'Vorteile',
   },
   chatShare: {
     button: {

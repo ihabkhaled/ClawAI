@@ -51,22 +51,22 @@ describe('route-permission.utility', () => {
       expect(requiredPermissionForPath('/research/runs')).toBe(Permission.ADMIN_SYSTEM_VIEW);
     });
 
-    it('maps chat sub-pages to their lab permission while keeping /chat base open', () => {
+    it('maps chat sub-pages to their own per-page lab permission while keeping /chat base open', () => {
       // Compare is PLAN-feature gated (allowCompareMode), so
-      // requiredPermissionForPath returns null. Verify is now permission
-      // gated by ROUTER_USE (same tier as the other orchestration labs)
-      // — independent of the per-lane Judge/Critic toggles which keep
-      // their own allowJudgeMode / allowCriticReview / JUDGE_USE gates.
+      // requiredPermissionForPath returns null. Each of the 9 orchestration
+      // labs has its OWN permission (replacing the old single coarse
+      // ROUTER_USE) — independent of the per-lane Judge/Critic toggles which
+      // keep their own allowJudgeMode / allowCriticReview / JUDGE_USE gates.
       expect(requiredPermissionForPath('/chat/compare')).toBeNull();
-      expect(requiredPermissionForPath('/chat/verify')).toBe(Permission.ROUTER_USE);
-      expect(requiredPermissionForPath('/chat/consensus')).toBe(Permission.ROUTER_USE);
-      expect(requiredPermissionForPath('/chat/escalation')).toBe(Permission.ROUTER_USE);
-      expect(requiredPermissionForPath('/chat/repair')).toBe(Permission.ROUTER_USE);
-      expect(requiredPermissionForPath('/chat/decompose')).toBe(Permission.ROUTER_USE);
-      expect(requiredPermissionForPath('/chat/best-of-n')).toBe(Permission.ROUTER_USE);
-      expect(requiredPermissionForPath('/chat/pipeline')).toBe(Permission.ROUTER_USE);
-      expect(requiredPermissionForPath('/chat/cost-ensemble')).toBe(Permission.ROUTER_USE);
-      expect(requiredPermissionForPath('/chat/role-pack')).toBe(Permission.ROUTER_USE);
+      expect(requiredPermissionForPath('/chat/verify')).toBe(Permission.VERIFIER_USE);
+      expect(requiredPermissionForPath('/chat/consensus')).toBe(Permission.CONSENSUS_MODE_USE);
+      expect(requiredPermissionForPath('/chat/escalation')).toBe(Permission.ESCALATION_CHAIN_USE);
+      expect(requiredPermissionForPath('/chat/repair')).toBe(Permission.REPAIR_LAB_USE);
+      expect(requiredPermissionForPath('/chat/decompose')).toBe(Permission.TASK_DECOMPOSER_USE);
+      expect(requiredPermissionForPath('/chat/best-of-n')).toBe(Permission.BEST_OF_N_USE);
+      expect(requiredPermissionForPath('/chat/pipeline')).toBe(Permission.PIPELINE_LAB_USE);
+      expect(requiredPermissionForPath('/chat/cost-ensemble')).toBe(Permission.COST_ENSEMBLE_USE);
+      expect(requiredPermissionForPath('/chat/role-pack')).toBe(Permission.ROLE_PACK_USE);
       // The bare /chat route remains open (no entry => null).
       expect(requiredPermissionForPath('/chat')).toBeNull();
     });
@@ -136,10 +136,12 @@ describe('route-permission.utility', () => {
       expect(req?.permission).toBeUndefined();
     });
 
-    it('maps /chat/verify to the ROUTER_USE permission (no plan feature)', () => {
+    it('maps /chat/verify to its own permission AND plan feature (both, not just permission)', () => {
       const req = requiredRequirementForPath('/chat/verify');
-      expect(req).toEqual({ permission: Permission.ROUTER_USE });
-      expect(req?.feature).toBeUndefined();
+      expect(req).toEqual({
+        permission: Permission.VERIFIER_USE,
+        feature: PlanFeature.ALLOW_VERIFIER,
+      });
     });
 
     it('maps a permission-gated route to its permission (no feature)', () => {
