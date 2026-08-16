@@ -1,5 +1,7 @@
 import { MODEL_ROLE_LABELS } from '@/constants/routing.constants';
 
+import type { JudgeModelOption } from '../types/chat.types';
+import type { GroupedModels, ModelPickerGroup } from '../types/component.types';
 import type { LocalModel } from '../types/routing.types';
 
 const LOCAL_MODEL_CATEGORY_SPEC_LABELS: Record<string, string> = {
@@ -16,12 +18,42 @@ export function encodeModelValue(provider: string, model: string): string {
   return `${provider}::${model}`;
 }
 
+// Flattens useAvailableModels()'s grouped catalog into the normalized shape
+// ModelPicker renders. `encodeModelValue` is what the caller decodes back
+// into { provider, model } on selection.
+export function groupedModelsToPickerGroups(groupedModels: GroupedModels[]): ModelPickerGroup[] {
+  return groupedModels.map((group) => ({
+    key: group.provider,
+    label: group.label,
+    options: group.models.map((model) => ({
+      value: encodeModelValue(model.provider, model.model),
+      label: model.displayName,
+      specifications: model.specifications,
+    })),
+  }));
+}
+
 export function decodeModelValue(value: string): { provider: string; model: string } | null {
   const parts = value.split('::');
   if (parts.length !== 2 || !parts[0] || !parts[1]) {
     return null;
   }
   return { provider: parts[0], model: parts[1] };
+}
+
+// Judge/critic model pickers (compare-judge-controls, compare-critic-controls)
+// source a flat, ungrouped JudgeModelOption[] from useJudgeModelOptions()
+// rather than useAvailableModels()'s grouped catalog. The null-value "auto"
+// entry (if present) is dropped here — ModelPicker's own `autoOption` prop is
+// the single canonical "Auto" row for these two callers.
+export function judgeModelOptionsToPickerGroups(options: JudgeModelOption[]): ModelPickerGroup[] {
+  const concreteOptions = options.filter(
+    (option): option is { value: string; label: string } => option.value !== null,
+  );
+  if (concreteOptions.length === 0) {
+    return [];
+  }
+  return [{ key: 'judge-models', label: '', options: concreteOptions }];
 }
 
 export function getLocalModelSpecificationLabels(model: LocalModel): string[] {

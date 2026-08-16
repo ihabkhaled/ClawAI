@@ -682,6 +682,47 @@ export type ModelSelection = {
   specifications?: string[];
 };
 
+// Normalized shape the shared searchable ModelPicker renders — every one of
+// the 6 model-picker call sites (grouped ModelSelection[] or flat
+// JudgeModelOption[]) adapts its own data into this before rendering, then
+// decodes ModelPickerOption.value back into its own callback shape.
+export type ModelPickerOption = {
+  value: string;
+  label: string;
+  specifications?: string[];
+};
+
+export type ModelPickerGroup = {
+  key: string;
+  label: string;
+  options: ModelPickerOption[];
+};
+
+export type ModelPickerItemProps = {
+  option: ModelPickerOption;
+  isSelected: boolean;
+  onSelect: (value: string) => void;
+};
+
+export type ModelPickerProps = {
+  id?: string;
+  groups: ModelPickerGroup[];
+  value: string | null;
+  onChange: (value: string | null) => void;
+  disabled?: boolean;
+  isLoading?: boolean;
+  // A pinned, always-first option outside every group (e.g. "Auto (routing
+  // decides)"). Omit for pickers that require an explicit model (no auto).
+  autoOption?: ModelPickerOption;
+  placeholder: string;
+  loadingPlaceholder: string;
+  emptyPlaceholder: string;
+  searchPlaceholder: string;
+  noResultsLabel: string;
+  triggerClassName?: string;
+  ariaLabel?: string;
+};
+
 export type ModelSelectorProps = {
   value: ModelSelection | null;
   onChange: (selection: ModelSelection | null) => void;
