@@ -7,6 +7,7 @@ import { WorkspaceAdapterFactory } from '../../workspace/adapters/workspace-adap
 import { TokenRefreshManager } from '../../workspace/managers/token-refresh.manager';
 import { WorkspaceConnectorRepository } from '../../workspace/repositories/workspace-connector.repository';
 import { ChainRepository } from '../repositories/chain.repository';
+import { classifyChainStepError } from '../utilities/chain-error-classifier.utility';
 import { resolveChainPayload } from '../utilities/chain-placeholder-resolver.utility';
 import type { ChainDsl, ChainRunView, ChainStep, ChainStepOutputs } from '../types/chain.types';
 import type { Prisma, WorkspaceProvider } from '../../../generated/prisma';
@@ -113,7 +114,12 @@ export class ChainExecutorManager {
       outputs[step.id] = (priorAttempt.output as Record<string, unknown> | null) ?? {};
     }
 
-    await this.chainRepo.updateRun(runId, { status: 'RUNNING', error: null, finishedAt: null });
+    await this.chainRepo.updateRun(runId, {
+      status: 'RUNNING',
+      error: null,
+      finishedAt: null,
+      wasResumed: true,
+    });
     return this.executeFromIndex(userId, runId, dsl, outputs, resumeIndex);
   }
 
@@ -171,6 +177,7 @@ export class ChainExecutorManager {
       await this.chainRepo.updateStep(stepRow.id, {
         status: 'FAILED',
         error,
+        errorClass: classifyChainStepError(error),
         finishedAt: new Date(),
       });
       return { ok: false, error: `step ${step.id}: ${error}` };
@@ -209,13 +216,15 @@ export class ChainExecutorManager {
     try {
       const result = await adapter.executeWriteAction(accessToken, step.actionType, payload);
       if (!result.success) {
+        const errorMessage = result.errorMessage ?? 'adapter returned success=false';
         await this.chainRepo.updateStep(stepRow.id, {
           status: 'FAILED',
           resolvedPayload: payload as Prisma.InputJsonValue,
-          error: result.errorMessage ?? 'adapter returned success=false',
+          error: errorMessage,
+          errorClass: classifyChainStepError(errorMessage),
           finishedAt: new Date(),
         });
-        return { ok: false, error: `step ${step.id}: ${result.errorMessage ?? 'failed'}` };
+        return { ok: false, error: `step ${step.id}: ${errorMessage}` };
       }
       // The output object later steps can reference via placeholders.
       const output: Record<string, unknown> = {
@@ -250,6 +259,7 @@ export class ChainExecutorManager {
       chainId: run.chainId,
       status: run.status,
       error: run.error,
+      wasResumed: run.wasResumed,
       startedAt: run.startedAt?.toISOString() ?? null,
       finishedAt: run.finishedAt?.toISOString() ?? null,
       steps: run.steps.map((s) => ({
@@ -261,6 +271,7 @@ export class ChainExecutorManager {
         resolvedPayload: (s.resolvedPayload as Record<string, unknown> | null) ?? null,
         output: (s.output as Record<string, unknown> | null) ?? null,
         error: s.error,
+        errorClass: s.errorClass,
       })),
     };
   }

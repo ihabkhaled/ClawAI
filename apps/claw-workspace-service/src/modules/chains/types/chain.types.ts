@@ -25,6 +25,9 @@ export type ChainStepRunView = {
   resolvedPayload: Record<string, unknown> | null;
   output: Record<string, unknown> | null;
   error: string | null;
+  // Phase 06 — see chain-error-classifier.utility.ts. Only set when
+  // status=FAILED.
+  errorClass: string | null;
 };
 
 export type ChainRunView = {
@@ -32,6 +35,9 @@ export type ChainRunView = {
   chainId: string;
   status: string;
   error: string | null;
+  // Phase 06 — true once this run has gone through
+  // ChainExecutorManager.resume() at least once.
+  wasResumed: boolean;
   startedAt: string | null;
   finishedAt: string | null;
   steps: ChainStepRunView[];

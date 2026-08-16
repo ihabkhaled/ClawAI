@@ -1,19 +1,19 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–05)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–06)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
 truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
-bridge), and Phase 05 (crash recovery + resume-from-failed-step on the existing sequential chain
-executor) are done as real, deliberately-scoped slices — see each phase's own section below for
-exactly what's in and out of scope. Phase 01's duplication scan, frontend route inventory, and
-RabbitMQ contract inventory are still pending (see "Explicitly not yet verified" below).
-Push-subscription lifecycle management (Phase 04's full spec), the real DAG rewrite (Phase 05's
-full spec), and Phase 06 onward are not started — each remaining phase is independently a
-multi-day-to-multi-week feature (saga/compensation, a knowledge graph, an NL automation studio,
-etc.); they're being built as real, tested, one-phase-per-batch slices rather than attempted all
-at once, per explicit instruction — and the two riskiest categories of change (push-subscription
-lifecycles touching live OAuth apps, and a DAG rewrite touching live write-action execution) are
-being deliberately scoped down rather than rushed, per explicit instruction after each was
-flagged.**
+bridge), Phase 05 (crash recovery + resume-from-failed-step), and Phase 06 (error taxonomy +
+manual-repair tracking) are done as real, deliberately-scoped slices — see each phase's own
+section below for exactly what's in and out of scope. Phase 01's duplication scan, frontend
+route inventory, and RabbitMQ contract inventory are still pending (see "Explicitly not yet
+verified" below). Push-subscription lifecycle management (Phase 04's full spec), the real DAG
+rewrite (Phase 05's full spec), compensating/verification steps (Phase 06's full spec), and
+Phase 07 onward are not started — each remaining phase is independently a multi-day-to-multi-week
+feature (a knowledge graph, an NL automation studio, org RBAC, etc.); they're being built as
+real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
+instruction — and every category of change that would touch live write-action execution or a live
+OAuth app is being deliberately scoped down to safety-net hardening rather than rushed into a full
+rewrite, per explicit instruction after each was flagged.**
 
 Pass 1 (below, preserved) established the structural map. Pass 2 adds the machine-actionable
 per-provider matrix the spec actually asks for, built by reading every adapter's
@@ -357,6 +357,54 @@ dry-run/simulation, no cost/token usage tracking for AI steps (there are no AI s
 existing chain step is a direct provider write action), no version pinning beyond the pre-existing
 `dslSnapshot`. The genuine DAG rewrite — the actual bulk of Phase 05 — remains the real next step,
 and should get its own dedicated, carefully-tested pass given what it touches.
+
+## Phase 06 — Saga, Retry, Compensation, Recovery (error taxonomy + repair tracking slice, done)
+
+The full Phase 06 spec asks for compensating steps, verification steps, retry budgets with
+retry-after support, dead-letter workflow state, and an idempotency-record/provider-fingerprint
+store for safe duplicate detection. Several of the pack's own "Add" list items were, on
+inspection, **already satisfied by Phase 05**: "manual repair/resume" is
+`ChainExecutorManager.resume()`; "stuck-run sweeper" / "orphaned-step recovery" is
+`ChainOrphanRunRecoveryManager`; "do not duplicate [an already-succeeded write] on retry" is
+resume's already-succeeded-steps-are-never-re-executed design. This pass adds the two remaining
+items that are safely buildable without a new automatic-write capability:
+
+**Added**:
+
+- `WorkspaceChainStepErrorClass` (`TRANSIENT` / `AUTH` / `RATE_LIMIT` / `VALIDATION` /
+  `PERMISSION` / `CONFLICT` / `PERMANENT`) — the exact 7-way taxonomy the pack's "Add" list names.
+  `classifyChainStepError()` reuses the same message-pattern-matching _approach_
+  `WorkspaceSyncManager.classifyError` already established for sync runs (pattern reused, not
+  logic duplicated — sync's own 5-way `WorkspaceSyncErrorClass` is a narrower taxonomy for a
+  narrower failure surface and was left as-is). Every step failure path in `executeStep` now
+  classifies and persists `errorClass` alongside the existing `error` message. This is what lets a
+  human deciding whether to call `resume()` tell a worth-retrying failure (`TRANSIENT`,
+  `RATE_LIMIT`) from one that won't fix itself on retry (`AUTH` needs reconnecting,
+  `VALIDATION`/`PERMISSION` need the chain definition or grant fixed, `PERMANENT` never will).
+- `WorkspaceChainRun.wasResumed` — set `true` the moment `resume()` is called, satisfying the
+  pack's "Manually repaired" state from its run-inspector list: a completed run can now be told
+  apart from one that needed a human to intervene.
+- Both fields flow through to the existing `ChainRunView`/`ChainStepRunView` API response (no
+  frontend chain UI exists yet — Phase 08's territory — so the API response is the only surface
+  to expose them on in this pass).
+- 12 new tests: classifier coverage for all 7 categories plus case-insensitivity, real
+  end-to-end proof that a `429` adapter error persists `errorClass: 'RATE_LIMIT'` on the step row,
+  and that `resume()` sets `wasResumed: true` before the resumed step even runs.
+
+**Explicitly not done in this slice** (real scope, not oversight): **compensating steps** — the
+pack's own worked example ("Drive upload succeeded → Jira failed → delete the uploaded file if
+reversible") is a genuinely new capability: automatically executing _more_ write actions when a
+run fails. That increases the exact risk surface Phase 05 was scoped to avoid — a bug in
+compensation logic could itself cause an incorrect or duplicate external write — so it needs its
+own dedicated, carefully-tested pass with an explicit reversibility/policy model, not to be
+bolted on here. Also not done: **verification steps** (confirming a write actually landed
+correctly, independent of the adapter's own success response), **retry budgets / retry-after
+support** (still no automatic retry of the write-action call itself — unchanged from Phase 05's
+reasoning), **dead-letter workflow state** (still just `FAILED`; no separate DLQ-style terminal
+state or dedicated repair queue/inbox), and an **idempotency-record / provider-action-fingerprint
+store** for safe duplicate detection beyond "don't re-run an already-succeeded step" (a
+same-payload-detected-independently-of-run-history dedup layer, which none of these provider APIs
+support natively and would need real design work to build safely on ClawAI's side).
 
 ## Explicitly not yet verified (next session's starting point)
 

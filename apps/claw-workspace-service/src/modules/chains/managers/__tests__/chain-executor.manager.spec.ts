@@ -193,6 +193,42 @@ describe('ChainExecutorManager', () => {
     );
   });
 
+  it('classifies a step failure and persists errorClass on the step row', async () => {
+    const executeWriteAction = jest
+      .fn()
+      .mockResolvedValueOnce({ success: false, errorMessage: 'Jira API error: HTTP 429' });
+    const { manager, chainRepo } = makeDeps({
+      chain: { id: 'chain-1', userId: 'u1', isEnabled: true, dsl: twoStepDsl },
+      adapter: { executeWriteAction },
+    });
+    await manager.run('u1', 'chain-1');
+    expect(chainRepo['updateStep']).toHaveBeenCalledWith(
+      'step-make-ticket',
+      expect.objectContaining({ status: 'FAILED', errorClass: 'RATE_LIMIT' }),
+    );
+  });
+
+  it('classifies an unresolved-placeholder failure as VALIDATION', async () => {
+    const badDsl = {
+      steps: [
+        {
+          id: 'only',
+          connectorId: 'c1',
+          actionType: 'SEND_SLACK',
+          payload: { text: '{{steps.x.output.id}}' },
+        },
+      ],
+    };
+    const { manager, chainRepo } = makeDeps({
+      chain: { id: 'chain-1', userId: 'u1', isEnabled: true, dsl: badDsl },
+    });
+    await manager.run('u1', 'chain-1');
+    expect(chainRepo['updateStep']).toHaveBeenCalledWith(
+      'step-only',
+      expect.objectContaining({ errorClass: 'VALIDATION' }),
+    );
+  });
+
   describe('resume', () => {
     const failedRunWithFirstStepSucceeded = {
       id: 'run-1',
@@ -262,6 +298,25 @@ describe('ChainExecutorManager', () => {
       expect(chainRepo['updateRun']).toHaveBeenLastCalledWith(
         'run-1',
         expect.objectContaining({ status: 'COMPLETED' }),
+      );
+    });
+
+    it('marks wasResumed: true the moment resume() is called, distinguishing a manually-repaired run from one that succeeded on the first try', async () => {
+      const executeWriteAction = jest
+        .fn()
+        .mockResolvedValue({ success: true, externalId: 'msg-1' });
+      const { manager, chainRepo } = makeDeps({
+        chain: { id: 'chain-1', userId: 'u1', isEnabled: true, dsl: twoStepDsl },
+        runWithSteps: failedRunWithFirstStepSucceeded,
+        adapter: { executeWriteAction },
+      });
+
+      await manager.resume('u1', 'chain-1', 'run-1');
+
+      expect(chainRepo['updateRun']).toHaveBeenNthCalledWith(
+        1,
+        'run-1',
+        expect.objectContaining({ status: 'RUNNING', wasResumed: true }),
       );
     });
 

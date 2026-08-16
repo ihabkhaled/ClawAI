@@ -804,6 +804,23 @@ enum WorkspaceChainStepStatus {
   SKIPPED
 }
 
+// Phase 06 — the error taxonomy the pack's "Add" list asks for
+// (transient / auth / rate-limit / validation / permission / conflict /
+// permanent), reusing the same message-pattern classification approach
+// WorkspaceSyncManager.classifyError already uses for sync runs (see
+// WorkspaceSyncErrorClass), extended to the full 7-way taxonomy since chain
+// steps hit a wider range of failure modes (payload validation, RBAC
+// denial, conflicting external state) than a read-only sync does.
+enum WorkspaceChainStepErrorClass {
+  TRANSIENT
+  AUTH
+  RATE_LIMIT
+  VALIDATION
+  PERMISSION
+  CONFLICT
+  PERMANENT
+}
+
 model WorkspaceChain {
   id          String   @id @default(cuid())
   userId      String   @map("user_id") @db.VarChar(128)
@@ -833,6 +850,11 @@ model WorkspaceChainRun {
   // retroactively change a historical run.
   dslSnapshot Json                  @map("dsl_snapshot")
   error     String?                 @db.Text
+  // Phase 06 — true once this run has gone through ChainExecutorManager
+  // .resume() at least once, so a completed run can be told apart from one
+  // that needed a human to manually repair and re-trigger it (the
+  // "Manually repaired" state the pack's run-inspector list asks for).
+  wasResumed Boolean                @default(false) @map("was_resumed")
   startedAt DateTime?               @map("started_at")
   finishedAt DateTime?              @map("finished_at")
   createdAt DateTime                @default(now()) @map("created_at")
@@ -860,6 +882,12 @@ model WorkspaceChainRunStep {
   resolvedPayload Json?                @map("resolved_payload")
   output      Json?
   error       String?                  @db.Text
+  // Phase 06 — classifies `error` so a human deciding whether to resume
+  // (or the run-inspector UI, once one exists) can tell a worth-retrying
+  // failure (TRANSIENT, RATE_LIMIT) from one that won't fix itself on
+  // retry (AUTH needs reconnecting, VALIDATION/PERMISSION need the chain
+  // definition or grant fixed, PERMANENT never will).
+  errorClass  WorkspaceChainStepErrorClass? @map("error_class")
   startedAt   DateTime?                @map("started_at")
   finishedAt  DateTime?                @map("finished_at")
   createdAt   DateTime                 @default(now()) @map("created_at")
