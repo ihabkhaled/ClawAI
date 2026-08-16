@@ -12,6 +12,7 @@ import {
 
 import { WorkspaceConnectorRepository } from '../repositories/workspace-connector.repository';
 import { WorkspaceAdapterFactory } from '../adapters/workspace-adapter.factory';
+import { WorkspaceSyncEventBridgeService } from '../../workspace-events/services/workspace-sync-event-bridge.service';
 import { TokenRefreshManager } from './token-refresh.manager';
 import { WorkspaceObjectManager } from './workspace-object.manager';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
@@ -38,6 +39,7 @@ export class WorkspaceSyncManager {
     private readonly tokenRefresh: TokenRefreshManager,
     private readonly objectManager: WorkspaceObjectManager,
     private readonly rabbitmq: RabbitMQService,
+    private readonly syncEventBridge: WorkspaceSyncEventBridgeService,
   ) {}
 
   async syncConnector(
@@ -133,12 +135,29 @@ export class WorkspaceSyncManager {
     ) {
       return 0;
     }
-    return this.objectManager.upsertBatch(
+    const synced = await this.objectManager.upsertBatch(
       connector.id,
       connector.userId,
       connector.provider,
       outcome.result.objects,
     );
+    // Phase 04 (scoped slice) — the "consistency path": bridge synced
+    // objects into the canonical WorkspaceEvent fabric for providers with
+    // no webhook fast path. No-ops for webhook-covered providers (see
+    // WorkspaceSyncEventBridgeService) so this never duplicates events the
+    // webhook path already created.
+    // Prisma's generated WorkspaceProvider enum and the hand-written
+    // common/enums mirror are structurally identical string enums but
+    // nominally distinct types; bridging them with a plain cast matches
+    // the existing convention in workspace-provider-registry.controller.ts.
+    await this.syncEventBridge
+      .bridge(connector.provider as WorkspaceProvider, connector.id, outcome.result.objects)
+      .catch((error: unknown) => {
+        this.logger.warn(
+          `sync-event-bridge failed for connector ${connector.id} — ${error instanceof Error ? error.message : 'unknown'}`,
+        );
+      });
+    return synced;
   }
 
   private async closeSyncRun(

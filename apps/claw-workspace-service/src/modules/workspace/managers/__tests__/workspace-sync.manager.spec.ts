@@ -4,6 +4,7 @@ import type { WorkspaceConnectorRepository } from '../../repositories/workspace-
 import type { WorkspaceAdapterFactory } from '../../adapters/workspace-adapter.factory';
 import type { TokenRefreshManager } from '../token-refresh.manager';
 import type { WorkspaceObjectManager } from '../workspace-object.manager';
+import type { WorkspaceSyncEventBridgeService } from '../../../workspace-events/services/workspace-sync-event-bridge.service';
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
 import type { WorkspaceConnector } from '../../../../generated/prisma';
 import { WorkspaceSyncStatus } from '../../../../common/enums/workspace-sync-status.enum';
@@ -124,6 +125,10 @@ const mockRabbitMQ = {
   publish: jest.fn().mockImplementation(() => Promise.resolve()),
 } as unknown as RabbitMQService;
 
+const mockSyncEventBridge = {
+  bridge: jest.fn().mockResolvedValue(0),
+} as unknown as WorkspaceSyncEventBridgeService;
+
 describe('WorkspaceSyncManager', () => {
   let manager: WorkspaceSyncManager;
 
@@ -136,6 +141,7 @@ describe('WorkspaceSyncManager', () => {
       mockTokenManager,
       mockObjectManager,
       mockRabbitMQ,
+      mockSyncEventBridge,
     );
   });
 

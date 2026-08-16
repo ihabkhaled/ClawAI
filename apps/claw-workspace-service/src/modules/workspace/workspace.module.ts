@@ -44,6 +44,8 @@ import { ProviderDefinitionRepository } from './repositories/provider-definition
 import { SyncCadenceRepository } from './repositories/sync-cadence.repository';
 import { ConnectorGrantRepository } from '../connector-access/repositories/connector-grant.repository';
 import { ConnectorAccessService } from '../connector-access/services/connector-access.service';
+import { WorkspaceEventRepository } from '../workspace-events/repositories/workspace-event.repository';
+import { WorkspaceSyncEventBridgeService } from '../workspace-events/services/workspace-sync-event-bridge.service';
 import { WorkspaceConnectorRepository } from './repositories/workspace-connector.repository';
 import { WorkspaceObjectRepository } from './repositories/workspace-object.repository';
 import { ProviderAppConfigService } from './services/provider-app-config.service';
@@ -75,6 +77,8 @@ import { WorkspaceEntitlementService } from './services/workspace-entitlement.se
     SyncCadenceRepository,
     ConnectorAccessService,
     ConnectorGrantRepository,
+    WorkspaceEventRepository,
+    WorkspaceSyncEventBridgeService,
     WorkspaceConnectorService,
     WorkspaceEntitlementService,
     WorkspaceObjectService,

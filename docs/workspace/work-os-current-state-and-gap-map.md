@@ -1,13 +1,15 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–03)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–04)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
-truth), and a deliberately-scoped-down real slice of Phase 03 (canonical event fabric, webhook
-sources only) are done. Phase 01's duplication scan, frontend route inventory, and RabbitMQ
-contract inventory are still pending (see "Explicitly not yet verified" below). Phase 03's
-non-webhook sources and Phase 04 onward are not started — each remaining phase is independently
-a multi-day-to-multi-week feature (durable workflow DAGs, saga/compensation, a knowledge graph,
-etc.); they're being built as real, tested, one-phase-per-batch slices rather than attempted all
-at once, per explicit instruction.**
+truth), Phase 03 (canonical event fabric, webhook sources), and Phase 04 (sync→event
+reconciliation bridge) are done as real, deliberately-scoped slices — see each phase's own
+section below for exactly what's in and out of scope. Phase 01's duplication scan, frontend
+route inventory, and RabbitMQ contract inventory are still pending (see "Explicitly not yet
+verified" below). Push-subscription lifecycle management (the bulk of Phase 04's full spec) and
+Phase 05 onward are not started — each remaining phase is independently a multi-day-to-multi-week
+feature (durable workflow DAGs, saga/compensation, a knowledge graph, etc.); they're being built
+as real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
+instruction.**
 
 Pass 1 (below, preserved) established the structural map. Pass 2 adds the machine-actionable
 per-provider matrix the spec actually asks for, built by reading every adapter's
@@ -251,6 +253,58 @@ eventType`, unique per provider), persists, and publishes the new `WORKSPACE_EVE
   output conventions (compare against recent hand-verified migrations in the same folder) and the
   Prisma Client was regenerated cleanly from the updated schema, but the migration itself has not
   been applied-and-verified against a live database in this pass.
+
+## Phase 04 — Real-Time Events + Delta Reconciliation (reconciliation-only slice, done)
+
+The full Phase 04 spec asks for provider-native push-subscription lifecycle management (create,
+persist external subscription id, renewal/expiration, validation challenge, revoke, auto-repair,
+telemetry) for Gmail watch, Google Drive change notifications, and Microsoft Graph change
+notifications — a materially different, larger category of work than Phases 01–03 (new OAuth-app
+subscription APIs per provider, renewal cron jobs, webhook-shaped validation-challenge endpoints)
+and was not attempted in this pass; it's the natural next Phase 04 slice, not silently dropped.
+
+**What this slice does instead**, matching the "Consistency path" arm of the pack's own
+architecture diagram (`delta/history/change sync → reconcile normalized objects/events`): the 6
+webhook-covered providers already have their fast path (Phase 03); the other 8
+(Confluence/Google Drive/Gmail/Google Calendar/Outlook Calendar/ClickUp/SharePoint/OneDrive)
+only had periodic delta-sync with **no bridge into the canonical WorkspaceEvent fabric at all** —
+exactly the gap Phase 03's docs flagged as follow-up work.
+
+**Added**: `WorkspaceSyncEventBridgeService`, called from `WorkspaceSyncManager.upsertIfSucceeded`
+(the existing periodic-sync hot path — `WorkspaceSyncSchedulerManager` already ran sync
+unconditionally for every connector, webhook-covered or not; this just adds a second effect
+after the existing object upsert). Maps synced `WorkspaceObjectType` → canonical event type
+(DOCUMENT→DOCUMENT_CREATED/UPDATED, FILE/SPREADSHEET→FILE_UPDATED, EMAIL→EMAIL_RECEIVED,
+TICKET→TASK_CREATED/UPDATED for ClickUp specifically, COMMENT→COMMENT_CREATED) using a
+`createdAt === updatedAt` heuristic for "just created upstream" — data every adapter already
+reports, not a guess. **Gated on `!isWebhookSupported(provider)`** so it structurally cannot fire
+for the 6 webhook-covered providers and duplicate what `WebhookIngestConsumer` already created —
+directly satisfying the pack's "Do not duplicate WorkspaceEvents after reconciliation"
+requirement. Idempotency key includes the object's own `externalUpdatedAt`, so re-syncing an
+_unchanged_ object on the next poll tick (which happens on every cadence interval, forever) does
+not spam a duplicate event — verified by a dedicated test.
+
+**Explicitly not done in this slice**:
+
+- No push-subscription lifecycle (the actual bulk of Phase 04's spec) — Gmail/Drive/Calendar/
+  SharePoint/OneDrive/ClickUp remain poll-only, just as before. This slice makes their _existing_
+  poll data flow into the event fabric; it doesn't make them faster or event-driven.
+- `WorkspaceCanonicalEventType.MEETING_STARTED`/`MEETING_ENDED` remain unmapped — deliberately:
+  they're time-relative lifecycle events a sync tick can't honestly detect (syncing a future
+  calendar entry must not emit MEETING_STARTED). Needs a scheduled, time-aware trigger, not a
+  sync-completion hook — a different mechanism than this slice builds.
+- Of the pack's other named failure cases (same webhook delivered 5×, webhook before first sync,
+  webhook after object deleted, provider outage, expired token, expired subscription, stale
+  cursor, rate limit, network timeout, RabbitMQ unavailable, crash after persist before publish):
+  Phase 03's tests already cover repeated/duplicate delivery and out-of-order delivery;
+  `OrphanSyncRecoveryManager` (pre-existing) already covers "process crashes mid-sync"; rate
+  limiting, network timeouts, and provider outages already have retry/backoff in
+  `WorkspaceSyncManager.runWithRetry` (pre-existing, unaudited in this pass for correctness). The
+  remaining cases (webhook before first sync, webhook after object deleted, crash between
+  WorkspaceEvent persist and publish specifically) are real, undemonstrated gaps — no outbox
+  pattern exists yet for the persist-then-publish step in either `WebhookIngestConsumer` or
+  `WorkspaceSyncEventBridgeService`, so a crash in that exact window would silently lose one
+  event. Worth a dedicated hardening pass, not fixed here.
 
 ## Explicitly not yet verified (next session's starting point)
 
