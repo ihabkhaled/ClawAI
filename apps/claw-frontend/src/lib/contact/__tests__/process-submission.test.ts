@@ -70,7 +70,7 @@ describe('processContactSubmission', () => {
     // app logs "delivered", and nothing arrives.
     process.env.CONTACT_EMAIL_ENABLED = 'true';
     process.env.CONTACT_EMAIL_PROVIDER = 'console';
-    process.env.CONTACT_EMAIL_FROM = 'no-reply@claw-ai.co';
+    process.env.CONTACT_EMAIL_FROM = 'no-reply@claw.local';
     process.env.CONTACT_EMAIL_TO = 'ops@claw.ai';
     const result = await processContactSubmission(validBody, headers());
     expect(result.code).toBe(ContactResponseCode.ACCEPTED_NOT_CONFIGURED);
