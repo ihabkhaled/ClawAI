@@ -300,6 +300,59 @@ export class RouterConfigurationRepository {
   }
 
   /**
+   * Updates a DRAFT revision's own configuration-level fields (deadline,
+   * attempt/token budgets, confidence floor, safety toggles) — everything on
+   * `RouterConfiguration` that is not a chain entry and not the
+   * publish/enable lifecycle. A plain single-row update, unlike `publish`:
+   * there is no "one of something" invariant to protect here, so no
+   * transaction is needed. Returns null if `id` does not exist, mirroring
+   * `replaceEntries`/`publish`'s not-found signalling.
+   */
+  async updateFields(
+    id: string,
+    fields: Partial<{
+      mode: RouterConfigurationSummary['mode'];
+      totalDeadlineMs: number;
+      maxAttempts: number;
+      maxRouterInputTokens: number;
+      maxRouterOutputTokens: number;
+      minConfidence: number;
+      lowConfidenceAction: RouterConfigurationSummary['lowConfidenceAction'];
+      failClosedWhenNoEligibleRouter: boolean;
+      skipProviderOnProviderWideFailure: boolean;
+      safeTraceLevel: string;
+      legacyLocalRollbackEnabled: boolean;
+    }>,
+  ): Promise<RouterConfigurationDetail | null> {
+    this.logger.debug(`updateFields: id=${id} fields=${Object.keys(fields).join(',')}`);
+
+    const existing = await this.prisma.routerConfiguration.findUnique({ where: { id } });
+    if (!existing) {
+      return null;
+    }
+
+    const updated = await this.prisma.routerConfiguration.update({
+      where: { id },
+      data: {
+        mode: fields.mode,
+        totalDeadlineMs: fields.totalDeadlineMs,
+        maxAttempts: fields.maxAttempts,
+        maxRouterInputTokens: fields.maxRouterInputTokens,
+        maxRouterOutputTokens: fields.maxRouterOutputTokens,
+        minConfidence:
+          fields.minConfidence === undefined ? undefined : new Prisma.Decimal(fields.minConfidence),
+        lowConfidenceAction: fields.lowConfidenceAction,
+        failClosedWhenNoEligibleRouter: fields.failClosedWhenNoEligibleRouter,
+        skipProviderOnProviderWideFailure: fields.skipProviderOnProviderWideFailure,
+        safeTraceLevel: fields.safeTraceLevel,
+        legacyLocalRollbackEnabled: fields.legacyLocalRollbackEnabled,
+      },
+      include: { entries: true },
+    });
+    return mapConfigurationDetail(updated);
+  }
+
+  /**
    * Publishes a DRAFT revision, respecting "one PUBLISHED per scope": any
    * revision currently PUBLISHED for the same scope is marked SUPERSEDED in
    * the same transaction, so there is never a window with two PUBLISHED rows

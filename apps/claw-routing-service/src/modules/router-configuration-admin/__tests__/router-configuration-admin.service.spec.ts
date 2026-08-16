@@ -48,6 +48,7 @@ describe('RouterConfigurationAdminService', () => {
       findPublishedRevision: jest.fn(),
       createDraft: jest.fn(),
       replaceEntries: jest.fn(),
+      updateFields: jest.fn(),
       publish: jest.fn(),
       setEnabled: jest.fn(),
     } as unknown as jest.Mocked<RouterConfigurationRepository>;
@@ -140,6 +141,38 @@ describe('RouterConfigurationAdminService', () => {
       repository.replaceEntries.mockResolvedValue(null);
 
       await expect(service.updateEntries('config_1', entriesDto)).rejects.toThrow(
+        EntityNotFoundException,
+      );
+    });
+  });
+
+  describe('updateFields', () => {
+    it('rejects editing a revision that is not DRAFT', async () => {
+      repository.findRevisionById.mockResolvedValue(
+        detail({ status: RouterConfigurationStatus.PUBLISHED }),
+      );
+
+      await expect(service.updateFields('config_1', { totalDeadlineMs: 15_000 })).rejects.toThrow(
+        BusinessException,
+      );
+      expect(repository.updateFields).not.toHaveBeenCalled();
+    });
+
+    it('updates a DRAFT revision', async () => {
+      repository.findRevisionById.mockResolvedValue(detail());
+      repository.updateFields.mockResolvedValue(detail({ totalDeadlineMs: 15_000 }));
+
+      const result = await service.updateFields('config_1', { totalDeadlineMs: 15_000 });
+
+      expect(repository.updateFields).toHaveBeenCalledWith('config_1', { totalDeadlineMs: 15_000 });
+      expect(result.totalDeadlineMs).toBe(15_000);
+    });
+
+    it('throws EntityNotFoundException if the revision vanished mid-request', async () => {
+      repository.findRevisionById.mockResolvedValue(detail());
+      repository.updateFields.mockResolvedValue(null);
+
+      await expect(service.updateFields('config_1', { totalDeadlineMs: 15_000 })).rejects.toThrow(
         EntityNotFoundException,
       );
     });
