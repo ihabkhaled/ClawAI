@@ -46,3 +46,10 @@ export type ChainRunView = {
 // The shape the placeholder resolver reads from: stepId → that step's
 // WriteActionResult-ish output object.
 export type ChainStepOutputs = Record<string, Record<string, unknown>>;
+
+// Phase 07 — ChainTemplateService.instantiate's input shape.
+export type InstantiateTemplateInput = {
+  name: string;
+  // provider (string, e.g. "JIRA") -> the caller's own connectorId for it.
+  connectorSelections: Record<string, string>;
+};

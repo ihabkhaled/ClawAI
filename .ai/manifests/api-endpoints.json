@@ -2612,6 +2612,16 @@
       },
       {
         "method": "GET",
+        "route": "/workspace/chain-templates",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain-template.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/chain-templates/:key/instantiate",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain-template.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/workspace/chains",
         "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
       },
@@ -2983,5 +2993,5 @@
     ]
   },
   "generated": true,
-  "total": 589
+  "total": 591
 }

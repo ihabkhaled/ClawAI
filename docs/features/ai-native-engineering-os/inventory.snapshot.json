@@ -2704,6 +2704,16 @@
         },
         {
           "method": "GET",
+          "route": "/workspace/chain-templates",
+          "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain-template.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/workspace/chain-templates/:key/instantiate",
+          "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain-template.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/workspace/chains",
           "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
         },
@@ -8809,6 +8819,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-workspace-service/prisma/schema.prisma",
+            "value": "WorkspaceChainTemplate"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-workspace-service/prisma/schema.prisma",
             "value": "WorkspaceConnector"
           },
           {
@@ -8958,7 +8973,7 @@
       },
       "claw-workspace-service": {
         "runner": "jest",
-        "testFiles": 74
+        "testFiles": 76
       }
     },
     "workspaces": [
@@ -9663,7 +9678,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 589,
+    "endpointCount": 591,
     "envVarCount": 343,
     "eventCount": 167,
     "frontendRouteCount": 120,
@@ -9675,7 +9690,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 930,
+    "totalTestFiles": 932,
     "workspaceCount": 25
   }
 }

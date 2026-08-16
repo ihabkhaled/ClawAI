@@ -841,6 +841,40 @@ model WorkspaceChain {
   @@map("workspace_chains")
 }
 
+// Phase 07 (scoped slice) — a catalog of pre-built, parameterized chain
+// DSLs a user can instantiate into a real WorkspaceChain, resolving each
+// step's provider placeholder (e.g. "$PROVIDER:JIRA" in dslTemplate) to
+// one of their own connected accounts for that provider. Once
+// instantiated, a template-derived chain is a completely normal
+// WorkspaceChain — it runs through the exact same executor, and gets
+// the exact same Phase 05/06 crash-recovery, resume, and error-taxonomy
+// behavior as a hand-written one, for free.
+//
+// Deliberately does NOT include the pack's full recipe vocabulary
+// (AI classify/summarize/extract steps, automatic WorkspaceEvent
+// triggers) — the chain DSL has no AI-step or trigger-binding concept
+// yet (Phase 05 was scoped down to the existing sequential executor, not
+// the full DAG engine those need). Templates here are the purely
+// mechanical, immediately-real sub-slices of the pack's named recipes:
+// multi-provider write-action sequences a user runs on demand.
+model WorkspaceChainTemplate {
+  id                String   @id @default(cuid())
+  key               String   @unique @db.VarChar(80)
+  name              String   @db.VarChar(160)
+  description       String   @db.Text
+  category          String   @db.VarChar(60)
+  requiredProviders WorkspaceProvider[] @map("required_providers")
+  // Same shape as WorkspaceChain.dsl, except each step's connectorId is a
+  // "$PROVIDER:<WorkspaceProvider>" placeholder token instead of a real
+  // connector id — resolved at instantiation time.
+  dslTemplate       Json     @map("dsl_template")
+  version           Int      @default(1)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("workspace_chain_templates")
+}
+
 model WorkspaceChainRun {
   id        String                  @id @default(cuid())
   chainId   String                  @map("chain_id")

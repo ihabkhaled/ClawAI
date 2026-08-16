@@ -272,6 +272,7 @@
         "WorkspaceChain",
         "WorkspaceChainRun",
         "WorkspaceChainRunStep",
+        "WorkspaceChainTemplate",
         "WorkspaceConnector",
         "WorkspaceConnectorGrant",
         "WorkspaceEvent",

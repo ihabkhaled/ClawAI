@@ -1,14 +1,15 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–06)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–07)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
 truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
-bridge), Phase 05 (crash recovery + resume-from-failed-step), and Phase 06 (error taxonomy +
-manual-repair tracking) are done as real, deliberately-scoped slices — see each phase's own
-section below for exactly what's in and out of scope. Phase 01's duplication scan, frontend
-route inventory, and RabbitMQ contract inventory are still pending (see "Explicitly not yet
-verified" below). Push-subscription lifecycle management (Phase 04's full spec), the real DAG
-rewrite (Phase 05's full spec), compensating/verification steps (Phase 06's full spec), and
-Phase 07 onward are not started — each remaining phase is independently a multi-day-to-multi-week
+bridge), Phase 05 (crash recovery + resume-from-failed-step), Phase 06 (error taxonomy +
+manual-repair tracking), and Phase 07 (mechanical chain template library) are done as real,
+deliberately-scoped slices — see each phase's own section below for exactly what's in and out of
+scope. Phase 01's duplication scan, frontend route inventory, and RabbitMQ contract inventory are
+still pending (see "Explicitly not yet verified" below). Push-subscription lifecycle management
+(Phase 04's full spec), the real DAG rewrite (Phase 05's full spec), compensating/verification
+steps (Phase 06's full spec), the AI-step/auto-trigger recipe layer (Phase 07's full spec), and
+Phase 08 onward are not started — each remaining phase is independently a multi-day-to-multi-week
 feature (a knowledge graph, an NL automation studio, org RBAC, etc.); they're being built as
 real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
 instruction — and every category of change that would touch live write-action execution or a live
@@ -405,6 +406,62 @@ state or dedicated repair queue/inbox), and an **idempotency-record / provider-a
 store** for safe duplicate detection beyond "don't re-run an already-succeeded step" (a
 same-payload-detected-independently-of-run-history dedup layer, which none of these provider APIs
 support natively and would need real design work to build safely on ClawAI's side).
+
+## Phase 07 — Golden Automation Templates / Recipe Library (mechanical template library, done)
+
+All 10 of the pack's named recipes ("Inbox → Work," "Ticket → Code → Done," "Daily Work Brief,"
+etc.) require capabilities that don't exist in this codebase yet: AI classification/summarization/
+extraction steps (the chain DSL only supports direct provider write actions — no AI_CLASSIFY/
+AI_SUMMARIZE/AI_EXTRACT node types, since Phase 05 was deliberately scoped down from the full DAG
+engine those need) and automatic triggering from a `WorkspaceEvent` (nothing currently subscribes
+to `WORKSPACE_EVENT_INGESTED` to auto-run a chain — chains are still manual-`POST /run` only).
+Shipping fake versions of these 10 recipes would mean either lying about what the "automation"
+does or leaving AI/trigger steps as unenforced no-ops — exactly the kind of stub completion the
+pack itself prohibits. This pass ships the real, honest, immediately-useful thing that already
+exists underneath them: **a template library of purely mechanical, multi-provider write-action
+sequences**, reusing 100% of the existing (now safety-netted) chain infrastructure.
+
+**Added**:
+
+- `WorkspaceChainTemplate` — a seeded catalog (mirrors the `PROVIDER_DEFINITION_SEEDS` /
+  `ProviderRegistryService` upsert-on-boot pattern from Phase 02) of parameterized chain DSLs.
+  Each step's `connectorId` holds a `$PROVIDER:<WorkspaceProvider>` placeholder instead of a real
+  connector id.
+- `ChainTemplateService.instantiate(userId, key, { name, connectorSelections })` — resolves each
+  placeholder to the caller's own connector for that provider (validating ownership, provider
+  match, and that it's actually authenticated), then calls the existing `ChainService.create()`
+  to persist a real `WorkspaceChain`. Once instantiated, the chain is completely ordinary — it
+  runs through the same executor and gets the exact same Phase 05 crash-recovery/resume and
+  Phase 06 error-classification behavior with no new code, because it _is_ the same chain
+  machinery, just pre-filled.
+- `GET /workspace/chain-templates` (catalog) and `POST /workspace/chain-templates/:key/instantiate`
+  (create-from-template). No frontend chain UI exists yet (Phase 08's territory), so the API
+  response is the only surface in this pass.
+- 3 seeded templates — the purely-mechanical sub-slices of 3 of the pack's named recipes with the
+  AI/trigger layers removed: **"File a ticket and announce it"** (Jira → Slack, from "Inbox →
+  Work"), **"File a GitHub issue and announce it"** (GitHub → Slack, from the "PR → Release"
+  family), and **"Cross-workspace task kickoff"** (Jira → GitHub → Slack, three providers, from
+  "Ticket → Code → Done" minus the coding-agent/PR/CI/merge steps). Each still needs its payload
+  fields (project key, summary, channel id, etc. — left blank in the template) filled in via the
+  existing `PATCH /workspace/chains/:id` before it's runnable; instantiation wires the connectors,
+  not the content.
+- 16 new tests: seed-sanity (every template's `requiredProviders` exactly matches the providers
+  its own `dslTemplate` actually references — catching future template/registry drift the same
+  way Phase 02's contract test catches provider/adapter drift — plus that every resolved template
+  would pass the existing chain-creation Zod schema), and instantiate() coverage including
+  rejecting a connector owned by another user, a provider mismatch, and an unauthenticated
+  connector.
+
+**Explicitly not done in this slice** (real scope, not oversight): none of the 10 recipes' AI
+steps or automatic event-triggering — see above. No "fill in the payload fields for me" UX
+(instantiation only wires connectors; content stays a manual edit via the existing PATCH
+endpoint — there's no frontend to build a guided form into anyway). No simulation/dry-run preview
+(the pack's own "simulation preview" requirement — chains have no dry-run mode at all yet, template
+or otherwise). Only 3 of the pack's 10 recipes have a mechanical sub-slice template; the other 7
+("Daily Work Brief," "Waiting/SLA Watcher," "Stale Work Sweeper," "Engineering Manager Brief") are
+fundamentally aggregation/analysis reports, not write-action sequences — the chain DSL's model
+(a linear sequence of provider writes) doesn't fit them at all, AI steps or not; they'd need a
+different execution shape entirely, which is out of scope for "extend the existing chain system."
 
 ## Explicitly not yet verified (next session's starting point)
 
