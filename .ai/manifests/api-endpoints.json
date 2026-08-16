@@ -2303,6 +2303,11 @@
       },
       {
         "method": "POST",
+        "route": "/routing/models/discovery/run",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/router-models.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/routing/models/sync",
         "source": "apps/claw-routing-service/src/modules/sync/controllers/router-sync.controller.ts"
       },
@@ -2973,5 +2978,5 @@
     ]
   },
   "generated": true,
-  "total": 587
+  "total": 588
 }

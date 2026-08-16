@@ -2395,6 +2395,11 @@
         },
         {
           "method": "POST",
+          "route": "/routing/models/discovery/run",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/router-models.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/routing/models/sync",
           "source": "apps/claw-routing-service/src/modules/sync/controllers/router-sync.controller.ts"
         },
@@ -8884,7 +8889,7 @@
       },
       "claw-routing-service": {
         "runner": "jest",
-        "testFiles": 91
+        "testFiles": 92
       },
       "claw-server-logs-service": {
         "runner": "jest",
@@ -9597,7 +9602,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 587,
+    "endpointCount": 588,
     "envVarCount": 343,
     "eventCount": 166,
     "frontendRouteCount": 120,
@@ -9609,7 +9614,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 914,
+    "totalTestFiles": 915,
     "workspaceCount": 25
   }
 }
