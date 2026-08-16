@@ -23,6 +23,9 @@ const mockUser = {
   passwordHash: 'hashed-password',
   role: UserRole.VIEWER,
   status: UserStatus.ACTIVE,
+  firstName: null,
+  lastName: null,
+  phone: null,
   mustChangePassword: false,
   isSuperAdmin: false,
   createdAt: new Date('2025-01-01'),
@@ -253,6 +256,16 @@ describe('AuthManager', () => {
       repository.findUserById.mockResolvedValue({ ...mockUser, isSuperAdmin: true });
 
       await expect(manager.getProfile('user-1')).resolves.toMatchObject({ isSuperAdmin: true });
+    });
+
+    it('returns firstName/lastName/phone as null for a user without them', async () => {
+      repository.findUserById.mockResolvedValue(mockUser);
+
+      await expect(manager.getProfile('user-1')).resolves.toMatchObject({
+        firstName: null,
+        lastName: null,
+        phone: null,
+      });
     });
   });
 });

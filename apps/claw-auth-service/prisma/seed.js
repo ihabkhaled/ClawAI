@@ -302,6 +302,8 @@ async function seed() {
     data: {
       email: ADMIN_EMAIL,
       username: ADMIN_USERNAME,
+      firstName: 'Claw',
+      lastName: 'Administrator',
       passwordHash,
       role: 'ADMIN',
       roleId: adminRoleId,

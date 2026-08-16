@@ -17,6 +17,9 @@ export interface SafeUser {
   languagePreference: string;
   appearancePreference: string;
   activePlanId: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +34,9 @@ export interface UpdateUserData {
   passwordHash?: string;
   mustChangePassword?: boolean;
   emailVerifiedAt?: Date | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
 }
 
 export interface UserFilters {

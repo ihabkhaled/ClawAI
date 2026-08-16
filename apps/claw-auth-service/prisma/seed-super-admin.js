@@ -24,6 +24,8 @@ async function reconcileExistingSuperAdmin({ prisma, adminEmail, adminRoleId, ve
       roleId: adminRoleId,
       status: 'ACTIVE',
       isSuperAdmin: true,
+      firstName: existingAdmin.firstName ?? 'Claw',
+      lastName: existingAdmin.lastName ?? 'Administrator',
       emailVerifiedAt: existingAdmin.emailVerifiedAt ?? verifiedAt,
     },
   });

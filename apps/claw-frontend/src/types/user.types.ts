@@ -10,6 +10,9 @@ export type User = {
   id: string;
   email: string;
   username: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
   role: UserRole;
   status: UserStatus;
   mustChangePassword: boolean;
@@ -24,6 +27,9 @@ export type UserProfile = {
   id: string;
   email: string;
   username: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
   role: UserRole;
   // DB-resolved effective permissions from the backend (optional for
   // back-compat with any cached pre-flagship session).
