@@ -35,9 +35,14 @@ export function PreviewContextButton(props: PreviewContextButtonProps): React.Re
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1" aria-label={t('preview.openLabel')}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1 px-2 sm:px-3"
+          aria-label={t('preview.openLabel')}
+        >
           <Eye className="h-3 w-3" />
-          {t('preview.openLabel')}
+          <span className="hidden sm:inline">{t('preview.openLabel')}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
@@ -46,12 +51,12 @@ export function PreviewContextButton(props: PreviewContextButtonProps): React.Re
           <DialogDescription>{t('preview.dialogDescription')}</DialogDescription>
         </DialogHeader>
         {preview.isPending && (
-          <p className="text-sm text-muted-foreground">{t('preview.loading')}</p>
+          <p className="text-muted-foreground text-sm">{t('preview.loading')}</p>
         )}
-        {preview.isError && <p className="text-sm text-destructive">{t('preview.failed')}</p>}
+        {preview.isError && <p className="text-destructive text-sm">{t('preview.failed')}</p>}
         {bundle && (
           <div className="space-y-3 text-sm">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
               <Badge variant="outline">
                 {t('preview.memoryCount', { value: String(bundle.memories.length) })}
               </Badge>
@@ -71,11 +76,11 @@ export function PreviewContextButton(props: PreviewContextButtonProps): React.Re
               </p>
             )}
             {bundle.memories.length === 0 && bundle.packItems.length === 0 && (
-              <p className="text-sm text-muted-foreground">{t('preview.empty')}</p>
+              <p className="text-muted-foreground text-sm">{t('preview.empty')}</p>
             )}
             {bundle.memories.length > 0 && (
               <section>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <h3 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
                   {t('preview.memoriesHeading')}
                 </h3>
                 <ul className="space-y-2">
@@ -89,7 +94,7 @@ export function PreviewContextButton(props: PreviewContextButtonProps): React.Re
             )}
             {bundle.packItems.length > 0 && (
               <section>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <h3 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
                   {t('preview.packItemsHeading')}
                 </h3>
                 <ul className="space-y-2">
