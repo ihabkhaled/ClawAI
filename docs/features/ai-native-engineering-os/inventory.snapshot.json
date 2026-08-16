@@ -6652,6 +6652,11 @@
         "route": "/workspace/automation-preferences"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/workspace/automations/page.tsx",
+        "kind": "page",
+        "route": "/workspace/automations"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/workspace/confluence/page.tsx",
         "kind": "page",
         "route": "/workspace/confluence"
@@ -7240,7 +7245,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4473
+        "value": 4511
       },
       "localeCount": 16,
       "locales": [
@@ -8933,7 +8938,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 318
+        "testFiles": 326
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9681,7 +9686,7 @@
     "endpointCount": 591,
     "envVarCount": 343,
     "eventCount": 167,
-    "frontendRouteCount": 120,
+    "frontendRouteCount": 121,
     "localeCount": 16,
     "nginxRouteCount": 54,
     "permissionCount": 47,
@@ -9690,7 +9695,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 932,
+    "totalTestFiles": 940,
     "workspaceCount": 25
   }
 }

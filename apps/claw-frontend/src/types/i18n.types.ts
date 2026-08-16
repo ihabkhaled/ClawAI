@@ -177,6 +177,7 @@ export type TranslationDictionary = {
     discovery: string;
     workspaceProviders: string;
     workspaceAppConfigs: string;
+    workspaceAutomations: string;
     workspaceGmail: string;
     workspaceJira: string;
     workspaceSourceControl: string;
@@ -2396,6 +2397,50 @@ export type TranslationDictionary = {
       successDescriptionNamed: string;
       errorTitle: string;
       errorUnknown: string;
+    };
+  };
+  workspaceChains: {
+    page: {
+      title: string;
+      description: string;
+    };
+    templates: {
+      heading: string;
+      loadFailed: string;
+      emptyTitle: string;
+      emptyDescription: string;
+      useTemplate: string;
+    };
+    myAutomations: {
+      heading: string;
+      loadFailed: string;
+      emptyTitle: string;
+      emptyDescription: string;
+    };
+    chain: {
+      disabled: string;
+      stepCount: string;
+      wasResumed: string;
+      viewRuns: string;
+      run: string;
+      running: string;
+    };
+    instantiate: {
+      name: string;
+      namePlaceholder: string;
+      connectorFor: string;
+      selectConnector: string;
+      noConnector: string;
+      creating: string;
+      create: string;
+    };
+    runHistory: {
+      title: string;
+      loading: string;
+      empty: string;
+      resuming: string;
+      resume: string;
+      notStarted: string;
     };
   };
   agent: {

@@ -220,6 +220,7 @@ export {
   WORKSPACE_ACTION_STATUS_I18N_KEY,
   WORKSPACE_ACTION_TYPE_LABEL,
 } from './workspace-action.constants';
+export { WORKSPACE_CHAIN_RUN_STATUS_VARIANT } from './workspace-chain.constants';
 export { DISCOVERY_STATUS_OPTIONS } from './discovery.constants';
 export {
   ROUTING_PLAYGROUND_DEFAULT_MODE,

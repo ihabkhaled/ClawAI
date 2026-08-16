@@ -1,15 +1,16 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–07)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–08)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
 truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
 bridge), Phase 05 (crash recovery + resume-from-failed-step), Phase 06 (error taxonomy +
-manual-repair tracking), and Phase 07 (mechanical chain template library) are done as real,
-deliberately-scoped slices — see each phase's own section below for exactly what's in and out of
-scope. Phase 01's duplication scan, frontend route inventory, and RabbitMQ contract inventory are
-still pending (see "Explicitly not yet verified" below). Push-subscription lifecycle management
-(Phase 04's full spec), the real DAG rewrite (Phase 05's full spec), compensating/verification
-steps (Phase 06's full spec), the AI-step/auto-trigger recipe layer (Phase 07's full spec), and
-Phase 08 onward are not started — each remaining phase is independently a multi-day-to-multi-week
+manual-repair tracking), Phase 07 (mechanical chain template library), and Phase 08 (Automations
+page — first frontend for the chain system) are done as real, deliberately-scoped slices — see
+each phase's own section below for exactly what's in and out of scope. Phase 01's duplication
+scan and RabbitMQ contract inventory are still pending (see "Explicitly not yet verified" below).
+Push-subscription lifecycle management (Phase 04's full spec), the real DAG rewrite (Phase 05's
+full spec), compensating/verification steps (Phase 06's full spec), the AI-step/auto-trigger
+recipe layer (Phase 07's full spec), the NL Automation Studio (Phase 09's full spec), and Phase 09
+onward are not started — each remaining phase is independently a multi-day-to-multi-week
 feature (a knowledge graph, an NL automation studio, org RBAC, etc.); they're being built as
 real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
 instruction — and every category of change that would touch live write-action execution or a live
@@ -463,12 +464,73 @@ fundamentally aggregation/analysis reports, not write-action sequences — the c
 (a linear sequence of provider writes) doesn't fit them at all, AI steps or not; they'd need a
 different execution shape entirely, which is out of scope for "extend the existing chain system."
 
+## Phase 08 — Automations Page (first frontend for the chain system, done)
+
+The full Phase 08 spec asks for a redesigned Work OS UX across all of `/workspace/*` — a unified
+inbox/dashboard, cross-provider search, a knowledge-graph view, and a dedicated automations
+surface. Chains (Phase 05/06/07) had **zero** frontend before this slice — the entire feature was
+API-only. This slice ships the one piece of that redesign the chain system actually needed to
+become usable: a single `/workspace/automations` page. The unified inbox/dashboard,
+cross-provider search, and knowledge-graph view are unrelated surfaces and were not attempted.
+
+**What shipped:**
+
+- `GET /workspace/automations` page (`apps/claw-frontend/src/app/(portal)/workspace/automations/page.tsx`)
+  with two sections — **Templates** (the Phase 07 catalog, one card per template with its required
+  providers and a "Use this template" action) and **My Automations** (the user's own chains, each
+  row showing enabled/disabled, step count, last-run status, and Run / View Runs actions).
+- Repository (`chain.repository.ts`), query hooks (`useChainTemplates`, `useChains`,
+  `useChainRuns`), and mutation hooks (`useInstantiateChainTemplate`, `useRunChain`,
+  `useResumeChainRun`) following the exact TanStack Query + repository conventions already used by
+  every other Workspace module — no new patterns introduced.
+- `InstantiateTemplateDialog` — a name field plus one connector picker per template-required
+  provider, sourced from the user's own connectors via the existing `useWorkspaceConnectors` hook;
+  disabled until every required slot is filled, surfacing the same "no connector of this type"
+  guidance the template's own validation (Phase 07) enforces server-side.
+- `ChainRunHistoryDialog` — lists a chain's run history with status badges, the "manually
+  repaired" hint from Phase 06's `wasResumed` flag, and a Resume action wired to
+  `ChainExecutorManager.resume()` (Phase 05) for any run left in `FAILED` status.
+- Sidebar nav entry (`nav.workspaceAutomations`) and `ROUTES.WORKSPACE_AUTOMATIONS` route
+  constant, registered the same way every other Workspace page is; no new route-permission entry
+  needed since `/workspace/*` already falls under the general `WORKSPACE_VIEW` gate in
+  `route-permissions.constants.ts`.
+- New `WorkspaceChainRunStatus` enum and `WORKSPACE_CHAIN_RUN_STATUS_VARIANT` constant (status →
+  badge variant), extracted per the repo's declaration-ownership rule instead of an inline map —
+  the same pattern `WorkspaceActionStatus`/`WORKSPACE_ACTION_STATUS_VARIANT` already use.
+- `workspaceChains` i18n block (28 leaf keys) added to `i18n.types.ts` and all 13 locale files
+  with real, hand-written translations (not machine copies) — verified by direct browser
+  inspection (see below), not just typecheck, since `t()` is not type-safe against the dictionary.
+- 61 new tests: repository (7), hook (16 across queries/mutations/the page-composing hook), and
+  component tests (21 across the four new components) — none of Phase 08's shipped code existed
+  before this slice, so this is full net-new coverage, not incremental.
+- Manual browser verification: logged in against the real dev-stack backend, navigated to
+  `/workspace/automations`, and confirmed the page renders its full portal chrome, every
+  `t()` call resolves to real translated text (not a raw key — the specific risk the repo's own
+  docs flag), and the loading/error states render correctly when the templates/chains queries
+  fail. Full login-gated interactive UAT (submitting the instantiate form, running a chain,
+  resuming a failed run) was blocked by an unrelated environment limitation — the isolated worktree
+  build has no nginx in front of it, and Next's `rewrites()` proxy-to-external-host workaround used
+  for the equivalent check on `feat/chat-experience-revamp` did not forward requests in this
+  worktree's standalone build (confirmed independently that the real backend responds correctly to
+  the same login call over curl). This is a local verification-harness gap, not a defect in the
+  shipped code; the automated gates (typecheck, lint, all 1905 frontend tests, production build)
+  are the actual acceptance signal here.
+
+**Explicitly not done in this slice** (real scope, not oversight): no unified cross-workspace
+inbox/dashboard, no cross-provider search UI, no knowledge-graph view — those are separate,
+unrelated Phase 08-spec surfaces. No dry-run/simulation preview in the instantiate dialog (chains
+still have no dry-run mode at all — unchanged from Phase 07). No inline chain editor (editing a
+chain's DSL — e.g. filling in the payload fields Phase 07 leaves blank — still requires the raw
+`PATCH /workspace/chains/:id` API; there is no form for it). No chain creation from scratch
+(only template-based instantiation has a UI; building an arbitrary chain DSL by hand has no
+frontend). No step-level run detail (the run history dialog shows run-level status only, not each
+step's `ChainStepRunView` output/error — the API already returns it, just not rendered).
+
 ## Explicitly not yet verified (next session's starting point)
 
 - Whether `chains`/`ai-actions`/`actions` module boundaries already have the duplication the
   pack warns about ("chain vs workflow overlap... duplicate action enums... duplicate approval
   queues").
-- Frontend `/workspace/*` route and hook inventory (Phase 08's redesign target).
 - RabbitMQ event contract inventory for workspace-service (`claw.events` topic exchange usage).
 - Existing QA/E2E coverage for the modules above (the 9-of-14 adapters with zero dedicated test
   files, noted in the matrix, is one concrete piece of this — but chains/ai-actions/digest/inbox
@@ -495,8 +557,9 @@ the pack's default sequence to front-load the work that de-risks everything afte
    depends on 02–04 being real.
 5. **Phase 07** (golden recipes) — cheapest to ship once 05/06 exist; delivers visible user value
    early rather than waiting for every later phase.
-6. **Phase 08/09** (Work OS UX + NL Automation Studio) — needs 05–07 to have something real to
-   surface.
+6. **Phase 08** (Automations page) is done — the unified inbox/dashboard and cross-provider
+   search pieces of the original Work OS UX spec remain. **Phase 09** (NL Automation Studio) —
+   needs 05–08 to have something real to surface.
 7. **Phase 10/11** (knowledge graph + learning) — can proceed in parallel with 08/09 once the
    event fabric (03) is stable, since both consume the same event stream.
 8. **Phase 12** (org installations/RBAC) — should land before Phase 13's provider expansion goes

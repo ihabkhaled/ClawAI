@@ -497,6 +497,11 @@
       "route": "/workspace/automation-preferences"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/automations/page.tsx",
+      "kind": "page",
+      "route": "/workspace/automations"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/workspace/confluence/page.tsx",
       "kind": "page",
       "route": "/workspace/confluence"

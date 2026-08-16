@@ -191,6 +191,7 @@ export const de: TranslationDictionary = {
     discovery: 'Modell-Discovery',
     workspaceProviders: 'Provider',
     workspaceAppConfigs: 'App-Konfigurationen',
+    workspaceAutomations: 'Automatisierungen',
     workspaceGmail: 'Gmail',
     workspaceJira: 'Jira',
     workspaceSourceControl: 'Quellcodeverwaltung',
@@ -2240,6 +2241,53 @@ export const de: TranslationDictionary = {
       successDescriptionNamed: '{name} verbunden. Weiterleitung zurück...',
       errorTitle: 'Verbindung fehlgeschlagen',
       errorUnknown: 'Ein unbekannter Fehler ist aufgetreten.',
+    },
+  },
+  workspaceChains: {
+    page: {
+      title: 'Automatisierungen',
+      description:
+        'Führen Sie fertige, arbeitsbereichsübergreifende Automatisierungen aus oder erstellen Sie eigene aus einer Vorlage.',
+    },
+    templates: {
+      heading: 'Vorlagen',
+      loadFailed: 'Vorlagen konnten nicht geladen werden.',
+      emptyTitle: 'Keine Vorlagen verfügbar',
+      emptyDescription:
+        'Automatisierungsvorlagen werden hier angezeigt, sobald sie hinzugefügt wurden.',
+      useTemplate: 'Diese Vorlage verwenden',
+    },
+    myAutomations: {
+      heading: 'Meine Automatisierungen',
+      loadFailed: 'Ihre Automatisierungen konnten nicht geladen werden.',
+      emptyTitle: 'Noch keine Automatisierungen',
+      emptyDescription:
+        'Verwenden Sie eine Vorlage oben, um Ihre erste Automatisierung zu erstellen.',
+    },
+    chain: {
+      disabled: 'Deaktiviert',
+      stepCount: '{value} Schritte',
+      wasResumed: 'Manuell repariert',
+      viewRuns: 'Ausführungen anzeigen',
+      run: 'Ausführen',
+      running: 'Wird ausgeführt…',
+    },
+    instantiate: {
+      name: 'Name',
+      namePlaceholder: 'z. B. Jira-Ticket erstellen und Team benachrichtigen',
+      connectorFor: 'Connector für {value}',
+      selectConnector: 'Connector auswählen',
+      noConnector: 'Kein verbundenes {value}-Konto — verbinden Sie zuerst eines.',
+      creating: 'Wird erstellt…',
+      create: 'Automatisierung erstellen',
+    },
+    runHistory: {
+      title: 'Ausführungsverlauf',
+      loading: 'Ausführungen werden geladen…',
+      empty: 'Noch keine Ausführungen.',
+      resuming: 'Wird fortgesetzt…',
+      resume: 'Fortsetzen',
+      notStarted: 'Nicht gestartet',
     },
   },
   agent: {

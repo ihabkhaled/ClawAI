@@ -197,6 +197,13 @@ export const queryKeys = {
       ['workspaceProviderAppConfigs', 'list', provider ?? 'all'] as const,
     detail: (id: string) => ['workspaceProviderAppConfigs', 'detail', id] as const,
   },
+  workspaceChainTemplates: {
+    all: ['workspaceChainTemplates'] as const,
+  },
+  workspaceChains: {
+    all: ['workspaceChains'] as const,
+    runs: (chainId: string) => ['workspaceChains', chainId, 'runs'] as const,
+  },
   discovery: {
     all: ['discovery'] as const,
     sources: {
