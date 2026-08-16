@@ -7,6 +7,7 @@ import {
   type ChainEntryInputDto,
   type UpdateChainEntriesDto,
 } from '../dto/update-chain-entries.dto';
+import { type UpdateRouterConfigurationFieldsDto } from '../dto/update-router-configuration-fields.dto';
 import { type CreateRouterConfigurationDto } from '../dto/create-router-configuration.dto';
 import { type ListRouterConfigurationsQueryDto } from '../dto/list-router-configurations-query.dto';
 import type {
@@ -56,6 +57,26 @@ export class RouterConfigurationAdminService {
 
     const entries = dto.entries.map((entry) => this.toChainEntryInput(entry));
     const updated = await this.repository.replaceEntries(id, entries);
+    if (updated === null) {
+      throw new EntityNotFoundException('RouterConfiguration', id);
+    }
+    return updated;
+  }
+
+  async updateFields(
+    id: string,
+    dto: UpdateRouterConfigurationFieldsDto,
+  ): Promise<RouterConfigurationDetail> {
+    const revision = await this.getById(id);
+    if (revision.status !== RouterConfigurationStatus.DRAFT) {
+      throw new BusinessException(
+        `RouterConfiguration '${id}' is ${revision.status}, not DRAFT — only a draft's own settings may be edited`,
+        'REVISION_NOT_DRAFT',
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    const updated = await this.repository.updateFields(id, dto);
     if (updated === null) {
       throw new EntityNotFoundException('RouterConfiguration', id);
     }

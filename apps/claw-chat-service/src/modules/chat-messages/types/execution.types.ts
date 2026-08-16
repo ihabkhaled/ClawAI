@@ -52,6 +52,11 @@ export type RouteRoadmap = {
   finalDisplayName?: string | null;
   steps: RouteRoadmapStep[];
   research?: ResearchExecutionSummary | null;
+  // Live UAT (2026-08-16) — always present on the routing decision that
+  // produced this message; threaded through so the frontend's "Why this
+  // model?" panel can render a real value instead of "—"/"Unknown".
+  confidence?: number | null;
+  costClass?: string | null;
 };
 
 export type MessageRoutedData = {
@@ -75,6 +80,9 @@ export type MessageRoutedData = {
   // fall back to DIRECT_LLM execution (backward compatible).
   selectedWorkflow?: string | null;
   workflowReason?: string | null;
+  // Live UAT (2026-08-16) — see RouteRoadmap.confidence/costClass.
+  confidence?: number | null;
+  costClass?: string | null;
 };
 
 export type LlmResponse = {

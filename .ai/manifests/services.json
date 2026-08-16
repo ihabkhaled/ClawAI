@@ -411,7 +411,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-routing-service",
-      "endpointCount": 72,
+      "endpointCount": 74,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -449,7 +449,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 90,
+      "testFiles": 92,
       "testRunner": "jest"
     },
     {

@@ -9,7 +9,12 @@ import {
 import type { ChainSeedEntry, RouterConfigurationSeed } from '../types/router-chain-seed.types';
 
 export const ROUTER_CHAIN_SEED_NAME = 'cloud-smart-router-default-v1';
-export const ROUTER_CHAIN_SEED_VERSION = 1;
+// Bumped 1 -> 2 (2026-08-16): realistic per-entry/total timeouts, per the
+// live-UAT finding above. A new version publishes a fresh revision rather
+// than mutating the applied v1 row - the seed service's own documented
+// mechanism for shipping a changed default chain, and it never touches an
+// admin's own edits to the live configuration.
+export const ROUTER_CHAIN_SEED_VERSION = 2;
 /** Distinct from the deployment backfill's lock so the two never serialise on
  * each other. */
 export const ROUTER_CHAIN_SEED_LOCK_ID = 740_040_002;
@@ -37,7 +42,14 @@ export const ROUTER_CHAIN_SEED_ENTRIES: readonly ChainSeedEntry[] = Object.freez
     provider: RouterProvider.GEMINI,
     modelAlias: 'gemini-3.5-flash-lite',
     role: RouterChainEntryRole.PRIMARY,
-    attemptTimeoutMs: 1_600,
+    // Real-world measurement (2026-08-16 live UAT): a genuine round trip to
+    // Gemini's OpenAI-compatible endpoint for a short JSON routing decision
+    // reliably exceeds 1.6s once TLS/routing/model-load latency is accounted
+    // for, not just under adverse conditions - the original 1_600 value
+    // aborted two consecutive real calls in testing, timing out the entire
+    // chain on every request. 4_000 gives a real call realistic margin
+    // without letting one slow attempt consume the whole walk.
+    attemptTimeoutMs: 4_000,
     retries: 1,
     triggers: [],
     billingModel: BillingModel.TOKEN,
@@ -49,7 +61,7 @@ export const ROUTER_CHAIN_SEED_ENTRIES: readonly ChainSeedEntry[] = Object.freez
     provider: RouterProvider.GEMINI,
     modelAlias: 'gemini-2.5-flash-lite',
     role: RouterChainEntryRole.MODEL_FALLBACK,
-    attemptTimeoutMs: 1_500,
+    attemptTimeoutMs: 3_500,
     retries: 0,
     triggers: [
       RouterErrorCode.MODEL_NOT_FOUND,
@@ -64,7 +76,7 @@ export const ROUTER_CHAIN_SEED_ENTRIES: readonly ChainSeedEntry[] = Object.freez
     provider: RouterProvider.OLLAMA_CLOUD,
     modelAlias: 'glm-4.7:cloud',
     role: RouterChainEntryRole.PROVIDER_FALLBACK,
-    attemptTimeoutMs: 1_800,
+    attemptTimeoutMs: 4_500,
     retries: 0,
     triggers: [
       RouterErrorCode.TIMEOUT,
@@ -79,7 +91,7 @@ export const ROUTER_CHAIN_SEED_ENTRIES: readonly ChainSeedEntry[] = Object.freez
     provider: RouterProvider.OLLAMA_CLOUD,
     modelAlias: 'minimax-m2.1:cloud',
     role: RouterChainEntryRole.PROVIDER_MODEL_FALLBACK,
-    attemptTimeoutMs: 1_800,
+    attemptTimeoutMs: 4_500,
     retries: 0,
     triggers: [RouterErrorCode.MALFORMED_STRUCTURED_OUTPUT, RouterErrorCode.LOW_CONFIDENCE],
     billingModel: BillingModel.SUBSCRIPTION,
@@ -89,7 +101,7 @@ export const ROUTER_CHAIN_SEED_ENTRIES: readonly ChainSeedEntry[] = Object.freez
     provider: RouterProvider.OLLAMA_CLOUD,
     modelAlias: 'qwen3.5:cloud',
     role: RouterChainEntryRole.PROVIDER_MODEL_FALLBACK,
-    attemptTimeoutMs: 2_000,
+    attemptTimeoutMs: 5_000,
     retries: 0,
     triggers: [RouterErrorCode.MALFORMED_STRUCTURED_OUTPUT, RouterErrorCode.LOW_CONFIDENCE],
     billingModel: BillingModel.SUBSCRIPTION,
@@ -99,7 +111,7 @@ export const ROUTER_CHAIN_SEED_ENTRIES: readonly ChainSeedEntry[] = Object.freez
     provider: RouterProvider.OLLAMA_CLOUD,
     modelAlias: 'gpt-oss:120b-cloud',
     role: RouterChainEntryRole.LAST_RESORT,
-    attemptTimeoutMs: 2_500,
+    attemptTimeoutMs: 5_500,
     retries: 0,
     triggers: [],
     billingModel: BillingModel.SUBSCRIPTION,
@@ -112,7 +124,7 @@ export const ROUTER_CHAIN_SEED_ENTRIES: readonly ChainSeedEntry[] = Object.freez
     provider: RouterProvider.GEMINI,
     modelAlias: 'gemini-3.6-flash',
     role: RouterChainEntryRole.QUALITY_ESCALATION,
-    attemptTimeoutMs: 2_200,
+    attemptTimeoutMs: 4_000,
     retries: 0,
     triggers: [RouterErrorCode.LOW_CONFIDENCE],
     billingModel: BillingModel.TOKEN,
@@ -125,7 +137,11 @@ export const ROUTER_CHAIN_SEED_CONFIGURATION: RouterConfigurationSeed = Object.f
   mode: RouterConfigurationMode.CLOUD_FIRST,
   // Seeded off. A chain existing is not the same as production using it.
   enabled: false,
-  totalDeadlineMs: 5_000,
+  // Bumped alongside the per-entry timeouts above (2026-08-16 live UAT) - the
+  // old 5_000 total was already smaller than the sum of just the first two
+  // entries' old per-entry budgets, let alone enough for a real fallback hop
+  // across providers.
+  totalDeadlineMs: 15_000,
   maxAttempts: 6,
   maxRouterInputTokens: 1_800,
   maxRouterOutputTokens: 320,

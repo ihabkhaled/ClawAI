@@ -836,6 +836,12 @@ export class RoutingService implements OnModuleInit {
       fallbackModel: fallback?.model,
       fallbackChain: decision.fallbackChain,
       detectedCategory: decision.detectedCategory,
+      // Live UAT (2026-08-16) — always-populated on RoutingDecisionResult but
+      // never threaded onto the event; chat-service's routeRoadmap, and the
+      // frontend's "Why this model?" panel that reads it, silently rendered
+      // these as "—"/"Unknown" for every message.
+      confidence: decision.confidence,
+      costClass: decision.costClass,
       // Phase 7 — auto-trigger judge for high-risk domains. Only fires
       // when ROUTING_JUDGE_HIGH_RISK_ENABLED=true; otherwise stays
       // undefined and the chat-service falls back to its own

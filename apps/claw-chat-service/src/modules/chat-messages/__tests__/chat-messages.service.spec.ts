@@ -77,6 +77,7 @@ const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, jest.Moc
 
 const mockThreadsRepository = (): Partial<Record<keyof ChatThreadsRepository, jest.Mock>> => ({
   findById: jest.fn(),
+  update: jest.fn().mockResolvedValue(undefined),
 });
 
 const mockExecutionManager = (): Partial<Record<keyof ChatExecutionManager, jest.Mock>> => ({
@@ -147,9 +148,10 @@ describe('ChatMessagesService', () => {
       streamService as unknown as ChatStreamService,
       { render: jest.fn().mockReturnValue(0) } as unknown as RouterTraceStreamService,
       rabbitMQ as unknown as RabbitMQService,
-      { write: jest.fn(), getByMessageId: jest.fn() } as unknown as ConstructorParameters<
-        typeof ChatMessagesService
-      >[17],
+      {
+        write: jest.fn().mockResolvedValue(undefined),
+        getByMessageId: jest.fn(),
+      } as unknown as ConstructorParameters<typeof ChatMessagesService>[17],
       {
         assertCanSendMessage,
         assertResearchAccess: jest.fn(),
@@ -871,6 +873,55 @@ describe('ChatMessagesService', () => {
           executionSuccess: false,
           finalStatus: 'failed',
           errorMessage: 'Cloud provider GEMINI returned status 429',
+        }),
+      );
+    });
+
+    // Live UAT (2026-08-16) — the routing decision's confidence/costClass
+    // were computed by routing-service but never reached the stored
+    // message's routeRoadmap, so the frontend's "Why this model?" panel
+    // silently rendered them as "-"/"Unknown" for every AUTO message.
+    it('carries confidence and costClass from the routed payload into the stored routeRoadmap', async () => {
+      const routedPayload = {
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        selectedProvider: 'GEMINI',
+        selectedModel: 'gemini-2.5-flash',
+        routingMode: 'AUTO',
+        confidence: 0.92,
+        costClass: 'medium',
+        timestamp: new Date().toISOString(),
+      };
+      const assistantMessage = {
+        ...mockMessage,
+        id: 'msg-assistant-1',
+        role: 'ASSISTANT' as const,
+        content: 'Hi there!',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+      };
+
+      messagesRepo.findRecentByThreadId.mockResolvedValue([mockMessage]);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      executionManager.execute!.mockResolvedValue({
+        content: 'Hi there!',
+        provider: 'GEMINI',
+        model: 'gemini-2.5-flash',
+        latencyMs: 1200,
+        usedFallback: false,
+      });
+      messagesRepo.create.mockResolvedValue(assistantMessage);
+
+      await service.handleMessageRouted(routedPayload);
+
+      expect(messagesRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            routeRoadmap: expect.objectContaining({
+              confidence: 0.92,
+              costClass: 'medium',
+            }),
+          }),
         }),
       );
     });

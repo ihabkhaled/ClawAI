@@ -1223,6 +1223,8 @@ export class ChatMessagesService implements OnModuleInit {
       finalDisplayName: llmResponse.model,
       steps: this.buildRouteRoadmapSteps(payload, llmResponse, researchSummary),
       research: researchSummary,
+      confidence: payload.confidence ?? null,
+      costClass: payload.costClass ?? null,
     };
   }
 
