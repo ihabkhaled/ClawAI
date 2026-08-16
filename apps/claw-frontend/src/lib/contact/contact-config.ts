@@ -45,7 +45,7 @@ export function getContactConfig(): ContactConfig {
   return {
     enabled,
     provider,
-    fromAddress: process.env.CONTACT_EMAIL_FROM ?? 'no-reply@claw.local',
+    fromAddress: process.env.CONTACT_EMAIL_FROM ?? 'no-reply@claw-ai.co',
     toAddress: process.env.CONTACT_EMAIL_TO ?? '',
     rateLimitMax: parsePositiveInt(process.env.CONTACT_RATE_LIMIT_MAX, 3),
     rateLimitWindowMs: parsePositiveInt(process.env.CONTACT_RATE_LIMIT_WINDOW_MS, 3_600_000),

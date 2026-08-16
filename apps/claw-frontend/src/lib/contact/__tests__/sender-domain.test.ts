@@ -4,7 +4,7 @@ import { isNonRoutableSenderDomain } from '@/lib/contact/sender-domain';
 
 describe('sender domain routability', () => {
   it.each([
-    ['no-reply@claw.local', '.local is reserved for mDNS (RFC 6762)'],
+    ['no-reply@claw-ai.co', '.local is reserved for mDNS (RFC 6762)'],
     ['a@localhost', 'reserved by RFC 2606'],
     ['a@sub.localhost', 'reserved, including subdomains'],
     ['a@example.test', 'reserved by RFC 2606'],
@@ -28,7 +28,7 @@ describe('sender domain routability', () => {
   });
 
   it('is case-insensitive', () => {
-    expect(isNonRoutableSenderDomain('No-Reply@CLAW.LOCAL')).toBe(true);
+    expect(isNonRoutableSenderDomain('no-reply@claw-ai.co')).toBe(true);
   });
 
   it('does not reject a domain that merely CONTAINS a reserved word', () => {

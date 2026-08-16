@@ -7,7 +7,7 @@ import type { ContactConfig } from '@/types/contact.types';
 const config: ContactConfig = {
   enabled: true,
   provider: ContactEmailProvider.CONSOLE,
-  fromAddress: 'no-reply@claw.local',
+  fromAddress: 'no-reply@claw-ai.co',
   toAddress: 'ops@claw.local',
   rateLimitMax: 3,
   rateLimitWindowMs: 3_600_000,
@@ -21,7 +21,7 @@ describe('buildContactEmail', () => {
       config,
     );
     expect(email.subject).toBe('[ClawAI Contact] Hi');
-    expect(email.from).toBe('no-reply@claw.local');
+    expect(email.from).toBe('no-reply@claw-ai.co');
     expect(email.to).toBe('ops@claw.local');
     expect(email.replyTo).toBe('ada@example.com');
   });
