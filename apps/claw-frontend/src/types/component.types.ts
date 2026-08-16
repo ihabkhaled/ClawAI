@@ -2403,6 +2403,17 @@ export type PublicMarkdownRendererProps = {
   truncatedLabel: string;
 };
 
+export type PhoneInputProps = {
+  value: string;
+  onChange: (value: string) => void;
+  defaultCountryIso2?: string;
+  countryLabel: string;
+  countrySearchLabel: string;
+  numberLabel: string;
+  numberPlaceholder: string;
+  invalidLabel?: string;
+  disabled?: boolean;
+};
 export type PublicSharedChatFooterProps = {
   homeLabel: string;
   homeHref: string;

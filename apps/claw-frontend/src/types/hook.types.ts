@@ -35,6 +35,7 @@ import type { CostEnsembleResult as CostEnsembleResultType } from './cost-ensemb
 import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
+import type { CountryDialCode } from './phone.types';
 import type { PipelineResult } from './pipeline.types';
 import type { PlanView } from './plan.types';
 import type { RecoveryStats } from './recovery.types';
@@ -759,4 +760,17 @@ export type UseKeyboardShortcutOptions = {
   preventDefault?: boolean;
 };
 
+export type UsePhoneInputReturn = {
+  selectedCountry: CountryDialCode;
+  setSelectedCountry: (country: CountryDialCode) => void;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  filter: string;
+  setFilter: (filter: string) => void;
+  filteredCountries: ReadonlyArray<CountryDialCode>;
+  nationalNumber: string;
+  setNationalNumber: (value: string) => void;
+  value: string;
+  isValid: boolean;
+};
 export type UseScrollDirectionReturn = ScrollDirection | null;
