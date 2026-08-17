@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { AiActionsModule } from '../ai-actions/ai-actions.module';
 import { ConnectorGrantRepository } from '../connector-access/repositories/connector-grant.repository';
 import { ConnectorAccessService } from '../connector-access/services/connector-access.service';
 import { BitbucketAdapter } from '../workspace/adapters/bitbucket.adapter';
@@ -31,6 +32,7 @@ import { ProviderRegistryService } from '../workspace/services/provider-registry
 import { ChainController } from './controllers/chain.controller';
 import { ChainTemplateController } from './controllers/chain-template.controller';
 import { ChainExecutorManager } from './managers/chain-executor.manager';
+import { ChainNlDraftManager } from './managers/chain-nl-draft.manager';
 import { ChainOrphanRunRecoveryManager } from './managers/chain-orphan-run-recovery.manager';
 import { ChainRepository } from './repositories/chain.repository';
 import { ChainTemplateRepository } from './repositories/chain-template.repository';
@@ -42,11 +44,13 @@ import { ChainService } from './services/chain.service';
 // needs (same pattern as ActionsModule) so a chain step can call any
 // provider's executeWriteAction.
 @Module({
+  imports: [AiActionsModule],
   controllers: [ChainController, ChainTemplateController],
   providers: [
     ChainRepository,
     ChainService,
     ChainExecutorManager,
+    ChainNlDraftManager,
     ChainOrphanRunRecoveryManager,
     ChainTemplateRepository,
     ChainTemplateService,

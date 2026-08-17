@@ -2284,6 +2284,23 @@ export const es: TranslationDictionary = {
       resume: 'Reanudar',
       notStarted: 'No iniciada',
     },
+    nlDraft: {
+      openButton: 'Describir una automatización',
+      title: 'Describir una automatización',
+      description:
+        'Describe lo que quieres en lenguaje simple y crearemos un borrador de cadena a partir de tus cuentas conectadas para que lo revises.',
+      promptLabel: '¿Qué quieres automatizar?',
+      promptPlaceholder: 'ej.: Crear un ticket de Jira y publicarlo en #eng-updates en Slack',
+      noMatch:
+        'No pudimos relacionarlo con ninguna de tus cuentas conectadas. Intenta reformularlo.',
+      previewHeading: 'Pasos del borrador',
+      nameLabel: 'Nombre',
+      namePlaceholder: 'Nombra esta automatización',
+      draft: 'Generar borrador',
+      drafting: 'Generando…',
+      save: 'Guardar automatización',
+      saving: 'Guardando…',
+    },
   },
   agent: {
     title: 'Agente de escritorio',

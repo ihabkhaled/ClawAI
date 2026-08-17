@@ -3,13 +3,20 @@ import { useState } from 'react';
 import { useWorkspaceConnectors } from '@/hooks/workspace/use-workspace-connectors';
 import { useTranslation } from '@/lib/i18n';
 import type {
+  ChainDsl,
   ChainRunView,
   InstantiateChainTemplateRequest,
   UseWorkspaceAutomationsPageReturn,
   WorkspaceChainTemplate,
 } from '@/types';
 
-import { useInstantiateChainTemplate, useResumeChainRun, useRunChain } from './use-chain-mutations';
+import {
+  useCreateChain,
+  useDraftChainFromNl,
+  useInstantiateChainTemplate,
+  useResumeChainRun,
+  useRunChain,
+} from './use-chain-mutations';
 import { useChainRuns } from './use-chain-runs';
 import { useChainTemplates } from './use-chain-templates';
 import { useChains } from './use-chains';
@@ -22,11 +29,15 @@ export function useWorkspaceAutomationsPage(): UseWorkspaceAutomationsPageReturn
   const instantiateMutation = useInstantiateChainTemplate();
   const runMutation = useRunChain();
   const resumeMutation = useResumeChainRun();
+  const draftMutation = useDraftChainFromNl();
+  const createMutation = useCreateChain();
 
   const [instantiateDialogTemplate, setInstantiateDialogTemplate] =
     useState<WorkspaceChainTemplate | null>(null);
   const [historyDialogChainId, setHistoryDialogChainId] = useState<string | null>(null);
   const [lastRunViewByChain, setLastRunViewByChain] = useState<Record<string, ChainRunView>>({});
+  const [isNlDraftDialogOpen, setIsNlDraftDialogOpen] = useState(false);
+  const [nlDraft, setNlDraft] = useState<ChainDsl | null>(null);
 
   const runsQuery = useChainRuns(historyDialogChainId);
 
@@ -48,6 +59,24 @@ export function useWorkspaceAutomationsPage(): UseWorkspaceAutomationsPageReturn
       return;
     }
     await resumeMutation.mutateAsync({ chainId: historyDialogChainId, runId });
+  };
+
+  const closeNlDraftDialog = (): void => {
+    setIsNlDraftDialogOpen(false);
+    setNlDraft(null);
+  };
+
+  const handleNlDraft = async (prompt: string): Promise<void> => {
+    const dsl = await draftMutation.mutateAsync(prompt);
+    setNlDraft(dsl);
+  };
+
+  const handleSaveNlDraft = async (name: string): Promise<void> => {
+    if (nlDraft === null) {
+      return;
+    }
+    await createMutation.mutateAsync({ name, dsl: nlDraft, isEnabled: true });
+    closeNlDraftDialog();
   };
 
   return {
@@ -80,5 +109,15 @@ export function useWorkspaceAutomationsPage(): UseWorkspaceAutomationsPageReturn
     isRunsLoading: runsQuery.isLoading,
     handleResume,
     isResumePending: resumeMutation.isPending,
+    isNlDraftDialogOpen,
+    openNlDraftDialog: () => setIsNlDraftDialogOpen(true),
+    closeNlDraftDialog,
+    handleNlDraft,
+    isNlDraftPending: draftMutation.isPending,
+    nlDraftError: draftMutation.error?.message ?? null,
+    nlDraft,
+    handleSaveNlDraft,
+    isNlDraftSavePending: createMutation.isPending,
+    nlDraftSaveError: createMutation.error?.message ?? null,
   };
 }

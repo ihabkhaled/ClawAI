@@ -2289,6 +2289,23 @@ export const de: TranslationDictionary = {
       resume: 'Fortsetzen',
       notStarted: 'Nicht gestartet',
     },
+    nlDraft: {
+      openButton: 'Automatisierung beschreiben',
+      title: 'Automatisierung beschreiben',
+      description:
+        'Beschreiben Sie in einfachen Worten, was Sie möchten — wir erstellen daraus einen Entwurf aus Ihren verbundenen Konten zur Überprüfung.',
+      promptLabel: 'Was möchten Sie automatisieren?',
+      promptPlaceholder: 'z. B. Ein Jira-Ticket anlegen und in #eng-updates auf Slack posten',
+      noMatch:
+        'Dies konnte keinem Ihrer verbundenen Konten zugeordnet werden. Versuchen Sie eine andere Formulierung.',
+      previewHeading: 'Entwurfsschritte',
+      nameLabel: 'Name',
+      namePlaceholder: 'Name für diese Automatisierung',
+      draft: 'Entwurf erstellen',
+      drafting: 'Entwurf wird erstellt…',
+      save: 'Automatisierung speichern',
+      saving: 'Wird gespeichert…',
+    },
   },
   agent: {
     title: 'Desktop-Agent',

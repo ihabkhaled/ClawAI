@@ -2250,6 +2250,22 @@ export const fa: TranslationDictionary = {
       resume: 'ازسرگیری',
       notStarted: 'شروع نشده',
     },
+    nlDraft: {
+      openButton: 'توصیف یک اتوماسیون',
+      title: 'توصیف یک اتوماسیون',
+      description:
+        'آنچه می‌خواهید را به زبان ساده توصیف کنید تا از حساب‌های متصل شما یک زنجیرهٔ پیش‌نویس برای بازبینی شما ایجاد کنیم.',
+      promptLabel: 'چه چیزی را می‌خواهید خودکار کنید؟',
+      promptPlaceholder: 'مثلاً: یک تیکت Jira ایجاد کن و آن را در #eng-updates در Slack ارسال کن',
+      noMatch: 'این با هیچ‌کدام از حساب‌های متصل شما مطابقت نداشت. عبارت را دوباره بنویسید.',
+      previewHeading: 'مراحل پیش‌نویس',
+      nameLabel: 'نام',
+      namePlaceholder: 'نامی برای این اتوماسیون',
+      draft: 'ایجاد پیش‌نویس',
+      drafting: 'در حال ایجاد…',
+      save: 'ذخیرهٔ اتوماسیون',
+      saving: 'در حال ذخیره…',
+    },
   },
   agent: {
     title: 'نماینده دسکتاپ',

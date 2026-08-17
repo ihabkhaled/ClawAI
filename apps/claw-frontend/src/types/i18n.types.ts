@@ -2442,6 +2442,21 @@ export type TranslationDictionary = {
       resume: string;
       notStarted: string;
     };
+    nlDraft: {
+      openButton: string;
+      title: string;
+      description: string;
+      promptLabel: string;
+      promptPlaceholder: string;
+      noMatch: string;
+      previewHeading: string;
+      nameLabel: string;
+      namePlaceholder: string;
+      draft: string;
+      drafting: string;
+      save: string;
+      saving: string;
+    };
   };
   agent: {
     title: string;

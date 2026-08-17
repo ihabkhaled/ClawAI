@@ -1,17 +1,18 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–08)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–09)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
 truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
 bridge), Phase 05 (crash recovery + resume-from-failed-step), Phase 06 (error taxonomy +
-manual-repair tracking), Phase 07 (mechanical chain template library), and Phase 08 (Automations
-page — first frontend for the chain system) are done as real, deliberately-scoped slices — see
-each phase's own section below for exactly what's in and out of scope. Phase 01's duplication
-scan and RabbitMQ contract inventory are still pending (see "Explicitly not yet verified" below).
-Push-subscription lifecycle management (Phase 04's full spec), the real DAG rewrite (Phase 05's
-full spec), compensating/verification steps (Phase 06's full spec), the AI-step/auto-trigger
-recipe layer (Phase 07's full spec), the NL Automation Studio (Phase 09's full spec), and Phase 09
-onward are not started — each remaining phase is independently a multi-day-to-multi-week
-feature (a knowledge graph, an NL automation studio, org RBAC, etc.); they're being built as
+manual-repair tracking), Phase 07 (mechanical chain template library), Phase 08 (Automations
+page — first frontend for the chain system), and Phase 09 (NL → chain draft, human reviews and
+saves) are done as real, deliberately-scoped slices — see each phase's own section below for
+exactly what's in and out of scope. Phase 01's duplication scan and RabbitMQ contract inventory
+are still pending (see "Explicitly not yet verified" below). Push-subscription lifecycle
+management (Phase 04's full spec), the real DAG rewrite (Phase 05's full spec),
+compensating/verification steps (Phase 06's full spec), the AI-step/auto-trigger recipe layer
+(Phase 07's full spec), auto-triggering off events (Phase 09's full spec), and Phase 10 onward are
+not started — each remaining phase is independently a multi-day-to-multi-week
+feature (a knowledge graph, org RBAC, etc.); they're being built as
 real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
 instruction — and every category of change that would touch live write-action execution or a live
 OAuth app is being deliberately scoped down to safety-net hardening rather than rushed into a full
@@ -526,6 +527,77 @@ chain's DSL — e.g. filling in the payload fields Phase 07 leaves blank — sti
 frontend). No step-level run detail (the run history dialog shows run-level status only, not each
 step's `ChainStepRunView` output/error — the API already returns it, just not rendered).
 
+## Phase 09 — NL Automation Studio (NL → chain draft, human reviews and saves, done)
+
+The full Phase 09 spec asks for a natural-language studio that turns "when I get a new Jira
+ticket assigned to me, post it to #eng-updates on Slack" into a running automation, including the
+trigger half of that sentence. Two things this slice needed didn't exist and were investigated
+honestly before scoping down (see the investigation this phase started from): chat-service has no
+schema-constrained/JSON-mode generation (only prompt-and-hope), and nothing in this repo connects
+`WorkspaceEvent` (Phase 03's event fabric) to chain execution — chains are still 100% manually
+triggered. This slice ships the part that's genuinely real given those two constraints: **NL →
+chain draft, human reviews the draft and clicks Save/Run** — the same "smart template generator,
+not an autonomous agent" honesty Phase 07 established for its own AI-shaped scope-down.
+
+**What shipped:**
+
+- `POST /workspace/chains/draft-from-nl` (`chain.controller.ts`) — takes `{ prompt }`, returns an
+  **unpersisted** `{ dsl }` draft. Never saves, never runs anything.
+- `ChainNlDraftManager` — loads the caller's own authenticated connectors, resolves a default
+  model via the existing `ModelCatalogResolverManager` (the same "safety net" cloud/local chain
+  every other AI action in this repo uses), and calls the existing
+  `callCloudGenerate`/`callOllamaGenerate` utilities from the `ai-actions` module — no new
+  LLM-calling mechanism, no new cross-service call pattern. The model is told the caller's _real_
+  connectorIds and the exact write actions available for each one
+  (`CHAIN_ACTION_CATALOG`, a new per-provider action whitelist derived from every adapter's actual
+  `executeWriteAction` dispatch); it can't reference a connector or action that doesn't exist.
+- Since chat-service has no structured-output mode, the response is prompt-engineered JSON,
+  parsed and validated against the **existing** `chainDslSchema` (the same schema `POST
+/workspace/chains` already enforces) plus a check that every step's `connectorId` is one the
+  caller actually owns. On a validation failure, one retry on the same model with the Zod error
+  appended to the prompt; after exhausting the model's fallback chain too, a clean
+  `CHAIN_NL_DRAFT_FAILED` error rather than a fabricated chain. A model is explicitly allowed to
+  respond `{"steps":[]}` when nothing in the request maps to an available connector/action —
+  treated as a valid "no match" result, not a validation failure.
+- Frontend: a "Describe an automation" button on `/workspace/automations` opens `NlDraftDialog` —
+  a prompt textarea, a read-only preview of the drafted steps (actionType + connectorId, the same
+  level of detail Phase 07's instantiated templates show before payload fields are filled in), a
+  name field, and Save. Save calls the **existing, previously frontend-unused** `POST
+/workspace/chains` create endpoint via a new `useCreateChain` hook — this also closes the "no
+  chain creation from scratch" gap Phase 08 flagged as not-yet-built, since the generic create
+  endpoint already existed server-side and just needed a caller.
+- 45 new tests: `CHAIN_ACTION_CATALOG` sanity (every action type is real, every provider has an
+  entry, the Figma-composite Jira actions are deliberately excluded), the prompt-builder utility,
+  `ChainNlDraftManager` (happy path, markdown-fence stripping, the empty-steps "no match" path,
+  retry-with-Zod-error-then-succeed, hallucinated-connector rejection, exhausted-attempts failure,
+  no-connectors / no-authenticated-connectors / no-default-model guards, falling through to a
+  fallback model), the repository/hook/component layers on the frontend.
+- Manual UI verification for this phase relied on the same automated-gates acceptance signal
+  documented for Phase 08 (typecheck, lint, full test suite, production build) rather than another
+  live-login browser pass — Phase 08 already spent significant effort establishing that the
+  isolated worktree's live-browser check needs infrastructure (an nginx proxy or equivalent) this
+  worktree doesn't have, and re-running that same investigation for this phase would not have
+  surfaced anything the unit/hook/component coverage here doesn't already exercise directly
+  (prompt building, schema validation, retry logic, and every dialog state are all covered without
+  needing a live backend).
+
+**Explicitly not done in this slice** (real scope, not oversight): **no auto-triggering.** "When I
+get a new ticket" is still not a thing this system can act on — there is no consumer that connects
+`WorkspaceEvent` to chain execution, and building one for real (subscription model, dedup,
+backoff, an actual scheduler) is its own multi-day slice, exactly as flagged in Phase 07's and
+Phase 08's own "explicitly not done" sections. When a request describes a trigger condition, the
+model is instructed to still produce the write-action step(s) it implies and say nothing about the
+trigger — the frontend does not currently surface any "triggers aren't supported yet" messaging
+beyond that omission, which is a gap worth closing in a later UX pass. No guarantee the drafted
+JSON is schema-valid on the first (or even the retried) attempt — chat-service has no
+structured-output mode; this is a real, disclosed limitation, not a bug, and is why the retry +
+clean-failure path exists instead of a "just trust the model" approach. No payload-field
+authoring help (the draft's `payload` is whatever the model guessed, same manual-review-before-run
+expectation as Phase 07's templates — there's no field-by-field editor). No reuse of the
+`ai-actions` approval-queue infrastructure — its schema is single-action-shaped, not
+chain-shaped, and extending it would have been undisclosed scope growth (see the investigation
+this phase started from for the full reasoning).
+
 ## Explicitly not yet verified (next session's starting point)
 
 - Whether `chains`/`ai-actions`/`actions` module boundaries already have the duplication the
@@ -557,11 +629,11 @@ the pack's default sequence to front-load the work that de-risks everything afte
    depends on 02–04 being real.
 5. **Phase 07** (golden recipes) — cheapest to ship once 05/06 exist; delivers visible user value
    early rather than waiting for every later phase.
-6. **Phase 08** (Automations page) is done — the unified inbox/dashboard and cross-provider
-   search pieces of the original Work OS UX spec remain. **Phase 09** (NL Automation Studio) —
-   needs 05–08 to have something real to surface.
-7. **Phase 10/11** (knowledge graph + learning) — can proceed in parallel with 08/09 once the
-   event fabric (03) is stable, since both consume the same event stream.
+6. **Phase 08** (Automations page) and **Phase 09** (NL → chain draft) are done — the unified
+   inbox/dashboard and cross-provider search pieces of the original Work OS UX spec, and Phase
+   09's auto-triggering half, remain.
+7. **Phase 10/11** (knowledge graph + learning) — can proceed in parallel with the remaining
+   08/09 pieces once the event fabric (03) is stable, since both consume the same event stream.
 8. **Phase 12** (org installations/RBAC) — should land before Phase 13's provider expansion goes
    to production, so deepened provider actions inherit the right grant model from day one.
 9. **Phase 13** (provider capability expansion) — depth work per provider.

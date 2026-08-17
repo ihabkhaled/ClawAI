@@ -2661,6 +2661,11 @@
         "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/workspace/chains/draft-from-nl",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/workspace/connectors",
         "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
@@ -2993,5 +2998,5 @@
     ]
   },
   "generated": true,
-  "total": 591
+  "total": 592
 }

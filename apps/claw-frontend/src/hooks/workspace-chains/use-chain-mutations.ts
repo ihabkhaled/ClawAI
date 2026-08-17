@@ -3,7 +3,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import { workspaceChainRepository } from '@/repositories/workspace/chain.repository';
 import type {
+  CreateChainRequest,
   InstantiateChainTemplateRequest,
+  UseCreateChainReturn,
+  UseDraftChainFromNlReturn,
   UseInstantiateChainTemplateReturn,
   UseResumeChainRunReturn,
   UseRunChainReturn,
@@ -47,6 +50,32 @@ export function useResumeChainRun(): UseResumeChainRunReturn {
       workspaceChainRepository.resumeChainRun(chainId, runId),
     onSuccess: (_result, { chainId }) => {
       void qc.invalidateQueries({ queryKey: queryKeys.workspaceChains.runs(chainId) });
+    },
+  });
+  return {
+    mutateAsync: (input) => mutation.mutateAsync(input),
+    isPending: mutation.isPending,
+    error: mutation.error as Error | null,
+  };
+}
+
+export function useDraftChainFromNl(): UseDraftChainFromNlReturn {
+  const mutation = useMutation({
+    mutationFn: (prompt: string) => workspaceChainRepository.draftFromNl(prompt),
+  });
+  return {
+    mutateAsync: (prompt) => mutation.mutateAsync(prompt),
+    isPending: mutation.isPending,
+    error: mutation.error as Error | null,
+  };
+}
+
+export function useCreateChain(): UseCreateChainReturn {
+  const qc = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: (data: CreateChainRequest) => workspaceChainRepository.create(data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.workspaceChains.all });
     },
   });
   return {

@@ -476,7 +476,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-workspace-service",
-      "endpointCount": 106,
+      "endpointCount": 107,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -518,7 +518,7 @@
         "WorkspaceProviderDefinition",
         "WorkspaceSyncRun"
       ],
-      "testFiles": 76,
+      "testFiles": 79,
       "testRunner": "jest"
     }
   ]

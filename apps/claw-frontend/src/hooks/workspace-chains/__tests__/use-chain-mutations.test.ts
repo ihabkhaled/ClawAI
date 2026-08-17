@@ -5,6 +5,8 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  useCreateChain,
+  useDraftChainFromNl,
   useInstantiateChainTemplate,
   useResumeChainRun,
   useRunChain,
@@ -13,12 +15,16 @@ import {
 const mockInstantiateTemplate = vi.fn();
 const mockRunChain = vi.fn();
 const mockResumeChainRun = vi.fn();
+const mockDraftFromNl = vi.fn();
+const mockCreate = vi.fn();
 
 vi.mock('@/repositories/workspace/chain.repository', () => ({
   workspaceChainRepository: {
     instantiateTemplate: (...args: unknown[]) => mockInstantiateTemplate(...args),
     runChain: (...args: unknown[]) => mockRunChain(...args),
     resumeChainRun: (...args: unknown[]) => mockResumeChainRun(...args),
+    draftFromNl: (...args: unknown[]) => mockDraftFromNl(...args),
+    create: (...args: unknown[]) => mockCreate(...args),
   },
 }));
 
@@ -96,5 +102,56 @@ describe('useResumeChainRun', () => {
     });
 
     expect(mockResumeChainRun).toHaveBeenCalledWith('chain-1', 'run-1');
+  });
+});
+
+describe('useDraftChainFromNl', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('calls the repository with the prompt and resolves the draft dsl', async () => {
+    const dsl = {
+      steps: [{ id: 's1', connectorId: 'jira-1', actionType: 'CREATE_TICKET', payload: {} }],
+    };
+    mockDraftFromNl.mockResolvedValue(dsl);
+    const { result } = renderHook(() => useDraftChainFromNl(), { wrapper: makeWrapper() });
+
+    let draft;
+    await act(async () => {
+      draft = await result.current.mutateAsync('file a jira ticket');
+    });
+
+    expect(mockDraftFromNl).toHaveBeenCalledWith('file a jira ticket');
+    expect(draft).toEqual(dsl);
+  });
+
+  it('surfaces draft errors', async () => {
+    mockDraftFromNl.mockRejectedValue(new Error('draft-failed'));
+    const { result } = renderHook(() => useDraftChainFromNl(), { wrapper: makeWrapper() });
+
+    await act(async () => {
+      await result.current.mutateAsync('x').catch(() => undefined);
+    });
+
+    await waitFor(() => expect(result.current.error?.message).toBe('draft-failed'));
+  });
+});
+
+describe('useCreateChain', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('calls the repository with the create payload and resolves the new chain', async () => {
+    mockCreate.mockResolvedValue({ id: 'chain-1' });
+    const { result } = renderHook(() => useCreateChain(), { wrapper: makeWrapper() });
+
+    const dsl = {
+      steps: [{ id: 's1', connectorId: 'jira-1', actionType: 'CREATE_TICKET', payload: {} }],
+    };
+    let created;
+    await act(async () => {
+      created = await result.current.mutateAsync({ name: 'My chain', dsl, isEnabled: true });
+    });
+
+    expect(mockCreate).toHaveBeenCalledWith({ name: 'My chain', dsl, isEnabled: true });
+    expect(created).toEqual({ id: 'chain-1' });
   });
 });

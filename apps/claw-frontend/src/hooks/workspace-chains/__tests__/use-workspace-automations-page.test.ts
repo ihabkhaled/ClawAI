@@ -12,6 +12,8 @@ const mockListChainRuns = vi.fn();
 const mockInstantiateTemplate = vi.fn();
 const mockRunChain = vi.fn();
 const mockResumeChainRun = vi.fn();
+const mockDraftFromNl = vi.fn();
+const mockCreate = vi.fn();
 const mockListWorkspaceConnectors = vi.fn();
 
 vi.mock('@/repositories/workspace/chain.repository', () => ({
@@ -22,6 +24,8 @@ vi.mock('@/repositories/workspace/chain.repository', () => ({
     instantiateTemplate: (...args: unknown[]) => mockInstantiateTemplate(...args),
     runChain: (...args: unknown[]) => mockRunChain(...args),
     resumeChainRun: (...args: unknown[]) => mockResumeChainRun(...args),
+    draftFromNl: (...args: unknown[]) => mockDraftFromNl(...args),
+    create: (...args: unknown[]) => mockCreate(...args),
   },
 }));
 
@@ -184,5 +188,66 @@ describe('useWorkspaceAutomationsPage', () => {
     });
 
     expect(mockResumeChainRun).not.toHaveBeenCalled();
+  });
+
+  it('opens and closes the NL draft dialog, clearing any prior draft', async () => {
+    const { result } = renderHook(() => useWorkspaceAutomationsPage(), { wrapper: makeWrapper() });
+    await waitFor(() => expect(result.current.chains).toHaveLength(1));
+
+    act(() => result.current.openNlDraftDialog());
+    expect(result.current.isNlDraftDialogOpen).toBe(true);
+
+    act(() => result.current.closeNlDraftDialog());
+    expect(result.current.isNlDraftDialogOpen).toBe(false);
+    expect(result.current.nlDraft).toBeNull();
+  });
+
+  it('handleNlDraft stores the drafted dsl', async () => {
+    const dsl = {
+      steps: [{ id: 's1', connectorId: 'conn-1', actionType: 'CREATE_TICKET', payload: {} }],
+    };
+    mockDraftFromNl.mockResolvedValue(dsl);
+    const { result } = renderHook(() => useWorkspaceAutomationsPage(), { wrapper: makeWrapper() });
+    await waitFor(() => expect(result.current.chains).toHaveLength(1));
+
+    await act(async () => {
+      await result.current.handleNlDraft('file a jira ticket');
+    });
+
+    expect(mockDraftFromNl).toHaveBeenCalledWith('file a jira ticket');
+    expect(result.current.nlDraft).toEqual(dsl);
+  });
+
+  it('handleSaveNlDraft does nothing when there is no draft yet', async () => {
+    const { result } = renderHook(() => useWorkspaceAutomationsPage(), { wrapper: makeWrapper() });
+    await waitFor(() => expect(result.current.chains).toHaveLength(1));
+
+    await act(async () => {
+      await result.current.handleSaveNlDraft('My automation');
+    });
+
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('handleSaveNlDraft creates the chain from the draft and closes the dialog', async () => {
+    const dsl = {
+      steps: [{ id: 's1', connectorId: 'conn-1', actionType: 'CREATE_TICKET', payload: {} }],
+    };
+    mockDraftFromNl.mockResolvedValue(dsl);
+    mockCreate.mockResolvedValue(sampleChain);
+    const { result } = renderHook(() => useWorkspaceAutomationsPage(), { wrapper: makeWrapper() });
+    await waitFor(() => expect(result.current.chains).toHaveLength(1));
+
+    act(() => result.current.openNlDraftDialog());
+    await act(async () => {
+      await result.current.handleNlDraft('file a jira ticket');
+    });
+    await act(async () => {
+      await result.current.handleSaveNlDraft('My automation');
+    });
+
+    expect(mockCreate).toHaveBeenCalledWith({ name: 'My automation', dsl, isEnabled: true });
+    expect(result.current.isNlDraftDialogOpen).toBe(false);
+    expect(result.current.nlDraft).toBeNull();
   });
 });

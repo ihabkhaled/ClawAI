@@ -1,6 +1,8 @@
 import { apiClient } from '@/services/shared/api-client';
 import type {
+  ChainDsl,
   ChainRunView,
+  CreateChainRequest,
   InstantiateChainTemplateRequest,
   WorkspaceChain,
   WorkspaceChainRun,
@@ -10,6 +12,18 @@ import type {
 export const workspaceChainRepository = {
   async listTemplates(): Promise<WorkspaceChainTemplate[]> {
     const response = await apiClient.get<WorkspaceChainTemplate[]>('/workspace/chain-templates');
+    return response.data;
+  },
+
+  async draftFromNl(prompt: string): Promise<ChainDsl> {
+    const response = await apiClient.post<{ dsl: ChainDsl }>('/workspace/chains/draft-from-nl', {
+      prompt,
+    });
+    return response.data.dsl;
+  },
+
+  async create(data: CreateChainRequest): Promise<WorkspaceChain> {
+    const response = await apiClient.post<WorkspaceChain>('/workspace/chains', data);
     return response.data;
   },
 

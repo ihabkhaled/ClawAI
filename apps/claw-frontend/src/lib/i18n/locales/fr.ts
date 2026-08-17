@@ -2291,6 +2291,23 @@ export const fr: TranslationDictionary = {
       resume: 'Reprendre',
       notStarted: 'Non démarrée',
     },
+    nlDraft: {
+      openButton: 'Décrire une automatisation',
+      title: 'Décrire une automatisation',
+      description:
+        'Décrivez ce que vous voulez en langage simple, et nous créerons un brouillon de chaîne à partir de vos comptes connectés pour que vous le révisiez.',
+      promptLabel: 'Que voulez-vous automatiser ?',
+      promptPlaceholder: 'ex. : Créer un ticket Jira et le publier sur #eng-updates sur Slack',
+      noMatch:
+        "Nous n'avons pas pu associer ceci à l'un de vos comptes connectés. Essayez de reformuler.",
+      previewHeading: 'Étapes du brouillon',
+      nameLabel: 'Nom',
+      namePlaceholder: 'Nommez cette automatisation',
+      draft: 'Créer le brouillon',
+      drafting: 'Création en cours…',
+      save: "Enregistrer l'automatisation",
+      saving: 'Enregistrement…',
+    },
   },
   agent: {
     title: 'Agent de bureau',

@@ -72,4 +72,34 @@ describe('workspaceChainRepository', () => {
     await workspaceChainRepository.listChainRuns('chain-1', 5);
     expect(mockGet).toHaveBeenCalledWith('/workspace/chains/chain-1/runs', { limit: '5' });
   });
+
+  it('draftFromNl posts the prompt and unwraps the dsl from the response', async () => {
+    const dsl = {
+      steps: [{ id: 's1', connectorId: 'jira-1', actionType: 'CREATE_TICKET', payload: {} }],
+    };
+    mockPost.mockResolvedValue({ data: { dsl } });
+    const result = await workspaceChainRepository.draftFromNl('file a jira ticket');
+    expect(mockPost).toHaveBeenCalledWith('/workspace/chains/draft-from-nl', {
+      prompt: 'file a jira ticket',
+    });
+    expect(result).toEqual(dsl);
+  });
+
+  it('create posts the chain payload to the base chains endpoint', async () => {
+    mockPost.mockResolvedValue({ data: { id: 'chain-1' } });
+    const dsl = {
+      steps: [{ id: 's1', connectorId: 'jira-1', actionType: 'CREATE_TICKET', payload: {} }],
+    };
+    const result = await workspaceChainRepository.create({
+      name: 'My chain',
+      dsl,
+      isEnabled: true,
+    });
+    expect(mockPost).toHaveBeenCalledWith('/workspace/chains', {
+      name: 'My chain',
+      dsl,
+      isEnabled: true,
+    });
+    expect(result).toEqual({ id: 'chain-1' });
+  });
 });

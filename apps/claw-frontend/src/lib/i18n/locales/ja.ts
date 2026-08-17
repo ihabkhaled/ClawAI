@@ -2256,6 +2256,23 @@ export const ja: TranslationDictionary = {
       resume: '再開',
       notStarted: '未開始',
     },
+    nlDraft: {
+      openButton: '自動化を記述',
+      title: '自動化を記述',
+      description:
+        '実現したいことを簡単な言葉で記述してください。接続済みのアカウントからドラフトのチェーンを作成し、確認していただきます。',
+      promptLabel: '何を自動化しますか?',
+      promptPlaceholder: '例: Jiraチケットを作成してSlackの#eng-updatesに投稿する',
+      noMatch:
+        '接続済みのアカウントに一致するものが見つかりませんでした。表現を変えてお試しください。',
+      previewHeading: 'ドラフトのステップ',
+      nameLabel: '名前',
+      namePlaceholder: 'この自動化に名前を付ける',
+      draft: 'ドラフトを作成',
+      drafting: '作成中…',
+      save: '自動化を保存',
+      saving: '保存中…',
+    },
   },
   agent: {
     title: 'デスクトップ エージェント',

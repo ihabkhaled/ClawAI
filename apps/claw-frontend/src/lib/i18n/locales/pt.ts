@@ -2270,6 +2270,23 @@ export const pt: TranslationDictionary = {
       resume: 'Retomar',
       notStarted: 'Não iniciada',
     },
+    nlDraft: {
+      openButton: 'Descrever uma automação',
+      title: 'Descrever uma automação',
+      description:
+        'Descreva o que você quer em linguagem simples, e criaremos um rascunho de cadeia a partir das suas contas conectadas para você revisar.',
+      promptLabel: 'O que você quer automatizar?',
+      promptPlaceholder: 'ex.: Criar um chamado no Jira e publicá-lo em #eng-updates no Slack',
+      noMatch:
+        'Não conseguimos relacionar isso a nenhuma das suas contas conectadas. Tente reformular.',
+      previewHeading: 'Etapas do rascunho',
+      nameLabel: 'Nome',
+      namePlaceholder: 'Dê um nome a esta automação',
+      draft: 'Gerar rascunho',
+      drafting: 'Gerando…',
+      save: 'Salvar automação',
+      saving: 'Salvando…',
+    },
   },
   agent: {
     title: 'Agente Desktop',

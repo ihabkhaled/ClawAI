@@ -77,6 +77,13 @@ export type InstantiateChainTemplateRequest = {
   connectorSelections: Record<string, string>;
 };
 
+export type CreateChainRequest = {
+  name: string;
+  description?: string;
+  dsl: ChainDsl;
+  isEnabled?: boolean;
+};
+
 export type UseChainTemplatesReturn = {
   templates: WorkspaceChainTemplate[];
   isLoading: boolean;
@@ -113,6 +120,18 @@ export type UseRunChainReturn = {
 
 export type UseResumeChainRunReturn = {
   mutateAsync: (input: { chainId: string; runId: string }) => Promise<ChainRunView>;
+  isPending: boolean;
+  error: Error | null;
+};
+
+export type UseDraftChainFromNlReturn = {
+  mutateAsync: (prompt: string) => Promise<ChainDsl>;
+  isPending: boolean;
+  error: Error | null;
+};
+
+export type UseCreateChainReturn = {
+  mutateAsync: (input: CreateChainRequest) => Promise<WorkspaceChain>;
   isPending: boolean;
   error: Error | null;
 };
@@ -179,6 +198,16 @@ export type UseWorkspaceAutomationsPageReturn = {
   isRunsLoading: boolean;
   handleResume: (runId: string) => Promise<void>;
   isResumePending: boolean;
+  isNlDraftDialogOpen: boolean;
+  openNlDraftDialog: () => void;
+  closeNlDraftDialog: () => void;
+  handleNlDraft: (prompt: string) => Promise<void>;
+  isNlDraftPending: boolean;
+  nlDraftError: string | null;
+  nlDraft: ChainDsl | null;
+  handleSaveNlDraft: (name: string) => Promise<void>;
+  isNlDraftSavePending: boolean;
+  nlDraftSaveError: string | null;
 };
 
 export type ChainRunHistoryDialogProps = {
@@ -189,5 +218,18 @@ export type ChainRunHistoryDialogProps = {
   onClose: () => void;
   onResume: (runId: string) => void;
   isResumePending: boolean;
+  t: TranslateFunction;
+};
+
+export type NlDraftDialogProps = {
+  open: boolean;
+  onClose: () => void;
+  onDraft: (prompt: string) => void;
+  isDraftPending: boolean;
+  draftError: string | null;
+  draft: ChainDsl | null;
+  onSave: (name: string) => void;
+  isSavePending: boolean;
+  saveError: string | null;
   t: TranslateFunction;
 };

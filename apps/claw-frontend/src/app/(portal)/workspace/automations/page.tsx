@@ -5,10 +5,12 @@ import { Sparkles, Workflow } from 'lucide-react';
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
+import { Button } from '@/components/ui/button';
 import { ChainRow } from '@/components/workspace-chains/chain-row';
 import { ChainRunHistoryDialog } from '@/components/workspace-chains/chain-run-history-dialog';
 import { ChainTemplateCard } from '@/components/workspace-chains/chain-template-card';
 import { InstantiateTemplateDialog } from '@/components/workspace-chains/instantiate-template-dialog';
+import { NlDraftDialog } from '@/components/workspace-chains/nl-draft-dialog';
 import { useWorkspaceAutomationsPage } from '@/hooks/workspace-chains/use-workspace-automations-page';
 
 export default function WorkspaceAutomationsPage(): React.ReactElement {
@@ -37,14 +39,29 @@ export default function WorkspaceAutomationsPage(): React.ReactElement {
     isRunsLoading,
     handleResume,
     isResumePending,
+    isNlDraftDialogOpen,
+    openNlDraftDialog,
+    closeNlDraftDialog,
+    handleNlDraft,
+    isNlDraftPending,
+    nlDraftError,
+    nlDraft,
+    handleSaveNlDraft,
+    isNlDraftSavePending,
+    nlDraftSaveError,
   } = useWorkspaceAutomationsPage();
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title={t('workspaceChains.page.title')}
-        description={t('workspaceChains.page.description')}
-      />
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <PageHeader
+          title={t('workspaceChains.page.title')}
+          description={t('workspaceChains.page.description')}
+        />
+        <Button variant="outline" onClick={openNlDraftDialog}>
+          {t('workspaceChains.nlDraft.openButton')}
+        </Button>
+      </div>
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">{t('workspaceChains.templates.heading')}</h2>
@@ -134,6 +151,19 @@ export default function WorkspaceAutomationsPage(): React.ReactElement {
         onClose={closeHistoryDialog}
         onResume={handleResume}
         isResumePending={isResumePending}
+        t={t}
+      />
+
+      <NlDraftDialog
+        open={isNlDraftDialogOpen}
+        onClose={closeNlDraftDialog}
+        onDraft={handleNlDraft}
+        isDraftPending={isNlDraftPending}
+        draftError={nlDraftError}
+        draft={nlDraft}
+        onSave={handleSaveNlDraft}
+        isSavePending={isNlDraftSavePending}
+        saveError={nlDraftSaveError}
         t={t}
       />
     </div>

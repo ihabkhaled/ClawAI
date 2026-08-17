@@ -2281,6 +2281,23 @@ export const it: TranslationDictionary = {
       resume: 'Riprendi',
       notStarted: 'Non avviata',
     },
+    nlDraft: {
+      openButton: "Descrivi un'automazione",
+      title: "Descrivi un'automazione",
+      description:
+        'Descrivi cosa vuoi in linguaggio semplice e creeremo una bozza di catena dai tuoi account collegati da rivedere.',
+      promptLabel: 'Cosa vuoi automatizzare?',
+      promptPlaceholder: 'es. Crea un ticket Jira e pubblicalo su #eng-updates su Slack',
+      noMatch:
+        'Non siamo riusciti ad associarlo a nessuno dei tuoi account collegati. Prova a riformulare.',
+      previewHeading: 'Passaggi della bozza',
+      nameLabel: 'Nome',
+      namePlaceholder: 'Assegna un nome a questa automazione',
+      draft: 'Crea bozza',
+      drafting: 'Creazione in corso…',
+      save: 'Salva automazione',
+      saving: 'Salvataggio…',
+    },
   },
   agent: {
     title: 'Agent desktop',

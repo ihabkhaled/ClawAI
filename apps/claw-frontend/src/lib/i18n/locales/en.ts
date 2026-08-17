@@ -2237,6 +2237,22 @@ export const en: TranslationDictionary = {
       resume: 'Resume',
       notStarted: 'Not started',
     },
+    nlDraft: {
+      openButton: 'Describe an automation',
+      title: 'Describe an automation',
+      description:
+        "Describe what you want in plain English, and we'll draft a chain from your connected accounts for you to review.",
+      promptLabel: 'What do you want to automate?',
+      promptPlaceholder: 'e.g. File a Jira ticket and post it to #eng-updates on Slack',
+      noMatch: "We couldn't match this to any of your connected accounts. Try rephrasing it.",
+      previewHeading: 'Draft steps',
+      nameLabel: 'Name',
+      namePlaceholder: 'Name this automation',
+      draft: 'Draft',
+      drafting: 'Drafting…',
+      save: 'Save automation',
+      saving: 'Saving…',
+    },
   },
   agent: {
     title: 'Desktop Agent',
