@@ -52,6 +52,11 @@ export const hi: TranslationDictionary = {
     errorBoundaryTitle: 'कुछ गलत हो गया',
     errorBoundaryDescription:
       'इस पृष्ठ पर एक अप्रत्याशित त्रुटि हुई। पुनः प्रयास करें या किसी अन्य पृष्ठ पर जाएँ।',
+    phoneCountryLabel: 'देश',
+    phoneCountrySearch: 'देश खोजें',
+    phoneNumberLabel: 'फ़ोन नंबर',
+    phoneNumberPlaceholder: 'फ़ोन नंबर दर्ज करें',
+    phoneInvalid: 'मान्य फ़ोन नंबर दर्ज करें',
   },
   auth: {
     login: 'लॉगिन',

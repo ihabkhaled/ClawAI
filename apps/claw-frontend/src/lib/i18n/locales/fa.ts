@@ -52,6 +52,11 @@ export const fa: TranslationDictionary = {
     errorBoundaryTitle: 'مشکلی پیش آمد',
     errorBoundaryDescription:
       'این صفحه با یک خطای غیرمنتظره مواجه شد.دوباره امتحان کنید یا به صفحه دیگری بروید.',
+    phoneCountryLabel: 'کشور',
+    phoneCountrySearch: 'جستجوی کشورها',
+    phoneNumberLabel: 'شماره تلفن',
+    phoneNumberPlaceholder: 'شماره تلفن را وارد کنید',
+    phoneInvalid: 'یک شماره تلفن معتبر وارد کنید',
   },
   auth: {
     login: 'وارد شوید',

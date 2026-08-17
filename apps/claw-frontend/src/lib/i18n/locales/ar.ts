@@ -52,6 +52,11 @@ export const ar: TranslationDictionary = {
     errorBoundaryTitle: 'حدث خطأ ما',
     errorBoundaryDescription:
       'واجهت هذه الصفحة خطأً غير متوقع. حاول مرة أخرى أو انتقل إلى صفحة أخرى.',
+    phoneCountryLabel: 'البلد',
+    phoneCountrySearch: 'البحث عن البلدان',
+    phoneNumberLabel: 'رقم الهاتف',
+    phoneNumberPlaceholder: 'أدخل رقم الهاتف',
+    phoneInvalid: 'أدخل رقم هاتف صالحًا',
   },
   auth: {
     login: 'تسجيل الدخول',

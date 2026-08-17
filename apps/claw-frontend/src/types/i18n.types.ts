@@ -47,6 +47,11 @@ export type TranslationDictionary = {
     showingPage: string;
     errorBoundaryTitle: string;
     errorBoundaryDescription: string;
+    phoneCountryLabel: string;
+    phoneCountrySearch: string;
+    phoneNumberLabel: string;
+    phoneNumberPlaceholder: string;
+    phoneInvalid: string;
   };
   auth: {
     login: string;

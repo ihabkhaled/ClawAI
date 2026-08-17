@@ -51,6 +51,11 @@ export const th: TranslationDictionary = {
     showingPage: 'กำลังแสดงหน้า {page} ของ {total}',
     errorBoundaryTitle: 'มีบางอย่างผิดพลาด',
     errorBoundaryDescription: 'หน้านี้เกิดข้อผิดพลาดที่ไม่คาดคิดลองอีกครั้งหรือย้ายไปยังหน้าอื่น',
+    phoneCountryLabel: 'ประเทศ',
+    phoneCountrySearch: 'ค้นหาประเทศ',
+    phoneNumberLabel: 'หมายเลขโทรศัพท์',
+    phoneNumberPlaceholder: 'ป้อนหมายเลขโทรศัพท์',
+    phoneInvalid: 'ป้อนหมายเลขโทรศัพท์ที่ถูกต้อง',
   },
   auth: {
     login: 'เข้าสู่ระบบ',

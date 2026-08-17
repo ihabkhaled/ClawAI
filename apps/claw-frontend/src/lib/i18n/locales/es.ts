@@ -52,6 +52,11 @@ export const es: TranslationDictionary = {
     errorBoundaryTitle: 'Algo salió mal',
     errorBoundaryDescription:
       'Esta página encontró un error inesperado. Inténtalo de nuevo o ve a otra página.',
+    phoneCountryLabel: 'País',
+    phoneCountrySearch: 'Buscar países',
+    phoneNumberLabel: 'Número de teléfono',
+    phoneNumberPlaceholder: 'Introduce el número de teléfono',
+    phoneInvalid: 'Introduce un número de teléfono válido',
   },
   auth: {
     login: 'Iniciar sesión',

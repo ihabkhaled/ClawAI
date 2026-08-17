@@ -52,6 +52,11 @@ export const ja: TranslationDictionary = {
     errorBoundaryTitle: '問題が発生しました',
     errorBoundaryDescription:
       'このページで予期しないエラーが発生しました。もう一度試すか、別のページに移動してください。',
+    phoneCountryLabel: '国',
+    phoneCountrySearch: '国を検索',
+    phoneNumberLabel: '電話番号',
+    phoneNumberPlaceholder: '電話番号を入力',
+    phoneInvalid: '有効な電話番号を入力してください',
   },
   auth: {
     login: 'ログイン',

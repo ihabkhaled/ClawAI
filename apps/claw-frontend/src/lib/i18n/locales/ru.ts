@@ -52,6 +52,11 @@ export const ru: TranslationDictionary = {
     errorBoundaryTitle: 'Что-то пошло не так',
     errorBoundaryDescription:
       'На этой странице произошла непредвиденная ошибка. Повторите попытку или перейдите на другую страницу.',
+    phoneCountryLabel: 'Страна',
+    phoneCountrySearch: 'Поиск стран',
+    phoneNumberLabel: 'Номер телефона',
+    phoneNumberPlaceholder: 'Введите номер телефона',
+    phoneInvalid: 'Введите действительный номер телефона',
   },
   auth: {
     login: 'Вход',

@@ -52,6 +52,11 @@ export const de: TranslationDictionary = {
     errorBoundaryTitle: 'Etwas ist schiefgelaufen',
     errorBoundaryDescription:
       'Auf dieser Seite ist ein unerwarteter Fehler aufgetreten. Versuchen Sie es erneut oder wechseln Sie zu einer anderen Seite.',
+    phoneCountryLabel: 'Land',
+    phoneCountrySearch: 'Länder suchen',
+    phoneNumberLabel: 'Telefonnummer',
+    phoneNumberPlaceholder: 'Telefonnummer eingeben',
+    phoneInvalid: 'Gültige Telefonnummer eingeben',
   },
   auth: {
     login: 'Anmelden',

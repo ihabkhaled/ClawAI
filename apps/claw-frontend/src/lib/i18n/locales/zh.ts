@@ -50,6 +50,11 @@ export const zh: TranslationDictionary = {
     showingPage: '显示 {total} 的页面 {page}',
     errorBoundaryTitle: '出了点问题',
     errorBoundaryDescription: '此页面遇到意外错误。请重试，或移至其他页面。',
+    phoneCountryLabel: '国家或地区',
+    phoneCountrySearch: '搜索国家或地区',
+    phoneNumberLabel: '电话号码',
+    phoneNumberPlaceholder: '输入电话号码',
+    phoneInvalid: '请输入有效的电话号码',
   },
   auth: {
     login: '登录',
