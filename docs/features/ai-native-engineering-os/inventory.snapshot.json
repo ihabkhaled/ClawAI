@@ -7219,7 +7219,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4478
+        "value": 4484
       },
       "localeCount": 16,
       "locales": [
@@ -8878,7 +8878,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 59
+        "testFiles": 61
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8902,7 +8902,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 320
+        "testFiles": 322
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9659,7 +9659,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 925,
+    "totalTestFiles": 929,
     "workspaceCount": 25
   }
 }

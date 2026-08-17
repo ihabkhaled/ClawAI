@@ -75,6 +75,12 @@ export type TranslationDictionary = {
     emailPlaceholder: string;
     registerTitle: string;
     registerSubtitle: string;
+    firstName: string;
+    firstNamePlaceholder: string;
+    lastName: string;
+    lastNamePlaceholder: string;
+    phone: string;
+    phoneOptional: string;
     registerButton: string;
     registering: string;
     registerFailed: string;

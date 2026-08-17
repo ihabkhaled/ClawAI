@@ -60,6 +60,9 @@ export class UsersService {
       email: dto.email,
       username: dto.username,
       passwordHash,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      phone: dto.phone,
       role: dto.role,
       status: 'ACTIVE',
     });

@@ -7,6 +7,7 @@ import type {
   ForgotPasswordFormValues,
   ResetPasswordFormValues,
 } from '@/lib/validation/password-reset.schema';
+import type { RegisterFormValues } from '@/lib/validation/register.schema';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 
 import type { SidebarItem } from '../constants/sidebar.constants';
@@ -59,6 +60,15 @@ export type UseLoginFormReturn = {
   rememberMe: boolean;
   handleRememberMeChange: (checked: boolean) => void;
   handleForgotPasswordClick: () => void;
+  onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
+  isPending: boolean;
+  isError: boolean;
+  errorMessage: string | null;
+  t: TranslateFunction;
+};
+
+export type UseRegisterFormReturn = {
+  form: UseFormReturn<RegisterFormValues>;
   onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
   isPending: boolean;
   isError: boolean;

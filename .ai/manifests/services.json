@@ -99,7 +99,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 59,
+      "testFiles": 61,
       "testRunner": "jest"
     },
     {

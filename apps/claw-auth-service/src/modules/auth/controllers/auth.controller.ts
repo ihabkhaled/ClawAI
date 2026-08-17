@@ -36,7 +36,7 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(registerSchema))
   async register(@Body() dto: RegisterDto): Promise<RegisterResult> {
-    return this.authService.register(dto.email, dto.password);
+    return this.authService.register(dto);
   }
 
   @Public()

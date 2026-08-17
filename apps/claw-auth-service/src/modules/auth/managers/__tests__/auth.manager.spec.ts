@@ -126,13 +126,22 @@ describe('AuthManager', () => {
       });
       rolesService.resolvePermissionsForUser.mockResolvedValue(['CHAT_USE']);
 
-      const result = await manager.register('new@example.com', 'Str0ng!Pass');
+      const result = await manager.register({
+        email: 'new@example.com',
+        password: 'Str0ng!Pass',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        phone: '+1234567890',
+      });
 
       expect(result.verificationRequired).toBe(true);
       expect(result.user.email).toBe('new@example.com');
       expect(result.user.role).toBe(UserRole.USER);
       expect(result.user.permissions).toEqual(['CHAT_USE']);
       const created = repository.createUser.mock.calls[0]?.[0];
+      expect(created).toEqual(
+        expect.objectContaining({ firstName: 'Jane', lastName: 'Doe', phone: '+1234567890' }),
+      );
       expect(created.role).toBe(UserRole.USER);
       expect(created.status).toBe(UserStatus.PENDING);
       expect(created.roleRef).toEqual({ connect: { id: 'role-user' } });
@@ -141,14 +150,26 @@ describe('AuthManager', () => {
 
     it('rejects a duplicate email', async () => {
       repository.findUserByEmail.mockResolvedValue(mockUser);
-      await expect(manager.register('test@example.com', 'Str0ng!Pass')).rejects.toThrow(
-        /already exists/i,
-      );
+      await expect(
+        manager.register({
+          email: 'test@example.com',
+          password: 'Str0ng!Pass',
+          firstName: 'Jane',
+          lastName: 'Doe',
+        }),
+      ).rejects.toThrow(/already exists/i);
       expect(repository.createUser).not.toHaveBeenCalled();
     });
 
     it('rejects a weak password before touching the DB', async () => {
-      await expect(manager.register('new@example.com', 'weak')).rejects.toThrow();
+      await expect(
+        manager.register({
+          email: 'new@example.com',
+          password: 'weak',
+          firstName: 'Jane',
+          lastName: 'Doe',
+        }),
+      ).rejects.toThrow();
       expect(repository.findUserByEmail).not.toHaveBeenCalled();
     });
 
@@ -157,7 +178,12 @@ describe('AuthManager', () => {
       repository.findUserByUsername.mockResolvedValueOnce(mockUser).mockResolvedValueOnce(null);
       repository.createUser.mockResolvedValue({ ...mockUser, role: UserRole.USER });
 
-      await manager.register('taken@example.com', 'Str0ng!Pass');
+      await manager.register({
+        email: 'taken@example.com',
+        password: 'Str0ng!Pass',
+        firstName: 'Jane',
+        lastName: 'Doe',
+      });
 
       const created = repository.createUser.mock.calls[0]?.[0];
       expect(created.username).toBe('taken1');

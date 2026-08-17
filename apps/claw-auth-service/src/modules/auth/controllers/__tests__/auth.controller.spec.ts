@@ -9,6 +9,7 @@ import { EmailVerificationService } from '../../services/email-verification.serv
 describe('AuthController', () => {
   let controller: AuthController;
   let serviceMock: jest.Mocked<{
+    register: jest.Mock;
     login: jest.Mock;
     refresh: jest.Mock;
     logout: jest.Mock;
@@ -21,6 +22,7 @@ describe('AuthController', () => {
 
   beforeEach(async () => {
     serviceMock = {
+      register: jest.fn(),
       login: jest.fn(),
       refresh: jest.fn(),
       logout: jest.fn(),
@@ -42,6 +44,21 @@ describe('AuthController', () => {
       ],
     }).compile();
     controller = module.get<AuthController>(AuthController);
+  });
+
+  it('register forwards the whole DTO', async () => {
+    const dto = {
+      email: 'new@example.com',
+      password: 'SecurePass1!',
+      firstName: 'Jane',
+      lastName: 'Doe',
+      phone: '+1234567890',
+    };
+    serviceMock.register.mockResolvedValue({ userId: 'u1', message: 'created' });
+
+    await controller.register(dto);
+
+    expect(serviceMock.register).toHaveBeenCalledWith(dto);
   });
 
   it('login forwards email + password', async () => {

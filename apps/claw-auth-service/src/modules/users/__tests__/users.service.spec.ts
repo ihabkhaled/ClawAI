@@ -315,6 +315,9 @@ describe('UsersService', () => {
         email: 'new@b.c',
         username: 'newuser',
         password: 'StrongPass1',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        phone: '+441234567890',
         role: UserRole.OPERATOR,
       } as never);
 
@@ -323,6 +326,9 @@ describe('UsersService', () => {
         expect.objectContaining({
           email: 'new@b.c',
           username: 'newuser',
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+          phone: '+441234567890',
           role: UserRole.OPERATOR,
           status: 'ACTIVE',
         }),

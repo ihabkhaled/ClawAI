@@ -50,12 +50,19 @@ Key-value store for runtime configuration (e.g., maintenance mode, feature flags
 
 | Method | Path         | Auth   | Description              |
 | ------ | ------------ | ------ | ------------------------ |
+| POST   | /register    | Public | Create a pending account |
 | POST   | /login       | Public | Email + password login   |
 | POST   | /refresh     | Public | Refresh token rotation   |
 | POST   | /logout      | Bearer | Invalidate session       |
 | GET    | /me          | Bearer | Current user profile     |
 | PATCH  | /me          | Bearer | Update own profile/prefs |
 | PATCH  | /me/password | Bearer | Change own password      |
+
+`POST /api/v1/auth/register` requires `firstName`, `lastName`, `email`,
+and `password`. Names are trimmed and limited to 64 characters. The optional
+`phone` field must use E.164 format (for example, `+15551234567`). The
+service derives the username from the email and always assigns the `USER`
+role and `PENDING` status; client-supplied role or status fields are ignored.
 
 ### Users (`/api/v1/users`)
 

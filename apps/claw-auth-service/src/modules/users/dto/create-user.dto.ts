@@ -19,6 +19,13 @@ export const createUserSchema = z.object({
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Password must contain at least one digit')
     .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+  firstName: z.string().trim().min(1).max(64).optional(),
+  lastName: z.string().trim().min(1).max(64).optional(),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\+[1-9]\d{6,14}$/)
+    .optional(),
   role: z.nativeEnum(UserRole).optional().default(UserRole.VIEWER),
 });
 
