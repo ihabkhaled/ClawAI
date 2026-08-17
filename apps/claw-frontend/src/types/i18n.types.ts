@@ -1751,6 +1751,10 @@ export type TranslationDictionary = {
     externalUpdated: string;
     openInProvider: string;
     author: string;
+    relatedItems: string;
+    viewRelatedItem: string;
+    unresolvedReference: string;
+    linkConfidence: string;
   };
   connectorDetail: {
     title: string;

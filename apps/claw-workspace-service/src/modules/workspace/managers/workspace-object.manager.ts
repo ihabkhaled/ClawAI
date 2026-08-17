@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { WorkspaceObjectLinkType } from '../../../common/enums/workspace-object-link-type.enum';
+import { WorkspaceProvider } from '../../../common/enums/workspace-provider.enum';
 import {
   GITHUB_ISSUE_URL_PATTERN,
   GITHUB_PR_URL_PATTERN,
@@ -8,9 +9,10 @@ import {
   OBJECT_UPSERT_BATCH_SIZE,
   SLACK_CHANNEL_PATTERN,
 } from '../../../common/constants/workspace.constants';
+import { GITHUB_REFERENCE_LINK_TYPES } from '../constants/workspace-object-link-resolution.constants';
 import { WorkspaceObjectRepository } from '../repositories/workspace-object.repository';
 import type { Prisma, WorkspaceObject } from '../../../generated/prisma';
-import type { SyncedObject } from '../types/workspace.types';
+import type { SyncedObject, WorkspaceObjectUpsertResult } from '../types/workspace.types';
 
 @Injectable()
 export class WorkspaceObjectManager {
@@ -23,8 +25,9 @@ export class WorkspaceObjectManager {
     userId: string,
     provider: string,
     objects: SyncedObject[],
-  ): Promise<number> {
+  ): Promise<WorkspaceObjectUpsertResult> {
     let synced = 0;
+    const stored: WorkspaceObject[] = [];
     for (let i = 0; i < objects.length; i += OBJECT_UPSERT_BATCH_SIZE) {
       const batch = objects.slice(i, i + OBJECT_UPSERT_BATCH_SIZE);
       const results = await Promise.allSettled(
@@ -48,13 +51,14 @@ export class WorkspaceObjectManager {
       for (const result of results) {
         if (result.status === 'fulfilled') {
           synced++;
+          stored.push(result.value);
         } else {
           this.logger.warn(`Object upsert failed: ${String(result.reason)}`);
         }
       }
     }
     this.logger.log(`Upserted ${synced}/${objects.length} objects for connector ${connectorId}`);
-    return synced;
+    return { synced, objects: stored };
   }
 
   async detectAndCreateLinks(storedObjects: WorkspaceObject[]): Promise<void> {
@@ -101,6 +105,32 @@ export class WorkspaceObjectManager {
       const ref = match[0];
       if (ref !== undefined) {
         await this.safeLinkCreate(objectId, ref, WorkspaceObjectLinkType.SLACK_MENTION, 0.85);
+      }
+    }
+  }
+
+  // Phase 10 — the counterpart to detectAndCreateLinks: when THIS object
+  // just synced, resolve any earlier-created link whose externalRef
+  // points at it (e.g. another object's content referenced this PR's URL
+  // before the PR itself had ever synced). Only touches unresolved rows.
+  async resolveLinksForObjects(storedObjects: WorkspaceObject[]): Promise<void> {
+    for (const obj of storedObjects) {
+      await this.resolveLinksForObject(obj);
+    }
+  }
+
+  private async resolveLinksForObject(obj: WorkspaceObject): Promise<void> {
+    if (obj.url !== null) {
+      await this.repository.resolveLinksByExternalRef(obj.url, GITHUB_REFERENCE_LINK_TYPES, obj.id);
+    }
+    if ((obj.provider as unknown as string) === WorkspaceProvider.JIRA) {
+      const issueKey = (obj.metadata as Record<string, unknown> | null)?.['issueKey'];
+      if (typeof issueKey === 'string') {
+        await this.repository.resolveLinksByExternalRef(
+          issueKey,
+          [WorkspaceObjectLinkType.JIRA_REFERENCE],
+          obj.id,
+        );
       }
     }
   }

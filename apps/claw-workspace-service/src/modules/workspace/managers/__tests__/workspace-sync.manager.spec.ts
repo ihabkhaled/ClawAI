@@ -118,7 +118,9 @@ const mockTokenManager = {
 } as unknown as TokenRefreshManager;
 
 const mockObjectManager = {
-  upsertBatch: jest.fn().mockResolvedValue(0),
+  upsertBatch: jest.fn().mockResolvedValue({ synced: 0, objects: [] }),
+  detectAndCreateLinks: jest.fn().mockResolvedValue(undefined),
+  resolveLinksForObjects: jest.fn().mockResolvedValue(undefined),
 } as unknown as WorkspaceObjectManager;
 
 const mockRabbitMQ = {
@@ -228,9 +230,14 @@ describe('WorkspaceSyncManager', () => {
         objectsFailed: 0,
         objects,
       });
-      (mockObjectManager.upsertBatch as jest.Mock).mockResolvedValue(1);
+      (mockObjectManager.upsertBatch as jest.Mock).mockResolvedValue({
+        synced: 1,
+        objects: [{ id: 'stored-1' }],
+      });
       await manager.syncConnector(mockConnector, false);
       expect(mockObjectManager.upsertBatch).toHaveBeenCalledWith('c1', 'u1', 'GITHUB', objects);
+      expect(mockObjectManager.detectAndCreateLinks).toHaveBeenCalledWith([{ id: 'stored-1' }]);
+      expect(mockObjectManager.resolveLinksForObjects).toHaveBeenCalledWith([{ id: 'stored-1' }]);
     });
 
     it('should publish WORKSPACE_OBJECT_SYNCED event on success', async () => {

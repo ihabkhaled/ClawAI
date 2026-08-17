@@ -1772,6 +1772,10 @@ export const ar: TranslationDictionary = {
     externalUpdated: 'حُدِّث في المصدر',
     openInProvider: 'فتح في المزود',
     author: 'المؤلف: {author}',
+    relatedItems: 'عناصر ذات صلة',
+    viewRelatedItem: 'عرض العنصر',
+    unresolvedReference: 'العنصر المُشار إليه لم تتم مزامنته بعد',
+    linkConfidence: 'الثقة {value}',
   },
   connectorDetail: {
     title: 'تفاصيل الموصل',

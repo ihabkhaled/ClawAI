@@ -1814,6 +1814,10 @@ export const ru: TranslationDictionary = {
     externalUpdated: 'Обновлено во внешней системе',
     openInProvider: 'Открыть у провайдера',
     author: 'Автор: {author}',
+    relatedItems: 'Связанные элементы',
+    viewRelatedItem: 'Просмотреть элемент',
+    unresolvedReference: 'Указанный элемент ещё не синхронизирован',
+    linkConfidence: 'уверенность {value}',
   },
   connectorDetail: {
     title: 'Детали коннектора',

@@ -1796,6 +1796,10 @@ export const ja: TranslationDictionary = {
     externalUpdated: 'アップストリームを更新しました',
     openInProvider: 'プロバイダーで開く',
     author: '作成者: {author}',
+    relatedItems: '関連アイテム',
+    viewRelatedItem: 'アイテムを表示',
+    unresolvedReference: '参照先のアイテムはまだ同期されていません',
+    linkConfidence: '信頼度 {value}',
   },
   connectorDetail: {
     title: 'コネクタの詳細',

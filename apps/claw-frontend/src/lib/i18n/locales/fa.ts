@@ -1793,6 +1793,10 @@ export const fa: TranslationDictionary = {
     externalUpdated: 'بالادست به روز شد',
     openInProvider: 'در ارائه دهنده باز کنید',
     author: 'نویسنده: {author}',
+    relatedItems: 'موارد مرتبط',
+    viewRelatedItem: 'مشاهده مورد',
+    unresolvedReference: 'مورد ارجاع‌شده هنوز همگام‌سازی نشده است',
+    linkConfidence: 'اطمینان {value}',
   },
   connectorDetail: {
     title: 'جزئیات اتصال',

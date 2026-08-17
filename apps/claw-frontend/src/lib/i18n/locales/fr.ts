@@ -1826,6 +1826,10 @@ export const fr: TranslationDictionary = {
     externalUpdated: 'Mis à jour en amont',
     openInProvider: 'Ouvrir chez le fournisseur',
     author: 'Auteur : {author}',
+    relatedItems: 'Éléments liés',
+    viewRelatedItem: "Voir l'élément",
+    unresolvedReference: "L'élément référencé n'a pas encore été synchronisé",
+    linkConfidence: 'confiance {value}',
   },
   connectorDetail: {
     title: 'Détail du connecteur',

@@ -1813,6 +1813,10 @@ export const pt: TranslationDictionary = {
     externalUpdated: 'Atualizado no upstream',
     openInProvider: 'Abrir no provedor',
     author: 'Autor: {author}',
+    relatedItems: 'Itens relacionados',
+    viewRelatedItem: 'Ver item',
+    unresolvedReference: 'Item referenciado ainda não sincronizado',
+    linkConfidence: 'confiança {value}',
   },
   connectorDetail: {
     title: 'Detalhe do Conector',

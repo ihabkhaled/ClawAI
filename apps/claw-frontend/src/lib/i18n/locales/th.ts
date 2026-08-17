@@ -1775,6 +1775,10 @@ export const th: TranslationDictionary = {
     externalUpdated: 'อัปเดตต้นน้ำแล้ว',
     openInProvider: 'เปิดในผู้ให้บริการ',
     author: 'ผู้เขียน: {author}',
+    relatedItems: 'รายการที่เกี่ยวข้อง',
+    viewRelatedItem: 'ดูรายการ',
+    unresolvedReference: 'รายการที่อ้างอิงยังไม่ได้ซิงค์',
+    linkConfidence: 'ความเชื่อมั่น {value}',
   },
   connectorDetail: {
     title: 'รายละเอียดตัวเชื่อมต่อ',

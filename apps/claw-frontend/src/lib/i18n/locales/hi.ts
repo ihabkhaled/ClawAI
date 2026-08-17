@@ -1798,6 +1798,10 @@ export const hi: TranslationDictionary = {
     externalUpdated: 'स्रोत पर अद्यतन',
     openInProvider: 'प्रोवाइडर में खोलें',
     author: 'लेखक: {author}',
+    relatedItems: 'संबंधित आइटम',
+    viewRelatedItem: 'आइटम देखें',
+    unresolvedReference: 'संदर्भित आइटम अभी तक सिंक नहीं हुआ',
+    linkConfidence: 'विश्वास {value}',
   },
   connectorDetail: {
     title: 'कनेक्टर विवरण',

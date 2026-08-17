@@ -1789,6 +1789,10 @@ export const en: TranslationDictionary = {
     externalUpdated: 'Updated upstream',
     openInProvider: 'Open in provider',
     author: 'Author: {author}',
+    relatedItems: 'Related items',
+    viewRelatedItem: 'View item',
+    unresolvedReference: 'Referenced item not synced yet',
+    linkConfidence: 'confidence {value}',
   },
   connectorDetail: {
     title: 'Connector Detail',

@@ -1822,6 +1822,10 @@ export const es: TranslationDictionary = {
     externalUpdated: 'Actualizado en origen',
     openInProvider: 'Abrir en el proveedor',
     author: 'Autor: {author}',
+    relatedItems: 'Elementos relacionados',
+    viewRelatedItem: 'Ver elemento',
+    unresolvedReference: 'El elemento referenciado aún no se ha sincronizado',
+    linkConfidence: 'confianza {value}',
   },
   connectorDetail: {
     title: 'Detalle del conector',

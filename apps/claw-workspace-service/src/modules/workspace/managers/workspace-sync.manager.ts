@@ -135,12 +135,26 @@ export class WorkspaceSyncManager {
     ) {
       return 0;
     }
-    const synced = await this.objectManager.upsertBatch(
+    const { synced, objects: storedObjects } = await this.objectManager.upsertBatch(
       connector.id,
       connector.userId,
       connector.provider,
       outcome.result.objects,
     );
+    // Phase 10 (scoped slice) — extract cross-object references from the
+    // content that just synced, and resolve any earlier-created reference
+    // that was waiting on these specific objects to show up. Best-effort:
+    // a failure here must never fail the sync itself.
+    await this.objectManager.detectAndCreateLinks(storedObjects).catch((error: unknown) => {
+      this.logger.warn(
+        `detectAndCreateLinks failed for connector ${connector.id} — ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+    });
+    await this.objectManager.resolveLinksForObjects(storedObjects).catch((error: unknown) => {
+      this.logger.warn(
+        `resolveLinksForObjects failed for connector ${connector.id} — ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+    });
     // Phase 04 (scoped slice) — the "consistency path": bridge synced
     // objects into the canonical WorkspaceEvent fabric for providers with
     // no webhook fast path. No-ops for webhook-covered providers (see

@@ -1742,6 +1742,10 @@ export const zh: TranslationDictionary = {
     externalUpdated: '更新上游',
     openInProvider: '在提供商中打开',
     author: '作者：{author}',
+    relatedItems: '相关项目',
+    viewRelatedItem: '查看项目',
+    unresolvedReference: '引用的项目尚未同步',
+    linkConfidence: '置信度 {value}',
   },
   connectorDetail: {
     title: '连接器细节',

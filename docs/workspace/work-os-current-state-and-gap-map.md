@@ -1,18 +1,19 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–09)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–10)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
 truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
 bridge), Phase 05 (crash recovery + resume-from-failed-step), Phase 06 (error taxonomy +
 manual-repair tracking), Phase 07 (mechanical chain template library), Phase 08 (Automations
-page — first frontend for the chain system), and Phase 09 (NL → chain draft, human reviews and
-saves) are done as real, deliberately-scoped slices — see each phase's own section below for
-exactly what's in and out of scope. Phase 01's duplication scan and RabbitMQ contract inventory
-are still pending (see "Explicitly not yet verified" below). Push-subscription lifecycle
-management (Phase 04's full spec), the real DAG rewrite (Phase 05's full spec),
-compensating/verification steps (Phase 06's full spec), the AI-step/auto-trigger recipe layer
-(Phase 07's full spec), auto-triggering off events (Phase 09's full spec), and Phase 10 onward are
-not started — each remaining phase is independently a multi-day-to-multi-week
-feature (a knowledge graph, org RBAC, etc.); they're being built as
+page — first frontend for the chain system), Phase 09 (NL → chain draft, human reviews and
+saves), and Phase 10 (wiring the dormant object-link graph end to end) are done as real,
+deliberately-scoped slices — see each phase's own section below for exactly what's in and out of
+scope. Phase 01's duplication scan and RabbitMQ contract inventory are still pending (see
+"Explicitly not yet verified" below). Push-subscription lifecycle management (Phase 04's full
+spec), the real DAG rewrite (Phase 05's full spec), compensating/verification steps (Phase 06's
+full spec), the AI-step/auto-trigger recipe layer (Phase 07's full spec), auto-triggering off
+events (Phase 09's full spec), learning/suggestion-groundwork (Phase 11's full spec), and Phase
+11 onward are not started — each remaining phase is independently a multi-day-to-multi-week
+feature (an LLM-backed preference classifier, org RBAC, etc.); they're being built as
 real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
 instruction — and every category of change that would touch live write-action execution or a live
 OAuth app is being deliberately scoped down to safety-net hardening rather than rushed into a full
@@ -598,6 +599,66 @@ expectation as Phase 07's templates — there's no field-by-field editor). No re
 chain-shaped, and extending it would have been undisclosed scope growth (see the investigation
 this phase started from for the full reasoning).
 
+## Phase 10 — Knowledge Graph (wiring the dormant object-link graph end to end, done)
+
+The full Phase 10 spec (per the doc's own Pass-2 open question at the top of this file) asked
+whether `WorkspaceObjectLink` — the proto knowledge-graph edge model — actually works, or is a
+flat, unused table. Investigation found the honest, concrete answer: **the write path existed but
+was never called in production, the resolution logic didn't exist at all, and the read path
+existed on the backend but nothing on the frontend ever rendered it.** `WorkspaceObjectManager
+.detectAndCreateLinks()` (regex-based reference extraction — Jira keys, GitHub PR/issue URLs,
+Slack channel mentions) was fully implemented and unit-tested, but its only caller anywhere in the
+codebase was its own spec file — dead code. `WorkspaceObjectLink.targetObjectId` was never once
+set outside of tests, because nothing resolved a link's `externalRef` against the objects that
+actually exist. `GET /workspace/objects/:id` already returned `sourceLinks`, but the frontend's
+`WorkspaceObject` type didn't declare the field and the detail page never rendered it. This slice
+is the mechanical "actually turn on the plumbing that was already 80% built" pass, not a new
+system — the same honesty as every other phase in this doc, just applied to code instead of spec.
+
+**What shipped:**
+
+- `WorkspaceObjectManager.upsertBatch()` now returns `{ synced, objects }` instead of a bare count,
+  and `WorkspaceSyncManager.upsertIfSucceeded()` calls `detectAndCreateLinks(objects)` on every
+  sync batch — link extraction runs in production for the first time.
+- New `WorkspaceObjectManager.resolveLinksForObjects()` — the resolution half that never existed:
+  when an object syncs, any earlier-created unresolved link whose `externalRef` matches this
+  object's `url` (GitHub PR/issue references — both store the full `html_url`) or, for Jira
+  objects, matches `metadata.issueKey` (Jira references store the bare key, e.g. `PROJ-123`, not a
+  URL — the two providers needed different match rules and that's now explicit and tested
+  separately) gets its `targetObjectId` filled in. Only ever touches `targetObjectId: null` rows,
+  so an already-resolved link is never repointed. Both extraction and resolution are wrapped in
+  `.catch()` at the call site — a failure here must never fail the sync itself, matching the
+  existing `syncEventBridge` best-effort pattern right next to it.
+- `GET /workspace/objects/:id` now includes `targetLinks` alongside the existing `sourceLinks` —
+  incoming references from other objects, not just outgoing ones this object made.
+- Frontend: the object detail page (`/workspace/objects/[objectId]`) renders a "Related items"
+  section for the first time — resolved links become a clickable link to the referenced object
+  (`sourceLinks` → the link's `targetObjectId`; `targetLinks` → the link's `sourceObjectId`, since
+  for an incoming reference the _target_ is already this object), unresolved outgoing links show
+  their raw `externalRef` as plain text, and every row shows its extraction confidence. Also fixed
+  a real pre-existing type bug found while touching this code: the frontend's
+  `WorkspaceObjectLink.targetObjectId` was typed as non-nullable `string`, when the backend has
+  always allowed `null` for an unresolved link.
+- 12 new backend tests (5 for `resolveLinksForObjects`'s per-provider matching rules, plus the
+  `upsertBatch`/`WorkspaceSyncManager` wiring assertions updated to cover the new
+  detect-then-resolve call sequence) and 7 new frontend component tests for the "Related items"
+  rendering (resolved vs. unresolved, outgoing vs. incoming, both together, confidence display).
+
+**Explicitly not done in this slice** (real scope, not oversight): no semantic/embedding-based
+relationships — that's a distinct, **already-shipped** feature (Stream 30's
+`workspace-semantic-search.service.ts`, cosine similarity via memory-service's pgvector column),
+not something this phase needed to add or that "knowledge graph" should be conflated with. No new
+link-extraction patterns beyond the four that already existed (Jira keys, GitHub PR/issue URLs,
+Slack channel mentions) — extending the regex set to more providers is a cheap, obvious follow-up
+but out of scope for "wire up what's there." No graph traversal/visualization UI — the detail page
+lists direct (one-hop) relationships only, not a graph view. No `PARENT_CHILD`/`URL_REFERENCE`
+link-type extraction — both enum values exist in `WorkspaceObjectLinkType` but nothing produces
+them; only the four regex-backed types are actually created. No "learning" — per this doc's own
+table (line ~132), the AI-preference-classifier groundwork is explicitly **Phase 11**, a separate,
+already-shipped-but-narrow-scope feature (`PreferenceClassifierManager`, heuristic v1, writes
+preference text to memory-service — see its own module for what it does today), not something this
+phase touched or extended.
+
 ## Explicitly not yet verified (next session's starting point)
 
 - Whether `chains`/`ai-actions`/`actions` module boundaries already have the duplication the
@@ -632,8 +693,10 @@ the pack's default sequence to front-load the work that de-risks everything afte
 6. **Phase 08** (Automations page) and **Phase 09** (NL → chain draft) are done — the unified
    inbox/dashboard and cross-provider search pieces of the original Work OS UX spec, and Phase
    09's auto-triggering half, remain.
-7. **Phase 10/11** (knowledge graph + learning) — can proceed in parallel with the remaining
-   08/09 pieces once the event fabric (03) is stable, since both consume the same event stream.
+7. **Phase 10** (knowledge graph — object-link wiring) is done. **Phase 11** (learning — an
+   LLM-backed preference classifier, beyond today's heuristic-v1) can proceed in parallel with the
+   remaining 08/09 pieces once the event fabric (03) is stable, since both consume the same event
+   stream.
 8. **Phase 12** (org installations/RBAC) — should land before Phase 13's provider expansion goes
    to production, so deepened provider actions inherit the right grant model from day one.
 9. **Phase 13** (provider capability expansion) — depth work per provider.
