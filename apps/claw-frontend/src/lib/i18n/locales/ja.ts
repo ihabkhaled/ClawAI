@@ -1050,7 +1050,6 @@ export const ja: TranslationDictionary = {
     editUser: 'ユーザーを編集',
     saveUser: 'ユーザーを保存',
     editUsername: 'ユーザー名を編集',
-    editEmail: 'メールを編集',
     userUpdated: 'ユーザーを更新しました',
     userUpdateFailed: 'ユーザーを更新できませんでした',
     colEmail: 'メール',

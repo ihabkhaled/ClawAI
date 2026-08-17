@@ -6,7 +6,6 @@ export function useUserTableState(): UseUserTableStateReturn {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [profileEditingId, setProfileEditingId] = useState<string | null>(null);
   const [editUsername, setEditUsername] = useState('');
-  const [editEmail, setEditEmail] = useState('');
 
   const handleRoleSelect = useCallback(
     (userId: string, role: string, onChangeRole: (userId: string, role: string) => void): void => {
@@ -19,17 +18,16 @@ export function useUserTableState(): UseUserTableStateReturn {
   const startProfileEdit = useCallback((user: AdminUser): void => {
     setProfileEditingId(user.id);
     setEditUsername(user.username);
-    setEditEmail(user.email);
   }, []);
   const finishProfileEdit = useCallback(
     (onUpdate: (userId: string, data: AdminUserUpdateRequest) => void): void => {
       if (profileEditingId === null) {
         return;
       }
-      onUpdate(profileEditingId, { username: editUsername, email: editEmail });
+      onUpdate(profileEditingId, { username: editUsername });
       setProfileEditingId(null);
     },
-    [editEmail, editUsername, profileEditingId],
+    [editUsername, profileEditingId],
   );
 
   return {
@@ -38,9 +36,7 @@ export function useUserTableState(): UseUserTableStateReturn {
     handleRoleSelect,
     profileEditingId,
     editUsername,
-    editEmail,
     setEditUsername,
-    setEditEmail,
     startProfileEdit,
     finishProfileEdit,
   };

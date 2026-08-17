@@ -121,13 +121,6 @@ export class UsersService {
     }
     this.assertMutableUser(user);
 
-    if (dto.email && dto.email !== user.email) {
-      const existing = await this.usersRepository.findByEmail(dto.email);
-      if (existing) {
-        throw new DuplicateEntityException('User', 'email');
-      }
-    }
-
     if (dto.username && dto.username !== user.username) {
       const existing = await this.usersRepository.findByUsername(dto.username);
       if (existing) {
@@ -136,7 +129,6 @@ export class UsersService {
     }
 
     const updated = await this.usersRepository.updateById(id, {
-      email: dto.email,
       username: dto.username,
       role: dto.role,
       status: dto.status,

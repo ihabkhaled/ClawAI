@@ -1059,7 +1059,6 @@ export const pt: TranslationDictionary = {
     editUser: 'Editar usuário',
     saveUser: 'Salvar usuário',
     editUsername: 'Editar nome de usuário',
-    editEmail: 'Editar e-mail',
     userUpdated: 'Usuário atualizado',
     userUpdateFailed: 'Não foi possível atualizar o usuário',
     colEmail: 'E-mail',

@@ -1059,7 +1059,6 @@ export const ru: TranslationDictionary = {
     editUser: 'Изменить пользователя',
     saveUser: 'Сохранить пользователя',
     editUsername: 'Изменить имя пользователя',
-    editEmail: 'Изменить эл. почту',
     userUpdated: 'Пользователь обновлён',
     userUpdateFailed: 'Не удалось обновить пользователя',
     colEmail: 'Эл. почта',

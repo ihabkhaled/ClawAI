@@ -1052,7 +1052,6 @@ export const hi: TranslationDictionary = {
     editUser: 'उपयोगकर्ता संपादित करें',
     saveUser: 'उपयोगकर्ता सहेजें',
     editUsername: 'उपयोगकर्ता नाम संपादित करें',
-    editEmail: 'ईमेल संपादित करें',
     userUpdated: 'उपयोगकर्ता अपडेट हुआ',
     userUpdateFailed: 'उपयोगकर्ता अपडेट नहीं हुआ',
     colEmail: 'ईमेल',

@@ -1048,7 +1048,6 @@ export const fa: TranslationDictionary = {
     editUser: 'ویرایش کاربر',
     saveUser: 'ذخیره کاربر',
     editUsername: 'ویرایش نام کاربری',
-    editEmail: 'ویرایش ایمیل',
     userUpdated: 'کاربر به‌روزرسانی شد',
     userUpdateFailed: 'به‌روزرسانی کاربر ناموفق بود',
     colEmail: 'ایمیل',

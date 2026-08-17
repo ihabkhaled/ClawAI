@@ -1046,7 +1046,6 @@ export type TranslationDictionary = {
     editUser: string;
     saveUser: string;
     editUsername: string;
-    editEmail: string;
     userUpdated: string;
     userUpdateFailed: string;
     colEmail: string;

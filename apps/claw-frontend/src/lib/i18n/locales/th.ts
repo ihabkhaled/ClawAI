@@ -1038,7 +1038,6 @@ export const th: TranslationDictionary = {
     editUser: 'แก้ไขผู้ใช้',
     saveUser: 'บันทึกผู้ใช้',
     editUsername: 'แก้ไขชื่อผู้ใช้',
-    editEmail: 'แก้ไขอีเมล',
     userUpdated: 'อัปเดตผู้ใช้แล้ว',
     userUpdateFailed: 'อัปเดตผู้ใช้ไม่สำเร็จ',
     colEmail: 'อีเมล',

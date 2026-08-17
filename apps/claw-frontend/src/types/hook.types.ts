@@ -158,9 +158,7 @@ export type UseUserTableStateReturn = {
   ) => void;
   profileEditingId: string | null;
   editUsername: string;
-  editEmail: string;
   setEditUsername: (value: string) => void;
-  setEditEmail: (value: string) => void;
   startProfileEdit: (user: AdminUser) => void;
   finishProfileEdit: (onUpdate: (userId: string, data: AdminUserUpdateRequest) => void) => void;
 };

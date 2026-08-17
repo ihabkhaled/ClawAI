@@ -2,11 +2,6 @@ import { z } from 'zod';
 import { UserRole, UserStatus } from '../../../common/enums';
 
 export const updateUserSchema = z.object({
-  email: z
-    .string()
-    .email('Invalid email address')
-    .max(255, 'Email must be at most 255 characters')
-    .optional(),
   username: z
     .string()
     .min(3, 'Username must be at least 3 characters')

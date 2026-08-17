@@ -60,7 +60,6 @@ export type DeleteOwnAccountRequest = {
 };
 
 export type AdminUserUpdateRequest = {
-  email?: string;
   username?: string;
 };
 

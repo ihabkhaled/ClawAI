@@ -1047,7 +1047,6 @@ export const en: TranslationDictionary = {
     editUser: 'Edit user',
     saveUser: 'Save user',
     editUsername: 'Edit username',
-    editEmail: 'Edit email',
     userUpdated: 'User updated',
     userUpdateFailed: 'Failed to update user',
     colEmail: 'Email',

@@ -1042,7 +1042,6 @@ export const ar: TranslationDictionary = {
     editUser: 'تعديل المستخدم',
     saveUser: 'حفظ المستخدم',
     editUsername: 'تعديل اسم المستخدم',
-    editEmail: 'تعديل البريد الإلكتروني',
     userUpdated: 'تم تحديث المستخدم',
     userUpdateFailed: 'تعذر تحديث المستخدم',
     colEmail: 'البريد الإلكتروني',

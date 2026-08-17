@@ -1063,7 +1063,6 @@ export const de: TranslationDictionary = {
     editUser: 'Benutzer bearbeiten',
     saveUser: 'Benutzer speichern',
     editUsername: 'Benutzernamen bearbeiten',
-    editEmail: 'E-Mail bearbeiten',
     userUpdated: 'Benutzer aktualisiert',
     userUpdateFailed: 'Benutzer konnte nicht aktualisiert werden',
     colEmail: 'E-Mail',

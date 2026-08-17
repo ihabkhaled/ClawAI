@@ -156,13 +156,14 @@ describe('UserTable plan column', () => {
 });
 
 describe('UserTable lifecycle actions', () => {
-  it('lets an administrator edit and save username and email', async () => {
+  it('lets an administrator edit and save username only', async () => {
     const onUpdateUser = vi.fn();
     render(<UserTable users={[makeUser()]} {...baseProps} onUpdateUser={onUpdateUser} />);
 
     await userEvent.click(
       screen.getAllByRole('button', { name: 'admin.editUser' })[0] as HTMLElement,
     );
+    expect(screen.queryByLabelText('admin.editEmail')).toBeNull();
     const username = screen.getAllByLabelText('admin.editUsername')[0] as HTMLInputElement;
     await userEvent.clear(username);
     await userEvent.type(username, 'renamed');
@@ -170,10 +171,7 @@ describe('UserTable lifecycle actions', () => {
       screen.getAllByRole('button', { name: 'admin.saveUser' })[0] as HTMLElement,
     );
 
-    expect(onUpdateUser).toHaveBeenCalledWith('u1', {
-      username: 'renamed',
-      email: 'alice@example.com',
-    });
+    expect(onUpdateUser).toHaveBeenCalledWith('u1', { username: 'renamed' });
   });
   it('offers Deactivate for an active user', () => {
     render(<UserTable users={[makeUser({ status: 'ACTIVE' })]} {...baseProps} />);

@@ -6,6 +6,7 @@ import { DuplicateEntityException, EntityNotFoundException } from '../../../comm
 import { UserRole, UserStatus } from '../../../common/enums';
 import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
 import { verifyPassword } from '@common/utilities';
+import { updateUserSchema } from '../dto/update-user.dto';
 import { type AuthEmailAdapter } from '../../auth/adapters/auth-email.adapter';
 
 jest.mock('@common/utilities', () => ({
@@ -67,18 +68,17 @@ describe('UsersService', () => {
   });
 
   describe('updateUser', () => {
-    it('should update user successfully', async () => {
-      const updatedUser = { ...mockUser, email: 'new@example.com' };
+    it('should update user username successfully', async () => {
+      const updatedUser = { ...mockUser, username: 'renamed' };
       repository.findById.mockResolvedValue(mockUser);
-      repository.findByEmail.mockResolvedValue(null);
+      repository.findByUsername.mockResolvedValue(null);
       repository.updateById.mockResolvedValue(updatedUser);
 
-      const result = await service.updateUser('user-1', { email: 'new@example.com' }, 'admin-1');
+      const result = await service.updateUser('user-1', { username: 'renamed' }, 'admin-1');
 
-      expect(result.email).toBe('new@example.com');
+      expect(result.username).toBe('renamed');
       expect(repository.updateById).toHaveBeenCalledWith('user-1', {
-        email: 'new@example.com',
-        username: undefined,
+        username: 'renamed',
         role: undefined,
         status: undefined,
       });
@@ -88,17 +88,36 @@ describe('UsersService', () => {
       repository.findById.mockResolvedValue(null);
 
       await expect(
-        service.updateUser('nonexistent', { email: 'new@example.com' }, 'admin-1'),
+        service.updateUser('nonexistent', { username: 'renamed' }, 'admin-1'),
       ).rejects.toThrow(EntityNotFoundException);
     });
 
-    it('should throw DuplicateEntityException if email already taken', async () => {
+    it('should throw DuplicateEntityException if username already taken', async () => {
       repository.findById.mockResolvedValue(mockUser);
-      repository.findByEmail.mockResolvedValue({ ...mockUser, id: 'other-user' });
+      repository.findByUsername.mockResolvedValue({ ...mockUser, id: 'other-user' });
 
-      await expect(
-        service.updateUser('user-1', { email: 'taken@example.com' }, 'admin-1'),
-      ).rejects.toThrow(DuplicateEntityException);
+      await expect(service.updateUser('user-1', { username: 'taken' }, 'admin-1')).rejects.toThrow(
+        DuplicateEntityException,
+      );
+    });
+
+    it('should ignore an email property and never pass it to updateById', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      repository.findByUsername.mockResolvedValue(null);
+      repository.updateById.mockResolvedValue(mockUser);
+
+      await service.updateUser(
+        'user-1',
+        updateUserSchema.parse({ email: 'taken@example.com' }),
+        'admin-1',
+      );
+
+      expect(repository.findByEmail).not.toHaveBeenCalled();
+      expect(repository.updateById).toHaveBeenCalledWith('user-1', {
+        username: undefined,
+        role: undefined,
+        status: undefined,
+      });
     });
   });
 

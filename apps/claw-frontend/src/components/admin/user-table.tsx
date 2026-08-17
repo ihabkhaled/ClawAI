@@ -42,9 +42,7 @@ export function UserTable({
     handleRoleSelect,
     profileEditingId,
     editUsername,
-    editEmail,
     setEditUsername,
-    setEditEmail,
     startProfileEdit,
     finishProfileEdit,
   } = useUserTableState();
@@ -80,12 +78,6 @@ export function UserTable({
               value={editUsername}
               onChange={(event) => setEditUsername(event.target.value)}
             />
-            <Input
-              aria-label={t('admin.editEmail')}
-              type="email"
-              value={editEmail}
-              onChange={(event) => setEditEmail(event.target.value)}
-            />
           </div>
         ) : (
           <div className="flex items-center gap-3">
@@ -106,17 +98,7 @@ export function UserTable({
     {
       key: 'email',
       header: t('admin.colEmail'),
-      render: (user) =>
-        profileEditingId === user.id ? (
-          <Input
-            aria-label={t('admin.editEmail')}
-            type="email"
-            value={editEmail}
-            onChange={(event) => setEditEmail(event.target.value)}
-          />
-        ) : (
-          <span className="text-muted-foreground text-sm">{user.email}</span>
-        ),
+      render: (user) => <span className="text-muted-foreground text-sm">{user.email}</span>,
     },
     {
       key: 'role',

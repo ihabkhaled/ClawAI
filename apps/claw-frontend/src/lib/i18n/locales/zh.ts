@@ -1031,7 +1031,6 @@ export const zh: TranslationDictionary = {
     editUser: '编辑用户',
     saveUser: '保存用户',
     editUsername: '编辑用户名',
-    editEmail: '编辑邮箱',
     userUpdated: '用户已更新',
     userUpdateFailed: '无法更新用户',
     colEmail: '电子邮件',
