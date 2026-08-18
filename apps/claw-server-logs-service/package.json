@@ -1,6 +1,6 @@
 {
   "name": "claw-server-logs-service",
-  "version": "1.27.1",
+  "version": "1.27.2",
   "private": true,
   "description": "Claw Server Logs Service - Backend server log ingestion and querying",
   "license": "UNLICENSED",
