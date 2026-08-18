@@ -8,15 +8,14 @@
 // Persisting both sides turns the thread into the ordinary agent transcript the
 // model expects: user → assistant(tool request) → tool(result) → …
 
-// A tool result is bounded before it reaches the transcript. The whole result
-// already travels to the model on the turn it arrives; the transcript copy only
-// has to be enough to recognise "I already did this", and ~16 unbounded results
-// would crowd out the conversation they are meant to inform.
-// Shortened as the retained trail grew. What an older entry has to answer is
-// "did I already read this?", which the head of the result settles; the full
-// result still travels to the model on the turn it arrives. Trading depth per
-// entry for many more entries is what keeps a long run from re-reading.
-export const RUNTIME_V2_TRANSCRIPT_RESULT_CHARACTERS = 400;
+// A tool result is bounded before it reaches the transcript. Continuations keep
+// at most twenty messages, so at most ten results can reach one provider turn.
+// A 16 KiB per-result ceiling therefore consumes at most ~40k tokens, leaving
+// more than half of the 96k continuation budget for instructions, requests and
+// the current result. The former 400-character ceiling discarded even a small
+// source file before the following model turn could use it to construct a
+// patch, leaving only the path/hash identity and causing read/retry loops.
+export const RUNTIME_V2_TRANSCRIPT_RESULT_CHARACTERS = 16_384;
 
 export const RUNTIME_V2_TRANSCRIPT_TRUNCATION_NOTICE = '…[result truncated in transcript]';
 
