@@ -1074,6 +1074,12 @@ export const en: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'The audit service was unreachable. Try again in a moment.',
     loadingAuditEvents: 'Loading audit events...',
     viewAllAudits: 'View all',
+    issueTemporaryPassword: 'Issue temporary password',
+    issueTemporaryPasswordConfirmTitle: 'Issue a temporary password?',
+    issueTemporaryPasswordConfirmBody:
+      'A temporary password will be emailed to the user and all active sessions will be signed out.',
+    temporaryPasswordIssued: 'Temporary password emailed and all sessions signed out.',
+    temporaryPasswordFailed: 'Failed to issue the temporary password.',
   },
   settings: {
     title: 'Settings',

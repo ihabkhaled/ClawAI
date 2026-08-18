@@ -294,6 +294,7 @@ export type {
   UseFileRetentionBadgeReturn,
   FormFieldErrors,
   UserTableProps,
+  TemporaryPasswordDialogProps,
   MessageBubbleProps,
   ModelSelection,
   ModelPickerOption,

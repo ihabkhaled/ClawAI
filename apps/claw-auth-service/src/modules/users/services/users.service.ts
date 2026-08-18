@@ -295,9 +295,17 @@ export class UsersService {
     await this.assertSuperAdminActorForAdminMutation(actorId, user.role === UserRole.ADMIN);
     const temporaryPassword = `${randomBytes(12).toString('base64url')}!Aa1`;
     const passwordHash = await hashPassword(temporaryPassword);
+    await this.authEmailAdapter.sendTemporaryPassword(user.email, temporaryPassword);
+    // Residual safe-direction failure: if updateById fails after the email is sent,
+    // the emailed temporary password will not work, but the user's existing password
+    // still works, so they are not locked out.
     await this.usersRepository.updateById(id, { passwordHash, mustChangePassword: true });
     await this.usersRepository.revokeSessionsByUserId(id);
-    await this.authEmailAdapter.sendTemporaryPassword(user.email, temporaryPassword);
+    await this.rabbitMQService.publish(EventPattern.USER_TEMPORARY_PASSWORD_ISSUED, {
+      userId: id,
+      issuedBy: actorId,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   private async requireUserWithValidPassword(userId: string, password: string): Promise<User> {

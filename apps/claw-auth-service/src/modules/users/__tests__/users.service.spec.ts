@@ -56,14 +56,16 @@ describe('UsersService', () => {
   let service: UsersService;
   let repository: ReturnType<typeof mockRepository>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
+  let authEmailAdapter: { sendTemporaryPassword: jest.Mock };
 
   beforeEach(() => {
     repository = mockRepository();
     rabbitMQ = mockRabbitMQ();
+    authEmailAdapter = { sendTemporaryPassword: jest.fn() };
     service = new UsersService(
       repository as unknown as UsersRepository,
       rabbitMQ as unknown as RabbitMQService,
-      { sendTemporaryPassword: jest.fn() } as unknown as AuthEmailAdapter,
+      authEmailAdapter as unknown as AuthEmailAdapter,
     );
   });
 
@@ -357,6 +359,51 @@ describe('UsersService', () => {
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
         EventPattern.USER_CREATED,
         expect.objectContaining({ userId: 'new-1', email: 'new@b.c' }),
+      );
+    });
+  });
+
+  describe('issueTemporaryPassword', () => {
+    it('does not update the password or revoke sessions when email delivery fails', async () => {
+      const emailError = new Error('Email delivery failed');
+      repository.findById.mockResolvedValue(mockUser);
+      authEmailAdapter.sendTemporaryPassword.mockRejectedValue(emailError);
+
+      await expect(service.issueTemporaryPassword(mockUser.id, 'actor-1')).rejects.toBe(emailError);
+
+      expect(repository.updateById).not.toHaveBeenCalled();
+      expect(repository.revokeSessionsByUserId).not.toHaveBeenCalled();
+      expect(rabbitMQ.publish).not.toHaveBeenCalled();
+    });
+
+    it('sends email, updates the password, and revokes sessions in order', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      repository.updateById.mockResolvedValue(undefined);
+      repository.revokeSessionsByUserId.mockResolvedValue(undefined);
+
+      await service.issueTemporaryPassword(mockUser.id, 'actor-2');
+
+      expect(authEmailAdapter.sendTemporaryPassword).toHaveBeenCalledTimes(1);
+      expect(repository.updateById).toHaveBeenCalledTimes(1);
+      expect(repository.revokeSessionsByUserId).toHaveBeenCalledTimes(1);
+
+      expect(authEmailAdapter.sendTemporaryPassword.mock.invocationCallOrder[0]).toBeLessThan(
+        repository.updateById.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+      );
+      expect(repository.updateById.mock.invocationCallOrder[0]).toBeLessThan(
+        repository.revokeSessionsByUserId.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+      );
+      expect(rabbitMQ.publish).toHaveBeenCalledTimes(1);
+      expect(repository.revokeSessionsByUserId.mock.invocationCallOrder[0]).toBeLessThan(
+        rabbitMQ.publish?.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+      );
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.USER_TEMPORARY_PASSWORD_ISSUED,
+        expect.objectContaining({
+          userId: mockUser.id,
+          issuedBy: 'actor-2',
+          timestamp: expect.any(String),
+        }),
       );
     });
   });

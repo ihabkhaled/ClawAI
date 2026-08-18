@@ -537,6 +537,14 @@ export type UserTableProps = {
   isTemporaryPasswordPending: boolean;
 };
 
+export type TemporaryPasswordDialogProps = {
+  open: boolean;
+  isPending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+  t: TranslateFunction;
+};
+
 // ─── Chat component props ───────────────────────────────────────────────────
 
 export type MessageBubbleProps = {

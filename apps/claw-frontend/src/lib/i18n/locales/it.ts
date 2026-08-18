@@ -1088,6 +1088,13 @@ export const it: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'Il servizio di audit non era raggiungibile. Riprova tra poco.',
     loadingAuditEvents: 'Caricamento eventi di audit...',
     viewAllAudits: 'Vedi tutti',
+    issueTemporaryPassword: 'Emetti password temporanea',
+    issueTemporaryPasswordConfirmTitle: 'Vuoi emettere una password temporanea?',
+    issueTemporaryPasswordConfirmBody:
+      "Una password temporanea verrà inviata via e-mail all'utente e tutte le sessioni attive verranno disconnesse.",
+    temporaryPasswordIssued:
+      'Password temporanea inviata via e-mail e tutte le sessioni disconnesse.',
+    temporaryPasswordFailed: 'Impossibile emettere la password temporanea.',
   },
   settings: {
     title: 'Impostazioni',

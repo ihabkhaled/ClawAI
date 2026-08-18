@@ -168,6 +168,25 @@ Published when a user logs out or their session is invalidated.
 
 ---
 
+### user.temporary_password_issued
+
+Published after a temporary password has been successfully delivered via email, persisted by the auth service, and all active sessions for the target account have been revoked.
+
+- **Domain:** identity
+- **Publisher:** `auth-service`
+- **Consumers:** `audit-service`
+
+| Field           | Type              | Description                                                 |
+| --------------- | ----------------- | ----------------------------------------------------------- |
+| `userId`        | UUID              | Target account that received the temporary password.        |
+| `issuedBy`      | UUID              | Administrator or system principal that issued the password. |
+| `timestamp`     | ISO-8601          | When the event was emitted.                                 |
+| `correlationId` | string (optional) | Trace correlation identifier for the issuing flow.          |
+
+This event intentionally does **not** carry the temporary password, any password hash, the user's email address, or a session token.
+
+---
+
 ### connector.created
 
 Published when a new cloud provider connector is configured.

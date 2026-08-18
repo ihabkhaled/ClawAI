@@ -161,6 +161,10 @@ export type UseUserTableStateReturn = {
   setEditUsername: (value: string) => void;
   startProfileEdit: (user: AdminUser) => void;
   finishProfileEdit: (onUpdate: (userId: string, data: AdminUserUpdateRequest) => void) => void;
+  temporaryPasswordUserId: string | null;
+  requestTemporaryPassword: (userId: string) => void;
+  cancelTemporaryPassword: () => void;
+  confirmTemporaryPassword: (onTemporaryPassword: (userId: string) => void) => void;
 };
 
 export type UseRecentAuditEventsReturn = {

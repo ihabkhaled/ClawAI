@@ -1087,6 +1087,12 @@ export const pt: TranslationDictionary = {
       'O serviço de auditoria estava indisponível. Tente novamente em instantes.',
     loadingAuditEvents: 'Carregando eventos de auditoria...',
     viewAllAudits: 'Ver todos',
+    issueTemporaryPassword: 'Emitir senha temporária',
+    issueTemporaryPasswordConfirmTitle: 'Emitir uma senha temporária?',
+    issueTemporaryPasswordConfirmBody:
+      'Uma senha temporária será enviada por e-mail ao usuário e todas as sessões ativas serão encerradas.',
+    temporaryPasswordIssued: 'Senha temporária enviada por e-mail e todas as sessões encerradas.',
+    temporaryPasswordFailed: 'Falha ao emitir a senha temporária.',
   },
   settings: {
     title: 'Configurações',

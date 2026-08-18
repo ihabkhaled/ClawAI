@@ -1078,6 +1078,13 @@ export const ja: TranslationDictionary = {
       '監査サービスに到達できませんでした。しばらくしてからもう一度試してください。',
     loadingAuditEvents: '監査イベントを読み込み中...',
     viewAllAudits: 'すべて表示',
+    issueTemporaryPassword: '仮パスワードを発行',
+    issueTemporaryPasswordConfirmTitle: '仮パスワードを発行しますか？',
+    issueTemporaryPasswordConfirmBody:
+      '仮パスワードをユーザーにメールで送信し、すべてのアクティブなセッションをサインアウトします。',
+    temporaryPasswordIssued:
+      '仮パスワードをメールで送信し、すべてのセッションをサインアウトしました。',
+    temporaryPasswordFailed: '仮パスワードの発行に失敗しました。',
   },
   settings: {
     title: '設定',

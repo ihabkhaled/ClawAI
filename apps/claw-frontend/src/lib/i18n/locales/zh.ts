@@ -1058,6 +1058,11 @@ export const zh: TranslationDictionary = {
     recentAuditEventsErrorDesc: '审计服务无法访问。稍后再试一次。',
     loadingAuditEvents: '正在加载审核事件...',
     viewAllAudits: '查看全部',
+    issueTemporaryPassword: '发放临时密码',
+    issueTemporaryPasswordConfirmTitle: '是否发放临时密码？',
+    issueTemporaryPasswordConfirmBody: '临时密码将通过邮件发送给用户，并登出所有活跃会话。',
+    temporaryPasswordIssued: '临时密码已发送邮件，并已登出所有会话。',
+    temporaryPasswordFailed: '发放临时密码失败。',
   },
   settings: {
     title: '设置',

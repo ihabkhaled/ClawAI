@@ -1245,6 +1245,16 @@
       ]
     },
     {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "USER_TEMPORARY_PASSWORD_ISSUED",
+      "pattern": "user.temporary_password_issued",
+      "producers": [
+        "claw-auth-service"
+      ]
+    },
+    {
       "consumers": [],
       "key": "WORKSPACE_AUTO_SUGGEST_TICK_COMPLETED",
       "pattern": "workspace.auto_suggest.tick.completed",

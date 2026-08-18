@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -239,5 +239,58 @@ describe('UserTable lifecycle actions', () => {
     for (const button of screen.getAllByRole('button', { name: 'admin.reactivate' })) {
       expect(button).toBeDisabled();
     }
+  });
+});
+
+describe('UserTable temporary password action', () => {
+  it('renders the honest temporary-password label', () => {
+    render(<UserTable users={[makeUser()]} {...baseProps} />);
+
+    expect(
+      screen.getAllByRole('button', { name: 'admin.issueTemporaryPassword' }).length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText('settings.changePassword')).toBeNull();
+  });
+
+  it('leaves other rows enabled while one user is pending', () => {
+    render(
+      <UserTable
+        users={[makeUser({ id: 'u1' }), makeUser({ id: 'u2' })]}
+        {...baseProps}
+        pendingId="u1"
+        isTemporaryPasswordPending
+      />,
+    );
+
+    const buttons = screen.getAllByRole('button', { name: 'admin.issueTemporaryPassword' });
+    expect(buttons.some((button) => button.hasAttribute('disabled'))).toBe(true);
+    expect(buttons.some((button) => !button.hasAttribute('disabled'))).toBe(true);
+  });
+
+  it('requires confirmation before issuing the temporary password', async () => {
+    const onTemporaryPassword = vi.fn();
+    render(
+      <UserTable
+        users={[makeUser({ id: 'u7' })]}
+        {...baseProps}
+        onTemporaryPassword={onTemporaryPassword}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'admin.issueTemporaryPassword' })[0] as HTMLElement,
+    );
+    expect(onTemporaryPassword).not.toHaveBeenCalled();
+
+    const dialog = screen.getByRole('dialog');
+    expect(
+      within(dialog).getByText('admin.issueTemporaryPasswordConfirmTitle'),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByText('admin.issueTemporaryPasswordConfirmBody')).toBeInTheDocument();
+    await userEvent.click(
+      within(dialog).getByRole('button', { name: 'admin.issueTemporaryPassword' }),
+    );
+
+    expect(onTemporaryPassword).toHaveBeenCalledWith('u7');
   });
 });

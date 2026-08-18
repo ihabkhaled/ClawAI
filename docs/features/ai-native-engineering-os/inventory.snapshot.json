@@ -5965,6 +5965,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "USER_TEMPORARY_PASSWORD_ISSUED",
+        "pattern": "user.temporary_password_issued",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "WORKSPACE_AUTO_SUGGEST_TICK_COMPLETED",
         "pattern": "workspace.auto_suggest.tick.completed",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -7219,7 +7224,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4483
+        "value": 4488
       },
       "localeCount": 16,
       "locales": [
@@ -8862,7 +8867,7 @@
       },
       "@claw/shared-types": {
         "runner": "jest",
-        "testFiles": 2
+        "testFiles": 3
       },
       "@claw/shared-utilities": {
         "runner": "jest",
@@ -9649,7 +9654,7 @@
     "dockerServiceCount": 41,
     "endpointCount": 588,
     "envVarCount": 343,
-    "eventCount": 166,
+    "eventCount": 167,
     "frontendRouteCount": 120,
     "localeCount": 16,
     "nginxRouteCount": 54,
@@ -9659,7 +9664,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 929,
+    "totalTestFiles": 930,
     "workspaceCount": 25
   }
 }

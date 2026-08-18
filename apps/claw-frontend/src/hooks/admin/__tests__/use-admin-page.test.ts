@@ -10,6 +10,7 @@ const mockGetAdminUsers = vi.fn();
 const mockUpdateUserRole = vi.fn();
 const mockDeactivateUser = vi.fn();
 const mockReactivateUser = vi.fn();
+const mockIssueTemporaryPassword = vi.fn();
 const mockGetAggregatedHealth = vi.fn();
 const mockPlansList = vi.fn();
 const mockAssignUser = vi.fn();
@@ -29,6 +30,7 @@ vi.mock('@/repositories/audit/audit.repository', () => ({
     updateUserRole: (...args: unknown[]) => mockUpdateUserRole(...args),
     deactivateUser: (...args: unknown[]) => mockDeactivateUser(...args),
     reactivateUser: (...args: unknown[]) => mockReactivateUser(...args),
+    issueTemporaryPassword: (...args: unknown[]) => mockIssueTemporaryPassword(...args),
   },
 }));
 
@@ -224,5 +226,46 @@ describe('useAdminPage', () => {
     await waitFor(() => expect(mockShowToastApiError).toHaveBeenCalled());
     expect(result.current.actionPending).toBeNull();
     expect(result.current.isReactivatePending).toBe(false);
+  });
+
+  it('reports success and invalidates users after issuing a temporary password', async () => {
+    mockIssueTemporaryPassword.mockResolvedValue(undefined);
+    const { wrapper, queryClient } = makeWrapper();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+    const { result } = renderHook(() => useAdminPage(), { wrapper });
+
+    await waitFor(() => expect(result.current.users).toHaveLength(1));
+
+    act(() => {
+      result.current.handleTemporaryPassword('u1');
+    });
+
+    await waitFor(() =>
+      expect(mockShowToastSuccess).toHaveBeenCalledWith({
+        description: 'admin.temporaryPasswordIssued',
+      }),
+    );
+    expect(mockIssueTemporaryPassword).toHaveBeenCalledWith('u1');
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['admin', 'users'] });
+    expect(result.current.actionPending).toBeNull();
+  });
+
+  it('reports an API error and clears pending state when temporary password issuance fails', async () => {
+    const error = new Error('issue-failed');
+    mockIssueTemporaryPassword.mockRejectedValue(error);
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useAdminPage(), { wrapper });
+
+    await waitFor(() => expect(result.current.users).toHaveLength(1));
+
+    act(() => {
+      result.current.handleTemporaryPassword('u1');
+    });
+
+    await waitFor(() =>
+      expect(mockShowToastApiError).toHaveBeenCalledWith(error, 'admin.temporaryPasswordFailed'),
+    );
+    expect(result.current.actionPending).toBeNull();
+    expect(result.current.isTemporaryPasswordPending).toBe(false);
   });
 });

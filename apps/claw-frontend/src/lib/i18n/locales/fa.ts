@@ -1075,6 +1075,12 @@ export const fa: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'خدمات حسابرسی غیرقابل دسترسی بود.یک لحظه دیگر دوباره امتحان کنید.',
     loadingAuditEvents: 'در حال بارگیری رویدادهای حسابرسی...',
     viewAllAudits: 'مشاهده همه',
+    issueTemporaryPassword: 'صدور گذرواژه موقت',
+    issueTemporaryPasswordConfirmTitle: 'گذرواژه موقت صادر شود؟',
+    issueTemporaryPasswordConfirmBody:
+      'یک گذرواژه موقت از طریق ایمیل برای کاربر ارسال می‌شود و همه نشست‌های فعال خاتمه می‌یابند.',
+    temporaryPasswordIssued: 'گذرواژه موقت از طریق ایمیل ارسال شد و همه نشست‌ها خاتمه یافتند.',
+    temporaryPasswordFailed: 'صدور گذرواژه موقت ناموفق بود.',
   },
   settings: {
     title: 'تنظیمات',

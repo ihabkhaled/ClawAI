@@ -1090,6 +1090,13 @@ export const fr: TranslationDictionary = {
     recentAuditEventsErrorDesc: "Le service d'audit était injoignable. Réessayez dans un instant.",
     loadingAuditEvents: "Chargement des événements d'audit...",
     viewAllAudits: 'Tout voir',
+    issueTemporaryPassword: 'Émettre un mot de passe temporaire',
+    issueTemporaryPasswordConfirmTitle: 'Émettre un mot de passe temporaire ?',
+    issueTemporaryPasswordConfirmBody:
+      "Un mot de passe temporaire sera envoyé par e-mail à l'utilisateur et toutes les sessions actives seront déconnectées.",
+    temporaryPasswordIssued:
+      'Mot de passe temporaire envoyé par e-mail et toutes les sessions déconnectées.',
+    temporaryPasswordFailed: "Échec de l'émission du mot de passe temporaire.",
   },
   settings: {
     title: 'Paramètres',

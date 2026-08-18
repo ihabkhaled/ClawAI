@@ -1065,6 +1065,12 @@ export const th: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'ไม่สามารถเข้าถึงบริการตรวจสอบได้โปรดลองอีกครั้งในอีกสักครู่',
     loadingAuditEvents: 'กำลังโหลดกิจกรรมการตรวจสอบ...',
     viewAllAudits: 'ดูทั้งหมด',
+    issueTemporaryPassword: 'ออกรหัสผ่านชั่วคราว',
+    issueTemporaryPasswordConfirmTitle: 'ออกรหัสผ่านชั่วคราวหรือไม่',
+    issueTemporaryPasswordConfirmBody:
+      'ระบบจะส่งรหัสผ่านชั่วคราวทางอีเมลให้ผู้ใช้ และลงชื่อออกจากทุกเซสชันที่ใช้งานอยู่',
+    temporaryPasswordIssued: 'ส่งรหัสผ่านชั่วคราวทางอีเมลแล้ว และลงชื่อออกจากทุกเซสชันแล้ว',
+    temporaryPasswordFailed: 'ไม่สามารถออกรหัสผ่านชั่วคราวได้',
   },
   settings: {
     title: 'การตั้งค่า',

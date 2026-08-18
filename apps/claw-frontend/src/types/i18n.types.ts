@@ -1072,6 +1072,11 @@ export type TranslationDictionary = {
     recentAuditEventsErrorDesc: string;
     loadingAuditEvents: string;
     viewAllAudits: string;
+    issueTemporaryPassword: string;
+    issueTemporaryPasswordConfirmTitle: string;
+    issueTemporaryPasswordConfirmBody: string;
+    temporaryPasswordIssued: string;
+    temporaryPasswordFailed: string;
   };
   settings: {
     title: string;

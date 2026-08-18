@@ -1091,6 +1091,13 @@ export const de: TranslationDictionary = {
       'Der Audit-Dienst war nicht erreichbar. Versuchen Sie es gleich erneut.',
     loadingAuditEvents: 'Audit-Ereignisse werden geladen ...',
     viewAllAudits: 'Alle anzeigen',
+    issueTemporaryPassword: 'Temporäres Passwort ausstellen',
+    issueTemporaryPasswordConfirmTitle: 'Temporäres Passwort ausstellen?',
+    issueTemporaryPasswordConfirmBody:
+      'Dem Benutzer wird ein temporäres Passwort per E-Mail zugesandt und alle aktiven Sitzungen werden abgemeldet.',
+    temporaryPasswordIssued:
+      'Temporäres Passwort per E-Mail gesendet und alle Sitzungen abgemeldet.',
+    temporaryPasswordFailed: 'Ausstellung des temporären Passworts fehlgeschlagen.',
   },
   settings: {
     title: 'Einstellungen',

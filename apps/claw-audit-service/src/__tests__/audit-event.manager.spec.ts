@@ -71,6 +71,31 @@ describe('AuditEventManager', () => {
       );
     });
 
+    it('audits temporary-password issuance without sensitive data', async () => {
+      const payload = {
+        userId: 'target-1',
+        issuedBy: 'admin-1',
+        timestamp: '2026-08-18T00:00:00.000Z',
+      };
+
+      await manager.handleEvent(EventPattern.USER_TEMPORARY_PASSWORD_ISSUED, payload);
+
+      expect(auditsService.createAuditLog.mock.calls[0]?.[0]).toEqual({
+        userId: 'admin-1',
+        action: 'ISSUE_TEMPORARY_PASSWORD',
+        entityType: 'user',
+        entityId: 'target-1',
+        severity: 'HIGH',
+        details: { targetUserId: 'target-1' },
+      });
+      const recordedDetails = JSON.stringify(
+        auditsService.createAuditLog.mock.calls[0]?.[0].details,
+      ).toLowerCase();
+      expect(recordedDetails).not.toContain('password');
+      expect(recordedDetails).not.toContain('email');
+      expect(recordedDetails).not.toContain('token');
+    });
+
     it('should handle connector.created event', async () => {
       const payload = {
         connectorId: 'conn-1',

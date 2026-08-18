@@ -1,5 +1,6 @@
 'use client';
 
+import { TemporaryPasswordDialog } from '@/components/admin/temporary-password-dialog';
 import { DataTable } from '@/components/common/data-table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,10 @@ export function UserTable({
     setEditUsername,
     startProfileEdit,
     finishProfileEdit,
+    temporaryPasswordUserId,
+    requestTemporaryPassword,
+    cancelTemporaryPassword,
+    confirmTemporaryPassword,
   } = useUserTableState();
   const { t } = useTranslation();
   const activePlans = plans.filter((plan) => plan.isActive);
@@ -210,10 +215,10 @@ export function UserTable({
           <Button
             variant="outline"
             size="sm"
-            disabled={user.isSuperAdmin || isTemporaryPasswordPending}
-            onClick={() => onTemporaryPassword(user.id)}
+            disabled={user.isSuperAdmin || (isTemporaryPasswordPending && pendingId === user.id)}
+            onClick={() => requestTemporaryPassword(user.id)}
           >
-            {t('settings.changePassword')}
+            {t('admin.issueTemporaryPassword')}
           </Button>
           {profileEditingId === user.id ? (
             <Button
@@ -259,12 +264,25 @@ export function UserTable({
   ];
 
   return (
-    <DataTable
-      columns={columns}
-      data={users}
-      keyExtractor={(user) => user.id}
-      emptyMessage={t('admin.noUsers')}
-      mobileTitleKey="username"
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={users}
+        keyExtractor={(user) => user.id}
+        emptyMessage={t('admin.noUsers')}
+        mobileTitleKey="username"
+      />
+      <TemporaryPasswordDialog
+        open={temporaryPasswordUserId !== null}
+        isPending={
+          isTemporaryPasswordPending &&
+          temporaryPasswordUserId !== null &&
+          pendingId === temporaryPasswordUserId
+        }
+        onCancel={cancelTemporaryPassword}
+        onConfirm={() => confirmTemporaryPassword(onTemporaryPassword)}
+        t={t}
+      />
+    </>
   );
 }

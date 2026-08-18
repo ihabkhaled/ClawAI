@@ -1079,6 +1079,13 @@ export const hi: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'ऑडिट सेवा अनुपलब्ध थी। कृपया थोड़ी देर बाद पुनः प्रयास करें।',
     loadingAuditEvents: 'ऑडिट इवेंट लोड हो रहे हैं...',
     viewAllAudits: 'सभी देखें',
+    issueTemporaryPassword: 'अस्थायी पासवर्ड जारी करें',
+    issueTemporaryPasswordConfirmTitle: 'क्या अस्थायी पासवर्ड जारी करें?',
+    issueTemporaryPasswordConfirmBody:
+      'उपयोगकर्ता को एक अस्थायी पासवर्ड ईमेल कर दिया जाएगा और सभी सक्रिय सत्रों से साइन आउट कर दिया जाएगा।',
+    temporaryPasswordIssued:
+      'अस्थायी पासवर्ड ईमेल कर दिया गया और सभी सत्रों से साइन आउट कर दिया गया।',
+    temporaryPasswordFailed: 'अस्थायी पासवर्ड जारी करने में विफल।',
   },
   settings: {
     title: 'सेटिंग्स',

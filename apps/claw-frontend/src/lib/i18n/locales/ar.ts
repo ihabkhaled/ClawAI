@@ -1069,6 +1069,13 @@ export const ar: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'خدمة التدقيق غير متاحة حاليًا. حاول مرة أخرى بعد قليل.',
     loadingAuditEvents: 'جارٍ تحميل أحداث التدقيق...',
     viewAllAudits: 'عرض الكل',
+    issueTemporaryPassword: 'إصدار كلمة مرور مؤقتة',
+    issueTemporaryPasswordConfirmTitle: 'هل تريد إصدار كلمة مرور مؤقتة؟',
+    issueTemporaryPasswordConfirmBody:
+      'سيتم إرسال كلمة مرور مؤقتة بالبريد الإلكتروني إلى المستخدم، وسيتم تسجيل الخروج من جميع الجلسات النشطة.',
+    temporaryPasswordIssued:
+      'تم إرسال كلمة المرور المؤقتة بالبريد وتم تسجيل الخروج من جميع الجلسات.',
+    temporaryPasswordFailed: 'فشل إصدار كلمة المرور المؤقتة.',
   },
   settings: {
     title: 'الإعدادات',

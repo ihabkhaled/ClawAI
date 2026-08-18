@@ -1089,6 +1089,13 @@ export const es: TranslationDictionary = {
       'El servicio de auditoría no respondió. Inténtalo de nuevo en unos instantes.',
     loadingAuditEvents: 'Cargando eventos de auditoría...',
     viewAllAudits: 'Ver todos',
+    issueTemporaryPassword: 'Emitir contraseña temporal',
+    issueTemporaryPasswordConfirmTitle: '¿Emitir una contraseña temporal?',
+    issueTemporaryPasswordConfirmBody:
+      'Se enviará una contraseña temporal por correo electrónico al usuario y se cerrarán todas las sesiones activas.',
+    temporaryPasswordIssued:
+      'Contraseña temporal enviada por correo y todas las sesiones cerradas.',
+    temporaryPasswordFailed: 'Error al emitir la contraseña temporal.',
   },
   settings: {
     title: 'Ajustes',

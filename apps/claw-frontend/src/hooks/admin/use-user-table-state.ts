@@ -6,6 +6,7 @@ export function useUserTableState(): UseUserTableStateReturn {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [profileEditingId, setProfileEditingId] = useState<string | null>(null);
   const [editUsername, setEditUsername] = useState('');
+  const [temporaryPasswordUserId, setTemporaryPasswordUserId] = useState<string | null>(null);
 
   const handleRoleSelect = useCallback(
     (userId: string, role: string, onChangeRole: (userId: string, role: string) => void): void => {
@@ -30,6 +31,23 @@ export function useUserTableState(): UseUserTableStateReturn {
     [editUsername, profileEditingId],
   );
 
+  const requestTemporaryPassword = useCallback((userId: string): void => {
+    setTemporaryPasswordUserId(userId);
+  }, []);
+  const cancelTemporaryPassword = useCallback((): void => {
+    setTemporaryPasswordUserId(null);
+  }, []);
+  const confirmTemporaryPassword = useCallback(
+    (onTemporaryPassword: (userId: string) => void): void => {
+      if (temporaryPasswordUserId === null) {
+        return;
+      }
+      onTemporaryPassword(temporaryPasswordUserId);
+      setTemporaryPasswordUserId(null);
+    },
+    [temporaryPasswordUserId],
+  );
+
   return {
     editingUserId,
     setEditingUserId,
@@ -39,5 +57,9 @@ export function useUserTableState(): UseUserTableStateReturn {
     setEditUsername,
     startProfileEdit,
     finishProfileEdit,
+    temporaryPasswordUserId,
+    requestTemporaryPassword,
+    cancelTemporaryPassword,
+    confirmTemporaryPassword,
   };
 }

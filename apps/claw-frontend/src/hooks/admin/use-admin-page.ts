@@ -125,7 +125,15 @@ export function useAdminPage(): UseAdminPageReturn {
   });
   const temporaryPasswordMutation = useMutation({
     mutationFn: (userId: string) => auditRepository.issueTemporaryPassword(userId),
-    onSettled: () => setActionPending(null),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.users });
+      setActionPending(null);
+      showToast.success({ description: t('admin.temporaryPasswordIssued') });
+    },
+    onError: (err: unknown) => {
+      setActionPending(null);
+      showToast.apiError(err, t('admin.temporaryPasswordFailed'));
+    },
   });
 
   const users = usersQuery.data?.data ?? [];

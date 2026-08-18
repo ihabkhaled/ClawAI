@@ -1086,6 +1086,12 @@ export const ru: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'Сервис аудита недоступен. Попробуйте ещё раз через мгновение.',
     loadingAuditEvents: 'Загрузка событий аудита...',
     viewAllAudits: 'Показать все',
+    issueTemporaryPassword: 'Выпустить временный пароль',
+    issueTemporaryPasswordConfirmTitle: 'Выпустить временный пароль?',
+    issueTemporaryPasswordConfirmBody:
+      'Временный пароль будет отправлен пользователю по электронной почте, и все активные сеансы будут завершены.',
+    temporaryPasswordIssued: 'Временный пароль отправлен по почте и все сеансы завершены.',
+    temporaryPasswordFailed: 'Не удалось выпустить временный пароль.',
   },
   settings: {
     title: 'Настройки',
