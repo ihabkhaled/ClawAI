@@ -245,7 +245,15 @@ export function repairUnescapedControlCharacters(text: string): string {
   return output;
 }
 
-/** Parses JSON, retrying once with raw control characters escaped. */
+/** Restores the missing `toolName` key in an observed model dialect. */
+function repairBareToolNameKey(text: string): string {
+  return text.replace(
+    /^(\s*\{\s*"kind"\s*:\s*"tool"\s*,\s*)"([^"]+)"(?=\s*,\s*"toolVersion"\s*:)/u,
+    '$1"toolName":"$2"',
+  );
+}
+
+/** Parses JSON, retrying with narrowly observed model defects repaired. */
 function parseJsonAllowingRawControls(text: string): { readonly value: unknown } | null {
   try {
     return { value: JSON.parse(text) };
@@ -253,7 +261,9 @@ function parseJsonAllowingRawControls(text: string): { readonly value: unknown }
     // Fall through to the repair below.
   }
   try {
-    return { value: JSON.parse(repairUnescapedControlCharacters(text)) };
+    return {
+      value: JSON.parse(repairBareToolNameKey(repairUnescapedControlCharacters(text))),
+    };
   } catch {
     return null;
   }

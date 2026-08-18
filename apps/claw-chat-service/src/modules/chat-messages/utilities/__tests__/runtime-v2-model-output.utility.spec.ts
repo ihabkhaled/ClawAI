@@ -199,6 +199,23 @@ describe('parseRuntimeV2ModelOutput', () => {
 });
 
 describe('parseRuntimeV2ModelOutput damaged tool requests', () => {
+  it('repairs a bare tool name emitted where the toolName key belongs', () => {
+    const damaged =
+      '{"kind":"tool","workspace.files","toolVersion":"2.0.0","operation":"glob",' +
+      '"arguments":{"rootKey":"workspace-1","path":"apps/claw-auth-service/src/modules/auth/constants","pattern":"*.ts"},' +
+      '"targetId":"target:workspace"}';
+
+    const globDefinitions = [
+      { ...fileDefinition, operations: [...fileDefinition.operations, 'glob'] },
+    ];
+
+    expect(parseRuntimeV2ModelOutput(damaged, globDefinitions)).toMatchObject({
+      kind: 'tool',
+      toolName: 'workspace.files',
+      operation: 'glob',
+    });
+  });
+
   // Captured live from glm-5.2 mid-run: one missing quote after `tool`. The
   // document did not parse, so the guard that exists to catch exactly this was
   // consulted — and it demanded `"kind":"tool"` with the closing quote, which is
