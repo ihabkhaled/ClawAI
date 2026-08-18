@@ -218,6 +218,7 @@ export const ja: TranslationDictionary = {
     workspaceEmailSignatures: '電子メールの署名',
     workspaceEmailTemplates: 'メール テンプレート',
     workspaceImplHandoffs: 'コーディングのハンドオフ',
+    adminUsers: 'ユーザー',
     adminAiActionPolicies: 'AI アクション ポリシー',
     adminSuggestionRules: '提案ルール',
     adminWebhookDeliveries: 'Webhook 配信',
@@ -3442,6 +3443,10 @@ export const ja: TranslationDictionary = {
       saveSucceeded: 'モデル アクセスが保存されました。',
       saveFailed: 'モデルのアクセスを保存できませんでした。',
     },
+  },
+  adminUsers: {
+    title: 'ユーザー管理',
+    description: 'ユーザーアカウント、ロール、プラン、認証、アクセスを管理します',
   },
   adminRoles: {
     title: 'の役割',

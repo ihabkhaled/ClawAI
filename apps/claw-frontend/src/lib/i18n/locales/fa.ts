@@ -218,6 +218,7 @@ export const fa: TranslationDictionary = {
     workspaceEmailSignatures: 'امضاهای ایمیل',
     workspaceEmailTemplates: 'قالب های ایمیل',
     workspaceImplHandoffs: 'برنامه‌نویسی دست‌ساز',
+    adminUsers: 'کاربران',
     adminAiActionPolicies: 'سیاست های اقدام هوش مصنوعی',
     adminSuggestionRules: 'قوانین پیشنهادی',
     adminWebhookDeliveries: 'تحویل Webhook',
@@ -3434,6 +3435,10 @@ export const fa: TranslationDictionary = {
       saveSucceeded: 'دسترسی مدل ذخیره شد.',
       saveFailed: 'دسترسی مدل ذخیره نشد.',
     },
+  },
+  adminUsers: {
+    title: 'مدیریت کاربران',
+    description: 'مدیریت حساب‌های کاربری، نقش‌ها، طرح‌ها، تأییدیه و دسترسی',
   },
   adminRoles: {
     title: 'نقش ها',

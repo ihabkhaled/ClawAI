@@ -213,6 +213,7 @@ export const th: TranslationDictionary = {
     workspaceEmailSignatures: 'ลายเซ็นอีเมล',
     workspaceEmailTemplates: 'เทมเพลตอีเมล',
     workspaceImplHandoffs: 'แฮนด์ออฟการเข้ารหัส',
+    adminUsers: 'ผู้ใช้',
     adminAiActionPolicies: 'นโยบายการดำเนินการของ AI',
     adminSuggestionRules: 'กฎการแนะนำ',
     adminWebhookDeliveries: 'การส่งมอบ Webhook',
@@ -3405,6 +3406,10 @@ export const th: TranslationDictionary = {
       saveSucceeded: 'บันทึกการเข้าถึงโมเดลแล้ว',
       saveFailed: 'ไม่สามารถบันทึกการเข้าถึงโมเดลได้',
     },
+  },
+  adminUsers: {
+    title: 'การจัดการผู้ใช้',
+    description: 'จัดการบัญชีผู้ใช้ บทบาท แผน การยืนยัน และการเข้าถึง',
   },
   adminRoles: {
     title: 'บทบาท',

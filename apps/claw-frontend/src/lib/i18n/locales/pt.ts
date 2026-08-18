@@ -218,6 +218,7 @@ export const pt: TranslationDictionary = {
     workspaceEmailSignatures: 'Assinaturas de e-mail',
     workspaceEmailTemplates: 'Modelos de e-mail',
     workspaceImplHandoffs: 'Entregas de código',
+    adminUsers: 'Usuários',
     adminAiActionPolicies: 'Políticas de ação IA',
     adminSuggestionRules: 'Regras de sugestão',
     adminWebhookDeliveries: 'Entregas de webhook',
@@ -3450,6 +3451,10 @@ export const pt: TranslationDictionary = {
       saveSucceeded: 'Acesso a modelos salvo.',
       saveFailed: 'Não foi possível salvar o acesso a modelos.',
     },
+  },
+  adminUsers: {
+    title: 'Gestão de usuários',
+    description: 'Gerencie contas de usuário, funções, planos, verificação e acesso',
   },
   adminRoles: {
     title: 'Funções',

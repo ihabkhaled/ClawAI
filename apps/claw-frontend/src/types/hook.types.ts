@@ -105,12 +105,7 @@ export type UseRedirectIfAuthenticatedReturn = {
 
 // ─── Admin hook types ───────────────────────────────────────────────────────
 
-export type UseAdminPageReturn = {
-  t: TranslateFunction;
-  user: { role: string } | null;
-  actionPending: string | null;
-  users: AdminUser[];
-  usersMeta: { total: number; page: number; limit: number; totalPages: number } | undefined;
+export type UseAdminUserFiltersReturn = {
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
   search: string;
@@ -123,17 +118,10 @@ export type UseAdminPageReturn = {
   setPlanFilter: (value: string) => void;
   verificationFilter: string;
   setVerificationFilter: (value: string) => void;
-  plans: PlanView[];
-  activeCount: number;
-  usersQuery: {
-    isLoading: boolean;
-    isError: boolean;
-  };
-  healthQuery: {
-    isLoading: boolean;
-    isError: boolean;
-    data: AggregatedHealth | undefined;
-  };
+};
+
+export type UseAdminUserMutationsReturn = {
+  actionPending: string | null;
   handleChangeRole: (userId: string, role: string) => void;
   handleDeactivate: (userId: string) => void;
   handleReactivate: (userId: string) => void;
@@ -146,6 +134,30 @@ export type UseAdminPageReturn = {
   isAssignPlanPending: boolean;
   isUpdateUserPending: boolean;
   isTemporaryPasswordPending: boolean;
+};
+
+export type UseAdminUsersPageReturn = UseAdminUserFiltersReturn &
+  UseAdminUserMutationsReturn & {
+    t: TranslateFunction;
+    user: { role: string } | null;
+    users: AdminUser[];
+    usersMeta: { total: number; page: number; limit: number; totalPages: number } | undefined;
+    plans: PlanView[];
+    activeCount: number;
+    usersQuery: { isLoading: boolean; isError: boolean };
+    onRetry: () => void;
+  };
+
+export type UseAdminPageReturn = {
+  t: TranslateFunction;
+  user: { role: string } | null;
+  totalUsers: number;
+  activeCount: number;
+  healthQuery: {
+    isLoading: boolean;
+    isError: boolean;
+    data: AggregatedHealth | undefined;
+  };
 };
 
 export type UseUserTableStateReturn = {

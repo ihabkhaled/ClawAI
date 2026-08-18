@@ -219,6 +219,7 @@ export const ru: TranslationDictionary = {
     workspaceEmailSignatures: 'Подписи писем',
     workspaceEmailTemplates: 'Шаблоны писем',
     workspaceImplHandoffs: 'Передача кода',
+    adminUsers: 'Пользователи',
     adminAiActionPolicies: 'Политики действий ИИ',
     adminSuggestionRules: 'Правила предложений',
     adminWebhookDeliveries: 'Доставки вебхуков',
@@ -3453,6 +3454,10 @@ export const ru: TranslationDictionary = {
       saveSucceeded: 'Доступ к моделям сохранён.',
       saveFailed: 'Не удалось сохранить доступ к моделям.',
     },
+  },
+  adminUsers: {
+    title: 'Управление пользователями',
+    description: 'Управляйте учётными записями, ролями, тарифами, верификацией и доступом',
   },
   adminRoles: {
     title: 'Роли',

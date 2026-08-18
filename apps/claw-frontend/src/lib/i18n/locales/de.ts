@@ -220,6 +220,7 @@ export const de: TranslationDictionary = {
     workspaceEmailSignatures: 'E-Mail-Signaturen',
     workspaceEmailTemplates: 'E-Mail-Vorlagen',
     workspaceImplHandoffs: 'Coding-Übergaben',
+    adminUsers: 'Benutzer',
     adminAiActionPolicies: 'KI-Aktionsrichtlinien',
     adminSuggestionRules: 'Vorschlagsregeln',
     adminWebhookDeliveries: 'Webhook-Auslieferungen',
@@ -3473,6 +3474,10 @@ export const de: TranslationDictionary = {
       saveSucceeded: 'Modellzugriff gespeichert.',
       saveFailed: 'Modellzugriff konnte nicht gespeichert werden.',
     },
+  },
+  adminUsers: {
+    title: 'Benutzerverwaltung',
+    description: 'Verwalten Sie Benutzerkonten, Rollen, Pläne, Verifizierung und Zugriff',
   },
   adminRoles: {
     title: 'Rollen',

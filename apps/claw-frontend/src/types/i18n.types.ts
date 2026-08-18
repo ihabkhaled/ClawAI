@@ -206,6 +206,7 @@ export type TranslationDictionary = {
     workspaceEmailSignatures: string;
     workspaceEmailTemplates: string;
     workspaceImplHandoffs: string;
+    adminUsers: string;
     adminAiActionPolicies: string;
     adminSuggestionRules: string;
     adminWebhookDeliveries: string;
@@ -3363,6 +3364,10 @@ export type TranslationDictionary = {
       saveSucceeded: string;
       saveFailed: string;
     };
+  };
+  adminUsers: {
+    title: string;
+    description: string;
   };
   adminRoles: {
     title: string;

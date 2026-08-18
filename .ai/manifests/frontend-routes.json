@@ -197,6 +197,11 @@
       "route": "/admin/suggestion-rules"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/users/page.tsx",
+      "kind": "page",
+      "route": "/admin/users"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/admin/webhook-deliveries/page.tsx",
       "kind": "page",
       "route": "/admin/webhook-deliveries"

@@ -218,6 +218,7 @@ export const en: TranslationDictionary = {
     workspaceEmailSignatures: 'Email Signatures',
     workspaceEmailTemplates: 'Email Templates',
     workspaceImplHandoffs: 'Coding Handoffs',
+    adminUsers: 'Users',
     adminAiActionPolicies: 'AI Action Policies',
     adminSuggestionRules: 'Suggestion Rules',
     adminWebhookDeliveries: 'Webhook Deliveries',
@@ -3412,6 +3413,10 @@ export const en: TranslationDictionary = {
       saveSucceeded: 'Model access saved.',
       saveFailed: 'Could not save model access.',
     },
+  },
+  adminUsers: {
+    title: 'User management',
+    description: 'Manage user accounts, roles, plans, verification, and access',
   },
   adminRoles: {
     title: 'Roles',

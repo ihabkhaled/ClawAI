@@ -211,6 +211,7 @@ export const zh: TranslationDictionary = {
     workspaceEmailSignatures: '电子邮件签名',
     workspaceEmailTemplates: '电子邮件模板',
     workspaceImplHandoffs: '编码交接',
+    adminUsers: '用户',
     adminAiActionPolicies: '人工智能行动政策',
     adminSuggestionRules: '提案规则',
     adminWebhookDeliveries: 'Webhook 交付',
@@ -3324,6 +3325,10 @@ export const zh: TranslationDictionary = {
       saveSucceeded: '模型访问已保存。',
       saveFailed: '无法保存模型访问权限。',
     },
+  },
+  adminUsers: {
+    title: '用户管理',
+    description: '管理用户账户、角色、方案、验证和访问权限',
   },
   adminRoles: {
     title: '角色',

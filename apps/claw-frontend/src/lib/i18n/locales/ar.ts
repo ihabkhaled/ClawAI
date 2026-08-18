@@ -216,6 +216,7 @@ export const ar: TranslationDictionary = {
     workspaceEmailSignatures: 'تواقيع البريد الإلكتروني',
     workspaceEmailTemplates: 'قوالب البريد الإلكتروني',
     workspaceImplHandoffs: 'تسليمات البرمجة',
+    adminUsers: 'المستخدمون',
     adminAiActionPolicies: 'سياسات إجراءات الذكاء الاصطناعي',
     adminSuggestionRules: 'قواعد الاقتراحات',
     adminWebhookDeliveries: 'تسليمات الويب هوك',
@@ -3392,6 +3393,10 @@ export const ar: TranslationDictionary = {
       saveSucceeded: 'تم حفظ الوصول إلى النماذج.',
       saveFailed: 'تعذَّر حفظ الوصول إلى النماذج.',
     },
+  },
+  adminUsers: {
+    title: 'إدارة المستخدمين',
+    description: 'إدارة حسابات المستخدمين والأدوار والخطط والتحقق والوصول',
   },
   adminRoles: {
     title: 'الأدوار',

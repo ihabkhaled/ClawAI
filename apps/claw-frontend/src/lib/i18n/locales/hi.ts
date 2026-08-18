@@ -217,6 +217,7 @@ export const hi: TranslationDictionary = {
     workspaceEmailSignatures: 'ईमेल हस्ताक्षर',
     workspaceEmailTemplates: 'ईमेल टेम्पलेट',
     workspaceImplHandoffs: 'कोडिंग हैंडऑफ़',
+    adminUsers: 'उपयोगकर्ता',
     adminAiActionPolicies: 'AI एक्शन नीतियाँ',
     adminSuggestionRules: 'सुझाव नियम',
     adminWebhookDeliveries: 'वेबहुक डिलीवरी',
@@ -3436,6 +3437,10 @@ export const hi: TranslationDictionary = {
       saveSucceeded: 'मॉडल एक्सेस सहेजा गया।',
       saveFailed: 'मॉडल एक्सेस सहेजा नहीं जा सका।',
     },
+  },
+  adminUsers: {
+    title: 'उपयोगकर्ता प्रबंधन',
+    description: 'उपयोगकर्ता खातों, भूमिकाओं, योजनाओं, सत्यापन और पहुंच का प्रबंधन करें',
   },
   adminRoles: {
     title: 'भूमिकाएँ',

@@ -519,6 +519,21 @@ export type GroupedModels = {
 
 // ─── Admin component props ──────────────────────────────────────────────────
 
+export type UserFiltersProps = {
+  t: TranslateFunction;
+  plans: PlanView[];
+  search: string;
+  setSearch: (value: string) => void;
+  roleFilter: string;
+  setRoleFilter: (value: string) => void;
+  statusFilter: string;
+  setStatusFilter: (value: string) => void;
+  planFilter: string;
+  setPlanFilter: (value: string) => void;
+  verificationFilter: string;
+  setVerificationFilter: (value: string) => void;
+};
+
 export type UserTableProps = {
   users: AdminUser[];
   plans: PlanView[];

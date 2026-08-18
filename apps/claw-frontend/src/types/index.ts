@@ -293,6 +293,7 @@ export type {
   FileRetentionBadgeProps,
   UseFileRetentionBadgeReturn,
   FormFieldErrors,
+  UserFiltersProps,
   UserTableProps,
   TemporaryPasswordDialogProps,
   MessageBubbleProps,
@@ -486,6 +487,9 @@ export type {
 export type {
   UsePipelinePageHookReturn,
   UseLoginFormReturn,
+  UseAdminUserFiltersReturn,
+  UseAdminUserMutationsReturn,
+  UseAdminUsersPageReturn,
   UseAdminPageReturn,
   UseRecentAuditEventsReturn,
   UseUserTableStateReturn,
