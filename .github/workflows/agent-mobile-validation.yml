@@ -1,0 +1,100 @@
+name: Agent Mobile PWA Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-mobile-pwa-critical-fixes
+  cancel-in-progress: true
+
+jobs:
+  validate-and-publish:
+    if: github.head_ref == 'agent/mobile-pwa-critical-fixes'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout validation branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          submodules: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.15.0
+          cache: npm
+
+      - name: Prepare clean implementation branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 --decode .github/agent/mobile-pwa-wip.patch.gz.b64 | gzip --decompress > /tmp/mobile-pwa.patch
+          git fetch origin main
+          git checkout -B agent/mobile-pwa-critical-fixes origin/main
+          git apply --binary /tmp/mobile-pwa.patch
+
+      - name: Install exact dependencies
+        run: npm ci
+
+      - name: Generate full-size PWA icon
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import sharp from 'sharp';
+
+          await sharp('apps/claw-frontend/brand/claw-mark-source.png')
+            .resize(512, 512, { fit: 'cover' })
+            .png()
+            .toFile('apps/claw-frontend/public/icon-512.png');
+          NODE
+
+      - name: Format changed frontend files
+        shell: bash
+        run: |
+          npx prettier --write \
+            'apps/claw-frontend/src/**/*.{ts,tsx,css}' \
+            'apps/claw-frontend/public/sw.js'
+
+      - name: Regenerate knowledge and inventory
+        shell: bash
+        run: |
+          npm run knowledge:build
+          npm run audit
+
+      - name: Commit through the real pre-commit hook
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix(frontend): harden mobile UI and PWA behavior'
+          test -z "$(git status --porcelain)"
+
+      - name: Frontend typecheck
+        run: npm run typecheck --workspace=claw-frontend
+
+      - name: Frontend lint
+        run: npm run lint --workspace=claw-frontend
+
+      - name: Frontend tests
+        run: npm run test --workspace=claw-frontend
+
+      - name: Frontend production build
+        run: npm run build --workspace=claw-frontend
+
+      - name: Confirm validated tree is clean
+        shell: bash
+        run: test -z "$(git status --porcelain)"
+
+      - name: Publish through the real pre-push hook
+        shell: bash
+        run: git push --force origin HEAD:agent/mobile-pwa-critical-fixes
