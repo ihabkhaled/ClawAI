@@ -36,7 +36,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base64 --decode .github/agent/mobile-pwa-wip.patch.gz.b64 | gzip --decompress > /tmp/mobile-pwa.patch
+          cat .github/agent/mobile-pwa-wip.part-* > /tmp/mobile-pwa.patch.gz.b64
+          test "$(wc -c < /tmp/mobile-pwa.patch.gz.b64)" -eq 40896
+          echo '8f70b62331143133f816357720150d7f0cfbcc403cece15544b88538ef308ae1  /tmp/mobile-pwa.patch.gz.b64' | sha256sum --check
+          base64 --decode /tmp/mobile-pwa.patch.gz.b64 | gzip --decompress > /tmp/mobile-pwa.patch
+          echo 'c75b22dc6358e1d36c6b4b5eba31bd37cad572d64ac57853b985bff71bb5ec2e  /tmp/mobile-pwa.patch' | sha256sum --check
           git fetch origin main
           git checkout -B agent/mobile-pwa-critical-fixes origin/main
           git apply --binary /tmp/mobile-pwa.patch
