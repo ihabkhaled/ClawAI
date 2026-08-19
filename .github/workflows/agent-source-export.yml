@@ -1,0 +1,36 @@
+name: Agent Source Export
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  export-source:
+    if: github.head_ref == 'agent/mobile-pwa-critical-fixes'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          submodules: false
+
+      - name: Create source archive
+        run: |
+          tar \
+            --exclude=.git \
+            --exclude=node_modules \
+            --exclude='apps/claw-coding-agent' \
+            -czf /tmp/clawai-source.tar.gz .
+
+      - name: Upload source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: clawai-source
+          path: /tmp/clawai-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
