@@ -113,11 +113,13 @@ export function ModelPicker({
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>{trigger}</DialogTrigger>
-        <DialogContent className="top-auto bottom-0 left-0 max-h-[80dvh] w-full max-w-none translate-x-0 translate-y-0 rounded-t-2xl rounded-b-none p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <DialogContent className="top-auto bottom-0 left-0 max-h-[85dvh] w-full max-w-none translate-x-0 translate-y-0 rounded-t-2xl rounded-b-none p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <DialogHeader className="text-start">
             <DialogTitle>{ariaLabel}</DialogTitle>
           </DialogHeader>
-          <div className="min-h-0 overflow-hidden rounded-lg border">{picker}</div>
+          <div className="min-h-0 flex-1 touch-pan-y overflow-hidden overscroll-contain rounded-lg border">
+            {picker}
+          </div>
         </DialogContent>
       </Dialog>
     );

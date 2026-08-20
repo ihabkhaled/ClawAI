@@ -243,6 +243,20 @@ describe('UserTable lifecycle actions', () => {
 });
 
 describe('UserTable temporary password action', () => {
+  it('wraps mobile actions into a two-column grid without overflowing the card', () => {
+    render(<UserTable users={[makeUser()]} {...baseProps} />);
+
+    const mobileAction = screen
+      .getAllByRole('button', { name: 'admin.issueTemporaryPassword' })
+      .find((button) => button.closest('.md\\:hidden'));
+    expect(mobileAction?.parentElement).toHaveClass(
+      'max-md:grid',
+      'max-md:grid-cols-2',
+      'max-md:w-full',
+    );
+    expect(mobileAction?.querySelector('span')).toHaveClass('whitespace-normal', 'text-center');
+  });
+
   it('renders the honest temporary-password label', () => {
     render(<UserTable users={[makeUser()]} {...baseProps} />);
 

@@ -20,9 +20,9 @@ export function CompareCriticControls({
 }: CompareCriticControlsProps): React.ReactElement {
   const groups = judgeModelOptionsToPickerGroups(criticModelOptions);
   return (
-    <div className="border-border/60 bg-muted/10 ms-4 space-y-4 rounded-lg border p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="space-y-0.5">
+    <div className="border-border/60 bg-muted/10 space-y-4 rounded-lg border p-4 sm:ms-4">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <div className="min-w-0 space-y-0.5">
           <label className="text-sm font-medium" htmlFor="compare-critic-enabled">
             {t('compare.critic.enabled')}
           </label>

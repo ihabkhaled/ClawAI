@@ -120,6 +120,16 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    const devApiProxyTarget = process.env.CLAW_DEV_API_PROXY_TARGET?.replace(/\/$/, '');
+    if (!devApiProxyTarget) return [];
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: `${devApiProxyTarget}/api/v1/:path*`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

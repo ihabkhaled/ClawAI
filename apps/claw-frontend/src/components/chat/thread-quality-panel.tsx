@@ -8,7 +8,7 @@ import type { ThreadQualityPanelProps } from '@/types';
 export function ThreadQualityPanel(props: ThreadQualityPanelProps): React.ReactElement {
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{props.t('chat.judgeReferee')}</DialogTitle>
         </DialogHeader>

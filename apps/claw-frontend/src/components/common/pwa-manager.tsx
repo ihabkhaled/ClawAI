@@ -62,7 +62,8 @@ export function PwaManager(): React.ReactElement | null {
     navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange, {
       once: true,
     });
-    return () => navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+    return () =>
+      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
   }, [waitingWorker]);
 
   const applyUpdate = (): void => {
@@ -83,18 +84,19 @@ export function PwaManager(): React.ReactElement | null {
   }
 
   return (
-    <div className="safe-top fixed inset-x-2 top-2 z-[120] mx-auto flex max-w-lg flex-col gap-2 rounded-xl border bg-background/95 p-3 shadow-floating backdrop-blur sm:inset-x-auto sm:end-4 sm:top-4 sm:w-[min(28rem,calc(100vw-2rem))]">
+    <div className="safe-bottom bg-background/95 shadow-floating fixed inset-x-2 bottom-[4.75rem] z-[120] mx-auto flex max-w-lg flex-col gap-2 rounded-xl border p-3 backdrop-blur sm:inset-x-auto sm:end-4 sm:top-4 sm:bottom-auto sm:w-[min(28rem,calc(100vw-2rem))]">
       {isOffline ? (
         <div className="flex min-h-11 items-center gap-3 text-sm">
-          <WifiOff className="h-5 w-5 shrink-0 text-warning" aria-hidden="true" />
+          <WifiOff className="text-warning h-5 w-5 shrink-0" aria-hidden="true" />
           <span className="min-w-0 flex-1">
-            You are offline. Reconnect to continue private actions; the public offline fallback remains available.
+            You are offline. Reconnect to continue private actions; the public offline fallback
+            remains available.
           </span>
         </div>
       ) : null}
       {waitingWorker ? (
-        <div className="flex items-center gap-2">
-          <RefreshCw className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2">
+          <RefreshCw className="text-primary h-5 w-5 shrink-0" aria-hidden="true" />
           <span className="min-w-0 flex-1 text-sm">A new ClawAI version is available.</span>
           <Button size="sm" onClick={applyUpdate}>
             Update
@@ -103,7 +105,7 @@ export function PwaManager(): React.ReactElement | null {
       ) : null}
       {installPrompt && !installDismissed ? (
         <div className="flex items-center gap-2">
-          <Download className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+          <Download className="text-primary h-5 w-5 shrink-0" aria-hidden="true" />
           <span className="min-w-0 flex-1 text-sm">Install ClawAI for app-like access.</span>
           <Button size="sm" onClick={() => void install()}>
             Install

@@ -16,3 +16,24 @@ describe('billing popup isolation headers', () => {
     },
   );
 });
+
+describe('development backend proxy', () => {
+  it('is disabled unless an explicit target is configured', async () => {
+    delete process.env.CLAW_DEV_API_PROXY_TARGET;
+
+    expect(await nextConfig.rewrites()).toEqual([]);
+  });
+
+  it('forwards API routes only to the explicitly configured target', async () => {
+    process.env.CLAW_DEV_API_PROXY_TARGET = 'https://claw.local';
+
+    await expect(nextConfig.rewrites()).resolves.toEqual([
+      {
+        source: '/api/v1/:path*',
+        destination: 'https://claw.local/api/v1/:path*',
+      },
+    ]);
+
+    delete process.env.CLAW_DEV_API_PROXY_TARGET;
+  });
+});

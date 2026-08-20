@@ -1,6 +1,13 @@
 'use client';
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ResponsiveTableProps } from '@/types/component.types';
@@ -17,7 +24,12 @@ export function ResponsiveTable<T>({
 
   if (rows.length === 0) {
     return (
-      <div className={cn('flex h-24 items-center justify-center rounded-md border text-sm text-muted-foreground', className)}>
+      <div
+        className={cn(
+          'text-muted-foreground flex h-24 items-center justify-center rounded-md border text-sm',
+          className,
+        )}
+      >
         {emptyMessage ?? t('common.noDataAvailable')}
       </div>
     );
@@ -27,14 +39,22 @@ export function ResponsiveTable<T>({
     <div className={cn('w-full', className)}>
       <ul className="space-y-3 md:hidden">
         {rows.map((row) => (
-          <li key={keyExtractor(row)} className="rounded-lg border bg-surface-panel p-4 shadow-soft">
-            <div className="mb-2 text-sm font-medium text-foreground">{mobileTitle(row)}</div>
+          <li
+            key={keyExtractor(row)}
+            className="bg-surface-panel shadow-soft min-w-0 overflow-hidden rounded-lg border p-4"
+          >
+            <div className="text-foreground mb-2 text-sm font-medium">{mobileTitle(row)}</div>
             <dl className="space-y-2">
               {columns.map((col) =>
                 col.header ? (
-                  <div key={col.key} className="flex items-start justify-between gap-3 text-sm">
-                    <dt className="shrink-0 text-muted-foreground">{col.header}</dt>
-                    <dd className="min-w-0 text-end text-foreground">{col.render(row)}</dd>
+                  <div
+                    key={col.key}
+                    className="grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-3 text-sm"
+                  >
+                    <dt className="text-muted-foreground shrink-0">{col.header}</dt>
+                    <dd className="text-foreground min-w-0 text-end break-words">
+                      {col.render(row)}
+                    </dd>
                   </div>
                 ) : (
                   <div key={col.key} className="flex min-h-11 items-center justify-end">
@@ -51,13 +71,21 @@ export function ResponsiveTable<T>({
         <Table>
           <TableHeader>
             <TableRow>
-              {columns.map((col) => <TableHead key={col.key} className={col.className}>{col.header}</TableHead>)}
+              {columns.map((col) => (
+                <TableHead key={col.key} className={col.className}>
+                  {col.header}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((row) => (
               <TableRow key={keyExtractor(row)}>
-                {columns.map((col) => <TableCell key={col.key} className={col.className}>{col.render(row)}</TableCell>)}
+                {columns.map((col) => (
+                  <TableCell key={col.key} className={col.className}>
+                    {col.render(row)}
+                  </TableCell>
+                ))}
               </TableRow>
             ))}
           </TableBody>

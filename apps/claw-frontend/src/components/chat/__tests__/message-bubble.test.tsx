@@ -69,9 +69,11 @@ describe('MessageBubble', () => {
       createdAt: '2026-04-21T12:00:00.000Z',
     };
 
-    render(<MessageBubble message={message} />);
+    const { container } = render(<MessageBubble message={message} />);
 
     expect(screen.getByText('chat.noVisibleAnswer')).toBeInTheDocument();
+    expect(container.firstElementChild).toHaveClass('min-w-0', 'w-full');
+    expect(container.querySelector('.overflow-hidden')).toHaveClass('min-w-0', 'max-w-full');
   });
 
   it('keeps compact route metadata while preserving detailed provenance', () => {
