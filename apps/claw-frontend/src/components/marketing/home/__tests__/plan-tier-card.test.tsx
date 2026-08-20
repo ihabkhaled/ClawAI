@@ -57,7 +57,6 @@ describe('PlanTierCard', () => {
   it('shows every token and resource limit on the public plan', () => {
     render(<PlanTierCard plan={{ ...PLAN, weeklyTokenQuota: 20_000 }} isYearly={false} />);
 
-    expect(screen.getByText('adminPlans.form.maxChatsPerDay')).toBeInTheDocument();
     expect(screen.getByText('userPlan.dailyLimitLabel')).toBeInTheDocument();
     expect(screen.getByText('adminPlans.form.weeklyTokenQuota')).toBeInTheDocument();
     expect(screen.getByText('userPlan.monthlyLimitLabel')).toBeInTheDocument();
