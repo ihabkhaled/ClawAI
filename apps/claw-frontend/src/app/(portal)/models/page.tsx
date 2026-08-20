@@ -67,10 +67,15 @@ export default function ModelsPage() {
     return pills;
   }, [providerFilter, lifecycleFilter, setProviderFilter, setLifecycleFilter, t]);
 
-  const selectedLabels = useMemo(() => selectedModels.map((model) => model.displayName), [selectedModels]);
+  const selectedLabels = useMemo(
+    () => selectedModels.map((model) => model.displayName),
+    [selectedModels],
+  );
 
   const handleCompare = (): void => {
-    if (selectedModels.length >= 2) setIsCompareDialogOpen(true);
+    if (selectedModels.length >= 2) {
+      setIsCompareDialogOpen(true);
+    }
   };
 
   if (isError) {
@@ -179,8 +184,6 @@ export default function ModelsPage() {
           ) : (
             <ModelTable
               models={models}
-              showProvider
-              emptyMessage={t('models.noModelsMatch')}
               compareSelection={isCompareMode ? compareSelection : undefined}
               onToggleCompare={isCompareMode ? toggleCompareModel : undefined}
             />
@@ -189,23 +192,29 @@ export default function ModelsPage() {
       )}
 
       <Dialog open={isCompareDialogOpen} onOpenChange={setIsCompareDialogOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{t('models.compare.compareCta', { count: selectedModels.length })}</DialogTitle>
+            <DialogTitle>{t('models.compare.title')}</DialogTitle>
           </DialogHeader>
-          <div className="grid min-h-0 gap-3 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {selectedModels.map((model) => (
-              <section key={model.id} className="min-w-0 rounded-lg border bg-card p-4">
-                <h3 className="break-words font-semibold">{model.displayName}</h3>
-                <p className="mt-1 break-all text-xs text-muted-foreground">{model.modelKey}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Badge variant="outline">{PROVIDER_DISPLAY_NAMES[model.provider] ?? model.provider}</Badge>
-                  <Badge variant="secondary">{LIFECYCLE_LABELS[model.lifecycle] ?? model.lifecycle}</Badge>
-                  {model.supportsStreaming ? <Badge variant="outline">{t('models.streaming')}</Badge> : null}
-                  {model.supportsTools ? <Badge variant="outline">{t('models.tools')}</Badge> : null}
-                  {model.supportsVision ? <Badge variant="outline">{t('models.vision')}</Badge> : null}
+              <div key={`${model.provider}-${model.name}`} className="min-w-0 rounded-lg border p-4">
+                <div className="flex min-w-0 items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{model.displayName}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {PROVIDER_DISPLAY_NAMES[model.provider] ?? model.provider}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="shrink-0">
+                    {model.lifecycle}
+                  </Badge>
                 </div>
-              </section>
+                <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                  <p className="break-words">{model.name}</p>
+                  {model.contextWindow ? <p>{model.contextWindow.toLocaleString()} context</p> : null}
+                </div>
+              </div>
             ))}
           </div>
         </DialogContent>
