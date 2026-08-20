@@ -3419,6 +3419,7 @@ export const de: TranslationDictionary = {
       displayOrder: 'Anzeigereihenfolge',
       dailyTokenQuota: 'Tägliches Token-Kontingent',
       dailyTokenQuotaHelp: 'Tokens, die ein Nutzer pro Tag in diesem Tarif verbrauchen darf.',
+      weeklyTokenQuota: 'Wöchentliches Token-Kontingent',
       monthlyTokenQuota: 'Monatliches Token-Kontingent',
       maxChatsPerDay: 'Max. Chats pro Tag',
       maxMessagesPerDay: 'Max. Nachrichten pro Tag',

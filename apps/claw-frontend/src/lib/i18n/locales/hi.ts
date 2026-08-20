@@ -3382,6 +3382,7 @@ export const hi: TranslationDictionary = {
       displayOrder: 'प्रदर्शन क्रम',
       dailyTokenQuota: 'दैनिक टोकन कोटा',
       dailyTokenQuotaHelp: 'इस योजना पर उपयोगकर्ता प्रतिदिन कितने टोकन उपयोग कर सकता है।',
+      weeklyTokenQuota: 'साप्ताहिक टोकन कोटा',
       monthlyTokenQuota: 'मासिक टोकन कोटा',
       maxChatsPerDay: 'प्रति दिन अधिकतम चैट',
       maxMessagesPerDay: 'प्रति दिन अधिकतम संदेश',

@@ -99,6 +99,23 @@ export function PlanForm({
           ) : null}
         </div>
         <div className="grid gap-2">
+          <label htmlFor="plan-weekly-quota" className="text-sm font-medium">
+            {t('adminPlans.form.weeklyTokenQuota')}
+          </label>
+          <Input
+            id="plan-weekly-quota"
+            type="number"
+            min={0}
+            value={state.weeklyTokenQuota}
+            onChange={(e) => setField('weeklyTokenQuota', e.target.value)}
+            placeholder={t('adminPlans.form.unlimitedPlaceholder')}
+            aria-invalid={fieldErrors.weeklyTokenQuota !== undefined}
+          />
+          {fieldErrors.weeklyTokenQuota !== undefined ? (
+            <p className="text-destructive text-xs">{fieldErrors.weeklyTokenQuota}</p>
+          ) : null}
+        </div>
+        <div className="grid gap-2">
           <label htmlFor="plan-monthly-quota" className="text-sm font-medium">
             {t('adminPlans.form.monthlyTokenQuota')}
           </label>

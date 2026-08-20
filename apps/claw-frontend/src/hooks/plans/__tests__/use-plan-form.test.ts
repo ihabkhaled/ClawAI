@@ -23,6 +23,7 @@ const seedPlan = {
   replacementPlanId: null,
   retiredAt: null,
   dailyTokenQuota: 100000,
+  weeklyTokenQuota: 20_000,
   monthlyTokenQuota: 2000000,
   maxChatsPerDay: 50,
   maxMessagesPerDay: 500,
@@ -61,6 +62,7 @@ describe('usePlanForm', () => {
     const { result } = renderHook(() => usePlanForm(seedPlan));
     expect(result.current.state.name).toBe('Pro');
     expect(result.current.state.monthlyTokenQuota).toBe('2000000');
+    expect(result.current.state.weeklyTokenQuota).toBe('20000');
     expect(result.current.state.allowJudgeMode).toBe(false);
     expect(result.current.state.isTrial).toBe(true);
   });
@@ -95,11 +97,13 @@ describe('usePlanForm', () => {
     act(() => {
       result.current.setField('name', 'Starter');
       result.current.setField('slug', 'starter');
+      result.current.setField('weeklyTokenQuota', '20000');
     });
     const payload = result.current.buildCreateRequest();
     expect(payload).not.toBeNull();
     expect(payload?.name).toBe('Starter');
     expect(payload?.slug).toBe('starter');
+    expect(payload?.weeklyTokenQuota).toBe(20_000);
     expect(payload).toMatchObject({ isTrial: false, trialDurationDays: null });
   });
 

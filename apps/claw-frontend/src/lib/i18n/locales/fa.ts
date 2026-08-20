@@ -3380,6 +3380,7 @@ export const fa: TranslationDictionary = {
       displayOrder: 'نمایش سفارش',
       dailyTokenQuota: 'سهمیه رمز روزانه',
       dailyTokenQuotaHelp: 'توکن هایی که کاربر ممکن است در روز در این طرح مصرف کند.',
+      weeklyTokenQuota: 'سهمیه هفتگی توکن',
       monthlyTokenQuota: 'سهمیه ماهانه رمزی',
       maxChatsPerDay: 'حداکثر چت در روز',
       maxMessagesPerDay: 'حداکثر پیام در روز',

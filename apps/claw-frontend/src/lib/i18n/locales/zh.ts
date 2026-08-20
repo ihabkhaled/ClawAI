@@ -3271,6 +3271,7 @@ export const zh: TranslationDictionary = {
       displayOrder: '显示顺序',
       dailyTokenQuota: '每日代币额度',
       dailyTokenQuotaHelp: '用户在此计划中每天可能消耗的代币。',
+      weeklyTokenQuota: '每周代币额度',
       monthlyTokenQuota: '每月代币配额',
       maxChatsPerDay: '每天最多聊天次数',
       maxMessagesPerDay: '每天最多消息数',

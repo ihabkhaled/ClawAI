@@ -3338,6 +3338,7 @@ export const ar: TranslationDictionary = {
       displayOrder: 'ترتيب العرض',
       dailyTokenQuota: 'الحصة اليومية للرموز',
       dailyTokenQuotaHelp: 'عدد الرموز التي يمكن للمستخدم استهلاكها يوميًا في هذه الخطة.',
+      weeklyTokenQuota: 'الحصة الأسبوعية للرموز',
       monthlyTokenQuota: 'الحصة الشهرية للرموز',
       maxChatsPerDay: 'أقصى عدد محادثات يوميًا',
       maxMessagesPerDay: 'أقصى عدد رسائل يوميًا',

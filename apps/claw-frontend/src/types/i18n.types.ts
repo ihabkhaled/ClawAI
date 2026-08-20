@@ -3310,6 +3310,7 @@ export type TranslationDictionary = {
       displayOrder: string;
       dailyTokenQuota: string;
       dailyTokenQuotaHelp: string;
+      weeklyTokenQuota: string;
       monthlyTokenQuota: string;
       maxChatsPerDay: string;
       maxMessagesPerDay: string;

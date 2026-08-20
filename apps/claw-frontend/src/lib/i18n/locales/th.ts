@@ -3351,6 +3351,7 @@ export const th: TranslationDictionary = {
       displayOrder: 'แสดงลำดับ',
       dailyTokenQuota: 'โควต้าโทเค็นรายวัน',
       dailyTokenQuotaHelp: 'โทเค็นที่ผู้ใช้สามารถใช้ต่อวันในแผนนี้',
+      weeklyTokenQuota: 'โควตาโทเค็นรายสัปดาห์',
       monthlyTokenQuota: 'โควต้าโทเค็นรายเดือน',
       maxChatsPerDay: 'สนทนาสูงสุดต่อวัน',
       maxMessagesPerDay: 'ข้อความสูงสุดต่อวัน',

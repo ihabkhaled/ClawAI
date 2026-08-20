@@ -3399,6 +3399,7 @@ export const ru: TranslationDictionary = {
       displayOrder: 'Порядок отображения',
       dailyTokenQuota: 'Дневная квота токенов',
       dailyTokenQuotaHelp: 'Сколько токенов пользователь может потратить в день на этом тарифе.',
+      weeklyTokenQuota: 'Недельная квота токенов',
       monthlyTokenQuota: 'Месячная квота токенов',
       maxChatsPerDay: 'Макс. чатов в день',
       maxMessagesPerDay: 'Макс. сообщений в день',

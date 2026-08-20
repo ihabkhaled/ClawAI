@@ -3388,6 +3388,7 @@ export const ja: TranslationDictionary = {
       displayOrder: '表示順',
       dailyTokenQuota: '毎日のトークン割り当て',
       dailyTokenQuotaHelp: 'このプランでユーザーが 1 日に消費できるトークン。',
+      weeklyTokenQuota: '週間トークン割り当て',
       monthlyTokenQuota: '月間トークン割り当て',
       maxChatsPerDay: '1 日あたりの最大チャット数',
       maxMessagesPerDay: '1 日あたりの最大メッセージ数',

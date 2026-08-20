@@ -9,6 +9,7 @@ export const updatePlanSchema = z
     isTrial: z.boolean().optional(),
     trialDurationDays: z.number().int().nullable().optional(),
     dailyTokenQuota: z.number().int().min(0).max(1_000_000_000).optional(),
+    weeklyTokenQuota: z.number().int().min(0).max(1_000_000_000).optional(),
     monthlyTokenQuota: z.number().int().min(0).max(1_000_000_000).optional(),
     maxChatsPerDay: z.number().int().min(0).max(1_000_000).optional(),
     maxMessagesPerDay: z.number().int().min(0).max(1_000_000).optional(),

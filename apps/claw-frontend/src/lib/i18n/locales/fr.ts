@@ -3427,6 +3427,7 @@ export const fr: TranslationDictionary = {
       displayOrder: 'Ordre d’affichage',
       dailyTokenQuota: 'Quota quotidien de jetons',
       dailyTokenQuotaHelp: 'Jetons qu’un utilisateur peut consommer par jour avec ce forfait.',
+      weeklyTokenQuota: 'Quota hebdomadaire de jetons',
       monthlyTokenQuota: 'Quota mensuel de jetons',
       maxChatsPerDay: 'Max. de discussions par jour',
       maxMessagesPerDay: 'Max. de messages par jour',

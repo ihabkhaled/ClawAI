@@ -3417,6 +3417,7 @@ export const es: TranslationDictionary = {
       displayOrder: 'Orden de visualización',
       dailyTokenQuota: 'Cuota diaria de tokens',
       dailyTokenQuotaHelp: 'Tokens que un usuario puede consumir al día en este plan.',
+      weeklyTokenQuota: 'Cuota semanal de tokens',
       monthlyTokenQuota: 'Cuota mensual de tokens',
       maxChatsPerDay: 'Máx. chats por día',
       maxMessagesPerDay: 'Máx. mensajes por día',

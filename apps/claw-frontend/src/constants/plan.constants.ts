@@ -10,6 +10,7 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   isPublic: true,
   isTrial: false,
   dailyTokenQuota: '100000',
+  weeklyTokenQuota: '',
   monthlyTokenQuota: '',
   maxChatsPerDay: '',
   maxMessagesPerDay: '',
