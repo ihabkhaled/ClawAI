@@ -21,7 +21,8 @@ export function useSidebarController(): UseSidebarControllerReturn {
     }
 
     const previousOverflow = document.body.style.overflow;
-    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const sidebar = document.querySelector<HTMLElement>('[data-mobile-sidebar]');
     document.body.style.overflow = 'hidden';
 

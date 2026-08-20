@@ -3,8 +3,20 @@ import { useState } from 'react';
 
 import { ModelPickerItem } from '@/components/chat/model-picker-item';
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@/components/ui/command';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useMediaQuery } from '@/hooks/ui/use-media-query';
 import type { ModelPickerOption, ModelPickerProps } from '@/types';
@@ -74,13 +86,22 @@ export function ModelPicker({
         <CommandEmpty>{noResultsLabel}</CommandEmpty>
         {autoOption ? (
           <CommandGroup>
-            <ModelPickerItem option={autoOption} isSelected={value === autoOption.value} onSelect={handleSelect} />
+            <ModelPickerItem
+              option={autoOption}
+              isSelected={value === autoOption.value}
+              onSelect={handleSelect}
+            />
           </CommandGroup>
         ) : null}
         {groups.map((group) => (
           <CommandGroup key={group.key} heading={group.label || undefined}>
             {group.options.map((option) => (
-              <ModelPickerItem key={option.value} option={option} isSelected={value === option.value} onSelect={handleSelect} />
+              <ModelPickerItem
+                key={option.value}
+                option={option}
+                isSelected={value === option.value}
+                onSelect={handleSelect}
+              />
             ))}
           </CommandGroup>
         ))}

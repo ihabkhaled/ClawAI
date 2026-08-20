@@ -18,6 +18,12 @@ vi.mock('@/components/layout/gpu-badge', () => ({
 vi.mock('@/components/layout/sidebar-nav-item', () => ({
   SidebarNavItem: () => <li data-testid="nav-item" />,
 }));
+vi.mock('@/components/layout/locale-switcher', () => ({
+  LocaleSwitcher: () => <div data-testid="locale-switcher" />,
+}));
+vi.mock('@/components/layout/theme-switcher', () => ({
+  ThemeSwitcher: () => <div data-testid="theme-switcher" />,
+}));
 
 describe('Sidebar footer (mobile bottom-nav overlap)', () => {
   // Regression: on mobile the sidebar is a bottom sheet pinned to bottom-0 and

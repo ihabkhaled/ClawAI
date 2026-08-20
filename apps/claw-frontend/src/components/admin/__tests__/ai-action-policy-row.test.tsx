@@ -28,6 +28,23 @@ function makePolicy(overrides: Partial<AiActionPolicy> = {}): AiActionPolicy {
 }
 
 describe('AiActionPolicyRow', () => {
+  it('wraps header metadata without widening narrow cards', () => {
+    render(
+      <AiActionPolicyRow
+        policy={makePolicy({ name: 'policy-with-a-long-mobile-name' })}
+        onToggleActive={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        isMutating={false}
+        t={(key) => key}
+      />,
+    );
+
+    const name = screen.getByText('policy-with-a-long-mobile-name');
+    expect(name).toHaveClass('min-w-0', 'break-words');
+    expect(name.parentElement).toHaveClass('flex-wrap');
+  });
+
   it('renders policy name and translated kind/risk labels', () => {
     render(
       <AiActionPolicyRow

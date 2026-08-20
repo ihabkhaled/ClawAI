@@ -23,21 +23,21 @@ export function AiActionPolicyRow({
   const riskBadgeStyle = WORKSPACE_RISK_LABEL_STYLES[riskLabelKey];
   const riskLabelText = t(`adminAutomation.policies.riskLabel.${policy.riskMaxLabel}`);
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
-      <div className="flex items-center gap-2">
+    <div className="border-border bg-card flex flex-col gap-2 rounded-lg border p-3">
+      <div className="flex flex-wrap items-center gap-2">
         <span
           className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${kindStyle}`}
           aria-label={kindLabel}
         >
           {kindLabel}
         </span>
-        <span className="text-sm font-semibold">{policy.name}</span>
+        <span className="min-w-0 text-sm font-semibold break-words">{policy.name}</span>
         {policy.isSystemDefault ? (
           <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-xs text-blue-600 dark:text-blue-400">
             {t('adminAutomation.policies.systemDefault')}
           </span>
         ) : null}
-        <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+        <span className="text-muted-foreground flex w-full items-center justify-between gap-2 text-xs sm:ms-auto sm:w-auto">
           <span>{t('adminAutomation.policies.priority', { p: String(policy.priority) })}</span>
           <Switch
             checked={policy.isActive}
@@ -48,23 +48,23 @@ export function AiActionPolicyRow({
         </span>
       </div>
       {policy.description !== null ? (
-        <p className="text-xs text-muted-foreground">{policy.description}</p>
+        <p className="text-muted-foreground text-xs">{policy.description}</p>
       ) : null}
-      <div className="grid gap-1 text-xs text-muted-foreground md:grid-cols-3">
+      <div className="text-muted-foreground grid gap-1 text-xs md:grid-cols-3">
         <div>
-          <span className="font-semibold text-foreground">
+          <span className="text-foreground font-semibold">
             {t('adminAutomation.policies.providerRegex')}
           </span>
-          : <code className="rounded bg-muted px-1">{policy.providerRegex}</code>
+          : <code className="bg-muted rounded px-1 break-all">{policy.providerRegex}</code>
         </div>
         <div>
-          <span className="font-semibold text-foreground">
+          <span className="text-foreground font-semibold">
             {t('adminAutomation.policies.actionKindRegex')}
           </span>
-          : <code className="rounded bg-muted px-1">{policy.actionKindRegex}</code>
+          : <code className="bg-muted rounded px-1 break-all">{policy.actionKindRegex}</code>
         </div>
         <div className="flex items-center gap-1">
-          <span className="font-semibold text-foreground">
+          <span className="text-foreground font-semibold">
             {t('adminAutomation.policies.riskCeiling')}
           </span>
           :{' '}
@@ -74,7 +74,7 @@ export function AiActionPolicyRow({
           <span>≤ {policy.riskMaxScore}</span>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
           size="sm"
