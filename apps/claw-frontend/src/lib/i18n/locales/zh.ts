@@ -5081,4 +5081,12 @@ export const zh: TranslationDictionary = {
       },
     },
   },
+  pwa: {
+    offlineMessage: '你已离线。请重新连接以继续私密操作；公共离线回退页面仍可使用。',
+    updateAvailable: 'ClawAI 有新版本可用。',
+    updateAction: '更新',
+    installMessage: '安装 ClawAI 以获得类似应用的体验。',
+    installAction: '安装',
+    dismissInstall: '关闭安装提示',
+  },
 };

@@ -5438,4 +5438,13 @@ export const it: TranslationDictionary = {
       },
     },
   },
+  pwa: {
+    offlineMessage:
+      'Sei offline. Ricollegati per continuare le azioni private; la modalità offline pubblica resta disponibile.',
+    updateAvailable: 'È disponibile una nuova versione di ClawAI.',
+    updateAction: 'Aggiorna',
+    installMessage: "Installa ClawAI per un accesso simile a un'app.",
+    installAction: 'Installa',
+    dismissInstall: 'Chiudi avviso di installazione',
+  },
 };

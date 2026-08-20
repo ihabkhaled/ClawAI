@@ -7,7 +7,7 @@ export function AuthAppVersion(): React.ReactElement {
   const { t } = useTranslation();
 
   return (
-    <p className="text-muted-foreground absolute inset-x-0 bottom-3 text-center text-xs">
+    <p className="text-muted-foreground safe-bottom px-4 py-3 text-center text-xs">
       {t('common.brandVersion', { version: APP_VERSION })}
     </p>
   );

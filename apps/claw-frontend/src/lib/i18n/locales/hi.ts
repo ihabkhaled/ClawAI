@@ -5370,4 +5370,13 @@ export const hi: TranslationDictionary = {
       },
     },
   },
+  pwa: {
+    offlineMessage:
+      'आप ऑफ़लाइन हैं। निजी कार्रवाइयाँ जारी रखने के लिए दोबारा कनेक्ट करें; सार्वजनिक ऑफ़लाइन विकल्प अब भी उपलब्ध है।',
+    updateAvailable: 'ClawAI का नया वर्शन उपलब्ध है।',
+    updateAction: 'अपडेट करें',
+    installMessage: 'ऐप जैसी सुविधा के लिए ClawAI इंस्टॉल करें।',
+    installAction: 'इंस्टॉल करें',
+    dismissInstall: 'इंस्टॉल सूचना बंद करें',
+  },
 };

@@ -5354,4 +5354,13 @@ export const en: TranslationDictionary = {
       },
     },
   },
+  pwa: {
+    offlineMessage:
+      'You are offline. Reconnect to continue private actions; the public offline fallback remains available.',
+    updateAvailable: 'A new ClawAI version is available.',
+    updateAction: 'Update',
+    installMessage: 'Install ClawAI for app-like access.',
+    installAction: 'Install',
+    dismissInstall: 'Dismiss install prompt',
+  },
 };

@@ -5358,4 +5358,13 @@ export const fa: TranslationDictionary = {
       },
     },
   },
+  pwa: {
+    offlineMessage:
+      'شما آفلاین هستید. برای ادامه اقدامات خصوصی دوباره متصل شوید؛ حالت آفلاین عمومی همچنان در دسترس است.',
+    updateAvailable: 'نسخه جدید ClawAI در دسترس است.',
+    updateAction: 'به‌روزرسانی',
+    installMessage: 'برای دسترسی شبیه برنامه، ClawAI را نصب کنید.',
+    installAction: 'نصب',
+    dismissInstall: 'بستن اعلان نصب',
+  },
 };

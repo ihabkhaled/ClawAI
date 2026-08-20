@@ -4,16 +4,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { CrossTabLocaleSync } from '@/components/common/cross-tab-locale-sync';
+import { PwaManager } from '@/components/common/pwa-manager';
 import { Toaster } from '@/components/ui/toaster';
 import { LocaleProvider } from '@/lib/i18n';
 import { ThemeProvider } from '@/lib/theme';
 import type { ProvidersProps } from '@/types';
 
-export function Providers({
-  children,
-  initialLocale,
-  initialDictionary,
-}: ProvidersProps): React.ReactElement {
+export function Providers({ children, initialLocale, initialDictionary }: ProvidersProps): React.ReactElement {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -35,6 +32,7 @@ export function Providers({
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           {children}
+          <PwaManager />
           <Toaster />
         </QueryClientProvider>
       </ThemeProvider>

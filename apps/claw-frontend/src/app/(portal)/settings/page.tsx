@@ -247,7 +247,7 @@ export default function SettingsPage() {
             <CardDescription>{t('settings.appearanceDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {APPEARANCE_OPTIONS.map((option) => {
                 const IconComponent =
                   APPEARANCE_ICONS[option.icon as keyof typeof APPEARANCE_ICONS];

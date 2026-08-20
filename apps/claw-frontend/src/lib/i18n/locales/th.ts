@@ -5324,4 +5324,13 @@ export const th: TranslationDictionary = {
       },
     },
   },
+  pwa: {
+    offlineMessage:
+      'คุณออฟไลน์อยู่ กรุณาเชื่อมต่ออีกครั้งเพื่อดำเนินการส่วนตัวต่อ โหมดออฟไลน์แบบสาธารณะยังคงใช้งานได้',
+    updateAvailable: 'มี ClawAI เวอร์ชันใหม่พร้อมใช้งาน',
+    updateAction: 'อัปเดต',
+    installMessage: 'ติดตั้ง ClawAI เพื่อการเข้าถึงแบบแอป',
+    installAction: 'ติดตั้ง',
+    dismissInstall: 'ปิดข้อความแจ้งเตือนการติดตั้ง',
+  },
 };

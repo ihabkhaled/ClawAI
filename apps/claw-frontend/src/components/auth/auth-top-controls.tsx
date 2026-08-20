@@ -8,16 +8,12 @@ import { MarketingThemeToggle } from '@/components/marketing/marketing-theme-tog
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 
-// Public-page controls shown in the top corner of the login/register screens:
-// a link back to the marketing home, the language switcher, and the theme
-// toggle. Reuses the public-safe marketing switchers (no authenticated
-// mutation) since these pages are unauthenticated. Positioned by the parent.
 export function AuthTopControls(): React.ReactElement {
   const { t } = useTranslation();
 
   return (
-    <div className="absolute end-4 top-4 z-20 flex items-center gap-1">
-      <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+    <div className="relative z-20 flex items-center justify-end gap-1 p-4 pt-[max(1rem,env(safe-area-inset-top))] lg:absolute lg:end-4 lg:top-4 lg:p-0">
+      <Button variant="ghost" size="icon" asChild>
         <Link href="/" aria-label={t('auth.backToHome')}>
           <Home className="h-4 w-4" />
         </Link>

@@ -6,7 +6,9 @@ import { WorkspaceProviderAppConfigStatus } from '@/enums/workspace-provider-app
 import { WorkspaceProviderAuthMode } from '@/enums/workspace-provider-auth-mode.enum';
 import type { WorkspaceProviderAppConfig } from '@/types';
 
-function makeConfig(overrides: Partial<WorkspaceProviderAppConfig> = {}): WorkspaceProviderAppConfig {
+function makeConfig(
+  overrides: Partial<WorkspaceProviderAppConfig> = {},
+): WorkspaceProviderAppConfig {
   return {
     id: 'cfg-1',
     provider: 'GITHUB',
@@ -58,6 +60,31 @@ function renderRow(canManage: boolean): void {
 }
 
 describe('AppConfigRow — RBAC-driven visibility', () => {
+  it('exposes a labeled stacked layout for narrow viewports', () => {
+    const { container } = render(
+      <table>
+        <tbody>
+          <AppConfigRow
+            config={makeConfig()}
+            {...baseHandlers}
+            isTestPending={false}
+            isDeletePending={false}
+            isConnectPending={false}
+            canManage
+            t={t}
+          />
+        </tbody>
+      </table>,
+    );
+
+    expect(container.querySelector('tr')).toHaveClass('max-md:block');
+    expect(container.querySelector('td')).toHaveAttribute(
+      'data-label',
+      'workspaceProviders.appConfigs.columns.name',
+    );
+    expect(container.querySelector('td:last-child > div')).toHaveClass('flex-wrap');
+  });
+
   describe('as a regular USER (canManage=false)', () => {
     it('renders the Connect button (USER may initiate OAuth on a READY OAUTH2 config)', () => {
       renderRow(false);

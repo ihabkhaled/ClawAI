@@ -63,7 +63,7 @@ export function ParallelModelSelector({
         />
       </div>
 
-      <div className="max-h-64 space-y-4 overflow-y-auto rounded-md border p-3">
+      <div className="max-h-[min(16rem,42dvh)] touch-pan-y space-y-4 overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border p-2 sm:p-3">
         {hasNoSearchResults ? (
           <p className="text-muted-foreground py-4 text-center text-sm">{t('common.noResults')}</p>
         ) : null}
@@ -82,7 +82,10 @@ export function ParallelModelSelector({
                     variant="ghost"
                     size="sm"
                     disabled={disabled}
-                    className={cn('w-full justify-start gap-2 text-sm', checked && 'bg-accent')}
+                    className={cn(
+                      'min-h-11 w-full min-w-0 justify-start gap-2 px-2 text-sm',
+                      checked && 'bg-accent',
+                    )}
                     onClick={() => onToggleModel(model.provider, model.model, !checked)}
                   >
                     <span

@@ -34,7 +34,7 @@ export function UserMenu(): React.ReactElement | null {
         <Button
           variant="unstyled"
           size="unstyled"
-          className="hover:bg-accent flex items-center gap-2 rounded-lg px-1 py-1.5 text-sm transition-colors sm:px-2"
+          className="hover:bg-accent flex min-h-11 min-w-11 items-center gap-2 rounded-lg px-1 py-1.5 text-sm transition-colors sm:px-2"
         >
           {/* Avatar wrapper carries the primary-tinted ring + an online status
            * dot anchored to the bottom-end corner. The dot uses `end-0` so it

@@ -69,12 +69,14 @@ describe('MessageBubble', () => {
       createdAt: '2026-04-21T12:00:00.000Z',
     };
 
-    render(<MessageBubble message={message} />);
+    const { container } = render(<MessageBubble message={message} />);
 
     expect(screen.getByText('chat.noVisibleAnswer')).toBeInTheDocument();
+    expect(container.firstElementChild).toHaveClass('min-w-0', 'w-full');
+    expect(container.querySelector('.overflow-hidden')).toHaveClass('min-w-0', 'max-w-full');
   });
 
-  it('renders the routed model and router path from metadata', () => {
+  it('keeps compact route metadata while preserving detailed provenance', () => {
     const message: ChatMessage = {
       id: 'msg-2',
       threadId: 'thread-1',
@@ -108,6 +110,7 @@ describe('MessageBubble', () => {
     expect(screen.getByText('local-ollama / glm-5.1:cloud')).toBeInTheDocument();
     expect(screen.getByText('Route: qwen3:1.7b -> glm-5.1:cloud')).toBeInTheDocument();
     expect(screen.getByText('Research: SEARCH_FETCH_EXTRACT (3 items)')).toBeInTheDocument();
+    expect(screen.getByText('provenance')).toBeInTheDocument();
   });
 
   it('renders the context-exhausted banner when truncatedAtContextLimit is true', () => {

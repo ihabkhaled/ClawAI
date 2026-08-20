@@ -244,6 +244,42 @@ describe('UserTable lifecycle actions', () => {
 });
 
 describe('UserTable temporary password action', () => {
+  it('wraps mobile actions into a two-column grid without overflowing the card', () => {
+    render(<UserTable users={[makeUser()]} {...baseProps} />);
+
+    const mobileAction = screen
+      .getAllByRole('button', { name: 'admin.issueTemporaryPassword' })
+      .find((button) => button.closest('.md\\:hidden'));
+    expect(mobileAction?.parentElement).toHaveClass(
+      'max-md:grid',
+      'max-md:grid-cols-2',
+      'max-md:w-full',
+    );
+    expect(mobileAction?.querySelector('span')).toHaveClass('whitespace-normal', 'text-center');
+  });
+
+  // Regression: the "sm" button size fixes a 36px height (44px on mobile via
+  // min-height), which does not grow for wrapped content. A long label such
+  // as "Issue temporary password" then wraps to 2-3 lines that spill outside
+  // the button's fixed box instead of being contained by it. `h-auto` lets
+  // the button grow to fit every wrapped line so the label always renders
+  // fully inside its own border at mobile widths.
+  it('lets the action buttons grow to fit wrapped multi-line labels instead of clipping them', () => {
+    render(<UserTable users={[makeUser()]} {...baseProps} />);
+
+    const mobileIssueButton = screen
+      .getAllByRole('button', { name: 'admin.issueTemporaryPassword' })
+      .find((button) => button.closest('.md\\:hidden'));
+    expect(mobileIssueButton).toHaveClass('h-auto');
+    expect(mobileIssueButton).not.toHaveClass('h-9');
+
+    const mobileEditButton = screen
+      .getAllByRole('button', { name: 'admin.editUser' })
+      .find((button) => button.closest('.md\\:hidden'));
+    expect(mobileEditButton).toHaveClass('h-auto');
+    expect(mobileEditButton).not.toHaveClass('h-9');
+  });
+
   it('renders the honest temporary-password label', () => {
     render(<UserTable users={[makeUser()]} {...baseProps} />);
 

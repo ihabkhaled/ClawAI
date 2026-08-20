@@ -37,14 +37,14 @@ export default function ResearchProvidersPage(): React.ReactElement {
       />
 
       {ctrl.lastTestMessage !== null ? (
-        <div className="rounded border border-muted bg-muted/50 p-3 text-sm">
+        <div className="border-muted bg-muted/50 rounded border p-3 text-sm">
           {ctrl.lastTestMessage}
         </div>
       ) : null}
 
       {ctrl.isLoading ? <LoadingSpinner label={ctrl.t('common.loading')} /> : null}
       {ctrl.isError ? (
-        <div className="rounded border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="border-destructive/40 bg-destructive/10 text-destructive rounded border p-4 text-sm">
           {ctrl.t('research.providers.loadFailed')}
         </div>
       ) : null}
@@ -56,10 +56,10 @@ export default function ResearchProvidersPage(): React.ReactElement {
         />
       ) : null}
       {!ctrl.isLoading && ctrl.providers.length > 0 ? (
-        <div className="rounded border">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+        <div className="max-w-full rounded border max-md:border-0">
+          <table className="w-full max-md:block">
+            <thead className="max-md:hidden">
+              <tr className="bg-muted/50 text-muted-foreground text-left text-xs uppercase">
                 <th className="px-3 py-2">{ctrl.t('research.providers.col.name')}</th>
                 <th className="px-3 py-2">{ctrl.t('research.providers.col.kind')}</th>
                 <th className="px-3 py-2">{ctrl.t('research.providers.col.baseUrl')}</th>
@@ -68,7 +68,7 @@ export default function ResearchProvidersPage(): React.ReactElement {
                 <th className="px-3 py-2 text-right">{ctrl.t('research.providers.col.actions')}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="max-md:block max-md:space-y-3">
               {ctrl.providers.map((p) => (
                 <ResearchProviderRow
                   key={p.id}

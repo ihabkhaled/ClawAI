@@ -12,9 +12,6 @@ import { ROUTES } from '@/constants';
 import { AlertVariant } from '@/enums/alert-variant.enum';
 import { useLoginForm } from '@/hooks/auth/use-login-form';
 
-// Right-hand form column for the split login layout. On mobile (<lg) this
-// component renders standalone — the branding panel is hidden by its own
-// `hidden lg:flex` class so we don't need any duplicated state here.
 export function LoginForm(): React.ReactElement {
   const {
     form,
@@ -32,7 +29,6 @@ export function LoginForm(): React.ReactElement {
 
   return (
     <div className="flex w-full max-w-sm flex-col">
-      {/* Mobile-only logo + welcome — replaces the branding panel on small screens */}
       <div className="mb-6 flex flex-col items-center text-center lg:hidden">
         <div className="bg-primary flex h-12 w-12 items-center justify-center rounded-xl">
           <Zap className="text-primary-foreground h-6 w-6" aria-hidden="true" />
@@ -81,7 +77,7 @@ export function LoginForm(): React.ReactElement {
                   placeholder={t('auth.passwordPlaceholder')}
                   autoComplete="current-password"
                   disabled={isPending}
-                  className="pe-10"
+                  className="pe-12"
                   {...form.register('password')}
                 />
                 <Button
@@ -90,17 +86,11 @@ export function LoginForm(): React.ReactElement {
                   type="button"
                   onClick={togglePasswordVisibility}
                   disabled={isPending}
-                  aria-label={
-                    showPassword ? t('auth.hidePasswordAria') : t('auth.showPasswordAria')
-                  }
+                  aria-label={showPassword ? t('auth.hidePasswordAria') : t('auth.showPasswordAria')}
                   aria-pressed={showPassword}
-                  className="text-muted-foreground hover:text-foreground focus-visible:text-foreground absolute inset-y-0 end-0 flex items-center pe-3 transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  className="text-muted-foreground hover:text-foreground focus-visible:text-foreground absolute inset-y-0 end-0 flex min-h-11 min-w-11 items-center justify-center transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" aria-hidden="true" />
-                  ) : (
-                    <Eye className="h-4 w-4" aria-hidden="true" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
                 </Button>
               </div>
               {form.formState.errors.password ? (
@@ -108,18 +98,16 @@ export function LoginForm(): React.ReactElement {
               ) : null}
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2 max-[360px]:items-stretch">
               <label
                 htmlFor="rememberMe"
-                className="text-muted-foreground flex cursor-pointer items-center gap-2 text-sm select-none"
+                className="text-muted-foreground flex min-h-11 cursor-pointer items-center gap-2 text-sm select-none"
               >
                 <Checkbox
                   id="rememberMe"
                   checked={rememberMe}
                   disabled={isPending}
-                  onCheckedChange={(value) => {
-                    handleRememberMeChange(value === true);
-                  }}
+                  onCheckedChange={(value) => handleRememberMeChange(value === true)}
                 />
                 <span>{t('auth.rememberMe')}</span>
               </label>
@@ -129,18 +117,14 @@ export function LoginForm(): React.ReactElement {
                 type="button"
                 onClick={handleForgotPasswordClick}
                 disabled={isPending}
-                className="text-primary text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                className="text-primary flex min-h-11 items-center px-2 text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {t('auth.forgotPassword')}
               </Button>
             </div>
 
             {isError ? (
-              <Alert
-                variant={AlertVariant.Error}
-                title={t('auth.loginFailedTitle')}
-                description={errorMessage ?? t('auth.loginFailed')}
-              />
+              <Alert variant={AlertVariant.Error} title={t('auth.loginFailedTitle')} description={errorMessage ?? t('auth.loginFailed')} />
             ) : null}
 
             <Button type="submit" className="w-full" isLoading={isPending}>
@@ -152,15 +136,12 @@ export function LoginForm(): React.ReactElement {
 
       <p className="text-muted-foreground mt-4 text-center text-sm">
         {t('auth.noAccount')}{' '}
-        <Link href={ROUTES.REGISTER} className="text-primary font-medium hover:underline">
+        <Link href={ROUTES.REGISTER} className="text-primary inline-flex min-h-11 items-center px-1 font-medium hover:underline">
           {t('auth.signUpLink')}
         </Link>
       </p>
 
-      {/* Mobile-only tagline — desktop renders inside the branding panel */}
-      <p className="text-muted-foreground mt-6 text-center text-xs lg:hidden">
-        {t('auth.tagline')}
-      </p>
+      <p className="text-muted-foreground mt-6 text-center text-xs lg:hidden">{t('auth.tagline')}</p>
     </div>
   );
 }

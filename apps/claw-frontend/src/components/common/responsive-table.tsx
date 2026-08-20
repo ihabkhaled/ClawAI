@@ -12,11 +12,6 @@ import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ResponsiveTableProps } from '@/types/component.types';
 
-// Mobile-first responsive table. Below the `md` breakpoint each row collapses
-// into a vertical stacked card with a per-row title and field/value pairs;
-// at `md` and up the regular HTML table layout takes over. The two views
-// share the same `columns` definition so consumers never duplicate render
-// logic between desktop and mobile.
 export function ResponsiveTable<T>({
   rows,
   columns,
@@ -31,7 +26,7 @@ export function ResponsiveTable<T>({
     return (
       <div
         className={cn(
-          'flex h-24 items-center justify-center rounded-md border text-sm text-muted-foreground',
+          'text-muted-foreground flex h-24 items-center justify-center rounded-md border text-sm',
           className,
         )}
       >
@@ -42,34 +37,36 @@ export function ResponsiveTable<T>({
 
   return (
     <div className={cn('w-full', className)}>
-      {/* Mobile (< md): stacked cards */}
       <ul className="space-y-3 md:hidden">
         {rows.map((row) => (
           <li
             key={keyExtractor(row)}
-            className="rounded-lg border bg-surface-panel p-4 shadow-soft"
+            className="bg-surface-panel shadow-soft min-w-0 overflow-hidden rounded-lg border p-4"
           >
-            <div className="mb-2 text-sm font-medium text-foreground">
-              {mobileTitle(row)}
-            </div>
-            <dl className="space-y-1.5">
-              {columns.map((col) => (
-                <div
-                  key={col.key}
-                  className="flex items-start justify-between gap-3 text-sm"
-                >
-                  <dt className="shrink-0 text-muted-foreground">{col.header}</dt>
-                  <dd className="min-w-0 text-end text-foreground">
+            <div className="text-foreground mb-2 text-sm font-medium">{mobileTitle(row)}</div>
+            <dl className="space-y-2">
+              {columns.map((col) =>
+                col.header ? (
+                  <div
+                    key={col.key}
+                    className="grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-3 text-sm"
+                  >
+                    <dt className="text-muted-foreground shrink-0">{col.header}</dt>
+                    <dd className="text-foreground min-w-0 text-end break-words">
+                      {col.render(row)}
+                    </dd>
+                  </div>
+                ) : (
+                  <div key={col.key} className="flex min-h-11 items-center justify-end">
                     {col.render(row)}
-                  </dd>
-                </div>
-              ))}
+                  </div>
+                ),
+              )}
             </dl>
           </li>
         ))}
       </ul>
 
-      {/* Desktop (md+): table */}
       <div className="hidden overflow-x-auto rounded-md border md:block">
         <Table>
           <TableHeader>

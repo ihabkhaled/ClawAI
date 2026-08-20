@@ -5408,4 +5408,13 @@ export const ru: TranslationDictionary = {
       },
     },
   },
+  pwa: {
+    offlineMessage:
+      'Вы не в сети. Восстановите подключение, чтобы продолжить личные действия; общедоступный офлайн-режим остаётся доступным.',
+    updateAvailable: 'Доступна новая версия ClawAI.',
+    updateAction: 'Обновить',
+    installMessage: 'Установите ClawAI для доступа в формате приложения.',
+    installAction: 'Установить',
+    dismissInstall: 'Закрыть уведомление об установке',
+  },
 };

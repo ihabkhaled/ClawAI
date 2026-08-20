@@ -1,7 +1,7 @@
 'use client';
 
 import { Cpu, Scale, X } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
@@ -11,7 +11,9 @@ import { ModelCompareToolbar } from '@/components/connectors/model-compare-toolb
 import { ModelFilterPills } from '@/components/connectors/model-filter-pills';
 import { ModelTable } from '@/components/connectors/model-table';
 import { ModelViewToggle } from '@/components/connectors/model-view-toggle';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -24,7 +26,6 @@ import { ConnectorProvider, ModelCatalogViewMode } from '@/enums';
 import { useAllModels } from '@/hooks/connectors/use-all-models';
 import { useTranslation } from '@/lib/i18n';
 import type { ActiveFilterPill } from '@/types';
-import { showToast } from '@/utilities';
 
 export default function ModelsPage() {
   const {
@@ -47,10 +48,8 @@ export default function ModelsPage() {
     selectedModels,
   } = useAllModels();
   const { t } = useTranslation();
+  const [isCompareDialogOpen, setIsCompareDialogOpen] = useState(false);
 
-  // Active-filter pill list. Each pill carries its own `onClear` so we can
-  // dismiss a single filter without nuking the whole filter bar — the
-  // "Clear all" CTA inside ModelFilterPills handles the all-at-once case.
   const activeFilterPills = useMemo<ActiveFilterPill[]>(() => {
     const pills: ActiveFilterPill[] = [];
     if (providerFilter !== null) {
@@ -74,17 +73,15 @@ export default function ModelsPage() {
     return pills;
   }, [providerFilter, lifecycleFilter, setProviderFilter, setLifecycleFilter, t]);
 
-  const selectedLabels = useMemo(() => selectedModels.map((m) => m.displayName), [selectedModels]);
+  const selectedLabels = useMemo(
+    () => selectedModels.map((model) => model.displayName),
+    [selectedModels],
+  );
 
   const handleCompare = (): void => {
-    // No compare-modal/page is wired yet; we surface a toast so the
-    // interaction is testable end-to-end without a route change. The page
-    // already passes the selection IDs to the parent — wiring a real compare
-    // destination is a separate slice.
-    showToast.info({
-      title: t('models.compare.compareCta', { count: selectedModels.length }),
-      description: selectedLabels.join(', '),
-    });
+    if (selectedModels.length >= 2) {
+      setIsCompareDialogOpen(true);
+    }
   };
 
   if (isError) {
@@ -92,7 +89,7 @@ export default function ModelsPage() {
       <div>
         <PageHeader title={t('models.title')} description={t('models.description')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">{t('models.loadFailed')}</p>
+          <p className="text-destructive text-sm">{t('models.loadFailed')}</p>
         </div>
       </div>
     );
@@ -114,21 +111,21 @@ export default function ModelsPage() {
 
       {!isLoading && totalModels > 0 && (
         <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-center">
             <Select
               value={providerFilter ?? ALL_FILTER}
               onValueChange={(value) =>
                 setProviderFilter(value === ALL_FILTER ? null : (value as ConnectorProvider))
               }
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder={t('models.allProviders')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL_FILTER}>{t('models.allProviders')}</SelectItem>
-                {Object.values(ConnectorProvider).map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {PROVIDER_DISPLAY_NAMES[p]}
+                {Object.values(ConnectorProvider).map((provider) => (
+                  <SelectItem key={provider} value={provider}>
+                    {PROVIDER_DISPLAY_NAMES[provider]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -138,24 +135,25 @@ export default function ModelsPage() {
               value={lifecycleFilter || ALL_FILTER}
               onValueChange={(value) => setLifecycleFilter(value === ALL_FILTER ? '' : value)}
             >
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-full sm:w-[160px]">
                 <SelectValue placeholder={t('models.allLifecycle')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL_FILTER}>{t('models.allLifecycle')}</SelectItem>
-                {Object.keys(LIFECYCLE_LABELS).map((l) => (
-                  <SelectItem key={l} value={l}>
-                    {LIFECYCLE_LABELS[l]}
+                {Object.keys(LIFECYCLE_LABELS).map((lifecycle) => (
+                  <SelectItem key={lifecycle} value={lifecycle}>
+                    {LIFECYCLE_LABELS[lifecycle]}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            <div className="ms-auto flex items-center gap-2">
+            <div className="flex w-full items-center gap-2 sm:ms-auto sm:w-auto">
               <Button
                 type="button"
                 variant={isCompareMode ? 'secondary' : 'outline'}
                 size="sm"
+                className="flex-1 sm:flex-none"
                 onClick={toggleCompareMode}
               >
                 {isCompareMode ? (
@@ -196,14 +194,46 @@ export default function ModelsPage() {
           ) : (
             <ModelTable
               models={models}
-              showProvider
-              emptyMessage={t('models.noModelsMatch')}
               compareSelection={isCompareMode ? compareSelection : undefined}
               onToggleCompare={isCompareMode ? toggleCompareModel : undefined}
             />
           )}
         </div>
       )}
+
+      <Dialog open={isCompareDialogOpen} onOpenChange={setIsCompareDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t('nav.compareModels')}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {selectedModels.map((model) => (
+              <div
+                key={`${model.provider}-${model.modelKey}`}
+                className="min-w-0 rounded-lg border p-4"
+              >
+                <div className="flex min-w-0 items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{model.displayName}</p>
+                    <p className="text-muted-foreground truncate text-xs">
+                      {PROVIDER_DISPLAY_NAMES[model.provider] ?? model.provider}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="shrink-0">
+                    {model.lifecycle}
+                  </Badge>
+                </div>
+                <div className="text-muted-foreground mt-3 space-y-1 text-sm">
+                  <p className="break-words">{model.modelKey}</p>
+                  {model.maxContextTokens ? (
+                    <p>{model.maxContextTokens.toLocaleString()} context</p>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

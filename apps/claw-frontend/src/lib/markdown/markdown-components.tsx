@@ -15,7 +15,7 @@ function PreBlock({ children, ...props }: React.JSX.IntrinsicElements['pre']): R
   return (
     <div className="group/code relative my-2">
       <pre
-        className="overflow-x-auto rounded-lg bg-muted p-3 pe-12 text-[13px] leading-relaxed sm:p-4 sm:pe-14"
+        className="bg-muted overflow-x-auto rounded-lg p-3 pe-12 text-[13px] leading-relaxed sm:p-4 sm:pe-14"
         {...props}
       >
         {children}
@@ -24,7 +24,7 @@ function PreBlock({ children, ...props }: React.JSX.IntrinsicElements['pre']): R
         <CopyButton
           text={codeText}
           size={ComponentSize.SM}
-          className="absolute end-2 top-2 h-7 w-7 bg-background/80 opacity-100 backdrop-blur-sm transition-opacity hover:bg-background md:opacity-0 md:group-hover/code:opacity-100 md:focus-visible:opacity-100"
+          className="bg-background/80 hover:bg-background absolute end-2 top-2 h-7 w-7 opacity-100 backdrop-blur-sm transition-opacity md:opacity-0 md:group-hover/code:opacity-100 md:focus-visible:opacity-100"
         />
       ) : null}
     </div>
@@ -40,7 +40,7 @@ function CodeBlock({
   if (isInline) {
     return (
       <code
-        className="break-words rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em]"
+        className="bg-muted rounded px-1.5 py-0.5 font-mono text-[0.85em] break-words"
         {...props}
       >
         {children}
@@ -60,7 +60,7 @@ function TableWrapper({
 }: React.JSX.IntrinsicElements['table']): React.JSX.Element {
   return (
     <div className="my-2 overflow-x-auto">
-      <table className="min-w-full border-collapse border border-border text-sm" {...props}>
+      <table className="border-border min-w-full border-collapse border text-sm" {...props}>
         {children}
       </table>
     </div>
@@ -69,7 +69,7 @@ function TableWrapper({
 
 function TableHeader({ children, ...props }: React.JSX.IntrinsicElements['th']): React.JSX.Element {
   return (
-    <th className="border border-border bg-muted px-3 py-2 text-start font-medium" {...props}>
+    <th className="border-border bg-muted border px-3 py-2 text-start font-medium" {...props}>
       {children}
     </th>
   );
@@ -77,7 +77,7 @@ function TableHeader({ children, ...props }: React.JSX.IntrinsicElements['th']):
 
 function TableCell({ children, ...props }: React.JSX.IntrinsicElements['td']): React.JSX.Element {
   return (
-    <td className="border border-border px-3 py-2" {...props}>
+    <td className="border-border border px-3 py-2" {...props}>
       {children}
     </td>
   );
@@ -86,7 +86,7 @@ function TableCell({ children, ...props }: React.JSX.IntrinsicElements['td']): R
 function Anchor({ children, ...props }: React.JSX.IntrinsicElements['a']): React.JSX.Element {
   return (
     <a
-      className="break-words text-primary underline underline-offset-2 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+      className="text-primary focus-visible:ring-ring break-words underline underline-offset-2 hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
       target="_blank"
       rel="noopener noreferrer"
       {...props}
@@ -101,7 +101,7 @@ function UnorderedList({
   ...props
 }: React.JSX.IntrinsicElements['ul']): React.JSX.Element {
   return (
-    <ul className="my-2 list-disc space-y-1 ps-6" {...props}>
+    <ul className="my-2 list-disc space-y-1 ps-6 break-words" {...props}>
       {children}
     </ul>
   );
@@ -109,7 +109,7 @@ function UnorderedList({
 
 function OrderedList({ children, ...props }: React.JSX.IntrinsicElements['ol']): React.JSX.Element {
   return (
-    <ol className="my-2 list-decimal space-y-1 ps-6" {...props}>
+    <ol className="my-2 list-decimal space-y-1 ps-6 break-words" {...props}>
       {children}
     </ol>
   );
@@ -121,7 +121,7 @@ function BlockQuote({
 }: React.JSX.IntrinsicElements['blockquote']): React.JSX.Element {
   return (
     <blockquote
-      className="my-2 border-s-4 border-primary/30 ps-4 italic text-muted-foreground"
+      className="border-primary/30 text-muted-foreground my-2 border-s-4 ps-4 break-words italic"
       {...props}
     >
       {children}
@@ -131,7 +131,7 @@ function BlockQuote({
 
 function Heading1({ children, ...props }: React.JSX.IntrinsicElements['h1']): React.JSX.Element {
   return (
-    <h1 className="mb-2 mt-4 text-xl font-bold" {...props}>
+    <h1 className="mt-4 mb-2 text-xl font-bold break-words" {...props}>
       {children}
     </h1>
   );
@@ -139,7 +139,7 @@ function Heading1({ children, ...props }: React.JSX.IntrinsicElements['h1']): Re
 
 function Heading2({ children, ...props }: React.JSX.IntrinsicElements['h2']): React.JSX.Element {
   return (
-    <h2 className="mb-2 mt-3 text-lg font-bold" {...props}>
+    <h2 className="mt-3 mb-2 text-lg font-bold break-words" {...props}>
       {children}
     </h2>
   );
@@ -147,7 +147,7 @@ function Heading2({ children, ...props }: React.JSX.IntrinsicElements['h2']): Re
 
 function Heading3({ children, ...props }: React.JSX.IntrinsicElements['h3']): React.JSX.Element {
   return (
-    <h3 className="mb-1 mt-2 text-base font-semibold" {...props}>
+    <h3 className="mt-2 mb-1 text-base font-semibold break-words" {...props}>
       {children}
     </h3>
   );
@@ -155,14 +155,14 @@ function Heading3({ children, ...props }: React.JSX.IntrinsicElements['h3']): Re
 
 function Paragraph({ children, ...props }: React.JSX.IntrinsicElements['p']): React.JSX.Element {
   return (
-    <p className="my-1.5 leading-relaxed" {...props}>
+    <p className="my-1.5 leading-relaxed break-words" {...props}>
       {children}
     </p>
   );
 }
 
 function HorizontalRule(props: React.JSX.IntrinsicElements['hr']): React.JSX.Element {
-  return <hr className="my-4 border-border" {...props} />;
+  return <hr className="border-border my-4" {...props} />;
 }
 
 function ImageBlock({ src, alt, ...props }: React.JSX.IntrinsicElements['img']): React.JSX.Element {
@@ -179,7 +179,7 @@ function ImageBlock({ src, alt, ...props }: React.JSX.IntrinsicElements['img']):
         <img
           src={resolvedSrc}
           alt={alt ?? 'Generated image'}
-          className="max-h-[512px] max-w-full rounded-lg border border-border"
+          className="border-border max-h-[512px] max-w-full rounded-lg border"
           loading="lazy"
           {...props}
         />
@@ -187,7 +187,7 @@ function ImageBlock({ src, alt, ...props }: React.JSX.IntrinsicElements['img']):
           <a
             href={downloadUrl}
             download
-            className="absolute end-2 top-2 rounded-md bg-background/80 p-1.5 opacity-0 transition-opacity group-hover:opacity-100"
+            className="bg-background/80 absolute end-2 top-2 rounded-md p-1.5 opacity-0 transition-opacity group-hover:opacity-100"
             title={t('chat.downloadImage')}
           >
             <Download className="h-4 w-4" />

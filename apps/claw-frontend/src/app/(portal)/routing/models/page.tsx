@@ -39,7 +39,7 @@ export default function RouterModelsPage(): ReactElement {
       <Card>
         <CardContent className="space-y-4 pt-6">
           <div className="flex flex-wrap items-end gap-3">
-            <div className="min-w-[200px] flex-1">
+            <div className="min-w-0 flex-1 max-md:basis-full">
               <Input
                 placeholder="Search by name, modelKey, family"
                 value={filters.search}
@@ -47,7 +47,7 @@ export default function RouterModelsPage(): ReactElement {
               />
             </div>
             <Select value={filters.provider} onValueChange={(v) => setFilter('provider', v)}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder={t('routing.models.filterByProvider')} />
               </SelectTrigger>
               <SelectContent>
@@ -62,7 +62,7 @@ export default function RouterModelsPage(): ReactElement {
               value={filters.lifecycle}
               onValueChange={(v) => setFilter('lifecycle', v as typeof filters.lifecycle)}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder={t('routing.models.filterByLifecycle')} />
               </SelectTrigger>
               <SelectContent>
@@ -77,7 +77,7 @@ export default function RouterModelsPage(): ReactElement {
               value={filters.isRouterOnly}
               onValueChange={(v) => setFilter('isRouterOnly', v as typeof filters.isRouterOnly)}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Router-only" />
               </SelectTrigger>
               <SelectContent>
@@ -104,9 +104,9 @@ export default function RouterModelsPage(): ReactElement {
             />
           ) : null}
           {!isLoading && !isError && models.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
+            <div className="max-w-full">
+              <table className="w-full border-collapse text-sm max-md:block">
+                <thead className="bg-muted/50 text-muted-foreground text-left text-xs tracking-wide uppercase max-md:hidden">
                   <tr>
                     <th className="px-3 py-2">{t('routing.models.columnModelKey')}</th>
                     <th className="px-3 py-2">{t('routing.models.columnProvider')}</th>
@@ -117,7 +117,7 @@ export default function RouterModelsPage(): ReactElement {
                     <th className="px-3 py-2">Privacy</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="max-md:block max-md:space-y-3">
                   {models.map((m) => (
                     <RouterModelRow
                       key={m.id}
@@ -128,7 +128,7 @@ export default function RouterModelsPage(): ReactElement {
                 </tbody>
               </table>
               {meta !== null ? (
-                <p className="mt-3 text-xs text-muted-foreground">
+                <p className="text-muted-foreground mt-3 text-xs">
                   {meta.total} total · page {meta.page} of {meta.totalPages}
                 </p>
               ) : null}

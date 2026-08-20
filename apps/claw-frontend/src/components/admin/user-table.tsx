@@ -211,32 +211,41 @@ export function UserTable({
       // Deactivate action rather than being silently approved by a button
       // labelled "reactivate".
       render: (user) => (
-        <div className="flex justify-end gap-2">
+        <div className="flex min-w-0 flex-wrap justify-end gap-2 max-md:grid max-md:w-full max-md:grid-cols-2">
           <Button
             variant="outline"
             size="sm"
+            className="h-auto py-1.5"
             disabled={user.isSuperAdmin || (isTemporaryPasswordPending && pendingId === user.id)}
             onClick={() => requestTemporaryPassword(user.id)}
           >
-            {t('admin.issueTemporaryPassword')}
+            <span className="min-w-0 text-center leading-tight whitespace-normal">
+              {t('admin.issueTemporaryPassword')}
+            </span>
           </Button>
           {profileEditingId === user.id ? (
             <Button
               variant="outline"
               size="sm"
+              className="h-auto py-1.5"
               disabled={user.isSuperAdmin || isUpdateUserPending}
               onClick={() => finishProfileEdit(onUpdateUser)}
             >
-              {t('admin.saveUser')}
+              <span className="text-center leading-tight whitespace-normal">
+                {t('admin.saveUser')}
+              </span>
             </Button>
           ) : (
             <Button
               variant="outline"
               size="sm"
+              className="h-auto py-1.5"
               disabled={user.isSuperAdmin || isUpdateUserPending}
               onClick={() => startProfileEdit(user)}
             >
-              {t('admin.editUser')}
+              <span className="text-center leading-tight whitespace-normal">
+                {t('admin.editUser')}
+              </span>
             </Button>
           )}
           {user.status === UserStatus.SUSPENDED ? (

@@ -45,7 +45,7 @@ export function InThreadComparePanel({
 }: InThreadComparePanelProps): React.ReactElement {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             {t('compare.title')}
@@ -106,7 +106,7 @@ export function InThreadComparePanel({
             </div>
 
             <form
-              className="flex items-end gap-2"
+              className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end"
               onSubmit={(e) => {
                 e.preventDefault();
                 onSend();
@@ -119,9 +119,14 @@ export function InThreadComparePanel({
                 placeholder={t('compare.sendPrompt')}
                 ariaLabel={t('compare.sendPrompt')}
                 disabled={isPending}
-                className="flex-1"
+                className="w-full min-w-0 flex-1"
               />
-              <Button type="submit" disabled={!canSend || isPending} size="sm">
+              <Button
+                type="submit"
+                disabled={!canSend || isPending}
+                size="sm"
+                className="w-full sm:w-auto"
+              >
                 {isPending ? (
                   <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 ) : (
