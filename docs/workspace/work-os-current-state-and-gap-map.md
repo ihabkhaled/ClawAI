@@ -1,4 +1,4 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–12)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–13)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
 truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
@@ -6,8 +6,9 @@ bridge), Phase 05 (crash recovery + resume-from-failed-step), Phase 06 (error ta
 manual-repair tracking), Phase 07 (mechanical chain template library), Phase 08 (Automations
 page — first frontend for the chain system), Phase 09 (NL → chain draft, human reviews and
 saves), Phase 10 (wiring the dormant object-link graph end to end), Phase 11 (feeding
-learned preferences back into AI-action generation), and Phase 12 (peer connector-sharing
-completeness — "org RBAC" was never buildable, see that phase's own section) are done as real,
+learned preferences back into AI-action generation), Phase 12 (peer connector-sharing
+completeness — "org RBAC" was never buildable, see that phase's own section), and Phase 13
+(ClickUp adapter test coverage + a real sync fault-isolation fix it found) are done as real,
 deliberately-scoped slices — see each phase's own section below for exactly what's in and out of
 scope. Phase 01's duplication scan and RabbitMQ contract inventory are still pending (see
 "Explicitly not yet verified" below). Push-subscription lifecycle management (Phase 04's full
@@ -16,9 +17,11 @@ full spec), the AI-step/auto-trigger recipe layer (Phase 07's full spec), auto-t
 events (Phase 09's full spec), an LLM-backed preference classifier and the memory-service
 write-path fix (Phase 11's full spec — see Phase 11's own section for why these were deliberately
 left for memory-service's own team), true org-level RBAC (Phase 12's full spec — needs auth-service
-schema/claims work that doesn't exist yet, see that phase's own section), and Phase 13 onward are
-not started — each remaining phase is independently a multi-day-to-multi-week feature (provider
-depth, etc.); they're being built as
+schema/claims work that doesn't exist yet, see that phase's own section), the other 8 of 9
+zero-dedicated-test adapters plus every unverified delta-sync/webhook gap in the Pass-2 matrix
+(Phase 13's full spec — see that phase's own section for why only one provider was tackled), and
+Phase 14 onward are not started — each remaining phase is independently a multi-day-to-multi-week
+feature (deeper provider coverage, etc.); they're being built as
 real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
 instruction — and every category of change that would touch live write-action execution or a live
 OAuth app is being deliberately scoped down to safety-net hardening rather than rushed into a full
@@ -42,22 +45,22 @@ dispatches on. "Tests" counts dedicated `__tests__/*.adapter.spec.ts`-style file
 shared `adapter-contract.spec.ts` or `workspace-adapter.factory.spec.ts`, which exercise the
 factory wiring, not per-provider behavior).
 
-| Provider         | Read objects                             | Write actions implemented                                                                                                                                        | Webhook: implemented | Webhook: advertised (pre-fix) | Delta sync | Live fetch | Download | Auth modes      | Known gaps                                                                                                            | Dedicated tests     |
-| ---------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ----------------------------- | ---------- | ---------- | -------- | --------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| GitHub           | REPOSITORY, ISSUE, PULL_REQUEST, COMMENT | CREATE_ISSUE, CREATE_ISSUE_COMMENT, CREATE_PR_DESCRIPTION, COMMENT_PR, APPROVE_PR, ADD_PR_SUGGESTION                                                             | yes                  | yes                           | yes        | yes        | no       | OAuth + PAT     | none found                                                                                                            | 3                   |
-| GitLab           | REPOSITORY, ISSUE, PULL_REQUEST          | CREATE_MR_COMMENT, APPROVE_MR, CREATE_GITLAB_ISSUE, COMMENT_GITLAB_ISSUE, UPDATE_MR_DESCRIPTION, ADD_MR_SUGGESTION, ADD_MR_IMAGE_COMMENT                         | yes                  | yes                           | no         | yes        | no       | OAuth + PAT     | no delta sync; **6 of 7 write actions had no frontend label (fixed)**                                                 | 2                   |
-| Bitbucket        | REPOSITORY, PULL_REQUEST                 | CREATE_PR_COMMENT_BB, APPROVE_PR_BB, CREATE_BITBUCKET_ISSUE                                                                                                      | yes                  | yes                           | no         | yes        | no       | OAuth (no PKCE) | no delta sync; **all 3 write actions had no frontend label (fixed)**; 0 dedicated tests                               | 0                   |
-| Jira             | TICKET, PROJECT, COMMENT                 | CREATE_TICKET, CREATE_JIRA_FROM_FIGMA, **CREATE_USER_STORY_FROM_FIGMA (fixed — was a labeled dead action)**, UPDATE_JIRA_ISSUE, ADD_TICKET_COMMENT, COMMENT_JIRA | yes                  | yes                           | yes        | yes        | no       | OAuth           | see fix below                                                                                                         | 1 (added this pass) |
-| Confluence       | DOCUMENT                                 | CREATE_CONFLUENCE, EDIT_CONFLUENCE                                                                                                                               | no                   | false                         | no         | yes        | no       | OAuth           | no webhook, no delta sync; 0 dedicated tests                                                                          | 0                   |
-| Slack            | CHANNEL, MESSAGE, USER                   | SEND_SLACK, SEND_SLACK_MESSAGE, REPLY_SLACK                                                                                                                      | yes                  | yes                           | no         | **no**     | no       | OAuth           | no live-fetch, no delta sync; 0 dedicated tests                                                                       | 0                   |
-| ClickUp          | TICKET                                   | CREATE_CLICKUP_TASK, UPDATE_CLICKUP_TASK, COMMENT_CLICKUP_TASK                                                                                                   | **no**               | **true (fixed → false)**      | no         | yes        | no       | OAuth           | advertised webhooks it can't accept (fixed); **all 3 write actions had no frontend label (fixed)**; 0 dedicated tests | 0                   |
-| Figma            | FILE                                     | POST_FIGMA_COMMENT (CREATE_JIRA_FROM_FIGMA / CREATE_USER_STORY_FROM_FIGMA route to the Jira adapter, not this one)                                               | yes                  | yes                           | no         | yes        | no       | OAuth           | none found beyond the Jira-side fix above                                                                             | 1                   |
-| Gmail            | EMAIL                                    | SEND_EMAIL, REPLY_EMAIL, CREATE_DRAFT                                                                                                                            | no                   | false                         | yes        | yes        | no       | OAuth           | **CREATE_DRAFT had no frontend label (fixed)**                                                                        | 2                   |
-| Google Drive     | FILE, DOCUMENT                           | UPLOAD_DRIVE, MOVE_DRIVE                                                                                                                                         | no                   | false                         | yes        | yes        | yes      | OAuth           | 0 dedicated tests                                                                                                     | 0                   |
-| Google Calendar  | MEETING                                  | **none — read-only, no `supportsWrite`/`executeWriteAction` at all**                                                                                             | no                   | false                         | yes        | yes        | no       | OAuth           | no write path exists for a provider the pack expects meeting automation on; 0 dedicated tests                         | 0                   |
-| OneDrive         | FILE                                     | UPLOAD_ONEDRIVE, MOVE_ONEDRIVE                                                                                                                                   | **no**               | **true (fixed → false)**      | yes        | yes        | yes      | OAuth           | advertised webhooks it can't accept (fixed); **both write actions had no frontend label (fixed)**; 0 dedicated tests  | 0                   |
-| Outlook Calendar | MEETING                                  | **none — read-only, no `supportsWrite`/`executeWriteAction` at all**                                                                                             | no                   | false                         | no         | yes        | no       | OAuth           | same gap as Google Calendar; also no delta sync; 0 dedicated tests                                                    | 0                   |
-| SharePoint       | DOCUMENT                                 | UPLOAD_SHAREPOINT, CREATE_SHAREPOINT_LIST_ITEM, UPDATE_SHAREPOINT_LIST_ITEM                                                                                      | **no**               | **true (fixed → false)**      | no         | yes        | yes      | OAuth           | advertised webhooks it can't accept (fixed); **all 3 write actions had no frontend label (fixed)**; 0 dedicated tests | 0                   |
+| Provider         | Read objects                             | Write actions implemented                                                                                                                                        | Webhook: implemented | Webhook: advertised (pre-fix) | Delta sync | Live fetch | Download | Auth modes      | Known gaps                                                                                                                                                                                            | Dedicated tests     |
+| ---------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ----------------------------- | ---------- | ---------- | -------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| GitHub           | REPOSITORY, ISSUE, PULL_REQUEST, COMMENT | CREATE_ISSUE, CREATE_ISSUE_COMMENT, CREATE_PR_DESCRIPTION, COMMENT_PR, APPROVE_PR, ADD_PR_SUGGESTION                                                             | yes                  | yes                           | yes        | yes        | no       | OAuth + PAT     | none found                                                                                                                                                                                            | 3                   |
+| GitLab           | REPOSITORY, ISSUE, PULL_REQUEST          | CREATE_MR_COMMENT, APPROVE_MR, CREATE_GITLAB_ISSUE, COMMENT_GITLAB_ISSUE, UPDATE_MR_DESCRIPTION, ADD_MR_SUGGESTION, ADD_MR_IMAGE_COMMENT                         | yes                  | yes                           | no         | yes        | no       | OAuth + PAT     | no delta sync; **6 of 7 write actions had no frontend label (fixed)**                                                                                                                                 | 2                   |
+| Bitbucket        | REPOSITORY, PULL_REQUEST                 | CREATE_PR_COMMENT_BB, APPROVE_PR_BB, CREATE_BITBUCKET_ISSUE                                                                                                      | yes                  | yes                           | no         | yes        | no       | OAuth (no PKCE) | no delta sync; **all 3 write actions had no frontend label (fixed)**; 0 dedicated tests                                                                                                               | 0                   |
+| Jira             | TICKET, PROJECT, COMMENT                 | CREATE_TICKET, CREATE_JIRA_FROM_FIGMA, **CREATE_USER_STORY_FROM_FIGMA (fixed — was a labeled dead action)**, UPDATE_JIRA_ISSUE, ADD_TICKET_COMMENT, COMMENT_JIRA | yes                  | yes                           | yes        | yes        | no       | OAuth           | see fix below                                                                                                                                                                                         | 1 (added this pass) |
+| Confluence       | DOCUMENT                                 | CREATE_CONFLUENCE, EDIT_CONFLUENCE                                                                                                                               | no                   | false                         | no         | yes        | no       | OAuth           | no webhook, no delta sync; 0 dedicated tests                                                                                                                                                          | 0                   |
+| Slack            | CHANNEL, MESSAGE, USER                   | SEND_SLACK, SEND_SLACK_MESSAGE, REPLY_SLACK                                                                                                                      | yes                  | yes                           | no         | **no**     | no       | OAuth           | no live-fetch, no delta sync; 0 dedicated tests                                                                                                                                                       | 0                   |
+| ClickUp          | TICKET                                   | CREATE_CLICKUP_TASK, UPDATE_CLICKUP_TASK, COMMENT_CLICKUP_TASK                                                                                                   | **no**               | **true (fixed → false)**      | no         | yes        | no       | OAuth           | advertised webhooks it can't accept (fixed); **all 3 write actions had no frontend label (fixed)**; **sync aborted entirely on one malformed task — fixed in Phase 13, see that phase's own section** | 26 (Phase 13)       |
+| Figma            | FILE                                     | POST_FIGMA_COMMENT (CREATE_JIRA_FROM_FIGMA / CREATE_USER_STORY_FROM_FIGMA route to the Jira adapter, not this one)                                               | yes                  | yes                           | no         | yes        | no       | OAuth           | none found beyond the Jira-side fix above                                                                                                                                                             | 1                   |
+| Gmail            | EMAIL                                    | SEND_EMAIL, REPLY_EMAIL, CREATE_DRAFT                                                                                                                            | no                   | false                         | yes        | yes        | no       | OAuth           | **CREATE_DRAFT had no frontend label (fixed)**                                                                                                                                                        | 2                   |
+| Google Drive     | FILE, DOCUMENT                           | UPLOAD_DRIVE, MOVE_DRIVE                                                                                                                                         | no                   | false                         | yes        | yes        | yes      | OAuth           | 0 dedicated tests                                                                                                                                                                                     | 0                   |
+| Google Calendar  | MEETING                                  | **none — read-only, no `supportsWrite`/`executeWriteAction` at all**                                                                                             | no                   | false                         | yes        | yes        | no       | OAuth           | no write path exists for a provider the pack expects meeting automation on; 0 dedicated tests                                                                                                         | 0                   |
+| OneDrive         | FILE                                     | UPLOAD_ONEDRIVE, MOVE_ONEDRIVE                                                                                                                                   | **no**               | **true (fixed → false)**      | yes        | yes        | yes      | OAuth           | advertised webhooks it can't accept (fixed); **both write actions had no frontend label (fixed)**; 0 dedicated tests                                                                                  | 0                   |
+| Outlook Calendar | MEETING                                  | **none — read-only, no `supportsWrite`/`executeWriteAction` at all**                                                                                             | no                   | false                         | no         | yes        | no       | OAuth           | same gap as Google Calendar; also no delta sync; 0 dedicated tests                                                                                                                                    | 0                   |
+| SharePoint       | DOCUMENT                                 | UPLOAD_SHAREPOINT, CREATE_SHAREPOINT_LIST_ITEM, UPDATE_SHAREPOINT_LIST_ITEM                                                                                      | **no**               | **true (fixed → false)**      | no         | yes        | yes      | OAuth           | advertised webhooks it can't accept (fixed); **all 3 write actions had no frontend label (fixed)**; 0 dedicated tests                                                                                 | 0                   |
 
 ## Drift found — and fixed — during this pass
 
@@ -784,15 +787,68 @@ have anywhere to attach without an org concept existing first. No change to the 
 owner-only `MANAGE_GRANTS` restriction (a `FULL`-level grantee still cannot re-share a connector
 to someone else) — treated as an intentional policy decision, not re-litigated here.
 
+## Phase 13 — Provider Capability Expansion (ClickUp test coverage + a real fault-isolation fix, done)
+
+The full Phase 13 spec asks for depth work across every provider in the Pass-2 matrix above —
+delta sync for GitLab/Bitbucket/Outlook Calendar, a Confluence webhook, dedicated tests for the
+9 of 14 adapters that have zero, and more. That's not one phase; it's a whole track. This slice
+picks the single smallest, most honestly-verifiable gap and closes it for real, rather than
+touching a dozen providers shallowly: **ClickUp had zero dedicated tests, and writing them found
+a genuine, live sync-reliability bug.**
+
+Two other candidates were investigated and explicitly ruled out before settling on ClickUp:
+Bitbucket/GitLab's "no delta sync" gap and Confluence's "no webhook" gap both require verifying
+external API shapes (query-filter params, Atlassian's webhook registration model) that cannot be
+confirmed from this repo's code alone — recommending an implementation without that verification
+would mean guessing at an API contract, which is exactly the kind of unverified assumption this
+project's phases have consistently refused to ship. Both remain open, correctly-scoped work for a
+future phase with access to the actual provider API docs.
+
+**What shipped:**
+
+- **The bug**: `ClickUpAdapter.syncObjects()` walked teams → spaces → lists → tasks, but task
+  mapping (`mapTaskToSynced`, called via `.map()` in the team/space/list loop) happened _outside_
+  `safeListTasks`'s try/catch — the only "unsafe" step in an otherwise fully `safe*`-wrapped
+  hierarchy. A single malformed task (e.g. one missing the `status` field the type declares as
+  always-present but the live API doesn't structurally guarantee) threw an uncaught `TypeError`
+  that aborted the _entire_ multi-team sync, discarding every task already collected from every
+  other list — not just the bad one. Every sibling adapter with an equivalent hierarchy (GitHub's
+  `safeFetchIssues`) does its item-to-`SyncedObject` mapping _inside_ the same try/catch as the
+  fetch, so a failure is scoped to one fetch unit (one repo's issues, here one list's tasks), never
+  the whole sync. ClickUp was the one exception to an otherwise-consistent codebase pattern.
+- **The fix**: `safeListTasks` now maps tasks to `SyncedObject`s inside its own try/catch and
+  returns `SyncedObject[]` directly (mirroring `safeFetchIssues`'s shape exactly), so a malformed
+  task costs at most that one list's tasks — every other list, space, and team in progress still
+  syncs successfully. No behavior change for the healthy path; this is a pure resilience fix.
+- 26 new tests covering the full adapter: `healthCheck` (4 branches), `getCapabilities`,
+  `getDefaultScopes`, `refreshTokens` (always throws — ClickUp tokens don't expire),
+  `syncObjects` (happy path, empty-at-each-level, a failed-HTTP list not affecting siblings, **the
+  malformed-task regression case that reproduces the bug above and proves the fix**, and the
+  `CLICKUP_SYNC_TASKS_PER_LIST` cap), `fetchObjectDetails` (resolve/wrong-type/404/non-404-throws),
+  all 3 write actions (create/update/comment, success and failure paths), the unsupported-action
+  fallback, and the top-level try/catch in `executeWriteAction`.
+
+**Explicitly not done in this slice** (real scope, not oversight): **no delta sync added anywhere**
+(GitLab, Bitbucket, Outlook Calendar all still do full syncs every time) — not attempted without
+verified API support, per above. **No Confluence webhook** — same reasoning; Atlassian's webhook
+registration model for Confluence specifically was not verified from this repo. **No test
+coverage added for the other 8 zero-coverage adapters** (Bitbucket, Confluence, Slack, Google
+Drive, Google Calendar, OneDrive, Outlook Calendar, SharePoint) — each is real, valuable, future
+work in this same shape (find the adapter's own equivalent of the ClickUp bug, if one exists, then
+close it with tests), just not attempted together in one phase. **No Google/Outlook Calendar write
+path** — both remain read-only, a gap the Pass-2 matrix already flagged as "the pack expects
+meeting automation on a provider with no write path at all," unrelated to and not addressed by
+this phase's test-coverage focus.
+
 ## Explicitly not yet verified (next session's starting point)
 
 - Whether `chains`/`ai-actions`/`actions` module boundaries already have the duplication the
   pack warns about ("chain vs workflow overlap... duplicate action enums... duplicate approval
   queues").
 - RabbitMQ event contract inventory for workspace-service (`claw.events` topic exchange usage).
-- Existing QA/E2E coverage for the modules above (the 9-of-14 adapters with zero dedicated test
-  files, noted in the matrix, is one concrete piece of this — but chains/ai-actions/digest/inbox
-  etc. are unaudited).
+- Existing QA/E2E coverage for the modules above (the 8-of-14 adapters still with zero dedicated
+  test files — ClickUp got real coverage in Phase 13 — is one concrete piece of this — but
+  chains/ai-actions/digest/inbox etc. are unaudited).
 - Plan/entitlement gates on Workspace features (this session's RBAC work on
   `feat/chat-experience-revamp` covered the 9 chat orchestration labs only — Workspace has its
   own, separate plan-gate surface, unaudited here).
@@ -826,7 +882,11 @@ the pack's default sequence to front-load the work that de-risks everything afte
    auth-service schema/claims work — should still land before Phase 13's provider expansion goes
    to production so deepened provider actions inherit the right grant model from day one, but that
    work belongs to auth-service's own scope, not workspace-service's.
-9. **Phase 13** (provider capability expansion) — depth work per provider.
+9. **Phase 13** (provider capability expansion) — ClickUp's slice (test coverage + the
+   fault-isolation fix it found) is done; delta sync for GitLab/Bitbucket/Outlook Calendar, a
+   Confluence webhook, and test coverage for the remaining 8 zero-coverage adapters remain —
+   each needs either verified external API details this repo's code can't confirm alone, or is
+   simply more of the same ClickUp-shaped work not yet attempted.
 10. **Phase 14** (observability/security/governance) — threaded throughout in practice, but the
     dedicated hardening pass belongs here once the surfaces it audits exist.
 11. **Phase 15** (test labs/chaos/E2E) — needs 01–14 substantially complete to be meaningful.

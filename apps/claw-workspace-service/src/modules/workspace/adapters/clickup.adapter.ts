@@ -80,8 +80,8 @@ export class ClickUpAdapter implements WorkspaceAdapter {
       for (const space of spaces) {
         const lists = await this.safeListLists(accessToken, space.id);
         for (const list of lists) {
-          const tasks = await this.safeListTasks(accessToken, list.id);
-          objects.push(...tasks.map((t) => this.mapTaskToSynced(t, list, team.name)));
+          const synced = await this.safeListTasks(accessToken, list, team.name);
+          objects.push(...synced);
         }
       }
     }
@@ -274,20 +274,31 @@ export class ClickUpAdapter implements WorkspaceAdapter {
     }
   }
 
-  private async safeListTasks(accessToken: string, listId: string): Promise<ClickUpTask[]> {
+  // Maps each task to a SyncedObject inside the same try/catch as the
+  // fetch itself (mirroring GitHub's safeFetchIssues), so a malformed task
+  // — e.g. one missing the `status` field executeWriteAction/webhook
+  // payloads don't always guarantee — only costs this one list's tasks,
+  // never the entire multi-team/space/list sync in progress.
+  private async safeListTasks(
+    accessToken: string,
+    list: ClickUpList,
+    teamName: string,
+  ): Promise<SyncedObject[]> {
     try {
       const response = await fetch(
-        `${CLICKUP_API_BASE}/list/${listId}/task?page=0&archived=false&order_by=updated&reverse=true`,
+        `${CLICKUP_API_BASE}/list/${list.id}/task?page=0&archived=false&order_by=updated&reverse=true`,
         { headers: { Authorization: accessToken, Accept: 'application/json' } },
       );
       if (!response.ok) {
-        this.logger.warn(`ClickUp tasks fetch failed for list ${listId}: HTTP ${response.status}`);
+        this.logger.warn(`ClickUp tasks fetch failed for list ${list.id}: HTTP ${response.status}`);
         return [];
       }
       const data = (await response.json()) as ClickUpTasksResponse;
-      return data.tasks.slice(0, CLICKUP_SYNC_TASKS_PER_LIST);
+      return data.tasks
+        .slice(0, CLICKUP_SYNC_TASKS_PER_LIST)
+        .map((task) => this.mapTaskToSynced(task, list, teamName));
     } catch (error) {
-      this.logger.warn(`ClickUp tasks error list=${listId}: ${String(error)}`);
+      this.logger.warn(`ClickUp tasks error list=${list.id}: ${String(error)}`);
       return [];
     }
   }
