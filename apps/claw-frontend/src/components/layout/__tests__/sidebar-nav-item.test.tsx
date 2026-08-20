@@ -47,7 +47,7 @@ describe('SidebarNavItem service availability', () => {
     render(<SidebarNavItem item={item} />);
 
     expect(screen.queryByRole('link', { name: 'nav.models' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'common.collapse' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Collapse' })).toHaveAttribute(
       'aria-expanded',
       'true',
     );

@@ -106,8 +106,8 @@ describe('MessageBubble', () => {
     render(<MessageBubble message={message} />);
 
     expect(screen.getByText('local-ollama / glm-5.1:cloud')).toBeInTheDocument();
-    expect(screen.queryByText('Route: qwen3:1.7b -> glm-5.1:cloud')).not.toBeInTheDocument();
-    expect(screen.queryByText('Research: SEARCH_FETCH_EXTRACT (3 items)')).not.toBeInTheDocument();
+    expect(screen.getByText('Route: qwen3:1.7b -> glm-5.1:cloud')).toBeInTheDocument();
+    expect(screen.getByText('Research: SEARCH_FETCH_EXTRACT (3 items)')).toBeInTheDocument();
     expect(screen.getByText('provenance')).toBeInTheDocument();
   });
 

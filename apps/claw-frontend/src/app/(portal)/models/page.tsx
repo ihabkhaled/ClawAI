@@ -14,7 +14,13 @@ import { ModelViewToggle } from '@/components/connectors/model-view-toggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ALL_FILTER, LIFECYCLE_LABELS, PROVIDER_DISPLAY_NAMES } from '@/constants';
 import { ConnectorProvider, ModelCatalogViewMode } from '@/enums';
 import { useAllModels } from '@/hooks/connectors/use-all-models';
@@ -83,7 +89,7 @@ export default function ModelsPage() {
       <div>
         <PageHeader title={t('models.title')} description={t('models.description')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">{t('models.loadFailed')}</p>
+          <p className="text-destructive text-sm">{t('models.loadFailed')}</p>
         </div>
       </div>
     );
@@ -96,7 +102,11 @@ export default function ModelsPage() {
       {isLoading && <LoadingSpinner label={t('models.loadingModels')} />}
 
       {!isLoading && totalModels === 0 && (
-        <EmptyState icon={Cpu} title={t('models.noModels')} description={t('models.noModelsDesc')} />
+        <EmptyState
+          icon={Cpu}
+          title={t('models.noModels')}
+          description={t('models.noModelsDesc')}
+        />
       )}
 
       {!isLoading && totalModels > 0 && (
@@ -194,15 +204,18 @@ export default function ModelsPage() {
       <Dialog open={isCompareDialogOpen} onOpenChange={setIsCompareDialogOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{t('models.compare.title')}</DialogTitle>
+            <DialogTitle>{t('nav.compareModels')}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-3 sm:grid-cols-2">
             {selectedModels.map((model) => (
-              <div key={`${model.provider}-${model.name}`} className="min-w-0 rounded-lg border p-4">
+              <div
+                key={`${model.provider}-${model.modelKey}`}
+                className="min-w-0 rounded-lg border p-4"
+              >
                 <div className="flex min-w-0 items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{model.displayName}</p>
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p className="text-muted-foreground truncate text-xs">
                       {PROVIDER_DISPLAY_NAMES[model.provider] ?? model.provider}
                     </p>
                   </div>
@@ -210,9 +223,11 @@ export default function ModelsPage() {
                     {model.lifecycle}
                   </Badge>
                 </div>
-                <div className="mt-3 space-y-1 text-sm text-muted-foreground">
-                  <p className="break-words">{model.name}</p>
-                  {model.contextWindow ? <p>{model.contextWindow.toLocaleString()} context</p> : null}
+                <div className="text-muted-foreground mt-3 space-y-1 text-sm">
+                  <p className="break-words">{model.modelKey}</p>
+                  {model.maxContextTokens ? (
+                    <p>{model.maxContextTokens.toLocaleString()} context</p>
+                  ) : null}
                 </div>
               </div>
             ))}
