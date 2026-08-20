@@ -358,6 +358,24 @@ describe('InvoiceTable', () => {
     },
   ];
 
+  it('contains its wide invoice table inside a shrinkable card', () => {
+    const { container } = render(
+      <InvoiceTable
+        invoices={invoices}
+        isLoading={false}
+        isError={false}
+        onDownload={vi.fn()}
+        pendingId={null}
+        isDownloadError={false}
+        t={t}
+      />,
+    );
+
+    expect(container.firstElementChild).toHaveClass('min-w-0');
+    expect(container.querySelector('table')).toHaveClass('min-w-[42rem]');
+    expect(container.querySelectorAll('.overflow-x-auto')).toHaveLength(1);
+  });
+
   it('offers an authenticated download even without a hosted provider URL', async () => {
     const onDownload = vi.fn();
     render(

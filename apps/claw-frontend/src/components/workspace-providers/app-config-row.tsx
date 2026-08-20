@@ -25,15 +25,29 @@ export function AppConfigRow({
     config.authMode === WorkspaceProviderAuthMode.OAUTH2 &&
     config.status === WorkspaceProviderAppConfigStatus.READY;
   return (
-    <tr className="border-t">
-      <td className="px-4 py-2 text-sm font-medium">{config.name}</td>
-      <td className="px-4 py-2 text-sm">
+    <tr className="border-t max-md:block max-md:rounded-lg max-md:border">
+      <td
+        data-label={t('workspaceProviders.appConfigs.columns.name')}
+        className="max-md:before:text-muted-foreground px-4 py-2 text-sm font-medium max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:font-normal max-md:before:content-[attr(data-label)]"
+      >
+        {config.name}
+      </td>
+      <td
+        data-label={t('workspaceProviders.appConfigs.columns.provider')}
+        className="max-md:before:text-muted-foreground px-4 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+      >
         <Badge variant="outline">{config.provider}</Badge>
       </td>
-      <td className="px-4 py-2 text-sm">
+      <td
+        data-label={t('workspaceProviders.appConfigs.columns.authMode')}
+        className="max-md:before:text-muted-foreground px-4 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+      >
         <Badge variant="outline">{config.authMode}</Badge>
       </td>
-      <td className="px-4 py-2 text-sm">
+      <td
+        data-label={t('workspaceProviders.appConfigs.columns.status')}
+        className="max-md:before:text-muted-foreground px-4 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+      >
         <Badge
           variant={
             config.status === WorkspaceProviderAppConfigStatus.READY ? 'default' : 'secondary'
@@ -42,14 +56,23 @@ export function AppConfigRow({
           {config.status}
         </Badge>
       </td>
-      <td className="px-4 py-2 text-sm text-muted-foreground">
+      <td
+        data-label={t('workspaceProviders.appConfigs.columns.secret')}
+        className="text-muted-foreground px-4 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+      >
         {config.hasSecret ? t('workspaceProviders.appConfigs.secretStored') : '—'}
       </td>
-      <td className="px-4 py-2 text-sm text-muted-foreground">
+      <td
+        data-label={t('workspaceProviders.appConfigs.columns.lastValidated')}
+        className="text-muted-foreground px-4 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+      >
         {formatOptionalIsoDate(config.lastValidatedAt)}
       </td>
-      <td className="px-4 py-2 text-right">
-        <div className="flex items-center justify-end gap-2">
+      <td
+        data-label={t('workspaceProviders.appConfigs.columns.actions')}
+        className="px-4 py-2 text-right max-md:block max-md:border-t"
+      >
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {canManage ? (
             <Button
               variant="outline"
