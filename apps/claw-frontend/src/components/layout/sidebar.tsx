@@ -11,9 +11,7 @@ import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import { GpuBadge } from './gpu-badge';
-import { LocaleSwitcher } from './locale-switcher';
 import { SidebarNavItem } from './sidebar-nav-item';
-import { ThemeSwitcher } from './theme-switcher';
 
 export function Sidebar() {
   const { isOpen, close, handleOverlayClick, items } = useSidebarController();
@@ -76,10 +74,6 @@ export function Sidebar() {
           ))}
         </nav>
         <Separator />
-        <div className="flex items-center gap-2 px-4 pt-3 md:hidden">
-          <LocaleSwitcher />
-          <ThemeSwitcher />
-        </div>
         <div className="safe-bottom safe-bottom-base-nav flex flex-wrap items-center justify-between gap-2 px-4 pt-3">
           <span className="bg-muted/60 text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
             {t('common.brandVersion', { version: APP_VERSION })}
