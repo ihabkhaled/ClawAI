@@ -4,6 +4,7 @@ import type {
   PlanFeature,
   SubscriptionStatus,
 } from '@/enums/billing.enum';
+import type { EntitlementFeatureGates } from '@/types/plan.types';
 
 // Field names mirror the backend DTOs verbatim. Renaming one on the way in is
 // how date and money rendering breaks silently: new Date(undefined) is
@@ -36,6 +37,7 @@ export type BillingPlan = {
   maxWorkspaceConnections: number | null;
   maxContextPacks: number | null;
   maxMemoryItems: number | null;
+  featureGates?: EntitlementFeatureGates;
   features: BillingPlanFeature[];
 };
 

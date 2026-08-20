@@ -1,6 +1,7 @@
 import { Check } from 'lucide-react';
 import type { ReactElement } from 'react';
 
+import { PlanFeatureGates } from '@/components/account/plan-feature-gates';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,6 +65,12 @@ export function BillingPlanCard({
           <li className="flex items-center gap-2">
             <Check className="text-muted-foreground h-4 w-4" aria-hidden="true" />
             <span>
+              {t('adminPlans.form.weeklyTokenQuota')}: {formatQuotaLimit(plan.weeklyTokenQuota, t)}
+            </span>
+          </li>
+          <li className="flex items-center gap-2">
+            <Check className="text-muted-foreground h-4 w-4" aria-hidden="true" />
+            <span>
               {t('billing.plans.monthlyTokens', {
                 value: formatQuotaLimit(plan.monthlyTokenQuota, t),
               })}
@@ -75,7 +82,35 @@ export function BillingPlanCard({
               {t('billing.plans.chatsPerDay', { value: formatQuotaLimit(plan.maxChatsPerDay, t) })}
             </span>
           </li>
+          <li className="flex items-center gap-2">
+            <Check className="text-muted-foreground h-4 w-4" aria-hidden="true" />
+            <span>
+              {t('adminPlans.form.maxMessagesPerDay')}:{' '}
+              {formatQuotaLimit(plan.maxMessagesPerDay, t)}
+            </span>
+          </li>
+          <li className="flex items-center gap-2">
+            <Check className="text-muted-foreground h-4 w-4" aria-hidden="true" />
+            <span>
+              {t('adminPlans.form.maxWorkspaceConnections')}:{' '}
+              {formatQuotaLimit(plan.maxWorkspaceConnections, t)}
+            </span>
+          </li>
+          <li className="flex items-center gap-2">
+            <Check className="text-muted-foreground h-4 w-4" aria-hidden="true" />
+            <span>
+              {t('adminPlans.form.maxContextPacks')}: {formatQuotaLimit(plan.maxContextPacks, t)}
+            </span>
+          </li>
+          <li className="flex items-center gap-2">
+            <Check className="text-muted-foreground h-4 w-4" aria-hidden="true" />
+            <span>
+              {t('adminPlans.form.maxMemoryItems')}: {formatQuotaLimit(plan.maxMemoryItems, t)}
+            </span>
+          </li>
         </ul>
+
+        <PlanFeatureGates featureGates={plan.featureGates} t={t} />
 
         {!isCurrent && !isNoCostPlan ? (
           <Button

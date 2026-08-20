@@ -26,6 +26,21 @@ function makePlan(overrides: PlanRow = {}): PlanRow {
     // Margin control. Must never reach the payment service or a customer.
     monthlyProviderCostCeilingMicroUsd: BigInt(5_000_000),
     allowCompareMode: true,
+    allowJudgeMode: true,
+    allowResearchMode: true,
+    allowCriticReview: true,
+    allowWorkspaces: true,
+    allowMemory: true,
+    allowContextPacks: true,
+    allowConsensusMode: true,
+    allowEscalationChain: true,
+    allowRepairLab: true,
+    allowTaskDecomposer: true,
+    allowBestOfN: true,
+    allowVerifier: true,
+    allowPipelineLab: true,
+    allowCostEnsemble: true,
+    allowRolePack: true,
     ...overrides,
   };
 }
@@ -149,6 +164,23 @@ describe('PlanCatalogService', () => {
       expect(entry?.features).toEqual([
         { feature: PlanFeatureKey.COMPARE_MODE, accessMode: 'METERED', limit: 5, window: 'DAY' },
       ]);
+    });
+
+    it('publishes every plan feature gate for subscription surfaces', async () => {
+      plans.findAll.mockResolvedValue([makePlan({ allowCompareMode: false })] as never);
+      billing.listActivePrices.mockResolvedValue([] as never);
+      billing.listFeatureRules.mockResolvedValue([] as never);
+
+      const [entry] = await service.listCatalog();
+
+      expect(entry?.featureGates).toEqual(
+        expect.objectContaining({
+          allowCompareMode: false,
+          allowConsensusMode: true,
+          allowRolePack: true,
+        }),
+      );
+      expect(Object.keys(entry?.featureGates ?? {})).toHaveLength(16);
     });
   });
 

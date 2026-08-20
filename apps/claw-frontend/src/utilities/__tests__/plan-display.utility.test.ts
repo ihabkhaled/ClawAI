@@ -25,6 +25,10 @@ describe('formatNullableLimit', () => {
     expect(formatNullableLimit(null, 'Unlimited')).toBe('Unlimited');
   });
 
+  it('returns the unlimited label for a field omitted by an older cached response', () => {
+    expect(formatNullableLimit(undefined, 'Unlimited')).toBe('Unlimited');
+  });
+
   it('returns grouped number when value is present', () => {
     expect(formatNullableLimit(2500, 'Unlimited')).toBe((2500).toLocaleString());
   });

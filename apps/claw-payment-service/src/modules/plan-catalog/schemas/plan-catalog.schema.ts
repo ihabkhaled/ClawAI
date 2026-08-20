@@ -28,6 +28,25 @@ const featureRuleSchema = z.object({
 // null means unlimited, 0 means disabled. Both are valid; neither is coerced.
 const quotaSchema = z.number().int().nonnegative().nullable();
 
+const featureGatesSchema = z.object({
+  allowCompareMode: z.boolean(),
+  allowJudgeMode: z.boolean(),
+  allowResearchMode: z.boolean(),
+  allowCriticReview: z.boolean(),
+  allowWorkspaces: z.boolean(),
+  allowMemory: z.boolean(),
+  allowContextPacks: z.boolean(),
+  allowConsensusMode: z.boolean(),
+  allowEscalationChain: z.boolean(),
+  allowRepairLab: z.boolean(),
+  allowTaskDecomposer: z.boolean(),
+  allowBestOfN: z.boolean(),
+  allowVerifier: z.boolean(),
+  allowPipelineLab: z.boolean(),
+  allowCostEnsemble: z.boolean(),
+  allowRolePack: z.boolean(),
+});
+
 const catalogEntrySchema = z.object({
   id: z.string().min(1).max(64),
   slug: z.string().min(1).max(64),
@@ -43,6 +62,7 @@ const catalogEntrySchema = z.object({
   maxWorkspaceConnections: quotaSchema,
   maxContextPacks: quotaSchema,
   maxMemoryItems: quotaSchema,
+  featureGates: featureGatesSchema,
   prices: z.array(priceVersionSchema).max(16),
   features: z.array(featureRuleSchema).max(64),
 });

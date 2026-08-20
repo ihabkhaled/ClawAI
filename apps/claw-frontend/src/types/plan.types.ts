@@ -174,6 +174,10 @@ export type EntitlementPlanLimits = {
   weeklyTokens: number | null;
   monthlyTokens: number | null;
   chatsPerDay: number | null;
+  messagesPerDay: number | null;
+  workspaceConnections: number | null;
+  contextPacks: number | null;
+  memoryItems: number | null;
 };
 
 export type EntitlementQuota = {
@@ -353,7 +357,7 @@ export type UsageMeterProps = {
 };
 
 export type PlanFeatureGatesProps = {
-  featureGates: EntitlementFeatureGates;
+  featureGates?: EntitlementFeatureGates;
   t: TranslateFunction;
 };
 

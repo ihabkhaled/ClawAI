@@ -37,6 +37,25 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
 
 export const PLAN_TRIAL_DURATION_DAYS = 30;
 
+export const DISABLED_PLAN_FEATURE_GATES: EntitlementFeatureGates = {
+  allowCompareMode: false,
+  allowJudgeMode: false,
+  allowResearchMode: false,
+  allowCriticReview: false,
+  allowWorkspaces: false,
+  allowMemory: false,
+  allowContextPacks: false,
+  allowConsensusMode: false,
+  allowEscalationChain: false,
+  allowRepairLab: false,
+  allowTaskDecomposer: false,
+  allowBestOfN: false,
+  allowVerifier: false,
+  allowPipelineLab: false,
+  allowCostEnsemble: false,
+  allowRolePack: false,
+};
+
 // Feature-gate toggle field names rendered as Switches in the PlanForm and as
 // badges on the user-facing plan card. Each entry carries the EntitlementFeatureGates
 // key plus the i18n label key so neither the form nor the card hardcodes strings.

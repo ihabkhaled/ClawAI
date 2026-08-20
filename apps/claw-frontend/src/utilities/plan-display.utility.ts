@@ -5,8 +5,11 @@ export function formatTokenCount(value: number): string {
 
 // Renders a nullable numeric limit: null → caller-supplied "unlimited" label,
 // otherwise the locale-grouped number.
-export function formatNullableLimit(value: number | null, unlimitedLabel: string): string {
-  return value === null ? unlimitedLabel : value.toLocaleString();
+export function formatNullableLimit(
+  value: number | null | undefined,
+  unlimitedLabel: string,
+): string {
+  return value === null || value === undefined ? unlimitedLabel : value.toLocaleString();
 }
 
 // Clamped 0–100 usage percentage for the quota meter. Unlimited plans report 0

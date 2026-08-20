@@ -21,6 +21,25 @@ export type PlanFeatureRuleView = {
   window: string | null;
 };
 
+export type PlanFeatureGatesView = {
+  allowCompareMode: boolean;
+  allowJudgeMode: boolean;
+  allowResearchMode: boolean;
+  allowCriticReview: boolean;
+  allowWorkspaces: boolean;
+  allowMemory: boolean;
+  allowContextPacks: boolean;
+  allowConsensusMode: boolean;
+  allowEscalationChain: boolean;
+  allowRepairLab: boolean;
+  allowTaskDecomposer: boolean;
+  allowBestOfN: boolean;
+  allowVerifier: boolean;
+  allowPipelineLab: boolean;
+  allowCostEnsemble: boolean;
+  allowRolePack: boolean;
+};
+
 export type PlanCatalogEntry = {
   id: string;
   slug: string;
@@ -36,6 +55,7 @@ export type PlanCatalogEntry = {
   maxWorkspaceConnections: number | null;
   maxContextPacks: number | null;
   maxMemoryItems: number | null;
+  featureGates: PlanFeatureGatesView;
   prices: PlanPriceVersionView[];
   features: PlanFeatureRuleView[];
 };
