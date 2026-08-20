@@ -50,7 +50,7 @@ export function MessageComposer({
       className="safe-bottom flex h-full min-h-0 flex-col"
     >
       <form onSubmit={handleSubmit} className="flex h-full min-h-0 flex-col gap-1.5">
-        <div className="flex shrink-0 snap-x snap-mandatory items-center gap-2 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:thin] md:hidden [&>*]:shrink-0 [&>*]:snap-start">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 pb-1 md:hidden [&>*]:shrink-0">
           <ModelSelector
             value={selectedModel}
             onChange={onModelChange}
