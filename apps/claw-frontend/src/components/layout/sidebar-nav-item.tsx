@@ -29,20 +29,12 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
     {
       'cursor-not-allowed text-muted-foreground/50': item.disabled === true,
       'bg-primary/10 font-semibold text-primary': item.disabled !== true && isActive,
-      'text-muted-foreground hover:bg-accent hover:text-accent-foreground':
-        item.disabled !== true && !isActive,
+      'text-muted-foreground hover:bg-accent hover:text-accent-foreground': item.disabled !== true && !isActive,
     },
   );
 
-  // Animated active indicator: 3px-wide, 60%-tall pill anchored to the
-  // inline-start edge. The `start-0` keyword respects RTL automatically and
-  // the keyframe slides + scales the bar in when the route becomes active.
-  // Rounded-end means the indicator looks like it's flowing OUT of the rail.
   const activeIndicator = isActive ? (
-    <span
-      aria-hidden
-      className="animate-nav-indicator bg-primary absolute start-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-e-full"
-    />
+    <span aria-hidden className="animate-nav-indicator bg-primary absolute start-0 top-1/2 h-[60%] w-[3px] -translate-y-1/2 rounded-e-full" />
   ) : null;
 
   if (!hasChildren) {
@@ -59,11 +51,7 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
         {activeIndicator}
         <item.icon className="h-4 w-4 shrink-0" />
         <span>{t(item.labelKey)}</span>
-        {item.badge ? (
-          <span className="bg-primary/10 text-primary ms-auto rounded-full px-2 py-0.5 text-xs">
-            {item.badge}
-          </span>
-        ) : null}
+        {item.badge ? <span className="bg-primary/10 text-primary ms-auto rounded-full px-2 py-0.5 text-xs">{item.badge}</span> : null}
       </Link>
     );
   }
@@ -88,23 +76,16 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
           size="unstyled"
           type="button"
           onClick={toggle}
-          aria-label={expanded ? 'Collapse' : 'Expand'}
+          aria-label={t(item.labelKey)}
           aria-expanded={expanded}
-          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground ms-1 flex min-h-11 w-8 items-center justify-center rounded-lg transition-colors"
+          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground ms-1 flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors"
         >
-          <ChevronDown
-            className={cn(
-              'duration-normal ease-expo-out h-4 w-4 transition-transform',
-              expanded ? 'rotate-0' : '-rotate-90',
-            )}
-          />
+          <ChevronDown className={cn('duration-normal ease-expo-out h-4 w-4 transition-transform', expanded ? 'rotate-0' : '-rotate-90 rtl:rotate-90')} />
         </Button>
       </div>
       {expanded ? (
         <div className="mt-1 space-y-1 ps-6">
-          {(item.children ?? []).map((child) => (
-            <SidebarNavItem key={child.href} item={child} />
-          ))}
+          {(item.children ?? []).map((child) => <SidebarNavItem key={child.href} item={child} />)}
         </div>
       ) : null}
     </div>
