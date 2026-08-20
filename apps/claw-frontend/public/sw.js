@@ -1,4 +1,4 @@
-const CACHE_NAME = 'clawai-shell-v1';
+const CACHE_NAME = 'clawai-shell-v2';
 const OFFLINE_URL = '/offline.html';
 const CORE_ASSETS = [OFFLINE_URL, '/en', '/icon.png', '/icon-maskable.png', '/apple-icon.png'];
 
@@ -23,27 +23,32 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
 
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          void caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(async () => (await caches.match(request)) || (await caches.match(OFFLINE_URL))),
+      fetch(request).catch(async () => {
+        const cachedPublicPage =
+          url.pathname === '/' || /^\/[a-z]{2}\/?$/.test(url.pathname)
+            ? await caches.match(request)
+            : null;
+        return cachedPublicPage || (await caches.match(OFFLINE_URL));
+      }),
     );
     return;
   }
 
-  const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/_next/static/') || /\.(?:png|jpg|jpeg|svg|webp|ico|woff2?)$/i.test(url.pathname)) {
+  if (
+    url.pathname.startsWith('/_next/static/') ||
+    /\.(?:png|jpg|jpeg|svg|webp|ico|woff2?)$/i.test(url.pathname)
+  ) {
     event.respondWith(
       caches.match(request).then(
         (cached) =>
           cached ||
           fetch(request).then((response) => {
+            if (!response.ok || response.type === 'opaque') return response;
             const copy = response.clone();
             void caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
             return response;
