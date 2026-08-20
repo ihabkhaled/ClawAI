@@ -135,6 +135,14 @@ After implementing any change to this service:
 - [ ] All fire-and-forget error paths: `emitError` → `storeErrorMessage` in nested try-catch
 - [ ] All poll-detected flows store metadata `{ error: true }` on failure
 
+## Email Change (Batch 09)
+
+The email-change API comprises authenticated `/api/v1/users/me/email-change` request, verify-current, resend, status, and cancel operations plus the public `/api/v1/auth/email-change/confirm` token endpoint. Authenticated handlers must derive ownership from the current principal; never accept a user ID for these routes. Keep mutation throttles at five requests per minute and preserve generic request/resend responses so account or delivery state cannot be enumerated.
+
+Persist only OTP and confirmation-token hashes. Enforce expiry, resend cooldown, attempt ceilings, single-use transitions, and a transactional final email swap. Operational delivery requires applying the Prisma migration, regenerating the Prisma client, rebuilding the auth-service through the supported repository lifecycle command, and verifying service health plus the workflow against the rebuilt container.
+
+**Batch deviation:** inline English SMTP templates intentionally follow the existing auth email adapter because this repository has no email-template or email-i18n layer. Do not invent a parallel template system as part of this batch.
+
 ## Required Output Format
 
 After completing any implementation task on this service, produce:

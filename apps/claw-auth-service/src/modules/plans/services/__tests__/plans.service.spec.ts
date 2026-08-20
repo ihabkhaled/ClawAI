@@ -15,6 +15,7 @@ const freePlan = {
   isActive: true,
   isPublic: true,
   dailyTokenQuota: 50000,
+  weeklyTokenQuota: 20_000,
   monthlyTokenQuota: null,
   maxChatsPerDay: null,
   maxMessagesPerDay: null,
@@ -167,6 +168,7 @@ describe('PlansService', () => {
     const view = await service.getPlan('plan-pro');
     expect(view.priceMonthly).toBe(20);
     expect(view.dailyTokenQuota).toBe(500000);
+    expect(view.weeklyTokenQuota).toBe(20_000);
     expect(view.modelAccessMode).toBe(PlanModelAccessMode.ALLOW_ALL);
   });
 });

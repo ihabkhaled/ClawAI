@@ -6,6 +6,14 @@ import { BusinessException } from '../../../common/errors';
 
 @Injectable()
 export class AuthEmailAdapter {
+  public assertEmailDeliveryAvailable(): void {
+    const config = AppConfig.get();
+    const smtp = this.resolveSmtpConfig(config);
+    if (!smtp) {
+      throw new BusinessException('Email delivery is unavailable', 'EMAIL_DELIVERY_UNAVAILABLE');
+    }
+  }
+
   async sendVerification(email: string, rawToken: string): Promise<void> {
     const config = AppConfig.get();
     const smtp = this.resolveSmtpConfig(config);
@@ -56,6 +64,60 @@ export class AuthEmailAdapter {
       subject: 'Reset your ClawAI password',
       text: `Reset your password: ${url.toString()}`,
       html: `<p>Reset your password:</p><p><a href="${url.toString()}">Reset password</a></p>`,
+    });
+  }
+
+  async sendEmailChangeOtp(oldEmail: string, otp: string, maskedNewEmail: string): Promise<void> {
+    const config = AppConfig.get();
+    const smtp = this.resolveSmtpConfig(config);
+    if (!smtp) {
+      throw new BusinessException('Email delivery is unavailable', 'EMAIL_DELIVERY_UNAVAILABLE');
+    }
+    const text = `A request was made to change the email address on your ClawAI account to ${maskedNewEmail}. Your one-time code is: ${otp}`;
+    const html = `<p>A request was made to change the email address on your ClawAI account to <strong>${maskedNewEmail}</strong>.</p><p>Your one-time code is: <strong>${otp}</strong></p>`;
+    const transport = createSmtpEmailTransport(smtp);
+    await transport.send({
+      from: config.CONTACT_EMAIL_FROM,
+      to: oldEmail,
+      subject: 'Confirm your ClawAI email change',
+      text,
+      html,
+    });
+  }
+
+  async sendEmailChangeConfirmation(newEmail: string, rawToken: string): Promise<void> {
+    const config = AppConfig.get();
+    const smtp = this.resolveSmtpConfig(config);
+    if (!smtp) {
+      throw new BusinessException('Email delivery is unavailable', 'EMAIL_DELIVERY_UNAVAILABLE');
+    }
+    const url = new URL('/confirm-email-change', config.PUBLIC_SITE_URL);
+    url.searchParams.set('token', rawToken);
+    const transport = createSmtpEmailTransport(smtp);
+    await transport.send({
+      from: config.CONTACT_EMAIL_FROM,
+      to: newEmail,
+      subject: 'Confirm your new ClawAI email address',
+      text: `Confirm your new email address: ${url.toString()}`,
+      html: `<p>Confirm your new email address:</p><p><a href="${url.toString()}">Confirm email change</a></p>`,
+    });
+  }
+
+  async sendEmailChangeCompletedNotice(oldEmail: string): Promise<void> {
+    const config = AppConfig.get();
+    const smtp = this.resolveSmtpConfig(config);
+    if (!smtp) {
+      throw new BusinessException('Email delivery is unavailable', 'EMAIL_DELIVERY_UNAVAILABLE');
+    }
+    const text = `The email address on your ClawAI account has been changed. If you did not make this change, contact support immediately.`;
+    const html = `<p>The email address on your ClawAI account has been changed.</p><p>If you did not make this change, contact support immediately.</p>`;
+    const transport = createSmtpEmailTransport(smtp);
+    await transport.send({
+      from: config.CONTACT_EMAIL_FROM,
+      to: oldEmail,
+      subject: 'Your ClawAI account email address was changed',
+      text,
+      html,
     });
   }
 

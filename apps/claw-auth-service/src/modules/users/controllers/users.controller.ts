@@ -10,6 +10,19 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import {
+  type CancelEmailChangeDto,
+  cancelEmailChangeSchema,
+  type ConfirmOldEmailOtpDto,
+  confirmOldEmailOtpSchema,
+  type RequestEmailChangeDto,
+  requestEmailChangeSchema,
+  type ResendEmailChangeOtpDto,
+  resendEmailChangeOtpSchema,
+} from '../../auth/dto/email-change.dto';
+import { EmailChangeService } from '../../auth/services/email-change.service';
+import type { PendingEmailChangeState } from '../../auth/types/email-change.types';
 import { UsersService } from '../services/users.service';
 import { type SafeUser } from '../types/users.types';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -34,7 +47,10 @@ import { type AuthenticatedUser, type PaginatedResult } from '../../../common/ty
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly emailChangeService: EmailChangeService,
+  ) {}
 
   @Post()
   @Roles(UserRole.ADMIN)
@@ -86,6 +102,54 @@ export class UsersController {
     @Body(new ZodValidationPipe(deleteOwnAccountSchema)) dto: DeleteOwnAccountDto,
   ): Promise<void> {
     return this.usersService.deleteOwnAccount(user.id, dto);
+  }
+
+  @Post('me/email-change')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async requestEmailChange(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(requestEmailChangeSchema)) dto: RequestEmailChangeDto,
+  ): Promise<{ requestId: string; expiresAt: Date }> {
+    return this.emailChangeService.requestEmailChange(user.id, dto.currentPassword, dto.newEmail);
+  }
+
+  @Post('me/email-change/verify-current')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async verifyCurrentEmail(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(confirmOldEmailOtpSchema)) dto: ConfirmOldEmailOtpDto,
+  ): Promise<{ pendingEmailSent: boolean }> {
+    return this.emailChangeService.verifyCurrentEmail(user.id, dto.requestId, dto.otp);
+  }
+
+  @Post('me/email-change/resend')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async resendCurrentEmailOtp(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(resendEmailChangeOtpSchema)) dto: ResendEmailChangeOtpDto,
+  ): Promise<{ accepted: true }> {
+    return this.emailChangeService.resendCurrentEmailOtp(user.id, dto.requestId);
+  }
+
+  @Get('me/email-change')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async getPendingEmailChange(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<PendingEmailChangeState | null> {
+    return this.emailChangeService.getPendingEmailChange(user.id);
+  }
+
+  @Delete('me/email-change')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async cancelEmailChange(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(cancelEmailChangeSchema)) dto: CancelEmailChangeDto,
+  ): Promise<void> {
+    return this.emailChangeService.cancelEmailChange(user.id, dto.requestId);
   }
 
   @Get(':id')

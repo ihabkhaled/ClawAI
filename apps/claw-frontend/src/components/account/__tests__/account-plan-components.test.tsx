@@ -85,6 +85,10 @@ describe('PlanCard', () => {
         weeklyTokens: 50_000,
         monthlyTokens: 200_000,
         chatsPerDay: 20,
+        messagesPerDay: 250,
+        workspaceConnections: 5,
+        contextPacks: 10,
+        memoryItems: 10,
       },
     };
     render(<PlanCard plan={plan} t={t} />);
@@ -94,6 +98,11 @@ describe('PlanCard', () => {
     expect(screen.getByText('userPlan.planLimits')).toBeInTheDocument();
     expect(screen.getByText('10,000')).toBeInTheDocument();
     expect(screen.getByText('200,000')).toBeInTheDocument();
+    expect(screen.getByText('250')).toBeInTheDocument();
+    expect(screen.getAllByText('5')).toHaveLength(1);
+    expect(screen.getAllByText('10')).toHaveLength(2);
+    expect(screen.getByText('adminPlans.gate.allowConsensusMode')).toBeInTheDocument();
+    expect(screen.getByText('adminPlans.gate.allowRolePack')).toBeInTheDocument();
   });
 });
 

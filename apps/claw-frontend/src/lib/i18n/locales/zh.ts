@@ -298,6 +298,14 @@ export const zh: TranslationDictionary = {
     allProvidersFailed: '所有提供商均未能生成响应',
     errors: {
       planTrialExpired: '您的免费试用已结束。请选择付费方案以继续使用 AI。',
+      dailyTokenLimitExceeded: '您已超出每日令牌限制。',
+      weeklyTokenLimitExceeded: '您已超出每周令牌限制。',
+      monthlyTokenLimitExceeded: '您已超出每月令牌限制。',
+      dailyChatLimitExceeded: '您已超出每日聊天线程限制。',
+      dailyMessageLimitExceeded: '您已超出每日消息限制。',
+      workspaceConnectionLimitExceeded: '您已达到工作区连接限制。',
+      contextPackLimitExceeded: '您已达到上下文包限制。',
+      memoryItemLimitExceeded: '您已达到记忆项限制。',
       videoAttachmentProviderUnsupported:
         '该模型无法处理视频附件。选择 Gemini 2.5 Flash 或 Pro，或切换到自动。',
       videoAttachmentLocalModelUnavailable:
@@ -3271,6 +3279,7 @@ export const zh: TranslationDictionary = {
       displayOrder: '显示顺序',
       dailyTokenQuota: '每日代币额度',
       dailyTokenQuotaHelp: '用户在此计划中每天可能消耗的代币。',
+      weeklyTokenQuota: '每周代币额度',
       monthlyTokenQuota: '每月代币配额',
       maxChatsPerDay: '每天最多聊天次数',
       maxMessagesPerDay: '每天最多消息数',

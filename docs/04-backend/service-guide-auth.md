@@ -181,3 +181,26 @@ src/
       services/health.service.ts
       health.module.ts
 ```
+
+## Email Change
+
+The authenticated email-change flow keeps ownership scoped to the current access-token subject:
+
+| Method   | Route                                          | Purpose                                                                           |
+| -------- | ---------------------------------------------- | --------------------------------------------------------------------------------- |
+| `POST`   | `/api/v1/users/me/email-change`                | Request a change and send an OTP to the current email.                            |
+| `POST`   | `/api/v1/users/me/email-change/verify-current` | Verify the current-email OTP and send a confirmation link to the requested email. |
+| `POST`   | `/api/v1/users/me/email-change/resend`         | Resend the active step without revealing account or delivery state.               |
+| `GET`    | `/api/v1/users/me/email-change`                | Return the caller's pending request status.                                       |
+| `DELETE` | `/api/v1/users/me/email-change`                | Cancel the caller's pending request.                                              |
+| `POST`   | `/api/v1/auth/email-change/confirm`            | Publicly consume the one-time confirmation token and complete the swap.           |
+
+The five `/users/me` operations require authentication, derive the user ID from the current principal, and never accept a caller-supplied user ID. Mutating operations are throttled to five requests per minute. Request and resend responses stay generic to resist account and email enumeration.
+
+The manager stores only hashes of OTPs and confirmation tokens. OTP expiry, confirmation expiry, resend cooldowns, maximum attempts, and single-use state transitions are enforced before completion. The final email swap and request completion run transactionally so a partial update cannot leave identity state split.
+
+### Operations
+
+Apply the Prisma migration and regenerate the client before deploying the service. Rebuild through the supported repository service lifecycle command, then verify the auth-service health endpoint and the email-change flow against the rebuilt container.
+
+**Documented deviation:** the new SMTP messages use inline English templates in the existing auth email adapter. The repository currently has no email-template or email-i18n layer; introducing one is outside Batch 09.

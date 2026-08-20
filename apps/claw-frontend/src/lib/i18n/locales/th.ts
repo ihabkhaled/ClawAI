@@ -300,6 +300,14 @@ export const th: TranslationDictionary = {
     allProvidersFailed: 'ผู้ให้บริการทั้งหมดไม่สามารถสร้างการตอบกลับได้',
     errors: {
       planTrialExpired: 'ช่วงทดลองใช้ฟรีของคุณสิ้นสุดแล้ว เลือกแผนแบบชำระเงินเพื่อใช้ AI ต่อ',
+      dailyTokenLimitExceeded: 'คุณใช้โทเค็นเกินขีดจำกัดรายวันแล้ว',
+      weeklyTokenLimitExceeded: 'คุณใช้โทเค็นเกินขีดจำกัดรายสัปดาห์แล้ว',
+      monthlyTokenLimitExceeded: 'คุณใช้โทเค็นเกินขีดจำกัดรายเดือนแล้ว',
+      dailyChatLimitExceeded: 'คุณสร้างเธรดแชทเกินขีดจำกัดรายวันแล้ว',
+      dailyMessageLimitExceeded: 'คุณส่งข้อความเกินขีดจำกัดรายวันแล้ว',
+      workspaceConnectionLimitExceeded: 'คุณใช้การเชื่อมต่อพื้นที่ทำงานถึงขีดจำกัดแล้ว',
+      contextPackLimitExceeded: 'คุณใช้ชุดบริบทถึงขีดจำกัดแล้ว',
+      memoryItemLimitExceeded: 'คุณใช้รายการความจำถึงขีดจำกัดแล้ว',
       videoAttachmentProviderUnsupported:
         'โมเดลนี้ไม่สามารถประมวลผลไฟล์แนบวิดีโอได้เลือก Gemini 2.5 Flash หรือ Pro หรือสลับเป็นอัตโนมัติ',
       videoAttachmentLocalModelUnavailable:
@@ -3351,6 +3359,7 @@ export const th: TranslationDictionary = {
       displayOrder: 'แสดงลำดับ',
       dailyTokenQuota: 'โควต้าโทเค็นรายวัน',
       dailyTokenQuotaHelp: 'โทเค็นที่ผู้ใช้สามารถใช้ต่อวันในแผนนี้',
+      weeklyTokenQuota: 'โควตาโทเค็นรายสัปดาห์',
       monthlyTokenQuota: 'โควต้าโทเค็นรายเดือน',
       maxChatsPerDay: 'สนทนาสูงสุดต่อวัน',
       maxMessagesPerDay: 'ข้อความสูงสุดต่อวัน',

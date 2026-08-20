@@ -35,6 +35,7 @@ export type PlanView = {
   replacementPlanId: string | null;
   retiredAt: string | null;
   dailyTokenQuota: number;
+  weeklyTokenQuota: number | null;
   monthlyTokenQuota: number | null;
   maxChatsPerDay: number | null;
   maxMessagesPerDay: number | null;
@@ -97,6 +98,7 @@ export type CreatePlanRequest = {
   isTrial: boolean;
   trialDurationDays: number | null;
   dailyTokenQuota: number;
+  weeklyTokenQuota?: number;
   monthlyTokenQuota?: number;
   maxChatsPerDay?: number;
   maxMessagesPerDay?: number;
@@ -172,6 +174,10 @@ export type EntitlementPlanLimits = {
   weeklyTokens: number | null;
   monthlyTokens: number | null;
   chatsPerDay: number | null;
+  messagesPerDay: number | null;
+  workspaceConnections: number | null;
+  contextPacks: number | null;
+  memoryItems: number | null;
 };
 
 export type EntitlementQuota = {
@@ -204,6 +210,7 @@ export type PlanFormState = {
   isPublic: boolean;
   isTrial: boolean;
   dailyTokenQuota: string;
+  weeklyTokenQuota: string;
   monthlyTokenQuota: string;
   maxChatsPerDay: string;
   maxMessagesPerDay: string;
@@ -350,7 +357,7 @@ export type UsageMeterProps = {
 };
 
 export type PlanFeatureGatesProps = {
-  featureGates: EntitlementFeatureGates;
+  featureGates?: EntitlementFeatureGates;
   t: TranslateFunction;
 };
 

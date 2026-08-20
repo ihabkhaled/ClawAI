@@ -73,6 +73,7 @@ describe('useAdminUserMutations', () => {
       replacementPlanId: null,
       retiredAt: null,
       dailyTokenQuota: 1,
+      weeklyTokenQuota: 1,
       monthlyTokenQuota: 1,
       maxChatsPerDay: 1,
       maxMessagesPerDay: 1,

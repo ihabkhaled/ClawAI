@@ -229,6 +229,7 @@ export {
 } from './routing-playground.constants';
 export { THREAD_CONTEXT_INSPECTOR_ENABLED } from './thread-context-inspector.constants';
 export {
+  DISABLED_PLAN_FEATURE_GATES,
   PLAN_FORM_DEFAULTS,
   PLAN_FEATURE_GATE_FIELDS,
   PLAN_TRIAL_DURATION_DAYS,

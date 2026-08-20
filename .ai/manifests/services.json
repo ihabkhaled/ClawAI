@@ -66,7 +66,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 64,
+      "endpointCount": 70,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",
@@ -79,6 +79,7 @@
       "portSource": "shared-constants",
       "prismaModels": [
         "DeviceAuthorizationGrant",
+        "EmailChangeRequest",
         "EmailVerificationToken",
         "EntitlementInboxEvent",
         "FeatureUsageRecord",
@@ -99,7 +100,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 61,
+      "testFiles": 67,
       "testRunner": "jest"
     },
     {
@@ -379,7 +380,7 @@
         "Subscription",
         "WebhookEvent"
       ],
-      "testFiles": 95,
+      "testFiles": 96,
       "testRunner": "jest"
     },
     {

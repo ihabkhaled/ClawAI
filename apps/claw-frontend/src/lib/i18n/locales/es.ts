@@ -307,6 +307,15 @@ export const es: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'Tu prueba gratuita ha terminado. Elige un plan de pago para seguir usando la IA.',
+      dailyTokenLimitExceeded: 'Has superado tu límite diario de tokens.',
+      weeklyTokenLimitExceeded: 'Has superado tu límite semanal de tokens.',
+      monthlyTokenLimitExceeded: 'Has superado tu límite mensual de tokens.',
+      dailyChatLimitExceeded: 'Has superado tu límite diario de conversaciones.',
+      dailyMessageLimitExceeded: 'Has superado tu límite diario de mensajes.',
+      workspaceConnectionLimitExceeded:
+        'Has alcanzado tu límite de conexiones de espacio de trabajo.',
+      contextPackLimitExceeded: 'Has alcanzado tu límite de paquetes de contexto.',
+      memoryItemLimitExceeded: 'Has alcanzado tu límite de elementos de memoria.',
       videoAttachmentProviderUnsupported:
         'Este modelo no puede procesar archivos de vídeo adjuntos. Elige Gemini 2.5 Flash o Pro, o cambia a Automático.',
       videoAttachmentLocalModelUnavailable:
@@ -3417,6 +3426,7 @@ export const es: TranslationDictionary = {
       displayOrder: 'Orden de visualización',
       dailyTokenQuota: 'Cuota diaria de tokens',
       dailyTokenQuotaHelp: 'Tokens que un usuario puede consumir al día en este plan.',
+      weeklyTokenQuota: 'Cuota semanal de tokens',
       monthlyTokenQuota: 'Cuota mensual de tokens',
       maxChatsPerDay: 'Máx. chats por día',
       maxMessagesPerDay: 'Máx. mensajes por día',
