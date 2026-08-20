@@ -2011,6 +2011,10 @@ export const pt: TranslationDictionary = {
     levelAiActions: 'Ações de IA',
     levelFull: 'Completo',
   },
+  sharedConnectors: {
+    title: 'Compartilhados comigo',
+    sharedBy: 'Compartilhado por {value}',
+  },
   emailSignatures: {
     page: {
       title: 'Assinaturas de e-mail',

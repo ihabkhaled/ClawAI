@@ -1968,6 +1968,10 @@ export const ar: TranslationDictionary = {
     levelAiActions: 'إجراءات الذكاء الاصطناعي',
     levelFull: 'كامل',
   },
+  sharedConnectors: {
+    title: 'تمت مشاركته معي',
+    sharedBy: 'شارَكه {value}',
+  },
   emailSignatures: {
     page: {
       title: 'تواقيع البريد الإلكتروني',

@@ -1972,6 +1972,10 @@ export const th: TranslationDictionary = {
     levelAiActions: 'การกระทำของเอไอ',
     levelFull: 'เต็ม',
   },
+  sharedConnectors: {
+    title: 'แชร์กับฉัน',
+    sharedBy: 'แชร์โดย {value}',
+  },
   emailSignatures: {
     page: {
       title: 'ลายเซ็นอีเมล',

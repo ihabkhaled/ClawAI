@@ -2015,6 +2015,10 @@ export const ru: TranslationDictionary = {
     levelAiActions: 'AI-действия',
     levelFull: 'Полный',
   },
+  sharedConnectors: {
+    title: 'Доступные мне',
+    sharedBy: 'Предоставил доступ: {value}',
+  },
   emailSignatures: {
     page: {
       title: 'Подписи писем',

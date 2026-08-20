@@ -1929,6 +1929,10 @@ export const zh: TranslationDictionary = {
     levelAiActions: '人工智能动作',
     levelFull: '满的',
   },
+  sharedConnectors: {
+    title: '与我共享',
+    sharedBy: '由 {value} 共享',
+  },
   emailSignatures: {
     page: {
       title: '电子邮件签名',

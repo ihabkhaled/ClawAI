@@ -1998,6 +1998,10 @@ export const hi: TranslationDictionary = {
     levelAiActions: 'AI क्रियाएँ',
     levelFull: 'पूर्ण',
   },
+  sharedConnectors: {
+    title: 'मेरे साथ साझा किए गए',
+    sharedBy: '{value} द्वारा साझा किया गया',
+  },
   emailSignatures: {
     page: {
       title: 'ईमेल हस्ताक्षर',

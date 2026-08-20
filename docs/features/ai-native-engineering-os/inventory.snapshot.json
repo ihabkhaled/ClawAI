@@ -2833,6 +2833,11 @@
           "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/workspace/connectors/shared-with-me",
+          "source": "apps/claw-workspace-service/src/modules/connector-access/controllers/connector-grant-inbox.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/workspace/decompose-fanout/queue/:queueId",
           "source": "apps/claw-workspace-service/src/modules/ticket-planning/controllers/decompose-fanout.controller.ts"
@@ -7250,7 +7255,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4530
+        "value": 4533
       },
       "localeCount": 16,
       "locales": [
@@ -8943,7 +8948,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 330
+        "testFiles": 333
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9688,7 +9693,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 592,
+    "endpointCount": 593,
     "envVarCount": 343,
     "eventCount": 167,
     "frontendRouteCount": 121,
@@ -9700,7 +9705,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 950,
+    "totalTestFiles": 953,
     "workspaceCount": 25
   }
 }

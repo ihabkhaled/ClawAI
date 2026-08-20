@@ -2741,6 +2741,11 @@
         "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/workspace/connectors/shared-with-me",
+        "source": "apps/claw-workspace-service/src/modules/connector-access/controllers/connector-grant-inbox.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/workspace/decompose-fanout/queue/:queueId",
         "source": "apps/claw-workspace-service/src/modules/ticket-planning/controllers/decompose-fanout.controller.ts"
@@ -2998,5 +3003,5 @@
     ]
   },
   "generated": true,
-  "total": 592
+  "total": 593
 }

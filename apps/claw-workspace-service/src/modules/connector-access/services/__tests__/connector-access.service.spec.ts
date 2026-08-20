@@ -187,4 +187,66 @@ describe('ConnectorAccessService', () => {
       );
     });
   });
+
+  // Phase 12 — the grantee-side counterpart to listGrantsAsViewer.
+  describe('listSharedWithMe', () => {
+    const makeWithSharedGrants = (
+      grants: unknown[],
+      connectors: unknown[],
+    ): { svc: ConnectorAccessService; connectorRepo: any } => {
+      const connectorRepo = { findManyByIds: jest.fn().mockResolvedValue(connectors) };
+      const grantRepo = { listForUser: jest.fn().mockResolvedValue(grants) };
+      const svc = new ConnectorAccessService(connectorRepo as any, grantRepo as any);
+      return { svc, connectorRepo };
+    };
+
+    it('returns an empty list without querying connectors when the user has no grants', async () => {
+      const { svc, connectorRepo } = makeWithSharedGrants([], []);
+      const result = await svc.listSharedWithMe('u1');
+      expect(result).toEqual([]);
+      expect(connectorRepo.findManyByIds).not.toHaveBeenCalled();
+    });
+
+    it('joins each grant to its connector and shapes the view', async () => {
+      const { svc } = makeWithSharedGrants(
+        [
+          {
+            connectorId: 'c1',
+            accessLevel: WorkspaceConnectorAccessLevel.AI_ACTIONS,
+            grantedBy: 'owner-1',
+            createdAt: new Date('2026-08-01T00:00:00.000Z'),
+          },
+        ],
+        [{ id: 'c1', name: 'My Jira', provider: 'JIRA', userId: 'owner-1' }],
+      );
+      const result = await svc.listSharedWithMe('u1');
+      expect(result).toEqual([
+        {
+          connectorId: 'c1',
+          connectorName: 'My Jira',
+          provider: 'JIRA',
+          ownerUserId: 'owner-1',
+          accessLevel: WorkspaceConnectorAccessLevel.AI_ACTIONS,
+          grantedBy: 'owner-1',
+          grantedAt: new Date('2026-08-01T00:00:00.000Z'),
+        },
+      ]);
+    });
+
+    it('skips a grant whose connector no longer exists', async () => {
+      const { svc } = makeWithSharedGrants(
+        [
+          {
+            connectorId: 'deleted-connector',
+            accessLevel: WorkspaceConnectorAccessLevel.FULL,
+            grantedBy: 'owner-1',
+            createdAt: new Date(),
+          },
+        ],
+        [],
+      );
+      const result = await svc.listSharedWithMe('u1');
+      expect(result).toEqual([]);
+    });
+  });
 });

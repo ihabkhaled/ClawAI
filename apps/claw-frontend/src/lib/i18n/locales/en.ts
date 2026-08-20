@@ -1981,6 +1981,10 @@ export const en: TranslationDictionary = {
     levelAiActions: 'AI actions',
     levelFull: 'Full',
   },
+  sharedConnectors: {
+    title: 'Shared with me',
+    sharedBy: 'Shared by {value}',
+  },
   emailSignatures: {
     page: {
       title: 'Email Signatures',

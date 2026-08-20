@@ -2022,6 +2022,10 @@ export const it: TranslationDictionary = {
     levelAiActions: 'Azioni IA',
     levelFull: 'Completo',
   },
+  sharedConnectors: {
+    title: 'Condivisi con me',
+    sharedBy: 'Condiviso da {value}',
+  },
   emailSignatures: {
     page: {
       title: 'Firme e-mail',

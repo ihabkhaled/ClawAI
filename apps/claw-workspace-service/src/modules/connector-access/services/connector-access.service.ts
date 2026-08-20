@@ -8,7 +8,10 @@ import {
   WorkspaceConnectorAccessLevel,
   type WorkspaceConnectorGrant,
 } from '../../../generated/prisma';
-import type { ConnectorEffectiveAccess } from '../types/connector-access.types';
+import type {
+  ConnectorEffectiveAccess,
+  SharedConnectorView,
+} from '../types/connector-access.types';
 
 // v3 round 5 (2026-05-12) — Prompt 12 polish: per-connector RBAC service.
 // Single source of truth for "can user X do thing Y on connector Z?"
@@ -108,5 +111,32 @@ export class ConnectorAccessService {
     }
     this.logger.log(`revoke: connector=${connectorId} grantee=${granteeUserId} by=${revokedBy}`);
     await this.grantRepo.deleteOne(connectorId, granteeUserId);
+  }
+
+  // Phase 12 — the grantee-side counterpart to listGrantsAsViewer (which
+  // lists a connector's grants for its owner). ConnectorGrantRepository
+  // .listForUser existed and was called from nowhere; this is its first
+  // real caller. A grant referencing a since-deleted connector is skipped
+  // rather than surfaced as a broken row.
+  async listSharedWithMe(userId: string): Promise<SharedConnectorView[]> {
+    const grants = await this.grantRepo.listForUser(userId);
+    if (grants.length === 0) return [];
+    const connectors = await this.connectorRepo.findManyByIds(grants.map((g) => g.connectorId));
+    const connectorById = new Map(connectors.map((c) => [c.id, c]));
+    const views: SharedConnectorView[] = [];
+    for (const grant of grants) {
+      const connector = connectorById.get(grant.connectorId);
+      if (connector === undefined) continue;
+      views.push({
+        connectorId: connector.id,
+        connectorName: connector.name,
+        provider: connector.provider,
+        ownerUserId: connector.userId,
+        accessLevel: grant.accessLevel,
+        grantedBy: grant.grantedBy,
+        grantedAt: grant.createdAt,
+      });
+    }
+    return views;
   }
 }

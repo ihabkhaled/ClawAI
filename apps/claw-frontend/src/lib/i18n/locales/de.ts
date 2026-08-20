@@ -2029,6 +2029,10 @@ export const de: TranslationDictionary = {
     levelAiActions: 'KI-Aktionen',
     levelFull: 'Vollzugriff',
   },
+  sharedConnectors: {
+    title: 'Mit mir geteilt',
+    sharedBy: 'Geteilt von {value}',
+  },
   emailSignatures: {
     page: {
       title: 'E-Mail-Signaturen',

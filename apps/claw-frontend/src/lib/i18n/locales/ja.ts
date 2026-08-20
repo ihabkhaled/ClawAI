@@ -1996,6 +1996,10 @@ export const ja: TranslationDictionary = {
     levelAiActions: 'AI アクション',
     levelFull: 'フル',
   },
+  sharedConnectors: {
+    title: '自分と共有されたもの',
+    sharedBy: '{value} が共有',
+  },
   emailSignatures: {
     page: {
       title: '電子メールの署名',

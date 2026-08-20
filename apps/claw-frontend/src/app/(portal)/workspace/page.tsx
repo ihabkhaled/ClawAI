@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
+import { SharedConnectorsSection } from '@/components/workspace/shared-connectors-section';
 import { WorkspaceConnectorCard } from '@/components/workspace/workspace-connector-card';
 import { WorkspaceObjectList } from '@/components/workspace/workspace-object-list';
 import { ROUTES } from '@/constants';
@@ -31,6 +32,9 @@ export default function WorkspacePage(): React.ReactElement {
     objects,
     isObjectsLoading,
     isObjectsError,
+    sharedConnectors,
+    isSharedConnectorsLoading,
+    isSharedConnectorsError,
   } = useWorkspacePage();
 
   if (isError) {
@@ -41,7 +45,7 @@ export default function WorkspacePage(): React.ReactElement {
           description={t('workspaceConnectors.description')}
         />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">
+          <p className="text-destructive text-sm">
             {error instanceof Error ? error.message : t('workspaceConnectors.loadFailed')}
           </p>
         </div>
@@ -100,10 +104,17 @@ export default function WorkspacePage(): React.ReactElement {
         </div>
       )}
 
+      <SharedConnectorsSection
+        connectors={sharedConnectors}
+        isLoading={isSharedConnectorsLoading}
+        isError={isSharedConnectorsError}
+        t={t}
+      />
+
       {!isLoading && connectors.length > 0 && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
-            <Package className="size-4 text-muted-foreground" />
+            <Package className="text-muted-foreground size-4" />
             <h2 className="text-base font-semibold">
               {selectedConnector !== null
                 ? t('workspaceObjects.title')

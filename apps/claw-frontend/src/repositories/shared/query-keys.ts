@@ -420,6 +420,7 @@ export const queryKeys = {
   connectorGrants: {
     all: ['connectorGrants'] as const,
     list: (connectorId: string) => ['connectorGrants', 'list', connectorId] as const,
+    sharedWithMe: ['connectorGrants', 'sharedWithMe'] as const,
   },
   chatShares: {
     all: ['chatShares'] as const,

@@ -1,21 +1,24 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–11)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–12)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
 truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
 bridge), Phase 05 (crash recovery + resume-from-failed-step), Phase 06 (error taxonomy +
 manual-repair tracking), Phase 07 (mechanical chain template library), Phase 08 (Automations
 page — first frontend for the chain system), Phase 09 (NL → chain draft, human reviews and
-saves), Phase 10 (wiring the dormant object-link graph end to end), and Phase 11 (feeding
-learned preferences back into AI-action generation) are done as real, deliberately-scoped slices
-— see each phase's own section below for exactly what's in and out of scope. Phase 01's
-duplication scan and RabbitMQ contract inventory are still pending (see "Explicitly not yet
-verified" below). Push-subscription lifecycle management (Phase 04's full spec), the real DAG
-rewrite (Phase 05's full spec), compensating/verification steps (Phase 06's full spec), the
-AI-step/auto-trigger recipe layer (Phase 07's full spec), auto-triggering off events (Phase 09's
-full spec), an LLM-backed preference classifier and the memory-service write-path fix (Phase 11's
-full spec — see Phase 11's own section for why these were deliberately left for memory-service's
-own team), and Phase 12 onward are not started — each remaining phase is independently a
-multi-day-to-multi-week feature (org RBAC, provider depth, etc.); they're being built as
+saves), Phase 10 (wiring the dormant object-link graph end to end), Phase 11 (feeding
+learned preferences back into AI-action generation), and Phase 12 (peer connector-sharing
+completeness — "org RBAC" was never buildable, see that phase's own section) are done as real,
+deliberately-scoped slices — see each phase's own section below for exactly what's in and out of
+scope. Phase 01's duplication scan and RabbitMQ contract inventory are still pending (see
+"Explicitly not yet verified" below). Push-subscription lifecycle management (Phase 04's full
+spec), the real DAG rewrite (Phase 05's full spec), compensating/verification steps (Phase 06's
+full spec), the AI-step/auto-trigger recipe layer (Phase 07's full spec), auto-triggering off
+events (Phase 09's full spec), an LLM-backed preference classifier and the memory-service
+write-path fix (Phase 11's full spec — see Phase 11's own section for why these were deliberately
+left for memory-service's own team), true org-level RBAC (Phase 12's full spec — needs auth-service
+schema/claims work that doesn't exist yet, see that phase's own section), and Phase 13 onward are
+not started — each remaining phase is independently a multi-day-to-multi-week feature (provider
+depth, etc.); they're being built as
 real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
 instruction — and every category of change that would touch live write-action execution or a live
 OAuth app is being deliberately scoped down to safety-net hardening rather than rushed into a full
@@ -727,6 +730,60 @@ from memory-service is real (blocked on the same disclosed upstream bug). No UI 
 preferences would be injected before a run — Dismiss is the only new user-facing preference
 control.
 
+## Phase 12 — Org Installations/RBAC → Peer Connector-Sharing Completeness (done)
+
+This phase answers the open question this doc has carried since its Pass-2 matrix (line ~130):
+_"does `WorkspaceConnectorGrant` carry confidence/provenance/inferred-vs-explicit, or is it a flat
+many-to-many table?"_ — with a bigger finding than the question anticipated. `WorkspaceConnectorGrant`
+is flat per-user (`connectorId`, `userId`, `grantedBy`, `accessLevel` — no org/team/tenant field of
+any kind), **and** `claw-auth-service` has zero organization/tenant concept anywhere in its schema,
+and `AuthenticatedUser` (`packages/shared-types`) carries no `organizationId`. "Org installations"
+is not a real, buildable feature today — it would require new auth-service schema, membership
+tables, and token/claims changes, none of which exist and none of which are in scope for the
+workspace-flagship-only constraint this phase (and Phases 08-11) operated under. Rather than fake
+an unenforceable `organizationId` column with no source of truth, this phase is honestly reframed
+as what `WorkspaceConnectorGrant` actually is: **peer connector-sharing** — one user granting
+another specific user access to a connector they personally own.
+
+Within that honest scope, the actual gap — matching Phase 08/10's exact "backend built, never
+wired" shape at a smaller scale — was real: `ConnectorGrantRepository.listForUser(userId)`
+(grants where the caller is the _grantee_, i.e. "connectors shared with me") existed and was
+covered by no test, no controller, and no frontend, called from nowhere in the entire codebase.
+The owner-side experience (`ConnectorGrantsCard` — list/grant/revoke grants on a connector you
+own) has existed since 2026-05-13, well before this phase sequence began; only the grantee-side
+"what's been shared with me" view was missing.
+
+**What shipped:**
+
+- `ConnectorAccessService.listSharedWithMe(userId)` — joins the caller's grant rows to their
+  connectors via a new `WorkspaceConnectorRepository.findManyByIds()` batch lookup (one query, not
+  N), returning only what a grantee should see (name, provider, owner id, access level, granted-by,
+  granted-at) — never `encryptedTokens`/`scopes`/other owner-only fields. A grant whose connector
+  was since deleted is silently skipped rather than surfaced as a broken row.
+- `GET /workspace/connectors/shared-with-me` — a new, separate controller
+  (`ConnectorGrantInboxController`) rather than a new method on the existing
+  `ConnectorGrantController`, because that controller's base path already carries a `:connectorId`
+  segment; this endpoint spans every connector the caller has a grant on, not one specific
+  connector.
+- Frontend: a new "Shared with me" section on the main `/workspace` hub page, below the caller's
+  own connector grid — one card per shared connector with provider/access-level badges and a link
+  through to the connector detail page, reusing the existing `connectorGrants.levelReadOnly/
+levelAiActions/levelFull` i18n keys the owner-side card already established rather than
+  duplicating them.
+- 12 new tests: `ConnectorAccessService.listSharedWithMe` (empty-list short-circuit, the
+  grant-to-connector join, skipping a grant for a deleted connector), plus frontend
+  repository/hook/component tests for the new endpoint and section — all first-time coverage for
+  code that had none.
+
+**Explicitly not done in this slice** (real scope, not oversight): **no org/tenant model** — this
+is the phase's central, disclosed finding, not an omission; building one means auth-service schema
+work (an `Organization` model, membership, updated JWT claims) that is out of bounds for a
+workspace-flagship-only phase and is a real, separate, future cross-service initiative. No policy
+inheritance, no org-level grant defaults, no bulk/org-wide connector installation — none of these
+have anywhere to attach without an org concept existing first. No change to the existing
+owner-only `MANAGE_GRANTS` restriction (a `FULL`-level grantee still cannot re-share a connector
+to someone else) — treated as an intentional policy decision, not re-litigated here.
+
 ## Explicitly not yet verified (next session's starting point)
 
 - Whether `chains`/`ai-actions`/`actions` module boundaries already have the duplication the
@@ -765,8 +822,10 @@ the pack's default sequence to front-load the work that de-risks everything afte
    injection into AI-action generation) are done. An LLM-backed preference classifier (beyond
    today's heuristic-v1) and the memory-service write-path fix remain — both belong to
    memory-service's own scope, not workspace-service's.
-8. **Phase 12** (org installations/RBAC) — should land before Phase 13's provider expansion goes
-   to production, so deepened provider actions inherit the right grant model from day one.
+8. **Phase 12** (peer connector-sharing completeness) is done. True org installations/RBAC needs
+   auth-service schema/claims work — should still land before Phase 13's provider expansion goes
+   to production so deepened provider actions inherit the right grant model from day one, but that
+   work belongs to auth-service's own scope, not workspace-service's.
 9. **Phase 13** (provider capability expansion) — depth work per provider.
 10. **Phase 14** (observability/security/governance) — threaded throughout in practice, but the
     dedicated hardening pass belongs here once the surfaces it audits exist.

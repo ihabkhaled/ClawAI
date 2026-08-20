@@ -72,6 +72,7 @@ import type {
   VisibleProgressStage,
 } from './chat.types';
 import type { ConfluencePageMetadata } from './confluence.types';
+import type { SharedConnectorView } from './connector-grant.types';
 import type {
   Connector,
   ConnectorFormFieldErrors,
@@ -1932,6 +1933,13 @@ export type WorkspaceConnectorCardProps = {
   isDeleting: boolean;
   isCheckingHealth: boolean;
   isSyncing: boolean;
+  t: TranslateFunction;
+};
+
+export type SharedConnectorsSectionProps = {
+  connectors: SharedConnectorView[];
+  isLoading: boolean;
+  isError: boolean;
   t: TranslateFunction;
 };
 

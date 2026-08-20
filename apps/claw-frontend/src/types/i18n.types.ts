@@ -1941,6 +1941,10 @@ export type TranslationDictionary = {
     levelAiActions: string;
     levelFull: string;
   };
+  sharedConnectors: {
+    title: string;
+    sharedBy: string;
+  };
   emailSignatures: {
     page: {
       title: string;

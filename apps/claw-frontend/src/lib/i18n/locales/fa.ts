@@ -1993,6 +1993,10 @@ export const fa: TranslationDictionary = {
     levelAiActions: 'اقدامات هوش مصنوعی',
     levelFull: 'کامل',
   },
+  sharedConnectors: {
+    title: 'به اشتراک گذاشته‌شده با من',
+    sharedBy: 'به اشتراک گذاشته‌شده توسط {value}',
+  },
   emailSignatures: {
     page: {
       title: 'امضاهای ایمیل',
