@@ -215,6 +215,7 @@ export function UserTable({
           <Button
             variant="outline"
             size="sm"
+            className="h-auto py-1.5"
             disabled={user.isSuperAdmin || (isTemporaryPasswordPending && pendingId === user.id)}
             onClick={() => requestTemporaryPassword(user.id)}
           >
@@ -226,6 +227,7 @@ export function UserTable({
             <Button
               variant="outline"
               size="sm"
+              className="h-auto py-1.5"
               disabled={user.isSuperAdmin || isUpdateUserPending}
               onClick={() => finishProfileEdit(onUpdateUser)}
             >
@@ -237,6 +239,7 @@ export function UserTable({
             <Button
               variant="outline"
               size="sm"
+              className="h-auto py-1.5"
               disabled={user.isSuperAdmin || isUpdateUserPending}
               onClick={() => startProfileEdit(user)}
             >

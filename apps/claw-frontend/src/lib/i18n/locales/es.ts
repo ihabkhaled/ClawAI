@@ -5426,4 +5426,13 @@ export const es: TranslationDictionary = {
       },
     },
   },
+  pwa: {
+    offlineMessage:
+      'Estás sin conexión. Vuelve a conectarte para continuar con las acciones privadas; el modo sin conexión público sigue disponible.',
+    updateAvailable: 'Hay una nueva versión de ClawAI disponible.',
+    updateAction: 'Actualizar',
+    installMessage: 'Instala ClawAI para acceder como una aplicación.',
+    installAction: 'Instalar',
+    dismissInstall: 'Cerrar aviso de instalación',
+  },
 };

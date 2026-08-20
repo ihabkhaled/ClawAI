@@ -4,9 +4,11 @@ import { Download, RefreshCw, WifiOff, X } from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/lib/i18n';
 import type { PwaInstallPromptEvent } from '@/types/pwa.types';
 
 export function PwaManager(): React.ReactElement | null {
+  const { t } = useTranslation();
   const [isOffline, setIsOffline] = React.useState(false);
   const [waitingWorker, setWaitingWorker] = React.useState<ServiceWorker | null>(null);
   const [installPrompt, setInstallPrompt] = React.useState<PwaInstallPromptEvent | null>(null);
@@ -84,36 +86,45 @@ export function PwaManager(): React.ReactElement | null {
   }
 
   return (
-    <div className="safe-bottom bg-background/95 shadow-floating fixed inset-x-2 bottom-[4.75rem] z-[120] mx-auto flex max-w-lg flex-col gap-2 rounded-xl border p-3 backdrop-blur sm:inset-x-auto sm:end-4 sm:top-4 sm:bottom-auto sm:w-[min(28rem,calc(100vw-2rem))]">
+    <div
+      // The chat page renders a floating "new chat" action button pinned to
+      // the same bottom-end corner (see (portal)/chat/page.tsx). A symmetric
+      // inset-x here used to span underneath it, and this banner's z-index
+      // is intentionally the highest in the app, so on mobile it silently
+      // swallowed every tap meant for that button. Reserving extra space on
+      // the end side keeps the banner clear of that corner instead of
+      // relying on z-order, which would only move the dead zone onto this
+      // banner's own Install/Dismiss buttons. This is scoped to mobile
+      // (below `sm`) only -- the desktop `sm:end-4 sm:top-4` placement is
+      // unchanged from before this fix.
+      className="safe-bottom bg-background/95 shadow-floating fixed start-2 end-20 bottom-[4.75rem] z-[120] mx-auto flex max-w-lg flex-col gap-2 rounded-xl border p-3 backdrop-blur sm:inset-x-auto sm:end-4 sm:top-4 sm:bottom-auto sm:w-[min(28rem,calc(100vw-2rem))]"
+    >
       {isOffline ? (
         <div className="flex min-h-11 items-center gap-3 text-sm">
           <WifiOff className="text-warning h-5 w-5 shrink-0" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            You are offline. Reconnect to continue private actions; the public offline fallback
-            remains available.
-          </span>
+          <span className="min-w-0 flex-1">{t('pwa.offlineMessage')}</span>
         </div>
       ) : null}
       {waitingWorker ? (
         <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2">
           <RefreshCw className="text-primary h-5 w-5 shrink-0" aria-hidden="true" />
-          <span className="min-w-0 flex-1 text-sm">A new ClawAI version is available.</span>
+          <span className="min-w-0 flex-1 text-sm">{t('pwa.updateAvailable')}</span>
           <Button size="sm" onClick={applyUpdate}>
-            Update
+            {t('pwa.updateAction')}
           </Button>
         </div>
       ) : null}
       {installPrompt && !installDismissed ? (
         <div className="flex items-center gap-2">
           <Download className="text-primary h-5 w-5 shrink-0" aria-hidden="true" />
-          <span className="min-w-0 flex-1 text-sm">Install ClawAI for app-like access.</span>
+          <span className="min-w-0 flex-1 text-sm">{t('pwa.installMessage')}</span>
           <Button size="sm" onClick={() => void install()}>
-            Install
+            {t('pwa.installAction')}
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Dismiss install prompt"
+            aria-label={t('pwa.dismissInstall')}
             onClick={() => setInstallDismissed(true)}
           >
             <X className="h-4 w-4" />

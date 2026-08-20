@@ -4867,6 +4867,14 @@ export type TranslationDictionary = {
       };
     };
   };
+  pwa: {
+    offlineMessage: string;
+    updateAvailable: string;
+    updateAction: string;
+    installMessage: string;
+    installAction: string;
+    dismissInstall: string;
+  };
 };
 
 export type DeploymentLocaleTranslation = {

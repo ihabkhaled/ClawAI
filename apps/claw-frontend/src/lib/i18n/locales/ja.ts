@@ -5375,4 +5375,13 @@ export const ja: TranslationDictionary = {
       },
     },
   },
+  pwa: {
+    offlineMessage:
+      'オフラインです。プライベート操作を続けるには再接続してください。公開のオフライン代替表示は引き続き利用できます。',
+    updateAvailable: 'ClawAIの新しいバージョンが利用可能です。',
+    updateAction: '更新',
+    installMessage: 'アプリのように使うにはClawAIをインストールしてください。',
+    installAction: 'インストール',
+    dismissInstall: 'インストール通知を閉じる',
+  },
 };

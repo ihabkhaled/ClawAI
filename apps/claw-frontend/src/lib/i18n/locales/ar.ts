@@ -5264,4 +5264,13 @@ export const ar: TranslationDictionary = {
       },
     },
   },
+  pwa: {
+    offlineMessage:
+      'أنت غير متصل بالإنترنت. أعد الاتصال لمتابعة الإجراءات الخاصة؛ يبقى البديل العام غير المتصل متاحًا.',
+    updateAvailable: 'يتوفر إصدار جديد من ClawAI.',
+    updateAction: 'تحديث',
+    installMessage: 'ثبّت ClawAI للوصول بتجربة تشبه التطبيق.',
+    installAction: 'تثبيت',
+    dismissInstall: 'إغلاق إشعار التثبيت',
+  },
 };

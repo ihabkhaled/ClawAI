@@ -5454,4 +5454,13 @@ export const fr: TranslationDictionary = {
       },
     },
   },
+  pwa: {
+    offlineMessage:
+      'Vous êtes hors ligne. Reconnectez-vous pour continuer les actions privées ; le mode hors ligne public reste disponible.',
+    updateAvailable: 'Une nouvelle version de ClawAI est disponible.',
+    updateAction: 'Mettre à jour',
+    installMessage: 'Installez ClawAI pour un accès type application.',
+    installAction: 'Installer',
+    dismissInstall: 'Fermer la notification d’installation',
+  },
 };
