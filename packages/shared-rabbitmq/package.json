@@ -1,6 +1,6 @@
 {
   "name": "@claw/shared-rabbitmq",
-  "version": "1.28.1",
+  "version": "1.28.3",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
