@@ -3220,6 +3220,7 @@ export const ru: TranslationDictionary = {
       loading: 'Загрузка…',
       error: 'Не удалось загрузить настройки.',
       empty: 'Учимся на ваших одобрениях — настроек пока нет.',
+      dismiss: 'Отклонить',
     },
   },
   whyThisModel: {

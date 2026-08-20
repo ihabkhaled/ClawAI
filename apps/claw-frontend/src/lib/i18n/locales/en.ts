@@ -3175,6 +3175,7 @@ export const en: TranslationDictionary = {
       loading: 'Loading…',
       error: 'Could not load preferences.',
       empty: "We'll learn from your approvals — no preferences yet.",
+      dismiss: 'Dismiss',
     },
   },
   whyThisModel: {

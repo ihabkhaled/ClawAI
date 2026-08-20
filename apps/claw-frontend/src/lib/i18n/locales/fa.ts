@@ -3199,6 +3199,7 @@ export const fa: TranslationDictionary = {
       loading: 'در حال بارگیری…',
       error: 'تنظیمات برگزیده بارگیری نشد.',
       empty: 'ما از تأییدیه‌های شما یاد می‌گیریم — هنوز هیچ اولویتی وجود ندارد.',
+      dismiss: 'نادیده گرفتن',
     },
   },
   whyThisModel: {

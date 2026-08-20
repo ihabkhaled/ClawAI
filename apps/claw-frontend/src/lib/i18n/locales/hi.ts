@@ -3200,6 +3200,7 @@ export const hi: TranslationDictionary = {
       loading: 'लोड हो रहा है…',
       error: 'प्राथमिकताएँ लोड नहीं हो सकीं।',
       empty: 'हम आपके अप्रूवल से सीखेंगे — अभी कोई प्राथमिकता नहीं।',
+      dismiss: 'खारिज करें',
     },
   },
   whyThisModel: {

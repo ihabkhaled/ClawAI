@@ -1,19 +1,21 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–10)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–11)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
 truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
 bridge), Phase 05 (crash recovery + resume-from-failed-step), Phase 06 (error taxonomy +
 manual-repair tracking), Phase 07 (mechanical chain template library), Phase 08 (Automations
 page — first frontend for the chain system), Phase 09 (NL → chain draft, human reviews and
-saves), and Phase 10 (wiring the dormant object-link graph end to end) are done as real,
-deliberately-scoped slices — see each phase's own section below for exactly what's in and out of
-scope. Phase 01's duplication scan and RabbitMQ contract inventory are still pending (see
-"Explicitly not yet verified" below). Push-subscription lifecycle management (Phase 04's full
-spec), the real DAG rewrite (Phase 05's full spec), compensating/verification steps (Phase 06's
-full spec), the AI-step/auto-trigger recipe layer (Phase 07's full spec), auto-triggering off
-events (Phase 09's full spec), learning/suggestion-groundwork (Phase 11's full spec), and Phase
-11 onward are not started — each remaining phase is independently a multi-day-to-multi-week
-feature (an LLM-backed preference classifier, org RBAC, etc.); they're being built as
+saves), Phase 10 (wiring the dormant object-link graph end to end), and Phase 11 (feeding
+learned preferences back into AI-action generation) are done as real, deliberately-scoped slices
+— see each phase's own section below for exactly what's in and out of scope. Phase 01's
+duplication scan and RabbitMQ contract inventory are still pending (see "Explicitly not yet
+verified" below). Push-subscription lifecycle management (Phase 04's full spec), the real DAG
+rewrite (Phase 05's full spec), compensating/verification steps (Phase 06's full spec), the
+AI-step/auto-trigger recipe layer (Phase 07's full spec), auto-triggering off events (Phase 09's
+full spec), an LLM-backed preference classifier and the memory-service write-path fix (Phase 11's
+full spec — see Phase 11's own section for why these were deliberately left for memory-service's
+own team), and Phase 12 onward are not started — each remaining phase is independently a
+multi-day-to-multi-week feature (org RBAC, provider depth, etc.); they're being built as
 real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
 instruction — and every category of change that would touch live write-action execution or a live
 OAuth app is being deliberately scoped down to safety-net hardening rather than rushed into a full
@@ -659,6 +661,72 @@ already-shipped-but-narrow-scope feature (`PreferenceClassifierManager`, heurist
 preference text to memory-service — see its own module for what it does today), not something this
 phase touched or extended.
 
+## Phase 11 — Learning (feeding learned preferences back into AI-action generation, done)
+
+Investigation for this phase corrected an assumption carried over from Phase 10's own writeup
+(quoted above): the "learning" pipeline is **not** simply write-only-and-forgotten the way
+`WorkspaceObjectLink` was. `GET /internal/memories/learned-preferences` already existed on
+memory-service, already had a workspace-service proxy
+(`GET /workspace/automation-preferences/learned`), and already had a frontend panel rendering it
+(`LearnedPreferencesPanel`) — none of that needed building. The two real gaps were: (1) nothing
+ever read the learned preferences back into an actual AI generation call, and (2) a genuine
+data-integrity bug on the **memory-service** side of the write path (`upsertAutomationPreference`
+persists every learned preference as `source: USER_MANUAL` instead of `AUTOMATION_LEARNING`, and
+drops `confidence`/`evidence` entirely, so every row lands with the schema-default `confidence:
+1.0` — indistinguishable from a hand-entered memory).
+
+**This phase deliberately did not touch memory-service**, per explicit scope instruction to stay
+within the workspace flagship (`claw-workspace-service` + its frontend). The data-integrity bug
+above is real and disclosed, but fixing it means editing `claw-memory-service`'s
+`memory-internal.controller.ts` and `memory.service.ts` — out of bounds for this slice. Bullet-list
+preference injection was built anyway, using whatever `confidence` value memory-service currently
+returns (always 1.0 today, so "top-N" degrades to "first N returned" until the upstream bug is
+fixed) — an honestly-disclosed limitation, not a blocker, since the injected preferences are still
+real, real user-derived content even without meaningful ranking yet.
+
+**What shipped (all within `claw-workspace-service` + `claw-frontend`):**
+
+- `AutomationPreferenceService.fetchLearned(userId, actionKind?, limit?)` — the memory-service
+  fetch logic that used to live inline in `AutomationPreferenceController.getLearned` is now a
+  reusable service method (better layering, and the actual point: `AiActionExecutionManager` can
+  now call the exact same thing). Best-effort: any fetch failure (timeout, memory-service down)
+  returns `[]` rather than throwing, logged as a warning — this is enhancement, never a new failure
+  mode for AI-action generation.
+- `AiActionExecutionManager.run()` now accepts an optional `userId` on `RunAiActionInput`, fetches
+  that user's top-`LEARNED_PREFERENCES_PROMPT_LIMIT` (5) learned preferences for the request's
+  `actionKind`, and passes them to `buildAiActionPrompt()`, which appends them as a bulleted "Known
+  preferences for this user" block onto the system prompt when non-empty. `userId` threads through
+  from the one real call site — `POST /workspace/ai-actions/run?execute=immediate` — since that's
+  the only path that already had `AuthenticatedUser` in scope; `digest`/`auto-suggest`/
+  `suggestion-factory`/`ticket-planning`, which produce AI drafts through their own code paths (not
+  through `AiActionExecutionManager`), are unaffected by this phase — extending injection to them
+  would mean auditing four more call sites, out of scope for "wire this one path."
+- Frontend: `LearnedPreferencesPanel` gained a per-item Dismiss button, reusing the **already
+  existing** `PATCH /memories/:id/toggle` endpoint via the **already existing**
+  `memoryRepository.toggleMemory()` (a learned preference is a `Memory` row under the hood, so
+  "dismiss" is just flipping its existing `isEnabled` flag) — a new `useDismissLearnedPreference`
+  hook wraps it with the correct query-key invalidation (`useToggleMemory`'s own hook invalidates a
+  different, generic memory list, not the learned-preferences one). Zero new backend endpoints on
+  either service.
+- 27 new tests: `buildAiActionPrompt`'s preference-injection behavior (5), `AiActionExecutionManager
+.run()` — first-time coverage for this previously-untested manager, covering the happy path,
+  preference fetch/injection, fallback-chain traversal, and exhausted-attempts failure (5),
+  `AutomationPreferenceService.fetchLearned` — also first-time coverage (4), plus frontend hook and
+  `LearnedPreferencesPanel` component tests (13) including the new dismiss button's per-item
+  pending state.
+
+**Explicitly not done in this slice** (real scope, not oversight): **no memory-service changes** —
+the `source`/`confidence`/`evidence` write-path bug described above is real, disclosed, and left
+for memory-service's own scope, per the explicit "workspace flagship only" instruction this phase
+started from. No LLM-backed classifier (`PreferenceClassifierManager` stays heuristic v1 — its own
+code comment already says the LLM version is planned separately; this phase didn't touch the
+classifier at all). No preference injection for `digest`/`auto-suggest`/`suggestion-factory`/
+`ticket-planning` — only the direct `AiActionExecutionManager.run()` path. No true "top-N by
+confidence" ranking — mechanically wired, but not meaningful until the confidence value flowing
+from memory-service is real (blocked on the same disclosed upstream bug). No UI to preview which
+preferences would be injected before a run — Dismiss is the only new user-facing preference
+control.
+
 ## Explicitly not yet verified (next session's starting point)
 
 - Whether `chains`/`ai-actions`/`actions` module boundaries already have the duplication the
@@ -693,10 +761,10 @@ the pack's default sequence to front-load the work that de-risks everything afte
 6. **Phase 08** (Automations page) and **Phase 09** (NL → chain draft) are done — the unified
    inbox/dashboard and cross-provider search pieces of the original Work OS UX spec, and Phase
    09's auto-triggering half, remain.
-7. **Phase 10** (knowledge graph — object-link wiring) is done. **Phase 11** (learning — an
-   LLM-backed preference classifier, beyond today's heuristic-v1) can proceed in parallel with the
-   remaining 08/09 pieces once the event fabric (03) is stable, since both consume the same event
-   stream.
+7. **Phase 10** (knowledge graph — object-link wiring) and **Phase 11** (learning — preference
+   injection into AI-action generation) are done. An LLM-backed preference classifier (beyond
+   today's heuristic-v1) and the memory-service write-path fix remain — both belong to
+   memory-service's own scope, not workspace-service's.
 8. **Phase 12** (org installations/RBAC) — should land before Phase 13's provider expansion goes
    to production, so deepened provider actions inherit the right grant model from day one.
 9. **Phase 13** (provider capability expansion) — depth work per provider.

@@ -3092,6 +3092,7 @@ export const zh: TranslationDictionary = {
       loading: '加载中…',
       error: '无法加载首选项。',
       empty: '我们会从您的批准中得知——目前还没有偏好。',
+      dismiss: '忽略',
     },
   },
   whyThisModel: {

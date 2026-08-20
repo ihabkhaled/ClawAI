@@ -3208,6 +3208,7 @@ export const ja: TranslationDictionary = {
       loading: '読み込み中…',
       error: '設定をロードできませんでした。',
       empty: 'あなたの承認から学びます — まだ設定はありません。',
+      dismiss: '却下',
     },
   },
   whyThisModel: {

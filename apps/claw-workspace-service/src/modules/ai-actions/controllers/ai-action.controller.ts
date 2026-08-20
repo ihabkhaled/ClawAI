@@ -91,7 +91,7 @@ export class AiActionController {
     query: RunAiActionQueryDto,
   ): Promise<RunAiActionEnvelope> {
     if (query.execute === 'immediate') {
-      const result = await this.executeNow(dto);
+      const result = await this.executeNow(dto, user.id);
       return { mode: 'EXECUTED', execution: result };
     }
     const enqueue = await this.approval.enqueueSuggestion({
@@ -105,12 +105,13 @@ export class AiActionController {
     return { mode: 'QUEUED', queue: enqueue };
   }
 
-  private async executeNow(dto: RunAiActionDto): Promise<AiActionResult> {
+  private async executeNow(dto: RunAiActionDto, userId: string): Promise<AiActionResult> {
     return this.execution.run({
       actionKind: dto.actionKind,
       privacyClass: dto.privacyClass,
       context: dto.context,
       preferredModel: dto.preferredModel,
+      userId,
     });
   }
 }

@@ -3156,6 +3156,7 @@ export const ar: TranslationDictionary = {
       loading: 'جارٍ التحميل…',
       error: 'تعذّر تحميل التفضيلات.',
       empty: 'سنتعلّم من موافقاتك — لا توجد تفضيلات بعد.',
+      dismiss: 'تجاهل',
     },
   },
   whyThisModel: {

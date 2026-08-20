@@ -3239,6 +3239,7 @@ export const de: TranslationDictionary = {
       loading: 'Wird geladen…',
       error: 'Einstellungen konnten nicht geladen werden.',
       empty: 'Wir lernen aus Ihren Genehmigungen — noch keine Präferenzen.',
+      dismiss: 'Verwerfen',
     },
   },
   whyThisModel: {

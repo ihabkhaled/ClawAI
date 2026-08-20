@@ -3,7 +3,11 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { AiActionMode } from '../../../common/enums/ai-action-kind.enum';
 import { BusinessException } from '../../../common/errors/business.exception';
-import { AI_ACTION_FALLBACK_LOCAL_PROVIDER } from '../constants/ai-action-prompts.constants';
+import {
+  AI_ACTION_FALLBACK_LOCAL_PROVIDER,
+  LEARNED_PREFERENCES_PROMPT_LIMIT,
+} from '../constants/ai-action-prompts.constants';
+import { AutomationPreferenceService } from '../services/automation-preference.service';
 import type {
   AiActionResult,
   CloudGenerateOutput,
@@ -24,6 +28,7 @@ export class AiActionExecutionManager {
   constructor(
     private readonly router: AutoRouterManager,
     private readonly resolver: ModelCatalogResolverManager,
+    private readonly automationPreferences: AutomationPreferenceService,
   ) {}
 
   async run(input: RunAiActionInput): Promise<AiActionResult> {
@@ -32,7 +37,12 @@ export class AiActionExecutionManager {
       privacyClass: input.privacyClass,
       preferredModel: input.preferredModel,
     });
-    const { systemPrompt, userPrompt } = buildAiActionPrompt(input.actionKind, input.context);
+    const learnedPreferences = await this.loadLearnedPreferences(input);
+    const { systemPrompt, userPrompt } = buildAiActionPrompt(
+      input.actionKind,
+      input.context,
+      learnedPreferences,
+    );
     const started = Date.now();
     const modelsToTry = await this.buildAttemptChain(
       resolution.primary,
@@ -132,6 +142,22 @@ export class AiActionExecutionManager {
 
   private alreadyInChain(chain: ModelChoice[], candidate: ModelChoice): boolean {
     return chain.some((c) => c.provider === candidate.provider && c.model === candidate.model);
+  }
+
+  // Phase 11 — best-effort: a memory-service hiccup must never block AI
+  // action generation, so this always resolves (fetchLearned itself never
+  // throws — see AutomationPreferenceService), and no userId simply means
+  // no preferences to inject.
+  private async loadLearnedPreferences(input: RunAiActionInput): Promise<string[]> {
+    if (input.userId === undefined) {
+      return [];
+    }
+    const items = await this.automationPreferences.fetchLearned(
+      input.userId,
+      input.actionKind,
+      LEARNED_PREFERENCES_PROMPT_LIMIT,
+    );
+    return items.map((item) => item.content);
   }
 
   private async executeGeneration(

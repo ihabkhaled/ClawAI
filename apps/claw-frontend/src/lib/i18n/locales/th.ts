@@ -3169,6 +3169,7 @@ export const th: TranslationDictionary = {
       loading: 'กำลังโหลด...',
       error: 'ไม่สามารถโหลดค่ากำหนดได้',
       empty: 'เราจะเรียนรู้จากการอนุมัติของคุณ — ยังไม่มีการตั้งค่าใดๆ',
+      dismiss: 'ยกเลิก',
     },
   },
   whyThisModel: {

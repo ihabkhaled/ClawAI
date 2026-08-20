@@ -3215,6 +3215,7 @@ export const pt: TranslationDictionary = {
       loading: 'Carregando…',
       error: 'Não foi possível carregar as preferências.',
       empty: 'Vamos aprender com suas aprovações — sem preferências ainda.',
+      dismiss: 'Dispensar',
     },
   },
   whyThisModel: {

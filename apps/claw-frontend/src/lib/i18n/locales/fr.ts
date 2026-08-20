@@ -3244,6 +3244,7 @@ export const fr: TranslationDictionary = {
       loading: 'Chargement…',
       error: 'Impossible de charger les préférences.',
       empty: 'Nous apprendrons de vos approbations — pas encore de préférences.',
+      dismiss: 'Ignorer',
     },
   },
   whyThisModel: {

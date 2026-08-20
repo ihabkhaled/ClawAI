@@ -2217,6 +2217,7 @@ export type TranslationDictionary = {
       loading: string;
       error: string;
       empty: string;
+      dismiss: string;
     };
   };
   research: {
