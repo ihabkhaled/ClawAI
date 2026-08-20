@@ -58,6 +58,27 @@ describe('plan catalog', () => {
     }
   });
 
+  it('publishes the approved Free quotas and orchestration labs', () => {
+    const free = bySlug('free') as CatalogEntry & {
+      workspaces: number;
+      contextPacks: number;
+      memoryItems: number;
+      labs: Record<string, boolean>;
+    };
+
+    expect(free).toMatchObject({
+      dailyTokens: 300_000,
+      weeklyTokens: 20_000,
+      monthlyTokens: null,
+      chatsPerDay: 5,
+      messagesPerDay: 250,
+      workspaces: 5,
+      contextPacks: 10,
+      memoryItems: 10,
+    });
+    expect(Object.values(free.labs).every(Boolean)).toBe(true);
+  });
+
   it.each([
     ['free', 0, null],
     ['starter', 500, 5_000],
@@ -81,8 +102,8 @@ describe('plan catalog', () => {
     }
   });
 
-  it('keeps daily < weekly < monthly for every metered plan', () => {
-    for (const plan of catalog) {
+  it('keeps daily < weekly < monthly for every paid metered plan', () => {
+    for (const plan of catalog.filter((entry) => entry.monthlyMinor > 0)) {
       expect(plan.weeklyTokens).toBeGreaterThan(plan.dailyTokens);
       if (plan.monthlyTokens !== null) {
         expect(plan.monthlyTokens).toBeGreaterThan(plan.weeklyTokens);
@@ -131,8 +152,8 @@ describe('plan catalog', () => {
     }
   });
 
-  it('disables workspaces on Free', () => {
-    expect(bySlug('free').features['WORKSPACES']?.accessMode).toBe('DISABLED');
+  it('enables workspaces on Free within the connection quota', () => {
+    expect(bySlug('free').features['WORKSPACES']?.accessMode).toBe('ENABLED');
   });
 
   it('allows every discovered model on every seeded plan by default', () => {
