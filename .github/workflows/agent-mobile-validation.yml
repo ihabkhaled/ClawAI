@@ -1,9 +1,9 @@
-name: Agent Mobile PWA Validation
+name: Agent Mobile PWA Apply Once
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
+      - agent/mobile-pwa-critical-fixes
 
 permissions:
   contents: write
@@ -14,12 +14,11 @@ concurrency:
 
 jobs:
   validate-and-publish:
-    if: github.head_ref == 'agent/mobile-pwa-critical-fixes'
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
     steps:
-      - name: Checkout validation branch
+      - name: Checkout implementation branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -32,7 +31,7 @@ jobs:
           node-version: 24.15.0
           cache: npm
 
-      - name: Prepare clean implementation branch
+      - name: Apply implementation patch onto clean main
         shell: bash
         run: |
           set -euo pipefail
