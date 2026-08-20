@@ -308,6 +308,15 @@ export const it: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'La tua prova gratuita è terminata. Scegli un piano a pagamento per continuare a usare l’IA.',
+      dailyTokenLimitExceeded: 'Hai superato il limite giornaliero di token.',
+      weeklyTokenLimitExceeded: 'Hai superato il limite settimanale di token.',
+      monthlyTokenLimitExceeded: 'Hai superato il limite mensile di token.',
+      dailyChatLimitExceeded: 'Hai superato il limite giornaliero di conversazioni.',
+      dailyMessageLimitExceeded: 'Hai superato il limite giornaliero di messaggi.',
+      workspaceConnectionLimitExceeded:
+        'Hai raggiunto il limite di connessioni all’area di lavoro.',
+      contextPackLimitExceeded: 'Hai raggiunto il limite di pacchetti di contesto.',
+      memoryItemLimitExceeded: 'Hai raggiunto il limite di elementi di memoria.',
       videoAttachmentProviderUnsupported:
         'Questo modello non può elaborare gli allegati video. Scegli Gemini 2.5 Flash o Pro oppure passa alla modalità Auto.',
       videoAttachmentLocalModelUnavailable:

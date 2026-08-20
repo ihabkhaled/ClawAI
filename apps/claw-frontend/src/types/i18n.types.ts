@@ -293,6 +293,14 @@ export type TranslationDictionary = {
     allProvidersFailed: string;
     errors: {
       planTrialExpired: string;
+      dailyTokenLimitExceeded: string;
+      weeklyTokenLimitExceeded: string;
+      monthlyTokenLimitExceeded: string;
+      dailyChatLimitExceeded: string;
+      dailyMessageLimitExceeded: string;
+      workspaceConnectionLimitExceeded: string;
+      contextPackLimitExceeded: string;
+      memoryItemLimitExceeded: string;
       videoAttachmentProviderUnsupported: string;
       videoAttachmentLocalModelUnavailable: string;
     };

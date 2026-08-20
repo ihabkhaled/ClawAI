@@ -305,6 +305,14 @@ export const hi: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'आपका मुफ़्त परीक्षण समाप्त हो गया है। AI का उपयोग जारी रखने के लिए सशुल्क प्लान चुनें।',
+      dailyTokenLimitExceeded: 'आपने अपनी दैनिक टोकन सीमा पार कर ली है।',
+      weeklyTokenLimitExceeded: 'आपने अपनी साप्ताहिक टोकन सीमा पार कर ली है।',
+      monthlyTokenLimitExceeded: 'आपने अपनी मासिक टोकन सीमा पार कर ली है।',
+      dailyChatLimitExceeded: 'आपने दैनिक चैट थ्रेड सीमा पार कर ली है।',
+      dailyMessageLimitExceeded: 'आपने दैनिक संदेश सीमा पार कर ली है।',
+      workspaceConnectionLimitExceeded: 'आप कार्यस्थान कनेक्शन सीमा तक पहुँच गए हैं।',
+      contextPackLimitExceeded: 'आप संदर्भ पैक सीमा तक पहुँच गए हैं।',
+      memoryItemLimitExceeded: 'आप मेमोरी आइटम सीमा तक पहुँच गए हैं।',
       videoAttachmentProviderUnsupported:
         'यह मॉडल वीडियो अटैचमेंट प्रोसेस नहीं कर सकता। Gemini 2.5 Flash या Pro चुनें, या Auto पर स्विच करें।',
       videoAttachmentLocalModelUnavailable:

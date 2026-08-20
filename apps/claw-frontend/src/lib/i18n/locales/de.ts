@@ -308,6 +308,14 @@ export const de: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'Deine kostenlose Testphase ist beendet. Wähle einen kostenpflichtigen Tarif, um KI weiter zu nutzen.',
+      dailyTokenLimitExceeded: 'Du hast dein tägliches Token-Limit überschritten.',
+      weeklyTokenLimitExceeded: 'Du hast dein wöchentliches Token-Limit überschritten.',
+      monthlyTokenLimitExceeded: 'Du hast dein monatliches Token-Limit überschritten.',
+      dailyChatLimitExceeded: 'Du hast dein tägliches Chat-Thread-Limit überschritten.',
+      dailyMessageLimitExceeded: 'Du hast dein tägliches Nachrichtenlimit überschritten.',
+      workspaceConnectionLimitExceeded: 'Du hast dein Limit für Workspace-Verbindungen erreicht.',
+      contextPackLimitExceeded: 'Du hast dein Limit für Kontextpakete erreicht.',
+      memoryItemLimitExceeded: 'Du hast dein Limit für Speichereinträge erreicht.',
       videoAttachmentProviderUnsupported:
         'Dieses Modell kann keine Videoanhänge verarbeiten. Wähle Gemini 2.5 Flash oder Pro oder wechsle zu „Auto“.',
       videoAttachmentLocalModelUnavailable:

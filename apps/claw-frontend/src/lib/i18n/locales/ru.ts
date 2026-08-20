@@ -307,6 +307,14 @@ export const ru: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'Бесплатный пробный период завершён. Выберите платный тариф, чтобы продолжить пользоваться ИИ.',
+      dailyTokenLimitExceeded: 'Вы превысили дневной лимит токенов.',
+      weeklyTokenLimitExceeded: 'Вы превысили недельный лимит токенов.',
+      monthlyTokenLimitExceeded: 'Вы превысили месячный лимит токенов.',
+      dailyChatLimitExceeded: 'Вы превысили дневной лимит чатов.',
+      dailyMessageLimitExceeded: 'Вы превысили дневной лимит сообщений.',
+      workspaceConnectionLimitExceeded: 'Вы достигли лимита подключений рабочих пространств.',
+      contextPackLimitExceeded: 'Вы достигли лимита пакетов контекста.',
+      memoryItemLimitExceeded: 'Вы достигли лимита элементов памяти.',
       videoAttachmentProviderUnsupported:
         'Эта модель не может обрабатывать видеофайлы. Выберите Gemini 2.5 Flash или Pro либо переключитесь в автоматический режим.',
       videoAttachmentLocalModelUnavailable:

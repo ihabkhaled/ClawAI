@@ -304,6 +304,14 @@ export const ar: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'انتهت فترتك التجريبية المجانية. اختر خطة مدفوعة لمواصلة استخدام الذكاء الاصطناعي.',
+      dailyTokenLimitExceeded: 'لقد تجاوزت الحد اليومي للرموز.',
+      weeklyTokenLimitExceeded: 'لقد تجاوزت الحد الأسبوعي للرموز.',
+      monthlyTokenLimitExceeded: 'لقد تجاوزت الحد الشهري للرموز.',
+      dailyChatLimitExceeded: 'لقد تجاوزت الحد اليومي لمحادثات الدردشة.',
+      dailyMessageLimitExceeded: 'لقد تجاوزت الحد اليومي للرسائل.',
+      workspaceConnectionLimitExceeded: 'لقد وصلت إلى حد اتصالات مساحة العمل.',
+      contextPackLimitExceeded: 'لقد وصلت إلى حد حزم السياق.',
+      memoryItemLimitExceeded: 'لقد وصلت إلى حد عناصر الذاكرة.',
       videoAttachmentProviderUnsupported:
         'لا يستطيع هذا النموذج معالجة مرفقات الفيديو. اختر Gemini 2.5 Flash أو Pro، أو انتقل إلى الوضع التلقائي.',
       videoAttachmentLocalModelUnavailable:
