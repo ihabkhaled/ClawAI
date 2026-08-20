@@ -4,16 +4,12 @@ import { Download, RefreshCw, WifiOff, X } from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
-
-type InstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-};
+import type { PwaInstallPromptEvent } from '@/types/pwa.types';
 
 export function PwaManager(): React.ReactElement | null {
   const [isOffline, setIsOffline] = React.useState(false);
   const [waitingWorker, setWaitingWorker] = React.useState<ServiceWorker | null>(null);
-  const [installPrompt, setInstallPrompt] = React.useState<InstallPromptEvent | null>(null);
+  const [installPrompt, setInstallPrompt] = React.useState<PwaInstallPromptEvent | null>(null);
   const [installDismissed, setInstallDismissed] = React.useState(false);
 
   React.useEffect(() => {
@@ -25,7 +21,7 @@ export function PwaManager(): React.ReactElement | null {
 
     const handleInstallPrompt = (event: Event): void => {
       event.preventDefault();
-      setInstallPrompt(event as InstallPromptEvent);
+      setInstallPrompt(event as PwaInstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handleInstallPrompt);
 
@@ -33,10 +29,14 @@ export function PwaManager(): React.ReactElement | null {
       void navigator.serviceWorker
         .register('/sw.js')
         .then((registration) => {
-          if (registration.waiting) setWaitingWorker(registration.waiting);
+          if (registration.waiting) {
+            setWaitingWorker(registration.waiting);
+          }
           registration.addEventListener('updatefound', () => {
             const worker = registration.installing;
-            if (!worker) return;
+            if (!worker) {
+              return;
+            }
             worker.addEventListener('statechange', () => {
               if (worker.state === 'installed' && navigator.serviceWorker.controller) {
                 setWaitingWorker(worker);
@@ -55,7 +55,9 @@ export function PwaManager(): React.ReactElement | null {
   }, []);
 
   React.useEffect(() => {
-    if (!waitingWorker || !('serviceWorker' in navigator)) return;
+    if (!waitingWorker || !('serviceWorker' in navigator)) {
+      return;
+    }
     const handleControllerChange = (): void => window.location.reload();
     navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange, {
       once: true,
@@ -68,13 +70,17 @@ export function PwaManager(): React.ReactElement | null {
   };
 
   const install = async (): Promise<void> => {
-    if (!installPrompt) return;
+    if (!installPrompt) {
+      return;
+    }
     await installPrompt.prompt();
     await installPrompt.userChoice;
     setInstallPrompt(null);
   };
 
-  if (!isOffline && !waitingWorker && (!installPrompt || installDismissed)) return null;
+  if (!isOffline && !waitingWorker && (!installPrompt || installDismissed)) {
+    return null;
+  }
 
   return (
     <div className="safe-top fixed inset-x-2 top-2 z-[120] mx-auto flex max-w-lg flex-col gap-2 rounded-xl border bg-background/95 p-3 shadow-floating backdrop-blur sm:inset-x-auto sm:end-4 sm:top-4 sm:w-[min(28rem,calc(100vw-2rem))]">
