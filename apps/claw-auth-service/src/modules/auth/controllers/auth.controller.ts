@@ -1,5 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, UsePipes } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
+import { ConfirmEmailChangeDto, confirmEmailChangeSchema } from '../dto/email-change.dto';
+import { EmailChangeService } from '../services/email-change.service';
 import { Public } from '../../../app/decorators/public.decorator';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
@@ -29,6 +31,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly passwordResetService: PasswordResetService,
     private readonly emailVerificationService: EmailVerificationService,
+    private readonly emailChangeService: EmailChangeService,
   ) {}
 
   @Public()
@@ -96,5 +99,13 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(verifyEmailSchema))
   async verifyEmail(@Body() dto: VerifyEmailDto): Promise<{ verified: boolean }> {
     return this.emailVerificationService.verify(dto.token);
+  }
+
+  @Public()
+  @Post('email-change/confirm')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(confirmEmailChangeSchema))
+  async confirmEmailChange(@Body() dto: ConfirmEmailChangeDto): Promise<{ changed: boolean }> {
+    return this.emailChangeService.confirmEmailChange(dto.token);
   }
 }

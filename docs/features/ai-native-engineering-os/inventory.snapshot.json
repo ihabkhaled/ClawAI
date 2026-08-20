@@ -664,6 +664,11 @@
         },
         {
           "method": "POST",
+          "route": "/auth/email-change/confirm",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/auth/email-verification/confirm",
           "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
         },
@@ -860,6 +865,31 @@
         {
           "method": "PATCH",
           "route": "/users/me",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/users/me/email-change",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/users/me/email-change",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/users/me/email-change",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/users/me/email-change/resend",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/users/me/email-change/verify-current",
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
         },
         {
@@ -8045,6 +8075,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "EmailChangeRequest"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "EmailVerificationToken"
           },
           {
@@ -8888,7 +8923,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 61
+        "testFiles": 66
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -9657,7 +9692,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 588,
+    "endpointCount": 594,
     "envVarCount": 343,
     "eventCount": 167,
     "frontendRouteCount": 121,
@@ -9669,7 +9704,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 933,
+    "totalTestFiles": 938,
     "workspaceCount": 25
   }
 }

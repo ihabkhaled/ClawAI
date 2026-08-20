@@ -572,6 +572,11 @@
       },
       {
         "method": "POST",
+        "route": "/auth/email-change/confirm",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/auth/email-verification/confirm",
         "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
       },
@@ -768,6 +773,31 @@
       {
         "method": "PATCH",
         "route": "/users/me",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/users/me/email-change",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/users/me/email-change",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/users/me/email-change",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/users/me/email-change/resend",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/users/me/email-change/verify-current",
         "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
       },
       {
@@ -2978,5 +3008,5 @@
     ]
   },
   "generated": true,
-  "total": 588
+  "total": 594
 }

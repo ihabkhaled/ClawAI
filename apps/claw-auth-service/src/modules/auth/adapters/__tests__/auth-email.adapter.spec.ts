@@ -67,6 +67,89 @@ describe('AuthEmailAdapter deployment notification', () => {
 
   afterEach(() => jest.restoreAllMocks());
 
+  it('throws EMAIL_DELIVERY_UNAVAILABLE when SMTP transport is unavailable', () => {
+    jest.spyOn(AppConfig, 'get').mockReturnValue(emailConfig({ CONTACT_EMAIL_ENABLED: 'false' }));
+
+    expect(() => new AuthEmailAdapter().assertEmailDeliveryAvailable()).toThrow(
+      'Email delivery is unavailable',
+    );
+    expect(createSmtpEmailTransport).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      'OTP',
+      (adapter: AuthEmailAdapter) =>
+        adapter.sendEmailChangeOtp('old@example.com', '123456', 'n***@example.com'),
+    ],
+    [
+      'confirmation',
+      (adapter: AuthEmailAdapter) =>
+        adapter.sendEmailChangeConfirmation('new@example.com', 'raw-token'),
+    ],
+    [
+      'completed notice',
+      (adapter: AuthEmailAdapter) => adapter.sendEmailChangeCompletedNotice('old@example.com'),
+    ],
+  ])('rejects the email-change %s sender when SMTP is unavailable', async (_label, sendEmail) => {
+    jest.spyOn(AppConfig, 'get').mockReturnValue(emailConfig({ CONTACT_EMAIL_ENABLED: 'false' }));
+
+    await expect(sendEmail(new AuthEmailAdapter())).rejects.toMatchObject({
+      code: 'EMAIL_DELIVERY_UNAVAILABLE',
+    });
+  });
+
+  it('sends email change OTP to the old email with masked address and OTP', async () => {
+    await new AuthEmailAdapter().sendEmailChangeOtp(
+      'old@example.com',
+      '123456',
+      'n**w@example.com',
+    );
+
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'old@example.com',
+        subject: 'Confirm your ClawAI email change',
+        text: expect.stringContaining('n**w@example.com'),
+        html: expect.stringContaining('123456'),
+      }),
+    );
+  });
+
+  it('sends the new email a confirmation URL containing the raw token', async () => {
+    await new AuthEmailAdapter().sendEmailChangeConfirmation('new@example.com', 'raw-token-xyz');
+    const expectedUrl = new URL('/confirm-email-change', 'https://claw-ai.co');
+    expectedUrl.searchParams.set('token', 'raw-token-xyz');
+
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'new@example.com',
+        text: expect.stringContaining(expectedUrl.toString()),
+        html: expect.stringContaining(expectedUrl.toString()),
+      }),
+    );
+  });
+
+  it('sends the old email a completed-change security notice', async () => {
+    await new AuthEmailAdapter().sendEmailChangeCompletedNotice('old@example.com');
+
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'old@example.com',
+        subject: 'Your ClawAI account email address was changed',
+        text: expect.stringContaining('If you did not make this change'),
+        html: expect.stringContaining('If you did not make this change'),
+      }),
+    );
+  });
+
+  it('returns the configured public site URL and from/to addresses', async () => {
+    const config = AppConfig.get();
+    expect(config.PUBLIC_SITE_URL).toBe('https://claw-ai.co');
+    expect(config.CONTACT_EMAIL_FROM).toBe('no-reply@claw-ai.co');
+    expect(config.CONTACT_EMAIL_TO).toBe('ops@claw-ai.co');
+  });
+
   it('sends a bounded completion email through the existing SMTP transport', async () => {
     await expect(new AuthEmailAdapter().sendDeploymentNotification(STATUS)).resolves.toBe(true);
 
