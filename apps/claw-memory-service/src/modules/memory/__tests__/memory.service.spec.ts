@@ -115,6 +115,30 @@ describe('MemoryService (V2)', () => {
     );
   });
 
+  it('rejects creation when the atomic memory-item limit is exhausted', async () => {
+    (memoryRepo.createWithinLimit as unknown as jest.Mock).mockResolvedValue(null);
+    service = new MemoryService(
+      memoryRepo,
+      extraction,
+      sensitivity,
+      embeddingManager,
+      suggestionRepo,
+      auditService,
+      preferenceService,
+      rabbit as never,
+      {
+        resolve: jest.fn().mockResolvedValue({
+          isAdmin: false,
+          plan: { featureGates: { allowMemory: true }, limits: { memoryItems: 10 } },
+        }),
+      } as never,
+    );
+
+    await expect(
+      service.createMemory('user-1', { type: MemoryType.FACT, content: 'Blocked' }),
+    ).rejects.toMatchObject({ code: 'PLAN_MEMORY_ITEM_LIMIT_EXCEEDED', status: 429 });
+  });
+
   it('redacts content when sensitivity classifier finds an AWS key', async () => {
     const created = buildMemoryRecord({
       content: 'AK********0000',

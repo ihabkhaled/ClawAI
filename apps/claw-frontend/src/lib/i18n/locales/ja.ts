@@ -306,6 +306,14 @@ export const ja: TranslationDictionary = {
     errors: {
       planTrialExpired:
         '無料トライアルは終了しました。AI を引き続き利用するには有料プランを選択してください。',
+      dailyTokenLimitExceeded: '1日のトークン上限を超えました。',
+      weeklyTokenLimitExceeded: '週間トークン上限を超えました。',
+      monthlyTokenLimitExceeded: '月間トークン上限を超えました。',
+      dailyChatLimitExceeded: '1日のチャットスレッド上限を超えました。',
+      dailyMessageLimitExceeded: '1日のメッセージ上限を超えました。',
+      workspaceConnectionLimitExceeded: 'ワークスペース接続の上限に達しました。',
+      contextPackLimitExceeded: 'コンテキストパックの上限に達しました。',
+      memoryItemLimitExceeded: 'メモリアイテムの上限に達しました。',
       videoAttachmentProviderUnsupported:
         'このモデルはビデオ添付ファイルを処理できません。 Gemini 2.5 Flash または Pro を選択するか、Auto に切り替えます。',
       videoAttachmentLocalModelUnavailable:
@@ -3388,6 +3396,7 @@ export const ja: TranslationDictionary = {
       displayOrder: '表示順',
       dailyTokenQuota: '毎日のトークン割り当て',
       dailyTokenQuotaHelp: 'このプランでユーザーが 1 日に消費できるトークン。',
+      weeklyTokenQuota: '週間トークン割り当て',
       monthlyTokenQuota: '月間トークン割り当て',
       maxChatsPerDay: '1 日あたりの最大チャット数',
       maxMessagesPerDay: '1 日あたりの最大メッセージ数',

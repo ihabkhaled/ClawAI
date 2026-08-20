@@ -200,6 +200,16 @@ describe('ChatMessagesService', () => {
       );
     });
 
+    it('rejects creation when the atomic daily message limit is exhausted', async () => {
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      messagesRepo.createUserMessageWithinDailyLimit.mockResolvedValue(null);
+
+      await expect(
+        service.createMessage('user-1', { threadId: 'thread-1', content: 'Blocked' }, ''),
+      ).rejects.toMatchObject({ code: 'PLAN_DAILY_MESSAGE_LIMIT_EXCEEDED', status: 429 });
+      expect(rabbitMQ.publish).not.toHaveBeenCalled();
+    });
+
     it('should preserve AUTO routing even when the thread has a preferred model', async () => {
       threadsRepo.findById!.mockResolvedValue({
         ...mockThread,

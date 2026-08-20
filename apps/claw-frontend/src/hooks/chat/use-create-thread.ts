@@ -6,7 +6,7 @@ import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { CreateThreadRequest } from '@/types';
-import { logger, showToast } from '@/utilities';
+import { logger, resolveApiErrorMessage, showToast } from '@/utilities';
 
 export function useCreateThread() {
   const queryClient = useQueryClient();
@@ -16,7 +16,12 @@ export function useCreateThread() {
   const mutation = useMutation({
     mutationFn: (data: CreateThreadRequest) => chatRepository.createThread(data),
     onSuccess: (thread) => {
-      logger.info({ component: 'chat', action: 'create-thread', message: 'Thread created', details: { threadId: thread.id } });
+      logger.info({
+        component: 'chat',
+        action: 'create-thread',
+        message: 'Thread created',
+        details: { threadId: thread.id },
+      });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.threads.lists(),
       });
@@ -25,7 +30,7 @@ export function useCreateThread() {
     },
     onError: (error: Error) => {
       logger.error({ component: 'chat', action: 'create-thread-error', message: error.message });
-      showToast.apiError(error, t('chat.threadCreateFailed'));
+      showToast.apiError(error, resolveApiErrorMessage(error, t, t('chat.threadCreateFailed')));
     },
   });
 

@@ -306,6 +306,14 @@ export const fa: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'دوره آزمایشی رایگان شما پایان یافته است. برای ادامه استفاده از هوش مصنوعی یک طرح پولی انتخاب کنید.',
+      dailyTokenLimitExceeded: 'از محدودیت روزانه توکن عبور کرده‌اید.',
+      weeklyTokenLimitExceeded: 'از محدودیت هفتگی توکن عبور کرده‌اید.',
+      monthlyTokenLimitExceeded: 'از محدودیت ماهانه توکن عبور کرده‌اید.',
+      dailyChatLimitExceeded: 'از محدودیت روزانه رشته‌های گفتگو عبور کرده‌اید.',
+      dailyMessageLimitExceeded: 'از محدودیت روزانه پیام‌ها عبور کرده‌اید.',
+      workspaceConnectionLimitExceeded: 'به محدودیت اتصال‌های فضای کاری رسیده‌اید.',
+      contextPackLimitExceeded: 'به محدودیت بسته‌های زمینه رسیده‌اید.',
+      memoryItemLimitExceeded: 'به محدودیت موارد حافظه رسیده‌اید.',
       videoAttachmentProviderUnsupported:
         'این مدل نمی‌تواند پیوست‌های ویدیویی را پردازش کند.Gemini 2.5 Flash یا Pro را انتخاب کنید یا به Auto بروید.',
       videoAttachmentLocalModelUnavailable:
@@ -3380,6 +3388,7 @@ export const fa: TranslationDictionary = {
       displayOrder: 'نمایش سفارش',
       dailyTokenQuota: 'سهمیه رمز روزانه',
       dailyTokenQuotaHelp: 'توکن هایی که کاربر ممکن است در روز در این طرح مصرف کند.',
+      weeklyTokenQuota: 'سهمیه هفتگی توکن',
       monthlyTokenQuota: 'سهمیه ماهانه رمزی',
       maxChatsPerDay: 'حداکثر چت در روز',
       maxMessagesPerDay: 'حداکثر پیام در روز',

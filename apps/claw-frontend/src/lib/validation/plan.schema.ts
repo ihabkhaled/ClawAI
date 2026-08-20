@@ -38,6 +38,7 @@ export const createPlanSchema = z.object({
   isTrial: z.boolean(),
   trialDurationDays: z.union([z.literal(30), z.null()]),
   dailyTokenQuota: z.coerce.number().int().min(0, 'Daily token quota must be 0 or greater'),
+  weeklyTokenQuota: optionalNonNegativeInt,
   monthlyTokenQuota: optionalNonNegativeInt,
   maxChatsPerDay: optionalNonNegativeInt,
   maxMessagesPerDay: optionalNonNegativeInt,

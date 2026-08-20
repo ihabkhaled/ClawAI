@@ -9,6 +9,7 @@ import { PaymentMethodList } from '@/components/billing/payment-method-list';
 import { ProrationBreakdown } from '@/components/billing/proration-breakdown';
 import { SubscriptionSummaryCard } from '@/components/billing/subscription-summary-card';
 import { UsageWindowBar } from '@/components/billing/usage-window-bar';
+import { DISABLED_PLAN_FEATURE_GATES } from '@/constants';
 import { BillingInterval, PlanFeature, SubscriptionStatus } from '@/enums/billing.enum';
 import type {
   BillingPlan,
@@ -84,11 +85,37 @@ function makePlan(amountMinor: number): BillingPlan {
     maxWorkspaceConnections: 0,
     maxContextPacks: 0,
     maxMemoryItems: 0,
+    featureGates: {
+      ...DISABLED_PLAN_FEATURE_GATES,
+      allowConsensusMode: true,
+      allowRolePack: true,
+    },
     features: [],
   };
 }
 
 describe('BillingPlanCard', () => {
+  it('shows every token and resource limit before subscription', () => {
+    render(
+      <BillingPlanCard
+        plan={{ ...makePlan(500), weeklyTokenQuota: 20_000 }}
+        interval={BillingInterval.MONTHLY}
+        isCurrent={false}
+        onSelect={vi.fn()}
+        isPending={false}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText(/adminPlans\.form\.weeklyTokenQuota/)).toBeInTheDocument();
+    expect(screen.getByText(/adminPlans\.form\.maxMessagesPerDay/)).toBeInTheDocument();
+    expect(screen.getByText(/adminPlans\.form\.maxWorkspaceConnections/)).toBeInTheDocument();
+    expect(screen.getByText(/adminPlans\.form\.maxContextPacks/)).toBeInTheDocument();
+    expect(screen.getByText(/adminPlans\.form\.maxMemoryItems/)).toBeInTheDocument();
+    expect(screen.getByText('adminPlans.gate.allowConsensusMode')).toBeInTheDocument();
+    expect(screen.getByText('adminPlans.gate.allowRolePack')).toBeInTheDocument();
+  });
+
   it('does not offer checkout for a zero-cost plan', () => {
     render(
       <BillingPlanCard

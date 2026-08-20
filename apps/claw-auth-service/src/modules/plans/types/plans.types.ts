@@ -57,6 +57,7 @@ export type PlanView = {
   replacementPlanId: string | null;
   retiredAt: Date | null;
   dailyTokenQuota: number;
+  weeklyTokenQuota: number | null;
   monthlyTokenQuota: number | null;
   maxChatsPerDay: number | null;
   maxMessagesPerDay: number | null;
@@ -98,6 +99,7 @@ export type CreatePlanData = {
   isTrial?: boolean;
   trialDurationDays?: number | null;
   dailyTokenQuota: number;
+  weeklyTokenQuota?: number;
   monthlyTokenQuota?: number;
   maxChatsPerDay?: number;
   maxMessagesPerDay?: number;

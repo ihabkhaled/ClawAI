@@ -34,7 +34,7 @@
     },
     "claw-auth-service": {
       "runner": "jest",
-      "testFiles": 66
+      "testFiles": 67
     },
     "claw-chat-service": {
       "runner": "jest",
@@ -82,7 +82,7 @@
     },
     "claw-payment-service": {
       "runner": "jest",
-      "testFiles": 95
+      "testFiles": 96
     },
     "claw-research-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 938
+  "total": 940
 }

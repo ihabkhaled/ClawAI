@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { PlanFeatureGates } from '@/components/account/plan-feature-gates';
 import { buttonVariants } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
@@ -68,12 +69,52 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
           </dd>
         </div>
         <div className="flex justify-between gap-2">
+          <dt>{t('adminPlans.form.weeklyTokenQuota')}</dt>
+          <dd className="text-foreground font-medium">
+            {formatPlanQuota(plan.weeklyTokenQuota, disabled, unlimited, locale)}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-2">
           <dt>{t('marketing.pricing.monthlyTokens')}</dt>
           <dd className="text-foreground font-medium">
             {formatPlanQuota(plan.monthlyTokenQuota, disabled, unlimited, locale)}
           </dd>
         </div>
+        <div className="flex justify-between gap-2">
+          <dt>{t('adminPlans.form.maxChatsPerDay')}</dt>
+          <dd className="text-foreground font-medium">
+            {formatPlanQuota(plan.maxChatsPerDay, disabled, unlimited, locale)}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt>{t('adminPlans.form.maxMessagesPerDay')}</dt>
+          <dd className="text-foreground font-medium">
+            {formatPlanQuota(plan.maxMessagesPerDay, disabled, unlimited, locale)}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt>{t('adminPlans.form.maxWorkspaceConnections')}</dt>
+          <dd className="text-foreground font-medium">
+            {formatPlanQuota(plan.maxWorkspaceConnections, disabled, unlimited, locale)}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt>{t('adminPlans.form.maxContextPacks')}</dt>
+          <dd className="text-foreground font-medium">
+            {formatPlanQuota(plan.maxContextPacks, disabled, unlimited, locale)}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt>{t('adminPlans.form.maxMemoryItems')}</dt>
+          <dd className="text-foreground font-medium">
+            {formatPlanQuota(plan.maxMemoryItems, disabled, unlimited, locale)}
+          </dd>
+        </div>
       </dl>
+
+      <div className="mt-4">
+        <PlanFeatureGates featureGates={plan.featureGates} t={t} />
+      </div>
 
       <Link
         href={`${ROUTES.REGISTER}?returnTo=${encodeURIComponent(returnRoute)}`}

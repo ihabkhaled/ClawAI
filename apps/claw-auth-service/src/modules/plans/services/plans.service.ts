@@ -215,6 +215,7 @@ export class PlansService {
       replacementPlanId: plan.replacementPlanId,
       retiredAt: plan.retiredAt,
       dailyTokenQuota: plan.dailyTokenQuota,
+      weeklyTokenQuota: plan.weeklyTokenQuota,
       monthlyTokenQuota: plan.monthlyTokenQuota,
       maxChatsPerDay: plan.maxChatsPerDay,
       maxMessagesPerDay: plan.maxMessagesPerDay,
