@@ -20,30 +20,24 @@ export function Topbar() {
   const title = useTopbarTitle();
 
   return (
-    // Glass topbar: backdrop-blur over the surface-glass token tint, with a
-    // subtle bottom hairline (border-border/30) so it separates from the
-    // shell without competing with the sidebar's solid border. Falls back to
-    // a flat card tint on browsers without backdrop-filter support.
     <header className="border-border/30 bg-card/85 sticky top-0 z-30 flex h-16 w-full min-w-0 items-center justify-between gap-1 border-b px-2 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-[hsl(var(--surface-glass))] sm:gap-2 sm:px-6">
-      <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 shrink-0 md:hidden"
+          className="shrink-0 md:hidden"
           onClick={toggle}
           aria-label={t('accessibility.toggleSidebar')}
         >
           <Menu className="h-5 w-5" />
         </Button>
-        <Breadcrumb />
+        <div className="hidden min-w-0 sm:block">
+          <Breadcrumb />
+        </div>
         {title ? (
-          // The `key={title}` forces React to re-mount the heading whenever
-          // the page title changes so the tailwindcss-animate enter
-          // animation replays. `animate-in fade-in slide-in-from-left-2
-          // duration-300` is the standard combo from tailwindcss-animate.
           <h1
             key={title}
-            className="ease-expo-out animate-in fade-in slide-in-from-left-2 truncate text-base font-semibold tracking-tight duration-300 sm:text-lg"
+            className="ease-expo-out animate-in fade-in slide-in-from-left-2 min-w-0 truncate text-sm font-semibold tracking-tight duration-300 sm:text-lg"
           >
             {title}
           </h1>
@@ -52,8 +46,12 @@ export function Topbar() {
       <div className="flex min-w-0 shrink-0 items-center gap-0.5 sm:gap-2">
         <GlobalSearch />
         <Separator orientation="vertical" className="hidden h-6 sm:block" />
-        <LocaleSwitcher />
-        <ThemeSwitcher />
+        <div className="hidden sm:block">
+          <LocaleSwitcher />
+        </div>
+        <div className="hidden sm:block">
+          <ThemeSwitcher />
+        </div>
         <Separator orientation="vertical" className="hidden h-6 sm:block" />
         <UserMenu />
       </div>
