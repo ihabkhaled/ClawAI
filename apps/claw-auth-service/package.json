@@ -1,6 +1,6 @@
 {
   "name": "claw-auth-service",
-  "version": "1.28.5",
+  "version": "1.28.6",
   "private": true,
   "description": "Claw Auth Service - Authentication, users, and sessions",
   "license": "UNLICENSED",
