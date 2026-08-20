@@ -37,8 +37,12 @@ export function ModelPicker({
   const selectedOption = allOptions.find((option) => option.value === value) ?? null;
 
   const resolveTriggerLabel = (): string => {
-    if (isLoading === true) return loadingPlaceholder;
-    if (isEmpty) return emptyPlaceholder;
+    if (isLoading === true) {
+      return loadingPlaceholder;
+    }
+    if (isEmpty) {
+      return emptyPlaceholder;
+    }
     return selectedOption?.label ?? placeholder;
   };
 
