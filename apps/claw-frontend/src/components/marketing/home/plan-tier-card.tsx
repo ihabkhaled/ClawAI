@@ -63,7 +63,7 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
 
       <dl className="text-muted-foreground mt-4 space-y-1 text-xs">
         <div className="flex justify-between gap-2">
-          <dt>{t('marketing.pricing.dailyTokens')}</dt>
+          <dt>{t('userPlan.dailyLimitLabel')}</dt>
           <dd className="text-foreground font-medium">
             {formatPlanQuota(plan.dailyTokenQuota, disabled, unlimited, locale)}
           </dd>
