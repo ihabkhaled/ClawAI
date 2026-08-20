@@ -16,7 +16,9 @@ export function useSidebarController(): UseSidebarControllerReturn {
   }, [pathname, close]);
 
   useEffect(() => {
-    if (!isOpen || window.matchMedia('(min-width: 768px)').matches) return;
+    if (!isOpen || window.matchMedia('(min-width: 768px)').matches) {
+      return;
+    }
 
     const previousOverflow = document.body.style.overflow;
     const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -36,15 +38,21 @@ export function useSidebarController(): UseSidebarControllerReturn {
         close();
         return;
       }
-      if (event.key !== 'Tab' || !sidebar) return;
+      if (event.key !== 'Tab' || !sidebar) {
+        return;
+      }
 
       const focusable = Array.from(sidebar.querySelectorAll<HTMLElement>(focusableSelector)).filter(
         (element) => element.offsetParent !== null,
       );
-      if (focusable.length === 0) return;
+      if (focusable.length === 0) {
+        return;
+      }
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (!first || !last) return;
+      if (!first || !last) {
+        return;
+      }
 
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
