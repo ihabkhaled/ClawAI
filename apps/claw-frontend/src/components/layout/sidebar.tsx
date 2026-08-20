@@ -32,10 +32,14 @@ export function Sidebar() {
 
       <aside
         data-mobile-sidebar
+        role={isOpen ? 'dialog' : undefined}
+        aria-modal={isOpen ? true : undefined}
+        aria-label={isOpen ? t('accessibility.navigation') : undefined}
+        aria-hidden={!isOpen ? true : undefined}
         className={cn(
           'bg-card duration-normal ease-expo-out fixed z-50 flex flex-col transition-transform',
           'shadow-floating inset-x-0 top-auto bottom-0 h-[85dvh] rounded-t-2xl border-t',
-          'md:static md:visible md:inset-auto md:h-full md:w-[var(--sidebar-width)] md:translate-y-0 md:rounded-none md:border-e md:border-t-0 md:shadow-none',
+          'md:static md:visible md:inset-auto md:h-full md:w-[var(--sidebar-width)] md:translate-y-0 md:rounded-none md:border-e md:border-t-0 md:shadow-none md:[aria-hidden=true]:visible',
           isOpen
             ? 'visible translate-y-0'
             : 'max-md:invisible max-md:pointer-events-none max-md:translate-y-full',
