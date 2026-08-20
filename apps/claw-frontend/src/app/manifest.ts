@@ -7,12 +7,12 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'ClawAI',
     description:
       'Local-first AI orchestration platform: local and cloud models, intelligent routing, memory, workspace integrations, and a desktop agent.',
-    start_url: '/en',
+    start_url: '/?source=pwa',
     scope: '/',
     display: 'standalone',
     orientation: 'any',
     lang: 'en',
-    dir: 'ltr',
+    dir: 'auto',
     background_color: '#0B1220',
     theme_color: '#3B82F6',
     icons: [
@@ -20,9 +20,9 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: '/icon-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
     ],
     shortcuts: [
-      { name: 'New chat', short_name: 'Chat', url: '/en/chat' },
-      { name: 'Models', short_name: 'Models', url: '/en/models' },
-      { name: 'Files', short_name: 'Files', url: '/en/files' },
+      { name: 'New chat', short_name: 'Chat', url: '/chat' },
+      { name: 'Models', short_name: 'Models', url: '/models' },
+      { name: 'Files', short_name: 'Files', url: '/files' },
     ],
   };
 }
