@@ -45,11 +45,28 @@ function MessageBubbleBase({
   const roleLabel = MESSAGE_ROLE_LABELS[message.role];
   const metadata = message.metadata as Record<string, unknown> | null;
   const routeRoadmap = metadata?.['routeRoadmap'] as
-    | { finalProvider?: string | null; finalModel?: string | null }
+    | {
+        routerModel?: string | null;
+        research?: { workflow?: string | null; itemCount?: number } | null;
+        finalProvider?: string | null;
+        finalModel?: string | null;
+      }
     | undefined;
   const displayedProvider = routeRoadmap?.finalProvider ?? message.provider;
   const displayedModel = routeRoadmap?.finalModel ?? message.model;
   const providerModel = [displayedProvider, displayedModel ?? 'unknown'].filter(Boolean).join(' / ');
+  const routerModel = typeof routeRoadmap?.routerModel === 'string' ? routeRoadmap.routerModel : null;
+  const routeSummary =
+    message.routingMode === RoutingMode.AUTO && routerModel
+      ? `Route: ${routerModel} -> ${displayedModel ?? 'unknown'}`
+      : null;
+  const researchSummary = routeRoadmap?.research;
+  const researchBadgeLabel =
+    researchSummary !== null &&
+    researchSummary !== undefined &&
+    typeof researchSummary.workflow === 'string'
+      ? `Research: ${researchSummary.workflow}${typeof researchSummary.itemCount === 'number' ? ` (${String(researchSummary.itemCount)} items)` : ''}`
+      : null;
   const memoryCount = typeof metadata?.['memoryCount'] === 'number' ? metadata['memoryCount'] : 0;
   const contextFileIds = Array.isArray(metadata?.['fileIds']) ? (metadata['fileIds'] as string[]) : [];
   const isImageGeneration = metadata?.['type'] === 'image_generation';
@@ -87,7 +104,9 @@ function MessageBubbleBase({
       : null;
 
   const handleFeedback = (value: MessageFeedback): void => {
-    if (!onFeedback) return;
+    if (!onFeedback) {
+      return;
+    }
     onFeedback(message.id, message.feedback === value ? null : value);
   };
 
@@ -146,9 +165,11 @@ function MessageBubbleBase({
         {!isUser && toolTranscript !== null ? <OllamaToolTranscriptPanel transcript={toolTranscript} /> : null}
         {!isUser && researchTranscript !== null ? <ResearchTranscriptPanel transcript={researchTranscript} /> : null}
 
-        {!isUser && (providerModel || workflow || judgeDecision || memoryCount > 0 || contextFileIds.length > 0) ? (
+        {!isUser && (providerModel || routeSummary || researchBadgeLabel || workflow || judgeDecision || memoryCount > 0 || contextFileIds.length > 0) ? (
           <div className="flex max-w-full flex-wrap items-center gap-1.5">
             {providerModel ? <Badge variant="outline" className="max-w-full truncate text-xs">{providerModel}</Badge> : null}
+            {routeSummary ? <Badge variant="outline" className="max-w-full truncate text-xs">{routeSummary}</Badge> : null}
+            {researchBadgeLabel ? <Badge variant="outline" className="max-w-full truncate text-xs">{researchBadgeLabel}</Badge> : null}
             <WorkflowBadge workflow={workflow} reason={workflowReason} searchFirst={searchFirstMeta} />
             {judgeDecision === 'ACCEPT' ? (
               <Badge variant="success" className="gap-1 text-xs">
