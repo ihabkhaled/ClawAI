@@ -1,11 +1,8 @@
 import { cva } from 'class-variance-authority';
 import type { VariantProps } from 'class-variance-authority';
 
-// The pure class-variance-authority definition, split out of button.tsx so
-// React Server Components can import the class helper WITHOUT pulling in
-// button.tsx's `@radix-ui/react-slot` dependency — react-slot calls
-// React.createContext at module load, which throws in the RSC server build
-// ("createContext is not a function"). This is the standard shadcn split.
+// Shared button sizing is mobile-first. Visual controls can stay compact on
+// desktop, but coarse/small-screen hit areas must remain comfortably tappable.
 export const buttonVariants = cva(
   'inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all duration-fast ease-quint-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50',
   {
@@ -20,12 +17,12 @@ export const buttonVariants = cva(
         unstyled: '',
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-md px-3',
+        default: 'h-10 px-4 py-2 max-md:min-h-11',
+        sm: 'h-9 rounded-md px-3 max-md:min-h-11',
         lg: 'h-11 rounded-md px-8',
-        icon: 'h-10 w-10',
-        'icon-sm': 'h-8 w-8',
-        'icon-xs': 'h-7 w-7 rounded-sm',
+        icon: 'h-10 w-10 max-md:min-h-11 max-md:min-w-11',
+        'icon-sm': 'h-8 w-8 max-md:min-h-11 max-md:min-w-11',
+        'icon-xs': 'h-7 w-7 rounded-sm max-md:min-h-11 max-md:min-w-11',
         unstyled: '',
       },
     },
