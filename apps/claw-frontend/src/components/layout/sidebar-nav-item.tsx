@@ -76,7 +76,7 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
           size="unstyled"
           type="button"
           onClick={toggle}
-          aria-label={t(item.labelKey)}
+          aria-label={expanded ? 'Collapse' : 'Expand'}
           aria-expanded={expanded}
           className="text-muted-foreground hover:bg-accent hover:text-accent-foreground ms-1 flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors"
         >
