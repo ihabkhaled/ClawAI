@@ -30,18 +30,21 @@ export function PwaManager(): React.ReactElement | null {
     window.addEventListener('beforeinstallprompt', handleInstallPrompt);
 
     if ('serviceWorker' in navigator) {
-      void navigator.serviceWorker.register('/sw.js').then((registration) => {
-        if (registration.waiting) setWaitingWorker(registration.waiting);
-        registration.addEventListener('updatefound', () => {
-          const worker = registration.installing;
-          if (!worker) return;
-          worker.addEventListener('statechange', () => {
-            if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-              setWaitingWorker(worker);
-            }
+      void navigator.serviceWorker
+        .register('/sw.js')
+        .then((registration) => {
+          if (registration.waiting) setWaitingWorker(registration.waiting);
+          registration.addEventListener('updatefound', () => {
+            const worker = registration.installing;
+            if (!worker) return;
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                setWaitingWorker(worker);
+              }
+            });
           });
-        });
-      });
+        })
+        .catch(() => undefined);
     }
 
     return () => {
@@ -54,7 +57,9 @@ export function PwaManager(): React.ReactElement | null {
   React.useEffect(() => {
     if (!waitingWorker || !('serviceWorker' in navigator)) return;
     const handleControllerChange = (): void => window.location.reload();
-    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange, { once: true });
+    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange, {
+      once: true,
+    });
     return () => navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
   }, [waitingWorker]);
 
@@ -76,22 +81,33 @@ export function PwaManager(): React.ReactElement | null {
       {isOffline ? (
         <div className="flex min-h-11 items-center gap-3 text-sm">
           <WifiOff className="h-5 w-5 shrink-0 text-warning" aria-hidden="true" />
-          <span className="min-w-0 flex-1">You are offline. Cached pages remain available and requests will retry after reconnection.</span>
+          <span className="min-w-0 flex-1">
+            You are offline. Reconnect to continue private actions; the public offline fallback remains available.
+          </span>
         </div>
       ) : null}
       {waitingWorker ? (
         <div className="flex items-center gap-2">
           <RefreshCw className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
           <span className="min-w-0 flex-1 text-sm">A new ClawAI version is available.</span>
-          <Button size="sm" onClick={applyUpdate}>Update</Button>
+          <Button size="sm" onClick={applyUpdate}>
+            Update
+          </Button>
         </div>
       ) : null}
       {installPrompt && !installDismissed ? (
         <div className="flex items-center gap-2">
           <Download className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
-          <span className="min-w-0 flex-1 text-sm">Install ClawAI for faster app-like access.</span>
-          <Button size="sm" onClick={() => void install()}>Install</Button>
-          <Button variant="ghost" size="icon" aria-label="Dismiss install prompt" onClick={() => setInstallDismissed(true)}>
+          <span className="min-w-0 flex-1 text-sm">Install ClawAI for app-like access.</span>
+          <Button size="sm" onClick={() => void install()}>
+            Install
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Dismiss install prompt"
+            onClick={() => setInstallDismissed(true)}
+          >
             <X className="h-4 w-4" />
           </Button>
         </div>
