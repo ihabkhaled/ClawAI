@@ -24,12 +24,17 @@ describe('buildChainNlDraftSystemPrompt', () => {
     expect(prompt).not.toContain('SEND_SLACK_MESSAGE');
   });
 
-  it('omits connectors for a provider with no write actions', () => {
+  // Post-pack hardening gave Google Calendar its one write action
+  // (CREATE_GOOGLE_CALENDAR_EVENT), so it now appears in the menu like any
+  // other provider — this replaces the old "omitted, no write actions"
+  // case, which no provider hits anymore now that every one has at least
+  // one write action in CHAIN_ACTION_CATALOG.
+  it('lists a calendar connector once it has a write action', () => {
     const prompt = buildChainNlDraftSystemPrompt([
       { id: 'cal-1', provider: WorkspaceProvider.GOOGLE_CALENDAR },
     ]);
-    expect(prompt).not.toContain('cal-1');
-    expect(prompt).toContain('(none)');
+    expect(prompt).toContain('cal-1');
+    expect(prompt).toContain('CREATE_GOOGLE_CALENDAR_EVENT');
   });
 
   it('renders "(none)" when given no connectors at all', () => {

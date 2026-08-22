@@ -1,6 +1,5 @@
 import { OutlookCalendarAdapter } from '../outlook-calendar.adapter';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
-import type { WorkspaceAdapter } from '../workspace-adapter.interface';
 
 global.fetch = jest.fn();
 
@@ -211,11 +210,79 @@ describe('OutlookCalendarAdapter', () => {
     });
   });
 
-  describe('no write path', () => {
-    it('does not implement supportsWrite/executeWriteAction — read-only provider', () => {
-      const asInterface: WorkspaceAdapter = adapter;
-      expect(asInterface.supportsWrite).toBeUndefined();
-      expect(asInterface.executeWriteAction).toBeUndefined();
+  // Post-pack hardening — previously read-only; now supports one write
+  // action (create an event) via Graph's POST /me/events.
+  describe('write actions', () => {
+    it('supports write actions and lists CREATE_OUTLOOK_CALENDAR_EVENT', () => {
+      expect(adapter.supportsWrite()).toBe(true);
+      expect(adapter.getSupportedActionTypes()).toEqual(['CREATE_OUTLOOK_CALENDAR_EVENT']);
+    });
+
+    describe('CREATE_OUTLOOK_CALENDAR_EVENT', () => {
+      it('creates an event and returns its id/link', async () => {
+        (global.fetch as jest.Mock).mockResolvedValue({
+          ok: true,
+          json: async () => ({ id: 'new-evt', webLink: 'https://outlook.office.com/new-evt' }),
+        });
+        const result = await adapter.executeWriteAction('token', 'CREATE_OUTLOOK_CALENDAR_EVENT', {
+          subject: 'Planning',
+          startDateTime: '2026-02-01T10:00:00',
+          endDateTime: '2026-02-01T10:30:00',
+          attendeeEmails: ['bob@example.com'],
+        });
+        expect(result).toEqual({
+          success: true,
+          externalId: 'new-evt',
+          url: 'https://outlook.office.com/new-evt',
+        });
+        const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+        expect(url).toContain('/me/events');
+        const body = JSON.parse(init.body as string);
+        expect(body.attendees).toEqual([
+          { emailAddress: { address: 'bob@example.com' }, type: 'required' },
+        ]);
+      });
+
+      it('returns success:false when required fields are missing', async () => {
+        const result = await adapter.executeWriteAction('token', 'CREATE_OUTLOOK_CALENDAR_EVENT', {
+          subject: 'x',
+        });
+        expect(result.success).toBe(false);
+        expect(result.errorMessage).toContain('requires {subject, startDateTime, endDateTime}');
+        expect(global.fetch).not.toHaveBeenCalled();
+      });
+
+      it('returns success:false on a non-ok API response', async () => {
+        (global.fetch as jest.Mock).mockResolvedValue({
+          ok: false,
+          status: 403,
+          text: async () => 'forbidden',
+        });
+        const result = await adapter.executeWriteAction('token', 'CREATE_OUTLOOK_CALENDAR_EVENT', {
+          subject: 'x',
+          startDateTime: '2026-02-01T10:00:00',
+          endDateTime: '2026-02-01T10:30:00',
+        });
+        expect(result.success).toBe(false);
+        expect(result.errorMessage).toContain('403');
+      });
+
+      it('catches a thrown network error', async () => {
+        (global.fetch as jest.Mock).mockRejectedValue(new Error('network down'));
+        const result = await adapter.executeWriteAction('token', 'CREATE_OUTLOOK_CALENDAR_EVENT', {
+          subject: 'x',
+          startDateTime: '2026-02-01T10:00:00',
+          endDateTime: '2026-02-01T10:30:00',
+        });
+        expect(result.success).toBe(false);
+        expect(result.errorMessage).toBe('network down');
+      });
+    });
+
+    it('returns success:false for an unsupported action type', async () => {
+      const result = await adapter.executeWriteAction('token', 'DELETE_OUTLOOK_CALENDAR_EVENT', {});
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain('unsupported action type');
     });
   });
 });

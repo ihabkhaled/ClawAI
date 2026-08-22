@@ -89,7 +89,18 @@ export const CHAIN_ACTION_CATALOG: Record<
       label: 'Update a SharePoint list item',
     },
   ],
-  // Read-only providers (Phase 01's matrix) — no write actions to offer.
-  [WorkspaceProvider.GOOGLE_CALENDAR]: [],
-  [WorkspaceProvider.OUTLOOK_CALENDAR]: [],
+  // Post-pack hardening gave both calendar providers one write action each
+  // (create an event) — previously read-only per Phase 01's matrix.
+  [WorkspaceProvider.GOOGLE_CALENDAR]: [
+    {
+      actionType: WorkspaceActionType.CREATE_GOOGLE_CALENDAR_EVENT,
+      label: 'Create a Google Calendar event',
+    },
+  ],
+  [WorkspaceProvider.OUTLOOK_CALENDAR]: [
+    {
+      actionType: WorkspaceActionType.CREATE_OUTLOOK_CALENDAR_EVENT,
+      label: 'Create an Outlook Calendar event',
+    },
+  ],
 };

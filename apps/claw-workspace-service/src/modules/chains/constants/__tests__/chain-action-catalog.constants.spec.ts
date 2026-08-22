@@ -27,9 +27,16 @@ describe('CHAIN_ACTION_CATALOG', () => {
     }
   });
 
-  it('leaves read-only providers with no write actions', () => {
-    expect(CHAIN_ACTION_CATALOG[WorkspaceProvider.GOOGLE_CALENDAR]).toEqual([]);
-    expect(CHAIN_ACTION_CATALOG[WorkspaceProvider.OUTLOOK_CALENDAR]).toEqual([]);
+  // Post-pack hardening gave both calendar providers one write action each
+  // (create an event) — previously read-only, this regression-guards that
+  // choice rather than asserting the old empty-array state.
+  it('gives both calendar providers exactly the create-event write action', () => {
+    expect(CHAIN_ACTION_CATALOG[WorkspaceProvider.GOOGLE_CALENDAR]).toEqual([
+      { actionType: WorkspaceActionType.CREATE_GOOGLE_CALENDAR_EVENT, label: expect.any(String) },
+    ]);
+    expect(CHAIN_ACTION_CATALOG[WorkspaceProvider.OUTLOOK_CALENDAR]).toEqual([
+      { actionType: WorkspaceActionType.CREATE_OUTLOOK_CALENDAR_EVENT, label: expect.any(String) },
+    ]);
   });
 
   it('excludes the Figma-composite Jira actions (out of scope for NL drafting)', () => {

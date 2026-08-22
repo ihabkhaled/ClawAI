@@ -12,21 +12,21 @@ explicit instruction after each was flagged.**
 **Post-pack hardening status (updated as each gap closes):** Phase 17 (live-DB migration
 verification), Phase 18 (delta-sync investigation — genuinely blocked for all 3 providers — plus
 the OneDrive capability-drift fix + its first test coverage), Phase 19 (SharePoint + Google Drive
-test coverage), and Phase 20 (Bitbucket/Slack/Confluence/Google Calendar/Outlook Calendar test
-coverage) done — see their own sections. **Every adapter in the service now has dedicated test
-coverage** (0 of 9 → 9 of 9 across Phases 18–20). Not yet started: a Confluence webhook;
-Bitbucket/Jira webhook-stub hardening; a Google/Outlook Calendar write path; a durable
-audit-logging/governance system; a connector-grant-revocation audit trail; the
-`WebhookReceiverManager.replay()` failed-republish signal; a fault-injection "lab"; CI-wired E2E;
-auto-triggering off events; the real chain-executor DAG rewrite; compensating/verification steps;
-push-subscription lifecycle management; the AI-step/auto-trigger recipe layer; an LLM-backed
-preference classifier (memory-service); the memory-service write-path fix; true org-level RBAC
-(auth-service); the never-seeded `SyncCadenceDefault` table (found during Phase 18, deliberately
-deferred as its own gap); the open Google Drive delta-sync-semantics observation (found during
-Phase 19, deliberately left unresolved); the remaining stale per-service docs; Phase 01's
-duplication scan and RabbitMQ contract inventory. Per explicit instruction this pass, the
-LLM-preference-classifier and org-RBAC items are now in scope even though they cross into
-memory-service/auth-service — every other item stays within
+test coverage), Phase 20 (Bitbucket/Slack/Confluence/Google Calendar/Outlook Calendar test
+coverage), and Phase 21 (Google/Outlook Calendar write path — one create-event action each) done
+— see their own sections. **Every adapter in the service now has dedicated test coverage** (0 of 9
+→ 9 of 9 across Phases 18–20). Not yet started: a Confluence webhook; Bitbucket/Jira
+webhook-stub hardening; a durable audit-logging/governance system; a connector-grant-revocation
+audit trail; the `WebhookReceiverManager.replay()` failed-republish signal; a fault-injection
+"lab"; CI-wired E2E; auto-triggering off events; the real chain-executor DAG rewrite;
+compensating/verification steps; push-subscription lifecycle management; the AI-step/auto-trigger
+recipe layer; an LLM-backed preference classifier (memory-service); the memory-service write-path
+fix; true org-level RBAC (auth-service); the never-seeded `SyncCadenceDefault` table (found during
+Phase 18, deliberately deferred as its own gap); the open Google Drive delta-sync-semantics
+observation (found during Phase 19, deliberately left unresolved); the remaining stale
+per-service docs; Phase 01's duplication scan and RabbitMQ contract inventory. Per explicit
+instruction this pass, the LLM-preference-classifier and org-RBAC items are now in scope even
+though they cross into memory-service/auth-service — every other item stays within
 `claw-workspace-service`/`claw-frontend`.
 
 Pass 1 (below, preserved) established the structural map. Pass 2 adds the machine-actionable
@@ -1178,6 +1178,62 @@ OneDrive before writing its tests; none of the 5 had one:
 drift bugs (OneDrive's, found in Phase 18, remains the only one across all 9 adapters). The
 Google/Outlook Calendar write-path gap and the still-open Google Drive delta-sync-semantics
 observation (Phase 19) remain exactly as documented, un-addressed here.
+
+## Phase 21 — Google/Outlook Calendar Write Path (done)
+
+Closes the calendar-write-path gap flagged since Phase 13: both calendar providers were
+sync-only, with the Pass-2 matrix noting the pack's own golden recipes (Phase 07) reference
+meeting automation, which needs a write path on at least one calendar provider. Unlike the
+webhook-signature stubs and delta-sync gaps this session has repeatedly left alone, "create an
+event" against Google Calendar's `events.insert` and Microsoft Graph's `POST /me/events` are
+canonical, decade-stable, fully public REST endpoints — not self-hosted-instance-variable
+(GitLab), not an obscure query-filter language (Bitbucket), not a mechanism nothing in this repo
+already uses (Graph `/delta`). This is squarely inside what's honestly buildable.
+
+**What shipped:**
+
+- One write action per provider — `CREATE_GOOGLE_CALENDAR_EVENT` and
+  `CREATE_OUTLOOK_CALENDAR_EVENT` — added to `WorkspaceActionType` in both the Prisma schema
+  (migration `20260822000000_add_calendar_write_actions`, hand-authored `ALTER TYPE ... ADD VALUE
+IF NOT EXISTS`, matching this repo's established pattern for adding action-type enum values) and
+  the hand-written mirror enum, plus the frontend's own mirror enum and label map.
+- `GoogleCalendarAdapter`/`OutlookCalendarAdapter` gained `supportsWrite()`,
+  `getSupportedActionTypes()`, and `executeWriteAction()`, each posting a minimal event body
+  (title/subject, start/end, optional description/body, optional attendee emails) to the
+  provider's standard create-event endpoint. `getDefaultScopes()` on both was upgraded from
+  read-only (`calendar.events.readonly` / `Calendars.Read`) to write-capable
+  (`calendar.events` / `Calendars.ReadWrite`) — the write action would 403 without this.
+- `PROVIDER_DEFINITION_SEEDS` and `CHAIN_ACTION_CATALOG` updated for both providers
+  (`write: false → true`, `supportedActions: [] → [...]`), verified against the adapters by the
+  existing generic `provider-registry-drift.spec.ts` contract test (no hardcoded update needed —
+  it iterates every provider and asserts registry/adapter agreement).
+- Test coverage added directly to each adapter's Phase 20 spec file: create-success (asserting the
+  attendee payload shape), missing-required-fields, non-ok API response, and a thrown-network-error
+  path. Three pre-existing tests were updated because their premise ("calendar providers have no
+  write actions") is no longer true: `chain-action-catalog.constants.spec.ts`'s
+  "leaves read-only providers with no write actions" assertion, and
+  `chain-nl-draft-prompt.utility.spec.ts`'s "omits connectors for a provider with no write
+  actions" case (rewritten to assert the connector now correctly appears with its real action,
+  since no provider in the catalog is empty anymore).
+- 1123/1123 backend tests pass (92/92 suites); 1949/1949 frontend tests pass (327/327 suites);
+  typecheck/lint/build clean on both sides.
+
+**A live-DB safety note worth recording**: applying this migration via `prisma migrate dev`
+against the shared dev Postgres container triggered Prisma's checksum-drift detector on an
+unrelated, already-applied migration (`20260419211000_workspace_action_idempotency`), which
+offered to run `migrate reset` — **all data would have been lost**. This was refused immediately;
+the command was not confirmed and nothing was dropped (verified via a follow-up `migrate status`).
+The migration was instead hand-authored (matching every other migration in this repo) and applied
+via `migrate deploy`, which does no such checksum comparison and applied cleanly. **`migrate dev`
+should not be run again against this shared container** — `migrate deploy` is the safe tool here,
+exactly as Phase 17 already established.
+
+**Explicitly not done in this slice**: no update/delete/list actions for calendar events — only
+create, matching the narrowest real gap the pack's golden recipes actually need. No investigation
+into _why_ `20260419211000_workspace_action_idempotency` shows checksum drift — that's a separate,
+pre-existing question (possibly a legitimately-corrected migration file after original authoring)
+noted here but not chased down, since the safe hand-authored-migration path made it moot for this
+phase's purposes.
 
 ## Explicitly not yet verified (next session's starting point)
 

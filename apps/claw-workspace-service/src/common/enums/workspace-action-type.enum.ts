@@ -49,4 +49,8 @@ export enum WorkspaceActionType {
   CREATE_CLICKUP_TASK = 'CREATE_CLICKUP_TASK',
   UPDATE_CLICKUP_TASK = 'UPDATE_CLICKUP_TASK',
   COMMENT_CLICKUP_TASK = 'COMMENT_CLICKUP_TASK',
+  // Post-pack hardening — calendar write path (both providers were
+  // read-only; this is the one write action each supports)
+  CREATE_GOOGLE_CALENDAR_EVENT = 'CREATE_GOOGLE_CALENDAR_EVENT',
+  CREATE_OUTLOOK_CALENDAR_EVENT = 'CREATE_OUTLOOK_CALENDAR_EVENT',
 }

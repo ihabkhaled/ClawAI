@@ -68,4 +68,6 @@ export const WORKSPACE_ACTION_TYPE_LABEL: Record<WorkspaceActionType, string> = 
   [WorkspaceActionType.CREATE_CLICKUP_TASK]: 'Create ClickUp Task',
   [WorkspaceActionType.UPDATE_CLICKUP_TASK]: 'Update ClickUp Task',
   [WorkspaceActionType.COMMENT_CLICKUP_TASK]: 'Comment on ClickUp Task',
+  [WorkspaceActionType.CREATE_GOOGLE_CALENDAR_EVENT]: 'Create Google Calendar Event',
+  [WorkspaceActionType.CREATE_OUTLOOK_CALENDAR_EVENT]: 'Create Outlook Calendar Event',
 };

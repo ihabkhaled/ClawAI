@@ -476,12 +476,13 @@ export const PROVIDER_DEFINITION_SEEDS: ProviderDefinitionSeed[] = [
   // working, tested adapters, but were never added to this registry, so
   // ProviderRegistryService.getByProvider(GOOGLE_CALENDAR |
   // OUTLOOK_CALENDAR) threw EntityNotFoundException for a provider that
-  // otherwise works end to end. Both adapters are read-only (no
-  // supportsWrite/executeWriteAction), so supportedActions is empty.
+  // otherwise works end to end. Post-pack hardening gave both adapters one
+  // write action each (create an event) — see the calendar-write-path gap
+  // in docs/workspace/work-os-current-state-and-gap-map.md.
   {
     provider: WorkspaceProvider.GOOGLE_CALENDAR,
     displayName: 'Google Calendar',
-    description: 'Google Calendar meetings and events (read-only)',
+    description: 'Google Calendar meetings and events',
     authModes: [WorkspaceProviderAuthMode.OAUTH2],
     defaultAuthMode: WorkspaceProviderAuthMode.OAUTH2,
     configSchema: {
@@ -489,16 +490,16 @@ export const PROVIDER_DEFINITION_SEEDS: ProviderDefinitionSeed[] = [
       fields: [...OAUTH_APP_FIELDS],
     },
     supportedObjects: [WorkspaceObjectType.MEETING],
-    supportedActions: [],
+    supportedActions: [WorkspaceActionType.CREATE_GOOGLE_CALENDAR_EVENT],
     adapterKey: 'google-calendar',
-    capabilities: { sync: true, write: false, webhooks: false, deltaSync: true },
+    capabilities: { sync: true, write: true, webhooks: false, deltaSync: true },
     iconUrl: '/icons/providers/google-calendar.svg',
     docsUrl: 'https://developers.google.com/calendar/api/guides/overview',
   },
   {
     provider: WorkspaceProvider.OUTLOOK_CALENDAR,
     displayName: 'Outlook Calendar',
-    description: 'Microsoft Outlook Calendar meetings and events (read-only)',
+    description: 'Microsoft Outlook Calendar meetings and events',
     authModes: [WorkspaceProviderAuthMode.OAUTH2],
     defaultAuthMode: WorkspaceProviderAuthMode.OAUTH2,
     configSchema: {
@@ -516,9 +517,9 @@ export const PROVIDER_DEFINITION_SEEDS: ProviderDefinitionSeed[] = [
       ],
     },
     supportedObjects: [WorkspaceObjectType.MEETING],
-    supportedActions: [],
+    supportedActions: [WorkspaceActionType.CREATE_OUTLOOK_CALENDAR_EVENT],
     adapterKey: 'outlook-calendar',
-    capabilities: { sync: true, write: false, webhooks: false, deltaSync: false },
+    capabilities: { sync: true, write: true, webhooks: false, deltaSync: false },
     iconUrl: '/icons/providers/outlook-calendar.svg',
     docsUrl: 'https://learn.microsoft.com/en-us/graph/api/resources/calendar',
   },
