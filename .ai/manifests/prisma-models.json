@@ -182,6 +182,7 @@
       "WorkspaceChainTemplate",
       "WorkspaceConnector",
       "WorkspaceConnectorGrant",
+      "WorkspaceConnectorGrantAuditLog",
       "WorkspaceEvent",
       "WorkspaceHealthEvent",
       "WorkspaceObject",

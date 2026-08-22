@@ -110,6 +110,14 @@ export class ConnectorAccessService {
       throw new ForbiddenException({ messageKey: 'CONNECTOR_GRANT_FORBIDDEN' });
     }
     this.logger.log(`revoke: connector=${connectorId} grantee=${granteeUserId} by=${revokedBy}`);
+    // Post-pack hardening — snapshot the grant before the hard delete so
+    // revocation survives it, rather than only the ephemeral log line
+    // above. Skipped when there's nothing to revoke (already-gone grant),
+    // matching deleteOne's existing silent-no-op behavior.
+    const existing = await this.grantRepo.findForUserConnector(granteeUserId, connectorId);
+    if (existing !== null) {
+      await this.grantRepo.recordRevocation(existing, revokedBy);
+    }
     await this.grantRepo.deleteOne(connectorId, granteeUserId);
   }
 

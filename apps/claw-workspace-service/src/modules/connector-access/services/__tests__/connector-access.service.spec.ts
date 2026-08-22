@@ -14,6 +14,7 @@ const makeService = (
     findForUserConnector: jest.fn().mockResolvedValue(overrides.grant ?? null),
     upsert: jest.fn().mockResolvedValue({ id: 'g1' }),
     deleteOne: jest.fn().mockResolvedValue(undefined),
+    recordRevocation: jest.fn().mockResolvedValue(undefined),
   };
   const svc = new ConnectorAccessService(connectorRepo as any, grantRepo as any);
   return { svc, connectorRepo, grantRepo };
@@ -144,6 +145,35 @@ describe('ConnectorAccessService', () => {
     it('owner can revoke', async () => {
       const { svc, grantRepo } = makeService({ connector: { userId: 'owner' } });
       await svc.revoke('c1', 'alice', 'owner');
+      expect(grantRepo.deleteOne).toHaveBeenCalledWith('c1', 'alice');
+    });
+
+    // Post-pack hardening — revocation now snapshots the grant into an
+    // append-only audit log before the hard delete.
+    it('revoking an existing grant records a revocation snapshot before deleting', async () => {
+      const existingGrant = {
+        connectorId: 'c1',
+        userId: 'alice',
+        accessLevel: WorkspaceConnectorAccessLevel.AI_ACTIONS,
+        grantedBy: 'owner',
+        createdAt: new Date('2026-01-01T00:00:00Z'),
+      };
+      const { svc, grantRepo } = makeService({
+        connector: { userId: 'owner' },
+        grant: existingGrant,
+      });
+      await svc.revoke('c1', 'alice', 'owner');
+      expect(grantRepo.recordRevocation).toHaveBeenCalledWith(existingGrant, 'owner');
+      // The snapshot must be written before the row is deleted, not after.
+      const recordOrder = grantRepo.recordRevocation.mock.invocationCallOrder[0];
+      const deleteOrder = grantRepo.deleteOne.mock.invocationCallOrder[0];
+      expect(recordOrder).toBeLessThan(deleteOrder);
+    });
+
+    it('revoking an already-gone grant skips the audit write — nothing to snapshot', async () => {
+      const { svc, grantRepo } = makeService({ connector: { userId: 'owner' }, grant: null });
+      await svc.revoke('c1', 'alice', 'owner');
+      expect(grantRepo.recordRevocation).not.toHaveBeenCalled();
       expect(grantRepo.deleteOne).toHaveBeenCalledWith('c1', 'alice');
     });
   });

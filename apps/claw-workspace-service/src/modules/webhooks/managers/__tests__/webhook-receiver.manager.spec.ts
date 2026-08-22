@@ -54,7 +54,10 @@ function mockRow(overrides: Partial<WebhookDelivery> = {}): WebhookDelivery {
 describe('WebhookReceiverManager', () => {
   let manager: WebhookReceiverManager;
   let repo: jest.Mocked<
-    Pick<WebhookDeliveryRepository, 'create' | 'findByExternalId' | 'findById' | 'markProcessed'>
+    Pick<
+      WebhookDeliveryRepository,
+      'create' | 'findByExternalId' | 'findById' | 'markProcessed' | 'setPublishFailed'
+    >
   >;
   let rabbitmq: jest.Mocked<Pick<RabbitMQService, 'publish'>>;
   let rateLimiter: jest.Mocked<Pick<WebhookRateLimiterManager, 'tryReserve'>>;
@@ -65,6 +68,7 @@ describe('WebhookReceiverManager', () => {
       findByExternalId: jest.fn().mockResolvedValue(null),
       findById: jest.fn().mockResolvedValue(null),
       markProcessed: jest.fn().mockResolvedValue(undefined),
+      setPublishFailed: jest.fn().mockResolvedValue(undefined),
     };
     rabbitmq = { publish: jest.fn().mockResolvedValue(undefined) };
     rateLimiter = { tryReserve: jest.fn().mockReturnValue(true) };
@@ -208,6 +212,7 @@ describe('WebhookReceiverManager', () => {
           eventType: 'push',
         }),
       );
+      expect(repo.setPublishFailed).toHaveBeenCalledWith('new-row', false);
     });
   });
 
@@ -232,6 +237,9 @@ describe('WebhookReceiverManager', () => {
 
       expect(result).toEqual({ status: 'ACCEPTED', deliveryId: 'new-row', signatureValid: true });
       expect(repo.create).toHaveBeenCalledTimes(1);
+      // Post-pack hardening — the swallowed failure is now durably
+      // recorded, not just warn-logged.
+      expect(repo.setPublishFailed).toHaveBeenCalledWith('new-row', true);
     });
 
     it('still returns REJECTED with the row persisted when publish rejects on the rejection path', async () => {
@@ -252,6 +260,7 @@ describe('WebhookReceiverManager', () => {
         signatureValid: false,
         reasonCode: WEBHOOK_REJECTION_CODES.SIGNATURE_INVALID,
       });
+      expect(repo.setPublishFailed).toHaveBeenCalledWith('rejected-row', true);
     });
   });
 
@@ -286,15 +295,16 @@ describe('WebhookReceiverManager', () => {
         }),
       );
       expect(repo.markProcessed).toHaveBeenCalledWith('row-1');
+      // Post-pack hardening — a successful replay clears any prior
+      // publishFailedAt signal for this row.
+      expect(repo.setPublishFailed).toHaveBeenCalledWith('row-1', false);
     });
 
-    // Chaos / documented gap: replay() swallows a publish failure the same way
-    // receive() does, but unlike receive() there is no durable "did this event
-    // actually reach RabbitMQ" signal for an operator to inspect afterward —
-    // the row is marked processed regardless of whether the republish
-    // succeeded. See the Phase 15 gap-map entry: this is a real, deliberately
-    // undeferred observability gap, not fixed in this slice.
-    it('marks the delivery processed even when the republish itself fails', async () => {
+    // Chaos: replay() still swallows a publish failure the same way receive()
+    // does (markProcessed always runs — a deliberate, unchanged behavior),
+    // but the Phase 15 gap this used to document — no durable "did this event
+    // actually reach RabbitMQ" signal — is now closed by publishFailedAt.
+    it('marks the delivery processed AND records publishFailedAt when the republish itself fails', async () => {
       repo.findById.mockResolvedValue(mockRow({ id: 'row-1' }));
       rabbitmq.publish.mockRejectedValue(new Error('ECONNREFUSED'));
 
@@ -302,6 +312,19 @@ describe('WebhookReceiverManager', () => {
 
       expect(result).toEqual({ deliveryId: 'row-1' });
       expect(repo.markProcessed).toHaveBeenCalledWith('row-1');
+      expect(repo.setPublishFailed).toHaveBeenCalledWith('row-1', true);
+    });
+
+    // Recovery: a delivery whose earlier publish failed (publishFailedAt
+    // set) gets it cleared once a later replay actually succeeds — the
+    // durable signal reflects the latest attempt, not just the first one.
+    it('clears a prior publishFailedAt once a retried replay succeeds', async () => {
+      repo.findById.mockResolvedValue(mockRow({ id: 'row-1', processedAt: null }));
+      rabbitmq.publish.mockResolvedValue(undefined);
+
+      await manager.replay('row-1');
+
+      expect(repo.setPublishFailed).toHaveBeenCalledWith('row-1', false);
     });
   });
 });

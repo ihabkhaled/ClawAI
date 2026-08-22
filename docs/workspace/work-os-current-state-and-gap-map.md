@@ -13,12 +13,12 @@ explicit instruction after each was flagged.**
 verification), Phase 18 (delta-sync investigation — genuinely blocked for all 3 providers — plus
 the OneDrive capability-drift fix + its first test coverage), Phase 19 (SharePoint + Google Drive
 test coverage), Phase 20 (Bitbucket/Slack/Confluence/Google Calendar/Outlook Calendar test
-coverage), and Phase 21 (Google/Outlook Calendar write path — one create-event action each) done
-— see their own sections. **Every adapter in the service now has dedicated test coverage** (0 of 9
-→ 9 of 9 across Phases 18–20). Not yet started: a Confluence webhook; Bitbucket/Jira
-webhook-stub hardening; a durable audit-logging/governance system; a connector-grant-revocation
-audit trail; the `WebhookReceiverManager.replay()` failed-republish signal; a fault-injection
-"lab"; CI-wired E2E; auto-triggering off events; the real chain-executor DAG rewrite;
+coverage), Phase 21 (Google/Outlook Calendar write path), and Phase 22 (webhook replay failure
+signal + connector-grant audit trail) done — see their own sections. **Every adapter in the
+service now has dedicated test coverage** (0 of 9 → 9 of 9 across Phases 18–20). Not yet started:
+a Confluence webhook; Bitbucket/Jira webhook-stub hardening; a durable audit-logging/governance
+system (broader than the one connector-grant table Phase 22 added); a fault-injection "lab";
+CI-wired E2E; auto-triggering off events; the real chain-executor DAG rewrite;
 compensating/verification steps; push-subscription lifecycle management; the AI-step/auto-trigger
 recipe layer; an LLM-backed preference classifier (memory-service); the memory-service write-path
 fix; true org-level RBAC (auth-service); the never-seeded `SyncCadenceDefault` table (found during
@@ -1234,6 +1234,50 @@ into _why_ `20260419211000_workspace_action_idempotency` shows checksum drift �
 pre-existing question (possibly a legitimately-corrected migration file after original authoring)
 noted here but not chased down, since the safe hand-authored-migration path made it moot for this
 phase's purposes.
+
+## Phase 22 — Webhook Replay Signal + Connector-Grant Audit Trail (done)
+
+Closes two small, concrete governance/reliability gaps documented across Phases 14/15: both were
+"nothing survives this event but an ephemeral warn log" problems with a well-understood, minimal
+fix, so they're landed together in one phase rather than as separate multi-hour investigations.
+
+**`WebhookReceiverManager.replay()` failed-republish signal** (found Phase 15): `publish()`
+always swallowed a RabbitMQ failure with only a warn log — no durable signal an operator could
+query to find deliveries whose event was actually lost. `WebhookDelivery` gained a
+`publishFailedAt DateTime?` column (migration `20260822010000_add_webhook_publish_failed_at`,
+indexed for a future "list failed" filter). `publish()` now returns whether it succeeded;
+`receive()`'s accept and reject paths and `replay()` all persist the outcome via
+`WebhookDeliveryRepository.setPublishFailed(id, failed)` — set on failure, cleared to `null` on
+the next publish for that row that succeeds (so a later successful replay correctly clears an
+earlier failure, not just papers over it). `replay()`'s existing "always marks processed even
+when the republish itself fails" behavior is unchanged (still Phase 15's own deliberate,
+documented choice) — this phase only adds the missing durable visibility, not a behavior change.
+The `GET /workspace/webhooks/deliveries` endpoint already returns full `WebhookDelivery` rows, so
+`publishFailedAt` is queryable immediately with zero controller/DTO changes. 3 existing Phase 15
+chaos tests updated to assert the new signal; 1 new recovery test added
+(`clears a prior publishFailedAt once a retried replay succeeds`).
+
+**Connector-grant-revocation audit trail** (found Phase 14): `ConnectorAccessService.revoke()`
+hard-deleted the `WorkspaceConnectorGrant` row via `deleteOne()`, with only an ephemeral log line
+surviving. A new append-only `WorkspaceConnectorGrantAuditLog` table (migration
+`20260822020000_add_connector_grant_audit_log`) snapshots the full grant lifecycle — connector,
+grantee, access level, who granted it, when, who revoked it, when — immediately before the delete.
+`revoke()` looks up the existing grant first (skipping the audit write only when there's genuinely
+nothing to snapshot — an already-gone grant, preserving `deleteOne`'s existing silent-no-op), then
+calls the new `ConnectorGrantRepository.recordRevocation()`, then deletes. 2 new tests confirm the
+snapshot is written before the delete (via `mock.invocationCallOrder`) and that a no-op revoke
+correctly skips the audit write.
+
+Both migrations were hand-authored and applied via `migrate deploy`, per Phase 21's established
+safe pattern for this shared dev container (never `migrate dev`). 1126/1126 backend tests pass
+(92/92 suites); lint and build clean.
+
+**Explicitly not done in this slice**: no admin UI or dedicated endpoint to browse either new
+signal — `publishFailedAt` is visible via the existing deliveries-list endpoint's response shape,
+and the grant audit log has no read endpoint at all yet (write-path only, matching "durable trail
+exists" rather than "full audit UI," which is real, separate, larger future work). No retroactive
+backfill for grants revoked before this phase shipped — the audit trail starts now, not
+historically.
 
 ## Explicitly not yet verified (next session's starting point)
 
