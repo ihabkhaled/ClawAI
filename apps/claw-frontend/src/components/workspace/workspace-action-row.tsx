@@ -34,7 +34,7 @@ export function WorkspaceActionRow({
             <summary className="hover:text-foreground cursor-pointer select-none">
               {t('workspaceActions.viewPayload')}
             </summary>
-            <pre className="bg-muted/50 touch:text-xs mt-2 max-h-48 overflow-auto rounded border p-2 font-mono text-[11px]">
+            <pre className="bg-muted/50 touch:text-xs touch:max-h-none touch:overflow-visible mt-2 max-h-48 overflow-auto rounded border p-2 font-mono text-[11px]">
               {payloadPreview}
             </pre>
           </details>

@@ -1015,6 +1015,13 @@
     overflow-wrap: anywhere;
   }
 
+  /* A JSON payload 4,400px wide inside a 220px card cannot be read by swiping
+   * sideways through it. Wrap the block instead. */
+  pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
   /* Meaningful text stays at or above the 12px floor. */
   .kbd-hint {
     font-size: var(--text-xs);

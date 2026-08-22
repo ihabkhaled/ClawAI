@@ -13,44 +13,46 @@ export function SyncHealthRow({ row, t }: SyncHealthRowProps): ReactElement {
     <tr className="border-border hover:bg-muted/30 touch:block touch:rounded-lg touch:border border-b">
       <td
         data-label={t('workspaceSync.dashboard.col.connector')}
-        className="touch:before:text-muted-foreground touch:flex touch:items-start touch:justify-between touch:gap-3 touch:before:text-xs touch:before:font-normal touch:before:content-[attr(data-label)] px-3 py-2 text-sm font-medium"
+        className="touch:before:text-muted-foreground touch:flex touch:flex-wrap touch:items-start touch:justify-between touch:gap-3 touch:before:text-xs touch:before:font-normal touch:before:content-[attr(data-label)] px-3 py-2 text-sm font-medium"
       >
         {row.name}
-        <span className="text-muted-foreground ml-2 text-xs">{row.provider}</span>
+        <span className="text-muted-foreground ms-2 min-w-0 text-xs break-words">
+          {row.provider}
+        </span>
       </td>
       <td
         data-label={t('workspaceSync.dashboard.col.freshness')}
-        className="touch:before:text-muted-foreground touch:flex touch:items-center touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2"
+        className="touch:before:text-muted-foreground touch:flex touch:flex-wrap touch:items-center touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2"
       >
         <StaleChip band={row.freshnessBand} label={bandLabel} />
       </td>
       <td
         data-label={t('workspaceSync.dashboard.col.last_sync')}
-        className="touch:before:text-muted-foreground touch:flex touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
+        className="touch:before:text-muted-foreground touch:flex touch:flex-wrap touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         {formatRelativeAge(row.lastSyncAt)}
       </td>
       <td
         data-label={t('workspaceSync.dashboard.col.cadence')}
-        className="touch:before:text-muted-foreground touch:flex touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
+        className="touch:before:text-muted-foreground touch:flex touch:flex-wrap touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         {row.cadenceSeconds}s
       </td>
       <td
         data-label={t('workspaceSync.dashboard.col.success_rate')}
-        className="touch:before:text-muted-foreground touch:flex touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
+        className="touch:before:text-muted-foreground touch:flex touch:flex-wrap touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         {successRatePct}%
       </td>
       <td
         data-label={t('workspaceSync.dashboard.col.avg_duration')}
-        className="touch:before:text-muted-foreground touch:flex touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
+        className="touch:before:text-muted-foreground touch:flex touch:flex-wrap touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         {row.averageDurationMs === null ? '—' : `${row.averageDurationMs}ms`}
       </td>
       <td
         data-label={t('workspaceSync.dashboard.col.status')}
-        className="text-muted-foreground touch:flex touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
+        className="text-muted-foreground touch:flex touch:flex-wrap touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         {row.status}
       </td>
