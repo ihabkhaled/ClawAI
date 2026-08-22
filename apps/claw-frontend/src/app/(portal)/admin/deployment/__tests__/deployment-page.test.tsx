@@ -9,6 +9,9 @@ vi.mock('@/hooks/admin/use-deployment-page', () => ({ useDeploymentPage: () => m
 vi.mock('@/components/admin/deployment/deployment-status-content', () => ({
   DeploymentStatusContent: () => <div data-testid="deployment-status" />,
 }));
+vi.mock('@/components/admin/deployment/deployment-control-panel', () => ({
+  DeploymentControlPanel: () => <div data-testid="deployment-controls" />,
+}));
 vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 function controller(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -22,6 +25,7 @@ function controller(overrides: Record<string, unknown> = {}): Record<string, unk
     error: null,
     isRefreshing: false,
     retry: vi.fn(),
+    actions: { isBusy: false },
     ...overrides,
   };
 }
@@ -33,6 +37,7 @@ describe('AdminDeploymentPage', () => {
     mockHook.mockReturnValue(controller());
     render(<AdminDeploymentPage />);
     expect(screen.getByTestId('deployment-status')).toBeInTheDocument();
+    expect(screen.getByTestId('deployment-controls')).toBeInTheDocument();
   });
 
   it('denies another administrator before rendering deployment data', () => {
@@ -40,6 +45,7 @@ describe('AdminDeploymentPage', () => {
     render(<AdminDeploymentPage />);
     expect(screen.getByText('common.accessDeniedTitle')).toBeInTheDocument();
     expect(screen.queryByTestId('deployment-status')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('deployment-controls')).not.toBeInTheDocument();
   });
 
   it('waits for a fresh profile before denying a cached pre-migration administrator', () => {

@@ -16,6 +16,9 @@ import { PlansModule } from '../plans/plans.module';
 import { EmailVerificationService } from './services/email-verification.service';
 import { EmailVerificationRepository } from './repositories/email-verification.repository';
 import { AuthEmailAdapter } from './adapters/auth-email.adapter';
+import { EmailChangeManager } from './managers/email-change.manager';
+import { EmailChangeRepository } from './repositories/email-change.repository';
+import { EmailChangeService } from './services/email-change.service';
 
 @Module({
   imports: [RolesModule, PlansModule, RedisModule],
@@ -33,7 +36,10 @@ import { AuthEmailAdapter } from './adapters/auth-email.adapter';
     EmailVerificationService,
     EmailVerificationRepository,
     AuthEmailAdapter,
+    EmailChangeRepository,
+    EmailChangeManager,
+    EmailChangeService,
   ],
-  exports: [AuthService, AuthEmailAdapter],
+  exports: [AuthService, AuthEmailAdapter, EmailChangeService],
 })
 export class AuthModule {}

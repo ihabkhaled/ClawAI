@@ -8,6 +8,17 @@ describe('account profile DTOs', () => {
     ).toBe(true);
   });
 
+  it('strips email from a password-protected profile update', () => {
+    const result = updateOwnProfileSchema.parse({
+      currentPassword: 'CurrentPass1!',
+      email: 'new@example.com',
+      username: 'renamed',
+    });
+
+    expect(result).toEqual({ currentPassword: 'CurrentPass1!', username: 'renamed' });
+    expect(result).not.toHaveProperty('email');
+  });
+
   it.each([
     {},
     { currentPassword: '' },

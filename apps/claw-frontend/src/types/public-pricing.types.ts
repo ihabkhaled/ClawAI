@@ -1,4 +1,5 @@
 import type { BillingInterval } from '@/enums/billing.enum';
+import type { EntitlementFeatureGates } from '@/types/plan.types';
 
 export type PublicPlanPrice = {
   id: string;
@@ -32,6 +33,7 @@ export type PublicPlan = {
   maxWorkspaceConnections: number | null;
   maxContextPacks: number | null;
   maxMemoryItems: number | null;
+  featureGates?: EntitlementFeatureGates;
   prices: readonly PublicPlanPrice[];
   features: readonly PublicPlanFeature[];
 };

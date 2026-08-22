@@ -1,10 +1,11 @@
 'use client';
 
+import { EditUserDialog } from '@/components/admin/edit-user-dialog';
+import { TemporaryPasswordDialog } from '@/components/admin/temporary-password-dialog';
 import { DataTable } from '@/components/common/data-table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -40,13 +41,14 @@ export function UserTable({
     editingUserId,
     setEditingUserId,
     handleRoleSelect,
-    profileEditingId,
-    editUsername,
-    editEmail,
-    setEditUsername,
-    setEditEmail,
-    startProfileEdit,
-    finishProfileEdit,
+    editUser,
+    openEditUser,
+    closeEditUser,
+    submitEditUser,
+    temporaryPasswordUserId,
+    requestTemporaryPassword,
+    cancelTemporaryPassword,
+    confirmTemporaryPassword,
   } = useUserTableState();
   const { t } = useTranslation();
   const activePlans = plans.filter((plan) => plan.isActive);
@@ -55,68 +57,34 @@ export function UserTable({
     {
       key: 'username',
       header: t('admin.colUsername'),
-      render: (user) =>
-        profileEditingId === user.id ? (
-          <Input
-            aria-label={t('admin.editUsername')}
-            value={editUsername}
-            onChange={(event) => setEditUsername(event.target.value)}
-          />
-        ) : (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                {resolveUserInitial(user)}
-              </AvatarFallback>
-            </Avatar>
-            <span className="font-medium">{user.username}</span>
+      render: (user) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="h-9 w-9">
+            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+              {resolveUserInitial(user)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="font-medium">{user.username}</span>
+        </div>
+      ),
+      renderMobileTitle: (user) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="h-9 w-9">
+            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+              {resolveUserInitial(user)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate">{user.username}</span>
+            <span className="text-muted-foreground truncate text-xs font-normal">{user.email}</span>
           </div>
-        ),
-      renderMobileTitle: (user) =>
-        profileEditingId === user.id ? (
-          <div className="space-y-2">
-            <Input
-              aria-label={t('admin.editUsername')}
-              value={editUsername}
-              onChange={(event) => setEditUsername(event.target.value)}
-            />
-            <Input
-              aria-label={t('admin.editEmail')}
-              type="email"
-              value={editEmail}
-              onChange={(event) => setEditEmail(event.target.value)}
-            />
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                {resolveUserInitial(user)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate">{user.username}</span>
-              <span className="text-muted-foreground truncate text-xs font-normal">
-                {user.email}
-              </span>
-            </div>
-          </div>
-        ),
+        </div>
+      ),
     },
     {
       key: 'email',
       header: t('admin.colEmail'),
-      render: (user) =>
-        profileEditingId === user.id ? (
-          <Input
-            aria-label={t('admin.editEmail')}
-            type="email"
-            value={editEmail}
-            onChange={(event) => setEditEmail(event.target.value)}
-          />
-        ) : (
-          <span className="text-muted-foreground text-sm">{user.email}</span>
-        ),
+      render: (user) => <span className="text-muted-foreground text-sm">{user.email}</span>,
     },
     {
       key: 'role',
@@ -224,34 +192,29 @@ export function UserTable({
       // Deactivate action rather than being silently approved by a button
       // labelled "reactivate".
       render: (user) => (
-        <div className="flex justify-end gap-2">
+        <div className="flex min-w-0 flex-wrap justify-end gap-2 max-md:grid max-md:w-full max-md:grid-cols-2">
           <Button
             variant="outline"
             size="sm"
-            disabled={user.isSuperAdmin || isTemporaryPasswordPending}
-            onClick={() => onTemporaryPassword(user.id)}
+            className="h-auto py-1.5"
+            disabled={user.isSuperAdmin || (isTemporaryPasswordPending && pendingId === user.id)}
+            onClick={() => requestTemporaryPassword(user.id)}
           >
-            {t('settings.changePassword')}
+            <span className="min-w-0 text-center leading-tight whitespace-normal">
+              {t('admin.issueTemporaryPassword')}
+            </span>
           </Button>
-          {profileEditingId === user.id ? (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={user.isSuperAdmin || isUpdateUserPending}
-              onClick={() => finishProfileEdit(onUpdateUser)}
-            >
-              {t('admin.saveUser')}
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={user.isSuperAdmin || isUpdateUserPending}
-              onClick={() => startProfileEdit(user)}
-            >
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-auto py-1.5"
+            disabled={user.isSuperAdmin || isUpdateUserPending}
+            onClick={() => openEditUser(user)}
+          >
+            <span className="text-center leading-tight whitespace-normal">
               {t('admin.editUser')}
-            </Button>
-          )}
+            </span>
+          </Button>
           {user.status === UserStatus.SUSPENDED ? (
             <Button
               variant="outline"
@@ -277,12 +240,35 @@ export function UserTable({
   ];
 
   return (
-    <DataTable
-      columns={columns}
-      data={users}
-      keyExtractor={(user) => user.id}
-      emptyMessage={t('admin.noUsers')}
-      mobileTitleKey="username"
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={users}
+        keyExtractor={(user) => user.id}
+        emptyMessage={t('admin.noUsers')}
+        mobileTitleKey="username"
+      />
+      <EditUserDialog
+        open={editUser !== null}
+        user={editUser}
+        isSaving={isUpdateUserPending}
+        isRotating={isTemporaryPasswordPending}
+        onClose={closeEditUser}
+        onSave={(userId, data) => submitEditUser(userId, data, onUpdateUser)}
+        onRotatePassword={requestTemporaryPassword}
+        t={t}
+      />
+      <TemporaryPasswordDialog
+        open={temporaryPasswordUserId !== null}
+        isPending={
+          isTemporaryPasswordPending &&
+          temporaryPasswordUserId !== null &&
+          pendingId === temporaryPasswordUserId
+        }
+        onCancel={cancelTemporaryPassword}
+        onConfirm={() => confirmTemporaryPassword(onTemporaryPassword)}
+        t={t}
+      />
+    </>
   );
 }

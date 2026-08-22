@@ -64,7 +64,35 @@ export const RUNTIME_V2_MODEL_INSTRUCTION = [
   // user asked for is described in the answer instead of created. Nothing in
   // the instruction said that describing an effect is not performing it.
   'If the request asks you to create or change a file, you must do it with a tool call: describing the file, or pasting its contents into your answer, does not create it.',
+  // A supervised feature-implementation run was handed a message that already
+  // named, file by file, exactly what existed and what did not — the product
+  // of a prior turn's own verified work. It spent over sixty consecutive tool
+  // calls re-reading, re-searching, and re-listing entries the message had
+  // already settled, wrote nothing, and ended the run out of model turns with
+  // every file still missing. The budget, not the task, was what it spent.
+  'A message that states which files already exist and which do not is reporting the result of work already verified. Trust it. Re-read a file only to see its current content immediately before editing it, never to re-confirm a fact you were already told.',
+  'Prefer acting over re-verifying: if you already know what a file needs, write it. A read, search, or list call that does not lead to a write within a turn or two is spending budget the task needs.',
+  // Twice in one supervised session a model reported output it had never seen.
+  // It wrote that `git push origin main` "Succeeded — main -> main" when the
+  // push had been rejected non-fast-forward and the remote was unchanged, and
+  // it quoted SMTP environment values that differed from what the container
+  // actually held. Both readable, specific, and wrong. A reader cannot tell an
+  // invented transcript from a real one, so the only safe rule is that every
+  // reported result must be copied from a tool result, never reconstructed
+  // from what the command was expected to print.
+  'Report only what a tool result actually contained. Quote command output verbatim from the result you received; never reconstruct, summarise from memory, or predict what a command would have printed.',
+  'If a command failed, was truncated, or you did not run it, say exactly that. A command that exits non-zero has failed even when its output looks reasonable, and reporting it as succeeded is the worst error you can make.',
   'Once the results answer the question and every requested change is applied, respond normally with the final user-facing answer and no JSON.',
+  // The workspace.files tool's JSON schema declares `transaction` as an opaque
+  // empty object — the model gets no structural cue for it at all. The only
+  // place the real shape is taught is a free-text tool description, and a
+  // supervised run made over 150 tool calls (read, search, list, stat) and
+  // never once attempted create or patch, because it never assembled the
+  // nested transaction.operations[0] object with confidence. Giving the exact
+  // shape here, in the channel the model reliably reads, is the fix.
+  'To create a new file with workspace.files, the call is: {"kind":"tool","toolName":"workspace.files","toolVersion":"2.0.0","operation":"create","arguments":{"transaction":{"transactionId":"<id>","summary":"<summary>","operations":[{"kind":"create","rootKey":"workspace-1","path":"<relative path>","contentLines":["line 1","line 2"],"beforeHash":null}]}},"targetId":"<target>"}. The outer operation must equal transaction.operations[0].kind. Use contentLines (array of lines) for source code, never a top-level content field.',
+  'To edit an existing file, use operation "patch" with transaction.operations[0] = {"kind":"patch","rootKey":"workspace-1","path":"<relative path>","beforeHash":"<sha256 hash from a prior read of this file>","hunks":[{"beforeLines":["exact existing line(s), must occur exactly once in the file"],"afterLines":["replacement line(s)"]}]}. This is an exact-text search and replace, never a unified diff — do not send @@ hunks or +/- prefixed lines.',
+  'transaction.operations must contain exactly one entry whose kind matches the outer operation. Do not add any key not shown in these examples; the schema is strict and an unrecognised key rejects the whole request.',
 ].join(' ');
 
 // The second line is what makes the correction land. Told only that its request

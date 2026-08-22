@@ -19,7 +19,7 @@ export function CompareJudgeBadges({
 }: CompareJudgeBadgesProps): React.ReactElement | null {
   if (judgeState === CompareJudgeState.VERIFIED) {
     return (
-      <span className="break-wordstext-success inline-flex min-w-0 items-center gap-1">
+      <span className="text-success inline-flex min-w-0 items-center gap-1 break-words">
         <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
         {t('compare.judgeVerified')}
       </span>
@@ -27,7 +27,7 @@ export function CompareJudgeBadges({
   }
   if (judgeState === CompareJudgeState.REVISED) {
     return (
-      <span className="break-wordstext-warning inline-flex min-w-0 items-center gap-1">
+      <span className="text-warning inline-flex min-w-0 items-center gap-1 break-words">
         <RefreshCw className="h-3.5 w-3.5 shrink-0" />
         {t('compare.judgeRevised')}
       </span>
@@ -35,7 +35,7 @@ export function CompareJudgeBadges({
   }
   if (judgeState === CompareJudgeState.ESCALATED) {
     return (
-      <span className="break-wordstext-info inline-flex min-w-0 items-center gap-1">
+      <span className="text-info inline-flex min-w-0 items-center gap-1 break-words">
         <ArrowUpCircle className="h-3.5 w-3.5 shrink-0" />
         {t('compare.judgeEscalated')}
       </span>
@@ -43,7 +43,7 @@ export function CompareJudgeBadges({
   }
   if (judgeState === CompareJudgeState.FAILED) {
     return (
-      <span className="break-wordstext-destructive inline-flex min-w-0 items-center gap-1">
+      <span className="text-destructive inline-flex min-w-0 items-center gap-1 break-words">
         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
         {t('compare.judgeFailed')}
       </span>
@@ -51,7 +51,7 @@ export function CompareJudgeBadges({
   }
   if (judgeState === CompareJudgeState.UNAVAILABLE) {
     return (
-      <span className="break-wordstext-warning inline-flex min-w-0 items-center gap-1">
+      <span className="text-warning inline-flex min-w-0 items-center gap-1 break-words">
         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
         {t('compare.judgeUnavailable')}
       </span>
@@ -59,7 +59,7 @@ export function CompareJudgeBadges({
   }
   if (judgeState === CompareJudgeState.SKIPPED) {
     return (
-      <span className="break-wordstext-muted-foreground inline-flex min-w-0 items-center gap-1">
+      <span className="text-muted-foreground inline-flex min-w-0 items-center gap-1 break-words">
         <MinusCircle className="h-3.5 w-3.5 shrink-0" />
         {t('compare.judgeSkipped')}
       </span>
@@ -67,14 +67,14 @@ export function CompareJudgeBadges({
   }
   if (judgeState === CompareJudgeState.AWAITING) {
     return (
-      <span className="break-wordstext-muted-foreground inline-flex min-w-0 items-center gap-1">
+      <span className="text-muted-foreground inline-flex min-w-0 items-center gap-1 break-words">
         <Clock className="h-3.5 w-3.5 shrink-0" />
         {t('compare.judgeAwaiting')}
       </span>
     );
   }
   return (
-    <span className="break-wordstext-muted-foreground inline-flex min-w-0 items-center gap-1">
+    <span className="text-muted-foreground inline-flex min-w-0 items-center gap-1 break-words">
       <Info className="h-3.5 w-3.5 shrink-0" />
       {t('compare.noJudge')}
     </span>

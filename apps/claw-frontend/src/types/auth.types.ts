@@ -1,3 +1,5 @@
+import type { EmailChangeStage } from '@/enums/email-change-stage.enum';
+
 import type { UserProfile } from './user.types';
 
 export interface LoginRequest {
@@ -8,6 +10,9 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string;
   password: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
 }
 
 export type TokenPair = {
@@ -48,7 +53,6 @@ export type ConfirmPasswordResetResponse = {
 
 export type UpdateOwnProfileRequest = {
   currentPassword: string;
-  email?: string;
   username?: string;
 };
 
@@ -57,13 +61,60 @@ export type DeleteOwnAccountRequest = {
 };
 
 export type AdminUserUpdateRequest = {
-  email?: string;
   username?: string;
+  firstName?: string | null;
+  lastName?: string | null;
 };
 
 export type AdminUserUpdateMutationVariables = {
   userId: string;
   data: AdminUserUpdateRequest;
+};
+
+export type RequestEmailChangeRequest = {
+  currentPassword: string;
+  newEmail: string;
+};
+
+export type RequestEmailChangeResponse = {
+  requestId: string;
+  expiresAt: string;
+};
+
+export type ConfirmOldEmailOtpRequest = {
+  requestId: string;
+  otp: string;
+};
+
+export type ConfirmOldEmailOtpResponse = {
+  pendingEmailSent: boolean;
+};
+
+export type ResendEmailChangeOtpRequest = {
+  requestId: string;
+};
+
+export type ResendEmailChangeOtpResponse = {
+  accepted: true;
+};
+
+export type CancelEmailChangeRequest = {
+  requestId: string;
+};
+
+export type EmailChangePendingState = {
+  requestId: string;
+  stage: EmailChangeStage;
+  maskedNewEmail: string;
+  expiresAt: string;
+};
+
+export type ConfirmEmailChangeRequest = {
+  token: string;
+};
+
+export type ConfirmEmailChangeResponse = {
+  changed: boolean;
 };
 
 export interface AuthState {

@@ -52,6 +52,11 @@ export const es: TranslationDictionary = {
     errorBoundaryTitle: 'Algo salió mal',
     errorBoundaryDescription:
       'Esta página encontró un error inesperado. Inténtalo de nuevo o ve a otra página.',
+    phoneCountryLabel: 'País',
+    phoneCountrySearch: 'Buscar países',
+    phoneNumberLabel: 'Número de teléfono',
+    phoneNumberPlaceholder: 'Introduce el número de teléfono',
+    phoneInvalid: 'Introduce un número de teléfono válido',
   },
   auth: {
     login: 'Iniciar sesión',
@@ -75,6 +80,12 @@ export const es: TranslationDictionary = {
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Crea tu cuenta de Claw',
     registerSubtitle: 'Regístrate con tu correo y contraseña',
+    firstName: 'Nombre',
+    firstNamePlaceholder: 'Ingrese su nombre',
+    lastName: 'Apellido',
+    lastNamePlaceholder: 'Ingrese su apellido',
+    phone: 'Número de teléfono',
+    phoneOptional: '(opcional)',
     registerButton: 'Crear cuenta',
     registering: 'Creando cuenta...',
     registerFailed: 'El registro falló. Inténtalo de nuevo.',
@@ -91,6 +102,11 @@ export const es: TranslationDictionary = {
       'El restablecimiento de contraseña está en desarrollo. Por ahora, contacta a un administrador.',
     showPasswordAria: 'Mostrar contraseña',
     hidePasswordAria: 'Ocultar contraseña',
+    confirmEmailChangeTitle: 'Confirma tu nuevo correo',
+    confirmEmailChangeDescription: 'Estamos confirmando tu nueva dirección de correo.',
+    confirmEmailChangeSuccess: 'Tu dirección de correo se ha actualizado. Inicia sesión de nuevo.',
+    confirmEmailChangeInvalidToken: 'Este enlace de confirmación no es válido o ha caducado.',
+    confirmEmailChangeBackToLogin: 'Volver al inicio de sesión',
     loginFailedTitle: 'No pudimos iniciar sesión',
     brandingHeadline: 'Todos los modelos de IA de frontera, una sola suscripción',
     brandingSubheadline:
@@ -209,6 +225,7 @@ export const es: TranslationDictionary = {
     workspaceEmailSignatures: 'Firmas de correo',
     workspaceEmailTemplates: 'Plantillas de correo',
     workspaceImplHandoffs: 'Entregas de código',
+    adminUsers: 'Usuarios',
     adminAiActionPolicies: 'Políticas de acciones de IA',
     adminSuggestionRules: 'Reglas de sugerencia',
     adminWebhookDeliveries: 'Entregas de webhook',
@@ -296,6 +313,15 @@ export const es: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'Tu prueba gratuita ha terminado. Elige un plan de pago para seguir usando la IA.',
+      dailyTokenLimitExceeded: 'Has superado tu límite diario de tokens.',
+      weeklyTokenLimitExceeded: 'Has superado tu límite semanal de tokens.',
+      monthlyTokenLimitExceeded: 'Has superado tu límite mensual de tokens.',
+      dailyChatLimitExceeded: 'Has superado tu límite diario de conversaciones.',
+      dailyMessageLimitExceeded: 'Has superado tu límite diario de mensajes.',
+      workspaceConnectionLimitExceeded:
+        'Has alcanzado tu límite de conexiones de espacio de trabajo.',
+      contextPackLimitExceeded: 'Has alcanzado tu límite de paquetes de contexto.',
+      memoryItemLimitExceeded: 'Has alcanzado tu límite de elementos de memoria.',
       videoAttachmentProviderUnsupported:
         'Este modelo no puede procesar archivos de vídeo adjuntos. Elige Gemini 2.5 Flash o Pro, o cambia a Automático.',
       videoAttachmentLocalModelUnavailable:
@@ -1051,7 +1077,29 @@ export const es: TranslationDictionary = {
     editUser: 'Editar usuario',
     saveUser: 'Guardar usuario',
     editUsername: 'Editar nombre de usuario',
-    editEmail: 'Editar correo',
+
+    editUserTitle: 'Editar usuario',
+
+    editUserDescription:
+      'Actualiza el nombre y el nombre de usuario de esta cuenta, o emite una nueva contraseña temporal.',
+
+    editUserUsername: 'Nombre de usuario',
+
+    editUserFirstName: 'Nombre',
+
+    editUserLastName: 'Apellidos',
+
+    editUserUsernameInvalid: 'Usa entre 3 y 32 letras, números, guiones o guiones bajos.',
+
+    editUserNameTooLong: 'Usa como máximo 64 caracteres.',
+
+    editUserSuperAdminNotice: 'Las cuentas de superadministrador no se pueden editar aquí.',
+
+    editUserSave: 'Guardar cambios',
+
+    editUserCancel: 'Cancelar',
+
+    editUserRotatePassword: 'Rotar contraseña',
     userUpdated: 'Usuario actualizado',
     userUpdateFailed: 'No se pudo actualizar el usuario',
     colEmail: 'Correo electrónico',
@@ -1080,6 +1128,13 @@ export const es: TranslationDictionary = {
       'El servicio de auditoría no respondió. Inténtalo de nuevo en unos instantes.',
     loadingAuditEvents: 'Cargando eventos de auditoría...',
     viewAllAudits: 'Ver todos',
+    issueTemporaryPassword: 'Emitir contraseña temporal',
+    issueTemporaryPasswordConfirmTitle: '¿Emitir una contraseña temporal?',
+    issueTemporaryPasswordConfirmBody:
+      'Se enviará una contraseña temporal por correo electrónico al usuario y se cerrarán todas las sesiones activas.',
+    temporaryPasswordIssued:
+      'Contraseña temporal enviada por correo y todas las sesiones cerradas.',
+    temporaryPasswordFailed: 'Error al emitir la contraseña temporal.',
   },
   settings: {
     title: 'Ajustes',
@@ -1095,8 +1150,24 @@ export const es: TranslationDictionary = {
     accountDeleteFailed: 'No se pudo eliminar la cuenta',
     username: 'Nombre de usuario',
     email: 'Correo electrónico',
-    emailReadOnly: 'Contacta con un administrador para cambiar tu correo.',
     role: 'Rol',
+    emailChange: {
+      title: 'Cambiar dirección de correo',
+      description:
+        'Cambiar tu correo requiere un código enviado a tu dirección actual y luego la confirmación desde la nueva.',
+      newEmailLabel: 'Nueva dirección de correo',
+      currentPasswordLabel: 'Contraseña actual',
+      submit: 'Enviar código de verificación',
+      otpDescription: 'Introduce el código de 6 dígitos enviado a tu correo actual.',
+      otpLabel: 'Código de verificación',
+      verify: 'Verificar código',
+      resend: 'Reenviar código',
+      resendCooldown: 'Reenvío disponible en {seconds}s',
+      cancel: 'Cancelar cambio de correo',
+      pendingNotice:
+        'Revisa tu nueva bandeja de entrada y abre el enlace de confirmación para finalizar el cambio.',
+      requestFailed: 'No se pudo cambiar la dirección de correo',
+    },
     selectLanguage: 'Seleccionar idioma',
     preferences: 'Preferencias',
     language: 'Idioma',
@@ -3471,6 +3542,7 @@ export const es: TranslationDictionary = {
       displayOrder: 'Orden de visualización',
       dailyTokenQuota: 'Cuota diaria de tokens',
       dailyTokenQuotaHelp: 'Tokens que un usuario puede consumir al día en este plan.',
+      weeklyTokenQuota: 'Cuota semanal de tokens',
       monthlyTokenQuota: 'Cuota mensual de tokens',
       maxChatsPerDay: 'Máx. chats por día',
       maxMessagesPerDay: 'Máx. mensajes por día',
@@ -3526,6 +3598,10 @@ export const es: TranslationDictionary = {
       saveSucceeded: 'Acceso a modelos guardado.',
       saveFailed: 'No se pudo guardar el acceso a modelos.',
     },
+  },
+  adminUsers: {
+    title: 'Gestión de usuarios',
+    description: 'Administra cuentas de usuario, roles, planes, verificación y acceso',
   },
   adminRoles: {
     title: 'Roles',
@@ -5475,5 +5551,14 @@ export const es: TranslationDictionary = {
           'Cuéntenos su sector, sus restricciones y aproximadamente cuántas personas lo usarían. Eso basta para una primera conversación útil.',
       },
     },
+  },
+  pwa: {
+    offlineMessage:
+      'Estás sin conexión. Vuelve a conectarte para continuar con las acciones privadas; el modo sin conexión público sigue disponible.',
+    updateAvailable: 'Hay una nueva versión de ClawAI disponible.',
+    updateAction: 'Actualizar',
+    installMessage: 'Instala ClawAI para acceder como una aplicación.',
+    installAction: 'Instalar',
+    dismissInstall: 'Cerrar aviso de instalación',
   },
 };

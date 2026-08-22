@@ -51,6 +51,11 @@ export const th: TranslationDictionary = {
     showingPage: 'กำลังแสดงหน้า {page} ของ {total}',
     errorBoundaryTitle: 'มีบางอย่างผิดพลาด',
     errorBoundaryDescription: 'หน้านี้เกิดข้อผิดพลาดที่ไม่คาดคิดลองอีกครั้งหรือย้ายไปยังหน้าอื่น',
+    phoneCountryLabel: 'ประเทศ',
+    phoneCountrySearch: 'ค้นหาประเทศ',
+    phoneNumberLabel: 'หมายเลขโทรศัพท์',
+    phoneNumberPlaceholder: 'ป้อนหมายเลขโทรศัพท์',
+    phoneInvalid: 'ป้อนหมายเลขโทรศัพท์ที่ถูกต้อง',
   },
   auth: {
     login: 'เข้าสู่ระบบ',
@@ -74,6 +79,12 @@ export const th: TranslationDictionary = {
     emailPlaceholder: 'you@example.com',
     registerTitle: 'สร้างบัญชี Claw ของคุณ',
     registerSubtitle: 'ลงทะเบียนด้วยอีเมลและรหัสผ่านของคุณ',
+    firstName: 'ชื่อ',
+    firstNamePlaceholder: 'กรอกชื่อของคุณ',
+    lastName: 'นามสกุล',
+    lastNamePlaceholder: 'กรอกนามสกุลของคุณ',
+    phone: 'หมายเลขโทรศัพท์',
+    phoneOptional: '(ไม่บังคับ)',
     registerButton: 'สร้างบัญชี',
     registering: 'กำลังสร้างบัญชี...',
     registerFailed: 'การลงทะเบียนล้มเหลวโปรดลองอีกครั้ง',
@@ -89,6 +100,11 @@ export const th: TranslationDictionary = {
     forgotPasswordComingSoonDesc: 'การรีเซ็ตรหัสผ่านอยู่ในแผนงานโปรดติดต่อผู้ดูแลระบบในตอนนี้',
     showPasswordAria: 'แสดงรหัสผ่าน',
     hidePasswordAria: 'ซ่อนรหัสผ่าน',
+    confirmEmailChangeTitle: 'ยืนยันอีเมลใหม่ของคุณ',
+    confirmEmailChangeDescription: 'เรากำลังยืนยันที่อยู่อีเมลใหม่ของคุณ',
+    confirmEmailChangeSuccess: 'อัปเดตที่อยู่อีเมลของคุณแล้ว โปรดลงชื่อเข้าใช้อีกครั้ง',
+    confirmEmailChangeInvalidToken: 'ลิงก์ยืนยันนี้ไม่ถูกต้องหรือหมดอายุแล้ว',
+    confirmEmailChangeBackToLogin: 'กลับไปที่การลงชื่อเข้าใช้',
     loginFailedTitle: 'เราไม่สามารถลงชื่อเข้าใช้ให้คุณ',
     brandingHeadline: 'โมเดล AI ชายแดนทุกรูปแบบ การสมัครรับข้อมูลหนึ่งครั้ง',
     brandingSubheadline:
@@ -203,6 +219,7 @@ export const th: TranslationDictionary = {
     workspaceEmailSignatures: 'ลายเซ็นอีเมล',
     workspaceEmailTemplates: 'เทมเพลตอีเมล',
     workspaceImplHandoffs: 'แฮนด์ออฟการเข้ารหัส',
+    adminUsers: 'ผู้ใช้',
     adminAiActionPolicies: 'นโยบายการดำเนินการของ AI',
     adminSuggestionRules: 'กฎการแนะนำ',
     adminWebhookDeliveries: 'การส่งมอบ Webhook',
@@ -289,6 +306,14 @@ export const th: TranslationDictionary = {
     allProvidersFailed: 'ผู้ให้บริการทั้งหมดไม่สามารถสร้างการตอบกลับได้',
     errors: {
       planTrialExpired: 'ช่วงทดลองใช้ฟรีของคุณสิ้นสุดแล้ว เลือกแผนแบบชำระเงินเพื่อใช้ AI ต่อ',
+      dailyTokenLimitExceeded: 'คุณใช้โทเค็นเกินขีดจำกัดรายวันแล้ว',
+      weeklyTokenLimitExceeded: 'คุณใช้โทเค็นเกินขีดจำกัดรายสัปดาห์แล้ว',
+      monthlyTokenLimitExceeded: 'คุณใช้โทเค็นเกินขีดจำกัดรายเดือนแล้ว',
+      dailyChatLimitExceeded: 'คุณสร้างเธรดแชทเกินขีดจำกัดรายวันแล้ว',
+      dailyMessageLimitExceeded: 'คุณส่งข้อความเกินขีดจำกัดรายวันแล้ว',
+      workspaceConnectionLimitExceeded: 'คุณใช้การเชื่อมต่อพื้นที่ทำงานถึงขีดจำกัดแล้ว',
+      contextPackLimitExceeded: 'คุณใช้ชุดบริบทถึงขีดจำกัดแล้ว',
+      memoryItemLimitExceeded: 'คุณใช้รายการความจำถึงขีดจำกัดแล้ว',
       videoAttachmentProviderUnsupported:
         'โมเดลนี้ไม่สามารถประมวลผลไฟล์แนบวิดีโอได้เลือก Gemini 2.5 Flash หรือ Pro หรือสลับเป็นอัตโนมัติ',
       videoAttachmentLocalModelUnavailable:
@@ -1028,7 +1053,28 @@ export const th: TranslationDictionary = {
     editUser: 'แก้ไขผู้ใช้',
     saveUser: 'บันทึกผู้ใช้',
     editUsername: 'แก้ไขชื่อผู้ใช้',
-    editEmail: 'แก้ไขอีเมล',
+
+    editUserTitle: 'แก้ไขผู้ใช้',
+
+    editUserDescription: 'อัปเดตชื่อและชื่อผู้ใช้ของบัญชีนี้ หรือออกรหัสผ่านชั่วคราวใหม่',
+
+    editUserUsername: 'ชื่อผู้ใช้',
+
+    editUserFirstName: 'ชื่อจริง',
+
+    editUserLastName: 'นามสกุล',
+
+    editUserUsernameInvalid: 'ใช้ตัวอักษร ตัวเลข ขีดกลาง หรือขีดล่าง 3–32 ตัว',
+
+    editUserNameTooLong: 'ใช้ได้ไม่เกิน 64 อักขระ',
+
+    editUserSuperAdminNotice: 'ไม่สามารถแก้ไขบัญชีผู้ดูแลระบบสูงสุดได้ที่นี่',
+
+    editUserSave: 'บันทึกการเปลี่ยนแปลง',
+
+    editUserCancel: 'ยกเลิก',
+
+    editUserRotatePassword: 'เปลี่ยนรหัสผ่าน',
     userUpdated: 'อัปเดตผู้ใช้แล้ว',
     userUpdateFailed: 'อัปเดตผู้ใช้ไม่สำเร็จ',
     colEmail: 'อีเมล',
@@ -1056,6 +1102,12 @@ export const th: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'ไม่สามารถเข้าถึงบริการตรวจสอบได้โปรดลองอีกครั้งในอีกสักครู่',
     loadingAuditEvents: 'กำลังโหลดกิจกรรมการตรวจสอบ...',
     viewAllAudits: 'ดูทั้งหมด',
+    issueTemporaryPassword: 'ออกรหัสผ่านชั่วคราว',
+    issueTemporaryPasswordConfirmTitle: 'ออกรหัสผ่านชั่วคราวหรือไม่',
+    issueTemporaryPasswordConfirmBody:
+      'ระบบจะส่งรหัสผ่านชั่วคราวทางอีเมลให้ผู้ใช้ และลงชื่อออกจากทุกเซสชันที่ใช้งานอยู่',
+    temporaryPasswordIssued: 'ส่งรหัสผ่านชั่วคราวทางอีเมลแล้ว และลงชื่อออกจากทุกเซสชันแล้ว',
+    temporaryPasswordFailed: 'ไม่สามารถออกรหัสผ่านชั่วคราวได้',
   },
   settings: {
     title: 'การตั้งค่า',
@@ -1070,8 +1122,23 @@ export const th: TranslationDictionary = {
     accountDeleteFailed: 'ลบบัญชีไม่สำเร็จ',
     username: 'ชื่อผู้ใช้',
     email: 'อีเมล',
-    emailReadOnly: 'ติดต่อผู้ดูแลระบบเพื่อเปลี่ยนอีเมลของคุณ',
     role: 'บทบาท',
+    emailChange: {
+      title: 'เปลี่ยนที่อยู่อีเมล',
+      description:
+        'การเปลี่ยนอีเมลต้องใช้รหัสที่ส่งไปยังที่อยู่ปัจจุบันของคุณ จากนั้นยืนยันจากที่อยู่ใหม่',
+      newEmailLabel: 'ที่อยู่อีเมลใหม่',
+      currentPasswordLabel: 'รหัสผ่านปัจจุบัน',
+      submit: 'ส่งรหัสยืนยัน',
+      otpDescription: 'กรอกรหัส 6 หลักที่ส่งไปยังที่อยู่อีเมลปัจจุบันของคุณ',
+      otpLabel: 'รหัสยืนยัน',
+      verify: 'ยืนยันรหัส',
+      resend: 'ส่งรหัสอีกครั้ง',
+      resendCooldown: 'ส่งอีกครั้งได้ใน {seconds} วินาที',
+      cancel: 'ยกเลิกการเปลี่ยนอีเมล',
+      pendingNotice: 'ตรวจสอบกล่องจดหมายใหม่ของคุณและเปิดลิงก์ยืนยันเพื่อดำเนินการให้เสร็จสิ้น',
+      requestFailed: 'เปลี่ยนที่อยู่อีเมลไม่สำเร็จ',
+    },
     selectLanguage: 'เลือกภาษา',
     preferences: 'การตั้งค่า',
     language: 'ภาษา',
@@ -3404,6 +3471,7 @@ export const th: TranslationDictionary = {
       displayOrder: 'แสดงลำดับ',
       dailyTokenQuota: 'โควต้าโทเค็นรายวัน',
       dailyTokenQuotaHelp: 'โทเค็นที่ผู้ใช้สามารถใช้ต่อวันในแผนนี้',
+      weeklyTokenQuota: 'โควตาโทเค็นรายสัปดาห์',
       monthlyTokenQuota: 'โควต้าโทเค็นรายเดือน',
       maxChatsPerDay: 'สนทนาสูงสุดต่อวัน',
       maxMessagesPerDay: 'ข้อความสูงสุดต่อวัน',
@@ -3459,6 +3527,10 @@ export const th: TranslationDictionary = {
       saveSucceeded: 'บันทึกการเข้าถึงโมเดลแล้ว',
       saveFailed: 'ไม่สามารถบันทึกการเข้าถึงโมเดลได้',
     },
+  },
+  adminUsers: {
+    title: 'การจัดการผู้ใช้',
+    description: 'จัดการบัญชีผู้ใช้ บทบาท แผน การยืนยัน และการเข้าถึง',
   },
   adminRoles: {
     title: 'บทบาท',
@@ -5363,5 +5435,14 @@ export const th: TranslationDictionary = {
           'บอกภาคส่วนของคุณให้เราทราบ คุณคือข้อจำกัด และประมาณจำนวนคนที่จะใช้นั่นก็เพียงพอแล้วสำหรับการสนทนาครั้งแรกที่เป็นประโยชน์',
       },
     },
+  },
+  pwa: {
+    offlineMessage:
+      'คุณออฟไลน์อยู่ กรุณาเชื่อมต่ออีกครั้งเพื่อดำเนินการส่วนตัวต่อ โหมดออฟไลน์แบบสาธารณะยังคงใช้งานได้',
+    updateAvailable: 'มี ClawAI เวอร์ชันใหม่พร้อมใช้งาน',
+    updateAction: 'อัปเดต',
+    installMessage: 'ติดตั้ง ClawAI เพื่อการเข้าถึงแบบแอป',
+    installAction: 'ติดตั้ง',
+    dismissInstall: 'ปิดข้อความแจ้งเตือนการติดตั้ง',
   },
 };

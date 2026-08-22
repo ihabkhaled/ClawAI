@@ -22,6 +22,7 @@ import {
   UserProfile,
 } from '../types/auth.types';
 import type { SessionClient } from '../types/token-session.types';
+import type { RegisterDto } from '../dto/register.dto';
 
 @Injectable()
 export class AuthManager {
@@ -37,26 +38,29 @@ export class AuthManager {
   // Self-registration: always creates a pending USER on the default
   // role. Any client-supplied role is impossible to inject — the DTO only
   // accepts email+password and we hard-code role here.
-  async register(email: string, password: string): Promise<RegisterResult> {
-    this.logger.log(`register: attempting registration for email=${email}`);
-    const strength = validatePasswordStrength(password);
+  async register(dto: RegisterDto): Promise<RegisterResult> {
+    this.logger.log(`register: attempting registration for email=${dto.email}`);
+    const strength = validatePasswordStrength(dto.password);
     if (!strength.valid) {
       throw new BusinessException(strength.errors[0] ?? 'Weak password', 'WEAK_PASSWORD');
     }
 
-    const existing = await this.authRepository.findUserByEmail(email);
+    const existing = await this.authRepository.findUserByEmail(dto.email);
     if (existing) {
       throw new DuplicateEntityException('User', 'email');
     }
 
-    const username = await this.deriveUniqueUsername(email);
-    const passwordHash = await hashPassword(password);
+    const username = await this.deriveUniqueUsername(dto.email);
+    const passwordHash = await hashPassword(dto.password);
     const roleId = await this.rolesService.getDefaultUserRoleId();
 
     const user = await this.authRepository.createUser({
-      email,
+      email: dto.email,
       username,
       passwordHash,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      ...(dto.phone ? { phone: dto.phone } : {}),
       role: UserRole.USER,
       ...(roleId ? { roleRef: { connect: { id: roleId } } } : {}),
       status: UserStatus.PENDING,

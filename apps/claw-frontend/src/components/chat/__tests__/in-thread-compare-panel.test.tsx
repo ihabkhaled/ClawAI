@@ -144,6 +144,16 @@ describe('InThreadComparePanel — plan-feature gates', () => {
 });
 
 describe('InThreadComparePanel — prompt textarea parity', () => {
+  it('stacks the prompt and submit action on narrow screens', () => {
+    render(
+      withQueryClient(<InThreadComparePanel {...baseProps} allowJudgeMode allowResearchMode />),
+    );
+
+    const submit = screen.getByRole('button', { name: 'compare.sendPrompt' });
+    expect(submit).toHaveClass('w-full', 'sm:w-auto');
+    expect(submit.closest('form')).toHaveClass('flex-col', 'sm:flex-row', 'min-w-0');
+  });
+
   it('typing into the prompt textarea calls onPromptChange with the new value', () => {
     const onPromptChange = vi.fn();
     render(

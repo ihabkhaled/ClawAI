@@ -1,5 +1,6 @@
 export type { User, UserProfile } from './user.types';
 export type { UseDeploymentPageResult } from './deployment-page.types';
+export type { PwaInstallPromptEvent } from './pwa.types';
 export type {
   LoginRequest,
   LoginResponse,
@@ -15,6 +16,16 @@ export type {
   RequestPasswordResetResponse,
   ConfirmPasswordResetRequest,
   ConfirmPasswordResetResponse,
+  RequestEmailChangeRequest,
+  RequestEmailChangeResponse,
+  ConfirmOldEmailOtpRequest,
+  ConfirmOldEmailOtpResponse,
+  ResendEmailChangeOtpRequest,
+  ResendEmailChangeOtpResponse,
+  CancelEmailChangeRequest,
+  EmailChangePendingState,
+  ConfirmEmailChangeRequest,
+  ConfirmEmailChangeResponse,
 } from './auth.types';
 export type {
   RoutePermission,
@@ -293,7 +304,9 @@ export type {
   FileRetentionBadgeProps,
   UseFileRetentionBadgeReturn,
   FormFieldErrors,
+  UserFiltersProps,
   UserTableProps,
+  TemporaryPasswordDialogProps,
   MessageBubbleProps,
   ModelSelection,
   ModelPickerOption,
@@ -432,6 +445,8 @@ export type {
   CostTierBadgeProps,
   RolePackResultCardProps,
   RolePackMemberCardProps,
+  EmailChangeCardProps,
+  EmailChangeOtpStepProps,
 } from './component.types';
 export type {
   StreamProgressBarProps,
@@ -484,7 +499,12 @@ export type {
 } from './log.types';
 export type {
   UsePipelinePageHookReturn,
+  UseEmailChangeReturn,
+  UseEmailChangeCooldownReturn,
   UseLoginFormReturn,
+  UseAdminUserFiltersReturn,
+  UseAdminUserMutationsReturn,
+  UseAdminUsersPageReturn,
   UseAdminPageReturn,
   UseRecentAuditEventsReturn,
   UseUserTableStateReturn,

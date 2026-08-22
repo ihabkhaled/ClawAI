@@ -2,6 +2,11 @@
   "generated": true,
   "routes": [
     {
+      "file": "apps/claw-frontend/src/app/(auth)/confirm-email-change/page.tsx",
+      "kind": "page",
+      "route": "/confirm-email-change"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(auth)/forgot-password/page.tsx",
       "kind": "page",
       "route": "/forgot-password"
@@ -195,6 +200,11 @@
       "file": "apps/claw-frontend/src/app/(portal)/admin/suggestion-rules/page.tsx",
       "kind": "page",
       "route": "/admin/suggestion-rules"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/users/page.tsx",
+      "kind": "page",
+      "route": "/admin/users"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/admin/webhook-deliveries/page.tsx",

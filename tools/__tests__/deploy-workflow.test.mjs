@@ -86,6 +86,33 @@ test('deploy-production retries only SSH connectivity failures with bounded back
   assert.doesNotMatch(workflow, /deploy-prod\.sh[^\n]*\|\|\s*true/u);
 });
 
+test('deploy-production keeps the deployment connection alive through silent phases', () => {
+  // A deployment goes quiet during a long build. Without keepalives the flow is
+  // idle from the network's point of view, and an idle flow gets dropped.
+  const keepalives = [...workflow.matchAll(/ServerAliveInterval=30/gu)];
+  const counts = [...workflow.matchAll(/ServerAliveCountMax=6/gu)];
+  const sshCalls = [...workflow.matchAll(/ssh -i ~\/\.ssh\/deploy_key/gu)];
+  assert.equal(keepalives.length, sshCalls.length, 'every ssh call needs ServerAliveInterval');
+  assert.equal(counts.length, sshCalls.length, 'every ssh call needs ServerAliveCountMax');
+});
+
+test('deploy-production arms the remote orphan guard and bounds the remote lock wait', () => {
+  assert.match(workflow, /CLAW_DEPLOY_ORPHAN_GUARD=1/u);
+  assert.match(workflow, /CLAW_DEPLOY_LOCK_WAIT=600/u);
+});
+
+test('deploy-production reports a dropped transport as a transport failure, not an application failure', () => {
+  assert.match(
+    workflow,
+    /client_loop: send disconnect\|packet_write_wait\|Timeout, server not responding/u,
+  );
+  assert.match(workflow, /The SSH transport dropped after the deployment started/u);
+  assert.match(
+    workflow,
+    /Deployment failed after SSH connected; refusing to retry application failure/u,
+  );
+});
+
 test('deploy-production serializes on a single concurrency group without cancelling in-flight runs', () => {
   assert.match(workflow, /concurrency:\s*\n\s*group:\s*clawai-production/u);
   assert.match(workflow, /cancel-in-progress:\s*false/u);
@@ -116,4 +143,22 @@ test('deploy-production always publishes a concise GitHub job summary', () => {
   assert.match(summary, /Deployment status/u);
   assert.match(summary, /Production URL/u);
   assert.doesNotMatch(summary, /SSH_PRIVATE_KEY|CONTACT_SMTP_PASS|INTER_SERVICE_AUTH_TOKEN/u);
+});
+
+test('deploy-production tells the box which lane started the rollout', () => {
+  // workflow_call defaults to auto (release.yml is the automatic lane);
+  // workflow_dispatch defaults to manual (a human pressed deploy). The box
+  // only obeys the automatic-deploy pause switch for the auto lane.
+  assert.match(workflow, /workflow_call:[\s\S]*?trigger_source:[\s\S]*?default: auto/u);
+  assert.match(workflow, /workflow_dispatch:[\s\S]*?trigger_source:[\s\S]*?default: manual/u);
+  assert.match(workflow, /CLAW_DEPLOY_TRIGGER='\$TRIGGER_SOURCE'/u);
+});
+
+test('deploy-production constrains the trigger lane before interpolating it into SSH', () => {
+  assert.match(workflow, /"\$TRIGGER_SOURCE" != "auto" && "\$TRIGGER_SOURCE" != "manual"/u);
+  assert.match(workflow, /Trigger source must be 'auto' or 'manual'\./u);
+});
+
+test('deploy-production reports the trigger lane in the job summary', () => {
+  assert.match(workflow, /\| Trigger \| \$TRIGGER_SOURCE \|/u);
 });

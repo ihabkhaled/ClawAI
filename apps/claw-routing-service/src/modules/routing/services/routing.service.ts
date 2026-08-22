@@ -238,6 +238,7 @@ export class RoutingService implements OnModuleInit {
       calibrated.decision,
       dto.messageContent,
       (dto.routingMode as RoutingMode | undefined) ?? calibrated.decision.routingMode,
+      false,
     );
     return withWorkflow;
   }
@@ -439,6 +440,7 @@ export class RoutingService implements OnModuleInit {
       forcedProvider,
       forcedModel,
       allowedModels,
+      runtimeV2,
     } = parsed;
 
     this.logMessageCreatedConsumed(messageId, threadId);
@@ -456,6 +458,7 @@ export class RoutingService implements OnModuleInit {
       calibrated.decision,
       content,
       routingMode ?? calibrated.decision.routingMode,
+      runtimeV2,
     );
     // Phase C — AUTO-mode plan gate: never let the router land on a model the
     // user's plan forbids. Empty allowedModels = no restriction (allow-all).
@@ -481,6 +484,7 @@ export class RoutingService implements OnModuleInit {
     forcedProvider: string | undefined;
     forcedModel: string | undefined;
     allowedModels: string[];
+    runtimeV2: boolean;
   } | null {
     const threadId = payload['threadId'] as string | undefined;
     const content = payload['content'] as string | undefined;
@@ -503,6 +507,7 @@ export class RoutingService implements OnModuleInit {
       forcedProvider: payload['forcedProvider'] as string | undefined,
       forcedModel: payload['forcedModel'] as string | undefined,
       allowedModels,
+      runtimeV2: payload['runtimeV2'] === true,
     };
   }
 
@@ -548,11 +553,13 @@ export class RoutingService implements OnModuleInit {
     decision: RoutingDecisionResult,
     message: string,
     routingMode: RoutingMode,
+    runtimeV2: boolean,
   ): RoutingDecisionResult {
     try {
       const selection = this.liveWorkflowSelector.selectWorkflow({
         message,
         routingMode,
+        runtimeV2,
         semanticIntent: null,
         keywordSignals: [],
         attachmentMimeTypes: [],

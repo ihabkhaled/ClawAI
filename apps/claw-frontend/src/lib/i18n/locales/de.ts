@@ -52,6 +52,11 @@ export const de: TranslationDictionary = {
     errorBoundaryTitle: 'Etwas ist schiefgelaufen',
     errorBoundaryDescription:
       'Auf dieser Seite ist ein unerwarteter Fehler aufgetreten. Versuchen Sie es erneut oder wechseln Sie zu einer anderen Seite.',
+    phoneCountryLabel: 'Land',
+    phoneCountrySearch: 'Länder suchen',
+    phoneNumberLabel: 'Telefonnummer',
+    phoneNumberPlaceholder: 'Telefonnummer eingeben',
+    phoneInvalid: 'Gültige Telefonnummer eingeben',
   },
   auth: {
     login: 'Anmelden',
@@ -75,6 +80,12 @@ export const de: TranslationDictionary = {
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Erstelle dein Claw-Konto',
     registerSubtitle: 'Registriere dich mit deiner E-Mail und deinem Passwort',
+    firstName: 'Vorname',
+    firstNamePlaceholder: 'Geben Sie Ihren Vornamen ein',
+    lastName: 'Nachname',
+    lastNamePlaceholder: 'Geben Sie Ihren Nachnamen ein',
+    phone: 'Telefonnummer',
+    phoneOptional: '(optional)',
     registerButton: 'Konto erstellen',
     registering: 'Konto wird erstellt...',
     registerFailed: 'Registrierung fehlgeschlagen. Bitte versuche es erneut.',
@@ -91,6 +102,12 @@ export const de: TranslationDictionary = {
       'Das Zurücksetzen des Passworts ist in Arbeit. Bitte wenden Sie sich vorerst an einen Administrator.',
     showPasswordAria: 'Passwort anzeigen',
     hidePasswordAria: 'Passwort ausblenden',
+    confirmEmailChangeTitle: 'Neue E-Mail-Adresse bestätigen',
+    confirmEmailChangeDescription: 'Wir bestätigen gerade Ihre neue E-Mail-Adresse.',
+    confirmEmailChangeSuccess:
+      'Ihre E-Mail-Adresse wurde aktualisiert. Bitte melden Sie sich erneut an.',
+    confirmEmailChangeInvalidToken: 'Dieser Bestätigungslink ist ungültig oder abgelaufen.',
+    confirmEmailChangeBackToLogin: 'Zurück zur Anmeldung',
     loginFailedTitle: 'Anmeldung fehlgeschlagen',
     brandingHeadline: 'Jedes Spitzenmodell, ein Abonnement',
     brandingSubheadline:
@@ -210,6 +227,7 @@ export const de: TranslationDictionary = {
     workspaceEmailSignatures: 'E-Mail-Signaturen',
     workspaceEmailTemplates: 'E-Mail-Vorlagen',
     workspaceImplHandoffs: 'Coding-Übergaben',
+    adminUsers: 'Benutzer',
     adminAiActionPolicies: 'KI-Aktionsrichtlinien',
     adminSuggestionRules: 'Vorschlagsregeln',
     adminWebhookDeliveries: 'Webhook-Auslieferungen',
@@ -297,6 +315,14 @@ export const de: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'Deine kostenlose Testphase ist beendet. Wähle einen kostenpflichtigen Tarif, um KI weiter zu nutzen.',
+      dailyTokenLimitExceeded: 'Du hast dein tägliches Token-Limit überschritten.',
+      weeklyTokenLimitExceeded: 'Du hast dein wöchentliches Token-Limit überschritten.',
+      monthlyTokenLimitExceeded: 'Du hast dein monatliches Token-Limit überschritten.',
+      dailyChatLimitExceeded: 'Du hast dein tägliches Chat-Thread-Limit überschritten.',
+      dailyMessageLimitExceeded: 'Du hast dein tägliches Nachrichtenlimit überschritten.',
+      workspaceConnectionLimitExceeded: 'Du hast dein Limit für Workspace-Verbindungen erreicht.',
+      contextPackLimitExceeded: 'Du hast dein Limit für Kontextpakete erreicht.',
+      memoryItemLimitExceeded: 'Du hast dein Limit für Speichereinträge erreicht.',
       videoAttachmentProviderUnsupported:
         'Dieses Modell kann keine Videoanhänge verarbeiten. Wähle Gemini 2.5 Flash oder Pro oder wechsle zu „Auto“.',
       videoAttachmentLocalModelUnavailable:
@@ -1053,7 +1079,30 @@ export const de: TranslationDictionary = {
     editUser: 'Benutzer bearbeiten',
     saveUser: 'Benutzer speichern',
     editUsername: 'Benutzernamen bearbeiten',
-    editEmail: 'E-Mail bearbeiten',
+
+    editUserTitle: 'Benutzer bearbeiten',
+
+    editUserDescription:
+      'Aktualisieren Sie Name und Benutzernamen dieses Kontos oder vergeben Sie ein neues temporäres Passwort.',
+
+    editUserUsername: 'Benutzername',
+
+    editUserFirstName: 'Vorname',
+
+    editUserLastName: 'Nachname',
+
+    editUserUsernameInvalid:
+      'Verwenden Sie 3–32 Buchstaben, Ziffern, Bindestriche oder Unterstriche.',
+
+    editUserNameTooLong: 'Verwenden Sie höchstens 64 Zeichen.',
+
+    editUserSuperAdminNotice: 'Super-Admin-Konten können hier nicht bearbeitet werden.',
+
+    editUserSave: 'Änderungen speichern',
+
+    editUserCancel: 'Abbrechen',
+
+    editUserRotatePassword: 'Passwort neu vergeben',
     userUpdated: 'Benutzer aktualisiert',
     userUpdateFailed: 'Benutzer konnte nicht aktualisiert werden',
     colEmail: 'E-Mail',
@@ -1082,6 +1131,13 @@ export const de: TranslationDictionary = {
       'Der Audit-Dienst war nicht erreichbar. Versuchen Sie es gleich erneut.',
     loadingAuditEvents: 'Audit-Ereignisse werden geladen ...',
     viewAllAudits: 'Alle anzeigen',
+    issueTemporaryPassword: 'Temporäres Passwort ausstellen',
+    issueTemporaryPasswordConfirmTitle: 'Temporäres Passwort ausstellen?',
+    issueTemporaryPasswordConfirmBody:
+      'Dem Benutzer wird ein temporäres Passwort per E-Mail zugesandt und alle aktiven Sitzungen werden abgemeldet.',
+    temporaryPasswordIssued:
+      'Temporäres Passwort per E-Mail gesendet und alle Sitzungen abgemeldet.',
+    temporaryPasswordFailed: 'Ausstellung des temporären Passworts fehlgeschlagen.',
   },
   settings: {
     title: 'Einstellungen',
@@ -1097,8 +1153,25 @@ export const de: TranslationDictionary = {
     accountDeleteFailed: 'Konto konnte nicht gelöscht werden',
     username: 'Benutzername',
     email: 'E-Mail',
-    emailReadOnly: 'Wenden Sie sich an einen Administrator, um Ihre E-Mail zu ändern.',
     role: 'Rolle',
+    emailChange: {
+      title: 'E-Mail-Adresse ändern',
+      description:
+        'Für die Änderung Ihrer E-Mail-Adresse wird ein Code an Ihre aktuelle Adresse gesendet und anschließend von der neuen bestätigt.',
+      newEmailLabel: 'Neue E-Mail-Adresse',
+      currentPasswordLabel: 'Aktuelles Passwort',
+      submit: 'Bestätigungscode senden',
+      otpDescription:
+        'Geben Sie den 6-stelligen Code ein, der an Ihre aktuelle E-Mail-Adresse gesendet wurde.',
+      otpLabel: 'Bestätigungscode',
+      verify: 'Code bestätigen',
+      resend: 'Code erneut senden',
+      resendCooldown: 'Erneut senden in {seconds}s möglich',
+      cancel: 'E-Mail-Änderung abbrechen',
+      pendingNotice:
+        'Prüfen Sie Ihr neues Postfach und öffnen Sie den Bestätigungslink, um die Änderung abzuschließen.',
+      requestFailed: 'E-Mail-Adresse konnte nicht geändert werden',
+    },
     selectLanguage: 'Sprache auswählen',
     preferences: 'Einstellungen',
     language: 'Sprache',
@@ -3475,6 +3548,7 @@ export const de: TranslationDictionary = {
       displayOrder: 'Anzeigereihenfolge',
       dailyTokenQuota: 'Tägliches Token-Kontingent',
       dailyTokenQuotaHelp: 'Tokens, die ein Nutzer pro Tag in diesem Tarif verbrauchen darf.',
+      weeklyTokenQuota: 'Wöchentliches Token-Kontingent',
       monthlyTokenQuota: 'Monatliches Token-Kontingent',
       maxChatsPerDay: 'Max. Chats pro Tag',
       maxMessagesPerDay: 'Max. Nachrichten pro Tag',
@@ -3530,6 +3604,10 @@ export const de: TranslationDictionary = {
       saveSucceeded: 'Modellzugriff gespeichert.',
       saveFailed: 'Modellzugriff konnte nicht gespeichert werden.',
     },
+  },
+  adminUsers: {
+    title: 'Benutzerverwaltung',
+    description: 'Verwalten Sie Benutzerkonten, Rollen, Pläne, Verifizierung und Zugriff',
   },
   adminRoles: {
     title: 'Rollen',
@@ -5493,5 +5571,14 @@ export const de: TranslationDictionary = {
           'Nennen Sie uns Ihre Branche, Ihre Rahmenbedingungen und ungefähr, wie viele Personen es nutzen würden. Das reicht für ein nützliches erstes Gespräch.',
       },
     },
+  },
+  pwa: {
+    offlineMessage:
+      'Du bist offline. Stelle die Verbindung wieder her, um private Aktionen fortzusetzen; der öffentliche Offline-Modus bleibt verfügbar.',
+    updateAvailable: 'Eine neue ClawAI-Version ist verfügbar.',
+    updateAction: 'Aktualisieren',
+    installMessage: 'Installiere ClawAI für den App-ähnlichen Zugriff.',
+    installAction: 'Installieren',
+    dismissInstall: 'Installationshinweis schließen',
   },
 };

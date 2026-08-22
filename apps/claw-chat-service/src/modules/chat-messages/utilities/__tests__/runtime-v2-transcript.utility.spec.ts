@@ -43,6 +43,13 @@ describe('buildRuntimeV2ToolResultRecord', () => {
     });
   });
 
+  it('keeps an ordinary source read available to following turns', () => {
+    const content = 'source-line\n'.repeat(60);
+    const record = buildRuntimeV2ToolResultRecord(readResult(content));
+
+    expect(JSON.parse(record).structured.content).toBe(content);
+  });
+
   it('keeps the hash whole when the content is far over budget', () => {
     // The defect in one assertion: this is the field `patch` needs and the
     // field the old slice destroyed first.
@@ -74,7 +81,7 @@ describe('buildRuntimeV2ToolResultRecord', () => {
       structured: {
         path: 'src',
         hash: HASH,
-        entries: Array.from({ length: 400 }, (_, i) => `file-${String(i)}.ts`),
+        entries: Array.from({ length: 4_000 }, (_, i) => `file-${String(i)}.ts`),
       },
     } as unknown as RuntimeResultDto['result'];
 

@@ -132,6 +132,20 @@ describe('WorkspaceConnectorService', () => {
       expect(mockRepo.createWithinLimit).toHaveBeenCalled();
     });
 
+    it('rejects creation when the atomic workspace connection limit is exhausted', async () => {
+      (mockRepo.createWithinLimit as jest.Mock).mockResolvedValueOnce(null);
+
+      await expect(
+        service.create('u1', {
+          name: 'Blocked',
+          provider: WorkspaceProvider.GITHUB,
+          permissionLevel: WorkspacePermissionLevel.READ,
+          scopes: [],
+          accessToken: 'tok',
+        }),
+      ).rejects.toMatchObject({ code: 'PLAN_WORKSPACE_CONNECTION_LIMIT_EXCEEDED', status: 429 });
+    });
+
     it('should encrypt tokens when accessToken provided', async () => {
       const dto = {
         name: 'Test',

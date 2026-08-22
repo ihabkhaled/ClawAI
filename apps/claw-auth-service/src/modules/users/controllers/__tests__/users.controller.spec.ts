@@ -4,6 +4,8 @@ import { UsersService } from '../../services/users.service';
 import { UserRole } from '../../../../common/enums';
 import { Permission } from '@claw/shared-types';
 import { PERMISSIONS_KEY } from '../../../../app/decorators/permissions.decorator';
+import { IS_PUBLIC_KEY } from '../../../../app/decorators/public.decorator';
+import { EmailChangeService } from '../../../auth/services/email-change.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -20,6 +22,13 @@ describe('UsersController', () => {
     updateOwnProfile: jest.Mock;
     deleteOwnAccount: jest.Mock;
   }>;
+  let emailChangeMock: jest.Mocked<{
+    requestEmailChange: jest.Mock;
+    verifyCurrentEmail: jest.Mock;
+    resendCurrentEmailOtp: jest.Mock;
+    getPendingEmailChange: jest.Mock;
+    cancelEmailChange: jest.Mock;
+  }>;
 
   beforeEach(async () => {
     usersMock = {
@@ -35,9 +44,19 @@ describe('UsersController', () => {
       updateOwnProfile: jest.fn(),
       deleteOwnAccount: jest.fn(),
     };
+    emailChangeMock = {
+      requestEmailChange: jest.fn(),
+      verifyCurrentEmail: jest.fn(),
+      resendCurrentEmailOtp: jest.fn(),
+      getPendingEmailChange: jest.fn(),
+      cancelEmailChange: jest.fn(),
+    };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
-      providers: [{ provide: UsersService, useValue: usersMock }],
+      providers: [
+        { provide: UsersService, useValue: usersMock },
+        { provide: EmailChangeService, useValue: emailChangeMock },
+      ],
     }).compile();
     controller = module.get<UsersController>(UsersController);
   });
@@ -83,6 +102,51 @@ describe('UsersController', () => {
     const dto = { currentPassword: 'CurrentPass1!' };
     await controller.deleteMyAccount(adminUser as never, dto);
     expect(usersMock.deleteOwnAccount).toHaveBeenCalledWith('admin-1', dto);
+  });
+
+  it('scopes email-change request creation to the authenticated user', async () => {
+    const dto = { currentPassword: 'CurrentPass1!', newEmail: 'new@example.com' };
+    await controller.requestEmailChange(adminUser as never, dto);
+    expect(emailChangeMock.requestEmailChange).toHaveBeenCalledWith(
+      'admin-1',
+      dto.currentPassword,
+      dto.newEmail,
+    );
+  });
+
+  it('scopes email-change OTP verification to the authenticated user and request', async () => {
+    await controller.verifyCurrentEmail(adminUser as never, {
+      requestId: 'request-1',
+      otp: '123456',
+    });
+    expect(emailChangeMock.verifyCurrentEmail).toHaveBeenCalledWith(
+      'admin-1',
+      'request-1',
+      '123456',
+    );
+  });
+
+  it('scopes email-change resend, read, and cancellation to the authenticated user', async () => {
+    await controller.resendCurrentEmailOtp(adminUser as never, { requestId: 'request-1' });
+    await controller.getPendingEmailChange(adminUser as never);
+    await controller.cancelEmailChange(adminUser as never, { requestId: 'request-1' });
+
+    expect(emailChangeMock.resendCurrentEmailOtp).toHaveBeenCalledWith('admin-1', 'request-1');
+    expect(emailChangeMock.getPendingEmailChange).toHaveBeenCalledWith('admin-1');
+    expect(emailChangeMock.cancelEmailChange).toHaveBeenCalledWith('admin-1', 'request-1');
+  });
+
+  it.each([
+    'requestEmailChange',
+    'verifyCurrentEmail',
+    'resendCurrentEmailOtp',
+    'getPendingEmailChange',
+    'cancelEmailChange',
+  ] as const)('%s remains authenticated and rate-limited', (methodName) => {
+    const handler = UsersController.prototype[methodName];
+    expect(Reflect.getMetadata(IS_PUBLIC_KEY, handler)).toBeUndefined();
+    expect(Reflect.getMetadata('THROTTLER:LIMITdefault', handler)).toBe(5);
+    expect(Reflect.getMetadata('THROTTLER:TTLdefault', handler)).toBe(60_000);
   });
 
   it.each(['create', 'findAll', 'findOne', 'update', 'deactivate', 'reactivate', 'changeRole'])(

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -26,6 +26,8 @@ function makeUser(overrides: Partial<AdminUser> = {}): AdminUser {
     activePlanId: null,
     isSuperAdmin: false,
     emailVerifiedAt: '2026-05-01T00:00:00.000Z',
+    firstName: null,
+    lastName: null,
     ...overrides,
   };
 }
@@ -49,6 +51,7 @@ function makePlan(overrides: Partial<PlanView> = {}): PlanView {
     replacementPlanId: null,
     retiredAt: null,
     dailyTokenQuota: 100000,
+    weeklyTokenQuota: null,
     monthlyTokenQuota: null,
     maxChatsPerDay: null,
     maxMessagesPerDay: null,
@@ -156,23 +159,26 @@ describe('UserTable plan column', () => {
 });
 
 describe('UserTable lifecycle actions', () => {
-  it('lets an administrator edit and save username and email', async () => {
+  it('edits name and username through the dialog and saves once', async () => {
     const onUpdateUser = vi.fn();
     render(<UserTable users={[makeUser()]} {...baseProps} onUpdateUser={onUpdateUser} />);
 
     await userEvent.click(
       screen.getAllByRole('button', { name: 'admin.editUser' })[0] as HTMLElement,
     );
-    const username = screen.getAllByLabelText('admin.editUsername')[0] as HTMLInputElement;
+
+    const username = screen.getByLabelText('admin.editUserUsername');
     await userEvent.clear(username);
     await userEvent.type(username, 'renamed');
-    await userEvent.click(
-      screen.getAllByRole('button', { name: 'admin.saveUser' })[0] as HTMLElement,
-    );
+    await userEvent.type(screen.getByLabelText('admin.editUserFirstName'), 'Ada');
+    await userEvent.type(screen.getByLabelText('admin.editUserLastName'), 'Lovelace');
+
+    await userEvent.click(screen.getByRole('button', { name: 'admin.editUserSave' }));
 
     expect(onUpdateUser).toHaveBeenCalledWith('u1', {
       username: 'renamed',
-      email: 'alice@example.com',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
     });
   });
   it('offers Deactivate for an active user', () => {
@@ -241,5 +247,94 @@ describe('UserTable lifecycle actions', () => {
     for (const button of screen.getAllByRole('button', { name: 'admin.reactivate' })) {
       expect(button).toBeDisabled();
     }
+  });
+});
+
+describe('UserTable temporary password action', () => {
+  it('wraps mobile actions into a two-column grid without overflowing the card', () => {
+    render(<UserTable users={[makeUser()]} {...baseProps} />);
+
+    const mobileAction = screen
+      .getAllByRole('button', { name: 'admin.issueTemporaryPassword' })
+      .find((button) => button.closest('.md\\:hidden'));
+    expect(mobileAction?.parentElement).toHaveClass(
+      'max-md:grid',
+      'max-md:grid-cols-2',
+      'max-md:w-full',
+    );
+    expect(mobileAction?.querySelector('span')).toHaveClass('whitespace-normal', 'text-center');
+  });
+
+  // Regression: the "sm" button size fixes a 36px height (44px on mobile via
+  // min-height), which does not grow for wrapped content. A long label such
+  // as "Issue temporary password" then wraps to 2-3 lines that spill outside
+  // the button's fixed box instead of being contained by it. `h-auto` lets
+  // the button grow to fit every wrapped line so the label always renders
+  // fully inside its own border at mobile widths.
+  it('lets the action buttons grow to fit wrapped multi-line labels instead of clipping them', () => {
+    render(<UserTable users={[makeUser()]} {...baseProps} />);
+
+    const mobileIssueButton = screen
+      .getAllByRole('button', { name: 'admin.issueTemporaryPassword' })
+      .find((button) => button.closest('.md\\:hidden'));
+    expect(mobileIssueButton).toHaveClass('h-auto');
+    expect(mobileIssueButton).not.toHaveClass('h-9');
+
+    const mobileEditButton = screen
+      .getAllByRole('button', { name: 'admin.editUser' })
+      .find((button) => button.closest('.md\\:hidden'));
+    expect(mobileEditButton).toHaveClass('h-auto');
+    expect(mobileEditButton).not.toHaveClass('h-9');
+  });
+
+  it('renders the honest temporary-password label', () => {
+    render(<UserTable users={[makeUser()]} {...baseProps} />);
+
+    expect(
+      screen.getAllByRole('button', { name: 'admin.issueTemporaryPassword' }).length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText('settings.changePassword')).toBeNull();
+  });
+
+  it('leaves other rows enabled while one user is pending', () => {
+    render(
+      <UserTable
+        users={[makeUser({ id: 'u1' }), makeUser({ id: 'u2' })]}
+        {...baseProps}
+        pendingId="u1"
+        isTemporaryPasswordPending
+      />,
+    );
+
+    const buttons = screen.getAllByRole('button', { name: 'admin.issueTemporaryPassword' });
+    expect(buttons.some((button) => button.hasAttribute('disabled'))).toBe(true);
+    expect(buttons.some((button) => !button.hasAttribute('disabled'))).toBe(true);
+  });
+
+  it('requires confirmation before issuing the temporary password', async () => {
+    const onTemporaryPassword = vi.fn();
+    render(
+      <UserTable
+        users={[makeUser({ id: 'u7' })]}
+        {...baseProps}
+        onTemporaryPassword={onTemporaryPassword}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'admin.issueTemporaryPassword' })[0] as HTMLElement,
+    );
+    expect(onTemporaryPassword).not.toHaveBeenCalled();
+
+    const dialog = screen.getByRole('dialog');
+    expect(
+      within(dialog).getByText('admin.issueTemporaryPasswordConfirmTitle'),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByText('admin.issueTemporaryPasswordConfirmBody')).toBeInTheDocument();
+    await userEvent.click(
+      within(dialog).getByRole('button', { name: 'admin.issueTemporaryPassword' }),
+    );
+
+    expect(onTemporaryPassword).toHaveBeenCalledWith('u7');
   });
 });

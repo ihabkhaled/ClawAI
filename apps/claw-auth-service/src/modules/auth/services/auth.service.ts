@@ -10,6 +10,7 @@ import {
   type UserProfile,
 } from '../types/auth.types';
 import type { SessionClient } from '../types/token-session.types';
+import type { RegisterDto } from '../dto/register.dto';
 import { EmailVerificationService } from './email-verification.service';
 
 @Injectable()
@@ -30,10 +31,10 @@ export class AuthService {
     );
   }
 
-  async register(email: string, password: string): Promise<RegisterResult> {
-    this.logger.log(`register: attempting registration for email=${email}`);
+  async register(dto: RegisterDto): Promise<RegisterResult> {
+    this.logger.log(`register: attempting registration for email=${dto.email}`);
     try {
-      const result = await this.authManager.register(email, password);
+      const result = await this.authManager.register(dto);
       await this.emailVerificationService.sendForUser(result.user.id, result.user.email);
       this.structuredLogger.logAction({
         level: LogLevel.INFO,
@@ -52,7 +53,7 @@ export class AuthService {
     } catch (error: unknown) {
       this.structuredLogger.logAction({
         level: LogLevel.WARN,
-        message: `Registration failed for email: ${email}`,
+        message: `Registration failed for email: ${dto.email}`,
         action: 'register_failed',
         service: AuthService.name,
         errorMessage: error instanceof Error ? error.message : 'Unknown error',

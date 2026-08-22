@@ -51,15 +51,9 @@ describe('audit repository — user lifecycle', () => {
   it('updates editable user profile fields through the admin user resource', async () => {
     mockPatch.mockResolvedValueOnce({ data: undefined });
 
-    await auditRepository.updateUser('user-1', {
-      username: 'renamed',
-      email: 'renamed@example.com',
-    });
+    await auditRepository.updateUser('user-1', { username: 'renamed' });
 
-    expect(mockPatch).toHaveBeenCalledWith('/users/user-1', {
-      username: 'renamed',
-      email: 'renamed@example.com',
-    });
+    expect(mockPatch).toHaveBeenCalledWith('/users/user-1', { username: 'renamed' });
   });
 
   it('reads the admin user list from the users collection', async () => {

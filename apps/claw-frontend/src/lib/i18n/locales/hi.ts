@@ -52,6 +52,11 @@ export const hi: TranslationDictionary = {
     errorBoundaryTitle: 'कुछ गलत हो गया',
     errorBoundaryDescription:
       'इस पृष्ठ पर एक अप्रत्याशित त्रुटि हुई। पुनः प्रयास करें या किसी अन्य पृष्ठ पर जाएँ।',
+    phoneCountryLabel: 'देश',
+    phoneCountrySearch: 'देश खोजें',
+    phoneNumberLabel: 'फ़ोन नंबर',
+    phoneNumberPlaceholder: 'फ़ोन नंबर दर्ज करें',
+    phoneInvalid: 'मान्य फ़ोन नंबर दर्ज करें',
   },
   auth: {
     login: 'लॉगिन',
@@ -75,6 +80,12 @@ export const hi: TranslationDictionary = {
     emailPlaceholder: 'you@example.com',
     registerTitle: 'अपना Claw खाता बनाएं',
     registerSubtitle: 'अपने ईमेल और पासवर्ड से साइन अप करें',
+    firstName: 'पहला नाम',
+    firstNamePlaceholder: 'अपना पहला नाम दर्ज करें',
+    lastName: 'उपनाम',
+    lastNamePlaceholder: 'अपना उपनाम दर्ज करें',
+    phone: 'फ़ोन नंबर',
+    phoneOptional: '(वैकल्पिक)',
     registerButton: 'खाता बनाएं',
     registering: 'खाता बनाया जा रहा है...',
     registerFailed: 'पंजीकरण विफल रहा। कृपया पुनः प्रयास करें।',
@@ -91,6 +102,11 @@ export const hi: TranslationDictionary = {
       'पासवर्ड रीसेट विकास में है। फिलहाल कृपया किसी व्यवस्थापक से संपर्क करें।',
     showPasswordAria: 'पासवर्ड दिखाएं',
     hidePasswordAria: 'पासवर्ड छिपाएं',
+    confirmEmailChangeTitle: 'अपना नया ईमेल सत्यापित करें',
+    confirmEmailChangeDescription: 'हम आपका नया ईमेल पता सत्यापित कर रहे हैं।',
+    confirmEmailChangeSuccess: 'आपका ईमेल पता अपडेट हो गया है। कृपया फिर से साइन इन करें।',
+    confirmEmailChangeInvalidToken: 'यह पुष्टिकरण लिंक अमान्य है या समाप्त हो चुका है।',
+    confirmEmailChangeBackToLogin: 'साइन इन पर वापस जाएं',
     loginFailedTitle: 'हम आपको साइन इन नहीं कर सके',
     brandingHeadline: 'हर फ्रंटियर AI मॉडल, एक ही सब्सक्रिप्शन',
     brandingSubheadline:
@@ -207,6 +223,7 @@ export const hi: TranslationDictionary = {
     workspaceEmailSignatures: 'ईमेल हस्ताक्षर',
     workspaceEmailTemplates: 'ईमेल टेम्पलेट',
     workspaceImplHandoffs: 'कोडिंग हैंडऑफ़',
+    adminUsers: 'उपयोगकर्ता',
     adminAiActionPolicies: 'AI एक्शन नीतियाँ',
     adminSuggestionRules: 'सुझाव नियम',
     adminWebhookDeliveries: 'वेबहुक डिलीवरी',
@@ -294,6 +311,14 @@ export const hi: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'आपका मुफ़्त परीक्षण समाप्त हो गया है। AI का उपयोग जारी रखने के लिए सशुल्क प्लान चुनें।',
+      dailyTokenLimitExceeded: 'आपने अपनी दैनिक टोकन सीमा पार कर ली है।',
+      weeklyTokenLimitExceeded: 'आपने अपनी साप्ताहिक टोकन सीमा पार कर ली है।',
+      monthlyTokenLimitExceeded: 'आपने अपनी मासिक टोकन सीमा पार कर ली है।',
+      dailyChatLimitExceeded: 'आपने दैनिक चैट थ्रेड सीमा पार कर ली है।',
+      dailyMessageLimitExceeded: 'आपने दैनिक संदेश सीमा पार कर ली है।',
+      workspaceConnectionLimitExceeded: 'आप कार्यस्थान कनेक्शन सीमा तक पहुँच गए हैं।',
+      contextPackLimitExceeded: 'आप संदर्भ पैक सीमा तक पहुँच गए हैं।',
+      memoryItemLimitExceeded: 'आप मेमोरी आइटम सीमा तक पहुँच गए हैं।',
       videoAttachmentProviderUnsupported:
         'यह मॉडल वीडियो अटैचमेंट प्रोसेस नहीं कर सकता। Gemini 2.5 Flash या Pro चुनें, या Auto पर स्विच करें।',
       videoAttachmentLocalModelUnavailable:
@@ -1042,7 +1067,29 @@ export const hi: TranslationDictionary = {
     editUser: 'उपयोगकर्ता संपादित करें',
     saveUser: 'उपयोगकर्ता सहेजें',
     editUsername: 'उपयोगकर्ता नाम संपादित करें',
-    editEmail: 'ईमेल संपादित करें',
+
+    editUserTitle: 'उपयोगकर्ता संपादित करें',
+
+    editUserDescription:
+      'इस खाते का नाम और उपयोगकर्ता नाम अपडेट करें, या नया अस्थायी पासवर्ड जारी करें।',
+
+    editUserUsername: 'उपयोगकर्ता नाम',
+
+    editUserFirstName: 'पहला नाम',
+
+    editUserLastName: 'अंतिम नाम',
+
+    editUserUsernameInvalid: '3–32 अक्षर, अंक, हाइफ़न या अंडरस्कोर उपयोग करें।',
+
+    editUserNameTooLong: 'अधिकतम 64 वर्ण उपयोग करें।',
+
+    editUserSuperAdminNotice: 'सुपर एडमिन खाते यहाँ संपादित नहीं किए जा सकते।',
+
+    editUserSave: 'परिवर्तन सहेजें',
+
+    editUserCancel: 'रद्द करें',
+
+    editUserRotatePassword: 'पासवर्ड बदलें',
     userUpdated: 'उपयोगकर्ता अपडेट हुआ',
     userUpdateFailed: 'उपयोगकर्ता अपडेट नहीं हुआ',
     colEmail: 'ईमेल',
@@ -1070,6 +1117,13 @@ export const hi: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'ऑडिट सेवा अनुपलब्ध थी। कृपया थोड़ी देर बाद पुनः प्रयास करें।',
     loadingAuditEvents: 'ऑडिट इवेंट लोड हो रहे हैं...',
     viewAllAudits: 'सभी देखें',
+    issueTemporaryPassword: 'अस्थायी पासवर्ड जारी करें',
+    issueTemporaryPasswordConfirmTitle: 'क्या अस्थायी पासवर्ड जारी करें?',
+    issueTemporaryPasswordConfirmBody:
+      'उपयोगकर्ता को एक अस्थायी पासवर्ड ईमेल कर दिया जाएगा और सभी सक्रिय सत्रों से साइन आउट कर दिया जाएगा।',
+    temporaryPasswordIssued:
+      'अस्थायी पासवर्ड ईमेल कर दिया गया और सभी सत्रों से साइन आउट कर दिया गया।',
+    temporaryPasswordFailed: 'अस्थायी पासवर्ड जारी करने में विफल।',
   },
   settings: {
     title: 'सेटिंग्स',
@@ -1084,8 +1138,22 @@ export const hi: TranslationDictionary = {
     accountDeleteFailed: 'खाता हटाया नहीं जा सका',
     username: 'उपयोगकर्ता नाम',
     email: 'ईमेल',
-    emailReadOnly: 'अपना ईमेल बदलने के लिए एडमिन से संपर्क करें।',
     role: 'भूमिका',
+    emailChange: {
+      title: 'ईमेल पता बदलें',
+      description: 'ईमेल बदलने के लिए आपके मौजूदा पते पर भेजा गया कोड चाहिए, फिर नए पते से पुष्टि।',
+      newEmailLabel: 'नया ईमेल पता',
+      currentPasswordLabel: 'मौजूदा पासवर्ड',
+      submit: 'सत्यापन कोड भेजें',
+      otpDescription: 'अपने मौजूदा ईमेल पते पर भेजा गया 6 अंकों का कोड दर्ज करें।',
+      otpLabel: 'सत्यापन कोड',
+      verify: 'कोड सत्यापित करें',
+      resend: 'कोड फिर भेजें',
+      resendCooldown: '{seconds} सेकंड में फिर भेज सकते हैं',
+      cancel: 'ईमेल परिवर्तन रद्द करें',
+      pendingNotice: 'अपना नया इनबॉक्स देखें और परिवर्तन पूरा करने के लिए पुष्टिकरण लिंक खोलें।',
+      requestFailed: 'ईमेल पता बदलने में विफल',
+    },
     selectLanguage: 'भाषा चुनें',
     preferences: 'प्राथमिकताएं',
     language: 'भाषा',
@@ -3435,6 +3503,7 @@ export const hi: TranslationDictionary = {
       displayOrder: 'प्रदर्शन क्रम',
       dailyTokenQuota: 'दैनिक टोकन कोटा',
       dailyTokenQuotaHelp: 'इस योजना पर उपयोगकर्ता प्रतिदिन कितने टोकन उपयोग कर सकता है।',
+      weeklyTokenQuota: 'साप्ताहिक टोकन कोटा',
       monthlyTokenQuota: 'मासिक टोकन कोटा',
       maxChatsPerDay: 'प्रति दिन अधिकतम चैट',
       maxMessagesPerDay: 'प्रति दिन अधिकतम संदेश',
@@ -3490,6 +3559,10 @@ export const hi: TranslationDictionary = {
       saveSucceeded: 'मॉडल एक्सेस सहेजा गया।',
       saveFailed: 'मॉडल एक्सेस सहेजा नहीं जा सका।',
     },
+  },
+  adminUsers: {
+    title: 'उपयोगकर्ता प्रबंधन',
+    description: 'उपयोगकर्ता खातों, भूमिकाओं, योजनाओं, सत्यापन और पहुंच का प्रबंधन करें',
   },
   adminRoles: {
     title: 'भूमिकाएँ',
@@ -5409,5 +5482,14 @@ export const hi: TranslationDictionary = {
           'हमें अपना क्षेत्र, अपनी शर्तें और लगभग कितने लोग इसे इस्तेमाल करेंगे बताएँ। एक उपयोगी पहली बातचीत के लिए इतना काफ़ी है।',
       },
     },
+  },
+  pwa: {
+    offlineMessage:
+      'आप ऑफ़लाइन हैं। निजी कार्रवाइयाँ जारी रखने के लिए दोबारा कनेक्ट करें; सार्वजनिक ऑफ़लाइन विकल्प अब भी उपलब्ध है।',
+    updateAvailable: 'ClawAI का नया वर्शन उपलब्ध है।',
+    updateAction: 'अपडेट करें',
+    installMessage: 'ऐप जैसी सुविधा के लिए ClawAI इंस्टॉल करें।',
+    installAction: 'इंस्टॉल करें',
+    dismissInstall: 'इंस्टॉल सूचना बंद करें',
   },
 };

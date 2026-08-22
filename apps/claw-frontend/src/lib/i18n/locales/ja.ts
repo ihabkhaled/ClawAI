@@ -52,6 +52,11 @@ export const ja: TranslationDictionary = {
     errorBoundaryTitle: '問題が発生しました',
     errorBoundaryDescription:
       'このページで予期しないエラーが発生しました。もう一度試すか、別のページに移動してください。',
+    phoneCountryLabel: '国',
+    phoneCountrySearch: '国を検索',
+    phoneNumberLabel: '電話番号',
+    phoneNumberPlaceholder: '電話番号を入力',
+    phoneInvalid: '有効な電話番号を入力してください',
   },
   auth: {
     login: 'ログイン',
@@ -75,6 +80,12 @@ export const ja: TranslationDictionary = {
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Claw アカウントを作成する',
     registerSubtitle: 'メールアドレスとパスワードを使用してサインアップします',
+    firstName: '名',
+    firstNamePlaceholder: '名を入力してください',
+    lastName: '姓',
+    lastNamePlaceholder: '姓を入力してください',
+    phone: '電話番号',
+    phoneOptional: '（任意）',
     registerButton: 'アカウントの作成',
     registering: 'アカウントを作成しています...',
     registerFailed: '登録に失敗しました。もう一度試してください。',
@@ -91,6 +102,11 @@ export const ja: TranslationDictionary = {
       'パスワードのリセットはロードマップにあります。とりあえず管理者に連絡してください。',
     showPasswordAria: 'パスワードを表示',
     hidePasswordAria: 'パスワードを隠す',
+    confirmEmailChangeTitle: '新しいメールアドレスの確認',
+    confirmEmailChangeDescription: '新しいメールアドレスを確認しています。',
+    confirmEmailChangeSuccess: 'メールアドレスが更新されました。もう一度サインインしてください。',
+    confirmEmailChangeInvalidToken: 'この確認リンクは無効か、有効期限が切れています。',
+    confirmEmailChangeBackToLogin: 'サインインに戻る',
     loginFailedTitle: 'サインインできませんでした',
     brandingHeadline: 'すべてのフロンティア AI モデル、1 つのサブスクリプション',
     brandingSubheadline:
@@ -208,6 +224,7 @@ export const ja: TranslationDictionary = {
     workspaceEmailSignatures: '電子メールの署名',
     workspaceEmailTemplates: 'メール テンプレート',
     workspaceImplHandoffs: 'コーディングのハンドオフ',
+    adminUsers: 'ユーザー',
     adminAiActionPolicies: 'AI アクション ポリシー',
     adminSuggestionRules: '提案ルール',
     adminWebhookDeliveries: 'Webhook 配信',
@@ -295,6 +312,14 @@ export const ja: TranslationDictionary = {
     errors: {
       planTrialExpired:
         '無料トライアルは終了しました。AI を引き続き利用するには有料プランを選択してください。',
+      dailyTokenLimitExceeded: '1日のトークン上限を超えました。',
+      weeklyTokenLimitExceeded: '週間トークン上限を超えました。',
+      monthlyTokenLimitExceeded: '月間トークン上限を超えました。',
+      dailyChatLimitExceeded: '1日のチャットスレッド上限を超えました。',
+      dailyMessageLimitExceeded: '1日のメッセージ上限を超えました。',
+      workspaceConnectionLimitExceeded: 'ワークスペース接続の上限に達しました。',
+      contextPackLimitExceeded: 'コンテキストパックの上限に達しました。',
+      memoryItemLimitExceeded: 'メモリアイテムの上限に達しました。',
       videoAttachmentProviderUnsupported:
         'このモデルはビデオ添付ファイルを処理できません。 Gemini 2.5 Flash または Pro を選択するか、Auto に切り替えます。',
       videoAttachmentLocalModelUnavailable:
@@ -1040,7 +1065,29 @@ export const ja: TranslationDictionary = {
     editUser: 'ユーザーを編集',
     saveUser: 'ユーザーを保存',
     editUsername: 'ユーザー名を編集',
-    editEmail: 'メールを編集',
+
+    editUserTitle: 'ユーザーを編集',
+
+    editUserDescription:
+      'このアカウントの氏名とユーザー名を更新するか、新しい一時パスワードを発行します。',
+
+    editUserUsername: 'ユーザー名',
+
+    editUserFirstName: '名',
+
+    editUserLastName: '姓',
+
+    editUserUsernameInvalid: '3〜32 文字の英数字、ハイフン、アンダースコアを使用してください。',
+
+    editUserNameTooLong: '64 文字以内で入力してください。',
+
+    editUserSuperAdminNotice: 'スーパー管理者アカウントはここでは編集できません。',
+
+    editUserSave: '変更を保存',
+
+    editUserCancel: 'キャンセル',
+
+    editUserRotatePassword: 'パスワードを再発行',
     userUpdated: 'ユーザーを更新しました',
     userUpdateFailed: 'ユーザーを更新できませんでした',
     colEmail: 'メール',
@@ -1069,6 +1116,13 @@ export const ja: TranslationDictionary = {
       '監査サービスに到達できませんでした。しばらくしてからもう一度試してください。',
     loadingAuditEvents: '監査イベントを読み込み中...',
     viewAllAudits: 'すべて表示',
+    issueTemporaryPassword: '仮パスワードを発行',
+    issueTemporaryPasswordConfirmTitle: '仮パスワードを発行しますか？',
+    issueTemporaryPasswordConfirmBody:
+      '仮パスワードをユーザーにメールで送信し、すべてのアクティブなセッションをサインアウトします。',
+    temporaryPasswordIssued:
+      '仮パスワードをメールで送信し、すべてのセッションをサインアウトしました。',
+    temporaryPasswordFailed: '仮パスワードの発行に失敗しました。',
   },
   settings: {
     title: '設定',
@@ -1083,8 +1137,23 @@ export const ja: TranslationDictionary = {
     accountDeleteFailed: 'アカウントを削除できませんでした',
     username: 'ユーザー名',
     email: 'メール',
-    emailReadOnly: '管理者に連絡して電子メールを変更してください。',
     role: '役割',
+    emailChange: {
+      title: 'メールアドレスの変更',
+      description:
+        'メールアドレスの変更には、現在のアドレスに送信されるコードと、新しいアドレスからの確認が必要です。',
+      newEmailLabel: '新しいメールアドレス',
+      currentPasswordLabel: '現在のパスワード',
+      submit: '確認コードを送信',
+      otpDescription: '現在のメールアドレスに送信された6桁のコードを入力してください。',
+      otpLabel: '確認コード',
+      verify: 'コードを確認',
+      resend: 'コードを再送信',
+      resendCooldown: '再送信は{seconds}秒後に可能です',
+      cancel: 'メールアドレスの変更を取り消す',
+      pendingNotice: '新しい受信トレイを確認し、確認リンクを開いて変更を完了してください。',
+      requestFailed: 'メールアドレスの変更に失敗しました',
+    },
     selectLanguage: '言語を選択してください',
     preferences: 'の設定',
     language: '言語',
@@ -3442,6 +3511,7 @@ export const ja: TranslationDictionary = {
       displayOrder: '表示順',
       dailyTokenQuota: '毎日のトークン割り当て',
       dailyTokenQuotaHelp: 'このプランでユーザーが 1 日に消費できるトークン。',
+      weeklyTokenQuota: '週間トークン割り当て',
       monthlyTokenQuota: '月間トークン割り当て',
       maxChatsPerDay: '1 日あたりの最大チャット数',
       maxMessagesPerDay: '1 日あたりの最大メッセージ数',
@@ -3497,6 +3567,10 @@ export const ja: TranslationDictionary = {
       saveSucceeded: 'モデル アクセスが保存されました。',
       saveFailed: 'モデルのアクセスを保存できませんでした。',
     },
+  },
+  adminUsers: {
+    title: 'ユーザー管理',
+    description: 'ユーザーアカウント、ロール、プラン、認証、アクセスを管理します',
   },
   adminRoles: {
     title: 'の役割',
@@ -5424,5 +5498,14 @@ export const ja: TranslationDictionary = {
           'あなたのセクター、制約、そしてそれを使用するおおよその人数を教えてください。最初の会話としてはこれで十分です。',
       },
     },
+  },
+  pwa: {
+    offlineMessage:
+      'オフラインです。プライベート操作を続けるには再接続してください。公開のオフライン代替表示は引き続き利用できます。',
+    updateAvailable: 'ClawAIの新しいバージョンが利用可能です。',
+    updateAction: '更新',
+    installMessage: 'アプリのように使うにはClawAIをインストールしてください。',
+    installAction: 'インストール',
+    dismissInstall: 'インストール通知を閉じる',
   },
 };

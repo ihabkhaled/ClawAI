@@ -34,10 +34,6 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
     },
   );
 
-  // Animated active indicator: 3px-wide, 60%-tall pill anchored to the
-  // inline-start edge. The `start-0` keyword respects RTL automatically and
-  // the keyframe slides + scales the bar in when the route becomes active.
-  // Rounded-end means the indicator looks like it's flowing OUT of the rail.
   const activeIndicator = isActive ? (
     <span
       aria-hidden
@@ -88,14 +84,14 @@ export function SidebarNavItem({ item }: SidebarNavItemProps) {
           size="unstyled"
           type="button"
           onClick={toggle}
-          aria-label={expanded ? 'Collapse' : 'Expand'}
+          aria-label={t(expanded ? 'actions.collapse' : 'actions.expand')}
           aria-expanded={expanded}
-          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground ms-1 flex min-h-11 w-8 items-center justify-center rounded-lg transition-colors"
+          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground ms-1 flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors"
         >
           <ChevronDown
             className={cn(
               'duration-normal ease-expo-out h-4 w-4 transition-transform',
-              expanded ? 'rotate-0' : '-rotate-90',
+              expanded ? 'rotate-0' : '-rotate-90 rtl:rotate-90',
             )}
           />
         </Button>

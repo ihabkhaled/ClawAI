@@ -207,6 +207,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
     href: ROUTES.ADMIN,
     icon: ShieldCheck,
     children: [
+      { labelKey: 'nav.adminUsers', href: ROUTES.ADMIN_USERS, icon: Users },
       {
         labelKey: 'nav.adminAiActionPolicies',
         href: ROUTES.ADMIN_AI_ACTION_POLICIES,

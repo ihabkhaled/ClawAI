@@ -44,6 +44,7 @@ import {
   type RoutingDecisionMadePayload,
   type UserLoginPayload,
   type UserLogoutPayload,
+  type UserTemporaryPasswordIssuedPayload,
 } from '@claw/shared-types';
 import { AuditsService } from '../services/audits.service';
 import { UsageService } from '../services/usage.service';
@@ -163,6 +164,10 @@ export class AuditEventManager implements OnModuleInit {
       [EventPattern.USER_LOGIN, (d) => this.handleUserLogin(d as UserLoginPayload)],
       [EventPattern.USER_LOGOUT, (d) => this.handleUserLogout(d as UserLogoutPayload)],
       [
+        EventPattern.USER_TEMPORARY_PASSWORD_ISSUED,
+        (d) => this.handleUserTemporaryPasswordIssued(d as UserTemporaryPasswordIssuedPayload),
+      ],
+      [
         EventPattern.CONNECTOR_CREATED,
         (d) => this.handleConnectorCreated(d as ConnectorCreatedPayload),
       ],
@@ -259,6 +264,9 @@ export class AuditEventManager implements OnModuleInit {
       case EventPattern.USER_LOGOUT:
         await this.handleUserLogout(payload as UserLogoutPayload);
         break;
+      case EventPattern.USER_TEMPORARY_PASSWORD_ISSUED:
+        await this.handleUserTemporaryPasswordIssued(payload as UserTemporaryPasswordIssuedPayload);
+        break;
       case EventPattern.CONNECTOR_CREATED:
         await this.handleConnectorCreated(payload as ConnectorCreatedPayload);
         break;
@@ -309,6 +317,19 @@ export class AuditEventManager implements OnModuleInit {
       entityId: payload.userId,
       severity: 'LOW',
       details: {},
+    });
+  }
+
+  private async handleUserTemporaryPasswordIssued(
+    payload: UserTemporaryPasswordIssuedPayload,
+  ): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.issuedBy,
+      action: 'ISSUE_TEMPORARY_PASSWORD',
+      entityType: 'user',
+      entityId: payload.userId,
+      severity: 'HIGH',
+      details: { targetUserId: payload.userId },
     });
   }
 

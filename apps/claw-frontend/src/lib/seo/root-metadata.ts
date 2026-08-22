@@ -24,6 +24,11 @@ export function buildRootMetadata(): Metadata {
     publisher: 'ClawAI',
     category: 'technology',
     referrer: 'origin-when-cross-origin',
+    appleWebApp: {
+      capable: true,
+      title: 'ClawAI',
+      statusBarStyle: 'black-translucent',
+    },
     openGraph: {
       type: 'website',
       siteName: 'ClawAI',

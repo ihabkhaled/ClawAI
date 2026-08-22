@@ -78,13 +78,14 @@ model User {
   createdAt            DateTime                 @default(now()) @map("created_at")
   updatedAt            DateTime                 @updatedAt @map("updated_at")
 
-  sessions        Session[]
-  passwordResetTokens PasswordResetToken[]
+  sessions                Session[]
+  passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
-  roleRef         Role?                @relation(fields: [roleId], references: [id])
-  activePlan      Plan?                @relation("UserActivePlan", fields: [activePlanId], references: [id])
-  planAssignments UserPlanAssignment[]
-  trialRedemption PlanTrialRedemption?
+  roleRef                 Role?                    @relation(fields: [roleId], references: [id])
+  activePlan              Plan?                    @relation("UserActivePlan", fields: [activePlanId], references: [id])
+  planAssignments         UserPlanAssignment[]
+  trialRedemption         PlanTrialRedemption?
+  emailChangeRequests     EmailChangeRequest[]
 
   @@index([email])
   @@index([status])
@@ -178,11 +179,11 @@ model Plan {
   createdAt                          DateTime            @default(now()) @map("created_at")
   updatedAt                          DateTime            @updatedAt @map("updated_at")
 
-  modelAccess    PlanModelAccess[]
-  assignments    UserPlanAssignment[]
-  priceVersions  PlanPriceVersion[]
-  featureRules   PlanFeatureRule[]
-  activeForUsers User[]               @relation("UserActivePlan")
+  modelAccess      PlanModelAccess[]
+  assignments      UserPlanAssignment[]
+  priceVersions    PlanPriceVersion[]
+  featureRules     PlanFeatureRule[]
+  activeForUsers   User[]                @relation("UserActivePlan")
   trialRedemptions PlanTrialRedemption[]
 
   @@index([isActive])
@@ -258,8 +259,8 @@ model UserPlanAssignment {
   createdAt             DateTime             @default(now()) @map("created_at")
   updatedAt             DateTime             @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan Plan @relation(fields: [planId], references: [id])
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan            Plan                 @relation(fields: [planId], references: [id])
   trialRedemption PlanTrialRedemption?
 
   @@index([userId])
@@ -387,10 +388,10 @@ model DeviceAuthorizationGrant {
 }
 
 model PasswordResetToken {
-  id         String   @id @default(cuid())
-  userId     String   @map("user_id")
-  tokenHash  String   @unique @map("token_hash")
-  expiresAt  DateTime @map("expires_at")
+  id         String    @id @default(cuid())
+  userId     String    @map("user_id")
+  tokenHash  String    @unique @map("token_hash")
+  expiresAt  DateTime  @map("expires_at")
   consumedAt DateTime? @map("consumed_at")
   createdAt  DateTime  @default(now()) @map("created_at")
 
@@ -648,6 +649,13 @@ enum SeedExecutionStatus {
   FAILED
 }
 
+enum EmailChangeStage {
+  OLD_EMAIL_PENDING
+  NEW_EMAIL_PENDING
+  COMPLETED
+  CANCELLED
+}
+
 // Run-once ledger for versioned data seeders. Migrations and seeds still run at
 // container start, but a completed seeder is never re-executed, so restarting a
 // production replica cannot re-seed over administrator-edited rows.
@@ -669,4 +677,29 @@ model SeedExecution {
   @@unique([name, version])
   @@index([status])
   @@map("seed_executions")
+}
+
+model EmailChangeRequest {
+  id                   String           @id @default(cuid())
+  userId               String           @map("user_id")
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newEmail             String           @map("new_email")
+  stage                EmailChangeStage
+  oldEmailOtpHash      String           @map("old_email_otp_hash")
+  oldEmailOtpExpiresAt DateTime         @map("old_email_otp_expires_at")
+  oldEmailAttempts     Int              @default(0) @map("old_email_attempts")
+  oldEmailVerifiedAt   DateTime?        @map("old_email_verified_at")
+  newEmailTokenHash    String?          @unique @map("new_email_token_hash")
+  newEmailExpiresAt    DateTime?        @map("new_email_expires_at")
+  lastSentAt           DateTime?        @map("last_sent_at")
+  activeKey            String?          @unique @map("active_key")
+  completedAt          DateTime?        @map("completed_at")
+  cancelledAt          DateTime?        @map("cancelled_at")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+
+  @@index([userId, stage])
+  @@index([oldEmailOtpExpiresAt])
+  @@index([newEmailExpiresAt])
+  @@map("email_change_requests")
 }

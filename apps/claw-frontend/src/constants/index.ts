@@ -1,4 +1,5 @@
 export { API_BASE_URL } from './api.constants';
+export { COUNTRY_DIAL_CODES, DEFAULT_COUNTRY_ISO2 } from './country-dial-codes.constants';
 export { SUGGESTED_PROMPTS } from './suggested-prompts.constants';
 export { THREAD_DATE_GROUP_LABEL_KEYS } from './thread-date-group.constants';
 export { SEVERITY_COLORS, ALL_FILTER } from './audit.constants';
@@ -229,6 +230,7 @@ export {
 } from './routing-playground.constants';
 export { THREAD_CONTEXT_INSPECTOR_ENABLED } from './thread-context-inspector.constants';
 export {
+  DISABLED_PLAN_FEATURE_GATES,
   PLAN_FORM_DEFAULTS,
   PLAN_FEATURE_GATE_FIELDS,
   PLAN_TRIAL_DURATION_DAYS,

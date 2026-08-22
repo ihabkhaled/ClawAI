@@ -52,6 +52,11 @@ export const en: TranslationDictionary = {
     errorBoundaryTitle: 'Something went wrong',
     errorBoundaryDescription:
       'This page hit an unexpected error. Try again, or move to another page.',
+    phoneCountryLabel: 'Country',
+    phoneCountrySearch: 'Search countries',
+    phoneNumberLabel: 'Phone number',
+    phoneNumberPlaceholder: 'Enter phone number',
+    phoneInvalid: 'Enter a valid phone number',
   },
   auth: {
     login: 'Login',
@@ -75,6 +80,12 @@ export const en: TranslationDictionary = {
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Create your Claw account',
     registerSubtitle: 'Sign up with your email and password',
+    firstName: 'First name',
+    firstNamePlaceholder: 'Enter your first name',
+    lastName: 'Last name',
+    lastNamePlaceholder: 'Enter your last name',
+    phone: 'Phone number',
+    phoneOptional: '(optional)',
     registerButton: 'Create Account',
     registering: 'Creating account...',
     registerFailed: 'Registration failed. Please try again.',
@@ -91,6 +102,11 @@ export const en: TranslationDictionary = {
       'Password reset is on the roadmap. Please contact an administrator for now.',
     showPasswordAria: 'Show password',
     hidePasswordAria: 'Hide password',
+    confirmEmailChangeTitle: 'Confirm your new email',
+    confirmEmailChangeDescription: 'We are confirming your new email address.',
+    confirmEmailChangeSuccess: 'Your email address has been updated. Please sign in again.',
+    confirmEmailChangeInvalidToken: 'This confirmation link is invalid or has expired.',
+    confirmEmailChangeBackToLogin: 'Back to sign in',
     loginFailedTitle: "We couldn't sign you in",
     brandingHeadline: 'Every frontier AI model, one subscription',
     brandingSubheadline:
@@ -208,6 +224,7 @@ export const en: TranslationDictionary = {
     workspaceEmailSignatures: 'Email Signatures',
     workspaceEmailTemplates: 'Email Templates',
     workspaceImplHandoffs: 'Coding Handoffs',
+    adminUsers: 'Users',
     adminAiActionPolicies: 'AI Action Policies',
     adminSuggestionRules: 'Suggestion Rules',
     adminWebhookDeliveries: 'Webhook Deliveries',
@@ -294,6 +311,14 @@ export const en: TranslationDictionary = {
     allProvidersFailed: 'All providers failed to generate a response',
     errors: {
       planTrialExpired: 'Your free trial has ended. Choose a paid plan to continue using AI.',
+      dailyTokenLimitExceeded: 'You have exceeded your daily token limit.',
+      weeklyTokenLimitExceeded: 'You have exceeded your weekly token limit.',
+      monthlyTokenLimitExceeded: 'You have exceeded your monthly token limit.',
+      dailyChatLimitExceeded: 'You have exceeded your daily chat thread limit.',
+      dailyMessageLimitExceeded: 'You have exceeded your daily message limit.',
+      workspaceConnectionLimitExceeded: 'You have reached your workspace connection limit.',
+      contextPackLimitExceeded: 'You have reached your context pack limit.',
+      memoryItemLimitExceeded: 'You have reached your memory item limit.',
       videoAttachmentProviderUnsupported:
         'This model cannot process video attachments. Choose Gemini 2.5 Flash or Pro, or switch to Auto.',
       videoAttachmentLocalModelUnavailable:
@@ -1037,7 +1062,29 @@ export const en: TranslationDictionary = {
     editUser: 'Edit user',
     saveUser: 'Save user',
     editUsername: 'Edit username',
-    editEmail: 'Edit email',
+
+    editUserTitle: 'Edit user',
+
+    editUserDescription:
+      'Update this account’s name and username, or issue a new temporary password.',
+
+    editUserUsername: 'Username',
+
+    editUserFirstName: 'First name',
+
+    editUserLastName: 'Last name',
+
+    editUserUsernameInvalid: 'Use 3–32 letters, numbers, hyphens or underscores.',
+
+    editUserNameTooLong: 'Use at most 64 characters.',
+
+    editUserSuperAdminNotice: 'Super admin accounts cannot be edited here.',
+
+    editUserSave: 'Save changes',
+
+    editUserCancel: 'Cancel',
+
+    editUserRotatePassword: 'Rotate password',
     userUpdated: 'User updated',
     userUpdateFailed: 'Failed to update user',
     colEmail: 'Email',
@@ -1065,6 +1112,12 @@ export const en: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'The audit service was unreachable. Try again in a moment.',
     loadingAuditEvents: 'Loading audit events...',
     viewAllAudits: 'View all',
+    issueTemporaryPassword: 'Issue temporary password',
+    issueTemporaryPasswordConfirmTitle: 'Issue a temporary password?',
+    issueTemporaryPasswordConfirmBody:
+      'A temporary password will be emailed to the user and all active sessions will be signed out.',
+    temporaryPasswordIssued: 'Temporary password emailed and all sessions signed out.',
+    temporaryPasswordFailed: 'Failed to issue the temporary password.',
   },
   settings: {
     title: 'Settings',
@@ -1079,8 +1132,23 @@ export const en: TranslationDictionary = {
     accountDeleteFailed: 'Failed to delete account',
     username: 'Username',
     email: 'Email',
-    emailReadOnly: 'Contact an administrator to change your email.',
     role: 'Role',
+    emailChange: {
+      title: 'Change email address',
+      description:
+        'Changing your email needs a code sent to your current address, then confirmation from the new one.',
+      newEmailLabel: 'New email address',
+      currentPasswordLabel: 'Current password',
+      submit: 'Send verification code',
+      otpDescription: 'Enter the 6-digit code sent to your current email address.',
+      otpLabel: 'Verification code',
+      verify: 'Verify code',
+      resend: 'Resend code',
+      resendCooldown: 'Resend available in {seconds}s',
+      cancel: 'Cancel email change',
+      pendingNotice: 'Check your new inbox and open the confirmation link to finish the change.',
+      requestFailed: 'Failed to change email address',
+    },
     selectLanguage: 'Select language',
     preferences: 'Preferences',
     language: 'Language',
@@ -3412,6 +3480,7 @@ export const en: TranslationDictionary = {
       displayOrder: 'Display order',
       dailyTokenQuota: 'Daily token quota',
       dailyTokenQuotaHelp: 'Tokens a user may consume per day on this plan.',
+      weeklyTokenQuota: 'Weekly token quota',
       monthlyTokenQuota: 'Monthly token quota',
       maxChatsPerDay: 'Max chats per day',
       maxMessagesPerDay: 'Max messages per day',
@@ -3467,6 +3536,10 @@ export const en: TranslationDictionary = {
       saveSucceeded: 'Model access saved.',
       saveFailed: 'Could not save model access.',
     },
+  },
+  adminUsers: {
+    title: 'User management',
+    description: 'Manage user accounts, roles, plans, verification, and access',
   },
   adminRoles: {
     title: 'Roles',
@@ -5394,5 +5467,14 @@ export const en: TranslationDictionary = {
           'Tell us your sector, your constraints and roughly how many people would use it. That is enough for a useful first conversation.',
       },
     },
+  },
+  pwa: {
+    offlineMessage:
+      'You are offline. Reconnect to continue private actions; the public offline fallback remains available.',
+    updateAvailable: 'A new ClawAI version is available.',
+    updateAction: 'Update',
+    installMessage: 'Install ClawAI for app-like access.',
+    installAction: 'Install',
+    dismissInstall: 'Dismiss install prompt',
   },
 };

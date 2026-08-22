@@ -50,12 +50,19 @@ Key-value store for runtime configuration (e.g., maintenance mode, feature flags
 
 | Method | Path         | Auth   | Description              |
 | ------ | ------------ | ------ | ------------------------ |
+| POST   | /register    | Public | Create a pending account |
 | POST   | /login       | Public | Email + password login   |
 | POST   | /refresh     | Public | Refresh token rotation   |
 | POST   | /logout      | Bearer | Invalidate session       |
 | GET    | /me          | Bearer | Current user profile     |
 | PATCH  | /me          | Bearer | Update own profile/prefs |
 | PATCH  | /me/password | Bearer | Change own password      |
+
+`POST /api/v1/auth/register` requires `firstName`, `lastName`, `email`,
+and `password`. Names are trimmed and limited to 64 characters. The optional
+`phone` field must use E.164 format (for example, `+15551234567`). The
+service derives the username from the email and always assigns the `USER`
+role and `PENDING` status; client-supplied role or status fields are ignored.
 
 ### Users (`/api/v1/users`)
 
@@ -174,3 +181,26 @@ src/
       services/health.service.ts
       health.module.ts
 ```
+
+## Email Change
+
+The authenticated email-change flow keeps ownership scoped to the current access-token subject:
+
+| Method   | Route                                          | Purpose                                                                           |
+| -------- | ---------------------------------------------- | --------------------------------------------------------------------------------- |
+| `POST`   | `/api/v1/users/me/email-change`                | Request a change and send an OTP to the current email.                            |
+| `POST`   | `/api/v1/users/me/email-change/verify-current` | Verify the current-email OTP and send a confirmation link to the requested email. |
+| `POST`   | `/api/v1/users/me/email-change/resend`         | Resend the active step without revealing account or delivery state.               |
+| `GET`    | `/api/v1/users/me/email-change`                | Return the caller's pending request status.                                       |
+| `DELETE` | `/api/v1/users/me/email-change`                | Cancel the caller's pending request.                                              |
+| `POST`   | `/api/v1/auth/email-change/confirm`            | Publicly consume the one-time confirmation token and complete the swap.           |
+
+The five `/users/me` operations require authentication, derive the user ID from the current principal, and never accept a caller-supplied user ID. Mutating operations are throttled to five requests per minute. Request and resend responses stay generic to resist account and email enumeration.
+
+The manager stores only hashes of OTPs and confirmation tokens. OTP expiry, confirmation expiry, resend cooldowns, maximum attempts, and single-use state transitions are enforced before completion. The final email swap and request completion run transactionally so a partial update cannot leave identity state split.
+
+### Operations
+
+Apply the Prisma migration and regenerate the client before deploying the service. Rebuild through the supported repository service lifecycle command, then verify the auth-service health endpoint and the email-change flow against the rebuilt container.
+
+**Documented deviation:** the new SMTP messages use inline English templates in the existing auth email adapter. The repository currently has no email-template or email-i18n layer; introducing one is outside Batch 09.

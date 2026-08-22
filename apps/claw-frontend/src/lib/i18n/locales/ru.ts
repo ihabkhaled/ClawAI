@@ -52,6 +52,11 @@ export const ru: TranslationDictionary = {
     errorBoundaryTitle: 'Что-то пошло не так',
     errorBoundaryDescription:
       'На этой странице произошла непредвиденная ошибка. Повторите попытку или перейдите на другую страницу.',
+    phoneCountryLabel: 'Страна',
+    phoneCountrySearch: 'Поиск стран',
+    phoneNumberLabel: 'Номер телефона',
+    phoneNumberPlaceholder: 'Введите номер телефона',
+    phoneInvalid: 'Введите действительный номер телефона',
   },
   auth: {
     login: 'Вход',
@@ -75,6 +80,12 @@ export const ru: TranslationDictionary = {
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Создайте аккаунт Claw',
     registerSubtitle: 'Зарегистрируйтесь с помощью эл. почты и пароля',
+    firstName: 'Имя',
+    firstNamePlaceholder: 'Введите ваше имя',
+    lastName: 'Фамилия',
+    lastNamePlaceholder: 'Введите вашу фамилию',
+    phone: 'Номер телефона',
+    phoneOptional: '(необязательно)',
     registerButton: 'Создать аккаунт',
     registering: 'Создание аккаунта...',
     registerFailed: 'Регистрация не удалась. Попробуйте снова.',
@@ -91,6 +102,11 @@ export const ru: TranslationDictionary = {
       'Сброс пароля в разработке. Пока что обратитесь к администратору.',
     showPasswordAria: 'Показать пароль',
     hidePasswordAria: 'Скрыть пароль',
+    confirmEmailChangeTitle: 'Подтвердите новый адрес электронной почты',
+    confirmEmailChangeDescription: 'Мы подтверждаем ваш новый адрес электронной почты.',
+    confirmEmailChangeSuccess: 'Ваш адрес электронной почты обновлён. Войдите снова.',
+    confirmEmailChangeInvalidToken: 'Эта ссылка подтверждения недействительна или устарела.',
+    confirmEmailChangeBackToLogin: 'Вернуться ко входу',
     loginFailedTitle: 'Не удалось войти',
     brandingHeadline: 'Все передовые ИИ-модели по одной подписке',
     brandingSubheadline:
@@ -209,6 +225,7 @@ export const ru: TranslationDictionary = {
     workspaceEmailSignatures: 'Подписи писем',
     workspaceEmailTemplates: 'Шаблоны писем',
     workspaceImplHandoffs: 'Передача кода',
+    adminUsers: 'Пользователи',
     adminAiActionPolicies: 'Политики действий ИИ',
     adminSuggestionRules: 'Правила предложений',
     adminWebhookDeliveries: 'Доставки вебхуков',
@@ -296,6 +313,14 @@ export const ru: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'Бесплатный пробный период завершён. Выберите платный тариф, чтобы продолжить пользоваться ИИ.',
+      dailyTokenLimitExceeded: 'Вы превысили дневной лимит токенов.',
+      weeklyTokenLimitExceeded: 'Вы превысили недельный лимит токенов.',
+      monthlyTokenLimitExceeded: 'Вы превысили месячный лимит токенов.',
+      dailyChatLimitExceeded: 'Вы превысили дневной лимит чатов.',
+      dailyMessageLimitExceeded: 'Вы превысили дневной лимит сообщений.',
+      workspaceConnectionLimitExceeded: 'Вы достигли лимита подключений рабочих пространств.',
+      contextPackLimitExceeded: 'Вы достигли лимита пакетов контекста.',
+      memoryItemLimitExceeded: 'Вы достигли лимита элементов памяти.',
       videoAttachmentProviderUnsupported:
         'Эта модель не может обрабатывать видеофайлы. Выберите Gemini 2.5 Flash или Pro либо переключитесь в автоматический режим.',
       videoAttachmentLocalModelUnavailable:
@@ -1049,7 +1074,29 @@ export const ru: TranslationDictionary = {
     editUser: 'Изменить пользователя',
     saveUser: 'Сохранить пользователя',
     editUsername: 'Изменить имя пользователя',
-    editEmail: 'Изменить эл. почту',
+
+    editUserTitle: 'Редактировать пользователя',
+
+    editUserDescription:
+      'Обновите имя и имя пользователя этой учётной записи или выпустите новый временный пароль.',
+
+    editUserUsername: 'Имя пользователя',
+
+    editUserFirstName: 'Имя',
+
+    editUserLastName: 'Фамилия',
+
+    editUserUsernameInvalid: 'Используйте от 3 до 32 букв, цифр, дефисов или подчёркиваний.',
+
+    editUserNameTooLong: 'Используйте не более 64 символов.',
+
+    editUserSuperAdminNotice: 'Учётные записи суперадминистратора нельзя редактировать здесь.',
+
+    editUserSave: 'Сохранить изменения',
+
+    editUserCancel: 'Отмена',
+
+    editUserRotatePassword: 'Сменить пароль',
     userUpdated: 'Пользователь обновлён',
     userUpdateFailed: 'Не удалось обновить пользователя',
     colEmail: 'Эл. почта',
@@ -1077,6 +1124,12 @@ export const ru: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'Сервис аудита недоступен. Попробуйте ещё раз через мгновение.',
     loadingAuditEvents: 'Загрузка событий аудита...',
     viewAllAudits: 'Показать все',
+    issueTemporaryPassword: 'Выпустить временный пароль',
+    issueTemporaryPasswordConfirmTitle: 'Выпустить временный пароль?',
+    issueTemporaryPasswordConfirmBody:
+      'Временный пароль будет отправлен пользователю по электронной почте, и все активные сеансы будут завершены.',
+    temporaryPasswordIssued: 'Временный пароль отправлен по почте и все сеансы завершены.',
+    temporaryPasswordFailed: 'Не удалось выпустить временный пароль.',
   },
   settings: {
     title: 'Настройки',
@@ -1091,8 +1144,24 @@ export const ru: TranslationDictionary = {
     accountDeleteFailed: 'Не удалось удалить аккаунт',
     username: 'Имя пользователя',
     email: 'Эл. почта',
-    emailReadOnly: 'Обратитесь к администратору, чтобы изменить email.',
     role: 'Роль',
+    emailChange: {
+      title: 'Изменить адрес электронной почты',
+      description:
+        'Для смены почты потребуется код, отправленный на текущий адрес, и затем подтверждение с нового.',
+      newEmailLabel: 'Новый адрес электронной почты',
+      currentPasswordLabel: 'Текущий пароль',
+      submit: 'Отправить код подтверждения',
+      otpDescription: 'Введите 6-значный код, отправленный на ваш текущий адрес электронной почты.',
+      otpLabel: 'Код подтверждения',
+      verify: 'Проверить код',
+      resend: 'Отправить код повторно',
+      resendCooldown: 'Повторная отправка через {seconds} с',
+      cancel: 'Отменить смену почты',
+      pendingNotice:
+        'Проверьте новый почтовый ящик и откройте ссылку подтверждения, чтобы завершить смену.',
+      requestFailed: 'Не удалось изменить адрес электронной почты',
+    },
     selectLanguage: 'Выберите язык',
     preferences: 'Предпочтения',
     language: 'Язык',
@@ -3454,6 +3523,7 @@ export const ru: TranslationDictionary = {
       displayOrder: 'Порядок отображения',
       dailyTokenQuota: 'Дневная квота токенов',
       dailyTokenQuotaHelp: 'Сколько токенов пользователь может потратить в день на этом тарифе.',
+      weeklyTokenQuota: 'Недельная квота токенов',
       monthlyTokenQuota: 'Месячная квота токенов',
       maxChatsPerDay: 'Макс. чатов в день',
       maxMessagesPerDay: 'Макс. сообщений в день',
@@ -3509,6 +3579,10 @@ export const ru: TranslationDictionary = {
       saveSucceeded: 'Доступ к моделям сохранён.',
       saveFailed: 'Не удалось сохранить доступ к моделям.',
     },
+  },
+  adminUsers: {
+    title: 'Управление пользователями',
+    description: 'Управляйте учётными записями, ролями, тарифами, верификацией и доступом',
   },
   adminRoles: {
     title: 'Роли',
@@ -5449,5 +5523,14 @@ export const ru: TranslationDictionary = {
           'Расскажите о вашей отрасли, ваших ограничениях и примерном числе пользователей. Этого достаточно для содержательного первого разговора.',
       },
     },
+  },
+  pwa: {
+    offlineMessage:
+      'Вы не в сети. Восстановите подключение, чтобы продолжить личные действия; общедоступный офлайн-режим остаётся доступным.',
+    updateAvailable: 'Доступна новая версия ClawAI.',
+    updateAction: 'Обновить',
+    installMessage: 'Установите ClawAI для доступа в формате приложения.',
+    installAction: 'Установить',
+    dismissInstall: 'Закрыть уведомление об установке',
   },
 };

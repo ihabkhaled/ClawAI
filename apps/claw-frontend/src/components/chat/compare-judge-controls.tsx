@@ -16,8 +16,8 @@ export function CompareJudgeControls({
   const groups = judgeModelOptionsToPickerGroups(judgeModelOptions);
   return (
     <div className="border-border/60 bg-muted/20 space-y-4 rounded-lg border p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="space-y-0.5">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <div className="min-w-0 space-y-0.5">
           <label className="text-sm font-medium" htmlFor="compare-judge-enabled">
             {t('chat.judgeReferee')}
           </label>

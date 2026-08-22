@@ -60,6 +60,9 @@ export class UsersService {
       email: dto.email,
       username: dto.username,
       passwordHash,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      phone: dto.phone,
       role: dto.role,
       status: 'ACTIVE',
     });
@@ -118,13 +121,6 @@ export class UsersService {
     }
     this.assertMutableUser(user);
 
-    if (dto.email && dto.email !== user.email) {
-      const existing = await this.usersRepository.findByEmail(dto.email);
-      if (existing) {
-        throw new DuplicateEntityException('User', 'email');
-      }
-    }
-
     if (dto.username && dto.username !== user.username) {
       const existing = await this.usersRepository.findByUsername(dto.username);
       if (existing) {
@@ -133,8 +129,9 @@ export class UsersService {
     }
 
     const updated = await this.usersRepository.updateById(id, {
-      email: dto.email,
       username: dto.username,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
       role: dto.role,
       status: dto.status,
     });
@@ -150,9 +147,8 @@ export class UsersService {
 
   async updateOwnProfile(userId: string, dto: UpdateOwnProfileDto): Promise<SafeUser> {
     const user = await this.requireUserWithValidPassword(userId, dto.currentPassword);
-    await this.ensureProfileFieldsAvailable(user.email, user.username, dto);
+    await this.ensureProfileFieldsAvailable(user.username, dto);
     const updated = await this.usersRepository.updateById(userId, {
-      email: dto.email,
       username: dto.username,
     });
     await this.usersRepository.revokeSessionsByUserId(userId);
@@ -300,9 +296,17 @@ export class UsersService {
     await this.assertSuperAdminActorForAdminMutation(actorId, user.role === UserRole.ADMIN);
     const temporaryPassword = `${randomBytes(12).toString('base64url')}!Aa1`;
     const passwordHash = await hashPassword(temporaryPassword);
+    await this.authEmailAdapter.sendTemporaryPassword(user.email, temporaryPassword);
+    // Residual safe-direction failure: if updateById fails after the email is sent,
+    // the emailed temporary password will not work, but the user's existing password
+    // still works, so they are not locked out.
     await this.usersRepository.updateById(id, { passwordHash, mustChangePassword: true });
     await this.usersRepository.revokeSessionsByUserId(id);
-    await this.authEmailAdapter.sendTemporaryPassword(user.email, temporaryPassword);
+    await this.rabbitMQService.publish(EventPattern.USER_TEMPORARY_PASSWORD_ISSUED, {
+      userId: id,
+      issuedBy: actorId,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   private async requireUserWithValidPassword(userId: string, password: string): Promise<User> {
@@ -339,17 +343,9 @@ export class UsersService {
   }
 
   private async ensureProfileFieldsAvailable(
-    currentEmail: string,
     currentUsername: string,
     dto: UpdateOwnProfileDto,
   ): Promise<void> {
-    if (
-      dto.email &&
-      dto.email !== currentEmail &&
-      (await this.usersRepository.findByEmail(dto.email))
-    ) {
-      throw new DuplicateEntityException('User', 'email');
-    }
     if (
       dto.username &&
       dto.username !== currentUsername &&

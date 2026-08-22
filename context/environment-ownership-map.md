@@ -17,6 +17,7 @@ single root `.env` (copy from `.env.example`) drives everything; all services us
 | Admin seed                | `ADMIN_EMAIL/USERNAME/PASSWORD`                                                                                            |
 | Frontend                  | `NEXT_PUBLIC_API_URL/APP_NAME/APP_URL`, `FRONTEND_PORT`                                                                    |
 | Outbound email            | `CONTACT_EMAIL_ENABLED/PROVIDER/FROM`, `CONTACT_SMTP_HOST/PORT/SECURE/USER/PASS`                                           |
+| Deployment control        | `DEPLOYMENT_STATUS_FILE`, `DEPLOYMENT_AUTOMATION_FILE`, `GITHUB_DEPLOY_TOKEN/REPOSITORY/REF` (auth-service only)           |
 | Payment / billing         | `PAYPAL_*`, `PAYMOB_*`, `PAYMENT_TOKEN_ENCRYPTION_*`, `FX_*`, `PAYMENT_*_INTERVAL_MS`, `PAYMENT_GATEWAY_*`                 |
 | Distributed origins       | `CLAW_<SVC>_ORIGIN`, including `CLAW_PAYMENT_ORIGIN`; internal service routes remain private                               |
 | Per-service ports         | `AUTH_PORT`, `CHAT_PORT`, …, `CLIENT_LOGS_PORT`, `SERVER_LOGS_PORT`                                                        |

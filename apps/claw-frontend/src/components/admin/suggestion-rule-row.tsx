@@ -15,15 +15,15 @@ export function SuggestionRuleRow({
   t,
 }: SuggestionRuleRowProps): ReactElement {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold">{rule.name}</span>
+    <div className="border-border bg-card flex flex-col gap-2 rounded-lg border p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="min-w-0 text-sm font-semibold break-words">{rule.name}</span>
         {rule.isSystemDefault ? (
           <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-xs text-blue-600 dark:text-blue-400">
             {t('adminAutomation.rules.systemDefault')}
           </span>
         ) : null}
-        <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+        <span className="text-muted-foreground flex w-full items-center justify-between gap-2 text-xs sm:ms-auto sm:w-auto">
           <span>{t('adminAutomation.rules.priority', { p: String(rule.priority) })}</span>
           <Switch
             checked={rule.isActive}
@@ -34,35 +34,35 @@ export function SuggestionRuleRow({
         </span>
       </div>
       {rule.description !== null ? (
-        <p className="text-xs text-muted-foreground">{rule.description}</p>
+        <p className="text-muted-foreground text-xs">{rule.description}</p>
       ) : null}
-      <div className="grid gap-1 text-xs text-muted-foreground md:grid-cols-2">
+      <div className="text-muted-foreground grid gap-1 text-xs md:grid-cols-2">
         <div>
-          <span className="font-semibold text-foreground">
+          <span className="text-foreground font-semibold">
             {t('adminAutomation.rules.eventType')}
           </span>
-          : <code className="rounded bg-muted px-1">{rule.eventType}</code>
+          : <code className="bg-muted rounded px-1 break-all">{rule.eventType}</code>
         </div>
         <div>
-          <span className="font-semibold text-foreground">
+          <span className="text-foreground font-semibold">
             {t('adminAutomation.rules.actionKind')}
           </span>
-          : <code className="rounded bg-muted px-1">{rule.actionKindToSuggest}</code>
+          : <code className="bg-muted rounded px-1 break-all">{rule.actionKindToSuggest}</code>
         </div>
         <div>
-          <span className="font-semibold text-foreground">
+          <span className="text-foreground font-semibold">
             {t('adminAutomation.rules.providerRegex')}
           </span>
-          : <code className="rounded bg-muted px-1">{rule.providerRegex}</code>
+          : <code className="bg-muted rounded px-1 break-all">{rule.providerRegex}</code>
         </div>
         <div>
-          <span className="font-semibold text-foreground">
+          <span className="text-foreground font-semibold">
             {t('adminAutomation.rules.contentRegex')}
           </span>
-          : <code className="rounded bg-muted px-1">{rule.contentRegex}</code>
+          : <code className="bg-muted rounded px-1 break-all">{rule.contentRegex}</code>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
           size="sm"

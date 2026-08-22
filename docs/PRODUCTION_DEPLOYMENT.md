@@ -53,7 +53,13 @@ happens to be by the time the SSH session runs.
 
 1. Validates the argument is a commit SHA.
 2. Takes a deploy lock (`flock` on `.deploy/deploy.lock`, or a `mkdir`-based
-   fallback) — two deployments never run against the VPS at once.
+   fallback) — two deployments never run against the VPS at once. Waiting is
+   never silent: a progress line naming the current holder is printed every
+   `CLAW_DEPLOY_LOCK_HEARTBEAT` seconds (default 15) until
+   `CLAW_DEPLOY_LOCK_WAIT` runs out. Under CI the deployment also arms an
+   orphan guard (`CLAW_DEPLOY_ORPHAN_GUARD=1`) that aborts it if the SSH
+   session that started it disappears, so a dropped connection can never leave
+   a deployment holding the lock.
 3. Validates `/srv/clawai`, `.env`, and that Docker/Compose v2 are reachable.
 4. Refuses to proceed if the checkout has uncommitted changes to **tracked**
    files (`git status --porcelain --untracked-files=no`). Untracked host state
@@ -83,6 +89,12 @@ A failed build never touches a running container. A failed health check dumps
 `docker compose ps` and the last 200 log lines per affected service, exits
 non-zero, and leaves `.deploy/deployed-sha` unchanged — the workflow run goes
 red, production keeps serving the previous commit.
+
+The whole image build is bounded by `CLAW_DEPLOY_BUILD_TIMEOUT` (default
+3600s, `timeout --foreground` so the build stays in the deployment's process
+group). A build that exceeds it is aborted and never retried: a build that
+produces nothing for an hour is wedged, not slow, and retrying it only holds
+the deploy lock longer.
 
 Docker Compose build concurrency defaults to `2` so a broad-impact release
 cannot start every service image build at once and starve the VPS or its SSH
@@ -122,6 +134,46 @@ The immutable seeded super admin can also inspect the same validated state at
 is running, slows to 30 seconds for terminal states, and warns when a running
 deployment has not reported progress for 30 minutes. Ordinary admins cannot see
 the navigation item or access the API.
+
+### 2.8 Deployment control from the admin page
+
+The same page drives production, not just watches it. Every control is
+super-admin only and ends in the same `deploy-production` workflow an automatic
+release dispatches — there is no second deployment path.
+
+| Control                | What it does                                                                              |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| Automatic deployment   | Pauses or resumes the automatic lane by writing `.deploy/automation.json`                 |
+| Deploy latest          | Dispatches the workflow against `GITHUB_DEPLOY_REF` (normally `main`)                     |
+| Re-deploy current      | Dispatches the commit already recorded as live — the recovery re-run                      |
+| Deploy an exact commit | Dispatches one 40-character SHA an operator typed — rollback, or pinning a known-good run |
+| Clear stuck rollout    | Rewrites a rollout that stopped reporting as `failed` so the next dispatch is not blocked |
+
+Manual dispatch needs the whole credential set — `GITHUB_DEPLOY_TOKEN`
+(fine-grained PAT, `actions: write` on this repository and nothing else),
+`GITHUB_DEPLOY_REPOSITORY` (`owner/repo`) and `GITHUB_DEPLOY_REF`. A partial set
+does not half-enable it: the page hides the manual controls rather than offering
+a button that can only fail. The automatic-deploy switch works either way,
+because it is a file on the box rather than a GitHub call.
+
+Two guards keep an operator from racing the pipeline. A dispatch is refused
+while a rollout is still reporting (HTTP 409, `DEPLOYMENT_ALREADY_RUNNING`);
+once a rollout has gone quiet past the 30-minute stale window it no longer
+blocks, which is exactly the stuck case the manual lane exists to recover.
+Clearing a stuck rollout only rewrites `status.json` with
+`failureCode: DEPLOYMENT_RESET` — it does not cancel a workflow, roll anything
+back, or change the recorded deployed SHA. If the rollout is in fact alive it
+overwrites that record on its next phase.
+
+`CLAW_DEPLOY_TRIGGER` carries the lane down to the box: `auto` (what
+`release.yml` passes) obeys the pause switch and exits 0 without touching
+production while it is off; `manual` always proceeds, so pausing the automatic
+lane can never lock an operator out. Anything unreadable, absent or
+unrecognised in `automation.json` leaves the lane on — a pause has to be an
+explicit, well-formed statement.
+
+`.deploy` is mounted read-write into auth-service for these two writes only.
+`deployed-sha` and `history.log` stay owned by `deploy-prod.sh`.
 
 Terminal success and failure email uses the existing contact-mail settings. Set
 `CONTACT_EMAIL_ENABLED=true`, `CONTACT_EMAIL_PROVIDER=smtp`,
@@ -188,15 +240,28 @@ crash-loops is not mistaken for success.
 /srv/clawai/.deploy/deployed-sha   — last successfully deployed commit (written atomically)
 /srv/clawai/.deploy/deploy.lock    — flock target
 /srv/clawai/.deploy/history.log    — append-only: timestamp, SHA, services touched
+/srv/clawai/.deploy/status.json    — current rollout record (also rewritten by an admin reset)
+/srv/clawai/.deploy/automation.json — automatic-deploy switch, written from the admin page
 ```
 
 None of `.deploy/` is committed to the repository.
 
 ## 4. Manual deployment
 
+Three ways in, one pipeline. In order of preference:
+
+1. **The admin deployment page** (`/<locale>/admin/deployment`) — see 2.8. This
+   is the normal recovery path: it needs no shell access and records the run
+   the same way an automatic release does.
+2. **The GitHub Actions UI** — run `deploy-production` with an optional exact
+   `target_sha`. `trigger_source` defaults to `manual` there, so it ignores the
+   automatic-deploy pause switch.
+3. **On the box:**
+
 ```bash
 cd /srv/clawai
-bash scripts/deploy-prod.sh <sha>
+bash scripts/deploy-prod.sh <sha>                          # obeys the pause switch
+CLAW_DEPLOY_TRIGGER=manual bash scripts/deploy-prod.sh <sha>  # ignores it
 ```
 
 Same script, same guarantees, whether GitHub Actions or an operator runs it.
@@ -235,6 +300,37 @@ on a fix will retry cleanly; nothing needs to be manually reverted first.
 **"dirty working tree"** — a tracked file in `/srv/clawai` was hand-edited on
 the server. `git diff` in that directory, decide whether to commit it
 upstream or discard it (`git checkout -- <file>`), then re-run.
+
+**Deployments hang, then fail with `client_loop: send disconnect: Broken pipe`
+(exit 255)** — the deployment reached the server and then went silent. Two
+things cause that, and both are now guarded:
+
+- A `docker compose build` that stops making progress. BuildKit can wedge a
+  single `RUN` layer with no output and no worker process left, and compose
+  never returns. The build is capped by `CLAW_DEPLOY_BUILD_TIMEOUT` (default
+  3600s) and aborted with a named error instead of running forever.
+- A deployment waiting on the deploy lock. It now prints a progress line every
+  `CLAW_DEPLOY_LOCK_HEARTBEAT` seconds naming the holder, so a queued
+  deployment is never mistaken for a dead connection, and the traffic keeps the
+  SSH flow from being dropped as idle.
+
+When the connection does die, `CLAW_DEPLOY_ORPHAN_GUARD=1` (set by the
+workflow) makes the remote deployment abort itself within
+`CLAW_DEPLOY_ORPHAN_GUARD_INTERVAL` seconds, record a failed status, and
+release the lock. Every docker invocation also closes the lock descriptor, so
+no surviving child can keep the lock held after the deployer exits.
+
+To confirm nothing is stuck on the box:
+
+```bash
+ps -eo pid,pgid,etime,cmd | grep -E 'deploy-prod|docker compose|buildx'
+lsof /srv/clawai/.deploy/deploy.lock          # no output = the lock is free
+cat /srv/clawai/.deploy/status.json
+```
+
+A deployment left over from before this guard existed is killed by its process
+group — `kill -TERM -<pgid>` — after which the lock is free and a normal re-run
+succeeds.
 
 **Emergency rollback** — deploying backwards is refused by default:
 

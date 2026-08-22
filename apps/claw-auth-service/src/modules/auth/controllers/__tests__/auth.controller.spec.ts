@@ -5,10 +5,13 @@ import { PasswordResetService } from '../../services/password-reset.service';
 import { UserRole } from '../../../../common/enums';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import { EmailVerificationService } from '../../services/email-verification.service';
+import { EmailChangeService } from '../../services/email-change.service';
+import { IS_PUBLIC_KEY } from '../../../../app/decorators/public.decorator';
 
 describe('AuthController', () => {
   let controller: AuthController;
   let serviceMock: jest.Mocked<{
+    register: jest.Mock;
     login: jest.Mock;
     refresh: jest.Mock;
     logout: jest.Mock;
@@ -18,9 +21,11 @@ describe('AuthController', () => {
     requestReset: jest.Mock;
     confirmReset: jest.Mock;
   }>;
+  let emailChangeServiceMock: jest.Mocked<{ confirmEmailChange: jest.Mock }>;
 
   beforeEach(async () => {
     serviceMock = {
+      register: jest.fn(),
       login: jest.fn(),
       refresh: jest.fn(),
       logout: jest.fn(),
@@ -30,11 +35,13 @@ describe('AuthController', () => {
       requestReset: jest.fn(),
       confirmReset: jest.fn(),
     };
+    emailChangeServiceMock = { confirmEmailChange: jest.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: AuthService, useValue: serviceMock },
         { provide: PasswordResetService, useValue: passwordResetServiceMock },
+        { provide: EmailChangeService, useValue: emailChangeServiceMock },
         {
           provide: EmailVerificationService,
           useValue: { resend: jest.fn(), verify: jest.fn() },
@@ -42,6 +49,21 @@ describe('AuthController', () => {
       ],
     }).compile();
     controller = module.get<AuthController>(AuthController);
+  });
+
+  it('register forwards the whole DTO', async () => {
+    const dto = {
+      email: 'new@example.com',
+      password: 'SecurePass1!',
+      firstName: 'Jane',
+      lastName: 'Doe',
+      phone: '+1234567890',
+    };
+    serviceMock.register.mockResolvedValue({ userId: 'u1', message: 'created' });
+
+    await controller.register(dto);
+
+    expect(serviceMock.register).toHaveBeenCalledWith(dto);
   });
 
   it('login forwards email + password', async () => {
@@ -100,5 +122,17 @@ describe('AuthController', () => {
     serviceMock.getProfile.mockResolvedValue(profile);
     const result = await controller.me({ id: 'u1' } as never);
     expect(result).toBe(profile);
+  });
+
+  it('public email-change confirmation delegates the raw token', async () => {
+    emailChangeServiceMock.confirmEmailChange.mockResolvedValue({ changed: true });
+
+    await expect(controller.confirmEmailChange({ token: 'raw-token' })).resolves.toEqual({
+      changed: true,
+    });
+    expect(emailChangeServiceMock.confirmEmailChange).toHaveBeenCalledWith('raw-token');
+    expect(Reflect.getMetadata(IS_PUBLIC_KEY, AuthController.prototype.confirmEmailChange)).toBe(
+      true,
+    );
   });
 });

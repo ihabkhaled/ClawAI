@@ -30,109 +30,67 @@ export function ThreadListItem({
   const messageCount = thread._count?.messages ?? 0;
   const hasActions = onPin !== undefined || onArchive !== undefined;
   const title = thread.title ?? t('chat.untitled');
-  // The BE doesn't expose a `lastMessage.content` on the thread list payload,
-  // so we surface the most recent model identifier (provider/model) as the
-  // preview snippet — this is what actually gives the user context about
-  // which conversation it is.
   const previewSnippet = buildThreadPreviewSnippet(thread.lastProvider, thread.lastModel);
 
-  const handlePin = (e: React.MouseEvent): void => {
-    e.preventDefault();
-    e.stopPropagation();
-    onPin?.(thread.id, !thread.isPinned);
-  };
-
-  const handleArchive = (e: React.MouseEvent): void => {
-    e.preventDefault();
-    e.stopPropagation();
-    onArchive?.(thread.id, !thread.isArchived);
-  };
-
   return (
-    <Link
-      href={ROUTES.CHAT_THREAD(thread.id)}
+    <div
       className={cn(
-        'group flex flex-col gap-1 rounded-lg border p-3 transition-colors hover:bg-accent',
+        'group relative rounded-lg border transition-colors hover:bg-accent',
         isActive && 'border-primary bg-accent',
         thread.isArchived && 'opacity-60',
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-1.5">
-          {thread.isPinned ? <Pin className="h-3 w-3 shrink-0 text-primary" /> : null}
-          <span className="truncate text-sm font-medium">
-            {searchQuery !== undefined && searchQuery.trim().length > 0 ? (
-              <HighlightedText text={title} query={searchQuery} />
-            ) : (
-              title
-            )}
-          </span>
+      <Link href={ROUTES.CHAT_THREAD(thread.id)} className="block min-h-11 p-3 pe-14">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-1.5">
+            {thread.isPinned ? <Pin className="h-3 w-3 shrink-0 text-primary" /> : null}
+            <span className="truncate text-sm font-medium">
+              {searchQuery !== undefined && searchQuery.trim().length > 0 ? (
+                <HighlightedText text={title} query={searchQuery} />
+              ) : (
+                title
+              )}
+            </span>
+          </div>
+          <span className="shrink-0 text-xs text-muted-foreground">{formatRelativeDate(thread.updatedAt)}</span>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <span className="text-xs text-muted-foreground">
-            {formatRelativeDate(thread.updatedAt)}
-          </span>
-          {hasActions ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  aria-label={t('chat.threadActions')}
-                >
-                  <MoreVertical className="h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                {onPin !== undefined ? (
-                  <DropdownMenuItem onClick={handlePin} disabled={isPinPending}>
-                    {thread.isPinned ? (
-                      <>
-                        <PinOff className="me-2 h-4 w-4" />
-                        {t('chat.unpinThread')}
-                      </>
-                    ) : (
-                      <>
-                        <Pin className="me-2 h-4 w-4" />
-                        {t('chat.pinThread')}
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                ) : null}
-                {onArchive !== undefined ? (
-                  <DropdownMenuItem onClick={handleArchive} disabled={isArchivePending}>
-                    {thread.isArchived ? (
-                      <>
-                        <ArchiveRestore className="me-2 h-4 w-4" />
-                        {t('chat.unarchiveThread')}
-                      </>
-                    ) : (
-                      <>
-                        <Archive className="me-2 h-4 w-4" />
-                        {t('chat.archiveThread')}
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : null}
+        {previewSnippet !== null ? <p className="mt-1 truncate text-xs text-muted-foreground">{previewSnippet}</p> : null}
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <RoutingBadge mode={thread.routingMode} />
+          <span className="text-xs text-muted-foreground">{messageCount}</span>
         </div>
-      </div>
-      {previewSnippet !== null ? (
-        <p className="truncate text-xs text-muted-foreground">{previewSnippet}</p>
+      </Link>
+
+      {hasActions ? (
+        <div className="absolute top-1 end-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+                aria-label={t('chat.threadActions')}
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              {onPin !== undefined ? (
+                <DropdownMenuItem onClick={() => onPin(thread.id, !thread.isPinned)} disabled={isPinPending}>
+                  {thread.isPinned ? <PinOff className="me-2 h-4 w-4" /> : <Pin className="me-2 h-4 w-4" />}
+                  {thread.isPinned ? t('chat.unpinThread') : t('chat.pinThread')}
+                </DropdownMenuItem>
+              ) : null}
+              {onArchive !== undefined ? (
+                <DropdownMenuItem onClick={() => onArchive(thread.id, !thread.isArchived)} disabled={isArchivePending}>
+                  {thread.isArchived ? <ArchiveRestore className="me-2 h-4 w-4" /> : <Archive className="me-2 h-4 w-4" />}
+                  {thread.isArchived ? t('chat.unarchiveThread') : t('chat.archiveThread')}
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       ) : null}
-      <div className="flex items-center justify-between gap-2">
-        <RoutingBadge mode={thread.routingMode} />
-        <span className="text-xs text-muted-foreground">
-          {messageCount} {messageCount === 1 ? 'message' : 'messages'}
-        </span>
-      </div>
-    </Link>
+    </div>
   );
 }

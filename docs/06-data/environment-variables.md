@@ -42,6 +42,25 @@ recipient.
 
 ---
 
+## Production Deployment Control
+
+Read by auth-service only, for the admin deployment page. See
+[PRODUCTION_DEPLOYMENT.md](../PRODUCTION_DEPLOYMENT.md) §2.8.
+
+| Variable                     | Required              | Default                        | Description                                                  |
+| ---------------------------- | --------------------- | ------------------------------ | ------------------------------------------------------------ |
+| `DEPLOYMENT_STATUS_FILE`     | No                    | `/app/.deploy/status.json`     | Rollout record `deploy-prod.sh` writes                       |
+| `DEPLOYMENT_AUTOMATION_FILE` | No                    | `/app/.deploy/automation.json` | Automatic-deploy switch the page writes                      |
+| `GITHUB_DEPLOY_TOKEN`        | For manual deployment | —                              | Fine-grained PAT, `actions: write` only; never log or expose |
+| `GITHUB_DEPLOY_REPOSITORY`   | For manual deployment | —                              | `owner/repo` the deployment workflow lives in                |
+| `GITHUB_DEPLOY_REF`          | For manual deployment | —                              | Git ref a manual dispatch targets, normally `main`           |
+
+The three `GITHUB_DEPLOY_*` values are required **together**. A partial set
+leaves manual deployment disabled and the page hides the controls; it does not
+half-enable them. A blank value in `.env` means unset, not empty-string.
+
+---
+
 ## PostgreSQL Instances
 
 Claw uses 14 separate PostgreSQL instances, one per data-owning service.

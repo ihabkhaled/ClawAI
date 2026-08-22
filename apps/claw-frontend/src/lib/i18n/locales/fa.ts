@@ -52,6 +52,11 @@ export const fa: TranslationDictionary = {
     errorBoundaryTitle: 'مشکلی پیش آمد',
     errorBoundaryDescription:
       'این صفحه با یک خطای غیرمنتظره مواجه شد.دوباره امتحان کنید یا به صفحه دیگری بروید.',
+    phoneCountryLabel: 'کشور',
+    phoneCountrySearch: 'جستجوی کشورها',
+    phoneNumberLabel: 'شماره تلفن',
+    phoneNumberPlaceholder: 'شماره تلفن را وارد کنید',
+    phoneInvalid: 'یک شماره تلفن معتبر وارد کنید',
   },
   auth: {
     login: 'وارد شوید',
@@ -75,6 +80,12 @@ export const fa: TranslationDictionary = {
     emailPlaceholder: 'you@example.com',
     registerTitle: 'حساب Claw خود را ایجاد کنید',
     registerSubtitle: 'با ایمیل و رمز عبور خود ثبت نام کنید',
+    firstName: 'نام',
+    firstNamePlaceholder: 'نام خود را وارد کنید',
+    lastName: 'نام خانوادگی',
+    lastNamePlaceholder: 'نام خانوادگی خود را وارد کنید',
+    phone: 'شماره تلفن',
+    phoneOptional: '(اختیاری)',
     registerButton: 'ایجاد حساب کاربری',
     registering: 'در حال ایجاد حساب کاربری...',
     registerFailed: 'ثبت نام انجام نشدلطفا دوباره امتحان کنید.',
@@ -91,6 +102,11 @@ export const fa: TranslationDictionary = {
       'بازنشانی رمز عبور در نقشه راه است.لطفا در حال حاضر با یک مدیر تماس بگیرید.',
     showPasswordAria: 'نمایش رمز عبور',
     hidePasswordAria: 'پنهان کردن رمز عبور',
+    confirmEmailChangeTitle: 'ایمیل جدید خود را تأیید کنید',
+    confirmEmailChangeDescription: 'در حال تأیید نشانی ایمیل جدید شما هستیم.',
+    confirmEmailChangeSuccess: 'نشانی ایمیل شما به‌روزرسانی شد. لطفاً دوباره وارد شوید.',
+    confirmEmailChangeInvalidToken: 'این پیوند تأیید نامعتبر است یا منقضی شده است.',
+    confirmEmailChangeBackToLogin: 'بازگشت به ورود',
     loginFailedTitle: 'ما نتوانستیم شما را به سیستم وارد کنیم',
     brandingHeadline: 'هر مدل هوش مصنوعی مرزی، یک اشتراک',
     brandingSubheadline:
@@ -208,6 +224,7 @@ export const fa: TranslationDictionary = {
     workspaceEmailSignatures: 'امضاهای ایمیل',
     workspaceEmailTemplates: 'قالب های ایمیل',
     workspaceImplHandoffs: 'برنامه‌نویسی دست‌ساز',
+    adminUsers: 'کاربران',
     adminAiActionPolicies: 'سیاست های اقدام هوش مصنوعی',
     adminSuggestionRules: 'قوانین پیشنهادی',
     adminWebhookDeliveries: 'تحویل Webhook',
@@ -295,6 +312,14 @@ export const fa: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'دوره آزمایشی رایگان شما پایان یافته است. برای ادامه استفاده از هوش مصنوعی یک طرح پولی انتخاب کنید.',
+      dailyTokenLimitExceeded: 'از محدودیت روزانه توکن عبور کرده‌اید.',
+      weeklyTokenLimitExceeded: 'از محدودیت هفتگی توکن عبور کرده‌اید.',
+      monthlyTokenLimitExceeded: 'از محدودیت ماهانه توکن عبور کرده‌اید.',
+      dailyChatLimitExceeded: 'از محدودیت روزانه رشته‌های گفتگو عبور کرده‌اید.',
+      dailyMessageLimitExceeded: 'از محدودیت روزانه پیام‌ها عبور کرده‌اید.',
+      workspaceConnectionLimitExceeded: 'به محدودیت اتصال‌های فضای کاری رسیده‌اید.',
+      contextPackLimitExceeded: 'به محدودیت بسته‌های زمینه رسیده‌اید.',
+      memoryItemLimitExceeded: 'به محدودیت موارد حافظه رسیده‌اید.',
       videoAttachmentProviderUnsupported:
         'این مدل نمی‌تواند پیوست‌های ویدیویی را پردازش کند.Gemini 2.5 Flash یا Pro را انتخاب کنید یا به Auto بروید.',
       videoAttachmentLocalModelUnavailable:
@@ -1038,7 +1063,29 @@ export const fa: TranslationDictionary = {
     editUser: 'ویرایش کاربر',
     saveUser: 'ذخیره کاربر',
     editUsername: 'ویرایش نام کاربری',
-    editEmail: 'ویرایش ایمیل',
+
+    editUserTitle: 'ویرایش کاربر',
+
+    editUserDescription:
+      'نام و نام کاربری این حساب را به‌روزرسانی کنید یا رمز موقت جدیدی صادر کنید.',
+
+    editUserUsername: 'نام کاربری',
+
+    editUserFirstName: 'نام',
+
+    editUserLastName: 'نام خانوادگی',
+
+    editUserUsernameInvalid: 'از ۳ تا ۳۲ حرف، رقم، خط تیره یا زیرخط استفاده کنید.',
+
+    editUserNameTooLong: 'حداکثر ۶۴ نویسه استفاده کنید.',
+
+    editUserSuperAdminNotice: 'حساب‌های ابرمدیر از اینجا قابل ویرایش نیستند.',
+
+    editUserSave: 'ذخیره تغییرات',
+
+    editUserCancel: 'لغو',
+
+    editUserRotatePassword: 'تغییر رمز عبور',
     userUpdated: 'کاربر به‌روزرسانی شد',
     userUpdateFailed: 'به‌روزرسانی کاربر ناموفق بود',
     colEmail: 'ایمیل',
@@ -1066,6 +1113,12 @@ export const fa: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'خدمات حسابرسی غیرقابل دسترسی بود.یک لحظه دیگر دوباره امتحان کنید.',
     loadingAuditEvents: 'در حال بارگیری رویدادهای حسابرسی...',
     viewAllAudits: 'مشاهده همه',
+    issueTemporaryPassword: 'صدور گذرواژه موقت',
+    issueTemporaryPasswordConfirmTitle: 'گذرواژه موقت صادر شود؟',
+    issueTemporaryPasswordConfirmBody:
+      'یک گذرواژه موقت از طریق ایمیل برای کاربر ارسال می‌شود و همه نشست‌های فعال خاتمه می‌یابند.',
+    temporaryPasswordIssued: 'گذرواژه موقت از طریق ایمیل ارسال شد و همه نشست‌ها خاتمه یافتند.',
+    temporaryPasswordFailed: 'صدور گذرواژه موقت ناموفق بود.',
   },
   settings: {
     title: 'تنظیمات',
@@ -1080,8 +1133,24 @@ export const fa: TranslationDictionary = {
     accountDeleteFailed: 'حذف حساب ناموفق بود',
     username: 'نام کاربری',
     email: 'ایمیل',
-    emailReadOnly: 'برای تغییر ایمیل خود با یک مدیر تماس بگیرید.',
     role: 'نقش',
+    emailChange: {
+      title: 'تغییر نشانی ایمیل',
+      description:
+        'تغییر ایمیل شما نیازمند کدی است که به نشانی فعلی ارسال می‌شود و سپس تأیید از نشانی جدید.',
+      newEmailLabel: 'نشانی ایمیل جدید',
+      currentPasswordLabel: 'گذرواژه فعلی',
+      submit: 'ارسال کد تأیید',
+      otpDescription: 'کد ۶ رقمی ارسال‌شده به ایمیل فعلی خود را وارد کنید.',
+      otpLabel: 'کد تأیید',
+      verify: 'تأیید کد',
+      resend: 'ارسال دوباره کد',
+      resendCooldown: 'ارسال دوباره تا {seconds} ثانیه دیگر',
+      cancel: 'لغو تغییر ایمیل',
+      pendingNotice:
+        'صندوق ورودی جدید خود را بررسی کنید و پیوند تأیید را باز کنید تا تغییر کامل شود.',
+      requestFailed: 'تغییر نشانی ایمیل ناموفق بود',
+    },
     selectLanguage: 'زبان را انتخاب کنید',
     preferences: 'ترجیحات',
     language: 'زبان',
@@ -3434,6 +3503,7 @@ export const fa: TranslationDictionary = {
       displayOrder: 'نمایش سفارش',
       dailyTokenQuota: 'سهمیه رمز روزانه',
       dailyTokenQuotaHelp: 'توکن هایی که کاربر ممکن است در روز در این طرح مصرف کند.',
+      weeklyTokenQuota: 'سهمیه هفتگی توکن',
       monthlyTokenQuota: 'سهمیه ماهانه رمزی',
       maxChatsPerDay: 'حداکثر چت در روز',
       maxMessagesPerDay: 'حداکثر پیام در روز',
@@ -3489,6 +3559,10 @@ export const fa: TranslationDictionary = {
       saveSucceeded: 'دسترسی مدل ذخیره شد.',
       saveFailed: 'دسترسی مدل ذخیره نشد.',
     },
+  },
+  adminUsers: {
+    title: 'مدیریت کاربران',
+    description: 'مدیریت حساب‌های کاربری، نقش‌ها، طرح‌ها، تأییدیه و دسترسی',
   },
   adminRoles: {
     title: 'نقش ها',
@@ -5398,5 +5472,14 @@ export const fa: TranslationDictionary = {
           'بخش خود را به ما بگویید، شما محدودیت دارید و تقریباً چند نفر از آن استفاده می کنند.همین برای اولین مکالمه مفید کافی است.',
       },
     },
+  },
+  pwa: {
+    offlineMessage:
+      'شما آفلاین هستید. برای ادامه اقدامات خصوصی دوباره متصل شوید؛ حالت آفلاین عمومی همچنان در دسترس است.',
+    updateAvailable: 'نسخه جدید ClawAI در دسترس است.',
+    updateAction: 'به‌روزرسانی',
+    installMessage: 'برای دسترسی شبیه برنامه، ClawAI را نصب کنید.',
+    installAction: 'نصب',
+    dismissInstall: 'بستن اعلان نصب',
   },
 };

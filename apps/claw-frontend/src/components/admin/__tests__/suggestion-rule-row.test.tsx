@@ -25,6 +25,23 @@ function makeRule(overrides: Partial<SuggestionTriggerRule> = {}): SuggestionTri
 }
 
 describe('SuggestionRuleRow', () => {
+  it('wraps header metadata without widening narrow cards', () => {
+    render(
+      <SuggestionRuleRow
+        rule={makeRule({ name: 'suggestion-rule-with-a-long-mobile-name' })}
+        onToggleActive={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        isMutating={false}
+        t={(key) => key}
+      />,
+    );
+
+    const name = screen.getByText('suggestion-rule-with-a-long-mobile-name');
+    expect(name).toHaveClass('min-w-0', 'break-words');
+    expect(name.parentElement).toHaveClass('flex-wrap');
+  });
+
   it('renders rule details and description', () => {
     render(
       <SuggestionRuleRow

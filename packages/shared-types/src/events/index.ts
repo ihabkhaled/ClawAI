@@ -83,6 +83,7 @@ export type {
   UserLogoutPayload,
   UserRoleChangedPayload,
   UserDeactivatedPayload,
+  UserTemporaryPasswordIssuedPayload,
   MessageCreatedPayload,
   MessageRoutedPayload,
   MessageCompletedPayload,

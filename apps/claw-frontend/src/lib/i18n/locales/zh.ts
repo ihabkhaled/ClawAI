@@ -50,6 +50,11 @@ export const zh: TranslationDictionary = {
     showingPage: '显示 {total} 的页面 {page}',
     errorBoundaryTitle: '出了点问题',
     errorBoundaryDescription: '此页面遇到意外错误。请重试，或移至其他页面。',
+    phoneCountryLabel: '国家或地区',
+    phoneCountrySearch: '搜索国家或地区',
+    phoneNumberLabel: '电话号码',
+    phoneNumberPlaceholder: '输入电话号码',
+    phoneInvalid: '请输入有效的电话号码',
   },
   auth: {
     login: '登录',
@@ -73,6 +78,12 @@ export const zh: TranslationDictionary = {
     emailPlaceholder: '你@example.com',
     registerTitle: '创建您的 Claw 帐户',
     registerSubtitle: '使用您的电子邮件和密码注册',
+    firstName: '名字',
+    firstNamePlaceholder: '请输入您的名字',
+    lastName: '姓氏',
+    lastNamePlaceholder: '请输入您的姓氏',
+    phone: '电话号码',
+    phoneOptional: '（可选）',
     registerButton: '创建账户',
     registering: '正在创建帐户...',
     registerFailed: '注册失败。请再试一次。',
@@ -88,6 +99,11 @@ export const zh: TranslationDictionary = {
     forgotPasswordComingSoonDesc: '密码重置已在路线图上。请暂时联系管理员。',
     showPasswordAria: '显示密码',
     hidePasswordAria: '隐藏密码',
+    confirmEmailChangeTitle: '确认您的新电子邮件',
+    confirmEmailChangeDescription: '我们正在确认您的新电子邮件地址。',
+    confirmEmailChangeSuccess: '您的电子邮件地址已更新。请重新登录。',
+    confirmEmailChangeInvalidToken: '此确认链接无效或已过期。',
+    confirmEmailChangeBackToLogin: '返回登录',
     loginFailedTitle: '我们无法让您登录',
     brandingHeadline: '每个前沿人工智能模型，一次订阅',
     brandingSubheadline:
@@ -201,6 +217,7 @@ export const zh: TranslationDictionary = {
     workspaceEmailSignatures: '电子邮件签名',
     workspaceEmailTemplates: '电子邮件模板',
     workspaceImplHandoffs: '编码交接',
+    adminUsers: '用户',
     adminAiActionPolicies: '人工智能行动政策',
     adminSuggestionRules: '提案规则',
     adminWebhookDeliveries: 'Webhook 交付',
@@ -287,6 +304,14 @@ export const zh: TranslationDictionary = {
     allProvidersFailed: '所有提供商均未能生成响应',
     errors: {
       planTrialExpired: '您的免费试用已结束。请选择付费方案以继续使用 AI。',
+      dailyTokenLimitExceeded: '您已超出每日令牌限制。',
+      weeklyTokenLimitExceeded: '您已超出每周令牌限制。',
+      monthlyTokenLimitExceeded: '您已超出每月令牌限制。',
+      dailyChatLimitExceeded: '您已超出每日聊天线程限制。',
+      dailyMessageLimitExceeded: '您已超出每日消息限制。',
+      workspaceConnectionLimitExceeded: '您已达到工作区连接限制。',
+      contextPackLimitExceeded: '您已达到上下文包限制。',
+      memoryItemLimitExceeded: '您已达到记忆项限制。',
       videoAttachmentProviderUnsupported:
         '该模型无法处理视频附件。选择 Gemini 2.5 Flash 或 Pro，或切换到自动。',
       videoAttachmentLocalModelUnavailable:
@@ -1021,7 +1046,28 @@ export const zh: TranslationDictionary = {
     editUser: '编辑用户',
     saveUser: '保存用户',
     editUsername: '编辑用户名',
-    editEmail: '编辑邮箱',
+
+    editUserTitle: '编辑用户',
+
+    editUserDescription: '更新此账户的姓名和用户名，或签发新的临时密码。',
+
+    editUserUsername: '用户名',
+
+    editUserFirstName: '名字',
+
+    editUserLastName: '姓氏',
+
+    editUserUsernameInvalid: '请使用 3–32 个字母、数字、连字符或下划线。',
+
+    editUserNameTooLong: '最多使用 64 个字符。',
+
+    editUserSuperAdminNotice: '此处无法编辑超级管理员账户。',
+
+    editUserSave: '保存更改',
+
+    editUserCancel: '取消',
+
+    editUserRotatePassword: '轮换密码',
     userUpdated: '用户已更新',
     userUpdateFailed: '无法更新用户',
     colEmail: '电子邮件',
@@ -1049,6 +1095,11 @@ export const zh: TranslationDictionary = {
     recentAuditEventsErrorDesc: '审计服务无法访问。稍后再试一次。',
     loadingAuditEvents: '正在加载审核事件...',
     viewAllAudits: '查看全部',
+    issueTemporaryPassword: '发放临时密码',
+    issueTemporaryPasswordConfirmTitle: '是否发放临时密码？',
+    issueTemporaryPasswordConfirmBody: '临时密码将通过邮件发送给用户，并登出所有活跃会话。',
+    temporaryPasswordIssued: '临时密码已发送邮件，并已登出所有会话。',
+    temporaryPasswordFailed: '发放临时密码失败。',
   },
   settings: {
     title: '设置',
@@ -1063,8 +1114,22 @@ export const zh: TranslationDictionary = {
     accountDeleteFailed: '无法删除账户',
     username: '用户名',
     email: '电子邮件',
-    emailReadOnly: '请联系管理员更改您的电子邮件。',
     role: '角色',
+    emailChange: {
+      title: '更改电子邮件地址',
+      description: '更改电子邮件需要向您当前地址发送验证码，然后从新地址进行确认。',
+      newEmailLabel: '新的电子邮件地址',
+      currentPasswordLabel: '当前密码',
+      submit: '发送验证码',
+      otpDescription: '请输入发送到您当前电子邮件地址的 6 位验证码。',
+      otpLabel: '验证码',
+      verify: '验证代码',
+      resend: '重新发送验证码',
+      resendCooldown: '{seconds} 秒后可重新发送',
+      cancel: '取消更改电子邮件',
+      pendingNotice: '请查收您的新邮箱并打开确认链接以完成更改。',
+      requestFailed: '更改电子邮件地址失败',
+    },
     selectLanguage: '选择语言',
     preferences: '偏好设置',
     language: '语言',
@@ -3324,6 +3389,7 @@ export const zh: TranslationDictionary = {
       displayOrder: '显示顺序',
       dailyTokenQuota: '每日代币额度',
       dailyTokenQuotaHelp: '用户在此计划中每天可能消耗的代币。',
+      weeklyTokenQuota: '每周代币额度',
       monthlyTokenQuota: '每月代币配额',
       maxChatsPerDay: '每天最多聊天次数',
       maxMessagesPerDay: '每天最多消息数',
@@ -3378,6 +3444,10 @@ export const zh: TranslationDictionary = {
       saveSucceeded: '模型访问已保存。',
       saveFailed: '无法保存模型访问权限。',
     },
+  },
+  adminUsers: {
+    title: '用户管理',
+    description: '管理用户账户、角色、方案、验证和访问权限',
   },
   adminRoles: {
     title: '角色',
@@ -5120,5 +5190,13 @@ export const zh: TranslationDictionary = {
           '告诉我们您所在的行业、您面临的限制以及大约有多少人会使用它。对于一次有用的第一次对话来说这已经足够了。',
       },
     },
+  },
+  pwa: {
+    offlineMessage: '你已离线。请重新连接以继续私密操作；公共离线回退页面仍可使用。',
+    updateAvailable: 'ClawAI 有新版本可用。',
+    updateAction: '更新',
+    installMessage: '安装 ClawAI 以获得类似应用的体验。',
+    installAction: '安装',
+    dismissInstall: '关闭安装提示',
   },
 };

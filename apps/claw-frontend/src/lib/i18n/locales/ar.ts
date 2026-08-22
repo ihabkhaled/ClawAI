@@ -52,6 +52,11 @@ export const ar: TranslationDictionary = {
     errorBoundaryTitle: 'حدث خطأ ما',
     errorBoundaryDescription:
       'واجهت هذه الصفحة خطأً غير متوقع. حاول مرة أخرى أو انتقل إلى صفحة أخرى.',
+    phoneCountryLabel: 'البلد',
+    phoneCountrySearch: 'البحث عن البلدان',
+    phoneNumberLabel: 'رقم الهاتف',
+    phoneNumberPlaceholder: 'أدخل رقم الهاتف',
+    phoneInvalid: 'أدخل رقم هاتف صالحًا',
   },
   auth: {
     login: 'تسجيل الدخول',
@@ -75,6 +80,12 @@ export const ar: TranslationDictionary = {
     emailPlaceholder: 'you@example.com',
     registerTitle: 'أنشئ حساب Claw الخاص بك',
     registerSubtitle: 'سجّل باستخدام بريدك الإلكتروني وكلمة المرور',
+    firstName: 'الاسم الأول',
+    firstNamePlaceholder: 'أدخل اسمك الأول',
+    lastName: 'اسم العائلة',
+    lastNamePlaceholder: 'أدخل اسم عائلتك',
+    phone: 'رقم الهاتف',
+    phoneOptional: '(اختياري)',
     registerButton: 'إنشاء حساب',
     registering: 'جارٍ إنشاء الحساب...',
     registerFailed: 'فشل التسجيل. يرجى المحاولة مرة أخرى.',
@@ -91,6 +102,11 @@ export const ar: TranslationDictionary = {
       'إعادة تعيين كلمة المرور قيد التطوير. يُرجى التواصل مع المسؤول حتى ذلك الحين.',
     showPasswordAria: 'إظهار كلمة المرور',
     hidePasswordAria: 'إخفاء كلمة المرور',
+    confirmEmailChangeTitle: 'أكّد بريدك الإلكتروني الجديد',
+    confirmEmailChangeDescription: 'نحن نؤكّد عنوان بريدك الإلكتروني الجديد.',
+    confirmEmailChangeSuccess: 'تم تحديث عنوان بريدك الإلكتروني. يُرجى تسجيل الدخول مرة أخرى.',
+    confirmEmailChangeInvalidToken: 'رابط التأكيد هذا غير صالح أو انتهت صلاحيته.',
+    confirmEmailChangeBackToLogin: 'العودة إلى تسجيل الدخول',
     loginFailedTitle: 'تعذر تسجيل الدخول',
     brandingHeadline: 'كل نماذج الذكاء الاصطناعي الرائدة باشتراك واحد',
     brandingSubheadline:
@@ -206,6 +222,7 @@ export const ar: TranslationDictionary = {
     workspaceEmailSignatures: 'تواقيع البريد الإلكتروني',
     workspaceEmailTemplates: 'قوالب البريد الإلكتروني',
     workspaceImplHandoffs: 'تسليمات البرمجة',
+    adminUsers: 'المستخدمون',
     adminAiActionPolicies: 'سياسات إجراءات الذكاء الاصطناعي',
     adminSuggestionRules: 'قواعد الاقتراحات',
     adminWebhookDeliveries: 'تسليمات الويب هوك',
@@ -293,6 +310,14 @@ export const ar: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'انتهت فترتك التجريبية المجانية. اختر خطة مدفوعة لمواصلة استخدام الذكاء الاصطناعي.',
+      dailyTokenLimitExceeded: 'لقد تجاوزت الحد اليومي للرموز.',
+      weeklyTokenLimitExceeded: 'لقد تجاوزت الحد الأسبوعي للرموز.',
+      monthlyTokenLimitExceeded: 'لقد تجاوزت الحد الشهري للرموز.',
+      dailyChatLimitExceeded: 'لقد تجاوزت الحد اليومي لمحادثات الدردشة.',
+      dailyMessageLimitExceeded: 'لقد تجاوزت الحد اليومي للرسائل.',
+      workspaceConnectionLimitExceeded: 'لقد وصلت إلى حد اتصالات مساحة العمل.',
+      contextPackLimitExceeded: 'لقد وصلت إلى حد حزم السياق.',
+      memoryItemLimitExceeded: 'لقد وصلت إلى حد عناصر الذاكرة.',
       videoAttachmentProviderUnsupported:
         'لا يستطيع هذا النموذج معالجة مرفقات الفيديو. اختر Gemini 2.5 Flash أو Pro، أو انتقل إلى الوضع التلقائي.',
       videoAttachmentLocalModelUnavailable:
@@ -1032,7 +1057,28 @@ export const ar: TranslationDictionary = {
     editUser: 'تعديل المستخدم',
     saveUser: 'حفظ المستخدم',
     editUsername: 'تعديل اسم المستخدم',
-    editEmail: 'تعديل البريد الإلكتروني',
+
+    editUserTitle: 'تعديل المستخدم',
+
+    editUserDescription: 'حدّث اسم هذا الحساب واسم المستخدم، أو أصدر كلمة مرور مؤقتة جديدة.',
+
+    editUserUsername: 'اسم المستخدم',
+
+    editUserFirstName: 'الاسم الأول',
+
+    editUserLastName: 'اسم العائلة',
+
+    editUserUsernameInvalid: 'استخدم من 3 إلى 32 حرفًا أو رقمًا أو شرطة أو شرطة سفلية.',
+
+    editUserNameTooLong: 'استخدم 64 حرفًا كحد أقصى.',
+
+    editUserSuperAdminNotice: 'لا يمكن تعديل حسابات المشرف الأعلى من هنا.',
+
+    editUserSave: 'حفظ التغييرات',
+
+    editUserCancel: 'إلغاء',
+
+    editUserRotatePassword: 'تدوير كلمة المرور',
     userUpdated: 'تم تحديث المستخدم',
     userUpdateFailed: 'تعذر تحديث المستخدم',
     colEmail: 'البريد الإلكتروني',
@@ -1060,6 +1106,13 @@ export const ar: TranslationDictionary = {
     recentAuditEventsErrorDesc: 'خدمة التدقيق غير متاحة حاليًا. حاول مرة أخرى بعد قليل.',
     loadingAuditEvents: 'جارٍ تحميل أحداث التدقيق...',
     viewAllAudits: 'عرض الكل',
+    issueTemporaryPassword: 'إصدار كلمة مرور مؤقتة',
+    issueTemporaryPasswordConfirmTitle: 'هل تريد إصدار كلمة مرور مؤقتة؟',
+    issueTemporaryPasswordConfirmBody:
+      'سيتم إرسال كلمة مرور مؤقتة بالبريد الإلكتروني إلى المستخدم، وسيتم تسجيل الخروج من جميع الجلسات النشطة.',
+    temporaryPasswordIssued:
+      'تم إرسال كلمة المرور المؤقتة بالبريد وتم تسجيل الخروج من جميع الجلسات.',
+    temporaryPasswordFailed: 'فشل إصدار كلمة المرور المؤقتة.',
   },
   settings: {
     title: 'الإعدادات',
@@ -1074,8 +1127,23 @@ export const ar: TranslationDictionary = {
     accountDeleteFailed: 'تعذر حذف الحساب',
     username: 'اسم المستخدم',
     email: 'البريد الإلكتروني',
-    emailReadOnly: 'اتصل بالمشرف لتغيير بريدك الإلكتروني.',
     role: 'الدور',
+    emailChange: {
+      title: 'تغيير عنوان البريد الإلكتروني',
+      description:
+        'يتطلب تغيير بريدك الإلكتروني رمزًا يُرسل إلى عنوانك الحالي، ثم تأكيدًا من العنوان الجديد.',
+      newEmailLabel: 'عنوان البريد الإلكتروني الجديد',
+      currentPasswordLabel: 'كلمة المرور الحالية',
+      submit: 'إرسال رمز التحقق',
+      otpDescription: 'أدخل الرمز المكوّن من 6 أرقام المُرسَل إلى بريدك الإلكتروني الحالي.',
+      otpLabel: 'رمز التحقق',
+      verify: 'تحقق من الرمز',
+      resend: 'إعادة إرسال الرمز',
+      resendCooldown: 'إعادة الإرسال متاحة خلال {seconds} ثانية',
+      cancel: 'إلغاء تغيير البريد الإلكتروني',
+      pendingNotice: 'تحقّق من صندوق بريدك الجديد وافتح رابط التأكيد لإتمام التغيير.',
+      requestFailed: 'فشل تغيير عنوان البريد الإلكتروني',
+    },
     selectLanguage: 'اختر اللغة',
     preferences: 'التفضيلات',
     language: 'اللغة',
@@ -3389,6 +3457,7 @@ export const ar: TranslationDictionary = {
       displayOrder: 'ترتيب العرض',
       dailyTokenQuota: 'الحصة اليومية للرموز',
       dailyTokenQuotaHelp: 'عدد الرموز التي يمكن للمستخدم استهلاكها يوميًا في هذه الخطة.',
+      weeklyTokenQuota: 'الحصة الأسبوعية للرموز',
       monthlyTokenQuota: 'الحصة الشهرية للرموز',
       maxChatsPerDay: 'أقصى عدد محادثات يوميًا',
       maxMessagesPerDay: 'أقصى عدد رسائل يوميًا',
@@ -3444,6 +3513,10 @@ export const ar: TranslationDictionary = {
       saveSucceeded: 'تم حفظ الوصول إلى النماذج.',
       saveFailed: 'تعذَّر حفظ الوصول إلى النماذج.',
     },
+  },
+  adminUsers: {
+    title: 'إدارة المستخدمين',
+    description: 'إدارة حسابات المستخدمين والأدوار والخطط والتحقق والوصول',
   },
   adminRoles: {
     title: 'الأدوار',
@@ -5310,5 +5383,14 @@ export const ar: TranslationDictionary = {
           'أخبرنا بقطاعك، وقيودك، وتقديرك لعدد الأشخاص الذين سيستخدمونه. هذا يكفي لمحادثة أولى مفيدة.',
       },
     },
+  },
+  pwa: {
+    offlineMessage:
+      'أنت غير متصل بالإنترنت. أعد الاتصال لمتابعة الإجراءات الخاصة؛ يبقى البديل العام غير المتصل متاحًا.',
+    updateAvailable: 'يتوفر إصدار جديد من ClawAI.',
+    updateAction: 'تحديث',
+    installMessage: 'ثبّت ClawAI للوصول بتجربة تشبه التطبيق.',
+    installAction: 'تثبيت',
+    dismissInstall: 'إغلاق إشعار التثبيت',
   },
 };

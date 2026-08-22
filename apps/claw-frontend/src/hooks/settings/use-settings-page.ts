@@ -7,6 +7,7 @@ import type { UserAppearancePreference, UserLanguagePreference } from '@/enums';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useAccountManagement } from '@/hooks/settings/use-account-management';
 import { useChangePassword } from '@/hooks/settings/use-change-password';
+import { useEmailChange } from '@/hooks/settings/use-email-change';
 import { useUpdatePreferences } from '@/hooks/settings/use-update-preferences';
 import { useLocale } from '@/hooks/use-locale';
 import { useLocaleNavigation } from '@/hooks/use-locale-navigation';
@@ -26,6 +27,7 @@ import {
 export function useSettingsPage() {
   const { user, isLoading } = useCurrentUser();
   const account = useAccountManagement(user);
+  const emailChange = useEmailChange();
   const { locale, setLocale } = useLocale();
   const { replaceLocale } = useLocaleNavigation();
   const { theme, setTheme } = useAppTheme();
@@ -95,6 +97,7 @@ export function useSettingsPage() {
     passwordForm,
     handlePasswordSubmit,
     isPasswordPending,
+    emailChange,
     ...account,
   };
 }

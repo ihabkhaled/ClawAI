@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PlanTierCard } from '@/components/marketing/home/plan-tier-card';
+import { DISABLED_PLAN_FEATURE_GATES } from '@/constants';
 import { BillingInterval } from '@/enums/billing.enum';
 import type { PublicPlan } from '@/types/public-pricing.types';
 
@@ -24,6 +25,11 @@ const PLAN: PublicPlan = {
   maxWorkspaceConnections: null,
   maxContextPacks: null,
   maxMemoryItems: null,
+  featureGates: {
+    ...DISABLED_PLAN_FEATURE_GATES,
+    allowConsensusMode: true,
+    allowRolePack: true,
+  },
   prices: [
     {
       id: 'price-monthly',
@@ -48,6 +54,21 @@ const PLAN: PublicPlan = {
 };
 
 describe('PlanTierCard', () => {
+  it('shows every token and resource limit on the public plan', () => {
+    render(<PlanTierCard plan={{ ...PLAN, weeklyTokenQuota: 20_000 }} isYearly={false} />);
+
+    expect(screen.getByText('userPlan.dailyLimitLabel')).toBeInTheDocument();
+    expect(screen.getByText('adminPlans.form.weeklyTokenQuota')).toBeInTheDocument();
+    expect(screen.getByText('userPlan.monthlyLimitLabel')).toBeInTheDocument();
+    expect(screen.getByText('userPlan.chatsLimitLabel')).toBeInTheDocument();
+    expect(screen.getByText('adminPlans.form.maxMessagesPerDay')).toBeInTheDocument();
+    expect(screen.getByText('adminPlans.form.maxWorkspaceConnections')).toBeInTheDocument();
+    expect(screen.getByText('adminPlans.form.maxContextPacks')).toBeInTheDocument();
+    expect(screen.getByText('adminPlans.form.maxMemoryItems')).toBeInTheDocument();
+    expect(screen.getByText('adminPlans.gate.allowConsensusMode')).toBeInTheDocument();
+    expect(screen.getByText('adminPlans.gate.allowRolePack')).toBeInTheDocument();
+  });
+
   it('keeps every card and call to action at stable dimensions while long copy scrolls', () => {
     render(
       <PlanTierCard

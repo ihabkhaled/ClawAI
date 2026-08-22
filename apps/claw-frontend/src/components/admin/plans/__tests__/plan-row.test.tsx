@@ -25,6 +25,7 @@ function makePlan(overrides: Partial<PlanView> = {}): PlanView {
     replacementPlanId: null,
     retiredAt: null,
     dailyTokenQuota: 100000,
+    weeklyTokenQuota: 500000,
     monthlyTokenQuota: 2000000,
     maxChatsPerDay: null,
     maxMessagesPerDay: null,

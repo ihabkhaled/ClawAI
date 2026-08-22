@@ -55,6 +55,11 @@ export interface UserDeactivatedPayload extends BaseEventPayload {
   deactivatedBy: string;
 }
 
+export interface UserTemporaryPasswordIssuedPayload extends BaseEventPayload {
+  userId: string;
+  issuedBy: string;
+}
+
 // ---- Message Events ----
 
 export interface MessageCreatedPayload extends BaseEventPayload {
@@ -538,11 +543,7 @@ export type WorkspaceSyncErrorClass =
   | 'AdapterException'
   | 'UnknownException';
 export type WorkspaceSyncPauseReason =
-  | 'user_requested'
-  | 'quiet_hours'
-  | 'budget_exceeded'
-  | 'circuit_open'
-  | 'deploy_freeze';
+  'user_requested' | 'quiet_hours' | 'budget_exceeded' | 'circuit_open' | 'deploy_freeze';
 
 export interface WorkspaceSyncRunStartedPayload extends BaseEventPayload {
   connectorId: string;
@@ -775,6 +776,7 @@ export type EventPayload =
   | UserLogoutPayload
   | UserRoleChangedPayload
   | UserDeactivatedPayload
+  | UserTemporaryPasswordIssuedPayload
   | MessageCreatedPayload
   | MessageRoutedPayload
   | MessageCompletedPayload

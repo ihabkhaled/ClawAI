@@ -83,6 +83,27 @@ describe('ContextPacksService (V2)', () => {
     );
   });
 
+  it('rejects creation when the atomic context-pack limit is exhausted', async () => {
+    const repo = makeStub<ContextPacksRepository>();
+    (repo.createWithinLimit as unknown as jest.Mock).mockResolvedValue(null);
+    const service = new ContextPacksService(
+      repo,
+      { publish: jest.fn(), subscribe: jest.fn() } as never,
+      makeStub(),
+      {
+        resolve: jest.fn().mockResolvedValue({
+          isAdmin: false,
+          plan: { featureGates: { allowContextPacks: true }, limits: { contextPacks: 10 } },
+        }),
+      } as never,
+    );
+
+    await expect(service.createContextPack('user-1', { name: 'Blocked' })).rejects.toMatchObject({
+      code: 'PLAN_CONTEXT_PACK_LIMIT_EXCEEDED',
+      status: 429,
+    });
+  });
+
   it('resolves a legacy free-text item.type to a V2 enum', async () => {
     const repo = makeStub<ContextPacksRepository>();
     const rabbit = { publish: jest.fn(), subscribe: jest.fn() };

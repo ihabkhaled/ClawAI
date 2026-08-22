@@ -79,6 +79,7 @@ const samplePlan = {
   replacementPlanId: null,
   retiredAt: null,
   dailyTokenQuota: 100000,
+  weeklyTokenQuota: null,
   monthlyTokenQuota: null,
   maxChatsPerDay: null,
   maxMessagesPerDay: null,

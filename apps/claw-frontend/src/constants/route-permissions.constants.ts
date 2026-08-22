@@ -10,6 +10,7 @@ import { ROUTES } from './routes.constants';
 // only gates the UI. ADMIN bypasses every requirement.
 export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   // Admin specific pages (MUST precede the /admin catch-all below).
+  { prefix: ROUTES.ADMIN_USERS, permission: Permission.ADMIN_USERS_MANAGE },
   {
     prefix: ROUTES.ADMIN_AI_ACTION_POLICIES,
     permission: Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE,

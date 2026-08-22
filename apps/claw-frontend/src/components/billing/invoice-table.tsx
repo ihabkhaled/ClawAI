@@ -26,7 +26,7 @@ export function InvoiceTable({
   t,
 }: InvoiceTableProps): ReactElement {
   return (
-    <Card>
+    <Card className="max-w-full min-w-0">
       <CardHeader>
         <CardTitle className="text-lg">{t('billing.invoices.title')}</CardTitle>
       </CardHeader>
@@ -50,46 +50,44 @@ export function InvoiceTable({
         ) : null}
 
         {!isLoading && !isError && invoices.length > 0 ? (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('billing.invoices.number')}</TableHead>
-                  <TableHead>{t('billing.invoices.issued')}</TableHead>
-                  <TableHead>{t('billing.invoices.status')}</TableHead>
-                  <TableHead className="text-right">{t('billing.invoices.total')}</TableHead>
-                  <TableHead />
+          <Table className="min-w-[42rem]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('billing.invoices.number')}</TableHead>
+                <TableHead>{t('billing.invoices.issued')}</TableHead>
+                <TableHead>{t('billing.invoices.status')}</TableHead>
+                <TableHead className="text-right">{t('billing.invoices.total')}</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invoices.map((invoice) => (
+                <TableRow key={invoice.id}>
+                  <TableCell className="font-medium">{invoice.number}</TableCell>
+                  <TableCell>{formatDateTimeSafe(invoice.issuedAt)}</TableCell>
+                  <TableCell>{invoice.status}</TableCell>
+                  <TableCell className="text-right">
+                    {formatMinorAmount(invoice.totalMinor, invoice.currency)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={pendingId === invoice.id}
+                      onClick={() => {
+                        onDownload(invoice.id, invoice.number);
+                      }}
+                    >
+                      <Download className="me-1 h-3.5 w-3.5" aria-hidden="true" />
+                      {pendingId === invoice.id
+                        ? t('billing.invoices.downloading')
+                        : t('billing.invoices.download')}
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell className="font-medium">{invoice.number}</TableCell>
-                    <TableCell>{formatDateTimeSafe(invoice.issuedAt)}</TableCell>
-                    <TableCell>{invoice.status}</TableCell>
-                    <TableCell className="text-right">
-                      {formatMinorAmount(invoice.totalMinor, invoice.currency)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={pendingId === invoice.id}
-                        onClick={() => {
-                          onDownload(invoice.id, invoice.number);
-                        }}
-                      >
-                        <Download className="me-1 h-3.5 w-3.5" aria-hidden="true" />
-                        {pendingId === invoice.id
-                          ? t('billing.invoices.downloading')
-                          : t('billing.invoices.download')}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
         ) : null}
       </CardContent>
     </Card>

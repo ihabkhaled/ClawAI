@@ -53,7 +53,12 @@ describe('useRegister', () => {
     const { result } = renderHook(() => useRegister(), { wrapper: makeWrapper() });
 
     await act(() =>
-      result.current.registerAsync({ email: 'buyer@example.com', password: 'Secret123!' }),
+      result.current.registerAsync({
+        email: 'buyer@example.com',
+        password: 'Secret123!',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+      }),
     );
 
     expect(mocks.push).toHaveBeenCalledWith(
@@ -66,7 +71,12 @@ describe('useRegister', () => {
     const { result } = renderHook(() => useRegister(), { wrapper: makeWrapper() });
 
     await act(() =>
-      result.current.registerAsync({ email: 'buyer@example.com', password: 'Secret123!' }),
+      result.current.registerAsync({
+        email: 'buyer@example.com',
+        password: 'Secret123!',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+      }),
     );
 
     expect(mocks.push).toHaveBeenCalledWith('/login?returnTo=%2Fchat');

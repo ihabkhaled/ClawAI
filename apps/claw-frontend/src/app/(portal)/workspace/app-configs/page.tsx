@@ -69,7 +69,7 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
       {ctrl.isLoading ? <LoadingSpinner label={ctrl.t('common.loading')} /> : null}
 
       {ctrl.isError ? (
-        <div className="rounded border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="border-destructive/40 bg-destructive/10 text-destructive rounded border p-4 text-sm">
           {ctrl.t('workspaceProviders.appConfigs.loadFailed')}
         </div>
       ) : null}
@@ -79,7 +79,7 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
           className={
             ctrl.testResult.status === WorkspaceConnectorStatus.CONNECTED
               ? 'rounded border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-600'
-              : 'rounded border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive'
+              : 'border-destructive/40 bg-destructive/10 text-destructive rounded border p-3 text-sm'
           }
         >
           {ctrl.t('workspaceProviders.appConfigs.testResult', {
@@ -107,10 +107,10 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
       ) : null}
 
       {!ctrl.isLoading && ctrl.configs.length > 0 ? (
-        <div className="rounded border">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+        <div className="max-w-full rounded border max-md:border-0">
+          <table className="w-full max-md:block">
+            <thead className="max-md:hidden">
+              <tr className="bg-muted/50 text-muted-foreground text-left text-xs uppercase">
                 <th className="px-4 py-2">
                   {ctrl.t('workspaceProviders.appConfigs.columns.name')}
                 </th>
@@ -134,7 +134,7 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="max-md:block max-md:space-y-3">
               {ctrl.configs.map((config) => (
                 <AppConfigRow
                   key={config.id}

@@ -681,6 +681,11 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "USER_TEMPORARY_PASSWORD_ISSUED",
+      "pattern": "user.temporary_password_issued",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "WORKSPACE_AUTO_SUGGEST_TICK_COMPLETED",
       "pattern": "workspace.auto_suggest.tick.completed",
       "source": "packages/shared-types/src/events/event-patterns.ts"

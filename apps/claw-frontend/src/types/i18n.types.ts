@@ -47,6 +47,11 @@ export type TranslationDictionary = {
     showingPage: string;
     errorBoundaryTitle: string;
     errorBoundaryDescription: string;
+    phoneCountryLabel: string;
+    phoneCountrySearch: string;
+    phoneNumberLabel: string;
+    phoneNumberPlaceholder: string;
+    phoneInvalid: string;
   };
   auth: {
     login: string;
@@ -70,6 +75,12 @@ export type TranslationDictionary = {
     emailPlaceholder: string;
     registerTitle: string;
     registerSubtitle: string;
+    firstName: string;
+    firstNamePlaceholder: string;
+    lastName: string;
+    lastNamePlaceholder: string;
+    phone: string;
+    phoneOptional: string;
     registerButton: string;
     registering: string;
     registerFailed: string;
@@ -85,6 +96,11 @@ export type TranslationDictionary = {
     forgotPasswordComingSoonDesc: string;
     showPasswordAria: string;
     hidePasswordAria: string;
+    confirmEmailChangeTitle: string;
+    confirmEmailChangeDescription: string;
+    confirmEmailChangeSuccess: string;
+    confirmEmailChangeInvalidToken: string;
+    confirmEmailChangeBackToLogin: string;
     loginFailedTitle: string;
     brandingHeadline: string;
     brandingSubheadline: string;
@@ -196,6 +212,7 @@ export type TranslationDictionary = {
     workspaceEmailSignatures: string;
     workspaceEmailTemplates: string;
     workspaceImplHandoffs: string;
+    adminUsers: string;
     adminAiActionPolicies: string;
     adminSuggestionRules: string;
     adminWebhookDeliveries: string;
@@ -282,6 +299,14 @@ export type TranslationDictionary = {
     allProvidersFailed: string;
     errors: {
       planTrialExpired: string;
+      dailyTokenLimitExceeded: string;
+      weeklyTokenLimitExceeded: string;
+      monthlyTokenLimitExceeded: string;
+      dailyChatLimitExceeded: string;
+      dailyMessageLimitExceeded: string;
+      workspaceConnectionLimitExceeded: string;
+      contextPackLimitExceeded: string;
+      memoryItemLimitExceeded: string;
       videoAttachmentProviderUnsupported: string;
       videoAttachmentLocalModelUnavailable: string;
     };
@@ -1036,7 +1061,28 @@ export type TranslationDictionary = {
     editUser: string;
     saveUser: string;
     editUsername: string;
-    editEmail: string;
+
+    editUserTitle: string;
+
+    editUserDescription: string;
+
+    editUserUsername: string;
+
+    editUserFirstName: string;
+
+    editUserLastName: string;
+
+    editUserUsernameInvalid: string;
+
+    editUserNameTooLong: string;
+
+    editUserSuperAdminNotice: string;
+
+    editUserSave: string;
+
+    editUserCancel: string;
+
+    editUserRotatePassword: string;
     userUpdated: string;
     userUpdateFailed: string;
     colEmail: string;
@@ -1063,6 +1109,11 @@ export type TranslationDictionary = {
     recentAuditEventsErrorDesc: string;
     loadingAuditEvents: string;
     viewAllAudits: string;
+    issueTemporaryPassword: string;
+    issueTemporaryPasswordConfirmTitle: string;
+    issueTemporaryPasswordConfirmBody: string;
+    temporaryPasswordIssued: string;
+    temporaryPasswordFailed: string;
   };
   settings: {
     title: string;
@@ -1077,8 +1128,22 @@ export type TranslationDictionary = {
     accountDeleteFailed: string;
     username: string;
     email: string;
-    emailReadOnly: string;
     role: string;
+    emailChange: {
+      title: string;
+      description: string;
+      newEmailLabel: string;
+      currentPasswordLabel: string;
+      submit: string;
+      otpDescription: string;
+      otpLabel: string;
+      verify: string;
+      resend: string;
+      resendCooldown: string;
+      cancel: string;
+      pendingNotice: string;
+      requestFailed: string;
+    };
     selectLanguage: string;
     preferences: string;
     language: string;
@@ -3242,6 +3307,33 @@ export type TranslationDictionary = {
     noServices: string;
     openWorkflow: string;
     notAvailable: string;
+    controlsTitle: string;
+    controlsDescription: string;
+    automaticTitle: string;
+    automaticOn: string;
+    automaticOff: string;
+    automaticOnHint: string;
+    automaticOffHint: string;
+    automaticPaused: string;
+    automaticResumed: string;
+    automaticError: string;
+    deployLatest: string;
+    deployLatestHint: string;
+    redeploy: string;
+    redeployUnavailable: string;
+    shaLabel: string;
+    shaPlaceholder: string;
+    shaHint: string;
+    deploySha: string;
+    manualUnavailable: string;
+    triggerStarted: string;
+    triggerError: string;
+    recoveryTitle: string;
+    recoveryHint: string;
+    reset: string;
+    resetCleared: string;
+    resetNothingToClear: string;
+    resetError: string;
     state: {
       unknown: string;
       running: string;
@@ -3363,6 +3455,7 @@ export type TranslationDictionary = {
       displayOrder: string;
       dailyTokenQuota: string;
       dailyTokenQuotaHelp: string;
+      weeklyTokenQuota: string;
       monthlyTokenQuota: string;
       maxChatsPerDay: string;
       maxMessagesPerDay: string;
@@ -3417,6 +3510,10 @@ export type TranslationDictionary = {
       saveSucceeded: string;
       saveFailed: string;
     };
+  };
+  adminUsers: {
+    title: string;
+    description: string;
   };
   adminRoles: {
     title: string;
@@ -4915,6 +5012,14 @@ export type TranslationDictionary = {
         ctaNote: string;
       };
     };
+  };
+  pwa: {
+    offlineMessage: string;
+    updateAvailable: string;
+    updateAction: string;
+    installMessage: string;
+    installAction: string;
+    dismissInstall: string;
   };
 };
 

@@ -19,7 +19,6 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile overlay */}
       {isOpen ? (
         <div
           className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
@@ -29,29 +28,24 @@ export function Sidebar() {
         />
       ) : null}
 
-      {/* Sidebar
-       * Desktop (md+): static left rail, w-[var(--sidebar-width)], border-e.
-       * Mobile (max-md): bottom-sheet — full-width, inset bottom, h-85dvh,
-       * rounded-t-2xl, border-t (NOT border-e), slides down via translate-y-full
-       * when closed. Drag-handle visible only on mobile. */}
       <aside
+        data-mobile-sidebar
+        role={isOpen ? 'dialog' : undefined}
+        aria-modal={isOpen ? true : undefined}
+        aria-label={isOpen ? t('accessibility.navigation') : undefined}
         className={cn(
           'bg-card duration-normal ease-expo-out fixed z-50 flex flex-col transition-transform',
-          // Mobile: bottom sheet
           'shadow-floating inset-x-0 top-auto bottom-0 h-[85dvh] rounded-t-2xl border-t',
-          // Desktop overrides: revert to left rail layout
-          'md:static md:inset-auto md:h-full md:w-[var(--sidebar-width)] md:translate-y-0 md:rounded-none md:border-e md:border-t-0 md:shadow-none',
-          isOpen ? 'translate-y-0' : 'max-md:translate-y-full',
+          'md:static md:visible md:inset-auto md:h-full md:w-[var(--sidebar-width)] md:translate-y-0 md:rounded-none md:border-e md:border-t-0 md:shadow-none',
+          isOpen
+            ? 'visible translate-y-0'
+            : 'max-md:invisible max-md:pointer-events-none max-md:translate-y-full',
         )}
       >
-        {/* Mobile-only drag handle */}
-        <div className="flex justify-center pt-2 md:hidden" aria-hidden>
-          <div className="bg-muted-foreground/30 h-1 w-10 rounded-full" />
-        </div>
         <div className="flex h-16 items-center justify-between gap-2 px-4 sm:px-6">
           <Link
             href={ROUTES.CHAT}
-            className="group focus-visible:ring-primary/40 flex items-center gap-3 rounded-lg transition-colors outline-none focus-visible:ring-2"
+            className="group focus-visible:ring-primary/40 flex min-h-11 items-center gap-3 rounded-lg transition-colors outline-none focus-visible:ring-2"
           >
             <div className="bg-primary/10 ring-primary/20 duration-normal ease-expo-out group-hover:bg-primary/15 group-hover:ring-primary/30 flex h-9 w-9 items-center justify-center rounded-xl ring-1 transition-all">
               <Zap className="text-primary h-4 w-4" />
@@ -66,7 +60,7 @@ export function Sidebar() {
           <Button
             variant="ghost"
             size="icon"
-            className="min-h-11 min-w-11 md:hidden"
+            className="md:hidden"
             onClick={close}
             aria-label={t('accessibility.closeSidebar')}
           >
@@ -80,15 +74,8 @@ export function Sidebar() {
           ))}
         </nav>
         <Separator />
-        {/* On mobile the sidebar is a bottom sheet pinned to `bottom-0`, and the
-         * mobile bottom nav is fixed at `bottom-0` with the SAME z-50 — so it
-         * paints over this row and swallowed both the version pill and the
-         * GPU/CPU badge. Reserve the nav's height below `md`, where it exists. */}
         <div className="safe-bottom safe-bottom-base-nav flex flex-wrap items-center justify-between gap-2 px-4 pt-3">
           <span className="bg-muted/60 text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
-            {/* APP_VERSION reads package.json. The literal that was here said
-                0.1.0 while the package said 1.0.0 — a hardcoded version is a
-                second source of truth that nothing keeps in step. */}
             {t('common.brandVersion', { version: APP_VERSION })}
           </span>
           <GpuBadge />

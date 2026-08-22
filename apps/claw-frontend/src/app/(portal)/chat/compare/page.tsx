@@ -121,7 +121,7 @@ export default function ComparePage() {
                   className="min-h-[100px] resize-y"
                 />
               </ComposerDropzone>
-              <div className="mt-3 flex items-center justify-between gap-2">
+              <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-between">
                 {selectedModels.length > 0 ? (
                   <FileAttachmentPicker
                     selectedFileIds={selectedFileIds}
@@ -131,7 +131,7 @@ export default function ComparePage() {
                 ) : (
                   <span />
                 )}
-                <Button onClick={handleSend} disabled={!canSend}>
+                <Button onClick={handleSend} disabled={!canSend} className="w-full sm:w-auto">
                   {isPending || isPolling ? (
                     <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   ) : (
@@ -171,7 +171,7 @@ export default function ComparePage() {
                 {pollingMessages.length} / {selectedModels.length}
               </Badge>
               {isPolling ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
               ) : null}
             </div>
             {allResponded ? (

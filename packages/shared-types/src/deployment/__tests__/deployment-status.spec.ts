@@ -1,4 +1,4 @@
-import { DeploymentPhase, DeploymentState } from '../index';
+import { DeploymentPhase, DeploymentState, DeploymentTriggerMode } from '../index';
 
 describe('deployment status contract', () => {
   it('exposes bounded lifecycle values shared by deployment and UI consumers', () => {
@@ -14,5 +14,11 @@ describe('deployment status contract', () => {
       'finalizing',
       'completed',
     ]);
+  });
+
+  it('exposes exactly the three manual deployment modes the admin page offers', () => {
+    // The backend DTO and the frontend buttons both switch on these values;
+    // adding a fourth without wiring both sides would silently do nothing.
+    expect(Object.values(DeploymentTriggerMode)).toEqual(['latest', 'redeploy', 'sha']);
   });
 });

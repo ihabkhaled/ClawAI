@@ -48,6 +48,7 @@ const stubAppConfig = (seedReconcile: boolean): void => {
     CONTACT_SMTP_PORT: 587,
     CONTACT_SMTP_SECURE: 'false',
     DEPLOYMENT_STATUS_FILE: '/app/.deploy/status.json',
+    DEPLOYMENT_AUTOMATION_FILE: '/app/.deploy/automation.json',
     SEED_RECONCILE_PERMISSIONS: seedReconcile,
   });
 };

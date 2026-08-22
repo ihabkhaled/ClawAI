@@ -4,9 +4,8 @@ import type { AdminUser, AdminUserUpdateRequest, UseUserTableStateReturn } from 
 
 export function useUserTableState(): UseUserTableStateReturn {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [profileEditingId, setProfileEditingId] = useState<string | null>(null);
-  const [editUsername, setEditUsername] = useState('');
-  const [editEmail, setEditEmail] = useState('');
+  const [editUser, setEditUser] = useState<AdminUser | null>(null);
+  const [temporaryPasswordUserId, setTemporaryPasswordUserId] = useState<string | null>(null);
 
   const handleRoleSelect = useCallback(
     (userId: string, role: string, onChangeRole: (userId: string, role: string) => void): void => {
@@ -16,32 +15,56 @@ export function useUserTableState(): UseUserTableStateReturn {
     [],
   );
 
-  const startProfileEdit = useCallback((user: AdminUser): void => {
-    setProfileEditingId(user.id);
-    setEditUsername(user.username);
-    setEditEmail(user.email);
+  const openEditUser = useCallback((user: AdminUser): void => {
+    setEditUser(user);
   }, []);
-  const finishProfileEdit = useCallback(
-    (onUpdate: (userId: string, data: AdminUserUpdateRequest) => void): void => {
-      if (profileEditingId === null) {
+
+  const closeEditUser = useCallback((): void => {
+    setEditUser(null);
+  }, []);
+
+  // The dialog owns the field values and hands back a complete request, so the
+  // table only has to forward it and close.
+  const submitEditUser = useCallback(
+    (
+      userId: string,
+      data: AdminUserUpdateRequest,
+      onUpdate: (userId: string, data: AdminUserUpdateRequest) => void,
+    ): void => {
+      onUpdate(userId, data);
+      setEditUser(null);
+    },
+    [],
+  );
+
+  const requestTemporaryPassword = useCallback((userId: string): void => {
+    setTemporaryPasswordUserId(userId);
+  }, []);
+  const cancelTemporaryPassword = useCallback((): void => {
+    setTemporaryPasswordUserId(null);
+  }, []);
+  const confirmTemporaryPassword = useCallback(
+    (onTemporaryPassword: (userId: string) => void): void => {
+      if (temporaryPasswordUserId === null) {
         return;
       }
-      onUpdate(profileEditingId, { username: editUsername, email: editEmail });
-      setProfileEditingId(null);
+      onTemporaryPassword(temporaryPasswordUserId);
+      setTemporaryPasswordUserId(null);
     },
-    [editEmail, editUsername, profileEditingId],
+    [temporaryPasswordUserId],
   );
 
   return {
     editingUserId,
     setEditingUserId,
     handleRoleSelect,
-    profileEditingId,
-    editUsername,
-    editEmail,
-    setEditUsername,
-    setEditEmail,
-    startProfileEdit,
-    finishProfileEdit,
+    editUser,
+    openEditUser,
+    closeEditUser,
+    submitEditUser,
+    temporaryPasswordUserId,
+    requestTemporaryPassword,
+    cancelTemporaryPassword,
+    confirmTemporaryPassword,
   };
 }

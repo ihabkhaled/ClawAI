@@ -98,12 +98,16 @@ describe('sidebar-visibility.utility', () => {
       expect(paymentGatewayItems).toHaveLength(1);
     });
 
-    it('hides the deployment monitor from an ordinary administrator', () => {
+    it('hides the deployment monitor from an ordinary administrator and ensures first child is nav.adminUsers', () => {
       const visible = filterSidebarItems(SIDEBAR_NAV_ITEMS, adminCan, adminFeatures);
       expect(visible.length).toBe(SIDEBAR_NAV_ITEMS.length);
 
       const admin = visible.find((i) => i.labelKey === 'nav.admin');
-      expect(labelKeys(admin?.children ?? [])).not.toContain('nav.adminDeployment');
+      expect(admin).toBeDefined();
+      const adminChildren = admin?.children ?? [];
+      expect(adminChildren.length).toBeGreaterThan(0);
+      expect(adminChildren[0]?.labelKey).toBe('nav.adminUsers');
+      expect(labelKeys(adminChildren)).not.toContain('nav.adminDeployment');
     });
 
     it('reveals the deployment monitor only to the seeded super administrator', () => {

@@ -1,4 +1,12 @@
 export { getAccessToken, getRefreshToken, setTokens, clearAuthStorage } from './api.utility';
+export {
+  flagEmojiFromIso2,
+  toE164,
+  isE164,
+  parseE164,
+  detectCountryFromE164,
+  findCountryByIso2,
+} from './phone.utility';
 export { cn } from './cn.utility';
 export { extractTextFromReactNode } from './react-node-text.utility';
 export { getConfidenceLabel, getConfidenceClass } from './confidence.utility';

@@ -23,11 +23,11 @@ export function AgentActivityEntry({ t, invocation }: AgentActivityEntryProps): 
   const entryId = `activity-entry-${invocation.id}`;
 
   return (
-    <Card className={cn('border-border overflow-hidden', styles.bgClass)}>
+    <Card className={cn('border-border max-w-full min-w-0 overflow-hidden', styles.bgClass)}>
       {/* 3px accent rule on the left edge — color comes from the --accent-* token */}
       <div className="flex">
         <div className={cn('w-[3px] shrink-0', styles.accentClass)} aria-hidden="true" />
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <Button
             variant="unstyled"
             size="unstyled"
@@ -35,13 +35,13 @@ export function AgentActivityEntry({ t, invocation }: AgentActivityEntryProps): 
             onClick={() => setExpanded((prev) => !prev)}
             aria-expanded={expanded}
             aria-controls={entryId}
-            className="hover:bg-muted/40 focus-visible:ring-ring flex w-full items-center gap-3 px-3 py-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            className="hover:bg-muted/40 focus-visible:ring-ring flex w-full flex-wrap items-center gap-3 px-3 py-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none max-md:whitespace-normal sm:flex-nowrap"
           >
             <Icon aria-hidden="true" className={cn('size-4 shrink-0', styles.iconClass)} />
             <Badge variant="outline" className="shrink-0 font-mono text-xs">
               {invocation.capabilityClass}.{invocation.capabilityOperation}
             </Badge>
-            <code className="text-muted-foreground flex-1 truncate text-xs">
+            <code className="text-muted-foreground min-w-0 flex-1 truncate text-xs max-md:order-last max-md:basis-full max-md:break-all max-md:whitespace-normal">
               {JSON.stringify(invocation.targetDescriptor)}
             </code>
             <RiskBadge label={invocation.riskLabel} score={invocation.riskScore} />
@@ -59,7 +59,7 @@ export function AgentActivityEntry({ t, invocation }: AgentActivityEntryProps): 
           {expanded && (
             <CardContent
               id={entryId}
-              className="border-border/60 flex flex-col gap-2 border-t px-3 py-3 text-xs"
+              className="border-border/60 flex min-w-0 flex-col gap-2 border-t px-3 py-3 text-xs"
             >
               <div className="text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-1">
                 <span className="text-foreground font-medium">{t('agent.blastRadius')}</span>
@@ -71,17 +71,17 @@ export function AgentActivityEntry({ t, invocation }: AgentActivityEntryProps): 
                 {invocation.matchedPolicyName !== null && (
                   <>
                     <span className="text-foreground font-medium">{t('agent.matchedPolicy')}</span>
-                    <span className="font-mono">{invocation.matchedPolicyName}</span>
+                    <span className="font-mono break-all">{invocation.matchedPolicyName}</span>
                   </>
                 )}
               </div>
               {invocation.executionError !== null && (
-                <p className="rounded bg-[hsl(var(--accent-rose)/0.08)] px-2 py-1 font-mono text-[hsl(var(--accent-rose))]">
+                <p className="rounded bg-[hsl(var(--accent-rose)/0.08)] px-2 py-1 font-mono break-all text-[hsl(var(--accent-rose))]">
                   {invocation.executionError}
                 </p>
               )}
               {invocation.rejectionReason !== null && (
-                <p className="bg-muted text-muted-foreground rounded px-2 py-1 font-mono">
+                <p className="bg-muted text-muted-foreground rounded px-2 py-1 font-mono break-all">
                   {invocation.rejectionReason}
                 </p>
               )}

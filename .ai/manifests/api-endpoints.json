@@ -466,6 +466,21 @@
         "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/admin/deployment/automation",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/deployment/reset",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/deployment/trigger",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/admin/plans",
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
@@ -569,6 +584,11 @@
         "method": "GET",
         "route": "/admin/roles/permissions",
         "source": "apps/claw-auth-service/src/modules/roles/controllers/roles.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/auth/email-change/confirm",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
       },
       {
         "method": "POST",
@@ -768,6 +788,31 @@
       {
         "method": "PATCH",
         "route": "/users/me",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/users/me/email-change",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/users/me/email-change",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/users/me/email-change",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/users/me/email-change/resend",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/users/me/email-change/verify-current",
         "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
       },
       {
@@ -3003,5 +3048,5 @@
     ]
   },
   "generated": true,
-  "total": 593
+  "total": 602
 }

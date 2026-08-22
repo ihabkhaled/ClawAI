@@ -92,6 +92,16 @@ describe('ChatThreadsService', () => {
         }),
       );
     });
+
+    it('rejects creation when the atomic daily thread limit is exhausted', async () => {
+      threadsRepo.createWithinDailyLimit.mockResolvedValue(null);
+
+      await expect(service.createThread('user-1', { title: 'Blocked' })).rejects.toMatchObject({
+        code: 'PLAN_DAILY_CHAT_LIMIT_EXCEEDED',
+        status: 429,
+      });
+      expect(rabbitMQ.publish).not.toHaveBeenCalled();
+    });
   });
 
   describe('getThreads', () => {

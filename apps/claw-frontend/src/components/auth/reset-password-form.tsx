@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 
+import { PasswordInput } from '@/components/common/password-input';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { ROUTES } from '@/constants';
 import { AlertVariant } from '@/enums/alert-variant.enum';
 import { useResetPasswordForm } from '@/hooks/auth/use-reset-password-form';
@@ -58,9 +58,8 @@ export function ResetPasswordForm(): React.ReactElement {
             <label htmlFor="password" className="text-sm font-medium">
               {t('auth.resetPasswordNewPasswordLabel')}
             </label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="new-password"
               {...form.register('password')}
               aria-invalid={!!form.formState.errors.password}
@@ -75,9 +74,8 @@ export function ResetPasswordForm(): React.ReactElement {
             <label htmlFor="confirmPassword" className="text-sm font-medium">
               {t('auth.resetPasswordConfirmPasswordLabel')}
             </label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               autoComplete="new-password"
               {...form.register('confirmPassword')}
               aria-invalid={!!form.formState.errors.confirmPassword}

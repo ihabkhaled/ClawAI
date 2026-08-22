@@ -6,6 +6,7 @@ import { DuplicateEntityException, EntityNotFoundException } from '../../../comm
 import { UserRole, UserStatus } from '../../../common/enums';
 import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
 import { verifyPassword } from '@common/utilities';
+import { updateUserSchema } from '../dto/update-user.dto';
 import { type AuthEmailAdapter } from '../../auth/adapters/auth-email.adapter';
 
 jest.mock('@common/utilities', () => ({
@@ -55,30 +56,31 @@ describe('UsersService', () => {
   let service: UsersService;
   let repository: ReturnType<typeof mockRepository>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
+  let authEmailAdapter: { sendTemporaryPassword: jest.Mock };
 
   beforeEach(() => {
     repository = mockRepository();
     rabbitMQ = mockRabbitMQ();
+    authEmailAdapter = { sendTemporaryPassword: jest.fn() };
     service = new UsersService(
       repository as unknown as UsersRepository,
       rabbitMQ as unknown as RabbitMQService,
-      { sendTemporaryPassword: jest.fn() } as unknown as AuthEmailAdapter,
+      authEmailAdapter as unknown as AuthEmailAdapter,
     );
   });
 
   describe('updateUser', () => {
-    it('should update user successfully', async () => {
-      const updatedUser = { ...mockUser, email: 'new@example.com' };
+    it('should update user username successfully', async () => {
+      const updatedUser = { ...mockUser, username: 'renamed' };
       repository.findById.mockResolvedValue(mockUser);
-      repository.findByEmail.mockResolvedValue(null);
+      repository.findByUsername.mockResolvedValue(null);
       repository.updateById.mockResolvedValue(updatedUser);
 
-      const result = await service.updateUser('user-1', { email: 'new@example.com' }, 'admin-1');
+      const result = await service.updateUser('user-1', { username: 'renamed' }, 'admin-1');
 
-      expect(result.email).toBe('new@example.com');
+      expect(result.username).toBe('renamed');
       expect(repository.updateById).toHaveBeenCalledWith('user-1', {
-        email: 'new@example.com',
-        username: undefined,
+        username: 'renamed',
         role: undefined,
         status: undefined,
       });
@@ -88,17 +90,36 @@ describe('UsersService', () => {
       repository.findById.mockResolvedValue(null);
 
       await expect(
-        service.updateUser('nonexistent', { email: 'new@example.com' }, 'admin-1'),
+        service.updateUser('nonexistent', { username: 'renamed' }, 'admin-1'),
       ).rejects.toThrow(EntityNotFoundException);
     });
 
-    it('should throw DuplicateEntityException if email already taken', async () => {
+    it('should throw DuplicateEntityException if username already taken', async () => {
       repository.findById.mockResolvedValue(mockUser);
-      repository.findByEmail.mockResolvedValue({ ...mockUser, id: 'other-user' });
+      repository.findByUsername.mockResolvedValue({ ...mockUser, id: 'other-user' });
 
-      await expect(
-        service.updateUser('user-1', { email: 'taken@example.com' }, 'admin-1'),
-      ).rejects.toThrow(DuplicateEntityException);
+      await expect(service.updateUser('user-1', { username: 'taken' }, 'admin-1')).rejects.toThrow(
+        DuplicateEntityException,
+      );
+    });
+
+    it('should ignore an email property and never pass it to updateById', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      repository.findByUsername.mockResolvedValue(null);
+      repository.updateById.mockResolvedValue(mockUser);
+
+      await service.updateUser(
+        'user-1',
+        updateUserSchema.parse({ email: 'taken@example.com' }),
+        'admin-1',
+      );
+
+      expect(repository.findByEmail).not.toHaveBeenCalled();
+      expect(repository.updateById).toHaveBeenCalledWith('user-1', {
+        username: undefined,
+        role: undefined,
+        status: undefined,
+      });
     });
   });
 
@@ -117,7 +138,6 @@ describe('UsersService', () => {
 
       expect(result.username).toBe('renamed');
       expect(repository.updateById).toHaveBeenCalledWith('user-1', {
-        email: undefined,
         username: 'renamed',
       });
       expect(repository.revokeSessionsByUserId).toHaveBeenCalledWith('user-1');
@@ -130,7 +150,7 @@ describe('UsersService', () => {
       await expect(
         service.updateOwnProfile('user-1', {
           currentPassword: 'WrongPass1!',
-          email: 'new@example.com',
+          username: 'renamed',
         }),
       ).rejects.toMatchObject({ code: 'INVALID_CURRENT_PASSWORD' });
       expect(repository.updateById).not.toHaveBeenCalled();
@@ -315,6 +335,9 @@ describe('UsersService', () => {
         email: 'new@b.c',
         username: 'newuser',
         password: 'StrongPass1',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        phone: '+441234567890',
         role: UserRole.OPERATOR,
       } as never);
 
@@ -323,6 +346,9 @@ describe('UsersService', () => {
         expect.objectContaining({
           email: 'new@b.c',
           username: 'newuser',
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+          phone: '+441234567890',
           role: UserRole.OPERATOR,
           status: 'ACTIVE',
         }),
@@ -332,6 +358,51 @@ describe('UsersService', () => {
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
         EventPattern.USER_CREATED,
         expect.objectContaining({ userId: 'new-1', email: 'new@b.c' }),
+      );
+    });
+  });
+
+  describe('issueTemporaryPassword', () => {
+    it('does not update the password or revoke sessions when email delivery fails', async () => {
+      const emailError = new Error('Email delivery failed');
+      repository.findById.mockResolvedValue(mockUser);
+      authEmailAdapter.sendTemporaryPassword.mockRejectedValue(emailError);
+
+      await expect(service.issueTemporaryPassword(mockUser.id, 'actor-1')).rejects.toBe(emailError);
+
+      expect(repository.updateById).not.toHaveBeenCalled();
+      expect(repository.revokeSessionsByUserId).not.toHaveBeenCalled();
+      expect(rabbitMQ.publish).not.toHaveBeenCalled();
+    });
+
+    it('sends email, updates the password, and revokes sessions in order', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      repository.updateById.mockResolvedValue(undefined);
+      repository.revokeSessionsByUserId.mockResolvedValue(undefined);
+
+      await service.issueTemporaryPassword(mockUser.id, 'actor-2');
+
+      expect(authEmailAdapter.sendTemporaryPassword).toHaveBeenCalledTimes(1);
+      expect(repository.updateById).toHaveBeenCalledTimes(1);
+      expect(repository.revokeSessionsByUserId).toHaveBeenCalledTimes(1);
+
+      expect(authEmailAdapter.sendTemporaryPassword.mock.invocationCallOrder[0]).toBeLessThan(
+        repository.updateById.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+      );
+      expect(repository.updateById.mock.invocationCallOrder[0]).toBeLessThan(
+        repository.revokeSessionsByUserId.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+      );
+      expect(rabbitMQ.publish).toHaveBeenCalledTimes(1);
+      expect(repository.revokeSessionsByUserId.mock.invocationCallOrder[0]).toBeLessThan(
+        rabbitMQ.publish?.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+      );
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.USER_TEMPORARY_PASSWORD_ISSUED,
+        expect.objectContaining({
+          userId: mockUser.id,
+          issuedBy: 'actor-2',
+          timestamp: expect.any(String),
+        }),
       );
     });
   });

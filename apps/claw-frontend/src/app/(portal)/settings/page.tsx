@@ -2,6 +2,8 @@
 
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
+import { PasswordInput } from '@/components/common/password-input';
+import { EmailChangeCard } from '@/components/settings/email-change-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,6 +40,7 @@ export default function SettingsPage() {
     deleteAccount,
     isProfilePending,
     isDeletePending,
+    emailChange,
   } = useSettingsPage();
   const { t } = useTranslation();
 
@@ -73,17 +76,6 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="settings-email" className="text-sm font-medium">
-                  {t('settings.email')}
-                </label>
-                <Input
-                  id="settings-email"
-                  type="email"
-                  disabled={isProfilePending}
-                  {...profileForm.register('email')}
-                />
-              </div>
-              <div className="space-y-2">
                 <label htmlFor="settings-role" className="text-sm font-medium">
                   {t('settings.role')}
                 </label>
@@ -93,9 +85,8 @@ export default function SettingsPage() {
                 <label htmlFor="profile-current-password" className="text-sm font-medium">
                   {t('settings.currentPassword')}
                 </label>
-                <Input
+                <PasswordInput
                   id="profile-current-password"
-                  type="password"
                   autoComplete="current-password"
                   disabled={isProfilePending}
                   {...profileForm.register('currentPassword')}
@@ -111,6 +102,25 @@ export default function SettingsPage() {
 
         <Separator />
 
+        <EmailChangeCard
+          pendingState={emailChange.pendingState}
+          requestForm={emailChange.requestForm}
+          otpForm={emailChange.otpForm}
+          onSubmitRequest={emailChange.submitRequest}
+          onSubmitOtp={emailChange.submitOtp}
+          onResendOtp={emailChange.resendOtp}
+          onCancelChange={emailChange.cancelChange}
+          resendCooldownSeconds={emailChange.resendCooldownSeconds}
+          t={emailChange.t}
+          isLoading={emailChange.loading}
+          isRequesting={emailChange.isRequesting}
+          isVerifying={emailChange.isVerifying}
+          isResending={emailChange.isResending}
+          isCancelling={emailChange.isCancelling}
+        />
+
+        <Separator />
+
         <Card className="border-destructive/40">
           <CardHeader>
             <CardTitle className="text-lg">{t('settings.deleteAccount')}</CardTitle>
@@ -122,9 +132,8 @@ export default function SettingsPage() {
                 <label htmlFor="delete-current-password" className="text-sm font-medium">
                   {t('settings.currentPassword')}
                 </label>
-                <Input
+                <PasswordInput
                   id="delete-current-password"
-                  type="password"
                   autoComplete="current-password"
                   disabled={isDeletePending}
                   {...deleteForm.register('currentPassword')}
@@ -153,9 +162,8 @@ export default function SettingsPage() {
                 <label htmlFor="current-password" className="text-sm font-medium">
                   {t('settings.currentPassword')}
                 </label>
-                <Input
+                <PasswordInput
                   id="current-password"
-                  type="password"
                   autoComplete="current-password"
                   disabled={isPasswordPending}
                   {...passwordForm.register('currentPassword')}
@@ -171,9 +179,8 @@ export default function SettingsPage() {
                 <label htmlFor="new-password" className="text-sm font-medium">
                   {t('settings.newPassword')}
                 </label>
-                <Input
+                <PasswordInput
                   id="new-password"
-                  type="password"
                   autoComplete="new-password"
                   disabled={isPasswordPending}
                   {...passwordForm.register('newPassword')}
@@ -189,9 +196,8 @@ export default function SettingsPage() {
                 <label htmlFor="confirm-password" className="text-sm font-medium">
                   {t('settings.confirmPassword')}
                 </label>
-                <Input
+                <PasswordInput
                   id="confirm-password"
-                  type="password"
                   autoComplete="new-password"
                   disabled={isPasswordPending}
                   {...passwordForm.register('confirmPassword')}
@@ -247,7 +253,7 @@ export default function SettingsPage() {
             <CardDescription>{t('settings.appearanceDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {APPEARANCE_OPTIONS.map((option) => {
                 const IconComponent =
                   APPEARANCE_ICONS[option.icon as keyof typeof APPEARANCE_ICONS];

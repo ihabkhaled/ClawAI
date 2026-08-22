@@ -1,12 +1,18 @@
 import type { UseFormReturn } from 'react-hook-form';
 
 import type { MessageFeedback } from '@/enums';
+import type { PasswordInputType } from '@/enums/password-input-type.enum';
 import type { ScrollDirection } from '@/enums/scroll-direction.enum';
+import type {
+  ConfirmOtpFormValues,
+  RequestEmailChangeFormValues,
+} from '@/lib/validation/email-change.schema';
 import type { LoginFormValues } from '@/lib/validation/login.schema';
 import type {
   ForgotPasswordFormValues,
   ResetPasswordFormValues,
 } from '@/lib/validation/password-reset.schema';
+import type { RegisterFormValues } from '@/lib/validation/register.schema';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 
 import type { SidebarItem } from '../constants/sidebar.constants';
@@ -14,7 +20,7 @@ import type { ResearchProviderKind } from '../enums/research-provider-kind.enum'
 
 import type { AdaptiveLearningInsights } from './adaptive-learning.types';
 import type { AdminUser, AuditLog } from './audit.types';
-import type { AdminUserUpdateRequest } from './auth.types';
+import type { AdminUserUpdateRequest, EmailChangePendingState } from './auth.types';
 import type {
   ChatMessage,
   ChatThread,
@@ -35,6 +41,7 @@ import type { CostEnsembleResult as CostEnsembleResultType } from './cost-ensemb
 import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
+import type { CountryDialCode } from './phone.types';
 import type { PipelineResult } from './pipeline.types';
 import type { PlanView } from './plan.types';
 import type { RecoveryStats } from './recovery.types';
@@ -65,11 +72,54 @@ export type UseLoginFormReturn = {
   t: TranslateFunction;
 };
 
+export type UseRegisterFormReturn = {
+  form: UseFormReturn<RegisterFormValues>;
+  onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
+  isPending: boolean;
+  isError: boolean;
+  errorMessage: string | null;
+  t: TranslateFunction;
+};
+
 export type UseForgotPasswordFormReturn = {
   form: UseFormReturn<ForgotPasswordFormValues>;
   onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
   isPending: boolean;
   isSuccess: boolean;
+  errorMessage: string | null;
+  t: TranslateFunction;
+};
+
+// ─── Email change hook types ─────────────────────────────────────────────────────
+
+export type UseEmailChangeCooldownReturn = {
+  resendCooldownSeconds: number;
+  startResendCooldown: () => void;
+};
+
+export type UseEmailChangeReturn = {
+  pendingState: EmailChangePendingState | null;
+  loading: boolean;
+  requestForm: UseFormReturn<RequestEmailChangeFormValues>;
+  otpForm: UseFormReturn<ConfirmOtpFormValues>;
+  submitRequest: (event?: React.BaseSyntheticEvent) => Promise<void>;
+  submitOtp: (event?: React.BaseSyntheticEvent) => Promise<void>;
+  resendOtp: () => void;
+  cancelChange: () => void;
+  resendCooldownSeconds: number;
+  t: TranslateFunction;
+  isRequesting: boolean;
+  isVerifying: boolean;
+  isResending: boolean;
+  isCancelling: boolean;
+};
+
+export type UseConfirmEmailChangeFormReturn = {
+  onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
+  isPending: boolean;
+  isSuccess: boolean;
+  isError: boolean;
+  isInvalidToken: boolean;
   errorMessage: string | null;
   t: TranslateFunction;
 };
@@ -94,12 +144,7 @@ export type UseRedirectIfAuthenticatedReturn = {
 
 // ─── Admin hook types ───────────────────────────────────────────────────────
 
-export type UseAdminPageReturn = {
-  t: TranslateFunction;
-  user: { role: string } | null;
-  actionPending: string | null;
-  users: AdminUser[];
-  usersMeta: { total: number; page: number; limit: number; totalPages: number } | undefined;
+export type UseAdminUserFiltersReturn = {
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
   search: string;
@@ -112,17 +157,10 @@ export type UseAdminPageReturn = {
   setPlanFilter: (value: string) => void;
   verificationFilter: string;
   setVerificationFilter: (value: string) => void;
-  plans: PlanView[];
-  activeCount: number;
-  usersQuery: {
-    isLoading: boolean;
-    isError: boolean;
-  };
-  healthQuery: {
-    isLoading: boolean;
-    isError: boolean;
-    data: AggregatedHealth | undefined;
-  };
+};
+
+export type UseAdminUserMutationsReturn = {
+  actionPending: string | null;
   handleChangeRole: (userId: string, role: string) => void;
   handleDeactivate: (userId: string) => void;
   handleReactivate: (userId: string) => void;
@@ -137,6 +175,30 @@ export type UseAdminPageReturn = {
   isTemporaryPasswordPending: boolean;
 };
 
+export type UseAdminUsersPageReturn = UseAdminUserFiltersReturn &
+  UseAdminUserMutationsReturn & {
+    t: TranslateFunction;
+    user: { role: string } | null;
+    users: AdminUser[];
+    usersMeta: { total: number; page: number; limit: number; totalPages: number } | undefined;
+    plans: PlanView[];
+    activeCount: number;
+    usersQuery: { isLoading: boolean; isError: boolean };
+    onRetry: () => void;
+  };
+
+export type UseAdminPageReturn = {
+  t: TranslateFunction;
+  user: { role: string } | null;
+  totalUsers: number;
+  activeCount: number;
+  healthQuery: {
+    isLoading: boolean;
+    isError: boolean;
+    data: AggregatedHealth | undefined;
+  };
+};
+
 export type UseUserTableStateReturn = {
   editingUserId: string | null;
   setEditingUserId: (id: string | null) => void;
@@ -145,13 +207,18 @@ export type UseUserTableStateReturn = {
     role: string,
     onChangeRole: (userId: string, role: string) => void,
   ) => void;
-  profileEditingId: string | null;
-  editUsername: string;
-  editEmail: string;
-  setEditUsername: (value: string) => void;
-  setEditEmail: (value: string) => void;
-  startProfileEdit: (user: AdminUser) => void;
-  finishProfileEdit: (onUpdate: (userId: string, data: AdminUserUpdateRequest) => void) => void;
+  editUser: AdminUser | null;
+  openEditUser: (user: AdminUser) => void;
+  closeEditUser: () => void;
+  submitEditUser: (
+    userId: string,
+    data: AdminUserUpdateRequest,
+    onUpdate: (userId: string, data: AdminUserUpdateRequest) => void,
+  ) => void;
+  temporaryPasswordUserId: string | null;
+  requestTemporaryPassword: (userId: string) => void;
+  cancelTemporaryPassword: () => void;
+  confirmTemporaryPassword: (onTemporaryPassword: (userId: string) => void) => void;
 };
 
 export type UseRecentAuditEventsReturn = {
@@ -759,4 +826,23 @@ export type UseKeyboardShortcutOptions = {
   preventDefault?: boolean;
 };
 
+export type UsePhoneInputReturn = {
+  selectedCountry: CountryDialCode;
+  setSelectedCountry: (country: CountryDialCode) => void;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  filter: string;
+  setFilter: (filter: string) => void;
+  filteredCountries: ReadonlyArray<CountryDialCode>;
+  nationalNumber: string;
+  setNationalNumber: (value: string) => void;
+  value: string;
+  isValid: boolean;
+};
 export type UseScrollDirectionReturn = ScrollDirection | null;
+
+export type UsePasswordVisibilityReturn = {
+  visible: boolean;
+  toggle: () => void;
+  inputType: PasswordInputType;
+};

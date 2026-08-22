@@ -255,6 +255,56 @@ describe('Runtime V2 DTO boundary', () => {
     ).toBe(false);
   });
 
+  it('admits a source file longer than the object-entry cap as contentLines', () => {
+    const contentLines = Array.from(
+      { length: 900 },
+      (_, index) => `const line${String(index)} = 1;`,
+    );
+    expect(
+      toolInvocationSchema.safeParse({
+        schemaVersion: '2.0',
+        invocationId: id,
+        runId: 'runtime_run_00000001',
+        turnId: 'runtime_turn_0000001',
+        toolName: 'workspace.files',
+        toolVersion: '2.0.0',
+        operation: 'create',
+        arguments: {
+          transaction: {
+            transactionId: 'transaction_00000001',
+            summary: 'Create a realistic source file.',
+            operations: [
+              { kind: 'create', rootKey: 'workspace-1', path: 'src/a.ts', contentLines },
+            ],
+          },
+        },
+        targetId: 'runtime_target_00001',
+        epochs,
+        idempotencyKey: 'runtime_idempotency_1',
+        requestedAt: '2026-08-02T10:00:00.000Z',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('still rejects an array beyond the pathological item ceiling', () => {
+    expect(
+      toolInvocationSchema.safeParse({
+        schemaVersion: '2.0',
+        invocationId: id,
+        runId: 'runtime_run_00000001',
+        turnId: 'runtime_turn_0000001',
+        toolName: 'workspace.files',
+        toolVersion: '2.0.0',
+        operation: 'create',
+        arguments: { contentLines: Array.from({ length: 4_001 }, () => 'x') },
+        targetId: 'runtime_target_00001',
+        epochs,
+        idempotencyKey: 'runtime_idempotency_1',
+        requestedAt: '2026-08-02T10:00:00.000Z',
+      }).success,
+    ).toBe(false);
+  });
+
   it('rejects duplicate identities across the admitted tool catalog', () => {
     const definition = {
       schemaVersion: '2.0',
