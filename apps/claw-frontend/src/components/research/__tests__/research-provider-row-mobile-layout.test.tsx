@@ -45,7 +45,7 @@ describe('ResearchProviderRow mobile layout', () => {
       </table>,
     );
 
-    expect(container.querySelector('tr')).toHaveClass('max-md:block');
+    expect(container.querySelector('tr')).toHaveClass('touch:block');
     expect(container.querySelector('td')).toHaveAttribute(
       'data-label',
       'research.providers.col.name',

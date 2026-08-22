@@ -31,7 +31,12 @@ export function StreamMetricsHud({
   );
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground', className)}>
+    <div
+      className={cn(
+        'touch:text-xs text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]',
+        className,
+      )}
+    >
       {elapsed !== null ? (
         <span className="inline-flex items-center gap-1" title={t('chat.stream.elapsed')}>
           <Clock className="h-3 w-3" /> {elapsed}

@@ -26,29 +26,31 @@ export function WorkspaceActionRow({
           <WorkspaceActionStatusBadge status={action.status} t={t} />
           <span className="text-sm font-medium">{typeLabel}</span>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-xs">
           {t('workspaceActions.connector')}: {action.connector.name}
         </p>
         {payloadPreview !== null ? (
-          <details className="mt-2 text-xs text-muted-foreground">
-            <summary className="cursor-pointer select-none hover:text-foreground">
+          <details className="text-muted-foreground mt-2 text-xs">
+            <summary className="hover:text-foreground cursor-pointer select-none">
               {t('workspaceActions.viewPayload')}
             </summary>
-            <pre className="mt-2 max-h-48 overflow-auto rounded border bg-muted/50 p-2 font-mono text-[11px]">
+            <pre className="bg-muted/50 touch:text-xs mt-2 max-h-48 overflow-auto rounded border p-2 font-mono text-[11px]">
               {payloadPreview}
             </pre>
           </details>
         ) : null}
         {action.errorMessage !== null ? (
-          <p className="mt-1 text-xs text-destructive">{action.errorMessage}</p>
+          <p className="text-destructive mt-1 text-xs">{action.errorMessage}</p>
         ) : null}
         {action.rejectionReason !== null ? (
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-xs">
             {t('workspaceActions.rejectionReason')}: {action.rejectionReason}
           </p>
         ) : null}
-        <p className="mt-1 text-xs text-muted-foreground">
-          {t('workspaceActions.requestedAt', { value: new Date(action.requestedAt).toLocaleString() })}
+        <p className="text-muted-foreground mt-1 text-xs">
+          {t('workspaceActions.requestedAt', {
+            value: new Date(action.requestedAt).toLocaleString(),
+          })}
           {action.reviewedAt !== null
             ? ` · ${t('workspaceActions.reviewedAt', { value: new Date(action.reviewedAt).toLocaleString() })}`
             : ''}

@@ -57,21 +57,21 @@ export function DownloadJobRow({
   const phaseLabel = isActive && currentFile === null ? labels.preparing : null;
   const fileSubtitle = isInstalling
     ? `${labels.installing}${installStep ? ` — ${installStep}` : ''}`
-    : currentFile ?? phaseLabel ?? labels.unknown;
+    : (currentFile ?? phaseLabel ?? labels.unknown);
 
   return (
-    <li className="flex flex-col gap-2 rounded-md border border-border bg-background/60 p-3">
+    <li className="border-border bg-background/60 flex flex-col gap-2 rounded-md border p-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <FileDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <FileDown className="text-muted-foreground size-4 shrink-0" aria-hidden />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-foreground">{displayName}</p>
-            <p className="truncate text-xs text-muted-foreground">{fileSubtitle}</p>
+            <p className="text-foreground truncate text-sm font-medium">{displayName}</p>
+            <p className="text-muted-foreground truncate text-xs">{fileSubtitle}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {isActive ? <Loader2 className="size-3 animate-spin text-primary" aria-hidden /> : null}
-          <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
+          {isActive ? <Loader2 className="text-primary size-3 animate-spin" aria-hidden /> : null}
+          <span className="border-border bg-muted touch:text-xs text-muted-foreground rounded-full border px-2 py-0.5 text-[10px] uppercase">
             {status}
           </span>
         </div>
@@ -80,9 +80,9 @@ export function DownloadJobRow({
       <Progress value={isInstalling ? 100 : percent} className="h-2" />
 
       {isInstalling ? (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
           <span>{labels.installingStepLabel}</span>
-          {installStep ? <span className="font-mono text-foreground">{installStep}</span> : null}
+          {installStep ? <span className="text-foreground font-mono">{installStep}</span> : null}
           {elapsedMs > 0 ? (
             <span>
               {elapsedLabel} {labels.elapsed}
@@ -90,10 +90,10 @@ export function DownloadJobRow({
           ) : null}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
+        <div className="text-muted-foreground grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-4">
           <span>
             <span className="text-foreground">{percent}%</span>
-            <span className="ms-1 text-[10px] uppercase text-muted-foreground/70">
+            <span className="touch:text-xs text-muted-foreground/70 ms-1 text-[10px] uppercase">
               {labels.percent}
             </span>
           </span>
@@ -128,41 +128,26 @@ export function DownloadJobRow({
       )}
 
       {errorMessage ? (
-        <p className="rounded-sm bg-destructive/10 px-2 py-1 text-xs text-destructive">
+        <p className="bg-destructive/10 text-destructive rounded-sm px-2 py-1 text-xs">
           {errorMessage}
         </p>
       ) : null}
 
       <div className="flex items-center justify-end gap-2">
         {isActive ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onCancel(job.id)}
-            className="gap-1.5"
-          >
+          <Button size="sm" variant="outline" onClick={() => onCancel(job.id)} className="gap-1.5">
             <X className="size-3" aria-hidden />
             {labels.cancel}
           </Button>
         ) : null}
         {canRetry ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onRetry(job.id)}
-            className="gap-1.5"
-          >
+          <Button size="sm" variant="outline" onClick={() => onRetry(job.id)} className="gap-1.5">
             <RotateCw className="size-3" aria-hidden />
             {labels.retry}
           </Button>
         ) : null}
         {canDismiss ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onCancel(job.id)}
-            className="gap-1.5"
-          >
+          <Button size="sm" variant="outline" onClick={() => onCancel(job.id)} className="gap-1.5">
             <Trash2 className="size-3" aria-hidden />
             {labels.remove}
           </Button>

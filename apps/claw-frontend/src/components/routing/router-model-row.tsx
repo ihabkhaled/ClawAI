@@ -8,12 +8,12 @@ export function RouterModelRow({ row, onSelect }: RouterModelRowProps): ReactEle
   const { t } = useTranslation();
   return (
     <tr
-      className="border-border hover:bg-muted/40 cursor-pointer border-b transition-colors max-md:block max-md:rounded-lg max-md:border"
+      className="border-border hover:bg-muted/40 touch:block touch:rounded-lg touch:border cursor-pointer border-b transition-colors"
       onClick={() => onSelect(row.id)}
     >
       <td
         data-label={t('routing.models.columnModelKey')}
-        className="max-md:before:text-muted-foreground px-3 py-2 font-medium max-md:grid max-md:grid-cols-[auto_minmax(0,1fr)] max-md:gap-3 max-md:text-end max-md:before:text-start max-md:before:text-xs max-md:before:font-normal max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:grid touch:grid-cols-[auto_minmax(0,1fr)] touch:gap-3 touch:text-end touch:before:text-start touch:before:text-xs touch:before:font-normal touch:before:content-[attr(data-label)] px-3 py-2 font-medium"
       >
         <div className="flex min-w-0 flex-col gap-1">
           <span>{row.displayName}</span>
@@ -22,13 +22,13 @@ export function RouterModelRow({ row, onSelect }: RouterModelRowProps): ReactEle
       </td>
       <td
         data-label={t('routing.models.columnProvider')}
-        className="max-md:before:text-muted-foreground px-3 py-2 text-sm max-md:flex max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         {row.provider}
       </td>
       <td
         data-label={t('routing.models.columnLifecycle')}
-        className="max-md:before:text-muted-foreground px-3 py-2 max-md:flex max-md:flex-wrap max-md:justify-end max-md:gap-1 max-md:before:me-auto max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:flex-wrap touch:justify-end touch:gap-1 touch:before:me-auto touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2"
       >
         <Badge variant={row.lifecycle === 'ACTIVE' ? 'default' : 'secondary'}>
           {row.lifecycle}
@@ -46,25 +46,25 @@ export function RouterModelRow({ row, onSelect }: RouterModelRowProps): ReactEle
       </td>
       <td
         data-label={t('routing.models.columnQuality')}
-        className="max-md:before:text-muted-foreground px-3 py-2 text-sm max-md:flex max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         {row.qualityTier}
       </td>
       <td
         data-label={t('routing.models.columnCost')}
-        className="max-md:before:text-muted-foreground px-3 py-2 text-sm max-md:flex max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         {row.costClass !== null ? `${row.costClass} (${row.costConfidenceLabel})` : '—'}
       </td>
       <td
         data-label={t('routing.models.columnLatency')}
-        className="max-md:before:text-muted-foreground px-3 py-2 text-sm max-md:flex max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         {row.latencyP95Ms !== null ? `${row.latencyP95Ms}ms` : '—'}
       </td>
       <td
         data-label="Privacy"
-        className="max-md:before:text-muted-foreground px-3 py-2 text-sm max-md:flex max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         {row.privacy}
       </td>

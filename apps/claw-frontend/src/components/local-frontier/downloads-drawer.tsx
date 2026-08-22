@@ -14,19 +14,19 @@ export function DownloadsDrawer({
 }: DownloadsDrawerProps): React.ReactElement {
   return (
     <section
-      className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 shadow-sm"
+      className="border-border bg-card flex flex-col gap-3 rounded-lg border p-4 shadow-sm"
       aria-label={labels.title}
     >
       <header className="flex items-center gap-2">
-        <CloudDownload className="size-4 text-muted-foreground" aria-hidden />
-        <h2 className="text-sm font-semibold text-foreground">{labels.title}</h2>
-        <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+        <CloudDownload className="text-muted-foreground size-4" aria-hidden />
+        <h2 className="text-foreground text-sm font-semibold">{labels.title}</h2>
+        <span className="border-border bg-muted touch:text-xs text-muted-foreground rounded-full border px-2 py-0.5 text-[10px]">
           {views.length}
         </span>
       </header>
 
       {views.length === 0 ? (
-        <p className="rounded-md border border-dashed border-border bg-background/40 p-3 text-xs text-muted-foreground">
+        <p className="border-border bg-background/40 text-muted-foreground rounded-md border border-dashed p-3 text-xs">
           {labels.empty}
         </p>
       ) : (

@@ -4,11 +4,13 @@ import type { HardwareStatProps } from '@/types/local-frontier-ui.types';
 
 export function HardwareStat({ icon: Icon, label, value }: HardwareStatProps): React.ReactElement {
   return (
-    <div className="flex items-start gap-2 rounded-md border border-border bg-background/50 p-2">
-      <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+    <div className="border-border bg-background/50 flex items-start gap-2 rounded-md border p-2">
+      <Icon className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden />
       <div className="flex min-w-0 flex-col">
-        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
-        <span className="truncate text-sm font-medium text-foreground" title={value}>
+        <span className="touch:text-xs text-muted-foreground text-[10px] tracking-wide uppercase">
+          {label}
+        </span>
+        <span className="text-foreground truncate text-sm font-medium" title={value}>
           {value}
         </span>
       </div>
