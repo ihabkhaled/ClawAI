@@ -59,8 +59,67 @@ test('deploy-prod.sh recreates containers with --no-deps so unrelated healthy se
 
 test('deploy-prod.sh bounds Docker Compose build concurrency with a conservative override', () => {
   assert.match(script, /BUILD_PARALLEL_LIMIT="\$\{COMPOSE_PARALLEL_LIMIT:-2\}"/u);
-  assert.match(script, /COMPOSE_PARALLEL_LIMIT="\$BUILD_PARALLEL_LIMIT" compose build/u);
+  assert.match(script, /COMPOSE_PARALLEL_LIMIT="\$BUILD_PARALLEL_LIMIT" compose_build_bounded/u);
   assert.match(script, /must be an integer from 1 to 4/u);
+});
+
+test('deploy-prod.sh bounds the whole image build so a wedged BuildKit step cannot hold the lock', () => {
+  assert.match(script, /BUILD_TIMEOUT_SECONDS="\$\{CLAW_DEPLOY_BUILD_TIMEOUT:-3600\}"/u);
+  assert.match(script, /timeout --foreground --kill-after=60 "\$BUILD_TIMEOUT_SECONDS"/u);
+  assert.match(script, /command -v timeout >\/dev\/null 2>&1 \|\| die/u);
+  // 124 is `timeout` expiring, 137 the follow-up SIGKILL; neither may be retried.
+  assert.match(script, /\[ "\$status" -eq 124 \] \|\| \[ "\$status" -eq 137 \]/u);
+  assert.match(script, /exceeded \$\{BUILD_TIMEOUT_SECONDS\}s and was aborted; refusing to retry/u);
+});
+
+test('deploy-prod.sh never lets a child process inherit the deploy lock', () => {
+  // bash passes open descriptors to children, so a build that outlives the
+  // deployment would keep holding fd 200 — the two-day outage of 2026-08-20.
+  // Every docker call that can outlive the deployment closes it: the compose
+  // wrapper, the bounded build, the health inspection, the cache prune. The
+  // `docker version` probes in preflight run before the lock is ever opened.
+  assert.match(script, /docker compose "\$\{COMPOSE_ARGS\[@\]\}" "\$@" 200>&-/u);
+  assert.match(script, /docker compose "\$\{COMPOSE_ARGS\[@\]\}" build "\$@" 200>&-/u);
+  assert.match(script, /docker inspect[\s\S]{0,240}?2>\/dev\/null 200>&-/u);
+  assert.match(script, /docker builder prune[^\n]*200>&-/u);
+
+  // And no new long-running docker call slips in without the same treatment.
+  const dockerLines = script
+    .split('\n')
+    .filter((line) => !/^\s*#/u.test(line))
+    .filter((line) => /\bdocker (?:compose|inspect|builder)\b/u.test(line))
+    .filter((line) => !/\bversion\b/u.test(line))
+    .filter((line) => !/^\s*(?:err|log|die) /u.test(line));
+  assert.equal(dockerLines.length, 4, dockerLines.join('\n'));
+});
+
+test('deploy-prod.sh aborts when the session that started it disappears', () => {
+  assert.match(script, /ORPHAN_GUARD="\$\{CLAW_DEPLOY_ORPHAN_GUARD:-0\}"/u);
+  assert.match(script, /start_orphan_guard\(\)/u);
+  assert.match(script, /kill -0 "\$watched"/u);
+  assert.match(script, /kill -TERM "-\$pgid"/u);
+  assert.match(script, /session that started this deployment is gone/u);
+  // The guard must be armed before the lock wait: waiting on a lock held by a
+  // dead deployment is exactly the case it exists for.
+  const body = script.split('main() {')[1] ?? '';
+  const guardIndex = body.indexOf('start_orphan_guard');
+  const lockIndex = body.indexOf('acquire_lock');
+  assert.ok(guardIndex > -1 && lockIndex > -1);
+  assert.ok(guardIndex < lockIndex, 'the orphan guard starts after the lock is taken');
+});
+
+test('deploy-prod.sh turns a terminating signal into a recorded failure', () => {
+  assert.match(script, /trap 'on_terminating_signal TERM 15' TERM/u);
+  assert.match(script, /trap 'on_terminating_signal INT 2' INT/u);
+  assert.match(script, /trap 'on_terminating_signal HUP 1' HUP/u);
+  assert.match(script, /Deployment aborted by SIG\$1/u);
+});
+
+test('deploy-prod.sh reports progress instead of blocking silently on the deploy lock', () => {
+  assert.match(script, /LOCK_HEARTBEAT_SECONDS="\$\{CLAW_DEPLOY_LOCK_HEARTBEAT:-15\}"/u);
+  assert.match(script, /while ! flock -w "\$slice" 200; do/u);
+  assert.match(script, /Waiting for the deploy lock: \$\{waited\}s of \$\{LOCK_WAIT_SECONDS\}s/u);
+  assert.match(script, /lock_holder_hint\(\)/u);
 });
 
 test('deploy-prod.sh retries only transient build-network failures with bounded backoff', () => {
@@ -198,8 +257,12 @@ test('deploy-prod.sh obeys the automatic-deploy switch only on the automatic lan
   assert.match(script, /automatic_deploy_paused\(\)/u);
   assert.match(script, /CLAW_DEPLOY_TRIGGER:-auto/u);
   assert.match(script, /\[ "\$trigger" = "auto" \] && automatic_deploy_paused/u);
-  // The gate runs before the lock and before anything touches the checkout.
-  assert.match(script, /assert_lane_allowed\n\s+preflight\n\s+acquire_lock/u);
+  // The gate runs first of all: before the orphan guard, before the lock, and
+  // before anything touches the checkout. A paused rollout does no work at all.
+  assert.match(
+    script,
+    /assert_lane_allowed\n(?:\s*#[^\n]*\n)*\s+start_orphan_guard\n\s+preflight\n\s+acquire_lock/u,
+  );
 });
 
 test('terminal deployment status triggers a best-effort internal notification', () => {

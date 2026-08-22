@@ -103,6 +103,8 @@ case "${1:-}" in
       version) exit 0 ;;
       build)
         if [ "${CLAW_STUB_BUILD_FAIL:-0}" = "1" ]; then exit 1; fi
+        # Stands in for a wedged BuildKit step: no output, no exit, no worker.
+        if [ "${CLAW_STUB_BUILD_HANG:-0}" = "1" ]; then sleep 120; fi
         exit 0
         ;;
       up)
@@ -311,6 +313,21 @@ assert_contains "an unhealthy service is named" "$out" "payment-service -> unhea
 assert_contains "failure dumps container logs" "$out" "last 200 log lines"
 assert_equals "an unhealthy deployment does not record the SHA" "$(deployed_sha)" "$SHA_BASE"
 
+# ─── Wedged build is aborted instead of holding the lock forever ─────────────
+# The 2026-08-20 outage: a BuildKit step stopped making progress, `docker
+# compose build` never returned, and the deployment held the lock for two days.
+reset_docker_log
+out="$(CLAW_STUB_BUILD_HANG=1 CLAW_DEPLOY_BUILD_TIMEOUT=2 deploy "$SHA_PAYMENT")"
+assert_contains "a wedged build is aborted on its own timeout" "$out" "exceeded 2s and was aborted"
+assert_contains "a wedged build refuses to retry" "$out" "refusing to retry"
+assert_contains "a wedged build fails the deployment" "$out" "docker compose build failed"
+assert_equals "a wedged build leaves the recorded SHA alone" "$(deployed_sha)" "$SHA_BASE"
+assert_contains "a wedged build records failed status" "$(cat "$PROD/.deploy/status.json")" '"state":"failed"'
+out="$(CLAW_DEPLOY_BUILD_TIMEOUT=0 deploy "$SHA_PAYMENT")"
+assert_contains "rejects a build timeout below one second" "$out" "must be at least 1 second"
+out="$(CLAW_DEPLOY_BUILD_TIMEOUT=soon deploy "$SHA_PAYMENT")"
+assert_contains "rejects a non-numeric build timeout" "$out" "whole number of seconds"
+
 # ─── Automatic-deploy switch ─────────────────────────────────────────────────
 # auth-service writes automation.json when an admin pauses the automatic lane
 # from the deployment page. Only an automatic rollout obeys it.
@@ -343,6 +360,11 @@ reset_docker_log
 out="$(CLAW_DEPLOY_TRIGGER=auto deploy "$SHA_PAYMENT")"
 assert_contains "no switch file means the lane is on" "$out" "Deployment successful"
 
+# Restore the invariant the deploy-lock and orphan-guard blocks below assume:
+# SHA_BASE recorded as deployed, so deploying SHA_PAYMENT is real work rather
+# than an instant no-op that finishes before either guard can act.
+printf '%s\n' "$SHA_BASE" >"$PROD/.deploy/deployed-sha"
+
 # ─── Deploy lock ─────────────────────────────────────────────────────────────
 if command -v flock >/dev/null 2>&1; then
   (
@@ -352,9 +374,66 @@ if command -v flock >/dev/null 2>&1; then
   ) &
   wait $! >/dev/null 2>&1
   assert_contains "a held lock blocks a second deployment" "$(cat "$WORK/locked.out")" "another deployment holds"
+
+  # Waiting must never be silent: silence on the SSH channel is what let a
+  # firewall drop the connection while the deployer sat on a held lock.
+  (
+    exec 201>"$PROD/.deploy/deploy.lock"
+    flock 201
+    CLAW_DEPLOY_LOCK_WAIT=3 CLAW_DEPLOY_LOCK_HEARTBEAT=1 \
+      deploy "$SHA_PAYMENT" >"$WORK/waiting.out" 2>&1
+  ) &
+  wait $! >/dev/null 2>&1
+  assert_contains "waiting for the lock reports progress" "$(cat "$WORK/waiting.out")" "Waiting for the deploy lock: 1s of 3s"
+  assert_contains "waiting for the lock names the holder" "$(cat "$WORK/waiting.out")" "holder: target="
 else
   ok "deploy lock (skipped — flock unavailable)"
 fi
+
+# ─── Orphan guard ────────────────────────────────────────────────────────────
+# A deployment whose SSH session dies must abort itself. Rehearsed with a
+# throwaway session: setsid gives the deployment its own process group, and
+# killing that group's leader is what losing sshd looks like from inside.
+if command -v setsid >/dev/null 2>&1; then
+  reset_docker_log
+  : >"$WORK/orphan.out"
+  # The owner stands in for sshd: it starts the deployment in a session of its
+  # own and is then killed, exactly as a dropped connection kills sshd.
+  bash -c "setsid bash -c \"cd '$PROD' && CLAW_DEPLOY_ORPHAN_GUARD=1 CLAW_DEPLOY_ORPHAN_GUARD_INTERVAL=1 \
+    CLAW_STUB_BUILD_HANG=1 CLAW_DEPLOY_BUILD_TIMEOUT=120 \
+    bash '$PROD/scripts/deploy-prod.sh' '$SHA_PAYMENT' >'$WORK/orphan.out' 2>&1\"; sleep 120" &
+  orphan_owner=$!
+  # Killing the owner is the point of the rehearsal, not a surprise worth a job
+  # notice in the middle of the report.
+  disown "$orphan_owner" 2>/dev/null || true
+  sleep 6
+  kill -9 "$orphan_owner" 2>/dev/null || true
+  waited=0
+  while [ "$waited" -lt 20 ] && ! grep -q 'session that started this deployment is gone' "$WORK/orphan.out"; do
+    sleep 1
+    waited=$((waited + 1))
+  done
+  assert_contains "an orphaned deployment reports why it stops" "$(cat "$WORK/orphan.out")" "session that started this deployment is gone"
+  assert_contains "an orphaned deployment aborts on the signal" "$(cat "$WORK/orphan.out")" "aborted by SIGTERM"
+  assert_contains "an orphaned deployment records failed status" "$(cat "$PROD/.deploy/status.json")" '"state":"failed"'
+  if command -v flock >/dev/null 2>&1; then
+    if flock -w 5 "$PROD/.deploy/deploy.lock" -c true; then
+      ok "an orphaned deployment releases the deploy lock"
+    else
+      bad "an orphaned deployment releases the deploy lock" "the lock is still held"
+    fi
+  fi
+  assert_equals "an orphaned deployment leaves the recorded SHA alone" "$(deployed_sha)" "$SHA_BASE"
+else
+  ok "orphan guard (skipped — setsid unavailable)"
+fi
+
+# The guard stays off unless the caller asks for it, so an operator's manual
+# deployment is never killed by it.
+reset_docker_log
+out="$(deploy "$SHA_PAYMENT")"
+assert_not_contains "the orphan guard is opt-in" "$out" "Orphan guard active"
+printf '%s\n' "$SHA_BASE" >"$PROD/.deploy/deployed-sha"
 
 # ─── Summary ─────────────────────────────────────────────────────────────────
 printf '\n%s passed, %s failed\n' "$PASS" "$FAIL"

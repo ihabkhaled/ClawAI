@@ -76,6 +76,7 @@ test('deploy-production retries only SSH connectivity failures with bounded back
   assert.match(workflow, /for attempt in 1 2 3 4 5 6/u);
   assert.match(workflow, /ssh_status" -ne 255/u);
   assert.match(workflow, /CLAW_SSH_CONNECTED/u);
+  assert.match(workflow, /grep -q 'CLAW_SSH_CONNECTED' "\$ssh_output"/u);
   assert.match(
     workflow,
     /Connection timed out\|Connection refused\|No route to host\|Could not resolve hostname/u,
@@ -85,34 +86,31 @@ test('deploy-production retries only SSH connectivity failures with bounded back
   assert.doesNotMatch(workflow, /deploy-prod\.sh[^\n]*\|\|\s*true/u);
 });
 
-test('deploy-production keeps the SSH session alive through a long silent build', () => {
-  // A build can go minutes without writing to the session. Without keepalives
-  // a NAT or firewall drops the idle TCP connection and the next write fails
-  // with 'client_loop: send disconnect: Broken pipe' mid-deployment.
-  for (const options of [/TCPKeepAlive=yes/gu, /ServerAliveInterval=30/gu, /ServerAliveCountMax=20/gu]) {
-    assert.equal(
-      (workflow.match(options) ?? []).length,
-      2,
-      'both the deploy and the status-capture SSH calls need keepalives',
-    );
-  }
+test('deploy-production keeps the deployment connection alive through silent phases', () => {
+  // A deployment goes quiet during a long build. Without keepalives the flow is
+  // idle from the network's point of view, and an idle flow gets dropped.
+  const keepalives = [...workflow.matchAll(/ServerAliveInterval=30/gu)];
+  const counts = [...workflow.matchAll(/ServerAliveCountMax=6/gu)];
+  const sshCalls = [...workflow.matchAll(/ssh -i ~\/\.ssh\/deploy_key/gu)];
+  assert.equal(keepalives.length, sshCalls.length, 'every ssh call needs ServerAliveInterval');
+  assert.equal(counts.length, sshCalls.length, 'every ssh call needs ServerAliveCountMax');
 });
 
-test('deploy-production retries a transport drop that happens after the session connected', () => {
-  // Classified by exit code plus diagnostic, never by whether the session got
-  // as far as CLAW_SSH_CONNECTED — a mid-deploy broken pipe is still transport,
-  // and not retrying it left production half-deployed with nobody driving it.
-  assert.doesNotMatch(workflow, /grep -q 'CLAW_SSH_CONNECTED' "\$ssh_output" \|\|/u);
-  assert.match(workflow, /Broken pipe\|client_loop: send disconnect/u);
-  assert.match(workflow, /Timeout, server \.\* not responding/u);
-  assert.match(workflow, /The SSH transport dropped mid-deployment/u);
+test('deploy-production arms the remote orphan guard and bounds the remote lock wait', () => {
+  assert.match(workflow, /CLAW_DEPLOY_ORPHAN_GUARD=1/u);
+  assert.match(workflow, /CLAW_DEPLOY_LOCK_WAIT=600/u);
 });
 
-test('deploy-production still refuses to retry a real application failure', () => {
-  // deploy-prod.sh exits with its own status, never 255, so the exit-code guard
-  // is what keeps a failed build, migration or health check from being re-run.
-  assert.match(workflow, /if \[ "\$ssh_status" -ne 255 \] \|\| ! grep -Eq/u);
-  assert.match(workflow, /refusing to retry an application failure/u);
+test('deploy-production reports a dropped transport as a transport failure, not an application failure', () => {
+  assert.match(
+    workflow,
+    /client_loop: send disconnect\|packet_write_wait\|Timeout, server not responding/u,
+  );
+  assert.match(workflow, /The SSH transport dropped after the deployment started/u);
+  assert.match(
+    workflow,
+    /Deployment failed after SSH connected; refusing to retry application failure/u,
+  );
 });
 
 test('deploy-production serializes on a single concurrency group without cancelling in-flight runs', () => {

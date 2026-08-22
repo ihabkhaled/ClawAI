@@ -15,6 +15,16 @@
 #   CLAW_DEPLOY_ROOT            production checkout (default: this script's repo root)
 #   CLAW_DEPLOY_LOCK_WAIT       seconds to wait for the deploy lock (default 1800)
 #   CLAW_DEPLOY_HEALTH_TIMEOUT  seconds to wait per service healthcheck (default 420)
+#   CLAW_DEPLOY_BUILD_TIMEOUT   seconds the whole image build may take before it
+#                               is aborted (default 3600). A wedged BuildKit step
+#                               must never hold the deploy lock indefinitely.
+#   CLAW_DEPLOY_ORPHAN_GUARD    1 = abort as soon as the SSH session that started
+#                               this deployment disappears. The CI workflow sets
+#                               it; an operator running the script by hand, or
+#                               under nohup, deliberately does not.
+#   CLAW_DEPLOY_ORPHAN_GUARD_INTERVAL  seconds between orphan checks (default 30)
+#   CLAW_DEPLOY_LOCK_HEARTBEAT  seconds between "still waiting for the lock"
+#                               progress lines (default 15)
 #   CLAW_DEPLOY_ALLOW_ROLLBACK  1 = permit deploying a commit older than the one
 #                               currently deployed (emergency rollback)
 #   COMPOSE_PARALLEL_LIMIT      concurrent service image builds (default 2,
@@ -99,8 +109,17 @@ DEP_GRAPH_REL=".ai/manifests/workspace-dependency-graph.json"
 
 LOCK_WAIT_SECONDS="${CLAW_DEPLOY_LOCK_WAIT:-1800}"
 HEALTH_TIMEOUT_SECONDS="${CLAW_DEPLOY_HEALTH_TIMEOUT:-420}"
+BUILD_TIMEOUT_SECONDS="${CLAW_DEPLOY_BUILD_TIMEOUT:-3600}"
 BUILD_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-2}"
 BUILD_RETRY_DELAYS=(10 30)
+
+# A blocked deployer must keep talking. Total silence on the SSH channel is what
+# lets a stateful firewall drop the connection, and a dropped connection used to
+# leave the remote deploy running — holding the lock — with nobody watching.
+LOCK_HEARTBEAT_SECONDS="${CLAW_DEPLOY_LOCK_HEARTBEAT:-15}"
+ORPHAN_GUARD="${CLAW_DEPLOY_ORPHAN_GUARD:-0}"
+ORPHAN_GUARD_INTERVAL="${CLAW_DEPLOY_ORPHAN_GUARD_INTERVAL:-30}"
+ORPHAN_GUARD_PID=""
 
 # Files that reach EVERY application image. Each service Dockerfile does
 # `COPY package.json`, `COPY .npmrc` and `COPY packages/`, and the build context
@@ -149,6 +168,7 @@ DEPLOYMENT_WORKFLOW_URL="${CLAW_DEPLOY_WORKFLOW_URL:-}"
 cleanup() {
   local status=$?
   trap - EXIT
+  stop_orphan_guard
   if [ "$status" -ne 0 ] && [ "$DEPLOYMENT_STATUS_ACTIVE" = "1" ]; then
     record_failed_deployment || true
   fi
@@ -166,6 +186,19 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Without an explicit signal trap bash dies from SIGTERM without running the EXIT
+# trap, so an aborted deployment would leave `.deploy/status.json` claiming it is
+# still running. Trapping the signal turns it into an ordinary exit, which runs
+# cleanup, records the failure, and releases the lock.
+on_terminating_signal() {
+  err ""
+  err "Deployment aborted by SIG$1."
+  exit $((128 + $2))
+}
+trap 'on_terminating_signal TERM 15' TERM
+trap 'on_terminating_signal INT 2' INT
+trap 'on_terminating_signal HUP 1' HUP
+
 log() { printf '%s\n' "$*"; }
 err() { printf '%s\n' "$*" >&2; }
 section() { printf '\n%s\n' "$*"; }
@@ -175,6 +208,56 @@ die() {
   err "DEPLOYMENT FAILED: $*"
   err ""
   exit 1
+}
+
+# =============================================================================
+# Orphan guard
+# =============================================================================
+# A CI deployment runs as a child of the sshd process that owns the connection.
+# When that connection dies, sshd exits and everything left in the session is
+# reparented to init — which is how a deployment from 2026-08-20 kept a wedged
+# `docker compose build` alive for two days, holding the deploy lock and
+# silently blocking every release after it. The guard watches for exactly that
+# reparenting and terminates the whole process group, so a lost connection can
+# never leave a deployment running unattended.
+start_orphan_guard() {
+  [ "$ORPHAN_GUARD" = "1" ] || return 0
+
+  local pgid watched
+  pgid="$(ps -o pgid= -p $$ 2>/dev/null | tr -d '[:space:]')"
+  if [ -z "$pgid" ]; then
+    err "Orphan guard disabled: ps does not report a process group on this host."
+    return 0
+  fi
+  # The owner is the process that started the process group — under CI, the sshd
+  # process that owns the connection. A group with nothing above it (nohup,
+  # setsid) is watched through its own leader instead.
+  watched="$(ps -o ppid= -p "$pgid" 2>/dev/null | tr -d '[:space:]')"
+  if [ -z "$watched" ] || [ "$watched" = "1" ]; then
+    watched="$pgid"
+  fi
+
+  (
+    # The connection this guard watches is the one it would report through, so a
+    # broken pipe must not kill the guard before it can stop the deployment.
+    trap '' PIPE
+    while sleep "$ORPHAN_GUARD_INTERVAL"; do
+      if ! kill -0 "$watched" 2>/dev/null; then
+        err "" || true
+        err "The session that started this deployment is gone; aborting so the deploy lock is released." || true
+        kill -TERM "-$pgid" 2>/dev/null || true
+        exit 0
+      fi
+    done
+  ) &
+  ORPHAN_GUARD_PID=$!
+  log "Orphan guard active: this deployment aborts if session $watched disappears."
+}
+
+stop_orphan_guard() {
+  [ -n "$ORPHAN_GUARD_PID" ] || return 0
+  kill "$ORPHAN_GUARD_PID" 2>/dev/null || true
+  ORPHAN_GUARD_PID=""
 }
 
 json_string_or_null() {
@@ -288,13 +371,21 @@ build_services() {
   for attempt in 1 2 3; do
     : >"$output_file"
     set +e
-    COMPOSE_PARALLEL_LIMIT="$BUILD_PARALLEL_LIMIT" compose build "${PLAN_SERVICES[@]}" \
+    COMPOSE_PARALLEL_LIMIT="$BUILD_PARALLEL_LIMIT" compose_build_bounded "${PLAN_SERVICES[@]}" \
       2>&1 | tee "$output_file"
     status="${PIPESTATUS[0]}"
     set -e
 
     if [ "$status" -eq 0 ]; then
       return 0
+    fi
+
+    # 124 is `timeout` expiring; 137 is the follow-up SIGKILL landing. A build
+    # that produces nothing for an hour is wedged, not slow, and a wedged build
+    # is deterministic — retrying it only holds the deploy lock longer.
+    if [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; then
+      err "docker compose build exceeded ${BUILD_TIMEOUT_SECONDS}s and was aborted; refusing to retry."
+      return "$status"
     fi
 
     if ! grep -Eqi 'ECONNRESET|ETIMEDOUT|EAI_AGAIN|network (is )?unreachable|temporary failure in name resolution|TLS handshake timeout|connection reset by peer' "$output_file"; then
@@ -673,13 +764,39 @@ resolve_gpu_overlay() {
 # =============================================================================
 # Locking — two deployments must never run against this host at once
 # =============================================================================
+# What the lock holder was doing, read from the status document it maintains.
+# Purely diagnostic: a missing or half-written file degrades to "unknown".
+lock_holder_hint() {
+  local target phase started
+  if [ ! -f "$DEPLOYMENT_STATUS_FILE" ]; then
+    printf 'holder unknown — no deployment status recorded'
+    return 0
+  fi
+  target="$(sed -nE 's/.*"targetSha":"([^"]*)".*/\1/p' "$DEPLOYMENT_STATUS_FILE" | head -n 1)"
+  phase="$(sed -nE 's/.*"phase":"([^"]*)".*/\1/p' "$DEPLOYMENT_STATUS_FILE" | head -n 1)"
+  started="$(sed -nE 's/.*"startedAt":"([^"]*)".*/\1/p' "$DEPLOYMENT_STATUS_FILE" | head -n 1)"
+  printf 'holder: target=%s phase=%s started=%s' \
+    "${target:-unknown}" "${phase:-unknown}" "${started:-unknown}"
+}
+
 acquire_lock() {
   mkdir -p "$STATE_DIR"
   if command -v flock >/dev/null 2>&1; then
     exec 200>"$LOCK_FILE"
-    if ! flock -w "$LOCK_WAIT_SECONDS" 200; then
-      die "another deployment holds $LOCK_FILE (waited ${LOCK_WAIT_SECONDS}s)"
+    # Never one long silent block: waiting in short slices keeps the SSH channel
+    # alive and tells the operator what is holding the lock. Silence here is
+    # what made a stuck deployment look like a dead connection.
+    local waited=0 slice="$LOCK_HEARTBEAT_SECONDS"
+    if [ "$LOCK_WAIT_SECONDS" -lt "$slice" ]; then
+      slice="$LOCK_WAIT_SECONDS"
     fi
+    while ! flock -w "$slice" 200; do
+      waited=$((waited + slice))
+      if [ "$waited" -ge "$LOCK_WAIT_SECONDS" ]; then
+        die "another deployment holds $LOCK_FILE (waited ${LOCK_WAIT_SECONDS}s) — $(lock_holder_hint)"
+      fi
+      log "Waiting for the deploy lock: ${waited}s of ${LOCK_WAIT_SECONDS}s — $(lock_holder_hint)"
+    done
     return 0
   fi
 
@@ -695,10 +812,13 @@ acquire_lock() {
       continue
     fi
     if [ "$waited" -ge "$LOCK_WAIT_SECONDS" ]; then
-      die "another deployment holds $LOCK_DIR (waited ${LOCK_WAIT_SECONDS}s)"
+      die "another deployment holds $LOCK_DIR (waited ${LOCK_WAIT_SECONDS}s) — $(lock_holder_hint)"
     fi
     sleep 5
     waited=$((waited + 5))
+    if [ "$LOCK_HEARTBEAT_SECONDS" -gt 0 ] && [ $((waited % LOCK_HEARTBEAT_SECONDS)) -eq 0 ]; then
+      log "Waiting for the deploy lock: ${waited}s of ${LOCK_WAIT_SECONDS}s — $(lock_holder_hint)"
+    fi
   done
   printf '%s\n' "$$" >"$LOCK_DIR/pid"
   LOCK_DIR_HELD=1
@@ -722,6 +842,7 @@ preflight() {
     *) die "CLAW_DEPLOY_WORKFLOW_URL must be an https://github.com/ URL" ;;
   esac
 
+  command -v timeout >/dev/null 2>&1 || die "timeout (GNU coreutils) is not installed"
   command -v docker >/dev/null 2>&1 || die "docker is not installed"
   docker version >/dev/null 2>&1 ||
     die "cannot reach the Docker daemon as $(id -un) — is the user in the docker group?"
@@ -752,14 +873,31 @@ assert_clean_tree() {
 # =============================================================================
 # Compose wrapper + health verification
 # =============================================================================
+# Every docker invocation closes fd 200, the deploy lock. bash hands open file
+# descriptors to its children, so without this a build that outlives the
+# deployment keeps holding the lock — which is precisely how one wedged build
+# blocked production releases for two days.
 compose() {
-  docker compose "${COMPOSE_ARGS[@]}" "$@"
+  docker compose "${COMPOSE_ARGS[@]}" "$@" 200>&-
+}
+
+# `timeout` cannot run a shell function, so this mirrors compose() instead of
+# wrapping it. The cap is on the whole build, not on one step: BuildKit can wedge
+# a single RUN layer with no output and no worker process, and the deployment
+# holds the lock for as long as compose refuses to return.
+#
+# --foreground keeps the build in this deployment's process group. Without it
+# `timeout` moves the build into a group of its own, where the orphan guard's
+# group signal cannot reach it.
+compose_build_bounded() {
+  timeout --foreground --kill-after=60 "$BUILD_TIMEOUT_SECONDS" \
+    docker compose "${COMPOSE_ARGS[@]}" build "$@" 200>&-
 }
 
 container_state() {
   docker inspect \
     --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}nohealth:{{.State.Status}}{{end}}' \
-    "$1" 2>/dev/null || printf 'missing'
+    "$1" 2>/dev/null 200>&- || printf 'missing'
 }
 
 wait_for_service_health() {
@@ -855,7 +993,7 @@ record_deployment() {
 # production rollout into a failed deployment.
 cleanup_build_cache() {
   section "Cleaning Docker build cache..."
-  if docker builder prune --all --force --keep-storage 20GB; then
+  if docker builder prune --all --force --keep-storage 20GB 200>&-; then
     log "Docker build cache is bounded to 20 GB."
   else
     err "WARNING: Docker build cache cleanup failed; production remains healthy."
@@ -965,6 +1103,13 @@ main() {
     *) die "COMPOSE_PARALLEL_LIMIT must be an integer from 1 to 4" ;;
   esac
 
+  case "$BUILD_TIMEOUT_SECONDS" in
+    '' | *[!0-9]*) die "CLAW_DEPLOY_BUILD_TIMEOUT must be a whole number of seconds" ;;
+  esac
+  if [ "$BUILD_TIMEOUT_SECONDS" -lt 1 ]; then
+    die "CLAW_DEPLOY_BUILD_TIMEOUT must be at least 1 second"
+  fi
+
   local target_rev="$1"
   case "$target_rev" in
     *[!0-9a-fA-F]* | '') die "not a commit SHA: '$target_rev' (expected 7-40 hex characters)" ;;
@@ -974,7 +1119,12 @@ main() {
   fi
   target_rev="$(printf '%s' "$target_rev" | tr '[:upper:]' '[:lower:]')"
 
+  # The lane gate first: a rollout the operator has paused should not start an
+  # orphan guard, take the lock, or touch the checkout at all.
   assert_lane_allowed
+  # Before the lock, not after: waiting for a lock held by a deployment whose
+  # own session died is exactly the case this guards.
+  start_orphan_guard
   preflight
   acquire_lock
   cd "$PROJECT_ROOT"

@@ -106,18 +106,7 @@ jobs:
 
           # One initial attempt plus five bounded retries. Only OpenSSH exit 255
           # with a recognized transport diagnostic is retried. A remote deploy,
-          # Docker, migration, or health failure is returned immediately — those
-          # exit with deploy-prod.sh's own status, never 255.
-          #
-          # The classification is by exit code plus diagnostic, NOT by whether
-          # the session got as far as printing CLAW_SSH_CONNECTED. A connection
-          # that dies mid-deploy ('client_loop: send disconnect: Broken pipe')
-          # is still a transport failure, and refusing to retry it left
-          # production half-deployed with nobody driving it. Retrying is safe
-          # because deploy-prod.sh is idempotent for a given SHA and holds a
-          # flock: if the orphaned remote process survived the session's SIGHUP,
-          # the retry waits on that lock instead of racing it; if it died, the
-          # retry resumes from a consistent checkout.
+          # Docker, migration, or health failure is returned immediately.
           for attempt in 1 2 3 4 5 6; do
             : > "$ssh_output"
             set +e
@@ -125,12 +114,11 @@ jobs:
                 -o UserKnownHostsFile=~/.ssh/known_hosts \
                 -o BatchMode=yes \
                 -o ConnectTimeout=20 \
-                -o TCPKeepAlive=yes \
                 -o ServerAliveInterval=30 \
-                -o ServerAliveCountMax=20 \
+                -o ServerAliveCountMax=6 \
                 -p "$PROD_PORT" \
                 "$PROD_USER@$PROD_HOST" \
-                "cd /srv/clawai && echo 'CLAW_SSH_CONNECTED' && echo 'Server deployed SHA before:' && (cat .deploy/deployed-sha 2>/dev/null || echo '<none>') && CLAW_DEPLOY_WORKFLOW_URL='$WORKFLOW_URL' CLAW_DEPLOY_TRIGGER='$TRIGGER_SOURCE' bash ./scripts/deploy-prod.sh '$TARGET_SHA' && echo 'Server deployed SHA after:' && cat .deploy/deployed-sha" \
+                "cd /srv/clawai && echo 'CLAW_SSH_CONNECTED' && echo 'Server deployed SHA before:' && (cat .deploy/deployed-sha 2>/dev/null || echo '<none>') && CLAW_DEPLOY_WORKFLOW_URL='$WORKFLOW_URL' CLAW_DEPLOY_TRIGGER='$TRIGGER_SOURCE' CLAW_DEPLOY_ORPHAN_GUARD=1 CLAW_DEPLOY_LOCK_WAIT=600 bash ./scripts/deploy-prod.sh '$TARGET_SHA' && echo 'Server deployed SHA after:' && cat .deploy/deployed-sha" \
                 2>&1 | tee "$ssh_output"
             ssh_status="${PIPESTATUS[0]}"
             set -e
@@ -140,16 +128,19 @@ jobs:
               break
             fi
 
-            if [ "$ssh_status" -ne 255 ] || ! grep -Eq \
-              'Connection timed out|Connection refused|No route to host|Could not resolve hostname|Connection reset by peer|Connection closed by remote host|kex_exchange_identification|Broken pipe|client_loop: send disconnect|Timeout, server .* not responding' \
+            if [ "$ssh_status" -ne 255 ] || grep -q 'CLAW_SSH_CONNECTED' "$ssh_output" || ! grep -Eq \
+              'Connection timed out|Connection refused|No route to host|Could not resolve hostname|Connection reset by peer|Connection closed by remote host|kex_exchange_identification' \
               "$ssh_output"; then
-              echo "Deployment failed on the server; refusing to retry an application failure." >&2
+              # A transport that dies mid-deployment is not the same failure as a
+              # deployment that returned non-zero, and saying so saves the next
+              # operator from reading an application failure that never happened.
+              if grep -Eq 'client_loop: send disconnect|packet_write_wait|Timeout, server not responding' "$ssh_output"; then
+                echo "The SSH transport dropped after the deployment started. CLAW_DEPLOY_ORPHAN_GUARD aborts the remote deployment and releases the deploy lock; read .deploy/status.json before re-running." >&2
+              else
+                echo "Deployment failed after SSH connected; refusing to retry application failure." >&2
+              fi
               deploy_status="$ssh_status"
               break
-            fi
-
-            if grep -q 'CLAW_SSH_CONNECTED' "$ssh_output"; then
-              echo "The SSH transport dropped mid-deployment; the rollout may be partially applied." >&2
             fi
 
             if [ "$attempt" -eq 6 ]; then
@@ -170,9 +161,8 @@ jobs:
               -o UserKnownHostsFile=~/.ssh/known_hosts \
               -o BatchMode=yes \
               -o ConnectTimeout=20 \
-              -o TCPKeepAlive=yes \
               -o ServerAliveInterval=30 \
-              -o ServerAliveCountMax=20 \
+              -o ServerAliveCountMax=6 \
               -p "$PROD_PORT" \
               "$PROD_USER@$PROD_HOST" \
               "cd /srv/clawai && cat .deploy/status.json" \
