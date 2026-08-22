@@ -182,4 +182,8 @@ jobs:
     uses: ./.github/workflows/deploy-production.yml
     with:
       target_sha: ${{ needs.release.outputs.target_sha }}
+      # The automatic lane. The box skips this rollout while an admin has the
+      # automatic-deploy switch paused on the deployment page; a manual
+      # dispatch from that page passes 'manual' and always proceeds.
+      trigger_source: auto
     secrets: inherit

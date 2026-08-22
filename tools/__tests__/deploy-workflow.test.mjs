@@ -144,3 +144,21 @@ test('deploy-production always publishes a concise GitHub job summary', () => {
   assert.match(summary, /Production URL/u);
   assert.doesNotMatch(summary, /SSH_PRIVATE_KEY|CONTACT_SMTP_PASS|INTER_SERVICE_AUTH_TOKEN/u);
 });
+
+test('deploy-production tells the box which lane started the rollout', () => {
+  // workflow_call defaults to auto (release.yml is the automatic lane);
+  // workflow_dispatch defaults to manual (a human pressed deploy). The box
+  // only obeys the automatic-deploy pause switch for the auto lane.
+  assert.match(workflow, /workflow_call:[\s\S]*?trigger_source:[\s\S]*?default: auto/u);
+  assert.match(workflow, /workflow_dispatch:[\s\S]*?trigger_source:[\s\S]*?default: manual/u);
+  assert.match(workflow, /CLAW_DEPLOY_TRIGGER='\$TRIGGER_SOURCE'/u);
+});
+
+test('deploy-production constrains the trigger lane before interpolating it into SSH', () => {
+  assert.match(workflow, /"\$TRIGGER_SOURCE" != "auto" && "\$TRIGGER_SOURCE" != "manual"/u);
+  assert.match(workflow, /Trigger source must be 'auto' or 'manual'\./u);
+});
+
+test('deploy-production reports the trigger lane in the job summary', () => {
+  assert.match(workflow, /\| Trigger \| \$TRIGGER_SOURCE \|/u);
+});

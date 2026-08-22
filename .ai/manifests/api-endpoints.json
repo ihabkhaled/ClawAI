@@ -466,6 +466,21 @@
         "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/admin/deployment/automation",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/deployment/reset",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/deployment/trigger",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/admin/plans",
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
@@ -3008,5 +3023,5 @@
     ]
   },
   "generated": true,
-  "total": 594
+  "total": 597
 }

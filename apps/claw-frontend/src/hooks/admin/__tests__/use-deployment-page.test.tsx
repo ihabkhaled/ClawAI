@@ -16,6 +16,10 @@ vi.mock('@/repositories/admin/deployment.repository', () => ({
   deploymentRepository: { get: () => mockGet() },
 }));
 
+vi.mock('@/hooks/admin/use-deployment-actions', () => ({
+  useDeploymentActions: () => ({ isBusy: false }),
+}));
+
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key, locale: 'en' }),
 }));
@@ -37,6 +41,14 @@ describe('useDeploymentPage', () => {
 
     await waitFor(() => expect(result.current.status?.state).toBe('completed'));
     expect(mockGet).toHaveBeenCalledOnce();
+  });
+
+  it('exposes the manual controls alongside the status', async () => {
+    mockGet.mockResolvedValue({ state: 'completed', targetSha: 'a'.repeat(40) });
+    const { result } = renderHook(() => useDeploymentPage(), { wrapper });
+
+    await waitFor(() => expect(result.current.status).not.toBeNull());
+    expect(result.current.actions.isBusy).toBe(false);
   });
 
   it('does not call the endpoint for another administrator', async () => {

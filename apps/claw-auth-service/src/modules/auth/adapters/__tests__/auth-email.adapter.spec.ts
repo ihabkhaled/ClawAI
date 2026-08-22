@@ -50,6 +50,7 @@ function emailConfig(overrides: Partial<AppConfigType> = {}): AppConfigType {
     CONTACT_SMTP_USER: 'smtp-user',
     CONTACT_SMTP_PASS: 'smtp-pass',
     DEPLOYMENT_STATUS_FILE: '/app/.deploy/status.json',
+    DEPLOYMENT_AUTOMATION_FILE: '/app/.deploy/automation.json',
     SEED_RECONCILE_PERMISSIONS: false,
     ...overrides,
   };

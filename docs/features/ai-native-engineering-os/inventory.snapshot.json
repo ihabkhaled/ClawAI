@@ -558,6 +558,21 @@
           "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/admin/deployment/automation",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/admin/deployment/reset",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/admin/deployment/trigger",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/admin/plans",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
@@ -3950,6 +3965,11 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "DEPLOYMENT_AUTOMATION_FILE"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "DEPLOYMENT_STATUS_FILE"
       },
       {
@@ -4101,6 +4121,21 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "GITHUB_CLIENT_SECRET"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "GITHUB_DEPLOY_REF"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "GITHUB_DEPLOY_REPOSITORY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "GITHUB_DEPLOY_TOKEN"
       },
       {
         "confidence": "verified",
@@ -8928,7 +8963,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 68
+        "testFiles": 69
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -8952,7 +8987,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 344
+        "testFiles": 346
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9697,8 +9732,8 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 594,
-    "envVarCount": 343,
+    "endpointCount": 597,
+    "envVarCount": 347,
     "eventCount": 167,
     "frontendRouteCount": 122,
     "localeCount": 16,
@@ -9709,7 +9744,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 960,
+    "totalTestFiles": 963,
     "workspaceCount": 25
   }
 }

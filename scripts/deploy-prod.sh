@@ -34,6 +34,13 @@
 #                               precedence rule scripts/claw.sh applies
 #   CLAW_DEPLOY_WORKFLOW_URL     optional https://github.com/... Actions run URL
 #                               recorded as non-secret deployment metadata
+#   CLAW_DEPLOY_TRIGGER         auto|manual — which lane started this rollout.
+#                               'auto' (the default, used by the release
+#                               workflow) obeys the automatic-deploy switch in
+#                               .deploy/automation.json that an admin toggles
+#                               from the deployment page; 'manual' always
+#                               proceeds, so pausing the automatic lane can
+#                               never lock an operator out of production.
 #
 # What this script will NEVER do:
 #   * `docker compose down`, `docker rm`, `docker volume rm`, `docker system prune`
@@ -92,6 +99,7 @@ ENV_FILE="$PROJECT_ROOT/.env"
 STATE_DIR="$PROJECT_ROOT/.deploy"
 STATE_FILE="$STATE_DIR/deployed-sha"
 DEPLOYMENT_STATUS_FILE="$STATE_DIR/status.json"
+AUTOMATION_FILE="$STATE_DIR/automation.json"
 HISTORY_FILE="$STATE_DIR/history.log"
 LOCK_FILE="$STATE_DIR/deploy.lock"
 LOCK_DIR="$STATE_DIR/deploy.lock.d"
@@ -1046,6 +1054,31 @@ run_plan_mode() {
   fi
 }
 
+# ─── Automatic-deploy switch ─────────────────────────────────────────────────
+# auth-service writes .deploy/automation.json when an admin pauses or resumes
+# the automatic lane from the deployment page. Only an automatic rollout reads
+# it; a manual dispatch is the operator overriding their own pause, so it never
+# consults the file. Anything unreadable, absent or unrecognised means the lane
+# is on — the shipped default, and the safe one: a pause must be an explicit,
+# well-formed statement, never the result of a truncated or missing file.
+automatic_deploy_paused() {
+  [ -f "$AUTOMATION_FILE" ] || return 1
+  grep -Eq '"enabled"[[:space:]]*:[[:space:]]*false' "$AUTOMATION_FILE" 2>/dev/null
+}
+
+assert_lane_allowed() {
+  local trigger="${CLAW_DEPLOY_TRIGGER:-auto}"
+  case "$trigger" in
+    auto | manual) ;;
+    *) die "CLAW_DEPLOY_TRIGGER must be 'auto' or 'manual', got '$trigger'" ;;
+  esac
+  if [ "$trigger" = "auto" ] && automatic_deploy_paused; then
+    log "Automatic deployment is paused; skipping this rollout."
+    log "Resume it from the admin deployment page, or deploy manually from there."
+    exit 0
+  fi
+}
+
 # =============================================================================
 # Deployment
 # =============================================================================
@@ -1086,6 +1119,9 @@ main() {
   fi
   target_rev="$(printf '%s' "$target_rev" | tr '[:upper:]' '[:lower:]')"
 
+  # The lane gate first: a rollout the operator has paused should not start an
+  # orphan guard, take the lock, or touch the checkout at all.
+  assert_lane_allowed
   # Before the lock, not after: waiting for a lock held by a deployment whose
   # own session died is exactly the case this guards.
   start_orphan_guard

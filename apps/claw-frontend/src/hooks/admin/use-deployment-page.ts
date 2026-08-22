@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
+import { useDeploymentActions } from '@/hooks/admin/use-deployment-actions';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useTranslation } from '@/lib/i18n';
 import { deploymentRepository } from '@/repositories/admin/deployment.repository';
@@ -10,6 +11,7 @@ import type { UseDeploymentPageResult } from '@/types/deployment-page.types';
 export function useDeploymentPage(): UseDeploymentPageResult {
   const { t, locale } = useTranslation();
   const { user, isLoading: isUserLoading } = useCurrentUser();
+  const actions = useDeploymentActions();
   const query = useQuery({
     queryKey: queryKeys.adminDeployment.status(),
     queryFn: () => deploymentRepository.get(),
@@ -30,5 +32,6 @@ export function useDeploymentPage(): UseDeploymentPageResult {
     error: query.error,
     isRefreshing: query.isFetching,
     retry,
+    actions,
   };
 }

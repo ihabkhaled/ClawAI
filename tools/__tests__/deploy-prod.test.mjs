@@ -228,12 +228,41 @@ test('deploy-prod.sh accepts only a GitHub workflow URL as optional status metad
   assert.match(script, /https:\/\/github\.com\//u);
 });
 
-test('auth-service receives the host-owned deployment status directory read-only', () => {
-  assert.match(prodCompose, /auth-service:[\s\S]*?- \.\.\/\.deploy:\/app\/\.deploy:ro/u);
-  assert.match(devCompose, /auth-service:[\s\S]*?- \.\.\/\.deploy:\/app\/\.deploy:ro/u);
+test('auth-service receives the host-owned deployment state directory', () => {
+  // Writable, unlike auth-service's other binds: the admin deployment page
+  // clears a stuck rollout and pauses the automatic lane by writing
+  // status.json and automation.json. deployed-sha and history.log stay owned
+  // by deploy-prod.sh, which simply overwrites status.json on its next phase.
+  assert.match(prodCompose, /auth-service:[\s\S]*?- \.\.\/\.deploy:\/app\/\.deploy\n/u);
+  assert.match(devCompose, /auth-service:[\s\S]*?- \.\.\/\.deploy:\/app\/\.deploy\n/u);
+  assert.doesNotMatch(prodCompose, /\.deploy:\/app\/\.deploy:ro/u);
+  assert.doesNotMatch(devCompose, /\.deploy:\/app\/\.deploy:ro/u);
   assert.match(bashInstaller, /mkdir -p "\$PROJECT_ROOT\/\.deploy"/u);
   assert.match(powershellInstaller, /New-Item[^\n]+\.deploy[^\n]+-Force/u);
   assert.match(envExample, /^DEPLOYMENT_STATUS_FILE=\/app\/\.deploy\/status\.json$/mu);
+  assert.match(envExample, /^DEPLOYMENT_AUTOMATION_FILE=\/app\/\.deploy\/automation\.json$/mu);
+});
+
+test('the manual deployment credential set is documented as all-or-nothing', () => {
+  for (const key of ['GITHUB_DEPLOY_TOKEN', 'GITHUB_DEPLOY_REPOSITORY', 'GITHUB_DEPLOY_REF']) {
+    assert.match(envExample, new RegExp(`^${key}=`, 'mu'), key);
+    assert.match(bashInstaller, new RegExp(`^${key}=`, 'mu'), key);
+    assert.match(powershellInstaller, new RegExp(`^${key}=`, 'mu'), key);
+  }
+  assert.doesNotMatch(envExample, /^GITHUB_DEPLOY_TOKEN=.+$/mu);
+});
+
+test('deploy-prod.sh obeys the automatic-deploy switch only on the automatic lane', () => {
+  assert.match(script, /AUTOMATION_FILE="\$STATE_DIR\/automation\.json"/u);
+  assert.match(script, /automatic_deploy_paused\(\)/u);
+  assert.match(script, /CLAW_DEPLOY_TRIGGER:-auto/u);
+  assert.match(script, /\[ "\$trigger" = "auto" \] && automatic_deploy_paused/u);
+  // The gate runs first of all: before the orphan guard, before the lock, and
+  // before anything touches the checkout. A paused rollout does no work at all.
+  assert.match(
+    script,
+    /assert_lane_allowed\n(?:\s*#[^\n]*\n)*\s+start_orphan_guard\n\s+preflight\n\s+acquire_lock/u,
+  );
 });
 
 test('terminal deployment status triggers a best-effort internal notification', () => {
@@ -243,6 +272,20 @@ test('terminal deployment status triggers a best-effort internal notification', 
   assert.doesNotMatch(script, /Authorization: Service \$INTER_SERVICE_AUTH_TOKEN/u);
   assert.match(script, /record_failed_deployment\(\)[\s\S]*notify_deployment_status/u);
   assert.match(script, /record_completed_deployment_status\(\)[\s\S]*notify_deployment_status/u);
+});
+
+test('the end-to-end rehearsal detaches from an inherited git environment', () => {
+  // git exports GIT_DIR (absolute, in a linked worktree) to its hooks, and it
+  // outranks `git -C <dir>`. Without this unset, running the gates from a
+  // pre-push hook inside a `git worktree` made the rehearsal commit its fake
+  // history onto the developer's real branch and replace their index.
+  const e2e = readFileSync(repoPath('tools/__tests__/deploy-prod-e2e.sh'), 'utf8');
+  const beforeFirstGit = e2e.slice(0, e2e.search(/^\s*git /mu));
+
+  for (const variable of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR']) {
+    assert.match(beforeFirstGit, new RegExp(`\\b${variable}\\b`, 'u'), variable);
+  }
+  assert.match(beforeFirstGit, /^unset GIT_DIR /mu);
 });
 
 test(
