@@ -6,6 +6,7 @@ import {
   RUNTIME_V2_ERROR_DETAIL_BYTES,
   RUNTIME_V2_EVENT_TYPE_PATTERN,
   RUNTIME_V2_ID_PATTERN,
+  RUNTIME_V2_JSON_ARRAY_ITEMS,
   RUNTIME_V2_JSON_DEPTH,
   RUNTIME_V2_JSON_ENTRIES,
   RUNTIME_V2_JSON_KEY_CHARACTERS,
@@ -50,7 +51,7 @@ function jsonValueAtDepth(depth: number): z.ZodType<RuntimeV2JsonValue> {
   const child = jsonValueAtDepth(depth - 1);
   return z.union([
     jsonPrimitiveSchema,
-    z.array(child).max(RUNTIME_V2_JSON_ENTRIES),
+    z.array(child).max(RUNTIME_V2_JSON_ARRAY_ITEMS),
     z
       .record(safeKeySchema, child)
       .refine((value) => Object.keys(value).length <= RUNTIME_V2_JSON_ENTRIES),

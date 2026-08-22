@@ -33,6 +33,13 @@ export const RUNTIME_V2_REDIS_PREFIX = 'chat:runtime:v2:{runtime-v2}';
 // byte caps continue to do the actual bounding work.
 export const RUNTIME_V2_JSON_DEPTH = 12;
 export const RUNTIME_V2_JSON_ENTRIES = 100;
+// Arrays carry file bodies: `workspace.files` sends a source file as one
+// `contentLines` entry per line. Sharing the 100-item object-entry cap made
+// every file over 100 lines unwritable, and the resulting ZodError surfaced as
+// an opaque 500 that killed the whole run. Line count is bounded here only to
+// stop a pathological payload; RUNTIME_V2_ARGUMENT_BYTES remains the real
+// budget, and 4,000 lines of ordinary source already exceeds it.
+export const RUNTIME_V2_JSON_ARRAY_ITEMS = 4_000;
 export const RUNTIME_V2_JSON_KEY_CHARACTERS = 120;
 export const RUNTIME_V2_JSON_STRING_CHARACTERS = 65_536;
 export const RUNTIME_V2_PROMPT_BYTES = 32_768;
