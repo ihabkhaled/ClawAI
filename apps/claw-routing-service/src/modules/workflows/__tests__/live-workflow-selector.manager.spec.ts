@@ -13,9 +13,7 @@ import {
 import { LiveWorkflowSelectorManager } from '../managers/live-workflow-selector.manager';
 import type { WorkflowSelectorInput } from '../types/live-workflow-selector.types';
 
-function makeSemantic(
-  overrides: Partial<SemanticIntentAnalysis> = {},
-): SemanticIntentAnalysis {
+function makeSemantic(overrides: Partial<SemanticIntentAnalysis> = {}): SemanticIntentAnalysis {
   return {
     primaryIntent: 'qa',
     secondaryIntents: [],
@@ -103,6 +101,19 @@ describe('LiveWorkflowSelectorManager', () => {
   });
 
   describe('keyword fresh-info markers', () => {
+    it('keeps a large Runtime V2 coding prompt with incidental freshness text on DIRECT_LLM', () => {
+      const generatedContext = 'const latest = cache.current;\n'.repeat(3_500);
+      const result = manager.selectWorkflow(
+        baseInput({
+          message: `Implement the requested code.\n${generatedContext}`,
+          runtimeV2: true,
+        }),
+      );
+
+      expect(result.kind).toBe(WorkflowKind.DIRECT_LLM);
+      expect(result.reason).toBe(WORKFLOW_REASON_DEFAULT_DIRECT);
+    });
+
     it.each(SEARCH_FIRST_TRIGGER_KEYWORDS.map((kw) => [kw]))(
       'trigger keyword "%s" selects SEARCH_FIRST',
       (kw) => {
@@ -146,9 +157,7 @@ describe('LiveWorkflowSelectorManager', () => {
     });
 
     it('case-insensitive keyword match', () => {
-      const result = manager.selectWorkflow(
-        baseInput({ message: 'WHAT IS LATEST IN AI?' }),
-      );
+      const result = manager.selectWorkflow(baseInput({ message: 'WHAT IS LATEST IN AI?' }));
       expect(result.kind).toBe(WorkflowKind.SEARCH_FIRST);
     });
 
@@ -184,11 +193,11 @@ describe('LiveWorkflowSelectorManager', () => {
     });
 
     it('chosen workflow does NOT appear in alternatives', () => {
-      const result = manager.selectWorkflow(
-        baseInput({ message: 'latest claude opus news' }),
-      );
+      const result = manager.selectWorkflow(baseInput({ message: 'latest claude opus news' }));
       expect(result.kind).toBe(WorkflowKind.SEARCH_FIRST);
-      expect(result.alternatives.find((a) => a.workflow === WorkflowKind.SEARCH_FIRST)).toBeUndefined();
+      expect(
+        result.alternatives.find((a) => a.workflow === WorkflowKind.SEARCH_FIRST),
+      ).toBeUndefined();
     });
 
     it('PDF_EXTRACTION is always marked unavailable today', () => {
@@ -207,17 +216,13 @@ describe('LiveWorkflowSelectorManager', () => {
 
     it('JUDGE_PIPELINE is always marked unavailable in this selector (lives in chat-service execution)', () => {
       const result = manager.selectWorkflow(baseInput());
-      const judge = result.alternatives.find(
-        (a) => a.workflow === WorkflowKind.JUDGE_PIPELINE,
-      );
+      const judge = result.alternatives.find((a) => a.workflow === WorkflowKind.JUDGE_PIPELINE);
       expect(judge).toBeDefined();
       expect(judge?.available).toBe(false);
     });
 
     it('DIRECT_LLM appears as available alternative when SEARCH_FIRST is chosen', () => {
-      const result = manager.selectWorkflow(
-        baseInput({ message: 'latest claude news' }),
-      );
+      const result = manager.selectWorkflow(baseInput({ message: 'latest claude news' }));
       const direct = result.alternatives.find((a) => a.workflow === WorkflowKind.DIRECT_LLM);
       expect(direct).toBeDefined();
       expect(direct?.available).toBe(true);
@@ -225,9 +230,7 @@ describe('LiveWorkflowSelectorManager', () => {
 
     it('SEARCH_FIRST appears as available alternative when DIRECT_LLM is chosen', () => {
       const result = manager.selectWorkflow(baseInput({ message: 'how do hash maps work' }));
-      const search = result.alternatives.find(
-        (a) => a.workflow === WorkflowKind.SEARCH_FIRST,
-      );
+      const search = result.alternatives.find((a) => a.workflow === WorkflowKind.SEARCH_FIRST);
       expect(search).toBeDefined();
       expect(search?.available).toBe(true);
     });

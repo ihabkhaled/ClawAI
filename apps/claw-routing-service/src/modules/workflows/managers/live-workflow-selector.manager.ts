@@ -48,6 +48,19 @@ export class LiveWorkflowSelectorManager {
     const alternativesForKind = (chosen: WorkflowKind): WorkflowAvailability[] =>
       this.buildAlternatives(chosen);
 
+    // Runtime V2 is published only by the authenticated coding-runtime start
+    // service. Its message is a generated agent prompt plus workspace context,
+    // not raw user intent, so keyword-classifying it can turn an incidental
+    // word such as "latest" in source code into an unrelated web-search flow.
+    if (input.runtimeV2 === true) {
+      this.logger.debug('selectWorkflow: DIRECT_LLM for Runtime V2');
+      return {
+        kind: WorkflowKind.DIRECT_LLM,
+        reason: WORKFLOW_REASON_DEFAULT_DIRECT,
+        alternatives: alternativesForKind(WorkflowKind.DIRECT_LLM),
+      };
+    }
+
     // Rule 1 — semantic intent flag wins over keyword absence.
     if (input.semanticIntent?.requiresSearch === true) {
       this.logger.log('selectWorkflow: SEARCH_FIRST via semantic intent');

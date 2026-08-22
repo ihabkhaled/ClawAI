@@ -35,6 +35,7 @@ export type LiveWorkflowKeywordSignal = {
 export type WorkflowSelectorInput = {
   message: string;
   routingMode: RoutingMode;
+  runtimeV2?: boolean;
   semanticIntent?: SemanticIntentAnalysis | null;
   keywordSignals?: LiveWorkflowKeywordSignal[];
   attachmentMimeTypes?: string[];

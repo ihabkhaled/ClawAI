@@ -140,6 +140,7 @@ export class RuntimeV2RunService {
       threadId: request.threadId,
       userId: ownerId,
       content: request.prompt,
+      runtimeV2: true,
       routingMode: routing.routingMode,
       ...(routing.provider === undefined
         ? {}

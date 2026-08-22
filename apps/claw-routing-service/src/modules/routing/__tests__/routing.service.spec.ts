@@ -150,6 +150,7 @@ describe('RoutingService', () => {
   let replayMgr: ReturnType<typeof mockReplayManager>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
   let routerEducationManager: ReturnType<typeof mockRouterEducationManager>;
+  let liveWorkflowSelector: { selectWorkflow: jest.Mock };
 
   beforeEach(() => {
     httpRequest.mockResolvedValue({ ok: true, status: 200, data: { connectors: [] } });
@@ -159,6 +160,13 @@ describe('RoutingService', () => {
     replayMgr = mockReplayManager();
     rabbitMQ = mockRabbitMQ();
     routerEducationManager = mockRouterEducationManager();
+    liveWorkflowSelector = {
+      selectWorkflow: jest.fn().mockReturnValue({
+        kind: 'DIRECT_LLM',
+        reason: 'default_direct',
+        alternatives: [],
+      }),
+    };
     const promptBuilder = {
       invalidateCache: jest.fn(),
       fetchInstalledModels: jest.fn().mockResolvedValue([]),
@@ -183,13 +191,7 @@ describe('RoutingService', () => {
       // Phase 6 — LiveWorkflowSelectorManager. selectWorkflow returns the
       // canonical DIRECT_LLM selection so any downstream code that checks
       // the workflow gets a sane default in tests that don't care.
-      {
-        selectWorkflow: jest.fn().mockReturnValue({
-          kind: 'DIRECT_LLM',
-          reason: 'default_direct',
-          alternatives: [],
-        }),
-      } as any,
+      liveWorkflowSelector as any,
     );
   });
 
@@ -375,6 +377,29 @@ describe('RoutingService', () => {
 
       expect(routingManager.evaluateRoute).toHaveBeenCalledWith(
         expect.objectContaining({ connectorHealth: { openai: true } }),
+      );
+    });
+
+    it('passes the trusted Runtime V2 marker without keyword-classifying generated context', async () => {
+      await service.onModuleInit();
+      const messageCall = rabbitMQ.subscribe.mock.calls.find(
+        ([pattern]) => pattern === EventPattern.MESSAGE_CREATED,
+      );
+      const handler = messageCall?.[1] as (data: unknown) => Promise<void>;
+      const generatedPrompt = `Implement the code.\n${'const latest = state.current;\n'.repeat(3_500)}`;
+
+      await handler({
+        messageId: 'message-runtime-v2',
+        threadId: 'thread-runtime-v2',
+        content: generatedPrompt,
+        runtimeV2: true,
+        routingMode: RoutingMode.MANUAL_MODEL,
+        forcedProvider: 'OLLAMA',
+        forcedModel: 'kimi-k2.7-code',
+      });
+
+      expect(liveWorkflowSelector.selectWorkflow).toHaveBeenCalledWith(
+        expect.objectContaining({ message: generatedPrompt, runtimeV2: true }),
       );
     });
   });
