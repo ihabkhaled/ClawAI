@@ -142,6 +142,45 @@ describe('UsersService', () => {
       });
       expect(repository.revokeSessionsByUserId).toHaveBeenCalledWith('user-1');
     });
+    it('saves personal details without signing the user out everywhere', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      jest.mocked(verifyPassword).mockResolvedValue(true);
+      repository.updateById.mockResolvedValue({
+        ...mockUser,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        phone: '+14155550123',
+      });
+
+      await service.updateOwnProfile('user-1', {
+        currentPassword: 'CurrentPass1!',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        phone: '+14155550123',
+      });
+
+      expect(repository.updateById).toHaveBeenCalledWith('user-1', {
+        username: undefined,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        phone: '+14155550123',
+      });
+      expect(repository.revokeSessionsByUserId).not.toHaveBeenCalled();
+    });
+
+    it('keeps sessions when the submitted username is unchanged', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      jest.mocked(verifyPassword).mockResolvedValue(true);
+      repository.findByUsername.mockResolvedValue(null);
+      repository.updateById.mockResolvedValue(mockUser);
+
+      await service.updateOwnProfile('user-1', {
+        currentPassword: 'CurrentPass1!',
+        username: mockUser.username,
+      });
+
+      expect(repository.revokeSessionsByUserId).not.toHaveBeenCalled();
+    });
 
     it('rejects an incorrect current password without changing the profile', async () => {
       repository.findById.mockResolvedValue(mockUser);

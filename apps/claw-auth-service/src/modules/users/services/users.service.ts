@@ -150,9 +150,22 @@ export class UsersService {
     await this.ensureProfileFieldsAvailable(user.username, dto);
     const updated = await this.usersRepository.updateById(userId, {
       username: dto.username,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      phone: dto.phone,
     });
-    await this.usersRepository.revokeSessionsByUserId(userId);
-    this.logger.log(`updateOwnProfile: updated user ${userId} and revoked sessions`);
+
+    // Only a username change alters how the account is identified, so only that
+    // warrants tearing down every session. Editing a display name or phone
+    // number used to sign the user out of every device, which made ordinary
+    // profile edits feel punitive.
+    const usernameChanged = dto.username !== undefined && dto.username !== user.username;
+    if (usernameChanged) {
+      await this.usersRepository.revokeSessionsByUserId(userId);
+    }
+    this.logger.log(
+      `updateOwnProfile: updated user ${userId}${usernameChanged ? ' and revoked sessions' : ''}`,
+    );
     return toSafeUser(updated);
   }
 
