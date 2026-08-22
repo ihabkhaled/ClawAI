@@ -77,13 +77,20 @@
         }
       ],
       "deliverables": [
-        "docs/implementation/model-exposure-entitlements/audit-01-connector-inventory.md (area 1 of 5, agent-authored, spot-verified against source)"
+        "audit-01-connector-inventory.md",
+        "audit-02-plan-model-access.md",
+        "audit-03-entitlement-resolution.md",
+        "audit-04-runtime-gates.md"
       ],
       "verifiedFindings": [
         "ConnectorModel unique key is @@unique([connectorId, modelKey]); provider is fixed per Connector, so the same modelKey under two connectors is two rows.",
         "connector-models.repository.ts replaceMany HARD-DELETES any model absent from the incoming sync (modelKey notIn), destroying history on one bad provider response. Pack forbids this.",
         "GET /connectors/:id/models has no @RequirePermissions while every sibling route requires ADMIN_CONNECTORS_MANAGE.",
-        "PlanModelAccess (auth-service) stores provider/model as free strings with no relation to ConnectorModel (connector-service); nothing validates an assignment against synced inventory."
+        "PlanModelAccess (auth-service) stores provider/model as free strings with no relation to ConnectorModel (connector-service); nothing validates an assignment against synced inventory.",
+        "entitlements.service.ts resolveModelAccessMode returns ALLOW_ALL for any admin; non-admins default to DENY_ALL (fail-closed default, verified).",
+        "applyPlanModelGate treats an EMPTY allowedModels array as unrestricted allow-all, by design comment - so a plan with zero rows grants every model.",
+        "access-control.service.ts assertCanUseCritic and assertResearchAccess return early with an explicit // fail-open comment when entitlements are null. Pack requires fail-closed.",
+        "Two independent gates already exist: applyPlanModelGate (routing-service) and AccessControlService.assertModelAllowed (chat-service). Neither consults connector inventory; both trust plan rows."
       ]
     },
     {
@@ -192,7 +199,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 1b: plan model access area, same read-list method",
+  "nextAction": "Batch 2: ADR on model identity, exposure and entitlement, grounded in audits 01-04",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
