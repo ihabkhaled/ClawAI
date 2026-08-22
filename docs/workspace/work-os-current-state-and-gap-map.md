@@ -1,42 +1,27 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–16)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–16 + post-pack hardening)
 
-**Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
-truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
-bridge), Phase 05 (crash recovery + resume-from-failed-step), Phase 06 (error taxonomy +
-manual-repair tracking), Phase 07 (mechanical chain template library), Phase 08 (Automations
-page — first frontend for the chain system), Phase 09 (NL → chain draft, human reviews and
-saves), Phase 10 (wiring the dormant object-link graph end to end), Phase 11 (feeding
-learned preferences back into AI-action generation), Phase 12 (peer connector-sharing
-completeness — "org RBAC" was never buildable, see that phase's own section), Phase 13
-(ClickUp adapter test coverage + a real sync fault-isolation fix it found), Phase 14 (Slack
-webhook replay-window fix — a real, confirmed security gap), Phase 15 (chaos-style test
-coverage for the previously-untested webhook receiver), and Phase 16 (documentation-completeness
-audit — `apps/claw-workspace-service/CLAUDE.md` and the service guide had gone stale relative to
-Phases 07–15) are done as real,
-deliberately-scoped slices — see each phase's own section below for exactly what's in and out of
-scope. Phase 01's duplication scan and RabbitMQ contract inventory are still pending (see
-"Explicitly not yet verified" below). Push-subscription lifecycle management (Phase 04's full
-spec), the real DAG rewrite (Phase 05's full spec), compensating/verification steps (Phase 06's
-full spec), the AI-step/auto-trigger recipe layer (Phase 07's full spec), auto-triggering off
-events (Phase 09's full spec), an LLM-backed preference classifier and the memory-service
-write-path fix (Phase 11's full spec — see Phase 11's own section for why these were deliberately
-left for memory-service's own team), true org-level RBAC (Phase 12's full spec — needs auth-service
-schema/claims work that doesn't exist yet, see that phase's own section), the other 8 of 9
-zero-dedicated-test adapters plus every unverified delta-sync/webhook gap in the Pass-2 matrix
-(Phase 13's full spec — see that phase's own section for why only one provider was tackled),
-Bitbucket/Jira's un-hardened webhook stubs and a durable connector-grant-revocation audit trail
-(Phase 14's full spec — see that phase's own section for why only the Slack fix was tackled), a
-full routing-style fault-injection "lab" and CI-wired E2E workspace flows (Phase 15's full spec —
-see that phase's own section for why only one manager's chaos-style test coverage was tackled), and
-live-DB migration verification against the shared dev Postgres container (Phase 16's full spec —
-deferred because it touches a shared resource other worktrees depend on, see that phase's own
-section) are not done. Phase 16 is the pack's final (16th) phase, so all 16 phases have now shipped
-as real, tested, deliberately-scoped slices, per explicit instruction, rather than attempted all at
-once — and every category of change that would touch live write-action execution or a live OAuth
-app was deliberately scoped down to safety-net hardening rather than rushed into a full rewrite,
-per explicit instruction after each was flagged. The "full spec" gaps enumerated above are real,
-honestly-documented future work — not queued phases, since the pack's own 16-phase structure ends
-here.**
+**Status: Phases 01–16 of the pack's own structure are done as real, deliberately-scoped slices —
+see each phase's own section below for what shipped and what was explicitly deferred. Phase 16 was
+the pack's final phase. At the user's explicit instruction (2026-08-22), work continued past the
+pack's own structure to close its remaining honestly-documented gaps one at a time — see
+"Post-pack hardening" below for that running list, and its own status line for what's still open.
+Every category of change that would touch live write-action execution or a live OAuth app is
+deliberately scoped down to safety-net hardening rather than rushed into a full rewrite, per
+explicit instruction after each was flagged.**
+
+**Post-pack hardening status (updated as each gap closes):** Phase 17 (live-DB migration
+verification) done — see its own section. Not yet started: delta sync for
+GitLab/Bitbucket/Outlook Calendar; a Confluence webhook; test coverage for the remaining 8
+zero-coverage adapters; Bitbucket/Jira webhook-stub hardening; a Google/Outlook Calendar write
+path; a durable audit-logging/governance system; a connector-grant-revocation audit trail; the
+`WebhookReceiverManager.replay()` failed-republish signal; a fault-injection "lab"; CI-wired E2E;
+auto-triggering off events; the real chain-executor DAG rewrite; compensating/verification steps;
+push-subscription lifecycle management; the AI-step/auto-trigger recipe layer; an LLM-backed
+preference classifier (memory-service); the memory-service write-path fix; true org-level RBAC
+(auth-service); the remaining stale per-service docs; Phase 01's duplication scan and RabbitMQ
+contract inventory. Per explicit instruction this pass, the LLM-preference-classifier and
+org-RBAC items are now in scope even though they cross into memory-service/auth-service — every
+other item stays within `claw-workspace-service`/`claw-frontend`.
 
 Pass 1 (below, preserved) established the structural map. Pass 2 adds the machine-actionable
 per-provider matrix the spec actually asks for, built by reading every adapter's
@@ -1005,6 +990,43 @@ area generically. **No rewrite of the other per-service docs** (`-activation`, `
 `-operations`, `-provider-registry`, `-security` service guides, or `apps/claw-frontend/CLAUDE.md`)
 — each would need its own honest audit against the code before editing, and none was found to be
 as concretely, provably stale as the two files touched here.
+
+## Post-pack hardening
+
+The pack's own 16-phase structure is complete (see Phase 16 above). At the user's explicit
+request, work continued past it to close the real gaps the pack's phases had honestly documented
+rather than leave them as permanent "future work." These are numbered continuing from Phase 16 for
+traceability, but they are not part of the original pack — they are the pack's own deferred items,
+closed one at a time with the same discipline (investigate → scope → implement for real with tests
+→ gate → document → commit → push) used throughout.
+
+## Phase 17 — Live-DB Migration Verification (done)
+
+Phase 16 deferred this because it touches the shared dev Postgres container (`claw-pg-workspace`)
+other worktrees may depend on. At the user's explicit instruction this phase attempted it, after
+first confirming safety: `pg_stat_activity` showed 5 connections, only 1 truly active with a
+sub-second query — no sign of another worktree mid-write.
+
+**What was found**: `prisma migrate status` showed the live database **8 migrations behind** the
+worktree's `prisma/migrations/` — including the Phase 03 event fabric, the Phase 06 error taxonomy,
+and the Phase 07 chain templates. This is exactly the drift Phase 03's own section had flagged as
+suspected but unverified. One of the 8 was a **stale failed migration record** from 2026-05-12
+(`add_user_email_signatures`) that had blocked `migrate deploy` entirely — its DDL had actually
+already succeeded (verified column-for-column against the migration SQL) but Prisma's own
+bookkeeping row was never marked complete, likely from a concurrent/interrupted run at the time.
+
+**What shipped**: Every one of the 8 migrations was individually verified against the live schema
+before being resolved — 4 had already been applied out-of-band (their tables/enums matched their
+migration SQL exactly, so `prisma migrate resolve --applied` was used, never a blind re-run) and 3
+were genuinely missing and were applied for real via `prisma migrate deploy`. `prisma migrate
+status` now reports "Database schema is up to date!" `claw-workspace-service` was restarted
+afterward and came up clean — Nest booted, all routes mapped (chains, connector grants, webhooks,
+email templates included), RabbitMQ subscriptions established, Docker health check reports
+`healthy`.
+
+**No source files changed** — the migration SQL files already existed in git from Phases 03/06/07;
+only the live database's applied-state changed. Nothing to commit for the migration application
+itself; this section is the durable record of it.
 
 ## Explicitly not yet verified (next session's starting point)
 
