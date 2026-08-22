@@ -905,6 +905,11 @@ export const it: TranslationDictionary = {
       columnLatency: 'Latenza',
       filterByProvider: 'Filtra per fornitore',
       filterByLifecycle: 'Filtra per ciclo di vita',
+      searchPlaceholder: 'Cerca modelli',
+      filterByRouterOnly: 'Solo router',
+      routerOnlyAll: 'Tutti i modelli',
+      routerOnlyExecution: 'Solo esecuzione',
+      routerOnlyRouter: 'Solo router',
     },
   },
   models: {
@@ -3170,7 +3175,7 @@ export const it: TranslationDictionary = {
       empty: 'Nessuna consegna corrisponde ai filtri.',
     },
     filter: {
-      providerPlaceholder: 'Filtra per provider (es. GITHUB)',
+      providerPlaceholder: 'Filtra per provider',
       connectorPlaceholder: 'Filtra per ID connettore',
       signaturePlaceholder: 'Stato firma',
       signatureAny: 'Qualsiasi firma',
@@ -3306,7 +3311,7 @@ export const it: TranslationDictionary = {
     },
     form: {
       messageLabel: 'Messaggio',
-      messagePlaceholder: 'Incolla un prompt da analizzare…',
+      messagePlaceholder: 'Incolla un prompt…',
       routingModeLabel: 'Modalità di routing',
       runSemantic: 'Esegui analizzatore semantico',
       reset: 'Reimposta',
@@ -3380,7 +3385,7 @@ export const it: TranslationDictionary = {
     mode: 'Modalità',
     secretHint:
       'I segreti non vengono mai mostrati. Lascia vuota una credenziale per conservarne il valore.',
-    configured: 'Configurato — lascia vuoto per conservare',
+    configured: 'Configurato',
     notConfigured: 'Non configurato',
     currency: 'Valuta',
     webhookUrl: 'URL webhook',

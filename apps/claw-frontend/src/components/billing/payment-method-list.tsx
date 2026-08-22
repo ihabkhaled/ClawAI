@@ -19,7 +19,7 @@ export function PaymentMethodList({
   return (
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-4">
-        <div className="grid gap-1">
+        <div className="grid grid-cols-1 gap-1">
           <CardTitle className="text-lg">{t('billing.paymentMethods.title')}</CardTitle>
           <p className="text-muted-foreground text-xs">{t('billing.paymentMethods.consent')}</p>
         </div>
@@ -27,7 +27,7 @@ export function PaymentMethodList({
           {isAdding ? t('billing.paymentMethods.adding') : t('billing.paymentMethods.add')}
         </Button>
       </CardHeader>
-      <CardContent className="grid gap-3">
+      <CardContent className="grid grid-cols-1 gap-3">
         {isLoading ? <Skeleton className="h-16 w-full" /> : null}
 
         {isError ? (
@@ -43,10 +43,10 @@ export function PaymentMethodList({
         {methods.map((method) => (
           <div
             key={method.id}
-            className="border-border flex items-center justify-between gap-3 rounded-lg border p-3"
+            className="border-border flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"
           >
-            <div className="grid gap-0.5 text-sm">
-              <span className="flex items-center gap-2 font-medium">
+            <div className="grid min-w-0 grid-cols-1 gap-0.5 text-sm">
+              <span className="flex flex-wrap items-center gap-2 font-medium">
                 {/* Only the gateway's own display fields are ever stored or
                     shown. There is no PAN and no CVV anywhere in this payload. */}
                 {method.brand ?? t(`billing.gateway.${method.gateway}`)}

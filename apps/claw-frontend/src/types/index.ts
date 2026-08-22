@@ -429,7 +429,7 @@ export type {
   RepairResultCardProps,
   RecoveryStatsCardProps,
   RecoveryProviderTableProps,
-  RecoveryFallbackRowProps,
+  RecoveryFallbackTableProps,
   DecompositionResultCardProps,
   SubTaskResultCardProps,
   BestOfNResultCardProps,

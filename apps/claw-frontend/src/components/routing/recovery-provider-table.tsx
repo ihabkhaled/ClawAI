@@ -1,38 +1,39 @@
-import type { RecoveryProviderTableProps } from '@/types';
+import { DataTable } from '@/components/common/data-table';
+import type { DataTableColumn, RecoveryProviderTableProps } from '@/types';
+import type { ProviderFailureStat } from '@/types/recovery.types';
 
-export function RecoveryProviderTable({ providerStats, t }: RecoveryProviderTableProps) {
-  if (providerStats.length === 0) {
-    return (
-      <p className="py-4 text-center text-sm text-muted-foreground">{t('recovery.noFallbacks')}</p>
-    );
-  }
+export function RecoveryProviderTable({
+  providerStats,
+  t,
+}: RecoveryProviderTableProps): React.ReactElement {
+  // 308px of columns did not fit the 206px card on a 280px viewport.
+  const columns: DataTableColumn<ProviderFailureStat>[] = [
+    {
+      key: 'provider',
+      header: t('recovery.provider'),
+      render: (stat) => <span className="font-medium">{stat.provider}</span>,
+    },
+    {
+      key: 'fallbackCount',
+      header: t('recovery.fallbackCount'),
+      className: 'text-end',
+      render: (stat) => stat.fallbackCount,
+    },
+    {
+      key: 'rate',
+      header: t('recovery.rate'),
+      className: 'text-end',
+      render: (stat) => `${(stat.fallbackRate * 100).toFixed(1)}%`,
+    },
+  ];
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/50">
-          <tr>
-            <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-              {t('recovery.provider')}
-            </th>
-            <th className="px-4 py-2 text-right font-medium text-muted-foreground">
-              {t('recovery.fallbackCount')}
-            </th>
-            <th className="px-4 py-2 text-right font-medium text-muted-foreground">
-              {t('recovery.rate')}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {providerStats.map((stat) => (
-            <tr key={stat.provider} className="border-t border-border">
-              <td className="px-4 py-2 font-medium">{stat.provider}</td>
-              <td className="px-4 py-2 text-right">{stat.fallbackCount}</td>
-              <td className="px-4 py-2 text-right">{(stat.fallbackRate * 100).toFixed(1)}%</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      columns={columns}
+      data={providerStats}
+      keyExtractor={(stat) => stat.provider}
+      emptyMessage={t('recovery.noFallbacks')}
+      mobileTitleKey="provider"
+    />
   );
 }

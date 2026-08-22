@@ -894,6 +894,11 @@ export const ja: TranslationDictionary = {
       columnLatency: 'レイテンシ',
       filterByProvider: 'プロバイダーによるフィルター',
       filterByLifecycle: 'ライフサイクルによるフィルター',
+      searchPlaceholder: 'モデルを検索',
+      filterByRouterOnly: 'ルーターのみ',
+      routerOnlyAll: 'すべてのモデル',
+      routerOnlyExecution: '実行のみ',
+      routerOnlyRouter: 'ルーターのみ',
     },
   },
   models: {
@@ -3152,7 +3157,7 @@ export const ja: TranslationDictionary = {
       empty: 'フィルターに一致する Webhook 配信はありません。',
     },
     filter: {
-      providerPlaceholder: 'プロバイダーによるフィルター (例: GITHUB)',
+      providerPlaceholder: 'プロバイダーで絞り込み',
       connectorPlaceholder: 'コネクタ ID によるフィルター',
       signaturePlaceholder: '署名ステータス',
       signatureAny: '任意の署名',
@@ -3287,7 +3292,7 @@ export const ja: TranslationDictionary = {
     },
     form: {
       messageLabel: 'メッセージ',
-      messagePlaceholder: '分析するプロンプトを貼り付けます…',
+      messagePlaceholder: 'プロンプトを貼り付け…',
       routingModeLabel: 'ルーティング モード',
       runSemantic: 'セマンティック アナライザーを実行する',
       reset: 'リセット',
@@ -3359,7 +3364,7 @@ export const ja: TranslationDictionary = {
     enabled: 'ゲートウェイを有効化',
     mode: 'モード',
     secretHint: 'シークレットは表示されません。保存済みの値を維持するには認証情報を空欄にします。',
-    configured: '設定済み — 維持するには空欄',
+    configured: '設定済み',
     notConfigured: '未設定',
     currency: '通貨',
     webhookUrl: 'ウェブフック URL',

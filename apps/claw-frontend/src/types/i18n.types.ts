@@ -891,6 +891,11 @@ export type TranslationDictionary = {
       columnLatency: string;
       filterByProvider: string;
       filterByLifecycle: string;
+      searchPlaceholder: string;
+      filterByRouterOnly: string;
+      routerOnlyAll: string;
+      routerOnlyExecution: string;
+      routerOnlyRouter: string;
     };
   };
   models: {

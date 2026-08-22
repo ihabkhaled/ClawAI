@@ -889,6 +889,11 @@ export const ar: TranslationDictionary = {
       columnLatency: 'زمن الاستجابة',
       filterByProvider: 'تصفية حسب المزوّد',
       filterByLifecycle: 'تصفية حسب دورة الحياة',
+      searchPlaceholder: 'بحث في النماذج',
+      filterByRouterOnly: 'الموجّه فقط',
+      routerOnlyAll: 'كل النماذج',
+      routerOnlyExecution: 'التنفيذ فقط',
+      routerOnlyRouter: 'الموجّه فقط',
     },
   },
   models: {
@@ -3102,7 +3107,7 @@ export const ar: TranslationDictionary = {
       empty: 'لا توجد تسليمات تطابق مرشحاتك.',
     },
     filter: {
-      providerPlaceholder: 'تصفية حسب الموفر (مثل GITHUB)',
+      providerPlaceholder: 'تصفية حسب المزود',
       connectorPlaceholder: 'تصفية حسب معرف الموصل',
       signaturePlaceholder: 'حالة التوقيع',
       signatureAny: 'أي توقيع',
@@ -3237,7 +3242,7 @@ export const ar: TranslationDictionary = {
     },
     form: {
       messageLabel: 'الرسالة',
-      messagePlaceholder: 'الصق مطالبة لتحليلها…',
+      messagePlaceholder: 'الصق مطالبة…',
       routingModeLabel: 'وضع التوجيه',
       runSemantic: 'تشغيل المحلِّل الدلالي',
       reset: 'إعادة تعيين',
@@ -3308,7 +3313,7 @@ export const ar: TranslationDictionary = {
     enabled: 'البوابة مفعّلة',
     mode: 'الوضع',
     secretHint: 'لا تُعرض الأسرار. اترك بيانات الاعتماد فارغة للاحتفاظ بالقيمة المخزّنة.',
-    configured: 'مُهيّأ — اتركه فارغًا للاحتفاظ به',
+    configured: 'مُهيّأ',
     notConfigured: 'غير مُهيّأ',
     currency: 'العملة',
     webhookUrl: 'عنوان URL لخطاف الويب',

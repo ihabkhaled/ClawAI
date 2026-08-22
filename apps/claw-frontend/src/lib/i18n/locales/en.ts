@@ -892,6 +892,11 @@ export const en: TranslationDictionary = {
       columnLatency: 'Latency',
       filterByProvider: 'Filter by provider',
       filterByLifecycle: 'Filter by lifecycle',
+      searchPlaceholder: 'Search models',
+      filterByRouterOnly: 'Router-only',
+      routerOnlyAll: 'All models',
+      routerOnlyExecution: 'Execution only',
+      routerOnlyRouter: 'Router only',
     },
   },
   models: {
@@ -3125,7 +3130,7 @@ export const en: TranslationDictionary = {
       empty: 'No webhook deliveries match your filters.',
     },
     filter: {
-      providerPlaceholder: 'Filter by provider (e.g. GITHUB)',
+      providerPlaceholder: 'Filter by provider',
       connectorPlaceholder: 'Filter by connector ID',
       signaturePlaceholder: 'Signature status',
       signatureAny: 'Any signature',
@@ -3254,7 +3259,7 @@ export const en: TranslationDictionary = {
     },
     form: {
       messageLabel: 'Message',
-      messagePlaceholder: 'Paste a prompt to analyse…',
+      messagePlaceholder: 'Paste a prompt…',
       routingModeLabel: 'Routing mode',
       runSemantic: 'Run semantic analyser',
       reset: 'Reset',
@@ -3329,7 +3334,7 @@ export const en: TranslationDictionary = {
     mode: 'Mode',
     secretHint:
       'Secrets are never displayed. Leave a credential blank to preserve its stored value.',
-    configured: 'Configured — leave blank to preserve',
+    configured: 'Configured',
     notConfigured: 'Not configured',
     currency: 'Currency',
     webhookUrl: 'Webhook URL',

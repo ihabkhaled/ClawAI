@@ -886,6 +886,11 @@ export const th: TranslationDictionary = {
       columnLatency: 'เวลาแฝง',
       filterByProvider: 'กรองตามผู้ให้บริการ',
       filterByLifecycle: 'กรองตามวงจรชีวิต',
+      searchPlaceholder: 'ค้นหาโมเดล',
+      filterByRouterOnly: 'เฉพาะเราเตอร์',
+      routerOnlyAll: 'โมเดลทั้งหมด',
+      routerOnlyExecution: 'เฉพาะการดำเนินการ',
+      routerOnlyRouter: 'เฉพาะเราเตอร์',
     },
   },
   models: {
@@ -3113,7 +3118,7 @@ export const th: TranslationDictionary = {
       empty: 'ไม่มีการนำส่งเว็บฮุคที่ตรงกับตัวกรองของคุณ',
     },
     filter: {
-      providerPlaceholder: 'กรองตามผู้ให้บริการ (เช่น GITHUB)',
+      providerPlaceholder: 'กรองตามผู้ให้บริการ',
       connectorPlaceholder: 'กรองตามรหัสตัวเชื่อมต่อ',
       signaturePlaceholder: 'สถานะลายเซ็น',
       signatureAny: 'ลายเซ็นใดๆ',
@@ -3248,7 +3253,7 @@ export const th: TranslationDictionary = {
     },
     form: {
       messageLabel: 'ข้อความ',
-      messagePlaceholder: 'วางข้อความแจ้งให้วิเคราะห์...',
+      messagePlaceholder: 'วางข้อความแจ้ง…',
       routingModeLabel: 'โหมดการกำหนดเส้นทาง',
       runSemantic: 'เรียกใช้การวิเคราะห์เชิงความหมาย',
       reset: 'รีเซ็ต',
@@ -3321,7 +3326,7 @@ export const th: TranslationDictionary = {
     enabled: 'เปิดใช้งานเกตเวย์',
     mode: 'โหมด',
     secretHint: 'ระบบจะไม่แสดงข้อมูลลับ เว้นข้อมูลรับรองว่างไว้เพื่อคงค่าที่บันทึกไว้',
-    configured: 'กำหนดค่าแล้ว — เว้นว่างไว้เพื่อคงค่าเดิม',
+    configured: 'กำหนดค่าแล้ว',
     notConfigured: 'ยังไม่ได้กำหนดค่า',
     currency: 'สกุลเงิน',
     webhookUrl: 'URL เว็บฮุก',

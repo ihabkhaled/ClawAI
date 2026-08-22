@@ -1872,8 +1872,8 @@ export type RecoveryProviderTableProps = {
   t: TranslateFunction;
 };
 
-export type RecoveryFallbackRowProps = {
-  fallback: RecentFallback;
+export type RecoveryFallbackTableProps = {
+  recentFallbacks: RecentFallback[];
   t: TranslateFunction;
 };
 

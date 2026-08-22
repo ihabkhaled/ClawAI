@@ -896,6 +896,11 @@ export const hi: TranslationDictionary = {
       columnLatency: 'लेटेंसी',
       filterByProvider: 'प्रदाता द्वारा फ़िल्टर करें',
       filterByLifecycle: 'जीवनचक्र द्वारा फ़िल्टर करें',
+      searchPlaceholder: 'मॉडल खोजें',
+      filterByRouterOnly: 'केवल राउटर',
+      routerOnlyAll: 'सभी मॉडल',
+      routerOnlyExecution: 'केवल निष्पादन',
+      routerOnlyRouter: 'केवल राउटर',
     },
   },
   models: {
@@ -3144,7 +3149,7 @@ export const hi: TranslationDictionary = {
       empty: 'आपके फ़िल्टर से कोई डिलीवरी मेल नहीं खाती।',
     },
     filter: {
-      providerPlaceholder: 'प्रदाता द्वारा फ़िल्टर करें (जैसे GITHUB)',
+      providerPlaceholder: 'प्रोवाइडर से फ़िल्टर करें',
       connectorPlaceholder: 'कनेक्टर आईडी द्वारा फ़िल्टर करें',
       signaturePlaceholder: 'हस्ताक्षर स्थिति',
       signatureAny: 'कोई भी हस्ताक्षर',
@@ -3279,7 +3284,7 @@ export const hi: TranslationDictionary = {
     },
     form: {
       messageLabel: 'संदेश',
-      messagePlaceholder: 'विश्लेषण के लिए प्रॉम्प्ट चिपकाएँ…',
+      messagePlaceholder: 'प्रॉम्प्ट चिपकाएँ…',
       routingModeLabel: 'रूटिंग मोड',
       runSemantic: 'सिमेंटिक विश्लेषक चलाएँ',
       reset: 'रीसेट',
@@ -3352,7 +3357,7 @@ export const hi: TranslationDictionary = {
     enabled: 'गेटवे सक्षम है',
     mode: 'मोड',
     secretHint: 'गुप्त मान कभी नहीं दिखाए जाते। संग्रहीत मान रखने के लिए क्रेडेंशियल खाली छोड़ें।',
-    configured: 'कॉन्फ़िगर किया गया — रखने के लिए खाली छोड़ें',
+    configured: 'कॉन्फ़िगर किया गया',
     notConfigured: 'कॉन्फ़िगर नहीं किया गया',
     currency: 'मुद्रा',
     webhookUrl: 'वेबहुक URL',

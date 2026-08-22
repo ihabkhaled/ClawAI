@@ -41,7 +41,7 @@ export default function RouterModelsPage(): ReactElement {
           <div className="flex flex-wrap items-end gap-3">
             <div className="touch:basis-full min-w-0 flex-1">
               <Input
-                placeholder="Search by name, modelKey, family"
+                placeholder={t('routing.models.searchPlaceholder')}
                 value={filters.search}
                 onChange={(e) => setFilter('search', e.target.value)}
               />
@@ -78,12 +78,12 @@ export default function RouterModelsPage(): ReactElement {
               onValueChange={(v) => setFilter('isRouterOnly', v as typeof filters.isRouterOnly)}
             >
               <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Router-only" />
+                <SelectValue placeholder={t('routing.models.filterByRouterOnly')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All models</SelectItem>
-                <SelectItem value="false">Execution only</SelectItem>
-                <SelectItem value="true">Router only</SelectItem>
+                <SelectItem value="ALL">{t('routing.models.routerOnlyAll')}</SelectItem>
+                <SelectItem value="false">{t('routing.models.routerOnlyExecution')}</SelectItem>
+                <SelectItem value="true">{t('routing.models.routerOnlyRouter')}</SelectItem>
               </SelectContent>
             </Select>
           </div>

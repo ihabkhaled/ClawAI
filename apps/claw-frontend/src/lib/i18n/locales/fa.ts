@@ -893,6 +893,11 @@ export const fa: TranslationDictionary = {
       columnLatency: 'تأخیر',
       filterByProvider: 'فیلتر بر اساس ارائه دهنده',
       filterByLifecycle: 'فیلتر بر اساس چرخه عمر',
+      searchPlaceholder: 'جست‌وجوی مدل‌ها',
+      filterByRouterOnly: 'فقط مسیریاب',
+      routerOnlyAll: 'همه مدل‌ها',
+      routerOnlyExecution: 'فقط اجرا',
+      routerOnlyRouter: 'فقط مسیریاب',
     },
   },
   models: {
@@ -3144,7 +3149,7 @@ export const fa: TranslationDictionary = {
       empty: 'هیچ تحویل وب هوکی با فیلترهای شما مطابقت ندارد.',
     },
     filter: {
-      providerPlaceholder: 'فیلتر بر اساس ارائه دهنده (به عنوان مثال GITHUB)',
+      providerPlaceholder: 'فیلتر بر اساس ارائه‌دهنده',
       connectorPlaceholder: 'فیلتر بر اساس شناسه رابط',
       signaturePlaceholder: 'وضعیت امضا',
       signatureAny: 'هر امضایی',
@@ -3279,7 +3284,7 @@ export const fa: TranslationDictionary = {
     },
     form: {
       messageLabel: 'پیام',
-      messagePlaceholder: 'چسباندن یک درخواست برای تجزیه و تحلیل…',
+      messagePlaceholder: 'یک درخواست بچسبانید…',
       routingModeLabel: 'حالت مسیریابی',
       runSemantic: 'تحلیل معنایی را اجرا کنید',
       reset: 'بازنشانی کنید',
@@ -3352,7 +3357,7 @@ export const fa: TranslationDictionary = {
     enabled: 'درگاه فعال است',
     mode: 'حالت',
     secretHint: 'اسرار هرگز نمایش داده نمی‌شوند. برای حفظ مقدار ذخیره‌شده، فیلد را خالی بگذارید.',
-    configured: 'پیکربندی شده — برای حفظ، خالی بگذارید',
+    configured: 'پیکربندی شده',
     notConfigured: 'پیکربندی نشده',
     currency: 'ارز',
     webhookUrl: 'نشانی وب‌هوک',

@@ -904,6 +904,11 @@ export const ru: TranslationDictionary = {
       columnLatency: 'Задержка',
       filterByProvider: 'Фильтр по поставщику',
       filterByLifecycle: 'Фильтр по жизненному циклу',
+      searchPlaceholder: 'Поиск моделей',
+      filterByRouterOnly: 'Только маршрутизатор',
+      routerOnlyAll: 'Все модели',
+      routerOnlyExecution: 'Только выполнение',
+      routerOnlyRouter: 'Только маршрутизатор',
     },
   },
   models: {
@@ -3164,7 +3169,7 @@ export const ru: TranslationDictionary = {
       empty: 'Нет доставок, соответствующих фильтрам.',
     },
     filter: {
-      providerPlaceholder: 'Фильтр по провайдеру (например, GITHUB)',
+      providerPlaceholder: 'Фильтр по провайдеру',
       connectorPlaceholder: 'Фильтр по ID коннектора',
       signaturePlaceholder: 'Состояние подписи',
       signatureAny: 'Любая подпись',
@@ -3299,7 +3304,7 @@ export const ru: TranslationDictionary = {
     },
     form: {
       messageLabel: 'Сообщение',
-      messagePlaceholder: 'Вставьте запрос для анализа…',
+      messagePlaceholder: 'Вставьте запрос…',
       routingModeLabel: 'Режим маршрутизации',
       runSemantic: 'Запустить семантический анализатор',
       reset: 'Сбросить',
@@ -3371,7 +3376,7 @@ export const ru: TranslationDictionary = {
     enabled: 'Шлюз включён',
     mode: 'Режим',
     secretHint: 'Секреты никогда не отображаются. Оставьте поле пустым, чтобы сохранить значение.',
-    configured: 'Настроено — оставьте пустым для сохранения',
+    configured: 'Настроено',
     notConfigured: 'Не настроено',
     currency: 'Валюта',
     webhookUrl: 'URL вебхука',

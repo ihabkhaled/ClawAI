@@ -879,6 +879,11 @@ export const zh: TranslationDictionary = {
       columnLatency: '延迟',
       filterByProvider: '按提供商过滤',
       filterByLifecycle: '按生命周期过滤',
+      searchPlaceholder: '搜索模型',
+      filterByRouterOnly: '仅路由器',
+      routerOnlyAll: '所有模型',
+      routerOnlyExecution: '仅执行',
+      routerOnlyRouter: '仅路由器',
     },
   },
   models: {
@@ -3043,7 +3048,7 @@ export const zh: TranslationDictionary = {
       empty: '没有 Webhook 传送符合您的过滤器。',
     },
     filter: {
-      providerPlaceholder: '按提供商过滤（例如 GITHUB）',
+      providerPlaceholder: '按提供商筛选',
       connectorPlaceholder: '按连接器 ID 过滤',
       signaturePlaceholder: '签名状态',
       signatureAny: '任意签名',
@@ -3170,7 +3175,7 @@ export const zh: TranslationDictionary = {
     },
     form: {
       messageLabel: '信息',
-      messagePlaceholder: '粘贴提示以进行分析...',
+      messagePlaceholder: '粘贴提示…',
       routingModeLabel: '路由方式',
       runSemantic: '运行语义分析',
       reset: '重置',
@@ -3241,7 +3246,7 @@ export const zh: TranslationDictionary = {
     enabled: '启用网关',
     mode: '模式',
     secretHint: '密钥绝不会显示。将凭据留空即可保留已存储的值。',
-    configured: '已配置 — 留空以保留',
+    configured: '已配置',
     notConfigured: '未配置',
     currency: '货币',
     webhookUrl: 'Webhook 地址',
