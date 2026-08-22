@@ -11,6 +11,20 @@ export const updateUserSchema = z.object({
       'Username may only contain letters, numbers, hyphens, and underscores',
     )
     .optional(),
+  firstName: z
+    .string()
+    .trim()
+    .max(64, 'First name must be at most 64 characters')
+    .transform((value) => (value === '' ? null : value))
+    .nullable()
+    .optional(),
+  lastName: z
+    .string()
+    .trim()
+    .max(64, 'Last name must be at most 64 characters')
+    .transform((value) => (value === '' ? null : value))
+    .nullable()
+    .optional(),
   role: z.nativeEnum(UserRole).optional(),
   status: z.nativeEnum(UserStatus).optional(),
 });

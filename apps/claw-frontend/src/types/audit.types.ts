@@ -116,6 +116,8 @@ export interface AdminUser {
   activePlanId: string | null;
   isSuperAdmin: boolean;
   emailVerifiedAt: string | null;
+  firstName: string | null;
+  lastName: string | null;
 }
 
 export interface AdminUserQuery {

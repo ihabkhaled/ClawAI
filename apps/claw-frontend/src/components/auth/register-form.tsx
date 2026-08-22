@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Controller } from 'react-hook-form';
 
+import { PasswordInput } from '@/components/common/password-input';
 import { PhoneInput } from '@/components/common/phone-input';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -103,9 +104,8 @@ export function RegisterForm(): React.ReactElement {
             <label htmlFor="password" className="text-sm leading-none font-medium">
               {t('auth.password')}
             </label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="new-password"
               placeholder={t('auth.passwordPlaceholder')}
               disabled={isPending}
@@ -119,9 +119,8 @@ export function RegisterForm(): React.ReactElement {
             <label htmlFor="confirmPassword" className="text-sm leading-none font-medium">
               {t('auth.confirmPassword')}
             </label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               autoComplete="new-password"
               disabled={isPending}
               {...form.register('confirmPassword')}

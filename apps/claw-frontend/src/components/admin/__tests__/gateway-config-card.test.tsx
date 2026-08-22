@@ -4,7 +4,19 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { GatewayConfigCard } from '@/components/admin/gateway-config-card';
 import { BillingGateway } from '@/enums/billing.enum';
+import { Direction } from '@/enums/direction.enum';
+import { Locale } from '@/enums/locale.enum';
 import type { GatewayAdminView } from '@/types/billing.types';
+
+// PasswordInput translates its own show/hide aria-label, so rendering this
+// card now reaches useTranslation.
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    locale: Locale.EN,
+    dir: Direction.LTR,
+  }),
+}));
 
 const gateway: GatewayAdminView = {
   gateway: BillingGateway.PAYPAL,

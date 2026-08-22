@@ -1074,6 +1074,29 @@ export const pt: TranslationDictionary = {
     editUser: 'Editar usuário',
     saveUser: 'Salvar usuário',
     editUsername: 'Editar nome de usuário',
+
+    editUserTitle: 'Editar usuário',
+
+    editUserDescription:
+      'Atualize o nome e o nome de usuário desta conta, ou emita uma nova senha temporária.',
+
+    editUserUsername: 'Nome de usuário',
+
+    editUserFirstName: 'Nome',
+
+    editUserLastName: 'Sobrenome',
+
+    editUserUsernameInvalid: 'Use de 3 a 32 letras, números, hifens ou sublinhados.',
+
+    editUserNameTooLong: 'Use no máximo 64 caracteres.',
+
+    editUserSuperAdminNotice: 'Contas de superadministrador não podem ser editadas aqui.',
+
+    editUserSave: 'Salvar alterações',
+
+    editUserCancel: 'Cancelar',
+
+    editUserRotatePassword: 'Rotacionar senha',
     userUpdated: 'Usuário atualizado',
     userUpdateFailed: 'Não foi possível atualizar o usuário',
     colEmail: 'E-mail',

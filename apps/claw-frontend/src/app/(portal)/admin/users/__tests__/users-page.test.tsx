@@ -112,6 +112,8 @@ describe('AdminUsersPage', () => {
           activePlanId: null,
           isSuperAdmin: false,
           emailVerifiedAt: null,
+          firstName: null,
+          lastName: null,
         },
       ],
       usersMeta: { ...baseReturn.usersMeta, total: 1 },

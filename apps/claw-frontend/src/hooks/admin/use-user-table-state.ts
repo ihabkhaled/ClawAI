@@ -4,8 +4,7 @@ import type { AdminUser, AdminUserUpdateRequest, UseUserTableStateReturn } from 
 
 export function useUserTableState(): UseUserTableStateReturn {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [profileEditingId, setProfileEditingId] = useState<string | null>(null);
-  const [editUsername, setEditUsername] = useState('');
+  const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [temporaryPasswordUserId, setTemporaryPasswordUserId] = useState<string | null>(null);
 
   const handleRoleSelect = useCallback(
@@ -16,19 +15,26 @@ export function useUserTableState(): UseUserTableStateReturn {
     [],
   );
 
-  const startProfileEdit = useCallback((user: AdminUser): void => {
-    setProfileEditingId(user.id);
-    setEditUsername(user.username);
+  const openEditUser = useCallback((user: AdminUser): void => {
+    setEditUser(user);
   }, []);
-  const finishProfileEdit = useCallback(
-    (onUpdate: (userId: string, data: AdminUserUpdateRequest) => void): void => {
-      if (profileEditingId === null) {
-        return;
-      }
-      onUpdate(profileEditingId, { username: editUsername });
-      setProfileEditingId(null);
+
+  const closeEditUser = useCallback((): void => {
+    setEditUser(null);
+  }, []);
+
+  // The dialog owns the field values and hands back a complete request, so the
+  // table only has to forward it and close.
+  const submitEditUser = useCallback(
+    (
+      userId: string,
+      data: AdminUserUpdateRequest,
+      onUpdate: (userId: string, data: AdminUserUpdateRequest) => void,
+    ): void => {
+      onUpdate(userId, data);
+      setEditUser(null);
     },
-    [editUsername, profileEditingId],
+    [],
   );
 
   const requestTemporaryPassword = useCallback((userId: string): void => {
@@ -52,11 +58,10 @@ export function useUserTableState(): UseUserTableStateReturn {
     editingUserId,
     setEditingUserId,
     handleRoleSelect,
-    profileEditingId,
-    editUsername,
-    setEditUsername,
-    startProfileEdit,
-    finishProfileEdit,
+    editUser,
+    openEditUser,
+    closeEditUser,
+    submitEditUser,
     temporaryPasswordUserId,
     requestTemporaryPassword,
     cancelTemporaryPassword,

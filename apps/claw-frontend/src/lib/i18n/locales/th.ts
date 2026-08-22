@@ -1052,6 +1052,28 @@ export const th: TranslationDictionary = {
     editUser: 'แก้ไขผู้ใช้',
     saveUser: 'บันทึกผู้ใช้',
     editUsername: 'แก้ไขชื่อผู้ใช้',
+
+    editUserTitle: 'แก้ไขผู้ใช้',
+
+    editUserDescription: 'อัปเดตชื่อและชื่อผู้ใช้ของบัญชีนี้ หรือออกรหัสผ่านชั่วคราวใหม่',
+
+    editUserUsername: 'ชื่อผู้ใช้',
+
+    editUserFirstName: 'ชื่อจริง',
+
+    editUserLastName: 'นามสกุล',
+
+    editUserUsernameInvalid: 'ใช้ตัวอักษร ตัวเลข ขีดกลาง หรือขีดล่าง 3–32 ตัว',
+
+    editUserNameTooLong: 'ใช้ได้ไม่เกิน 64 อักขระ',
+
+    editUserSuperAdminNotice: 'ไม่สามารถแก้ไขบัญชีผู้ดูแลระบบสูงสุดได้ที่นี่',
+
+    editUserSave: 'บันทึกการเปลี่ยนแปลง',
+
+    editUserCancel: 'ยกเลิก',
+
+    editUserRotatePassword: 'เปลี่ยนรหัสผ่าน',
     userUpdated: 'อัปเดตผู้ใช้แล้ว',
     userUpdateFailed: 'อัปเดตผู้ใช้ไม่สำเร็จ',
     colEmail: 'อีเมล',

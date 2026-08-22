@@ -1078,6 +1078,30 @@ export const de: TranslationDictionary = {
     editUser: 'Benutzer bearbeiten',
     saveUser: 'Benutzer speichern',
     editUsername: 'Benutzernamen bearbeiten',
+
+    editUserTitle: 'Benutzer bearbeiten',
+
+    editUserDescription:
+      'Aktualisieren Sie Name und Benutzernamen dieses Kontos oder vergeben Sie ein neues temporäres Passwort.',
+
+    editUserUsername: 'Benutzername',
+
+    editUserFirstName: 'Vorname',
+
+    editUserLastName: 'Nachname',
+
+    editUserUsernameInvalid:
+      'Verwenden Sie 3–32 Buchstaben, Ziffern, Bindestriche oder Unterstriche.',
+
+    editUserNameTooLong: 'Verwenden Sie höchstens 64 Zeichen.',
+
+    editUserSuperAdminNotice: 'Super-Admin-Konten können hier nicht bearbeitet werden.',
+
+    editUserSave: 'Änderungen speichern',
+
+    editUserCancel: 'Abbrechen',
+
+    editUserRotatePassword: 'Passwort neu vergeben',
     userUpdated: 'Benutzer aktualisiert',
     userUpdateFailed: 'Benutzer konnte nicht aktualisiert werden',
     colEmail: 'E-Mail',

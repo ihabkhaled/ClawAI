@@ -62,6 +62,8 @@ export type DeleteOwnAccountRequest = {
 
 export type AdminUserUpdateRequest = {
   username?: string;
+  firstName?: string | null;
+  lastName?: string | null;
 };
 
 export type AdminUserUpdateMutationVariables = {

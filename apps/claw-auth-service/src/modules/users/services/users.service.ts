@@ -130,6 +130,8 @@ export class UsersService {
 
     const updated = await this.usersRepository.updateById(id, {
       username: dto.username,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
       role: dto.role,
       status: dto.status,
     });

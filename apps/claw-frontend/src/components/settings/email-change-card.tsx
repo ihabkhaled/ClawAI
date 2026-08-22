@@ -3,6 +3,7 @@
 import type { ReactElement } from 'react';
 
 import { LoadingSpinner } from '@/components/common/loading-spinner';
+import { PasswordInput } from '@/components/common/password-input';
 import { EmailChangeOtpStep } from '@/components/settings/email-change-otp-step';
 import { Button } from '@/components/ui/button';
 import {
@@ -117,9 +118,8 @@ export function EmailChangeCard({
             >
               {t('settings.emailChange.currentPasswordLabel')}
             </label>
-            <Input
+            <PasswordInput
               id="email-change-current-password"
-              type="password"
               autoComplete="current-password"
               aria-invalid={Boolean(passwordError)}
               aria-describedby={passwordError ? 'email-change-current-password-error' : undefined}

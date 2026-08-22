@@ -1,6 +1,7 @@
 import type { UseFormReturn } from 'react-hook-form';
 
 import type { MessageFeedback } from '@/enums';
+import type { PasswordInputType } from '@/enums/password-input-type.enum';
 import type { ScrollDirection } from '@/enums/scroll-direction.enum';
 import type {
   ConfirmOtpFormValues,
@@ -206,11 +207,14 @@ export type UseUserTableStateReturn = {
     role: string,
     onChangeRole: (userId: string, role: string) => void,
   ) => void;
-  profileEditingId: string | null;
-  editUsername: string;
-  setEditUsername: (value: string) => void;
-  startProfileEdit: (user: AdminUser) => void;
-  finishProfileEdit: (onUpdate: (userId: string, data: AdminUserUpdateRequest) => void) => void;
+  editUser: AdminUser | null;
+  openEditUser: (user: AdminUser) => void;
+  closeEditUser: () => void;
+  submitEditUser: (
+    userId: string,
+    data: AdminUserUpdateRequest,
+    onUpdate: (userId: string, data: AdminUserUpdateRequest) => void,
+  ) => void;
   temporaryPasswordUserId: string | null;
   requestTemporaryPassword: (userId: string) => void;
   cancelTemporaryPassword: () => void;
@@ -836,3 +840,9 @@ export type UsePhoneInputReturn = {
   isValid: boolean;
 };
 export type UseScrollDirectionReturn = ScrollDirection | null;
+
+export type UsePasswordVisibilityReturn = {
+  visible: boolean;
+  toggle: () => void;
+  inputType: PasswordInputType;
+};
