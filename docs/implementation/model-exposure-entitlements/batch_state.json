@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "feature": "model-exposure-plan-entitlements",
+  "featureRepo": "ihabkhaled/ClawAI",
+  "worktree": "D:/Freelance/Claw-model-exposure-entitlements",
+  "branch": "feat/model-exposure-plan-entitlements",
+  "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
+  "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
+  "currentBatch": 1,
+  "codingAgent": {
+    "repo": "ihabkhaled/ClawAI-Coding-Agent",
+    "baselineVersion": "0.63.2",
+    "activeVersion": "0.63.3",
+    "repairBranch": "fix/coding-agent-tool-round-ceiling",
+    "repairPr": "https://github.com/ihabkhaled/ClawAI-Coding-Agent/pull/2",
+    "runId": "run_8ae2d219d8fe3f7823c9759f0b5a2452",
+    "model": "kimi-k2.7-code",
+    "permissionMode": "AUTONOMOUS_SCOPED (worktree-local, commands still gated)",
+    "repairSummary": "Budget exhaustion threw a bare Error, published no terminal event, and was compensated with a cancel - runs died silently with the UI spinning. Now ends as run.failed with RUNTIME_BUDGET_EXHAUSTED and the limit reached. 1082 unit tests green; VSIX packaged, installed, confirmed loaded as 0.63.3 in the Extensions view."
+  },
+  "batches": [
+    {
+      "id": 0,
+      "status": "DONE",
+      "commit": null,
+      "tests": ["none by policy - gates deferred to end of flagship"],
+      "defects": []
+    },
+    {
+      "id": 1,
+      "status": "IN_PROGRESS",
+      "commit": null,
+      "tests": [],
+      "defects": [
+        {
+          "id": "CA-01",
+          "owner": "CodingAgent",
+          "severity": "high",
+          "summary": "A run that exhausts the 96000-char prompt-assembly budget ends with no terminal event: no error text, no failure badge, and the webview activity panel stays on Running with a live spinner indefinitely. Observed on run_9a47aa975f9b91abc0ecbd392c452c25, dead at 21:04:28 while the UI still showed Running 7 minutes later.",
+          "evidence": "claw-chat-service ContextAssemblyManager buildPromptString climbing 76013-89686 chars against budget=96000, then zero further activity on thread cmt4opu1700av01qgb1wijndx",
+          "status": "FIXED in coding-agent 0.63.3 (PR #2)"
+        },
+        {
+          "id": "CA-02",
+          "owner": "CodingAgent",
+          "severity": "medium",
+          "summary": "ClawAI Output channel logs \"ClawAI operation failed. {}\" with an empty error body, so a failed run cannot be diagnosed from logs. Same observability gap the lab ledger recorded earlier; still present at 0.63.1.",
+          "evidence": "exthost2/output_logging_20260822T202653/1-ClawAI.log",
+          "status": "PARTIALLY ADDRESSED - the reason now reaches the run.failed event; the Output channel empty-body log is untouched"
+        },
+        {
+          "id": "ENV-01",
+          "owner": "Environment",
+          "severity": "low",
+          "summary": "A second VS Code window is running concurrent agent threads against D:/Freelance/Claw. Feature work is isolated in its own worktree, so commits here are unaffected, but do not run git ops in the main worktree while it is active.",
+          "evidence": "threads cmt4oumjw00gh01qgmfqvc8wa, cmt4oxyet00h501qgiadml8oy, cmt4oyznp00hb01qg43g9nu5c"
+        }
+      ],
+      "attempts": [
+        {
+          "run": "run_8ae2d219d8fe3f7823c9759f0b5a2452",
+          "model": "kimi-k2.7-code",
+          "outcome": "FAILED",
+          "cause": "model hit output token cap mid Runtime Protocol 2.0 tool object while writing the whole document in one call"
+        },
+        {
+          "run": "run_9a47aa975f9b91abc0ecbd392c452c25",
+          "model": "glm-5.2",
+          "outcome": "FAILED",
+          "cause": "context saturation after ~100 discovery reads; silent stop, see CA-01"
+        },
+        {
+          "run": "batch-1a",
+          "model": "glm-5.2",
+          "outcome": "RUNNING",
+          "note": "scope narrowed to audit area 1 only, 25 tool calls / 12 reads budget"
+        }
+      ],
+      "deliverables": [
+        "docs/implementation/model-exposure-entitlements/audit-01-connector-inventory.md (area 1 of 5, agent-authored, spot-verified against source)"
+      ],
+      "verifiedFindings": [
+        "ConnectorModel unique key is @@unique([connectorId, modelKey]); provider is fixed per Connector, so the same modelKey under two connectors is two rows.",
+        "connector-models.repository.ts replaceMany HARD-DELETES any model absent from the incoming sync (modelKey notIn), destroying history on one bad provider response. Pack forbids this.",
+        "GET /connectors/:id/models has no @RequirePermissions while every sibling route requires ADMIN_CONNECTORS_MANAGE.",
+        "PlanModelAccess (auth-service) stores provider/model as free strings with no relation to ConnectorModel (connector-service); nothing validates an assignment against synced inventory."
+      ]
+    },
+    {
+      "id": 2,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 3,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 4,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 5,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 6,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 7,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 8,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 9,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 10,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 11,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 12,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 13,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 14,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 15,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 16,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    }
+  ],
+  "nextAction": "Batch 1b: plan model access area, same read-list method",
+  "appVersionAtBase": "1.33.0",
+  "policy": {
+    "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
+    "commandApproval": "supervisor approves every terminal command; gate commands rejected until the end"
+  },
+  "knownCeiling": "A coding-agent run is bounded at ~100 tool calls: maxModelTurns and maxToolRounds are debited 1:1 per invocation and both are capped at 100 by the protocol schema in BOTH repos, so ULTRA maxToolCalls 250 is unreachable. Every batch must be scoped to fit well under 100 tool calls. Raising it needs a coordinated protocol change in claw-coding-agent and claw-chat-service.",
+  "method": "The agent ignores prompt-level tool budgets and dies at ~100 model turns. Discovery-shaped tasks fail. Working shape: supervisor names an exact short read list, agent traces and authors. Confirmed on batch 1a."
+}
