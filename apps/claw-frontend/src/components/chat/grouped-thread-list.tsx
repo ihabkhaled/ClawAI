@@ -81,7 +81,9 @@ export function GroupedThreadList({
               and at 10px it is small text, which has no relaxed threshold to
               fall back on. Size alone keeps it subordinate to the group label.
             */}
-            <span className="ms-2 text-[10px] font-normal">{group.threads.length}</span>
+            <span className="touch:text-xs ms-2 text-[10px] font-normal">
+              {group.threads.length}
+            </span>
           </h3>
           <div className="flex flex-col gap-2">
             {group.threads.map((thread) => (

@@ -29,7 +29,8 @@ export function JumpToLatestButton({
   }
   const label = t('chat.jumpToLatest');
   const hasUnread = unreadCount !== undefined && unreadCount > 0;
-  const badgeLabel = hasUnread && unreadCount !== undefined && unreadCount > 99 ? '99+' : unreadCount;
+  const badgeLabel =
+    hasUnread && unreadCount !== undefined && unreadCount > 99 ? '99+' : unreadCount;
   return (
     <Button
       type="button"
@@ -37,14 +38,14 @@ export function JumpToLatestButton({
       size="sm"
       onClick={onClick}
       aria-label={hasUnread ? `${label} (${String(unreadCount)})` : label}
-      className="absolute bottom-3 end-3 z-20 gap-1.5 rounded-full shadow-md"
+      className="absolute end-3 bottom-3 z-20 gap-1.5 rounded-full shadow-md"
     >
       <ChevronDown className="h-4 w-4" />
       <span>{label}</span>
       {hasUnread ? (
         <span
           aria-hidden="true"
-          className="ms-0.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold leading-none text-primary-foreground"
+          className="bg-primary touch:text-xs text-primary-foreground ms-0.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] leading-none font-semibold"
         >
           {badgeLabel}
         </span>

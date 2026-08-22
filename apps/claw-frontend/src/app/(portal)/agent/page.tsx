@@ -101,7 +101,7 @@ export default function AgentPage(): React.ReactElement {
                 <div className="flex flex-1 flex-col gap-1 overflow-hidden">
                   <code className="truncate text-xs">{cmd.command}</code>
                   {cmd.riskReasons !== null && cmd.riskReasons.length > 0 ? (
-                    <span className="text-muted-foreground truncate text-[10px]">
+                    <span className="text-muted-foreground touch:text-xs truncate text-[10px]">
                       {cmd.riskReasons}
                     </span>
                   ) : null}

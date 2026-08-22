@@ -50,7 +50,9 @@ export function RuntimeProgressPageClient({
               />
               {t('runtimeProgress.diagnostics.refreshAll')}
             </Button>
-            <span className="text-muted-foreground text-[11px]">{lastUpdatedLabel}</span>
+            <span className="text-muted-foreground touch:text-xs text-[11px]">
+              {lastUpdatedLabel}
+            </span>
           </div>
         ) : null}
       </div>

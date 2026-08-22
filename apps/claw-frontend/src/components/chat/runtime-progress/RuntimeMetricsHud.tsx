@@ -49,7 +49,7 @@ export function RuntimeMetricsHud({
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground',
+        'touch:text-xs text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]',
         className,
       )}
     >

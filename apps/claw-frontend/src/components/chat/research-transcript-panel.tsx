@@ -31,13 +31,19 @@ export function ResearchTranscriptPanel({
         {t('research.transcript.title', { count: String(transcript.sources.length) })}
         {open ? <ChevronUp className="ms-1 h-3 w-3" /> : <ChevronDown className="ms-1 h-3 w-3" />}
       </Button>
-      <div className="text-muted-foreground flex flex-wrap gap-1 ps-2 text-[10px]">
-        <Badge variant="outline" className="border-sky-500/40 bg-sky-500/10 text-[10px]">
+      <div className="text-muted-foreground touch:text-xs flex flex-wrap gap-1 ps-2 text-[10px]">
+        <Badge
+          variant="outline"
+          className="touch:text-xs border-sky-500/40 bg-sky-500/10 text-[10px]"
+        >
           {t('research.transcript.searchRequests', {
             count: String(transcript.searchRequestCount ?? 0),
           })}
         </Badge>
-        <Badge variant="outline" className="border-violet-500/40 bg-violet-500/10 text-[10px]">
+        <Badge
+          variant="outline"
+          className="touch:text-xs border-violet-500/40 bg-violet-500/10 text-[10px]"
+        >
           {t('research.transcript.fetchRequests', {
             count: String(transcript.fetchRequestCount ?? 0),
           })}
@@ -55,12 +61,12 @@ export function ResearchTranscriptPanel({
                   {source.title.length > 0 ? source.title : source.url}
                 </span>
                 {typeof source.score === 'number' ? (
-                  <Badge variant="outline" className="text-[10px]">
+                  <Badge variant="outline" className="touch:text-xs text-[10px]">
                     {(source.score * 100).toFixed(0)}%
                   </Badge>
                 ) : null}
                 {typeof source.latencyMs === 'number' ? (
-                  <span className="text-muted-foreground text-[10px]">
+                  <span className="text-muted-foreground touch:text-xs text-[10px]">
                     {String(source.latencyMs)}ms
                   </span>
                 ) : null}
@@ -68,19 +74,19 @@ export function ResearchTranscriptPanel({
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary inline-flex items-center gap-1 text-[11px] hover:underline"
+                  className="text-primary touch:text-xs inline-flex items-center gap-1 text-[11px] hover:underline"
                 >
                   <ExternalLink className="h-3 w-3" />
                   {source.url}
                 </a>
               </div>
               {source.snippet.length > 0 ? (
-                <p className="text-muted-foreground text-[11px]">{source.snippet}</p>
+                <p className="text-muted-foreground touch:text-xs text-[11px]">{source.snippet}</p>
               ) : null}
               {source.extracted !== undefined && source.extracted.length > 0 ? (
-                <details className="text-muted-foreground text-[11px]">
+                <details className="text-muted-foreground touch:text-xs text-[11px]">
                   <summary className="cursor-pointer">{t('research.transcript.expand')}</summary>
-                  <pre className="mt-1 font-mono text-[10px] break-words whitespace-pre-wrap">
+                  <pre className="touch:text-xs mt-1 font-mono text-[10px] break-words whitespace-pre-wrap">
                     {source.extracted}
                   </pre>
                 </details>

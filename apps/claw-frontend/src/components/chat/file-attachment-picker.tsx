@@ -77,7 +77,7 @@ export function FileAttachmentPicker({
               <Badge
                 variant="secondary"
                 className={cn(
-                  'h-5 min-w-5 px-1 text-[10px]',
+                  'touch:text-xs h-5 min-w-5 px-1 text-[10px]',
                   isCompact && !showLabel ? 'absolute -top-1 -right-1 ml-0' : 'ml-1',
                 )}
               >
@@ -134,7 +134,7 @@ export function FileAttachmentPicker({
                           variant="unstyled"
                           size="unstyled"
                           type="button"
-                          className="text-muted-foreground hover:bg-accent/40 flex items-center gap-1.5 px-2 py-1 text-left text-[11px]"
+                          className="text-muted-foreground hover:bg-accent/40 touch:text-xs flex items-center gap-1.5 px-2 py-1 text-left text-[11px]"
                           onClick={() => toggleParentExpansion(group.parent.id)}
                           aria-expanded={expanded}
                         >
@@ -148,7 +148,10 @@ export function FileAttachmentPicker({
                               filename: group.parent.filename,
                             })}
                           </span>
-                          <Badge variant="secondary" className="ml-auto h-4 px-1 text-[10px]">
+                          <Badge
+                            variant="secondary"
+                            className="touch:text-xs ml-auto h-4 px-1 text-[10px]"
+                          >
                             {t('files.zip.childCountLabel', { count: group.children.length })}
                           </Badge>
                         </Button>

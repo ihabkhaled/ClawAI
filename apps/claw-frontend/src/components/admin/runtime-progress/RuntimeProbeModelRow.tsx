@@ -12,24 +12,26 @@ export function RuntimeProbeModelRow({
   isActive,
 }: RuntimeProbeModelRowProps): React.ReactElement {
   return (
-    <li className="flex items-center justify-between gap-2 rounded border border-border/40 bg-background/40 px-2 py-1.5">
+    <li className="border-border/40 bg-background/40 flex items-center justify-between gap-2 rounded border px-2 py-1.5">
       <div className="flex min-w-0 items-center gap-2">
-        <Box className="h-3.5 w-3.5 flex-none text-muted-foreground" aria-hidden="true" />
-        <span className="truncate font-mono text-xs text-foreground" title={model.id}>
+        <Box className="text-muted-foreground h-3.5 w-3.5 flex-none" aria-hidden="true" />
+        <span className="text-foreground truncate font-mono text-xs" title={model.id}>
           {model.id}
         </span>
       </div>
       <div className="flex flex-none items-center gap-1.5">
         {model.family !== undefined && model.family.length > 0 ? (
-          <span className="text-[10px] text-muted-foreground">{model.family}</span>
+          <span className="touch:text-xs text-muted-foreground text-[10px]">{model.family}</span>
         ) : null}
         {model.quantization !== undefined && model.quantization.length > 0 ? (
-          <span className="text-[10px] text-muted-foreground">{model.quantization}</span>
+          <span className="touch:text-xs text-muted-foreground text-[10px]">
+            {model.quantization}
+          </span>
         ) : null}
         <Badge
           variant="outline"
           className={cn(
-            'text-[10px]',
+            'touch:text-xs text-[10px]',
             isActive
               ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
               : 'border-border text-muted-foreground',

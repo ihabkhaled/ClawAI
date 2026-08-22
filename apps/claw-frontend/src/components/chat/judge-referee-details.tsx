@@ -83,7 +83,7 @@ export function JudgeRefereeDetails({
           {decisionLabel}
         </Badge>
         {fileCount > 0 ? (
-          <Badge variant="outline" className="gap-1 text-[10px]">
+          <Badge variant="outline" className="touch:text-xs gap-1 text-[10px]">
             <Paperclip className="h-3 w-3" />
             {t('compare.delivery.filesProvided', { count: fileCount })}
           </Badge>
@@ -107,7 +107,7 @@ export function JudgeRefereeDetails({
                 {decisionLabel}
               </Badge>
               {fileCount > 0 ? (
-                <Badge variant="outline" className="gap-1 text-[10px]">
+                <Badge variant="outline" className="touch:text-xs gap-1 text-[10px]">
                   <Paperclip className="h-3 w-3" />
                   {t('compare.delivery.filesProvided', { count: fileCount })}
                 </Badge>
@@ -171,7 +171,7 @@ export function JudgeRefereeDetails({
             <section className="border-border/60 bg-muted/30 space-y-2 rounded-lg border p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-foreground text-sm font-medium">{t('chat.judgeResponse')}</h3>
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="touch:text-xs text-[10px]">
                   {responseTypeLabel}
                 </Badge>
               </div>
@@ -225,7 +225,7 @@ export function JudgeRefereeDetails({
                     {t('judgeReview.criticHeader')}
                   </h3>
                   {fileCount > 0 ? (
-                    <Badge variant="outline" className="gap-1 text-[10px]">
+                    <Badge variant="outline" className="touch:text-xs gap-1 text-[10px]">
                       <Paperclip className="h-3 w-3" />
                       {t('compare.delivery.filesProvided', { count: fileCount })}
                     </Badge>

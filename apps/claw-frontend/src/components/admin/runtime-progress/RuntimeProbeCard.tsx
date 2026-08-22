@@ -111,7 +111,7 @@ export function RuntimeProbeCard({
           ) : null}
         </div>
         {report?.runtimeUrl !== undefined && report.runtimeUrl.length > 0 ? (
-          <p className="text-muted-foreground mt-2 font-mono text-[11px] break-all">
+          <p className="text-muted-foreground touch:text-xs mt-2 font-mono text-[11px] break-all">
             {t('runtimeProgress.diagnostics.runtimeUrl')}: {report.runtimeUrl}
           </p>
         ) : null}
@@ -196,16 +196,16 @@ export function RuntimeProbeCard({
                   <table className="w-full table-fixed text-left">
                     <thead className="bg-muted/40">
                       <tr>
-                        <th className="text-muted-foreground px-2 py-1 text-[10px] font-medium tracking-wide uppercase">
+                        <th className="text-muted-foreground touch:text-xs px-2 py-1 text-[10px] font-medium tracking-wide uppercase">
                           {t('runtimeProgress.diagnostics.recentEventsTime')}
                         </th>
-                        <th className="text-muted-foreground px-2 py-1 text-[10px] font-medium tracking-wide uppercase">
+                        <th className="text-muted-foreground touch:text-xs px-2 py-1 text-[10px] font-medium tracking-wide uppercase">
                           {t('runtimeProgress.diagnostics.recentEventsType')}
                         </th>
-                        <th className="text-muted-foreground px-2 py-1 text-[10px] font-medium tracking-wide uppercase">
+                        <th className="text-muted-foreground touch:text-xs px-2 py-1 text-[10px] font-medium tracking-wide uppercase">
                           {t('runtimeProgress.diagnostics.recentEventsModel')}
                         </th>
-                        <th className="text-muted-foreground px-2 py-1 text-right text-[10px] font-medium tracking-wide uppercase">
+                        <th className="text-muted-foreground touch:text-xs px-2 py-1 text-right text-[10px] font-medium tracking-wide uppercase">
                           {t('runtimeProgress.diagnostics.recentEventsDuration')}
                         </th>
                       </tr>

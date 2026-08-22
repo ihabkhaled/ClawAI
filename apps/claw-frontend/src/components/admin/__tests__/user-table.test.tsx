@@ -258,9 +258,9 @@ describe('UserTable temporary password action', () => {
       .getAllByRole('button', { name: 'admin.issueTemporaryPassword' })
       .find((button) => button.closest('.md\\:hidden'));
     expect(mobileAction?.parentElement).toHaveClass(
-      'max-md:grid',
-      'max-md:grid-cols-2',
-      'max-md:w-full',
+      'touch:grid',
+      'touch:grid-cols-2',
+      'touch:w-full',
     );
     expect(mobileAction?.querySelector('span')).toHaveClass('whitespace-normal', 'text-center');
   });
