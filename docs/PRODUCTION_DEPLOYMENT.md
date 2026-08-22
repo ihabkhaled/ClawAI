@@ -53,7 +53,13 @@ happens to be by the time the SSH session runs.
 
 1. Validates the argument is a commit SHA.
 2. Takes a deploy lock (`flock` on `.deploy/deploy.lock`, or a `mkdir`-based
-   fallback) — two deployments never run against the VPS at once.
+   fallback) — two deployments never run against the VPS at once. Waiting is
+   never silent: a progress line naming the current holder is printed every
+   `CLAW_DEPLOY_LOCK_HEARTBEAT` seconds (default 15) until
+   `CLAW_DEPLOY_LOCK_WAIT` runs out. Under CI the deployment also arms an
+   orphan guard (`CLAW_DEPLOY_ORPHAN_GUARD=1`) that aborts it if the SSH
+   session that started it disappears, so a dropped connection can never leave
+   a deployment holding the lock.
 3. Validates `/srv/clawai`, `.env`, and that Docker/Compose v2 are reachable.
 4. Refuses to proceed if the checkout has uncommitted changes to **tracked**
    files (`git status --porcelain --untracked-files=no`). Untracked host state
@@ -83,6 +89,12 @@ A failed build never touches a running container. A failed health check dumps
 `docker compose ps` and the last 200 log lines per affected service, exits
 non-zero, and leaves `.deploy/deployed-sha` unchanged — the workflow run goes
 red, production keeps serving the previous commit.
+
+The whole image build is bounded by `CLAW_DEPLOY_BUILD_TIMEOUT` (default
+3600s, `timeout --foreground` so the build stays in the deployment's process
+group). A build that exceeds it is aborted and never retried: a build that
+produces nothing for an hour is wedged, not slow, and retrying it only holds
+the deploy lock longer.
 
 Docker Compose build concurrency defaults to `2` so a broad-impact release
 cannot start every service image build at once and starve the VPS or its SSH
@@ -235,6 +247,37 @@ on a fix will retry cleanly; nothing needs to be manually reverted first.
 **"dirty working tree"** — a tracked file in `/srv/clawai` was hand-edited on
 the server. `git diff` in that directory, decide whether to commit it
 upstream or discard it (`git checkout -- <file>`), then re-run.
+
+**Deployments hang, then fail with `client_loop: send disconnect: Broken pipe`
+(exit 255)** — the deployment reached the server and then went silent. Two
+things cause that, and both are now guarded:
+
+- A `docker compose build` that stops making progress. BuildKit can wedge a
+  single `RUN` layer with no output and no worker process left, and compose
+  never returns. The build is capped by `CLAW_DEPLOY_BUILD_TIMEOUT` (default
+  3600s) and aborted with a named error instead of running forever.
+- A deployment waiting on the deploy lock. It now prints a progress line every
+  `CLAW_DEPLOY_LOCK_HEARTBEAT` seconds naming the holder, so a queued
+  deployment is never mistaken for a dead connection, and the traffic keeps the
+  SSH flow from being dropped as idle.
+
+When the connection does die, `CLAW_DEPLOY_ORPHAN_GUARD=1` (set by the
+workflow) makes the remote deployment abort itself within
+`CLAW_DEPLOY_ORPHAN_GUARD_INTERVAL` seconds, record a failed status, and
+release the lock. Every docker invocation also closes the lock descriptor, so
+no surviving child can keep the lock held after the deployer exits.
+
+To confirm nothing is stuck on the box:
+
+```bash
+ps -eo pid,pgid,etime,cmd | grep -E 'deploy-prod|docker compose|buildx'
+lsof /srv/clawai/.deploy/deploy.lock          # no output = the lock is free
+cat /srv/clawai/.deploy/status.json
+```
+
+A deployment left over from before this guard existed is killed by its process
+group — `kill -TERM -<pgid>` — after which the lock is free and a normal re-run
+succeeds.
 
 **Emergency rollback** — deploying backwards is refused by default:
 

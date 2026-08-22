@@ -92,9 +92,11 @@ jobs:
                 -o UserKnownHostsFile=~/.ssh/known_hosts \
                 -o BatchMode=yes \
                 -o ConnectTimeout=20 \
+                -o ServerAliveInterval=30 \
+                -o ServerAliveCountMax=6 \
                 -p "$PROD_PORT" \
                 "$PROD_USER@$PROD_HOST" \
-                "cd /srv/clawai && echo 'CLAW_SSH_CONNECTED' && echo 'Server deployed SHA before:' && (cat .deploy/deployed-sha 2>/dev/null || echo '<none>') && CLAW_DEPLOY_WORKFLOW_URL='$WORKFLOW_URL' bash ./scripts/deploy-prod.sh '$TARGET_SHA' && echo 'Server deployed SHA after:' && cat .deploy/deployed-sha" \
+                "cd /srv/clawai && echo 'CLAW_SSH_CONNECTED' && echo 'Server deployed SHA before:' && (cat .deploy/deployed-sha 2>/dev/null || echo '<none>') && CLAW_DEPLOY_WORKFLOW_URL='$WORKFLOW_URL' CLAW_DEPLOY_ORPHAN_GUARD=1 CLAW_DEPLOY_LOCK_WAIT=600 bash ./scripts/deploy-prod.sh '$TARGET_SHA' && echo 'Server deployed SHA after:' && cat .deploy/deployed-sha" \
                 2>&1 | tee "$ssh_output"
             ssh_status="${PIPESTATUS[0]}"
             set -e
@@ -107,7 +109,14 @@ jobs:
             if [ "$ssh_status" -ne 255 ] || grep -q 'CLAW_SSH_CONNECTED' "$ssh_output" || ! grep -Eq \
               'Connection timed out|Connection refused|No route to host|Could not resolve hostname|Connection reset by peer|Connection closed by remote host|kex_exchange_identification' \
               "$ssh_output"; then
-              echo "Deployment failed after SSH connected; refusing to retry application failure." >&2
+              # A transport that dies mid-deployment is not the same failure as a
+              # deployment that returned non-zero, and saying so saves the next
+              # operator from reading an application failure that never happened.
+              if grep -Eq 'client_loop: send disconnect|packet_write_wait|Timeout, server not responding' "$ssh_output"; then
+                echo "The SSH transport dropped after the deployment started. CLAW_DEPLOY_ORPHAN_GUARD aborts the remote deployment and releases the deploy lock; read .deploy/status.json before re-running." >&2
+              else
+                echo "Deployment failed after SSH connected; refusing to retry application failure." >&2
+              fi
               deploy_status="$ssh_status"
               break
             fi
@@ -130,6 +139,8 @@ jobs:
               -o UserKnownHostsFile=~/.ssh/known_hosts \
               -o BatchMode=yes \
               -o ConnectTimeout=20 \
+              -o ServerAliveInterval=30 \
+              -o ServerAliveCountMax=6 \
               -p "$PROD_PORT" \
               "$PROD_USER@$PROD_HOST" \
               "cd /srv/clawai && cat .deploy/status.json" \
