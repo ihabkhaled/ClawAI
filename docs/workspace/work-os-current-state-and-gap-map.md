@@ -1,4 +1,4 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–13)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–14)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
 truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
@@ -8,7 +8,8 @@ page — first frontend for the chain system), Phase 09 (NL → chain draft, hum
 saves), Phase 10 (wiring the dormant object-link graph end to end), Phase 11 (feeding
 learned preferences back into AI-action generation), Phase 12 (peer connector-sharing
 completeness — "org RBAC" was never buildable, see that phase's own section), and Phase 13
-(ClickUp adapter test coverage + a real sync fault-isolation fix it found) are done as real,
+(ClickUp adapter test coverage + a real sync fault-isolation fix it found), and Phase 14 (Slack
+webhook replay-window fix — a real, confirmed security gap) are done as real,
 deliberately-scoped slices — see each phase's own section below for exactly what's in and out of
 scope. Phase 01's duplication scan and RabbitMQ contract inventory are still pending (see
 "Explicitly not yet verified" below). Push-subscription lifecycle management (Phase 04's full
@@ -19,8 +20,10 @@ write-path fix (Phase 11's full spec — see Phase 11's own section for why thes
 left for memory-service's own team), true org-level RBAC (Phase 12's full spec — needs auth-service
 schema/claims work that doesn't exist yet, see that phase's own section), the other 8 of 9
 zero-dedicated-test adapters plus every unverified delta-sync/webhook gap in the Pass-2 matrix
-(Phase 13's full spec — see that phase's own section for why only one provider was tackled), and
-Phase 14 onward are not started — each remaining phase is independently a multi-day-to-multi-week
+(Phase 13's full spec — see that phase's own section for why only one provider was tackled),
+Bitbucket/Jira's un-hardened webhook stubs and a durable connector-grant-revocation audit trail
+(Phase 14's full spec — see that phase's own section for why only the Slack fix was tackled), and
+Phase 15 onward are not started — each remaining phase is independently a multi-day-to-multi-week
 feature (deeper provider coverage, etc.); they're being built as
 real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
 instruction — and every category of change that would touch live write-action execution or a live
@@ -840,6 +843,54 @@ path** — both remain read-only, a gap the Pass-2 matrix already flagged as "th
 meeting automation on a provider with no write path at all," unrelated to and not addressed by
 this phase's test-coverage focus.
 
+## Phase 14 — Observability/Security/Governance (Slack webhook replay-window fix, done)
+
+The full Phase 14 spec covers observability, security, and governance broadly — audit logging,
+secret-handling review, webhook-verifier hardening, and more. Investigation (an Explore-agent sweep
+across the gap-map doc, a secret-logging audit of every `this.logger.*` call site, a
+webhook-signature-verifier quality audit, and an audit-trail/governance-table check) found the
+logging discipline already sound — no site logs a raw token, secret, or password; every
+secret-adjacent log interpolates only an id or `error.message`. It also found one genuine,
+confirmed, fixable security gap: **Slack's webhook verifier was missing the replay-window check
+Slack's own docs require**, with a correct reference implementation already sitting as dead code
+elsewhere in the repo.
+
+**What shipped:**
+
+- **The bug**: `buildSlackVerifier()` in
+  `apps/claw-workspace-service/src/modules/webhooks/utilities/webhook-signature-verifiers.utility.ts`
+  checked the `v0=` HMAC signature but never validated `X-Slack-Request-Timestamp` against the
+  current time. Slack's HMAC alone never expires, so a captured, validly-signed webhook payload
+  could be resubmitted indefinitely — a real replay vulnerability, not a theoretical one. A correct
+  implementation of this exact check (`SLACK_MAX_TIMESTAMP_SKEW_MS`, a 5-minute skew window) already
+  existed in `common/utilities/webhook-signature.utility.ts`, but that file is dead code — nothing
+  calls it or its guard (`common/guards/webhook-signature.guard.ts`); the live verifier registry the
+  webhook receiver actually calls is the one in the `webhooks` module.
+- **The fix**: `buildSlackVerifier()` now parses `X-Slack-Request-Timestamp`, rejects a missing or
+  non-numeric timestamp, and rejects anything more than 5 minutes (`SLACK_MAX_TIMESTAMP_SKEW_MS`)
+  from now — all before the (more expensive) HMAC comparison. A new rejection code,
+  `SIGNATURE_TIMESTAMP_EXPIRED`, was added to `WEBHOOK_REJECTION_CODES` (deliberately not reusing
+  the existing-but-unused `REPLAY_DUPLICATE`, whose established meaning is a duplicate delivery id,
+  not a stale timestamp).
+- 4 new tests plus 2 existing tests rewritten (the originals hardcoded a Nov-2023 timestamp that the
+  new skew check would now correctly reject): fresh-timestamp accept, fresh-timestamp-wrong-signature
+  reject, stale-but-validly-signed reject (the direct regression test for the bug), non-numeric
+  timestamp reject, missing timestamp reject, unconfigured-secret reject. 13/13 tests pass in the
+  verifier spec; 17/17 pass across the full `webhooks` module as a regression check.
+
+**Explicitly not done in this slice** (real scope, not oversight): **Bitbucket and Jira's webhook
+verifiers remain honest no-op stubs** (`signatureValid: true` unconditionally, already commented as
+such in the source) — Bitbucket Cloud doesn't send HMAC by default and this app's Jira integration is
+OAuth-based, not an Atlassian Connect app with a shared signing secret, so hardening either would mean
+guessing at an unverified external API contract, the same reasoning Phase 13 used to skip GitLab's
+delta sync and Confluence's webhook. **No audit-logging/governance system was built** — a full
+audit-trail feature (who-did-what-when across workspace actions) is its own multi-day track, not a
+one-phase slice. **Connector-grant revocation still has no durable audit trail**
+(`ConnectorAccessService.revoke()` hard-deletes the grant row via `grantRepo.deleteOne()`, traceable
+only through ephemeral logs) — a real, narrower governance gap identified during investigation but not
+pursued this phase in favor of the more concretely verifiable security fix above; left for a future
+phase.
+
 ## Explicitly not yet verified (next session's starting point)
 
 - Whether `chains`/`ai-actions`/`actions` module boundaries already have the duplication the
@@ -887,8 +938,10 @@ the pack's default sequence to front-load the work that de-risks everything afte
    Confluence webhook, and test coverage for the remaining 8 zero-coverage adapters remain —
    each needs either verified external API details this repo's code can't confirm alone, or is
    simply more of the same ClickUp-shaped work not yet attempted.
-10. **Phase 14** (observability/security/governance) — threaded throughout in practice, but the
-    dedicated hardening pass belongs here once the surfaces it audits exist.
+10. **Phase 14** (observability/security/governance) — the Slack webhook replay-window fix is done;
+    Bitbucket/Jira webhook-stub hardening (needs verified external API contracts this repo can't
+    confirm alone), a full audit-logging/governance system, and a durable connector-grant-revocation
+    audit trail remain, each its own future phase.
 11. **Phase 15** (test labs/chaos/E2E) — needs 01–14 substantially complete to be meaningful.
 12. **Phase 16** (migration/docs/release gate) — final phase, unchanged from the pack's ordering.
 
