@@ -11,10 +11,10 @@ explicit instruction after each was flagged.**
 
 **Post-pack hardening status (updated as each gap closes):** Phase 17 (live-DB migration
 verification), Phase 18 (delta-sync investigation — genuinely blocked for all 3 providers — plus
-the OneDrive capability-drift fix + its first test coverage), and Phase 19 (SharePoint + Google
-Drive test coverage) done — see their own sections. Not yet started: a Confluence webhook; test
-coverage for the remaining 5 zero-coverage adapters (Bitbucket, Confluence, Slack, Google
-Calendar, Outlook Calendar — OneDrive done in Phase 18, SharePoint/Google Drive done in Phase 19);
+the OneDrive capability-drift fix + its first test coverage), Phase 19 (SharePoint + Google Drive
+test coverage), and Phase 20 (Bitbucket/Slack/Confluence/Google Calendar/Outlook Calendar test
+coverage) done — see their own sections. **Every adapter in the service now has dedicated test
+coverage** (0 of 9 → 9 of 9 across Phases 18–20). Not yet started: a Confluence webhook;
 Bitbucket/Jira webhook-stub hardening; a Google/Outlook Calendar write path; a durable
 audit-logging/governance system; a connector-grant-revocation audit trail; the
 `WebhookReceiverManager.replay()` failed-republish signal; a fault-injection "lab"; CI-wired E2E;
@@ -1129,6 +1129,55 @@ Two more of the 8 zero-coverage adapters flagged since Phase 13.
 **Explicitly not done in this slice**: no code behavior changed in either adapter (SharePoint had
 nothing to fix; Google Drive's delta-sync semantics question stays open and undecided, not
 resolved either way).
+
+## Phase 20 — Bitbucket, Slack, Confluence, Google Calendar, Outlook Calendar Test Coverage (done)
+
+Closes the remaining 5 of the 8 zero-coverage adapters flagged since Phase 13 — combined with
+Phases 18–19's OneDrive/SharePoint/Google Drive, **every adapter in `claw-workspace-service` now
+has dedicated test coverage.** Each was checked for the same class of capability-drift bug found in
+OneDrive before writing its tests; none of the 5 had one:
+
+- **Bitbucket**: `getCapabilities()` already honest. Its PR-fetch fault isolation already matches
+  GitHub's `safeFetchIssues`/ClickUp's fixed pattern (mapping happens inside the same try/catch as
+  the fetch). Added 36 tests: `healthCheck`, capabilities, `supportsPkce` (false — Bitbucket OAuth2
+  rejects `code_challenge` with HTTP 400), OAuth exchange/refresh via Basic auth, `syncObjects`
+  (workspace → repo → PR walk, the 410-no-workspaces empty-list branch, a failed-workspace repo
+  fetch not aborting siblings, and PR-fetch fault isolation for both an HTTP failure and a thrown
+  network error), `fetchObjectDetails` for both REPOSITORY and PULL_REQUEST, all 3 write actions,
+  and the unsupported-action fallback.
+- **Slack**: `getCapabilities()` already honest. `executeWriteAction`/`syncObjects` have no inner
+  try/catch (unlike sibling adapters) — checked whether this is a live gap: it isn't, because the
+  only caller, `ActionExecutionManager.execute()`, already wraps every adapter call in its own
+  try/catch, converting any thrown error into a structured result regardless of whether the adapter
+  does its own catching. Added 25 tests: `healthCheck` (including the `invalid_auth`/`token_revoked`
+  → DISCONNECTED vs. any-other-error → DEGRADED distinction), capabilities, OAuth exchange (bot
+  token vs. `authed_user` fallback), `refreshTokens` (always throws — Slack has no refresh_token
+  flow), `syncObjects`, and all 3 write actions (`SEND_SLACK`/`SEND_SLACK_MESSAGE`/`REPLY_SLACK`,
+  including the `thread_ts` and `blocks` payload variants).
+- **Confluence**: `getCapabilities()` already honest (`supportsWebhooks: false`, matching the
+  already-documented no-Confluence-webhook gap). Added 31 tests: `healthCheck`, capabilities, OAuth
+  exchange/refresh, `syncObjects` (confluence-scoped-resource selection, the no-accessible-resource
+  empty-result branch, and the fallback-to-first-resource branch), `fetchObjectDetails`, and both
+  write actions (`CREATE_CONFLUENCE`/`EDIT_CONFLUENCE`, including the version-increment logic on
+  edit and the no-accessible-site failure path).
+- **Google Calendar**: `getCapabilities()` claims `supportsDeltaSync: true`, and — unlike Drive —
+  this one is genuinely correct: it uses the Calendar API's own native `syncToken` mechanism
+  (threaded in as a real query param, `nextSyncToken` read back out), the same real precedent Phase
+  19 identified as the one genuine in-repo delta-cursor example. Added 26 tests: `healthCheck`,
+  capabilities, OAuth, `syncObjects` (cancelled-event filtering, the `syncToken` threading, and the
+  `nextSyncToken` vs. `nextPageToken` fallback), `fetchObjectDetails`, and confirmation that
+  `supportsWrite`/`executeWriteAction` are genuinely absent (the calendar-write-path gap already
+  documented in Phase 13's section).
+- **Outlook Calendar**: `getCapabilities()` already honest (`supportsDeltaSync: false`, confirmed
+  during Phase 18's investigation — `deltaToken` is unused and `deltaTokenOut` is Graph's
+  pagination link, never threaded back in). Added 21 tests, same shape as Google Calendar's.
+
+1113/1113 tests pass across the full backend suite (92/92 suites); lint and build clean.
+
+**Explicitly not done in this slice**: no adapter behavior changed — this phase found zero new
+drift bugs (OneDrive's, found in Phase 18, remains the only one across all 9 adapters). The
+Google/Outlook Calendar write-path gap and the still-open Google Drive delta-sync-semantics
+observation (Phase 19) remain exactly as documented, un-addressed here.
 
 ## Explicitly not yet verified (next session's starting point)
 
