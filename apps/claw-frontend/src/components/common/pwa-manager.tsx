@@ -4,6 +4,7 @@ import { Download, RefreshCw, WifiOff, X } from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { PWA_INSTALL_DISMISSED_KEY } from '@/constants/pwa.constants';
 import { useTranslation } from '@/lib/i18n';
 import type { PwaInstallPromptEvent } from '@/types/pwa.types';
 
@@ -12,9 +13,11 @@ export function PwaManager(): React.ReactElement | null {
   const [isOffline, setIsOffline] = React.useState(false);
   const [waitingWorker, setWaitingWorker] = React.useState<ServiceWorker | null>(null);
   const [installPrompt, setInstallPrompt] = React.useState<PwaInstallPromptEvent | null>(null);
-  const [installDismissed, setInstallDismissed] = React.useState(false);
+  const [isMinimized, setIsMinimized] = React.useState(false);
+  const [installDismissed, setInstallDismissed] = React.useState(true); // Default to dismissed until checked.
 
   React.useEffect(() => {
+    setInstallDismissed(localStorage.getItem(PWA_INSTALL_DISMISSED_KEY) === 'true');
     setIsOffline(!navigator.onLine);
     const handleOnline = (): void => setIsOffline(false);
     const handleOffline = (): void => setIsOffline(true);
@@ -81,54 +84,85 @@ export function PwaManager(): React.ReactElement | null {
     setInstallPrompt(null);
   };
 
+  const dismissInstall = (): void => {
+    localStorage.setItem(PWA_INSTALL_DISMISSED_KEY, 'true');
+    setInstallDismissed(true);
+  };
+
   if (!isOffline && !waitingWorker && (!installPrompt || installDismissed)) {
     return null;
   }
 
+  if (isMinimized) {
+    return (
+      <div className="safe-bottom fixed start-4 end-20 bottom-[4.75rem] z-[120] flex justify-center sm:inset-x-0 sm:bottom-6">
+        <Button onClick={() => setIsMinimized(false)} className="rounded-full shadow-lg">
+          <Download className="me-2 h-4 w-4" />
+          {t('pwa.expand')}
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div
-      // The chat page renders a floating "new chat" action button pinned to
-      // the same bottom-end corner (see (portal)/chat/page.tsx). A symmetric
-      // inset-x here used to span underneath it, and this banner's z-index
-      // is intentionally the highest in the app, so on mobile it silently
-      // swallowed every tap meant for that button. Reserving extra space on
-      // the end side keeps the banner clear of that corner instead of
-      // relying on z-order, which would only move the dead zone onto this
-      // banner's own Install/Dismiss buttons. This is scoped to mobile
-      // (below `sm`) only -- the desktop `sm:end-4 sm:top-4` placement is
-      // unchanged from before this fix.
-      className="safe-bottom bg-background/95 shadow-floating fixed start-2 end-20 bottom-[4.75rem] z-[120] mx-auto flex max-w-lg flex-col gap-2 rounded-xl border p-3 backdrop-blur sm:inset-x-auto sm:end-4 sm:top-4 sm:bottom-auto sm:w-[min(28rem,calc(100vw-2rem))]"
-    >
+    // The chat page pins a floating "new chat" button to the bottom-end
+    // corner, and this banner carries the highest z-index in the app. A
+    // symmetric inset used to span underneath that button and swallow every
+    // tap meant for it, so the end-side gap is reserved on mobile rather than
+    // relying on z-order. On wider screens the panel is centred at the bottom,
+    // where it clears the button on its own.
+    <div className="safe-bottom bg-background/95 shadow-floating fixed start-4 end-20 bottom-[4.75rem] z-[120] mx-auto flex max-w-lg flex-col gap-3 rounded-xl border p-4 backdrop-blur sm:inset-x-0 sm:bottom-6">
       {isOffline ? (
-        <div className="flex min-h-11 items-center gap-3 text-sm">
-          <WifiOff className="text-warning h-5 w-5 shrink-0" aria-hidden="true" />
-          <span className="min-w-0 flex-1">{t('pwa.offlineMessage')}</span>
+        <div className="flex items-center gap-3">
+          <span className="bg-warning/10 text-warning flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+            <WifiOff className="h-[18px] w-[18px]" aria-hidden="true" />
+          </span>
+          <p className="text-muted-foreground min-w-0 flex-1 text-xs leading-relaxed">
+            {t('pwa.offlineMessage')}
+          </p>
         </div>
       ) : null}
       {waitingWorker ? (
-        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2">
-          <RefreshCw className="text-primary h-5 w-5 shrink-0" aria-hidden="true" />
-          <span className="min-w-0 flex-1 text-sm">{t('pwa.updateAvailable')}</span>
+        <div className="flex items-center gap-3">
+          <span className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+            <RefreshCw className="h-[18px] w-[18px]" aria-hidden="true" />
+          </span>
+          <p className="min-w-0 flex-1 text-sm font-medium">{t('pwa.updateAvailable')}</p>
           <Button size="sm" onClick={applyUpdate}>
             {t('pwa.updateAction')}
           </Button>
         </div>
       ) : null}
       {installPrompt && !installDismissed ? (
-        <div className="flex items-center gap-2">
-          <Download className="text-primary h-5 w-5 shrink-0" aria-hidden="true" />
-          <span className="min-w-0 flex-1 text-sm">{t('pwa.installMessage')}</span>
-          <Button size="sm" onClick={() => void install()}>
-            {t('pwa.installAction')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t('pwa.dismissInstall')}
-            onClick={() => setInstallDismissed(true)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start gap-4">
+            <span className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+              <Download className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">{t('pwa.installTitle')}</p>
+              <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                {t('pwa.installMessage')}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setIsMinimized(true)}>
+              {t('pwa.minimise')}
+            </Button>
+            <Button size="sm" onClick={() => void install()}>
+              {t('pwa.installAction')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground -me-2 h-8 w-8 shrink-0"
+              aria-label={t('pwa.neverShowAgain')}
+              onClick={dismissInstall}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       ) : null}
     </div>

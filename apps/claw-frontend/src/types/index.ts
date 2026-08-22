@@ -543,6 +543,7 @@ export type {
   UseVirtualizedMessagesControllerParams,
   UseVirtualizedMessagesControllerReturn,
   UseFollowStreamingTokensParams,
+  UseProfilePageReturn,
 } from './hook.types';
 export type {
   CandidateResult,

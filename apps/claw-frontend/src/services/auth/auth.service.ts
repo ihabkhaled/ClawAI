@@ -64,6 +64,13 @@ export const authService = {
 
   async updateOwnProfile(data: UpdateOwnProfileRequest): Promise<void> {
     await authRepository.updateOwnProfile(data);
+    // The API revokes every session only when the username changes, so the
+    // caller omits the username unless it actually changed. Clearing local auth
+    // on a name or phone edit would sign the user out of a session the server
+    // still considers valid.
+    if (data.username === undefined) {
+      return;
+    }
     useAuthStore.getState().clearAuth();
     if (typeof document !== 'undefined') {
       document.cookie = 'claw-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';

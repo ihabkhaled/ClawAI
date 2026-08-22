@@ -110,7 +110,7 @@ describe('PwaManager', () => {
     // Re-fire the prompt to exercise the dismiss path independently.
     window.dispatchEvent(installEvent);
     await screen.findByText('pwa.installMessage');
-    const dismissButton = screen.getByRole('button', { name: 'pwa.dismissInstall' });
+    const dismissButton = screen.getByRole('button', { name: 'pwa.neverShowAgain' });
     await user.click(dismissButton);
     expect(screen.queryByText('pwa.installMessage')).toBeNull();
   });

@@ -6627,6 +6627,11 @@
         "route": "/plan"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/profile/page.tsx",
+        "kind": "page",
+        "route": "/profile"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/research/providers/page.tsx",
         "kind": "page",
         "route": "/research/providers"
@@ -7299,7 +7304,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4537
+        "value": 4562
       },
       "localeCount": 16,
       "locales": [
@@ -9735,7 +9740,7 @@
     "endpointCount": 597,
     "envVarCount": 347,
     "eventCount": 167,
-    "frontendRouteCount": 122,
+    "frontendRouteCount": 123,
     "localeCount": 16,
     "nginxRouteCount": 54,
     "permissionCount": 47,

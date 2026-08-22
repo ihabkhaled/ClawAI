@@ -12,6 +12,7 @@ import type {
   ForgotPasswordFormValues,
   ResetPasswordFormValues,
 } from '@/lib/validation/password-reset.schema';
+import type { ProfileIdentityFormValues } from '@/lib/validation/profile.schema';
 import type { RegisterFormValues } from '@/lib/validation/register.schema';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 
@@ -845,4 +846,13 @@ export type UsePasswordVisibilityReturn = {
   visible: boolean;
   toggle: () => void;
   inputType: PasswordInputType;
+};
+
+export type UseProfilePageReturn = {
+  form: UseFormReturn<ProfileIdentityFormValues>;
+  t: TranslateFunction;
+  isLoading: boolean;
+  isSaving: boolean;
+  email: string;
+  save: (event?: React.BaseSyntheticEvent) => Promise<void>;
 };

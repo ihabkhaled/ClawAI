@@ -50,7 +50,7 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
         )}
       </div>
 
-      <p className="mt-5 flex items-baseline gap-1">
+      <p className="mt-6 flex items-baseline gap-1">
         <span className="text-foreground text-3xl font-bold tracking-tight">
           {price === null
             ? t('billing.plans.unavailableForInterval')
@@ -61,7 +61,7 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
         )}
       </p>
 
-      <dl className="text-muted-foreground mt-4 space-y-1 text-xs">
+      <dl className="text-muted-foreground mt-6 space-y-2.5 text-xs">
         <div className="flex justify-between gap-2">
           <dt>{t('userPlan.dailyLimitLabel')}</dt>
           <dd className="text-foreground font-medium">
@@ -112,7 +112,7 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
         </div>
       </dl>
 
-      <div className="mt-4">
+      <div className="border-border/60 mt-6 space-y-2 border-t pt-5">
         <PlanFeatureGates featureGates={plan.featureGates} t={t} />
       </div>
 

@@ -39,6 +39,7 @@ const TECHNICAL_VALUE_ALLOWLIST = new Set([
   'VS Code',
   'N/A',
   'Claw v{version}',
+  '+14155550123',
   'you@example.com',
   'Gmail',
   'Jira',

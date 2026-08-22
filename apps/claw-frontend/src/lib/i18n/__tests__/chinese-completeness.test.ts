@@ -43,6 +43,7 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set([
   'Ollama',
   'PayPal',
   'PayPal/Card',
+  '+14155550123',
   'you@example.com',
   'Paymob',
   'GitHub',

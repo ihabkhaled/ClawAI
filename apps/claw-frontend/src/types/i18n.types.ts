@@ -4948,9 +4948,35 @@ export type TranslationDictionary = {
     offlineMessage: string;
     updateAvailable: string;
     updateAction: string;
+    installTitle: string;
     installMessage: string;
     installAction: string;
     dismissInstall: string;
+    minimise: string;
+    expand: string;
+    neverShowAgain: string;
+  };
+  profile: {
+    title: string;
+    description: string;
+    identityTitle: string;
+    identityDescription: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    phonePlaceholder: string;
+    phoneInvalid: string;
+    username: string;
+    usernameInvalid: string;
+    usernameNotice: string;
+    email: string;
+    emailNotice: string;
+    currentPassword: string;
+    currentPasswordRequired: string;
+    nameTooLong: string;
+    save: string;
+    saved: string;
+    saveFailed: string;
   };
 };
 
