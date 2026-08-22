@@ -27,6 +27,12 @@ export const FALLBACK_CADENCE_SECONDS: Record<WorkspaceProvider, number> = {
 
 export const FALLBACK_BACKFILL_WINDOW_DAYS = 30;
 
+// Post-pack hardening — SyncCadenceSeederManager's starting priority for a
+// freshly-bootstrapped SyncCadenceDefault row. Only used on first
+// creation; a re-seed never overwrites priority once a row exists (see
+// SyncCadenceRepository.upsertDefault's own comment for why).
+export const SYNC_CADENCE_SEED_DEFAULT_PRIORITY = 50;
+
 export const SCHEDULER_LOCK_NAMESPACE = 'workspace.sync.scheduler';
 export const SCHEDULER_TICK_NAME = 'workspace.sync.tick';
 export const STALE_DETECTOR_TICK_NAME = 'workspace.sync.stale_detector';

@@ -38,6 +38,7 @@ import { WorkspaceHealthManager } from './managers/workspace-health.manager';
 import { WorkspaceObjectManager } from './managers/workspace-object.manager';
 import { WorkspaceSearchManager } from './managers/workspace-search.manager';
 import { WorkspaceSyncManager } from './managers/workspace-sync.manager';
+import { SyncCadenceSeederManager } from './managers/sync-cadence-seeder.manager';
 import { WorkspaceSyncSchedulerManager } from './managers/workspace-sync-scheduler.manager';
 import { ProviderAppConfigRepository } from './repositories/provider-app-config.repository';
 import { ProviderDefinitionRepository } from './repositories/provider-definition.repository';
@@ -93,6 +94,7 @@ import { WorkspaceEntitlementService } from './services/workspace-entitlement.se
     WorkspaceHealthManager,
     WorkspaceSyncManager,
     WorkspaceSyncSchedulerManager,
+    SyncCadenceSeederManager,
     StaleDetectorManager,
     OrphanSyncRecoveryManager,
     WorkspaceObjectManager,

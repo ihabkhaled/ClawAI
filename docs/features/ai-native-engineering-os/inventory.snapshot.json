@@ -8993,7 +8993,7 @@
       },
       "claw-workspace-service": {
         "runner": "jest",
-        "testFiles": 92
+        "testFiles": 93
       }
     },
     "workspaces": [
@@ -9710,7 +9710,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 963,
+    "totalTestFiles": 964,
     "workspaceCount": 25
   }
 }

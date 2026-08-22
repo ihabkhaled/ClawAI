@@ -13,21 +13,21 @@ explicit instruction after each was flagged.**
 verification), Phase 18 (delta-sync investigation — genuinely blocked for all 3 providers — plus
 the OneDrive capability-drift fix + its first test coverage), Phase 19 (SharePoint + Google Drive
 test coverage), Phase 20 (Bitbucket/Slack/Confluence/Google Calendar/Outlook Calendar test
-coverage), Phase 21 (Google/Outlook Calendar write path), and Phase 22 (webhook replay failure
-signal + connector-grant audit trail) done — see their own sections. **Every adapter in the
-service now has dedicated test coverage** (0 of 9 → 9 of 9 across Phases 18–20). Not yet started:
-a Confluence webhook; Bitbucket/Jira webhook-stub hardening; a durable audit-logging/governance
-system (broader than the one connector-grant table Phase 22 added); a fault-injection "lab";
-CI-wired E2E; auto-triggering off events; the real chain-executor DAG rewrite;
-compensating/verification steps; push-subscription lifecycle management; the AI-step/auto-trigger
-recipe layer; an LLM-backed preference classifier (memory-service); the memory-service write-path
-fix; true org-level RBAC (auth-service); the never-seeded `SyncCadenceDefault` table (found during
-Phase 18, deliberately deferred as its own gap); the open Google Drive delta-sync-semantics
-observation (found during Phase 19, deliberately left unresolved); the remaining stale
-per-service docs; Phase 01's duplication scan and RabbitMQ contract inventory. Per explicit
-instruction this pass, the LLM-preference-classifier and org-RBAC items are now in scope even
-though they cross into memory-service/auth-service — every other item stays within
-`claw-workspace-service`/`claw-frontend`.
+coverage), Phase 21 (Google/Outlook Calendar write path), Phase 22 (webhook replay failure signal
+
+- connector-grant audit trail), and Phase 23 (`SyncCadenceDefault` seeder) done — see their own
+  sections. **Every adapter in the service now has dedicated test coverage** (0 of 9 → 9 of 9 across
+  Phases 18–20). Not yet started: a Confluence webhook; Bitbucket/Jira webhook-stub hardening; a
+  durable audit-logging/governance system (broader than the one connector-grant table Phase 22
+  added); a fault-injection "lab"; CI-wired E2E; auto-triggering off events; the real
+  chain-executor DAG rewrite; compensating/verification steps; push-subscription lifecycle
+  management; the AI-step/auto-trigger recipe layer; an LLM-backed preference classifier
+  (memory-service); the memory-service write-path fix; true org-level RBAC (auth-service); the open
+  Google Drive delta-sync-semantics observation (found during Phase 19, deliberately left
+  unresolved); the remaining stale per-service docs; Phase 01's duplication scan and RabbitMQ
+  contract inventory. Per explicit instruction this pass, the LLM-preference-classifier and
+  org-RBAC items are now in scope even though they cross into memory-service/auth-service — every
+  other item stays within `claw-workspace-service`/`claw-frontend`.
 
 Pass 1 (below, preserved) established the structural map. Pass 2 adds the machine-actionable
 per-provider matrix the spec actually asks for, built by reading every adapter's
@@ -1278,6 +1278,45 @@ and the grant audit log has no read endpoint at all yet (write-path only, matchi
 exists" rather than "full audit UI," which is real, separate, larger future work). No retroactive
 backfill for grants revoked before this phase shipped — the audit trail starts now, not
 historically.
+
+## Phase 23 — SyncCadenceDefault Seeder (done)
+
+Closes the gap Phase 18 found and deferred: `SyncCadenceDefault`'s own doc comment says "DB values
+ALWAYS win over [`FALLBACK_CADENCE_SECONDS`]," but nothing anywhere in the codebase ever wrote a
+row into that table — `SyncCadenceRepository.findAll()` always returned `[]`, so the DB-level
+admin-override surface this table exists for was never actually reachable. Not a live bug (the
+constant fallback is correct and the scheduler degrades to it cleanly), but a real, half-built
+"config goes DB-level" feature (matching this project's established pattern of DB table + seeder,
+avoiding new env vars) with only the seeder half missing.
+
+**What shipped:**
+
+- `SyncCadenceRepository.upsertDefault()` — idempotent, but asymmetric on purpose:
+  `create` bootstraps every field from the current fallback the first time a provider's row
+  doesn't exist; `update` touches ONLY `supportsDeltaSync`/`supportsWebhookSync`/`nativeCursorKind`
+  (fields that describe adapter reality and should stay fresh) and deliberately never overwrites
+  `intervalSeconds`/`backfillWindowDays`/`priority` on a later boot — those are the actual
+  admin-tunable override surface `SyncCadenceDefault` exists for, and a naive full-upsert-every-boot
+  would silently stomp any admin override back to the fallback on every deploy.
+- `SyncCadenceSeederManager` (new, `OnApplicationBootstrap`, matching the existing
+  `TriggerRuleSeederManager`/`AiActionDefaultPolicySeederManager` pattern) seeds one row per
+  provider in `PROVIDER_DEFINITION_SEEDS` on every boot. Capability flags
+  (`supportsDeltaSync`/`supportsWebhookSync`) are derived from that same drift-tested source — the
+  one `provider-registry-drift.spec.ts` already verifies against every real adapter — not a fourth,
+  independently-maintained value that could silently diverge the way OneDrive's `getCapabilities()`
+  flag did (Phase 18).
+- Registered in `workspace.module.ts`'s `providers` (bootstrap-only; nothing else calls it, so no
+  export needed).
+- 3 new tests, including a regression guard asserting the seeder never hardcodes a capability flag
+  independent of `PROVIDER_DEFINITION_SEEDS` — the exact shape of bug this session repeatedly found
+  and fixed elsewhere. 1129/1129 backend tests pass (93/93 suites); lint (0 errors — one new
+  `security/detect-object-injection` warning on an enum-indexed lookup, the same accepted false-positive
+  class already present in `chain-executor.manager.ts`/`google-drive.adapter.ts`) and build clean.
+
+**Explicitly not done in this slice**: no admin UI or API endpoint to actually edit
+`intervalSeconds`/`priority` after seeding — this phase makes the table genuinely populated and
+queryable (an admin could hand-edit rows directly today), not a full self-service admin page,
+which is real, separate, larger future work.
 
 ## Explicitly not yet verified (next session's starting point)
 
