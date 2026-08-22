@@ -41,7 +41,7 @@ export default function WorkspacePage(): React.ReactElement {
           description={t('workspaceConnectors.description')}
         />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">
+          <p className="text-destructive text-sm">
             {error instanceof Error ? error.message : t('workspaceConnectors.loadFailed')}
           </p>
         </div>
@@ -83,7 +83,7 @@ export default function WorkspacePage(): React.ReactElement {
       )}
 
       {!isLoading && connectors.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {connectors.map((connector) => (
             <WorkspaceConnectorCard
               key={connector.id}
@@ -103,7 +103,7 @@ export default function WorkspacePage(): React.ReactElement {
       {!isLoading && connectors.length > 0 && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
-            <Package className="size-4 text-muted-foreground" />
+            <Package className="text-muted-foreground size-4" />
             <h2 className="text-base font-semibold">
               {selectedConnector !== null
                 ? t('workspaceObjects.title')

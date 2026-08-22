@@ -33,7 +33,7 @@ export default function ProfilePage(): React.ReactElement {
         </CardHeader>
         <CardContent>
           <form onSubmit={save} className="space-y-6">
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div className="space-y-2">
                 <label htmlFor="firstName" className="text-sm leading-none font-medium">
                   {t('profile.firstName')}

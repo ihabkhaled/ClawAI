@@ -26,9 +26,9 @@ export function PlanForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid max-w-3xl gap-6">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
+    <form onSubmit={handleSubmit} className="grid max-w-3xl grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-name" className="text-sm font-medium">
             {t('adminPlans.form.name')}
           </label>
@@ -44,7 +44,7 @@ export function PlanForm({
           ) : null}
         </div>
 
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-slug" className="text-sm font-medium">
             {t('adminPlans.form.slug')}
           </label>
@@ -63,7 +63,7 @@ export function PlanForm({
         </div>
       </div>
 
-      <div className="grid gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <label htmlFor="plan-description" className="text-sm font-medium">
           {t('adminPlans.form.description')}
         </label>
@@ -78,8 +78,8 @@ export function PlanForm({
         ) : null}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-daily-quota" className="text-sm font-medium">
             {t('adminPlans.form.dailyTokenQuota')}
           </label>
@@ -98,7 +98,7 @@ export function PlanForm({
             <p className="text-destructive text-xs">{fieldErrors.dailyTokenQuota}</p>
           ) : null}
         </div>
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-weekly-quota" className="text-sm font-medium">
             {t('adminPlans.form.weeklyTokenQuota')}
           </label>
@@ -115,7 +115,7 @@ export function PlanForm({
             <p className="text-destructive text-xs">{fieldErrors.weeklyTokenQuota}</p>
           ) : null}
         </div>
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-monthly-quota" className="text-sm font-medium">
             {t('adminPlans.form.monthlyTokenQuota')}
           </label>
@@ -134,8 +134,8 @@ export function PlanForm({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="grid gap-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-max-chats" className="text-sm font-medium">
             {t('adminPlans.form.maxChatsPerDay')}
           </label>
@@ -148,7 +148,7 @@ export function PlanForm({
             placeholder={t('adminPlans.form.unlimitedPlaceholder')}
           />
         </div>
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-max-messages" className="text-sm font-medium">
             {t('adminPlans.form.maxMessagesPerDay')}
           </label>
@@ -161,7 +161,7 @@ export function PlanForm({
             placeholder={t('adminPlans.form.unlimitedPlaceholder')}
           />
         </div>
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-max-workspaces" className="text-sm font-medium">
             {t('adminPlans.form.maxWorkspaceConnections')}
           </label>
@@ -174,7 +174,7 @@ export function PlanForm({
             placeholder={t('adminPlans.form.unlimitedPlaceholder')}
           />
         </div>
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-max-packs" className="text-sm font-medium">
             {t('adminPlans.form.maxContextPacks')}
           </label>
@@ -187,7 +187,7 @@ export function PlanForm({
             placeholder={t('adminPlans.form.unlimitedPlaceholder')}
           />
         </div>
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-max-memory" className="text-sm font-medium">
             {t('adminPlans.form.maxMemoryItems')}
           </label>
@@ -200,7 +200,7 @@ export function PlanForm({
             placeholder={t('adminPlans.form.unlimitedPlaceholder')}
           />
         </div>
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-display-order" className="text-sm font-medium">
             {t('adminPlans.form.displayOrder')}
           </label>
@@ -214,7 +214,7 @@ export function PlanForm({
         </div>
       </div>
 
-      <div className="border-border grid gap-3 rounded-lg border p-4">
+      <div className="border-border grid grid-cols-1 gap-3 rounded-lg border p-4">
         <h3 className="text-sm font-semibold">{t('adminPlans.form.featureGates')}</h3>
         <div className="flex items-center justify-between gap-2">
           <label htmlFor="plan-is-public" className="text-sm">
@@ -316,7 +316,7 @@ export function PlanForm({
         </div>
       </div>
 
-      <div className="border-border grid gap-3 rounded-lg border p-4">
+      <div className="border-border grid grid-cols-1 gap-3 rounded-lg border p-4">
         <h3 className="text-sm font-semibold">{t('adminPlans.form.orchestrationLabs')}</h3>
         <p className="text-muted-foreground text-xs">
           {t('adminPlans.form.orchestrationLabsHint')}

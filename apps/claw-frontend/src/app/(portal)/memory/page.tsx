@@ -77,7 +77,7 @@ export default function MemoryPage(): React.ReactElement {
       <div>
         <PageHeader title={t('memory.title')} description={t('memory.description')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">{error?.message ?? t('memory.loadFailed')}</p>
+          <p className="text-destructive text-sm">{error?.message ?? t('memory.loadFailed')}</p>
         </div>
       </div>
     );
@@ -207,7 +207,7 @@ export default function MemoryPage(): React.ReactElement {
           )}
 
           {!isLoading && memories.length > 0 && (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {memories.map((memory) => (
                 <MemoryCard
                   key={memory.id}

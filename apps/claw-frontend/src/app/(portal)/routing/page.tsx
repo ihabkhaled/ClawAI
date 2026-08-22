@@ -93,7 +93,7 @@ export default function RoutingPage(): React.ReactElement {
       <div>
         <PageHeader title={t('routing.title')} description={t('routing.description')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">{error?.message ?? t('routing.loadFailed')}</p>
+          <p className="text-destructive text-sm">{error?.message ?? t('routing.loadFailed')}</p>
         </div>
       </div>
     );
@@ -112,7 +112,7 @@ export default function RoutingPage(): React.ReactElement {
         }
       />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">{t('routing.defaultRoutingMode')}</CardTitle>

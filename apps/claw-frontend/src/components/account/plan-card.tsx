@@ -18,7 +18,7 @@ export function PlanCard({ plan, t }: PlanCardProps): ReactElement {
         </div>
         <CardDescription>{t('userPlan.featuresIncluded')}</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid grid-cols-1 gap-4">
         <PlanFeatureGates featureGates={plan.featureGates} t={t} />
         <PlanLimits limits={plan.limits} t={t} />
       </CardContent>

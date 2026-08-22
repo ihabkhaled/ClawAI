@@ -54,7 +54,7 @@ export function PlanRow({
           <p className="text-muted-foreground text-sm">{plan.description}</p>
         ) : null}
 
-        <div className="text-muted-foreground grid gap-1 text-xs sm:grid-cols-3">
+        <div className="text-muted-foreground grid grid-cols-1 gap-1 text-xs sm:grid-cols-3">
           <div>
             <span className="text-foreground font-medium">{t('adminPlans.dailyQuota')}</span>:{' '}
             {formatTokenCount(plan.dailyTokenQuota)}

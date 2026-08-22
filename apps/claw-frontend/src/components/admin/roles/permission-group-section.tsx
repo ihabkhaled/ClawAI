@@ -17,7 +17,7 @@ export function PermissionGroupSection({
   const allSelected = group.permissions.every((permission) => selected.has(permission));
 
   return (
-    <div className="grid gap-2 rounded-lg border border-border p-3">
+    <div className="border-border grid grid-cols-1 gap-2 rounded-lg border p-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold">{t(`adminRoles.group.${group.groupKey}`)}</h3>
         <Button
@@ -30,7 +30,7 @@ export function PermissionGroupSection({
           {allSelected ? t('adminRoles.detail.clearGroup') : t('adminRoles.detail.selectGroup')}
         </Button>
       </div>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {group.permissions.map((permission) => (
           <label key={permission} className="flex items-center gap-2 text-sm">
             <Checkbox
@@ -38,7 +38,7 @@ export function PermissionGroupSection({
               disabled={disabled}
               onCheckedChange={() => togglePermission(permission)}
             />
-            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{permission}</code>
+            <code className="bg-muted rounded px-1.5 py-0.5 text-xs">{permission}</code>
           </label>
         ))}
       </div>

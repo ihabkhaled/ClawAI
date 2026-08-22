@@ -45,7 +45,7 @@ export default function ModelCatalogPage(): React.ReactElement {
       <div>
         <PageHeader title={t('catalog.title')} description={t('catalog.description')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">{t('models.loadFailed')}</p>
+          <p className="text-destructive text-sm">{t('models.loadFailed')}</p>
         </div>
       </div>
     );
@@ -71,7 +71,7 @@ export default function ModelCatalogPage(): React.ReactElement {
           className="max-w-sm"
         />
         {!isLoading ? (
-          <span className="text-sm text-muted-foreground">
+          <span className="text-muted-foreground text-sm">
             {entries.length} / {meta.total} {t('catalog.models')}
           </span>
         ) : null}
@@ -99,7 +99,7 @@ export default function ModelCatalogPage(): React.ReactElement {
 
       {!isLoading && entries.length > 0 ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {entries.map((entry) => (
               <CatalogModelCard
                 key={entry.id}
@@ -116,13 +116,13 @@ export default function ModelCatalogPage(): React.ReactElement {
 
           <div ref={sentinelRef} className="flex items-center justify-center py-4">
             {isFetchingNextPage && (
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
             )}
             {!isFetchingNextPage && hasNextPage && (
-              <span className="text-xs text-muted-foreground">{t('catalog.scrollForMore')}</span>
+              <span className="text-muted-foreground text-xs">{t('catalog.scrollForMore')}</span>
             )}
             {!isFetchingNextPage && !hasNextPage && (
-              <span className="text-xs text-muted-foreground">{t('catalog.allLoaded')}</span>
+              <span className="text-muted-foreground text-xs">{t('catalog.allLoaded')}</span>
             )}
           </div>
         </>

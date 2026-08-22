@@ -77,7 +77,7 @@ export function EditUserDialog(props: EditUserDialogProps): ReactElement {
           <DialogDescription>{t('admin.editUserDescription')}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="grid grid-cols-1 gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="username" className="text-sm leading-none font-medium">
               {t('admin.editUserUsername')}

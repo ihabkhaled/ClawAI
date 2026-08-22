@@ -7,9 +7,9 @@ import { formatNullableLimit } from '@/utilities';
 
 export function PlanLimits({ limits, t }: PlanLimitsProps): ReactElement {
   return (
-    <div className="border-border grid gap-2 border-t pt-4">
+    <div className="border-border grid grid-cols-1 gap-2 border-t pt-4">
       <p className="text-sm font-medium">{t('userPlan.planLimits')}</p>
-      <dl className="grid gap-2 text-sm sm:grid-cols-2">
+      <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
         <div className="bg-muted/35 flex justify-between gap-3 rounded-md px-3 py-2">
           <dt className="text-muted-foreground">{t('userPlan.dailyLimitLabel')}</dt>
           <dd className="font-medium tabular-nums">
