@@ -123,6 +123,46 @@ is running, slows to 30 seconds for terminal states, and warns when a running
 deployment has not reported progress for 30 minutes. Ordinary admins cannot see
 the navigation item or access the API.
 
+### 2.8 Deployment control from the admin page
+
+The same page drives production, not just watches it. Every control is
+super-admin only and ends in the same `deploy-production` workflow an automatic
+release dispatches — there is no second deployment path.
+
+| Control                | What it does                                                                              |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| Automatic deployment   | Pauses or resumes the automatic lane by writing `.deploy/automation.json`                 |
+| Deploy latest          | Dispatches the workflow against `GITHUB_DEPLOY_REF` (normally `main`)                     |
+| Re-deploy current      | Dispatches the commit already recorded as live — the recovery re-run                      |
+| Deploy an exact commit | Dispatches one 40-character SHA an operator typed — rollback, or pinning a known-good run |
+| Clear stuck rollout    | Rewrites a rollout that stopped reporting as `failed` so the next dispatch is not blocked |
+
+Manual dispatch needs the whole credential set — `GITHUB_DEPLOY_TOKEN`
+(fine-grained PAT, `actions: write` on this repository and nothing else),
+`GITHUB_DEPLOY_REPOSITORY` (`owner/repo`) and `GITHUB_DEPLOY_REF`. A partial set
+does not half-enable it: the page hides the manual controls rather than offering
+a button that can only fail. The automatic-deploy switch works either way,
+because it is a file on the box rather than a GitHub call.
+
+Two guards keep an operator from racing the pipeline. A dispatch is refused
+while a rollout is still reporting (HTTP 409, `DEPLOYMENT_ALREADY_RUNNING`);
+once a rollout has gone quiet past the 30-minute stale window it no longer
+blocks, which is exactly the stuck case the manual lane exists to recover.
+Clearing a stuck rollout only rewrites `status.json` with
+`failureCode: DEPLOYMENT_RESET` — it does not cancel a workflow, roll anything
+back, or change the recorded deployed SHA. If the rollout is in fact alive it
+overwrites that record on its next phase.
+
+`CLAW_DEPLOY_TRIGGER` carries the lane down to the box: `auto` (what
+`release.yml` passes) obeys the pause switch and exits 0 without touching
+production while it is off; `manual` always proceeds, so pausing the automatic
+lane can never lock an operator out. Anything unreadable, absent or
+unrecognised in `automation.json` leaves the lane on — a pause has to be an
+explicit, well-formed statement.
+
+`.deploy` is mounted read-write into auth-service for these two writes only.
+`deployed-sha` and `history.log` stay owned by `deploy-prod.sh`.
+
 Terminal success and failure email uses the existing contact-mail settings. Set
 `CONTACT_EMAIL_ENABLED=true`, `CONTACT_EMAIL_PROVIDER=smtp`,
 `CONTACT_EMAIL_TO=<operations recipient>`, and the existing `CONTACT_SMTP_*`
@@ -188,15 +228,28 @@ crash-loops is not mistaken for success.
 /srv/clawai/.deploy/deployed-sha   — last successfully deployed commit (written atomically)
 /srv/clawai/.deploy/deploy.lock    — flock target
 /srv/clawai/.deploy/history.log    — append-only: timestamp, SHA, services touched
+/srv/clawai/.deploy/status.json    — current rollout record (also rewritten by an admin reset)
+/srv/clawai/.deploy/automation.json — automatic-deploy switch, written from the admin page
 ```
 
 None of `.deploy/` is committed to the repository.
 
 ## 4. Manual deployment
 
+Three ways in, one pipeline. In order of preference:
+
+1. **The admin deployment page** (`/<locale>/admin/deployment`) — see 2.8. This
+   is the normal recovery path: it needs no shell access and records the run
+   the same way an automatic release does.
+2. **The GitHub Actions UI** — run `deploy-production` with an optional exact
+   `target_sha`. `trigger_source` defaults to `manual` there, so it ignores the
+   automatic-deploy pause switch.
+3. **On the box:**
+
 ```bash
 cd /srv/clawai
-bash scripts/deploy-prod.sh <sha>
+bash scripts/deploy-prod.sh <sha>                          # obeys the pause switch
+CLAW_DEPLOY_TRIGGER=manual bash scripts/deploy-prod.sh <sha>  # ignores it
 ```
 
 Same script, same guarantees, whether GitHub Actions or an operator runs it.

@@ -1241,6 +1241,13 @@ CONTACT_EMAIL_PROVIDER=none
 CONTACT_EMAIL_FROM=no-reply@claw-ai.co
 CONTACT_EMAIL_TO=
 DEPLOYMENT_STATUS_FILE=/app/.deploy/status.json
+DEPLOYMENT_AUTOMATION_FILE=/app/.deploy/automation.json
+# Manual production deployment from the admin deployment page. All three are
+# required together; blank leaves the manual lane off and the controls hidden.
+# The token is a fine-grained PAT with actions:write on the repository only.
+GITHUB_DEPLOY_TOKEN=
+GITHUB_DEPLOY_REPOSITORY=
+GITHUB_DEPLOY_REF=main
 CONTACT_RATE_LIMIT_MAX=3
 CONTACT_RATE_LIMIT_WINDOW_MS=3600000
 CONTACT_SMTP_HOST=

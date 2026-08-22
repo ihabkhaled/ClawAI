@@ -9,6 +9,11 @@ name: Deploy production
 # verification, and recording the deployed SHA — lives in
 # scripts/deploy-prod.sh so it is identical whether GitHub Actions runs it or
 # an operator runs it by hand on the box. See docs/PRODUCTION_DEPLOYMENT.md.
+#
+# trigger_source tells the box which lane started this rollout. An automatic
+# rollout obeys the automatic-deploy switch an admin can pause from the
+# deployment page; a manual one always proceeds, so pausing the automatic lane
+# can never lock an operator out of production.
 
 on:
   workflow_call:
@@ -17,11 +22,21 @@ on:
         description: Exact release commit SHA to deploy
         required: true
         type: string
+      trigger_source:
+        description: Which lane started this rollout (auto obeys the automatic-deploy switch)
+        required: false
+        default: auto
+        type: string
   workflow_dispatch:
     inputs:
       target_sha:
         description: Exact commit SHA to deploy (blank uses the selected ref, normally current main)
         required: false
+        type: string
+      trigger_source:
+        description: Which lane started this rollout (auto obeys the automatic-deploy switch)
+        required: false
+        default: manual
         type: string
 
 permissions:
@@ -65,11 +80,18 @@ jobs:
           PROD_USER: ${{ secrets.PROD_USER }}
           PROD_PORT: ${{ secrets.PROD_PORT }}
           TARGET_SHA: ${{ inputs.target_sha || github.sha }}
+          TRIGGER_SOURCE: ${{ inputs.trigger_source || 'manual' }}
           WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
           if [[ ! "$TARGET_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
             echo "Target must be an exact 40-character commit SHA." >&2
+            exit 2
+          fi
+          # Interpolated into the remote command below, so it is constrained to
+          # the two literals the script understands rather than passed through.
+          if [[ "$TRIGGER_SOURCE" != "auto" && "$TRIGGER_SOURCE" != "manual" ]]; then
+            echo "Trigger source must be 'auto' or 'manual'." >&2
             exit 2
           fi
           if [[ "$WORKFLOW_URL" != https://github.com/* ]]; then
@@ -84,7 +106,18 @@ jobs:
 
           # One initial attempt plus five bounded retries. Only OpenSSH exit 255
           # with a recognized transport diagnostic is retried. A remote deploy,
-          # Docker, migration, or health failure is returned immediately.
+          # Docker, migration, or health failure is returned immediately — those
+          # exit with deploy-prod.sh's own status, never 255.
+          #
+          # The classification is by exit code plus diagnostic, NOT by whether
+          # the session got as far as printing CLAW_SSH_CONNECTED. A connection
+          # that dies mid-deploy ('client_loop: send disconnect: Broken pipe')
+          # is still a transport failure, and refusing to retry it left
+          # production half-deployed with nobody driving it. Retrying is safe
+          # because deploy-prod.sh is idempotent for a given SHA and holds a
+          # flock: if the orphaned remote process survived the session's SIGHUP,
+          # the retry waits on that lock instead of racing it; if it died, the
+          # retry resumes from a consistent checkout.
           for attempt in 1 2 3 4 5 6; do
             : > "$ssh_output"
             set +e
@@ -92,9 +125,12 @@ jobs:
                 -o UserKnownHostsFile=~/.ssh/known_hosts \
                 -o BatchMode=yes \
                 -o ConnectTimeout=20 \
+                -o TCPKeepAlive=yes \
+                -o ServerAliveInterval=30 \
+                -o ServerAliveCountMax=20 \
                 -p "$PROD_PORT" \
                 "$PROD_USER@$PROD_HOST" \
-                "cd /srv/clawai && echo 'CLAW_SSH_CONNECTED' && echo 'Server deployed SHA before:' && (cat .deploy/deployed-sha 2>/dev/null || echo '<none>') && CLAW_DEPLOY_WORKFLOW_URL='$WORKFLOW_URL' bash ./scripts/deploy-prod.sh '$TARGET_SHA' && echo 'Server deployed SHA after:' && cat .deploy/deployed-sha" \
+                "cd /srv/clawai && echo 'CLAW_SSH_CONNECTED' && echo 'Server deployed SHA before:' && (cat .deploy/deployed-sha 2>/dev/null || echo '<none>') && CLAW_DEPLOY_WORKFLOW_URL='$WORKFLOW_URL' CLAW_DEPLOY_TRIGGER='$TRIGGER_SOURCE' bash ./scripts/deploy-prod.sh '$TARGET_SHA' && echo 'Server deployed SHA after:' && cat .deploy/deployed-sha" \
                 2>&1 | tee "$ssh_output"
             ssh_status="${PIPESTATUS[0]}"
             set -e
@@ -104,12 +140,16 @@ jobs:
               break
             fi
 
-            if [ "$ssh_status" -ne 255 ] || grep -q 'CLAW_SSH_CONNECTED' "$ssh_output" || ! grep -Eq \
-              'Connection timed out|Connection refused|No route to host|Could not resolve hostname|Connection reset by peer|Connection closed by remote host|kex_exchange_identification' \
+            if [ "$ssh_status" -ne 255 ] || ! grep -Eq \
+              'Connection timed out|Connection refused|No route to host|Could not resolve hostname|Connection reset by peer|Connection closed by remote host|kex_exchange_identification|Broken pipe|client_loop: send disconnect|Timeout, server .* not responding' \
               "$ssh_output"; then
-              echo "Deployment failed after SSH connected; refusing to retry application failure." >&2
+              echo "Deployment failed on the server; refusing to retry an application failure." >&2
               deploy_status="$ssh_status"
               break
+            fi
+
+            if grep -q 'CLAW_SSH_CONNECTED' "$ssh_output"; then
+              echo "The SSH transport dropped mid-deployment; the rollout may be partially applied." >&2
             fi
 
             if [ "$attempt" -eq 6 ]; then
@@ -130,6 +170,9 @@ jobs:
               -o UserKnownHostsFile=~/.ssh/known_hosts \
               -o BatchMode=yes \
               -o ConnectTimeout=20 \
+              -o TCPKeepAlive=yes \
+              -o ServerAliveInterval=30 \
+              -o ServerAliveCountMax=20 \
               -p "$PROD_PORT" \
               "$PROD_USER@$PROD_HOST" \
               "cd /srv/clawai && cat .deploy/status.json" \
@@ -146,6 +189,7 @@ jobs:
         env:
           DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
           TARGET_SHA: ${{ inputs.target_sha || github.sha }}
+          TRIGGER_SOURCE: ${{ inputs.trigger_source || 'manual' }}
           PRODUCTION_URL: https://claw-ai.co
         run: |
           set -euo pipefail
@@ -169,6 +213,7 @@ jobs:
             echo
             echo "| Field | Value |"
             echo "| --- | --- |"
+            echo "| Trigger | $TRIGGER_SOURCE |"
             echo "| Workflow result | $DEPLOY_OUTCOME |"
             echo "| Deployment status | $state |"
             echo "| Last phase | $phase |"

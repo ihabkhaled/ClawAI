@@ -17,6 +17,24 @@
 
 set -uo pipefail
 
+# Detach from any inherited git environment BEFORE the first git call.
+#
+# git exports GIT_DIR, GIT_INDEX_FILE and friends to the hooks it runs, and
+# those variables outrank `git -C <dir>`. In a normal checkout the exported
+# GIT_DIR is the relative '.git', which combined with -C happens to resolve
+# inside the sandbox and looks harmless. In a linked worktree
+# (`git worktree add`) git must export an ABSOLUTE GIT_DIR — and then every
+# `git -C "$SRC"` below operates on the developer's real worktree instead:
+# this rehearsal's fake 'base', 'payment only', 'docs only' and 'shared-auth
+# change' commits land on their branch and its index is replaced with the
+# sandbox's handful of files.
+#
+# So the sandbox must own its git environment outright, whether this runs from
+# a shell, from a pre-push hook, or from a hook inside a worktree.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR \
+  GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_NAMESPACE \
+  GIT_CEILING_DIRECTORIES GIT_CONFIG GIT_CONFIG_GLOBAL GIT_CONFIG_SYSTEM
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 DEPLOY_SCRIPT="$REPO_ROOT/scripts/deploy-prod.sh"
@@ -292,6 +310,38 @@ assert_contains "an unhealthy service fails the deployment" "$out" "health verif
 assert_contains "an unhealthy service is named" "$out" "payment-service -> unhealthy"
 assert_contains "failure dumps container logs" "$out" "last 200 log lines"
 assert_equals "an unhealthy deployment does not record the SHA" "$(deployed_sha)" "$SHA_BASE"
+
+# ─── Automatic-deploy switch ─────────────────────────────────────────────────
+# auth-service writes automation.json when an admin pauses the automatic lane
+# from the deployment page. Only an automatic rollout obeys it.
+printf '%s\n' "$SHA_BASE" >"$PROD/.deploy/deployed-sha"
+printf '{"schemaVersion":1,"enabled":false,"updatedAt":"2026-08-13T10:29:58Z"}\n' \
+  >"$PROD/.deploy/automation.json"
+reset_docker_log
+out="$(CLAW_DEPLOY_TRIGGER=auto deploy "$SHA_PAYMENT")"
+assert_contains "a paused lane skips an automatic rollout" "$out" "Automatic deployment is paused"
+assert_equals "a paused lane leaves the recorded SHA alone" "$(deployed_sha)" "$SHA_BASE"
+assert_not_contains "a paused lane never builds" "$(cat "$CLAW_STUB_LOG")" " build "
+
+reset_docker_log
+out="$(CLAW_DEPLOY_TRIGGER=manual deploy "$SHA_PAYMENT")"
+assert_contains "a paused lane never blocks a manual rollout" "$out" "Deployment successful"
+assert_equals "a manual rollout past a pause records the SHA" "$(deployed_sha)" "$SHA_PAYMENT"
+
+out="$(CLAW_DEPLOY_TRIGGER=sideways deploy "$SHA_PAYMENT")"
+assert_contains "an unknown trigger lane is rejected" "$out" "CLAW_DEPLOY_TRIGGER must be"
+
+printf '%s\n' "$SHA_BASE" >"$PROD/.deploy/deployed-sha"
+printf '{"schemaVersion":1,"enabled":tru' >"$PROD/.deploy/automation.json"
+reset_docker_log
+out="$(CLAW_DEPLOY_TRIGGER=auto deploy "$SHA_PAYMENT")"
+assert_contains "a truncated switch file leaves the lane on" "$out" "Deployment successful"
+rm -f "$PROD/.deploy/automation.json"
+
+printf '%s\n' "$SHA_BASE" >"$PROD/.deploy/deployed-sha"
+reset_docker_log
+out="$(CLAW_DEPLOY_TRIGGER=auto deploy "$SHA_PAYMENT")"
+assert_contains "no switch file means the lane is on" "$out" "Deployment successful"
 
 # ─── Deploy lock ─────────────────────────────────────────────────────────────
 if command -v flock >/dev/null 2>&1; then

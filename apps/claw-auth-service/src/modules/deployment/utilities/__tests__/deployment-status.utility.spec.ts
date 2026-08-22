@@ -1,12 +1,16 @@
 import { DeploymentPhase, DeploymentState } from '@claw/shared-types';
 
+import { type DeploymentViewFlags } from '../../types/deployment-view.types';
 import {
+  parseDeploymentAutomation,
   parseDeploymentStatus,
   toDeploymentStatusView,
+  toResetDeploymentStatus,
   unknownDeploymentStatusView,
 } from '../deployment-status.utility';
 
 const SHA = 'a'.repeat(40);
+const FLAGS: DeploymentViewFlags = { manualTriggerEnabled: true, automaticDeployEnabled: true };
 
 function validDocument(): Record<string, unknown> {
   return {
@@ -45,17 +49,25 @@ describe('deployment status utility', () => {
     const parsed = parseDeploymentStatus(validDocument());
     expect(parsed).not.toBeNull();
     if (parsed === null) return;
-    expect(toDeploymentStatusView(parsed, Date.parse('2026-08-13T11:20:00Z')).isStale).toBe(true);
+    expect(toDeploymentStatusView(parsed, FLAGS, Date.parse('2026-08-13T11:20:00Z')).isStale).toBe(
+      true,
+    );
     expect(
       toDeploymentStatusView(
         { ...parsed, state: DeploymentState.COMPLETED },
+        FLAGS,
         Date.parse('2026-08-14T11:20:00Z'),
       ).isStale,
     ).toBe(false);
   });
 
   it('returns a bounded unknown view when no readable status exists', () => {
-    expect(unknownDeploymentStatusView()).toEqual({
+    expect(
+      unknownDeploymentStatusView({
+        manualTriggerEnabled: false,
+        automaticDeployEnabled: false,
+      }),
+    ).toEqual({
       schemaVersion: 1,
       state: DeploymentState.UNKNOWN,
       phase: DeploymentPhase.UNKNOWN,
@@ -71,6 +83,60 @@ describe('deployment status utility', () => {
       workflowUrl: null,
       failureCode: null,
       isStale: false,
+      manualTriggerEnabled: false,
+      automaticDeployEnabled: false,
     });
+  });
+
+  it('carries the operational flags onto a parsed view', () => {
+    const parsed = parseDeploymentStatus(validDocument());
+    expect(parsed).not.toBeNull();
+    if (parsed === null) return;
+    expect(
+      toDeploymentStatusView(parsed, {
+        manualTriggerEnabled: true,
+        automaticDeployEnabled: false,
+      }),
+    ).toMatchObject({ manualTriggerEnabled: true, automaticDeployEnabled: false });
+  });
+
+  it('accepts the reset failure code the admin reset writes', () => {
+    expect(
+      parseDeploymentStatus({
+        ...validDocument(),
+        state: DeploymentState.FAILED,
+        failureCode: 'DEPLOYMENT_RESET',
+      }),
+    ).toMatchObject({ failureCode: 'DEPLOYMENT_RESET' });
+  });
+
+  it('rewrites a stuck rollout as failed without moving any recorded commit', () => {
+    const parsed = parseDeploymentStatus({ ...validDocument(), deployedSha: SHA });
+    expect(parsed).not.toBeNull();
+    if (parsed === null) return;
+
+    const reset = toResetDeploymentStatus(parsed, '2026-08-13T12:00:00Z');
+
+    expect(reset).toMatchObject({
+      state: DeploymentState.FAILED,
+      failureCode: 'DEPLOYMENT_RESET',
+      currentService: null,
+      completedAt: '2026-08-13T12:00:00Z',
+      updatedAt: '2026-08-13T12:00:00Z',
+      targetSha: SHA,
+      deployedSha: SHA,
+    });
+    expect(parseDeploymentStatus(reset)).not.toBeNull();
+  });
+
+  it('parses the automation switch and rejects anything else', () => {
+    expect(
+      parseDeploymentAutomation({
+        schemaVersion: 1,
+        enabled: false,
+        updatedAt: '2026-08-13T12:00:00Z',
+      }),
+    ).toMatchObject({ enabled: false });
+    expect(parseDeploymentAutomation({ schemaVersion: 1, enabled: 'no' })).toBeNull();
   });
 });

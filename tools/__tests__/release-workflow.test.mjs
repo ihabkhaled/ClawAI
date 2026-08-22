@@ -114,3 +114,7 @@ test('release deploys only the newly created release SHA through the reusable SS
   assert.match(workflow, /target_sha:\s*\$\{\{\s*needs\.release\.outputs\.target_sha\s*\}\}/u);
   assert.match(workflow, /secrets:\s*inherit/u);
 });
+
+test('release hands the deployment to the automatic lane so a paused switch is honoured', () => {
+  assert.match(workflow, /uses: \.\/\.github\/workflows\/deploy-production\.yml[\s\S]*?trigger_source: auto/u);
+});

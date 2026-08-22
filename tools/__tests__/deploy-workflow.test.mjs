@@ -76,7 +76,6 @@ test('deploy-production retries only SSH connectivity failures with bounded back
   assert.match(workflow, /for attempt in 1 2 3 4 5 6/u);
   assert.match(workflow, /ssh_status" -ne 255/u);
   assert.match(workflow, /CLAW_SSH_CONNECTED/u);
-  assert.match(workflow, /grep -q 'CLAW_SSH_CONNECTED' "\$ssh_output"/u);
   assert.match(
     workflow,
     /Connection timed out\|Connection refused\|No route to host\|Could not resolve hostname/u,
@@ -84,6 +83,36 @@ test('deploy-production retries only SSH connectivity failures with bounded back
   assert.match(workflow, /deploy_status="\$ssh_status"/u);
   assert.match(workflow, /exit "\$deploy_status"/u);
   assert.doesNotMatch(workflow, /deploy-prod\.sh[^\n]*\|\|\s*true/u);
+});
+
+test('deploy-production keeps the SSH session alive through a long silent build', () => {
+  // A build can go minutes without writing to the session. Without keepalives
+  // a NAT or firewall drops the idle TCP connection and the next write fails
+  // with 'client_loop: send disconnect: Broken pipe' mid-deployment.
+  for (const options of [/TCPKeepAlive=yes/gu, /ServerAliveInterval=30/gu, /ServerAliveCountMax=20/gu]) {
+    assert.equal(
+      (workflow.match(options) ?? []).length,
+      2,
+      'both the deploy and the status-capture SSH calls need keepalives',
+    );
+  }
+});
+
+test('deploy-production retries a transport drop that happens after the session connected', () => {
+  // Classified by exit code plus diagnostic, never by whether the session got
+  // as far as CLAW_SSH_CONNECTED — a mid-deploy broken pipe is still transport,
+  // and not retrying it left production half-deployed with nobody driving it.
+  assert.doesNotMatch(workflow, /grep -q 'CLAW_SSH_CONNECTED' "\$ssh_output" \|\|/u);
+  assert.match(workflow, /Broken pipe\|client_loop: send disconnect/u);
+  assert.match(workflow, /Timeout, server \.\* not responding/u);
+  assert.match(workflow, /The SSH transport dropped mid-deployment/u);
+});
+
+test('deploy-production still refuses to retry a real application failure', () => {
+  // deploy-prod.sh exits with its own status, never 255, so the exit-code guard
+  // is what keeps a failed build, migration or health check from being re-run.
+  assert.match(workflow, /if \[ "\$ssh_status" -ne 255 \] \|\| ! grep -Eq/u);
+  assert.match(workflow, /refusing to retry an application failure/u);
 });
 
 test('deploy-production serializes on a single concurrency group without cancelling in-flight runs', () => {
@@ -116,4 +145,22 @@ test('deploy-production always publishes a concise GitHub job summary', () => {
   assert.match(summary, /Deployment status/u);
   assert.match(summary, /Production URL/u);
   assert.doesNotMatch(summary, /SSH_PRIVATE_KEY|CONTACT_SMTP_PASS|INTER_SERVICE_AUTH_TOKEN/u);
+});
+
+test('deploy-production tells the box which lane started the rollout', () => {
+  // workflow_call defaults to auto (release.yml is the automatic lane);
+  // workflow_dispatch defaults to manual (a human pressed deploy). The box
+  // only obeys the automatic-deploy pause switch for the auto lane.
+  assert.match(workflow, /workflow_call:[\s\S]*?trigger_source:[\s\S]*?default: auto/u);
+  assert.match(workflow, /workflow_dispatch:[\s\S]*?trigger_source:[\s\S]*?default: manual/u);
+  assert.match(workflow, /CLAW_DEPLOY_TRIGGER='\$TRIGGER_SOURCE'/u);
+});
+
+test('deploy-production constrains the trigger lane before interpolating it into SSH', () => {
+  assert.match(workflow, /"\$TRIGGER_SOURCE" != "auto" && "\$TRIGGER_SOURCE" != "manual"/u);
+  assert.match(workflow, /Trigger source must be 'auto' or 'manual'\./u);
+});
+
+test('deploy-production reports the trigger lane in the job summary', () => {
+  assert.match(workflow, /\| Trigger \| \$TRIGGER_SOURCE \|/u);
 });

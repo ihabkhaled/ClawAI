@@ -3,6 +3,7 @@
 import { RefreshCw } from 'lucide-react';
 
 import { AccessDenied } from '@/components/admin/access-denied';
+import { DeploymentControlPanel } from '@/components/admin/deployment/deployment-control-panel';
 import { DeploymentStatusContent } from '@/components/admin/deployment/deployment-status-content';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
@@ -48,11 +49,18 @@ export default function AdminDeploymentPage(): React.ReactElement {
         </div>
       ) : null}
       {!controller.isLoading && !controller.isError && controller.status ? (
-        <DeploymentStatusContent
-          status={controller.status}
-          t={controller.t}
-          locale={controller.locale}
-        />
+        <>
+          <DeploymentControlPanel
+            t={controller.t}
+            status={controller.status}
+            actions={controller.actions}
+          />
+          <DeploymentStatusContent
+            status={controller.status}
+            t={controller.t}
+            locale={controller.locale}
+          />
+        </>
       ) : null}
     </div>
   );

@@ -20,6 +20,8 @@ const status = {
   workflowUrl: 'https://github.com/ihabkhaled/ClawAI/actions/runs/123',
   failureCode: null,
   isStale: false,
+  manualTriggerEnabled: true,
+  automaticDeployEnabled: true,
 };
 
 describe('DeploymentStatusContent', () => {

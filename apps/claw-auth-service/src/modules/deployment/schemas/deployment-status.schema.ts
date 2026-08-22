@@ -2,6 +2,7 @@ import { DeploymentPhase, DeploymentState } from '@claw/shared-types';
 import { z } from 'zod';
 
 import {
+  DEPLOYMENT_RESET_FAILURE_CODE,
   DEPLOYMENT_SERVICE_PATTERN,
   DEPLOYMENT_SHA_PATTERN,
   DEPLOYMENT_VERSION_PATTERN,
@@ -37,6 +38,18 @@ export const deploymentStatusSchema = z
       .url()
       .refine((value) => value.startsWith(DEPLOYMENT_WORKFLOW_URL_PREFIX))
       .nullable(),
-    failureCode: z.enum(['DEPLOYMENT_FAILED']).nullable(),
+    failureCode: z.enum(['DEPLOYMENT_FAILED', DEPLOYMENT_RESET_FAILURE_CODE]).nullable(),
+  })
+  .strict();
+
+/**
+ * The automatic-deploy switch on disk. Kept in its own file so clearing a stuck
+ * rollout and pausing the automatic lane stay independent operations.
+ */
+export const deploymentAutomationSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    enabled: z.boolean(),
+    updatedAt: z.iso.datetime(),
   })
   .strict();

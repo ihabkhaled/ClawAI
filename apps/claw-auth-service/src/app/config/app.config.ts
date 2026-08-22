@@ -33,6 +33,16 @@ const appConfigSchema = z.object({
   CONTACT_SMTP_USER: z.string().min(1).optional(),
   CONTACT_SMTP_PASS: z.string().min(1).optional(),
   DEPLOYMENT_STATUS_FILE: z.string().min(1).default('/app/.deploy/status.json'),
+  DEPLOYMENT_AUTOMATION_FILE: z.string().min(1).default('/app/.deploy/automation.json'),
+
+  // Manual production deployment from the admin deployment page. All three are
+  // required together: a partial set leaves manual dispatch disabled rather
+  // than half-enabled, and the page hides the controls instead of offering a
+  // button that can only fail. GITHUB_DEPLOY_TOKEN needs `actions: write` on
+  // the repository and nothing else.
+  GITHUB_DEPLOY_TOKEN: z.string().min(1).optional(),
+  GITHUB_DEPLOY_REPOSITORY: z.string().min(1).optional(),
+  GITHUB_DEPLOY_REF: z.string().min(1).optional(),
 
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_USERNAME: z.string().min(1).optional(),

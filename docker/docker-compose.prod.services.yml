@@ -32,7 +32,12 @@ services:
       - '4001:4001'
     volumes:
       - ../certs:/certs:ro
-      - ../.deploy:/app/.deploy:ro
+      # Read-write, unlike every other bind auth-service gets: the deployment
+      # page clears a stuck rollout and pauses the automatic lane by writing
+      # .deploy/status.json and .deploy/automation.json. deploy-prod.sh owns
+      # deployed-sha and history.log and simply overwrites status.json on its
+      # next phase, so the two writers never contend for the same fact.
+      - ../.deploy:/app/.deploy
     healthcheck:
       test:
         [

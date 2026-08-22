@@ -34,4 +34,26 @@ export type DeploymentStatusView = {
   workflowUrl: string | null;
   failureCode: string | null;
   isStale: boolean;
+  /**
+   * True only when the WHOLE GitHub dispatch credential set is configured on
+   * auth-service. A partial set does not half-enable manual deployment: the
+   * page hides the controls instead of offering a button that always fails.
+   */
+  manualTriggerEnabled: boolean;
+  /**
+   * Whether a green release still deploys itself. False means an operator
+   * paused the automatic lane, so production only moves on a manual dispatch.
+   */
+  automaticDeployEnabled: boolean;
+};
+
+/**
+ * Persisted automatic-deploy switch. deploy-prod.sh reads this file on every
+ * rollout it was told is automatic and refuses to touch production while
+ * `enabled` is false; a manual dispatch ignores it by design.
+ */
+export type DeploymentAutomationDocument = {
+  schemaVersion: 1;
+  enabled: boolean;
+  updatedAt: string;
 };

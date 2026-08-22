@@ -1,11 +1,16 @@
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 
 import { DeploymentState } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { DeploymentStatusFileAdapter } from '../deployment-status-file.adapter';
 
-jest.mock('node:fs/promises', () => ({ readFile: jest.fn() }));
+jest.mock('node:fs/promises', () => ({
+  mkdir: jest.fn(),
+  readFile: jest.fn(),
+  rename: jest.fn(),
+  writeFile: jest.fn(),
+}));
 
 const SHA = 'a'.repeat(40);
 
@@ -30,6 +35,7 @@ describe('DeploymentStatusFileAdapter', () => {
       CONTACT_SMTP_PORT: 587,
       CONTACT_SMTP_SECURE: 'false',
       DEPLOYMENT_STATUS_FILE: '/app/.deploy/status.json',
+      DEPLOYMENT_AUTOMATION_FILE: '/app/.deploy/automation.json',
       SEED_RECONCILE_PERMISSIONS: false,
     });
   });
@@ -71,4 +77,48 @@ describe('DeploymentStatusFileAdapter', () => {
       await expect(new DeploymentStatusFileAdapter().read()).resolves.toBeNull();
     },
   );
+
+  it('reads the automation switch from its own configured file', async () => {
+    jest
+      .mocked(readFile)
+      .mockResolvedValue(
+        JSON.stringify({ schemaVersion: 1, enabled: false, updatedAt: '2026-08-13T10:29:58Z' }),
+      );
+
+    await expect(new DeploymentStatusFileAdapter().readAutomation()).resolves.toMatchObject({
+      enabled: false,
+    });
+    expect(readFile).toHaveBeenCalledWith('/app/.deploy/automation.json', 'utf8');
+  });
+
+  it('writes through a temp file and rename so a reader never sees a partial document', async () => {
+    await new DeploymentStatusFileAdapter().writeAutomation({
+      schemaVersion: 1,
+      enabled: true,
+      updatedAt: '2026-08-13T10:29:58Z',
+    });
+
+    expect(mkdir).toHaveBeenCalledWith('/app/.deploy', { recursive: true });
+    expect(writeFile).toHaveBeenCalledWith(
+      '/app/.deploy/automation.json.tmp',
+      expect.stringContaining('"enabled":true'),
+      'utf8',
+    );
+    expect(rename).toHaveBeenCalledWith(
+      '/app/.deploy/automation.json.tmp',
+      '/app/.deploy/automation.json',
+    );
+  });
+
+  it('propagates a write failure instead of reporting a reset that never landed', async () => {
+    jest.mocked(writeFile).mockRejectedValue(new Error('read-only file system'));
+
+    await expect(
+      new DeploymentStatusFileAdapter().writeAutomation({
+        schemaVersion: 1,
+        enabled: true,
+        updatedAt: '2026-08-13T10:29:58Z',
+      }),
+    ).rejects.toThrow('read-only file system');
+  });
 });
