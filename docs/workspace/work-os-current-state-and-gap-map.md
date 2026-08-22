@@ -1,4 +1,4 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–15)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–16)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
 truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
@@ -7,10 +7,12 @@ manual-repair tracking), Phase 07 (mechanical chain template library), Phase 08 
 page — first frontend for the chain system), Phase 09 (NL → chain draft, human reviews and
 saves), Phase 10 (wiring the dormant object-link graph end to end), Phase 11 (feeding
 learned preferences back into AI-action generation), Phase 12 (peer connector-sharing
-completeness — "org RBAC" was never buildable, see that phase's own section), and Phase 13
+completeness — "org RBAC" was never buildable, see that phase's own section), Phase 13
 (ClickUp adapter test coverage + a real sync fault-isolation fix it found), Phase 14 (Slack
-webhook replay-window fix — a real, confirmed security gap), and Phase 15 (chaos-style test
-coverage for the previously-untested webhook receiver) are done as real,
+webhook replay-window fix — a real, confirmed security gap), Phase 15 (chaos-style test
+coverage for the previously-untested webhook receiver), and Phase 16 (documentation-completeness
+audit — `apps/claw-workspace-service/CLAUDE.md` and the service guide had gone stale relative to
+Phases 07–15) are done as real,
 deliberately-scoped slices — see each phase's own section below for exactly what's in and out of
 scope. Phase 01's duplication scan and RabbitMQ contract inventory are still pending (see
 "Explicitly not yet verified" below). Push-subscription lifecycle management (Phase 04's full
@@ -26,12 +28,15 @@ Bitbucket/Jira's un-hardened webhook stubs and a durable connector-grant-revocat
 (Phase 14's full spec — see that phase's own section for why only the Slack fix was tackled), a
 full routing-style fault-injection "lab" and CI-wired E2E workspace flows (Phase 15's full spec —
 see that phase's own section for why only one manager's chaos-style test coverage was tackled), and
-Phase 16 onward are not started — each remaining phase is independently a multi-day-to-multi-week
-feature (deeper provider coverage, etc.); they're being built as
-real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
-instruction — and every category of change that would touch live write-action execution or a live
-OAuth app is being deliberately scoped down to safety-net hardening rather than rushed into a full
-rewrite, per explicit instruction after each was flagged.**
+live-DB migration verification against the shared dev Postgres container (Phase 16's full spec —
+deferred because it touches a shared resource other worktrees depend on, see that phase's own
+section) are not done. Phase 16 is the pack's final (16th) phase, so all 16 phases have now shipped
+as real, tested, deliberately-scoped slices, per explicit instruction, rather than attempted all at
+once — and every category of change that would touch live write-action execution or a live OAuth
+app was deliberately scoped down to safety-net hardening rather than rushed into a full rewrite,
+per explicit instruction after each was flagged. The "full spec" gaps enumerated above are real,
+honestly-documented future work — not queued phases, since the pack's own 16-phase structure ends
+here.**
 
 Pass 1 (below, preserved) established the structural map. Pass 2 adds the machine-actionable
 per-provider matrix the spec actually asks for, built by reading every adapter's
@@ -947,6 +952,60 @@ have existing tests today (the `WorkspaceSyncManager` spec already covers retry-
 example); `WebhookReceiverManager` was the one manager with zero coverage of any kind, which is why
 it was the slice chosen. **The `replay()` observability gap above was documented, not fixed.**
 
+## Phase 16 — Migration/Docs/Release Gate (documentation-completeness audit, done)
+
+The full Phase 16 spec — "migration/docs/release gate," the pack's final phase — is described in
+this doc's own roadmap only as "final phase, unchanged from the pack's ordering," with no further
+detail. Investigation (an Explore-agent sweep across three concrete areas: Prisma migrations,
+hand-written docs, and release-gate tooling) found there is genuinely very little novel _code_ work
+left in this phase, and said so plainly rather than manufacturing busywork:
+
+- **Migrations**: clean. All 28 migrations under `apps/claw-workspace-service/prisma/migrations/`
+  match `schema.prisma`; no drift, no TODO/FIXME. Phases 08–15 added no schema changes — they wired
+  existing tables. Live-DB verification against the shared dev Postgres container was ruled out
+  (see "Explicitly not done" below).
+- **Release gate**: already exists and is already generic. `npm run release:preflight` and the
+  CI workflow's affected-workspace matrix (computed dynamically from `tools/affected/index.mjs`,
+  not a hardcoded per-service list) already cover `claw-workspace-service` and `claw-frontend`
+  whenever either is touched. There was nothing workspace-automation-specific to add.
+- **Docs**: concretely, provably stale — this was the one real, honest slice. Every phase commit
+  landed 2026-08-16 through 2026-08-22; `apps/claw-workspace-service/CLAUDE.md` (last touched
+  2026-05-02) listed only 3 "Owned Tables" against a schema that now has 25, with zero mention of
+  the `chains`, `webhooks`, `learning`, or `connector-access` modules. `docs/04-backend/service-guide-workspace.md`
+  (last touched 2026-05-30) had zero mentions of chains, `/workspace/chains`, `draft-from-nl`,
+  resume, the knowledge graph, learned preferences, or connector grants. By contrast the
+  **generated** `apps/claw-workspace-service/AGENTS.md` was already current (machine-regenerated
+  and CI-hash-gated) — only the hand-written narrative docs, which have no such gate, had drifted.
+
+**What shipped:**
+
+- `apps/claw-workspace-service/CLAUDE.md`: corrected the "Owned Tables" list (3 → all 25, grouped
+  by feature area) and added five new sections — Chains/Automations, Webhooks & Event Fabric,
+  Knowledge Graph, Learned Preferences, Peer Connector-Sharing — matching the existing "AI Action
+  Approval Engine" style (component table + hard rules), each cross-checked against the actual
+  module directories, Prisma enums, and controller route decorators rather than summarized from
+  memory.
+- `docs/04-backend/service-guide-workspace.md`: added the missing Chains/automations and Connector
+  grants API-surface tables (endpoints verified against `chain.controller.ts`,
+  `chain-template.controller.ts`, `connector-grant.controller.ts`,
+  `connector-grant-inbox.controller.ts`), four new "Key Data Models" entries, and the chain
+  run/step status enums, plus expanded "Core Responsibilities" to include chains, webhooks,
+  the knowledge graph, and learned preferences.
+- Every claim in both docs is traceable to code (schema.prisma enums, actual route decorators,
+  actual manager/service file names) — not restated from this gap-map doc's own phase summaries,
+  to avoid compounding any earlier inaccuracy.
+
+**Explicitly not done in this slice** (real scope, not oversight): **no live-DB migration
+verification** — confirming the 28 migrations actually apply cleanly against a running Postgres
+would mean touching the shared dev database container, which Phase 03's own section already
+identified as something other worktrees depend on and explicitly avoided for the same reason; this
+investigation-only slice doesn't get an exception. **No new release-gate CI infrastructure** —
+none is missing; `release:preflight` and the affected-workspace matrix already cover this feature
+area generically. **No rewrite of the other per-service docs** (`-activation`, `-observability`,
+`-operations`, `-provider-registry`, `-security` service guides, or `apps/claw-frontend/CLAUDE.md`)
+— each would need its own honest audit against the code before editing, and none was found to be
+as concretely, provably stale as the two files touched here.
+
 ## Explicitly not yet verified (next session's starting point)
 
 - Whether `chains`/`ai-actions`/`actions` module boundaries already have the duplication the
@@ -963,7 +1022,7 @@ it was the slice chosen. **The `replay()` observability gap above was documented
   scope or a genuine gap — the pack's golden recipes (Phase 07) reference meeting automation,
   which would need a write path on at least one calendar provider.
 
-## Recommended execution order for the remaining 15 phases
+## Execution order used across all 16 phases
 
 Given the amount of already-existing infrastructure, phases should be re-ordered slightly from
 the pack's default sequence to front-load the work that de-risks everything after it:
@@ -1001,9 +1060,19 @@ the pack's default sequence to front-load the work that de-risks everything afte
 11. **Phase 15** (test labs/chaos/E2E) — `WebhookReceiverManager`'s chaos-style test coverage
     (previously zero) is done; a routing-style fault-plan "lab" for workspace-service and a
     CI-wired Playwright E2E workspace flow remain, each its own future phase.
-12. **Phase 16** (migration/docs/release gate) — final phase, unchanged from the pack's ordering.
+12. **Phase 16** (migration/docs/release gate) — done. Migrations were confirmed clean and the
+    release gate confirmed already generic; the one real gap found was stale hand-written docs
+    (`CLAUDE.md` and the service guide), which are now current as of Phase 16. Live-DB migration
+    verification against the shared dev Postgres container remains out of scope for the same
+    reason Phase 03 avoided it — it touches a resource other worktrees depend on.
 
-Each numbered item above should ship as its own batch: scoped, gated (typecheck/lint/test/build
-in the touched workspaces only), committed, and pushed before the next starts — consistent with
-this repo's existing "large flagship work ships in batches" rule. At the current pace this is
-realistically many further sessions of work, not a single pass.
+All 16 phases of the pack's own structure have now shipped as real, tested, deliberately-scoped
+slices, each as its own batch: scoped, gated (typecheck/lint/test/build in the touched workspaces
+only), committed, and pushed before the next started — consistent with this repo's existing "large
+flagship work ships in batches" rule. What remains is not a queued phase but the honestly-documented
+"full spec" gaps enumerated throughout this doc (Phase 01's duplication scan, the real DAG rewrite,
+an LLM-backed preference classifier, true org-level RBAC, delta sync for the remaining providers,
+Bitbucket/Jira webhook hardening, a durable connector-grant audit trail, a fault-plan lab, CI-wired
+E2E, and live-DB migration verification) — each is real, separately-scoped future work belonging
+either to workspace-service's own backlog or to another service's team, not something this pack's
+16-phase structure asks for.
