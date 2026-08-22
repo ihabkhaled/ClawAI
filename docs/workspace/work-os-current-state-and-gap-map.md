@@ -1,4 +1,4 @@
-# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–14)
+# Workspace / Work OS — Current-State Audit and Gap Map (Phase 01–15)
 
 **Status: Phase 01 (per-provider capability matrix), Phase 02 (capability manifest / registry
 truth), Phase 03 (canonical event fabric, webhook sources), Phase 04 (sync→event reconciliation
@@ -8,8 +8,9 @@ page — first frontend for the chain system), Phase 09 (NL → chain draft, hum
 saves), Phase 10 (wiring the dormant object-link graph end to end), Phase 11 (feeding
 learned preferences back into AI-action generation), Phase 12 (peer connector-sharing
 completeness — "org RBAC" was never buildable, see that phase's own section), and Phase 13
-(ClickUp adapter test coverage + a real sync fault-isolation fix it found), and Phase 14 (Slack
-webhook replay-window fix — a real, confirmed security gap) are done as real,
+(ClickUp adapter test coverage + a real sync fault-isolation fix it found), Phase 14 (Slack
+webhook replay-window fix — a real, confirmed security gap), and Phase 15 (chaos-style test
+coverage for the previously-untested webhook receiver) are done as real,
 deliberately-scoped slices — see each phase's own section below for exactly what's in and out of
 scope. Phase 01's duplication scan and RabbitMQ contract inventory are still pending (see
 "Explicitly not yet verified" below). Push-subscription lifecycle management (Phase 04's full
@@ -22,8 +23,10 @@ schema/claims work that doesn't exist yet, see that phase's own section), the ot
 zero-dedicated-test adapters plus every unverified delta-sync/webhook gap in the Pass-2 matrix
 (Phase 13's full spec — see that phase's own section for why only one provider was tackled),
 Bitbucket/Jira's un-hardened webhook stubs and a durable connector-grant-revocation audit trail
-(Phase 14's full spec — see that phase's own section for why only the Slack fix was tackled), and
-Phase 15 onward are not started — each remaining phase is independently a multi-day-to-multi-week
+(Phase 14's full spec — see that phase's own section for why only the Slack fix was tackled), a
+full routing-style fault-injection "lab" and CI-wired E2E workspace flows (Phase 15's full spec —
+see that phase's own section for why only one manager's chaos-style test coverage was tackled), and
+Phase 16 onward are not started — each remaining phase is independently a multi-day-to-multi-week
 feature (deeper provider coverage, etc.); they're being built as
 real, tested, one-phase-per-batch slices rather than attempted all at once, per explicit
 instruction — and every category of change that would touch live write-action execution or a live
@@ -891,6 +894,59 @@ only through ephemeral logs) — a real, narrower governance gap identified duri
 pursued this phase in favor of the more concretely verifiable security fix above; left for a future
 phase.
 
+## Phase 15 — Test Labs/Chaos/E2E (webhook-receiver chaos-style test coverage, done)
+
+The full Phase 15 spec is "test labs/chaos/E2E," described in this doc's own roadmap only as
+"needs 01–14 substantially complete to be meaningful" — there was no more detailed spec text to
+work from, so this phase needed real investigation (an Explore-agent sweep) before any code, the
+same as Phase 14. That investigation found what "test lab" concretely means in this codebase
+already: `apps/claw-routing-service/src/modules/routing/lab/` — a 30-file, multi-day
+fault-plan/corpus/evidence-manifest harness — and confirmed the word "chaos" does not appear
+anywhere in workspace-service today. It also found a real, CI-unwired Playwright E2E suite at
+`apps/claw-frontend/tests/e2e/` with no workspace-flow spec, and confirmed
+`WebhookReceiverManager` (301 lines — preflight, signature verification, dedup, persistence,
+event publishing, and replay) had **zero test coverage of any kind**.
+
+**What shipped:**
+
+- `apps/claw-workspace-service/src/modules/webhooks/managers/__tests__/webhook-receiver.manager.spec.ts`
+  (new file, 12 tests) covering `receive()`'s full branch set (body-too-large, rate-limited,
+  unsupported-provider, invalid-signature, duplicate-delivery idempotent return, malformed-JSON
+  rejection, and the accept happy path with the exact persisted row and published-event shape
+  asserted) and `replay()` (not-found throw, success path, and a chaos case).
+- Three tests are deliberately chaos-style: they inject a rejected `RabbitMQService.publish()`
+  (simulating a RabbitMQ outage) on the `receive()` accept path, the `receive()` rejection path,
+  and inside `replay()`, and assert what the manager actually does today — the delivery row stays
+  durably persisted and the HTTP-facing result still returns normally in every case, because
+  `publish()` catches and warn-logs rather than propagating. This is the manager's real,
+  intentional fault-isolation contract (the webhook response to an external provider must never
+  depend on RabbitMQ being reachable) — the tests lock it in as a regression guard rather than
+  leaving 301 lines of security- and data-custody-critical code with no safety net.
+- 12/12 new tests pass; 29/29 across the full `webhooks` module; 875/875 across the full
+  `claw-workspace-service` suite (84/84 suites) as a full regression check.
+
+**A real gap found, deliberately not fixed this slice**: `replay()` calls
+`repo.markProcessed(row.id)` unconditionally, even when the republish it just attempted failed —
+so an operator using `replay()` to recover a lost event during a RabbitMQ outage gets no durable,
+query-able signal that the recovery attempt itself failed (only an ephemeral warn log). This is the
+same shape of gap Phase 14 found and deferred for connector-grant revocation: fixing it well would
+mean a real design decision (a `publishFailedAt` column and a migration, or a "needs replay" admin
+query) rather than a mechanical change, so it's documented here as a follow-on candidate rather than
+rushed into this test-coverage slice.
+
+**Explicitly not done in this slice** (real scope, not oversight): **no routing-style fault-plan
+"lab" was built for workspace-service** — that pattern is multi-day, purpose-built infrastructure
+(fault-plan types, a corpus generator, a runner manager, a hand-written evidence manifest), not a
+slice; workspace-service has no equivalent today and building one is real, separately-scoped future
+work. **No CI-wired E2E workspace flow was added** — `apps/claw-frontend/tests/e2e/` has a working
+Playwright harness but it isn't referenced in any `.github/workflows/*.yml` job, and a workspace
+flow spec would need a live docker stack with seeded connector credentials to run meaningfully,
+which isn't something this investigation-then-implement session could honestly verify end-to-end.
+**No chaos coverage was added for the sync engine, chain executor, or saga/retry logic** — those
+have existing tests today (the `WorkspaceSyncManager` spec already covers retry-exhaustion, for
+example); `WebhookReceiverManager` was the one manager with zero coverage of any kind, which is why
+it was the slice chosen. **The `replay()` observability gap above was documented, not fixed.**
+
 ## Explicitly not yet verified (next session's starting point)
 
 - Whether `chains`/`ai-actions`/`actions` module boundaries already have the duplication the
@@ -942,7 +998,9 @@ the pack's default sequence to front-load the work that de-risks everything afte
     Bitbucket/Jira webhook-stub hardening (needs verified external API contracts this repo can't
     confirm alone), a full audit-logging/governance system, and a durable connector-grant-revocation
     audit trail remain, each its own future phase.
-11. **Phase 15** (test labs/chaos/E2E) — needs 01–14 substantially complete to be meaningful.
+11. **Phase 15** (test labs/chaos/E2E) — `WebhookReceiverManager`'s chaos-style test coverage
+    (previously zero) is done; a routing-style fault-plan "lab" for workspace-service and a
+    CI-wired Playwright E2E workspace flow remain, each its own future phase.
 12. **Phase 16** (migration/docs/release gate) — final phase, unchanged from the pack's ordering.
 
 Each numbered item above should ship as its own batch: scoped, gated (typecheck/lint/test/build
