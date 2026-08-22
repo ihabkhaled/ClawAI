@@ -33,7 +33,7 @@ export function BillingCheckoutContent(): React.ReactElement {
           <CardHeader>
             <CardTitle>{controller.plan.name}</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-5">
+          <CardContent className="grid grid-cols-1 gap-5">
             <p className="text-3xl font-bold">{controller.formattedPrice}</p>
             {!controller.hasAvailableGateways ? (
               <p className="text-muted-foreground text-sm" role="status">

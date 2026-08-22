@@ -33,7 +33,7 @@ export function BillingPlanCard({
         <CardTitle className="text-lg">{plan.name}</CardTitle>
         {isCurrent ? <Badge>{t('billing.plans.current')}</Badge> : null}
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid grid-cols-1 gap-4">
         {plan.description === null ? null : (
           <p className="text-muted-foreground text-sm">{plan.description}</p>
         )}
@@ -55,7 +55,7 @@ export function BillingPlanCard({
           </p>
         ) : null}
 
-        <ul className="grid gap-1 text-sm">
+        <ul className="grid grid-cols-1 gap-1 text-sm">
           <li className="flex items-center gap-2">
             <Check className="text-muted-foreground h-4 w-4" aria-hidden="true" />
             <span>

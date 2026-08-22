@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PwaManager } from '@/components/common/pwa-manager';
+import { PWA_INSTALL_DISMISSED_KEY } from '@/constants/pwa.constants';
 
 // Regression: the chat page pins a floating "new chat" action button to the
 // same bottom-end corner (fixed, end-4, see (portal)/chat/page.tsx), and this
@@ -35,6 +36,7 @@ describe('PwaManager', () => {
   const originalOnLine = window.navigator.onLine;
 
   beforeEach(() => {
+    window.localStorage.clear();
     Object.defineProperty(window.navigator, 'onLine', {
       configurable: true,
       value: true,
@@ -113,5 +115,32 @@ describe('PwaManager', () => {
     const dismissButton = screen.getByRole('button', { name: 'pwa.neverShowAgain' });
     await user.click(dismissButton);
     expect(screen.queryByText('pwa.installMessage')).toBeNull();
+  });
+
+  // The close control is "never show again", not "hide for now": the choice is
+  // persisted, so a reload must not put the prompt back in front of someone who
+  // already declined it.
+  it('persists the dismissal and stays gone on a later render', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<PwaManager />);
+
+    const installEvent = new Event('beforeinstallprompt') as Event & {
+      prompt: () => Promise<void>;
+      userChoice: Promise<{ outcome: string }>;
+    };
+    installEvent.prompt = vi.fn(async () => undefined);
+    installEvent.userChoice = Promise.resolve({ outcome: 'dismissed' });
+    window.dispatchEvent(installEvent);
+
+    await screen.findByText('pwa.installMessage');
+    await user.click(screen.getByRole('button', { name: 'pwa.neverShowAgain' }));
+
+    expect(window.localStorage.getItem(PWA_INSTALL_DISMISSED_KEY)).toBe('true');
+
+    unmount();
+    render(<PwaManager />);
+    window.dispatchEvent(installEvent);
+
+    await waitFor(() => expect(screen.queryByText('pwa.installMessage')).toBeNull());
   });
 });

@@ -34,7 +34,7 @@ function ProviderCatalog({ heading, note }: { heading: string; note: string }): 
       <h2 id="implemented-provider-families" className="sr-only">
         {heading}
       </h2>
-      <ul className="bg-border grid gap-px border sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="bg-border grid grid-cols-1 gap-px border sm:grid-cols-2 lg:grid-cols-3">
         {IMPLEMENTED_PROVIDER_FAMILIES.map((provider) => (
           <li key={provider} className="bg-card text-foreground px-5 py-6 text-lg font-semibold">
             {provider}
@@ -98,7 +98,7 @@ export async function PublicLaunchPage({
               key={section.id}
               id={section.id}
               aria-labelledby={`${section.id}-heading`}
-              className="border-border grid gap-4 border-t pt-8 md:grid-cols-[5rem_minmax(0,1fr)]"
+              className="border-border grid grid-cols-1 gap-4 border-t pt-8 md:grid-cols-[5rem_minmax(0,1fr)]"
             >
               <p className="text-primary font-mono text-sm font-semibold" aria-hidden="true">
                 {String(index + 1).padStart(2, '0')}
@@ -152,7 +152,7 @@ export async function PublicLaunchPage({
 
           <section
             aria-label={labels.startFree}
-            className="bg-foreground text-background grid gap-6 px-6 py-8 sm:grid-cols-[1fr_auto] sm:items-center sm:px-8"
+            className="bg-foreground text-background grid grid-cols-1 gap-6 px-6 py-8 sm:grid-cols-[1fr_auto] sm:items-center sm:px-8"
           >
             <p className="max-w-2xl text-lg font-semibold">{summary}</p>
             <div className="flex flex-wrap gap-3">

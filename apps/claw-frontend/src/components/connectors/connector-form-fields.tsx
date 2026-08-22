@@ -39,8 +39,8 @@ export function ConnectorFormFields({
 }: ConnectorFormFieldsProps): React.ReactElement {
   const { t } = useTranslation();
   return (
-    <div className="grid gap-4">
-      <div className="grid gap-2">
+    <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-2">
         <label htmlFor="connector-name" className="text-sm font-medium">
           {t('connectors.name')}
         </label>
@@ -56,7 +56,7 @@ export function ConnectorFormFields({
         ) : null}
       </div>
 
-      <div className="grid gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <label htmlFor="connector-provider" className="text-sm font-medium">
           {t('connectors.provider')}
         </label>
@@ -82,7 +82,7 @@ export function ConnectorFormFields({
         ) : null}
       </div>
 
-      <div className="grid gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <label htmlFor="connector-auth" className="text-sm font-medium">
           {t('connectors.authType')}
         </label>
@@ -105,7 +105,7 @@ export function ConnectorFormFields({
       </div>
 
       {authType === ConnectorAuthType.API_KEY ? (
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="connector-api-key" className="text-sm font-medium">
             {t('connectors.apiKey')}
           </label>
@@ -124,7 +124,7 @@ export function ConnectorFormFields({
         </div>
       ) : null}
 
-      <div className="grid gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <label htmlFor="connector-base-url" className="text-sm font-medium">
           {t('connectors.baseUrlOptional')}
         </label>
@@ -147,7 +147,7 @@ export function ConnectorFormFields({
       </div>
 
       {provider === ConnectorProvider.AWS_BEDROCK ? (
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="connector-region" className="text-sm font-medium">
             {t('connectors.region')}
           </label>

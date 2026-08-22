@@ -118,7 +118,7 @@ export function JudgeRefereeDetails({
           </DialogHeader>
 
           <div className="space-y-4">
-            <section className="border-border/60 bg-muted/30 grid gap-3 rounded-lg border p-4 md:grid-cols-2">
+            <section className="border-border/60 bg-muted/30 grid grid-cols-1 gap-3 rounded-lg border p-4 md:grid-cols-2">
               <div className="space-y-1">
                 <p className="text-muted-foreground text-xs font-medium">
                   {t('chat.judgeExecutionModel')}
@@ -199,7 +199,7 @@ export function JudgeRefereeDetails({
                * auto-picked cloud model and a synthetic 100%, which read as a
                * review that never happened. */}
               {judgeReview.criticRequested ? (
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div className="space-y-1">
                     <p className="text-muted-foreground text-xs font-medium">
                       {t('chat.judgeCriticModel')}
