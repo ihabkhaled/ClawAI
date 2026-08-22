@@ -233,8 +233,8 @@ test('auth-service receives the host-owned deployment state directory', () => {
   // clears a stuck rollout and pauses the automatic lane by writing
   // status.json and automation.json. deployed-sha and history.log stay owned
   // by deploy-prod.sh, which simply overwrites status.json on its next phase.
-  assert.match(prodCompose, /auth-service:[\s\S]*?- \.\.\/\.deploy:\/app\/\.deploy\n/u);
-  assert.match(devCompose, /auth-service:[\s\S]*?- \.\.\/\.deploy:\/app\/\.deploy\n/u);
+  assert.match(prodCompose, /auth-service:[\s\S]*?- \.\.\/\.deploy:\/app\/\.deploy\r?\n/u);
+  assert.match(devCompose, /auth-service:[\s\S]*?- \.\.\/\.deploy:\/app\/\.deploy\r?\n/u);
   assert.doesNotMatch(prodCompose, /\.deploy:\/app\/\.deploy:ro/u);
   assert.doesNotMatch(devCompose, /\.deploy:\/app\/\.deploy:ro/u);
   assert.match(bashInstaller, /mkdir -p "\$PROJECT_ROOT\/\.deploy"/u);
