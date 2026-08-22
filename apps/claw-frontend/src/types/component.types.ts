@@ -2479,3 +2479,7 @@ export type PublicSharedChatFooterProps = {
   reportHref: string;
   disclaimer: string;
 };
+
+export type PasswordInputProps = Omit<React.ComponentPropsWithoutRef<'input'>, 'type'> & {
+  id: string;
+};

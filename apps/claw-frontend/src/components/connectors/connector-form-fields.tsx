@@ -1,5 +1,6 @@
 import { Info } from 'lucide-react';
 
+import { PasswordInput } from '@/components/common/password-input';
 import { FieldHint } from '@/components/connectors/field-hint';
 import { Input } from '@/components/ui/input';
 import {
@@ -51,7 +52,7 @@ export function ConnectorFormFields({
         />
         <FieldHint text={t('connectors.nameHelp')} />
         {fieldErrors.name ? (
-          <p className="mt-1 text-sm text-destructive">{fieldErrors.name[0]}</p>
+          <p className="text-destructive mt-1 text-sm">{fieldErrors.name[0]}</p>
         ) : null}
       </div>
 
@@ -77,7 +78,7 @@ export function ConnectorFormFields({
         </Select>
         <FieldHint text={t('connectors.providerHelp')} />
         {fieldErrors.provider ? (
-          <p className="mt-1 text-sm text-destructive">{fieldErrors.provider[0]}</p>
+          <p className="text-destructive mt-1 text-sm">{fieldErrors.provider[0]}</p>
         ) : null}
       </div>
 
@@ -99,7 +100,7 @@ export function ConnectorFormFields({
         </Select>
         <FieldHint text={t('connectors.authTypeHelp')} />
         {fieldErrors.authType ? (
-          <p className="mt-1 text-sm text-destructive">{fieldErrors.authType[0]}</p>
+          <p className="text-destructive mt-1 text-sm">{fieldErrors.authType[0]}</p>
         ) : null}
       </div>
 
@@ -108,20 +109,17 @@ export function ConnectorFormFields({
           <label htmlFor="connector-api-key" className="text-sm font-medium">
             {t('connectors.apiKey')}
           </label>
-          <Input
+          <PasswordInput
             id="connector-api-key"
-            type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder={
-              isEditing
-                ? t('connectors.apiKeyPlaceholderEdit')
-                : t('connectors.apiKeyPlaceholder')
+              isEditing ? t('connectors.apiKeyPlaceholderEdit') : t('connectors.apiKeyPlaceholder')
             }
           />
           <FieldHint text={t('connectors.apiKeyHelp')} />
           {fieldErrors.apiKey ? (
-            <p className="mt-1 text-sm text-destructive">{fieldErrors.apiKey[0]}</p>
+            <p className="text-destructive mt-1 text-sm">{fieldErrors.apiKey[0]}</p>
           ) : null}
         </div>
       ) : null}
@@ -138,13 +136,13 @@ export function ConnectorFormFields({
         />
         <FieldHint text={t('connectors.baseUrlHelp')} />
         {defaultBaseUrl !== null ? (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             {t('connectors.defaultLabel')}{' '}
-            <code className="rounded bg-muted px-1 py-0.5">{defaultBaseUrl}</code>
+            <code className="bg-muted rounded px-1 py-0.5">{defaultBaseUrl}</code>
           </p>
         ) : null}
         {fieldErrors.baseUrl ? (
-          <p className="mt-1 text-sm text-destructive">{fieldErrors.baseUrl[0]}</p>
+          <p className="text-destructive mt-1 text-sm">{fieldErrors.baseUrl[0]}</p>
         ) : null}
       </div>
 
@@ -161,13 +159,13 @@ export function ConnectorFormFields({
           />
           <FieldHint text={t('connectors.regionHelp')} />
           {fieldErrors.region ? (
-            <p className="mt-1 text-sm text-destructive">{fieldErrors.region[0]}</p>
+            <p className="text-destructive mt-1 text-sm">{fieldErrors.region[0]}</p>
           ) : null}
         </div>
       ) : null}
 
       {!isEditing ? (
-        <div className="flex items-start gap-2 rounded-md border bg-muted/50 p-3 text-xs text-muted-foreground">
+        <div className="bg-muted/50 text-muted-foreground flex items-start gap-2 rounded-md border p-3 text-xs">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>{t('connectors.saveFirstThenTest')}</span>
         </div>

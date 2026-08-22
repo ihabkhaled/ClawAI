@@ -2,6 +2,7 @@
 
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
+import { PasswordInput } from '@/components/common/password-input';
 import { EmailChangeCard } from '@/components/settings/email-change-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -84,9 +85,8 @@ export default function SettingsPage() {
                 <label htmlFor="profile-current-password" className="text-sm font-medium">
                   {t('settings.currentPassword')}
                 </label>
-                <Input
+                <PasswordInput
                   id="profile-current-password"
-                  type="password"
                   autoComplete="current-password"
                   disabled={isProfilePending}
                   {...profileForm.register('currentPassword')}
@@ -132,9 +132,8 @@ export default function SettingsPage() {
                 <label htmlFor="delete-current-password" className="text-sm font-medium">
                   {t('settings.currentPassword')}
                 </label>
-                <Input
+                <PasswordInput
                   id="delete-current-password"
-                  type="password"
                   autoComplete="current-password"
                   disabled={isDeletePending}
                   {...deleteForm.register('currentPassword')}
@@ -163,9 +162,8 @@ export default function SettingsPage() {
                 <label htmlFor="current-password" className="text-sm font-medium">
                   {t('settings.currentPassword')}
                 </label>
-                <Input
+                <PasswordInput
                   id="current-password"
-                  type="password"
                   autoComplete="current-password"
                   disabled={isPasswordPending}
                   {...passwordForm.register('currentPassword')}
@@ -181,9 +179,8 @@ export default function SettingsPage() {
                 <label htmlFor="new-password" className="text-sm font-medium">
                   {t('settings.newPassword')}
                 </label>
-                <Input
+                <PasswordInput
                   id="new-password"
-                  type="password"
                   autoComplete="new-password"
                   disabled={isPasswordPending}
                   {...passwordForm.register('newPassword')}
@@ -199,9 +196,8 @@ export default function SettingsPage() {
                 <label htmlFor="confirm-password" className="text-sm font-medium">
                   {t('settings.confirmPassword')}
                 </label>
-                <Input
+                <PasswordInput
                   id="confirm-password"
-                  type="password"
                   autoComplete="new-password"
                   disabled={isPasswordPending}
                   {...passwordForm.register('confirmPassword')}

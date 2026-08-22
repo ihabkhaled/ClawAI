@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 
+import { PasswordInput } from '@/components/common/password-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -41,9 +42,8 @@ export function GatewayConfigCard({
             <label className="text-sm font-medium" htmlFor={`${gateway.gateway}-${field.key}`}>
               {t(GATEWAY_CREDENTIAL_LABEL_KEYS[field.key] ?? GENERIC_GATEWAY_CREDENTIAL_LABEL_KEY)}
             </label>
-            <Input
+            <PasswordInput
               id={`${gateway.gateway}-${field.key}`}
-              type="password"
               autoComplete="new-password"
               value={form.state.credentials[field.key] ?? ''}
               placeholder={

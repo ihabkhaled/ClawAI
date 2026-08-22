@@ -1,6 +1,7 @@
 import type { UseFormReturn } from 'react-hook-form';
 
 import type { MessageFeedback } from '@/enums';
+import type { PasswordInputType } from '@/enums/password-input-type.enum';
 import type { ScrollDirection } from '@/enums/scroll-direction.enum';
 import type {
   ConfirmOtpFormValues,
@@ -836,3 +837,9 @@ export type UsePhoneInputReturn = {
   isValid: boolean;
 };
 export type UseScrollDirectionReturn = ScrollDirection | null;
+
+export type UsePasswordVisibilityReturn = {
+  visible: boolean;
+  toggle: () => void;
+  inputType: PasswordInputType;
+};

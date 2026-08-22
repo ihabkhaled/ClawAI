@@ -1,5 +1,6 @@
 'use client';
 
+import { PasswordInput } from '@/components/common/password-input';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -85,15 +86,14 @@ export function ResearchProviderForm({
             <label htmlFor="rp-key" className="text-sm font-medium">
               {t('research.providers.apiKey')}
             </label>
-            <Input
+            <PasswordInput
               id="rp-key"
-              type="password"
               value={form.apiKey}
               onChange={(e) => onSetField('apiKey', e.target.value)}
             />
           </div>
           {error !== null ? (
-            <p className="rounded border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+            <p className="border-destructive/40 bg-destructive/10 text-destructive rounded border p-2 text-xs">
               {error}
             </p>
           ) : null}
