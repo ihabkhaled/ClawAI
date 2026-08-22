@@ -1,6 +1,6 @@
 {
   "name": "@claw/shared-constants",
-  "version": "1.34.6",
+  "version": "1.34.7",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
