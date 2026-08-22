@@ -10,18 +10,20 @@ deliberately scoped down to safety-net hardening rather than rushed into a full 
 explicit instruction after each was flagged.**
 
 **Post-pack hardening status (updated as each gap closes):** Phase 17 (live-DB migration
-verification) done. Phase 18 (delta-sync investigation — genuinely blocked for all 3 providers —
-plus the OneDrive capability-drift fix + its first test coverage) done. Both — see their own
-sections. Not yet started: a Confluence webhook; test coverage for the remaining 7 zero-coverage
-adapters (Bitbucket, Confluence, Slack, Google Drive, Google Calendar, Outlook Calendar,
-SharePoint — OneDrive done in Phase 18); Bitbucket/Jira webhook-stub hardening; a Google/Outlook
-Calendar write path; a durable audit-logging/governance system; a connector-grant-revocation
-audit trail; the `WebhookReceiverManager.replay()` failed-republish signal; a fault-injection
-"lab"; CI-wired E2E; auto-triggering off events; the real chain-executor DAG rewrite;
-compensating/verification steps; push-subscription lifecycle management; the AI-step/auto-trigger
-recipe layer; an LLM-backed preference classifier (memory-service); the memory-service write-path
-fix; true org-level RBAC (auth-service); the never-seeded `SyncCadenceDefault` table (found during
-Phase 18, deliberately deferred as its own gap); the remaining stale per-service docs; Phase 01's
+verification), Phase 18 (delta-sync investigation — genuinely blocked for all 3 providers — plus
+the OneDrive capability-drift fix + its first test coverage), and Phase 19 (SharePoint + Google
+Drive test coverage) done — see their own sections. Not yet started: a Confluence webhook; test
+coverage for the remaining 5 zero-coverage adapters (Bitbucket, Confluence, Slack, Google
+Calendar, Outlook Calendar — OneDrive done in Phase 18, SharePoint/Google Drive done in Phase 19);
+Bitbucket/Jira webhook-stub hardening; a Google/Outlook Calendar write path; a durable
+audit-logging/governance system; a connector-grant-revocation audit trail; the
+`WebhookReceiverManager.replay()` failed-republish signal; a fault-injection "lab"; CI-wired E2E;
+auto-triggering off events; the real chain-executor DAG rewrite; compensating/verification steps;
+push-subscription lifecycle management; the AI-step/auto-trigger recipe layer; an LLM-backed
+preference classifier (memory-service); the memory-service write-path fix; true org-level RBAC
+(auth-service); the never-seeded `SyncCadenceDefault` table (found during Phase 18, deliberately
+deferred as its own gap); the open Google Drive delta-sync-semantics observation (found during
+Phase 19, deliberately left unresolved); the remaining stale per-service docs; Phase 01's
 duplication scan and RabbitMQ contract inventory. Per explicit instruction this pass, the
 LLM-preference-classifier and org-RBAC items are now in scope even though they cross into
 memory-service/auth-service — every other item stays within
@@ -1089,6 +1091,44 @@ to stay scoped: the `SyncCadenceDefault` Prisma table (read by `SyncCadenceRepos
 from each adapter's own `getCapabilities()`) has no seeder anywhere in the codebase — every
 `findAll()`/`findByProvider()` call likely returns empty/null today. This is a real, separate gap
 (a never-populated config table), left for its own future phase rather than folded into this one.
+
+## Phase 19 — SharePoint + Google Drive Test Coverage (done)
+
+Two more of the 8 zero-coverage adapters flagged since Phase 13.
+
+- **SharePoint**: `getCapabilities()` was already honest (`supportsDeltaSync: false`, correctly
+  commented) — no drift bug here. Added
+  `adapters/__tests__/sharepoint.adapter.spec.ts` (30 tests): `healthCheck`, `getCapabilities`,
+  `getDefaultScopes`, OAuth exchange/refresh, `syncObjects` (site-to-`SyncedObject` mapping
+  including the `displayName ?? name` fallback), `fetchObjectDetails`, `downloadFileContent`
+  (including the missing-`driveId`-metadata-returns-null branch), all 3 write actions (upload,
+  create list item, update list item), the unsupported-action fallback, and the top-level
+  `executeWriteAction` try/catch.
+- **Google Drive**: `getCapabilities()` claims `supportsDeltaSync: true`, and unlike OneDrive this
+  is _not_ a clear-cut lie — `deltaToken` genuinely flows into the request as `pageToken`, and a
+  real `nextPageToken` comes back as `deltaTokenOut`. But `syncObjects()` never sends any
+  time-based filter (no `orderBy=modifiedTime`, no `q=modifiedTime > X`) — verifiable directly from
+  the code, no external knowledge needed. Whether reusing a previous run's `pageToken` across
+  separate sync invocations (rather than within one paginated listing) actually yields "files
+  changed since last sync," or just continues paging a stale, possibly-expired listing snapshot,
+  depends on Google Drive API pagination-token lifetime semantics this repo doesn't demonstrate
+  anywhere. **This is flagged as an open, unconfirmed observation, not asserted as a bug and not
+  fixed** — asserting it's broken (or attempting a fix via Drive's separate `changes.list`/
+  `startPageToken` API, the API's actual mechanism for incremental sync) would itself be guessing
+  at an external contract nothing in this repo backs up, the exact thing this project consistently
+  avoids. Added `adapters/__tests__/google-drive.adapter.spec.ts` (33 tests) covering current
+  behavior as-is: `healthCheck`, `getCapabilities`, scopes/auth params, OAuth exchange/refresh,
+  `syncObjects` (object-type resolution for docs/sheets/folders, the `pageToken` threading, and the
+  `nextPageToken` → `deltaTokenOut` passthrough — locking in current behavior for whoever
+  eventually resolves the observation above), `fetchObjectDetails` (including inlined Google Doc
+  export content), `downloadFileContent` (binary passthrough vs. Docs/Sheets/Slides export), both
+  write actions, and the unsupported-action fallback.
+
+974/974 tests pass across the full backend suite (87/87 suites); lint and build clean.
+
+**Explicitly not done in this slice**: no code behavior changed in either adapter (SharePoint had
+nothing to fix; Google Drive's delta-sync semantics question stays open and undecided, not
+resolved either way).
 
 ## Explicitly not yet verified (next session's starting point)
 
