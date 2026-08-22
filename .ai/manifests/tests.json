@@ -98,9 +98,9 @@
     },
     "claw-workspace-service": {
       "runner": "jest",
-      "testFiles": 84
+      "testFiles": 85
     }
   },
   "generated": true,
-  "total": 955
+  "total": 956
 }

@@ -10,18 +10,22 @@ deliberately scoped down to safety-net hardening rather than rushed into a full 
 explicit instruction after each was flagged.**
 
 **Post-pack hardening status (updated as each gap closes):** Phase 17 (live-DB migration
-verification) done — see its own section. Not yet started: delta sync for
-GitLab/Bitbucket/Outlook Calendar; a Confluence webhook; test coverage for the remaining 8
-zero-coverage adapters; Bitbucket/Jira webhook-stub hardening; a Google/Outlook Calendar write
-path; a durable audit-logging/governance system; a connector-grant-revocation audit trail; the
-`WebhookReceiverManager.replay()` failed-republish signal; a fault-injection "lab"; CI-wired E2E;
-auto-triggering off events; the real chain-executor DAG rewrite; compensating/verification steps;
-push-subscription lifecycle management; the AI-step/auto-trigger recipe layer; an LLM-backed
-preference classifier (memory-service); the memory-service write-path fix; true org-level RBAC
-(auth-service); the remaining stale per-service docs; Phase 01's duplication scan and RabbitMQ
-contract inventory. Per explicit instruction this pass, the LLM-preference-classifier and
-org-RBAC items are now in scope even though they cross into memory-service/auth-service — every
-other item stays within `claw-workspace-service`/`claw-frontend`.
+verification) done. Phase 18 (delta-sync investigation — genuinely blocked for all 3 providers —
+plus the OneDrive capability-drift fix + its first test coverage) done. Both — see their own
+sections. Not yet started: a Confluence webhook; test coverage for the remaining 7 zero-coverage
+adapters (Bitbucket, Confluence, Slack, Google Drive, Google Calendar, Outlook Calendar,
+SharePoint — OneDrive done in Phase 18); Bitbucket/Jira webhook-stub hardening; a Google/Outlook
+Calendar write path; a durable audit-logging/governance system; a connector-grant-revocation
+audit trail; the `WebhookReceiverManager.replay()` failed-republish signal; a fault-injection
+"lab"; CI-wired E2E; auto-triggering off events; the real chain-executor DAG rewrite;
+compensating/verification steps; push-subscription lifecycle management; the AI-step/auto-trigger
+recipe layer; an LLM-backed preference classifier (memory-service); the memory-service write-path
+fix; true org-level RBAC (auth-service); the never-seeded `SyncCadenceDefault` table (found during
+Phase 18, deliberately deferred as its own gap); the remaining stale per-service docs; Phase 01's
+duplication scan and RabbitMQ contract inventory. Per explicit instruction this pass, the
+LLM-preference-classifier and org-RBAC items are now in scope even though they cross into
+memory-service/auth-service — every other item stays within
+`claw-workspace-service`/`claw-frontend`.
 
 Pass 1 (below, preserved) established the structural map. Pass 2 adds the machine-actionable
 per-provider matrix the spec actually asks for, built by reading every adapter's
@@ -1027,6 +1031,64 @@ email templates included), RabbitMQ subscriptions established, Docker health che
 **No source files changed** — the migration SQL files already existed in git from Phases 03/06/07;
 only the live database's applied-state changed. Nothing to commit for the migration application
 itself; this section is the durable record of it.
+
+## Phase 18 — Delta Sync Investigation + OneDrive Capability-Drift Fix (done)
+
+Investigated whether real delta sync is achievable for GitLab, Bitbucket, and Outlook Calendar —
+the three still-full-poll providers flagged since the Pass-2 matrix. For each:
+
+- **GitLab**: the adapter already sorts by `updated_at`/`last_activity_at` on every list endpoint
+  it calls, suggestive of an `updated_after`-style filter, but nothing in this repo confirms that
+  parameter's existence or behavior — and the adapter supports arbitrary self-hosted GitLab
+  instances (`resolveApiBase`), where version drift is a real risk. Not verifiable from this repo.
+- **Bitbucket**: same shape — `-updated_on` sort order suggests a filter capability exists, but it
+  would require Bitbucket Cloud's `q=` query-language syntax, which nothing in this codebase
+  references or has ever used. Not verifiable from this repo.
+- **Outlook Calendar**: the premise that a sibling Microsoft Graph adapter already proves this out
+  turned out to be false — **no adapter in this codebase uses Graph's `/delta` endpoint**.
+  OneDrive's `getCapabilities()` claims `supportsDeltaSync: true`, but this is not backed by its
+  actual implementation (see below) — it doesn't demonstrate a working pattern to copy. The only
+  genuine in-repo delta-cursor precedent for calendars is Google Calendar's `syncToken` mechanism,
+  which is that API's own concept and not portable to Graph.
+
+All three stay full-poll, consistent with this project's established, repeatedly-applied policy of
+never guessing at an unverified external API contract (the same reasoning Phase 13 used for
+GitLab/Bitbucket delta sync and Confluence's webhook, and Phase 14 used for the Bitbucket/Jira
+signature stubs).
+
+**A real bug was found instead**: `OneDriveAdapter.getCapabilities()` claims
+`supportsDeltaSync: true`, but `syncObjects()` ignores the incoming `deltaToken` entirely, always
+calls the fixed `/me/drive/recent` endpoint, and returns `deltaTokenOut: new Date().toISOString()`
+— a value that carries no real cursor position. The capability flag was lying about what the
+adapter actually does — exactly the "registry/adapter drift" this doc's Pass-2 audit methodology
+was built to catch. (Checked: this flag has zero live callers today — no manager/service/controller
+calls `adapter.getCapabilities()` anywhere in this codebase outside the adapter files and the
+shared `adapter-contract.spec.ts`, which only asserts the field is a boolean, not its value — so
+this was a metadata-accuracy bug, not a live behavioral one.)
+
+**What shipped**: `apps/claw-workspace-service/src/modules/workspace/adapters/onedrive.adapter.ts`
+— corrected `supportsDeltaSync` to `false` with an inline comment explaining why, mirroring the
+existing `supportsWebhooks: false` fix already in the same file for the same class of issue.
+`onedrive.adapter.ts` also had **zero test coverage** (one of the 8 zero-coverage adapters flagged
+since Phase 13) — added a full spec,
+`adapters/__tests__/onedrive.adapter.spec.ts` (31 tests): `healthCheck` (4 branches),
+`getCapabilities` (including a regression test for the drift bug above), `getDefaultScopes`,
+OAuth exchange/refresh (success, missing credentials, HTTP failure), `syncObjects` (mapping,
+folder-filtering, and a direct test proving the incoming `deltaToken` is ignored),
+`fetchObjectDetails` (resolve/wrong-type/404/non-404-throw), `downloadFileContent` (stream/404/
+non-404-throw), both write actions (`UPLOAD_ONEDRIVE` including the size-limit rejection,
+`MOVE_ONEDRIVE` including a failed folder lookup), the unsupported-action fallback, and the
+top-level `executeWriteAction` try/catch. 906/906 tests pass across the full backend suite
+(85/85 suites); lint and build clean.
+
+**Explicitly not done in this slice**: delta sync for GitLab, Bitbucket, and Outlook Calendar
+remain full-poll, per the reasoning above — not attempted without verified API support. A separate,
+smaller, unrelated finding surfaced during investigation and was deliberately **not** pursued here
+to stay scoped: the `SyncCadenceDefault` Prisma table (read by `SyncCadenceRepository`, whose
+`supportsDeltaSync`/`supportsWebhookSync` fields are a _third_, DB-backed source of truth distinct
+from each adapter's own `getCapabilities()`) has no seeder anywhere in the codebase — every
+`findAll()`/`findByProvider()` call likely returns empty/null today. This is a real, separate gap
+(a never-populated config table), left for its own future phase rather than folded into this one.
 
 ## Explicitly not yet verified (next session's starting point)
 
