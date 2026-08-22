@@ -13,6 +13,20 @@
 @import 'tailwindcss';
 @config '../../tailwind.config.mts';
 
+/* `touch:` is the mobile guard for anything that has to grow for a finger.
+ *
+ * The guard used to be `max-md:`, i.e. width < 768px. A phone held sideways
+ * reports 915×412 or 667×375, clears that breakpoint, and silently fell back to
+ * desktop sizing — the source of most of the 2026-08-22 regression's undersized
+ * targets and sub-16px form controls. Matching the pointer catches every real
+ * phone and tablet in both orientations; the width clause keeps a narrow
+ * desktop window behaving exactly as it did. */
+@custom-variant touch {
+  @media (hover: none) and (pointer: coarse), (max-width: 767px) {
+    @slot;
+  }
+}
+
 .dark pre code.hljs {
   background: transparent;
 }
@@ -943,5 +957,66 @@
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Touch layer — pointer-coarse hardening.
+ *
+ * The 2026-08-22 mobile regression traced most of its 2,110 records to guards
+ * written as `max-md:` (width < 768px). A phone in landscape reports 915×412,
+ * clears that breakpoint, and falls back to desktop sizing. Matching the
+ * pointer instead covers both orientations; the width clause preserves the old
+ * behaviour for a narrow desktop window.
+ *
+ * Deliberately unlayered: an unlayered rule outranks anything inside `@layer`,
+ * which is how `.truncate` gets relaxed and a stray control gets lifted to 16px
+ * without `!important` or a specificity hack. None of this reaches a mouse.
+ * ------------------------------------------------------------------------- */
+@media (hover: none) and (pointer: coarse), (max-width: 767px) {
+  /* Safari zooms the whole page when a focused control computes under 16px. */
+  input:not([type='checkbox']):not([type='radio']),
+  textarea,
+  select,
+  [contenteditable='true'] {
+    font-size: max(1rem, 1em);
+  }
+
+  /* 44 CSS px is the minimum comfortable target. The UI primitives carry their
+   * own `touch:` guards; this is the net for controls that bypass them. */
+  button,
+  select,
+  summary,
+  [role='button'],
+  [role='tab'],
+  [role='switch'],
+  [role='checkbox'],
+  [role='radio'],
+  [role='combobox'],
+  [role='menuitem'],
+  [role='menuitemcheckbox'],
+  [role='menuitemradio'],
+  [role='option'] {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+
+  input:not([type='hidden']),
+  textarea {
+    min-height: 2.75rem;
+  }
+
+  /* A phone has no hover, so a clipped string is simply unreadable. Wrap it. */
+  .truncate,
+  .text-ellipsis {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* Meaningful text stays at or above the 12px floor. */
+  .kbd-hint {
+    font-size: var(--text-xs);
   }
 }
