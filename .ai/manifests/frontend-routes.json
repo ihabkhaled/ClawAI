@@ -2,6 +2,11 @@
   "generated": true,
   "routes": [
     {
+      "file": "apps/claw-frontend/src/app/(auth)/confirm-email-change/page.tsx",
+      "kind": "page",
+      "route": "/confirm-email-change"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(auth)/forgot-password/page.tsx",
       "kind": "page",
       "route": "/forgot-password"

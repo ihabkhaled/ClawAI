@@ -31,7 +31,7 @@ export function useAccountManagement(user: UserProfile | null | undefined) {
 
   useEffect(() => {
     if (user) {
-      profileForm.reset({ username: user.username, email: user.email, currentPassword: '' });
+      profileForm.reset({ username: user.username, currentPassword: '' });
     }
   }, [profileForm, user]);
 

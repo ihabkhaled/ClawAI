@@ -11,6 +11,7 @@ export const queryKeys = {
   },
   auth: {
     me: ['auth', 'me'] as const,
+    emailChange: ['auth', 'email-change'] as const,
   },
   threads: {
     all: ['threads'] as const,

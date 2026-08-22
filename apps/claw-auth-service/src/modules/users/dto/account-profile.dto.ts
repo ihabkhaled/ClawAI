@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 const currentPasswordSchema = z.string().min(1).max(256);
-const emailSchema = z.string().email().max(255);
 const usernameSchema = z
   .string()
   .min(3)
@@ -11,10 +10,9 @@ const usernameSchema = z
 export const updateOwnProfileSchema = z
   .object({
     currentPassword: currentPasswordSchema,
-    email: emailSchema.optional(),
     username: usernameSchema.optional(),
   })
-  .refine((value) => value.email !== undefined || value.username !== undefined, {
+  .refine((value) => value.username !== undefined, {
     message: 'At least one profile field is required',
   });
 

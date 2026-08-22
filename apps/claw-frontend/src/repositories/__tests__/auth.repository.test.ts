@@ -111,13 +111,11 @@ describe('authRepository', () => {
 
     await authRepository.updateOwnProfile({
       username: 'renamed',
-      email: 'test@example.com',
       currentPassword: 'CurrentPass1!',
     });
 
     expect(mockPatch).toHaveBeenCalledWith('/users/me', {
       username: 'renamed',
-      email: 'test@example.com',
       currentPassword: 'CurrentPass1!',
     });
   });

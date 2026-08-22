@@ -96,6 +96,11 @@ export type TranslationDictionary = {
     forgotPasswordComingSoonDesc: string;
     showPasswordAria: string;
     hidePasswordAria: string;
+    confirmEmailChangeTitle: string;
+    confirmEmailChangeDescription: string;
+    confirmEmailChangeSuccess: string;
+    confirmEmailChangeInvalidToken: string;
+    confirmEmailChangeBackToLogin: string;
     loginFailedTitle: string;
     brandingHeadline: string;
     brandingSubheadline: string;
@@ -1100,8 +1105,22 @@ export type TranslationDictionary = {
     accountDeleteFailed: string;
     username: string;
     email: string;
-    emailReadOnly: string;
     role: string;
+    emailChange: {
+      title: string;
+      description: string;
+      newEmailLabel: string;
+      currentPasswordLabel: string;
+      submit: string;
+      otpDescription: string;
+      otpLabel: string;
+      verify: string;
+      resend: string;
+      resendCooldown: string;
+      cancel: string;
+      pendingNotice: string;
+      requestFailed: string;
+    };
     selectLanguage: string;
     preferences: string;
     language: string;

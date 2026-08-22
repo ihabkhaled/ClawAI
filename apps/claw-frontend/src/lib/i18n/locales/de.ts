@@ -102,6 +102,12 @@ export const de: TranslationDictionary = {
       'Das Zurücksetzen des Passworts ist in Arbeit. Bitte wenden Sie sich vorerst an einen Administrator.',
     showPasswordAria: 'Passwort anzeigen',
     hidePasswordAria: 'Passwort ausblenden',
+    confirmEmailChangeTitle: 'Neue E-Mail-Adresse bestätigen',
+    confirmEmailChangeDescription: 'Wir bestätigen gerade Ihre neue E-Mail-Adresse.',
+    confirmEmailChangeSuccess:
+      'Ihre E-Mail-Adresse wurde aktualisiert. Bitte melden Sie sich erneut an.',
+    confirmEmailChangeInvalidToken: 'Dieser Bestätigungslink ist ungültig oder abgelaufen.',
+    confirmEmailChangeBackToLogin: 'Zurück zur Anmeldung',
     loginFailedTitle: 'Anmeldung fehlgeschlagen',
     brandingHeadline: 'Jedes Spitzenmodell, ein Abonnement',
     brandingSubheadline:
@@ -1122,8 +1128,25 @@ export const de: TranslationDictionary = {
     accountDeleteFailed: 'Konto konnte nicht gelöscht werden',
     username: 'Benutzername',
     email: 'E-Mail',
-    emailReadOnly: 'Wenden Sie sich an einen Administrator, um Ihre E-Mail zu ändern.',
     role: 'Rolle',
+    emailChange: {
+      title: 'E-Mail-Adresse ändern',
+      description:
+        'Für die Änderung Ihrer E-Mail-Adresse wird ein Code an Ihre aktuelle Adresse gesendet und anschließend von der neuen bestätigt.',
+      newEmailLabel: 'Neue E-Mail-Adresse',
+      currentPasswordLabel: 'Aktuelles Passwort',
+      submit: 'Bestätigungscode senden',
+      otpDescription:
+        'Geben Sie den 6-stelligen Code ein, der an Ihre aktuelle E-Mail-Adresse gesendet wurde.',
+      otpLabel: 'Bestätigungscode',
+      verify: 'Code bestätigen',
+      resend: 'Code erneut senden',
+      resendCooldown: 'Erneut senden in {seconds}s möglich',
+      cancel: 'E-Mail-Änderung abbrechen',
+      pendingNotice:
+        'Prüfen Sie Ihr neues Postfach und öffnen Sie den Bestätigungslink, um die Änderung abzuschließen.',
+      requestFailed: 'E-Mail-Adresse konnte nicht geändert werden',
+    },
     selectLanguage: 'Sprache auswählen',
     preferences: 'Einstellungen',
     language: 'Sprache',

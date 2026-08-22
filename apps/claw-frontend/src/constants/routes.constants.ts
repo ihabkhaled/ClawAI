@@ -5,6 +5,7 @@ export const ROUTES = {
   REGISTER: '/register',
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
+  CONFIRM_EMAIL_CHANGE: '/confirm-email-change',
   // Public marketing route. Also the entry point for organisations asking
   // about a private on-premise deployment.
   CONTACT: '/contact',
@@ -98,4 +99,9 @@ export const ROUTES = {
   AGENT_ACTIVITY_MEMORY: '/agent/activity-memory',
 } as const;
 
-export const PUBLIC_ROUTES = [ROUTES.LOGIN, ROUTES.FORGOT_PASSWORD, ROUTES.RESET_PASSWORD] as const;
+export const PUBLIC_ROUTES = [
+  ROUTES.LOGIN,
+  ROUTES.FORGOT_PASSWORD,
+  ROUTES.RESET_PASSWORD,
+  ROUTES.CONFIRM_EMAIL_CHANGE,
+] as const;

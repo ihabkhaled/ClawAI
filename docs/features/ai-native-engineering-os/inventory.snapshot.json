@@ -6152,6 +6152,11 @@
     ],
     "frontendRoutes": [
       {
+        "file": "apps/claw-frontend/src/app/(auth)/confirm-email-change/page.tsx",
+        "kind": "page",
+        "route": "/confirm-email-change"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(auth)/forgot-password/page.tsx",
         "kind": "page",
         "route": "/forgot-password"
@@ -7259,7 +7264,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4508
+        "value": 4526
       },
       "localeCount": 16,
       "locales": [
@@ -8947,7 +8952,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 339
+        "testFiles": 343
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9695,7 +9700,7 @@
     "endpointCount": 594,
     "envVarCount": 343,
     "eventCount": 167,
-    "frontendRouteCount": 121,
+    "frontendRouteCount": 122,
     "localeCount": 16,
     "nginxRouteCount": 54,
     "permissionCount": 47,
@@ -9704,7 +9709,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 954,
+    "totalTestFiles": 958,
     "workspaceCount": 25
   }
 }

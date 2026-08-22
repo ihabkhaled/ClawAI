@@ -2,6 +2,7 @@
 
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
+import { EmailChangeCard } from '@/components/settings/email-change-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,7 @@ export default function SettingsPage() {
     deleteAccount,
     isProfilePending,
     isDeletePending,
+    emailChange,
   } = useSettingsPage();
   const { t } = useTranslation();
 
@@ -73,17 +75,6 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="settings-email" className="text-sm font-medium">
-                  {t('settings.email')}
-                </label>
-                <Input
-                  id="settings-email"
-                  type="email"
-                  disabled={isProfilePending}
-                  {...profileForm.register('email')}
-                />
-              </div>
-              <div className="space-y-2">
                 <label htmlFor="settings-role" className="text-sm font-medium">
                   {t('settings.role')}
                 </label>
@@ -108,6 +99,25 @@ export default function SettingsPage() {
             </form>
           </CardContent>
         </Card>
+
+        <Separator />
+
+        <EmailChangeCard
+          pendingState={emailChange.pendingState}
+          requestForm={emailChange.requestForm}
+          otpForm={emailChange.otpForm}
+          onSubmitRequest={emailChange.submitRequest}
+          onSubmitOtp={emailChange.submitOtp}
+          onResendOtp={emailChange.resendOtp}
+          onCancelChange={emailChange.cancelChange}
+          resendCooldownSeconds={emailChange.resendCooldownSeconds}
+          t={emailChange.t}
+          isLoading={emailChange.loading}
+          isRequesting={emailChange.isRequesting}
+          isVerifying={emailChange.isVerifying}
+          isResending={emailChange.isResending}
+          isCancelling={emailChange.isCancelling}
+        />
 
         <Separator />
 

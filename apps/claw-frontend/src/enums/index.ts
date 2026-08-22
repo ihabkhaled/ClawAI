@@ -47,6 +47,7 @@ export { MessageFeedback } from './message-feedback.enum';
 export { Theme, ResolvedTheme } from './theme.enum';
 export { StreamEventType } from './stream-event-type.enum';
 export { AiStreamStage } from './ai-stream-stage.enum';
+export { EmailChangeStage } from './email-change-stage.enum';
 export { AiReasoningVisibility } from './ai-reasoning-visibility.enum';
 export { AiStreamProgressConfidence } from './ai-stream-progress-confidence.enum';
 export { ImageGenerationStatus } from './image-generation-status.enum';

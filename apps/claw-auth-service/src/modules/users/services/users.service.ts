@@ -145,9 +145,8 @@ export class UsersService {
 
   async updateOwnProfile(userId: string, dto: UpdateOwnProfileDto): Promise<SafeUser> {
     const user = await this.requireUserWithValidPassword(userId, dto.currentPassword);
-    await this.ensureProfileFieldsAvailable(user.email, user.username, dto);
+    await this.ensureProfileFieldsAvailable(user.username, dto);
     const updated = await this.usersRepository.updateById(userId, {
-      email: dto.email,
       username: dto.username,
     });
     await this.usersRepository.revokeSessionsByUserId(userId);
@@ -342,17 +341,9 @@ export class UsersService {
   }
 
   private async ensureProfileFieldsAvailable(
-    currentEmail: string,
     currentUsername: string,
     dto: UpdateOwnProfileDto,
   ): Promise<void> {
-    if (
-      dto.email &&
-      dto.email !== currentEmail &&
-      (await this.usersRepository.findByEmail(dto.email))
-    ) {
-      throw new DuplicateEntityException('User', 'email');
-    }
     if (
       dto.username &&
       dto.username !== currentUsername &&

@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import type { UseFormReturn } from 'react-hook-form';
 
 import type { SidebarItem } from '@/constants';
 import type {
@@ -39,6 +40,10 @@ import type { Locale } from '@/enums/locale.enum';
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
+import type {
+  ConfirmOtpFormValues,
+  RequestEmailChangeFormValues,
+} from '@/lib/validation/email-change.schema';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
 import type { OwnerChatShare, PublicChatShareMessage } from '@/types/chat-share.types';
 import type { TranslationDictionary, TranslateFunction } from '@/types/i18n.types';
@@ -55,7 +60,7 @@ import type {
 } from './adaptive-learning.types';
 import type { RepairResultState } from './answer-repair.types';
 import type { AdminUser, AuditLog } from './audit.types';
-import type { AdminUserUpdateRequest } from './auth.types';
+import type { AdminUserUpdateRequest, EmailChangePendingState } from './auth.types';
 import type { BestOfNResultState, CandidateResult } from './best-of-n.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
 import type {
@@ -558,6 +563,36 @@ export type TemporaryPasswordDialogProps = {
   onCancel: () => void;
   onConfirm: () => void;
   t: TranslateFunction;
+};
+
+export type EmailChangeCardProps = {
+  pendingState: EmailChangePendingState | null;
+  requestForm: UseFormReturn<RequestEmailChangeFormValues>;
+  otpForm: UseFormReturn<ConfirmOtpFormValues>;
+  onSubmitRequest: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  onSubmitOtp: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  onResendOtp: () => void;
+  onCancelChange: () => void;
+  resendCooldownSeconds: number;
+  t: TranslateFunction;
+  isLoading: boolean;
+  isRequesting: boolean;
+  isVerifying: boolean;
+  isResending: boolean;
+  isCancelling: boolean;
+};
+
+export type EmailChangeOtpStepProps = {
+  pendingState: EmailChangePendingState;
+  otpForm: UseFormReturn<ConfirmOtpFormValues>;
+  onSubmitOtp: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  onResendOtp: () => void;
+  onCancelChange: () => void;
+  resendCooldownSeconds: number;
+  t: TranslateFunction;
+  isVerifying: boolean;
+  isResending: boolean;
+  isCancelling: boolean;
 };
 
 // ─── Chat component props ───────────────────────────────────────────────────

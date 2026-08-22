@@ -2,6 +2,10 @@ import type { UseFormReturn } from 'react-hook-form';
 
 import type { MessageFeedback } from '@/enums';
 import type { ScrollDirection } from '@/enums/scroll-direction.enum';
+import type {
+  ConfirmOtpFormValues,
+  RequestEmailChangeFormValues,
+} from '@/lib/validation/email-change.schema';
 import type { LoginFormValues } from '@/lib/validation/login.schema';
 import type {
   ForgotPasswordFormValues,
@@ -15,7 +19,7 @@ import type { ResearchProviderKind } from '../enums/research-provider-kind.enum'
 
 import type { AdaptiveLearningInsights } from './adaptive-learning.types';
 import type { AdminUser, AuditLog } from './audit.types';
-import type { AdminUserUpdateRequest } from './auth.types';
+import type { AdminUserUpdateRequest, EmailChangePendingState } from './auth.types';
 import type {
   ChatMessage,
   ChatThread,
@@ -81,6 +85,40 @@ export type UseForgotPasswordFormReturn = {
   onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
   isPending: boolean;
   isSuccess: boolean;
+  errorMessage: string | null;
+  t: TranslateFunction;
+};
+
+// ─── Email change hook types ─────────────────────────────────────────────────────
+
+export type UseEmailChangeCooldownReturn = {
+  resendCooldownSeconds: number;
+  startResendCooldown: () => void;
+};
+
+export type UseEmailChangeReturn = {
+  pendingState: EmailChangePendingState | null;
+  loading: boolean;
+  requestForm: UseFormReturn<RequestEmailChangeFormValues>;
+  otpForm: UseFormReturn<ConfirmOtpFormValues>;
+  submitRequest: (event?: React.BaseSyntheticEvent) => Promise<void>;
+  submitOtp: (event?: React.BaseSyntheticEvent) => Promise<void>;
+  resendOtp: () => void;
+  cancelChange: () => void;
+  resendCooldownSeconds: number;
+  t: TranslateFunction;
+  isRequesting: boolean;
+  isVerifying: boolean;
+  isResending: boolean;
+  isCancelling: boolean;
+};
+
+export type UseConfirmEmailChangeFormReturn = {
+  onSubmit: (event?: React.BaseSyntheticEvent) => Promise<void>;
+  isPending: boolean;
+  isSuccess: boolean;
+  isError: boolean;
+  isInvalidToken: boolean;
   errorMessage: string | null;
   t: TranslateFunction;
 };

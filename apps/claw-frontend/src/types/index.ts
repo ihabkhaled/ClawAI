@@ -16,6 +16,16 @@ export type {
   RequestPasswordResetResponse,
   ConfirmPasswordResetRequest,
   ConfirmPasswordResetResponse,
+  RequestEmailChangeRequest,
+  RequestEmailChangeResponse,
+  ConfirmOldEmailOtpRequest,
+  ConfirmOldEmailOtpResponse,
+  ResendEmailChangeOtpRequest,
+  ResendEmailChangeOtpResponse,
+  CancelEmailChangeRequest,
+  EmailChangePendingState,
+  ConfirmEmailChangeRequest,
+  ConfirmEmailChangeResponse,
 } from './auth.types';
 export type {
   RoutePermission,
@@ -435,6 +445,8 @@ export type {
   CostTierBadgeProps,
   RolePackResultCardProps,
   RolePackMemberCardProps,
+  EmailChangeCardProps,
+  EmailChangeOtpStepProps,
 } from './component.types';
 export type {
   StreamProgressBarProps,
@@ -487,6 +499,8 @@ export type {
 } from './log.types';
 export type {
   UsePipelinePageHookReturn,
+  UseEmailChangeReturn,
+  UseEmailChangeCooldownReturn,
   UseLoginFormReturn,
   UseAdminUserFiltersReturn,
   UseAdminUserMutationsReturn,

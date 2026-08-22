@@ -138,7 +138,6 @@ describe('UsersService', () => {
 
       expect(result.username).toBe('renamed');
       expect(repository.updateById).toHaveBeenCalledWith('user-1', {
-        email: undefined,
         username: 'renamed',
       });
       expect(repository.revokeSessionsByUserId).toHaveBeenCalledWith('user-1');
@@ -151,7 +150,7 @@ describe('UsersService', () => {
       await expect(
         service.updateOwnProfile('user-1', {
           currentPassword: 'WrongPass1!',
-          email: 'new@example.com',
+          username: 'renamed',
         }),
       ).rejects.toMatchObject({ code: 'INVALID_CURRENT_PASSWORD' });
       expect(repository.updateById).not.toHaveBeenCalled();
