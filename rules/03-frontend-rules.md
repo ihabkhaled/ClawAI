@@ -137,6 +137,14 @@ ABSOLUTE RULE — NEVER LEAK ENGLISH INTO NON-EN LOCALES
 4. NO raw color classes (text-blue-500) for semantic meaning
 5. Use cn() from @/lib/utils for conditional classes
 6. Mobile-first: sm:, md:, lg: breakpoints
+7. Touch sizing uses the `touch:` variant, NEVER `max-md:`. `touch:` matches
+   (hover: none) and (pointer: coarse) as well as max-width 767px; a width test
+   alone misses a phone in landscape, which reports 915x412 and falls back to
+   desktop sizing. Applies to 44px targets, 16px form controls, and card/table
+   switching.
+8. Every grid names a base column count (`grid grid-cols-1 ...`). An implicit
+   track is sized to its content and will overflow a narrow viewport.
+   `grid-flow-*`, `auto-cols-*` and `grid-rows-*` are the exceptions.
 ```
 
 ## Extraction Table
