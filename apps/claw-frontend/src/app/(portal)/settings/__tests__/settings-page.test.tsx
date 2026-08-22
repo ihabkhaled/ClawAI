@@ -41,6 +41,22 @@ describe('SettingsPage mobile layout', () => {
       deleteAccount: vi.fn(),
       isProfilePending: false,
       isDeletePending: false,
+      emailChange: {
+        pendingState: null,
+        requestForm: formState(),
+        otpForm: formState(),
+        submitRequest: vi.fn(),
+        submitOtp: vi.fn(),
+        resendOtp: vi.fn(),
+        cancelChange: vi.fn(),
+        resendCooldownSeconds: 0,
+        t: (key: string) => key,
+        loading: false,
+        isRequesting: false,
+        isVerifying: false,
+        isResending: false,
+        isCancelling: false,
+      },
     });
 
     render(<SettingsPage />);
