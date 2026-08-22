@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 3,
+  "currentBatch": 4,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -105,10 +105,16 @@
     },
     {
       "id": 3,
-      "status": "PENDING",
+      "status": "DONE",
       "commit": null,
       "tests": [],
-      "defects": []
+      "defects": [],
+      "deliverables": [
+        "apps/claw-connector-service/prisma/schema.prisma",
+        "apps/claw-connector-service/prisma/migrations/20260822232000_add_model_exposure_and_kind/migration.sql",
+        "docs/implementation/model-exposure-entitlements/batch-03-schema-note.md"
+      ],
+      "migrationEvidence": "Executed against claw-pg-connector (PostgreSQL 16.13) inside a transaction and rolled back. All statements succeeded; 160 existing connector_models rows, 160 defaulted to UNEXPOSED. Nothing was persisted."
     },
     {
       "id": 4,
@@ -202,12 +208,16 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 3: schema and migration for ConnectorModel.exposure + kind, PlanModelAccess.connectorModelId, and soft-delete on re-sync, per the ADR",
+  "nextAction": "Batch 4: sync algorithm - soft-delete on re-sync, lastSeenAt, new models stay UNEXPOSED",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
     "commandApproval": "supervisor approves every terminal command; gate commands rejected until the end"
   },
   "knownCeiling": "A coding-agent run is bounded at ~100 tool calls: maxModelTurns and maxToolRounds are debited 1:1 per invocation and both are capped at 100 by the protocol schema in BOTH repos, so ULTRA maxToolCalls 250 is unreachable. Every batch must be scoped to fit well under 100 tool calls. Raising it needs a coordinated protocol change in claw-coding-agent and claw-chat-service.",
-  "method": "The agent ignores prompt-level tool budgets and dies at ~100 model turns. Discovery-shaped tasks fail. Working shape: supervisor names an exact short read list, agent traces and authors. Confirmed on batch 1a."
+  "method": "The agent ignores prompt-level tool budgets and dies at ~100 model turns. Discovery-shaped tasks fail. Working shape: supervisor names an exact short read list, agent traces and authors. Confirmed on batch 1a.",
+  "adrCorrections": [
+    "ADR proposed an exposure enum containing DEPRECATED; dropped, because ModelLifecycle already owns DEPRECATED and SUNSET and two enums encoding the same concept produce contradictory states.",
+    "ADR proposed a foreign key from PlanModelAccess to ConnectorModel; impossible, they live in different service databases and this repository forbids crossing a service database boundary. The link must be a plain column validated over HTTP."
+  ]
 }
