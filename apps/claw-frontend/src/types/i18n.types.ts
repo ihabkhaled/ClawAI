@@ -1060,6 +1060,28 @@ export type TranslationDictionary = {
     editUser: string;
     saveUser: string;
     editUsername: string;
+
+    editUserTitle: string;
+
+    editUserDescription: string;
+
+    editUserUsername: string;
+
+    editUserFirstName: string;
+
+    editUserLastName: string;
+
+    editUserUsernameInvalid: string;
+
+    editUserNameTooLong: string;
+
+    editUserSuperAdminNotice: string;
+
+    editUserSave: string;
+
+    editUserCancel: string;
+
+    editUserRotatePassword: string;
     userUpdated: string;
     userUpdateFailed: string;
     colEmail: string;

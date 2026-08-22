@@ -1056,6 +1056,28 @@ export const ar: TranslationDictionary = {
     editUser: 'تعديل المستخدم',
     saveUser: 'حفظ المستخدم',
     editUsername: 'تعديل اسم المستخدم',
+
+    editUserTitle: 'تعديل المستخدم',
+
+    editUserDescription: 'حدّث اسم هذا الحساب واسم المستخدم، أو أصدر كلمة مرور مؤقتة جديدة.',
+
+    editUserUsername: 'اسم المستخدم',
+
+    editUserFirstName: 'الاسم الأول',
+
+    editUserLastName: 'اسم العائلة',
+
+    editUserUsernameInvalid: 'استخدم من 3 إلى 32 حرفًا أو رقمًا أو شرطة أو شرطة سفلية.',
+
+    editUserNameTooLong: 'استخدم 64 حرفًا كحد أقصى.',
+
+    editUserSuperAdminNotice: 'لا يمكن تعديل حسابات المشرف الأعلى من هنا.',
+
+    editUserSave: 'حفظ التغييرات',
+
+    editUserCancel: 'إلغاء',
+
+    editUserRotatePassword: 'تدوير كلمة المرور',
     userUpdated: 'تم تحديث المستخدم',
     userUpdateFailed: 'تعذر تحديث المستخدم',
     colEmail: 'البريد الإلكتروني',

@@ -1066,6 +1066,29 @@ export const hi: TranslationDictionary = {
     editUser: 'उपयोगकर्ता संपादित करें',
     saveUser: 'उपयोगकर्ता सहेजें',
     editUsername: 'उपयोगकर्ता नाम संपादित करें',
+
+    editUserTitle: 'उपयोगकर्ता संपादित करें',
+
+    editUserDescription:
+      'इस खाते का नाम और उपयोगकर्ता नाम अपडेट करें, या नया अस्थायी पासवर्ड जारी करें।',
+
+    editUserUsername: 'उपयोगकर्ता नाम',
+
+    editUserFirstName: 'पहला नाम',
+
+    editUserLastName: 'अंतिम नाम',
+
+    editUserUsernameInvalid: '3–32 अक्षर, अंक, हाइफ़न या अंडरस्कोर उपयोग करें।',
+
+    editUserNameTooLong: 'अधिकतम 64 वर्ण उपयोग करें।',
+
+    editUserSuperAdminNotice: 'सुपर एडमिन खाते यहाँ संपादित नहीं किए जा सकते।',
+
+    editUserSave: 'परिवर्तन सहेजें',
+
+    editUserCancel: 'रद्द करें',
+
+    editUserRotatePassword: 'पासवर्ड बदलें',
     userUpdated: 'उपयोगकर्ता अपडेट हुआ',
     userUpdateFailed: 'उपयोगकर्ता अपडेट नहीं हुआ',
     colEmail: 'ईमेल',

@@ -1073,6 +1073,29 @@ export const ru: TranslationDictionary = {
     editUser: 'Изменить пользователя',
     saveUser: 'Сохранить пользователя',
     editUsername: 'Изменить имя пользователя',
+
+    editUserTitle: 'Редактировать пользователя',
+
+    editUserDescription:
+      'Обновите имя и имя пользователя этой учётной записи или выпустите новый временный пароль.',
+
+    editUserUsername: 'Имя пользователя',
+
+    editUserFirstName: 'Имя',
+
+    editUserLastName: 'Фамилия',
+
+    editUserUsernameInvalid: 'Используйте от 3 до 32 букв, цифр, дефисов или подчёркиваний.',
+
+    editUserNameTooLong: 'Используйте не более 64 символов.',
+
+    editUserSuperAdminNotice: 'Учётные записи суперадминистратора нельзя редактировать здесь.',
+
+    editUserSave: 'Сохранить изменения',
+
+    editUserCancel: 'Отмена',
+
+    editUserRotatePassword: 'Сменить пароль',
     userUpdated: 'Пользователь обновлён',
     userUpdateFailed: 'Не удалось обновить пользователя',
     colEmail: 'Эл. почта',

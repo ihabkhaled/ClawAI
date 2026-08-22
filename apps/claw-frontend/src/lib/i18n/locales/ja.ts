@@ -1064,6 +1064,29 @@ export const ja: TranslationDictionary = {
     editUser: 'ユーザーを編集',
     saveUser: 'ユーザーを保存',
     editUsername: 'ユーザー名を編集',
+
+    editUserTitle: 'ユーザーを編集',
+
+    editUserDescription:
+      'このアカウントの氏名とユーザー名を更新するか、新しい一時パスワードを発行します。',
+
+    editUserUsername: 'ユーザー名',
+
+    editUserFirstName: '名',
+
+    editUserLastName: '姓',
+
+    editUserUsernameInvalid: '3〜32 文字の英数字、ハイフン、アンダースコアを使用してください。',
+
+    editUserNameTooLong: '64 文字以内で入力してください。',
+
+    editUserSuperAdminNotice: 'スーパー管理者アカウントはここでは編集できません。',
+
+    editUserSave: '変更を保存',
+
+    editUserCancel: 'キャンセル',
+
+    editUserRotatePassword: 'パスワードを再発行',
     userUpdated: 'ユーザーを更新しました',
     userUpdateFailed: 'ユーザーを更新できませんでした',
     colEmail: 'メール',

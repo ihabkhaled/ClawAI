@@ -2483,3 +2483,14 @@ export type PublicSharedChatFooterProps = {
 export type PasswordInputProps = Omit<React.ComponentPropsWithoutRef<'input'>, 'type'> & {
   id: string;
 };
+
+export type EditUserDialogProps = {
+  open: boolean;
+  user: AdminUser | null;
+  isSaving: boolean;
+  isRotating: boolean;
+  onClose: () => void;
+  onSave: (userId: string, data: AdminUserUpdateRequest) => void;
+  onRotatePassword: (userId: string) => void;
+  t: TranslateFunction;
+};

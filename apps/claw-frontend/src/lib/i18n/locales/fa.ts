@@ -1062,6 +1062,29 @@ export const fa: TranslationDictionary = {
     editUser: 'ویرایش کاربر',
     saveUser: 'ذخیره کاربر',
     editUsername: 'ویرایش نام کاربری',
+
+    editUserTitle: 'ویرایش کاربر',
+
+    editUserDescription:
+      'نام و نام کاربری این حساب را به‌روزرسانی کنید یا رمز موقت جدیدی صادر کنید.',
+
+    editUserUsername: 'نام کاربری',
+
+    editUserFirstName: 'نام',
+
+    editUserLastName: 'نام خانوادگی',
+
+    editUserUsernameInvalid: 'از ۳ تا ۳۲ حرف، رقم، خط تیره یا زیرخط استفاده کنید.',
+
+    editUserNameTooLong: 'حداکثر ۶۴ نویسه استفاده کنید.',
+
+    editUserSuperAdminNotice: 'حساب‌های ابرمدیر از اینجا قابل ویرایش نیستند.',
+
+    editUserSave: 'ذخیره تغییرات',
+
+    editUserCancel: 'لغو',
+
+    editUserRotatePassword: 'تغییر رمز عبور',
     userUpdated: 'کاربر به‌روزرسانی شد',
     userUpdateFailed: 'به‌روزرسانی کاربر ناموفق بود',
     colEmail: 'ایمیل',

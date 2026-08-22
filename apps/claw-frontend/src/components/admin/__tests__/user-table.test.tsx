@@ -26,6 +26,8 @@ function makeUser(overrides: Partial<AdminUser> = {}): AdminUser {
     activePlanId: null,
     isSuperAdmin: false,
     emailVerifiedAt: '2026-05-01T00:00:00.000Z',
+    firstName: null,
+    lastName: null,
     ...overrides,
   };
 }
@@ -157,22 +159,27 @@ describe('UserTable plan column', () => {
 });
 
 describe('UserTable lifecycle actions', () => {
-  it('lets an administrator edit and save username only', async () => {
+  it('edits name and username through the dialog and saves once', async () => {
     const onUpdateUser = vi.fn();
     render(<UserTable users={[makeUser()]} {...baseProps} onUpdateUser={onUpdateUser} />);
 
     await userEvent.click(
       screen.getAllByRole('button', { name: 'admin.editUser' })[0] as HTMLElement,
     );
-    expect(screen.queryByLabelText('admin.editEmail')).toBeNull();
-    const username = screen.getAllByLabelText('admin.editUsername')[0] as HTMLInputElement;
+
+    const username = screen.getByLabelText('admin.editUserUsername');
     await userEvent.clear(username);
     await userEvent.type(username, 'renamed');
-    await userEvent.click(
-      screen.getAllByRole('button', { name: 'admin.saveUser' })[0] as HTMLElement,
-    );
+    await userEvent.type(screen.getByLabelText('admin.editUserFirstName'), 'Ada');
+    await userEvent.type(screen.getByLabelText('admin.editUserLastName'), 'Lovelace');
 
-    expect(onUpdateUser).toHaveBeenCalledWith('u1', { username: 'renamed' });
+    await userEvent.click(screen.getByRole('button', { name: 'admin.editUserSave' }));
+
+    expect(onUpdateUser).toHaveBeenCalledWith('u1', {
+      username: 'renamed',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+    });
   });
   it('offers Deactivate for an active user', () => {
     render(<UserTable users={[makeUser({ status: 'ACTIVE' })]} {...baseProps} />);

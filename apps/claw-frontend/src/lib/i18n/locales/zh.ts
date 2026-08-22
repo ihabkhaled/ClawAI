@@ -1045,6 +1045,28 @@ export const zh: TranslationDictionary = {
     editUser: '编辑用户',
     saveUser: '保存用户',
     editUsername: '编辑用户名',
+
+    editUserTitle: '编辑用户',
+
+    editUserDescription: '更新此账户的姓名和用户名，或签发新的临时密码。',
+
+    editUserUsername: '用户名',
+
+    editUserFirstName: '名字',
+
+    editUserLastName: '姓氏',
+
+    editUserUsernameInvalid: '请使用 3–32 个字母、数字、连字符或下划线。',
+
+    editUserNameTooLong: '最多使用 64 个字符。',
+
+    editUserSuperAdminNotice: '此处无法编辑超级管理员账户。',
+
+    editUserSave: '保存更改',
+
+    editUserCancel: '取消',
+
+    editUserRotatePassword: '轮换密码',
     userUpdated: '用户已更新',
     userUpdateFailed: '无法更新用户',
     colEmail: '电子邮件',

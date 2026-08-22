@@ -207,11 +207,14 @@ export type UseUserTableStateReturn = {
     role: string,
     onChangeRole: (userId: string, role: string) => void,
   ) => void;
-  profileEditingId: string | null;
-  editUsername: string;
-  setEditUsername: (value: string) => void;
-  startProfileEdit: (user: AdminUser) => void;
-  finishProfileEdit: (onUpdate: (userId: string, data: AdminUserUpdateRequest) => void) => void;
+  editUser: AdminUser | null;
+  openEditUser: (user: AdminUser) => void;
+  closeEditUser: () => void;
+  submitEditUser: (
+    userId: string,
+    data: AdminUserUpdateRequest,
+    onUpdate: (userId: string, data: AdminUserUpdateRequest) => void,
+  ) => void;
   temporaryPasswordUserId: string | null;
   requestTemporaryPassword: (userId: string) => void;
   cancelTemporaryPassword: () => void;
