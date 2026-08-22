@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 1,
+  "currentBatch": 3,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -28,7 +28,7 @@
     },
     {
       "id": 1,
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "commit": null,
       "tests": [],
       "defects": [
@@ -95,10 +95,13 @@
     },
     {
       "id": 2,
-      "status": "PENDING",
-      "commit": null,
+      "status": "DONE",
+      "commit": "pending-push",
       "tests": [],
-      "defects": []
+      "defects": [],
+      "deliverables": [
+        "docs/implementation/model-exposure-entitlements/ADR-model-identity-exposure-entitlement.md"
+      ]
     },
     {
       "id": 3,
@@ -199,7 +202,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 2: ADR on model identity, exposure and entitlement, grounded in audits 01-04",
+  "nextAction": "Batch 3: schema and migration for ConnectorModel.exposure + kind, PlanModelAccess.connectorModelId, and soft-delete on re-sync, per the ADR",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
