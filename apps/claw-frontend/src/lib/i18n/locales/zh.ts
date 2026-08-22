@@ -69,7 +69,7 @@ export const zh: TranslationDictionary = {
     invalidCredentials: '电子邮件或密码无效',
     welcomeTitle: '欢迎来到Claw',
     welcomeSubtitle: '人工智能编排平台',
-    passwordPlaceholder: '输入您的密码',
+    passwordPlaceholder: '密码',
     signingIn: '正在登录...',
     loginFailed: '登录失败。请再试一次。',
     tagline: 'Claw — 每个前沿人工智能模型，一次订阅',

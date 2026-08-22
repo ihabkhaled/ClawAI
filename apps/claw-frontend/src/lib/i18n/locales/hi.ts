@@ -71,7 +71,7 @@ export const hi: TranslationDictionary = {
     invalidCredentials: 'अमान्य ईमेल या पासवर्ड',
     welcomeTitle: 'Claw में आपका स्वागत है',
     welcomeSubtitle: 'AI ऑर्केस्ट्रेशन प्लेटफ़ॉर्म',
-    passwordPlaceholder: 'अपना पासवर्ड दर्ज करें',
+    passwordPlaceholder: 'पासवर्ड',
     signingIn: 'साइन इन हो रहा है...',
     loginFailed: 'लॉगिन विफल। कृपया पुनः प्रयास करें।',
     tagline: 'Claw — हर फ्रंटियर AI मॉडल, एक ही सब्सक्रिप्शन',

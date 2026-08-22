@@ -71,7 +71,7 @@ export const ja: TranslationDictionary = {
     invalidCredentials: 'メールアドレスまたはパスワードが無効です',
     welcomeTitle: 'Claw へようこそ',
     welcomeSubtitle: 'AI オーケストレーション プラットフォーム',
-    passwordPlaceholder: 'パスワードを入力してください',
+    passwordPlaceholder: 'パスワード',
     signingIn: 'サインイン中...',
     loginFailed: 'ログインに失敗しました。もう一度試してください。',
     tagline: 'Claw — すべてのフロンティア AI モデル、1 つのサブスクリプション',

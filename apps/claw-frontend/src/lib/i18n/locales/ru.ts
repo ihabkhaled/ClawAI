@@ -71,7 +71,7 @@ export const ru: TranslationDictionary = {
     invalidCredentials: 'Неверный email или пароль',
     welcomeTitle: 'Добро пожаловать в Claw',
     welcomeSubtitle: 'Платформа оркестрации ИИ',
-    passwordPlaceholder: 'Введите пароль',
+    passwordPlaceholder: 'Пароль',
     signingIn: 'Выполняется вход...',
     loginFailed: 'Не удалось войти. Попробуйте снова.',
     tagline: 'Claw — все передовые ИИ-модели по одной подписке',

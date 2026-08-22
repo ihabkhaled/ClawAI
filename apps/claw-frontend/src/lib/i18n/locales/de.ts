@@ -71,7 +71,7 @@ export const de: TranslationDictionary = {
     invalidCredentials: 'Ungültige E-Mail oder Passwort',
     welcomeTitle: 'Willkommen bei Claw',
     welcomeSubtitle: 'KI-Orchestrierungsplattform',
-    passwordPlaceholder: 'Passwort eingeben',
+    passwordPlaceholder: 'Passwort',
     signingIn: 'Anmeldung läuft...',
     loginFailed: 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
     tagline: 'Claw — jedes Spitzenmodell, ein Abonnement',

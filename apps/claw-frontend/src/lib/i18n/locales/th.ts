@@ -70,7 +70,7 @@ export const th: TranslationDictionary = {
     invalidCredentials: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
     welcomeTitle: 'ยินดีต้อนรับสู่ Claw',
     welcomeSubtitle: 'แพลตฟอร์มการประสาน AI',
-    passwordPlaceholder: 'ใส่รหัสผ่านของคุณ',
+    passwordPlaceholder: 'รหัสผ่าน',
     signingIn: 'กำลังลงชื่อเข้าใช้...',
     loginFailed: 'การเข้าสู่ระบบล้มเหลวโปรดลองอีกครั้ง',
     tagline: 'Claw — โมเดล AI ระดับแนวหน้าทุกรูปแบบ หนึ่งครั้งการสมัครสมาชิก',

@@ -71,7 +71,7 @@ export const ar: TranslationDictionary = {
     invalidCredentials: 'بريد إلكتروني أو كلمة مرور غير صحيحة',
     welcomeTitle: 'مرحباً بك في Claw',
     welcomeSubtitle: 'منصة تنظيم الذكاء الاصطناعي',
-    passwordPlaceholder: 'أدخل كلمة المرور',
+    passwordPlaceholder: 'كلمة المرور',
     signingIn: 'جار تسجيل الدخول...',
     loginFailed: 'فشل تسجيل الدخول. حاول مرة أخرى.',
     tagline: 'Claw — كل نماذج الذكاء الاصطناعي الرائدة باشتراك واحد',

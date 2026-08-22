@@ -71,7 +71,7 @@ export const en: TranslationDictionary = {
     invalidCredentials: 'Invalid email or password',
     welcomeTitle: 'Welcome to Claw',
     welcomeSubtitle: 'AI Orchestration Platform',
-    passwordPlaceholder: 'Enter your password',
+    passwordPlaceholder: 'Password',
     signingIn: 'Signing in...',
     loginFailed: 'Login failed. Please try again.',
     tagline: 'Claw — every frontier AI model, one subscription',

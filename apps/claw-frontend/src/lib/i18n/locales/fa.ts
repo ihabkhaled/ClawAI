@@ -71,7 +71,7 @@ export const fa: TranslationDictionary = {
     invalidCredentials: 'ایمیل یا رمز عبور نامعتبر است',
     welcomeTitle: 'به Claw خوش آمدید',
     welcomeSubtitle: 'پلتفرم ارکستراسیون هوش مصنوعی',
-    passwordPlaceholder: 'رمز عبور خود را وارد کنید',
+    passwordPlaceholder: 'رمز عبور',
     signingIn: 'ورود به سیستم...',
     loginFailed: 'ورود ناموفق بود.لطفا دوباره امتحان کنید.',
     tagline: 'Claw - هر مدل هوش مصنوعی مرزی، یک اشتراک',

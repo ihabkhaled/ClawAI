@@ -64,3 +64,21 @@ describe('touch target guards', () => {
     expect(screen.getByRole('textbox', { name: 'Message' })).toHaveClass('touch:text-[16px]');
   });
 });
+
+describe('touch readability guards', () => {
+  it('lets a long select value wrap on touch rather than clamping it', async () => {
+    const { Select, SelectTrigger, SelectValue } = await import('@/components/ui/select');
+
+    render(
+      <Select>
+        <SelectTrigger aria-label="Template">
+          <SelectValue placeholder="Analyze to Reason to Format" />
+        </SelectTrigger>
+      </Select>,
+    );
+
+    const trigger = screen.getByRole('combobox', { name: 'Template' });
+    expect(trigger.className).toContain('touch:[&>span]:line-clamp-none');
+    expect(trigger.className).toContain('touch:h-auto');
+  });
+});

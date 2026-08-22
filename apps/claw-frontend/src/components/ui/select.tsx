@@ -17,7 +17,10 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring touch:min-h-11 touch:text-base flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
+      // `line-clamp-1` hides the tail of a long selection, and a phone has no
+      // hover to reveal it — "Analyze -> Reason -> Format" lost its last word at
+      // 280px. On a coarse pointer the trigger grows rather than clamping.
+      'border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring touch:h-auto touch:min-h-11 touch:text-base touch:[&>span]:line-clamp-none touch:[&>span]:text-start flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
       className,
     )}
     {...props}

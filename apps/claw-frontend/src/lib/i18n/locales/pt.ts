@@ -71,7 +71,7 @@ export const pt: TranslationDictionary = {
     invalidCredentials: 'E-mail ou senha inválidos',
     welcomeTitle: 'Bem-vindo ao Claw',
     welcomeSubtitle: 'Plataforma de Orquestração de IA',
-    passwordPlaceholder: 'Digite sua senha',
+    passwordPlaceholder: 'Senha',
     signingIn: 'Entrando...',
     loginFailed: 'Falha no login. Tente novamente.',
     tagline: 'Claw — todos os modelos de IA de fronteira, uma assinatura',
