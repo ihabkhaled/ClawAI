@@ -354,6 +354,19 @@ export class ConnectorsService implements OnApplicationBootstrap {
     this.logger.log(
       `setModelExposure: connector=${connectorId} exposed=${String(exposed)} requested=${String(modelKeys.length)} updated=${String(updated)}`,
     );
+    // Exposure decides what ClawAI offers to everyone, so who changed it and
+    // what it took away has to be recoverable later. previouslyExposed is the
+    // before-state: on an unexpose it names exactly what stopped being
+    // available, which a count alone would not tell an investigator.
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Model exposure ${exposed ? 'granted' : 'revoked'} on connector ${connectorId}`,
+      action: exposed ? 'model_exposure_granted' : 'model_exposure_revoked',
+      service: ConnectorsService.name,
+      connectorId,
+      metadata: { requestedModelKeys: modelKeys, previouslyExposed, updated },
+    });
+
     // Consumers cache exposure to keep the check off the message hot path. This
     // is what tells them to drop that cache, so an unexpose takes effect while
     // the administrator is still on the screen rather than up to a TTL later.

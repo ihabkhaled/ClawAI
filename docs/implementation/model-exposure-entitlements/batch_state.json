@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 12,
+  "currentBatch": 13,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -269,10 +269,14 @@
     },
     {
       "id": 12,
-      "status": "PENDING",
+      "status": "PARTIAL",
       "commit": null,
       "tests": [],
-      "defects": []
+      "defects": [],
+      "deliverables": [
+        "structured audit action on every exposure grant and revoke, carrying the before-state"
+      ],
+      "gap": "Plan model-access mutations record a service log but not a structured audit action; plans.service has no StructuredLogger and wiring one needs constructor changes on a hot path. Metrics (denial-reason counters, authz latency, Auto candidates excluded) are not implemented."
     },
     {
       "id": 13,
@@ -303,7 +307,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 12 audit and observability, then 13-16 evidence suites",
+  "nextAction": "Batch 13 deterministic entitlement matrix",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
