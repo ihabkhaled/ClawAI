@@ -32,6 +32,29 @@ const baseProps = {
 };
 
 describe('ModelPicker', () => {
+  // The trigger is 36px square in the mobile composer, and a phone relaxes
+  // `.truncate` to wrap so a clipped string stays readable. Together those
+  // rendered "Auto (routing decides)" as six stacked syllables spilling out of
+  // the button. An icon-only trigger keeps the label for a screen reader only.
+  it('keeps the label out of the trigger but not out of the accessibility tree', () => {
+    render(
+      <ModelPicker {...baseProps} value="OPENAI::gpt-4.1" hideTriggerLabel ariaLabel="Model" />,
+    );
+
+    const trigger = screen.getByRole('combobox', { name: 'Model' });
+    expect(trigger).toHaveTextContent('GPT-4.1');
+    expect(trigger.querySelector('.sr-only')).not.toBeNull();
+    expect(trigger.querySelector('.truncate-fixed')).toBeNull();
+  });
+
+  it('clips rather than wraps the label when the trigger does show one', () => {
+    render(<ModelPicker {...baseProps} value="OPENAI::gpt-4.1" />);
+
+    const label = screen.getByRole('combobox').querySelector('.truncate-fixed');
+    expect(label).not.toBeNull();
+    expect(label).toHaveTextContent('GPT-4.1');
+  });
+
   it('shows every group when opened, not just one provider', () => {
     render(<ModelPicker {...baseProps} />);
     fireEvent.click(screen.getByRole('combobox'));

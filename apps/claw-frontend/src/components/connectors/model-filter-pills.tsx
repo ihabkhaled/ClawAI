@@ -21,11 +21,15 @@ export function ModelFilterPills({
 
   return (
     <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-md border p-2">
-      <Badge variant="default" className="text-[11px]">
+      <Badge variant="default" className="touch:text-xs text-[11px]">
         {t('models.filters.activeCount', { count: pills.length })}
       </Badge>
       {pills.map((pill) => (
-        <Badge key={pill.id} variant="secondary" className="gap-1 ps-2 pe-1 text-[11px]">
+        <Badge
+          key={pill.id}
+          variant="secondary"
+          className="touch:text-xs gap-1 ps-2 pe-1 text-[11px]"
+        >
           {pill.label}
           <Button
             variant="unstyled"

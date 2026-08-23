@@ -37,7 +37,7 @@ export function CapabilityCard({
   }
 
   return (
-    <Card className={cn('overflow-hidden border-border', styles.bgClass)}>
+    <Card className={cn('border-border overflow-hidden', styles.bgClass)}>
       <div className="flex">
         <div className={cn('w-[3px] shrink-0', styles.accentClass)} aria-hidden="true" />
         <CardContent className="flex flex-1 flex-col gap-3 py-3">
@@ -64,17 +64,17 @@ export function CapabilityCard({
             ) : (
               <Badge
                 variant="outline"
-                className="shrink-0 text-[10px] uppercase tracking-wider"
+                className="touch:text-xs shrink-0 text-[10px] tracking-wider uppercase"
               >
                 {invocation.status}
               </Badge>
             )}
           </div>
-          <code className="truncate rounded bg-muted px-2 py-1 text-xs text-muted-foreground">
+          <code className="bg-muted text-muted-foreground truncate rounded px-2 py-1 text-xs">
             {JSON.stringify(invocation.targetDescriptor)}
           </code>
           {invocation.matchedPolicyName !== null && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {t('agent.matchedPolicy')}: {invocation.matchedPolicyName}
             </p>
           )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactElement, useEffect, useState } from 'react';
+import { type ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,25 +12,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import type { AdminUserUpdateRequest } from '@/types/auth.types';
+import { useEditUserForm } from '@/hooks/admin/use-edit-user-form';
 import type { EditUserDialogProps } from '@/types/component.types';
 
 export function EditUserDialog(props: EditUserDialogProps): ReactElement {
   const { open, user, isSaving, isRotating, onClose, onSave, onRotatePassword, t } = props;
-
-  const usernameRegex = /^[a-zA-Z0-9_-]+$/;
-
-  const [username, setUsername] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-
-  useEffect(() => {
-    if (user) {
-      setUsername(user.username ?? '');
-      setFirstName(user.firstName ?? '');
-      setLastName(user.lastName ?? '');
-    }
-  }, [user]);
+  const { form, submit } = useEditUserForm(user, onSave);
+  const { errors, isValid } = form.formState;
 
   if (!user) {
     return <Dialog open={false} onOpenChange={onClose} />;
@@ -38,126 +26,90 @@ export function EditUserDialog(props: EditUserDialogProps): ReactElement {
 
   const isSuperAdmin = user.isSuperAdmin;
 
-  const trimmedUsername = username.trim();
-  const isUsernameValid =
-    trimmedUsername.length >= 3 &&
-    trimmedUsername.length <= 32 &&
-    usernameRegex.test(trimmedUsername);
-
-  const isFirstNameValid = firstName.trim().length <= 64;
-  const isLastNameValid = lastName.trim().length <= 64;
-
-  const canSave =
-    !isSaving && !isSuperAdmin && isUsernameValid && isFirstNameValid && isLastNameValid;
-
-  const handleSave = (): void => {
-    if (!canSave || !user) {
-      return;
-    }
-    const updateRequest: AdminUserUpdateRequest = {
-      username: username.trim(),
-      firstName: firstName.trim() || null,
-      lastName: lastName.trim() || null,
-    };
-    onSave(user.id, updateRequest);
-  };
-
-  const handleRotatePassword = (): void => {
-    if (!user) {
-      return;
-    }
-    onRotatePassword(user.id);
-  };
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t('admin.editUserTitle')}</DialogTitle>
           <DialogDescription>{t('admin.editUserDescription')}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="username" className="text-sm leading-none font-medium">
+        <form onSubmit={submit} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="edit-user-username" className="text-sm leading-none font-medium">
               {t('admin.editUserUsername')}
             </label>
             <Input
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="col-span-3"
+              id="edit-user-username"
+              autoComplete="off"
               disabled={isSuperAdmin}
+              error={Boolean(errors.username)}
+              {...form.register('username')}
             />
+            {errors.username ? (
+              <p className="text-destructive text-xs">{t('admin.editUserUsernameInvalid')}</p>
+            ) : null}
           </div>
-          {!isUsernameValid && (
-            <div className="text-destructive col-span-3 col-start-2 text-sm">
-              {t('admin.editUserUsernameInvalid')}
-            </div>
-          )}
 
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="firstName" className="text-sm leading-none font-medium">
-              {t('admin.editUserFirstName')}
-            </label>
-            <Input
-              id="firstName"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              className="col-span-3"
-              disabled={isSuperAdmin}
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label htmlFor="edit-user-first-name" className="text-sm leading-none font-medium">
+                {t('admin.editUserFirstName')}
+              </label>
+              <Input
+                id="edit-user-first-name"
+                autoComplete="off"
+                disabled={isSuperAdmin}
+                error={Boolean(errors.firstName)}
+                {...form.register('firstName')}
+              />
+              {errors.firstName ? (
+                <p className="text-destructive text-xs">{t('admin.editUserNameTooLong')}</p>
+              ) : null}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="edit-user-last-name" className="text-sm leading-none font-medium">
+                {t('admin.editUserLastName')}
+              </label>
+              <Input
+                id="edit-user-last-name"
+                autoComplete="off"
+                disabled={isSuperAdmin}
+                error={Boolean(errors.lastName)}
+                {...form.register('lastName')}
+              />
+              {errors.lastName ? (
+                <p className="text-destructive text-xs">{t('admin.editUserNameTooLong')}</p>
+              ) : null}
+            </div>
           </div>
-          {!isFirstNameValid && (
-            <div className="text-destructive col-span-3 col-start-2 text-sm">
-              {t('admin.editUserNameTooLong')}
-            </div>
-          )}
 
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="lastName" className="text-sm leading-none font-medium">
-              {t('admin.editUserLastName')}
-            </label>
-            <Input
-              id="lastName"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              className="col-span-3"
-              disabled={isSuperAdmin}
-            />
-          </div>
-          {!isLastNameValid && (
-            <div className="text-destructive col-span-3 col-start-2 text-sm">
-              {t('admin.editUserNameTooLong')}
-            </div>
-          )}
-
-          {isSuperAdmin && (
-            <p className="text-muted-foreground pt-2 text-center text-sm">
+          {isSuperAdmin ? (
+            <p className="text-muted-foreground border-border rounded-md border border-dashed p-3 text-sm">
               {t('admin.editUserSuperAdminNotice')}
             </p>
-          )}
-        </div>
+          ) : null}
 
-        <DialogFooter className="sm:justify-between">
-          <div>
+          <DialogFooter className="gap-2 pt-2 sm:justify-between sm:gap-0">
             <Button
+              type="button"
               variant="destructive"
-              onClick={handleRotatePassword}
+              onClick={() => onRotatePassword(user.id)}
               disabled={isRotating || isSuperAdmin}
             >
               {t('admin.editUserRotatePassword')}
             </Button>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
-              {t('admin.editUserCancel')}
-            </Button>
-            <Button onClick={handleSave} disabled={!canSave}>
-              {t('admin.editUserSave')}
-            </Button>
-          </div>
-        </DialogFooter>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              <Button type="button" variant="outline" onClick={onClose}>
+                {t('admin.editUserCancel')}
+              </Button>
+              <Button type="submit" disabled={isSaving || isSuperAdmin || !isValid}>
+                {t('admin.editUserSave')}
+              </Button>
+            </div>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

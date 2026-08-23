@@ -134,6 +134,15 @@ describe('UsersRepository', () => {
     });
   });
 
+  it('revokeOtherSessionsByUserId spares the session that asked for the change', async () => {
+    const revokedAt = new Date('2026-08-09T00:00:00.000Z');
+    await repository.revokeOtherSessionsByUserId('u1', 'session-1', revokedAt);
+    expect(prismaMock.session.updateMany).toHaveBeenCalledWith({
+      where: { userId: 'u1', revokedAt: null, id: { not: 'session-1' } },
+      data: { revokedAt },
+    });
+  });
+
   it('countAll delegates to prisma count with no filters', async () => {
     await repository.countAll();
     expect(prismaMock.user.count).toHaveBeenCalledWith({ where: {} });

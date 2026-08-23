@@ -37,8 +37,8 @@ export function ContextPackForm({ open, onOpenChange, onSubmit, isPending }: Con
             interactions.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="pack-name" className="text-sm font-medium">
               {t('context.name')}
             </label>
@@ -49,11 +49,11 @@ export function ContextPackForm({ open, onOpenChange, onSubmit, isPending }: Con
               placeholder={t('context.namePlaceholder')}
             />
             {fieldErrors.name ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.name[0]}</p>
+              <p className="text-destructive mt-1 text-sm">{fieldErrors.name[0]}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="pack-description" className="text-sm font-medium">
               {t('context.descriptionOptional')}
             </label>
@@ -65,11 +65,11 @@ export function ContextPackForm({ open, onOpenChange, onSubmit, isPending }: Con
               rows={3}
             />
             {fieldErrors.description ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.description[0]}</p>
+              <p className="text-destructive mt-1 text-sm">{fieldErrors.description[0]}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="pack-scope" className="text-sm font-medium">
               {t('context.scopeOptional')}
             </label>
@@ -80,7 +80,7 @@ export function ContextPackForm({ open, onOpenChange, onSubmit, isPending }: Con
               placeholder={t('context.scopePlaceholder')}
             />
             {fieldErrors.scope ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.scope[0]}</p>
+              <p className="text-destructive mt-1 text-sm">{fieldErrors.scope[0]}</p>
             ) : null}
           </div>
 

@@ -23,6 +23,13 @@ import type {
 const t = (key: string, params?: Record<string, string | number>): string =>
   params === undefined ? key : `${key}:${JSON.stringify(params)}`;
 
+// ResponsiveTable, which DataTable renders, reads its default empty message
+// from the locale context. These are prop-driven component tests with no
+// provider around them.
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 describe('FeatureAllowanceList', () => {
   it('shows observed request consumption for unlimited research features', () => {
     render(
@@ -385,7 +392,11 @@ describe('InvoiceTable', () => {
     },
   ];
 
-  it('contains its wide invoice table inside a shrinkable card', () => {
+  // Five invoice columns need about 42rem. They used to sit in a horizontal
+  // scroller, which on a 360px phone meant swiping sideways to reach the total
+  // and the download button. DataTable keeps the table for a mouse and stacks
+  // each invoice into a card on a coarse pointer.
+  it('stacks each invoice into a card on touch and keeps the table for a mouse', () => {
     const { container } = render(
       <InvoiceTable
         invoices={invoices}
@@ -399,8 +410,9 @@ describe('InvoiceTable', () => {
     );
 
     expect(container.firstElementChild).toHaveClass('min-w-0');
-    expect(container.querySelector('table')).toHaveClass('min-w-[42rem]');
-    expect(container.querySelectorAll('.overflow-x-auto')).toHaveLength(1);
+    expect(container.querySelector('ul')).toHaveClass('touch:block');
+    expect(container.querySelector('table')).not.toHaveClass('min-w-[42rem]');
+    expect(container.querySelector('.touch\:hidden')?.querySelector('table')).not.toBeNull();
   });
 
   it('offers an authenticated download even without a hosted provider URL', async () => {
@@ -417,7 +429,13 @@ describe('InvoiceTable', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'billing.invoices.download' }));
+    // The stacked card and the table are both in the DOM; only CSS decides
+    // which one the viewer sees, so either download button is the same action.
+    const [downloadButton] = screen.getAllByRole('button', {
+      name: 'billing.invoices.download',
+    });
+
+    await userEvent.click(downloadButton as HTMLElement);
     expect(onDownload).toHaveBeenCalledWith('invoice-1', 'CLAW-00000001');
   });
 });

@@ -61,7 +61,12 @@ describe('UsersController', () => {
     controller = module.get<UsersController>(UsersController);
   });
 
-  const adminUser = { id: 'admin-1', email: 'a@b', role: UserRole.ADMIN };
+  const adminUser = {
+    id: 'admin-1',
+    email: 'a@b',
+    role: UserRole.ADMIN,
+    sessionId: 'session-1',
+  };
 
   it('create forwards body to service.create', async () => {
     const dto = { email: 'a@b', username: 'a', password: 'PWord!1secure', role: UserRole.OPERATOR };
@@ -92,10 +97,12 @@ describe('UsersController', () => {
     expect(usersMock.changePassword).toHaveBeenCalledWith('admin-1', dto);
   });
 
-  it('updateMyProfile forwards the authenticated user id and body', async () => {
+  // The session id decides which sessions survive a rename, so the controller
+  // has to pass the caller's own rather than let the service guess.
+  it('updateMyProfile forwards the authenticated user id, body and session', async () => {
     const dto = { currentPassword: 'CurrentPass1!', username: 'renamed' };
     await controller.updateMyProfile(adminUser as never, dto);
-    expect(usersMock.updateOwnProfile).toHaveBeenCalledWith('admin-1', dto);
+    expect(usersMock.updateOwnProfile).toHaveBeenCalledWith('admin-1', dto, 'session-1');
   });
 
   it('deleteMyAccount forwards the authenticated user id and body', async () => {

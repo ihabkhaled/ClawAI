@@ -21,10 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  POLICY_KIND_OPTIONS,
-  RISK_LABEL_OPTIONS,
-} from '@/constants/admin-automation.constants';
+import { POLICY_KIND_OPTIONS, RISK_LABEL_OPTIONS } from '@/constants/admin-automation.constants';
 import { AdminFormMode } from '@/enums/admin-form-mode.enum';
 import type { AiActionPolicyKind } from '@/enums/ai-action-policy-kind.enum';
 import type { RiskLabel } from '@/enums/risk-label.enum';
@@ -42,10 +39,14 @@ export function PolicyFormDialog({
   submitErrorMessage,
   t,
 }: PolicyFormDialogProps): ReactElement {
-  const { state, setField, fieldErrors, buildCreateRequest, buildUpdateRequest } =
-    usePolicyForm(initial ?? null);
+  const { state, setField, fieldErrors, buildCreateRequest, buildUpdateRequest } = usePolicyForm(
+    initial ?? null,
+  );
 
-  const titleKey = mode === AdminFormMode.CREATE ? 'adminAutomation.policies.createTitle' : 'adminAutomation.policies.editTitle';
+  const titleKey =
+    mode === AdminFormMode.CREATE
+      ? 'adminAutomation.policies.createTitle'
+      : 'adminAutomation.policies.editTitle';
   const descKey =
     mode === AdminFormMode.CREATE
       ? 'adminAutomation.policies.createDescription'
@@ -68,13 +69,13 @@ export function PolicyFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>{t(titleKey)}</DialogTitle>
           <DialogDescription>{t(descKey)}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="policy-name" className="text-sm font-medium">
               {t('adminAutomation.policies.nameLabel')}
             </label>
@@ -86,13 +87,15 @@ export function PolicyFormDialog({
               placeholder="deny-pii"
               aria-invalid={fieldErrors.name !== undefined}
             />
-            <p className="text-xs text-muted-foreground">{t('adminAutomation.policies.nameHelp')}</p>
+            <p className="text-muted-foreground text-xs">
+              {t('adminAutomation.policies.nameHelp')}
+            </p>
             {fieldErrors.name !== undefined ? (
-              <p className="text-xs text-destructive">{fieldErrors.name}</p>
+              <p className="text-destructive text-xs">{fieldErrors.name}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="policy-description" className="text-sm font-medium">
               {t('adminAutomation.policies.descriptionLabel')}
             </label>
@@ -103,11 +106,11 @@ export function PolicyFormDialog({
               rows={2}
             />
             {fieldErrors.description !== undefined ? (
-              <p className="text-xs text-destructive">{fieldErrors.description}</p>
+              <p className="text-destructive text-xs">{fieldErrors.description}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="policy-kind" className="text-sm font-medium">
               {t('adminAutomation.policies.kindFieldLabel')}
             </label>
@@ -128,8 +131,8 @@ export function PolicyFormDialog({
             </Select>
           </div>
 
-          <div className="grid gap-2 md:grid-cols-2 md:gap-4">
-            <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="policy-provider-regex" className="text-sm font-medium">
                 {t('adminAutomation.policies.providerRegex')}
               </label>
@@ -140,10 +143,10 @@ export function PolicyFormDialog({
                 aria-invalid={fieldErrors.providerRegex !== undefined}
               />
               {fieldErrors.providerRegex !== undefined ? (
-                <p className="text-xs text-destructive">{fieldErrors.providerRegex}</p>
+                <p className="text-destructive text-xs">{fieldErrors.providerRegex}</p>
               ) : null}
             </div>
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="policy-action-regex" className="text-sm font-medium">
                 {t('adminAutomation.policies.actionKindRegex')}
               </label>
@@ -154,21 +157,19 @@ export function PolicyFormDialog({
                 aria-invalid={fieldErrors.actionKindRegex !== undefined}
               />
               {fieldErrors.actionKindRegex !== undefined ? (
-                <p className="text-xs text-destructive">{fieldErrors.actionKindRegex}</p>
+                <p className="text-destructive text-xs">{fieldErrors.actionKindRegex}</p>
               ) : null}
             </div>
           </div>
 
-          <div className="grid gap-2 md:grid-cols-2 md:gap-4">
-            <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="policy-risk-label" className="text-sm font-medium">
                 {t('adminAutomation.policies.riskCeiling')}
               </label>
               <Select
                 value={state.riskMaxLabel}
-                onValueChange={(value: string) =>
-                  setField('riskMaxLabel', value as RiskLabel)
-                }
+                onValueChange={(value: string) => setField('riskMaxLabel', value as RiskLabel)}
               >
                 <SelectTrigger id="policy-risk-label">
                   <SelectValue />
@@ -182,7 +183,7 @@ export function PolicyFormDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="policy-risk-score" className="text-sm font-medium">
                 {t('adminAutomation.policies.riskMaxScoreLabel')}
               </label>
@@ -196,12 +197,12 @@ export function PolicyFormDialog({
                 aria-invalid={fieldErrors.riskMaxScore !== undefined}
               />
               {fieldErrors.riskMaxScore !== undefined ? (
-                <p className="text-xs text-destructive">{fieldErrors.riskMaxScore}</p>
+                <p className="text-destructive text-xs">{fieldErrors.riskMaxScore}</p>
               ) : null}
             </div>
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="policy-priority" className="text-sm font-medium">
               {t('adminAutomation.policies.priorityLabel')}
             </label>
@@ -215,7 +216,7 @@ export function PolicyFormDialog({
               aria-invalid={fieldErrors.priority !== undefined}
             />
             {fieldErrors.priority !== undefined ? (
-              <p className="text-xs text-destructive">{fieldErrors.priority}</p>
+              <p className="text-destructive text-xs">{fieldErrors.priority}</p>
             ) : null}
           </div>
 
@@ -242,7 +243,10 @@ export function PolicyFormDialog({
           </div>
 
           {submitErrorMessage !== null ? (
-            <p className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm text-destructive" role="alert">
+            <p
+              className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-2 text-sm"
+              role="alert"
+            >
               {submitErrorMessage}
             </p>
           ) : null}

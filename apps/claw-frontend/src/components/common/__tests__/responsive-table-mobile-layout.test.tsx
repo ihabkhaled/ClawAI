@@ -26,3 +26,24 @@ describe('ResponsiveTable mobile layout', () => {
     expect(container.querySelector('dd')).toHaveClass('min-w-0', 'break-words');
   });
 });
+
+describe('ResponsiveTable breakpoint', () => {
+  // The card/table switch used to be `md:`, a width test. A phone in landscape
+  // reports 915px, cleared it, and got the desktop table — which is why
+  // /en/audits and /en/admin/users still demanded horizontal scrolling on the
+  // landscape profiles. The switch is now pointer-based.
+  it('shows cards on a coarse pointer and the table on a fine one', () => {
+    const { container } = render(
+      <ResponsiveTable
+        rows={[{ id: '1', value: 'value' }]}
+        columns={[{ key: 'value', header: 'Value', render: (row) => row.value }]}
+        keyExtractor={(row) => row.id}
+        mobileTitle={() => 'Title'}
+      />,
+    );
+
+    expect(container.querySelector('ul')).toHaveClass('hidden', 'touch:block');
+    const tableWrapper = container.querySelector('table')?.parentElement?.parentElement;
+    expect(tableWrapper).toHaveClass('block', 'touch:hidden');
+  });
+});

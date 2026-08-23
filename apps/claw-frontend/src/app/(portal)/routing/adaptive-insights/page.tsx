@@ -17,13 +17,13 @@ export default function AdaptiveInsightsPage(): React.ReactElement {
   const { t, insights, isLoading, isError, windowDays, setWindowDays } = useAdaptiveLearningPage();
 
   const header = (
-    <div className="flex items-center justify-between">
-      <div>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="min-w-0">
         <h1 className="text-2xl font-semibold">{t('adaptiveLearning.title')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t('adaptiveLearning.description')}</p>
+        <p className="text-muted-foreground mt-1 text-sm">{t('adaptiveLearning.description')}</p>
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">{t('adaptiveLearning.windowDays')}</span>
+        <span className="text-muted-foreground text-sm">{t('adaptiveLearning.windowDays')}</span>
         <Select
           value={String(windowDays)}
           onValueChange={(v) => {
@@ -49,7 +49,7 @@ export default function AdaptiveInsightsPage(): React.ReactElement {
     return (
       <div className="space-y-6 p-6">
         {header}
-        <div className="flex items-center justify-center py-16 text-muted-foreground">
+        <div className="text-muted-foreground flex items-center justify-center py-16">
           {t('adaptiveLearning.loading')}
         </div>
       </div>
@@ -60,7 +60,7 @@ export default function AdaptiveInsightsPage(): React.ReactElement {
     return (
       <div className="space-y-6 p-6">
         {header}
-        <div className="flex items-center justify-center py-16 text-destructive">
+        <div className="text-destructive flex items-center justify-center py-16">
           {t('adaptiveLearning.error')}
         </div>
       </div>
@@ -71,7 +71,7 @@ export default function AdaptiveInsightsPage(): React.ReactElement {
     return (
       <div className="space-y-6 p-6">
         {header}
-        <div className="flex items-center justify-center py-16 text-muted-foreground">
+        <div className="text-muted-foreground flex items-center justify-center py-16">
           {t('adaptiveLearning.noData')}
         </div>
       </div>

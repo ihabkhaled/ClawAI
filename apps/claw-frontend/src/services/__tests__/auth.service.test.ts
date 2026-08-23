@@ -191,7 +191,9 @@ describe('authService', () => {
     });
   });
 
-  it('updates the profile and clears the revoked local session', async () => {
+  // Renaming yourself used to sign you out of the tab you renamed in. The API
+  // now spares the calling session, so nothing local may be torn down.
+  it('keeps the local session when the username changes', async () => {
     mockUpdateOwnProfile.mockResolvedValueOnce({ ...mockUser, username: 'renamed' });
     act(() =>
       useAuthStore.getState().setAuth({ accessToken: 'a', refreshToken: 'r', user: mockUser }),
@@ -199,7 +201,12 @@ describe('authService', () => {
 
     await authService.updateOwnProfile({ currentPassword: 'CurrentPass1!', username: 'renamed' });
 
-    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    expect(mockUpdateOwnProfile).toHaveBeenCalledWith({
+      currentPassword: 'CurrentPass1!',
+      username: 'renamed',
+    });
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(useAuthStore.getState().accessToken).toBe('a');
   });
 
   it('deletes the account and clears the local session', async () => {

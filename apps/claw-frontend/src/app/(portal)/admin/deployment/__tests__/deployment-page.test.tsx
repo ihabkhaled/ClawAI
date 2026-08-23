@@ -12,6 +12,15 @@ vi.mock('@/components/admin/deployment/deployment-status-content', () => ({
 vi.mock('@/components/admin/deployment/deployment-control-panel', () => ({
   DeploymentControlPanel: () => <div data-testid="deployment-controls" />,
 }));
+vi.mock('@/components/admin/deployment/deployment-credentials-card', () => ({
+  DeploymentCredentialsCard: () => <div data-testid="deployment-credentials" />,
+}));
+vi.mock('@/components/admin/deployment/deployment-run-progress-card', () => ({
+  DeploymentRunProgressCard: () => <div data-testid="deployment-progress" />,
+}));
+vi.mock('@/components/admin/deployment/deployment-troubleshooting-card', () => ({
+  DeploymentTroubleshootingCard: () => <div data-testid="deployment-troubleshooting" />,
+}));
 vi.mock('@/lib/i18n', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 function controller(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -26,6 +35,8 @@ function controller(overrides: Record<string, unknown> = {}): Record<string, unk
     isRefreshing: false,
     retry: vi.fn(),
     actions: { isBusy: false },
+    credentials: { isEditing: false },
+    progress: { progress: null, isLoading: false },
     ...overrides,
   };
 }
@@ -38,6 +49,8 @@ describe('AdminDeploymentPage', () => {
     render(<AdminDeploymentPage />);
     expect(screen.getByTestId('deployment-status')).toBeInTheDocument();
     expect(screen.getByTestId('deployment-controls')).toBeInTheDocument();
+    expect(screen.getByTestId('deployment-progress')).toBeInTheDocument();
+    expect(screen.getByTestId('deployment-credentials')).toBeInTheDocument();
   });
 
   it('denies another administrator before rendering deployment data', () => {
@@ -46,6 +59,7 @@ describe('AdminDeploymentPage', () => {
     expect(screen.getByText('common.accessDeniedTitle')).toBeInTheDocument();
     expect(screen.queryByTestId('deployment-status')).not.toBeInTheDocument();
     expect(screen.queryByTestId('deployment-controls')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('deployment-credentials')).not.toBeInTheDocument();
   });
 
   it('waits for a fresh profile before denying a cached pre-migration administrator', () => {

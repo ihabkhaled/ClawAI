@@ -144,7 +144,7 @@ export function RuntimeProgressPanel({
                 <div className="border-border/60 flex items-center justify-between gap-3 border-b px-3 py-2">
                   <div className="flex items-center gap-2">
                     <StreamStageBadge stage={streamLive.stage} />
-                    <span className="text-muted-foreground inline-flex items-center gap-1 text-[11px]">
+                    <span className="text-muted-foreground touch:text-xs inline-flex items-center gap-1 text-[11px]">
                       <CircleDot className="h-3 w-3 animate-pulse text-sky-500" />
                       {t('chat.live')}
                     </span>
@@ -217,12 +217,12 @@ export function RuntimeProgressPanel({
             >
               <div className="border-border/60 flex items-center justify-between gap-3 border-b px-3 py-2">
                 <div className="min-w-0">
-                  <div className="text-[11px] font-semibold tracking-[0.2em] text-sky-700 uppercase dark:text-sky-300">
+                  <div className="touch:text-xs text-[11px] font-semibold tracking-[0.2em] text-sky-700 uppercase dark:text-sky-300">
                     {t('chat.visibleAiProgress')}
                   </div>
                   <div className="text-foreground truncate text-sm font-medium">{statusLabel}</div>
                 </div>
-                <div className="bg-background/80 text-muted-foreground flex items-center gap-1.5 rounded-full px-2 py-1 text-[11px]">
+                <div className="bg-background/80 text-muted-foreground touch:text-xs flex items-center gap-1.5 rounded-full px-2 py-1 text-[11px]">
                   <CircleDot className="h-3 w-3 animate-pulse text-sky-500" />
                   {t('chat.live')}
                 </div>
@@ -260,7 +260,7 @@ export function RuntimeProgressPanel({
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                             <span className="text-foreground font-medium">{label}</span>
                             {stage.actorName !== undefined && stage.actorName !== null ? (
-                              <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px]">
+                              <span className="bg-muted text-muted-foreground touch:text-xs rounded-full px-1.5 py-0.5 text-[10px]">
                                 {stage.actorName}
                               </span>
                             ) : null}
@@ -271,7 +271,7 @@ export function RuntimeProgressPanel({
                         </div>
                         <span
                           className={cn(
-                            'shrink-0 rounded-md px-1.5 py-0.5 text-[10px] tracking-wide uppercase',
+                            'touch:text-xs shrink-0 rounded-md px-1.5 py-0.5 text-[10px] tracking-wide uppercase',
                             {
                               'bg-destructive/10 text-destructive':
                                 stage.status === VisibleProgressStageStatus.ERROR,
@@ -311,7 +311,7 @@ export function RuntimeProgressPanel({
                   </span>
                 ) : null}
                 {streamLive?.metrics?.elapsedMs !== undefined ? (
-                  <span className="text-muted-foreground/80 ms-auto font-mono text-[11px] tabular-nums">
+                  <span className="text-muted-foreground/80 touch:text-xs ms-auto font-mono text-[11px] tabular-nums">
                     {formatElapsed(streamLive.metrics.elapsedMs)}
                   </span>
                 ) : null}

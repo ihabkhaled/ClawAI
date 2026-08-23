@@ -59,7 +59,7 @@ export default function AdminRefundsPage(): ReactElement {
         </p>
       ) : null}
 
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {transactions.map((transaction) => (
           <RefundTransactionCard
             key={transaction.id}

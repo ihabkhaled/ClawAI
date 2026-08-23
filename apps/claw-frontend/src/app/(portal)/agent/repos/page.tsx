@@ -19,7 +19,7 @@ export default function AgentReposPage(): React.ReactElement {
       <div>
         <PageHeader title={t('agent.repos')} description={t('agent.reposDesc')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">
+          <p className="text-destructive text-sm">
             {error instanceof Error ? error.message : t('agent.loadFailed')}
           </p>
         </div>
@@ -42,12 +42,12 @@ export default function AgentReposPage(): React.ReactElement {
       )}
 
       {!isLoading && repos.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {repos.map((repo) => (
             <Card key={repo.id}>
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm">
-                  <GitBranch className="size-4 shrink-0 text-muted-foreground" />
+                  <GitBranch className="text-muted-foreground size-4 shrink-0" />
                   <span className="truncate">{repo.name}</span>
                   {repo.isDirty && (
                     <Badge variant="outline" className="ml-auto shrink-0 text-xs">
@@ -56,7 +56,7 @@ export default function AgentReposPage(): React.ReactElement {
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col gap-1 text-xs text-muted-foreground">
+              <CardContent className="text-muted-foreground flex flex-col gap-1 text-xs">
                 <p className="truncate">{repo.repoPath}</p>
                 {repo.branch !== null && (
                   <p className="flex items-center gap-1">

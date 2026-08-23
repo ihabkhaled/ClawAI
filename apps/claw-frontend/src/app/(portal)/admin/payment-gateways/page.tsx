@@ -26,7 +26,7 @@ export default function AdminPaymentGatewaysPage(): ReactElement {
         <p>{controller.t('adminGatewayConfig.empty')}</p>
       ) : null}
       {!controller.isLoading && !controller.isError ? (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {controller.gateways.map((gateway) => (
             <GatewayConfigCard
               key={gateway.gateway}

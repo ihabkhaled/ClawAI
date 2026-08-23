@@ -47,10 +47,14 @@ export function ModelSelector({
   // Compact variant — icon-only square button, optional inline label.
   // Default variant — keeps the historical full-width trigger.
   const isCompact = variant === ComposerControlVariant.Compact;
+  // Icon-only is a square that stays square. It used to keep the label mounted
+  // and merely narrow the button, so the name wrapped one syllable per line and
+  // spilled out; the name now lives in the dialog the button opens.
+  const isIconOnly = isCompact && showLabel !== true;
   const triggerClass = isCompact
     ? cn(
-        'h-8 gap-1 rounded-xl border-border/60 px-2 text-xs',
-        showLabel ? 'min-w-[7rem]' : 'w-8 justify-center px-0',
+        'border-border/60 h-9 gap-1 rounded-xl px-2 text-xs',
+        isIconOnly ? 'w-9 shrink-0 justify-center px-0' : 'min-w-0 max-w-[9rem] flex-1',
       )
     : 'h-9 w-[220px] text-xs sm:w-[260px]';
 
@@ -68,7 +72,8 @@ export function ModelSelector({
       searchPlaceholder="Search"
       noResultsLabel="No results found"
       triggerClassName={triggerClass}
-      ariaLabel={isCompact && !showLabel ? 'Auto' : undefined}
+      hideTriggerLabel={isIconOnly}
+      ariaLabel={isIconOnly ? 'Auto' : undefined}
     />
   );
 }

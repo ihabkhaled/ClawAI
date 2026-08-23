@@ -40,7 +40,7 @@ export function ImageGenerationProgressPanel({
   return (
     <section
       className={cn(
-        'flex w-full max-w-xl flex-col gap-3 rounded-2xl border border-sky-500/25 bg-card p-3 shadow-sm',
+        'bg-card flex w-full max-w-xl flex-col gap-3 rounded-2xl border border-sky-500/25 p-3 shadow-sm',
         className,
       )}
       aria-label={t('runtimeProgress.image.title')}
@@ -49,10 +49,10 @@ export function ImageGenerationProgressPanel({
         <div className="flex items-center gap-2">
           <ImageIcon className="h-4 w-4 text-sky-500" aria-hidden />
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-700 dark:text-sky-300">
+            <div className="touch:text-xs text-[11px] font-semibold tracking-[0.2em] text-sky-700 uppercase dark:text-sky-300">
               {t('runtimeProgress.image.title')}
             </div>
-            <div className="truncate text-sm font-medium text-foreground">
+            <div className="text-foreground truncate text-sm font-medium">
               {hasSteps
                 ? t('runtimeProgress.image.stepProgress', {
                     current: String(currentStep),
@@ -67,7 +67,7 @@ export function ImageGenerationProgressPanel({
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-destructive"
+            className="text-muted-foreground hover:text-destructive h-7 gap-1 px-2 text-xs"
             onClick={onCancel}
             disabled={isCancelling}
             aria-label={t('runtimeProgress.image.interrupt')}
@@ -83,12 +83,12 @@ export function ImageGenerationProgressPanel({
         confidence={AiStreamProgressConfidence.PROVIDER_REPORTED}
       />
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
         {etaSeconds !== undefined ? (
           <span>{t('runtimeProgress.image.eta', { seconds: etaSeconds.toFixed(1) })}</span>
         ) : null}
         {progress?.rawProviderEventType ? (
-          <span className="font-mono text-[10px] uppercase tracking-wide">
+          <span className="touch:text-xs font-mono text-[10px] tracking-wide uppercase">
             {progress.rawProviderEventType}
           </span>
         ) : null}
@@ -99,7 +99,7 @@ export function ImageGenerationProgressPanel({
           src={`data:image/png;base64,${previewBase64}`}
           alt={prompt ?? t('runtimeProgress.image.preview')}
           loading="lazy"
-          className="max-h-48 w-auto rounded-lg border border-border object-contain"
+          className="border-border max-h-48 w-auto rounded-lg border object-contain"
         />
       ) : null}
     </section>

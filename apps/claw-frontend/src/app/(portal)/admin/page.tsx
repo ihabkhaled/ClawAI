@@ -23,7 +23,7 @@ export default function AdminPage(): React.ReactElement {
     <div className="space-y-6">
       <PageHeader title={t('admin.title')} description={t('admin.description')} />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">

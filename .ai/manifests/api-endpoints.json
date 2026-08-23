@@ -471,8 +471,23 @@
         "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
       },
       {
+        "method": "DELETE",
+        "route": "/admin/deployment/credentials",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/admin/deployment/credentials",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/admin/deployment/reset",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/deployment/run",
         "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
       },
       {
@@ -3033,5 +3048,5 @@
     ]
   },
   "generated": true,
-  "total": 599
+  "total": 602
 }

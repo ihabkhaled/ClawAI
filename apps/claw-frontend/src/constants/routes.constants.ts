@@ -42,6 +42,7 @@ export const ROUTES = {
   LOGS: '/logs',
   OBSERVABILITY: '/observability',
   SETTINGS: '/settings',
+  PROFILE: '/profile',
   ADMIN: '/admin',
   RESEARCH_PROVIDERS: '/research/providers',
   RESEARCH_RUNS: '/research/runs',

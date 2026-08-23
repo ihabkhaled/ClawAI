@@ -37,7 +37,7 @@ export function RuntimeConfigDialog({
           <DialogDescription>
             {labels.description}
             {loaded ? (
-              <span className="ml-1 font-mono text-xs text-foreground">
+              <span className="text-foreground ml-1 font-mono text-xs">
                 ({loaded.name}:{loaded.tag})
               </span>
             ) : null}
@@ -46,7 +46,7 @@ export function RuntimeConfigDialog({
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
-            <label htmlFor="lf-ngpu" className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="lf-ngpu" className="text-muted-foreground text-xs font-medium">
               {labels.ngpuLayers}
             </label>
             <Input
@@ -61,11 +61,13 @@ export function RuntimeConfigDialog({
                 })
               }
             />
-            <span className="text-[10px] text-muted-foreground">{labels.ngpuLayersHint}</span>
+            <span className="touch:text-xs text-muted-foreground text-[10px]">
+              {labels.ngpuLayersHint}
+            </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="lf-ctx" className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="lf-ctx" className="text-muted-foreground text-xs font-medium">
               {labels.ctxSize}
             </label>
             <Input
@@ -75,11 +77,13 @@ export function RuntimeConfigDialog({
               value={draft.ctxSize}
               onChange={(e) => onChange({ ...draft, ctxSize: Number(e.target.value) })}
             />
-            <span className="text-[10px] text-muted-foreground">{labels.ctxSizeHint}</span>
+            <span className="touch:text-xs text-muted-foreground text-[10px]">
+              {labels.ctxSizeHint}
+            </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="lf-threads" className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="lf-threads" className="text-muted-foreground text-xs font-medium">
               {labels.threads}
             </label>
             <Input
@@ -94,23 +98,25 @@ export function RuntimeConfigDialog({
                 })
               }
             />
-            <span className="text-[10px] text-muted-foreground">{labels.threadsHint}</span>
+            <span className="touch:text-xs text-muted-foreground text-[10px]">
+              {labels.threadsHint}
+            </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">{labels.cpuMoe}</span>
+            <span className="text-muted-foreground text-xs font-medium">{labels.cpuMoe}</span>
             <div className="flex items-center gap-2">
               <Switch
                 checked={draft.cpuMoe}
                 onCheckedChange={(value) => onChange({ ...draft, cpuMoe: value })}
                 aria-label={labels.cpuMoe}
               />
-              <span className="text-xs text-muted-foreground">{labels.cpuMoeHint}</span>
+              <span className="text-muted-foreground text-xs">{labels.cpuMoeHint}</span>
             </div>
           </div>
 
           <div className="flex flex-col gap-1 sm:col-span-2">
-            <label htmlFor="lf-args" className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="lf-args" className="text-muted-foreground text-xs font-medium">
               {labels.customArgs}
             </label>
             <Textarea
@@ -125,7 +131,9 @@ export function RuntimeConfigDialog({
               }
               placeholder="--mlock --n-batch 512"
             />
-            <span className="text-[10px] text-muted-foreground">{labels.customArgsHint}</span>
+            <span className="touch:text-xs text-muted-foreground text-[10px]">
+              {labels.customArgsHint}
+            </span>
           </div>
         </div>
 

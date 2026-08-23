@@ -56,7 +56,7 @@ function ConnectorsContent({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {connectors.map((connector) => (
         <ConnectorCard
           key={connector.id}
@@ -100,9 +100,7 @@ export default function ConnectorsPage() {
       <div>
         <PageHeader title={t('connectors.title')} description={t('connectors.description')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">
-            {error?.message ?? t('connectors.loadFailed')}
-          </p>
+          <p className="text-destructive text-sm">{error?.message ?? t('connectors.loadFailed')}</p>
         </div>
       </div>
     );

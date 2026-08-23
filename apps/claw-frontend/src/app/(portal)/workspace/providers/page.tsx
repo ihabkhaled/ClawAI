@@ -24,7 +24,7 @@ export default function WorkspaceProvidersPage(): React.ReactElement {
       {isLoading ? <LoadingSpinner label={t('common.loading')} /> : null}
 
       {isError ? (
-        <div className="rounded border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="border-destructive/40 bg-destructive/10 text-destructive rounded border p-4 text-sm">
           {t('workspaceProviders.catalog.loadFailed')}
         </div>
       ) : null}
@@ -38,7 +38,7 @@ export default function WorkspaceProvidersPage(): React.ReactElement {
       ) : null}
 
       {!isLoading && providers.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {providers.map((provider) => (
             <ProviderCard
               key={provider.id}

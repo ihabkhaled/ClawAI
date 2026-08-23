@@ -36,7 +36,7 @@ export function SuggestionRuleRow({
       {rule.description !== null ? (
         <p className="text-muted-foreground text-xs">{rule.description}</p>
       ) : null}
-      <div className="text-muted-foreground grid gap-1 text-xs md:grid-cols-2">
+      <div className="text-muted-foreground grid grid-cols-1 gap-1 text-xs md:grid-cols-2">
         <div>
           <span className="text-foreground font-semibold">
             {t('adminAutomation.rules.eventType')}

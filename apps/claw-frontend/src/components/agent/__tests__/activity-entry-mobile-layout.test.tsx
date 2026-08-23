@@ -54,8 +54,8 @@ describe('AgentActivityEntry mobile layout', () => {
     expect(screen.getByRole('button')).toHaveClass('flex-wrap', 'sm:flex-nowrap');
     expect(screen.getByText(/example\.com/)).toHaveClass(
       'min-w-0',
-      'max-md:basis-full',
-      'max-md:break-all',
+      'touch:basis-full',
+      'touch:break-all',
     );
   });
 });

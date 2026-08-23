@@ -52,8 +52,8 @@ export function WorkspaceConnectorForm({
           <DialogTitle>{t('workspaceConnectors.createConnector')}</DialogTitle>
           <DialogDescription>{t('workspaceConnectors.description')}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="workspace-connector-name" className="text-sm font-medium">
               {t('workspaceConnectors.name')}
             </label>
@@ -63,13 +63,13 @@ export function WorkspaceConnectorForm({
               onChange={(event) => setName(event.target.value)}
               placeholder={t('workspaceConnectors.namePlaceholder')}
             />
-            <p className="text-xs text-muted-foreground">{t('workspaceConnectors.nameHelp')}</p>
+            <p className="text-muted-foreground text-xs">{t('workspaceConnectors.nameHelp')}</p>
             {fieldErrors.name ? (
-              <p className="text-sm text-destructive">{fieldErrors.name[0]}</p>
+              <p className="text-destructive text-sm">{fieldErrors.name[0]}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="workspace-connector-provider" className="text-sm font-medium">
               {t('workspaceConnectors.provider')}
             </label>
@@ -88,13 +88,13 @@ export function WorkspaceConnectorForm({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">{t('workspaceConnectors.providerHelp')}</p>
+            <p className="text-muted-foreground text-xs">{t('workspaceConnectors.providerHelp')}</p>
             {fieldErrors.provider ? (
-              <p className="text-sm text-destructive">{fieldErrors.provider[0]}</p>
+              <p className="text-destructive text-sm">{fieldErrors.provider[0]}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="workspace-connector-permission" className="text-sm font-medium">
               {t('workspaceConnectors.permissionLevel')}
             </label>
@@ -113,11 +113,11 @@ export function WorkspaceConnectorForm({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {t('workspaceConnectors.permissionLevelHelp')}
             </p>
             {fieldErrors.permissionLevel ? (
-              <p className="text-sm text-destructive">{fieldErrors.permissionLevel[0]}</p>
+              <p className="text-destructive text-sm">{fieldErrors.permissionLevel[0]}</p>
             ) : null}
           </div>
 

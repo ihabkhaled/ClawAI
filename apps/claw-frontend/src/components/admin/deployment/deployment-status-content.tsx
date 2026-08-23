@@ -56,7 +56,7 @@ export function DeploymentStatusContent({
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardContent className="flex items-start gap-3 pt-6">
             <PackageCheck className="text-primary mt-0.5 h-5 w-5" aria-hidden="true" />

@@ -27,47 +27,47 @@ export function DecisionDetailSections({
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           <div>
-            <p className="text-xs text-muted-foreground">{t('decisionDetail.field.provider')}</p>
+            <p className="text-muted-foreground text-xs">{t('decisionDetail.field.provider')}</p>
             <Badge variant="outline">{decision.selectedProvider}</Badge>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">{t('decisionDetail.field.model')}</p>
+            <p className="text-muted-foreground text-xs">{t('decisionDetail.field.model')}</p>
             <Badge variant="outline">{decision.selectedModel}</Badge>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">{t('decisionDetail.field.mode')}</p>
+            <p className="text-muted-foreground text-xs">{t('decisionDetail.field.mode')}</p>
             <span>{decision.routingMode}</span>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">{t('decisionDetail.field.confidence')}</p>
+            <p className="text-muted-foreground text-xs">{t('decisionDetail.field.confidence')}</p>
             <span>{confidencePct === null ? '—' : `${String(confidencePct)}%`}</span>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {t('decisionDetail.field.privacyClass')}
             </p>
             <span>{decision.privacyClass ?? '—'}</span>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">{t('decisionDetail.field.costClass')}</p>
+            <p className="text-muted-foreground text-xs">{t('decisionDetail.field.costClass')}</p>
             <span>{decision.costClass ?? '—'}</span>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">{t('decisionDetail.field.duration')}</p>
+            <p className="text-muted-foreground text-xs">{t('decisionDetail.field.duration')}</p>
             <span>
-              {decision.routingDurationMs === null ? '—' : `${String(decision.routingDurationMs)}ms`}
+              {decision.routingDurationMs === null
+                ? '—'
+                : `${String(decision.routingDurationMs)}ms`}
             </span>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">
-              {t('decisionDetail.field.reasonTags')}
-            </p>
+            <p className="text-muted-foreground text-xs">{t('decisionDetail.field.reasonTags')}</p>
             <div className="flex flex-wrap gap-1">
               {decision.reasonTags.length === 0 ? (
                 <span>—</span>
               ) : (
                 decision.reasonTags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-[10px]">
+                  <Badge key={tag} variant="secondary" className="touch:text-xs text-[10px]">
                     {tag}
                   </Badge>
                 ))
@@ -94,21 +94,19 @@ export function DecisionDetailSections({
         </CardHeader>
         <CardContent className="grid grid-cols-3 gap-2 text-sm">
           <div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {t('decisionDetail.field.detectedCategory')}
             </p>
             <span>{decision.detectedCategory ?? '—'}</span>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {t('decisionDetail.field.secondaryCategory')}
             </p>
             <span>{decision.secondaryCategory ?? '—'}</span>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">
-              {t('decisionDetail.field.matchCount')}
-            </p>
+            <p className="text-muted-foreground text-xs">{t('decisionDetail.field.matchCount')}</p>
             <span>{decision.matchCount === null ? '—' : String(decision.matchCount)}</span>
           </div>
         </CardContent>
@@ -121,25 +119,22 @@ export function DecisionDetailSections({
         <CardContent className="text-sm">
           <ul className="space-y-1">
             <li>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 {t('decisionDetail.candidates.primary')}:{' '}
               </span>
-              <Badge variant="default" className="text-[10px]">
+              <Badge variant="default" className="touch:text-xs text-[10px]">
                 {decision.selectedProvider}/{decision.selectedModel}
               </Badge>
             </li>
-            {(roadmap?.fallbackChain ?? []).length === 0 &&
-            decision.fallbackProvider === null ? (
-              <li className="text-muted-foreground">
-                {t('decisionDetail.candidates.noFallback')}
-              </li>
+            {(roadmap?.fallbackChain ?? []).length === 0 && decision.fallbackProvider === null ? (
+              <li className="text-muted-foreground">{t('decisionDetail.candidates.noFallback')}</li>
             ) : null}
             {(roadmap?.fallbackChain ?? []).map((entry, index) => (
               <li key={`${entry.provider}-${entry.model}-${String(index)}`}>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {t('decisionDetail.candidates.fallback', { index: String(index + 1) })}:{' '}
                 </span>
-                <Badge variant="outline" className="text-[10px]">
+                <Badge variant="outline" className="touch:text-xs text-[10px]">
                   {entry.provider}/{entry.model}
                 </Badge>
               </li>
@@ -148,10 +143,10 @@ export function DecisionDetailSections({
             decision.fallbackProvider !== null &&
             decision.fallbackModel !== null ? (
               <li>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {t('decisionDetail.candidates.fallback', { index: '1' })}:{' '}
                 </span>
-                <Badge variant="outline" className="text-[10px]">
+                <Badge variant="outline" className="touch:text-xs text-[10px]">
                   {decision.fallbackProvider}/{decision.fallbackModel}
                 </Badge>
               </li>

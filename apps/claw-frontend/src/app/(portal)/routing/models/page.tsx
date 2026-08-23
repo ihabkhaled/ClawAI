@@ -39,9 +39,9 @@ export default function RouterModelsPage(): ReactElement {
       <Card>
         <CardContent className="space-y-4 pt-6">
           <div className="flex flex-wrap items-end gap-3">
-            <div className="min-w-0 flex-1 max-md:basis-full">
+            <div className="touch:basis-full min-w-0 flex-1">
               <Input
-                placeholder="Search by name, modelKey, family"
+                placeholder={t('routing.models.searchPlaceholder')}
                 value={filters.search}
                 onChange={(e) => setFilter('search', e.target.value)}
               />
@@ -78,12 +78,12 @@ export default function RouterModelsPage(): ReactElement {
               onValueChange={(v) => setFilter('isRouterOnly', v as typeof filters.isRouterOnly)}
             >
               <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Router-only" />
+                <SelectValue placeholder={t('routing.models.filterByRouterOnly')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All models</SelectItem>
-                <SelectItem value="false">Execution only</SelectItem>
-                <SelectItem value="true">Router only</SelectItem>
+                <SelectItem value="ALL">{t('routing.models.routerOnlyAll')}</SelectItem>
+                <SelectItem value="false">{t('routing.models.routerOnlyExecution')}</SelectItem>
+                <SelectItem value="true">{t('routing.models.routerOnlyRouter')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -105,8 +105,8 @@ export default function RouterModelsPage(): ReactElement {
           ) : null}
           {!isLoading && !isError && models.length > 0 ? (
             <div className="max-w-full">
-              <table className="w-full border-collapse text-sm max-md:block">
-                <thead className="bg-muted/50 text-muted-foreground text-left text-xs tracking-wide uppercase max-md:hidden">
+              <table className="touch:block w-full border-collapse text-sm">
+                <thead className="bg-muted/50 text-muted-foreground touch:hidden text-left text-xs tracking-wide uppercase">
                   <tr>
                     <th className="px-3 py-2">{t('routing.models.columnModelKey')}</th>
                     <th className="px-3 py-2">{t('routing.models.columnProvider')}</th>
@@ -117,7 +117,7 @@ export default function RouterModelsPage(): ReactElement {
                     <th className="px-3 py-2">Privacy</th>
                   </tr>
                 </thead>
-                <tbody className="max-md:block max-md:space-y-3">
+                <tbody className="touch:block touch:space-y-3">
                   {models.map((m) => (
                     <RouterModelRow
                       key={m.id}

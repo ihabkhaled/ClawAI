@@ -21,3 +21,4 @@ export {
   VIDEO_MIME_PREFIX,
   WORKSPACE_CONTEXT_LIMIT,
 } from './execution.constants';
+export { NUL_BYTE } from './postgres-safe-text.constants';

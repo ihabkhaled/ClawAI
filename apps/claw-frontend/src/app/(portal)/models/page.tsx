@@ -206,7 +206,7 @@ export default function ModelsPage() {
           <DialogHeader>
             <DialogTitle>{t('nav.compareModels')}</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {selectedModels.map((model) => (
               <div
                 key={`${model.provider}-${model.modelKey}`}

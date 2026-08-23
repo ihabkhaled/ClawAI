@@ -19,7 +19,7 @@ import { formatMinorAmount } from '@/utilities';
 
 export function PlanPriceEditor(controller: UseAdminPlanPricesResult): ReactElement {
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(18rem,24rem)_1fr]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(18rem,24rem)_1fr]">
       <Card>
         <CardHeader>
           <CardTitle>{controller.t('common.create')}</CardTitle>
@@ -95,7 +95,7 @@ export function PlanPriceEditor(controller: UseAdminPlanPricesResult): ReactElem
         ) : null}
         {controller.prices.map((price) => (
           <Card key={price.id}>
-            <CardContent className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-4">
+            <CardContent className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-4">
               <div>
                 <p className="text-muted-foreground text-xs">v{price.version}</p>
                 <p className="font-semibold">

@@ -74,7 +74,7 @@ export function MessageProvenance({ message }: MessageProvenanceProps) {
       <Button
         variant="ghost"
         size="sm"
-        className="h-6 gap-1 px-1.5 text-xs text-muted-foreground"
+        className="text-muted-foreground h-6 gap-1 px-1.5 text-xs"
         onClick={toggleExpanded}
         aria-label={t('chat.toggleProvenance')}
       >
@@ -83,7 +83,7 @@ export function MessageProvenance({ message }: MessageProvenanceProps) {
       </Button>
 
       {isExpanded ? (
-        <div className="mt-1 rounded-md border bg-card p-2.5 text-xs">
+        <div className="bg-card mt-1 rounded-md border p-2.5 text-xs">
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
             {message.provider !== null ? (
               <div>
@@ -145,11 +145,11 @@ export function MessageProvenance({ message }: MessageProvenanceProps) {
                   {progressSummary.map((step, index) => (
                     <div
                       key={`${step.label ?? 'step'}-${String(index)}`}
-                      className="rounded-md border border-border/60 px-2 py-1"
+                      className="border-border/60 rounded-md border px-2 py-1"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium text-foreground">{step.label ?? 'Step'}</span>
-                        <Badge variant="outline" className="text-[10px]">
+                        <span className="text-foreground font-medium">{step.label ?? 'Step'}</span>
+                        <Badge variant="outline" className="touch:text-xs text-[10px]">
                           {step.status ?? 'completed'}
                         </Badge>
                       </div>

@@ -9,10 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  HF_CATEGORY_OPTIONS,
-  HF_QUALITY_TIER_OPTIONS,
-} from '@/constants/hf-search.constants';
+import { HF_CATEGORY_OPTIONS, HF_QUALITY_TIER_OPTIONS } from '@/constants/hf-search.constants';
 import type { HfCategoryChoice, HfQualityTierChoice } from '@/enums/hf-search.enum';
 import type { HfDetailsPanelProps, HfFieldProps } from '@/types/hf-search.types';
 import { formatHfBytes } from '@/utilities/hf-format.utility';
@@ -30,15 +27,15 @@ export function HfDetailsPanel({
 }: HfDetailsPanelProps): React.ReactElement {
   if (!selectedRepo) {
     return (
-      <div className="flex h-96 items-center justify-center rounded-md border border-dashed border-border text-xs text-muted-foreground">
+      <div className="border-border text-muted-foreground flex h-96 items-center justify-center rounded-md border border-dashed text-xs">
         Pick a model on the left to see its GGUF files and import.
       </div>
     );
   }
   if (isLoading || !details) {
     return (
-      <div className="flex h-96 items-center justify-center rounded-md border border-border bg-background/40">
-        <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden />
+      <div className="border-border bg-background/40 flex h-96 items-center justify-center rounded-md border">
+        <Loader2 className="text-muted-foreground size-5 animate-spin" aria-hidden />
       </div>
     );
   }
@@ -50,14 +47,14 @@ export function HfDetailsPanel({
     ),
   );
   return (
-    <div className="flex h-96 flex-col gap-3 overflow-y-auto rounded-md border border-border p-3">
+    <div className="border-border flex h-96 flex-col gap-3 overflow-y-auto rounded-md border p-3">
       <div>
-        <p className="text-sm font-medium text-foreground">{details.id}</p>
+        <p className="text-foreground text-sm font-medium">{details.id}</p>
         <a
           href={`https://huggingface.co/${details.id}`}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+          className="touch:text-xs text-primary inline-flex items-center gap-1 text-[11px] hover:underline"
         >
           View on HuggingFace
           <ExternalLink className="size-3" aria-hidden />
@@ -118,7 +115,7 @@ export function HfDetailsPanel({
           </Select>
         </HfField>
         <HfField label="Recommended file">
-          <span className="truncate text-foreground">
+          <span className="text-foreground truncate">
             {details.recommendedFile
               ? `${details.recommendedFile.name} (${formatHfBytes(
                   details.recommendedFile.sizeBytes,
@@ -129,10 +126,10 @@ export function HfDetailsPanel({
       </div>
 
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="touch:text-xs text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
           GGUF files ({details.ggufFiles.length})
         </p>
-        <ul className="mt-1 max-h-32 overflow-y-auto text-[11px] text-muted-foreground">
+        <ul className="touch:text-xs text-muted-foreground mt-1 max-h-32 overflow-y-auto text-[11px]">
           {details.ggufFiles.map((file) => (
             <li key={file.name} className="flex items-center justify-between gap-2">
               <span className="truncate">{file.name}</span>
@@ -148,7 +145,7 @@ export function HfDetailsPanel({
 function HfField({ label, children }: HfFieldProps): React.ReactElement {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <span className="touch:text-xs text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
         {label}
       </span>
       {children}

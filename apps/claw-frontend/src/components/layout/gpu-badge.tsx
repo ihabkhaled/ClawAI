@@ -24,7 +24,7 @@ export function GpuBadge(): React.ReactElement | null {
       <Link
         data-testid="sidebar-gpu-pill"
         href={ROUTES.MODELS_LOCAL_FRONTIER}
-        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted"
+        className="border-border bg-muted/40 touch:text-xs text-muted-foreground hover:bg-muted inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors"
         title={t('gpuBadge.noGpu')}
       >
         <Cpu className="size-3" aria-hidden />
@@ -43,7 +43,7 @@ export function GpuBadge(): React.ReactElement | null {
     <Link
       data-testid="sidebar-gpu-pill"
       href={ROUTES.MODELS_LOCAL_FRONTIER}
-      className="gradient-border-pill inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold text-primary transition-transform duration-fast ease-expo-out hover:scale-[1.02]"
+      className="gradient-border-pill touch:text-xs text-primary duration-fast ease-expo-out inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold transition-transform hover:scale-[1.02]"
       title={data.model ?? vendorLabel}
     >
       <Zap className="size-3" aria-hidden />

@@ -107,9 +107,9 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
       ) : null}
 
       {!ctrl.isLoading && ctrl.configs.length > 0 ? (
-        <div className="max-w-full rounded border max-md:border-0">
-          <table className="w-full max-md:block">
-            <thead className="max-md:hidden">
+        <div className="touch:border-0 max-w-full rounded border">
+          <table className="touch:block w-full">
+            <thead className="touch:hidden">
               <tr className="bg-muted/50 text-muted-foreground text-left text-xs uppercase">
                 <th className="px-4 py-2">
                   {ctrl.t('workspaceProviders.appConfigs.columns.name')}
@@ -134,7 +134,7 @@ export default function WorkspaceAppConfigsPage(): React.ReactElement {
                 </th>
               </tr>
             </thead>
-            <tbody className="max-md:block max-md:space-y-3">
+            <tbody className="touch:block touch:space-y-3">
               {ctrl.configs.map((config) => (
                 <AppConfigRow
                   key={config.id}

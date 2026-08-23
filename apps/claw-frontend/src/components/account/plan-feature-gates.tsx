@@ -8,7 +8,7 @@ import type { PlanFeatureGatesProps } from '@/types';
 
 export function PlanFeatureGates({ featureGates, t }: PlanFeatureGatesProps): ReactElement {
   return (
-    <ul className="grid gap-2">
+    <ul className="grid grid-cols-1 gap-2">
       {PLAN_FEATURE_GATE_FIELDS.map(({ field, labelKey }) => {
         const enabled = (featureGates ?? DISABLED_PLAN_FEATURE_GATES)[field];
         return (

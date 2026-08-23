@@ -1,4 +1,9 @@
-import { DeploymentPhase, DeploymentState, DeploymentTriggerMode } from '@claw/shared-types';
+import {
+  DeploymentCredentialSource,
+  DeploymentPhase,
+  DeploymentState,
+  DeploymentTriggerMode,
+} from '@claw/shared-types';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -23,6 +28,14 @@ const baseStatus = {
   isStale: false,
   manualTriggerEnabled: true,
   automaticDeployEnabled: true,
+  credentials: {
+    source: DeploymentCredentialSource.DATABASE,
+    repository: 'ihabkhaled/ClawAI',
+    ref: 'main',
+    tokenLastFour: 'abcd',
+    updatedAt: '2026-08-13T10:29:58Z',
+    isUsable: true,
+  },
 };
 
 function actions(overrides: Partial<UseDeploymentActionsResult> = {}): UseDeploymentActionsResult {

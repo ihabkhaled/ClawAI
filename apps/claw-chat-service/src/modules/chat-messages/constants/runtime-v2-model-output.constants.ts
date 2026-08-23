@@ -208,11 +208,66 @@ export const RUNTIME_V2_TRUNCATED_TOOL_REQUEST_PATTERN = /"kind"\s*:\s*"?tool\b/
  * Observed with kimi-k2.7-code writing a unit test: the request was cut off in
  * the middle of the `operations` array twice in a row.
  */
+export const RUNTIME_V2_TRUNCATED_TOOL_CALL_MARKER =
+  'The model started a Runtime Protocol 2.0 tool object and did not finish it.';
+
 export const RUNTIME_V2_TRUNCATED_TOOL_CALL_MESSAGE = [
-  'The model started a Runtime Protocol 2.0 tool object and did not finish it.',
+  RUNTIME_V2_TRUNCATED_TOOL_CALL_MARKER,
   'This is almost always length, not syntax: the reply hit the output-token limit part-way through the JSON.',
   'Send the same request with a SHORTER body — write a small file first and append the rest in later turns, or patch fewer lines per call.',
   'Do not resend an object of the same size; it will be cut off at the same place.',
+].join(' ');
+
+/**
+ * How many repair turns a malformed request gets, by kind of malformation.
+ *
+ * These were one and the same, and a truncation cannot be corrected in one
+ * turn the way a dialect error can. A model told its request was malformed
+ * fixes the syntax and resends the SAME body, which is cut at the same place,
+ * so the single retry was spent restating the problem rather than shrinking
+ * the request. glm-5.2 lost two flagship lanes that way.
+ *
+ * A dialect or schema error keeps its single retry: told exactly which key was
+ * wrong, a model either corrects on the next turn or is not going to. A
+ * truncation is different in kind — each attempt can cut the body further, so
+ * the demanded size shrinks with every one.
+ */
+export const RUNTIME_V2_REPAIR_ATTEMPTS = 1;
+
+export const RUNTIME_V2_TRUNCATION_REPAIR_ATTEMPTS = 3;
+
+/**
+ * The size ceiling demanded on each truncation repair turn.
+ *
+ * "Send something shorter" is not actionable — a model that believed its
+ * request was a reasonable size has no way to tell how much shorter is enough,
+ * and shaves a few lines off a body that was three times over. Naming a line
+ * count makes the demand checkable, and halving it each turn converges instead
+ * of asking the same unanswerable question three times.
+ *
+ * The last entry is the floor, so a run that reaches it is being told to write
+ * a stub and append, which always fits.
+ */
+export const RUNTIME_V2_TRUNCATION_SHRINK_DEMANDS: readonly string[] = [
+  'Send at most 80 lines of file content in this request.',
+  'Send at most 40 lines of file content in this request.',
+  'Send at most 20 lines of file content in this request: create the file with those lines only, then append the rest in later turns.',
+];
+
+/**
+ * The instruction a truncation repair turn carries INSTEAD of the generic one.
+ *
+ * They used to be sent together, and they contradict each other. The generic
+ * instruction opens with "Your previous tool request was invalid" and asks for
+ * a valid object — which a model reads as a syntax fault, so it resends the
+ * same body more carefully and is cut at the same place. The request was not
+ * invalid; it was too long. Only one of these two messages can be true of a
+ * truncated request, and it is this one.
+ */
+export const RUNTIME_V2_TRUNCATION_REPAIR_INSTRUCTION = [
+  'Your previous tool request was not invalid — it was too long, and the reply was cut off before the JSON closed.',
+  'Do not change the shape of the request. Send the same tool, the same operation, and a SMALLER body.',
+  'A long file is written by creating a short one now and appending the rest in later turns; a long patch is split into several patches.',
 ].join(' ');
 
 // An agent-self capability denial: the model claiming it has no filesystem, command, workspace, or
@@ -368,6 +423,8 @@ export const RUNTIME_V2_INTENT_CORRECTION_INSTRUCTION = [
   'Announcing an action does not perform it. ClawAI only acts when you return a tool JSON object.',
   'This is a loop: request ONE tool now, ClawAI executes it, and you are called again with the result.',
   'Return exactly one Runtime Protocol 2.0 tool JSON object for the next step you described, and no prose.',
+  'If you said you need something before you can act — a file’s contents, its hash, a directory listing — then fetching that IS the tool call to make now. Request it; do not describe needing it.',
+  'Optional arguments may be left out. A value you do not have, such as contentHash, is never a reason to withhold the request.',
   'Answer in prose only when the work is actually finished and you are reporting the result.',
 ].join(' ');
 

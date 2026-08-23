@@ -37,7 +37,7 @@ export function ResponsiveTable<T>({
 
   return (
     <div className={cn('w-full', className)}>
-      <ul className="space-y-3 md:hidden">
+      <ul className="touch:block hidden space-y-3">
         {rows.map((row) => (
           <li
             key={keyExtractor(row)}
@@ -67,7 +67,7 @@ export function ResponsiveTable<T>({
         ))}
       </ul>
 
-      <div className="hidden overflow-x-auto rounded-md border md:block">
+      <div className="touch:hidden block overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>

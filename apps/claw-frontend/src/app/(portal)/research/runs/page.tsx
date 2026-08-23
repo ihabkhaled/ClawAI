@@ -48,7 +48,7 @@ export default function ResearchRunsPage(): React.ReactElement {
                     {new Date(run.startedAt).toLocaleString()}
                   </span>
                 </div>
-                <code className="text-muted-foreground max-w-full text-[10px] break-all">
+                <code className="text-muted-foreground touch:text-xs max-w-full text-[10px] break-all">
                   {run.id}
                 </code>
               </div>

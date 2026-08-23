@@ -563,8 +563,23 @@
           "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
         },
         {
+          "method": "DELETE",
+          "route": "/admin/deployment/credentials",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
+          "method": "PUT",
+          "route": "/admin/deployment/credentials",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/admin/deployment/reset",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/deployment/run",
           "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
         },
         {
@@ -6637,6 +6652,11 @@
         "route": "/plan"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/profile/page.tsx",
+        "kind": "page",
+        "route": "/profile"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/research/providers/page.tsx",
         "kind": "page",
         "route": "/research/providers"
@@ -6909,7 +6929,7 @@
           "file": "rules/02-monorepo-and-workspace-ownership.md"
         },
         {
-          "bytes": 8709,
+          "bytes": 9255,
           "file": "rules/03-frontend-rules.md"
         },
         {
@@ -7309,7 +7329,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4560
+        "value": 4590
       },
       "localeCount": 16,
       "locales": [
@@ -8117,6 +8137,11 @@
       },
       "claw-auth-service": {
         "models": [
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "DeploymentCredential"
+          },
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
@@ -8977,7 +9002,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 98
+        "testFiles": 100
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -8997,7 +9022,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 346
+        "testFiles": 356
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9742,10 +9767,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 599,
+    "endpointCount": 602,
     "envVarCount": 347,
     "eventCount": 167,
-    "frontendRouteCount": 122,
+    "frontendRouteCount": 123,
     "localeCount": 16,
     "nginxRouteCount": 54,
     "permissionCount": 47,
@@ -9754,7 +9779,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 963,
+    "totalTestFiles": 975,
     "workspaceCount": 25
   }
 }

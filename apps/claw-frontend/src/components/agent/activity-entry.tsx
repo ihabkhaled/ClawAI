@@ -35,17 +35,20 @@ export function AgentActivityEntry({ t, invocation }: AgentActivityEntryProps): 
             onClick={() => setExpanded((prev) => !prev)}
             aria-expanded={expanded}
             aria-controls={entryId}
-            className="hover:bg-muted/40 focus-visible:ring-ring flex w-full flex-wrap items-center gap-3 px-3 py-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none max-md:whitespace-normal sm:flex-nowrap"
+            className="hover:bg-muted/40 focus-visible:ring-ring touch:whitespace-normal flex w-full flex-wrap items-center gap-3 px-3 py-2 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none sm:flex-nowrap"
           >
             <Icon aria-hidden="true" className={cn('size-4 shrink-0', styles.iconClass)} />
             <Badge variant="outline" className="shrink-0 font-mono text-xs">
               {invocation.capabilityClass}.{invocation.capabilityOperation}
             </Badge>
-            <code className="text-muted-foreground min-w-0 flex-1 truncate text-xs max-md:order-last max-md:basis-full max-md:break-all max-md:whitespace-normal">
+            <code className="text-muted-foreground touch:order-last touch:basis-full touch:break-all touch:whitespace-normal min-w-0 flex-1 truncate text-xs">
               {JSON.stringify(invocation.targetDescriptor)}
             </code>
             <RiskBadge label={invocation.riskLabel} score={invocation.riskScore} />
-            <Badge variant="outline" className="shrink-0 text-[10px] tracking-wider uppercase">
+            <Badge
+              variant="outline"
+              className="touch:text-xs shrink-0 text-[10px] tracking-wider uppercase"
+            >
               {invocation.status}
             </Badge>
             <ChevronDown

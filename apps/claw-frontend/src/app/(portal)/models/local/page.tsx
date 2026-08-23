@@ -56,7 +56,7 @@ export default function LocalModelsPage(): React.ReactElement {
       render: (row) => (
         <div className="flex flex-col">
           <span className="font-medium">{row.name}</span>
-          <span className="text-xs text-muted-foreground">{row.tag}</span>
+          <span className="text-muted-foreground text-xs">{row.tag}</span>
         </div>
       ),
     },
@@ -83,7 +83,7 @@ export default function LocalModelsPage(): React.ReactElement {
       key: 'parameters',
       header: t('models.colParameters'),
       render: (row) => (
-        <span className="tabular-nums text-muted-foreground">
+        <span className="text-muted-foreground tabular-nums">
           {row.parameters ?? t('common.notAvailable')}
         </span>
       ),
@@ -101,7 +101,7 @@ export default function LocalModelsPage(): React.ReactElement {
               </Badge>
             ))}
           {row.roles.filter((r) => r.isActive).length === 0 ? (
-            <span className="text-xs text-muted-foreground">{t('models.noneRole')}</span>
+            <span className="text-muted-foreground text-xs">{t('models.noneRole')}</span>
           ) : null}
         </div>
       ),
@@ -132,7 +132,7 @@ export default function LocalModelsPage(): React.ReactElement {
       <div>
         <PageHeader title={t('models.localTitle')} description={t('models.localDescription')} />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">
+          <p className="text-destructive text-sm">
             {error?.message ?? t('models.localLoadFailed')}
           </p>
         </div>
@@ -144,7 +144,7 @@ export default function LocalModelsPage(): React.ReactElement {
     <div>
       <PageHeader title={t('models.localTitle')} description={t('models.localDescription')} />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -161,7 +161,7 @@ export default function LocalModelsPage(): React.ReactElement {
                   {healthStatus ?? t('common.unknown')}
                 </span>
                 {healthRuntime ? (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-muted-foreground text-xs">
                     {RUNTIME_TYPE_LABELS[healthRuntime] ?? healthRuntime}
                     {healthLatency !== null ? ` - ${healthLatency}ms` : ''}
                   </span>
@@ -195,7 +195,7 @@ export default function LocalModelsPage(): React.ReactElement {
                   placeholder={t('models.modelNamePlaceholder')}
                 />
                 {pullFieldErrors.modelName && (
-                  <p className="mt-1 text-sm text-destructive">{pullFieldErrors.modelName[0]}</p>
+                  <p className="text-destructive mt-1 text-sm">{pullFieldErrors.modelName[0]}</p>
                 )}
               </div>
               <div className="w-full space-y-2 sm:w-[160px]">
@@ -227,7 +227,7 @@ export default function LocalModelsPage(): React.ReactElement {
                   </SelectContent>
                 </Select>
                 {pullFieldErrors.runtime && (
-                  <p className="mt-1 text-sm text-destructive">{pullFieldErrors.runtime[0]}</p>
+                  <p className="text-destructive mt-1 text-sm">{pullFieldErrors.runtime[0]}</p>
                 )}
               </div>
               <Button onClick={handlePullModel} disabled={isPullPending}>

@@ -61,7 +61,7 @@ export default function BillingPage(): ReactElement {
         />
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {subscription.isLoading ? (
           <Skeleton className="h-48 w-full" />
         ) : (
@@ -85,7 +85,7 @@ export default function BillingPage(): ReactElement {
         />
       </div>
 
-      <section className="grid gap-4">
+      <section className="grid grid-cols-1 gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">{t('billing.plans.title')}</h2>
           <BillingIntervalToggle value={view.interval} onChange={view.setInterval} t={t} />
@@ -115,7 +115,7 @@ export default function BillingPage(): ReactElement {
         ) : null}
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <InvoiceTable
           invoices={invoices.invoices}
           isLoading={invoices.isLoading}

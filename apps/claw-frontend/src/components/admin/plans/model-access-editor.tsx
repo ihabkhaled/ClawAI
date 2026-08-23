@@ -21,17 +21,20 @@ export function ModelAccessEditor({
   t,
 }: ModelAccessEditorProps): ReactElement {
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       {rows.length === 0 ? (
         <p className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
           {t('adminPlans.modelAccess.empty')}
         </p>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {rows.map((row) => (
-            <div key={row.rowKey} className="border-border grid gap-3 rounded-lg border p-3">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="grid gap-1 sm:col-span-2">
+            <div
+              key={row.rowKey}
+              className="border-border grid grid-cols-1 gap-3 rounded-lg border p-3"
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-1 sm:col-span-2">
                   <label htmlFor={`deployment-${row.rowKey}`} className="text-xs font-medium">
                     {t('adminPlans.modelAccess.model')}
                   </label>
@@ -117,7 +120,7 @@ export function ModelAccessEditor({
               </div>
 
               <div className="flex items-end justify-between gap-3">
-                <div className="grid gap-1">
+                <div className="grid grid-cols-1 gap-1">
                   <label htmlFor={`override-${row.rowKey}`} className="text-xs font-medium">
                     {t('adminPlans.modelAccess.dailyTokenLimitOverride')}
                   </label>

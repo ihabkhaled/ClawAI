@@ -38,7 +38,7 @@ export function PreviewContextButton(props: PreviewContextButtonProps): React.Re
         <Button
           variant="outline"
           size="sm"
-          className="h-8 gap-1 px-2 sm:px-3"
+          className="h-9 shrink-0 gap-1 px-2 sm:px-3"
           aria-label={t('preview.openLabel')}
         >
           <Eye className="h-3 w-3" />

@@ -256,11 +256,11 @@ describe('UserTable temporary password action', () => {
 
     const mobileAction = screen
       .getAllByRole('button', { name: 'admin.issueTemporaryPassword' })
-      .find((button) => button.closest('.md\\:hidden'));
+      .find((button) => button.closest('.touch\\:block'));
     expect(mobileAction?.parentElement).toHaveClass(
-      'max-md:grid',
-      'max-md:grid-cols-2',
-      'max-md:w-full',
+      'touch:grid',
+      'touch:grid-cols-2',
+      'touch:w-full',
     );
     expect(mobileAction?.querySelector('span')).toHaveClass('whitespace-normal', 'text-center');
   });
@@ -276,13 +276,13 @@ describe('UserTable temporary password action', () => {
 
     const mobileIssueButton = screen
       .getAllByRole('button', { name: 'admin.issueTemporaryPassword' })
-      .find((button) => button.closest('.md\\:hidden'));
+      .find((button) => button.closest('.touch\\:block'));
     expect(mobileIssueButton).toHaveClass('h-auto');
     expect(mobileIssueButton).not.toHaveClass('h-9');
 
     const mobileEditButton = screen
       .getAllByRole('button', { name: 'admin.editUser' })
-      .find((button) => button.closest('.md\\:hidden'));
+      .find((button) => button.closest('.touch\\:block'));
     expect(mobileEditButton).toHaveClass('h-auto');
     expect(mobileEditButton).not.toHaveClass('h-9');
   });

@@ -10,19 +10,18 @@ export function StreamProgressBar({
 }: StreamProgressBarProps): React.ReactElement {
   const { t } = useTranslation();
   const clamped = Math.max(0, Math.min(100, Math.round(percent)));
-  const isEstimated =
-    confidence !== undefined && confidence !== AiStreamProgressConfidence.EXACT;
+  const isEstimated = confidence !== undefined && confidence !== AiStreamProgressConfidence.EXACT;
 
   return (
     <div className={cn('flex flex-col gap-1', className)}>
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+      <div className="touch:text-xs text-muted-foreground flex items-center justify-between text-[11px]">
         <span>{t('chat.stream.progress')}</span>
         <span className="tabular-nums">
           {clamped}%{isEstimated ? ` · ${t('chat.stream.estimated')}` : ''}
         </span>
       </div>
       <div
-        className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+        className="bg-muted h-1.5 w-full overflow-hidden rounded-full"
         role="progressbar"
         aria-valuenow={clamped}
         aria-valuemin={0}

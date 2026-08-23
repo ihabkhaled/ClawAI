@@ -35,7 +35,7 @@ export function PhoneInput({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild disabled={disabled}>
             <Button
@@ -85,7 +85,7 @@ export function PhoneInput({
           aria-label={numberLabel}
           error={!isValid && nationalNumber.length > 0}
           disabled={disabled}
-          className="flex-1"
+          className="touch:basis-full min-w-0 flex-1"
         />
       </div>
       {!isValid && nationalNumber.length > 0 && invalidLabel ? (

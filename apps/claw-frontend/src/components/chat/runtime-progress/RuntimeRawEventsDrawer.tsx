@@ -40,23 +40,23 @@ export function RuntimeRawEventsDrawer({
       open={isOpen}
       onToggle={handleToggle}
       className={cn(
-        'group w-full rounded-lg border border-border/60 bg-muted/40 px-3 py-2',
+        'group border-border/60 bg-muted/40 w-full rounded-lg border px-3 py-2',
         className,
       )}
     >
       <summary
-        className="flex cursor-pointer list-none items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
+        className="touch:text-xs text-muted-foreground flex cursor-pointer list-none items-center gap-1.5 text-[11px] font-medium"
         aria-label={t('runtimeProgress.rawEvents.toggle')}
       >
         <Terminal className="h-3.5 w-3.5" />
         {t('runtimeProgress.rawEvents.title')}
-        <span className="rounded-full bg-background/60 px-1.5 py-0.5 text-[10px] font-normal">
+        <span className="bg-background/60 touch:text-xs rounded-full px-1.5 py-0.5 text-[10px] font-normal">
           {visibleEvents.length}
         </span>
       </summary>
       <div className="mt-2 flex max-h-72 flex-col gap-2 overflow-y-auto">
         {visibleEvents.length === 0 ? (
-          <div className="text-[11px] italic text-muted-foreground">
+          <div className="touch:text-xs text-muted-foreground text-[11px] italic">
             {t('runtimeProgress.rawEvents.empty')}
           </div>
         ) : (
@@ -66,17 +66,17 @@ export function RuntimeRawEventsDrawer({
               // serialized payload is the only unique signature available
               // without decoding the payload shape.
               key={`${String(index)}:${serializeRuntimeEvent(event).slice(0, 80)}`}
-              className="rounded-md border border-border/40 bg-background/60 p-2"
+              className="border-border/40 bg-background/60 rounded-md border p-2"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                <span className="touch:text-xs text-muted-foreground text-[10px] tracking-wide uppercase">
                   #{visibleEvents.length - index}
                 </span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-6 gap-1 px-1.5 text-[10px] text-muted-foreground"
+                  className="touch:text-xs text-muted-foreground h-6 gap-1 px-1.5 text-[10px]"
                   onClick={() => handleCopy(event)}
                   aria-label={t('runtimeProgress.rawEvents.copy')}
                 >
@@ -84,7 +84,7 @@ export function RuntimeRawEventsDrawer({
                   {t('runtimeProgress.rawEvents.copy')}
                 </Button>
               </div>
-              <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-muted-foreground">
+              <pre className="touch:text-xs text-muted-foreground mt-1 max-h-40 overflow-auto text-[10px] leading-snug break-words whitespace-pre-wrap">
                 {serializeRuntimeEvent(event)}
               </pre>
             </div>

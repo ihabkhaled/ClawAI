@@ -6,7 +6,6 @@ import { PasswordInput } from '@/components/common/password-input';
 import { EmailChangeCard } from '@/components/settings/email-change-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -24,7 +23,6 @@ import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
   const {
-    user,
     isLoading,
     isPending,
     currentLanguage,
@@ -34,11 +32,8 @@ export default function SettingsPage() {
     passwordForm,
     handlePasswordSubmit,
     isPasswordPending,
-    profileForm,
     deleteForm,
-    updateProfile,
     deleteAccount,
-    isProfilePending,
     isDeletePending,
     emailChange,
   } = useSettingsPage();
@@ -58,50 +53,6 @@ export default function SettingsPage() {
       <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{t('settings.profile')}</CardTitle>
-            <CardDescription>{t('settings.profileDescription')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={updateProfile} className="max-w-sm space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="settings-username" className="text-sm font-medium">
-                  {t('settings.username')}
-                </label>
-                <Input
-                  id="settings-username"
-                  disabled={isProfilePending}
-                  {...profileForm.register('username')}
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="settings-role" className="text-sm font-medium">
-                  {t('settings.role')}
-                </label>
-                <Input id="settings-role" value={user?.role ?? ''} disabled readOnly />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="profile-current-password" className="text-sm font-medium">
-                  {t('settings.currentPassword')}
-                </label>
-                <PasswordInput
-                  id="profile-current-password"
-                  autoComplete="current-password"
-                  disabled={isProfilePending}
-                  {...profileForm.register('currentPassword')}
-                />
-              </div>
-              <p className="text-muted-foreground text-xs">{t('settings.profileSessionNotice')}</p>
-              <Button type="submit" disabled={isProfilePending}>
-                {isProfilePending ? t('common.loading') : t('settings.saveProfile')}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Separator />
-
         <EmailChangeCard
           pendingState={emailChange.pendingState}
           requestForm={emailChange.requestForm}
