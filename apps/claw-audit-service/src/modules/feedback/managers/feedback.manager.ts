@@ -6,12 +6,18 @@ import { FeedbackStatus } from '@claw/shared-types';
 import {
   FEEDBACK_ALLOWED_ATTACHMENT_MIME_TYPES,
   FEEDBACK_MAX_ATTACHMENT_BYTES,
+  FEEDBACK_MAX_SUBJECT_LENGTH,
+  FEEDBACK_MAX_TITLE_LENGTH,
   FEEDBACK_STATUS_TRANSITIONS,
 } from '@claw/shared-constants';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors';
 import { FeedbackRepository } from '../repositories/feedback.repository';
-import { sanitizeFeedbackMarkdown, toSearchText } from '../sanitizers/feedback-markdown.sanitizer';
+import {
+  sanitizeFeedbackMarkdown,
+  sanitizeFeedbackPlainText,
+  toSearchText,
+} from '../sanitizers/feedback-markdown.sanitizer';
 import { type CreateFeedbackDto } from '../dto/create-feedback.dto';
 import { type ListFeedbackQueryDto } from '../dto/list-feedback-query.dto';
 import { type UpdateFeedbackStatusDto } from '../dto/update-feedback-status.dto';
@@ -61,7 +67,11 @@ export class FeedbackManager {
     const created = await this.repository.create({
       ticketNumber,
       type: dto.type,
-      title: dto.title,
+      title: sanitizeFeedbackPlainText(dto.title, FEEDBACK_MAX_TITLE_LENGTH),
+      subject:
+        dto.subject === undefined
+          ? undefined
+          : sanitizeFeedbackPlainText(dto.subject, FEEDBACK_MAX_SUBJECT_LENGTH),
       contentMarkdown: sanitizedContent,
       searchText,
       status: FeedbackStatus.OPEN,

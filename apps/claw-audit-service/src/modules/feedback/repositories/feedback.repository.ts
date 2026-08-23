@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { type Model, type QueryFilter } from 'mongoose';
 import { FeedbackTicket } from '../schemas/feedback-ticket.schema';
 import { FeedbackCounter } from '../schemas/feedback-counter.schema';
+import { FEEDBACK_TICKET_NUMBER_PATTERN } from '../constants/feedback-sanitizer.constants';
 import type { FeedbackListParams, FeedbackStatusPatch } from '../types/feedback.types';
 import { FEEDBACK_TICKET_NUMBER_PAD, FEEDBACK_TICKET_PREFIX } from '@claw/shared-constants';
 
@@ -38,11 +39,24 @@ export class FeedbackRepository {
     // accepted as a parameter and then dropped here, so `GET /feedback/mine`
     // returned every user's tickets — an IDOR that the ownership check on the
     // single-ticket route did not cover.
+    // A ticket number is looked up exactly, not through the text index. Mongo
+    // tokenises `FDB-000003` on the hyphen, so `FDB` matched every ticket and
+    // searching for one number returned the whole table.
+    const search = p.search?.trim();
+    const ticketNumberSearch =
+      search !== undefined && FEEDBACK_TICKET_NUMBER_PATTERN.test(search)
+        ? search.toUpperCase()
+        : undefined;
+
     const filter: QueryFilter<FeedbackTicket> = {
       ...(p.userId && { userId: p.userId }),
       ...(p.status && { status: p.status }),
       ...(p.type && { type: p.type }),
-      ...(p.search && { $text: { $search: p.search } }),
+      ...(ticketNumberSearch !== undefined
+        ? { ticketNumber: ticketNumberSearch }
+        : (search
+          ? { $text: { $search: search } }
+          : {})),
     };
     const [items, total] = await Promise.all([
       this.ticketModel

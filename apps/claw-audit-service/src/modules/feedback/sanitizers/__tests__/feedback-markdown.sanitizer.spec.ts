@@ -1,6 +1,10 @@
 import { FEEDBACK_MAX_CONTENT_LENGTH } from '@claw/shared-constants';
 
-import { sanitizeFeedbackMarkdown, toSearchText } from '../feedback-markdown.sanitizer';
+import {
+  sanitizeFeedbackMarkdown,
+  sanitizeFeedbackPlainText,
+  toSearchText,
+} from '../feedback-markdown.sanitizer';
 
 // Feedback content is hostile input. These are the payloads an attacker would
 // actually try, including the encoded and nested forms that defeat naive
@@ -192,5 +196,39 @@ describe('toSearchText', () => {
 
   it('drops fenced code blocks so a paste does not swamp the index', () => {
     expect(toSearchText('before\n```\nnoise noise\n```\nafter')).toBe('before after');
+  });
+});
+
+describe('sanitizeFeedbackPlainText — title and subject are inert too', () => {
+  it('escapes markup in a title', () => {
+    const output = sanitizeFeedbackPlainText('XSS attempt <script>alert(1)</script>', 200);
+
+    expect(output).not.toContain('<');
+    expect(output).toContain('&lt;script');
+  });
+
+  it('strips control characters from a title', () => {
+    expect(sanitizeFeedbackPlainText(`a${String.fromCharCode(0)}b`, 200)).toBe('ab');
+  });
+
+  it('caps at the supplied maximum', () => {
+    expect(sanitizeFeedbackPlainText('a'.repeat(500), 160)).toHaveLength(160);
+  });
+
+  it('returns empty for empty input', () => {
+    expect(sanitizeFeedbackPlainText('', 160)).toBe('');
+  });
+});
+
+describe('link targets containing parentheses', () => {
+  it('consumes the whole target, leaving no stray bracket', () => {
+    // `[^)]+` stopped at the first `)`, so this used to render as `click)`.
+    expect(sanitizeFeedbackMarkdown('[click](javascript:alert(1))')).toBe('click');
+  });
+
+  it('keeps a safe URL that legitimately contains parentheses', () => {
+    const input = '[wiki](https://example.test/a_(b))';
+
+    expect(sanitizeFeedbackMarkdown(input)).toBe(input);
   });
 });

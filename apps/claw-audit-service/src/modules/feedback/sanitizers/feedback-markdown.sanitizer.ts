@@ -112,8 +112,12 @@ export function sanitizeFeedbackMarkdown(input: string): string {
   // Any Markdown link or image whose target is not provably safe collapses to
   // its visible text, so the payload is gone but the author's words survive.
   // Done BEFORE escaping, so the decision is made on the author's real target.
+  //
+  // The target pattern allows one level of nested parentheses. `[^)]+` stopped
+  // at the first `)`, so `[x](javascript:alert(1))` left a stray `)` behind in
+  // the output — and a URL that legitimately contains brackets was mangled.
   result = result.replaceAll(
-    /(!?)\[([^\]]*)\]\(([^)]+)\)/g,
+    /(!?)\[([^\]]*)\]\(((?:[^()]|\([^()]*\))*)\)/g,
     (match: string, _bang: string, text: string, target: string) =>
       isSafeLinkTarget(target) ? match : text,
   );
@@ -148,4 +152,16 @@ export function toSearchText(markdown: string): string {
     .replaceAll(/\s+/g, ' ')
     .trim()
     .toLowerCase();
+}
+
+// Title and subject are plain text, never Markdown, but they are still author
+// input that reaches an admin's screen and any downstream consumer. They get
+// the same control-character strip and the same markup escape, so the whole
+// stored ticket is inert — not just the body. React escapes on render, but the
+// server is the authority here, and a ticket is read by more than one client.
+export function sanitizeFeedbackPlainText(input: string, maxLength: number): string {
+  if (input.length === 0) {
+    return '';
+  }
+  return escapeMarkupCharacters(stripControlCharacters(input.normalize('NFC'))).slice(0, maxLength);
 }
