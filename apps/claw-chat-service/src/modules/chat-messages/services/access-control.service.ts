@@ -63,13 +63,10 @@ export class AccessControlService {
   // (assertCompareAccess) already checks `allowCriticReview` — this second
   // check ensures a future code path that bypasses the boundary (e.g. an
   // internal helper, a re-run, a regression) still cannot run the critic
-  // without the plan unlock. Fail-OPEN on entitlement-service errors so an
-  // auth outage never breaks the compare lane.
+  // without the plan unlock. Fails CLOSED: resolve() raises a 503 when entitlements cannot be reached,
+  // and an unresolvable entitlement must not quietly unlock a paid feature.
   async assertCanUseCritic(userId: string): Promise<void> {
     const ent = await this.resolve(userId);
-    if (!ent) {
-      return; // fail-open
-    }
     this.assertFeatureEnabled(ent, 'allowCriticReview', userId);
   }
 
@@ -78,13 +75,10 @@ export class AccessControlService {
   // Combines the plan-level `allowResearchMode` unlock with the RESEARCH_USE
   // RBAC permission so a USER without RESEARCH_USE or on a plan that does not
   // unlock research gets a 403 before any enricher / research-service hop runs.
-  // Fail-OPEN on entitlement-service errors so an auth outage never breaks
-  // chat — the auth-service stays the hard source of truth once reachable.
+  // Fails CLOSED: resolve() raises a 503 when entitlements cannot be reached,
+  // and an unresolvable entitlement must not quietly unlock a paid feature.
   async assertResearchAccess(userId: string): Promise<void> {
     const ent = await this.resolve(userId);
-    if (!ent) {
-      return; // fail-open
-    }
     this.assertFeatureEnabled(ent, 'allowResearchMode', userId);
     this.assertPermissionGranted(ent, Permission.RESEARCH_USE, userId);
   }
