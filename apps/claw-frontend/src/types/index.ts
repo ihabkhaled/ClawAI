@@ -1027,3 +1027,15 @@ export type {
   UseChatShareMutationsReturn,
   UseShareChatDialogReturn,
 } from './chat-share-hook.types';
+
+export type {
+  FeedbackAttachment,
+  FeedbackPageContext,
+  FeedbackHistoryEntry,
+  FeedbackTicket,
+  FeedbackListResponse,
+  CreateFeedbackRequest,
+  CreateFeedbackResponse,
+  FeedbackListQuery,
+  FeedbackStatusCounts,
+} from './feedback.types';

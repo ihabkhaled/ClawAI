@@ -434,6 +434,46 @@
         "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/feedback",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/feedback/admin",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/feedback/admin/:id",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/feedback/admin/:id/attachments/:fileId",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/feedback/admin/:id/status",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/feedback/admin/stats",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/feedback/mine",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/feedback/mine/:id",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-audit-service/src/modules/health/controllers/health.controller.ts"
@@ -3023,5 +3063,5 @@
     ]
   },
   "generated": true,
-  "total": 597
+  "total": 605
 }

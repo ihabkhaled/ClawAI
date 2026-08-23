@@ -44,7 +44,7 @@
     {
       "database": "mongodb",
       "dir": "apps/claw-audit-service",
-      "endpointCount": 7,
+      "endpointCount": 15,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -54,6 +54,8 @@
       ],
       "mongooseModels": [
         "AuditLog",
+        "FeedbackCounter",
+        "FeedbackTicket",
         "UsageLedger"
       ],
       "name": "claw-audit-service",
