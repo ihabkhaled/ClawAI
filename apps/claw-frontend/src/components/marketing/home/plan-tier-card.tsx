@@ -50,7 +50,7 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
         )}
       </div>
 
-      <p className="mt-5 flex items-baseline gap-1">
+      <p className="mt-6 flex items-baseline gap-1">
         <span className="text-foreground text-3xl font-bold tracking-tight">
           {price === null
             ? t('billing.plans.unavailableForInterval')
@@ -61,7 +61,7 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
         )}
       </p>
 
-      <dl className="text-muted-foreground mt-4 space-y-1 text-xs">
+      <dl className="text-muted-foreground mt-6 space-y-2.5 text-xs">
         <div className="flex justify-between gap-2">
           <dt>{t('userPlan.dailyLimitLabel')}</dt>
           <dd className="text-foreground font-medium">
@@ -112,21 +112,27 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
         </div>
       </dl>
 
-      <div className="mt-4">
+      <div className="border-border/60 mt-6 space-y-2 border-t pt-5">
         <PlanFeatureGates featureGates={plan.featureGates} t={t} />
       </div>
 
-      <Link
-        href={`${ROUTES.REGISTER}?returnTo=${encodeURIComponent(returnRoute)}`}
-        aria-disabled={price === null}
-        className={cn(
-          buttonVariants({ variant: plan.isDefault ? 'default' : 'outline' }),
-          'mt-auto h-12 w-full shrink-0 cursor-pointer self-end text-center leading-tight whitespace-normal',
-          price === null && 'pointer-events-none opacity-50',
-        )}
-      >
-        {isFree ? t('marketing.pricing.ctaFree') : t('marketing.pricing.ctaPaid')}
-      </Link>
+      {/* `mt-auto` on the link alone pushed it down only when the card had room
+          to spare. A plan carrying all sixteen features has none, so the margin
+          collapsed to nothing and the button sat flush against the last feature.
+          The padding is the floor the auto margin grows from. */}
+      <div className="border-border/60 mt-auto shrink-0 border-t pt-6">
+        <Link
+          href={`${ROUTES.REGISTER}?returnTo=${encodeURIComponent(returnRoute)}`}
+          aria-disabled={price === null}
+          className={cn(
+            buttonVariants({ variant: plan.isDefault ? 'default' : 'outline' }),
+            'h-12 w-full cursor-pointer text-center leading-tight whitespace-normal',
+            price === null && 'pointer-events-none opacity-50',
+          )}
+        >
+          {isFree ? t('marketing.pricing.ctaFree') : t('marketing.pricing.ctaPaid')}
+        </Link>
+      </div>
     </article>
   );
 }

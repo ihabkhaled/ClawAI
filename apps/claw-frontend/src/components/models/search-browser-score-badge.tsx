@@ -15,7 +15,7 @@ export function SearchBrowserScoreBadge({ score, t }: SearchBrowserScoreBadgePro
   return (
     <Badge
       variant="outline"
-      className={cn('gap-1 text-[10px] font-medium uppercase tracking-wide', tone)}
+      className={cn('touch:text-xs gap-1 text-[10px] font-medium tracking-wide uppercase', tone)}
       title={t('catalog.searchBrowserScoreTooltip')}
     >
       <Globe className="h-3 w-3" />

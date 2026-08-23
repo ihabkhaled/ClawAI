@@ -32,7 +32,7 @@ export function ResearchToggle({
   const providerDisabled = disabled || selectableProviders.length === 0;
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex min-w-0 flex-1 items-center gap-1 sm:flex-none">
       <Globe
         className={
           value.mode === ResearchMode.NONE ? 'text-muted-foreground size-4' : 'text-primary size-4'
@@ -44,7 +44,7 @@ export function ResearchToggle({
         onValueChange={(next) => onChange({ ...value, mode: next as ResearchMode })}
         disabled={disabled}
       >
-        <SelectTrigger className="h-8 min-w-[6rem] px-2 text-xs sm:min-w-[9rem]">
+        <SelectTrigger className="truncate-fixed h-9 min-w-0 flex-1 px-2 text-xs sm:w-[10rem] sm:flex-none">
           <SelectValue placeholder={t('research.toggle.placeholder')} />
         </SelectTrigger>
         <SelectContent>
@@ -62,7 +62,13 @@ export function ResearchToggle({
       </Select>
       {/* The provider picker only matters once research is actually on — hiding
           it otherwise saves the ~10rem it needs, which is most of why this row
-          used to overflow into a horizontal-scroll strip on mobile. */}
+          used to overflow into a horizontal-scroll strip on mobile.
+          Both triggers take a fixed width from sm up and shrink below it, and
+          trim their value either way. They used to hold a minimum with no
+          maximum, so "Google / SerpAPI (Google / SerpAPI)" grew one trigger to
+          409px, pushed the preview button onto a second row and wrapped inside
+          a 36px control. Nothing is hidden by trimming: the menu that opens on
+          click lists every provider in full. */}
       {value.mode !== ResearchMode.NONE ? (
         <Select
           value={providerValue}
@@ -71,7 +77,7 @@ export function ResearchToggle({
           }
           disabled={providerDisabled}
         >
-          <SelectTrigger className="h-8 min-w-[8rem] px-2 text-xs sm:min-w-[10rem]">
+          <SelectTrigger className="truncate-fixed h-9 min-w-0 flex-1 px-2 text-xs sm:w-[12rem] sm:flex-none">
             <SelectValue
               placeholder={getProviderPlaceholder(
                 isProvidersLoading,

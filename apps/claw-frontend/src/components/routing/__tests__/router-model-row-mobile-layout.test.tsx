@@ -37,7 +37,7 @@ describe('RouterModelRow mobile layout', () => {
       </table>,
     );
 
-    expect(container.querySelector('tr')).toHaveClass('max-md:block');
+    expect(container.querySelector('tr')).toHaveClass('touch:block');
     expect(container.querySelectorAll('td')).toHaveLength(7);
     expect(container.querySelector('td')).toHaveAttribute(
       'data-label',

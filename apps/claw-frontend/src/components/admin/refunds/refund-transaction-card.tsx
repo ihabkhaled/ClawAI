@@ -63,7 +63,7 @@ export function RefundTransactionCard({
   return (
     <>
       <Card>
-        <CardContent className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+        <CardContent className="grid grid-cols-1 gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
           <div className="min-w-0 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <code className="bg-muted rounded px-2 py-1 text-xs">{transaction.id}</code>
@@ -71,7 +71,7 @@ export function RefundTransactionCard({
                 {transaction.gateway}
               </span>
             </div>
-            <dl className="grid gap-3 text-sm sm:grid-cols-3">
+            <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
               <div>
                 <dt className="text-muted-foreground text-xs">{t('adminRefunds.user')}</dt>
                 <dd className="truncate font-medium">{transaction.userId}</dd>

@@ -49,8 +49,8 @@ export function ContextPackItemForm({
           <DialogTitle>{t('context.addItem')}</DialogTitle>
           <DialogDescription>{t('context.addItemDesc')}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="item-type" className="text-sm font-medium">
               {t('context.itemType')}
             </label>
@@ -67,12 +67,12 @@ export function ContextPackItemForm({
               </SelectContent>
             </Select>
             {fieldErrors.type ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.type[0]}</p>
+              <p className="text-destructive mt-1 text-sm">{fieldErrors.type[0]}</p>
             ) : null}
           </div>
 
           {isFileRef ? (
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="item-file-id" className="text-sm font-medium">
                 {t('context.fileId')}
               </label>
@@ -83,11 +83,11 @@ export function ContextPackItemForm({
                 placeholder={t('context.fileIdPlaceholder')}
               />
               {fieldErrors.fileId ? (
-                <p className="mt-1 text-sm text-destructive">{fieldErrors.fileId[0]}</p>
+                <p className="text-destructive mt-1 text-sm">{fieldErrors.fileId[0]}</p>
               ) : null}
             </div>
           ) : (
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="item-content" className="text-sm font-medium">
                 {t('context.content')}
               </label>
@@ -99,7 +99,7 @@ export function ContextPackItemForm({
                 rows={4}
               />
               {fieldErrors.content ? (
-                <p className="mt-1 text-sm text-destructive">{fieldErrors.content[0]}</p>
+                <p className="text-destructive mt-1 text-sm">{fieldErrors.content[0]}</p>
               ) : null}
             </div>
           )}

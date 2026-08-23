@@ -1,3 +1,5 @@
+import { type DeploymentCredentialView } from '@claw/shared-types';
+
 /**
  * Operational flags the deployment page needs alongside the rollout record.
  * They come from configuration and the automation switch rather than from the
@@ -7,4 +9,5 @@
 export type DeploymentViewFlags = {
   manualTriggerEnabled: boolean;
   automaticDeployEnabled: boolean;
+  credentials: DeploymentCredentialView;
 };

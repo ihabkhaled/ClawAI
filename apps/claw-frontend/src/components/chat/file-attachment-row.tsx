@@ -17,7 +17,7 @@ export function FileAttachmentRow({
     >
       <div className="flex flex-col gap-0.5 overflow-hidden">
         <span className="truncate text-sm">{file.filename}</span>
-        <span className="text-[10px] text-muted-foreground">
+        <span className="touch:text-xs text-muted-foreground text-[10px]">
           {file.ingestionStatus === FileIngestionStatus.COMPLETED
             ? FileIngestionStatus.COMPLETED
             : file.ingestionStatus}

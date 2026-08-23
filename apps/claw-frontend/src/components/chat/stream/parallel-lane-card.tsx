@@ -24,19 +24,19 @@ export function ParallelLaneCard({
     <Card className="flex flex-col gap-2.5 p-4">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <div className="truncate text-sm font-medium text-foreground">{model}</div>
-          <div className="truncate text-[11px] text-muted-foreground">{provider}</div>
+          <div className="text-foreground truncate text-sm font-medium">{model}</div>
+          <div className="touch:text-xs text-muted-foreground truncate text-[11px]">{provider}</div>
         </div>
         {lane !== undefined ? (
           <div className="flex items-center gap-1.5">
             <StreamStageBadge stage={lane.stage} />
-            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="touch:text-xs text-muted-foreground inline-flex items-center gap-1 text-[10px]">
               <CircleDot className="h-3 w-3 animate-pulse text-sky-500" />
               {t('chat.live')}
             </span>
           </div>
         ) : (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
         )}
       </div>
 
@@ -52,7 +52,7 @@ export function ParallelLaneCard({
       {lane !== undefined && lane.content.length > 0 ? (
         <StreamLiveAnswer content={lane.content} isStreaming={lane.isStreaming} />
       ) : (
-        <div className="text-xs text-muted-foreground">{t('chat.stream.stage.connecting')}</div>
+        <div className="text-muted-foreground text-xs">{t('chat.stream.stage.connecting')}</div>
       )}
       {lane?.metrics !== undefined ? (
         <StreamMetricsHud metrics={lane.metrics} usage={lane.usage} />

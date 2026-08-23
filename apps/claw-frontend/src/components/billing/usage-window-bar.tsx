@@ -18,7 +18,7 @@ export function UsageWindowBar({ label, window, t }: UsageWindowBarProps): React
   const isUnlimited = tone === UsageTone.UNLIMITED;
 
   return (
-    <div className="grid gap-1.5">
+    <div className="grid grid-cols-1 gap-1.5">
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">{label}</span>
         <span className="font-medium">

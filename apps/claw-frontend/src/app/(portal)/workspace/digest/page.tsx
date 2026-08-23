@@ -36,7 +36,7 @@ export default function WorkspaceDigestPage(): ReactElement {
           {t('digest.page.triggerWeekly')}
         </Button>
         {preference !== null ? (
-          <span className="ml-auto text-xs text-muted-foreground">
+          <span className="text-muted-foreground ml-auto text-xs">
             {t('digest.page.preferenceHint', {
               hour: String(preference.dailyHourLocal),
               tz: preference.timezone,
@@ -46,17 +46,17 @@ export default function WorkspaceDigestPage(): ReactElement {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">{t('digest.page.loading')}</p>
+        <p className="text-muted-foreground text-sm">{t('digest.page.loading')}</p>
       ) : null}
 
       {isError ? (
-        <p className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <p className="border-destructive/40 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm">
           {error?.message ?? t('digest.page.error')}
         </p>
       ) : null}
 
       {!isLoading && (today === null || today === undefined) ? (
-        <p className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+        <p className="border-border bg-muted/20 text-muted-foreground rounded-lg border p-6 text-center text-sm">
           {t('digest.page.noTodayDigest')}
         </p>
       ) : null}
@@ -65,13 +65,13 @@ export default function WorkspaceDigestPage(): ReactElement {
         <div className="flex flex-col gap-3">
           <h2 className="text-lg font-semibold">{t('digest.page.today')}</h2>
           {today.generatedAt !== undefined && today.generatedAt !== null ? (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               {t('digest.page.generatedAt', {
                 ts: new Date(today.generatedAt).toLocaleString(),
               })}
             </span>
           ) : null}
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {(today.sections ?? []).map((section) => (
               <DigestSectionCard key={section.provider} section={section} t={t} />
             ))}
@@ -86,10 +86,10 @@ export default function WorkspaceDigestPage(): ReactElement {
             {history.slice(0, 14).map((h) => (
               <li
                 key={h.id}
-                className="flex items-center justify-between rounded-md border border-border px-3 py-2"
+                className="border-border flex items-center justify-between rounded-md border px-3 py-2"
               >
                 <span>{h.snapshotDate}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {t('digest.page.sectionsCount', {
                     n: String((h.sections ?? []).length),
                   })}

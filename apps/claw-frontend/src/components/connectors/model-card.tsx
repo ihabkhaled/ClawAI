@@ -61,27 +61,30 @@ export function ModelCard({ model, selected, onToggleSelect }: ModelCardProps): 
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <Badge variant="outline" className="text-[10px]">
+        <Badge variant="outline" className="touch:text-xs text-[10px]">
           {PROVIDER_DISPLAY_NAMES[model.provider] ?? model.provider}
         </Badge>
-        <Badge variant={getLifecycleBadgeVariant(model.lifecycle)} className="text-[10px]">
+        <Badge
+          variant={getLifecycleBadgeVariant(model.lifecycle)}
+          className="touch:text-xs text-[10px]"
+        >
           {LIFECYCLE_LABELS[model.lifecycle] ?? model.lifecycle}
         </Badge>
       </div>
 
       <div className="flex flex-wrap gap-1">
         {model.supportsStreaming ? (
-          <Badge variant="secondary" className="text-[10px]">
+          <Badge variant="secondary" className="touch:text-xs text-[10px]">
             {t('models.streaming')}
           </Badge>
         ) : null}
         {model.supportsTools ? (
-          <Badge variant="secondary" className="text-[10px]">
+          <Badge variant="secondary" className="touch:text-xs text-[10px]">
             {t('models.tools')}
           </Badge>
         ) : null}
         {model.supportsVision ? (
-          <Badge variant="secondary" className="text-[10px]">
+          <Badge variant="secondary" className="touch:text-xs text-[10px]">
             {t('models.vision')}
           </Badge>
         ) : null}

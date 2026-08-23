@@ -17,10 +17,10 @@ export function EvidenceViewer({ bundle, t }: EvidenceViewerProps): React.ReactE
         <div className="min-w-0 flex-1">
           <CardTitle className="text-sm">{t('research.evidence.title')}</CardTitle>
           <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-xs">
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="outline" className="touch:text-xs text-[10px]">
               {bundle.workflow}
             </Badge>
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="outline" className="touch:text-xs text-[10px]">
               {bundle.mode}
             </Badge>
             {bundle.requestedModel !== null ? (
@@ -60,7 +60,7 @@ export function EvidenceViewer({ bundle, t }: EvidenceViewerProps): React.ReactE
                   {item.title ?? t('research.evidence.noTitle')}
                 </div>
                 <div className="text-muted-foreground text-xs break-words">{item.snippet}</div>
-                <div className="text-muted-foreground flex flex-wrap gap-2 text-[10px]">
+                <div className="text-muted-foreground touch:text-xs flex flex-wrap gap-2 text-[10px]">
                   <span>{item.source}</span>
                   {item.providerKind !== null ? <span>• {item.providerKind}</span> : null}
                   <span>

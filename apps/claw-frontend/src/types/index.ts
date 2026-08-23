@@ -429,7 +429,7 @@ export type {
   RepairResultCardProps,
   RecoveryStatsCardProps,
   RecoveryProviderTableProps,
-  RecoveryFallbackRowProps,
+  RecoveryFallbackTableProps,
   DecompositionResultCardProps,
   SubTaskResultCardProps,
   BestOfNResultCardProps,
@@ -543,6 +543,8 @@ export type {
   UseVirtualizedMessagesControllerParams,
   UseVirtualizedMessagesControllerReturn,
   UseFollowStreamingTokensParams,
+  UseProfilePageReturn,
+  UseEditUserFormReturn,
 } from './hook.types';
 export type {
   CandidateResult,

@@ -9,12 +9,12 @@ import type { ConsensusModelBreakdownProps } from '@/types/component.types';
 
 function StatusIcon({ status }: { status: ConsensusModelStatus }) {
   if (status === ConsensusModelStatus.COMPLETED) {
-    return <CheckCircle2 className="h-3.5 w-3.5 text-success" />;
+    return <CheckCircle2 className="text-success h-3.5 w-3.5" />;
   }
   if (status === ConsensusModelStatus.TIMEOUT) {
-    return <Clock className="h-3.5 w-3.5 text-warning" />;
+    return <Clock className="text-warning h-3.5 w-3.5" />;
   }
-  return <XCircle className="h-3.5 w-3.5 text-destructive" />;
+  return <XCircle className="text-destructive h-3.5 w-3.5" />;
 }
 
 export function ConsensusModelBreakdown({ breakdown, t }: ConsensusModelBreakdownProps) {
@@ -42,11 +42,11 @@ export function ConsensusModelBreakdown({ breakdown, t }: ConsensusModelBreakdow
           {breakdown.map((item) => (
             <div
               key={`${item.provider}/${item.model}`}
-              className="flex items-center gap-1.5 rounded-md border bg-muted/40 px-2.5 py-1.5 text-xs"
+              className="bg-muted/40 flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs"
             >
               <StatusIcon status={item.status} />
               <span className="font-medium">{item.model}</span>
-              <Badge variant="outline" className="text-[10px]">
+              <Badge variant="outline" className="touch:text-xs text-[10px]">
                 {getStatusLabel(item.status)}
               </Badge>
               {item.status === ConsensusModelStatus.COMPLETED ? (

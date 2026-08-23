@@ -50,11 +50,11 @@ export function CatalogCard({
   const showNotActiveHelp = isDownloaded && !loaded && !isLoading;
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 shadow-sm">
+    <div className="border-border bg-card flex flex-col gap-3 rounded-lg border p-4 shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold text-foreground">{entry.displayName}</h3>
-          <p className="text-xs text-muted-foreground">
+          <h3 className="text-foreground text-base font-semibold">{entry.displayName}</h3>
+          <p className="text-muted-foreground text-xs">
             {entry.parameterCount} &middot; {entry.contextLength.toLocaleString()}{' '}
             {labels.contextLength}
           </p>
@@ -76,11 +76,11 @@ export function CatalogCard({
         }}
       />
 
-      <p className="line-clamp-2 text-sm text-muted-foreground">{entry.description}</p>
+      <p className="text-muted-foreground line-clamp-2 text-sm">{entry.description}</p>
 
       <div className="flex flex-wrap items-center gap-2">
         <HardwareCompatChip chip={compat.chip} label={compatLabel} />
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           {formatBytes(entry.fileSizeBytes)} &middot; {entry.requiredRamGb} {labels.requiresRamGb}
           {entry.recommendedGpuVramGb > 0
             ? ` · ${String(entry.recommendedGpuVramGb)} ${labels.requiresVramGb}`
@@ -89,7 +89,7 @@ export function CatalogCard({
       </div>
 
       {showNotActiveHelp ? (
-        <p className="flex items-start gap-1.5 rounded-md bg-muted/40 px-2 py-1.5 text-[11px] text-muted-foreground">
+        <p className="bg-muted/40 touch:text-xs text-muted-foreground flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px]">
           <HelpCircle className="mt-0.5 size-3 shrink-0" aria-hidden />
           <span>{labels.notActiveHelp}</span>
         </p>
@@ -100,7 +100,7 @@ export function CatalogCard({
           href={entry.sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+          className="text-primary inline-flex items-center gap-1.5 text-xs hover:underline"
           aria-label={`${labels.sourceLink}: ${entry.huggingfaceRepo}`}
         >
           <ExternalLink className="size-3" aria-hidden />

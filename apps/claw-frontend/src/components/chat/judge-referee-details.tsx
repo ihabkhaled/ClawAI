@@ -83,7 +83,7 @@ export function JudgeRefereeDetails({
           {decisionLabel}
         </Badge>
         {fileCount > 0 ? (
-          <Badge variant="outline" className="gap-1 text-[10px]">
+          <Badge variant="outline" className="touch:text-xs gap-1 text-[10px]">
             <Paperclip className="h-3 w-3" />
             {t('compare.delivery.filesProvided', { count: fileCount })}
           </Badge>
@@ -107,7 +107,7 @@ export function JudgeRefereeDetails({
                 {decisionLabel}
               </Badge>
               {fileCount > 0 ? (
-                <Badge variant="outline" className="gap-1 text-[10px]">
+                <Badge variant="outline" className="touch:text-xs gap-1 text-[10px]">
                   <Paperclip className="h-3 w-3" />
                   {t('compare.delivery.filesProvided', { count: fileCount })}
                 </Badge>
@@ -118,7 +118,7 @@ export function JudgeRefereeDetails({
           </DialogHeader>
 
           <div className="space-y-4">
-            <section className="border-border/60 bg-muted/30 grid gap-3 rounded-lg border p-4 md:grid-cols-2">
+            <section className="border-border/60 bg-muted/30 grid grid-cols-1 gap-3 rounded-lg border p-4 md:grid-cols-2">
               <div className="space-y-1">
                 <p className="text-muted-foreground text-xs font-medium">
                   {t('chat.judgeExecutionModel')}
@@ -171,7 +171,7 @@ export function JudgeRefereeDetails({
             <section className="border-border/60 bg-muted/30 space-y-2 rounded-lg border p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-foreground text-sm font-medium">{t('chat.judgeResponse')}</h3>
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="touch:text-xs text-[10px]">
                   {responseTypeLabel}
                 </Badge>
               </div>
@@ -199,7 +199,7 @@ export function JudgeRefereeDetails({
                * auto-picked cloud model and a synthetic 100%, which read as a
                * review that never happened. */}
               {judgeReview.criticRequested ? (
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div className="space-y-1">
                     <p className="text-muted-foreground text-xs font-medium">
                       {t('chat.judgeCriticModel')}
@@ -225,7 +225,7 @@ export function JudgeRefereeDetails({
                     {t('judgeReview.criticHeader')}
                   </h3>
                   {fileCount > 0 ? (
-                    <Badge variant="outline" className="gap-1 text-[10px]">
+                    <Badge variant="outline" className="touch:text-xs gap-1 text-[10px]">
                       <Paperclip className="h-3 w-3" />
                       {t('compare.delivery.filesProvided', { count: fileCount })}
                     </Badge>

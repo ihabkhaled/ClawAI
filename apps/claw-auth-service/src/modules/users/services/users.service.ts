@@ -145,7 +145,11 @@ export class UsersService {
     return toSafeUser(updated);
   }
 
-  async updateOwnProfile(userId: string, dto: UpdateOwnProfileDto): Promise<SafeUser> {
+  async updateOwnProfile(
+    userId: string,
+    dto: UpdateOwnProfileDto,
+    sessionId: string,
+  ): Promise<SafeUser> {
     const user = await this.requireUserWithValidPassword(userId, dto.currentPassword);
     await this.ensureProfileFieldsAvailable(user.username, dto);
     const updated = await this.usersRepository.updateById(userId, {
@@ -156,15 +160,15 @@ export class UsersService {
     });
 
     // Only a username change alters how the account is identified, so only that
-    // warrants tearing down every session. Editing a display name or phone
-    // number used to sign the user out of every device, which made ordinary
-    // profile edits feel punitive.
+    // warrants tearing down sessions, and the caller's own session is spared:
+    // renaming yourself is not a credential change, and signing the user out of
+    // the tab they are editing in made an ordinary rename feel like a lockout.
     const usernameChanged = dto.username !== undefined && dto.username !== user.username;
     if (usernameChanged) {
-      await this.usersRepository.revokeSessionsByUserId(userId);
+      await this.usersRepository.revokeOtherSessionsByUserId(userId, sessionId);
     }
     this.logger.log(
-      `updateOwnProfile: updated user ${userId}${usernameChanged ? ' and revoked sessions' : ''}`,
+      `updateOwnProfile: updated user ${userId}${usernameChanged ? ' and revoked other sessions' : ''}`,
     );
     return toSafeUser(updated);
   }

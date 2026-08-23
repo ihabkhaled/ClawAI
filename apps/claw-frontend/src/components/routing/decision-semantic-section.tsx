@@ -25,10 +25,10 @@ export function DecisionSemanticSection({
         {t('decisionDetail.semantic.failed', { status: semantic.status })}
       </p>
       {semantic.failureReason !== undefined ? (
-        <p className="text-xs text-muted-foreground">{semantic.failureReason}</p>
+        <p className="text-muted-foreground text-xs">{semantic.failureReason}</p>
       ) : null}
       {semantic.rawOutputExcerpt !== undefined ? (
-        <pre className="overflow-x-auto rounded bg-muted p-2 text-[11px]">
+        <pre className="bg-muted touch:text-xs overflow-x-auto rounded p-2 text-[11px]">
           {semantic.rawOutputExcerpt}
         </pre>
       ) : null}

@@ -26,21 +26,21 @@ export default function EmailSignaturesPage(): ReactElement {
       />
 
       {ctrl.isLoading ? (
-        <p className="text-sm text-muted-foreground">{t('emailSignatures.page.loading')}</p>
+        <p className="text-muted-foreground text-sm">{t('emailSignatures.page.loading')}</p>
       ) : null}
 
       {ctrl.isError ? (
-        <p className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <p className="border-destructive/40 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm">
           {ctrl.error?.message ?? t('emailSignatures.page.error')}
         </p>
       ) : null}
 
       {!ctrl.isLoading && !ctrl.isError && ctrl.signatures.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t('emailSignatures.page.empty')}</p>
+        <p className="text-muted-foreground text-sm">{t('emailSignatures.page.empty')}</p>
       ) : null}
 
       {ctrl.signatures.length > 0 ? (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {ctrl.signatures.map((sig) => (
             <EmailSignatureRow
               key={sig.id}

@@ -20,17 +20,20 @@ export function ModelAccessEditor({
   t,
 }: ModelAccessEditorProps): ReactElement {
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       {rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+        <p className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
           {t('adminPlans.modelAccess.empty')}
         </p>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {rows.map((row) => (
-            <div key={row.rowKey} className="grid gap-3 rounded-lg border border-border p-3">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="grid gap-1">
+            <div
+              key={row.rowKey}
+              className="border-border grid grid-cols-1 gap-3 rounded-lg border p-3"
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-1">
                   <label htmlFor={`provider-${row.rowKey}`} className="text-xs font-medium">
                     {t('adminPlans.modelAccess.provider')}
                   </label>
@@ -41,7 +44,7 @@ export function ModelAccessEditor({
                     placeholder="anthropic"
                   />
                 </div>
-                <div className="grid gap-1">
+                <div className="grid grid-cols-1 gap-1">
                   <label htmlFor={`model-${row.rowKey}`} className="text-xs font-medium">
                     {t('adminPlans.modelAccess.model')}
                   </label>
@@ -99,7 +102,7 @@ export function ModelAccessEditor({
               </div>
 
               <div className="flex items-end justify-between gap-3">
-                <div className="grid gap-1">
+                <div className="grid grid-cols-1 gap-1">
                   <label htmlFor={`override-${row.rowKey}`} className="text-xs font-medium">
                     {t('adminPlans.modelAccess.dailyTokenLimitOverride')}
                   </label>
@@ -137,7 +140,7 @@ export function ModelAccessEditor({
 
       {saveErrorMessage !== null ? (
         <p
-          className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm text-destructive"
+          className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-2 text-sm"
           role="alert"
         >
           {saveErrorMessage}

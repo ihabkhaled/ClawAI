@@ -39,10 +39,10 @@ export function RoutingPlaygroundSemanticResult({
               {t('routingPlayground.result.noAnalysis', { status: result.status })}
             </p>
             {result.failureReason !== undefined ? (
-              <p className="text-xs text-muted-foreground">{result.failureReason}</p>
+              <p className="text-muted-foreground text-xs">{result.failureReason}</p>
             ) : null}
             {result.rawOutputExcerpt !== undefined ? (
-              <pre className="overflow-x-auto rounded bg-muted p-2 text-[11px]">
+              <pre className="bg-muted touch:text-xs overflow-x-auto rounded p-2 text-[11px]">
                 {result.rawOutputExcerpt}
               </pre>
             ) : null}

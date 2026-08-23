@@ -42,6 +42,7 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "DeploymentCredential",
         "DeviceAuthorizationGrant",
         "EmailChangeRequest",
         "EmailVerificationToken",

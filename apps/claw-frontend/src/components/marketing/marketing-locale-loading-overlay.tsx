@@ -6,7 +6,7 @@ export function MarketingLocaleLoadingOverlay({
 }: MarketingLocaleLoadingOverlayProps): React.ReactElement {
   return (
     <div
-      className="bg-background/85 fixed inset-0 z-[100] grid place-items-center backdrop-blur-sm"
+      className="bg-background/85 fixed inset-0 z-[100] grid grid-cols-1 place-items-center backdrop-blur-sm"
       aria-live="polite"
     >
       <LoadingSpinner className="min-h-0" label={label} />

@@ -64,4 +64,22 @@ describe('PasswordInput', () => {
     expect(input).toHaveAttribute('autoComplete', 'current-password');
     expect(input).toHaveAttribute('name', 'pwd');
   });
+
+  // A button inside a form submits it by default. The reveal toggle sits inside
+  // every password form in the app, so without an explicit type it would submit
+  // the login, register or password-change form on the first click.
+  it('never submits a surrounding form', () => {
+    const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
+    render(
+      <form onSubmit={onSubmit}>
+        <PasswordInput id="test" placeholder="password" />
+      </form>,
+    );
+
+    const button = screen.getByRole('button', { name: 'auth.showPasswordAria' });
+    expect(button).toHaveAttribute('type', 'button');
+
+    fireEvent.click(button);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });

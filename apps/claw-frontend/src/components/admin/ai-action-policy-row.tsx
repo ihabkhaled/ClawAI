@@ -50,7 +50,7 @@ export function AiActionPolicyRow({
       {policy.description !== null ? (
         <p className="text-muted-foreground text-xs">{policy.description}</p>
       ) : null}
-      <div className="text-muted-foreground grid gap-1 text-xs md:grid-cols-3">
+      <div className="text-muted-foreground grid grid-cols-1 gap-1 text-xs md:grid-cols-3">
         <div>
           <span className="text-foreground font-semibold">
             {t('adminAutomation.policies.providerRegex')}

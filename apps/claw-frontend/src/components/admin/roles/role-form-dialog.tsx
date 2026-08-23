@@ -42,8 +42,8 @@ export function RoleFormDialog({
           <DialogTitle>{t('adminRoles.create.title')}</DialogTitle>
           <DialogDescription>{t('adminRoles.create.description')}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="role-name" className="text-sm font-medium">
               {t('adminRoles.form.name')}
             </label>
@@ -55,11 +55,11 @@ export function RoleFormDialog({
               aria-invalid={fieldErrors.name !== undefined}
             />
             {fieldErrors.name !== undefined ? (
-              <p className="text-xs text-destructive">{fieldErrors.name}</p>
+              <p className="text-destructive text-xs">{fieldErrors.name}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="role-slug" className="text-sm font-medium">
               {t('adminRoles.form.slug')}
             </label>
@@ -70,13 +70,13 @@ export function RoleFormDialog({
               placeholder="content-editor"
               aria-invalid={fieldErrors.slug !== undefined}
             />
-            <p className="text-xs text-muted-foreground">{t('adminRoles.form.slugHelp')}</p>
+            <p className="text-muted-foreground text-xs">{t('adminRoles.form.slugHelp')}</p>
             {fieldErrors.slug !== undefined ? (
-              <p className="text-xs text-destructive">{fieldErrors.slug}</p>
+              <p className="text-destructive text-xs">{fieldErrors.slug}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="role-description" className="text-sm font-medium">
               {t('adminRoles.form.description')}
             </label>
@@ -87,7 +87,7 @@ export function RoleFormDialog({
               rows={2}
             />
             {fieldErrors.description !== undefined ? (
-              <p className="text-xs text-destructive">{fieldErrors.description}</p>
+              <p className="text-destructive text-xs">{fieldErrors.description}</p>
             ) : null}
           </div>
 
@@ -104,7 +104,7 @@ export function RoleFormDialog({
 
           {submitErrorMessage !== null ? (
             <p
-              className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm text-destructive"
+              className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-2 text-sm"
               role="alert"
             >
               {submitErrorMessage}

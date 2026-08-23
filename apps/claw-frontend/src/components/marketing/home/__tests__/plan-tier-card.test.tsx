@@ -84,8 +84,20 @@ describe('PlanTierCard', () => {
       'overflow-y-auto',
       'overscroll-contain',
     );
-    expect(screen.getByRole('link')).toHaveClass('mt-auto', 'h-12', 'shrink-0', 'cursor-pointer');
+    expect(screen.getByRole('link')).toHaveClass('h-12', 'w-full', 'cursor-pointer');
     expect(screen.getByRole('link')).not.toHaveClass('flex-1');
+    expect(screen.getByRole('link').parentElement).toHaveClass('mt-auto', 'shrink-0');
+  });
+
+  // `mt-auto` only separates the call to action when the card has space to
+  // spare. A plan carrying all sixteen feature gates has none, so the margin
+  // collapsed and the button sat flush against the last feature row.
+  it('keeps the call to action clear of the feature list on a full card', () => {
+    render(<PlanTierCard plan={PLAN} isYearly={false} />);
+
+    // The rule matters as much as the padding: after sixteen tightly stacked
+    // feature rows, spacing alone did not read as a break.
+    expect(screen.getByRole('link').parentElement).toHaveClass('pt-6', 'border-t');
   });
 
   it('preserves the selected plan and monthly interval through registration', () => {

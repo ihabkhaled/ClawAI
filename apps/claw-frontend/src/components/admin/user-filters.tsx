@@ -25,7 +25,7 @@ export function UserFilters({
   setVerificationFilter,
 }: UserFiltersProps): ReactElement {
   return (
-    <div className="grid gap-3 md:grid-cols-5">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
       <Input
         aria-label={t('common.search')}
         placeholder={t('common.search')}

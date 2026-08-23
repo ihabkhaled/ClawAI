@@ -427,6 +427,11 @@
       "route": "/plan"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/profile/page.tsx",
+      "kind": "page",
+      "route": "/profile"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/research/providers/page.tsx",
       "kind": "page",
       "route": "/research/providers"

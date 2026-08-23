@@ -1,45 +1,48 @@
+import { DataTable } from '@/components/common/data-table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import type { AdaptiveModeChartProps } from '@/types';
+import type { AdaptiveModeChartProps, DataTableColumn, ModeInsight } from '@/types';
 
 export function AdaptiveModeChart({ modeInsights, t }: AdaptiveModeChartProps): React.ReactElement {
+  // Same treatment as the provider table: 418px of columns did not fit a phone
+  // card, so the mode breakdown stacks on a coarse pointer.
+  const columns: DataTableColumn<ModeInsight>[] = [
+    {
+      key: 'mode',
+      header: t('adaptiveLearning.mode'),
+      render: (insight) => <span className="font-medium">{insight.routingMode}</span>,
+    },
+    {
+      key: 'count',
+      header: t('adaptiveLearning.count'),
+      className: 'text-end tabular-nums',
+      render: (insight) => insight.count,
+    },
+    {
+      key: 'percentage',
+      header: t('adaptiveLearning.percentage'),
+      className: 'text-end tabular-nums',
+      render: (insight) => `${(insight.percentage * 100).toFixed(1)}%`,
+    },
+    {
+      key: 'avgConfidence',
+      header: t('adaptiveLearning.avgConfidence'),
+      className: 'text-end tabular-nums',
+      render: (insight) => `${(insight.avgConfidence * 100).toFixed(1)}%`,
+    },
+  ];
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">{t('adaptiveLearning.modeBreakdown')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('adaptiveLearning.mode')}</TableHead>
-              <TableHead className="text-right">{t('adaptiveLearning.count')}</TableHead>
-              <TableHead className="text-right">{t('adaptiveLearning.percentage')}</TableHead>
-              <TableHead className="text-right">{t('adaptiveLearning.avgConfidence')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {modeInsights.map((insight) => (
-              <TableRow key={insight.routingMode}>
-                <TableCell className="font-medium">{insight.routingMode}</TableCell>
-                <TableCell className="text-right tabular-nums">{insight.count}</TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {(insight.percentage * 100).toFixed(1)}%
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {(insight.avgConfidence * 100).toFixed(1)}%
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns}
+          data={modeInsights}
+          keyExtractor={(insight) => insight.routingMode}
+          mobileTitleKey="mode"
+        />
       </CardContent>
     </Card>
   );

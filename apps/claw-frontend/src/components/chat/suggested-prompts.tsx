@@ -18,11 +18,11 @@ export function SuggestedPrompts({
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-2">
-      <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+      <p className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
         <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
         {t('chat.suggestedPrompts.heading')}
       </p>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {prompts.map((prompt) => (
           <Button
             key={prompt.id}
@@ -31,7 +31,7 @@ export function SuggestedPrompts({
             disabled={disabled}
             onClick={() => onSelect(prompt)}
             className={cn(
-              'h-auto justify-start whitespace-normal px-3 py-2 text-start text-sm font-normal',
+              'h-auto justify-start px-3 py-2 text-start text-sm font-normal whitespace-normal',
               'hover:bg-accent/60',
             )}
           >

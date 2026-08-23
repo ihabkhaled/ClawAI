@@ -54,8 +54,8 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
             {isEditing ? t('routing.editPolicyDesc') : t('routing.createPolicyDesc')}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="policy-name" className="text-sm font-medium">
               {t('routing.name')}
             </label>
@@ -66,11 +66,11 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
               placeholder={t('routing.namePlaceholder')}
             />
             {fieldErrors.name ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.name[0]}</p>
+              <p className="text-destructive mt-1 text-sm">{fieldErrors.name[0]}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="policy-mode" className="text-sm font-medium">
               {t('routing.mode')}
             </label>
@@ -90,11 +90,11 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
               </SelectContent>
             </Select>
             {fieldErrors.routingMode ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.routingMode[0]}</p>
+              <p className="text-destructive mt-1 text-sm">{fieldErrors.routingMode[0]}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="policy-priority" className="text-sm font-medium">
               {t('routing.priority')}
             </label>
@@ -107,11 +107,11 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
               max={100}
             />
             {fieldErrors.priority ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.priority[0]}</p>
+              <p className="text-destructive mt-1 text-sm">{fieldErrors.priority[0]}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="policy-active" className="text-sm font-medium">
               {t('routing.status')}
             </label>
@@ -129,7 +129,7 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
             </Select>
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="policy-weights-json" className="text-sm font-medium">
               {t('routing.weightsJsonLabel')}
             </label>
@@ -141,9 +141,9 @@ export function PolicyForm({ open, onOpenChange, onSubmit, isPending, policy }: 
               className="font-mono text-xs"
               rows={10}
             />
-            <p className="text-xs text-muted-foreground">{t('routing.weightsJsonHelp')}</p>
+            <p className="text-muted-foreground text-xs">{t('routing.weightsJsonHelp')}</p>
             {weightsJsonError ? (
-              <p className="mt-1 text-sm text-destructive">{t(weightsJsonError)}</p>
+              <p className="text-destructive mt-1 text-sm">{t(weightsJsonError)}</p>
             ) : null}
           </div>
 

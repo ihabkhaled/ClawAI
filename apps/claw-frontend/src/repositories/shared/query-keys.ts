@@ -109,6 +109,7 @@ export const queryKeys = {
   adminDeployment: {
     all: ['adminDeployment'] as const,
     status: () => ['adminDeployment', 'status'] as const,
+    run: () => ['adminDeployment', 'run'] as const,
   },
   adminGateways: {
     all: ['adminGateways'] as const,

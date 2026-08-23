@@ -64,10 +64,10 @@ export function SmartRouterAddEntryForm({
   return (
     <Card>
       <CardContent className="p-4">
-        <form onSubmit={handleSubmit} className="grid gap-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
           <p className="text-sm font-medium">{t('smartRouterAdmin.entryForm.addEntryTitle')}</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="smart-router-entry-provider" className="text-sm font-medium">
                 {t('smartRouterAdmin.entryForm.provider')}
               </label>
@@ -87,7 +87,7 @@ export function SmartRouterAddEntryForm({
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="smart-router-entry-model-alias" className="text-sm font-medium">
                 {t('smartRouterAdmin.entryForm.modelAlias')}
               </label>
@@ -100,8 +100,8 @@ export function SmartRouterAddEntryForm({
               />
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="smart-router-entry-role" className="text-sm font-medium">
                 {t('smartRouterAdmin.entryForm.role')}
               </label>
@@ -121,7 +121,7 @@ export function SmartRouterAddEntryForm({
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="smart-router-entry-billing-model" className="text-sm font-medium">
                 {t('smartRouterAdmin.entryForm.billingModel')}
               </label>
@@ -144,8 +144,8 @@ export function SmartRouterAddEntryForm({
               </Select>
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="smart-router-entry-deployment-id" className="text-sm font-medium">
                 {t('smartRouterAdmin.entryForm.deploymentId')}
               </label>
@@ -156,7 +156,7 @@ export function SmartRouterAddEntryForm({
                 placeholder={t('smartRouterAdmin.entryForm.deploymentIdPlaceholder')}
               />
             </div>
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="smart-router-entry-timeout" className="text-sm font-medium">
                 {t('smartRouterAdmin.entryForm.attemptTimeoutMs')}
               </label>
@@ -169,7 +169,7 @@ export function SmartRouterAddEntryForm({
                 onChange={(event) => setAttemptTimeoutMs(Number(event.target.value))}
               />
             </div>
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="smart-router-entry-retries" className="text-sm font-medium">
                 {t('smartRouterAdmin.entryForm.retries')}
               </label>
@@ -183,7 +183,7 @@ export function SmartRouterAddEntryForm({
               />
             </div>
           </div>
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="smart-router-entry-triggers" className="text-sm font-medium">
               {t('smartRouterAdmin.entryForm.triggers')}
             </label>

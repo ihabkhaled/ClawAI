@@ -15,7 +15,7 @@ export function DeploymentManualActions({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Button
           type="button"
           className="h-auto w-full justify-start gap-3 px-4 py-3 text-left"

@@ -54,6 +54,9 @@ export type ConfirmPasswordResetResponse = {
 export type UpdateOwnProfileRequest = {
   currentPassword: string;
   username?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
 };
 
 export type DeleteOwnAccountRequest = {

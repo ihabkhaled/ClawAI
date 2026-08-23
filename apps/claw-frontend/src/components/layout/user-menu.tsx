@@ -64,7 +64,7 @@ export function UserMenu(): React.ReactElement | null {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href={ROUTES.SETTINGS} className="cursor-pointer">
+          <Link href={ROUTES.PROFILE} className="cursor-pointer">
             <User className="me-2 h-4 w-4" />
             {t('settings.profile')}
           </Link>

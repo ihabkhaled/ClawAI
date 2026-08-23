@@ -45,8 +45,8 @@ export function SyncHealthDashboardView({
           {t('workspaceSync.dashboard.connectors_title')}
         </h2>
         <div className="max-w-full md:overflow-x-auto">
-          <table className="w-full text-left max-md:block">
-            <thead className="bg-muted/30 max-md:hidden">
+          <table className="touch:block w-full text-left">
+            <thead className="bg-muted/30 touch:hidden">
               <tr>
                 <th className="text-muted-foreground px-3 py-2 text-xs font-medium">
                   {t('workspaceSync.dashboard.col.connector')}
@@ -71,7 +71,7 @@ export function SyncHealthDashboardView({
                 </th>
               </tr>
             </thead>
-            <tbody className="max-md:block max-md:space-y-3 max-md:p-3">
+            <tbody className="touch:block touch:space-y-3 touch:p-3">
               {orderedRows.map((row) => (
                 <SyncHealthRow key={row.connectorId} row={row} t={t} />
               ))}

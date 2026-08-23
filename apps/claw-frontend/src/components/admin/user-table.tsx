@@ -192,7 +192,7 @@ export function UserTable({
       // Deactivate action rather than being silently approved by a button
       // labelled "reactivate".
       render: (user) => (
-        <div className="flex min-w-0 flex-wrap justify-end gap-2 max-md:grid max-md:w-full max-md:grid-cols-2">
+        <div className="touch:grid touch:w-full touch:grid-cols-2 flex min-w-0 flex-wrap justify-end gap-2">
           <Button
             variant="outline"
             size="sm"

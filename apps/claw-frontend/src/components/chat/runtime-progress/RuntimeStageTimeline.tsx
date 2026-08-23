@@ -47,7 +47,7 @@ export function RuntimeStageTimeline({
         return (
           <li
             key={stage}
-            className="grid grid-cols-[auto_1fr_auto] items-center gap-2 text-[11px]"
+            className="touch:text-xs grid grid-cols-[auto_1fr_auto] items-center gap-2 text-[11px]"
             data-stage={stage}
             data-status={isActive ? 'active' : 'completed'}
           >
@@ -58,9 +58,9 @@ export function RuntimeStageTimeline({
               )}
               aria-hidden
             />
-            <span className="truncate font-medium text-foreground">{stage}</span>
-            <span className="flex items-center gap-1.5 text-muted-foreground">
-              <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
+            <span className="text-foreground truncate font-medium">{stage}</span>
+            <span className="text-muted-foreground flex items-center gap-1.5">
+              <span className="bg-muted touch:text-xs rounded-full px-1.5 py-0.5 text-[10px] tracking-wide uppercase">
                 {statusLabel}
               </span>
               <span className="tabular-nums">{formatBottleneckDuration(duration)}</span>

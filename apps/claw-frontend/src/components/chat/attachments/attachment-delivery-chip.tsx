@@ -36,31 +36,31 @@ export function AttachmentDeliveryChip({
       data-testid="attachment-delivery-chip"
     >
       {counts.extracted > 0 ? (
-        <Badge variant="outline" className="gap-1 px-1.5 py-0 text-[10px]">
+        <Badge variant="outline" className="touch:text-xs gap-1 px-1.5 py-0 text-[10px]">
           <span aria-hidden>📄</span>
           {t('compare.delivery.extractedText')} {String(counts.extracted)}
         </Badge>
       ) : null}
       {counts.image > 0 ? (
-        <Badge variant="outline" className="gap-1 px-1.5 py-0 text-[10px]">
+        <Badge variant="outline" className="touch:text-xs gap-1 px-1.5 py-0 text-[10px]">
           <span aria-hidden>🖼️</span>
           {t('compare.delivery.nativeImage')} {String(counts.image)}
         </Badge>
       ) : null}
       {counts.skipped > 0 ? (
-        <Badge variant="outline" className="gap-1 px-1.5 py-0 text-[10px]">
+        <Badge variant="outline" className="touch:text-xs gap-1 px-1.5 py-0 text-[10px]">
           <span aria-hidden>🚫</span>
           {t('compare.delivery.omittedNoVision')} {String(counts.skipped)}
         </Badge>
       ) : null}
       {counts.unsupported > 0 ? (
-        <Badge variant="outline" className="gap-1 px-1.5 py-0 text-[10px]">
+        <Badge variant="outline" className="touch:text-xs gap-1 px-1.5 py-0 text-[10px]">
           <span aria-hidden>🚫</span>
           {t('compare.delivery.omittedUnsupported')} {String(counts.unsupported)}
         </Badge>
       ) : null}
       {counts.truncated > 0 ? (
-        <Badge variant="outline" className="gap-1 px-1.5 py-0 text-[10px]">
+        <Badge variant="outline" className="touch:text-xs gap-1 px-1.5 py-0 text-[10px]">
           <span aria-hidden>✂️</span>
           {t('compare.delivery.truncatedText')} {String(counts.truncated)}
         </Badge>

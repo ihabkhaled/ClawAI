@@ -54,7 +54,7 @@ export default function AgentPage(): React.ReactElement {
       )}
 
       {!isLoading && sessions.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sessions.map((session) => (
             <Card key={session.id}>
               <CardHeader className="pb-2">
@@ -101,7 +101,7 @@ export default function AgentPage(): React.ReactElement {
                 <div className="flex flex-1 flex-col gap-1 overflow-hidden">
                   <code className="truncate text-xs">{cmd.command}</code>
                   {cmd.riskReasons !== null && cmd.riskReasons.length > 0 ? (
-                    <span className="text-muted-foreground truncate text-[10px]">
+                    <span className="text-muted-foreground touch:text-xs truncate text-[10px]">
                       {cmd.riskReasons}
                     </span>
                   ) : null}

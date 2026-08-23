@@ -92,7 +92,7 @@ export class UsersController {
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(updateOwnProfileSchema)) dto: UpdateOwnProfileDto,
   ): Promise<SafeUser> {
-    return this.usersService.updateOwnProfile(user.id, dto);
+    return this.usersService.updateOwnProfile(user.id, dto, user.sessionId);
   }
 
   @Delete('me')

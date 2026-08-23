@@ -61,7 +61,7 @@ export function WhyThisModelPanel({ message }: WhyThisModelPanelProps): React.Re
         variant="ghost"
         size="sm"
         onClick={toggleExpanded}
-        className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground h-7 gap-1.5 px-2 text-xs"
         aria-label={t('whyThisModel.toggle')}
       >
         <Sparkles className="h-3 w-3" />
@@ -70,7 +70,7 @@ export function WhyThisModelPanel({ message }: WhyThisModelPanelProps): React.Re
       </Button>
 
       {isExpanded ? (
-        <div className="mt-1 rounded-md border bg-card p-3 text-xs">
+        <div className="bg-card mt-1 rounded-md border p-3 text-xs">
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
             <WhyThisModelRow label={t('whyThisModel.selectedModel')}>
               <span className="font-medium">
@@ -84,12 +84,12 @@ export function WhyThisModelPanel({ message }: WhyThisModelPanelProps): React.Re
               <span>{confidencePct === null ? '—' : `${String(confidencePct)}%`}</span>
             </WhyThisModelRow>
             <WhyThisModelRow label={t('whyThisModel.costClass')}>
-              <Badge variant="outline" className="text-[10px]">
+              <Badge variant="outline" className="touch:text-xs text-[10px]">
                 {costClass ?? t('common.unknown')}
               </Badge>
             </WhyThisModelRow>
             <WhyThisModelRow label={t('whyThisModel.latencyClass')}>
-              <Badge variant="outline" className="text-[10px]">
+              <Badge variant="outline" className="touch:text-xs text-[10px]">
                 {latencyClass ?? t('common.unknown')}
               </Badge>
             </WhyThisModelRow>
@@ -113,8 +113,8 @@ export function WhyThisModelPanel({ message }: WhyThisModelPanelProps): React.Re
           </div>
 
           {reasonSummary !== null && reasonSummary.length > 0 ? (
-            <div className="mt-2 rounded border border-border/60 bg-muted/40 p-2">
-              <p className="text-[11px] text-muted-foreground">
+            <div className="border-border/60 bg-muted/40 mt-2 rounded border p-2">
+              <p className="touch:text-xs text-muted-foreground text-[11px]">
                 {t('whyThisModel.reasonSummary')}
               </p>
               <p className="mt-1">{reasonSummary}</p>

@@ -8,7 +8,7 @@ export function DeploymentPhaseRail({ status, t }: DeploymentPhaseRailProps): Re
   const activeIndex = DEPLOYMENT_PHASES.findIndex((phase) => phase === status.phase);
 
   return (
-    <ol className="grid gap-2 sm:grid-cols-4 xl:grid-cols-8">
+    <ol className="grid grid-cols-1 gap-2 sm:grid-cols-4 xl:grid-cols-8">
       {DEPLOYMENT_PHASES.map((phase, index) => {
         const isComplete = status.state === 'completed' || index < activeIndex;
         const isActive = index === activeIndex && status.state === 'running';
