@@ -90,6 +90,21 @@ describe('RuntimeV2LoopManager unfulfilled-intent correction', () => {
     expect(callProvider).toHaveBeenCalledTimes(1);
   });
 
+  // "I need the actual file hash before I can patch. Let me read the file
+  // first." — a model withholding a request over a precondition it believes is
+  // mandatory. contentHash is optional, and reading the file is itself the tool
+  // call it was describing, but the correction never said either, so the run
+  // ended having done nothing three narrations later.
+  it('tells a model blocked on a precondition to request it rather than describe it', async () => {
+    const callProvider = jest.fn().mockResolvedValueOnce({ content: toolJson() });
+
+    await nudge(callProvider);
+
+    const correction = (callProvider.mock.calls[0]?.[2] as { systemPrompt: string }).systemPrompt;
+    expect(correction).toContain('fetching that IS the tool call to make now');
+    expect(correction).toContain('contentHash');
+  });
+
   it('repairs a malformed correction instead of discarding the whole run', async () => {
     // The correction asks for a tool request, which is when a model is most
     // likely to produce a slightly wrong one. Inline parsing threw here, and
