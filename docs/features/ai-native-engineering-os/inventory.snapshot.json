@@ -1194,6 +1194,11 @@
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
         },
         {
+          "method": "PUT",
+          "route": "/connectors/:id/models/exposure",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/connectors/:id/sync",
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
@@ -9732,7 +9737,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 597,
+    "endpointCount": 598,
     "envVarCount": 347,
     "eventCount": 167,
     "frontendRouteCount": 122,

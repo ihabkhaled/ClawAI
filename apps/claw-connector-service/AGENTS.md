@@ -20,7 +20,7 @@ npm run dev
 - Port: 4003
 - Database: postgresql
 - Prisma models: Connector, ConnectorHealthEvent, ConnectorModel, ModelSyncRun
-- API endpoints: 15 (see `.ai/manifests/api-endpoints.json`)
+- API endpoints: 16 (see `.ai/manifests/api-endpoints.json`)
 - Test files: 19 (jest)
 - Depends on: @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 

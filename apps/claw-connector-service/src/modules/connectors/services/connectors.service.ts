@@ -328,6 +328,35 @@ export class ConnectorsService implements OnApplicationBootstrap {
     return rows.map(({ connector: _connector, ...model }) => model);
   }
 
+  // Admin exposure control. The connector is verified first so a bad id fails as
+  // NOT FOUND rather than silently updating nothing, and the previously exposed
+  // keys are captured before the write so the caller can report what an unexpose
+  // actually took away. setExposure only touches rows that already exist and are
+  // not REMOVED, so a forged modelKey changes nothing.
+  async setModelExposure(
+    connectorId: string,
+    modelKeys: string[],
+    exposed: boolean,
+  ): Promise<{ updated: number; previouslyExposed: string[] }> {
+    const connector = await this.connectorsRepository.findById(connectorId);
+    if (!connector) {
+      throw new EntityNotFoundException('Connector', connectorId);
+    }
+    const previouslyExposed = await this.connectorModelsRepository.findExposedKeys(
+      connectorId,
+      modelKeys,
+    );
+    const { updated } = await this.connectorModelsRepository.setExposure(
+      connectorId,
+      modelKeys,
+      exposed,
+    );
+    this.logger.log(
+      `setModelExposure: connector=${connectorId} exposed=${String(exposed)} requested=${String(modelKeys.length)} updated=${String(updated)}`,
+    );
+    return { updated, previouslyExposed };
+  }
+
   private maskSecrets<T extends { encryptedConfig?: string | null }>(connector: T): T {
     if (connector.encryptedConfig) {
       return { ...connector, encryptedConfig: '****' };

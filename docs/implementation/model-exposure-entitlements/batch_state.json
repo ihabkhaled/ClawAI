@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 5,
+  "currentBatch": 6,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -143,15 +143,18 @@
     },
     {
       "id": 5,
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "commit": null,
-      "tests": [],
+      "tests": ["connector-service: 19 suites, 176 tests pass; typecheck clean"],
       "defects": [],
       "deliverables": [
         "findExposedForCatalog + getAvailableModels gated on exposure",
         "ADMIN_CONNECTORS_MANAGE added to GET /connectors/:id/models",
         "backfill migration 20260823093000_backfill_existing_model_exposure",
-        "connector-models.repository.ts setExposure + findExposedKeys"
+        "connector-models.repository.ts setExposure + findExposedKeys",
+        "ConnectorsService.setModelExposure",
+        "PUT /connectors/:id/models/exposure with ADMIN_CONNECTORS_MANAGE",
+        "controller spec for setModelExposure"
       ],
       "migrationEvidence": "Both migrations replayed in one transaction against claw-pg-connector 16.13 and rolled back. Old catalog predicate returned 160 rows; after backfill the new catalog predicate returns the same 160. No user loses a model on upgrade. 0 rows left UNEXPOSED because all 160 were ACTIVE on enabled connectors."
     },
@@ -233,7 +236,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 5c: admin expose/unexpose API with RBAC, audit and impact preview",
+  "nextAction": "Batch 6: admin Model Exposure UI, or Batch 7 plan entitlement backend validation",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
@@ -246,8 +249,9 @@
     "ADR proposed a foreign key from PlanModelAccess to ConnectorModel; impossible, they live in different service databases and this repository forbids crossing a service database boundary. The link must be a plain column validated over HTTP."
   ],
   "openCaveats": [
-    "exposure now gates the user catalog but the runtime authorization gates (chat access-control, routing plan-model-gate) still do not consult it. A forged API request naming an unexposed model is still accepted by those paths until Batch 9.",
-    "Admin expose/unexpose API does not exist yet, so exposure can currently only change via SQL or the backfill."
+    "Runtime gates (chat-service access-control, routing plan-model-gate) still do not consult exposure. A forged request naming an unexposed model is still accepted there. Batch 9.",
+    "Plan model access still accepts unvalidated free-text (provider, model). Batch 7.",
+    "No admin exposure UI yet. Batch 6."
   ],
   "workingTechnique": "For any edit to a file larger than about 8 KB: instruct patch with a minimal anchored hunk (quote the exact 3 trailing lines) and explicitly forbid update. Verify the executed model with: docker logs claw-chat-service | grep callProvider."
 }
