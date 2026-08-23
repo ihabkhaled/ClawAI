@@ -1,6 +1,6 @@
 {
   "name": "claw-file-service",
-  "version": "1.34.9",
+  "version": "1.34.10",
   "private": true,
   "description": "Claw File Service - File upload, storage, and chunking",
   "license": "UNLICENSED",
