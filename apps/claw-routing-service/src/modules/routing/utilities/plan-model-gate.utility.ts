@@ -20,11 +20,12 @@ export function applyPlanModelGate(
   unrestricted = false,
 ): PlanModelGateResult {
   if (unrestricted) {
-    return { decision, outcome: 'unrestricted' };
+    return { decision, outcome: 'unrestricted', excludedCandidates: 0 };
   }
+  const totalCandidates = 1 + (decision.fallbackChain ?? []).length;
   if (allowedModels.length === 0) {
     // A restricted plan with nothing on its list authorizes nothing.
-    return { decision, outcome: 'unsatisfiable' };
+    return { decision, outcome: 'unsatisfiable', excludedCandidates: totalCandidates };
   }
   const allowed = new Set(allowedModels);
   const isAllowed = (provider: string, model: string): boolean =>
@@ -33,8 +34,14 @@ export function applyPlanModelGate(
     isAllowed(e.provider, e.model),
   );
 
+  const excludedFallbacks = (decision.fallbackChain ?? []).length - filteredChain.length;
+
   if (isAllowed(decision.selectedProvider, decision.selectedModel)) {
-    return { decision: { ...decision, fallbackChain: filteredChain }, outcome: 'allowed' };
+    return {
+      decision: { ...decision, fallbackChain: filteredChain },
+      outcome: 'allowed',
+      excludedCandidates: excludedFallbacks,
+    };
   }
 
   const promoted = filteredChain[0];
@@ -47,8 +54,10 @@ export function applyPlanModelGate(
         fallbackChain: filteredChain.slice(1),
       },
       outcome: 'promoted',
+      // The rejected primary counts as excluded alongside the filtered chain.
+      excludedCandidates: excludedFallbacks + 1,
     };
   }
 
-  return { decision, outcome: 'unsatisfiable' };
+  return { decision, outcome: 'unsatisfiable', excludedCandidates: totalCandidates };
 }

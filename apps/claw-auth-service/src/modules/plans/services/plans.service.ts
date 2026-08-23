@@ -1,5 +1,7 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
+import { RabbitMQService, StructuredLogger } from '@claw/shared-rabbitmq';
+import { EventPattern, LogLevel } from '@claw/shared-types';
 import { PlansRepository } from '../repositories/plans.repository';
 import { ExposedModelClient } from '../clients/exposed-model.client';
 import { EXPOSED_MODEL_VALIDATION_MAX_PAIRS } from '../constants/exposed-model.constants';
@@ -21,10 +23,20 @@ import {
 export class PlansService {
   private readonly logger = new Logger(PlansService.name);
 
+  private readonly structuredLogger: StructuredLogger;
+
   constructor(
     private readonly plansRepository: PlansRepository,
     private readonly exposedModels: ExposedModelClient,
-  ) {}
+    private readonly rabbitMQService: RabbitMQService,
+  ) {
+    this.structuredLogger = new StructuredLogger(
+      this.rabbitMQService,
+      'auth-service',
+      EventPattern.LOG_SERVER,
+      PlansService.name,
+    );
+  }
 
   async listPlans(): Promise<PlanView[]> {
     const plans = await this.plansRepository.findAll();
@@ -215,6 +227,19 @@ export class PlansService {
       if (rejected.length > 0) {
         const names = rejected.map((pair) => `${pair.provider}/${pair.model}`).join(', ');
         this.logger.warn(`setModelAccess: id=${id} rejected=${names}`);
+        // A refused assignment is worth recording as well. Repeated attempts to
+        // entitle a plan to models that do not exist is a signal, and it is
+        // invisible if only successes are audited.
+        this.structuredLogger.logAction({
+          level: LogLevel.WARN,
+          message: `Plan model access refused on plan ${id}`,
+          action: 'plan_model_access_refused',
+          service: PlansService.name,
+          metadata: {
+            planId: id,
+            rejected: rejected.map((pair) => `${pair.provider}/${pair.model}`),
+          },
+        });
         throw new BusinessException(
           `These models are not available to assign: ${names}. A model must be synced from a connector and exposed before a plan can use it.`,
           'PLAN_MODEL_NOT_EXPOSED',
@@ -223,6 +248,21 @@ export class PlansService {
       }
     }
     const plan = await this.plansRepository.replaceModelAccess(id, dto.models);
+    // Which models a plan grants is an entitlement decision, so the change has
+    // to be recoverable later — who changed it, on which plan, and to what. The
+    // rows are recorded as provider/model keys rather than the full DTO: the
+    // flags are visible on the plan, the identities are what an investigator
+    // needs.
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Plan model access replaced on plan ${id}`,
+      action: 'plan_model_access_replaced',
+      service: PlansService.name,
+      metadata: {
+        planId: id,
+        models: dto.models.map((row) => `${row.provider}/${row.model}`),
+      },
+    });
     this.logger.log(`setModelAccess: id=${id} rows=${dto.models.length}`);
     return this.toView(plan);
   }

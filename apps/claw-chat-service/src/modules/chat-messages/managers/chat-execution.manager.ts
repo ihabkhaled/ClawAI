@@ -19,6 +19,8 @@ import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest, recordGet } from '../../../common/utilities';
 import { BusinessException } from '../../../common/errors';
 import { ModelExposureClient } from '../clients/model-exposure.client';
+import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
+import { ModelAuthorizationMetricsService } from '../services/model-authorization-metrics.service';
 import {
   ANTHROPIC_PROVIDER,
   FILE_GENERATION_PROVIDER,
@@ -168,6 +170,7 @@ import { providerFailureCode } from '../utilities/runtime-v2-provider-failure.ut
 export class ChatExecutionManager implements OnModuleInit {
   private readonly logger = new Logger(ChatExecutionManager.name);
   private readonly modelExposure = new ModelExposureClient();
+  private readonly authorizationMetrics = new ModelAuthorizationMetricsService();
 
   constructor(
     private readonly contextAssembly: ContextAssemblyManager,
@@ -1613,9 +1616,19 @@ export class ChatExecutionManager implements OnModuleInit {
   // connector-service cannot answer, the execution does not happen. Cached
   // briefly inside the client so a busy thread does not add a hop per turn.
   private async assertExposedForExecution(provider: string, model: string): Promise<void> {
+    const startedAt = Date.now();
     if (await this.modelExposure.isExposed(provider, model)) {
+      this.authorizationMetrics.recordAllowed(Date.now() - startedAt);
       return;
     }
+    // Counted apart from the entry gate. A refusal here means a model got past
+    // the front door and was still stopped — a routing or fallback path chose
+    // it — which is a different thing to investigate than a user asking for a
+    // model they are not entitled to.
+    this.authorizationMetrics.recordDenied(
+      ModelAuthorizationDenialReason.EXECUTION_EXPOSURE,
+      Date.now() - startedAt,
+    );
     this.logger.warn(`callProvider: refused unexposed model ${provider}/${model}`);
     throw new BusinessException(
       'The selected model is not available',

@@ -470,6 +470,11 @@ export class RoutingService implements OnModuleInit {
       allowedModels,
       modelAccessMode === 'ALLOW_ALL',
     );
+    if (gate.excludedCandidates > 0) {
+      this.logger.log(
+        `planModelGate: excluded=${String(gate.excludedCandidates)} outcome=${gate.outcome}`,
+      );
+    }
     if (gate.outcome === 'promoted') {
       this.logger.warn(
         `planModelGate: promoted ${gate.decision.selectedProvider}/${gate.decision.selectedModel} (primary was off-plan)`,

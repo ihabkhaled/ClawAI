@@ -73,4 +73,25 @@ describe('applyPlanModelGate', () => {
     expect(res.outcome).toBe('unsatisfiable');
     expect(res.decision.selectedProvider).toBe('ANTHROPIC');
   });
+
+  it('reports how many candidates the plan removed', () => {
+    // The count is what makes a narrowed AUTO visible. Without it a plan that
+    // strips three of four fallbacks looks the same as one that strips none.
+    const d = decision('OPENAI', 'gpt-off-plan', [
+      { provider: 'GEMINI', model: 'gemini-2.5-pro' },
+      { provider: 'OPENAI', model: 'also-off-plan' },
+    ]);
+
+    const result = applyPlanModelGate(d, ['GEMINI/gemini-2.5-pro']);
+
+    expect(result.outcome).toBe('promoted');
+    // The off-plan primary plus the one filtered fallback.
+    expect(result.excludedCandidates).toBe(2);
+  });
+
+  it('counts every candidate as excluded when the plan allows none', () => {
+    const d = decision('OPENAI', 'gpt-4o', [{ provider: 'OPENAI', model: 'nope' }]);
+
+    expect(applyPlanModelGate(d, []).excludedCandidates).toBe(2);
+  });
 });

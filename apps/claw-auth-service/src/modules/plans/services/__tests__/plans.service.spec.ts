@@ -1,3 +1,4 @@
+import type { RabbitMQService } from '@claw/shared-rabbitmq';
 import { PlansService } from '../plans.service';
 import { type PlansRepository } from '../../repositories/plans.repository';
 import { type ExposedModelClient } from '../../clients/exposed-model.client';
@@ -70,6 +71,7 @@ describe('PlansService', () => {
   let service: PlansService;
   let repo: ReturnType<typeof mockRepo>;
   let exposedModels: { findExposed: jest.Mock };
+  let rabbit: { publish: jest.Mock };
 
   beforeEach(() => {
     repo = mockRepo();
@@ -78,9 +80,14 @@ describe('PlansService', () => {
     exposedModels = {
       findExposed: jest.fn(async (pairs: Array<{ provider: string; model: string }>) => pairs),
     };
+    // The audit log is a real side effect of a model-access mutation, so the
+    // publisher is stubbed rather than omitted; the assertions below check that
+    // both the grant and the refusal reach it.
+    rabbit = { publish: jest.fn(async () => {}) };
     service = new PlansService(
       repo as unknown as PlansRepository,
       exposedModels as unknown as ExposedModelClient,
+      rabbit as unknown as RabbitMQService,
     );
   });
 
@@ -243,6 +250,43 @@ describe('PlansService', () => {
 
       expect(exposedModels.findExposed).not.toHaveBeenCalled();
       expect(repo.replaceModelAccess).toHaveBeenCalledWith(freePlan.id, []);
+    });
+
+    it('audits the grant with the plan and the model identities', async () => {
+      // Who was entitled to what has to survive the request. A service log is
+      // not enough: it is not queryable and it is not retained with the other
+      // administrative actions.
+      await service.setModelAccess(freePlan.id, {
+        models: [{ provider: 'GEMINI', model: 'gemini-2.5-pro', isAllowed: true }],
+      } as never);
+
+      const audited = rabbit.publish.mock.calls.find(
+        (call) => call[1]?.action === 'plan_model_access_replaced',
+      );
+      expect(audited).toBeDefined();
+      expect(audited?.[1]?.metadata).toEqual({
+        planId: freePlan.id,
+        models: ['GEMINI/gemini-2.5-pro'],
+      });
+    });
+
+    it('audits a refusal so repeated probing is visible', async () => {
+      exposedModels.findExposed.mockResolvedValue([]);
+
+      await expect(
+        service.setModelAccess(freePlan.id, {
+          models: [{ provider: 'GEMINI', model: 'ghost-model', isAllowed: true }],
+        } as never),
+      ).rejects.toThrow();
+
+      const audited = rabbit.publish.mock.calls.find(
+        (call) => call[1]?.action === 'plan_model_access_refused',
+      );
+      expect(audited).toBeDefined();
+      expect(audited?.[1]?.metadata).toEqual({
+        planId: freePlan.id,
+        rejected: ['GEMINI/ghost-model'],
+      });
     });
   });
 });

@@ -11,6 +11,8 @@ import {
 } from '@claw/shared-entitlements';
 import { Permission } from '@claw/shared-types';
 import { ModelExposureClient } from '../clients/model-exposure.client';
+import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
+import { ModelAuthorizationMetricsService } from './model-authorization-metrics.service';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors';
 import { type SendMessageAccessOptions } from '../types/access-control.types';
@@ -24,6 +26,7 @@ export class AccessControlService {
   private readonly logger = new Logger(AccessControlService.name);
   private readonly adapter: EntitlementsAdapter;
   private readonly exposure = new ModelExposureClient();
+  private readonly metrics = new ModelAuthorizationMetricsService();
 
   constructor() {
     this.adapter = new EntitlementsAdapter({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL });
@@ -46,8 +49,23 @@ export class AccessControlService {
       this.assertPermissionGranted(ent, opts.requirePermission, userId);
     }
     if (opts.provider && opts.model) {
-      this.assertModelAllowed(ent, opts.provider, opts.model, userId);
-      await this.assertModelExposed(opts.provider, opts.model, userId);
+      // Timed as one decision because that is what the caller waits on: the
+      // plan check is local, the exposure check is a network hop, and only the
+      // sum tells you what the gate costs a message.
+      const startedAt = Date.now();
+      try {
+        this.assertModelAllowed(ent, opts.provider, opts.model, userId);
+      } catch (error) {
+        this.metrics.recordDenied(ModelAuthorizationDenialReason.PLAN, Date.now() - startedAt);
+        throw error;
+      }
+      try {
+        await this.assertModelExposed(opts.provider, opts.model, userId);
+      } catch (error) {
+        this.metrics.recordDenied(ModelAuthorizationDenialReason.EXPOSURE, Date.now() - startedAt);
+        throw error;
+      }
+      this.metrics.recordAllowed(Date.now() - startedAt);
     }
     this.assertQuotaRemaining(ent, userId);
     return ent;

@@ -1038,6 +1038,11 @@
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/internal/chat/model-authorization-metrics",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/internal/chat/threads/seeded",
         "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads-internal.controller.ts"
@@ -3048,5 +3053,5 @@
     ]
   },
   "generated": true,
-  "total": 602
+  "total": 603
 }

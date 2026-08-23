@@ -1130,6 +1130,11 @@
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/internal/chat/model-authorization-metrics",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/internal/chat/threads/seeded",
           "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads-internal.controller.ts"
@@ -9007,7 +9012,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 100
+        "testFiles": 101
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -9772,7 +9777,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 602,
+    "endpointCount": 603,
     "envVarCount": 347,
     "eventCount": 168,
     "frontendRouteCount": 123,
@@ -9784,7 +9789,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 976,
+    "totalTestFiles": 977,
     "workspaceCount": 25
   }
 }
