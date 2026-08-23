@@ -34,7 +34,12 @@ export class FeedbackRepository {
   }
 
   async findPaginated(p: FeedbackListParams) {
+    // userId MUST be part of the query, never a post-fetch comparison. It was
+    // accepted as a parameter and then dropped here, so `GET /feedback/mine`
+    // returned every user's tickets — an IDOR that the ownership check on the
+    // single-ticket route did not cover.
     const filter: QueryFilter<FeedbackTicket> = {
+      ...(p.userId && { userId: p.userId }),
       ...(p.status && { status: p.status }),
       ...(p.type && { type: p.type }),
       ...(p.search && { $text: { $search: p.search } }),

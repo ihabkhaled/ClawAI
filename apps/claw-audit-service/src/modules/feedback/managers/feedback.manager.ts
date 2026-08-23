@@ -1,4 +1,6 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { basename } from 'node:path';
+
 import { type Response } from 'express';
 import { FeedbackStatus } from '@claw/shared-types';
 import {
@@ -33,10 +35,14 @@ export class FeedbackManager {
     const sanitizedContent = sanitizeFeedbackMarkdown(dto.contentMarkdown);
     const searchText = toSearchText(sanitizedContent);
 
-    if (dto.attachments && dto.attachments.length > 0) {
-      for (const attachment of dto.attachments) {
-        await this.verifyAttachment(actorId, attachment);
-      }
+    // Every attachment is re-derived from file-service's own metadata rather
+    // than trusted from the request. The client's filename, MIME type and size
+    // are only a claim; storing the claim would let a caller label a file as
+    // something it is not, and that label is what the download endpoint later
+    // echoes as Content-Type.
+    const attachments: FeedbackAttachment[] = [];
+    for (const attachment of dto.attachments ?? []) {
+      attachments.push(await this.verifyAttachment(actorId, attachment));
     }
 
     const ticketNumber = await this.repository.nextTicketNumber();
@@ -61,7 +67,7 @@ export class FeedbackManager {
       status: FeedbackStatus.OPEN,
       userId: actorId,
       reporterEmail: actorEmail,
-      attachments: dto.attachments ?? [],
+      attachments,
       history: [historyEntry],
       lastActorId: actorId,
     });
@@ -204,7 +210,14 @@ export class FeedbackManager {
         );
       }
 
+      // The stored mimeType was checked against the image-only allowlist when
+      // the ticket was created, so it is safe to echo. nosniff stops a browser
+      // from ignoring it and sniffing the bytes into something executable, and
+      // the CSP makes the response inert even if it ever is rendered as a
+      // document. Both matter because admins open these in their own session.
       res.setHeader('Content-Type', attachment.mimeType);
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
       res.setHeader('Content-Disposition', 'inline');
 
       const reader = response.body.getReader();
@@ -227,7 +240,10 @@ export class FeedbackManager {
     }
   }
 
-  private async verifyAttachment(actorId: string, attachment: FeedbackAttachment): Promise<void> {
+  private async verifyAttachment(
+    actorId: string,
+    attachment: FeedbackAttachment,
+  ): Promise<FeedbackAttachment> {
     const config = AppConfig.get();
     const url = `${config.FILE_SERVICE_URL}/api/v1/internal/files/metadata-internal/${encodeURIComponent(attachment.fileId)}`;
     const token = config.INTER_SERVICE_AUTH_TOKEN;
@@ -274,5 +290,17 @@ export class FeedbackManager {
         HttpStatus.BAD_REQUEST,
       );
     }
+
+    // file-service is the authority on what this file actually is. Only the
+    // caller's isScreenshot flag is kept, because that is presentation, not a
+    // claim about the bytes. The filename is reduced to its basename so a
+    // traversal-shaped name can never be echoed into a header or a path.
+    return {
+      fileId: attachment.fileId,
+      filename: basename(metadata.filename),
+      mimeType: metadata.mimeType,
+      sizeBytes: metadata.sizeBytes,
+      isScreenshot: attachment.isScreenshot,
+    };
   }
 }

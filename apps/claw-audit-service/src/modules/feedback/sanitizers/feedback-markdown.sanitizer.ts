@@ -84,6 +84,24 @@ function isSafeLinkTarget(target: string): boolean {
   }
 }
 
+// Single pass over the input, so no replacement can ever be re-examined and no
+// output character can combine with another to form markup.
+//
+// Only `&` and `<` are escaped. An HTML element cannot begin without `<`, so
+// escaping it is already sufficient to make the output tag-free; `>` on its own
+// is inert, and escaping it would break Markdown blockquotes, which start with
+// a literal `>`. Safety here comes from `<` being impossible, not from
+// mangling every punctuation mark.
+function escapeMarkupCharacters(value: string): string {
+  let output = '';
+  for (const character of value) {
+    if (character === '&') output += '&amp;';
+    else if (character === '<') output += '&lt;';
+    else output += character;
+  }
+  return output;
+}
+
 export function sanitizeFeedbackMarkdown(input: string): string {
   if (input.length === 0) {
     return '';
@@ -91,17 +109,27 @@ export function sanitizeFeedbackMarkdown(input: string): string {
 
   let result = stripControlCharacters(input.normalize('NFC'));
 
-  // Drop HTML comments first so a comment cannot hide a tag from the tag pass.
-  result = result.replaceAll(/<!--[\s\S]*?-->/g, '');
-  result = result.replaceAll(/<[^>]*>/g, '');
-
   // Any Markdown link or image whose target is not provably safe collapses to
   // its visible text, so the payload is gone but the author's words survive.
+  // Done BEFORE escaping, so the decision is made on the author's real target.
   result = result.replaceAll(
     /(!?)\[([^\]]*)\]\(([^)]+)\)/g,
     (match: string, _bang: string, text: string, target: string) =>
       isSafeLinkTarget(target) ? match : text,
   );
+
+  // Neutralise the markup metacharacters instead of trying to remove tags.
+  //
+  // Removal by pattern is "incomplete multi-character sanitization": stripping
+  // one match can splice the remaining text into a NEW match, so proving it
+  // safe means case-analysing every nesting. `<scr<!-- -->ipt>` reassembles
+  // into `<script>` the moment the comment is removed. Escaping has no such
+  // failure mode — after this pass the output provably contains no `<`, so it
+  // provably contains no tag, whatever the input was.
+  //
+  // `&` goes first, otherwise the entities produced below would themselves be
+  // re-encoded and a literal `&lt;` typed by the author would become ambiguous.
+  result = escapeMarkupCharacters(result);
 
   return result.slice(0, FEEDBACK_MAX_CONTENT_LENGTH);
 }
