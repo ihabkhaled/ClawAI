@@ -65,6 +65,14 @@ Branch `feature/full-feedback-system`. Targets the next minor release after
   cookies, `localStorage`, `sessionStorage`, tokens and authorization headers,
   and failures log context without tokens, headers or file bytes.
 
+## Verified
+
+Full record in [VERIFICATION.md](VERIFICATION.md). In short: 148 audit-service
+tests, 1993 frontend tests, 18 live API security assertions, and 25 browser
+checks against the running stack — all passing. Live testing found seven
+defects, including an IDOR on the own-ticket list and a sanitizer that could be
+defeated by nesting; all are fixed with regression coverage.
+
 ## Migration
 
 No SQL migration. Tickets live in MongoDB (`feedback_tickets`,

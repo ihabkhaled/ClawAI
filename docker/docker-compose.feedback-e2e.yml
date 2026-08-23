@@ -1,0 +1,31 @@
+# E2E overlay for the feedback feature branch.
+#
+# The dev compose bind-mounts each service's `src` from the checkout it is run
+# from, so the running stack only ever serves the main worktree. Rather than
+# move the whole stack onto the feature worktree — which would need every image
+# rebuilt against that checkout — this repoints just the two services the
+# feedback feature touches, plus the shared packages they import.
+#
+# Usage:
+#   ./scripts/claw.sh up            # normal stack, main worktree
+#   docker compose --env-file .env \
+#     -f docker/docker-compose.dev.databases.yml \
+#     -f docker/docker-compose.dev.services.yml \
+#     -f docker/docker-compose.feedback-e2e.yml up -d audit-service frontend
+#
+# Remove the overlay and re-run `./scripts/claw.sh up` to go back.
+services:
+  audit-service:
+    volumes:
+      - ../../Claw-feedback-system/apps/claw-audit-service/src:/app/apps/claw-audit-service/src
+      - ../../Claw-feedback-system/packages/shared-types/dist:/app/packages/shared-types/dist
+      - ../../Claw-feedback-system/packages/shared-constants/dist:/app/packages/shared-constants/dist
+      - ../certs:/certs:ro
+
+  frontend:
+    volumes:
+      - ../../Claw-feedback-system/apps/claw-frontend/src:/app/apps/claw-frontend/src
+      - ../../Claw-feedback-system/apps/claw-frontend/public:/app/apps/claw-frontend/public
+      - ../../Claw-feedback-system/packages/shared-types/dist:/app/packages/shared-types/dist
+      - ../../Claw-feedback-system/packages/shared-constants/dist:/app/packages/shared-constants/dist
+      - ../certs:/certs

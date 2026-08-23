@@ -3365,6 +3365,7 @@
       {
         "files": [
           "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.feedback-e2e.yml",
           "docker/docker-compose.prod.services.yml"
         ],
         "name": "audit-service"
@@ -3428,6 +3429,7 @@
       {
         "files": [
           "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.feedback-e2e.yml",
           "docker/docker-compose.prod.services.yml"
         ],
         "name": "frontend"
