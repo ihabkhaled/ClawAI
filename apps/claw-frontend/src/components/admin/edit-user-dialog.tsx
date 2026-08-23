@@ -78,7 +78,7 @@ export function EditUserDialog(props: EditUserDialogProps): ReactElement {
         </DialogHeader>
 
         <div className="grid grid-cols-1 gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-4 sm:gap-4">
             <label htmlFor="username" className="text-sm leading-none font-medium">
               {t('admin.editUserUsername')}
             </label>
@@ -86,17 +86,17 @@ export function EditUserDialog(props: EditUserDialogProps): ReactElement {
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="col-span-3"
+              className="sm:col-span-3"
               disabled={isSuperAdmin}
             />
           </div>
           {!isUsernameValid && (
-            <div className="text-destructive col-span-3 col-start-2 text-sm">
+            <div className="text-destructive text-sm sm:col-span-3 sm:col-start-2">
               {t('admin.editUserUsernameInvalid')}
             </div>
           )}
 
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-4 sm:gap-4">
             <label htmlFor="firstName" className="text-sm leading-none font-medium">
               {t('admin.editUserFirstName')}
             </label>
@@ -104,17 +104,17 @@ export function EditUserDialog(props: EditUserDialogProps): ReactElement {
               id="firstName"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              className="col-span-3"
+              className="sm:col-span-3"
               disabled={isSuperAdmin}
             />
           </div>
           {!isFirstNameValid && (
-            <div className="text-destructive col-span-3 col-start-2 text-sm">
+            <div className="text-destructive text-sm sm:col-span-3 sm:col-start-2">
               {t('admin.editUserNameTooLong')}
             </div>
           )}
 
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-4 sm:gap-4">
             <label htmlFor="lastName" className="text-sm leading-none font-medium">
               {t('admin.editUserLastName')}
             </label>
@@ -122,12 +122,12 @@ export function EditUserDialog(props: EditUserDialogProps): ReactElement {
               id="lastName"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              className="col-span-3"
+              className="sm:col-span-3"
               disabled={isSuperAdmin}
             />
           </div>
           {!isLastNameValid && (
-            <div className="text-destructive col-span-3 col-start-2 text-sm">
+            <div className="text-destructive text-sm sm:col-span-3 sm:col-start-2">
               {t('admin.editUserNameTooLong')}
             </div>
           )}
