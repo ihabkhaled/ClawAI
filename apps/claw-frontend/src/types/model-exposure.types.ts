@@ -92,3 +92,7 @@ export interface ModelExposureTableProps {
   onApply: (exposed: boolean) => void;
   t: (key: string) => string;
 }
+
+export interface ModelExposureSectionProps {
+  connectorId: string;
+}

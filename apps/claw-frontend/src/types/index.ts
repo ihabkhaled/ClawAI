@@ -1036,4 +1036,5 @@ export type {
   ModelExposureFilters,
   UseModelExposureResult,
   ModelExposureTableProps,
+  ModelExposureSectionProps,
 } from './model-exposure.types';

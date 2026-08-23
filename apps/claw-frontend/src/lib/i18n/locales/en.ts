@@ -3363,6 +3363,9 @@ export const en: TranslationDictionary = {
   },
   adminConnectors: {
     exposure: {
+      title: 'Model exposure',
+      description:
+        'Only exposed models can be assigned to a plan or run by a user. Unexposing a model removes it from every plan that uses it.',
       counts: 'Exposed vs unexposed',
       searchPlaceholder: 'Search models',
       filterAll: 'All',

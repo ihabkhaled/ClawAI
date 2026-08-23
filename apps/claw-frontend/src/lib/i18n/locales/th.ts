@@ -3355,6 +3355,9 @@ export const th: TranslationDictionary = {
   },
   adminConnectors: {
     exposure: {
+      title: 'การเปิดใช้งานโมเดล',
+      description:
+        'เฉพาะโมเดลที่เปิดใช้งานเท่านั้นที่กำหนดให้แพ็กเกจหรือให้ผู้ใช้เรียกใช้ได้ การปิดใช้งานจะนำโมเดลออกจากทุกแพ็กเกจที่ใช้โมเดลนั้น',
       counts: 'ที่เปิดให้ใช้และที่ยังไม่เปิด',
       searchPlaceholder: 'ค้นหาโมเดล',
       filterAll: 'ทั้งหมด',

@@ -3426,6 +3426,8 @@ export type TranslationDictionary = {
   };
   adminConnectors: {
     exposure: {
+      title: string;
+      description: string;
       counts: string;
       searchPlaceholder: string;
       filterAll: string;

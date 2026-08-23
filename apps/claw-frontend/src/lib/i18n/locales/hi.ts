@@ -3386,6 +3386,9 @@ export const hi: TranslationDictionary = {
   },
   adminConnectors: {
     exposure: {
+      title: 'मॉडल उपलब्धता',
+      description:
+        'केवल उपलब्ध मॉडल ही किसी प्लान को दिए जा सकते हैं या उपयोगकर्ता द्वारा चलाए जा सकते हैं। उपलब्धता हटाने पर मॉडल हर उस प्लान से हट जाता है जो उसका उपयोग करता है।',
       counts: 'उपलब्ध बनाम अनुपलब्ध',
       searchPlaceholder: 'मॉडल खोजें',
       filterAll: 'सभी',

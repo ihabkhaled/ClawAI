@@ -3393,6 +3393,9 @@ export const ja: TranslationDictionary = {
   },
   adminConnectors: {
     exposure: {
+      title: 'モデルの公開',
+      description:
+        '公開されたモデルのみをプランに割り当てたり、ユーザーが実行したりできます。公開を取り消すと、そのモデルを使用しているすべてのプランから削除されます。',
       counts: '公開と非公開',
       searchPlaceholder: 'モデルを検索',
       filterAll: 'すべて',

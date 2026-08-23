@@ -3428,6 +3428,9 @@ export const de: TranslationDictionary = {
   },
   adminConnectors: {
     exposure: {
+      title: 'Modellfreigabe',
+      description:
+        'Nur freigegebene Modelle können einem Tarif zugewiesen oder von Nutzern ausgeführt werden. Wird die Freigabe entzogen, entfällt das Modell in jedem Tarif, der es verwendet.',
       counts: 'Freigegeben vs. nicht freigegeben',
       searchPlaceholder: 'Modelle suchen',
       filterAll: 'Alle',

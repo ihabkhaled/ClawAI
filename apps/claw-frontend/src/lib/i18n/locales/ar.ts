@@ -3342,6 +3342,9 @@ export const ar: TranslationDictionary = {
   },
   adminConnectors: {
     exposure: {
+      title: 'إتاحة النماذج',
+      description:
+        'لا يمكن إسناد نموذج إلى خطة أو تشغيله من قِبل مستخدم إلا إذا كان متاحًا. إلغاء إتاحة نموذج يزيله من كل خطة تستخدمه.',
       counts: 'المكشوفة مقابل غير المكشوفة',
       searchPlaceholder: 'ابحث عن النماذج',
       filterAll: 'الكل',

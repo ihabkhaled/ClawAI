@@ -3433,6 +3433,9 @@ export const fr: TranslationDictionary = {
   },
   adminConnectors: {
     exposure: {
+      title: 'Exposition des modèles',
+      description:
+        "Seuls les modèles exposés peuvent être affectés à un forfait ou exécutés par un utilisateur. Retirer l'exposition supprime le modèle de tous les forfaits qui l'utilisent.",
       counts: 'Proposés et non proposés',
       searchPlaceholder: 'Rechercher des modèles',
       filterAll: 'Tous',

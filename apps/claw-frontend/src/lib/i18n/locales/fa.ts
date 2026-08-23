@@ -3386,6 +3386,9 @@ export const fa: TranslationDictionary = {
   },
   adminConnectors: {
     exposure: {
+      title: 'در دسترس بودن مدل‌ها',
+      description:
+        'تنها مدل‌های در دسترس را می‌توان به یک طرح اختصاص داد یا کاربر آن‌ها را اجرا کند. برداشتن دسترسی یک مدل، آن را از هر طرحی که از آن استفاده می‌کند حذف می‌کند.',
       counts: 'ارائه‌شده در برابر ارائه‌نشده',
       searchPlaceholder: 'جستجوی مدل‌ها',
       filterAll: 'همه',

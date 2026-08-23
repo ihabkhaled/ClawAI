@@ -3405,6 +3405,9 @@ export const ru: TranslationDictionary = {
   },
   adminConnectors: {
     exposure: {
+      title: 'Доступность моделей',
+      description:
+        'Только доступные модели можно назначить тарифу или запустить от имени пользователя. Снятие доступности убирает модель из каждого тарифа, где она используется.',
       counts: 'Доступные и недоступные',
       searchPlaceholder: 'Поиск моделей',
       filterAll: 'Все',

@@ -3275,6 +3275,9 @@ export const zh: TranslationDictionary = {
   },
   adminConnectors: {
     exposure: {
+      title: '模型开放',
+      description:
+        '只有已开放的模型才能分配给套餐或供用户运行。取消开放会将该模型从所有使用它的套餐中移除。',
       counts: '已开放与未开放',
       searchPlaceholder: '搜索模型',
       filterAll: '全部',

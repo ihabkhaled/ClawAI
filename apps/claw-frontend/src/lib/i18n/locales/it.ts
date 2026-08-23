@@ -3414,6 +3414,9 @@ export const it: TranslationDictionary = {
   },
   adminConnectors: {
     exposure: {
+      title: 'Esposizione dei modelli',
+      description:
+        "Solo i modelli esposti possono essere assegnati a un piano o eseguiti da un utente. Rimuovendo l'esposizione, il modello viene tolto da ogni piano che lo utilizza.",
       counts: 'Esposti e non esposti',
       searchPlaceholder: 'Cerca modelli',
       filterAll: 'Tutti',
