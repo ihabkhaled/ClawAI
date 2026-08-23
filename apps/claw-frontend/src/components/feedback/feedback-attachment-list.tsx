@@ -105,7 +105,7 @@ export function FeedbackAttachmentList({
                 onClick={() => onRemove(attachment.fileId)}
                 aria-label={t('feedback.removeAttachment', { filename: attachment.filename })}
               >
-                {t('common.remove')}
+                {t('feedback.removeAttachment')}
               </Button>
             </li>
           ))}

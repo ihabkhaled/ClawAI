@@ -1,3 +1,7 @@
+// Typed contract for the `feedback` section of the translation dictionary.
+// Every key here is referenced from code; the i18n-key-references test fails
+// if the two ever drift apart.
+
 export type FeedbackLauncherTranslation = {
   ariaLabel: string;
   tooltip: string;
@@ -6,36 +10,25 @@ export type FeedbackLauncherTranslation = {
 export type FeedbackDialogTranslation = {
   title: string;
   description: string;
-  typeLabel: string;
   titleLabel: string;
   titlePlaceholder: string;
   subjectLabel: string;
   subjectPlaceholder: string;
-  contentLabel: string;
-  contentPlaceholder: string;
-  attachmentsLabel: string;
-  dropHint: string;
-  pasteHint: string;
-  removeAttachment: string;
-  screenshotLabel: string;
-  captureScreenshot: string;
-  removeScreenshot: string;
-  screenshotFailed: string;
-  preview: string;
-  write: string;
   cancel: string;
   submit: string;
   submitting: string;
 };
 
-export type FeedbackToolbarTranslation = {
+export type FeedbackEditorTranslation = {
   bold: string;
   italic: string;
   bulletList: string;
   numberedList: string;
   heading: string;
   link: string;
-  code: string;
+  inlineCode: string;
+  write: string;
+  preview: string;
 };
 
 export type FeedbackTypeLabelsTranslation = {
@@ -51,28 +44,27 @@ export type FeedbackTypeLabelsTranslation = {
   other: string;
 };
 
-export type FeedbackStatusLabelsTranslation = {
-  open: string;
-  inProgress: string;
-  resolved: string;
-  closed: string;
-  archived: string;
-  all: string;
-};
-
 export type FeedbackErrorsTranslation = {
   titleRequired: string;
   contentRequired: string;
-  typeRequired: string;
+  submitFailed: string;
   tooManyFiles: string;
   fileTooLarge: string;
   totalTooLarge: string;
   unsupportedType: string;
   uploadFailed: string;
-  submitFailed: string;
 };
 
-export type FeedbackAdminColumnsTranslation = {
+export type FeedbackAdminStatusTranslation = {
+  all: string;
+  open: string;
+  inProgress: string;
+  resolved: string;
+  closed: string;
+  archived: string;
+};
+
+export type FeedbackAdminTableTranslation = {
   ticket: string;
   type: string;
   title: string;
@@ -83,19 +75,6 @@ export type FeedbackAdminColumnsTranslation = {
   attachments: string;
 };
 
-export type FeedbackAdminDetailTranslation = {
-  title: string;
-  reporter: string;
-  page: string;
-  device: string;
-  description: string;
-  attachments: string;
-  history: string;
-  resolvedAt: string;
-  closedAt: string;
-  noResults: string;
-};
-
 export type FeedbackAdminActionsTranslation = {
   markInProgress: string;
   resolve: string;
@@ -103,8 +82,6 @@ export type FeedbackAdminActionsTranslation = {
   reopen: string;
   archive: string;
   confirmArchive: string;
-  viewImage: string;
-  closeImage: string;
 };
 
 export type FeedbackAdminPaginationTranslation = {
@@ -115,12 +92,13 @@ export type FeedbackAdminPaginationTranslation = {
 
 export type FeedbackAdminTranslation = {
   title: string;
-  description: string;
   searchLabel: string;
   searchPlaceholder: string;
-  typeFilterAll: string;
-  columns: FeedbackAdminColumnsTranslation;
-  detail: FeedbackAdminDetailTranslation;
+  hasAttachments: string;
+  updated: string;
+  type: { all: string; placeholder: string };
+  status: FeedbackAdminStatusTranslation;
+  table: FeedbackAdminTableTranslation;
   actions: FeedbackAdminActionsTranslation;
   pagination: FeedbackAdminPaginationTranslation;
 };
@@ -128,10 +106,18 @@ export type FeedbackAdminTranslation = {
 export type FeedbackTranslation = {
   launcher: FeedbackLauncherTranslation;
   dialog: FeedbackDialogTranslation;
-  toolbar: FeedbackToolbarTranslation;
+  editor: FeedbackEditorTranslation;
+  type: { placeholder: string };
   types: FeedbackTypeLabelsTranslation;
-  status: FeedbackStatusLabelsTranslation;
   errors: FeedbackErrorsTranslation;
-  submittedWithTicket: string;
   admin: FeedbackAdminTranslation;
+  captureScreenshot: string;
+  capturing: string;
+  screenshotPreview: string;
+  removeScreenshot: string;
+  pasteOrUploadInstead: string;
+  uploadAttachments: string;
+  dragDropOrClickToUpload: string;
+  removeAttachment: string;
+  submittedWithTicket: string;
 };

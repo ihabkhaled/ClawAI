@@ -124,3 +124,37 @@ libraries `claw-audit-service` does not depend on, against a repo-wide Zod +
 `ZodValidationPipe` convention. Caught by reading the file; the run was killed
 and the exact Zod file was handed back to it verbatim. A narrow correction is
 not safe to give this agent without also pinning what must NOT change.
+
+### 9. Large files cannot be read, so they can never be patched
+
+`workspace.files · read` on `apps/claw-frontend/src/lib/i18n/locales/en.ts`
+(5,409 lines) fails with `TOOL_OUTPUT_INVALID`. Because `patch` requires a
+`beforeHash` from a prior successful read, a file that cannot be read can never
+be modified. The agent correctly refused to invent a hash and stopped:
+
+> The read failed with `TOOL_OUTPUT_INVALID`, so I did not receive the file's
+> sha256 hash. I cannot proceed with the patch because the `patch` operation
+> requires a valid `beforeHash` from a prior successful read, and I must not
+> invent one.
+
+This is the one place in this feature where the agent was structurally
+incapable rather than merely slow. Every locale file in this repo is over 5,000
+lines, so i18n — a mandatory part of any user-facing change here — is currently
+out of reach for the agent. A ranged read that still yields a whole-file hash,
+or an append/insert operation that does not require one, would close the gap.
+
+## Work Claude took over, and why
+
+Provenance matters for this exercise, so this is explicit. The ClawAI Coding
+Agent authored the backend module, the frontend reporter and admin components,
+the hooks, repositories and constants. Claude took over three things:
+
+1. **Type-error cleanup** (~35 errors across both workspaces) — mechanical, and
+   the agent's ~15-line tool-call ceiling made each fix a multi-round retry.
+2. **Component/hook contract reconciliation.** The agent wrote each file in
+   isolation, so components called a `useFeedbackForm` returning
+   `{ onSubmit, type, title, subject, description, ticketNumber, reset }` while
+   the hook it wrote returned `{ form, submit, isSubmitting, submitError }`.
+   One hook also declared its own `fetch`-based `apiClient` instead of using the
+   shared one. Reconciling that was integration work, not cleanup.
+3. **All 13 i18n locales**, for the reason in defect 9 above.

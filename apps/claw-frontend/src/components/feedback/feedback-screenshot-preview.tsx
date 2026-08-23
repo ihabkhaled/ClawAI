@@ -26,7 +26,7 @@ export function FeedbackScreenshotPreview({
             onClick={onClear}
             aria-label={t('feedback.removeScreenshot')}
           >
-            {t('common.remove')}
+            {t('feedback.removeScreenshot')}
           </Button>
         )}
       </div>
