@@ -129,10 +129,16 @@
     },
     {
       "id": 5,
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "commit": null,
       "tests": [],
-      "defects": []
+      "defects": [],
+      "deliverables": [
+        "findExposedForCatalog + getAvailableModels gated on exposure",
+        "ADMIN_CONNECTORS_MANAGE added to GET /connectors/:id/models",
+        "backfill migration 20260823093000_backfill_existing_model_exposure"
+      ],
+      "migrationEvidence": "Both migrations replayed in one transaction against claw-pg-connector 16.13 and rolled back. Old catalog predicate returned 160 rows; after backfill the new catalog predicate returns the same 160. No user loses a model on upgrade. 0 rows left UNEXPOSED because all 160 were ACTIVE on enabled connectors."
     },
     {
       "id": 6,
@@ -212,7 +218,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 5: global exposure backend - admin expose/unexpose endpoints and make the user-facing catalog filter on exposure",
+  "nextAction": "Batch 5c: admin expose/unexpose API with RBAC, audit and impact preview",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
@@ -225,6 +231,7 @@
     "ADR proposed a foreign key from PlanModelAccess to ConnectorModel; impossible, they live in different service databases and this repository forbids crossing a service database boundary. The link must be a plain column validated over HTTP."
   ],
   "openCaveats": [
-    "exposure is stored but not yet enforced anywhere: getAvailableModels, findAllForSnapshot and both runtime gates still ignore it. Batch 5 wires the exposure backend, Batch 9 the canonical gate. Until then the column is inert and behaviour is unchanged for users."
+    "exposure now gates the user catalog but the runtime authorization gates (chat access-control, routing plan-model-gate) still do not consult it. A forged API request naming an unexposed model is still accepted by those paths until Batch 9.",
+    "Admin expose/unexpose API does not exist yet, so exposure can currently only change via SQL or the backfill."
   ]
 }
