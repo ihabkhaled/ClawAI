@@ -116,17 +116,23 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
         <PlanFeatureGates featureGates={plan.featureGates} t={t} />
       </div>
 
-      <Link
-        href={`${ROUTES.REGISTER}?returnTo=${encodeURIComponent(returnRoute)}`}
-        aria-disabled={price === null}
-        className={cn(
-          buttonVariants({ variant: plan.isDefault ? 'default' : 'outline' }),
-          'mt-auto h-12 w-full shrink-0 cursor-pointer self-end text-center leading-tight whitespace-normal',
-          price === null && 'pointer-events-none opacity-50',
-        )}
-      >
-        {isFree ? t('marketing.pricing.ctaFree') : t('marketing.pricing.ctaPaid')}
-      </Link>
+      {/* `mt-auto` on the link alone pushed it down only when the card had room
+          to spare. A plan carrying all sixteen features has none, so the margin
+          collapsed to nothing and the button sat flush against the last feature.
+          The padding is the floor the auto margin grows from. */}
+      <div className="mt-auto shrink-0 pt-6">
+        <Link
+          href={`${ROUTES.REGISTER}?returnTo=${encodeURIComponent(returnRoute)}`}
+          aria-disabled={price === null}
+          className={cn(
+            buttonVariants({ variant: plan.isDefault ? 'default' : 'outline' }),
+            'h-12 w-full cursor-pointer text-center leading-tight whitespace-normal',
+            price === null && 'pointer-events-none opacity-50',
+          )}
+        >
+          {isFree ? t('marketing.pricing.ctaFree') : t('marketing.pricing.ctaPaid')}
+        </Link>
+      </div>
     </article>
   );
 }

@@ -37,6 +37,7 @@ export function ModelPicker({
   noResultsLabel,
   triggerClassName,
   ariaLabel,
+  hideTriggerLabel,
 }: ModelPickerProps): React.ReactElement {
   const [open, setOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 767px)');
@@ -75,7 +76,11 @@ export function ModelPicker({
       className={cn('w-full justify-start gap-2 font-normal', triggerClassName)}
     >
       <Bot className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-      <span className="min-w-0 flex-1 truncate text-start">{resolveTriggerLabel()}</span>
+      {hideTriggerLabel === true ? (
+        <span className="sr-only">{resolveTriggerLabel()}</span>
+      ) : (
+        <span className="truncate-fixed min-w-0 flex-1 text-start">{resolveTriggerLabel()}</span>
+      )}
     </Button>
   );
 

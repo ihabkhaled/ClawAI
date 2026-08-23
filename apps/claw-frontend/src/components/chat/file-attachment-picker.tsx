@@ -45,13 +45,13 @@ export function FileAttachmentPicker({
     useFileAttachmentGrouping(files);
 
   // Phase 2 mobile composer redesign — `compact` shrinks the trigger to a
-  // 32px square icon button with optional inline label. `default` keeps the
+  // Square icon button with optional inline label. `default` keeps the
   // historical pill button (icon + "Attach files" label hidden under sm).
   const isCompact = variant === ComposerControlVariant.Compact;
   const triggerClass = isCompact
     ? cn(
-        'relative h-8 gap-1 rounded-xl border-border/60 px-2 text-xs',
-        showLabel ? 'min-w-[6.5rem]' : 'w-8 justify-center px-0',
+        'border-border/60 relative h-9 shrink-0 gap-1 rounded-xl px-2 text-xs',
+        showLabel ? 'min-w-[6.5rem]' : 'w-9 justify-center px-0',
       )
     : 'relative h-9 gap-1 text-xs';
   const renderTriggerLabel = isCompact ? showLabel === true : true;

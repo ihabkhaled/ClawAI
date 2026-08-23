@@ -32,7 +32,7 @@ export function ResearchToggle({
   const providerDisabled = disabled || selectableProviders.length === 0;
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex min-w-0 flex-1 items-center gap-1 sm:flex-none">
       <Globe
         className={
           value.mode === ResearchMode.NONE ? 'text-muted-foreground size-4' : 'text-primary size-4'
@@ -44,7 +44,7 @@ export function ResearchToggle({
         onValueChange={(next) => onChange({ ...value, mode: next as ResearchMode })}
         disabled={disabled}
       >
-        <SelectTrigger className="h-8 min-w-[6rem] px-2 text-xs sm:min-w-[9rem]">
+        <SelectTrigger className="touch:[&>span]:truncate-fixed h-9 min-w-0 flex-1 px-2 text-xs sm:min-w-[9rem] sm:flex-none">
           <SelectValue placeholder={t('research.toggle.placeholder')} />
         </SelectTrigger>
         <SelectContent>
@@ -62,7 +62,10 @@ export function ResearchToggle({
       </Select>
       {/* The provider picker only matters once research is actually on — hiding
           it otherwise saves the ~10rem it needs, which is most of why this row
-          used to overflow into a horizontal-scroll strip on mobile. */}
+          used to overflow into a horizontal-scroll strip on mobile.
+          Both triggers shrink and clip on a phone rather than holding a minimum
+          width: "Google Search (Google SerpAPI)" is longer than the screen, and
+          the tap that reads it opens a menu listing every provider in full. */}
       {value.mode !== ResearchMode.NONE ? (
         <Select
           value={providerValue}
@@ -71,7 +74,7 @@ export function ResearchToggle({
           }
           disabled={providerDisabled}
         >
-          <SelectTrigger className="h-8 min-w-[8rem] px-2 text-xs sm:min-w-[10rem]">
+          <SelectTrigger className="touch:[&>span]:truncate-fixed h-9 min-w-0 flex-1 px-2 text-xs sm:min-w-[10rem] sm:flex-none">
             <SelectValue
               placeholder={getProviderPlaceholder(
                 isProvidersLoading,

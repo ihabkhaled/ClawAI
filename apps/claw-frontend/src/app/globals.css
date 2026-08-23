@@ -1015,6 +1015,24 @@
     overflow-wrap: anywhere;
   }
 
+  /* The opt-out, for a label inside a control that is deliberately sized.
+   *
+   * The rule above is right for prose and wrong for a fixed-width trigger: the
+   * text has nowhere to go, so it wraps one syllable per line and spills out of
+   * the button. "Auto (routing decides)" rendered as six lines beside a 32px
+   * model button, and a provider name pushed the composer row off the screen.
+   *
+   * Nothing is lost by clipping here. A trigger opens a menu, a dialog or a
+   * sheet that lists every option in full on tap, which is the reveal a phone
+   * lacks for prose. Unlayered like its neighbour, so it holds even when the
+   * element also carries `truncate`. */
+  .truncate-fixed {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+
   /* A JSON payload 4,400px wide inside a 220px card cannot be read by swiping
    * sideways through it. Wrap the block instead. */
   pre {

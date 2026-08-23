@@ -38,4 +38,21 @@ describe('ResearchToggle', () => {
 
     expect(screen.getAllByRole('combobox')).toHaveLength(2);
   });
+
+  // Both triggers held a minimum width and no maximum, so "Google Search
+  // (Google SerpAPI)" grew the row past the edge of the screen instead of
+  // clipping. On a phone they give; from sm up they keep their comfortable size.
+  it('lets both triggers shrink and clip rather than push the row off screen', () => {
+    render(
+      <ResearchToggle
+        value={{ mode: ResearchMode.SEARCH }}
+        providers={providers}
+        onChange={vi.fn()}
+      />,
+    );
+
+    for (const trigger of screen.getAllByRole('combobox')) {
+      expect(trigger).toHaveClass('min-w-0', 'flex-1', 'touch:[&>span]:truncate-fixed');
+    }
+  });
 });

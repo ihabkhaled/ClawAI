@@ -779,6 +779,10 @@ export type ModelPickerProps = {
   noResultsLabel: string;
   triggerClassName?: string;
   ariaLabel?: string;
+  // Keeps the selected label available to a screen reader while removing it
+  // from the trigger. An icon-only trigger has no room for it, and rendering it
+  // anyway wrapped the model name one syllable per line beside the button.
+  hideTriggerLabel?: boolean;
 };
 
 export type ModelSelectorProps = {

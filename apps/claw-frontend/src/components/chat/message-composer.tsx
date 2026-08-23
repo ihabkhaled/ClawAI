@@ -50,7 +50,11 @@ export function MessageComposer({
       className="safe-bottom flex h-full min-h-0 flex-col"
     >
       <form onSubmit={handleSubmit} className="flex h-full min-h-0 flex-col gap-1.5">
-        <div className="flex shrink-0 flex-wrap items-center gap-2 pb-1 md:hidden [&>*]:shrink-0">
+        {/* `[&>*]:shrink-0` used to sit here and outranked each control's own
+            sizing, so nothing could give: a long provider name pushed the row
+            off the screen instead of clipping. The square buttons hold their
+            size themselves; the research control is the one that shrinks. */}
+        <div className="flex shrink-0 flex-wrap items-center gap-2 pb-1 md:hidden">
           <ModelSelector
             value={selectedModel}
             onChange={onModelChange}
@@ -66,7 +70,11 @@ export function MessageComposer({
               disabled={isPending}
             />
           ) : null}
-          {threadId ? <PreviewContextButton threadId={threadId} draft={content} /> : null}
+          {threadId ? (
+            <div className="shrink-0">
+              <PreviewContextButton threadId={threadId} draft={content} />
+            </div>
+          ) : null}
         </div>
 
         <div className="hidden shrink-0 items-center gap-2 pb-1 md:flex md:flex-wrap [&>*]:shrink-0">
@@ -105,9 +113,9 @@ export function MessageComposer({
               onKeyDown={handleKeyDown}
               placeholder={t('chat.composerPlaceholder')}
               className={cn(
-                'composer-max-height min-h-[60px] w-full resize-none rounded-2xl border-border/50 bg-card pe-14 text-base',
-                'transition-colors focus-visible:border-primary/50 focus-visible:ring-1 focus-visible:ring-primary/20 focus-visible:ring-offset-0',
-                'md:!max-h-none md:h-full md:min-h-0 md:pe-3 md:text-sm',
+                'composer-max-height border-border/50 bg-card min-h-[60px] w-full resize-none rounded-2xl pe-14 text-base',
+                'focus-visible:border-primary/50 focus-visible:ring-primary/20 transition-colors focus-visible:ring-1 focus-visible:ring-offset-0',
+                'md:h-full md:!max-h-none md:min-h-0 md:pe-3 md:text-sm',
               )}
               disabled={isPending}
             />
@@ -116,8 +124,8 @@ export function MessageComposer({
               size="icon"
               aria-label={t('chat.sendMessage')}
               className={cn(
-                'absolute bottom-2 end-2 h-11 w-11 rounded-xl shadow-soft md:hidden',
-                'transition-all duration-fast hover:scale-105 active:scale-95',
+                'shadow-soft absolute end-2 bottom-2 h-11 w-11 rounded-xl md:hidden',
+                'duration-fast transition-all hover:scale-105 active:scale-95',
                 canSubmit
                   ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                   : 'bg-muted text-muted-foreground hover:bg-muted',
@@ -140,9 +148,11 @@ export function MessageComposer({
           </Button>
         </div>
 
-        {validationError ? <p className="mt-1 text-sm text-destructive">{validationError}</p> : null}
+        {validationError ? (
+          <p className="text-destructive mt-1 text-sm">{validationError}</p>
+        ) : null}
         {isUploadingAttachment ? (
-          <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
+          <p className="text-muted-foreground mt-1 text-xs" aria-live="polite">
             {t('chat.attachment.uploading')}
           </p>
         ) : null}
