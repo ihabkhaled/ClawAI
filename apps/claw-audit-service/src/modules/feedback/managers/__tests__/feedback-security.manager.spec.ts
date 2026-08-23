@@ -101,14 +101,72 @@ describe('feedback authorisation — attachments', () => {
   }
 
   function mockFileService(metadata: Record<string, unknown>, ok = true): void {
+    mockFileServiceBody(JSON.stringify(metadata), ok);
+  }
+
+  // The manager reads the peer response as text and parses it itself, because
+  // file-service does not always answer an ok status with a JSON body.
+  function mockFileServiceBody(body: string, ok = true): void {
     global.fetch = jest.fn().mockResolvedValue({
       ok,
-      json: async () => metadata,
+      text: async () => body,
     }) as unknown as typeof fetch;
   }
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  // file-service answers 200 with an empty body for an id that does not exist.
+  // Before this was handled, referencing a bogus fileId crashed the request
+  // with an unhandled SyntaxError, so the caller saw a 500 and the ownership
+  // check never ran at all.
+  it('refuses an attachment when the file service answers ok with an empty body', async () => {
+    const repository = repositoryMock();
+    mockFileServiceBody('');
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+
+    await expect(manager.createTicket('user-a', 'a@test', createDto())).rejects.toMatchObject({
+      code: 'FEEDBACK_ATTACHMENT_INVALID',
+      status: HttpStatus.BAD_REQUEST,
+    });
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses an attachment when the file service answers ok with a non-JSON body', async () => {
+    const repository = repositoryMock();
+    mockFileServiceBody('<html>gateway error</html>');
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+
+    await expect(manager.createTicket('user-a', 'a@test', createDto())).rejects.toMatchObject({
+      code: 'FEEDBACK_ATTACHMENT_INVALID',
+    });
+  });
+
+  it('refuses an attachment when the file service answers ok with JSON null', async () => {
+    const repository = repositoryMock();
+    mockFileServiceBody('null');
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+
+    await expect(manager.createTicket('user-a', 'a@test', createDto())).rejects.toMatchObject({
+      code: 'FEEDBACK_ATTACHMENT_INVALID',
+    });
+  });
+
+  it('refuses metadata that is missing the owner, rather than reading undefined', async () => {
+    const repository = repositoryMock();
+    mockFileService({
+      id: 'file-1',
+      filename: 'shot.png',
+      mimeType: 'image/png',
+      sizeBytes: 1_024,
+    });
+    const manager = new FeedbackManager(repository as unknown as FeedbackRepository);
+
+    await expect(manager.createTicket('user-a', 'a@test', createDto())).rejects.toMatchObject({
+      code: 'FEEDBACK_ATTACHMENT_INVALID',
+    });
+    expect(repository.create).not.toHaveBeenCalled();
   });
 
   it('refuses a file that belongs to another user', async () => {

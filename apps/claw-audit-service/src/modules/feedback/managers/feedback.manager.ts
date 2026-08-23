@@ -19,6 +19,7 @@ import {
   toSearchText,
 } from '../sanitizers/feedback-markdown.sanitizer';
 import { type CreateFeedbackDto } from '../dto/create-feedback.dto';
+import { fileMetadataResponseSchema } from '../dto/file-metadata-response.dto';
 import { type ListFeedbackQueryDto } from '../dto/list-feedback-query.dto';
 import { type UpdateFeedbackStatusDto } from '../dto/update-feedback-status.dto';
 import {
@@ -273,7 +274,7 @@ export class FeedbackManager {
       );
     }
 
-    const metadata = (await response.json()) as FileMetadataResponse;
+    const metadata = this.parseAttachmentMetadata(await response.text());
 
     if (metadata.userId !== actorId) {
       throw new BusinessException(
@@ -312,5 +313,36 @@ export class FeedbackManager {
       sizeBytes: metadata.sizeBytes,
       isScreenshot: attachment.isScreenshot,
     };
+  }
+
+  /**
+   * file-service answers 200 with an empty body when the id does not exist, so
+   * an ok status is not on its own evidence that a file is there. Parsing and
+   * shape-checking here keeps a bogus attachment reference a 400 for the caller
+   * instead of an unhandled SyntaxError surfacing as a 500, and guarantees the
+   * ownership and MIME checks below run against a complete record.
+   */
+  private parseAttachmentMetadata(body: string): FileMetadataResponse {
+    let payload: unknown;
+    try {
+      payload = JSON.parse(body) as unknown;
+    } catch {
+      throw new BusinessException(
+        'Attachment is not available',
+        'FEEDBACK_ATTACHMENT_INVALID',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const parsed = fileMetadataResponseSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new BusinessException(
+        'Attachment is not available',
+        'FEEDBACK_ATTACHMENT_INVALID',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return parsed.data;
   }
 }

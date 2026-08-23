@@ -9,7 +9,7 @@ line is a command that ran and the result it produced, not a claim.
 | ------------------------------ | ----------------------------- |
 | `claw-audit-service` typecheck | 0 errors                      |
 | `claw-audit-service` lint      | 0 errors                      |
-| `claw-audit-service` tests     | **148 passed**                |
+| `claw-audit-service` tests     | **273 passed** (152 feedback) |
 | `claw-frontend` typecheck      | 0 errors                      |
 | `claw-frontend` lint           | 0 errors                      |
 | `claw-frontend` tests          | **1993 passed / 340 files**   |
@@ -142,9 +142,49 @@ PermissionsSeederService reconcileRole: drift detected —
 
 so `FEEDBACK_SUBMIT` reaches an already-seeded database without a manual step.
 
+## Attachment round trip — 9/9 passed
+
+Run with `attachment-round-trip.sh`. The unit suite covers the attachment rules
+with a mocked file-service; this drives a real image through the real pipeline.
+
+```
+upload a real PNG to file-service            201  (fileId returned)
+attach it to a ticket                        201  FDB-000014
+attachment fileId that does not exist        400  <- was 500
+admin streams the attachment                 200
+  Content-Type                               image/png
+  X-Content-Type-Options                     nosniff
+  Content-Security-Policy                    default-src 'none'; sandbox
+  bytes returned                             identical PNG
+a fileId not attached to this ticket         404
+```
+
+file-service also rejected a deliberately wrong `sizeBytes` in the harness
+(`FILE_SIZE_MISMATCH`), so the declared size is checked against the decoded
+bytes rather than believed.
+
+## ReDoS check on the link rewriter — measured, not assumed
+
+ESLint's `security/detect-unsafe-regex` flags the Markdown link pattern
+`/(!?)\[([^\]]*)\]\(((?:[^()]|\([^()]*\))*)\)/g`. It is a heuristic false
+positive: the two alternatives are disjoint on their first character, so each
+position has exactly one way to match and backtracking stays linear. Measured at
+the 8000-character content cap:
+
+```
+unclosed target, all safe chars   0.06 ms
+unclosed nested parens            0.02 ms
+open parens only                  0.01 ms
+alternating "x(" ...              0.00 ms
+400 complete links                0.05 ms
+```
+
+The warning is left standing rather than suppressed — suppressing findings is
+prohibited, and a warning that is explained is more useful than one that is hidden.
+
 ## Defects this verification found
 
-Live testing found seven defects that the unit suite had not:
+Live testing found eight defects that the unit suite had not:
 
 1. **IDOR** — `GET /feedback/mine` returned every user's tickets; `userId` was
    accepted by the manager and then dropped when the query was built.
@@ -158,5 +198,12 @@ Live testing found seven defects that the unit suite had not:
    so `FDB` matched every row.
 7. **Raw Mongo documents in responses** — `_id`, `__v` and the internal
    `searchText` reached the client while `id` never did.
+8. **A bogus attachment reference crashed the request with a 500.**
+   file-service answers **200 with an empty body** for an id that does not
+   exist, so `!response.ok` never fired and `response.json()` threw an unhandled
+   `SyntaxError`. The caller saw a 500, and the ownership, MIME and size checks
+   never ran on that path. The peer's payload is now parsed defensively and
+   shape-checked with Zod, so an empty, non-JSON, `null` or incomplete body is a
+   400 `FEEDBACK_ATTACHMENT_INVALID` like any other bad reference.
 
 Every one is fixed, and every one now has a regression test.

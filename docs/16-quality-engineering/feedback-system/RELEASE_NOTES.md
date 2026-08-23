@@ -67,11 +67,17 @@ Branch `feature/full-feedback-system`. Targets the next minor release after
 
 ## Verified
 
-Full record in [VERIFICATION.md](VERIFICATION.md). In short: 148 audit-service
-tests, 1993 frontend tests, 18 live API security assertions, and 25 browser
-checks against the running stack — all passing. Live testing found seven
-defects, including an IDOR on the own-ticket list and a sanitizer that could be
-defeated by nesting; all are fixed with regression coverage.
+Full record in [VERIFICATION.md](VERIFICATION.md). In short: 273 audit-service
+tests (152 of them feedback), 1993 frontend tests, 18 live API security
+assertions, 25 browser checks, a 9/9 RBAC boundary run against a real non-admin
+account, and a 9/9 attachment round trip pushing a real image through the real
+pipeline — all against the running stack, all passing.
+
+Live testing found eight defects the unit suite had not, including an IDOR on
+the own-ticket list, a sanitizer that could be defeated by nesting, and a bogus
+attachment reference that crashed the request with a 500 because file-service
+answers 200 with an empty body for an unknown id. All are fixed with regression
+coverage.
 
 ## Migration
 
