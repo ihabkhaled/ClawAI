@@ -3489,7 +3489,7 @@ export const pt: TranslationDictionary = {
     modelAccess: {
       title: 'Acesso a modelos',
       description: 'Restrinja quais modelos de provedor este plano pode usar.',
-      empty: 'Sem regras de modelos. Uma lista vazia permite todos os modelos.',
+      empty: 'Sem regras de modelos. Este plano não concede modelos até que um seja adicionado.',
       provider: 'Provedor',
       model: 'Modelo',
       isAllowed: 'Permitido',
@@ -3499,6 +3499,8 @@ export const pt: TranslationDictionary = {
       allowInCompare: 'Comparar',
       dailyTokenLimitOverride: 'Substituir limite diário de tokens',
       noOverride: 'Sem substituição',
+      selectModel: 'Selecionar um modelo',
+      noLongerExposed: 'Já não é oferecido:',
       addRow: 'Adicionar regra de modelo',
       removeRow: 'Remover regra de modelo',
       saving: 'Salvando...',

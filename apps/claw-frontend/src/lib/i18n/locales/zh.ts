@@ -3359,7 +3359,7 @@ export const zh: TranslationDictionary = {
     modelAccess: {
       title: '模型访问',
       description: '限制该计划可以使用哪些提供商模型。',
-      empty: '没有模型规则。空列表允许每个模型。',
+      empty: '没有模型规则。在添加之前，此套餐不授予任何模型。',
       provider: '提供者',
       model: '模型',
       isAllowed: '允许',
@@ -3369,6 +3369,8 @@ export const zh: TranslationDictionary = {
       allowInCompare: '比较',
       dailyTokenLimitOverride: '每日令牌覆盖',
       noOverride: '无覆盖',
+      selectModel: '选择模型',
+      noLongerExposed: '已不再提供：',
       addRow: '添加模型规则',
       removeRow: '删除模型规则',
       saving: '保存...',

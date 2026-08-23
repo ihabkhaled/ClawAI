@@ -3479,7 +3479,7 @@ export const ja: TranslationDictionary = {
     modelAccess: {
       title: 'モデルアクセス',
       description: 'このプランで使用できるプロバイダー モデルを制限します。',
-      empty: 'モデルルールはありません。空のリストでは、すべてのモデルが許可されます。',
+      empty: 'モデル規則がありません。追加するまで、このプランはモデルを許可しません。',
       provider: 'プロバイダー',
       model: 'モデル',
       isAllowed: '許可',
@@ -3489,6 +3489,8 @@ export const ja: TranslationDictionary = {
       allowInCompare: '比較',
       dailyTokenLimitOverride: '毎日のトークンの上書き',
       noOverride: 'オーバーライドなし',
+      selectModel: 'モデルを選択',
+      noLongerExposed: '提供終了:',
       addRow: 'モデルルールの追加',
       removeRow: 'モデル ルールの削除',
       saving: '保存中...',

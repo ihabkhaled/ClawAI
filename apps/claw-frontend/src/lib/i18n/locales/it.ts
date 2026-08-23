@@ -3501,7 +3501,8 @@ export const it: TranslationDictionary = {
     modelAccess: {
       title: 'Accesso ai modelli',
       description: 'Limita quali modelli del fornitore può usare questo piano.',
-      empty: 'Nessuna regola di modello. Un elenco vuoto consente tutti i modelli.',
+      empty:
+        'Nessuna regola sui modelli. Questo piano non concede alcun modello finché non ne viene aggiunto uno.',
       provider: 'Fornitore',
       model: 'Modello',
       isAllowed: 'Consentito',
@@ -3511,6 +3512,8 @@ export const it: TranslationDictionary = {
       allowInCompare: 'Confronto',
       dailyTokenLimitOverride: 'Override limite giornaliero di token',
       noOverride: 'Nessun override',
+      selectModel: 'Seleziona un modello',
+      noLongerExposed: 'Non più disponibile:',
       addRow: 'Aggiungi regola di modello',
       removeRow: 'Rimuovi regola di modello',
       saving: 'Salvataggio...',

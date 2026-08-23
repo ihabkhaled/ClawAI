@@ -3520,7 +3520,8 @@ export const fr: TranslationDictionary = {
     modelAccess: {
       title: 'Accès aux modèles',
       description: 'Restreignez les modèles de fournisseur que ce forfait peut utiliser.',
-      empty: 'Aucune règle de modèle. Une liste vide autorise tous les modèles.',
+      empty:
+        "Aucune règle de modèle. Ce forfait n'accorde aucun modèle tant qu'aucun n'est ajouté.",
       provider: 'Fournisseur',
       model: 'Modèle',
       isAllowed: 'Autorisé',
@@ -3530,6 +3531,8 @@ export const fr: TranslationDictionary = {
       allowInCompare: 'Comparaison',
       dailyTokenLimitOverride: 'Remplacer la limite quotidienne de jetons',
       noOverride: 'Aucun remplacement',
+      selectModel: 'Sélectionner un modèle',
+      noLongerExposed: "N'est plus proposé :",
       addRow: 'Ajouter une règle de modèle',
       removeRow: 'Supprimer la règle de modèle',
       saving: 'Enregistrement...',

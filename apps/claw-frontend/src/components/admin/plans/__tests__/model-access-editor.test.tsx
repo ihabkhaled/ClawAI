@@ -38,14 +38,40 @@ describe('ModelAccessEditor', () => {
     expect(screen.getByText('adminPlans.modelAccess.empty')).toBeInTheDocument();
   });
 
-  it('renders a row with its provider and model values', () => {
-    render(<ModelAccessEditor {...makeProps()} />);
-    expect(
-      (screen.getByLabelText('adminPlans.modelAccess.provider') as HTMLInputElement).value,
-    ).toBe('openai');
-    expect((screen.getByLabelText('adminPlans.modelAccess.model') as HTMLInputElement).value).toBe(
-      'gpt-4o',
+  it('shows the saved deployment as the selected option', () => {
+    render(
+      <ModelAccessEditor
+        {...makeProps({
+          exposedModels: [{ provider: 'openai', modelKey: 'gpt-4o', displayName: 'GPT-4o' }],
+        })}
+      />,
     );
+    expect((screen.getByLabelText('adminPlans.modelAccess.model') as HTMLSelectElement).value).toBe(
+      'openai/gpt-4o',
+    );
+  });
+
+  it('offers only exposed deployments, never free text', () => {
+    // The point of the change: an administrator can no longer type a model id
+    // that was never synced. Only what has been exposed is selectable.
+    render(
+      <ModelAccessEditor
+        {...makeProps({
+          exposedModels: [{ provider: 'openai', modelKey: 'gpt-4o', displayName: 'GPT-4o' }],
+        })}
+      />,
+    );
+    const select = screen.getByLabelText('adminPlans.modelAccess.model') as HTMLSelectElement;
+    expect(select.tagName).toBe('SELECT');
+    // The placeholder plus exactly one exposed deployment.
+    expect(select.querySelectorAll('option')).toHaveLength(2);
+  });
+
+  it('warns about a saved row whose model is no longer exposed', () => {
+    // A legacy or since-unexposed row stays visible so it can be seen and
+    // removed, but it is never re-selectable.
+    render(<ModelAccessEditor {...makeProps({ exposedModels: [] })} />);
+    expect(screen.getByText(/adminPlans.modelAccess.noLongerExposed/)).toBeInTheDocument();
   });
 
   it('invokes addRow when the add button is clicked', async () => {
@@ -64,12 +90,28 @@ describe('ModelAccessEditor', () => {
     expect(removeRow).toHaveBeenCalledWith('rk1');
   });
 
-  it('invokes updateRow when the provider input changes', async () => {
+  it('sets both provider and model when a deployment is selected', async () => {
     const updateRow = vi.fn();
     const user = userEvent.setup();
-    render(<ModelAccessEditor {...makeProps({ updateRow })} />);
-    await user.type(screen.getByLabelText('adminPlans.modelAccess.provider'), 'X');
-    expect(updateRow).toHaveBeenCalledWith('rk1', 'provider', expect.any(String));
+    render(
+      <ModelAccessEditor
+        {...makeProps({
+          updateRow,
+          exposedModels: [
+            { provider: 'openai', modelKey: 'gpt-4o', displayName: 'GPT-4o' },
+            { provider: 'anthropic', modelKey: 'claude-opus', displayName: 'Claude Opus' },
+          ],
+        })}
+      />,
+    );
+    await user.selectOptions(
+      screen.getByLabelText('adminPlans.modelAccess.model'),
+      'anthropic/claude-opus',
+    );
+    // One selection carries both halves of the deployment identity, so the two
+    // fields can never drift apart the way two free-text boxes could.
+    expect(updateRow).toHaveBeenCalledWith('rk1', 'provider', 'anthropic');
+    expect(updateRow).toHaveBeenCalledWith('rk1', 'model', 'claude-opus');
   });
 
   it('toggles a checkbox flag through updateRow with a boolean', async () => {

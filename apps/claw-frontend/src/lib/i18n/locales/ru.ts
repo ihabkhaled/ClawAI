@@ -3491,7 +3491,7 @@ export const ru: TranslationDictionary = {
     modelAccess: {
       title: 'Доступ к моделям',
       description: 'Ограничьте, какие модели провайдеров может использовать этот тариф.',
-      empty: 'Нет правил моделей. Пустой список разрешает все модели.',
+      empty: 'Нет правил моделей. Этот план не даёт ни одной модели, пока она не добавлена.',
       provider: 'Провайдер',
       model: 'Модель',
       isAllowed: 'Разрешено',
@@ -3501,6 +3501,8 @@ export const ru: TranslationDictionary = {
       allowInCompare: 'Сравнение',
       dailyTokenLimitOverride: 'Переопределить дневной лимит токенов',
       noOverride: 'Без переопределения',
+      selectModel: 'Выберите модель',
+      noLongerExposed: 'Больше не предоставляется:',
       addRow: 'Добавить правило модели',
       removeRow: 'Удалить правило модели',
       saving: 'Сохранение...',

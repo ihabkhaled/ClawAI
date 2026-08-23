@@ -3428,7 +3428,7 @@ export const ar: TranslationDictionary = {
     modelAccess: {
       title: 'الوصول إلى النماذج',
       description: 'قيِّد نماذج المزوِّدين التي يمكن لهذه الخطة استخدامها.',
-      empty: 'لا توجد قواعد للنماذج. القائمة الفارغة تسمح بكل النماذج.',
+      empty: 'لا توجد قواعد نماذج. لا تمنح هذه الخطة أي نموذج حتى تتم الإضافة.',
       provider: 'المزوِّد',
       model: 'النموذج',
       isAllowed: 'مسموح',
@@ -3438,6 +3438,8 @@ export const ar: TranslationDictionary = {
       allowInCompare: 'مقارنة',
       dailyTokenLimitOverride: 'تجاوز الحد اليومي للرموز',
       noOverride: 'بلا تجاوز',
+      selectModel: 'اختر نموذجًا',
+      noLongerExposed: 'لم يعد متاحًا:',
       addRow: 'إضافة قاعدة نموذج',
       removeRow: 'إزالة قاعدة النموذج',
       saving: 'جارٍ الحفظ...',

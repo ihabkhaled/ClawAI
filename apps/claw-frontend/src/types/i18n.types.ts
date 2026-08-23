@@ -3435,6 +3435,8 @@ export type TranslationDictionary = {
       allowInCompare: string;
       dailyTokenLimitOverride: string;
       noOverride: string;
+      selectModel: string;
+      noLongerExposed: string;
       addRow: string;
       removeRow: string;
       saving: string;

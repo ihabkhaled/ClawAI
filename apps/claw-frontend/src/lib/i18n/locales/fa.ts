@@ -3472,7 +3472,7 @@ export const fa: TranslationDictionary = {
     modelAccess: {
       title: 'دسترسی به مدل',
       description: 'مدل‌های ارائه‌دهنده را که این طرح می‌تواند استفاده کند، محدود کنید.',
-      empty: 'قوانین مدل وجود ندارد.یک لیست خالی به هر مدل اجازه می دهد.',
+      empty: 'قاعده‌ای برای مدل‌ها وجود ندارد. این طرح تا زمان افزودن مدل، هیچ مدلی نمی‌دهد.',
       provider: 'ارائه دهنده',
       model: 'مدل',
       isAllowed: 'مجاز است',
@@ -3482,6 +3482,8 @@ export const fa: TranslationDictionary = {
       allowInCompare: 'مقایسه کنید',
       dailyTokenLimitOverride: 'لغو رمز روزانه',
       noOverride: 'بدون لغو',
+      selectModel: 'یک مدل انتخاب کنید',
+      noLongerExposed: 'دیگر ارائه نمی‌شود:',
       addRow: 'قانون مدل را اضافه کنید',
       removeRow: 'قانون مدل را حذف کنید',
       saving: 'در حال ذخیره...',

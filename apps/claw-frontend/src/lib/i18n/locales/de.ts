@@ -3514,7 +3514,7 @@ export const de: TranslationDictionary = {
     modelAccess: {
       title: 'Modellzugriff',
       description: 'Beschränken Sie, welche Anbietermodelle dieser Tarif nutzen darf.',
-      empty: 'Keine Modellregeln. Eine leere Liste erlaubt alle Modelle.',
+      empty: 'Keine Modellregeln. Dieser Tarif gewährt keine Modelle, bis eines hinzugefügt wird.',
       provider: 'Anbieter',
       model: 'Modell',
       isAllowed: 'Erlaubt',
@@ -3524,6 +3524,8 @@ export const de: TranslationDictionary = {
       allowInCompare: 'Vergleich',
       dailyTokenLimitOverride: 'Tägliches Token-Limit überschreiben',
       noOverride: 'Keine Überschreibung',
+      selectModel: 'Modell auswählen',
+      noLongerExposed: 'Nicht mehr angeboten:',
       addRow: 'Modellregel hinzufügen',
       removeRow: 'Modellregel entfernen',
       saving: 'Wird gespeichert...',

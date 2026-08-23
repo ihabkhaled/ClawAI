@@ -3441,7 +3441,7 @@ export const th: TranslationDictionary = {
     modelAccess: {
       title: 'การเข้าถึงโมเดล',
       description: 'จำกัดผู้ให้บริการโมเดลที่แผนนี้สามารถใช้ได้',
-      empty: 'ไม่มีกฎเกณฑ์ของโมเดลรายการว่างอนุญาตให้ทุกรุ่น',
+      empty: 'ไม่มีกฎของโมเดล แผนนี้จะไม่ให้สิทธิ์โมเดลใดจนกว่าจะเพิ่ม',
       provider: 'ผู้ให้บริการ',
       model: 'แบบอย่าง',
       isAllowed: 'อนุญาต',
@@ -3451,6 +3451,8 @@ export const th: TranslationDictionary = {
       allowInCompare: 'เปรียบเทียบ',
       dailyTokenLimitOverride: 'การแทนที่โทเค็นรายวัน',
       noOverride: 'ไม่มีการแทนที่',
+      selectModel: 'เลือกโมเดล',
+      noLongerExposed: 'ไม่ได้ให้บริการแล้ว:',
       addRow: 'เพิ่มกฎโมเดล',
       removeRow: 'ลบกฎโมเดล',
       saving: 'ประหยัด...',

@@ -3449,7 +3449,7 @@ export const en: TranslationDictionary = {
     modelAccess: {
       title: 'Model Access',
       description: 'Restrict which provider models this plan can use.',
-      empty: 'No model rules. An empty list allows every model.',
+      empty: 'No model rules. This plan grants no models until one is added.',
       provider: 'Provider',
       model: 'Model',
       isAllowed: 'Allowed',
@@ -3459,6 +3459,8 @@ export const en: TranslationDictionary = {
       allowInCompare: 'Compare',
       dailyTokenLimitOverride: 'Daily token override',
       noOverride: 'No override',
+      selectModel: 'Select a model',
+      noLongerExposed: 'No longer offered:',
       addRow: 'Add model rule',
       removeRow: 'Remove model rule',
       saving: 'Saving...',

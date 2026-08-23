@@ -3472,7 +3472,7 @@ export const hi: TranslationDictionary = {
     modelAccess: {
       title: 'मॉडल एक्सेस',
       description: 'प्रतिबंधित करें कि यह योजना किन प्रदाता मॉडलों का उपयोग कर सकती है।',
-      empty: 'कोई मॉडल नियम नहीं। खाली सूची सभी मॉडलों की अनुमति देती है।',
+      empty: 'कोई मॉडल नियम नहीं। जब तक कोई जोड़ा नहीं जाता, यह प्लान कोई मॉडल नहीं देता।',
       provider: 'प्रदाता',
       model: 'मॉडल',
       isAllowed: 'अनुमत',
@@ -3482,6 +3482,8 @@ export const hi: TranslationDictionary = {
       allowInCompare: 'तुलना',
       dailyTokenLimitOverride: 'दैनिक टोकन सीमा ओवरराइड',
       noOverride: 'कोई ओवरराइड नहीं',
+      selectModel: 'एक मॉडल चुनें',
+      noLongerExposed: 'अब उपलब्ध नहीं:',
       addRow: 'मॉडल नियम जोड़ें',
       removeRow: 'मॉडल नियम हटाएँ',
       saving: 'सहेजा जा रहा है...',

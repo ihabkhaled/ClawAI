@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 10,
+  "currentBatch": 6,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -206,10 +206,16 @@
     },
     {
       "id": 8,
-      "status": "PENDING",
+      "status": "DONE",
       "commit": null,
-      "tests": [],
-      "defects": []
+      "tests": ["frontend: model-access-editor 12 tests pass; tsc clean across all locales"],
+      "defects": [],
+      "deliverables": [
+        "model-access-editor: free-text provider/model replaced by a select of exposed deployments",
+        "legacy or unexposed rows shown with a warning and never re-selectable",
+        "ModelAccessEditorProps.exposedModels",
+        "13 locales + i18n.types.ts, including corrected empty-state copy"
+      ]
     },
     {
       "id": 9,
@@ -280,7 +286,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 6 admin exposure UI and Batch 8 plan editor, then 10-16",
+  "nextAction": "Batch 6 admin Model Exposure page, then 10-16",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
