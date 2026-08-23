@@ -5458,7 +5458,7 @@ export const ja: TranslationDictionary = {
     username: 'ユーザー名',
     usernameInvalid: '3〜32 文字の英数字、ハイフン、アンダースコアを使用してください。',
     usernameNotice:
-      'ユーザー名を変更すると全端末からサインアウトします。名前と電話番号では起こりません。',
+      'ユーザー名を変更すると他の端末はサインアウトされます。この端末はサインインしたままです。',
     email: 'メールアドレス',
     emailNotice: 'メールアドレスは設定から変更でき、2 段階で確認されます。',
     currentPassword: '現在のパスワード',

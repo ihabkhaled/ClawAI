@@ -5529,7 +5529,8 @@ export const de: TranslationDictionary = {
     phoneInvalid: 'Geben Sie eine Telefonnummer im internationalen Format an, etwa +14155550123.',
     username: 'Benutzername',
     usernameInvalid: 'Verwenden Sie 3 bis 32 Buchstaben, Ziffern, Bindestriche oder Unterstriche.',
-    usernameNotice: 'Ein neuer Benutzername meldet Sie überall ab, Namen und Telefonnummer nicht.',
+    usernameNotice:
+      'Ein neuer Benutzername meldet Ihre anderen Geräte ab. Dieses bleibt angemeldet.',
     email: 'E-Mail',
     emailNotice:
       'Ändern Sie Ihre E-Mail in den Einstellungen, wo sie in zwei Schritten bestätigt wird.',

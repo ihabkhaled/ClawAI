@@ -5428,7 +5428,8 @@ export const en: TranslationDictionary = {
     phoneInvalid: 'Enter a phone number in international format, such as +14155550123.',
     username: 'Username',
     usernameInvalid: 'Use 3 to 32 letters, numbers, hyphens or underscores.',
-    usernameNotice: 'Changing your username signs you out everywhere. Names and phone do not.',
+    usernameNotice:
+      'Changing your username signs out your other devices. This one stays signed in.',
     email: 'Email',
     emailNotice: 'Change your email from Settings, where it is verified in two steps.',
     currentPassword: 'Current password',

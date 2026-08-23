@@ -2,11 +2,9 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { ROUTES } from '@/constants';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useTranslation } from '@/lib/i18n';
 import {
@@ -20,7 +18,6 @@ import { showToast } from '@/utilities';
 
 export function useProfilePage(): UseProfilePageReturn {
   const { t } = useTranslation();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { user, isLoading } = useCurrentUser();
 
@@ -50,14 +47,10 @@ export function useProfilePage(): UseProfilePageReturn {
 
   const mutation = useMutation({
     mutationFn: (data: UpdateOwnProfileRequest) => authService.updateOwnProfile(data),
-    onSuccess: (_result, variables) => {
-      // Only a username change ends every session, and authService clears the
-      // local token in exactly that case, so the user has to sign in again.
-      if (variables.username !== undefined) {
-        queryClient.clear();
-        router.push(ROUTES.LOGIN);
-        return;
-      }
+    // A username change keeps this session, so the saved profile is refetched in
+    // place. Only the password field is cleared, because the rest of the form is
+    // reset from the refreshed user.
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
       form.setValue('currentPassword', '');
       showToast.success({ title: t('profile.saved') });

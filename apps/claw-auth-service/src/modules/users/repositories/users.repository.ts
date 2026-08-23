@@ -67,6 +67,21 @@ export class UsersRepository {
     return result.count;
   }
 
+  // Renaming an account is not a credential change, so the device doing the
+  // rename keeps its session. Every other device still holds a token minted
+  // against the old identity and is signed out.
+  async revokeOtherSessionsByUserId(
+    userId: string,
+    keepSessionId: string,
+    revokedAt = new Date(),
+  ): Promise<number> {
+    const result = await this.prisma.session.updateMany({
+      where: { userId, revokedAt: null, id: { not: keepSessionId } },
+      data: { revokedAt },
+    });
+    return result.count;
+  }
+
   async countAll(filters?: UserFilters): Promise<number> {
     const where = this.buildWhereClause(filters);
     return this.prisma.user.count({ where });

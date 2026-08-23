@@ -5540,7 +5540,7 @@ export const fr: TranslationDictionary = {
     username: 'Nom d’utilisateur',
     usernameInvalid: 'Utilisez 3 à 32 lettres, chiffres, tirets ou traits de soulignement.',
     usernameNotice:
-      'Changer de nom d’utilisateur vous déconnecte partout ; les noms et le téléphone non.',
+      'Changer votre nom d’utilisateur déconnecte vos autres appareils. Celui-ci reste connecté.',
     email: 'E-mail',
     emailNotice: 'Modifiez votre e-mail dans les Paramètres, où il est vérifié en deux étapes.',
     currentPassword: 'Mot de passe actuel',

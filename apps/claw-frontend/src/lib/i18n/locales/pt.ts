@@ -5487,7 +5487,7 @@ export const pt: TranslationDictionary = {
     username: 'Nome de usuário',
     usernameInvalid: 'Use de 3 a 32 letras, números, hifens ou sublinhados.',
     usernameNotice:
-      'Alterar o nome de usuário encerra a sessão em todos os dispositivos; nomes e telefone não.',
+      'Alterar o seu nome de utilizador termina a sessão nos outros dispositivos. Este continua ligado.',
     email: 'E-mail',
     emailNotice: 'Altere seu e-mail em Configurações, onde ele é verificado em duas etapas.',
     currentPassword: 'Senha atual',

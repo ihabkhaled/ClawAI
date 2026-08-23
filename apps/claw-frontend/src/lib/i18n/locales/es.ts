@@ -5512,7 +5512,7 @@ export const es: TranslationDictionary = {
     username: 'Nombre de usuario',
     usernameInvalid: 'Usa entre 3 y 32 letras, números, guiones o guiones bajos.',
     usernameNotice:
-      'Cambiar el nombre de usuario cierra la sesión en todos los dispositivos; los nombres y el teléfono no.',
+      'Cambiar tu nombre de usuario cierra la sesión en tus otros dispositivos. Este sigue conectado.',
     email: 'Correo',
     emailNotice: 'Cambia tu correo en Ajustes, donde se verifica en dos pasos.',
     currentPassword: 'Contraseña actual',

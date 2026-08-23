@@ -5513,7 +5513,8 @@ export const it: TranslationDictionary = {
     phoneInvalid: 'Inserisci un numero in formato internazionale, ad esempio +14155550123.',
     username: 'Nome utente',
     usernameInvalid: 'Usa da 3 a 32 lettere, numeri, trattini o trattini bassi.',
-    usernameNotice: 'Cambiare nome utente ti disconnette ovunque; nomi e telefono no.',
+    usernameNotice:
+      'Cambiare nome utente disconnette gli altri dispositivi. Questo resta connesso.',
     email: 'Email',
     emailNotice: 'Cambia la tua email dalle Impostazioni, dove viene verificata in due passaggi.',
     currentPassword: 'Password attuale',

@@ -5151,7 +5151,7 @@ export const zh: TranslationDictionary = {
     phoneInvalid: '请输入国际格式的电话号码，例如 +14155550123。',
     username: '用户名',
     usernameInvalid: '请使用 3 到 32 个字母、数字、连字符或下划线。',
-    usernameNotice: '修改用户名会让所有设备退出登录，姓名和电话则不会。',
+    usernameNotice: '修改用户名会让其他设备退出登录，当前设备保持登录。',
     email: '邮箱',
     emailNotice: '请在设置中修改邮箱，那里会进行两步验证。',
     currentPassword: '当前密码',

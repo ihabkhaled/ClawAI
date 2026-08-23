@@ -46,6 +46,7 @@ const mockRepository = (): Record<keyof UsersRepository, jest.Mock> => ({
   countAll: jest.fn(),
   updatePreferences: jest.fn(),
   revokeSessionsByUserId: jest.fn(),
+  revokeOtherSessionsByUserId: jest.fn(),
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
@@ -124,23 +125,29 @@ describe('UsersService', () => {
   });
 
   describe('updateOwnProfile', () => {
-    it('verifies the current password, updates only profile fields, and revokes sessions', async () => {
+    it('verifies the current password, updates only profile fields, and revokes the other sessions', async () => {
       const updatedUser = { ...mockUser, username: 'renamed' };
       repository.findById.mockResolvedValue(mockUser);
       jest.mocked(verifyPassword).mockResolvedValue(true);
       repository.findByUsername.mockResolvedValue(null);
       repository.updateById.mockResolvedValue(updatedUser);
 
-      const result = await service.updateOwnProfile('user-1', {
-        currentPassword: 'CurrentPass1!',
-        username: 'renamed',
-      });
+      const result = await service.updateOwnProfile(
+        'user-1',
+        {
+          currentPassword: 'CurrentPass1!',
+          username: 'renamed',
+        },
+        'session-1',
+      );
 
       expect(result.username).toBe('renamed');
       expect(repository.updateById).toHaveBeenCalledWith('user-1', {
         username: 'renamed',
       });
-      expect(repository.revokeSessionsByUserId).toHaveBeenCalledWith('user-1');
+      expect(repository.revokeOtherSessionsByUserId).toHaveBeenCalledWith('user-1', 'session-1');
+      // The tab doing the rename stays signed in; a rename is not a credential change.
+      expect(repository.revokeSessionsByUserId).not.toHaveBeenCalled();
     });
     it('saves personal details without signing the user out everywhere', async () => {
       repository.findById.mockResolvedValue(mockUser);
@@ -152,12 +159,16 @@ describe('UsersService', () => {
         phone: '+14155550123',
       });
 
-      await service.updateOwnProfile('user-1', {
-        currentPassword: 'CurrentPass1!',
-        firstName: 'Ada',
-        lastName: 'Lovelace',
-        phone: '+14155550123',
-      });
+      await service.updateOwnProfile(
+        'user-1',
+        {
+          currentPassword: 'CurrentPass1!',
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+          phone: '+14155550123',
+        },
+        'session-1',
+      );
 
       expect(repository.updateById).toHaveBeenCalledWith('user-1', {
         username: undefined,
@@ -165,7 +176,7 @@ describe('UsersService', () => {
         lastName: 'Lovelace',
         phone: '+14155550123',
       });
-      expect(repository.revokeSessionsByUserId).not.toHaveBeenCalled();
+      expect(repository.revokeOtherSessionsByUserId).not.toHaveBeenCalled();
     });
 
     it('keeps sessions when the submitted username is unchanged', async () => {
@@ -174,12 +185,16 @@ describe('UsersService', () => {
       repository.findByUsername.mockResolvedValue(null);
       repository.updateById.mockResolvedValue(mockUser);
 
-      await service.updateOwnProfile('user-1', {
-        currentPassword: 'CurrentPass1!',
-        username: mockUser.username,
-      });
+      await service.updateOwnProfile(
+        'user-1',
+        {
+          currentPassword: 'CurrentPass1!',
+          username: mockUser.username,
+        },
+        'session-1',
+      );
 
-      expect(repository.revokeSessionsByUserId).not.toHaveBeenCalled();
+      expect(repository.revokeOtherSessionsByUserId).not.toHaveBeenCalled();
     });
 
     it('rejects an incorrect current password without changing the profile', async () => {
@@ -187,10 +202,14 @@ describe('UsersService', () => {
       jest.mocked(verifyPassword).mockResolvedValue(false);
 
       await expect(
-        service.updateOwnProfile('user-1', {
-          currentPassword: 'WrongPass1!',
-          username: 'renamed',
-        }),
+        service.updateOwnProfile(
+          'user-1',
+          {
+            currentPassword: 'WrongPass1!',
+            username: 'renamed',
+          },
+          'session-1',
+        ),
       ).rejects.toMatchObject({ code: 'INVALID_CURRENT_PASSWORD' });
       expect(repository.updateById).not.toHaveBeenCalled();
     });
