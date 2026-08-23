@@ -2,7 +2,18 @@
 # Proves the admin boundary against a REAL non-admin session, not just an
 # unauthenticated one. Hiding the nav entry is not the control; these are the
 # calls an attacker would make by hand.
+#
+# Needs a throwaway non-admin account on the local stack. Create one through
+# the normal sign-up flow, activate it, then run:
+#
+#   FEEDBACK_USER_EMAIL=<address> FEEDBACK_USER_PASSWORD=<password> ./rbac-boundary.sh
+#
+# The password is deliberately not committed. The admin address below is the
+# local dev seed account that .env.example and the existing e2e specs already
+# use, so it is not a new secret.
 BASE="https://claw.local/api/v1"
+USER_EMAIL="${FEEDBACK_USER_EMAIL:?set FEEDBACK_USER_EMAIL to a non-admin account}"
+USER_PASSWORD="${FEEDBACK_USER_PASSWORD:?set FEEDBACK_USER_PASSWORD for that account}"
 PASS=0
 FAIL=0
 
@@ -33,7 +44,7 @@ code() {
 }
 
 ADMIN=$(login 'admin@claw.local' 'ClawAdmin123!')
-USER=$(login 'feedback.user@claw.local' 'FeedbackUser123!')
+USER=$(login "$USER_EMAIL" "$USER_PASSWORD")
 echo "admin token ${#ADMIN} chars · user token ${#USER} chars"
 echo
 
@@ -51,10 +62,10 @@ check "GET  /feedback/mine"   200 "$(code GET  "$BASE/feedback/mine" "$USER")"
 echo
 
 echo "== Tenant isolation: the user sees ONLY their own tickets =="
-python - "$USER" "$ADMIN" <<'PY'
+python - "$USER" "$ADMIN" "$USER_EMAIL" <<'PY'
 import json, subprocess, sys
 
-user_token, admin_token = sys.argv[1], sys.argv[2]
+user_token, admin_token, expected_email = sys.argv[1], sys.argv[2], sys.argv[3]
 
 def get(url, token):
     out = subprocess.run(
@@ -70,7 +81,7 @@ owners = {item.get('reporterEmail') for item in mine['items']}
 print(f"  user's own list  : {mine['total']} ticket(s), reporters={sorted(owners) or ['-']}")
 print(f"  admin total      : {everything['total']} ticket(s)")
 
-ok_scoped = owners <= {'feedback.user@claw.local'}
+ok_scoped = owners <= {expected_email}
 ok_subset = mine['total'] < everything['total']
 print(('  EXECUTED_AND_PASSED  ' if ok_scoped else '  EXECUTED_AND_FAILED  ')
       + 'own list contains only the caller\'s tickets')

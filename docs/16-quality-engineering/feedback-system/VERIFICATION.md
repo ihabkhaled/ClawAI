@@ -102,8 +102,13 @@ ticket detail dialog showing hostile content rendered as inert text.
 ## RBAC boundary against a real non-admin session — 9/9 passed
 
 Run with `rbac-boundary.sh`. An unauthenticated 401 does not prove the admin
-boundary; this uses a second, genuine account (`feedback.user@claw.local`,
-role USER) and makes the calls an attacker would make by hand.
+boundary; this uses a second, genuine account with role USER and makes the calls
+an attacker would make by hand. The account is supplied by environment variable
+so no new credential is committed:
+
+```
+FEEDBACK_USER_EMAIL=<address> FEEDBACK_USER_PASSWORD=<password> ./rbac-boundary.sh
+```
 
 **Every admin route refuses a normal user with 403**
 
