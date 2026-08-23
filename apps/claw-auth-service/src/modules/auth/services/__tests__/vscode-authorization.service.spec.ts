@@ -80,7 +80,13 @@ describe('VscodeAuthorizationService', () => {
     const approval = await service.approve(initialized.requestId, 'user-1');
     const code = new URL(approval.redirectUri).searchParams.get('code');
 
-    await expect(service.exchange(code ?? '', verifier)).resolves.toEqual({ tokens });
+    // The account id rides with the tokens so the extension can tell the SAME
+    // user authorizing in a second window from a different account taking over
+    // the shared session slot. Without it, a second window logged the first out.
+    await expect(service.exchange(code ?? '', verifier)).resolves.toEqual({
+      tokens,
+      accountId: 'user-1',
+    });
     await expect(service.exchange(code ?? '', verifier)).rejects.toBeInstanceOf(
       UnauthorizedException,
     );
