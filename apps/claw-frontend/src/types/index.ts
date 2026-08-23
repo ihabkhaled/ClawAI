@@ -544,6 +544,7 @@ export type {
   UseVirtualizedMessagesControllerReturn,
   UseFollowStreamingTokensParams,
   UseProfilePageReturn,
+  UseEditUserFormReturn,
 } from './hook.types';
 export type {
   CandidateResult,

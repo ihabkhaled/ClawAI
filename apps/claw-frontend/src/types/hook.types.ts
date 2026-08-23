@@ -3,6 +3,7 @@ import type { UseFormReturn } from 'react-hook-form';
 import type { MessageFeedback } from '@/enums';
 import type { PasswordInputType } from '@/enums/password-input-type.enum';
 import type { ScrollDirection } from '@/enums/scroll-direction.enum';
+import type { AdminUserEditFormValues } from '@/lib/validation/admin-user.schema';
 import type {
   ConfirmOtpFormValues,
   RequestEmailChangeFormValues,
@@ -80,6 +81,11 @@ export type UseRegisterFormReturn = {
   isError: boolean;
   errorMessage: string | null;
   t: TranslateFunction;
+};
+
+export type UseEditUserFormReturn = {
+  form: UseFormReturn<AdminUserEditFormValues>;
+  submit: (event?: React.BaseSyntheticEvent) => Promise<void>;
 };
 
 export type UseForgotPasswordFormReturn = {

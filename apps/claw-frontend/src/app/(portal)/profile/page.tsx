@@ -1,8 +1,11 @@
 'use client';
 
+import { Controller } from 'react-hook-form';
+
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { PasswordInput } from '@/components/common/password-input';
+import { PhoneInput } from '@/components/common/phone-input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -55,14 +58,25 @@ export default function ProfilePage(): React.ReactElement {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="phone" className="text-sm leading-none font-medium">
-                  {t('profile.phone')}
-                </label>
-                <Input
-                  id="phone"
-                  autoComplete="tel"
-                  placeholder={t('profile.phonePlaceholder')}
-                  {...form.register('phone')}
+                {/* PhoneInput is a country button plus a number field, so there is
+                    no single control to point a label at; each part carries its
+                    own aria-label. */}
+                <span className="text-sm leading-none font-medium">{t('profile.phone')}</span>
+                <Controller
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <PhoneInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      countryLabel={t('common.phoneCountryLabel')}
+                      countrySearchLabel={t('common.phoneCountrySearch')}
+                      numberLabel={t('common.phoneNumberLabel')}
+                      numberPlaceholder={t('common.phoneNumberPlaceholder')}
+                      invalidLabel={t('common.phoneInvalid')}
+                      disabled={isSaving}
+                    />
+                  )}
                 />
                 {errors.phone ? (
                   <p className="text-destructive text-xs">{t('profile.phoneInvalid')}</p>
