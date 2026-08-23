@@ -179,4 +179,28 @@ export class ConnectorModelsRepository {
       orderBy: [{ provider: 'asc' }, { displayName: 'asc' }],
     }) as Promise<Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>>;
   }
+
+  // Only a model that already exists on this connector and is not REMOVED may be
+  // exposed. A forged or stale modelKey must change nothing rather than create a row.
+  async setExposure(
+    connectorId: string,
+    modelKeys: string[],
+    exposed: boolean,
+  ): Promise<{ updated: number }> {
+    const result = await this.prisma.connectorModel.updateMany({
+      where: { connectorId, modelKey: { in: modelKeys }, lifecycle: { not: 'REMOVED' } },
+      data: { exposure: exposed ? 'EXPOSED' : 'UNEXPOSED' },
+    });
+    return { updated: result.count };
+  }
+
+  // Which of these keys are currently exposed. The caller uses this to show what an
+  // unexpose would actually take away before it is committed.
+  async findExposedKeys(connectorId: string, modelKeys: string[]): Promise<string[]> {
+    const rows = await this.prisma.connectorModel.findMany({
+      where: { connectorId, modelKey: { in: modelKeys }, exposure: 'EXPOSED' },
+      select: { modelKey: true },
+    });
+    return rows.map((row) => row.modelKey);
+  }
 }

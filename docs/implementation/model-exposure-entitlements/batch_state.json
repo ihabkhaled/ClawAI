@@ -54,6 +54,20 @@
           "severity": "low",
           "summary": "A second VS Code window is running concurrent agent threads against D:/Freelance/Claw. Feature work is isolated in its own worktree, so commits here are unaffected, but do not run git ops in the main worktree while it is active.",
           "evidence": "threads cmt4oumjw00gh01qgmfqvc8wa, cmt4oxyet00h501qgiadml8oy, cmt4oyznp00hb01qg43g9nu5c"
+        },
+        {
+          "id": "CA-04",
+          "owner": "CodingAgent",
+          "severity": "high",
+          "summary": "A manual model choice in the composer is not always honoured. With clawAI.routingMode left at its AUTO default, runs execute on whatever the backend router selects while the status bar and composer both display the manually chosen model. Observed: composer and status bar showed kimi-k2.7-code while chat-service logged callProvider provider=OLLAMA model=deepseek-v4-pro with usedFallback=false. deepseek-v4-pro could not emit a valid Runtime Protocol 2.0 tool object, so five consecutive edits failed as MODEL_TOOL_REQUEST_UNREPAIRABLE and read as an output-token problem rather than a routing one.",
+          "evidence": "docker logs claw-chat-service | grep callProvider - 50 dispatches to deepseek-v4-pro during the failing window"
+        },
+        {
+          "id": "CA-05",
+          "owner": "CodingAgent",
+          "severity": "medium",
+          "summary": "workspace.files update rewrites an entire file, so editing any file over roughly 8 KB overflows the model output budget and fails the run. patch with a small anchored hunk succeeds on the same file. The tool guidance does not warn the model away from update on large files, and the truncation error blames output length without naming the operation that caused it.",
+          "evidence": "Repeated MODEL_TOOL_REQUEST_UNREPAIRABLE on an 8.2 KB repository file; identical edit succeeded once the model was told to use patch with a three-line anchor and forbidden from using update."
         }
       ],
       "attempts": [
@@ -136,7 +150,8 @@
       "deliverables": [
         "findExposedForCatalog + getAvailableModels gated on exposure",
         "ADMIN_CONNECTORS_MANAGE added to GET /connectors/:id/models",
-        "backfill migration 20260823093000_backfill_existing_model_exposure"
+        "backfill migration 20260823093000_backfill_existing_model_exposure",
+        "connector-models.repository.ts setExposure + findExposedKeys"
       ],
       "migrationEvidence": "Both migrations replayed in one transaction against claw-pg-connector 16.13 and rolled back. Old catalog predicate returned 160 rows; after backfill the new catalog predicate returns the same 160. No user loses a model on upgrade. 0 rows left UNEXPOSED because all 160 were ACTIVE on enabled connectors."
     },
@@ -233,5 +248,6 @@
   "openCaveats": [
     "exposure now gates the user catalog but the runtime authorization gates (chat access-control, routing plan-model-gate) still do not consult it. A forged API request naming an unexposed model is still accepted by those paths until Batch 9.",
     "Admin expose/unexpose API does not exist yet, so exposure can currently only change via SQL or the backfill."
-  ]
+  ],
+  "workingTechnique": "For any edit to a file larger than about 8 KB: instruct patch with a minimal anchored hunk (quote the exact 3 trailing lines) and explicitly forbid update. Verify the executed model with: docker logs claw-chat-service | grep callProvider."
 }
