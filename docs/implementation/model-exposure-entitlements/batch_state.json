@@ -68,6 +68,13 @@
           "severity": "medium",
           "summary": "workspace.files update rewrites an entire file, so editing any file over roughly 8 KB overflows the model output budget and fails the run. patch with a small anchored hunk succeeds on the same file. The tool guidance does not warn the model away from update on large files, and the truncation error blames output length without naming the operation that caused it.",
           "evidence": "Repeated MODEL_TOOL_REQUEST_UNREPAIRABLE on an 8.2 KB repository file; identical edit succeeded once the model was told to use patch with a three-line anchor and forbidden from using update."
+        },
+        {
+          "id": "CA-06",
+          "owner": "CodingAgent",
+          "severity": "medium",
+          "summary": "Two VS Code windows against the same serve-web server cannot both hold a ClawAI session. Connecting the second window silently logs the first out, and reconnecting the first logs the second out, so parallel agent threads are not possible. The evicted window shows the Connect gate again with no explanation and any queued message is lost.",
+          "evidence": "Windows on pages 2 and 3 of the same browser, same backend; each reconnect evicted the other. Neither queued task ran."
         }
       ],
       "attempts": [
@@ -253,5 +260,6 @@
     "Plan model access still accepts unvalidated free-text (provider, model). Batch 7.",
     "No admin exposure UI yet. Batch 6."
   ],
-  "workingTechnique": "For any edit to a file larger than about 8 KB: instruct patch with a minimal anchored hunk (quote the exact 3 trailing lines) and explicitly forbid update. Verify the executed model with: docker logs claw-chat-service | grep callProvider."
+  "workingTechnique": "For any edit to a file larger than about 8 KB: instruct patch with a minimal anchored hunk (quote the exact 3 trailing lines) and explicitly forbid update. Verify the executed model with: docker logs claw-chat-service | grep callProvider.",
+  "parallelismNote": "Parallel agent threads are not viable (CA-06). Execute serially in one window; use the waiting time for supervisor verification rather than a second thread."
 }
