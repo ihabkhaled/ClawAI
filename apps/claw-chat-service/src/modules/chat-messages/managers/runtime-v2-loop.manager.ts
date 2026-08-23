@@ -40,7 +40,9 @@ import {
 } from '../utilities/runtime-v2-transcript.utility';
 import {
   excerpt,
+  repairAttemptsFor,
   repairDiagnosis,
+  repairGuidance,
   runtimeV2TerminalReason,
 } from '../utilities/runtime-v2-failure.utility';
 import {
@@ -51,7 +53,6 @@ import {
   RUNTIME_V2_CAPABILITY_CORRECTION_INSTRUCTION,
   RUNTIME_V2_INTENT_CORRECTION_ATTEMPTS,
   RUNTIME_V2_INTENT_CORRECTION_INSTRUCTION,
-  RUNTIME_V2_REPAIR_INSTRUCTION,
 } from '../utilities/runtime-v2-model-output.utility';
 import { ChatExecutionManager } from './chat-execution.manager';
 import { ContextAssemblyManager } from './context-assembly.manager';
@@ -631,8 +632,14 @@ export class RuntimeV2LoopManager {
   }
 
   /**
-   * Calls the provider, and on a malformed tool request asks once more with the
-   * repair instruction appended. A second failure is a real fault and raises.
+   * Calls the provider, and on a malformed tool request asks again with the
+   * repair instruction appended. Exhausting the attempts is a real fault.
+   *
+   * How many attempts depends on what went wrong. A dialect or schema error is
+   * corrected on the next turn or not at all, so it keeps its single retry. A
+   * request cut off by the output limit is a different problem: the shape was
+   * right and only the size was wrong, so each attempt can cut the body
+   * further and the demanded size shrinks with it.
    */
   private async callWithRepair(
     binding: RuntimeV2BoundInput,
@@ -642,66 +649,85 @@ export class RuntimeV2LoopManager {
     response: Awaited<ReturnType<ChatExecutionManager['callProvider']>>;
     output: ReturnType<typeof parseRuntimeV2ModelOutput>;
   }> {
-    const response = await this.callRuntimeProvider(binding, runtimeContext, routingMode);
-    try {
-      return {
-        response,
-        output: parseRuntimeV2ModelOutput(response.content, binding.toolDefinitions),
-      };
-    } catch (rejection: unknown) {
-      // The parser's message names the offending key or the failing rule. It
-      // used to be discarded here, so the repair turn could only say "invalid"
-      // — and a model that believes its request is correct repeats it. Quoting
-      // the real reason is what turns the second attempt into a correction.
-      const diagnosis = repairDiagnosis(rejection);
-      const repaired = await this.execution.callProvider(
-        binding.provider,
-        binding.model,
-        {
-          ...runtimeContext,
-          systemPrompt: [runtimeContext.systemPrompt, RUNTIME_V2_REPAIR_INSTRUCTION, diagnosis]
-            .filter((value): value is string => value !== null && value.length > 0)
-            .join('\n\n'),
-        },
-        Date.now(),
-        false,
-        undefined,
-        routingMode,
-        RUNTIME_V2_TURN_EXECUTION_OPTIONS,
-        TokenLedgerContext.CHAT,
-      );
+    let response = await this.callRuntimeProvider(binding, runtimeContext, routingMode);
+    let rejection: unknown;
+    let repairs = 0;
+    for (;;) {
       try {
         return {
-          response: repaired,
-          output: parseRuntimeV2ModelOutput(repaired.content, binding.toolDefinitions),
+          response,
+          output: parseRuntimeV2ModelOutput(response.content, binding.toolDefinitions),
         };
-      } catch (secondRejection: unknown) {
-        // The repair turn was the second chance and it did not take it. That is
-        // a run that cannot continue, but it is still a model failing to follow
-        // a protocol — not a fault in this service. Raising the raw parse error
-        // here reached the exception filter and the user was shown "Internal
-        // server error" with nothing to act on.
-        //
-        // The reason is carried too: a quoted request that is cut off before
-        // the offending key leaves whoever reads this unable to tell what was
-        // actually wrong with it.
-        // The diagnosis comes before the quote. The whole message is truncated
-        // to a bounded length, and the quoted request is the long part — put
-        // the reason last and it is the first thing lost, which is exactly the
-        // information needed to act.
-        throw new BusinessException(
-          [
-            RUNTIME_V2_UNREPAIRABLE_REQUEST_MESSAGE,
-            repairDiagnosis(secondRejection),
-            excerpt(repaired.content),
-          ]
-            .filter((value) => value.length > 0)
-            .join(' '),
-          RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE,
-          HttpStatus.UNPROCESSABLE_ENTITY,
+      } catch (error: unknown) {
+        rejection = error;
+        if (repairs >= repairAttemptsFor(error)) {
+          break;
+        }
+        repairs += 1;
+        this.logger.warn(
+          `Runtime V2 repair ${String(repairs)}/${String(repairAttemptsFor(error))}: ${repairDiagnosis(error)}`,
         );
+        response = await this.repairTurn(binding, runtimeContext, routingMode, error, repairs);
       }
     }
+    // The repair turns were the chances and none was taken. That is a run that
+    // cannot continue, but it is still a model failing to follow a protocol —
+    // not a fault in this service. Raising the raw parse error here reached the
+    // exception filter and the user was shown "Internal server error" with
+    // nothing to act on.
+    //
+    // The diagnosis comes before the quote. The whole message is bounded and
+    // the quoted request is the long part, so putting the reason last would
+    // make it the first thing lost — and it is the part worth reading.
+    throw new BusinessException(
+      [
+        RUNTIME_V2_UNREPAIRABLE_REQUEST_MESSAGE,
+        repairDiagnosis(rejection),
+        excerpt(response.content),
+      ]
+        .filter((value) => value.length > 0)
+        .join(' '),
+      RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE,
+      HttpStatus.UNPROCESSABLE_ENTITY,
+    );
+  }
+
+  /**
+   * One corrective call, told what was actually wrong with the last request.
+   *
+   * The parser's message names the offending key, the failing rule, or the fact
+   * that the object never closed. It used to be discarded, so the repair turn
+   * could only say "invalid" — and a model that believes its request is correct
+   * repeats it. Quoting the real reason is what turns the retry into a
+   * correction.
+   */
+  private async repairTurn(
+    binding: RuntimeV2BoundInput,
+    runtimeContext: Awaited<ReturnType<ContextAssemblyManager['assemble']>>,
+    routingMode: string,
+    rejection: unknown,
+    attempt: number,
+  ): Promise<Awaited<ReturnType<ChatExecutionManager['callProvider']>>> {
+    return this.execution.callProvider(
+      binding.provider,
+      binding.model,
+      {
+        ...runtimeContext,
+        systemPrompt: [
+          runtimeContext.systemPrompt,
+          repairGuidance(rejection, attempt),
+          repairDiagnosis(rejection),
+        ]
+          .filter((value): value is string => value !== null && value.length > 0)
+          .join('\n\n'),
+      },
+      Date.now(),
+      false,
+      undefined,
+      routingMode,
+      RUNTIME_V2_TURN_EXECUTION_OPTIONS,
+      TokenLedgerContext.CHAT,
+    );
   }
 
   /**
