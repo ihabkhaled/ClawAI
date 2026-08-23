@@ -6372,6 +6372,11 @@
         "route": "/admin/deployment"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/feedback/page.tsx",
+        "kind": "page",
+        "route": "/admin/feedback"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/page.tsx",
         "kind": "page",
         "route": "/admin"
@@ -9801,7 +9806,7 @@
     "endpointCount": 605,
     "envVarCount": 347,
     "eventCount": 167,
-    "frontendRouteCount": 122,
+    "frontendRouteCount": 123,
     "localeCount": 16,
     "nginxRouteCount": 55,
     "permissionCount": 49,
