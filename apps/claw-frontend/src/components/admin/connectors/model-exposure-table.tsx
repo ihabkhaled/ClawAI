@@ -26,7 +26,7 @@ export function ModelExposureTable({
   t,
 }: ModelExposureTableProps): ReactElement {
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <p className="text-muted-foreground text-sm">
         {t('adminConnectors.exposure.counts')} {exposedCount} / {unexposedCount}
       </p>
@@ -61,7 +61,7 @@ export function ModelExposureTable({
       {isLoading ? (
         <p className="text-muted-foreground text-sm">{t('adminConnectors.exposure.loading')}</p>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -76,7 +76,7 @@ export function ModelExposureTable({
             {impact.length > 0 ? (
               <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-2 text-xs">
                 <p className="font-medium">{t('adminConnectors.exposure.impactWarning')}</p>
-                <ul className="mt-1 grid gap-0.5">
+                <ul className="mt-1 grid grid-cols-1 gap-0.5">
                   {impact.map((key) => (
                     <li key={key}>{key}</li>
                   ))}
