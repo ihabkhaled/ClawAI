@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 11,
+  "currentBatch": 12,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -256,10 +256,16 @@
     },
     {
       "id": 11,
-      "status": "PENDING",
+      "status": "DONE",
       "commit": null,
-      "tests": [],
-      "defects": []
+      "tests": ["chat-service 100 suites / 1334", "connector-service 19 suites / 176"],
+      "defects": [],
+      "deliverables": [
+        "CONNECTOR_MODEL_EXPOSURE_CHANGED event",
+        "connector-service publishes on every exposure mutation",
+        "chat-service subscribes and clears the exposure cache",
+        "cache made process-shared so both client holders invalidate together"
+      ]
     },
     {
       "id": 12,
@@ -297,7 +303,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 11 cache and revision correctness",
+  "nextAction": "Batch 12 audit and observability, then 13-16 evidence suites",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",

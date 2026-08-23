@@ -18,7 +18,18 @@ const validateExposedResponseSchema = z.object({
 @Injectable()
 export class ModelExposureClient {
   private readonly logger = new Logger(ModelExposureClient.name);
-  private readonly cache = new Map<string, { exposed: boolean; expiresAt: number }>();
+  // Shared across every instance in this process on purpose. Two collaborators
+  // hold their own client — the access gate and the execution chokepoint — and
+  // an administrator unexposing a model has to reach both. A per-instance cache
+  // would clear one and leave the other serving a stale yes.
+  private static readonly cache = new Map<string, { exposed: boolean; expiresAt: number }>();
+
+  // Drops every cached answer. Called when connector-service reports an
+  // exposure change, so the decision takes effect immediately rather than at
+  // the end of a TTL the administrator cannot see.
+  static invalidateAll(): void {
+    ModelExposureClient.cache.clear();
+  }
 
   // Whether this exact deployment is currently offerable to users.
   //
@@ -33,7 +44,7 @@ export class ModelExposureClient {
   // model is not.
   async isExposed(provider: string, model: string): Promise<boolean> {
     const key = `${provider}/${model}`;
-    const hit = this.cache.get(key);
+    const hit = ModelExposureClient.cache.get(key);
     const now = Date.now();
     if (hit && hit.expiresAt > now) {
       return hit.exposed;
@@ -58,7 +69,7 @@ export class ModelExposureClient {
       const exposed = parsed.data.valid.some(
         (pair) => pair.provider === provider && pair.model === model,
       );
-      this.cache.set(key, { exposed, expiresAt: now + MODEL_EXPOSURE_CACHE_TTL_MS });
+      ModelExposureClient.cache.set(key, { exposed, expiresAt: now + MODEL_EXPOSURE_CACHE_TTL_MS });
       return exposed;
     } catch {
       this.logger.error(`isExposed: connector unreachable ${key}`);

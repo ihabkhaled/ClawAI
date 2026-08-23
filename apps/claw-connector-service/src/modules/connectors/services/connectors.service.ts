@@ -354,6 +354,18 @@ export class ConnectorsService implements OnApplicationBootstrap {
     this.logger.log(
       `setModelExposure: connector=${connectorId} exposed=${String(exposed)} requested=${String(modelKeys.length)} updated=${String(updated)}`,
     );
+    // Consumers cache exposure to keep the check off the message hot path. This
+    // is what tells them to drop that cache, so an unexpose takes effect while
+    // the administrator is still on the screen rather than up to a TTL later.
+    // Fire-and-forget: a missed event costs at most one cache lifetime, and
+    // blocking the administrator's request on the broker would be worse.
+    void this.rabbitMQService.publish(EventPattern.CONNECTOR_MODEL_EXPOSURE_CHANGED, {
+      connectorId,
+      modelKeys,
+      exposed,
+      updated,
+      timestamp: new Date().toISOString(),
+    });
     return { updated, previouslyExposed };
   }
 
