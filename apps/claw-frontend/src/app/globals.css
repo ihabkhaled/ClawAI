@@ -1033,6 +1033,18 @@
     overflow-wrap: normal;
   }
 
+  /* A select renders its value into a child span that the primitive clamps with
+   * `line-clamp`, which is a -webkit-box and wraps before it clips. Put the
+   * class on the trigger and the value trims on one line. */
+  .truncate-fixed > span:first-child {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+
   /* A JSON payload 4,400px wide inside a 220px card cannot be read by swiping
    * sideways through it. Wrap the block instead. */
   pre {
