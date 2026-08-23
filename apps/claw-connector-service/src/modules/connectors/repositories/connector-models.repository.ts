@@ -203,4 +203,23 @@ export class ConnectorModelsRepository {
     });
     return rows.map((row) => row.modelKey);
   }
+
+  // Which of these (provider, model) pairs are real, exposed, chat-capable
+  // deployments right now. One query for the whole set, so a plan with 200
+  // models costs one round trip. A pair that matches nothing is simply absent.
+  async findExposedPairs(
+    pairs: Array<{ provider: string; model: string }>,
+  ): Promise<Array<{ provider: string; model: string }>> {
+    const rows = await this.prisma.connectorModel.findMany({
+      where: {
+        OR: pairs.map((pair) => ({ provider: pair.provider as never, modelKey: pair.model })),
+        exposure: 'EXPOSED',
+        kind: 'CHAT',
+        lifecycle: 'ACTIVE',
+        connector: { isEnabled: true },
+      },
+      select: { provider: true, modelKey: true },
+    });
+    return rows.map((row) => ({ provider: row.provider, model: row.modelKey }));
+  }
 }

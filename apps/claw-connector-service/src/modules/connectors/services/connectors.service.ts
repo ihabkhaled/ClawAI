@@ -357,6 +357,20 @@ export class ConnectorsService implements OnApplicationBootstrap {
     return { updated, previouslyExposed };
   }
 
+  // Internal contract for auth-service. Returns only the pairs that are
+  // currently offerable. It deliberately does not say WHY a pair was rejected:
+  // this endpoint is reachable service-to-service and must not become a way to
+  // probe which models exist but are hidden.
+  async validateExposedModels(
+    pairs: Array<{ provider: string; model: string }>,
+  ): Promise<{ valid: Array<{ provider: string; model: string }> }> {
+    const valid = await this.connectorModelsRepository.findExposedPairs(pairs);
+    this.logger.debug(
+      `validateExposedModels: requested=${String(pairs.length)} valid=${String(valid.length)}`,
+    );
+    return { valid };
+  }
+
   private maskSecrets<T extends { encryptedConfig?: string | null }>(connector: T): T {
     if (connector.encryptedConfig) {
       return { ...connector, encryptedConfig: '****' };

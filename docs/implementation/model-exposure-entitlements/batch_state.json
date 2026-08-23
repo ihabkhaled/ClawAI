@@ -75,6 +75,20 @@
           "severity": "medium",
           "summary": "Two VS Code windows against the same serve-web server cannot both hold a ClawAI session. Connecting the second window silently logs the first out, and reconnecting the first logs the second out, so parallel agent threads are not possible. The evicted window shows the Connect gate again with no explanation and any queued message is lost.",
           "evidence": "Windows on pages 2 and 3 of the same browser, same backend; each reconnect evicted the other. Neither queued task ran."
+        },
+        {
+          "id": "ENV-02",
+          "owner": "Environment",
+          "severity": "high",
+          "summary": "The running chat-service image was stale. HARD_MAX_OUTPUT_TOKENS was still 16384 in the container while source had 32768, because chat-service runs a baked prod image with no source mount and had not been rebuilt since the fix landed on main at 10:36. Every agent edit truncated mid tool-object against a ceiling that was already fixed on disk. Rebuilt and recreated chat-service; two patches then landed in a single turn.",
+          "evidence": "docker exec claw-chat-service grep HARD_MAX_OUTPUT_TOKENS dist -> 16384 before rebuild, 32768 after. Five consecutive MODEL_TOOL_REQUEST_UNREPAIRABLE failures before, none after."
+        },
+        {
+          "id": "ENV-03",
+          "owner": "Environment",
+          "severity": "high",
+          "summary": "auth-service was crash-looping on a stale @claw/shared-types dist: DeploymentRunConclusion and friends existed in package source but not in the built dist, so every auth request returned 502 and the coding agent could not sign in. Rebuilt packages/shared-types and restarted auth-service.",
+          "evidence": "nodemon app crashed - TS2305 no exported member DeploymentRunConclusion; dist/index.d.ts dated 08-22 19:31."
         }
       ],
       "attempts": [
@@ -161,7 +175,9 @@
         "connector-models.repository.ts setExposure + findExposedKeys",
         "ConnectorsService.setModelExposure",
         "PUT /connectors/:id/models/exposure with ADMIN_CONNECTORS_MANAGE",
-        "controller spec for setModelExposure"
+        "controller spec for setModelExposure",
+        "ConnectorModelsRepository.findExposedPairs",
+        "ConnectorsService.validateExposedModels"
       ],
       "migrationEvidence": "Both migrations replayed in one transaction against claw-pg-connector 16.13 and rolled back. Old catalog predicate returned 160 rows; after backfill the new catalog predicate returns the same 160. No user loses a model on upgrade. 0 rows left UNEXPOSED because all 160 were ACTIVE on enabled connectors."
     },
@@ -243,7 +259,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 6: admin Model Exposure UI, or Batch 7 plan entitlement backend validation",
+  "nextAction": "Wire the internal validate-exposed endpoint on connectors-internal.controller, then auth-service consumption in setModelAccess",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
