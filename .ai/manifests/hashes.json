@@ -4,7 +4,7 @@
     ".ai/BOOTSTRAP.md": "ff5c359f",
     ".ai/manifests/api-endpoints.json": "5a7de1a0",
     ".ai/manifests/data-ownership.json": "600db5c9",
-    ".ai/manifests/docker-services.json": "787fb039",
+    ".ai/manifests/docker-services.json": "255da189",
     ".ai/manifests/environment-variables.json": "c066a62e",
     ".ai/manifests/event-graph.json": "026c3c32",
     ".ai/manifests/frontend-routes.json": "2b6b7a36",

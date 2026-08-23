@@ -99,6 +99,49 @@ Screenshots: [`evidence/`](evidence/) — launcher (desktop and mobile), the
 dialog, the admin list, the mobile admin layout, post-submission, and the
 ticket detail dialog showing hostile content rendered as inert text.
 
+## RBAC boundary against a real non-admin session — 9/9 passed
+
+Run with `rbac-boundary.sh`. An unauthenticated 401 does not prove the admin
+boundary; this uses a second, genuine account (`feedback.user@claw.local`,
+role USER) and makes the calls an attacker would make by hand.
+
+**Every admin route refuses a normal user with 403**
+
+```
+GET   /feedback/admin                        403
+GET   /feedback/admin/stats                  403
+GET   /feedback/admin/:id                    403
+PATCH /feedback/admin/:id/status             403
+GET   /feedback/admin/:id/attachments/:file  403
+```
+
+**The same user can still use what they are entitled to**
+
+```
+POST /feedback        201
+GET  /feedback/mine   200
+```
+
+**Tenant isolation — the IDOR is closed against a live second identity**
+
+```
+user's own list : 1 ticket,   reporters = [feedback.user@claw.local]
+admin total     : 13 tickets
+```
+
+The own-ticket list contains only the caller's tickets and is a strict subset
+of all tickets. Before the fix this returned all 13.
+
+**The permission upgrade path works on an existing install.** auth-service
+logged on boot:
+
+```
+PermissionsSeederService reconcileRole: drift detected —
+  roleSlug=USER added=[JUDGE_USE,FEEDBACK_SUBMIT] removed=[] finalGrantCount=25
+```
+
+so `FEEDBACK_SUBMIT` reaches an already-seeded database without a manual step.
+
 ## Defects this verification found
 
 Live testing found seven defects that the unit suite had not:

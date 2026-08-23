@@ -29,3 +29,14 @@ services:
       - ../../Claw-feedback-system/packages/shared-types/dist:/app/packages/shared-types/dist
       - ../../Claw-feedback-system/packages/shared-constants/dist:/app/packages/shared-constants/dist
       - ../certs:/certs
+
+  # auth-service owns the role->permission seed. Without it on the feature
+  # branch the boot-time reconciler never grants FEEDBACK_SUBMIT, so a normal
+  # user is refused the feature they are entitled to.
+  auth-service:
+    volumes:
+      - ../../Claw-feedback-system/apps/claw-auth-service/src:/app/apps/claw-auth-service/src
+      - ../../Claw-feedback-system/apps/claw-auth-service/prisma:/app/apps/claw-auth-service/prisma
+      - ../../Claw-feedback-system/packages/shared-types/dist:/app/packages/shared-types/dist
+      - ../../Claw-feedback-system/packages/shared-constants/dist:/app/packages/shared-constants/dist
+      - ../certs:/certs:ro
