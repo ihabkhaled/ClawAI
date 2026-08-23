@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { RoutingMode } from '../../../generated/prisma';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
+import { stripNulBytes } from '../../../common/utilities/postgres-safe-text.utility';
 
 // Canonical research-mode schema for every chat DTO. Replaces the inline
 // OFF/SEARCH_ONLY/SEARCH_THEN_FETCH/SEARCH_FETCH_EXTRACT string union that
@@ -12,10 +13,17 @@ export const researchModeSchema = z.nativeEnum(ResearchMode);
 
 export const createMessageSchema = z.object({
   threadId: z.string().max(255, 'Thread ID must be at most 255 characters'),
+  // Stripped BEFORE the length checks so a payload of nothing but NUL bytes is
+  // rejected as empty rather than reaching Postgres and 500ing the thread.
   content: z
     .string()
-    .min(1, 'Content must not be empty')
-    .max(100000, 'Content must be at most 100000 characters'),
+    .transform(stripNulBytes)
+    .pipe(
+      z
+        .string()
+        .min(1, 'Content must not be empty')
+        .max(100000, 'Content must be at most 100000 characters'),
+    ),
   clientIntent: z.string().max(20000, 'Client intent must be at most 20000 characters').optional(),
   routingMode: z.nativeEnum(RoutingMode).optional(),
   provider: z.string().max(50, 'Provider must be at most 50 characters').optional(),

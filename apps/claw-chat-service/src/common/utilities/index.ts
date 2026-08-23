@@ -13,3 +13,5 @@ export {
   buildFileDeliveryEntries,
   buildLaneDeliverySummary,
 } from './file-delivery.utility';
+
+export { stripNulBytes, containsNulByte } from './postgres-safe-text.utility';
