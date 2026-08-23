@@ -72,3 +72,23 @@ export interface UseModelExposureResult {
   load: () => Promise<void>;
   apply: (exposed: boolean) => Promise<void>;
 }
+
+// Props for the admin Model Exposure table. The component is a .tsx file and so
+// holds only the component; its shape lives here.
+export interface ModelExposureTableProps {
+  visibleRows: ConnectorModelRow[];
+  selected: Set<string>;
+  toggle: (modelKey: string) => void;
+  selectAllVisible: () => void;
+  clearSelection: () => void;
+  filters: ModelExposureFilters;
+  setFilter: <K extends keyof ModelExposureFilters>(key: K, value: ModelExposureFilters[K]) => void;
+  exposedCount: number;
+  unexposedCount: number;
+  impact: string[];
+  isLoading: boolean;
+  isSaving: boolean;
+  errorMessage: string | null;
+  onApply: (exposed: boolean) => void;
+  t: (key: string) => string;
+}

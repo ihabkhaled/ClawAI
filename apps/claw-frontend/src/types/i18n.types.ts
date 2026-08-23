@@ -3334,6 +3334,29 @@ export type TranslationDictionary = {
     expiredBody: string;
     upgrade: string;
   };
+  adminConnectors: {
+    exposure: {
+      counts: string;
+      searchPlaceholder: string;
+      filterAll: string;
+      filterExposed: string;
+      filterUnexposed: string;
+      loading: string;
+      colModel: string;
+      colProvider: string;
+      colExposure: string;
+      colLifecycle: string;
+      colLastSeen: string;
+      neverSeen: string;
+      exposed: string;
+      unexposed: string;
+      exposeSelected: string;
+      unexposeSelected: string;
+      selectAllVisible: string;
+      clearSelection: string;
+      impactWarning: string;
+    };
+  };
   adminPlans: {
     title: string;
     description: string;

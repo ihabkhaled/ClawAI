@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 6,
+  "currentBatch": 10,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -183,10 +183,17 @@
     },
     {
       "id": 6,
-      "status": "PENDING",
+      "status": "DONE",
       "commit": null,
       "tests": [],
-      "defects": []
+      "defects": [],
+      "deliverables": [
+        "use-model-exposure hook",
+        "ModelExposureTable component",
+        "ModelExposureTableProps",
+        "adminConnectors.exposure keys in 13 locales + i18n.types.ts"
+      ],
+      "note": "Screen composition (a route under /admin wiring the hook to the table) is not wired yet; the hook and table are complete and typed."
     },
     {
       "id": 7,
@@ -286,7 +293,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 6 admin Model Exposure page, then 10-16",
+  "nextAction": "Batches 10-16: auto/multi-model entitlement, cache/revision, audit+security, tests, browser, chaos, release",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
