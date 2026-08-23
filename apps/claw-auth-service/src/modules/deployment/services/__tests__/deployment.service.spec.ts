@@ -1,14 +1,18 @@
 import {
+  DeploymentCredentialSource,
   DeploymentPhase,
+  DeploymentRunUnavailableReason,
   DeploymentState,
   type DeploymentStatusDocument,
   DeploymentTriggerMode,
 } from '@claw/shared-types';
 
+import { AppConfig, type AppConfigType } from '../../../../app/config/app.config';
 import { type AuthEmailAdapter } from '../../../auth/adapters/auth-email.adapter';
 import { type UsersService } from '../../../users/services/users.service';
 import { type DeploymentStatusFileAdapter } from '../../adapters/deployment-status-file.adapter';
 import { type GithubActionsAdapter } from '../../adapters/github-actions.adapter';
+import { type DeploymentCredentialRepository } from '../../repositories/deployment-credential.repository';
 import { DeploymentService } from '../deployment.service';
 
 const WORKFLOW_URL = 'https://github.com/ihabkhaled/ClawAI/actions/workflows/deploy-production.yml';
@@ -38,22 +42,42 @@ describe('DeploymentService', () => {
   const writeAutomation = jest.fn();
   const sendDeploymentNotification = jest.fn();
   const dispatch = jest.fn();
-  const isEnabled = jest.fn();
-  const defaultRef = jest.fn();
+  const resolve = jest.fn();
+  const latestRun = jest.fn();
   const workflowUrl = jest.fn();
+  const findCredential = jest.fn();
+  const upsertCredential = jest.fn();
+  const deleteCredential = jest.fn();
   const service = new DeploymentService(
     { assertSuperAdminActor } as unknown as UsersService,
     { read, write, readAutomation, writeAutomation } as unknown as DeploymentStatusFileAdapter,
     { sendDeploymentNotification } as unknown as AuthEmailAdapter,
-    { dispatch, isEnabled, defaultRef, workflowUrl } as unknown as GithubActionsAdapter,
+    { dispatch, resolve, latestRun, workflowUrl } as unknown as GithubActionsAdapter,
+    {
+      find: findCredential,
+      upsert: upsertCredential,
+      delete: deleteCredential,
+    } as unknown as DeploymentCredentialRepository,
   );
+
+  const RESOLVED = {
+    token: 'ghp_token',
+    repository: 'ihabkhaled/ClawAI',
+    ref: 'main',
+    source: DeploymentCredentialSource.ENVIRONMENT,
+    tokenLastFour: 'oken',
+    updatedAt: null,
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    isEnabled.mockReturnValue(true);
-    defaultRef.mockReturnValue('main');
+    jest
+      .spyOn(AppConfig, 'get')
+      .mockReturnValue({ ENCRYPTION_KEY: 'a'.repeat(64) } as unknown as AppConfigType);
+    resolve.mockResolvedValue(RESOLVED);
     workflowUrl.mockReturnValue(WORKFLOW_URL);
     readAutomation.mockResolvedValue(null);
+    findCredential.mockResolvedValue(null);
   });
 
   it('authorizes the actor before returning a valid status view', async () => {
@@ -101,7 +125,7 @@ describe('DeploymentService', () => {
 
   it('reports the manual lane off when the credential set is incomplete', async () => {
     read.mockResolvedValue(STATUS);
-    isEnabled.mockReturnValue(false);
+    resolve.mockResolvedValue(null);
     readAutomation.mockResolvedValue({
       schemaVersion: 1,
       enabled: false,
@@ -188,8 +212,7 @@ describe('DeploymentService', () => {
   });
 
   it('refuses to dispatch when manual deployment is unconfigured', async () => {
-    defaultRef.mockReturnValue(null);
-    workflowUrl.mockReturnValue(null);
+    resolve.mockResolvedValue(null);
 
     await expect(
       service.trigger('super-admin', { mode: DeploymentTriggerMode.LATEST }),
@@ -228,8 +251,103 @@ describe('DeploymentService', () => {
     expect(write).not.toHaveBeenCalled();
   });
 
+  it('reports live run progress from GitHub', async () => {
+    latestRun.mockResolvedValue({ id: 1, currentStep: { stepName: 'Deploy over SSH' } });
+
+    await expect(service.getRunProgress('super-admin')).resolves.toMatchObject({
+      available: true,
+      reason: null,
+    });
+  });
+
+  it('says progress is unavailable because nothing is configured', async () => {
+    resolve.mockResolvedValue(null);
+
+    await expect(service.getRunProgress('super-admin')).resolves.toEqual({
+      available: false,
+      reason: DeploymentRunUnavailableReason.NOT_CONFIGURED,
+      run: null,
+    });
+    expect(latestRun).not.toHaveBeenCalled();
+  });
+
+  it('says progress is unavailable because GitHub could not be read', async () => {
+    latestRun.mockResolvedValue(null);
+
+    await expect(service.getRunProgress('super-admin')).resolves.toEqual({
+      available: false,
+      reason: DeploymentRunUnavailableReason.UNREACHABLE,
+      run: null,
+    });
+  });
+
+  it('encrypts a saved token and never returns it', async () => {
+    const view = await service.saveCredentials('super-admin', {
+      repository: 'ihabkhaled/ClawAI',
+      ref: 'main',
+      token: 'ghp_a_real_looking_token',
+    });
+
+    const [written] = upsertCredential.mock.calls[0] as [Record<string, string>];
+    expect(written.encryptedToken).not.toContain('ghp_a_real_looking_token');
+    expect(written.tokenLastFour).toBe('oken');
+    expect(written.updatedByUserId).toBe('super-admin');
+    expect(JSON.stringify(view)).not.toContain('ghp_a_real_looking_token');
+  });
+
+  it('keeps the stored token when only the repository or ref changes', async () => {
+    findCredential.mockResolvedValue({
+      encryptedToken: 'existing-ciphertext',
+      tokenLastFour: 'last',
+      updatedAt: new Date('2026-08-13T10:29:58Z'),
+      repository: 'ihabkhaled/ClawAI',
+      ref: 'main',
+    });
+
+    await service.saveCredentials('super-admin', {
+      repository: 'ihabkhaled/ClawAI',
+      ref: 'release',
+    });
+
+    expect(upsertCredential).toHaveBeenCalledWith(
+      expect.objectContaining({ encryptedToken: 'existing-ciphertext', tokenLastFour: 'last' }),
+    );
+  });
+
+  it('requires a token the first time credentials are saved', async () => {
+    await expect(
+      service.saveCredentials('super-admin', { repository: 'ihabkhaled/ClawAI', ref: 'main' }),
+    ).rejects.toMatchObject({ code: 'DEPLOYMENT_TOKEN_REQUIRED' });
+    expect(upsertCredential).not.toHaveBeenCalled();
+  });
+
+  it('reports the fallback source after clearing the stored credentials', async () => {
+    deleteCredential.mockResolvedValue(true);
+
+    await expect(service.clearCredentials('super-admin')).resolves.toEqual({
+      cleared: true,
+      source: DeploymentCredentialSource.ENVIRONMENT,
+    });
+  });
+
+  it('reports an unusable stored row rather than pretending nothing is configured', async () => {
+    resolve.mockResolvedValue(null);
+    findCredential.mockResolvedValue({
+      repository: 'ihabkhaled/ClawAI',
+      ref: 'main',
+      tokenLastFour: 'last',
+      updatedAt: new Date('2026-08-13T10:29:58Z'),
+    });
+    read.mockResolvedValue(STATUS);
+
+    await expect(service.getStatus('super-admin')).resolves.toMatchObject({
+      manualTriggerEnabled: false,
+      credentials: { source: DeploymentCredentialSource.DATABASE, isUsable: false },
+    });
+  });
+
   it('persists the automatic-deploy switch', async () => {
-    await expect(service.setAutomation('super-admin', { enabled: false })).resolves.toEqual({
+    await expect(service.setAutomation('super-admin', { enabled: false })).resolves.toMatchObject({
       manualTriggerEnabled: true,
       automaticDeployEnabled: false,
     });

@@ -5,11 +5,15 @@ import { deploymentRepository } from '@/repositories/admin/deployment.repository
 
 const mockGet = vi.fn();
 const mockPost = vi.fn();
+const mockPut = vi.fn();
+const mockDelete = vi.fn();
 
 vi.mock('@/services/shared/api-client', () => ({
   apiClient: {
     get: (...args: unknown[]) => mockGet(...args),
     post: (...args: unknown[]) => mockPost(...args),
+    put: (...args: unknown[]) => mockPut(...args),
+    delete: (...args: unknown[]) => mockDelete(...args),
   },
 }));
 
@@ -56,5 +60,35 @@ describe('deployment repository', () => {
       automaticDeployEnabled: false,
     });
     expect(mockPost).toHaveBeenCalledWith('/admin/deployment/automation', { enabled: false });
+  });
+  it('reads live run progress', async () => {
+    const progress = { available: true, reason: null, run: null };
+    mockGet.mockResolvedValue({ data: progress });
+
+    await expect(deploymentRepository.getRun()).resolves.toBe(progress);
+    expect(mockGet).toHaveBeenCalledWith('/admin/deployment/run');
+  });
+
+  it('puts credentials, token included, to the credentials endpoint', async () => {
+    mockPut.mockResolvedValue({ data: { source: 'database' } });
+
+    await deploymentRepository.saveCredentials({
+      repository: 'ihabkhaled/ClawAI',
+      ref: 'main',
+      token: 'github_pat_11ABCDEFG0123456789',
+    });
+
+    expect(mockPut).toHaveBeenCalledWith('/admin/deployment/credentials', {
+      repository: 'ihabkhaled/ClawAI',
+      ref: 'main',
+      token: 'github_pat_11ABCDEFG0123456789',
+    });
+  });
+
+  it('deletes the stored credentials', async () => {
+    mockDelete.mockResolvedValue({ data: { cleared: true, source: 'none' } });
+
+    await expect(deploymentRepository.clearCredentials()).resolves.toMatchObject({ cleared: true });
+    expect(mockDelete).toHaveBeenCalledWith('/admin/deployment/credentials');
   });
 });

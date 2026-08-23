@@ -1,7 +1,12 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   type DeploymentAutomationDocument,
+  type DeploymentCredentialClearResult,
+  DeploymentCredentialSource,
+  type DeploymentCredentialView,
   type DeploymentResetResult,
+  type DeploymentRunProgress,
+  DeploymentRunUnavailableReason,
   DeploymentState,
   type DeploymentStatusDocument,
   type DeploymentStatusView,
@@ -9,16 +14,24 @@ import {
   type DeploymentTriggerResult,
 } from '@claw/shared-types';
 
+import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors';
+import { encrypt } from '../../../common/utilities';
 import { AuthEmailAdapter } from '../../auth/adapters/auth-email.adapter';
 import { UsersService } from '../../users/services/users.service';
 import { DeploymentStatusFileAdapter } from '../adapters/deployment-status-file.adapter';
 import { GithubActionsAdapter } from '../adapters/github-actions.adapter';
 import { DEPLOYMENT_STATUS_STALE_MS } from '../constants/deployment-status.constants';
 import {
+  DEPLOYMENT_CREDENTIAL_ENCRYPTION_KEY_VERSION,
+  DEPLOYMENT_TOKEN_LAST_FOUR_LENGTH,
+} from '../constants/deployment-trigger.constants';
+import { type SaveDeploymentCredentialDto } from '../dto/deployment-credential.dto';
+import {
   type SetDeploymentAutomationDto,
   type TriggerDeploymentDto,
 } from '../dto/deployment-trigger.dto';
+import { DeploymentCredentialRepository } from '../repositories/deployment-credential.repository';
 import { type DeploymentNotificationResult } from '../types/deployment-notification.types';
 import { type DeploymentViewFlags } from '../types/deployment-view.types';
 import {
@@ -34,6 +47,7 @@ export class DeploymentService {
     private readonly statusFile: DeploymentStatusFileAdapter,
     private readonly emailAdapter: AuthEmailAdapter,
     private readonly githubActions: GithubActionsAdapter,
+    private readonly credentials: DeploymentCredentialRepository,
   ) {}
 
   async getStatus(actorId: string): Promise<DeploymentStatusView> {
@@ -52,9 +66,8 @@ export class DeploymentService {
    */
   async trigger(actorId: string, dto: TriggerDeploymentDto): Promise<DeploymentTriggerResult> {
     await this.usersService.assertSuperAdminActor(actorId);
-    const ref = this.githubActions.defaultRef();
-    const workflowUrl = this.githubActions.workflowUrl();
-    if (ref === null || workflowUrl === null) {
+    const credentials = await this.githubActions.resolve();
+    if (!credentials) {
       throw new BusinessException(
         'Manual deployment is not configured',
         'DEPLOYMENT_TRIGGER_UNAVAILABLE',
@@ -65,8 +78,14 @@ export class DeploymentService {
     const status = await this.statusFile.read();
     this.assertNoLiveRollout(status);
     const targetSha = this.resolveTargetSha(dto, status);
-    await this.githubActions.dispatch({ ref, targetSha });
-    return { dispatched: true, mode: dto.mode, targetSha, ref, workflowUrl };
+    await this.githubActions.dispatch({ ref: credentials.ref, targetSha });
+    return {
+      dispatched: true,
+      mode: dto.mode,
+      targetSha,
+      ref: credentials.ref,
+      workflowUrl: this.githubActions.workflowUrl(credentials.repository),
+    };
   }
 
   /**
@@ -101,10 +120,76 @@ export class DeploymentService {
       updatedAt: new Date().toISOString(),
     };
     await this.statusFile.writeAutomation(document);
-    return {
-      manualTriggerEnabled: this.githubActions.isEnabled(),
-      automaticDeployEnabled: dto.enabled,
-    };
+    return { ...(await this.resolveFlags()), automaticDeployEnabled: dto.enabled };
+  }
+
+  /**
+   * Live progress of the latest production run, read straight from GitHub
+   * Actions so the page shows the step that is actually executing rather than
+   * inferring it. Never throws for a GitHub problem: the panel degrades with a
+   * reason instead of taking the page down with it.
+   */
+  async getRunProgress(actorId: string): Promise<DeploymentRunProgress> {
+    await this.usersService.assertSuperAdminActor(actorId);
+    const credentials = await this.githubActions.resolve();
+    if (!credentials) {
+      return { available: false, reason: DeploymentRunUnavailableReason.NOT_CONFIGURED, run: null };
+    }
+    const run = await this.githubActions.latestRun();
+    if (!run) {
+      return { available: false, reason: DeploymentRunUnavailableReason.UNREACHABLE, run: null };
+    }
+    return { available: true, reason: null, run };
+  }
+
+  /**
+   * Stores the credentials manual deployment uses, replacing the GITHUB_DEPLOY_*
+   * environment fallback. The token is encrypted with ENCRYPTION_KEY before it
+   * reaches the database and is never read back out to any caller.
+   *
+   * Omitting the token keeps the stored one, so an operator can correct a
+   * repository or ref without re-pasting a secret they may no longer have.
+   */
+  async saveCredentials(
+    actorId: string,
+    dto: SaveDeploymentCredentialDto,
+  ): Promise<DeploymentCredentialView> {
+    await this.usersService.assertSuperAdminActor(actorId);
+    const existing = await this.credentials.find();
+    if (!dto.token && !existing) {
+      throw new BusinessException(
+        'A deployment token is required the first time credentials are saved',
+        'DEPLOYMENT_TOKEN_REQUIRED',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const token = dto.token?.trim();
+    await this.credentials.upsert({
+      repository: dto.repository,
+      ref: dto.ref,
+      encryptedToken: token
+        ? encrypt(token, AppConfig.get().ENCRYPTION_KEY)
+        : (existing?.encryptedToken ?? ''),
+      tokenLastFour: token
+        ? token.slice(-DEPLOYMENT_TOKEN_LAST_FOUR_LENGTH)
+        : (existing?.tokenLastFour ?? ''),
+      encryptionKeyVersion: DEPLOYMENT_CREDENTIAL_ENCRYPTION_KEY_VERSION,
+      updatedByUserId: actorId,
+    });
+    return this.resolveCredentialView();
+  }
+
+  /**
+   * Removes the stored credentials. The lane does not necessarily go dark:
+   * if GITHUB_DEPLOY_* is set the service falls back to it, and the returned
+   * source says which of the two is now in effect.
+   */
+  async clearCredentials(actorId: string): Promise<DeploymentCredentialClearResult> {
+    await this.usersService.assertSuperAdminActor(actorId);
+    const cleared = await this.credentials.delete();
+    const view = await this.resolveCredentialView();
+    return { cleared, source: view.source };
   }
 
   async sendNotification(): Promise<DeploymentNotificationResult> {
@@ -114,12 +199,61 @@ export class DeploymentService {
   }
 
   private async resolveFlags(): Promise<DeploymentViewFlags> {
-    const automation = await this.statusFile.readAutomation();
+    const [automation, credentials] = await Promise.all([
+      this.statusFile.readAutomation(),
+      this.resolveCredentialView(),
+    ]);
     return {
-      manualTriggerEnabled: this.githubActions.isEnabled(),
+      // isUsable, not "a row exists": a stored row whose target no longer
+      // validates or whose token will not decrypt cannot dispatch anything, and
+      // offering the controls for it would be a button that can only fail.
+      manualTriggerEnabled: credentials.isUsable,
       // No file means nobody ever paused the lane, which is the shipped
       // default: a green release deploys itself.
       automaticDeployEnabled: automation?.enabled ?? true,
+      credentials,
+    };
+  }
+
+  /**
+   * What the page may know about the installed credentials. The token is never
+   * part of this — only its last four characters, which identify it without
+   * being usable.
+   */
+  private async resolveCredentialView(): Promise<DeploymentCredentialView> {
+    const resolved = await this.githubActions.resolve();
+    if (resolved) {
+      return {
+        source: resolved.source,
+        repository: resolved.repository,
+        ref: resolved.ref,
+        tokenLastFour: resolved.tokenLastFour,
+        updatedAt: resolved.updatedAt,
+        isUsable: true,
+      };
+    }
+    // Nothing usable resolved. A stored row may still exist — one whose
+    // repository or ref no longer validates, or whose token will not decrypt.
+    // Surfacing it as unusable explains why the lane is off; reporting NONE
+    // would leave an operator staring at a form they already filled in.
+    const stored = await this.credentials.find();
+    if (stored) {
+      return {
+        source: DeploymentCredentialSource.DATABASE,
+        repository: stored.repository,
+        ref: stored.ref,
+        tokenLastFour: stored.tokenLastFour,
+        updatedAt: stored.updatedAt.toISOString(),
+        isUsable: false,
+      };
+    }
+    return {
+      source: DeploymentCredentialSource.NONE,
+      repository: null,
+      ref: null,
+      tokenLastFour: null,
+      updatedAt: null,
+      isUsable: false,
     };
   }
 

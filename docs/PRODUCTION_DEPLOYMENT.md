@@ -149,12 +149,70 @@ release dispatches — there is no second deployment path.
 | Deploy an exact commit | Dispatches one 40-character SHA an operator typed — rollback, or pinning a known-good run |
 | Clear stuck rollout    | Rewrites a rollout that stopped reporting as `failed` so the next dispatch is not blocked |
 
-Manual dispatch needs the whole credential set — `GITHUB_DEPLOY_TOKEN`
-(fine-grained PAT, `actions: write` on this repository and nothing else),
-`GITHUB_DEPLOY_REPOSITORY` (`owner/repo`) and `GITHUB_DEPLOY_REF`. A partial set
-does not half-enable it: the page hides the manual controls rather than offering
-a button that can only fail. The automatic-deploy switch works either way,
-because it is a file on the box rather than a GitHub call.
+### Credentials
+
+Manual dispatch needs a GitHub token, a repository and a ref. They are
+configured **from the deployment page itself** and stored in auth-service's
+database, with the token encrypted using `ENCRYPTION_KEY`. No endpoint ever
+returns the token; the page shows only its last four characters, which is
+enough to tell which token is installed and not enough to use it.
+
+The `GITHUB_DEPLOY_TOKEN` / `GITHUB_DEPLOY_REPOSITORY` / `GITHUB_DEPLOY_REF`
+environment variables remain a **fallback**. A stored row always wins; the
+environment is what keeps an existing box working and lets a fresh one be
+provisioned from `.env` alone. The page labels which of the two is in effect.
+
+A partial set does not half-enable the lane, and neither does a broken stored
+row: if the repository or ref no longer validates, or the token will not
+decrypt (usually because `ENCRYPTION_KEY` was rotated without re-saving), the
+page marks the credentials unusable and hides the controls rather than offering
+a button that can only fail.
+
+The automatic-deploy switch works either way, because it is a file on the box
+rather than a GitHub call.
+
+#### Creating the token
+
+1. GitHub → your avatar → **Settings** → **Developer settings** →
+   **Personal access tokens** → **Fine-grained tokens** → **Generate new token**.
+2. **Resource owner**: the account or organisation that owns this repository.
+3. **Repository access**: _Only select repositories_ → this repository alone.
+4. **Permissions** → _Repository permissions_ → **Actions: Read and write**.
+   Leave every other permission at _No access_. Read and write is the minimum:
+   write dispatches the workflow, read powers the live progress panel.
+5. Set an expiry you will actually renew, generate, and copy the
+   `github_pat_…` value — GitHub shows it once.
+6. Paste it into **Add credentials** on `/<locale>/admin/deployment`, with the
+   repository as `owner/repo` and the branch you deploy from (normally `main`).
+
+A classic PAT with the `workflow` scope also works, but grants far more than
+this needs; prefer the fine-grained token.
+
+### 2.9 Live progress and diagnosing a stuck build
+
+The page reads the deployment workflow straight from the GitHub Actions API and
+renders the run, its jobs and every step, with the step executing right now
+highlighted and each finished step marked passed or failed. When a step fails,
+the page names the **first** failed step — later ones usually fail as a
+consequence — and links directly to that job's log.
+
+This is deliberately independent of `.deploy/status.json`. The two disagree in
+exactly the case that is hardest to diagnose: the workflow has already failed
+while the box still reports `running`. The page detects that combination and
+says so, rather than leaving a rollout that looks alive but is not.
+
+The troubleshooting panel appears only when something is actually wrong, and
+gives ordered steps for the situation:
+
+| Situation                                                   | What it means                                                                 |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Workflow ended without success, box still reports `running` | The rollout was abandoned mid-flight. Production still serves the old version |
+| Reported `running`, silent for over 30 minutes              | Wedged, or its connection died                                                |
+| Last rollout failed, nothing running                        | Production still serves the old version; nothing was half-applied             |
+| No usable credentials                                       | The page can only watch                                                       |
+
+The advice always reads the failing log before re-running anything: a re-deploy
+that has not been explained is just the same failure again.
 
 Two guards keep an operator from racing the pipeline. A dispatch is refused
 while a rollout is still reporting (HTTP 409, `DEPLOYMENT_ALREADY_RUNNING`);

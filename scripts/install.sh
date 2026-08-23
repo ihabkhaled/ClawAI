@@ -1403,9 +1403,9 @@ CONTACT_EMAIL_FROM=no-reply@claw-ai.co
 CONTACT_EMAIL_TO=
 DEPLOYMENT_STATUS_FILE=/app/.deploy/status.json
 DEPLOYMENT_AUTOMATION_FILE=/app/.deploy/automation.json
-# Manual production deployment from the admin deployment page. All three are
-# required together; blank leaves the manual lane off and the controls hidden.
-# The token is a fine-grained PAT with `actions: write` on the repository only.
+# Manual production deployment fallback. Prefer configuring these from the
+# admin deployment page, which stores them encrypted in the database. All three
+# are required together if you do set them here.
 GITHUB_DEPLOY_TOKEN=
 GITHUB_DEPLOY_REPOSITORY=
 GITHUB_DEPLOY_REF=main

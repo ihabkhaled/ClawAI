@@ -20,6 +20,14 @@ vi.mock('@/hooks/admin/use-deployment-actions', () => ({
   useDeploymentActions: () => ({ isBusy: false }),
 }));
 
+vi.mock('@/hooks/admin/use-deployment-credentials-form', () => ({
+  useDeploymentCredentialsForm: (hasStored: boolean) => ({ isEditing: false, hasStored }),
+}));
+
+vi.mock('@/hooks/admin/use-deployment-run-progress', () => ({
+  useDeploymentRunProgress: (enabled: boolean) => ({ progress: null, isLoading: false, enabled }),
+}));
+
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key, locale: 'en' }),
 }));
@@ -36,19 +44,42 @@ describe('useDeploymentPage', () => {
   });
 
   it('loads deployment status only for the seeded super administrator', async () => {
-    mockGet.mockResolvedValue({ state: 'completed', targetSha: 'a'.repeat(40) });
+    mockGet.mockResolvedValue({
+      state: 'completed',
+      targetSha: 'a'.repeat(40),
+      credentials: { repository: 'ihabkhaled/ClawAI' },
+    });
     const { result } = renderHook(() => useDeploymentPage(), { wrapper });
 
     await waitFor(() => expect(result.current.status?.state).toBe('completed'));
     expect(mockGet).toHaveBeenCalledOnce();
   });
 
-  it('exposes the manual controls alongside the status', async () => {
-    mockGet.mockResolvedValue({ state: 'completed', targetSha: 'a'.repeat(40) });
+  it('exposes the manual controls, credentials form and live progress', async () => {
+    mockGet.mockResolvedValue({
+      state: 'completed',
+      targetSha: 'a'.repeat(40),
+      credentials: { repository: 'ihabkhaled/ClawAI' },
+    });
     const { result } = renderHook(() => useDeploymentPage(), { wrapper });
 
     await waitFor(() => expect(result.current.status).not.toBeNull());
     expect(result.current.actions.isBusy).toBe(false);
+    expect(result.current.credentials.isEditing).toBe(false);
+    expect(result.current.progress.isLoading).toBe(false);
+  });
+
+  it('tells the credentials form whether anything is stored yet', async () => {
+    mockGet.mockResolvedValue({
+      state: 'completed',
+      targetSha: 'a'.repeat(40),
+      credentials: { repository: null },
+    });
+    const { result } = renderHook(() => useDeploymentPage(), { wrapper });
+
+    await waitFor(() => expect(result.current.status).not.toBeNull());
+    // null repository means nothing is saved, so the form must demand a token.
+    expect((result.current.credentials as unknown as { hasStored: boolean }).hasStored).toBe(false);
   });
 
   it('does not call the endpoint for another administrator', async () => {

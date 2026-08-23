@@ -417,6 +417,34 @@ model EmailVerificationToken {
   @@map("email_verification_tokens")
 }
 
+/// Credentials the admin deployment page uses to dispatch the production
+/// deployment workflow on GitHub Actions.
+///
+/// Exactly one row, pinned to DEPLOYMENT_CREDENTIAL_ID. The token is stored
+/// encrypted with ENCRYPTION_KEY and is never returned by any endpoint — the
+/// page only ever sees `tokenLastFour`, enough to confirm which token is
+/// installed without being able to reconstruct it.
+///
+/// When no row exists the service falls back to the GITHUB_DEPLOY_* environment
+/// variables, so an existing deployment keeps working and a fresh box can still
+/// be provisioned from .env alone.
+model DeploymentCredential {
+  id String @id
+
+  repository           String
+  ref                  String
+  encryptedToken       String @map("encrypted_token")
+  tokenLastFour        String @map("token_last_four")
+  encryptionKeyVersion Int    @default(1) @map("encryption_key_version")
+
+  updatedByUserId String? @map("updated_by_user_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("deployment_credentials")
+}
+
 model SystemSetting {
   id        String   @id @default(cuid())
   key       String   @unique
