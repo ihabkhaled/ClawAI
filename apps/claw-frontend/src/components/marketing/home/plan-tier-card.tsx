@@ -120,7 +120,7 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
           to spare. A plan carrying all sixteen features has none, so the margin
           collapsed to nothing and the button sat flush against the last feature.
           The padding is the floor the auto margin grows from. */}
-      <div className="mt-auto shrink-0 pt-6">
+      <div className="border-border/60 mt-auto shrink-0 border-t pt-6">
         <Link
           href={`${ROUTES.REGISTER}?returnTo=${encodeURIComponent(returnRoute)}`}
           aria-disabled={price === null}

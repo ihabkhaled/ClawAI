@@ -95,7 +95,9 @@ describe('PlanTierCard', () => {
   it('keeps the call to action clear of the feature list on a full card', () => {
     render(<PlanTierCard plan={PLAN} isYearly={false} />);
 
-    expect(screen.getByRole('link').parentElement).toHaveClass('pt-6');
+    // The rule matters as much as the padding: after sixteen tightly stacked
+    // feature rows, spacing alone did not read as a break.
+    expect(screen.getByRole('link').parentElement).toHaveClass('pt-6', 'border-t');
   });
 
   it('preserves the selected plan and monthly interval through registration', () => {
