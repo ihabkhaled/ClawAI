@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 6,
+  "currentBatch": 8,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -190,10 +190,19 @@
     },
     {
       "id": 7,
-      "status": "PENDING",
+      "status": "DONE",
       "commit": null,
-      "tests": [],
-      "defects": []
+      "tests": [
+        "auth-service: 69 suites, 582 tests pass, typecheck clean",
+        "connector-service: 19 suites, 176 tests pass"
+      ],
+      "defects": [],
+      "deliverables": [
+        "connectors-internal POST models/validate-exposed",
+        "auth-service ExposedModelClient + constants",
+        "AppConfig.CONNECTOR_SERVICE_URL",
+        "PlansService.setModelAccess validates every row against real inventory"
+      ]
     },
     {
       "id": 8,
@@ -259,7 +268,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Wire the internal validate-exposed endpoint on connectors-internal.controller, then auth-service consumption in setModelAccess",
+  "nextAction": "Batch 9 canonical runtime gate, or Batch 6/8 UI",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
@@ -272,8 +281,8 @@
     "ADR proposed a foreign key from PlanModelAccess to ConnectorModel; impossible, they live in different service databases and this repository forbids crossing a service database boundary. The link must be a plain column validated over HTTP."
   ],
   "openCaveats": [
-    "Runtime gates (chat-service access-control, routing plan-model-gate) still do not consult exposure. A forged request naming an unexposed model is still accepted there. Batch 9.",
-    "Plan model access still accepts unvalidated free-text (provider, model). Batch 7.",
+    "Runtime gates (chat-service access-control, routing plan-model-gate) still do not consult exposure. Batch 9.",
+    "Plan model access UI still offers free-text entry; the backend now refuses invalid rows but the editor should stop offering them. Batch 8.",
     "No admin exposure UI yet. Batch 6."
   ],
   "workingTechnique": "For any edit to a file larger than about 8 KB: instruct patch with a minimal anchored hunk (quote the exact 3 trailing lines) and explicitly forbid update. Verify the executed model with: docker logs claw-chat-service | grep callProvider.",

@@ -1,5 +1,6 @@
 import { PlansService } from '../plans.service';
 import { type PlansRepository } from '../../repositories/plans.repository';
+import { type ExposedModelClient } from '../../clients/exposed-model.client';
 import { PlanModelAccessMode } from '../../../../generated/prisma';
 
 const freePlan = {
@@ -68,10 +69,19 @@ const mockRepo = (): Record<keyof PlansRepository, jest.Mock> => ({
 describe('PlansService', () => {
   let service: PlansService;
   let repo: ReturnType<typeof mockRepo>;
+  let exposedModels: { findExposed: jest.Mock };
 
   beforeEach(() => {
     repo = mockRepo();
-    service = new PlansService(repo as unknown as PlansRepository);
+    // Default: connector-service says every requested pair is real and exposed.
+    // Tests that care about rejection narrow this per case.
+    exposedModels = {
+      findExposed: jest.fn(async (pairs: Array<{ provider: string; model: string }>) => pairs),
+    };
+    service = new PlansService(
+      repo as unknown as PlansRepository,
+      exposedModels as unknown as ExposedModelClient,
+    );
   });
 
   it('createPlan rejects duplicate slug', async () => {
@@ -170,5 +180,69 @@ describe('PlansService', () => {
     expect(view.dailyTokenQuota).toBe(500000);
     expect(view.weeklyTokenQuota).toBe(20_000);
     expect(view.modelAccessMode).toBe(PlanModelAccessMode.ALLOW_ALL);
+  });
+
+  describe('setModelAccess', () => {
+    // Reuse the full fixture: toView reads more of the row than a stub carries.
+    const plan = freePlan;
+
+    beforeEach(() => {
+      repo.findById.mockResolvedValue(plan);
+      repo.replaceModelAccess.mockResolvedValue({ ...plan, modelAccess: [] });
+    });
+
+    it('persists rows that connector-service confirms are exposed', async () => {
+      const models = [{ provider: 'GEMINI', model: 'gemini-2.5-pro', isAllowed: true }];
+
+      await service.setModelAccess(freePlan.id, { models } as never);
+
+      expect(exposedModels.findExposed).toHaveBeenCalledWith([
+        { provider: 'GEMINI', model: 'gemini-2.5-pro' },
+      ]);
+      expect(repo.replaceModelAccess).toHaveBeenCalledWith(freePlan.id, models);
+    });
+
+    it('refuses a model that was never synced and writes nothing', async () => {
+      // The whole point of the feature: provider and model arrive as free
+      // strings, and before this check a typo or a guess became a durable
+      // entitlement indistinguishable from a real one.
+      exposedModels.findExposed.mockResolvedValue([]);
+
+      await expect(
+        service.setModelAccess(freePlan.id, {
+          models: [{ provider: 'GEMINI', model: 'totally-made-up', isAllowed: true }],
+        } as never),
+      ).rejects.toThrow(/not available to assign/i);
+
+      expect(repo.replaceModelAccess).not.toHaveBeenCalled();
+    });
+
+    it('rejects the whole request when only one row is unknown', async () => {
+      // All or nothing: a partially applied plan is harder to notice than a
+      // refused one.
+      exposedModels.findExposed.mockResolvedValue([
+        { provider: 'GEMINI', model: 'gemini-2.5-pro' },
+      ]);
+
+      await expect(
+        service.setModelAccess(freePlan.id, {
+          models: [
+            { provider: 'GEMINI', model: 'gemini-2.5-pro', isAllowed: true },
+            { provider: 'OPENAI', model: 'ghost-model', isAllowed: true },
+          ],
+        } as never),
+      ).rejects.toThrow(/ghost-model/);
+
+      expect(repo.replaceModelAccess).not.toHaveBeenCalled();
+    });
+
+    it('does not call connector-service when clearing every model', async () => {
+      // An empty list removes access. There is nothing to validate, and asking
+      // would fail the request whenever connector-service is down.
+      await service.setModelAccess(freePlan.id, { models: [] } as never);
+
+      expect(exposedModels.findExposed).not.toHaveBeenCalled();
+      expect(repo.replaceModelAccess).toHaveBeenCalledWith(freePlan.id, []);
+    });
   });
 });

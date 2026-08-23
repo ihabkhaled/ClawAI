@@ -1232,6 +1232,11 @@
           "method": "GET",
           "route": "/internal/connectors/models-snapshot",
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/connectors/models/validate-exposed",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
         }
       ],
       "claw-file-generation-service": [
@@ -9737,7 +9742,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 598,
+    "endpointCount": 599,
     "envVarCount": 347,
     "eventCount": 167,
     "frontendRouteCount": 122,

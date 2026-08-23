@@ -1,6 +1,8 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { PlansRepository } from '../repositories/plans.repository';
+import { ExposedModelClient } from '../clients/exposed-model.client';
+import { EXPOSED_MODEL_VALIDATION_MAX_PAIRS } from '../constants/exposed-model.constants';
 import { type CreatePlanDto } from '../dto/create-plan.dto';
 import { type UpdatePlanDto } from '../dto/update-plan.dto';
 import { type SetPlanModelAccessDto } from '../dto/plan-misc.dto';
@@ -19,7 +21,10 @@ import {
 export class PlansService {
   private readonly logger = new Logger(PlansService.name);
 
-  constructor(private readonly plansRepository: PlansRepository) {}
+  constructor(
+    private readonly plansRepository: PlansRepository,
+    private readonly exposedModels: ExposedModelClient,
+  ) {}
 
   async listPlans(): Promise<PlanView[]> {
     const plans = await this.plansRepository.findAll();
@@ -184,8 +189,39 @@ export class PlansService {
     return this.toView(plan);
   }
 
+  // Every row is checked against real connector inventory before anything is
+  // written. Until this existed, provider and model were free strings on the
+  // way in and nothing ever asked whether the pair named a model that had been
+  // synced, was exposed, or was even a chat deployment — so a typo or a guess
+  // became a durable entitlement that looked identical to a real one.
+  //
+  // All or nothing: one unknown pair rejects the whole request rather than
+  // silently saving the rest, because a partially applied plan is harder to
+  // notice than a refused one.
   async setModelAccess(id: string, dto: SetPlanModelAccessDto): Promise<PlanView> {
     await this.getPlan(id);
+    if (dto.models.length > EXPOSED_MODEL_VALIDATION_MAX_PAIRS) {
+      throw new BusinessException(
+        `A plan cannot be given more than ${String(EXPOSED_MODEL_VALIDATION_MAX_PAIRS)} models in one request.`,
+        'PLAN_MODEL_ACCESS_TOO_MANY',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+    if (dto.models.length > 0) {
+      const requested = dto.models.map((row) => ({ provider: row.provider, model: row.model }));
+      const exposed = await this.exposedModels.findExposed(requested);
+      const allowed = new Set(exposed.map((pair) => `${pair.provider}/${pair.model}`));
+      const rejected = requested.filter((pair) => !allowed.has(`${pair.provider}/${pair.model}`));
+      if (rejected.length > 0) {
+        const names = rejected.map((pair) => `${pair.provider}/${pair.model}`).join(', ');
+        this.logger.warn(`setModelAccess: id=${id} rejected=${names}`);
+        throw new BusinessException(
+          `These models are not available to assign: ${names}. A model must be synced from a connector and exposed before a plan can use it.`,
+          'PLAN_MODEL_NOT_EXPOSED',
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+    }
     const plan = await this.plansRepository.replaceModelAccess(id, dto.models);
     this.logger.log(`setModelAccess: id=${id} rows=${dto.models.length}`);
     return this.toView(plan);

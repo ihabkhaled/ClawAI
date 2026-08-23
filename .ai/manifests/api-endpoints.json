@@ -1140,6 +1140,11 @@
         "method": "GET",
         "route": "/internal/connectors/models-snapshot",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/connectors/models/validate-exposed",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
       }
     ],
     "claw-file-generation-service": [
@@ -3028,5 +3033,5 @@
     ]
   },
   "generated": true,
-  "total": 598
+  "total": 599
 }
