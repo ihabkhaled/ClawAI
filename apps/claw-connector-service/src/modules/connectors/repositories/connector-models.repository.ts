@@ -159,4 +159,24 @@ export class ConnectorModelsRepository {
       orderBy: [{ provider: 'asc' }, { displayName: 'asc' }],
     }) as Promise<Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>>;
   }
+
+  // User-facing catalog: a model reaches a user only if its connector is enabled,
+  // it is ACTIVE, an administrator has EXPOSED it, and it is a CHAT model rather than
+  // router infrastructure or an embedding or reranker deployment. The snapshot query
+  // (findAllForSnapshot) stays unfiltered on purpose because the router needs
+  // infrastructure models that are never user-executable.
+  async findExposedForCatalog(): Promise<
+    Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>
+  > {
+    return this.prisma.connectorModel.findMany({
+      where: {
+        connector: { isEnabled: true },
+        lifecycle: 'ACTIVE',
+        exposure: 'EXPOSED',
+        kind: 'CHAT',
+      },
+      include: { connector: { select: { status: true, isEnabled: true } } },
+      orderBy: [{ provider: 'asc' }, { displayName: 'asc' }],
+    }) as Promise<Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>>;
+  }
 }

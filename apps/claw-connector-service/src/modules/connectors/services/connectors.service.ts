@@ -323,8 +323,8 @@ export class ConnectorsService implements OnApplicationBootstrap {
   // unmodified; plan features (compare/judge/critic/research) gate WORKFLOWS,
   // never which model the user can pick.
   async getAvailableModels(): Promise<ConnectorModel[]> {
-    this.logger.debug('getAvailableModels: listing enabled connector models');
-    const rows = await this.connectorModelsRepository.findAllForSnapshot();
+    this.logger.debug('getAvailableModels: listing exposed chat models');
+    const rows = await this.connectorModelsRepository.findExposedForCatalog();
     return rows.map(({ connector: _connector, ...model }) => model);
   }
 

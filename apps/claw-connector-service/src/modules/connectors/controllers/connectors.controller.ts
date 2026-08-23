@@ -90,7 +90,10 @@ export class ConnectorsController {
     return this.connectorsService.syncModels(id);
   }
 
+  // Lists a connector's FULL inventory, including models no administrator has
+  // exposed yet. Administrator-only; every sibling route here already requires it.
   @Get(':id/models')
+  @RequirePermissions(Permission.ADMIN_CONNECTORS_MANAGE)
   async getModels(@Param('id') id: string): Promise<ConnectorModel[]> {
     return this.connectorsService.getModels(id);
   }
