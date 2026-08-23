@@ -49,3 +49,26 @@ export interface ModelExposureFilters {
   exposedOnly: boolean | null;
   kind: ConnectorModelKind | null;
 }
+
+// Declaration ownership: hooks live in src/hooks, their shapes live here.
+export interface UseModelExposureResult {
+  rows: ConnectorModelRow[];
+  visibleRows: ConnectorModelRow[];
+  isLoading: boolean;
+  isSaving: boolean;
+  errorMessage: string | null;
+  filters: ModelExposureFilters;
+  setFilter: <K extends keyof ModelExposureFilters>(key: K, value: ModelExposureFilters[K]) => void;
+  selected: Set<string>;
+  toggle: (modelKey: string) => void;
+  selectAllVisible: () => void;
+  clearSelection: () => void;
+  exposedCount: number;
+  unexposedCount: number;
+  // For an unexpose, the keys currently EXPOSED among the selection, so the
+  // screen can state what is about to be taken away BEFORE the operator
+  // confirms rather than after.
+  impact: string[];
+  load: () => Promise<void>;
+  apply: (exposed: boolean) => Promise<void>;
+}
