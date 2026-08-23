@@ -10,6 +10,7 @@ import {
   type UserEntitlements,
 } from '@claw/shared-entitlements';
 import { Permission } from '@claw/shared-types';
+import { ModelExposureClient } from '../clients/model-exposure.client';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors';
 import { type SendMessageAccessOptions } from '../types/access-control.types';
@@ -22,6 +23,7 @@ import { type SendMessageAccessOptions } from '../types/access-control.types';
 export class AccessControlService {
   private readonly logger = new Logger(AccessControlService.name);
   private readonly adapter: EntitlementsAdapter;
+  private readonly exposure = new ModelExposureClient();
 
   constructor() {
     this.adapter = new EntitlementsAdapter({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL });
@@ -45,6 +47,7 @@ export class AccessControlService {
     }
     if (opts.provider && opts.model) {
       this.assertModelAllowed(ent, opts.provider, opts.model, userId);
+      await this.assertModelExposed(opts.provider, opts.model, userId);
     }
     this.assertQuotaRemaining(ent, userId);
     return ent;
@@ -187,6 +190,23 @@ export class AccessControlService {
     throw new BusinessException(
       'The selected model is not available on your plan',
       'MODEL_NOT_ALLOWED_FOR_PLAN',
+      HttpStatus.FORBIDDEN,
+    );
+  }
+
+  // The plan check answers "is this model on the user's plan". It cannot answer
+  // "does ClawAI still offer this model at all", because plan rows are plain
+  // strings and an administrator can unexpose a deployment long after a plan was
+  // configured. Without this, a crafted request naming an unexposed model still
+  // reached the provider.
+  private async assertModelExposed(provider: string, model: string, userId: string): Promise<void> {
+    if (await this.exposure.isExposed(provider, model)) {
+      return;
+    }
+    this.logger.warn(`assertCanSendMessage: unexposed model user=${userId} ${provider}/${model}`);
+    throw new BusinessException(
+      'The selected model is not available',
+      'MODEL_NOT_EXPOSED',
       HttpStatus.FORBIDDEN,
     );
   }

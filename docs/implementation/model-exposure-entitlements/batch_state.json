@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 8,
+  "currentBatch": 10,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -213,14 +213,21 @@
     },
     {
       "id": 9,
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "commit": null,
-      "tests": ["routing-service 92 suites / 1328 tests", "chat-service 98 suites / 1320 tests"],
+      "tests": [
+        "chat-service 98 suites / 1321 tests",
+        "routing-service 92 suites / 1328 tests",
+        "auth-service 69 suites / 582 tests"
+      ],
       "defects": [],
       "deliverables": [
         "applyPlanModelGate: empty allow-list no longer means unrestricted",
         "modelAccessMode carried on message.created so ALLOW_ALL still works",
-        "gate spec pins both directions"
+        "gate spec pins both directions",
+        "fail-open removed from critic and research gates",
+        "ModelExposureClient with 60s TTL cache",
+        "assertModelExposed on the manual send path, admins included"
       ]
     },
     {
@@ -273,7 +280,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 9 remainder: remove the fail-open guards, then consult exposure at execution time",
+  "nextAction": "Batch 6 admin exposure UI and Batch 8 plan editor, then 10-16",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
@@ -286,9 +293,9 @@
     "ADR proposed a foreign key from PlanModelAccess to ConnectorModel; impossible, they live in different service databases and this repository forbids crossing a service database boundary. The link must be a plain column validated over HTTP."
   ],
   "openCaveats": [
-    "Runtime gates (chat-service access-control, routing plan-model-gate) still do not consult exposure. Batch 9.",
-    "Plan model access UI still offers free-text entry; the backend now refuses invalid rows but the editor should stop offering them. Batch 8.",
-    "No admin exposure UI yet. Batch 6."
+    "Exposure is enforced on the manual send path. AUTO goes through the routing gate, which is plan-aware but not yet exposure-aware; the catalog it routes over is exposure-filtered, so the remaining gap is a crafted AUTO request naming an unexposed model.",
+    "No admin exposure UI (batch 6) and the plan editor still offers free text (batch 8).",
+    "Batches 10-16 not started."
   ],
   "workingTechnique": "For any edit to a file larger than about 8 KB: instruct patch with a minimal anchored hunk (quote the exact 3 trailing lines) and explicitly forbid update. Verify the executed model with: docker logs claw-chat-service | grep callProvider.",
   "parallelismNote": "Parallel agent threads are not viable (CA-06). Execute serially in one window; use the waiting time for supervisor verification rather than a second thread.",
