@@ -1,6 +1,7 @@
 import { usePathname } from 'next/navigation';
 import { useCallback } from 'react';
 
+import { APP_VERSION } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import type { FeedbackPageContext } from '@/types';
 
@@ -19,7 +20,7 @@ export function usePageContext(): () => FeedbackPageContext {
       url: window.location.href,
       viewportWidth: window.innerWidth,
       viewportHeight: window.innerHeight,
-      appVersion: process.env.NEXT_PUBLIC_APP_VERSION ?? 'unknown',
+      appVersion: APP_VERSION,
       userAgent: window.navigator.userAgent,
       locale,
     };
