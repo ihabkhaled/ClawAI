@@ -42,3 +42,19 @@ FeedbackTicketSchema.index({
   subject: 'text',
   searchText: 'text',
 });
+
+// Serialise a ticket as the API contract, not as a Mongo document. Without
+// this the responses carried `_id`, `__v` and the internal `searchText` blob
+// straight to the client, and never carried `id` — so the admin table had no
+// stable React key and clicking a row passed `undefined` to the detail dialog.
+FeedbackTicketSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: (_document, record) => {
+    const output = record as unknown as Record<string, unknown>;
+    output.id = String(output._id);
+    delete output._id;
+    delete output.searchText;
+    return output;
+  },
+});

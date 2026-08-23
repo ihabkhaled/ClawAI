@@ -5477,6 +5477,7 @@ export const fa: TranslationDictionary = {
         closed: 'بسته',
         archived: 'بایگانی‌شده',
       },
+      detail: { reporter: 'گزارش‌دهنده' },
       table: {
         ticket: 'تیکت',
         type: 'نوع',

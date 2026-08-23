@@ -5584,6 +5584,7 @@ export const fr: TranslationDictionary = {
         closed: 'Fermé',
         archived: 'Archivé',
       },
+      detail: { reporter: 'Auteur' },
       table: {
         ticket: 'Ticket',
         type: 'Type',

@@ -5558,6 +5558,7 @@ export const it: TranslationDictionary = {
         closed: 'Chiuso',
         archived: 'Archiviato',
       },
+      detail: { reporter: 'Autore' },
       table: {
         ticket: 'Ticket',
         type: 'Tipo',

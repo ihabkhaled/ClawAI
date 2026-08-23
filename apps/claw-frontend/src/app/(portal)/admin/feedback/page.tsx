@@ -40,12 +40,13 @@ export default function AdminFeedbackPage(): React.ReactElement {
         <CardContent>
           <AdminFeedbackFilters
             status={status ?? 'all'}
-            onStatusChange={setStatus}
+            onStatusChange={(next) => setStatus(next === 'all' ? undefined : next)}
             type={type ?? 'all'}
-            onTypeChange={setType}
+            onTypeChange={(next) => setType(next === 'all' ? undefined : next)}
             search={search}
             onSearchChange={setSearch}
             counts={counts ?? {}}
+            totalCount={total}
           />
         </CardContent>
       </Card>

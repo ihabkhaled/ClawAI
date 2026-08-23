@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect, useMemo } from 'react';
 
+import { FeedbackSortDirection } from '@/enums';
 import { feedbackAdminRepository } from '@/repositories/feedback/feedback-admin.repository';
 import type { FeedbackListQuery, FeedbackStatusCounts } from '@/types';
 
@@ -26,7 +27,11 @@ export function useAdminFeedbackList() {
   const [search, setSearch] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const limit = 20;
-  const sort = '-createdAt';
+  // The API validates sortBy against an allowlist and takes direction
+  // separately. Sending '-createdAt' was rejected with a 400, so the admin list
+  // silently rendered empty.
+  const sortBy = 'createdAt';
+  const sortDir = FeedbackSortDirection.DESC;
 
   const debouncedSearch = useDebouncedValue(search, 400);
 
@@ -35,7 +40,7 @@ export function useAdminFeedbackList() {
   }, [status, type, debouncedSearch]);
 
   const queryFilters: FeedbackListQuery = useMemo(() => {
-    const filters: FeedbackListQuery = { page, limit, sortBy: sort };
+    const filters: FeedbackListQuery = { page, limit, sortBy, sortDir };
     if (status) {
       filters.status = status;
     }
@@ -46,7 +51,7 @@ export function useAdminFeedbackList() {
       filters.search = debouncedSearch;
     }
     return filters;
-  }, [status, type, debouncedSearch, page, limit, sort]);
+  }, [status, type, debouncedSearch, page, limit, sortBy, sortDir]);
 
   const {
     data: listData,

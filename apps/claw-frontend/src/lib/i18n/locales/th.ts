@@ -5441,6 +5441,7 @@ export const th: TranslationDictionary = {
         closed: 'ปิด',
         archived: 'เก็บถาวร',
       },
+      detail: { reporter: 'ผู้แจ้ง' },
       table: {
         ticket: 'ทิกเก็ต',
         type: 'ประเภท',

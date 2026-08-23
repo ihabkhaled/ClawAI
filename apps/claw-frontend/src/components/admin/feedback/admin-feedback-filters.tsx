@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FEEDBACK_TYPE_OPTIONS } from '@/constants/feedback.constants';
+import { FEEDBACK_STATUS_TABS, FEEDBACK_TYPE_OPTIONS } from '@/constants/feedback.constants';
 import { useTranslation } from '@/lib/i18n';
 import type { AdminFeedbackFiltersProps } from '@/types/feedback-props.types';
 
@@ -21,17 +21,15 @@ export function AdminFeedbackFilters({
   search,
   onSearchChange,
   counts,
+  totalCount,
 }: AdminFeedbackFiltersProps) {
   const { t } = useTranslation();
 
-  const statusTabs = [
-    { value: 'all', label: t('feedback.admin.status.all'), count: counts.all },
-    { value: 'open', label: t('feedback.admin.status.open'), count: counts.open },
-    { value: 'inProgress', label: t('feedback.admin.status.inProgress'), count: counts.inProgress },
-    { value: 'resolved', label: t('feedback.admin.status.resolved'), count: counts.resolved },
-    { value: 'closed', label: t('feedback.admin.status.closed'), count: counts.closed },
-    { value: 'archived', label: t('feedback.admin.status.archived'), count: counts.archived },
-  ];
+  const statusTabs = FEEDBACK_STATUS_TABS.map((tab) => ({
+    value: tab.value,
+    label: t(tab.labelKey),
+    count: tab.value === 'all' ? totalCount : (counts[tab.value] ?? 0),
+  }));
 
   return (
     <div className="space-y-4">

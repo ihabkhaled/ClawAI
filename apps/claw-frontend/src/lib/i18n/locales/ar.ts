@@ -5390,6 +5390,7 @@ export const ar: TranslationDictionary = {
         closed: 'مغلقة',
         archived: 'مؤرشفة',
       },
+      detail: { reporter: 'المُبلِّغ' },
       table: {
         ticket: 'التذكرة',
         type: 'النوع',

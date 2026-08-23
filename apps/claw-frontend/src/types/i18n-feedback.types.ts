@@ -98,6 +98,7 @@ export type FeedbackAdminTranslation = {
   updated: string;
   type: { all: string; placeholder: string };
   status: FeedbackAdminStatusTranslation;
+  detail: { reporter: string };
   table: FeedbackAdminTableTranslation;
   actions: FeedbackAdminActionsTranslation;
   pagination: FeedbackAdminPaginationTranslation;

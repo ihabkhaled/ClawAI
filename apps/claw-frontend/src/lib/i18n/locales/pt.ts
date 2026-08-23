@@ -5530,6 +5530,7 @@ export const pt: TranslationDictionary = {
         closed: 'Fechado',
         archived: 'Arquivado',
       },
+      detail: { reporter: 'Autor' },
       table: {
         ticket: 'Ticket',
         type: 'Tipo',

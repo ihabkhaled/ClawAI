@@ -5528,6 +5528,7 @@ export const ru: TranslationDictionary = {
         closed: 'Закрыт',
         archived: 'В архиве',
       },
+      detail: { reporter: 'Автор' },
       table: {
         ticket: 'Тикет',
         type: 'Тип',

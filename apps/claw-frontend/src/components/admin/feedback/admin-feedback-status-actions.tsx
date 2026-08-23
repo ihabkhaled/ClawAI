@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 import type { AdminFeedbackStatusActionsProps } from '@/types/feedback-props.types';
+import { feedbackStatusLabelKey } from '@/utilities/feedback-label.utility';
 
 export function AdminFeedbackStatusActions({
   status,
@@ -46,7 +47,7 @@ export function AdminFeedbackStatusActions({
           ? t('feedback.admin.actions.confirmArchive')
           : t('feedback.admin.actions.archive');
       default:
-        return t(`feedback.admin.status.${newStatus}`);
+        return t(feedbackStatusLabelKey(newStatus));
     }
   };
 

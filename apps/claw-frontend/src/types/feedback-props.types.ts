@@ -69,6 +69,7 @@ export type AdminFeedbackFiltersProps = {
   search: string;
   onSearchChange: (search: string) => void;
   counts: FeedbackStatusCounts;
+  totalCount: number;
 };
 
 export type AdminFeedbackImageViewerProps = {

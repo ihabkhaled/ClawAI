@@ -5472,6 +5472,7 @@ export const en: TranslationDictionary = {
         closed: 'Closed',
         archived: 'Archived',
       },
+      detail: { reporter: 'Reporter' },
       table: {
         ticket: 'Ticket',
         type: 'Type',

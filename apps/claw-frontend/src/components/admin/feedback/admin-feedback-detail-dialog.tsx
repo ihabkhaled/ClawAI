@@ -7,10 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAdminFeedbackDetail } from '@/hooks/admin/feedback/use-admin-feedback-detail';
+import { useTranslation } from '@/lib/i18n';
 import { MarkdownRenderer } from '@/lib/markdown/markdown-renderer';
 import { feedbackAdminRepository } from '@/repositories/feedback/feedback-admin.repository';
 import type { AdminFeedbackDetailDialogProps } from '@/types/feedback-props.types';
 import { formatDateTimeSafe } from '@/utilities/date.utility';
+import { feedbackStatusLabelKey, feedbackTypeLabelKey } from '@/utilities/feedback-label.utility';
 
 import { AdminFeedbackImageViewer } from './admin-feedback-image-viewer';
 import { AdminFeedbackStatusActions } from './admin-feedback-status-actions';
@@ -20,6 +22,7 @@ export function AdminFeedbackDetailDialog({
   open,
   onOpenChange,
 }: AdminFeedbackDetailDialogProps) {
+  const { t } = useTranslation();
   const { ticket, isLoading, changeStatus, isChanging } = useAdminFeedbackDetail(ticketId);
   const [imagePreview, setImagePreview] = useState<{ src: string; alt: string } | null>(null);
 
@@ -36,9 +39,9 @@ export function AdminFeedbackDetailDialog({
               <DialogTitle>Ticket {ticket.ticketNumber}</DialogTitle>
               <div className="flex items-center gap-2">
                 <Badge variant={ticket.status === FeedbackStatus.OPEN ? 'default' : 'secondary'}>
-                  {ticket.status}
+                  {t(feedbackStatusLabelKey(ticket.status))}
                 </Badge>
-                <Badge variant="outline">{ticket.type}</Badge>
+                <Badge variant="outline">{t(feedbackTypeLabelKey(ticket.type))}</Badge>
               </div>
             </div>
           </DialogHeader>
@@ -51,8 +54,10 @@ export function AdminFeedbackDetailDialog({
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="font-medium">Reporter:</span> {ticket.reporterName} (
-                {ticket.reporterEmail})
+                <span className="font-medium">{t('feedback.admin.detail.reporter')}:</span>{' '}
+                {ticket.reporterName === undefined || ticket.reporterName.length === 0
+                  ? ticket.reporterEmail
+                  : `${ticket.reporterName} (${ticket.reporterEmail})`}
               </div>
               <div>
                 <span className="font-medium">Created:</span> {formatDateTimeSafe(ticket.createdAt)}

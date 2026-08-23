@@ -1,4 +1,4 @@
-import { FeedbackType } from '@claw/shared-types';
+import { FeedbackStatus, FeedbackType } from '@claw/shared-types';
 
 export const FEEDBACK_TYPE_OPTIONS: readonly { value: FeedbackType; labelKey: string }[] = [
   { value: FeedbackType.BUG_REPORT, labelKey: 'feedback.types.bugReport' },
@@ -17,3 +17,16 @@ export const FEEDBACK_ACCEPTED_IMAGE_TYPES = 'image/png,image/jpeg,image/webp,im
 
 export const FEEDBACK_LAUNCHER_CLASSES =
   'fixed right-4 z-40 bottom-[calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom)+1rem)] md:bottom-[calc(env(safe-area-inset-bottom)+1.5rem)]';
+
+// The API reports per-status counts keyed by the FeedbackStatus enum name, and
+// the status filter is sent back the same way. The tabs used lowercase labels
+// as their values, so every tab filtered on a status the server did not know
+// and the counts rendered empty.
+export const FEEDBACK_STATUS_TABS: readonly { value: string; labelKey: string }[] = [
+  { value: 'all', labelKey: 'feedback.admin.status.all' },
+  { value: FeedbackStatus.OPEN, labelKey: 'feedback.admin.status.open' },
+  { value: FeedbackStatus.IN_PROGRESS, labelKey: 'feedback.admin.status.inProgress' },
+  { value: FeedbackStatus.RESOLVED, labelKey: 'feedback.admin.status.resolved' },
+  { value: FeedbackStatus.CLOSED, labelKey: 'feedback.admin.status.closed' },
+  { value: FeedbackStatus.ARCHIVED, labelKey: 'feedback.admin.status.archived' },
+];

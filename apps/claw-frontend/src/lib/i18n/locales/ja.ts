@@ -5502,6 +5502,7 @@ export const ja: TranslationDictionary = {
         closed: 'クローズ',
         archived: 'アーカイブ済み',
       },
+      detail: { reporter: '報告者' },
       table: {
         ticket: 'チケット',
         type: '種類',

@@ -5196,6 +5196,7 @@ export const zh: TranslationDictionary = {
         closed: '已关闭',
         archived: '已归档',
       },
+      detail: { reporter: '提交人' },
       table: {
         ticket: '工单',
         type: '类型',

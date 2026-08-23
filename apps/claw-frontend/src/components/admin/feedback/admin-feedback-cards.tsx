@@ -8,16 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/lib/i18n';
 import type { AdminFeedbackListProps } from '@/types/feedback-props.types';
 import { formatDateTimeSafe } from '@/utilities/date.utility';
+import { feedbackStatusLabelKey, feedbackTypeLabelKey } from '@/utilities/feedback-label.utility';
 
 export function AdminFeedbackCards({ items, onSelect }: AdminFeedbackListProps) {
   const { t } = useTranslation();
 
   const getStatusLabel = (status: string) => {
-    return t(`feedback.admin.status.${status}`);
+    return t(feedbackStatusLabelKey(status));
   };
 
   const getTypeLabel = (type: string) => {
-    return t(`feedback.type.${type}`);
+    return t(feedbackTypeLabelKey(type));
   };
 
   return (

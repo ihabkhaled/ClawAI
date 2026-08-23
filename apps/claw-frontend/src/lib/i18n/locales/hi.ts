@@ -5487,6 +5487,7 @@ export const hi: TranslationDictionary = {
         closed: 'बंद',
         archived: 'संग्रहीत',
       },
+      detail: { reporter: 'रिपोर्टर' },
       table: {
         ticket: 'टिकट',
         type: 'प्रकार',
