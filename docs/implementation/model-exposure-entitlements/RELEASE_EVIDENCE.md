@@ -23,16 +23,45 @@ Every row is something that was run and observed. Anything not measured says so.
 
 ## Migration
 
-| Item              | Value                                                                                           |
-| ----------------- | ----------------------------------------------------------------------------------------------- |
-| Migration IDs     | `20260822232000_add_model_exposure_and_kind`, `20260823093000_backfill_existing_model_exposure` |
-| Rehearsed against | `claw-pg-connector`, PostgreSQL 16.13, in a transaction, rolled back                            |
-| Rows before       | 160 visible under the old catalogue predicate                                                   |
-| Rows after        | 160 visible under the new predicate                                                             |
-| Backfilled        | 160 (`ACTIVE` on an enabled connector)                                                          |
-| Left `UNEXPOSED`  | 0 (every existing row qualified)                                                                |
-| Fresh install     | no-op, no rows to backfill                                                                      |
-| Rerun safe        | yes — the trailing `exposure = 'UNEXPOSED'` predicate makes it idempotent                       |
+| Item              | Value                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| Migration IDs     | `20260822232000_add_model_exposure_and_kind`, `20260823093000_backfill_existing_model_exposure`   |
+| Rehearsed against | `claw-pg-connector`, PostgreSQL 16.13, in a transaction, rolled back                              |
+| Rows before       | 160 visible under the old catalogue predicate                                                     |
+| Rows after        | 160 visible under the new predicate                                                               |
+| Backfilled        | 160 (`ACTIVE` on an enabled connector)                                                            |
+| Left `UNEXPOSED`  | 0 (every existing row qualified)                                                                  |
+| Fresh install     | no-op, no rows to backfill                                                                        |
+| Rerun safe        | Idempotent: a second run updates 0 rows. **Not intent-preserving on a manual replay** — see below |
+
+### Backfill replay — measured, and a correction
+
+Replayed in a transaction against the same database:
+
+```
+second run of the backfill              UPDATE 0     (idempotent)
+admin unexposes 3 models, replay again  UPDATE 3     (they came back EXPOSED)
+rows left UNEXPOSED after replay        0
+```
+
+An earlier commit message on this branch claimed the trailing
+`exposure = 'UNEXPOSED'` predicate stops the backfill re-exposing anything an
+administrator later hides. **That claim is wrong.** An administrator-unexposed
+row _is_ `UNEXPOSED`, so it matches the predicate and is re-exposed.
+
+The predicate does make the statement idempotent — running it twice in a row
+changes nothing — which is what was actually verified the first time and then
+over-claimed. It does not encode administrator intent, because nothing in the
+row distinguishes "never exposed" from "deliberately unexposed".
+
+In practice Prisma records the migration in `_prisma_migrations` and runs it
+once, so this is a caveat rather than a live defect. It becomes real if the
+backfill is ever re-applied by hand after go-live — during a restore rehearsal,
+say. Anyone doing that must expect every unexposure to be undone.
+
+A durable fix would need the row to carry why it is unexposed, never-exposed
+versus revoked, which the current schema does not model. Recorded rather than
+patched over.
 
 ## Test evidence
 

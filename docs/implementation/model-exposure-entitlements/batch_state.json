@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 14,
+  "currentBatch": 16,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -300,20 +300,30 @@
     },
     {
       "id": 15,
-      "status": "PENDING",
+      "status": "PARTIAL",
       "commit": null,
       "tests": [],
-      "defects": []
+      "defects": [],
+      "deliverables": [
+        "migration replay testing: idempotence confirmed, and a wrong idempotence claim corrected"
+      ],
+      "finding": "The backfill is idempotent (second run updates 0 rows) but NOT intent-preserving: replaying it after an administrator unexposes models re-exposes them, because an admin-unexposed row is indistinguishable from a never-exposed one. Prisma runs the migration once so this is a caveat, not a live defect. A durable fix needs the schema to record WHY a row is unexposed.",
+      "gap": "No injected provider 429/500, partial pagination, mid-request connector disable, Redis-down, or concurrent-admin chaos. No performance measurement at 100/500/1000 models."
     },
     {
       "id": 16,
-      "status": "PENDING",
+      "status": "DONE",
       "commit": null,
       "tests": [],
-      "defects": []
+      "defects": [],
+      "deliverables": [
+        "RELEASE_EVIDENCE.md with a measured table and an explicit not-measured section",
+        "RELEASE_NOTES_DRAFT.md",
+        "PR #171 ready for review, mergeable, CodeQL green"
+      ]
     }
   ],
-  "nextAction": "Batches 14-16: browser burn-in, chaos, release evidence",
+  "nextAction": "Remaining: browser burn-in, chaos injection, performance, wiring authorizeModel into the live path, admin route composition",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
