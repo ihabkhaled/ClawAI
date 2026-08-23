@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 4,
+  "currentBatch": 5,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -118,10 +118,14 @@
     },
     {
       "id": 4,
-      "status": "PENDING",
+      "status": "DONE",
       "commit": null,
       "tests": [],
-      "defects": []
+      "defects": [],
+      "deliverables": [
+        "connector-models.repository.ts replaceMany soft-delete",
+        "docs/implementation/model-exposure-entitlements/batch-04-sync-note.md"
+      ]
     },
     {
       "id": 5,
@@ -208,7 +212,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 4: sync algorithm - soft-delete on re-sync, lastSeenAt, new models stay UNEXPOSED",
+  "nextAction": "Batch 5: global exposure backend - admin expose/unexpose endpoints and make the user-facing catalog filter on exposure",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
@@ -219,5 +223,8 @@
   "adrCorrections": [
     "ADR proposed an exposure enum containing DEPRECATED; dropped, because ModelLifecycle already owns DEPRECATED and SUNSET and two enums encoding the same concept produce contradictory states.",
     "ADR proposed a foreign key from PlanModelAccess to ConnectorModel; impossible, they live in different service databases and this repository forbids crossing a service database boundary. The link must be a plain column validated over HTTP."
+  ],
+  "openCaveats": [
+    "exposure is stored but not yet enforced anywhere: getAvailableModels, findAllForSnapshot and both runtime gates still ignore it. Batch 5 wires the exposure backend, Batch 9 the canonical gate. Until then the column is inert and behaviour is unchanged for users."
   ]
 }

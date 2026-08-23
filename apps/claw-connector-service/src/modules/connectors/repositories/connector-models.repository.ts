@@ -68,12 +68,18 @@ export class ConnectorModelsRepository {
     const uniqueModels = [...new Map(models.map((model) => [model.modelKey, model])).values()];
     const modelKeys = uniqueModels.map((model) => model.modelKey);
 
+    // A provider listing that is truncated, rate-limited or briefly failing used to
+    // erase inventory permanently, taking with it the identity that plan entitlements
+    // and audit history point at. Marking REMOVED keeps the row and its id, and forcing
+    // exposure back to UNEXPOSED means a model that disappears cannot keep serving users.
     const operations = [
-      this.prisma.connectorModel.deleteMany({
+      this.prisma.connectorModel.updateMany({
         where: {
           connectorId,
           ...(modelKeys.length > 0 ? { modelKey: { notIn: modelKeys } } : {}),
+          lifecycle: { not: 'REMOVED' },
         },
+        data: { lifecycle: 'REMOVED', exposure: 'UNEXPOSED' },
       }),
       ...uniqueModels.map((model) =>
         this.prisma.connectorModel.upsert({
@@ -94,6 +100,7 @@ export class ConnectorModelsRepository {
             cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
             outputUsdPerMillion: model.usage?.outputUsdPerMillion,
             syncedAt: new Date(),
+            lastSeenAt: new Date(),
           },
           create: {
             connectorId,
@@ -111,13 +118,15 @@ export class ConnectorModelsRepository {
             inputUsdPerMillion: model.usage?.inputUsdPerMillion,
             cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
             outputUsdPerMillion: model.usage?.outputUsdPerMillion,
+            lastSeenAt: new Date(),
           },
         }),
       ),
     ];
 
-    const [deleted, ...upserted] = await this.prisma.$transaction(operations);
-    return { deleted: (deleted as { count: number }).count, upserted: upserted.length };
+    // `removed` is now models marked REMOVED rather than rows destroyed.
+    const [removed, ...upserted] = await this.prisma.$transaction(operations);
+    return { deleted: (removed as { count: number }).count, upserted: upserted.length };
   }
 
   async findByConnectorId(connectorId: string): Promise<ConnectorModel[]> {
