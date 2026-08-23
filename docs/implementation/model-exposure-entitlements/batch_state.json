@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 13,
+  "currentBatch": 14,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -280,10 +280,16 @@
     },
     {
       "id": 13,
-      "status": "PENDING",
+      "status": "PARTIAL",
       "commit": null,
       "tests": [],
-      "defects": []
+      "defects": [],
+      "deliverables": [
+        "authorizeModel: the ADR precedence order as one pure, testable function",
+        "300-case entitlement matrix runs against it, all passing"
+      ],
+      "finding": "The matrix corrected the ADR. It expects NO_ACTIVE_PLAN to outrank every deployment fact, and it is right: reporting MODEL_NOT_EXPOSED to a caller with no plan hands them a probe into the inventory. Plan standing is now checked first.",
+      "gap": "authorizeModel is not yet the code path production uses; the live checks remain the Prisma where-clause plus isModelAllowedForUsage. Wiring the services onto it is follow-up work."
     },
     {
       "id": 14,
@@ -307,7 +313,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 13 deterministic entitlement matrix",
+  "nextAction": "Batches 14-16: browser burn-in, chaos, release evidence",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
