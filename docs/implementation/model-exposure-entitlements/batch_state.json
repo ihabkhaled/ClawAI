@@ -213,10 +213,15 @@
     },
     {
       "id": 9,
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "commit": null,
-      "tests": [],
-      "defects": []
+      "tests": ["routing-service 92 suites / 1328 tests", "chat-service 98 suites / 1320 tests"],
+      "defects": [],
+      "deliverables": [
+        "applyPlanModelGate: empty allow-list no longer means unrestricted",
+        "modelAccessMode carried on message.created so ALLOW_ALL still works",
+        "gate spec pins both directions"
+      ]
     },
     {
       "id": 10,
@@ -268,7 +273,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batch 9 canonical runtime gate, or Batch 6/8 UI",
+  "nextAction": "Batch 9 remainder: remove the fail-open guards, then consult exposure at execution time",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
@@ -286,5 +291,6 @@
     "No admin exposure UI yet. Batch 6."
   ],
   "workingTechnique": "For any edit to a file larger than about 8 KB: instruct patch with a minimal anchored hunk (quote the exact 3 trailing lines) and explicitly forbid update. Verify the executed model with: docker logs claw-chat-service | grep callProvider.",
-  "parallelismNote": "Parallel agent threads are not viable (CA-06). Execute serially in one window; use the waiting time for supervisor verification rather than a second thread."
+  "parallelismNote": "Parallel agent threads are not viable (CA-06). Execute serially in one window; use the waiting time for supervisor verification rather than a second thread.",
+  "provenanceNote": "chat-messages.service.ts publish wiring (4 mechanical edits) was applied by the supervisor after the agent failed the anchors repeatedly on that ~1900-line file. Design and every other change in this batch are agent-authored."
 }

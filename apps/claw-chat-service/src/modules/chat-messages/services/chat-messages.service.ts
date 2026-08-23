@@ -153,6 +153,10 @@ export class ChatMessagesService implements OnModuleInit {
       forcedModel,
     );
     const allowedModels = entitlements ? allowedModelKeys(entitlements) : [];
+    // Travels with the event so the router can tell an ALLOW_ALL plan, which
+    // sends an empty list as a fast path, from a restricted plan whose list is
+    // genuinely empty and therefore grants nothing.
+    const modelAccessMode = entitlements?.modelAccessMode;
 
     this.chatStreamService.emitRequestAccepted(dto.threadId);
 
@@ -193,6 +197,7 @@ export class ChatMessagesService implements OnModuleInit {
       forcedProvider,
       forcedModel,
       allowedModels,
+      modelAccessMode,
     );
 
     return message;
@@ -1893,6 +1898,7 @@ export class ChatMessagesService implements OnModuleInit {
     forcedProvider: string | undefined,
     forcedModel: string | undefined,
     allowedModels: string[],
+    modelAccessMode: string | undefined,
   ): void {
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: message.id,
@@ -1903,8 +1909,10 @@ export class ChatMessagesService implements OnModuleInit {
       forcedProvider,
       forcedModel,
       // Phase C: plan-allowed "provider/model" keys for AUTO-mode router gating.
-      // Empty = no restriction (allow-all) — preserves the v1 hot path.
+      // Empty means "everything" only when modelAccessMode is ALLOW_ALL; for any
+      // other plan an empty list grants nothing, so the mode has to travel too.
       allowedModels,
+      modelAccessMode,
       timestamp: new Date().toISOString(),
     });
   }
