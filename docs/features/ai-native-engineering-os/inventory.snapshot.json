@@ -563,8 +563,23 @@
           "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
         },
         {
+          "method": "DELETE",
+          "route": "/admin/deployment/credentials",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
+          "method": "PUT",
+          "route": "/admin/deployment/credentials",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/admin/deployment/reset",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/deployment/run",
           "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
         },
         {
@@ -8115,6 +8130,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "DeploymentCredential"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "DeviceAuthorizationGrant"
           },
           {
@@ -8992,7 +9012,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 352
+        "testFiles": 356
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9737,7 +9757,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 597,
+    "endpointCount": 600,
     "envVarCount": 347,
     "eventCount": 167,
     "frontendRouteCount": 123,
@@ -9749,7 +9769,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 970,
+    "totalTestFiles": 974,
     "workspaceCount": 25
   }
 }

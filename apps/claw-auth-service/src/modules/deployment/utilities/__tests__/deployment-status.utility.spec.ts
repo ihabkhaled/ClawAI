@@ -1,4 +1,4 @@
-import { DeploymentPhase, DeploymentState } from '@claw/shared-types';
+import { DeploymentCredentialSource, DeploymentPhase, DeploymentState } from '@claw/shared-types';
 
 import { type DeploymentViewFlags } from '../../types/deployment-view.types';
 import {
@@ -10,7 +10,27 @@ import {
 } from '../deployment-status.utility';
 
 const SHA = 'a'.repeat(40);
-const FLAGS: DeploymentViewFlags = { manualTriggerEnabled: true, automaticDeployEnabled: true };
+const CREDENTIALS = {
+  source: DeploymentCredentialSource.ENVIRONMENT,
+  repository: 'ihabkhaled/ClawAI',
+  ref: 'main',
+  tokenLastFour: 'oken',
+  updatedAt: null,
+  isUsable: true,
+};
+const FLAGS: DeploymentViewFlags = {
+  manualTriggerEnabled: true,
+  automaticDeployEnabled: true,
+  credentials: CREDENTIALS,
+};
+const NO_CREDENTIALS = {
+  source: DeploymentCredentialSource.NONE,
+  repository: null,
+  ref: null,
+  tokenLastFour: null,
+  updatedAt: null,
+  isUsable: false,
+};
 
 function validDocument(): Record<string, unknown> {
   return {
@@ -66,6 +86,7 @@ describe('deployment status utility', () => {
       unknownDeploymentStatusView({
         manualTriggerEnabled: false,
         automaticDeployEnabled: false,
+        credentials: NO_CREDENTIALS,
       }),
     ).toEqual({
       schemaVersion: 1,
@@ -85,6 +106,7 @@ describe('deployment status utility', () => {
       isStale: false,
       manualTriggerEnabled: false,
       automaticDeployEnabled: false,
+      credentials: NO_CREDENTIALS,
     });
   });
 
@@ -96,6 +118,7 @@ describe('deployment status utility', () => {
       toDeploymentStatusView(parsed, {
         manualTriggerEnabled: true,
         automaticDeployEnabled: false,
+        credentials: CREDENTIALS,
       }),
     ).toMatchObject({ manualTriggerEnabled: true, automaticDeployEnabled: false });
   });

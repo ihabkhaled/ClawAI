@@ -63,6 +63,7 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set([
   'Ollama',
   'Ollama Cloud',
   'OpenAI',
+  'github_pat_…',
   'llama.cpp',
   'ms',
 ]);

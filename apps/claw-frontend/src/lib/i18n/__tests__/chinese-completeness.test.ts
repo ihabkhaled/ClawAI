@@ -57,6 +57,7 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set([
   'Grok',
   'Ollama Cloud',
   'OpenAI',
+  'github_pat_…',
   'llama.cpp',
 ]);
 

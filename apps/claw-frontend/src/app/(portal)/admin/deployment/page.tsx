@@ -4,7 +4,10 @@ import { RefreshCw } from 'lucide-react';
 
 import { AccessDenied } from '@/components/admin/access-denied';
 import { DeploymentControlPanel } from '@/components/admin/deployment/deployment-control-panel';
+import { DeploymentCredentialsCard } from '@/components/admin/deployment/deployment-credentials-card';
+import { DeploymentRunProgressCard } from '@/components/admin/deployment/deployment-run-progress-card';
 import { DeploymentStatusContent } from '@/components/admin/deployment/deployment-status-content';
+import { DeploymentTroubleshootingCard } from '@/components/admin/deployment/deployment-troubleshooting-card';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
@@ -50,15 +53,31 @@ export default function AdminDeploymentPage(): React.ReactElement {
       ) : null}
       {!controller.isLoading && !controller.isError && controller.status ? (
         <>
+          <DeploymentTroubleshootingCard
+            t={controller.t}
+            status={controller.status}
+            progress={controller.progress}
+          />
           <DeploymentControlPanel
             t={controller.t}
             status={controller.status}
             actions={controller.actions}
           />
+          <DeploymentRunProgressCard
+            t={controller.t}
+            locale={controller.locale}
+            progress={controller.progress}
+          />
           <DeploymentStatusContent
             status={controller.status}
             t={controller.t}
             locale={controller.locale}
+          />
+          <DeploymentCredentialsCard
+            t={controller.t}
+            locale={controller.locale}
+            status={controller.status}
+            credentials={controller.credentials}
           />
         </>
       ) : null}

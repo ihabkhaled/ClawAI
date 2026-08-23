@@ -61,6 +61,7 @@ const TECHNICAL_VALUE_ALLOWLIST = new Set([
   'CPU MoE',
   'CUDA',
   'ROCm',
+  'github_pat_…',
   'llama.cpp',
   '© {year} ClawAI · v{version}',
   'X',

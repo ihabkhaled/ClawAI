@@ -1,6 +1,9 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Post, Put } from '@nestjs/common';
 import {
+  type DeploymentCredentialClearResult,
+  type DeploymentCredentialView,
   type DeploymentResetResult,
+  type DeploymentRunProgress,
   type DeploymentStatusView,
   type DeploymentTriggerResult,
   Permission,
@@ -12,6 +15,10 @@ import { Roles } from '../../../app/decorators/roles.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { UserRole } from '../../../common/enums';
 import { type AuthenticatedUser } from '../../../common/types';
+import {
+  type SaveDeploymentCredentialDto,
+  saveDeploymentCredentialSchema,
+} from '../dto/deployment-credential.dto';
 import {
   type SetDeploymentAutomationDto,
   setDeploymentAutomationSchema,
@@ -53,6 +60,31 @@ export class DeploymentAdminController {
   @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
   reset(@CurrentUser() actor: AuthenticatedUser): Promise<DeploymentResetResult> {
     return this.deploymentService.reset(actor.id);
+  }
+
+  @Get('run')
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
+  getRun(@CurrentUser() actor: AuthenticatedUser): Promise<DeploymentRunProgress> {
+    return this.deploymentService.getRunProgress(actor.id);
+  }
+
+  @Put('credentials')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
+  saveCredentials(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Body(new ZodValidationPipe(saveDeploymentCredentialSchema)) dto: SaveDeploymentCredentialDto,
+  ): Promise<DeploymentCredentialView> {
+    return this.deploymentService.saveCredentials(actor.id, dto);
+  }
+
+  @Delete('credentials')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions(Permission.ADMIN_SYSTEM_VIEW)
+  clearCredentials(
+    @CurrentUser() actor: AuthenticatedUser,
+  ): Promise<DeploymentCredentialClearResult> {
+    return this.deploymentService.clearCredentials(actor.id);
   }
 
   @Post('automation')
