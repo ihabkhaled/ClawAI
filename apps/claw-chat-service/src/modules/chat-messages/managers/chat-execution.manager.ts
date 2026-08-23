@@ -1,4 +1,4 @@
-import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import {
   LocalModelRole,
   type ResolvedEffort,
@@ -18,6 +18,7 @@ import {
 import { AppConfig } from '../../../app/config/app.config';
 import { httpRequest, recordGet } from '../../../common/utilities';
 import { BusinessException } from '../../../common/errors';
+import { ModelExposureClient } from '../clients/model-exposure.client';
 import {
   ANTHROPIC_PROVIDER,
   FILE_GENERATION_PROVIDER,
@@ -166,6 +167,7 @@ import { providerFailureCode } from '../utilities/runtime-v2-provider-failure.ut
 @Injectable()
 export class ChatExecutionManager implements OnModuleInit {
   private readonly logger = new Logger(ChatExecutionManager.name);
+  private readonly modelExposure = new ModelExposureClient();
 
   constructor(
     private readonly contextAssembly: ContextAssemblyManager,
@@ -1607,6 +1609,21 @@ export class ChatExecutionManager implements OnModuleInit {
     });
   }
 
+  // Refuses a deployment that is no longer offered. Fails closed: if
+  // connector-service cannot answer, the execution does not happen. Cached
+  // briefly inside the client so a busy thread does not add a hop per turn.
+  private async assertExposedForExecution(provider: string, model: string): Promise<void> {
+    if (await this.modelExposure.isExposed(provider, model)) {
+      return;
+    }
+    this.logger.warn(`callProvider: refused unexposed model ${provider}/${model}`);
+    throw new BusinessException(
+      'The selected model is not available',
+      'MODEL_NOT_EXPOSED',
+      HttpStatus.FORBIDDEN,
+    );
+  }
+
   private async dispatchProvider(
     provider: string,
     model: string,
@@ -1617,6 +1634,13 @@ export class ChatExecutionManager implements OnModuleInit {
     routingMode?: string,
     executionOptions?: ExecutionOptions,
   ): Promise<LlmResponse> {
+    // The last gate before a provider is called, and the only one every
+    // execution path shares: manual sends, AUTO, fallback, escalation,
+    // consensus and compare all arrive here. Checking exposure at this single
+    // point is what stops a model nobody exposed from executing no matter which
+    // route reached it — a manual send is refused earlier, but an AUTO decision
+    // or a fallback promotion is chosen by the router, not the caller.
+    await this.assertExposedForExecution(provider, model);
     this.logger.debug(
       `callProvider: dispatching to provider type — provider=${provider} model=${model} usedFallback=${String(usedFallback)}`,
     );

@@ -6,7 +6,7 @@
   "branch": "feat/model-exposure-plan-entitlements",
   "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
   "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
-  "currentBatch": 10,
+  "currentBatch": 11,
   "codingAgent": {
     "repo": "ihabkhaled/ClawAI-Coding-Agent",
     "baselineVersion": "0.63.2",
@@ -245,10 +245,14 @@
     },
     {
       "id": 10,
-      "status": "PENDING",
+      "status": "DONE",
       "commit": null,
-      "tests": [],
-      "defects": []
+      "tests": ["chat-service 100 suites / 1334 tests"],
+      "defects": [],
+      "deliverables": [
+        "exposure enforced inside dispatchProvider, the single chokepoint every execution path shares",
+        "covers AUTO, fallback, escalation, consensus and compare in one place"
+      ]
     },
     {
       "id": 11,
@@ -293,7 +297,7 @@
       "defects": []
     }
   ],
-  "nextAction": "Batches 10-16: auto/multi-model entitlement, cache/revision, audit+security, tests, browser, chaos, release",
+  "nextAction": "Batch 11 cache and revision correctness",
   "appVersionAtBase": "1.33.0",
   "policy": {
     "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
@@ -306,9 +310,8 @@
     "ADR proposed a foreign key from PlanModelAccess to ConnectorModel; impossible, they live in different service databases and this repository forbids crossing a service database boundary. The link must be a plain column validated over HTTP."
   ],
   "openCaveats": [
-    "Exposure is enforced on the manual send path. AUTO goes through the routing gate, which is plan-aware but not yet exposure-aware; the catalog it routes over is exposure-filtered, so the remaining gap is a crafted AUTO request naming an unexposed model.",
-    "No admin exposure UI (batch 6) and the plan editor still offers free text (batch 8).",
-    "Batches 10-16 not started."
+    "Admin exposure hook and table exist; the /admin route composing them is not wired.",
+    "Batches 11-16 not started: cache/revision invalidation, audit+metrics, the 300-case matrix, browser burn-in, chaos and performance."
   ],
   "workingTechnique": "For any edit to a file larger than about 8 KB: instruct patch with a minimal anchored hunk (quote the exact 3 trailing lines) and explicitly forbid update. Verify the executed model with: docker logs claw-chat-service | grep callProvider.",
   "parallelismNote": "Parallel agent threads are not viable (CA-06). Execute serially in one window; use the waiting time for supervisor verification rather than a second thread.",
