@@ -36,22 +36,30 @@ export async function GET(_request: Request, context: DiscoveryRouteContext): Pr
       return new Response(null, { status: 404 });
     }
     const pageOffset = (pageChunk - 1) * SITEMAP_URL_CHUNK_SIZE;
-    entries = getIndexablePagesForLocale(localeValue)
-      .slice(pageOffset, pageOffset + SITEMAP_URL_CHUNK_SIZE)
-      .map((page) => {
-        const alternates = getLanguageAlternates(page.slug);
-        return {
-          url: `${siteUrl}${page.canonicalPath}`,
-          lastModified: page.metadata.lastReviewed,
-          alternates: [
-            ...Object.entries(alternates).map(([language, path]) => ({
-              language: getHtmlLanguage(language as typeof localeValue),
-              url: `${siteUrl}${path}`,
-            })),
-            { language: 'x-default', url: `${siteUrl}/en${page.path === '/' ? '' : page.path}` },
-          ],
-        };
-      });
+    const localePages = getIndexablePagesForLocale(localeValue);
+    // A chunk past the end is not an empty sitemap, it is a sitemap that does
+    // not exist. Answering 200 with zero URLs tells Google the document is
+    // healthy and holds nothing, which is indistinguishable from a real outage
+    // that emptied it — and the index can genuinely point at a chunk that has
+    // since shrunk away, so this is reachable in production and not only by a
+    // hand-typed URL.
+    if (pageChunk > 1 && pageOffset >= localePages.length) {
+      return new Response(null, { status: 404 });
+    }
+    entries = localePages.slice(pageOffset, pageOffset + SITEMAP_URL_CHUNK_SIZE).map((page) => {
+      const alternates = getLanguageAlternates(page.slug);
+      return {
+        url: `${siteUrl}${page.canonicalPath}`,
+        lastModified: page.metadata.lastReviewed,
+        alternates: [
+          ...Object.entries(alternates).map(([language, path]) => ({
+            language: getHtmlLanguage(language as typeof localeValue),
+            url: `${siteUrl}${path}`,
+          })),
+          { language: 'x-default', url: `${siteUrl}/en${page.path === '/' ? '' : page.path}` },
+        ],
+      };
+    });
   } else if (chatMatch?.[1] !== undefined) {
     const chunk = Number(chatMatch[1]);
     if (!Number.isSafeInteger(chunk) || chunk < 1) {
@@ -83,6 +91,13 @@ export async function GET(_request: Request, context: DiscoveryRouteContext): Pr
       }
     }
   } else {
+    return new Response(null, { status: 404 });
+  }
+
+  // Same rule for the chat half, which cannot know its length up front: it
+  // pages until it fills a chunk, so "collected nothing beyond the first chunk"
+  // is how out-of-range presents itself here.
+  if (entries.length === 0 && chatMatch?.[1] !== undefined && Number(chatMatch[1]) > 1) {
     return new Response(null, { status: 404 });
   }
 

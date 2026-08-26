@@ -21,9 +21,12 @@ function isW3cDatetime(value: string): boolean {
   return W3C_DATE.test(value) || W3C_DATETIME_WITH_TIME.test(value);
 }
 
+const mockChatSharePage = vi.fn();
+
 vi.mock('@/lib/chat-shares/public-chat-share.service', () => ({
   countIndexableChatShares: (locale: string): unknown => Promise.resolve({ locale, count: 0 }),
-  getIndexableChatSharePage: (): unknown => Promise.resolve(null),
+  getIndexableChatSharePage: (locale: string, cursor: string | null): unknown =>
+    mockChatSharePage(locale, cursor),
 }));
 
 function parse(xml: string): Document {
@@ -52,6 +55,8 @@ async function fetchChild(locale: string, document: string): Promise<Response> {
 describe('sitemaps are readable by Google', () => {
   beforeEach(() => {
     vi.resetModules();
+    mockChatSharePage.mockReset();
+    mockChatSharePage.mockResolvedValue(null);
     vi.stubEnv('NODE_ENV', 'production');
     process.env['SITE_URL'] = SITE;
   });
@@ -188,6 +193,35 @@ describe('sitemaps are readable by Google', () => {
     DYNAMIC_IMPORT_TIMEOUT_MS,
   );
 
+  // The rules above were asserted against the pages half only. Shared chats
+  // reach Google through the same documents and carry a different lastmod
+  // source (`updatedAt`, a full timestamp) and a different URL shape.
+  it(
+    'holds the chat half to the same rules as the pages half',
+    async () => {
+      mockChatSharePage.mockResolvedValue({
+        items: [
+          {
+            publicShareId: 'share-abc',
+            contentLocale: 'en',
+            updatedAt: '2026-08-20T10:00:00.000Z',
+          },
+        ],
+        nextCursor: null,
+      });
+
+      const child = parse(await (await fetchChild('en', 'chats-1.xml')).text());
+      const url = child.getElementsByTagNameNS(SITEMAP_NS, 'url')[0];
+      const location = url?.getElementsByTagNameNS(SITEMAP_NS, 'loc')[0]?.textContent ?? '';
+      const stamp = url?.getElementsByTagNameNS(SITEMAP_NS, 'lastmod')[0]?.textContent ?? '';
+
+      expect(location).toBe(`${SITE}/en/share/chat/share-abc`);
+      expect(new URL(location).host).toBe(new URL(SITE).host);
+      expect(isW3cDatetime(stamp)).toBe(true);
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
+
   it(
     'stays inside the 50 000 URL and 50 MB limits, and says so in the content type',
     async () => {
@@ -211,6 +245,25 @@ describe('sitemaps are readable by Google', () => {
       // An empty but successful sitemap looks healthy while indexing nothing.
       expect((await fetchChild('en', 'nonsense.xml')).status).toBe(404);
       expect((await fetchChild('xx', 'pages-1.xml')).status).toBe(404);
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
+
+  // Caught by turning the anti-gaming pass on this file: the assertion above
+  // stated the principle while the route broke it for the case that actually
+  // occurs. A chunk beyond the end returned 200 with zero URLs — and the index
+  // can point at a chunk that has since shrunk away, so Googlebot reaches this
+  // without anyone typing a URL by hand.
+  it(
+    'answers a chunk past the end with 404, not an empty urlset',
+    async () => {
+      expect((await fetchChild('en', 'pages-2.xml')).status).toBe(404);
+      expect((await fetchChild('en', 'pages-99.xml')).status).toBe(404);
+      expect((await fetchChild('en', 'chats-3.xml')).status).toBe(404);
+
+      // The first chunk stays answerable: an empty one is a locale with nothing
+      // published yet, which the index simply does not link.
+      expect((await fetchChild('en', 'pages-1.xml')).status).toBe(200);
     },
     DYNAMIC_IMPORT_TIMEOUT_MS,
   );

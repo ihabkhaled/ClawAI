@@ -109,7 +109,12 @@ them:
 - every hreflang cluster carrying a self-reference and an `x-default`;
 - no URL that `robots.txt` disallows;
 - 50,000 URLs and 50 MB per document as hard ceilings;
-- `404` for an unknown locale or document, never an empty but successful urlset.
+- `404` for an unknown locale or document, and for a chunk past the end, never
+  an empty but successful urlset — the index can point at a chunk that has since
+  shrunk away, so an out-of-range request is reachable in production and must
+  read as "gone", not as "healthy and empty";
+- the chat half held to the same rules as the pages half, not assumed to inherit
+  them.
 
 ## Scale and privacy
 
