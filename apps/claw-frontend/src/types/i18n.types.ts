@@ -1,5 +1,6 @@
 import type { Direction } from '@/enums/direction.enum';
 import type { Locale } from '@/enums/locale.enum';
+import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 
 export type TranslationDictionary = {
   common: {
@@ -193,6 +194,7 @@ export type TranslationDictionary = {
     discovery: string;
     workspaceProviders: string;
     workspaceAppConfigs: string;
+    workspaceAutomations: string;
     workspaceGmail: string;
     workspaceJira: string;
     workspaceSourceControl: string;
@@ -212,6 +214,7 @@ export type TranslationDictionary = {
     workspaceEmailTemplates: string;
     workspaceImplHandoffs: string;
     adminUsers: string;
+    adminFeedback: string;
     adminAiActionPolicies: string;
     adminSuggestionRules: string;
     adminWebhookDeliveries: string;
@@ -1820,6 +1823,10 @@ export type TranslationDictionary = {
     externalUpdated: string;
     openInProvider: string;
     author: string;
+    relatedItems: string;
+    viewRelatedItem: string;
+    unresolvedReference: string;
+    linkConfidence: string;
   };
   connectorDetail: {
     title: string;
@@ -2005,6 +2012,10 @@ export type TranslationDictionary = {
     levelReadOnly: string;
     levelAiActions: string;
     levelFull: string;
+  };
+  sharedConnectors: {
+    title: string;
+    sharedBy: string;
   };
   emailSignatures: {
     page: {
@@ -2282,6 +2293,7 @@ export type TranslationDictionary = {
       loading: string;
       error: string;
       empty: string;
+      dismiss: string;
     };
   };
   research: {
@@ -2466,6 +2478,65 @@ export type TranslationDictionary = {
       successDescriptionNamed: string;
       errorTitle: string;
       errorUnknown: string;
+    };
+  };
+  workspaceChains: {
+    page: {
+      title: string;
+      description: string;
+    };
+    templates: {
+      heading: string;
+      loadFailed: string;
+      emptyTitle: string;
+      emptyDescription: string;
+      useTemplate: string;
+    };
+    myAutomations: {
+      heading: string;
+      loadFailed: string;
+      emptyTitle: string;
+      emptyDescription: string;
+    };
+    chain: {
+      disabled: string;
+      stepCount: string;
+      wasResumed: string;
+      viewRuns: string;
+      run: string;
+      running: string;
+    };
+    instantiate: {
+      name: string;
+      namePlaceholder: string;
+      connectorFor: string;
+      selectConnector: string;
+      noConnector: string;
+      creating: string;
+      create: string;
+    };
+    runHistory: {
+      title: string;
+      loading: string;
+      empty: string;
+      resuming: string;
+      resume: string;
+      notStarted: string;
+    };
+    nlDraft: {
+      openButton: string;
+      title: string;
+      description: string;
+      promptLabel: string;
+      promptPlaceholder: string;
+      noMatch: string;
+      previewHeading: string;
+      nameLabel: string;
+      namePlaceholder: string;
+      draft: string;
+      drafting: string;
+      save: string;
+      saving: string;
     };
   };
   agent: {
@@ -5095,6 +5166,7 @@ export type TranslationDictionary = {
     saved: string;
     saveFailed: string;
   };
+  feedback: FeedbackTranslation;
 };
 
 export type DeploymentLocaleTranslation = {

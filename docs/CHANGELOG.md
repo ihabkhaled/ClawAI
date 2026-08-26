@@ -8,6 +8,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Workspace automations.** A new Automations page turns multi-step work across
+  your connected tools into saved, repeatable chains — create a Jira ticket, post
+  the result to Slack, update a document — with a starter template library and a
+  run history showing exactly which step succeeded, failed, or was skipped. A
+  failed run can be resumed from the step that broke rather than restarted.
+- **Describe an automation in plain language** and get a draft chain back. Drafts
+  are always reviewed and saved by a person; nothing runs automatically.
+- **Calendar events can now be created** from automations on both Google Calendar
+  and Outlook Calendar. Both were previously read-only.
+- **Connector sharing.** A connector owner can grant another person scoped access
+  (view, propose AI actions, edit config, manage grants) without handing over
+  ownership, and recipients get a "shared with me" view. Revoking a grant now
+  leaves a durable audit record instead of vanishing silently.
+- **Cross-tool knowledge graph.** Relationships between synced items — a pull
+  request that references a ticket, for example — are now detected and resolved
+  during every sync and surfaced on item detail views.
+- **Learned preferences.** Approving, editing, or rejecting an AI suggestion now
+  teaches the system your preferences, which feed back into how future suggestions
+  are drafted. A "what we've learned" panel shows what was inferred, and anything
+  there can be dismissed.
+
+### Fixed
+
+- **Slack webhook replay vulnerability.** Slack request signatures never expire, so
+  a captured, validly-signed webhook could previously be replayed indefinitely.
+  Deliveries outside a five-minute window are now rejected.
+- **A single malformed item no longer aborts an entire sync.** One bad ClickUp task
+  could previously discard everything already collected from every other list; a
+  failure is now contained to the one fetch that hit it.
+- **Nineteen automation actions showed users raw internal names** (such as
+  `CREATE_GITLAB_ISSUE`) instead of readable labels in the approval queue.
+- **Removed a phantom action** that appeared and was clickable in the interface but
+  had no implementation behind it and always failed.
+- **Three connectors advertised webhook support they did not have**, so deliveries
+  were silently rejected; the capability flags now match real behavior.
+- **Lost automation events are now visible.** When the message broker is
+  unreachable, the delivery record is kept and flagged rather than the failure only
+  appearing in server logs, and a successful retry clears the flag.
+
 ---
 
 ## [1.1.0] - 2026-08-01

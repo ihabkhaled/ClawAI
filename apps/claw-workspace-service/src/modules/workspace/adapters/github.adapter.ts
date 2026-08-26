@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
   CLAW_USER_AGENT,
@@ -337,6 +338,17 @@ export class GitHubAdapter implements WorkspaceAdapter {
 
   supportsWrite(): boolean {
     return true;
+  }
+
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [
+      WorkspaceActionType.CREATE_ISSUE,
+      WorkspaceActionType.CREATE_ISSUE_COMMENT,
+      WorkspaceActionType.CREATE_PR_DESCRIPTION,
+      WorkspaceActionType.COMMENT_PR,
+      WorkspaceActionType.APPROVE_PR,
+      WorkspaceActionType.ADD_PR_SUGGESTION,
+    ];
   }
 
   async executeWriteAction(

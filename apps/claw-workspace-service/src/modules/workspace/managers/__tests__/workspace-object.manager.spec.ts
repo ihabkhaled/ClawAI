@@ -5,6 +5,7 @@ import { WorkspaceObjectType } from '../../../../common/enums/workspace-object-t
 const mockRepository = {
   upsert: jest.fn(),
   createLink: jest.fn(),
+  resolveLinksByExternalRef: jest.fn(),
 } as unknown as WorkspaceObjectRepository;
 
 describe('WorkspaceObjectManager', () => {
@@ -30,8 +31,9 @@ describe('WorkspaceObjectManager', () => {
           title: 'bug fix',
         },
       ];
-      const count = await manager.upsertBatch('c1', 'u1', 'GITHUB', objects);
-      expect(count).toBe(2);
+      const result = await manager.upsertBatch('c1', 'u1', 'GITHUB', objects);
+      expect(result.synced).toBe(2);
+      expect(result.objects).toHaveLength(2);
       expect(mockRepository.upsert).toHaveBeenCalledTimes(2);
     });
 
@@ -43,13 +45,15 @@ describe('WorkspaceObjectManager', () => {
         { externalId: 'ext1', type: WorkspaceObjectType.REPOSITORY, title: 'ok' },
         { externalId: 'ext2', type: WorkspaceObjectType.REPOSITORY, title: 'fail' },
       ];
-      const count = await manager.upsertBatch('c1', 'u1', 'GITHUB', objects);
-      expect(count).toBe(1);
+      const result = await manager.upsertBatch('c1', 'u1', 'GITHUB', objects);
+      expect(result.synced).toBe(1);
+      expect(result.objects).toHaveLength(1);
     });
 
     it('should return 0 for empty objects array', async () => {
-      const count = await manager.upsertBatch('c1', 'u1', 'GITHUB', []);
-      expect(count).toBe(0);
+      const result = await manager.upsertBatch('c1', 'u1', 'GITHUB', []);
+      expect(result.synced).toBe(0);
+      expect(result.objects).toEqual([]);
       expect(mockRepository.upsert).not.toHaveBeenCalled();
     });
 
@@ -128,6 +132,66 @@ describe('WorkspaceObjectManager', () => {
         typeof manager.detectAndCreateLinks
       >[0];
       await expect(manager.detectAndCreateLinks(objects)).resolves.toBeUndefined();
+    });
+  });
+
+  describe('resolveLinksForObjects', () => {
+    it('resolves GitHub reference links by the object url', async () => {
+      const objects = [
+        {
+          id: 'obj-pr',
+          url: 'https://github.com/org/repo/pull/42',
+          provider: 'GITHUB',
+          metadata: {},
+        },
+      ] as unknown as Parameters<typeof manager.resolveLinksForObjects>[0];
+      await manager.resolveLinksForObjects(objects);
+      expect(mockRepository.resolveLinksByExternalRef).toHaveBeenCalledWith(
+        'https://github.com/org/repo/pull/42',
+        ['GITHUB_PR_REFERENCE', 'GITHUB_ISSUE_REFERENCE'],
+        'obj-pr',
+      );
+    });
+
+    it('resolves Jira reference links by metadata.issueKey for JIRA-provider objects', async () => {
+      const objects = [
+        { id: 'obj-jira', url: null, provider: 'JIRA', metadata: { issueKey: 'PROJ-123' } },
+      ] as unknown as Parameters<typeof manager.resolveLinksForObjects>[0];
+      await manager.resolveLinksForObjects(objects);
+      expect(mockRepository.resolveLinksByExternalRef).toHaveBeenCalledWith(
+        'PROJ-123',
+        ['JIRA_REFERENCE'],
+        'obj-jira',
+      );
+    });
+
+    it('does not attempt Jira resolution for a non-Jira object even with an issueKey-shaped metadata field', async () => {
+      const objects = [
+        { id: 'obj-x', url: null, provider: 'GITHUB', metadata: { issueKey: 'PROJ-123' } },
+      ] as unknown as Parameters<typeof manager.resolveLinksForObjects>[0];
+      await manager.resolveLinksForObjects(objects);
+      expect(mockRepository.resolveLinksByExternalRef).not.toHaveBeenCalled();
+    });
+
+    it('skips url resolution when url is null and skips Jira resolution when issueKey is missing', async () => {
+      const objects = [
+        { id: 'obj-none', url: null, provider: 'JIRA', metadata: {} },
+      ] as unknown as Parameters<typeof manager.resolveLinksForObjects>[0];
+      await manager.resolveLinksForObjects(objects);
+      expect(mockRepository.resolveLinksByExternalRef).not.toHaveBeenCalled();
+    });
+
+    it('can resolve both a url-based and a Jira-based reference for the same object', async () => {
+      const objects = [
+        {
+          id: 'obj-both',
+          url: 'https://github.com/org/repo/issues/7',
+          provider: 'JIRA',
+          metadata: { issueKey: 'PROJ-9' },
+        },
+      ] as unknown as Parameters<typeof manager.resolveLinksForObjects>[0];
+      await manager.resolveLinksForObjects(objects);
+      expect(mockRepository.resolveLinksByExternalRef).toHaveBeenCalledTimes(2);
     });
   });
 });

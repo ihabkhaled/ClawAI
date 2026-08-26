@@ -58,4 +58,20 @@ export class ConnectorGrantRepository {
       where: { connectorId, userId },
     });
   }
+
+  // Post-pack hardening — append-only snapshot written immediately before
+  // deleteOne() removes the grant row, so revocation survives the hard
+  // delete for forensic/compliance purposes.
+  async recordRevocation(grant: WorkspaceConnectorGrant, revokedBy: string): Promise<void> {
+    await this.prisma.workspaceConnectorGrantAuditLog.create({
+      data: {
+        connectorId: grant.connectorId,
+        granteeUserId: grant.userId,
+        accessLevel: grant.accessLevel,
+        grantedBy: grant.grantedBy,
+        grantedAt: grant.createdAt,
+        revokedBy,
+      },
+    });
+  }
 }

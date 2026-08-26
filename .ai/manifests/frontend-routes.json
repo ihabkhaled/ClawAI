@@ -137,6 +137,11 @@
       "route": "/admin/deployment"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/feedback/page.tsx",
+      "kind": "page",
+      "route": "/admin/feedback"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/admin/page.tsx",
       "kind": "page",
       "route": "/admin"
@@ -510,6 +515,11 @@
       "file": "apps/claw-frontend/src/app/(portal)/workspace/automation-preferences/page.tsx",
       "kind": "page",
       "route": "/workspace/automation-preferences"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/workspace/automations/page.tsx",
+      "kind": "page",
+      "route": "/workspace/automations"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/workspace/confluence/page.tsx",

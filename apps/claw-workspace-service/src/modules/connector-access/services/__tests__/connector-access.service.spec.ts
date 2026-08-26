@@ -14,6 +14,7 @@ const makeService = (
     findForUserConnector: jest.fn().mockResolvedValue(overrides.grant ?? null),
     upsert: jest.fn().mockResolvedValue({ id: 'g1' }),
     deleteOne: jest.fn().mockResolvedValue(undefined),
+    recordRevocation: jest.fn().mockResolvedValue(undefined),
   };
   const svc = new ConnectorAccessService(connectorRepo as any, grantRepo as any);
   return { svc, connectorRepo, grantRepo };
@@ -146,6 +147,35 @@ describe('ConnectorAccessService', () => {
       await svc.revoke('c1', 'alice', 'owner');
       expect(grantRepo.deleteOne).toHaveBeenCalledWith('c1', 'alice');
     });
+
+    // Post-pack hardening — revocation now snapshots the grant into an
+    // append-only audit log before the hard delete.
+    it('revoking an existing grant records a revocation snapshot before deleting', async () => {
+      const existingGrant = {
+        connectorId: 'c1',
+        userId: 'alice',
+        accessLevel: WorkspaceConnectorAccessLevel.AI_ACTIONS,
+        grantedBy: 'owner',
+        createdAt: new Date('2026-01-01T00:00:00Z'),
+      };
+      const { svc, grantRepo } = makeService({
+        connector: { userId: 'owner' },
+        grant: existingGrant,
+      });
+      await svc.revoke('c1', 'alice', 'owner');
+      expect(grantRepo.recordRevocation).toHaveBeenCalledWith(existingGrant, 'owner');
+      // The snapshot must be written before the row is deleted, not after.
+      const recordOrder = grantRepo.recordRevocation.mock.invocationCallOrder[0];
+      const deleteOrder = grantRepo.deleteOne.mock.invocationCallOrder[0];
+      expect(recordOrder).toBeLessThan(deleteOrder);
+    });
+
+    it('revoking an already-gone grant skips the audit write — nothing to snapshot', async () => {
+      const { svc, grantRepo } = makeService({ connector: { userId: 'owner' }, grant: null });
+      await svc.revoke('c1', 'alice', 'owner');
+      expect(grantRepo.recordRevocation).not.toHaveBeenCalled();
+      expect(grantRepo.deleteOne).toHaveBeenCalledWith('c1', 'alice');
+    });
   });
 
   // v3 round 6 — Prompt 12 wiring polish: listGrantsAsViewer
@@ -185,6 +215,68 @@ describe('ConnectorAccessService', () => {
       await expect(svc.listGrantsAsViewer('outsider', 'c1')).rejects.toThrow(
         /forbidden|FORBIDDEN/i,
       );
+    });
+  });
+
+  // Phase 12 — the grantee-side counterpart to listGrantsAsViewer.
+  describe('listSharedWithMe', () => {
+    const makeWithSharedGrants = (
+      grants: unknown[],
+      connectors: unknown[],
+    ): { svc: ConnectorAccessService; connectorRepo: any } => {
+      const connectorRepo = { findManyByIds: jest.fn().mockResolvedValue(connectors) };
+      const grantRepo = { listForUser: jest.fn().mockResolvedValue(grants) };
+      const svc = new ConnectorAccessService(connectorRepo as any, grantRepo as any);
+      return { svc, connectorRepo };
+    };
+
+    it('returns an empty list without querying connectors when the user has no grants', async () => {
+      const { svc, connectorRepo } = makeWithSharedGrants([], []);
+      const result = await svc.listSharedWithMe('u1');
+      expect(result).toEqual([]);
+      expect(connectorRepo.findManyByIds).not.toHaveBeenCalled();
+    });
+
+    it('joins each grant to its connector and shapes the view', async () => {
+      const { svc } = makeWithSharedGrants(
+        [
+          {
+            connectorId: 'c1',
+            accessLevel: WorkspaceConnectorAccessLevel.AI_ACTIONS,
+            grantedBy: 'owner-1',
+            createdAt: new Date('2026-08-01T00:00:00.000Z'),
+          },
+        ],
+        [{ id: 'c1', name: 'My Jira', provider: 'JIRA', userId: 'owner-1' }],
+      );
+      const result = await svc.listSharedWithMe('u1');
+      expect(result).toEqual([
+        {
+          connectorId: 'c1',
+          connectorName: 'My Jira',
+          provider: 'JIRA',
+          ownerUserId: 'owner-1',
+          accessLevel: WorkspaceConnectorAccessLevel.AI_ACTIONS,
+          grantedBy: 'owner-1',
+          grantedAt: new Date('2026-08-01T00:00:00.000Z'),
+        },
+      ]);
+    });
+
+    it('skips a grant whose connector no longer exists', async () => {
+      const { svc } = makeWithSharedGrants(
+        [
+          {
+            connectorId: 'deleted-connector',
+            accessLevel: WorkspaceConnectorAccessLevel.FULL,
+            grantedBy: 'owner-1',
+            createdAt: new Date(),
+          },
+        ],
+        [],
+      );
+      const result = await svc.listSharedWithMe('u1');
+      expect(result).toEqual([]);
     });
   });
 });

@@ -52,10 +52,7 @@ describe('webhook-signature-verifiers', () => {
     });
 
     it('rejects missing signature', () => {
-      const result = verifier.verify(
-        { rawBody: Buffer.from('{}'), headers: {} },
-        'mysecret',
-      );
+      const result = verifier.verify({ rawBody: Buffer.from('{}'), headers: {} }, 'mysecret');
       expect(result.signatureValid).toBe(false);
       expect(result.reason).toBe('SIGNATURE_MISSING');
     });
@@ -74,9 +71,14 @@ describe('webhook-signature-verifiers', () => {
     const verifier = findVerifier(WorkspaceProvider.SLACK);
     if (verifier === null) throw new Error('Slack verifier missing');
 
-    it('accepts valid v0 signature', () => {
+    // A real (not replayed) request always carries a timestamp close to
+    // "now" — Slack's own docs require verifying this. Tests use a fresh
+    // timestamp so they exercise the HMAC check, not the skew check.
+    const freshTimestamp = (): string => String(Math.floor(Date.now() / 1000));
+
+    it('accepts valid v0 signature with a fresh timestamp', () => {
       const secret = 'slacksecret';
-      const ts = '1700000000';
+      const ts = freshTimestamp();
       const body = Buffer.from('payload=hello');
       const base = `v0:${ts}:${body.toString('utf-8')}`;
       const sig = `v0=${createHmac('sha256', secret).update(base).digest('hex')}`;
@@ -90,15 +92,78 @@ describe('webhook-signature-verifiers', () => {
       expect(result.signatureValid).toBe(true);
     });
 
-    it('rejects wrong signature', () => {
+    it('rejects wrong signature even with a fresh timestamp', () => {
       const result = verifier.verify(
         {
           rawBody: Buffer.from('payload=hello'),
-          headers: { 'x-slack-signature': 'v0=bad', 'x-slack-request-timestamp': '1' },
+          headers: { 'x-slack-signature': 'v0=bad', 'x-slack-request-timestamp': freshTimestamp() },
         },
         'slacksecret',
       );
       expect(result.signatureValid).toBe(false);
+      expect(result.reason).toBe('SIGNATURE_INVALID');
+    });
+
+    // Phase 14 — regression test for the replay-window bug this phase
+    // found and fixed: a validly-signed-but-old payload used to be
+    // accepted forever, since the signature itself never expires.
+    it('rejects a validly-signed but stale timestamp (replay protection)', () => {
+      const secret = 'slacksecret';
+      const ts = String(Math.floor(Date.now() / 1000) - 10 * 60); // 10 minutes old
+      const body = Buffer.from('payload=hello');
+      const base = `v0:${ts}:${body.toString('utf-8')}`;
+      const sig = `v0=${createHmac('sha256', secret).update(base).digest('hex')}`;
+      const result = verifier.verify(
+        {
+          rawBody: body,
+          headers: { 'x-slack-signature': sig, 'x-slack-request-timestamp': ts },
+        },
+        secret,
+      );
+      expect(result.signatureValid).toBe(false);
+      expect(result.reason).toBe('SIGNATURE_TIMESTAMP_EXPIRED');
+    });
+
+    it('rejects a non-numeric timestamp', () => {
+      const result = verifier.verify(
+        {
+          rawBody: Buffer.from('payload=hello'),
+          headers: {
+            'x-slack-signature': 'v0=whatever',
+            'x-slack-request-timestamp': 'not-a-number',
+          },
+        },
+        'slacksecret',
+      );
+      expect(result.signatureValid).toBe(false);
+      expect(result.reason).toBe('SIGNATURE_TIMESTAMP_EXPIRED');
+    });
+
+    it('rejects a missing timestamp', () => {
+      const result = verifier.verify(
+        {
+          rawBody: Buffer.from('payload=hello'),
+          headers: { 'x-slack-signature': 'v0=whatever' },
+        },
+        'slacksecret',
+      );
+      expect(result.signatureValid).toBe(false);
+      expect(result.reason).toBe('SIGNATURE_MISSING');
+    });
+
+    it('rejects when secret unconfigured', () => {
+      const result = verifier.verify(
+        {
+          rawBody: Buffer.from('payload=hello'),
+          headers: {
+            'x-slack-signature': 'v0=whatever',
+            'x-slack-request-timestamp': freshTimestamp(),
+          },
+        },
+        '',
+      );
+      expect(result.signatureValid).toBe(false);
+      expect(result.reason).toBe('SECRET_NOT_CONFIGURED');
     });
   });
 

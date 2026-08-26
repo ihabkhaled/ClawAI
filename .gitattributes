@@ -10,5 +10,11 @@ docker-entrypoint*.sh text eol=lf
 **/AGENTS.md text eol=lf
 docs/features/ai-native-engineering-os/inventory.snapshot.json text eol=lf
 
+# Split compose files are content-asserted with \n-anchored regexes by
+# tools/__tests__/deploy-prod.test.mjs (knowledge:test, run in pre-push), so a
+# CRLF checkout false-fails that gate on Windows exactly the way it would for
+# the generated files above.
+docker/*.yml text eol=lf
+
 # Keep other text files cross-platform-friendly.
 * text=auto

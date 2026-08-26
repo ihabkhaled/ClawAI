@@ -18,3 +18,15 @@ export type GrantConnectorAccessRequest = {
   granteeUserId: string;
   accessLevel: WorkspaceConnectorAccessLevel;
 };
+
+// Phase 12 — one row of "connectors shared with me". Mirrors the backend
+// SharedConnectorView exactly.
+export type SharedConnectorView = {
+  connectorId: string;
+  connectorName: string;
+  provider: string;
+  ownerUserId: string;
+  accessLevel: WorkspaceConnectorAccessLevel;
+  grantedBy: string;
+  grantedAt: string;
+};

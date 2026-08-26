@@ -83,3 +83,5 @@ export {
   EffortResearchDepth,
 } from './claw-effort-profile.enum';
 export { ClawSpeedProfile, SpeedProviderMode } from './claw-speed-profile.enum';
+export { FeedbackType } from './feedback-type.enum';
+export { FeedbackStatus } from './feedback-status.enum';

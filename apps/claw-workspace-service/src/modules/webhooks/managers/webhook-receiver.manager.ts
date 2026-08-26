@@ -79,7 +79,7 @@ export class WebhookReceiverManager {
       ipAddress,
       bodyBytes,
     });
-    await this.publishReceived(
+    const published = await this.publishReceived(
       row.id,
       provider,
       connectorId,
@@ -89,6 +89,7 @@ export class WebhookReceiverManager {
       },
       parsedBody,
     );
+    await this.repo.setPublishFailed(row.id, !published);
     return { status: 'ACCEPTED', deliveryId: row.id, signatureValid: true };
   }
 
@@ -189,7 +190,7 @@ export class WebhookReceiverManager {
     if (row === null) {
       throw new NotFoundException({ messageKey: 'WEBHOOK_DELIVERY_NOT_FOUND' });
     }
-    await this.publish(EventPattern.WORKSPACE_WEBHOOK_REPLAYED, {
+    const published = await this.publish(EventPattern.WORKSPACE_WEBHOOK_REPLAYED, {
       deliveryId: row.id,
       provider: row.provider,
       connectorId: row.connectorId,
@@ -197,7 +198,13 @@ export class WebhookReceiverManager {
       eventType: row.eventType,
       occurredAt: new Date().toISOString(),
     });
+    // markProcessed always runs, even when the republish itself failed —
+    // that's a deliberate, pre-existing, separately-documented behavior
+    // (Phase 15) this fix doesn't change. What's new is that a failed
+    // replay is now durably visible via publishFailedAt instead of only
+    // an ephemeral warn log.
     await this.repo.markProcessed(row.id);
+    await this.repo.setPublishFailed(row.id, !published);
     return { deliveryId: row.id };
   }
 
@@ -223,13 +230,14 @@ export class WebhookReceiverManager {
       ipAddress,
       bodyBytes,
     });
-    await this.publish(EventPattern.WORKSPACE_WEBHOOK_REJECTED, {
+    const published = await this.publish(EventPattern.WORKSPACE_WEBHOOK_REJECTED, {
       deliveryId: row.id,
       provider,
       connectorId,
       reasonCode,
       occurredAt: new Date().toISOString(),
     });
+    await this.repo.setPublishFailed(row.id, !published);
     return { status: 'REJECTED', deliveryId: row.id, signatureValid: false, reasonCode };
   }
 
@@ -277,8 +285,8 @@ export class WebhookReceiverManager {
     connectorId: string | null,
     verification: { externalDeliveryId: string | null; eventType: string | null },
     body: Record<string, unknown> | unknown[],
-  ): Promise<void> {
-    await this.publish(EventPattern.WORKSPACE_WEBHOOK_RECEIVED, {
+  ): Promise<boolean> {
+    return this.publish(EventPattern.WORKSPACE_WEBHOOK_RECEIVED, {
       deliveryId,
       provider,
       connectorId,
@@ -289,13 +297,18 @@ export class WebhookReceiverManager {
     });
   }
 
-  private async publish(pattern: EventPattern, payload: unknown): Promise<void> {
+  // Returns whether the publish succeeded, so callers can persist a
+  // durable publishFailedAt signal — the swallow itself (the webhook HTTP
+  // response must never depend on RabbitMQ being reachable) is unchanged.
+  private async publish(pattern: EventPattern, payload: unknown): Promise<boolean> {
     try {
       await this.rabbitmq.publish(pattern, payload);
+      return true;
     } catch (error) {
       this.logger.warn(
         `failed to publish ${pattern} — ${error instanceof Error ? error.message : 'unknown'}`,
       );
+      return false;
     }
   }
 }

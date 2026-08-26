@@ -45,6 +45,11 @@ export type RunAiActionInput = {
   privacyClass: AiActionPrivacyClass;
   context: string;
   preferredModel?: ModelChoice;
+  // Phase 11 — whose learned preferences (from AutomationPreferenceService
+  // .fetchLearned) to inject into the prompt. Optional: callers that don't
+  // have an authenticated user (none exist yet, but the type shouldn't
+  // force one) simply skip preference injection.
+  userId?: string;
 };
 
 export type BuiltAiActionPrompt = {
