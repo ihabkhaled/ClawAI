@@ -79,6 +79,10 @@ export class FeedbackManager {
       userId: actorId,
       reporterEmail: actorEmail,
       attachments,
+      // Validated by the DTO and declared on the schema, but never written — so
+      // every ticket showed Route, URL, Viewport and App version as N/A in the
+      // admin dialog, which is exactly the context a triager needs to reproduce.
+      pageContext: dto.pageContext,
       history: [historyEntry],
       lastActorId: actorId,
     });

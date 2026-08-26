@@ -3,13 +3,12 @@
 import { FeedbackStatus } from '@claw/shared-types';
 import { useState } from 'react';
 
+import { AdminFeedbackAttachmentThumbnail } from '@/components/admin/feedback/admin-feedback-attachment-thumbnail';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAdminFeedbackDetail } from '@/hooks/admin/feedback/use-admin-feedback-detail';
 import { useTranslation } from '@/lib/i18n';
 import { MarkdownRenderer } from '@/lib/markdown/markdown-renderer';
-import { feedbackAdminRepository } from '@/repositories/feedback/feedback-admin.repository';
 import type { AdminFeedbackDetailDialogProps } from '@/types/feedback-props.types';
 import { formatDateTimeSafe } from '@/utilities/date.utility';
 import { feedbackStatusLabelKey, feedbackTypeLabelKey } from '@/utilities/feedback-label.utility';
@@ -126,23 +125,12 @@ export function AdminFeedbackDetailDialog({
                 <h4 className="mb-2 font-semibold">Attachments</h4>
                 <div className="flex flex-wrap gap-2">
                   {ticket.attachments.map((attachment) => (
-                    <Button
+                    <AdminFeedbackAttachmentThumbnail
                       key={attachment.fileId}
-                      variant="outline"
-                      className="h-auto p-2"
-                      onClick={() =>
-                        setImagePreview({
-                          src: feedbackAdminRepository.attachmentPath(ticketId, attachment.fileId),
-                          alt: attachment.filename,
-                        })
-                      }
-                    >
-                      <img
-                        src={feedbackAdminRepository.attachmentPath(ticketId, attachment.fileId)}
-                        alt={attachment.filename}
-                        className="h-16 w-16 rounded object-cover"
-                      />
-                    </Button>
+                      ticketId={ticketId}
+                      attachment={attachment}
+                      onOpen={(url, filename) => setImagePreview({ src: url, alt: filename })}
+                    />
                   ))}
                 </div>
               </div>

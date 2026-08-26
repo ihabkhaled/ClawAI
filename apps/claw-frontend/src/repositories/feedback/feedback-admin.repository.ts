@@ -48,4 +48,15 @@ export const feedbackAdminRepository = {
   attachmentPath(id: string, fileId: string): string {
     return `/api/v1/feedback/admin/${id}/attachments/${fileId}`;
   },
+
+  // The attachment endpoint requires ADMIN_FEEDBACK_MANAGE, and a plain
+  // <img src="..."> cannot carry the Bearer token — the browser issues that
+  // request with no Authorization header, so it answered 401 and every
+  // thumbnail rendered as a broken image showing its alt text. Fetching the
+  // bytes through apiClient attaches the token; the caller turns the blob into
+  // an object URL and revokes it when done.
+  async fetchAttachmentBlob(id: string, fileId: string): Promise<Blob> {
+    const response = await apiClient.getBlob(`/feedback/admin/${id}/attachments/${fileId}`);
+    return response.data;
+  },
 };

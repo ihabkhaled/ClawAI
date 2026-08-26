@@ -84,3 +84,9 @@ export type AdminFeedbackStatusActionsProps = {
   isChanging: boolean;
   onChange: (newStatus: string) => void;
 };
+
+export interface AdminFeedbackAttachmentThumbnailProps {
+  ticketId: string;
+  attachment: FeedbackAttachment;
+  onOpen: (url: string, filename: string) => void;
+}
