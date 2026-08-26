@@ -7,6 +7,8 @@ const appConfigSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
   AUDIT_PORT: z.string().default('4007'),
+  FILE_SERVICE_URL: z.string().url(),
+  INTER_SERVICE_AUTH_TOKEN: z.string().min(1),
 });
 
 export type AppConfigType = z.infer<typeof appConfigSchema>;

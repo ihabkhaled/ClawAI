@@ -1,0 +1,102 @@
+[
+  {
+    "label": "admin can sign in",
+    "ok": true,
+    "detail": "https://claw.local/en/chat"
+  },
+  {
+    "label": "floating feedback launcher is present on a portal page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "feedback dialog opens",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "dialog exposes its controls",
+    "ok": true,
+    "detail": "15 controls"
+  },
+  {
+    "label": "dialog exposes the title field",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "markdown toolbar is rendered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "screen capture control is offered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "attachment drop zone is offered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "dialog closes after a successful submission",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "admin feedback route renders",
+    "ok": true,
+    "detail": "https://claw.local/en/admin/feedback"
+  },
+  {
+    "label": "admin list shows a seeded ticket number",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "the ticket filed through the UI appears in the admin list",
+    "ok": true,
+    "detail": "UI submitted ticket 1787484115005"
+  },
+  {
+    "label": "type labels are translated, not raw keys",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "status labels are translated, not raw keys",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "no javascript dialog was raised by stored content",
+    "ok": true,
+    "detail": "no alert()"
+  },
+  {
+    "label": "no injected script or iframe element in the DOM",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "escaped markup is shown as text, not parsed",
+    "ok": true,
+    "detail": "title rendered as literal text"
+  },
+  {
+    "label": "admin page does not overflow horizontally on a phone viewport",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "launcher is reachable on a phone viewport",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "no console errors from the feedback surfaces",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -20,9 +20,9 @@ npm run dev
 - Port: 4007
 - Database: mongodb
 - Prisma models: none
-- Mongoose models: AuditLog, UsageLedger
-- API endpoints: 7 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 15 (jest)
+- Mongoose models: AuditLog, FeedbackCounter, FeedbackTicket, UsageLedger
+- API endpoints: 15 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 21 (jest)
 - Depends on: @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
