@@ -600,6 +600,8 @@ export const de: TranslationDictionary = {
     testConnection: 'Verbindung testen',
     testingConnection: 'Wird getestet...',
     syncModels: 'Modelle synchronisieren',
+    manageExposure: 'Modell-Freigabe',
+    backToConnector: 'Zurück zum Connector',
     name: 'Name',
     nameHelp: 'Ein aussagekräftiger Name, um diesen Konnektor im Dashboard zu identifizieren.',
     provider: 'Anbieter',

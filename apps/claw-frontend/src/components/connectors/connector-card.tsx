@@ -1,4 +1,12 @@
-import { Activity, MoreVertical, Pencil, Plug, RefreshCw, Trash2 } from 'lucide-react';
+import {
+  Activity,
+  MoreVertical,
+  Pencil,
+  Plug,
+  RefreshCw,
+  SlidersHorizontal,
+  Trash2,
+} from 'lucide-react';
 import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
@@ -39,7 +47,7 @@ export function ConnectorCard({
   const statusLabel = t(getConnectorStatusLabelKey(connector.status));
 
   return (
-    <Card className="transition-colors hover:border-primary/50">
+    <Card className="hover:border-primary/50 transition-colors">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
         <div className="flex min-w-0 items-center gap-3">
           <div
@@ -52,7 +60,7 @@ export function ConnectorCard({
             <span
               aria-hidden="true"
               className={cn(
-                'absolute -bottom-0.5 -right-0.5 inline-block h-3 w-3 rounded-full border-2 border-card',
+                'border-card absolute -right-0.5 -bottom-0.5 inline-block h-3 w-3 rounded-full border-2',
                 dotTone,
               )}
             />
@@ -63,7 +71,7 @@ export function ConnectorCard({
                 {connector.name}
               </Link>
             </CardTitle>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="text-muted-foreground flex items-center gap-2 text-xs">
               <span>{providerName}</span>
               <span aria-hidden="true">•</span>
               <span>{statusLabel}</span>
@@ -126,8 +134,14 @@ export function ConnectorCard({
             <RefreshCw className={cn('me-1.5 h-3.5 w-3.5', isSyncPending && 'animate-spin')} />
             {isSyncPending ? t('connectors.syncing') : t('connectors.syncModels')}
           </Button>
+          <Button asChild size="sm" variant="outline" className="h-8">
+            <Link href={ROUTES.CONNECTOR_MODELS(connector.id)}>
+              <SlidersHorizontal className="me-1.5 h-3.5 w-3.5" />
+              {t('connectors.manageExposure')}
+            </Link>
+          </Button>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-3 text-xs">
           {t('connectors.updatedAt', { date: formatShortDateTime(connector.updatedAt) })}
         </p>
       </CardContent>

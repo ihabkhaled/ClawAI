@@ -64,7 +64,7 @@ export function FeedbackAttachmentList({
         onClick={handleClick}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className="w-full rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition-colors hover:border-gray-400"
+        className="border-border hover:border-muted-foreground w-full rounded-lg border-2 border-dashed p-6 text-center transition-colors"
         aria-label={t('feedback.uploadAttachments')}
       >
         <input
@@ -75,11 +75,11 @@ export function FeedbackAttachmentList({
           onChange={handleFileChange}
           className="hidden"
         />
-        <p className="text-sm text-gray-600">{t('feedback.dragDropOrClickToUpload')}</p>
+        <p className="text-muted-foreground text-sm">{t('feedback.dragDropOrClickToUpload')}</p>
       </Button>
 
       {uploadError && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-destructive text-sm" role="alert">
           {t(uploadError)}
         </p>
       )}
@@ -89,11 +89,16 @@ export function FeedbackAttachmentList({
           {attachments.map((attachment) => (
             <li
               key={attachment.fileId}
-              className="flex items-center justify-between rounded-md bg-gray-50 p-3"
+              className="border-border bg-muted/40 flex items-center justify-between gap-2 rounded-md border p-3"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{attachment.filename}</p>
-                <p className="text-xs text-gray-500">{formatSize(attachment.sizeBytes)}</p>
+                <p
+                  className="text-foreground truncate text-sm font-medium"
+                  title={attachment.filename}
+                >
+                  {attachment.filename}
+                </p>
+                <p className="text-muted-foreground text-xs">{formatSize(attachment.sizeBytes)}</p>
                 {(progress[attachment.fileId] ?? 100) < 100 && (
                   <Progress value={progress[attachment.fileId] ?? 0} className="mt-1" />
                 )}

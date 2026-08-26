@@ -589,6 +589,8 @@ export const ar: TranslationDictionary = {
     testConnection: 'اختبار الاتصال',
     testingConnection: 'جار الاختبار...',
     syncModels: 'مزامنة النماذج',
+    manageExposure: 'عرض النماذج',
+    backToConnector: 'العودة إلى الموصل',
     name: 'الاسم',
     nameHelp: 'اسم واضح لتمييز هذا الموصل في لوحة التحكم.',
     provider: 'المزود',

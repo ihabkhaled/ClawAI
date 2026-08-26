@@ -593,6 +593,8 @@ export const hi: TranslationDictionary = {
     testConnection: 'कनेक्शन टेस्ट करें',
     testingConnection: 'परीक्षण हो रहा है...',
     syncModels: 'मॉडल सिंक करें',
+    manageExposure: 'मॉडल एक्सपोज़र',
+    backToConnector: 'कनेक्टर पर वापस जाएँ',
     name: 'नाम',
     nameHelp: 'अपने डैशबोर्ड में इस कनेक्टर की पहचान के लिए एक नाम।',
     provider: 'प्रोवाइडर',

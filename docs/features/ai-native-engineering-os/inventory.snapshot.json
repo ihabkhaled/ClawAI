@@ -6623,6 +6623,11 @@
         "route": "/chat/verify"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/connectors/[connectorId]/models/page.tsx",
+        "kind": "page",
+        "route": "/connectors/[connectorId]/models"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/connectors/[connectorId]/page.tsx",
         "kind": "page",
         "route": "/connectors/[connectorId]"
@@ -7402,7 +7407,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4742
+        "value": 4744
       },
       "localeCount": 13,
       "locales": [
@@ -9133,7 +9138,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 372
+        "testFiles": 373
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9881,7 +9886,7 @@
     "endpointCount": 616,
     "envVarCount": 347,
     "eventCount": 169,
-    "frontendRouteCount": 125,
+    "frontendRouteCount": 126,
     "localeCount": 13,
     "nginxRouteCount": 55,
     "permissionCount": 49,
@@ -9890,7 +9895,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1026,
+    "totalTestFiles": 1027,
     "workspaceCount": 25
   }
 }

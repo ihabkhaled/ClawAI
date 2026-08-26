@@ -597,6 +597,8 @@ export const fr: TranslationDictionary = {
     testConnection: 'Tester la connexion',
     testingConnection: 'Test en cours...',
     syncModels: 'Synchroniser les modèles',
+    manageExposure: 'Exposition des modèles',
+    backToConnector: 'Retour au connecteur',
     name: 'Nom',
     nameHelp: 'Un nom convivial pour identifier ce connecteur dans votre tableau de bord.',
     provider: 'Fournisseur',

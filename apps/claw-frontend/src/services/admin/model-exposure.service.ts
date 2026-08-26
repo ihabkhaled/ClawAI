@@ -1,6 +1,8 @@
 // model-exposure.service.ts
 // Thin service module — no React, no component code.
 
+import { apiClient } from '@/services/shared/api-client';
+
 import type {
   ConnectorModelRow,
   SetModelExposureRequest,
@@ -8,27 +10,26 @@ import type {
   ModelExposureFilters,
 } from '../../types/model-exposure.types';
 
-async function http<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, { credentials: 'include', ...init });
-  if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText}`);
-  }
-  return res.json() as Promise<T>;
-}
+// These calls go through apiClient, not a private fetch(). The app
+// authenticates with a Bearer token that apiClient attaches; a raw fetch with
+// `credentials: 'include'` sends cookies and no Authorization header, so every
+// request here answered 401 "Missing authorization header" and the panel showed
+// "Exposed vs unexposed 0 / 0" with an empty table.
 
 export async function fetchConnectorModels(connectorId: string): Promise<ConnectorModelRow[]> {
-  return http<ConnectorModelRow[]>(`/api/v1/connectors/${connectorId}/models`);
+  const response = await apiClient.get<ConnectorModelRow[]>(`/connectors/${connectorId}/models`);
+  return response.data;
 }
 
 export async function setModelExposure(
   connectorId: string,
   request: SetModelExposureRequest,
 ): Promise<SetModelExposureResponse> {
-  return http<SetModelExposureResponse>(`/api/v1/connectors/${connectorId}/models/exposure`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
-  });
+  const response = await apiClient.put<SetModelExposureResponse>(
+    `/connectors/${connectorId}/models/exposure`,
+    request,
+  );
+  return response.data;
 }
 
 /**

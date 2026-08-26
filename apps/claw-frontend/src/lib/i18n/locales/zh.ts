@@ -581,6 +581,8 @@ export const zh: TranslationDictionary = {
     testConnection: '测试连接',
     testingConnection: '测试...',
     syncModels: '同步模型',
+    manageExposure: '模型开放设置',
+    backToConnector: '返回连接器',
     name: '姓名',
     nameHelp: '用于在仪表板中识别此连接器的友好名称。',
     provider: '提供者',

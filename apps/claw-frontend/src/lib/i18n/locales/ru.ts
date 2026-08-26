@@ -597,6 +597,8 @@ export const ru: TranslationDictionary = {
     testConnection: 'Проверить соединение',
     testingConnection: 'Проверка...',
     syncModels: 'Синхронизировать модели',
+    manageExposure: 'Доступность моделей',
+    backToConnector: 'Назад к коннектору',
     name: 'Название',
     nameHelp: 'Удобное имя для идентификации этого коннектора на панели.',
     provider: 'Провайдер',

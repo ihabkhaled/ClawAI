@@ -357,6 +357,11 @@
       "route": "/chat/verify"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/connectors/[connectorId]/models/page.tsx",
+      "kind": "page",
+      "route": "/connectors/[connectorId]/models"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/connectors/[connectorId]/page.tsx",
       "kind": "page",
       "route": "/connectors/[connectorId]"

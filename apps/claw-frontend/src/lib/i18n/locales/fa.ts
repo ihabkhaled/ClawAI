@@ -592,6 +592,8 @@ export const fa: TranslationDictionary = {
     testConnection: 'تست اتصال',
     testingConnection: 'تست کردن...',
     syncModels: 'همگام سازی مدل ها',
+    manageExposure: 'نمایش مدل‌ها',
+    backToConnector: 'بازگشت به رابط',
     name: 'نام',
     nameHelp: 'نامی مناسب برای شناسایی این رابط در داشبورد شما.',
     provider: 'ارائه دهنده',

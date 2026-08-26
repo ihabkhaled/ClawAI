@@ -586,6 +586,8 @@ export const th: TranslationDictionary = {
     testConnection: 'ทดสอบการเชื่อมต่อ',
     testingConnection: 'กำลังทดสอบ...',
     syncModels: 'ซิงค์โมเดล',
+    manageExposure: 'การเปิดใช้งานโมเดล',
+    backToConnector: 'กลับไปที่ตัวเชื่อมต่อ',
     name: 'ชื่อ',
     nameHelp: 'ชื่อที่จำง่ายเพื่อระบุตัวเชื่อมต่อนี้ในแดชบอร์ดของคุณ',
     provider: 'ผู้ให้บริการ',

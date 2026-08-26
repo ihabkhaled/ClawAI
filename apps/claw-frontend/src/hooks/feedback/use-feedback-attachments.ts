@@ -9,7 +9,11 @@ import { useCallback, useState } from 'react';
 import { apiClient } from '@/services/shared/api-client';
 import type { FeedbackAttachment } from '@/types';
 import type { UseFeedbackAttachmentsReturn } from '@/types/feedback-hook.types';
-import { readFileAsBase64, base64FromDataUrl } from '@/utilities/feedback-file.utility';
+import {
+  base64ByteLength,
+  base64FromDataUrl,
+  readFileAsBase64,
+} from '@/utilities/feedback-file.utility';
 
 // Client-side validation here is convenience only — the server re-validates
 // ownership, MIME and size on every attachment before a ticket is written.
@@ -94,7 +98,7 @@ export function useFeedbackAttachments(): UseFeedbackAttachmentsReturn {
       setIsUploading(true);
       try {
         const content = base64FromDataUrl(dataUrl);
-        const sizeBytes = Math.ceil((content.length * 3) / 4);
+        const sizeBytes = base64ByteLength(content);
         const problem = validate('image/png', sizeBytes, attachments);
         if (problem !== null) {
           setUploadError(problem);

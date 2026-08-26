@@ -593,6 +593,8 @@ export type TranslationDictionary = {
     testConnection: string;
     testingConnection: string;
     syncModels: string;
+    manageExposure: string;
+    backToConnector: string;
     name: string;
     nameHelp: string;
     provider: string;

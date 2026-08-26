@@ -593,6 +593,8 @@ export const ja: TranslationDictionary = {
     testConnection: 'テスト接続',
     testingConnection: 'テスト中...',
     syncModels: '同期モデル',
+    manageExposure: 'モデル公開設定',
+    backToConnector: 'コネクタに戻る',
     name: '名前',
     nameHelp: 'ダッシュボードでこのコネクタを識別するためのフレンドリ名。',
     provider: 'プロバイダー',
