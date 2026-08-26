@@ -1,6 +1,6 @@
 {
   "name": "claw-research-service",
-  "version": "1.38.2",
+  "version": "1.38.3",
   "private": true,
   "description": "Claw Research Service - dynamic search, fetch, scrape, and evidence orchestration",
   "license": "UNLICENSED",
