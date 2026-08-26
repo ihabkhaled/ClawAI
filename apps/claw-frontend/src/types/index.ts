@@ -1029,3 +1029,12 @@ export type {
   UseChatShareMutationsReturn,
   UseShareChatDialogReturn,
 } from './chat-share-hook.types';
+export type {
+  ConnectorModelRow,
+  SetModelExposureRequest,
+  SetModelExposureResponse,
+  ModelExposureFilters,
+  UseModelExposureResult,
+  ModelExposureTableProps,
+  ModelExposureSectionProps,
+} from './model-exposure.types';

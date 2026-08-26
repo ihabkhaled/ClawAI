@@ -26,6 +26,7 @@ import { RouterTraceStreamService } from './services/router-trace-stream.service
 import { StreamCancellationService } from './services/stream-cancellation.service';
 import { StreamControlService } from './services/stream-control.service';
 import { ProviderStreamExecutor } from './managers/provider-stream-executor.manager';
+import { ModelAuthorizationMetricsService } from './services/model-authorization-metrics.service';
 import { AccessControlService } from './services/access-control.service';
 import { AdvancedModuleModelSelectionService } from './services/advanced-module-model-selection.service';
 import { LocalModelSelectionService } from './services/local-model-selection.service';
@@ -78,6 +79,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     StreamControlService,
     ProviderStreamExecutor,
     AccessControlService,
+    ModelAuthorizationMetricsService,
     AdvancedModuleModelSelectionService,
     LocalModelSelectionService,
     ChatMessagesRepository,

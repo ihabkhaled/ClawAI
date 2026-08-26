@@ -3424,6 +3424,31 @@ export type TranslationDictionary = {
     expiredBody: string;
     upgrade: string;
   };
+  adminConnectors: {
+    exposure: {
+      title: string;
+      description: string;
+      counts: string;
+      searchPlaceholder: string;
+      filterAll: string;
+      filterExposed: string;
+      filterUnexposed: string;
+      loading: string;
+      colModel: string;
+      colProvider: string;
+      colExposure: string;
+      colLifecycle: string;
+      colLastSeen: string;
+      neverSeen: string;
+      exposed: string;
+      unexposed: string;
+      exposeSelected: string;
+      unexposeSelected: string;
+      selectAllVisible: string;
+      clearSelection: string;
+      impactWarning: string;
+    };
+  };
   adminPlans: {
     title: string;
     description: string;
@@ -3525,6 +3550,8 @@ export type TranslationDictionary = {
       allowInCompare: string;
       dailyTokenLimitOverride: string;
       noOverride: string;
+      selectModel: string;
+      noLongerExposed: string;
       addRow: string;
       removeRow: string;
       saving: string;

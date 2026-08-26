@@ -68,12 +68,18 @@ export class ConnectorModelsRepository {
     const uniqueModels = [...new Map(models.map((model) => [model.modelKey, model])).values()];
     const modelKeys = uniqueModels.map((model) => model.modelKey);
 
+    // A provider listing that is truncated, rate-limited or briefly failing used to
+    // erase inventory permanently, taking with it the identity that plan entitlements
+    // and audit history point at. Marking REMOVED keeps the row and its id, and forcing
+    // exposure back to UNEXPOSED means a model that disappears cannot keep serving users.
     const operations = [
-      this.prisma.connectorModel.deleteMany({
+      this.prisma.connectorModel.updateMany({
         where: {
           connectorId,
           ...(modelKeys.length > 0 ? { modelKey: { notIn: modelKeys } } : {}),
+          lifecycle: { not: 'REMOVED' },
         },
+        data: { lifecycle: 'REMOVED', exposure: 'UNEXPOSED' },
       }),
       ...uniqueModels.map((model) =>
         this.prisma.connectorModel.upsert({
@@ -94,6 +100,7 @@ export class ConnectorModelsRepository {
             cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
             outputUsdPerMillion: model.usage?.outputUsdPerMillion,
             syncedAt: new Date(),
+            lastSeenAt: new Date(),
           },
           create: {
             connectorId,
@@ -111,13 +118,15 @@ export class ConnectorModelsRepository {
             inputUsdPerMillion: model.usage?.inputUsdPerMillion,
             cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
             outputUsdPerMillion: model.usage?.outputUsdPerMillion,
+            lastSeenAt: new Date(),
           },
         }),
       ),
     ];
 
-    const [deleted, ...upserted] = await this.prisma.$transaction(operations);
-    return { deleted: (deleted as { count: number }).count, upserted: upserted.length };
+    // `removed` is now models marked REMOVED rather than rows destroyed.
+    const [removed, ...upserted] = await this.prisma.$transaction(operations);
+    return { deleted: (removed as { count: number }).count, upserted: upserted.length };
   }
 
   async findByConnectorId(connectorId: string): Promise<ConnectorModel[]> {
@@ -149,5 +158,68 @@ export class ConnectorModelsRepository {
       include: { connector: { select: { status: true, isEnabled: true } } },
       orderBy: [{ provider: 'asc' }, { displayName: 'asc' }],
     }) as Promise<Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>>;
+  }
+
+  // User-facing catalog: a model reaches a user only if its connector is enabled,
+  // it is ACTIVE, an administrator has EXPOSED it, and it is a CHAT model rather than
+  // router infrastructure or an embedding or reranker deployment. The snapshot query
+  // (findAllForSnapshot) stays unfiltered on purpose because the router needs
+  // infrastructure models that are never user-executable.
+  async findExposedForCatalog(): Promise<
+    Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>
+  > {
+    return this.prisma.connectorModel.findMany({
+      where: {
+        connector: { isEnabled: true },
+        lifecycle: 'ACTIVE',
+        exposure: 'EXPOSED',
+        kind: 'CHAT',
+      },
+      include: { connector: { select: { status: true, isEnabled: true } } },
+      orderBy: [{ provider: 'asc' }, { displayName: 'asc' }],
+    }) as Promise<Array<ConnectorModel & { connector: { status: string; isEnabled: boolean } }>>;
+  }
+
+  // Only a model that already exists on this connector and is not REMOVED may be
+  // exposed. A forged or stale modelKey must change nothing rather than create a row.
+  async setExposure(
+    connectorId: string,
+    modelKeys: string[],
+    exposed: boolean,
+  ): Promise<{ updated: number }> {
+    const result = await this.prisma.connectorModel.updateMany({
+      where: { connectorId, modelKey: { in: modelKeys }, lifecycle: { not: 'REMOVED' } },
+      data: { exposure: exposed ? 'EXPOSED' : 'UNEXPOSED' },
+    });
+    return { updated: result.count };
+  }
+
+  // Which of these keys are currently exposed. The caller uses this to show what an
+  // unexpose would actually take away before it is committed.
+  async findExposedKeys(connectorId: string, modelKeys: string[]): Promise<string[]> {
+    const rows = await this.prisma.connectorModel.findMany({
+      where: { connectorId, modelKey: { in: modelKeys }, exposure: 'EXPOSED' },
+      select: { modelKey: true },
+    });
+    return rows.map((row) => row.modelKey);
+  }
+
+  // Which of these (provider, model) pairs are real, exposed, chat-capable
+  // deployments right now. One query for the whole set, so a plan with 200
+  // models costs one round trip. A pair that matches nothing is simply absent.
+  async findExposedPairs(
+    pairs: Array<{ provider: string; model: string }>,
+  ): Promise<Array<{ provider: string; model: string }>> {
+    const rows = await this.prisma.connectorModel.findMany({
+      where: {
+        OR: pairs.map((pair) => ({ provider: pair.provider as never, modelKey: pair.model })),
+        exposure: 'EXPOSED',
+        kind: 'CHAT',
+        lifecycle: 'ACTIVE',
+        connector: { isEnabled: true },
+      },
+      select: { provider: true, modelKey: true },
+    });
+    return rows.map((row) => ({ provider: row.provider, model: row.modelKey }));
   }
 }

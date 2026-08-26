@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { type ModelBehaviorProbeResult, Permission } from '@claw/shared-types';
 import { RequirePermissions } from '@claw/shared-entitlements';
 import { type ConnectorModel } from '../../../generated/prisma';
@@ -7,6 +7,7 @@ import { type PaginatedResult } from '../../../common/types';
 import { ConnectorsService } from '../services/connectors.service';
 import { CreateConnectorDto, createConnectorSchema } from '../dto/create-connector.dto';
 import { UpdateConnectorDto, updateConnectorSchema } from '../dto/update-connector.dto';
+import { SetModelExposureDto, setModelExposureSchema } from '../dto/set-model-exposure.dto';
 import {
   ListConnectorsQueryDto,
   listConnectorsQuerySchema,
@@ -90,8 +91,24 @@ export class ConnectorsController {
     return this.connectorsService.syncModels(id);
   }
 
+  // Lists a connector's FULL inventory, including models no administrator has
+  // exposed yet. Administrator-only; every sibling route here already requires it.
   @Get(':id/models')
+  @RequirePermissions(Permission.ADMIN_CONNECTORS_MANAGE)
   async getModels(@Param('id') id: string): Promise<ConnectorModel[]> {
     return this.connectorsService.getModels(id);
+  }
+
+  // Expose or unexpose a bounded set of a connector's synced models. Exposure is
+  // the gate between what a provider happens to offer and what ClawAI is willing
+  // to put in front of a user, so this is administrator-only and never inferred.
+  // previouslyExposed lets the caller report exactly what an unexpose took away.
+  @Put(':id/models/exposure')
+  @RequirePermissions(Permission.ADMIN_CONNECTORS_MANAGE)
+  async setModelExposure(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(setModelExposureSchema)) dto: SetModelExposureDto,
+  ): Promise<{ updated: number; previouslyExposed: string[] }> {
+    return this.connectorsService.setModelExposure(id, dto.modelKeys, dto.exposed);
   }
 }

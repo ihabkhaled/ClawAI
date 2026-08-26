@@ -1130,6 +1130,11 @@
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/internal/chat/model-authorization-metrics",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/internal/chat/threads/seeded",
           "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads-internal.controller.ts"
@@ -1209,6 +1214,11 @@
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
         },
         {
+          "method": "PUT",
+          "route": "/connectors/:id/models/exposure",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/connectors/:id/sync",
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
@@ -1241,6 +1251,11 @@
         {
           "method": "GET",
           "route": "/internal/connectors/models-snapshot",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/connectors/models/validate-exposed",
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
         }
       ],
@@ -5675,6 +5690,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "CONNECTOR_MODEL_EXPOSURE_CHANGED",
+        "pattern": "connector.model_exposure_changed",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "CONNECTOR_SYNCED",
         "pattern": "connector.synced",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -7319,7 +7339,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4567
+        "value": 4592
       },
       "localeCount": 16,
       "locales": [
@@ -8964,7 +8984,7 @@
       },
       "@claw/shared-entitlements": {
         "runner": "jest",
-        "testFiles": 3
+        "testFiles": 4
       },
       "@claw/shared-rabbitmq": {
         "runner": "jest",
@@ -8992,7 +9012,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 100
+        "testFiles": 101
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -9757,9 +9777,9 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 600,
+    "endpointCount": 603,
     "envVarCount": 347,
-    "eventCount": 167,
+    "eventCount": 168,
     "frontendRouteCount": 123,
     "localeCount": 16,
     "nginxRouteCount": 54,
@@ -9769,7 +9789,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 975,
+    "totalTestFiles": 977,
     "workspaceCount": 25
   }
 }
