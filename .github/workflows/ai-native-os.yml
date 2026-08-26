@@ -36,6 +36,12 @@ jobs:
           node-version: '22'
       - name: knowledge:verify
         run: node tools/knowledge/verify.mjs
+      # Rule 33's documentation-discoverability gate. It lives here rather than
+      # in the git hooks on purpose: hooks gate code and must stay fast, and a
+      # missing index row never breaks a build — but it does cost the next agent
+      # a re-derivation, so CI is where it gets caught.
+      - name: knowledge:coverage
+        run: node tools/knowledge/coverage.mjs
 
   tooling-tests:
     name: Tooling tests (audit, knowledge, affected)

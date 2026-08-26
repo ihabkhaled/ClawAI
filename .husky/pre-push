@@ -56,15 +56,25 @@ echo "pre-push 2/4: knowledge + architecture tooling tests"
 npm run knowledge:test || fail "→ knowledge:test failed"
 npm run architecture:check || fail "→ architecture:check failed"
 
-echo "pre-push 3/4: test affected workspaces"
-node tools/affected/index.mjs test --base=origin/HEAD ||
-  node tools/affected/index.mjs test --base=main ||
-  fail "→ affected tests failed"
+# Stages 3 and 4 are the expensive ones. If the scoped gates already ran green
+# over exactly this tree and recorded a receipt, repeating them here proves
+# nothing and only burns the developer's machine. The receipt names the tree it
+# proved, so a single changed byte invalidates it and both stages run in full.
+# This is the sanctioned way to avoid duplicate work — never --no-verify, which
+# would also skip the cheap integrity checks above. See rules/34.
+if node tools/gates/receipt.mjs check >/dev/null 2>&1; then
+  echo "pre-push 3-4/4: skipped — gate receipt matches this exact tree (rules/34)"
+else
+  echo "pre-push 3/4: test affected workspaces"
+  node tools/affected/index.mjs test --base=origin/HEAD ||
+    node tools/affected/index.mjs test --base=main ||
+    fail "→ affected tests failed"
 
-echo "pre-push 4/4: build affected workspaces"
-node tools/affected/index.mjs build --base=origin/HEAD ||
-  node tools/affected/index.mjs build --base=main ||
-  fail "→ affected build failed"
+  echo "pre-push 4/4: build affected workspaces"
+  node tools/affected/index.mjs build --base=origin/HEAD ||
+    node tools/affected/index.mjs build --base=main ||
+    fail "→ affected build failed"
+fi
 
 restore_stash
 trap - EXIT INT TERM

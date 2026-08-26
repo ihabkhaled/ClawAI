@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 20904,
+      "bytes": 22902,
       "file": "CLAUDE.md"
     },
     {
@@ -53,11 +53,11 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 12653,
+      "bytes": 18407,
       "file": "rules/00-master-rules.md"
     },
     {
-      "bytes": 4412,
+      "bytes": 5691,
       "file": "rules/00-non-negotiable-rules.md"
     },
     {
@@ -225,13 +225,21 @@
       "file": "rules/32-underthinking-and-reasoning-balance.md"
     },
     {
+      "bytes": 9188,
+      "file": "rules/33-knowledge-compounding-and-context-velocity.md"
+    },
+    {
+      "bytes": 6856,
+      "file": "rules/34-gate-economy-and-machine-resources.md"
+    },
+    {
       "bytes": 4045,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 9046,
+      "bytes": 19163,
       "file": "skills/00-index.md"
     },
     {
@@ -407,6 +415,10 @@
       "file": "skills/frontend-architecture-review.md"
     },
     {
+      "bytes": 4524,
+      "file": "skills/grow-the-knowledge-layer.md"
+    },
+    {
       "bytes": 3134,
       "file": "skills/increase-coverage-correctly.md"
     },
@@ -433,6 +445,10 @@
     {
       "bytes": 4741,
       "file": "skills/reuse-before-creating.md"
+    },
+    {
+      "bytes": 3693,
+      "file": "skills/run-gates-once-and-land.md"
     },
     {
       "bytes": 4455,

@@ -72,6 +72,11 @@ stated explicitly, never applied silently.
 - **NEVER** add user-facing text without i18n in all 13 locales, as real translations.
 - **NEVER** add code without a test.
 - **NEVER** declare a `type`/`interface`/`enum`/module-`const` inline in a logic file — extract per [`rules/12-types-enums-constants-and-declaration-ownership.md`](rules/12-types-enums-constants-and-declaration-ownership.md).
+- **NEVER** ship a change with no knowledge delta. Code alone is half a change: the
+  skills, rules, docs, `context/` and `.ai/` that let the next agent act in seconds
+  ship in the **same commit** — [`rules/33-knowledge-compounding-and-context-velocity.md`](rules/33-knowledge-compounding-and-context-velocity.md).
+- **NEVER** re-run a gate you have already proven green over an unchanged tree, and
+  never run all-workspace gates. Gate once, at the end, scoped — [`rules/34-gate-economy-and-machine-resources.md`](rules/34-gate-economy-and-machine-resources.md).
 
 Full list with rationale: [`rules/00-non-negotiable-rules.md`](rules/00-non-negotiable-rules.md).
 
@@ -98,7 +103,15 @@ npx tsgo --noEmit && npm run lint && npm test && npm run build
 
 Run the gates **only in the folders you touched** — never all-workspace, which is
 prohibitively expensive (13 Prisma clients, every service compiled) and false-fails
-on unchanged siblings. Then:
+on unchanged siblings.
+
+Gate **once, at the end of a batch** — not per edit, not per commit. If those scoped
+gates just proved this exact tree green, record it with `npm run gates:receipt` and the
+hooks skip the duplicate pass for that tree only. The receipt is the sanctioned way
+to avoid paying for the same proof twice; bypassing a hook remains prohibited under
+[ADR-061](docs/13-adr/adr-061-git-hook-policy-no-bypass.md).
+
+Then:
 
 ```bash
 git add <explicit paths>                 # never -A, never .
@@ -138,6 +151,13 @@ all 13 i18n locales + `i18n.types.ts` in the same commit · Prisma migration · 
 tests · frontend types · `docs/` · this file only when a canonical rule genuinely
 changes.
 
+**And the knowledge layer, in the same commit.** A repeatable new procedure gets a
+`skills/*.md`; a new constraint gets a numbered `rules/*.md`; a service change updates
+its `CLAUDE.md` and `docs/04-backend/service-guide-<name>.md`; a cross-cutting decision
+gets an ADR. Anything new must be reachable from its index — `npm run knowledge:coverage`
+fails otherwise. Full rule:
+[`rules/33-knowledge-compounding-and-context-velocity.md`](rules/33-knowledge-compounding-and-context-velocity.md).
+
 Full checklist with rationale: [`rules/05-infra-rules.md`](rules/05-infra-rules.md) ·
 [`context/environment-ownership-map.md`](context/environment-ownership-map.md) ·
 [`docs/16-quality-engineering/DOCS_ENV_DOCKER_NGINX_CI_CHECKLIST.md`](docs/16-quality-engineering/DOCS_ENV_DOCKER_NGINX_CI_CHECKLIST.md)
@@ -149,6 +169,8 @@ Full checklist with rationale: [`rules/05-infra-rules.md`](rules/05-infra-rules.
 | The blockers, in one page                                       | [`rules/00-non-negotiable-rules.md`](rules/00-non-negotiable-rules.md)                                                                                                                                |
 | Rule index                                                      | [`rules/00-master-rules.md`](rules/00-master-rules.md) · [`rules/README.md`](rules/README.md)                                                                                                         |
 | The 26 engineering mindsets                                     | [`rules/27-engineering-mindsets.md`](rules/27-engineering-mindsets.md)                                                                                                                                |
+| Knowledge, docs and skills that ship with the code              | [`rules/33-knowledge-compounding-and-context-velocity.md`](rules/33-knowledge-compounding-and-context-velocity.md) · [`skills/grow-the-knowledge-layer.md`](skills/grow-the-knowledge-layer.md)       |
+| Gate economy and machine resources                              | [`rules/34-gate-economy-and-machine-resources.md`](rules/34-gate-economy-and-machine-resources.md) · [`skills/run-gates-once-and-land.md`](skills/run-gates-once-and-land.md)                         |
 | Planning gate (Phase 0 / 0g)                                    | [`rules/01-planning-rules.md`](rules/01-planning-rules.md) · [`rules/01-task-intake-and-planning.md`](rules/01-task-intake-and-planning.md)                                                           |
 | Backend layering: controllers, services, managers, repositories | [`rules/02-backend-rules.md`](rules/02-backend-rules.md), [`rules/07`](rules/07-backend-controllers-and-transport.md)–[`rules/11`](rules/11-dtos-and-validation.md)                                   |
 | Frontend pages, hooks, components, queries                      | [`rules/03-frontend-rules.md`](rules/03-frontend-rules.md), [`rules/04`](rules/04-nextjs-app-router.md)–[`rules/06`](rules/06-frontend-queries-and-cache.md)                                          |

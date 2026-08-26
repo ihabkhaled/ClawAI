@@ -38,6 +38,14 @@ Every workspace: all 17 `apps/claw-*` services, `apps/claw-frontend`, all six
     `*.repository.ts`. Services and managers call repositories, never the client.
 12. **No secret logging or exposure.** Never log or return tokens, passwords,
     refresh tokens, API keys, or encrypted config to any client or log sink.
+13. **Every change carries its knowledge delta.** A change is the code _plus_ the
+    knowledge that lets the next agent act on it in seconds. In the same commit,
+    update whichever apply: the service's `CLAUDE.md`, its service guide, the
+    governing `rules/*.md`, the matching `skills/*.md`, the relevant `context/*.md`,
+    and the regenerated `.ai/**`. A repeatable new procedure gets a skill; a new
+    constraint gets a rule; both must be reachable from their index. Record the
+    _why_, the rejected alternatives, and the operational consequence — see
+    [33-knowledge-compounding-and-context-velocity.md](33-knowledge-compounding-and-context-velocity.md).
 
 ## Prohibited patterns
 
@@ -48,6 +56,11 @@ Every workspace: all 17 `apps/claw-*` services, `apps/claw-frontend`, all six
 - `@ts-ignore`, or `@ts-expect-error` without an approved waiver.
 - `any`, or `as unknown as X` casts.
 - String-literal union types for domain values (use an enum).
+- Shipping a feature, flagship or migration with **zero** diff under `rules/`,
+  `skills/`, `docs/`, `context/` or `.ai/` — and no stated reason why none applied.
+- "I'll document it in a follow-up." The follow-up does not happen.
+- A new `rules/*.md` or `skills/*.md` that no index references.
+- Hand-editing anything under `.ai/**` or the inventory snapshot.
 
 ## Correct pattern
 
@@ -69,6 +82,8 @@ npx tsgo --noEmit && npm run lint && npm test && npm run build   # per-folder ga
 - 9 → **Architecture test** + **Review checklist**.
 - 12 → **ESLint** (Pino redaction config) + **Review checklist**.
 - Prohibited casts/unions → **ESLint** + **TS config** (`tsgo --noEmit`).
+- 13 → **Knowledge check** (`npm run knowledge:coverage`, CI + unit suite — kept
+  out of the hooks so the commit path stays fast) + **Review checklist**.
 
 ## Related skills
 
@@ -88,3 +103,4 @@ npx tsgo --noEmit && npm run lint && npm test && npm run build   # per-folder ga
 - [ ] Every commit pushed before the next was started —
       `git log --oneline origin/<branch>..HEAD` is empty.
 - [ ] No prohibited pattern present anywhere in the diff.
+- [ ] The knowledge delta landed in the same commit, and `npm run knowledge:coverage` passes.

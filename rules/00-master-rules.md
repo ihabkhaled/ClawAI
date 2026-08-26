@@ -8,24 +8,50 @@
 
 ## Rule Files
 
-| File                                              | Domain                                                                                                                                           |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `01-planning-rules.md`                            | Phase 0–0g: planning gate before every change                                                                                                    |
-| `02-backend-rules.md`                             | NestJS architecture: controllers, services, managers, repos                                                                                      |
-| `03-frontend-rules.md`                            | Next.js architecture: pages, hooks, components, state                                                                                            |
-| `04-testing-rules.md`                             | **Mandatory testing**: TDD, unit, API (20-25×), UI, QA, UAT, coverage                                                                            |
-| `05-infra-rules.md`                               | Docker, Nginx, CI, .env, shared packages                                                                                                         |
-| `06-docs-rules.md`                                | Documentation: when, where, what format                                                                                                          |
-| `07-commit-rules.md`                              | Conventional commits, PR rules, branch rules                                                                                                     |
-| `08-security-rules.md`                            | Security: secrets, auth, input validation, OWASP                                                                                                 |
-| `09-refactor-rules.md`                            | **Refactor discipline**: extraction, dedup, logging, coverage, splits                                                                            |
-| `26-prompt-pack-intake-protocol.md`               | **Prompt-pack intake**: what MUST happen before code when work arrives as a document                                                             |
-| `27-engineering-mindsets.md`                      | **The 26 mindsets**: the default operating mode for every agent (moved out of CLAUDE.md)                                                         |
-| `28-billing-integrity-and-api-contracts.md`       | Billing immutability, refund entitlement, exact FE/BE contract tests                                                                             |
-| `29-communication-style.md`                       | **Short, plain, concrete replies**; stay foreground and keep streaming                                                                           |
-| `30-agent-self-regulation-and-loop-prevention.md` | **Loop/drift prevention**: nesting, retry, and verification budgets; discovery classification; deadlock/livelock recovery                        |
-| `31-anti-gaming-and-semantic-compliance.md`       | **Anti-gaming**: rule 30's budgets enforced by intent, not literal syntax; false progress/completion/blocker guards; executive override protocol |
-| `32-underthinking-and-reasoning-balance.md`       | **Reasoning floor**: the counterweight to rule 30 — architecture/root-cause/evidence/security floors, decision-readiness gate                    |
+| File                                                    | Domain                                                                                                                                                 |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `01-planning-rules.md`                                  | Phase 0–0g: planning gate before every change                                                                                                          |
+| `02-backend-rules.md`                                   | NestJS architecture: controllers, services, managers, repos                                                                                            |
+| `03-frontend-rules.md`                                  | Next.js architecture: pages, hooks, components, state                                                                                                  |
+| `04-testing-rules.md`                                   | **Mandatory testing**: TDD, unit, API (20-25×), UI, QA, UAT, coverage                                                                                  |
+| `05-infra-rules.md`                                     | Docker, Nginx, CI, .env, shared packages                                                                                                               |
+| `06-docs-rules.md`                                      | Documentation: when, where, what format                                                                                                                |
+| `07-commit-rules.md`                                    | Conventional commits, PR rules, branch rules                                                                                                           |
+| `08-security-rules.md`                                  | Security: secrets, auth, input validation, OWASP                                                                                                       |
+| `09-refactor-rules.md`                                  | **Refactor discipline**: extraction, dedup, logging, coverage, splits                                                                                  |
+| `26-prompt-pack-intake-protocol.md`                     | **Prompt-pack intake**: what MUST happen before code when work arrives as a document                                                                   |
+| `27-engineering-mindsets.md`                            | **The 26 mindsets**: the default operating mode for every agent (moved out of CLAUDE.md)                                                               |
+| `28-billing-integrity-and-api-contracts.md`             | Billing immutability, refund entitlement, exact FE/BE contract tests                                                                                   |
+| `29-communication-style.md`                             | **Short, plain, concrete replies**; stay foreground and keep streaming                                                                                 |
+| `30-agent-self-regulation-and-loop-prevention.md`       | **Loop/drift prevention**: nesting, retry, and verification budgets; discovery classification; deadlock/livelock recovery                              |
+| `31-anti-gaming-and-semantic-compliance.md`             | **Anti-gaming**: rule 30's budgets enforced by intent, not literal syntax; false progress/completion/blocker guards; executive override protocol       |
+| `32-underthinking-and-reasoning-balance.md`             | **Reasoning floor**: the counterweight to rule 30 — architecture/root-cause/evidence/security floors, decision-readiness gate                          |
+| `01-task-intake-and-planning.md`                        | No line of code is written before the task is understood and its blast radius is mapped.                                                               |
+| `02-monorepo-and-workspace-ownership.md`                | ClawAI is an npm-workspaces monorepo: 17 NestJS services, one Next.js frontend, and six shared packages.                                               |
+| `03-microservice-boundaries.md`                         | Each ClawAI service owns its data and its process.                                                                                                     |
+| `04-nextjs-app-router.md`                               | `apps/claw-frontend` is a Next.js 16 App Router application (React 19.2).                                                                              |
+| `05-frontend-components-and-hooks.md`                   | Components render; hooks hold logic. Splitting them — and keeping each small and single-purpose — is what makes the frontend reviewable and testabl…   |
+| `06-frontend-queries-and-cache.md`                      | All server state flows through TanStack Query; client-only state flows through Zustand.                                                                |
+| `07-backend-controllers-and-transport.md`               | Controllers are the thinnest layer: they translate transport (HTTP/SSE) into a single service call and translate the result back.                      |
+| `08-backend-managers-and-use-cases.md`                  | Managers hold complex orchestration that would bloat a service method: parallel LLM calls, retry chains, external-API sequencing, multi-step assembly. |
+| `09-backend-services.md`                                | Services are the business-logic layer: they own domain rules, ownership/permission checks, and event publishing.                                       |
+| `10-repositories-and-persistence.md`                    | Repositories are the only place database queries live.                                                                                                 |
+| `11-dtos-and-validation.md`                             | Every byte that enters a service is validated at the boundary with Zod.                                                                                |
+| `12-types-enums-constants-and-declaration-ownership.md` | Every declaration has exactly one home. Extracting types, enums, constants, and functions out of logic files keeps those files focused, makes decla…   |
+| `13-external-library-wrappers-and-adapters.md`          | Third-party code touches ClawAI in exactly one place.                                                                                                  |
+| `14-shared-packages.md`                                 | Six `packages/shared-*` workspaces hold everything used by two or more services.                                                                       |
+| `15-configuration-and-environment.md`                   | Configuration is read once, validated with Zod, and exposed through a typed `AppConfig` — never scraped from `process.env` at call sites.              |
+| `16-authentication-and-authorization.md`                | Auth is uniform across all 17 services: one JWT model, one guard stack, one permission catalog, one entitlement layer.                                 |
+| `17-rabbitmq-events-and-jobs.md`                        | Async cross-service communication runs on one topic exchange with one reliability contract.                                                            |
+| `18-error-handling-and-reliability.md`                  | Errors are typed, logged, and surfaced — never swallowed, never left to spin.                                                                          |
+| `19-logging-observability-and-redaction.md`             | Every request is traceable end-to-end and no log line ever leaks a secret.                                                                             |
+| `20-i18n-and-user-facing-messages.md`                   | Every string a user can see is translatable and actually translated into all nine locales.                                                             |
+| `21-security-and-secrets.md`                            | Secrets stay server-side and encrypted; input is validated and bounded; every service ships the same hardening.                                        |
+| `22-testing-and-coverage.md`                            | Nothing ships untested. Unit tests are the floor; QA scripts, DB verification, and log inspection are the ceiling. Coverage is a proxy for "did you…   |
+| `23-git-commits-hooks-and-release-gates.md`             | Quality gates run where they are cheap and correct: in the folder you touched.                                                                         |
+| `24-generated-files-and-knowledge-freshness.md`         | The AI-native workflow depends on machine-readable facts staying true.                                                                                 |
+| `33-knowledge-compounding-and-context-velocity.md`      | ClawAI is production-grade and worked on by many people and many agents.                                                                               |
+| `34-gate-economy-and-machine-resources.md`              | The gates in this repo are expensive by construction: 13 Prisma clients, 20 workspaces, thousands of tests.                                            |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 
