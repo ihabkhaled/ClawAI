@@ -953,10 +953,40 @@ dump_diagnostics() {
   err ""
 }
 
-# nginx serves its configuration from a read-only bind mount, so the new file is
-# already visible inside the running container. `nginx -s reload` swaps workers
-# without dropping a connection — strictly better than recreating the container,
-# which would blip TLS termination for the whole site.
+# nginx's configuration arrives through SINGLE-FILE bind mounts, and a file bind
+# mount binds the INODE, not the path. `git pull` does not edit these files in
+# place — it writes a replacement and renames it over the original, which is a
+# new inode. The running container stays attached to the old, now-unlinked one,
+# so the new configuration is NOT visible inside the container and `nginx -s
+# reload` faithfully reloads the previous content while reporting success.
+#
+# That is not hypothetical: production served an Aug 7 locations.conf for nearly
+# three weeks while every deployment reported a healthy reload, and /api/v1/feedback
+# 404'd because the route existed only in the host's copy of the file.
+#
+# So the reload is now evidence-based: compare what the container can actually
+# see against the host, take the cheap zero-downtime reload when they match, and
+# recreate the container when they do not. Recreating blips TLS termination for a
+# moment, which is strictly better than serving a stale configuration silently.
+NGINX_CONFIG_MOUNTS="/etc/nginx/nginx.conf:infra/nginx/nginx.conf /etc/nginx/claw/locations.conf:infra/nginx/locations.conf"
+
+# 0 when every mounted config file inside the container matches the host copy.
+nginx_sees_current_config() {
+  local cid="$1" pair container_path host_path host_sum container_sum
+  for pair in $NGINX_CONFIG_MOUNTS; do
+    container_path="${pair%%:*}"
+    host_path="${pair#*:}"
+    [ -f "$host_path" ] || continue
+    host_sum="$(sha256sum "$host_path" 2>/dev/null | awk '{print $1}')"
+    container_sum="$(docker exec "$cid" sha256sum "$container_path" 2>/dev/null | awk '{print $1}')"
+    if [ -z "$container_sum" ] || [ "$host_sum" != "$container_sum" ]; then
+      log "nginx cannot see the current $host_path (stale bind mount)."
+      return 1
+    fi
+  done
+  return 0
+}
+
 reload_nginx() {
   section "Reloading nginx configuration..."
   local cid
@@ -966,6 +996,23 @@ reload_nginx() {
     compose up -d --no-deps --no-build nginx || die "could not start nginx"
     return 0
   fi
+
+  if ! nginx_sees_current_config "$cid"; then
+    log "Recreating nginx so the bind mounts re-resolve to the current files."
+    compose up -d --no-deps --no-build --force-recreate nginx ||
+      die "could not recreate nginx"
+    cid="$(compose ps -q nginx 2>/dev/null | head -1 || true)"
+    [ -n "$cid" ] || die "nginx did not come back after recreation"
+    if ! nginx_sees_current_config "$cid"; then
+      die "nginx still cannot see the current configuration after recreation"
+    fi
+    if ! docker exec "$cid" nginx -t; then
+      die "the new nginx configuration is invalid"
+    fi
+    log "nginx recreated with the current configuration."
+    return 0
+  fi
+
   if ! docker exec "$cid" nginx -t; then
     die "the new nginx configuration is invalid — the running configuration was left in place"
   fi

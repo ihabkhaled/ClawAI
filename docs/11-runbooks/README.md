@@ -8,6 +8,7 @@
 | Symptom                                      | Start here                                                                                                                            |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | A service won't start / crash-loops          | [runbook-service-crash.md](runbook-service-crash.md) → check Docker logs, DB reachability, migrations                                 |
+| A new API route 404s as HTML in production   | [runbook-nginx-stale-config.md](runbook-nginx-stale-config.md) → nginx is pinned to a stale config inode; recreate the container      |
 | Requests are slow / timing out               | [runbook-high-latency.md](runbook-high-latency.md)                                                                                    |
 | A database is corrupt / needs restore        | [runbook-database-recovery.md](runbook-database-recovery.md)                                                                          |
 | Routing picks the "wrong" model              | [runbook-routing-misclassification.md](runbook-routing-misclassification.md)                                                          |
