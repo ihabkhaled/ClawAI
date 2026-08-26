@@ -323,9 +323,77 @@ export class ConnectorsService implements OnApplicationBootstrap {
   // unmodified; plan features (compare/judge/critic/research) gate WORKFLOWS,
   // never which model the user can pick.
   async getAvailableModels(): Promise<ConnectorModel[]> {
-    this.logger.debug('getAvailableModels: listing enabled connector models');
-    const rows = await this.connectorModelsRepository.findAllForSnapshot();
+    this.logger.debug('getAvailableModels: listing exposed chat models');
+    const rows = await this.connectorModelsRepository.findExposedForCatalog();
     return rows.map(({ connector: _connector, ...model }) => model);
+  }
+
+  // Admin exposure control. The connector is verified first so a bad id fails as
+  // NOT FOUND rather than silently updating nothing, and the previously exposed
+  // keys are captured before the write so the caller can report what an unexpose
+  // actually took away. setExposure only touches rows that already exist and are
+  // not REMOVED, so a forged modelKey changes nothing.
+  async setModelExposure(
+    connectorId: string,
+    modelKeys: string[],
+    exposed: boolean,
+  ): Promise<{ updated: number; previouslyExposed: string[] }> {
+    const connector = await this.connectorsRepository.findById(connectorId);
+    if (!connector) {
+      throw new EntityNotFoundException('Connector', connectorId);
+    }
+    const previouslyExposed = await this.connectorModelsRepository.findExposedKeys(
+      connectorId,
+      modelKeys,
+    );
+    const { updated } = await this.connectorModelsRepository.setExposure(
+      connectorId,
+      modelKeys,
+      exposed,
+    );
+    this.logger.log(
+      `setModelExposure: connector=${connectorId} exposed=${String(exposed)} requested=${String(modelKeys.length)} updated=${String(updated)}`,
+    );
+    // Exposure decides what ClawAI offers to everyone, so who changed it and
+    // what it took away has to be recoverable later. previouslyExposed is the
+    // before-state: on an unexpose it names exactly what stopped being
+    // available, which a count alone would not tell an investigator.
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Model exposure ${exposed ? 'granted' : 'revoked'} on connector ${connectorId}`,
+      action: exposed ? 'model_exposure_granted' : 'model_exposure_revoked',
+      service: ConnectorsService.name,
+      connectorId,
+      metadata: { requestedModelKeys: modelKeys, previouslyExposed, updated },
+    });
+
+    // Consumers cache exposure to keep the check off the message hot path. This
+    // is what tells them to drop that cache, so an unexpose takes effect while
+    // the administrator is still on the screen rather than up to a TTL later.
+    // Fire-and-forget: a missed event costs at most one cache lifetime, and
+    // blocking the administrator's request on the broker would be worse.
+    void this.rabbitMQService.publish(EventPattern.CONNECTOR_MODEL_EXPOSURE_CHANGED, {
+      connectorId,
+      modelKeys,
+      exposed,
+      updated,
+      timestamp: new Date().toISOString(),
+    });
+    return { updated, previouslyExposed };
+  }
+
+  // Internal contract for auth-service. Returns only the pairs that are
+  // currently offerable. It deliberately does not say WHY a pair was rejected:
+  // this endpoint is reachable service-to-service and must not become a way to
+  // probe which models exist but are hidden.
+  async validateExposedModels(
+    pairs: Array<{ provider: string; model: string }>,
+  ): Promise<{ valid: Array<{ provider: string; model: string }> }> {
+    const valid = await this.connectorModelsRepository.findExposedPairs(pairs);
+    this.logger.debug(
+      `validateExposedModels: requested=${String(pairs.length)} valid=${String(valid.length)}`,
+    );
+    return { valid };
   }
 
   private maskSecrets<T extends { encryptedConfig?: string | null }>(connector: T): T {

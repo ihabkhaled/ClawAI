@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "authorizationOrder": [
+    "authentication",
+    "subscription_state",
+    "resolved_plan",
+    "plan_provider_access",
+    "global_model_exposure",
+    "plan_model_entitlement",
+    "connector_enabled",
+    "deployment_lifecycle",
+    "operation_capability"
+  ],
+  "modelPools": {
+    "routerInfrastructure": "Internal routing/classification models configured separately from user execution.",
+    "userExecution": "Globally exposed deployments further constrained by plan and runtime policies."
+  },
+  "syncDefaults": {
+    "newModelExposure": "UNEXPOSED",
+    "removedModel": "STALE_OR_RETIRED_BY_POLICY",
+    "deleteHistoricalReferences": false
+  },
+  "security": {
+    "frontendAuthorizes": false,
+    "serverRejectsForgedModelIds": true,
+    "failClosed": true,
+    "requestAuthorizationSnapshot": true
+  }
+}

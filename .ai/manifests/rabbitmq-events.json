@@ -311,6 +311,11 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "CONNECTOR_MODEL_EXPOSURE_CHANGED",
+      "pattern": "connector.model_exposure_changed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "CONNECTOR_SYNCED",
       "pattern": "connector.synced",
       "source": "packages/shared-types/src/events/event-patterns.ts"

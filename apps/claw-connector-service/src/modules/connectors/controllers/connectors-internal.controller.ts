@@ -1,5 +1,10 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { Public } from '../../../app/decorators/public.decorator';
+import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import {
+  type ValidateExposedModelsDto,
+  validateExposedModelsSchema,
+} from '../dto/validate-exposed-models.dto';
 import { ModelsSnapshotManager } from '../managers/models-snapshot.manager';
 import { ConnectorsService } from '../services/connectors.service';
 import {
@@ -31,5 +36,19 @@ export class ConnectorsInternalController {
   @Get('health-snapshot')
   async getHealthSnapshot(): Promise<ConnectorHealthSnapshotResult> {
     return this.connectorsService.getHealthSnapshot();
+  }
+
+  // auth-service calls this before persisting plan model access, so an
+  // administrator cannot entitle a plan to a model that was never synced, is
+  // not exposed, or is not a chat deployment. Only the acceptable pairs come
+  // back; anything absent is rejected by the caller. It does not report WHY a
+  // pair failed, so the endpoint cannot be used to probe which models exist
+  // but are deliberately hidden.
+  @Public()
+  @Post('models/validate-exposed')
+  async validateExposedModels(
+    @Body(new ZodValidationPipe(validateExposedModelsSchema)) dto: ValidateExposedModelsDto,
+  ): Promise<{ valid: Array<{ provider: string; model: string }> }> {
+    return this.connectorsService.validateExposedModels(dto.pairs);
   }
 }

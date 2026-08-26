@@ -10,6 +10,7 @@ import type { ModelAccessEditorProps } from '@/types';
 
 export function ModelAccessEditor({
   rows,
+  exposedModels,
   addRow,
   removeRow,
   updateRow,
@@ -33,27 +34,44 @@ export function ModelAccessEditor({
               className="border-border grid grid-cols-1 gap-3 rounded-lg border p-3"
             >
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="grid grid-cols-1 gap-1">
-                  <label htmlFor={`provider-${row.rowKey}`} className="text-xs font-medium">
-                    {t('adminPlans.modelAccess.provider')}
-                  </label>
-                  <Input
-                    id={`provider-${row.rowKey}`}
-                    value={row.provider}
-                    onChange={(e) => updateRow(row.rowKey, 'provider', e.target.value)}
-                    placeholder="anthropic"
-                  />
-                </div>
-                <div className="grid grid-cols-1 gap-1">
-                  <label htmlFor={`model-${row.rowKey}`} className="text-xs font-medium">
+                <div className="grid grid-cols-1 gap-1 sm:col-span-2">
+                  <label htmlFor={`deployment-${row.rowKey}`} className="text-xs font-medium">
                     {t('adminPlans.modelAccess.model')}
                   </label>
-                  <Input
-                    id={`model-${row.rowKey}`}
-                    value={row.model}
-                    onChange={(e) => updateRow(row.rowKey, 'model', e.target.value)}
-                    placeholder="claude-sonnet-4"
-                  />
+                  {/* Selection, not free text. Only deployments an administrator
+                      has exposed are offered; anything else cannot be assigned
+                      and the server refuses it anyway. A row already saved with
+                      a model that is no longer exposed stays visible below so it
+                      can be seen and removed, but it is never re-selectable. */}
+                  <select
+                    id={`deployment-${row.rowKey}`}
+                    className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+                    value={row.provider && row.model ? `${row.provider}/${row.model}` : ''}
+                    onChange={(e) => {
+                      const [provider, ...rest] = e.target.value.split('/');
+                      updateRow(row.rowKey, 'provider', provider ?? '');
+                      updateRow(row.rowKey, 'model', rest.join('/'));
+                    }}
+                  >
+                    <option value="">{t('adminPlans.modelAccess.selectModel')}</option>
+                    {(exposedModels ?? []).map((option) => (
+                      <option
+                        key={`${option.provider}/${option.modelKey}`}
+                        value={`${option.provider}/${option.modelKey}`}
+                      >
+                        {option.displayName} — {option.provider}/{option.modelKey}
+                      </option>
+                    ))}
+                  </select>
+                  {row.provider &&
+                  row.model &&
+                  !(exposedModels ?? []).some(
+                    (option) => option.provider === row.provider && option.modelKey === row.model,
+                  ) ? (
+                    <p className="text-destructive text-xs">
+                      {t('adminPlans.modelAccess.noLongerExposed')} {row.provider}/{row.model}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 

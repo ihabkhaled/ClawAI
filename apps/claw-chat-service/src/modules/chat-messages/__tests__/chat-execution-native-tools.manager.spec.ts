@@ -21,6 +21,13 @@ import type { OllamaChatRequest, OpenAiChatRequest } from '../types/execution.ty
 import { ToolChoiceMode } from '../../../common/enums';
 import { ClawEffortProfile, ClawSpeedProfile } from '@claw/shared-types';
 
+jest.mock('../clients/model-exposure.client', () => ({
+  ModelExposureClient: jest.fn().mockImplementation(() => ({
+    // Exposure is a network call to connector-service. These suites test
+    // dispatch behaviour, not connectivity, so the deployment is exposed.
+    isExposed: jest.fn().mockResolvedValue(true),
+  })),
+}));
 jest.mock('../../../common/utilities', () => ({
   httpRequest: jest.fn(),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {

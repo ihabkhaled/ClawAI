@@ -44,7 +44,7 @@
     {
       "database": "mongodb",
       "dir": "apps/claw-audit-service",
-      "endpointCount": 7,
+      "endpointCount": 15,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -54,13 +54,15 @@
       ],
       "mongooseModels": [
         "AuditLog",
+        "FeedbackCounter",
+        "FeedbackTicket",
         "UsageLedger"
       ],
       "name": "claw-audit-service",
       "port": 4007,
       "portSource": "shared-constants",
       "prismaModels": [],
-      "testFiles": 15,
+      "testFiles": 21,
       "testRunner": "jest"
     },
     {
@@ -107,7 +109,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-chat-service",
-      "endpointCount": 41,
+      "endpointCount": 42,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -128,7 +130,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 100,
+      "testFiles": 101,
       "testRunner": "jest"
     },
     {
@@ -154,7 +156,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-connector-service",
-      "endpointCount": 15,
+      "endpointCount": 17,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",

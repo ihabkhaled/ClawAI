@@ -18,12 +18,30 @@ const decision = (
   }) as unknown as RoutingDecisionResult;
 
 describe('applyPlanModelGate', () => {
-  it('passes through unchanged when allowedModels is empty (allow-all)', () => {
+  it('passes through unchanged when the plan is explicitly unrestricted', () => {
+    // ALLOW_ALL plans and administrators send an empty list on purpose, as a
+    // fast path. That is the only case an empty list may mean "everything".
     const d = decision('OPENAI', 'gpt-4o', [{ provider: 'ANTHROPIC', model: 'claude' }]);
-    const res = applyPlanModelGate(d, []);
+    const res = applyPlanModelGate(d, [], true);
     expect(res.outcome).toBe('unrestricted');
     expect(res.decision.selectedProvider).toBe('OPENAI');
     expect(res.decision.fallbackChain).toHaveLength(1);
+  });
+
+  it('authorizes nothing when a restricted plan has an empty allow-list', () => {
+    // Regression. An empty list used to mean "no restriction" regardless of the
+    // plan, so a plan configured to grant nothing was handed the entire
+    // catalogue — the exact inversion of what the operator set up.
+    const d = decision('OPENAI', 'gpt-4o', [{ provider: 'ANTHROPIC', model: 'claude' }]);
+    const res = applyPlanModelGate(d, []);
+    expect(res.outcome).toBe('unsatisfiable');
+  });
+
+  it('defaults to restricted when the caller does not say otherwise', () => {
+    // The unrestricted flag defaults to false so a caller that has not been
+    // updated becomes MORE restrictive, never less.
+    const d = decision('OPENAI', 'gpt-4o', []);
+    expect(applyPlanModelGate(d, []).outcome).toBe('unsatisfiable');
   });
 
   it('keeps an allowed primary and filters the fallback chain to allowed-only', () => {
@@ -54,5 +72,26 @@ describe('applyPlanModelGate', () => {
     const res = applyPlanModelGate(d, ['OPENAI/gpt-4o']);
     expect(res.outcome).toBe('unsatisfiable');
     expect(res.decision.selectedProvider).toBe('ANTHROPIC');
+  });
+
+  it('reports how many candidates the plan removed', () => {
+    // The count is what makes a narrowed AUTO visible. Without it a plan that
+    // strips three of four fallbacks looks the same as one that strips none.
+    const d = decision('OPENAI', 'gpt-off-plan', [
+      { provider: 'GEMINI', model: 'gemini-2.5-pro' },
+      { provider: 'OPENAI', model: 'also-off-plan' },
+    ]);
+
+    const result = applyPlanModelGate(d, ['GEMINI/gemini-2.5-pro']);
+
+    expect(result.outcome).toBe('promoted');
+    // The off-plan primary plus the one filtered fallback.
+    expect(result.excludedCandidates).toBe(2);
+  });
+
+  it('counts every candidate as excluded when the plan allows none', () => {
+    const d = decision('OPENAI', 'gpt-4o', [{ provider: 'OPENAI', model: 'nope' }]);
+
+    expect(applyPlanModelGate(d, []).excludedCandidates).toBe(2);
   });
 });

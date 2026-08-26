@@ -4,6 +4,7 @@ import { Activity, ArrowLeft, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
+import { ModelExposureSection } from '@/components/admin/connectors/model-exposure-section';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { StatusBadge } from '@/components/common/status-badge';
@@ -230,6 +231,8 @@ export default function ConnectorDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      <ModelExposureSection connectorId={connectorId} />
 
       <ConnectorForm
         open={isFormOpen}

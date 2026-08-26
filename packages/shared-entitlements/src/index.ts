@@ -19,3 +19,9 @@ export { PermissionGuard } from './permission.guard';
 export { RequirePermissions } from './require-permissions.decorator';
 export { EntitlementsModule, type EntitlementsModuleOptions } from './entitlements.module';
 export { ENTITLEMENTS_ADAPTER, REQUIRE_PERMISSIONS_KEY } from './entitlements.tokens';
+export {
+  ModelAuthorizationDenial,
+  authorizeModel,
+  type ModelAuthorizationFacts,
+  type ModelAuthorizationResult,
+} from './model-authorization';

@@ -5,10 +5,17 @@ import { PlansService } from './services/plans.service';
 import { PlanCatalogService } from './services/plan-catalog.service';
 import { PlansRepository } from './repositories/plans.repository';
 import { PlanBillingRepository } from './repositories/plan-billing.repository';
+import { ExposedModelClient } from './clients/exposed-model.client';
 
 @Module({
   controllers: [PlansController, PlansInternalController],
-  providers: [PlansService, PlanCatalogService, PlansRepository, PlanBillingRepository],
+  providers: [
+    PlansService,
+    PlanCatalogService,
+    PlansRepository,
+    PlanBillingRepository,
+    ExposedModelClient,
+  ],
   exports: [PlansService, PlanCatalogService, PlansRepository, PlanBillingRepository],
 })
 export class PlansModule {}
