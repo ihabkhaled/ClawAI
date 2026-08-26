@@ -20,7 +20,7 @@
     "@nestjs/common": "^11.1.28",
     "@nestjs/core": "^11.1.28",
     "@types/jest": "^30.0.0",
-    "eslint": "^10.8.1",
+    "eslint": "^10.9.0",
     "eslint-plugin-unicorn": "73.0.0",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.12",
