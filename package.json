@@ -62,7 +62,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@commitlint/cli": "^21.2.1",
+    "@commitlint/cli": "^21.2.2",
     "@commitlint/config-conventional": "^21.2.0",
     "@eslint/js": "^9.39.4",
     "eslint": "^10.8.1",
@@ -74,12 +74,12 @@
     "prettier": "^3.9.6",
     "prisma": "^7.9.1",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.66.0",
+    "typescript-eslint": "^8.67.0",
     "typescript7": "npm:typescript@^7.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.28",
+    "@nestjs/common": "^11.2.1",
     "@nestjs/core": "^11.2.1",
     "@nestjs/platform-express": "^11.2.1",
     "better-sqlite3": "^13.0.3",
