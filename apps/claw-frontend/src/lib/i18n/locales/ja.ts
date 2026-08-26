@@ -205,6 +205,7 @@ export const ja: TranslationDictionary = {
     discovery: 'モデルの検出',
     workspaceProviders: 'プロバイダー',
     workspaceAppConfigs: 'アプリ構成',
+    workspaceAutomations: '自動化',
     workspaceGmail: 'Gmail',
     workspaceJira: 'ジラ',
     workspaceSourceControl: 'ソース管理',
@@ -1870,6 +1871,10 @@ export const ja: TranslationDictionary = {
     externalUpdated: 'アップストリームを更新しました',
     openInProvider: 'プロバイダーで開く',
     author: '作成者: {author}',
+    relatedItems: '関連アイテム',
+    viewRelatedItem: 'アイテムを表示',
+    unresolvedReference: '参照先のアイテムはまだ同期されていません',
+    linkConfidence: '信頼度 {value}',
   },
   connectorDetail: {
     title: 'コネクタの詳細',
@@ -2065,6 +2070,10 @@ export const ja: TranslationDictionary = {
     levelReadOnly: '読み取り専用',
     levelAiActions: 'AI アクション',
     levelFull: 'フル',
+  },
+  sharedConnectors: {
+    title: '自分と共有されたもの',
+    sharedBy: '{value} が共有',
   },
   emailSignatures: {
     page: {
@@ -2284,6 +2293,68 @@ export const ja: TranslationDictionary = {
       successDescriptionNamed: '{name} が接続されました。リダイレクトして戻ってきます...',
       errorTitle: '接続に失敗しました',
       errorUnknown: '不明なエラーが発生しました。',
+    },
+  },
+  workspaceChains: {
+    page: {
+      title: '自動化',
+      description:
+        'ワークスペース間の既製の自動化を実行するか、テンプレートから独自の自動化を作成します。',
+    },
+    templates: {
+      heading: 'テンプレート',
+      loadFailed: 'テンプレートの読み込みに失敗しました。',
+      emptyTitle: '利用可能なテンプレートがありません',
+      emptyDescription: '自動化テンプレートが追加されるとここに表示されます。',
+      useTemplate: 'このテンプレートを使用',
+    },
+    myAutomations: {
+      heading: 'マイ自動化',
+      loadFailed: '自動化の読み込みに失敗しました。',
+      emptyTitle: 'まだ自動化がありません',
+      emptyDescription: '上のテンプレートを使用して最初の自動化を作成してください。',
+    },
+    chain: {
+      disabled: '無効',
+      stepCount: '{value} ステップ',
+      wasResumed: '手動で修復済み',
+      viewRuns: '実行履歴を表示',
+      run: '実行',
+      running: '実行中…',
+    },
+    instantiate: {
+      name: '名前',
+      namePlaceholder: '例: Jiraチケットを作成してチームに通知',
+      connectorFor: '{value} のコネクタ',
+      selectConnector: 'コネクタを選択',
+      noConnector: '接続された{value}アカウントがありません。先に接続してください。',
+      creating: '作成中…',
+      create: '自動化を作成',
+    },
+    runHistory: {
+      title: '実行履歴',
+      loading: '実行履歴を読み込み中…',
+      empty: 'まだ実行履歴がありません。',
+      resuming: '再開中…',
+      resume: '再開',
+      notStarted: '未開始',
+    },
+    nlDraft: {
+      openButton: '自動化を記述',
+      title: '自動化を記述',
+      description:
+        '実現したいことを簡単な言葉で記述してください。接続済みのアカウントからドラフトのチェーンを作成し、確認していただきます。',
+      promptLabel: '何を自動化しますか?',
+      promptPlaceholder: '例: Jiraチケットを作成してSlackの#eng-updatesに投稿する',
+      noMatch:
+        '接続済みのアカウントに一致するものが見つかりませんでした。表現を変えてお試しください。',
+      previewHeading: 'ドラフトのステップ',
+      nameLabel: '名前',
+      namePlaceholder: 'この自動化に名前を付ける',
+      draft: 'ドラフトを作成',
+      drafting: '作成中…',
+      save: '自動化を保存',
+      saving: '保存中…',
     },
   },
   agent: {
@@ -3216,6 +3287,7 @@ export const ja: TranslationDictionary = {
       loading: '読み込み中…',
       error: '設定をロードできませんでした。',
       empty: 'あなたの承認から学びます — まだ設定はありません。',
+      dismiss: '却下',
     },
   },
   whyThisModel: {

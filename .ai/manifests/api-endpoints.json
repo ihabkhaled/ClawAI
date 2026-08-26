@@ -2727,6 +2727,16 @@
       },
       {
         "method": "GET",
+        "route": "/workspace/chain-templates",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain-template.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/chain-templates/:key/instantiate",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain-template.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/workspace/chains",
         "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
       },
@@ -2758,6 +2768,16 @@
       {
         "method": "GET",
         "route": "/workspace/chains/:id/runs",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/chains/:id/runs/:runId/resume",
+        "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/workspace/chains/draft-from-nl",
         "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
       },
       {
@@ -2834,6 +2854,11 @@
         "method": "GET",
         "route": "/workspace/connectors/:id/sync-runs",
         "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/workspace/connectors/shared-with-me",
+        "source": "apps/claw-workspace-service/src/modules/connector-access/controllers/connector-grant-inbox.controller.ts"
       },
       {
         "method": "POST",
@@ -3093,5 +3118,5 @@
     ]
   },
   "generated": true,
-  "total": 611
+  "total": 616
 }

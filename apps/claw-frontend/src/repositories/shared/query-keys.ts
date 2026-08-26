@@ -199,6 +199,13 @@ export const queryKeys = {
       ['workspaceProviderAppConfigs', 'list', provider ?? 'all'] as const,
     detail: (id: string) => ['workspaceProviderAppConfigs', 'detail', id] as const,
   },
+  workspaceChainTemplates: {
+    all: ['workspaceChainTemplates'] as const,
+  },
+  workspaceChains: {
+    all: ['workspaceChains'] as const,
+    runs: (chainId: string) => ['workspaceChains', chainId, 'runs'] as const,
+  },
   discovery: {
     all: ['discovery'] as const,
     sources: {
@@ -415,6 +422,7 @@ export const queryKeys = {
   connectorGrants: {
     all: ['connectorGrants'] as const,
     list: (connectorId: string) => ['connectorGrants', 'list', connectorId] as const,
+    sharedWithMe: ['connectorGrants', 'sharedWithMe'] as const,
   },
   chatShares: {
     all: ['chatShares'] as const,

@@ -706,6 +706,11 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "WORKSPACE_EVENT_INGESTED",
+      "pattern": "workspace.event.ingested",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "WORKSPACE_SUGGESTION_FACTORY_PROCESSED",
       "pattern": "workspace.suggestion.factory_processed",
       "source": "packages/shared-types/src/events/event-patterns.ts"

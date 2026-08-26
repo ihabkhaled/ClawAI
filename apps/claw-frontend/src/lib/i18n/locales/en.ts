@@ -205,6 +205,7 @@ export const en: TranslationDictionary = {
     discovery: 'Model Discovery',
     workspaceProviders: 'Providers',
     workspaceAppConfigs: 'App Configurations',
+    workspaceAutomations: 'Automations',
     workspaceGmail: 'Gmail',
     workspaceJira: 'Jira',
     workspaceSourceControl: 'Source Control',
@@ -1862,6 +1863,10 @@ export const en: TranslationDictionary = {
     externalUpdated: 'Updated upstream',
     openInProvider: 'Open in provider',
     author: 'Author: {author}',
+    relatedItems: 'Related items',
+    viewRelatedItem: 'View item',
+    unresolvedReference: 'Referenced item not synced yet',
+    linkConfidence: 'confidence {value}',
   },
   connectorDetail: {
     title: 'Connector Detail',
@@ -2049,6 +2054,10 @@ export const en: TranslationDictionary = {
     levelReadOnly: 'Read only',
     levelAiActions: 'AI actions',
     levelFull: 'Full',
+  },
+  sharedConnectors: {
+    title: 'Shared with me',
+    sharedBy: 'Shared by {value}',
   },
   emailSignatures: {
     page: {
@@ -2264,6 +2273,67 @@ export const en: TranslationDictionary = {
       successDescriptionNamed: '{name} connected. Redirecting you back...',
       errorTitle: 'Connection failed',
       errorUnknown: 'An unknown error occurred.',
+    },
+  },
+  workspaceChains: {
+    page: {
+      title: 'Automations',
+      description:
+        'Run ready-made, cross-workspace automations, or build your own from a template.',
+    },
+    templates: {
+      heading: 'Templates',
+      loadFailed: 'Failed to load templates.',
+      emptyTitle: 'No templates available',
+      emptyDescription: 'Automation templates will appear here once they are added.',
+      useTemplate: 'Use this template',
+    },
+    myAutomations: {
+      heading: 'My Automations',
+      loadFailed: 'Failed to load your automations.',
+      emptyTitle: 'No automations yet',
+      emptyDescription: 'Use a template above to create your first automation.',
+    },
+    chain: {
+      disabled: 'Disabled',
+      stepCount: '{value} steps',
+      wasResumed: 'Manually repaired',
+      viewRuns: 'View runs',
+      run: 'Run',
+      running: 'Running…',
+    },
+    instantiate: {
+      name: 'Name',
+      namePlaceholder: 'e.g. File Jira ticket and notify team',
+      connectorFor: 'Connector for {value}',
+      selectConnector: 'Select a connector',
+      noConnector: 'No connected {value} account — connect one first.',
+      creating: 'Creating…',
+      create: 'Create automation',
+    },
+    runHistory: {
+      title: 'Run history',
+      loading: 'Loading runs…',
+      empty: 'No runs yet.',
+      resuming: 'Resuming…',
+      resume: 'Resume',
+      notStarted: 'Not started',
+    },
+    nlDraft: {
+      openButton: 'Describe an automation',
+      title: 'Describe an automation',
+      description:
+        "Describe what you want in plain English, and we'll draft a chain from your connected accounts for you to review.",
+      promptLabel: 'What do you want to automate?',
+      promptPlaceholder: 'e.g. File a Jira ticket and post it to #eng-updates on Slack',
+      noMatch: "We couldn't match this to any of your connected accounts. Try rephrasing it.",
+      previewHeading: 'Draft steps',
+      nameLabel: 'Name',
+      namePlaceholder: 'Name this automation',
+      draft: 'Draft',
+      drafting: 'Drafting…',
+      save: 'Save automation',
+      saving: 'Saving…',
     },
   },
   agent: {
@@ -3183,6 +3253,7 @@ export const en: TranslationDictionary = {
       loading: 'Loading…',
       error: 'Could not load preferences.',
       empty: "We'll learn from your approvals — no preferences yet.",
+      dismiss: 'Dismiss',
     },
   },
   whyThisModel: {

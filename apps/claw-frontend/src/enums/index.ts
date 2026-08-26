@@ -74,6 +74,7 @@ export { WorkspaceObjectType } from './workspace-object-type.enum';
 export { WorkspacePermissionLevel } from './workspace-permission-level.enum';
 export { WorkspaceProvider } from './workspace-provider.enum';
 export { WorkspaceActionStatus } from './workspace-action-status.enum';
+export { WorkspaceChainRunStatus } from './workspace-chain-run-status.enum';
 export { WorkspaceActionType } from './workspace-action-type.enum';
 export { AgentSessionStatus } from './agent-session-status.enum';
 export { TerminalCommandStatus } from './terminal-command-status.enum';

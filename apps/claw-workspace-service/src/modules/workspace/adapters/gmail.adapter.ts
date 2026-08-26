@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import {
   GMAIL_API_BASE,
   GMAIL_SYNC_MESSAGE_LIMIT,
@@ -426,6 +427,14 @@ export class GmailAdapter implements WorkspaceAdapter {
     return true;
   }
 
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [
+      WorkspaceActionType.SEND_EMAIL,
+      WorkspaceActionType.REPLY_EMAIL,
+      WorkspaceActionType.CREATE_DRAFT,
+    ];
+  }
+
   async executeWriteAction(
     accessToken: string,
     actionType: string,
@@ -538,7 +547,10 @@ export class GmailAdapter implements WorkspaceAdapter {
       `To: ${to}`,
       `Subject: ${subject}`,
       ...(isReply && typeof payload['inReplyTo'] === 'string'
-        ? [`In-Reply-To: ${payload['inReplyTo'] as string}`, `References: ${payload['inReplyTo'] as string}`]
+        ? [
+            `In-Reply-To: ${payload['inReplyTo'] as string}`,
+            `References: ${payload['inReplyTo'] as string}`,
+          ]
         : []),
       'Content-Type: text/plain; charset=utf-8',
       'MIME-Version: 1.0',

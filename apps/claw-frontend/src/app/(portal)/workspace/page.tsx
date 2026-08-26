@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
+import { SharedConnectorsSection } from '@/components/workspace/shared-connectors-section';
 import { WorkspaceConnectorCard } from '@/components/workspace/workspace-connector-card';
 import { WorkspaceObjectList } from '@/components/workspace/workspace-object-list';
 import { ROUTES } from '@/constants';
@@ -31,6 +32,9 @@ export default function WorkspacePage(): React.ReactElement {
     objects,
     isObjectsLoading,
     isObjectsError,
+    sharedConnectors,
+    isSharedConnectorsLoading,
+    isSharedConnectorsError,
   } = useWorkspacePage();
 
   if (isError) {
@@ -99,6 +103,13 @@ export default function WorkspacePage(): React.ReactElement {
           ))}
         </div>
       )}
+
+      <SharedConnectorsSection
+        connectors={sharedConnectors}
+        isLoading={isSharedConnectorsLoading}
+        isError={isSharedConnectorsError}
+        t={t}
+      />
 
       {!isLoading && connectors.length > 0 && (
         <div className="flex flex-col gap-4">

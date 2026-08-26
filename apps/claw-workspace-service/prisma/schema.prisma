@@ -134,6 +134,10 @@ enum WorkspaceActionType {
   CREATE_CLICKUP_TASK
   UPDATE_CLICKUP_TASK
   COMMENT_CLICKUP_TASK
+  // Post-pack hardening — calendar write path (both providers were
+  // read-only; this is the one write action each supports)
+  CREATE_GOOGLE_CALENDAR_EVENT
+  CREATE_OUTLOOK_CALENDAR_EVENT
 }
 
 enum WorkspaceActionStatus {
@@ -495,6 +499,13 @@ model WebhookDelivery {
   signature       String?             @db.VarChar(512)
   rawPayload      Json                @map("raw_payload")
   processedAt     DateTime?           @map("processed_at")
+  // Post-pack hardening — durable signal for the gap Phase 15's chaos
+  // tests found: publish() always swallows a RabbitMQ failure (by design,
+  // so the webhook HTTP response never depends on RabbitMQ), but nothing
+  // previously recorded that swallow anywhere queryable. Set on a failed
+  // publish (receive() accept/reject paths, replay()); cleared back to
+  // null on the next publish that succeeds for this row.
+  publishFailedAt DateTime?           @map("publish_failed_at")
   errorMessage    String?             @map("error_message") @db.VarChar(2000)
   ipAddress       String?             @map("ip_address") @db.VarChar(64)
   bodyBytes       Int                 @default(0) @map("body_bytes")
@@ -504,7 +515,55 @@ model WebhookDelivery {
   @@index([provider, createdAt])
   @@index([signatureValid, createdAt])
   @@index([connectorId])
+  @@index([publishFailedAt])
   @@map("webhook_deliveries")
+}
+
+// ─── Workspace Automation Phase 03: Canonical Event Fabric ───────────────
+//
+// Provider-neutral, deduped, replayable record of "something happened" —
+// the single normalized representation every downstream consumer (workflow
+// triggers, the knowledge graph, digest, learning, audit) should subscribe
+// to instead of re-parsing raw provider webhook payloads. Populated by
+// WorkspaceEventMapperService from WebhookDelivery rows; sourceDeliveryId
+// links back to the raw payload that produced it.
+//
+// Deliberately scoped down from the pack's full proposed shape for this
+// first pass: organizationId/installationId/actorExternalId/causationId
+// (multi-tenant + actor attribution — Phase 12's territory) and
+// riskClass/privacyClass (redaction — Phase 14's territory) are not yet
+// modeled. See docs/workspace/work-os-current-state-and-gap-map.md.
+enum WorkspaceEventProcessingStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+model WorkspaceEvent {
+  id                 String                         @id @default(cuid())
+  schemaVersion      Int                             @default(1) @map("schema_version")
+  connectorId        String?                         @map("connector_id")
+  provider           WorkspaceProvider
+  eventType          String                          @map("event_type") @db.VarChar(64)
+  resourceType       WorkspaceObjectType?            @map("resource_type")
+  resourceExternalId String?                         @map("resource_external_id") @db.VarChar(256)
+  occurredAt         DateTime?                       @map("occurred_at")
+  receivedAt         DateTime                        @default(now()) @map("received_at")
+  correlationId      String                          @map("correlation_id")
+  idempotencyKey     String                          @map("idempotency_key") @db.VarChar(320)
+  payload            Json
+  payloadHash        String                          @map("payload_hash") @db.VarChar(64)
+  sourceDeliveryId   String?                         @map("source_delivery_id")
+  processingStatus   WorkspaceEventProcessingStatus  @default(PENDING) @map("processing_status")
+  processingError    String?                         @map("processing_error") @db.VarChar(2000)
+  createdAt          DateTime                        @default(now()) @map("created_at")
+
+  @@unique([provider, idempotencyKey])
+  @@index([provider, eventType, receivedAt])
+  @@index([connectorId])
+  @@index([processingStatus])
+  @@index([sourceDeliveryId])
+  @@map("workspace_events")
 }
 
 // ─── Stream 12: Auto-Suggest Scheduler ───────────────────
@@ -733,6 +792,29 @@ model WorkspaceConnectorGrant {
   @@map("workspace_connector_grants")
 }
 
+// Post-pack hardening — ConnectorAccessService.revoke() previously
+// hard-deleted the WorkspaceConnectorGrant row with no durable trail,
+// only an ephemeral log line (a documented gap since Phase 14). A
+// snapshot of the grant's full lifecycle (who granted it, when, at what
+// level, who revoked it, when) is written here immediately before the
+// delete, so revocation is forensically/compliance auditable after the
+// fact — this table is append-only; nothing here is ever updated or
+// deleted by application code.
+model WorkspaceConnectorGrantAuditLog {
+  id            String                        @id @default(cuid())
+  connectorId   String                        @map("connector_id")
+  granteeUserId String                        @map("grantee_user_id") @db.VarChar(128)
+  accessLevel   WorkspaceConnectorAccessLevel @map("access_level")
+  grantedBy     String                        @map("granted_by") @db.VarChar(128)
+  grantedAt     DateTime                      @map("granted_at")
+  revokedBy     String                        @map("revoked_by") @db.VarChar(128)
+  revokedAt     DateTime                      @default(now()) @map("revoked_at")
+
+  @@index([connectorId])
+  @@index([granteeUserId])
+  @@map("workspace_connector_grant_audit_logs")
+}
+
 // v3 round 12 (2026-05-14) — Prompt 11: cross-workspace automation
 // chains. A chain is an ordered list of workspace-action steps —
 // e.g. "create Jira ticket" → "post Slack message" referencing the new
@@ -757,6 +839,23 @@ enum WorkspaceChainStepStatus {
   SKIPPED
 }
 
+// Phase 06 — the error taxonomy the pack's "Add" list asks for
+// (transient / auth / rate-limit / validation / permission / conflict /
+// permanent), reusing the same message-pattern classification approach
+// WorkspaceSyncManager.classifyError already uses for sync runs (see
+// WorkspaceSyncErrorClass), extended to the full 7-way taxonomy since chain
+// steps hit a wider range of failure modes (payload validation, RBAC
+// denial, conflicting external state) than a read-only sync does.
+enum WorkspaceChainStepErrorClass {
+  TRANSIENT
+  AUTH
+  RATE_LIMIT
+  VALIDATION
+  PERMISSION
+  CONFLICT
+  PERMANENT
+}
+
 model WorkspaceChain {
   id          String   @id @default(cuid())
   userId      String   @map("user_id") @db.VarChar(128)
@@ -777,6 +876,40 @@ model WorkspaceChain {
   @@map("workspace_chains")
 }
 
+// Phase 07 (scoped slice) — a catalog of pre-built, parameterized chain
+// DSLs a user can instantiate into a real WorkspaceChain, resolving each
+// step's provider placeholder (e.g. "$PROVIDER:JIRA" in dslTemplate) to
+// one of their own connected accounts for that provider. Once
+// instantiated, a template-derived chain is a completely normal
+// WorkspaceChain — it runs through the exact same executor, and gets
+// the exact same Phase 05/06 crash-recovery, resume, and error-taxonomy
+// behavior as a hand-written one, for free.
+//
+// Deliberately does NOT include the pack's full recipe vocabulary
+// (AI classify/summarize/extract steps, automatic WorkspaceEvent
+// triggers) — the chain DSL has no AI-step or trigger-binding concept
+// yet (Phase 05 was scoped down to the existing sequential executor, not
+// the full DAG engine those need). Templates here are the purely
+// mechanical, immediately-real sub-slices of the pack's named recipes:
+// multi-provider write-action sequences a user runs on demand.
+model WorkspaceChainTemplate {
+  id                String   @id @default(cuid())
+  key               String   @unique @db.VarChar(80)
+  name              String   @db.VarChar(160)
+  description       String   @db.Text
+  category          String   @db.VarChar(60)
+  requiredProviders WorkspaceProvider[] @map("required_providers")
+  // Same shape as WorkspaceChain.dsl, except each step's connectorId is a
+  // "$PROVIDER:<WorkspaceProvider>" placeholder token instead of a real
+  // connector id — resolved at instantiation time.
+  dslTemplate       Json     @map("dsl_template")
+  version           Int      @default(1)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("workspace_chain_templates")
+}
+
 model WorkspaceChainRun {
   id        String                  @id @default(cuid())
   chainId   String                  @map("chain_id")
@@ -786,6 +919,11 @@ model WorkspaceChainRun {
   // retroactively change a historical run.
   dslSnapshot Json                  @map("dsl_snapshot")
   error     String?                 @db.Text
+  // Phase 06 — true once this run has gone through ChainExecutorManager
+  // .resume() at least once, so a completed run can be told apart from one
+  // that needed a human to manually repair and re-trigger it (the
+  // "Manually repaired" state the pack's run-inspector list asks for).
+  wasResumed Boolean                @default(false) @map("was_resumed")
   startedAt DateTime?               @map("started_at")
   finishedAt DateTime?              @map("finished_at")
   createdAt DateTime                @default(now()) @map("created_at")
@@ -813,6 +951,12 @@ model WorkspaceChainRunStep {
   resolvedPayload Json?                @map("resolved_payload")
   output      Json?
   error       String?                  @db.Text
+  // Phase 06 — classifies `error` so a human deciding whether to resume
+  // (or the run-inspector UI, once one exists) can tell a worth-retrying
+  // failure (TRANSIENT, RATE_LIMIT) from one that won't fix itself on
+  // retry (AUTH needs reconnecting, VALIDATION/PERMISSION need the chain
+  // definition or grant fixed, PERMANENT never will).
+  errorClass  WorkspaceChainStepErrorClass? @map("error_class")
   startedAt   DateTime?                @map("started_at")
   finishedAt  DateTime?                @map("finished_at")
   createdAt   DateTime                 @default(now()) @map("created_at")

@@ -204,6 +204,7 @@ export const hi: TranslationDictionary = {
     discovery: 'मॉडल खोज',
     workspaceProviders: 'प्रोवाइडर',
     workspaceAppConfigs: 'ऐप कॉन्फ़िगरेशन',
+    workspaceAutomations: 'स्वचालन',
     workspaceGmail: 'Gmail',
     workspaceJira: 'Jira',
     workspaceSourceControl: 'स्रोत नियंत्रण',
@@ -1871,6 +1872,10 @@ export const hi: TranslationDictionary = {
     externalUpdated: 'स्रोत पर अद्यतन',
     openInProvider: 'प्रोवाइडर में खोलें',
     author: 'लेखक: {author}',
+    relatedItems: 'संबंधित आइटम',
+    viewRelatedItem: 'आइटम देखें',
+    unresolvedReference: 'संदर्भित आइटम अभी तक सिंक नहीं हुआ',
+    linkConfidence: 'विश्वास {value}',
   },
   connectorDetail: {
     title: 'कनेक्टर विवरण',
@@ -2066,6 +2071,10 @@ export const hi: TranslationDictionary = {
     levelReadOnly: 'केवल पढ़ने योग्य',
     levelAiActions: 'AI क्रियाएँ',
     levelFull: 'पूर्ण',
+  },
+  sharedConnectors: {
+    title: 'मेरे साथ साझा किए गए',
+    sharedBy: '{value} द्वारा साझा किया गया',
   },
   emailSignatures: {
     page: {
@@ -2282,6 +2291,67 @@ export const hi: TranslationDictionary = {
       successDescriptionNamed: '{name} कनेक्ट हो गया। आपको पुनर्निर्देशित किया जा रहा है...',
       errorTitle: 'कनेक्शन विफल',
       errorUnknown: 'एक अज्ञात त्रुटि हुई।',
+    },
+  },
+  workspaceChains: {
+    page: {
+      title: 'स्वचालन',
+      description:
+        'कार्यक्षेत्रों के बीच तैयार स्वचालन चलाएँ, या किसी टेम्पलेट से अपना खुद का बनाएँ।',
+    },
+    templates: {
+      heading: 'टेम्पलेट',
+      loadFailed: 'टेम्पलेट लोड करने में विफल।',
+      emptyTitle: 'कोई टेम्पलेट उपलब्ध नहीं',
+      emptyDescription: 'स्वचालन टेम्पलेट जोड़े जाने के बाद यहाँ दिखाई देंगे।',
+      useTemplate: 'यह टेम्पलेट उपयोग करें',
+    },
+    myAutomations: {
+      heading: 'मेरे स्वचालन',
+      loadFailed: 'आपके स्वचालन लोड करने में विफल।',
+      emptyTitle: 'अभी तक कोई स्वचालन नहीं',
+      emptyDescription: 'अपना पहला स्वचालन बनाने के लिए ऊपर दिए गए किसी टेम्पलेट का उपयोग करें।',
+    },
+    chain: {
+      disabled: 'अक्षम',
+      stepCount: '{value} चरण',
+      wasResumed: 'मैन्युअल रूप से ठीक किया गया',
+      viewRuns: 'रन देखें',
+      run: 'चलाएँ',
+      running: 'चल रहा है…',
+    },
+    instantiate: {
+      name: 'नाम',
+      namePlaceholder: 'जैसे: Jira टिकट बनाएँ और टीम को सूचित करें',
+      connectorFor: '{value} के लिए कनेक्टर',
+      selectConnector: 'एक कनेक्टर चुनें',
+      noConnector: 'कोई {value} खाता कनेक्ट नहीं है — पहले एक कनेक्ट करें।',
+      creating: 'बनाया जा रहा है…',
+      create: 'स्वचालन बनाएँ',
+    },
+    runHistory: {
+      title: 'रन इतिहास',
+      loading: 'रन लोड हो रहे हैं…',
+      empty: 'अभी तक कोई रन नहीं।',
+      resuming: 'फिर से शुरू किया जा रहा है…',
+      resume: 'फिर से शुरू करें',
+      notStarted: 'शुरू नहीं हुआ',
+    },
+    nlDraft: {
+      openButton: 'ऑटोमेशन का वर्णन करें',
+      title: 'ऑटोमेशन का वर्णन करें',
+      description:
+        'सरल भाषा में बताएं कि आप क्या चाहते हैं, हम आपके जुड़े खातों से एक ड्राफ्ट चेन बनाएंगे जिसे आप समीक्षा कर सकें।',
+      promptLabel: 'आप क्या स्वचालित करना चाहते हैं?',
+      promptPlaceholder: 'उदा: एक Jira टिकट बनाएं और इसे Slack पर #eng-updates में पोस्ट करें',
+      noMatch: 'यह आपके किसी भी जुड़े खाते से मेल नहीं खाया। इसे दोबारा लिखने का प्रयास करें।',
+      previewHeading: 'ड्राफ्ट चरण',
+      nameLabel: 'नाम',
+      namePlaceholder: 'इस ऑटोमेशन को नाम दें',
+      draft: 'ड्राफ्ट बनाएं',
+      drafting: 'ड्राफ्ट बनाया जा रहा है…',
+      save: 'ऑटोमेशन सहेजें',
+      saving: 'सहेजा जा रहा है…',
     },
   },
   agent: {
@@ -3208,6 +3278,7 @@ export const hi: TranslationDictionary = {
       loading: 'लोड हो रहा है…',
       error: 'प्राथमिकताएँ लोड नहीं हो सकीं।',
       empty: 'हम आपके अप्रूवल से सीखेंगे — अभी कोई प्राथमिकता नहीं।',
+      dismiss: 'खारिज करें',
     },
   },
   whyThisModel: {

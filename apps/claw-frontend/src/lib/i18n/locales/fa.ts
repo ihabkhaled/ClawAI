@@ -205,6 +205,7 @@ export const fa: TranslationDictionary = {
     discovery: 'کشف مدل',
     workspaceProviders: 'ارائه دهندگان',
     workspaceAppConfigs: 'تنظیمات برنامه',
+    workspaceAutomations: 'اتوماسیون‌ها',
     workspaceGmail: 'Gmail',
     workspaceJira: 'Jira',
     workspaceSourceControl: 'کنترل منبع',
@@ -1867,6 +1868,10 @@ export const fa: TranslationDictionary = {
     externalUpdated: 'بالادست به روز شد',
     openInProvider: 'در ارائه دهنده باز کنید',
     author: 'نویسنده: {author}',
+    relatedItems: 'موارد مرتبط',
+    viewRelatedItem: 'مشاهده مورد',
+    unresolvedReference: 'مورد ارجاع‌شده هنوز همگام‌سازی نشده است',
+    linkConfidence: 'اطمینان {value}',
   },
   connectorDetail: {
     title: 'جزئیات اتصال',
@@ -2062,6 +2067,10 @@ export const fa: TranslationDictionary = {
     levelReadOnly: 'فقط بخوانید',
     levelAiActions: 'اقدامات هوش مصنوعی',
     levelFull: 'کامل',
+  },
+  sharedConnectors: {
+    title: 'به اشتراک گذاشته‌شده با من',
+    sharedBy: 'به اشتراک گذاشته‌شده توسط {value}',
   },
   emailSignatures: {
     page: {
@@ -2278,6 +2287,67 @@ export const fa: TranslationDictionary = {
       successDescriptionNamed: '{name} متصل است.هدایت شما به عقب...',
       errorTitle: 'اتصال ناموفق بود',
       errorUnknown: 'یک خطای ناشناخته رخ داد.',
+    },
+  },
+  workspaceChains: {
+    page: {
+      title: 'خودکارسازی‌ها',
+      description:
+        'خودکارسازی‌های آماده بین فضاهای کاری را اجرا کنید یا از یک الگو، خودکارسازی خودتان را بسازید.',
+    },
+    templates: {
+      heading: 'الگوها',
+      loadFailed: 'بارگذاری الگوها ناموفق بود.',
+      emptyTitle: 'هیچ الگویی موجود نیست',
+      emptyDescription: 'الگوهای خودکارسازی پس از افزوده شدن، اینجا نمایش داده می‌شوند.',
+      useTemplate: 'استفاده از این الگو',
+    },
+    myAutomations: {
+      heading: 'خودکارسازی‌های من',
+      loadFailed: 'بارگذاری خودکارسازی‌های شما ناموفق بود.',
+      emptyTitle: 'هنوز خودکارسازی‌ای وجود ندارد',
+      emptyDescription: 'برای ساخت اولین خودکارسازی خود، از یکی از الگوهای بالا استفاده کنید.',
+    },
+    chain: {
+      disabled: 'غیرفعال',
+      stepCount: '{value} مرحله',
+      wasResumed: 'به‌صورت دستی ترمیم شد',
+      viewRuns: 'مشاهده اجراها',
+      run: 'اجرا',
+      running: 'در حال اجرا…',
+    },
+    instantiate: {
+      name: 'نام',
+      namePlaceholder: 'مثلاً: ایجاد تیکت جیرا و اطلاع‌رسانی به تیم',
+      connectorFor: 'اتصال‌دهنده برای {value}',
+      selectConnector: 'یک اتصال‌دهنده انتخاب کنید',
+      noConnector: 'هیچ حساب {value} متصلی وجود ندارد — ابتدا یکی را متصل کنید.',
+      creating: 'در حال ایجاد…',
+      create: 'ایجاد خودکارسازی',
+    },
+    runHistory: {
+      title: 'تاریخچه اجرا',
+      loading: 'در حال بارگذاری اجراها…',
+      empty: 'هنوز اجرایی وجود ندارد.',
+      resuming: 'در حال ازسرگیری…',
+      resume: 'ازسرگیری',
+      notStarted: 'شروع نشده',
+    },
+    nlDraft: {
+      openButton: 'توصیف یک اتوماسیون',
+      title: 'توصیف یک اتوماسیون',
+      description:
+        'آنچه می‌خواهید را به زبان ساده توصیف کنید تا از حساب‌های متصل شما یک زنجیرهٔ پیش‌نویس برای بازبینی شما ایجاد کنیم.',
+      promptLabel: 'چه چیزی را می‌خواهید خودکار کنید؟',
+      promptPlaceholder: 'مثلاً: یک تیکت Jira ایجاد کن و آن را در #eng-updates در Slack ارسال کن',
+      noMatch: 'این با هیچ‌کدام از حساب‌های متصل شما مطابقت نداشت. عبارت را دوباره بنویسید.',
+      previewHeading: 'مراحل پیش‌نویس',
+      nameLabel: 'نام',
+      namePlaceholder: 'نامی برای این اتوماسیون',
+      draft: 'ایجاد پیش‌نویس',
+      drafting: 'در حال ایجاد…',
+      save: 'ذخیرهٔ اتوماسیون',
+      saving: 'در حال ذخیره…',
     },
   },
   agent: {
@@ -3208,6 +3278,7 @@ export const fa: TranslationDictionary = {
       loading: 'در حال بارگیری…',
       error: 'تنظیمات برگزیده بارگیری نشد.',
       empty: 'ما از تأییدیه‌های شما یاد می‌گیریم — هنوز هیچ اولویتی وجود ندارد.',
+      dismiss: 'نادیده گرفتن',
     },
   },
   whyThisModel: {

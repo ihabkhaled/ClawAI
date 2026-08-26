@@ -167,12 +167,16 @@ export type WorkspaceObject = {
   externalUpdatedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  // Only present on GET /workspace/objects/:id (Phase 10) — list/refresh
+  // responses don't include them.
+  sourceLinks?: WorkspaceObjectLink[];
+  targetLinks?: WorkspaceObjectLink[];
 };
 
 export type WorkspaceObjectLink = {
   id: string;
   sourceObjectId: string;
-  targetObjectId: string;
+  targetObjectId: string | null;
   externalRef: string | null;
   linkType: string;
   confidence: number;

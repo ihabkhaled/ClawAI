@@ -47,6 +47,7 @@ import {
   Gauge,
   UserCog,
   Rocket,
+  Zap,
 } from 'lucide-react';
 
 import { OptionalService } from '@/enums/optional-service.enum';
@@ -99,6 +100,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
     icon: Workflow,
     children: [
       { labelKey: 'nav.workspaceAppConfigs', href: ROUTES.WORKSPACE_APP_CONFIGS, icon: KeyRound },
+      { labelKey: 'nav.workspaceAutomations', href: ROUTES.WORKSPACE_AUTOMATIONS, icon: Zap },
       { labelKey: 'nav.workspaceInbox', href: ROUTES.WORKSPACE_INBOX, icon: Inbox },
       {
         labelKey: 'nav.workspaceSemanticSearch',

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import type { CreateWebhookDeliveryInput, ListWebhookDeliveriesFilters } from '../types/webhook-repository.types';
+import type {
+  CreateWebhookDeliveryInput,
+  ListWebhookDeliveriesFilters,
+} from '../types/webhook-repository.types';
 import type { Prisma, WebhookDelivery, WorkspaceProvider } from '../../../generated/prisma';
 
 @Injectable()
@@ -55,6 +58,17 @@ export class WebhookDeliveryRepository {
     await this.prisma.webhookDelivery.update({
       where: { id },
       data: { processedAt: new Date() },
+    });
+  }
+
+  // Post-pack hardening — durable signal for a publish outcome. Called
+  // with `failed: true` right after a swallowed RabbitMQ publish error,
+  // and with `failed: false` on the next publish for this row that
+  // succeeds (e.g. a later replay), clearing the flag back to null.
+  async setPublishFailed(id: string, failed: boolean): Promise<void> {
+    await this.prisma.webhookDelivery.update({
+      where: { id },
+      data: { publishFailedAt: failed ? new Date() : null },
     });
   }
 }

@@ -207,6 +207,7 @@ export const it: TranslationDictionary = {
     discovery: 'Scoperta modelli',
     workspaceProviders: 'Provider',
     workspaceAppConfigs: 'Configurazioni app',
+    workspaceAutomations: 'Automazioni',
     workspaceGmail: 'Gmail',
     workspaceJira: 'Jira',
     workspaceSourceControl: 'Controllo sorgente',
@@ -1895,6 +1896,10 @@ export const it: TranslationDictionary = {
     externalUpdated: 'Aggiornato a monte',
     openInProvider: 'Apri nel provider',
     author: 'Autore: {author}',
+    relatedItems: 'Elementi correlati',
+    viewRelatedItem: 'Visualizza elemento',
+    unresolvedReference: 'Elemento referenziato non ancora sincronizzato',
+    linkConfidence: 'affidabilità {value}',
   },
   connectorDetail: {
     title: 'Dettaglio connettore',
@@ -2093,6 +2098,10 @@ export const it: TranslationDictionary = {
     levelReadOnly: 'Sola lettura',
     levelAiActions: 'Azioni IA',
     levelFull: 'Completo',
+  },
+  sharedConnectors: {
+    title: 'Condivisi con me',
+    sharedBy: 'Condiviso da {value}',
   },
   emailSignatures: {
     page: {
@@ -2311,6 +2320,68 @@ export const it: TranslationDictionary = {
       successDescriptionNamed: '{name} connesso. Reindirizzamento in corso...',
       errorTitle: 'Connessione non riuscita',
       errorUnknown: 'Si è verificato un errore sconosciuto.',
+    },
+  },
+  workspaceChains: {
+    page: {
+      title: 'Automazioni',
+      description:
+        'Esegui automazioni già pronte tra gli spazi di lavoro, oppure crea le tue a partire da un modello.',
+    },
+    templates: {
+      heading: 'Modelli',
+      loadFailed: 'Impossibile caricare i modelli.',
+      emptyTitle: 'Nessun modello disponibile',
+      emptyDescription: 'I modelli di automazione appariranno qui una volta aggiunti.',
+      useTemplate: 'Usa questo modello',
+    },
+    myAutomations: {
+      heading: 'Le mie automazioni',
+      loadFailed: 'Impossibile caricare le tue automazioni.',
+      emptyTitle: 'Nessuna automazione ancora',
+      emptyDescription: 'Usa un modello sopra per creare la tua prima automazione.',
+    },
+    chain: {
+      disabled: 'Disattivata',
+      stepCount: '{value} passaggi',
+      wasResumed: 'Riparata manualmente',
+      viewRuns: 'Visualizza esecuzioni',
+      run: 'Esegui',
+      running: 'In esecuzione…',
+    },
+    instantiate: {
+      name: 'Nome',
+      namePlaceholder: 'es. Crea ticket Jira e notifica il team',
+      connectorFor: 'Connettore per {value}',
+      selectConnector: 'Seleziona un connettore',
+      noConnector: 'Nessun account {value} connesso: connettine prima uno.',
+      creating: 'Creazione in corso…',
+      create: 'Crea automazione',
+    },
+    runHistory: {
+      title: 'Cronologia esecuzioni',
+      loading: 'Caricamento esecuzioni…',
+      empty: 'Nessuna esecuzione ancora.',
+      resuming: 'Ripresa in corso…',
+      resume: 'Riprendi',
+      notStarted: 'Non avviata',
+    },
+    nlDraft: {
+      openButton: "Descrivi un'automazione",
+      title: "Descrivi un'automazione",
+      description:
+        'Descrivi cosa vuoi in linguaggio semplice e creeremo una bozza di catena dai tuoi account collegati da rivedere.',
+      promptLabel: 'Cosa vuoi automatizzare?',
+      promptPlaceholder: 'es. Crea un ticket Jira e pubblicalo su #eng-updates su Slack',
+      noMatch:
+        'Non siamo riusciti ad associarlo a nessuno dei tuoi account collegati. Prova a riformulare.',
+      previewHeading: 'Passaggi della bozza',
+      nameLabel: 'Nome',
+      namePlaceholder: 'Assegna un nome a questa automazione',
+      draft: 'Crea bozza',
+      drafting: 'Creazione in corso…',
+      save: 'Salva automazione',
+      saving: 'Salvataggio…',
     },
   },
   agent: {
@@ -3234,6 +3305,7 @@ export const it: TranslationDictionary = {
       loading: 'Caricamento…',
       error: 'Impossibile caricare le preferenze.',
       empty: 'Impareremo dalle tue approvazioni — nessuna preferenza ancora.',
+      dismiss: 'Ignora',
     },
   },
   whyThisModel: {

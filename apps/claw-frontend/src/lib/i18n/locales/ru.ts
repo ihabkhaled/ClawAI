@@ -206,6 +206,7 @@ export const ru: TranslationDictionary = {
     discovery: 'Обнаружение моделей',
     workspaceProviders: 'Провайдеры',
     workspaceAppConfigs: 'Конфигурации приложений',
+    workspaceAutomations: 'Автоматизации',
     workspaceGmail: 'Gmail',
     workspaceJira: 'Jira',
     workspaceSourceControl: 'Контроль версий',
@@ -1888,6 +1889,10 @@ export const ru: TranslationDictionary = {
     externalUpdated: 'Обновлено во внешней системе',
     openInProvider: 'Открыть у провайдера',
     author: 'Автор: {author}',
+    relatedItems: 'Связанные элементы',
+    viewRelatedItem: 'Просмотреть элемент',
+    unresolvedReference: 'Указанный элемент ещё не синхронизирован',
+    linkConfidence: 'уверенность {value}',
   },
   connectorDetail: {
     title: 'Детали коннектора',
@@ -2084,6 +2089,10 @@ export const ru: TranslationDictionary = {
     levelReadOnly: 'Только чтение',
     levelAiActions: 'AI-действия',
     levelFull: 'Полный',
+  },
+  sharedConnectors: {
+    title: 'Доступные мне',
+    sharedBy: 'Предоставил доступ: {value}',
   },
   emailSignatures: {
     page: {
@@ -2303,6 +2312,68 @@ export const ru: TranslationDictionary = {
       successDescriptionNamed: '{name} подключён. Перенаправление обратно...',
       errorTitle: 'Сбой подключения',
       errorUnknown: 'Произошла неизвестная ошибка.',
+    },
+  },
+  workspaceChains: {
+    page: {
+      title: 'Автоматизации',
+      description:
+        'Запускайте готовые автоматизации между рабочими пространствами или создавайте свои из шаблона.',
+    },
+    templates: {
+      heading: 'Шаблоны',
+      loadFailed: 'Не удалось загрузить шаблоны.',
+      emptyTitle: 'Нет доступных шаблонов',
+      emptyDescription: 'Шаблоны автоматизации появятся здесь после добавления.',
+      useTemplate: 'Использовать этот шаблон',
+    },
+    myAutomations: {
+      heading: 'Мои автоматизации',
+      loadFailed: 'Не удалось загрузить ваши автоматизации.',
+      emptyTitle: 'Пока нет автоматизаций',
+      emptyDescription: 'Используйте шаблон выше, чтобы создать первую автоматизацию.',
+    },
+    chain: {
+      disabled: 'Отключена',
+      stepCount: '{value} шагов',
+      wasResumed: 'Восстановлена вручную',
+      viewRuns: 'Показать запуски',
+      run: 'Запустить',
+      running: 'Выполняется…',
+    },
+    instantiate: {
+      name: 'Название',
+      namePlaceholder: 'напр., Создать тикет в Jira и уведомить команду',
+      connectorFor: 'Коннектор для {value}',
+      selectConnector: 'Выберите коннектор',
+      noConnector: 'Нет подключённого аккаунта {value}. Сначала подключите его.',
+      creating: 'Создание…',
+      create: 'Создать автоматизацию',
+    },
+    runHistory: {
+      title: 'История запусков',
+      loading: 'Загрузка запусков…',
+      empty: 'Пока нет запусков.',
+      resuming: 'Возобновление…',
+      resume: 'Возобновить',
+      notStarted: 'Не запущена',
+    },
+    nlDraft: {
+      openButton: 'Описать автоматизацию',
+      title: 'Описать автоматизацию',
+      description:
+        'Опишите простыми словами, что вы хотите, и мы составим черновик цепочки на основе ваших подключённых аккаунтов для проверки.',
+      promptLabel: 'Что вы хотите автоматизировать?',
+      promptPlaceholder: 'напр., Создать тикет в Jira и опубликовать его в #eng-updates в Slack',
+      noMatch:
+        'Не удалось сопоставить это ни с одним из ваших подключённых аккаунтов. Попробуйте переформулировать.',
+      previewHeading: 'Шаги черновика',
+      nameLabel: 'Название',
+      namePlaceholder: 'Название для этой автоматизации',
+      draft: 'Составить черновик',
+      drafting: 'Составление…',
+      save: 'Сохранить автоматизацию',
+      saving: 'Сохранение…',
     },
   },
   agent: {
@@ -3228,6 +3299,7 @@ export const ru: TranslationDictionary = {
       loading: 'Загрузка…',
       error: 'Не удалось загрузить настройки.',
       empty: 'Учимся на ваших одобрениях — настроек пока нет.',
+      dismiss: 'Отклонить',
     },
   },
   whyThisModel: {

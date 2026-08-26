@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
   GOOGLE_AUTH_URL,
@@ -376,7 +377,8 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
     const contentLength = response.headers.get('content-length');
     return {
       filename: exportTarget !== undefined ? `${name}${exportTarget.ext}` : name,
-      mimeType: exportTarget?.mime ?? response.headers.get('content-type') ?? 'application/octet-stream',
+      mimeType:
+        exportTarget?.mime ?? response.headers.get('content-type') ?? 'application/octet-stream',
       sizeBytes: contentLength !== null ? Number(contentLength) : null,
       body: response.body,
     };
@@ -384,6 +386,10 @@ export class GoogleDriveAdapter implements WorkspaceAdapter {
 
   supportsWrite(): boolean {
     return true;
+  }
+
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [WorkspaceActionType.UPLOAD_DRIVE, WorkspaceActionType.MOVE_DRIVE];
   }
 
   async executeWriteAction(

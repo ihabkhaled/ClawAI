@@ -2819,6 +2819,16 @@
         },
         {
           "method": "GET",
+          "route": "/workspace/chain-templates",
+          "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain-template.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/workspace/chain-templates/:key/instantiate",
+          "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain-template.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/workspace/chains",
           "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
         },
@@ -2850,6 +2860,16 @@
         {
           "method": "GET",
           "route": "/workspace/chains/:id/runs",
+          "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/workspace/chains/:id/runs/:runId/resume",
+          "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/workspace/chains/draft-from-nl",
           "source": "apps/claw-workspace-service/src/modules/chains/controllers/chain.controller.ts"
         },
         {
@@ -2926,6 +2946,11 @@
           "method": "GET",
           "route": "/workspace/connectors/:id/sync-runs",
           "source": "apps/claw-workspace-service/src/modules/workspace/controllers/workspace-connector.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/workspace/connectors/shared-with-me",
+          "source": "apps/claw-workspace-service/src/modules/connector-access/controllers/connector-grant-inbox.controller.ts"
         },
         {
           "method": "POST",
@@ -6128,6 +6153,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "WORKSPACE_EVENT_INGESTED",
+        "pattern": "workspace.event.ingested",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "WORKSPACE_SUGGESTION_FACTORY_PROCESSED",
         "pattern": "workspace.suggestion.factory_processed",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -6800,6 +6830,11 @@
         "route": "/workspace/automation-preferences"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/workspace/automations/page.tsx",
+        "kind": "page",
+        "route": "/workspace/automations"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/workspace/confluence/page.tsx",
         "kind": "page",
         "route": "/workspace/confluence"
@@ -6958,7 +6993,8 @@
         "docs/features",
         "docs/implementation",
         "docs/security",
-        "docs/superpowers"
+        "docs/superpowers",
+        "docs/workspace"
       ],
       "looseDocs": 23,
       "rules": [
@@ -7387,7 +7423,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4682
+        "value": 4742
       },
       "localeCount": 16,
       "locales": [
@@ -9002,12 +9038,27 @@
           {
             "confidence": "verified",
             "source": "apps/claw-workspace-service/prisma/schema.prisma",
+            "value": "WorkspaceChainTemplate"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-workspace-service/prisma/schema.prisma",
             "value": "WorkspaceConnector"
           },
           {
             "confidence": "verified",
             "source": "apps/claw-workspace-service/prisma/schema.prisma",
             "value": "WorkspaceConnectorGrant"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-workspace-service/prisma/schema.prisma",
+            "value": "WorkspaceConnectorGrantAuditLog"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-workspace-service/prisma/schema.prisma",
+            "value": "WorkspaceEvent"
           },
           {
             "confidence": "verified",
@@ -9106,7 +9157,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 356
+        "testFiles": 372
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9146,7 +9197,7 @@
       },
       "claw-workspace-service": {
         "runner": "jest",
-        "testFiles": 66
+        "testFiles": 93
       }
     },
     "workspaces": [
@@ -9851,10 +9902,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 611,
+    "endpointCount": 616,
     "envVarCount": 347,
-    "eventCount": 168,
-    "frontendRouteCount": 124,
+    "eventCount": 169,
+    "frontendRouteCount": 125,
     "localeCount": 16,
     "nginxRouteCount": 55,
     "permissionCount": 49,
@@ -9863,7 +9914,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 983,
+    "totalTestFiles": 1026,
     "workspaceCount": 25
   }
 }

@@ -14,13 +14,11 @@ import {
 import { OAuthProbeOutcome } from '../enums/oauth-probe-outcome.enum';
 import { probeOAuthAppCredentials } from '../utilities/oauth-app-probe.utility';
 import { buildOAuthErrorMessage } from '../utilities/oauth-error.utility';
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import { WorkspaceObjectType } from '../../../common/enums/workspace-object-type.enum';
 import type { AdapterAppCredentials, WorkspaceAdapter } from './workspace-adapter.interface';
-import type {
-  GoogleCalendarEvent,
-  GoogleCalendarEventList,
-} from '../types/calendar-api.types';
+import type { GoogleCalendarEvent, GoogleCalendarEventList } from '../types/calendar-api.types';
 import type {
   AdapterCapabilities,
   HealthCheckResult,
@@ -28,6 +26,7 @@ import type {
   OAuthTokenSet,
   SyncedObject,
   SyncResult,
+  WriteActionResult,
 } from '../types/workspace.types';
 
 @Injectable()
@@ -37,20 +36,35 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
   async healthCheck(accessToken: string): Promise<HealthCheckResult> {
     const start = Date.now();
     try {
-      const response = await fetch(`${GOOGLE_CALENDAR_API_BASE}/users/me/calendarList?maxResults=1`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
-      });
+      const response = await fetch(
+        `${GOOGLE_CALENDAR_API_BASE}/users/me/calendarList?maxResults=1`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+        },
+      );
       const latencyMs = Date.now() - start;
       if (response.ok) return { status: WorkspaceConnectorStatus.CONNECTED, latencyMs };
       if (response.status === 401) {
-        return { status: WorkspaceConnectorStatus.DISCONNECTED, latencyMs, errorMessage: 'Unauthorized' };
+        return {
+          status: WorkspaceConnectorStatus.DISCONNECTED,
+          latencyMs,
+          errorMessage: 'Unauthorized',
+        };
       }
-      return { status: WorkspaceConnectorStatus.DEGRADED, latencyMs, errorMessage: `HTTP ${response.status}` };
+      return {
+        status: WorkspaceConnectorStatus.DEGRADED,
+        latencyMs,
+        errorMessage: `HTTP ${response.status}`,
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Google Calendar health check failed: ${message}`);
-      return { status: WorkspaceConnectorStatus.DISCONNECTED, latencyMs: Date.now() - start, errorMessage: message };
+      return {
+        status: WorkspaceConnectorStatus.DISCONNECTED,
+        latencyMs: Date.now() - start,
+        errorMessage: message,
+      };
     }
   }
 
@@ -66,12 +80,17 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
       maxResults: String(CALENDAR_SYNC_MAX_EVENTS_PER_TICK),
       ...(deltaToken !== undefined ? { syncToken: deltaToken } : {}),
     });
-    const response = await fetch(`${GOOGLE_CALENDAR_API_BASE}/calendars/primary/events?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-    });
+    const response = await fetch(
+      `${GOOGLE_CALENDAR_API_BASE}/calendars/primary/events?${params.toString()}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      },
+    );
     if (!response.ok) {
       const text = await response.text().catch(() => '');
-      throw new Error(`Google Calendar sync HTTP ${String(response.status)}: ${text.slice(0, 200)}`);
+      throw new Error(
+        `Google Calendar sync HTTP ${String(response.status)}: ${text.slice(0, 200)}`,
+      );
     }
     const data = (await response.json()) as GoogleCalendarEventList;
     const objects: SyncedObject[] = (data.items ?? [])
@@ -120,12 +139,16 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
     return {
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
-      expiresAt: data.expires_in !== undefined ? new Date(Date.now() + data.expires_in * 1000) : undefined,
+      expiresAt:
+        data.expires_in !== undefined ? new Date(Date.now() + data.expires_in * 1000) : undefined,
       scopes: (data.scope ?? '').split(' ').filter(Boolean),
     };
   }
 
-  async refreshTokens(refreshToken: string, appCredentials: AdapterAppCredentials): Promise<OAuthTokenSet> {
+  async refreshTokens(
+    refreshToken: string,
+    appCredentials: AdapterAppCredentials,
+  ): Promise<OAuthTokenSet> {
     if (!appCredentials.clientId || !appCredentials.clientSecret) {
       throw new Error('Google Calendar OAuth refresh requires clientId and clientSecret');
     }
@@ -147,7 +170,8 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
     return {
       accessToken: data.access_token,
       refreshToken,
-      expiresAt: data.expires_in !== undefined ? new Date(Date.now() + data.expires_in * 1000) : undefined,
+      expiresAt:
+        data.expires_in !== undefined ? new Date(Date.now() + data.expires_in * 1000) : undefined,
       scopes: [],
     };
   }
@@ -167,7 +191,10 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
       tokenUrl: GOOGLE_TOKEN_URL,
       requestBuilder: () => ({
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
         body: form.toString(),
       }),
       interpret: (payload, status) => {
@@ -200,7 +227,9 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
   getDefaultScopes(): string[] {
     return [
       'https://www.googleapis.com/auth/calendar.readonly',
-      'https://www.googleapis.com/auth/calendar.events.readonly',
+      // Write-capable, not .readonly — CREATE_GOOGLE_CALENDAR_EVENT needs
+      // events.insert, which the readonly scope variant cannot grant.
+      'https://www.googleapis.com/auth/calendar.events',
     ];
   }
 
@@ -214,10 +243,13 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
     objectType: string,
   ): Promise<LiveObjectDetails | null> {
     if (objectType !== WorkspaceObjectType.MEETING) return null;
-    const response = await fetch(`${GOOGLE_CALENDAR_API_BASE}/calendars/primary/events/${encodeURIComponent(externalId)}`, {
-      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-      signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
-    });
+    const response = await fetch(
+      `${GOOGLE_CALENDAR_API_BASE}/calendars/primary/events/${encodeURIComponent(externalId)}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS),
+      },
+    );
     if (response.status === 404) return null;
     if (!response.ok) {
       throw new Error(`Google Calendar fetchObjectDetails failed: HTTP ${response.status}`);
@@ -263,5 +295,76 @@ export class GoogleCalendarAdapter implements WorkspaceAdapter {
       hangoutLink: event.hangoutLink,
       meetingLinks: (event.conferenceData?.entryPoints ?? []).map((e) => e.uri).filter(Boolean),
     };
+  }
+
+  // Post-pack hardening — the one write action this previously read-only
+  // provider supports: creating a primary-calendar event via Google
+  // Calendar API's standard events.insert endpoint.
+  supportsWrite(): boolean {
+    return true;
+  }
+
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [WorkspaceActionType.CREATE_GOOGLE_CALENDAR_EVENT];
+  }
+
+  async executeWriteAction(
+    accessToken: string,
+    actionType: string,
+    payload: Record<string, unknown>,
+  ): Promise<WriteActionResult> {
+    if (actionType !== WorkspaceActionType.CREATE_GOOGLE_CALENDAR_EVENT) {
+      return {
+        success: false,
+        errorMessage: `Google Calendar adapter: unsupported action type ${actionType}`,
+      };
+    }
+    try {
+      const summary = typeof payload['summary'] === 'string' ? payload['summary'] : null;
+      const startDateTime =
+        typeof payload['startDateTime'] === 'string' ? payload['startDateTime'] : null;
+      const endDateTime =
+        typeof payload['endDateTime'] === 'string' ? payload['endDateTime'] : null;
+      if (summary === null || startDateTime === null || endDateTime === null) {
+        return {
+          success: false,
+          errorMessage:
+            'CREATE_GOOGLE_CALENDAR_EVENT requires {summary, startDateTime, endDateTime} in payload',
+        };
+      }
+      const description =
+        typeof payload['description'] === 'string' ? payload['description'] : undefined;
+      const attendeeEmails = Array.isArray(payload['attendeeEmails'])
+        ? (payload['attendeeEmails'] as unknown[]).filter((e): e is string => typeof e === 'string')
+        : [];
+      const timeZone = typeof payload['timeZone'] === 'string' ? payload['timeZone'] : 'UTC';
+      const response = await fetch(`${GOOGLE_CALENDAR_API_BASE}/calendars/primary/events`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          summary,
+          description,
+          start: { dateTime: startDateTime, timeZone },
+          end: { dateTime: endDateTime, timeZone },
+          attendees: attendeeEmails.map((email) => ({ email })),
+        }),
+      });
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        return {
+          success: false,
+          errorMessage: `Google Calendar API error: HTTP ${String(response.status)} ${text.slice(0, 200)}`,
+        };
+      }
+      const data = (await response.json()) as GoogleCalendarEvent;
+      return { success: true, externalId: data.id, url: data.htmlLink };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'unknown';
+      this.logger.warn(`Google Calendar write ${actionType} failed: ${message}`);
+      return { success: false, errorMessage: message };
+    }
   }
 }

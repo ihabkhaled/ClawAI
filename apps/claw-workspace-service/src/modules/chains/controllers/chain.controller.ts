@@ -19,10 +19,12 @@ import {
   type UpdateChainDto,
   updateChainSchema,
 } from '../dto/chain.dto';
+import { type DraftChainFromNlDto, draftChainFromNlSchema } from '../dto/chain-nl-draft.dto';
 import { ChainExecutorManager } from '../managers/chain-executor.manager';
+import { ChainNlDraftManager } from '../managers/chain-nl-draft.manager';
 import { ChainRepository } from '../repositories/chain.repository';
 import { ChainService } from '../services/chain.service';
-import type { ChainRunView } from '../types/chain.types';
+import type { ChainDsl, ChainRunView } from '../types/chain.types';
 import type { AuthenticatedUser } from '../../../common/types/auth.types';
 import type { WorkspaceChain, WorkspaceChainRun } from '../../../generated/prisma';
 
@@ -32,6 +34,7 @@ export class ChainController {
     private readonly service: ChainService,
     private readonly executor: ChainExecutorManager,
     private readonly repo: ChainRepository,
+    private readonly nlDraft: ChainNlDraftManager,
   ) {}
 
   @Get()
@@ -47,6 +50,19 @@ export class ChainController {
     @Param('id') id: string,
   ): Promise<WorkspaceChain> {
     return this.service.getOwn(user.id, id);
+  }
+
+  // Phase 09 — turns a short natural-language request into an unpersisted
+  // draft ChainDsl the caller reviews before saving via POST / (above).
+  // Never auto-saves and never runs anything.
+  @Post('draft-from-nl')
+  @HttpCode(HttpStatus.OK)
+  async draftFromNl(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(draftChainFromNlSchema)) dto: DraftChainFromNlDto,
+  ): Promise<{ dsl: ChainDsl }> {
+    const dsl = await this.nlDraft.draft(user.id, dto.prompt);
+    return { dsl };
   }
 
   @Post()
@@ -70,10 +86,7 @@ export class ChainController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ): Promise<void> {
+  async remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string): Promise<void> {
     await this.service.deleteById(user.id, id);
   }
 
@@ -87,6 +100,20 @@ export class ChainController {
     @Param('id') id: string,
   ): Promise<ChainRunView> {
     return this.executor.run(user.id, id);
+  }
+
+  // Resumes a FAILED run from its first non-SUCCEEDED step (see
+  // ChainExecutorManager.resume for why this is safe: already-SUCCEEDED
+  // steps are never re-executed, so a resume can never duplicate a write
+  // action that already completed).
+  @Post(':id/runs/:runId/resume')
+  @HttpCode(HttpStatus.OK)
+  async resumeRun(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Param('runId') runId: string,
+  ): Promise<ChainRunView> {
+    return this.executor.resume(user.id, id, runId);
   }
 
   @Get(':id/runs')

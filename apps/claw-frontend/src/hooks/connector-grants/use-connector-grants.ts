@@ -10,12 +10,22 @@ import { queryKeys } from '@/repositories/shared/query-keys';
 import {
   grantConnectorAccess,
   listConnectorGrants,
+  listConnectorsSharedWithMe,
   revokeConnectorAccess,
 } from '@/repositories/workspace/connector-grant.repository';
 import type {
   GrantConnectorAccessRequest,
+  SharedConnectorView,
   WorkspaceConnectorGrant,
 } from '@/types/connector-grant.types';
+
+export function useSharedConnectorsQuery(): UseQueryResult<SharedConnectorView[], Error> {
+  return useQuery({
+    queryKey: queryKeys.connectorGrants.sharedWithMe,
+    queryFn: () => listConnectorsSharedWithMe(),
+    staleTime: 30_000,
+  });
+}
 
 export function useConnectorGrantsQuery(
   connectorId: string,

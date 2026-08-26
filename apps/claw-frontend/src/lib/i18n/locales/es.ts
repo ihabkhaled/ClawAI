@@ -206,6 +206,7 @@ export const es: TranslationDictionary = {
     discovery: 'Descubrimiento de modelos',
     workspaceProviders: 'Proveedores',
     workspaceAppConfigs: 'Configuraciones de apps',
+    workspaceAutomations: 'Automatizaciones',
     workspaceGmail: 'Gmail',
     workspaceJira: 'Jira',
     workspaceSourceControl: 'Control de versiones',
@@ -1898,6 +1899,10 @@ export const es: TranslationDictionary = {
     externalUpdated: 'Actualizado en origen',
     openInProvider: 'Abrir en el proveedor',
     author: 'Autor: {author}',
+    relatedItems: 'Elementos relacionados',
+    viewRelatedItem: 'Ver elemento',
+    unresolvedReference: 'El elemento referenciado aún no se ha sincronizado',
+    linkConfidence: 'confianza {value}',
   },
   connectorDetail: {
     title: 'Detalle del conector',
@@ -2095,6 +2100,10 @@ export const es: TranslationDictionary = {
     levelReadOnly: 'Solo lectura',
     levelAiActions: 'Acciones de IA',
     levelFull: 'Completo',
+  },
+  sharedConnectors: {
+    title: 'Compartidos conmigo',
+    sharedBy: 'Compartido por {value}',
   },
   emailSignatures: {
     page: {
@@ -2314,6 +2323,68 @@ export const es: TranslationDictionary = {
       successDescriptionNamed: '{name} conectado. Redirigiéndote de vuelta...',
       errorTitle: 'Error de conexión',
       errorUnknown: 'Se produjo un error desconocido.',
+    },
+  },
+  workspaceChains: {
+    page: {
+      title: 'Automatizaciones',
+      description:
+        'Ejecuta automatizaciones ya preparadas entre espacios de trabajo, o crea las tuyas a partir de una plantilla.',
+    },
+    templates: {
+      heading: 'Plantillas',
+      loadFailed: 'No se pudieron cargar las plantillas.',
+      emptyTitle: 'No hay plantillas disponibles',
+      emptyDescription: 'Las plantillas de automatización aparecerán aquí una vez que se agreguen.',
+      useTemplate: 'Usar esta plantilla',
+    },
+    myAutomations: {
+      heading: 'Mis automatizaciones',
+      loadFailed: 'No se pudieron cargar tus automatizaciones.',
+      emptyTitle: 'Aún no hay automatizaciones',
+      emptyDescription: 'Usa una plantilla de arriba para crear tu primera automatización.',
+    },
+    chain: {
+      disabled: 'Desactivada',
+      stepCount: '{value} pasos',
+      wasResumed: 'Reparada manualmente',
+      viewRuns: 'Ver ejecuciones',
+      run: 'Ejecutar',
+      running: 'Ejecutando…',
+    },
+    instantiate: {
+      name: 'Nombre',
+      namePlaceholder: 'p. ej., Crear ticket de Jira y notificar al equipo',
+      connectorFor: 'Conector para {value}',
+      selectConnector: 'Selecciona un conector',
+      noConnector: 'No hay ninguna cuenta de {value} conectada; conecta una primero.',
+      creating: 'Creando…',
+      create: 'Crear automatización',
+    },
+    runHistory: {
+      title: 'Historial de ejecuciones',
+      loading: 'Cargando ejecuciones…',
+      empty: 'Aún no hay ejecuciones.',
+      resuming: 'Reanudando…',
+      resume: 'Reanudar',
+      notStarted: 'No iniciada',
+    },
+    nlDraft: {
+      openButton: 'Describir una automatización',
+      title: 'Describir una automatización',
+      description:
+        'Describe lo que quieres en lenguaje simple y crearemos un borrador de cadena a partir de tus cuentas conectadas para que lo revises.',
+      promptLabel: '¿Qué quieres automatizar?',
+      promptPlaceholder: 'ej.: Crear un ticket de Jira y publicarlo en #eng-updates en Slack',
+      noMatch:
+        'No pudimos relacionarlo con ninguna de tus cuentas conectadas. Intenta reformularlo.',
+      previewHeading: 'Pasos del borrador',
+      nameLabel: 'Nombre',
+      namePlaceholder: 'Nombra esta automatización',
+      draft: 'Generar borrador',
+      drafting: 'Generando…',
+      save: 'Guardar automatización',
+      saving: 'Guardando…',
     },
   },
   agent: {
@@ -3244,6 +3315,7 @@ export const es: TranslationDictionary = {
       loading: 'Cargando…',
       error: 'No se pudieron cargar las preferencias.',
       empty: 'Aprenderemos de tus aprobaciones — aún no hay preferencias.',
+      dismiss: 'Descartar',
     },
   },
   whyThisModel: {

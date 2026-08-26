@@ -102,7 +102,7 @@ export class WorkspaceObjectRepository {
   async findById(id: string, userId: string): Promise<WorkspaceObject | null> {
     return this.prisma.workspaceObject.findFirst({
       where: { id, userId },
-      include: { sourceLinks: true },
+      include: { sourceLinks: true, targetLinks: true },
     });
   }
 
@@ -112,8 +112,25 @@ export class WorkspaceObjectRepository {
   async findByIdForAuthorizedUser(id: string): Promise<WorkspaceObject | null> {
     return this.prisma.workspaceObject.findUnique({
       where: { id },
-      include: { sourceLinks: true },
+      include: { sourceLinks: true, targetLinks: true },
     });
+  }
+
+  // Phase 10 — resolves any not-yet-resolved links whose externalRef points
+  // at the object that just synced (e.g. a GITHUB_PR_REFERENCE link created
+  // from another object's content, now that the PR itself has synced).
+  // Only ever touches targetObjectId: null rows, so an already-resolved
+  // link is never repointed.
+  async resolveLinksByExternalRef(
+    externalRef: string,
+    linkTypes: string[],
+    targetObjectId: string,
+  ): Promise<number> {
+    const result = await this.prisma.workspaceObjectLink.updateMany({
+      where: { externalRef, linkType: { in: linkTypes }, targetObjectId: null },
+      data: { targetObjectId },
+    });
+    return result.count;
   }
 
   async countByConnectorId(connectorId: string): Promise<number> {

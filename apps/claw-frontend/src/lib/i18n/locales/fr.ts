@@ -205,6 +205,7 @@ export const fr: TranslationDictionary = {
     discovery: 'Découverte de modèles',
     workspaceProviders: 'Fournisseurs',
     workspaceAppConfigs: "Configurations d'applications",
+    workspaceAutomations: 'Automatisations',
     workspaceGmail: 'Gmail',
     workspaceJira: 'Jira',
     workspaceSourceControl: 'Contrôle de version',
@@ -1902,6 +1903,10 @@ export const fr: TranslationDictionary = {
     externalUpdated: 'Mis à jour en amont',
     openInProvider: 'Ouvrir chez le fournisseur',
     author: 'Auteur : {author}',
+    relatedItems: 'Éléments liés',
+    viewRelatedItem: "Voir l'élément",
+    unresolvedReference: "L'élément référencé n'a pas encore été synchronisé",
+    linkConfidence: 'confiance {value}',
   },
   connectorDetail: {
     title: 'Détail du connecteur',
@@ -2100,6 +2105,10 @@ export const fr: TranslationDictionary = {
     levelReadOnly: 'Lecture seule',
     levelAiActions: 'Actions IA',
     levelFull: 'Complet',
+  },
+  sharedConnectors: {
+    title: 'Partagés avec moi',
+    sharedBy: 'Partagé par {value}',
   },
   emailSignatures: {
     page: {
@@ -2321,6 +2330,68 @@ export const fr: TranslationDictionary = {
       successDescriptionNamed: '{name} connecté. Redirection en cours...',
       errorTitle: 'Échec de la connexion',
       errorUnknown: 'Une erreur inconnue est survenue.',
+    },
+  },
+  workspaceChains: {
+    page: {
+      title: 'Automatisations',
+      description:
+        "Exécutez des automatisations prêtes à l'emploi entre vos espaces de travail, ou créez les vôtres à partir d'un modèle.",
+    },
+    templates: {
+      heading: 'Modèles',
+      loadFailed: 'Échec du chargement des modèles.',
+      emptyTitle: 'Aucun modèle disponible',
+      emptyDescription: "Les modèles d'automatisation apparaîtront ici une fois ajoutés.",
+      useTemplate: 'Utiliser ce modèle',
+    },
+    myAutomations: {
+      heading: 'Mes automatisations',
+      loadFailed: 'Échec du chargement de vos automatisations.',
+      emptyTitle: 'Aucune automatisation pour le moment',
+      emptyDescription: 'Utilisez un modèle ci-dessus pour créer votre première automatisation.',
+    },
+    chain: {
+      disabled: 'Désactivée',
+      stepCount: '{value} étapes',
+      wasResumed: 'Réparée manuellement',
+      viewRuns: 'Voir les exécutions',
+      run: 'Exécuter',
+      running: 'Exécution en cours…',
+    },
+    instantiate: {
+      name: 'Nom',
+      namePlaceholder: "p. ex. Créer un ticket Jira et notifier l'équipe",
+      connectorFor: 'Connecteur pour {value}',
+      selectConnector: 'Sélectionner un connecteur',
+      noConnector: "Aucun compte {value} connecté — connectez-en un d'abord.",
+      creating: 'Création en cours…',
+      create: "Créer l'automatisation",
+    },
+    runHistory: {
+      title: 'Historique des exécutions',
+      loading: 'Chargement des exécutions…',
+      empty: 'Aucune exécution pour le moment.',
+      resuming: 'Reprise en cours…',
+      resume: 'Reprendre',
+      notStarted: 'Non démarrée',
+    },
+    nlDraft: {
+      openButton: 'Décrire une automatisation',
+      title: 'Décrire une automatisation',
+      description:
+        'Décrivez ce que vous voulez en langage simple, et nous créerons un brouillon de chaîne à partir de vos comptes connectés pour que vous le révisiez.',
+      promptLabel: 'Que voulez-vous automatiser ?',
+      promptPlaceholder: 'ex. : Créer un ticket Jira et le publier sur #eng-updates sur Slack',
+      noMatch:
+        "Nous n'avons pas pu associer ceci à l'un de vos comptes connectés. Essayez de reformuler.",
+      previewHeading: 'Étapes du brouillon',
+      nameLabel: 'Nom',
+      namePlaceholder: 'Nommez cette automatisation',
+      draft: 'Créer le brouillon',
+      drafting: 'Création en cours…',
+      save: "Enregistrer l'automatisation",
+      saving: 'Enregistrement…',
     },
   },
   agent: {
@@ -3254,6 +3325,7 @@ export const fr: TranslationDictionary = {
       loading: 'Chargement…',
       error: 'Impossible de charger les préférences.',
       empty: 'Nous apprendrons de vos approbations — pas encore de préférences.',
+      dismiss: 'Ignorer',
     },
   },
   whyThisModel: {

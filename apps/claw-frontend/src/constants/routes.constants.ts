@@ -50,6 +50,7 @@ export const ROUTES = {
   WORKSPACE_ACTIONS: '/workspace/actions',
   WORKSPACE_APPROVALS: '/workspace/approvals',
   WORKSPACE_PROVIDERS: '/workspace/providers',
+  WORKSPACE_AUTOMATIONS: '/workspace/automations',
   WORKSPACE_APP_CONFIGS: '/workspace/app-configs',
   WORKSPACE_SYNC_HEALTH: '/workspace/sync-health',
   WORKSPACE_CONNECTOR_DETAIL: (id: string) => `/workspace/connectors/${id}`,
