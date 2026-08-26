@@ -48,3 +48,9 @@ export type RiskBadgeProps = {
 export type LearnedPreferencesPanelProps = {
   t: TranslateFunction;
 };
+
+export type UseDismissLearnedPreferenceReturn = {
+  dismiss: (id: string) => void;
+  isPending: boolean;
+  pendingId: string | null;
+};

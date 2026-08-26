@@ -79,3 +79,12 @@ export const AI_ACTION_PROMPTS: Record<AiActionKind, PromptTemplate> = {
 
 export const AI_ACTION_MAX_CONTEXT_CHARS = 60_000;
 export const AI_ACTION_FALLBACK_LOCAL_PROVIDER = 'local-ollama';
+// Phase 11 — memory-service lookup for learned preferences must never
+// stall AI-action generation; a short timeout plus best-effort empty-list
+// fallback (see AutomationPreferenceService.fetchLearned) keeps this a
+// pure enhancement, never a new failure mode.
+export const LEARNED_PREFERENCES_FETCH_TIMEOUT_MS = 3_000;
+// Top-N learned preferences injected into the generation prompt. Capped
+// small — this is context, not the main event, and every provider charges
+// per token.
+export const LEARNED_PREFERENCES_PROMPT_LIMIT = 5;

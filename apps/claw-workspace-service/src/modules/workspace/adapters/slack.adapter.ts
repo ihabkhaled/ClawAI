@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
   HEALTH_CHECK_TIMEOUT_MS,
@@ -191,6 +192,14 @@ export class SlackAdapter implements WorkspaceAdapter {
 
   supportsWrite(): boolean {
     return true;
+  }
+
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [
+      WorkspaceActionType.SEND_SLACK,
+      WorkspaceActionType.SEND_SLACK_MESSAGE,
+      WorkspaceActionType.REPLY_SLACK,
+    ];
   }
 
   async executeWriteAction(

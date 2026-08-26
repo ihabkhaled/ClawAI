@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import {
   CONFLUENCE_API_RESOURCES,
   CONFLUENCE_AUTH_URL,
@@ -311,6 +312,10 @@ export class ConfluenceAdapter implements WorkspaceAdapter {
 
   supportsWrite(): boolean {
     return true;
+  }
+
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [WorkspaceActionType.CREATE_CONFLUENCE, WorkspaceActionType.EDIT_CONFLUENCE];
   }
 
   async executeWriteAction(

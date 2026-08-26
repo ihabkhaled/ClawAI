@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { WorkspaceActionType } from '../../../common/enums/workspace-action-type.enum';
 import { WorkspaceConnectorStatus } from '../../../common/enums/workspace-connector-status.enum';
 import {
   HEALTH_CHECK_TIMEOUT_MS,
@@ -408,6 +409,17 @@ export class JiraAdapter implements WorkspaceAdapter {
     return true;
   }
 
+  getSupportedActionTypes(): WorkspaceActionType[] {
+    return [
+      WorkspaceActionType.CREATE_TICKET,
+      WorkspaceActionType.CREATE_JIRA_FROM_FIGMA,
+      WorkspaceActionType.CREATE_USER_STORY_FROM_FIGMA,
+      WorkspaceActionType.UPDATE_JIRA_ISSUE,
+      WorkspaceActionType.ADD_TICKET_COMMENT,
+      WorkspaceActionType.COMMENT_JIRA,
+    ];
+  }
+
   async executeWriteAction(
     accessToken: string,
     actionType: string,
@@ -435,7 +447,11 @@ export class JiraAdapter implements WorkspaceAdapter {
     }
     const baseUrl = `${JIRA_API_BASE}/ex/jira/${site.id}/rest/api/3`;
 
-    if (actionType === 'CREATE_TICKET' || actionType === 'CREATE_JIRA_FROM_FIGMA') {
+    if (
+      actionType === 'CREATE_TICKET' ||
+      actionType === 'CREATE_JIRA_FROM_FIGMA' ||
+      actionType === 'CREATE_USER_STORY_FROM_FIGMA'
+    ) {
       const response = await fetch(`${baseUrl}/issue`, {
         method: 'POST',
         headers,

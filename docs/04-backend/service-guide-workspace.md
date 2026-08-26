@@ -41,6 +41,11 @@ The workspace service is Claw's integration layer for external tools and knowled
 5. store searchable workspace objects
 6. expose user-facing search and internal chat search
 7. manage action drafts that require user approval
+8. run mechanical, multi-step chain automations against connectors, including NL-drafted chains a human reviews before saving
+9. ingest, verify, dedup, and durably store provider webhooks, with best-effort event publishing and manual replay
+10. detect and resolve object-link relationships between synced objects (knowledge graph)
+11. classify AI-action approval decisions into per-user learned preferences that feed back into generation
+12. let a connector owner grant another user scoped access without transferring ownership
 
 ---
 
@@ -68,7 +73,37 @@ Represents an action draft such as creating an issue, comment, ticket, or Slack 
 
 ### `WorkspaceObjectLink`
 
-Stores graph-style relationships between synced workspace objects.
+Stores graph-style relationships between synced workspace objects. Extraction and resolution are
+wired into every sync path as of Phase 10 — the table existed earlier but nothing populated it.
+
+### `WorkspaceChain`, `WorkspaceChainTemplate`, `WorkspaceChainRun`, `WorkspaceChainRunStep`
+
+A chain is a saved, multi-step DSL definition run against one or more connectors. Templates are a
+mechanical starter-chain library (Phase 07); `draft-from-nl` (Phase 09) turns a natural-language
+prompt into a chain definition a human reviews and saves — it never auto-runs. Each run's steps
+persist their resolved payload, adapter output, status (`PENDING`/`RUNNING`/`SUCCEEDED`/`FAILED`/
+`SKIPPED`), and — on failure — an `errorClass` (`TRANSIENT`/`AUTH`/`RATE_LIMIT`/`VALIDATION`/
+`PERMISSION`/`CONFLICT`/`PERMANENT`) so a human deciding whether to resume can tell a
+worth-retrying failure from one that won't fix itself on retry.
+
+### `WebhookDelivery`, `WorkspaceEvent`
+
+Every inbound provider webhook is signature-verified, deduped by external delivery id, and
+persisted regardless of whether the resulting `WorkspaceEvent` publish to RabbitMQ succeeds — the
+webhook HTTP response never depends on RabbitMQ being reachable. A delivery can be manually
+replayed later. See the Webhooks API section below.
+
+### `UserAutomationPreference`
+
+Rolled-up per-user preference signal, classified from every AI-action approval-queue decision
+(`APPROVED`/`REJECTED`/`AUTO_APPROVED`/`EDITED`). Feeds back into AI-action generation as of
+Phase 11.
+
+### `WorkspaceConnectorGrant`
+
+An explicit, scoped grant of another user's access to a connector the caller doesn't own — access
+level maps onto `VIEW`/`PROPOSE_AI_ACTION`/`EDIT_CONFIG`/`MANAGE_GRANTS`. Revocation is a hard
+delete with no durable audit trail today (a documented, not-yet-closed gap).
 
 ---
 
@@ -117,35 +152,63 @@ Stores graph-style relationships between synced workspace objects.
 The approval engine routes every draft through a `priority`-ordered chain of
 policies. System-defaults seed on boot and cannot be deleted via REST.
 
-| Method   | Path                                       | Purpose                                                                 |
-| -------- | ------------------------------------------ | ----------------------------------------------------------------------- |
-| `GET`    | `/api/v1/workspace/ai-actions/policies`    | List policies (ordered by `priority` DESC, then `name` ASC)             |
-| `GET`    | `/api/v1/workspace/ai-actions/policies/:id`| Get one policy — `404 POLICY_NOT_FOUND` when missing                    |
-| `POST`   | `/api/v1/workspace/ai-actions/policies`    | Create policy — `409 POLICY_NAME_TAKEN` on duplicate `name`             |
-| `PATCH`  | `/api/v1/workspace/ai-actions/policies/:id`| Partial update (the `name` field is omitted)                            |
-| `DELETE` | `/api/v1/workspace/ai-actions/policies/:id`| Delete — `409 POLICY_SYSTEM_DEFAULT_PROTECTED` on system defaults       |
+| Method   | Path                                        | Purpose                                                           |
+| -------- | ------------------------------------------- | ----------------------------------------------------------------- |
+| `GET`    | `/api/v1/workspace/ai-actions/policies`     | List policies (ordered by `priority` DESC, then `name` ASC)       |
+| `GET`    | `/api/v1/workspace/ai-actions/policies/:id` | Get one policy — `404 POLICY_NOT_FOUND` when missing              |
+| `POST`   | `/api/v1/workspace/ai-actions/policies`     | Create policy — `409 POLICY_NAME_TAKEN` on duplicate `name`       |
+| `PATCH`  | `/api/v1/workspace/ai-actions/policies/:id` | Partial update (the `name` field is omitted)                      |
+| `DELETE` | `/api/v1/workspace/ai-actions/policies/:id` | Delete — `409 POLICY_SYSTEM_DEFAULT_PROTECTED` on system defaults |
 
 Auth: `GET` requires `ADMIN` or `OPERATOR`; mutations require `ADMIN`.
 
 ### Suggestion trigger rules (admin)
 
-| Method   | Path                                       | Purpose                                                                |
-| -------- | ------------------------------------------ | ---------------------------------------------------------------------- |
-| `GET`    | `/api/v1/workspace/suggestion-rules`       | List rules (ordered by `priority` DESC, then `name` ASC)               |
-| `POST`   | `/api/v1/workspace/suggestion-rules`       | Create rule — `409 RULE_NAME_TAKEN` on duplicate `name`                |
-| `PATCH`  | `/api/v1/workspace/suggestion-rules/:id`   | Partial update — `404 RULE_NOT_FOUND` when missing                     |
-| `DELETE` | `/api/v1/workspace/suggestion-rules/:id`   | Delete — `404 RULE_NOT_FOUND` if missing, `409 RULE_SYSTEM_DEFAULT_PROTECTED` for system defaults |
+| Method   | Path                                     | Purpose                                                                                           |
+| -------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `GET`    | `/api/v1/workspace/suggestion-rules`     | List rules (ordered by `priority` DESC, then `name` ASC)                                          |
+| `POST`   | `/api/v1/workspace/suggestion-rules`     | Create rule — `409 RULE_NAME_TAKEN` on duplicate `name`                                           |
+| `PATCH`  | `/api/v1/workspace/suggestion-rules/:id` | Partial update — `404 RULE_NOT_FOUND` when missing                                                |
+| `DELETE` | `/api/v1/workspace/suggestion-rules/:id` | Delete — `404 RULE_NOT_FOUND` if missing, `409 RULE_SYSTEM_DEFAULT_PROTECTED` for system defaults |
 
 Auth: `GET` requires `ADMIN` or `OPERATOR`; mutations require `ADMIN`.
 
 ### Webhook deliveries (admin)
 
-| Method | Path                                                    | Purpose                                                                                          |
-| ------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `GET`  | `/api/v1/workspace/webhooks/deliveries`                 | List deliveries. Query (strict Zod): `provider`, `signatureValid` (`'true' \| 'false'`), `connectorId`, `limit` (1-100, default 30), `cursor`. Unknown query params return `400`. |
-| `POST` | `/api/v1/workspace/webhooks/deliveries/:id/replay`      | Replay — `404 WEBHOOK_DELIVERY_NOT_FOUND` when missing                                           |
+| Method | Path                                               | Purpose                                                                                                                                                                           |
+| ------ | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/v1/workspace/webhooks/deliveries`            | List deliveries. Query (strict Zod): `provider`, `signatureValid` (`'true' \| 'false'`), `connectorId`, `limit` (1-100, default 30), `cursor`. Unknown query params return `400`. |
+| `POST` | `/api/v1/workspace/webhooks/deliveries/:id/replay` | Replay — `404 WEBHOOK_DELIVERY_NOT_FOUND` when missing                                                                                                                            |
 
 Auth: `GET` requires `ADMIN` or `OPERATOR`; replay requires `ADMIN`.
+
+### Chains / automations
+
+| Method   | Path                                                 | Purpose                                                                                             |
+| -------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `GET`    | `/api/v1/workspace/chains`                           | List the caller's chains                                                                            |
+| `GET`    | `/api/v1/workspace/chains/:id`                       | Get one chain                                                                                       |
+| `POST`   | `/api/v1/workspace/chains/draft-from-nl`             | Draft a chain definition from a natural-language prompt (Phase 09) — returns a draft, does not save |
+| `POST`   | `/api/v1/workspace/chains`                           | Save a chain (from a draft or authored directly)                                                    |
+| `PATCH`  | `/api/v1/workspace/chains/:id`                       | Update a chain                                                                                      |
+| `DELETE` | `/api/v1/workspace/chains/:id`                       | Delete a chain                                                                                      |
+| `POST`   | `/api/v1/workspace/chains/:id/run`                   | Start a run                                                                                         |
+| `POST`   | `/api/v1/workspace/chains/:id/runs/:runId/resume`    | Resume a run stuck at a failed step                                                                 |
+| `GET`    | `/api/v1/workspace/chains/:id/runs`                  | List runs for a chain                                                                               |
+| `GET`    | `/api/v1/workspace/chain-templates`                  | List the mechanical starter-chain template library (Phase 07)                                       |
+| `POST`   | `/api/v1/workspace/chain-templates/:key/instantiate` | Instantiate a template into a saved chain                                                           |
+
+Frontend: `apps/claw-frontend/src/app/(portal)/workspace/automations/` is the only UI surface for
+this API (Phase 08).
+
+### Connector grants (peer sharing)
+
+| Method   | Path                                                              | Purpose                                              |
+| -------- | ----------------------------------------------------------------- | ---------------------------------------------------- |
+| `GET`    | `/api/v1/workspace/connectors/:connectorId/grants`                | List grants on a connector the caller owns           |
+| `POST`   | `/api/v1/workspace/connectors/:connectorId/grants`                | Create a grant                                       |
+| `DELETE` | `/api/v1/workspace/connectors/:connectorId/grants/:granteeUserId` | Revoke a grant (hard delete)                         |
+| `GET`    | `/api/v1/workspace/connectors/shared-with-me`                     | A grantee's own inbox of connectors shared with them |
 
 ---
 
@@ -223,6 +286,21 @@ That keeps workspace grounding inside service boundaries:
 - `EXECUTED`
 - `FAILED`
 - `EXPIRED`
+
+### Chain run status
+
+- `PENDING`
+- `RUNNING`
+- `COMPLETED`
+- `FAILED`
+
+### Chain run step status
+
+- `PENDING`
+- `RUNNING`
+- `SUCCEEDED`
+- `FAILED`
+- `SKIPPED`
 
 ---
 
@@ -321,22 +399,22 @@ The split is deliberate: USER reads (provider catalog, provider-app-configs)
 and connects (own connectors), but admin owns infrastructure mutations. The
 matrix below summarises:
 
-| Endpoint group                                          | USER  | ADMIN     | Backing permission                       |
-| ------------------------------------------------------- | ----- | --------- | ---------------------------------------- |
-| `GET /workspace/providers[/:provider]`                  | Read  | Read      | (any authenticated role)                 |
-| `GET /workspace/provider-app-configs[/:id]`             | Read  | Read      | `WORKSPACE_APP_CONFIG_VIEW`              |
-| `POST / PUT / DELETE /workspace/provider-app-configs`   | --    | Full CRUD | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`      |
-| `GET / POST / PATCH / DELETE /workspace/connectors[*]`  | Own   | All       | `WORKSPACE_CONNECT_OWN` / `*_READ_OWN`   |
-| `POST /workspace/connectors/:id/health\|sync\|pause\|resume\|cadence` | Own | All | `WORKSPACE_SYNC_OWN`                    |
-| `POST /workspace/oauth/init` + `GET /oauth/callback`    | Own   | All       | `WORKSPACE_CONNECT_OWN`                  |
-| `POST /workspace/search` + `GET /workspace/objects[*]`  | Own   | All       | `WORKSPACE_READ_OWN`                     |
-| `GET / POST /workspace/actions[*]/approve\|reject`      | Own   | All       | `WORKSPACE_ACTION_OWN`                   |
-| `GET /workspace/ai-actions/policies[*]`                 | --    | All       | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`      |
-| `POST / PATCH / DELETE /workspace/ai-actions/policies[*]` | --  | All       | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`      |
-| `GET / POST / PATCH / DELETE /workspace/suggestion-rules[*]` | -- | All     | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`      |
-| `GET /workspace/webhooks/deliveries`                    | --    | All       | `ADMIN_WORKSPACES_VIEW`                  |
-| `POST /workspace/webhooks/deliveries/:id/replay`        | --    | All       | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`      |
-| `GET /workspace/sync/dashboard`                         | --    | All       | `ADMIN_WORKSPACES_VIEW`                  |
+| Endpoint group                                                        | USER | ADMIN     | Backing permission                     |
+| --------------------------------------------------------------------- | ---- | --------- | -------------------------------------- |
+| `GET /workspace/providers[/:provider]`                                | Read | Read      | (any authenticated role)               |
+| `GET /workspace/provider-app-configs[/:id]`                           | Read | Read      | `WORKSPACE_APP_CONFIG_VIEW`            |
+| `POST / PUT / DELETE /workspace/provider-app-configs`                 | --   | Full CRUD | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`    |
+| `GET / POST / PATCH / DELETE /workspace/connectors[*]`                | Own  | All       | `WORKSPACE_CONNECT_OWN` / `*_READ_OWN` |
+| `POST /workspace/connectors/:id/health\|sync\|pause\|resume\|cadence` | Own  | All       | `WORKSPACE_SYNC_OWN`                   |
+| `POST /workspace/oauth/init` + `GET /oauth/callback`                  | Own  | All       | `WORKSPACE_CONNECT_OWN`                |
+| `POST /workspace/search` + `GET /workspace/objects[*]`                | Own  | All       | `WORKSPACE_READ_OWN`                   |
+| `GET / POST /workspace/actions[*]/approve\|reject`                    | Own  | All       | `WORKSPACE_ACTION_OWN`                 |
+| `GET /workspace/ai-actions/policies[*]`                               | --   | All       | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`    |
+| `POST / PATCH / DELETE /workspace/ai-actions/policies[*]`             | --   | All       | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`    |
+| `GET / POST / PATCH / DELETE /workspace/suggestion-rules[*]`          | --   | All       | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`    |
+| `GET /workspace/webhooks/deliveries`                                  | --   | All       | `ADMIN_WORKSPACES_VIEW`                |
+| `POST /workspace/webhooks/deliveries/:id/replay`                      | --   | All       | `ADMIN_WORKSPACE_AUTOMATION_MANAGE`    |
+| `GET /workspace/sync/dashboard`                                       | --   | All       | `ADMIN_WORKSPACES_VIEW`                |
 
 All endpoints carry both `@Roles(...)` AND
 `@RequirePermissions(Permission.XXX)`. Roles gate the legacy enum-based

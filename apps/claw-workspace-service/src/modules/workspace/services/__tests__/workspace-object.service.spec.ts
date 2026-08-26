@@ -35,7 +35,13 @@ const mockTokenManager = {
 } as unknown as OAuthTokenManager;
 
 const mockConnector = { id: 'conn1', userId: 'user1' };
-const mockObject = { id: 'obj1', userId: 'user1', connectorId: 'conn1', sourceLinks: [] };
+const mockObject = {
+  id: 'obj1',
+  userId: 'user1',
+  connectorId: 'conn1',
+  sourceLinks: [],
+  targetLinks: [],
+};
 const mockPage = { data: [mockObject], total: 1, page: 1, pageSize: 20 };
 
 describe('WorkspaceObjectService', () => {

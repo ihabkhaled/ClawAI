@@ -7,6 +7,7 @@ import { WorkspaceAdapterFactory } from '../../workspace/adapters/workspace-adap
 import { TokenRefreshManager } from '../../workspace/managers/token-refresh.manager';
 import { WorkspaceConnectorRepository } from '../../workspace/repositories/workspace-connector.repository';
 import { ChainRepository } from '../repositories/chain.repository';
+import { classifyChainStepError } from '../utilities/chain-error-classifier.utility';
 import { resolveChainPayload } from '../utilities/chain-placeholder-resolver.utility';
 import type { ChainDsl, ChainRunView, ChainStep, ChainStepOutputs } from '../types/chain.types';
 import type { Prisma, WorkspaceProvider } from '../../../generated/prisma';
@@ -58,14 +59,84 @@ export class ChainExecutorManager {
       startedAt: new Date(),
     });
 
-    const outputs: ChainStepOutputs = {};
-    let runFailed = false;
-    let runError: string | null = null;
+    return this.executeFromIndex(userId, runRow.id, dsl, {}, 0);
+  }
 
+  /**
+   * Phase 05 (scoped safety-net slice) — resumes a FAILED run from its
+   * first non-SUCCEEDED step instead of re-running the whole chain from
+   * scratch. Already-SUCCEEDED steps are never re-executed — their stored
+   * `output` is reused as-is — which is what makes this safe: retrying a
+   * write action that already completed (e.g. re-running CREATE_ISSUE)
+   * would create a duplicate external side effect, and none of these
+   * provider APIs support a real idempotency key to prevent that. Skipping
+   * already-succeeded steps sidesteps the problem entirely rather than
+   * papering over it with an unenforced idempotency field.
+   *
+   * Uses the run's `dslSnapshot`, not the chain's current (possibly since
+   * edited) `dsl`, so a resume always continues the exact definition that
+   * was actually running — the same reasoning `dslSnapshot` already exists
+   * for in `run()`.
+   */
+  async resume(userId: string, chainId: string, runId: string): Promise<ChainRunView> {
+    const chain = await this.chainRepo.findById(chainId);
+    if (chain === null || chain.userId !== userId) {
+      throw new BusinessException('workspace.chain.not_found', 'NOT_FOUND', HttpStatus.NOT_FOUND);
+    }
+    const run = await this.chainRepo.findRunWithSteps(runId);
+    if (run === null || run.chainId !== chainId || run.userId !== userId) {
+      throw new BusinessException(
+        'workspace.chain.run_not_found',
+        'NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    if (run.status !== 'FAILED') {
+      throw new BusinessException(
+        'workspace.chain.run_not_resumable',
+        'RUN_NOT_RESUMABLE',
+        HttpStatus.BAD_REQUEST,
+        { status: run.status },
+      );
+    }
+
+    const dsl = run.dslSnapshot as unknown as ChainDsl;
+    const outputs: ChainStepOutputs = {};
+    let resumeIndex = dsl.steps.length;
     for (let i = 0; i < dsl.steps.length; i += 1) {
       const step = dsl.steps[i];
       if (step === undefined) continue;
-      const stepResult = await this.executeStep(userId, runRow.id, step, i, outputs);
+      const priorAttempt = run.steps.find((s) => s.stepId === step.id && s.status === 'SUCCEEDED');
+      if (priorAttempt === undefined) {
+        resumeIndex = i;
+        break;
+      }
+      outputs[step.id] = (priorAttempt.output as Record<string, unknown> | null) ?? {};
+    }
+
+    await this.chainRepo.updateRun(runId, {
+      status: 'RUNNING',
+      error: null,
+      finishedAt: null,
+      wasResumed: true,
+    });
+    return this.executeFromIndex(userId, runId, dsl, outputs, resumeIndex);
+  }
+
+  private async executeFromIndex(
+    userId: string,
+    runId: string,
+    dsl: ChainDsl,
+    outputs: ChainStepOutputs,
+    startIndex: number,
+  ): Promise<ChainRunView> {
+    let runFailed = false;
+    let runError: string | null = null;
+
+    for (let i = startIndex; i < dsl.steps.length; i += 1) {
+      const step = dsl.steps[i];
+      if (step === undefined) continue;
+      const stepResult = await this.executeStep(userId, runId, step, i, outputs);
       if (!stepResult.ok) {
         runFailed = true;
         runError = stepResult.error;
@@ -74,15 +145,13 @@ export class ChainExecutorManager {
       outputs[step.id] = stepResult.output;
     }
 
-    await this.chainRepo.updateRun(runRow.id, {
+    await this.chainRepo.updateRun(runId, {
       status: runFailed ? 'FAILED' : 'COMPLETED',
       error: runError,
       finishedAt: new Date(),
     });
-    this.logger.log(
-      `run: chainId=${chainId} runId=${runRow.id} status=${runFailed ? 'FAILED' : 'COMPLETED'}`,
-    );
-    return this.buildRunView(runRow.id);
+    this.logger.log(`run: runId=${runId} status=${runFailed ? 'FAILED' : 'COMPLETED'}`);
+    return this.buildRunView(runId);
   }
 
   // Executes one step. Returns { ok, output } on success or
@@ -108,6 +177,7 @@ export class ChainExecutorManager {
       await this.chainRepo.updateStep(stepRow.id, {
         status: 'FAILED',
         error,
+        errorClass: classifyChainStepError(error),
         finishedAt: new Date(),
       });
       return { ok: false, error: `step ${step.id}: ${error}` };
@@ -146,13 +216,15 @@ export class ChainExecutorManager {
     try {
       const result = await adapter.executeWriteAction(accessToken, step.actionType, payload);
       if (!result.success) {
+        const errorMessage = result.errorMessage ?? 'adapter returned success=false';
         await this.chainRepo.updateStep(stepRow.id, {
           status: 'FAILED',
           resolvedPayload: payload as Prisma.InputJsonValue,
-          error: result.errorMessage ?? 'adapter returned success=false',
+          error: errorMessage,
+          errorClass: classifyChainStepError(errorMessage),
           finishedAt: new Date(),
         });
-        return { ok: false, error: `step ${step.id}: ${result.errorMessage ?? 'failed'}` };
+        return { ok: false, error: `step ${step.id}: ${errorMessage}` };
       }
       // The output object later steps can reference via placeholders.
       const output: Record<string, unknown> = {
@@ -176,13 +248,18 @@ export class ChainExecutorManager {
   private async buildRunView(runId: string): Promise<ChainRunView> {
     const run = await this.chainRepo.findRunWithSteps(runId);
     if (run === null) {
-      throw new BusinessException('workspace.chain.run_not_found', 'NOT_FOUND', HttpStatus.NOT_FOUND);
+      throw new BusinessException(
+        'workspace.chain.run_not_found',
+        'NOT_FOUND',
+        HttpStatus.NOT_FOUND,
+      );
     }
     return {
       id: run.id,
       chainId: run.chainId,
       status: run.status,
       error: run.error,
+      wasResumed: run.wasResumed,
       startedAt: run.startedAt?.toISOString() ?? null,
       finishedAt: run.finishedAt?.toISOString() ?? null,
       steps: run.steps.map((s) => ({
@@ -194,6 +271,7 @@ export class ChainExecutorManager {
         resolvedPayload: (s.resolvedPayload as Record<string, unknown> | null) ?? null,
         output: (s.output as Record<string, unknown> | null) ?? null,
         error: s.error,
+        errorClass: s.errorClass,
       })),
     };
   }

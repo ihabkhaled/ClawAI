@@ -782,6 +782,33 @@ export type {
   UseAppConfigsPageReturn,
 } from './workspace-providers.types';
 export type {
+  ChainDsl,
+  ChainStep,
+  WorkspaceChain,
+  WorkspaceChainTemplate,
+  ChainStepRunView,
+  ChainRunView,
+  WorkspaceChainRun,
+  InstantiateChainTemplateRequest,
+  CreateChainRequest,
+  UseChainTemplatesReturn,
+  UseChainsReturn,
+  UseChainRunsReturn,
+  UseInstantiateChainTemplateReturn,
+  UseRunChainReturn,
+  UseResumeChainRunReturn,
+  UseDraftChainFromNlReturn,
+  UseCreateChainReturn,
+  WorkspaceAutomationsPageProps,
+  ChainTemplateCardProps,
+  ChainRowProps,
+  InstantiateTemplateDialogProps,
+  ChainRunHistoryDialogProps,
+  NlDraftDialogProps,
+  WorkspaceAutomationsConnectorOption,
+  UseWorkspaceAutomationsPageReturn,
+} from './workspace-chains.types';
+export type {
   DiscoverySource,
   DiscoveryRun,
   DiscoveryRunListResponse,
@@ -1029,6 +1056,7 @@ export type {
   UseChatShareMutationsReturn,
   UseShareChatDialogReturn,
 } from './chat-share-hook.types';
+
 export type {
   ConnectorModelRow,
   SetModelExposureRequest,
@@ -1038,3 +1066,15 @@ export type {
   ModelExposureTableProps,
   ModelExposureSectionProps,
 } from './model-exposure.types';
+
+export type {
+  FeedbackAttachment,
+  FeedbackPageContext,
+  FeedbackHistoryEntry,
+  FeedbackTicket,
+  FeedbackListResponse,
+  CreateFeedbackRequest,
+  CreateFeedbackResponse,
+  FeedbackListQuery,
+  FeedbackStatusCounts,
+} from './feedback.types';

@@ -43,6 +43,13 @@ export class WorkspaceConnectorRepository {
     return this.prisma.workspaceConnector.findUnique({ where: { id } });
   }
 
+  // Phase 12 — batch lookup for "connectors shared with me": one query for
+  // every connector referenced by the caller's grant rows, instead of N.
+  async findManyByIds(ids: string[]): Promise<WorkspaceConnector[]> {
+    if (ids.length === 0) return [];
+    return this.prisma.workspaceConnector.findMany({ where: { id: { in: ids } } });
+  }
+
   async findByIdWithStats(id: string): Promise<WorkspaceConnectorWithStats | null> {
     return this.prisma.workspaceConnector.findUnique({
       where: { id },

@@ -34,10 +34,7 @@ export class ChainRepository {
     return this.prisma.workspaceChain.create({ data });
   }
 
-  async update(
-    id: string,
-    data: Prisma.WorkspaceChainUpdateInput,
-  ): Promise<WorkspaceChain> {
+  async update(id: string, data: Prisma.WorkspaceChainUpdateInput): Promise<WorkspaceChain> {
     return this.prisma.workspaceChain.update({ where: { id }, data });
   }
 
@@ -86,5 +83,28 @@ export class ChainRepository {
     data: Prisma.WorkspaceChainRunStepUpdateInput,
   ): Promise<WorkspaceChainRunStep> {
     return this.prisma.workspaceChainRunStep.update({ where: { id }, data });
+  }
+
+  /**
+   * Sweeps WorkspaceChainRun rows stuck in status=RUNNING longer than
+   * olderThan and marks them FAILED. Mirrors
+   * WorkspaceConnectorRepository.markOrphanedRunsAsFailed — without this,
+   * a process crash mid-chain leaves an orphan row RUNNING forever, since
+   * ChainExecutorManager.run() executes the whole chain synchronously in
+   * one process with no separate heartbeat/lease to detect a dead worker.
+   */
+  async markOrphanedRunsAsFailed(olderThan: Date, reason: string): Promise<number> {
+    const result = await this.prisma.workspaceChainRun.updateMany({
+      where: {
+        status: 'RUNNING',
+        startedAt: { lt: olderThan },
+      },
+      data: {
+        status: 'FAILED',
+        finishedAt: new Date(),
+        error: reason,
+      },
+    });
+    return result.count;
   }
 }

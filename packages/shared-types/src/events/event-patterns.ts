@@ -135,6 +135,12 @@ export enum EventPattern {
   WORKSPACE_AUTO_SUGGEST_TICK_FAILED = 'workspace.auto_suggest.tick.failed',
   // === Workspace Automation Stream 13 — Suggestion Factory ===
   WORKSPACE_SUGGESTION_FACTORY_PROCESSED = 'workspace.suggestion.factory_processed',
+  // === Workspace Automation Phase 03 — Canonical Event Fabric ===
+  // Published once a raw webhook delivery has been mapped to a normalized
+  // WorkspaceEvent row. Downstream consumers (workflow triggers, the
+  // knowledge graph, digest, learning, audit) subscribe to this instead of
+  // re-parsing provider-specific webhook payloads themselves.
+  WORKSPACE_EVENT_INGESTED = 'workspace.event.ingested',
   // === Workspace Automation Stream 40 — Memory Learning Loop ===
   MEMORY_PREFERENCE_UPSERTED = 'memory.preference.upserted',
   // === Smart Router Flagship (Phases 1, 7, 10, 12) ===

@@ -2,11 +2,14 @@
 
 import type { ReactElement } from 'react';
 
+import { Button } from '@/components/ui/button';
+import { useDismissLearnedPreference } from '@/hooks/automation-preferences/use-dismiss-learned-preference';
 import { useLearnedPreferences } from '@/hooks/automation-preferences/use-learned-preferences';
 import type { LearnedPreferencesPanelProps } from '@/types/automation-preference.types';
 
 export function LearnedPreferencesPanel({ t }: LearnedPreferencesPanelProps): ReactElement {
   const { items, isLoading, isError } = useLearnedPreferences();
+  const { dismiss, isPending, pendingId } = useDismissLearnedPreference();
 
   return (
     <div className="border-border bg-card flex flex-col gap-3 rounded-lg border p-4">
@@ -31,12 +34,23 @@ export function LearnedPreferencesPanel({ t }: LearnedPreferencesPanelProps): Re
           {items.map((item) => (
             <li
               key={item.id}
-              className="border-border bg-muted/20 rounded-md border px-3 py-2 text-xs"
+              className="border-border bg-muted/20 flex items-start justify-between gap-2 rounded-md border px-3 py-2 text-xs"
             >
-              <p>{item.content}</p>
-              <p className="touch:text-xs text-muted-foreground mt-1 text-[10px]">
-                {new Date(item.updatedAt).toLocaleString()}
-              </p>
+              <div>
+                <p>{item.content}</p>
+                <p className="touch:text-xs text-muted-foreground mt-1 text-[10px]">
+                  {new Date(item.updatedAt).toLocaleString()}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto shrink-0 px-2 py-1 text-[10px]"
+                disabled={isPending && pendingId === item.id}
+                onClick={() => dismiss(item.id)}
+              >
+                {t('learned.panel.dismiss')}
+              </Button>
             </li>
           ))}
         </ul>

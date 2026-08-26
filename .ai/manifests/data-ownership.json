@@ -31,6 +31,8 @@
       "database": "mongodb",
       "mongooseModels": [
         "AuditLog",
+        "FeedbackCounter",
+        "FeedbackTicket",
         "UsageLedger"
       ],
       "prismaModels": [],
@@ -274,8 +276,11 @@
         "WorkspaceChain",
         "WorkspaceChainRun",
         "WorkspaceChainRunStep",
+        "WorkspaceChainTemplate",
         "WorkspaceConnector",
         "WorkspaceConnectorGrant",
+        "WorkspaceConnectorGrantAuditLog",
+        "WorkspaceEvent",
         "WorkspaceHealthEvent",
         "WorkspaceObject",
         "WorkspaceObjectLink",

@@ -10,3 +10,4 @@ export { WorkspaceErrorCode } from './workspace-error-code.enum';
 export { AiActionPolicyKind } from './ai-action-policy-kind.enum';
 export { AiActionRiskLabel } from './ai-action-risk-label.enum';
 export { AiActionQueueStatus } from './ai-action-queue-status.enum';
+export { WorkspaceCanonicalEventType } from './workspace-canonical-event-type.enum';

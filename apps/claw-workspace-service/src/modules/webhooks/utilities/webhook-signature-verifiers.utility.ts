@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
+import { SLACK_MAX_TIMESTAMP_SKEW_MS } from '../../../common/constants/webhook.constants';
 import { WorkspaceProvider } from '../../../common/enums/workspace-provider.enum';
 import {
   WEBHOOK_HEADER_NAMES,
@@ -122,6 +123,17 @@ function buildSlackVerifier(): WebhookSignatureVerifier {
       if (sig === null || ts === null)
         return failedResult(WEBHOOK_REJECTION_CODES.SIGNATURE_MISSING);
       if (secret.length === 0) return failedResult(WEBHOOK_REJECTION_CODES.SECRET_NOT_CONFIGURED);
+      // Slack's own docs require this check: without it, a captured (but
+      // validly-signed) payload can be replayed indefinitely, since the
+      // signature alone never expires. Reject anything outside the skew
+      // window before doing the (more expensive) HMAC comparison.
+      const tsSeconds = Number.parseInt(ts, 10);
+      if (
+        !Number.isFinite(tsSeconds) ||
+        Math.abs(Date.now() - tsSeconds * 1000) > SLACK_MAX_TIMESTAMP_SKEW_MS
+      ) {
+        return failedResult(WEBHOOK_REJECTION_CODES.SIGNATURE_TIMESTAMP_EXPIRED);
+      }
       const base = `v0:${ts}:${input.rawBody.toString('utf-8')}`;
       const expected = `v0=${createHmac('sha256', secret).update(base).digest('hex')}`;
       if (!safeEqualHex(expected.replace('v0=', ''), sig.replace('v0=', ''))) {

@@ -4,6 +4,7 @@ import type { WorkspaceConnectorRepository } from '../../repositories/workspace-
 import type { WorkspaceAdapterFactory } from '../../adapters/workspace-adapter.factory';
 import type { TokenRefreshManager } from '../token-refresh.manager';
 import type { WorkspaceObjectManager } from '../workspace-object.manager';
+import type { WorkspaceSyncEventBridgeService } from '../../../workspace-events/services/workspace-sync-event-bridge.service';
 import type { RabbitMQService } from '@claw/shared-rabbitmq';
 import type { WorkspaceConnector } from '../../../../generated/prisma';
 import { WorkspaceSyncStatus } from '../../../../common/enums/workspace-sync-status.enum';
@@ -117,12 +118,18 @@ const mockTokenManager = {
 } as unknown as TokenRefreshManager;
 
 const mockObjectManager = {
-  upsertBatch: jest.fn().mockResolvedValue(0),
+  upsertBatch: jest.fn().mockResolvedValue({ synced: 0, objects: [] }),
+  detectAndCreateLinks: jest.fn().mockResolvedValue(undefined),
+  resolveLinksForObjects: jest.fn().mockResolvedValue(undefined),
 } as unknown as WorkspaceObjectManager;
 
 const mockRabbitMQ = {
   publish: jest.fn().mockImplementation(() => Promise.resolve()),
 } as unknown as RabbitMQService;
+
+const mockSyncEventBridge = {
+  bridge: jest.fn().mockResolvedValue(0),
+} as unknown as WorkspaceSyncEventBridgeService;
 
 describe('WorkspaceSyncManager', () => {
   let manager: WorkspaceSyncManager;
@@ -136,6 +143,7 @@ describe('WorkspaceSyncManager', () => {
       mockTokenManager,
       mockObjectManager,
       mockRabbitMQ,
+      mockSyncEventBridge,
     );
   });
 
@@ -222,9 +230,14 @@ describe('WorkspaceSyncManager', () => {
         objectsFailed: 0,
         objects,
       });
-      (mockObjectManager.upsertBatch as jest.Mock).mockResolvedValue(1);
+      (mockObjectManager.upsertBatch as jest.Mock).mockResolvedValue({
+        synced: 1,
+        objects: [{ id: 'stored-1' }],
+      });
       await manager.syncConnector(mockConnector, false);
       expect(mockObjectManager.upsertBatch).toHaveBeenCalledWith('c1', 'u1', 'GITHUB', objects);
+      expect(mockObjectManager.detectAndCreateLinks).toHaveBeenCalledWith([{ id: 'stored-1' }]);
+      expect(mockObjectManager.resolveLinksForObjects).toHaveBeenCalledWith([{ id: 'stored-1' }]);
     });
 
     it('should publish WORKSPACE_OBJECT_SYNCED event on success', async () => {

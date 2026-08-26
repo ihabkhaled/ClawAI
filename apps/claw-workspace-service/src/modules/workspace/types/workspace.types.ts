@@ -84,8 +84,14 @@ export type SyncResult = {
   objects: SyncedObject[];
 };
 
+export type WorkspaceObjectUpsertResult = {
+  synced: number;
+  objects: WorkspaceObject[];
+};
+
 export type WorkspaceObjectWithLinks = WorkspaceObject & {
   sourceLinks: WorkspaceObjectLink[];
+  targetLinks: WorkspaceObjectLink[];
 };
 
 export type PaginatedWorkspaceObjects = {

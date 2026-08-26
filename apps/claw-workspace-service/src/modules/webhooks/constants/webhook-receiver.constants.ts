@@ -23,6 +23,12 @@ export const WEBHOOK_REJECTION_CODES = {
   UNSUPPORTED_PROVIDER: 'UNSUPPORTED_PROVIDER',
   MALFORMED_BODY: 'MALFORMED_BODY',
   RATE_LIMITED: 'RATE_LIMITED',
+  // Phase 14 — Slack's own docs require rejecting a request whose
+  // X-Slack-Request-Timestamp is outside a small skew window, specifically
+  // so a captured-and-replayed (but otherwise validly-signed) payload can't
+  // be resubmitted indefinitely. Distinct from REPLAY_DUPLICATE, which is
+  // about a delivery id seen twice, not a stale timestamp.
+  SIGNATURE_TIMESTAMP_EXPIRED: 'SIGNATURE_TIMESTAMP_EXPIRED',
 } as const;
 
 export const WEBHOOK_PROVIDER_DISPLAY_LIMIT = 50;

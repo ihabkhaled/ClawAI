@@ -1,7 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Put, Query } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
 
-import { AppConfig } from '../../../app/config/app.config';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
   type UpsertAutomationPreferenceDto,
@@ -58,29 +57,10 @@ export class AutomationPreferenceController {
     @Query('actionKind') actionKind: string | undefined,
     @Query('limit') limit: string | undefined,
   ): Promise<LearnedPreferenceItem[]> {
-    const params = new URLSearchParams();
-    params.set('userId', user.id);
-    if (actionKind !== undefined && actionKind.length > 0) {
-      params.set('actionKind', actionKind);
-    }
-    if (limit !== undefined) {
-      params.set('limit', limit);
-    }
-    const url = `${AppConfig.get().MEMORY_SERVICE_URL}/api/v1/internal/memories/learned-preferences?${params.toString()}`;
-    const response = await fetch(url, {
-      headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!response.ok) {
-      return [];
-    }
-    const rows = (await response.json()) as Array<{
-      id: string;
-      content: string;
-      type: string;
-      createdAt: string;
-      updatedAt: string;
-    }>;
-    return rows;
+    return this.service.fetchLearned(
+      user.id,
+      actionKind,
+      limit !== undefined ? Number(limit) : undefined,
+    );
   }
 }

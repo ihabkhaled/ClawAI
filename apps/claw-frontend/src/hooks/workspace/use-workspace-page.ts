@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { useSharedConnectorsQuery } from '@/hooks/connector-grants/use-connector-grants';
+
 import type { WorkspaceConnector } from '../../types/workspace.types';
 
 import {
@@ -24,6 +26,11 @@ export function useWorkspacePage() {
   const deleteMutation = useDeleteWorkspaceConnector();
   const healthMutation = useTestWorkspaceConnectorHealth();
   const syncMutation = useTriggerWorkspaceSync();
+  const {
+    data: sharedConnectors,
+    isLoading: isSharedConnectorsLoading,
+    isError: isSharedConnectorsError,
+  } = useSharedConnectorsQuery();
 
   const connectors = data?.data ?? [];
   const total = data?.total ?? 0;
@@ -50,5 +57,8 @@ export function useWorkspacePage() {
     objects,
     isObjectsLoading,
     isObjectsError,
+    sharedConnectors: sharedConnectors ?? [],
+    isSharedConnectorsLoading,
+    isSharedConnectorsError,
   };
 }
