@@ -138,6 +138,13 @@ export function checkKnowledgeCoverage() {
     : [];
   for (const workspace of workspaces) {
     if (!workspace.startsWith('claw-')) continue;
+    // A git submodule is its own repository and carries its own knowledge layer
+    // there. CI checks this repo out without initialising submodules, so the
+    // directory is empty — demanding a CLAUDE.md inside it failed the build for
+    // a file that is not this repo's to provide. Absence of package.json is the
+    // reliable signal: an uninitialised submodule has nothing in it, and a real
+    // workspace always has one.
+    if (!exists(repoPath('apps', workspace, 'package.json'))) continue;
     if (!exists(repoPath('apps', workspace, 'CLAUDE.md'))) {
       errors.push(`missing service memory: apps/${workspace}/CLAUDE.md (rule 33)`);
     }
