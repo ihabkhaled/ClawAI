@@ -8,6 +8,7 @@ export type FeedbackLauncherTranslation = {
 };
 
 export type FeedbackDialogTranslation = {
+  typeLabel: string;
   title: string;
   description: string;
   titleLabel: string;
@@ -45,6 +46,7 @@ export type FeedbackTypeLabelsTranslation = {
 };
 
 export type FeedbackErrorsTranslation = {
+  typeRequired: string;
   titleRequired: string;
   contentRequired: string;
   submitFailed: string;
@@ -90,6 +92,31 @@ export type FeedbackAdminPaginationTranslation = {
   pageOf: string;
 };
 
+export type FeedbackAdminDetailTranslation = {
+  imageDimensions: string;
+  imageUnavailable: string;
+  openOriginal: string;
+  imageLoading: string;
+  ticket: string;
+  reporter: string;
+  created: string;
+  updated: string;
+  resolved: string;
+  closed: string;
+  context: string;
+  route: string;
+  url: string;
+  viewport: string;
+  appVersion: string;
+  userAgent: string;
+  locale: string;
+  description: string;
+  attachments: string;
+  history: string;
+  notAvailable: string;
+  imagePreview: string;
+};
+
 export type FeedbackAdminTranslation = {
   title: string;
   searchLabel: string;
@@ -98,7 +125,7 @@ export type FeedbackAdminTranslation = {
   updated: string;
   type: { all: string; placeholder: string };
   status: FeedbackAdminStatusTranslation;
-  detail: { reporter: string };
+  detail: FeedbackAdminDetailTranslation;
   table: FeedbackAdminTableTranslation;
   actions: FeedbackAdminActionsTranslation;
   pagination: FeedbackAdminPaginationTranslation;

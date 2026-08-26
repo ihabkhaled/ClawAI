@@ -9,6 +9,7 @@ import { FeedbackEditorTab } from '@/enums';
 import { useMarkdownToolbar } from '@/hooks/feedback/use-markdown-toolbar';
 import { useTranslation } from '@/lib/i18n';
 import { MarkdownRenderer } from '@/lib/markdown/markdown-renderer';
+import { cn } from '@/lib/utils';
 import type { FeedbackMarkdownEditorProps } from '@/types/feedback-props.types';
 
 export function FeedbackMarkdownEditor({ value, onChange, error }: FeedbackMarkdownEditorProps) {
@@ -24,7 +25,7 @@ export function FeedbackMarkdownEditor({ value, onChange, error }: FeedbackMarkd
     applyLink,
     applyInlineCode,
   } = useMarkdownToolbar(value, onChange);
-  const errorId = error ? 'feedback-content-error' : undefined;
+  const errorId = error === undefined ? undefined : 'feedback-content-error';
 
   return (
     <div className="space-y-2">
@@ -105,9 +106,9 @@ export function FeedbackMarkdownEditor({ value, onChange, error }: FeedbackMarkd
             ref={textareaRef}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            aria-invalid={!!error}
+            aria-invalid={error !== undefined}
             aria-describedby={errorId}
-            className={`min-h-[200px] ${error ? 'border-red-500' : ''}`}
+            className={cn('min-h-[200px]', error !== undefined && 'border-destructive')}
           />
         </TabsContent>
         <TabsContent value={FeedbackEditorTab.PREVIEW}>
@@ -116,8 +117,8 @@ export function FeedbackMarkdownEditor({ value, onChange, error }: FeedbackMarkd
           </div>
         </TabsContent>
       </Tabs>
-      {error && (
-        <p id={errorId} className="text-sm text-red-500">
+      {error === undefined ? null : (
+        <p id={errorId} className="text-destructive text-sm">
           {error}
         </p>
       )}

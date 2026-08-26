@@ -34,6 +34,7 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set([
   'https://api.example.com',
   '{"capability": 0.2, "domain": 0.1, ...}',
   'PDF',
+  'URL',
   'PayPal',
   'PayPal/Card',
   'Paymob',

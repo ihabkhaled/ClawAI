@@ -95,7 +95,7 @@ export function PwaManager(): React.ReactElement | null {
 
   if (isMinimized) {
     return (
-      <div className="safe-bottom fixed start-4 end-20 bottom-[4.75rem] z-[120] flex justify-center sm:inset-x-0 sm:bottom-6">
+      <div className="safe-bottom pointer-events-auto fixed start-4 end-20 bottom-[4.75rem] z-[120] flex justify-center sm:inset-x-0 sm:bottom-8">
         <Button onClick={() => setIsMinimized(false)} className="rounded-full shadow-lg">
           <Download className="me-2 h-4 w-4" />
           {t('pwa.expand')}
@@ -105,13 +105,19 @@ export function PwaManager(): React.ReactElement | null {
   }
 
   return (
+    // `pointer-events-auto` is load-bearing: a Radix modal sets
+    // `pointer-events: none` on <body> while it is open, so this banner --
+    // which sits above every dialog at z-[120] and covers part of one -- was
+    // painted on top yet swallowed every click, leaving no way to dismiss it
+    // without closing the dialog first.
+    //
     // The chat page pins a floating "new chat" button to the bottom-end
     // corner, and this banner carries the highest z-index in the app. A
     // symmetric inset used to span underneath that button and swallow every
     // tap meant for it, so the end-side gap is reserved on mobile rather than
     // relying on z-order. On wider screens the panel is centred at the bottom,
     // where it clears the button on its own.
-    <div className="safe-bottom bg-background/95 shadow-floating fixed start-4 end-20 bottom-[4.75rem] z-[120] mx-auto flex max-w-lg flex-col gap-3 rounded-xl border p-4 backdrop-blur sm:inset-x-0 sm:bottom-6">
+    <div className="safe-bottom bg-background/95 shadow-floating pointer-events-auto fixed start-4 end-20 bottom-[4.75rem] z-[120] mx-auto flex max-w-lg flex-col gap-3 rounded-xl border p-5 backdrop-blur sm:inset-x-0 sm:bottom-8">
       {isOffline ? (
         <div className="flex items-center gap-3">
           <span className="bg-warning/10 text-warning flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
@@ -146,7 +152,7 @@ export function PwaManager(): React.ReactElement | null {
               </p>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2">
+          <div className="border-border/60 flex flex-wrap items-center justify-end gap-3 border-t pt-4">
             <Button variant="ghost" size="sm" onClick={() => setIsMinimized(true)}>
               {t('pwa.minimise')}
             </Button>
@@ -156,7 +162,7 @@ export function PwaManager(): React.ReactElement | null {
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-foreground -me-2 h-8 w-8 shrink-0"
+              className="text-muted-foreground hover:text-foreground ms-1 h-8 w-8 shrink-0"
               aria-label={t('pwa.neverShowAgain')}
               onClick={dismissInstall}
             >

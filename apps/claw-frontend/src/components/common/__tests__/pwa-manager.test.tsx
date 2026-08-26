@@ -84,6 +84,22 @@ describe('PwaManager', () => {
     expect(banner).not.toHaveClass('inset-x-2');
   });
 
+  // Regression: a Radix modal sets `pointer-events: none` on <body> while it
+  // is open. This banner outranks every dialog at z-[120] and paints over one,
+  // so without an explicit opt-in it was visible, on top, and completely
+  // unclickable -- the user could not dismiss it without closing the dialog.
+  it('stays clickable while a modal dialog holds the page', () => {
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: false,
+    });
+
+    render(<PwaManager />);
+
+    const banner = screen.getByText('pwa.offlineMessage').closest('.fixed');
+    expect(banner).toHaveClass('pointer-events-auto');
+  });
+
   it('shows a translated install prompt and lets the user install or dismiss it', async () => {
     const user = userEvent.setup();
     const prompt = vi.fn().mockResolvedValue(undefined);
@@ -115,6 +131,26 @@ describe('PwaManager', () => {
     const dismissButton = screen.getByRole('button', { name: 'pwa.neverShowAgain' });
     await user.click(dismissButton);
     expect(screen.queryByText('pwa.installMessage')).toBeNull();
+  });
+
+  // The close control used to carry a negative inline-end margin, which pulled
+  // it flush against the card edge with no padding around it at all.
+  it('keeps the dismiss control inside the card padding', async () => {
+    render(<PwaManager />);
+
+    const installEvent = new Event('beforeinstallprompt') as Event & {
+      prompt: () => Promise<void>;
+      userChoice: Promise<{ outcome: string }>;
+    };
+    installEvent.prompt = vi.fn(async () => undefined);
+    installEvent.userChoice = Promise.resolve({ outcome: 'dismissed' });
+    window.dispatchEvent(installEvent);
+
+    await screen.findByText('pwa.installMessage');
+
+    expect(screen.getByRole('button', { name: 'pwa.neverShowAgain' }).className).not.toContain(
+      '-me-',
+    );
   });
 
   // The close control is "never show again", not "hide for now": the choice is

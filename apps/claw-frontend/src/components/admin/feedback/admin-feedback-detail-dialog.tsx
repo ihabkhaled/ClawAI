@@ -1,181 +1,201 @@
 'use client';
 
 import { FeedbackStatus } from '@claw/shared-types';
-import { useState } from 'react';
+import type { ReactElement } from 'react';
 
 import { AdminFeedbackAttachmentThumbnail } from '@/components/admin/feedback/admin-feedback-attachment-thumbnail';
+import { AdminFeedbackDetailSection } from '@/components/admin/feedback/admin-feedback-detail-section';
+import { AdminFeedbackHistoryList } from '@/components/admin/feedback/admin-feedback-history-list';
+import { AdminFeedbackImageViewer } from '@/components/admin/feedback/admin-feedback-image-viewer';
+import { AdminFeedbackMetaItem } from '@/components/admin/feedback/admin-feedback-meta-item';
+import { AdminFeedbackStatusActions } from '@/components/admin/feedback/admin-feedback-status-actions';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useAdminFeedbackDetail } from '@/hooks/admin/feedback/use-admin-feedback-detail';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useAdminFeedbackDetailDialog } from '@/hooks/admin/feedback/use-admin-feedback-detail-dialog';
 import { useTranslation } from '@/lib/i18n';
 import { MarkdownRenderer } from '@/lib/markdown/markdown-renderer';
 import type { AdminFeedbackDetailDialogProps } from '@/types/feedback-props.types';
 import { formatDateTimeSafe } from '@/utilities/date.utility';
 import { feedbackStatusLabelKey, feedbackTypeLabelKey } from '@/utilities/feedback-label.utility';
 
-import { AdminFeedbackImageViewer } from './admin-feedback-image-viewer';
-import { AdminFeedbackStatusActions } from './admin-feedback-status-actions';
-
+// The dialog used to return null while the ticket loaded, so a click on a row
+// did nothing visible until the request came back. It stays mounted now and
+// shows its own loading state, and every label goes through the dictionary
+// instead of the hardcoded English the first cut shipped with.
 export function AdminFeedbackDetailDialog({
   ticketId,
   open,
   onOpenChange,
-}: AdminFeedbackDetailDialogProps) {
+}: AdminFeedbackDetailDialogProps): ReactElement {
   const { t } = useTranslation();
-  const { ticket, isLoading, changeStatus, isChanging } = useAdminFeedbackDetail(ticketId);
-  const [imagePreview, setImagePreview] = useState<{ src: string; alt: string } | null>(null);
+  const {
+    ticket,
+    isLoading,
+    changeStatus,
+    isChanging,
+    imagePreview,
+    openImagePreview,
+    closeImagePreview,
+  } = useAdminFeedbackDetailDialog(ticketId);
 
-  if (isLoading || ticket === undefined) {
-    return null;
-  }
+  const fallback = t('feedback.admin.detail.notAvailable');
+  const context = ticket?.pageContext;
+  const viewport =
+    context === undefined ||
+    context.viewportWidth === undefined ||
+    context.viewportHeight === undefined
+      ? fallback
+      : `${context.viewportWidth}×${context.viewportHeight}`;
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle>Ticket {ticket.ticketNumber}</DialogTitle>
-              <div className="flex items-center gap-2">
-                <Badge variant={ticket.status === FeedbackStatus.OPEN ? 'default' : 'secondary'}>
-                  {t(feedbackStatusLabelKey(ticket.status))}
-                </Badge>
-                <Badge variant="outline">{t(feedbackTypeLabelKey(ticket.type))}</Badge>
+        <DialogContent className="flex max-h-[92dvh] max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:p-0">
+          {isLoading || ticket === undefined ? (
+            <>
+              <DialogHeader className="border-b px-5 py-4 pe-14 text-start sm:px-6 sm:pe-14">
+                <DialogTitle className="text-base">{t('common.loading')}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 p-6" aria-busy="true">
+                <span className="bg-muted block h-4 w-2/5 animate-pulse rounded" />
+                <span className="bg-muted block h-4 w-3/5 animate-pulse rounded" />
+                <span className="bg-muted block h-24 w-full animate-pulse rounded" />
               </div>
-            </div>
-          </DialogHeader>
+            </>
+          ) : (
+            <>
+              <DialogHeader className="border-b px-5 py-4 pe-14 text-start sm:px-6 sm:pe-14">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-muted-foreground font-mono text-xs">
+                    {t('feedback.admin.detail.ticket', { ticketNumber: ticket.ticketNumber })}
+                  </span>
+                  <Badge variant={ticket.status === FeedbackStatus.OPEN ? 'default' : 'secondary'}>
+                    {t(feedbackStatusLabelKey(ticket.status))}
+                  </Badge>
+                  <Badge variant="outline">{t(feedbackTypeLabelKey(ticket.type))}</Badge>
+                </div>
+                <DialogTitle className="text-lg">{ticket.title}</DialogTitle>
+                {ticket.subject === undefined || ticket.subject.length === 0 ? null : (
+                  <DialogDescription>{ticket.subject}</DialogDescription>
+                )}
+              </DialogHeader>
 
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold">{ticket.title}</h3>
-              <p className="text-muted-foreground">{ticket.subject}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium">{t('feedback.admin.detail.reporter')}:</span>{' '}
-                {ticket.reporterName === undefined || ticket.reporterName.length === 0
-                  ? ticket.reporterEmail
-                  : `${ticket.reporterName} (${ticket.reporterEmail})`}
-              </div>
-              <div>
-                <span className="font-medium">Created:</span> {formatDateTimeSafe(ticket.createdAt)}
-              </div>
-              {ticket.updatedAt && (
-                <div>
-                  <span className="font-medium">Updated:</span>{' '}
-                  {formatDateTimeSafe(ticket.updatedAt)}
-                </div>
-              )}
-              {ticket.resolvedAt && (
-                <div>
-                  <span className="font-medium">Resolved:</span>{' '}
-                  {formatDateTimeSafe(ticket.resolvedAt)}
-                </div>
-              )}
-              {ticket.closedAt && (
-                <div>
-                  <span className="font-medium">Closed:</span> {formatDateTimeSafe(ticket.closedAt)}
-                </div>
-              )}
-            </div>
-
-            <div className="border-t pt-4">
-              <h4 className="mb-2 font-semibold">Page & Device Metadata</h4>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                <div>
-                  <dt className="font-medium">Route:</dt>
-                  <dd>{ticket.pageContext?.route || 'N/A'}</dd>
-                </div>
-                <div>
-                  <dt className="font-medium">URL:</dt>
-                  <dd className="truncate">{ticket.pageContext?.url || 'N/A'}</dd>
-                </div>
-                <div>
-                  <dt className="font-medium">Viewport:</dt>
-                  <dd>
-                    {`${ticket.pageContext?.viewportWidth ?? 0}×${ticket.pageContext?.viewportHeight ?? 0}` ||
-                      'N/A'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-medium">App Version:</dt>
-                  <dd>{ticket.pageContext?.appVersion || 'N/A'}</dd>
-                </div>
-                <div>
-                  <dt className="font-medium">User Agent:</dt>
-                  <dd className="truncate">{ticket.pageContext?.userAgent || 'N/A'}</dd>
-                </div>
-                <div>
-                  <dt className="font-medium">Locale:</dt>
-                  <dd>{ticket.pageContext?.locale || 'N/A'}</dd>
-                </div>
-              </dl>
-            </div>
-
-            <div className="border-t pt-4">
-              <h4 className="mb-2 font-semibold">Description</h4>
-              <div className="prose dark:prose-invert max-w-none">
-                <MarkdownRenderer content={ticket.contentMarkdown} />
-              </div>
-            </div>
-
-            {ticket.attachments && ticket.attachments.length > 0 && (
-              <div className="border-t pt-4">
-                <h4 className="mb-2 font-semibold">Attachments</h4>
-                <div className="flex flex-wrap gap-2">
-                  {ticket.attachments.map((attachment) => (
-                    <AdminFeedbackAttachmentThumbnail
-                      key={attachment.fileId}
-                      ticketId={ticketId}
-                      attachment={attachment}
-                      onOpen={(url, filename) => setImagePreview({ src: url, alt: filename })}
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 sm:px-6">
+                <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <AdminFeedbackMetaItem
+                    label={t('feedback.admin.detail.reporter')}
+                    value={
+                      ticket.reporterName === undefined || ticket.reporterName.length === 0
+                        ? ticket.reporterEmail
+                        : `${ticket.reporterName} (${ticket.reporterEmail})`
+                    }
+                  />
+                  <AdminFeedbackMetaItem
+                    label={t('feedback.admin.detail.created')}
+                    value={formatDateTimeSafe(ticket.createdAt)}
+                  />
+                  <AdminFeedbackMetaItem
+                    label={t('feedback.admin.detail.updated')}
+                    value={formatDateTimeSafe(ticket.updatedAt)}
+                  />
+                  {ticket.resolvedAt === undefined || ticket.resolvedAt === null ? null : (
+                    <AdminFeedbackMetaItem
+                      label={t('feedback.admin.detail.resolved')}
+                      value={formatDateTimeSafe(ticket.resolvedAt)}
                     />
-                  ))}
-                </div>
-              </div>
-            )}
+                  )}
+                  {ticket.closedAt === undefined || ticket.closedAt === null ? null : (
+                    <AdminFeedbackMetaItem
+                      label={t('feedback.admin.detail.closed')}
+                      value={formatDateTimeSafe(ticket.closedAt)}
+                    />
+                  )}
+                </dl>
 
-            {ticket.history && ticket.history.length > 0 && (
-              <div className="border-t pt-4">
-                <h4 className="mb-2 font-semibold">History</h4>
-                <ul className="space-y-2 text-sm">
-                  {ticket.history.map((entry) => (
-                    <li key={`${entry.action}-${entry.at}`} className="flex items-start gap-2">
-                      <Badge variant="outline" className="shrink-0">
-                        {entry.action}
-                      </Badge>
-                      <span className="text-muted-foreground">
-                        {entry.fromStatus === null ? '' : `${entry.fromStatus} → `}
-                        {entry.toStatus} · {entry.actorEmail} · {formatDateTimeSafe(entry.at)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                <AdminFeedbackDetailSection title={t('feedback.admin.detail.description')}>
+                  <div className="prose dark:prose-invert max-w-none text-sm">
+                    <MarkdownRenderer content={ticket.contentMarkdown} />
+                  </div>
+                </AdminFeedbackDetailSection>
 
-            <div className="flex justify-end border-t pt-4">
-              <AdminFeedbackStatusActions
-                status={ticket.status}
-                isChanging={isChanging}
-                onChange={(next) => changeStatus({ status: next })}
-              />
-            </div>
-          </div>
+                {ticket.attachments.length === 0 ? null : (
+                  <AdminFeedbackDetailSection title={t('feedback.admin.detail.attachments')}>
+                    <div className="flex flex-wrap gap-3">
+                      {ticket.attachments.map((attachment) => (
+                        <AdminFeedbackAttachmentThumbnail
+                          key={attachment.fileId}
+                          ticketId={ticketId}
+                          attachment={attachment}
+                          onOpen={openImagePreview}
+                        />
+                      ))}
+                    </div>
+                  </AdminFeedbackDetailSection>
+                )}
+
+                <AdminFeedbackDetailSection title={t('feedback.admin.detail.context')}>
+                  <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <AdminFeedbackMetaItem
+                      label={t('feedback.admin.detail.route')}
+                      value={context?.route ?? fallback}
+                      isMono
+                    />
+                    <AdminFeedbackMetaItem
+                      label={t('feedback.admin.detail.url')}
+                      value={context?.url ?? fallback}
+                      isMono
+                    />
+                    <AdminFeedbackMetaItem
+                      label={t('feedback.admin.detail.viewport')}
+                      value={viewport}
+                    />
+                    <AdminFeedbackMetaItem
+                      label={t('feedback.admin.detail.appVersion')}
+                      value={context?.appVersion ?? fallback}
+                    />
+                    <AdminFeedbackMetaItem
+                      label={t('feedback.admin.detail.locale')}
+                      value={context?.locale ?? fallback}
+                    />
+                    <AdminFeedbackMetaItem
+                      label={t('feedback.admin.detail.userAgent')}
+                      value={context?.userAgent ?? fallback}
+                      isMono
+                    />
+                  </dl>
+                </AdminFeedbackDetailSection>
+
+                {ticket.history.length === 0 ? null : (
+                  <AdminFeedbackDetailSection title={t('feedback.admin.detail.history')}>
+                    <AdminFeedbackHistoryList entries={ticket.history} />
+                  </AdminFeedbackDetailSection>
+                )}
+              </div>
+
+              <div className="bg-muted/30 flex justify-end border-t px-5 py-4 sm:px-6">
+                <AdminFeedbackStatusActions
+                  status={ticket.status}
+                  isChanging={isChanging}
+                  onChange={(next) => changeStatus({ status: next })}
+                />
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
-      {imagePreview && (
+      {imagePreview === null ? null : (
         <AdminFeedbackImageViewer
           src={imagePreview.src}
           alt={imagePreview.alt}
-          open={!!imagePreview}
-          onOpenChange={(open) => {
-            if (!open) {
-              setImagePreview(null);
-            }
-          }}
+          open
+          onOpenChange={closeImagePreview}
         />
       )}
     </>

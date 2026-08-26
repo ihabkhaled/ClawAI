@@ -46,6 +46,7 @@ View (TSX) -> Controller (Hook) -> Service -> Repository/API
 28. Use `cn()` from `@/lib/utils` for conditional Tailwind classes.
 29. No default exports except for Next.js pages/layouts.
 30. No circular dependencies between modules.
+31. **NEVER** render a close button inside a `Dialog` — `DialogContent` already renders one, and a second X leaves the user guessing which control owns the panel. `DialogTitle`/`DialogDescription` belong inside `DialogContent`, never as its sibling. See `rules/03-frontend-rules.md` → Dialog Rules.
 
 ---
 

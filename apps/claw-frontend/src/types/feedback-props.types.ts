@@ -1,5 +1,8 @@
+import type { ReactNode } from 'react';
+
 import type {
   FeedbackAttachment,
+  FeedbackHistoryEntry,
   FeedbackStatusCounts,
   FeedbackTicket,
 } from '@/types/feedback.types';
@@ -70,6 +73,26 @@ export type AdminFeedbackFiltersProps = {
   onSearchChange: (search: string) => void;
   counts: FeedbackStatusCounts;
   totalCount: number;
+};
+
+export type AdminFeedbackImagePreview = {
+  src: string;
+  alt: string;
+};
+
+export type AdminFeedbackDetailSectionProps = {
+  title: string;
+  children: ReactNode;
+};
+
+export type AdminFeedbackMetaItemProps = {
+  label: string;
+  value: string;
+  isMono?: boolean;
+};
+
+export type AdminFeedbackHistoryListProps = {
+  entries: FeedbackHistoryEntry[];
 };
 
 export type AdminFeedbackImageViewerProps = {

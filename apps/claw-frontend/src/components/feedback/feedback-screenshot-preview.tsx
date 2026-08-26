@@ -15,7 +15,7 @@ export function FeedbackScreenshotPreview({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Button type="button" onClick={onCapture} disabled={isCapturing}>
+        <Button type="button" variant="outline" onClick={onCapture} disabled={isCapturing}>
           {isCapturing ? t('feedback.capturing') : t('feedback.captureScreenshot')}
         </Button>
         {screenshot && (
@@ -42,7 +42,7 @@ export function FeedbackScreenshotPreview({
       )}
 
       {error && (
-        <p className="text-sm text-amber-600" role="status">
+        <p className="text-muted-foreground text-sm" role="status">
           {t(error)} {t('feedback.pasteOrUploadInstead')}
         </p>
       )}

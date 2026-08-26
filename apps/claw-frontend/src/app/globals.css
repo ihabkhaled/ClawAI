@@ -936,6 +936,35 @@
     );
   }
 
+  /*
+   * The backdrop an attachment is previewed against.
+   *
+   * A flat surface cannot tell you whether the transparent corner of a PNG is
+   * the image or the panel behind it, and a screenshot of a dark UI on a dark
+   * panel loses its own edges. The checker does both jobs: it marks the image
+   * bounds and it reads as "this is a canvas, not a blank dialog".
+   */
+  .image-preview-canvas {
+    --image-preview-checker: hsl(var(--muted-foreground) / 0.08);
+    background-color: hsl(var(--muted) / 0.35);
+    background-image:
+      linear-gradient(45deg, var(--image-preview-checker) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--image-preview-checker) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--image-preview-checker) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--image-preview-checker) 75%);
+    background-position:
+      0 0,
+      0 8px,
+      8px -8px,
+      -8px 0;
+    background-size: 16px 16px;
+  }
+
+  /* Keep a scaled-up thumbnail crisp instead of smearing it into a blur. */
+  .image-preview-pixelated {
+    image-rendering: pixelated;
+  }
+
   /* Fade the tail of long scroll regions (e.g. sidebar nav) */
   .scroll-fade-y {
     mask-image: linear-gradient(

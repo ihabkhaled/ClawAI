@@ -47,6 +47,7 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set([
   'NVIDIA',
   'P95',
   'PDF',
+  'URL',
   'github_pat_…',
   'llama.cpp',
   '18',

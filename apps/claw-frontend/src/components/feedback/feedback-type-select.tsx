@@ -9,19 +9,25 @@ import {
 } from '@/components/ui/select';
 import { FEEDBACK_TYPE_OPTIONS } from '@/constants/feedback.constants';
 import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 import type { FeedbackTypeSelectProps } from '@/types/feedback-props.types';
 
 export function FeedbackTypeSelect({ value, onChange, error }: FeedbackTypeSelectProps) {
   const { t } = useTranslation();
-  const errorId = error ? 'feedback-type-error' : undefined;
+  const errorId = error === undefined ? undefined : 'feedback-type-error';
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
+      <label className="text-sm font-medium" id="feedback-type-label" htmlFor="feedback-type">
+        {t('feedback.dialog.typeLabel')}
+      </label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger
-          aria-invalid={!!error}
+          id="feedback-type"
+          aria-labelledby="feedback-type-label feedback-type"
+          aria-invalid={error !== undefined}
           aria-describedby={errorId}
-          className={error ? 'border-red-500' : ''}
+          className={cn('w-full', error !== undefined && 'border-destructive')}
         >
           <SelectValue placeholder={t('feedback.type.placeholder')} />
         </SelectTrigger>
@@ -33,8 +39,8 @@ export function FeedbackTypeSelect({ value, onChange, error }: FeedbackTypeSelec
           ))}
         </SelectContent>
       </Select>
-      {error && (
-        <p id={errorId} className="text-sm text-red-500">
+      {error === undefined ? null : (
+        <p id={errorId} className="text-destructive text-sm">
           {error}
         </p>
       )}

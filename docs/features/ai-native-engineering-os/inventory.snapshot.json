@@ -6991,7 +6991,7 @@
           "file": "rules/02-monorepo-and-workspace-ownership.md"
         },
         {
-          "bytes": 9798,
+          "bytes": 11094,
           "file": "rules/03-frontend-rules.md"
         },
         {
@@ -7407,7 +7407,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4744
+        "value": 4768
       },
       "localeCount": 13,
       "locales": [
@@ -9138,7 +9138,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 373
+        "testFiles": 376
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9895,7 +9895,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1027,
+    "totalTestFiles": 1030,
     "workspaceCount": 25
   }
 }

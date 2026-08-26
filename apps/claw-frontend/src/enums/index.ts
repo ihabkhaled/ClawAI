@@ -157,3 +157,4 @@ export { TrialStatus } from './trial-status.enum';
 export { InstallPromptOutcome } from './install-prompt-outcome.enum';
 export { FeedbackSortDirection } from './feedback-sort-direction.enum';
 export { FeedbackEditorTab } from './feedback-editor-tab.enum';
+export { ImagePreviewStatus } from './image-preview-status.enum';

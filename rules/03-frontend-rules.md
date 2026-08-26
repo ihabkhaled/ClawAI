@@ -54,6 +54,29 @@ Page (.tsx)
 7. No inline logic in JSX — extract to handler functions in controller hook
 ```
 
+## Dialog Rules
+
+`DialogContent` (`components/ui/dialog.tsx`) already renders the close button,
+positioned against the panel's own top-inline-end corner.
+
+```
+1. NEVER add a close button inside a Dialog — DialogContent owns the only one
+2. DialogTitle and DialogDescription go INSIDE DialogContent, never beside it
+3. A dialog panel keeps its surface: no bg-transparent + border-0 + shadow-none
+4. Header, scroll area and footer: pin the first and last, scroll only the middle
+5. A nested dialog (a lightbox over a detail dialog) is still a framed panel
+```
+
+Rules 1 and 3 travel together. The admin feedback attachment viewer set the
+panel transparent and full-width and then drew its own X on top of the built-in
+one: two close glyphs floated over the backdrop with no frame under them and no
+way to tell which belonged to what. A dialog that needs a different close
+treatment restyles `DialogContent`, it does not add a second control.
+
+Rule 2 is not cosmetic — a `DialogTitle` placed as a sibling of `DialogContent`
+renders outside the portal, leaks into the page body, and still leaves Radix
+warning that the dialog has no accessible name.
+
 ## No Inline Rule (Critical)
 
 **NEVER** define inside `.tsx` files, hook files, service files, or store files:
@@ -217,6 +240,8 @@ export const sendMessage = async (dto: SendMessageDto): Promise<ChatMessage> => 
 10. Defining a sub-component function inside a page file — extract to its own file
 11. Comparing strings against domain values — use enum comparisons
 12. Passing more than 2 levels of props — use context or composition
+13. Adding a close button to a Dialog — DialogContent already renders one
+14. Truncating a value the reader needs in full (URL, user agent) — wrap it
 
 ## Enforcement
 

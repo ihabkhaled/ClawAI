@@ -13,6 +13,10 @@ export const FEEDBACK_TYPE_OPTIONS: readonly { value: FeedbackType; labelKey: st
   { value: FeedbackType.OTHER, labelKey: 'feedback.types.other' },
 ] as const;
 
+// Below this, an attachment rendered at its natural size reads as a blank
+// panel rather than as an image, so the viewer scales it up instead.
+export const TINY_IMAGE_PIXEL_THRESHOLD = 64;
+
 export const FEEDBACK_ACCEPTED_IMAGE_TYPES = 'image/png,image/jpeg,image/webp,image/gif';
 
 export const FEEDBACK_LAUNCHER_CLASSES =

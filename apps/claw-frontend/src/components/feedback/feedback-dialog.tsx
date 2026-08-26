@@ -24,6 +24,9 @@ import { useScreenshotCapture } from '@/hooks/feedback/use-screenshot-capture';
 import { useTranslation } from '@/lib/i18n';
 import type { FeedbackDialogProps } from '@/types/feedback-props.types';
 
+// The dialog scrolled as one block, so Submit slid off the bottom while the
+// user was still typing and the title scrolled away with it. Header and footer
+// are pinned now and only the fields between them scroll.
 export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps): React.ReactElement {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -43,7 +46,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps): Rea
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl"
+        className="flex max-h-[92dvh] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:p-0"
         onPaste={(event) => {
           const images = Array.from(event.clipboardData.files).filter((file) =>
             file.type.startsWith('image/'),
@@ -53,24 +56,12 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps): Rea
           }
         }}
       >
-        <DialogHeader>
+        <DialogHeader className="border-b px-5 py-4 pe-14 text-start sm:px-6 sm:pe-14">
           <DialogTitle>{t('feedback.dialog.title')}</DialogTitle>
           <DialogDescription>{t('feedback.dialog.description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <Controller
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FeedbackTypeSelect
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.type?.message}
-              />
-            )}
-          />
-
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 sm:px-6">
           <div className="space-y-1">
             <label className="text-sm font-medium" htmlFor="feedback-title">
               {t('feedback.dialog.titleLabel')}
@@ -89,15 +80,29 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps): Rea
             )}
           </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium" htmlFor="feedback-subject">
-              {t('feedback.dialog.subjectLabel')}
-            </label>
-            <Input
-              id="feedback-subject"
-              placeholder={t('feedback.dialog.subjectPlaceholder')}
-              {...form.register('subject')}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Controller
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FeedbackTypeSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.type === undefined ? undefined : t('feedback.errors.typeRequired')}
+                />
+              )}
             />
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium" htmlFor="feedback-subject">
+                {t('feedback.dialog.subjectLabel')}
+              </label>
+              <Input
+                id="feedback-subject"
+                placeholder={t('feedback.dialog.subjectPlaceholder')}
+                {...form.register('subject')}
+              />
+            </div>
           </div>
 
           <Controller
@@ -116,25 +121,27 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps): Rea
             )}
           />
 
-          <FeedbackScreenshotPreview
-            screenshot={screenshotState.screenshot}
-            isCapturing={screenshotState.isCapturing}
-            error={screenshotState.error ?? undefined}
-            onCapture={() => {
-              void screenshotState.capture();
-            }}
-            onClear={screenshotState.clear}
-          />
+          <div className="border-border/60 bg-muted/20 space-y-4 rounded-lg border p-4">
+            <FeedbackScreenshotPreview
+              screenshot={screenshotState.screenshot}
+              isCapturing={screenshotState.isCapturing}
+              error={screenshotState.error ?? undefined}
+              onCapture={() => {
+                void screenshotState.capture();
+              }}
+              onClear={screenshotState.clear}
+            />
 
-          <FeedbackAttachmentList
-            attachments={attachmentState.attachments}
-            progress={attachmentState.progress}
-            uploadError={attachmentState.uploadError ?? undefined}
-            onRemove={attachmentState.remove}
-            onFilesPicked={(files) => {
-              void attachmentState.addFiles(files);
-            }}
-          />
+            <FeedbackAttachmentList
+              attachments={attachmentState.attachments}
+              progress={attachmentState.progress}
+              uploadError={attachmentState.uploadError ?? undefined}
+              onRemove={attachmentState.remove}
+              onFilesPicked={(files) => {
+                void attachmentState.addFiles(files);
+              }}
+            />
+          </div>
 
           {submitError === null ? null : (
             <p className="text-destructive text-sm" role="alert">
@@ -143,7 +150,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps): Rea
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="bg-muted/30 border-t px-5 py-4 sm:px-6">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
             {t('feedback.dialog.cancel')}
           </Button>

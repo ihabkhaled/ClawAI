@@ -1,6 +1,8 @@
 import type { UseFormReturn } from 'react-hook-form';
 
+import type { ImagePreviewStatus } from '@/enums';
 import type { FeedbackFormValues } from '@/lib/validation/feedback.schema';
+import type { AdminFeedbackImagePreview } from '@/types/feedback-props.types';
 import type {
   FeedbackAttachment,
   FeedbackPageContext,
@@ -39,4 +41,23 @@ export type UseAdminFeedbackDetailReturn = {
   changeStatus: (status: string, note?: string) => void;
   isChanging: boolean;
   changeError: string | null;
+};
+
+export type UseAdminFeedbackDetailDialogReturn = {
+  ticket: FeedbackTicket | undefined;
+  isLoading: boolean;
+  changeStatus: (input: { status: string; note?: string }) => void;
+  isChanging: boolean;
+  imagePreview: AdminFeedbackImagePreview | null;
+  openImagePreview: (src: string, alt: string) => void;
+  closeImagePreview: () => void;
+};
+
+export type UseAttachmentPreviewReturn = {
+  status: ImagePreviewStatus;
+  width: number;
+  height: number;
+  isTiny: boolean;
+  handleLoad: (event: React.SyntheticEvent<HTMLImageElement>) => void;
+  handleError: () => void;
 };
