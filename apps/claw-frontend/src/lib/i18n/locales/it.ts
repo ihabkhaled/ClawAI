@@ -3413,6 +3413,32 @@ export const it: TranslationDictionary = {
     expiredBody: 'Scegli un piano a pagamento per continuare a usare le funzionalità IA.',
     upgrade: 'Vedi i piani a pagamento',
   },
+  adminConnectors: {
+    exposure: {
+      title: 'Esposizione dei modelli',
+      description:
+        "Solo i modelli esposti possono essere assegnati a un piano o eseguiti da un utente. Rimuovendo l'esposizione, il modello viene tolto da ogni piano che lo utilizza.",
+      counts: 'Esposti e non esposti',
+      searchPlaceholder: 'Cerca modelli',
+      filterAll: 'Tutti',
+      filterExposed: 'Solo esposti',
+      filterUnexposed: 'Solo non esposti',
+      loading: 'Caricamento modelli...',
+      colModel: 'Modello',
+      colProvider: 'Fornitore',
+      colExposure: 'Esposizione',
+      colLifecycle: 'Ciclo di vita',
+      colLastSeen: "Visto l'ultima volta",
+      neverSeen: 'Mai visto',
+      exposed: 'Esposto',
+      unexposed: 'Non esposto',
+      exposeSelected: 'Esponi selezionati',
+      unexposeSelected: 'Rimuovi selezionati',
+      selectAllVisible: 'Seleziona tutti i mostrati',
+      clearSelection: 'Cancella selezione',
+      impactWarning: 'La rimozione toglierà questi modelli da ogni piano che li usa:',
+    },
+  },
   adminPlans: {
     title: 'Piani',
     description:
@@ -3507,7 +3533,8 @@ export const it: TranslationDictionary = {
     modelAccess: {
       title: 'Accesso ai modelli',
       description: 'Limita quali modelli del fornitore può usare questo piano.',
-      empty: 'Nessuna regola di modello. Un elenco vuoto consente tutti i modelli.',
+      empty:
+        'Nessuna regola sui modelli. Questo piano non concede alcun modello finché non ne viene aggiunto uno.',
       provider: 'Fornitore',
       model: 'Modello',
       isAllowed: 'Consentito',
@@ -3517,6 +3544,8 @@ export const it: TranslationDictionary = {
       allowInCompare: 'Confronto',
       dailyTokenLimitOverride: 'Override limite giornaliero di token',
       noOverride: 'Nessun override',
+      selectModel: 'Seleziona un modello',
+      noLongerExposed: 'Non più disponibile:',
       addRow: 'Aggiungi regola di modello',
       removeRow: 'Rimuovi regola di modello',
       saving: 'Salvataggio...',

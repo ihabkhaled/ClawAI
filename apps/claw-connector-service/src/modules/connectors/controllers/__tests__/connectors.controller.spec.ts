@@ -13,6 +13,7 @@ describe('ConnectorsController', () => {
     testConnector: jest.Mock;
     syncModels: jest.Mock;
     getModels: jest.Mock;
+    setModelExposure: jest.Mock;
   }>;
 
   beforeEach(async () => {
@@ -25,6 +26,7 @@ describe('ConnectorsController', () => {
       testConnector: jest.fn(),
       syncModels: jest.fn(),
       getModels: jest.fn(),
+      setModelExposure: jest.fn(),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConnectorsController],
@@ -78,5 +80,19 @@ describe('ConnectorsController', () => {
     serviceMock.getModels.mockResolvedValue([]);
     await controller.getModels('c1');
     expect(serviceMock.getModels).toHaveBeenCalledWith('c1');
+  });
+
+  it('setModelExposure forwards the connector id, keys and flag to the service', async () => {
+    serviceMock.setModelExposure.mockResolvedValue({ updated: 2, previouslyExposed: ['gpt-4'] });
+
+    const result = await controller.setModelExposure('c1', {
+      modelKeys: ['gpt-4', 'gpt-4o'],
+      exposed: false,
+    } as never);
+
+    expect(serviceMock.setModelExposure).toHaveBeenCalledWith('c1', ['gpt-4', 'gpt-4o'], false);
+    // previouslyExposed is what an unexpose actually took away, so the caller can
+    // report it rather than guessing from the request.
+    expect(result).toEqual({ updated: 2, previouslyExposed: ['gpt-4'] });
   });
 });

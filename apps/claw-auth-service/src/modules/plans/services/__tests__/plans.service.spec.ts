@@ -1,5 +1,7 @@
+import type { RabbitMQService } from '@claw/shared-rabbitmq';
 import { PlansService } from '../plans.service';
 import { type PlansRepository } from '../../repositories/plans.repository';
+import { type ExposedModelClient } from '../../clients/exposed-model.client';
 import { PlanModelAccessMode } from '../../../../generated/prisma';
 
 const freePlan = {
@@ -68,10 +70,25 @@ const mockRepo = (): Record<keyof PlansRepository, jest.Mock> => ({
 describe('PlansService', () => {
   let service: PlansService;
   let repo: ReturnType<typeof mockRepo>;
+  let exposedModels: { findExposed: jest.Mock };
+  let rabbit: { publish: jest.Mock };
 
   beforeEach(() => {
     repo = mockRepo();
-    service = new PlansService(repo as unknown as PlansRepository);
+    // Default: connector-service says every requested pair is real and exposed.
+    // Tests that care about rejection narrow this per case.
+    exposedModels = {
+      findExposed: jest.fn(async (pairs: Array<{ provider: string; model: string }>) => pairs),
+    };
+    // The audit log is a real side effect of a model-access mutation, so the
+    // publisher is stubbed rather than omitted; the assertions below check that
+    // both the grant and the refusal reach it.
+    rabbit = { publish: jest.fn(async () => {}) };
+    service = new PlansService(
+      repo as unknown as PlansRepository,
+      exposedModels as unknown as ExposedModelClient,
+      rabbit as unknown as RabbitMQService,
+    );
   });
 
   it('createPlan rejects duplicate slug', async () => {
@@ -170,5 +187,106 @@ describe('PlansService', () => {
     expect(view.dailyTokenQuota).toBe(500000);
     expect(view.weeklyTokenQuota).toBe(20_000);
     expect(view.modelAccessMode).toBe(PlanModelAccessMode.ALLOW_ALL);
+  });
+
+  describe('setModelAccess', () => {
+    // Reuse the full fixture: toView reads more of the row than a stub carries.
+    const plan = freePlan;
+
+    beforeEach(() => {
+      repo.findById.mockResolvedValue(plan);
+      repo.replaceModelAccess.mockResolvedValue({ ...plan, modelAccess: [] });
+    });
+
+    it('persists rows that connector-service confirms are exposed', async () => {
+      const models = [{ provider: 'GEMINI', model: 'gemini-2.5-pro', isAllowed: true }];
+
+      await service.setModelAccess(freePlan.id, { models } as never);
+
+      expect(exposedModels.findExposed).toHaveBeenCalledWith([
+        { provider: 'GEMINI', model: 'gemini-2.5-pro' },
+      ]);
+      expect(repo.replaceModelAccess).toHaveBeenCalledWith(freePlan.id, models);
+    });
+
+    it('refuses a model that was never synced and writes nothing', async () => {
+      // The whole point of the feature: provider and model arrive as free
+      // strings, and before this check a typo or a guess became a durable
+      // entitlement indistinguishable from a real one.
+      exposedModels.findExposed.mockResolvedValue([]);
+
+      await expect(
+        service.setModelAccess(freePlan.id, {
+          models: [{ provider: 'GEMINI', model: 'totally-made-up', isAllowed: true }],
+        } as never),
+      ).rejects.toThrow(/not available to assign/i);
+
+      expect(repo.replaceModelAccess).not.toHaveBeenCalled();
+    });
+
+    it('rejects the whole request when only one row is unknown', async () => {
+      // All or nothing: a partially applied plan is harder to notice than a
+      // refused one.
+      exposedModels.findExposed.mockResolvedValue([
+        { provider: 'GEMINI', model: 'gemini-2.5-pro' },
+      ]);
+
+      await expect(
+        service.setModelAccess(freePlan.id, {
+          models: [
+            { provider: 'GEMINI', model: 'gemini-2.5-pro', isAllowed: true },
+            { provider: 'OPENAI', model: 'ghost-model', isAllowed: true },
+          ],
+        } as never),
+      ).rejects.toThrow(/ghost-model/);
+
+      expect(repo.replaceModelAccess).not.toHaveBeenCalled();
+    });
+
+    it('does not call connector-service when clearing every model', async () => {
+      // An empty list removes access. There is nothing to validate, and asking
+      // would fail the request whenever connector-service is down.
+      await service.setModelAccess(freePlan.id, { models: [] } as never);
+
+      expect(exposedModels.findExposed).not.toHaveBeenCalled();
+      expect(repo.replaceModelAccess).toHaveBeenCalledWith(freePlan.id, []);
+    });
+
+    it('audits the grant with the plan and the model identities', async () => {
+      // Who was entitled to what has to survive the request. A service log is
+      // not enough: it is not queryable and it is not retained with the other
+      // administrative actions.
+      await service.setModelAccess(freePlan.id, {
+        models: [{ provider: 'GEMINI', model: 'gemini-2.5-pro', isAllowed: true }],
+      } as never);
+
+      const audited = rabbit.publish.mock.calls.find(
+        (call) => call[1]?.action === 'plan_model_access_replaced',
+      );
+      expect(audited).toBeDefined();
+      expect(audited?.[1]?.metadata).toEqual({
+        planId: freePlan.id,
+        models: ['GEMINI/gemini-2.5-pro'],
+      });
+    });
+
+    it('audits a refusal so repeated probing is visible', async () => {
+      exposedModels.findExposed.mockResolvedValue([]);
+
+      await expect(
+        service.setModelAccess(freePlan.id, {
+          models: [{ provider: 'GEMINI', model: 'ghost-model', isAllowed: true }],
+        } as never),
+      ).rejects.toThrow();
+
+      const audited = rabbit.publish.mock.calls.find(
+        (call) => call[1]?.action === 'plan_model_access_refused',
+      );
+      expect(audited).toBeDefined();
+      expect(audited?.[1]?.metadata).toEqual({
+        planId: freePlan.id,
+        rejected: ['GEMINI/ghost-model'],
+      });
+    });
   });
 });

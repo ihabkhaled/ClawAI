@@ -37,12 +37,25 @@ enum ModelLifecycle {
   ACTIVE
   DEPRECATED
   SUNSET
+  REMOVED
 }
 
 enum ModelSyncStatus {
   RUNNING
   COMPLETED
   FAILED
+}
+
+enum ModelExposure {
+  UNEXPOSED
+  EXPOSED
+}
+
+enum ModelKind {
+  CHAT
+  EMBEDDING
+  RERANKER
+  TOOL
 }
 
 // ─── Models ──────────────────────────────────────────────
@@ -89,6 +102,9 @@ model ConnectorModel {
   cachedInputUsdPerMillion Decimal?          @map("cached_input_usd_per_million") @db.Decimal(12, 6)
   outputUsdPerMillion      Decimal?          @map("output_usd_per_million") @db.Decimal(12, 6)
   syncedAt                 DateTime          @default(now()) @map("synced_at")
+  exposure                 ModelExposure     @default(UNEXPOSED)
+  kind                     ModelKind         @default(CHAT)
+  lastSeenAt               DateTime?         @map("last_seen_at")
 
   connector Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
 
@@ -96,6 +112,7 @@ model ConnectorModel {
   @@index([connectorId])
   @@index([provider])
   @@index([lifecycle])
+  @@index([exposure])
   @@map("connector_models")
 }
 

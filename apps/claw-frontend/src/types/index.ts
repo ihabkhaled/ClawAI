@@ -1031,6 +1031,16 @@ export type {
 } from './chat-share-hook.types';
 
 export type {
+  ConnectorModelRow,
+  SetModelExposureRequest,
+  SetModelExposureResponse,
+  ModelExposureFilters,
+  UseModelExposureResult,
+  ModelExposureTableProps,
+  ModelExposureSectionProps,
+} from './model-exposure.types';
+
+export type {
   FeedbackAttachment,
   FeedbackPageContext,
   FeedbackHistoryEntry,

@@ -22,6 +22,7 @@ const appConfigSchema = z.object({
     .string()
     .min(32, 'INTER_SERVICE_AUTH_TOKEN must be at least 32 characters'),
   PAYMENT_SERVICE_URL: z.string().url().default('http://payment-service:4018'),
+  CONNECTOR_SERVICE_URL: z.string().url().default('https://connector-service:4003'),
   PUBLIC_SITE_URL: z.string().url().default('https://claw.local'),
   CONTACT_EMAIL_ENABLED: z.enum(['true', 'false']).default('false'),
   CONTACT_EMAIL_PROVIDER: z.enum(['none', 'smtp']).default('none'),

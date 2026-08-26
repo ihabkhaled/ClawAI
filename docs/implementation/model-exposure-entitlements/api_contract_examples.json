@@ -1,0 +1,25 @@
+{
+  "syncedModels": {
+    "conceptual": "GET /admin/model-exposure",
+    "filters": ["provider", "connectorId", "exposed", "lifecycle", "search", "page"]
+  },
+  "bulkExposure": {
+    "conceptual": "PUT /admin/model-exposure",
+    "payload": {
+      "deploymentIds": ["dep_a", "dep_b"],
+      "exposed": true,
+      "revision": 12
+    }
+  },
+  "planModels": {
+    "conceptual": "PUT /admin/plans/{planId}/models",
+    "preferredPayload": {
+      "deploymentIds": ["dep_a", "dep_b"]
+    },
+    "rule": "server resolves and validates globally exposed + provider allowed"
+  },
+  "userCatalog": {
+    "conceptual": "GET /models/available",
+    "rule": "active subscription/plan derived server-side"
+  }
+}

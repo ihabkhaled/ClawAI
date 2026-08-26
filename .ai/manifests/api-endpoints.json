@@ -1078,6 +1078,11 @@
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/internal/chat/model-authorization-metrics",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/internal/chat/threads/seeded",
         "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads-internal.controller.ts"
@@ -1157,6 +1162,11 @@
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
       },
       {
+        "method": "PUT",
+        "route": "/connectors/:id/models/exposure",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/connectors/:id/sync",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
@@ -1189,6 +1199,11 @@
       {
         "method": "GET",
         "route": "/internal/connectors/models-snapshot",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/connectors/models/validate-exposed",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
       }
     ],
@@ -3078,5 +3093,5 @@
     ]
   },
   "generated": true,
-  "total": 608
+  "total": 611
 }

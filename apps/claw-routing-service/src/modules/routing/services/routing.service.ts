@@ -440,6 +440,7 @@ export class RoutingService implements OnModuleInit {
       forcedProvider,
       forcedModel,
       allowedModels,
+      modelAccessMode,
       runtimeV2,
     } = parsed;
 
@@ -461,8 +462,19 @@ export class RoutingService implements OnModuleInit {
       runtimeV2,
     );
     // Phase C — AUTO-mode plan gate: never let the router land on a model the
-    // user's plan forbids. Empty allowedModels = no restriction (allow-all).
-    const gate = applyPlanModelGate(decisionWithWorkflow, allowedModels);
+    // user's plan forbids. Only a plan explicitly in ALLOW_ALL mode is
+    // unrestricted; a restricted plan with an empty list now authorizes
+    // nothing, where it used to be handed the whole catalogue.
+    const gate = applyPlanModelGate(
+      decisionWithWorkflow,
+      allowedModels,
+      modelAccessMode === 'ALLOW_ALL',
+    );
+    if (gate.excludedCandidates > 0) {
+      this.logger.log(
+        `planModelGate: excluded=${String(gate.excludedCandidates)} outcome=${gate.outcome}`,
+      );
+    }
     if (gate.outcome === 'promoted') {
       this.logger.warn(
         `planModelGate: promoted ${gate.decision.selectedProvider}/${gate.decision.selectedModel} (primary was off-plan)`,
@@ -484,6 +496,7 @@ export class RoutingService implements OnModuleInit {
     forcedProvider: string | undefined;
     forcedModel: string | undefined;
     allowedModels: string[];
+    modelAccessMode: string | undefined;
     runtimeV2: boolean;
   } | null {
     const threadId = payload['threadId'] as string | undefined;
@@ -498,6 +511,13 @@ export class RoutingService implements OnModuleInit {
     const allowedModels = Array.isArray(rawAllowed)
       ? rawAllowed.filter((m): m is string => typeof m === 'string')
       : [];
+    // ALLOW_ALL plans and administrators send an empty allowedModels list on
+    // purpose, as a fast path. Every other plan with an empty list grants
+    // nothing. Only the mode can tell those apart, so it travels with the
+    // event. A payload without it is treated as restricted: an older publisher
+    // must not silently widen access.
+    const modelAccessMode =
+      typeof payload['modelAccessMode'] === 'string' ? payload['modelAccessMode'] : undefined;
 
     return {
       messageId: payload['messageId'] as string | undefined,
@@ -507,6 +527,7 @@ export class RoutingService implements OnModuleInit {
       forcedProvider: payload['forcedProvider'] as string | undefined,
       forcedModel: payload['forcedModel'] as string | undefined,
       allowedModels,
+      modelAccessMode,
       runtimeV2: payload['runtimeV2'] === true,
     };
   }

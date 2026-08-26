@@ -3432,6 +3432,32 @@ export const fr: TranslationDictionary = {
     expiredBody: 'Choisissez une offre payante pour continuer à utiliser les fonctionnalités d’IA.',
     upgrade: 'Voir les offres payantes',
   },
+  adminConnectors: {
+    exposure: {
+      title: 'Exposition des modèles',
+      description:
+        "Seuls les modèles exposés peuvent être affectés à un forfait ou exécutés par un utilisateur. Retirer l'exposition supprime le modèle de tous les forfaits qui l'utilisent.",
+      counts: 'Proposés et non proposés',
+      searchPlaceholder: 'Rechercher des modèles',
+      filterAll: 'Tous',
+      filterExposed: 'Proposés uniquement',
+      filterUnexposed: 'Non proposés uniquement',
+      loading: 'Chargement des modèles...',
+      colModel: 'Modèle',
+      colProvider: 'Fournisseur',
+      colExposure: 'Exposition',
+      colLifecycle: 'Cycle de vie',
+      colLastSeen: 'Vu pour la dernière fois',
+      neverSeen: 'Jamais vu',
+      exposed: 'Proposé',
+      unexposed: 'Non proposé',
+      exposeSelected: 'Proposer la sélection',
+      unexposeSelected: 'Retirer la sélection',
+      selectAllVisible: 'Tout sélectionner',
+      clearSelection: 'Effacer la sélection',
+      impactWarning: 'Le retrait supprimera ces modèles de tous les forfaits qui les utilisent :',
+    },
+  },
   adminPlans: {
     title: 'Forfaits',
     description:
@@ -3526,7 +3552,8 @@ export const fr: TranslationDictionary = {
     modelAccess: {
       title: 'Accès aux modèles',
       description: 'Restreignez les modèles de fournisseur que ce forfait peut utiliser.',
-      empty: 'Aucune règle de modèle. Une liste vide autorise tous les modèles.',
+      empty:
+        "Aucune règle de modèle. Ce forfait n'accorde aucun modèle tant qu'aucun n'est ajouté.",
       provider: 'Fournisseur',
       model: 'Modèle',
       isAllowed: 'Autorisé',
@@ -3536,6 +3563,8 @@ export const fr: TranslationDictionary = {
       allowInCompare: 'Comparaison',
       dailyTokenLimitOverride: 'Remplacer la limite quotidienne de jetons',
       noOverride: 'Aucun remplacement',
+      selectModel: 'Sélectionner un modèle',
+      noLongerExposed: "N'est plus proposé :",
       addRow: 'Ajouter une règle de modèle',
       removeRow: 'Supprimer la règle de modèle',
       saving: 'Enregistrement...',
