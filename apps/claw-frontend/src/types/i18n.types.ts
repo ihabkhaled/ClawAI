@@ -1,5 +1,6 @@
 import type { Direction } from '@/enums/direction.enum';
 import type { Locale } from '@/enums/locale.enum';
+import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 
 export type TranslationDictionary = {
   common: {
@@ -212,6 +213,7 @@ export type TranslationDictionary = {
     workspaceEmailTemplates: string;
     workspaceImplHandoffs: string;
     adminUsers: string;
+    adminFeedback: string;
     adminAiActionPolicies: string;
     adminSuggestionRules: string;
     adminWebhookDeliveries: string;
@@ -5095,6 +5097,7 @@ export type TranslationDictionary = {
     saved: string;
     saveFailed: string;
   };
+  feedback: FeedbackTranslation;
 };
 
 export type DeploymentLocaleTranslation = {

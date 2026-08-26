@@ -16,6 +16,7 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 import { AuditsModule } from '../modules/audits/audits.module';
+import { FeedbackModule } from '../modules/feedback/feedback.module';
 import { HealthModule } from '../modules/health/health.module';
 
 @Module({
@@ -68,6 +69,7 @@ import { HealthModule } from '../modules/health/health.module';
     RedisModule,
     EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
     AuditsModule,
+    FeedbackModule,
     HealthModule,
     ThrottlerModule.forRoot([
       {

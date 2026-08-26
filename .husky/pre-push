@@ -12,6 +12,13 @@
 # So: hide anything not committed, run the checks against the committed tree,
 # then restore. The trap restores even on failure or interrupt — blocking a push
 # is a nuisance, losing a developer's uncommitted work to a hook is not.
+# Drain the ref list git writes to this hook's stdin. Nothing below needs it,
+# but a hook that never reads it leaves that write outstanding, and when the
+# hook exits git can take EPIPE on it and die with 141 — aborting the push
+# *after* all four checks have already passed and printed OK. Consuming it costs
+# nothing and keeps a green hook run from silently failing to transfer.
+cat >/dev/null 2>&1 || true
+
 STASHED=0
 STASH_REF=""
 STASH_MSG="pre-push-verify-$$"

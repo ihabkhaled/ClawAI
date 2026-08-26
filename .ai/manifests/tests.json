@@ -30,7 +30,7 @@
     },
     "claw-audit-service": {
       "runner": "jest",
-      "testFiles": 15
+      "testFiles": 21
     },
     "claw-auth-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 977
+  "total": 983
 }
