@@ -5744,6 +5744,10 @@ export const it: TranslationDictionary = {
         pageOf: 'Pagina {page} di {total}',
       },
     },
+    screenshot: {
+      failed: 'La cattura dello schermo non è stata completata',
+      unsupported: 'La cattura dello schermo non è disponibile in questo browser',
+    },
     captureScreenshot: 'Cattura schermo',
     capturing: 'Cattura in corso…',
     screenshotPreview: 'Screenshot',

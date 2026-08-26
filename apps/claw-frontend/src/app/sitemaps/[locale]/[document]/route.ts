@@ -14,6 +14,12 @@ import {
 import { getHtmlLanguage, isSupportedLocale } from '@/utilities/locale.utility';
 import { buildSitemapUrlSetXml } from '@/utilities/xml.utility';
 
+// Same reason as the index: SITE_URL is injected into the running production
+// container, not the Docker build, so a child sitemap rendered at build time
+// would freeze the wrong canonical origin (or a noindex response) into every
+// URL Google reads.
+export const dynamic = 'force-dynamic';
+
 export async function GET(_request: Request, context: DiscoveryRouteContext): Promise<Response> {
   const { locale: localeValue, document } = await context.params;
   if (shouldNoIndexEverything() || !isSupportedLocale(localeValue)) {
@@ -24,21 +30,28 @@ export async function GET(_request: Request, context: DiscoveryRouteContext): Pr
   const siteUrl = getSiteUrl();
   let entries: SitemapUrlEntry[] = [];
 
-  if (pageMatch?.[1] === '1') {
-    entries = getIndexablePagesForLocale(localeValue).map((page) => {
-      const alternates = getLanguageAlternates(page.slug);
-      return {
-        url: `${siteUrl}${page.canonicalPath}`,
-        lastModified: page.metadata.lastReviewed,
-        alternates: [
-          ...Object.entries(alternates).map(([language, path]) => ({
-            language: getHtmlLanguage(language as typeof localeValue),
-            url: `${siteUrl}${path}`,
-          })),
-          { language: 'x-default', url: `${siteUrl}/en${page.path === '/' ? '' : page.path}` },
-        ],
-      };
-    });
+  if (pageMatch?.[1] !== undefined) {
+    const pageChunk = Number(pageMatch[1]);
+    if (!Number.isSafeInteger(pageChunk) || pageChunk < 1) {
+      return new Response(null, { status: 404 });
+    }
+    const pageOffset = (pageChunk - 1) * SITEMAP_URL_CHUNK_SIZE;
+    entries = getIndexablePagesForLocale(localeValue)
+      .slice(pageOffset, pageOffset + SITEMAP_URL_CHUNK_SIZE)
+      .map((page) => {
+        const alternates = getLanguageAlternates(page.slug);
+        return {
+          url: `${siteUrl}${page.canonicalPath}`,
+          lastModified: page.metadata.lastReviewed,
+          alternates: [
+            ...Object.entries(alternates).map(([language, path]) => ({
+              language: getHtmlLanguage(language as typeof localeValue),
+              url: `${siteUrl}${path}`,
+            })),
+            { language: 'x-default', url: `${siteUrl}/en${page.path === '/' ? '' : page.path}` },
+          ],
+        };
+      });
   } else if (chatMatch?.[1] !== undefined) {
     const chunk = Number(chatMatch[1]);
     if (!Number.isSafeInteger(chunk) || chunk < 1) {

@@ -133,6 +133,22 @@ describe('PwaManager', () => {
     expect(screen.queryByText('pwa.installMessage')).toBeNull();
   });
 
+  // `.safe-bottom` assigns padding-bottom, so it beats the card's `p-5` and
+  // collapsed the bottom padding to the safe-area inset — 0px on desktop. The
+  // buttons sat flush against the border while every other edge had air.
+  it('pairs safe-bottom with a base so the card keeps its bottom padding', () => {
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: false,
+    });
+
+    render(<PwaManager />);
+
+    const banner = screen.getByText('pwa.offlineMessage').closest('.fixed');
+    expect(banner).toHaveClass('safe-bottom');
+    expect(banner).toHaveClass('safe-bottom-base-5');
+  });
+
   // The close control used to carry a negative inline-end margin, which pulled
   // it flush against the card edge with no padding around it at all.
   it('keeps the dismiss control inside the card padding', async () => {

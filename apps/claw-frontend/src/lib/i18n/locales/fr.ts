@@ -5770,6 +5770,10 @@ export const fr: TranslationDictionary = {
         pageOf: 'Page {page} sur {total}',
       },
     },
+    screenshot: {
+      failed: 'La capture d’écran ne s’est pas terminée',
+      unsupported: 'La capture d’écran n’est pas disponible dans ce navigateur',
+    },
     captureScreenshot: 'Capturer l’écran',
     capturing: 'Capture…',
     screenshotPreview: 'Capture d’écran',

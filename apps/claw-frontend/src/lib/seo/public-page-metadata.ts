@@ -54,7 +54,13 @@ export function buildPublicPageMetadata(slug: string, locale: Locale): Metadata 
       canonical,
       languages,
       types: {
-        'application/rss+xml': `${siteUrl}/${locale}/feed.xml`,
+        // Both feeds are advertised: the locale feed for a reader who wants
+        // this language, the global one so a crawler that lands on any single
+        // localized page can still discover all thirteen.
+        'application/rss+xml': [
+          { url: `${siteUrl}/${locale}/feed.xml`, title: `ClawAI — ${locale.toUpperCase()}` },
+          { url: `${siteUrl}/rss.xml`, title: 'ClawAI — all languages' },
+        ],
       },
     },
     robots: {

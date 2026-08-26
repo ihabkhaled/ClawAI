@@ -125,6 +125,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps): Rea
             <FeedbackScreenshotPreview
               screenshot={screenshotState.screenshot}
               isCapturing={screenshotState.isCapturing}
+              isSupported={screenshotState.isSupported}
               error={screenshotState.error ?? undefined}
               onCapture={() => {
                 void screenshotState.capture();

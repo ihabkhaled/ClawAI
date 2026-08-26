@@ -26,6 +26,8 @@ export type UseScreenshotCaptureReturn = {
   clear: () => void;
   isCapturing: boolean;
   error: string | null;
+  /** False on every mobile browser, which has no screen-capture API at all. */
+  isSupported: boolean;
 };
 
 export type UseFeedbackFormReturn = {

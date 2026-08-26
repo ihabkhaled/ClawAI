@@ -5656,6 +5656,10 @@ export const en: TranslationDictionary = {
         pageOf: 'Page {page} of {total}',
       },
     },
+    screenshot: {
+      failed: 'Screen capture did not complete',
+      unsupported: 'Screen capture is not available in this browser',
+    },
     captureScreenshot: 'Capture screen',
     capturing: 'Capturing…',
     screenshotPreview: 'Screenshot',

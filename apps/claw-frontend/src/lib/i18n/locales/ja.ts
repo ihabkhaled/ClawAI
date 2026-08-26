@@ -5686,6 +5686,10 @@ export const ja: TranslationDictionary = {
         pageOf: '{total} ページ中 {page} ページ',
       },
     },
+    screenshot: {
+      failed: '画面キャプチャを完了できませんでした',
+      unsupported: 'このブラウザでは画面キャプチャを利用できません',
+    },
     captureScreenshot: '画面をキャプチャ',
     capturing: 'キャプチャ中…',
     screenshotPreview: 'スクリーンショット',

@@ -5,7 +5,6 @@ import {
   DEGRADED_RSS_CACHE_CONTROL,
   DISCOVERY_RETRY_AFTER_SECONDS,
   RSS_CACHE_CONTROL,
-  RSS_CONTENT_TYPE,
 } from '@/constants/seo-discovery.constants';
 import { RssFeedKind } from '@/enums/rss-feed-kind.enum';
 import { listPublicChatRssEntries } from '@/lib/chat-shares/public-chat-share.service';
@@ -13,6 +12,7 @@ import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
 import type { RssFeedItem } from '@/types/seo-discovery.types';
 import { getIndexablePagesForLocale } from '@/utilities/content-registry.utility';
+import { resolveFeedContentType } from '@/utilities/discovery-content-type.utility';
 import { getHtmlLanguage, isSupportedLocale } from '@/utilities/locale.utility';
 import { buildRssXml } from '@/utilities/xml.utility';
 
@@ -84,7 +84,10 @@ export async function buildLocalizedRssResponse(
   return new Response(xml, {
     headers: {
       'Cache-Control': RSS_CACHE_CONTROL,
-      'Content-Type': RSS_CONTENT_TYPE,
+      'Content-Type': resolveFeedContentType(request),
+      // The type is chosen from Accept, so a shared cache must key on it or it
+      // will hand a feed reader the browser's answer.
+      Vary: 'Accept',
       ETag: etag,
       'Last-Modified': new Date(lastBuildDate).toUTCString(),
       'X-Content-Type-Options': 'nosniff',

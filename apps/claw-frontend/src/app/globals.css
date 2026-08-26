@@ -870,6 +870,21 @@
    * `md:hidden`, so releasing the reservation at `sm` would let content slide
    * back under a nav that is still on screen between 640px and 767px.
    */
+  /*
+   * A base for `.safe-bottom` that matches `p-5`.
+   *
+   * `.safe-bottom` assigns padding-bottom, so on any element that also carries
+   * `p-4`/`p-5` it wins and the bottom padding collapses to the safe-area inset
+   * alone — which is 0px on desktop. That is how the PWA install banner ended
+   * up with its buttons flush against the card border while every other edge
+   * had 1.25rem of air. Callers pair this with `.safe-bottom` so the two
+   * declarations cooperate instead of fighting, exactly as `.safe-top-base-4`
+   * does at the other end.
+   */
+  .safe-bottom-base-5 {
+    --safe-bottom-base: 1.25rem;
+  }
+
   .safe-bottom-base-nav {
     --safe-bottom-base: calc(var(--mobile-bottom-nav-height, 4rem) + 1rem);
   }

@@ -5660,6 +5660,10 @@ export const fa: TranslationDictionary = {
         pageOf: 'صفحه {page} از {total}',
       },
     },
+    screenshot: {
+      failed: 'ضبط صفحه کامل نشد',
+      unsupported: 'ضبط صفحه در این مرورگر در دسترس نیست',
+    },
     captureScreenshot: 'گرفتن تصویر صفحه',
     capturing: 'در حال گرفتن…',
     screenshotPreview: 'تصویر صفحه',

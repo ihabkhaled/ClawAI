@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SUGGESTED_PROMPTS } from '@/constants';
+import { FLOATING_ACTION_RAIL_SLOT_ONE } from '@/constants/floating-action.constants';
 import { ChatThreadListTab } from '@/enums';
 import { useChatPage } from '@/hooks/chat/use-chat-page';
 import { useTranslation } from '@/lib/i18n';
@@ -51,7 +52,7 @@ export default function ChatPage() {
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row md:gap-6">
         <div className="flex min-h-0 w-full flex-1 flex-col gap-3 overflow-hidden md:w-80 md:flex-none">
           <div className="relative">
-            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -126,7 +127,7 @@ export default function ChatPage() {
         onClick={handleNewChat}
         disabled={isCreating}
         aria-label={t('chat.newChatFab')}
-        className="fixed bottom-20 end-4 z-30 h-14 w-14 rounded-full shadow-lg md:hidden"
+        className={`${FLOATING_ACTION_RAIL_SLOT_ONE} z-30 h-14 w-14 rounded-full shadow-lg md:hidden`}
       >
         <Plus className="h-6 w-6" />
       </Button>

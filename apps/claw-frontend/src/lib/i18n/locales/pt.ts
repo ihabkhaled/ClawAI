@@ -5715,6 +5715,10 @@ export const pt: TranslationDictionary = {
         pageOf: 'Página {page} de {total}',
       },
     },
+    screenshot: {
+      failed: 'A captura de tela não foi concluída',
+      unsupported: 'A captura de tela não está disponível neste navegador',
+    },
     captureScreenshot: 'Capturar ecrã',
     capturing: 'A capturar…',
     screenshotPreview: 'Captura de ecrã',

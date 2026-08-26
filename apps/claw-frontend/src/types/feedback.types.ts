@@ -1,6 +1,6 @@
 import type { FeedbackStatus, FeedbackType } from '@claw/shared-types';
 
-import type { FeedbackSortDirection } from '@/enums';
+import type { FeedbackSortDirection, ScreenCaptureStatus } from '@/enums';
 
 export type FeedbackAttachment = {
   fileId: string;
@@ -85,3 +85,8 @@ export type FeedbackListQuery = {
 };
 
 export type FeedbackStatusCounts = Record<string, number>;
+
+export type ScreenCaptureResult = {
+  status: ScreenCaptureStatus;
+  dataUrl: string | null;
+};

@@ -40,6 +40,7 @@ export type FeedbackMarkdownEditorProps = {
 export type FeedbackScreenshotPreviewProps = {
   screenshot: string | null;
   isCapturing: boolean;
+  isSupported: boolean;
   error?: string;
   onCapture: () => void;
   onClear: () => void;

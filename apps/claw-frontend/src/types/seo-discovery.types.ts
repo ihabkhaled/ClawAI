@@ -11,6 +11,15 @@ export type RssFeedItem = {
   guid: string;
   publishedAt: string;
   category: string;
+  /**
+   * BCP-47 tag for this item, emitted as `dc:language`.
+   *
+   * RSS 2.0 has one `<language>` for the whole channel, which is fine for the
+   * per-locale feeds and useless for the global one — a reader would see 13
+   * languages all claiming to be English. Dublin Core is the standard way to
+   * say it per item.
+   */
+  language?: string;
 };
 export type RssFeedDefinition = {
   title: string;

@@ -25,8 +25,13 @@ export async function GET(): Promise<Response> {
   );
   const childUrls: string[] = [];
   for (const { locale } of SUPPORTED_LOCALES) {
-    if (getIndexablePagesForLocale(locale).length > 0) {
-      childUrls.push(`${siteUrl}/sitemaps/${locale}/pages-1.xml`);
+    // Page chunks are counted rather than assumed. Hardcoding `pages-1.xml`
+    // silently capped the static half of the sitemap at one chunk, so the
+    // 40 001st registry page in a locale would have been unreachable to a
+    // crawler while looking perfectly healthy from the index.
+    const pageCount = getIndexablePagesForLocale(locale).length;
+    for (let chunk = 1; chunk <= Math.ceil(pageCount / SITEMAP_URL_CHUNK_SIZE); chunk += 1) {
+      childUrls.push(`${siteUrl}/sitemaps/${locale}/pages-${String(chunk)}.xml`);
     }
     const count = counts.find((entry) => entry?.locale === locale)?.count ?? 0;
     for (let chunk = 1; chunk <= Math.ceil(count / SITEMAP_URL_CHUNK_SIZE); chunk += 1) {

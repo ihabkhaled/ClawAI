@@ -131,6 +131,11 @@ export type FeedbackAdminTranslation = {
   pagination: FeedbackAdminPaginationTranslation;
 };
 
+export type FeedbackScreenshotTranslation = {
+  failed: string;
+  unsupported: string;
+};
+
 export type FeedbackTranslation = {
   launcher: FeedbackLauncherTranslation;
   dialog: FeedbackDialogTranslation;
@@ -139,6 +144,7 @@ export type FeedbackTranslation = {
   types: FeedbackTypeLabelsTranslation;
   errors: FeedbackErrorsTranslation;
   admin: FeedbackAdminTranslation;
+  screenshot: FeedbackScreenshotTranslation;
   captureScreenshot: string;
   capturing: string;
   screenshotPreview: string;

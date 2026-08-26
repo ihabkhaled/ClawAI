@@ -5762,6 +5762,10 @@ export const de: TranslationDictionary = {
         pageOf: 'Seite {page} von {total}',
       },
     },
+    screenshot: {
+      failed: 'Die Bildschirmaufnahme wurde nicht abgeschlossen',
+      unsupported: 'Bildschirmaufnahme ist in diesem Browser nicht verfügbar',
+    },
     captureScreenshot: 'Bildschirm aufnehmen',
     capturing: 'Wird aufgenommen…',
     screenshotPreview: 'Screenshot',

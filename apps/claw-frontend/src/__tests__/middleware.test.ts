@@ -17,7 +17,10 @@ describe('middleware X-Robots-Tag enforcement', () => {
     expect(matchers).toContain('ads\\.txt');
     expect(matchers).toContain('robots\\.txt');
     expect(matchers).toContain('sitemap\\.xml');
-    for (const path of ['/ads.txt', '/robots.txt', '/sitemap.xml']) {
+    // /rss.xml is the global, locale-neutral feed: it carries all thirteen
+    // languages in one document, so a locale redirect on it would hand a
+    // crawler one language and hide the rest.
+    for (const path of ['/ads.txt', '/robots.txt', '/sitemap.xml', '/rss.xml']) {
       expect(
         unstable_doesMiddlewareMatch({
           config,

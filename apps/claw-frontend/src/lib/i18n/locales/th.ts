@@ -5622,6 +5622,10 @@ export const th: TranslationDictionary = {
         pageOf: 'หน้า {page} จาก {total}',
       },
     },
+    screenshot: {
+      failed: 'จับภาพหน้าจอไม่สำเร็จ',
+      unsupported: 'เบราว์เซอร์นี้ไม่รองรับการจับภาพหน้าจอ',
+    },
     captureScreenshot: 'จับภาพหน้าจอ',
     capturing: 'กำลังจับภาพ…',
     screenshotPreview: 'ภาพหน้าจอ',

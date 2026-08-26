@@ -158,3 +158,4 @@ export { InstallPromptOutcome } from './install-prompt-outcome.enum';
 export { FeedbackSortDirection } from './feedback-sort-direction.enum';
 export { FeedbackEditorTab } from './feedback-editor-tab.enum';
 export { ImagePreviewStatus } from './image-preview-status.enum';
+export { ScreenCaptureStatus } from './screen-capture-status.enum';

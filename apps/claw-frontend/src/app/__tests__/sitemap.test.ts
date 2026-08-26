@@ -50,6 +50,37 @@ describe('sitemap index route', () => {
     DYNAMIC_IMPORT_TIMEOUT_MS,
   );
 
+  // The index used to hardcode `pages-1.xml`. That silently capped the static
+  // half at one chunk, so a locale that grew past the 40 000-URL chunk limit
+  // would have had its remaining pages unreachable while the index still looked
+  // healthy. Every locale carries the same 16 registry pages today, so the
+  // guard is that the count decides the chunk list rather than a literal.
+  it(
+    'derives page chunks from the registry instead of assuming a single one',
+    async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      process.env['SITE_URL'] = 'https://claw.example';
+      const [{ GET }, { SITEMAP_URL_CHUNK_SIZE }, registry] = await Promise.all([
+        import('../sitemap.xml/route'),
+        import('@/constants/seo-discovery.constants'),
+        import('@/utilities/content-registry.utility'),
+      ]);
+      const { Locale } = await import('@/enums/locale.enum');
+
+      const xml = await (await GET()).text();
+      const expectedChunks = Math.ceil(
+        registry.getIndexablePagesForLocale(Locale.EN).length / SITEMAP_URL_CHUNK_SIZE,
+      );
+
+      expect(expectedChunks).toBeGreaterThan(0);
+      expect(xml).toContain(`https://claw.example/sitemaps/en/pages-${String(expectedChunks)}.xml`);
+      expect(xml).not.toContain(
+        `https://claw.example/sitemaps/en/pages-${String(expectedChunks + 1)}.xml`,
+      );
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
+
   it(
     'fails closed outside the canonical production environment',
     async () => {

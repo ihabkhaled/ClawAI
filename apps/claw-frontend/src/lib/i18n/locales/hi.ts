@@ -5670,6 +5670,10 @@ export const hi: TranslationDictionary = {
         pageOf: 'पृष्ठ {page} / {total}',
       },
     },
+    screenshot: {
+      failed: 'स्क्रीन कैप्चर पूरा नहीं हुआ',
+      unsupported: 'इस ब्राउज़र में स्क्रीन कैप्चर उपलब्ध नहीं है',
+    },
     captureScreenshot: 'स्क्रीन कैप्चर करें',
     capturing: 'कैप्चर हो रहा है…',
     screenshotPreview: 'स्क्रीनशॉट',

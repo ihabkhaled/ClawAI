@@ -5713,6 +5713,10 @@ export const ru: TranslationDictionary = {
         pageOf: 'Страница {page} из {total}',
       },
     },
+    screenshot: {
+      failed: 'Съёмка экрана не завершилась',
+      unsupported: 'Съёмка экрана недоступна в этом браузере',
+    },
     captureScreenshot: 'Снимок экрана',
     capturing: 'Съёмка…',
     screenshotPreview: 'Снимок экрана',

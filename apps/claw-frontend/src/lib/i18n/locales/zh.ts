@@ -5376,6 +5376,10 @@ export const zh: TranslationDictionary = {
         pageOf: '第 {page} 页，共 {total} 页',
       },
     },
+    screenshot: {
+      failed: '屏幕捕获未完成',
+      unsupported: '此浏览器不支持屏幕捕获',
+    },
     captureScreenshot: '捕获屏幕',
     capturing: '捕获中…',
     screenshotPreview: '截图',

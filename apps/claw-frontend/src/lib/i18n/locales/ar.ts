@@ -5570,6 +5570,10 @@ export const ar: TranslationDictionary = {
         pageOf: 'صفحة {page} من {total}',
       },
     },
+    screenshot: {
+      failed: 'لم يكتمل التقاط الشاشة',
+      unsupported: 'التقاط الشاشة غير متاح في هذا المتصفح',
+    },
     captureScreenshot: 'التقاط الشاشة',
     capturing: 'جارٍ الالتقاط…',
     screenshotPreview: 'لقطة الشاشة',

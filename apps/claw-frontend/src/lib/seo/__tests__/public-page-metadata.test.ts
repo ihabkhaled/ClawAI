@@ -35,7 +35,13 @@ describe('buildPublicPageMetadata', () => {
         'x-default': 'https://claw.example/en/features',
       },
       types: {
-        'application/rss+xml': 'https://claw.example/en/feed.xml',
+        // Both feeds are advertised: the locale feed for a reader who wants
+        // this language, the global one so a crawler landing on any single
+        // localized page can still discover all thirteen.
+        'application/rss+xml': [
+          { url: 'https://claw.example/en/feed.xml', title: 'ClawAI — EN' },
+          { url: 'https://claw.example/rss.xml', title: 'ClawAI — all languages' },
+        ],
       },
     });
     expect(metadata.openGraph).toEqual(

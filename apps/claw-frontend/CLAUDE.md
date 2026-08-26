@@ -157,6 +157,22 @@ export const agentKeys = {
   regression. Use it for touch targets (44px), form-control size (16px, or iOS
   zooms the page on focus), and for switching a table to cards.
   A test asserts `max-md:` never returns.
+- **Screen capture is desktop-only.** `getDisplayMedia` does not exist on any
+  mobile browser, so `useScreenshotCapture` reports `isSupported` and the UI
+  hides the button rather than failing on tap. Cancelling the picker is
+  `NotAllowedError` — a decision, not an error, and it must stay silent.
+- **`.safe-bottom` and `.safe-top` assign padding, so they beat `p-*`.** They
+  live in `@layer utilities` and are declared later, so an element carrying both
+  `p-5` and `safe-bottom` ends up with a bottom padding of the safe-area inset
+  alone — 0px on desktop. That is how the PWA install banner got buttons flush
+  against its border while every other edge had air. Pair them with a base class
+  (`safe-bottom-base-5`, `safe-top-base-4`, `safe-bottom-base-nav`) so the two
+  declarations cooperate.
+- **Two features pinning a control to the same corner need a shared rail.**
+  `FLOATING_ACTION_RAIL_SLOT_ONE`/`_TWO` in
+  `constants/floating-action.constants.ts` own the mobile bottom-end stack; the
+  chat FAB and the feedback launcher each take a slot. They previously computed
+  the same offset independently and sat on top of each other.
 - **Every grid names its base column count.** `grid gap-4 lg:grid-cols-2` and
   plain `grid gap-3` both leave the mobile track implicit, and an implicit track
   is sized to its content — which is how a 288px grid laid out a 350px card and
