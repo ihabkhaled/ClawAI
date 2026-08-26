@@ -90,7 +90,7 @@ export function ConnectorForm({
             className="mt-4 flex flex-1 flex-col gap-4 overflow-y-auto pr-1"
           >
             {fields}
-            <SheetFooter className="sticky bottom-0 mt-auto -mx-6 -mb-6 border-t bg-background p-4">
+            <SheetFooter className="bg-background sticky bottom-0 -mx-6 mt-auto -mb-6 border-t p-4">
               <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                 {t('common.cancel')}
               </Button>
@@ -111,7 +111,7 @@ export function ConnectorForm({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
           {fields}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>

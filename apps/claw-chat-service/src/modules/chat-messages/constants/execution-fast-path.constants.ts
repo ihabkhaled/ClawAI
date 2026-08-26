@@ -9,7 +9,17 @@
 export const FAST_PATH_MAX_OUTPUT_TOKENS = 512;
 export const AUTO_MAX_OUTPUT_TOKENS = 2048;
 export const DEFAULT_MAX_OUTPUT_TOKENS = 4096;
-export const HARD_MAX_OUTPUT_TOKENS = 16384;
+// The ceiling every lane is clamped to, so it cannot sit below the largest cap
+// a lane deliberately asks for. It did: the runtime lane raised its own cap to
+// 32_768 precisely because 16_384 cut agent turns off mid-JSON, and this
+// Math.min put it straight back to 16_384 — the exact value that raise was
+// meant to escape. The runtime cap looked applied and never was, so every
+// attempt to fix the truncation by raising that constant did nothing.
+//
+// Nothing generates to this number by default: the defaults above (512 / 2048 /
+// 4096) and the ctx-derived defensive default are what an ordinary turn gets.
+// This only bounds a caller that asked for more on purpose.
+export const HARD_MAX_OUTPUT_TOKENS = 32768;
 export const MIN_OUTPUT_TOKENS = 24;
 export const FAST_PATH_MAX_PROMPT_CHARS = 220;
 export const FAST_PATH_MAX_PROMPT_WORDS = 36;

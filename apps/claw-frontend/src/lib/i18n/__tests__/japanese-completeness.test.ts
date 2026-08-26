@@ -25,6 +25,7 @@ function flatten(
 }
 
 const LEGITIMATE_UNCHANGED_VALUES = new Set([
+  '+14155550123',
   'you@example.com',
   'Claw',
   'Claw v{version}',
@@ -62,6 +63,7 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set([
   'Ollama',
   'Ollama Cloud',
   'OpenAI',
+  'github_pat_…',
   'llama.cpp',
   'ms',
 ]);

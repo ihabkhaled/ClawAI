@@ -137,6 +137,11 @@
       "route": "/admin/deployment"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/feedback/page.tsx",
+      "kind": "page",
+      "route": "/admin/feedback"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/admin/page.tsx",
       "kind": "page",
       "route": "/admin"
@@ -420,6 +425,11 @@
       "file": "apps/claw-frontend/src/app/(portal)/plan/page.tsx",
       "kind": "page",
       "route": "/plan"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/profile/page.tsx",
+      "kind": "page",
+      "route": "/profile"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/research/providers/page.tsx",

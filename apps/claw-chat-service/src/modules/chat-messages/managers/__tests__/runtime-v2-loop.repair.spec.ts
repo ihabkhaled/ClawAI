@@ -1,4 +1,8 @@
 import { RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE } from '../../constants/runtime-v2-failure.constants';
+import {
+  RUNTIME_V2_TRUNCATION_REPAIR_ATTEMPTS,
+  RUNTIME_V2_TRUNCATION_SHRINK_DEMANDS,
+} from '../../constants/runtime-v2-model-output.constants';
 import { RuntimeV2LoopManager } from '../runtime-v2-loop.manager';
 
 /**
@@ -116,6 +120,63 @@ describe('RuntimeV2LoopManager repair on every turn', () => {
       code: RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE,
     });
     expect(callProvider).toHaveBeenCalledTimes(2);
+  });
+
+  // A tool object cut off by the output limit was given the same single retry
+  // as a malformed one, and told the same thing: that its request was invalid.
+  // A model reads that as a syntax fault, resends the same body, and is cut at
+  // the same place. glm-5.2 lost two flagship lanes to exactly that.
+  function truncatedToolJson(): string {
+    return toolJson('workspace.files').slice(0, 60);
+  }
+
+  it('gives a truncated request more than the single retry a malformed one gets', async () => {
+    const callProvider = jest.fn().mockResolvedValue({ content: truncatedToolJson() });
+
+    await expect(repair(callProvider)).rejects.toMatchObject({
+      code: RUNTIME_V2_UNREPAIRABLE_REQUEST_CODE,
+    });
+    expect(callProvider).toHaveBeenCalledTimes(RUNTIME_V2_TRUNCATION_REPAIR_ATTEMPTS + 1);
+  });
+
+  it('recovers when the model finally sends a body that fits', async () => {
+    const callProvider = jest
+      .fn()
+      .mockResolvedValueOnce({ content: truncatedToolJson() })
+      .mockResolvedValueOnce({ content: truncatedToolJson() })
+      .mockResolvedValueOnce({ content: toolJson('workspace.files') });
+
+    const result = await repair(callProvider);
+
+    expect(callProvider).toHaveBeenCalledTimes(3);
+    expect(result.output).toMatchObject({ kind: 'tool', toolName: 'workspace.files' });
+  });
+
+  it('tells a truncated request it was too long, not invalid, and by how much', async () => {
+    const callProvider = jest
+      .fn()
+      .mockResolvedValueOnce({ content: truncatedToolJson() })
+      .mockResolvedValueOnce({ content: toolJson('workspace.files') });
+
+    await repair(callProvider);
+
+    const repairPrompt = (callProvider.mock.calls[1]?.[2] as { systemPrompt: string }).systemPrompt;
+    expect(repairPrompt).toContain('it was too long');
+    expect(repairPrompt).toContain(RUNTIME_V2_TRUNCATION_SHRINK_DEMANDS[0]);
+    expect(repairPrompt).not.toContain('Your previous tool request was invalid');
+  });
+
+  it('shrinks the demanded size on each further truncation', async () => {
+    const callProvider = jest
+      .fn()
+      .mockResolvedValueOnce({ content: truncatedToolJson() })
+      .mockResolvedValueOnce({ content: truncatedToolJson() })
+      .mockResolvedValueOnce({ content: toolJson('workspace.files') });
+
+    await repair(callProvider);
+
+    const secondRepair = (callProvider.mock.calls[2]?.[2] as { systemPrompt: string }).systemPrompt;
+    expect(secondRepair).toContain(RUNTIME_V2_TRUNCATION_SHRINK_DEMANDS[1]);
   });
 
   it('leaves a plain answer untouched', async () => {

@@ -13,6 +13,11 @@ export enum EventPattern {
   CONNECTOR_UPDATED = 'connector.updated',
   CONNECTOR_DELETED = 'connector.deleted',
   CONNECTOR_SYNCED = 'connector.synced',
+  // Emitted when an administrator exposes or unexposes models on a connector.
+  // Consumers cache exposure decisions to keep the check off the hot path; this
+  // is what tells them to drop that cache, so an unexpose takes effect while the
+  // administrator is still looking at the screen rather than up to a TTL later.
+  CONNECTOR_MODEL_EXPOSURE_CHANGED = 'connector.model_exposure_changed',
   CONNECTOR_HEALTH_CHECKED = 'connector.health_checked',
   ROUTING_DECISION_MADE = 'routing.decision_made',
   /**

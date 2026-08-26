@@ -434,6 +434,46 @@
         "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/feedback",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/feedback/admin",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/feedback/admin/:id",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/feedback/admin/:id/attachments/:fileId",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/feedback/admin/:id/status",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/feedback/admin/stats",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/feedback/mine",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/feedback/mine/:id",
+        "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-audit-service/src/modules/health/controllers/health.controller.ts"
@@ -471,8 +511,23 @@
         "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
       },
       {
+        "method": "DELETE",
+        "route": "/admin/deployment/credentials",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/admin/deployment/credentials",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/admin/deployment/reset",
+        "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/deployment/run",
         "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
       },
       {
@@ -1023,6 +1078,11 @@
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/internal/chat/model-authorization-metrics",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/internal/chat/threads/seeded",
         "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads-internal.controller.ts"
@@ -1102,6 +1162,11 @@
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
       },
       {
+        "method": "PUT",
+        "route": "/connectors/:id/models/exposure",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/connectors/:id/sync",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
@@ -1134,6 +1199,11 @@
       {
         "method": "GET",
         "route": "/internal/connectors/models-snapshot",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/connectors/models/validate-exposed",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
       }
     ],
@@ -3048,5 +3118,5 @@
     ]
   },
   "generated": true,
-  "total": 602
+  "total": 616
 }

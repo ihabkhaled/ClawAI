@@ -6,8 +6,14 @@ import {
   RUNTIME_V2_UNKNOWN_FAILURE_CODE,
 } from '../constants/runtime-v2-failure.constants';
 import {
+  RUNTIME_V2_REPAIR_ATTEMPTS,
   RUNTIME_V2_REPAIR_DIAGNOSIS_CHARACTERS,
   RUNTIME_V2_REPAIR_DIAGNOSIS_PREFIX,
+  RUNTIME_V2_REPAIR_INSTRUCTION,
+  RUNTIME_V2_TRUNCATED_TOOL_CALL_MARKER,
+  RUNTIME_V2_TRUNCATION_REPAIR_ATTEMPTS,
+  RUNTIME_V2_TRUNCATION_REPAIR_INSTRUCTION,
+  RUNTIME_V2_TRUNCATION_SHRINK_DEMANDS,
 } from '../constants/runtime-v2-model-output.constants';
 import type { RuntimeV2TerminalReason } from '../types/runtime-v2-store.types';
 
@@ -88,4 +94,44 @@ export function repairDiagnosis(error: unknown): string {
       ? normalized
       : `${normalized.slice(0, RUNTIME_V2_REPAIR_DIAGNOSIS_CHARACTERS)}…`;
   return `${RUNTIME_V2_REPAIR_DIAGNOSIS_PREFIX} ${bounded}`;
+}
+
+/**
+ * Whether a parse rejection is a tool object cut off by the output-token limit.
+ *
+ * The parser raises the truncation message verbatim for this case, so its first
+ * sentence is the marker. Matching on the marker rather than the whole message
+ * keeps the check stable when the advice after it is reworded, and it is the
+ * advice that gets reworded.
+ */
+export function isTruncatedToolRequest(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.startsWith(RUNTIME_V2_TRUNCATED_TOOL_CALL_MARKER);
+}
+
+/** How many repair turns this rejection is worth. */
+export function repairAttemptsFor(error: unknown): number {
+  return isTruncatedToolRequest(error)
+    ? RUNTIME_V2_TRUNCATION_REPAIR_ATTEMPTS
+    : RUNTIME_V2_REPAIR_ATTEMPTS;
+}
+
+/**
+ * The instruction a repair turn carries, chosen by what actually went wrong.
+ *
+ * A truncated request is not an invalid one, and telling a model its request
+ * was invalid when it was merely too long is what made it resend the same body.
+ * The size demand escalates with the attempt so three tries converge rather
+ * than repeating one unanswerable ask.
+ */
+export function repairGuidance(error: unknown, attempt: number): string {
+  if (!isTruncatedToolRequest(error)) {
+    return RUNTIME_V2_REPAIR_INSTRUCTION;
+  }
+  // The last demand is the floor: a fourth truncation would be asked for the
+  // same 20 lines rather than an index past the end.
+  const index = Math.min(Math.max(attempt, 1) - 1, RUNTIME_V2_TRUNCATION_SHRINK_DEMANDS.length - 1);
+  return [RUNTIME_V2_TRUNCATION_REPAIR_INSTRUCTION, RUNTIME_V2_TRUNCATION_SHRINK_DEMANDS.at(index)]
+    .filter((value): value is string => value !== undefined)
+    .join(' ');
 }

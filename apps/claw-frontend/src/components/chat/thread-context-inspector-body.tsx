@@ -29,7 +29,7 @@ export function ThreadContextInspectorBody({
         variant="ghost"
         size="sm"
         onClick={openInspector}
-        className="h-6 gap-1 px-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+        className="touch:text-xs text-muted-foreground hover:text-foreground h-6 gap-1 px-1.5 text-[10px]"
         aria-label={t('threadContextInspector.openLabel')}
       >
         <Bug className="h-3 w-3" />
@@ -61,8 +61,8 @@ export function ThreadContextInspectorBody({
                     {t('threadContextInspector.fieldPackItems')}: {String(receipt.packItems.length)}
                   </li>
                   <li>
-                    {t('threadContextInspector.fieldTokensUsed')}:{' '}
-                    {String(receipt.tokenBudgetUsed)} / {String(receipt.tokenBudget)}
+                    {t('threadContextInspector.fieldTokensUsed')}: {String(receipt.tokenBudgetUsed)}{' '}
+                    / {String(receipt.tokenBudget)}
                   </li>
                   <li>
                     {t('threadContextInspector.fieldAssemblyOrder')}:{' '}

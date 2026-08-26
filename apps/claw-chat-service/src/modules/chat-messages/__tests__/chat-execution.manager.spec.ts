@@ -16,6 +16,13 @@ import {
   HARD_MAX_OUTPUT_TOKENS,
 } from '../constants/execution-fast-path.constants';
 
+jest.mock('../clients/model-exposure.client', () => ({
+  ModelExposureClient: jest.fn().mockImplementation(() => ({
+    // Exposure is a network call to connector-service. These suites test
+    // dispatch behaviour, not connectivity, so the deployment is exposed.
+    isExposed: jest.fn().mockResolvedValue(true),
+  })),
+}));
 jest.mock('../../../common/utilities', () => ({
   httpRequest: jest.fn(),
   recordGet: <T>(record: Record<string, T> | undefined | null, key: string): T | undefined => {

@@ -45,8 +45,8 @@ export function MemoryForm({ open, onOpenChange, onSubmit, isPending, memory }: 
             {isEditing ? t('memory.editMemoryDesc') : t('memory.createMemoryDesc')}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="memory-type" className="text-sm font-medium">
               {t('memory.type')}
             </label>
@@ -66,11 +66,11 @@ export function MemoryForm({ open, onOpenChange, onSubmit, isPending, memory }: 
               </SelectContent>
             </Select>
             {fieldErrors.type ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.type[0]}</p>
+              <p className="text-destructive mt-1 text-sm">{fieldErrors.type[0]}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="memory-content" className="text-sm font-medium">
               {t('memory.content')}
             </label>
@@ -82,7 +82,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, isPending, memory }: 
               rows={4}
             />
             {fieldErrors.content ? (
-              <p className="mt-1 text-sm text-destructive">{fieldErrors.content[0]}</p>
+              <p className="text-destructive mt-1 text-sm">{fieldErrors.content[0]}</p>
             ) : null}
           </div>
 

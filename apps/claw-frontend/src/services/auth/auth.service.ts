@@ -62,12 +62,11 @@ export const authService = {
     });
   },
 
+  // The API keeps the calling session alive even when the username changes, so
+  // there is nothing local to tear down. Clearing auth here signed the user out
+  // of a session the server still considers valid.
   async updateOwnProfile(data: UpdateOwnProfileRequest): Promise<void> {
     await authRepository.updateOwnProfile(data);
-    useAuthStore.getState().clearAuth();
-    if (typeof document !== 'undefined') {
-      document.cookie = 'claw-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    }
   },
 
   async deleteOwnAccount(data: DeleteOwnAccountRequest): Promise<void> {

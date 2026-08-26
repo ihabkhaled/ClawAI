@@ -28,14 +28,14 @@ export function StreamThinkingPanel({
         className,
       )}
     >
-      <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[11px] font-medium text-violet-700 dark:text-violet-300">
+      <summary className="touch:text-xs flex cursor-pointer list-none items-center gap-1.5 text-[11px] font-medium text-violet-700 dark:text-violet-300">
         <Brain className="h-3.5 w-3.5" />
         {t('chat.stream.reasoning.title')}
-        <span className="rounded-full bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-normal text-violet-600 dark:text-violet-400">
+        <span className="touch:text-xs rounded-full bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-normal text-violet-600 dark:text-violet-400">
           {t(labelKey)}
         </span>
       </summary>
-      <div className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words text-xs text-muted-foreground">
+      <div className="text-muted-foreground mt-2 max-h-64 overflow-y-auto text-xs break-words whitespace-pre-wrap">
         {reasoning}
       </div>
     </details>

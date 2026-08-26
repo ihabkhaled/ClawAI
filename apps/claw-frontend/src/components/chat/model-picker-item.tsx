@@ -18,7 +18,7 @@ export function ModelPickerItem({
           {option.specifications.map((specification) => (
             <span
               key={specification}
-              className="border-border bg-muted text-muted-foreground rounded border px-1.5 py-0.5 text-[10px] leading-none"
+              className="border-border bg-muted text-muted-foreground touch:text-xs rounded border px-1.5 py-0.5 text-[10px] leading-none"
             >
               {specification}
             </span>

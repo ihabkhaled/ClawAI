@@ -1,5 +1,6 @@
 import type { Direction } from '@/enums/direction.enum';
 import type { Locale } from '@/enums/locale.enum';
+import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 
 export type TranslationDictionary = {
   common: {
@@ -213,6 +214,7 @@ export type TranslationDictionary = {
     workspaceEmailTemplates: string;
     workspaceImplHandoffs: string;
     adminUsers: string;
+    adminFeedback: string;
     adminAiActionPolicies: string;
     adminSuggestionRules: string;
     adminWebhookDeliveries: string;
@@ -892,6 +894,11 @@ export type TranslationDictionary = {
       columnLatency: string;
       filterByProvider: string;
       filterByLifecycle: string;
+      searchPlaceholder: string;
+      filterByRouterOnly: string;
+      routerOnlyAll: string;
+      routerOnlyExecution: string;
+      routerOnlyRouter: string;
     };
   };
   models: {
@@ -3334,6 +3341,91 @@ export type TranslationDictionary = {
     resetCleared: string;
     resetNothingToClear: string;
     resetError: string;
+    credentialsTitle: string;
+    credentialsDescription: string;
+    credentialsRepository: string;
+    credentialsRef: string;
+    credentialsToken: string;
+    credentialsTokenHint: string;
+    credentialsTokenKeep: string;
+    credentialsTokenPlaceholder: string;
+    credentialsSave: string;
+    credentialsCancel: string;
+    credentialsSaved: string;
+    credentialsSaveError: string;
+    credentialsClear: string;
+    credentialsCleared: string;
+    credentialsClearError: string;
+    credentialsConfigure: string;
+    credentialsReplace: string;
+    credentialsSavedAt: string;
+    credentialsUnusable: string;
+    runTitle: string;
+    runDescription: string;
+    runLoading: string;
+    runNumber: string;
+    runNowRunning: string;
+    runFailedAt: string;
+    runReadLog: string;
+    runOpen: string;
+    runOpenJob: string;
+    runNoSteps: string;
+    runAutoRefresh: string;
+    credentialsSource: {
+      database: string;
+      environment: string;
+      none: string;
+    };
+    runStatus: {
+      queued: string;
+      in_progress: string;
+      completed: string;
+      waiting: string;
+      requested: string;
+      pending: string;
+    };
+    runConclusion: {
+      success: string;
+      failure: string;
+      cancelled: string;
+      skipped: string;
+      timed_out: string;
+      action_required: string;
+      neutral: string;
+      stale: string;
+    };
+    runUnavailable: {
+      not_configured: string;
+      unreachable: string;
+      no_runs: string;
+    };
+    troubleshooting: {
+      abandoned: {
+        title: string;
+        description: string;
+      };
+      stale: {
+        title: string;
+        description: string;
+      };
+      failed: {
+        title: string;
+        description: string;
+      };
+      unconfigured: {
+        title: string;
+        description: string;
+      };
+    };
+    troubleshootingStep: {
+      readLog: string;
+      clearStuck: string;
+      redeploy: string;
+      checkRun: string;
+      fixOrRollback: string;
+      configureCredentials: string;
+      checkTokenScope: string;
+    };
     state: {
       unknown: string;
       running: string;
@@ -3402,6 +3494,31 @@ export type TranslationDictionary = {
     expiredTitle: string;
     expiredBody: string;
     upgrade: string;
+  };
+  adminConnectors: {
+    exposure: {
+      title: string;
+      description: string;
+      counts: string;
+      searchPlaceholder: string;
+      filterAll: string;
+      filterExposed: string;
+      filterUnexposed: string;
+      loading: string;
+      colModel: string;
+      colProvider: string;
+      colExposure: string;
+      colLifecycle: string;
+      colLastSeen: string;
+      neverSeen: string;
+      exposed: string;
+      unexposed: string;
+      exposeSelected: string;
+      unexposeSelected: string;
+      selectAllVisible: string;
+      clearSelection: string;
+      impactWarning: string;
+    };
   };
   adminPlans: {
     title: string;
@@ -3504,6 +3621,8 @@ export type TranslationDictionary = {
       allowInCompare: string;
       dailyTokenLimitOverride: string;
       noOverride: string;
+      selectModel: string;
+      noLongerExposed: string;
       addRow: string;
       removeRow: string;
       saving: string;
@@ -5017,10 +5136,37 @@ export type TranslationDictionary = {
     offlineMessage: string;
     updateAvailable: string;
     updateAction: string;
+    installTitle: string;
     installMessage: string;
     installAction: string;
     dismissInstall: string;
+    minimise: string;
+    expand: string;
+    neverShowAgain: string;
   };
+  profile: {
+    title: string;
+    description: string;
+    identityTitle: string;
+    identityDescription: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    phonePlaceholder: string;
+    phoneInvalid: string;
+    username: string;
+    usernameInvalid: string;
+    usernameNotice: string;
+    email: string;
+    emailNotice: string;
+    currentPassword: string;
+    currentPasswordRequired: string;
+    nameTooLong: string;
+    save: string;
+    saved: string;
+    saveFailed: string;
+  };
+  feedback: FeedbackTranslation;
 };
 
 export type DeploymentLocaleTranslation = {

@@ -51,6 +51,101 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: 'The stuck rollout was cleared.',
       resetNothingToClear: 'There is no stuck rollout to clear.',
       resetError: 'The stuck rollout could not be cleared.',
+      credentialsTitle: 'GitHub deployment credentials',
+      credentialsDescription:
+        'Stored encrypted on the server and used to start and follow production deployments. The token is never shown again after you save it.',
+      credentialsRepository: 'Repository',
+      credentialsRef: 'Branch',
+      credentialsToken: 'Access token',
+      credentialsTokenHint:
+        'A fine-grained personal access token with read and write access to Actions on this repository, and nothing else.',
+      credentialsTokenKeep: 'Leave blank to keep the saved token',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: 'Save credentials',
+      credentialsCancel: 'Cancel',
+      credentialsSaved: 'Deployment credentials saved.',
+      credentialsSaveError: 'The deployment credentials could not be saved.',
+      credentialsClear: 'Remove',
+      credentialsCleared: 'Deployment credentials removed.',
+      credentialsClearError: 'The deployment credentials could not be removed.',
+      credentialsConfigure: 'Add credentials',
+      credentialsReplace: 'Edit credentials',
+      credentialsSavedAt: 'Last saved',
+      credentialsUnusable: 'These credentials cannot be used. Save them again.',
+      runTitle: 'Live deployment progress',
+      runDescription: 'Read directly from GitHub Actions, step by step, while the deployment runs.',
+      runLoading: 'Loading deployment progress…',
+      runNumber: 'Run',
+      runNowRunning: 'Running now:',
+      runFailedAt: 'Failed at:',
+      runReadLog: 'Read the failing log',
+      runOpen: 'Open in GitHub',
+      runOpenJob: 'Logs',
+      runNoSteps: 'This job has not reported any steps yet.',
+      runAutoRefresh: 'This updates automatically every few seconds.',
+      credentialsSource: {
+        database: 'Saved here',
+        environment: 'From server environment',
+        none: 'Not configured',
+      },
+      runStatus: {
+        queued: 'Queued',
+        in_progress: 'Running',
+        completed: 'Done',
+        waiting: 'Waiting',
+        requested: 'Requested',
+        pending: 'Pending',
+      },
+      runConclusion: {
+        success: 'Passed',
+        failure: 'Failed',
+        cancelled: 'Cancelled',
+        skipped: 'Skipped',
+        timed_out: 'Timed out',
+        action_required: 'Needs approval',
+        neutral: 'Neutral',
+        stale: 'Stale',
+      },
+      runUnavailable: {
+        not_configured: 'Add deployment credentials to follow the workflow live.',
+        unreachable: 'GitHub could not be reached. Progress will reappear on its own.',
+        no_runs: 'This workflow has not run yet.',
+      },
+      troubleshooting: {
+        abandoned: {
+          title: 'The rollout stopped, but the server still reports it as running',
+          description:
+            'The workflow finished without success while the server was mid-deployment. Production is still serving the previous version.',
+        },
+        stale: {
+          title: 'This rollout has stopped reporting',
+          description:
+            'No progress for over 30 minutes. The deployment is either wedged or its connection died.',
+        },
+        failed: {
+          title: 'The last deployment failed',
+          description:
+            'Production is still serving the previous version. Nothing was half-applied.',
+        },
+        unconfigured: {
+          title: 'Manual deployment is not available',
+          description:
+            'Without credentials this page can only watch. Add them to deploy and to follow progress.',
+        },
+      },
+      troubleshootingStep: {
+        readLog:
+          'Open the failing step above and read the last lines of its log — that is where the real error is.',
+        clearStuck: 'Clear the stuck rollout so the next deployment is not blocked behind it.',
+        redeploy: 'Re-deploy the current commit once the cause is fixed.',
+        checkRun:
+          'Check the live progress above: if a step is still running, the deployment is slow rather than stuck.',
+        fixOrRollback:
+          'Fix the cause and deploy again, or deploy the last known-good commit to roll back.',
+        configureCredentials: 'Add the GitHub deployment credentials below.',
+        checkTokenScope:
+          'Make sure the token has read and write access to Actions on this repository.',
+      },
       state: {
         unknown: 'Status unknown',
         running: 'Deployment in progress',
@@ -119,6 +214,96 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: 'تم مسح النشر المتوقف.',
       resetNothingToClear: 'لا يوجد نشر متوقف لمسحه.',
       resetError: 'تعذّر مسح النشر المتوقف.',
+      credentialsTitle: 'بيانات اعتماد النشر في GitHub',
+      credentialsDescription:
+        'تُخزَّن مشفَّرة على الخادم وتُستخدم لبدء عمليات النشر إلى الإنتاج ومتابعتها. لن يُعرض الرمز مرة أخرى بعد حفظه.',
+      credentialsRepository: 'المستودع',
+      credentialsRef: 'الفرع',
+      credentialsToken: 'رمز الوصول',
+      credentialsTokenHint:
+        'رمز وصول شخصي دقيق الصلاحيات، بصلاحية القراءة والكتابة على Actions في هذا المستودع فقط لا غير.',
+      credentialsTokenKeep: 'اتركه فارغًا للإبقاء على الرمز المحفوظ',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: 'حفظ بيانات الاعتماد',
+      credentialsCancel: 'إلغاء',
+      credentialsSaved: 'تم حفظ بيانات اعتماد النشر.',
+      credentialsSaveError: 'تعذّر حفظ بيانات اعتماد النشر.',
+      credentialsClear: 'إزالة',
+      credentialsCleared: 'تمت إزالة بيانات اعتماد النشر.',
+      credentialsClearError: 'تعذّرت إزالة بيانات اعتماد النشر.',
+      credentialsConfigure: 'إضافة بيانات اعتماد',
+      credentialsReplace: 'تعديل بيانات الاعتماد',
+      credentialsSavedAt: 'آخر حفظ',
+      credentialsUnusable: 'لا يمكن استخدام بيانات الاعتماد هذه. احفظها من جديد.',
+      runTitle: 'تقدُّم النشر المباشر',
+      runDescription: 'يُقرأ مباشرة من GitHub Actions، خطوة بخطوة، أثناء تنفيذ النشر.',
+      runLoading: 'جارٍ تحميل تقدُّم النشر…',
+      runNumber: 'التشغيل',
+      runNowRunning: 'قيد التنفيذ الآن:',
+      runFailedAt: 'فشل عند:',
+      runReadLog: 'اقرأ سجل الخطوة الفاشلة',
+      runOpen: 'فتح في GitHub',
+      runOpenJob: 'السجلات',
+      runNoSteps: 'لم تُبلِّغ هذه المهمة عن أي خطوات بعد.',
+      runAutoRefresh: 'يتحدَّث هذا تلقائيًا كل بضع ثوانٍ.',
+      credentialsSource: {
+        database: 'محفوظة هنا',
+        environment: 'من بيئة الخادم',
+        none: 'غير مهيأة',
+      },
+      runStatus: {
+        queued: 'في الانتظار',
+        in_progress: 'قيد التنفيذ',
+        completed: 'انتهت',
+        waiting: 'منتظرة',
+        requested: 'مطلوبة',
+        pending: 'معلَّقة',
+      },
+      runConclusion: {
+        success: 'نجحت',
+        failure: 'فشلت',
+        cancelled: 'أُلغيت',
+        skipped: 'تم تخطيها',
+        timed_out: 'انتهت المهلة',
+        action_required: 'تحتاج موافقة',
+        neutral: 'محايدة',
+        stale: 'قديمة',
+      },
+      runUnavailable: {
+        not_configured: 'أضف بيانات اعتماد النشر لمتابعة سير العمل مباشرة.',
+        unreachable: 'تعذّر الوصول إلى GitHub. سيعود التقدُّم للظهور تلقائيًا.',
+        no_runs: 'لم يُشغَّل سير العمل هذا بعد.',
+      },
+      troubleshooting: {
+        abandoned: {
+          title: 'توقف النشر، لكن الخادم ما زال يبلغ أنه قيد التشغيل',
+          description:
+            'انتهى سير العمل دون نجاح بينما كان الخادم في منتصف النشر. الإنتاج ما زال يقدّم الإصدار السابق.',
+        },
+        stale: {
+          title: 'توقف هذا النشر عن إرسال التقدُّم',
+          description: 'لا تقدُّم منذ أكثر من 30 دقيقة. إما أن النشر متعثِّر أو أن اتصاله انقطع.',
+        },
+        failed: {
+          title: 'فشل آخر نشر',
+          description: 'الإنتاج ما زال يقدّم الإصدار السابق. لم يُطبَّق أي شيء بشكل جزئي.',
+        },
+        unconfigured: {
+          title: 'النشر اليدوي غير متاح',
+          description:
+            'بدون بيانات اعتماد لا تستطيع هذه الصفحة سوى المراقبة. أضفها للنشر ولمتابعة التقدُّم.',
+        },
+      },
+      troubleshootingStep: {
+        readLog: 'افتح الخطوة الفاشلة أعلاه واقرأ آخر أسطر سجلها — هناك يوجد الخطأ الحقيقي.',
+        clearStuck: 'امسح النشر المتوقف حتى لا يعيق النشر التالي.',
+        redeploy: 'أعد نشر الالتزام الحالي بعد إصلاح السبب.',
+        checkRun:
+          'تحقق من التقدُّم المباشر أعلاه: إذا كانت هناك خطوة قيد التنفيذ فالنشر بطيء لا متوقف.',
+        fixOrRollback: 'أصلح السبب وانشر مجددًا، أو انشر آخر التزام معروف بسلامته للتراجع.',
+        configureCredentials: 'أضف بيانات اعتماد النشر الخاصة بـ GitHub أدناه.',
+        checkTokenScope: 'تأكد أن الرمز يملك صلاحية القراءة والكتابة على Actions في هذا المستودع.',
+      },
       state: {
         unknown: 'الحالة غير معروفة',
         running: 'النشر قيد التنفيذ',
@@ -189,6 +374,103 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: 'Le déploiement bloqué a été effacé.',
       resetNothingToClear: 'Aucun déploiement bloqué à effacer.',
       resetError: 'Impossible d’effacer le déploiement bloqué.',
+      credentialsTitle: 'Identifiants de déploiement GitHub',
+      credentialsDescription:
+        "Stockés chiffrés sur le serveur et utilisés pour lancer et suivre les déploiements en production. Le jeton n'est plus jamais affiché après l'enregistrement.",
+      credentialsRepository: 'Dépôt',
+      credentialsRef: 'Branche',
+      credentialsToken: "Jeton d'accès",
+      credentialsTokenHint:
+        "Un jeton d'accès personnel à portée fine, avec accès en lecture et écriture aux Actions de ce dépôt, et rien d'autre.",
+      credentialsTokenKeep: 'Laissez vide pour conserver le jeton enregistré',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: 'Enregistrer les identifiants',
+      credentialsCancel: 'Annuler',
+      credentialsSaved: 'Identifiants de déploiement enregistrés.',
+      credentialsSaveError: "Les identifiants de déploiement n'ont pas pu être enregistrés.",
+      credentialsClear: 'Supprimer',
+      credentialsCleared: 'Identifiants de déploiement supprimés.',
+      credentialsClearError: "Les identifiants de déploiement n'ont pas pu être supprimés.",
+      credentialsConfigure: 'Ajouter des identifiants',
+      credentialsReplace: 'Modifier les identifiants',
+      credentialsSavedAt: 'Dernier enregistrement',
+      credentialsUnusable: 'Ces identifiants sont inutilisables. Enregistrez-les à nouveau.',
+      runTitle: 'Progression du déploiement en direct',
+      runDescription:
+        'Lue directement depuis GitHub Actions, étape par étape, pendant le déploiement.',
+      runLoading: 'Chargement de la progression…',
+      runNumber: 'Exécution',
+      runNowRunning: 'En cours :',
+      runFailedAt: 'Échec à :',
+      runReadLog: 'Lire le journal en échec',
+      runOpen: 'Ouvrir dans GitHub',
+      runOpenJob: 'Journaux',
+      runNoSteps: "Cette tâche n'a encore signalé aucune étape.",
+      runAutoRefresh: 'Mise à jour automatique toutes les quelques secondes.',
+      credentialsSource: {
+        database: 'Enregistrés ici',
+        environment: "Depuis l'environnement du serveur",
+        none: 'Non configurés',
+      },
+      runStatus: {
+        queued: "En file d'attente",
+        in_progress: 'En cours',
+        completed: 'Terminé',
+        waiting: 'En attente',
+        requested: 'Demandé',
+        pending: 'En suspens',
+      },
+      runConclusion: {
+        success: 'Réussi',
+        failure: 'Échoué',
+        cancelled: 'Annulé',
+        skipped: 'Ignoré',
+        timed_out: 'Délai dépassé',
+        action_required: 'Approbation requise',
+        neutral: 'Neutre',
+        stale: 'Obsolète',
+      },
+      runUnavailable: {
+        not_configured:
+          'Ajoutez des identifiants de déploiement pour suivre le workflow en direct.',
+        unreachable: "GitHub est injoignable. La progression réapparaîtra d'elle-même.",
+        no_runs: "Ce workflow n'a encore jamais été exécuté.",
+      },
+      troubleshooting: {
+        abandoned: {
+          title: "Le déploiement s'est arrêté, mais le serveur le signale encore en cours",
+          description:
+            "Le workflow s'est terminé sans succès alors que le serveur était en plein déploiement. La production sert toujours la version précédente.",
+        },
+        stale: {
+          title: 'Ce déploiement ne signale plus de progression',
+          description:
+            'Aucune progression depuis plus de 30 minutes. Le déploiement est bloqué ou sa connexion est morte.',
+        },
+        failed: {
+          title: 'Le dernier déploiement a échoué',
+          description:
+            "La production sert toujours la version précédente. Rien n'a été appliqué à moitié.",
+        },
+        unconfigured: {
+          title: 'Le déploiement manuel est indisponible',
+          description:
+            "Sans identifiants, cette page ne peut qu'observer. Ajoutez-les pour déployer et suivre la progression.",
+        },
+      },
+      troubleshootingStep: {
+        readLog:
+          "Ouvrez l'étape en échec ci-dessus et lisez les dernières lignes de son journal — la vraie erreur est là.",
+        clearStuck: 'Effacez le déploiement bloqué pour ne pas bloquer le suivant.',
+        redeploy: 'Redéployez le commit actuel une fois la cause corrigée.',
+        checkRun:
+          'Regardez la progression ci-dessus : si une étape tourne encore, le déploiement est lent, pas bloqué.',
+        fixOrRollback:
+          'Corrigez la cause et redéployez, ou déployez le dernier commit sain pour revenir en arrière.',
+        configureCredentials: 'Ajoutez les identifiants de déploiement GitHub ci-dessous.',
+        checkTokenScope:
+          'Vérifiez que le jeton a un accès en lecture et écriture aux Actions de ce dépôt.',
+      },
       state: {
         unknown: 'État inconnu',
         running: 'Déploiement en cours',
@@ -260,6 +542,103 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: 'La distribuzione bloccata è stata cancellata.',
       resetNothingToClear: 'Non c’è nessuna distribuzione bloccata da cancellare.',
       resetError: 'Non è stato possibile cancellare la distribuzione bloccata.',
+      credentialsTitle: 'Credenziali di distribuzione GitHub',
+      credentialsDescription:
+        'Salvate cifrate sul server e usate per avviare e seguire le distribuzioni in produzione. Il token non viene più mostrato dopo il salvataggio.',
+      credentialsRepository: 'Repository',
+      credentialsRef: 'Ramo',
+      credentialsToken: 'Token di accesso',
+      credentialsTokenHint:
+        'Un token di accesso personale a granularità fine, con accesso in lettura e scrittura alle Actions di questo repository e nient’altro.',
+      credentialsTokenKeep: 'Lascia vuoto per mantenere il token salvato',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: 'Salva le credenziali',
+      credentialsCancel: 'Annulla',
+      credentialsSaved: 'Credenziali di distribuzione salvate.',
+      credentialsSaveError: 'Non è stato possibile salvare le credenziali di distribuzione.',
+      credentialsClear: 'Rimuovi',
+      credentialsCleared: 'Credenziali di distribuzione rimosse.',
+      credentialsClearError: 'Non è stato possibile rimuovere le credenziali di distribuzione.',
+      credentialsConfigure: 'Aggiungi le credenziali',
+      credentialsReplace: 'Modifica le credenziali',
+      credentialsSavedAt: 'Ultimo salvataggio',
+      credentialsUnusable: 'Queste credenziali non sono utilizzabili. Salvale di nuovo.',
+      runTitle: 'Avanzamento della distribuzione in diretta',
+      runDescription:
+        'Letto direttamente da GitHub Actions, passo per passo, mentre la distribuzione procede.',
+      runLoading: 'Caricamento dell’avanzamento…',
+      runNumber: 'Esecuzione',
+      runNowRunning: 'In esecuzione ora:',
+      runFailedAt: 'Fallita a:',
+      runReadLog: 'Leggi il log del passo fallito',
+      runOpen: 'Apri in GitHub',
+      runOpenJob: 'Log',
+      runNoSteps: 'Questo job non ha ancora segnalato alcun passo.',
+      runAutoRefresh: 'Si aggiorna da solo ogni pochi secondi.',
+      credentialsSource: {
+        database: 'Salvate qui',
+        environment: 'Dall’ambiente del server',
+        none: 'Non configurate',
+      },
+      runStatus: {
+        queued: 'In coda',
+        in_progress: 'In corso',
+        completed: 'Conclusa',
+        waiting: 'In attesa',
+        requested: 'Richiesta',
+        pending: 'Sospesa',
+      },
+      runConclusion: {
+        success: 'Superata',
+        failure: 'Fallita',
+        cancelled: 'Annullata',
+        skipped: 'Saltata',
+        timed_out: 'Tempo scaduto',
+        action_required: 'Serve approvazione',
+        neutral: 'Neutra',
+        stale: 'Obsoleta',
+      },
+      runUnavailable: {
+        not_configured:
+          'Aggiungi le credenziali di distribuzione per seguire il workflow in diretta.',
+        unreachable: 'GitHub non è raggiungibile. L’avanzamento ricomparirà da solo.',
+        no_runs: 'Questo workflow non è mai stato eseguito.',
+      },
+      troubleshooting: {
+        abandoned: {
+          title: 'La distribuzione si è fermata, ma il server la segnala ancora in corso',
+          description:
+            'Il workflow è terminato senza successo mentre il server era a metà distribuzione. La produzione serve ancora la versione precedente.',
+        },
+        stale: {
+          title: 'Questa distribuzione ha smesso di segnalare avanzamento',
+          description:
+            'Nessun avanzamento da oltre 30 minuti. La distribuzione è bloccata oppure la sua connessione è caduta.',
+        },
+        failed: {
+          title: 'L’ultima distribuzione è fallita',
+          description:
+            'La produzione serve ancora la versione precedente. Nulla è stato applicato a metà.',
+        },
+        unconfigured: {
+          title: 'La distribuzione manuale non è disponibile',
+          description:
+            'Senza credenziali questa pagina può solo osservare. Aggiungile per distribuire e seguire l’avanzamento.',
+        },
+      },
+      troubleshootingStep: {
+        readLog:
+          'Apri il passo fallito qui sopra e leggi le ultime righe del suo log — l’errore vero è lì.',
+        clearStuck: 'Cancella la distribuzione bloccata così non ostacola la prossima.',
+        redeploy: 'Ridistribuisci il commit attuale una volta risolta la causa.',
+        checkRun:
+          'Guarda l’avanzamento qui sopra: se un passo è ancora in corso, la distribuzione è lenta, non bloccata.',
+        fixOrRollback:
+          'Risolvi la causa e distribuisci di nuovo, oppure distribuisci l’ultimo commit sano per tornare indietro.',
+        configureCredentials: 'Aggiungi qui sotto le credenziali di distribuzione GitHub.',
+        checkTokenScope:
+          'Verifica che il token abbia accesso in lettura e scrittura alle Actions di questo repository.',
+      },
       state: {
         unknown: 'Stato sconosciuto',
         running: 'Distribuzione in corso',
@@ -331,6 +710,103 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: 'Das hängende Deployment wurde aufgeräumt.',
       resetNothingToClear: 'Es gibt kein hängendes Deployment zum Aufräumen.',
       resetError: 'Das hängende Deployment ließ sich nicht aufräumen.',
+      credentialsTitle: 'GitHub-Deployment-Zugangsdaten',
+      credentialsDescription:
+        'Verschlüsselt auf dem Server gespeichert und verwendet, um Produktions-Deployments zu starten und zu verfolgen. Das Token wird nach dem Speichern nie wieder angezeigt.',
+      credentialsRepository: 'Repository',
+      credentialsRef: 'Branch',
+      credentialsToken: 'Zugriffstoken',
+      credentialsTokenHint:
+        'Ein fein granuliertes persönliches Zugriffstoken mit Lese- und Schreibzugriff auf Actions dieses Repositorys — und sonst nichts.',
+      credentialsTokenKeep: 'Leer lassen, um das gespeicherte Token zu behalten',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: 'Zugangsdaten speichern',
+      credentialsCancel: 'Abbrechen',
+      credentialsSaved: 'Deployment-Zugangsdaten gespeichert.',
+      credentialsSaveError: 'Die Deployment-Zugangsdaten konnten nicht gespeichert werden.',
+      credentialsClear: 'Entfernen',
+      credentialsCleared: 'Deployment-Zugangsdaten entfernt.',
+      credentialsClearError: 'Die Deployment-Zugangsdaten konnten nicht entfernt werden.',
+      credentialsConfigure: 'Zugangsdaten hinzufügen',
+      credentialsReplace: 'Zugangsdaten bearbeiten',
+      credentialsSavedAt: 'Zuletzt gespeichert',
+      credentialsUnusable: 'Diese Zugangsdaten sind unbrauchbar. Speichere sie erneut.',
+      runTitle: 'Live-Fortschritt des Deployments',
+      runDescription:
+        'Direkt aus GitHub Actions gelesen, Schritt für Schritt, während das Deployment läuft.',
+      runLoading: 'Deployment-Fortschritt wird geladen…',
+      runNumber: 'Lauf',
+      runNowRunning: 'Läuft gerade:',
+      runFailedAt: 'Fehlgeschlagen bei:',
+      runReadLog: 'Fehlerprotokoll lesen',
+      runOpen: 'In GitHub öffnen',
+      runOpenJob: 'Protokolle',
+      runNoSteps: 'Dieser Job hat noch keine Schritte gemeldet.',
+      runAutoRefresh: 'Aktualisiert sich alle paar Sekunden von selbst.',
+      credentialsSource: {
+        database: 'Hier gespeichert',
+        environment: 'Aus der Serverumgebung',
+        none: 'Nicht konfiguriert',
+      },
+      runStatus: {
+        queued: 'In Warteschlange',
+        in_progress: 'Läuft',
+        completed: 'Fertig',
+        waiting: 'Wartet',
+        requested: 'Angefordert',
+        pending: 'Ausstehend',
+      },
+      runConclusion: {
+        success: 'Bestanden',
+        failure: 'Fehlgeschlagen',
+        cancelled: 'Abgebrochen',
+        skipped: 'Übersprungen',
+        timed_out: 'Zeitüberschreitung',
+        action_required: 'Freigabe nötig',
+        neutral: 'Neutral',
+        stale: 'Veraltet',
+      },
+      runUnavailable: {
+        not_configured: 'Füge Deployment-Zugangsdaten hinzu, um den Workflow live zu verfolgen.',
+        unreachable: 'GitHub war nicht erreichbar. Der Fortschritt erscheint von selbst wieder.',
+        no_runs: 'Dieser Workflow wurde noch nie ausgeführt.',
+      },
+      troubleshooting: {
+        abandoned: {
+          title: 'Der Rollout endete, aber der Server meldet ihn weiterhin als laufend',
+          description:
+            'Der Workflow endete ohne Erfolg, während der Server mitten im Deployment war. Die Produktion liefert weiterhin die vorherige Version aus.',
+        },
+        stale: {
+          title: 'Dieser Rollout meldet keinen Fortschritt mehr',
+          description:
+            'Seit über 30 Minuten kein Fortschritt. Das Deployment hängt, oder seine Verbindung ist gestorben.',
+        },
+        failed: {
+          title: 'Das letzte Deployment ist fehlgeschlagen',
+          description:
+            'Die Produktion liefert weiterhin die vorherige Version aus. Nichts wurde halb angewendet.',
+        },
+        unconfigured: {
+          title: 'Manuelles Deployment ist nicht verfügbar',
+          description:
+            'Ohne Zugangsdaten kann diese Seite nur zusehen. Füge sie hinzu, um zu deployen und den Fortschritt zu verfolgen.',
+        },
+      },
+      troubleshootingStep: {
+        readLog:
+          'Öffne oben den fehlgeschlagenen Schritt und lies die letzten Zeilen seines Protokolls — dort steht der eigentliche Fehler.',
+        clearStuck:
+          'Räume den hängenden Rollout auf, damit er das nächste Deployment nicht blockiert.',
+        redeploy: 'Rolle den aktuellen Commit erneut aus, sobald die Ursache behoben ist.',
+        checkRun:
+          'Sieh dir den Live-Fortschritt oben an: Läuft noch ein Schritt, ist das Deployment langsam und nicht hängen geblieben.',
+        fixOrRollback:
+          'Behebe die Ursache und deploye erneut, oder deploye den letzten funktionierenden Commit als Rückfall.',
+        configureCredentials: 'Füge unten die GitHub-Deployment-Zugangsdaten hinzu.',
+        checkTokenScope:
+          'Stelle sicher, dass das Token Lese- und Schreibzugriff auf Actions dieses Repositorys hat.',
+      },
       state: {
         unknown: 'Status unbekannt',
         running: 'Bereitstellung läuft',
@@ -400,6 +876,102 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: 'Se limpió el despliegue atascado.',
       resetNothingToClear: 'No hay ningún despliegue atascado que limpiar.',
       resetError: 'No se pudo limpiar el despliegue atascado.',
+      credentialsTitle: 'Credenciales de despliegue de GitHub',
+      credentialsDescription:
+        'Se guardan cifradas en el servidor y se usan para iniciar y seguir los despliegues a producción. El token no vuelve a mostrarse después de guardarlo.',
+      credentialsRepository: 'Repositorio',
+      credentialsRef: 'Rama',
+      credentialsToken: 'Token de acceso',
+      credentialsTokenHint:
+        'Un token de acceso personal de permisos detallados, con acceso de lectura y escritura a Actions en este repositorio y nada más.',
+      credentialsTokenKeep: 'Déjalo vacío para conservar el token guardado',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: 'Guardar credenciales',
+      credentialsCancel: 'Cancelar',
+      credentialsSaved: 'Credenciales de despliegue guardadas.',
+      credentialsSaveError: 'No se pudieron guardar las credenciales de despliegue.',
+      credentialsClear: 'Quitar',
+      credentialsCleared: 'Credenciales de despliegue eliminadas.',
+      credentialsClearError: 'No se pudieron eliminar las credenciales de despliegue.',
+      credentialsConfigure: 'Añadir credenciales',
+      credentialsReplace: 'Editar credenciales',
+      credentialsSavedAt: 'Último guardado',
+      credentialsUnusable: 'Estas credenciales no se pueden usar. Guárdalas de nuevo.',
+      runTitle: 'Progreso del despliegue en vivo',
+      runDescription:
+        'Leído directamente de GitHub Actions, paso a paso, mientras se ejecuta el despliegue.',
+      runLoading: 'Cargando el progreso del despliegue…',
+      runNumber: 'Ejecución',
+      runNowRunning: 'Ejecutándose ahora:',
+      runFailedAt: 'Falló en:',
+      runReadLog: 'Leer el registro del fallo',
+      runOpen: 'Abrir en GitHub',
+      runOpenJob: 'Registros',
+      runNoSteps: 'Este trabajo aún no ha informado de ningún paso.',
+      runAutoRefresh: 'Esto se actualiza solo cada pocos segundos.',
+      credentialsSource: {
+        database: 'Guardadas aquí',
+        environment: 'Del entorno del servidor',
+        none: 'Sin configurar',
+      },
+      runStatus: {
+        queued: 'En cola',
+        in_progress: 'En curso',
+        completed: 'Terminado',
+        waiting: 'Esperando',
+        requested: 'Solicitado',
+        pending: 'Pendiente',
+      },
+      runConclusion: {
+        success: 'Correcto',
+        failure: 'Fallido',
+        cancelled: 'Cancelado',
+        skipped: 'Omitido',
+        timed_out: 'Tiempo agotado',
+        action_required: 'Requiere aprobación',
+        neutral: 'Neutro',
+        stale: 'Obsoleto',
+      },
+      runUnavailable: {
+        not_configured: 'Añade credenciales de despliegue para seguir el flujo de trabajo en vivo.',
+        unreachable: 'No se pudo contactar con GitHub. El progreso reaparecerá solo.',
+        no_runs: 'Este flujo de trabajo todavía no se ha ejecutado.',
+      },
+      troubleshooting: {
+        abandoned: {
+          title: 'El despliegue se detuvo, pero el servidor sigue informando que está en curso',
+          description:
+            'El flujo de trabajo terminó sin éxito mientras el servidor estaba a medio desplegar. Producción sigue sirviendo la versión anterior.',
+        },
+        stale: {
+          title: 'Este despliegue dejó de informar progreso',
+          description:
+            'Sin progreso desde hace más de 30 minutos. El despliegue está atascado o su conexión murió.',
+        },
+        failed: {
+          title: 'El último despliegue falló',
+          description:
+            'Producción sigue sirviendo la versión anterior. No se aplicó nada a medias.',
+        },
+        unconfigured: {
+          title: 'El despliegue manual no está disponible',
+          description:
+            'Sin credenciales esta página solo puede observar. Añádelas para desplegar y seguir el progreso.',
+        },
+      },
+      troubleshootingStep: {
+        readLog:
+          'Abre arriba el paso que falló y lee las últimas líneas de su registro: ahí está el error real.',
+        clearStuck: 'Limpia el despliegue atascado para que no bloquee el siguiente.',
+        redeploy: 'Vuelve a desplegar el commit actual una vez corregida la causa.',
+        checkRun:
+          'Mira el progreso de arriba: si un paso sigue en curso, el despliegue es lento, no está atascado.',
+        fixOrRollback:
+          'Corrige la causa y despliega otra vez, o despliega el último commit correcto para revertir.',
+        configureCredentials: 'Añade abajo las credenciales de despliegue de GitHub.',
+        checkTokenScope:
+          'Asegúrate de que el token tiene acceso de lectura y escritura a Actions en este repositorio.',
+      },
       state: {
         unknown: 'Estado desconocido',
         running: 'Despliegue en curso',
@@ -470,6 +1042,102 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: 'Зависшее развёртывание очищено.',
       resetNothingToClear: 'Зависших развёртываний нет.',
       resetError: 'Не удалось очистить зависшее развёртывание.',
+      credentialsTitle: 'Учётные данные развёртывания GitHub',
+      credentialsDescription:
+        'Хранятся на сервере в зашифрованном виде и используются для запуска и отслеживания развёртываний в продакшен. После сохранения токен больше не показывается.',
+      credentialsRepository: 'Репозиторий',
+      credentialsRef: 'Ветка',
+      credentialsToken: 'Токен доступа',
+      credentialsTokenHint:
+        'Токен личного доступа с точными правами: чтение и запись Actions в этом репозитории и ничего больше.',
+      credentialsTokenKeep: 'Оставьте пустым, чтобы сохранить прежний токен',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: 'Сохранить учётные данные',
+      credentialsCancel: 'Отмена',
+      credentialsSaved: 'Учётные данные развёртывания сохранены.',
+      credentialsSaveError: 'Не удалось сохранить учётные данные развёртывания.',
+      credentialsClear: 'Удалить',
+      credentialsCleared: 'Учётные данные развёртывания удалены.',
+      credentialsClearError: 'Не удалось удалить учётные данные развёртывания.',
+      credentialsConfigure: 'Добавить учётные данные',
+      credentialsReplace: 'Изменить учётные данные',
+      credentialsSavedAt: 'Последнее сохранение',
+      credentialsUnusable: 'Эти учётные данные использовать нельзя. Сохраните их заново.',
+      runTitle: 'Ход развёртывания в реальном времени',
+      runDescription: 'Читается напрямую из GitHub Actions, шаг за шагом, пока идёт развёртывание.',
+      runLoading: 'Загрузка хода развёртывания…',
+      runNumber: 'Запуск',
+      runNowRunning: 'Сейчас выполняется:',
+      runFailedAt: 'Сбой на шаге:',
+      runReadLog: 'Открыть журнал сбоя',
+      runOpen: 'Открыть в GitHub',
+      runOpenJob: 'Журналы',
+      runNoSteps: 'Это задание пока не сообщило ни об одном шаге.',
+      runAutoRefresh: 'Обновляется автоматически каждые несколько секунд.',
+      credentialsSource: {
+        database: 'Сохранены здесь',
+        environment: 'Из окружения сервера',
+        none: 'Не настроены',
+      },
+      runStatus: {
+        queued: 'В очереди',
+        in_progress: 'Выполняется',
+        completed: 'Завершено',
+        waiting: 'Ожидает',
+        requested: 'Запрошено',
+        pending: 'В ожидании',
+      },
+      runConclusion: {
+        success: 'Успешно',
+        failure: 'Сбой',
+        cancelled: 'Отменено',
+        skipped: 'Пропущено',
+        timed_out: 'Истекло время',
+        action_required: 'Нужно подтверждение',
+        neutral: 'Нейтрально',
+        stale: 'Устарело',
+      },
+      runUnavailable: {
+        not_configured:
+          'Добавьте учётные данные развёртывания, чтобы следить за рабочим процессом вживую.',
+        unreachable: 'GitHub недоступен. Ход выполнения появится снова сам.',
+        no_runs: 'Этот рабочий процесс ещё ни разу не запускался.',
+      },
+      troubleshooting: {
+        abandoned: {
+          title: 'Развёртывание остановилось, но сервер всё ещё считает его идущим',
+          description:
+            'Рабочий процесс завершился неуспешно, пока сервер был в середине развёртывания. Продакшен по-прежнему отдаёт предыдущую версию.',
+        },
+        stale: {
+          title: 'Это развёртывание перестало сообщать о ходе работы',
+          description:
+            'Нет прогресса больше 30 минут. Развёртывание либо зависло, либо потеряло соединение.',
+        },
+        failed: {
+          title: 'Последнее развёртывание завершилось сбоем',
+          description:
+            'Продакшен по-прежнему отдаёт предыдущую версию. Ничего не применилось наполовину.',
+        },
+        unconfigured: {
+          title: 'Ручное развёртывание недоступно',
+          description:
+            'Без учётных данных эта страница может только наблюдать. Добавьте их, чтобы развёртывать и следить за ходом.',
+        },
+      },
+      troubleshootingStep: {
+        readLog:
+          'Откройте сбойный шаг выше и прочитайте последние строки его журнала — настоящая ошибка там.',
+        clearStuck: 'Очистите зависшее развёртывание, чтобы оно не блокировало следующее.',
+        redeploy: 'Разверните текущий коммит заново, когда причина устранена.',
+        checkRun:
+          'Посмотрите ход выше: если шаг ещё выполняется, развёртывание идёт медленно, а не зависло.',
+        fixOrRollback:
+          'Устраните причину и разверните снова — или разверните последний заведомо рабочий коммит для отката.',
+        configureCredentials: 'Добавьте учётные данные развёртывания GitHub ниже.',
+        checkTokenScope:
+          'Убедитесь, что у токена есть права на чтение и запись Actions в этом репозитории.',
+      },
       state: {
         unknown: 'Статус неизвестен',
         running: 'Развёртывание выполняется',
@@ -539,6 +1207,102 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: 'A implantação encravada foi limpa.',
       resetNothingToClear: 'Não há nenhuma implantação encravada para limpar.',
       resetError: 'Não foi possível limpar a implantação encravada.',
+      credentialsTitle: 'Credenciais de implantação do GitHub',
+      credentialsDescription:
+        'Guardadas cifradas no servidor e usadas para iniciar e acompanhar as implantações em produção. O token nunca mais é mostrado depois de guardado.',
+      credentialsRepository: 'Repositório',
+      credentialsRef: 'Ramo',
+      credentialsToken: 'Token de acesso',
+      credentialsTokenHint:
+        'Um token de acesso pessoal de permissões detalhadas, com acesso de leitura e escrita às Actions deste repositório e mais nada.',
+      credentialsTokenKeep: 'Deixe em branco para manter o token guardado',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: 'Guardar credenciais',
+      credentialsCancel: 'Cancelar',
+      credentialsSaved: 'Credenciais de implantação guardadas.',
+      credentialsSaveError: 'Não foi possível guardar as credenciais de implantação.',
+      credentialsClear: 'Remover',
+      credentialsCleared: 'Credenciais de implantação removidas.',
+      credentialsClearError: 'Não foi possível remover as credenciais de implantação.',
+      credentialsConfigure: 'Adicionar credenciais',
+      credentialsReplace: 'Editar credenciais',
+      credentialsSavedAt: 'Última gravação',
+      credentialsUnusable: 'Estas credenciais não podem ser usadas. Guarde-as novamente.',
+      runTitle: 'Progresso da implantação em direto',
+      runDescription:
+        'Lido diretamente do GitHub Actions, passo a passo, enquanto a implantação decorre.',
+      runLoading: 'A carregar o progresso da implantação…',
+      runNumber: 'Execução',
+      runNowRunning: 'A executar agora:',
+      runFailedAt: 'Falhou em:',
+      runReadLog: 'Ler o registo da falha',
+      runOpen: 'Abrir no GitHub',
+      runOpenJob: 'Registos',
+      runNoSteps: 'Esta tarefa ainda não comunicou nenhum passo.',
+      runAutoRefresh: 'Isto atualiza-se sozinho a cada poucos segundos.',
+      credentialsSource: {
+        database: 'Guardadas aqui',
+        environment: 'Do ambiente do servidor',
+        none: 'Não configuradas',
+      },
+      runStatus: {
+        queued: 'Em fila',
+        in_progress: 'A decorrer',
+        completed: 'Concluído',
+        waiting: 'A aguardar',
+        requested: 'Pedido',
+        pending: 'Pendente',
+      },
+      runConclusion: {
+        success: 'Passou',
+        failure: 'Falhou',
+        cancelled: 'Cancelado',
+        skipped: 'Ignorado',
+        timed_out: 'Tempo esgotado',
+        action_required: 'Precisa de aprovação',
+        neutral: 'Neutro',
+        stale: 'Obsoleto',
+      },
+      runUnavailable: {
+        not_configured:
+          'Adicione credenciais de implantação para acompanhar o fluxo de trabalho em direto.',
+        unreachable: 'Não foi possível contactar o GitHub. O progresso voltará a aparecer sozinho.',
+        no_runs: 'Este fluxo de trabalho ainda não foi executado.',
+      },
+      troubleshooting: {
+        abandoned: {
+          title: 'A implantação parou, mas o servidor continua a indicá-la como a decorrer',
+          description:
+            'O fluxo de trabalho terminou sem sucesso enquanto o servidor estava a meio da implantação. A produção continua a servir a versão anterior.',
+        },
+        stale: {
+          title: 'Esta implantação deixou de comunicar progresso',
+          description:
+            'Sem progresso há mais de 30 minutos. A implantação está encravada ou perdeu a ligação.',
+        },
+        failed: {
+          title: 'A última implantação falhou',
+          description: 'A produção continua a servir a versão anterior. Nada foi aplicado a meio.',
+        },
+        unconfigured: {
+          title: 'A implantação manual não está disponível',
+          description:
+            'Sem credenciais esta página só consegue observar. Adicione-as para implantar e acompanhar o progresso.',
+        },
+      },
+      troubleshootingStep: {
+        readLog:
+          'Abra acima o passo que falhou e leia as últimas linhas do seu registo — o erro verdadeiro está lá.',
+        clearStuck: 'Limpe a implantação encravada para que não bloqueie a seguinte.',
+        redeploy: 'Reimplante o commit atual assim que a causa estiver corrigida.',
+        checkRun:
+          'Veja o progresso acima: se um passo ainda decorre, a implantação está lenta e não encravada.',
+        fixOrRollback:
+          'Corrija a causa e implante de novo, ou implante o último commit bom conhecido para reverter.',
+        configureCredentials: 'Adicione abaixo as credenciais de implantação do GitHub.',
+        checkTokenScope:
+          'Confirme que o token tem acesso de leitura e escrita às Actions deste repositório.',
+      },
       state: {
         unknown: 'Estado desconhecido',
         running: 'Implantação em andamento',
@@ -609,6 +1373,99 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: 'अटका परिनियोजन साफ़ कर दिया गया।',
       resetNothingToClear: 'साफ़ करने के लिए कोई अटका परिनियोजन नहीं है।',
       resetError: 'अटका परिनियोजन साफ़ नहीं किया जा सका।',
+      credentialsTitle: 'GitHub परिनियोजन क्रेडेंशियल',
+      credentialsDescription:
+        'सर्वर पर एन्क्रिप्ट करके रखे जाते हैं और उत्पादन परिनियोजन शुरू करने तथा उन पर नज़र रखने के लिए उपयोग होते हैं। सहेजने के बाद टोकन दोबारा कभी नहीं दिखाया जाता।',
+      credentialsRepository: 'रिपॉज़िटरी',
+      credentialsRef: 'शाखा',
+      credentialsToken: 'एक्सेस टोकन',
+      credentialsTokenHint:
+        'बारीक अनुमतियों वाला व्यक्तिगत एक्सेस टोकन, जिसे इसी रिपॉज़िटरी की Actions पर पढ़ने-लिखने की अनुमति हो और कुछ नहीं।',
+      credentialsTokenKeep: 'सहेजा हुआ टोकन बनाए रखने के लिए खाली छोड़ें',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: 'क्रेडेंशियल सहेजें',
+      credentialsCancel: 'रद्द करें',
+      credentialsSaved: 'परिनियोजन क्रेडेंशियल सहेजे गए।',
+      credentialsSaveError: 'परिनियोजन क्रेडेंशियल सहेजे नहीं जा सके।',
+      credentialsClear: 'हटाएँ',
+      credentialsCleared: 'परिनियोजन क्रेडेंशियल हटा दिए गए।',
+      credentialsClearError: 'परिनियोजन क्रेडेंशियल हटाए नहीं जा सके।',
+      credentialsConfigure: 'क्रेडेंशियल जोड़ें',
+      credentialsReplace: 'क्रेडेंशियल संपादित करें',
+      credentialsSavedAt: 'अंतिम बार सहेजा गया',
+      credentialsUnusable: 'ये क्रेडेंशियल उपयोग योग्य नहीं हैं। इन्हें दोबारा सहेजें।',
+      runTitle: 'लाइव परिनियोजन प्रगति',
+      runDescription: 'परिनियोजन चलने के दौरान सीधे GitHub Actions से, चरण दर चरण पढ़ी जाती है।',
+      runLoading: 'परिनियोजन प्रगति लोड हो रही है…',
+      runNumber: 'रन',
+      runNowRunning: 'अभी चल रहा है:',
+      runFailedAt: 'यहाँ विफल:',
+      runReadLog: 'विफल लॉग पढ़ें',
+      runOpen: 'GitHub में खोलें',
+      runOpenJob: 'लॉग',
+      runNoSteps: 'इस जॉब ने अभी तक कोई चरण नहीं बताया है।',
+      runAutoRefresh: 'यह हर कुछ सेकंड में अपने आप अपडेट होता है।',
+      credentialsSource: {
+        database: 'यहाँ सहेजे गए',
+        environment: 'सर्वर परिवेश से',
+        none: 'कॉन्फ़िगर नहीं',
+      },
+      runStatus: {
+        queued: 'कतार में',
+        in_progress: 'चल रहा है',
+        completed: 'पूर्ण',
+        waiting: 'प्रतीक्षारत',
+        requested: 'अनुरोधित',
+        pending: 'लंबित',
+      },
+      runConclusion: {
+        success: 'सफल',
+        failure: 'विफल',
+        cancelled: 'रद्द',
+        skipped: 'छोड़ा गया',
+        timed_out: 'समय समाप्त',
+        action_required: 'स्वीकृति चाहिए',
+        neutral: 'तटस्थ',
+        stale: 'पुराना',
+      },
+      runUnavailable: {
+        not_configured: 'वर्कफ़्लो को लाइव देखने के लिए परिनियोजन क्रेडेंशियल जोड़ें।',
+        unreachable: 'GitHub तक नहीं पहुँचा जा सका। प्रगति अपने आप फिर दिखेगी।',
+        no_runs: 'यह वर्कफ़्लो अभी तक नहीं चला है।',
+      },
+      troubleshooting: {
+        abandoned: {
+          title: 'परिनियोजन रुक गया, पर सर्वर अब भी इसे चालू बता रहा है',
+          description:
+            'सर्वर आधे परिनियोजन पर था तभी वर्कफ़्लो बिना सफलता के समाप्त हो गया। उत्पादन अब भी पिछला संस्करण दे रहा है।',
+        },
+        stale: {
+          title: 'इस परिनियोजन ने प्रगति बताना बंद कर दिया है',
+          description:
+            '30 मिनट से अधिक कोई प्रगति नहीं। या तो परिनियोजन अटका है या उसका कनेक्शन टूट गया।',
+        },
+        failed: {
+          title: 'पिछला परिनियोजन विफल रहा',
+          description: 'उत्पादन अब भी पिछला संस्करण दे रहा है। कुछ भी आधा-अधूरा लागू नहीं हुआ।',
+        },
+        unconfigured: {
+          title: 'मैन्युअल परिनियोजन उपलब्ध नहीं है',
+          description:
+            'क्रेडेंशियल के बिना यह पृष्ठ केवल देख सकता है। परिनियोजित करने और प्रगति देखने के लिए उन्हें जोड़ें।',
+        },
+      },
+      troubleshootingStep: {
+        readLog: 'ऊपर विफल चरण खोलें और उसके लॉग की अंतिम पंक्तियाँ पढ़ें — असली त्रुटि वहीं है।',
+        clearStuck: 'अटके परिनियोजन को साफ़ करें ताकि वह अगले को न रोके।',
+        redeploy: 'कारण ठीक होने पर वर्तमान कमिट को फिर से परिनियोजित करें।',
+        checkRun:
+          'ऊपर लाइव प्रगति देखें: यदि कोई चरण अब भी चल रहा है तो परिनियोजन धीमा है, अटका नहीं।',
+        fixOrRollback:
+          'कारण ठीक करके दोबारा परिनियोजित करें, या पीछे लौटने के लिए अंतिम ज्ञात-सही कमिट परिनियोजित करें।',
+        configureCredentials: 'नीचे GitHub परिनियोजन क्रेडेंशियल जोड़ें।',
+        checkTokenScope:
+          'सुनिश्चित करें कि टोकन को इस रिपॉज़िटरी की Actions पर पढ़ने-लिखने की अनुमति है।',
+      },
       state: {
         unknown: 'स्थिति अज्ञात',
         running: 'परिनियोजन जारी है',
@@ -677,6 +1534,100 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: '停止したデプロイをクリアしました。',
       resetNothingToClear: 'クリアすべき停止したデプロイはありません。',
       resetError: '停止したデプロイをクリアできませんでした。',
+      credentialsTitle: 'GitHub デプロイ資格情報',
+      credentialsDescription:
+        'サーバーに暗号化して保存し、本番デプロイの開始と追跡に使います。保存後、トークンが再表示されることはありません。',
+      credentialsRepository: 'リポジトリ',
+      credentialsRef: 'ブランチ',
+      credentialsToken: 'アクセストークン',
+      credentialsTokenHint:
+        'このリポジトリの Actions に対する読み取りと書き込みだけを許可した、細粒度の個人用アクセストークン。',
+      credentialsTokenKeep: '空のままにすると保存済みのトークンを維持します',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: '資格情報を保存',
+      credentialsCancel: 'キャンセル',
+      credentialsSaved: 'デプロイ資格情報を保存しました。',
+      credentialsSaveError: 'デプロイ資格情報を保存できませんでした。',
+      credentialsClear: '削除',
+      credentialsCleared: 'デプロイ資格情報を削除しました。',
+      credentialsClearError: 'デプロイ資格情報を削除できませんでした。',
+      credentialsConfigure: '資格情報を追加',
+      credentialsReplace: '資格情報を編集',
+      credentialsSavedAt: '最終保存',
+      credentialsUnusable: 'この資格情報は使用できません。保存し直してください。',
+      runTitle: 'デプロイの進行状況（ライブ）',
+      runDescription: 'デプロイ中に GitHub Actions から直接、ステップ単位で読み取ります。',
+      runLoading: 'デプロイの進行状況を読み込み中…',
+      runNumber: '実行',
+      runNowRunning: '実行中:',
+      runFailedAt: '失敗した箇所:',
+      runReadLog: '失敗したログを読む',
+      runOpen: 'GitHub で開く',
+      runOpenJob: 'ログ',
+      runNoSteps: 'このジョブはまだステップを報告していません。',
+      runAutoRefresh: '数秒ごとに自動更新されます。',
+      credentialsSource: {
+        database: 'ここに保存済み',
+        environment: 'サーバー環境から',
+        none: '未設定',
+      },
+      runStatus: {
+        queued: '待機中',
+        in_progress: '実行中',
+        completed: '完了',
+        waiting: '保留中',
+        requested: '要求済み',
+        pending: '未処理',
+      },
+      runConclusion: {
+        success: '成功',
+        failure: '失敗',
+        cancelled: 'キャンセル',
+        skipped: 'スキップ',
+        timed_out: 'タイムアウト',
+        action_required: '承認が必要',
+        neutral: '中立',
+        stale: '無効',
+      },
+      runUnavailable: {
+        not_configured: 'ワークフローをライブで追跡するにはデプロイ資格情報を追加してください。',
+        unreachable: 'GitHub に接続できませんでした。進行状況は自動的に再表示されます。',
+        no_runs: 'このワークフローはまだ実行されていません。',
+      },
+      troubleshooting: {
+        abandoned: {
+          title: 'ロールアウトは停止しましたが、サーバーはまだ実行中と報告しています',
+          description:
+            'サーバーがデプロイの途中にある間に、ワークフローが成功しないまま終了しました。本番環境は引き続き以前のバージョンを提供しています。',
+        },
+        stale: {
+          title: 'このロールアウトは進行状況の報告を止めています',
+          description: '30 分以上進行がありません。デプロイが詰まっているか、接続が切れています。',
+        },
+        failed: {
+          title: '前回のデプロイは失敗しました',
+          description:
+            '本番環境は引き続き以前のバージョンを提供しています。中途半端に適用されたものはありません。',
+        },
+        unconfigured: {
+          title: '手動デプロイは利用できません',
+          description:
+            '資格情報がないと、このページは見ることしかできません。デプロイと進行状況の追跡には資格情報を追加してください。',
+        },
+      },
+      troubleshootingStep: {
+        readLog:
+          '上の失敗したステップを開き、ログの最後の数行を読んでください。本当のエラーはそこにあります。',
+        clearStuck: '停止したロールアウトをクリアし、次のデプロイを塞がないようにします。',
+        redeploy: '原因を修正したら、現在のコミットを再デプロイします。',
+        checkRun:
+          '上のライブ進行状況を確認してください。ステップがまだ実行中なら、詰まっているのではなく遅いだけです。',
+        fixOrRollback:
+          '原因を修正して再デプロイするか、最後に正常だったコミットをデプロイして切り戻します。',
+        configureCredentials: '下で GitHub デプロイ資格情報を追加してください。',
+        checkTokenScope:
+          'トークンにこのリポジトリの Actions への読み取りと書き込み権限があることを確認してください。',
+      },
       state: {
         unknown: '状態不明',
         running: 'デプロイ中',
@@ -746,6 +1697,98 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: 'ล้างการนำขึ้นระบบที่ค้างแล้ว',
       resetNothingToClear: 'ไม่มีการนำขึ้นระบบที่ค้างให้ล้าง',
       resetError: 'ล้างการนำขึ้นระบบที่ค้างไม่สำเร็จ',
+      credentialsTitle: 'ข้อมูลรับรองการนำขึ้นระบบของ GitHub',
+      credentialsDescription:
+        'จัดเก็บแบบเข้ารหัสไว้บนเซิร์ฟเวอร์ ใช้เริ่มและติดตามการนำขึ้นสู่การใช้งานจริง โทเค็นจะไม่ถูกแสดงอีกหลังจากบันทึกแล้ว',
+      credentialsRepository: 'ที่เก็บโค้ด',
+      credentialsRef: 'สาขา',
+      credentialsToken: 'โทเค็นการเข้าถึง',
+      credentialsTokenHint:
+        'โทเค็นการเข้าถึงส่วนบุคคลแบบกำหนดสิทธิ์ละเอียด ที่มีสิทธิ์อ่านและเขียน Actions ของที่เก็บโค้ดนี้เท่านั้น',
+      credentialsTokenKeep: 'เว้นว่างไว้เพื่อคงโทเค็นที่บันทึกไว้',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: 'บันทึกข้อมูลรับรอง',
+      credentialsCancel: 'ยกเลิก',
+      credentialsSaved: 'บันทึกข้อมูลรับรองการนำขึ้นระบบแล้ว',
+      credentialsSaveError: 'บันทึกข้อมูลรับรองการนำขึ้นระบบไม่สำเร็จ',
+      credentialsClear: 'นำออก',
+      credentialsCleared: 'นำข้อมูลรับรองการนำขึ้นระบบออกแล้ว',
+      credentialsClearError: 'นำข้อมูลรับรองการนำขึ้นระบบออกไม่สำเร็จ',
+      credentialsConfigure: 'เพิ่มข้อมูลรับรอง',
+      credentialsReplace: 'แก้ไขข้อมูลรับรอง',
+      credentialsSavedAt: 'บันทึกล่าสุด',
+      credentialsUnusable: 'ข้อมูลรับรองนี้ใช้งานไม่ได้ กรุณาบันทึกใหม่อีกครั้ง',
+      runTitle: 'ความคืบหน้าการนำขึ้นระบบแบบสด',
+      runDescription: 'อ่านจาก GitHub Actions โดยตรงทีละขั้นตอนขณะที่การนำขึ้นระบบกำลังทำงาน',
+      runLoading: 'กำลังโหลดความคืบหน้า…',
+      runNumber: 'การทำงาน',
+      runNowRunning: 'กำลังทำงานอยู่:',
+      runFailedAt: 'ล้มเหลวที่:',
+      runReadLog: 'อ่านบันทึกของขั้นตอนที่ล้มเหลว',
+      runOpen: 'เปิดใน GitHub',
+      runOpenJob: 'บันทึก',
+      runNoSteps: 'งานนี้ยังไม่ได้รายงานขั้นตอนใด ๆ',
+      runAutoRefresh: 'ข้อมูลนี้อัปเดตเองทุกไม่กี่วินาที',
+      credentialsSource: {
+        database: 'บันทึกไว้ที่นี่',
+        environment: 'จากสภาพแวดล้อมของเซิร์ฟเวอร์',
+        none: 'ยังไม่ได้ตั้งค่า',
+      },
+      runStatus: {
+        queued: 'อยู่ในคิว',
+        in_progress: 'กำลังทำงาน',
+        completed: 'เสร็จแล้ว',
+        waiting: 'กำลังรอ',
+        requested: 'ร้องขอแล้ว',
+        pending: 'รอดำเนินการ',
+      },
+      runConclusion: {
+        success: 'ผ่าน',
+        failure: 'ล้มเหลว',
+        cancelled: 'ยกเลิก',
+        skipped: 'ข้าม',
+        timed_out: 'หมดเวลา',
+        action_required: 'ต้องอนุมัติ',
+        neutral: 'เป็นกลาง',
+        stale: 'ล้าสมัย',
+      },
+      runUnavailable: {
+        not_configured: 'เพิ่มข้อมูลรับรองการนำขึ้นระบบเพื่อติดตามเวิร์กโฟลว์แบบสด',
+        unreachable: 'ติดต่อ GitHub ไม่ได้ ความคืบหน้าจะกลับมาแสดงเอง',
+        no_runs: 'เวิร์กโฟลว์นี้ยังไม่เคยทำงาน',
+      },
+      troubleshooting: {
+        abandoned: {
+          title: 'การนำขึ้นระบบหยุดแล้ว แต่เซิร์ฟเวอร์ยังรายงานว่ากำลังทำงาน',
+          description:
+            'เวิร์กโฟลว์จบลงโดยไม่สำเร็จขณะที่เซิร์ฟเวอร์อยู่กลางการนำขึ้นระบบ ระบบใช้งานจริงยังให้บริการเวอร์ชันก่อนหน้าอยู่',
+        },
+        stale: {
+          title: 'การนำขึ้นระบบนี้หยุดรายงานความคืบหน้าแล้ว',
+          description: 'ไม่มีความคืบหน้ามากว่า 30 นาที การนำขึ้นระบบอาจค้างหรือการเชื่อมต่อขาดไป',
+        },
+        failed: {
+          title: 'การนำขึ้นระบบครั้งล่าสุดล้มเหลว',
+          description:
+            'ระบบใช้งานจริงยังให้บริการเวอร์ชันก่อนหน้าอยู่ ไม่มีสิ่งใดถูกใช้งานเพียงครึ่งเดียว',
+        },
+        unconfigured: {
+          title: 'การนำขึ้นระบบด้วยตนเองใช้ไม่ได้',
+          description:
+            'หากไม่มีข้อมูลรับรอง หน้านี้ทำได้เพียงเฝ้าดู เพิ่มข้อมูลรับรองเพื่อนำขึ้นระบบและติดตามความคืบหน้า',
+        },
+      },
+      troubleshootingStep: {
+        readLog:
+          'เปิดขั้นตอนที่ล้มเหลวด้านบนแล้วอ่านบรรทัดท้าย ๆ ของบันทึก ข้อผิดพลาดจริงอยู่ตรงนั้น',
+        clearStuck: 'ล้างการนำขึ้นระบบที่ค้าง เพื่อไม่ให้ขวางครั้งถัดไป',
+        redeploy: 'นำคอมมิตปัจจุบันขึ้นระบบอีกครั้งเมื่อแก้สาเหตุแล้ว',
+        checkRun: 'ดูความคืบหน้าด้านบน: ถ้ายังมีขั้นตอนที่ทำงานอยู่ แสดงว่าช้า ไม่ใช่ค้าง',
+        fixOrRollback:
+          'แก้สาเหตุแล้วนำขึ้นระบบใหม่ หรือนำคอมมิตล่าสุดที่ใช้งานได้ขึ้นระบบเพื่อย้อนกลับ',
+        configureCredentials: 'เพิ่มข้อมูลรับรองการนำขึ้นระบบของ GitHub ด้านล่าง',
+        checkTokenScope: 'ตรวจสอบว่าโทเค็นมีสิทธิ์อ่านและเขียน Actions ของที่เก็บโค้ดนี้',
+      },
       state: {
         unknown: 'ไม่ทราบสถานะ',
         running: 'กำลังปรับใช้',
@@ -816,6 +1859,100 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: 'استقرار گیرکرده پاک شد.',
       resetNothingToClear: 'هیچ استقرار گیرکرده‌ای برای پاک‌کردن نیست.',
       resetError: 'پاک‌کردن استقرار گیرکرده ممکن نشد.',
+      credentialsTitle: 'اعتبارنامه‌های استقرار GitHub',
+      credentialsDescription:
+        'رمزگذاری‌شده روی سرور ذخیره می‌شود و برای شروع و پیگیری استقرارهای محیط عملیاتی به کار می‌رود. پس از ذخیره، توکن دیگر هرگز نمایش داده نمی‌شود.',
+      credentialsRepository: 'مخزن',
+      credentialsRef: 'شاخه',
+      credentialsToken: 'توکن دسترسی',
+      credentialsTokenHint:
+        'یک توکن دسترسی شخصی با دسترسی دقیق، که فقط اجازهٔ خواندن و نوشتن Actions همین مخزن را دارد و نه چیز دیگری.',
+      credentialsTokenKeep: 'برای حفظ توکن ذخیره‌شده خالی بگذارید',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: 'ذخیرهٔ اعتبارنامه‌ها',
+      credentialsCancel: 'انصراف',
+      credentialsSaved: 'اعتبارنامه‌های استقرار ذخیره شد.',
+      credentialsSaveError: 'ذخیرهٔ اعتبارنامه‌های استقرار ممکن نشد.',
+      credentialsClear: 'حذف',
+      credentialsCleared: 'اعتبارنامه‌های استقرار حذف شد.',
+      credentialsClearError: 'حذف اعتبارنامه‌های استقرار ممکن نشد.',
+      credentialsConfigure: 'افزودن اعتبارنامه',
+      credentialsReplace: 'ویرایش اعتبارنامه‌ها',
+      credentialsSavedAt: 'آخرین ذخیره',
+      credentialsUnusable: 'این اعتبارنامه‌ها قابل استفاده نیستند. دوباره ذخیره‌شان کنید.',
+      runTitle: 'پیشرفت زندهٔ استقرار',
+      runDescription: 'در حین اجرای استقرار، گام‌به‌گام مستقیم از GitHub Actions خوانده می‌شود.',
+      runLoading: 'در حال بارگذاری پیشرفت استقرار…',
+      runNumber: 'اجرا',
+      runNowRunning: 'هم‌اکنون در حال اجرا:',
+      runFailedAt: 'شکست در:',
+      runReadLog: 'خواندن گزارش گام ناموفق',
+      runOpen: 'باز کردن در GitHub',
+      runOpenJob: 'گزارش‌ها',
+      runNoSteps: 'این کار هنوز هیچ گامی گزارش نکرده است.',
+      runAutoRefresh: 'این بخش هر چند ثانیه خودش به‌روز می‌شود.',
+      credentialsSource: {
+        database: 'ذخیره‌شده در اینجا',
+        environment: 'از محیط سرور',
+        none: 'پیکربندی‌نشده',
+      },
+      runStatus: {
+        queued: 'در صف',
+        in_progress: 'در حال اجرا',
+        completed: 'پایان‌یافته',
+        waiting: 'در انتظار',
+        requested: 'درخواست‌شده',
+        pending: 'معلق',
+      },
+      runConclusion: {
+        success: 'موفق',
+        failure: 'ناموفق',
+        cancelled: 'لغوشده',
+        skipped: 'رد‌شده',
+        timed_out: 'اتمام زمان',
+        action_required: 'نیازمند تأیید',
+        neutral: 'خنثی',
+        stale: 'کهنه',
+      },
+      runUnavailable: {
+        not_configured: 'برای پیگیری زندهٔ جریان کاری، اعتبارنامه‌های استقرار را اضافه کنید.',
+        unreachable: 'دسترسی به GitHub ممکن نشد. پیشرفت خودبه‌خود دوباره پدیدار می‌شود.',
+        no_runs: 'این جریان کاری هنوز اجرا نشده است.',
+      },
+      troubleshooting: {
+        abandoned: {
+          title: 'استقرار متوقف شد، اما سرور هنوز آن را در حال اجرا گزارش می‌کند',
+          description:
+            'جریان کاری بدون موفقیت پایان یافت در حالی که سرور میانهٔ استقرار بود. محیط عملیاتی همچنان نسخهٔ پیشین را ارائه می‌دهد.',
+        },
+        stale: {
+          title: 'این استقرار گزارش پیشرفت را متوقف کرده است',
+          description:
+            'بیش از ۳۰ دقیقه هیچ پیشرفتی نبوده. یا استقرار گیر کرده یا اتصالش از بین رفته است.',
+        },
+        failed: {
+          title: 'آخرین استقرار ناموفق بود',
+          description:
+            'محیط عملیاتی همچنان نسخهٔ پیشین را ارائه می‌دهد. هیچ چیز نیمه‌کاره اعمال نشد.',
+        },
+        unconfigured: {
+          title: 'استقرار دستی در دسترس نیست',
+          description:
+            'بدون اعتبارنامه این صفحه فقط می‌تواند تماشا کند. برای استقرار و پیگیری پیشرفت آن‌ها را اضافه کنید.',
+        },
+      },
+      troubleshootingStep: {
+        readLog:
+          'گام ناموفق بالا را باز کنید و چند خط پایانی گزارشش را بخوانید — خطای واقعی همان‌جاست.',
+        clearStuck: 'استقرار گیرکرده را پاک کنید تا جلوی استقرار بعدی را نگیرد.',
+        redeploy: 'پس از رفع علت، کامیت فعلی را دوباره مستقر کنید.',
+        checkRun:
+          'پیشرفت زنده در بالا را ببینید: اگر گامی هنوز در حال اجراست، استقرار کند است نه گیرکرده.',
+        fixOrRollback:
+          'علت را برطرف و دوباره مستقر کنید، یا برای بازگشت، آخرین کامیت سالم را مستقر کنید.',
+        configureCredentials: 'اعتبارنامه‌های استقرار GitHub را در پایین اضافه کنید.',
+        checkTokenScope: 'مطمئن شوید توکن به Actions این مخزن دسترسی خواندن و نوشتن دارد.',
+      },
       state: {
         unknown: 'وضعیت نامشخص',
         running: 'استقرار در حال اجرا',
@@ -881,6 +2018,92 @@ export const DEPLOYMENT_TRANSLATIONS: Record<Locale, DeploymentLocaleTranslation
       resetCleared: '已清除卡住的部署。',
       resetNothingToClear: '没有卡住的部署需要清除。',
       resetError: '无法清除卡住的部署。',
+      credentialsTitle: 'GitHub 部署凭据',
+      credentialsDescription:
+        '加密保存在服务器上，用于启动和跟踪生产部署。保存后不会再次显示令牌。',
+      credentialsRepository: '仓库',
+      credentialsRef: '分支',
+      credentialsToken: '访问令牌',
+      credentialsTokenHint: '一个细粒度个人访问令牌，仅对本仓库的 Actions 具有读写权限，别无其他。',
+      credentialsTokenKeep: '留空以保留已保存的令牌',
+      credentialsTokenPlaceholder: 'github_pat_…',
+      credentialsSave: '保存凭据',
+      credentialsCancel: '取消',
+      credentialsSaved: '部署凭据已保存。',
+      credentialsSaveError: '无法保存部署凭据。',
+      credentialsClear: '移除',
+      credentialsCleared: '部署凭据已移除。',
+      credentialsClearError: '无法移除部署凭据。',
+      credentialsConfigure: '添加凭据',
+      credentialsReplace: '编辑凭据',
+      credentialsSavedAt: '最后保存于',
+      credentialsUnusable: '这些凭据无法使用，请重新保存。',
+      runTitle: '实时部署进度',
+      runDescription: '在部署运行时逐步直接从 GitHub Actions 读取。',
+      runLoading: '正在加载部署进度…',
+      runNumber: '运行',
+      runNowRunning: '正在运行：',
+      runFailedAt: '失败于：',
+      runReadLog: '查看失败日志',
+      runOpen: '在 GitHub 中打开',
+      runOpenJob: '日志',
+      runNoSteps: '此作业尚未报告任何步骤。',
+      runAutoRefresh: '每隔几秒自动刷新。',
+      credentialsSource: {
+        database: '已保存在此',
+        environment: '来自服务器环境',
+        none: '未配置',
+      },
+      runStatus: {
+        queued: '排队中',
+        in_progress: '进行中',
+        completed: '已完成',
+        waiting: '等待中',
+        requested: '已请求',
+        pending: '待处理',
+      },
+      runConclusion: {
+        success: '通过',
+        failure: '失败',
+        cancelled: '已取消',
+        skipped: '已跳过',
+        timed_out: '超时',
+        action_required: '需要批准',
+        neutral: '中性',
+        stale: '已过期',
+      },
+      runUnavailable: {
+        not_configured: '添加部署凭据即可实时跟踪工作流。',
+        unreachable: '无法连接 GitHub，进度会自行恢复显示。',
+        no_runs: '此工作流尚未运行过。',
+      },
+      troubleshooting: {
+        abandoned: {
+          title: '这次部署已停止，但服务器仍报告为运行中',
+          description: '工作流在服务器部署到一半时以非成功状态结束。生产环境仍在提供上一个版本。',
+        },
+        stale: {
+          title: '这次部署已停止上报进度',
+          description: '超过 30 分钟没有进展。部署要么卡住了，要么连接已断开。',
+        },
+        failed: {
+          title: '上一次部署失败',
+          description: '生产环境仍在提供上一个版本，没有任何内容被应用到一半。',
+        },
+        unconfigured: {
+          title: '手动部署不可用',
+          description: '没有凭据时此页面只能查看。添加凭据即可部署并跟踪进度。',
+        },
+      },
+      troubleshootingStep: {
+        readLog: '打开上面失败的步骤，阅读其日志的最后几行——真正的错误就在那里。',
+        clearStuck: '清除卡住的部署，以免它挡住下一次部署。',
+        redeploy: '修复原因后，重新部署当前提交。',
+        checkRun: '查看上方的实时进度：如果某个步骤仍在运行，说明部署只是慢，并没有卡住。',
+        fixOrRollback: '修复原因后重新部署，或部署最后一个已知正常的提交以回滚。',
+        configureCredentials: '在下方添加 GitHub 部署凭据。',
+        checkTokenScope: '确认令牌拥有本仓库 Actions 的读写权限。',
+      },
       state: {
         unknown: '状态未知',
         running: '正在部署',

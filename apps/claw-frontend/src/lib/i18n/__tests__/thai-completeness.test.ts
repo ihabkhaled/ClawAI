@@ -25,6 +25,7 @@ function flatten(
 }
 
 const LEGITIMATE_UNCHANGED_VALUES = new Set([
+  '+14155550123',
   'you@example.com',
   'Gmail',
   'GitHub',
@@ -46,6 +47,7 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set([
   'NVIDIA',
   'P95',
   'PDF',
+  'github_pat_…',
   'llama.cpp',
   '18',
   '{"capability": 0.2, "domain": 0.1, ...}',

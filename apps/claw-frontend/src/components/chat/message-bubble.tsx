@@ -131,7 +131,7 @@ function MessageBubbleBase({
       >
         <div className={cn('flex items-center gap-2', isUser ? 'self-end' : 'self-start')}>
           <span className="text-muted-foreground text-xs">{roleLabel}</span>
-          <span className="text-muted-foreground/60 text-[10px] transition-opacity md:opacity-60 md:group-hover/bubble:opacity-100">
+          <span className="text-muted-foreground/60 touch:text-xs text-[10px] transition-opacity md:opacity-60 md:group-hover/bubble:opacity-100">
             {formatShortDateTime(message.createdAt)}
           </span>
         </div>

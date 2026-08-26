@@ -148,6 +148,19 @@ export const agentKeys = {
 - **No** raw color classes (`text-blue-500`) for semantic meaning — use design tokens.
 - Use `cn()` for combining conditional classes.
 - Responsive design: mobile-first with `sm:`, `md:`, `lg:` breakpoints.
+- **Anything that has to grow for a finger uses `touch:`, never `max-md:`.**
+  `touch:` is a custom variant declared in `globals.css` matching
+  `(hover: none) and (pointer: coarse)` as well as `max-width: 767px`. A width
+  test alone misses a phone in landscape, which reports 915x412 and silently
+  falls back to desktop sizing — the cause of most of the 2026-08-22 mobile
+  regression. Use it for touch targets (44px), form-control size (16px, or iOS
+  zooms the page on focus), and for switching a table to cards.
+  A test asserts `max-md:` never returns.
+- **Every grid names its base column count.** `grid gap-4 lg:grid-cols-2` and
+  plain `grid gap-3` both leave the mobile track implicit, and an implicit track
+  is sized to its content — which is how a 288px grid laid out a 350px card and
+  scrolled `main` sideways. Write `grid grid-cols-1 ...`; `grid-flow-*`,
+  `auto-cols-*` and `grid-rows-*` are the deliberate exceptions.
 
 ---
 

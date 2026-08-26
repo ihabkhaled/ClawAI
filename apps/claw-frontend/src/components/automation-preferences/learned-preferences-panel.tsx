@@ -38,7 +38,7 @@ export function LearnedPreferencesPanel({ t }: LearnedPreferencesPanelProps): Re
             >
               <div>
                 <p>{item.content}</p>
-                <p className="text-muted-foreground mt-1 text-[10px]">
+                <p className="touch:text-xs text-muted-foreground mt-1 text-[10px]">
                   {new Date(item.updatedAt).toLocaleString()}
                 </p>
               </div>

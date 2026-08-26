@@ -17,9 +17,9 @@ export function UsageOverviewCard({
       <CardHeader>
         <CardTitle className="text-lg">{t('billing.usage.title')}</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid grid-cols-1 gap-4">
         {isLoading ? (
-          <div className="grid gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <Skeleton className="h-8 w-full" />
             <Skeleton className="h-8 w-full" />
             <Skeleton className="h-8 w-full" />

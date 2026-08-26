@@ -27,6 +27,7 @@ describe('DeploymentStatusFileAdapter', () => {
       ENCRYPTION_KEY: 'a'.repeat(64),
       INTER_SERVICE_AUTH_TOKEN: 'b'.repeat(32),
       PAYMENT_SERVICE_URL: 'http://payment-service:4018',
+      CONNECTOR_SERVICE_URL: 'https://connector-service:4003',
       PUBLIC_SITE_URL: 'https://claw.local',
       CONTACT_EMAIL_ENABLED: 'false',
       CONTACT_EMAIL_PROVIDER: 'none',

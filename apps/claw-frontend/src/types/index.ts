@@ -429,7 +429,7 @@ export type {
   RepairResultCardProps,
   RecoveryStatsCardProps,
   RecoveryProviderTableProps,
-  RecoveryFallbackRowProps,
+  RecoveryFallbackTableProps,
   DecompositionResultCardProps,
   SubTaskResultCardProps,
   BestOfNResultCardProps,
@@ -543,6 +543,8 @@ export type {
   UseVirtualizedMessagesControllerParams,
   UseVirtualizedMessagesControllerReturn,
   UseFollowStreamingTokensParams,
+  UseProfilePageReturn,
+  UseEditUserFormReturn,
 } from './hook.types';
 export type {
   CandidateResult,
@@ -1054,3 +1056,25 @@ export type {
   UseChatShareMutationsReturn,
   UseShareChatDialogReturn,
 } from './chat-share-hook.types';
+
+export type {
+  ConnectorModelRow,
+  SetModelExposureRequest,
+  SetModelExposureResponse,
+  ModelExposureFilters,
+  UseModelExposureResult,
+  ModelExposureTableProps,
+  ModelExposureSectionProps,
+} from './model-exposure.types';
+
+export type {
+  FeedbackAttachment,
+  FeedbackPageContext,
+  FeedbackHistoryEntry,
+  FeedbackTicket,
+  FeedbackListResponse,
+  CreateFeedbackRequest,
+  CreateFeedbackResponse,
+  FeedbackListQuery,
+  FeedbackStatusCounts,
+} from './feedback.types';

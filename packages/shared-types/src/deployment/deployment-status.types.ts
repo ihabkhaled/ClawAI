@@ -1,3 +1,4 @@
+import { type DeploymentCredentialView } from './deployment-credential.types';
 import { type DeploymentPhase } from './deployment-phase.enum';
 import { type DeploymentState } from './deployment-state.enum';
 
@@ -45,6 +46,8 @@ export type DeploymentStatusView = {
    * paused the automatic lane, so production only moves on a manual dispatch.
    */
   automaticDeployEnabled: boolean;
+  /** Redacted description of the credentials manual deployment would use. */
+  credentials: DeploymentCredentialView;
 };
 
 /**

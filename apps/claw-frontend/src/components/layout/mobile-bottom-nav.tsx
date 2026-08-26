@@ -36,13 +36,13 @@ export function MobileBottomNav(): React.ReactElement {
             onClick={openSidebar}
             aria-label={t('nav.more')}
             className={cn(
-              'relative flex h-full min-h-11 w-full flex-col items-center justify-center gap-1 px-1 text-center text-[10px] font-medium leading-tight sm:text-xs',
+              'touch:text-xs relative flex h-full min-h-11 w-full flex-col items-center justify-center gap-1 px-1 text-center text-[10px] leading-tight font-medium sm:text-xs',
               'text-muted-foreground hover:text-foreground transition-colors',
               'focus-visible:ring-primary/40 focus-visible:ring-2 focus-visible:outline-none',
             )}
           >
             <Menu className="h-5 w-5 shrink-0" />
-            <span className="max-w-full whitespace-normal break-words">{t('nav.more')}</span>
+            <span className="max-w-full break-words whitespace-normal">{t('nav.more')}</span>
           </Button>
         </li>
       </ul>

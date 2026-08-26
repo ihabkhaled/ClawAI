@@ -45,7 +45,7 @@ export function PlanChangeDialog({
           <DialogDescription>{t('billing.planChange.description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {isQuoting ? <Skeleton className="h-24 w-full" /> : null}
           {!isQuoting && quote !== null ? <ProrationBreakdown quote={quote} t={t} /> : null}
 

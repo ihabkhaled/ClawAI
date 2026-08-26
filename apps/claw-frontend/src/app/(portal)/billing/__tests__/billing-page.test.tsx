@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import BillingPage from '@/app/(portal)/billing/page';
 import { BillingGateway, BillingInterval, SubscriptionStatus } from '@/enums/billing.enum';
+import type * as I18nModule from '@/lib/i18n';
 import type { UseBillingPageReturn } from '@/types/billing-hook.types';
 import type { BillingPlan, CurrentSubscription } from '@/types/billing.types';
 
@@ -11,6 +12,14 @@ const mockHook = vi.fn();
 
 vi.mock('@/hooks/billing/use-billing-page', () => ({
   useBillingPage: () => mockHook(),
+}));
+
+// The invoice list renders through DataTable, which reads its default empty
+// message from the locale context. The page itself takes `t` from the mocked
+// controller hook, so there is no provider in this tree.
+vi.mock('@/lib/i18n', async (importOriginal) => ({
+  ...(await importOriginal<typeof I18nModule>()),
+  useTranslation: () => ({ t: (key: string) => key }),
 }));
 
 const plan: BillingPlan = {

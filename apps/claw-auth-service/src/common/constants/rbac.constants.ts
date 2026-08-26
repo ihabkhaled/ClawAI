@@ -48,6 +48,7 @@ export const USER_DEFAULT_PERMISSIONS: Permission[] = [
   Permission.PIPELINE_LAB_USE,
   Permission.COST_ENSEMBLE_USE,
   Permission.ROLE_PACK_USE,
+  Permission.FEEDBACK_SUBMIT,
 ];
 
 // Slugs of the two system roles. Slugs intentionally equal the UserRole enum

@@ -25,7 +25,7 @@ export function ArchitectureServicesSection(): React.ReactElement {
             >
               <dt className="flex flex-wrap items-center gap-2">
                 <span className="text-foreground font-medium">{t(service.nameKey)}</span>
-                <span className="border-border text-muted-foreground rounded-full border px-2 py-0.5 font-mono text-[11px]">
+                <span className="border-border text-muted-foreground touch:text-xs rounded-full border px-2 py-0.5 font-mono text-[11px]">
                   {service.store}
                 </span>
               </dt>

@@ -36,10 +36,10 @@ export function Sidebar() {
         className={cn(
           'bg-card duration-normal ease-expo-out fixed z-50 flex flex-col transition-transform',
           'shadow-floating inset-x-0 top-auto bottom-0 h-[85dvh] rounded-t-2xl border-t',
-          'md:static md:visible md:inset-auto md:h-full md:w-[var(--sidebar-width)] md:translate-y-0 md:rounded-none md:border-e md:border-t-0 md:shadow-none',
+          'md:visible md:static md:inset-auto md:h-full md:w-[var(--sidebar-width)] md:translate-y-0 md:rounded-none md:border-e md:border-t-0 md:shadow-none',
           isOpen
             ? 'visible translate-y-0'
-            : 'max-md:invisible max-md:pointer-events-none max-md:translate-y-full',
+            : 'touch:invisible touch:pointer-events-none touch:translate-y-full',
         )}
       >
         <div className="flex h-16 items-center justify-between gap-2 px-4 sm:px-6">
@@ -52,7 +52,7 @@ export function Sidebar() {
             </div>
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-bold tracking-tight">{t('common.brandName')}</span>
-              <span className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
+              <span className="text-muted-foreground touch:text-xs text-[10px] font-medium tracking-wider uppercase">
                 {t('common.brandTagline')}
               </span>
             </div>
@@ -75,7 +75,7 @@ export function Sidebar() {
         </nav>
         <Separator />
         <div className="safe-bottom safe-bottom-base-nav flex flex-wrap items-center justify-between gap-2 px-4 pt-3">
-          <span className="bg-muted/60 text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
+          <span className="bg-muted/60 text-muted-foreground touch:text-xs rounded-full px-2 py-0.5 text-[11px] font-medium">
             {t('common.brandVersion', { version: APP_VERSION })}
           </span>
           <GpuBadge />

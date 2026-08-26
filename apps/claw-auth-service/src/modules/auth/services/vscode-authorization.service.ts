@@ -115,7 +115,10 @@ export class VscodeAuthorizationService {
       kind: VSCODE_AUTHORIZATION_CLIENT_KIND,
       name: record.clientName,
     });
-    return { tokens };
+    // The account travels with the tokens so the extension can tell a second
+    // window of the SAME user from a different account taking over the shared
+    // session slot. Only the id: nothing here needs the email or the name.
+    return { tokens, accountId: user.id };
   }
 
   private async getRequest(requestId: string): Promise<VscodeAuthorizationRequestRecord> {

@@ -4,6 +4,7 @@ import { Activity, ArrowLeft, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
+import { ModelExposureSection } from '@/components/admin/connectors/model-exposure-section';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { StatusBadge } from '@/components/common/status-badge';
@@ -70,15 +71,15 @@ export default function ConnectorDetailPage() {
           }
         />
         <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-destructive">
-            {error?.message ?? t('connectors.loadFailed')}
-          </p>
+          <p className="text-destructive text-sm">{error?.message ?? t('connectors.loadFailed')}</p>
         </div>
       </div>
     );
   }
 
-  const providerColor = PROVIDER_ICON_COLORS[connector.provider] ?? 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400';
+  const providerColor =
+    PROVIDER_ICON_COLORS[connector.provider] ??
+    'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400';
   const providerName = PROVIDER_DISPLAY_NAMES[connector.provider] ?? connector.provider;
 
   return (
@@ -140,7 +141,7 @@ export default function ConnectorDetailPage() {
               {t('connectors.enabled')}
             </Badge>
           ) : (
-            <Badge variant="outline" className="text-xs text-muted-foreground">
+            <Badge variant="outline" className="text-muted-foreground text-xs">
               {t('connectors.disabled')}
             </Badge>
           )}
@@ -151,9 +152,9 @@ export default function ConnectorDetailPage() {
         <Card>
           <CardContent className="flex items-center gap-4 pt-6">
             <StatusBadge status={testResult.status} />
-            <span className="text-sm text-muted-foreground">Latency: {testResult.latencyMs}ms</span>
+            <span className="text-muted-foreground text-sm">Latency: {testResult.latencyMs}ms</span>
             {testResult.errorMessage ? (
-              <span className="text-sm text-destructive">{testResult.errorMessage}</span>
+              <span className="text-destructive text-sm">{testResult.errorMessage}</span>
             ) : null}
           </CardContent>
         </Card>
@@ -161,7 +162,7 @@ export default function ConnectorDetailPage() {
 
       {syncResult ? (
         <Card>
-          <CardContent className="flex items-center gap-4 pt-6 text-sm text-muted-foreground">
+          <CardContent className="text-muted-foreground flex items-center gap-4 pt-6 text-sm">
             <span>Models found: {syncResult.modelsFound}</span>
             <span>Added: {syncResult.modelsAdded}</span>
             <span>Removed: {syncResult.modelsRemoved}</span>
@@ -169,12 +170,12 @@ export default function ConnectorDetailPage() {
         </Card>
       ) : null}
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">{t('connectors.configuration')}</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-3 text-sm">
+          <CardContent className="grid grid-cols-1 gap-3 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t('connectors.provider')}</span>
               <span className="font-medium">{providerName}</span>
@@ -211,16 +212,16 @@ export default function ConnectorDetailPage() {
             <CardTitle className="text-lg">{t('connectors.healthHistory')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {t('connectors.healthHistoryDesc')}
-            </p>
+            <p className="text-muted-foreground text-sm">{t('connectors.healthHistoryDesc')}</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{t('connectors.models')} ({models.length})</CardTitle>
+          <CardTitle className="text-lg">
+            {t('connectors.models')} ({models.length})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoadingModels ? (
@@ -230,6 +231,8 @@ export default function ConnectorDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      <ModelExposureSection connectorId={connectorId} />
 
       <ConnectorForm
         open={isFormOpen}

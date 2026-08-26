@@ -1,4 +1,4 @@
-import { DeploymentPhase, DeploymentState } from '@claw/shared-types';
+import { DeploymentCredentialSource, DeploymentPhase, DeploymentState } from '@claw/shared-types';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
@@ -22,6 +22,14 @@ const status = {
   isStale: false,
   manualTriggerEnabled: true,
   automaticDeployEnabled: true,
+  credentials: {
+    source: DeploymentCredentialSource.DATABASE,
+    repository: 'ihabkhaled/ClawAI',
+    ref: 'main',
+    tokenLastFour: 'abcd',
+    updatedAt: '2026-08-13T10:29:58Z',
+    isUsable: true,
+  },
 };
 
 describe('DeploymentStatusContent', () => {

@@ -16,40 +16,40 @@ export function ResearchProviderRow({
 }: ResearchProviderRowProps): React.ReactElement {
   const { t } = useTranslation();
   return (
-    <tr className="border-t max-md:block max-md:rounded-lg max-md:border">
+    <tr className="touch:block touch:rounded-lg touch:border border-t">
       <td
         data-label={t('research.providers.col.name')}
-        className="max-md:before:text-muted-foreground px-3 py-2 text-sm font-medium max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:font-normal max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:items-center touch:justify-between touch:gap-3 touch:before:text-xs touch:before:font-normal touch:before:content-[attr(data-label)] px-3 py-2 text-sm font-medium"
       >
         {provider.name}
       </td>
       <td
         data-label={t('research.providers.col.kind')}
-        className="max-md:before:text-muted-foreground px-3 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:items-center touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         <Badge variant="outline">{provider.kind}</Badge>
       </td>
       <td
         data-label={t('research.providers.col.baseUrl')}
-        className="text-muted-foreground px-3 py-2 text-sm break-all max-md:grid max-md:grid-cols-[auto_minmax(0,1fr)] max-md:gap-3 max-md:text-end max-md:before:text-start max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="text-muted-foreground touch:grid touch:grid-cols-[auto_minmax(0,1fr)] touch:gap-3 touch:text-end touch:before:text-start touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm break-all"
       >
         {provider.baseUrl}
       </td>
       <td
         data-label={t('research.providers.col.status')}
-        className="max-md:before:text-muted-foreground px-3 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:items-center touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         <Badge variant={provider.enabled ? 'default' : 'secondary'}>{provider.status}</Badge>
       </td>
       <td
         data-label={t('research.providers.col.secret')}
-        className="text-muted-foreground px-3 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="text-muted-foreground touch:flex touch:items-center touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-3 py-2 text-sm"
       >
         {provider.hasSecret ? t('research.providers.secretStored') : '—'}
       </td>
       <td
         data-label={t('research.providers.col.actions')}
-        className="px-3 py-2 text-right max-md:block max-md:border-t"
+        className="touch:block touch:border-t px-3 py-2 text-right"
       >
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Button

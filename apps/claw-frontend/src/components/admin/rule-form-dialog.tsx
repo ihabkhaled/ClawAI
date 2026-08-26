@@ -29,10 +29,14 @@ export function RuleFormDialog({
   submitErrorMessage,
   t,
 }: RuleFormDialogProps): ReactElement {
-  const { state, setField, fieldErrors, buildCreateRequest, buildUpdateRequest } =
-    useRuleForm(initial ?? null);
+  const { state, setField, fieldErrors, buildCreateRequest, buildUpdateRequest } = useRuleForm(
+    initial ?? null,
+  );
 
-  const titleKey = mode === AdminFormMode.CREATE ? 'adminAutomation.rules.createTitle' : 'adminAutomation.rules.editTitle';
+  const titleKey =
+    mode === AdminFormMode.CREATE
+      ? 'adminAutomation.rules.createTitle'
+      : 'adminAutomation.rules.editTitle';
   const descKey =
     mode === AdminFormMode.CREATE
       ? 'adminAutomation.rules.createDescription'
@@ -55,13 +59,13 @@ export function RuleFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>{t(titleKey)}</DialogTitle>
           <DialogDescription>{t(descKey)}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="rule-name" className="text-sm font-medium">
               {t('adminAutomation.rules.nameLabel')}
             </label>
@@ -73,13 +77,13 @@ export function RuleFormDialog({
               placeholder="github-pr-opened"
               aria-invalid={fieldErrors.name !== undefined}
             />
-            <p className="text-xs text-muted-foreground">{t('adminAutomation.rules.nameHelp')}</p>
+            <p className="text-muted-foreground text-xs">{t('adminAutomation.rules.nameHelp')}</p>
             {fieldErrors.name !== undefined ? (
-              <p className="text-xs text-destructive">{fieldErrors.name}</p>
+              <p className="text-destructive text-xs">{fieldErrors.name}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="rule-description" className="text-sm font-medium">
               {t('adminAutomation.rules.descriptionLabel')}
             </label>
@@ -90,11 +94,11 @@ export function RuleFormDialog({
               rows={2}
             />
             {fieldErrors.description !== undefined ? (
-              <p className="text-xs text-destructive">{fieldErrors.description}</p>
+              <p className="text-destructive text-xs">{fieldErrors.description}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="rule-event-type" className="text-sm font-medium">
               {t('adminAutomation.rules.eventType')}
             </label>
@@ -104,14 +108,16 @@ export function RuleFormDialog({
               onChange={(e) => setField('eventType', e.target.value)}
               aria-invalid={fieldErrors.eventType !== undefined}
             />
-            <p className="text-xs text-muted-foreground">{t('adminAutomation.rules.eventTypeHelp')}</p>
+            <p className="text-muted-foreground text-xs">
+              {t('adminAutomation.rules.eventTypeHelp')}
+            </p>
             {fieldErrors.eventType !== undefined ? (
-              <p className="text-xs text-destructive">{fieldErrors.eventType}</p>
+              <p className="text-destructive text-xs">{fieldErrors.eventType}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2 md:grid-cols-2 md:gap-4">
-            <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="rule-provider-regex" className="text-sm font-medium">
                 {t('adminAutomation.rules.providerRegex')}
               </label>
@@ -122,10 +128,10 @@ export function RuleFormDialog({
                 aria-invalid={fieldErrors.providerRegex !== undefined}
               />
               {fieldErrors.providerRegex !== undefined ? (
-                <p className="text-xs text-destructive">{fieldErrors.providerRegex}</p>
+                <p className="text-destructive text-xs">{fieldErrors.providerRegex}</p>
               ) : null}
             </div>
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <label htmlFor="rule-content-regex" className="text-sm font-medium">
                 {t('adminAutomation.rules.contentRegex')}
               </label>
@@ -136,12 +142,12 @@ export function RuleFormDialog({
                 aria-invalid={fieldErrors.contentRegex !== undefined}
               />
               {fieldErrors.contentRegex !== undefined ? (
-                <p className="text-xs text-destructive">{fieldErrors.contentRegex}</p>
+                <p className="text-destructive text-xs">{fieldErrors.contentRegex}</p>
               ) : null}
             </div>
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="rule-action-kind" className="text-sm font-medium">
               {t('adminAutomation.rules.actionKind')}
             </label>
@@ -151,13 +157,15 @@ export function RuleFormDialog({
               onChange={(e) => setField('actionKindToSuggest', e.target.value)}
               aria-invalid={fieldErrors.actionKindToSuggest !== undefined}
             />
-            <p className="text-xs text-muted-foreground">{t('adminAutomation.rules.actionKindHelp')}</p>
+            <p className="text-muted-foreground text-xs">
+              {t('adminAutomation.rules.actionKindHelp')}
+            </p>
             {fieldErrors.actionKindToSuggest !== undefined ? (
-              <p className="text-xs text-destructive">{fieldErrors.actionKindToSuggest}</p>
+              <p className="text-destructive text-xs">{fieldErrors.actionKindToSuggest}</p>
             ) : null}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="rule-priority" className="text-sm font-medium">
               {t('adminAutomation.rules.priorityLabel')}
             </label>
@@ -171,7 +179,7 @@ export function RuleFormDialog({
               aria-invalid={fieldErrors.priority !== undefined}
             />
             {fieldErrors.priority !== undefined ? (
-              <p className="text-xs text-destructive">{fieldErrors.priority}</p>
+              <p className="text-destructive text-xs">{fieldErrors.priority}</p>
             ) : null}
           </div>
 
@@ -187,7 +195,10 @@ export function RuleFormDialog({
           </div>
 
           {submitErrorMessage !== null ? (
-            <p className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm text-destructive" role="alert">
+            <p
+              className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-2 text-sm"
+              role="alert"
+            >
               {submitErrorMessage}
             </p>
           ) : null}

@@ -337,6 +337,13 @@ export type PlanFormProps = {
 
 export type ModelAccessEditorProps = {
   rows: ModelAccessRowState[];
+  /**
+   * Deployments an administrator has exposed, and therefore the only ones a
+   * plan may be given. Optional so the editor still renders while the list is
+   * loading; an empty list simply offers nothing to select, which is correct
+   * when no model has been exposed yet.
+   */
+  exposedModels?: Array<{ provider: string; modelKey: string; displayName: string }>;
   addRow: () => void;
   removeRow: (rowKey: string) => void;
   updateRow: <K extends keyof ModelAccessRowState>(

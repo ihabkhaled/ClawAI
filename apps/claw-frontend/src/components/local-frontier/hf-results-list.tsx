@@ -57,7 +57,7 @@ export function HfResultsList({
               )}
             >
               <span className="text-foreground truncate font-medium">{model.id}</span>
-              <span className="text-muted-foreground flex items-center gap-3 text-[10px]">
+              <span className="text-muted-foreground touch:text-xs flex items-center gap-3 text-[10px]">
                 <span className="inline-flex items-center gap-1">
                   <Download className="size-3" aria-hidden />
                   {formatHfCount(model.downloads)}
@@ -87,7 +87,7 @@ export function HfResultsList({
           </li>
         ) : null}
       </ul>
-      <p className="text-muted-foreground text-[10px]" aria-live="polite">
+      <p className="text-muted-foreground touch:text-xs text-[10px]" aria-live="polite">
         {resultsCountLabel}
       </p>
     </div>

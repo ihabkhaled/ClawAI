@@ -13,7 +13,7 @@ import { formatDateTimeSafe } from '@/utilities/date.utility';
 export function ProrationBreakdown({ quote, t }: ProrationBreakdownProps): ReactElement {
   if (quote.isScheduledForPeriodEnd) {
     return (
-      <div className="border-border grid gap-2 rounded-lg border p-3 text-sm">
+      <div className="border-border grid grid-cols-1 gap-2 rounded-lg border p-3 text-sm">
         <p>
           {t('billing.proration.scheduled', {
             date: formatDateTimeSafe(quote.scheduledEffectiveAt),
@@ -25,7 +25,7 @@ export function ProrationBreakdown({ quote, t }: ProrationBreakdownProps): React
   }
 
   return (
-    <dl className="border-border grid gap-2 rounded-lg border p-3 text-sm">
+    <dl className="border-border grid grid-cols-1 gap-2 rounded-lg border p-3 text-sm">
       <div className="flex items-center justify-between gap-2">
         <dt className="text-muted-foreground">{t('billing.proration.unusedCredit')}</dt>
         <dd>-{formatMinorAmount(quote.unusedCurrentCreditMinor, quote.currency)}</dd>

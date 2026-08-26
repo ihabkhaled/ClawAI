@@ -10,6 +10,9 @@ import {
   type UserEntitlements,
 } from '@claw/shared-entitlements';
 import { Permission } from '@claw/shared-types';
+import { ModelExposureClient } from '../clients/model-exposure.client';
+import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
+import { ModelAuthorizationMetricsService } from './model-authorization-metrics.service';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors';
 import { type SendMessageAccessOptions } from '../types/access-control.types';
@@ -22,6 +25,8 @@ import { type SendMessageAccessOptions } from '../types/access-control.types';
 export class AccessControlService {
   private readonly logger = new Logger(AccessControlService.name);
   private readonly adapter: EntitlementsAdapter;
+  private readonly exposure = new ModelExposureClient();
+  private readonly metrics = new ModelAuthorizationMetricsService();
 
   constructor() {
     this.adapter = new EntitlementsAdapter({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL });
@@ -44,7 +49,23 @@ export class AccessControlService {
       this.assertPermissionGranted(ent, opts.requirePermission, userId);
     }
     if (opts.provider && opts.model) {
-      this.assertModelAllowed(ent, opts.provider, opts.model, userId);
+      // Timed as one decision because that is what the caller waits on: the
+      // plan check is local, the exposure check is a network hop, and only the
+      // sum tells you what the gate costs a message.
+      const startedAt = Date.now();
+      try {
+        this.assertModelAllowed(ent, opts.provider, opts.model, userId);
+      } catch (error) {
+        this.metrics.recordDenied(ModelAuthorizationDenialReason.PLAN, Date.now() - startedAt);
+        throw error;
+      }
+      try {
+        await this.assertModelExposed(opts.provider, opts.model, userId);
+      } catch (error) {
+        this.metrics.recordDenied(ModelAuthorizationDenialReason.EXPOSURE, Date.now() - startedAt);
+        throw error;
+      }
+      this.metrics.recordAllowed(Date.now() - startedAt);
     }
     this.assertQuotaRemaining(ent, userId);
     return ent;
@@ -63,13 +84,10 @@ export class AccessControlService {
   // (assertCompareAccess) already checks `allowCriticReview` — this second
   // check ensures a future code path that bypasses the boundary (e.g. an
   // internal helper, a re-run, a regression) still cannot run the critic
-  // without the plan unlock. Fail-OPEN on entitlement-service errors so an
-  // auth outage never breaks the compare lane.
+  // without the plan unlock. Fails CLOSED: resolve() raises a 503 when entitlements cannot be reached,
+  // and an unresolvable entitlement must not quietly unlock a paid feature.
   async assertCanUseCritic(userId: string): Promise<void> {
     const ent = await this.resolve(userId);
-    if (!ent) {
-      return; // fail-open
-    }
     this.assertFeatureEnabled(ent, 'allowCriticReview', userId);
   }
 
@@ -78,13 +96,10 @@ export class AccessControlService {
   // Combines the plan-level `allowResearchMode` unlock with the RESEARCH_USE
   // RBAC permission so a USER without RESEARCH_USE or on a plan that does not
   // unlock research gets a 403 before any enricher / research-service hop runs.
-  // Fail-OPEN on entitlement-service errors so an auth outage never breaks
-  // chat — the auth-service stays the hard source of truth once reachable.
+  // Fails CLOSED: resolve() raises a 503 when entitlements cannot be reached,
+  // and an unresolvable entitlement must not quietly unlock a paid feature.
   async assertResearchAccess(userId: string): Promise<void> {
     const ent = await this.resolve(userId);
-    if (!ent) {
-      return; // fail-open
-    }
     this.assertFeatureEnabled(ent, 'allowResearchMode', userId);
     this.assertPermissionGranted(ent, Permission.RESEARCH_USE, userId);
   }
@@ -193,6 +208,23 @@ export class AccessControlService {
     throw new BusinessException(
       'The selected model is not available on your plan',
       'MODEL_NOT_ALLOWED_FOR_PLAN',
+      HttpStatus.FORBIDDEN,
+    );
+  }
+
+  // The plan check answers "is this model on the user's plan". It cannot answer
+  // "does ClawAI still offer this model at all", because plan rows are plain
+  // strings and an administrator can unexpose a deployment long after a plan was
+  // configured. Without this, a crafted request naming an unexposed model still
+  // reached the provider.
+  private async assertModelExposed(provider: string, model: string, userId: string): Promise<void> {
+    if (await this.exposure.isExposed(provider, model)) {
+      return;
+    }
+    this.logger.warn(`assertCanSendMessage: unexposed model user=${userId} ${provider}/${model}`);
+    throw new BusinessException(
+      'The selected model is not available',
+      'MODEL_NOT_EXPOSED',
       HttpStatus.FORBIDDEN,
     );
   }

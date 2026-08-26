@@ -11,6 +11,7 @@ import { ROUTES } from './routes.constants';
 export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   // Admin specific pages (MUST precede the /admin catch-all below).
   { prefix: ROUTES.ADMIN_USERS, permission: Permission.ADMIN_USERS_MANAGE },
+  { prefix: ROUTES.ADMIN_FEEDBACK, permission: Permission.ADMIN_FEEDBACK_MANAGE },
   {
     prefix: ROUTES.ADMIN_AI_ACTION_POLICIES,
     permission: Permission.ADMIN_WORKSPACE_AUTOMATION_MANAGE,

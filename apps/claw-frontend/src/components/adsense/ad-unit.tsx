@@ -37,7 +37,7 @@ export function AdUnit({
       style={{ minHeight: reservedHeight }}
       aria-label={label}
     >
-      <p className="text-muted-foreground mb-1 text-center text-[10px] tracking-wide uppercase">
+      <p className="text-muted-foreground touch:text-xs mb-1 text-center text-[10px] tracking-wide uppercase">
         {label}
       </p>
       <ins

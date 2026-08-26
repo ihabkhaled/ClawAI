@@ -2,10 +2,7 @@ import { StreamBottleneckStage } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { RuntimeBottleneckBreakdownProps } from '@/types';
-import {
-  buildBottleneckSegments,
-  formatBottleneckDuration,
-} from '@/utilities';
+import { buildBottleneckSegments, formatBottleneckDuration } from '@/utilities';
 
 // Horizontal stacked-segment bar showing the relative weight of the
 // modelLoad / promptEval / generation stages once a local-runtime stream
@@ -39,11 +36,11 @@ export function RuntimeBottleneckBreakdown({
       role="group"
       aria-label={t('runtimeProgress.bottleneck.ariaLabel')}
     >
-      <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+      <div className="touch:text-xs text-muted-foreground flex items-center justify-between text-[11px] font-medium">
         <span>{t('runtimeProgress.bottleneck.title')}</span>
         <span>{formatBottleneckDuration(total)}</span>
       </div>
-      <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
+      <div className="bg-muted flex h-2 w-full overflow-hidden rounded-full">
         {segments.map((seg) => {
           const widthPct = total > 0 ? (seg.durationMs / total) * 100 : 0;
           const isBottleneck = seg.stage === bottleneckStage;
@@ -55,7 +52,7 @@ export function RuntimeBottleneckBreakdown({
                 seg.stage === StreamBottleneckStage.MODEL_LOAD && 'bg-amber-500/80',
                 seg.stage === StreamBottleneckStage.PROMPT_EVAL && 'bg-sky-500/80',
                 seg.stage === StreamBottleneckStage.GENERATION && 'bg-emerald-500/80',
-                isBottleneck && 'ring-2 ring-offset-0 ring-foreground/40',
+                isBottleneck && 'ring-foreground/40 ring-2 ring-offset-0',
               )}
               style={{ width: `${String(widthPct)}%` }}
               title={`${stageLabels[seg.stage] ?? seg.stage}: ${formatBottleneckDuration(seg.durationMs)}`}
@@ -63,7 +60,7 @@ export function RuntimeBottleneckBreakdown({
           );
         })}
       </div>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
+      <div className="touch:text-xs text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
         {segments.map((seg) => (
           <span key={seg.stage} className="inline-flex items-center gap-1">
             <span
@@ -75,7 +72,7 @@ export function RuntimeBottleneckBreakdown({
               )}
               aria-hidden
             />
-            <span className="font-medium text-foreground">
+            <span className="text-foreground font-medium">
               {stageLabels[seg.stage] ?? seg.stage}
             </span>
             <span>{formatBottleneckDuration(seg.durationMs)}</span>

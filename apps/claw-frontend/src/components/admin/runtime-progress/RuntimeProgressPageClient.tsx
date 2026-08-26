@@ -50,12 +50,14 @@ export function RuntimeProgressPageClient({
               />
               {t('runtimeProgress.diagnostics.refreshAll')}
             </Button>
-            <span className="text-muted-foreground text-[11px]">{lastUpdatedLabel}</span>
+            <span className="text-muted-foreground touch:text-xs text-[11px]">
+              {lastUpdatedLabel}
+            </span>
           </div>
         ) : null}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <RuntimeProbeCard
           titleKey="runtimeProgress.diagnostics.ollamaTitle"
           report={ollama.data}

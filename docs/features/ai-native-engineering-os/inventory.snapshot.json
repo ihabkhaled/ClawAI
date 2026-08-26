@@ -526,6 +526,46 @@
           "source": "apps/claw-audit-service/src/modules/audits/controllers/audits.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/feedback",
+          "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/feedback/admin",
+          "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/feedback/admin/:id",
+          "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/feedback/admin/:id/attachments/:fileId",
+          "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/feedback/admin/:id/status",
+          "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/feedback/admin/stats",
+          "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback-admin.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/feedback/mine",
+          "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/feedback/mine/:id",
+          "source": "apps/claw-audit-service/src/modules/feedback/controllers/feedback.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-audit-service/src/modules/health/controllers/health.controller.ts"
@@ -563,8 +603,23 @@
           "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
         },
         {
+          "method": "DELETE",
+          "route": "/admin/deployment/credentials",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
+          "method": "PUT",
+          "route": "/admin/deployment/credentials",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/admin/deployment/reset",
+          "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/deployment/run",
           "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
         },
         {
@@ -1115,6 +1170,11 @@
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/internal/chat/model-authorization-metrics",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-internal.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/internal/chat/threads/seeded",
           "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads-internal.controller.ts"
@@ -1194,6 +1254,11 @@
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
         },
         {
+          "method": "PUT",
+          "route": "/connectors/:id/models/exposure",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/connectors/:id/sync",
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
@@ -1226,6 +1291,11 @@
         {
           "method": "GET",
           "route": "/internal/connectors/models-snapshot",
+          "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/connectors/models/validate-exposed",
           "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
         }
       ],
@@ -3350,6 +3420,7 @@
       {
         "files": [
           "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.feedback-e2e.yml",
           "docker/docker-compose.prod.services.yml"
         ],
         "name": "audit-service"
@@ -3357,6 +3428,7 @@
       {
         "files": [
           "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.feedback-e2e.yml",
           "docker/docker-compose.prod.services.yml"
         ],
         "name": "auth-service"
@@ -3413,6 +3485,7 @@
       {
         "files": [
           "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.feedback-e2e.yml",
           "docker/docker-compose.prod.services.yml"
         ],
         "name": "frontend"
@@ -5685,6 +5758,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "CONNECTOR_MODEL_EXPOSURE_CHANGED",
+        "pattern": "connector.model_exposure_changed",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "CONNECTOR_SYNCED",
         "pattern": "connector.synced",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -6362,6 +6440,11 @@
         "route": "/admin/deployment"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/feedback/page.tsx",
+        "kind": "page",
+        "route": "/admin/feedback"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/page.tsx",
         "kind": "page",
         "route": "/admin"
@@ -6657,6 +6740,11 @@
         "route": "/plan"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/profile/page.tsx",
+        "kind": "page",
+        "route": "/profile"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/research/providers/page.tsx",
         "kind": "page",
         "route": "/research/providers"
@@ -6935,7 +7023,7 @@
           "file": "rules/02-monorepo-and-workspace-ownership.md"
         },
         {
-          "bytes": 8709,
+          "bytes": 9255,
           "file": "rules/03-frontend-rules.md"
         },
         {
@@ -7335,7 +7423,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4597
+        "value": 4742
       },
       "localeCount": 16,
       "locales": [
@@ -7364,6 +7452,16 @@
           "confidence": "verified",
           "source": "apps/claw-audit-service/src",
           "value": "AuditLog"
+        },
+        {
+          "confidence": "verified",
+          "source": "apps/claw-audit-service/src",
+          "value": "FeedbackCounter"
+        },
+        {
+          "confidence": "verified",
+          "source": "apps/claw-audit-service/src",
+          "value": "FeedbackTicket"
         },
         {
           "confidence": "verified",
@@ -7535,6 +7633,12 @@
         "location": "/api/v1/context-packs",
         "port": 4005,
         "service": "memory-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "/api/v1/feedback",
+        "port": 4007,
+        "service": "audit-service",
         "source": "infra/nginx/locations.conf"
       },
       {
@@ -7721,6 +7825,11 @@
       {
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "ADMIN_FEEDBACK_MANAGE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "ADMIN_LOGS_VIEW"
       },
       {
@@ -7832,6 +7941,11 @@
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "ESCALATION_CHAIN_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "FEEDBACK_SUBMIT"
       },
       {
         "confidence": "verified",
@@ -8143,6 +8257,11 @@
       },
       "claw-auth-service": {
         "models": [
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "DeploymentCredential"
+          },
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
@@ -8990,7 +9109,7 @@
       },
       "@claw/shared-entitlements": {
         "runner": "jest",
-        "testFiles": 3
+        "testFiles": 4
       },
       "@claw/shared-rabbitmq": {
         "runner": "jest",
@@ -9010,7 +9129,7 @@
       },
       "claw-audit-service": {
         "runner": "jest",
-        "testFiles": 15
+        "testFiles": 21
       },
       "claw-auth-service": {
         "runner": "jest",
@@ -9018,7 +9137,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 98
+        "testFiles": 101
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -9038,7 +9157,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 362
+        "testFiles": 372
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9783,19 +9902,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 602,
+    "endpointCount": 616,
     "envVarCount": 347,
-    "eventCount": 168,
-    "frontendRouteCount": 123,
+    "eventCount": 169,
+    "frontendRouteCount": 125,
     "localeCount": 16,
-    "nginxRouteCount": 54,
-    "permissionCount": 47,
+    "nginxRouteCount": 55,
+    "permissionCount": 49,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 4,
-    "totalTestFiles": 1006,
+    "totalTestFiles": 1026,
     "workspaceCount": 25
   }
 }

@@ -584,6 +584,16 @@
     },
     {
       "consumers": [
+        "claw-chat-service"
+      ],
+      "key": "CONNECTOR_MODEL_EXPOSURE_CHANGED",
+      "pattern": "connector.model_exposure_changed",
+      "producers": [
+        "claw-connector-service"
+      ]
+    },
+    {
+      "consumers": [
         "claw-audit-service",
         "claw-routing-service"
       ],

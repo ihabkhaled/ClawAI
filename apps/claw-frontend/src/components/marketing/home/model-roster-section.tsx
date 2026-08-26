@@ -40,7 +40,9 @@ export function ModelRosterSection(): React.ReactElement {
                 className="border-border bg-card flex min-w-0 flex-col rounded-md border px-3 py-2"
               >
                 <span className="text-foreground truncate text-sm font-medium">{model.label}</span>
-                <span className="text-muted-foreground truncate text-[11px]">{model.provider}</span>
+                <span className="text-muted-foreground touch:text-xs truncate text-[11px]">
+                  {model.provider}
+                </span>
               </li>
             ))}
           </ul>

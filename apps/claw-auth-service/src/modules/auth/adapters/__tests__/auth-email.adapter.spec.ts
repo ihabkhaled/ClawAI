@@ -39,6 +39,7 @@ function emailConfig(overrides: Partial<AppConfigType> = {}): AppConfigType {
     ENCRYPTION_KEY: 'a'.repeat(64),
     INTER_SERVICE_AUTH_TOKEN: 'b'.repeat(32),
     PAYMENT_SERVICE_URL: 'http://payment-service:4018',
+    CONNECTOR_SERVICE_URL: 'https://connector-service:4003',
     PUBLIC_SITE_URL: 'https://claw-ai.co',
     CONTACT_EMAIL_ENABLED: 'true',
     CONTACT_EMAIL_PROVIDER: 'smtp',

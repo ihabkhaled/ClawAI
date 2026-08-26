@@ -10,6 +10,7 @@ import type { ModelAccessEditorProps } from '@/types';
 
 export function ModelAccessEditor({
   rows,
+  exposedModels,
   addRow,
   removeRow,
   updateRow,
@@ -20,37 +21,57 @@ export function ModelAccessEditor({
   t,
 }: ModelAccessEditorProps): ReactElement {
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       {rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+        <p className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
           {t('adminPlans.modelAccess.empty')}
         </p>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {rows.map((row) => (
-            <div key={row.rowKey} className="grid gap-3 rounded-lg border border-border p-3">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="grid gap-1">
-                  <label htmlFor={`provider-${row.rowKey}`} className="text-xs font-medium">
-                    {t('adminPlans.modelAccess.provider')}
-                  </label>
-                  <Input
-                    id={`provider-${row.rowKey}`}
-                    value={row.provider}
-                    onChange={(e) => updateRow(row.rowKey, 'provider', e.target.value)}
-                    placeholder="anthropic"
-                  />
-                </div>
-                <div className="grid gap-1">
-                  <label htmlFor={`model-${row.rowKey}`} className="text-xs font-medium">
+            <div
+              key={row.rowKey}
+              className="border-border grid grid-cols-1 gap-3 rounded-lg border p-3"
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-1 sm:col-span-2">
+                  <label htmlFor={`deployment-${row.rowKey}`} className="text-xs font-medium">
                     {t('adminPlans.modelAccess.model')}
                   </label>
-                  <Input
-                    id={`model-${row.rowKey}`}
-                    value={row.model}
-                    onChange={(e) => updateRow(row.rowKey, 'model', e.target.value)}
-                    placeholder="claude-sonnet-4"
-                  />
+                  {/* Selection, not free text. Only deployments an administrator
+                      has exposed are offered; anything else cannot be assigned
+                      and the server refuses it anyway. A row already saved with
+                      a model that is no longer exposed stays visible below so it
+                      can be seen and removed, but it is never re-selectable. */}
+                  <select
+                    id={`deployment-${row.rowKey}`}
+                    className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+                    value={row.provider && row.model ? `${row.provider}/${row.model}` : ''}
+                    onChange={(e) => {
+                      const [provider, ...rest] = e.target.value.split('/');
+                      updateRow(row.rowKey, 'provider', provider ?? '');
+                      updateRow(row.rowKey, 'model', rest.join('/'));
+                    }}
+                  >
+                    <option value="">{t('adminPlans.modelAccess.selectModel')}</option>
+                    {(exposedModels ?? []).map((option) => (
+                      <option
+                        key={`${option.provider}/${option.modelKey}`}
+                        value={`${option.provider}/${option.modelKey}`}
+                      >
+                        {option.displayName} — {option.provider}/{option.modelKey}
+                      </option>
+                    ))}
+                  </select>
+                  {row.provider &&
+                  row.model &&
+                  !(exposedModels ?? []).some(
+                    (option) => option.provider === row.provider && option.modelKey === row.model,
+                  ) ? (
+                    <p className="text-destructive text-xs">
+                      {t('adminPlans.modelAccess.noLongerExposed')} {row.provider}/{row.model}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -99,7 +120,7 @@ export function ModelAccessEditor({
               </div>
 
               <div className="flex items-end justify-between gap-3">
-                <div className="grid gap-1">
+                <div className="grid grid-cols-1 gap-1">
                   <label htmlFor={`override-${row.rowKey}`} className="text-xs font-medium">
                     {t('adminPlans.modelAccess.dailyTokenLimitOverride')}
                   </label>
@@ -137,7 +158,7 @@ export function ModelAccessEditor({
 
       {saveErrorMessage !== null ? (
         <p
-          className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm text-destructive"
+          className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-2 text-sm"
           role="alert"
         >
           {saveErrorMessage}

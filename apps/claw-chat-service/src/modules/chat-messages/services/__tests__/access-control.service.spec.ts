@@ -3,6 +3,15 @@ import { AccessControlService } from '../access-control.service';
 const getEntitlements = jest.fn();
 const finalizeQuota = jest.fn();
 const recordFeatureUsage = jest.fn();
+// Exposure is a network call to connector-service; the harness stubs it so the
+// suite tests the gate's decision, not connectivity. Default: exposed.
+const isExposed = jest.fn().mockResolvedValue(true);
+
+jest.mock('../../clients/model-exposure.client', () => ({
+  ModelExposureClient: jest.fn().mockImplementation(() => ({
+    isExposed: (...args: unknown[]) => isExposed(...args),
+  })),
+}));
 
 jest.mock('@claw/shared-entitlements', () => {
   const actual = jest.requireActual('@claw/shared-entitlements');
@@ -79,13 +88,28 @@ describe('AccessControlService', () => {
     });
   });
 
-  it('ADMIN/unlimited bypasses quota and model checks', async () => {
+  it('ADMIN/unlimited bypasses quota and plan model checks, but not exposure', async () => {
     getEntitlements.mockResolvedValue(
       ent({ isAdmin: true, quota: { dailyLimit: 0, used: 0, remaining: 0, unlimited: true } }),
     );
+    isExposed.mockResolvedValue(true);
     await expect(
       service.assertCanSendMessage('u1', { provider: 'ANTHROPIC', model: 'claude-opus' }),
     ).resolves.toMatchObject({ isAdmin: true });
+    expect(isExposed).toHaveBeenCalledWith('ANTHROPIC', 'claude-opus');
+  });
+
+  it('refuses an unexposed model even for an administrator', async () => {
+    // Exposure is what ClawAI is willing to offer at all. A plan can widen who
+    // may use an offered model; it cannot make an unexposed one usable, and an
+    // admin bypass here would let a deployment nobody exposed reach a provider.
+    getEntitlements.mockResolvedValue(
+      ent({ isAdmin: true, quota: { dailyLimit: 0, used: 0, remaining: 0, unlimited: true } }),
+    );
+    isExposed.mockResolvedValue(false);
+    await expect(
+      service.assertCanSendMessage('u1', { provider: 'ANTHROPIC', model: 'claude-opus' }),
+    ).rejects.toMatchObject({ code: 'MODEL_NOT_EXPOSED' });
   });
 
   it('fails closed when the entitlements service is unreachable', async () => {

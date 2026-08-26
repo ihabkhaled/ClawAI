@@ -71,12 +71,7 @@ export function OrchestrationStageTimeline({
                 )}
                 aria-hidden="true"
               >
-                <Icon
-                  className={cn(
-                    'h-3.5 w-3.5',
-                    isActive ? 'animate-spin' : '',
-                  )}
-                />
+                <Icon className={cn('h-3.5 w-3.5', isActive ? 'animate-spin' : '')} />
               </span>
               {!isLast ? (
                 <span
@@ -92,29 +87,24 @@ export function OrchestrationStageTimeline({
 
             {/* Label + detail column. Collapses to dot-only under 480px when
                 collapseOnMobile is true. */}
-            <div
-              className={cn(
-                'min-w-0 pb-3',
-                collapseOnMobile ? 'max-[479px]:hidden' : '',
-              )}
-            >
+            <div className={cn('min-w-0 pb-3', collapseOnMobile ? 'max-[479px]:hidden' : '')}>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                <span className="font-medium text-foreground">{stage.label}</span>
+                <span className="text-foreground font-medium">{stage.label}</span>
                 {stage.actorName !== undefined && stage.actorName !== '' ? (
-                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  <span className="bg-muted touch:text-xs text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px]">
                     {stage.actorName}
                   </span>
                 ) : null}
               </div>
               {stage.detail !== undefined && stage.detail !== '' ? (
-                <p className="mt-0.5 line-clamp-2 text-muted-foreground">{stage.detail}</p>
+                <p className="text-muted-foreground mt-0.5 line-clamp-2">{stage.detail}</p>
               ) : null}
             </div>
 
             {/* Status pill column. Hidden when collapsed. */}
             <span
               className={cn(
-                'shrink-0 rounded-md px-1.5 py-0.5 text-[10px] uppercase tracking-wide',
+                'touch:text-xs shrink-0 rounded-md px-1.5 py-0.5 text-[10px] tracking-wide uppercase',
                 ORCHESTRATION_STAGE_PILL_CLASSES[stage.status],
                 collapseOnMobile ? 'max-[479px]:hidden' : '',
               )}

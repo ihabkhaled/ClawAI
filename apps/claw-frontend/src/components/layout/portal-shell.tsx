@@ -2,6 +2,7 @@
 
 import { ErrorBoundary } from '@/components/common/error-boundary';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
+import { FeedbackReporter } from '@/components/feedback/feedback-reporter';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { PortalContent } from '@/components/layout/portal-content';
 import { Sidebar } from '@/components/layout/sidebar';
@@ -65,6 +66,7 @@ export function PortalShell({ children }: { children: React.ReactNode }): React.
         </main>
       </div>
       <MobileBottomNav />
+      <FeedbackReporter />
     </div>
   );
 }

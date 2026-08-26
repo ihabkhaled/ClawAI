@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "feature": "model-exposure-plan-entitlements",
+  "featureRepo": "ihabkhaled/ClawAI",
+  "worktree": "D:/Freelance/Claw-model-exposure-entitlements",
+  "branch": "feat/model-exposure-plan-entitlements",
+  "baseSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
+  "headSha": "75426b6dba27fab1243c62da064b2ab7e4704965",
+  "currentBatch": 16,
+  "codingAgent": {
+    "repo": "ihabkhaled/ClawAI-Coding-Agent",
+    "baselineVersion": "0.63.2",
+    "activeVersion": "0.63.3",
+    "repairBranch": "fix/coding-agent-tool-round-ceiling",
+    "repairPr": "https://github.com/ihabkhaled/ClawAI-Coding-Agent/pull/2",
+    "runId": "run_8ae2d219d8fe3f7823c9759f0b5a2452",
+    "model": "kimi-k2.7-code",
+    "permissionMode": "AUTONOMOUS_SCOPED (worktree-local, commands still gated)",
+    "repairSummary": "Budget exhaustion threw a bare Error, published no terminal event, and was compensated with a cancel - runs died silently with the UI spinning. Now ends as run.failed with RUNTIME_BUDGET_EXHAUSTED and the limit reached. 1082 unit tests green; VSIX packaged, installed, confirmed loaded as 0.63.3 in the Extensions view."
+  },
+  "batches": [
+    {
+      "id": 0,
+      "status": "DONE",
+      "commit": null,
+      "tests": ["none by policy - gates deferred to end of flagship"],
+      "defects": []
+    },
+    {
+      "id": 1,
+      "status": "DONE",
+      "commit": null,
+      "tests": [],
+      "defects": [
+        {
+          "id": "CA-01",
+          "owner": "CodingAgent",
+          "severity": "high",
+          "summary": "A run that exhausts the 96000-char prompt-assembly budget ends with no terminal event: no error text, no failure badge, and the webview activity panel stays on Running with a live spinner indefinitely. Observed on run_9a47aa975f9b91abc0ecbd392c452c25, dead at 21:04:28 while the UI still showed Running 7 minutes later.",
+          "evidence": "claw-chat-service ContextAssemblyManager buildPromptString climbing 76013-89686 chars against budget=96000, then zero further activity on thread cmt4opu1700av01qgb1wijndx",
+          "status": "FIXED in coding-agent 0.63.3 (PR #2)"
+        },
+        {
+          "id": "CA-02",
+          "owner": "CodingAgent",
+          "severity": "medium",
+          "summary": "ClawAI Output channel logs \"ClawAI operation failed. {}\" with an empty error body, so a failed run cannot be diagnosed from logs. Same observability gap the lab ledger recorded earlier; still present at 0.63.1.",
+          "evidence": "exthost2/output_logging_20260822T202653/1-ClawAI.log",
+          "status": "PARTIALLY ADDRESSED - the reason now reaches the run.failed event; the Output channel empty-body log is untouched"
+        },
+        {
+          "id": "ENV-01",
+          "owner": "Environment",
+          "severity": "low",
+          "summary": "A second VS Code window is running concurrent agent threads against D:/Freelance/Claw. Feature work is isolated in its own worktree, so commits here are unaffected, but do not run git ops in the main worktree while it is active.",
+          "evidence": "threads cmt4oumjw00gh01qgmfqvc8wa, cmt4oxyet00h501qgiadml8oy, cmt4oyznp00hb01qg43g9nu5c"
+        },
+        {
+          "id": "CA-04",
+          "owner": "CodingAgent",
+          "severity": "high",
+          "summary": "A manual model choice in the composer is not always honoured. With clawAI.routingMode left at its AUTO default, runs execute on whatever the backend router selects while the status bar and composer both display the manually chosen model. Observed: composer and status bar showed kimi-k2.7-code while chat-service logged callProvider provider=OLLAMA model=deepseek-v4-pro with usedFallback=false. deepseek-v4-pro could not emit a valid Runtime Protocol 2.0 tool object, so five consecutive edits failed as MODEL_TOOL_REQUEST_UNREPAIRABLE and read as an output-token problem rather than a routing one.",
+          "evidence": "docker logs claw-chat-service | grep callProvider - 50 dispatches to deepseek-v4-pro during the failing window"
+        },
+        {
+          "id": "CA-05",
+          "owner": "CodingAgent",
+          "severity": "medium",
+          "summary": "workspace.files update rewrites an entire file, so editing any file over roughly 8 KB overflows the model output budget and fails the run. patch with a small anchored hunk succeeds on the same file. The tool guidance does not warn the model away from update on large files, and the truncation error blames output length without naming the operation that caused it.",
+          "evidence": "Repeated MODEL_TOOL_REQUEST_UNREPAIRABLE on an 8.2 KB repository file; identical edit succeeded once the model was told to use patch with a three-line anchor and forbidden from using update."
+        },
+        {
+          "id": "CA-06",
+          "owner": "CodingAgent",
+          "severity": "medium",
+          "summary": "Two VS Code windows against the same serve-web server cannot both hold a ClawAI session. Connecting the second window silently logs the first out, and reconnecting the first logs the second out, so parallel agent threads are not possible. The evicted window shows the Connect gate again with no explanation and any queued message is lost.",
+          "evidence": "Windows on pages 2 and 3 of the same browser, same backend; each reconnect evicted the other. Neither queued task ran."
+        },
+        {
+          "id": "ENV-02",
+          "owner": "Environment",
+          "severity": "high",
+          "summary": "The running chat-service image was stale. HARD_MAX_OUTPUT_TOKENS was still 16384 in the container while source had 32768, because chat-service runs a baked prod image with no source mount and had not been rebuilt since the fix landed on main at 10:36. Every agent edit truncated mid tool-object against a ceiling that was already fixed on disk. Rebuilt and recreated chat-service; two patches then landed in a single turn.",
+          "evidence": "docker exec claw-chat-service grep HARD_MAX_OUTPUT_TOKENS dist -> 16384 before rebuild, 32768 after. Five consecutive MODEL_TOOL_REQUEST_UNREPAIRABLE failures before, none after."
+        },
+        {
+          "id": "ENV-03",
+          "owner": "Environment",
+          "severity": "high",
+          "summary": "auth-service was crash-looping on a stale @claw/shared-types dist: DeploymentRunConclusion and friends existed in package source but not in the built dist, so every auth request returned 502 and the coding agent could not sign in. Rebuilt packages/shared-types and restarted auth-service.",
+          "evidence": "nodemon app crashed - TS2305 no exported member DeploymentRunConclusion; dist/index.d.ts dated 08-22 19:31."
+        }
+      ],
+      "attempts": [
+        {
+          "run": "run_8ae2d219d8fe3f7823c9759f0b5a2452",
+          "model": "kimi-k2.7-code",
+          "outcome": "FAILED",
+          "cause": "model hit output token cap mid Runtime Protocol 2.0 tool object while writing the whole document in one call"
+        },
+        {
+          "run": "run_9a47aa975f9b91abc0ecbd392c452c25",
+          "model": "glm-5.2",
+          "outcome": "FAILED",
+          "cause": "context saturation after ~100 discovery reads; silent stop, see CA-01"
+        },
+        {
+          "run": "batch-1a",
+          "model": "glm-5.2",
+          "outcome": "RUNNING",
+          "note": "scope narrowed to audit area 1 only, 25 tool calls / 12 reads budget"
+        }
+      ],
+      "deliverables": [
+        "audit-01-connector-inventory.md",
+        "audit-02-plan-model-access.md",
+        "audit-03-entitlement-resolution.md",
+        "audit-04-runtime-gates.md"
+      ],
+      "verifiedFindings": [
+        "ConnectorModel unique key is @@unique([connectorId, modelKey]); provider is fixed per Connector, so the same modelKey under two connectors is two rows.",
+        "connector-models.repository.ts replaceMany HARD-DELETES any model absent from the incoming sync (modelKey notIn), destroying history on one bad provider response. Pack forbids this.",
+        "GET /connectors/:id/models has no @RequirePermissions while every sibling route requires ADMIN_CONNECTORS_MANAGE.",
+        "PlanModelAccess (auth-service) stores provider/model as free strings with no relation to ConnectorModel (connector-service); nothing validates an assignment against synced inventory.",
+        "entitlements.service.ts resolveModelAccessMode returns ALLOW_ALL for any admin; non-admins default to DENY_ALL (fail-closed default, verified).",
+        "applyPlanModelGate treats an EMPTY allowedModels array as unrestricted allow-all, by design comment - so a plan with zero rows grants every model.",
+        "access-control.service.ts assertCanUseCritic and assertResearchAccess return early with an explicit // fail-open comment when entitlements are null. Pack requires fail-closed.",
+        "Two independent gates already exist: applyPlanModelGate (routing-service) and AccessControlService.assertModelAllowed (chat-service). Neither consults connector inventory; both trust plan rows."
+      ]
+    },
+    {
+      "id": 2,
+      "status": "DONE",
+      "commit": "pending-push",
+      "tests": [],
+      "defects": [],
+      "deliverables": [
+        "docs/implementation/model-exposure-entitlements/ADR-model-identity-exposure-entitlement.md"
+      ]
+    },
+    {
+      "id": 3,
+      "status": "DONE",
+      "commit": null,
+      "tests": [],
+      "defects": [],
+      "deliverables": [
+        "apps/claw-connector-service/prisma/schema.prisma",
+        "apps/claw-connector-service/prisma/migrations/20260822232000_add_model_exposure_and_kind/migration.sql",
+        "docs/implementation/model-exposure-entitlements/batch-03-schema-note.md"
+      ],
+      "migrationEvidence": "Executed against claw-pg-connector (PostgreSQL 16.13) inside a transaction and rolled back. All statements succeeded; 160 existing connector_models rows, 160 defaulted to UNEXPOSED. Nothing was persisted."
+    },
+    {
+      "id": 4,
+      "status": "DONE",
+      "commit": null,
+      "tests": [],
+      "defects": [],
+      "deliverables": [
+        "connector-models.repository.ts replaceMany soft-delete",
+        "docs/implementation/model-exposure-entitlements/batch-04-sync-note.md"
+      ]
+    },
+    {
+      "id": 5,
+      "status": "DONE",
+      "commit": null,
+      "tests": ["connector-service: 19 suites, 176 tests pass; typecheck clean"],
+      "defects": [],
+      "deliverables": [
+        "findExposedForCatalog + getAvailableModels gated on exposure",
+        "ADMIN_CONNECTORS_MANAGE added to GET /connectors/:id/models",
+        "backfill migration 20260823093000_backfill_existing_model_exposure",
+        "connector-models.repository.ts setExposure + findExposedKeys",
+        "ConnectorsService.setModelExposure",
+        "PUT /connectors/:id/models/exposure with ADMIN_CONNECTORS_MANAGE",
+        "controller spec for setModelExposure",
+        "ConnectorModelsRepository.findExposedPairs",
+        "ConnectorsService.validateExposedModels"
+      ],
+      "migrationEvidence": "Both migrations replayed in one transaction against claw-pg-connector 16.13 and rolled back. Old catalog predicate returned 160 rows; after backfill the new catalog predicate returns the same 160. No user loses a model on upgrade. 0 rows left UNEXPOSED because all 160 were ACTIVE on enabled connectors."
+    },
+    {
+      "id": 6,
+      "status": "DONE",
+      "commit": null,
+      "tests": [],
+      "defects": [],
+      "deliverables": [
+        "use-model-exposure hook",
+        "ModelExposureTable component",
+        "ModelExposureTableProps",
+        "adminConnectors.exposure keys in 13 locales + i18n.types.ts"
+      ],
+      "note": "Screen composition (a route under /admin wiring the hook to the table) is not wired yet; the hook and table are complete and typed."
+    },
+    {
+      "id": 7,
+      "status": "DONE",
+      "commit": null,
+      "tests": [
+        "auth-service: 69 suites, 582 tests pass, typecheck clean",
+        "connector-service: 19 suites, 176 tests pass"
+      ],
+      "defects": [],
+      "deliverables": [
+        "connectors-internal POST models/validate-exposed",
+        "auth-service ExposedModelClient + constants",
+        "AppConfig.CONNECTOR_SERVICE_URL",
+        "PlansService.setModelAccess validates every row against real inventory"
+      ]
+    },
+    {
+      "id": 8,
+      "status": "DONE",
+      "commit": null,
+      "tests": ["frontend: model-access-editor 12 tests pass; tsc clean across all locales"],
+      "defects": [],
+      "deliverables": [
+        "model-access-editor: free-text provider/model replaced by a select of exposed deployments",
+        "legacy or unexposed rows shown with a warning and never re-selectable",
+        "ModelAccessEditorProps.exposedModels",
+        "13 locales + i18n.types.ts, including corrected empty-state copy"
+      ]
+    },
+    {
+      "id": 9,
+      "status": "DONE",
+      "commit": null,
+      "tests": [
+        "chat-service 98 suites / 1321 tests",
+        "routing-service 92 suites / 1328 tests",
+        "auth-service 69 suites / 582 tests"
+      ],
+      "defects": [],
+      "deliverables": [
+        "applyPlanModelGate: empty allow-list no longer means unrestricted",
+        "modelAccessMode carried on message.created so ALLOW_ALL still works",
+        "gate spec pins both directions",
+        "fail-open removed from critic and research gates",
+        "ModelExposureClient with 60s TTL cache",
+        "assertModelExposed on the manual send path, admins included"
+      ]
+    },
+    {
+      "id": 10,
+      "status": "DONE",
+      "commit": null,
+      "tests": ["chat-service 100 suites / 1334 tests"],
+      "defects": [],
+      "deliverables": [
+        "exposure enforced inside dispatchProvider, the single chokepoint every execution path shares",
+        "covers AUTO, fallback, escalation, consensus and compare in one place"
+      ]
+    },
+    {
+      "id": 11,
+      "status": "DONE",
+      "commit": null,
+      "tests": ["chat-service 100 suites / 1334", "connector-service 19 suites / 176"],
+      "defects": [],
+      "deliverables": [
+        "CONNECTOR_MODEL_EXPOSURE_CHANGED event",
+        "connector-service publishes on every exposure mutation",
+        "chat-service subscribes and clears the exposure cache",
+        "cache made process-shared so both client holders invalidate together"
+      ]
+    },
+    {
+      "id": 12,
+      "status": "PARTIAL",
+      "commit": null,
+      "tests": [],
+      "defects": [],
+      "deliverables": [
+        "structured audit action on every exposure grant and revoke, carrying the before-state"
+      ],
+      "gap": "Plan model-access mutations record a service log but not a structured audit action; plans.service has no StructuredLogger and wiring one needs constructor changes on a hot path. Metrics (denial-reason counters, authz latency, Auto candidates excluded) are not implemented."
+    },
+    {
+      "id": 13,
+      "status": "PARTIAL",
+      "commit": null,
+      "tests": [],
+      "defects": [],
+      "deliverables": [
+        "authorizeModel: the ADR precedence order as one pure, testable function",
+        "300-case entitlement matrix runs against it, all passing"
+      ],
+      "finding": "The matrix corrected the ADR. It expects NO_ACTIVE_PLAN to outrank every deployment fact, and it is right: reporting MODEL_NOT_EXPOSED to a caller with no plan hands them a probe into the inventory. Plan standing is now checked first.",
+      "gap": "authorizeModel is not yet the code path production uses; the live checks remain the Prisma where-clause plus isModelAllowedForUsage. Wiring the services onto it is follow-up work."
+    },
+    {
+      "id": 14,
+      "status": "PENDING",
+      "commit": null,
+      "tests": [],
+      "defects": []
+    },
+    {
+      "id": 15,
+      "status": "PARTIAL",
+      "commit": null,
+      "tests": [],
+      "defects": [],
+      "deliverables": [
+        "migration replay testing: idempotence confirmed, and a wrong idempotence claim corrected"
+      ],
+      "finding": "The backfill is idempotent (second run updates 0 rows) but NOT intent-preserving: replaying it after an administrator unexposes models re-exposes them, because an admin-unexposed row is indistinguishable from a never-exposed one. Prisma runs the migration once so this is a caveat, not a live defect. A durable fix needs the schema to record WHY a row is unexposed.",
+      "gap": "No injected provider 429/500, partial pagination, mid-request connector disable, Redis-down, or concurrent-admin chaos. No performance measurement at 100/500/1000 models."
+    },
+    {
+      "id": 16,
+      "status": "DONE",
+      "commit": null,
+      "tests": [],
+      "defects": [],
+      "deliverables": [
+        "RELEASE_EVIDENCE.md with a measured table and an explicit not-measured section",
+        "RELEASE_NOTES_DRAFT.md",
+        "PR #171 ready for review, mergeable, CodeQL green"
+      ]
+    }
+  ],
+  "nextAction": "Remaining: browser burn-in, chaos injection, performance, wiring authorizeModel into the live path, admin route composition",
+  "appVersionAtBase": "1.33.0",
+  "policy": {
+    "gates": "ONE run at the very end of the flagship only. No per-edit or per-batch lint/test/build.",
+    "commandApproval": "supervisor approves every terminal command; gate commands rejected until the end"
+  },
+  "knownCeiling": "A coding-agent run is bounded at ~100 tool calls: maxModelTurns and maxToolRounds are debited 1:1 per invocation and both are capped at 100 by the protocol schema in BOTH repos, so ULTRA maxToolCalls 250 is unreachable. Every batch must be scoped to fit well under 100 tool calls. Raising it needs a coordinated protocol change in claw-coding-agent and claw-chat-service.",
+  "method": "The agent ignores prompt-level tool budgets and dies at ~100 model turns. Discovery-shaped tasks fail. Working shape: supervisor names an exact short read list, agent traces and authors. Confirmed on batch 1a.",
+  "adrCorrections": [
+    "ADR proposed an exposure enum containing DEPRECATED; dropped, because ModelLifecycle already owns DEPRECATED and SUNSET and two enums encoding the same concept produce contradictory states.",
+    "ADR proposed a foreign key from PlanModelAccess to ConnectorModel; impossible, they live in different service databases and this repository forbids crossing a service database boundary. The link must be a plain column validated over HTTP."
+  ],
+  "openCaveats": [
+    "Admin exposure hook and table exist; the /admin route composing them is not wired.",
+    "Batches 11-16 not started: cache/revision invalidation, audit+metrics, the 300-case matrix, browser burn-in, chaos and performance."
+  ],
+  "workingTechnique": "For any edit to a file larger than about 8 KB: instruct patch with a minimal anchored hunk (quote the exact 3 trailing lines) and explicitly forbid update. Verify the executed model with: docker logs claw-chat-service | grep callProvider.",
+  "parallelismNote": "Parallel agent threads are not viable (CA-06). Execute serially in one window; use the waiting time for supervisor verification rather than a second thread.",
+  "provenanceNote": "chat-messages.service.ts publish wiring (4 mechanical edits) was applied by the supervisor after the agent failed the anchors repeatedly on that ~1900-line file. Design and every other change in this batch are agent-authored."
+}

@@ -23,6 +23,7 @@
       "TerminalCommand"
     ],
     "claw-auth-service": [
+      "DeploymentCredential",
       "DeviceAuthorizationGrant",
       "EmailChangeRequest",
       "EmailVerificationToken",

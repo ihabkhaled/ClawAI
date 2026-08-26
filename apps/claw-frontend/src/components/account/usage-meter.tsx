@@ -9,7 +9,7 @@ import { computeUsagePercent, formatTokenCount } from '@/utilities';
 export function UsageMeter({ quota, t }: UsageMeterProps): ReactElement {
   if (quota.adminBypass) {
     return (
-      <div className="grid gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">{t('userUsage.dailyTokens')}</span>
           <span className="font-medium">{t('userUsage.adminBypass')}</span>
@@ -22,7 +22,7 @@ export function UsageMeter({ quota, t }: UsageMeterProps): ReactElement {
   const percent = computeUsagePercent(quota.used, quota.dailyLimit);
 
   return (
-    <div className="grid gap-2">
+    <div className="grid grid-cols-1 gap-2">
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">{t('userUsage.dailyTokens')}</span>
         <span className="font-medium">

@@ -25,28 +25,28 @@ export function AppConfigRow({
     config.authMode === WorkspaceProviderAuthMode.OAUTH2 &&
     config.status === WorkspaceProviderAppConfigStatus.READY;
   return (
-    <tr className="border-t max-md:block max-md:rounded-lg max-md:border">
+    <tr className="touch:block touch:rounded-lg touch:border border-t">
       <td
         data-label={t('workspaceProviders.appConfigs.columns.name')}
-        className="max-md:before:text-muted-foreground px-4 py-2 text-sm font-medium max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:font-normal max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:items-center touch:justify-between touch:gap-3 touch:before:text-xs touch:before:font-normal touch:before:content-[attr(data-label)] px-4 py-2 text-sm font-medium"
       >
         {config.name}
       </td>
       <td
         data-label={t('workspaceProviders.appConfigs.columns.provider')}
-        className="max-md:before:text-muted-foreground px-4 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:items-center touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-4 py-2 text-sm"
       >
         <Badge variant="outline">{config.provider}</Badge>
       </td>
       <td
         data-label={t('workspaceProviders.appConfigs.columns.authMode')}
-        className="max-md:before:text-muted-foreground px-4 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:items-center touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-4 py-2 text-sm"
       >
         <Badge variant="outline">{config.authMode}</Badge>
       </td>
       <td
         data-label={t('workspaceProviders.appConfigs.columns.status')}
-        className="max-md:before:text-muted-foreground px-4 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="touch:before:text-muted-foreground touch:flex touch:items-center touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-4 py-2 text-sm"
       >
         <Badge
           variant={
@@ -58,19 +58,19 @@ export function AppConfigRow({
       </td>
       <td
         data-label={t('workspaceProviders.appConfigs.columns.secret')}
-        className="text-muted-foreground px-4 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="text-muted-foreground touch:flex touch:items-center touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-4 py-2 text-sm"
       >
         {config.hasSecret ? t('workspaceProviders.appConfigs.secretStored') : '—'}
       </td>
       <td
         data-label={t('workspaceProviders.appConfigs.columns.lastValidated')}
-        className="text-muted-foreground px-4 py-2 text-sm max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:before:text-xs max-md:before:content-[attr(data-label)]"
+        className="text-muted-foreground touch:flex touch:items-center touch:justify-between touch:gap-3 touch:before:text-xs touch:before:content-[attr(data-label)] px-4 py-2 text-sm"
       >
         {formatOptionalIsoDate(config.lastValidatedAt)}
       </td>
       <td
         data-label={t('workspaceProviders.appConfigs.columns.actions')}
-        className="px-4 py-2 text-right max-md:block max-md:border-t"
+        className="touch:block touch:border-t px-4 py-2 text-right"
       >
         <div className="flex flex-wrap items-center justify-end gap-2">
           {canManage ? (

@@ -36,7 +36,7 @@ export function ResearchRunDetails({
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 px-2 text-xs text-muted-foreground"
+        className="text-muted-foreground h-7 px-2 text-xs"
         onClick={() => setOpen(true)}
       >
         <Search className="me-1 h-3.5 w-3.5" />
@@ -49,7 +49,7 @@ export function ResearchRunDetails({
             <DialogDescription>{t('research.results.description')}</DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex flex-wrap gap-2 text-xs">
             <Badge variant="outline">{researchRun.workflow}</Badge>
             <Badge variant="outline">{researchRun.bundle.mode}</Badge>
             <Badge variant="outline">
@@ -66,15 +66,15 @@ export function ResearchRunDetails({
             ) : null}
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div className="rounded border p-3">
-              <div className="text-xs font-medium text-muted-foreground">
+              <div className="text-muted-foreground text-xs font-medium">
                 {t('research.results.query')}
               </div>
               <p className="mt-1 text-sm">{researchRun.intent}</p>
             </div>
             <div className="rounded border p-3">
-              <div className="text-xs font-medium text-muted-foreground">
+              <div className="text-muted-foreground text-xs font-medium">
                 {t('research.results.evidenceCount')}
               </div>
               <p className="mt-1 text-sm">{bundle.items.length}</p>
@@ -82,7 +82,7 @@ export function ResearchRunDetails({
           </div>
 
           <div className="rounded border p-3">
-            <div className="mb-2 text-xs font-medium text-muted-foreground">
+            <div className="text-muted-foreground mb-2 text-xs font-medium">
               {t('research.results.attempts')}
             </div>
             <p className="text-sm">
@@ -95,20 +95,20 @@ export function ResearchRunDetails({
           <EvidenceViewer bundle={bundle} t={t} />
 
           <div className="rounded border p-3">
-            <div className="mb-2 text-xs font-medium text-muted-foreground">
+            <div className="text-muted-foreground mb-2 text-xs font-medium">
               {t('research.results.trace')}
             </div>
             <div className="flex flex-col gap-2">
               {researchRun.trace.map((entry, index) => (
                 <div
                   key={`${entry.phase}-${index.toString()}`}
-                  className="rounded border border-muted bg-muted/30 p-2 text-sm"
+                  className="border-muted bg-muted/30 rounded border p-2 text-sm"
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline">{entry.phase}</Badge>
                     <Badge variant="outline">{entry.status}</Badge>
                     {entry.latencyMs !== null ? (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-muted-foreground text-xs">
                         {formatLatency(entry.latencyMs)}
                       </span>
                     ) : null}

@@ -24,7 +24,7 @@ export function ApprovalCard({
   const version = action.draftHistory.length + 1;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+    <div className="border-border bg-card rounded-lg border p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <Checkbox
           checked={selected}
@@ -35,7 +35,7 @@ export function ApprovalCard({
         <div className="flex-1 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-semibold">{action.actionType}</span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               {action.connector.provider} · {action.connector.name}
             </span>
             {action.riskLabel !== undefined && action.riskLabel !== null ? (
@@ -56,7 +56,7 @@ export function ApprovalCard({
               </span>
             ) : null}
             {action.generatedBy !== null ? (
-              <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
+              <span className="border-border bg-muted/40 text-muted-foreground rounded-full border px-2 py-0.5 text-xs">
                 {action.generatedBy.mode === ActionGenerationMode.AUTO
                   ? t('approvals.card.attribution_auto', {
                       model: action.generatedBy.displayName,
@@ -67,7 +67,7 @@ export function ApprovalCard({
               </span>
             ) : null}
           </div>
-          <pre className="max-h-40 overflow-auto rounded-md bg-muted/30 p-3 text-xs">
+          <pre className="touch:max-h-none touch:overflow-visible bg-muted/30 max-h-40 overflow-auto rounded-md p-3 text-xs">
             {stringifyPayload(action.payload)}
           </pre>
           <div className="flex flex-wrap gap-2">

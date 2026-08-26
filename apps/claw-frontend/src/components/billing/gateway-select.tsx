@@ -19,7 +19,7 @@ export function GatewaySelect({
   t,
 }: GatewaySelectProps): ReactElement {
   return (
-    <div className="grid gap-1.5">
+    <div className="grid grid-cols-1 gap-1.5">
       <label className="text-sm font-medium" htmlFor="billing-gateway">
         {t('billing.gateway.label')}
       </label>

@@ -21,21 +21,21 @@ export default function AutomationPreferencesPage(): ReactElement {
       />
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">{t('automationPreferences.page.loading')}</p>
+        <p className="text-muted-foreground text-sm">{t('automationPreferences.page.loading')}</p>
       ) : null}
 
       {isError ? (
-        <p className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <p className="border-destructive/40 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm">
           {error?.message ?? t('automationPreferences.page.error')}
         </p>
       ) : null}
 
       {!isLoading && !isError && preferences.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t('automationPreferences.page.empty')}</p>
+        <p className="text-muted-foreground text-sm">{t('automationPreferences.page.empty')}</p>
       ) : null}
 
       {preferences.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {preferences.map((preference) => (
             <AutomationPreferenceRow
               key={preference.actionKind}

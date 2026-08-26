@@ -77,7 +77,7 @@ describe('AppConfigRow — RBAC-driven visibility', () => {
       </table>,
     );
 
-    expect(container.querySelector('tr')).toHaveClass('max-md:block');
+    expect(container.querySelector('tr')).toHaveClass('touch:block');
     expect(container.querySelector('td')).toHaveAttribute(
       'data-label',
       'workspaceProviders.appConfigs.columns.name',
