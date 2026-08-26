@@ -260,3 +260,15 @@ GLM, Qwen, DeepSeek, Mistral, or any other).
 **These 26 mindsets are the default operating mode.** Any AI agent that does not follow them is doing it wrong. Any code reviewer seeing a violation should block the merge.
 
 ---
+
+## Enforcement
+
+- **Review checklist** — this rule is behavioral and deliberately has no
+  automatable check. It is enforced by review and by the agent's own operating
+  discipline; a change that violates a mindset usually shows up as a violation
+  of one of the mechanically enforced rules it underpins.
+
+## Definition of done
+
+- [ ] The change reflects the mindsets rather than merely satisfying the letter
+      of the numbered rules.

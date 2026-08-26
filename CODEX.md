@@ -5,7 +5,7 @@ to canonical sources. **Canonical wins on conflict** (see below).
 
 ## Identity
 
-ClawAI: 17 NestJS services + Next.js 16 frontend + 6 shared packages (npm
+ClawAI: 18 NestJS services + Next.js 16 frontend + 6 shared packages (npm
 workspaces). RabbitMQ `claw.events`; nginx proxies `/api/v1/*`.
 
 ## Canonical authority (higher wins)
@@ -39,6 +39,8 @@ Release: `npm run release:preflight`.
   no DB calls outside repositories; no `process.env` outside AppConfig; no `console.log`.
 - NEVER log/expose secrets. NEVER add text without i18n (13 locales). NEVER add code without a test.
 - Do NOT invent repository facts — derive them from `.ai/manifests/` and real code.
+- NEVER ship a change with no knowledge delta — docs/skills/rules/context ship in the SAME commit (rules/33).
+- NEVER gate per-commit or all-workspace; gate once at the end, scoped. Never re-prove an unchanged tree (rules/34).
 
 ## Codex emphasis
 

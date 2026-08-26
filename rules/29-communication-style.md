@@ -86,3 +86,15 @@ Report ALL of these, one short line each, as they happen:
 - every wait (`polling agent, no change yet`)
 
 0.1% of movement is still movement — say it. Silence is the only forbidden state.
+
+## Enforcement
+
+- **Review checklist** — behavioral, with no automatable check. Enforced by the
+  reader: a reply that buries the answer, hedges, or narrates instead of
+  reporting is a violation regardless of whether the code was correct.
+
+## Definition of done
+
+- [ ] The answer leads with the answer.
+- [ ] Blocked states name the concrete cause: file, symbol, exact error.
+- [ ] Nothing was claimed done that was not verified.

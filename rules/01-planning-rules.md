@@ -162,3 +162,17 @@ Format:
 - Writing acceptance criteria after implementation
 - Defining risks after encountering them
 - Treating Phase 0g as optional for "technical" changes
+
+## Enforcement
+
+- **Knowledge check** — `npm run knowledge:context -- --task="…"` must be run
+  before the work starts; it resolves the affected workspaces, governing rules
+  and pitfalls that this rule requires you to have read.
+- **Review checklist** — a reviewer rejects a substantive change whose plan does
+  not state its blast radius and its batches.
+
+## Definition of done
+
+- [ ] `knowledge:context` was run and `.ai/local/current-context.md` was read.
+- [ ] The blast radius (workspaces, events, permissions, locales) is named.
+- [ ] Large work is split into independently reviewable batches.

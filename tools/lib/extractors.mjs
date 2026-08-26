@@ -249,7 +249,14 @@ export function extractFrontendRoutes() {
 /** i18n locale files + approximate key counts + untranslated flags. */
 export function extractI18n() {
   const dir = repoPath('apps/claw-frontend/src/lib/i18n/locales');
-  const locales = listFiles(dir).filter((f) => f.endsWith('.ts'));
+  // A locale is a language file named by its code (en.ts, ar.ts, zh.ts). The
+  // directory also holds feature translation modules — deployment-translations,
+  // router-trace-translations, smart-router-admin-translations — which are
+  // shared fragments, not languages. Counting every .ts here made the audit
+  // report "13 locales claimed but 16 exist" against docs that were correct,
+  // which is worse than no check: four permanent false positives teach everyone
+  // to ignore the auditor.
+  const locales = listFiles(dir).filter((f) => /^[a-z]{2}(-[A-Za-z]{2,4})?\.ts$/.test(f));
   const enSrc = readText(join(dir, 'en.ts')) ?? '';
   const countKeys = (src) => (src.match(/^\s*[\w'"[\]]+\s*:/gm) ?? []).length;
   const enKeys = countKeys(enSrc);

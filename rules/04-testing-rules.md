@@ -344,3 +344,18 @@ Date: YYYY-MM-DD HH:MM
 - It does NOT mean testing the same function with slightly different names
 - It does NOT mean testing a mock that always returns what you tell it to return
 - It DOES mean: the code behaves correctly under real failure conditions, boundary inputs, and concurrent load
+
+## Enforcement
+
+- **Unit test** — Jest (backend) / Vitest (frontend) via `npm run affected:test`.
+- **CI job** — the per-package test matrix in `.github/workflows/ci.yml`.
+- **Coverage threshold** — `coverageThreshold` in each service's
+  `jest.config.ts`; a drop below the floor fails the run.
+- **Review checklist** — a reviewer rejects tests that assert a mock's own
+  return value, or that cover only the happy path.
+
+## Definition of done
+
+- [ ] New or changed behavior ships with a new or changed test.
+- [ ] Failure conditions and boundaries are covered, not just the happy path.
+- [ ] Coverage did not drop below the workspace floor.

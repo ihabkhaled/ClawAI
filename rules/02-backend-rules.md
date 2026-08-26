@@ -262,3 +262,17 @@ Cross-service ownership table:
 | Constants     | `packages/shared-constants/` |
 | RabbitMQ glue | `packages/shared-rabbitmq/`  |
 | Auth glue     | `packages/shared-auth/`      |
+
+## Enforcement
+
+- **ESLint** — layering and import-boundary rules in the flat config
+  (`no-restricted-syntax`, `no-restricted-imports`).
+- **Architecture test** — `npm run architecture:check`.
+- **TS config** — `npm run affected:typecheck` (tsgo, `--noEmit`).
+- **CI job** — the per-service lint/typecheck/test/build matrix in `.github/workflows/ci.yml`.
+
+## Definition of done
+
+- [ ] Controller → service → manager → repository layering holds.
+- [ ] No Prisma/Mongoose call outside a `*.repository.ts`.
+- [ ] `architecture:check` and the scoped typecheck pass.

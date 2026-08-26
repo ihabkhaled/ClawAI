@@ -217,3 +217,17 @@ export const sendMessage = async (dto: SendMessageDto): Promise<ChatMessage> => 
 10. Defining a sub-component function inside a page file — extract to its own file
 11. Comparing strings against domain values — use enum comparisons
 12. Passing more than 2 levels of props — use context or composition
+
+## Enforcement
+
+- **ESLint** — `npm run lint:frontend`, including the TSX restrictions that
+  keep hooks, types and constants out of component files.
+- **Unit test** — Vitest, via `npm run affected:test`.
+- **CI job** — the frontend lane of the CI matrix, plus Lighthouse budgets
+  (`.github/workflows/lighthouse.yml`) for the public surfaces.
+
+## Definition of done
+
+- [ ] TSX files contain render composition and one controller hook only.
+- [ ] Types, enums, constants and hooks live in their own files.
+- [ ] Frontend lint and tests pass.

@@ -5,7 +5,7 @@ to canonical sources. **Canonical wins on conflict** (see below).
 
 ## Identity
 
-ClawAI: 17 NestJS services + Next.js 16 frontend + 6 shared packages (npm
+ClawAI: 18 NestJS services + Next.js 16 frontend + 6 shared packages (npm
 workspaces). RabbitMQ `claw.events`; nginx proxies `/api/v1/*`.
 
 ## Canonical authority (higher wins)
@@ -37,8 +37,10 @@ Release: `npm run release:preflight`.
   (`eslint-disable`, `@ts-ignore`, `any`, `as unknown as`).
 - NEVER cross a service DB boundary (use HTTP/RabbitMQ); no logic in controllers;
   no DB calls outside repositories; no `process.env` outside AppConfig; no `console.log`.
-- NEVER log/expose secrets. NEVER add text without i18n (9 locales). NEVER add code without a test.
+- NEVER log/expose secrets. NEVER add text without i18n (13 locales). NEVER add code without a test.
 - Do NOT invent repository facts — derive them from `.ai/manifests/` and real code.
+- NEVER ship a change with no knowledge delta — docs/skills/rules/context ship in the SAME commit (rules/33).
+- NEVER gate per-commit or all-workspace; gate once at the end, scoped. Never re-prove an unchanged tree (rules/34).
 
 ## GLM emphasis
 
@@ -70,7 +72,7 @@ runs BEFORE the first line of code. Runbook:
 5. **Review the constraint surface first**: ESLint flat config (banned syntax,
    inline-declaration bans, size ceilings, import order), TypeScript strict,
    Prettier, coverage floors, security (secrets/authz/IDOR/validation/redaction/CSP),
-   i18n × 9 locales + `i18n.types.ts`, the `CLAUDE.md` delivery checklist (env,
+   i18n × 13 locales + `i18n.types.ts`, the `CLAUDE.md` delivery checklist (env,
    installers, every compose file, nginx, shared packages, health service, CI
    matrix, TLS SANs, docs), and the FULL gate topology: pre-commit (lint-staged →
    generated-artifact regeneration → affected typecheck), pre-push, the CI matrix

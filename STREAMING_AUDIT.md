@@ -1,5 +1,10 @@
 # STREAMING_AUDIT.md — Rich Cloud Model Progress (Phase 0)
 
+> **HISTORICAL SNAPSHOT — do not treat as current.** This is a dated Phase 0
+> audit, accurate at the time it was produced. Facts have since moved: the
+> repo now ships **13 locales**, not 9. Numbers here are preserved as a record
+> of what was true then; for current facts use `CLAUDE.md` and `.ai/manifests/`.
+
 > Grounded audit of the **real** ClawAI codebase (not the prompt's GitHub-web guesses).
 > Produced before any code change, per the master prompt Phase 0 / deliverable #1.
 
@@ -15,6 +20,7 @@ What's missing is only **(1)** real token streaming from providers (today every 
 Gemini parts, Bedrock ConverseStream, etc.). The real repo routes **all cloud providers through one
 OpenAI-compatible `/chat/completions`** path. So the actual normalization surface is **two wire formats**,
 not seven:
+
 1. **OpenAI-compatible SSE** (`data: {choices:[{delta:{content}}]}` … `data: [DONE]`) — OpenAI, Grok,
    DeepSeek, Anthropic, Gemini, Bedrock (all via OpenAI-compat connector base URLs), **and** llama.cpp.
 2. **Ollama native NDJSON** (`/api/generate` → `{response, done, thinking?}`; OLLAMA connector `/api/chat`
@@ -29,6 +35,7 @@ when present) + the Ollama `thinking` field; model-emitted `<think>…</think>` 
 ## 1. Backend — chat-service (`apps/claw-chat-service/src/modules/chat-messages/`)
 
 ### Current message flow (async, event-driven)
+
 1. `POST /api/v1/chat-messages` → `ChatMessagesController.create` → `ChatMessagesService.createMessage`
    (`services/chat-messages.service.ts:107`). Persists the **USER** message, publishes `message.created`,
    **returns immediately** (assistant reply is produced asynchronously).
@@ -38,6 +45,7 @@ when present) + the Ollama `thinking` field; model-emitted `<think>…</think>` 
    → `storeAssistantResponse` (`:758`) → `ChatStreamService.emitCompletion` + publish `message.completed`.
 
 ### Existing SSE channel (the seam to extend)
+
 - Endpoint: `@Sse('stream/:threadId')` — `controllers/chat-stream.controller.ts:15`, `@SkipLogging()` + `@SkipThrottle()`.
   Auth = global `AuthGuard` (Bearer header) ⇒ FE uses `fetch()`+ReadableStream, not `EventSource`.
   **Security gap:** the `_user` param is unused — there is **no per-thread ownership check** on subscribe. Must add.
@@ -52,6 +60,7 @@ when present) + the Ollama `thinking` field; model-emitted `<think>…</think>` 
   "system prompt"). New delta emitters need light sanitization (strip nothing; FE renders as text, never HTML).
 
 ### Provider invocation boundary (where to add `stream:true`)
+
 - `ChatExecutionManager.callProvider` (`:791`) dispatches by provider string. All paths use `httpRequest`
   (`common/utilities/http-client.utility.ts`) = native `fetch` + `await response.json()` (**buffered, no stream**):
   - `callCloudProvider` (`:1091`) — OpenAI-compat `${baseUrl}/chat/completions`, body `buildChatRequestBody` (`:1190`,
@@ -65,6 +74,7 @@ when present) + the Ollama `thinking` field; model-emitted `<think>…</think>` 
 - connector-service adapters do **health/sync only**; no SDKs installed; raw HTTP everywhere.
 
 ### Parallel/compare
+
 - `POST /chat-messages/parallel` → `ParallelExecutionManager.executeParallel` (`managers/parallel-execution.manager.ts:37`):
   stores USER msg, fires `void executeInBackground`, `Promise.allSettled` across 2–5 models, judge optional,
   bulk-inserts separate ASSISTANT rows tagged `metadata.parallelGroupId` / `parallelExecution:true`. One coarse
@@ -73,12 +83,14 @@ when present) + the Ollama `thinking` field; model-emitted `<think>…</think>` 
 - Judge = `JudgeRefereeManager` (rides on the same parallel body). Consensus = `ConsensusExecutionManager` (`/consensus`).
 
 ### Persistence
+
 - `ChatMessage` (`prisma/schema.prisma`): `role`, `content`, `provider/model`, token counts, `latencyMs`, untyped `metadata Json?`.
   **No status column.** In-progress = implicit (no ASSISTANT row). Error = ASSISTANT row + `metadata.error:true`
   (`storeErrorResponse`). Rich progress already stored in `metadata.routeRoadmap` / `metadata.progressSummary`.
   Streaming needs **no schema change** (final content still written once); an optional `ChatStreamRun` table is deferred.
 
 ### RabbitMQ
+
 Consumes `message.routed`; publishes `message.created`, `message.completed`, `message.feedback_set`.
 
 ---
@@ -100,7 +112,7 @@ Consumes `message.routed`; publishes `message.created`, `message.completed`, `me
 - No chat Zustand store (SSE state held in `useChatStream` useState). Conventions: enums `src/enums/`, types `src/types/`,
   constants `src/constants/`, utilities `src/utilities/`, repo `src/repositories/chat/chat.repository.ts`, hooks
   `src/hooks/chat/`, query keys `src/repositories/shared/query-keys.ts`. i18n = 9 locales `src/lib/i18n/locales/*.ts`
-  + schema `src/types/i18n.types.ts`, keys nested under `chat.*`.
+  - schema `src/types/i18n.types.ts`, keys nested under `chat.*`.
 - Compare page `app/(portal)/chat/compare/page.tsx` → `useParallelComparePage` → `useParallelCompare`
   (`POST /chat-messages/parallel`) → `useParallelPoll` (polls). Components (`parallel-results-grid.tsx`,
   `parallel-response-card.tsx`, `parallel-message-group.tsx`, `in-thread-compare-panel.tsx`,
@@ -130,11 +142,13 @@ Consumes `message.routed`; publishes `message.created`, `message.completed`, `me
    (verify), docs `docs/RICH_MODEL_STREAMING.md`, CLAUDE.md, tests.
 
 ## 4. Realistic provider availability for testing
+
 Per project memory only the **Gemini** connector is configured (and llama.cpp/Ollama run locally). To test all
 formats deterministically without burning provider cost, add a **mock/simulated provider stream** (prompt §4.2/§5.7)
 behind a test flag, plus live tests against Gemini (OpenAI-compat) + local Ollama + llama.cpp.
 
 ## 5. Test-environment note (worktree)
+
 The dev stack bind-mounts the **main** checkout, not this worktree. For live UI/API testing I will rebuild **only**
 the touched containers (`chat-service`, `frontend`) from the worktree compose files (identical container names ⇒
 surgical recreate bound to worktree source); DBs and other services keep running untouched.

@@ -6,19 +6,19 @@
 
 ## When Docs Are Required
 
-| What changed            | What to create/update                                             |
-| ----------------------- | ----------------------------------------------------------------- |
-| New NestJS service      | `docs/04-backend/service-guide-<name>.md` (full architecture doc) |
-| New frontend page       | Update `docs/05-frontend/` relevant section                       |
-| New API endpoint        | `docs/12-reference/api-reference.md`                              |
-| New RabbitMQ event      | `docs/03-architecture/event-bus.md`                               |
+| What changed            | What to create/update                                                  |
+| ----------------------- | ---------------------------------------------------------------------- |
+| New NestJS service      | `docs/04-backend/service-guide-<name>.md` (full architecture doc)      |
+| New frontend page       | Update `docs/05-frontend/` relevant section                            |
+| New API endpoint        | `docs/12-reference/api-reference.md`                                   |
+| New RabbitMQ event      | `docs/03-architecture/event-bus.md`                                    |
 | New routing behavior    | `docs/03-architecture/routing-engine.md` and the related business spec |
-| New env variable        | `docs/06-data/environment-variables.md`                           |
-| New Docker change       | `docs/08-runtime-devops/docker-guide.md`                          |
-| New Nginx route         | `docs/08-runtime-devops/docker-guide.md` or nginx-specific doc    |
-| Any architecture change | Relevant file in `docs/03-architecture/`                          |
-| Any new rule/pattern    | Root `CLAUDE.md` + `CODEX.md` + `cursor.md` + rules folder        |
-| New service port        | `packages/shared-constants` + CLAUDE.md port table                |
+| New env variable        | `docs/06-data/environment-variables.md`                                |
+| New Docker change       | `docs/08-runtime-devops/docker-guide.md`                               |
+| New Nginx route         | `docs/08-runtime-devops/docker-guide.md` or nginx-specific doc         |
+| Any architecture change | Relevant file in `docs/03-architecture/`                               |
+| Any new rule/pattern    | Root `CLAUDE.md` + `CODEX.md` + `cursor.md` + rules folder             |
+| New service port        | `packages/shared-constants` + CLAUDE.md port table                     |
 
 ---
 
@@ -134,3 +134,17 @@ Docs must NOT:
 - [ ] `cursor.md` updated (if new rules or patterns)
 - [ ] `rules/` folder updated if new rules codified
 - [ ] `skills/` folder updated if new skills discovered
+
+## Enforcement
+
+- **Knowledge check** — `npm run knowledge:verify` fails on a broken internal
+  link in any governance document; `npm run knowledge:coverage` fails when a
+  rule or skill is unreachable from its index or a service lacks its guide.
+- **CI job** — the knowledge lane in `.github/workflows/ai-native-os.yml`.
+- **Review checklist** — a doc that records _what_ without _why_ fails review.
+
+## Definition of done
+
+- [ ] Every internal link resolves.
+- [ ] The doc says why, not only what, and states what would make it stale.
+- [ ] It is reachable from the index that owns it.

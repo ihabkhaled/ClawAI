@@ -202,3 +202,15 @@ regeneration is step 2.
 If a generated file is wrong, fix the **generator or its input**, then
 regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
 overwritten on the next build and hides the real problem.
+
+## Enforcement
+
+- **Knowledge check** — `npm run knowledge:coverage` fails when a rule in this
+  catalog is unreachable from an index, which is what keeps this file honest.
+- **Review checklist** — this file is an index, so its enforcement is that the
+  rules it points at are themselves enforced.
+
+## Definition of done
+
+- [ ] Every rule file in `rules/` appears in this catalog or in `rules/README.md`.
+- [ ] Each entry's one-line description still matches the rule's Purpose.

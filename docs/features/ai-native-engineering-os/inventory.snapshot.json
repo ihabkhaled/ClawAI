@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (22902 vs 5877 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (22902 vs 6104 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (22902 vs 26577 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (22902 vs 27062 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -27,7 +27,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CODEX.md and cursor.md share 2 identical headings (5877 vs 26577 bytes) — candidates for compact routing",
+        "message": "CODEX.md and cursor.md share 2 identical headings (6104 vs 27062 bytes) — candidates for compact routing",
         "severity": "medium"
       }
     ],
@@ -51,44 +51,7 @@
         "severity": "medium"
       }
     ],
-    "staleClaims": [
-      {
-        "evidence": [
-          "CLAUDE.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "CLAUDE.md claims 13 locales but 16 locale files exist",
-        "severity": "low"
-      },
-      {
-        "evidence": [
-          "CODEX.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "CODEX.md claims 13 locales but 16 locale files exist",
-        "severity": "low"
-      },
-      {
-        "evidence": [
-          "CODEX.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "CODEX.md claims 13 locales but 16 locale files exist",
-        "severity": "low"
-      },
-      {
-        "evidence": [
-          "README.md",
-          "apps/claw-frontend/src/lib/i18n/locales"
-        ],
-        "kind": "stale-locale-count",
-        "message": "README.md claims 13 locales but 16 locale files exist",
-        "severity": "low"
-      }
-    ]
+    "staleClaims": []
   },
   "inventory": {
     "apiEndpoints": {
@@ -6952,19 +6915,19 @@
           "file": "CLAUDE.md"
         },
         {
-          "bytes": 5877,
+          "bytes": 6104,
           "file": "CODEX.md"
         },
         {
-          "bytes": 26577,
+          "bytes": 27062,
           "file": "cursor.md"
         },
         {
-          "bytes": 9457,
+          "bytes": 9684,
           "file": "AGENTS.md"
         },
         {
-          "bytes": 2736,
+          "bytes": 2919,
           "file": ".cursorrules"
         }
       ],
@@ -6999,7 +6962,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 18407,
+          "bytes": 18887,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7007,7 +6970,7 @@
           "file": "rules/00-non-negotiable-rules.md"
         },
         {
-          "bytes": 4393,
+          "bytes": 4995,
           "file": "rules/01-planning-rules.md"
         },
         {
@@ -7015,7 +6978,7 @@
           "file": "rules/01-task-intake-and-planning.md"
         },
         {
-          "bytes": 9432,
+          "bytes": 9996,
           "file": "rules/02-backend-rules.md"
         },
         {
@@ -7023,7 +6986,7 @@
           "file": "rules/02-monorepo-and-workspace-ownership.md"
         },
         {
-          "bytes": 9255,
+          "bytes": 9798,
           "file": "rules/03-frontend-rules.md"
         },
         {
@@ -7035,7 +6998,7 @@
           "file": "rules/04-nextjs-app-router.md"
         },
         {
-          "bytes": 10803,
+          "bytes": 11446,
           "file": "rules/04-testing-rules.md"
         },
         {
@@ -7043,11 +7006,11 @@
           "file": "rules/05-frontend-components-and-hooks.md"
         },
         {
-          "bytes": 13826,
+          "bytes": 14501,
           "file": "rules/05-infra-rules.md"
         },
         {
-          "bytes": 4297,
+          "bytes": 4946,
           "file": "rules/06-docs-rules.md"
         },
         {
@@ -7059,7 +7022,7 @@
           "file": "rules/07-backend-controllers-and-transport.md"
         },
         {
-          "bytes": 11358,
+          "bytes": 11920,
           "file": "rules/07-commit-rules.md"
         },
         {
@@ -7067,7 +7030,7 @@
           "file": "rules/08-backend-managers-and-use-cases.md"
         },
         {
-          "bytes": 5380,
+          "bytes": 6046,
           "file": "rules/08-security-rules.md"
         },
         {
@@ -7075,7 +7038,7 @@
           "file": "rules/09-backend-services.md"
         },
         {
-          "bytes": 11024,
+          "bytes": 11619,
           "file": "rules/09-refactor-rules.md"
         },
         {
@@ -7147,7 +7110,7 @@
           "file": "rules/26-prompt-pack-intake-protocol.md"
         },
         {
-          "bytes": 15364,
+          "bytes": 15803,
           "file": "rules/27-engineering-mindsets.md"
         },
         {
@@ -7155,7 +7118,7 @@
           "file": "rules/28-billing-integrity-and-api-contracts.md"
         },
         {
-          "bytes": 3242,
+          "bytes": 3674,
           "file": "rules/29-communication-style.md"
         },
         {
@@ -7441,11 +7404,10 @@
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
         "value": 4742
       },
-      "localeCount": 16,
+      "localeCount": 13,
       "locales": [
         "ar",
         "de",
-        "deployment-translations",
         "en",
         "es",
         "fa",
@@ -7454,9 +7416,7 @@
         "it",
         "ja",
         "pt",
-        "router-trace-translations",
         "ru",
-        "smart-router-admin-translations",
         "th",
         "zh"
       ],
@@ -9922,14 +9882,14 @@
     "envVarCount": 347,
     "eventCount": 169,
     "frontendRouteCount": 125,
-    "localeCount": 16,
+    "localeCount": 13,
     "nginxRouteCount": 55,
     "permissionCount": 49,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
-    "staleClaimCount": 4,
+    "staleClaimCount": 0,
     "totalTestFiles": 1026,
     "workspaceCount": 25
   }

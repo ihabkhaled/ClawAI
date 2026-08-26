@@ -272,3 +272,17 @@ regeneration is step 2.
 If a generated file is wrong, fix the **generator or its input**, then
 regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
 overwritten on the next build and hides the real problem.
+
+## Enforcement
+
+- **Git hook** — `.husky/commit-msg` runs commitlint on every message;
+  `.husky/pre-commit` and `.husky/pre-push` gate the content.
+- **Knowledge check** — `npm run knowledge:verify` (`checkBypass`) fails if any
+  canonical policy file recommends bypassing a hook.
+- **Review checklist** — an unpushed commit stack is rejected: one commit, one push.
+
+## Definition of done
+
+- [ ] The message is a valid conventional commit.
+- [ ] Only explicit paths were staged — never `-A`, never `.`.
+- [ ] The commit was pushed before the next one started.

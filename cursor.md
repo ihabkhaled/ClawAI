@@ -50,6 +50,15 @@ These are DELIVERY BLOCKERS — a PR without them is rejected:
 
 Do not deviate from those rules. Do not invent new patterns. Do not bypass tests.
 
+## Knowledge and gate discipline (rules/33, rules/34)
+
+- Every change ships its knowledge delta in the SAME commit: docs, skills,
+  rules, context. A repeatable procedure becomes a skill; a new constraint
+  becomes a rule. See `rules/33-knowledge-compounding-and-context-velocity.md`.
+- Gate once, at the end of a batch, scoped to touched workspaces — never
+  per-commit, never all-workspace, never re-prove an unchanged tree.
+  See `rules/34-gate-economy-and-machine-resources.md`.
+
 ## Cursor-specific workflow
 
 1. **Open `CLAUDE.md` first.** Pin it in your tab bar. Read it every session.
@@ -167,7 +176,7 @@ envelope.
 
 ## Build toolchain (tsgo) — see docs/08-runtime-devops/build-system.md
 
-The repo compiles with **tsgo** (`@typescript/native-preview`), not `tsc`/`nest build`. After compile, **tsc-alias** rewrites path aliases (`@app/*`, `@common/*`, `@modules/*`) to relative paths. The `typescript` dependency is aliased to `@typescript/native-preview@beta`; ts-jest still pulls real `tsc` transitively. Per-workspace scripts: `build` = `tsgo -p tsconfig.build.json && tsc-alias -p tsconfig.build.json`; `typecheck` = `tsgo --noEmit`; `dev` runs tsgo + tsc-alias in `--watch` under `nodemon`. Docker images use `node:26-bookworm-slim` (glibc — tsgo binaries are not musl-compatible, so never Alpine). All 5 shared packages also build/lint/test/typecheck with tsgo and are first-class CI matrix entries.
+The repo compiles with **tsgo** (`@typescript/native-preview`), not `tsc`/`nest build`. After compile, **tsc-alias** rewrites path aliases (`@app/*`, `@common/*`, `@modules/*`) to relative paths. The `typescript` dependency is aliased to `@typescript/native-preview@beta`; ts-jest still pulls real `tsc` transitively. Per-workspace scripts: `build` = `tsgo -p tsconfig.build.json && tsc-alias -p tsconfig.build.json`; `typecheck` = `tsgo --noEmit`; `dev` runs tsgo + tsc-alias in `--watch` under `nodemon`. Docker images use `node:26-bookworm-slim` (glibc — tsgo binaries are not musl-compatible, so never Alpine). All 6 shared packages also build/lint/test/typecheck with tsgo and are first-class CI matrix entries.
 
 ## Cursor editing conventions
 
@@ -269,7 +278,7 @@ When you add a new package under `packages/`, the CI workflow needs an extra bui
     cd ../<new-shared-package> && npx tsgo -p tsconfig.build.json   # MUST add for any new shared package
 ```
 
-Update all four jobs (`lint`, `typecheck`, `test`, `build`) — they each have their own copy of the step. Each job is a ~24-entry matrix (17 services + frontend + 6 shared packages).
+Update all four jobs (`lint`, `typecheck`, `test`, `build`) — they each have their own copy of the step. Each job is a ~24-entry matrix (18 services + frontend + 6 shared packages).
 
 **SECOND required edit (added 2026-05-29):** also add the package to the per-package `strategy.matrix.include` in all four jobs, or its OWN lint/typecheck/test never runs in CI (it's only built as a dependency):
 
@@ -379,7 +388,7 @@ runs BEFORE the first line of code. Runbook:
 5. **Review the constraint surface first**: ESLint flat config (banned syntax,
    inline-declaration bans, size ceilings, import order), TypeScript strict,
    Prettier, coverage floors, security (secrets/authz/IDOR/validation/redaction/CSP),
-   i18n × 9 locales + `i18n.types.ts`, the `CLAUDE.md` delivery checklist (env,
+   i18n × 13 locales + `i18n.types.ts`, the `CLAUDE.md` delivery checklist (env,
    installers, every compose file, nginx, shared packages, health service, CI
    matrix, TLS SANs, docs), and the FULL gate topology: pre-commit (lint-staged →
    generated-artifact regeneration → affected typecheck), pre-push, the CI matrix

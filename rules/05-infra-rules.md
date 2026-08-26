@@ -309,3 +309,19 @@ regeneration is step 2.
 If a generated file is wrong, fix the **generator or its input**, then
 regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
 overwritten on the next build and hides the real problem.
+
+## Enforcement
+
+- **Knowledge check** — `npm run audit:check` (the inventory snapshot) and
+  `npm run knowledge:verify` (generated-layer freshness) both fail when an
+  infrastructure change is not propagated.
+- **CI job** — the inventory-audit and knowledge-freshness jobs in
+  `.github/workflows/ai-native-os.yml`.
+- **Review checklist** — the delivery checklist in `CLAUDE.md` is walked item by
+  item for anything added or renamed.
+
+## Definition of done
+
+- [ ] Every file in the delivery checklist that the change touches was updated.
+- [ ] `audit:check` and `knowledge:verify` pass.
+- [ ] The change is present in every compose file and CI job that must know about it.

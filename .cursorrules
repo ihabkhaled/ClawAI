@@ -11,7 +11,10 @@ skills/* > context/* + memory/* > .ai/manifests/*.
 Blockers (never): --no-verify / hook bypass; eslint-disable / @ts-ignore / any /
 as unknown as; cross-service DB access; logic in controllers; DB calls outside
 repositories; process.env outside AppConfig; console.log; logging/exposing
-secrets; user-facing text without i18n (9 locales); code without a test.
+secrets; user-facing text without i18n (13 locales); code without a test;
+shipping a change with no knowledge delta (docs/skills/rules/context in the SAME
+commit, rules/33); gating per-commit or all-workspace instead of once at the end,
+scoped (rules/34).
 
 Validation (touched folders only):
   npm run affected:list

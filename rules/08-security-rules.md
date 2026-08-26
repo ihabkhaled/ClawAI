@@ -126,3 +126,19 @@ Failed checks → HTTP 422 with reason code. Never silently skip checks.
 - [ ] No raw SQL introduced
 - [ ] No eval() or dynamic code execution introduced
 - [ ] Logs don't contain auth tokens or user secrets
+
+## Enforcement
+
+- **CI job** — CodeQL (GitHub default setup) reports as the `Analyze` checks on
+  every pull request.
+- **ESLint** — the security and redaction rules in the flat config.
+- **Unit test** — the per-service security and sanitizer suites.
+- **Review checklist** — every change touching auth, permissions, file handling
+  or user-supplied content gets an explicit security read.
+
+## Definition of done
+
+- [ ] No secret, token or credential is logged, returned or committed.
+- [ ] User-supplied content is validated at the boundary and rendered inertly.
+- [ ] Authorization is enforced server-side, not by hiding UI.
+- [ ] CodeQL is clean for the change.

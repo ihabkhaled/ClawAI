@@ -203,3 +203,18 @@ Every per-service refactor commit MUST follow this exact recipe:
 - Don't refactor + ratchet coverage threshold + change behaviour all at once. Land each separately.
 - Don't refactor third-party-generated files (Prisma client, locale files, catalog generated).
 - Don't refactor near a release freeze — wait until post-release.
+
+## Enforcement
+
+- **Architecture test** — `npm run architecture:check` catches layering and
+  boundary regressions introduced by a move.
+- **Unit test** — `npm run affected:test`; a refactor must not change behavior,
+  so the existing suite is the proof.
+- **Review checklist** — a refactor that changes behavior and structure in the
+  same commit is rejected; split it.
+
+## Definition of done
+
+- [ ] Behavior is unchanged and the existing tests prove it.
+- [ ] Structure and behavior were not changed in the same commit.
+- [ ] Dead code and now-unused exports were removed, not left orphaned.
