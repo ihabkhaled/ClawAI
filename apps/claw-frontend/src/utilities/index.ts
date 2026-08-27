@@ -206,6 +206,7 @@ export { resolveApiErrorMessage } from './api-error-message.utility';
 export { resolveAdminUserCapability } from './admin-user-capability.utility';
 export { resolveFloatingClearance } from './floating-obstacle-clearance.utility';
 export { resolveChatLimitNotice } from './chat-limit-notice.utility';
+export { getStoredReasoning } from './message-reasoning.utility';
 export { buildThreadExportFilename, buildThreadMarkdown } from './thread-markdown.utility';
 export { resolveEmailVerificationCopyKeys } from './email-verification-copy.utility';
 export { generatePassword } from './password-generator.utility';

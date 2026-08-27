@@ -261,6 +261,9 @@ export const ru: TranslationDictionary = {
       action: 'Экспорт',
       emptyThread: 'Экспортировать пока нечего — в этой беседе нет сообщений.',
     },
+    reasoning: {
+      title: 'Рассуждение модели',
+    },
     limits: {
       dailyTokensTitle: 'Дневной запас токенов израсходован',
       dailyTokensBody:

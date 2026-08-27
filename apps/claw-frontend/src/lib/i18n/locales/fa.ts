@@ -260,6 +260,9 @@ export const fa: TranslationDictionary = {
       action: 'برون‌ریزی',
       emptyThread: 'هنوز چیزی برای برون‌ریزی نیست — این گفت‌وگو پیامی ندارد.',
     },
+    reasoning: {
+      title: 'استدلال مدل',
+    },
     limits: {
       dailyTokensTitle: 'توکن‌های امروز تمام شد',
       dailyTokensBody:

@@ -2517,6 +2517,11 @@ export type PasswordInputProps = Omit<React.ComponentPropsWithoutRef<'input'>, '
   id: string;
 };
 
+export type MessageReasoningPanelProps = {
+  /** Already trimmed and known non-empty by getStoredReasoning. */
+  reasoning: string;
+};
+
 export type ChatLimitNoticeCardProps = {
   notice: ChatLimitNotice;
 };

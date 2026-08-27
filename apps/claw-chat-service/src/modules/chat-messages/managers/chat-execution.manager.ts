@@ -1021,6 +1021,9 @@ export class ChatExecutionManager implements OnModuleInit {
         latencyMs: Date.now() - base.startMs,
         finishReason,
         usedFallback,
+        // Carried so it can be persisted. Empty for a model that emits none,
+        // and omitted entirely rather than stored as an empty string.
+        ...(result.reasoning.trim().length > 0 ? { reasoning: result.reasoning } : {}),
         ...(toolCalls.length > 0
           ? {
               toolCalls,

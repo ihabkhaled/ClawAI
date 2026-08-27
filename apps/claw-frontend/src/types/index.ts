@@ -901,6 +901,7 @@ export type {
   ShareChatButtonProps,
   PublicSharedChatHeaderProps,
   PublicSharedMessageProps,
+  MessageReasoningPanelProps,
   PublicSharedAssetsProps,
   PublicSharedMessageListProps,
   PublicMarkdownRendererProps,

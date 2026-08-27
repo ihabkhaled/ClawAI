@@ -262,6 +262,9 @@ export const it: TranslationDictionary = {
       action: 'Esporta',
       emptyThread: "Non c'è ancora nulla da esportare: questa conversazione non ha messaggi.",
     },
+    reasoning: {
+      title: 'Ragionamento del modello',
+    },
     limits: {
       dailyTokensTitle: 'Hai usato i token di oggi',
       dailyTokensBody:

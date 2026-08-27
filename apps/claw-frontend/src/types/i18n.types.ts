@@ -247,6 +247,9 @@ export type TranslationDictionary = {
       action: string;
       emptyThread: string;
     };
+    reasoning: {
+      title: string;
+    };
     limits: {
       dailyTokensTitle: string;
       dailyTokensBody: string;

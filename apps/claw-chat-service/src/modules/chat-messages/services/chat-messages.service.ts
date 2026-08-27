@@ -85,6 +85,7 @@ import { BusinessException, EntityNotFoundException } from '../../../common/erro
 import { type PaginatedResult } from '../../../common/types';
 import { type ChatMessage, type ChatThread, Prisma, RoutingMode } from '../../../generated/prisma';
 import type { AssembledContext } from '../types/context.types';
+import { MAX_STORED_REASONING_CHARS } from '../constants/stored-reasoning.constants';
 
 @Injectable()
 export class ChatMessagesService implements OnModuleInit {
@@ -1292,6 +1293,33 @@ export class ChatMessagesService implements OnModuleInit {
     return [...researchStep, executionStep];
   }
 
+  /**
+   * Persists the chain of thought the model streamed.
+   *
+   * Reasoning was produced by the stream executor, shown live, and then thrown
+   * away — so refreshing the page lost it, and reopening a thread the next day
+   * showed an answer with no trace of how it was reached.
+   *
+   * Capped, because a reasoning model can emit more thinking than answer and
+   * this rides in a JSONB column read on every message page. Truncation is
+   * visible rather than silent, matching how the snapshot sanitizer handles an
+   * over-long message.
+   */
+  private buildReasoningMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
+    const reasoning = llmResponse.reasoning?.trim();
+    if (reasoning === undefined || reasoning.length === 0) {
+      return {};
+    }
+    return {
+      reasoning:
+        reasoning.length <= MAX_STORED_REASONING_CHARS
+          ? reasoning
+          : `${reasoning.slice(0, MAX_STORED_REASONING_CHARS)}
+
+…`,
+    };
+  }
+
   private buildAssistantMetadata(args: {
     payload: MessageRoutedData;
     llmResponse: LlmResponse;
@@ -1315,6 +1343,7 @@ export class ChatMessagesService implements OnModuleInit {
       ...this.buildResearchMetaPart(latestUserMetadata),
       ...this.buildResearchTranscriptMetaPart(latestUserMetadata),
       ...this.buildGenerationMetaPart(llmResponse),
+      ...this.buildReasoningMetaPart(llmResponse),
       sourceMessageId: payload.messageId,
       // What the user asked for versus what actually answered. With AUTO the
       // two differ whenever the chain falls over, and the transcript only ever

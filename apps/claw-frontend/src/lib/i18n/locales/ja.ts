@@ -261,6 +261,9 @@ export const ja: TranslationDictionary = {
       action: 'エクスポート',
       emptyThread: 'まだエクスポートするものがありません。この会話にはメッセージがありません。',
     },
+    reasoning: {
+      title: 'モデルの思考',
+    },
     limits: {
       dailyTokensTitle: '本日のトークンを使い切りました',
       dailyTokensBody:

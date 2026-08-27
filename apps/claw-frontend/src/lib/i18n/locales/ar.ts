@@ -257,6 +257,9 @@ export const ar: TranslationDictionary = {
       action: 'تصدير',
       emptyThread: 'لا يوجد ما يُصدَّر بعد — هذه المحادثة بلا رسائل.',
     },
+    reasoning: {
+      title: 'استدلال النموذج',
+    },
     limits: {
       dailyTokensTitle: 'لقد استهلكت رموز اليوم',
       dailyTokensBody:

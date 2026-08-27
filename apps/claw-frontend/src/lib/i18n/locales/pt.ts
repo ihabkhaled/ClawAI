@@ -260,6 +260,9 @@ export const pt: TranslationDictionary = {
       action: 'Exportar',
       emptyThread: 'Ainda não há nada para exportar — esta conversa não tem mensagens.',
     },
+    reasoning: {
+      title: 'Raciocínio do modelo',
+    },
     limits: {
       dailyTokensTitle: 'Já usou os tokens de hoje',
       dailyTokensBody:

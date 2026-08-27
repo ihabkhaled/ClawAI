@@ -261,6 +261,9 @@ export const fr: TranslationDictionary = {
       emptyThread:
         "Il n'y a encore rien à exporter : cette conversation ne contient aucun message.",
     },
+    reasoning: {
+      title: 'Raisonnement du modèle',
+    },
     limits: {
       dailyTokensTitle: 'Vous avez utilisé les jetons du jour',
       dailyTokensBody:

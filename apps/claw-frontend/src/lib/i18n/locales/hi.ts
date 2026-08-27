@@ -259,6 +259,9 @@ export const hi: TranslationDictionary = {
       action: 'निर्यात करें',
       emptyThread: 'अभी निर्यात करने के लिए कुछ नहीं है — इस बातचीत में कोई संदेश नहीं है।',
     },
+    reasoning: {
+      title: 'मॉडल का तर्क',
+    },
     limits: {
       dailyTokensTitle: 'आज के टोकन खत्म हो गए',
       dailyTokensBody:

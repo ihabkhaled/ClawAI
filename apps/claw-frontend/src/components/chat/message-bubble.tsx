@@ -16,6 +16,7 @@ import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageProvenance } from '@/components/chat/message-provenance';
+import { MessageReasoningPanel } from '@/components/chat/message-reasoning-panel';
 import { OllamaToolTranscriptPanel } from '@/components/chat/ollama-tool-transcript-panel';
 import { ResearchRunDetails } from '@/components/chat/research-run-details';
 import { ResearchTranscriptPanel } from '@/components/chat/research-transcript-panel';
@@ -32,7 +33,7 @@ import { useTranslation } from '@/lib/i18n';
 import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
 import type { MessageBubbleProps, OllamaToolTranscript, ResearchTranscript } from '@/types';
-import { formatShortDateTime, getJudgeReviewFromMessage } from '@/utilities';
+import { formatShortDateTime, getJudgeReviewFromMessage, getStoredReasoning } from '@/utilities';
 
 function MessageBubbleBase({
   message,
@@ -88,6 +89,7 @@ function MessageBubbleBase({
   ) : (
     <p className="text-muted-foreground whitespace-pre-wrap">{t('chat.noVisibleAnswer')}</p>
   );
+  const storedReasoning = getStoredReasoning(message);
   const judgeReview = getJudgeReviewFromMessage(message);
   const judgeDecision = judgeReview?.judgeDecision ?? null;
   const workflow = typeof metadata?.['workflow'] === 'string' ? metadata['workflow'] : null;
@@ -174,6 +176,9 @@ function MessageBubbleBase({
             <FileGenerationBubble generationId={fileGenerationId} prompt={message.content} />
           ) : null}
           {!isUser && !isImageGeneration && !isFileGeneration ? assistantContent : null}
+          {/* Below the answer, not above it: the reasoning is how the reply was
+              reached, and a reader wants the reply first. */}
+          {storedReasoning === null ? null : <MessageReasoningPanel reasoning={storedReasoning} />}
         </div>
 
         {isUser && message.content.trim().length > 0 ? (

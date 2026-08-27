@@ -102,6 +102,15 @@ export type LlmResponse = {
   latencyMs: number;
   finishReason?: string;
   usedFallback: boolean;
+  /**
+   * The chain of thought the model streamed, if it streamed one.
+   *
+   * Produced by ProviderStreamExecutor and, until 2026-08-28, dropped here —
+   * so reasoning was visible while the answer was generating and gone the
+   * moment the page was refreshed. It is persisted onto the assistant message
+   * so the transcript still has it later.
+   */
+  reasoning?: string;
   imageGenerationId?: string;
   fileGenerationId?: string;
   reRouted?: boolean;

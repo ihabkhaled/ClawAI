@@ -255,6 +255,9 @@ export const th: TranslationDictionary = {
       action: 'ส่งออก',
       emptyThread: 'ยังไม่มีอะไรให้ส่งออก — บทสนทนานี้ยังไม่มีข้อความ',
     },
+    reasoning: {
+      title: 'การให้เหตุผลของโมเดล',
+    },
     limits: {
       dailyTokensTitle: 'คุณใช้โทเค็นของวันนี้หมดแล้ว',
       dailyTokensBody:
