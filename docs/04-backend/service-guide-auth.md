@@ -163,6 +163,67 @@ type JwtPayload = {
 - Failed login attempts should be rate-limited via `@nestjs/throttler` (100 req/min default)
 - The admin seed user is created on first startup via `prisma/seed.ts`
 
+## The Super Administrator
+
+One account carries `User.isSuperAdmin`. A **partial unique index** —
+`users_single_super_admin_idx ... WHERE is_super_admin = true`, created in raw SQL
+by `migrations/20260812230000_super_admin_email_verification` — guarantees at most
+one. No HTTP path grants or clears the flag: `UpdateUserData` has no such field
+and `createUserSchema` has no such field, so the only writers are the seed
+(`prisma/seed.js`, `prisma/seed-super-admin.js`) and migration SQL.
+
+**Known debt.** Prisma cannot express a partial unique index, so
+`schema.prisma`'s `User` block does not declare it and a future
+`prisma migrate dev` diff can propose dropping it. It is the only structural
+guarantee that exactly one super administrator exists. If a migration ever
+proposes that drop, reject it.
+
+### Authority is two questions, answered in two places
+
+| Question                                                       | Answered by                                    | Where                                                               |
+| -------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------- |
+| May this actor mutate **this row**, for **this scope**?        | `resolveSuperAdminMutability` (pure)           | `modules/users/service.utilities/super-admin-mutability.utility.ts` |
+| Does this actor hold super-administrator **authority** at all? | `UsersService.assertSuperAdminActor` (DB read) | `modules/users/services/users.service.ts`                           |
+
+They are separate because they fail differently, and they ship together because a
+self-exemption on the first without a gate on the second is an escalation.
+
+`SUPER_ADMIN_SELF_PERMITTED_SCOPES` holds `PROFILE` only. The super administrator
+may rename themselves through the admin surface; role, status, plan, delete and
+administrator-issued password rotation stay refused even for them, because the
+partial unique index makes self-lockout unrecoverable through the product. Their
+own password still changes through `/users/me/password`.
+
+### Administrator-class mutations
+
+These require a super-administrator actor: creating an `ADMIN`, promoting to
+`ADMIN`, demoting an `ADMIN`, suspending or reactivating an `ADMIN`, and editing a
+**system** role's permission set. Mutations aimed at ordinary users are
+deliberately not gated.
+
+`RolesController` requires `ADMIN_PERMISSIONS_MANAGE` on every route. Before
+2026-08-27 it required nothing beyond the `ADMIN` role enum, which let one
+administrator strip grants from the `ADMIN` system role and thereby degrade every
+administrator — an attack on the super administrator that never touched the super
+administrator's row.
+
+### System-driven writes are exempt
+
+`EntitlementApplierService` (RabbitMQ billing events) and the plan-retirement
+transaction write `activePlanId` on any row, super administrator included, on
+purpose. A legitimate event that cannot be applied does not protect anybody — it
+poisons a consumer retry loop.
+
+### Refusal codes
+
+`SUPER_ADMIN_IMMUTABLE` (wrong actor for this target), `SUPER_ADMIN_SELF_LOCKED`
+(right actor, wrong scope), `SUPER_ADMIN_REQUIRED` (actor lacks authority). All
+`403`; an unknown target id is `404`. Each is logged as a structured `WARN`,
+because repeated attempts are a security signal.
+
+Full rule: [`rules/35-super-administrator-and-privilege-boundaries.md`](../../rules/35-super-administrator-and-privilege-boundaries.md) ·
+Decision: [ADR-073](../13-adr/adr-073-super-administrator-authority.md)
+
 ## Module Structure
 
 ```

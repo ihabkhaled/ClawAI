@@ -8,6 +8,8 @@ import { validatePasswordStrength } from '../service.utilities/password-policy.u
 import { verifyPassword } from '@common/utilities';
 import { updateUserSchema } from '../dto/update-user.dto';
 import { type AuthEmailAdapter } from '../../auth/adapters/auth-email.adapter';
+import { type RolesService } from '../../roles/services/roles.service';
+import { type PlansRepository } from '../../plans/repositories/plans.repository';
 
 jest.mock('@common/utilities', () => ({
   hashPassword: jest.fn().mockResolvedValue('hashed-password'),
@@ -53,20 +55,48 @@ const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
   publish: jest.fn().mockResolvedValue(void 0),
 });
 
+const SUPER_ADMIN_ID = 'super-1';
+const superAdminRow = { ...mockUser, id: SUPER_ADMIN_ID, isSuperAdmin: true, role: UserRole.ADMIN };
+const adminRow = { ...mockUser, id: 'admin-2', role: UserRole.ADMIN };
+
+/** Resolves the actor lookup assertSuperAdminActor performs against the repository. */
+const actorIsSuperAdmin = (
+  repository: ReturnType<typeof mockRepository>,
+  target: unknown,
+): void => {
+  repository.findById.mockImplementation((id: string) =>
+    Promise.resolve(id === SUPER_ADMIN_ID ? superAdminRow : target),
+  );
+};
+
 describe('UsersService', () => {
   let service: UsersService;
   let repository: ReturnType<typeof mockRepository>;
   let rabbitMQ: ReturnType<typeof mockRabbitMQ>;
   let authEmailAdapter: { sendTemporaryPassword: jest.Mock };
+  let rolesService: { getRoleIdBySlug: jest.Mock };
+  let plansRepository: {
+    findDefault: jest.Mock;
+    assignUserToPlan: jest.Mock;
+    assignTrialPlanOnce: jest.Mock;
+  };
 
   beforeEach(() => {
     repository = mockRepository();
     rabbitMQ = mockRabbitMQ();
     authEmailAdapter = { sendTemporaryPassword: jest.fn() };
+    rolesService = { getRoleIdBySlug: jest.fn().mockResolvedValue('role-1') };
+    plansRepository = {
+      findDefault: jest.fn().mockResolvedValue(null),
+      assignUserToPlan: jest.fn(),
+      assignTrialPlanOnce: jest.fn(),
+    };
     service = new UsersService(
       repository as unknown as UsersRepository,
       rabbitMQ as unknown as RabbitMQService,
       authEmailAdapter as unknown as AuthEmailAdapter,
+      rolesService as unknown as RolesService,
+      plansRepository as unknown as PlansRepository,
     );
   });
 
@@ -344,24 +374,30 @@ describe('UsersService', () => {
   describe('create', () => {
     it('rejects weak password with WEAK_PASSWORD code', async () => {
       await expect(
-        service.create({
-          email: 'a@b.c',
-          username: 'a',
-          password: 'weak',
-          role: UserRole.OPERATOR,
-        } as never),
+        service.create(
+          {
+            email: 'a@b.c',
+            username: 'a',
+            password: 'weak',
+            role: UserRole.OPERATOR,
+          } as never,
+          'admin-1',
+        ),
       ).rejects.toMatchObject({ code: 'WEAK_PASSWORD' });
     });
 
     it('rejects duplicate email with DuplicateEntityException', async () => {
       repository.findByEmail.mockResolvedValue(mockUser);
       await expect(
-        service.create({
-          email: mockUser.email,
-          username: 'newname',
-          password: 'StrongPass1',
-          role: UserRole.OPERATOR,
-        } as never),
+        service.create(
+          {
+            email: mockUser.email,
+            username: 'newname',
+            password: 'StrongPass1',
+            role: UserRole.OPERATOR,
+          } as never,
+          'admin-1',
+        ),
       ).rejects.toThrow(DuplicateEntityException);
     });
 
@@ -369,12 +405,15 @@ describe('UsersService', () => {
       repository.findByEmail.mockResolvedValue(null);
       repository.findByUsername.mockResolvedValue(mockUser);
       await expect(
-        service.create({
-          email: 'new@b.c',
-          username: mockUser.username,
-          password: 'StrongPass1',
-          role: UserRole.OPERATOR,
-        } as never),
+        service.create(
+          {
+            email: 'new@b.c',
+            username: mockUser.username,
+            password: 'StrongPass1',
+            role: UserRole.OPERATOR,
+          } as never,
+          'admin-1',
+        ),
       ).rejects.toThrow(DuplicateEntityException);
     });
 
@@ -389,15 +428,18 @@ describe('UsersService', () => {
         role: UserRole.OPERATOR,
       });
 
-      const result = await service.create({
-        email: 'new@b.c',
-        username: 'newuser',
-        password: 'StrongPass1',
-        firstName: 'Ada',
-        lastName: 'Lovelace',
-        phone: '+441234567890',
-        role: UserRole.OPERATOR,
-      } as never);
+      const result = await service.create(
+        {
+          email: 'new@b.c',
+          username: 'newuser',
+          password: 'StrongPass1',
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+          phone: '+441234567890',
+          role: UserRole.OPERATOR,
+        } as never,
+        'admin-1',
+      );
 
       expect(result.id).toBe('new-1');
       expect(repository.create).toHaveBeenCalledWith(
@@ -409,6 +451,7 @@ describe('UsersService', () => {
           phone: '+441234567890',
           role: UserRole.OPERATOR,
           status: 'ACTIVE',
+          mustChangePassword: true,
         }),
       );
       const calledArgs = repository.create.mock.calls[0]?.[0];
@@ -559,6 +602,119 @@ describe('UsersService', () => {
           newPassword: 'StrongPass1',
         }),
       ).rejects.toThrow();
+    });
+  });
+
+  describe('super-administrator authority', () => {
+    it('refuses a non-super administrator promoting themselves through PATCH /users/:id', async () => {
+      // The hole that made every other protection decorative: changeRole was
+      // gated, updateUser accepted the same field and was not.
+      repository.findById.mockImplementation((id: string) =>
+        Promise.resolve(id === 'admin-2' ? adminRow : mockUser),
+      );
+
+      await expect(
+        service.updateUser('admin-2', { role: UserRole.ADMIN }, 'admin-2'),
+      ).rejects.toMatchObject({ code: 'SUPER_ADMIN_REQUIRED' });
+      expect(repository.updateById).not.toHaveBeenCalled();
+    });
+
+    it('lets the super administrator promote someone through PATCH /users/:id', async () => {
+      actorIsSuperAdmin(repository, mockUser);
+      repository.findByUsername.mockResolvedValue(null);
+      repository.updateById.mockResolvedValue({ ...mockUser, role: UserRole.ADMIN });
+
+      await service.updateUser('user-1', { role: UserRole.ADMIN }, SUPER_ADMIN_ID);
+
+      expect(repository.updateById).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ role: UserRole.ADMIN }),
+      );
+    });
+
+    it('refuses a non-super administrator creating another administrator', async () => {
+      repository.findById.mockResolvedValue(adminRow);
+
+      await expect(
+        service.create(
+          {
+            email: 'peer@b.c',
+            username: 'peer',
+            password: 'StrongPass1!',
+            role: UserRole.ADMIN,
+          } as never,
+          'admin-2',
+        ),
+      ).rejects.toMatchObject({ code: 'SUPER_ADMIN_REQUIRED' });
+      expect(repository.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses a non-super administrator deactivating another administrator', async () => {
+      repository.findById.mockImplementation((id: string) =>
+        Promise.resolve(id === 'admin-2' ? adminRow : adminRow),
+      );
+
+      await expect(service.deactivateUser('admin-3', 'admin-2')).rejects.toMatchObject({
+        code: 'SUPER_ADMIN_REQUIRED',
+      });
+      expect(repository.updateById).not.toHaveBeenCalled();
+    });
+
+    it('still lets an ordinary administrator deactivate an ordinary user', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      repository.updateById.mockResolvedValue({ ...mockUser, status: UserStatus.SUSPENDED });
+
+      await service.deactivateUser('user-1', 'admin-2');
+
+      expect(repository.updateById).toHaveBeenCalledWith('user-1', {
+        status: UserStatus.SUSPENDED,
+      });
+    });
+
+    it('refuses another administrator editing the super administrator', async () => {
+      repository.findById.mockResolvedValue(superAdminRow);
+
+      await expect(
+        service.updateUser(SUPER_ADMIN_ID, { firstName: 'Nope' }, 'admin-2'),
+      ).rejects.toMatchObject({ code: 'SUPER_ADMIN_IMMUTABLE' });
+      expect(repository.updateById).not.toHaveBeenCalled();
+    });
+
+    it('lets the super administrator edit their own profile', async () => {
+      repository.findById.mockResolvedValue(superAdminRow);
+      repository.findByUsername.mockResolvedValue(null);
+      repository.updateById.mockResolvedValue({ ...superAdminRow, firstName: 'Ada' });
+
+      const result = await service.updateUser(SUPER_ADMIN_ID, { firstName: 'Ada' }, SUPER_ADMIN_ID);
+
+      expect(result.firstName).toBe('Ada');
+    });
+
+    it('refuses the super administrator changing their own status, and writes nothing', async () => {
+      repository.findById.mockResolvedValue(superAdminRow);
+
+      await expect(
+        service.updateUser(SUPER_ADMIN_ID, { status: UserStatus.SUSPENDED }, SUPER_ADMIN_ID),
+      ).rejects.toMatchObject({ code: 'SUPER_ADMIN_SELF_LOCKED' });
+      expect(repository.updateById).not.toHaveBeenCalled();
+    });
+
+    it('refuses the super administrator deleting their own account', async () => {
+      (verifyPassword as jest.Mock).mockResolvedValue(true);
+      repository.findById.mockResolvedValue(superAdminRow);
+
+      await expect(
+        service.deleteOwnAccount(SUPER_ADMIN_ID, { currentPassword: 'x' } as never),
+      ).rejects.toMatchObject({ code: 'SUPER_ADMIN_SELF_LOCKED' });
+      expect(repository.deleteById).not.toHaveBeenCalled();
+    });
+
+    it('returns 404 rather than 403 for an unknown target — absence is not a refusal', async () => {
+      repository.findById.mockResolvedValue(null);
+
+      await expect(service.updateUser('nope', { firstName: 'x' }, 'admin-2')).rejects.toThrow(
+        EntityNotFoundException,
+      );
     });
   });
 });

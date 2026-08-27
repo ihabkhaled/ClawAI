@@ -57,8 +57,9 @@ export class UsersController {
   @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
   async create(
     @Body(new ZodValidationPipe(createUserSchema)) dto: CreateUserDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<SafeUser> {
-    return this.usersService.create(dto);
+    return this.usersService.create(dto, actor.id);
   }
 
   @Get()

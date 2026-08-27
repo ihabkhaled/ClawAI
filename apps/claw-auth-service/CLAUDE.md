@@ -78,6 +78,39 @@ npm run prisma:generate  # Regenerate Prisma client
 
 Operators can run the reconciler standalone (no full deploy) via `npm run seed:permissions` (backed by `prisma/seed-permissions.js`). Useful for rolling a permission catalog change out to an existing install.
 
+## Super-Administrator Authority (2026-08-27)
+
+One account carries `User.isSuperAdmin`, guaranteed unique by a **raw-SQL partial
+index** that `schema.prisma` cannot express — never accept a migration diff that
+proposes dropping `users_single_super_admin_idx`.
+
+Authority is two questions, deliberately answered in two places:
+
+- **May this actor mutate this row, for this scope?** →
+  `resolveSuperAdminMutability` (pure, in `modules/users/service.utilities/`).
+  Never re-derive this from `user.isSuperAdmin` at a call site, and never write a
+  second predicate.
+- **Does this actor hold super-administrator authority?** →
+  `UsersService.assertSuperAdminActor` (DB read). Do **not** add an
+  `isSuperAdmin` JWT claim — already-issued tokens would lack it until expiry.
+
+`SUPER_ADMIN_SELF_PERMITTED_SCOPES` = `PROFILE` only. Adding a scope is a product
+decision with an unrecoverable failure mode, not a code-review call.
+
+Administrator-class mutations (create/promote/demote/suspend/reactivate an
+`ADMIN`, and editing a **system** role's permissions) require a super-admin actor.
+Ordinary-user mutations must stay ungated.
+
+Cross-module target reads use `PlansRepository.findUserMutabilityFacts` and
+`RolesRepository.isSuperAdminActor` — **not** `UsersService`, because
+`UsersModule` imports `RolesModule` and `PlansModule` and the reverse is a cycle.
+
+System-driven writers (billing entitlement events, plan retirement) are exempt on
+purpose and state it at the write site.
+
+Full rule: `rules/35-super-administrator-and-privilege-boundaries.md` ·
+ADR: `docs/13-adr/adr-073-super-administrator-authority.md`
+
 ## Docker Container Rebuild Procedure
 
 When rebuilding this service (especially after shared package changes):

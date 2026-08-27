@@ -8,6 +8,11 @@ import {
   type RoleWithPermissions,
   type UpdateRoleData,
 } from '../types/roles.types';
+import {
+  SUPER_ADMIN_REFUSED_ACTOR_ACTION,
+  SUPER_ADMIN_REQUIRED_CODE,
+  SUPER_ADMIN_REQUIRED_MESSAGE,
+} from '../../../common/constants/super-admin.constants';
 
 @Injectable()
 export class RolesService {
@@ -62,6 +67,14 @@ export class RolesService {
     return role?.id ?? null;
   }
 
+  // Returns the system role id matching a legacy role slug, so an
+  // administrator-created account gets the same roleRef self-registration does
+  // instead of being born with none.
+  async getRoleIdBySlug(slug: string): Promise<string | null> {
+    const role = await this.rolesRepository.findBySlug(slug);
+    return role?.id ?? null;
+  }
+
   async createRole(data: CreateRoleData): Promise<RoleWithPermissions> {
     const existing = await this.rolesRepository.findBySlug(data.slug);
     if (existing) {
@@ -104,8 +117,17 @@ export class RolesService {
     this.logger.log(`deleteRole: id=${id}`);
   }
 
-  async setPermissions(id: string, permissions: Permission[]): Promise<RoleWithPermissions> {
+  async setPermissions(
+    id: string,
+    permissions: Permission[],
+    actorId: string,
+  ): Promise<RoleWithPermissions> {
     const role = await this.getRole(id);
+    // A system role's grant set is what the super administrator's own authority
+    // is made of. Leaving this on the ADMIN role enum alone let one administrator
+    // degrade every administrator — an attack on the super administrator that
+    // never touches the super administrator's user row.
+    await this.assertSuperAdminActorForSystemRole(role.isSystem, actorId);
     this.assertNoAdminLockout(role.slug, permissions);
     const updated = await this.rolesRepository.replacePermissions(id, permissions);
     if (!updated) {
@@ -113,6 +135,22 @@ export class RolesService {
     }
     this.logger.log(`setPermissions: id=${id} count=${permissions.length}`);
     return this.toView(updated);
+  }
+
+  private async assertSuperAdminActorForSystemRole(
+    isSystem: boolean,
+    actorId: string,
+  ): Promise<void> {
+    if (!isSystem) return;
+    if (await this.rolesRepository.isSuperAdminActor(actorId)) return;
+    this.logger.warn(
+      `${SUPER_ADMIN_REFUSED_ACTOR_ACTION}: actor=${actorId} attempted a system-role permission change`,
+    );
+    throw new BusinessException(
+      SUPER_ADMIN_REQUIRED_MESSAGE,
+      SUPER_ADMIN_REQUIRED_CODE,
+      HttpStatus.FORBIDDEN,
+    );
   }
 
   // Refuse to strip the ADMIN system role of ADMIN_PERMISSIONS_MANAGE — that

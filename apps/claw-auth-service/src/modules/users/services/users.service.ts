@@ -16,12 +16,27 @@ import {
 } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
 import { UserRole, UserStatus } from '../../../common/enums';
+import { SuperAdminMutationScope } from '../../../common/enums/super-admin-mutation-scope.enum';
+import {
+  SUPER_ADMIN_IMMUTABLE_CODE,
+  SUPER_ADMIN_IMMUTABLE_MESSAGE,
+  SUPER_ADMIN_REFUSED_ACTOR_ACTION,
+  SUPER_ADMIN_REFUSED_SELF_ACTION,
+  SUPER_ADMIN_REFUSED_TARGET_ACTION,
+  SUPER_ADMIN_REQUIRED_CODE,
+  SUPER_ADMIN_REQUIRED_MESSAGE,
+  SUPER_ADMIN_SELF_LOCKED_CODE,
+  SUPER_ADMIN_SELF_LOCKED_MESSAGE,
+} from '../../../common/constants/super-admin.constants';
 import { type User } from '../../../generated/prisma';
 import { type SafeUser } from '../types/users.types';
 import { toSafeUser } from '../service.utilities/to-safe-user.utility';
 import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
+import { resolveSuperAdminMutability } from '../service.utilities/super-admin-mutability.utility';
 import { randomBytes } from 'node:crypto';
 import { AuthEmailAdapter } from '../../auth/adapters/auth-email.adapter';
+import { RolesService } from '../../roles/services/roles.service';
+import { PlansRepository } from '../../plans/repositories/plans.repository';
 
 @Injectable()
 export class UsersService {
@@ -31,10 +46,19 @@ export class UsersService {
     private readonly usersRepository: UsersRepository,
     private readonly rabbitMQService: RabbitMQService,
     private readonly authEmailAdapter: AuthEmailAdapter,
+    private readonly rolesService: RolesService,
+    private readonly plansRepository: PlansRepository,
   ) {}
 
-  async create(dto: CreateUserDto): Promise<SafeUser> {
-    this.logger.log(`create: creating user email=${dto.email} role=${dto.role}`);
+  async create(dto: CreateUserDto, actorId: string): Promise<SafeUser> {
+    this.logger.log(
+      `create: creating user email=${dto.email} role=${dto.role} by actor ${actorId}`,
+    );
+    // Minting an administrator is an administrator-class mutation even though no
+    // existing row is touched: without this gate any holder of ADMIN_USERS_MANAGE
+    // could create a peer administrator, which is the same escalation that
+    // changeRole already refuses.
+    await this.assertSuperAdminActorForAdminMutation(actorId, dto.role === UserRole.ADMIN);
     const passwordResult = validatePasswordStrength(dto.password);
     if (!passwordResult.valid) {
       throw new BusinessException(
@@ -55,7 +79,12 @@ export class UsersService {
     }
 
     const passwordHash = await hashPassword(dto.password);
+    const roleId = await this.rolesService.getRoleIdBySlug(dto.role);
 
+    // An administrator vouching for an address is the verification. Creating the
+    // row PENDING with emailVerifiedAt null — which is what this did before —
+    // stranded the account behind an email wall it was never sent a link for,
+    // and login hard-blocks anything that is not ACTIVE.
     const user = await this.usersRepository.create({
       email: dto.email,
       username: dto.username,
@@ -64,8 +93,15 @@ export class UsersService {
       lastName: dto.lastName,
       phone: dto.phone,
       role: dto.role,
-      status: 'ACTIVE',
+      ...(roleId ? { roleRef: { connect: { id: roleId } } } : {}),
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date(),
+      // The creating administrator knows this password. Forcing the rotation
+      // stops an administrator-known credential from becoming the standing one.
+      mustChangePassword: true,
     });
+
+    await this.assignSignupPlan(user.id);
 
     this.logger.log(`create: created user ${user.id}`);
     await this.rabbitMQService.publish(EventPattern.USER_CREATED, {
@@ -119,7 +155,24 @@ export class UsersService {
     if (!user) {
       throw new EntityNotFoundException('User', id);
     }
-    this.assertMutableUser(user);
+
+    // This endpoint carries three different classes of change behind one body.
+    // Assert each against its own scope: the super administrator may rename
+    // themselves here, but role and status stay locked even for them, and a
+    // non-super administrator may not reach role or status on any administrator
+    // at all — which was the hole that made every other protection decorative.
+    this.assertMutable(user, actorId, SuperAdminMutationScope.PROFILE);
+    if (dto.role !== undefined) {
+      this.assertMutable(user, actorId, SuperAdminMutationScope.ROLE);
+    }
+    if (dto.status !== undefined) {
+      this.assertMutable(user, actorId, SuperAdminMutationScope.STATUS);
+    }
+    await this.assertSuperAdminActorForAdminMutation(
+      actorId,
+      (dto.role !== undefined || dto.status !== undefined) &&
+        (user.role === UserRole.ADMIN || dto.role === UserRole.ADMIN),
+    );
 
     if (dto.username && dto.username !== user.username) {
       const existing = await this.usersRepository.findByUsername(dto.username);
@@ -175,7 +228,10 @@ export class UsersService {
 
   async deleteOwnAccount(userId: string, dto: DeleteOwnAccountDto): Promise<void> {
     const user = await this.requireUserWithValidPassword(userId, dto.currentPassword);
-    this.assertMutableUser(user);
+    // Self-deletion stays refused even for the super administrator: the partial
+    // unique index guarantees at most one, and nothing re-creates it except a
+    // fresh seed against an empty admin table.
+    this.assertMutable(user, userId, SuperAdminMutationScope.DELETE);
     await this.usersRepository.revokeSessionsByUserId(userId);
     await this.usersRepository.deleteById(userId);
     this.logger.log(`deleteOwnAccount: deleted user ${userId}`);
@@ -187,7 +243,8 @@ export class UsersService {
     if (!user) {
       throw new EntityNotFoundException('User', id);
     }
-    this.assertMutableUser(user);
+    this.assertMutable(user, actorId, SuperAdminMutationScope.STATUS);
+    await this.assertSuperAdminActorForAdminMutation(actorId, user.role === UserRole.ADMIN);
 
     const updated = await this.usersRepository.updateById(id, {
       status: UserStatus.SUSPENDED,
@@ -210,7 +267,8 @@ export class UsersService {
     if (!user) {
       throw new EntityNotFoundException('User', id);
     }
-    this.assertMutableUser(user);
+    this.assertMutable(user, actorId, SuperAdminMutationScope.STATUS);
+    await this.assertSuperAdminActorForAdminMutation(actorId, user.role === UserRole.ADMIN);
 
     const updated = await this.usersRepository.updateById(id, {
       status: UserStatus.ACTIVE,
@@ -268,15 +326,25 @@ export class UsersService {
     this.logger.log(`changePassword: completed for user ${userId}`);
   }
 
+  /**
+   * The actor half of the invariant: does this caller hold super-administrator
+   * authority at all?
+   *
+   * A database read rather than a token claim, deliberately. Adding
+   * `isSuperAdmin` to the access token would leave every already-issued token
+   * without it until expiry, so the claim would be absent exactly when it is
+   * first needed.
+   */
   async assertSuperAdminActor(actorId: string): Promise<void> {
     const actor = await this.usersRepository.findById(actorId);
-    if (!actor?.isSuperAdmin) {
-      throw new BusinessException(
-        'Only the super administrator may view deployment operations',
-        'SUPER_ADMIN_REQUIRED',
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    if (actor?.isSuperAdmin === true) return;
+
+    this.logger.warn(`${SUPER_ADMIN_REFUSED_ACTOR_ACTION}: actor=${actorId}`);
+    throw new BusinessException(
+      SUPER_ADMIN_REQUIRED_MESSAGE,
+      SUPER_ADMIN_REQUIRED_CODE,
+      HttpStatus.FORBIDDEN,
+    );
   }
 
   async changeRole(id: string, role: UserRole, actorId: string): Promise<SafeUser> {
@@ -285,7 +353,7 @@ export class UsersService {
     if (!user) {
       throw new EntityNotFoundException('User', id);
     }
-    this.assertMutableUser(user);
+    this.assertMutable(user, actorId, SuperAdminMutationScope.ROLE);
     await this.assertSuperAdminActorForAdminMutation(
       actorId,
       user.role === UserRole.ADMIN || role === UserRole.ADMIN,
@@ -309,7 +377,7 @@ export class UsersService {
   async issueTemporaryPassword(id: string, actorId: string): Promise<void> {
     const user = await this.usersRepository.findById(id);
     if (!user) throw new EntityNotFoundException('User', id);
-    this.assertMutableUser(user);
+    this.assertMutable(user, actorId, SuperAdminMutationScope.TEMPORARY_PASSWORD);
     await this.assertSuperAdminActorForAdminMutation(actorId, user.role === UserRole.ADMIN);
     const temporaryPassword = `${randomBytes(12).toString('base64url')}!Aa1`;
     const passwordHash = await hashPassword(temporaryPassword);
@@ -341,22 +409,70 @@ export class UsersService {
     return user;
   }
 
-  private assertMutableUser(user: User): void {
-    if (user.isSuperAdmin) {
+  /**
+   * Refuses a mutation whose TARGET is shielded from this actor.
+   *
+   * Repeated refusals are a security signal, so each one is logged with the
+   * actor, the target and the scope rather than vanishing into a bare throw.
+   */
+  private assertMutable(user: User, actorId: string, scope: SuperAdminMutationScope): void {
+    const outcome = resolveSuperAdminMutability({
+      target: { id: user.id, isSuperAdmin: user.isSuperAdmin },
+      actorId,
+      scope,
+    });
+    if (outcome.allowed) return;
+
+    if (outcome.reason === 'IMMUTABLE_TO_OTHERS') {
+      this.logger.warn(
+        `${SUPER_ADMIN_REFUSED_TARGET_ACTION}: actor=${actorId} target=${user.id} scope=${scope}`,
+      );
       throw new BusinessException(
-        'The seeded super administrator is immutable',
-        'SUPER_ADMIN_IMMUTABLE',
+        SUPER_ADMIN_IMMUTABLE_MESSAGE,
+        SUPER_ADMIN_IMMUTABLE_CODE,
         HttpStatus.FORBIDDEN,
       );
     }
+
+    this.logger.warn(
+      `${SUPER_ADMIN_REFUSED_SELF_ACTION}: actor=${actorId} target=${user.id} scope=${scope}`,
+    );
+    throw new BusinessException(
+      SUPER_ADMIN_SELF_LOCKED_MESSAGE,
+      SUPER_ADMIN_SELF_LOCKED_CODE,
+      HttpStatus.FORBIDDEN,
+    );
   }
 
+  /**
+   * Refuses a mutation whose ACTOR lacks super-administrator authority.
+   *
+   * The other half of the invariant. Target protection alone is decorative: an
+   * administrator who can promote themselves simply does that first, then acts.
+   */
   private async assertSuperAdminActorForAdminMutation(
     actorId: string,
     adminMutation: boolean,
   ): Promise<void> {
     if (!adminMutation) return;
     await this.assertSuperAdminActor(actorId);
+  }
+
+  /**
+   * Grants the plan a new signup receives, mirroring self-registration.
+   *
+   * Non-fatal, exactly as in AuthManager.register: an account without a plan is
+   * still a usable account, but normally the signup plan exists from seed.
+   */
+  private async assignSignupPlan(userId: string): Promise<void> {
+    const signupPlan = await this.plansRepository.findDefault();
+    if (!signupPlan) {
+      this.logger.warn(`assignSignupPlan: no signup plan configured; user ${userId} has none`);
+      return;
+    }
+    await (signupPlan.isTrial
+      ? this.plansRepository.assignTrialPlanOnce(userId, signupPlan.id, undefined, new Date())
+      : this.plansRepository.assignUserToPlan(userId, signupPlan.id));
   }
 
   private async ensureProfileFieldsAvailable(

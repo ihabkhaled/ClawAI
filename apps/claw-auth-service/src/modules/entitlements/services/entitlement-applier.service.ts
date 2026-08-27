@@ -72,6 +72,10 @@ export class EntitlementApplierService {
           startsAt: new Date(input.effectiveAtMs),
         },
       });
+      // Super-administrator exemption, deliberate: this write is system-driven,
+      // not actor-driven. A legitimate billing event that cannot be applied
+      // protects nobody — it poisons the consumer retry loop. See
+      // rules/35-super-administrator-and-privilege-boundaries.md rule 8.
       await tx.user.update({
         where: { id: input.userId },
         data: { activePlanId: planId },
@@ -136,6 +140,10 @@ export class EntitlementApplierService {
           },
         });
       }
+      // Super-administrator exemption, deliberate: this write is system-driven,
+      // not actor-driven. A legitimate billing event that cannot be applied
+      // protects nobody — it poisons the consumer retry loop. See
+      // rules/35-super-administrator-and-privilege-boundaries.md rule 8.
       await tx.user.update({
         where: { id: input.userId },
         data: { activePlanId: freePlan.id },

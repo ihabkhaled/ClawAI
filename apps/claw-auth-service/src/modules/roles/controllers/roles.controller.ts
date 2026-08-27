@@ -12,6 +12,9 @@ import {
 } from '@nestjs/common';
 import { Permission } from '@claw/shared-types';
 import { Roles } from '../../../app/decorators/roles.decorator';
+import { CurrentUser } from '../../../app/decorators/current-user.decorator';
+import { RequirePermissions } from '../../../app/decorators/permissions.decorator';
+import { type AuthenticatedUser } from '../../../common/types';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { UserRole } from '../../../common/enums';
 import { RolesService } from '../services/roles.service';
@@ -22,6 +25,10 @@ import { type RoleWithPermissions } from '../types/roles.types';
 
 @Controller('admin/roles')
 @Roles(UserRole.ADMIN)
+// The whole role/permission matrix was gated on the ADMIN role enum alone, with
+// no permission requirement on any route — so any administrator could edit the
+// grant set that defines what every administrator can do.
+@RequirePermissions(Permission.ADMIN_PERMISSIONS_MANAGE)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
@@ -59,8 +66,9 @@ export class RolesController {
   async setPermissions(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(setPermissionsSchema)) dto: SetPermissionsDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<RoleWithPermissions> {
-    return this.rolesService.setPermissions(id, dto.permissions);
+    return this.rolesService.setPermissions(id, dto.permissions, actor.id);
   }
 
   @Delete(':id')

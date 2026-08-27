@@ -122,6 +122,23 @@ export class PlansRepository {
 
   // Atomically: expire the user's prior ACTIVE assignment, create a new ACTIVE
   // one, and point User.activePlanId at the new plan.
+  /**
+   * Reads the two facts the super-administrator target rule needs.
+   *
+   * Read here rather than through UsersService because UsersModule already
+   * imports PlansModule (an administrator-created account needs the signup
+   * plan), so the reverse dependency would be a cycle. Same service, same
+   * database, so this stays inside the ownership boundary.
+   */
+  async findUserMutabilityFacts(
+    userId: string,
+  ): Promise<{ id: string; isSuperAdmin: boolean } | null> {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, isSuperAdmin: true },
+    });
+  }
+
   async assignUserToPlan(userId: string, planId: string, assignedByUserId?: string): Promise<void> {
     await this.prisma.$transaction([
       this.prisma.userPlanAssignment.updateMany({
@@ -274,6 +291,9 @@ export class PlansRepository {
             status: paid ? 'BILLING_SCHEDULE_PENDING' : 'APPLIED',
           },
         });
+        // Super-administrator exemption, deliberate: retiring a plan is a
+        // system-driven migration, not an administrator acting on a row. See
+        // rules/35-super-administrator-and-privilege-boundaries.md rule 8.
         await tx.user.update({
           where: { id: assignment.userId },
           data: { activePlanId: replacementPlanId },

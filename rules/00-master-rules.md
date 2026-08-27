@@ -52,6 +52,7 @@
 | `24-generated-files-and-knowledge-freshness.md`         | The AI-native workflow depends on machine-readable facts staying true.                                                                                 |
 | `33-knowledge-compounding-and-context-velocity.md`      | ClawAI is production-grade and worked on by many people and many agents.                                                                               |
 | `34-gate-economy-and-machine-resources.md`              | The gates in this repo are expensive by construction: 13 Prisma clients, 20 workspaces, thousands of tests.                                            |
+| `35-super-administrator-and-privilege-boundaries.md`    | Protecting a row is half a privilege boundary; the other half is asking what the caller is allowed to do.                                              |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 

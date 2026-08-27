@@ -35,6 +35,7 @@ const mockRepo = (): Record<keyof RolesRepository, jest.Mock> => ({
   delete: jest.fn(),
   replacePermissions: jest.fn(),
   countUsersWithRole: jest.fn(),
+  isSuperAdminActor: jest.fn().mockResolvedValue(true),
 });
 
 describe('RolesService', () => {
@@ -79,9 +80,9 @@ describe('RolesService', () => {
   describe('setPermissions lockout guard', () => {
     it('rejects stripping ADMIN_PERMISSIONS_MANAGE from the ADMIN system role', async () => {
       repo.findById.mockResolvedValue(adminRole);
-      await expect(service.setPermissions('role-admin', [Permission.CHAT_USE])).rejects.toThrow(
-        /ADMIN_PERMISSIONS_MANAGE/,
-      );
+      await expect(
+        service.setPermissions('role-admin', [Permission.CHAT_USE], 'super-1'),
+      ).rejects.toThrow(/ADMIN_PERMISSIONS_MANAGE/);
       expect(repo.replacePermissions).not.toHaveBeenCalled();
     });
 
@@ -91,7 +92,33 @@ describe('RolesService', () => {
         ...customRole,
         permissions: [{ permission: Permission.CHAT_USE }],
       });
-      await service.setPermissions('role-support', [Permission.CHAT_USE]);
+      await service.setPermissions('role-support', [Permission.CHAT_USE], 'admin-2');
+      expect(repo.replacePermissions).toHaveBeenCalledWith('role-support', [Permission.CHAT_USE]);
+    });
+
+    it('refuses a non-super administrator editing a SYSTEM role, before the lockout guard', async () => {
+      // A system role's grant set is what every administrator's authority is made
+      // of, so degrading it is an attack on the super administrator that never
+      // touches the super administrator's user row.
+      repo.findById.mockResolvedValue(adminRole);
+      repo.isSuperAdminActor.mockResolvedValue(false);
+
+      await expect(
+        service.setPermissions('role-admin', [Permission.ADMIN_PERMISSIONS_MANAGE], 'admin-2'),
+      ).rejects.toMatchObject({ code: 'SUPER_ADMIN_REQUIRED' });
+      expect(repo.replacePermissions).not.toHaveBeenCalled();
+    });
+
+    it('lets a non-super administrator edit a CUSTOM role', async () => {
+      repo.findById.mockResolvedValue(customRole);
+      repo.isSuperAdminActor.mockResolvedValue(false);
+      repo.replacePermissions.mockResolvedValue({
+        ...customRole,
+        permissions: [{ permission: Permission.CHAT_USE }],
+      });
+
+      await service.setPermissions('role-support', [Permission.CHAT_USE], 'admin-2');
+
       expect(repo.replacePermissions).toHaveBeenCalledWith('role-support', [Permission.CHAT_USE]);
     });
   });

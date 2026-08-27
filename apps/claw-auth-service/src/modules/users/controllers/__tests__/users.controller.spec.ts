@@ -71,8 +71,8 @@ describe('UsersController', () => {
   it('create forwards body to service.create', async () => {
     const dto = { email: 'a@b', username: 'a', password: 'PWord!1secure', role: UserRole.OPERATOR };
     usersMock.create.mockResolvedValue({ id: 'u1' });
-    const result = await controller.create(dto as never);
-    expect(usersMock.create).toHaveBeenCalledWith(dto);
+    const result = await controller.create(dto as never, { id: 'admin-1' } as never);
+    expect(usersMock.create).toHaveBeenCalledWith(dto, 'admin-1');
     expect(result).toEqual({ id: 'u1' });
   });
 

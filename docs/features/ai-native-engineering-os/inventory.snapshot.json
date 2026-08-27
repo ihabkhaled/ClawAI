@@ -6997,7 +6997,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 18887,
+          "bytes": 19100,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7175,6 +7175,10 @@
         {
           "bytes": 6856,
           "file": "rules/34-gate-economy-and-machine-resources.md"
+        },
+        {
+          "bytes": 6821,
+          "file": "rules/35-super-administrator-and-privilege-boundaries.md"
         },
         {
           "bytes": 4045,
@@ -9148,7 +9152,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 69
+        "testFiles": 70
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -9929,7 +9933,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1038,
+    "totalTestFiles": 1039,
     "workspaceCount": 25
   }
 }

@@ -81,6 +81,21 @@ export class RolesRepository {
     return this.findById(id);
   }
 
+  /**
+   * Reads whether an actor is the super administrator.
+   *
+   * Read here rather than through UsersService because UsersModule imports
+   * RolesModule, so the reverse dependency would be a cycle. Same service, same
+   * database, so this stays inside the ownership boundary.
+   */
+  async isSuperAdminActor(actorId: string): Promise<boolean> {
+    const actor = await this.prisma.user.findUnique({
+      where: { id: actorId },
+      select: { isSuperAdmin: true },
+    });
+    return actor?.isSuperAdmin === true;
+  }
+
   async countUsersWithRole(roleId: string): Promise<number> {
     return this.prisma.user.count({ where: { roleId } });
   }

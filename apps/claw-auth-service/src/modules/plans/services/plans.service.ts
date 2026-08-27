@@ -18,6 +18,16 @@ import {
   type PlanView,
   type PlanWithAccess,
 } from '../types/plans.types';
+import { SuperAdminMutationScope } from '../../../common/enums/super-admin-mutation-scope.enum';
+import {
+  SUPER_ADMIN_IMMUTABLE_CODE,
+  SUPER_ADMIN_IMMUTABLE_MESSAGE,
+  SUPER_ADMIN_REFUSED_SELF_ACTION,
+  SUPER_ADMIN_REFUSED_TARGET_ACTION,
+  SUPER_ADMIN_SELF_LOCKED_CODE,
+  SUPER_ADMIN_SELF_LOCKED_MESSAGE,
+} from '../../../common/constants/super-admin.constants';
+import { resolveSuperAdminMutability } from '../../users/service.utilities/super-admin-mutability.utility';
 
 @Injectable()
 export class PlansService {
@@ -169,6 +179,11 @@ export class PlansService {
   }
 
   async assignUserToPlan(userId: string, planId: string, assignedBy: string): Promise<PlanView> {
+    // The admin table already disables this control for the super administrator,
+    // but the endpoint accepted any userId, so the protection was decorative.
+    // The super administrator bypasses plans entirely, so PLAN is refused even
+    // when they are the actor.
+    await this.assertPlanAssignable(userId, assignedBy);
     const plan = await this.plansRepository.findById(planId);
     if (!plan) {
       throw new EntityNotFoundException('Plan', planId);
@@ -326,6 +341,41 @@ export class PlansService {
       allowCostEnsemble: plan.allowCostEnsemble,
       allowRolePack: plan.allowRolePack,
     };
+  }
+
+  /**
+   * Refuses a plan assignment aimed at the super administrator.
+   *
+   * Applies to the human-driven admin path only. System-driven writes — billing
+   * entitlement events and plan retirement — deliberately bypass this, because a
+   * legitimate event that cannot be applied poisons a consumer retry loop; see
+   * EntitlementApplierService and PlansRepository.retire.
+   */
+  private async assertPlanAssignable(userId: string, actorId: string): Promise<void> {
+    const target = await this.plansRepository.findUserMutabilityFacts(userId);
+    if (!target) {
+      throw new EntityNotFoundException('User', userId);
+    }
+    const outcome = resolveSuperAdminMutability({
+      target,
+      actorId,
+      scope: SuperAdminMutationScope.PLAN,
+    });
+    if (outcome.allowed) return;
+
+    const isOther = outcome.reason === 'IMMUTABLE_TO_OTHERS';
+    this.structuredLogger.logAction({
+      level: LogLevel.WARN,
+      action: isOther ? SUPER_ADMIN_REFUSED_TARGET_ACTION : SUPER_ADMIN_REFUSED_SELF_ACTION,
+      message: `Plan assignment refused for the super administrator (actor=${actorId})`,
+      service: PlansService.name,
+      metadata: { userId, actorId, scope: SuperAdminMutationScope.PLAN },
+    });
+    throw new BusinessException(
+      isOther ? SUPER_ADMIN_IMMUTABLE_MESSAGE : SUPER_ADMIN_SELF_LOCKED_MESSAGE,
+      isOther ? SUPER_ADMIN_IMMUTABLE_CODE : SUPER_ADMIN_SELF_LOCKED_CODE,
+      HttpStatus.FORBIDDEN,
+    );
   }
 
   private toModelAccessView(model: PlanWithAccess['modelAccess'][number]): PlanModelAccessView {

@@ -65,6 +65,7 @@ const mockRepo = (): Record<keyof PlansRepository, jest.Mock> => ({
   retirePlan: jest.fn(),
   listPendingRetirementMigrations: jest.fn(),
   recordRetirementMigrationOutcome: jest.fn(),
+  findUserMutabilityFacts: jest.fn().mockResolvedValue({ id: 'user-1', isSuperAdmin: false }),
 });
 
 describe('PlansService', () => {
