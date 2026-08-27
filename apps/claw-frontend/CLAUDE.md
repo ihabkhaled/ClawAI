@@ -321,6 +321,22 @@ After completing any frontend implementation:
 5. **Evidence**: typecheck output, lint output, test output
 6. **Known gaps or follow-up items**
 
+## Floating UI must register itself (2026-08-27)
+
+Toasts stack from the bottom edge, and so does everything else that floats there.
+The viewport used to reserve space for exactly one obstacle — the mobile bottom
+nav — as a hardcoded height, so toasts landed on the feedback launcher, the chat
+FAB and the PWA install prompt.
+
+Add `data-floating-obstacle` to any element that floats near the bottom edge.
+`useFloatingObstacleClearance` measures it and moves the toast column. Never
+hardcode a clearance that encodes another component's height, and never assemble
+a Tailwind class by interpolation — Tailwind scans source text, so a computed
+class is one it never generates. Anything dynamic goes through a CSS custom
+property with a static `var()` in the class string and a fallback.
+
+Full rule: `rules/36-floating-ui-and-toast-clearance.md`.
+
 ## Local Frontier (llama.cpp) page
 
 Route: `/models/local-frontier`. Sidebar nav entry: `nav.modelLocalFrontier`. Page composition:

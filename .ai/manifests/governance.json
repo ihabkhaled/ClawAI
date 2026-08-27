@@ -53,7 +53,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 19100,
+      "bytes": 19313,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -235,6 +235,10 @@
     {
       "bytes": 6821,
       "file": "rules/35-super-administrator-and-privilege-boundaries.md"
+    },
+    {
+      "bytes": 4420,
+      "file": "rules/36-floating-ui-and-toast-clearance.md"
     },
     {
       "bytes": 4045,
@@ -435,7 +439,7 @@
       "file": "skills/navigate-codebase.md"
     },
     {
-      "bytes": 6428,
+      "bytes": 8585,
       "file": "skills/publish-a-public-marketing-page.md"
     },
     {

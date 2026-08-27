@@ -131,6 +131,25 @@ the larger transport envelope accounts for UTF-8 and JSON escaping when coding
 clients attach bounded workspace context. Requests above the transport bound
 return HTTP 413 with the middleware error code instead of being masked as a 500.
 
+## Limit refusals must carry the machine code, not a message key
+
+`AccessControlService.assertQuotaRemaining` threw
+`'quota.dailyLimitExceeded'` as its `BusinessException` code. The frontend error
+map keys on the stable billing value `QUOTA_DAILY_EXCEEDED`, so nothing matched
+and every user in every locale saw the service's English sentence.
+
+The rule that generalises: **the `code` on a `BusinessException` is a contract
+with the frontend, not a translation key.** Use the enum
+(`BillingErrorCode`, `Permission`, and the module's own `*-error-code.enum.ts`),
+never a dotted message path.
+
+Limit refusals are also not toasts any more. The frontend renders them as a line
+in the transcript, because a toast that fades leaves a composer that appears to
+have silently done nothing. The codes it recognises are the six quota/plan codes
+plus `PLAN_TRIAL_EXPIRED` — which is not a quota at all: the free plan is a
+30-day trial, so day 31 is a wall, and "you used your allowance" is the wrong
+sentence. Anything unrecognised stays a toast rather than being guessed at.
+
 ## Events
 
 | Event             | Direction | Notes                          |

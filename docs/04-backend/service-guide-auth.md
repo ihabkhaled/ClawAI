@@ -224,6 +224,60 @@ because repeated attempts are a security signal.
 Full rule: [`rules/35-super-administrator-and-privilege-boundaries.md`](../../rules/35-super-administrator-and-privilege-boundaries.md) ·
 Decision: [ADR-073](../13-adr/adr-073-super-administrator-authority.md)
 
+## Activating a pending account
+
+A self-registration lands in `UserStatus.PENDING` with `emailVerifiedAt = null`,
+and login hard-blocks anything that is not `ACTIVE`. `PATCH /users/:id/activate`
+is the administrator's way through that wall.
+
+It is deliberately **not** `reactivate`. Reactivating lifts a suspension on an
+account that has already verified its address; activating asserts that an
+administrator vouched for an address the product never confirmed. So activation
+is one transaction over three writes that must not be separable:
+
+1. `status` → `ACTIVE`
+2. `emailVerifiedAt` → now
+3. every outstanding `EmailVerificationToken` marked **consumed**
+
+Consumed rather than deleted, so the verify-email page can tell "already used"
+from "never existed" and say which. Activating a non-`PENDING` account is refused
+with `USER_NOT_PENDING` rather than silently doing the right-looking thing.
+
+The action publishes `EventPattern.USER_ACTIVATED` and audit-service records it at
+`HIGH` severity beside the temporary-password action, because vouching for an
+unverified address is where an investigation would start.
+
+Before 2026-08-27 the only ways to flip the status were `PATCH /users/:id` and
+`PATCH /users/:id/reactivate`. Neither set `emailVerifiedAt`, so the account came
+out `ACTIVE` but unverified; neither touched the token, so the emailed link stayed
+live; and both published `USER_CREATED` with a payload satisfying no payload type
+and consumed by nothing. `USER_UPDATED` and `USER_REACTIVATED` now exist so those
+three events say three different things.
+
+## Plan flags: signup versus popular
+
+`Plan` carries two independent flags.
+
+| Flag        | Meaning                                                                                        | Written by                          |
+| ----------- | ---------------------------------------------------------------------------------------------- | ----------------------------------- |
+| `isDefault` | The plan a new signup is granted. Read by `AuthManager.register` and by `UsersService.create`. | `POST /admin/plans/:id/set-default` |
+| `isPopular` | The plan the public pricing page badges "Most popular". A marketing claim.                     | `POST /admin/plans/:id/set-popular` |
+
+They were one flag until 2026-08-27, so the badge always followed the signup
+plan — which meant the pricing page advertised the free tier as the most popular
+one.
+
+`Plan.popularKey` is a nullable `@unique` column emulating a partial index, the
+same trick `PlanPriceVersion.activeKey` uses: it carries the literal `'popular'`
+while a plan holds the badge and `NULL` otherwise, so Postgres rejects a second
+badged plan rather than an application-level "unset the others" racing between
+two administrators.
+
+**Neither flag is writable through the plan DTOs**, and the migration that added
+`isPopular` deliberately does not write `isDefault` on any row — moving the signup
+plan is an operator decision per install, never a migration. See
+[ADR-074](../13-adr/adr-074-plan-signup-flag-and-popular-badge.md).
+
 ## Module Structure
 
 ```

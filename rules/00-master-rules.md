@@ -53,6 +53,7 @@
 | `33-knowledge-compounding-and-context-velocity.md`      | ClawAI is production-grade and worked on by many people and many agents.                                                                               |
 | `34-gate-economy-and-machine-resources.md`              | The gates in this repo are expensive by construction: 13 Prisma clients, 20 workspaces, thousands of tests.                                            |
 | `35-super-administrator-and-privilege-boundaries.md`    | Protecting a row is half a privilege boundary; the other half is asking what the caller is allowed to do.                                              |
+| `36-floating-ui-and-toast-clearance.md`                 | Toasts stack from the same corner everything else floats in; a floating element declares itself and the clearance is measured, never hardcoded.        |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 

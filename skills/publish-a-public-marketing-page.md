@@ -136,3 +136,45 @@ Route resolves under `/{locale}/`; registry entry `PUBLISHED` + `REVIEWED` +
 `INDEXABLE`; 13 locales of SEO copy and body copy; URL in `lighthouserc.json`;
 reachable from the footer or nav; the four coverage tests green; validation lane
 green.
+
+## Two shapes this repo already has, and when each applies
+
+### A cluster that fans out from a registry list
+
+The comparison pages are not nine registry entries. They are one enum
+(`ComparisonRival`), one order array, two maps, and a `.map()` inside
+`PUBLIC_CONTENT_DEFINITIONS`. Adding a rival is four lines plus content — the
+sitemap, the feeds, `/llms.txt`, `robots.txt`, the canonicals, the footer and the
+AdSense rules all follow.
+
+If you are adding the second, third or fourth page of an obviously repeating
+kind, build the fan-out before the second page, not after the fourth.
+
+### A pair of pages with their own dictionary
+
+The Coding Agent pages (`/coding-agent`, `/coding-agent/install`) have their own
+`constants/coding-agent-content/<locale>.constants.ts` files and a `*-content.constants.ts`
+loader, exactly like the comparison cluster, rather than living in the main
+`lib/i18n/locales` dictionaries.
+
+Use a dedicated dictionary when the copy is long-form page content. Use the main
+i18n dictionaries for UI chrome — nav labels, buttons, the homepage band's three
+points. The split keeps a 200-line page from bloating the dictionary every
+authenticated screen loads.
+
+## Things that will bite you
+
+- **Product identifiers do not belong in a dictionary.** An extension id, a CLI
+  command or a keyboard shortcut translated into thirteen languages is thirteen
+  broken instructions. They live in a constants file and stay Latin even in the
+  RTL locales.
+- **A `vscode:`-style protocol link cannot be feature-detected.** Offer it beside
+  the real link, never instead of it.
+- **Four tests enumerate the published surface on purpose.**
+  `content-registry.utility.test.ts` lists every published path, every
+  ad-eligible path, and the per-locale count; `comparison-page.test.tsx` counts
+  the rail. They are the tripwire for a page going live unreviewed, so a new page
+  means editing them — that is the feature, not friction. Prefer deriving counts
+  from the order array where the contract really is "all of them".
+- **`getPageBySlugAndLocale` returns the unlocalised entry**, which has no
+  `path`. Use the route constant and `localisePath`.
