@@ -47,6 +47,36 @@
       "route": "/architecture"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/compare/chatgpt/page.tsx",
+      "kind": "page",
+      "route": "/compare/chatgpt"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/compare/claude/page.tsx",
+      "kind": "page",
+      "route": "/compare/claude"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/compare/copilot/page.tsx",
+      "kind": "page",
+      "route": "/compare/copilot"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/compare/gemini/page.tsx",
+      "kind": "page",
+      "route": "/compare/gemini"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/compare/page.tsx",
+      "kind": "page",
+      "route": "/compare"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/compare/perplexity/page.tsx",
+      "kind": "page",
+      "route": "/compare/perplexity"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/contact/page.tsx",
       "kind": "page",
       "route": "/contact"

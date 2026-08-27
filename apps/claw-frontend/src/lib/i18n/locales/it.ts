@@ -4155,6 +4155,7 @@ export const it: TranslationDictionary = {
       navArchitecture: 'Architettura',
       navLocalFirst: 'Per le organizzazioni',
       navPricing: 'Prezzi',
+      navCompare: 'Confronti',
       navEnterprise: 'Per le organizzazioni',
       navUseCases: 'Casi d’uso',
       navFaq: 'FAQ',

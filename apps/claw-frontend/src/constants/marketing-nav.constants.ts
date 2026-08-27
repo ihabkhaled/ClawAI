@@ -1,3 +1,4 @@
+import { COMPARISON_HUB_PATH } from '@/constants/public-comparison.constants';
 import type { MarketingNavLink } from '@/types';
 
 // Phase B: every concept now has its own page, so the nav points at real
@@ -13,6 +14,7 @@ export const MARKETING_NAV_LINKS: ReadonlyArray<MarketingNavLink> = [
   { labelKey: 'marketing.header.navHowItWorks', href: '/how-it-works' },
   { labelKey: 'marketing.header.navPricing', href: '/pricing' },
   { labelKey: 'marketing.header.navUseCases', href: '/use-cases' },
+  { labelKey: 'marketing.header.navCompare', href: COMPARISON_HUB_PATH },
   { labelKey: 'marketing.header.navEnterprise', href: '/local-first-ai' },
 ];
 

@@ -4115,6 +4115,7 @@ export const fa: TranslationDictionary = {
       navArchitecture: 'معماری',
       navLocalFirst: 'برای سازمان ها',
       navPricing: 'قیمت گذاری',
+      navCompare: 'مقایسه‌ها',
       navEnterprise: 'برای سازمان ها',
       navUseCases: 'موارد استفاده',
       navFaq: 'سوالات متداول',

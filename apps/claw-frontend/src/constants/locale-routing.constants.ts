@@ -16,6 +16,9 @@ export const LOCALE_NEUTRAL_PREFIXES: ReadonlyArray<string> = [
   '/discovery.xsl',
   '/robots.txt',
   '/ads.txt',
+  // Assistant-facing site map. One document covering every language, so it is
+  // locale-neutral for the same reason /rss.xml is.
+  '/llms.txt',
   '/manifest.webmanifest',
   '/favicon.ico',
   '/icon.png',

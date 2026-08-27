@@ -140,6 +140,8 @@ export { ContentCategory } from './content-category.enum';
 export { Indexability } from './indexability.enum';
 export { AdEligibility } from './ad-eligibility.enum';
 export { ContentReviewStatus } from './content-review-status.enum';
+export { ComparisonDimension } from './comparison-dimension.enum';
+export { ComparisonRival } from './comparison-rival.enum';
 export { StructuredDataType } from './structured-data-type.enum';
 export { ContentLifecycleStatus } from './content-lifecycle-status.enum';
 export { PlanLifecycleStatus } from './plan-lifecycle-status.enum';

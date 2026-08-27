@@ -13,6 +13,7 @@ and local storage never override a locale already present in the URL.
 ## Route contract
 
 - Human pages: `/{locale}/...`
+- Comparison cluster: `/{locale}/compare` and `/{locale}/compare/{rival}`
 - Public shares: `/{contentLocale}/share/chat/{publicShareId}`
 - Sitemap index: `/sitemap.xml`
 - Child sitemaps: `/sitemaps/{locale}/pages-{chunk}.xml` and
@@ -20,8 +21,10 @@ and local storage never override a locale already present in the URL.
 - Per-locale RSS: `/{locale}/feed.xml`, `/{locale}/feeds/topics.xml`, and
   `/{locale}/feeds/chats.xml`
 - Global RSS: `/rss.xml`
+- Assistant site map: `/llms.txt`
 - Locale-neutral: `/api/*`, `/robots.txt`, `/sitemap.xml`, `/sitemaps/*`,
-  `/rss.xml`, icons, the web manifest, and externally configured callbacks
+  `/rss.xml`, `/llms.txt`, icons, the web manifest, and externally configured
+  callbacks
 
 Legacy GET/HEAD navigation is permanently redirected to English with the path
 and query intact. API calls, mutations and callbacks do not pass through locale
@@ -73,6 +76,71 @@ One locale's chat feed failing degrades `/rss.xml` rather than emptying it: the
 other twelve locales and every registry page still ship, and the response
 carries `X-Claw-Discovery-Degraded: chat-feed-unavailable` with the short CDN
 TTL.
+
+## Who is invited to crawl
+
+`robots.txt` is generated from the content registry, and since ADR-072 it emits
+four groups rather than one: the wildcard, plus one per named list in
+`crawler-policy.constants.ts` — classic web search, AI answer engines, AI
+training crawlers.
+
+**Every group is built from the same `allow`/`disallow` pair.** This is not
+tidiness. A `robots.txt` group naming a user agent is read _instead of_
+`User-agent: *`, never in addition to it, so a named group that omitted the
+private prefixes would hand that specific bot the portal routes the wildcard
+group withholds. `robots.test.ts` asserts the disallow list appears in every
+group for exactly that reason.
+
+The split into three lists exists because the three things a bot can do with a
+page are three decisions: index it for a results list, fetch it to ground a live
+answer, add it to a training corpus. Today all three are allowed. Changing one is
+a one-array edit with the reasoning already written down in ADR-072.
+
+For ChatGPT Search, Claude, Perplexity and Copilot there is no submission form of
+any kind. Being fetchable is the entire opt-in, which makes
+`AI_ANSWER_ENGINE_CRAWLERS` the load-bearing list: `OAI-SearchBot`,
+`Claude-SearchBot`, `PerplexityBot` and the on-demand `*-User` agents that fetch a
+URL because somebody asked an assistant about it right now. `Google-Extended` and
+`Applebot-Extended` are not crawlers at all — they are read only as permission
+flags for Gemini and Apple Intelligence grounding.
+
+## `/llms.txt`
+
+One plain-text map of the public site, generated from the registry: the product
+pages, the comparisons, the legal pages, and the machine-readable indexes. It is
+locale-neutral like `/rss.xml`, and it 404s on a non-canonical deployment like
+everything else here.
+
+It is a convenience, not a standard anyone must honour, and it carries no URL the
+sitemap does not already carry. It is offered because nothing in it is authored:
+a page that is unpublished or de-indexed leaves the file in the same edit, so it
+cannot become a hand-maintained list of 404s.
+
+## The comparison cluster
+
+`/compare` plus five `/compare/{rival}` pages, in the registry like any other
+public page and therefore in every sitemap, feed and `llms.txt` automatically.
+
+Three things about them are load-bearing rather than editorial:
+
+- **Fixed axes.** Every rival is scored on the same eight `ComparisonDimension`
+  values in the same order. Different axes per competitor would make two pages
+  unreadable side by side — for a person and for a model summarising them.
+- **Structured data claims only what the page is.** `WebPage` + `BreadcrumbList`
+  - `FAQPage` in one `@graph`, generated from the same arrays the page renders.
+    No `Review`, no `AggregateRating`, no `Product` comparison: a verdict invented
+    by the vendor about its own competitors is the fabricated-review case that gets
+    markup ignored and pages demoted. A test asserts those types never appear.
+- **Really translated.** `getIndexablePagesForLocale` cannot tell what language a
+  body is written in, so it will put `/ja/compare/chatgpt` in the Japanese
+  sitemap regardless. `public-comparison-content.test.ts` compares each locale's
+  prose against the English and fails when they match.
+
+`COMPARISON_REVIEW_DATE` is printed on the page, emitted as `dateModified`, and
+used as `lastReviewed` for those six registry entries only. Move it when the
+claims have actually been re-checked against each vendor's documentation, never
+as part of an unrelated edit — these are five products that change monthly, and a
+stale page that looks current is the failure mode.
 
 ## Reading the documents in a browser
 

@@ -6308,6 +6308,36 @@
         "route": "/architecture"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/compare/chatgpt/page.tsx",
+        "kind": "page",
+        "route": "/compare/chatgpt"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/compare/claude/page.tsx",
+        "kind": "page",
+        "route": "/compare/claude"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/compare/copilot/page.tsx",
+        "kind": "page",
+        "route": "/compare/copilot"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/compare/gemini/page.tsx",
+        "kind": "page",
+        "route": "/compare/gemini"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/compare/page.tsx",
+        "kind": "page",
+        "route": "/compare"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/compare/perplexity/page.tsx",
+        "kind": "page",
+        "route": "/compare/perplexity"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/contact/page.tsx",
         "kind": "page",
         "route": "/contact"
@@ -7153,7 +7183,7 @@
       ],
       "skills": [
         {
-          "bytes": 19163,
+          "bytes": 19398,
           "file": "skills/00-index.md"
         },
         {
@@ -7345,6 +7375,10 @@
           "file": "skills/navigate-codebase.md"
         },
         {
+          "bytes": 6428,
+          "file": "skills/publish-a-public-marketing-page.md"
+        },
+        {
           "bytes": 4619,
           "file": "skills/reasoning-balance.md"
         },
@@ -7407,7 +7441,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4771
+        "value": 4772
       },
       "localeCount": 13,
       "locales": [
@@ -9138,7 +9172,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 381
+        "testFiles": 384
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9886,7 +9920,7 @@
     "endpointCount": 616,
     "envVarCount": 347,
     "eventCount": 169,
-    "frontendRouteCount": 126,
+    "frontendRouteCount": 132,
     "localeCount": 13,
     "nginxRouteCount": 55,
     "permissionCount": 49,
@@ -9895,7 +9929,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1035,
+    "totalTestFiles": 1038,
     "workspaceCount": 25
   }
 }

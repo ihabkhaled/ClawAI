@@ -4079,6 +4079,7 @@ export const th: TranslationDictionary = {
       navArchitecture: 'สถาปัตยกรรม',
       navLocalFirst: 'สำหรับองค์กร',
       navPricing: 'ราคา',
+      navCompare: 'เปรียบเทียบ',
       navEnterprise: 'สำหรับองค์กร',
       navUseCases: 'ใช้กรณี',
       navFaq: 'คำถามที่พบบ่อย',

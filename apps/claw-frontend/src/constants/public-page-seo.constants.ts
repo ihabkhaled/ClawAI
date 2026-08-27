@@ -103,6 +103,42 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'See how routed models, shared context, and review workflows support software development, research, analysis, writing, support, and document tasks.',
       keywords: ['AI use cases', 'research workflows', 'developer productivity'],
     },
+    compare: {
+      title: 'Compare ClawAI with other AI assistants',
+      description:
+        'ClawAI set against ChatGPT, Claude, Gemini, Perplexity and Microsoft Copilot on model choice, routing, local models, self-hosting, connectors and per-answer cost.',
+      keywords: ['AI assistant comparison', 'ClawAI alternatives', 'compare AI tools'],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI vs ChatGPT',
+      description:
+        'One polished assistant versus nine model families: how ClawAI and ChatGPT differ on routing, side-by-side answers, local models, self-hosting and per-answer cost.',
+      keywords: ['ClawAI vs ChatGPT', 'ChatGPT alternative', 'multi-model AI workspace'],
+    },
+    'compare/claude': {
+      title: 'ClawAI vs Claude',
+      description:
+        'One careful model versus nine families that can check each other: how ClawAI and Claude differ on routing, second opinions, local models and self-hosting.',
+      keywords: ['ClawAI vs Claude', 'Claude alternative', 'multi-model AI workspace'],
+    },
+    'compare/gemini': {
+      title: 'ClawAI vs Gemini',
+      description:
+        'Workspace-native versus provider-neutral: how ClawAI and Gemini differ on model choice, connectors, routing, local models, self-hosting and per-answer cost.',
+      keywords: ['ClawAI vs Gemini', 'Gemini alternative', 'provider-neutral AI workspace'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI vs Perplexity',
+      description:
+        'A cited answer engine versus a multi-model workspace: how ClawAI and Perplexity differ on research, model choice, memory, local models and self-hosting.',
+      keywords: ['ClawAI vs Perplexity', 'Perplexity alternative', 'AI research workspace'],
+    },
+    'compare/copilot': {
+      title: 'ClawAI vs Microsoft Copilot',
+      description:
+        'Microsoft 365-native versus vendor-neutral: how ClawAI and Copilot differ on model choice, routing, per-answer cost and deployment on your own servers.',
+      keywords: ['ClawAI vs Microsoft Copilot', 'Copilot alternative', 'self-hosted AI workspace'],
+    },
   },
   [Locale.AR]: {
     home: {
@@ -200,6 +236,42 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       description:
         'شاهد كيف تدعم النماذج الموجّهة والسياق المشترك وسير عمل المراجعة تطوير البرمجيات والبحث والتحليل والكتابة والدعم ومهام المستندات.',
       keywords: ['حالات استخدام الذكاء الاصطناعي', 'سير عمل البحث', 'إنتاجية المطورين'],
+    },
+    compare: {
+      title: 'قارن ClawAI بمساعدي الذكاء الاصطناعي الآخرين',
+      description:
+        'مقارنة ClawAI مع ChatGPT وClaude وGemini وPerplexity وMicrosoft Copilot من حيث اختيار النماذج والتوجيه والنماذج المحلية والاستضافة الذاتية والموصلات وتكلفة كل إجابة.',
+      keywords: ['مقارنة مساعدي الذكاء الاصطناعي', 'بدائل ClawAI', 'مقارنة أدوات الذكاء الاصطناعي'],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI مقابل ChatGPT',
+      description:
+        'مساعد واحد متقن مقابل تسع عائلات نماذج: كيف يختلف ClawAI عن ChatGPT في التوجيه والإجابات المتوازية والنماذج المحلية والاستضافة الذاتية وتكلفة كل إجابة.',
+      keywords: ['ClawAI مقابل ChatGPT', 'بديل ChatGPT', 'مساحة عمل متعددة النماذج'],
+    },
+    'compare/claude': {
+      title: 'ClawAI مقابل Claude',
+      description:
+        'نموذج واحد دقيق مقابل تسع عائلات يمكنها مراجعة بعضها: كيف يختلف ClawAI عن Claude في التوجيه والرأي الثاني والنماذج المحلية والاستضافة الذاتية.',
+      keywords: ['ClawAI مقابل Claude', 'بديل Claude', 'مساحة عمل متعددة النماذج'],
+    },
+    'compare/gemini': {
+      title: 'ClawAI مقابل Gemini',
+      description:
+        'اندماج مع Workspace مقابل حياد تجاه المزوّدين: كيف يختلف ClawAI عن Gemini في اختيار النماذج والموصلات والتوجيه والنماذج المحلية والاستضافة الذاتية.',
+      keywords: ['ClawAI مقابل Gemini', 'بديل Gemini', 'مساحة عمل محايدة تجاه المزودين'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI مقابل Perplexity',
+      description:
+        'محرك إجابات موثّق المصادر مقابل مساحة عمل متعددة النماذج: كيف يختلف ClawAI عن Perplexity في البحث واختيار النماذج والذاكرة والنماذج المحلية والاستضافة الذاتية.',
+      keywords: ['ClawAI مقابل Perplexity', 'بديل Perplexity', 'مساحة عمل للبحث بالذكاء الاصطناعي'],
+    },
+    'compare/copilot': {
+      title: 'ClawAI مقابل Microsoft Copilot',
+      description:
+        'اندماج مع Microsoft 365 مقابل حياد تجاه المورّدين: كيف يختلف ClawAI عن Copilot في اختيار النماذج والتوجيه وتكلفة كل إجابة والنشر على خوادمك.',
+      keywords: ['ClawAI مقابل Microsoft Copilot', 'بديل Copilot', 'مساحة عمل ذاتية الاستضافة'],
     },
   },
   [Locale.FR]: {
@@ -307,6 +379,50 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'Découvrez comment routage, contexte partagé et révision assistent le développement logiciel, la recherche, l’analyse, la rédaction, le support et les documents.',
       keywords: ['cas d’usage IA', 'flux de recherche', 'productivité des développeurs'],
     },
+    compare: {
+      title: 'Comparer ClawAI aux autres assistants IA',
+      description:
+        'ClawAI face à ChatGPT, Claude, Gemini, Perplexity et Microsoft Copilot : choix des modèles, routage, modèles locaux, auto-hébergement, connecteurs et coût par réponse.',
+      keywords: ['comparatif assistants IA', 'alternatives à ClawAI', 'comparer les outils IA'],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI vs ChatGPT : le comparatif',
+      description:
+        'Un assistant unique et abouti face à neuf familles de modèles : routage, réponses côte à côte, modèles locaux, auto-hébergement et coût par réponse.',
+      keywords: [
+        'ClawAI vs ChatGPT',
+        'alternative à ChatGPT',
+        'espace de travail IA multi-modèles',
+      ],
+    },
+    'compare/claude': {
+      title: 'ClawAI vs Claude : le comparatif',
+      description:
+        'Un modèle rigoureux face à neuf familles qui peuvent se relire : routage, deuxième avis, modèles locaux et auto-hébergement, comparés point par point.',
+      keywords: ['ClawAI vs Claude', 'alternative à Claude', 'espace de travail IA multi-modèles'],
+    },
+    'compare/gemini': {
+      title: 'ClawAI vs Gemini : le comparatif',
+      description:
+        'Intégré à Workspace ou neutre vis-à-vis des fournisseurs : choix des modèles, connecteurs, routage, modèles locaux et auto-hébergement comparés.',
+      keywords: ['ClawAI vs Gemini', 'alternative à Gemini', 'espace de travail IA neutre'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI vs Perplexity : le comparatif',
+      description:
+        'Un moteur de réponses sourcées face à un espace de travail multi-modèles : recherche, choix des modèles, mémoire, modèles locaux et auto-hébergement.',
+      keywords: ['ClawAI vs Perplexity', 'alternative à Perplexity', 'espace de recherche IA'],
+    },
+    'compare/copilot': {
+      title: 'ClawAI vs Microsoft Copilot : le comparatif',
+      description:
+        'Intégré à Microsoft 365 ou neutre : choix des modèles, routage, coût par réponse et déploiement sur vos propres serveurs, comparés point par point.',
+      keywords: [
+        'ClawAI vs Microsoft Copilot',
+        'alternative à Copilot',
+        'espace de travail IA auto-hébergé',
+      ],
+    },
   },
   [Locale.IT]: {
     home: {
@@ -405,6 +521,46 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'Scopri come modelli instradati, contesto condiviso e revisioni supportano sviluppo software, ricerca, analisi, scrittura, assistenza e attività documentali.',
       keywords: ['casi d’uso IA', 'flussi di ricerca', 'produttività sviluppatori'],
     },
+    compare: {
+      title: 'Confronta ClawAI con gli altri assistenti IA',
+      description:
+        'ClawAI a confronto con ChatGPT, Claude, Gemini, Perplexity e Microsoft Copilot: scelta dei modelli, routing, modelli locali, self-hosting, connettori e costo per risposta.',
+      keywords: ['confronto assistenti IA', 'alternative a ClawAI', 'confrontare strumenti IA'],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI vs ChatGPT: il confronto',
+      description:
+        'Un assistente curato contro nove famiglie di modelli: routing, risposte affiancate, modelli locali, self-hosting e costo per risposta a confronto.',
+      keywords: ['ClawAI vs ChatGPT', 'alternativa a ChatGPT', 'workspace IA multi-modello'],
+    },
+    'compare/claude': {
+      title: 'ClawAI vs Claude: il confronto',
+      description:
+        'Un modello accurato contro nove famiglie che possono controllarsi a vicenda: routing, seconda opinione, modelli locali e self-hosting a confronto.',
+      keywords: ['ClawAI vs Claude', 'alternativa a Claude', 'workspace IA multi-modello'],
+    },
+    'compare/gemini': {
+      title: 'ClawAI vs Gemini: il confronto',
+      description:
+        'Nativo di Workspace o neutrale rispetto ai fornitori: scelta dei modelli, connettori, routing, modelli locali e self-hosting messi a confronto.',
+      keywords: ['ClawAI vs Gemini', 'alternativa a Gemini', 'workspace IA neutrale'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI vs Perplexity: il confronto',
+      description:
+        'Un motore di risposte con fonti contro un workspace multi-modello: ricerca, scelta dei modelli, memoria, modelli locali e self-hosting.',
+      keywords: ['ClawAI vs Perplexity', 'alternativa a Perplexity', 'workspace di ricerca IA'],
+    },
+    'compare/copilot': {
+      title: 'ClawAI vs Microsoft Copilot: il confronto',
+      description:
+        'Nativo di Microsoft 365 o indipendente dal fornitore: scelta dei modelli, routing, costo per risposta e installazione sui tuoi server.',
+      keywords: [
+        'ClawAI vs Microsoft Copilot',
+        'alternativa a Copilot',
+        'workspace IA self-hosted',
+      ],
+    },
   },
   [Locale.DE]: {
     home: {
@@ -502,6 +658,46 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       description:
         'Erfahren Sie, wie geroutete Modelle, gemeinsamer Kontext und Prüfabläufe Softwareentwicklung, Recherche, Analyse, Schreiben, Support und Dokumentarbeit unterstützen.',
       keywords: ['KI-Anwendungsfälle', 'Recherche-Workflows', 'Entwicklerproduktivität'],
+    },
+    compare: {
+      title: 'ClawAI mit anderen KI-Assistenten vergleichen',
+      description:
+        'ClawAI im Vergleich zu ChatGPT, Claude, Gemini, Perplexity und Microsoft Copilot: Modellauswahl, Routing, lokale Modelle, Self-Hosting, Konnektoren und Kosten pro Antwort.',
+      keywords: ['KI-Assistenten Vergleich', 'ClawAI Alternativen', 'KI-Tools vergleichen'],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI vs. ChatGPT im Vergleich',
+      description:
+        'Ein ausgereifter Assistent gegen neun Modellfamilien: Routing, Antworten nebeneinander, lokale Modelle, Self-Hosting und Kosten pro Antwort im Vergleich.',
+      keywords: ['ClawAI vs ChatGPT', 'ChatGPT Alternative', 'Multi-Modell-KI-Workspace'],
+    },
+    'compare/claude': {
+      title: 'ClawAI vs. Claude im Vergleich',
+      description:
+        'Ein sorgfältiges Modell gegen neun Familien, die sich gegenseitig prüfen: Routing, Zweitmeinung, lokale Modelle und Self-Hosting im Vergleich.',
+      keywords: ['ClawAI vs Claude', 'Claude Alternative', 'Multi-Modell-KI-Workspace'],
+    },
+    'compare/gemini': {
+      title: 'ClawAI vs. Gemini im Vergleich',
+      description:
+        'Workspace-nah oder anbieterneutral: Modellauswahl, Konnektoren, Routing, lokale Modelle und Self-Hosting von ClawAI und Gemini im Vergleich.',
+      keywords: ['ClawAI vs Gemini', 'Gemini Alternative', 'anbieterneutraler KI-Workspace'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI vs. Perplexity im Vergleich',
+      description:
+        'Eine Antwortmaschine mit Quellen gegen einen Multi-Modell-Workspace: Recherche, Modellauswahl, Speicher, lokale Modelle und Self-Hosting im Vergleich.',
+      keywords: ['ClawAI vs Perplexity', 'Perplexity Alternative', 'KI-Recherche-Workspace'],
+    },
+    'compare/copilot': {
+      title: 'ClawAI vs. Microsoft Copilot im Vergleich',
+      description:
+        'Microsoft-365-nah oder herstellerneutral: Modellauswahl, Routing, Kosten pro Antwort und Betrieb auf eigenen Servern im Vergleich.',
+      keywords: [
+        'ClawAI vs Microsoft Copilot',
+        'Copilot Alternative',
+        'selbst gehosteter KI-Workspace',
+      ],
     },
   },
   [Locale.ES]: {
@@ -613,6 +809,62 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'Descubre cómo los modelos enrutados, el contexto compartido y la revisión apoyan el desarrollo, la investigación, el análisis, la escritura, el soporte y los documentos.',
       keywords: ['casos de uso de IA', 'flujos de investigación', 'productividad de desarrollo'],
     },
+    compare: {
+      title: 'Compara ClawAI con otros asistentes de IA',
+      description:
+        'ClawAI frente a ChatGPT, Claude, Gemini, Perplexity y Microsoft Copilot: elección de modelos, enrutado, modelos locales, autoalojamiento, conectores y coste por respuesta.',
+      keywords: [
+        'comparativa de asistentes de IA',
+        'alternativas a ClawAI',
+        'comparar herramientas de IA',
+      ],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI vs ChatGPT: la comparativa',
+      description:
+        'Un asistente pulido frente a nueve familias de modelos: enrutado, respuestas en paralelo, modelos locales, autoalojamiento y coste por respuesta.',
+      keywords: [
+        'ClawAI vs ChatGPT',
+        'alternativa a ChatGPT',
+        'espacio de trabajo de IA multimodelo',
+      ],
+    },
+    'compare/claude': {
+      title: 'ClawAI vs Claude: la comparativa',
+      description:
+        'Un modelo cuidadoso frente a nueve familias que pueden revisarse entre sí: enrutado, segunda opinión, modelos locales y autoalojamiento.',
+      keywords: [
+        'ClawAI vs Claude',
+        'alternativa a Claude',
+        'espacio de trabajo de IA multimodelo',
+      ],
+    },
+    'compare/gemini': {
+      title: 'ClawAI vs Gemini: la comparativa',
+      description:
+        'Nativo de Workspace o neutral ante proveedores: elección de modelos, conectores, enrutado, modelos locales y autoalojamiento, comparados.',
+      keywords: ['ClawAI vs Gemini', 'alternativa a Gemini', 'espacio de trabajo de IA neutral'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI vs Perplexity: la comparativa',
+      description:
+        'Un motor de respuestas con fuentes frente a un espacio multimodelo: investigación, elección de modelos, memoria, modelos locales y autoalojamiento.',
+      keywords: [
+        'ClawAI vs Perplexity',
+        'alternativa a Perplexity',
+        'espacio de investigación con IA',
+      ],
+    },
+    'compare/copilot': {
+      title: 'ClawAI vs Microsoft Copilot: la comparativa',
+      description:
+        'Nativo de Microsoft 365 o independiente del proveedor: elección de modelos, enrutado, coste por respuesta y despliegue en tus propios servidores.',
+      keywords: [
+        'ClawAI vs Microsoft Copilot',
+        'alternativa a Copilot',
+        'espacio de trabajo de IA autoalojado',
+      ],
+    },
   },
   [Locale.RU]: {
     home: {
@@ -717,6 +969,54 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'сценарии использования ИИ',
         'исследовательские процессы',
         'продуктивность разработчиков',
+      ],
+    },
+    compare: {
+      title: 'Сравнение ClawAI с другими ИИ-ассистентами',
+      description:
+        'ClawAI против ChatGPT, Claude, Gemini, Perplexity и Microsoft Copilot: выбор моделей, маршрутизация, локальные модели, self-hosting, коннекторы и стоимость ответа.',
+      keywords: ['сравнение ИИ-ассистентов', 'альтернативы ClawAI', 'сравнить ИИ-инструменты'],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI против ChatGPT',
+      description:
+        'Один отточенный ассистент против девяти семейств моделей: маршрутизация, ответы рядом, локальные модели, self-hosting и стоимость каждого ответа.',
+      keywords: [
+        'ClawAI против ChatGPT',
+        'альтернатива ChatGPT',
+        'мультимодельное ИИ-пространство',
+      ],
+    },
+    'compare/claude': {
+      title: 'ClawAI против Claude',
+      description:
+        'Одна аккуратная модель против девяти семейств, которые проверяют друг друга: маршрутизация, второе мнение, локальные модели и self-hosting.',
+      keywords: ['ClawAI против Claude', 'альтернатива Claude', 'мультимодельное ИИ-пространство'],
+    },
+    'compare/gemini': {
+      title: 'ClawAI против Gemini',
+      description:
+        'Интеграция с Workspace или нейтральность к поставщикам: выбор моделей, коннекторы, маршрутизация, локальные модели и self-hosting.',
+      keywords: ['ClawAI против Gemini', 'альтернатива Gemini', 'нейтральное ИИ-пространство'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI против Perplexity',
+      description:
+        'Поисковый движок с источниками против мультимодельного пространства: исследование, выбор моделей, память, локальные модели и self-hosting.',
+      keywords: [
+        'ClawAI против Perplexity',
+        'альтернатива Perplexity',
+        'ИИ-пространство для исследований',
+      ],
+    },
+    'compare/copilot': {
+      title: 'ClawAI против Microsoft Copilot',
+      description:
+        'Интеграция с Microsoft 365 или независимость от вендора: выбор моделей, маршрутизация, стоимость ответа и развёртывание на своих серверах.',
+      keywords: [
+        'ClawAI против Microsoft Copilot',
+        'альтернатива Copilot',
+        'self-hosted ИИ-пространство',
       ],
     },
   },
@@ -833,6 +1133,54 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'produtividade de desenvolvimento',
       ],
     },
+    compare: {
+      title: 'Compare o ClawAI com outros assistentes de IA',
+      description:
+        'O ClawAI diante do ChatGPT, Claude, Gemini, Perplexity e Microsoft Copilot: escolha de modelos, roteamento, modelos locais, self-hosting, conectores e custo por resposta.',
+      keywords: [
+        'comparação de assistentes de IA',
+        'alternativas ao ClawAI',
+        'comparar ferramentas de IA',
+      ],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI vs ChatGPT: o comparativo',
+      description:
+        'Um assistente polido diante de nove famílias de modelos: roteamento, respostas lado a lado, modelos locais, self-hosting e custo por resposta.',
+      keywords: ['ClawAI vs ChatGPT', 'alternativa ao ChatGPT', 'workspace de IA multimodelo'],
+    },
+    'compare/claude': {
+      title: 'ClawAI vs Claude: o comparativo',
+      description:
+        'Um modelo cuidadoso diante de nove famílias que se verificam: roteamento, segunda opinião, modelos locais e self-hosting, comparados.',
+      keywords: ['ClawAI vs Claude', 'alternativa ao Claude', 'workspace de IA multimodelo'],
+    },
+    'compare/gemini': {
+      title: 'ClawAI vs Gemini: o comparativo',
+      description:
+        'Nativo do Workspace ou neutro entre fornecedores: escolha de modelos, conectores, roteamento, modelos locais e self-hosting, comparados.',
+      keywords: ['ClawAI vs Gemini', 'alternativa ao Gemini', 'workspace de IA neutro'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI vs Perplexity: o comparativo',
+      description:
+        'Um motor de respostas com fontes diante de um workspace multimodelo: pesquisa, escolha de modelos, memória, modelos locais e self-hosting.',
+      keywords: [
+        'ClawAI vs Perplexity',
+        'alternativa ao Perplexity',
+        'workspace de pesquisa com IA',
+      ],
+    },
+    'compare/copilot': {
+      title: 'ClawAI vs Microsoft Copilot: o comparativo',
+      description:
+        'Nativo do Microsoft 365 ou independente de fornecedor: escolha de modelos, roteamento, custo por resposta e instalação nos seus servidores.',
+      keywords: [
+        'ClawAI vs Microsoft Copilot',
+        'alternativa ao Copilot',
+        'workspace de IA self-hosted',
+      ],
+    },
   },
   [Locale.HI]: {
     home: {
@@ -930,6 +1278,42 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       description:
         'जानें कि रूट किए गए मॉडल, साझा संदर्भ और समीक्षा प्रवाह सॉफ़्टवेयर विकास, शोध, विश्लेषण, लेखन, सहायता और दस्तावेज़ कार्यों में कैसे मदद करते हैं।',
       keywords: ['एआई उपयोग के मामले', 'शोध कार्यप्रवाह', 'डेवलपर उत्पादकता'],
+    },
+    compare: {
+      title: 'ClawAI की तुलना अन्य AI असिस्टेंट से करें',
+      description:
+        'ClawAI बनाम ChatGPT, Claude, Gemini, Perplexity और Microsoft Copilot — मॉडल चुनाव, रूटिंग, लोकल मॉडल, सेल्फ-होस्टिंग, कनेक्टर और हर जवाब की लागत।',
+      keywords: ['AI असिस्टेंट तुलना', 'ClawAI विकल्प', 'AI टूल तुलना'],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI बनाम ChatGPT',
+      description:
+        'एक परिष्कृत असिस्टेंट बनाम नौ मॉडल परिवार: रूटिंग, साथ-साथ जवाब, लोकल मॉडल, सेल्फ-होस्टिंग और हर जवाब की लागत की तुलना।',
+      keywords: ['ClawAI बनाम ChatGPT', 'ChatGPT विकल्प', 'मल्टी-मॉडल AI वर्कस्पेस'],
+    },
+    'compare/claude': {
+      title: 'ClawAI बनाम Claude',
+      description:
+        'एक सावधान मॉडल बनाम नौ परिवार जो एक-दूसरे को जाँच सकते हैं: रूटिंग, दूसरी राय, लोकल मॉडल और सेल्फ-होस्टिंग की तुलना।',
+      keywords: ['ClawAI बनाम Claude', 'Claude विकल्प', 'मल्टी-मॉडल AI वर्कस्पेस'],
+    },
+    'compare/gemini': {
+      title: 'ClawAI बनाम Gemini',
+      description:
+        'Workspace से जुड़ा या प्रदाता-तटस्थ: मॉडल चुनाव, कनेक्टर, रूटिंग, लोकल मॉडल और सेल्फ-होस्टिंग की तुलना।',
+      keywords: ['ClawAI बनाम Gemini', 'Gemini विकल्प', 'प्रदाता-तटस्थ AI वर्कस्पेस'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI बनाम Perplexity',
+      description:
+        'स्रोत सहित उत्तर देने वाला इंजन बनाम मल्टी-मॉडल वर्कस्पेस: रिसर्च, मॉडल चुनाव, मेमोरी, लोकल मॉडल और सेल्फ-होस्टिंग।',
+      keywords: ['ClawAI बनाम Perplexity', 'Perplexity विकल्प', 'AI रिसर्च वर्कस्पेस'],
+    },
+    'compare/copilot': {
+      title: 'ClawAI बनाम Microsoft Copilot',
+      description:
+        'Microsoft 365 से जुड़ा या वेंडर-तटस्थ: मॉडल चुनाव, रूटिंग, हर जवाब की लागत और अपने सर्वर पर तैनाती की तुलना।',
+      keywords: ['ClawAI बनाम Microsoft Copilot', 'Copilot विकल्प', 'सेल्फ-होस्टेड AI वर्कस्पेस'],
     },
   },
   [Locale.JA]: {
@@ -1029,6 +1413,42 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'ルーティングされたモデル、共有コンテキスト、レビュー工程が、ソフトウェア開発、調査、分析、文章作成、サポート、文書作業をどのように支えるか紹介します。代表的な仕事の流れを具体的に確認できます。',
       keywords: ['AI活用例', '調査ワークフロー', '開発者の生産性'],
     },
+    compare: {
+      title: 'ClawAI と他の AI アシスタントの比較',
+      description:
+        'ClawAI と ChatGPT、Claude、Gemini、Perplexity、Microsoft Copilot を、モデル選択・ルーティング・ローカルモデル・セルフホスト・コネクター・回答ごとのコストで比較します。',
+      keywords: ['AI アシスタント 比較', 'ClawAI 代替', 'AI ツール 比較'],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI と ChatGPT の比較',
+      description:
+        'ClawAI と ChatGPT の違いを、完成度の高い単一アシスタントと 9 つのモデルファミリーという観点で整理します。ルーティング、並列回答、ローカルモデル、セルフホスト、回答ごとのコストまで比較。',
+      keywords: ['ClawAI ChatGPT 比較', 'ChatGPT 代替', 'マルチモデル AI ワークスペース'],
+    },
+    'compare/claude': {
+      title: 'ClawAI と Claude の比較',
+      description:
+        'ClawAI と Claude の違いを、丁寧な単一モデルと互いに検証できる 9 つのモデルファミリーという観点で整理します。ルーティング、セカンドオピニオン、ローカルモデル、セルフホストまで比較。',
+      keywords: ['ClawAI Claude 比較', 'Claude 代替', 'マルチモデル AI ワークスペース'],
+    },
+    'compare/gemini': {
+      title: 'ClawAI と Gemini の比較',
+      description:
+        'ClawAI と Gemini の違いを、Workspace 密着型かベンダー中立かという観点で整理します。モデル選択、コネクター、ルーティング、ローカルモデル、セルフホスト、回答ごとのコストまで比較。',
+      keywords: ['ClawAI Gemini 比較', 'Gemini 代替', 'ベンダー中立 AI ワークスペース'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI と Perplexity の比較',
+      description:
+        'ClawAI と Perplexity の違いを、出典付き回答エンジンとマルチモデルワークスペースという観点で整理します。リサーチ、モデル選択、メモリ、ローカルモデル、セルフホストまで比較。',
+      keywords: ['ClawAI Perplexity 比較', 'Perplexity 代替', 'AI リサーチ ワークスペース'],
+    },
+    'compare/copilot': {
+      title: 'ClawAI と Microsoft Copilot の比較',
+      description:
+        'ClawAI と Microsoft Copilot の違いを、Microsoft 365 密着型かベンダー中立かという観点で整理します。モデル選択、ルーティング、回答ごとのコスト、自社サーバーへの導入まで比較。',
+      keywords: ['ClawAI Copilot 比較', 'Copilot 代替', 'セルフホスト AI ワークスペース'],
+    },
   },
   [Locale.TH]: {
     home: {
@@ -1126,6 +1546,42 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       description:
         'ดูว่าโมเดลที่กำหนดเส้นทาง บริบทที่ใช้ร่วมกัน และขั้นตอนตรวจทาน ช่วยงานพัฒนาซอฟต์แวร์ วิจัย วิเคราะห์ เขียนเนื้อหา สนับสนุน และจัดการเอกสารได้อย่างไร',
       keywords: ['กรณีใช้งาน AI', 'เวิร์กโฟลว์วิจัย', 'ประสิทธิภาพนักพัฒนา'],
+    },
+    compare: {
+      title: 'เปรียบเทียบ ClawAI กับผู้ช่วย AI อื่น ๆ',
+      description:
+        'ClawAI เทียบกับ ChatGPT, Claude, Gemini, Perplexity และ Microsoft Copilot ในด้านการเลือกโมเดล การกำหนดเส้นทาง โมเดลในเครื่อง การโฮสต์เอง ตัวเชื่อมต่อ และต้นทุนต่อคำตอบ',
+      keywords: ['เปรียบเทียบผู้ช่วย AI', 'ทางเลือกแทน ClawAI', 'เปรียบเทียบเครื่องมือ AI'],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI เทียบกับ ChatGPT',
+      description:
+        'ผู้ช่วยเดียวที่ขัดเกลามาอย่างดี เทียบกับโมเดลเก้าตระกูล ทั้งการกำหนดเส้นทาง คำตอบคู่ขนาน โมเดลในเครื่อง การโฮสต์เอง และต้นทุนต่อคำตอบ',
+      keywords: ['ClawAI เทียบ ChatGPT', 'ทางเลือกแทน ChatGPT', 'เวิร์กสเปซ AI หลายโมเดล'],
+    },
+    'compare/claude': {
+      title: 'ClawAI เทียบกับ Claude',
+      description:
+        'โมเดลเดียวที่รอบคอบ เทียบกับเก้าตระกูลที่ตรวจงานกันเองได้ ทั้งการกำหนดเส้นทาง ความเห็นที่สอง โมเดลในเครื่อง และการโฮสต์เอง',
+      keywords: ['ClawAI เทียบ Claude', 'ทางเลือกแทน Claude', 'เวิร์กสเปซ AI หลายโมเดล'],
+    },
+    'compare/gemini': {
+      title: 'ClawAI เทียบกับ Gemini',
+      description:
+        'ผูกกับ Workspace หรือเป็นกลางต่อผู้ให้บริการ เทียบการเลือกโมเดล ตัวเชื่อมต่อ การกำหนดเส้นทาง โมเดลในเครื่อง และการโฮสต์เอง',
+      keywords: ['ClawAI เทียบ Gemini', 'ทางเลือกแทน Gemini', 'เวิร์กสเปซ AI ที่เป็นกลาง'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI เทียบกับ Perplexity',
+      description:
+        'เครื่องมือตอบคำถามพร้อมแหล่งอ้างอิง เทียบกับเวิร์กสเปซหลายโมเดล ทั้งงานวิจัย การเลือกโมเดล หน่วยความจำ โมเดลในเครื่อง และการโฮสต์เอง',
+      keywords: ['ClawAI เทียบ Perplexity', 'ทางเลือกแทน Perplexity', 'เวิร์กสเปซวิจัยด้วย AI'],
+    },
+    'compare/copilot': {
+      title: 'ClawAI เทียบกับ Microsoft Copilot',
+      description:
+        'ผูกกับ Microsoft 365 หรือเป็นกลางต่อผู้ขาย เทียบการเลือกโมเดล การกำหนดเส้นทาง ต้นทุนต่อคำตอบ และการติดตั้งบนเซิร์ฟเวอร์ของคุณเอง',
+      keywords: ['ClawAI เทียบ Copilot', 'ทางเลือกแทน Copilot', 'เวิร์กสเปซ AI ที่โฮสต์เอง'],
     },
   },
   [Locale.FA]: {
@@ -1225,6 +1681,42 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'ببینید مدل‌های مسیریابی‌شده، زمینه مشترک و فرایند بازبینی چگونه به توسعه نرم‌افزار، پژوهش، تحلیل، نگارش، پشتیبانی و کار با سند کمک می‌کنند.',
       keywords: ['کاربردهای هوش مصنوعی', 'گردش‌کار پژوهش', 'بهره‌وری توسعه‌دهنده'],
     },
+    compare: {
+      title: 'مقایسه ClawAI با دیگر دستیارهای هوش مصنوعی',
+      description:
+        'ClawAI در برابر ChatGPT، Claude، Gemini، Perplexity و Microsoft Copilot: انتخاب مدل، مسیریابی، مدل‌های محلی، میزبانی شخصی، اتصال‌دهنده‌ها و هزینهٔ هر پاسخ.',
+      keywords: ['مقایسه دستیارهای هوش مصنوعی', 'جایگزین‌های ClawAI', 'مقایسه ابزارهای هوش مصنوعی'],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI در برابر ChatGPT',
+      description:
+        'یک دستیار پرداخته در برابر نُه خانوادهٔ مدل: مسیریابی، پاسخ‌های هم‌زمان، مدل‌های محلی، میزبانی شخصی و هزینهٔ هر پاسخ.',
+      keywords: ['ClawAI در برابر ChatGPT', 'جایگزین ChatGPT', 'فضای کاری چندمدلی'],
+    },
+    'compare/claude': {
+      title: 'ClawAI در برابر Claude',
+      description:
+        'یک مدل دقیق در برابر نُه خانواده که یکدیگر را بررسی می‌کنند: مسیریابی، نظر دوم، مدل‌های محلی و میزبانی شخصی.',
+      keywords: ['ClawAI در برابر Claude', 'جایگزین Claude', 'فضای کاری چندمدلی'],
+    },
+    'compare/gemini': {
+      title: 'ClawAI در برابر Gemini',
+      description:
+        'پیوسته به Workspace یا بی‌طرف نسبت به ارائه‌دهنده: انتخاب مدل، اتصال‌دهنده‌ها، مسیریابی، مدل‌های محلی و میزبانی شخصی.',
+      keywords: ['ClawAI در برابر Gemini', 'جایگزین Gemini', 'فضای کاری بی‌طرف'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI در برابر Perplexity',
+      description:
+        'موتور پاسخ با ارجاع در برابر فضای کاری چندمدلی: پژوهش، انتخاب مدل، حافظه، مدل‌های محلی و میزبانی شخصی.',
+      keywords: ['ClawAI در برابر Perplexity', 'جایگزین Perplexity', 'فضای کاری پژوهش هوش مصنوعی'],
+    },
+    'compare/copilot': {
+      title: 'ClawAI در برابر Microsoft Copilot',
+      description:
+        'پیوسته به Microsoft 365 یا مستقل از فروشنده: انتخاب مدل، مسیریابی، هزینهٔ هر پاسخ و استقرار روی سرورهای خودتان.',
+      keywords: ['ClawAI در برابر Copilot', 'جایگزین Copilot', 'فضای کاری خودمیزبان'],
+    },
   },
   [Locale.ZH]: {
     home: {
@@ -1322,6 +1814,42 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       description:
         '了解经过路由的模型、共享上下文和复核流程如何支持软件开发、研究、分析、写作、客户支持和文档处理，并帮助不同类型的任务保持连贯、共享必要信息并有效减少重复准备工作。',
       keywords: ['人工智能使用场景', '研究工作流', '开发者效率'],
+    },
+    compare: {
+      title: '将 ClawAI 与其他 AI 助手对比',
+      description:
+        'ClawAI 对比 ChatGPT、Claude、Gemini、Perplexity 与 Microsoft Copilot：模型选择、路由、本地模型、自托管、连接器与每次回答的成本。',
+      keywords: ['AI 助手对比', 'ClawAI 替代方案', 'AI 工具对比'],
+    },
+    'compare/chatgpt': {
+      title: 'ClawAI 与 ChatGPT 对比',
+      description:
+        'ClawAI 与 ChatGPT 的差别在哪里：一个打磨精良的单一助手，对比一个覆盖九大模型家族的工作区。逐项比较模型选择、路由、并排回答、本地模型、自托管以及每次回答的成本记录。',
+      keywords: ['ClawAI 对比 ChatGPT', 'ChatGPT 替代方案', '多模型 AI 工作区'],
+    },
+    'compare/claude': {
+      title: 'ClawAI 与 Claude 对比',
+      description:
+        'ClawAI 与 Claude 的差别在哪里：一个严谨的单一模型，对比可以互相校验的九大模型家族。逐项比较模型选择、路由、第二意见、本地模型、自托管以及每次回答的成本记录。',
+      keywords: ['ClawAI 对比 Claude', 'Claude 替代方案', '多模型 AI 工作区'],
+    },
+    'compare/gemini': {
+      title: 'ClawAI 与 Gemini 对比',
+      description:
+        'ClawAI 与 Gemini 的差别在哪里：深度绑定 Workspace，还是保持厂商中立。逐项比较模型选择、连接器、路由、本地模型、自托管以及每次回答的成本记录。',
+      keywords: ['ClawAI 对比 Gemini', 'Gemini 替代方案', '厂商中立 AI 工作区'],
+    },
+    'compare/perplexity': {
+      title: 'ClawAI 与 Perplexity 对比',
+      description:
+        'ClawAI 与 Perplexity 的差别在哪里：带引用的答案引擎，对比一个多模型工作区。逐项比较研究能力、模型选择、记忆、文件、本地模型、自托管以及每次回答的成本记录。',
+      keywords: ['ClawAI 对比 Perplexity', 'Perplexity 替代方案', 'AI 研究工作区'],
+    },
+    'compare/copilot': {
+      title: 'ClawAI 与 Microsoft Copilot 对比',
+      description:
+        'ClawAI 与 Microsoft Copilot 的差别在哪里：深度绑定 Microsoft 365，还是保持厂商无关。逐项比较模型选择、路由、每次回答的成本，以及部署到自有服务器的能力。',
+      keywords: ['ClawAI 对比 Copilot', 'Copilot 替代方案', '自托管 AI 工作区'],
     },
   },
 };

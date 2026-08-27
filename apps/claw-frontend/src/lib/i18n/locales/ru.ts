@@ -4135,6 +4135,7 @@ export const ru: TranslationDictionary = {
       navArchitecture: 'Архитектура',
       navLocalFirst: 'Для организаций',
       navPricing: 'Тарифы',
+      navCompare: 'Сравнения',
       navEnterprise: 'Для организаций',
       navUseCases: 'Сценарии использования',
       navFaq: 'Частые вопросы',

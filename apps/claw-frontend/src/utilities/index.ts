@@ -191,6 +191,16 @@ export {
   isKnownPublicPathForLocale,
   isAdEligiblePath,
 } from './content-registry.utility';
+export {
+  buildComparisonHubCards,
+  buildComparisonRailItems,
+  buildComparisonRows,
+  formatComparisonLabel,
+  getComparisonContent,
+  getComparisonPath,
+  getComparisonSlug,
+  isComparisonRival,
+} from './public-comparison.utility';
 export { isPublicPath } from './route-visibility.utility';
 export { resolveApiErrorMessage } from './api-error-message.utility';
 export { resolveTrialStatusBanner } from './trial-status.utility';

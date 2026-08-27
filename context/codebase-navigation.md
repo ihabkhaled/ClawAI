@@ -54,6 +54,9 @@ src/
 
 ```
 app/(portal)/<route>/page.tsx     # render-only pages (102 pages total)
+app/(marketing)/<route>/page.tsx  # public, indexable pages (registry-driven)
+app/{robots.ts,sitemap.xml,rss.xml,feed.xml,feeds/,sitemaps/,llms.txt}
+                                  # discovery surface — all derived from the registry
 components/<feature>/              # presentational components (shadcn/ui for inputs)
 components/ui/                     # shadcn/ui generated (do not edit)
 hooks/<domain>/use-<name>.ts      # one hook = one responsibility
@@ -67,17 +70,19 @@ types/i18n.types.ts               # TranslationDictionary schema (atomic with lo
 
 ## "I need to change X — where do I go?"
 
-| I want to…                 | Start at                                                                                                                                    |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Add/modify an API endpoint | service `controllers/` + `service` + `repository`; register in `infra/nginx/nginx.conf`                                                     |
-| Add a DB field             | service `prisma/schema.prisma` → `migrate:dev`                                                                                              |
-| Add/change an event        | `packages/shared-types` EventPattern first, then producer/consumer                                                                          |
-| Add an env var             | `.env` + `.env.example` + `scripts/install.{sh,ps1}` + all compose files (see [environment-ownership-map.md](environment-ownership-map.md)) |
-| Add a permission           | `packages/shared-types` Permission enum + auth-service RBAC seed                                                                            |
-| Add a frontend page        | `src/app/(portal)/<route>/page.tsx` + hook + repository + i18n ×13                                                                          |
-| Change billing/payments    | auth plan contracts + payment service + frontend repository body tests + `rules/28-billing-integrity-and-api-contracts.md`                  |
-| Add shared logic           | `packages/shared-utilities` (function) / `shared-constants` (value) / `shared-types` (type)                                                 |
-| Understand who calls whom  | [service-dependency-map.md](service-dependency-map.md)                                                                                      |
+| I want to…                 | Start at                                                                                                                                                                                                    |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add/modify an API endpoint | service `controllers/` + `service` + `repository`; register in `infra/nginx/nginx.conf`                                                                                                                     |
+| Add a DB field             | service `prisma/schema.prisma` → `migrate:dev`                                                                                                                                                              |
+| Add/change an event        | `packages/shared-types` EventPattern first, then producer/consumer                                                                                                                                          |
+| Add an env var             | `.env` + `.env.example` + `scripts/install.{sh,ps1}` + all compose files (see [environment-ownership-map.md](environment-ownership-map.md))                                                                 |
+| Add a permission           | `packages/shared-types` Permission enum + auth-service RBAC seed                                                                                                                                            |
+| Add a frontend page        | `src/app/(portal)/<route>/page.tsx` + hook + repository + i18n ×13                                                                                                                                          |
+| Add a PUBLIC page          | `src/app/(marketing)/<route>/page.tsx` **plus** the registry chain — see [`skills/publish-a-public-marketing-page.md`](../skills/publish-a-public-marketing-page.md); the file alone is invisible to search |
+| Change who may crawl       | `src/constants/crawler-policy.constants.ts` → `robots.ts`; every named group repeats the same disallow list ([ADR-072](../docs/13-adr/adr-072-ai-answer-engine-crawler-policy.md))                          |
+| Change billing/payments    | auth plan contracts + payment service + frontend repository body tests + `rules/28-billing-integrity-and-api-contracts.md`                                                                                  |
+| Add shared logic           | `packages/shared-utilities` (function) / `shared-constants` (value) / `shared-types` (type)                                                                                                                 |
+| Understand who calls whom  | [service-dependency-map.md](service-dependency-map.md)                                                                                                                                                      |
 
 ## Find things fast
 
@@ -86,6 +91,9 @@ types/i18n.types.ts               # TranslationDictionary schema (atomic with lo
 - **Which models does a service own?** `.ai/manifests/services.json` →
   `prismaModels`/`mongooseModels`.
 - **What are all endpoints?** `.ai/manifests/api-endpoints.json` (542 endpoints).
+- **Which public pages exist?** `src/constants/content-registry.constants.ts` —
+  the one source the sitemaps, feeds, `robots.txt`, `/llms.txt`, the footer and
+  the metadata builder all derive from.
 - Prefer the `Grep`/`Glob` tools over shell `find`/`grep`.
 
 See `skills/01-codebase-navigation.md` for the operational runbook.

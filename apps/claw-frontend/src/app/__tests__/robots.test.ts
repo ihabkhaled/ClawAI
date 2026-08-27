@@ -49,6 +49,47 @@ describe('robots', () => {
   );
 
   it(
+    'names the AI answer engines explicitly, with the same private routes withheld',
+    async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      process.env['SITE_URL'] = 'https://claw.example';
+      const { PRIVATE_ROUTE_PREFIXES } = await import('@/constants');
+      const { AI_ANSWER_ENGINE_CRAWLERS, AI_TRAINING_CRAWLERS, WEB_SEARCH_CRAWLERS } =
+        await import('@/constants/crawler-policy.constants');
+      const robots = (await import('../robots')).default;
+
+      const rules = robots().rules;
+      if (!Array.isArray(rules)) {
+        throw new Error('expected a group per named crawler set');
+      }
+      const agents = rules.flatMap((rule) =>
+        typeof rule.userAgent === 'string' ? [rule.userAgent] : (rule.userAgent ?? []),
+      );
+      // The whole point of the change: ChatGPT Search, Claude and Perplexity
+      // have no submission form. Being fetchable IS the opt-in.
+      expect(agents).toContain('OAI-SearchBot');
+      expect(agents).toContain('Claude-SearchBot');
+      expect(agents).toContain('PerplexityBot');
+      expect(agents).toContain('Google-Extended');
+
+      // A named group is read INSTEAD of `*`, never in addition to it. A group
+      // that forgot the disallow list would invite the named bot into the
+      // portal — the one mistake this whole file exists to prevent.
+      for (const rule of rules) {
+        expect(rule.allow).toContain('/');
+        for (const prefix of PRIVATE_ROUTE_PREFIXES) {
+          expect(rule.disallow).toContain(prefix);
+        }
+      }
+
+      const named = [...WEB_SEARCH_CRAWLERS, ...AI_ANSWER_ENGINE_CRAWLERS, ...AI_TRAINING_CRAWLERS];
+      expect(new Set(named).size).toBe(named.length);
+      expect(rules).toHaveLength(4);
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
+
+  it(
     'disallows everything in non-canonical environments',
     async () => {
       vi.stubEnv('NODE_ENV', 'production');

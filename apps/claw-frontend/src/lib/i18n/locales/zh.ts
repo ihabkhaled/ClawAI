@@ -3981,6 +3981,7 @@ export const zh: TranslationDictionary = {
       navArchitecture: '建筑学',
       navLocalFirst: '对于组织',
       navPricing: '定价',
+      navCompare: '对比',
       navEnterprise: '对于组织',
       navUseCases: '使用案例',
       navFaq: '常问问题',

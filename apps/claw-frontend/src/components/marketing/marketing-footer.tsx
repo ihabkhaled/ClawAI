@@ -5,8 +5,14 @@ import Link from 'next/link';
 
 import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale-switcher';
 import { APP_VERSION, MARKETING_GITHUB_URL, ROUTES } from '@/constants';
+import { COMPARISON_HUB_PATH } from '@/constants/public-comparison.constants';
 import { useTranslation } from '@/lib/i18n';
-import { getConfiguredSocialLinks, getPublishedPagesForLocale } from '@/utilities';
+import {
+  buildComparisonRailItems,
+  getComparisonContent,
+  getConfiguredSocialLinks,
+  getPublishedPagesForLocale,
+} from '@/utilities';
 
 // Server-renderable content is computed at module scope (registry + social
 // config are both static per build), so only the two truly interactive
@@ -20,14 +26,25 @@ export function MarketingFooter(): React.ReactElement {
   // Every published page besides the homepage itself — Phase A has none,
   // Phase B populates this as pages flip from PLANNED to PUBLISHED.
   const dedicatedGetStartedPaths = new Set(['/', '/contact', '/pricing']);
+  const comparisonContent = getComparisonContent(locale);
+  // Comparison pages get their own column rather than joining Explore. Every
+  // one of them then carries a site-wide inbound link — the thing that decides
+  // whether a new page is crawled in days or in months — without turning one
+  // footer column into a nineteen-item list.
+  const comparisons = buildComparisonRailItems(comparisonContent, locale);
+  const comparisonPaths = new Set<string>([
+    COMPARISON_HUB_PATH,
+    ...comparisons.map((item) => item.path),
+  ]);
   const explorePages = getPublishedPagesForLocale(locale).filter(
-    (page) => !dedicatedGetStartedPaths.has(page.canonicalPath),
+    (page) =>
+      !dedicatedGetStartedPaths.has(page.canonicalPath) && !comparisonPaths.has(page.canonicalPath),
   );
 
   return (
     <footer className="border-border bg-surface-shell border-t">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
           <div className="sm:col-span-2 lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <Image src="/claw-logo.png" alt="" width={28} height={28} aria-hidden="true" />
@@ -67,6 +84,26 @@ export function MarketingFooter(): React.ReactElement {
                 <li key={page.slug}>
                   <Link href={page.canonicalPath} className="hover:text-foreground">
                     {page.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h2 className="text-foreground text-sm font-semibold">
+              {comparisonContent.hub.eyebrow}
+            </h2>
+            <ul className="text-muted-foreground mt-3 space-y-2 text-sm">
+              <li>
+                <Link href={COMPARISON_HUB_PATH} className="hover:text-foreground">
+                  {t('marketing.header.navCompare')}
+                </Link>
+              </li>
+              {comparisons.map((item) => (
+                <li key={item.rival}>
+                  <Link href={item.path} className="hover:text-foreground">
+                    {item.summary}
                   </Link>
                 </li>
               ))}

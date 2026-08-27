@@ -15,4 +15,10 @@ export enum LaunchPublicPageSlug {
   SUPPORTED_MODELS = 'supported-models',
   TERMS = 'terms',
   USE_CASES = 'use-cases',
+  COMPARE = 'compare',
+  COMPARE_CHATGPT = 'compare/chatgpt',
+  COMPARE_CLAUDE = 'compare/claude',
+  COMPARE_GEMINI = 'compare/gemini',
+  COMPARE_PERPLEXITY = 'compare/perplexity',
+  COMPARE_COPILOT = 'compare/copilot',
 }

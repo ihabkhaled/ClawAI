@@ -4089,6 +4089,7 @@ export const en: TranslationDictionary = {
       navArchitecture: 'Architecture',
       navLocalFirst: 'For Organisations',
       navPricing: 'Pricing',
+      navCompare: 'Compare',
       navEnterprise: 'For Organisations',
       navUseCases: 'Use Cases',
       navFaq: 'FAQ',

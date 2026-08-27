@@ -17,6 +17,7 @@ const STATIC_PUBLIC_PATHS: ReadonlyArray<string> = [
   '/opengraph-image',
   '/favicon.ico',
   '/ads.txt',
+  '/llms.txt',
 ];
 
 function matchesStaticPublicPath(pathname: string): boolean {

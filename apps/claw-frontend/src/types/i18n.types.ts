@@ -4135,6 +4135,7 @@ export type TranslationDictionary = {
       navArchitecture: string;
       navLocalFirst: string;
       navPricing: string;
+      navCompare: string;
       navEnterprise: string;
       navUseCases: string;
       navFaq: string;

@@ -66,6 +66,12 @@ describe('content registry integrity', () => {
       '/about',
       '/acceptable-use',
       '/architecture',
+      '/compare',
+      '/compare/chatgpt',
+      '/compare/claude',
+      '/compare/copilot',
+      '/compare/gemini',
+      '/compare/perplexity',
       '/contact',
       '/cookies',
       '/faq',
@@ -144,8 +150,8 @@ describe('localized publication boundary', () => {
   });
 
   it('resolves metadata for every supported locale', () => {
-    expect(getPublishedPagesForLocale(Locale.EN).length).toBe(16);
-    expect(getPublishedPagesForLocale(Locale.JA).length).toBe(16);
+    expect(getPublishedPagesForLocale(Locale.EN).length).toBe(22);
+    expect(getPublishedPagesForLocale(Locale.JA).length).toBe(22);
     expect(getPageBySlugAndLocale('features', Locale.EN)?.title.toLowerCase()).toContain(
       'features',
     );
@@ -167,6 +173,11 @@ describe('localized publication boundary', () => {
         expect(page.title.match(/ClawAI.*ClawAI/)).toBeNull();
 
         if (locale !== Locale.EN) {
+          // The tripwire for a locale that silently fell back to English. It
+          // applies to titles too, which is why "ClawAI vs ChatGPT" carries a
+          // localized qualifier in the Romance locales rather than being copied
+          // across verbatim — a title identical to the English one is
+          // indistinguishable from a missing translation.
           const englishPage = englishPages.get(page.slug);
           expect(page.title).not.toBe(englishPage?.title);
           expect(page.description).not.toBe(englishPage?.description);

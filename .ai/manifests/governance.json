@@ -239,7 +239,7 @@
   ],
   "skills": [
     {
-      "bytes": 19163,
+      "bytes": 19398,
       "file": "skills/00-index.md"
     },
     {
@@ -429,6 +429,10 @@
     {
       "bytes": 4352,
       "file": "skills/navigate-codebase.md"
+    },
+    {
+      "bytes": 6428,
+      "file": "skills/publish-a-public-marketing-page.md"
     },
     {
       "bytes": 4619,

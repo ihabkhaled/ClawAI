@@ -4123,6 +4123,7 @@ export const ja: TranslationDictionary = {
       navArchitecture: 'アーキテクチャ',
       navLocalFirst: '組織向け',
       navPricing: '価格',
+      navCompare: '比較',
       navEnterprise: '組織向け',
       navUseCases: 'の使用例',
       navFaq: 'よくある質問',

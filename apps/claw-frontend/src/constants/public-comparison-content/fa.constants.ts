@@ -1,0 +1,267 @@
+import { ComparisonDimension } from '@/enums/comparison-dimension.enum';
+import { ComparisonRival } from '@/enums/comparison-rival.enum';
+import type { ComparisonDictionary } from '@/types/public-comparison.types';
+
+export const FA_COMPARISON_CONTENT: ComparisonDictionary = {
+  labels: {
+    onThisPage: 'در این صفحه',
+    atAGlance: 'در یک نگاه',
+    tableCaption: 'مقایسهٔ ClawAI و {rival}، قابلیت به قابلیت',
+    capabilityColumn: 'قابلیت',
+    clawColumn: 'ClawAI',
+    strengthTitle: 'نقطهٔ قوت {rival}',
+    differenceTitle: 'تفاوت کار ClawAI',
+    chooseTitle: 'کدام را انتخاب کنیم',
+    chooseRivalLabel: '{rival} را انتخاب کنید اگر',
+    chooseClawLabel: 'ClawAI را انتخاب کنید اگر',
+    faqTitle: 'پرسش‌های پرتکرار',
+    lastReviewed: 'مقایسه بر پایهٔ اطلاعات عمومی، آخرین بازبینی',
+    independence:
+      'ClawAI محصولی مستقل است. با هیچ‌یک از دستیارهای نام‌برده در این صفحه وابستگی ندارد، از سوی آن‌ها تأیید نشده و بازفروش آن‌ها نیست. هر ادعا از مستندات عمومی همان ارائه‌دهنده در تاریخ بالا برداشته شده و این محصولات سریع تغییر می‌کنند — پیش از تصمیم، صفحه‌های خود ارائه‌دهنده را ببینید.',
+    otherComparisons: 'مقایسهٔ ClawAI با دستیاری دیگر',
+    startFree: 'شروع با طرح رایگان',
+    seePricing: 'مشاهدهٔ قیمت‌ها',
+  },
+  hub: {
+    eyebrow: 'مقایسه‌ها',
+    intro:
+      'ClawAI نمی‌کوشد دستیار واحدِ بهتری باشد. نُه خانوادهٔ مدل پیشرو را زیر یک اشتراک می‌گذارد و هر پیام را به مدل مناسب می‌فرستد. این صفحه‌ها همان را در برابر دستیارهایی می‌گذارند که مردم همین حالا به کار می‌برند، و هر بار بر پایهٔ همان هشت قابلیت.',
+    cardsTitle: 'دستیاری برای مقایسه انتخاب کنید',
+    cardCta: 'مقایسه با {rival}',
+    coversTitle: 'هر مقایسه چه چیزی را پوشش می‌دهد',
+    coversBody:
+      'همان هشت قابلیت، به همان ترتیب، در هر صفحه: انتخاب مدل، مسیریابی، پاسخ‌های هم‌زمان، مدل‌های محلی، میزبانی شخصی، حافظه و پرونده‌ها، اتصال‌دهنده‌های کاری و گزارش مصرف برای هر پاسخ. پرسش‌های یکسان برای همه، تا دو صفحه را بتوان کنار هم خواند.',
+  },
+  dimensionLabels: {
+    [ComparisonDimension.MODEL_CHOICE]: 'انتخاب مدل',
+    [ComparisonDimension.ROUTING]: 'مسیریابی',
+    [ComparisonDimension.SIDE_BY_SIDE]: 'پاسخ‌های هم‌زمان',
+    [ComparisonDimension.LOCAL_MODELS]: 'مدل‌های محلی و با وزن باز',
+    [ComparisonDimension.SELF_HOSTING]: 'میزبانی شخصی',
+    [ComparisonDimension.MEMORY_AND_FILES]: 'حافظه و پرونده‌ها',
+    [ComparisonDimension.CONNECTORS]: 'اتصال‌دهنده‌های کاری',
+    [ComparisonDimension.RECEIPTS]: 'گزارش مصرف',
+  },
+  clawCells: {
+    [ComparisonDimension.MODEL_CHOICE]: 'نُه خانوادهٔ مدل پیشرو زیر یک اشتراک',
+    [ComparisonDimension.ROUTING]: 'پنج حالت مسیریابی، از جمله مسیریابی خودکار برای هر پیام',
+    [ComparisonDimension.SIDE_BY_SIDE]: 'یک درخواست به چند مدل هم‌زمان، پاسخ‌ها کنار هم',
+    [ComparisonDimension.LOCAL_MODELS]:
+      'مدل‌های با وزن باز روی GPU خودتان، از راه Ollama یا llama.cpp',
+    [ComparisonDimension.SELF_HOSTING]: 'کل مجموعه روی سرورهای شما اجرا می‌شود، کد روی GitHub',
+    [ComparisonDimension.MEMORY_AND_FILES]:
+      'حافظه‌ای که میان گفتگوها می‌ماند، به‌همراه بافت پرونده‌ها',
+    [ComparisonDimension.CONNECTORS]: 'دوازده اتصال‌دهندهٔ کاری',
+    [ComparisonDimension.RECEIPTS]: 'هر پاسخ مدل، هزینه و سهمیهٔ مصرف‌شده‌اش را ثبت می‌کند',
+  },
+  rivals: {
+    [ComparisonRival.CHATGPT]: {
+      name: 'ChatGPT',
+      vendor: 'OpenAI',
+      eyebrow: 'ClawAI در برابر ChatGPT',
+      intro:
+        'ChatGPT همان دستیاری است که بیشتر مردم هنگام گفتن «هوش مصنوعی» در ذهن دارند: پرداخته، سریع و متکی بر مدل‌های پیشروی OpenAI. ClawAI شکل دیگری دارد: یک اشتراک که مدل‌های OpenAI را در کنار هشت خانوادهٔ دیگر در دسترس می‌گذارد و هر پیام را به مدل مناسب می‌فرستد.',
+      theirStrength:
+        'یک محصول واحد و بسیار خوش‌ساخت. صدا، تولید تصویر، اجرای کد و پژوهش عمیق درون آن جا گرفته‌اند و با هم کار می‌کنند، اپلیکیشن‌های موبایل عالی‌اند، و مدل زیرین یک مدل پیشرو است نه یک مصالحه.',
+      ourDifference:
+        'ClawAI نمی‌کوشد دستیار واحدِ بهتری باشد؛ پرسش «کدام ارائه‌دهنده» را از میان برمی‌دارد: یک گفتگو می‌تواند میان OpenAI، Anthropic، Google و شش خانوادهٔ دیگر جابه‌جا شود، وقتی داده نباید از شبکه بیرون برود به مدل محلی با وزن باز بیفتد، و ثبت کند کدام مدل پاسخ داده است.',
+      chooseRival:
+        'یک دستیار پرداخته می‌خواهید، مدل‌های OpenAI تقریباً همهٔ کارتان را پوشش می‌دهند و ابزارهای صدا و تصویرِ درون‌ساخت برایتان مهم است.',
+      chooseClaw:
+        'مرتب به مرز یک ارائه‌دهنده می‌خورید، می‌خواهید مدل دوم پاسخ اول را بررسی کند، یا بخشی از کار باید روی سخت‌افزار خودتان بماند.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'فقط مدل‌های OpenAI',
+        [ComparisonDimension.ROUTING]: 'انتخاب خودکار درون گسترهٔ OpenAI',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'هر بار یک پاسخ',
+        [ComparisonDimension.LOCAL_MODELS]: 'فقط ابری',
+        [ComparisonDimension.SELF_HOSTING]: 'ارائه نمی‌شود',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'حافظه، پروژه‌ها و بارگذاری پرونده',
+        [ComparisonDimension.CONNECTORS]: 'اپلیکیشن‌ها و اتصال‌دهنده‌ها در طرح‌های پولی',
+        [ComparisonDimension.RECEIPTS]: 'مصرف در سطح طرح، نه هزینهٔ هر پاسخ',
+      },
+      faq: [
+        {
+          question: 'آیا ClawAI می‌تواند همان مدل‌های OpenAI را که ChatGPT دارد به کار ببرد؟',
+          answer:
+            'ClawAI به مدل‌های OpenAI مسیر می‌دهد؛ یکی از نُه خانوادهٔ فهرستش. نه حسابی در OpenAI باید بسازید و نه کلید API جایی بچسبانید: دسترسی به مدل‌ها همراه اشتراک می‌آید.',
+        },
+        {
+          question: 'آیا ClawAI یک کلاینت ChatGPT است؟',
+          answer:
+            'نه. ClawAI سکویی مستقل با لایه‌های مسیریابی، حافظه، مقایسه و هماهنگ‌سازی خودش است. OpenAI یکی از ارائه‌دهندگانی است که می‌تواند پیام برایش بفرستد، نه محصولی که زیر آن نشسته باشد.',
+        },
+        {
+          question: 'می‌شود ClawAI را بدون فرستادن چیزی به OpenAI به کار برد؟',
+          answer:
+            'بله. گفتگو را به یک مدل محلی با وزن باز سنجاق کنید، یا کل مجموعه را خودتان میزبانی کنید و تنها مدل‌هایی را روی GPU خودتان اجرا کنید، بدون هیچ فراخوان بیرونی.',
+        },
+      ],
+    },
+    [ComparisonRival.CLAUDE]: {
+      name: 'Claude',
+      vendor: 'Anthropic',
+      eyebrow: 'ClawAI در برابر Claude',
+      intro:
+        'Claude همان چیزی است که بسیاری وقتی کار طولانی، دقیق و نوشتاری است سراغش می‌روند. ClawAI هم به مدل‌های Anthropic می‌رسد — در کنار هشت خانوادهٔ دیگر — و می‌گذارد مدلی دوم گفتهٔ مدل اول را بررسی کند.',
+      theirStrength:
+        'استدلال دقیق روی اسناد طولانی، پایبندترین پیروی از دستور در این حوزه، و بازبینی قوی کد. پروژه‌ها، خروجی‌ها و اتصال‌دهنده‌های MCP آن را جای واقعاً خوبی برای کار نوشتاری ممتد می‌کنند.',
+      ourDifference:
+        'ClawAI با Anthropic همچون یک گزینهٔ قوی برخورد می‌کند، نه یگانه گزینه. یک رشتهٔ گفتگو می‌تواند یک درخواست را هم‌زمان به Claude و چهار مدل دیگر بفرستد، یک مدل را داور پاسخ مدل دیگر کند، و هنگام از کار افتادن یک ارائه‌دهنده خودکار جابه‌جا شود.',
+      chooseRival: 'تقریباً همهٔ کارتان استدلال بلند یا بازبینی کد است و یک مدل عالی کافی است.',
+      chooseClaw:
+        'هم پاسخ Claude را می‌خواهید و هم نظر دوم، برای کار حساس به مدل محلی نیاز دارید، یا نمی‌خواهید برای هر ارائه‌دهنده اشتراکی جدا نگه دارید.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'فقط مدل‌های Anthropic',
+        [ComparisonDimension.ROUTING]: 'مدل را خودتان انتخاب می‌کنید',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'هر بار یک پاسخ',
+        [ComparisonDimension.LOCAL_MODELS]: 'فقط ابری',
+        [ComparisonDimension.SELF_HOSTING]: 'ارائه نمی‌شود',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'پروژه‌ها، پرونده‌ها و حافظه',
+        [ComparisonDimension.CONNECTORS]: 'اتصال‌دهنده‌های MCP و افزونه‌های دسکتاپ',
+        [ComparisonDimension.RECEIPTS]: 'مصرف در سطح طرح، نه هزینهٔ هر پاسخ',
+      },
+      faq: [
+        {
+          question: 'آیا مدل‌های Claude در ClawAI هست؟',
+          answer:
+            'بله. Anthropic یکی از نُه خانوادهٔ مدل فهرست است و از هر گفتگویی در دسترس است، بدون حساب یا کلید جداگانهٔ Anthropic.',
+        },
+        {
+          question: 'آیا یک مدل می‌تواند پاسخ مدل دیگر را بررسی کند؟',
+          answer:
+            'بله. Verify و Judge و Critic مدلی دوم را روی خروجی مدل اول می‌گذارند. این خطر پاسخ نادرستِ مطمئن را کم می‌کند اما از میان نمی‌برد: هر چیز پیامددار همچنان به خواندن انسانی نیاز دارد.',
+        },
+        {
+          question: 'آیا ClawAI وابسته به Anthropic است؟',
+          answer:
+            'نه. ClawAI مستقل است. به مدل‌های Anthropic همان‌گونه مسیر می‌دهد که به هشت ارائه‌دهندهٔ دیگر، و نه تأییدشدهٔ هیچ‌کدام است و نه شریکشان.',
+        },
+      ],
+    },
+    [ComparisonRival.GEMINI]: {
+      name: 'Gemini',
+      vendor: 'Google',
+      eyebrow: 'ClawAI در برابر Gemini',
+      intro:
+        'Gemini نزدیک‌ترین دستیار به اسنادی است که همین حالا دارید، به شرط آنکه آن اسناد در Google Workspace باشند. ClawAI از سوی دیگر می‌آید: بی‌طرف نسبت به ارائه‌دهندگان، با مدل‌های Google همچون یکی از نُه خانواده.',
+      theirStrength:
+        'پنجره‌های بافت بسیار بزرگ، پردازش بومی تصویر و صدا و ویدیو، پاسخ‌های سریع، و یکپارچگی با Gmail و Drive و Docs که هیچ طرف سومی به آن نمی‌رسد.',
+      ourDifference:
+        'ClawAI نه به یک مجموعهٔ اداری بسته است و نه به نقشهٔ راه یک ارائه‌دهنده. به دوازده ابزار کاری وصل می‌شود نه یکی، هر پیام را بر پایهٔ کار مسیر می‌دهد، و می‌تواند کار حساس را روی مدل محلی با وزن باز نگه دارد.',
+      chooseRival:
+        'سازمان شما در Google Workspace زندگی می‌کند و دستیار را مستقیم در دل آن می‌خواهید.',
+      chooseClaw:
+        'از ابزارهای چند سازنده استفاده می‌کنید، می‌خواهید پیش از تعهد مدل‌ها را مقایسه کنید، یا به استقراری بدون هیچ فراخوان بیرونی نیاز دارید.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'فقط مدل‌های Google',
+        [ComparisonDimension.ROUTING]: 'انتخاب خودکار درون گسترهٔ Google',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'هر بار یک پاسخ',
+        [ComparisonDimension.LOCAL_MODELS]: 'فقط میزبانی روی Google',
+        [ComparisonDimension.SELF_HOSTING]: 'ارائه نمی‌شود',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'پرونده‌ها، Drive و بافت Workspace',
+        [ComparisonDimension.CONNECTORS]: 'یکپارچگی عمیق با Google Workspace',
+        [ComparisonDimension.RECEIPTS]: 'مصرف در سطح طرح، نه هزینهٔ هر پاسخ',
+      },
+      faq: [
+        {
+          question: 'آیا ClawAI می‌تواند مدل‌های Gemini را به کار ببرد؟',
+          answer:
+            'بله. Google یکی از نُه خانوادهٔ مدل فهرست است و با همان اشتراک در هر گفتگویی در دسترس است.',
+        },
+        {
+          question: 'آیا ClawAI به Google Workspace وصل می‌شود؟',
+          answer:
+            'ClawAI دوازده اتصال‌دهنده دارد که پیگیرهای کار، گفتگوی تیمی و اسناد را پوشش می‌دهد. یکپارچگی‌اش با Google یک اتصال‌دهنده است نه سطحی بومی: گسترده‌تر میان سازندگان، کم‌عمق‌تر درون Google.',
+        },
+        {
+          question: 'کدام برای اسناد بسیار طولانی بهتر است؟',
+          answer:
+            'هر دو خوب از پس آن برمی‌آیند و بزرگ‌ترین پنجره‌های بافت Google از پهناورترین‌های موجود است. تفاوت ClawAI این است که می‌توانید همان سند را به دو مدل بفرستید و نتیجه‌گیری‌شان را مقایسه کنید.',
+        },
+      ],
+    },
+    [ComparisonRival.PERPLEXITY]: {
+      name: 'Perplexity',
+      vendor: 'Perplexity AI',
+      eyebrow: 'ClawAI در برابر Perplexity',
+      intro:
+        'Perplexity گرد یک کار ساخته شده است: پاسخ به یک پرسش از وبِ زنده، همراه با منابع. ClawAI گرد کاری دیگر ساخته شده: گذاشتن مدل درست روی کاری که در دست دارید، پژوهش هم بخشی از آن.',
+      theirStrength:
+        'خوش‌ساخت‌ترین محصول برای پرسش‌های جست‌وجویی. پاسخ‌ها با ارجاع می‌آیند، پرسش‌های بعدی رشته را منسجم نگه می‌دارند، و کل رابط برای وارسی خاستگاه یک ادعا طراحی شده است.',
+      ourDifference:
+        'ClawAI یک فضای کاری است نه موتور پاسخ. پژوهش یکی از حالت‌هاست، کنار مقایسهٔ مدل، حافظهٔ ماندگار، بافت پرونده، عامل کدنویسی و مدل‌های محلی — و هر پاسخ مدلی را که تولیدش کرده ثبت می‌کند.',
+      chooseRival: 'بیشتر پرسش‌هایتان «چه چیزی همین حالا درست است و چه کسی می‌گوید» باشد.',
+      chooseClaw:
+        'پژوهش تنها بخشی از کار باشد و به کد، نوشتار بلند، مقایسهٔ مدل یا مدلی روی سخت‌افزار خودتان هم نیاز داشته باشید.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'مدل‌های چند سازنده در طرح‌های بالاتر',
+        [ComparisonDimension.ROUTING]: 'بر پایهٔ کیفیت جست‌وجو و پاسخ انتخاب می‌شود',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'هر بار یک پاسخ',
+        [ComparisonDimension.LOCAL_MODELS]: 'فقط ابری',
+        [ComparisonDimension.SELF_HOSTING]: 'ارائه نمی‌شود',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'فضاها، رشته‌ها و بارگذاری پرونده',
+        [ComparisonDimension.CONNECTORS]: 'اتصال‌دهنده‌ها در طرح‌های سازمانی',
+        [ComparisonDimension.RECEIPTS]: 'مصرف در سطح طرح، نه هزینهٔ هر پاسخ',
+      },
+      faq: [
+        {
+          question: 'آیا ClawAI در وب جست‌وجو می‌کند؟',
+          answer:
+            'بله. پژوهش یک جست‌وجوی چندمرحله‌ای در وب اجرا می‌کند و پاسخ را با منابعش برمی‌گرداند. این یکی از قابلیت‌های فضای کاری است نه کل محصول.',
+        },
+        {
+          question: 'کدام ارجاع بهتری می‌دهد؟',
+          answer:
+            'Perplexity برای پاسخ‌های مستند ساخته شده و عملاً برای هر ادعا منبع نشان می‌دهد. ClawAI برای پژوهش‌هایش منبع می‌آورد؛ برای پرسش خالصِ «پیدا کن و ارجاع بده»، موتور پاسخِ تخصصی ابزار برنده‌تری است.',
+        },
+        {
+          question: 'می‌شود از هر دو استفاده کرد؟',
+          answer:
+            'بسیاری همین کار را می‌کنند. پرسش اصلی این است که موتور پاسخِ تخصصی می‌خواهید، فضای کاری عمومی چندمدلی، یا هر دو.',
+        },
+      ],
+    },
+    [ComparisonRival.COPILOT]: {
+      name: 'Microsoft Copilot',
+      vendor: 'Microsoft',
+      eyebrow: 'ClawAI در برابر Microsoft Copilot',
+      intro:
+        'Copilot همان Microsoft 365 است با دستیاری تنیده در آن. ClawAI فضای کاری مستقلی است که به نُه خانوادهٔ مدل می‌رسد و می‌تواند به‌تمامی روی سرورهای خودتان اجرا شود.',
+      theirStrength:
+        'هیچ‌چیز به این اندازه به داده‌های Microsoftِ موجود یک سازمان نزدیک نیست. بافت Word و Excel و Outlook و Teams بدون پیکربندی می‌رسد، و صدور پروانه، جداسازی و انطباق از همان قرارداد Microsoft 365 پیروی می‌کند که واحد فناوری اطلاعات دارد.',
+      ourDifference:
+        'ClawAI نسبت به سازندگان بی‌طرف است و هر جا قابل استقرار. به‌جای گزینش یک تأمین‌کننده روی نُه خانوادهٔ مدل مسیر می‌دهد، هزینهٔ هر پاسخ را نشان می‌دهد، و می‌تواند درون شبکهٔ خودتان با مدل‌های وزن‌باز و بدون هیچ فراخوان بیرونی نصب شود.',
+      chooseRival:
+        'سازمان شما روی Microsoft 365 می‌چرخد و ارزش در این است که دستیار درون اسناد موجود بنشیند.',
+      chooseClaw:
+        'حق انتخاب ارائه‌دهنده، دیدنِ هزینهٔ هر پاسخ، یا استقراری می‌خواهید که هرگز از زیرساخت خودتان بیرون نرود.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'مدل‌های OpenAI به‌علاوهٔ مدل‌های خود Microsoft',
+        [ComparisonDimension.ROUTING]: 'Microsoft برای هر سطح انتخاب می‌کند',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'هر بار یک پاسخ',
+        [ComparisonDimension.LOCAL_MODELS]: 'فقط ابری',
+        [ComparisonDimension.SELF_HOSTING]: 'ارائه نمی‌شود',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'پرونده‌های Microsoft 365 و بافت سازمان',
+        [ComparisonDimension.CONNECTORS]: 'عمیق‌ترین یکپارچگی با Microsoft 365',
+        [ComparisonDimension.RECEIPTS]: 'پروانه به‌ازای هر کاربر، نه هزینهٔ هر پاسخ',
+      },
+      faq: [
+        {
+          question: 'آیا ClawAI را می‌شود درون شبکهٔ خودمان مستقر کرد؟',
+          answer:
+            'بله. کل مجموعه روی سرورهای شما اجرا می‌شود، با مدل‌های وزن‌باز روی GPUهای خودتان و بدون هیچ فراخوان به ارائه‌دهندهٔ بیرونی. این یک همکاری با دامنهٔ مشخص است نه طرحی که آنلاین بخرید.',
+        },
+        {
+          question: 'آیا ClawAI با Microsoft 365 یکپارچه می‌شود؟',
+          answer:
+            'ClawAI دوازده اتصال‌دهنده دارد که پیگیرهای کار، گفتگوی تیمی و اسناد را پوشش می‌دهد — گسترده‌تر از Copilot میان سازندگان، و کم‌عمق‌تر درون خود اپلیکیشن‌های Microsoft.',
+        },
+        {
+          question: 'مصرف چگونه محاسبه می‌شود؟',
+          answer:
+            'با توکن‌های هزینه‌نرمال‌شده در برابر سهمیهٔ روزانه و ماهانه، نه به‌ازای هر کاربر. هر پاسخ مدل، هزینه و سهمیهٔ مصرف‌شده را نشان می‌دهد.',
+        },
+      ],
+    },
+  },
+};

@@ -1,3 +1,10 @@
+import {
+  COMPARISON_HUB_PATH,
+  COMPARISON_PATH_BY_RIVAL,
+  COMPARISON_REVIEW_DATE,
+  COMPARISON_RIVAL_ORDER,
+  COMPARISON_SLUG_BY_RIVAL,
+} from '@/constants/public-comparison.constants';
 import { PUBLIC_PAGE_SEO_BY_LOCALE } from '@/constants/public-page-seo.constants';
 import {
   AdEligibility,
@@ -24,6 +31,13 @@ type PublishedContentConfig = {
   adEligibility: AdEligibility;
   structuredDataType: StructuredDataType;
   relatedSlugs: readonly string[];
+  /**
+   * When this page's claims were last checked, if that is not the site-wide
+   * review date. Comparison pages describe other vendors' products, which
+   * change on their own schedule, so they carry their own date rather than
+   * inheriting one that says nothing about them.
+   */
+  reviewDate?: string;
 };
 
 const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
@@ -155,6 +169,27 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     structuredDataType: StructuredDataType.WEB_PAGE,
     relatedSlugs: ['features', 'how-it-works', 'pricing'],
   },
+  // Comparison hub and its five pages. Ad-ineligible on purpose: a page whose
+  // job is to be a fair, checkable comparison of named competitors does not
+  // also carry ad inventory.
+  {
+    slug: LaunchPublicPageSlug.COMPARE,
+    path: COMPARISON_HUB_PATH,
+    category: ContentCategory.COMPARISON,
+    adEligibility: AdEligibility.INELIGIBLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['features', 'pricing', 'supported-models'],
+    reviewDate: COMPARISON_REVIEW_DATE,
+  },
+  ...COMPARISON_RIVAL_ORDER.map((rival): PublishedContentConfig => ({
+    slug: COMPARISON_SLUG_BY_RIVAL[rival],
+    path: COMPARISON_PATH_BY_RIVAL[rival],
+    category: ContentCategory.COMPARISON,
+    adEligibility: AdEligibility.INELIGIBLE,
+    structuredDataType: StructuredDataType.FAQ_PAGE,
+    relatedSlugs: ['compare', 'features', 'pricing'],
+    reviewDate: COMPARISON_REVIEW_DATE,
+  })),
 ];
 
 const PLANNED_CONTENT_CONFIGS = [
@@ -177,6 +212,7 @@ const PLANNED_CONTENT_CONFIGS = [
 
 function buildLocalizedMetadata(
   slug: LaunchPublicPageSlug,
+  reviewDate: string,
 ): Record<Locale, LocalizedContentMetadata> {
   return Object.values(Locale).reduce(
     (metadataByLocale, locale) => {
@@ -185,7 +221,7 @@ function buildLocalizedMetadata(
         title: seo.title,
         description: seo.description,
         keywords: seo.keywords,
-        lastReviewed: REVIEW_DATE,
+        lastReviewed: reviewDate,
         reviewStatus: ContentReviewStatus.REVIEWED,
         indexability: Indexability.INDEXABLE,
       };
@@ -204,7 +240,7 @@ const PUBLISHED_DEFINITIONS: ReadonlyArray<PublicContentDefinition> = PUBLISHED_
     adEligibility: config.adEligibility,
     structuredDataType: config.structuredDataType,
     relatedSlugs: config.relatedSlugs,
-    locales: buildLocalizedMetadata(config.slug),
+    locales: buildLocalizedMetadata(config.slug, config.reviewDate ?? REVIEW_DATE),
   }),
 );
 

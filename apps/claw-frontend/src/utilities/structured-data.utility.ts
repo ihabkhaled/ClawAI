@@ -1,7 +1,12 @@
 import { MARKETING_GITHUB_URL } from '@/constants/marketing-nav.constants';
 import type { SharedChatJsonLdInput } from '@/types/chat-share-page.types';
 import type { PublicPlan } from '@/types/public-pricing.types';
-import type { JsonLdObject, PublicPageJsonLdInput } from '@/types/structured-data.types';
+import type {
+  ComparisonHubJsonLdInput,
+  ComparisonJsonLdInput,
+  JsonLdObject,
+  PublicPageJsonLdInput,
+} from '@/types/structured-data.types';
 import { formatPriceDecimal } from '@/utilities/pricing-catalog.utility';
 
 // Only facts the application and repository actually support — no
@@ -51,6 +56,90 @@ export function buildPublicPageJsonLd(input: PublicPageJsonLdInput): JsonLdObjec
       name: 'ClawAI',
       url: canonicalUrl.origin,
     },
+  };
+}
+
+/**
+ * Structured data for one comparison page.
+ *
+ * A `@graph` rather than three separate script blocks, so the WebPage, the
+ * breadcrumb trail and the FAQ are one connected description of one URL instead
+ * of three unrelated documents a parser has to guess the relationship between.
+ *
+ * Deliberately NOT a `Review`, `AggregateRating` or `Product` comparison: those
+ * types carry a rating from a reviewer, and inventing one for a page the vendor
+ * wrote about its own competitors is exactly the fabricated-review case that
+ * gets structured data ignored and pages demoted. `WebPage` + `FAQPage` claims
+ * only what the page actually is.
+ */
+export function buildComparisonJsonLd(input: ComparisonJsonLdInput): JsonLdObject {
+  const origin = new URL(input.canonicalUrl).origin;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        name: input.name,
+        description: input.description,
+        url: input.canonicalUrl,
+        inLanguage: input.language,
+        dateModified: input.lastReviewed,
+        isPartOf: { '@type': 'WebSite', name: 'ClawAI', url: origin },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'ClawAI', item: origin },
+          { '@type': 'ListItem', position: 2, name: input.hubName, item: input.hubUrl },
+          { '@type': 'ListItem', position: 3, name: input.name, item: input.canonicalUrl },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        url: input.canonicalUrl,
+        inLanguage: input.language,
+        mainEntity: input.faq.map((entry) => ({
+          '@type': 'Question',
+          name: entry.question,
+          acceptedAnswer: { '@type': 'Answer', text: entry.answer },
+        })),
+      },
+    ],
+  };
+}
+
+/** Structured data for the comparison hub: the page, its trail, and what it lists. */
+export function buildComparisonHubJsonLd(input: ComparisonHubJsonLdInput): JsonLdObject {
+  const origin = new URL(input.canonicalUrl).origin;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        name: input.name,
+        description: input.description,
+        url: input.canonicalUrl,
+        inLanguage: input.language,
+        dateModified: input.lastReviewed,
+        isPartOf: { '@type': 'WebSite', name: 'ClawAI', url: origin },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'ClawAI', item: origin },
+          { '@type': 'ListItem', position: 2, name: input.name, item: input.canonicalUrl },
+        ],
+      },
+      {
+        '@type': 'ItemList',
+        itemListElement: input.items.map((item, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: item.name,
+          url: item.url,
+        })),
+      },
+    ],
   };
 }
 

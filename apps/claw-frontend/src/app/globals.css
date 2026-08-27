@@ -766,6 +766,379 @@
     line-height: 1.65;
   }
 
+  /*
+   * Comparison pages. Reuses the editorial palette tokens declared on
+   * .editorial-page-shell, so light/dark inversion is inherited rather than
+   * redeclared — every colour below is a token pair that already clears WCAG AA
+   * in both themes (see color-contrast-tokens.test.ts).
+   *
+   * Logical properties throughout: five of the thirteen locales are not
+   * left-to-right, and a comparison table is exactly where a physical
+   * `padding-left` shows up as a broken layout in Arabic.
+   */
+  .editorial-comparison {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 4rem);
+  }
+
+  .editorial-comparison__stamp {
+    color: var(--editorial-graphite);
+    font-family: var(--font-editorial-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .editorial-comparison__lede {
+    max-width: 46rem;
+    color: var(--editorial-ink);
+    font-size: clamp(1.125rem, 2.2vw, 1.5rem);
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+
+  .editorial-comparison__section {
+    border-block-start: 1px solid var(--editorial-rule);
+    padding-block-start: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .editorial-comparison__section-heading {
+    color: var(--editorial-ink);
+    font-family: var(--font-editorial-display), var(--font-sans);
+    font-size: clamp(1.6rem, 4vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+
+  .editorial-comparison__body {
+    max-width: 44rem;
+    margin-block-start: 1.25rem;
+    color: var(--editorial-graphite);
+    font-size: 1.0625rem;
+    line-height: 1.75;
+    text-wrap: pretty;
+  }
+
+  .editorial-comparison__table-scroll {
+    margin-block-start: 1.75rem;
+    overflow-x: auto;
+    border: 1px solid var(--editorial-rule);
+  }
+
+  .editorial-comparison__table-scroll:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--editorial-circuit) 45%, transparent);
+    outline-offset: 2px;
+  }
+
+  .editorial-comparison__table {
+    width: 100%;
+    min-width: 42rem;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+
+  .editorial-comparison__table th,
+  .editorial-comparison__table td {
+    border-block-end: 1px solid var(--editorial-rule);
+    padding: 0.9rem 1rem;
+    text-align: start;
+    vertical-align: top;
+  }
+
+  .editorial-comparison__table thead th {
+    background-color: color-mix(in srgb, var(--editorial-ink) 8%, var(--editorial-paper));
+    color: var(--editorial-ink);
+    font-family: var(--font-editorial-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .editorial-comparison__table tbody th {
+    color: var(--editorial-ink);
+    font-weight: 700;
+  }
+
+  .editorial-comparison__table tbody td {
+    color: var(--editorial-graphite);
+    line-height: 1.6;
+  }
+
+  .editorial-comparison__table tbody tr:last-child th,
+  .editorial-comparison__table tbody tr:last-child td {
+    border-block-end: 0;
+  }
+
+  .editorial-comparison__claw-column,
+  .editorial-comparison__claw-cell {
+    background-color: color-mix(in srgb, var(--editorial-circuit) 10%, var(--editorial-paper));
+  }
+
+  .editorial-comparison__table tbody td.editorial-comparison__claw-cell {
+    color: var(--editorial-ink);
+    font-weight: 600;
+  }
+
+  .editorial-comparison__verdict {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
+    margin-block-start: 1.75rem;
+    border: 1px solid var(--editorial-rule);
+    background-color: var(--editorial-rule);
+  }
+
+  .editorial-comparison__verdict-panel {
+    background-color: var(--editorial-paper);
+    padding: 1.5rem;
+  }
+
+  .editorial-comparison__verdict-panel--claw {
+    background-color: color-mix(in srgb, var(--editorial-circuit) 10%, var(--editorial-paper));
+  }
+
+  .editorial-comparison__verdict-label {
+    color: var(--editorial-signal);
+    font-family: var(--font-editorial-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .editorial-comparison__verdict-panel--claw .editorial-comparison__verdict-label {
+    color: var(--editorial-circuit);
+  }
+
+  .editorial-comparison__verdict-body {
+    margin-block-start: 0.75rem;
+    color: var(--editorial-ink);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .editorial-comparison__faq {
+    display: grid;
+    gap: 1.5rem;
+    margin-block-start: 1.75rem;
+  }
+
+  .editorial-comparison__faq-item {
+    border-inline-start: 3px solid var(--editorial-rule);
+    padding-inline-start: 1.25rem;
+  }
+
+  .editorial-comparison__faq-question {
+    color: var(--editorial-ink);
+    font-family: var(--font-editorial-display), var(--font-sans);
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  .editorial-comparison__faq-answer {
+    margin-block-start: 0.6rem;
+    margin-inline-start: 0;
+    max-width: 44rem;
+    color: var(--editorial-graphite);
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .editorial-comparison__note {
+    border-block: 1px solid var(--editorial-rule);
+    padding-block: 1.25rem;
+    max-width: 52rem;
+    color: var(--editorial-graphite);
+    font-size: 0.875rem;
+    line-height: 1.7;
+  }
+
+  .editorial-comparison__cards {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
+    margin-block-start: 1.75rem;
+    border: 1px solid var(--editorial-rule);
+    background-color: var(--editorial-rule);
+  }
+
+  .editorial-comparison__card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background-color: var(--editorial-paper);
+    padding: 1.5rem;
+  }
+
+  .editorial-comparison__card-name {
+    color: var(--editorial-ink);
+    font-family: var(--font-editorial-display), var(--font-sans);
+    font-size: 1.375rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .editorial-comparison__card-summary {
+    color: var(--editorial-graphite);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+
+  .editorial-comparison__card-link,
+  .editorial-comparison__rail-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    color: var(--editorial-circuit);
+    font-family: var(--font-editorial-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 0.25em;
+    transition: text-decoration-color var(--duration-fast) var(--ease-out-quint);
+  }
+
+  .editorial-comparison__card-link {
+    margin-block-start: auto;
+  }
+
+  .editorial-comparison__card-link:hover,
+  .editorial-comparison__rail-link:hover {
+    text-decoration-color: currentColor;
+  }
+
+  .editorial-comparison__card-link:focus-visible,
+  .editorial-comparison__rail-link:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--editorial-circuit) 45%, transparent);
+    outline-offset: 0.25rem;
+  }
+
+  .editorial-comparison__rail {
+    border-block: 1px solid var(--editorial-rule);
+    padding-block: 1.5rem;
+  }
+
+  .editorial-comparison__rail-label {
+    color: var(--editorial-signal);
+    font-family: var(--font-editorial-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .editorial-comparison__rail-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2rem;
+    margin-block-start: 0.75rem;
+  }
+
+  .editorial-comparison__rail-link {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+  }
+
+  .editorial-comparison__rail-name {
+    color: var(--editorial-ink);
+    font-family: var(--font-editorial-display), var(--font-sans);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  .editorial-comparison__rail-summary {
+    color: var(--editorial-graphite);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-weight: 400;
+  }
+
+  .editorial-comparison__cta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    background-color: var(--editorial-ink);
+    color: var(--editorial-paper);
+    padding: clamp(1.75rem, 4vw, 2.5rem);
+  }
+
+  .editorial-comparison__cta-copy {
+    max-width: 40rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+
+  .editorial-comparison__cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .editorial-comparison__cta-primary,
+  .editorial-comparison__cta-secondary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-inline: 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  .editorial-comparison__cta-primary {
+    background-color: var(--editorial-circuit);
+    color: var(--editorial-paper);
+  }
+
+  .editorial-comparison__cta-secondary {
+    border: 1px solid var(--editorial-paper);
+    color: var(--editorial-paper);
+  }
+
+  .editorial-comparison__cta-primary:focus-visible,
+  .editorial-comparison__cta-secondary:focus-visible {
+    outline: 3px solid var(--editorial-paper);
+    outline-offset: 0.25rem;
+  }
+
+  .editorial-comparison:dir(rtl) .editorial-comparison__stamp,
+  .editorial-comparison:dir(rtl) .editorial-comparison__rail-label,
+  .editorial-comparison:dir(rtl) .editorial-comparison__verdict-label,
+  .editorial-comparison:dir(rtl) .editorial-comparison__table thead th {
+    letter-spacing: 0;
+  }
+
+  @media (min-width: 48rem) {
+    .editorial-comparison__verdict {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .editorial-comparison__cards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .editorial-comparison__cta {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .editorial-comparison__cards {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
   .editorial-page-shell:dir(rtl) .editorial-page-shell__eyebrow,
   .editorial-page-shell:dir(rtl) .editorial-section-nav__label,
   .editorial-page-shell:dir(rtl) .editorial-evidence-note__label {

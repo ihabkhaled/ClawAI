@@ -4114,6 +4114,7 @@ export const hi: TranslationDictionary = {
       navArchitecture: 'आर्किटेक्चर',
       navLocalFirst: 'संगठनों के लिए',
       navPricing: 'मूल्य निर्धारण',
+      navCompare: 'तुलना',
       navEnterprise: 'संगठनों के लिए',
       navUseCases: 'उपयोग के मामले',
       navFaq: 'सामान्य प्रश्न',

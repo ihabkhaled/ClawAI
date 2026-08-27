@@ -17,6 +17,7 @@ export const DISCOVERY_RETRY_AFTER_SECONDS = 30;
 export const RSS_GLOBAL_MAX_ITEMS = 2000;
 
 export const XML_CONTENT_TYPE = 'application/xml; charset=utf-8';
+export const PLAIN_TEXT_CONTENT_TYPE = 'text/plain; charset=utf-8';
 export const XSL_CONTENT_TYPE = 'text/xsl; charset=utf-8';
 
 /** Stylesheet that renders the discovery XML as a readable table in a browser. */

@@ -4061,6 +4061,7 @@ export const ar: TranslationDictionary = {
       navArchitecture: 'البنية المعمارية',
       navLocalFirst: 'للمؤسسات',
       navPricing: 'التسعير',
+      navCompare: 'المقارنات',
       navEnterprise: 'للمؤسسات',
       navUseCases: 'حالات الاستخدام',
       navFaq: 'الأسئلة الشائعة',
