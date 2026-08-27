@@ -142,3 +142,9 @@ export interface AuthState {
   user: UserProfile | null;
   isAuthenticated: boolean;
 }
+
+/** Locale keys for one email-verification outcome. */
+export type EmailVerificationCopyKeys = {
+  titleKey: string;
+  bodyKey: string;
+};

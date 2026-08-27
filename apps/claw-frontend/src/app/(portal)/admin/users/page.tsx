@@ -45,12 +45,14 @@ export default function AdminUsersPage(): ReactElement {
           onChangeRole={admin.handleChangeRole}
           onDeactivate={admin.handleDeactivate}
           onReactivate={admin.handleReactivate}
+          onActivate={admin.handleActivate}
           onAssignPlan={admin.handleAssignPlan}
           onUpdateUser={admin.handleUpdateUser}
           onTemporaryPassword={admin.handleTemporaryPassword}
           isRoleChangePending={admin.isRoleChangePending}
           isDeactivatePending={admin.isDeactivatePending}
           isReactivatePending={admin.isReactivatePending}
+          isActivatePending={admin.isActivatePending}
           isAssignPlanPending={admin.isAssignPlanPending}
           isUpdateUserPending={admin.isUpdateUserPending}
           isTemporaryPasswordPending={admin.isTemporaryPasswordPending}

@@ -68,7 +68,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 76,
+      "endpointCount": 77,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",

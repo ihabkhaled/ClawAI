@@ -74,6 +74,14 @@ export type TranslationDictionary = {
     authenticating: string;
     mustChangePasswordTitle: string;
     mustChangePasswordBody: string;
+    verifyEmailPendingTitle: string;
+    verifyEmailPendingBody: string;
+    verifyEmailVerifiedTitle: string;
+    verifyEmailVerifiedBody: string;
+    verifyEmailAlreadyActiveTitle: string;
+    verifyEmailAlreadyActiveBody: string;
+    verifyEmailFailedTitle: string;
+    verifyEmailFailedBody: string;
     backToHome: string;
     emailPlaceholder: string;
     registerTitle: string;
@@ -1122,6 +1130,9 @@ export type TranslationDictionary = {
     createUserSubmit: string;
     createUserSucceeded: string;
     createUserFailed: string;
+    activatePendingUser: string;
+    activatePendingUserSucceeded: string;
+    activatePendingUserFailed: string;
 
     editUserSave: string;
 

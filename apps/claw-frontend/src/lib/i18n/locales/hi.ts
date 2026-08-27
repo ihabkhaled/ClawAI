@@ -79,6 +79,15 @@ export const hi: TranslationDictionary = {
     mustChangePasswordTitle: 'नया पासवर्ड चुनें',
     mustChangePasswordBody:
       'आपका मौजूदा पासवर्ड एक एडमिन ने सेट किया था। आगे बढ़ने से पहले इसे नीचे बदलें।',
+    verifyEmailPendingTitle: 'आपका लिंक जाँचा जा रहा है',
+    verifyEmailPendingBody: 'एक क्षण।',
+    verifyEmailVerifiedTitle: 'ईमेल की पुष्टि हो गई',
+    verifyEmailVerifiedBody: 'आपका पता सत्यापित है। अब आप साइन इन कर सकते हैं।',
+    verifyEmailAlreadyActiveTitle: 'पहले से सक्रिय',
+    verifyEmailAlreadyActiveBody:
+      'यह लिंक पहले ही उपयोग हो चुका है, या किसी एडमिन ने आपका खाता सक्रिय कर दिया है। साइन इन करके देखें।',
+    verifyEmailFailedTitle: 'वह लिंक काम नहीं आया',
+    verifyEmailFailedBody: 'शायद उसकी अवधि समाप्त हो गई है। साइन इन करें और नया लिंक माँगें।',
     backToHome: 'होम पर वापस जाएं',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'अपना Claw खाता बनाएं',
@@ -1136,6 +1145,9 @@ export const hi: TranslationDictionary = {
     createUserSubmit: 'उपयोगकर्ता बनाएँ',
     createUserSucceeded: 'उपयोगकर्ता बनाया गया',
     createUserFailed: 'उपयोगकर्ता नहीं बनाया जा सका',
+    activatePendingUser: 'सक्रिय करें',
+    activatePendingUserSucceeded: 'खाता सक्रिय हो गया',
+    activatePendingUserFailed: 'खाता सक्रिय नहीं किया जा सका',
 
     editUserSave: 'परिवर्तन सहेजें',
 

@@ -1,6 +1,7 @@
 import type { UseFormReturn } from 'react-hook-form';
 
 import type { MessageFeedback } from '@/enums';
+import type { EmailVerificationOutcome } from '@/enums/email-verification-outcome.enum';
 import type { PasswordInputType } from '@/enums/password-input-type.enum';
 import type { ScrollDirection } from '@/enums/scroll-direction.enum';
 import type { AdminCreateUserFormValues } from '@/lib/validation/admin-create-user.schema';
@@ -105,6 +106,10 @@ export type UseCreateUserFormReturn = {
   submit: (event?: React.BaseSyntheticEvent) => Promise<void>;
 };
 
+export type UseVerifyEmailPageReturn = {
+  outcome: EmailVerificationOutcome;
+};
+
 export type UsePasswordRotationGuardReturn = {
   /** True while the account is required to replace its current password. */
   mustRotate: boolean;
@@ -202,6 +207,8 @@ export type UseAdminUserMutationsReturn = {
   handleAssignPlan: (userId: string, planId: string) => void;
   handleUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   handleTemporaryPassword: (userId: string) => void;
+  handleActivate: (userId: string) => void;
+  isActivatePending: boolean;
   handleCreateUser: (data: AdminCreateUserRequest) => void;
   isCreateUserPending: boolean;
   isRoleChangePending: boolean;

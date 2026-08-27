@@ -91,6 +91,8 @@ const baseProps = {
   onChangeRole: vi.fn(),
   onDeactivate: vi.fn(),
   onReactivate: vi.fn(),
+  onActivate: vi.fn(),
+  isActivatePending: false,
   onAssignPlan: vi.fn(),
   onUpdateUser: vi.fn(),
   onTemporaryPassword: vi.fn(),

@@ -1211,6 +1211,16 @@
       "producers": []
     },
     {
+      "consumers": [
+        "claw-audit-service"
+      ],
+      "key": "USER_ACTIVATED",
+      "pattern": "user.activated",
+      "producers": [
+        "claw-auth-service"
+      ]
+    },
+    {
       "consumers": [],
       "key": "USER_CREATED",
       "pattern": "user.created",
@@ -1248,6 +1258,14 @@
     },
     {
       "consumers": [],
+      "key": "USER_REACTIVATED",
+      "pattern": "user.reactivated",
+      "producers": [
+        "claw-auth-service"
+      ]
+    },
+    {
+      "consumers": [],
       "key": "USER_ROLE_CHANGED",
       "pattern": "user.role_changed",
       "producers": [
@@ -1260,6 +1278,14 @@
       ],
       "key": "USER_TEMPORARY_PASSWORD_ISSUED",
       "pattern": "user.temporary_password_issued",
+      "producers": [
+        "claw-auth-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "USER_UPDATED",
+      "pattern": "user.updated",
       "producers": [
         "claw-auth-service"
       ]

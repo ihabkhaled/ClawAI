@@ -191,6 +191,16 @@ export class UsersController {
     return this.usersService.reactivateUser(id, user.id);
   }
 
+  @Patch(':id/activate')
+  @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
+  async activate(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<SafeUser> {
+    return this.usersService.activatePendingUser(id, user.id);
+  }
+
   @Patch(':id/role')
   @Roles(UserRole.ADMIN)
   @RequirePermissions(Permission.ADMIN_USERS_MANAGE)

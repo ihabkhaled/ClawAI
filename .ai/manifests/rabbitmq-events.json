@@ -661,6 +661,11 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "USER_ACTIVATED",
+      "pattern": "user.activated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "USER_CREATED",
       "pattern": "user.created",
       "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -681,6 +686,11 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "USER_REACTIVATED",
+      "pattern": "user.reactivated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "USER_ROLE_CHANGED",
       "pattern": "user.role_changed",
       "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -688,6 +698,11 @@
     {
       "key": "USER_TEMPORARY_PASSWORD_ISSUED",
       "pattern": "user.temporary_password_issued",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "USER_UPDATED",
+      "pattern": "user.updated",
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {

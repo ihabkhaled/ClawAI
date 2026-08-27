@@ -34,6 +34,8 @@ const baseReturn = {
   createDialog: { isOpen: false, open: noop, close: noop },
   handleCreateUser: noop,
   isCreateUserPending: false,
+  handleActivate: noop,
+  isActivatePending: false,
   plans: [],
   search: '',
   roleFilter: '',

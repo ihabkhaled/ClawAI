@@ -17,6 +17,7 @@ import {
 import { type PaginatedResult } from '../../../common/types';
 import { UserRole, UserStatus } from '../../../common/enums';
 import { SuperAdminMutationScope } from '../../../common/enums/super-admin-mutation-scope.enum';
+import { USER_NOT_PENDING_CODE } from '../../../common/constants/user-status.constants';
 import {
   SUPER_ADMIN_IMMUTABLE_CODE,
   SUPER_ADMIN_IMMUTABLE_MESSAGE,
@@ -189,9 +190,11 @@ export class UsersService {
       status: dto.status,
     });
 
-    void this.rabbitMQService.publish(EventPattern.USER_CREATED, {
+    // Was USER_CREATED with an actorId field, which satisfies no payload type
+    // and which nothing subscribes to — an update is not a creation.
+    void this.rabbitMQService.publish(EventPattern.USER_UPDATED, {
       userId: updated.id,
-      actorId,
+      updatedBy: actorId,
       timestamp: new Date().toISOString(),
     });
 
@@ -274,9 +277,49 @@ export class UsersService {
       status: UserStatus.ACTIVE,
     });
 
-    void this.rabbitMQService.publish(EventPattern.USER_CREATED, {
+    void this.rabbitMQService.publish(EventPattern.USER_REACTIVATED, {
       userId: id,
-      actorId,
+      reactivatedBy: actorId,
+      timestamp: new Date().toISOString(),
+    });
+
+    return toSafeUser(updated);
+  }
+
+  /**
+   * Clears a PENDING account's email wall by administrator decision.
+   *
+   * Separate from `reactivateUser`, which lifts a suspension. The two look alike
+   * in the table and are different security events: this one asserts that an
+   * administrator vouched for the address, so it sets `emailVerifiedAt` and
+   * burns the outstanding verification token as well as the status. Reusing
+   * reactivate for it — which is what the generic update endpoint effectively
+   * did — left the account ACTIVE but unverified, with its emailed link still
+   * live.
+   */
+  async activatePendingUser(id: string, actorId: string): Promise<SafeUser> {
+    this.logger.log(`activatePendingUser: activating user ${id} by actor ${actorId}`);
+    const user = await this.usersRepository.findById(id);
+    if (!user) {
+      throw new EntityNotFoundException('User', id);
+    }
+    this.assertMutable(user, actorId, SuperAdminMutationScope.STATUS);
+    await this.assertSuperAdminActorForAdminMutation(actorId, user.role === UserRole.ADMIN);
+
+    if (user.status !== UserStatus.PENDING) {
+      throw new BusinessException(
+        'Only a pending account can be activated',
+        USER_NOT_PENDING_CODE,
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    const updated = await this.usersRepository.activateAndVerify(id, new Date());
+
+    await this.rabbitMQService.publish(EventPattern.USER_ACTIVATED, {
+      userId: id,
+      activatedBy: actorId,
+      previousStatus: user.status,
       timestamp: new Date().toISOString(),
     });
 

@@ -48,9 +48,9 @@ Full validation before release: `npm run release:preflight`.
 ## Fast facts (generated)
 - Services (18): agent-service :4015, audit-service :4007, auth-service :4001, chat-service :4002, connector-service :4003, file-generation-service :4013, file-service :4006, health-service :4009, image-service :4012, llamacpp-service :4017, memory-service :4005, ollama-service :4008, payment-service :4018, research-service :4016, routing-service :4004, workspace-service :4014
 - Shared packages: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
-- Events: 169 on `claw.events`
+- Events: 172 on `claw.events`
 - Permissions: 49 · Env vars: 347
-- API endpoints: 616 · Frontend pages: 132
+- API endpoints: 617 · Frontend pages: 132
 
 This file is generated. To change it, edit the renderer + policy sources and run
 `npm run knowledge:build`.

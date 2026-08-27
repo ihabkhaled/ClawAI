@@ -55,6 +55,31 @@ export class UsersRepository {
     return this.prisma.user.update({ where: { id }, data });
   }
 
+  /**
+   * Clears a PENDING account's email wall in one transaction.
+   *
+   * Three writes that must not be separable: the status, the verification
+   * timestamp, and burning the outstanding token. Setting the status alone —
+   * which is all `PATCH /users/:id` ever did — leaves `emailVerifiedAt` null and
+   * a live token in the user's inbox, so the account reads as unverified
+   * everywhere and the emailed link still works.
+   *
+   * The token is marked consumed rather than deleted so the verify-email page
+   * can tell "already used" from "never existed" and say so.
+   */
+  async activateAndVerify(id: string, now: Date): Promise<User> {
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.emailVerificationToken.updateMany({
+        where: { userId: id, consumedAt: null },
+        data: { consumedAt: now },
+      });
+      return transaction.user.update({
+        where: { id },
+        data: { status: 'ACTIVE', emailVerifiedAt: now },
+      });
+    });
+  }
+
   async deleteById(id: string): Promise<User> {
     return this.prisma.user.delete({ where: { id } });
   }

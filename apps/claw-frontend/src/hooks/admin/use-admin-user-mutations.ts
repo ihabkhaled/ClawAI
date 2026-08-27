@@ -124,6 +124,24 @@ function useTemporaryPasswordMutation(setActionPending: (value: string | null) =
   });
 }
 
+function useActivateMutation(setActionPending: (value: string | null) => void) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => auditRepository.activatePendingUser(userId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.users });
+      setActionPending(null);
+      showToast.success({ description: t('admin.activatePendingUserSucceeded') });
+    },
+    onError: (err: unknown) => {
+      setActionPending(null);
+      showToast.apiError(err, t('admin.activatePendingUserFailed'), { translate: t });
+    },
+  });
+}
+
 function useCreateUserMutation(onCreated: () => void) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -151,6 +169,7 @@ function useIdentityHandlers(
   const changeRoleMutation = useChangeRoleMutation(setActionPending);
   const deactivateMutation = useDeactivateMutation(setActionPending);
   const reactivateMutation = useReactivateMutation(setActionPending);
+  const activateMutation = useActivateMutation(setActionPending);
 
   const handleChangeRole = (userId: string, role: string): void => {
     logger.info({
@@ -190,9 +209,20 @@ function useIdentityHandlers(
     handleChangeRole,
     handleDeactivate,
     handleReactivate,
+    handleActivate: (userId: string): void => {
+      logger.info({
+        component: 'admin',
+        action: 'activate-pending-user',
+        message: 'Activating pending user',
+        details: { userId },
+      });
+      setActionPending(userId);
+      activateMutation.mutate(userId);
+    },
     isRoleChangePending: changeRoleMutation.isPending && actionPending !== null,
     isDeactivatePending: deactivateMutation.isPending && actionPending !== null,
     isReactivatePending: reactivateMutation.isPending && actionPending !== null,
+    isActivatePending: activateMutation.isPending && actionPending !== null,
   };
 }
 
@@ -259,12 +289,14 @@ export function useAdminUserMutations(
     handleChangeRole: identity.handleChangeRole,
     handleDeactivate: identity.handleDeactivate,
     handleReactivate: identity.handleReactivate,
+    handleActivate: identity.handleActivate,
     handleAssignPlan: account.handleAssignPlan,
     handleUpdateUser: account.handleUpdateUser,
     handleTemporaryPassword: account.handleTemporaryPassword,
     isRoleChangePending: identity.isRoleChangePending,
     isDeactivatePending: identity.isDeactivatePending,
     isReactivatePending: identity.isReactivatePending,
+    isActivatePending: identity.isActivatePending,
     isAssignPlanPending: account.isAssignPlanPending,
     isUpdateUserPending: account.isUpdateUserPending,
     isTemporaryPasswordPending: account.isTemporaryPasswordPending,

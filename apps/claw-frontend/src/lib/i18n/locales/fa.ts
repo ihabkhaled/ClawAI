@@ -79,6 +79,15 @@ export const fa: TranslationDictionary = {
     mustChangePasswordTitle: 'یک رمز عبور تازه انتخاب کنید',
     mustChangePasswordBody:
       'رمز عبور فعلی شما را یک مدیر تعیین کرده است. پیش از ادامه، آن را در پایین تغییر دهید.',
+    verifyEmailPendingTitle: 'در حال بررسی پیوند شما',
+    verifyEmailPendingBody: 'یک لحظه.',
+    verifyEmailVerifiedTitle: 'ایمیل تأیید شد',
+    verifyEmailVerifiedBody: 'نشانی شما تأیید شد. اکنون می‌توانید وارد شوید.',
+    verifyEmailAlreadyActiveTitle: 'از پیش فعال است',
+    verifyEmailAlreadyActiveBody:
+      'این پیوند قبلاً استفاده شده، یا یک مدیر حساب شما را فعال کرده است. ورود را امتحان کنید.',
+    verifyEmailFailedTitle: 'این پیوند کار نکرد',
+    verifyEmailFailedBody: 'شاید منقضی شده باشد. وارد شوید و پیوند تازه‌ای بخواهید.',
     backToHome: 'بازگشت به خانه',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'حساب Claw خود را ایجاد کنید',
@@ -1131,6 +1140,9 @@ export const fa: TranslationDictionary = {
     createUserSubmit: 'ایجاد کاربر',
     createUserSucceeded: 'کاربر ایجاد شد',
     createUserFailed: 'ایجاد کاربر ممکن نشد',
+    activatePendingUser: 'فعال‌سازی',
+    activatePendingUserSucceeded: 'حساب فعال شد',
+    activatePendingUserFailed: 'فعال‌سازی حساب ممکن نشد',
 
     editUserSave: 'ذخیره تغییرات',
 

@@ -11,6 +11,7 @@ export type {
   UpdateOwnProfileRequest,
   DeleteOwnAccountRequest,
   AdminCreateUserRequest,
+  EmailVerificationCopyKeys,
   AdminUserUpdateRequest,
   AdminUserUpdateMutationVariables,
   RequestPasswordResetRequest,
@@ -559,6 +560,7 @@ export type {
   UseCreateUserFormReturn,
   UseEditUserFormReturn,
   UsePasswordRotationGuardReturn,
+  UseVerifyEmailPageReturn,
 } from './hook.types';
 export type {
   CandidateResult,

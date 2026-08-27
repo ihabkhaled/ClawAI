@@ -92,6 +92,16 @@ export const auditRepository = {
     await apiClient.patch(`/users/${userId}`, data);
   },
 
+  /**
+   * Clears a PENDING account's email wall.
+   *
+   * Distinct from `reactivateUser`, which lifts a suspension: this also sets the
+   * verification timestamp and burns the outstanding verification token.
+   */
+  async activatePendingUser(userId: string): Promise<void> {
+    await apiClient.patch(`/users/${userId}/activate`);
+  },
+
   async deactivateUser(userId: string): Promise<void> {
     await apiClient.delete(`/users/${userId}`);
   },

@@ -29,12 +29,14 @@ export function UserTable({
   onChangeRole,
   onDeactivate,
   onReactivate,
+  onActivate,
   onAssignPlan,
   onUpdateUser,
   onTemporaryPassword,
   isRoleChangePending,
   isDeactivatePending,
   isReactivatePending,
+  isActivatePending,
   isAssignPlanPending,
   isUpdateUserPending,
   isTemporaryPasswordPending,
@@ -225,6 +227,20 @@ export function UserTable({
               {t('admin.editUser')}
             </span>
           </Button>
+          {user.status === UserStatus.PENDING ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={
+                !resolveAdminUserCapability(user, actor).canChangeStatus || isActivatePending
+              }
+              onClick={() => onActivate(user.id)}
+            >
+              <span className="min-w-0 text-center leading-tight whitespace-normal">
+                {t('admin.activatePendingUser')}
+              </span>
+            </Button>
+          ) : null}
           {user.status === UserStatus.SUSPENDED ? (
             <Button
               variant="outline"

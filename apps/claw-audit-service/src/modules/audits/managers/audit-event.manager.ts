@@ -42,6 +42,7 @@ import {
   type MemoryExtractedPayload,
   type MessageCompletedPayload,
   type RoutingDecisionMadePayload,
+  type UserActivatedPayload,
   type UserLoginPayload,
   type UserLogoutPayload,
   type UserTemporaryPasswordIssuedPayload,
@@ -167,6 +168,7 @@ export class AuditEventManager implements OnModuleInit {
         EventPattern.USER_TEMPORARY_PASSWORD_ISSUED,
         (d) => this.handleUserTemporaryPasswordIssued(d as UserTemporaryPasswordIssuedPayload),
       ],
+      [EventPattern.USER_ACTIVATED, (d) => this.handleUserActivated(d as UserActivatedPayload)],
       [
         EventPattern.CONNECTOR_CREATED,
         (d) => this.handleConnectorCreated(d as ConnectorCreatedPayload),
@@ -267,6 +269,9 @@ export class AuditEventManager implements OnModuleInit {
       case EventPattern.USER_TEMPORARY_PASSWORD_ISSUED:
         await this.handleUserTemporaryPasswordIssued(payload as UserTemporaryPasswordIssuedPayload);
         break;
+      case EventPattern.USER_ACTIVATED:
+        await this.handleUserActivated(payload as UserActivatedPayload);
+        break;
       case EventPattern.CONNECTOR_CREATED:
         await this.handleConnectorCreated(payload as ConnectorCreatedPayload);
         break;
@@ -330,6 +335,25 @@ export class AuditEventManager implements OnModuleInit {
       entityId: payload.userId,
       severity: 'HIGH',
       details: { targetUserId: payload.userId },
+    });
+  }
+
+  /**
+   * An administrator cleared an account's email wall by hand.
+   *
+   * HIGH severity, like the temporary-password action and unlike an ordinary
+   * status change: it asserts that somebody vouched for an address the product
+   * never confirmed, and it burns the verification token in the process. If that
+   * turns out to have been wrong, this row is where the investigation starts.
+   */
+  private async handleUserActivated(payload: UserActivatedPayload): Promise<void> {
+    await this.auditsService.createAuditLog({
+      userId: payload.activatedBy,
+      action: 'ACTIVATE_PENDING_USER',
+      entityType: 'user',
+      entityId: payload.userId,
+      severity: 'HIGH',
+      details: { targetUserId: payload.userId, previousStatus: payload.previousStatus },
     });
   }
 

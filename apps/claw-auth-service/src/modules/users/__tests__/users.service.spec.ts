@@ -39,6 +39,7 @@ const mockUser = {
 
 const mockRepository = (): Record<keyof UsersRepository, jest.Mock> => ({
   create: jest.fn(),
+  activateAndVerify: jest.fn(),
   findById: jest.fn(),
   findByEmail: jest.fn(),
   findByUsername: jest.fn(),
@@ -602,6 +603,73 @@ describe('UsersService', () => {
           newPassword: 'StrongPass1',
         }),
       ).rejects.toThrow();
+    });
+  });
+
+  describe('activatePendingUser', () => {
+    const pendingUser = { ...mockUser, status: UserStatus.PENDING, emailVerifiedAt: null };
+
+    it('sets ACTIVE and the verification timestamp in one transaction, and burns the token', async () => {
+      repository.findById.mockResolvedValue(pendingUser);
+      repository.activateAndVerify.mockResolvedValue({
+        ...pendingUser,
+        status: UserStatus.ACTIVE,
+        emailVerifiedAt: new Date(),
+      });
+
+      const result = await service.activatePendingUser('user-1', 'admin-1');
+
+      expect(repository.activateAndVerify).toHaveBeenCalledWith('user-1', expect.any(Date));
+      expect(result.status).toBe(UserStatus.ACTIVE);
+      expect(result.emailVerifiedAt).not.toBeNull();
+    });
+
+    it('publishes USER_ACTIVATED, not USER_CREATED', async () => {
+      repository.findById.mockResolvedValue(pendingUser);
+      repository.activateAndVerify.mockResolvedValue({ ...pendingUser, status: UserStatus.ACTIVE });
+
+      await service.activatePendingUser('user-1', 'admin-1');
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.USER_ACTIVATED,
+        expect.objectContaining({
+          userId: 'user-1',
+          activatedBy: 'admin-1',
+          previousStatus: UserStatus.PENDING,
+        }),
+      );
+    });
+
+    it('refuses an account that is not pending, and writes nothing', async () => {
+      // Activating is not reactivating: a SUSPENDED account has already verified
+      // its address and needs the suspension lifted instead.
+      repository.findById.mockResolvedValue({ ...mockUser, status: UserStatus.SUSPENDED });
+
+      await expect(service.activatePendingUser('user-1', 'admin-1')).rejects.toMatchObject({
+        code: 'USER_NOT_PENDING',
+      });
+      expect(repository.activateAndVerify).not.toHaveBeenCalled();
+    });
+
+    it('returns 404 for an unknown target', async () => {
+      repository.findById.mockResolvedValue(null);
+
+      await expect(service.activatePendingUser('nope', 'admin-1')).rejects.toThrow(
+        EntityNotFoundException,
+      );
+    });
+
+    it('refuses a non-super administrator activating a pending ADMIN', async () => {
+      repository.findById.mockResolvedValue({
+        ...pendingUser,
+        role: UserRole.ADMIN,
+        id: 'admin-3',
+      });
+
+      await expect(service.activatePendingUser('admin-3', 'admin-2')).rejects.toMatchObject({
+        code: 'SUPER_ADMIN_REQUIRED',
+      });
+      expect(repository.activateAndVerify).not.toHaveBeenCalled();
     });
   });
 

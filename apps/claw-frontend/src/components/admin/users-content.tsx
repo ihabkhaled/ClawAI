@@ -15,12 +15,14 @@ export function UsersContent({
   onChangeRole,
   onDeactivate,
   onReactivate,
+  onActivate,
   onAssignPlan,
   onUpdateUser,
   onTemporaryPassword,
   isRoleChangePending,
   isDeactivatePending,
   isReactivatePending,
+  isActivatePending,
   isAssignPlanPending,
   isUpdateUserPending,
   isTemporaryPasswordPending,
@@ -49,12 +51,14 @@ export function UsersContent({
       onChangeRole={onChangeRole}
       onDeactivate={onDeactivate}
       onReactivate={onReactivate}
+      onActivate={onActivate}
       onAssignPlan={onAssignPlan}
       onUpdateUser={onUpdateUser}
       onTemporaryPassword={onTemporaryPassword}
       isRoleChangePending={isRoleChangePending}
       isDeactivatePending={isDeactivatePending}
       isReactivatePending={isReactivatePending}
+      isActivatePending={isActivatePending}
       isAssignPlanPending={isAssignPlanPending}
       isUpdateUserPending={isUpdateUserPending}
       isTemporaryPasswordPending={isTemporaryPasswordPending}

@@ -79,6 +79,15 @@ export const ru: TranslationDictionary = {
     mustChangePasswordTitle: 'Выберите новый пароль',
     mustChangePasswordBody:
       'Ваш текущий пароль задал администратор. Смените его ниже, прежде чем продолжить.',
+    verifyEmailPendingTitle: 'Проверяем вашу ссылку',
+    verifyEmailPendingBody: 'Одну минуту.',
+    verifyEmailVerifiedTitle: 'Адрес подтверждён',
+    verifyEmailVerifiedBody: 'Ваш адрес подтверждён. Теперь можно войти.',
+    verifyEmailAlreadyActiveTitle: 'Уже активна',
+    verifyEmailAlreadyActiveBody:
+      'Эта ссылка уже использована, или администратор активировал вашу учётную запись. Попробуйте войти.',
+    verifyEmailFailedTitle: 'Ссылка не сработала',
+    verifyEmailFailedBody: 'Возможно, срок её действия истёк. Войдите и запросите новую.',
     backToHome: 'Вернуться на главную',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Создайте аккаунт Claw',
@@ -1145,6 +1154,9 @@ export const ru: TranslationDictionary = {
     createUserSubmit: 'Создать пользователя',
     createUserSucceeded: 'Пользователь создан',
     createUserFailed: 'Не удалось создать пользователя',
+    activatePendingUser: 'Активировать',
+    activatePendingUserSucceeded: 'Учётная запись активирована',
+    activatePendingUserFailed: 'Не удалось активировать учётную запись',
 
     editUserSave: 'Сохранить изменения',
 

@@ -9,3 +9,4 @@ export {
   SYSTEM_ROLE_USER_SLUG,
   SYSTEM_ROLE_SEED,
 } from './rbac.constants';
+export { USER_NOT_PENDING_CODE } from './user-status.constants';

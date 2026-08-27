@@ -877,6 +877,11 @@
         },
         {
           "method": "PATCH",
+          "route": "/users/:id/activate",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
+          "method": "PATCH",
           "route": "/users/:id/reactivate",
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
         },
@@ -6071,6 +6076,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "USER_ACTIVATED",
+        "pattern": "user.activated",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "USER_CREATED",
         "pattern": "user.created",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -6091,6 +6101,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "USER_REACTIVATED",
+        "pattern": "user.reactivated",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "USER_ROLE_CHANGED",
         "pattern": "user.role_changed",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -6098,6 +6113,11 @@
       {
         "key": "USER_TEMPORARY_PASSWORD_ISSUED",
         "pattern": "user.temporary_password_issued",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
+        "key": "USER_UPDATED",
+        "pattern": "user.updated",
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
@@ -7445,7 +7465,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4808
+        "value": 4819
       },
       "localeCount": 13,
       "locales": [
@@ -9921,9 +9941,9 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 616,
+    "endpointCount": 617,
     "envVarCount": 347,
-    "eventCount": 169,
+    "eventCount": 172,
     "frontendRouteCount": 132,
     "localeCount": 13,
     "nginxRouteCount": 55,

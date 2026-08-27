@@ -822,6 +822,11 @@
       },
       {
         "method": "PATCH",
+        "route": "/users/:id/activate",
+        "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+      },
+      {
+        "method": "PATCH",
         "route": "/users/:id/reactivate",
         "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
       },
@@ -3118,5 +3123,5 @@
     ]
   },
   "generated": true,
-  "total": 616
+  "total": 617
 }

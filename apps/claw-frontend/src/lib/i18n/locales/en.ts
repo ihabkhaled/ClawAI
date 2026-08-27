@@ -79,6 +79,15 @@ export const en: TranslationDictionary = {
     mustChangePasswordTitle: 'Choose a new password',
     mustChangePasswordBody:
       'Your current password was set by an administrator. Change it below before you carry on.',
+    verifyEmailPendingTitle: 'Checking your link',
+    verifyEmailPendingBody: 'One moment.',
+    verifyEmailVerifiedTitle: 'Email confirmed',
+    verifyEmailVerifiedBody: 'Your address is verified. You can sign in now.',
+    verifyEmailAlreadyActiveTitle: 'Already active',
+    verifyEmailAlreadyActiveBody:
+      'This link has already been used, or an administrator activated your account for you. Try signing in.',
+    verifyEmailFailedTitle: 'That link did not work',
+    verifyEmailFailedBody: 'It may have expired. Sign in and request a new one.',
     backToHome: 'Back to home',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Create your Claw account',
@@ -1131,6 +1140,9 @@ export const en: TranslationDictionary = {
     createUserSubmit: 'Create user',
     createUserSucceeded: 'User created',
     createUserFailed: 'Could not create the user',
+    activatePendingUser: 'Activate',
+    activatePendingUserSucceeded: 'Account activated',
+    activatePendingUserFailed: 'Could not activate the account',
 
     editUserSave: 'Save changes',
 

@@ -55,6 +55,30 @@ export interface UserDeactivatedPayload extends BaseEventPayload {
   deactivatedBy: string;
 }
 
+export interface UserUpdatedPayload extends BaseEventPayload {
+  userId: string;
+  updatedBy: string;
+}
+
+export interface UserReactivatedPayload extends BaseEventPayload {
+  userId: string;
+  reactivatedBy: string;
+}
+
+/**
+ * An administrator cleared a PENDING account's email wall by hand.
+ *
+ * Distinct from `user.reactivated`, which lifts a suspension: this one also sets
+ * `emailVerifiedAt` and burns the outstanding verification token, so it is a
+ * different security event with a different meaning in the audit trail.
+ */
+export interface UserActivatedPayload extends BaseEventPayload {
+  userId: string;
+  activatedBy: string;
+  /** The status the row held before the administrator acted. */
+  previousStatus: string;
+}
+
 export interface UserTemporaryPasswordIssuedPayload extends BaseEventPayload {
   userId: string;
   issuedBy: string;
@@ -776,6 +800,9 @@ export type EventPayload =
   | UserLogoutPayload
   | UserRoleChangedPayload
   | UserDeactivatedPayload
+  | UserUpdatedPayload
+  | UserReactivatedPayload
+  | UserActivatedPayload
   | UserTemporaryPasswordIssuedPayload
   | MessageCreatedPayload
   | MessageRoutedPayload

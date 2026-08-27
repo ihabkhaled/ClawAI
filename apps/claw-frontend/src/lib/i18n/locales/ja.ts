@@ -79,6 +79,16 @@ export const ja: TranslationDictionary = {
     mustChangePasswordTitle: '新しいパスワードを設定してください',
     mustChangePasswordBody:
       '現在のパスワードは管理者が設定したものです。続ける前に、下で変更してください。',
+    verifyEmailPendingTitle: 'リンクを確認しています',
+    verifyEmailPendingBody: '少々お待ちください。',
+    verifyEmailVerifiedTitle: 'メールアドレスを確認しました',
+    verifyEmailVerifiedBody: 'アドレスの確認が完了しました。サインインできます。',
+    verifyEmailAlreadyActiveTitle: 'すでに有効です',
+    verifyEmailAlreadyActiveBody:
+      'このリンクは使用済みか、管理者がアカウントを有効にしました。サインインをお試しください。',
+    verifyEmailFailedTitle: 'このリンクは使えませんでした',
+    verifyEmailFailedBody:
+      '有効期限が切れている可能性があります。サインインして新しいリンクをリクエストしてください。',
     backToHome: 'ホームに戻る',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'Claw アカウントを作成する',
@@ -1134,6 +1144,9 @@ export const ja: TranslationDictionary = {
     createUserSubmit: 'ユーザーを作成',
     createUserSucceeded: 'ユーザーを作成しました',
     createUserFailed: 'ユーザーを作成できませんでした',
+    activatePendingUser: '有効化',
+    activatePendingUserSucceeded: 'アカウントを有効にしました',
+    activatePendingUserFailed: 'アカウントを有効にできませんでした',
 
     editUserSave: '変更を保存',
 

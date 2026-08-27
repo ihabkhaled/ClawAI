@@ -78,6 +78,15 @@ export const th: TranslationDictionary = {
     mustChangePasswordTitle: 'ตั้งรหัสผ่านใหม่',
     mustChangePasswordBody:
       'รหัสผ่านปัจจุบันของคุณถูกตั้งโดยผู้ดูแลระบบ กรุณาเปลี่ยนด้านล่างก่อนใช้งานต่อ',
+    verifyEmailPendingTitle: 'กำลังตรวจสอบลิงก์ของคุณ',
+    verifyEmailPendingBody: 'สักครู่',
+    verifyEmailVerifiedTitle: 'ยืนยันอีเมลแล้ว',
+    verifyEmailVerifiedBody: 'ยืนยันที่อยู่ของคุณแล้ว เข้าสู่ระบบได้เลย',
+    verifyEmailAlreadyActiveTitle: 'เปิดใช้งานอยู่แล้ว',
+    verifyEmailAlreadyActiveBody:
+      'ลิงก์นี้ถูกใช้ไปแล้ว หรือผู้ดูแลระบบเปิดใช้งานบัญชีให้คุณแล้ว ลองเข้าสู่ระบบดู',
+    verifyEmailFailedTitle: 'ลิงก์นี้ใช้ไม่ได้',
+    verifyEmailFailedBody: 'อาจหมดอายุแล้ว เข้าสู่ระบบแล้วขอลิงก์ใหม่',
     backToHome: 'กลับบ้าน',
     emailPlaceholder: 'you@example.com',
     registerTitle: 'สร้างบัญชี Claw ของคุณ',
@@ -1120,6 +1129,9 @@ export const th: TranslationDictionary = {
     createUserSubmit: 'สร้างผู้ใช้',
     createUserSucceeded: 'สร้างผู้ใช้แล้ว',
     createUserFailed: 'ไม่สามารถสร้างผู้ใช้ได้',
+    activatePendingUser: 'เปิดใช้งาน',
+    activatePendingUserSucceeded: 'เปิดใช้งานบัญชีแล้ว',
+    activatePendingUserFailed: 'ไม่สามารถเปิดใช้งานบัญชีได้',
 
     editUserSave: 'บันทึกการเปลี่ยนแปลง',
 
