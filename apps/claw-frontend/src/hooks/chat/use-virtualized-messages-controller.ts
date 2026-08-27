@@ -178,6 +178,10 @@ export function useVirtualizedMessagesController(
   return {
     isLoading: params.isLoading,
     isEmpty: params.messages.length === 0,
+    // Also handed to the list itself, not only to the footer: an empty thread
+    // never renders a list, so the footer that normally carries the refusal is
+    // never mounted.
+    limitNotice: params.limitNotice,
     loadingLabel: params.loadingLabel,
     emptyLabel: params.emptyLabel,
     persistentError: params.streamError,

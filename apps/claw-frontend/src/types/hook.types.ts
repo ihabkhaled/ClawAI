@@ -900,6 +900,8 @@ export type UseVirtualizedMessagesControllerReturn = {
   // Display states the .tsx renders directly.
   isLoading: boolean;
   isEmpty: boolean;
+  /** Null unless the last send was refused by a plan limit. */
+  limitNotice: ChatLimitNotice | null;
   loadingLabel: string;
   emptyLabel: string;
   persistentError: string | null;

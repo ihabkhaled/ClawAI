@@ -1,5 +1,6 @@
 'use client';
 
+import { ChatLimitNoticeCard } from '@/components/chat/chat-limit-notice-card';
 import { JumpToLatestButton } from '@/components/chat/jump-to-latest-button';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { STICKY_BOTTOM_THRESHOLD_PX } from '@/constants';
@@ -23,6 +24,16 @@ export function VirtualizedMessages(props: VirtualizedMessagesProps): React.Reac
           role="alert"
         >
           {props.persistentError}
+        </div>
+      );
+    }
+    // A refusal on the first message is the whole story of this thread so far.
+    // "No messages yet" beside a composer that just did nothing is not an
+    // explanation, and the toast that carried the reason has already faded.
+    if (props.limitNotice !== null) {
+      return (
+        <div className="flex items-start justify-center px-4 py-12">
+          <ChatLimitNoticeCard notice={props.limitNotice} />
         </div>
       );
     }

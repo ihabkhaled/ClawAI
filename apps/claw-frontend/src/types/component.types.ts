@@ -1003,6 +1003,14 @@ export type VirtualizedMessagesProps = {
   // Display states the .tsx renders directly.
   isLoading: boolean;
   isEmpty: boolean;
+  /**
+   * Null unless the last send was refused by a plan limit.
+   *
+   * The footer carries this too, but a thread with no messages never renders a
+   * list — so on the very first message, the most likely moment to hit a wall,
+   * the refusal had nowhere to appear and survived only as a toast.
+   */
+  limitNotice: ChatLimitNotice | null;
   loadingLabel: string;
   emptyLabel: string;
   persistentError: string | null;
