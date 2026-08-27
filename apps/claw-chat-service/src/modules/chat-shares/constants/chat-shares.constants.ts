@@ -25,6 +25,36 @@ export const MIN_INDEXABLE_CONTENT_CHARS = 500;
 export const MAX_SNAPSHOT_MESSAGES = 500;
 export const MAX_SNAPSHOT_MESSAGE_CHARS = 100_000;
 
+/**
+ * Images copied per published message.
+ *
+ * Same reasoning as MAX_SNAPSHOT_MESSAGE_CHARS: one pathological message must
+ * not be able to make a public page unloadable, and each asset here is a real
+ * byte-for-byte copy in file-service, so the cap is a storage bound too.
+ */
+export const MAX_SNAPSHOT_ASSETS_PER_MESSAGE = 8;
+
+/**
+ * The largest image a share will copy.
+ *
+ * Above this the asset is skipped rather than the publish failing: losing one
+ * oversized picture from a public page is a better outcome than refusing to
+ * publish the conversation.
+ */
+export const MAX_SNAPSHOT_ASSET_BYTES = 12 * 1024 * 1024;
+
+/** Only images are published. A PDF on a public page is a different question. */
+export const PUBLISHABLE_ASSET_MIME_PREFIX = 'image/';
+
+/**
+ * Per-image budget for the copy call.
+ *
+ * Generous, because file-service is reading and re-writing a real file; but
+ * bounded, because a publish that hangs on one picture is worse than a publish
+ * that loses it.
+ */
+export const SHARE_ASSET_COPY_TIMEOUT_MS = 20_000;
+
 // Description shown in search results and social previews. Google truncates
 // around 160; going much beyond that just pads the payload.
 export const MAX_DESCRIPTION_LENGTH = 200;

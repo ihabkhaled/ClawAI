@@ -2,6 +2,7 @@ import { AppConfig } from '../../../../app/config/app.config';
 import { EntityNotFoundException } from '../../../../common/errors';
 import { ChatShareManager } from '../chat-share.manager';
 import type { ChatShareEventsService } from '../../services/chat-share-events.service';
+import { type ShareAssetPublisherService } from '../../services/share-asset-publisher.service';
 import { ChatShareMapperService } from '../../services/chat-share-mapper.service';
 import type { ChatMessagesRepository } from '../../../chat-messages/repositories/chat-messages.repository';
 import type { ChatSharesRepository } from '../../repositories/chat-shares.repository';
@@ -81,6 +82,7 @@ type SharesRepoMock = {
   listIndexable: jest.Mock;
   revokeForThread: jest.Mock;
   findPublicByShareId: jest.Mock;
+  listStoredAssetFileIds: jest.Mock;
 };
 
 type EventsMock = {
@@ -97,6 +99,7 @@ describe('ChatShareManager', () => {
   let threads: { findById: jest.Mock };
   let messages: { findAllByThreadIdAscending: jest.Mock; countByThreadId: jest.Mock };
   let events: EventsMock;
+  let shareAssets: { attachCopies: jest.Mock; releaseCopies: jest.Mock };
   let manager: ChatShareManager;
 
   beforeEach(() => {
@@ -121,6 +124,7 @@ describe('ChatShareManager', () => {
       listIndexable: jest.fn(),
       revokeForThread: jest.fn(),
       findPublicByShareId: jest.fn(),
+      listStoredAssetFileIds: jest.fn().mockResolvedValue([]),
     };
     threads = {
       findById: jest.fn().mockResolvedValue({ id: 'thread-1', userId: 'user-1', title: 'Setup' }),
@@ -128,6 +132,12 @@ describe('ChatShareManager', () => {
     messages = {
       findAllByThreadIdAscending: jest.fn().mockResolvedValue(fourMessages()),
       countByThreadId: jest.fn().mockResolvedValue(4),
+    };
+    // No thread in these fixtures carries images, so the publisher passes the
+    // messages through untouched. Asset copying has its own spec.
+    shareAssets = {
+      attachCopies: jest.fn(async (messages: unknown) => messages),
+      releaseCopies: jest.fn(async () => {}),
     };
     jest
       .spyOn(AppConfig, 'get')
@@ -141,6 +151,7 @@ describe('ChatShareManager', () => {
       messages as unknown as ChatMessagesRepository,
       new ChatShareMapperService(),
       events as unknown as ChatShareEventsService,
+      shareAssets as unknown as ShareAssetPublisherService,
     );
   });
 
@@ -497,6 +508,57 @@ describe('ChatShareManager', () => {
       await manager.regenerateUrl('thread-1', 'user-1');
 
       expect(events.urlRegenerated).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('images and inventory eligibility', () => {
+    // evaluateSnapshotSafety reads message text and nothing else, so a snapshot
+    // carrying images has not been fully scanned. The share still publishes —
+    // the gate protects ClawAI's ad and index surfaces, not the user's ability
+    // to share their own picture. See ADR-075.
+    const messageWithImage = {
+      id: 'm1',
+      threadId: 'thread-1',
+      role: 'USER',
+      content: 'Here is the screenshot you asked for, with plenty of surrounding prose.',
+      provider: null,
+      model: null,
+      createdAt: new Date('2026-08-01T10:00:00.000Z'),
+      metadata: { fileIds: ['file-1'] },
+    };
+
+    it('withholds ads and indexing while a snapshot carries images', async () => {
+      messages.findAllByThreadIdAscending.mockResolvedValue([messageWithImage]);
+      shares.findByThreadId.mockResolvedValue(null);
+      shares.create.mockImplementation(async (data: Record<string, unknown>) => ({
+        ...data,
+        id: 'share-1',
+        snapshotVersion: 1,
+      }));
+
+      await manager.publish({ threadId: 'thread-1', userId: 'user-1', allowIndexing: true });
+
+      const created = shares.create.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(created['adsEligible']).toBe(false);
+      expect(created['indexEligible']).toBe(false);
+    });
+
+    it('still publishes the share, and copies the image into it', async () => {
+      messages.findAllByThreadIdAscending.mockResolvedValue([messageWithImage]);
+      shares.findByThreadId.mockResolvedValue(null);
+      shares.create.mockImplementation(async (data: Record<string, unknown>) => ({
+        ...data,
+        id: 'share-1',
+        snapshotVersion: 1,
+      }));
+
+      await manager.publish({ threadId: 'thread-1', userId: 'user-1', allowIndexing: true });
+
+      expect(shares.replaceSnapshot).toHaveBeenCalled();
+      const publishable = shareAssets.attachCopies.mock.calls[0]?.[0] as Array<{
+        assetSources: unknown[];
+      }>;
+      expect(publishable[0]?.assetSources).toHaveLength(1);
     });
   });
 });

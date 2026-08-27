@@ -2,6 +2,7 @@ import { ChatShareMapperService } from '../chat-share-mapper.service';
 import {
   type ChatShare,
   type ChatShareMessage,
+  type ChatShareMessageAsset,
   ChatShareSafetyStatus,
   ChatShareStatus,
   ChatShareVisibility,
@@ -43,7 +44,25 @@ const MESSAGE = {
   modelLabel: 'claude-sonnet-4',
   originalCreatedAt: new Date('2026-07-01T10:00:00.000Z'),
   createdAt: new Date('2026-07-20T09:00:00.000Z'),
-} as unknown as ChatShareMessage;
+  assets: [
+    {
+      id: 'ASSET-ROW-ID',
+      chatShareMessageId: 'msg-row-1',
+      publicAssetId: 'e6b0f1c2-0000-4000-8000-000000000001',
+      // The private handle onto file-service storage. Asserted below to never
+      // appear in the public payload.
+      storedFileId: 'PRIVATE-STORED-FILE-ID',
+      mimeType: 'image/png',
+      byteSize: 2048,
+      altText: null,
+      sequence: 0,
+      scanStatus: 'PENDING',
+      scanReason: null,
+      scannedAt: null,
+      createdAt: new Date('2026-07-20T09:00:00.000Z'),
+    },
+  ],
+} as unknown as ChatShareMessage & { assets: ChatShareMessageAsset[] };
 
 describe('ChatShareMapperService', () => {
   const mapper = new ChatShareMapperService();
@@ -80,7 +99,11 @@ describe('ChatShareMapperService', () => {
     });
 
     it('exposes exactly the approved message fields', () => {
+      // An explicit list, not a subset check: this is the allow-list itself, so
+      // a field appearing here without somebody editing this line is exactly
+      // what it exists to catch. `assets` was added deliberately in ADR-075.
       expect(Object.keys(response.messages[0] ?? {}).sort()).toEqual([
+        'assets',
         'content',
         'createdAt',
         'id',
@@ -128,6 +151,30 @@ describe('ChatShareMapperService', () => {
     it('reports unpublished messages so the UI can offer a refresh', () => {
       const view = mapper.toOwnerView(SHARE, 'https://claw.local/share/chat/AbCd', true);
       expect(view.hasUnpublishedMessages).toBe(true);
+    });
+  });
+
+  describe('published assets', () => {
+    const response = mapper.toPublicResponse({ ...SHARE, messages: [MESSAGE] });
+    const serialized = JSON.stringify(response);
+
+    it('publishes the public handle so the image can render', () => {
+      expect(response.messages[0]?.assets[0]?.publicAssetId).toBe(
+        'e6b0f1c2-0000-4000-8000-000000000001',
+      );
+      expect(response.messages[0]?.assets[0]?.mimeType).toBe('image/png');
+    });
+
+    it('never exposes the private stored file id', () => {
+      // The whole point of the copy indirection: the public handle resolves
+      // only through the share that owns it, and the storage id never leaves.
+      expect(serialized).not.toContain('PRIVATE-STORED-FILE-ID');
+      expect(serialized).not.toContain('storedFileId');
+    });
+
+    it('never exposes the scan verdict, which gates our inventory not their reading', () => {
+      expect(serialized).not.toContain('scanStatus');
+      expect(serialized).not.toContain('scanReason');
     });
   });
 });

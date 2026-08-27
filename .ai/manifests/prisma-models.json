@@ -51,6 +51,7 @@
       "ChatMessageContextReceipt",
       "ChatShare",
       "ChatShareMessage",
+      "ChatShareMessageAsset",
       "ChatThread",
       "FileDeliveryRecord",
       "MessageAttachment"

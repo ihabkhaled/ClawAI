@@ -14,5 +14,7 @@ import { type PublishableSnapshotMessage, type SnapshotMessage } from '../types/
  * array, so there is no index to get wrong.
  */
 export function withPublicIds(messages: SnapshotMessage[]): PublishableSnapshotMessage[] {
-  return messages.map((message) => ({ ...message, publicMessageId: randomUUID() }));
+  // `assets` starts empty and is filled by ShareAssetPublisherService, which
+  // needs the public message ids to already exist.
+  return messages.map((message) => ({ ...message, publicMessageId: randomUUID(), assets: [] }));
 }

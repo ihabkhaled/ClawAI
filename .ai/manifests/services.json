@@ -109,7 +109,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-chat-service",
-      "endpointCount": 42,
+      "endpointCount": 43,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -126,6 +126,7 @@
         "ChatMessageContextReceipt",
         "ChatShare",
         "ChatShareMessage",
+        "ChatShareMessageAsset",
         "ChatThread",
         "FileDeliveryRecord",
         "MessageAttachment"

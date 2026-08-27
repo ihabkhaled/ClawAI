@@ -39,6 +39,19 @@ export const publicShareParamSchema = z.object({
 
 export type PublicShareParamDto = z.infer<typeof publicShareParamSchema>;
 
+/**
+ * Both ids, always together.
+ *
+ * The pairing is the authorisation: an asset is only resolvable through the
+ * share that owns it, so an asset id lifted from one page cannot be read
+ * through another.
+ */
+export const publicShareAssetParamSchema = publicShareParamSchema.extend({
+  publicAssetId: z.string().uuid(),
+});
+
+export type PublicShareAssetParamDto = z.infer<typeof publicShareAssetParamSchema>;
+
 export const sitemapFeedQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(5000).optional(),
   cursor: z.string().min(1).max(256).optional(),

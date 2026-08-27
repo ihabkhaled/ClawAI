@@ -10,6 +10,7 @@ import { DEFAULT_SHARE_TITLE, MAX_SNAPSHOT_MESSAGES } from '../constants/chat-sh
 import { ChatShareErrorCode } from '../enums/chat-share-error-code.enum';
 import { ChatSharesRepository } from '../repositories/chat-shares.repository';
 import { ChatShareEventsService } from '../services/chat-share-events.service';
+import { ShareAssetPublisherService } from '../services/share-asset-publisher.service';
 import { ChatShareMapperService } from '../services/chat-share-mapper.service';
 import { buildPublicShareUrl } from '../utilities/public-share-url.utility';
 import { withPublicIds } from '../utilities/publishable-message.utility';
@@ -51,6 +52,7 @@ export class ChatShareManager {
     private readonly messages: ChatMessagesRepository,
     private readonly mapper: ChatShareMapperService,
     private readonly events: ChatShareEventsService,
+    private readonly shareAssets: ShareAssetPublisherService,
   ) {}
 
   /**
@@ -142,10 +144,17 @@ export class ChatShareManager {
             revokedAt: null,
           });
 
-    await this.shares.replaceSnapshot(share.id, withPublicIds(snapshot.messages), {
+    // Copy the images BEFORE the snapshot is written, and release whatever the
+    // previous snapshot owned after — a publish over an existing share replaces
+    // its transcript, and the old copies have no retention expiry to reclaim
+    // them.
+    const previousAssets = await this.shares.listStoredAssetFileIds(share.id);
+    const publishable = await this.shareAssets.attachCopies(withPublicIds(snapshot.messages));
+    await this.shares.replaceSnapshot(share.id, publishable, {
       snapshotVersion: 1,
       lastSnapshotAt: now,
     });
+    await this.shareAssets.releaseCopies(previousAssets);
 
     this.logger.log(
       `publish: thread=${input.threadId} published visibility=${visibility} ` +
@@ -178,7 +187,9 @@ export class ChatShareManager {
     const snapshot = await this.buildSnapshot(threadId);
     const now = new Date();
 
-    const updated = await this.shares.replaceSnapshot(share.id, withPublicIds(snapshot.messages), {
+    const previousAssets = await this.shares.listStoredAssetFileIds(share.id);
+    const publishable = await this.shareAssets.attachCopies(withPublicIds(snapshot.messages));
+    const updated = await this.shares.replaceSnapshot(share.id, publishable, {
       snapshotVersion: share.snapshotVersion + 1,
       title: buildShareTitle(thread.title, DEFAULT_SHARE_TITLE),
       description: snapshot.description,
@@ -194,6 +205,7 @@ export class ChatShareManager {
       ),
       lastSnapshotAt: now,
     });
+    await this.shareAssets.releaseCopies(previousAssets);
 
     this.logger.log(
       `refresh: thread=${threadId} version=${String(updated.snapshotVersion)} ` +
@@ -266,6 +278,11 @@ export class ChatShareManager {
     await this.requireOwnedThread(threadId, userId);
     const share = await this.requireActiveShare(threadId);
 
+    // Read the copies before the status flips, then release them after. The
+    // status change is what stops new reads; releasing the bytes is what makes
+    // "revoked" mean the images are gone rather than merely unreachable.
+    const storedAssets = await this.shares.listStoredAssetFileIds(share.id);
+
     await this.shares.update(share.id, {
       status: ChatShareStatus.REVOKED,
       visibility: ChatShareVisibility.PRIVATE,
@@ -273,6 +290,7 @@ export class ChatShareManager {
       indexEligible: false,
       revokedAt: new Date(),
     });
+    await this.shareAssets.releaseCopies(storedAssets);
     this.logger.log(`revoke: thread=${threadId} is private again`);
     this.events.revoked({ shareId: share.id, threadId, userId }, share.visibility);
   }
@@ -307,12 +325,28 @@ export class ChatShareManager {
     const raw = await this.messages.findAllByThreadIdAscending(threadId, MAX_SNAPSHOT_MESSAGES);
     const messages = buildSnapshotMessages(raw);
     const safety = evaluateSnapshotSafety(messages);
+
+    // evaluateSnapshotSafety reads message TEXT and nothing else. A snapshot
+    // carrying images has therefore not been fully scanned, so it does not
+    // become an ad surface and is not offered for indexing — the share is still
+    // published and still readable by anyone with the link. The gate protects
+    // ClawAI's own inventory, not the user's ability to share their image.
+    // See docs/13-adr/adr-075-public-share-assets.md.
+    const carriesUnscannedAssets = messages.some((message) => message.assetSources.length > 0);
+    if (carriesUnscannedAssets) {
+      this.logger.log(
+        `buildSnapshot: thread=${threadId} carries images; ads and indexing withheld pending an image scan`,
+      );
+    }
+
     return {
       messages,
       description: buildShareDescription(messages),
       safety,
-      adsEligible: resolveAdsEligibility(safety.status, safety.meetsContentThreshold),
-      indexEligible: safety.indexEligible,
+      adsEligible:
+        !carriesUnscannedAssets &&
+        resolveAdsEligibility(safety.status, safety.meetsContentThreshold),
+      indexEligible: !carriesUnscannedAssets && safety.indexEligible,
     };
   }
 

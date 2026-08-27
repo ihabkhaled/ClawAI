@@ -234,9 +234,65 @@ model ChatShareMessage {
   originalCreatedAt DateTime @map("original_created_at")
   createdAt         DateTime @default(now()) @map("created_at")
 
-  share ChatShare @relation(fields: [chatShareId], references: [id], onDelete: Cascade)
+  share  ChatShare               @relation(fields: [chatShareId], references: [id], onDelete: Cascade)
+  assets ChatShareMessageAsset[]
 
   @@unique([chatShareId, sequence])
   @@index([chatShareId])
   @@map("chat_share_messages")
+}
+
+/// An image published with a shared message.
+///
+/// The share owns a COPY of the file, not a reference to the user's. A
+/// reference would rot: FileRetentionSweeperManager reaps files whose
+/// retentionExpiresAt has passed, and the user may delete the original at any
+/// time — either of which turns an already-indexed public page into a 404.
+/// The copy is stored with no retention expiry and is deleted when the share is.
+///
+/// `publicAssetId` is a fresh random id, like publicMessageId: the private file
+/// id is a handle onto private storage and never appears in public output.
+/// See docs/13-adr/adr-075-public-share-assets.md.
+model ChatShareMessageAsset {
+  id                   String @id @default(uuid())
+  chatShareMessageId   String @map("chat_share_message_id")
+
+  /// The only asset identifier that appears in a public URL.
+  publicAssetId String @unique @map("public_asset_id")
+
+  /// The share-owned copy in file-service. Never returned to a public caller.
+  storedFileId String @map("stored_file_id")
+
+  mimeType String  @map("mime_type")
+  byteSize Int     @map("byte_size")
+  /// Alt text, when the source turn carried one. Not invented.
+  altText  String? @map("alt_text")
+
+  sequence Int
+
+  /// Until an image passes the publish-time scan the share is neither
+  /// ad-eligible nor index-eligible. It is still publishable and still readable
+  /// by anyone holding the link — the scan gates ClawAI's inventory, not the
+  /// user's ability to share their own image.
+  scanStatus ChatShareAssetScanStatus @default(PENDING) @map("scan_status")
+  scanReason String?                  @map("scan_reason")
+  scannedAt  DateTime?                @map("scanned_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  message ChatShareMessage @relation(fields: [chatShareMessageId], references: [id], onDelete: Cascade)
+
+  @@unique([chatShareMessageId, sequence])
+  @@index([chatShareMessageId])
+  @@index([scanStatus])
+  @@map("chat_share_message_assets")
+}
+
+enum ChatShareAssetScanStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  /// The scan could not run. Treated as not-approved: the share stays readable
+  /// and stays off the ad and index surfaces.
+  UNAVAILABLE
 }

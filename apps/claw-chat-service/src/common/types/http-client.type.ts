@@ -32,3 +32,16 @@ export type HttpStreamResult = {
   // Decoded UTF-8 text chunks as they arrive — iterate only when ok === true.
   chunks: AsyncGenerator<string>;
 };
+
+/**
+ * A binary passthrough: fetch bytes and write them to a sink, without decoding.
+ *
+ * `sink` is a minimal writable rather than an Express `Response`, so the
+ * utility stays framework-agnostic and testable with a plain object.
+ */
+export type HttpBinaryStreamOptions = {
+  url: string;
+  headers?: Record<string, string>;
+  timeoutMs?: number;
+  sink: { write: (chunk: Buffer) => unknown; end: () => unknown };
+};

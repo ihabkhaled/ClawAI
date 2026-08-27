@@ -14,7 +14,13 @@ import type { Locale } from '@claw/shared-types';
  * Absent by construction: userId, the private threadId, original message ids,
  * system prompts, tool output, context receipts, memory records, routing
  * metadata, token counts, cost estimates, latency, provider response bodies,
- * moderation notes, and attachment ids or storage URLs.
+ * moderation notes, and storage URLs or private file ids.
+ *
+ * Changed 2026-08-27: published images are now present, as `publicAssetId`
+ * handles onto share-owned copies. The private file id is still absent, and so
+ * is any storage URL — the handle only resolves through the share that owns it,
+ * and stops resolving when that share is revoked.
+ * See docs/13-adr/adr-075-public-share-assets.md.
  */
 export type PublicChatShareResponse = {
   publicShareId: string;
@@ -34,6 +40,14 @@ export type PublicChatShareResponse = {
   messages: PublicChatShareMessage[];
 };
 
+/** One published image, as a public caller sees it. */
+export type PublicChatShareAsset = {
+  /** The only asset identifier that appears in a URL. */
+  publicAssetId: string;
+  mimeType: string;
+  altText: string | null;
+};
+
 export type PublicChatShareMessage = {
   // The PUBLIC id. Never the private message id.
   id: string;
@@ -44,6 +58,8 @@ export type PublicChatShareMessage = {
   providerLabel: string | null;
   modelLabel: string | null;
   createdAt: string;
+  /** Published images. Empty for a message that carried none. */
+  assets: PublicChatShareAsset[];
 };
 
 /** What the owner sees in the share dialog. */
@@ -68,6 +84,36 @@ export type OwnerChatShareView = {
 };
 
 /** One message as it will be copied into a snapshot. */
+/**
+ * One image carried by a message, as identified at publish time.
+ *
+ * `sourceFileId` is the user's private file. The publish path copies it and
+ * replaces this with a share-owned id before anything is written — the private
+ * id never reaches a share table.
+ */
+export type SnapshotAssetSource = {
+  sequence: number;
+  sourceFileId: string;
+  altText: string | null;
+};
+
+/** What file-service returns when it has made a share-owned copy. */
+export type ShareAssetCopy = {
+  fileId: string;
+  mimeType: string;
+  byteSize: number;
+};
+
+/** A copied, share-owned asset, ready to be written to the snapshot. */
+export type SnapshotAsset = {
+  sequence: number;
+  publicAssetId: string;
+  storedFileId: string;
+  mimeType: string;
+  byteSize: number;
+  altText: string | null;
+};
+
 export type SnapshotMessage = {
   sequence: number;
   role: MessageRole;
@@ -75,6 +121,15 @@ export type SnapshotMessage = {
   providerLabel: string | null;
   modelLabel: string | null;
   originalCreatedAt: Date;
+  /**
+   * The images this message carried, before copying.
+   *
+   * Read from `ChatMessage.metadata.fileIds`, which is where both uploaded
+   * attachments and generated images record themselves. The snapshot used to
+   * drop metadata entirely, which is why a shared conversation lost its
+   * pictures.
+   */
+  assetSources: SnapshotAssetSource[];
 };
 
 /**
@@ -86,6 +141,12 @@ export type SnapshotMessage = {
  */
 export type PublishableSnapshotMessage = SnapshotMessage & {
   publicMessageId: string;
+  /**
+   * The share-owned copies, once made. Empty until
+   * `ShareAssetPublisherService.attachCopies` has run, and empty for messages
+   * whose images could not be copied.
+   */
+  assets: SnapshotAsset[];
 };
 
 /** The outcome of scanning a snapshot before it may be indexed. */

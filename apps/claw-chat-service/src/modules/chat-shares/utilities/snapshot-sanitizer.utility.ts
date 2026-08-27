@@ -1,11 +1,12 @@
 import {
   MAX_DESCRIPTION_LENGTH,
+  MAX_SNAPSHOT_ASSETS_PER_MESSAGE,
   MAX_SNAPSHOT_MESSAGE_CHARS,
   MAX_SNAPSHOT_MESSAGES,
   MAX_TITLE_LENGTH,
   PUBLISHABLE_ROLES,
 } from '../constants/chat-shares.constants';
-import { type SnapshotMessage } from '../types/chat-shares.types';
+import { type SnapshotAssetSource, type SnapshotMessage } from '../types/chat-shares.types';
 import { type ChatMessage, MessageRole } from '../../../generated/prisma';
 
 /**
@@ -30,6 +31,7 @@ export function buildSnapshotMessages(messages: ChatMessage[]): SnapshotMessage[
       providerLabel: toDisplayLabel(message.provider),
       modelLabel: toDisplayLabel(message.model),
       originalCreatedAt: message.createdAt,
+      assetSources: extractAssetSources(message),
     }));
 }
 
@@ -54,6 +56,37 @@ function isPublishable(message: ChatMessage): boolean {
   // Messages the execution path marked as errors were never delivered as real
   // answers; they are diagnostics, and diagnostics are internal.
   return !isErrorMessage(message);
+}
+
+/**
+ * The images a message carried.
+ *
+ * `metadata.fileIds` is where both uploaded attachments and generated images
+ * record themselves. The snapshot dropped metadata wholesale, which is the
+ * reason a shared conversation lost its pictures.
+ *
+ * Capped, because the cap is what stops one pathological message from making a
+ * public page unloadable — the same reasoning as truncateContent.
+ */
+function extractAssetSources(message: ChatMessage): SnapshotAssetSource[] {
+  const metadata = message.metadata;
+  if (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata)) {
+    return [];
+  }
+  const fileIds = (metadata as Record<string, unknown>)['fileIds'];
+  if (!Array.isArray(fileIds)) {
+    return [];
+  }
+  return fileIds
+    .filter((fileId): fileId is string => typeof fileId === 'string' && fileId.length > 0)
+    .slice(0, MAX_SNAPSHOT_ASSETS_PER_MESSAGE)
+    .map((sourceFileId, sequence) => ({
+      sequence,
+      sourceFileId,
+      // Alt text is only ever copied, never invented: a made-up description of
+      // somebody's screenshot is worse than none.
+      altText: null,
+    }));
 }
 
 function isErrorMessage(message: ChatMessage): boolean {

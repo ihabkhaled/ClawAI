@@ -4,6 +4,7 @@ import { PrismaService } from '../../../infrastructure/database/prisma/prisma.se
 import {
   type ChatShare,
   type ChatShareMessage,
+  ChatShareMessageAsset,
   ChatShareSafetyStatus,
   ChatShareStatus,
   ChatShareVisibility,
@@ -33,7 +34,9 @@ export class ChatSharesRepository {
    */
   async findPublicByShareId(
     publicShareId: string,
-  ): Promise<(ChatShare & { messages: ChatShareMessage[] }) | null> {
+  ): Promise<
+    (ChatShare & { messages: (ChatShareMessage & { assets: ChatShareMessageAsset[] })[] }) | null
+  > {
     this.logger.debug('findPublicByShareId');
     return this.prisma.chatShare.findFirst({
       where: {
@@ -43,7 +46,12 @@ export class ChatSharesRepository {
           in: [ChatShareVisibility.PUBLIC_UNLISTED, ChatShareVisibility.PUBLIC_INDEXED],
         },
       },
-      include: { messages: { orderBy: { sequence: 'asc' } } },
+      include: {
+        messages: {
+          orderBy: { sequence: 'asc' },
+          include: { assets: { orderBy: { sequence: 'asc' } } },
+        },
+      },
     });
   }
 
@@ -61,10 +69,15 @@ export class ChatSharesRepository {
   ): Promise<ChatShare> {
     this.logger.debug(`replaceSnapshot: share=${shareId} messages=${String(messages.length)}`);
     return this.prisma.$transaction(async (tx) => {
+      // Deleting the messages cascades to their assets, which is what makes a
+      // refresh replace the whole snapshot rather than accumulate one.
       await tx.chatShareMessage.deleteMany({ where: { chatShareId: shareId } });
-      if (messages.length > 0) {
-        await tx.chatShareMessage.createMany({
-          data: messages.map((message) => ({
+      for (const message of messages) {
+        // Created one at a time rather than with createMany, because each
+        // message's assets need its generated id. A snapshot is capped at
+        // MAX_SNAPSHOT_MESSAGES and this runs once per publish.
+        const created = await tx.chatShareMessage.create({
+          data: {
             chatShareId: shareId,
             publicMessageId: message.publicMessageId,
             sequence: message.sequence,
@@ -73,10 +86,57 @@ export class ChatSharesRepository {
             providerLabel: message.providerLabel,
             modelLabel: message.modelLabel,
             originalCreatedAt: message.originalCreatedAt,
-          })),
+          },
         });
+        if (message.assets.length > 0) {
+          await tx.chatShareMessageAsset.createMany({
+            data: message.assets.map((asset) => ({
+              chatShareMessageId: created.id,
+              publicAssetId: asset.publicAssetId,
+              storedFileId: asset.storedFileId,
+              mimeType: asset.mimeType,
+              byteSize: asset.byteSize,
+              altText: asset.altText,
+              sequence: asset.sequence,
+            })),
+          });
+        }
       }
       return tx.chatShare.update({ where: { id: shareId }, data: shareData });
+    });
+  }
+
+  /**
+   * The file-service ids of every copy this share owns.
+   *
+   * Read before a snapshot is replaced or a share is revoked: the copies carry
+   * no retention expiry, so nothing else will ever reclaim them.
+   */
+  async listStoredAssetFileIds(shareId: string): Promise<string[]> {
+    const rows = await this.prisma.chatShareMessageAsset.findMany({
+      where: { message: { chatShareId: shareId } },
+      select: { storedFileId: true },
+    });
+    return rows.map((row) => row.storedFileId);
+  }
+
+  /**
+   * Resolves one public asset, and only if its share is currently readable.
+   *
+   * The share status is part of the query rather than a check afterwards: that
+   * is what makes a leaked asset URL die with the share, and what stops an asset
+   * id from one share being read through another.
+   */
+  async findPublicAsset(
+    publicShareId: string,
+    publicAssetId: string,
+  ): Promise<{ storedFileId: string; mimeType: string } | null> {
+    return this.prisma.chatShareMessageAsset.findFirst({
+      where: {
+        publicAssetId,
+        message: { share: { publicShareId, status: ChatShareStatus.ACTIVE } },
+      },
+      select: { storedFileId: true, mimeType: true },
     });
   }
 

@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import {
+  type HttpBinaryStreamOptions,
   type HttpRequestOptions,
   type HttpResponse,
   type HttpStreamOptions,
@@ -54,6 +55,52 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
   } finally {
     clearTimeout(timeout);
     signal?.removeEventListener('abort', onExternalAbort);
+  }
+}
+
+/**
+ * Pipes a binary response body straight into a writable sink.
+ *
+ * Separate from `httpStream`, which decodes UTF-8 text — running image bytes
+ * through a text decoder replaces every invalid sequence and corrupts the file.
+ * This one never looks at the bytes.
+ *
+ * Returns false without writing anything when the upstream call fails, so the
+ * caller can still send its own status: once a byte has been written, the
+ * status line is already gone.
+ */
+export async function httpStreamBinary(options: HttpBinaryStreamOptions): Promise<boolean> {
+  const { url, headers, timeoutMs = 30_000, sink } = options;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { ...headers },
+      signal: controller.signal,
+    });
+    if (!response.ok || response.body === null) {
+      logger.warn(`httpStreamBinary: GET ${url} failed — status ${String(response.status)}`);
+      return false;
+    }
+
+    const reader = response.body.getReader();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value !== undefined) {
+        sink.write(Buffer.from(value));
+      }
+    }
+    sink.end();
+    return true;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown HTTP error';
+    logger.error(`httpStreamBinary: GET ${url} failed — ${message}`);
+    return false;
+  } finally {
+    clearTimeout(timer);
   }
 }
 

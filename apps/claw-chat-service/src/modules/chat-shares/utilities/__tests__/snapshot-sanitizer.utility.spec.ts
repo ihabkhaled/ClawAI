@@ -188,6 +188,7 @@ describe('buildShareDescription', () => {
         providerLabel: null,
         modelLabel: null,
         originalCreatedAt: new Date(),
+        assetSources: [],
       },
     ]);
 
@@ -205,6 +206,7 @@ describe('buildShareDescription', () => {
         providerLabel: null,
         modelLabel: null,
         originalCreatedAt: new Date(),
+        assetSources: [],
       },
     ]);
 
@@ -222,6 +224,7 @@ describe('buildShareDescription', () => {
         providerLabel: null,
         modelLabel: null,
         originalCreatedAt: new Date(),
+        assetSources: [],
       },
     ]);
 
@@ -241,6 +244,7 @@ describe('buildShareDescription', () => {
         providerLabel: null,
         modelLabel: null,
         originalCreatedAt: new Date(),
+        assetSources: [],
       },
     ]);
 

@@ -11,6 +11,7 @@ function makeSnapshot(contents: string[]): SnapshotMessage[] {
     providerLabel: null,
     modelLabel: null,
     originalCreatedAt: new Date('2026-07-01T10:00:00.000Z'),
+    assetSources: [],
   }));
 }
 

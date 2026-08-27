@@ -1,5 +1,5 @@
 export { verifyAccessToken } from './jwt.utility';
-export { httpRequest, httpStream } from './http-client.utility';
+export { httpRequest, httpStream, httpStreamBinary } from './http-client.utility';
 export { runResearch } from './research-client.utility';
 export { mapResearchModeToWorkflow } from './research-mode-mapping.utility';
 export { extractBearer } from './bearer.utility';

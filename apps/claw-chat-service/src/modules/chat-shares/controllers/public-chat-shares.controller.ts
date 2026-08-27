@@ -1,9 +1,15 @@
-import { Controller, Get, Header, HttpCode, HttpStatus, Param } from '@nestjs/common';
+import { Controller, Get, Header, HttpCode, HttpStatus, Param, Res } from '@nestjs/common';
+import { type Response } from 'express';
 
 import { Public } from '../../../app/decorators/public.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { PUBLIC_SHARE_CACHE_CONTROL } from '../constants/public-cache.constants';
-import { type PublicShareParamDto, publicShareParamSchema } from '../dto/chat-share.dto';
+import {
+  type PublicShareAssetParamDto,
+  publicShareAssetParamSchema,
+  type PublicShareParamDto,
+  publicShareParamSchema,
+} from '../dto/chat-share.dto';
 import { PublicChatShareService } from '../services/public-chat-share.service';
 import { type PublicChatShareResponse } from '../types/chat-shares.types';
 
@@ -41,5 +47,31 @@ export class PublicChatSharesController {
     // The service raises one uniform 404 for private, revoked, deleted and
     // never-existed, so nothing here can distinguish them.
     return this.shares.requirePublic(params.publicShareId);
+  }
+
+  /**
+   * Streams one image belonging to a published share.
+   *
+   * Both ids are required and are resolved together against a currently ACTIVE
+   * share. That pairing is the authorisation: an asset id from one share cannot
+   * be read through another, and a leaked URL stops resolving the moment the
+   * share is revoked — which is why revocation deletes the bytes as well.
+   *
+   * The stored file id never appears in the URL or the response. See
+   * docs/13-adr/adr-075-public-share-assets.md.
+   */
+  @Get(':publicShareId/assets/:publicAssetId')
+  @Header('Cache-Control', PUBLIC_SHARE_CACHE_CONTROL)
+  @Header('X-Robots-Tag', 'noindex, nofollow, noarchive')
+  // An image served from a user-shared page is untrusted content. It must never
+  // be interpreted as a document, so it is forced to download-or-render-as-image
+  // rather than being sniffed.
+  @Header('X-Content-Type-Options', 'nosniff')
+  @Header('Content-Disposition', 'inline')
+  async findAsset(
+    @Param(new ZodValidationPipe(publicShareAssetParamSchema)) params: PublicShareAssetParamDto,
+    @Res() response: Response,
+  ): Promise<void> {
+    return this.shares.streamPublicAsset(params.publicShareId, params.publicAssetId, response);
   }
 }

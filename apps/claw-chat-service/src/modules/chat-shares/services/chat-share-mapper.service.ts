@@ -5,7 +5,11 @@ import {
   type PublicChatShareMessage,
   type PublicChatShareResponse,
 } from '../types/chat-shares.types';
-import { type ChatShare, type ChatShareMessage } from '../../../generated/prisma';
+import {
+  type ChatShare,
+  type ChatShareMessage,
+  type ChatShareMessageAsset,
+} from '../../../generated/prisma';
 import { parseStoredLocale } from '../utilities/stored-locale.utility';
 
 /**
@@ -18,7 +22,9 @@ import { parseStoredLocale } from '../utilities/stored-locale.utility';
  */
 @Injectable()
 export class ChatShareMapperService {
-  toPublicResponse(share: ChatShare & { messages: ChatShareMessage[] }): PublicChatShareResponse {
+  toPublicResponse(
+    share: ChatShare & { messages: (ChatShareMessage & { assets: ChatShareMessageAsset[] })[] },
+  ): PublicChatShareResponse {
     return {
       publicShareId: share.publicShareId,
       title: share.title,
@@ -35,7 +41,9 @@ export class ChatShareMapperService {
     };
   }
 
-  private toPublicMessage(message: ChatShareMessage): PublicChatShareMessage {
+  private toPublicMessage(
+    message: ChatShareMessage & { assets: ChatShareMessageAsset[] },
+  ): PublicChatShareMessage {
     return {
       // The PUBLIC id. `message.id` is the share-message row's own primary key
       // and stays internal; publicMessageId is what the outside world sees.
@@ -46,6 +54,13 @@ export class ChatShareMapperService {
       providerLabel: message.providerLabel,
       modelLabel: message.modelLabel,
       createdAt: message.originalCreatedAt.toISOString(),
+      // Only the public handle, the media type and the alt text. `storedFileId`
+      // is the private handle onto file-service storage and never leaves.
+      assets: message.assets.map((asset) => ({
+        publicAssetId: asset.publicAssetId,
+        mimeType: asset.mimeType,
+        altText: asset.altText,
+      })),
     };
   }
 

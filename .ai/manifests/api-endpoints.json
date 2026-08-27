@@ -1111,6 +1111,11 @@
         "method": "GET",
         "route": "/public/chat-shares/:publicShareId",
         "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/public-chat-shares.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/public/chat-shares/:publicShareId/assets/:publicAssetId",
+        "source": "apps/claw-chat-service/src/modules/chat-shares/controllers/public-chat-shares.controller.ts"
       }
     ],
     "claw-client-logs-service": [
@@ -3148,5 +3153,5 @@
     ]
   },
   "generated": true,
-  "total": 622
+  "total": 623
 }
