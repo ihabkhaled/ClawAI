@@ -63,21 +63,23 @@ export async function CodingAgentOverviewPage(): Promise<React.ReactElement> {
         <div className="editorial-comparison">
           <p className="editorial-comparison__lede">{overview.intro}</p>
 
-          <div className="editorial-comparison__actions">
-            <Link className="editorial-comparison__cta" href={installPath}>
-              {overview.installCta}
-            </Link>
-            {/* rel="noopener" on a cross-origin target: without it the opened
-                page can reach back through window.opener. */}
-            <Link
-              className="editorial-comparison__cta editorial-comparison__cta--secondary"
-              href={CODING_AGENT_MARKETPLACE_URL}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              {overview.marketplaceCta}
-            </Link>
-          </div>
+          <section aria-label={overview.installCta} className="editorial-comparison__cta">
+            <div className="editorial-comparison__cta-actions">
+              <Link className="editorial-comparison__cta-primary" href={installPath}>
+                {overview.installCta}
+              </Link>
+              {/* rel="noopener" on a cross-origin target: without it the opened
+                  page can reach back through window.opener. */}
+              <Link
+                className="editorial-comparison__cta-secondary"
+                href={CODING_AGENT_MARKETPLACE_URL}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                {overview.marketplaceCta}
+              </Link>
+            </div>
+          </section>
 
           <ComparisonSection
             id={CODING_AGENT_SECTION_IDS.capabilities}

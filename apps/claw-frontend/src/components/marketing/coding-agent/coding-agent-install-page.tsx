@@ -1,10 +1,12 @@
 import { headers } from 'next/headers';
 import Link from 'next/link';
 
+import { CodingAgentInstallFigure } from '@/components/marketing/coding-agent/coding-agent-install-figure';
 import { ComparisonFaq } from '@/components/marketing/compare/comparison-faq';
 import { ComparisonSection } from '@/components/marketing/compare/comparison-section';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
+import { CODING_AGENT_INSTALL_FIGURES } from '@/constants/coding-agent-figures.constants';
 import { CODING_AGENT_INSTALL_SECTION_IDS } from '@/constants/coding-agent-sections.constants';
 import {
   CODING_AGENT_CLI_INSTALL_COMMAND,
@@ -64,33 +66,39 @@ export async function CodingAgentInstallPage(): Promise<React.ReactElement> {
         <div className="editorial-comparison">
           <p className="editorial-comparison__lede">{install.intro}</p>
 
-          <div className="editorial-comparison__actions">
-            <Link
-              className="editorial-comparison__cta"
-              href={CODING_AGENT_MARKETPLACE_URL}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              {install.marketplaceCta}
-            </Link>
-            {/* The `vscode:` protocol only resolves if VS Code is installed on
-                the machine doing the browsing, and that cannot be feature-
-                detected. So it sits beside the Marketplace link, never instead
-                of it — a dead primary button is worse than a second choice. */}
-            <a
-              className="editorial-comparison__cta editorial-comparison__cta--secondary"
-              href={CODING_AGENT_VSCODE_INSTALL_URL}
-            >
-              {install.openInEditorCta}
-            </a>
-          </div>
+          <section aria-label={install.marketplaceCta} className="editorial-comparison__cta">
+            <div className="editorial-comparison__cta-actions">
+              <Link
+                className="editorial-comparison__cta-primary"
+                href={CODING_AGENT_MARKETPLACE_URL}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                {install.marketplaceCta}
+              </Link>
+              {/* The `vscode:` protocol only resolves if VS Code is installed on
+                  the machine doing the browsing, and that cannot be feature-
+                  detected. So it sits beside the Marketplace link, never instead
+                  of it — a dead primary button is worse than a second choice. */}
+              <a
+                className="editorial-comparison__cta-secondary"
+                href={CODING_AGENT_VSCODE_INSTALL_URL}
+              >
+                {install.openInEditorCta}
+              </a>
+            </div>
+          </section>
 
           <ComparisonSection id={CODING_AGENT_INSTALL_SECTION_IDS.steps} title={install.stepsTitle}>
             <ol className="editorial-comparison__steps">
-              {install.steps.map((step) => (
+              {install.steps.map((step, index) => (
                 <li key={step.title} className="editorial-comparison__list-item">
                   <strong>{step.title}</strong>
                   <span>{step.body}</span>
+                  <CodingAgentInstallFigure
+                    figure={CODING_AGENT_INSTALL_FIGURES[index]}
+                    label={step.title}
+                  />
                 </li>
               ))}
             </ol>
