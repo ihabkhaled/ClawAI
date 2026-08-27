@@ -1,4 +1,5 @@
 import { AccessControlService } from '../access-control.service';
+import { BillingErrorCode } from '@claw/shared-types';
 
 const getEntitlements = jest.fn();
 const finalizeQuota = jest.fn();
@@ -83,8 +84,11 @@ describe('AccessControlService', () => {
     getEntitlements.mockResolvedValue(
       ent({ quota: { dailyLimit: 100, used: 100, remaining: 0, unlimited: false } }),
     );
+    // The stable machine code, not a message key: the frontend error map keys
+    // on QUOTA_DAILY_EXCEEDED, so a message key here meant nothing matched and
+    // the user saw the backend's English regardless of locale.
     await expect(service.assertCanSendMessage('u1', {})).rejects.toMatchObject({
-      code: 'quota.dailyLimitExceeded',
+      code: BillingErrorCode.QUOTA_DAILY_EXCEEDED,
     });
   });
 

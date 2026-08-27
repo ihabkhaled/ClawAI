@@ -9,6 +9,11 @@ describe('ToastViewport placement', () => {
   // Regression: the viewport used to be `top-0 … sm:bottom-0`, which put toasts
   // at the TOP on mobile — the hardest place to reach and directly under the
   // notch — and only moved them to the bottom on desktop.
+  //
+  // The offset is now `bottom-[var(--toast-obstacle-clearance,0px)]` rather than
+  // a literal `bottom-0`: useFloatingObstacleClearance measures whatever is
+  // floating and writes the number into that variable. The 0px fallback is what
+  // keeps this bottom-anchored before the first measurement.
   it('anchors to the bottom on mobile', () => {
     render(
       <ToastProvider>
@@ -17,7 +22,7 @@ describe('ToastViewport placement', () => {
     );
 
     const viewport = screen.getByTestId('toast-viewport');
-    expect(viewport.className).toContain('bottom-0');
+    expect(viewport.className).toContain('bottom-[var(--toast-obstacle-clearance,0px)]');
     expect(viewport.className).not.toContain('top-0');
   });
 

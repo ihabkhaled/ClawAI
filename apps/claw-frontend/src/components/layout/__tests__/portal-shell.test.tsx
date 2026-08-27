@@ -16,6 +16,11 @@ vi.mock('@/components/layout/topbar', () => ({ Topbar: () => <div data-testid="t
 vi.mock('@/components/layout/trial-status-banner', () => ({
   TrialStatusBanner: () => <div data-testid="trial-banner" />,
 }));
+// The rotation banner owns a router-dependent guard; this suite renders the
+// shell outside an app router, so it is stubbed like every other banner here.
+vi.mock('@/components/layout/password-rotation-banner', () => ({
+  PasswordRotationBanner: () => <div data-testid="password-rotation-banner" />,
+}));
 vi.mock('@/components/layout/mobile-bottom-nav', () => ({
   MobileBottomNav: () => <div data-testid="mobile-nav" />,
 }));
@@ -54,7 +59,13 @@ describe('PortalShell (regression: behavior-preserving extraction from the old c
     );
     expect(screen.getByTestId('sidebar')).toBeInTheDocument();
     expect(screen.getByTestId('topbar')).toBeInTheDocument();
+    // Order matters: the rotation banner is a hard stop (the account cannot use
+    // the product until the password is replaced), so it sits above the trial
+    // banner, which is informational.
     expect(screen.getByTestId('topbar').nextElementSibling).toBe(
+      screen.getByTestId('password-rotation-banner'),
+    );
+    expect(screen.getByTestId('password-rotation-banner').nextElementSibling).toBe(
       screen.getByTestId('trial-banner'),
     );
     expect(screen.getByTestId('mobile-nav')).toBeInTheDocument();

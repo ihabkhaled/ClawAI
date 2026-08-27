@@ -136,6 +136,12 @@ describe('useAdminUserMutations', () => {
       expect(result.current.actionPending).toBeNull();
     });
 
-    expect(showToast.apiError).toHaveBeenCalledWith(error, expect.any(String));
+    // The third argument carries `t`, so a coded refusal renders translated
+    // instead of quoting the backend's English.
+    expect(showToast.apiError).toHaveBeenCalledWith(
+      error,
+      expect.any(String),
+      expect.objectContaining({ translate: expect.any(Function) }),
+    );
   });
 });

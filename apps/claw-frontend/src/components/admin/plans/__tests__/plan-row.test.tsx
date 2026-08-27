@@ -80,8 +80,10 @@ describe('PlanRow', () => {
 
   it('shows the default badge and hides the set-default button for the default plan', () => {
     render(<PlanRow plan={makePlan({ isDefault: true })} {...baseProps} />);
-    expect(screen.getByText('adminPlans.defaultBadge')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'adminPlans.setDefault' })).not.toBeInTheDocument();
+    expect(screen.getByText('adminPlans.signupPlanBadge')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'adminPlans.setSignupPlan' }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows the private badge and activate button for an inactive private plan', () => {
@@ -110,7 +112,7 @@ describe('PlanRow', () => {
     );
     await user.click(screen.getByRole('button', { name: 'adminPlans.deactivate' }));
     expect(onDeactivate).toHaveBeenCalledWith('pl1');
-    await user.click(screen.getByRole('button', { name: 'adminPlans.setDefault' }));
+    await user.click(screen.getByRole('button', { name: 'adminPlans.setSignupPlan' }));
     expect(onSetDefault).toHaveBeenCalledWith('pl1');
   });
 
