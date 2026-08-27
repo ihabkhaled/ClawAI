@@ -6,6 +6,7 @@ import { plansRepository } from '@/repositories/admin/plans.repository';
 import { auditRepository } from '@/repositories/audit/audit.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type {
+  AdminCreateUserRequest,
   AdminUserUpdateMutationVariables,
   AdminUserUpdateRequest,
   UseAdminUserMutationsReturn,
@@ -123,6 +124,26 @@ function useTemporaryPasswordMutation(setActionPending: (value: string | null) =
   });
 }
 
+function useCreateUserMutation(onCreated: () => void) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: AdminCreateUserRequest) => auditRepository.createUser(data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.users });
+      onCreated();
+      showToast.success({ description: t('admin.createUserSucceeded') });
+    },
+    // Minting an ADMIN requires a super-administrator actor, so this is the one
+    // create path that can refuse on authority rather than on validation —
+    // SUPER_ADMIN_REQUIRED must reach the user translated.
+    onError: (err: unknown) => {
+      showToast.apiError(err, t('admin.createUserFailed'), { translate: t });
+    },
+  });
+}
+
 function useIdentityHandlers(
   actionPending: string | null,
   setActionPending: (value: string | null) => void,
@@ -215,13 +236,26 @@ function useAccountHandlers(
   };
 }
 
-export function useAdminUserMutations(): UseAdminUserMutationsReturn {
+export function useAdminUserMutations(
+  onUserCreated: () => void = () => undefined,
+): UseAdminUserMutationsReturn {
   const [actionPending, setActionPending] = useState<string | null>(null);
   const identity = useIdentityHandlers(actionPending, setActionPending);
   const account = useAccountHandlers(actionPending, setActionPending);
+  const createUserMutation = useCreateUserMutation(onUserCreated);
 
   return {
     actionPending,
+    handleCreateUser: (data: AdminCreateUserRequest) => {
+      logger.info({
+        component: 'admin',
+        action: 'create-user',
+        message: 'Creating user',
+        details: { role: data.role },
+      });
+      createUserMutation.mutate(data);
+    },
+    isCreateUserPending: createUserMutation.isPending,
     handleChangeRole: identity.handleChangeRole,
     handleDeactivate: identity.handleDeactivate,
     handleReactivate: identity.handleReactivate,

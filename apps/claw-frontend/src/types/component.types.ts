@@ -61,7 +61,11 @@ import type {
 import type { AdminUserActor } from './admin-user-capability.types';
 import type { RepairResultState } from './answer-repair.types';
 import type { AdminUser, AuditLog } from './audit.types';
-import type { AdminUserUpdateRequest, EmailChangePendingState } from './auth.types';
+import type {
+  AdminCreateUserRequest,
+  AdminUserUpdateRequest,
+  EmailChangePendingState,
+} from './auth.types';
 import type { BestOfNResultState, CandidateResult } from './best-of-n.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
 import type {
@@ -126,6 +130,7 @@ import type {
   ParallelModelTarget,
   ParallelResponse,
 } from './parallel.types';
+import type { PasswordStrengthResult } from './password-strength.types';
 import type { PipelineResult, PipelineStageResult } from './pipeline.types';
 import type { PlanView } from './plan.types';
 import type { ProviderFailureStat, RecentFallback } from './recovery.types';
@@ -2502,6 +2507,25 @@ export type PublicSharedChatFooterProps = {
 
 export type PasswordInputProps = Omit<React.ComponentPropsWithoutRef<'input'>, 'type'> & {
   id: string;
+};
+
+export type PasswordStrengthMeterProps = {
+  strength: PasswordStrengthResult;
+  /** Hide the checklist when the field already passes, or when space is tight. */
+  showRequirements?: boolean;
+};
+
+export type CreateUserDialogProps = {
+  open: boolean;
+  isSaving: boolean;
+  /**
+   * Only the super administrator may mint another administrator, so the ADMIN
+   * option is withheld rather than offered and refused.
+   */
+  canCreateAdmin: boolean;
+  onClose: () => void;
+  onCreate: (data: AdminCreateUserRequest) => void;
+  t: TranslateFunction;
 };
 
 export type EditUserDialogProps = {

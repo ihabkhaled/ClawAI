@@ -9,6 +9,7 @@ import type {
   AuditListParams,
   UsageListParams,
   AdminUsersResponse,
+  AdminCreateUserRequest,
   AdminUserUpdateRequest,
   AdminUserQuery,
 } from '@/types';
@@ -81,6 +82,10 @@ export const auditRepository = {
 
   async updateUserRole(userId: string, role: string): Promise<void> {
     await apiClient.patch(`/users/${userId}/role`, { role });
+  },
+
+  async createUser(data: AdminCreateUserRequest): Promise<void> {
+    await apiClient.post('/users', data);
   },
 
   async updateUser(userId: string, data: AdminUserUpdateRequest): Promise<void> {

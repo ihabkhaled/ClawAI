@@ -162,3 +162,4 @@ export { FeedbackEditorTab } from './feedback-editor-tab.enum';
 export { ImagePreviewStatus } from './image-preview-status.enum';
 export { ScreenCaptureStatus } from './screen-capture-status.enum';
 export { AdminUserCapabilityReason } from './admin-user-capability-reason.enum';
+export { PasswordStrengthLevel } from './password-strength-level.enum';

@@ -11,12 +11,16 @@ import type { UseAdminUsersPageReturn } from '@/types';
 
 import { useAdminUserFilters } from './use-admin-user-filters';
 import { useAdminUserMutations } from './use-admin-user-mutations';
+import { useCreateUserDialog } from './use-create-user-dialog';
 
 export function useAdminUsersPage(): UseAdminUsersPageReturn {
   const { t } = useTranslation();
   const { user } = useCurrentUser();
   const filters = useAdminUserFilters();
-  const mutations = useAdminUserMutations();
+  const createDialog = useCreateUserDialog();
+  // The dialog closes on success rather than on submit, so a refusal keeps the
+  // typed values on screen instead of discarding them.
+  const mutations = useAdminUserMutations(createDialog.close);
 
   const userQuery = {
     page: filters.page,
@@ -49,6 +53,7 @@ export function useAdminUsersPage(): UseAdminUsersPageReturn {
 
   return {
     t,
+    createDialog,
     user: user ?? null,
     actor,
     ...filters,

@@ -10,6 +10,7 @@ export type {
   AuthState,
   UpdateOwnProfileRequest,
   DeleteOwnAccountRequest,
+  AdminCreateUserRequest,
   AdminUserUpdateRequest,
   AdminUserUpdateMutationVariables,
   RequestPasswordResetRequest,
@@ -149,6 +150,11 @@ export type {
   WhyThisModelPanelProps,
 } from './why-this-model-component.types';
 export type { WhyThisModelRowProps } from './why-this-model-row.types';
+export type {
+  PasswordRequirementState,
+  PasswordStrengthPresentation,
+  PasswordStrengthResult,
+} from './password-strength.types';
 export type {
   AdminUserActor,
   AdminUserCapability,
@@ -549,7 +555,10 @@ export type {
   UseVirtualizedMessagesControllerReturn,
   UseFollowStreamingTokensParams,
   UseProfilePageReturn,
+  UseCreateUserDialogReturn,
+  UseCreateUserFormReturn,
   UseEditUserFormReturn,
+  UsePasswordRotationGuardReturn,
 } from './hook.types';
 export type {
   CandidateResult,

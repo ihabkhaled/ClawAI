@@ -69,6 +69,22 @@ export type AdminUserUpdateRequest = {
   lastName?: string | null;
 };
 
+/**
+ * Body for `POST /users`, the administrator create-user endpoint.
+ *
+ * The account is born ACTIVE and email-verified — an administrator vouching for
+ * the address is the verification — and `mustChangePassword` is set server-side,
+ * so the password an administrator types here never becomes the standing one.
+ */
+export type AdminCreateUserRequest = {
+  email: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  password: string;
+  role: string;
+};
+
 export type AdminUserUpdateMutationVariables = {
   userId: string;
   data: AdminUserUpdateRequest;

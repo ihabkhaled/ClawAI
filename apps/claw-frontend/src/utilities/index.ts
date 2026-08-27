@@ -204,6 +204,9 @@ export {
 export { isPublicPath } from './route-visibility.utility';
 export { resolveApiErrorMessage } from './api-error-message.utility';
 export { resolveAdminUserCapability } from './admin-user-capability.utility';
+export { generatePassword } from './password-generator.utility';
+export { evaluatePasswordStrength } from './password-strength.utility';
+export { resolvePasswordStrengthPresentation } from './password-strength-presentation.utility';
 export { resolveTrialStatusBanner } from './trial-status.utility';
 export { getConfiguredSocialLinks } from './social-links.utility';
 export {

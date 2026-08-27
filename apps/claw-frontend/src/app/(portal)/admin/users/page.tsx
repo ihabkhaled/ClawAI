@@ -1,8 +1,10 @@
 'use client';
 
+import { UserPlus } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 import { AccessDenied } from '@/components/admin/access-denied';
+import { CreateUserDialog } from '@/components/admin/create-user-dialog';
 import { UserFilters } from '@/components/admin/user-filters';
 import { UsersContent } from '@/components/admin/users-content';
 import { PageHeader } from '@/components/common/page-header';
@@ -81,6 +83,20 @@ export default function AdminUsersPage(): ReactElement {
       <PageHeader
         title={admin.t('adminUsers.title')}
         description={admin.t('adminUsers.description')}
+        actions={
+          <Button onClick={admin.createDialog.open}>
+            <UserPlus className="me-2 h-4 w-4" aria-hidden="true" />
+            {admin.t('admin.createUser')}
+          </Button>
+        }
+      />
+      <CreateUserDialog
+        open={admin.createDialog.isOpen}
+        isSaving={admin.isCreateUserPending}
+        canCreateAdmin={admin.actor?.isSuperAdmin === true}
+        onClose={admin.createDialog.close}
+        onCreate={admin.handleCreateUser}
+        t={admin.t}
       />
       <UserFilters
         t={admin.t}

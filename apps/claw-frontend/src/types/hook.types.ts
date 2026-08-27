@@ -3,6 +3,7 @@ import type { UseFormReturn } from 'react-hook-form';
 import type { MessageFeedback } from '@/enums';
 import type { PasswordInputType } from '@/enums/password-input-type.enum';
 import type { ScrollDirection } from '@/enums/scroll-direction.enum';
+import type { AdminCreateUserFormValues } from '@/lib/validation/admin-create-user.schema';
 import type { AdminUserEditFormValues } from '@/lib/validation/admin-user.schema';
 import type {
   ConfirmOtpFormValues,
@@ -23,7 +24,11 @@ import type { ResearchProviderKind } from '../enums/research-provider-kind.enum'
 import type { AdaptiveLearningInsights } from './adaptive-learning.types';
 import type { AdminUserActor } from './admin-user-capability.types';
 import type { AdminUser, AuditLog } from './audit.types';
-import type { AdminUserUpdateRequest, EmailChangePendingState } from './auth.types';
+import type {
+  AdminCreateUserRequest,
+  AdminUserUpdateRequest,
+  EmailChangePendingState,
+} from './auth.types';
 import type {
   ChatMessage,
   ChatThread,
@@ -44,6 +49,7 @@ import type { CostEnsembleResult as CostEnsembleResultType } from './cost-ensemb
 import type { UploadFileRequest } from './file.types';
 import type { AggregatedHealth } from './health.types';
 import type { TranslateFunction } from './i18n.types';
+import type { PasswordStrengthResult } from './password-strength.types';
 import type { CountryDialCode } from './phone.types';
 import type { PipelineResult } from './pipeline.types';
 import type { PlanView } from './plan.types';
@@ -87,6 +93,27 @@ export type UseRegisterFormReturn = {
 export type UseEditUserFormReturn = {
   form: UseFormReturn<AdminUserEditFormValues>;
   submit: (event?: React.BaseSyntheticEvent) => Promise<void>;
+};
+
+export type UseCreateUserFormReturn = {
+  form: UseFormReturn<AdminCreateUserFormValues>;
+  /** Live score of the password field, for the meter. */
+  strength: PasswordStrengthResult;
+  /** Writes a policy-compliant password straight into the field. */
+  generate: () => void;
+  reset: () => void;
+  submit: (event?: React.BaseSyntheticEvent) => Promise<void>;
+};
+
+export type UsePasswordRotationGuardReturn = {
+  /** True while the account is required to replace its current password. */
+  mustRotate: boolean;
+};
+
+export type UseCreateUserDialogReturn = {
+  isOpen: boolean;
+  open: () => void;
+  close: () => void;
 };
 
 export type UseForgotPasswordFormReturn = {
@@ -175,6 +202,8 @@ export type UseAdminUserMutationsReturn = {
   handleAssignPlan: (userId: string, planId: string) => void;
   handleUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   handleTemporaryPassword: (userId: string) => void;
+  handleCreateUser: (data: AdminCreateUserRequest) => void;
+  isCreateUserPending: boolean;
   isRoleChangePending: boolean;
   isDeactivatePending: boolean;
   isReactivatePending: boolean;
@@ -185,6 +214,8 @@ export type UseAdminUserMutationsReturn = {
 
 export type UseAdminUsersPageReturn = UseAdminUserFiltersReturn &
   UseAdminUserMutationsReturn & {
+    /** Open/close state for the create-user dialog. */
+    createDialog: UseCreateUserDialogReturn;
     t: TranslateFunction;
     user: { role: string } | null;
     /** Identity of the signed-in administrator, for the per-row capability rule. */

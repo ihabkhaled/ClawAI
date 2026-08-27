@@ -72,6 +72,8 @@ export type TranslationDictionary = {
     loginFailed: string;
     tagline: string;
     authenticating: string;
+    mustChangePasswordTitle: string;
+    mustChangePasswordBody: string;
     backToHome: string;
     emailPlaceholder: string;
     registerTitle: string;
@@ -1092,6 +1094,34 @@ export type TranslationDictionary = {
 
     editUserSuperAdminNotice: string;
     editUserSelfSuperAdminNotice: string;
+    createUserTitle: string;
+    createUserDescription: string;
+    createUserEmail: string;
+    createUserEmailInvalid: string;
+    createUserUsername: string;
+    createUserUsernameInvalid: string;
+    createUserFirstName: string;
+    createUserLastName: string;
+    createUserRole: string;
+    createUserAdminRestricted: string;
+    createUserPassword: string;
+    createUserGeneratePassword: string;
+    createUserPasswordNotice: string;
+    createUserPasswordStrength: string;
+    createUserPasswordWeak: string;
+    createUserPasswordFair: string;
+    createUserPasswordGood: string;
+    createUserPasswordStrong: string;
+    createUserPasswordNeedsLength: string;
+    createUserPasswordNeedsUppercase: string;
+    createUserPasswordNeedsLowercase: string;
+    createUserPasswordNeedsDigit: string;
+    createUserPasswordNeedsSymbol: string;
+    createUserPasswordTooLong: string;
+    createUserCancel: string;
+    createUserSubmit: string;
+    createUserSucceeded: string;
+    createUserFailed: string;
 
     editUserSave: string;
 
@@ -1106,6 +1136,7 @@ export type TranslationDictionary = {
     colJoined: string;
     colActions: string;
     roleAdmin: string;
+    roleUser: string;
     roleOperator: string;
     roleViewer: string;
     planColumn: string;
