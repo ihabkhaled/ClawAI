@@ -32,7 +32,8 @@ import type {
   EmailChangePendingState,
 } from './auth.types';
 import type { ChatLimitNotice } from './chat-limit-notice.types';
-import type { InThreadSearchMatch,
+import type {
+  InThreadSearchMatch,
   ChatMessage,
   ChatThread,
   CreateMessageRequest,
@@ -41,7 +42,8 @@ import type { InThreadSearchMatch,
   MessageRenderItem,
   StreamLiveState,
   UseVirtualizedMessagesReturn,
-  VisibleProgressStage } from './chat.types';
+  VisibleProgressStage,
+} from './chat.types';
 import type {
   ChatThreadShellProps,
   ModelSelection,
@@ -152,9 +154,32 @@ export type UseToasterViewportReturn = {
   viewportRef: React.RefObject<HTMLOListElement | null>;
 };
 
+/**
+ * Which registry a clearance measurement reads, and where it writes the answer.
+ *
+ * Two exist: the toast column clears floating controls, the floating rail
+ * clears bottom-anchored page furniture.
+ */
+export type FloatingClearanceConfig = {
+  /** CSS selector for the elements to measure. */
+  selector: string;
+  /** The custom property that receives the resulting pixel value. */
+  variable: string;
+};
+
 export type UseFloatingObstacleClearanceReturn = {
   /** Force a re-measure — for callers that move a floating element themselves. */
   remeasure: () => void;
+};
+
+export type UseJumpToMessageReturn = {
+  /** Scrolls to a message, or explains why it cannot. */
+  jumpToMessage: (messageId: string) => void;
+};
+
+export type UseFeedbackLauncherReturn = {
+  /** The launcher's own box, which is the column its clearance is measured for. */
+  launcherRef: React.RefObject<HTMLButtonElement | null>;
 };
 
 export type UsePasswordRotationGuardReturn = {
@@ -871,7 +896,7 @@ export type UseVirtualizedMessagesControllerParams = {
 
 export type UseVirtualizedMessagesControllerReturn = {
   /** Scrolls to a message by id; silent when it is outside the loaded window. */
-  handleJumpToMessage: (messageId: string) => void;
+  handleJumpToMessage: (messageId: string) => boolean;
   // Display states the .tsx renders directly.
   isLoading: boolean;
   isEmpty: boolean;

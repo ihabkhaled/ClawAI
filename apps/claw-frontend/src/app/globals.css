@@ -1063,6 +1063,166 @@
     font-weight: 400;
   }
 
+  /* Ordered and unordered lists whose items lead with a term.
+   *
+   * The coding-agent pages render `<strong>title</strong><span>body</span>`
+   * per item. Without a block context on the parts, the two run together —
+   * "Every model, one subscriptionNine frontier families…" — which is what
+   * shipped until the styles below existed. The term is a block so the body
+   * starts on its own line, and the counter is drawn rather than left to the
+   * default marker, which the editorial reset removes.
+   */
+  .editorial-comparison__list,
+  .editorial-comparison__steps {
+    display: grid;
+    gap: 1.25rem;
+    margin-block-start: 1rem;
+  }
+
+  .editorial-comparison__steps {
+    counter-reset: editorial-step;
+  }
+
+  .editorial-comparison__list-item {
+    display: grid;
+    gap: 0.35rem;
+    border-inline-start: 2px solid var(--editorial-rule);
+    padding-inline-start: 1rem;
+  }
+
+  .editorial-comparison__steps .editorial-comparison__list-item {
+    counter-increment: editorial-step;
+  }
+
+  .editorial-comparison__steps .editorial-comparison__list-item strong::before {
+    content: counter(editorial-step) '. ';
+    color: var(--editorial-signal);
+  }
+
+  .editorial-comparison__list-item strong {
+    color: var(--editorial-ink);
+    font-family: var(--font-editorial-display), var(--font-sans);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .editorial-comparison__list-item span {
+    color: var(--editorial-graphite);
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.65;
+  }
+
+  /* A schematic of another program's interface.
+   *
+   * Drawn rather than screenshotted: a VS Code screenshot is wrong the moment
+   * the reader's theme, version or language differs from the one it was taken
+   * in, and a picture that disagrees with what is on screen is worse than
+   * none. A diagram of "a search box, a result, a button" stays true.
+   *
+   * The figure carries the accessible name (the step's own translated title);
+   * the SVG inside is aria-hidden so a screen reader gets one name, not a pile
+   * of stray labels quoted from another product's UI.
+   */
+  .editorial-figure {
+    margin-block-start: 0.75rem;
+    max-width: 26rem;
+  }
+
+  .editorial-figure__canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--editorial-rule);
+    background-color: color-mix(in srgb, var(--editorial-ink) 3%, transparent);
+  }
+
+  .editorial-figure__frame {
+    fill: none;
+    stroke: var(--editorial-rule);
+  }
+
+  .editorial-figure__panel {
+    fill: color-mix(in srgb, var(--editorial-ink) 6%, transparent);
+  }
+
+  .editorial-figure__muted {
+    fill: color-mix(in srgb, var(--editorial-ink) 12%, transparent);
+  }
+
+  .editorial-figure__field {
+    fill: color-mix(in srgb, var(--editorial-paper) 70%, transparent);
+    stroke: var(--editorial-rule);
+  }
+
+  .editorial-figure__selected {
+    fill: color-mix(in srgb, var(--editorial-circuit) 12%, transparent);
+    stroke: var(--editorial-circuit);
+  }
+
+  .editorial-figure__accent {
+    fill: color-mix(in srgb, var(--editorial-circuit) 55%, transparent);
+  }
+
+  .editorial-figure__button {
+    fill: var(--editorial-circuit);
+  }
+
+  .editorial-figure__tick {
+    fill: none;
+    stroke: var(--editorial-circuit);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .editorial-figure__label,
+  .editorial-figure__typed,
+  .editorial-figure__meta,
+  .editorial-figure__button-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+  }
+
+  .editorial-figure__label {
+    fill: var(--editorial-ink);
+    font-weight: 700;
+  }
+
+  .editorial-figure__typed {
+    fill: var(--editorial-ink);
+    font-family: var(--font-editorial-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 10px;
+  }
+
+  .editorial-figure__meta {
+    fill: var(--editorial-graphite);
+    font-size: 10px;
+  }
+
+  .editorial-figure__button-label {
+    fill: var(--editorial-paper);
+    font-weight: 700;
+  }
+
+  /* A shell command, quoted verbatim.
+   *
+   * `pre` wraps globally on touch so a wide payload is readable by scrolling
+   * down rather than sideways; an install command is the opposite case — it is
+   * copied, and a wrapped one is copied wrong. So this one scrolls. */
+  .editorial-comparison__code {
+    margin-block-start: 1rem;
+    border: 1px solid var(--editorial-rule);
+    background-color: color-mix(in srgb, var(--editorial-ink) 4%, transparent);
+    padding: 1rem;
+    overflow-x: auto;
+    color: var(--editorial-ink);
+    font-family: var(--font-editorial-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.8125rem;
+    white-space: pre;
+  }
+
   .editorial-comparison__cta {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -1448,6 +1608,23 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow-wrap: normal;
+  }
+
+  /* The third case: a heading, which is neither prose nor a control.
+   *
+   * Wrapping it is right — a clipped title on a phone cannot be revealed. But
+   * wrapping it *without a bound* is how a thread named with a whole paragraph
+   * rendered five lines tall and pushed the conversation itself below the fold
+   * on an 844px screen. Clamp the wrap instead of choosing between the two.
+   *
+   * Media-gated like its neighbours, so a desktop heading keeps the plain
+   * one-line `truncate` it already had. */
+  .clamp-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
   }
 
   /* A select renders its value into a child span that the primitive clamps with

@@ -272,6 +272,8 @@ export const en: TranslationDictionary = {
       searching: 'Searching…',
       noMatches: 'No messages match that.',
       roleUser: 'You',
+      notLoadedTitle: 'That message is not loaded',
+      notLoaded: 'It is further back in the conversation. Scroll up to load it, then search again.',
       roleAssistant: 'Assistant',
     },
     limits: {

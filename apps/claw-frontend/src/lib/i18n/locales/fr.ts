@@ -273,6 +273,9 @@ export const fr: TranslationDictionary = {
       searching: 'Recherche…',
       noMatches: 'Aucun message ne correspond.',
       roleUser: 'Vous',
+      notLoadedTitle: "Ce message n'est pas chargé",
+      notLoaded:
+        'Il se trouve plus haut dans la conversation. Faites défiler vers le haut pour le charger, puis relancez la recherche.',
       roleAssistant: 'Assistant',
     },
     limits: {

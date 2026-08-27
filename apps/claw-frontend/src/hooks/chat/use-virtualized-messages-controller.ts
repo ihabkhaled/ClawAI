@@ -100,19 +100,21 @@ export function useVirtualizedMessagesController(
   }, [lastIndex]);
 
   /**
-   * Scrolls to a message by id.
+   * Scrolls to a message by id, reporting whether it could.
    *
-   * Returns silently when the message is not in the loaded window: search can
-   * match a turn from before the current page, and the honest behaviour there is
-   * to do nothing rather than to jump somewhere arbitrary.
+   * Search runs over the whole thread while this list holds one page of it, so
+   * a real match can sit outside the loaded window. Jumping somewhere arbitrary
+   * would be worse than not jumping — but the caller has to be able to tell the
+   * difference, or the click just looks broken.
    */
   const handleJumpToMessage = useCallback(
-    (messageId: string): void => {
+    (messageId: string): boolean => {
       const index = params.messages.findIndex((message) => message.id === messageId);
       if (index < 0) {
-        return;
+        return false;
       }
       virtuosoRef.current?.scrollToIndex({ index, behavior: 'smooth', align: 'center' });
+      return true;
     },
     [params.messages],
   );

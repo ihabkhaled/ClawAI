@@ -272,6 +272,9 @@ export const pt: TranslationDictionary = {
       searching: 'A procurar…',
       noMatches: 'Nenhuma mensagem corresponde.',
       roleUser: 'Você',
+      notLoadedTitle: 'Essa mensagem não está carregada',
+      notLoaded:
+        'Está mais atrás na conversa. Desloque para cima para a carregar e procure novamente.',
       roleAssistant: 'Assistente',
     },
     limits: {

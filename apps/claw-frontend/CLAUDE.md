@@ -335,7 +335,39 @@ a Tailwind class by interpolation — Tailwind scans source text, so a computed
 class is one it never generates. Anything dynamic goes through a CSS custom
 property with a static `var()` in the class string and a fallback.
 
+**There are two registries.** `data-floating-obstacle` is what the toast column
+dodges; `data-rail-obstacle` is what the floating rail dodges — bottom-anchored
+page furniture such as the composer. One hook measures both, picked by the
+`config` argument. The chain runs furniture → rail → toast column. Merging the
+two would ask the launcher to dodge itself.
+
+Two lifecycle traps, both silent: a cleanup that cancels a queued frame must
+also null the handle (otherwise the scheduler believes one is pending forever
+and the hook never measures again), and a box that moves without resizing fires
+no observer at all — hence the bounded settle pass.
+
 Full rule: `rules/36-floating-ui-and-toast-clearance.md`.
+
+## Editorial marketing classes are hand-written, not Tailwind (2026-08-27)
+
+The `/compare/*` and `/coding-agent*` pages are styled by a BEM vocabulary in
+`globals.css`, not by utilities. A class name that never made it into the
+stylesheet is therefore **invisible**: the markup renders, typecheck and build
+pass, and the section is simply unstyled. The coding-agent pages shipped with
+six such names — the install buttons rendered as one cream slab and every list
+item ran its title into its body with no separator.
+
+`components/marketing/__tests__/editorial-class-vocabulary.test.ts` now fails on
+any `editorial-*` class used in TSX but absent from `globals.css`. Before adding
+a class, check whether the vocabulary already has one: `__cta` is the panel,
+`__cta-primary`/`__cta-secondary` are the buttons inside it.
+
+Illustrations of another product's interface are drawn (`editorial-figure`),
+never screenshotted — a VS Code screenshot is wrong the moment the reader's
+theme, version or language differs, and a picture that disagrees with the screen
+is worse than none. Literal UI words quoted inside a figure ("Extensions",
+"Install") stay untranslated on purpose; the accessible name comes from the
+translated step title on the `<figure>`.
 
 ## Local Frontier (llama.cpp) page
 

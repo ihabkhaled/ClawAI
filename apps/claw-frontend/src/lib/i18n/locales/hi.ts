@@ -271,6 +271,9 @@ export const hi: TranslationDictionary = {
       searching: 'खोजा जा रहा है…',
       noMatches: 'कोई संदेश मेल नहीं खाता।',
       roleUser: 'आप',
+      notLoadedTitle: 'वह संदेश लोड नहीं है',
+      notLoaded:
+        'वह बातचीत में और पीछे है। उसे लोड करने के लिए ऊपर स्क्रॉल करें, फिर दोबारा खोजें।',
       roleAssistant: 'असिस्टेंट',
     },
     limits: {

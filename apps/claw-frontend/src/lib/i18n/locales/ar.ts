@@ -269,6 +269,8 @@ export const ar: TranslationDictionary = {
       searching: 'جارٍ البحث…',
       noMatches: 'لا توجد رسائل مطابقة.',
       roleUser: 'أنت',
+      notLoadedTitle: 'هذه الرسالة غير محمّلة',
+      notLoaded: 'إنها أبعد في المحادثة. مرّر لأعلى لتحميلها ثم ابحث مرة أخرى.',
       roleAssistant: 'المساعد',
     },
     limits: {

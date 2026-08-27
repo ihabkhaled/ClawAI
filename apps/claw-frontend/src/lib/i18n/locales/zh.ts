@@ -263,6 +263,8 @@ export const zh: TranslationDictionary = {
       searching: '搜索中…',
       noMatches: '没有匹配的消息。',
       roleUser: '你',
+      notLoadedTitle: '该消息尚未加载',
+      notLoaded: '它在对话的更早处。向上滚动以加载，然后重新搜索。',
       roleAssistant: '助手',
     },
     limits: {

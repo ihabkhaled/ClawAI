@@ -19,12 +19,25 @@
  * `end-*` rather than `right-*`: the rail must mirror in Arabic and Persian.
  * The gap between slots is one slot height (3.5rem, the FAB diameter) plus 1rem
  * of air.
+ *
+ * The rail's floor is `max(bottom navigation, whatever else owns the corner)`.
+ * On most pages the second term is 0 and nothing changes; on a thread page the
+ * composer is down there, and the launcher used to sit squarely on top of it —
+ * hiding the "Preview context" button entirely and clipping the message box.
+ * That is the same tap-stealing failure the slots were introduced to end, one
+ * layer up.
+ *
+ * The second term is measured (`--rail-obstacle-clearance`, published by
+ * `useFeedbackLauncher`) rather than written down, because a composer's height
+ * follows its content: a number copied from it is wrong the moment it grows a
+ * row. Registering furniture is one attribute — see
+ * `RAIL_OBSTACLE_ATTRIBUTE`.
  */
 export const FLOATING_ACTION_RAIL_SLOT_ONE =
-  'fixed end-4 bottom-[calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom)+1rem)]';
+  'fixed end-4 bottom-[calc(max(calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom)),var(--rail-obstacle-clearance,0px))+1rem)]';
 
 export const FLOATING_ACTION_RAIL_SLOT_TWO =
-  'fixed end-4 bottom-[calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom)+5.5rem)]';
+  'fixed end-4 bottom-[calc(max(calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom)),var(--rail-obstacle-clearance,0px))+5.5rem)]';
 
 /**
  * Desktop drops the rail: the bottom navigation is gone and the chat FAB is

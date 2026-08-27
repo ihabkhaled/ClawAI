@@ -259,6 +259,8 @@ export type TranslationDictionary = {
       searching: string;
       noMatches: string;
       roleUser: string;
+      notLoadedTitle: string;
+      notLoaded: string;
       roleAssistant: string;
     };
     limits: {

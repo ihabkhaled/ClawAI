@@ -166,10 +166,7 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
         <div className="min-h-0 flex-1 overflow-hidden">
-          <ThreadSearchPanel
-            search={props.search}
-            onJumpToMessage={props.virtualizedMessagesProps.handleJumpToMessage}
-          />
+          <ThreadSearchPanel search={props.search} onJumpToMessage={props.onJumpToMessage} />
           <VirtualizedMessages {...props.virtualizedMessagesProps} />
         </div>
 

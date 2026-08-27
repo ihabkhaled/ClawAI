@@ -276,6 +276,9 @@ export const de: TranslationDictionary = {
       searching: 'Wird gesucht…',
       noMatches: 'Keine Nachricht passt dazu.',
       roleUser: 'Sie',
+      notLoadedTitle: 'Diese Nachricht ist nicht geladen',
+      notLoaded:
+        'Sie liegt weiter zurück im Verlauf. Scrollen Sie nach oben, um sie zu laden, und suchen Sie erneut.',
       roleAssistant: 'Assistent',
     },
     limits: {

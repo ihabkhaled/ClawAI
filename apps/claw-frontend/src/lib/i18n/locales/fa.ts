@@ -272,6 +272,9 @@ export const fa: TranslationDictionary = {
       searching: 'در حال جست‌وجو…',
       noMatches: 'هیچ پیامی مطابقت ندارد.',
       roleUser: 'شما',
+      notLoadedTitle: 'آن پیام بارگذاری نشده است',
+      notLoaded:
+        'در بخش‌های قبلی گفت‌وگو قرار دارد. برای بارگذاری به بالا بروید و دوباره جست‌وجو کنید.',
       roleAssistant: 'دستیار',
     },
     limits: {

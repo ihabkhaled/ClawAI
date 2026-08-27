@@ -267,6 +267,8 @@ export const th: TranslationDictionary = {
       searching: 'กำลังค้นหา…',
       noMatches: 'ไม่พบข้อความที่ตรงกัน',
       roleUser: 'คุณ',
+      notLoadedTitle: 'ยังไม่ได้โหลดข้อความนั้น',
+      notLoaded: 'อยู่ก่อนหน้านี้ในบทสนทนา เลื่อนขึ้นเพื่อโหลด แล้วค้นหาอีกครั้ง',
       roleAssistant: 'ผู้ช่วย',
     },
     limits: {

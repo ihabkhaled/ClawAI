@@ -31,6 +31,7 @@ import type {
 import type { AiActionKind } from '@/enums/ai-action-kind.enum';
 import type { AlertVariant } from '@/enums/alert-variant.enum';
 import type { BadgeTone } from '@/enums/badge-tone.enum';
+import type { CodingAgentInstallFigure } from '@/enums/coding-agent-install-figure.enum';
 import type { ComposerControlVariant } from '@/enums/composer-control-variant.enum';
 import type { ConsensusConfidenceLevel } from '@/enums/consensus-confidence-level.enum';
 import type { CopyButtonVariant } from '@/enums/copy-button-variant.enum';
@@ -1008,7 +1009,7 @@ export type VirtualizedMessagesProps = {
   // Virtuoso wiring (controller-owned).
   virtuosoRef: React.Ref<VirtuosoHandle>;
   /** Scrolls to a message by id; silent when it is outside the loaded window. */
-  handleJumpToMessage: (messageId: string) => void;
+  handleJumpToMessage: (messageId: string) => boolean;
   renderItems: MessageRenderItem[];
   itemContent: (index: number, item: MessageRenderItem) => React.ReactElement;
   headerContent: () => React.ReactElement | null;
@@ -1791,6 +1792,8 @@ export type ChatThreadShellProps = {
   /** Find-in-conversation state, with jump-to. */
   search: UseInThreadSearchReturn;
   searchLabel: string;
+  /** Scrolls to a search hit, or says why it cannot reach one. */
+  onJumpToMessage: (messageId: string) => void;
   editableTitle: UseEditableTitleReturn;
   canCompare: boolean;
   compareToggleOpen: () => void;
@@ -2567,4 +2570,12 @@ export type EditUserDialogProps = {
   onSave: (userId: string, data: AdminUserUpdateRequest) => void;
   onRotatePassword: (userId: string) => void;
   t: TranslateFunction;
+};
+
+/** One schematic beside an install step. */
+export type CodingAgentInstallFigureProps = {
+  /** Which illustration to draw; undefined when the step has none. */
+  figure: CodingAgentInstallFigure | undefined;
+  /** Accessible name — the step's own translated title. */
+  label: string;
 };

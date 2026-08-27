@@ -274,6 +274,9 @@ export const it: TranslationDictionary = {
       searching: 'Ricerca in corso…',
       noMatches: 'Nessun messaggio corrisponde.',
       roleUser: 'Tu',
+      notLoadedTitle: 'Quel messaggio non è caricato',
+      notLoaded:
+        "Si trova più indietro nella conversazione. Scorri verso l'alto per caricarlo, poi cerca di nuovo.",
       roleAssistant: 'Assistente',
     },
     limits: {

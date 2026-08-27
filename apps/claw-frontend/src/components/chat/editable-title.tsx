@@ -52,11 +52,13 @@ export function EditableTitle({
 
   return (
     <div className="flex items-center gap-2">
-      <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+      <h1 className="clamp-title truncate text-2xl font-bold tracking-tight sm:text-3xl">
+        {title}
+      </h1>
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground h-8 w-8"
         onClick={editableTitle.startEditing}
         aria-label={t('common.edit')}
       >

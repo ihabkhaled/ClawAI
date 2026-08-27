@@ -17,6 +17,7 @@ import type { ChatThreadShellProps, UseThreadDetailPageReturn } from '@/types';
 
 import { useExportThread } from './use-export-thread';
 import { useInThreadSearch } from './use-in-thread-search';
+import { useJumpToMessage } from './use-jump-to-message';
 
 // Page-bootstrap controller for /chat/[threadId]. The .tsx may call EXACTLY
 // ONE hook (this one). Composes useParams + useTranslation + the data
@@ -67,6 +68,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
   const share = useShareChatController(threadId.length > 0 ? threadId : null);
   const exportThread = useExportThread(threadId, title, data.messages);
   const search = useInThreadSearch(threadId);
+  const { jumpToMessage } = useJumpToMessage(data.virtualizedMessagesProps.handleJumpToMessage);
 
   const shellProps: ChatThreadShellProps = {
     threadId,
@@ -194,6 +196,9 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
       allowCriticReview: canCritic,
     },
     virtualizedMessagesProps: data.virtualizedMessagesProps,
+    // Its own prop rather than a reach into the list's bag: the search panel is
+    // the only consumer, and the list itself never scrolls on its own behalf.
+    onJumpToMessage: jumpToMessage,
     composerHeight,
     onResizeHandleMouseDown: handleMouseDown,
     resizeAriaLabel: t('accessibility.resizeInput'),

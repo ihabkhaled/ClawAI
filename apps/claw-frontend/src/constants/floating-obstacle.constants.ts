@@ -30,3 +30,49 @@ export const FLOATING_CLEARANCE_GAP_PX = 12;
  * top of the screen. Past this, overlapping is the lesser failure.
  */
 export const FLOATING_CLEARANCE_MAX_RATIO = 0.5;
+
+/**
+ * How many extra frames a measurement may chase a still-moving layout.
+ *
+ * A breakpoint change moves boxes without resizing them — no mutation, no
+ * resize entry — so the single pass a window resize triggers can read the old
+ * position and keep it. Re-measuring while the answer changes converges in one
+ * or two frames; the cap turns a pathological layout into a wrong number rather
+ * than a permanent loop.
+ */
+export const FLOATING_CLEARANCE_SETTLE_PASSES = 4;
+
+/**
+ * The second registry: what the floating *rail* has to clear.
+ *
+ * The two are not the same set and must not share one. The toast column dodges
+ * the launcher; the launcher dodges the composer. Merging them would ask the
+ * launcher to dodge itself, and the composer — which is page furniture, not a
+ * floating control — would start pushing toasts around for no reason.
+ *
+ * Add `data-rail-obstacle` to a bottom-anchored element that owns its corner:
+ * a composer, a persistent action bar. The rail lifts above it.
+ */
+export const RAIL_OBSTACLE_ATTRIBUTE = 'data-rail-obstacle';
+export const RAIL_OBSTACLE_SELECTOR = '[data-rail-obstacle]';
+
+/** The custom property the rail slot classes read. */
+export const RAIL_CLEARANCE_VARIABLE = '--rail-obstacle-clearance';
+
+/** What the toast column measures: every registered floating control. */
+export const FLOATING_TOAST_CLEARANCE_CONFIG = {
+  selector: FLOATING_OBSTACLE_SELECTOR,
+  variable: FLOATING_CLEARANCE_VARIABLE,
+} as const;
+
+/** What the rail measures: bottom-anchored page furniture. */
+export const FLOATING_RAIL_CLEARANCE_CONFIG = {
+  selector: RAIL_OBSTACLE_SELECTOR,
+  variable: RAIL_CLEARANCE_VARIABLE,
+} as const;
+
+/** Every attribute that puts an element into one of the two registries. */
+export const FLOATING_MEASURED_ATTRIBUTES: readonly string[] = [
+  FLOATING_OBSTACLE_ATTRIBUTE,
+  RAIL_OBSTACLE_ATTRIBUTE,
+];

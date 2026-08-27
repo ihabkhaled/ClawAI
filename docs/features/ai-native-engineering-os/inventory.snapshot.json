@@ -7271,7 +7271,7 @@
           "file": "rules/35-super-administrator-and-privilege-boundaries.md"
         },
         {
-          "bytes": 4420,
+          "bytes": 6178,
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
@@ -7539,7 +7539,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4872
+        "value": 4874
       },
       "localeCount": 13,
       "locales": [
@@ -9275,7 +9275,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 391
+        "testFiles": 393
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10032,7 +10032,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1047,
+    "totalTestFiles": 1049,
     "workspaceCount": 25
   }
 }

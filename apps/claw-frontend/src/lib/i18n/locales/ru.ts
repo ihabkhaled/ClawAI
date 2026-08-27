@@ -273,6 +273,9 @@ export const ru: TranslationDictionary = {
       searching: 'Идёт поиск…',
       noMatches: 'Совпадений не найдено.',
       roleUser: 'Вы',
+      notLoadedTitle: 'Это сообщение не загружено',
+      notLoaded:
+        'Оно находится раньше в беседе. Прокрутите вверх, чтобы загрузить его, и повторите поиск.',
       roleAssistant: 'Ассистент',
     },
     limits: {

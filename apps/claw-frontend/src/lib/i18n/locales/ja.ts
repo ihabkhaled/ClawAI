@@ -273,6 +273,9 @@ export const ja: TranslationDictionary = {
       searching: '検索中…',
       noMatches: '一致するメッセージはありません。',
       roleUser: 'あなた',
+      notLoadedTitle: 'そのメッセージは読み込まれていません',
+      notLoaded:
+        '会話のさらに前にあります。上にスクロールして読み込んでから、もう一度検索してください。',
       roleAssistant: 'アシスタント',
     },
     limits: {

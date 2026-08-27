@@ -58,7 +58,13 @@ export function MessageComposer({
       disabled={isPending}
       className="safe-bottom flex h-full min-h-0 flex-col"
     >
-      <form onSubmit={handleSubmit} className="flex h-full min-h-0 flex-col gap-1.5">
+      <form
+        onSubmit={handleSubmit}
+        className="flex h-full min-h-0 flex-col gap-1.5"
+        // The composer owns the bottom-end corner on a phone, so the floating
+        // rail lifts above it instead of landing on its controls.
+        data-rail-obstacle=""
+      >
         {/* `[&>*]:shrink-0` used to sit here and outranked each control's own
             sizing, so nothing could give: a long provider name pushed the row
             off the screen instead of clipping. The square buttons hold their

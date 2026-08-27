@@ -9,6 +9,9 @@ import {
   FLOATING_ACTION_RAIL_SLOT_ONE,
   FLOATING_ACTION_RAIL_SLOT_TWO,
 } from '@/constants/floating-action.constants';
+import { RAIL_CLEARANCE_VARIABLE } from '@/constants/floating-obstacle.constants';
+
+const COMPOSER = resolve(__dirname, '../../chat/message-composer.tsx');
 
 // The chat page pins a "new thread" FAB to the bottom-end corner and the portal
 // shell pins the feedback launcher to the same corner. Both were written with
@@ -59,5 +62,29 @@ describe('mobile floating action rail', () => {
 
     expect(source).toContain('FLOATING_ACTION_RAIL_SLOT_ONE');
     expect(source).not.toContain('fixed bottom-20 end-4');
+  });
+
+  it('lifts both slots above whatever else owns the corner', () => {
+    // The nav is not the only thing down there. On a thread page the composer
+    // is, and the launcher sat on top of it — covering "Preview context" whole.
+    for (const slot of [FLOATING_ACTION_RAIL_SLOT_ONE, FLOATING_ACTION_RAIL_SLOT_TWO]) {
+      expect(slot).toContain('max(');
+      expect(slot).toContain(`var(${RAIL_CLEARANCE_VARIABLE},0px)`);
+    }
+  });
+
+  it('falls back to the nav offset when nothing has been measured', () => {
+    // A page with no registered furniture never sets the property, so the
+    // fallback is the only thing standing between the rail and bottom: 0.
+    for (const slot of [FLOATING_ACTION_RAIL_SLOT_ONE, FLOATING_ACTION_RAIL_SLOT_TWO]) {
+      expect(slot).toContain('var(--mobile-bottom-nav-height)');
+      expect(slot).toContain(',0px)');
+    }
+  });
+
+  it('registers the composer as the furniture the rail has to clear', () => {
+    const source = readFileSync(COMPOSER, 'utf8');
+
+    expect(source).toContain('data-rail-obstacle');
   });
 });
