@@ -30,7 +30,7 @@ export function useThreadDetail(threadId: string) {
     enabled: !!threadId,
   });
 
-  const virtualizedMessages = useVirtualizedMessages(threadId);
+  const virtualizedMessages = useVirtualizedMessages(threadId, isWaitingForResponse);
 
   const messagesList = virtualizedMessages.messages;
   const lastMessage = messagesList.length > 0 ? messagesList.at(-1) : undefined;

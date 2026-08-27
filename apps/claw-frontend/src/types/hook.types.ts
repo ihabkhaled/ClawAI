@@ -112,6 +112,12 @@ export type UseVerifyEmailPageReturn = {
   outcome: EmailVerificationOutcome;
 };
 
+export type UseExportThreadReturn = {
+  exportThread: () => void;
+  /** False on an empty thread, so the control can disable rather than no-op. */
+  canExport: boolean;
+};
+
 export type UseToasterViewportReturn = {
   toasts: ToastData[];
   viewportRef: React.RefObject<HTMLOListElement | null>;

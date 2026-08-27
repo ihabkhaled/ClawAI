@@ -20,6 +20,15 @@ export const MESSAGE_ROLE_LABELS: Record<MessageRole, string> = {
 export const THINKING_INDICATOR_LABEL = 'AI is thinking...';
 export const MODEL_AUTO_VALUE = '__auto__';
 export const POLLING_INTERVAL_MS = 2000;
+/**
+ * Background refetch of the message list, and only while a response is in
+ * flight.
+ *
+ * Slower than POLLING_INTERVAL_MS on purpose: the 2s interval is the belt, this
+ * is the braces. The stream itself delivers the answer; both of these exist for
+ * the case where the stream dropped and nobody noticed.
+ */
+export const MESSAGE_POLL_INTERVAL_MS = 5000;
 export const MESSAGES_PAGE_SIZE = 50;
 export const THREADS_PAGE_SIZE = 30;
 export const COMPOSER_MIN_HEIGHT = 80;

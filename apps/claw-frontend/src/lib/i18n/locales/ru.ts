@@ -256,6 +256,10 @@ export const ru: TranslationDictionary = {
     more: 'Ещё',
   },
   chat: {
+    export: {
+      action: 'Экспорт',
+      emptyThread: 'Экспортировать пока нечего — в этой беседе нет сообщений.',
+    },
     limits: {
       dailyTokensTitle: 'Дневной запас токенов израсходован',
       dailyTokensBody:

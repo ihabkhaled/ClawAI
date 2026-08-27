@@ -1,13 +1,26 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { MESSAGES_PAGE_SIZE, VIRTUOSO_START_INDEX } from '@/constants';
+import { MESSAGE_POLL_INTERVAL_MS, MESSAGES_PAGE_SIZE, VIRTUOSO_START_INDEX } from '@/constants';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { ChatMessage, UseVirtualizedMessagesReturn } from '@/types';
 import { logger } from '@/utilities';
 
-export function useVirtualizedMessages(threadId: string): UseVirtualizedMessagesReturn {
+/**
+ * The message list, paginated backwards from the newest page.
+ *
+ * `isAwaitingResponse` gates the background refetch. It used to poll every five
+ * seconds unconditionally, forever, on every open thread — including one nobody
+ * had touched in an hour and one whose last answer finished days ago. Since the
+ * stream emits a deterministic DONE, the only window where a refetch can find
+ * anything new is while a response is in flight, so that is the only window it
+ * runs in.
+ */
+export function useVirtualizedMessages(
+  threadId: string,
+  isAwaitingResponse = false,
+): UseVirtualizedMessagesReturn {
   const query = useInfiniteQuery({
     queryKey: queryKeys.threads.messagesInfinite(threadId),
     queryFn: ({ pageParam }) => {
@@ -25,7 +38,9 @@ export function useVirtualizedMessages(threadId: string): UseVirtualizedMessages
       return page < totalPages ? page + 1 : undefined;
     },
     enabled: !!threadId,
-    refetchInterval: 5000,
+    // `false` disables the interval entirely rather than setting a long one:
+    // an idle thread should cost nothing, not less.
+    refetchInterval: isAwaitingResponse ? MESSAGE_POLL_INTERVAL_MS : false,
     staleTime: 2000,
     maxPages: undefined,
   });

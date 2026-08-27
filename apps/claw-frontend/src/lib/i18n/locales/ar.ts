@@ -252,6 +252,10 @@ export const ar: TranslationDictionary = {
     more: 'المزيد',
   },
   chat: {
+    export: {
+      action: 'تصدير',
+      emptyThread: 'لا يوجد ما يُصدَّر بعد — هذه المحادثة بلا رسائل.',
+    },
     limits: {
       dailyTokensTitle: 'لقد استهلكت رموز اليوم',
       dailyTokensBody:

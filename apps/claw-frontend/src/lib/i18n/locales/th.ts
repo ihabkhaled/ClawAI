@@ -250,6 +250,10 @@ export const th: TranslationDictionary = {
     more: 'มากกว่า',
   },
   chat: {
+    export: {
+      action: 'ส่งออก',
+      emptyThread: 'ยังไม่มีอะไรให้ส่งออก — บทสนทนานี้ยังไม่มีข้อความ',
+    },
     limits: {
       dailyTokensTitle: 'คุณใช้โทเค็นของวันนี้หมดแล้ว',
       dailyTokensBody:

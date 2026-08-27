@@ -3,14 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { VirtualizedMessagesFooter } from '@/components/chat/virtualized-messages-footer';
 
-vi.mock('@/components/chat/thinking-indicator', () => ({
-  ThinkingIndicator: ({ streamError }: { streamError?: string | null }) => (
-    <div data-testid="thinking-indicator">{streamError}</div>
+vi.mock('@/components/chat/runtime-progress', () => ({
+  RuntimeProgressPanel: ({ streamError }: { streamError?: string | null }) => (
+    <div data-testid="runtime-progress-panel">{streamError}</div>
   ),
 }));
 
 describe('VirtualizedMessagesFooter', () => {
-  it('renders ThinkingIndicator when waiting for a response', () => {
+  it('renders the runtime progress panel when waiting for a response', () => {
     render(
       <VirtualizedMessagesFooter
         isWaitingForResponse
@@ -21,7 +21,7 @@ describe('VirtualizedMessagesFooter', () => {
         currentStageLabel={null}
       />,
     );
-    expect(screen.getByTestId('thinking-indicator')).toBeInTheDocument();
+    expect(screen.getByTestId('runtime-progress-panel')).toBeInTheDocument();
   });
 
   it('renders nothing when not waiting for a response', () => {

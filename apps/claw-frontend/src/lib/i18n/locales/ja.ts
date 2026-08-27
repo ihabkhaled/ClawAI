@@ -256,6 +256,10 @@ export const ja: TranslationDictionary = {
     more: 'もっと見る',
   },
   chat: {
+    export: {
+      action: 'エクスポート',
+      emptyThread: 'まだエクスポートするものがありません。この会話にはメッセージがありません。',
+    },
     limits: {
       dailyTokensTitle: '本日のトークンを使い切りました',
       dailyTokensBody:

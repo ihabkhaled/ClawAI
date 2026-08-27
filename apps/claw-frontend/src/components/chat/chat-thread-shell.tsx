@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Gavel, GitCompareArrows, Settings, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, Gavel, GitCompareArrows, Settings, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 import { EditableTitle } from '@/components/chat/editable-title';
@@ -85,6 +85,17 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
               <span className="hidden sm:inline">{props.qualityControlsLabel}</span>
             </Button>
           ) : null}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="sm:size-auto sm:h-9 sm:w-auto sm:px-3"
+            onClick={props.onExportThread}
+            disabled={!props.canExportThread}
+            aria-label={props.exportThreadLabel}
+          >
+            <Download className="h-4 w-4 sm:me-2" />
+            <span className="hidden sm:inline">{props.exportThreadLabel}</span>
+          </Button>
           <ShareChatButton {...props.shareButtonProps} />
           <Button
             variant={props.threadSettingsOpen ? 'default' : 'ghost'}

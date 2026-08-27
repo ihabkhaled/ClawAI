@@ -255,6 +255,10 @@ export const fa: TranslationDictionary = {
     more: 'بیشتر',
   },
   chat: {
+    export: {
+      action: 'برون‌ریزی',
+      emptyThread: 'هنوز چیزی برای برون‌ریزی نیست — این گفت‌وگو پیامی ندارد.',
+    },
     limits: {
       dailyTokensTitle: 'توکن‌های امروز تمام شد',
       dailyTokensBody:

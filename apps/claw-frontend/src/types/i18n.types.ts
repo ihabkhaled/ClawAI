@@ -242,6 +242,10 @@ export type TranslationDictionary = {
     more: string;
   };
   chat: {
+    export: {
+      action: string;
+      emptyThread: string;
+    };
     limits: {
       dailyTokensTitle: string;
       dailyTokensBody: string;

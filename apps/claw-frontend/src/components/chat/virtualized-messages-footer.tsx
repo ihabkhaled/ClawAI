@@ -1,7 +1,7 @@
 'use client';
 
 import { ChatLimitNoticeCard } from '@/components/chat/chat-limit-notice-card';
-import { ThinkingIndicator } from '@/components/chat/thinking-indicator';
+import { RuntimeProgressPanel } from '@/components/chat/runtime-progress';
 import type { VirtualizedMessagesFooterProps } from '@/types';
 
 // Pure-render footer mounted as Virtuoso's `components.Footer`. Wraps the
@@ -32,7 +32,7 @@ export function VirtualizedMessagesFooter({
   return (
     <div className="flex flex-col gap-3 px-4 py-2">
       {limitNotice === null ? null : <ChatLimitNoticeCard notice={limitNotice} />}
-      <ThinkingIndicator
+      <RuntimeProgressPanel
         fallbackAttempts={fallbackAttempts}
         streamError={streamError}
         judgeEvaluating={judgeEvaluating}

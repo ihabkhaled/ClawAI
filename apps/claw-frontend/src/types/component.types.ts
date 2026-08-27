@@ -620,20 +620,6 @@ export type MessageBubbleProps = {
   onRegenerate?: (messageId: string) => void;
 };
 
-export type ThinkingIndicatorProps = {
-  className?: string;
-  fallbackAttempts?: FallbackAttemptInfo[];
-  streamError?: string | null;
-  judgeEvaluating?: boolean;
-  executingModel?: string | null;
-  judgeModel?: string | null;
-  progressStages?: VisibleProgressStage[];
-  currentStageLabel?: string | null;
-  streamLive?: StreamLiveState;
-  onCancel?: () => void;
-  isCancelling?: boolean;
-};
-
 // ─── Runtime progress panel props ───────────────────────────────────────────
 // Top-level pluggable panel that replaces the monolithic ThinkingIndicator.
 // Composes existing stream-* primitives with new runtime-neutral sub-panels
@@ -998,20 +984,6 @@ export type FileCompletedStateProps = {
 
 export type AttachmentThumbnailProps = {
   fileId: string;
-};
-
-export type MessagesContentProps = {
-  isLoadingThread: boolean;
-  isLoadingMessages: boolean;
-  messages: ChatMessage[];
-  isWaitingForResponse: boolean;
-  fallbackAttempts: FallbackAttemptInfo[];
-  streamError: string | null;
-  progressStages: VisibleProgressStage[];
-  currentStageLabel: string | null;
-  messagesEndRef: React.RefObject<HTMLDivElement | null>;
-  onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
-  onRegenerate: (messageId: string) => void;
 };
 
 // Strict pure-render props for VirtualizedMessages. After the strict-TSX
@@ -1798,6 +1770,10 @@ export type ChatThreadShellProps = {
   // Header.
   title: string;
   thread: ChatThread | null;
+  /** Downloads the conversation as Markdown; disabled while it is empty. */
+  onExportThread: () => void;
+  canExportThread: boolean;
+  exportThreadLabel: string;
   editableTitle: UseEditableTitleReturn;
   canCompare: boolean;
   compareToggleOpen: () => void;

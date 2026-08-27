@@ -255,6 +255,10 @@ export const en: TranslationDictionary = {
     more: 'More',
   },
   chat: {
+    export: {
+      action: 'Export',
+      emptyThread: 'There is nothing to export yet — this conversation has no messages.',
+    },
     limits: {
       dailyTokensTitle: "You have used today's tokens",
       dailyTokensBody:

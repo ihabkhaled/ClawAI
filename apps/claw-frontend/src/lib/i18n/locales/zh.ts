@@ -246,6 +246,10 @@ export const zh: TranslationDictionary = {
     more: '更多的',
   },
   chat: {
+    export: {
+      action: '导出',
+      emptyThread: '暂时没有可导出的内容——这个对话还没有消息。',
+    },
     limits: {
       dailyTokensTitle: '今天的额度已用完',
       dailyTokensBody: '你今天的 token 额度已用完，将在 UTC 零点重置，也可以现在升级到更大的套餐。',

@@ -597,3 +597,10 @@ export type UseVirtualizedThreadsReturn = {
   fetchNextPage: () => void;
   totalCount: number;
 };
+
+/** Input for rendering a conversation as a Markdown document. */
+export type ThreadMarkdownInput = {
+  title: string;
+  exportedAt: string;
+  messages: readonly ChatMessage[];
+};
