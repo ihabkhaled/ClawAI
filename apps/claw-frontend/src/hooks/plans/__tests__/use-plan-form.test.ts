@@ -15,6 +15,7 @@ const seedPlan = {
   currency: 'USD',
   displayOrder: 2,
   isDefault: false,
+  isPopular: false,
   isActive: true,
   isPublic: true,
   isTrial: true,

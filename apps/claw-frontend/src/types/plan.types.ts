@@ -26,7 +26,10 @@ export type PlanView = {
   priceYearly: number | null;
   currency: string | null;
   displayOrder: number;
+  /** The plan a new signup is granted. */
   isDefault: boolean;
+  /** The plan the public pricing page badges "Most popular". */
+  isPopular: boolean;
   isActive: boolean;
   isPublic: boolean;
   isTrial: boolean;
@@ -272,6 +275,7 @@ export type UsePlansPageResult = {
   onActivate: (id: string) => void;
   onDeactivate: (id: string) => void;
   onSetDefault: (id: string) => void;
+  onSetPopular: (id: string) => void;
   retirementCandidate: PlanRetirementCandidate | null;
   onRequestRetirement: (plan: PlanRetirementCandidate) => void;
   onCancelRetirement: () => void;
@@ -384,6 +388,7 @@ export type PlanRowProps = {
   onActivate: (id: string) => void;
   onDeactivate: (id: string) => void;
   onSetDefault: (id: string) => void;
+  onSetPopular: (id: string) => void;
   onRetire: (id: string, name: string) => void;
   onEditHref: string;
   onModelAccessHref: string;

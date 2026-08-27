@@ -43,6 +43,7 @@ function makePlan(overrides: Partial<PlanView> = {}): PlanView {
     currency: null,
     displayOrder: 1,
     isDefault: false,
+    isPopular: false,
     isActive: true,
     isPublic: true,
     isTrial: false,

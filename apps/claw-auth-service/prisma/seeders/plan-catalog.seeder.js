@@ -82,12 +82,22 @@ function labGateProjections(labs) {
   };
 }
 
+// Mirrors POPULAR_PLAN_KEY in src/modules/plans/constants/popular-plan.constants.ts.
+// The seeder is plain JS run by `prisma db seed` and cannot import the TS source.
+const POPULAR_PLAN_KEY = 'popular';
+
 function planColumns(definition) {
   return {
     name: definition.name,
     description: definition.description,
     displayOrder: definition.displayOrder,
     isDefault: definition.isDefault,
+    // Deliberately NOT version-bumped for this field. Existing installs get the
+    // badge from migration 20260827200000, which backfills `pro`; bumping the
+    // catalog version would re-run the whole seed and could overwrite quotas an
+    // operator has since edited. Fresh installs take it from here.
+    isPopular: definition.isPopular === true,
+    popularKey: definition.isPopular === true ? POPULAR_PLAN_KEY : null,
     isTrial: definition.isTrial,
     trialDurationDays: definition.trialDurationDays,
     isActive: true,

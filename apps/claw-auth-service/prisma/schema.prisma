@@ -125,7 +125,19 @@ model Plan {
   priceYearly                        Decimal?            @map("price_yearly") @db.Decimal(12, 2)
   currency                           String?             @default("USD")
   displayOrder                       Int                 @default(0) @map("display_order")
+  // The plan a new signup is granted. Read by AuthManager.register and by
+  // UsersService when an administrator creates an account.
   isDefault                          Boolean             @default(false) @map("is_default")
+  // The plan the public pricing page badges "Most popular". A marketing
+  // decision, deliberately separate from isDefault: one flag was doing both
+  // jobs, so the badge always landed on whichever plan signups happened to get.
+  isPopular                          Boolean             @default(false) @map("is_popular")
+  // Emulated partial-unique index, following PlanPriceVersion.activeKey:
+  // carries the literal 'popular' while this plan holds the badge and NULL
+  // otherwise. Postgres treats every NULL as distinct, so any number of plans
+  // can be un-badged but a second popular plan is rejected by the database
+  // rather than by an application-level "unset the others" that races.
+  popularKey                         String?             @unique @map("popular_key")
   isTrial                            Boolean             @default(false) @map("is_trial")
   trialDurationDays                  Int?                @map("trial_duration_days")
   isActive                           Boolean             @default(true) @map("is_active")

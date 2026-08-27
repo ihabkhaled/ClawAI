@@ -14,6 +14,8 @@ const freePlan = {
   currency: 'USD',
   displayOrder: 0,
   isDefault: true,
+  isPopular: false,
+  popularKey: null,
   isActive: true,
   isPublic: true,
   dailyTokenQuota: 50000,
@@ -55,6 +57,8 @@ const mockRepo = (): Record<keyof PlansRepository, jest.Mock> => ({
   update: jest.fn(),
   setActive: jest.fn(),
   makeDefault: jest.fn(),
+  makePopular: jest.fn(),
+  clearPopular: jest.fn(),
   reorder: jest.fn(),
   countActiveAssignments: jest.fn(),
   replaceModelAccess: jest.fn(),
@@ -288,6 +292,42 @@ describe('PlansService', () => {
         planId: freePlan.id,
         rejected: ['GEMINI/ghost-model'],
       });
+    });
+  });
+
+  describe('the most-popular badge', () => {
+    it('is a separate write path from the signup plan', async () => {
+      // One flag used to serve both, so the badge always followed whichever
+      // plan new signups happened to receive.
+      repo.findById.mockResolvedValue(proPlan);
+
+      await service.setPopular('plan-pro');
+
+      expect(repo.makePopular).toHaveBeenCalledWith('plan-pro');
+      expect(repo.makeDefault).not.toHaveBeenCalled();
+    });
+
+    it('does not touch the signup plan when the badge moves', async () => {
+      repo.findById.mockResolvedValue(freePlan);
+
+      await service.setPopular('plan-free');
+
+      expect(repo.makeDefault).not.toHaveBeenCalled();
+    });
+
+    it('can clear the badge entirely, leaving the pricing page with none', async () => {
+      repo.findAll.mockResolvedValue([]);
+
+      await service.clearPopular();
+
+      expect(repo.clearPopular).toHaveBeenCalledTimes(1);
+    });
+
+    it('refuses an unknown plan before writing', async () => {
+      repo.findById.mockResolvedValue(null);
+
+      await expect(service.setPopular('nope')).rejects.toThrow();
+      expect(repo.makePopular).not.toHaveBeenCalled();
     });
   });
 });

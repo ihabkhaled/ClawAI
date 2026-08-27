@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { POPULAR_PLAN_KEY } from '../constants/popular-plan.constants';
 import {
   PlanModelAccessMode,
   type PlanRetirementMigrationStatus,
@@ -85,6 +86,40 @@ export class PlansRepository {
       this.prisma.plan.updateMany({ where: { id: { not: keepId } }, data: { isDefault: false } }),
       this.prisma.plan.update({ where: { id: keepId }, data: { isDefault: true, isActive: true } }),
     ]);
+  }
+
+  /**
+   * Moves the "Most popular" badge to one plan.
+   *
+   * Clearing `popularKey` on every other row first is what makes the unique
+   * index usable: without it, granting the badge to a second plan would collide
+   * with the literal 'popular' the first one still holds. Doing both inside one
+   * transaction is what stops two administrators racing to a state where the
+   * badge is on nobody.
+   *
+   * A retired or inactive plan is not force-activated here, unlike makeDefault:
+   * badging a plan is a marketing statement, not a decision that anybody is
+   * about to be subscribed to it.
+   */
+  async makePopular(keepId: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.plan.updateMany({
+        where: { id: { not: keepId } },
+        data: { isPopular: false, popularKey: null },
+      }),
+      this.prisma.plan.update({
+        where: { id: keepId },
+        data: { isPopular: true, popularKey: POPULAR_PLAN_KEY },
+      }),
+    ]);
+  }
+
+  /** Removes the badge entirely, leaving the pricing page with none. */
+  async clearPopular(): Promise<void> {
+    await this.prisma.plan.updateMany({
+      where: { isPopular: true },
+      data: { isPopular: false, popularKey: null },
+    });
   }
 
   async reorder(orderedIds: string[]): Promise<void> {

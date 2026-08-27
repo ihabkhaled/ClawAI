@@ -21,6 +21,7 @@ const samplePlan = {
   currency: 'USD',
   displayOrder: 0,
   isDefault: false,
+  isPopular: false,
   isActive: true,
   isPublic: true,
   isTrial: false,

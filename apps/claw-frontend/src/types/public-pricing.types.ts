@@ -24,7 +24,10 @@ export type PublicPlan = {
   name: string;
   description: string | null;
   displayOrder: number;
+  /** The plan a new signup is granted. */
   isDefault: boolean;
+  /** The plan this page badges "Most popular". */
+  isPopular: boolean;
   dailyTokenQuota: number | null;
   weeklyTokenQuota: number | null;
   monthlyTokenQuota: number | null;

@@ -48,7 +48,10 @@ export type PlanView = {
   priceYearly: number | null;
   currency: string | null;
   displayOrder: number;
+  /** The plan a new signup is granted. */
   isDefault: boolean;
+  /** The plan the public pricing page badges "Most popular". */
+  isPopular: boolean;
   isActive: boolean;
   isPublic: boolean;
   isTrial: boolean;

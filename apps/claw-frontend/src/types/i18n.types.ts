@@ -3595,6 +3595,12 @@ export type TranslationDictionary = {
     deactivateSucceeded: string;
     deactivateFailed: string;
     setDefaultSucceeded: string;
+    signupPlanBadge: string;
+    popularBadge: string;
+    setSignupPlan: string;
+    setMostPopular: string;
+    setMostPopularSucceeded: string;
+    setMostPopularFailed: string;
     setDefaultFailed: string;
     createSucceeded: string;
     createFailed: string;

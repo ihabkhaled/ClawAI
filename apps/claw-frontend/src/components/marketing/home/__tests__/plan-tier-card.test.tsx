@@ -17,6 +17,7 @@ const PLAN: PublicPlan = {
   description: 'Professional plan',
   displayOrder: 1,
   isDefault: true,
+  isPopular: false,
   dailyTokenQuota: 250_000,
   weeklyTokenQuota: null,
   monthlyTokenQuota: 4_000_000,

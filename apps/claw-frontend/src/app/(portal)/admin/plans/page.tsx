@@ -27,6 +27,7 @@ export default function AdminPlansPage(): ReactElement {
     onActivate,
     onDeactivate,
     onSetDefault,
+    onSetPopular,
     retirementCandidate,
     onRequestRetirement,
     onCancelRetirement,
@@ -97,6 +98,7 @@ export default function AdminPlansPage(): ReactElement {
               onActivate={onActivate}
               onDeactivate={onDeactivate}
               onSetDefault={onSetDefault}
+              onSetPopular={onSetPopular}
               onRetire={(id, name) => onRequestRetirement({ id, name })}
               onEditHref={ROUTES.ADMIN_PLAN_EDIT(plan.id)}
               onModelAccessHref={ROUTES.ADMIN_PLAN_MODEL_ACCESS(plan.id)}

@@ -67,6 +67,19 @@ export const plansRepository = {
     return response.data;
   },
 
+  /**
+   * Moves the "Most popular" badge on the public pricing page.
+   *
+   * Separate from setDefault, which decides the plan a new signup is granted.
+   * One endpoint used to do both, so the badge always followed the signup plan.
+   */
+  async setPopular(id: string): Promise<PlanView> {
+    const response = await apiClient.post<PlanView>(
+      `${PLANS_BASE}/${encodeURIComponent(id)}/set-popular`,
+    );
+    return response.data;
+  },
+
   async reorder(payload: ReorderPlansRequest): Promise<PlanView[]> {
     const response = await apiClient.post<PlanView[]>(`${PLANS_BASE}/reorder`, payload);
     return response.data;

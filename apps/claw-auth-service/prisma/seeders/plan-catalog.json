@@ -35,16 +35,56 @@
       "modelAccessMode": "ALLOW_ALL",
       "allowedCostClasses": [],
       "features": {
-        "COMPARE_MODE": { "accessMode": "LIMITED", "limit": 1, "window": "LIFETIME" },
-        "JUDGE_MODE": { "accessMode": "LIMITED", "limit": 1, "window": "LIFETIME" },
-        "RESEARCH_MODE": { "accessMode": "LIMITED", "limit": 1, "window": "LIFETIME" },
-        "WEB_SEARCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_FETCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_EXTRACT": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CRITIC_REVIEW": { "accessMode": "LIMITED", "limit": 1, "window": "LIFETIME" },
-        "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+        "COMPARE_MODE": {
+          "accessMode": "LIMITED",
+          "limit": 1,
+          "window": "LIFETIME"
+        },
+        "JUDGE_MODE": {
+          "accessMode": "LIMITED",
+          "limit": 1,
+          "window": "LIFETIME"
+        },
+        "RESEARCH_MODE": {
+          "accessMode": "LIMITED",
+          "limit": 1,
+          "window": "LIFETIME"
+        },
+        "WEB_SEARCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_FETCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_EXTRACT": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CRITIC_REVIEW": {
+          "accessMode": "LIMITED",
+          "limit": 1,
+          "window": "LIFETIME"
+        },
+        "WORKSPACES": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "MEMORY": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CONTEXT_PACKS": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        }
       },
       "labs": {
         "consensusMode": true,
@@ -56,7 +96,8 @@
         "pipelineLab": true,
         "costEnsemble": true,
         "rolePack": true
-      }
+      },
+      "isPopular": false
     },
     {
       "slug": "starter",
@@ -81,16 +122,56 @@
       "modelAccessMode": "ALLOW_ALL",
       "allowedCostClasses": [],
       "features": {
-        "COMPARE_MODE": { "accessMode": "LIMITED", "limit": 10, "window": "MONTH" },
-        "JUDGE_MODE": { "accessMode": "LIMITED", "limit": 2, "window": "MONTH" },
-        "RESEARCH_MODE": { "accessMode": "LIMITED", "limit": 2, "window": "MONTH" },
-        "WEB_SEARCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_FETCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_EXTRACT": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CRITIC_REVIEW": { "accessMode": "LIMITED", "limit": 1, "window": "MONTH" },
-        "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+        "COMPARE_MODE": {
+          "accessMode": "LIMITED",
+          "limit": 10,
+          "window": "MONTH"
+        },
+        "JUDGE_MODE": {
+          "accessMode": "LIMITED",
+          "limit": 2,
+          "window": "MONTH"
+        },
+        "RESEARCH_MODE": {
+          "accessMode": "LIMITED",
+          "limit": 2,
+          "window": "MONTH"
+        },
+        "WEB_SEARCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_FETCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_EXTRACT": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CRITIC_REVIEW": {
+          "accessMode": "LIMITED",
+          "limit": 1,
+          "window": "MONTH"
+        },
+        "WORKSPACES": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "MEMORY": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CONTEXT_PACKS": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        }
       },
       "labs": {
         "consensusMode": true,
@@ -102,7 +183,8 @@
         "pipelineLab": false,
         "costEnsemble": false,
         "rolePack": false
-      }
+      },
+      "isPopular": false
     },
     {
       "slug": "plus",
@@ -127,16 +209,56 @@
       "modelAccessMode": "ALLOW_ALL",
       "allowedCostClasses": [],
       "features": {
-        "COMPARE_MODE": { "accessMode": "LIMITED", "limit": 30, "window": "MONTH" },
-        "JUDGE_MODE": { "accessMode": "LIMITED", "limit": 10, "window": "MONTH" },
-        "RESEARCH_MODE": { "accessMode": "LIMITED", "limit": 10, "window": "MONTH" },
-        "WEB_SEARCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_FETCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_EXTRACT": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CRITIC_REVIEW": { "accessMode": "LIMITED", "limit": 5, "window": "MONTH" },
-        "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+        "COMPARE_MODE": {
+          "accessMode": "LIMITED",
+          "limit": 30,
+          "window": "MONTH"
+        },
+        "JUDGE_MODE": {
+          "accessMode": "LIMITED",
+          "limit": 10,
+          "window": "MONTH"
+        },
+        "RESEARCH_MODE": {
+          "accessMode": "LIMITED",
+          "limit": 10,
+          "window": "MONTH"
+        },
+        "WEB_SEARCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_FETCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_EXTRACT": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CRITIC_REVIEW": {
+          "accessMode": "LIMITED",
+          "limit": 5,
+          "window": "MONTH"
+        },
+        "WORKSPACES": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "MEMORY": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CONTEXT_PACKS": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        }
       },
       "labs": {
         "consensusMode": true,
@@ -148,7 +270,8 @@
         "pipelineLab": false,
         "costEnsemble": false,
         "rolePack": false
-      }
+      },
+      "isPopular": false
     },
     {
       "slug": "pro",
@@ -173,16 +296,56 @@
       "modelAccessMode": "ALLOW_ALL",
       "allowedCostClasses": [],
       "features": {
-        "COMPARE_MODE": { "accessMode": "LIMITED", "limit": 150, "window": "MONTH" },
-        "JUDGE_MODE": { "accessMode": "LIMITED", "limit": 75, "window": "MONTH" },
-        "RESEARCH_MODE": { "accessMode": "LIMITED", "limit": 50, "window": "MONTH" },
-        "WEB_SEARCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_FETCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_EXTRACT": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CRITIC_REVIEW": { "accessMode": "LIMITED", "limit": 50, "window": "MONTH" },
-        "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+        "COMPARE_MODE": {
+          "accessMode": "LIMITED",
+          "limit": 150,
+          "window": "MONTH"
+        },
+        "JUDGE_MODE": {
+          "accessMode": "LIMITED",
+          "limit": 75,
+          "window": "MONTH"
+        },
+        "RESEARCH_MODE": {
+          "accessMode": "LIMITED",
+          "limit": 50,
+          "window": "MONTH"
+        },
+        "WEB_SEARCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_FETCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_EXTRACT": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CRITIC_REVIEW": {
+          "accessMode": "LIMITED",
+          "limit": 50,
+          "window": "MONTH"
+        },
+        "WORKSPACES": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "MEMORY": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CONTEXT_PACKS": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        }
       },
       "labs": {
         "consensusMode": true,
@@ -194,7 +357,8 @@
         "pipelineLab": false,
         "costEnsemble": false,
         "rolePack": false
-      }
+      },
+      "isPopular": true
     },
     {
       "slug": "team",
@@ -219,16 +383,56 @@
       "modelAccessMode": "ALLOW_ALL",
       "allowedCostClasses": [],
       "features": {
-        "COMPARE_MODE": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "JUDGE_MODE": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "RESEARCH_MODE": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_SEARCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_FETCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_EXTRACT": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CRITIC_REVIEW": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+        "COMPARE_MODE": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "JUDGE_MODE": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "RESEARCH_MODE": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_SEARCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_FETCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_EXTRACT": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CRITIC_REVIEW": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WORKSPACES": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "MEMORY": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CONTEXT_PACKS": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        }
       },
       "labs": {
         "consensusMode": true,
@@ -240,7 +444,8 @@
         "pipelineLab": false,
         "costEnsemble": false,
         "rolePack": false
-      }
+      },
+      "isPopular": false
     },
     {
       "slug": "scale",
@@ -265,16 +470,56 @@
       "modelAccessMode": "ALLOW_ALL",
       "allowedCostClasses": [],
       "features": {
-        "COMPARE_MODE": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "JUDGE_MODE": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "RESEARCH_MODE": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_SEARCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_FETCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_EXTRACT": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CRITIC_REVIEW": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+        "COMPARE_MODE": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "JUDGE_MODE": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "RESEARCH_MODE": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_SEARCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_FETCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_EXTRACT": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CRITIC_REVIEW": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WORKSPACES": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "MEMORY": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CONTEXT_PACKS": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        }
       },
       "labs": {
         "consensusMode": true,
@@ -286,7 +531,8 @@
         "pipelineLab": false,
         "costEnsemble": false,
         "rolePack": false
-      }
+      },
+      "isPopular": false
     },
     {
       "slug": "unlimited",
@@ -311,16 +557,56 @@
       "modelAccessMode": "ALLOW_ALL",
       "allowedCostClasses": [],
       "features": {
-        "COMPARE_MODE": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "JUDGE_MODE": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "RESEARCH_MODE": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_SEARCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_FETCH": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WEB_EXTRACT": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CRITIC_REVIEW": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "WORKSPACES": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "MEMORY": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" },
-        "CONTEXT_PACKS": { "accessMode": "ENABLED", "limit": null, "window": "MONTH" }
+        "COMPARE_MODE": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "JUDGE_MODE": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "RESEARCH_MODE": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_SEARCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_FETCH": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WEB_EXTRACT": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CRITIC_REVIEW": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "WORKSPACES": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "MEMORY": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        },
+        "CONTEXT_PACKS": {
+          "accessMode": "ENABLED",
+          "limit": null,
+          "window": "MONTH"
+        }
       },
       "labs": {
         "consensusMode": true,
@@ -332,7 +618,8 @@
         "pipelineLab": false,
         "costEnsemble": false,
         "rolePack": false
-      }
+      },
+      "isPopular": false
     }
   ]
 }

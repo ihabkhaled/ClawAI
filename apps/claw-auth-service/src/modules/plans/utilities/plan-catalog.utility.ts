@@ -49,6 +49,7 @@ export function toCatalogEntry(
     description: plan.description,
     displayOrder: plan.displayOrder,
     isDefault: plan.isDefault,
+    isPopular: plan.isPopular,
     dailyTokenQuota: plan.dailyTokenQuota,
     weeklyTokenQuota: plan.weeklyTokenQuota,
     monthlyTokenQuota: plan.monthlyTokenQuota,

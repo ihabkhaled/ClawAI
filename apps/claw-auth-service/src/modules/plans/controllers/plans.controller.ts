@@ -64,6 +64,13 @@ export class PlansController {
     return this.plansService.deactivatePlan(id);
   }
 
+  // Declared before @Delete(':id'): Nest matches routes in declaration order,
+  // so a literal segment placed after a parameterised one is unreachable.
+  @Delete('popular')
+  async clearPopular(): Promise<PlanView[]> {
+    return this.plansService.clearPopular();
+  }
+
   @Delete(':id')
   async retire(
     @Param('id') id: string,
@@ -75,6 +82,11 @@ export class PlansController {
   @Post(':id/set-default')
   async setDefault(@Param('id') id: string): Promise<PlanView> {
     return this.plansService.setDefault(id);
+  }
+
+  @Post(':id/set-popular')
+  async setPopular(@Param('id') id: string): Promise<PlanView> {
+    return this.plansService.setPopular(id);
   }
 
   @Get(':id/price-versions')

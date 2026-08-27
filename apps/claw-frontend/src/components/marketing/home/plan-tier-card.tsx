@@ -29,10 +29,13 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
     <article
       className={cn(
         'border-border bg-card flex h-full min-h-[22rem] flex-col rounded-lg border p-6',
-        plan.isDefault && 'border-primary ring-primary/30 shadow-sm ring-1',
+        // The badge follows the marketing decision, not the signup grant. One
+        // flag used to serve both, so the badge landed on whichever plan new
+        // signups happened to receive.
+        plan.isPopular && 'border-primary ring-primary/30 shadow-sm ring-1',
       )}
     >
-      {plan.isDefault ? (
+      {plan.isPopular ? (
         <span className="bg-primary text-primary-foreground mb-3 self-start rounded-full px-2.5 py-0.5 text-xs font-medium">
           {t('marketing.pricing.mostPopular')}
         </span>
@@ -125,7 +128,7 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
           href={`${ROUTES.REGISTER}?returnTo=${encodeURIComponent(returnRoute)}`}
           aria-disabled={price === null}
           className={cn(
-            buttonVariants({ variant: plan.isDefault ? 'default' : 'outline' }),
+            buttonVariants({ variant: plan.isPopular ? 'default' : 'outline' }),
             'h-12 w-full cursor-pointer text-center leading-tight whitespace-normal',
             price === null && 'pointer-events-none opacity-50',
           )}

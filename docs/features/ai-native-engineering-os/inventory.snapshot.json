@@ -606,6 +606,11 @@
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
         },
         {
+          "method": "DELETE",
+          "route": "/admin/plans/:id",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/admin/plans/:id",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
@@ -646,8 +651,18 @@
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/admin/plans/:id/set-popular",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/admin/plans/:id/users",
+          "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/admin/plans/popular",
           "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
         },
         {
@@ -7465,7 +7480,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4819
+        "value": 4825
       },
       "localeCount": 13,
       "locales": [
@@ -9941,7 +9956,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 617,
+    "endpointCount": 620,
     "envVarCount": 347,
     "eventCount": 172,
     "frontendRouteCount": 132,

@@ -14,6 +14,7 @@ export function PlanRow({
   onActivate,
   onDeactivate,
   onSetDefault,
+  onSetPopular,
   onRetire,
   onEditHref,
   onModelAccessHref,
@@ -31,7 +32,12 @@ export function PlanRow({
           <code className="bg-muted rounded px-1.5 py-0.5 text-xs">{plan.slug}</code>
           {plan.isDefault ? (
             <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-xs text-blue-600 dark:text-blue-400">
-              {t('adminPlans.defaultBadge')}
+              {t('adminPlans.signupPlanBadge')}
+            </span>
+          ) : null}
+          {plan.isPopular ? (
+            <span className="rounded-full border border-purple-500/40 bg-purple-500/10 px-2 py-0.5 text-xs text-purple-600 dark:text-purple-400">
+              {t('adminPlans.popularBadge')}
             </span>
           ) : null}
           <span
@@ -100,6 +106,17 @@ export function PlanRow({
               {t('adminPlans.activate')}
             </Button>
           )}
+          {plan.isPopular ? null : (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => onSetPopular(plan.id)}
+              disabled={isPending}
+            >
+              {t('adminPlans.setMostPopular')}
+            </Button>
+          )}
           {plan.isDefault ? null : (
             <>
               <Button
@@ -109,7 +126,7 @@ export function PlanRow({
                 onClick={() => onSetDefault(plan.id)}
                 disabled={isPending}
               >
-                {t('adminPlans.setDefault')}
+                {t('adminPlans.setSignupPlan')}
               </Button>
               <Button
                 type="button"

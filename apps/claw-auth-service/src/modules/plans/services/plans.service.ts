@@ -173,6 +173,27 @@ export class PlansService {
     return this.getPlan(id);
   }
 
+  /**
+   * Moves the "Most popular" badge.
+   *
+   * A separate endpoint from setDefault on purpose: one flag was serving both
+   * the signup grant and the marketing badge, so the badge always followed
+   * whichever plan signups happened to receive. Splitting the write path is what
+   * makes the two decisions independently settable.
+   */
+  async setPopular(id: string): Promise<PlanView> {
+    await this.getPlan(id);
+    await this.plansRepository.makePopular(id);
+    this.logger.log(`setPopular: id=${id}`);
+    return this.getPlan(id);
+  }
+
+  async clearPopular(): Promise<PlanView[]> {
+    await this.plansRepository.clearPopular();
+    this.logger.log('clearPopular: no plan is badged');
+    return this.listPlans();
+  }
+
   async reorder(orderedIds: string[]): Promise<PlanView[]> {
     await this.plansRepository.reorder(orderedIds);
     return this.listPlans();
@@ -298,6 +319,7 @@ export class PlansService {
       currency: plan.currency,
       displayOrder: plan.displayOrder,
       isDefault: plan.isDefault,
+      isPopular: plan.isPopular,
       isActive: plan.isActive,
       isPublic: plan.isPublic,
       isTrial: plan.isTrial,

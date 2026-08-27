@@ -65,6 +65,7 @@ describe('useAdminUserMutations', () => {
       currency: 'USD',
       displayOrder: 1,
       isDefault: false,
+      isPopular: false,
       isActive: true,
       isPublic: true,
       isTrial: false,

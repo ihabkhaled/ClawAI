@@ -551,6 +551,11 @@
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
       },
       {
+        "method": "DELETE",
+        "route": "/admin/plans/:id",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/admin/plans/:id",
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
@@ -591,8 +596,18 @@
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/admin/plans/:id/set-popular",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/admin/plans/:id/users",
+        "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/admin/plans/popular",
         "source": "apps/claw-auth-service/src/modules/plans/controllers/plans.controller.ts"
       },
       {
@@ -3123,5 +3138,5 @@
     ]
   },
   "generated": true,
-  "total": 617
+  "total": 620
 }

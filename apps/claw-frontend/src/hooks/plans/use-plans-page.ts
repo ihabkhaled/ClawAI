@@ -151,6 +151,36 @@ export function usePlansPage(): UsePlansPageResult & {
     [setDefaultMutation],
   );
 
+  const setPopularMutation = useMutation({
+    mutationFn: (id: string) => plansRepository.setPopular(id),
+    onMutate: (id: string) => {
+      setPendingId(id);
+      setMutationError(null);
+    },
+    onSuccess: () => {
+      showToast.success({ description: t('adminPlans.setMostPopularSucceeded') });
+      invalidate();
+    },
+    onError: (err: Error) => {
+      setMutationError(err);
+      showToast.apiError(err, t('adminPlans.setMostPopularFailed'), { translate: t });
+    },
+    onSettled: () => setPendingId(null),
+  });
+
+  const onSetPopular = useCallback(
+    (id: string): void => {
+      logger.info({
+        component: 'admin-plans',
+        action: 'set-popular',
+        message: 'Setting the most popular plan',
+        details: { id },
+      });
+      setPopularMutation.mutate(id);
+    },
+    [setPopularMutation],
+  );
+
   const onRequestRetirement = useCallback(
     (plan: PlanRetirementCandidate): void =>
       setRetirementCandidate({ id: plan.id, name: plan.name }),
@@ -181,6 +211,7 @@ export function usePlansPage(): UsePlansPageResult & {
     onActivate,
     onDeactivate,
     onSetDefault,
+    onSetPopular,
     retirementCandidate,
     onRequestRetirement,
     onCancelRetirement,
