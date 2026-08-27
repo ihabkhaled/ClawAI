@@ -1,5 +1,6 @@
 import type { UseFormReturn } from 'react-hook-form';
 
+import type { ToastData } from '@/components/ui/use-toast';
 import type { MessageFeedback } from '@/enums';
 import type { EmailVerificationOutcome } from '@/enums/email-verification-outcome.enum';
 import type { PasswordInputType } from '@/enums/password-input-type.enum';
@@ -108,6 +109,16 @@ export type UseCreateUserFormReturn = {
 
 export type UseVerifyEmailPageReturn = {
   outcome: EmailVerificationOutcome;
+};
+
+export type UseToasterViewportReturn = {
+  toasts: ToastData[];
+  viewportRef: React.RefObject<HTMLOListElement | null>;
+};
+
+export type UseFloatingObstacleClearanceReturn = {
+  /** Force a re-measure — for callers that move a floating element themselves. */
+  remeasure: () => void;
 };
 
 export type UsePasswordRotationGuardReturn = {

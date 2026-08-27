@@ -128,6 +128,7 @@ export default function ChatPage() {
         disabled={isCreating}
         aria-label={t('chat.newChatFab')}
         className={`${FLOATING_ACTION_RAIL_SLOT_ONE} z-30 h-14 w-14 rounded-full shadow-lg md:hidden`}
+        data-floating-obstacle=""
       >
         <Plus className="h-6 w-6" />
       </Button>

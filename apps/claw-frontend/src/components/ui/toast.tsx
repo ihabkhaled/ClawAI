@@ -22,7 +22,14 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      'safe-bottom safe-bottom-base-nav fixed bottom-0 z-[100] flex max-h-[calc(100dvh-var(--mobile-bottom-nav-height))] w-full flex-col-reverse gap-2 px-3 sm:right-0 sm:bottom-0 sm:px-4 md:max-w-[420px]',
+      // The bottom offset is a live measurement, not a constant. This used to
+      // reserve exactly one obstacle -- the mobile bottom nav -- so toasts sat
+      // on top of the feedback launcher, the chat FAB and the install prompt.
+      // `--toast-obstacle-clearance` is written by useFloatingObstacleClearance
+      // from the real boxes of everything tagged data-floating-obstacle, and
+      // defaults to 0 so the column still renders before the first measurement
+      // and in any environment without JS.
+      'safe-bottom safe-bottom-base-nav fixed bottom-[var(--toast-obstacle-clearance,0px)] z-[100] flex max-h-[calc(100dvh-var(--mobile-bottom-nav-height))] w-full flex-col-reverse gap-2 px-3 transition-[bottom] duration-200 sm:right-0 sm:px-4 md:max-w-[420px]',
       className,
     )}
     {...props}
@@ -82,7 +89,7 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      'text-foreground/60 hover:text-foreground absolute top-1 end-1 flex min-h-11 min-w-11 items-center justify-center rounded-md opacity-100 transition-opacity focus:ring-2 focus:outline-none md:top-2 md:end-2 md:min-h-0 md:min-w-0 md:p-1 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100',
+      'text-foreground/60 hover:text-foreground absolute end-1 top-1 flex min-h-11 min-w-11 items-center justify-center rounded-md opacity-100 transition-opacity focus:ring-2 focus:outline-none md:end-2 md:top-2 md:min-h-0 md:min-w-0 md:p-1 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100',
       className,
     )}
     toast-close=""
@@ -105,7 +112,11 @@ const ToastDescription = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Description>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>
 >(({ className, ...props }, ref) => (
-  <ToastPrimitives.Description ref={ref} className={cn('text-sm opacity-90 break-words', className)} {...props} />
+  <ToastPrimitives.Description
+    ref={ref}
+    className={cn('text-sm break-words opacity-90', className)}
+    {...props}
+  />
 ));
 ToastDescription.displayName = ToastPrimitives.Description.displayName;
 
@@ -114,7 +125,12 @@ type ToastIconProps = { variant: ToastVariant; className?: string };
 function ToastIcon({ variant, className }: ToastIconProps): React.ReactElement | null {
   const Icon = TOAST_VARIANT_ICONS[variant];
   if (!Icon) return null;
-  return <Icon aria-hidden="true" className={cn('mt-0.5 h-5 w-5 shrink-0', TOAST_VARIANT_ICON_CLASSES[variant], className)} />;
+  return (
+    <Icon
+      aria-hidden="true"
+      className={cn('mt-0.5 h-5 w-5 shrink-0', TOAST_VARIANT_ICON_CLASSES[variant], className)}
+    />
+  );
 }
 
 type ToastProgressBarProps = { variant: ToastVariant; durationMs: number };
@@ -126,10 +142,18 @@ function ToastProgressBar({ variant, durationMs }: ToastProgressBarProps): React
     return () => window.cancelAnimationFrame(handle);
   }, []);
   return (
-    <div aria-hidden="true" className="bg-foreground/5 pointer-events-none absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-md">
+    <div
+      aria-hidden="true"
+      className="bg-foreground/5 pointer-events-none absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-md"
+    >
       <div
         className={cn('h-full origin-left', TOAST_VARIANT_PROGRESS_CLASSES[variant])}
-        style={{ width, transitionProperty: 'width', transitionDuration: `${durationMs}ms`, transitionTimingFunction: 'linear' }}
+        style={{
+          width,
+          transitionProperty: 'width',
+          transitionDuration: `${durationMs}ms`,
+          transitionTimingFunction: 'linear',
+        }}
       />
     </div>
   );

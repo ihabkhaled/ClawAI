@@ -151,6 +151,7 @@ export type {
   WhyThisModelPanelProps,
 } from './why-this-model-component.types';
 export type { WhyThisModelRowProps } from './why-this-model-row.types';
+export type { FloatingClearanceInput, FloatingObstacleRect } from './floating-obstacle.types';
 export type {
   PasswordRequirementState,
   PasswordStrengthPresentation,
@@ -559,6 +560,8 @@ export type {
   UseCreateUserDialogReturn,
   UseCreateUserFormReturn,
   UseEditUserFormReturn,
+  UseFloatingObstacleClearanceReturn,
+  UseToasterViewportReturn,
   UsePasswordRotationGuardReturn,
   UseVerifyEmailPageReturn,
 } from './hook.types';

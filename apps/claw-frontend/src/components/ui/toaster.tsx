@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Toast,
@@ -10,9 +10,9 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-} from "@/components/ui/toast";
-import { useToast } from "@/components/ui/use-toast";
-import { ToastVariant } from "@/enums/toast-variant.enum";
+} from '@/components/ui/toast';
+import { ToastVariant } from '@/enums/toast-variant.enum';
+import { useToasterViewport } from '@/hooks/layout/use-toaster-viewport';
 
 // Reads the current toast queue and renders each toast as a row of:
 //   [icon] [title + description + optional action] [close-X] [progress-bar]
@@ -23,7 +23,7 @@ import { ToastVariant } from "@/enums/toast-variant.enum";
 //   - action renders only when the consumer passes one
 //   - progress bar respects per-toast `durationMs` (0 disables it)
 export function Toaster(): React.ReactElement {
-  const { toasts } = useToast();
+  const { toasts, viewportRef } = useToasterViewport();
 
   return (
     <ToastProvider>
@@ -52,7 +52,7 @@ export function Toaster(): React.ReactElement {
           </Toast>
         );
       })}
-      <ToastViewport />
+      <ToastViewport ref={viewportRef} />
     </ToastProvider>
   );
 }

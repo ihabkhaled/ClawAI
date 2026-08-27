@@ -14,6 +14,9 @@ export function FeedbackLauncher({ onOpen }: FeedbackLauncherProps) {
     <Button
       type="button"
       className={FEEDBACK_LAUNCHER_CLASSES}
+      // Joins the floating registry, so the toast column measures around it
+      // instead of stacking on top of it.
+      data-floating-obstacle=""
       aria-label={t('feedback.launcher.ariaLabel')}
       title={t('feedback.launcher.tooltip')}
       onClick={onOpen}
