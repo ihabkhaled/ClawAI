@@ -255,6 +255,7 @@ export const fa: TranslationDictionary = {
     more: 'بیشتر',
   },
   chat: {
+    threadListDrawer: 'گفت‌وگوها',
     export: {
       action: 'برون‌ریزی',
       emptyThread: 'هنوز چیزی برای برون‌ریزی نیست — این گفت‌وگو پیامی ندارد.',

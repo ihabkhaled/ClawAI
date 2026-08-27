@@ -1092,6 +1092,11 @@ export type HighlightedTextProps = {
   className?: string;
 };
 
+export type ThreadListDrawerProps = {
+  /** Accessible name for the trigger and the sheet title. */
+  label: string;
+};
+
 export type GroupedThreadListProps = {
   threads: ChatThread[];
   isLoading: boolean;
@@ -1774,6 +1779,8 @@ export type ChatThreadShellProps = {
   onExportThread: () => void;
   canExportThread: boolean;
   exportThreadLabel: string;
+  /** Accessible name for the mobile thread-list drawer. */
+  threadListDrawerLabel: string;
   editableTitle: UseEditableTitleReturn;
   canCompare: boolean;
   compareToggleOpen: () => void;

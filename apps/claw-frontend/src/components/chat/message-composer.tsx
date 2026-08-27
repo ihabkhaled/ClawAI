@@ -7,6 +7,7 @@ import { PreviewContextButton } from '@/components/chat/preview-context-button';
 import { ResearchToggle } from '@/components/chat/research-toggle';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { NEW_THREAD_DRAFT_KEY } from '@/constants';
 import { ComposerControlVariant, PlanFeature } from '@/enums';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useMessageComposerState } from '@/hooks/chat/use-message-composer-state';
@@ -38,7 +39,15 @@ export function MessageComposer({
     handleChange,
     ingestFiles,
     isUploadingAttachment,
-  } = useMessageComposerState({ onSend, isPending, selectedModel });
+  } = useMessageComposerState({
+    onSend,
+    isPending,
+    selectedModel,
+    // A composer with no thread yet (the new-chat surface) still gets a draft,
+    // under a stable key, so a message typed before the thread exists survives
+    // a refresh too.
+    threadId: threadId ?? NEW_THREAD_DRAFT_KEY,
+  });
 
   const hasContent = content.trim().length > 0;
   const canSubmit = !isPending && hasContent;

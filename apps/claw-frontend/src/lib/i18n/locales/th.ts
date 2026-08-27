@@ -250,6 +250,7 @@ export const th: TranslationDictionary = {
     more: 'มากกว่า',
   },
   chat: {
+    threadListDrawer: 'บทสนทนา',
     export: {
       action: 'ส่งออก',
       emptyThread: 'ยังไม่มีอะไรให้ส่งออก — บทสนทนานี้ยังไม่มีข้อความ',

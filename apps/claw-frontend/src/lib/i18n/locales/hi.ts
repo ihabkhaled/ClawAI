@@ -254,6 +254,7 @@ export const hi: TranslationDictionary = {
     more: 'अधिक',
   },
   chat: {
+    threadListDrawer: 'बातचीत',
     export: {
       action: 'निर्यात करें',
       emptyThread: 'अभी निर्यात करने के लिए कुछ नहीं है — इस बातचीत में कोई संदेश नहीं है।',

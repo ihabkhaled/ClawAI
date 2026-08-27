@@ -73,6 +73,31 @@ export const RICH_PROMPT_DEFAULT_MAX_ROWS = 12;
 export const COMPOSER_SEED_STORAGE_KEY = 'chat:nextComposerSeed';
 
 /**
+ * Per-thread composer drafts.
+ *
+ * One key per thread, not one shared key: a half-written message leaking from
+ * one conversation into another is worse than losing it.
+ */
+export const COMPOSER_DRAFT_KEY_PREFIX = 'chat:draft:';
+
+/**
+ * Drafts longer than this are dropped rather than saved.
+ *
+ * localStorage is a small, shared, synchronous budget for the whole origin.
+ * A pasted document in the composer is not worth spending it on, and a
+ * QuotaExceededError here would break the composer for every thread.
+ */
+export const COMPOSER_DRAFT_MAX_LENGTH = 20_000;
+
+/**
+ * The draft key for a composer with no thread yet.
+ *
+ * The new-chat surface has no id to scope by, but a message typed there is
+ * exactly the one worth not losing.
+ */
+export const NEW_THREAD_DRAFT_KEY = 'new';
+
+/**
  * Rough per-token cost estimates (USD) for common providers.
  * Used only for display — not billing.
  */

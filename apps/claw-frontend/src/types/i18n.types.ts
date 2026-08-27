@@ -242,6 +242,7 @@ export type TranslationDictionary = {
     more: string;
   };
   chat: {
+    threadListDrawer: string;
     export: {
       action: string;
       emptyThread: string;

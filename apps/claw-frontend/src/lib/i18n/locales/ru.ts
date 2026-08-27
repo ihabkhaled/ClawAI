@@ -256,6 +256,7 @@ export const ru: TranslationDictionary = {
     more: 'Ещё',
   },
   chat: {
+    threadListDrawer: 'Беседы',
     export: {
       action: 'Экспорт',
       emptyThread: 'Экспортировать пока нечего — в этой беседе нет сообщений.',

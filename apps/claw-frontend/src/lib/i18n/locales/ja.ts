@@ -256,6 +256,7 @@ export const ja: TranslationDictionary = {
     more: 'もっと見る',
   },
   chat: {
+    threadListDrawer: '会話',
     export: {
       action: 'エクスポート',
       emptyThread: 'まだエクスポートするものがありません。この会話にはメッセージがありません。',

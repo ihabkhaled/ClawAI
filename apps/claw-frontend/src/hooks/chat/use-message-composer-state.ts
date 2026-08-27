@@ -12,13 +12,22 @@ import type {
   UseMessageComposerStateReturn,
 } from '@/types';
 import { logger } from '@/utilities';
+import {
+  clearComposerDraft,
+  readComposerDraft,
+  writeComposerDraft,
+} from '@/utilities/composer-draft.utility';
 
 export const useMessageComposerState = ({
   onSend,
   isPending,
   selectedModel,
+  threadId,
 }: UseMessageComposerStateParams): UseMessageComposerStateReturn => {
-  const [content, setContent] = useState('');
+  // Seeded from the saved draft rather than restored in an effect: an effect
+  // would render an empty composer first and then fill it, which reads as the
+  // page overwriting what you typed.
+  const [content, setContent] = useState(() => readComposerDraft(threadId));
   const [validationError, setValidationError] = useState<string | null>(null);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [research, setResearch] = useState<ResearchOptions>(DEFAULT_RESEARCH_OPTIONS);
@@ -56,6 +65,13 @@ export const useMessageComposerState = ({
     }
   }, []);
 
+  // Persist on every keystroke. localStorage writes are synchronous but cheap
+  // at this size, and debouncing would lose the last few characters on the exact
+  // event this exists for — a crash or a tab close mid-sentence.
+  useEffect(() => {
+    writeComposerDraft(threadId, content);
+  }, [content, threadId]);
+
   const validateAndSend = useCallback((): boolean => {
     const result = sendMessageSchema.safeParse({ content: content.trim() });
     if (!result.success) {
@@ -87,9 +103,12 @@ export const useMessageComposerState = ({
       research.mode === ResearchMode.NONE ? undefined : research,
     );
     setContent('');
+    // Cleared explicitly rather than left to the effect: the message has been
+    // sent, so a draft of it is no longer a draft.
+    clearComposerDraft(threadId);
     setSelectedFileIds([]);
     return true;
-  }, [content, onSend, selectedModel, selectedFileIds, research]);
+  }, [content, onSend, selectedModel, selectedFileIds, research, threadId]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent): void => {

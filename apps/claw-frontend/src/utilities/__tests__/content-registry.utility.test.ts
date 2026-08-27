@@ -66,12 +66,18 @@ describe('content registry integrity', () => {
       '/about',
       '/acceptable-use',
       '/architecture',
+      '/coding-agent',
+      '/coding-agent/install',
       '/compare',
       '/compare/chatgpt',
       '/compare/claude',
       '/compare/copilot',
+      '/compare/deepseek',
       '/compare/gemini',
+      '/compare/glm',
+      '/compare/kimi',
       '/compare/perplexity',
+      '/compare/qwen',
       '/contact',
       '/cookies',
       '/faq',
@@ -103,9 +109,14 @@ describe('getIndexablePages / getAdEligiblePages defense in depth', () => {
   it('returns only reviewed, published editorial pages as ad surfaces', () => {
     const eligible = getAdEligiblePages();
     const paths = [...new Set(eligible.map((page) => page.canonicalPath))].sort();
+    // The two Coding Agent pages are ad-eligible because they are ClawAI's own
+    // product surface. The comparison pages are not: a page whose job is a fair
+    // comparison of named competitors does not also carry ad inventory.
     expect(paths).toEqual([
       '/',
       '/architecture',
+      '/coding-agent',
+      '/coding-agent/install',
       '/faq',
       '/features',
       '/how-it-works',
@@ -150,8 +161,8 @@ describe('localized publication boundary', () => {
   });
 
   it('resolves metadata for every supported locale', () => {
-    expect(getPublishedPagesForLocale(Locale.EN).length).toBe(22);
-    expect(getPublishedPagesForLocale(Locale.JA).length).toBe(22);
+    expect(getPublishedPagesForLocale(Locale.EN).length).toBe(28);
+    expect(getPublishedPagesForLocale(Locale.JA).length).toBe(28);
     expect(getPageBySlugAndLocale('features', Locale.EN)?.title.toLowerCase()).toContain(
       'features',
     );

@@ -252,6 +252,7 @@ export const ar: TranslationDictionary = {
     more: 'المزيد',
   },
   chat: {
+    threadListDrawer: 'المحادثات',
     export: {
       action: 'تصدير',
       emptyThread: 'لا يوجد ما يُصدَّر بعد — هذه المحادثة بلا رسائل.',

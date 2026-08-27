@@ -257,6 +257,7 @@ export const it: TranslationDictionary = {
     more: 'Altro',
   },
   chat: {
+    threadListDrawer: 'Conversazioni',
     export: {
       action: 'Esporta',
       emptyThread: "Non c'è ancora nulla da esportare: questa conversazione non ha messaggi.",

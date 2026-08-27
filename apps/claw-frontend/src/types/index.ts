@@ -562,6 +562,7 @@ export type {
   UseEditUserFormReturn,
   UseFloatingObstacleClearanceReturn,
   UseExportThreadReturn,
+  UseThreadListDrawerReturn,
   UseToasterViewportReturn,
   UsePasswordRotationGuardReturn,
   UseVerifyEmailPageReturn,

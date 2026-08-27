@@ -259,6 +259,7 @@ export const de: TranslationDictionary = {
     more: 'Mehr',
   },
   chat: {
+    threadListDrawer: 'Unterhaltungen',
     export: {
       action: 'Exportieren',
       emptyThread: 'Es gibt noch nichts zu exportieren — diese Unterhaltung hat keine Nachrichten.',

@@ -75,6 +75,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     onExportThread: exportThread.exportThread,
     canExportThread: exportThread.canExport,
     exportThreadLabel: t('chat.export.action'),
+    threadListDrawerLabel: t('chat.threadListDrawer'),
     editableTitle,
     canCompare,
     compareToggleOpen: () => togglePanel(ActiveThreadPanel.COMPARE),

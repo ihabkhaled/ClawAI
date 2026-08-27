@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ComparisonHubPage } from '@/components/marketing/compare/comparison-hub-page';
 import { ComparisonPage } from '@/components/marketing/compare/comparison-page';
-import { COMPARISON_DIMENSION_ORDER } from '@/constants/public-comparison.constants';
+import { COMPARISON_DIMENSION_ORDER, COMPARISON_RIVAL_ORDER  } from '@/constants/public-comparison.constants';
 import { ComparisonRival } from '@/enums/comparison-rival.enum';
 
 vi.mock('next/headers', () => ({
@@ -80,7 +80,7 @@ describe('ComparisonPage', () => {
     expect(container.innerHTML).not.toContain('"Review"');
   });
 
-  it('links to the other four comparisons and never to itself', async () => {
+  it('links to every other comparison and never to itself', async () => {
     render(await ComparisonPage({ rival: ComparisonRival.COPILOT }));
 
     const rail = screen.getByRole('navigation', {
@@ -89,9 +89,14 @@ describe('ComparisonPage', () => {
     const hrefs = within(rail)
       .getAllByRole('link')
       .map((link) => link.getAttribute('href'));
-    expect(hrefs).toHaveLength(4);
+
+    // Derived from the order rather than hardcoded: the rail's contract is
+    // "every rival except this one", and pinning a count here would just have
+    // to be edited again the next time a rival is added.
+    expect(hrefs).toHaveLength(COMPARISON_RIVAL_ORDER.length - 1);
     expect(hrefs).not.toContain('/en/compare/copilot');
     expect(hrefs).toContain('/en/compare/chatgpt');
+    expect(hrefs).toContain('/en/compare/kimi');
   });
 
   it('states the independence disclaimer on the page itself', async () => {
@@ -109,7 +114,7 @@ describe('ComparisonHubPage', () => {
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     const graph = readJsonLd(container)['@graph'] as Array<Record<string, unknown>>;
     expect(graph.map((node) => node['@type'])).toEqual(['WebPage', 'BreadcrumbList', 'ItemList']);
-    expect(graph[2]?.['itemListElement']).toHaveLength(5);
+    expect(graph[2]?.['itemListElement']).toHaveLength(COMPARISON_RIVAL_ORDER.length);
     expect(screen.getByText('Compare with ChatGPT')).toBeInTheDocument();
     expect(screen.getByText('Compare with Microsoft Copilot')).toBeInTheDocument();
   });

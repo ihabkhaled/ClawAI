@@ -246,6 +246,7 @@ export const zh: TranslationDictionary = {
     more: '更多的',
   },
   chat: {
+    threadListDrawer: '对话',
     export: {
       action: '导出',
       emptyThread: '暂时没有可导出的内容——这个对话还没有消息。',

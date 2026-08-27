@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { EditableTitle } from '@/components/chat/editable-title';
 import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel';
 import { MessageComposer } from '@/components/chat/message-composer';
+import { ThreadListDrawer } from '@/components/chat/thread-list-drawer';
 import { ThreadQualityPanel } from '@/components/chat/thread-quality-panel';
 import { ThreadSettings } from '@/components/chat/thread-settings';
 import { VirtualizedMessages } from '@/components/chat/virtualized-messages';
@@ -45,6 +46,7 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
               <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
             </Link>
           </Button>
+          <ThreadListDrawer label={props.threadListDrawerLabel} />
           <div className="min-w-0 flex-1">
             <EditableTitle title={props.title} editableTitle={props.editableTitle} />
             {props.thread ? (

@@ -112,6 +112,22 @@ export type UseVerifyEmailPageReturn = {
   outcome: EmailVerificationOutcome;
 };
 
+export type UseThreadListDrawerReturn = {
+  isOpen: boolean;
+  setOpen: (open: boolean) => void;
+  threads: ChatThread[];
+  isLoading: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
+  fetchNextPage: () => void;
+  search: string;
+  setSearch: (value: string) => void;
+  handlePin: (id: string, isPinned: boolean) => void;
+  handleArchive: (id: string, isArchived: boolean) => void;
+  isPinPending: boolean;
+  isArchivePending: boolean;
+};
+
 export type UseExportThreadReturn = {
   exportThread: () => void;
   /** False on an empty thread, so the control can disable rather than no-op. */
@@ -381,6 +397,8 @@ export type UseImageGenerationBubbleStateReturn = {
 };
 
 export type UseMessageComposerStateParams = {
+  /** Scopes the saved draft, so one thread's half-written message stays there. */
+  threadId: string;
   onSend: (
     content: string,
     modelSelection?: ModelSelection,
