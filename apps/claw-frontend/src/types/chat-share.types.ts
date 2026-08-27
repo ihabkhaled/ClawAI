@@ -63,6 +63,21 @@ export type PublicChatShareMessage = {
   providerLabel: string | null;
   modelLabel: string | null;
   createdAt: string;
+  /** Published images. Empty for a message that carried none. */
+  assets: PublicChatShareAsset[];
+};
+
+/**
+ * One published image.
+ *
+ * `publicAssetId` is a handle onto a share-owned copy, resolvable only through
+ * the share that owns it. The private file id and any storage URL stay on the
+ * server. See docs/13-adr/adr-075-public-share-assets.md.
+ */
+export type PublicChatShareAsset = {
+  publicAssetId: string;
+  mimeType: string;
+  altText: string | null;
 };
 
 /** One entry of the sitemap feed. Identifier and timestamp, nothing else. */

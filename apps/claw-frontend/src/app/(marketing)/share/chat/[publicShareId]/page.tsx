@@ -95,6 +95,8 @@ export default async function PublicSharedChatPage({
       <PublicSharedMessageList
         {...view.messageListProps}
         messages={messages}
+        publicShareId={share.publicShareId}
+        imageLabel={view.imageLabel}
         inlineAd={
           <AdUnit
             slot={slots.sharedChatInline}

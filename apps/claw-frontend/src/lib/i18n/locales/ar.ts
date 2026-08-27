@@ -3946,6 +3946,7 @@ export const ar: TranslationDictionary = {
       roleAssistant: 'المساعد',
       truncated: 'تم اختصار هذه الرسالة لأنها طويلة بشكل غير معتاد.',
       advertisement: 'إعلان',
+      sharedImage: 'صورة مشاركة في هذه المحادثة',
       backToHome: 'الانتقال إلى ClawAI',
       report: 'الإبلاغ عن هذه الصفحة',
       footerDisclaimer:

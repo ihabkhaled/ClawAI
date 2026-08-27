@@ -35,4 +35,6 @@ export type SharedChatViewModel = {
   pathname: string;
   /** Accessible label for every ad container on the page. */
   adLabel: string;
+  /** Alt text for a published image whose source turn carried none. */
+  imageLabel: string;
 };

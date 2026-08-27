@@ -4034,6 +4034,7 @@ export const it: TranslationDictionary = {
       roleAssistant: 'Assistente',
       truncated: 'Questo messaggio è stato accorciato perché insolitamente lungo.',
       advertisement: 'Pubblicità',
+      sharedImage: 'Immagine condivisa in questa conversazione',
       backToHome: 'Vai a ClawAI',
       report: 'Segnala questa pagina',
       footerDisclaimer:

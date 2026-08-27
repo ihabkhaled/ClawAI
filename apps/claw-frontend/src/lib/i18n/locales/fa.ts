@@ -3996,6 +3996,7 @@ export const fa: TranslationDictionary = {
       roleAssistant: 'دستیار',
       truncated: 'این پیام به دلیل طولانی بودن آن کوتاه شد.',
       advertisement: 'تبلیغات',
+      sharedImage: 'تصویری که در این گفت‌وگو به اشتراک گذاشته شده است',
       backToHome: 'به ClawAI بروید',
       report: 'گزارش این صفحه',
       footerDisclaimer:

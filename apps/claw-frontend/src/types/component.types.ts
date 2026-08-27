@@ -45,7 +45,11 @@ import type {
   RequestEmailChangeFormValues,
 } from '@/lib/validation/email-change.schema';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
-import type { OwnerChatShare, PublicChatShareMessage } from '@/types/chat-share.types';
+import type {
+  OwnerChatShare,
+  PublicChatShareAsset,
+  PublicChatShareMessage,
+} from '@/types/chat-share.types';
 import type { TranslationDictionary, TranslateFunction } from '@/types/i18n.types';
 import type {
   ResearchEvidenceBundle,
@@ -2437,8 +2441,18 @@ export type PublicSharedChatHeaderProps = {
   snapshotDisclaimer: string;
 };
 
+export type PublicSharedAssetsProps = {
+  publicShareId: string;
+  assets: PublicChatShareAsset[];
+  /** Alt text for an image whose source turn carried none. */
+  imageLabel: string;
+};
+
 export type PublicSharedMessageProps = {
   message: PublicChatShareMessage;
+  /** Needed to build the share-scoped asset URLs. */
+  publicShareId: string;
+  imageLabel: string;
   roleLabel: string;
   /** Pre-formatted timestamp. Formatting on the server keeps SSR deterministic. */
   timestampLabel: string;
@@ -2467,6 +2481,10 @@ export type PublicSharedMessageListPresentation = {
 
 export type PublicSharedMessageListProps = PublicSharedMessageListPresentation & {
   messages: PublicChatShareMessage[];
+  /** Needed to build the share-scoped asset URLs. */
+  publicShareId: string;
+  /** Alt text for a published image whose source turn carried none. */
+  imageLabel: string;
   /** Rendered between message groups when the page is ad-eligible. */
   inlineAd: React.ReactNode;
 };

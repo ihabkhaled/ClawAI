@@ -4010,6 +4010,7 @@ export type TranslationDictionary = {
       roleAssistant: string;
       truncated: string;
       advertisement: string;
+      sharedImage: string;
       backToHome: string;
       report: string;
       footerDisclaimer: string;

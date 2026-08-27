@@ -1,4 +1,5 @@
 import { PublicMarkdownRenderer } from '@/components/chat-shares/public-markdown-renderer';
+import { PublicSharedAssets } from '@/components/chat-shares/public-shared-assets';
 import { MessageRole } from '@/enums/message-role.enum';
 import { cn } from '@/lib/utils';
 import type { PublicSharedMessageProps } from '@/types';
@@ -19,6 +20,8 @@ import type { PublicSharedMessageProps } from '@/types';
  */
 export function PublicSharedMessage({
   message,
+  publicShareId,
+  imageLabel,
   roleLabel,
   timestampLabel,
   modelLabel,
@@ -53,6 +56,11 @@ export function PublicSharedMessage({
       <div className="prose-sm max-w-none min-w-0 text-sm leading-relaxed break-words">
         <PublicMarkdownRenderer content={message.content} truncatedLabel={truncatedLabel} />
       </div>
+      <PublicSharedAssets
+        publicShareId={publicShareId}
+        assets={message.assets}
+        imageLabel={imageLabel}
+      />
     </article>
   );
 }

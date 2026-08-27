@@ -149,6 +149,7 @@ export function buildSharedChatViewModel(
     },
     pathname: buildSharePath(share.publicShareId, share.contentLocale),
     adLabel: t('chatShare.public.advertisement'),
+    imageLabel: t('chatShare.public.sharedImage'),
   };
 }
 

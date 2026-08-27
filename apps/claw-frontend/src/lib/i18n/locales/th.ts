@@ -3961,6 +3961,7 @@ export const th: TranslationDictionary = {
       roleAssistant: 'ผู้ช่วย',
       truncated: 'ข้อความนี้สั้นลงเนื่องจากยาวผิดปกติ',
       advertisement: 'โฆษณา',
+      sharedImage: 'รูปภาพที่แชร์ในบทสนทนานี้',
       backToHome: 'ไปที่ ClawAI',
       report: 'รายงานหน้านี้',
       footerDisclaimer:

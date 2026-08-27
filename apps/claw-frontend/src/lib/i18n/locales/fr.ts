@@ -4057,6 +4057,7 @@ export const fr: TranslationDictionary = {
       roleAssistant: 'Assistant',
       truncated: 'Ce message a été raccourci car il est exceptionnellement long.',
       advertisement: 'Publicité',
+      sharedImage: 'Image partagée dans cette conversation',
       backToHome: 'Aller à ClawAI',
       report: 'Signaler cette page',
       footerDisclaimer:

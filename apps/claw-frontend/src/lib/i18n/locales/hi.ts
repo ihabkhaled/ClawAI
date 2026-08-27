@@ -3998,6 +3998,7 @@ export const hi: TranslationDictionary = {
       roleAssistant: 'सहायक',
       truncated: 'यह संदेश छोटा किया गया क्योंकि यह असामान्य रूप से लंबा है।',
       advertisement: 'विज्ञापन',
+      sharedImage: 'इस बातचीत में साझा की गई छवि',
       backToHome: 'ClawAI पर जाएँ',
       report: 'इस पृष्ठ की शिकायत करें',
       footerDisclaimer:

@@ -22,6 +22,8 @@ import type { PublicSharedMessageListProps } from '@/types';
  */
 export function PublicSharedMessageList({
   messages,
+  publicShareId,
+  imageLabel,
   userRoleLabel,
   assistantRoleLabel,
   truncatedLabel,
@@ -36,6 +38,8 @@ export function PublicSharedMessageList({
         <li key={message.id}>
           <PublicSharedMessage
             message={message}
+            publicShareId={publicShareId}
+            imageLabel={imageLabel}
             roleLabel={message.role === MessageRole.USER ? userRoleLabel : assistantRoleLabel}
             timestampLabel={formatTimestamp(message.createdAt)}
             modelLabel={formatModelLabel(message)}

@@ -3867,6 +3867,7 @@ export const zh: TranslationDictionary = {
       roleAssistant: '助手',
       truncated: '由于该消息异常长，因此被缩短。',
       advertisement: '广告',
+      sharedImage: '此对话中分享的图片',
       backToHome: '前往ClawAI',
       report: '举报此页面',
       footerDisclaimer: '由 ClawAI 用户共享。响应由人工智能模型生成，可能不准确。',

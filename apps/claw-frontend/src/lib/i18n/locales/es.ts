@@ -4040,6 +4040,7 @@ export const es: TranslationDictionary = {
       roleAssistant: 'Asistente',
       truncated: 'Este mensaje se acortó porque es inusualmente largo.',
       advertisement: 'Publicidad',
+      sharedImage: 'Imagen compartida en esta conversación',
       backToHome: 'Ir a ClawAI',
       report: 'Denunciar esta página',
       footerDisclaimer:

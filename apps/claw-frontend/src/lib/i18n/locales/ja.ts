@@ -4007,6 +4007,7 @@ export const ja: TranslationDictionary = {
       roleAssistant: 'アシスタント',
       truncated: 'このメッセージは異常に長いため、短縮されました。',
       advertisement: '',
+      sharedImage: 'この会話で共有された画像',
       backToHome: 'ClawAI に移動',
       report: 'このページについて報告する',
       footerDisclaimer:

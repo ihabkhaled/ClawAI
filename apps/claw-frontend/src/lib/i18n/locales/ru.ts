@@ -4021,6 +4021,7 @@ export const ru: TranslationDictionary = {
       roleAssistant: 'Ассистент',
       truncated: 'Это сообщение сокращено, потому что оно необычно длинное.',
       advertisement: 'Реклама',
+      sharedImage: 'Изображение из этой беседы',
       backToHome: 'Перейти в ClawAI',
       report: 'Пожаловаться на эту страницу',
       footerDisclaimer:
