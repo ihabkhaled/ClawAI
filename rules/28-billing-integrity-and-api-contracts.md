@@ -37,6 +37,18 @@ tests for any frontend repository that calls a changed API.
    on each side is insufficient; callers parse bounded Zod schemas and fail
    closed on mismatch.
 
+8. **A shorter quota window may never allow more than a longer one.** Daily
+   cannot exceed weekly, nor weekly monthly. A shorter cap above the longer one
+   is not a stricter plan — the longer ceiling binds first, so the shorter
+   figure is unreachable, and the shorter figure is what the pricing card leads
+   with. `findQuotaWindowConflicts` (auth-service `modules/plans/utilities/`) is
+   the single predicate, enforced on plan create and update with
+   `PLAN_QUOTA_WINDOWS_INCOHERENT`. `null` is unlimited and `0` is disabled;
+   neither participates in the comparison.
+
+   This shipped live: the Free plan advertised 300,000 tokens a day against a
+   20,000 weekly ceiling — fifteen times the allowance the account grants.
+
 The request-body test is required because the share feature once omitted
 `acknowledgedPublicWarning`: frontend and backend both typechecked, but every
 publication request returned 400. Exact serialization assertions catch that
@@ -51,6 +63,7 @@ class of split-contract failure.
 - Floating-point arithmetic or cross-currency summation in billing.
 - Exposing `/api/v1/internal/payments/*` through nginx.
 - A frontend mutation test that asserts only `toHaveBeenCalled()`.
+- A plan whose daily cap exceeds its weekly cap, or weekly its monthly.
 
 ## Correct pattern
 

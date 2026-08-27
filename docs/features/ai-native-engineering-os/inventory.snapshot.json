@@ -7239,7 +7239,7 @@
           "file": "rules/27-engineering-mindsets.md"
         },
         {
-          "bytes": 4303,
+          "bytes": 5107,
           "file": "rules/28-billing-integrity-and-api-contracts.md"
         },
         {
@@ -9251,7 +9251,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 70
+        "testFiles": 71
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -10032,7 +10032,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1050,
+    "totalTestFiles": 1051,
     "workspaceCount": 25
   }
 }

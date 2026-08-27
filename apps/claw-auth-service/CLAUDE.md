@@ -111,6 +111,29 @@ purpose and state it at the write site.
 Full rule: `rules/35-super-administrator-and-privilege-boundaries.md` ·
 ADR: `docs/13-adr/adr-073-super-administrator-authority.md`
 
+## Quota windows must widen as they lengthen (2026-08-27)
+
+A plan's daily cap may not exceed its weekly cap, nor weekly its monthly. A
+shorter window that allows more is not a stricter plan — the longer ceiling
+binds first, so the shorter number is unreachable, and the shorter number is
+what the pricing card leads with.
+
+This was live: the Free plan advertised **300,000 tokens a day against a 20,000
+weekly ceiling**. A visitor read fifteen times the allowance the account
+actually grants and would hit the wall on the first afternoon.
+
+`findQuotaWindowConflicts` (`modules/plans/utilities/`) is the single predicate;
+`PlansService.createPlan` and `updatePlan` refuse with
+`PLAN_QUOTA_WINDOWS_INCOHERENT`. Update merges the partial DTO onto the stored
+row first — raising the weekly cap alone would otherwise be judged with no daily
+cap to compare against.
+
+`null` is unlimited and `0` is disabled; neither is "a smaller number" here, and
+conflating them is how an unlimited window would start failing validation.
+
+Existing rows are not migrated: the replacement numbers are a pricing decision,
+so the guard surfaces them by refusing the next edit rather than picking values.
+
 ## Docker Container Rebuild Procedure
 
 When rebuilding this service (especially after shared package changes):

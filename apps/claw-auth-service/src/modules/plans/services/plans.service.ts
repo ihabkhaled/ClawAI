@@ -5,6 +5,12 @@ import { EventPattern, LogLevel } from '@claw/shared-types';
 import { PlansRepository } from '../repositories/plans.repository';
 import { ExposedModelClient } from '../clients/exposed-model.client';
 import { EXPOSED_MODEL_VALIDATION_MAX_PAIRS } from '../constants/exposed-model.constants';
+import { PLAN_QUOTA_WINDOWS_INCOHERENT } from '../constants/quota-window.constants';
+import {
+  describeQuotaWindowConflicts,
+  findQuotaWindowConflicts,
+} from '../utilities/quota-window-coherence.utility';
+import type { QuotaWindowQuotas } from '../types/quota-window.types';
 import { type CreatePlanDto } from '../dto/create-plan.dto';
 import { type UpdatePlanDto } from '../dto/update-plan.dto';
 import { type SetPlanModelAccessDto } from '../dto/plan-misc.dto';
@@ -75,7 +81,29 @@ export class PlansService {
     return this.toView(plan);
   }
 
+  /**
+   * Refuses a plan whose shorter window allows more than its longer one.
+   *
+   * The shorter cap is then unreachable — the longer ceiling binds first — and
+   * it is the shorter figure the pricing card leads with, so the plan advertises
+   * an allowance it never grants.
+   */
+  private assertQuotaWindowsCoherent(quotas: QuotaWindowQuotas, slug: string): void {
+    const conflicts = findQuotaWindowConflicts(quotas);
+    if (conflicts.length === 0) {
+      return;
+    }
+    const detail = describeQuotaWindowConflicts(conflicts);
+    this.logger.warn(`assertQuotaWindowsCoherent: slug=${slug} ${detail}`);
+    throw new BusinessException(
+      `A shorter quota window cannot allow more than a longer one: ${detail}`,
+      PLAN_QUOTA_WINDOWS_INCOHERENT,
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+
   async createPlan(dto: CreatePlanDto): Promise<PlanView> {
+    this.assertQuotaWindowsCoherent(dto, dto.slug);
     const existing = await this.plansRepository.findBySlug(dto.slug);
     if (existing) {
       throw new BusinessException(
@@ -90,7 +118,18 @@ export class PlansService {
   }
 
   async updatePlan(id: string, dto: UpdatePlanDto): Promise<PlanView> {
-    await this.getPlan(id);
+    const current = await this.getPlan(id);
+    // Merged against the stored row, not checked alone: an update carries only
+    // what changed, so raising the weekly cap on its own would otherwise be
+    // judged with no daily cap to compare it to.
+    this.assertQuotaWindowsCoherent(
+      {
+        dailyTokenQuota: dto.dailyTokenQuota ?? current.dailyTokenQuota,
+        weeklyTokenQuota: dto.weeklyTokenQuota ?? current.weeklyTokenQuota,
+        monthlyTokenQuota: dto.monthlyTokenQuota ?? current.monthlyTokenQuota,
+      },
+      current.slug,
+    );
     const plan = await this.plansRepository.update(id, dto);
     this.logger.log(`updatePlan: id=${id}`);
     return this.toView(plan);
