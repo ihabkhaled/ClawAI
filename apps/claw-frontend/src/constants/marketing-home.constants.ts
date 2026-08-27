@@ -24,6 +24,29 @@ export const MARKETING_COMPACT_PLAN_SLUGS: ReadonlyArray<string> = ['free', 'pro
 // home page where on-premise/self-managed deployment is offered, and it is
 // scoped to companies — it is a contact-sales conversation, never a
 // self-serve individual plan.
+/**
+ * The three things worth saying about the editor extension on the homepage.
+ *
+ * Deliberately not a feature list — the overview page has that. These answer
+ * the three objections a developer raises in the first ten seconds: do I need
+ * another subscription, does my code leave the machine, and does it work with
+ * what I already run.
+ */
+export const MARKETING_CODING_AGENT_POINTS: ReadonlyArray<MarketingPageSection> = [
+  {
+    titleKey: 'marketing.home.codingAgent.point1Title',
+    bodyKey: 'marketing.home.codingAgent.point1Body',
+  },
+  {
+    titleKey: 'marketing.home.codingAgent.point2Title',
+    bodyKey: 'marketing.home.codingAgent.point2Body',
+  },
+  {
+    titleKey: 'marketing.home.codingAgent.point3Title',
+    bodyKey: 'marketing.home.codingAgent.point3Body',
+  },
+];
+
 export const MARKETING_ENTERPRISE_POINTS: ReadonlyArray<MarketingPageSection> = [
   {
     titleKey: 'marketing.home.enterprise.point1Title',

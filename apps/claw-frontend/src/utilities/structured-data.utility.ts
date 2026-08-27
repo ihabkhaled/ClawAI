@@ -2,9 +2,11 @@ import { MARKETING_GITHUB_URL } from '@/constants/marketing-nav.constants';
 import type { SharedChatJsonLdInput } from '@/types/chat-share-page.types';
 import type { PublicPlan } from '@/types/public-pricing.types';
 import type {
+  CodingAgentJsonLdInput,
   ComparisonHubJsonLdInput,
   ComparisonJsonLdInput,
   JsonLdObject,
+  PublicFaqJsonLdInput,
   PublicPageJsonLdInput,
 } from '@/types/structured-data.types';
 import { formatPriceDecimal } from '@/utilities/pricing-catalog.utility';
@@ -93,6 +95,79 @@ export function buildComparisonJsonLd(input: ComparisonJsonLdInput): JsonLdObjec
           { '@type': 'ListItem', position: 2, name: input.hubName, item: input.hubUrl },
           { '@type': 'ListItem', position: 3, name: input.name, item: input.canonicalUrl },
         ],
+      },
+      {
+        '@type': 'FAQPage',
+        url: input.canonicalUrl,
+        inLanguage: input.language,
+        mainEntity: input.faq.map((entry) => ({
+          '@type': 'Question',
+          name: entry.question,
+          acceptedAnswer: { '@type': 'Answer', text: entry.answer },
+        })),
+      },
+    ],
+  };
+}
+
+/**
+ * Structured data for the Coding Agent overview.
+ *
+ * `applicationCategory: DeveloperApplication` and an explicit
+ * `operatingSystem` because the thing being described is an editor extension,
+ * not a web page about one. `offers` is free: the extension itself costs
+ * nothing — a ClawAI subscription is what is paid for, and claiming otherwise
+ * here would be a price claim in structured data that the pricing page
+ * contradicts.
+ */
+export function buildCodingAgentJsonLd(input: CodingAgentJsonLdInput): JsonLdObject {
+  const origin = new URL(input.canonicalUrl).origin;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'SoftwareApplication',
+        name: input.name,
+        description: input.description,
+        url: input.canonicalUrl,
+        inLanguage: input.language,
+        applicationCategory: 'DeveloperApplication',
+        operatingSystem: 'Windows, macOS, Linux',
+        downloadUrl: input.downloadUrl,
+        installUrl: input.downloadUrl,
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        isPartOf: { '@type': 'WebSite', name: 'ClawAI', url: origin },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'ClawAI', item: origin },
+          { '@type': 'ListItem', position: 2, name: input.name, item: input.canonicalUrl },
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * Structured data for any page whose body is a question-and-answer list.
+ *
+ * Built from the same array the page renders, so the visible text and the
+ * structured data cannot drift — which is the condition attached to FAQ rich
+ * results, and the reason both come from one source object here.
+ */
+export function buildPublicFaqJsonLd(input: PublicFaqJsonLdInput): JsonLdObject {
+  const origin = new URL(input.canonicalUrl).origin;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        name: input.name,
+        description: input.description,
+        url: input.canonicalUrl,
+        inLanguage: input.language,
+        isPartOf: { '@type': 'WebSite', name: 'ClawAI', url: origin },
       },
       {
         '@type': 'FAQPage',

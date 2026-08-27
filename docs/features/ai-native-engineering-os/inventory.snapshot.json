@@ -6343,6 +6343,16 @@
         "route": "/architecture"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/coding-agent/install/page.tsx",
+        "kind": "page",
+        "route": "/coding-agent/install"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/coding-agent/page.tsx",
+        "kind": "page",
+        "route": "/coding-agent"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/compare/chatgpt/page.tsx",
         "kind": "page",
         "route": "/compare/chatgpt"
@@ -7500,7 +7510,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4841
+        "value": 4855
       },
       "localeCount": 13,
       "locales": [
@@ -9979,7 +9989,7 @@
     "endpointCount": 620,
     "envVarCount": 347,
     "eventCount": 172,
-    "frontendRouteCount": 136,
+    "frontendRouteCount": 138,
     "localeCount": 13,
     "nginxRouteCount": 55,
     "permissionCount": 49,

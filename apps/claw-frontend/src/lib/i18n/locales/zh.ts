@@ -193,6 +193,7 @@ export const zh: TranslationDictionary = {
     logs: '日志',
     admin: '行政',
     settings: '设置',
+    codingAgent: '编程助手',
     workspace: '工作空间',
     workspaceActions: '行动',
     workspaceApprovals: '批准',
@@ -4190,6 +4191,20 @@ export const zh: TranslationDictionary = {
       errorGeneric: '发送您的消息时出了点问题。请再试一次。',
     },
     home: {
+      codingAgent: {
+        eyebrow: '在你的编辑器里',
+        title: 'ClawAI 就在 VS Code 中运行',
+        body: '你订阅里的每一个模型，都在你已经使用的编辑器中。扩展是一个瘦客户端——账户、额度和历史记录都留在平台上，所以在浏览器里开始的对话可以在编辑器里继续。',
+        point1Title: '不需要第二份订阅',
+        point1Body: '它使用你已有的 ClawAI 账户和同一份额度，没有额外要买的东西。',
+        point2Title: '编辑器里没有 API 密钥',
+        point2Body: '路由在平台上完成，所以扩展从不持有任何模型提供方的凭据。',
+        point3Title: '支持自托管',
+        point3Body: '把它指向 ClawAI 的托管平台，或你自己的部署。登录时由你选择。',
+        ctaInstall: '从 Marketplace 安装',
+        ctaLearnMore: '它能做什么',
+        ctaInstallGuide: '安装指南',
+      },
       hero: {
         title: '每个前沿人工智能模型，一次订阅',
         subtitle:

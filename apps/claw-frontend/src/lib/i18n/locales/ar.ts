@@ -199,6 +199,7 @@ export const ar: TranslationDictionary = {
     logs: 'السجلات',
     admin: 'الإدارة',
     settings: 'الإعدادات',
+    codingAgent: 'وكيل البرمجة',
     workspace: 'مساحة العمل',
     workspaceActions: 'الإجراءات',
     workspaceApprovals: 'الموافقات',
@@ -4277,6 +4278,22 @@ export const ar: TranslationDictionary = {
       errorGeneric: 'حدث خطأ أثناء إرسال رسالتك. يرجى المحاولة مرة أخرى.',
     },
     home: {
+      codingAgent: {
+        eyebrow: 'داخل محرّرك',
+        title: 'يعمل ClawAI داخل VS Code',
+        body: 'كل النماذج التي يشملها اشتراكك، داخل المحرّر الذي تستخدمه أصلاً. الإضافة عميل خفيف — حسابك وحصصك وسجلّك تبقى على المنصة، فالمحادثة التي بدأتها في المتصفح تكمل في المحرّر.',
+        point1Title: 'لا اشتراك ثانٍ',
+        point1Body:
+          'تستخدم حساب ClawAI الذي لديك بالفعل وتسحب من الحصة نفسها. لا شيء إضافي تشتريه.',
+        point2Title: 'لا مفاتيح API في محرّرك',
+        point2Body: 'التوجيه يجري على المنصة، فالإضافة لا تحمل أبداً بيانات اعتماد أي مزوّد نماذج.',
+        point3Title: 'تعمل مع الاستضافة الذاتية',
+        point3Body:
+          'وجّهها إلى منصة ClawAI المستضافة أو إلى نشرك الخاص. أنت تختار عند تسجيل الدخول.',
+        ctaInstall: 'التثبيت من المتجر',
+        ctaLearnMore: 'ماذا تفعل',
+        ctaInstallGuide: 'دليل التثبيت',
+      },
       hero: {
         title: 'كل النماذج المتقدمة للذكاء الاصطناعي، في اشتراك واحد',
         subtitle:

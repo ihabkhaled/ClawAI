@@ -189,6 +189,7 @@ export type TranslationDictionary = {
     logs: string;
     admin: string;
     settings: string;
+    codingAgent: string;
     workspace: string;
     workspaceActions: string;
     workspaceApprovals: string;
@@ -4330,6 +4331,20 @@ export type TranslationDictionary = {
       errorGeneric: string;
     };
     home: {
+      codingAgent: {
+        eyebrow: string;
+        title: string;
+        body: string;
+        point1Title: string;
+        point1Body: string;
+        point2Title: string;
+        point2Body: string;
+        point3Title: string;
+        point3Body: string;
+        ctaInstall: string;
+        ctaLearnMore: string;
+        ctaInstallGuide: string;
+      };
       hero: {
         title: string;
         subtitle: string;

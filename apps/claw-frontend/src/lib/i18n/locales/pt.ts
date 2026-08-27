@@ -202,6 +202,7 @@ export const pt: TranslationDictionary = {
     logs: 'Registros',
     admin: 'Administração',
     settings: 'Configurações',
+    codingAgent: 'Agente de código',
     workspace: 'Área de Trabalho',
     workspaceActions: 'Ações',
     workspaceApprovals: 'Aprovações',
@@ -4360,6 +4361,22 @@ export const pt: TranslationDictionary = {
       errorGeneric: 'Ocorreu um erro ao enviar sua mensagem. Tente novamente.',
     },
     home: {
+      codingAgent: {
+        eyebrow: 'No seu editor',
+        title: 'O ClawAI funciona dentro do VS Code',
+        body: 'Todos os modelos da sua subscrição, no editor que já usa. A extensão é um cliente leve — a conta, as quotas e o histórico ficam na plataforma, por isso uma conversa iniciada no navegador continua no editor.',
+        point1Title: 'Sem uma segunda subscrição',
+        point1Body: 'Usa a conta ClawAI que já tem e o mesmo saldo. Não há mais nada para comprar.',
+        point2Title: 'Sem chaves de API no seu editor',
+        point2Body:
+          'O encaminhamento acontece na plataforma, por isso a extensão nunca guarda as credenciais de um fornecedor de modelos.',
+        point3Title: 'Funciona com auto-alojamento',
+        point3Body:
+          'Aponte-a para a plataforma alojada da ClawAI ou para a sua própria instalação. Escolhe ao iniciar sessão.',
+        ctaInstall: 'Instalar a partir do Marketplace',
+        ctaLearnMore: 'O que faz',
+        ctaInstallGuide: 'Guia de instalação',
+      },
       hero: {
         title: 'Todos os modelos de IA de fronteira, uma assinatura',
         subtitle:

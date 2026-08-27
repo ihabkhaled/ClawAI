@@ -1,3 +1,4 @@
+import { CODING_AGENT_INSTALL_PATH, CODING_AGENT_PATH } from '@/constants/coding-agent.constants';
 import {
   COMPARISON_HUB_PATH,
   COMPARISON_PATH_BY_RIVAL,
@@ -169,7 +170,27 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     structuredDataType: StructuredDataType.WEB_PAGE,
     relatedSlugs: ['features', 'how-it-works', 'pricing'],
   },
-  // Comparison hub and its five pages. Ad-ineligible on purpose: a page whose
+  // The VS Code extension. Ad-eligible: this is ClawAI's own product surface,
+  // not a comparison of anyone else's, and it is the page most likely to be
+  // found by somebody searching for an editor integration rather than for a
+  // chat app.
+  {
+    slug: LaunchPublicPageSlug.CODING_AGENT,
+    path: CODING_AGENT_PATH,
+    category: ContentCategory.CODING_AGENT,
+    adEligibility: AdEligibility.ELIGIBLE,
+    structuredDataType: StructuredDataType.SOFTWARE_APPLICATION,
+    relatedSlugs: ['coding-agent/install', 'features', 'how-it-works'],
+  },
+  {
+    slug: LaunchPublicPageSlug.CODING_AGENT_INSTALL,
+    path: CODING_AGENT_INSTALL_PATH,
+    category: ContentCategory.CODING_AGENT,
+    adEligibility: AdEligibility.ELIGIBLE,
+    structuredDataType: StructuredDataType.FAQ_PAGE,
+    relatedSlugs: ['coding-agent', 'features', 'pricing'],
+  },
+  // Comparison hub and its rival pages. Ad-ineligible on purpose: a page whose
   // job is to be a fair, checkable comparison of named competitors does not
   // also carry ad inventory.
   {

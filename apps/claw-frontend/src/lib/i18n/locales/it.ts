@@ -204,6 +204,7 @@ export const it: TranslationDictionary = {
     logs: 'Log',
     admin: 'Amministrazione',
     settings: 'Impostazioni',
+    codingAgent: 'Agente di codice',
     workspace: 'Area di lavoro',
     workspaceActions: 'Azioni',
     workspaceApprovals: 'Approvazioni',
@@ -4380,6 +4381,23 @@ export const it: TranslationDictionary = {
       errorGeneric: 'Si è verificato un errore durante l’invio del messaggio. Riprova.',
     },
     home: {
+      codingAgent: {
+        eyebrow: 'Nel tuo editor',
+        title: 'ClawAI funziona dentro VS Code',
+        body: "Tutti i modelli del tuo abbonamento, nell'editor che usi già. L'estensione è un client leggero — account, quote e cronologia restano sulla piattaforma, quindi una conversazione iniziata nel browser prosegue nell'editor.",
+        point1Title: 'Nessun secondo abbonamento',
+        point1Body:
+          "Usa l'account ClawAI che hai già e la stessa disponibilità. Non c'è nulla da comprare in più.",
+        point2Title: 'Nessuna chiave API nel tuo editor',
+        point2Body:
+          "L'instradamento avviene sulla piattaforma, quindi l'estensione non conserva mai le credenziali di un fornitore di modelli.",
+        point3Title: "Funziona con l'autohosting",
+        point3Body:
+          "Puntala alla piattaforma ospitata di ClawAI o alla tua installazione. Scegli al momento dell'accesso.",
+        ctaInstall: 'Installa dal Marketplace',
+        ctaLearnMore: 'Che cosa fa',
+        ctaInstallGuide: "Guida all'installazione",
+      },
       hero: {
         title: 'Ogni modello IA di frontiera, un solo abbonamento',
         subtitle:

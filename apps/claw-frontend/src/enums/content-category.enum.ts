@@ -13,6 +13,9 @@ export enum ContentCategory {
   RAG_FILES = 'RAG_FILES',
   WORKSPACE = 'WORKSPACE',
   DESKTOP_AGENT = 'DESKTOP_AGENT',
+  // The VS Code extension. Separate from DESKTOP_AGENT, which is the desktop
+  // companion app — they are different products with different install paths.
+  CODING_AGENT = 'CODING_AGENT',
   SELF_HOSTING = 'SELF_HOSTING',
   SECURITY_PRIVACY = 'SECURITY_PRIVACY',
   AI_SAFETY = 'AI_SAFETY',

@@ -47,11 +47,13 @@ import {
   Gauge,
   UserCog,
   Rocket,
+  Code2,
   Zap,
 } from 'lucide-react';
 
 import { OptionalService } from '@/enums/optional-service.enum';
 
+import { CODING_AGENT_PATH } from './coding-agent.constants';
 import { ROUTES } from './routes.constants';
 
 export type SidebarItem = {
@@ -267,6 +269,10 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
       },
     ],
   },
+  // The editor extension, for every signed-in user. It is a public marketing
+  // route rather than a portal page, so it is the one nav item that leaves the
+  // app — which is why it sits above the billing group rather than inside it.
+  { labelKey: 'nav.codingAgent', href: CODING_AGENT_PATH, icon: Code2 },
   { labelKey: 'nav.plan', href: ROUTES.PLAN, icon: CreditCard },
   { labelKey: 'nav.billing', href: ROUTES.BILLING, icon: Receipt },
   { labelKey: 'nav.usage', href: ROUTES.USAGE, icon: Gauge },

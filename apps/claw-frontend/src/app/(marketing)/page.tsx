@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { MarketingAdUnit } from '@/components/adsense/marketing-ad-unit';
+import { CodingAgentBandSection } from '@/components/marketing/home/coding-agent-band-section';
 import { CtaSection } from '@/components/marketing/home/cta-section';
 import { EnterpriseBandSection } from '@/components/marketing/home/enterprise-band-section';
 import { FeaturesSection } from '@/components/marketing/home/features-section';
@@ -59,6 +60,7 @@ export default async function HomePage(): Promise<React.ReactElement> {
       <PricingSection initialPlans={plans} />
       <HowItWorksSection />
       <FeaturesSection />
+      <CodingAgentBandSection />
       <EnterpriseBandSection />
       <CtaSection />
     </>

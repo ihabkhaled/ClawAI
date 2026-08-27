@@ -206,6 +206,7 @@ export const de: TranslationDictionary = {
     logs: 'Protokolle',
     admin: 'Admin',
     settings: 'Einstellungen',
+    codingAgent: 'Coding-Agent',
     workspace: 'Arbeitsbereich',
     workspaceActions: 'Aktionen',
     workspaceApprovals: 'Genehmigungen',
@@ -4394,6 +4395,23 @@ export const de: TranslationDictionary = {
         'Beim Senden Ihrer Nachricht ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.',
     },
     home: {
+      codingAgent: {
+        eyebrow: 'In Ihrem Editor',
+        title: 'ClawAI arbeitet in VS Code',
+        body: 'Jedes Modell Ihres Abonnements, im Editor, den Sie ohnehin nutzen. Die Erweiterung ist ein schlanker Client — Konto, Kontingente und Verlauf bleiben auf der Plattform, sodass ein im Browser begonnenes Gespräch im Editor weitergeht.',
+        point1Title: 'Kein zweites Abonnement',
+        point1Body:
+          'Sie nutzt das ClawAI-Konto, das Sie bereits haben, und dasselbe Kontingent. Es gibt nichts zusätzlich zu kaufen.',
+        point2Title: 'Keine API-Schlüssel im Editor',
+        point2Body:
+          'Das Routing passiert auf der Plattform, deshalb hält die Erweiterung nie die Zugangsdaten eines Modellanbieters.',
+        point3Title: 'Funktioniert mit Self-Hosting',
+        point3Body:
+          'Richten Sie sie auf die gehostete ClawAI-Plattform oder auf Ihre eigene Installation. Sie entscheiden bei der Anmeldung.',
+        ctaInstall: 'Im Marketplace installieren',
+        ctaLearnMore: 'Was sie kann',
+        ctaInstallGuide: 'Installationsanleitung',
+      },
       hero: {
         title: 'Jedes Spitzenmodell der KI, ein Abonnement',
         subtitle:

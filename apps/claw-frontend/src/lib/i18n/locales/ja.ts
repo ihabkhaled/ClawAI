@@ -203,6 +203,7 @@ export const ja: TranslationDictionary = {
     logs: 'ログ',
     admin: '管理者',
     settings: '設定',
+    codingAgent: 'コーディングエージェント',
     workspace: 'ワークスペース',
     workspaceActions: 'アクション',
     workspaceApprovals: '承認',
@@ -4345,6 +4346,23 @@ export const ja: TranslationDictionary = {
       errorGeneric: 'メッセージの送信中に問題が発生しました。もう一度試してください。',
     },
     home: {
+      codingAgent: {
+        eyebrow: 'エディターの中で',
+        title: 'ClawAI は VS Code の中で動きます',
+        body: 'サブスクリプションのすべてのモデルを、普段お使いのエディターで。拡張機能はシンクライアントです — アカウント、割り当て、履歴はプラットフォーム側に残るため、ブラウザーで始めた会話をエディターでそのまま続けられます。',
+        point1Title: '2つ目の契約は不要',
+        point1Body:
+          'すでにお持ちの ClawAI アカウントと同じ割り当てを使います。追加で購入するものはありません。',
+        point2Title: 'エディターに API キーは不要',
+        point2Body:
+          'ルーティングはプラットフォーム側で行われるため、拡張機能がモデルプロバイダーの認証情報を持つことはありません。',
+        point3Title: 'セルフホスティングにも対応',
+        point3Body:
+          'ClawAI のホスト型プラットフォームにも、ご自身の環境にも接続できます。サインイン時に選択します。',
+        ctaInstall: 'Marketplace からインストール',
+        ctaLearnMore: 'できること',
+        ctaInstallGuide: 'インストール手順',
+      },
       hero: {
         title: 'すべてのフロンティア AI モデル、1 つのサブスクリプション',
         subtitle:

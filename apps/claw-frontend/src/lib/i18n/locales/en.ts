@@ -202,6 +202,7 @@ export const en: TranslationDictionary = {
     logs: 'Logs',
     admin: 'Admin',
     settings: 'Settings',
+    codingAgent: 'Coding Agent',
     workspace: 'Workspace',
     workspaceActions: 'Actions',
     workspaceApprovals: 'Approvals',
@@ -4307,6 +4308,23 @@ export const en: TranslationDictionary = {
       errorGeneric: 'Something went wrong sending your message. Please try again.',
     },
     home: {
+      codingAgent: {
+        eyebrow: 'In your editor',
+        title: 'ClawAI works inside VS Code',
+        body: 'Every model on your subscription, in the editor you already use. The extension is a thin client — your account, quotas and history stay on the platform, so a conversation started in the browser continues in the editor.',
+        point1Title: 'No second subscription',
+        point1Body:
+          'It uses the ClawAI account you already have and draws on the same allowance. Nothing extra to buy.',
+        point2Title: 'No API keys in your editor',
+        point2Body:
+          "Routing happens on the platform, so the extension never holds a model provider's credential.",
+        point3Title: 'Works with self-hosting',
+        point3Body:
+          "Point it at ClawAI's hosted platform or at your own deployment. You choose at sign-in.",
+        ctaInstall: 'Install from the Marketplace',
+        ctaLearnMore: 'What it does',
+        ctaInstallGuide: 'Install guide',
+      },
       hero: {
         title: 'Every frontier AI model, one subscription',
         subtitle:
