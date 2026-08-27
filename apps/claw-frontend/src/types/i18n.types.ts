@@ -241,6 +241,23 @@ export type TranslationDictionary = {
     more: string;
   };
   chat: {
+    limits: {
+      dailyTokensTitle: string;
+      dailyTokensBody: string;
+      weeklyTokensTitle: string;
+      weeklyTokensBody: string;
+      monthlyTokensTitle: string;
+      monthlyTokensBody: string;
+      dailyChatsTitle: string;
+      dailyChatsBody: string;
+      dailyMessagesTitle: string;
+      dailyMessagesBody: string;
+      trialExpiredTitle: string;
+      trialExpiredBody: string;
+      featureDisabledTitle: string;
+      featureDisabledBody: string;
+      upgradeCta: string;
+    };
     stream: {
       progress: string;
       estimated: string;

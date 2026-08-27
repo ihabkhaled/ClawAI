@@ -152,6 +152,7 @@ export type {
 } from './why-this-model-component.types';
 export type { WhyThisModelRowProps } from './why-this-model-row.types';
 export type { FloatingClearanceInput, FloatingObstacleRect } from './floating-obstacle.types';
+export type { ChatLimitNotice } from './chat-limit-notice.types';
 export type {
   PasswordRequirementState,
   PasswordStrengthPresentation,

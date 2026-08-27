@@ -16,6 +16,7 @@ describe('VirtualizedMessagesFooter', () => {
         isWaitingForResponse
         fallbackAttempts={[]}
         streamError={null}
+        limitNotice={null}
         progressStages={[]}
         currentStageLabel={null}
       />,
@@ -29,6 +30,7 @@ describe('VirtualizedMessagesFooter', () => {
         isWaitingForResponse={false}
         fallbackAttempts={[]}
         streamError={null}
+        limitNotice={null}
         progressStages={[]}
         currentStageLabel={null}
       />,
@@ -42,6 +44,7 @@ describe('VirtualizedMessagesFooter', () => {
         isWaitingForResponse={false}
         fallbackAttempts={[]}
         streamError="Your trial ended"
+        limitNotice={null}
         progressStages={[]}
         currentStageLabel={null}
       />,

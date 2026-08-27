@@ -9,7 +9,7 @@ import {
   type ResearchUsageFeature,
   type UserEntitlements,
 } from '@claw/shared-entitlements';
-import { Permission } from '@claw/shared-types';
+import { BillingErrorCode, Permission  } from '@claw/shared-types';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
 import { ModelAuthorizationMetricsService } from './model-authorization-metrics.service';
@@ -234,9 +234,13 @@ export class AccessControlService {
       return;
     }
     this.logger.warn(`assertCanSendMessage: quota exceeded user=${userId}`);
+    // The code has to be the stable machine value the frontend maps, not a
+    // message key. It read 'quota.dailyLimitExceeded' here while the frontend
+    // mapped QUOTA_DAILY_EXCEEDED, so nothing matched and the user got this
+    // sentence in English regardless of their locale.
     throw new BusinessException(
       'Daily token quota exceeded',
-      'quota.dailyLimitExceeded',
+      BillingErrorCode.QUOTA_DAILY_EXCEEDED,
       HttpStatus.TOO_MANY_REQUESTS,
     );
   }

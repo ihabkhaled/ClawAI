@@ -68,6 +68,7 @@ import type {
 } from './auth.types';
 import type { BestOfNResultState, CandidateResult } from './best-of-n.types';
 import type { DownloadStats, ModelCatalogEntry, PullJobResponse } from './catalog.types';
+import type { ChatLimitNotice } from './chat-limit-notice.types';
 import type {
   ChatMessage,
   ChatThread,
@@ -1066,6 +1067,8 @@ export type VirtualizedMessagesHeaderProps = {
 
 // Pure-render props for the footer wrapper around ThinkingIndicator.
 export type VirtualizedMessagesFooterProps = {
+  /** Null unless the last send was refused by a plan limit. */
+  limitNotice: ChatLimitNotice | null;
   isWaitingForResponse: boolean;
   fallbackAttempts: FallbackAttemptInfo[];
   streamError: string | null;
@@ -2511,6 +2514,10 @@ export type PublicSharedChatFooterProps = {
 
 export type PasswordInputProps = Omit<React.ComponentPropsWithoutRef<'input'>, 'type'> & {
   id: string;
+};
+
+export type ChatLimitNoticeCardProps = {
+  notice: ChatLimitNotice;
 };
 
 export type PasswordStrengthMeterProps = {

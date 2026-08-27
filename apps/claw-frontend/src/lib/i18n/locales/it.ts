@@ -256,6 +256,30 @@ export const it: TranslationDictionary = {
     more: 'Altro',
   },
   chat: {
+    limits: {
+      dailyTokensTitle: 'Hai usato i token di oggi',
+      dailyTokensBody:
+        'Il tuo budget giornaliero di token è esaurito. Si azzera a mezzanotte UTC, oppure puoi passare subito a un piano più ampio.',
+      weeklyTokensTitle: 'Hai usato i token di questa settimana',
+      weeklyTokensBody:
+        "Il tuo budget settimanale di token è esaurito. Si azzera all'inizio della prossima settimana, oppure puoi passare subito a un piano più ampio.",
+      monthlyTokensTitle: 'Hai usato i token di questo mese',
+      monthlyTokensBody:
+        "Il tuo budget mensile di token è esaurito. Si azzera all'inizio del prossimo mese, oppure puoi passare subito a un piano più ampio.",
+      dailyChatsTitle: 'Hai avviato abbastanza chat oggi',
+      dailyChatsBody:
+        'Il tuo piano consente un numero definito di nuove conversazioni al giorno. Prosegui in una conversazione esistente, o passa a un piano più ampio.',
+      dailyMessagesTitle: 'Hai inviato abbastanza messaggi oggi',
+      dailyMessagesBody:
+        'Il tuo piano consente un numero definito di messaggi al giorno. Si azzera a mezzanotte UTC, oppure puoi passare subito a un piano più ampio.',
+      trialExpiredTitle: 'La tua prova gratuita è finita',
+      trialExpiredBody:
+        'Il piano gratuito dura 30 giorni. Scegli un piano per riprendere da dove eri rimasto.',
+      featureDisabledTitle: 'Il tuo piano non lo include',
+      featureDisabledBody:
+        'Questo messaggio richiedeva una funzione non coperta dal tuo piano attuale.',
+      upgradeCta: 'Vedi i piani',
+    },
     stream: {
       progress: 'Avanzamento',
       estimated: 'stimato',

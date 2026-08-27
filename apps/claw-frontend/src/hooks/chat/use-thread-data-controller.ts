@@ -10,6 +10,7 @@ import type {
   UseVirtualizedMessagesControllerParams,
 } from '@/types';
 import { logger } from '@/utilities';
+import { resolveChatLimitNotice } from '@/utilities/chat-limit-notice.utility';
 
 import { useCancelStream } from './use-cancel-stream';
 import { useDeleteThread } from './use-delete-thread';
@@ -35,7 +36,12 @@ export const useThreadDataController = ({
     sendMessage,
     isPending: isSending,
     errorMessage: sendError,
+    error: sendErrorObject,
   } = useSendMessage(threadId, detail.startWaitingForResponse, detail.stopWaitingForResponse);
+  // A limit refusal becomes a line in the transcript instead of a toast that
+  // fades; everything else stays a toast, because a provider outage is not a
+  // standing fact about this conversation.
+  const limitNotice = resolveChatLimitNotice(sendErrorObject);
   const { deleteThread, isPending: isDeleting } = useDeleteThread();
   const { setFeedback } = useMessageFeedback(threadId);
   const { regenerate } = useRegenerateMessage(threadId, detail.startWaitingForResponse);
@@ -117,6 +123,7 @@ export const useThreadDataController = ({
   }, [threadId, deleteThread]);
 
   const virtualizedParams: UseVirtualizedMessagesControllerParams = {
+    limitNotice,
     messages: detail.messages,
     isLoading: detail.isLoadingThread || detail.isLoadingMessages,
     isFetchingPreviousPage: detail.virtualizedMessages.isFetchingPreviousPage,
@@ -124,7 +131,9 @@ export const useThreadDataController = ({
     firstItemIndex: detail.virtualizedMessages.firstItemIndex,
     isWaitingForResponse: detail.isWaitingForResponse,
     fallbackAttempts: detail.fallbackAttempts,
-    streamError: sendError ?? detail.streamError,
+    // The limit line carries the explanation, so the generic error banner is
+    // suppressed for that case rather than saying the same thing twice.
+    streamError: limitNotice === null ? (sendError ?? detail.streamError) : detail.streamError,
     judgeEvaluating: detail.judgeEvaluating,
     executingModel: detail.executingModel,
     judgeModel: detail.judgeModel,

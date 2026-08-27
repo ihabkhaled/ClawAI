@@ -254,6 +254,29 @@ export const en: TranslationDictionary = {
     more: 'More',
   },
   chat: {
+    limits: {
+      dailyTokensTitle: "You have used today's tokens",
+      dailyTokensBody:
+        'Your daily token allowance is spent. It resets at midnight UTC, or you can move to a larger plan now.',
+      weeklyTokensTitle: "You have used this week's tokens",
+      weeklyTokensBody:
+        'Your weekly token allowance is spent. It resets at the start of next week, or you can move to a larger plan now.',
+      monthlyTokensTitle: "You have used this month's tokens",
+      monthlyTokensBody:
+        'Your monthly token allowance is spent. It resets at the start of next month, or you can move to a larger plan now.',
+      dailyChatsTitle: 'You have started enough chats today',
+      dailyChatsBody:
+        'Your plan allows a set number of new conversations per day. Continue in an existing thread, or move to a larger plan.',
+      dailyMessagesTitle: 'You have sent enough messages today',
+      dailyMessagesBody:
+        'Your plan allows a set number of messages per day. It resets at midnight UTC, or you can move to a larger plan now.',
+      trialExpiredTitle: 'Your free trial has ended',
+      trialExpiredBody:
+        'The free plan runs for 30 days. Choose a plan to carry on where you left off.',
+      featureDisabledTitle: 'Your plan does not include this',
+      featureDisabledBody: 'This message needed a feature your current plan does not cover.',
+      upgradeCta: 'See plans',
+    },
     stream: {
       progress: 'Progress',
       estimated: 'estimated',

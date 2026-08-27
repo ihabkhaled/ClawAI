@@ -31,6 +31,7 @@ import type {
   AdminUserUpdateRequest,
   EmailChangePendingState,
 } from './auth.types';
+import type { ChatLimitNotice } from './chat-limit-notice.types';
 import type {
   ChatMessage,
   ChatThread,
@@ -803,6 +804,8 @@ export type UseResearchProvidersPageReturn = {
 // useFollowStreamingTokens with the Virtuoso wiring callbacks and produces
 // the flat prop bag (`VirtualizedMessagesProps`) the .tsx spreads.
 export type UseVirtualizedMessagesControllerParams = {
+  /** Null unless the last send was refused by a plan limit. */
+  limitNotice: ChatLimitNotice | null;
   messages: ChatMessage[];
   isLoading: boolean;
   isFetchingPreviousPage: boolean;

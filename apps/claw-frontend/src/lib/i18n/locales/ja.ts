@@ -255,6 +255,28 @@ export const ja: TranslationDictionary = {
     more: 'もっと見る',
   },
   chat: {
+    limits: {
+      dailyTokensTitle: '本日のトークンを使い切りました',
+      dailyTokensBody:
+        '1日あたりのトークン枠を使い切りました。UTCの深夜にリセットされます。今すぐ上位プランに変更することもできます。',
+      weeklyTokensTitle: '今週のトークンを使い切りました',
+      weeklyTokensBody:
+        '1週間あたりのトークン枠を使い切りました。来週の開始時にリセットされます。今すぐ上位プランに変更することもできます。',
+      monthlyTokensTitle: '今月のトークンを使い切りました',
+      monthlyTokensBody:
+        '1か月あたりのトークン枠を使い切りました。翌月の開始時にリセットされます。今すぐ上位プランに変更することもできます。',
+      dailyChatsTitle: '本日の新規チャット数の上限に達しました',
+      dailyChatsBody:
+        'ご利用のプランでは1日に開始できる会話数が決まっています。既存のスレッドで続けるか、上位プランに変更してください。',
+      dailyMessagesTitle: '本日のメッセージ数の上限に達しました',
+      dailyMessagesBody:
+        'ご利用のプランでは1日に送信できるメッセージ数が決まっています。UTCの深夜にリセットされます。今すぐ上位プランに変更することもできます。',
+      trialExpiredTitle: '無料トライアルが終了しました',
+      trialExpiredBody: '無料プランの期間は30日です。続きから再開するにはプランをお選びください。',
+      featureDisabledTitle: 'ご利用のプランには含まれていません',
+      featureDisabledBody: 'このメッセージには、現在のプランに含まれていない機能が必要でした。',
+      upgradeCta: 'プランを見る',
+    },
     stream: {
       progress: '進捗状況',
       estimated: '推定',

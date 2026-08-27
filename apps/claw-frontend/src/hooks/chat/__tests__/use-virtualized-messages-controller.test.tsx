@@ -43,6 +43,7 @@ function makeParams(
     firstItemIndex: 0,
     isWaitingForResponse: false,
     fallbackAttempts: [],
+    limitNotice: null,
     streamError: null,
     progressStages: [],
     currentStageLabel: null,
@@ -100,8 +101,7 @@ describe('useVirtualizedMessagesController', () => {
 
   it('unreadCount stays 0 while at-bottom and increments only after scrolling away', () => {
     const { result, rerender } = renderHook(
-      (params: UseVirtualizedMessagesControllerParams) =>
-        useVirtualizedMessagesController(params),
+      (params: UseVirtualizedMessagesControllerParams) => useVirtualizedMessagesController(params),
       { initialProps: makeParams() },
     );
     expect(result.current.unreadCount).toBe(0);
@@ -127,8 +127,7 @@ describe('useVirtualizedMessagesController', () => {
   it('handleStartReached invokes onStartReached only when hasPreviousPage AND not fetching', () => {
     const onStartReached = vi.fn();
     const { result, rerender } = renderHook(
-      (params: UseVirtualizedMessagesControllerParams) =>
-        useVirtualizedMessagesController(params),
+      (params: UseVirtualizedMessagesControllerParams) => useVirtualizedMessagesController(params),
       {
         initialProps: makeParams({
           onStartReached,
@@ -140,15 +139,11 @@ describe('useVirtualizedMessagesController', () => {
     result.current.handleStartReached();
     expect(onStartReached).not.toHaveBeenCalled();
 
-    rerender(
-      makeParams({ onStartReached, hasPreviousPage: true, isFetchingPreviousPage: true }),
-    );
+    rerender(makeParams({ onStartReached, hasPreviousPage: true, isFetchingPreviousPage: true }));
     result.current.handleStartReached();
     expect(onStartReached).not.toHaveBeenCalled();
 
-    rerender(
-      makeParams({ onStartReached, hasPreviousPage: true, isFetchingPreviousPage: false }),
-    );
+    rerender(makeParams({ onStartReached, hasPreviousPage: true, isFetchingPreviousPage: false }));
     result.current.handleStartReached();
     expect(onStartReached).toHaveBeenCalledTimes(1);
   });

@@ -245,6 +245,27 @@ export const zh: TranslationDictionary = {
     more: '更多的',
   },
   chat: {
+    limits: {
+      dailyTokensTitle: '今天的额度已用完',
+      dailyTokensBody: '你今天的 token 额度已用完，将在 UTC 零点重置，也可以现在升级到更大的套餐。',
+      weeklyTokensTitle: '本周的额度已用完',
+      weeklyTokensBody:
+        '你本周的 token 额度已用完，将在下周开始时重置，也可以现在升级到更大的套餐。',
+      monthlyTokensTitle: '本月的额度已用完',
+      monthlyTokensBody:
+        '你本月的 token 额度已用完，将在下月开始时重置，也可以现在升级到更大的套餐。',
+      dailyChatsTitle: '今天开启的对话已达上限',
+      dailyChatsBody:
+        '你的套餐每天可开启的新对话数量有限。可以在已有对话中继续，或升级到更大的套餐。',
+      dailyMessagesTitle: '今天发送的消息已达上限',
+      dailyMessagesBody:
+        '你的套餐每天可发送的消息数量有限，将在 UTC 零点重置，也可以现在升级到更大的套餐。',
+      trialExpiredTitle: '免费试用已结束',
+      trialExpiredBody: '免费套餐为期 30 天。选择一个套餐即可从中断处继续。',
+      featureDisabledTitle: '你的套餐不包含此功能',
+      featureDisabledBody: '这条消息需要你当前套餐未涵盖的功能。',
+      upgradeCta: '查看套餐',
+    },
     stream: {
       progress: '进步',
       estimated: '估计的',

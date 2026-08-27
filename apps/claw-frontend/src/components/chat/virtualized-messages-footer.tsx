@@ -1,5 +1,6 @@
 'use client';
 
+import { ChatLimitNoticeCard } from '@/components/chat/chat-limit-notice-card';
 import { ThinkingIndicator } from '@/components/chat/thinking-indicator';
 import type { VirtualizedMessagesFooterProps } from '@/types';
 
@@ -12,6 +13,7 @@ export function VirtualizedMessagesFooter({
   isWaitingForResponse,
   fallbackAttempts,
   streamError,
+  limitNotice,
   judgeEvaluating,
   executingModel,
   judgeModel,
@@ -21,11 +23,15 @@ export function VirtualizedMessagesFooter({
   onCancelStream,
   isCancellingStream,
 }: VirtualizedMessagesFooterProps): React.ReactElement | null {
-  if (!isWaitingForResponse && !streamError) {
+  if (!isWaitingForResponse && !streamError && limitNotice === null) {
     return null;
   }
+  // The limit notice stays in the transcript after the spinner has gone: the
+  // refusal is part of what happened in this thread, and a toast that has
+  // already faded leaves a composer that looks like it silently did nothing.
   return (
-    <div className="px-4 py-2">
+    <div className="flex flex-col gap-3 px-4 py-2">
+      {limitNotice === null ? null : <ChatLimitNoticeCard notice={limitNotice} />}
       <ThinkingIndicator
         fallbackAttempts={fallbackAttempts}
         streamError={streamError}

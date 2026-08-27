@@ -254,6 +254,30 @@ export const fr: TranslationDictionary = {
     more: 'Plus',
   },
   chat: {
+    limits: {
+      dailyTokensTitle: 'Vous avez utilisé les jetons du jour',
+      dailyTokensBody:
+        'Votre quota quotidien de jetons est épuisé. Il se réinitialise à minuit UTC, ou vous pouvez passer à un forfait supérieur.',
+      weeklyTokensTitle: 'Vous avez utilisé les jetons de la semaine',
+      weeklyTokensBody:
+        'Votre quota hebdomadaire de jetons est épuisé. Il se réinitialise au début de la semaine prochaine, ou vous pouvez passer à un forfait supérieur.',
+      monthlyTokensTitle: 'Vous avez utilisé les jetons du mois',
+      monthlyTokensBody:
+        'Votre quota mensuel de jetons est épuisé. Il se réinitialise au début du mois prochain, ou vous pouvez passer à un forfait supérieur.',
+      dailyChatsTitle: "Vous avez ouvert assez de conversations aujourd'hui",
+      dailyChatsBody:
+        'Votre forfait autorise un nombre défini de nouvelles conversations par jour. Continuez dans une conversation existante, ou passez à un forfait supérieur.',
+      dailyMessagesTitle: "Vous avez envoyé assez de messages aujourd'hui",
+      dailyMessagesBody:
+        'Votre forfait autorise un nombre défini de messages par jour. Il se réinitialise à minuit UTC, ou vous pouvez passer à un forfait supérieur.',
+      trialExpiredTitle: 'Votre essai gratuit est terminé',
+      trialExpiredBody:
+        'Le forfait gratuit dure 30 jours. Choisissez un forfait pour reprendre où vous en étiez.',
+      featureDisabledTitle: 'Votre forfait ne couvre pas cela',
+      featureDisabledBody:
+        'Ce message nécessitait une fonctionnalité que votre forfait actuel ne couvre pas.',
+      upgradeCta: 'Voir les forfaits',
+    },
     stream: {
       progress: 'Progression',
       estimated: 'estimé',

@@ -258,6 +258,30 @@ export const de: TranslationDictionary = {
     more: 'Mehr',
   },
   chat: {
+    limits: {
+      dailyTokensTitle: 'Die heutigen Tokens sind aufgebraucht',
+      dailyTokensBody:
+        'Ihr Tagesbudget an Tokens ist verbraucht. Es wird um Mitternacht UTC zurückgesetzt, oder Sie wechseln jetzt zu einem größeren Tarif.',
+      weeklyTokensTitle: 'Die Tokens dieser Woche sind aufgebraucht',
+      weeklyTokensBody:
+        'Ihr Wochenbudget an Tokens ist verbraucht. Es wird zu Wochenbeginn zurückgesetzt, oder Sie wechseln jetzt zu einem größeren Tarif.',
+      monthlyTokensTitle: 'Die Tokens dieses Monats sind aufgebraucht',
+      monthlyTokensBody:
+        'Ihr Monatsbudget an Tokens ist verbraucht. Es wird zu Monatsbeginn zurückgesetzt, oder Sie wechseln jetzt zu einem größeren Tarif.',
+      dailyChatsTitle: 'Sie haben heute genug Unterhaltungen begonnen',
+      dailyChatsBody:
+        'Ihr Tarif erlaubt eine bestimmte Anzahl neuer Unterhaltungen pro Tag. Schreiben Sie in einer bestehenden weiter, oder wechseln Sie zu einem größeren Tarif.',
+      dailyMessagesTitle: 'Sie haben heute genug Nachrichten gesendet',
+      dailyMessagesBody:
+        'Ihr Tarif erlaubt eine bestimmte Anzahl Nachrichten pro Tag. Zurückgesetzt wird um Mitternacht UTC, oder Sie wechseln jetzt zu einem größeren Tarif.',
+      trialExpiredTitle: 'Ihre kostenlose Testphase ist beendet',
+      trialExpiredBody:
+        'Der kostenlose Tarif läuft 30 Tage. Wählen Sie einen Tarif, um dort weiterzumachen, wo Sie aufgehört haben.',
+      featureDisabledTitle: 'Ihr Tarif enthält das nicht',
+      featureDisabledBody:
+        'Diese Nachricht benötigte eine Funktion, die Ihr aktueller Tarif nicht abdeckt.',
+      upgradeCta: 'Tarife ansehen',
+    },
     stream: {
       progress: 'Fortschritt',
       estimated: 'geschätzt',
