@@ -62,9 +62,24 @@
       "route": "/compare/copilot"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/compare/deepseek/page.tsx",
+      "kind": "page",
+      "route": "/compare/deepseek"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/compare/gemini/page.tsx",
       "kind": "page",
       "route": "/compare/gemini"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/compare/glm/page.tsx",
+      "kind": "page",
+      "route": "/compare/glm"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/compare/kimi/page.tsx",
+      "kind": "page",
+      "route": "/compare/kimi"
     },
     {
       "file": "apps/claw-frontend/src/app/(marketing)/compare/page.tsx",
@@ -75,6 +90,11 @@
       "file": "apps/claw-frontend/src/app/(marketing)/compare/perplexity/page.tsx",
       "kind": "page",
       "route": "/compare/perplexity"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/compare/qwen/page.tsx",
+      "kind": "page",
+      "route": "/compare/qwen"
     },
     {
       "file": "apps/claw-frontend/src/app/(marketing)/contact/page.tsx",

@@ -139,6 +139,46 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'Microsoft 365-native versus vendor-neutral: how ClawAI and Copilot differ on model choice, routing, per-answer cost and deployment on your own servers.',
       keywords: ['ClawAI vs Microsoft Copilot', 'Copilot alternative', 'self-hosted AI workspace'],
     },
+    'compare/kimi': {
+      title: 'ClawAI vs Kimi',
+      description:
+        'Open weights you run yourself versus nine families on one subscription: how ClawAI and Kimi differ on model choice, routing, long context and self-hosting.',
+      keywords: ['ClawAI vs Kimi', 'Kimi alternative', 'open-weight AI workspace'],
+    },
+    'compare/qwen': {
+      title: 'ClawAI vs Qwen',
+      description:
+        'A model you operate versus a workspace above the models: how ClawAI and Qwen differ on model choice, routing, side-by-side answers, memory and self-hosting.',
+      keywords: ['ClawAI vs Qwen', 'Qwen alternative', 'multi-model AI workspace'],
+    },
+    'compare/glm': {
+      title: 'ClawAI vs GLM',
+      description:
+        'Open weights at low cost versus routing across nine families: how ClawAI and GLM differ on model choice, cost-aware routing, self-hosting and per-answer cost.',
+      keywords: ['ClawAI vs GLM', 'GLM alternative', 'cost-aware model routing'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI vs DeepSeek',
+      description:
+        'Open-weight reasoning versus nine families on one subscription: how ClawAI and DeepSeek differ on model choice, routing, second opinions and self-hosting.',
+      keywords: ['ClawAI vs DeepSeek', 'DeepSeek alternative', 'open-weight AI workspace'],
+    },
+    'coding-agent': {
+      title: 'ClawAI Coding Agent for VS Code',
+      description:
+        'See how the VS Code extension reaches every model on your ClawAI subscription, with routing, comparison, reviewable diffs, and history kept on the platform.',
+      keywords: ['ClawAI Coding Agent', 'VS Code AI extension', 'AI coding assistant'],
+    },
+    'coding-agent/install': {
+      title: 'Install the ClawAI Coding Agent for VS Code',
+      description:
+        'Install the extension from the Marketplace or the command line, sign in with your backend URL, and work through the common install and sign-in problems.',
+      keywords: [
+        'install ClawAI Coding Agent',
+        'VS Code extension install',
+        'AI coding assistant setup',
+      ],
+    },
   },
   [Locale.AR]: {
     home: {
@@ -272,6 +312,46 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       description:
         'اندماج مع Microsoft 365 مقابل حياد تجاه المورّدين: كيف يختلف ClawAI عن Copilot في اختيار النماذج والتوجيه وتكلفة كل إجابة والنشر على خوادمك.',
       keywords: ['ClawAI مقابل Microsoft Copilot', 'بديل Copilot', 'مساحة عمل ذاتية الاستضافة'],
+    },
+    'compare/kimi': {
+      title: 'ClawAI مقابل Kimi',
+      description:
+        'أوزان مفتوحة تستضيفها بنفسك مقابل تسع عائلات باشتراك واحد: كيف يختلف ClawAI عن Kimi في اختيار النماذج والتوجيه والتشغيل المحلي وتكلفة كل إجابة.',
+      keywords: ['ClawAI مقابل Kimi', 'بديل Kimi', 'نماذج مفتوحة الأوزان'],
+    },
+    'compare/qwen': {
+      title: 'ClawAI مقابل Qwen',
+      description:
+        'عائلة مفتوحة الأوزان تشغّلها بنفسك مقابل تسع عائلات باشتراك واحد: كيف يختلف ClawAI عن Qwen في التوجيه والذاكرة والملفات والتشغيل المحلي والاستضافة الذاتية.',
+      keywords: ['ClawAI مقابل Qwen', 'بديل Qwen', 'استضافة ذاتية للنماذج المفتوحة'],
+    },
+    'compare/glm': {
+      title: 'ClawAI مقابل GLM',
+      description:
+        'أوزان مفتوحة ومنتج مغلق مقابل تسع عائلات باشتراك واحد: كيف يختلف ClawAI عن GLM في اختيار النماذج والتوجيه والاستضافة الذاتية وتكلفة كل إجابة.',
+      keywords: ['ClawAI مقابل GLM', 'بديل GLM', 'مساحة عمل متعددة النماذج'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI مقابل DeepSeek',
+      description:
+        'نماذج استدلال مفتوحة الأوزان مقابل تسع عائلات باشتراك واحد: كيف يختلف ClawAI عن DeepSeek في التوجيه والإجابات المتوازية والتشغيل المحلي وتكلفة كل إجابة.',
+      keywords: ['ClawAI مقابل DeepSeek', 'بديل DeepSeek', 'نماذج استدلال مفتوحة الأوزان'],
+    },
+    'coding-agent': {
+      title: 'وكيل البرمجة من ClawAI لـ VS Code',
+      description:
+        'تعرّف إلى إضافة VS Code التي تصل إلى نماذج اشتراك ClawAI من داخل المحرّر، مع بقاء الحساب والحصص والسجل وبيانات اعتماد المزوّدين والتوجيه على المنصة.',
+      keywords: [
+        'وكيل البرمجة من ClawAI',
+        'إضافة VS Code للذكاء الاصطناعي',
+        'مساعد برمجة داخل المحرّر',
+      ],
+    },
+    'coding-agent/install': {
+      title: 'تثبيت وكيل البرمجة في VS Code',
+      description:
+        'اتبع خطوات تثبيت إضافة ClawAI من Visual Studio Marketplace أو من سطر الأوامر، ثم تسجيل الدخول واختيار عنوان الخادم، مع حلول للمشكلات الشائعة.',
+      keywords: ['تثبيت وكيل البرمجة من ClawAI', 'تثبيت إضافة VS Code', 'دليل تثبيت الإضافة'],
     },
   },
   [Locale.FR]: {
@@ -423,6 +503,54 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'espace de travail IA auto-hébergé',
       ],
     },
+    'compare/kimi': {
+      title: 'ClawAI vs Kimi : le comparatif',
+      description:
+        'Contexte long chez un seul fournisseur ou neuf familles sous un abonnement : poids ouverts, exécution locale, auto-hébergement et coût par réponse.',
+      keywords: ['ClawAI vs Kimi', 'alternative à Kimi', 'modèles à poids ouverts'],
+    },
+    'compare/qwen': {
+      title: 'ClawAI vs Qwen : le comparatif',
+      description:
+        'Une famille à poids ouverts que vous hébergez vous-même ou la couche au-dessus : routage, comparaison, mémoire, exécution locale et quota unique.',
+      keywords: ['ClawAI vs Qwen', 'alternative à Qwen', 'exécuter des modèles à poids ouverts'],
+    },
+    'compare/glm': {
+      title: 'ClawAI vs GLM : le comparatif',
+      description:
+        'Le rapport prix-capacité d’un seul laboratoire face à neuf familles : poids ouverts, exécution locale, auto-hébergement et coût par réponse.',
+      keywords: ['ClawAI vs GLM', 'alternative à GLM', 'modèles à poids ouverts auto-hébergés'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI vs DeepSeek : le comparatif',
+      description:
+        'Un modèle de raisonnement à poids ouverts ou neuf familles routées message par message : exécution locale, auto-hébergement et coût par réponse.',
+      keywords: [
+        'ClawAI vs DeepSeek',
+        'alternative à DeepSeek',
+        'modèles de raisonnement à poids ouverts',
+      ],
+    },
+    'coding-agent': {
+      title: 'L’agent de codage ClawAI pour VS Code',
+      description:
+        'L’extension VS Code qui atteint les modèles de votre abonnement ClawAI : compte, quotas, historique, identifiants et routage restent sur la plateforme.',
+      keywords: [
+        'agent de codage ClawAI',
+        'extension VS Code pour l’IA',
+        'assistant de code multi-modèles',
+      ],
+    },
+    'coding-agent/install': {
+      title: 'Installer l’agent de codage pour VS Code',
+      description:
+        'Installez l’extension depuis la Marketplace ou en ligne de commande, connectez-vous dans le navigateur, puis indiquez l’URL de votre plateforme.',
+      keywords: [
+        'installer l’agent de codage ClawAI',
+        'extension VS Code ClawAI',
+        'connexion depuis VS Code',
+      ],
+    },
   },
   [Locale.IT]: {
     home: {
@@ -561,6 +689,46 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'workspace IA self-hosted',
       ],
     },
+    'compare/kimi': {
+      title: 'ClawAI vs Kimi: il confronto',
+      description:
+        'Contesto lungo con pesi aperti da ospitare da sé contro nove famiglie in un abbonamento: routing, modelli locali, self-hosting e costo per risposta.',
+      keywords: ['ClawAI vs Kimi', 'alternativa a Kimi', 'workspace IA a pesi aperti'],
+    },
+    'compare/qwen': {
+      title: 'ClawAI vs Qwen: il confronto',
+      description:
+        'Una famiglia a pesi aperti da gestire o un livello che la usa: scelta dei modelli, routing, risposte affiancate, memoria e self-hosting a confronto.',
+      keywords: ['ClawAI vs Qwen', 'alternativa a Qwen', 'workspace IA self-hosted'],
+    },
+    'compare/glm': {
+      title: 'ClawAI vs GLM: il confronto',
+      description:
+        'Il rapporto prezzo/capacità di un solo laboratorio contro nove famiglie: pesi aperti, routing per messaggio, modelli locali e self-hosting.',
+      keywords: ['ClawAI vs GLM', 'alternativa a GLM', 'workspace IA multi-modello'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI vs DeepSeek: il confronto',
+      description:
+        'Un fornitore di ragionamento a pesi aperti contro un workspace multi-modello: routing, risposte affiancate, modelli locali e self-hosting.',
+      keywords: ['ClawAI vs DeepSeek', 'alternativa a DeepSeek', 'workspace IA con modelli locali'],
+    },
+    'coding-agent': {
+      title: 'ClawAI Coding Agent per VS Code',
+      description:
+        'Scopri l’estensione per VS Code che porta i modelli del tuo abbonamento ClawAI nell’editor: account, quote, credenziali e cronologia restano sulla piattaforma.',
+      keywords: [
+        'ClawAI Coding Agent',
+        'estensione IA per VS Code',
+        'assistente di codice nell’editor',
+      ],
+    },
+    'coding-agent/install': {
+      title: 'Installa il Coding Agent per VS Code',
+      description:
+        'Segui i tre passaggi per installare l’estensione dal Marketplace o da riga di comando, accedere al tuo account ClawAI e indicare l’indirizzo del backend.',
+      keywords: ['installare ClawAI Coding Agent', 'estensione VS Code', 'guida all’installazione'],
+    },
   },
   [Locale.DE]: {
     home: {
@@ -697,6 +865,46 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'ClawAI vs Microsoft Copilot',
         'Copilot Alternative',
         'selbst gehosteter KI-Workspace',
+      ],
+    },
+    'compare/kimi': {
+      title: 'ClawAI vs. Kimi im Vergleich',
+      description:
+        'Langer Kontext mit offenen Gewichten gegen neun Modellfamilien: Modellauswahl, Routing, lokale Ausführung, Self-Hosting und Kosten pro Antwort im Vergleich.',
+      keywords: ['ClawAI vs Kimi', 'Kimi Alternative', 'Workspace für offene Modelle'],
+    },
+    'compare/qwen': {
+      title: 'ClawAI vs. Qwen im Vergleich',
+      description:
+        'Eine breite offene Modellfamilie gegen einen Multi-Modell-Workspace: Modellauswahl, Routing, lokale Ausführung, Self-Hosting und Kosten pro Antwort.',
+      keywords: ['ClawAI vs Qwen', 'Qwen Alternative', 'offene Modelle im KI-Workspace'],
+    },
+    'compare/glm': {
+      title: 'ClawAI vs. GLM im Vergleich',
+      description:
+        'Günstige Modelle für Code und Agenten gegen neun Familien: Modellauswahl, Routing, lokale Ausführung, Self-Hosting und Kosten pro Antwort im Vergleich.',
+      keywords: ['ClawAI vs GLM', 'GLM Alternative', 'kostenbewusster KI-Workspace'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI vs. DeepSeek im Vergleich',
+      description:
+        'Ein Reasoning-Modell mit offenen Gewichten gegen neun Familien: Modellauswahl, Routing, Zweitmeinung, lokale Ausführung und Self-Hosting im Vergleich.',
+      keywords: ['ClawAI vs DeepSeek', 'DeepSeek Alternative', 'Workspace für Reasoning-Modelle'],
+    },
+    'coding-agent': {
+      title: 'ClawAI Coding Agent für VS Code',
+      description:
+        'Die VS-Code-Erweiterung bringt alle Modelle Ihres ClawAI-Abonnements in den Editor; Konto, Kontingente, Zugangsdaten und Verlauf bleiben auf der Plattform.',
+      keywords: ['ClawAI Coding Agent', 'VS Code KI-Erweiterung', 'KI-Assistent im Editor'],
+    },
+    'coding-agent/install': {
+      title: 'Coding Agent in VS Code installieren',
+      description:
+        'Schritt für Schritt: Erweiterung aus dem Marketplace oder per Befehlszeile installieren, anmelden, Backend-URL wählen und häufige Probleme beheben.',
+      keywords: [
+        'ClawAI Coding Agent installieren',
+        'VS Code Erweiterung installieren',
+        'KI-Assistent im Editor einrichten',
       ],
     },
   },
@@ -865,6 +1073,58 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'espacio de trabajo de IA autoalojado',
       ],
     },
+    'compare/kimi': {
+      title: 'ClawAI vs Kimi: la comparativa',
+      description:
+        'Pesos abiertos de contexto largo frente a nueve familias bajo una suscripción: enrutado, modelos locales, autoalojamiento y coste por respuesta.',
+      keywords: [
+        'ClawAI vs Kimi',
+        'alternativa a Kimi',
+        'espacio de trabajo de IA con pesos abiertos',
+      ],
+    },
+    'compare/qwen': {
+      title: 'ClawAI vs Qwen: la comparativa',
+      description:
+        'Pesos abiertos en toda una escalera de tamaños frente a la capa que va encima: enrutado, modelos locales, autoalojamiento y coste por respuesta.',
+      keywords: ['ClawAI vs Qwen', 'alternativa a Qwen', 'modelos de pesos abiertos autoalojados'],
+    },
+    'compare/glm': {
+      title: 'ClawAI vs GLM: la comparativa',
+      description:
+        'Precio y capacidad de un catálogo de pesos abiertos frente a nueve familias: enrutado, modelos locales, autoalojamiento y coste por respuesta.',
+      keywords: ['ClawAI vs GLM', 'alternativa a GLM', 'modelos de pesos abiertos para código'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI vs DeepSeek: la comparativa',
+      description:
+        'Razonamiento de pesos abiertos a bajo precio frente a nueve familias: elección de modelos, enrutado, modelos locales y coste por respuesta.',
+      keywords: [
+        'ClawAI vs DeepSeek',
+        'alternativa a DeepSeek',
+        'modelos de razonamiento de pesos abiertos',
+      ],
+    },
+    'coding-agent': {
+      title: 'ClawAI Coding Agent para VS Code',
+      description:
+        'Descubre la extensión de ClawAI para VS Code: los mismos modelos y el mismo historial, con cuenta, cuotas, credenciales y enrutado en la plataforma.',
+      keywords: [
+        'ClawAI Coding Agent',
+        'extensión de IA para VS Code',
+        'asistente de código en el editor',
+      ],
+    },
+    'coding-agent/install': {
+      title: 'Instalar ClawAI Coding Agent en VS Code',
+      description:
+        'Sigue los pasos para instalar la extensión desde el Marketplace o la línea de comandos, iniciar sesión indicando tu backend y resolver fallos habituales.',
+      keywords: [
+        'instalar ClawAI Coding Agent',
+        'extensión de IA para VS Code',
+        'Marketplace de Visual Studio',
+      ],
+    },
   },
   [Locale.RU]: {
     home: {
@@ -1017,6 +1277,46 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'ClawAI против Microsoft Copilot',
         'альтернатива Copilot',
         'self-hosted ИИ-пространство',
+      ],
+    },
+    'compare/kimi': {
+      title: 'ClawAI против Kimi',
+      description:
+        'Длинный контекст и открытые веса у одного поставщика против девяти семейств в одной подписке: маршрутизация, локальные модели, self-hosting и стоимость ответа.',
+      keywords: ['ClawAI против Kimi', 'альтернатива Kimi', 'модели с открытыми весами'],
+    },
+    'compare/qwen': {
+      title: 'ClawAI против Qwen',
+      description:
+        'Запустить открытые веса самому или пользоваться ими через слой с маршрутизацией: выбор моделей, ответы рядом, память и файлы, self-hosting и стоимость ответа.',
+      keywords: ['ClawAI против Qwen', 'альтернатива Qwen', 'self-hosted ИИ-пространство'],
+    },
+    'compare/glm': {
+      title: 'ClawAI против GLM',
+      description:
+        'Одна линейка Zhipu с открытыми весами против девяти семейств рядом: выбор моделей, маршрутизация, локальные модели, self-hosting и стоимость ответа.',
+      keywords: ['ClawAI против GLM', 'альтернатива GLM', 'мультимодельное ИИ-пространство'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI против DeepSeek',
+      description:
+        'Рассуждение у одного поставщика против маршрутизации между девятью семействами: ответы рядом, локальные модели, self-hosting и стоимость каждого ответа.',
+      keywords: ['ClawAI против DeepSeek', 'альтернатива DeepSeek', 'модели с рассуждением'],
+    },
+    'coding-agent': {
+      title: 'ClawAI Coding Agent для VS Code',
+      description:
+        'Расширение связывает VS Code с вашей подпиской ClawAI: выбор моделей, маршрутизация, сравнение ответов, просмотр правок и общая история с веб-приложением.',
+      keywords: ['ClawAI Coding Agent', 'расширение VS Code с ИИ', 'ИИ-ассистент для кода'],
+    },
+    'coding-agent/install': {
+      title: 'Установка ClawAI Coding Agent',
+      description:
+        'Установите расширение из Visual Studio Marketplace или из командной строки, войдите в аккаунт, укажите адрес бэкенда и разберите частые сбои установки.',
+      keywords: [
+        'установка ClawAI Coding Agent',
+        'установить расширение VS Code',
+        'вход в ClawAI из VS Code',
       ],
     },
   },
@@ -1181,6 +1481,54 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'workspace de IA self-hosted',
       ],
     },
+    'compare/kimi': {
+      title: 'ClawAI vs Kimi: o comparativo',
+      description:
+        'Contexto longo com pesos abertos diante de nove famílias de modelos numa só assinatura: roteamento, modelos locais, self-hosting e custo por resposta.',
+      keywords: ['ClawAI vs Kimi', 'alternativa ao Kimi', 'workspace de IA com pesos abertos'],
+    },
+    'compare/qwen': {
+      title: 'ClawAI vs Qwen: o comparativo',
+      description:
+        'Uma família de pesos abertos que instala por sua conta diante de um workspace multimodelo: escolha de modelos, roteamento, memória e execução local.',
+      keywords: ['ClawAI vs Qwen', 'alternativa ao Qwen', 'workspace de IA self-hosted'],
+    },
+    'compare/glm': {
+      title: 'ClawAI vs GLM: o comparativo',
+      description:
+        'Um laboratório de baixo custo com pesos abertos diante de nove famílias: roteamento por mensagem, custo por resposta, modelos locais e self-hosting.',
+      keywords: ['ClawAI vs GLM', 'alternativa ao GLM', 'workspace de IA multimodelo'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI vs DeepSeek: o comparativo',
+      description:
+        'Raciocínio de baixo custo com pesos abertos diante de nove famílias de modelos: roteamento por mensagem, comparação, modelos locais e self-hosting.',
+      keywords: [
+        'ClawAI vs DeepSeek',
+        'alternativa ao DeepSeek',
+        'workspace de IA com pesos abertos',
+      ],
+    },
+    'coding-agent': {
+      title: 'O Coding Agent do ClawAI para VS Code',
+      description:
+        'Conheça a extensão que leva os modelos da sua assinatura ClawAI ao VS Code, com conta, quotas, histórico, credenciais e roteamento na plataforma.',
+      keywords: [
+        'extensão ClawAI para VS Code',
+        'assistente de IA no editor',
+        'coding agent para VS Code',
+      ],
+    },
+    'coding-agent/install': {
+      title: 'Instalar o Coding Agent no VS Code',
+      description:
+        'Siga os passos para instalar a extensão pelo Marketplace ou pela linha de comandos, iniciar sessão e indicar o backend alojado ou o seu próprio.',
+      keywords: [
+        'instalar a extensão ClawAI',
+        'ClawAI Coding Agent para VS Code',
+        'instalação a partir do Marketplace',
+      ],
+    },
   },
   [Locale.HI]: {
     home: {
@@ -1314,6 +1662,46 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       description:
         'Microsoft 365 से जुड़ा या वेंडर-तटस्थ: मॉडल चुनाव, रूटिंग, हर जवाब की लागत और अपने सर्वर पर तैनाती की तुलना।',
       keywords: ['ClawAI बनाम Microsoft Copilot', 'Copilot विकल्प', 'सेल्फ-होस्टेड AI वर्कस्पेस'],
+    },
+    'compare/kimi': {
+      title: 'ClawAI बनाम Kimi',
+      description:
+        'ओपन-वेट मॉडल खुद चलाएँ या नौ मॉडल परिवारों वाली एक सदस्यता: लंबा संदर्भ, लोकल मॉडल, सेल्फ-होस्टिंग और हर जवाब की लागत की तुलना।',
+      keywords: ['ClawAI बनाम Kimi', 'Kimi विकल्प', 'ओपन-वेट AI वर्कस्पेस'],
+    },
+    'compare/qwen': {
+      title: 'ClawAI बनाम Qwen',
+      description:
+        'ओपन-वेट परिवार खुद होस्ट करें या उसे नौ में से एक विकल्प की तरह इस्तेमाल करें: मॉडल चुनाव, रूटिंग, लोकल मॉडल और सेल्फ-होस्टिंग।',
+      keywords: ['ClawAI बनाम Qwen', 'Qwen विकल्प', 'सेल्फ-होस्टेड AI वर्कस्पेस'],
+    },
+    'compare/glm': {
+      title: 'ClawAI बनाम GLM',
+      description:
+        'एक लैब की किफ़ायती लाइन या नौ परिवारों के बीच रूटिंग: मॉडल चुनाव, ओपन-वेट मॉडल खुद चलाना, सेल्फ-होस्टिंग और हर जवाब की लागत की तुलना।',
+      keywords: ['ClawAI बनाम GLM', 'GLM विकल्प', 'मल्टी-मॉडल AI वर्कस्पेस'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI बनाम DeepSeek',
+      description:
+        'तर्क करने वाले ओपन-वेट मॉडल खुद चलाएँ या नौ परिवारों के बीच रूट करें: मॉडल चुनाव, लोकल मॉडल, सेल्फ-होस्टिंग और हर जवाब की लागत।',
+      keywords: ['ClawAI बनाम DeepSeek', 'DeepSeek विकल्प', 'ओपन-वेट AI वर्कस्पेस'],
+    },
+    'coding-agent': {
+      title: 'VS Code के लिए ClawAI कोडिंग एजेंट',
+      description:
+        'अपने एडिटर में ClawAI का एक्सटेंशन: हर मॉडल एक ही सदस्यता से, रूटिंग और इतिहास प्लेटफ़ॉर्म पर, और लागू करने से पहले हर बदलाव की समीक्षा।',
+      keywords: ['ClawAI कोडिंग एजेंट', 'VS Code AI एक्सटेंशन', 'एडिटर में AI असिस्टेंट'],
+    },
+    'coding-agent/install': {
+      title: 'VS Code में कोडिंग एजेंट इंस्टॉल करें',
+      description:
+        'VS Code में ClawAI कोडिंग एजेंट इंस्टॉल करने के चरण: Marketplace या कमांड लाइन से इंस्टॉल, साइन-इन, बैकएंड URL, और आम दिक्कतों के हल।',
+      keywords: [
+        'ClawAI कोडिंग एजेंट इंस्टॉल',
+        'VS Code एक्सटेंशन इंस्टॉल',
+        'AI कोडिंग एक्सटेंशन सेटअप',
+      ],
     },
   },
   [Locale.JA]: {
@@ -1449,6 +1837,46 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'ClawAI と Microsoft Copilot の違いを、Microsoft 365 密着型かベンダー中立かという観点で整理します。モデル選択、ルーティング、回答ごとのコスト、自社サーバーへの導入まで比較。',
       keywords: ['ClawAI Copilot 比較', 'Copilot 代替', 'セルフホスト AI ワークスペース'],
     },
+    'compare/kimi': {
+      title: 'ClawAI と Kimi の比較',
+      description:
+        'ClawAI と Kimi の違いを、単一ベンダーのオープンウェイトと 9 つのモデルファミリーという観点で整理します。長いコンテキスト、ローカル実行、セルフホスト、回答ごとのコストまで比較。',
+      keywords: ['ClawAI Kimi 比較', 'Kimi 代替', 'オープンウェイト AI ワークスペース'],
+    },
+    'compare/qwen': {
+      title: 'ClawAI と Qwen の比較',
+      description:
+        'ClawAI と Qwen の違いを、モデルを自分で運用するか使うだけにするかという観点で整理します。モデル選択、ルーティング、ローカル実行、セルフホスト、メモリとファイルまで比較。',
+      keywords: ['ClawAI Qwen 比較', 'Qwen 代替', 'セルフホスト AI ワークスペース'],
+    },
+    'compare/glm': {
+      title: 'ClawAI と GLM の比較',
+      description:
+        'ClawAI と GLM の違いを、単一ラボのラインナップとベンダー中立なワークスペースという観点で整理します。モデル選択、ルーティング、ローカル実行、セルフホスト、回答ごとのコストまで比較。',
+      keywords: ['ClawAI GLM 比較', 'GLM 代替', 'ベンダー中立 AI ワークスペース'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI と DeepSeek の比較',
+      description:
+        'ClawAI と DeepSeek の違いを、推論に強い単一ラインと 9 つのモデルファミリーという観点で整理します。ルーティング、並列回答、ローカル実行、セルフホスト、回答ごとのコストまで比較。',
+      keywords: ['ClawAI DeepSeek 比較', 'DeepSeek 代替', 'マルチモデル AI ワークスペース'],
+    },
+    'coding-agent': {
+      title: 'VS Code 向け ClawAI コーディングエージェント',
+      description:
+        'ClawAI のサブスクリプションで使えるモデルを VS Code の中から利用でき、アカウント、利用枠、履歴、プロバイダー認証情報、ルーティングはプラットフォーム側に残る拡張機能を紹介します。',
+      keywords: ['ClawAI コーディングエージェント', 'VS Code AI 拡張機能', 'AI コーディング支援'],
+    },
+    'coding-agent/install': {
+      title: 'ClawAI コーディングエージェントのインストール',
+      description:
+        'VS Code の拡張機能ビューまたはコマンドラインから ClawAI コーディングエージェントを導入し、バックエンド URL を指定してサインインするまでの手順を説明します。',
+      keywords: [
+        'ClawAI 拡張機能 インストール',
+        'VS Code AI 拡張機能',
+        'コーディングエージェント 導入',
+      ],
+    },
   },
   [Locale.TH]: {
     home: {
@@ -1582,6 +2010,42 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       description:
         'ผูกกับ Microsoft 365 หรือเป็นกลางต่อผู้ขาย เทียบการเลือกโมเดล การกำหนดเส้นทาง ต้นทุนต่อคำตอบ และการติดตั้งบนเซิร์ฟเวอร์ของคุณเอง',
       keywords: ['ClawAI เทียบ Copilot', 'ทางเลือกแทน Copilot', 'เวิร์กสเปซ AI ที่โฮสต์เอง'],
+    },
+    'compare/kimi': {
+      title: 'ClawAI เทียบกับ Kimi',
+      description:
+        'บริบทยาวและน้ำหนักเปิดจากห้องแล็บเดียว เทียบกับเก้าตระกูลในการสมัครสมาชิกเดียว ทั้งการกำหนดเส้นทาง การรันโมเดลเอง การโฮสต์เอง และต้นทุนต่อคำตอบ',
+      keywords: ['ClawAI เทียบ Kimi', 'ทางเลือกแทน Kimi', 'เวิร์กสเปซโมเดลน้ำหนักเปิด'],
+    },
+    'compare/qwen': {
+      title: 'ClawAI เทียบกับ Qwen',
+      description:
+        'ตระกูลโมเดลน้ำหนักเปิดที่คุณดูแลเอง เทียบกับชั้นที่อยู่เหนือโมเดล ทั้งการกำหนดเส้นทาง คำตอบคู่ขนาน หน่วยความจำ การโฮสต์เอง และโควตาเดียว',
+      keywords: ['ClawAI เทียบ Qwen', 'ทางเลือกแทน Qwen', 'เวิร์กสเปซ AI ที่โฮสต์เอง'],
+    },
+    'compare/glm': {
+      title: 'ClawAI เทียบกับ GLM',
+      description:
+        'น้ำหนักเปิดราคาประหยัดจากห้องแล็บเดียว เทียบกับเก้าตระกูล ทั้งงานโค้ด การกำหนดเส้นทาง โมเดลในเครื่อง การโฮสต์เอง และต้นทุนต่อคำตอบ',
+      keywords: ['ClawAI เทียบ GLM', 'ทางเลือกแทน GLM', 'เวิร์กสเปซ AI หลายโมเดล'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI เทียบกับ DeepSeek',
+      description:
+        'โมเดลให้เหตุผลราคาต่ำจากห้องแล็บเดียว เทียบกับเก้าตระกูล ทั้งการกำหนดเส้นทาง ความเห็นที่สอง น้ำหนักเปิดในเครื่อง การโฮสต์เอง และต้นทุนต่อคำตอบ',
+      keywords: ['ClawAI เทียบ DeepSeek', 'ทางเลือกแทน DeepSeek', 'เวิร์กสเปซโมเดลน้ำหนักเปิด'],
+    },
+    'coding-agent': {
+      title: 'ClawAI Coding Agent สำหรับ VS Code',
+      description:
+        'ส่วนขยาย VS Code ที่เป็นไคลเอนต์บาง ๆ เรียกใช้ทุกโมเดลในสมาชิก ClawAI เดิม โดยบัญชี โควตา ประวัติ ข้อมูลรับรองผู้ให้บริการ และการกำหนดเส้นทางยังอยู่บนแพลตฟอร์ม',
+      keywords: ['ส่วนขยาย VS Code', 'ClawAI Coding Agent', 'ผู้ช่วยเขียนโค้ดด้วย AI'],
+    },
+    'coding-agent/install': {
+      title: 'ติดตั้ง ClawAI Coding Agent สำหรับ VS Code',
+      description:
+        'ขั้นตอนติดตั้งส่วนขยายจาก Marketplace หรือจากบรรทัดคำสั่ง การลงชื่อเข้าใช้ การตั้ง URL ของหลังบ้านเมื่อคุณโฮสต์เอง และวิธีแก้ปัญหาที่พบบ่อย',
+      keywords: ['ติดตั้งส่วนขยาย VS Code', 'ClawAI Coding Agent', 'การลงชื่อเข้าใช้ส่วนขยาย'],
     },
   },
   [Locale.FA]: {
@@ -1717,6 +2181,42 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
         'پیوسته به Microsoft 365 یا مستقل از فروشنده: انتخاب مدل، مسیریابی، هزینهٔ هر پاسخ و استقرار روی سرورهای خودتان.',
       keywords: ['ClawAI در برابر Copilot', 'جایگزین Copilot', 'فضای کاری خودمیزبان'],
     },
+    'compare/kimi': {
+      title: 'ClawAI در برابر Kimi',
+      description:
+        'بافت طولانی با وزن‌های باز در برابر نُه خانوادهٔ مدل زیر یک اشتراک: انتخاب مدل، مسیریابی، اجرای محلی، میزبانی شخصی و هزینهٔ هر پاسخ.',
+      keywords: ['ClawAI در برابر Kimi', 'جایگزین Kimi', 'فضای کاری مدل‌های وزن‌باز'],
+    },
+    'compare/qwen': {
+      title: 'ClawAI در برابر Qwen',
+      description:
+        'خانواده‌ای پهن از مدل‌های وزن‌باز در برابر لایه‌ای روی نُه خانواده: انتخاب مدل، مسیریابی، حافظه و پرونده‌ها، اجرای محلی و میزبانی شخصی.',
+      keywords: ['ClawAI در برابر Qwen', 'جایگزین Qwen', 'اجرای محلی مدل‌های وزن‌باز'],
+    },
+    'compare/glm': {
+      title: 'ClawAI در برابر GLM',
+      description:
+        'هزینهٔ پایین با وزن‌های باز در برابر فضای کاری چندمدلی: انتخاب مدل، مسیریابی هزینه‌آگاه، اجرای محلی، میزبانی شخصی و هزینهٔ هر پاسخ.',
+      keywords: ['ClawAI در برابر GLM', 'جایگزین GLM', 'فضای کاری چندمدلی'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI در برابر DeepSeek',
+      description:
+        'مدل‌های استدلالی با وزن‌های باز در برابر نُه خانوادهٔ مدل: انتخاب مدل، مسیریابی برای هر پیام، پاسخ‌های هم‌زمان، اجرای محلی و میزبانی شخصی.',
+      keywords: ['ClawAI در برابر DeepSeek', 'جایگزین DeepSeek', 'فضای کاری خودمیزبان'],
+    },
+    'coding-agent': {
+      title: 'عامل کدنویسی ClawAI برای VS Code',
+      description:
+        'افزونه‌ای برای VS Code که مدل‌ها، مسیریابی و تاریخچهٔ اشتراک ClawAI را درون ویرایشگر می‌آورد، در حالی که حساب، سهمیه و اطلاعات ارائه‌دهنده روی پلتفرم می‌مانند.',
+      keywords: ['افزونهٔ VS Code هوش مصنوعی', 'عامل کدنویسی ClawAI', 'دستیار کدنویسی'],
+    },
+    'coding-agent/install': {
+      title: 'نصب عامل کدنویسی ClawAI برای VS Code',
+      description:
+        'نصب افزونه از درون VS Code یا از خط فرمان، ورود به حساب، انتخاب میان سرویس میزبانی‌شده و نمونهٔ خودمیزبان، و رفع مشکل‌های رایج نصب.',
+      keywords: ['نصب افزونهٔ ClawAI', 'نصب افزونه VS Code', 'ورود به عامل کدنویسی'],
+    },
   },
   [Locale.ZH]: {
     home: {
@@ -1850,6 +2350,42 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       description:
         'ClawAI 与 Microsoft Copilot 的差别在哪里：深度绑定 Microsoft 365，还是保持厂商无关。逐项比较模型选择、路由、每次回答的成本，以及部署到自有服务器的能力。',
       keywords: ['ClawAI 对比 Copilot', 'Copilot 替代方案', '自托管 AI 工作区'],
+    },
+    'compare/kimi': {
+      title: 'ClawAI 与 Kimi 对比',
+      description:
+        'ClawAI 与 Kimi 的差别在哪里：一家把旗舰权重公开的实验室，对比一个覆盖九大模型家族的工作区。逐项比较模型选择、路由、并排回答、在自有硬件上运行开源权重、自托管以及每次回答的成本记录。',
+      keywords: ['ClawAI 对比 Kimi', 'Kimi 替代方案', '开源权重 AI 工作区'],
+    },
+    'compare/qwen': {
+      title: 'ClawAI 与 Qwen 对比',
+      description:
+        'ClawAI 与 Qwen 的差别在哪里：一个可以自己部署的开源权重家族，对比一个替你把模型跑起来的工作区。逐项比较模型选择、路由、本地模型、自托管、记忆与文件以及每次回答的成本记录。',
+      keywords: ['ClawAI 对比 Qwen', 'Qwen 替代方案', '本地模型 AI 工作区'],
+    },
+    'compare/glm': {
+      title: 'ClawAI 与 GLM 对比',
+      description:
+        'ClawAI 与 GLM 的差别在哪里：押注一家实验室的价格与能力，还是按消息在九个家族之间选路。逐项比较模型选择、路由、本地模型、自托管以及每次回答的成本记录。',
+      keywords: ['ClawAI 对比 GLM', 'GLM 替代方案', '自托管 AI 工作区'],
+    },
+    'compare/deepseek': {
+      title: 'ClawAI 与 DeepSeek 对比',
+      description:
+        'ClawAI 与 DeepSeek 的差别在哪里：一条以推理见长、并公开旗舰权重的产品线，对比一个多模型工作区。逐项比较模型选择、路由、并排回答、本地模型、自托管以及每次回答的成本记录。',
+      keywords: ['ClawAI 对比 DeepSeek', 'DeepSeek 替代方案', '多模型 AI 工作区'],
+    },
+    'coding-agent': {
+      title: 'VS Code 版 ClawAI 编程助手',
+      description:
+        '了解 ClawAI 编程助手扩展在 VS Code 里做什么：它是一个瘦客户端，账户、额度、对话历史、供应商凭据与模型路由都留在平台上，编辑器中可以选择模型、并排对比回答，并在改动写入前先查看差异。',
+      keywords: ['ClawAI 编程助手', 'VS Code AI 扩展', '编辑器内 AI 编程'],
+    },
+    'coding-agent/install': {
+      title: '安装 ClawAI 编程助手扩展',
+      description:
+        '按步骤在 VS Code 中安装 ClawAI 编程助手：从扩展面板或命令行安装、在浏览器中登录并填写后端地址（使用 ClawAI 托管平台或自己的部署），并查看安装与登录出问题时的排查方法。',
+      keywords: ['ClawAI 编程助手安装', 'VS Code 扩展安装', 'AI 编程助手设置'],
     },
   },
 };

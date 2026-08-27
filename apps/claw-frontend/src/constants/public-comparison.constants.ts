@@ -37,6 +37,10 @@ export const COMPARISON_RIVAL_ORDER: ReadonlyArray<ComparisonRival> = [
   ComparisonRival.GEMINI,
   ComparisonRival.PERPLEXITY,
   ComparisonRival.COPILOT,
+  ComparisonRival.KIMI,
+  ComparisonRival.QWEN,
+  ComparisonRival.GLM,
+  ComparisonRival.DEEPSEEK,
 ];
 
 export const COMPARISON_HUB_PATH = '/compare';
@@ -56,6 +60,10 @@ export const COMPARISON_SLUG_BY_RIVAL: Record<ComparisonRival, LaunchPublicPageS
   [ComparisonRival.GEMINI]: LaunchPublicPageSlug.COMPARE_GEMINI,
   [ComparisonRival.PERPLEXITY]: LaunchPublicPageSlug.COMPARE_PERPLEXITY,
   [ComparisonRival.COPILOT]: LaunchPublicPageSlug.COMPARE_COPILOT,
+  [ComparisonRival.KIMI]: LaunchPublicPageSlug.COMPARE_KIMI,
+  [ComparisonRival.QWEN]: LaunchPublicPageSlug.COMPARE_QWEN,
+  [ComparisonRival.GLM]: LaunchPublicPageSlug.COMPARE_GLM,
+  [ComparisonRival.DEEPSEEK]: LaunchPublicPageSlug.COMPARE_DEEPSEEK,
 };
 
 export const COMPARISON_PATH_BY_RIVAL: Record<ComparisonRival, string> = {
@@ -64,6 +72,10 @@ export const COMPARISON_PATH_BY_RIVAL: Record<ComparisonRival, string> = {
   [ComparisonRival.GEMINI]: `${COMPARISON_HUB_PATH}/${ComparisonRival.GEMINI}`,
   [ComparisonRival.PERPLEXITY]: `${COMPARISON_HUB_PATH}/${ComparisonRival.PERPLEXITY}`,
   [ComparisonRival.COPILOT]: `${COMPARISON_HUB_PATH}/${ComparisonRival.COPILOT}`,
+  [ComparisonRival.KIMI]: `${COMPARISON_HUB_PATH}/${ComparisonRival.KIMI}`,
+  [ComparisonRival.QWEN]: `${COMPARISON_HUB_PATH}/${ComparisonRival.QWEN}`,
+  [ComparisonRival.GLM]: `${COMPARISON_HUB_PATH}/${ComparisonRival.GLM}`,
+  [ComparisonRival.DEEPSEEK]: `${COMPARISON_HUB_PATH}/${ComparisonRival.DEEPSEEK}`,
 };
 
 /** Anchor ids for the in-page section nav. Stable, so deep links keep working. */

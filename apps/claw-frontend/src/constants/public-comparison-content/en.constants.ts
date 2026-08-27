@@ -266,5 +266,173 @@ export const EN_COMPARISON_CONTENT: ComparisonDictionary = {
         },
       ],
     },
+    [ComparisonRival.KIMI]: {
+      name: 'Kimi',
+      vendor: 'Moonshot AI',
+      eyebrow: 'ClawAI vs Kimi',
+      intro:
+        'Kimi built its reputation on very long context and, more recently, on releasing open weights that anyone can download and run. ClawAI is a different shape: one subscription that reaches Kimi-class open-weight models alongside eight other families, and sends each message to whichever suits it.',
+      theirStrength:
+        'Long-context reading at a price that undercuts most Western frontier models, strong agentic and tool-use behaviour, and open weights for the flagship line — so the same model can be evaluated in the hosted product and then run on your own hardware.',
+      ourDifference:
+        'ClawAI does not ask you to pick a lab. An open-weight model can answer the questions where cost or residency matters, a frontier model can take the ones that need it, and the routing decision is recorded per answer instead of being a habit you have to remember.',
+      chooseRival:
+        'your work is dominated by very long documents, you are comfortable with a single vendor, and the price per token is the number that decides it.',
+      chooseClaw:
+        'you want open-weight economics on some messages and frontier quality on others, without running two subscriptions and deciding by hand each time.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'Moonshot models only',
+        [ComparisonDimension.ROUTING]: 'Selection within Moonshot’s own range',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'One answer at a time',
+        [ComparisonDimension.LOCAL_MODELS]: 'Open weights published, hosting is your own problem',
+        [ComparisonDimension.SELF_HOSTING]: 'Weights yes, product no',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'Long-context file reading',
+        [ComparisonDimension.CONNECTORS]: 'Limited outside its own apps',
+        [ComparisonDimension.RECEIPTS]: 'API-level usage, not per-answer cost',
+      },
+      faq: [
+        {
+          question: 'Can ClawAI use Kimi models?',
+          answer:
+            'ClawAI reaches open-weight models of this class through its own roster, and can run them locally on your GPUs. There is no separate account to create and no API key to paste.',
+        },
+        {
+          question: 'Is running open weights myself cheaper than a subscription?',
+          answer:
+            'At sustained volume it can be, once you own the GPUs and the operational time. ClawAI is aimed at the case in between: open-weight economics for the messages that suit them, frontier models for the ones that do not, on one bill.',
+        },
+        {
+          question: 'Does my data leave the network if I use a local model?',
+          answer:
+            'No. Pin a conversation to a local open-weight model and nothing is sent to an external provider. Self-hosting the whole stack removes external calls entirely.',
+        },
+      ],
+    },
+    [ComparisonRival.QWEN]: {
+      name: 'Qwen',
+      vendor: 'Alibaba',
+      eyebrow: 'ClawAI vs Qwen',
+      intro:
+        'Qwen is one of the most complete open-weight families available: a wide ladder of sizes, strong multilingual coverage, and permissive licensing on most of the range. ClawAI puts models of that class next to eight other families under one subscription.',
+      theirStrength:
+        'Breadth. Sizes from ones that run on a laptop to ones that need a server, vision and coding variants, genuinely good performance outside English, and licensing that makes commercial self-hosting straightforward.',
+      ourDifference:
+        'ClawAI is the layer above the model rather than the model itself. It routes per message, can ask several families the same question and show the answers side by side, keeps memory and files across all of them, and prices the whole thing as one allowance.',
+      chooseRival:
+        'you are building on top of a model, want to own the deployment, and have the operational capacity to run and update it yourself.',
+      chooseClaw:
+        'you want to use models rather than operate them, and want the option to reach a frontier model when an open-weight one is not enough.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'Qwen family only',
+        [ComparisonDimension.ROUTING]: 'You pick the size and variant',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'Not part of the model',
+        [ComparisonDimension.LOCAL_MODELS]: 'Open weights across the range',
+        [ComparisonDimension.SELF_HOSTING]: 'Weights yes, product no',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'Whatever you build around it',
+        [ComparisonDimension.CONNECTORS]: 'Whatever you build around it',
+        [ComparisonDimension.RECEIPTS]: 'Your own instrumentation',
+      },
+      faq: [
+        {
+          question: 'Can I run an open-weight model inside ClawAI?',
+          answer:
+            'Yes. ClawAI runs open-weight models locally through its own runtime, and a conversation can be pinned to one so nothing leaves your network.',
+        },
+        {
+          question: 'Why use ClawAI instead of hosting a model directly?',
+          answer:
+            'Because the model is the easy part. Routing, comparison, memory, file handling, connectors, quotas and per-answer cost accounting are the parts you would otherwise build, and they are what ClawAI is.',
+        },
+        {
+          question: 'Does ClawAI support languages other than English?',
+          answer:
+            'The product interface ships in thirteen languages, and model choice is per message — so a multilingual model can take the messages that need one.',
+        },
+      ],
+    },
+    [ComparisonRival.GLM]: {
+      name: 'GLM',
+      vendor: 'Zhipu AI',
+      eyebrow: 'ClawAI vs GLM',
+      intro:
+        'GLM is Zhipu’s frontier line, known for strong coding and agentic performance at a fraction of the price of the largest Western models, with open weights on much of the range. ClawAI treats models of that class as one option among nine.',
+      theirStrength:
+        'Price-to-capability. Coding and tool-use results close to far more expensive models, an aggressive release cadence, and open weights that make self-hosting a real option rather than a press release.',
+      ourDifference:
+        'ClawAI does not make you bet on one lab keeping its lead. Routing is per message and the roster changes underneath you, so a cheaper model taking more of the work is a configuration change rather than a migration.',
+      chooseRival:
+        'cost per capable answer is the deciding number, your work is mostly code, and you are willing to follow one lab’s release cycle closely.',
+      chooseClaw:
+        'you want that economics available without committing to it for everything, and want a record of which model actually answered.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'Zhipu models only',
+        [ComparisonDimension.ROUTING]: 'Selection within Zhipu’s own range',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'One answer at a time',
+        [ComparisonDimension.LOCAL_MODELS]: 'Open weights on much of the range',
+        [ComparisonDimension.SELF_HOSTING]: 'Weights yes, product no',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'File uploads in its own app',
+        [ComparisonDimension.CONNECTORS]: 'Limited outside its own apps',
+        [ComparisonDimension.RECEIPTS]: 'API-level usage, not per-answer cost',
+      },
+      faq: [
+        {
+          question: 'Is ClawAI cheaper than using a low-cost model directly?',
+          answer:
+            'Per token, no — a direct API call to the cheapest capable model is always the floor. ClawAI is cheaper than the realistic alternative: several subscriptions, or building routing, memory and cost accounting yourself.',
+        },
+        {
+          question: 'Can I make ClawAI prefer lower-cost models?',
+          answer:
+            'Yes. Routing modes range from fully automatic to pinning a specific model, and the cost-aware modes weigh price against capability per message.',
+        },
+        {
+          question: 'How do I know which model answered?',
+          answer:
+            'Every answer carries the provider, the model, the routing mode and the cost it drew, and the routing decision itself can be inspected.',
+        },
+      ],
+    },
+    [ComparisonRival.DEEPSEEK]: {
+      name: 'DeepSeek',
+      vendor: 'DeepSeek',
+      eyebrow: 'ClawAI vs DeepSeek',
+      intro:
+        'DeepSeek changed the price expectation for reasoning models and published open weights for its flagship line. ClawAI is the layer that lets a model like that take the work it is good at without becoming the only model you have.',
+      theirStrength:
+        'Reasoning and mathematics at a price that upended the market, open weights on the flagship line, and a research posture that publishes rather than hints — you can read how the models were trained.',
+      ourDifference:
+        'ClawAI keeps the choice open per message. A reasoning-heavy question can go to a reasoning model, a routine one to something cheap and fast, and a sensitive one to a model on your own hardware, with the decision recorded rather than assumed.',
+      chooseRival:
+        'your workload is dominated by hard reasoning, you want the lowest price for it, and one vendor is acceptable.',
+      chooseClaw:
+        'reasoning is part of your work rather than all of it, and you want a second model available to check the first.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'DeepSeek models only',
+        [ComparisonDimension.ROUTING]: 'You pick chat or reasoning',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'One answer at a time',
+        [ComparisonDimension.LOCAL_MODELS]: 'Open weights on the flagship line',
+        [ComparisonDimension.SELF_HOSTING]: 'Weights yes, product no',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'File uploads in its own app',
+        [ComparisonDimension.CONNECTORS]: 'Limited outside its own apps',
+        [ComparisonDimension.RECEIPTS]: 'API-level usage, not per-answer cost',
+      },
+      faq: [
+        {
+          question: 'Can ClawAI route only to reasoning models?',
+          answer:
+            'Yes. A conversation can be pinned to a specific model, and the automatic mode already sends reasoning-heavy messages to models suited to them.',
+        },
+        {
+          question: 'Where is my data processed?',
+          answer:
+            'Whichever provider answered, and the answer says which. If that matters for a piece of work, pin it to a local open-weight model, or self-host the stack so nothing leaves your network.',
+        },
+        {
+          question: 'Can I compare two models on the same question?',
+          answer:
+            'Yes. Compare mode sends one prompt to several models at once and shows the answers side by side, with an optional judge pass to score them.',
+        },
+      ],
+    },
   },
 };

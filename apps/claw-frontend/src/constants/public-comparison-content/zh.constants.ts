@@ -258,5 +258,168 @@ export const ZH_COMPARISON_CONTENT: ComparisonDictionary = {
         },
       ],
     },
+    [ComparisonRival.KIMI]: {
+      name: 'Kimi',
+      vendor: 'Moonshot AI',
+      eyebrow: 'ClawAI 与 Kimi 对比',
+      intro:
+        'Kimi 靠超长上下文建立了声誉，近来又公开了任何人都能下载并运行的开源权重。ClawAI 的形态不同：一份订阅既能触达 Kimi 这一类开源权重模型，也能触达另外八个家族，并把每条消息交给合适的那个。',
+      theirStrength:
+        '以低于多数西方前沿模型的价格读取长上下文，代理与工具调用表现扎实，旗舰产品线还公开了权重——同一个模型可以先在托管产品里评估，再放到你自己的硬件上运行。',
+      ourDifference:
+        'ClawAI 不要求你选定某一家实验室。成本或数据驻留要紧时，可以由开源权重模型作答；需要时再交给前沿模型；而路由决定会逐条记录，不必靠你自己记住。',
+      chooseRival:
+        '你的工作以超长文档为主，只用一家厂商也没问题，而且每 token 的价格是决定一切的那个数字。',
+      chooseClaw:
+        '你希望一部分消息享受开源权重的经济性、另一部分拿到前沿模型的质量，又不想为此维持两份订阅、每次还得手动决定。',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: '仅 Moonshot 模型',
+        [ComparisonDimension.ROUTING]: '在 Moonshot 自家产品线内选择',
+        [ComparisonDimension.SIDE_BY_SIDE]: '一次一个回答',
+        [ComparisonDimension.LOCAL_MODELS]: '权重已公开，托管要你自己解决',
+        [ComparisonDimension.SELF_HOSTING]: '权重可以，产品不行',
+        [ComparisonDimension.MEMORY_AND_FILES]: '长上下文文件读取',
+        [ComparisonDimension.CONNECTORS]: '自家应用之外很有限',
+        [ComparisonDimension.RECEIPTS]: 'API 层面的用量，无每次回答成本',
+      },
+      faq: [
+        {
+          question: 'ClawAI 能使用 Kimi 模型吗？',
+          answer:
+            'ClawAI 通过自己的模型清单触达这一类开源权重模型，并可在你的 GPU 上本地运行。无需另行注册账号，也不必粘贴 API 密钥。',
+        },
+        {
+          question: '自己运行开源权重会比订阅更便宜吗？',
+          answer:
+            '在持续的高用量下有可能，前提是 GPU 和运维时间都归你自己。ClawAI 面向的是中间那种情况：适合的消息用开源权重的经济性，不适合的交给前沿模型，合成一份账单。',
+        },
+        {
+          question: '用本地模型时，我的数据会离开内网吗？',
+          answer:
+            '不会。把对话固定到本地开源权重模型，就不会有任何内容发往外部供应商。自托管整套系统则完全消除外部调用。',
+        },
+      ],
+    },
+    [ComparisonRival.QWEN]: {
+      name: 'Qwen',
+      vendor: 'Alibaba',
+      eyebrow: 'ClawAI 与 Qwen 对比',
+      intro:
+        'Qwen 是现有最完整的开源权重家族之一：尺寸阶梯很宽，多语言覆盖扎实，大部分产品线还采用宽松许可。ClawAI 把这一类模型与另外八个家族一起放在同一份订阅之下。',
+      theirStrength:
+        '广度。尺寸从能在笔记本上跑的一直到需要服务器的，另有视觉与代码变体，在英语之外也确实好用，许可证还让商用自托管变得直截了当。',
+      ourDifference:
+        'ClawAI 是模型之上的那一层，而不是模型本身。它按消息选路，可以把同一个问题抛给多个家族并把回答并排呈现，在所有模型之间保留记忆与文件，并把这一切计入同一份额度。',
+      chooseRival: '你要在模型之上做开发，希望自己掌控部署，并且有运维能力自行运行与更新它。',
+      chooseClaw: '你想使用模型而不是运维模型，并希望在开源权重模型不够用时还能触达前沿模型。',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: '仅 Qwen 家族',
+        [ComparisonDimension.ROUTING]: '由你自己挑选尺寸与变体',
+        [ComparisonDimension.SIDE_BY_SIDE]: '不属于模型本身',
+        [ComparisonDimension.LOCAL_MODELS]: '整条产品线都有开源权重',
+        [ComparisonDimension.SELF_HOSTING]: '权重可以，产品不行',
+        [ComparisonDimension.MEMORY_AND_FILES]: '取决于你自己搭的那一层',
+        [ComparisonDimension.CONNECTORS]: '取决于你自己搭的那一层',
+        [ComparisonDimension.RECEIPTS]: '由你自行埋点统计',
+      },
+      faq: [
+        {
+          question: '我能在 ClawAI 里运行开源权重模型吗？',
+          answer:
+            '可以。ClawAI 通过自己的运行时在本地运行开源权重模型，而且对话可以固定到其中一个，任何内容都不会离开你的网络。',
+        },
+        {
+          question: '为什么用 ClawAI，而不是直接自己托管一个模型？',
+          answer:
+            '因为模型才是简单的那部分。路由、对比、记忆、文件处理、连接器、配额和每次回答的成本核算，才是你原本要自己搭的东西，而这些正是 ClawAI。',
+        },
+        {
+          question: 'ClawAI 支持英语以外的语言吗？',
+          answer:
+            '产品界面提供十三种语言，而且模型是按消息选择的——需要多语言能力的消息可以交给多语言模型。',
+        },
+      ],
+    },
+    [ComparisonRival.GLM]: {
+      name: 'GLM',
+      vendor: 'Zhipu AI',
+      eyebrow: 'ClawAI 与 GLM 对比',
+      intro:
+        'GLM 是 Zhipu 的前沿产品线，以远低于最大型西方模型的价格给出出色的编码与代理表现，大部分产品线还公开了权重。ClawAI 把这一类模型视为九个选项之一。',
+      theirStrength:
+        '价格与能力之比。编码与工具调用的结果接近贵得多的模型，发布节奏紧凑，公开的权重也让自托管成为真正可行的选项，而不只是一纸新闻稿。',
+      ourDifference:
+        'ClawAI 不会让你押注某一家实验室能一直领先。路由按消息进行，模型清单会在你脚下更新，因此让更便宜的模型承担更多工作只是一次配置调整，而不是一次迁移。',
+      chooseRival:
+        '每个可用回答的成本是决定一切的那个数字，你的工作以代码为主，而且愿意紧跟某一家实验室的发布节奏。',
+      chooseClaw:
+        '你希望这种经济性随时可用，却不必为此把所有工作都押上去，同时想留下究竟是哪个模型作答的记录。',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: '仅 Zhipu 模型',
+        [ComparisonDimension.ROUTING]: '在 Zhipu 自家产品线内选择',
+        [ComparisonDimension.SIDE_BY_SIDE]: '一次一个回答',
+        [ComparisonDimension.LOCAL_MODELS]: '大部分产品线有开源权重',
+        [ComparisonDimension.SELF_HOSTING]: '权重可以，产品不行',
+        [ComparisonDimension.MEMORY_AND_FILES]: '自家应用内的文件上传',
+        [ComparisonDimension.CONNECTORS]: '自家应用之外很有限',
+        [ComparisonDimension.RECEIPTS]: 'API 层面的用量，无每次回答成本',
+      },
+      faq: [
+        {
+          question: 'ClawAI 会比直接使用低价模型更便宜吗？',
+          answer:
+            '按 token 算不会——直接调用最便宜的可用模型永远是价格底线。ClawAI 便宜在与现实的替代方案相比：要么订上好几份服务，要么自己搭路由、记忆与成本核算。',
+        },
+        {
+          question: '我能让 ClawAI 偏向低成本模型吗？',
+          answer:
+            '可以。路由模式从完全自动到固定某个具体模型都有，其中考虑成本的模式会按消息在价格与能力之间权衡。',
+        },
+        {
+          question: '我怎么知道是哪个模型作答的？',
+          answer: '每个回答都带着供应商、模型、路由模式以及消耗的成本，路由决策本身也可以查看。',
+        },
+      ],
+    },
+    [ComparisonRival.DEEPSEEK]: {
+      name: 'DeepSeek',
+      vendor: 'DeepSeek',
+      eyebrow: 'ClawAI 与 DeepSeek 对比',
+      intro:
+        'DeepSeek 改变了人们对推理模型价格的预期，并为旗舰产品线公开了权重。ClawAI 就是那一层：让这样的模型去做它擅长的工作，而不必成为你唯一的模型。',
+      theirStrength:
+        '推理与数学的价格颠覆了市场，旗舰产品线公开权重，研究姿态是发表而非暗示——你可以读到这些模型是怎么训练出来的。',
+      ourDifference:
+        'ClawAI 把选择权按消息保留下来。重推理的问题可以交给推理模型，例行的交给又便宜又快的，敏感的交给你自己硬件上的模型，而且这个决定是记录下来的，不是猜的。',
+      chooseRival: '你的工作以困难推理为主，希望为此拿到最低价格，而且只用一家厂商也可以接受。',
+      chooseClaw: '推理只是工作的一部分而非全部，而且你希望随时有第二个模型来复核第一个。',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: '仅 DeepSeek 模型',
+        [ComparisonDimension.ROUTING]: '由你自己挑选对话或推理',
+        [ComparisonDimension.SIDE_BY_SIDE]: '一次一个回答',
+        [ComparisonDimension.LOCAL_MODELS]: '旗舰产品线有开源权重',
+        [ComparisonDimension.SELF_HOSTING]: '权重可以，产品不行',
+        [ComparisonDimension.MEMORY_AND_FILES]: '自家应用内的文件上传',
+        [ComparisonDimension.CONNECTORS]: '自家应用之外很有限',
+        [ComparisonDimension.RECEIPTS]: 'API 层面的用量，无每次回答成本',
+      },
+      faq: [
+        {
+          question: 'ClawAI 能只路由到推理模型吗？',
+          answer:
+            '可以。对话可以固定到某个具体模型，而且自动模式本来就会把重推理的消息发给适合它们的模型。',
+        },
+        {
+          question: '我的数据在哪里处理？',
+          answer:
+            '在作答的那家供应商那里，回答会写明是哪一家。如果这一点对某项工作很重要，就把它固定到本地开源权重模型，或者自托管整套系统，任何内容都不会离开你的网络。',
+        },
+        {
+          question: '我能就同一个问题比较两个模型吗？',
+          answer:
+            '可以。对比模式把同一条提示同时发给多个模型，并把回答并排呈现，还可以选做一次评判来打分。',
+        },
+      ],
+    },
   },
 };

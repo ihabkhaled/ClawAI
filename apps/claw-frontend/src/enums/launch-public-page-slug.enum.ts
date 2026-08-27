@@ -21,4 +21,10 @@ export enum LaunchPublicPageSlug {
   COMPARE_GEMINI = 'compare/gemini',
   COMPARE_PERPLEXITY = 'compare/perplexity',
   COMPARE_COPILOT = 'compare/copilot',
+  COMPARE_KIMI = 'compare/kimi',
+  COMPARE_QWEN = 'compare/qwen',
+  COMPARE_GLM = 'compare/glm',
+  COMPARE_DEEPSEEK = 'compare/deepseek',
+  CODING_AGENT = 'coding-agent',
+  CODING_AGENT_INSTALL = 'coding-agent/install',
 }

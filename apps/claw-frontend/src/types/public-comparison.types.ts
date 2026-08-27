@@ -27,7 +27,7 @@ export type ComparisonRivalContent = {
 };
 
 /**
- * Page furniture shared by the hub and all five comparison pages.
+ * Page furniture shared by the hub and every comparison page.
  *
  * Three of these carry a `{rival}` placeholder rather than being assembled from
  * fragments in the component. Word order is not universal — a prefix-plus-name

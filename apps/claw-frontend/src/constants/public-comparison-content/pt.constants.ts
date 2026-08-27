@@ -267,5 +267,173 @@ export const PT_COMPARISON_CONTENT: ComparisonDictionary = {
         },
       ],
     },
+    [ComparisonRival.KIMI]: {
+      name: 'Kimi',
+      vendor: 'Moonshot AI',
+      eyebrow: 'ClawAI vs Kimi',
+      intro:
+        'O Kimi ganhou reputação com contexto muito longo e, mais recentemente, com a publicação de pesos abertos que qualquer pessoa pode descarregar e correr. O ClawAI tem outra forma: uma assinatura que alcança modelos de pesos abertos desta classe ao lado de outras oito famílias e envia cada mensagem para a que melhor serve.',
+      theirStrength:
+        'Leitura de contexto longo a um preço abaixo da maioria dos modelos de ponta ocidentais, bom comportamento agêntico e de uso de ferramentas, e pesos abertos na linha principal — o mesmo modelo pode ser avaliado no produto alojado e depois corrido no seu próprio hardware.',
+      ourDifference:
+        'O ClawAI não lhe pede que escolha um laboratório. Um modelo de pesos abertos pode responder às perguntas em que o custo ou a residência dos dados contam, um modelo de ponta pode ficar com as que precisam disso, e a decisão de roteamento fica registada em cada resposta em vez de ser um hábito que tem de recordar.',
+      chooseRival:
+        'o seu trabalho é dominado por documentos muito longos, está confortável com um só fornecedor, e o preço por token é o número que decide.',
+      chooseClaw:
+        'quer a economia dos pesos abertos nalgumas mensagens e a qualidade de ponta noutras, sem manter duas assinaturas e decidir à mão de cada vez.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'Apenas modelos Moonshot',
+        [ComparisonDimension.ROUTING]: 'Seleção dentro da gama da Moonshot',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'Uma resposta de cada vez',
+        [ComparisonDimension.LOCAL_MODELS]: 'Pesos abertos publicados, o alojamento é consigo',
+        [ComparisonDimension.SELF_HOSTING]: 'Os pesos sim, o produto não',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'Leitura de ficheiros em contexto longo',
+        [ComparisonDimension.CONNECTORS]: 'Limitados fora das suas próprias apps',
+        [ComparisonDimension.RECEIPTS]: 'Uso ao nível da API, não custo por resposta',
+      },
+      faq: [
+        {
+          question: 'O ClawAI pode usar modelos Kimi?',
+          answer:
+            'O ClawAI alcança modelos de pesos abertos desta classe através do seu próprio catálogo, e pode corrê-los localmente nas suas GPUs. Não há conta separada para criar nem chave de API para colar.',
+        },
+        {
+          question: 'Correr pesos abertos por minha conta é mais barato do que uma assinatura?',
+          answer:
+            'Com volume sustentado pode ser, depois de ter as GPUs e o tempo de operação. O ClawAI aponta ao caso intermédio: a economia dos pesos abertos para as mensagens que a servem, modelos de ponta para as que não, numa só fatura.',
+        },
+        {
+          question: 'Os meus dados saem da rede se usar um modelo local?',
+          answer:
+            'Não. Fixe a conversa num modelo local de pesos abertos e nada é enviado para um fornecedor externo. Instalar toda a pilha nos seus servidores elimina por completo as chamadas externas.',
+        },
+      ],
+    },
+    [ComparisonRival.QWEN]: {
+      name: 'Qwen',
+      vendor: 'Alibaba',
+      eyebrow: 'ClawAI vs Qwen',
+      intro:
+        'O Qwen é uma das famílias de pesos abertos mais completas que existem: uma escada larga de tamanhos, boa cobertura multilingue e licenciamento permissivo em quase toda a gama. O ClawAI põe modelos dessa classe ao lado de outras oito famílias numa só assinatura.',
+      theirStrength:
+        'Amplitude. Tamanhos que vão dos que correm num portátil aos que precisam de um servidor, variantes de visão e de código, desempenho realmente bom fora do inglês, e licenciamento que torna simples o self-hosting comercial.',
+      ourDifference:
+        'O ClawAI é a camada acima do modelo, não o modelo em si. Encaminha por mensagem, pode fazer a mesma pergunta a várias famílias e mostrar as respostas lado a lado, mantém memória e ficheiros em todas elas, e cobra o conjunto como um só saldo.',
+      chooseRival:
+        'está a construir em cima de um modelo, quer ser dono da instalação, e tem capacidade operacional para o correr e atualizar por si.',
+      chooseClaw:
+        'quer usar modelos em vez de os operar, e quer a opção de alcançar um modelo de ponta quando um de pesos abertos não chega.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'Apenas a família Qwen',
+        [ComparisonDimension.ROUTING]: 'É você que escolhe o tamanho e a variante',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'Não faz parte do modelo',
+        [ComparisonDimension.LOCAL_MODELS]: 'Pesos abertos em toda a gama',
+        [ComparisonDimension.SELF_HOSTING]: 'Os pesos sim, o produto não',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'O que construir à volta dele',
+        [ComparisonDimension.CONNECTORS]: 'O que construir à volta dele',
+        [ComparisonDimension.RECEIPTS]: 'A sua própria instrumentação',
+      },
+      faq: [
+        {
+          question: 'Posso correr um modelo de pesos abertos dentro do ClawAI?',
+          answer:
+            'Sim. O ClawAI corre modelos de pesos abertos localmente através do seu próprio runtime, e uma conversa pode ser fixada num deles para que nada saia da sua rede.',
+        },
+        {
+          question: 'Porquê usar o ClawAI em vez de alojar um modelo diretamente?',
+          answer:
+            'Porque o modelo é a parte fácil. Roteamento, comparação, memória, tratamento de ficheiros, conectores, quotas e contabilidade de custo por resposta são as partes que teria de construir, e são aquilo que o ClawAI é.',
+        },
+        {
+          question: 'O ClawAI suporta outras línguas além do inglês?',
+          answer:
+            'A interface do produto vem em treze línguas, e a escolha do modelo é por mensagem: um modelo multilingue pode ficar com as mensagens que precisem dele.',
+        },
+      ],
+    },
+    [ComparisonRival.GLM]: {
+      name: 'GLM',
+      vendor: 'Zhipu AI',
+      eyebrow: 'ClawAI vs GLM',
+      intro:
+        'O GLM é a linha de ponta da Zhipu, conhecida por bom desempenho em código e em trabalho agêntico por uma fração do preço dos maiores modelos ocidentais, com pesos abertos em boa parte da gama. O ClawAI trata modelos dessa classe como uma opção entre nove.',
+      theirStrength:
+        'Preço face à capacidade. Resultados em código e uso de ferramentas próximos de modelos muito mais caros, uma cadência de lançamentos agressiva, e pesos abertos que fazem do self-hosting uma opção real e não um comunicado de imprensa.',
+      ourDifference:
+        'O ClawAI não o obriga a apostar que um laboratório mantém a dianteira. O roteamento é por mensagem e o catálogo muda por baixo de si, por isso pôr um modelo mais barato a levar mais trabalho é uma alteração de configuração, não uma migração.',
+      chooseRival:
+        'o custo por resposta capaz é o número que decide, o seu trabalho é sobretudo código, e está disposto a seguir de perto o ciclo de lançamentos de um laboratório.',
+      chooseClaw:
+        'quer essa economia disponível sem se comprometer com ela para tudo, e quer um registo de qual modelo respondeu de facto.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'Apenas modelos Zhipu',
+        [ComparisonDimension.ROUTING]: 'Seleção dentro da gama da Zhipu',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'Uma resposta de cada vez',
+        [ComparisonDimension.LOCAL_MODELS]: 'Pesos abertos em boa parte da gama',
+        [ComparisonDimension.SELF_HOSTING]: 'Os pesos sim, o produto não',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'Envio de ficheiros na sua própria app',
+        [ComparisonDimension.CONNECTORS]: 'Limitados fora das suas próprias apps',
+        [ComparisonDimension.RECEIPTS]: 'Uso ao nível da API, não custo por resposta',
+      },
+      faq: [
+        {
+          question: 'O ClawAI é mais barato do que usar um modelo de baixo custo diretamente?',
+          answer:
+            'Por token, não: uma chamada direta à API do modelo capaz mais barato é sempre o mínimo. O ClawAI é mais barato do que a alternativa realista: várias assinaturas, ou construir por si o roteamento, a memória e a contabilidade de custos.',
+        },
+        {
+          question: 'Posso fazer o ClawAI preferir modelos de menor custo?',
+          answer:
+            'Sim. Os modos de roteamento vão do totalmente automático até fixar um modelo específico, e os modos atentos ao custo pesam o preço face à capacidade em cada mensagem.',
+        },
+        {
+          question: 'Como sei qual modelo respondeu?',
+          answer:
+            'Cada resposta traz o fornecedor, o modelo, o modo de roteamento e o custo consumido, e a própria decisão de roteamento pode ser inspecionada.',
+        },
+      ],
+    },
+    [ComparisonRival.DEEPSEEK]: {
+      name: 'DeepSeek',
+      vendor: 'DeepSeek',
+      eyebrow: 'ClawAI vs DeepSeek',
+      intro:
+        'A DeepSeek mudou a expectativa de preço dos modelos de raciocínio e publicou pesos abertos para a sua linha principal. O ClawAI é a camada que deixa um modelo desses ficar com o trabalho em que é bom sem passar a ser o único modelo que tem.',
+      theirStrength:
+        'Raciocínio e matemática a um preço que abalou o mercado, pesos abertos na linha principal, e uma postura de investigação que publica em vez de insinuar: pode ler como os modelos foram treinados.',
+      ourDifference:
+        'O ClawAI mantém a escolha aberta em cada mensagem. Uma pergunta pesada em raciocínio pode ir para um modelo de raciocínio, uma de rotina para algo barato e rápido, e uma sensível para um modelo no seu próprio hardware, com a decisão registada em vez de presumida.',
+      chooseRival:
+        'a sua carga de trabalho é dominada por raciocínio difícil, quer o preço mais baixo para isso, e um só fornecedor é aceitável.',
+      chooseClaw:
+        'o raciocínio é parte do seu trabalho e não a totalidade, e quer um segundo modelo disponível para verificar o primeiro.',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'Apenas modelos DeepSeek',
+        [ComparisonDimension.ROUTING]: 'É você que escolhe entre chat e raciocínio',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'Uma resposta de cada vez',
+        [ComparisonDimension.LOCAL_MODELS]: 'Pesos abertos na linha principal',
+        [ComparisonDimension.SELF_HOSTING]: 'Os pesos sim, o produto não',
+        [ComparisonDimension.MEMORY_AND_FILES]: 'Envio de ficheiros na sua própria app',
+        [ComparisonDimension.CONNECTORS]: 'Limitados fora das suas próprias apps',
+        [ComparisonDimension.RECEIPTS]: 'Uso ao nível da API, não custo por resposta',
+      },
+      faq: [
+        {
+          question: 'O ClawAI pode encaminhar apenas para modelos de raciocínio?',
+          answer:
+            'Sim. Uma conversa pode ser fixada num modelo específico, e o modo automático já envia as mensagens pesadas em raciocínio para modelos adequados a elas.',
+        },
+        {
+          question: 'Onde são processados os meus dados?',
+          answer:
+            'No fornecedor que respondeu, e a resposta diz qual. Se isso importar para algum trabalho, fixe-o num modelo local de pesos abertos, ou instale a pilha nos seus servidores para que nada saia da sua rede.',
+        },
+        {
+          question: 'Posso comparar dois modelos na mesma pergunta?',
+          answer:
+            'Sim. O modo de comparação envia um mesmo pedido para vários modelos ao mesmo tempo e mostra as respostas lado a lado, com uma passagem opcional de júri para as pontuar.',
+        },
+      ],
+    },
   },
 };

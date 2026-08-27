@@ -265,5 +265,173 @@ export const JA_COMPARISON_CONTENT: ComparisonDictionary = {
         },
       ],
     },
+    [ComparisonRival.KIMI]: {
+      name: 'Kimi',
+      vendor: 'Moonshot AI',
+      eyebrow: 'ClawAI と Kimi の比較',
+      intro:
+        'Kimi は非常に長いコンテキストで評価を築き、近年は誰でもダウンロードして実行できるオープンウェイトの公開でも知られています。ClawAI は形が違います。1 つのサブスクリプションで Kimi と同種のオープンウェイトモデルに加えて 8 つのモデルファミリーへ届き、メッセージごとに適したモデルへ送ります。',
+      theirStrength:
+        '欧米のフロンティアモデルの多くを下回る価格での長文読解、エージェント的な挙動とツール利用の強さ、そして主力ラインのオープンウェイト公開。ホスト版の製品で評価したのと同じモデルを、そのまま自社ハードウェア上で動かせます。',
+      ourDifference:
+        'ClawAI はどのラボを選ぶかを問いません。コストや所在地が問題になる質問はオープンウェイトモデルが答え、それを必要とする質問はフロンティアモデルが引き受けます。そしてルーティングの判断は、覚えておくべき習慣ではなく回答ごとの記録として残ります。',
+      chooseRival:
+        '作業の大半が非常に長い文書で、単一ベンダーでも構わず、トークン単価が決め手になる場合。',
+      chooseClaw:
+        '一部のメッセージではオープンウェイトの経済性を、別のメッセージではフロンティアの品質を使いたく、2 つの契約を抱えて毎回手で選び分けたくない場合。',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'Moonshot のモデルのみ',
+        [ComparisonDimension.ROUTING]: 'Moonshot 自社ラインナップ内での選択',
+        [ComparisonDimension.SIDE_BY_SIDE]: '一度に 1 つの回答',
+        [ComparisonDimension.LOCAL_MODELS]: 'オープンウェイトは公開、ホスティングは自分持ち',
+        [ComparisonDimension.SELF_HOSTING]: 'ウェイトはあり、製品はなし',
+        [ComparisonDimension.MEMORY_AND_FILES]: '長いコンテキストでのファイル読み込み',
+        [ComparisonDimension.CONNECTORS]: '自社アプリの外では限定的',
+        [ComparisonDimension.RECEIPTS]: 'API 単位の利用量、回答ごとのコストはなし',
+      },
+      faq: [
+        {
+          question: 'ClawAI で Kimi のモデルを使えますか。',
+          answer:
+            'ClawAI は自前のラインナップを通じてこの種のオープンウェイトモデルに届き、自社 GPU 上でローカルに実行できます。個別のアカウント作成も API キーの貼り付けも不要です。',
+        },
+        {
+          question: 'オープンウェイトを自分で動かすほうがサブスクリプションより安いですか。',
+          answer:
+            '継続的に大量に使うなら、GPU と運用の時間を自前で持つ前提で安くなり得ます。ClawAI が狙うのはその中間です。向いているメッセージにはオープンウェイトの経済性を、そうでないメッセージにはフロンティアモデルを、1 つの請求で使えます。',
+        },
+        {
+          question: 'ローカルモデルを使うと、データはネットワークの外に出ますか。',
+          answer:
+            'いいえ。会話をローカルのオープンウェイトモデルに固定すれば、外部プロバイダーへは何も送信されません。スタック全体をセルフホストすれば、外部通信は完全になくなります。',
+        },
+      ],
+    },
+    [ComparisonRival.QWEN]: {
+      name: 'Qwen',
+      vendor: 'Alibaba',
+      eyebrow: 'ClawAI と Qwen の比較',
+      intro:
+        'Qwen は入手できるオープンウェイトファミリーの中でも最も揃ったものの 1 つです。幅広いサイズ展開、多言語での強いカバー範囲、そしてラインナップの大半に付く緩やかなライセンス。ClawAI はその種のモデルを、ほかの 8 ファミリーと並べて 1 つのサブスクリプションの下に置きます。',
+      theirStrength:
+        '幅広さです。ノートパソコンで動くサイズからサーバーを要するサイズまで、ビジョン版とコーディング版、英語以外でも実際に良い性能、そして商用のセルフホストを進めやすいライセンス。',
+      ourDifference:
+        'ClawAI はモデルそのものではなく、その上のレイヤーです。メッセージごとにルーティングし、同じ質問を複数のファミリーに投げて回答を並べて表示し、それらすべてをまたいでメモリとファイルを保ち、全体を 1 つの割当量として課金します。',
+      chooseRival:
+        'モデルの上に何かを作っていて、導入を自分で所有したく、自前で運用と更新を続けられる体制がある場合。',
+      chooseClaw:
+        'モデルを運用するのではなく使いたく、オープンウェイトでは足りないときにフロンティアモデルへ届く選択肢も欲しい場合。',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'Qwen ファミリーのみ',
+        [ComparisonDimension.ROUTING]: 'サイズと種類は利用者が選択',
+        [ComparisonDimension.SIDE_BY_SIDE]: 'モデルの機能には含まれない',
+        [ComparisonDimension.LOCAL_MODELS]: 'ラインナップ全体でオープンウェイト',
+        [ComparisonDimension.SELF_HOSTING]: 'ウェイトはあり、製品はなし',
+        [ComparisonDimension.MEMORY_AND_FILES]: '周りに自分で作るもの次第',
+        [ComparisonDimension.CONNECTORS]: '周りに自分で作るもの次第',
+        [ComparisonDimension.RECEIPTS]: '自前の計測',
+      },
+      faq: [
+        {
+          question: 'ClawAI の中でオープンウェイトモデルを動かせますか。',
+          answer:
+            'はい。ClawAI は自前のランタイムでオープンウェイトモデルをローカルに実行し、会話をその 1 つに固定すればネットワークの外へは何も出ません。',
+        },
+        {
+          question: 'モデルを直接ホストせずに ClawAI を使う理由は何ですか。',
+          answer:
+            'モデルの部分は簡単だからです。ルーティング、比較、メモリ、ファイルの扱い、コネクター、割当量、回答ごとのコスト計上。自分で作ることになるのはそちらで、ClawAI はまさにそれです。',
+        },
+        {
+          question: 'ClawAI は英語以外の言語に対応していますか。',
+          answer:
+            '製品のインターフェースは 13 言語で提供され、モデル選択はメッセージ単位です。多言語モデルが必要なメッセージは、そのモデルが引き受けられます。',
+        },
+      ],
+    },
+    [ComparisonRival.GLM]: {
+      name: 'GLM',
+      vendor: 'Zhipu AI',
+      eyebrow: 'ClawAI と GLM の比較',
+      intro:
+        'GLM は Zhipu のフロンティアラインで、欧米最大級のモデルの何分の一かの価格でコーディングとエージェント的な作業に強く、ラインナップの多くにオープンウェイトが付くことで知られています。ClawAI はその種のモデルを、9 つの選択肢のうちの 1 つとして扱います。',
+      theirStrength:
+        '価格に対する能力です。はるかに高価なモデルに近いコーディングとツール利用の結果、積極的なリリース頻度、そしてセルフホストを発表文ではなく現実の選択肢にするオープンウェイト。',
+      ourDifference:
+        'ClawAI は、1 つのラボが優位を保ち続けることに賭けさせません。ルーティングはメッセージ単位で、ラインナップは足元で入れ替わります。より安いモデルにより多くの作業を任せることは、移行ではなく設定の変更です。',
+      chooseRival:
+        '有効な回答あたりのコストが決め手で、作業の大半がコードで、1 つのラボのリリースサイクルを細かく追う気がある場合。',
+      chooseClaw:
+        'その経済性を、すべてを預けることなく使えるようにしておきたく、実際にどのモデルが答えたかの記録も欲しい場合。',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'Zhipu のモデルのみ',
+        [ComparisonDimension.ROUTING]: 'Zhipu 自社ラインナップ内での選択',
+        [ComparisonDimension.SIDE_BY_SIDE]: '一度に 1 つの回答',
+        [ComparisonDimension.LOCAL_MODELS]: 'ラインナップの多くでオープンウェイト',
+        [ComparisonDimension.SELF_HOSTING]: 'ウェイトはあり、製品はなし',
+        [ComparisonDimension.MEMORY_AND_FILES]: '自社アプリ内でのファイルアップロード',
+        [ComparisonDimension.CONNECTORS]: '自社アプリの外では限定的',
+        [ComparisonDimension.RECEIPTS]: 'API 単位の利用量、回答ごとのコストはなし',
+      },
+      faq: [
+        {
+          question: '低コストのモデルを直接使うより ClawAI のほうが安いですか。',
+          answer:
+            'トークン単価では安くありません。能力のある最安モデルへの直接の API 呼び出しが常に下限です。ClawAI が安いのは現実的な代替案と比べたときです。複数のサブスクリプションを抱えるか、ルーティングとメモリとコスト計上を自分で作るか、そのどちらかとの比較になります。',
+        },
+        {
+          question: 'ClawAI により低コストなモデルを優先させられますか。',
+          answer:
+            'はい。ルーティングモードは完全自動から特定モデルへの固定まであり、コストを考慮するモードはメッセージごとに価格と能力を秤にかけます。',
+        },
+        {
+          question: 'どのモデルが答えたかはどう分かりますか。',
+          answer:
+            'すべての回答にプロバイダー、モデル、ルーティングモード、消費したコストが付き、ルーティングの判断そのものも確認できます。',
+        },
+      ],
+    },
+    [ComparisonRival.DEEPSEEK]: {
+      name: 'DeepSeek',
+      vendor: 'DeepSeek',
+      eyebrow: 'ClawAI と DeepSeek の比較',
+      intro:
+        'DeepSeek は推論モデルの価格に対する期待を変え、主力ラインのオープンウェイトを公開しました。ClawAI は、そうしたモデルが得意な仕事を引き受けつつ、唯一のモデルにはならないようにするレイヤーです。',
+      theirStrength:
+        '市場をひっくり返した価格での推論と数学、主力ラインのオープンウェイト、そしてほのめかすのではなく公開する研究姿勢。モデルがどう学習されたかを読めます。',
+      ourDifference:
+        'ClawAI はメッセージごとに選択肢を開いたままにします。推論の重い質問は推論モデルへ、定型的なものは安くて速いモデルへ、機微なものは自社ハードウェア上のモデルへ。その判断は前提ではなく記録として残ります。',
+      chooseRival:
+        '扱う作業の大半が難しい推論で、それを最も安く済ませたく、ベンダーが 1 つでも構わない場合。',
+      chooseClaw:
+        '推論は作業の全部ではなく一部で、1 つ目の回答を検証する 2 つ目のモデルを用意しておきたい場合。',
+      cells: {
+        [ComparisonDimension.MODEL_CHOICE]: 'DeepSeek のモデルのみ',
+        [ComparisonDimension.ROUTING]: 'チャットか推論かを利用者が選択',
+        [ComparisonDimension.SIDE_BY_SIDE]: '一度に 1 つの回答',
+        [ComparisonDimension.LOCAL_MODELS]: '主力ラインでオープンウェイト',
+        [ComparisonDimension.SELF_HOSTING]: 'ウェイトはあり、製品はなし',
+        [ComparisonDimension.MEMORY_AND_FILES]: '自社アプリ内でのファイルアップロード',
+        [ComparisonDimension.CONNECTORS]: '自社アプリの外では限定的',
+        [ComparisonDimension.RECEIPTS]: 'API 単位の利用量、回答ごとのコストはなし',
+      },
+      faq: [
+        {
+          question: 'ClawAI を推論モデルだけにルーティングさせられますか。',
+          answer:
+            'はい。会話を特定のモデルに固定でき、自動モードも推論の重いメッセージを既に適したモデルへ送ります。',
+        },
+        {
+          question: 'データはどこで処理されますか。',
+          answer:
+            '回答したプロバイダーの側で処理され、どこが答えたかは回答に表示されます。それが問題になる作業であれば、ローカルのオープンウェイトモデルに固定するか、スタックをセルフホストしてネットワークの外に何も出さないようにできます。',
+        },
+        {
+          question: '同じ質問で 2 つのモデルを比較できますか。',
+          answer:
+            'はい。Compare モードは 1 つのプロンプトを複数のモデルへ同時に送り、回答を並べて表示します。任意で判定パスを走らせて採点もできます。',
+        },
+      ],
+    },
   },
 };

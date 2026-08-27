@@ -26,7 +26,13 @@
         "http://localhost:3000/en/compare/claude",
         "http://localhost:3000/en/compare/gemini",
         "http://localhost:3000/en/compare/perplexity",
-        "http://localhost:3000/en/compare/copilot"
+        "http://localhost:3000/en/compare/copilot",
+        "http://localhost:3000/en/compare/kimi",
+        "http://localhost:3000/en/compare/qwen",
+        "http://localhost:3000/en/compare/glm",
+        "http://localhost:3000/en/compare/deepseek",
+        "http://localhost:3000/en/coding-agent",
+        "http://localhost:3000/en/coding-agent/install"
       ],
       "numberOfRuns": 2,
       "settings": {
