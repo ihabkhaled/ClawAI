@@ -1382,6 +1382,16 @@
         },
         {
           "method": "POST",
+          "route": "/internal/files/publish-copy",
+          "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/internal/files/published-copy/:id",
+          "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/internal/files/store-image",
           "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
         },
@@ -9990,7 +10000,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 620,
+    "endpointCount": 622,
     "envVarCount": 347,
     "eventCount": 172,
     "frontendRouteCount": 138,

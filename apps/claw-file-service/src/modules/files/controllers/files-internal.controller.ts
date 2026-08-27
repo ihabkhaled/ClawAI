@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -19,6 +20,7 @@ import {
   type InternalFileContentQueryDto,
   internalFileContentQuerySchema,
 } from '../dto/internal-file-content-query.dto';
+import { type PublishCopyDto, publishCopySchema } from '../dto/publish-copy.dto';
 import { FileChunksRepository } from '../repositories/file-chunks.repository';
 import { FilesRepository } from '../repositories/files.repository';
 import { FilesService } from '../services/files.service';
@@ -26,6 +28,7 @@ import type {
   CreateInternalFileBody,
   InternalFileContentResponse,
 } from '../types/internal-file.types';
+import { type PublishedCopyResult } from '../types/published-copy.types';
 
 @Controller('internal/files')
 export class FilesInternalController {
@@ -92,6 +95,39 @@ export class FilesInternalController {
   @Get('download-internal/:id')
   async downloadInternal(@Param('id') id: string, @Res() res: Response): Promise<void> {
     return this.filesService.downloadFilePublic(id, res);
+  }
+
+  /**
+   * Copies a file into a permanent, share-owned duplicate.
+   *
+   * chat-service calls this when a conversation carrying images is published.
+   * It receives an id, never bytes — the copy happens inside the service that
+   * owns storage. Returns 204 with no body when the source is missing, not an
+   * image, or too large: one skipped picture is a better outcome than a refused
+   * publish. See docs/13-adr/adr-075-public-share-assets.md.
+   */
+  @Public()
+  @UseGuards(ServiceTokenGuard)
+  @Post('publish-copy')
+  @HttpCode(HttpStatus.OK)
+  async publishCopy(
+    @Body(new ZodValidationPipe(publishCopySchema)) body: PublishCopyDto,
+  ): Promise<PublishedCopyResult | null> {
+    return this.filesService.createPublishedCopy(body.sourceFileId);
+  }
+
+  /**
+   * Deletes a share-owned copy.
+   *
+   * This is how revocation reaches the bytes: the copy has no retention expiry,
+   * so nothing else will ever reap it.
+   */
+  @Public()
+  @UseGuards(ServiceTokenGuard)
+  @Delete('published-copy/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deletePublishedCopy(@Param('id') id: string): Promise<void> {
+    return this.filesService.deletePublishedCopy(id);
   }
 
   @Public()

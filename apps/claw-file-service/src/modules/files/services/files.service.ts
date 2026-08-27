@@ -13,6 +13,11 @@ import {
 import { type File, type FileChunk } from '../../../generated/prisma';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { deleteFile, readFile, saveFile } from '../../../common/utilities';
+import {
+  MAX_PUBLISHED_COPY_BYTES,
+  PUBLISHABLE_COPY_MIME_PREFIX,
+} from '../constants/published-copy.constants';
+import { type PublishedCopyResult } from '../types/published-copy.types';
 import { type PaginatedResult } from '../../../common/types';
 import { AppConfig } from '../../../app/config/app.config';
 import { FilesRepository } from '../repositories/files.repository';
@@ -415,6 +420,78 @@ export class FilesService {
   // Slice C foundation 3 — compute the retention expiry for a new upload.
   // Returns null when FILE_RETENTION_DAYS = 0 (retention disabled / keep forever),
   // otherwise returns a Date that is FILE_RETENTION_DAYS days in the future.
+  /**
+   * Copies a file into a permanent, share-owned duplicate.
+   *
+   * A public share must not hold a reference to the user's file. The retention
+   * sweeper reaps by `retentionExpiresAt`, and the user may delete the original
+   * at any time — either of which turns an already-indexed public page into a
+   * 404. So the share gets its own row with **no expiry**, which the sweeper
+   * skips, and deleting the share deletes the copy.
+   *
+   * The copy happens here rather than in chat-service so the bytes never leave
+   * the service that owns storage: chat-service asks for a copy and receives an
+   * id, not a base64 payload.
+   *
+   * Images only. A PDF on a public page is a different content-rights question
+   * and does not get answered by accident here.
+   *
+   * See docs/13-adr/adr-075-public-share-assets.md.
+   */
+  async createPublishedCopy(sourceFileId: string): Promise<PublishedCopyResult | null> {
+    const source = await this.filesRepository.findById(sourceFileId);
+    if (!source) {
+      this.logger.warn(`createPublishedCopy: source ${sourceFileId} not found`);
+      return null;
+    }
+    if (!source.mimeType.startsWith(PUBLISHABLE_COPY_MIME_PREFIX)) {
+      this.logger.warn(
+        `createPublishedCopy: refusing non-image ${sourceFileId} (${source.mimeType})`,
+      );
+      return null;
+    }
+    if (source.sizeBytes > MAX_PUBLISHED_COPY_BYTES) {
+      this.logger.warn(
+        `createPublishedCopy: refusing oversized ${sourceFileId} (${String(source.sizeBytes)} bytes)`,
+      );
+      return null;
+    }
+
+    const buffer = readFile(source.storagePath);
+    const storagePath = saveFile(`share-${String(Date.now())}-${source.filename}`, buffer);
+    const copy = await this.filesRepository.create({
+      userId: source.userId,
+      filename: source.filename,
+      mimeType: source.mimeType,
+      sizeBytes: buffer.length,
+      storagePath,
+      content: source.content,
+      // The whole point: no expiry, so the retention sweep never reaps it.
+      retentionExpiresAt: null,
+    });
+
+    this.logger.log(`createPublishedCopy: ${sourceFileId} -> ${copy.id} (no retention)`);
+    return { fileId: copy.id, mimeType: copy.mimeType, byteSize: copy.sizeBytes };
+  }
+
+  /**
+   * Removes a share-owned copy, blob then row.
+   *
+   * Blob first for the same reason the retention sweeper does it that way: a
+   * row without a blob is a recoverable inconsistency the next pass can finish,
+   * while a blob without a row is unreachable garbage nobody will ever find.
+   */
+  async deletePublishedCopy(fileId: string): Promise<void> {
+    const file = await this.filesRepository.findById(fileId);
+    if (!file) {
+      this.logger.debug(`deletePublishedCopy: ${fileId} already gone`);
+      return;
+    }
+    deleteFile(file.storagePath);
+    await this.filesRepository.deleteById(fileId);
+    this.logger.log(`deletePublishedCopy: removed ${fileId}`);
+  }
+
   private computeRetentionExpiry(): Date | null {
     const days = AppConfig.get().FILE_RETENTION_DAYS;
     if (days === 0) {
