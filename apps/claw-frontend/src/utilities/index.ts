@@ -203,6 +203,7 @@ export {
 } from './public-comparison.utility';
 export { isPublicPath } from './route-visibility.utility';
 export { resolveApiErrorMessage } from './api-error-message.utility';
+export { resolveAdminUserCapability } from './admin-user-capability.utility';
 export { resolveTrialStatusBanner } from './trial-status.utility';
 export { getConfiguredSocialLinks } from './social-links.utility';
 export {

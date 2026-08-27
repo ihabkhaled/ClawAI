@@ -38,6 +38,7 @@ export default function AdminUsersPage(): ReactElement {
           isError={false}
           users={admin.users}
           plans={admin.plans}
+          actor={admin.actor}
           pendingId={admin.actionPending}
           onChangeRole={admin.handleChangeRole}
           onDeactivate={admin.handleDeactivate}

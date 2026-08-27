@@ -10,6 +10,7 @@ export function UsersContent({
   isError,
   users,
   plans,
+  actor,
   pendingId,
   onChangeRole,
   onDeactivate,
@@ -43,6 +44,7 @@ export function UsersContent({
     <UserTable
       users={users}
       plans={plans}
+      actor={actor}
       pendingId={pendingId}
       onChangeRole={onChangeRole}
       onDeactivate={onDeactivate}

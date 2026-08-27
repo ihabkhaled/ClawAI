@@ -149,6 +149,11 @@ export type {
   WhyThisModelPanelProps,
 } from './why-this-model-component.types';
 export type { WhyThisModelRowProps } from './why-this-model-row.types';
+export type {
+  AdminUserActor,
+  AdminUserCapability,
+  AdminUserCapabilityTarget,
+} from './admin-user-capability.types';
 export type { DecisionDetailSectionsProps } from './decision-detail-sections.types';
 export type { RoutingPlaygroundSemanticResultProps } from './routing-playground-result.types';
 export type { DecisionSemanticSectionProps } from './decision-semantic-section.types';

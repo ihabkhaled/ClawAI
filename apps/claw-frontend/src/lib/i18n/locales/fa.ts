@@ -1041,6 +1041,14 @@ export const fa: TranslationDictionary = {
     ipAddress: 'آدرس IP',
   },
   admin: {
+    // The super-administrator refusal contract. Three codes, because
+    // "you may never" and "you may, but not to yourself" are different
+    // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
+    errors: {
+      superAdminImmutable: 'تنها سوپر ادمین می‌تواند حساب سوپر ادمین را تغییر دهد.',
+      superAdminSelfLocked: 'سوپر ادمین نمی‌تواند این تغییر را روی حساب خودش اعمال کند.',
+      superAdminRequired: 'تنها سوپر ادمین می‌تواند این کار را انجام دهد.',
+    },
     title: 'مدیر',
     description: 'مدیریت کاربران و تنظیمات سیستم',
     users: 'کاربران',
@@ -1088,6 +1096,9 @@ export const fa: TranslationDictionary = {
     editUserNameTooLong: 'حداکثر ۶۴ نویسه استفاده کنید.',
 
     editUserSuperAdminNotice: 'حساب‌های ابرمدیر از اینجا قابل ویرایش نیستند.',
+
+    editUserSelfSuperAdminNotice:
+      'این حساب سوپر ادمین خودتان است. می‌توانید نام خود را اینجا تغییر دهید؛ نقش، وضعیت، طرح و چرخش رمز عبور قفل می‌مانند.',
 
     editUserSave: 'ذخیره تغییرات',
 

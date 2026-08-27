@@ -26,6 +26,7 @@ function renderDialog(overrides: Partial<React.ComponentProps<typeof EditUserDia
     <EditUserDialog
       open
       user={user}
+      actor={{ id: 'admin-1', isSuperAdmin: false }}
       isSaving={false}
       isRotating={false}
       onClose={vi.fn()}

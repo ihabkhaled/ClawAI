@@ -1055,6 +1055,15 @@ export const it: TranslationDictionary = {
     ipAddress: 'Indirizzo IP',
   },
   admin: {
+    // The super-administrator refusal contract. Three codes, because
+    // "you may never" and "you may, but not to yourself" are different
+    // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
+    errors: {
+      superAdminImmutable: 'Solo il super amministratore può modificare questo account.',
+      superAdminSelfLocked:
+        'Il super amministratore non può applicare questa modifica al proprio account.',
+      superAdminRequired: 'Solo il super amministratore può eseguire questa azione.',
+    },
     title: 'Amministrazione',
     description: 'Gestisci utenti e impostazioni di sistema',
     users: 'Utenti',
@@ -1102,6 +1111,9 @@ export const it: TranslationDictionary = {
     editUserNameTooLong: 'Usa al massimo 64 caratteri.',
 
     editUserSuperAdminNotice: 'Gli account super admin non possono essere modificati qui.',
+
+    editUserSelfSuperAdminNotice:
+      'Questo è il tuo account super amministratore. Qui puoi cambiare il tuo nome; ruolo, stato, piano e rotazione della password restano bloccati.',
 
     editUserSave: 'Salva modifiche',
 

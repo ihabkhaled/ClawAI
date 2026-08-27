@@ -15,6 +15,9 @@ const API_ERROR_MESSAGE_KEY_BY_CODE: ReadonlyMap<string, string> = new Map([
   ],
   [ApiErrorCode.PLAN_CONTEXT_PACK_LIMIT_EXCEEDED, 'chat.errors.contextPackLimitExceeded'],
   [ApiErrorCode.PLAN_MEMORY_ITEM_LIMIT_EXCEEDED, 'chat.errors.memoryItemLimitExceeded'],
+  [ApiErrorCode.SUPER_ADMIN_IMMUTABLE, 'admin.errors.superAdminImmutable'],
+  [ApiErrorCode.SUPER_ADMIN_SELF_LOCKED, 'admin.errors.superAdminSelfLocked'],
+  [ApiErrorCode.SUPER_ADMIN_REQUIRED, 'admin.errors.superAdminRequired'],
 ]);
 
 export function resolveApiErrorMessage(

@@ -12,11 +12,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { AdminUserCapabilityReason } from '@/enums/admin-user-capability-reason.enum';
 import { useEditUserForm } from '@/hooks/admin/use-edit-user-form';
 import type { EditUserDialogProps } from '@/types/component.types';
+import { resolveAdminUserCapability } from '@/utilities/admin-user-capability.utility';
 
 export function EditUserDialog(props: EditUserDialogProps): ReactElement {
-  const { open, user, isSaving, isRotating, onClose, onSave, onRotatePassword, t } = props;
+  const { open, user, actor, isSaving, isRotating, onClose, onSave, onRotatePassword, t } = props;
   const { form, submit } = useEditUserForm(user, onSave);
   const { errors, isValid } = form.formState;
 
@@ -24,7 +26,10 @@ export function EditUserDialog(props: EditUserDialogProps): ReactElement {
     return <Dialog open={false} onOpenChange={onClose} />;
   }
 
-  const isSuperAdmin = user.isSuperAdmin;
+  // The super administrator may rename themselves; role, status, plan, rotation
+  // and delete stay locked even for them. See rules/35.
+  const capability = resolveAdminUserCapability(user, actor);
+  const fieldsLocked = !capability.canEditProfile;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -42,7 +47,7 @@ export function EditUserDialog(props: EditUserDialogProps): ReactElement {
             <Input
               id="edit-user-username"
               autoComplete="off"
-              disabled={isSuperAdmin}
+              disabled={fieldsLocked}
               error={Boolean(errors.username)}
               {...form.register('username')}
             />
@@ -59,7 +64,7 @@ export function EditUserDialog(props: EditUserDialogProps): ReactElement {
               <Input
                 id="edit-user-first-name"
                 autoComplete="off"
-                disabled={isSuperAdmin}
+                disabled={fieldsLocked}
                 error={Boolean(errors.firstName)}
                 {...form.register('firstName')}
               />
@@ -75,7 +80,7 @@ export function EditUserDialog(props: EditUserDialogProps): ReactElement {
               <Input
                 id="edit-user-last-name"
                 autoComplete="off"
-                disabled={isSuperAdmin}
+                disabled={fieldsLocked}
                 error={Boolean(errors.lastName)}
                 {...form.register('lastName')}
               />
@@ -85,18 +90,20 @@ export function EditUserDialog(props: EditUserDialogProps): ReactElement {
             </div>
           </div>
 
-          {isSuperAdmin ? (
+          {capability.reason === null ? null : (
             <p className="text-muted-foreground border-border rounded-md border border-dashed p-3 text-sm">
-              {t('admin.editUserSuperAdminNotice')}
+              {capability.reason === AdminUserCapabilityReason.SuperAdminSelf
+                ? t('admin.editUserSelfSuperAdminNotice')
+                : t('admin.editUserSuperAdminNotice')}
             </p>
-          ) : null}
+          )}
 
           <DialogFooter className="gap-2 pt-2 sm:justify-between sm:gap-0">
             <Button
               type="button"
               variant="destructive"
               onClick={() => onRotatePassword(user.id)}
-              disabled={isRotating || isSuperAdmin}
+              disabled={isRotating || !capability.canRotatePassword}
             >
               {t('admin.editUserRotatePassword')}
             </Button>
@@ -104,7 +111,7 @@ export function EditUserDialog(props: EditUserDialogProps): ReactElement {
               <Button type="button" variant="outline" onClick={onClose}>
                 {t('admin.editUserCancel')}
               </Button>
-              <Button type="submit" disabled={isSaving || isSuperAdmin || !isValid}>
+              <Button type="submit" disabled={isSaving || fieldsLocked || !isValid}>
                 {t('admin.editUserSave')}
               </Button>
             </div>

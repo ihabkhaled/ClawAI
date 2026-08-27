@@ -30,6 +30,7 @@ const noop = vi.fn();
 const baseReturn = {
   t: (key: string) => key,
   user: { role: UserRole.ADMIN },
+  actor: { id: 'admin-1', isSuperAdmin: false },
   plans: [],
   search: '',
   roleFilter: '',

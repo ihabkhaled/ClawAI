@@ -1040,6 +1040,11 @@ export type TranslationDictionary = {
     ipAddress: string;
   };
   admin: {
+    errors: {
+      superAdminImmutable: string;
+      superAdminSelfLocked: string;
+      superAdminRequired: string;
+    };
     title: string;
     description: string;
     users: string;
@@ -1086,6 +1091,7 @@ export type TranslationDictionary = {
     editUserNameTooLong: string;
 
     editUserSuperAdminNotice: string;
+    editUserSelfSuperAdminNotice: string;
 
     editUserSave: string;
 

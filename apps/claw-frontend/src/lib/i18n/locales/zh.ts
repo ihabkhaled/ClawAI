@@ -1024,6 +1024,14 @@ export const zh: TranslationDictionary = {
     ipAddress: 'IP地址',
   },
   admin: {
+    // The super-administrator refusal contract. Three codes, because
+    // "you may never" and "you may, but not to yourself" are different
+    // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
+    errors: {
+      superAdminImmutable: '只有超级管理员才能修改超级管理员账户。',
+      superAdminSelfLocked: '超级管理员不能对自己的账户进行此更改。',
+      superAdminRequired: '只有超级管理员才能执行此操作。',
+    },
     title: '行政',
     description: '管理用户和系统设置',
     users: '用户',
@@ -1070,6 +1078,9 @@ export const zh: TranslationDictionary = {
     editUserNameTooLong: '最多使用 64 个字符。',
 
     editUserSuperAdminNotice: '此处无法编辑超级管理员账户。',
+
+    editUserSelfSuperAdminNotice:
+      '这是你自己的超级管理员账户。你可以在这里修改姓名；角色、状态、套餐和密码轮换保持锁定。',
 
     editUserSave: '保存更改',
 

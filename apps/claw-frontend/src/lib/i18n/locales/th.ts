@@ -1031,6 +1031,14 @@ export const th: TranslationDictionary = {
     ipAddress: 'ที่อยู่ IP',
   },
   admin: {
+    // The super-administrator refusal contract. Three codes, because
+    // "you may never" and "you may, but not to yourself" are different
+    // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
+    errors: {
+      superAdminImmutable: 'มีเพียงผู้ดูแลระบบสูงสุดเท่านั้นที่แก้ไขบัญชีผู้ดูแลระบบสูงสุดได้',
+      superAdminSelfLocked: 'ผู้ดูแลระบบสูงสุดไม่สามารถทำการเปลี่ยนแปลงนี้กับบัญชีของตนเองได้',
+      superAdminRequired: 'เฉพาะผู้ดูแลระบบสูงสุดเท่านั้นที่ทำสิ่งนี้ได้',
+    },
     title: 'ผู้ดูแลระบบ',
     description: 'จัดการผู้ใช้และการตั้งค่าระบบ',
     users: 'ผู้ใช้',
@@ -1077,6 +1085,9 @@ export const th: TranslationDictionary = {
     editUserNameTooLong: 'ใช้ได้ไม่เกิน 64 อักขระ',
 
     editUserSuperAdminNotice: 'ไม่สามารถแก้ไขบัญชีผู้ดูแลระบบสูงสุดได้ที่นี่',
+
+    editUserSelfSuperAdminNotice:
+      'นี่คือบัญชีผู้ดูแลระบบสูงสุดของคุณเอง คุณเปลี่ยนชื่อได้ที่นี่ ส่วนบทบาท สถานะ แผน และการรีเซ็ตรหัสผ่านจะถูกล็อกไว้',
 
     editUserSave: 'บันทึกการเปลี่ยนแปลง',
 

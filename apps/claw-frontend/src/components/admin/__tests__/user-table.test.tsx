@@ -81,8 +81,12 @@ function makePlan(overrides: Partial<PlanView> = {}): PlanView {
   };
 }
 
+const ORDINARY_ACTOR = { id: 'admin-2', isSuperAdmin: false };
+const SUPER_ADMIN_ACTOR = { id: 'super-1', isSuperAdmin: true };
+
 const baseProps = {
   plans: [makePlan()],
+  actor: ORDINARY_ACTOR,
   pendingId: null,
   onChangeRole: vi.fn(),
   onDeactivate: vi.fn(),
@@ -336,5 +340,35 @@ describe('UserTable temporary password action', () => {
     );
 
     expect(onTemporaryPassword).toHaveBeenCalledWith('u7');
+  });
+
+  it('locks every control on the super admin row for another administrator', () => {
+    render(<UserTable users={[makeUser({ id: 'super-1', isSuperAdmin: true })]} {...baseProps} />);
+
+    const edit = screen.getAllByRole('button', { name: 'admin.editUser' })[0] as HTMLElement;
+    const rotate = screen.getAllByRole('button', {
+      name: 'admin.issueTemporaryPassword',
+    })[0] as HTMLElement;
+
+    expect(edit).toBeDisabled();
+    expect(rotate).toBeDisabled();
+  });
+
+  it('lets the super admin open their own row for editing, while rotation stays locked', () => {
+    render(
+      <UserTable
+        users={[makeUser({ id: 'super-1', isSuperAdmin: true })]}
+        {...baseProps}
+        actor={SUPER_ADMIN_ACTOR}
+      />,
+    );
+
+    const edit = screen.getAllByRole('button', { name: 'admin.editUser' })[0] as HTMLElement;
+    const rotate = screen.getAllByRole('button', {
+      name: 'admin.issueTemporaryPassword',
+    })[0] as HTMLElement;
+
+    expect(edit).toBeEnabled();
+    expect(rotate).toBeDisabled();
   });
 });

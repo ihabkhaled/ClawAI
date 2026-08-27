@@ -2,8 +2,10 @@ import { toast } from '@/components/ui/use-toast';
 import type { ToastAction } from '@/components/ui/use-toast';
 import { ToastVariant } from '@/enums/toast-variant.enum';
 import type { ApiClientError } from '@/services/shared/api-client';
+import type { TranslateFunction } from '@/types';
 
 import { formatApiFieldErrors } from './api-error-fields.utility';
+import { resolveApiErrorMessage } from './api-error-message.utility';
 
 type ToastOptions = {
   title?: string;
@@ -21,6 +23,15 @@ type ToastOptions = {
    * auto-dismiss entirely (the toast then waits for explicit user dismissal).
    */
   durationMs?: number;
+  /**
+   * Pass `t` to translate known backend error codes.
+   *
+   * Without it `apiError` prints `apiErr.message` verbatim — the backend's
+   * English — which is how a machine-readable refusal reached users untranslated
+   * even though an error-code map already existed. Callers that have `t` in
+   * scope should always pass it.
+   */
+  translate?: TranslateFunction;
 };
 
 function success(options: ToastOptions): void {
@@ -49,16 +60,19 @@ function error(options: ToastOptions): void {
 function apiError(err: unknown, fallbackMessage?: string, options?: ToastOptions): void {
   let message = fallbackMessage ?? 'An unexpected error occurred';
 
-  if (err && typeof err === 'object' && 'message' in err) {
+  if (options?.translate) {
+    message = resolveApiErrorMessage(err, options.translate, message);
+  } else if (err && typeof err === 'object' && 'message' in err) {
     const apiErr = err as ApiClientError;
     message = apiErr.message || message;
+  }
 
-    // If there are field-level validation errors, append them
-    if (apiErr.errors) {
-      const fieldErrors = formatApiFieldErrors(apiErr.errors);
-      if (fieldErrors) {
-        message = `${message} (${fieldErrors})`;
-      }
+  // Field-level validation detail is appended either way — it is already
+  // per-field and carries no backend prose.
+  if (err && typeof err === 'object' && 'errors' in err) {
+    const fieldErrors = formatApiFieldErrors((err as ApiClientError).errors);
+    if (fieldErrors) {
+      message = `${message} (${fieldErrors})`;
     }
   }
 

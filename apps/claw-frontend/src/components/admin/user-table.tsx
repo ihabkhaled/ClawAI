@@ -18,11 +18,13 @@ import { useUserTableState } from '@/hooks/admin/use-user-table-state';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { AdminUser, DataTableColumn, UserTableProps } from '@/types';
+import { resolveAdminUserCapability } from '@/utilities/admin-user-capability.utility';
 import { resolveRoleBadgeVariant, resolveUserInitial } from '@/utilities/admin-user.utility';
 
 export function UserTable({
   users,
   plans,
+  actor,
   pendingId,
   onChangeRole,
   onDeactivate,
@@ -111,7 +113,7 @@ export function UserTable({
             variant={resolveRoleBadgeVariant(user.role)}
             className="cursor-pointer"
             onClick={() => {
-              if (!user.isSuperAdmin) {
+              if (resolveAdminUserCapability(user, actor).canChangeRole) {
                 setEditingUserId(user.id);
               }
             }}
@@ -152,7 +154,10 @@ export function UserTable({
       render: (user) => (
         <Select
           value={user.activePlanId ?? undefined}
-          disabled={user.isSuperAdmin || (isAssignPlanPending && pendingId === user.id)}
+          disabled={
+            !resolveAdminUserCapability(user, actor).canAssignPlan ||
+            (isAssignPlanPending && pendingId === user.id)
+          }
           onValueChange={(value) => onAssignPlan(user.id, value)}
         >
           <SelectTrigger className="w-[160px]" aria-label={t('admin.assignPlan')}>
@@ -197,7 +202,10 @@ export function UserTable({
             variant="outline"
             size="sm"
             className="h-auto py-1.5"
-            disabled={user.isSuperAdmin || (isTemporaryPasswordPending && pendingId === user.id)}
+            disabled={
+              !resolveAdminUserCapability(user, actor).canRotatePassword ||
+              (isTemporaryPasswordPending && pendingId === user.id)
+            }
             onClick={() => requestTemporaryPassword(user.id)}
           >
             <span className="min-w-0 text-center leading-tight whitespace-normal">
@@ -208,7 +216,9 @@ export function UserTable({
             variant="outline"
             size="sm"
             className="h-auto py-1.5"
-            disabled={user.isSuperAdmin || isUpdateUserPending}
+            disabled={
+              !resolveAdminUserCapability(user, actor).canEditProfile || isUpdateUserPending
+            }
             onClick={() => openEditUser(user)}
           >
             <span className="text-center leading-tight whitespace-normal">
@@ -219,7 +229,11 @@ export function UserTable({
             <Button
               variant="outline"
               size="sm"
-              disabled={user.isSuperAdmin || isReactivatePending || isRoleChangePending}
+              disabled={
+                !resolveAdminUserCapability(user, actor).canChangeStatus ||
+                isReactivatePending ||
+                isRoleChangePending
+              }
               onClick={() => onReactivate(user.id)}
             >
               {t('admin.reactivate')}
@@ -228,7 +242,11 @@ export function UserTable({
             <Button
               variant="destructive"
               size="sm"
-              disabled={user.isSuperAdmin || isDeactivatePending || isRoleChangePending}
+              disabled={
+                !resolveAdminUserCapability(user, actor).canChangeStatus ||
+                isDeactivatePending ||
+                isRoleChangePending
+              }
               onClick={() => onDeactivate(user.id)}
             >
               {t('admin.deactivate')}
@@ -251,6 +269,7 @@ export function UserTable({
       <EditUserDialog
         open={editUser !== null}
         user={editUser}
+        actor={actor}
         isSaving={isUpdateUserPending}
         isRotating={isTemporaryPasswordPending}
         onClose={closeEditUser}

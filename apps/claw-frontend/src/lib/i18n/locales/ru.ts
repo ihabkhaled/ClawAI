@@ -1052,6 +1052,16 @@ export const ru: TranslationDictionary = {
     ipAddress: 'IP-адрес',
   },
   admin: {
+    // The super-administrator refusal contract. Three codes, because
+    // "you may never" and "you may, but not to yourself" are different
+    // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
+    errors: {
+      superAdminImmutable:
+        'Изменять учётную запись суперадминистратора может только суперадминистратор.',
+      superAdminSelfLocked:
+        'Суперадминистратор не может внести это изменение в собственную учётную запись.',
+      superAdminRequired: 'Это действие может выполнить только суперадминистратор.',
+    },
     title: 'Администрирование',
     description: 'Управление пользователями и системными настройками',
     users: 'Пользователи',
@@ -1099,6 +1109,9 @@ export const ru: TranslationDictionary = {
     editUserNameTooLong: 'Используйте не более 64 символов.',
 
     editUserSuperAdminNotice: 'Учётные записи суперадминистратора нельзя редактировать здесь.',
+
+    editUserSelfSuperAdminNotice:
+      'Это ваша собственная учётная запись суперадминистратора. Здесь можно изменить имя; роль, статус, тариф и смена пароля остаются заблокированными.',
 
     editUserSave: 'Сохранить изменения',
 

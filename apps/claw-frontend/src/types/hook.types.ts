@@ -21,6 +21,7 @@ import type { SidebarItem } from '../constants/sidebar.constants';
 import type { ResearchProviderKind } from '../enums/research-provider-kind.enum';
 
 import type { AdaptiveLearningInsights } from './adaptive-learning.types';
+import type { AdminUserActor } from './admin-user-capability.types';
 import type { AdminUser, AuditLog } from './audit.types';
 import type { AdminUserUpdateRequest, EmailChangePendingState } from './auth.types';
 import type {
@@ -186,6 +187,8 @@ export type UseAdminUsersPageReturn = UseAdminUserFiltersReturn &
   UseAdminUserMutationsReturn & {
     t: TranslateFunction;
     user: { role: string } | null;
+    /** Identity of the signed-in administrator, for the per-row capability rule. */
+    actor: AdminUserActor | null;
     users: AdminUser[];
     usersMeta: { total: number; page: number; limit: number; totalPages: number } | undefined;
     plans: PlanView[];

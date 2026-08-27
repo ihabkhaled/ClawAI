@@ -43,9 +43,14 @@ export function useAdminUsersPage(): UseAdminUsersPageReturn {
   const users = usersQuery.data?.data ?? [];
   const activeCount = users.filter((u) => u.status === UserStatus.ACTIVE).length;
 
+  // The table needs identity, not the whole profile: the capability rule asks
+  // only "is this row me" and "am I the super administrator".
+  const actor = user ? { id: user.id, isSuperAdmin: user.isSuperAdmin === true } : null;
+
   return {
     t,
     user: user ?? null,
+    actor,
     ...filters,
     ...mutations,
     users,

@@ -26,7 +26,7 @@ function useChangeRoleMutation(setActionPending: (value: string | null) => void)
     },
     onError: (err: unknown) => {
       setActionPending(null);
-      showToast.apiError(err, t('admin.userRoleUpdateFailed'));
+      showToast.apiError(err, t('admin.userRoleUpdateFailed'), { translate: t });
     },
   });
 }
@@ -44,7 +44,7 @@ function useDeactivateMutation(setActionPending: (value: string | null) => void)
     },
     onError: (err: unknown) => {
       setActionPending(null);
-      showToast.apiError(err, t('admin.userDeactivateFailed'));
+      showToast.apiError(err, t('admin.userDeactivateFailed'), { translate: t });
     },
   });
 }
@@ -62,7 +62,7 @@ function useReactivateMutation(setActionPending: (value: string | null) => void)
     },
     onError: (err: unknown) => {
       setActionPending(null);
-      showToast.apiError(err, t('admin.userReactivateFailed'));
+      showToast.apiError(err, t('admin.userReactivateFailed'), { translate: t });
     },
   });
 }
@@ -81,7 +81,7 @@ function useAssignPlanMutation(setActionPending: (value: string | null) => void)
     },
     onError: (err: unknown) => {
       setActionPending(null);
-      showToast.apiError(err, t('admin.planAssignFailed'));
+      showToast.apiError(err, t('admin.planAssignFailed'), { translate: t });
     },
   });
 }
@@ -100,7 +100,7 @@ function useUpdateUserMutation(setActionPending: (value: string | null) => void)
     },
     onError: (err: unknown) => {
       setActionPending(null);
-      showToast.apiError(err, t('admin.userUpdateFailed'));
+      showToast.apiError(err, t('admin.userUpdateFailed'), { translate: t });
     },
   });
 }
@@ -118,7 +118,7 @@ function useTemporaryPasswordMutation(setActionPending: (value: string | null) =
     },
     onError: (err: unknown) => {
       setActionPending(null);
-      showToast.apiError(err, t('admin.temporaryPasswordFailed'));
+      showToast.apiError(err, t('admin.temporaryPasswordFailed'), { translate: t });
     },
   });
 }

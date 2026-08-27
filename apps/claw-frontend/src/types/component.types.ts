@@ -58,6 +58,7 @@ import type {
   ModeInsight,
   ProviderInsight,
 } from './adaptive-learning.types';
+import type { AdminUserActor } from './admin-user-capability.types';
 import type { RepairResultState } from './answer-repair.types';
 import type { AdminUser, AuditLog } from './audit.types';
 import type { AdminUserUpdateRequest, EmailChangePendingState } from './auth.types';
@@ -543,6 +544,12 @@ export type UserFiltersProps = {
 export type UserTableProps = {
   users: AdminUser[];
   plans: PlanView[];
+  /**
+   * The signed-in administrator. Needed to tell "this row is the super
+   * administrator" from "this row is me" — without it the super administrator
+   * saw their own row fully disabled.
+   */
+  actor: AdminUserActor | null;
   pendingId: string | null;
   onChangeRole: (userId: string, role: string) => void;
   onDeactivate: (userId: string) => void;
@@ -1398,6 +1405,7 @@ export type UsersContentProps = {
   isError: boolean;
   users: AdminUser[];
   plans: PlanView[];
+  actor: AdminUserActor | null;
   pendingId: string | null;
   onChangeRole: (userId: string, role: string) => void;
   onDeactivate: (userId: string) => void;
@@ -2499,6 +2507,7 @@ export type PasswordInputProps = Omit<React.ComponentPropsWithoutRef<'input'>, '
 export type EditUserDialogProps = {
   open: boolean;
   user: AdminUser | null;
+  actor: AdminUserActor | null;
   isSaving: boolean;
   isRotating: boolean;
   onClose: () => void;

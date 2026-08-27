@@ -14,4 +14,11 @@ export enum ApiErrorCode {
   PLAN_CONTEXT_PACK_LIMIT_EXCEEDED = 'PLAN_CONTEXT_PACK_LIMIT_EXCEEDED',
   PLAN_MEMORY_ITEM_LIMIT_EXCEEDED = 'PLAN_MEMORY_ITEM_LIMIT_EXCEEDED',
   INSUFFICIENT_PERMISSIONS = 'INSUFFICIENT_PERMISSIONS',
+  // The super-administrator invariant. Three codes, not one: "you may never do
+  // this" and "you may, but not to yourself" need different copy, and the second
+  // is what stops the super administrator filing a bug about their own row.
+  // See rules/35-super-administrator-and-privilege-boundaries.md.
+  SUPER_ADMIN_IMMUTABLE = 'SUPER_ADMIN_IMMUTABLE',
+  SUPER_ADMIN_SELF_LOCKED = 'SUPER_ADMIN_SELF_LOCKED',
+  SUPER_ADMIN_REQUIRED = 'SUPER_ADMIN_REQUIRED',
 }
