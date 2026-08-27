@@ -265,6 +265,17 @@ export const it: TranslationDictionary = {
     reasoning: {
       title: 'Ragionamento del modello',
     },
+    search: {
+      action: 'Cerca',
+      title: 'Cerca in questa conversazione',
+      placeholder: 'Cerca in questa conversazione…',
+      close: 'Chiudi la ricerca',
+      keepTyping: 'Continua a scrivere per cercare.',
+      searching: 'Ricerca in corso…',
+      noMatches: 'Nessun messaggio corrisponde.',
+      roleUser: 'Tu',
+      roleAssistant: 'Assistente',
+    },
     limits: {
       dailyTokensTitle: 'Hai usato i token di oggi',
       dailyTokensBody:

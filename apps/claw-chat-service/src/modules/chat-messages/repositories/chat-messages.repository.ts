@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import { type ChatMessage, type Prisma } from '../../../generated/prisma';
+import { type ChatMessage, type MessageRole, type Prisma } from '../../../generated/prisma';
 import { type CreateMessageData } from '../types/chat-messages.types';
 
 @Injectable()
@@ -41,6 +41,31 @@ export class ChatMessagesRepository {
       skip,
       take: limit,
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Every message in a thread matching a term, newest first.
+   *
+   * Returns ids and a snippet rather than whole messages: the caller is
+   * building a jump-to list, and shipping the full bodies of a hundred matches
+   * to render a dozen one-line previews is wasted on both sides.
+   *
+   * Case-insensitive `contains`, matching how thread-level search already
+   * works. That is a sequential scan over the thread's rows — acceptable
+   * because it is scoped to one thread, unlike the cross-thread search, which
+   * is the one that will need an index first.
+   */
+  async searchByThreadId(
+    threadId: string,
+    term: string,
+    take: number,
+  ): Promise<Array<{ id: string; role: MessageRole; content: string; createdAt: Date }>> {
+    return this.prisma.chatMessage.findMany({
+      where: { threadId, content: { contains: term, mode: 'insensitive' } },
+      select: { id: true, role: true, content: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take,
     });
   }
 

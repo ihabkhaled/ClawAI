@@ -969,6 +969,11 @@
         },
         {
           "method": "GET",
+          "route": "/chat-messages/:id",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/chat-messages/:id/context-receipt",
           "source": "apps/claw-chat-service/src/modules/context-receipts/controllers/context-receipt.controller.ts"
         },
@@ -1060,6 +1065,11 @@
         {
           "method": "GET",
           "route": "/chat-messages/thread/:threadId",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/chat-messages/thread/:threadId/search",
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
         },
         {
@@ -7529,7 +7539,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4862
+        "value": 4872
       },
       "localeCount": 13,
       "locales": [
@@ -9245,7 +9255,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 101
+        "testFiles": 102
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -9265,7 +9275,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 390
+        "testFiles": 391
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10010,7 +10020,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 623,
+    "endpointCount": 625,
     "envVarCount": 347,
     "eventCount": 172,
     "frontendRouteCount": 138,
@@ -10022,7 +10032,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1045,
+    "totalTestFiles": 1047,
     "workspaceCount": 25
   }
 }

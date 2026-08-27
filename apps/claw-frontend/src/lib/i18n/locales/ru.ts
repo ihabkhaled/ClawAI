@@ -264,6 +264,17 @@ export const ru: TranslationDictionary = {
     reasoning: {
       title: 'Рассуждение модели',
     },
+    search: {
+      action: 'Найти',
+      title: 'Поиск по этой беседе',
+      placeholder: 'Искать в этой беседе…',
+      close: 'Закрыть поиск',
+      keepTyping: 'Продолжайте вводить текст для поиска.',
+      searching: 'Идёт поиск…',
+      noMatches: 'Совпадений не найдено.',
+      roleUser: 'Вы',
+      roleAssistant: 'Ассистент',
+    },
     limits: {
       dailyTokensTitle: 'Дневной запас токенов израсходован',
       dailyTokensBody:

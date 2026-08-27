@@ -250,6 +250,17 @@ export type TranslationDictionary = {
     reasoning: {
       title: string;
     };
+    search: {
+      action: string;
+      title: string;
+      placeholder: string;
+      close: string;
+      keepTyping: string;
+      searching: string;
+      noMatches: string;
+      roleUser: string;
+      roleAssistant: string;
+    };
     limits: {
       dailyTokensTitle: string;
       dailyTokensBody: string;

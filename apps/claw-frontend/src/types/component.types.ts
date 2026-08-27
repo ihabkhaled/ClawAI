@@ -113,6 +113,7 @@ import type { FigmaDesignMetadata } from './figma.types';
 import type { UploadedFile } from './file.types';
 import type { GmailMessageMetadata } from './gmail.types';
 import type { AggregatedHealth } from './health.types';
+import type { UseInThreadSearchReturn } from './hook.types';
 import type { JiraTicketMetadata } from './jira.types';
 import type {
   ClientLogEntry,
@@ -1006,6 +1007,8 @@ export type VirtualizedMessagesProps = {
   persistentError: string | null;
   // Virtuoso wiring (controller-owned).
   virtuosoRef: React.Ref<VirtuosoHandle>;
+  /** Scrolls to a message by id; silent when it is outside the loaded window. */
+  handleJumpToMessage: (messageId: string) => void;
   renderItems: MessageRenderItem[];
   itemContent: (index: number, item: MessageRenderItem) => React.ReactElement;
   headerContent: () => React.ReactElement | null;
@@ -1785,6 +1788,9 @@ export type ChatThreadShellProps = {
   exportThreadLabel: string;
   /** Accessible name for the mobile thread-list drawer. */
   threadListDrawerLabel: string;
+  /** Find-in-conversation state, with jump-to. */
+  search: UseInThreadSearchReturn;
+  searchLabel: string;
   editableTitle: UseEditableTitleReturn;
   canCompare: boolean;
   compareToggleOpen: () => void;
@@ -2515,6 +2521,12 @@ export type PublicSharedChatFooterProps = {
 
 export type PasswordInputProps = Omit<React.ComponentPropsWithoutRef<'input'>, 'type'> & {
   id: string;
+};
+
+export type ThreadSearchPanelProps = {
+  search: UseInThreadSearchReturn;
+  /** No-op when the message is outside the loaded window. */
+  onJumpToMessage: (messageId: string) => void;
 };
 
 export type MessageReasoningPanelProps = {

@@ -914,6 +914,11 @@
       },
       {
         "method": "GET",
+        "route": "/chat-messages/:id",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/chat-messages/:id/context-receipt",
         "source": "apps/claw-chat-service/src/modules/context-receipts/controllers/context-receipt.controller.ts"
       },
@@ -1005,6 +1010,11 @@
       {
         "method": "GET",
         "route": "/chat-messages/thread/:threadId",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/chat-messages/thread/:threadId/search",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
       },
       {
@@ -3153,5 +3163,5 @@
     ]
   },
   "generated": true,
-  "total": 623
+  "total": 625
 }

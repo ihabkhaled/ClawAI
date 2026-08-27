@@ -267,6 +267,17 @@ export const de: TranslationDictionary = {
     reasoning: {
       title: 'Modell-Begründung',
     },
+    search: {
+      action: 'Suchen',
+      title: 'In dieser Unterhaltung suchen',
+      placeholder: 'Diese Unterhaltung durchsuchen…',
+      close: 'Suche schließen',
+      keepTyping: 'Weiterschreiben, um zu suchen.',
+      searching: 'Wird gesucht…',
+      noMatches: 'Keine Nachricht passt dazu.',
+      roleUser: 'Sie',
+      roleAssistant: 'Assistent',
+    },
     limits: {
       dailyTokensTitle: 'Die heutigen Tokens sind aufgebraucht',
       dailyTokensBody:

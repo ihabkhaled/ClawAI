@@ -16,6 +16,7 @@ import { useTranslation } from '@/lib/i18n/use-translation';
 import type { ChatThreadShellProps, UseThreadDetailPageReturn } from '@/types';
 
 import { useExportThread } from './use-export-thread';
+import { useInThreadSearch } from './use-in-thread-search';
 
 // Page-bootstrap controller for /chat/[threadId]. The .tsx may call EXACTLY
 // ONE hook (this one). Composes useParams + useTranslation + the data
@@ -65,6 +66,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
   const deleteConfirm = useToggle(false);
   const share = useShareChatController(threadId.length > 0 ? threadId : null);
   const exportThread = useExportThread(threadId, title, data.messages);
+  const search = useInThreadSearch(threadId);
 
   const shellProps: ChatThreadShellProps = {
     threadId,
@@ -76,6 +78,8 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     canExportThread: exportThread.canExport,
     exportThreadLabel: t('chat.export.action'),
     threadListDrawerLabel: t('chat.threadListDrawer'),
+    search,
+    searchLabel: t('chat.search.action'),
     editableTitle,
     canCompare,
     compareToggleOpen: () => togglePanel(ActiveThreadPanel.COMPARE),

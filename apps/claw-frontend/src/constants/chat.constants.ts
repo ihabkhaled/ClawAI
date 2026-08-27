@@ -98,6 +98,14 @@ export const COMPOSER_DRAFT_MAX_LENGTH = 20_000;
 export const NEW_THREAD_DRAFT_KEY = 'new';
 
 /**
+ * Shortest in-thread search term.
+ *
+ * A single character matches most of a conversation, so the result is a list
+ * nobody can use rather than a search. Mirrors the backend DTO's minimum.
+ */
+export const IN_THREAD_SEARCH_MIN_LENGTH = 2;
+
+/**
  * Rough per-token cost estimates (USD) for common providers.
  * Used only for display — not billing.
  */

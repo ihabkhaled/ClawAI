@@ -254,6 +254,17 @@ export const zh: TranslationDictionary = {
     reasoning: {
       title: '模型推理过程',
     },
+    search: {
+      action: '查找',
+      title: '在此对话中查找',
+      placeholder: '搜索这个对话…',
+      close: '关闭搜索',
+      keepTyping: '继续输入以搜索。',
+      searching: '搜索中…',
+      noMatches: '没有匹配的消息。',
+      roleUser: '你',
+      roleAssistant: '助手',
+    },
     limits: {
       dailyTokensTitle: '今天的额度已用完',
       dailyTokensBody: '你今天的 token 额度已用完，将在 UTC 零点重置，也可以现在升级到更大的套餐。',

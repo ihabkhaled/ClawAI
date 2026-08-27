@@ -260,6 +260,17 @@ export const ar: TranslationDictionary = {
     reasoning: {
       title: 'استدلال النموذج',
     },
+    search: {
+      action: 'بحث',
+      title: 'البحث في هذه المحادثة',
+      placeholder: 'ابحث في هذه المحادثة…',
+      close: 'إغلاق البحث',
+      keepTyping: 'تابع الكتابة للبحث.',
+      searching: 'جارٍ البحث…',
+      noMatches: 'لا توجد رسائل مطابقة.',
+      roleUser: 'أنت',
+      roleAssistant: 'المساعد',
+    },
     limits: {
       dailyTokensTitle: 'لقد استهلكت رموز اليوم',
       dailyTokensBody:

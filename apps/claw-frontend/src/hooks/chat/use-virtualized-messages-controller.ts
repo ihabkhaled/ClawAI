@@ -99,6 +99,24 @@ export function useVirtualizedMessagesController(
     });
   }, [lastIndex]);
 
+  /**
+   * Scrolls to a message by id.
+   *
+   * Returns silently when the message is not in the loaded window: search can
+   * match a turn from before the current page, and the honest behaviour there is
+   * to do nothing rather than to jump somewhere arbitrary.
+   */
+  const handleJumpToMessage = useCallback(
+    (messageId: string): void => {
+      const index = params.messages.findIndex((message) => message.id === messageId);
+      if (index < 0) {
+        return;
+      }
+      virtuosoRef.current?.scrollToIndex({ index, behavior: 'smooth', align: 'center' });
+    },
+    [params.messages],
+  );
+
   const { onStartReached, hasPreviousPage, isFetchingPreviousPage } = params;
   const handleStartReached = useCallback((): void => {
     if (hasPreviousPage && !isFetchingPreviousPage) {
@@ -162,6 +180,7 @@ export function useVirtualizedMessagesController(
     emptyLabel: params.emptyLabel,
     persistentError: params.streamError,
     virtuosoRef,
+    handleJumpToMessage,
     renderItems,
     itemContent,
     headerContent,

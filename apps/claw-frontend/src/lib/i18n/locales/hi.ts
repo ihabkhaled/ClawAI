@@ -262,6 +262,17 @@ export const hi: TranslationDictionary = {
     reasoning: {
       title: 'मॉडल का तर्क',
     },
+    search: {
+      action: 'खोजें',
+      title: 'इस बातचीत में खोजें',
+      placeholder: 'इस बातचीत में खोजें…',
+      close: 'खोज बंद करें',
+      keepTyping: 'खोजने के लिए टाइप करते रहें।',
+      searching: 'खोजा जा रहा है…',
+      noMatches: 'कोई संदेश मेल नहीं खाता।',
+      roleUser: 'आप',
+      roleAssistant: 'असिस्टेंट',
+    },
     limits: {
       dailyTokensTitle: 'आज के टोकन खत्म हो गए',
       dailyTokensBody:

@@ -86,6 +86,9 @@ import { type PaginatedResult } from '../../../common/types';
 import { type ChatMessage, type ChatThread, Prisma, RoutingMode } from '../../../generated/prisma';
 import type { AssembledContext } from '../types/context.types';
 import { MAX_STORED_REASONING_CHARS } from '../constants/stored-reasoning.constants';
+import { type SearchMessagesQueryDto } from '../dto/search-messages-query.dto';
+import { type InThreadSearchMatch } from '../types/in-thread-search.types';
+import { buildSearchSnippet } from '../utilities/search-snippet.utility';
 
 @Injectable()
 export class ChatMessagesService implements OnModuleInit {
@@ -689,6 +692,38 @@ export class ChatMessagesService implements OnModuleInit {
     });
     await this.assertOrchestrationResearchGate(userId, dto.researchMode);
     return this.rolePackManager.executeRolePack(userId, dto, userToken);
+  }
+
+  /**
+   * Finds matches inside one thread.
+   *
+   * Ownership is checked exactly as it is for reading the thread — the search
+   * is a read of the same rows, so it cannot be a weaker gate than the list it
+   * jumps into.
+   */
+  async searchInThread(
+    threadId: string,
+    userId: string,
+    query: SearchMessagesQueryDto,
+  ): Promise<InThreadSearchMatch[]> {
+    const thread = await this.chatThreadsRepository.findById(threadId);
+    if (!thread) {
+      throw new EntityNotFoundException('ChatThread', threadId);
+    }
+    this.validateOwnership(thread, userId);
+
+    const matches = await this.chatMessagesRepository.searchByThreadId(
+      threadId,
+      query.q,
+      query.limit,
+    );
+    this.logger.debug(`searchInThread: thread=${threadId} matches=${String(matches.length)}`);
+    return matches.map((match) => ({
+      messageId: match.id,
+      role: match.role,
+      snippet: buildSearchSnippet(match.content, query.q),
+      createdAt: match.createdAt.toISOString(),
+    }));
   }
 
   async getMessages(

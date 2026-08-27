@@ -66,6 +66,7 @@ const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, jest.Moc
   createUserMessageWithinDailyLimit: jest.fn(),
   findById: jest.fn(),
   findByThreadId: jest.fn(),
+  searchByThreadId: jest.fn().mockResolvedValue([]),
   findRecentByThreadId: jest.fn(),
   findAllByThreadIdAscending: jest.fn(),
   countByThreadId: jest.fn(),

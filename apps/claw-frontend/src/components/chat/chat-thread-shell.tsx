@@ -1,6 +1,14 @@
 'use client';
 
-import { ArrowLeft, Download, Gavel, GitCompareArrows, Settings, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  Gavel,
+  GitCompareArrows,
+  Search,
+  Settings,
+  Trash2,
+} from 'lucide-react';
 import Link from 'next/link';
 
 import { EditableTitle } from '@/components/chat/editable-title';
@@ -8,6 +16,7 @@ import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel'
 import { MessageComposer } from '@/components/chat/message-composer';
 import { ThreadListDrawer } from '@/components/chat/thread-list-drawer';
 import { ThreadQualityPanel } from '@/components/chat/thread-quality-panel';
+import { ThreadSearchPanel } from '@/components/chat/thread-search-panel';
 import { ThreadSettings } from '@/components/chat/thread-settings';
 import { VirtualizedMessages } from '@/components/chat/virtualized-messages';
 import { ShareChatButton } from '@/components/chat-shares/share-chat-button';
@@ -88,6 +97,17 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
             </Button>
           ) : null}
           <Button
+            variant={props.search.isOpen ? 'default' : 'ghost'}
+            size="icon-sm"
+            className="sm:size-auto sm:h-9 sm:w-auto sm:px-3"
+            onClick={props.search.isOpen ? props.search.close : props.search.open}
+            aria-label={props.searchLabel}
+            aria-expanded={props.search.isOpen}
+          >
+            <Search className="h-4 w-4 sm:me-2" />
+            <span className="hidden sm:inline">{props.searchLabel}</span>
+          </Button>
+          <Button
             variant="ghost"
             size="icon-sm"
             className="sm:size-auto sm:h-9 sm:w-auto sm:px-3"
@@ -146,6 +166,10 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
         <div className="min-h-0 flex-1 overflow-hidden">
+          <ThreadSearchPanel
+            search={props.search}
+            onJumpToMessage={props.virtualizedMessagesProps.handleJumpToMessage}
+          />
           <VirtualizedMessages {...props.virtualizedMessagesProps} />
         </div>
 

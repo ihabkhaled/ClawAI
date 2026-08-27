@@ -1,6 +1,7 @@
 import type { MessageFeedback } from '@/enums';
 import { apiClient } from '@/services/shared/api-client';
 import type {
+  InThreadSearchMatch,
   BestOfNRequest,
   BestOfNResponse,
   ChatThread,
@@ -79,6 +80,20 @@ export const chatRepository = {
     const response = await apiClient.get<MessagesListResponse>(
       `/chat-messages/thread/${threadId}`,
       params,
+    );
+    return response.data;
+  },
+
+  /**
+   * Finds matches inside one thread, for jump-to navigation.
+   *
+   * Returns snippets rather than whole messages: the caller renders one-line
+   * previews, and shipping full bodies to draw them wastes the payload.
+   */
+  async searchInThread(threadId: string, term: string): Promise<InThreadSearchMatch[]> {
+    const response = await apiClient.get<InThreadSearchMatch[]>(
+      `/chat-messages/thread/${threadId}/search`,
+      { q: term },
     );
     return response.data;
   },

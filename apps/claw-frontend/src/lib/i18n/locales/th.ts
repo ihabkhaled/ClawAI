@@ -258,6 +258,17 @@ export const th: TranslationDictionary = {
     reasoning: {
       title: 'การให้เหตุผลของโมเดล',
     },
+    search: {
+      action: 'ค้นหา',
+      title: 'ค้นหาในบทสนทนานี้',
+      placeholder: 'ค้นหาในบทสนทนานี้…',
+      close: 'ปิดการค้นหา',
+      keepTyping: 'พิมพ์ต่อเพื่อค้นหา',
+      searching: 'กำลังค้นหา…',
+      noMatches: 'ไม่พบข้อความที่ตรงกัน',
+      roleUser: 'คุณ',
+      roleAssistant: 'ผู้ช่วย',
+    },
     limits: {
       dailyTokensTitle: 'คุณใช้โทเค็นของวันนี้หมดแล้ว',
       dailyTokensBody:

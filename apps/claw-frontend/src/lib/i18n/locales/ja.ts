@@ -264,6 +264,17 @@ export const ja: TranslationDictionary = {
     reasoning: {
       title: 'モデルの思考',
     },
+    search: {
+      action: '検索',
+      title: 'この会話内を検索',
+      placeholder: 'この会話内を検索…',
+      close: '検索を閉じる',
+      keepTyping: '検索するには入力を続けてください。',
+      searching: '検索中…',
+      noMatches: '一致するメッセージはありません。',
+      roleUser: 'あなた',
+      roleAssistant: 'アシスタント',
+    },
     limits: {
       dailyTokensTitle: '本日のトークンを使い切りました',
       dailyTokensBody:

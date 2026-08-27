@@ -22,6 +22,8 @@ export const queryKeys = {
       [...queryKeys.threads.all, 'messages', threadId, page] as const,
     messagesInfinite: (threadId: string) =>
       [...queryKeys.threads.all, 'messages-infinite', threadId] as const,
+    search: (threadId: string, term: string) =>
+      [...queryKeys.threads.all, 'search', threadId, term] as const,
     listInfinite: (filters: Record<string, unknown>) =>
       [...queryKeys.threads.lists(), 'infinite', filters] as const,
   },

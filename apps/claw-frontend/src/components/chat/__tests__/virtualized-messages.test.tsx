@@ -60,6 +60,7 @@ function makeProps(overrides: Partial<VirtualizedMessagesProps> = {}): Virtualiz
     emptyLabel: 'chat.noMessagesYet',
     persistentError: null,
     virtuosoRef,
+    handleJumpToMessage: vi.fn(),
     renderItems,
     itemContent: () => <div data-testid="row" />,
     headerContent: renderNull,

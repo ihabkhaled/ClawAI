@@ -22,6 +22,11 @@ import { type RolePackMessageDto, rolePackMessageSchema } from '../dto/role-pack
 import { CreateMessageDto, createMessageSchema } from '../dto/create-message.dto';
 import { type ParallelMessageDto, parallelMessageSchema } from '../dto/parallel-message.dto';
 import { ListMessagesQueryDto, listMessagesQuerySchema } from '../dto/list-messages-query.dto';
+import {
+  type SearchMessagesQueryDto,
+  searchMessagesQuerySchema,
+} from '../dto/search-messages-query.dto';
+import { type InThreadSearchMatch } from '../types/in-thread-search.types';
 import { SetFeedbackDto, setFeedbackSchema } from '../dto/set-feedback.dto';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { type AuthenticatedUser, type PaginatedResult } from '../../../common/types';
@@ -150,6 +155,21 @@ export class ChatMessagesController {
     @Query(new ZodValidationPipe(listMessagesQuerySchema)) query: ListMessagesQueryDto,
   ): Promise<PaginatedResult<ChatMessage>> {
     return this.chatMessagesService.getMessages(threadId, user.id, query);
+  }
+
+  /**
+   * Finds matches inside one thread, for jump-to navigation.
+   *
+   * Declared before `@Get(':id')`: Nest matches in declaration order, so a
+   * literal segment placed after a parameterised one is unreachable.
+   */
+  @Get('thread/:threadId/search')
+  async searchInThread(
+    @Param('threadId') threadId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Query(new ZodValidationPipe(searchMessagesQuerySchema)) query: SearchMessagesQueryDto,
+  ): Promise<InThreadSearchMatch[]> {
+    return this.chatMessagesService.searchInThread(threadId, user.id, query);
   }
 
   @Get(':id')

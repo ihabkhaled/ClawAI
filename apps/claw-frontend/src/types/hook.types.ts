@@ -32,7 +32,7 @@ import type {
   EmailChangePendingState,
 } from './auth.types';
 import type { ChatLimitNotice } from './chat-limit-notice.types';
-import type {
+import type { InThreadSearchMatch,
   ChatMessage,
   ChatThread,
   CreateMessageRequest,
@@ -41,8 +41,7 @@ import type {
   MessageRenderItem,
   StreamLiveState,
   UseVirtualizedMessagesReturn,
-  VisibleProgressStage,
-} from './chat.types';
+  VisibleProgressStage } from './chat.types';
 import type {
   ChatThreadShellProps,
   ModelSelection,
@@ -126,6 +125,20 @@ export type UseThreadListDrawerReturn = {
   handleArchive: (id: string, isArchived: boolean) => void;
   isPinPending: boolean;
   isArchivePending: boolean;
+};
+
+export type UseInThreadSearchReturn = {
+  term: string;
+  setTerm: (value: string) => void;
+  /** Focused when the panel opens, instead of an autoFocus prop. */
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  isOpen: boolean;
+  open: () => void;
+  close: () => void;
+  matches: InThreadSearchMatch[];
+  isSearching: boolean;
+  /** False while the term is too short to search on. */
+  isSearchable: boolean;
 };
 
 export type UseExportThreadReturn = {
@@ -857,6 +870,8 @@ export type UseVirtualizedMessagesControllerParams = {
 };
 
 export type UseVirtualizedMessagesControllerReturn = {
+  /** Scrolls to a message by id; silent when it is outside the loaded window. */
+  handleJumpToMessage: (messageId: string) => void;
   // Display states the .tsx renders directly.
   isLoading: boolean;
   isEmpty: boolean;

@@ -148,6 +148,25 @@ const shareControllerMock = {
   dialogProps: {} as never,
 };
 
+// Both own a useQuery, and this suite renders the controller without a
+// QueryClientProvider — it mocks every data-owning hook rather than standing up
+// a client, so these follow the same pattern.
+vi.mock('@/hooks/chat/use-in-thread-search', () => ({
+  useInThreadSearch: () => ({
+    term: '',
+    setTerm: vi.fn(),
+    isOpen: false,
+    open: vi.fn(),
+    close: vi.fn(),
+    matches: [],
+    isSearching: false,
+    isSearchable: false,
+  }),
+}));
+vi.mock('@/hooks/chat/use-export-thread', () => ({
+  useExportThread: () => ({ exportThread: vi.fn(), canExport: false }),
+}));
+
 vi.mock('@/hooks/chat-shares/use-share-chat-controller', () => ({
   useShareChatController: vi.fn(() => shareControllerMock),
 }));

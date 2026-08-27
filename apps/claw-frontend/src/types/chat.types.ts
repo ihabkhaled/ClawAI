@@ -604,3 +604,16 @@ export type ThreadMarkdownInput = {
   exportedAt: string;
   messages: readonly ChatMessage[];
 };
+
+/**
+ * One in-thread search match.
+ *
+ * A snippet cut around the term, not the message body: the search panel renders
+ * one-line previews and jumps to the message when one is chosen.
+ */
+export type InThreadSearchMatch = {
+  messageId: string;
+  role: MessageRole;
+  snippet: string;
+  createdAt: string;
+};

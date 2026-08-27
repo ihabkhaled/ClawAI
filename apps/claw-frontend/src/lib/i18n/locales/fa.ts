@@ -263,6 +263,17 @@ export const fa: TranslationDictionary = {
     reasoning: {
       title: 'استدلال مدل',
     },
+    search: {
+      action: 'یافتن',
+      title: 'جست‌وجو در این گفت‌وگو',
+      placeholder: 'در این گفت‌وگو جست‌وجو کنید…',
+      close: 'بستن جست‌وجو',
+      keepTyping: 'برای جست‌وجو تایپ را ادامه دهید.',
+      searching: 'در حال جست‌وجو…',
+      noMatches: 'هیچ پیامی مطابقت ندارد.',
+      roleUser: 'شما',
+      roleAssistant: 'دستیار',
+    },
     limits: {
       dailyTokensTitle: 'توکن‌های امروز تمام شد',
       dailyTokensBody:

@@ -38,6 +38,7 @@ export type { UsePlanFeaturesReturn } from './plan-feature-hook.types';
 export type {
   ChatThread,
   ChatMessage,
+  InThreadSearchMatch,
   ThreadMarkdownInput,
   CreateThreadRequest,
   UpdateThreadRequest,
@@ -562,6 +563,7 @@ export type {
   UseEditUserFormReturn,
   UseFloatingObstacleClearanceReturn,
   UseExportThreadReturn,
+  UseInThreadSearchReturn,
   UseThreadListDrawerReturn,
   UseToasterViewportReturn,
   UsePasswordRotationGuardReturn,
@@ -902,6 +904,7 @@ export type {
   PublicSharedChatHeaderProps,
   PublicSharedMessageProps,
   MessageReasoningPanelProps,
+  ThreadSearchPanelProps,
   PublicSharedAssetsProps,
   PublicSharedMessageListProps,
   PublicMarkdownRendererProps,
