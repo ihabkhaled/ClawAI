@@ -265,6 +265,11 @@ export const it: TranslationDictionary = {
     reasoning: {
       title: 'Ragionamento del modello',
     },
+    branch: {
+      action: 'Dirama da qui',
+      succeeded: 'Diramato in una nuova conversazione.',
+      failed: 'Impossibile diramare la conversazione.',
+    },
     edit: {
       action: 'Modifica ed esegui di nuovo',
       title: 'Modifica questo messaggio',

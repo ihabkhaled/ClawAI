@@ -68,6 +68,19 @@ export const chatRepository = {
     await apiClient.delete(`/chat-threads/${id}`);
   },
 
+  /**
+   * Copies this conversation up to one message into a new thread.
+   *
+   * Non-destructive, unlike editing: the original is left exactly as it was and
+   * the branch is explored beside it.
+   */
+  async branchThread(threadId: string, fromMessageId: string): Promise<ChatThread> {
+    const response = await apiClient.post<ChatThread>(`/chat-threads/${threadId}/branch`, {
+      fromMessageId,
+    });
+    return response.data;
+  },
+
   async createMessage(data: CreateMessageRequest): Promise<ChatMessage> {
     const response = await apiClient.post<ChatMessage>('/chat-messages', data);
     return response.data;

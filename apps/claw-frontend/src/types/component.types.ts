@@ -2593,3 +2593,9 @@ export type MessageEditActionProps = {
   messageId: string;
   content: string;
 };
+
+/** The branch affordance on a message. */
+export type MessageBranchActionProps = {
+  threadId: string;
+  messageId: string;
+};

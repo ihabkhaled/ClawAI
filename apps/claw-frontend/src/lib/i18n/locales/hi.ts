@@ -262,6 +262,11 @@ export const hi: TranslationDictionary = {
     reasoning: {
       title: 'मॉडल का तर्क',
     },
+    branch: {
+      action: 'यहाँ से शाखा बनाएँ',
+      succeeded: 'नई बातचीत में शाखा बना दी गई।',
+      failed: 'बातचीत की शाखा नहीं बनाई जा सकी।',
+    },
     edit: {
       action: 'संपादित करें और दोबारा चलाएँ',
       title: 'यह संदेश संपादित करें',

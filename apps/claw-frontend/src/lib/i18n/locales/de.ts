@@ -267,6 +267,11 @@ export const de: TranslationDictionary = {
     reasoning: {
       title: 'Modell-Begründung',
     },
+    branch: {
+      action: 'Ab hier verzweigen',
+      succeeded: 'In eine neue Unterhaltung verzweigt.',
+      failed: 'Die Unterhaltung konnte nicht verzweigt werden.',
+    },
     edit: {
       action: 'Bearbeiten und erneut ausführen',
       title: 'Diese Nachricht bearbeiten',

@@ -258,6 +258,11 @@ export const th: TranslationDictionary = {
     reasoning: {
       title: 'การให้เหตุผลของโมเดล',
     },
+    branch: {
+      action: 'แยกสายจากตรงนี้',
+      succeeded: 'แยกเป็นบทสนทนาใหม่แล้ว',
+      failed: 'แยกสายบทสนทนาไม่สำเร็จ',
+    },
     edit: {
       action: 'แก้ไขและเรียกใช้ใหม่',
       title: 'แก้ไขข้อความนี้',

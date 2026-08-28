@@ -260,6 +260,11 @@ export const ar: TranslationDictionary = {
     reasoning: {
       title: 'استدلال النموذج',
     },
+    branch: {
+      action: 'تفريع من هنا',
+      succeeded: 'تم التفريع إلى محادثة جديدة.',
+      failed: 'تعذّر تفريع المحادثة.',
+    },
     edit: {
       action: 'تعديل وإعادة التشغيل',
       title: 'تعديل هذه الرسالة',

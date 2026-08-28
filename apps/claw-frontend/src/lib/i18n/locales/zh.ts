@@ -254,6 +254,11 @@ export const zh: TranslationDictionary = {
     reasoning: {
       title: '模型推理过程',
     },
+    branch: {
+      action: '从这里分支',
+      succeeded: '已分支为新的对话。',
+      failed: '无法分支该对话。',
+    },
     edit: {
       action: '编辑并重新运行',
       title: '编辑此消息',

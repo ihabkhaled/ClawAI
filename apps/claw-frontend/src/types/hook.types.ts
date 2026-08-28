@@ -172,6 +172,12 @@ export type UseFloatingObstacleClearanceReturn = {
   remeasure: () => void;
 };
 
+export type UseBranchThreadReturn = {
+  /** Forks the conversation at this message into a thread of its own. */
+  branchFrom: (fromMessageId: string) => void;
+  isPending: boolean;
+};
+
 export type UseMessageEditReturn = {
   isOpen: boolean;
   open: () => void;

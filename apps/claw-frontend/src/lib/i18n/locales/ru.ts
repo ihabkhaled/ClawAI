@@ -264,6 +264,11 @@ export const ru: TranslationDictionary = {
     reasoning: {
       title: 'Рассуждение модели',
     },
+    branch: {
+      action: 'Ответвить отсюда',
+      succeeded: 'Создана новая ветка беседы.',
+      failed: 'Не удалось ответвить беседу.',
+    },
     edit: {
       action: 'Изменить и запустить заново',
       title: 'Изменить это сообщение',

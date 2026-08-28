@@ -15,6 +15,7 @@ import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { MessageAttachments } from '@/components/chat/message-attachments';
+import { MessageBranchAction } from '@/components/chat/message-branch-action';
 import { MessageEditAction } from '@/components/chat/message-edit-action';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { MessageReasoningPanel } from '@/components/chat/message-reasoning-panel';
@@ -191,6 +192,7 @@ function MessageBubbleBase({
               className="text-muted-foreground h-7 w-7"
             />
             <MessageEditAction messageId={message.id} content={message.content} />
+            <MessageBranchAction threadId={message.threadId} messageId={message.id} />
           </div>
         ) : null}
 
@@ -291,6 +293,7 @@ function MessageBubbleBase({
                 <RefreshCw className="h-3.5 w-3.5" />
               </Button>
             ) : null}
+            <MessageBranchAction threadId={message.threadId} messageId={message.id} />
             {onFeedback ? (
               <>
                 <Button

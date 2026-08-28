@@ -263,6 +263,11 @@ export const en: TranslationDictionary = {
     reasoning: {
       title: 'Model reasoning',
     },
+    branch: {
+      action: 'Branch from here',
+      succeeded: 'Branched into a new conversation.',
+      failed: 'Could not branch the conversation.',
+    },
     edit: {
       action: 'Edit and re-run',
       title: 'Edit this message',

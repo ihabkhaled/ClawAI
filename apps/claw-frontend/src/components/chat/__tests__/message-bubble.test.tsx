@@ -25,6 +25,17 @@ vi.mock('@/components/chat/message-provenance', () => ({
   MessageProvenance: () => <div>provenance</div>,
 }));
 
+// The edit and branch affordances each own a mutation and, in the branch's
+// case, the router. Neither is what this file is about — it asserts what the
+// bubble renders — so they stand in as markers.
+vi.mock('@/components/chat/message-edit-action', () => ({
+  MessageEditAction: () => <div>edit-action</div>,
+}));
+
+vi.mock('@/components/chat/message-branch-action', () => ({
+  MessageBranchAction: () => <div>branch-action</div>,
+}));
+
 vi.mock('@/components/chat/research-run-details', () => ({
   ResearchRunDetails: () => <div>research-details</div>,
 }));

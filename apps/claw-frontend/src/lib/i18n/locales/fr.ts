@@ -264,6 +264,11 @@ export const fr: TranslationDictionary = {
     reasoning: {
       title: 'Raisonnement du modèle',
     },
+    branch: {
+      action: 'Créer une branche ici',
+      succeeded: 'Branche créée dans une nouvelle conversation.',
+      failed: 'Impossible de créer une branche.',
+    },
     edit: {
       action: 'Modifier et relancer',
       title: 'Modifier ce message',

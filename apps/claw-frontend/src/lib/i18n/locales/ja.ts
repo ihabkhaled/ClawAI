@@ -264,6 +264,11 @@ export const ja: TranslationDictionary = {
     reasoning: {
       title: 'モデルの思考',
     },
+    branch: {
+      action: 'ここから分岐',
+      succeeded: '新しい会話に分岐しました。',
+      failed: '会話を分岐できませんでした。',
+    },
     edit: {
       action: '編集して再実行',
       title: 'このメッセージを編集',

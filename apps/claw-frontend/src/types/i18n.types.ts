@@ -250,6 +250,11 @@ export type TranslationDictionary = {
     reasoning: {
       title: string;
     };
+    branch: {
+      action: string;
+      succeeded: string;
+      failed: string;
+    };
     edit: {
       action: string;
       title: string;

@@ -263,6 +263,11 @@ export const fa: TranslationDictionary = {
     reasoning: {
       title: 'استدلال مدل',
     },
+    branch: {
+      action: 'انشعاب از اینجا',
+      succeeded: 'به گفت‌وگوی تازه‌ای منشعب شد.',
+      failed: 'انشعاب گفت‌وگو ممکن نشد.',
+    },
     edit: {
       action: 'ویرایش و اجرای دوباره',
       title: 'ویرایش این پیام',

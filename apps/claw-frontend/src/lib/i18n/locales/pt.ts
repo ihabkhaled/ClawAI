@@ -263,6 +263,11 @@ export const pt: TranslationDictionary = {
     reasoning: {
       title: 'Raciocínio do modelo',
     },
+    branch: {
+      action: 'Ramificar a partir daqui',
+      succeeded: 'Ramificado numa nova conversa.',
+      failed: 'Não foi possível ramificar a conversa.',
+    },
     edit: {
       action: 'Editar e executar de novo',
       title: 'Editar esta mensagem',
