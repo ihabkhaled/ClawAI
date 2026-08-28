@@ -47,6 +47,11 @@ if (LOCAL_TLS_HOSTS.has(new URL(BASE).hostname)) {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 }
 
+/** Matches any codeword this suite plants, so a run can clean up after an
+ * earlier one that died before its own cleanup. */
+const CODEWORD_PATTERN =
+  /(ZEPHYR|ORCHID|BUTTERFLY|MAROON|ALPHA|BRAVO|CHARLIE|DELTA|ECHO|SAFFRON|CINNABAR)-\d{4}/;
+
 /** A codeword the model cannot know unless it was given it. */
 function codeword(label) {
   const n = Math.floor(Math.random() * 9000) + 1000;
@@ -351,8 +356,29 @@ async function casePackShortPrompt() {
   );
 }
 
+/**
+ * Removes codewords left behind by an earlier run.
+ *
+ * A case that throws part-way skips its own cleanup, and the memory it planted
+ * then answers the NEXT run with the PREVIOUS run codeword. That looks exactly
+ * like an injection failure and is not — the suite poisons itself. Cleaning up
+ * front makes a run independent of how the last one ended.
+ */
+async function purgeLeftovers() {
+  const list = await api('/memories?page=1&limit=200');
+  const items = Array.isArray(list.body) ? list.body : (list.body?.data ?? []);
+  const stale = items.filter((m) => CODEWORD_PATTERN.test(String(m.content ?? '')));
+  for (const memory of stale) {
+    await deleteMemory(memory.id);
+  }
+  if (stale.length > 0) {
+    console.log(`purged ${stale.length} leftover regression memories`);
+  }
+}
+
 async function main() {
   await login();
+  await purgeLeftovers();
   console.log('context + memory injection regression\n');
 
   await caseMemoryFactLongPrompt();
