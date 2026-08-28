@@ -116,3 +116,45 @@ describe('buildContentSecurityPolicy', () => {
     expect(scriptDirective).not.toContain('googlesyndication.com');
   });
 });
+
+describe('buildContentSecurityPolicy analytics hosts', () => {
+  // A tag whose host is missing from the policy is blocked with no visible
+  // error, which is indistinguishable from analytics never having been
+  // installed. strict-dynamic covers script LOADING only — it does nothing for
+  // the beacon sends, the pixels or the noscript iframe.
+  const prod = {
+    nonce: 'n0nce',
+    isDev: false,
+    adsenseEnabled: false,
+    upgradeInsecureRequests: true,
+  };
+
+  it('allows GTM and GA to send their measurements', () => {
+    const csp = buildContentSecurityPolicy(prod);
+
+    expect(csp).toContain('https://www.googletagmanager.com');
+    expect(csp).toContain('https://www.google-analytics.com');
+  });
+
+  it('allows the GTM noscript iframe', () => {
+    const csp = buildContentSecurityPolicy(prod);
+    const frameSrc = csp.split(';').find((d) => d.trim().startsWith('frame-src')) ?? '';
+
+    expect(frameSrc).toContain('https://www.googletagmanager.com');
+  });
+
+  it('allows measurement pixels as images', () => {
+    const csp = buildContentSecurityPolicy(prod);
+    const imgSrc = csp.split(';').find((d) => d.trim().startsWith('img-src')) ?? '';
+
+    expect(imgSrc).toContain('https://www.google-analytics.com');
+  });
+
+  it('names the GTM script host in development, where strict-dynamic is absent', () => {
+    // Without this the loader tag renders and the browser silently blocks it.
+    const csp = buildContentSecurityPolicy({ ...prod, isDev: true });
+    const scriptSrc = csp.split(';').find((d) => d.trim().startsWith('script-src')) ?? '';
+
+    expect(scriptSrc).toContain('https://www.googletagmanager.com');
+  });
+});

@@ -4571,6 +4571,16 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "NEXT_PUBLIC_GA_MEASUREMENT_ID"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "NEXT_PUBLIC_GTM_ID"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "NEXT_PUBLIC_PAYMOB_PUBLIC_KEY"
       },
       {
@@ -9285,7 +9295,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 396
+        "testFiles": 398
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10031,7 +10041,7 @@
     "contradictionCount": 0,
     "dockerServiceCount": 41,
     "endpointCount": 627,
-    "envVarCount": 347,
+    "envVarCount": 349,
     "eventCount": 172,
     "frontendRouteCount": 138,
     "localeCount": 13,
@@ -10042,7 +10052,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1056,
+    "totalTestFiles": 1058,
     "workspaceCount": 25
   }
 }

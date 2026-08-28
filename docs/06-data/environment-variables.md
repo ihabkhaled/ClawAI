@@ -516,6 +516,30 @@ Optional — can also be configured through the UI connector management interfac
 
 ---
 
+## Analytics (Google Tag Manager / GA4)
+
+Both are client-side (`NEXT_PUBLIC_`), so they are baked into the frontend build
+and are visible to anyone viewing the page — they are public identifiers, not
+secrets.
+
+| Variable                        | Example        | Meaning                                                                                                                                 |
+| ------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_GTM_ID`            | `GTM-PPCVCPGM` | Container id. Empty disables the tag entirely: no loader, no `<noscript>` iframe.                                                       |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | `G-ABCD1234`   | Direct GA4 install via gtag.js. Usually empty — a GTM container normally carries the GA4 tag inside it, and setting both double-counts. |
+
+A malformed value is treated as unset rather than emitted, so pasting the whole
+snippet into the variable, or leaving a `GTM-XXXXXXX` placeholder, ships no tag
+instead of one that 404s on every page load.
+
+`env_file` is read only when a container is **created**. After changing either
+value, `docker restart claw-frontend` will not pick it up — recreate with
+`./scripts/claw.sh up -d frontend`.
+
+The Content-Security-Policy already names the analytics hosts
+(`constants/analytics.constants.ts` feeds `content-security-policy.ts`). A tag
+whose host is missing from the policy is blocked with no visible error, which is
+indistinguishable from analytics never having been installed.
+
 ## Testing
 
 | Variable             | Required | Default | Description                                     |

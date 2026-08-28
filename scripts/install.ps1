@@ -1223,6 +1223,8 @@ NEXT_PUBLIC_SOCIAL_LINKEDIN_URL=
 NEXT_PUBLIC_SOCIAL_DISCORD_URL=
 # Google AdSense (marketing pages only). OFF by default; set a real
 # ca-pub-... id to enable /ads.txt + the verification/serving machinery.
+NEXT_PUBLIC_GTM_ID=
+NEXT_PUBLIC_GA_MEASUREMENT_ID=
 NEXT_PUBLIC_ADSENSE_CLIENT_ID=
 NEXT_PUBLIC_ADSENSE_SERVING_ENABLED=false
 NEXT_PUBLIC_ADSENSE_REVIEW_MODE=false

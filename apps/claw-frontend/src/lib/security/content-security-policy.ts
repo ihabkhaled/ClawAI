@@ -1,3 +1,9 @@
+import {
+  ANALYTICS_CONNECT_HOSTS,
+  ANALYTICS_FRAME_HOSTS,
+  ANALYTICS_IMG_HOSTS,
+  GTM_HOST,
+} from '@/constants/analytics.constants';
 import type { ContentSecurityPolicyOptions } from '@/types/security.types';
 
 // Google ad domains that the browser must be allowed to frame / fetch from
@@ -90,6 +96,11 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
         "'unsafe-eval'",
         PAYMOB_SCRIPT_HOST,
         PAYPAL_SCRIPT_HOST,
+        // Development has no 'strict-dynamic', so the GTM loader is not covered
+        // by nonce-inherited trust and must be named explicitly — otherwise the
+        // tag renders and the browser blocks it, which looks exactly like GTM
+        // not being installed.
+        GTM_HOST,
         ...(adsenseEnabled ? GOOGLE_AD_SCRIPT_HOSTS : []),
       ]
     : [
@@ -104,6 +115,9 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
 
   const connectSrc = [
     "'self'",
+    // GTM and GA4 beacon their payloads to these; strict-dynamic covers script
+    // loading only, so a measurement send is blocked unless named here.
+    ...ANALYTICS_CONNECT_HOSTS,
     ...VSCODE_LOOPBACK_CONNECT_HOSTS,
     ...(isDev ? ['ws:', 'wss:'] : []),
     ...(adsenseEnabled ? GOOGLE_AD_CONNECT_HOSTS : []),
@@ -113,6 +127,8 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
 
   const frameSrc = [
     "'self'",
+    // The GTM <noscript> fallback is an iframe.
+    ...ANALYTICS_FRAME_HOSTS,
     ...PAYMOB_CHECKOUT_HOSTS,
     ...PAYPAL_CHECKOUT_HOSTS,
     ...(adsenseEnabled ? GOOGLE_AD_FRAME_HOSTS : []),
@@ -122,6 +138,8 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
     "'self'",
     'data:',
     'blob:',
+    // Measurement pixels are images as far as the policy is concerned.
+    ...ANALYTICS_IMG_HOSTS,
     ...PAYMOB_CHECKOUT_HOSTS,
     ...PAYPAL_CHECKOUT_HOSTS,
     ...(adsenseEnabled ? GOOGLE_AD_IMG_HOSTS : []),

@@ -1,11 +1,11 @@
 {
   "generated": true,
   "hashes": {
-    ".ai/BOOTSTRAP.md": "ac49781a",
+    ".ai/BOOTSTRAP.md": "4260dacc",
     ".ai/manifests/api-endpoints.json": "355f639a",
     ".ai/manifests/data-ownership.json": "03e4b931",
     ".ai/manifests/docker-services.json": "255da189",
-    ".ai/manifests/environment-variables.json": "c066a62e",
+    ".ai/manifests/environment-variables.json": "ba0f09b1",
     ".ai/manifests/event-graph.json": "09dac888",
     ".ai/manifests/frontend-routes.json": "ac85a927",
     ".ai/manifests/governance.json": "0b6eaac5",
@@ -18,7 +18,7 @@
     ".ai/manifests/rabbitmq-events.json": "8af5ac39",
     ".ai/manifests/repository.json": "047d93d0",
     ".ai/manifests/services.json": "dbf731a0",
-    ".ai/manifests/tests.json": "f3813fe0",
+    ".ai/manifests/tests.json": "55b23314",
     ".ai/manifests/workspace-dependency-graph.json": "e127fc73",
     ".ai/manifests/workspaces.json": "c162c837",
     ".ai/packs/README.md": "2e64753b",

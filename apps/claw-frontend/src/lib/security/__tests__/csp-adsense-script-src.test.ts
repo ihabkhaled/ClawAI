@@ -71,9 +71,15 @@ describe('CSP script-src for AdSense', () => {
       adsenseEnabled: false,
       upgradeInsecureRequests: true,
     });
+    // Asserted against the AdSense hosts specifically, not the substring
+    // "google". Analytics later added googletagmanager.com to these same
+    // directives unconditionally — correctly, since GTM is not gated on
+    // AdSense — and the looser check would have failed on a change it was
+    // never meant to police.
     for (const name of ['frame-src', 'img-src', 'connect-src']) {
-      expect(directive(on, name)).toContain('google');
-      expect(directive(off, name)).not.toContain('google');
+      expect(directive(on, name)).toContain('doubleclick.net');
+      expect(directive(off, name)).not.toContain('doubleclick.net');
+      expect(directive(off, name)).not.toContain('googlesyndication.com');
     }
   });
 });
