@@ -13,6 +13,16 @@ COPY .npmrc /app/.npmrc
 COPY packages/ /app/packages/
 COPY apps/claw-audit-service/package.json ./package.json
 RUN cd /app && npm install --ignore-scripts && cd /app/apps/claw-audit-service && npm install --ignore-scripts 2>/dev/null || true
+# The root declares the compiler as an ALIAS (typescript7 -> npm:typescript).
+# npm does not install an aliased package's platform optionalDependencies, so
+# @typescript/typescript-<platform> never lands on disk and every shared-package
+# build dies with "Unable to resolve @typescript/typescript-linux-x64".
+#
+# CI does not hit this because it installs from package-lock.json, which does
+# record the binaries; these images install without the lock. The version is
+# read back from the resolved compiler so it can never drift from it.
+RUN cd /app && npm install --ignore-scripts --no-save \
+  "@typescript/typescript-linux-x64@$(node -p "require('/app/node_modules/typescript7/package.json').version")"
 
 FROM base AS builder
 COPY --from=deps /app /app
