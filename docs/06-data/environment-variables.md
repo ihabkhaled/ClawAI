@@ -516,6 +516,37 @@ Optional — can also be configured through the UI connector management interfac
 
 ---
 
+## Image Moderation (shared chats)
+
+| Variable                      | Required | Default | Description                                                      |
+| ----------------------------- | -------- | ------- | ---------------------------------------------------------------- |
+| `GOOGLE_CLOUD_VISION_API_KEY` | No       | —       | Google Cloud Vision SafeSearch key, read by `claw-chat-service`. |
+
+**Blank is a safe default, not a broken one.** The scan does not decide whether a
+shared chat is readable — a published share is always readable by link. It
+decides one thing only: whether that share may _additionally_ carry advertising
+and be offered to search engines. With no key, images are never cleared, so such
+a share stays readable and unmonetised.
+
+**Getting the key** — Google Cloud Console → pick or create a project → _APIs &
+Services_ → _Library_ → enable **Cloud Vision API** → _Credentials_ → _Create
+credentials_ → _API key_. Restrict it to the Vision API. Billing must be enabled
+on the project; SafeSearch has a free monthly tier and is charged per image
+after it.
+
+This is a **secret**, unlike the analytics ids below. It has no `NEXT_PUBLIC_`
+prefix, is never sent to the browser, and must never be logged — the client that
+uses it passes it as a query parameter and deliberately keeps it out of every log
+line (`clients/cloud-vision.client.ts`).
+
+Only `SAFE_SEARCH_DETECTION` is requested — no labels, no text, no faces — so a
+user's shared image is not incidentally run through a general-purpose analysis
+pipeline. Policy detail:
+[`apps/claw-chat-service/CLAUDE.md`](../../apps/claw-chat-service/CLAUDE.md)
+("Image moderation gates ads, not the share").
+
+---
+
 ## Analytics (Google Tag Manager / GA4)
 
 Both are client-side (`NEXT_PUBLIC_`), so they are baked into the frontend build

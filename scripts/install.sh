@@ -1382,11 +1382,20 @@ SITE_URL=${CLAW_BASE_URL}
 NEXT_PUBLIC_SOCIAL_X_URL=
 NEXT_PUBLIC_SOCIAL_LINKEDIN_URL=
 NEXT_PUBLIC_SOCIAL_DISCORD_URL=
+# Google Cloud Vision SafeSearch. Moderates images in a published shared
+# chat. Blank is safe: with no key an image is never cleared, so the share
+# stays readable but never carries advertising and is never offered to search
+# engines. Console -> enable "Cloud Vision API" -> Credentials -> API key.
+GOOGLE_CLOUD_VISION_API_KEY=
+# Google Tag Manager container (marketing pages only). Matches .env.example,
+# so an install.sh install and a setup.sh install measure the same thing.
+NEXT_PUBLIC_GTM_ID=GTM-PPCVCPGM
+# Direct GA4 id (G-XXXXXXX), for an install that wants gtag.js without a
+# container. Usually blank: the container above normally carries the GA4 tag
+# inside it, and setting both double-counts every page view.
+NEXT_PUBLIC_GA_MEASUREMENT_ID=
 # Google AdSense (marketing pages only). OFF by default; set a real
 # ca-pub-... id to enable /ads.txt + the verification/serving machinery.
-GOOGLE_CLOUD_VISION_API_KEY=
-NEXT_PUBLIC_GTM_ID=
-NEXT_PUBLIC_GA_MEASUREMENT_ID=
 NEXT_PUBLIC_ADSENSE_CLIENT_ID=
 NEXT_PUBLIC_ADSENSE_SERVING_ENABLED=false
 NEXT_PUBLIC_ADSENSE_REVIEW_MODE=false
