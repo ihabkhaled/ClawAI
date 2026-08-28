@@ -1066,10 +1066,20 @@ export class ChatExecutionManager implements OnModuleInit {
     // Bug-hunt 2026-05-31, Fix 4 — the ctx baseline is now provider-aware
     // (local-ollama → 4_096, all others → 32_768) so CPU local-ollama
     // models don't time out trying to produce ~31_500 tokens.
-    body.max_tokens ??= computeDefaultMaxTokens(
-      pickDefaultCtxSizeForProvider(provider),
-      this.estimatePromptTokens(context),
-    );
+    // `??=` on max_tokens alone put the rejected field back on models whose cap
+    // had just been written to max_completion_tokens — so the check is "is any
+    // cap set", not "is max_tokens set".
+    if (body.max_tokens === undefined && body.max_completion_tokens === undefined) {
+      this.setOutputCap(
+        body,
+        model,
+        computeDefaultMaxTokens(
+          pickDefaultCtxSizeForProvider(provider),
+          this.estimatePromptTokens(context),
+        ),
+        'buildStreamingChatBody',
+      );
+    }
     if (body.tools !== undefined) {
       this.logger.debug(
         `buildStreamingChatBody: streaming with ${String(body.tools.length)} native tool(s) — ProviderStreamReader merges tool_call deltas by index`,
@@ -1768,7 +1778,7 @@ export class ChatExecutionManager implements OnModuleInit {
           model,
           messages,
           stream: false,
-          max_tokens: cappedMaxTokens,
+          ...this.outputCapField(model, cappedMaxTokens),
         };
     const startTime = Date.now();
     const response = await httpRequest<OpenAiChatResponse | OllamaChatResponse>({
@@ -3071,12 +3081,34 @@ export class ChatExecutionManager implements OnModuleInit {
     if (cap === undefined) {
       return;
     }
+    this.setOutputCap(requestBody, model, cap, 'buildChatRequestBody');
+  }
+
+  // The cap as a spreadable field, for bodies built as one literal.
+  private outputCapField(
+    model: string,
+    cap: number,
+  ): { max_tokens: number } | { max_completion_tokens: number } {
+    return modelRequiresMaxCompletionTokens(model)
+      ? { max_completion_tokens: cap }
+      : { max_tokens: cap };
+  }
+
+  // Writes the cap to the one field this model accepts. Every path that caps
+  // output must go through here: setting `max_tokens` directly is how a default
+  // silently reintroduced the rejected field after the builder had dropped it.
+  private setOutputCap(
+    requestBody: OpenAiChatRequest,
+    model: string,
+    cap: number,
+    caller: string,
+  ): void {
     if (modelRequiresMaxCompletionTokens(model)) {
-      this.logger.debug(`buildChatRequestBody: applying max_completion_tokens=${String(cap)}`);
+      this.logger.debug(`${caller}: applying max_completion_tokens=${String(cap)}`);
       requestBody.max_completion_tokens = cap;
       return;
     }
-    this.logger.debug(`buildChatRequestBody: applying max_tokens=${String(cap)}`);
+    this.logger.debug(`${caller}: applying max_tokens=${String(cap)}`);
     requestBody.max_tokens = cap;
   }
 

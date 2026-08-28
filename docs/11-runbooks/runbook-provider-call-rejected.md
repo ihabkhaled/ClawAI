@@ -76,6 +76,26 @@ still take `max_tokens`. Widening it would break them.
 Note `gpt-4o` accepts `max_completion_tokens` too — so a green test against one
 model proves nothing about the other direction. Both halves are asserted.
 
+**The trap that made this survive a correct fix.** Choosing the field in the
+request builder is not enough. The _streaming_ body — the path production
+actually uses — then applied a computed default with `body.max_tokens ??= …`,
+saw `max_tokens` unset (the cap had gone to `max_completion_tokens`), and put
+the rejected field straight back. The deployed build genuinely contained the
+fix and the model still 400'd.
+
+Every write of an output cap now goes through `setOutputCap` / `outputCapField`.
+**Never assign `max_tokens` directly** — that is exactly how the field came
+back. If you are chasing this again, check the streaming path before concluding
+the fix is not deployed:
+
+```bash
+docker exec <chat-replica> sh -lc "grep -c max_completion_tokens   dist/modules/chat-messages/managers/chat-execution.manager.js"
+```
+
+Under a multi-replica deployment, check the replica that served the request —
+container names are `claw-chat-service-<n>`, and `claw-chat-service` no longer
+exists as a single container.
+
 ### 2. Billing, not code
 
 ```

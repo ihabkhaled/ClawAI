@@ -18,6 +18,7 @@ import type { AccessControlService } from '../services/access-control.service';
 import type { SearchFirstManager } from '../managers/search-first.manager';
 import type { GeminiFilesApiManager } from '../managers/gemini-files-api.manager';
 import type { AssembledContext } from '../types/context.types';
+import type { ExecutionOptions } from '../types/execution-options.types';
 import type { OpenAiChatRequest, ThreadSettings } from '../types/execution.types';
 
 jest.mock('../clients/model-exposure.client', () => ({
@@ -251,6 +252,50 @@ describe('ChatExecutionManager sampling parameters', () => {
       const body = requestBodyOf<OpenAiChatRequest>();
       expect(body.max_tokens).toBe(256);
       expect(body.max_completion_tokens).toBeUndefined();
+    });
+  });
+
+  // The streaming path is what production actually uses, and it is where this
+  // bug survived a correct fix: the builder wrote max_completion_tokens, then
+  // the streaming default did `body.max_tokens ??= ...`, saw it unset, and put
+  // the rejected field straight back. Asserting the builder alone missed it.
+  describe('streaming body — the path production uses', () => {
+    const buildStreaming = (model: string, threadSettings?: ThreadSettings): OpenAiChatRequest =>
+      (
+        manager as unknown as {
+          buildStreamingChatBody: (
+            provider: string,
+            model: string,
+            context: AssembledContext,
+            threadSettings: ThreadSettings | undefined,
+            executionOptions: ExecutionOptions | undefined,
+          ) => OpenAiChatRequest;
+        }
+      ).buildStreamingChatBody('OPENAI', model, makeContext('hi'), threadSettings, undefined);
+
+    it('never sends max_tokens for gpt-5.6-sol, even via the computed default', () => {
+      const body = buildStreaming('gpt-5.6-sol');
+
+      expect(body.max_tokens).toBeUndefined();
+      expect(body.max_completion_tokens).toBeGreaterThan(0);
+    });
+
+    it('applies the computed default to max_tokens for gpt-4o-mini', () => {
+      const body = buildStreaming('gpt-4o-mini');
+
+      expect(body.max_completion_tokens).toBeUndefined();
+      expect(body.max_tokens).toBeGreaterThan(0);
+    });
+
+    it('keeps an explicit thread cap on the right field for gpt-5.6-sol', () => {
+      const body = buildStreaming('gpt-5.6-sol', {
+        temperature: 0.7,
+        maxTokens: 256,
+      } as unknown as ThreadSettings);
+
+      expect(body.max_tokens).toBeUndefined();
+      expect(body.max_completion_tokens).toBe(256);
+      expect(body.temperature).toBeUndefined();
     });
   });
 });
