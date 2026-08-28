@@ -401,10 +401,15 @@ await httpRequest({
 
 The wrapper lives at `src/common/utilities/inter-service-auth.utility.ts` and reads `AppConfig.get().INTER_SERVICE_AUTH_TOKEN`. Mirrors the pattern in `apps/claw-workspace-service/src/common/utilities/file-service-client.utility.ts#buildAuthHeader`. Forgetting the header will manifest as `401 Service token required` from file-service; users will see context-assembly silently skip attached files (caught as non-blocking) and judge/critic compare lanes will run without their attachments.
 
-## chat-service runs exactly one replica (2026-08-28)
+## chat-service runs 4 replicas (2026-08-28)
 
-Not a deployment preference — a correctness constraint, decided in
-[ADR-076](../../docs/13-adr/adr-076-chat-stream-durability.md).
+**Superseded.** This was a correctness constraint while the stream lived in
+process memory. It no longer is: the stream bus and the Stop broadcast moved to
+Redis and production runs `CHAT_SERVICE_REPLICAS=4`
+([ADR-077](../../docs/13-adr/adr-077-chat-service-horizontal-scaling.md)).
+
+What follows is kept because it explains WHY scaling was unsafe, and the three
+things that had to be true before it became safe.
 
 `ChatStreamService` keeps its event bus, its per-thread replay buffer and its
 event-id sequence in process memory (`Subject`, and two `Map`s). A client
@@ -412,11 +417,15 @@ connected to replica A therefore never sees an event emitted on replica B, and
 no amount of polling hides that while a run is in flight — the poll recovers the
 finished answer, not the stream.
 
-Scaling this service horizontally silently breaks streaming for a fraction of
-users proportional to the replica count. Before adding a replica, do the
-migration ADR-076 describes: point the legacy branch of
-`RuntimeV2StreamService.selectEvents` at the runtime-v2 Redis journal, which
-already has the sequencing, cursor and idempotency guarantees this needs.
+That is the failure this used to describe, and all three preconditions are now
+met: the bus is in Redis, Stop is broadcast, and the compose file no longer
+fixes a container name or a host port. Raising `CHAT_SERVICE_REPLICAS` is safe.
+
+**What is still NOT safe to scale** is any service whose in-process state has
+not been audited the way this one's was. The compose files keep
+`container_name` on every other service deliberately — Docker then refuses to
+scale them, which turns an unaudited assumption into an error instead of a
+silent, partial outage.
 
 A restart mid-run drops the partial text. That is accepted: the assistant row is
 written on completion and the client's two-second poll renders it, so what is

@@ -1,8 +1,13 @@
 # ADR-076: Chat stream durability — keep the in-process bus, rely on the database as the record
 
-**Status**: Accepted
-**Date**: 2026-08-28
-**Deciders**: ClawAI core team
+**Status**: Superseded in part by [ADR-077](adr-077-chat-service-horizontal-scaling.md)
+
+> The single-replica constraint below no longer holds: the stream bus and the
+> Stop broadcast moved to Redis on 2026-08-28 and production runs 4 replicas.
+> The rest of this ADR — that a restart loses the partial text but not the
+> answer, and that durable partials are not worth building — still stands.
+> **Date**: 2026-08-28
+> **Deciders**: ClawAI core team
 
 ## Context
 
