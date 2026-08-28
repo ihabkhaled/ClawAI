@@ -107,6 +107,10 @@ import {
   ToolChoiceMode,
 } from '../../../common/enums';
 import { modelRejectsSamplingParams } from '../utilities/anthropic-sampling.utility';
+import {
+  modelRejectsCustomTemperature,
+  modelRequiresMaxCompletionTokens,
+} from '../utilities/openai-request-shape.utility';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import { boundImageGenerationPrompt } from '../utilities/image-generation-prompt.utility';
 import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-shape.utility';
@@ -2970,7 +2974,7 @@ export class ChatExecutionManager implements OnModuleInit {
     if (temperature === null || temperature === undefined) {
       return undefined;
     }
-    if (modelRejectsSamplingParams(model)) {
+    if (modelRejectsSamplingParams(model) || modelRejectsCustomTemperature(model)) {
       this.logger.debug(`${caller}: omitting temperature — ${model} rejects sampling params`);
       return undefined;
     }
@@ -3043,16 +3047,37 @@ export class ChatExecutionManager implements OnModuleInit {
       requestBody.temperature = temperature;
     }
 
-    if (executionOptions?.maxOutputTokens !== undefined) {
-      requestBody.max_tokens = executionOptions.maxOutputTokens;
-    } else if (threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined) {
-      this.logger.debug(
-        `buildChatRequestBody: applying maxTokens=${String(threadSettings.maxTokens)}`,
-      );
-      requestBody.max_tokens = Math.min(threadSettings.maxTokens, HARD_MAX_OUTPUT_TOKENS);
-    }
+    this.applyOutputCap(requestBody, model, threadSettings, executionOptions);
 
     return requestBody;
+  }
+
+  // The output cap, written to whichever field this model actually accepts.
+  //
+  // Exactly one of the two is ever set: OpenAI's reasoning families reject
+  // `max_tokens` outright, and every older model — plus the other providers
+  // served by this same OpenAI-compatible builder — does not know the new name.
+  private applyOutputCap(
+    requestBody: OpenAiChatRequest,
+    model: string,
+    threadSettings: ThreadSettings | undefined,
+    executionOptions: ExecutionOptions | undefined,
+  ): void {
+    const cap =
+      executionOptions?.maxOutputTokens ??
+      (threadSettings?.maxTokens !== null && threadSettings?.maxTokens !== undefined
+        ? Math.min(threadSettings.maxTokens, HARD_MAX_OUTPUT_TOKENS)
+        : undefined);
+    if (cap === undefined) {
+      return;
+    }
+    if (modelRequiresMaxCompletionTokens(model)) {
+      this.logger.debug(`buildChatRequestBody: applying max_completion_tokens=${String(cap)}`);
+      requestBody.max_completion_tokens = cap;
+      return;
+    }
+    this.logger.debug(`buildChatRequestBody: applying max_tokens=${String(cap)}`);
+    requestBody.max_tokens = cap;
   }
 
   // Slice D — request-body dispatcher used by callCloudProvider. Picks the

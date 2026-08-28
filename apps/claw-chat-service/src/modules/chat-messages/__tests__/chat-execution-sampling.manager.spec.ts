@@ -109,6 +109,26 @@ describe('ChatExecutionManager sampling parameters', () => {
     );
   });
 
+  function mockProvider(provider: string, baseUrl: string): void {
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { provider, apiKey: 'sk-test', baseUrl },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          id: 'chatcmpl-1',
+          choices: [
+            { index: 0, message: { role: 'assistant', content: 'ok' }, finish_reason: 'stop' },
+          ],
+          usage: { prompt_tokens: 5, completion_tokens: 2, total_tokens: 7 },
+        },
+      });
+  }
+
   function mockAnthropicCompat(): void {
     httpRequest
       .mockResolvedValueOnce({
@@ -172,4 +192,65 @@ describe('ChatExecutionManager sampling parameters', () => {
       expect(requestBodyOf<OpenAiChatRequest>().temperature).toBe(0.7);
     },
   );
+
+  // OpenAI's reasoning families renamed the output cap and froze temperature.
+  // Both are 400s, verified against the live API, so a thread with a token cap
+  // or a temperature failed every turn on them while gpt-4o kept working.
+  describe('OpenAI reasoning families', () => {
+    const capped = { temperature: 0.7, maxTokens: 256 } as unknown as ThreadSettings;
+
+    it('sends max_completion_tokens and no temperature for gpt-5.6-luna', async () => {
+      mockProvider('OPENAI', 'https://api.openai.com/v1');
+
+      await manager.callProvider(
+        'OPENAI',
+        'gpt-5.6-luna',
+        makeContext('hi'),
+        Date.now(),
+        false,
+        capped,
+      );
+
+      const body = requestBodyOf<OpenAiChatRequest>();
+      expect(body.max_completion_tokens).toBe(256);
+      expect(body.max_tokens).toBeUndefined();
+      expect(body.temperature).toBeUndefined();
+    });
+
+    it('keeps max_tokens and temperature for gpt-4o-mini', async () => {
+      mockProvider('OPENAI', 'https://api.openai.com/v1');
+
+      await manager.callProvider(
+        'OPENAI',
+        'gpt-4o-mini',
+        makeContext('hi'),
+        Date.now(),
+        false,
+        capped,
+      );
+
+      const body = requestBodyOf<OpenAiChatRequest>();
+      expect(body.max_tokens).toBe(256);
+      expect(body.max_completion_tokens).toBeUndefined();
+      expect(body.temperature).toBe(0.7);
+    });
+
+    // The same builder serves providers that never renamed the field.
+    it('keeps max_tokens for a non-OpenAI provider on the compatible route', async () => {
+      mockProvider('DEEPSEEK', 'https://api.deepseek.com/v1');
+
+      await manager.callProvider(
+        'DEEPSEEK',
+        'deepseek-chat',
+        makeContext('hi'),
+        Date.now(),
+        false,
+        capped,
+      );
+
+      const body = requestBodyOf<OpenAiChatRequest>();
+      expect(body.max_tokens).toBe(256);
+      expect(body.max_completion_tokens).toBeUndefined();
+    });
+  });
 });

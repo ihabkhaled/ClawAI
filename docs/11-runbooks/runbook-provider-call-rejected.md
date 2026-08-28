@@ -10,8 +10,9 @@ Please try again shortly.
 ```
 
 The message is deliberately vague to the user and says nothing about cause. It
-covers three quite different situations, and the first step is always to find
-out which one you have — never to retry or to swap models on a hunch.
+covers several quite different situations, and the first step is always to find
+out which one you have — never to retry or to swap models on a hunch. Two of
+them are per-_model_, not per-provider, so "OpenAI is down" is usually wrong.
 
 ## Diagnose in one step
 
@@ -47,6 +48,33 @@ model breaks the moment someone sets a temperature on a thread.
 
 A dated snapshot (`-YYYYMMDD`) is normalised before the check, so only the
 undated id needs listing.
+
+### 1b. A parameter the model renamed
+
+```
+Unsupported parameter: 'max_tokens' is not supported with this model.
+Use 'max_completion_tokens' instead.
+```
+
+```
+Unsupported value: 'temperature' does not support 0.7 with this model.
+Only the default (1) value is supported.
+```
+
+OpenAI's **reasoning families** — `gpt-5*`, `o1*`, `o3*`, `o4*` — renamed the
+output cap to `max_completion_tokens` and froze `temperature` at its default.
+Both are 400s. Every request carries an output cap, so these models failed on
+_every_ turn, while `gpt-4o` on the same thread answered normally.
+
+The builder now picks the field per model and drops a non-default temperature,
+driven by
+[`openai-request-shape.constants.ts`](../../apps/claw-chat-service/src/modules/chat-messages/constants/openai-request-shape.constants.ts).
+That rule is a **prefix match**, deliberately narrow: the same builder serves
+DeepSeek, Grok and Anthropic's OpenAI-compatible route, and those providers
+still take `max_tokens`. Widening it would break them.
+
+Note `gpt-4o` accepts `max_completion_tokens` too — so a green test against one
+model proves nothing about the other direction. Both halves are asserted.
 
 ### 2. Billing, not code
 

@@ -284,6 +284,9 @@ export type OpenAiChatRequest = {
   stream: boolean;
   temperature?: number;
   max_tokens?: number;
+  // The reasoning families renamed the output cap and reject `max_tokens`
+  // outright. Exactly one of the two is ever sent.
+  max_completion_tokens?: number;
   // Asks OpenAI-compatible providers to include a final usage chunk while
   // streaming (token totals). Ignored by providers that don't support it.
   stream_options?: { include_usage: boolean };
