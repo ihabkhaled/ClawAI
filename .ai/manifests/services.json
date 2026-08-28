@@ -109,7 +109,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-chat-service",
-      "endpointCount": 46,
+      "endpointCount": 47,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",

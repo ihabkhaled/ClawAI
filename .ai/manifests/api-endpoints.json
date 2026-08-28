@@ -1054,6 +1054,11 @@
       },
       {
         "method": "POST",
+        "route": "/chat-threads/:id/branch",
+        "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/chat-threads/:id/preview-context",
         "source": "apps/claw-chat-service/src/modules/context-preview/controllers/context-preview.controller.ts"
       },
@@ -3168,5 +3173,5 @@
     ]
   },
   "generated": true,
-  "total": 626
+  "total": 627
 }

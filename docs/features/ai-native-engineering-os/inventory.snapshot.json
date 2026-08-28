@@ -1109,6 +1109,11 @@
         },
         {
           "method": "POST",
+          "route": "/chat-threads/:id/branch",
+          "source": "apps/claw-chat-service/src/modules/chat-threads/controllers/chat-threads.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/chat-threads/:id/preview-context",
           "source": "apps/claw-chat-service/src/modules/context-preview/controllers/context-preview.controller.ts"
         },
@@ -10025,7 +10030,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 626,
+    "endpointCount": 627,
     "envVarCount": 347,
     "eventCount": 172,
     "frontendRouteCount": 138,

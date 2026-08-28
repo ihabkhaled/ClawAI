@@ -31,6 +31,7 @@ const mockThreadWithCount = {
 const mockThreadsRepository = (): Record<keyof ChatThreadsRepository, jest.Mock> => ({
   create: jest.fn(),
   createWithinDailyLimit: jest.fn(),
+  createBranchWithinDailyLimit: jest.fn(),
   findById: jest.fn(),
   findAll: jest.fn(),
   update: jest.fn(),
@@ -40,6 +41,7 @@ const mockThreadsRepository = (): Record<keyof ChatThreadsRepository, jest.Mock>
 
 const mockMessagesRepository = (): Partial<Record<keyof ChatMessagesRepository, jest.Mock>> => ({
   deleteByThreadId: jest.fn().mockResolvedValue(0),
+  findById: jest.fn(),
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, jest.Mock>> => ({
@@ -101,6 +103,73 @@ describe('ChatThreadsService', () => {
         status: 429,
       });
       expect(rabbitMQ.publish).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('branchThread', () => {
+    const pivot = {
+      id: 'msg-3',
+      threadId: 'thread-1',
+      createdAt: new Date('2026-08-28T00:00:00Z'),
+    };
+
+    beforeEach(() => {
+      threadsRepo.findById.mockResolvedValue(mockThread);
+      messagesRepo.findById!.mockResolvedValue(pivot);
+      threadsRepo.createBranchWithinDailyLimit.mockResolvedValue({
+        ...mockThread,
+        id: 'thread-branch',
+      });
+    });
+
+    it('copies the conversation up to the chosen message', async () => {
+      const result = await service.branchThread('user-1', 'thread-1', 'msg-3');
+
+      expect(result.id).toBe('thread-branch');
+      expect(threadsRepo.createBranchWithinDailyLimit).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'user-1' }),
+        2,
+        'thread-1',
+        pivot.createdAt,
+      );
+    });
+
+    it('counts the branch against the daily chat ceiling', async () => {
+      // A branch is a thread. Exempting it would make branching the way around
+      // the limit.
+      threadsRepo.createBranchWithinDailyLimit.mockResolvedValue(null);
+
+      await expect(service.branchThread('user-1', 'thread-1', 'msg-3')).rejects.toMatchObject({
+        code: 'PLAN_DAILY_CHAT_LIMIT_EXCEEDED',
+      });
+    });
+
+    it('refuses a pivot message from another conversation', async () => {
+      // Otherwise one thread's history could be grafted onto another.
+      messagesRepo.findById!.mockResolvedValue({ ...pivot, threadId: 'thread-other' });
+
+      await expect(service.branchThread('user-1', 'thread-1', 'msg-3')).rejects.toThrow(
+        EntityNotFoundException,
+      );
+      expect(threadsRepo.createBranchWithinDailyLimit).not.toHaveBeenCalled();
+    });
+
+    it('refuses to branch a thread owned by someone else', async () => {
+      threadsRepo.findById.mockResolvedValue({ ...mockThread, userId: 'someone-else' });
+
+      await expect(service.branchThread('user-1', 'thread-1', 'msg-3')).rejects.toThrow();
+      expect(threadsRepo.createBranchWithinDailyLimit).not.toHaveBeenCalled();
+    });
+
+    it('leaves an untitled source branching untitled', async () => {
+      // The branch then names itself from its own first message, which is the
+      // same message — rather than carrying an empty string across.
+      threadsRepo.findById.mockResolvedValue({ ...mockThread, title: null });
+
+      await service.branchThread('user-1', 'thread-1', 'msg-3');
+
+      const [data] = threadsRepo.createBranchWithinDailyLimit.mock.calls[0] ?? [];
+      expect(data).not.toHaveProperty('title');
     });
   });
 

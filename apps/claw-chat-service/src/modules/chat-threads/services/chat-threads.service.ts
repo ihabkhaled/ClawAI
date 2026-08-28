@@ -12,6 +12,7 @@ import { type ThreadWithMessageCount } from '../types/chat-threads.types';
 import { type ChatThread } from '../../../generated/prisma';
 import { THREAD_CREATED_EVENT } from '../constants/chat-threads.constants';
 import { DailyLimitService } from '../../chat-messages/services/daily-limit.service';
+import { copyThreadSettings } from '../utilities/copy-thread-settings.utility';
 
 @Injectable()
 export class ChatThreadsService {
@@ -59,6 +60,60 @@ export class ChatThreadsService {
     });
 
     return thread;
+  }
+
+  /**
+   * Copies a conversation up to one message into a new thread.
+   *
+   * The point is to try a different direction without losing the one you have.
+   * Editing a prompt truncates the thread it belongs to; branching leaves the
+   * original untouched and explores beside it.
+   *
+   * Counted against the daily chat ceiling like any other new thread — a branch
+   * is a thread, and exempting it would make branching the way around the
+   * limit.
+   */
+  async branchThread(userId: string, threadId: string, fromMessageId: string): Promise<ChatThread> {
+    const source = await this.chatThreadsRepository.findById(threadId);
+    if (!source) {
+      throw new EntityNotFoundException('ChatThread', threadId);
+    }
+    this.validateOwnership(source, userId);
+
+    const pivot = await this.chatMessagesRepository.findById(fromMessageId);
+    // One expression covers both "no such message" and "a message from another
+    // conversation" — the second is what stops one thread's history being
+    // grafted onto another.
+    if (pivot?.threadId !== threadId) {
+      throw new EntityNotFoundException('ChatMessage', fromMessageId);
+    }
+
+    const entitlements = await this.dailyLimitService.resolve(userId);
+    const branch = await this.chatThreadsRepository.createBranchWithinDailyLimit(
+      // The branch is the same conversation up to this point, so it carries the
+      // same name and settings. An untitled source stays untitled and the branch
+      // names itself from its own first message, which is that same message.
+      { userId, ...copyThreadSettings(source) },
+      entitlements.isAdmin ? null : (entitlements.plan?.limits.chatsPerDay ?? 0),
+      threadId,
+      pivot.createdAt,
+    );
+    if (!branch) {
+      throw new BusinessException(
+        'Daily chat limit exceeded',
+        'PLAN_DAILY_CHAT_LIMIT_EXCEEDED',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    this.logger.log(`branchThread: ${threadId} -> ${branch.id} at message ${fromMessageId}`);
+    void this.rabbitMQService.publish(THREAD_CREATED_EVENT, {
+      threadId: branch.id,
+      userId,
+      timestamp: new Date().toISOString(),
+    });
+
+    return branch;
   }
 
   async getThreads(

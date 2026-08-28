@@ -179,6 +179,26 @@ extractor in a follow-up.
 
 Full architecture: [`docs/03-architecture/runtime-progress.md`](../../docs/03-architecture/runtime-progress.md).
 
+## Branching copies a conversation, it does not move it (2026-08-28)
+
+`POST /chat-threads/:id/branch` with `{ fromMessageId }` creates a new thread
+holding every message up to and including that one. The original is untouched —
+that is the whole difference from editing, which truncates the thread it belongs
+to. Branching needs no warning because nothing is lost.
+
+- **One transaction**, under the same advisory lock and daily chat ceiling as an
+  ordinary new thread. A branch is a thread; exempting it would make branching
+  the way around the limit. It refuses with `PLAN_DAILY_CHAT_LIMIT_EXCEEDED`,
+  the same code, so callers have one refusal to handle.
+- **The pivot must belong to the thread.** Otherwise one conversation's history
+  could be grafted onto another.
+- **Copied messages take fresh ids and timestamps.** Carrying the originals
+  across would make two threads claim the same message, and the context receipts
+  hanging off those ids belong to the original run.
+- **The branch carries the source title.** It is the same conversation up to
+  that point. An untitled source branches untitled and names itself from its own
+  first message — which is that same message.
+
 ## Editing a prompt truncates the thread (2026-08-28)
 
 `POST /chat-messages/:id/edit` rewrites a user prompt and re-runs the thread

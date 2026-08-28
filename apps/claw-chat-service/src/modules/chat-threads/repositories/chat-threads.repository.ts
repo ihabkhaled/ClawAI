@@ -35,6 +35,57 @@ export class ChatThreadsRepository {
     });
   }
 
+  /**
+   * Creates a thread holding a copy of another thread's opening messages.
+   *
+   * One transaction, and under the same advisory lock and daily ceiling as an
+   * ordinary new thread — otherwise branching would be a way around the chat
+   * limit. Returns null when the ceiling is reached, exactly as
+   * `createWithinDailyLimit` does, so the caller has one refusal to handle.
+   *
+   * The copy is deliberately shallow on provenance: the branch keeps each
+   * message's text, role and model, and takes fresh identifiers and timestamps.
+   * Carrying the original ids across would make two threads claim the same
+   * message, and the receipts hanging off those ids belong to the original run.
+   */
+  async createBranchWithinDailyLimit(
+    data: CreateThreadData,
+    limit: number | null,
+    sourceThreadId: string,
+    upToCreatedAt: Date,
+  ): Promise<ChatThread | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`chat:${data.userId}`}, 0))`;
+      if (limit !== null) {
+        const start = new Date();
+        start.setUTCHours(0, 0, 0, 0);
+        const count = await transaction.chatThread.count({
+          where: { userId: data.userId, createdAt: { gte: start } },
+        });
+        if (count >= limit) return null;
+      }
+
+      const branch = await transaction.chatThread.create({ data });
+      const source = await transaction.chatMessage.findMany({
+        where: { threadId: sourceThreadId, createdAt: { lte: upToCreatedAt } },
+        orderBy: { createdAt: 'asc' },
+      });
+      await transaction.chatMessage.createMany({
+        data: source.map((message) => ({
+          threadId: branch.id,
+          role: message.role,
+          content: message.content,
+          provider: message.provider,
+          model: message.model,
+          routingMode: message.routingMode,
+          routerModel: message.routerModel,
+          usedFallback: message.usedFallback,
+        })),
+      });
+      return branch;
+    });
+  }
+
   async findById(id: string): Promise<ChatThread | null> {
     return this.prisma.chatThread.findUnique({ where: { id } });
   }
