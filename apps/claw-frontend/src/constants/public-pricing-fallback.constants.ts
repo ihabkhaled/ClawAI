@@ -10,8 +10,12 @@ export const PUBLIC_PRICING_FALLBACK_PLANS: PublicPlan[] = [
     displayOrder: 0,
     isDefault: true,
     isPopular: false,
-    dailyTokenQuota: 300_000,
-    weeklyTokenQuota: 20_000,
+    // Weekly is six times daily, the ratio every other tier uses. The pair
+    // shipped as 300,000 daily against 20,000 weekly, which the card rendered
+    // as an allowance fifteen times what the account actually granted — the
+    // weekly ceiling binds on the first afternoon.
+    dailyTokenQuota: 20_000,
+    weeklyTokenQuota: 120_000,
     monthlyTokenQuota: null,
     maxChatsPerDay: 5,
     maxMessagesPerDay: 250,
