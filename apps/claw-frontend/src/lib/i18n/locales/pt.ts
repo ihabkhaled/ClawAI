@@ -263,6 +263,16 @@ export const pt: TranslationDictionary = {
     reasoning: {
       title: 'Raciocínio do modelo',
     },
+    edit: {
+      action: 'Editar e executar de novo',
+      title: 'Editar esta mensagem',
+      warning:
+        'Tudo depois desta mensagem será removido, e a conversa é executada de novo a partir daqui.',
+      confirm: 'Guardar e executar de novo',
+      saving: 'A guardar…',
+      succeeded: 'Mensagem atualizada. A executar de novo…',
+      failed: 'Não foi possível atualizar a mensagem.',
+    },
     search: {
       action: 'Procurar',
       title: 'Procurar nesta conversa',
@@ -372,6 +382,8 @@ export const pt: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'O seu teste gratuito terminou. Escolha um plano pago para continuar a usar a IA.',
+      messageNotEditable: 'Só pode editar a sua própria mensagem.',
+      messageEditUnchanged: 'A mensagem não foi alterada.',
       dailyTokenLimitExceeded: 'Você excedeu seu limite diário de tokens.',
       weeklyTokenLimitExceeded: 'Você excedeu seu limite semanal de tokens.',
       monthlyTokenLimitExceeded: 'Você excedeu seu limite mensal de tokens.',

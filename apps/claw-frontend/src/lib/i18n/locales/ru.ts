@@ -264,6 +264,15 @@ export const ru: TranslationDictionary = {
     reasoning: {
       title: 'Рассуждение модели',
     },
+    edit: {
+      action: 'Изменить и запустить заново',
+      title: 'Изменить это сообщение',
+      warning: 'Всё после этого сообщения будет удалено, и беседа продолжится заново отсюда.',
+      confirm: 'Сохранить и запустить заново',
+      saving: 'Сохранение…',
+      succeeded: 'Сообщение обновлено. Запускаем заново…',
+      failed: 'Не удалось обновить сообщение.',
+    },
     search: {
       action: 'Найти',
       title: 'Поиск по этой беседе',
@@ -373,6 +382,8 @@ export const ru: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'Бесплатный пробный период завершён. Выберите платный тариф, чтобы продолжить пользоваться ИИ.',
+      messageNotEditable: 'Изменить можно только собственное сообщение.',
+      messageEditUnchanged: 'Сообщение не изменилось.',
       dailyTokenLimitExceeded: 'Вы превысили дневной лимит токенов.',
       weeklyTokenLimitExceeded: 'Вы превысили недельный лимит токенов.',
       monthlyTokenLimitExceeded: 'Вы превысили месячный лимит токенов.',

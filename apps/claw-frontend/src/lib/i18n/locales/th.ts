@@ -258,6 +258,15 @@ export const th: TranslationDictionary = {
     reasoning: {
       title: 'การให้เหตุผลของโมเดล',
     },
+    edit: {
+      action: 'แก้ไขและเรียกใช้ใหม่',
+      title: 'แก้ไขข้อความนี้',
+      warning: 'ทุกอย่างหลังข้อความนี้จะถูกลบ และบทสนทนาจะเริ่มใหม่จากจุดนี้',
+      confirm: 'บันทึกและเรียกใช้ใหม่',
+      saving: 'กำลังบันทึก…',
+      succeeded: 'อัปเดตข้อความแล้ว กำลังเรียกใช้ใหม่…',
+      failed: 'อัปเดตข้อความไม่สำเร็จ',
+    },
     search: {
       action: 'ค้นหา',
       title: 'ค้นหาในบทสนทนานี้',
@@ -363,6 +372,8 @@ export const th: TranslationDictionary = {
     allProvidersFailed: 'ผู้ให้บริการทั้งหมดไม่สามารถสร้างการตอบกลับได้',
     errors: {
       planTrialExpired: 'ช่วงทดลองใช้ฟรีของคุณสิ้นสุดแล้ว เลือกแผนแบบชำระเงินเพื่อใช้ AI ต่อ',
+      messageNotEditable: 'คุณแก้ไขได้เฉพาะข้อความของคุณเอง',
+      messageEditUnchanged: 'ข้อความไม่มีการเปลี่ยนแปลง',
       dailyTokenLimitExceeded: 'คุณใช้โทเค็นเกินขีดจำกัดรายวันแล้ว',
       weeklyTokenLimitExceeded: 'คุณใช้โทเค็นเกินขีดจำกัดรายสัปดาห์แล้ว',
       monthlyTokenLimitExceeded: 'คุณใช้โทเค็นเกินขีดจำกัดรายเดือนแล้ว',

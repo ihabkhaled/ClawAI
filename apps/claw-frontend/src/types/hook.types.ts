@@ -172,6 +172,18 @@ export type UseFloatingObstacleClearanceReturn = {
   remeasure: () => void;
 };
 
+export type UseMessageEditReturn = {
+  isOpen: boolean;
+  open: () => void;
+  close: () => void;
+  draft: string;
+  setDraft: (value: string) => void;
+  save: () => void;
+  isPending: boolean;
+  /** False for an empty or unchanged draft, which the server refuses anyway. */
+  canSave: boolean;
+};
+
 export type UseJumpToMessageReturn = {
   /** Scrolls to a message, or explains why it cannot. */
   jumpToMessage: (messageId: string) => void;

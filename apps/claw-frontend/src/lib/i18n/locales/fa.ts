@@ -263,6 +263,15 @@ export const fa: TranslationDictionary = {
     reasoning: {
       title: 'استدلال مدل',
     },
+    edit: {
+      action: 'ویرایش و اجرای دوباره',
+      title: 'ویرایش این پیام',
+      warning: 'هر چیزی پس از این پیام حذف می‌شود و گفت‌وگو از اینجا دوباره اجرا می‌شود.',
+      confirm: 'ذخیره و اجرای دوباره',
+      saving: 'در حال ذخیره…',
+      succeeded: 'پیام به‌روزرسانی شد. در حال اجرای دوباره…',
+      failed: 'به‌روزرسانی پیام ممکن نشد.',
+    },
     search: {
       action: 'یافتن',
       title: 'جست‌وجو در این گفت‌وگو',
@@ -370,6 +379,8 @@ export const fa: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'دوره آزمایشی رایگان شما پایان یافته است. برای ادامه استفاده از هوش مصنوعی یک طرح پولی انتخاب کنید.',
+      messageNotEditable: 'فقط پیام خودتان را می‌توانید ویرایش کنید.',
+      messageEditUnchanged: 'پیام تغییری نکرده است.',
       dailyTokenLimitExceeded: 'از محدودیت روزانه توکن عبور کرده‌اید.',
       weeklyTokenLimitExceeded: 'از محدودیت هفتگی توکن عبور کرده‌اید.',
       monthlyTokenLimitExceeded: 'از محدودیت ماهانه توکن عبور کرده‌اید.',

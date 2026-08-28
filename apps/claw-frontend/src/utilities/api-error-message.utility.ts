@@ -4,6 +4,8 @@ import type { TranslateFunction } from '@/types';
 
 const API_ERROR_MESSAGE_KEY_BY_CODE: ReadonlyMap<string, string> = new Map([
   [ApiErrorCode.PLAN_TRIAL_EXPIRED, 'chat.errors.planTrialExpired'],
+  [ApiErrorCode.MESSAGE_NOT_EDITABLE, 'chat.errors.messageNotEditable'],
+  [ApiErrorCode.MESSAGE_EDIT_UNCHANGED, 'chat.errors.messageEditUnchanged'],
   [ApiErrorCode.QUOTA_DAILY_EXCEEDED, 'chat.errors.dailyTokenLimitExceeded'],
   [ApiErrorCode.QUOTA_WEEKLY_EXCEEDED, 'chat.errors.weeklyTokenLimitExceeded'],
   [ApiErrorCode.QUOTA_MONTHLY_EXCEEDED, 'chat.errors.monthlyTokenLimitExceeded'],

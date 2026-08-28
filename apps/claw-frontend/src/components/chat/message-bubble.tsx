@@ -15,6 +15,7 @@ import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { MessageAttachments } from '@/components/chat/message-attachments';
+import { MessageEditAction } from '@/components/chat/message-edit-action';
 import { MessageProvenance } from '@/components/chat/message-provenance';
 import { MessageReasoningPanel } from '@/components/chat/message-reasoning-panel';
 import { OllamaToolTranscriptPanel } from '@/components/chat/ollama-tool-transcript-panel';
@@ -189,6 +190,7 @@ function MessageBubbleBase({
               label={t('chat.copyMessage')}
               className="text-muted-foreground h-7 w-7"
             />
+            <MessageEditAction messageId={message.id} content={message.content} />
           </div>
         ) : null}
 

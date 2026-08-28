@@ -250,6 +250,15 @@ export type TranslationDictionary = {
     reasoning: {
       title: string;
     };
+    edit: {
+      action: string;
+      title: string;
+      warning: string;
+      confirm: string;
+      saving: string;
+      succeeded: string;
+      failed: string;
+    };
     search: {
       action: string;
       title: string;
@@ -350,6 +359,8 @@ export type TranslationDictionary = {
     allProvidersFailed: string;
     errors: {
       planTrialExpired: string;
+      messageNotEditable: string;
+      messageEditUnchanged: string;
       dailyTokenLimitExceeded: string;
       weeklyTokenLimitExceeded: string;
       monthlyTokenLimitExceeded: string;

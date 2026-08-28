@@ -263,6 +263,16 @@ export const en: TranslationDictionary = {
     reasoning: {
       title: 'Model reasoning',
     },
+    edit: {
+      action: 'Edit and re-run',
+      title: 'Edit this message',
+      warning:
+        'Everything after this message will be removed, and the conversation runs again from here.',
+      confirm: 'Save and re-run',
+      saving: 'Saving…',
+      succeeded: 'Message updated. Running again…',
+      failed: 'Could not update the message.',
+    },
     search: {
       action: 'Find',
       title: 'Find in this conversation',
@@ -369,6 +379,8 @@ export const en: TranslationDictionary = {
     allProvidersFailed: 'All providers failed to generate a response',
     errors: {
       planTrialExpired: 'Your free trial has ended. Choose a paid plan to continue using AI.',
+      messageNotEditable: 'You can only edit your own message.',
+      messageEditUnchanged: 'The message is unchanged.',
       dailyTokenLimitExceeded: 'You have exceeded your daily token limit.',
       weeklyTokenLimitExceeded: 'You have exceeded your weekly token limit.',
       monthlyTokenLimitExceeded: 'You have exceeded your monthly token limit.',

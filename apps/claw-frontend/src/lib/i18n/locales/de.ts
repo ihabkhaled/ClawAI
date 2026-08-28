@@ -267,6 +267,16 @@ export const de: TranslationDictionary = {
     reasoning: {
       title: 'Modell-Begründung',
     },
+    edit: {
+      action: 'Bearbeiten und erneut ausführen',
+      title: 'Diese Nachricht bearbeiten',
+      warning:
+        'Alles nach dieser Nachricht wird entfernt, und die Unterhaltung läuft ab hier erneut.',
+      confirm: 'Speichern und erneut ausführen',
+      saving: 'Wird gespeichert…',
+      succeeded: 'Nachricht aktualisiert. Wird erneut ausgeführt…',
+      failed: 'Die Nachricht konnte nicht aktualisiert werden.',
+    },
     search: {
       action: 'Suchen',
       title: 'In dieser Unterhaltung suchen',
@@ -376,6 +386,8 @@ export const de: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'Deine kostenlose Testphase ist beendet. Wähle einen kostenpflichtigen Tarif, um KI weiter zu nutzen.',
+      messageNotEditable: 'Sie können nur Ihre eigene Nachricht bearbeiten.',
+      messageEditUnchanged: 'Die Nachricht ist unverändert.',
       dailyTokenLimitExceeded: 'Du hast dein tägliches Token-Limit überschritten.',
       weeklyTokenLimitExceeded: 'Du hast dein wöchentliches Token-Limit überschritten.',
       monthlyTokenLimitExceeded: 'Du hast dein monatliches Token-Limit überschritten.',

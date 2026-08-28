@@ -254,6 +254,15 @@ export const zh: TranslationDictionary = {
     reasoning: {
       title: '模型推理过程',
     },
+    edit: {
+      action: '编辑并重新运行',
+      title: '编辑此消息',
+      warning: '此消息之后的内容都会被删除，对话将从这里重新运行。',
+      confirm: '保存并重新运行',
+      saving: '保存中…',
+      succeeded: '消息已更新，正在重新运行…',
+      failed: '无法更新消息。',
+    },
     search: {
       action: '查找',
       title: '在此对话中查找',
@@ -358,6 +367,8 @@ export const zh: TranslationDictionary = {
     allProvidersFailed: '所有提供商均未能生成响应',
     errors: {
       planTrialExpired: '您的免费试用已结束。请选择付费方案以继续使用 AI。',
+      messageNotEditable: '您只能编辑自己的消息。',
+      messageEditUnchanged: '消息没有变化。',
       dailyTokenLimitExceeded: '您已超出每日令牌限制。',
       weeklyTokenLimitExceeded: '您已超出每周令牌限制。',
       monthlyTokenLimitExceeded: '您已超出每月令牌限制。',

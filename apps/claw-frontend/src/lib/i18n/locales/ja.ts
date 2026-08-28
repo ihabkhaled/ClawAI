@@ -264,6 +264,15 @@ export const ja: TranslationDictionary = {
     reasoning: {
       title: 'モデルの思考',
     },
+    edit: {
+      action: '編集して再実行',
+      title: 'このメッセージを編集',
+      warning: 'このメッセージより後はすべて削除され、会話はここから再実行されます。',
+      confirm: '保存して再実行',
+      saving: '保存中…',
+      succeeded: 'メッセージを更新しました。再実行しています…',
+      failed: 'メッセージを更新できませんでした。',
+    },
     search: {
       action: '検索',
       title: 'この会話内を検索',
@@ -371,6 +380,8 @@ export const ja: TranslationDictionary = {
     errors: {
       planTrialExpired:
         '無料トライアルは終了しました。AI を引き続き利用するには有料プランを選択してください。',
+      messageNotEditable: '編集できるのは自分のメッセージだけです。',
+      messageEditUnchanged: 'メッセージは変更されていません。',
       dailyTokenLimitExceeded: '1日のトークン上限を超えました。',
       weeklyTokenLimitExceeded: '週間トークン上限を超えました。',
       monthlyTokenLimitExceeded: '月間トークン上限を超えました。',

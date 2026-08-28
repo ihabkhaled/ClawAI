@@ -110,6 +110,19 @@ export const chatRepository = {
     return response.data;
   },
 
+  /**
+   * Rewrites a user prompt and re-runs the thread from that point.
+   *
+   * Destructive on the server: everything below the edited message is deleted,
+   * because those were answers to a question that no longer exists.
+   */
+  async editMessage(messageId: string, content: string): Promise<ChatMessage> {
+    const response = await apiClient.post<ChatMessage>(`/chat-messages/${messageId}/edit`, {
+      content,
+    });
+    return response.data;
+  },
+
   async regenerateMessage(messageId: string): Promise<ChatMessage> {
     const response = await apiClient.post<ChatMessage>(`/chat-messages/${messageId}/regenerate`);
     return response.data;

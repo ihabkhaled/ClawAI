@@ -260,6 +260,15 @@ export const ar: TranslationDictionary = {
     reasoning: {
       title: 'استدلال النموذج',
     },
+    edit: {
+      action: 'تعديل وإعادة التشغيل',
+      title: 'تعديل هذه الرسالة',
+      warning: 'سيُحذف كل ما بعد هذه الرسالة، وتُعاد المحادثة من هنا.',
+      confirm: 'حفظ وإعادة التشغيل',
+      saving: 'جارٍ الحفظ…',
+      succeeded: 'تم تحديث الرسالة. جارٍ إعادة التشغيل…',
+      failed: 'تعذّر تحديث الرسالة.',
+    },
     search: {
       action: 'بحث',
       title: 'البحث في هذه المحادثة',
@@ -366,6 +375,8 @@ export const ar: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'انتهت فترتك التجريبية المجانية. اختر خطة مدفوعة لمواصلة استخدام الذكاء الاصطناعي.',
+      messageNotEditable: 'يمكنك تعديل رسالتك أنت فقط.',
+      messageEditUnchanged: 'الرسالة لم تتغيّر.',
       dailyTokenLimitExceeded: 'لقد تجاوزت الحد اليومي للرموز.',
       weeklyTokenLimitExceeded: 'لقد تجاوزت الحد الأسبوعي للرموز.',
       monthlyTokenLimitExceeded: 'لقد تجاوزت الحد الشهري للرموز.',

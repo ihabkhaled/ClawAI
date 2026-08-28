@@ -2587,3 +2587,9 @@ export type CodingAgentInstallFigureProps = {
   /** Accessible name — the step's own translated title. */
   label: string;
 };
+
+/** The edit affordance on a user message: the trigger and its dialog. */
+export type MessageEditActionProps = {
+  messageId: string;
+  content: string;
+};

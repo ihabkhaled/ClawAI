@@ -262,6 +262,15 @@ export const hi: TranslationDictionary = {
     reasoning: {
       title: 'मॉडल का तर्क',
     },
+    edit: {
+      action: 'संपादित करें और दोबारा चलाएँ',
+      title: 'यह संदेश संपादित करें',
+      warning: 'इस संदेश के बाद की हर चीज़ हटा दी जाएगी, और बातचीत यहीं से दोबारा चलेगी।',
+      confirm: 'सहेजें और दोबारा चलाएँ',
+      saving: 'सहेजा जा रहा है…',
+      succeeded: 'संदेश अपडेट हो गया। दोबारा चलाया जा रहा है…',
+      failed: 'संदेश अपडेट नहीं किया जा सका।',
+    },
     search: {
       action: 'खोजें',
       title: 'इस बातचीत में खोजें',
@@ -370,6 +379,8 @@ export const hi: TranslationDictionary = {
     errors: {
       planTrialExpired:
         'आपका मुफ़्त परीक्षण समाप्त हो गया है। AI का उपयोग जारी रखने के लिए सशुल्क प्लान चुनें।',
+      messageNotEditable: 'आप केवल अपना संदेश संपादित कर सकते हैं।',
+      messageEditUnchanged: 'संदेश में कोई बदलाव नहीं है।',
       dailyTokenLimitExceeded: 'आपने अपनी दैनिक टोकन सीमा पार कर ली है।',
       weeklyTokenLimitExceeded: 'आपने अपनी साप्ताहिक टोकन सीमा पार कर ली है।',
       monthlyTokenLimitExceeded: 'आपने अपनी मासिक टोकन सीमा पार कर ली है।',
