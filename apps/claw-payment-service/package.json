@@ -1,6 +1,6 @@
 {
   "name": "claw-payment-service",
-  "version": "1.55.0",
+  "version": "1.55.1",
   "private": true,
   "description": "Claw Payment Service - subscriptions, checkout, gateways, invoices and entitlement synchronization",
   "license": "UNLICENSED",
