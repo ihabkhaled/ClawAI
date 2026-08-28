@@ -210,7 +210,7 @@ cd apps/claw-<name>-service && npm run build
 cd apps/claw-<name>-service && npx prisma migrate dev --name init
 
 # 3. Start the service
-./scripts/claw.sh up -d --build claw-<name>-service
+./scripts/claw.sh service:rebuild claw-<name>-service
 
 # 4. Check health
 curl http://localhost:40XX/health

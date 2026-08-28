@@ -447,7 +447,7 @@ Apply the fix (restart, rollback, configuration change, code fix).
 ./scripts/claw.sh restart <service>
 
 # Rebuild and restart
-./scripts/claw.sh up -d --build <service>
+./scripts/claw.sh service:rebuild <service>
 ```
 
 ### 6. Verify

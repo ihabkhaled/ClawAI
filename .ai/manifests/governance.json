@@ -255,7 +255,7 @@
       "file": "skills/01-codebase-navigation.md"
     },
     {
-      "bytes": 5270,
+      "bytes": 5272,
       "file": "skills/02-service-scaffold.md"
     },
     {
@@ -271,7 +271,7 @@
       "file": "skills/05-qa-toolkit.md"
     },
     {
-      "bytes": 6137,
+      "bytes": 8585,
       "file": "skills/06-docker-toolkit.md"
     },
     {
@@ -283,7 +283,7 @@
       "file": "skills/08-event-bus-toolkit.md"
     },
     {
-      "bytes": 9000,
+      "bytes": 9002,
       "file": "skills/09-refactor-toolkit.md"
     },
     {
@@ -311,7 +311,7 @@
       "file": "skills/add-library-adapter.md"
     },
     {
-      "bytes": 3870,
+      "bytes": 3872,
       "file": "skills/add-migration.md"
     },
     {
@@ -375,7 +375,7 @@
       "file": "skills/create-manager-or-use-case.md"
     },
     {
-      "bytes": 6441,
+      "bytes": 6443,
       "file": "skills/create-microservice.md"
     },
     {

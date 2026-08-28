@@ -51,15 +51,37 @@
 docker rmi claw-<service-name>
 
 # STEP 4: Rebuild and start
-./scripts/claw.sh up -d --build <service-name>
+./scripts/claw.sh service:rebuild <service-name>
 ```
 
 NEVER skip steps. Never use `--build` alone without removing the old container and image first.
 
-When to use rebuild vs restart:
+### When to restart, recreate, or rebuild
 
-- **Restart only**: `.env` value changed, docker-compose config changed
-- **Full rebuild**: `src/` code changes that hot-reload missed, `package.json` deps changed, shared package changed, Prisma schema changed
+Three different things. Picking the weakest one that seems plausible is the
+most common way to spend an hour on a change that never took effect — every
+wrong choice here fails **silently**, with the old value still in place and no
+error anywhere to say so.
+
+| The change                                                                   | What it needs                                                                                  | Command                                        |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `src/` code the hot-reloader missed                                          | restart                                                                                        | `docker restart claw-<service>`                |
+| An `.env` value read at **runtime** (`AppConfig`, `process.env` server-side) | **recreate** — `env_file` is read when a container is _created_, never on restart              | `./scripts/claw.sh service:recreate <service>` |
+| Any `NEXT_PUBLIC_*` value                                                    | **rebuild** — passed as a build arg and inlined by `next build`, so it lives in the shipped JS | `./scripts/claw.sh service:rebuild frontend`   |
+| `package.json` deps, a shared package, a Prisma schema, a Dockerfile         | **rebuild**                                                                                    | `./scripts/claw.sh service:rebuild <service>`  |
+| A compose file edit                                                          | **recreate**                                                                                   | `./scripts/claw.sh service:recreate <service>` |
+
+Add `--prod` before the command on a production box.
+
+**`claw.sh up` takes no service argument.** `./scripts/claw.sh up -d frontend`
+does not act on the frontend — the argument is ignored and the _entire stack_
+comes up, recreating containers you did not intend to touch. Use
+`service:recreate` / `service:rebuild` for one service.
+
+A `.env` edit also survives no deployment on its own: `deploy-prod.sh` rebuilds
+only the services the deployed **commit** touches, and `.env` is untracked host
+state its planner cannot see. Change a value on the box, then recreate or
+rebuild that service by hand.
 
 Prompt-plan or docs-only edits under `plan-prompts/` do not require a Docker action at all.
 
@@ -80,7 +102,11 @@ Rebuild ALL services that depend on them:
 # Rebuild all services (nuclear option)
 ./scripts/claw.sh down
 docker rmi $(docker images "claw-*" -q)
-./scripts/claw.sh up -d --build
+# db:up first — `down` stopped the databases too, and services:rebuild only
+# covers the services group. Skipping it starts eighteen services against
+# nothing to connect to.
+./scripts/claw.sh db:up
+./scripts/claw.sh services:rebuild
 ```
 
 ---

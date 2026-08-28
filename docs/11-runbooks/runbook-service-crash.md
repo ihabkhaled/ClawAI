@@ -104,7 +104,7 @@ Watch for successful startup messages:
 If `package.json` or `Dockerfile` changed:
 
 ```bash
-./scripts/claw.sh up -d --build chat-service
+./scripts/claw.sh service:rebuild chat-service
 ```
 
 ### Database Migration Issue

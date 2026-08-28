@@ -105,7 +105,7 @@ The `scripts/claw.sh` script provides granular control with separate compose fil
 
 ```bash
 # Rebuild and start a single service
-./scripts/claw.sh up -d --build chat-service
+./scripts/claw.sh service:rebuild chat-service
 
 # Start only infrastructure (databases, Redis, RabbitMQ)
 ./scripts/claw.sh up -d pg-auth pg-chat pg-connector pg-routing pg-memory pg-files pg-ollama pg-images pg-file-generations mongodb redis rabbitmq
@@ -264,7 +264,7 @@ docker logs claw-chat-service --tail=50 -f
 ./scripts/claw.sh up -d auth-service
 
 # Rebuild and restart in one command
-./scripts/claw.sh up -d --build auth-service
+./scripts/claw.sh service:rebuild auth-service
 
 # Rebuild all services
 ./scripts/claw.sh build --no-cache
@@ -367,7 +367,7 @@ netstat -ano | findstr :4001
 1. Check logs: `docker logs claw-<service> --tail=100`
 2. Common causes: database not ready, missing env vars, Prisma migration failure
 3. Ensure infrastructure is healthy: `./scripts/claw.sh ps`
-4. Try rebuilding: `./scripts/claw.sh up -d --build <service>`
+4. Try rebuilding: `./scripts/claw.sh service:rebuild <service>`
 
 ### Health Check Failures
 
@@ -430,5 +430,5 @@ docker volume prune
 **Solution**: Shared packages are copied at build time, not mounted. Rebuild the affected service:
 
 ```bash
-./scripts/claw.sh up -d --build <service>
+./scripts/claw.sh service:rebuild <service>
 ```

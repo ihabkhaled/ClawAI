@@ -4,14 +4,14 @@ This runbook covers operational triage for the capability framework: terminal co
 
 ## Quick reference
 
-| Component | Service / Container | Port | Logs |
-|---|---|---|---|
-| Capability backend | `claw-agent-service` | 4015 | `docker compose logs -f agent-service` |
-| Capability events consumer (audit) | `claw-audit-service` | 4007 | `docker compose logs -f audit-service` |
-| Capability events consumer (recipes) | `claw-agent-service` (in-process) | 4015 | same as above; filter `RecipeEventConsumerManager` |
-| CLI runner | user's machine — `agent-cli` | n/a | `~/.claw-agent/logs/runtime.log` |
-| Capability storage | `claw-pg-agent` Postgres | 5451 | `docker exec claw-pg-agent psql ...` |
-| Event bus | `claw-rabbitmq` | 5672 | `docker exec claw-rabbitmq rabbitmqctl list_bindings` |
+| Component                            | Service / Container               | Port | Logs                                                  |
+| ------------------------------------ | --------------------------------- | ---- | ----------------------------------------------------- |
+| Capability backend                   | `claw-agent-service`              | 4015 | `docker compose logs -f agent-service`                |
+| Capability events consumer (audit)   | `claw-audit-service`              | 4007 | `docker compose logs -f audit-service`                |
+| Capability events consumer (recipes) | `claw-agent-service` (in-process) | 4015 | same as above; filter `RecipeEventConsumerManager`    |
+| CLI runner                           | user's machine — `agent-cli`      | n/a  | `~/.claw-agent/logs/runtime.log`                      |
+| Capability storage                   | `claw-pg-agent` Postgres          | 5451 | `docker exec claw-pg-agent psql ...`                  |
+| Event bus                            | `claw-rabbitmq`                   | 5672 | `docker exec claw-rabbitmq rabbitmqctl list_bindings` |
 
 ## "A capability invocation is stuck in PENDING_APPROVAL"
 
@@ -64,7 +64,7 @@ Most likely cause: a higher-priority `ALLOW` policy targets the same input. Per 
    ./scripts/claw.sh stop audit-service && \
    ./scripts/claw.sh rm -f audit-service && \
    docker rmi claw-audit-service && \
-   ./scripts/claw.sh up -d --build audit-service
+   ./scripts/claw.sh service:rebuild audit-service
    ```
 
 ## "A recipe run is stuck — step 1 succeeded but step 2 was never proposed"

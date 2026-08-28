@@ -98,7 +98,7 @@ This skill EXTENDS the mechanical 12-step wiring in [`./02-service-scaffold.md`]
 cd apps/claw-<service>-service && npm run typecheck && npm run lint && npm test && npm run build
 ```
 
-Then `./scripts/claw.sh up -d --build claw-<service>-service` and `curl http://localhost:4000/api/v1/<name>/health`. Run only per-touched-folder gates; never all-workspace.
+Then `./scripts/claw.sh service:rebuild claw-<service>-service` and `curl http://localhost:4000/api/v1/<name>/health`. Run only per-touched-folder gates; never all-workspace.
 
 ## Documentation updates
 

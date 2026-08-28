@@ -534,6 +534,14 @@ credentials_ → _API key_. Restrict it to the Vision API. Billing must be enabl
 on the project; SafeSearch has a free monthly tier and is charged per image
 after it.
 
+Unlike the analytics ids below it is read at **runtime**, so it needs no
+rebuild — but `env_file` is consulted only when a container is _created_, so
+`docker restart` will not pick it up either:
+
+```bash
+./scripts/claw.sh --prod service:recreate chat-service
+```
+
 This is a **secret**, unlike the analytics ids below. It has no `NEXT_PUBLIC_`
 prefix, is never sent to the browser, and must never be logged — the client that
 uses it passes it as a query parameter and deliberately keeps it out of every log
@@ -562,9 +570,22 @@ A malformed value is treated as unset rather than emitted, so pasting the whole
 snippet into the variable, or leaving a `GTM-XXXXXXX` placeholder, ships no tag
 instead of one that 404s on every page load.
 
-`env_file` is read only when a container is **created**. After changing either
-value, `docker restart claw-frontend` will not pick it up — recreate with
-`./scripts/claw.sh up -d frontend`.
+**Changing either value requires a frontend image REBUILD, not a restart.** Both
+are passed as Docker build args and inlined by `next build`, so the value is
+compiled into the JavaScript that ships to the browser. Editing `.env` and
+restarting — or even recreating — the container changes nothing, and the tag
+goes on being absent with no error anywhere to explain why.
+
+```bash
+./scripts/claw.sh --prod service:rebuild frontend
+```
+
+In dev the frontend runs `next dev` and recompiles per request, so
+`service:recreate frontend` is enough there. Production is the case that bites.
+
+This is also why a `.env` edit alone survives no deployment: `deploy-prod.sh`
+rebuilds only the services the deployed **commit** touches, and `.env` is
+untracked host state its planner cannot see.
 
 The Content-Security-Policy already names the analytics hosts
 (`constants/analytics.constants.ts` feeds `content-security-policy.ts`). A tag

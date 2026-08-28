@@ -413,6 +413,56 @@ case "$1" in
     docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d --no-build
     ensure_public_tls
     ;;
+  service:recreate)
+    # Recreate ONE service so it re-reads .env.
+    #
+    # Exists because `env_file` is consulted when a container is CREATED, never
+    # afterwards: an operator who edits .env on the box and runs
+    # `docker restart` sees no change and reasonably concludes the variable does
+    # not work. `up` is not the answer either — it takes no service argument and
+    # brings the whole stack up, which is how an unrelated service gets
+    # recreated out from under a running deployment.
+    #
+    # Does NOT rebuild. A NEXT_PUBLIC_ value is baked into the frontend image at
+    # build time and is unaffected by this command; use service:rebuild for one.
+    if [ -z "$2" ]; then
+      echo "Usage: ./scripts/claw.sh [--dev|--prod] service:recreate <service> [service...]" >&2
+      exit 1
+    fi
+    preflight_up
+    detect_gpu
+    ensure_network
+    SVC_FLAGS=$(build_svc_compose_flags)
+    echo "Recreating ${*:2} ($MODE mode) so it re-reads .env..."
+    # --no-deps keeps this to the one service. Without it compose recreates
+    # everything the service depends on, which on this stack reaches the
+    # databases.
+    # shellcheck disable=SC2086
+    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d --no-deps --force-recreate --no-build "${@:2}"
+    ;;
+  service:rebuild)
+    # Rebuild ONE service's image, then recreate it.
+    #
+    # Required for any build-time value — every NEXT_PUBLIC_ variable is passed
+    # as a build arg and inlined by `next build`, so no restart or recreate can
+    # ever pick a changed one up. services:rebuild would do it too, at the cost
+    # of rebuilding all eighteen services to change one string.
+    if [ -z "$2" ]; then
+      echo "Usage: ./scripts/claw.sh [--dev|--prod] service:rebuild <service> [service...]" >&2
+      exit 1
+    fi
+    preflight_up
+    detect_gpu
+    ensure_network
+    SVC_FLAGS=$(build_svc_compose_flags)
+    echo "Rebuilding ${*:2} ($MODE mode, gpu=$GPU_VENDOR)..."
+    # shellcheck disable=SC2086
+    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS build --progress plain "${@:2}"
+    echo "Recreating ${*:2}..."
+    # shellcheck disable=SC2086
+    docker compose $ENV_FILE_FLAG -p claw $SVC_FLAGS up -d --no-deps --force-recreate --no-build "${@:2}"
+    ensure_public_tls
+    ;;
   ollama:up)
     # Explicit request for the local runtime — always activate the profile,
     # regardless of the default local-ai setting.
@@ -492,6 +542,10 @@ case "$1" in
     echo "  services:up       Start backend + frontend services only"
     echo "  services:down     Stop backend + frontend services only"
     echo "  services:rebuild  Rebuild and start backend + frontend services"
+    echo "  service:recreate <svc>  Recreate ONE service so it re-reads .env"
+    echo "                          (env_file is read at create, not on restart)"
+    echo "  service:rebuild <svc>   Rebuild ONE service's image, then recreate it"
+    echo "                          (required for NEXT_PUBLIC_* — baked at build)"
     echo "  ollama:up         Start Ollama LLM runtime"
     echo "  ollama:down       Stop Ollama LLM runtime"
     echo "  status            Show status of all groups"

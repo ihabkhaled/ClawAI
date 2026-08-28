@@ -228,7 +228,7 @@ Layer 4: Frontend (depends on nginx being started)
 ./scripts/claw.sh restart chat-service
 
 # Rebuild and restart a single service
-./scripts/claw.sh up -d --build chat-service
+./scripts/claw.sh service:rebuild chat-service
 
 # View logs
 ./scripts/claw.sh logs -f chat-service

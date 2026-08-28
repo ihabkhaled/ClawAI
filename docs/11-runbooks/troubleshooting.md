@@ -45,7 +45,7 @@ docker logs claw-auth-service 2>&1 | grep -i "prisma\|migration\|error"
 **Node modules out of date**: Rebuild the container:
 
 ```bash
-./scripts/claw.sh up -d --build auth-service
+./scripts/claw.sh service:rebuild auth-service
 ```
 
 ---

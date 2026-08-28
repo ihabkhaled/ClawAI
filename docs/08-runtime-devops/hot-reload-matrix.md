@@ -72,10 +72,10 @@ Shared packages (`packages/shared-*`) are NOT mounted as volumes. They are copie
 # 1. Make changes in packages/shared-types (or other shared package)
 
 # 2. Rebuild the affected services
-./scripts/claw.sh up -d --build chat-service routing-service
+./scripts/claw.sh service:rebuild chat-service routing-service
 
 # OR rebuild all services
-./scripts/claw.sh up -d --build
+./scripts/claw.sh services:rebuild
 ```
 
 **Build order matters** for shared packages:
@@ -105,7 +105,7 @@ npx prisma migrate dev --name add_new_field
 
 # 3. The migration file is created in prisma/migrations/
 # 4. Rebuild the container to apply
-./scripts/claw.sh up -d --build chat-service
+./scripts/claw.sh service:rebuild chat-service
 ```
 
 ### Automatic Migration on Container Start
@@ -139,7 +139,7 @@ Nothing to do. `node --watch` auto-restarts.
 ### "I added a new npm dependency"
 
 ```bash
-./scripts/claw.sh up -d --build <service-name>
+./scripts/claw.sh service:rebuild <service-name>
 ```
 
 ### "I changed a Prisma schema"
@@ -149,7 +149,7 @@ Nothing to do. `node --watch` auto-restarts.
 cd apps/claw-<service> && npx prisma migrate dev --name description
 
 # Rebuild container to apply
-./scripts/claw.sh up -d --build <service-name>
+./scripts/claw.sh service:rebuild <service-name>
 ```
 
 ### "I changed an environment variable"
@@ -167,7 +167,7 @@ cd apps/claw-<service> && npx prisma migrate dev --name description
 ### "I changed a shared package"
 
 ```bash
-./scripts/claw.sh up -d --build <all-affected-services>
+./scripts/claw.sh service:rebuild <all-affected-services>
 ```
 
 ### "I changed a Docker Compose file"
@@ -181,7 +181,7 @@ cd apps/claw-<service> && npx prisma migrate dev --name description
 
 ```bash
 # Full rebuild required
-./scripts/claw.sh up -d --build
+./scripts/claw.sh services:rebuild
 ```
 
 ---
@@ -189,6 +189,12 @@ cd apps/claw-<service> && npx prisma migrate dev --name description
 ## 6. Important Notes
 
 - **Never use `docker compose build`** alone -- always follow with `up -d` to apply
-- **Restart vs Rebuild**: Use `restart` for env changes, `--build` for code/dependency changes
+- **Restart vs Recreate vs Rebuild**: `restart` for code the watcher missed;
+  `service:recreate` for a runtime `.env` change (`env_file` is read when a
+  container is _created_, so `restart` silently keeps the old value);
+  `service:rebuild` for code/dependency changes **and for every
+  `NEXT_PUBLIC_*` value**, which is inlined by `next build` and can never be
+  picked up by a restart. Full table in
+  [`skills/06-docker-toolkit.md`](../../skills/06-docker-toolkit.md).
 - **Hot reload does NOT work for**: shared packages, Dockerfiles, compose config, or new dependencies
 - **Frontend tests** may have issues with Node.js v24+ due to rollup native binaries -- run inside Docker or use the vitest process cache

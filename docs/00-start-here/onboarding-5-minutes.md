@@ -300,7 +300,7 @@ Another process is using one of the service ports (3000, 4000-4015). Kill it or 
 If a migration fails during container startup, the container will crash-loop. Fix the migration, then rebuild:
 
 ```bash
-./scripts/claw.sh up -d --build <service-name>
+./scripts/claw.sh service:rebuild <service-name>
 ```
 
 ### RabbitMQ connection refused

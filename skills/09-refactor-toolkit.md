@@ -176,7 +176,7 @@ bash qa/test-<service>.sh
 ./scripts/claw.sh stop <service>
 ./scripts/claw.sh rm -f <service>
 docker rmi claw-<service>-service
-./scripts/claw.sh up -d --build <service>
+./scripts/claw.sh service:rebuild <service>
 
 # Wait for healthy
 ./scripts/claw.sh ps <service>
