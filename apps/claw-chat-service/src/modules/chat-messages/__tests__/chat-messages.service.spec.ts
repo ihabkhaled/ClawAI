@@ -936,5 +936,116 @@ describe('ChatMessagesService', () => {
         }),
       );
     });
+
+    // A thread's title was whatever the list truncated the first prompt to,
+    // cut mid-word and mid-markdown. It is now derived from the opening
+    // sentence — and derived rather than model-written, because every call in
+    // this service runs through the token-deduction chokepoint and a title is
+    // not something the user asked to spend their allowance on.
+    describe('thread auto-titling', () => {
+      const routedPayload = {
+        messageId: 'msg-1',
+        threadId: 'thread-1',
+        selectedProvider: 'GEMINI',
+        selectedModel: 'gemini-2.5-flash',
+        routingMode: 'AUTO',
+        timestamp: new Date().toISOString(),
+      };
+
+      function arrangeAnswer(): void {
+        messagesRepo.findRecentByThreadId.mockResolvedValue([mockMessage]);
+        executionManager.execute!.mockResolvedValue({
+          content: 'Hi there!',
+          provider: 'GEMINI',
+          model: 'gemini-2.5-flash',
+          latencyMs: 1200,
+          usedFallback: false,
+        });
+        messagesRepo.create.mockResolvedValue({
+          ...mockMessage,
+          id: 'msg-assistant-1',
+          role: 'ASSISTANT' as const,
+        });
+      }
+
+      it('names an unnamed thread after its opening sentence', async () => {
+        arrangeAnswer();
+        threadsRepo.findById!.mockResolvedValue({ ...mockThread, title: null });
+        messagesRepo.findAllByThreadIdAscending.mockResolvedValue([
+          { ...mockMessage, role: 'USER' as const, content: 'Explain partial indexes. Be brief.' },
+        ]);
+
+        await service.handleMessageRouted(routedPayload);
+
+        expect(threadsRepo.update).toHaveBeenCalledWith(
+          'thread-1',
+          expect.objectContaining({ title: 'Explain partial indexes' }),
+        );
+      });
+
+      it('never renames a thread that already has a title', async () => {
+        // A thread that renamed itself as the conversation moved on would be
+        // unfindable in the list, and would silently discard a name the person
+        // typed themselves.
+        arrangeAnswer();
+        threadsRepo.findById!.mockResolvedValue({ ...mockThread, title: 'Chosen by hand' });
+
+        await service.handleMessageRouted(routedPayload);
+
+        expect(messagesRepo.findAllByThreadIdAscending).not.toHaveBeenCalled();
+        expect(threadsRepo.update).toHaveBeenCalledWith(
+          'thread-1',
+          expect.not.objectContaining({ title: expect.anything() }),
+        );
+      });
+
+      it('treats a blank title as unnamed', async () => {
+        arrangeAnswer();
+        threadsRepo.findById!.mockResolvedValue({ ...mockThread, title: '   ' });
+        messagesRepo.findAllByThreadIdAscending.mockResolvedValue([
+          { ...mockMessage, role: 'USER' as const, content: 'Fix the build' },
+        ]);
+
+        await service.handleMessageRouted(routedPayload);
+
+        expect(threadsRepo.update).toHaveBeenCalledWith(
+          'thread-1',
+          expect.objectContaining({ title: 'Fix the build' }),
+        );
+      });
+
+      it('skips past a system or tool row to find the opening turn', async () => {
+        arrangeAnswer();
+        threadsRepo.findById!.mockResolvedValue({ ...mockThread, title: null });
+        messagesRepo.findAllByThreadIdAscending.mockResolvedValue([
+          { ...mockMessage, role: 'SYSTEM' as const, content: 'You are a helpful assistant.' },
+          { ...mockMessage, role: 'USER' as const, content: 'Why is the build red?' },
+        ]);
+
+        await service.handleMessageRouted(routedPayload);
+
+        expect(threadsRepo.update).toHaveBeenCalledWith(
+          'thread-1',
+          expect.objectContaining({ title: 'Why is the build red?' }),
+        );
+      });
+
+      it('leaves the thread unnamed when nothing usable can be derived', async () => {
+        // A title of backticks is worse than no title, and the list already
+        // renders an unnamed thread perfectly well.
+        arrangeAnswer();
+        threadsRepo.findById!.mockResolvedValue({ ...mockThread, title: null });
+        messagesRepo.findAllByThreadIdAscending.mockResolvedValue([
+          { ...mockMessage, role: 'USER' as const, content: '```\ncode only\n```' },
+        ]);
+
+        await service.handleMessageRouted(routedPayload);
+
+        expect(threadsRepo.update).toHaveBeenCalledWith(
+          'thread-1',
+          expect.not.objectContaining({ title: expect.anything() }),
+        );
+      });
+    });
   });
 });

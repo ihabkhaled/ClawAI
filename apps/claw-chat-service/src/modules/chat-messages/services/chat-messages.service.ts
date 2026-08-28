@@ -83,7 +83,15 @@ import { type PipelineMessageDto } from '../dto/pipeline-message.dto';
 import { type RolePackMessageDto } from '../dto/role-pack-message.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
-import { type ChatMessage, type ChatThread, Prisma, RoutingMode } from '../../../generated/prisma';
+import {
+  type ChatMessage,
+  type ChatThread,
+  MessageRole,
+  Prisma,
+  RoutingMode,
+} from '../../../generated/prisma';
+import { THREAD_TITLE_SCAN_LIMIT } from '../../chat-threads/constants/thread-title.constants';
+import { deriveThreadTitle } from '../../chat-threads/utilities/derive-thread-title.utility';
 import type { AssembledContext } from '../types/context.types';
 import { MAX_STORED_REASONING_CHARS } from '../constants/stored-reasoning.constants';
 import { type SearchMessagesQueryDto } from '../dto/search-messages-query.dto';
@@ -1767,10 +1775,43 @@ export class ChatMessagesService implements OnModuleInit {
     threadId: string,
     llmResponse: LlmResponse,
   ): Promise<void> {
+    const title = await this.resolveDerivedTitle(threadId);
     await this.chatThreadsRepository.update(threadId, {
       lastProvider: llmResponse.provider,
       lastModel: llmResponse.model,
+      ...(title === null ? {} : { title }),
     });
+  }
+
+  /**
+   * Names an unnamed thread after its opening message.
+   *
+   * Only ever fills a blank. A title the person typed, or one derived on an
+   * earlier turn, is never overwritten — a thread that renamed itself as the
+   * conversation moved on would be unfindable in the list.
+   *
+   * Derived rather than model-written on purpose: every call in this service
+   * runs through the token-deduction chokepoint, so asking a model for a title
+   * would spend the user's own allowance on a cosmetic field.
+   */
+  private async resolveDerivedTitle(threadId: string): Promise<string | null> {
+    const thread = await this.chatThreadsRepository.findById(threadId);
+    if (thread === null || (thread.title ?? '').trim().length > 0) {
+      return null;
+    }
+
+    const opening = await this.chatMessagesRepository.findAllByThreadIdAscending(
+      threadId,
+      THREAD_TITLE_SCAN_LIMIT,
+    );
+    // The first row is usually the user's, but a thread can open with a system
+    // row and a research run writes a placeholder before the answer.
+    const firstUserMessage = opening.find((message) => message.role === MessageRole.USER);
+    if (firstUserMessage === undefined) {
+      return null;
+    }
+
+    return deriveThreadTitle(firstUserMessage.content);
   }
 
   private logAssistantResponse(payload: MessageRoutedData, llmResponse: LlmResponse): void {

@@ -161,15 +161,15 @@ extends end-to-end. PR1 shipped the contract; PR2 wired text-runtime final
 timings + bottleneck through this service. The original "extension point"
 stub in this file is now IMPLEMENTED — see the wiring table below.
 
-| Seam                                                                              | Status / wiring                                                                                                                                                                                                                                                                                                                                                       |
-| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ChatStreamService` (RxJS Subject per thread)                                     | Unchanged. Same Subject; both `StreamEvent` and `ClawRuntimeProgressEvent` envelopes coexist on the SAME SSE channel.                                                                                                                                                                                                                                                 |
-| `ProviderStreamExecutor` (OpenAI-SSE + Ollama)                                    | **PR2 wired.** `applyFragment()` now reads `fragment.finalTimings` from the terminal frame and stashes it on `LoopState.finalTimings`. `transitionStage()` + `closeStageIfActive()` capture per-stage wall-clock windows into `LoopState.stageTimings`. `finalize()` calls `buildFinalMetrics()` which merges the live tracker snapshot with `computeFinalStreamMetrics()` and adds `stageTimings`. |
-| Final `METRICS` event payload (`StreamMetrics`)                                   | **PR2 enriched.** Now includes `modelLoadMs` / `promptEvalMs` / `generationMs` / `tokensPerSecond` (computed by `final-metrics.utility.ts`) + `bottleneck` (`{ stage: 'modelLoad' \| 'promptEval' \| 'generation', durationMs, percentOfTotal }`) + `stageTimings` (`Record<AiStreamStage, { startedAtMs, endedAtMs }>`).                                              |
-| `final-metrics.utility.ts` (new, PR2)                                             | Single source of truth for picking the slowest of (modelLoad, promptEval, generation) when those numbers are available, and for converting Ollama nanosecond timings to ms via `extractOllamaFinalTimings` from `@claw/shared-utilities`. Returns `undefined` bottleneck on cached / zero-duration responses; FE then skips the breakdown bar.                       |
-| `provider-stream-reader.utility.ts` (PR2 extended)                                | Terminal-frame Ollama NDJSON `done: true` chunks now populate `NormalizedStreamFragment.finalTimings` instead of being dropped. OpenAI-SSE path unchanged (no native timings block).                                                                                                                                                                                  |
-| `StreamEvent` envelope                                                            | Coexists with `ClawRuntimeProgressEvent` (`@claw/shared-types/runtime-progress`) on the SAME SSE channel. Frontend consumers (`useChatStream`, the runtime-progress panels including `RuntimeBottleneckBreakdown` and the now-real `RuntimeStageTimeline`) handle both shapes.                                                                                        |
-| `@Sse('stream/:threadId')` controller                                             | Unchanged.                                                                                                                                                                                                                                                                                                                                                            |
+| Seam                                               | Status / wiring                                                                                                                                                                                                                                                                                                                                                                                     |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ChatStreamService` (RxJS Subject per thread)      | Unchanged. Same Subject; both `StreamEvent` and `ClawRuntimeProgressEvent` envelopes coexist on the SAME SSE channel.                                                                                                                                                                                                                                                                               |
+| `ProviderStreamExecutor` (OpenAI-SSE + Ollama)     | **PR2 wired.** `applyFragment()` now reads `fragment.finalTimings` from the terminal frame and stashes it on `LoopState.finalTimings`. `transitionStage()` + `closeStageIfActive()` capture per-stage wall-clock windows into `LoopState.stageTimings`. `finalize()` calls `buildFinalMetrics()` which merges the live tracker snapshot with `computeFinalStreamMetrics()` and adds `stageTimings`. |
+| Final `METRICS` event payload (`StreamMetrics`)    | **PR2 enriched.** Now includes `modelLoadMs` / `promptEvalMs` / `generationMs` / `tokensPerSecond` (computed by `final-metrics.utility.ts`) + `bottleneck` (`{ stage: 'modelLoad' \| 'promptEval' \| 'generation', durationMs, percentOfTotal }`) + `stageTimings` (`Record<AiStreamStage, { startedAtMs, endedAtMs }>`).                                                                           |
+| `final-metrics.utility.ts` (new, PR2)              | Single source of truth for picking the slowest of (modelLoad, promptEval, generation) when those numbers are available, and for converting Ollama nanosecond timings to ms via `extractOllamaFinalTimings` from `@claw/shared-utilities`. Returns `undefined` bottleneck on cached / zero-duration responses; FE then skips the breakdown bar.                                                      |
+| `provider-stream-reader.utility.ts` (PR2 extended) | Terminal-frame Ollama NDJSON `done: true` chunks now populate `NormalizedStreamFragment.finalTimings` instead of being dropped. OpenAI-SSE path unchanged (no native timings block).                                                                                                                                                                                                                |
+| `StreamEvent` envelope                             | Coexists with `ClawRuntimeProgressEvent` (`@claw/shared-types/runtime-progress`) on the SAME SSE channel. Frontend consumers (`useChatStream`, the runtime-progress panels including `RuntimeBottleneckBreakdown` and the now-real `RuntimeStageTimeline`) handle both shapes.                                                                                                                      |
+| `@Sse('stream/:threadId')` controller              | Unchanged.                                                                                                                                                                                                                                                                                                                                                                                          |
 
 **Do not introduce a parallel SSE channel for local runtimes.** The "extend,
 don't parallelize" mindset is the binding rule here. The `finalTimings`
@@ -178,6 +178,35 @@ llama.cpp OpenAI-SSE `timings` block should flow through the same
 extractor in a follow-up.
 
 Full architecture: [`docs/03-architecture/runtime-progress.md`](../../docs/03-architecture/runtime-progress.md).
+
+## Thread titles are derived, never generated (2026-08-27)
+
+A thread is named after its opening message the first time an assistant answer
+lands, in `ChatMessagesService.resolveDerivedTitle`.
+
+**Derived, not model-written.** Every call in this service runs through the
+universal token-deduction chokepoint, so asking a model for a title would spend
+the user's own allowance on a cosmetic field they never asked to buy. The
+opening sentence of a prompt is already what the person would have typed.
+
+`deriveThreadTitle` (`modules/chat-threads/utilities/`) drops fenced blocks,
+unwraps inline code, strips heading and emphasis marks, collapses whitespace,
+takes the first sentence, and cuts at a word boundary with an ellipsis. It keeps
+a question mark and drops a full stop — a title is a name, not a quotation. It
+returns `null` when nothing usable survives, and the thread stays unnamed: a
+title made of backticks is worse than none.
+
+**It only ever fills a blank.** A title the person typed, or one derived on an
+earlier turn, is never overwritten — a thread that renamed itself as the
+conversation moved on would be unfindable in the list.
+
+The scan skips past a system or tool row to find the opening user turn, because
+a thread can open with a system prompt and a research run writes a placeholder
+before the answer.
+
+Before this, titles were whatever the first eighty characters happened to be:
+`Create ONE new file. Read NOTHING. No prose before the tool call. Use
+"create". ` became `Create ONE new file`.
 
 ## Inter-service auth for file-service internal endpoints
 
