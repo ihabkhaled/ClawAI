@@ -106,6 +106,7 @@ import {
   StreamEventType,
   ToolChoiceMode,
 } from '../../../common/enums';
+import { modelRejectsSamplingParams } from '../utilities/anthropic-sampling.utility';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 import { boundImageGenerationPrompt } from '../utilities/image-generation-prompt.utility';
 import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-shape.utility';
@@ -2953,6 +2954,30 @@ export class ChatExecutionManager implements OnModuleInit {
     return resolved;
   }
 
+  // The temperature to actually send, or undefined to send none.
+  //
+  // A model that has dropped sampling rejects the whole request rather than
+  // ignoring the parameter, so an unsupported temperature has to be left out
+  // instead of passed through. Silence would be worse than the 400 it prevents,
+  // hence the log line: the answer really is less deterministic than the
+  // thread's setting asks for.
+  private resolveTemperature(
+    model: string,
+    threadSettings: ThreadSettings | undefined,
+    caller: string,
+  ): number | undefined {
+    const temperature = threadSettings?.temperature;
+    if (temperature === null || temperature === undefined) {
+      return undefined;
+    }
+    if (modelRejectsSamplingParams(model)) {
+      this.logger.debug(`${caller}: omitting temperature — ${model} rejects sampling params`);
+      return undefined;
+    }
+    this.logger.debug(`${caller}: applying temperature=${String(temperature)}`);
+    return temperature;
+  }
+
   private buildChatRequestBody(
     provider: string,
     model: string,
@@ -3013,11 +3038,9 @@ export class ChatExecutionManager implements OnModuleInit {
       requestBody.service_tier = speedTier;
     }
 
-    if (threadSettings?.temperature !== null && threadSettings?.temperature !== undefined) {
-      this.logger.debug(
-        `buildChatRequestBody: applying temperature=${String(threadSettings.temperature)}`,
-      );
-      requestBody.temperature = threadSettings.temperature;
+    const temperature = this.resolveTemperature(model, threadSettings, 'buildChatRequestBody');
+    if (temperature !== undefined) {
+      requestBody.temperature = temperature;
     }
 
     if (executionOptions?.maxOutputTokens !== undefined) {
@@ -3132,8 +3155,13 @@ export class ChatExecutionManager implements OnModuleInit {
     if (system.length > 0) {
       requestBody.system = system;
     }
-    if (threadSettings?.temperature !== null && threadSettings?.temperature !== undefined) {
-      requestBody.temperature = threadSettings.temperature;
+    const anthropicTemperature = this.resolveTemperature(
+      model,
+      threadSettings,
+      'buildAnthropicMessagesRequestBody',
+    );
+    if (anthropicTemperature !== undefined) {
+      requestBody.temperature = anthropicTemperature;
     }
     const resolvedMaxTokens = this.resolveBoundedMaxTokens(threadSettings, executionOptions);
     if (resolvedMaxTokens !== undefined) {

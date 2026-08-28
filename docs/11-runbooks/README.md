@@ -16,6 +16,7 @@
 | `ollama pull` / model download fails               | [runbook-model-pull-failure.md](runbook-model-pull-failure.md)                                                                                           |
 | TLS / cert / `Hostname doesn't match` errors       | [troubleshoot-tls.md](troubleshoot-tls.md)                                                                                                               |
 | Local frontier (llama.cpp) issues                  | [frontier-troubleshooting.md](frontier-troubleshooting.md) · [frontier-first-time-walkthrough.md](frontier-first-time-walkthrough.md)                    |
+| Chat says "every available AI provider failed"     | [runbook-provider-call-rejected.md](runbook-provider-call-rejected.md) → read the provider's own body; usually a dropped param or no credit              |
 | Provider connector: sync 500s but the test says OK | [runbook-connector-model-sync-failure.md](runbook-connector-model-sync-failure.md) → the test toast lied; read `model_sync_runs.error_message`           |
 | Workspace connector sync failing                   | [runbook-workspace-automation.md](runbook-workspace-automation.md)                                                                                       |
 | Billing reconciliation is stuck                    | [runbook-billing-reconciliation.md](runbook-billing-reconciliation.md)                                                                                   |
@@ -44,6 +45,7 @@
 - [runbook-routing-misclassification.md](runbook-routing-misclassification.md)
 - [runbook-model-pull-failure.md](runbook-model-pull-failure.md)
 - [runbook-connector-model-sync-failure.md](runbook-connector-model-sync-failure.md)
+- [runbook-provider-call-rejected.md](runbook-provider-call-rejected.md)
 
 ### Local frontier (llama.cpp)
 
