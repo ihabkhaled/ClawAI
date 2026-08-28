@@ -400,3 +400,24 @@ await httpRequest({
 ```
 
 The wrapper lives at `src/common/utilities/inter-service-auth.utility.ts` and reads `AppConfig.get().INTER_SERVICE_AUTH_TOKEN`. Mirrors the pattern in `apps/claw-workspace-service/src/common/utilities/file-service-client.utility.ts#buildAuthHeader`. Forgetting the header will manifest as `401 Service token required` from file-service; users will see context-assembly silently skip attached files (caught as non-blocking) and judge/critic compare lanes will run without their attachments.
+
+## chat-service runs exactly one replica (2026-08-28)
+
+Not a deployment preference — a correctness constraint, decided in
+[ADR-076](../../docs/13-adr/adr-076-chat-stream-durability.md).
+
+`ChatStreamService` keeps its event bus, its per-thread replay buffer and its
+event-id sequence in process memory (`Subject`, and two `Map`s). A client
+connected to replica A therefore never sees an event emitted on replica B, and
+no amount of polling hides that while a run is in flight — the poll recovers the
+finished answer, not the stream.
+
+Scaling this service horizontally silently breaks streaming for a fraction of
+users proportional to the replica count. Before adding a replica, do the
+migration ADR-076 describes: point the legacy branch of
+`RuntimeV2StreamService.selectEvents` at the runtime-v2 Redis journal, which
+already has the sequencing, cursor and idempotency guarantees this needs.
+
+A restart mid-run drops the partial text. That is accepted: the assistant row is
+written on completion and the client's two-second poll renders it, so what is
+lost is the typing animation, not the answer.
