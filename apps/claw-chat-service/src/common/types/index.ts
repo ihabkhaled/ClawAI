@@ -2,6 +2,7 @@ export type { AuthenticatedUser, AuthenticatedRequest } from './authenticated-re
 export type { JwtPayload } from './jwt-payload.type';
 export type { PaginationParams, PaginatedResult } from './pagination.type';
 export type {
+  HttpBinaryReadOptions,
   HttpBinaryStreamOptions,
   HttpRequestOptions,
   HttpResponse,

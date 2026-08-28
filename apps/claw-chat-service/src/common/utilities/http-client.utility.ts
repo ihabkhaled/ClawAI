@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import {
+  type HttpBinaryReadOptions,
   type HttpBinaryStreamOptions,
   type HttpRequestOptions,
   type HttpResponse,
@@ -69,6 +70,46 @@ export async function httpRequest<T>(options: HttpRequestOptions): Promise<HttpR
  * caller can still send its own status: once a byte has been written, the
  * status line is already gone.
  */
+/**
+ * Reads a binary response into memory as base64.
+ *
+ * The counterpart to `httpStreamBinary`, for the cases that genuinely need the
+ * whole payload rather than a pipe — moderation, hashing, anything that must
+ * inspect the bytes. `httpRequest` cannot serve these: it always parses the
+ * body as JSON, which turns an image into a throw.
+ *
+ * Buffering is the deliberate trade. Use this only where the call happens once
+ * per artefact, never once per viewer.
+ *
+ * Returns null on any failure, so a caller cannot mistake "could not fetch" for
+ * an empty-but-valid payload.
+ */
+export async function httpReadBinaryBase64(options: HttpBinaryReadOptions): Promise<string | null> {
+  const { url, headers, timeoutMs = 30_000 } = options;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { ...headers },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      logger.warn(`httpReadBinaryBase64: GET ${url} failed — status ${String(response.status)}`);
+      return null;
+    }
+    const buffer = await response.arrayBuffer();
+    return Buffer.from(buffer).toString('base64');
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'unknown error';
+    logger.warn(`httpReadBinaryBase64: GET ${url} failed — ${message}`);
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function httpStreamBinary(options: HttpBinaryStreamOptions): Promise<boolean> {
   const { url, headers, timeoutMs = 30_000, sink } = options;
   const controller = new AbortController();

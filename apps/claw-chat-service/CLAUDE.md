@@ -227,6 +227,41 @@ The re-run publishes `MESSAGE_CREATED` with `regenerate: true` — the same flag
 regeneration uses — so routing does not bill it against the daily message
 ceiling. It is the same turn, run again.
 
+## Image moderation gates ads, not the share (2026-08-28)
+
+A published share containing images is **always** readable by link. The scan
+decides one thing only: whether it may additionally carry advertising and be
+offered to search engines.
+
+`ImageSafetyScannerService` runs **after** publish, never during. Publishing must
+not wait on a third-party moderation API and must not fail because that API is
+down — the share is the user's, the ad decision is ClawAI's, and only the second
+depends on the scan. It is fire-and-forget with the rejection swallowed.
+
+Google Cloud Vision SafeSearch, not a model asked to guess. What hangs on the
+answer is ClawAI's own ad account, which is not something to stake on a
+heuristic. Only `SAFE_SEARCH_DETECTION` is requested — no labels, no text, no
+faces — so a user's image is not incidentally run through a general-purpose
+analysis pipeline.
+
+The policy is deliberately strict and fails closed in every direction:
+
+- **POSSIBLE is a rejection**, not a maybe. Wrongly approving one image risks
+  the ad account; wrongly withholding ads from one share costs almost nothing.
+- `spoof` and `medical` are **not** moderated — a doctored photo or a clinical
+  image is not an advertising problem, and rejecting on them would withhold ads
+  from legitimate technical conversations.
+- A missing annotation, a missing category, or an unrecognised likelihood is
+  **never** an approval. A future Cloud Vision level this code has not heard of
+  cannot quietly pass.
+- `UNAVAILABLE` is not `REJECTED`. "The API was down" is not a verdict about the
+  image, and recording it as one would blame the user's picture for an outage.
+- With **no key configured**, assets stay `PENDING` rather than being marked
+  `UNAVAILABLE`, so they remain eligible for a later scan once a key exists.
+
+`scanReason` carries category names only. It is read by operators and must never
+become a pointer back to the content it describes.
+
 ## Image generation is a capability, not a deployment (2026-08-28)
 
 `IMAGE_OPENAI`, `IMAGE_GEMINI`, `IMAGE_LOCAL` and `IMAGE_LOCAL_COMFYUI` are not

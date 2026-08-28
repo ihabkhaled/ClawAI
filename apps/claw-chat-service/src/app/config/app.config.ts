@@ -29,6 +29,11 @@ const appConfigSchema = z.object({
   MEMORY_SERVICE_URL: z.string().min(1).default('http://memory-service:4005'),
   FILE_SERVICE_URL: z.string().min(1).default('http://file-service:4006'),
   IMAGE_SERVICE_URL: z.string().min(1).default('http://image-service:4012'),
+  // Google Cloud Vision SafeSearch, used to moderate images in a published
+  // share before it may carry advertising. Optional: with no key the scan
+  // reports UNAVAILABLE and the share stays readable but never ad- or
+  // index-eligible, which is the same fail-closed behaviour as before.
+  GOOGLE_CLOUD_VISION_API_KEY: z.string().default(''),
   FILE_GENERATION_SERVICE_URL: z.string().min(1).default('http://file-generation-service:4013'),
   WORKSPACE_SERVICE_URL: z.string().min(1).default('http://workspace-service:4014'),
   RESEARCH_SERVICE_URL: z.string().min(1).default('http://research-service:4016'),

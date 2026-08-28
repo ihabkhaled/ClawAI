@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
   type ChatShare,
+  ChatShareAssetScanStatus,
   type ChatShareMessage,
   ChatShareMessageAsset,
   ChatShareSafetyStatus,
@@ -230,5 +231,55 @@ export class ChatSharesRepository {
       },
     });
     return result.count;
+  }
+  /** Every asset in a share still awaiting a moderation verdict. */
+  async findPendingAssets(shareId: string): Promise<ChatShareMessageAsset[]> {
+    return this.prisma.chatShareMessageAsset.findMany({
+      where: {
+        message: { chatShareId: shareId },
+        scanStatus: ChatShareAssetScanStatus.PENDING,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  /**
+   * Records one asset's moderation verdict.
+   *
+   * `scanReason` carries category names only. It is read by operators and must
+   * never become a pointer back to the content it describes.
+   */
+  async recordAssetScan(
+    assetId: string,
+    status: ChatShareAssetScanStatus,
+    reason: string | null,
+  ): Promise<void> {
+    await this.prisma.chatShareMessageAsset.update({
+      where: { id: assetId },
+      data: { scanStatus: status, scanReason: reason, scannedAt: new Date() },
+    });
+  }
+
+  /** True when the share has no asset left in a non-approved state. */
+  async allAssetsApproved(shareId: string): Promise<boolean> {
+    const outstanding = await this.prisma.chatShareMessageAsset.count({
+      where: {
+        message: { chatShareId: shareId },
+        scanStatus: { not: ChatShareAssetScanStatus.APPROVED },
+      },
+    });
+    return outstanding === 0;
+  }
+
+  /** Re-grants ad and index eligibility once every image has been cleared. */
+  async setEligibility(
+    shareId: string,
+    adsEligible: boolean,
+    indexEligible: boolean,
+  ): Promise<void> {
+    await this.prisma.chatShare.update({
+      where: { id: shareId },
+      data: { adsEligible, indexEligible },
+    });
   }
 }

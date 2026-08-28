@@ -4276,6 +4276,11 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "GOOGLE_CLOUD_VISION_API_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "HEALTH_PORT"
       },
       {
@@ -9275,7 +9280,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 104
+        "testFiles": 106
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -10041,7 +10046,7 @@
     "contradictionCount": 0,
     "dockerServiceCount": 41,
     "endpointCount": 627,
-    "envVarCount": 349,
+    "envVarCount": 350,
     "eventCount": 172,
     "frontendRouteCount": 138,
     "localeCount": 13,
@@ -10052,7 +10057,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1058,
+    "totalTestFiles": 1060,
     "workspaceCount": 25
   }
 }

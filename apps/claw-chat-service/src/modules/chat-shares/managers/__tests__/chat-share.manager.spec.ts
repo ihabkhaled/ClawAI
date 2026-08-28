@@ -2,6 +2,7 @@ import { AppConfig } from '../../../../app/config/app.config';
 import { EntityNotFoundException } from '../../../../common/errors';
 import { ChatShareManager } from '../chat-share.manager';
 import type { ChatShareEventsService } from '../../services/chat-share-events.service';
+import { type ImageSafetyScannerService } from '../../services/image-safety-scanner.service';
 import { type ShareAssetPublisherService } from '../../services/share-asset-publisher.service';
 import { ChatShareMapperService } from '../../services/chat-share-mapper.service';
 import type { ChatMessagesRepository } from '../../../chat-messages/repositories/chat-messages.repository';
@@ -152,6 +153,9 @@ describe('ChatShareManager', () => {
       new ChatShareMapperService(),
       events as unknown as ChatShareEventsService,
       shareAssets as unknown as ShareAssetPublisherService,
+      // Moderation is fire-and-forget after publish; these tests assert the
+      // publish itself, so a no-op scanner keeps them focused on that.
+      { scanShare: jest.fn(async () => {}) } as unknown as ImageSafetyScannerService,
     );
   });
 

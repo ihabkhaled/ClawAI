@@ -10,6 +10,7 @@ import { DEFAULT_SHARE_TITLE, MAX_SNAPSHOT_MESSAGES } from '../constants/chat-sh
 import { ChatShareErrorCode } from '../enums/chat-share-error-code.enum';
 import { ChatSharesRepository } from '../repositories/chat-shares.repository';
 import { ChatShareEventsService } from '../services/chat-share-events.service';
+import { ImageSafetyScannerService } from '../services/image-safety-scanner.service';
 import { ShareAssetPublisherService } from '../services/share-asset-publisher.service';
 import { ChatShareMapperService } from '../services/chat-share-mapper.service';
 import { buildPublicShareUrl } from '../utilities/public-share-url.utility';
@@ -53,6 +54,7 @@ export class ChatShareManager {
     private readonly mapper: ChatShareMapperService,
     private readonly events: ChatShareEventsService,
     private readonly shareAssets: ShareAssetPublisherService,
+    private readonly imageScanner: ImageSafetyScannerService,
   ) {}
 
   /**
@@ -170,6 +172,20 @@ export class ChatShareManager {
       indexEligible: snapshot.indexEligible,
     });
     this.emitSafetyRejectionIfAny(identity, snapshot.safety, input.allowIndexing);
+
+    // Moderation runs AFTER the share exists, never as part of publishing it.
+    // The share is the user's and must not wait on — or fail because of — a
+    // third-party moderation API; only ClawAI's ad decision depends on the
+    // scan, and that can be granted a moment later. Fire-and-forget with the
+    // rejection swallowed: a scan that cannot run leaves the share exactly as
+    // it already is, readable and unmonetised.
+    void this.imageScanner
+      .scanShare(share.id, snapshot.safety.meetsContentThreshold)
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : 'unknown error';
+        this.logger.warn(`publish: image scan failed for share=${share.id} — ${message}`);
+      });
+
     return this.toOwnerView({ ...share, snapshotVersion: 1 }, input.threadId);
   }
 
@@ -326,11 +342,16 @@ export class ChatShareManager {
     const messages = buildSnapshotMessages(raw);
     const safety = evaluateSnapshotSafety(messages);
 
-    // evaluateSnapshotSafety reads message TEXT and nothing else. A snapshot
-    // carrying images has therefore not been fully scanned, so it does not
-    // become an ad surface and is not offered for indexing — the share is still
-    // published and still readable by anyone with the link. The gate protects
+    // evaluateSnapshotSafety reads message TEXT and nothing else, so at publish
+    // time a snapshot carrying images has not been fully scanned and does not
+    // become an ad surface or get offered for indexing. The share is still
+    // published and still readable by anyone with the link — the gate protects
     // ClawAI's own inventory, not the user's ability to share their image.
+    //
+    // This is the state at publish, not the final answer: ImageSafetyScanner
+    // runs immediately afterwards and re-grants eligibility once Cloud Vision
+    // has cleared every image. With no moderation provider configured, nothing
+    // clears them and this remains the permanent state.
     // See docs/13-adr/adr-075-public-share-assets.md.
     const carriesUnscannedAssets = messages.some((message) => message.assetSources.length > 0);
     if (carriesUnscannedAssets) {

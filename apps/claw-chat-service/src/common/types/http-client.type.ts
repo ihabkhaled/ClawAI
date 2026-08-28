@@ -39,6 +39,13 @@ export type HttpStreamResult = {
  * `sink` is a minimal writable rather than an Express `Response`, so the
  * utility stays framework-agnostic and testable with a plain object.
  */
+/** Options for reading a binary response fully into memory. */
+export type HttpBinaryReadOptions = {
+  url: string;
+  headers?: Record<string, string>;
+  timeoutMs?: number;
+};
+
 export type HttpBinaryStreamOptions = {
   url: string;
   headers?: Record<string, string>;

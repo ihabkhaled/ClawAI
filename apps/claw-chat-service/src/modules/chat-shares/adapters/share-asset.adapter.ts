@@ -5,6 +5,7 @@ import { type Response } from 'express';
 
 import {
   buildInterServiceAuthHeader,
+  httpReadBinaryBase64,
   httpRequest,
   httpStreamBinary,
 } from '../../../common/utilities';
@@ -71,6 +72,33 @@ export class ShareAssetAdapter {
       timeoutMs: SHARE_ASSET_COPY_TIMEOUT_MS,
       sink: response,
     });
+  }
+
+  /**
+   * Reads a share-owned copy into base64, for moderation.
+   *
+   * Buffered, unlike `streamCopyTo`, and deliberately so: this runs once per
+   * image at publish time rather than once per viewer, and Cloud Vision wants
+   * the whole image inline. The streaming path exists because a popular shared
+   * page would otherwise hold one image in memory per concurrent reader; that
+   * pressure does not apply to a single background scan.
+   *
+   * Returns null on any failure. The caller must not read that as "safe" — an
+   * image that could not be fetched is one that was never classified.
+   */
+  async readPublishedImage(storedFileId: string): Promise<string | null> {
+    try {
+      const config = AppConfig.get();
+      return await httpReadBinaryBase64({
+        url: `${config.FILE_SERVICE_URL}/api/v1/internal/files/download-internal/${encodeURIComponent(storedFileId)}`,
+        headers: { Authorization: buildInterServiceAuthHeader() },
+        timeoutMs: SHARE_ASSET_COPY_TIMEOUT_MS,
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'unknown error';
+      this.logger.warn(`readPublishedImage: failed for ${storedFileId} — ${message}`);
+      return null;
+    }
   }
 
   /**
