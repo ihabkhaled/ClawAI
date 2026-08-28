@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { IMAGE_CAPABILITIES } from '@/constants/image.constants';
 import { FrontierDownloadStatus } from '@/enums/local-frontier.enum';
 import { useAvailableConnectorModels } from '@/hooks/chat/use-available-connector-models';
 import { useFrontierCatalog } from '@/hooks/local-frontier/use-frontier-catalog';
@@ -96,27 +97,27 @@ export function useAvailableModels(): {
       });
     }
 
-    result.push({
-      provider: 'IMAGE_OPENAI',
-      label: PROVIDER_LABELS['IMAGE_OPENAI'] ?? 'OpenAI (Image)',
-      models: [{ provider: 'IMAGE_OPENAI', model: 'dall-e-3', displayName: 'DALL-E 3' }],
-    });
-    result.push({
-      provider: 'IMAGE_GEMINI',
-      label: PROVIDER_LABELS['IMAGE_GEMINI'] ?? 'Gemini (Image)',
-      models: [
-        {
-          provider: 'IMAGE_GEMINI',
-          model: 'gemini-2.5-flash-image',
-          displayName: 'Gemini 2.5 Flash Image',
-        },
-      ],
-    });
-    result.push({
-      provider: 'IMAGE_LOCAL',
-      label: PROVIDER_LABELS['IMAGE_LOCAL'] ?? 'Local (Image)',
-      models: [{ provider: 'IMAGE_LOCAL', model: 'sdxl-turbo', displayName: 'SDXL Turbo (Local)' }],
-    });
+    // Image generation is offered only where it can actually run.
+    //
+    // These three used to be pushed unconditionally, so the composer advertised
+    // "Gemini (Image)" and "DALL-E 3" on an install with no Google or OpenAI
+    // connector, and "SDXL Turbo (Local)" with no local image runtime deployed
+    // — the local-ai compose profile is opt-in. Picking any of them produced a
+    // 403, which reads as a broken product rather than as a missing connector.
+    //
+    // Each image capability borrows the credentials of a chat connector, so the
+    // presence of that connector's models is the signal: it is the same
+    // credential image-service will resolve when the request arrives.
+    for (const image of IMAGE_CAPABILITIES) {
+      if (!groups.has(image.requiresConnector)) {
+        continue;
+      }
+      result.push({
+        provider: image.provider,
+        label: PROVIDER_LABELS[image.provider] ?? image.provider,
+        models: [{ provider: image.provider, model: image.model, displayName: image.displayName }],
+      });
+    }
 
     result.sort((a, b) => {
       if (a.provider === 'local-ollama') {

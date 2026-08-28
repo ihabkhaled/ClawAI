@@ -227,6 +227,30 @@ The re-run publishes `MESSAGE_CREATED` with `regenerate: true` — the same flag
 regeneration uses — so routing does not bill it against the daily message
 ceiling. It is the same turn, run again.
 
+## Image generation is a capability, not a deployment (2026-08-28)
+
+`IMAGE_OPENAI`, `IMAGE_GEMINI`, `IMAGE_LOCAL` and `IMAGE_LOCAL_COMFYUI` are not
+connector models and have no row in the model-exposure registry. They are
+capabilities: image-service resolves the **OpenAI or Google connector's own API
+key** at call time, and the local ones talk to Stable Diffusion / ComfyUI in the
+opt-in `local-ai` compose profile.
+
+So the exposure gate — "is this deployment offered?" — is unanswerable for them,
+and it answered **no**. Selecting any image model in the composer returned
+`403 MODEL_NOT_EXPOSED` no matter how the connectors were configured.
+`assertModelExposed` now returns early for `isGenerationProvider(provider)`;
+availability is enforced downstream, where image-service fails with a specific
+error if the borrowed connector has no credentials.
+
+The frontend used to push all three into the picker unconditionally, so a
+cloud-only install advertised "SDXL Turbo (Local)" with no local runtime, and an
+install with no Google connector advertised "Gemini (Image)". Each capability is
+now gated on the connector whose key it borrows (`IMAGE_CAPABILITIES`).
+
+Stable Diffusion and ComfyUI are **already** opt-in in dev and prod compose
+(`profiles: ['local-ai']`, same gate as Ollama and llama.cpp). They are not
+deployed unless `CLAW_LOCAL_AI=true`.
+
 ## A routed run must never fail silently (2026-08-28)
 
 Reported as "sometimes it gets stuck". Two defects, both reproduced.

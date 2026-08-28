@@ -15,6 +15,7 @@ import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
 import { ModelAuthorizationMetricsService } from './model-authorization-metrics.service';
 import { AppConfig } from '../../../app/config/app.config';
+import { isGenerationProvider } from '../utilities/generation-provider.utility';
 import { ENTITLEMENTS_TIMEOUT_MS } from '../../../common/constants';
 import { BusinessException } from '../../../common/errors';
 import { type SendMessageAccessOptions } from '../types/access-control.types';
@@ -223,6 +224,20 @@ export class AccessControlService {
   // configured. Without this, a crafted request naming an unexposed model still
   // reached the provider.
   private async assertModelExposed(provider: string, model: string, userId: string): Promise<void> {
+    // Generation providers are not in the exposure registry and never can be.
+    //
+    // `IMAGE_*` and the file-generation provider are not connector models with
+    // deployment rows; they are capabilities that resolve their own credentials
+    // downstream — image-service reads the OpenAI or Gemini connector config at
+    // call time and fails with a specific error when it is missing. Asking the
+    // registry whether `IMAGE_GEMINI/gemini-2.5-flash-image` is an exposed
+    // deployment always answered no, so picking any image model in the composer
+    // returned "The selected model is not available" no matter how the
+    // connectors were configured.
+    if (isGenerationProvider(provider)) {
+      return;
+    }
+
     if (await this.exposure.isExposed(provider, model)) {
       return;
     }

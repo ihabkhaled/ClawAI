@@ -202,3 +202,71 @@ describe('useAvailableModels', () => {
     });
   });
 });
+
+describe('useAvailableModels image capabilities', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseLocalModels.mockReturnValue({ models: [], isLoading: false });
+    mockUseFrontierCatalog.mockReturnValue({ data: { data: [] } });
+  });
+
+  function providersFor(models: unknown[]): string[] {
+    mockUseAllModels.mockReturnValue({ models, isLoading: false, isError: false });
+    const { result } = renderHook(() => useAvailableModels());
+    return result.current.groupedModels.map((g) => g.provider);
+  }
+
+  // These three were pushed unconditionally, so the composer advertised image
+  // models on an install with no Google or OpenAI connector and no local
+  // runtime. Picking one returned 403 "The selected model is not available",
+  // which reads as a broken product rather than a missing connector.
+  it('hides every image capability when no connector backs one', () => {
+    const providers = providersFor([
+      { provider: 'ANTHROPIC', modelKey: 'claude-x', displayName: 'Claude X' },
+    ]);
+
+    expect(providers).not.toContain('IMAGE_GEMINI');
+    expect(providers).not.toContain('IMAGE_OPENAI');
+    expect(providers).not.toContain('IMAGE_LOCAL');
+  });
+
+  it('offers Gemini image only when the Google connector has models', () => {
+    // Image generation borrows that connector's API key, so its presence is the
+    // same credential image-service will resolve when the request arrives.
+    const providers = providersFor([
+      { provider: 'GEMINI', modelKey: 'gemini-2.5-flash', displayName: 'Gemini 2.5 Flash' },
+    ]);
+
+    expect(providers).toContain('IMAGE_GEMINI');
+    expect(providers).not.toContain('IMAGE_OPENAI');
+  });
+
+  it('offers DALL-E only when the OpenAI connector has models', () => {
+    const providers = providersFor([
+      { provider: 'OPENAI', modelKey: 'gpt-4o', displayName: 'GPT-4o' },
+    ]);
+
+    expect(providers).toContain('IMAGE_OPENAI');
+    expect(providers).not.toContain('IMAGE_GEMINI');
+  });
+
+  it('hides local Stable Diffusion unless the local runtime is present', () => {
+    // SDXL runs in the opt-in local-ai compose profile, so a cloud-only install
+    // must never be offered it.
+    const providers = providersFor([
+      { provider: 'OPENAI', modelKey: 'gpt-4o', displayName: 'GPT-4o' },
+    ]);
+
+    expect(providers).not.toContain('IMAGE_LOCAL');
+  });
+
+  it('offers local Stable Diffusion when local models are installed', () => {
+    mockUseLocalModels.mockReturnValue({
+      models: [{ name: 'glm4', tag: 'latest', isInstalled: true, family: 'glm', roles: [] }],
+      isLoading: false,
+    });
+    const providers = providersFor([]);
+
+    expect(providers).toContain('IMAGE_LOCAL');
+  });
+});
