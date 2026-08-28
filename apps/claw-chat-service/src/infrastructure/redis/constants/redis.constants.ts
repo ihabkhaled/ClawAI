@@ -10,3 +10,12 @@ export const RUNTIME_V2_REDIS_DEADLINE_MS_MAX = 10_000;
  * cache read in the service the moment the subscription started.
  */
 export const CHAT_STREAM_SUBSCRIBER_CLIENT = 'CHAT_STREAM_SUBSCRIBER_CLIENT';
+
+/**
+ * Connection used only to subscribe to the run-cancellation channel.
+ *
+ * A second subscriber rather than sharing the stream one: a subscribed Redis
+ * connection rejects ordinary commands, and keeping one channel per connection
+ * means neither feature can silence the other by mistake.
+ */
+export const STREAM_CANCEL_SUBSCRIBER_CLIENT = 'STREAM_CANCEL_SUBSCRIBER_CLIENT';

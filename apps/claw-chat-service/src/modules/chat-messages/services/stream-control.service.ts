@@ -26,7 +26,7 @@ export class StreamControlService {
 
   async cancelStream(threadId: string, userId: string): Promise<CancelStreamResult> {
     await this.assertOwnership(threadId, userId);
-    const cancelled = this.cancellation.cancel(threadId);
+    const cancelled = await this.cancellation.cancel(threadId);
     this.logger.log(`cancelStream: threadId=${threadId} cancelled=${String(cancelled)}`);
     return { cancelled };
   }

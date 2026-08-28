@@ -5,6 +5,7 @@ import {
   CHAT_STREAM_SUBSCRIBER_CLIENT,
   REDIS_CLIENT,
   RUNTIME_V2_REDIS_CLIENT,
+  STREAM_CANCEL_SUBSCRIBER_CLIENT,
 } from './constants/redis.constants';
 import { RedisService } from './redis.service';
 import { RedisClientAdapter, RedisSubscriberAdapter } from './redis-client.adapter';
@@ -55,8 +56,25 @@ import type { RedisClientPort, RedisSubscriberPort } from './types/redis-client.
         );
       },
     },
+    {
+      provide: STREAM_CANCEL_SUBSCRIBER_CLIENT,
+      useFactory: (): RedisSubscriberPort => {
+        const config = AppConfig.get();
+        return new RedisSubscriberAdapter(
+          new Redis(config.REDIS_URL, {
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false,
+          }),
+        );
+      },
+    },
     RedisService,
   ],
-  exports: [RedisService, CHAT_STREAM_SUBSCRIBER_CLIENT, REDIS_CLIENT],
+  exports: [
+    RedisService,
+    CHAT_STREAM_SUBSCRIBER_CLIENT,
+    STREAM_CANCEL_SUBSCRIBER_CLIENT,
+    REDIS_CLIENT,
+  ],
 })
 export class RedisModule {}

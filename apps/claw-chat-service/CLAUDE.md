@@ -471,3 +471,35 @@ by itself make the service safe to scale — `StreamCancellationService` still
 holds its `AbortController`s in memory, so the Stop button would hit a random
 replica and silently do nothing. The single-replica rule stands until that is
 fixed too.
+
+## Stop works across replicas (2026-08-28)
+
+`StreamCancellationService` still keeps its `AbortController`s in process memory
+— they cannot leave the process that owns the provider connection. What moved
+across replicas is the **decision**: Stop is broadcast on a Redis channel and
+whichever replica is actually running the model aborts it.
+
+Without this, Stop posts to whichever replica nginx picked, finds no controller,
+and returns quietly while the model keeps generating and keeps being billed. It
+is the failure mode that costs money rather than just annoying someone.
+
+- **The `DEL` is the source of truth for "was anything running", not the local
+  map.** The replica serving the Stop usually does not hold the run. `DEL`
+  reports 1 only to the caller that actually removed the key, so two concurrent
+  Stops cannot both claim the same run.
+- **The broadcast happens even when the marker was already gone.** A long run
+  whose marker aged out is still worth aborting if some replica holds it.
+- **The marker has a TTL** for the replica that dies mid-run: `release` never
+  happens, and without an expiry the key would advertise a run no process is
+  executing for the rest of the deployment's life.
+- **`isActive` answers only for this replica.** It is not a cluster-wide check
+  and must not be used as one.
+
+With Redis unreachable it aborts locally, so a single-replica install behaves as
+it did before.
+
+This clears the second blocker from
+[ADR-076](../../docs/13-adr/adr-076-chat-stream-durability.md). The remaining
+work before replicas can be switched on is deployment: `container_name` in the
+compose file makes Docker refuse to scale the service at all, and
+`deploy-prod.sh` would recreate every replica at once.
