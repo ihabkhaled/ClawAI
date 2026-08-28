@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import {
+  describeEntitlementsFailure,
   EntitlementsAdapter,
   hasPermission,
   hasPlanFeature,
@@ -9,11 +10,12 @@ import {
   type ResearchUsageFeature,
   type UserEntitlements,
 } from '@claw/shared-entitlements';
-import { BillingErrorCode, Permission  } from '@claw/shared-types';
+import { BillingErrorCode, Permission } from '@claw/shared-types';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
 import { ModelAuthorizationMetricsService } from './model-authorization-metrics.service';
 import { AppConfig } from '../../../app/config/app.config';
+import { ENTITLEMENTS_TIMEOUT_MS } from '../../../common/constants';
 import { BusinessException } from '../../../common/errors';
 import { type SendMessageAccessOptions } from '../types/access-control.types';
 
@@ -29,7 +31,10 @@ export class AccessControlService {
   private readonly metrics = new ModelAuthorizationMetricsService();
 
   constructor() {
-    this.adapter = new EntitlementsAdapter({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL });
+    this.adapter = new EntitlementsAdapter({
+      authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+      timeoutMs: ENTITLEMENTS_TIMEOUT_MS,
+    });
   }
 
   // Throws 403 if a manually-selected model is not in the user's plan, 403 if
@@ -248,8 +253,16 @@ export class AccessControlService {
   private async resolve(userId: string): Promise<UserEntitlements> {
     try {
       return await this.adapter.getEntitlements(userId);
-    } catch {
-      this.logger.error(`resolve: entitlements unavailable for user=${userId}`);
+    } catch (error: unknown) {
+      // Name the actual fault. "unavailable" alone cannot distinguish a
+      // timeout from a refused connection from a 500 upstream, and those are
+      // three different fixes.
+      this.logger.error(
+        `resolve: entitlements unavailable for user=${userId} — ${describeEntitlementsFailure(
+          error,
+          ENTITLEMENTS_TIMEOUT_MS,
+        )}`,
+      );
       throw new BusinessException(
         'Entitlements are temporarily unavailable',
         'ENTITLEMENTS_UNAVAILABLE',

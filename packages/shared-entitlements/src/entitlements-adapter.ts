@@ -47,6 +47,26 @@ export type FeatureUsageInput = {
 // Fetches fresh per call (no stale cache) so a plan/role change applies on the
 // very next request — the user's stated requirement. Framework-agnostic; it
 // only needs global fetch (Node 20+).
+
+/**
+ * True when the request never reached a response.
+ *
+ * `fetch` reports transport faults as a bare `TypeError` with the real code on
+ * `.cause`; anything that produced a status is not one of these, and an abort
+ * is the caller's own timeout rather than a fault worth repeating.
+ */
+function isTransportFailure(error: unknown): boolean {
+  if (!(error instanceof Error) || error.name === 'AbortError') {
+    return false;
+  }
+  if (error instanceof EntitlementsRequestError) {
+    return false;
+  }
+  // A non-2xx is thrown as a plain Error with this prefix by `request`; the
+  // server answered, so it is not a transport failure.
+  return !error.message.startsWith('Entitlements request failed:');
+}
+
 export class EntitlementsAdapter {
   private readonly authServiceUrl: string;
   private readonly timeoutMs: number;
@@ -64,10 +84,36 @@ export class EntitlementsAdapter {
   }
 
   async getEntitlements(userId: string): Promise<UserEntitlements> {
-    return this.request<UserEntitlements>(
+    return this.requestWithTransportRetry<UserEntitlements>(
       'GET',
       `/api/v1/internal/users/${encodeURIComponent(userId)}/entitlements`,
     );
+  }
+
+  /**
+   * One retry, and only for a connection that never carried a response.
+   *
+   * Every service resolves entitlements on the hot path with no cache, so a
+   * momentary transport fault becomes a user-visible 503 on writes that would
+   * otherwise have succeeded. The common cause is an upstream restart: keep-
+   * alive sockets pooled against the old process fail once each as they are
+   * discovered dead, in a burst, and then everything is fine again — which is
+   * exactly the intermittent shape that was reported.
+   *
+   * Deliberately narrow. Only a transport failure retries: an HTTP response of
+   * any status means auth-service answered and its answer stands, and only a
+   * GET is retried because it is the sole idempotent call here. Reserving or
+   * finalizing quota must never be retried blindly — that would double-charge.
+   */
+  private async requestWithTransportRetry<T>(method: string, path: string): Promise<T> {
+    try {
+      return await this.request<T>(method, path);
+    } catch (error: unknown) {
+      if (!isTransportFailure(error)) {
+        throw error;
+      }
+      return this.request<T>(method, path);
+    }
   }
 
   async reserveQuota(userId: string, estimatedTokens: number): Promise<QuotaReserveResult> {

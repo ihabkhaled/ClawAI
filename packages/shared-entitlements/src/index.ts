@@ -7,6 +7,7 @@ export {
   type FeatureUsageInput,
   type ResearchUsageFeature,
 } from './entitlements-adapter';
+export { describeEntitlementsFailure } from './describe-failure';
 export { hasPermission, hasPlanFeature, isModelAllowedForUsage, allowedModelKeys } from './helpers';
 export {
   ModelUsageType,

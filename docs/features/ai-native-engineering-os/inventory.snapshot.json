@@ -9237,7 +9237,7 @@
       },
       "@claw/shared-entitlements": {
         "runner": "jest",
-        "testFiles": 4
+        "testFiles": 5
       },
       "@claw/shared-rabbitmq": {
         "runner": "jest",
@@ -10042,7 +10042,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1054,
+    "totalTestFiles": 1055,
     "workspaceCount": 25
   }
 }
