@@ -1393,9 +1393,11 @@ CHAT_SERVICE_REPLICAS=1
 # stays readable but never carries advertising and is never offered to search
 # engines. Console -> enable "Cloud Vision API" -> Credentials -> API key.
 GOOGLE_CLOUD_VISION_API_KEY=
-# Google Tag Manager container (marketing pages only). Matches .env.example,
-# so an install.sh install and a setup.sh install measure the same thing.
-NEXT_PUBLIC_GTM_ID=GTM-PPCVCPGM
+# Google Tag Manager container. Blank by default ON PURPOSE: a container id is
+# an ANALYTICS ACCOUNT, and an installer that fills one in makes every install
+# report into whoever's account shipped the script. ClawAI's own deployment sets
+# this in its .env; yours should be your own container, or blank.
+NEXT_PUBLIC_GTM_ID=
 # Direct GA4 id (G-XXXXXXX), for an install that wants gtag.js without a
 # container. Usually blank: the container above normally carries the GA4 tag
 # inside it, and setting both double-counts every page view.
