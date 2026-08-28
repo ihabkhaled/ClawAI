@@ -777,6 +777,106 @@ describe('ChatMessagesService', () => {
     });
   });
 
+  describe('regenerateMessage target resolution', () => {
+    // The regenerate button is rendered only on assistant bubbles, so the id
+    // that arrives here is an ASSISTANT row. Routing looks the published id up
+    // with `role === 'USER'`; publishing the assistant id made that lookup
+    // throw before the guarded region, so the run produced no answer, no error
+    // row and no terminal stream frame — the reported "it gets stuck".
+    const assistantRow = {
+      ...mockMessage,
+      id: 'msg-assistant',
+      role: 'ASSISTANT' as const,
+      content: 'The previous answer.',
+      metadata: null,
+    };
+    const userRow = {
+      ...mockMessage,
+      id: 'msg-user',
+      role: 'USER' as const,
+      content: 'The original question?',
+    };
+
+    it('publishes the user turn an assistant answer belongs to', async () => {
+      messagesRepo.findById.mockResolvedValue(assistantRow);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      messagesRepo.findRecentByThreadId.mockResolvedValue([assistantRow, userRow]);
+
+      await service.regenerateMessage('msg-assistant', 'user-1');
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_CREATED,
+        expect.objectContaining({ messageId: 'msg-user', content: 'The original question?' }),
+      );
+    });
+
+    it('prefers the recorded source message over a positional guess', async () => {
+      messagesRepo.findById.mockImplementation((id: string) =>
+        Promise.resolve(
+          id === 'msg-assistant'
+            ? { ...assistantRow, metadata: { sourceMessageId: 'msg-source' } }
+            : { ...userRow, id: 'msg-source', content: 'Recorded question?' },
+        ),
+      );
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await service.regenerateMessage('msg-assistant', 'user-1');
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_CREATED,
+        expect.objectContaining({ messageId: 'msg-source', content: 'Recorded question?' }),
+      );
+    });
+
+    it('regenerates a user row as itself', async () => {
+      messagesRepo.findById.mockResolvedValue(userRow);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await service.regenerateMessage('msg-user', 'user-1');
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_CREATED,
+        expect.objectContaining({ messageId: 'msg-user' }),
+      );
+    });
+
+    it('refuses when there is no question to re-run, instead of publishing a dead id', async () => {
+      messagesRepo.findById.mockResolvedValue(assistantRow);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      messagesRepo.findRecentByThreadId.mockResolvedValue([assistantRow]);
+
+      await expect(service.regenerateMessage('msg-assistant', 'user-1')).rejects.toThrow(
+        BusinessException,
+      );
+      expect(rabbitMQ.publish).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleMessageRouted failure reporting', () => {
+    it('reports a failure raised before the model call instead of going silent', async () => {
+      // resolveRoutedMessageWindow throws when the routed id is not a user row
+      // in the window. That throw used to happen outside the try, so no error
+      // row was written and no terminal frame was emitted: the client waited
+      // for an answer that was never coming.
+      messagesRepo.findRecentByThreadId.mockResolvedValue([]);
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+      messagesRepo.create.mockResolvedValue({ ...mockMessage, role: 'ASSISTANT' as const });
+
+      await expect(
+        service.handleMessageRouted({
+          messageId: 'missing',
+          threadId: 'thread-1',
+          selectedProvider: 'GEMINI',
+          selectedModel: 'gemini-2.5-flash',
+          routingMode: 'AUTO',
+          timestamp: new Date().toISOString(),
+        }),
+      ).rejects.toThrow();
+
+      expect(streamService.emitError).toHaveBeenCalled();
+    });
+  });
+
   describe('handleMessageRouted', () => {
     it('preserves localizable business error metadata on the stored assistant response', async () => {
       const routedPayload = {
@@ -903,6 +1003,14 @@ describe('ChatMessagesService', () => {
         { ...mockMessage, id: 'msg-different' },
       ]);
       threadsRepo.findById!.mockResolvedValue(mockThread);
+      // The failure now reaches the reporting path, which writes an error row.
+      // It used to throw before the guarded region and write nothing at all,
+      // which is what left the client waiting on an answer that never came.
+      messagesRepo.create.mockResolvedValue({
+        ...mockMessage,
+        id: 'msg-error',
+        role: 'ASSISTANT' as const,
+      });
 
       await expect(
         service.handleMessageRouted({
@@ -917,6 +1025,9 @@ describe('ChatMessagesService', () => {
 
       expect(contextAssembly.assemble).not.toHaveBeenCalled();
       expect(executionManager.execute).not.toHaveBeenCalled();
+      // Fails closed LOUDLY: an error row and a terminal frame, so the client
+      // stops waiting instead of spinning until its own timeout.
+      expect(streamService.emitError).toHaveBeenCalled();
     });
 
     it('publishes message.completed even when execution fails after storing an error response', async () => {

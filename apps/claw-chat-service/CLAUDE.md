@@ -227,6 +227,33 @@ The re-run publishes `MESSAGE_CREATED` with `regenerate: true` — the same flag
 regeneration uses — so routing does not bill it against the daily message
 ceiling. It is the same turn, run again.
 
+## A routed run must never fail silently (2026-08-28)
+
+Reported as "sometimes it gets stuck". Two defects, both reproduced.
+
+**Regenerate published the wrong id.** The regenerate button is rendered only on
+assistant bubbles, so `POST /chat-messages/:id/regenerate` always received an
+ASSISTANT row id. `regenerateMessage` republished that id, and
+`resolveRoutedMessageWindow` matches on `role === 'USER'`, so the lookup threw
+`ROUTED_MESSAGE_NOT_FOUND` every single time. `resolveRegenerationTarget` now
+resolves an assistant row to the question it answered — `metadata.sourceMessageId`
+first, then the nearest preceding user turn — and publishes that id **and that
+content**. The content mattered too: routing scores the published text, and it
+was being handed the model's own previous answer.
+
+**The failure was invisible.** Everything from `emitRequestAccepted` through
+context assembly sat OUTSIDE the `try` in `handleMessageRouted`. A throw there
+skipped `handleMessageRoutedFailure` — the only code that writes an error row
+and emits a terminal stream frame — and `onMessageRouted` then caught it and
+returned normally, so the broker ACKed. No answer, no error, no terminal event:
+the client spun until it gave up. The guarded region now starts immediately
+after `emitRequestAccepted`, with `thread` and `routedMessages` hoisted so the
+failure handler still gets whatever was resolved before the throw.
+
+**Every regenerate test used a USER row**, which is the one shape the UI cannot
+produce — that is why CI stayed green. Any new test here must cover the
+assistant-row case.
+
 ## Memory and context-pack injection (2026-08-28)
 
 Reproduced and fixed with `scripts/regression/context-memory-regression.mjs`,

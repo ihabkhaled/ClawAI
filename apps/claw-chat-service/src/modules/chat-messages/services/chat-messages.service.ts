@@ -99,6 +99,8 @@ import {
   MESSAGE_EDIT_UNCHANGED_MESSAGE_KEY,
   MESSAGE_NOT_EDITABLE_CODE,
   MESSAGE_NOT_EDITABLE_MESSAGE_KEY,
+  REGENERATION_TARGET_MISSING_CODE,
+  REGENERATION_TARGET_MISSING_MESSAGE_KEY,
 } from '../constants/message-edit.constants';
 import { type SearchMessagesQueryDto } from '../dto/search-messages-query.dto';
 import { type InThreadSearchMatch } from '../types/in-thread-search.types';
@@ -873,19 +875,28 @@ export class ChatMessagesService implements OnModuleInit {
     this.validateOwnership(thread, userId);
     await this.assertThreadReviewAccess(userId, thread);
 
+    // The button lives on the ASSISTANT bubble, so `id` is an assistant row.
+    // Routing must be told about the USER turn it answered: the consumer looks
+    // the routed id up with `role === 'USER'` and throws when it cannot find
+    // it, which used to strand the run with no answer and no error.
+    const target = await this.resolveRegenerationTarget(message);
+
     const regenProvider = thread.preferredProvider ?? undefined;
     const regenModel = thread.preferredModel ?? undefined;
     const regenRoutingMode =
-      regenProvider && regenModel ? RoutingMode.MANUAL_MODEL : message.routingMode;
+      regenProvider && regenModel ? RoutingMode.MANUAL_MODEL : target.routingMode;
 
     this.logger.log(
-      `regenerateMessage: publishing message.created for regeneration of ${id} with mode=${regenRoutingMode}`,
+      `regenerateMessage: publishing message.created for ${target.id} (requested via ${id}) mode=${regenRoutingMode}`,
     );
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
-      messageId: message.id,
-      threadId: message.threadId,
+      messageId: target.id,
+      threadId: target.threadId,
       userId,
-      content: message.content,
+      // The user's question, never the model's previous answer: routing scores
+      // this text, so sending the answer made every regeneration route on the
+      // wrong input.
+      content: target.content,
       routingMode: regenRoutingMode,
       forcedProvider: regenProvider,
       forcedModel: regenModel,
@@ -894,6 +905,58 @@ export class ChatMessagesService implements OnModuleInit {
     });
 
     return message;
+  }
+
+  /**
+   * Finds the user turn a regeneration should re-run.
+   *
+   * A user row regenerates itself. An assistant row resolves to the question it
+   * answered — `metadata.sourceMessageId` when the answer recorded one, and
+   * otherwise the nearest preceding user row in the thread.
+   *
+   * Refuses loudly when neither resolves. The alternative is what shipped:
+   * publishing an id the consumer cannot match, which failed silently with the
+   * spinner running until the client gave up three minutes later.
+   */
+  private async resolveRegenerationTarget(message: ChatMessage): Promise<ChatMessage> {
+    if (message.role === MessageRole.USER) {
+      return message;
+    }
+
+    const metadata = message.metadata as Record<string, unknown> | null;
+    const sourceId = metadata?.['sourceMessageId'];
+    if (typeof sourceId === 'string' && sourceId.length > 0) {
+      const source = await this.chatMessagesRepository.findById(sourceId);
+      if (source && source.role === MessageRole.USER) {
+        return source;
+      }
+    }
+
+    const recent = await this.chatMessagesRepository.findRecentByThreadId(message.threadId, 50);
+    const chronological = [...recent].reverse();
+    const index = chronological.findIndex((row) => row.id === message.id);
+    // A reverse scan rather than `findLast`, which this service's lib target
+    // does not provide, and rather than `.filter().at(-1)`, which lint rewrites
+    // back into `findLast`.
+    const searchWindow = index < 0 ? chronological : chronological.slice(0, index);
+    let preceding: ChatMessage | undefined;
+    for (let cursor = searchWindow.length - 1; cursor >= 0; cursor -= 1) {
+      const row = searchWindow[cursor];
+      if (row !== undefined && row.role === MessageRole.USER) {
+        preceding = row;
+        break;
+      }
+    }
+    if (preceding) {
+      return preceding;
+    }
+
+    throw new BusinessException(
+      'There is no question to regenerate an answer for',
+      REGENERATION_TARGET_MISSING_CODE,
+      HttpStatus.CONFLICT,
+      REGENERATION_TARGET_MISSING_MESSAGE_KEY,
+    );
   }
 
   /**
@@ -987,29 +1050,42 @@ export class ChatMessagesService implements OnModuleInit {
     );
     const startedAt = Date.now();
     this.chatStreamService.emitRequestAccepted(payload.threadId);
-    const [threadMessages, thread] = await Promise.all([
-      this.chatMessagesRepository.findRecentByThreadId(payload.threadId, 20),
-      this.chatThreadsRepository.findById(payload.threadId),
-    ]);
-    const chronologicalMessages = [...threadMessages].reverse();
-    const routedMessages = this.resolveRoutedMessageWindow(
-      chronologicalMessages,
-      payload.messageId,
-    );
-    const threadSettings = this.extractThreadSettings(thread);
-    const fileIds = this.extractFileIdsFromMessages(routedMessages);
-    const latestUserMetadata = this.extractLatestUserMetadata(routedMessages);
-    const effectivePayload = this.applyFollowUpOverrides(payload, thread, routedMessages);
-    const context = await this.contextAssemblyManager.assemble(
-      thread?.userId ?? 'system',
-      routedMessages,
-      threadSettings,
-      thread?.contextPackIds ?? undefined,
-      fileIds,
-      undefined,
-      payload.routingMode as RoutingMode,
-    );
+
+    // The guarded region starts HERE, not at the model call.
+    //
+    // Everything below — the message-window lookup, thread settings, context
+    // assembly — used to sit outside the try. A throw in any of it skipped
+    // `handleMessageRoutedFailure`, which is the only code that writes an error
+    // row and emits a terminal stream event, and `onMessageRouted` then caught
+    // it and returned normally so the broker ACKed the message. The result was
+    // a run with no answer, no error and no terminal frame: the client kept its
+    // spinner until it gave up three minutes later, and the answer never came.
+    //
+    // `thread` and `routedMessages` are declared out here so the failure
+    // handler still has whatever was resolved before the throw.
+    let thread: ChatThread | null = null;
+    let routedMessages: ChatMessage[] = [];
     try {
+      const [threadMessages, loadedThread] = await Promise.all([
+        this.chatMessagesRepository.findRecentByThreadId(payload.threadId, 20),
+        this.chatThreadsRepository.findById(payload.threadId),
+      ]);
+      thread = loadedThread;
+      const chronologicalMessages = [...threadMessages].reverse();
+      routedMessages = this.resolveRoutedMessageWindow(chronologicalMessages, payload.messageId);
+      const threadSettings = this.extractThreadSettings(thread);
+      const fileIds = this.extractFileIdsFromMessages(routedMessages);
+      const latestUserMetadata = this.extractLatestUserMetadata(routedMessages);
+      const effectivePayload = this.applyFollowUpOverrides(payload, thread, routedMessages);
+      const context = await this.contextAssemblyManager.assemble(
+        thread?.userId ?? 'system',
+        routedMessages,
+        threadSettings,
+        thread?.contextPackIds ?? undefined,
+        fileIds,
+        undefined,
+        payload.routingMode as RoutingMode,
+      );
       await this.runLlmAndStore(
         effectivePayload,
         payload,
