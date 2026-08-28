@@ -58,12 +58,14 @@ and predates the current container.
 
 ## Common causes
 
-| `error_message`                               | Cause                                                                                                        |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `Failed to fetch <provider> models: HTTP 400` | A malformed **header** — most often a bad API version. See "The version header is not a feature flag" below. |
-| `Failed to fetch <provider> models: HTTP 401` | Wrong, revoked, or wrong-environment API key.                                                                |
-| `Failed to fetch <provider> models: HTTP 404` | Base URL missing its version segment — see the base-URL table below.                                         |
-| `fetch failed` / `The operation was aborted`  | Egress blocked, or the provider took longer than `DEFAULT_HTTP_TIMEOUT_MS`.                                  |
+| `error_message`                                          | Cause                                                                                                                        |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `... status 400: anthropic-workspace-id is required ...` | An Anthropic identity-linked key that does not name a workspace. See "an identity-linked key must name its workspace" below. |
+| `Failed to fetch <provider> models: ... status 400`      | Any other malformed **header** — often a bad API version. See "The version header is not a feature flag" below.              |
+| `Failed to fetch <provider> models: HTTP 401`            | Wrong, revoked, or wrong-environment API key.                                                                                |
+| `Failed to fetch <provider> models: HTTP 404`            | Base URL missing its version segment — see the base-URL table below.                                                         |
+| `fetch failed` / `The operation was aborted`             | Egress blocked, or the provider took longer than `DEFAULT_HTTP_TIMEOUT_MS`.                                                  |
+| `... returned HTTP <n> with a non-JSON body`             | Usually a wrong base URL: an error page or empty body where JSON was expected. Check the version segment below.              |
 
 ### Base URL must include the version segment
 
@@ -80,6 +82,36 @@ default rather than typing a shorter one:
 `https://api.anthropic.com` (no `/v1`) requests `https://api.anthropic.com/models`
 and 404s. Note the frontend placeholder shows the bare host as a _hint_, not a
 value to copy.
+
+### Anthropic: an identity-linked key must name its workspace
+
+If `error_message` reads:
+
+```
+anthropic-workspace-id is required when authenticating with an identity-linked
+API key; send the id of the workspace this request acts in.
+```
+
+the key is **identity-linked** (tied to a user rather than scoped to one
+workspace). Anthropic rejects every such request — `GET /v1/models` included —
+until the request names the workspace it acts in. The key is valid; the request
+is incomplete. Two ways out:
+
+1. **Fill in "Workspace ID" on the connector** (the field is shown only for
+   Anthropic). Find it in the Anthropic Console under the workspace's settings —
+   it appears in the console URL and starts with `wrkspc_`. The adapter then
+   sends `anthropic-workspace-id`.
+2. **Or issue a workspace-scoped API key** in the Console and paste that
+   instead. Such a key carries its own workspace and needs no header — leave the
+   field blank.
+
+Tell the two failures apart before you touch the key: a _missing_ header says
+"is required", a _wrong_ value says "must be a valid workspace ID". The second
+means the mechanism works and only the id is wrong.
+
+A blank `anthropic-workspace-id` is itself a 400, so the adapter omits the
+header entirely when the value is unset or whitespace — leave the field empty
+rather than typing a placeholder.
 
 ### The version header is not a feature flag
 

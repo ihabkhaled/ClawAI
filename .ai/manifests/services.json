@@ -175,7 +175,7 @@
         "ConnectorModel",
         "ModelSyncRun"
       ],
-      "testFiles": 20,
+      "testFiles": 21,
       "testRunner": "jest"
     },
     {

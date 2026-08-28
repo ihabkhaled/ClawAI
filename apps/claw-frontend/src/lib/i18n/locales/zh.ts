@@ -664,6 +664,9 @@ export const zh: TranslationDictionary = {
     baseUrlHelp: '覆盖默认的 API 端点。留空以使用提供商默认值。',
     region: '地区',
     regionHelp: '部署您的 Bedrock 终端节点的 AWS 区域。',
+    workspaceIdOptional: '工作区 ID（可选）',
+    workspaceIdHelp:
+      '仅在使用与身份关联的 Anthropic API 密钥时需要填写；此类密钥若未在请求中指明所属工作区将被拒绝。使用工作区范围的密钥时请留空。',
     status: '地位',
     healthy: '健康',
     degraded: '降级',
@@ -707,6 +710,7 @@ export const zh: TranslationDictionary = {
     editConnectorDesc: '更新连接器配置',
     namePlaceholder: '例如，OpenAI 生产',
     regionPlaceholder: '例如，us-east-1',
+    workspaceIdPlaceholder: '例如，wrkspc_01AbCd...',
     saveFirstThenTest: '先保存连接器，然后测试',
     selectProvider: '选择提供商',
   },

@@ -89,6 +89,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
       encryptedConfig,
       baseUrl: dto.baseUrl,
       region: dto.region,
+      workspaceId: dto.workspaceId,
     });
 
     this.structuredLogger.logAction({
@@ -173,6 +174,7 @@ export class ConnectorsService implements OnApplicationBootstrap {
       encryptedConfig,
       baseUrl: dto.baseUrl,
       region: dto.region,
+      workspaceId: dto.workspaceId,
       isEnabled: dto.isEnabled,
     });
 

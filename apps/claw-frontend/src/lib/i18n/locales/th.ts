@@ -672,6 +672,9 @@ export const th: TranslationDictionary = {
     baseUrlHelp: 'แทนที่ตำแหน่งข้อมูลดีฟอลต์ APIเว้นว่างไว้เพื่อใช้ค่าเริ่มต้นของผู้ให้บริการ',
     region: 'ภูมิภาค',
     regionHelp: 'ภูมิภาค AWS ที่มีการปรับใช้ตำแหน่งข้อมูล Bedrock ของคุณ',
+    workspaceIdOptional: 'รหัสพื้นที่ทำงาน (ไม่บังคับ)',
+    workspaceIdHelp:
+      'จำเป็นเฉพาะกับคีย์ API ของ Anthropic ที่ผูกกับตัวตน ซึ่งจะถูกปฏิเสธหากคำขอไม่ระบุพื้นที่ทำงานของตน เว้นว่างไว้สำหรับคีย์ที่จำกัดอยู่ในพื้นที่ทำงานเดียว',
     status: 'สถานะ',
     healthy: 'สุขภาพดี',
     degraded: 'เสื่อมโทรม',
@@ -715,6 +718,7 @@ export const th: TranslationDictionary = {
     editConnectorDesc: 'อัปเดตการกำหนดค่าตัวเชื่อมต่อ',
     namePlaceholder: 'เช่น การผลิต OpenAI',
     regionPlaceholder: 'เช่น us-east-1',
+    workspaceIdPlaceholder: 'เช่น wrkspc_01AbCd...',
     saveFirstThenTest: 'บันทึกตัวเชื่อมต่อก่อน จากนั้นจึงทดสอบ',
     selectProvider: 'เลือกผู้ให้บริการ',
   },

@@ -1212,6 +1212,8 @@ export type ConnectorFormFieldsProps = {
   setBaseUrl: (value: string) => void;
   region: string;
   setRegion: (value: string) => void;
+  workspaceId: string;
+  setWorkspaceId: (value: string) => void;
   defaultBaseUrl: string | null;
 };
 

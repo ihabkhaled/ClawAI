@@ -24,6 +24,7 @@ export function useConnectorFormState({
   const [apiKey, setApiKey] = useState('');
   const [baseUrl, setBaseUrl] = useState(connector?.baseUrl ?? '');
   const [region, setRegion] = useState(connector?.region ?? '');
+  const [workspaceId, setWorkspaceId] = useState(connector?.workspaceId ?? '');
   const [fieldErrors, setFieldErrors] = useState<ConnectorFormFieldErrors>({});
 
   const isEditing = !!connector;
@@ -36,6 +37,7 @@ export function useConnectorFormState({
       setApiKey('');
       setBaseUrl(connector?.baseUrl ?? '');
       setRegion(connector?.region ?? '');
+      setWorkspaceId(connector?.workspaceId ?? '');
       setFieldErrors({});
     }
   }, [open, connector]);
@@ -63,6 +65,9 @@ export function useConnectorFormState({
     }
     if (region) {
       formData.region = region;
+    }
+    if (workspaceId) {
+      formData.workspaceId = workspaceId;
     }
 
     const result = createConnectorSchema.safeParse(formData);
@@ -93,6 +98,8 @@ export function useConnectorFormState({
     setBaseUrl,
     region,
     setRegion,
+    workspaceId,
+    setWorkspaceId,
     fieldErrors,
     isEditing,
     pendingLabel,

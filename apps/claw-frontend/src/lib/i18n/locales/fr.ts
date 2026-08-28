@@ -688,6 +688,9 @@ export const fr: TranslationDictionary = {
       'Remplacez le point de terminaison API par défaut. Laissez vide pour utiliser celui du fournisseur.',
     region: 'Région',
     regionHelp: 'La région AWS où votre point de terminaison Bedrock est déployé.',
+    workspaceIdOptional: "ID de l'espace de travail (facultatif)",
+    workspaceIdHelp:
+      'Requis uniquement pour une clé API Anthropic liée à une identité, qui est rejetée tant que la requête ne nomme pas son espace de travail. Laissez vide pour une clé limitée à un espace de travail.',
     status: 'Statut',
     healthy: 'Opérationnel',
     degraded: 'Dégradé',
@@ -733,6 +736,7 @@ export const fr: TranslationDictionary = {
     editConnectorDesc: 'Mettre à jour la configuration du connecteur',
     namePlaceholder: 'ex. OpenAI Production',
     regionPlaceholder: 'ex. us-east-1',
+    workspaceIdPlaceholder: 'ex. wrkspc_01AbCd...',
     saveFirstThenTest: "Enregistrez d'abord le connecteur, puis testez",
     selectProvider: 'Sélectionnez un fournisseur',
   },

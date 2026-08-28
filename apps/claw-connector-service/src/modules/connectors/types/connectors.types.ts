@@ -16,6 +16,7 @@ export interface CreateConnectorData {
   encryptedConfig?: string;
   baseUrl?: string;
   region?: string;
+  workspaceId?: string;
 }
 
 export interface UpdateConnectorData {
@@ -25,6 +26,7 @@ export interface UpdateConnectorData {
   encryptedConfig?: string;
   baseUrl?: string;
   region?: string;
+  workspaceId?: string;
   isEnabled?: boolean;
   status?: ConnectorStatus;
   defaultModelId?: string;

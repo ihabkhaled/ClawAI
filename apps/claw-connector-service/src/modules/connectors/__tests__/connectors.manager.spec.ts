@@ -77,7 +77,7 @@ function mockFetchForProvider(provider: string): void {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
     status: 200,
-    json: () => Promise.resolve(body),
+    text: () => Promise.resolve(JSON.stringify(body)),
   });
 }
 
@@ -92,6 +92,7 @@ const mockConnector = {
   defaultModelId: null,
   baseUrl: null,
   region: null,
+  workspaceId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

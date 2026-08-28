@@ -71,6 +71,10 @@ model Connector {
   defaultModelId  String?           @map("default_model_id")
   baseUrl         String?           @map("base_url")
   region          String?
+  // Anthropic identity-linked keys refuse every call unless the request names
+  // the workspace it acts in. Kept out of `region` on purpose: that field means
+  // an AWS region, and overloading it would make both unreadable.
+  workspaceId     String?           @map("workspace_id")
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")
 

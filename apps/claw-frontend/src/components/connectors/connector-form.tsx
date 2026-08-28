@@ -43,6 +43,8 @@ export function ConnectorForm({
     setBaseUrl,
     region,
     setRegion,
+    workspaceId,
+    setWorkspaceId,
     fieldErrors,
     isEditing,
     pendingLabel,
@@ -73,6 +75,8 @@ export function ConnectorForm({
       setBaseUrl={setBaseUrl}
       region={region}
       setRegion={setRegion}
+      workspaceId={workspaceId}
+      setWorkspaceId={setWorkspaceId}
       defaultBaseUrl={defaultBaseUrl}
     />
   );

@@ -680,6 +680,9 @@ export const fa: TranslationDictionary = {
       'نقطه پایانی پیش‌فرض API را لغو کنید.برای استفاده از پیش‌فرض ارائه‌دهنده، خالی بگذارید.',
     region: 'منطقه',
     regionHelp: 'منطقه AWS که در آن نقطه پایانی Bedrock شما مستقر شده است.',
+    workspaceIdOptional: 'شناسه فضای کاری (اختیاری)',
+    workspaceIdHelp:
+      'فقط برای کلید API انتروپیک مرتبط با هویت لازم است؛ چنین کلیدی تا زمانی که درخواست فضای کاری خود را مشخص نکند رد می\u200cشود. برای کلید محدود به فضای کاری خالی بگذارید.',
     status: 'وضعیت',
     healthy: 'سالم',
     degraded: 'تحقیر شده',
@@ -723,6 +726,7 @@ export const fa: TranslationDictionary = {
     editConnectorDesc: 'پیکربندی کانکتور را به روز کنید',
     namePlaceholder: 'به عنوان مثال، تولید OpenAI',
     regionPlaceholder: 'به عنوان مثال، us-east-1',
+    workspaceIdPlaceholder: 'به عنوان مثال، wrkspc_01AbCd...',
     saveFirstThenTest: 'ابتدا کانکتور را ذخیره کنید سپس تست کنید',
     selectProvider: 'ارائه دهنده ای را انتخاب کنید',
   },

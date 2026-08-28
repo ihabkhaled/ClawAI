@@ -163,6 +163,7 @@ export class ConnectorsManager {
       apiKey,
       baseUrl: connector.baseUrl ?? undefined,
       region: connector.region ?? undefined,
+      workspaceId: connector.workspaceId ?? undefined,
     };
   }
 }

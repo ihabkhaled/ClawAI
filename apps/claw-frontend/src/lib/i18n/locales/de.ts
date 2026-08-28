@@ -692,6 +692,9 @@ export const de: TranslationDictionary = {
       'Überschreibt den Standard-API-Endpunkt. Leer lassen, um den Standard zu verwenden.',
     region: 'Region',
     regionHelp: 'Die AWS-Region, in der Ihr Bedrock-Endpunkt bereitgestellt wird.',
+    workspaceIdOptional: 'Workspace-ID (optional)',
+    workspaceIdHelp:
+      'Nur für einen identitätsgebundenen Anthropic-API-Schlüssel erforderlich, der abgelehnt wird, sofern die Anfrage ihren Workspace nicht benennt. Bei einem workspace-gebundenen Schlüssel leer lassen.',
     status: 'Status',
     healthy: 'Funktionsfähig',
     degraded: 'Beeinträchtigt',
@@ -737,6 +740,7 @@ export const de: TranslationDictionary = {
     editConnectorDesc: 'Connector-Konfiguration aktualisieren',
     namePlaceholder: 'z. B. OpenAI Production',
     regionPlaceholder: 'z. B. us-east-1',
+    workspaceIdPlaceholder: 'z. B. wrkspc_01AbCd...',
     saveFirstThenTest: 'Connector zuerst speichern, dann testen',
     selectProvider: 'Anbieter auswählen',
   },

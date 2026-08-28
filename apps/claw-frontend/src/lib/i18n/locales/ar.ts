@@ -674,6 +674,9 @@ export const ar: TranslationDictionary = {
     baseUrlHelp: 'تجاوز نقطة نهاية API الافتراضية. اتركه فارغاً لاستخدام الافتراضي.',
     region: 'المنطقة',
     regionHelp: 'منطقة AWS التي تم نشر نقطة Bedrock فيها.',
+    workspaceIdOptional: 'معرّف مساحة العمل (اختياري)',
+    workspaceIdHelp:
+      'مطلوب فقط لمفتاح Anthropic المرتبط بالهوية، إذ يُرفض ما لم يحدّد الطلب مساحة عمله. اتركه فارغًا للمفتاح المحدود بمساحة عمل.',
     status: 'الحالة',
     healthy: 'سليم',
     degraded: 'متدهور',
@@ -717,6 +720,7 @@ export const ar: TranslationDictionary = {
     editConnectorDesc: 'تحديث إعدادات الموصّل',
     namePlaceholder: 'مثال: OpenAI Production',
     regionPlaceholder: 'مثال: us-east-1',
+    workspaceIdPlaceholder: 'مثال: wrkspc_01AbCd...',
     saveFirstThenTest: 'احفظ الموصّل أولًا ثم اختبره',
     selectProvider: 'اختر مزوّدًا',
   },

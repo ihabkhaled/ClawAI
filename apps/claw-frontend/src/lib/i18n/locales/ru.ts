@@ -688,6 +688,9 @@ export const ru: TranslationDictionary = {
       'Переопределить API-эндпоинт по умолчанию. Оставьте пустым для значения по умолчанию.',
     region: 'Регион',
     regionHelp: 'Регион AWS, в котором развернут ваш эндпоинт Bedrock.',
+    workspaceIdOptional: 'Идентификатор рабочего пространства (необязательно)',
+    workspaceIdHelp:
+      'Требуется только для ключа API Anthropic, привязанного к личности: такой ключ отклоняется, пока запрос не укажет своё рабочее пространство. Для ключа, ограниченного рабочим пространством, оставьте поле пустым.',
     status: 'Статус',
     healthy: 'Работает',
     degraded: 'Снижено',
@@ -731,6 +734,7 @@ export const ru: TranslationDictionary = {
     editConnectorDesc: 'Обновить конфигурацию коннектора',
     namePlaceholder: 'например, OpenAI Production',
     regionPlaceholder: 'например, us-east-1',
+    workspaceIdPlaceholder: 'например, wrkspc_01AbCd...',
     saveFirstThenTest: 'Сначала сохраните коннектор, затем протестируйте',
     selectProvider: 'Выберите провайдера',
   },

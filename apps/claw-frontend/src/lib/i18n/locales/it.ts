@@ -692,6 +692,9 @@ export const it: TranslationDictionary = {
       "Sovrascrivi l'endpoint API predefinito. Lascia vuoto per usare quello del provider.",
     region: 'Regione',
     regionHelp: 'La regione AWS in cui è distribuito il tuo endpoint Bedrock.',
+    workspaceIdOptional: 'ID dello spazio di lavoro (opzionale)',
+    workspaceIdHelp:
+      "Richiesto solo per una chiave API Anthropic collegata all'identità, che viene rifiutata se la richiesta non indica il proprio spazio di lavoro. Lascia vuoto per una chiave limitata a uno spazio di lavoro.",
     status: 'Stato',
     healthy: 'Integro',
     degraded: 'Degradato',
@@ -736,6 +739,7 @@ export const it: TranslationDictionary = {
     editConnectorDesc: 'Aggiorna la configurazione del connettore',
     namePlaceholder: 'es., OpenAI Production',
     regionPlaceholder: 'es., us-east-1',
+    workspaceIdPlaceholder: 'es., wrkspc_01AbCd...',
     saveFirstThenTest: 'Salva prima il connettore, poi testalo',
     selectProvider: 'Seleziona un provider',
   },

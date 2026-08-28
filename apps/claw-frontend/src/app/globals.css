@@ -1429,13 +1429,14 @@
   }
 
   /*
-   * Mobile toasts are OPAQUE; desktop keeps the translucent tinted glass.
+   * Toasts are OPAQUE at every width.
    *
-   * The tinted variants are 10% alpha, which over a dense chat transcript is
-   * unreadable on a small screen. The tint is painted as a gradient LAYER so it
-   * can sit on top of an opaque background-color on mobile and on top of
-   * nothing (i.e. the page) from `sm:` up — the variant hue survives in both,
-   * and desktop renders pixel-identical to the previous `bg-<variant>/10`.
+   * The tinted variants are 10% alpha. Desktop used to leave the surface
+   * transparent so the tint sat directly on the page — pretty over an empty
+   * background, unreadable over a dense transcript or a table, which is exactly
+   * where an error toast has to be read. The tint stays a gradient LAYER so the
+   * variant hue survives; it now sits on an opaque background at all widths
+   * rather than only below `sm:`.
    *
    * Only the four tinted variants use this. Default and Destructive already
    * paint a fully opaque surface.
@@ -1443,12 +1444,6 @@
   .toast-surface {
     background-color: hsl(var(--background));
     background-image: linear-gradient(hsl(var(--toast-tint) / 0.1), hsl(var(--toast-tint) / 0.1));
-  }
-
-  @media (min-width: 640px) {
-    .toast-surface {
-      background-color: transparent;
-    }
   }
 
   /*

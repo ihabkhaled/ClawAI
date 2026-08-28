@@ -25,6 +25,7 @@ export const createConnectorSchema = z.object({
     .optional()
     .or(z.literal('')),
   region: z.string().max(50, 'Region must be at most 50 characters').optional(),
+  workspaceId: z.string().max(100, 'Workspace ID must be at most 100 characters').optional(),
 });
 
 export const updateConnectorSchema = createConnectorSchema

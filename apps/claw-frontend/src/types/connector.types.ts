@@ -10,6 +10,7 @@ export type Connector = {
   defaultModelId: string | null;
   baseUrl: string | null;
   region: string | null;
+  workspaceId: string | null;
   maskedApiKey: string | null;
   createdAt: string;
   updatedAt: string;
@@ -37,6 +38,7 @@ export type CreateConnectorRequest = {
   apiKey?: string;
   baseUrl?: string;
   region?: string;
+  workspaceId?: string;
 };
 
 export type UpdateConnectorRequest = Partial<CreateConnectorRequest> & {
@@ -70,6 +72,7 @@ export type ConnectorFormFieldErrors = {
   apiKey?: string[];
   baseUrl?: string[];
   region?: string[];
+  workspaceId?: string[];
 };
 
 export type UpdateConnectorParams = {
@@ -97,6 +100,8 @@ export type ConnectorFormStateReturn = {
   setBaseUrl: (value: string) => void;
   region: string;
   setRegion: (value: string) => void;
+  workspaceId: string;
+  setWorkspaceId: (value: string) => void;
   fieldErrors: ConnectorFormFieldErrors;
   isEditing: boolean;
   pendingLabel: string;

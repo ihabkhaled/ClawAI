@@ -672,6 +672,8 @@ export type TranslationDictionary = {
     baseUrlHelp: string;
     region: string;
     regionHelp: string;
+    workspaceIdOptional: string;
+    workspaceIdHelp: string;
     status: string;
     healthy: string;
     degraded: string;
@@ -715,6 +717,7 @@ export type TranslationDictionary = {
     editConnectorDesc: string;
     namePlaceholder: string;
     regionPlaceholder: string;
+    workspaceIdPlaceholder: string;
     saveFirstThenTest: string;
     selectProvider: string;
   };

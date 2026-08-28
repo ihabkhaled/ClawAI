@@ -39,7 +39,7 @@ function mockFetchOk(body: unknown): void {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
     status: 200,
-    json: () => Promise.resolve(body),
+    text: () => Promise.resolve(JSON.stringify(body)),
   });
 }
 
@@ -47,7 +47,7 @@ function mockFetchError(status: number): void {
   global.fetch = jest.fn().mockResolvedValue({
     ok: false,
     status,
-    json: () => Promise.resolve({}),
+    text: () => Promise.resolve('{}'),
   });
 }
 
@@ -97,6 +97,90 @@ describe('AnthropicAdapter', () => {
         'x-api-key': 'sk-ant-test-key',
         'anthropic-version': '2023-06-01',
       });
+    });
+  });
+
+  // --- workspace scoping ---
+
+  describe('anthropic-workspace-id header', () => {
+    // An identity-linked key carries no workspace of its own; Anthropic rejects
+    // every call with a 400 until the request names one.
+    it('sends the workspace id when the connector configures one', async () => {
+      mockFetchOk(mockModelsResponse);
+
+      await adapter.syncModels({ ...mockConfig, workspaceId: 'wrkspc_123' });
+
+      expect(lastRequestHeaders()['anthropic-workspace-id']).toBe('wrkspc_123');
+    });
+
+    // A workspace-scoped key needs no header, and a blank one is itself a 400 —
+    // so an unset or whitespace-only value must omit the header, not send "".
+    it.each([
+      ['unset', undefined],
+      ['empty', ''],
+      ['whitespace only', '   '],
+    ])('omits the header when the workspace id is %s', async (_label, workspaceId) => {
+      mockFetchOk(mockModelsResponse);
+
+      await adapter.syncModels({ ...mockConfig, workspaceId });
+
+      expect(lastRequestHeaders()).not.toHaveProperty('anthropic-workspace-id');
+    });
+
+    it('trims a padded workspace id rather than sending it verbatim', async () => {
+      mockFetchOk(mockModelsResponse);
+
+      await adapter.healthCheck({ ...mockConfig, workspaceId: '  wrkspc_123  ' });
+
+      expect(lastRequestHeaders()['anthropic-workspace-id']).toBe('wrkspc_123');
+    });
+  });
+
+  // --- error reporting ---
+
+  describe('provider error reporting', () => {
+    const workspaceError = {
+      type: 'error',
+      error: {
+        type: 'invalid_request_error',
+        message:
+          'anthropic-workspace-id is required when authenticating with an identity-linked API key; send the id of the workspace this request acts in.',
+      },
+    };
+
+    function mockFetchErrorBody(status: number, body: unknown): void {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status,
+        text: () => Promise.resolve(JSON.stringify(body)),
+      });
+    }
+
+    // A bare "status 400" cannot tell an operator whether the key, the URL or
+    // the workspace is at fault. The provider says which; repeat it.
+    it('carries the provider explanation into the health check result', async () => {
+      mockFetchErrorBody(400, workspaceError);
+
+      const result = await adapter.healthCheck(mockConfig);
+
+      expect(result.status).toBe(ConnectorStatus.DOWN);
+      expect(result.errorMessage).toContain('anthropic-workspace-id is required');
+    });
+
+    it('carries the provider explanation into the sync failure', async () => {
+      mockFetchErrorBody(400, workspaceError);
+
+      await expect(adapter.syncModels(mockConfig)).rejects.toThrow(
+        /anthropic-workspace-id is required/,
+      );
+    });
+
+    it('falls back to the bare status when the body explains nothing', async () => {
+      mockFetchErrorBody(500, {});
+
+      const result = await adapter.healthCheck(mockConfig);
+
+      expect(result.errorMessage).toBe('Anthropic API returned status 500');
     });
   });
 
@@ -171,7 +255,7 @@ describe('AnthropicAdapter', () => {
       mockFetchError(400);
 
       await expect(adapter.syncModels(mockConfig)).rejects.toThrow(
-        'Failed to fetch Anthropic models: HTTP 400',
+        'Failed to fetch Anthropic models: Anthropic API returned status 400',
       );
     });
 

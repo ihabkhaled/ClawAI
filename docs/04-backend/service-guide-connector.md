@@ -133,6 +133,12 @@ Each cloud provider has specific API patterns:
   (including the native `document` content part for PDFs) travel on the separate
   `anthropic-beta` header. The value is pinned in `anthropic.constants.ts` and a
   test fails if it moves — do not "bump" it to enable a feature.
+- **Workspace ID**: an _identity-linked_ key (tied to a user, not scoped to a
+  workspace) is rejected on every call until the request names its workspace.
+  The connector stores it in `Connector.workspaceId` and the adapter sends
+  `anthropic-workspace-id`. A workspace-scoped key needs none — and because a
+  blank header is itself a 400, the adapter omits it when the value is unset or
+  whitespace rather than sending an empty string.
 - **Model list**: synced live from `GET /v1/models`; `display_name` is used when
   the provider sends one, otherwise the id is title-cased.
 - **Capabilities**: every Claude model is registered as streaming + tools +

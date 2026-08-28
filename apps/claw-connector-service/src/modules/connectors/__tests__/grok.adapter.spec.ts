@@ -31,7 +31,7 @@ function mockFetchOk(body: unknown): void {
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
     status: 200,
-    json: () => Promise.resolve(body),
+    text: () => Promise.resolve(JSON.stringify(body)),
   });
 }
 
@@ -39,7 +39,7 @@ function mockFetchError(status: number): void {
   global.fetch = jest.fn().mockResolvedValue({
     ok: false,
     status,
-    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(JSON.stringify({})),
   });
 }
 

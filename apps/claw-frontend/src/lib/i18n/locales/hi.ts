@@ -683,6 +683,9 @@ export const hi: TranslationDictionary = {
       'डिफ़ॉल्ट API एंडपॉइंट को ओवरराइड करें। प्रोवाइडर डिफ़ॉल्ट उपयोग करने के लिए खाली छोड़ दें।',
     region: 'क्षेत्र',
     regionHelp: 'वह AWS क्षेत्र जहां आपका Bedrock एंडपॉइंट तैनात है।',
+    workspaceIdOptional: 'वर्कस्पेस आईडी (वैकल्पिक)',
+    workspaceIdHelp:
+      'केवल पहचान से जुड़ी Anthropic API कुंजी के लिए आवश्यक, जिसे तब तक अस्वीकार किया जाता है जब तक अनुरोध अपना वर्कस्पेस न बताए। वर्कस्पेस-सीमित कुंजी के लिए खाली छोड़ें।',
     status: 'स्थिति',
     healthy: 'स्वस्थ',
     degraded: 'कमज़ोर',
@@ -726,6 +729,7 @@ export const hi: TranslationDictionary = {
     editConnectorDesc: 'कनेक्टर कॉन्फ़िगरेशन अपडेट करें',
     namePlaceholder: 'उदा., OpenAI Production',
     regionPlaceholder: 'उदा., us-east-1',
+    workspaceIdPlaceholder: 'उदा., wrkspc_01AbCd...',
     saveFirstThenTest: 'पहले कनेक्टर सहेजें, फिर परीक्षण करें',
     selectProvider: 'एक प्रदाता चुनें',
   },

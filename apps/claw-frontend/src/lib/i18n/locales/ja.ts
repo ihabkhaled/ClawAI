@@ -682,6 +682,9 @@ export const ja: TranslationDictionary = {
       'デフォルトの API エンドポイントをオーバーライドします。プロバイダーのデフォルトを使用するには、空白のままにします。',
     region: '地域',
     regionHelp: 'Bedrock エンドポイントがデプロイされている AWS リージョン。',
+    workspaceIdOptional: 'ワークスペース ID（任意）',
+    workspaceIdHelp:
+      'ID 連携型の Anthropic API キーの場合にのみ必要です。このキーはリクエストがワークスペースを指定しない限り拒否されます。ワークスペース限定のキーでは空欄のままにしてください。',
     status: 'ステータス',
     healthy: '健康',
     degraded: '劣化しました',
@@ -725,6 +728,7 @@ export const ja: TranslationDictionary = {
     editConnectorDesc: 'コネクタ構成の更新',
     namePlaceholder: '例: OpenAI Production',
     regionPlaceholder: '例: us-east-1',
+    workspaceIdPlaceholder: '例: wrkspc_01AbCd...',
     saveFirstThenTest: 'まずコネクタを保存してからテストしてください',
     selectProvider: 'プロバイダーを選択してください',
   },

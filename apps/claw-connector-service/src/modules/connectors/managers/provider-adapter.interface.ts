@@ -19,6 +19,9 @@ export type ConnectorConfig = {
   apiKey: string;
   baseUrl?: string;
   region?: string;
+  // Only some providers scope a key to a workspace. Anthropic's identity-linked
+  // keys reject every request that does not name one.
+  workspaceId?: string;
 };
 
 export type ProviderCapabilities = {

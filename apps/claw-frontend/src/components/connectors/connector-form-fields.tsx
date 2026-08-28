@@ -35,6 +35,8 @@ export function ConnectorFormFields({
   setBaseUrl,
   region,
   setRegion,
+  workspaceId,
+  setWorkspaceId,
   defaultBaseUrl,
 }: ConnectorFormFieldsProps): React.ReactElement {
   const { t } = useTranslation();
@@ -160,6 +162,24 @@ export function ConnectorFormFields({
           <FieldHint text={t('connectors.regionHelp')} />
           {fieldErrors.region ? (
             <p className="text-destructive mt-1 text-sm">{fieldErrors.region[0]}</p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {provider === ConnectorProvider.ANTHROPIC ? (
+        <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="connector-workspace-id" className="text-sm font-medium">
+            {t('connectors.workspaceIdOptional')}
+          </label>
+          <Input
+            id="connector-workspace-id"
+            value={workspaceId}
+            onChange={(e) => setWorkspaceId(e.target.value)}
+            placeholder={t('connectors.workspaceIdPlaceholder')}
+          />
+          <FieldHint text={t('connectors.workspaceIdHelp')} />
+          {fieldErrors.workspaceId ? (
+            <p className="text-destructive mt-1 text-sm">{fieldErrors.workspaceId[0]}</p>
           ) : null}
         </div>
       ) : null}
