@@ -71,6 +71,13 @@ export type MemoryRecordResponse = {
   type: string;
   content: string;
   isEnabled: boolean;
+  /**
+   * An explicit "always use this" from the author.
+   *
+   * Optional because memory-service has not always returned it; absent is
+   * treated as not pinned rather than as a reason to drop the memory.
+   */
+  pinned?: boolean;
 };
 
 export type ContextPackResponse = {

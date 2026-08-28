@@ -227,6 +227,45 @@ The re-run publishes `MESSAGE_CREATED` with `regenerate: true` — the same flag
 regeneration uses — so routing does not bill it against the daily message
 ceiling. It is the same turn, run again.
 
+## Memory and context-pack injection (2026-08-28)
+
+Reproduced and fixed with `scripts/regression/context-memory-regression.mjs`,
+which plants a codeword the model cannot otherwise know and asks a question only
+answerable from it. **A count is not evidence of injection** — that was the bug.
+
+Four defects, all measured before and after:
+
+1. **Short prompts skipped retrieval entirely.** `shouldSkipExpensiveContext`
+   returned true for any prompt of three words or fewer, and
+   `fetchAssembledInputs` then returned `[]` for memories, context-pack items
+   AND workspace context. "the codename?" got nothing. Only a pleasantry is
+   skipped now.
+
+2. **Standing memories were filtered by topic.** `filterMemoriesForIntent` kept
+   a memory only if it looked preference-like by keyword or shared >= 0.28
+   lexical overlap with the question. An `INSTRUCTION` — "always end every reply
+   with X" — shares no vocabulary with "what is a database index", so it was
+   dropped from every prompt that did not happen to discuss instructions.
+   `selectMemoriesForPrompt` now splits **standing** (INSTRUCTION, PREFERENCE,
+   pinned) from **topical** (FACT, SUMMARY). Standing memories are never
+   filtered by topic; the overlap test and the cap apply to topical only.
+
+3. **The cap was three, across all kinds.** Five saved facts reached the model as
+   three. `PROMPT_TOPICAL_MEMORY_LIMIT` is 8 and applies to topical memories
+   only, so facts can never crowd out an instruction.
+
+4. **The reported count was the fetched count.** `metadata.memoryCount` used
+   `context.memories.length` — everything retrieved — while the prompt carried
+   the filtered subset. That is literally the reported symptom: "I see it
+   written 1 memory but it is not sent to the model". Use
+   `ContextAssemblyManager.injectedMemories(context)` for any number shown to a
+   user; never `context.memories.length`.
+
+Note that `context-preview.service.ts` retrieves through memory-service's
+`/internal/memories/retrieve`, which is a **different** path from the one the
+real prompt uses here. The preview and the prompt can still disagree; treat the
+preview as indicative, not authoritative.
+
 ## Thread titles are derived, never generated (2026-08-27)
 
 A thread is named after its opening message the first time an assistant answer

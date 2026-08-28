@@ -1105,7 +1105,13 @@ export class ChatMessagesService implements OnModuleInit {
       context,
       threadSettings,
     );
-    const contextMetadata = { memoryCount: context.memories.length, fileIds: fileIds ?? [] };
+    // The INJECTED count, not the fetched one. These are different numbers and
+    // reporting the fetched one is how the transcript came to claim a memory
+    // was in play that the prompt never carried.
+    const contextMetadata = {
+      memoryCount: this.contextAssemblyManager.injectedMemories(context).length,
+      fileIds: fileIds ?? [],
+    };
     const assistantMessage = await this.storeAssistantResponse(
       originalPayload,
       llmResponse,

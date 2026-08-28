@@ -6,11 +6,14 @@ import {
   mapResearchModeToWorkflow,
   runResearch,
 } from '../../../common/utilities';
+import { MemoryRecordType } from '../../../common/enums/memory-record-type.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import {
   APPROX_CHARS_PER_TOKEN,
   MEMORY_FETCH_LIMIT,
+  PROMPT_TOPICAL_MEMORY_LIMIT,
   THREAD_CONTEXT_LIMIT,
+  TOPICAL_MEMORY_OVERLAP_THRESHOLD,
   WORKSPACE_CONTEXT_LIMIT,
 } from '../../../common/constants';
 import { type ChatMessage, RoutingMode } from '../../../generated/prisma';
@@ -274,7 +277,7 @@ export class ContextAssemblyManager {
       context.threadMessages,
       currentIntent,
     );
-    const relevantMemories = this.filterMemoriesForIntent(context.memories, currentIntent);
+    const relevantMemories = this.selectMemoriesForPrompt(context.memories, currentIntent);
     const relevantWorkspaceCitations = this.filterWorkspaceCitationsForIntent(
       context.workspaceCitations,
       currentIntent,
@@ -361,7 +364,7 @@ export class ContextAssemblyManager {
       context.threadMessages,
       currentIntent,
     );
-    const relevantMemories = this.filterMemoriesForIntent(context.memories, currentIntent);
+    const relevantMemories = this.selectMemoriesForPrompt(context.memories, currentIntent);
     const relevantWorkspaceCitations = this.filterWorkspaceCitationsForIntent(
       context.workspaceCitations,
       currentIntent,
@@ -740,6 +743,20 @@ export class ContextAssemblyManager {
     return typeof kind === 'string' ? kind : null;
   }
 
+  /**
+   * The memories this context will actually put in front of the model.
+   *
+   * Exposed so callers report the injected count rather than the fetched one.
+   * They diverged, and the divergence was the whole complaint: the transcript
+   * said a memory was in play while the prompt never carried it.
+   */
+  injectedMemories(context: AssembledContext): AssembledContext['memories'] {
+    return this.selectMemoriesForPrompt(
+      context.memories,
+      this.extractCurrentIntent(context.threadMessages),
+    );
+  }
+
   private extractCurrentIntent(messages: ChatMessage[]): string {
     const lastUser = [...messages].reverse().find((msg) => msg.role === 'USER');
     return this.normalizeIntentText(lastUser?.content ?? '');
@@ -796,7 +813,26 @@ export class ContextAssemblyManager {
     return selected.length > 0 ? selected.slice(-4) : messages.slice(-1);
   }
 
-  private filterMemoriesForIntent(
+  /**
+   * Chooses which memories reach the prompt.
+   *
+   * Public because the count reported back to the user has to be the count that
+   * was actually injected. It used to be `context.memories.length` — everything
+   * fetched — so a user could be told a memory was in play while this method
+   * had already dropped it. "I see it written 1 memory but the model does not
+   * consider it" was exactly that gap.
+   *
+   * Two kinds, treated differently on purpose:
+   *
+   *   standing  — an instruction or a preference. It applies to every turn, so
+   *               relevance to the current question is not a meaningful test
+   *               and is not applied. "Always answer in bullet points" shares
+   *               no words with "what is a database index"; filtering it by
+   *               vocabulary overlap silently disabled it everywhere.
+   *   topical   — a fact or a summary, relevant only when the question is about
+   *               it. These keep the overlap test and the cap.
+   */
+  selectMemoriesForPrompt(
     memories: MemoryRecordResponse[],
     currentIntent: string,
   ): MemoryRecordResponse[] {
@@ -804,16 +840,38 @@ export class ContextAssemblyManager {
       return memories;
     }
 
-    const relevant = memories
-      .filter((memory) => {
-        if (this.isPreferenceLikeMemory(memory)) {
-          return true;
-        }
-        return this.calculateTokenOverlap(memory.content, currentIntent) >= 0.28;
-      })
-      .slice(0, 3);
+    const standing = memories.filter((memory) => this.isStandingMemory(memory));
+    const topical = memories
+      .filter((memory) => !this.isStandingMemory(memory))
+      .filter(
+        (memory) =>
+          this.calculateTokenOverlap(memory.content, currentIntent) >=
+          TOPICAL_MEMORY_OVERLAP_THRESHOLD,
+      )
+      .slice(0, PROMPT_TOPICAL_MEMORY_LIMIT);
 
-    return relevant;
+    return [...standing, ...topical];
+  }
+
+  /**
+   * A memory that applies to every turn regardless of subject.
+   *
+   * Type first, because that is the author's own declaration of intent and does
+   * not depend on wording. The keyword test is kept for memories saved before
+   * the types were used consistently, and for a pinned memory, which is an
+   * explicit "always use this".
+   */
+  private isStandingMemory(memory: MemoryRecordResponse): boolean {
+    if (
+      memory.type === MemoryRecordType.INSTRUCTION ||
+      memory.type === MemoryRecordType.PREFERENCE
+    ) {
+      return true;
+    }
+    if (memory.pinned === true) {
+      return true;
+    }
+    return this.isPreferenceLikeMemory(memory);
   }
 
   private filterWorkspaceCitationsForIntent(
@@ -922,11 +980,14 @@ export class ContextAssemblyManager {
       return true;
     }
 
-    const words = prompt.split(/\s+/).filter((word) => word.length > 0);
-    if (words.length <= 3) {
-      return true;
-    }
-
+    // A short question is still a question. This used to skip retrieval for
+    // anything of three words or fewer, which meant "the codename?" and
+    // "what is my name" got no memories, no context-pack items and no
+    // workspace context at all — measured, not theorised: both fail in
+    // scripts/regression/context-memory-regression.mjs against the old rule.
+    //
+    // Only a pleasantry genuinely needs nothing, so only a pleasantry is
+    // skipped.
     return /^(hi|hello|hey|yo|thanks|thank you|good (morning|afternoon|evening))(?:[!.?]*)$/.test(
       prompt,
     );

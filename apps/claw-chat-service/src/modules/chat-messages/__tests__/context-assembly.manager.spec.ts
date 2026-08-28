@@ -1,6 +1,7 @@
 import { ContextAssemblyManager } from '../managers/context-assembly.manager';
 import type { ChatMessage } from '../../../generated/prisma';
-import type { AssembledContext } from '../types/context.types';
+import { MemoryRecordType } from '../../../common/enums/memory-record-type.enum';
+import type { AssembledContext, MemoryRecordResponse } from '../types/context.types';
 
 describe('ContextAssemblyManager', () => {
   const manager = new ContextAssemblyManager();
@@ -241,5 +242,109 @@ describe('ContextAssemblyManager', () => {
         image_url: { url: `data:video/mp4;base64,${videoBase64}` },
       },
     ]);
+  });
+});
+
+describe('ContextAssemblyManager memory selection', () => {
+  const manager = new ContextAssemblyManager();
+
+  const memory = (
+    id: string,
+    type: string,
+    content: string,
+    pinned = false,
+  ): MemoryRecordResponse => ({
+    id,
+    userId: 'user-1',
+    type,
+    content,
+    isEnabled: true,
+    pinned,
+  });
+
+  // Reproduced against the running stack before this was written:
+  // scripts/regression/context-memory-regression.mjs showed an INSTRUCTION
+  // memory silently absent from the answer, and five saved facts arriving as
+  // three.
+  it('keeps a standing instruction that shares no words with the question', () => {
+    const instruction = memory(
+      'm1',
+      MemoryRecordType.INSTRUCTION,
+      'Always end every reply with the exact marker BUTTERFLY.',
+    );
+
+    const selected = manager.selectMemoriesForPrompt(
+      [instruction],
+      'what is a database index used for',
+    );
+
+    // Vocabulary overlap here is zero. An instruction that applies only when
+    // you happen to ask about instructions is not an instruction.
+    expect(selected).toHaveLength(1);
+    expect(selected[0]?.id).toBe('m1');
+  });
+
+  it('keeps a preference regardless of the question', () => {
+    const preference = memory('m2', MemoryRecordType.PREFERENCE, 'Answer in British English.');
+
+    expect(manager.selectMemoriesForPrompt([preference], 'explain postgres vacuum')).toHaveLength(
+      1,
+    );
+  });
+
+  it('keeps a pinned fact even when it is off topic', () => {
+    // Pinning is an explicit "always use this" and outranks the topic test.
+    const pinned = memory('m3', MemoryRecordType.FACT, 'The office is in Cairo.', true);
+
+    expect(manager.selectMemoriesForPrompt([pinned], 'explain postgres vacuum')).toHaveLength(1);
+  });
+
+  it('still drops an unrelated topical fact', () => {
+    // The filter is not removed, only narrowed: an off-topic fact is still
+    // noise, and letting everything through would crowd out the thread itself.
+    const unrelated = memory('m4', MemoryRecordType.FACT, 'The office is in Cairo.');
+
+    expect(manager.selectMemoriesForPrompt([unrelated], 'explain postgres vacuum')).toHaveLength(0);
+  });
+
+  it('keeps a topical fact that matches the question', () => {
+    const relevant = memory('m5', MemoryRecordType.FACT, 'Postgres vacuum reclaims dead tuples.');
+
+    expect(
+      manager.selectMemoriesForPrompt([relevant], 'explain postgres vacuum please'),
+    ).toHaveLength(1);
+  });
+
+  it('carries more than three relevant memories', () => {
+    // The old cap was three, applied across every kind at once. Five saved
+    // codenames reached the model as three, which is the measured failure.
+    const facts = Array.from({ length: 5 }, (_, i) =>
+      memory(`f${String(i)}`, MemoryRecordType.FACT, `Registered codename number ${String(i)}.`),
+    );
+
+    const selected = manager.selectMemoriesForPrompt(
+      facts,
+      'list every registered codename number you know',
+    );
+
+    expect(selected).toHaveLength(5);
+  });
+
+  it('never lets topical facts crowd out standing memories', () => {
+    const instruction = memory('i1', MemoryRecordType.INSTRUCTION, 'Always reply in bullets.');
+    const facts = Array.from({ length: 12 }, (_, i) =>
+      memory(`f${String(i)}`, MemoryRecordType.FACT, `Registered codename number ${String(i)}.`),
+    );
+
+    const selected = manager.selectMemoriesForPrompt(
+      [...facts, instruction],
+      'list every registered codename number you know',
+    );
+
+    expect(selected.some((m) => m.id === 'i1')).toBe(true);
+  });
+
+  it('returns an empty list unchanged', () => {
+    expect(manager.selectMemoriesForPrompt([], 'anything')).toEqual([]);
   });
 });

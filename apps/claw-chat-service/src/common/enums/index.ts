@@ -22,3 +22,4 @@ export { OrchestrationStageStatus } from './orchestration-stage-status.enum';
 export { GeminiUploadPhase } from './gemini-upload-phase.enum';
 export { ProviderToolDialect } from './provider-tool-dialect.enum';
 export { ToolChoiceMode } from './tool-choice-mode.enum';
+export { MemoryRecordType } from './memory-record-type.enum';

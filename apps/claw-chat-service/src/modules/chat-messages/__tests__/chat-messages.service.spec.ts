@@ -88,6 +88,9 @@ const mockExecutionManager = (): Partial<Record<keyof ChatExecutionManager, jest
 });
 
 const mockContextAssembly = (): Partial<Record<keyof ContextAssemblyManager, jest.Mock>> => ({
+  // The injected count is asked for on every stored answer, because the number
+  // the transcript reports has to be the number the prompt carried.
+  injectedMemories: jest.fn().mockReturnValue([]),
   assemble: jest.fn().mockResolvedValue({
     systemPrompt: null,
     threadMessages: [],
