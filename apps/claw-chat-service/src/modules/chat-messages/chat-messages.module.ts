@@ -21,6 +21,7 @@ import { PipelineManager } from './managers/pipeline.manager';
 import { CostEnsembleManager } from './managers/cost-ensemble.manager';
 import { RolePackManager } from './managers/role-pack.manager';
 import { SearchFirstManager } from './managers/search-first.manager';
+import { ChatStreamBusService } from './services/chat-stream-bus.service';
 import { ChatStreamService } from './services/chat-stream.service';
 import { RouterTraceStreamService } from './services/router-trace-stream.service';
 import { StreamCancellationService } from './services/stream-cancellation.service';
@@ -73,6 +74,7 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     CostEnsembleManager,
     RolePackManager,
     SearchFirstManager,
+    ChatStreamBusService,
     ChatStreamService,
     RouterTraceStreamService,
     StreamCancellationService,

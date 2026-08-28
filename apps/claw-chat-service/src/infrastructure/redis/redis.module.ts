@@ -1,10 +1,14 @@
 import { Global, Module } from '@nestjs/common';
 import Redis from 'ioredis';
 import { AppConfig } from '../../app/config/app.config';
-import { REDIS_CLIENT, RUNTIME_V2_REDIS_CLIENT } from './constants/redis.constants';
+import {
+  CHAT_STREAM_SUBSCRIBER_CLIENT,
+  REDIS_CLIENT,
+  RUNTIME_V2_REDIS_CLIENT,
+} from './constants/redis.constants';
 import { RedisService } from './redis.service';
-import { RedisClientAdapter } from './redis-client.adapter';
-import type { RedisClientPort } from './types/redis-client.types';
+import { RedisClientAdapter, RedisSubscriberAdapter } from './redis-client.adapter';
+import type { RedisClientPort, RedisSubscriberPort } from './types/redis-client.types';
 
 @Global()
 @Module({
@@ -36,8 +40,23 @@ import type { RedisClientPort } from './types/redis-client.types';
         );
       },
     },
+    {
+      provide: CHAT_STREAM_SUBSCRIBER_CLIENT,
+      useFactory: (): RedisSubscriberPort => {
+        const config = AppConfig.get();
+        return new RedisSubscriberAdapter(
+          // Retries are unlimited on purpose. A subscriber that gives up leaves
+          // this replica connected to clients it can never send another frame
+          // to, and nothing else in the system would notice.
+          new Redis(config.REDIS_URL, {
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false,
+          }),
+        );
+      },
+    },
     RedisService,
   ],
-  exports: [RedisService],
+  exports: [RedisService, CHAT_STREAM_SUBSCRIBER_CLIENT, REDIS_CLIENT],
 })
 export class RedisModule {}

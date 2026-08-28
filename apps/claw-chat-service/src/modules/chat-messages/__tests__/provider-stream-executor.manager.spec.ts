@@ -1,3 +1,4 @@
+import { createFakeChatStreamBus } from './helpers/fake-chat-stream-bus.helper';
 import { AiStreamProtocol, AiStreamStage, StreamEventType } from '../../../common/enums';
 import { httpStream as httpStreamMock } from '../../../common/utilities';
 import { ChatStreamService } from '../services/chat-stream.service';
@@ -48,7 +49,8 @@ describe('ProviderStreamExecutor — rich final metrics', () => {
   let captured: StreamEvent[];
 
   beforeEach(() => {
-    streamService = new ChatStreamService();
+    streamService = new ChatStreamService(createFakeChatStreamBus());
+    streamService.onModuleInit();
     captured = [];
     streamService.eventBus.subscribe((e) => captured.push(e));
     executor = new ProviderStreamExecutor(streamService);

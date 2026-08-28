@@ -1,3 +1,4 @@
+import { createFakeChatStreamBus } from '../../__tests__/helpers/fake-chat-stream-bus.helper';
 import { Test } from '@nestjs/testing';
 import { firstValueFrom } from 'rxjs';
 import { UserRole } from '../../../../common/enums';
@@ -8,7 +9,8 @@ import { StreamControlService } from '../../services/stream-control.service';
 
 describe('ChatStreamController', () => {
   it('honors replay=false so a reused thread starts with the next live event', async () => {
-    const streamService = new ChatStreamService();
+    const streamService = new ChatStreamService(createFakeChatStreamBus());
+    streamService.onModuleInit();
     streamService.emitCompletion('thread-reused', 'OLLAMA', 'gemma3:4b');
     const module = await Test.createTestingModule({
       controllers: [ChatStreamController],

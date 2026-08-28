@@ -1,3 +1,4 @@
+import { createFakeChatStreamBus } from './helpers/fake-chat-stream-bus.helper';
 import { AiStreamStage, ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ChatStreamService } from '../services/chat-stream.service';
 
@@ -5,7 +6,10 @@ describe('ChatStreamService', () => {
   let service: ChatStreamService;
 
   beforeEach(() => {
-    service = new ChatStreamService();
+    service = new ChatStreamService(createFakeChatStreamBus());
+    // Frames now reach subscribers through the bus, and the handler that does
+    // that is registered on init. Without this the service emits into nothing.
+    service.onModuleInit();
   });
 
   it('emits safe live model progress beats while the model call is in flight', () => {
@@ -148,12 +152,12 @@ describe('ChatStreamService', () => {
     });
   });
 
-  it('keeps a bounded recent event buffer for reconnect replay', () => {
+  it('keeps a bounded recent event buffer for reconnect replay', async () => {
     service.emitRequestAccepted('thread-buffer');
     service.emitRouterStarted('thread-buffer', 'AUTO');
     service.emitProviderSelected('thread-buffer', 'local-ollama', 'qwen3:1.7b');
 
-    expect(service.getRecentEvents('thread-buffer')).toEqual([
+    await expect(service.getRecentEvents('thread-buffer')).resolves.toEqual([
       expect.objectContaining({ sequence: 1, type: StreamEventType.REQUEST_ACCEPTED }),
       expect.objectContaining({ sequence: 2, type: StreamEventType.ROUTER_STARTED }),
       expect.objectContaining({ sequence: 3, type: StreamEventType.PROVIDER_SELECTED }),
@@ -173,7 +177,7 @@ describe('ChatStreamService', () => {
     expect(received).toEqual([StreamEventType.PROVIDER_SELECTED]);
   });
 
-  it("does not replay a prior run's terminal event into the next run on the same thread", () => {
+  it("does not replay a prior run's terminal event into the next run on the same thread", async () => {
     service.emitRequestAccepted('thread-reconnect');
     service.emitRouterStarted('thread-reconnect', 'AUTO');
     service.emitCompletion('thread-reconnect', 'OLLAMA', 'gemma3:4b');
@@ -186,18 +190,23 @@ describe('ChatStreamService', () => {
     const subscription = service
       .streamEvents('thread-reconnect')
       .subscribe((event) => received.push(event.type));
+    // The replay is a Redis read now, so replayed frames arrive on a later
+    // microtask instead of during subscribe(). Live frames are buffered from
+    // the moment of subscription, so nothing emitted in this gap is lost.
+    await Promise.resolve();
     subscription.unsubscribe();
 
     expect(received).toEqual([StreamEventType.REQUEST_ACCEPTED]);
   });
 
-  it('preserves recent-event replay by default for existing browser clients', () => {
+  it('preserves recent-event replay by default for existing browser clients', async () => {
     service.emitRequestAccepted('thread-browser');
     const received: StreamEventType[] = [];
     const subscription = service
       .streamEvents('thread-browser')
       .subscribe((event) => received.push(event.type));
 
+    await Promise.resolve();
     subscription.unsubscribe();
 
     expect(received).toEqual([StreamEventType.REQUEST_ACCEPTED]);
@@ -299,7 +308,7 @@ describe('ChatStreamService', () => {
     );
   });
 
-  it('emitResearchProgress increments sequence and stores frames in the replay buffer', () => {
+  it('emitResearchProgress increments sequence and stores frames in the replay buffer', async () => {
     service.emitResearchProgress('thread-replay', {
       stage: AiStreamStage.RESEARCH_STARTED,
       details: { mode: 'SEARCH', query: 'q' },
@@ -309,7 +318,7 @@ describe('ChatStreamService', () => {
       details: { mode: 'SEARCH', query: 'q', sourcesCount: 0 },
     });
 
-    expect(service.getRecentEvents('thread-replay')).toEqual([
+    await expect(service.getRecentEvents('thread-replay')).resolves.toEqual([
       expect.objectContaining({
         sequence: 1,
         type: StreamEventType.RESEARCH_PROGRESS,

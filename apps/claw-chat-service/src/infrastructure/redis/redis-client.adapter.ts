@@ -1,7 +1,7 @@
 import type Redis from 'ioredis';
 
 import { RUNTIME_V2_REDIS_DEADLINE_MS_MAX } from './constants/redis.constants';
-import type { RedisClientPort } from './types/redis-client.types';
+import type { RedisClientPort, RedisSubscriberPort } from './types/redis-client.types';
 
 export class RedisClientAdapter implements RedisClientPort {
   constructor(private readonly client: Redis) {}
@@ -66,6 +66,39 @@ export class RedisClientAdapter implements RedisClientPort {
 
   disconnect(reconnect: boolean): void {
     this.client.disconnect(reconnect);
+  }
+
+  quit(): Promise<string> {
+    return this.client.quit();
+  }
+
+  lrange(key: string, start: number, stop: number): Promise<string[]> {
+    return this.client.lrange(key, start, stop);
+  }
+}
+
+/**
+ * Wraps a connection that is only ever used to subscribe.
+ *
+ * `onReady` exists because ioredis drops subscriptions when a connection is
+ * re-established: after a Redis restart or a network blip the client silently
+ * reconnects, and without re-subscribing this replica would go on serving SSE
+ * connections that never receive another frame — the failure looks exactly like
+ * a model that stopped responding.
+ */
+export class RedisSubscriberAdapter implements RedisSubscriberPort {
+  constructor(private readonly client: Redis) {}
+
+  async subscribe(channel: string): Promise<void> {
+    await this.client.subscribe(channel);
+  }
+
+  onMessage(handler: (channel: string, payload: string) => void): void {
+    this.client.on('message', handler);
+  }
+
+  onReady(handler: () => void): void {
+    this.client.on('ready', handler);
   }
 
   quit(): Promise<string> {

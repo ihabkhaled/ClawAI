@@ -14,6 +14,24 @@ export interface RedisClientPort {
   ): Promise<unknown>;
   disconnect(reconnect: boolean): void;
   quit(): Promise<string>;
+  /** Reads a whole list. Used for the chat replay buffer. */
+  lrange(key: string, start: number, stop: number): Promise<string[]>;
+}
+
+/**
+ * A connection dedicated to subscribing.
+ *
+ * Separate from `RedisClientPort` because Redis puts a subscribed connection
+ * into a mode where it accepts almost nothing else — issuing an ordinary
+ * command on it fails at runtime. Modelling that as its own port makes the
+ * restriction a compile-time fact instead of a comment someone has to read.
+ */
+export interface RedisSubscriberPort {
+  subscribe(channel: string): Promise<void>;
+  onMessage(handler: (channel: string, payload: string) => void): void;
+  /** Fires on every (re)connection, so callers can re-assert subscriptions. */
+  onReady(handler: () => void): void;
+  quit(): Promise<string>;
 }
 
 export interface RuntimeV2RedisCommand {

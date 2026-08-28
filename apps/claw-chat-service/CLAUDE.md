@@ -421,3 +421,53 @@ already has the sequencing, cursor and idempotency guarantees this needs.
 A restart mid-run drops the partial text. That is accepted: the assistant row is
 written on completion and the client's two-second poll renders it, so what is
 lost is the typing animation, not the answer.
+
+## The chat stream bus is Redis-backed (2026-08-28)
+
+`ChatStreamService` no longer keeps anything about a stream in process memory.
+Its event bus, replay buffer and event-id sequence all live in Redis, because
+RabbitMQ hands a routed message to exactly ONE replica while the browser's SSE
+connection is pinned to whichever replica nginx routed it to. Those are the same
+instance only by coincidence.
+
+Four invariants, each with the failure it prevents:
+
+- **`emit()` never touches the local `Subject` directly.** It publishes, and the
+  frame comes back through this replica's own subscription like everyone else's.
+  One delivery path means one ordering, identical everywhere, and no
+  de-duplicating a locally-emitted frame against its own echo.
+- **`sequence` and `eventId` are assigned by Redis, not by the service.** They
+  must be monotonic per thread across every replica: the browser discards a
+  progress stage whose sequence is below one it has already rendered, so a
+  per-replica counter would make a retry picked up by a second replica look
+  stale and silently vanish from the UI.
+- **`emit()` stays synchronous.** It is called from ~30 sites across every
+  orchestration mode; making it awaitable would put a Redis round-trip in front
+  of each. Ordering still holds because ioredis writes commands to one
+  connection in call order and Redis executes them in arrival order — frames are
+  sequenced in the order `emit` ran, not the order their promises settle.
+- **`resetReplay` clears the buffer and leaves the sequence alone.** Resetting
+  the counter would restart numbering at 1 and trip the stale-stage guard above.
+
+The publish is one Lua script so the sequence, the replay record and the fan-out
+are atomic. As three round-trips, a client could be handed a replay missing the
+frame it had just been shown live. The script deliberately does not
+`cjson.decode` the frame: cjson cannot tell an empty array from an empty object
+and encodes both as `{}`, so the first array field anyone adds to `StreamEvent`
+would corrupt silently, in every frame, with no test that would catch it.
+
+**Replay is now asynchronous**, so replayed frames arrive on a later microtask
+rather than during `subscribe()`. `streamEvents` therefore subscribes to live
+frames BEFORE reading the replay and de-duplicates by `eventId` — subscribing
+afterwards, as it did while the buffer was in memory, drops anything emitted
+during the read. The old code got away with it only because there was no gap.
+
+Redis being unreachable degrades to local-only delivery rather than silence, so
+a single-replica install behaves exactly as it did before.
+
+This removes the first of the blockers named in
+[ADR-076](../../docs/13-adr/adr-076-chat-stream-durability.md). It does **not**
+by itself make the service safe to scale — `StreamCancellationService` still
+holds its `AbortController`s in memory, so the Stop button would hit a random
+replica and silently do nothing. The single-replica rule stands until that is
+fixed too.

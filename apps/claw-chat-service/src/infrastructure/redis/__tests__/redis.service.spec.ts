@@ -14,6 +14,7 @@ const client = (): jest.Mocked<RedisClientPort> => ({
   evalRuntimeV2: jest.fn<RedisClientPort['evalRuntimeV2']>(),
   disconnect: jest.fn<RedisClientPort['disconnect']>(),
   quit: jest.fn<RedisClientPort['quit']>(),
+  lrange: jest.fn<RedisClientPort['lrange']>(),
 });
 
 describe('RedisService atomic boundary', () => {

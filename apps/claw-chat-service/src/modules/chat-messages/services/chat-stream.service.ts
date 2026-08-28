@@ -1,6 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { concat, filter, from, type Observable, Subject } from 'rxjs';
+import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import {
+  concat,
+  filter,
+  finalize,
+  from,
+  mergeMap,
+  type Observable,
+  ReplaySubject,
+  Subject,
+} from 'rxjs';
 import { ROUTER_TRACE_TERMINAL_STAGE_ID } from '@claw/shared-constants';
+import { CHAT_STREAM_REPLAY_LIMIT } from '../constants/chat-stream-bus.constants';
+import { ChatStreamBusService } from './chat-stream-bus.service';
 import {
   type ContentDeltaEmitInput,
   type LifecycleEmitInput,
@@ -22,12 +33,23 @@ import {
 } from '../../../common/enums';
 
 @Injectable()
-export class ChatStreamService {
+export class ChatStreamService implements OnModuleInit {
   private readonly logger = new Logger(ChatStreamService.name);
-  private readonly recentEvents = new Map<string, StreamEvent[]>();
-  private readonly sequenceByThread = new Map<string, number>();
-  private static readonly RECENT_EVENT_LIMIT = 100;
   readonly eventBus = new Subject<StreamEvent>();
+
+  constructor(private readonly bus: ChatStreamBusService) {}
+
+  /**
+   * Every frame reaches this replica's subscribers through the bus, including
+   * the ones this replica emitted itself. One delivery path means one ordering,
+   * identical on every replica, and no de-duplication of a locally-emitted frame
+   * against its own echo.
+   */
+  onModuleInit(): void {
+    this.bus.onEvent((event) => {
+      this.eventBus.next(event);
+    });
+  }
   private readonly responseProgressBeats = [
     {
       label: 'Understanding your request',
@@ -59,7 +81,10 @@ export class ChatStreamService {
     // DONE from the shared per-thread buffer before any live event for the
     // new run arrives, and the UI reads that stale DONE as immediate
     // completion and stops listening.
-    this.recentEvents.delete(threadId);
+    // Fire-and-forget: the frames this clears belong to a finished run, and
+    // making every caller await a Redis delete to start a new one would put a
+    // round-trip in front of the first thing the user sees.
+    void this.bus.resetReplay(threadId);
     this.emit({
       threadId,
       type: StreamEventType.REQUEST_ACCEPTED,
@@ -516,40 +541,66 @@ export class ChatStreamService {
     });
   }
 
-  getRecentEvents(threadId: string): StreamEvent[] {
-    return [...(this.recentEvents.get(threadId) ?? [])];
+  getRecentEvents(threadId: string): Promise<StreamEvent[]> {
+    return this.bus.replay(threadId);
   }
 
+  /**
+   * The frames for one thread: what was missed, then what happens next.
+   *
+   * Live frames are buffered from the instant of subscription — BEFORE the
+   * replay is read — because that read is now a Redis round-trip. Subscribing
+   * afterwards, as this did while the buffer was in memory, drops anything
+   * emitted during the gap; the old code got away with it only because there
+   * was no gap.
+   *
+   * The buffer is then filtered against the ids the replay already delivered,
+   * so a frame present in both is shown once.
+   */
   streamEvents(threadId: string, replayRecent = true): Observable<StreamEvent> {
     const liveEvents = this.eventBus.pipe(filter((event) => event.threadId === threadId));
     if (!replayRecent) {
       return liveEvents;
     }
-    return concat(from(this.getRecentEvents(threadId)), liveEvents);
+
+    const buffered = new ReplaySubject<StreamEvent>(CHAT_STREAM_REPLAY_LIMIT);
+    const subscription = liveEvents.subscribe(buffered);
+
+    return from(this.getRecentEvents(threadId)).pipe(
+      mergeMap((replayed) => {
+        const alreadySent = new Set(replayed.map((event) => event.eventId));
+        return concat(
+          from(replayed),
+          buffered.pipe(filter((event) => !alreadySent.has(event.eventId))),
+        );
+      }),
+      finalize(() => {
+        subscription.unsubscribe();
+      }),
+    );
   }
 
+  /**
+   * Sanitizes a frame and hands it to the Redis fan-out.
+   *
+   * It is NOT pushed onto the local bus here. Every replica — including this
+   * one — receives it back through the subscription, so there is exactly one
+   * delivery path and every reader sees the same frames in the same order. The
+   * alternative, emitting locally and publishing, means this replica's clients
+   * see a different ordering from everyone else's and need de-duplicating.
+   *
+   * `sequence` and `eventId` are assigned by Redis, not here, because they must
+   * be monotonic per thread across all replicas: the browser drops a progress
+   * stage whose sequence is lower than one it has already shown, so a per-replica
+   * counter would make a retry picked up by a second replica look stale and
+   * vanish from the UI.
+   */
   private emit(event: StreamEvent): void {
-    const safeEvent = this.decorateEvent(this.sanitizeEvent(event));
-    this.storeRecentEvent(safeEvent);
-    this.eventBus.next(safeEvent);
+    this.bus.publish(this.stampCreatedAt(this.sanitizeEvent(event)));
   }
 
-  private decorateEvent(event: StreamEvent): StreamEvent {
-    const nextSequence = (this.sequenceByThread.get(event.threadId) ?? 0) + 1;
-    this.sequenceByThread.set(event.threadId, nextSequence);
-
-    return {
-      ...event,
-      eventId: `${event.threadId}:${String(nextSequence)}`,
-      sequence: nextSequence,
-      createdAt: new Date().toISOString(),
-    };
-  }
-
-  private storeRecentEvent(event: StreamEvent): void {
-    const current = this.recentEvents.get(event.threadId) ?? [];
-    const next = [...current, event].slice(-ChatStreamService.RECENT_EVENT_LIMIT);
-    this.recentEvents.set(event.threadId, next);
+  private stampCreatedAt(event: StreamEvent): StreamEvent {
+    return { ...event, createdAt: new Date().toISOString() };
   }
 
   private sanitizeEvent(event: StreamEvent): StreamEvent {
