@@ -91,6 +91,7 @@ export function useFloatingObstacleClearance(
       columnRight: column.right,
       viewportHeight: window.innerHeight,
       gapPx: FLOATING_CLEARANCE_GAP_PX,
+      edge: config.edge,
     });
 
     document.documentElement.style.setProperty(config.variable, `${clearance}px`);
@@ -111,7 +112,7 @@ export function useFloatingObstacleClearance(
     }
     settlePassesRef.current += 1;
     settleRef.current?.();
-  }, [config.selector, config.variable, syncBoxObserver, viewportRef]);
+  }, [config.edge, config.selector, config.variable, syncBoxObserver, viewportRef]);
 
   const scheduleMeasure = useCallback((): void => {
     if (frameRef.current !== null) {

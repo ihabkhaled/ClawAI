@@ -328,18 +328,25 @@ The viewport used to reserve space for exactly one obstacle — the mobile botto
 nav — as a hardcoded height, so toasts landed on the feedback launcher, the chat
 FAB and the PWA install prompt.
 
-Add `data-floating-obstacle` to any element that floats near the bottom edge.
-`useFloatingObstacleClearance` measures it and moves the toast column. Never
+**Toasts stack from the TOP edge** (2026-08-28), below the header. This reverses
+the earlier move to the bottom: the bottom is where the launcher, the chat FAB,
+the install prompt, the composer and the mobile nav already live, so the column
+had to dodge five things and sat somewhere different on every page.
+
+Add `data-top-obstacle` to any band pinned across the top, and
+`data-rail-obstacle` to bottom-anchored furniture the floating rail would land
+on. `useFloatingObstacleClearance` measures them and writes the offset. Never
 hardcode a clearance that encodes another component's height, and never assemble
 a Tailwind class by interpolation — Tailwind scans source text, so a computed
 class is one it never generates. Anything dynamic goes through a CSS custom
 property with a static `var()` in the class string and a fallback.
 
-**There are two registries.** `data-floating-obstacle` is what the toast column
-dodges; `data-rail-obstacle` is what the floating rail dodges — bottom-anchored
-page furniture such as the composer. One hook measures both, picked by the
-`config` argument. The chain runs furniture → rail → toast column. Merging the
-two would ask the launcher to dodge itself.
+**Two registries, opposite edges.** `data-top-obstacle` → `--toast-top-clearance`
+for the toast column; `data-rail-obstacle` → `--rail-obstacle-clearance` for the
+rail. One hook measures both; `FloatingClearanceEdge` picks the edge. The old
+`data-floating-obstacle` registry existed only so a bottom-anchored toast column
+could dodge the launcher, and was removed with the move rather than left as a
+tag that looks meaningful and does nothing.
 
 Two lifecycle traps, both silent: a cleanup that cancels a queued frame must
 also null the handle (otherwise the scheduler believes one is pending forever

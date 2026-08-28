@@ -6,15 +6,22 @@ import { TOAST_VARIANT_CONTAINER_CLASSES } from '@/constants/toast.constants';
 import { ToastVariant } from '@/enums/toast-variant.enum';
 
 describe('ToastViewport placement', () => {
-  // Regression: the viewport used to be `top-0 … sm:bottom-0`, which put toasts
-  // at the TOP on mobile — the hardest place to reach and directly under the
-  // notch — and only moved them to the bottom on desktop.
+  // Toasts stack from the TOP edge, by product decision (2026-08-28).
   //
-  // The offset is now `bottom-[var(--toast-obstacle-clearance,0px)]` rather than
-  // a literal `bottom-0`: useFloatingObstacleClearance measures whatever is
-  // floating and writes the number into that variable. The 0px fallback is what
-  // keeps this bottom-anchored before the first measurement.
-  it('anchors to the bottom on mobile', () => {
+  // This reverses an earlier call. The viewport was moved to the bottom because
+  // the top is harder to reach one-handed and sits under the notch; the bottom
+  // then turned out to be where everything else already lives — the feedback
+  // launcher, the chat FAB, the install prompt, the composer and the mobile nav
+  // — so the column had to dodge all of them and landed somewhere different on
+  // every page. The notch objection still stands and is answered by `safe-top`
+  // rather than by moving back.
+  //
+  // The offset is a variable, not a literal `top-0`: the header is pinned up
+  // there and a trial banner stacks under it, so
+  // `useFloatingObstacleClearance` measures the real bands and writes the
+  // number. The 0px fallback keeps the column top-anchored before the first
+  // measurement and with no JS.
+  it('anchors to the top, below whatever is pinned there', () => {
     render(
       <ToastProvider>
         <ToastViewport data-testid="toast-viewport" />
@@ -22,11 +29,15 @@ describe('ToastViewport placement', () => {
     );
 
     const viewport = screen.getByTestId('toast-viewport');
-    expect(viewport.className).toContain('bottom-[var(--toast-obstacle-clearance,0px)]');
-    expect(viewport.className).not.toContain('top-0');
+    expect(viewport.className).toContain('top-[var(--toast-top-clearance,0px)]');
+    expect(viewport.className).not.toContain('bottom-0');
+    expect(viewport.className).not.toContain('bottom-[var(');
   });
 
-  it('clears the mobile bottom nav via the safe-area utility', () => {
+  it('keeps clear of the notch via the safe-area utility', () => {
+    // `.safe-top` assigns padding, so it beats a bare `p-*`; it is paired with
+    // a base class so the inset and the padding cooperate instead of the inset
+    // winning alone and leaving 0px on a device without a notch.
     render(
       <ToastProvider>
         <ToastViewport data-testid="toast-viewport" />
@@ -34,8 +45,22 @@ describe('ToastViewport placement', () => {
     );
 
     const viewport = screen.getByTestId('toast-viewport');
-    expect(viewport.className).toContain('safe-bottom');
-    expect(viewport.className).toContain('safe-bottom-base-nav');
+    expect(viewport.className).toContain('safe-top');
+    expect(viewport.className).toContain('safe-top-base-4');
+  });
+
+  it('stacks downward from the top rather than upward', () => {
+    // `flex-col-reverse` belongs to a bottom-anchored column. Left in place it
+    // would put the newest toast furthest from the edge it grows from.
+    render(
+      <ToastProvider>
+        <ToastViewport data-testid="toast-viewport" />
+      </ToastProvider>,
+    );
+
+    const viewport = screen.getByTestId('toast-viewport');
+    expect(viewport.className).toContain('flex-col');
+    expect(viewport.className).not.toContain('flex-col-reverse');
   });
 });
 

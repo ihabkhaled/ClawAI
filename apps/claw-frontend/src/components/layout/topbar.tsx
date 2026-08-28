@@ -20,7 +20,13 @@ export function Topbar() {
   const title = useTopbarTitle();
 
   return (
-    <header className="border-border/30 bg-card/85 sticky top-0 z-30 flex h-16 w-full min-w-0 items-center justify-between gap-1 border-b px-2 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-[hsl(var(--surface-glass))] sm:gap-2 sm:px-6">
+    <header
+      // The toast column stacks from the top edge and measures around whatever
+      // is pinned there; without this it would cover the search box and the
+      // account menu.
+      data-top-obstacle=""
+      className="border-border/30 bg-card/85 sticky top-0 z-30 flex h-16 w-full min-w-0 items-center justify-between gap-1 border-b px-2 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-[hsl(var(--surface-glass))] sm:gap-2 sm:px-6"
+    >
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
         <Button
           variant="ghost"

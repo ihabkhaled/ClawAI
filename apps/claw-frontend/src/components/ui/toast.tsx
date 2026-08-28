@@ -22,14 +22,19 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      // The bottom offset is a live measurement, not a constant. This used to
-      // reserve exactly one obstacle -- the mobile bottom nav -- so toasts sat
-      // on top of the feedback launcher, the chat FAB and the install prompt.
-      // `--toast-obstacle-clearance` is written by useFloatingObstacleClearance
-      // from the real boxes of everything tagged data-floating-obstacle, and
-      // defaults to 0 so the column still renders before the first measurement
-      // and in any environment without JS.
-      'safe-bottom safe-bottom-base-nav fixed bottom-[var(--toast-obstacle-clearance,0px)] z-[100] flex max-h-[calc(100dvh-var(--mobile-bottom-nav-height))] w-full flex-col-reverse gap-2 px-3 transition-[bottom] duration-200 sm:right-0 sm:px-4 md:max-w-[420px]',
+      // Toasts stack from the TOP edge. The bottom of the screen is where every
+      // floating control already lives -- the launcher, the chat FAB, the
+      // install prompt, the composer, the mobile nav -- and a column that has
+      // to dodge all of them ends up somewhere different on every page.
+      //
+      // The top offset is still a live measurement, not a constant: the header
+      // is pinned up there, and a trial banner stacks under it. Hardcoding a
+      // header height is what put toasts on top of things in the first place.
+      // `--toast-top-clearance` is written by useFloatingObstacleClearance from
+      // the real boxes of everything tagged data-top-obstacle, and defaults to
+      // 0 so the column still renders before the first measurement and in any
+      // environment without JS.
+      'safe-top safe-top-base-4 fixed top-[var(--toast-top-clearance,0px)] z-[100] flex max-h-dvh w-full flex-col gap-2 px-3 transition-[top] duration-200 sm:right-0 sm:px-4 md:max-w-[420px]',
       className,
     )}
     {...props}
@@ -47,7 +52,7 @@ const TOAST_BASE_CLASSES = cn(
   'data-[state=open]:animate-in data-[state=closed]:animate-out',
   'data-[swipe=end]:animate-out data-[state=closed]:fade-out-80',
   'data-[state=closed]:slide-out-to-right-full',
-  'data-[state=open]:slide-in-from-bottom-full',
+  'data-[state=open]:slide-in-from-top-full',
   'max-sm:grid-cols-[auto_minmax(0,1fr)]',
 );
 

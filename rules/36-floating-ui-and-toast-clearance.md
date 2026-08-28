@@ -2,21 +2,28 @@
 
 ## Purpose
 
-Toasts stack from the bottom edge. So does the mobile bottom nav, the chat
-"new thread" FAB, the global feedback launcher, and the PWA install prompt. Every
-one of those was written by somebody who reasonably assumed their corner was
-theirs.
+Anything pinned to an edge is competing for that edge with everything else
+pinned to it, and each was written by somebody who reasonably assumed the corner
+was theirs.
 
-The result, measured in the running app at 929×861: the toast column occupies
-x 509–929 rising from y 845, the feedback launcher sits at 861–913 × 797–837, and
-the install prompt at 209–721 × 670–829. Toasts covered both. On a phone the
-column starts at exactly `nav height + 1rem` — which is exactly where the chat
-FAB begins.
+The bottom edge is the crowded one: the mobile bottom nav, the chat "new thread"
+FAB, the global feedback launcher, the PWA install prompt and the composer all
+live there. Measured in the running app at 929×861, a toast column rising from
+y 845 covered the feedback launcher (861–913 × 797–837) and the install prompt
+(209–721 × 670–829); on a phone it started at exactly `nav height + 1rem`, which
+is exactly where the chat FAB begins.
 
-The viewport had reserved space for precisely one obstacle, the mobile bottom
-nav, as a hardcoded height. It knew nothing about anything else, and it could not:
-a constant cannot know whether a button is on screen right now, how tall it is at
-this breakpoint, or which side it sits on in Arabic.
+**Toasts now stack from the TOP edge** (product decision, 2026-08-28). This
+reverses an earlier call that moved them to the bottom for one-handed reach. The
+bottom turned out to be where everything else already lives, so the column had
+to dodge five different things and landed somewhere different on every page. The
+reach and notch objections still stand and are answered by `safe-top` plus the
+measured offset, not by moving back.
+
+The top edge is not empty either — the header is pinned there, and a trial
+banner stacks under it — so the same measurement applies, just from the other
+edge. A constant cannot know whether a band is on screen right now, how tall it
+is at this breakpoint, or which side it sits on in Arabic.
 
 ## Applies to
 
@@ -25,14 +32,17 @@ above the page) in the region where toasts stack, and the toast viewport itself.
 
 ## Mandatory rules
 
-1. **A floating element declares itself.** Add `data-floating-obstacle` to any
-   element that floats over the page near the bottom edge.
-   `useFloatingObstacleClearance` measures the real box and the toast column
-   moves out of the way. Nothing else is required of the element.
+1. **An edge-pinned element declares itself.** Add `data-top-obstacle` to any
+   band pinned across the top (headers, banners), and `data-rail-obstacle` to
+   bottom-anchored page furniture the floating rail would land on (the
+   composer). `useFloatingObstacleClearance` measures the real box and the
+   dependent column moves. Nothing else is required of the element.
 
-2. **Never hardcode a clearance.** `bottom-20`, `bottom-[5rem]` and
-   `nav height + 1rem` are how the collision happened. The offset is
-   `--toast-obstacle-clearance`, written from a live measurement.
+2. **Never hardcode a clearance.** `bottom-20`, `bottom-[5rem]`,
+   `nav height + 1rem` and `top-16` are how the collision happened. The offset
+   is a custom property written from a live measurement:
+   `--toast-top-clearance` for the toast column, `--rail-obstacle-clearance`
+   for the rail.
 
 3. **A computed Tailwind class is a class that does not exist.** Tailwind scans
    source text, so `` `bottom-[${offset}]` `` generates nothing. Anything dynamic
@@ -46,11 +56,15 @@ above the page) in the region where toasts stack, and the toast viewport itself.
    third control takes the next slot; it does not invent an offset.
 
 5. **There are two registries, and they are not interchangeable.** The toast
-   column clears floating controls (`data-floating-obstacle`). The rail clears
-   bottom-anchored page furniture (`data-rail-obstacle`) — a composer, a
-   persistent action bar. Merging them would ask the launcher to dodge itself,
-   and would let page furniture push toasts around for no reason. The chain runs
-   one way: furniture → rail → toast column, each measured from the one below.
+   column clears top-anchored bands (`data-top-obstacle`). The rail clears
+   bottom-anchored page furniture (`data-rail-obstacle`). They measure from
+   opposite edges — `FloatingClearanceEdge` picks which — and merging them would
+   ask each column to dodge things it never touches.
+
+   A third registry, `data-floating-obstacle`, existed while toasts were
+   bottom-anchored so the column could dodge the launcher and the FAB. Moving
+   toasts to the top left it with no consumer, and it was removed rather than
+   left as a tag that looks meaningful and does nothing.
 
    The composer is the case that made this necessary. On a thread page the
    feedback launcher sat squarely on top of it, covering the "Preview context"
@@ -91,7 +105,7 @@ above the page) in the region where toasts stack, and the toast viewport itself.
 
 ## Prohibited patterns
 
-- A `fixed` element near the bottom edge with no `data-floating-obstacle`.
+- A band pinned across the top edge with no `data-top-obstacle`.
 - A bottom-anchored composer or action bar with no `data-rail-obstacle`.
 - A cleanup that cancels a pending frame without clearing its handle.
 - A magic-number bottom offset that encodes another component's height.
@@ -102,7 +116,7 @@ above the page) in the region where toasts stack, and the toast viewport itself.
 
 ## Definition of done
 
-- [ ] Every new floating element carries `data-floating-obstacle`.
+- [ ] Every new band pinned across the top carries `data-top-obstacle`.
 - [ ] Every new bottom-anchored page element the rail would land on carries
       `data-rail-obstacle`.
 - [ ] No new hardcoded clearance encodes another component's height.

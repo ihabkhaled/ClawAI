@@ -1,26 +1,20 @@
-/**
- * The floating-element registry, as a DOM contract rather than a list.
- *
- * A hardcoded list of obstacles goes stale the moment somebody adds a floating
- * button, and it cannot know whether that button is on screen right now, how
- * tall it is at this breakpoint, or which side it sits on in Arabic. So an
- * element declares itself instead: it carries the attribute below, and the
- * clearance is *measured*.
- *
- * Add `data-floating-obstacle` to any element that floats above the page in the
- * region where toasts stack, and the toast column will make room for it.
- */
-export const FLOATING_OBSTACLE_ATTRIBUTE = 'data-floating-obstacle';
-export const FLOATING_OBSTACLE_SELECTOR = '[data-floating-obstacle]';
+import { FloatingClearanceEdge } from '@/enums/floating-clearance-edge.enum';
 
 /**
- * The custom property the toast viewport reads.
+ * The top-anchored registry: what the toast column has to clear.
  *
- * A CSS variable rather than a computed class: Tailwind scans source text, so a
- * class assembled at runtime is one it never generates. The viewport keeps one
- * static `calc()` and the number inside it moves.
+ * Toasts stack from the top edge, and the top edge already belongs to the app
+ * header — and, when a trial is running, to the banner stacked under it. A
+ * column pinned to `top-0` covers the search box, the language picker and the
+ * account menu, which is the same collision the bottom edge had, moved.
+ *
+ * Add `data-top-obstacle` to any band pinned across the top of the page.
  */
-export const FLOATING_CLEARANCE_VARIABLE = '--toast-obstacle-clearance';
+export const TOP_OBSTACLE_ATTRIBUTE = 'data-top-obstacle';
+export const TOP_OBSTACLE_SELECTOR = '[data-top-obstacle]';
+
+/** The custom property the toast viewport reads. */
+export const TOAST_TOP_CLEARANCE_VARIABLE = '--toast-top-clearance';
 
 /** Air between the tallest obstacle and the first toast. */
 export const FLOATING_CLEARANCE_GAP_PX = 12;
@@ -59,20 +53,22 @@ export const RAIL_OBSTACLE_SELECTOR = '[data-rail-obstacle]';
 /** The custom property the rail slot classes read. */
 export const RAIL_CLEARANCE_VARIABLE = '--rail-obstacle-clearance';
 
-/** What the toast column measures: every registered floating control. */
+/** What the toast column measures: the bands pinned across the top. */
 export const FLOATING_TOAST_CLEARANCE_CONFIG = {
-  selector: FLOATING_OBSTACLE_SELECTOR,
-  variable: FLOATING_CLEARANCE_VARIABLE,
+  selector: TOP_OBSTACLE_SELECTOR,
+  variable: TOAST_TOP_CLEARANCE_VARIABLE,
+  edge: FloatingClearanceEdge.TOP,
 } as const;
 
 /** What the rail measures: bottom-anchored page furniture. */
 export const FLOATING_RAIL_CLEARANCE_CONFIG = {
   selector: RAIL_OBSTACLE_SELECTOR,
   variable: RAIL_CLEARANCE_VARIABLE,
+  edge: FloatingClearanceEdge.BOTTOM,
 } as const;
 
-/** Every attribute that puts an element into one of the two registries. */
+/** Every attribute that puts an element into one of the registries. */
 export const FLOATING_MEASURED_ATTRIBUTES: readonly string[] = [
-  FLOATING_OBSTACLE_ATTRIBUTE,
+  TOP_OBSTACLE_ATTRIBUTE,
   RAIL_OBSTACLE_ATTRIBUTE,
 ];

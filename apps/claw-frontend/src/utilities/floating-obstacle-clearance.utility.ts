@@ -1,4 +1,5 @@
 import { FLOATING_CLEARANCE_MAX_RATIO } from '@/constants/floating-obstacle.constants';
+import { FloatingClearanceEdge } from '@/enums/floating-clearance-edge.enum';
 import type { FloatingClearanceInput, FloatingObstacleRect } from '@/types';
 
 /** A zero-area node is display:none or not laid out yet — not an obstacle. */
@@ -33,14 +34,22 @@ export function resolveFloatingClearance(input: FloatingClearanceInput): number 
   const blocking = input.obstacles
     .filter(isRendered)
     .filter((rect) => overlapsColumn(rect, input.columnLeft, input.columnRight))
-    // An obstacle entirely above the fold does not sit between the bottom edge
-    // and the toasts, so it reserves nothing.
+    // An obstacle entirely off screen does not sit between the measured edge
+    // and the column, so it reserves nothing.
     .filter((rect) => rect.bottom > 0 && rect.top < input.viewportHeight);
 
-  if (blocking.length === 0) {return 0;}
+  if (blocking.length === 0) {
+    return 0;
+  }
 
-  const highestTop = Math.min(...blocking.map((rect) => rect.top));
-  const clearance = input.viewportHeight - highestTop + input.gapPx;
+  const clearance =
+    input.edge === FloatingClearanceEdge.TOP
+      ? // Down from the top edge: clear the lowest bottom, so a column starting
+        // below it clears every top-anchored band — a header with a trial
+        // banner stacked under it is two obstacles, not one.
+        Math.max(...blocking.map((rect) => rect.bottom)) + input.gapPx
+      : // Up from the bottom edge: clear the highest top.
+        input.viewportHeight - Math.min(...blocking.map((rect) => rect.top)) + input.gapPx;
 
   return Math.max(0, Math.min(clearance, input.viewportHeight * FLOATING_CLEARANCE_MAX_RATIO));
 }

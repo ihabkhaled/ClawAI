@@ -95,10 +95,7 @@ export function PwaManager(): React.ReactElement | null {
 
   if (isMinimized) {
     return (
-      <div
-        className="safe-bottom pointer-events-auto fixed start-4 end-20 bottom-[4.75rem] z-[120] flex justify-center sm:inset-x-0 sm:bottom-8"
-        data-floating-obstacle=""
-      >
+      <div className="safe-bottom pointer-events-auto fixed start-4 end-20 bottom-[4.75rem] z-[120] flex justify-center sm:inset-x-0 sm:bottom-8">
         <Button onClick={() => setIsMinimized(false)} className="rounded-full shadow-lg">
           <Download className="me-2 h-4 w-4" />
           {t('pwa.expand')}
@@ -120,10 +117,7 @@ export function PwaManager(): React.ReactElement | null {
     // tap meant for it, so the end-side gap is reserved on mobile rather than
     // relying on z-order. On wider screens the panel is centred at the bottom,
     // where it clears the button on its own.
-    <div
-      className="safe-bottom safe-bottom-base-5 bg-background/95 shadow-floating pointer-events-auto fixed start-4 end-20 bottom-[4.75rem] z-[120] mx-auto flex max-w-lg flex-col gap-3 rounded-xl border p-5 backdrop-blur sm:inset-x-0 sm:bottom-8"
-      data-floating-obstacle=""
-    >
+    <div className="safe-bottom safe-bottom-base-5 bg-background/95 shadow-floating pointer-events-auto fixed start-4 end-20 bottom-[4.75rem] z-[120] mx-auto flex max-w-lg flex-col gap-3 rounded-xl border p-5 backdrop-blur sm:inset-x-0 sm:bottom-8">
       {isOffline ? (
         <div className="flex items-center gap-3">
           <span className="bg-warning/10 text-warning flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">

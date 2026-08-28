@@ -3,6 +3,7 @@ import type { UseFormReturn } from 'react-hook-form';
 import type { ToastData } from '@/components/ui/use-toast';
 import type { MessageFeedback } from '@/enums';
 import type { EmailVerificationOutcome } from '@/enums/email-verification-outcome.enum';
+import type { FloatingClearanceEdge } from '@/enums/floating-clearance-edge.enum';
 import type { PasswordInputType } from '@/enums/password-input-type.enum';
 import type { ScrollDirection } from '@/enums/scroll-direction.enum';
 import type { AdminCreateUserFormValues } from '@/lib/validation/admin-create-user.schema';
@@ -165,6 +166,8 @@ export type FloatingClearanceConfig = {
   selector: string;
   /** The custom property that receives the resulting pixel value. */
   variable: string;
+  /** Which edge the column is anchored to, and therefore measured from. */
+  edge: FloatingClearanceEdge;
 };
 
 export type UseFloatingObstacleClearanceReturn = {

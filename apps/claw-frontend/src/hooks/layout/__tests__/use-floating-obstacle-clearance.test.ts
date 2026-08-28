@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { FLOATING_CLEARANCE_VARIABLE } from '@/constants/floating-obstacle.constants';
+import { TOAST_TOP_CLEARANCE_VARIABLE } from '@/constants/floating-obstacle.constants';
 import { useFloatingObstacleClearance } from '@/hooks/layout/use-floating-obstacle-clearance';
 
 // jsdom reports every box as 0x0, so the numbers here come from stubs. The
@@ -15,15 +15,15 @@ function stubRect(element: Element, rect: Partial<DOMRect>): void {
 
 function makeViewport(): HTMLElement {
   const viewport = document.createElement('ol');
-  stubRect(viewport, { left: 500, right: 930, top: 800, bottom: 860 });
+  stubRect(viewport, { left: 500, right: 930, top: 0, bottom: 60 });
   document.body.appendChild(viewport);
   return viewport;
 }
 
 function makeObstacle(): HTMLElement {
   const obstacle = document.createElement('button');
-  obstacle.setAttribute('data-floating-obstacle', '');
-  stubRect(obstacle, { left: 860, right: 912, top: 796, bottom: 836 });
+  obstacle.setAttribute('data-top-obstacle', '');
+  stubRect(obstacle, { left: 0, right: 929, top: 0, bottom: 64 });
   document.body.appendChild(obstacle);
   return obstacle;
 }
@@ -45,7 +45,7 @@ describe('useFloatingObstacleClearance', () => {
 
   afterEach(() => {
     document.body.innerHTML = '';
-    document.documentElement.style.removeProperty(FLOATING_CLEARANCE_VARIABLE);
+    document.documentElement.style.removeProperty(TOAST_TOP_CLEARANCE_VARIABLE);
     vi.unstubAllGlobals();
   });
 
@@ -57,7 +57,7 @@ describe('useFloatingObstacleClearance', () => {
     await flushFrames();
 
     // A pixel value, not the arithmetic: the number is the utility's test.
-    expect(document.documentElement.style.getPropertyValue(FLOATING_CLEARANCE_VARIABLE)).toMatch(
+    expect(document.documentElement.style.getPropertyValue(TOAST_TOP_CLEARANCE_VARIABLE)).toMatch(
       /^\d+px$/,
     );
   });
@@ -73,12 +73,12 @@ describe('useFloatingObstacleClearance', () => {
     const first = renderHook(() => useFloatingObstacleClearance({ current: viewport }));
     first.unmount();
 
-    expect(document.documentElement.style.getPropertyValue(FLOATING_CLEARANCE_VARIABLE)).toBe('');
+    expect(document.documentElement.style.getPropertyValue(TOAST_TOP_CLEARANCE_VARIABLE)).toBe('');
 
     renderHook(() => useFloatingObstacleClearance({ current: viewport }));
     await flushFrames();
 
-    expect(document.documentElement.style.getPropertyValue(FLOATING_CLEARANCE_VARIABLE)).toMatch(
+    expect(document.documentElement.style.getPropertyValue(TOAST_TOP_CLEARANCE_VARIABLE)).toMatch(
       /^\d+px$/,
     );
   });
@@ -91,6 +91,6 @@ describe('useFloatingObstacleClearance', () => {
     await flushFrames();
     unmount();
 
-    expect(document.documentElement.style.getPropertyValue(FLOATING_CLEARANCE_VARIABLE)).toBe('');
+    expect(document.documentElement.style.getPropertyValue(TOAST_TOP_CLEARANCE_VARIABLE)).toBe('');
   });
 });
