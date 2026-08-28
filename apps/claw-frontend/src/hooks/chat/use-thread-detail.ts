@@ -8,13 +8,18 @@ import { useVirtualizedMessages } from '@/hooks/chat/use-virtualized-messages';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import { logger } from '@/utilities';
+import { buildTranscriptSignature } from '@/utilities/transcript-signature.utility';
 
 export function useThreadDetail(threadId: string) {
   const queryClient = useQueryClient();
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const messageCountBeforeSend = useRef(0);
-  const waitingSuppressedRef = useRef(false);
+  // The transcript this hook has already concluded a run for. Scoped to that
+  // transcript rather than a plain boolean: a boolean disabled the recovery
+  // below for the rest of the thread's life, so a run started by anything that
+  // does not announce itself never got a subscription or a poll.
+  const suppressedSignatureRef = useRef<string | null>(null);
 
   const threadQuery = useQuery({
     queryKey: queryKeys.threads.detail(threadId),
@@ -68,9 +73,19 @@ export function useThreadDetail(threadId: string) {
     // sent, and on a thread that already fills a page the count does not grow,
     // so the spinner and the three-minute poll would keep running after the
     // answer had already rendered.
-    waitingSuppressedRef.current = true;
+    suppressedSignatureRef.current = buildTranscriptSignature(
+      messagesList.length,
+      lastMessage?.id ?? null,
+    );
     setIsWaitingForResponse(false);
-  }, [streamCompletedAt, isWaitingForResponse, queryClient, threadId]);
+  }, [
+    streamCompletedAt,
+    isWaitingForResponse,
+    queryClient,
+    threadId,
+    messagesList.length,
+    lastMessage?.id,
+  ]);
 
   // When SSE reports an error, immediately refetch messages and stop polling.
   // The backend stores an error ASSISTANT message, so the refetch will pick it up.
@@ -160,7 +175,8 @@ export function useThreadDetail(threadId: string) {
   useEffect(() => {
     if (
       !isWaitingForResponse &&
-      !waitingSuppressedRef.current &&
+      suppressedSignatureRef.current !==
+        buildTranscriptSignature(messagesList.length, lastMessage?.id ?? null) &&
       messagesList.length > 0 &&
       lastMessage?.role === MessageRole.USER &&
       !virtualizedMessages.isLoading
@@ -168,7 +184,13 @@ export function useThreadDetail(threadId: string) {
       messageCountBeforeSend.current = messagesList.length - 1;
       setIsWaitingForResponse(true);
     }
-  }, [messagesList.length, lastMessage?.role, virtualizedMessages.isLoading, isWaitingForResponse]);
+  }, [
+    messagesList.length,
+    lastMessage?.role,
+    lastMessage?.id,
+    virtualizedMessages.isLoading,
+    isWaitingForResponse,
+  ]);
 
   const startWaitingForResponse = useCallback((): void => {
     logger.debug({
@@ -178,15 +200,18 @@ export function useThreadDetail(threadId: string) {
       details: { threadId, currentMessageCount: messagesList.length },
     });
     messageCountBeforeSend.current = messagesList.length;
-    waitingSuppressedRef.current = false;
+    suppressedSignatureRef.current = null;
     resetStream();
     setIsWaitingForResponse(true);
   }, [messagesList.length, resetStream, threadId]);
 
   const stopWaitingForResponse = useCallback((): void => {
-    waitingSuppressedRef.current = true;
+    suppressedSignatureRef.current = buildTranscriptSignature(
+      messagesList.length,
+      lastMessage?.id ?? null,
+    );
     setIsWaitingForResponse(false);
-  }, []);
+  }, [messagesList.length, lastMessage?.id]);
 
   return {
     thread: threadQuery.data ?? null,

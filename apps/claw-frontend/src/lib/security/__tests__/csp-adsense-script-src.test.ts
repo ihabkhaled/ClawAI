@@ -82,4 +82,35 @@ describe('CSP script-src for AdSense', () => {
       expect(directive(off, name)).not.toContain('googlesyndication.com');
     }
   });
+
+  it('lets the AdSense invalid-traffic beacon through, in both directives it uses', () => {
+    // Caught in the browser console on the live site: the beacon was blocked
+    // while ads rendered normally. A blocked connect-src is invisible from the
+    // page — nothing looks broken — but the signal Google uses to separate real
+    // traffic from fraudulent traffic never arrives, and that signal protects
+    // the ad account. It is reached by fetch AND from an invisible iframe, so
+    // naming it in only one directive leaves it blocked half the time.
+    const csp = buildContentSecurityPolicy({
+      nonce: 'n',
+      isDev: false,
+      adsenseEnabled: true,
+      upgradeInsecureRequests: true,
+    });
+
+    expect(directive(csp, 'connect-src')).toContain('https://ep1.adtrafficquality.google');
+    expect(directive(csp, 'frame-src')).toContain('https://ep1.adtrafficquality.google');
+  });
+
+  it('does not name the beacon when AdSense is off', () => {
+    // The ad hosts are added only when AdSense can actually load; a policy that
+    // names them regardless would widen the surface of an install serving no ads.
+    const csp = buildContentSecurityPolicy({
+      nonce: 'n',
+      isDev: false,
+      adsenseEnabled: false,
+      upgradeInsecureRequests: true,
+    });
+
+    expect(directive(csp, 'connect-src')).not.toContain('adtrafficquality');
+  });
 });

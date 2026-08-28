@@ -94,4 +94,49 @@ describe('useMessageEdit', () => {
     expect(result.current.isOpen).toBe(true);
     expect(result.current.draft).toBe('second draft');
   });
+
+  it('announces that a run started, so the page waits for the answer', async () => {
+    // The reported "the answer doesn't show until I refresh": an edit re-runs
+    // the thread, but nothing told the page a run was underway, so it opened no
+    // SSE subscription and started no polling and the reply sat in the database.
+    const onRerunStarted = vi.fn();
+    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft', onRerunStarted), {
+      wrapper,
+    });
+
+    act(() => {
+      result.current.open();
+    });
+    act(() => {
+      result.current.setDraft('a genuinely different prompt');
+    });
+    act(() => {
+      result.current.save();
+    });
+
+    await waitFor(() => expect(onRerunStarted).toHaveBeenCalledTimes(1));
+  });
+
+  it('does not announce a run when the edit failed', async () => {
+    // Waiting for an answer that was never requested leaves a spinner that only
+    // the poll ceiling ends.
+    mockEditMessage.mockRejectedValue(new Error('nope'));
+    const onRerunStarted = vi.fn();
+    const { result } = renderHook(() => useMessageEdit('msg-1', 'first draft', onRerunStarted), {
+      wrapper,
+    });
+
+    act(() => {
+      result.current.open();
+    });
+    act(() => {
+      result.current.setDraft('a genuinely different prompt');
+    });
+    act(() => {
+      result.current.save();
+    });
+
+    await waitFor(() => expect(mockApiError).toHaveBeenCalled());
+    expect(onRerunStarted).not.toHaveBeenCalled();
+  });
 });

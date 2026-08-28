@@ -384,3 +384,61 @@ Route: `/models/local-frontier`. Sidebar nav entry: `nav.modelLocalFrontier`. Pa
 - Components: `HardwarePanel`, `FilterBar`, `DownloadsDrawer` (with live SSE progress via `usePullProgressSse`), 3 dialogs (`DeleteWeightsDialog`, `OverridePromptDialog`, `RuntimeConfigDialog`).
 - Chat ModelSelector (`useAvailableModels`) shows `local-llamacpp` group with READY frontier models, sorted right after `local-ollama` group.
 - All ~80 new strings added to all 13 locales (`en/ar/de/es/fa/fr/hi/it/ja/pt/ru/th/zh`).
+
+## A run that starts without announcing itself is invisible (2026-08-28)
+
+Reported as "sometimes the answer doesn't show until I refresh". Reproduced and
+fixed; the reproduction is in `use-thread-detail.test.tsx` and it fails against
+the old code.
+
+`useThreadDetail` only opens the SSE subscription and starts polling while
+`isWaitingForResponse` is true. **Every flow that starts a run must call
+`startWaitingForResponse()`.** Sending and regenerating did. Editing a prompt —
+which re-runs the thread from that message — did not, so the reply was streamed
+to nobody and written to a database nothing was reading. It appeared on the next
+remount, which is exactly what a refresh is.
+
+There is a recovery effect for precisely this case: a transcript ending in a
+`USER` message with no answer re-arms the waiting state. It could not fire,
+because it was gated on a `waitingSuppressedRef` **boolean** that the previous
+run had set and nothing ever cleared. The suppression exists for a real reason —
+between `DONE` arriving and the refetch landing, the transcript still ends with
+the user's message, and re-arming there loops the spinner — but a boolean makes
+it permanent for the life of the thread.
+
+It is now keyed on `buildTranscriptSignature(count, lastMessageId)`: the
+conclusion is scoped to the transcript it concluded. The **count** is the
+load-bearing half — editing a prompt deletes every answer below it, so the
+count is what changes when a rewritten question replaces an answered one whose
+id it keeps.
+
+Two rules follow:
+
+- **Never re-introduce a plain boolean here.** Any conclusion about a run must
+  name the transcript it applies to.
+- **A new run-starting flow gets `onRerunStarted` plumbed to it**, the way
+  `onRegenerate` already travels: controller → `use-virtualized-messages-controller`
+  → `VirtualizedMessageItem` → `MessageBubble` → the action.
+
+The signature alone cannot rescue every case: editing the sole user turn of a
+two-message thread returns the transcript to the same count and id it had when
+the run was concluded. That case is covered only by the explicit callback, which
+is why both exist.
+
+## A blocked connect-src fails silently (2026-08-28)
+
+`ep1/ep2.adtrafficquality.google` — AdSense's invalid-traffic beacon — was
+blocked by our own CSP on the live site while ads rendered normally. Nothing
+looks broken from the page: ads still appear, and only the browser console says
+anything. What is lost is the signal Google uses to separate real traffic from
+fraudulent traffic, which protects the ad account.
+
+It is reached both by `fetch` and from an invisible iframe, so it is named in
+`connect-src` **and** `frame-src`; naming it in one leaves it blocked half the
+time. Like every other ad host it is added only when AdSense is actually
+enabled, so an install serving no ads does not widen its policy.
+
+Check the browser console against the real site after any CSP change.
+`script-src` is exempt from this class of bug in production only because
+`strict-dynamic` lets the nonce-trusted loader vouch for what it inserts —
+`connect-src`, `img-src` and `frame-src` get no such help.

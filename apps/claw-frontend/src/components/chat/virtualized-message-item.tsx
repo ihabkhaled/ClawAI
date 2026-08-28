@@ -12,6 +12,7 @@ export function VirtualizedMessageItem({
   item,
   onFeedback,
   onRegenerate,
+  onRerunStarted,
   t,
 }: VirtualizedMessageItemProps): React.ReactElement {
   // A separator tops every row rather than being conditional on index: with
@@ -29,6 +30,7 @@ export function VirtualizedMessageItem({
             message={item.message}
             onFeedback={onFeedback}
             onRegenerate={onRegenerate}
+            onRerunStarted={onRerunStarted}
           />
         )}
       </div>

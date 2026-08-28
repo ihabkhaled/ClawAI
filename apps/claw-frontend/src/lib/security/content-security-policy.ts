@@ -16,12 +16,25 @@ const GOOGLE_AD_FRAME_HOSTS: ReadonlyArray<string> = [
   'https://googleads.g.doubleclick.net',
   'https://tpc.googlesyndication.com',
   'https://www.google.com',
+  // Same beacon as in GOOGLE_AD_CONNECT_HOSTS: it is reached both by fetch and
+  // from an invisible iframe, and naming it in only one of the two directives
+  // leaves it blocked half the time.
+  'https://ep1.adtrafficquality.google',
+  'https://ep2.adtrafficquality.google',
 ];
 
 const GOOGLE_AD_CONNECT_HOSTS: ReadonlyArray<string> = [
   'https://pagead2.googlesyndication.com',
   'https://googleads.g.doubleclick.net',
   'https://www.google-analytics.com',
+  // AdSense's invalid-traffic ("sodar") beacon. Observed being blocked in the
+  // browser console with the ad script otherwise working, because a blocked
+  // connect-src fails silently from the page's point of view: ads still render,
+  // so nothing looks wrong, while the signal Google uses to tell real traffic
+  // from fraudulent traffic never arrives. That signal protects the ad account,
+  // which is the same thing the image moderation exists to protect.
+  'https://ep1.adtrafficquality.google',
+  'https://ep2.adtrafficquality.google',
 ];
 
 const VSCODE_LOOPBACK_CONNECT_HOSTS: ReadonlyArray<string> = ['http://127.0.0.1:*'];

@@ -908,6 +908,8 @@ export type UseVirtualizedMessagesControllerParams = {
   onStartReached: () => void;
   onFeedback: (messageId: string, feedback: MessageFeedback | null) => void;
   onRegenerate: (messageId: string) => void;
+  /** Told when an edit starts a new run, so the page waits for its answer. */
+  onRerunStarted?: () => void;
   // i18n surface forwarded into sub-components.
   loadingLabel: string;
   emptyLabel: string;

@@ -145,6 +145,10 @@ export const useThreadDataController = ({
     onStartReached: detail.virtualizedMessages.fetchPreviousPage,
     onFeedback: handleFeedback,
     onRegenerate: handleRegenerate,
+    // Editing a prompt re-runs the thread from it, so it has to arm the waiting
+    // state exactly as sending and regenerating do. Nothing else observes that
+    // a run started, and without it the page neither subscribes nor polls.
+    onRerunStarted: detail.startWaitingForResponse,
     loadingLabel: t('chat.loadingMessages'),
     emptyLabel: t('chat.noMessagesYet'),
     jumpToLatestLabelKey: 'chat.jumpToLatest',

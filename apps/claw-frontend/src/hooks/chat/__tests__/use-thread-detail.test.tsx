@@ -69,6 +69,10 @@ function buildUserMessage(): ChatMessage {
   };
 }
 
+function buildMessage(id: string, role: MessageRole): ChatMessage {
+  return { ...buildUserMessage(), id, role };
+}
+
 describe('useThreadDetail', () => {
   let queryClient: QueryClient;
 
@@ -98,5 +102,56 @@ describe('useThreadDetail', () => {
     });
 
     await waitFor(() => expect(result.current.isWaitingForResponse).toBe(false));
+  });
+
+  it('re-arms waiting when an edit truncates the thread after a completed run', async () => {
+    // The reported "the answer doesn't show until I refresh". Editing a prompt
+    // re-runs the thread from it, but nothing tells this hook a run started, so
+    // the recovery effect is the only thing that could notice — and it was
+    // blocked by a flag set by the PREVIOUS run and never scoped to it. With no
+    // waiting state there is no SSE subscription and no polling, so the answer
+    // sits in the database until a remount happens to fetch it.
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    virtualizedState.messages = [
+      buildMessage('user-1', MessageRole.USER),
+      buildMessage('assistant-1', MessageRole.ASSISTANT),
+      buildMessage('user-2', MessageRole.USER),
+    ];
+    const { result, rerender } = renderHook(() => useThreadDetail('thread-race'), { wrapper });
+
+    // The transcript ends with an unanswered question, so waiting arms itself.
+    await waitFor(() => expect(result.current.isWaitingForResponse).toBe(true));
+
+    // DONE concludes that run. This is what records the suppression.
+    act(() => {
+      streamState.completedAt = 1;
+      streamState.completionReads = 0;
+      rerender();
+    });
+    await waitFor(() => expect(result.current.isWaitingForResponse).toBe(false));
+
+    // Its answer arrives, so the transcript ends with the assistant.
+    act(() => {
+      streamState.completedAt = null;
+      streamState.completionReads = 0;
+      virtualizedState.messages = [
+        buildMessage('user-1', MessageRole.USER),
+        buildMessage('assistant-1', MessageRole.ASSISTANT),
+        buildMessage('user-2', MessageRole.USER),
+        buildMessage('assistant-2', MessageRole.ASSISTANT),
+      ];
+      rerender();
+    });
+
+    // Editing the first prompt deletes every answer below it, so the transcript
+    // ends with an unanswered question again — a different one.
+    act(() => {
+      virtualizedState.messages = [buildMessage('user-1', MessageRole.USER)];
+      rerender();
+    });
+
+    await waitFor(() => expect(result.current.isWaitingForResponse).toBe(true));
   });
 });

@@ -126,11 +126,11 @@ export function useVirtualizedMessagesController(
     }
   }, [hasPreviousPage, isFetchingPreviousPage, onStartReached]);
 
-  const { onFeedback, onRegenerate, t } = params;
+  const { onFeedback, onRegenerate, onRerunStarted, t } = params;
   const itemContent = useCallback(
     (_index: number, item: MessageRenderItem): React.ReactElement =>
-      createElement(VirtualizedMessageItem, { item, onFeedback, onRegenerate, t }),
-    [onFeedback, onRegenerate, t],
+      createElement(VirtualizedMessageItem, { item, onFeedback, onRegenerate, onRerunStarted, t }),
+    [onFeedback, onRegenerate, onRerunStarted, t],
   );
 
   const headerContent = useCallback(

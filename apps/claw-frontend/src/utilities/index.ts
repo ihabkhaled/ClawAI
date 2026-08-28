@@ -205,6 +205,7 @@ export { isPublicPath } from './route-visibility.utility';
 export { resolveApiErrorMessage } from './api-error-message.utility';
 export { resolveAdminUserCapability } from './admin-user-capability.utility';
 export { resolveFloatingClearance } from './floating-obstacle-clearance.utility';
+export { buildTranscriptSignature } from './transcript-signature.utility';
 export { resolveChatLimitNotice } from './chat-limit-notice.utility';
 export { getStoredReasoning } from './message-reasoning.utility';
 export { resolveThreadSearchState } from './thread-search-state.utility';

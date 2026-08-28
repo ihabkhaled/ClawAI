@@ -624,6 +624,8 @@ export type MessageBubbleProps = {
   routingDecision?: RoutingDecision | null;
   onFeedback?: (messageId: string, feedback: MessageFeedback | null) => void;
   onRegenerate?: (messageId: string) => void;
+  /** Told when an edit starts a new run, so the page waits for its answer. */
+  onRerunStarted?: () => void;
 };
 
 // ─── Runtime progress panel props ───────────────────────────────────────────
@@ -1041,6 +1043,8 @@ export type VirtualizedMessageItemProps = {
   item: MessageRenderItem;
   onFeedback?: (messageId: string, feedback: MessageFeedback | null) => void;
   onRegenerate?: (messageId: string) => void;
+  /** Told when an edit starts a new run, so the page waits for its answer. */
+  onRerunStarted?: () => void;
   t: TranslateFunction;
 };
 
@@ -2592,6 +2596,8 @@ export type CodingAgentInstallFigureProps = {
 export type MessageEditActionProps = {
   messageId: string;
   content: string;
+  /** Told when the edit starts a new run, so the page waits for its answer. */
+  onRerunStarted?: () => void;
 };
 
 /** The branch affordance on a message. */

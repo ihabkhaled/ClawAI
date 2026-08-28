@@ -42,6 +42,7 @@ function MessageBubbleBase({
   routingDecision,
   onFeedback,
   onRegenerate,
+  onRerunStarted,
 }: MessageBubbleProps) {
   const { t } = useTranslation();
   const isUser = message.role === MessageRole.USER;
@@ -191,7 +192,11 @@ function MessageBubbleBase({
               label={t('chat.copyMessage')}
               className="text-muted-foreground h-7 w-7"
             />
-            <MessageEditAction messageId={message.id} content={message.content} />
+            <MessageEditAction
+              messageId={message.id}
+              content={message.content}
+              onRerunStarted={onRerunStarted}
+            />
             <MessageBranchAction threadId={message.threadId} messageId={message.id} />
           </div>
         ) : null}

@@ -27,9 +27,10 @@ import type { MessageEditActionProps } from '@/types';
 export function MessageEditAction({
   messageId,
   content,
+  onRerunStarted,
 }: MessageEditActionProps): React.ReactElement {
   const { t } = useTranslation();
-  const edit = useMessageEdit(messageId, content);
+  const edit = useMessageEdit(messageId, content, onRerunStarted);
 
   return (
     <>
