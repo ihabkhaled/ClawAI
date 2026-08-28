@@ -256,9 +256,10 @@ assistant-row case.
 
 ## Memory and context-pack injection (2026-08-28)
 
-Reproduced and fixed with `scripts/regression/context-memory-regression.mjs`,
-which plants a codeword the model cannot otherwise know and asks a question only
-answerable from it. **A count is not evidence of injection** — that was the bug.
+Reproduced and fixed with a throwaway harness that plants a codeword the model
+cannot otherwise know and asks a question only answerable from it. **A count is
+not evidence of injection** — that was the bug, so any future check here must
+assert on the model's answer, never on a counter.
 
 Four defects, all measured before and after:
 
