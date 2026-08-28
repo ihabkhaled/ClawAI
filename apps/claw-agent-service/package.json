@@ -1,6 +1,6 @@
 {
   "name": "claw-agent-service",
-  "version": "1.54.2",
+  "version": "1.54.3",
   "private": true,
   "description": "Claw Agent Service - manages desktop agent sessions, terminal command approval flows, and filesystem events",
   "license": "UNLICENSED",
