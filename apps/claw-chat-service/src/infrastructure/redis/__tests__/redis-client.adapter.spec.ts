@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import Redis from 'ioredis';
 
-import { RedisClientAdapter } from '../redis-client.adapter';
+import { RedisClientAdapter, RedisSubscriberAdapter } from '../redis-client.adapter';
 
 describe('RedisClientAdapter', () => {
   it('delegates lifecycle, keys, writes, deletion and evaluation exactly', async () => {
@@ -167,5 +167,63 @@ describe('RedisClientAdapter', () => {
 
     await expect(adapter.set('key', 'value', 'EX')).resolves.toBe('OK');
     expect(set.mock.calls[0]).toEqual(['key', 'value']);
+  });
+
+  it('reads a whole list for the chat replay buffer', async () => {
+    const client = new Redis({ lazyConnect: true });
+    const lrange = jest.spyOn(client, 'lrange').mockResolvedValue(['a', 'b']);
+    const adapter = new RedisClientAdapter(client);
+
+    await expect(adapter.lrange('key', 0, -1)).resolves.toEqual(['a', 'b']);
+    expect(lrange).toHaveBeenCalledWith('key', 0, -1);
+  });
+});
+
+describe('RedisSubscriberAdapter', () => {
+  it('subscribes to a channel', async () => {
+    const client = new Redis({ lazyConnect: true });
+    const subscribe = jest.spyOn(client, 'subscribe').mockResolvedValue(1);
+    const adapter = new RedisSubscriberAdapter(client);
+
+    await adapter.subscribe('claw:chat:stream');
+
+    expect(subscribe).toHaveBeenCalledWith('claw:chat:stream');
+  });
+
+  it('forwards published messages to the handler', () => {
+    const client = new Redis({ lazyConnect: true });
+    const adapter = new RedisSubscriberAdapter(client);
+    const received: Array<[string, string]> = [];
+
+    adapter.onMessage((channel, payload) => received.push([channel, payload]));
+    client.emit('message', 'claw:chat:stream', '{"threadId":"t"}');
+
+    expect(received).toEqual([['claw:chat:stream', '{"threadId":"t"}']]);
+  });
+
+  it('reports every reconnection so subscriptions can be re-asserted', () => {
+    // ioredis restores the connection but not the subscription. A replica that
+    // is connected-but-unsubscribed keeps its SSE clients open and silent,
+    // which reads exactly like a model that stopped responding.
+    const client = new Redis({ lazyConnect: true });
+    const adapter = new RedisSubscriberAdapter(client);
+    let readies = 0;
+
+    adapter.onReady(() => {
+      readies += 1;
+    });
+    client.emit('ready');
+    client.emit('ready');
+
+    expect(readies).toBe(2);
+  });
+
+  it('closes its connection on quit', async () => {
+    const client = new Redis({ lazyConnect: true });
+    const quit = jest.spyOn(client, 'quit').mockResolvedValue('OK');
+    const adapter = new RedisSubscriberAdapter(client);
+
+    await expect(adapter.quit()).resolves.toBe('OK');
+    expect(quit).toHaveBeenCalledTimes(1);
   });
 });
