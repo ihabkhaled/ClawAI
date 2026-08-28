@@ -1,6 +1,6 @@
 {
   "name": "claw-routing-service",
-  "version": "1.51.1",
+  "version": "1.51.2",
   "private": true,
   "description": "Claw Routing Service - manages AI routing decisions and policies",
   "license": "UNLICENSED",
