@@ -97,8 +97,13 @@ describe('CSP script-src for AdSense', () => {
       upgradeInsecureRequests: true,
     });
 
+    // All four directives it actually uses. Each was discovered only after the
+    // previous was unblocked, because the browser reports whichever the beacon
+    // reaches first — so this asserts the whole set, not the one that happened
+    // to be in the console that day.
     expect(directive(csp, 'connect-src')).toContain('https://ep1.adtrafficquality.google');
     expect(directive(csp, 'frame-src')).toContain('https://ep1.adtrafficquality.google');
+    expect(directive(csp, 'img-src')).toContain('https://ep1.adtrafficquality.google');
   });
 
   it('does not name the beacon when AdSense is off', () => {
@@ -112,5 +117,20 @@ describe('CSP script-src for AdSense', () => {
     });
 
     expect(directive(csp, 'connect-src')).not.toContain('adtrafficquality');
+  });
+
+  it('names the beacon in development script-src, where strict-dynamic is absent', () => {
+    // Production needs no entry: strict-dynamic lets the nonce-trusted loader
+    // vouch for the scripts it inserts. Development has no such help, so the
+    // beacon's sodar2.js is blocked and the console fills with errors that read
+    // like a broken ad integration.
+    const csp = buildContentSecurityPolicy({
+      nonce: 'n',
+      isDev: true,
+      adsenseEnabled: true,
+      upgradeInsecureRequests: false,
+    });
+
+    expect(directive(csp, 'script-src')).toContain('https://ep2.adtrafficquality.google');
   });
 });

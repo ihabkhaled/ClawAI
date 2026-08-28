@@ -19,6 +19,15 @@ import { buildGaBootstrapScript, buildGtmBootstrapScript } from '@/utilities/ana
  * framework's sanctioned way to inline one without reaching for the dangerous
  * prop in application code.
  *
+ * Every tag here is `afterInteractive`, which is also what Next's and Google's
+ * own GTM integration uses. `beforeInteractive` is tempting for a measurement
+ * snippet and it broke hydration: it emits an inline
+ * `(self.__next_s=...).push(...)` element on the server and renders NOTHING on
+ * the client, so the server `<head>` carries one more child than the client's
+ * and React aligns every following sibling against the wrong node. It showed up
+ * as this component's script being reconciled against the AdSense loader tag.
+ * Do not raise the strategy back.
+ *
  * Both tags carry the per-request nonce. Production CSP is `strict-dynamic`,
  * under which a nonce-trusted script passes its trust to everything it inserts
  * — the only reason the container can go on to load tags whose hosts appear
@@ -38,7 +47,7 @@ export async function AnalyticsHead(): Promise<React.ReactElement | null> {
   return (
     <>
       {gtmContainerId === null ? null : (
-        <Script id="gtm-bootstrap" strategy="beforeInteractive" nonce={nonce}>
+        <Script id="gtm-bootstrap" strategy="afterInteractive" nonce={nonce}>
           {buildGtmBootstrapScript(gtmContainerId)}
         </Script>
       )}

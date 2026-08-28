@@ -46,12 +46,26 @@ const GOOGLE_AD_SCRIPT_HOSTS: ReadonlyArray<string> = [
   'https://pagead2.googlesyndication.com',
   'https://googleads.g.doubleclick.net',
   'https://tpc.googlesyndication.com',
+  // The invalid-traffic beacon is fetched AND loaded as a script
+  // (sodar/sodar2.js). Production does not need it named here — strict-dynamic
+  // lets the nonce-trusted AdSense loader vouch for what it inserts — but
+  // development has no strict-dynamic, so without this the console fills with
+  // blocked-script errors that look like a broken ad integration.
+  'https://ep1.adtrafficquality.google',
+  'https://ep2.adtrafficquality.google',
 ];
 
 const GOOGLE_AD_IMG_HOSTS: ReadonlyArray<string> = [
   'https://pagead2.googlesyndication.com',
   'https://googleads.g.doubleclick.net',
   'https://tpc.googlesyndication.com',
+  // The invalid-traffic beacon again. It reports over FOUR directives — an
+  // image pixel (/pagead/sodar?...), a script (sodar2.js), a fetch, and an
+  // iframe — and each one was found only after the previous was unblocked,
+  // because the browser reports whichever it reaches first. Adding a Google ad
+  // host to one directive is rarely finished.
+  'https://ep1.adtrafficquality.google',
+  'https://ep2.adtrafficquality.google',
 ];
 
 const PAYMOB_SCRIPT_HOST = 'https://cdn.jsdelivr.net';

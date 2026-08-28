@@ -433,12 +433,42 @@ looks broken from the page: ads still appear, and only the browser console says
 anything. What is lost is the signal Google uses to separate real traffic from
 fraudulent traffic, which protects the ad account.
 
-It is reached both by `fetch` and from an invisible iframe, so it is named in
-`connect-src` **and** `frame-src`; naming it in one leaves it blocked half the
-time. Like every other ad host it is added only when AdSense is actually
-enabled, so an install serving no ads does not widen its policy.
+It reports over **four** directives — `img-src` (a `/pagead/sodar?...` pixel),
+`script-src` (`sodar2.js`), `connect-src` (a fetch) and `frame-src` (an
+invisible iframe). Each was found only after the previous one was unblocked,
+because the browser reports whichever the beacon reaches first: fixing two of
+them and reloading looks like a fix and is not. **Adding a Google ad host to one
+directive is rarely finished** — check the console again after every round.
+
+`script-src` matters in development only. Production has `strict-dynamic`, under
+which the nonce-trusted AdSense loader vouches for what it inserts; development
+has no such help, so without the host the console fills with blocked-script
+errors that read like a broken ad integration.
+
+Like every other ad host it is added only when AdSense is actually enabled, so
+an install serving no ads does not widen its policy.
 
 Check the browser console against the real site after any CSP change.
 `script-src` is exempt from this class of bug in production only because
 `strict-dynamic` lets the nonce-trusted loader vouch for what it inserts —
 `connect-src`, `img-src` and `frame-src` get no such help.
+
+## `beforeInteractive` breaks hydration in the head (2026-08-28)
+
+`next/script` with `strategy="beforeInteractive"` emits an inline
+`(self.__next_s=...).push(...)` element on the **server** and renders **nothing**
+on the client. The server `<head>` therefore carries one more child than the
+client's, and React aligns every following sibling against the wrong node.
+
+It surfaced as the GTM bootstrap being reconciled against the AdSense loader —
+a hydration error naming a `pagead2.googlesyndication.com` `src` that the
+analytics component does not contain, which sends you looking in the wrong file.
+
+Every tag in `AnalyticsHead` is `afterInteractive`, which is what Next's and
+Google's own GTM integration uses. A test asserts the strategy so it cannot be
+quietly raised back for "earlier measurement".
+
+The general rule for this `<head>`: a component rendered there must produce the
+**same number of children** on the server and the client. `AnalyticsHead` and
+`AdSenseHead` both return `null` when unconfigured, which is safe — the count
+matches on both sides. A strategy that renders on only one side is not.
