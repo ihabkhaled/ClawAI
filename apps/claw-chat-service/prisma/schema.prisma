@@ -93,6 +93,13 @@ model ChatMessage {
   metadata      Json?
   createdAt     DateTime     @default(now()) @map("created_at")
 
+  // Set the first time a message is edited, and never overwritten after that.
+  // The receipt on an assistant answer names the prompt that produced it; once
+  // the prompt can change, keeping the text as first sent is the only way that
+  // claim stays checkable.
+  originalContent String?   @map("original_content")
+  editedAt        DateTime? @map("edited_at")
+
   thread              ChatThread           @relation(fields: [threadId], references: [id], onDelete: Cascade)
   attachments         MessageAttachment[]
   fileDeliveryRecords FileDeliveryRecord[]

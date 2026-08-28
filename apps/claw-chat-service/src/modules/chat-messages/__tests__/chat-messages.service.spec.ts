@@ -74,6 +74,8 @@ const mockMessagesRepository = (): Record<keyof ChatMessagesRepository, jest.Moc
   updateMetadata: jest.fn(),
   deleteById: jest.fn(),
   deleteByThreadId: jest.fn(),
+  deleteCreatedAfter: jest.fn().mockResolvedValue(0),
+  replaceContent: jest.fn().mockResolvedValue(undefined),
 });
 
 const mockThreadsRepository = (): Partial<Record<keyof ChatThreadsRepository, jest.Mock>> => ({
@@ -678,6 +680,96 @@ describe('ChatMessagesService', () => {
           provider: 'ANTHROPIC',
           model: 'claude-sonnet-4',
         }),
+      );
+    });
+  });
+
+  describe('editAndRerunMessage', () => {
+    const editable = { ...mockMessage, role: 'USER' as const, content: 'first draft' };
+
+    it('replaces the text, keeps the first version, and runs the thread again', async () => {
+      messagesRepo.findById.mockResolvedValue({ ...editable, originalContent: null });
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await service.editAndRerunMessage('msg-1', 'user-1', 'second draft');
+
+      // The original is written on the FIRST edit only, so the prompt an
+      // assistant answer was actually given stays checkable.
+      expect(messagesRepo.replaceContent).toHaveBeenCalledWith(
+        'msg-1',
+        'second draft',
+        'first draft',
+      );
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.MESSAGE_CREATED,
+        expect.objectContaining({ messageId: 'msg-1', content: 'second draft', regenerate: true }),
+      );
+    });
+
+    it('does not overwrite the original on a second edit', async () => {
+      messagesRepo.findById.mockResolvedValue({
+        ...editable,
+        content: 'second draft',
+        originalContent: 'first draft',
+      });
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await service.editAndRerunMessage('msg-1', 'user-1', 'third draft');
+
+      expect(messagesRepo.replaceContent).toHaveBeenCalledWith('msg-1', 'third draft', null);
+    });
+
+    it('deletes everything below the edited message', async () => {
+      // Those were answers to a question that no longer exists. Leaving them
+      // would attach an answer to something nobody asked.
+      messagesRepo.findById.mockResolvedValue({ ...editable, originalContent: null });
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await service.editAndRerunMessage('msg-1', 'user-1', 'second draft');
+
+      expect(messagesRepo.deleteCreatedAfter).toHaveBeenCalledWith('thread-1', editable.createdAt);
+    });
+
+    it('refuses to edit an assistant turn', async () => {
+      // A transcript that can be made to claim a model said something it did
+      // not is the one thing a chat log has to be trusted about.
+      messagesRepo.findById.mockResolvedValue({ ...mockMessage, role: 'ASSISTANT' as const });
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await expect(service.editAndRerunMessage('msg-1', 'user-1', 'rewritten')).rejects.toThrow(
+        BusinessException,
+      );
+      expect(messagesRepo.replaceContent).not.toHaveBeenCalled();
+      expect(messagesRepo.deleteCreatedAfter).not.toHaveBeenCalled();
+    });
+
+    it('refuses an edit that changes nothing', async () => {
+      // Otherwise a stray click would delete the rest of the thread and spend
+      // tokens re-running a prompt that did not change.
+      messagesRepo.findById.mockResolvedValue({ ...editable, originalContent: null });
+      threadsRepo.findById!.mockResolvedValue(mockThread);
+
+      await expect(
+        service.editAndRerunMessage('msg-1', 'user-1', '  first draft  '),
+      ).rejects.toThrow(BusinessException);
+      expect(messagesRepo.deleteCreatedAfter).not.toHaveBeenCalled();
+    });
+
+    it('refuses to edit a message in a thread owned by someone else', async () => {
+      messagesRepo.findById.mockResolvedValue({ ...editable, originalContent: null });
+      threadsRepo.findById!.mockResolvedValue({ ...mockThread, userId: 'someone-else' });
+
+      await expect(
+        service.editAndRerunMessage('msg-1', 'user-1', 'second draft'),
+      ).rejects.toThrow();
+      expect(messagesRepo.replaceContent).not.toHaveBeenCalled();
+    });
+
+    it('reports a missing message rather than silently doing nothing', async () => {
+      messagesRepo.findById.mockResolvedValue(null);
+
+      await expect(service.editAndRerunMessage('nope', 'user-1', 'x')).rejects.toThrow(
+        EntityNotFoundException,
       );
     });
   });

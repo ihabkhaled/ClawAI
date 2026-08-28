@@ -923,6 +923,11 @@
         "source": "apps/claw-chat-service/src/modules/context-receipts/controllers/context-receipt.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/chat-messages/:id/edit",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+      },
+      {
         "method": "PATCH",
         "route": "/chat-messages/:id/feedback",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
@@ -3163,5 +3168,5 @@
     ]
   },
   "generated": true,
-  "total": 625
+  "total": 626
 }

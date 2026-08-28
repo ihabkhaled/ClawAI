@@ -179,6 +179,34 @@ extractor in a follow-up.
 
 Full architecture: [`docs/03-architecture/runtime-progress.md`](../../docs/03-architecture/runtime-progress.md).
 
+## Editing a prompt truncates the thread (2026-08-28)
+
+`POST /chat-messages/:id/edit` rewrites a user prompt and re-runs the thread
+from that point. It is destructive by design and the frontend warns before
+calling it.
+
+Three rules, each with a failure it exists to prevent:
+
+- **Only a `USER` message.** Editing an assistant turn would let the transcript
+  claim a model said something it did not, which is the one thing a chat log has
+  to be trusted about. Refused with `MESSAGE_NOT_EDITABLE` (409).
+- **Everything below is deleted.** Those were answers to a question that no
+  longer exists; leaving them attaches an answer to something nobody asked.
+  `ChatMessagesRepository.deleteCreatedAfter` compares on `createdAt` — there is
+  no ordering column, and an assistant reply is seconds behind its prompt.
+- **An unchanged edit is refused** with `MESSAGE_EDIT_UNCHANGED` (400), so a
+  stray click cannot delete the rest of the thread and spend tokens re-running
+  the same prompt.
+
+`original_content` is written once, on the first edit, and never overwritten.
+The context receipt on an assistant answer names the prompt that produced it;
+once the prompt can change, keeping the text as first sent is the only way that
+claim stays checkable.
+
+The re-run publishes `MESSAGE_CREATED` with `regenerate: true` — the same flag
+regeneration uses — so routing does not bill it against the daily message
+ceiling. It is the same turn, run again.
+
 ## Thread titles are derived, never generated (2026-08-27)
 
 A thread is named after its opening message the first time an assistant answer

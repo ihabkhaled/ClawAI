@@ -103,6 +103,41 @@ export class ChatMessagesRepository {
     });
   }
 
+  /**
+   * Drops every message in the thread created after the given instant.
+   *
+   * Used when a prompt is edited and re-run: the answers below it were replies
+   * to a question that no longer exists, and leaving them would attach an
+   * answer to something nobody asked.
+   *
+   * Compares on `createdAt` rather than on an ordering column because there is
+   * none. A same-millisecond sibling would survive, which in practice cannot
+   * happen — an assistant reply is seconds behind the prompt it answers.
+   */
+  async deleteCreatedAfter(threadId: string, createdAt: Date): Promise<number> {
+    const result = await this.prisma.chatMessage.deleteMany({
+      where: { threadId, createdAt: { gt: createdAt } },
+    });
+    return result.count;
+  }
+
+  /**
+   * Replaces a message's text, keeping the first version.
+   *
+   * `originalContent` is written only when it is still null, so a second edit
+   * does not lose the text as first sent.
+   */
+  async replaceContent(id: string, content: string, originalContent: string | null): Promise<void> {
+    await this.prisma.chatMessage.update({
+      where: { id },
+      data: {
+        content,
+        editedAt: new Date(),
+        ...(originalContent === null ? {} : { originalContent }),
+      },
+    });
+  }
+
   async deleteByThreadId(threadId: string): Promise<number> {
     const result = await this.prisma.chatMessage.deleteMany({ where: { threadId } });
     return result.count;

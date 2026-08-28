@@ -9,6 +9,7 @@ import {
   type EscalationChainMessageDto,
   escalationChainMessageSchema,
 } from '../dto/escalation-chain-message.dto';
+import { type EditMessageDto, editMessageSchema } from '../dto/edit-message.dto';
 import { type RepairMessageDto, repairMessageSchema } from '../dto/repair-message.dto';
 import { type DecomposeTaskDto, decomposeTaskSchema } from '../dto/decompose-task.dto';
 import { type BestOfNMessageDto, bestOfNMessageSchema } from '../dto/best-of-n-message.dto';
@@ -186,6 +187,15 @@ export class ChatMessagesController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ChatMessage> {
     return this.chatMessagesService.regenerateMessage(id, user.id);
+  }
+
+  @Post(':id/edit')
+  async edit(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(editMessageSchema)) dto: EditMessageDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ChatMessage> {
+    return this.chatMessagesService.editAndRerunMessage(id, user.id, dto.content);
   }
 
   @Patch(':id/feedback')

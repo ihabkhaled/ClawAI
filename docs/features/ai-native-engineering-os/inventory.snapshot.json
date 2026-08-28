@@ -978,6 +978,11 @@
           "source": "apps/claw-chat-service/src/modules/context-receipts/controllers/context-receipt.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/chat-messages/:id/edit",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
+        },
+        {
           "method": "PATCH",
           "route": "/chat-messages/:id/feedback",
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
@@ -10020,7 +10025,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 625,
+    "endpointCount": 626,
     "envVarCount": 347,
     "eventCount": 172,
     "frontendRouteCount": 138,

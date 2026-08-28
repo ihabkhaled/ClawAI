@@ -94,6 +94,12 @@ import { THREAD_TITLE_SCAN_LIMIT } from '../../chat-threads/constants/thread-tit
 import { deriveThreadTitle } from '../../chat-threads/utilities/derive-thread-title.utility';
 import type { AssembledContext } from '../types/context.types';
 import { MAX_STORED_REASONING_CHARS } from '../constants/stored-reasoning.constants';
+import {
+  MESSAGE_EDIT_UNCHANGED_CODE,
+  MESSAGE_EDIT_UNCHANGED_MESSAGE_KEY,
+  MESSAGE_NOT_EDITABLE_CODE,
+  MESSAGE_NOT_EDITABLE_MESSAGE_KEY,
+} from '../constants/message-edit.constants';
 import { type SearchMessagesQueryDto } from '../dto/search-messages-query.dto';
 import { type InThreadSearchMatch } from '../types/in-thread-search.types';
 import { buildSearchSnippet } from '../utilities/search-snippet.utility';
@@ -888,6 +894,91 @@ export class ChatMessagesService implements OnModuleInit {
     });
 
     return message;
+  }
+
+  /**
+   * Rewrites a user prompt and runs the thread again from that point.
+   *
+   * Everything below the edited message is deleted. Those were answers to a
+   * question that no longer exists, and an answer attached to a question nobody
+   * asked is worse than no answer — it is the conversation quietly lying about
+   * what happened. This is destructive and deliberate; the frontend confirms
+   * before calling it.
+   *
+   * Only a user message qualifies. Editing an assistant turn would let the
+   * transcript claim a model said something it did not, which is the one thing
+   * a chat log has to be trusted about.
+   */
+  async editAndRerunMessage(id: string, userId: string, content: string): Promise<ChatMessage> {
+    const message = await this.chatMessagesRepository.findById(id);
+    if (!message) {
+      throw new EntityNotFoundException('ChatMessage', id);
+    }
+    if (message.role !== MessageRole.USER) {
+      throw new BusinessException(
+        'Only your own message can be edited',
+        MESSAGE_NOT_EDITABLE_CODE,
+        HttpStatus.CONFLICT,
+        MESSAGE_NOT_EDITABLE_MESSAGE_KEY,
+      );
+    }
+
+    const thread = await this.chatThreadsRepository.findById(message.threadId);
+    if (!thread) {
+      throw new EntityNotFoundException('ChatThread', message.threadId);
+    }
+    this.validateOwnership(thread, userId);
+
+    const trimmed = content.trim();
+    if (trimmed === message.content.trim()) {
+      throw new BusinessException(
+        'The message is unchanged',
+        MESSAGE_EDIT_UNCHANGED_CODE,
+        HttpStatus.BAD_REQUEST,
+        MESSAGE_EDIT_UNCHANGED_MESSAGE_KEY,
+      );
+    }
+
+    await this.applyEditAndRerun(message, thread, userId, trimmed);
+    return { ...message, content: trimmed, editedAt: new Date() };
+  }
+
+  /** The write half of an edit: replace, prune below, run again. */
+  private async applyEditAndRerun(
+    message: ChatMessage,
+    thread: ChatThread,
+    userId: string,
+    content: string,
+  ): Promise<void> {
+    // Written only when still null, so a second edit keeps the first version.
+    await this.chatMessagesRepository.replaceContent(
+      message.id,
+      content,
+      message.originalContent === null ? message.content : null,
+    );
+    const removed = await this.chatMessagesRepository.deleteCreatedAfter(
+      message.threadId,
+      message.createdAt,
+    );
+    this.logger.log(
+      `editAndRerunMessage: message=${message.id} thread=${message.threadId} removedBelow=${removed}`,
+    );
+
+    const forcedProvider = thread.preferredProvider ?? undefined;
+    const forcedModel = thread.preferredModel ?? undefined;
+    void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
+      messageId: message.id,
+      threadId: message.threadId,
+      userId,
+      content,
+      routingMode: forcedProvider && forcedModel ? RoutingMode.MANUAL_MODEL : message.routingMode,
+      forcedProvider,
+      forcedModel,
+      // The same flag regeneration uses: routing must not bill this as a new
+      // turn against the daily message ceiling, because it is the same turn.
+      regenerate: true,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   async handleMessageRouted(payload: MessageRoutedData): Promise<void> {
