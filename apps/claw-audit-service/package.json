@@ -1,6 +1,6 @@
 {
   "name": "claw-audit-service",
-  "version": "1.55.1",
+  "version": "1.55.2",
   "private": true,
   "description": "Claw Audit Service - Audit logs and usage ledger",
   "license": "UNLICENSED",
