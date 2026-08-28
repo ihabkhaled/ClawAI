@@ -1221,6 +1221,12 @@ SITE_URL=$clawBaseUrl
 NEXT_PUBLIC_SOCIAL_X_URL=
 NEXT_PUBLIC_SOCIAL_LINKEDIN_URL=
 NEXT_PUBLIC_SOCIAL_DISCORD_URL=
+# Number of chat-service containers. 1 unless raised deliberately.
+# Safe to raise ONLY because the stream bus and the Stop broadcast live in
+# Redis (ADR-077); with an in-process bus, extra replicas silently drop most
+# streams. Infrastructure config rather than a DB setting because docker
+# compose reads it, not the application.
+CHAT_SERVICE_REPLICAS=1
 # Google Cloud Vision SafeSearch. Moderates images in a published shared
 # chat. Blank is safe: with no key an image is never cleared, so the share
 # stays readable but never carries advertising and is never offered to search

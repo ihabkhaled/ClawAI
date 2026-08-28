@@ -43,7 +43,12 @@
 #                               never lock an operator out of production.
 #
 # What this script will NEVER do:
-#   * `docker compose down`, `docker rm`, `docker volume rm`, `docker system prune`
+#   * `docker compose down`, `docker volume rm`, `docker system prune`
+#   * `docker rm` on anything except ONE replica of the service being deployed,
+#     during a rolling rollout, with the id taken from `compose ps -q <service>`.
+#     Compose cannot replace a single replica of a scaled service outside swarm,
+#     so a zero-downtime rollout cannot be expressed without it; sourcing the id
+#     from the service's own containers is what keeps a database out of reach.
 #   * pass `--remove-orphans` — the databases live in a SEPARATE compose file
 #     under the same `claw` project, so compose would treat every database as an
 #     orphan and delete it. Never add that flag here.
@@ -900,46 +905,102 @@ container_state() {
     "$1" 2>/dev/null 200>&- || printf 'missing'
 }
 
+# Every replica of a service, newest last. One line per container id.
+service_container_ids() {
+  compose ps -q "$1" 2>/dev/null || true
+}
+
+# Waits for EVERY replica, not just the first.
+#
+# This used to take `head -1`, which on a scaled service reported the whole
+# deployment healthy as soon as replica 1 came up — the other replicas could be
+# crash-looping on a bad image and the rollout would still be recorded a success.
 wait_for_service_health() {
   local service="$1"
   local deadline=$(($(date +%s) + HEALTH_TIMEOUT_SECONDS))
-  local cid state='unknown' stable=0
+  local cid state='unknown' stable=0 ids total ready saw_nohealth
 
   while [ "$(date +%s)" -lt "$deadline" ]; do
-    cid="$(compose ps -q "$service" 2>/dev/null | head -1 || true)"
-    if [ -z "$cid" ]; then
+    ids="$(service_container_ids "$service")"
+    if [ -z "$ids" ]; then
       sleep 3
       continue
     fi
-    state="$(container_state "$cid")"
-    case "$state" in
-      healthy)
-        printf '%s -> healthy\n' "$service"
-        return 0
-        ;;
-      nohealth:running)
-        # No healthcheck declared (nginx). "Running" on its own is not evidence
+
+    total=0
+    ready=0
+    saw_nohealth=0
+    for cid in $ids; do
+      total=$((total + 1))
+      state="$(container_state "$cid")"
+      case "$state" in
+        healthy) ready=$((ready + 1)) ;;
+        unhealthy)
+          printf '%s -> unhealthy (%s)\n' "$service" "$cid"
+          return 1
+          ;;
+        nohealth:running)
+          ready=$((ready + 1))
+          saw_nohealth=1
+          ;;
+        *) ;;
+      esac
+    done
+
+    if [ "$ready" -eq "$total" ] && [ "$total" -gt 0 ]; then
+      if [ "$saw_nohealth" = "1" ]; then
+        # No healthcheck declared (nginx). "Running" is not evidence on its own
         # — a crash-looping container is momentarily running too — so require
         # the state to hold across two consecutive polls.
         stable=$((stable + 1))
         if [ "$stable" -ge 2 ]; then
-          printf '%s -> running (no healthcheck declared)\n' "$service"
+          printf '%s -> running, %s replica(s) (no healthcheck declared)\n' "$service" "$total"
           return 0
         fi
-        ;;
-      unhealthy)
-        printf '%s -> unhealthy\n' "$service"
-        return 1
-        ;;
-      *)
-        stable=0
-        ;;
-    esac
+      else
+        printf '%s -> healthy, %s replica(s)\n' "$service" "$total"
+        return 0
+      fi
+    else
+      stable=0
+    fi
     sleep 5
   done
 
   printf '%s -> TIMEOUT after %ss (last state: %s)\n' "$service" "$HEALTH_TIMEOUT_SECONDS" "$state"
   return 1
+}
+
+# Replaces a scaled service's containers ONE AT A TIME.
+#
+# Compose has no rolling restart outside swarm: `up -d` recreates every replica
+# together, which drops every in-flight stream and makes chat unavailable on
+# every release. Removing one container and letting compose refill the gap with
+# `--no-recreate` leaves the surviving replicas serving traffic throughout, so
+# the only cost is a slower rollout.
+rolling_recreate_service() {
+  local service="$1"
+  local ids id index=0 total
+  ids="$(service_container_ids "$service")"
+  total="$(printf '%s\n' "$ids" | grep -c . || true)"
+
+  log "Rolling $service across $total replica(s), one at a time."
+  for id in $ids; do
+    index=$((index + 1))
+    log "  replica $index/$total: replacing $id"
+    docker rm -f "$id" >/dev/null 2>&1 || true
+    # --no-recreate leaves the replicas still serving traffic untouched;
+    # compose creates only the missing one, on the new image.
+    if ! compose up -d --no-deps --no-build --no-recreate "$service"; then
+      dump_diagnostics "$service"
+      return 1
+    fi
+    if ! wait_for_service_health "$service"; then
+      dump_diagnostics "$service"
+      return 1
+    fi
+  done
+  return 0
 }
 
 dump_diagnostics() {
@@ -1367,12 +1428,28 @@ main() {
   #            depends_on chain and restarts healthy, unrelated containers.
   # --no-build: use exactly the images the step above produced.
   # Never --remove-orphans: the databases live in a different compose file.
-  if ! compose up -d --no-deps --no-build "${PLAN_SERVICES[@]}"; then
-    err ""
-    for svc in "${PLAN_SERVICES[@]}"; do
-      dump_diagnostics "$svc"
-    done
-    die "docker compose up failed"
+  # Scaled services roll one replica at a time so the service stays available;
+  # single-replica services take the original bulk path, which is faster and
+  # has nothing to keep serving.
+  BULK_SERVICES=()
+  for svc in "${PLAN_SERVICES[@]}"; do
+    if [ "$(service_container_ids "$svc" | grep -c . || true)" -gt 1 ]; then
+      if ! rolling_recreate_service "$svc"; then
+        die "rolling deployment of $svc failed"
+      fi
+    else
+      BULK_SERVICES+=("$svc")
+    fi
+  done
+
+  if [ "${#BULK_SERVICES[@]}" -gt 0 ]; then
+    if ! compose up -d --no-deps --no-build "${BULK_SERVICES[@]}"; then
+      err ""
+      for svc in "${BULK_SERVICES[@]}"; do
+        dump_diagnostics "$svc"
+      done
+      die "docker compose up failed"
+    fi
   fi
 
   if [ "$PLAN_NGINX_RELOAD" = "1" ]; then

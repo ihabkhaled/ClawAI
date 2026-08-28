@@ -36,7 +36,18 @@ test('deploy-prod.sh never runs a destructive Docker or git operation', () => {
     .join('\n');
 
   assert.doesNotMatch(codeLines, /docker compose[^\n]*\bdown\b/u);
-  assert.doesNotMatch(codeLines, /\bdocker rm\b/u);
+  // `docker rm` is permitted in exactly one shape: removing a single replica
+  // during a rolling deployment. Compose cannot replace one replica of a scaled
+  // service outside swarm, so a zero-downtime rollout cannot be expressed
+  // without it. The safety property is unchanged - the id comes from
+  // `compose ps -q <service>`, so it is provably a replica of the service being
+  // deployed and never a database, which lives in a different compose file.
+  const dockerRemovals = codeLines
+    .split(String.fromCharCode(10))
+    .filter((line) => line.includes('docker rm'));
+  assert.equal(dockerRemovals.length, 1);
+  assert.ok(dockerRemovals[0].includes('-f "$id"'));
+  assert.ok(script.includes('service_container_ids "$service"'));
   assert.doesNotMatch(codeLines, /\bdocker volume rm\b/u);
   assert.doesNotMatch(codeLines, /\bdocker system prune\b/u);
   assert.doesNotMatch(codeLines, /--remove-orphans/u);

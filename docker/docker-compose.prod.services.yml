@@ -55,11 +55,19 @@ services:
     build:
       context: ..
       dockerfile: apps/claw-chat-service/Dockerfile
-    container_name: claw-chat-service
+    # No container_name and no published host port: Docker refuses to scale a
+    # service that fixes either, because four containers cannot share one name
+    # or bind one host port. nginx reaches this service by its network alias
+    # (https://chat-service:4002) and re-resolves it per request, so dropping
+    # the host publish costs nothing and stops the service being reachable from
+    # outside the compose network at all.
     restart: unless-stopped
     env_file: ../.env
-    ports:
-      - '4002:4002'
+    # Replica count. 1 unless raised deliberately — every other value requires
+    # the cross-replica stream bus and Stop broadcast to be present, which they
+    # are as of the commits referenced in ADR-077.
+    deploy:
+      replicas: ${CHAT_SERVICE_REPLICAS:-1}
     volumes:
       - ../certs:/certs:ro
     healthcheck:

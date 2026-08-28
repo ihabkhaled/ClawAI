@@ -103,13 +103,17 @@ services:
     build:
       context: ..
       dockerfile: apps/claw-chat-service/Dockerfile.dev
-    container_name: claw-chat-service
+    # No container_name and no published host port: Docker refuses to scale a
+    # service that fixes either. Reach it through nginx at https://claw.local,
+    # which resolves the service alias per request and round-robins replicas.
     restart: unless-stopped
     env_file: ../.env
     environment:
       <<: *development-watch-environment
-    ports:
-      - '4002:4002'
+    # Replica count, 1 unless raised deliberately. Set CHAT_SERVICE_REPLICAS to
+    # exercise the cross-replica paths locally before production does.
+    deploy:
+      replicas: ${CHAT_SERVICE_REPLICAS:-1}
     volumes:
       - ../apps/claw-chat-service/package.json:/app/apps/claw-chat-service/package.json:ro
       - ../apps/claw-chat-service/src:/app/apps/claw-chat-service/src

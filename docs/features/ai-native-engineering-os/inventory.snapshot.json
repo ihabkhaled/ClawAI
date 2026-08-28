@@ -3906,6 +3906,11 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "CHAT_SERVICE_REPLICAS"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "CHAT_SERVICE_URL"
       },
       {
@@ -10046,7 +10051,7 @@
     "contradictionCount": 0,
     "dockerServiceCount": 41,
     "endpointCount": 627,
-    "envVarCount": 350,
+    "envVarCount": 351,
     "eventCount": 172,
     "frontendRouteCount": 138,
     "localeCount": 13,
