@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { POLLING_INTERVAL_MS } from '@/constants';
+import { POLLING_INTERVAL_MS, POLLING_MAX_TICKS } from '@/constants';
 import { MessageRole } from '@/enums';
 import { useChatStream } from '@/hooks/chat/use-chat-stream';
 import { useVirtualizedMessages } from '@/hooks/chat/use-virtualized-messages';
@@ -94,12 +94,19 @@ export function useThreadDetail(threadId: string) {
       let pollCount = 0;
       pollingRef.current = setInterval(() => {
         pollCount += 1;
-        if (pollCount > 90) {
+        if (pollCount > POLLING_MAX_TICKS) {
           logger.warn({
             component: 'chat',
             action: 'polling-timeout',
-            message: 'Polling max reached (3 min), stopping',
-            details: { threadId },
+            message: 'Polling max reached, stopping',
+            details: { threadId, ticks: pollCount },
+          });
+          // One last refetch on the way out. The answer may have landed between
+          // the previous tick and this one, and giving up without looking is
+          // how a completed run ends with the page still showing the in-flight
+          // state until something else happens to refetch.
+          void queryClient.invalidateQueries({
+            queryKey: queryKeys.threads.messagesInfinite(threadId),
           });
           setIsWaitingForResponse(false);
           if (pollingRef.current) {

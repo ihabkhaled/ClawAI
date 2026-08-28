@@ -20,6 +20,22 @@ export const MESSAGE_ROLE_LABELS: Record<MessageRole, string> = {
 export const THINKING_INDICATOR_LABEL = 'AI is thinking...';
 export const MODEL_AUTO_VALUE = '__auto__';
 export const POLLING_INTERVAL_MS = 2000;
+
+/**
+ * How many poll ticks to wait for an answer before giving up.
+ *
+ * Was a bare `90` inside the effect — three minutes, which is *below* the real
+ * tail. Measured against the running stack at concurrency 16, one first
+ * response took ~3.5 minutes because the local model server queues: the poll
+ * stopped, the answer landed afterwards, and the page went on showing the
+ * in-flight state until something else refetched it. That is the reported
+ * "doesn't show until refresh".
+ *
+ * Ten minutes covers a queued local model without waiting forever on a run that
+ * genuinely died. The cap still matters — an unbounded poll on an abandoned tab
+ * is a request every two seconds until it is closed.
+ */
+export const POLLING_MAX_TICKS = 300;
 /**
  * Background refetch of the message list, and only while a response is in
  * flight.
