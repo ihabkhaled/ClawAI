@@ -114,12 +114,29 @@ Each cloud provider has specific API patterns:
 | Provider    | Auth         | Model List API                     | Chat API                  |
 | ----------- | ------------ | ---------------------------------- | ------------------------- |
 | OpenAI      | Bearer token | GET /v1/models                     | POST /v1/chat/completions |
-| Anthropic   | x-api-key    | Hardcoded model list               | POST /v1/messages         |
+| Anthropic   | x-api-key    | GET /v1/models                     | POST /v1/messages         |
 | Gemini      | API key      | GET /v1/models                     | POST /v1/generateContent  |
 | DeepSeek    | Bearer token | GET /v1/models (OpenAI-compatible) | POST /v1/chat/completions |
 | AWS Bedrock | IAM/SigV4    | ListFoundationModels               | InvokeModel               |
 | Ollama      | None         | GET /api/tags                      | POST /api/generate        |
 | Grok (xAI)  | Bearer token | GET /v1/models (filters grok-\*)   | POST /v1/chat/completions |
+
+### Anthropic Adapter Notes
+
+- **Base URL**: `https://api.anthropic.com/v1` — the adapter appends `/models`,
+  so the stored value is the API root _including_ `/v1`. Leaving the field blank
+  uses this default; `https://api.anthropic.com` requests `/models` at the host
+  root and 404s.
+- **`anthropic-version: 2023-06-01`** — a dated API version, not a feature flag.
+  It does not follow the calendar: there is no `2024-06-01`, and sending one
+  fails every call with HTTP 400 before the request is routed. Opt-in features
+  (including the native `document` content part for PDFs) travel on the separate
+  `anthropic-beta` header. The value is pinned in `anthropic.constants.ts` and a
+  test fails if it moves — do not "bump" it to enable a feature.
+- **Model list**: synced live from `GET /v1/models`; `display_name` is used when
+  the provider sends one, otherwise the id is title-cased.
+- **Capabilities**: every Claude model is registered as streaming + tools +
+  vision + structured output, audio off.
 
 ### Grok/xAI Adapter Notes
 

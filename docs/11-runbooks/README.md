@@ -5,21 +5,22 @@
 
 ## Symptom → runbook
 
-| Symptom                                         | Start here                                                                                                                                               |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A service won't start / crash-loops             | [runbook-service-crash.md](runbook-service-crash.md) → check Docker logs, DB reachability, migrations                                                    |
-| A new API route 404s as HTML in production      | [runbook-nginx-stale-config.md](runbook-nginx-stale-config.md) → nginx is pinned to a stale config inode; recreate the container                         |
-| A service fails on a symbol its source declares | [runbook-stale-shared-package-dist.md](runbook-stale-shared-package-dist.md) → the container carries an image-baked `packages/*/dist`; rebuild the image |
-| Requests are slow / timing out                  | [runbook-high-latency.md](runbook-high-latency.md)                                                                                                       |
-| A database is corrupt / needs restore           | [runbook-database-recovery.md](runbook-database-recovery.md)                                                                                             |
-| Routing picks the "wrong" model                 | [runbook-routing-misclassification.md](runbook-routing-misclassification.md)                                                                             |
-| `ollama pull` / model download fails            | [runbook-model-pull-failure.md](runbook-model-pull-failure.md)                                                                                           |
-| TLS / cert / `Hostname doesn't match` errors    | [troubleshoot-tls.md](troubleshoot-tls.md)                                                                                                               |
-| Local frontier (llama.cpp) issues               | [frontier-troubleshooting.md](frontier-troubleshooting.md) · [frontier-first-time-walkthrough.md](frontier-first-time-walkthrough.md)                    |
-| Workspace connector sync failing                | [runbook-workspace-automation.md](runbook-workspace-automation.md)                                                                                       |
-| Billing reconciliation is stuck                 | [runbook-billing-reconciliation.md](runbook-billing-reconciliation.md)                                                                                   |
-| A billing sweep or delivery job failed          | [runbook-failed-billing-sweep.md](runbook-failed-billing-sweep.md)                                                                                       |
-| Anything else                                   | [troubleshooting.md](troubleshooting.md) · [operational-runbooks.md](operational-runbooks.md)                                                            |
+| Symptom                                            | Start here                                                                                                                                               |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A service won't start / crash-loops                | [runbook-service-crash.md](runbook-service-crash.md) → check Docker logs, DB reachability, migrations                                                    |
+| A new API route 404s as HTML in production         | [runbook-nginx-stale-config.md](runbook-nginx-stale-config.md) → nginx is pinned to a stale config inode; recreate the container                         |
+| A service fails on a symbol its source declares    | [runbook-stale-shared-package-dist.md](runbook-stale-shared-package-dist.md) → the container carries an image-baked `packages/*/dist`; rebuild the image |
+| Requests are slow / timing out                     | [runbook-high-latency.md](runbook-high-latency.md)                                                                                                       |
+| A database is corrupt / needs restore              | [runbook-database-recovery.md](runbook-database-recovery.md)                                                                                             |
+| Routing picks the "wrong" model                    | [runbook-routing-misclassification.md](runbook-routing-misclassification.md)                                                                             |
+| `ollama pull` / model download fails               | [runbook-model-pull-failure.md](runbook-model-pull-failure.md)                                                                                           |
+| TLS / cert / `Hostname doesn't match` errors       | [troubleshoot-tls.md](troubleshoot-tls.md)                                                                                                               |
+| Local frontier (llama.cpp) issues                  | [frontier-troubleshooting.md](frontier-troubleshooting.md) · [frontier-first-time-walkthrough.md](frontier-first-time-walkthrough.md)                    |
+| Provider connector: sync 500s but the test says OK | [runbook-connector-model-sync-failure.md](runbook-connector-model-sync-failure.md) → the test toast lied; read `model_sync_runs.error_message`           |
+| Workspace connector sync failing                   | [runbook-workspace-automation.md](runbook-workspace-automation.md)                                                                                       |
+| Billing reconciliation is stuck                    | [runbook-billing-reconciliation.md](runbook-billing-reconciliation.md)                                                                                   |
+| A billing sweep or delivery job failed             | [runbook-failed-billing-sweep.md](runbook-failed-billing-sweep.md)                                                                                       |
+| Anything else                                      | [troubleshooting.md](troubleshooting.md) · [operational-runbooks.md](operational-runbooks.md)                                                            |
 
 > **Before any runbook**, do the standard triage from
 > [../../skills/04-debug-toolkit.md](../../skills/04-debug-toolkit.md): Docker
@@ -42,6 +43,7 @@
 
 - [runbook-routing-misclassification.md](runbook-routing-misclassification.md)
 - [runbook-model-pull-failure.md](runbook-model-pull-failure.md)
+- [runbook-connector-model-sync-failure.md](runbook-connector-model-sync-failure.md)
 
 ### Local frontier (llama.cpp)
 

@@ -135,8 +135,10 @@ const appConfigSchema = z.object({
 
   // Anthropic native PDF input — when true, the anthropic adapter forwards
   // PDF bytes as a `document` content part instead of falling through to
-  // extracted text. Requires `anthropic-version` >= 2024-06-01 (bumped
-  // centrally in connector-service constants).
+  // extracted text. The `document` part is generally available under
+  // `anthropic-version: 2023-06-01`; it needs no version bump, and raising
+  // that header is not a way to opt into anything (see the note on
+  // ANTHROPIC_VERSION in connector-service constants).
   ENABLE_ANTHROPIC_NATIVE_PDF: z
     .string()
     .default('false')

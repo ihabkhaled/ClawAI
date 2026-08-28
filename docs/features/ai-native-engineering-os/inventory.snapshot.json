@@ -9288,7 +9288,7 @@
       },
       "claw-connector-service": {
         "runner": "jest",
-        "testFiles": 19
+        "testFiles": 20
       },
       "claw-file-generation-service": {
         "runner": "jest",
@@ -9300,7 +9300,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 398
+        "testFiles": 399
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10057,7 +10057,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1060,
+    "totalTestFiles": 1062,
     "workspaceCount": 25
   }
 }
