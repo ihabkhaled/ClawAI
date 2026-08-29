@@ -5,4 +5,5 @@ export {
   InvalidCredentialsException,
   AccountSuspendedException,
   InvalidRefreshTokenException,
-} from "./business.exception";
+  PaygRejectionException,
+} from './business.exception';

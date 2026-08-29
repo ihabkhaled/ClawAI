@@ -12,4 +12,11 @@ export enum QuotaRejectionWindow {
   CONCURRENCY = 'CONCURRENCY',
   CHATS = 'CHATS',
   MESSAGES = 'MESSAGES',
+  // PAYG credit windows (ADR-080). Unlike the six above these are not token
+  // windows at all: the "limit" is the wallet bucket's balance and the counter
+  // is only the outstanding holds, so a rejection here means "out of credit",
+  // not "over a rate limit". They map to PAYG_CREDIT_EXHAUSTED rather than to a
+  // QUOTA_* code.
+  CREDIT_GRANT = 'CREDIT_GRANT',
+  CREDIT_PURCHASED = 'CREDIT_PURCHASED',
 }

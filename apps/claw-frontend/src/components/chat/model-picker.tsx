@@ -38,6 +38,7 @@ export function ModelPicker({
   triggerClassName,
   ariaLabel,
   hideTriggerLabel,
+  footer,
 }: ModelPickerProps): React.ReactElement {
   const [open, setOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 767px)');
@@ -111,6 +112,10 @@ export function ModelPicker({
           </CommandGroup>
         ))}
       </CommandList>
+      {/* Pinned below the scrolling list, not inside it: the disclaimer has to
+          stay readable while the user scrolls through providers, which is
+          exactly when it matters. */}
+      {footer === undefined ? null : <div className="border-border border-t p-2">{footer}</div>}
     </Command>
   );
 

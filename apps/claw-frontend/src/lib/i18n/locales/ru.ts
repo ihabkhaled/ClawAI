@@ -256,6 +256,15 @@ export const ru: TranslationDictionary = {
     more: 'Ещё',
   },
   chat: {
+    credit: {
+      modelBadge: 'Расходует кредит',
+      badgeLabel: 'Кредит',
+      badgeHint: 'Осталось {remaining} кредита коннекторов',
+      clampedTitle: 'Ответ сокращён',
+      clampedBody: 'Этот ответ сокращён, чтобы уместиться в остаток вашего кредита коннекторов.',
+      clampedDismiss: 'Закрыть',
+      addCreditCta: 'Пополнить кредит',
+    },
     threadListDrawer: 'Беседы',
     export: {
       action: 'Экспорт',
@@ -293,6 +302,19 @@ export const ru: TranslationDictionary = {
       roleAssistant: 'Ассистент',
     },
     limits: {
+      addCreditCta: 'Пополнить кредит',
+      paygCreditExhaustedTitle: 'Кредит коннекторов исчерпан',
+      paygCreditExhaustedBody:
+        'Эта модель оплачивается из кредита коннекторов, а баланс пуст. Пополните кредит, чтобы продолжить, или выберите локальную модель.',
+      paygPromptTooExpensiveTitle: 'Диалог слишком длинный для вашего кредита',
+      paygPromptTooExpensiveBody:
+        'Этот диалог стоит больше, чем остаток кредита коннекторов. Пополните кредит, начните более короткий чат или выберите локальную модель.',
+      paygModelUnpricedTitle: 'Модель недоступна',
+      paygModelUnpricedBody:
+        'Для этой модели ещё не опубликована цена, поэтому её нельзя тарифицировать. Выберите другую модель.',
+      paygPricingUnavailableTitle: 'Временно недоступно',
+      paygPricingUnavailableBody:
+        'Не удалось получить цены, поэтому платные модели ненадолго приостановлены. С вас ничего не списано. Локальные модели продолжают работать.',
       dailyTokensTitle: 'Дневной запас токенов израсходован',
       dailyTokensBody:
         'Ваша дневная норма токенов исчерпана. Она обновится в полночь UTC, либо можно перейти на более крупный тариф прямо сейчас.',
@@ -2633,6 +2655,9 @@ export const ru: TranslationDictionary = {
     invalidFileType: 'Этот тип файла не поддерживается',
   },
   toast: {
+    creditTopupSucceeded: 'Кредит пополнен.',
+    creditTopupFailed: 'Не удалось пополнить кредит.',
+    creditTopupCancelled: 'Оплата отменена. Кредит не пополнен.',
     loginSuccess: 'Вход выполнен успешно',
     registerSuccess: 'Аккаунт успешно создан',
     loginFailed: 'Не удалось войти',
@@ -3554,6 +3579,11 @@ export const ru: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ru,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ru,
   adminBilling: {
+    credit: {
+      packageCreated: 'Пакет кредита создан.',
+      versionPublished: 'Цена пакета опубликована.',
+      saveFailed: 'Не удалось сохранить пакет кредита.',
+    },
     title: 'Панель биллинга',
     description: 'Выручка, расходы на провайдеров, маржа и состояние подписок.',
     loading: 'Загрузка показателей биллинга...',
@@ -3678,6 +3708,9 @@ export const ru: TranslationDictionary = {
       description: 'Обновите этот тариф.',
     },
     form: {
+      monthlyConnectorCredit: 'Месячный кредит коннекторов (микро-USD)',
+      monthlyConnectorCreditHelp:
+        'Долларовый лимит для платных облачных коннекторов, в микро-USD (1 000 000 = $1,00). 0 отключает платные коннекторы на этом тарифе. Это значение видно пользователям.',
       name: 'Название',
       namePlaceholder: 'Pro',
       slug: 'Идентификатор',
@@ -3804,6 +3837,7 @@ export const ru: TranslationDictionary = {
     },
   },
   userPlan: {
+    noCreditOnThisPlan: 'В этот тариф кредит коннекторов не входит.',
     title: 'Мой тариф',
     description: 'Ваша текущая подписка, функции и разрешённые модели.',
     loading: 'Загрузка вашего тарифа...',
@@ -3825,6 +3859,12 @@ export const ru: TranslationDictionary = {
     chatsLimitLabel: 'Чаты в день',
   },
   userUsage: {
+    connectorCredit: 'Кредит коннекторов',
+    creditRemaining: 'Осталось {remaining}',
+    creditUsedOfLimit: '{used} из {limit}',
+    creditPercentUsed: 'Использовано {percent}%',
+    dualConsumptionHint:
+      'Облачные коннекторы расходуют и кредит, и токены; локальные модели — только токены.',
     title: 'Использование',
     description: 'Отслеживайте дневной расход токенов относительно квоты вашего тарифа.',
     loading: 'Загрузка использования...',
@@ -4066,6 +4106,44 @@ export const ru: TranslationDictionary = {
     },
   },
   billing: {
+    credit: {
+      title: 'Кредит коннекторов',
+      available: 'Доступно',
+      grantBucket: 'Лимит тарифа',
+      purchasedBucket: 'Купленный кредит',
+      reserved: 'Зарезервировано',
+      reservedHint: 'Зарезервировано под выполняющиеся запросы. Освобождается по их завершении.',
+      resetsOn: 'Обновится {date}',
+      neverExpires: 'Не сгорает',
+      percentUsed: 'Использовано {percent}%',
+      noAllowance: 'В этот тариф кредит коннекторов не входит.',
+      addCredit: 'Пополнить кредит',
+      adminBypass: 'Администратор — кредит коннекторов не применяется',
+      meteringDisabled: 'Сейчас кредит коннекторов не списывается.',
+      empty: 'Нет данных о кредите.',
+      error: 'Не удалось загрузить кредит коннекторов.',
+      packages: 'Пакеты кредита',
+      packagesEmpty: 'Сейчас нет доступных пакетов кредита.',
+      packagesError: 'Не удалось загрузить пакеты кредита.',
+      packageCredit: '{credit} кредита',
+      topupTitle: 'Пополнить кредит коннекторов',
+      topupDescription: 'Выберите пакет. Купленный кредит не сгорает.',
+      topupConfirm: 'Перейти к оплате',
+      topupConfirming: 'Подготовка оплаты…',
+      ledgerTitle: 'История кредита',
+      ledgerDate: 'Дата',
+      ledgerSurface: 'Где использован',
+      ledgerModel: 'Модель',
+      ledgerNoModel: 'Нет',
+      ledgerAmount: 'Сумма',
+      ledgerBalance: 'Баланс',
+      ledgerEmpty: 'Операций по кредиту пока нет.',
+      ledgerError: 'Не удалось загрузить историю кредита.',
+      ledgerLoadMore: 'Показать ещё',
+      ledgerLoadingMore: 'Загрузка…',
+      dualConsumptionNotice:
+        'Облачные коннекторы, такие как OpenAI, Claude и Gemini, расходуют И ваш долларовый кредит, И дневной лимит токенов. Локальные модели расходуют только токены.',
+    },
     page: {
       title: 'Оплата',
       description: 'Ваш тариф, ваше потребление и все списания.',
@@ -4075,6 +4153,17 @@ export const ru: TranslationDictionary = {
       dismiss: 'Скрыть',
     },
     errors: {
+      PAYG_CREDIT_EXHAUSTED:
+        'Кредит коннекторов исчерпан. Пополните кредит, чтобы продолжить пользоваться облачными моделями.',
+      PAYG_PROMPT_TOO_EXPENSIVE:
+        'Этот диалог стоит больше, чем остаток вашего кредита коннекторов.',
+      PAYG_MODEL_UNPRICED:
+        'Для этой модели ещё не опубликована цена, поэтому её нельзя тарифицировать.',
+      PAYG_PRICING_UNAVAILABLE: 'Цены временно недоступны. С вас ничего не списано.',
+      CREDIT_PACKAGE_NOT_FOUND: 'Этот пакет кредита больше не существует.',
+      CREDIT_PACKAGE_INACTIVE: 'Этот пакет кредита больше не продаётся.',
+      CREDIT_ADJUSTMENT_REASON_REQUIRED:
+        'Для ручной корректировки кредита требуется указать причину.',
       PLAN_NOT_PURCHASABLE: 'Этот тариф сейчас недоступен для покупки.',
       PAYMENT_NOT_VERIFIED: 'Не удалось подтвердить платёж. Средства с вас не списывались.',
       PAYMENT_METHOD_UNAVAILABLE:
@@ -4321,6 +4410,8 @@ export const ru: TranslationDictionary = {
         'Доступность моделей зависит от графика выпуска каждого провайдера. Новые модели добавляются по мере их появления.',
     },
     pricing: {
+      paygCreditLabel: 'Месячный кредит коннекторов',
+      paygCreditNone: 'Без кредита коннекторов',
       sectionTitle: 'Тарифы, которые растут вместе с вами',
       sectionSubtitle:
         'Начните бесплатно. Переходите на старший тариф, когда потребуется больше. Все платные тарифы дают доступ к одним и тем же моделям — различается только объём использования.',

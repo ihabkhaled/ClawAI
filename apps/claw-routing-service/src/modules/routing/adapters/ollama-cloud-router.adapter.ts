@@ -86,7 +86,12 @@ export class OllamaCloudRouterAdapter implements RouterInferenceProvider {
           think: false,
           options: {
             temperature: ROUTER_TEMPERATURE,
-            num_predict: ROUTER_MAX_OUTPUT_TOKENS,
+            // The PAYG affordability clamp wins when it is present: below the
+            // user's balance the reservation grants a smaller ceiling, and
+            // honouring it is what makes an overspend impossible by
+            // construction. Absent (an unmetered call), the router's own low
+            // ceiling applies.
+            num_predict: request.maxOutputTokens ?? ROUTER_MAX_OUTPUT_TOKENS,
           },
         },
         timeoutMs: Math.max(0, request.timeoutMs - resolveMs),

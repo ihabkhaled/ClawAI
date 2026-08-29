@@ -9,6 +9,7 @@ import { type ChatStreamService } from '../services/chat-stream.service';
 import { type AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { pipelineMessageSchema } from '../dto/pipeline-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
+import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
 
 jest.mock('../../../common/utilities/http-client.utility');
 jest.mock('../../../app/config/app.config');
@@ -78,7 +79,7 @@ describe('PipelineManager', () => {
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
       researchEnricher.service,
-      { recordUsage: jest.fn() } as any,
+      createFakePaygAccessControl() as any,
     );
   });
 
@@ -142,10 +143,15 @@ describe('PipelineManager', () => {
 
       messagesRepo.create!.mockResolvedValue({ id: 'assist-1', threadId: 'thread-1' });
 
-      await manager.executeInBackground('thread-1', 'My request content', {
-        content: 'My request content',
-        template: 'analyze-reason-format',
-      }, 'user-1');
+      await manager.executeInBackground(
+        'thread-1',
+        'My request content',
+        {
+          content: 'My request content',
+          template: 'analyze-reason-format',
+        },
+        'user-1',
+      );
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
@@ -164,10 +170,15 @@ describe('PipelineManager', () => {
 
       messagesRepo.create!.mockResolvedValue({ id: 'assist-2', threadId: 'thread-1' });
 
-      await manager.executeInBackground('thread-1', 'My request content', {
-        content: 'My request content',
-        template: 'analyze-reason-format',
-      }, 'user-1');
+      await manager.executeInBackground(
+        'thread-1',
+        'My request content',
+        {
+          content: 'My request content',
+          template: 'analyze-reason-format',
+        },
+        'user-1',
+      );
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
@@ -185,10 +196,15 @@ describe('PipelineManager', () => {
 
       messagesRepo.create!.mockResolvedValue({ id: 'msg-done', threadId: 'thread-1' });
 
-      await manager.executeInBackground('thread-1', 'My request content', {
-        content: 'My request content',
-        template: 'analyze-reason-format',
-      }, 'user-1');
+      await manager.executeInBackground(
+        'thread-1',
+        'My request content',
+        {
+          content: 'My request content',
+          template: 'analyze-reason-format',
+        },
+        'user-1',
+      );
 
       expect(streamService.emitCompletion).toHaveBeenCalledWith('thread-1', 'local-ollama', 'AUTO');
     });
@@ -197,10 +213,15 @@ describe('PipelineManager', () => {
       httpRequest.mockResolvedValueOnce({ ok: false, status: 500, data: { response: '' } });
       messagesRepo.create!.mockResolvedValue({ id: 'err-msg', threadId: 'thread-1' });
 
-      await manager.executeInBackground('thread-1', 'My request content', {
-        content: 'My request content',
-        template: 'analyze-reason-format',
-      }, 'user-1');
+      await manager.executeInBackground(
+        'thread-1',
+        'My request content',
+        {
+          content: 'My request content',
+          template: 'analyze-reason-format',
+        },
+        'user-1',
+      );
 
       expect(streamService.emitError).toHaveBeenCalledWith('thread-1', expect.any(String));
       const errorCall = messagesRepo.create!.mock.calls.find(
@@ -214,10 +235,15 @@ describe('PipelineManager', () => {
       messagesRepo.create!.mockRejectedValue(new Error('DB error'));
 
       await expect(
-        manager.executeInBackground('thread-1', 'My request content', {
-          content: 'My request content',
-          template: 'analyze-reason-format',
-        }, 'user-1'),
+        manager.executeInBackground(
+          'thread-1',
+          'My request content',
+          {
+            content: 'My request content',
+            template: 'analyze-reason-format',
+          },
+          'user-1',
+        ),
       ).resolves.toBeUndefined();
     });
 
@@ -229,10 +255,15 @@ describe('PipelineManager', () => {
 
       messagesRepo.create!.mockResolvedValue({ id: 'msg-tmpl', threadId: 'thread-1' });
 
-      await manager.executeInBackground('thread-1', 'Content here', {
-        content: 'Content here',
-        template: 'analyze-reason-format',
-      }, 'user-1');
+      await manager.executeInBackground(
+        'thread-1',
+        'Content here',
+        {
+          content: 'Content here',
+          template: 'analyze-reason-format',
+        },
+        'user-1',
+      );
 
       expect(httpRequest).toHaveBeenCalledTimes(3);
     });
@@ -244,14 +275,19 @@ describe('PipelineManager', () => {
 
       messagesRepo.create!.mockResolvedValue({ id: 'msg-custom', threadId: 'thread-1' });
 
-      await manager.executeInBackground('thread-1', 'Content', {
-        content: 'Content',
-        template: 'custom',
-        customStages: [
-          { name: 'Stage A', instruction: 'Do A:', model: 'AUTO' },
-          { name: 'Stage B', instruction: 'Do B:', model: 'AUTO' },
-        ],
-      }, 'user-1');
+      await manager.executeInBackground(
+        'thread-1',
+        'Content',
+        {
+          content: 'Content',
+          template: 'custom',
+          customStages: [
+            { name: 'Stage A', instruction: 'Do A:', model: 'AUTO' },
+            { name: 'Stage B', instruction: 'Do B:', model: 'AUTO' },
+          ],
+        },
+        'user-1',
+      );
 
       expect(httpRequest).toHaveBeenCalledTimes(2);
       const assistantCall = messagesRepo.create!.mock.calls.find(
@@ -335,7 +371,7 @@ describe('PipelineManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         researchEnricher.service,
-        { recordUsage: jest.fn() } as any,
+        createFakePaygAccessControl() as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
@@ -466,9 +502,8 @@ describe('PipelineManager', () => {
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
       );
-      const metadata = (
-        assistantCall![0] as { metadata?: { researchTranscript?: unknown } }
-      ).metadata;
+      const metadata = (assistantCall![0] as { metadata?: { researchTranscript?: unknown } })
+        .metadata;
       expect(metadata?.researchTranscript).toBeUndefined();
     });
 
@@ -482,7 +517,8 @@ describe('PipelineManager', () => {
       };
       researchEnricher.enrichForOrchestration.mockResolvedValue({
         transcript,
-        systemPrompt: '## Web research evidence (mode: SEARCH, gathered now)\n\n[1] src — https://example.com\nsnippet\n',
+        systemPrompt:
+          '## Web research evidence (mode: SEARCH, gathered now)\n\n[1] src — https://example.com\nsnippet\n',
       });
       httpRequest
         .mockResolvedValueOnce(makeOllamaSuccess('Analysis output'))

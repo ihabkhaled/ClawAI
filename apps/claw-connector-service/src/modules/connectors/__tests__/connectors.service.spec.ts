@@ -32,6 +32,8 @@ const mockConnector = {
   defaultModelId: null,
   baseUrl: null,
   region: null,
+  workspaceId: null,
+  isPayAsYouGo: true,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -50,6 +52,7 @@ const mockConnectorsRepository = (): Record<keyof ConnectorsRepository, jest.Moc
   update: jest.fn(),
   delete: jest.fn(),
   countAll: jest.fn(),
+  findPaygPolicyRows: jest.fn(),
 });
 
 const mockConnectorModelsRepository = (): Partial<
@@ -157,6 +160,56 @@ describe('ConnectorsService', () => {
       );
     });
 
+    // The migration backfills existing rows, but a connector added AFTERWARDS
+    // would land on the column default of `false` and serve paid OpenAI traffic
+    // for free. The provider default is what closes that hole (ADR-082).
+    it('defaults isPayAsYouGo to true for a paid cloud provider', async () => {
+      connectorsRepo.create.mockResolvedValue(mockConnector);
+
+      await service.createConnector({
+        name: 'Test OpenAI',
+        provider: ConnectorProvider.OPENAI,
+        authType: ConnectorAuthType.API_KEY,
+        apiKey: 'sk-test-key',
+      });
+
+      expect(connectorsRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ isPayAsYouGo: true }),
+      );
+    });
+
+    it('defaults isPayAsYouGo to false for a local provider', async () => {
+      connectorsRepo.create.mockResolvedValue({ ...mockConnector, isPayAsYouGo: false });
+
+      await service.createConnector({
+        name: 'Local Ollama',
+        provider: ConnectorProvider.OLLAMA,
+        authType: ConnectorAuthType.NONE,
+      });
+
+      expect(connectorsRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ isPayAsYouGo: false }),
+      );
+    });
+
+    // Ollama Cloud is the case A3 calls out: it costs money upstream but is
+    // indistinguishable from self-hosted Ollama at the provider grain, so the
+    // administrator's explicit answer has to beat the default.
+    it('lets an explicit isPayAsYouGo override the provider default', async () => {
+      connectorsRepo.create.mockResolvedValue(mockConnector);
+
+      await service.createConnector({
+        name: 'Ollama Cloud',
+        provider: ConnectorProvider.OLLAMA,
+        authType: ConnectorAuthType.API_KEY,
+        isPayAsYouGo: true,
+      });
+
+      expect(connectorsRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ provider: ConnectorProvider.OLLAMA, isPayAsYouGo: true }),
+      );
+    });
+
     it('should create connector without API key', async () => {
       const connectorNoKey = { ...mockConnector, encryptedConfig: null };
       connectorsRepo.create.mockResolvedValue(connectorNoKey);
@@ -230,12 +283,75 @@ describe('ConnectorsService', () => {
       );
     });
 
+    it('forwards an admin PAYG toggle to the repository', async () => {
+      const disabled = { ...mockConnector, isPayAsYouGo: false };
+      connectorsRepo.findById.mockResolvedValue(mockConnector);
+      connectorsRepo.update.mockResolvedValue(disabled);
+
+      const result = await service.updateConnector('conn-1', { isPayAsYouGo: false });
+
+      expect(connectorsRepo.update).toHaveBeenCalledWith(
+        'conn-1',
+        expect.objectContaining({ isPayAsYouGo: false }),
+      );
+      expect(result.isPayAsYouGo).toBe(false);
+    });
+
+    // An unrelated edit must not reset the classification to the provider
+    // default: that would silently stop metering a paid connector on a rename.
+    it('leaves isPayAsYouGo undefined when the field was not sent', async () => {
+      connectorsRepo.findById.mockResolvedValue(mockConnector);
+      connectorsRepo.update.mockResolvedValue(mockConnector);
+
+      await service.updateConnector('conn-1', { name: 'Renamed' });
+
+      expect(connectorsRepo.update).toHaveBeenCalledWith(
+        'conn-1',
+        expect.objectContaining({ isPayAsYouGo: undefined }),
+      );
+    });
+
     it('should throw EntityNotFoundException when connector not found', async () => {
       connectorsRepo.findById.mockResolvedValue(null);
 
       await expect(service.updateConnector('nonexistent', { name: 'Updated' })).rejects.toThrow(
         EntityNotFoundException,
       );
+    });
+  });
+
+  describe('getPaygPolicy', () => {
+    // The rollup rule that matters: several connectors can serve one provider,
+    // and a single metered one has to make the whole provider metered.
+    it('rolls multiple connectors of one provider up to a single metered entry', async () => {
+      connectorsRepo.findPaygPolicyRows.mockResolvedValue([
+        { provider: 'OPENAI', isEnabled: true, isPayAsYouGo: false },
+        { provider: 'OPENAI', isEnabled: true, isPayAsYouGo: true },
+        { provider: 'OLLAMA', isEnabled: true, isPayAsYouGo: false },
+      ]);
+
+      const result = await service.getPaygPolicy();
+
+      expect(result).toEqual({ providers: { OPENAI: true, OLLAMA: false } });
+    });
+
+    // A disabled connector cannot serve traffic, so it cannot cost money — but
+    // it still contributes its provider, so the caller gets an explicit `false`
+    // rather than an absent key it would have to guess about.
+    it('does not let a disabled connector make its provider metered', async () => {
+      connectorsRepo.findPaygPolicyRows.mockResolvedValue([
+        { provider: 'ANTHROPIC', isEnabled: false, isPayAsYouGo: true },
+      ]);
+
+      const result = await service.getPaygPolicy();
+
+      expect(result.providers).toEqual({ ANTHROPIC: false });
+    });
+
+    it('returns an empty map when no connectors are configured', async () => {
+      connectorsRepo.findPaygPolicyRows.mockResolvedValue([]);
+
+      await expect(service.getPaygPolicy()).resolves.toEqual({ providers: {} });
     });
   });
 

@@ -10,6 +10,9 @@ import {
   chatsKey,
   CONCURRENCY_SLOT_TTL_SECONDS,
   concurrencyKey,
+  CREDIT_HOLD_TTL_SECONDS,
+  creditGrantHoldKey,
+  creditPurchasedHoldKey,
   messagesKey,
   providerCostKey,
   QUOTA_UNLIMITED,
@@ -17,6 +20,7 @@ import {
 } from '../constants/quota-redis.constants';
 import { QuotaRejectionWindow } from '../../../common/enums/quota-rejection-window.enum';
 import {
+  type QuotaAdjustmentDeltas,
   type QuotaLimits,
   type QuotaPeriodKeys,
   type WeightedReservationInput,
@@ -38,7 +42,9 @@ export function buildPeriodKeys(now: Date): QuotaPeriodKeys {
 }
 
 // Key order is the contract with RESERVE_QUOTA_LUA: day, week, month,
-// providerCost, concurrency, chats, messages.
+// providerCost, concurrency, chats, messages, creditGrantHolds,
+// creditPurchasedHolds. The two credit keys are appended rather than inserted
+// so every existing ARGV index keeps its meaning.
 export function buildQuotaKeys(userId: string, periods: QuotaPeriodKeys): string[] {
   return [
     weightedQuotaKey(userId, 'DAY', periods.dayKey),
@@ -48,6 +54,8 @@ export function buildQuotaKeys(userId: string, periods: QuotaPeriodKeys): string
     concurrencyKey(userId),
     chatsKey(userId, periods.dayKey),
     messagesKey(userId, periods.dayKey),
+    creditGrantHoldKey(userId, periods.monthKey),
+    creditPurchasedHoldKey(userId),
   ];
 }
 
@@ -72,18 +80,18 @@ export function buildReserveArgv(
     String(secondsUntilEndOfIsoWeek(now)),
     String(secondsUntilEndOfUtcMonth(now)),
     String(CONCURRENCY_SLOT_TTL_SECONDS),
+    toRedisCostLimit(limits.creditGrantMicroUsd),
+    toRedisCostLimit(limits.creditPurchasedMicroUsd),
+    input.creditGrantMicroUsd.toString(),
+    input.creditPurchasedMicroUsd.toString(),
+    String(CREDIT_HOLD_TTL_SECONDS),
+    String(input.concurrencyDelta),
   ];
 }
 
 // Signed deltas for ADJUST_QUOTA_LUA, in the same key order as buildQuotaKeys.
 // Positive values charge, negative values give back.
-export function buildAdjustArgv(input: {
-  weightedTokenDelta: number;
-  costMicroUsdDelta: bigint;
-  concurrencyDelta: number;
-  chatsDelta: number;
-  messagesDelta: number;
-}): string[] {
+export function buildAdjustArgv(input: QuotaAdjustmentDeltas): string[] {
   return [
     String(input.weightedTokenDelta),
     String(input.weightedTokenDelta),
@@ -92,6 +100,8 @@ export function buildAdjustArgv(input: {
     String(input.concurrencyDelta),
     String(input.chatsDelta),
     String(input.messagesDelta),
+    input.creditGrantDelta.toString(),
+    input.creditPurchasedDelta.toString(),
   ];
 }
 

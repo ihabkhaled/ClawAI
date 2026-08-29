@@ -7,6 +7,18 @@ export type NormalizeTokenUsageInput = {
   promptTokens?: number;
   completionTokens?: number;
   totalTokens?: number;
+  /**
+   * Subset of `promptTokens` served from the provider's prompt cache. Absent
+   * when the provider does not report caching; clamped to `promptTokens` by the
+   * normalizer so a malformed response can never make the discounted part
+   * larger than the whole.
+   */
+  cachedPromptTokens?: number;
+  /**
+   * Subset of `completionTokens` spent on reasoning / thinking. Clamped the
+   * same way.
+   */
+  reasoningTokens?: number;
   promptText?: string;
   completionText?: string;
 };

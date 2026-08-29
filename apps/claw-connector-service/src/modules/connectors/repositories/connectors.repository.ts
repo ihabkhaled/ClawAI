@@ -3,6 +3,7 @@ import { PrismaService } from '../../../infrastructure/database/prisma/prisma.se
 import { type Connector, Prisma } from '../../../generated/prisma';
 import {
   type ConnectorFilters,
+  type ConnectorPaygPolicyRow,
   type ConnectorWithModels,
   type CreateConnectorData,
   type UpdateConnectorData,
@@ -60,6 +61,24 @@ export class ConnectorsRepository {
     return this.prisma.connector.findMany({
       where: { isEnabled: true },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Every connector's PAYG classification, projected to the three columns the
+   * provider-grain rollup needs.
+   *
+   * Deliberately unfiltered and unpaginated: the rollup has to see disabled
+   * rows too, so a provider whose only PAYG connector is switched off still
+   * appears in the map as an explicit `false` instead of disappearing. The
+   * table holds one row per configured provider account — tens, not thousands —
+   * so reading all of them costs less than the two grouped queries a
+   * conditional aggregate would need.
+   */
+  async findPaygPolicyRows(): Promise<ConnectorPaygPolicyRow[]> {
+    return this.prisma.connector.findMany({
+      select: { provider: true, isEnabled: true, isPayAsYouGo: true },
+      orderBy: { provider: 'asc' },
     });
   }
 

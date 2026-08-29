@@ -1,6 +1,7 @@
 import { Send } from 'lucide-react';
 
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
+import { CreditIndicator } from '@/components/chat/credit-indicator';
 import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
 import { ModelSelector } from '@/components/chat/model-selector';
 import { PreviewContextButton } from '@/components/chat/preview-context-button';
@@ -109,6 +110,9 @@ export function MessageComposer({
             />
           ) : null}
           {threadId ? <PreviewContextButton threadId={threadId} draft={content} /> : null}
+          {/* Renders nothing when the account is not metered, so an admin or a
+              disabled kill switch sees the composer exactly as before. */}
+          <CreditIndicator />
         </div>
 
         <div className="flex min-h-0 flex-1 items-end gap-2 md:items-stretch">

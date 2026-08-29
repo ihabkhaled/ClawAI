@@ -54,4 +54,10 @@ export enum Permission {
   // Feedback / ticketing
   FEEDBACK_SUBMIT = 'FEEDBACK_SUBMIT',
   ADMIN_FEEDBACK_MANAGE = 'ADMIN_FEEDBACK_MANAGE',
+
+  // Pay-as-you-go connector credit. Buying credit and operating the wallet are
+  // separate grants on purpose: an operator who may correct a balance is not
+  // thereby a buyer, and a buyer must never reach another account's wallet.
+  BILLING_CREDIT_TOPUP = 'BILLING_CREDIT_TOPUP',
+  ADMIN_CREDIT_MANAGE = 'ADMIN_CREDIT_MANAGE',
 }

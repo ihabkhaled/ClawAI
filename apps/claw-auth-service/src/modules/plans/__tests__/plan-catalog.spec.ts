@@ -66,10 +66,14 @@ describe('plan catalog', () => {
       labs: Record<string, boolean>;
     };
 
+    // ADR-078 corrected these. The old row was incoherent: 300,000 daily against
+    // a 20,000 WEEKLY ceiling meant Free's real enforced allowance was $0.02 a
+    // week, not the $0.30 the pricing page implied. The widening guard below
+    // only covered paid plans, which is exactly how it survived.
     expect(free).toMatchObject({
-      dailyTokens: 300_000,
-      weeklyTokens: 20_000,
-      monthlyTokens: null,
+      dailyTokens: 50_000,
+      weeklyTokens: 150_000,
+      monthlyTokens: 300_000,
       chatsPerDay: 5,
       messagesPerDay: 250,
       workspaces: 5,
@@ -102,8 +106,10 @@ describe('plan catalog', () => {
     }
   });
 
-  it('keeps daily < weekly < monthly for every paid metered plan', () => {
-    for (const plan of catalog.filter((entry) => entry.monthlyMinor > 0)) {
+  // Covers EVERY metered plan, Free included. Restricting this to paid plans is
+  // what let Free ship with a weekly ceiling below its own daily one.
+  it('keeps daily < weekly < monthly for every metered plan', () => {
+    for (const plan of catalog) {
       expect(plan.weeklyTokens).toBeGreaterThan(plan.dailyTokens);
       if (plan.monthlyTokens !== null) {
         expect(plan.monthlyTokens).toBeGreaterThan(plan.weeklyTokens);
@@ -136,9 +142,17 @@ describe('plan catalog', () => {
     // 0 means disabled elsewhere in this system; conflating the two would lock
     // the most expensive plan out of chatting entirely.
     const unlimited = bySlug('unlimited');
-    expect(unlimited.monthlyTokens).toBeNull();
     expect(unlimited.chatsPerDay).toBeNull();
     expect(unlimited.messagesPerDay).toBeNull();
+    // Chats and messages are genuinely unlimited; premium cloud spend is not,
+    // and never was — the plan's own description promises "fair-use on premium
+    // cloud". Before ADR-078 that cap lived in a SECOND column
+    // (monthlyProviderCostCeilingMicroUsd = 50_000_000) while monthlyTokens said
+    // null, so the smaller of two names silently bound. One unit, one number:
+    // 50,000,000 weighted tokens IS $50.00, because
+    // WEIGHTED_TOKENS_PER_USD === MICRO_USD_PER_USD.
+    expect(unlimited.monthlyTokens).toBe(50_000_000);
+    expect(unlimited.costCeilingMicroUsd).toBe(String(unlimited.monthlyTokens));
   });
 
   it('gives Free exactly one lifetime run of each advanced feature', () => {
@@ -219,6 +233,15 @@ describe('catalog integrity', () => {
     // through the migration window; a seeded plan must never rely on it.
     for (const plan of catalogData.plans) {
       expect(plan.modelAccessMode).not.toBe('LEGACY_UNRESTRICTED');
+    }
+  });
+  // ADR-078. `WEIGHTED_TOKENS_PER_USD === MICRO_USD_PER_USD`, so these two
+  // columns are the same dollar amount under two names. They are allowed to
+  // exist separately only while they agree; the moment they diverge, the
+  // smaller one silently binds and the UI advertises the larger.
+  it('keeps the monthly token quota and the provider-cost ceiling identical', () => {
+    for (const plan of catalog) {
+      expect(String(plan.monthlyTokens)).toBe(String(plan.costCeilingMicroUsd));
     }
   });
 });

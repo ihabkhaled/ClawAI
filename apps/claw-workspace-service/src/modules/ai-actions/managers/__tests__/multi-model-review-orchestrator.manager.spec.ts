@@ -1,3 +1,5 @@
+import { PaygSurface } from '@claw/shared-types';
+
 import { MultiModelReviewOrchestratorManager } from '../multi-model-review-orchestrator.manager';
 import { AppConfig } from '../../../../app/config/app.config';
 import * as cloudClient from '../../utilities/cloud-generation-client.utility';
@@ -9,6 +11,7 @@ const mockConfig = {
 
 const valid = {
   content: 'The PR adds X with rationale Y.',
+  userId: 'user-1',
   reviewerModels: [
     { provider: 'ANTHROPIC', model: 'claude-sonnet-4', label: 'Sonnet' },
     { provider: 'OPENAI', model: 'gpt-4o' },
@@ -21,7 +24,9 @@ describe('MultiModelReviewOrchestratorManager', () => {
 
   beforeEach(() => {
     manager = new MultiModelReviewOrchestratorManager();
-    jest.spyOn(AppConfig, 'get').mockReturnValue(mockConfig as unknown as ReturnType<typeof AppConfig.get>);
+    jest
+      .spyOn(AppConfig, 'get')
+      .mockReturnValue(mockConfig as unknown as ReturnType<typeof AppConfig.get>);
     callSpy = jest.spyOn(cloudClient, 'callCloudGenerate');
   });
 
@@ -104,6 +109,7 @@ describe('MultiModelReviewOrchestratorManager', () => {
     callSpy.mockResolvedValue({ content: 'ok', inputTokens: 1, outputTokens: 1 });
     const result = await manager.run({
       content: valid.content,
+      userId: valid.userId,
       reviewerModels: Array.from({ length: 8 }, (_, i) => ({
         provider: 'P',
         model: `m${String(i)}`,
@@ -114,16 +120,14 @@ describe('MultiModelReviewOrchestratorManager', () => {
   });
 
   it('rejects empty content', async () => {
-    await expect(manager.run({ ...valid, content: '   ' })).rejects.toThrow(
-      'content is empty',
-    );
+    await expect(manager.run({ ...valid, content: '   ' })).rejects.toThrow('content is empty');
     expect(callSpy).not.toHaveBeenCalled();
   });
 
   it('rejects empty reviewer list', async () => {
-    await expect(manager.run({ content: 'x', reviewerModels: [] })).rejects.toThrow(
-      'reviewerModels is empty',
-    );
+    await expect(
+      manager.run({ content: 'x', userId: 'user-1', reviewerModels: [] }),
+    ).rejects.toThrow('reviewerModels is empty');
     expect(callSpy).not.toHaveBeenCalled();
   });
 
@@ -139,5 +143,33 @@ describe('MultiModelReviewOrchestratorManager', () => {
     expect(result.reviewers.every((r) => r.success)).toBe(true);
     expect(result.judge?.success).toBe(false);
     expect(result.judge?.errorMessage).toContain('judge 5xx');
+  });
+
+  // PAYG (U9): N reviewers + 1 judge are N+1 SEPARATE paid provider calls.
+  // Each carries the acting user and the WORKSPACE_ACTION surface so
+  // chat-service reserves and settles each one on its own, instead of the fan
+  // -out being billed as a single request.
+  it('sends the acting user and WORKSPACE_ACTION surface on every reviewer and the judge', async () => {
+    callSpy.mockImplementation(async (input) => ({
+      content: `verdict from ${input.provider}`,
+      inputTokens: 10,
+      outputTokens: 20,
+    }));
+
+    await manager.run({
+      ...valid,
+      judgeModel: { provider: 'JUDGE_PROVIDER', model: 'judge-1' },
+    });
+
+    expect(callSpy).toHaveBeenCalledTimes(3);
+    for (const call of callSpy.mock.calls) {
+      expect(call[0]).toMatchObject({
+        userId: 'user-1',
+        surface: PaygSurface.WORKSPACE_ACTION,
+      });
+    }
+    // Distinct provider/model per call is what keeps three reservations apart.
+    const targets = callSpy.mock.calls.map((c) => `${c[0].provider}/${c[0].model}`);
+    expect(new Set(targets).size).toBe(3);
   });
 });

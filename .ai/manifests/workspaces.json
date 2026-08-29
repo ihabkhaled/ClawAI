@@ -310,6 +310,7 @@
       "dir": "apps/claw-image-service",
       "internalDeps": [
         "@claw/shared-constants",
+        "@claw/shared-entitlements",
         "@claw/shared-rabbitmq",
         "@claw/shared-types",
         "@claw/shared-utilities"
@@ -630,6 +631,7 @@
     {
       "dir": "packages/shared-entitlements",
       "internalDeps": [
+        "@claw/shared-constants",
         "@claw/shared-types"
       ],
       "name": "@claw/shared-entitlements",

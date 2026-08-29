@@ -39,6 +39,12 @@ export type QuotaLimits = {
   maxConcurrentRequests: number | null;
   dailyChats: number | null;
   dailyMessages: number | null;
+  // PAYG credit ceilings (ADR-080). NOT plan-derived like the six above: these
+  // are the wallet's CURRENT bucket balances, read from Postgres per request,
+  // because a balance moves with every top-up and every settlement while a plan
+  // limit only moves when an administrator edits the plan.
+  creditGrantMicroUsd: bigint | null;
+  creditPurchasedMicroUsd: bigint | null;
 };
 
 export type WeightedReservationInput = {
@@ -54,7 +60,18 @@ export type WeightedReservationInput = {
   // Product-limit consumption this request represents.
   chatsDelta: number;
   messagesDelta: number;
+  // Concurrency slots this reservation takes. 1 for an ordinary request; 0 for
+  // a PAYG credit hold, which is taken AROUND a request the quota path will
+  // (once wired) already have counted — incrementing twice would halve every
+  // plan's effective concurrency.
+  concurrencyDelta: number;
   billingPeriodKey: string | null;
+  // True when this request is metered against the PAYG wallet. The two credit
+  // amounts are the hold's split across the buckets, taken GRANT first, and are
+  // both 0 for a request that is not metered.
+  isPayg: boolean;
+  creditGrantMicroUsd: bigint;
+  creditPurchasedMicroUsd: bigint;
 };
 
 // UTC bucket identifiers a reservation is charged against, resolved once per
@@ -83,6 +100,23 @@ export type WeightedFinalizeInput = {
   toolCallCount: number;
   actualWeightedTokens: number;
   actualCostMicroUsd: bigint;
+};
+
+// Signed deltas applied to every Redis window when a reservation is reconciled
+// or released. Positive charges, negative gives back.
+//
+// The two credit deltas are ALWAYS the negation of what was held, never the
+// actual-minus-estimate difference the token windows use: the credit counters
+// track outstanding HOLDS, and settled spend is subtracted from the wallet in
+// Postgres instead. Reconciling both would charge the same dollars twice.
+export type QuotaAdjustmentDeltas = {
+  weightedTokenDelta: number;
+  costMicroUsdDelta: bigint;
+  concurrencyDelta: number;
+  chatsDelta: number;
+  messagesDelta: number;
+  creditGrantDelta: bigint;
+  creditPurchasedDelta: bigint;
 };
 
 export type QuotaUsageSnapshot = {

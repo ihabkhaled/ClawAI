@@ -880,8 +880,6 @@
     "apps/claw-routing-service/src/infrastructure/redis/redis.module.ts": "4cf9ef0c248a0a35b0e798da41740065eda9a07b16cad4fc3cf919266e4d3cff",
     "apps/claw-routing-service/src/infrastructure/redis/redis.service.ts": "95c8ae9b4edfea94ae62ac845509911e02bee7db007a3471fdf06d85f1d9d7ef",
     "apps/claw-routing-service/src/main.ts": "0a9eccfc7edfc284c8553c240ed2556101ddf8cadfef0968102ff36eb4eee14a",
-    "apps/claw-routing-service/src/modules/cost-budget/managers/budget-warning.manager.ts": "d02d1855ea2174f43d9a33d06f531fa001651a8a8a0e18635c0fbd50fdd12b7c",
-    "apps/claw-routing-service/src/modules/cost-budget/managers/spend-tracker.manager.ts": "745eb6c71f68cd71effd5fab3a0c0ad4296151c1c2a12351c81aa4c729331848",
     "apps/claw-routing-service/src/modules/health/controllers/health.controller.ts": "b2b82afe3cf09b7333740573b3f708fc0e034b994358976fda0e11c1a4ab31d0",
     "apps/claw-routing-service/src/modules/health/health.module.ts": "c5065c259c9df336dc546cf878acb58b8cc004ba3482e81bd4b1b4dbe2f8e58c",
     "apps/claw-routing-service/src/modules/health/services/health.service.ts": "72a3b3fb592a8b74b2141d633a724aa762f02c8afc14c1ffbb4d5e8cd99ab70b",

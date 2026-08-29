@@ -560,6 +560,10 @@ export class RoutingManager {
       const prompt = this.cloudRouterPrompt.buildPrompt(context, eligibleDeployments);
       const result = await this.cloudRouter.route({
         traceId: randomUUID(),
+        // The cloud router is the only routing path that spends provider money,
+        // so this is what lets that spend reach a wallet instead of stopping at
+        // `router_attempts`.
+        userId: context.userId,
         prompt,
         eligibleDeploymentIds: eligibleDeployments.map((deployment) => deployment.id),
       });

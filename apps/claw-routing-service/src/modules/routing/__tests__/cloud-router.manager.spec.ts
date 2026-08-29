@@ -123,6 +123,33 @@ describe('CloudRouterManager.route', () => {
     }
   });
 
+  // The coordinator meters the router's own paid calls against this wallet.
+  // A request that arrives without one is walked unmetered rather than billed
+  // to a guess, so the value has to survive the hop verbatim.
+  it('carries the requesting user through to the coordinator', async () => {
+    const { manager } = build(snapshot());
+    const coordinator = jest.spyOn(RouterInferenceCoordinatorManager.prototype, 'run');
+
+    await manager.route({ ...request, userId: 'usr_42' });
+
+    const call = coordinator.mock.calls[0];
+    expect(call).toBeDefined();
+    expect(call?.[1].userId).toBe('usr_42');
+    coordinator.mockRestore();
+  });
+
+  it('leaves the user undefined when the request carries none', async () => {
+    const { manager } = build(snapshot());
+    const coordinator = jest.spyOn(RouterInferenceCoordinatorManager.prototype, 'run');
+
+    await manager.route(request);
+
+    const call = coordinator.mock.calls[0];
+    expect(call).toBeDefined();
+    expect(call?.[1].userId).toBeUndefined();
+    coordinator.mockRestore();
+  });
+
   // "Not turned on yet" and "configured but nothing can run" look identical from
   // outside and mean completely different things to an operator.
   it('reports a missing configuration distinctly', async () => {

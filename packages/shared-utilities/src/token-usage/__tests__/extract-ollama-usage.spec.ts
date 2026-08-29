@@ -13,6 +13,8 @@ describe('extractOllamaUsage', () => {
       promptTokens: 60,
       completionTokens: 24,
       totalTokens: 84,
+      cachedPromptTokens: 0,
+      reasoningTokens: 0,
       estimated: false,
       source: TokenUsageSource.NATIVE,
       estimator: TokenEstimatorKind.NONE,

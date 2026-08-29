@@ -23,6 +23,9 @@
       "TerminalCommand"
     ],
     "claw-auth-service": [
+      "CreditLedgerEntry",
+      "CreditPackage",
+      "CreditPackageVersion",
       "DeploymentCredential",
       "DeviceAuthorizationGrant",
       "EmailChangeRequest",
@@ -43,6 +46,7 @@
       "SystemSetting",
       "TokenUsageLedger",
       "User",
+      "UserCreditWallet",
       "UserPlanAssignment",
       "WeightedUsageRecord"
     ],

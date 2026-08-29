@@ -255,6 +255,16 @@ export const fr: TranslationDictionary = {
     more: 'Plus',
   },
   chat: {
+    credit: {
+      modelBadge: 'Consomme du crédit',
+      badgeLabel: 'Crédit',
+      badgeHint: 'Il vous reste {remaining} de crédit connecteurs',
+      clampedTitle: 'Réponse raccourcie',
+      clampedBody:
+        'Cette réponse a été raccourcie pour tenir dans votre crédit connecteurs restant.',
+      clampedDismiss: 'Fermer',
+      addCreditCta: 'Ajouter du crédit',
+    },
     threadListDrawer: 'Conversations',
     export: {
       action: 'Exporter',
@@ -293,6 +303,19 @@ export const fr: TranslationDictionary = {
       roleAssistant: 'Assistant',
     },
     limits: {
+      addCreditCta: 'Ajouter du crédit',
+      paygCreditExhaustedTitle: 'Crédit connecteurs épuisé',
+      paygCreditExhaustedBody:
+        'Ce modèle est facturé sur votre crédit connecteurs et votre solde est vide. Ajoutez du crédit pour continuer, ou choisissez un modèle local.',
+      paygPromptTooExpensiveTitle: 'Conversation trop longue pour votre crédit',
+      paygPromptTooExpensiveBody:
+        'Cette conversation coûte plus que votre crédit connecteurs restant. Ajoutez du crédit, démarrez une conversation plus courte ou choisissez un modèle local.',
+      paygModelUnpricedTitle: 'Modèle indisponible',
+      paygModelUnpricedBody:
+        'Ce modèle n’a pas encore de tarif publié, il ne peut donc pas être facturé. Veuillez choisir un autre modèle.',
+      paygPricingUnavailableTitle: 'Indisponible temporairement',
+      paygPricingUnavailableBody:
+        'Les tarifs n’ont pas pu être consultés, les modèles payants sont donc suspendus un instant. Rien ne vous a été facturé. Les modèles locaux fonctionnent toujours.',
       dailyTokensTitle: 'Vous avez utilisé les jetons du jour',
       dailyTokensBody:
         'Votre quota quotidien de jetons est épuisé. Il se réinitialise à minuit UTC, ou vous pouvez passer à un forfait supérieur.',
@@ -2654,6 +2677,9 @@ export const fr: TranslationDictionary = {
     invalidFileType: "Ce type de fichier n'est pas pris en charge",
   },
   toast: {
+    creditTopupSucceeded: 'Crédit ajouté.',
+    creditTopupFailed: 'Impossible d’ajouter du crédit.',
+    creditTopupCancelled: 'Paiement annulé. Aucun crédit n’a été ajouté.',
     loginSuccess: 'Connexion réussie',
     registerSuccess: 'Compte créé avec succès',
     loginFailed: 'Échec de la connexion',
@@ -3582,6 +3608,11 @@ export const fr: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fr,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.fr,
   adminBilling: {
+    credit: {
+      packageCreated: 'Pack de crédit créé.',
+      versionPublished: 'Tarif du pack publié.',
+      saveFailed: 'Impossible d’enregistrer le pack de crédit.',
+    },
     title: 'Tableau de bord de facturation',
     description: 'Revenus, coûts fournisseurs, marge et santé des abonnements.',
     loading: 'Chargement des métriques de facturation...',
@@ -3708,6 +3739,9 @@ export const fr: TranslationDictionary = {
       description: 'Mettez à jour ce forfait.',
     },
     form: {
+      monthlyConnectorCredit: 'Crédit connecteurs mensuel (micro-USD)',
+      monthlyConnectorCreditHelp:
+        'Allocation en dollars pour les connecteurs cloud payants, en micro-USD (1 000 000 = 1,00 $). 0 désactive les connecteurs payants sur ce forfait. Ce montant est affiché aux utilisateurs.',
       name: 'Nom',
       namePlaceholder: 'Pro',
       slug: 'Identifiant',
@@ -3836,6 +3870,7 @@ export const fr: TranslationDictionary = {
     },
   },
   userPlan: {
+    noCreditOnThisPlan: 'Ce forfait ne comprend aucun crédit connecteurs.',
     title: 'Mon forfait',
     description: 'Votre abonnement actuel, vos fonctionnalités et vos modèles autorisés.',
     loading: 'Chargement de votre forfait...',
@@ -3857,6 +3892,12 @@ export const fr: TranslationDictionary = {
     chatsLimitLabel: 'Discussions par jour',
   },
   userUsage: {
+    connectorCredit: 'Crédit connecteurs',
+    creditRemaining: '{remaining} restants',
+    creditUsedOfLimit: '{used} sur {limit}',
+    creditPercentUsed: '{percent} % utilisés',
+    dualConsumptionHint:
+      'Les connecteurs cloud consomment crédit et jetons ; les modèles locaux ne consomment que des jetons.',
     title: 'Utilisation',
     description:
       'Suivez votre consommation quotidienne de jetons par rapport au quota de votre forfait.',
@@ -4102,6 +4143,44 @@ export const fr: TranslationDictionary = {
     },
   },
   billing: {
+    credit: {
+      title: 'Crédit connecteurs',
+      available: 'Disponible',
+      grantBucket: 'Allocation du forfait',
+      purchasedBucket: 'Crédit acheté',
+      reserved: 'Réservé',
+      reservedHint: 'Réservé pour des requêtes en cours. Libéré à leur terme.',
+      resetsOn: 'Réinitialisé le {date}',
+      neverExpires: 'N’expire jamais',
+      percentUsed: '{percent} % utilisés',
+      noAllowance: 'Ce forfait ne comprend aucun crédit connecteurs.',
+      addCredit: 'Ajouter du crédit',
+      adminBypass: 'Administrateur — le crédit connecteurs ne s’applique pas',
+      meteringDisabled: 'Le crédit connecteurs n’est pas débité pour le moment.',
+      empty: 'Aucune information de crédit disponible.',
+      error: 'Impossible de charger votre crédit connecteurs.',
+      packages: 'Packs de crédit',
+      packagesEmpty: 'Aucun pack de crédit n’est disponible actuellement.',
+      packagesError: 'Impossible de charger les packs de crédit.',
+      packageCredit: '{credit} de crédit',
+      topupTitle: 'Ajouter du crédit connecteurs',
+      topupDescription: 'Choisissez un pack. Le crédit acheté n’expire jamais.',
+      topupConfirm: 'Passer au paiement',
+      topupConfirming: 'Préparation du paiement…',
+      ledgerTitle: 'Historique du crédit',
+      ledgerDate: 'Date',
+      ledgerSurface: 'Utilisé par',
+      ledgerModel: 'Modèle',
+      ledgerNoModel: 'Aucun',
+      ledgerAmount: 'Montant',
+      ledgerBalance: 'Solde',
+      ledgerEmpty: 'Aucun mouvement de crédit pour l’instant.',
+      ledgerError: 'Impossible de charger l’historique du crédit.',
+      ledgerLoadMore: 'Charger plus',
+      ledgerLoadingMore: 'Chargement…',
+      dualConsumptionNotice:
+        'Les connecteurs cloud comme OpenAI, Claude et Gemini consomment À LA FOIS votre crédit en dollars ET votre allocation quotidienne de jetons. Les modèles locaux ne consomment que des jetons.',
+    },
     page: {
       title: 'Facturation',
       description: 'Votre forfait, votre consommation et tout ce qui vous a été facturé.',
@@ -4111,6 +4190,16 @@ export const fr: TranslationDictionary = {
       dismiss: 'Masquer',
     },
     errors: {
+      PAYG_CREDIT_EXHAUSTED:
+        'Votre crédit connecteurs est épuisé. Ajoutez du crédit pour continuer à utiliser les modèles cloud.',
+      PAYG_PROMPT_TOO_EXPENSIVE:
+        'Cette conversation coûte plus que votre crédit connecteurs restant.',
+      PAYG_MODEL_UNPRICED: 'Ce modèle n’a pas encore de tarif publié et ne peut pas être facturé.',
+      PAYG_PRICING_UNAVAILABLE:
+        'Les tarifs sont temporairement inaccessibles. Rien ne vous a été facturé.',
+      CREDIT_PACKAGE_NOT_FOUND: 'Ce pack de crédit n’existe plus.',
+      CREDIT_PACKAGE_INACTIVE: 'Ce pack de crédit n’est plus proposé.',
+      CREDIT_ADJUSTMENT_REASON_REQUIRED: 'Un motif est requis pour un ajustement manuel de crédit.',
       PLAN_NOT_PURCHASABLE: "Ce forfait n'est pas disponible à l'achat.",
       PAYMENT_NOT_VERIFIED:
         "Le paiement n'a pas pu être vérifié. Aucun montant ne vous a été débité.",
@@ -4364,6 +4453,8 @@ export const fr: TranslationDictionary = {
         'La disponibilité des modèles suit le calendrier de sortie propre à chaque fournisseur. Les nouveaux modèles sont ajoutés dès leur lancement.',
     },
     pricing: {
+      paygCreditLabel: 'Crédit connecteurs mensuel',
+      paygCreditNone: 'Aucun crédit connecteurs',
       sectionTitle: 'Des forfaits qui évoluent avec vous',
       sectionSubtitle:
         'Commencez gratuitement. Passez à un forfait supérieur quand vous avez besoin de plus. Chaque forfait payant donne accès aux mêmes modèles — la différence porte sur la quantité que vous pouvez utiliser.',

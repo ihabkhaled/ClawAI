@@ -1,10 +1,11 @@
+import { CreditDualConsumptionNotice } from '@/components/billing/credit-dual-consumption-notice';
 import { ModelPicker } from '@/components/chat/model-picker';
 import { MODEL_AUTO_VALUE } from '@/constants';
 import { ComposerControlVariant } from '@/enums';
-import { useAvailableModels } from '@/hooks/chat/use-available-models';
+import { useModelSelector } from '@/hooks/chat/use-model-selector';
 import { cn } from '@/lib/utils';
 import type { ModelSelectorProps } from '@/types';
-import { decodeModelValue, encodeModelValue, groupedModelsToPickerGroups } from '@/utilities';
+import { decodeModelValue, encodeModelValue } from '@/utilities';
 
 export function ModelSelector({
   value,
@@ -13,7 +14,7 @@ export function ModelSelector({
   variant = ComposerControlVariant.Default,
   showLabel,
 }: ModelSelectorProps): React.ReactElement {
-  const { groupedModels, isLoading } = useAvailableModels();
+  const { groups, groupedModels, isLoading, t } = useModelSelector();
 
   // Both selector callsites (MessageComposer + ThreadSettings) MUST share the
   // exact same enabling logic. The picker is disabled ONLY for runtime reasons:
@@ -24,7 +25,12 @@ export function ModelSelector({
   // research) — those gate workflows, not model selection. Model SELECTION is
   // always open to every plan tier; admin-only PlanModelAccess restrictions (if
   // any rows exist) are enforced server-side at execution time, not in the UI.
-  const groups = groupedModelsToPickerGroups(groupedModels);
+  //
+  // Pay-as-you-go credit does NOT change that. A metered model carries a cost
+  // BADGE and stays selectable: whether a provider is billable is a runtime
+  // connector policy an administrator can flip, and the reservation call is the
+  // only place that can answer it correctly. Greying a model out here would
+  // hide models the account can actually afford.
   const selectedValue = value ? encodeModelValue(value.provider, value.model) : MODEL_AUTO_VALUE;
 
   const handleChange = (val: string | null): void => {
@@ -74,6 +80,11 @@ export function ModelSelector({
       triggerClassName={triggerClass}
       hideTriggerLabel={isIconOnly}
       ariaLabel={isIconOnly ? 'Auto' : undefined}
+      // The disclaimer belongs where the money decision is made. A cloud model
+      // spends BOTH the dollar wallet and the daily token allowance; a local one
+      // spends tokens only, and that is the single most useful thing to know
+      // while choosing between them.
+      footer={<CreditDualConsumptionNotice t={t} className="border-0 bg-transparent px-0 py-0" />}
     />
   );
 }

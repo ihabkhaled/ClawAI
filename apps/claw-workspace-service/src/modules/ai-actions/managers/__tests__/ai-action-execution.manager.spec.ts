@@ -1,3 +1,5 @@
+import { PaygSurface } from '@claw/shared-types';
+
 import { AppConfig } from '../../../../app/config/app.config';
 import {
   AiActionKind,
@@ -68,23 +70,58 @@ describe('AiActionExecutionManager.run', () => {
       actionKind: AiActionKind.SUMMARIZE,
       privacyClass: AiActionPrivacyClass.PUBLIC,
       context: 'some content',
+      userId: 'user-1',
     });
 
     expect(result.content).toBe('generated text');
     expect(result.generatedBy.provider).toBe('ANTHROPIC');
   });
 
-  it('does not fetch learned preferences when no userId is given', async () => {
-    const { manager, automationPreferences } = makeManager();
+  // PAYG: the cloud call spends real money and chat-service takes the
+  // reservation, so it can only charge the right wallet if the acting user's id
+  // travels with the request. `userId` is required on RunAiActionInput for
+  // exactly this reason — a defaulted one would bill someone else.
+  it('sends the acting user and the WORKSPACE_ACTION surface to chat-service', async () => {
+    const { manager } = makeManager();
     callSpy.mockResolvedValue({ content: 'ok' });
 
     await manager.run({
       actionKind: AiActionKind.SUMMARIZE,
       privacyClass: AiActionPrivacyClass.PUBLIC,
       context: 'ctx',
+      userId: 'user-42',
     });
 
-    expect(automationPreferences.fetchLearned).not.toHaveBeenCalled();
+    expect(callSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-42',
+        surface: PaygSurface.WORKSPACE_ACTION,
+        provider: 'ANTHROPIC',
+      }),
+    );
+  });
+
+  it('meters each model in the fallback chain separately — N attempts, N calls', async () => {
+    const fallbackModel = { provider: 'OPENAI', model: 'gpt-4o', displayName: 'GPT-4o' };
+    const { manager } = makeManager({ fallbackChain: [fallbackModel] });
+    callSpy
+      .mockRejectedValueOnce(new Error('primary down'))
+      .mockResolvedValueOnce({ content: 'from fallback' });
+
+    await manager.run({
+      actionKind: AiActionKind.SUMMARIZE,
+      privacyClass: AiActionPrivacyClass.PUBLIC,
+      context: 'ctx',
+      userId: 'user-42',
+    });
+
+    expect(callSpy).toHaveBeenCalledTimes(2);
+    for (const call of callSpy.mock.calls) {
+      expect(call[0]).toMatchObject({
+        userId: 'user-42',
+        surface: PaygSurface.WORKSPACE_ACTION,
+      });
+    }
   });
 
   it('fetches learned preferences for the given userId and actionKind, and injects them into the prompt', async () => {
@@ -125,6 +162,7 @@ describe('AiActionExecutionManager.run', () => {
         actionKind: AiActionKind.SUMMARIZE,
         privacyClass: AiActionPrivacyClass.PUBLIC,
         context: 'ctx',
+        userId: 'user-1',
       }),
     ).rejects.toBeInstanceOf(BusinessException);
   });
@@ -140,6 +178,7 @@ describe('AiActionExecutionManager.run', () => {
       actionKind: AiActionKind.SUMMARIZE,
       privacyClass: AiActionPrivacyClass.PUBLIC,
       context: 'ctx',
+      userId: 'user-1',
     });
 
     expect(result.content).toBe('from fallback');

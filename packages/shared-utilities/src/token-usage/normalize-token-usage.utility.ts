@@ -48,6 +48,28 @@ function resolveSource(promptEstimated: boolean, completionEstimated: boolean): 
  * `totalTokens` is ignored to keep the invariant). Never throws; always returns
  * safe non-negative integers.
  */
+/**
+ * Clamps a reported sub-count to the side it is a subset of.
+ *
+ * `cachedPromptTokens` and `reasoningTokens` are always PARTS of the prompt and
+ * completion respectively. A provider that reports a part larger than the whole
+ * is malformed, and letting that through would make the cheap-rate share exceed
+ * the total and under-charge the request. Clamping is the fail-safe direction:
+ * the excess falls back to the full-price side.
+ *
+ * An estimated side has no measured sub-count, so the part is zero there.
+ */
+function resolveSubCount(reported: number | undefined, whole: ResolvedTokenSide): number {
+  if (whole.estimated) {
+    return 0;
+  }
+  const safe = toTokenCount(reported);
+  if (safe === undefined) {
+    return 0;
+  }
+  return Math.min(safe, whole.tokens);
+}
+
 export function normalizeTokenUsage(input: NormalizeTokenUsageInput): TokenUsage {
   const prompt = resolveSide(input.promptTokens, input.promptText);
   const completion = resolveSide(input.completionTokens, input.completionText);
@@ -59,6 +81,8 @@ export function normalizeTokenUsage(input: NormalizeTokenUsageInput): TokenUsage
     promptTokens: prompt.tokens,
     completionTokens: completion.tokens,
     totalTokens: prompt.tokens + completion.tokens,
+    cachedPromptTokens: resolveSubCount(input.cachedPromptTokens, prompt),
+    reasoningTokens: resolveSubCount(input.reasoningTokens, completion),
     estimated,
     source,
     estimator: estimated ? TokenEstimatorKind.CHAR_DIV_4 : TokenEstimatorKind.NONE,

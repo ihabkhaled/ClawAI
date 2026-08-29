@@ -208,3 +208,44 @@ A connector owner can grant another user scoped access without transferring owne
 **Note:** true org-level RBAC (roles, org-scoped installations) needs `auth-service` schema/claims
 work that doesn't exist yet — out of scope for workspace-service alone. `ConnectorAccessService.revoke()`
 hard-deletes the grant row with no durable audit trail (documented gap, Phase 14).
+
+## PAYG credit metering (C4 — U8/U9/U10/U12)
+
+**This service does NOT meter. It attributes.** Every paid provider call it makes
+goes out through `modules/ai-actions/utilities/cloud-generation-client.utility.ts`
+→ chat-service `POST /internal/chat/generate`, and the PAYG reservation is taken
+_inside chat-service_, around the provider request it owns. Adding a
+`PaygMeter.reserve` here would put two holds on one provider call and settle both
+— the user pays twice for one answer. That is decision D5, "one reservation, not
+two"; do not "fix" the apparent gap by wrapping a meter around `callCloudGenerate`.
+
+What this service is responsible for is telling chat-service **whose** credit is
+being spent and **which** surface spent it. `CloudGenerateInput` therefore carries
+required `userId` and `surface`, and neither is ever defaulted: a defaulted
+`userId` charges the wrong wallet, and a defaulted surface makes the spend
+anonymous on the billing page.
+
+| Call site                                                                                   | Surface            | Where the user id comes from                                                                           |
+| ------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------ |
+| `ai-actions/managers/ai-action-execution.manager.ts` `executeGeneration`                    | `WORKSPACE_ACTION` | `RunAiActionInput.userId` — now **required**, from `@CurrentUser()` in `ai-action.controller.ts`       |
+| `ai-actions/managers/multi-model-review-orchestrator.manager.ts` `runReviewer` / `runJudge` | `WORKSPACE_ACTION` | `MultiModelReviewInput.userId`, set by the controller from the token — **never from the request body** |
+| `chains/managers/chain-nl-draft.manager.ts` `generate`                                      | `WORKSPACE_ACTION` | the `userId` `draft()` already receives                                                                |
+
+**N calls, N reservations.** The AI-action fallback chain, the up-to-five reviewer
+fan-out plus judge, and the NL-draft retry loop each issue one HTTP request per
+paid attempt, so chat-service reserves and settles each separately. Batching them
+into one request would bill N provider calls as one.
+
+**The local branches are free and stay unmetered.** `callOllamaGenerate` in
+`ai-action-execution.manager` and `chain-nl-draft.manager` runs on the operator's
+own hardware.
+
+**U12 (`ticket-planning/managers/impl-handoff.manager.ts`) has nothing to meter.**
+It calls chat-service `POST /internal/chat/threads/seeded` and agent-service
+`POST /internal/agent/terminal/seed-command`. `seedThread` writes a thread row and
+a USER message row and performs **no inference**; the spend happens later, when
+the user sends in that thread, and is metered by chat-service under `CHAT`.
+
+**`workspace/services/workspace-entitlement.service.ts` is not the gate.** It only
+exposes `resolve()`. Quota and credit enforcement live in auth-service, reached
+through chat-service's reservation. Do not add credit logic there.

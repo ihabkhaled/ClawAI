@@ -638,6 +638,16 @@ model WeightedUsageRecord {
   rawReasoningTokens    Int                @default(0) @map("raw_reasoning_tokens")
   rawOutputTokens       Int                @default(0) @map("raw_output_tokens")
   toolCallCount         Int                @default(0) @map("tool_call_count")
+  // PAYG credit attribution (ADR-080: one reservation, not two). A non-PAYG
+  // request leaves all three at their defaults, so every historical row stays
+  // valid and old code keeps running against the new schema.
+  isPayg                Boolean            @default(false) @map("is_payg")
+  // What this hold took from each wallet bucket, in integer micro-USD. Kept
+  // per-bucket rather than as one total because releasing a hold has to give
+  // GRANT back as GRANT — returning perishable allowance as purchased credit
+  // would mint permanent money out of an expiring one.
+  creditGrantMicroUsd     BigInt           @default(0) @map("credit_grant_micro_usd")
+  creditPurchasedMicroUsd BigInt           @default(0) @map("credit_purchased_micro_usd")
   // 1,000,000 weighted tokens == $1.00 of estimated provider cost.
   weightedTokens        Int                @default(0) @map("weighted_tokens")
   estimatedCostMicroUsd BigInt             @default(0) @map("estimated_cost_micro_usd")
@@ -742,4 +752,227 @@ model EmailChangeRequest {
   @@index([oldEmailOtpExpiresAt])
   @@index([newEmailExpiresAt])
   @@map("email_change_requests")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pay-as-you-go connector credit (PAYG flagship)
+//
+// The wallet is the PROMOTED form of `Plan.monthlyProviderCostCeilingMicroUsd`:
+// the same dollars the platform already enforced as a hidden margin control,
+// made visible to the user and top-up-able. It is not a third allowance —
+// 1 weighted token === 1 micro-USD (WEIGHTED_TOKENS_PER_USD === MICRO_USD_PER_USD),
+// so the ceiling, the monthly token quota and the credit grant are one number
+// wearing three names, and only one of them may bind.
+//
+// Every figure is integer micro-USD in a BigInt column. A float anywhere in a
+// billing path is how a balance stops summing to its ledger.
+//
+// Postgres is authoritative for the BALANCE; Redis holds only a reconstructible
+// hot counter of OUTSTANDING HOLDS. Production Redis is RDB-only, so losing its
+// tail must never hand out free money. That is also why there is deliberately
+// NO `version` optimistic-lock column below: Redis+Lua is the concurrency
+// authority and Postgres is the durability authority, and two mechanisms
+// guarding one value is exactly how the two drift apart.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Which half of a user's wallet a movement touches. Mirrors `CreditBucket` in
+/// @claw/shared-types member for member — the wire payload and the column must
+/// never disagree about what "GRANT" means.
+///
+/// GRANT resets each period and does NOT roll over. PURCHASED was paid for with
+/// real money and never expires. Debits take GRANT first (spend the perishable
+/// half before the money someone paid for); refunds return to PURCHASED first
+/// (handing cash back as a bucket that expires at month end would quietly
+/// confiscate it).
+enum CreditBucket {
+  GRANT
+  PURCHASED
+}
+
+/// Why a row exists in the append-only credit ledger. Mirrors
+/// `CreditLedgerKind` in @claw/shared-types member for member.
+///
+/// A correction is ALWAYS a new compensating row and never an edit — the same
+/// rule the payment service's financial tables follow.
+enum CreditLedgerKind {
+  /// Monthly plan allowance credited at a billing-period boundary.
+  PLAN_GRANT
+  /// Unused GRANT swept at the period roll, so the ledger still sums to the wallet.
+  GRANT_EXPIRY
+  /// Credit bought with real money. Carries the payment event id for idempotency.
+  TOPUP
+  /// A refunded or charged-back top-up, reversed against the PURCHASED bucket.
+  TOPUP_REVERSAL
+  /// A pre-flight hold. Negative; released or converted to CONSUMPTION.
+  RESERVATION
+  /// A hold given back because the request never reached the provider.
+  RESERVATION_RELEASE
+  /// Settled spend. The difference against its RESERVATION is the reconciliation.
+  CONSUMPTION
+  /// Operator correction. Requires a reason and an actor; never imitates a payment.
+  ADMIN_ADJUSTMENT
+  /// Credit returned because the provider failed after money was already held.
+  PROVIDER_FAILURE_REFUND
+}
+
+/// One user's credit balance. A materialized sum of `CreditLedgerEntry`, kept as
+/// a row so the reservation gate is one indexed read rather than an aggregate
+/// over a table that grows with every request.
+///
+/// The three balances are deliberately GROSS of holds:
+///   available = grant + purchased − reserved   (floored at 0)
+/// which is the number the gate compares against and the number the UI shows.
+/// Storing a pre-netted balance instead would make an abandoned hold
+/// indistinguishable from spend.
+model UserCreditWallet {
+  id     String @id @default(cuid())
+  userId String @unique @map("user_id")
+
+  /// Perishable plan allowance remaining this period, NET of settled spend and
+  /// GROSS of outstanding holds.
+  grantMicroUsd     BigInt @default(0) @map("grant_micro_usd")
+  /// Credit bought with real money. Never expires, survives a downgrade.
+  purchasedMicroUsd BigInt @default(0) @map("purchased_micro_usd")
+  /// Total currently held by in-flight requests, across BOTH buckets. Mirrored
+  /// by the two Redis hold counters; reclaimed by the reservation sweeper when a
+  /// request dies without finalizing.
+  reservedMicroUsd  BigInt @default(0) @map("reserved_micro_usd")
+
+  /// What this period's grant STARTED at — the denominator of the usage bar and
+  /// of the low-balance thresholds. Not derivable from `grantMicroUsd`, which
+  /// has already been spent down.
+  periodGrantMicroUsd BigInt   @default(0) @map("period_grant_micro_usd")
+  /// UTC `YYYY-MM`. Renewal is driven off a MISMATCH with the current key, so a
+  /// missed run self-heals on the next tick instead of skipping a period.
+  periodKey           String   @map("period_key")
+  grantResetsAt       DateTime @map("grant_resets_at")
+
+  /// Lifetime counters, for support and finance. Monotonic: never decremented,
+  /// so they stay meaningful after a reversal writes its own compensating row.
+  lifetimeGrantedMicroUsd   BigInt @default(0) @map("lifetime_granted_micro_usd")
+  lifetimePurchasedMicroUsd BigInt @default(0) @map("lifetime_purchased_micro_usd")
+  lifetimeConsumedMicroUsd  BigInt @default(0) @map("lifetime_consumed_micro_usd")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  ledgerEntries CreditLedgerEntry[]
+
+  @@index([periodKey])
+  @@map("user_credit_wallets")
+}
+
+/// Append-only. The source of truth a wallet must always reconcile to:
+///   wallet.grantMicroUsd     == SUM(grant_delta_micro_usd)
+///   wallet.purchasedMicroUsd == SUM(purchased_delta_micro_usd)
+///   available                == SUM(amount_micro_usd)
+///
+/// The third identity is what makes an open hold auditable: a RESERVATION row
+/// carries a NEGATIVE `amountMicroUsd` and ZERO bucket deltas, and its matching
+/// RESERVATION_RELEASE carries the exact positive mirror — so the pair cancels
+/// once settled, while an outstanding hold leaves precisely `-reserved` behind.
+/// CONSUMPTION is the only kind that moves the buckets for a request.
+///
+/// Nothing here is ever UPDATEd. A correction is a new compensating row.
+model CreditLedgerEntry {
+  id       String @id @default(cuid())
+  userId   String @map("user_id")
+  walletId String @map("wallet_id")
+
+  kind CreditLedgerKind
+
+  /// Signed. Positive credits the wallet, negative debits it.
+  amountMicroUsd         BigInt @map("amount_micro_usd")
+  grantDeltaMicroUsd     BigInt @default(0) @map("grant_delta_micro_usd")
+  purchasedDeltaMicroUsd BigInt @default(0) @map("purchased_delta_micro_usd")
+  /// Running `available` after this row, so a user can audit the arithmetic
+  /// themselves instead of trusting a computed total.
+  balanceAfterMicroUsd   BigInt @map("balance_after_micro_usd")
+
+  reservationId String? @map("reservation_id")
+  requestId     String? @map("request_id")
+  provider      String?
+  model         String?
+  /// `PaygSurface`. Stored as text, not a native enum: a new surface must not
+  /// need a migration to become spendable, and "where did my $5 go" has to stay
+  /// answerable for surfaces added after this row was written.
+  surface       String?
+  workflow      String?
+
+  /// Idempotency key for money arriving from outside auth-service. A redelivered
+  /// `billing.credit.topup_succeeded` collides here and is rejected BY THE
+  /// DATABASE rather than by an application check two consumers can race.
+  sourceEventId String? @unique @map("source_event_id")
+
+  /// Set only for operator-initiated rows. An ADMIN_ADJUSTMENT without both of
+  /// these is refused by the service — an unattributed credit is
+  /// indistinguishable from a fabricated payment.
+  actorUserId String? @map("actor_user_id")
+  reason      String?
+
+  occurredAt DateTime @default(now()) @map("occurred_at")
+
+  wallet UserCreditWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([userId, occurredAt])
+  @@index([reservationId])
+  @@map("credit_ledger_entries")
+}
+
+/// A purchasable top-up SKU. The row itself carries no money — every price lives
+/// in an immutable `CreditPackageVersion`, so retiring or repricing a package
+/// cannot rewrite what an existing checkout session quoted.
+model CreditPackage {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  displayOrder Int      @default(0) @map("display_order")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  versions CreditPackageVersion[]
+
+  @@index([isActive])
+  @@index([displayOrder])
+  @@map("credit_packages")
+}
+
+/// IMMUTABLE. A price or ratio CHANGE creates a new version rather than mutating
+/// a column, exactly as `PlanPriceVersion` does, so a completed purchase and
+/// every historical invoice keep meaning what was actually bought.
+///
+/// `priceMinor` and `creditMicroUsd` are independent on purpose: the ratio
+/// between them IS the platform's margin on a top-up. Pinning it to 1:1 in code
+/// would book negative gross margin the moment a gateway fee is paid, so it
+/// lives in the database where an operator can change it without a deploy.
+model CreditPackageVersion {
+  id        String @id @default(cuid())
+  packageId String @map("package_id")
+
+  /// Integer minor units ($5.00 => 500). Money is never a float anywhere.
+  priceMinor     Int    @map("price_minor")
+  currency       String @default("USD")
+  /// What the buyer receives, in integer micro-USD.
+  creditMicroUsd BigInt @map("credit_micro_usd")
+
+  version  Int
+  isActive Boolean @default(true) @map("is_active")
+  /// Emulated partial-unique index, copied from `PlanPriceVersion.activeKey`:
+  /// carries the package id while this row is the active price and NULL once
+  /// retired. Postgres treats every NULL as distinct, so any number of retired
+  /// rows coexist while a second ACTIVE price for one package is rejected by the
+  /// database itself rather than by an "unset the others" that two admins race.
+  activeKey String? @unique @map("active_key")
+
+  effectiveFrom   DateTime  @default(now()) @map("effective_from")
+  retiredAt       DateTime? @map("retired_at")
+  createdByUserId String?   @map("created_by_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  package CreditPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@unique([packageId, version])
+  @@index([packageId])
+  @@index([isActive])
+  @@map("credit_package_versions")
 }

@@ -1,3 +1,5 @@
+import type { PaygSurface } from '@claw/shared-types';
+
 import type {
   AiActionKind,
   AiActionMode,
@@ -45,11 +47,18 @@ export type RunAiActionInput = {
   privacyClass: AiActionPrivacyClass;
   context: string;
   preferredModel?: ModelChoice;
-  // Phase 11 — whose learned preferences (from AutomationPreferenceService
-  // .fetchLearned) to inject into the prompt. Optional: callers that don't
-  // have an authenticated user (none exist yet, but the type shouldn't
-  // force one) simply skip preference injection.
-  userId?: string;
+  /**
+   * The acting user. Two jobs, and the second is why it is no longer optional.
+   *
+   * Phase 11: whose learned preferences (`AutomationPreferenceService
+   * .fetchLearned`) get injected into the prompt.
+   *
+   * PAYG: whose credit pays for the cloud attempt. This action's fallback chain
+   * reaches OpenAI, Anthropic and Gemini through chat-service, where the
+   * reservation is taken — so a missing id would be an unmetered paid call.
+   * Optional was safe while nothing spent money; it is not any more.
+   */
+  userId: string;
 };
 
 export type BuiltAiActionPrompt = {
@@ -88,6 +97,20 @@ export type CloudGenerateInput = {
   systemPrompt: string;
   userPrompt: string;
   timeoutMs: number;
+  /**
+   * Whose PAYG credit this generation spends.
+   *
+   * REQUIRED, and never defaulted. Every one of these calls reaches a real paid
+   * provider through chat-service, and chat-service is where the reservation is
+   * taken — so an absent or invented id here is either an unmetered frontier
+   * call or a charge against the wrong wallet. There is no acceptable fallback.
+   */
+  userId: string;
+  /**
+   * Which product surface is spending, recorded on the ledger row so
+   * "where did my $5 go" is answerable on the billing page.
+   */
+  surface: PaygSurface;
 };
 
 export type CloudGenerateOutput = {

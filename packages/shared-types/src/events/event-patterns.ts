@@ -212,4 +212,25 @@ export enum EventPattern {
   BILLING_PAYMENT_REFUNDED = 'billing.payment.refunded',
   BILLING_PAYMENT_CHARGEBACK = 'billing.payment.chargeback',
   BILLING_ENTITLEMENT_RECONCILE_REQUESTED = 'billing.entitlement.reconcile_requested',
+  // === PAYG connector credit (ADR-078) ===
+  // Money in. Published from the payment outbox in the same transaction that
+  // records the charge, consumed by the auth inbox keyed on the envelope
+  // eventId so a redelivered webhook cannot grant the credit twice.
+  //
+  // ORDERING IS LOAD-BEARING: the topic exchange discards a routing key with no
+  // bound queue, and queues are asserted by the CONSUMER at boot. If payment
+  // drains a credit event before auth has ever subscribed, the money is taken,
+  // the outbox row is marked published, and nothing reaches a DLQ. auth-service
+  // must be healthy before payment-service starts.
+  BILLING_CREDIT_TOPUP_SUCCEEDED = 'billing.credit.topup_succeeded',
+  BILLING_CREDIT_TOPUP_REVERSED = 'billing.credit.topup_reversed',
+  // Wallet lifecycle, published by auth for audit and notification. Never
+  // carries a balance in a log-visible field beyond the threshold that fired.
+  CREDIT_BALANCE_LOW = 'credit.balance.low',
+  CREDIT_BALANCE_EXHAUSTED = 'credit.balance.exhausted',
+  CREDIT_GRANT_RENEWED = 'credit.grant.renewed',
+  // Price change. Auth caches provider rates to keep the reservation path off
+  // a synchronous routing hop; this is what makes an admin repricing apply on
+  // the next request instead of at the end of the cache TTL.
+  ROUTING_MODEL_COST_PUBLISHED = 'routing.model_cost.published',
 }

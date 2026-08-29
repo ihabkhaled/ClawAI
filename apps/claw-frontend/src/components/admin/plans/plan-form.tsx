@@ -134,6 +134,36 @@ export function PlanForm({
         </div>
       </div>
 
+      {/* The connector credit is the number the customer actually sees on the
+          pricing page and in their wallet, so it gets its own row rather than
+          being buried among the token ceilings. Micro-USD, because that is the
+          unit the wallet holds — the help text says so, and says that 0 turns
+          pay-as-you-go off rather than meaning "unlimited". */}
+      <div className="grid grid-cols-1 gap-2">
+        <label htmlFor="plan-connector-credit" className="text-sm font-medium">
+          {t('adminPlans.form.monthlyConnectorCredit')}
+        </label>
+        <Input
+          id="plan-connector-credit"
+          type="number"
+          min={0}
+          step={1}
+          value={state.monthlyProviderCostCeilingMicroUsd}
+          onChange={(e) => setField('monthlyProviderCostCeilingMicroUsd', e.target.value)}
+          placeholder={t('adminPlans.form.unlimitedPlaceholder')}
+          aria-invalid={fieldErrors.monthlyProviderCostCeilingMicroUsd !== undefined}
+          aria-describedby="plan-connector-credit-help"
+        />
+        <p id="plan-connector-credit-help" className="text-muted-foreground text-xs">
+          {t('adminPlans.form.monthlyConnectorCreditHelp')}
+        </p>
+        {fieldErrors.monthlyProviderCostCeilingMicroUsd !== undefined ? (
+          <p className="text-destructive text-xs">
+            {fieldErrors.monthlyProviderCostCeilingMicroUsd}
+          </p>
+        ) : null}
+      </div>
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-max-chats" className="text-sm font-medium">

@@ -139,17 +139,67 @@ The `RoutingDecision` record stores `complexityClass`, a structured `explanation
 
 ## Events
 
-| Event                    | Direction | Notes                               |
-| ------------------------ | --------- | ----------------------------------- |
-| message.created          | Subscribe | Triggers routing decision           |
-| message.completed        | Subscribe | Ingests execution outcomes          |
-| message.feedback_set     | Subscribe | Ingests thumbs learning signals     |
-| message.routed           | Publish   | Sends decision back to chat service |
-| routing.decision_made    | Publish   | Audit trail                         |
-| connector.synced         | Subscribe | Updates healthy provider list       |
-| connector.health_checked | Subscribe | Updates provider health status      |
-| model.pulled             | Subscribe | Invalidates prompt cache            |
-| model.deleted            | Subscribe | Invalidates prompt cache            |
+| Event                        | Direction | Notes                                |
+| ---------------------------- | --------- | ------------------------------------ |
+| message.created              | Subscribe | Triggers routing decision            |
+| message.completed            | Subscribe | Ingests execution outcomes           |
+| message.feedback_set         | Subscribe | Ingests thumbs learning signals      |
+| message.routed               | Publish   | Sends decision back to chat service  |
+| routing.decision_made        | Publish   | Audit trail                          |
+| connector.synced             | Subscribe | Updates healthy provider list        |
+| connector.health_checked     | Subscribe | Updates provider health status       |
+| model.pulled                 | Subscribe | Invalidates prompt cache             |
+| model.deleted                | Subscribe | Invalidates prompt cache             |
+| routing.model_cost.published | Publish   | Busts auth-service's PAYG rate cache |
+
+`routing.model_cost.published` carries `{ provider, modelKey, version }` and
+**never a rate** — a topic exchange is readable by any consumer that binds the
+pattern, and a rate is a margin input. auth-service caches a provider rate for
+300 s while reserving PAYG credit, so this is what makes an administrator's
+repricing land on the next request instead of at the end of the TTL. It is
+emitted from `ModelCostService.publish`, and therefore from `applySyncedRates`
+exactly when a sync ACTUALLY changed a rate — never on `ADMIN_OVERRIDE_ACTIVE`
+or `RATES_UNCHANGED`, so a nightly no-op sync stays silent. The first-boot price
+seeder does not publish: there is nothing cached to bust.
+
+## Model cost prices (`ModelCostVersion`)
+
+`ModelCostSeedService` seeds 16 public LIST prices on first boot (OpenAI ×6,
+Anthropic ×3, Gemini ×3, DeepSeek ×2, Grok ×2) from
+`router-models/constants/model-cost-seed.constants.ts`. **This is
+launch-blocking**: PAYG treats an unpriced model on a metered provider as
+blocked rather than free, so an empty table refused every paid request on day
+one.
+
+Run-once mechanism is the same as `DeploymentSeedService` — transaction-scoped
+advisory lock `740_040_003`, a `SeedExecution` ledger row on
+(`model-cost-list-prices-2026-v1`, version), and a checksum. Editing a price
+without bumping the version is a `CHECKSUM_MISMATCH` warning that writes
+nothing.
+
+Seeded rows are `source: SEED, confidence: ESTIMATED, isAdminOverride: false`,
+so an automated sync may refresh them later. The seed only ever **fills a gap** —
+a model with any price history is skipped, which protects an administrator
+override and keeps the version counter from colliding on a retired v1. The
+prices are LIST prices off public cards, not contracts: an operator should verify
+them against their own invoices.
+
+## PAYG metering of the router's own calls
+
+The cloud router calls real billed models (Gemini, Ollama Cloud) to decide where
+a message goes. `RouterInferenceCoordinatorManager.invokeMetered` wraps every
+`adapter.invoke` in a `PaygMeter` reserve → finalize / release cycle at
+`PaygSurface.ROUTING`.
+
+`userId` rides the `message.created` event through `RoutingContext` →
+`CloudRouteRequest` → `RouterCoordinatorOptions`; a walk without one is left
+unmetered rather than billed to a guess. One hold per ATTEMPT (keyed
+`traceId:entryId:attemptNumber`, since a retry is a second paid call). The
+granted `maxOutputTokens` is always what reaches the provider, which is what
+makes an overspend impossible by construction. A refused reservation — exhausted
+credit or an unreachable auth-service alike — becomes `BUDGET_EXCEEDED`, which
+is REQUEST-scoped, so AUTO mode drops to the local heuristic router rather than
+refusing the user's message.
 
 ## Key Constants
 

@@ -25,8 +25,18 @@ bug to be fixed. Resolve up, never down.
 9. **Compact AI routers** (`CODEX.md`, `cursor.md` and other per-tool entrypoints) — mirrors, never originals.
 
 > The legacy `rules/00-master-rules.md … 09-refactor-rules.md` set remains valid
-> and is not superseded; this numbered `00-32` catalog is the finer-grained,
-> enforcement-tagged expansion that lives alongside it.
+> and is not superseded; this numbered `00-37` catalog is the finer-grained,
+> enforcement-tagged expansion that lives alongside it. The full one-line index
+> of every numbered file lives in [`00-master-rules.md`](00-master-rules.md).
+
+### Money and entitlement rules
+
+Two rules govern the paths that move money, and they compose rather than overlap:
+
+| Rule                                                                                     | Governs                                                                                                                         |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| [`28-billing-integrity-and-api-contracts.md`](28-billing-integrity-and-api-contracts.md) | Charging for something already delivered: prices, invoices, refunds, subscription entitlement, quota windows                    |
+| [`37-payg-credit-integrity.md`](37-payg-credit-integrity.md)                             | Spending a customer's money **before** they see a result: PAYG reservation, the affordability clamp, the credit ledger, top-ups |
 
 ## Rule file format
 

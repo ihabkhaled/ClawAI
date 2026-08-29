@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { PaygSurface, TokenLedgerContext } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ConsensusConfidenceLevel } from '../../../common/enums/consensus-confidence.enum';
@@ -9,6 +10,7 @@ import {
   CONSENSUS_MIN_CONTENT_LENGTH,
   CONSENSUS_SYNTHESIS_TIMEOUT_MS,
 } from '../constants/consensus.constants';
+import { PAYG_WORKFLOW_CONSENSUS } from '../constants/payg.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { AccessControlService } from '../services/access-control.service';
@@ -314,6 +316,10 @@ export class ConsensusExecutionManager {
         startTime,
         false,
         threadSettings,
+        undefined,
+        undefined,
+        TokenLedgerContext.CONSENSUS,
+        { surface: PaygSurface.ORCHESTRATION, workflow: PAYG_WORKFLOW_CONSENSUS },
       );
       return {
         provider: llmResponse.provider,

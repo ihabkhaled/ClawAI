@@ -1,3 +1,5 @@
+import type { PaygWalletSnapshot } from '@claw/shared-types';
+
 import type { BillingGateway, BillingInterval } from '@/enums/billing.enum';
 import type {
   BillingPlan,
@@ -69,7 +71,14 @@ export type UsageOverviewCardProps = {
   usage: BillingUsage | null;
   isLoading: boolean;
   isError: boolean;
+  /**
+   * The pay-as-you-go wallet, rendered beside the token windows. Optional so a
+   * caller with no wallet in scope still gets the historical card.
+   */
+  wallet?: PaygWalletSnapshot | null;
   t: TranslateFunction;
+  /** Needed only when `wallet` is supplied; money is localized. */
+  locale?: string;
 };
 
 export type FeatureAllowanceListProps = {

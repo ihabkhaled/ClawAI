@@ -15,6 +15,15 @@ export type ReviewerModelRef = {
 export type MultiModelReviewInput = {
   // The PR/MR body (or diff, or both) to review.
   content: string;
+  /**
+   * Whose PAYG credit pays for the fan-out.
+   *
+   * REQUIRED. This is the most expensive single request in the service: up to
+   * five reviewer models plus a judge, every one of them a separate paid
+   * provider call. Taken from the authenticated caller, never from the request
+   * body — a body-supplied id would let anyone spend anyone else's credit.
+   */
+  userId: string;
   // 1-5 reviewer models. The orchestrator caps the array at 5 to bound cost.
   reviewerModels: ReviewerModelRef[];
   // Optional final synthesis model. When provided the orchestrator runs a

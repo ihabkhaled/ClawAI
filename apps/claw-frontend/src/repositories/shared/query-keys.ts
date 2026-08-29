@@ -9,6 +9,21 @@ export const queryKeys = {
     gateways: () => [...queryKeys.billing.all, 'gateways'] as const,
     checkoutSession: (id: string) => [...queryKeys.billing.all, 'checkout', id] as const,
   },
+  // Pay-as-you-go connector credit. A namespace of its own rather than a branch
+  // of `billing`, because the wallet is owned by auth-service and a top-up
+  // completing must invalidate both — collapsing them would hide which service
+  // a stale balance actually came from.
+  credit: {
+    all: ['credit'] as const,
+    wallet: () => [...queryKeys.credit.all, 'wallet'] as const,
+    ledger: () => [...queryKeys.credit.all, 'ledger'] as const,
+    packages: () => [...queryKeys.credit.all, 'packages'] as const,
+  },
+  adminCredit: {
+    all: ['adminCredit'] as const,
+    wallet: (userId: string) => [...queryKeys.adminCredit.all, 'wallet', userId] as const,
+    packages: () => [...queryKeys.adminCredit.all, 'packages'] as const,
+  },
   auth: {
     me: ['auth', 'me'] as const,
     emailChange: ['auth', 'email-change'] as const,

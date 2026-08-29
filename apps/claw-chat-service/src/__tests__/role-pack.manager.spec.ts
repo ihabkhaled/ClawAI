@@ -8,6 +8,7 @@ import { type AdvancedModuleModelSelectionService } from '../modules/chat-messag
 import { rolePackMessageSchema } from '../modules/chat-messages/dto/role-pack-message.dto';
 import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
+import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
 jest.mock('../app/config/app.config', () => ({
   AppConfig: {
@@ -120,7 +121,7 @@ describe('RolePackManager', () => {
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
       mockResearchEnricherManager as any,
-      { recordUsage: jest.fn() } as any,
+      createFakePaygAccessControl() as any,
     );
 
     jest.clearAllMocks();
@@ -176,7 +177,12 @@ describe('RolePackManager', () => {
     it('should store ASSISTANT message with rolePack:true in metadata', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-role-1', 'implement login', 'coding-team', 'user-1');
+      await manager.executeInBackground(
+        'thread-role-1',
+        'implement login',
+        'coding-team',
+        'user-1',
+      );
 
       expect(messagesRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -189,7 +195,12 @@ describe('RolePackManager', () => {
     it('should store pack name in metadata', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-role-1', 'implement login', 'coding-team', 'user-1');
+      await manager.executeInBackground(
+        'thread-role-1',
+        'implement login',
+        'coding-team',
+        'user-1',
+      );
 
       expect(messagesRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -201,7 +212,12 @@ describe('RolePackManager', () => {
     it('should store all member results in metadata', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-role-1', 'implement login', 'coding-team', 'user-1');
+      await manager.executeInBackground(
+        'thread-role-1',
+        'implement login',
+        'coding-team',
+        'user-1',
+      );
 
       const call = (messagesRepo.create as jest.Mock).mock.calls[0][0] as Record<string, unknown>;
       const meta = call['metadata'] as Record<string, unknown>;
@@ -213,7 +229,12 @@ describe('RolePackManager', () => {
     it('should emit SSE completion on success', async () => {
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-role-1', 'implement login', 'coding-team', 'user-1');
+      await manager.executeInBackground(
+        'thread-role-1',
+        'implement login',
+        'coding-team',
+        'user-1',
+      );
 
       expect(streamService.emitCompletion).toHaveBeenCalledWith(
         'thread-role-1',
@@ -228,7 +249,12 @@ describe('RolePackManager', () => {
       );
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-role-1', 'implement login', 'coding-team', 'user-1');
+      await manager.executeInBackground(
+        'thread-role-1',
+        'implement login',
+        'coding-team',
+        'user-1',
+      );
 
       expect(streamService.emitError).toHaveBeenCalledWith('thread-role-1', expect.any(String));
       expect(messagesRepo.create).toHaveBeenCalledWith(
@@ -253,7 +279,12 @@ describe('RolePackManager', () => {
 
       messagesRepo.create!.mockResolvedValue(mockAssistantMessage);
 
-      await manager.executeInBackground('thread-role-1', 'implement login', 'coding-team', 'user-1');
+      await manager.executeInBackground(
+        'thread-role-1',
+        'implement login',
+        'coding-team',
+        'user-1',
+      );
 
       const call = (messagesRepo.create as jest.Mock).mock.calls[0][0] as Record<string, unknown>;
       const meta = call['metadata'] as Record<string, unknown>;
@@ -322,7 +353,7 @@ describe('RolePackManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         mockResearchEnricherManager as any,
-        { recordUsage: jest.fn() } as any,
+        createFakePaygAccessControl() as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
@@ -365,7 +396,13 @@ describe('RolePackManager', () => {
             selection: AdvancedModelSelectionResolution,
           ) => Promise<void>;
         }
-      ).executeInBackground('thread-role-1', 'implement login', 'coding-team', 'user-1', manualResolution);
+      ).executeInBackground(
+        'thread-role-1',
+        'implement login',
+        'coding-team',
+        'user-1',
+        manualResolution,
+      );
 
       const assistantCall = (messagesRepo.create as jest.Mock).mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',

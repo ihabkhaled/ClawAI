@@ -9,6 +9,7 @@ import { type AdvancedModuleModelSelectionService } from '../modules/chat-messag
 import { bestOfNMessageSchema } from '../modules/chat-messages/dto/best-of-n-message.dto';
 import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
+import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
 jest.mock('../modules/chat-messages/managers/best-of-n.manager', () => {
   const actual = jest.requireActual<{ BestOfNManager: typeof BestOfNManager }>(
@@ -135,7 +136,7 @@ describe('BestOfNManager', () => {
       streamService as unknown as ChatStreamService,
       qualityManager as unknown as QualityCheckManager,
       mockResearchEnricherManager as any,
-      { recordUsage: jest.fn() } as any,
+      createFakePaygAccessControl() as any,
     );
 
     jest.clearAllMocks();
@@ -289,7 +290,7 @@ describe('BestOfNManager', () => {
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
         mockResearchEnricherManager as any,
-        { recordUsage: jest.fn() } as any,
+        createFakePaygAccessControl() as any,
       );
       await isolatedManager.executeInBackground('thread-err', 'prompt', 2, 'user-1');
       expect(createMock).toHaveBeenCalledWith(
@@ -342,7 +343,7 @@ describe('BestOfNManager', () => {
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
         mockResearchEnricherManager as any,
-        { recordUsage: jest.fn() } as any,
+        createFakePaygAccessControl() as any,
       );
       await expect(
         isolatedManager.executeInBackground('thread-double-fail', 'prompt', 2, 'user-1'),
@@ -401,7 +402,7 @@ describe('BestOfNManager', () => {
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
         mockResearchEnricherManager as any,
-        { recordUsage: jest.fn() } as any,
+        createFakePaygAccessControl() as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 

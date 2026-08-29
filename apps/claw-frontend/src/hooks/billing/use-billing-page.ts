@@ -10,6 +10,7 @@ import { useCurrentSubscription } from '@/hooks/billing/use-current-subscription
 import { usePaymentMethods } from '@/hooks/billing/use-payment-methods';
 import { usePlanChange } from '@/hooks/billing/use-plan-change';
 import { useStartCheckout } from '@/hooks/billing/use-start-checkout';
+import { useCreditPage } from '@/hooks/credit/use-credit-page';
 import { useTranslation } from '@/lib/i18n';
 import type { UseBillingPageReturn } from '@/types/billing-hook.types';
 import type { BillingPlan } from '@/types/billing.types';
@@ -19,7 +20,11 @@ import { isSubscriptionEntitling } from '@/utilities/billing.utility';
 // exactly one decision: whether picking a plan starts a fresh checkout or a
 // prorated plan change. Everything else is delegated.
 export function useBillingPage(): UseBillingPageReturn {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  // /billing shows the balance and the ledger; /plan owns the primary "Add
+  // credit" button. Both read the same wallet query, so the two pages can never
+  // disagree about what is left.
+  const credit = useCreditPage();
   const subscription = useCurrentSubscription();
   const usage = useBillingUsage();
   const invoices = useBillingInvoices();
@@ -108,8 +113,10 @@ export function useBillingPage(): UseBillingPageReturn {
     checkout,
     cancellation,
     view,
+    credit,
     selectPlan,
     confirmPlanSelection,
     t,
+    locale,
   };
 }

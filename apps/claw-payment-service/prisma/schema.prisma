@@ -12,6 +12,11 @@ enum CheckoutSessionPurpose {
   UPGRADE
   RENEWAL
   PAYMENT_METHOD_SETUP
+  /// One-off purchase of PAYG connector credit. The third purpose CLASS, not
+  /// the fifth member: no plan fields (like PAYMENT_METHOD_SETUP) but a real
+  /// amount (like a subscription), so it needs its own branch of
+  /// `checkout_sessions_purpose_fields_check`. ADR-083 amends ADR-066.
+  CREDIT_TOPUP
 }
 
 enum RefundStatus {
@@ -197,6 +202,15 @@ model CheckoutSession {
   subscriptionId   String? @map("subscription_id")
   /// Consumed proration quote, for an upgrade.
   prorationQuoteId String? @map("proration_quote_id")
+
+  /// CREDIT_TOPUP only. The package bought and the EXACT immutable version it
+  /// was priced from — retaining the version is what stops a later reprice from
+  /// rewriting how much credit a completed purchase was owed.
+  creditPackageId        String? @map("credit_package_id")
+  creditPackageVersionId String? @map("credit_package_version_id")
+  /// Integer micro-USD of credit this purchase buys. BigInt because a large
+  /// package exceeds INTEGER, and money is never a float.
+  creditMicroUsd         BigInt? @map("credit_micro_usd")
 
   expiresAt   DateTime  @map("expires_at")
   verifiedAt  DateTime? @map("verified_at")

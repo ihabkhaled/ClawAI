@@ -41,6 +41,22 @@ describe('ConnectorsRepository', () => {
     expect(prismaMock.connector.create).toHaveBeenCalled();
   });
 
+  // The rollup must see disabled rows too, so a provider whose only metered
+  // connector is switched off still surfaces as an explicit false instead of
+  // vanishing from the map. A `where` clause here would silently break that.
+  it('findPaygPolicyRows projects three columns and filters nothing', async () => {
+    prismaMock.connector.findMany.mockResolvedValue([
+      { provider: 'OPENAI', isEnabled: true, isPayAsYouGo: true },
+    ]);
+
+    const rows = await repository.findPaygPolicyRows();
+
+    const args = prismaMock.connector.findMany.mock.calls[0][0];
+    expect(args.where).toBeUndefined();
+    expect(args.select).toEqual({ provider: true, isEnabled: true, isPayAsYouGo: true });
+    expect(rows).toEqual([{ provider: 'OPENAI', isEnabled: true, isPayAsYouGo: true }]);
+  });
+
   it('findById uses prisma findUnique', async () => {
     await repository.findById('c1');
     expect(prismaMock.connector.findUnique).toHaveBeenCalledWith({ where: { id: 'c1' } });

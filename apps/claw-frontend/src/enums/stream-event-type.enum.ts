@@ -19,4 +19,9 @@ export enum StreamEventType {
   PROVIDER_SELECTED = 'provider_selected',
   MODEL_PROGRESS = 'model_progress',
   RESPONSE_STREAMING = 'response_streaming',
+  // The answer was shortened to fit the user's remaining pay-as-you-go credit.
+  // Its own frame rather than a generic progress stage, because a silently
+  // truncated reply reads as the model being bad instead of the wallet
+  // being nearly empty. Mirrors chat-service's StreamEventType.
+  PAYG_CREDIT_CLAMPED = 'payg_credit_clamped',
 }

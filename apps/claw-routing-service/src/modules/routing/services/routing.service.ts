@@ -435,6 +435,7 @@ export class RoutingService implements OnModuleInit {
     const {
       messageId,
       threadId,
+      userId,
       content,
       routingMode,
       forcedProvider,
@@ -452,6 +453,7 @@ export class RoutingService implements OnModuleInit {
       routingMode,
       forcedProvider,
       forcedModel,
+      userId,
     );
     const rawDecision = await this.routingManager.evaluateRoute(context);
     const calibrated = await this.routerEducationManager.calibrateDecision(rawDecision, context);
@@ -491,6 +493,7 @@ export class RoutingService implements OnModuleInit {
   private parseMessageCreatedPayload(payload: Record<string, unknown>): {
     messageId: string | undefined;
     threadId: string;
+    userId: string | undefined;
     content: string;
     routingMode: RoutingMode | undefined;
     forcedProvider: string | undefined;
@@ -522,6 +525,12 @@ export class RoutingService implements OnModuleInit {
     return {
       messageId: payload['messageId'] as string | undefined,
       threadId,
+      // chat-service has always put this on the event; routing simply threw it
+      // away here. It is what lets the cloud router meter its own paid
+      // inference against the sender's PAYG credit (U5/U6). Left undefined
+      // rather than defaulted: no user is a real state, and a wrong user is a
+      // billing incident.
+      userId: typeof payload['userId'] === 'string' ? payload['userId'] : undefined,
       content,
       routingMode: payload['routingMode'] as RoutingMode | undefined,
       forcedProvider: payload['forcedProvider'] as string | undefined,
@@ -549,12 +558,14 @@ export class RoutingService implements OnModuleInit {
     routingMode: RoutingMode | undefined,
     forcedProvider: string | undefined,
     forcedModel: string | undefined,
+    userId: string | undefined,
   ): RoutingContext {
     const config = this.getRuntimeRoutingConfig();
     this.runtimeHealthCache.set(LLAMACPP_RUNTIME, this.llamacppHealth.isFrontierAvailable());
     return {
       message: content,
       threadId,
+      userId,
       userMode: routingMode,
       forcedProvider,
       forcedModel,

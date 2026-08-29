@@ -9,6 +9,7 @@ import { type ChatStreamService } from '../services/chat-stream.service';
 import { type AdvancedModuleModelSelectionService } from '../services/advanced-module-model-selection.service';
 import { decomposeTaskSchema } from '../dto/decompose-task.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
+import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
 
 jest.mock('../../../common/utilities/http-client.utility');
 jest.mock('../../../app/config/app.config');
@@ -73,7 +74,7 @@ describe('TaskDecompositionManager', () => {
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
       researchEnricher.service,
-      { recordUsage: jest.fn() } as any,
+      createFakePaygAccessControl() as any,
     );
   });
 
@@ -294,7 +295,7 @@ describe('TaskDecompositionManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         researchEnricher.service,
-        { recordUsage: jest.fn() } as any,
+        createFakePaygAccessControl() as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 
@@ -335,7 +336,13 @@ describe('TaskDecompositionManager', () => {
         .mockResolvedValueOnce(makeOllamaSuccess('merged'));
       messagesRepo.create!.mockResolvedValue({ id: 'msg-manual', threadId: 'thread-m' });
 
-      await manager.executeInBackground('thread-m', 'Some complex task', 2, 'user-1', manualResolution);
+      await manager.executeInBackground(
+        'thread-m',
+        'Some complex task',
+        2,
+        'user-1',
+        manualResolution,
+      );
 
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
@@ -413,9 +420,8 @@ describe('TaskDecompositionManager', () => {
       const assistantCall = messagesRepo.create!.mock.calls.find(
         (call) => (call[0] as { role?: string }).role === 'ASSISTANT',
       );
-      const metadata = (
-        assistantCall![0] as { metadata?: { researchTranscript?: unknown } }
-      ).metadata;
+      const metadata = (assistantCall![0] as { metadata?: { researchTranscript?: unknown } })
+        .metadata;
       expect(metadata?.researchTranscript).toBeUndefined();
     });
 
@@ -429,7 +435,8 @@ describe('TaskDecompositionManager', () => {
       };
       researchEnricher.enrichForOrchestration.mockResolvedValue({
         transcript,
-        systemPrompt: '## Web research evidence (mode: SEARCH, gathered now)\n\n[1] Wiki — https://wiki.example.com\nsnippet\n',
+        systemPrompt:
+          '## Web research evidence (mode: SEARCH, gathered now)\n\n[1] Wiki — https://wiki.example.com\nsnippet\n',
       });
       httpRequest
         .mockResolvedValueOnce(

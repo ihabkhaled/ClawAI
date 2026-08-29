@@ -24,7 +24,11 @@ const makeReservationInput = (
   estimatedCostMicroUsd: 1000n,
   chatsDelta: 0,
   messagesDelta: 1,
+  concurrencyDelta: 1,
   billingPeriodKey: null,
+  isPayg: false,
+  creditGrantMicroUsd: 0n,
+  creditPurchasedMicroUsd: 0n,
   ...overrides,
 });
 
@@ -36,8 +40,25 @@ const makeLimits = (overrides: Partial<QuotaLimits> = {}): QuotaLimits => ({
   maxConcurrentRequests: 3,
   dailyChats: 10,
   dailyMessages: 100,
+  // Unlimited for a non-PAYG reservation: the credit windows are skipped by the
+  // script's `amounts[i] > 0` guard, so they cost nothing to carry.
+  creditGrantMicroUsd: null,
+  creditPurchasedMicroUsd: null,
   ...overrides,
 });
+
+/**
+ * The ADJUST argv, located by reading the key count out of the call rather than
+ * by counting from the left.
+ *
+ * `eval(script, numKeys, ...keys, ...argv)`. A literal offset here silently
+ * points at a KEY the moment a window is added, which is exactly what happened
+ * when PAYG credit took the script from seven windows to nine.
+ */
+function adjustArgv(call: unknown[]): string[] {
+  const numKeys = Number(call[1]);
+  return call.slice(2 + numKeys) as string[];
+}
 
 describe('QuotaService', () => {
   let service: QuotaService;
@@ -150,15 +171,18 @@ describe('QuotaService', () => {
       expect(weighted.createReservation).toHaveBeenCalledTimes(1);
     });
 
-    it('passes all seven window keys to a single atomic script', async () => {
+    it('passes all nine window keys to a single atomic script', async () => {
       client.eval.mockResolvedValue([1, '', '0', '0']);
       await service.reserveWeighted(makeReservationInput(), makeLimits());
       // Second eval arg is the key count: day, week, month, cost, concurrency,
-      // chats, messages — checked together or the check is not atomic.
+      // chats, messages, creditGrantHolds, creditPurchasedHolds — checked
+      // together or the check is not atomic. The two credit windows are part of
+      // the SAME script (ADR-080); a parallel reservation could admit a request
+      // the other one refused.
       expect(client.eval).toHaveBeenCalledWith(
         expect.any(String),
-        7,
-        ...Array(7 + 15).fill(expect.anything()),
+        9,
+        ...Array(9 + 21).fill(expect.anything()),
       );
     });
 
@@ -218,8 +242,8 @@ describe('QuotaService', () => {
         actualWeightedTokens: 1500,
         actualCostMicroUsd: 1500n,
       });
-      const argv = client.eval.mock.calls[0] as unknown[];
-      expect(argv.slice(9, 12)).toEqual(['500', '500', '500']);
+      const argv = adjustArgv(client.eval.mock.calls[0] as unknown[]);
+      expect(argv.slice(0, 3)).toEqual(['500', '500', '500']);
       expect(weighted.finalize).toHaveBeenCalled();
     });
 
@@ -243,8 +267,8 @@ describe('QuotaService', () => {
         actualWeightedTokens: 400,
         actualCostMicroUsd: 400n,
       });
-      const argv = client.eval.mock.calls[0] as unknown[];
-      expect(argv.slice(9, 12)).toEqual(['-600', '-600', '-600']);
+      const argv = adjustArgv(client.eval.mock.calls[0] as unknown[]);
+      expect(argv.slice(0, 3)).toEqual(['-600', '-600', '-600']);
     });
 
     it('finalize always frees the concurrency slot', async () => {
@@ -267,9 +291,9 @@ describe('QuotaService', () => {
         actualWeightedTokens: 100,
         actualCostMicroUsd: 100n,
       });
-      const argv = client.eval.mock.calls[0] as unknown[];
-      // ARGV index 5 of 7 is the concurrency delta.
-      expect(argv[13]).toBe('-1');
+      const argv = adjustArgv(client.eval.mock.calls[0] as unknown[]);
+      // Concurrency is the fifth signed delta the adjust script takes.
+      expect(argv[4]).toBe('-1');
     });
 
     it('release gives back the full reservation and marks the row RELEASED', async () => {
@@ -283,8 +307,8 @@ describe('QuotaService', () => {
       });
       client.eval.mockResolvedValue(1);
       await service.releaseWeighted('r1');
-      const argv = client.eval.mock.calls[0] as unknown[];
-      expect(argv.slice(9, 12)).toEqual(['-900', '-900', '-900']);
+      const argv = adjustArgv(client.eval.mock.calls[0] as unknown[]);
+      expect(argv.slice(0, 3)).toEqual(['-900', '-900', '-900']);
       expect(weighted.markReleased).toHaveBeenCalledWith('r1');
     });
 

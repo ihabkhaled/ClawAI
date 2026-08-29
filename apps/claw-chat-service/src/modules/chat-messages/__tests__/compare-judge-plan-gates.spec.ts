@@ -1,3 +1,4 @@
+import type { PaygMeter } from '@claw/shared-entitlements';
 import { Permission, UserRole } from '@claw/shared-types';
 import { AccessControlService } from '../services/access-control.service';
 import { JudgeRefereeManager } from '../managers/judge-referee.manager';
@@ -129,12 +130,29 @@ async function runCompareGate(
   }
 }
 
+// The PAYG meter is injected now. These suites test the plan / quota / exposure
+// gates, not credit, so a stub that reports "not metered" keeps every existing
+// assertion about those gates unchanged.
+const paygMeter = {
+  reserve: jest.fn().mockResolvedValue({
+    metered: false,
+    maxOutputTokens: 4096,
+    clamped: false,
+    reservationId: null,
+    heldMicroUsd: 0,
+    availableAfterMicroUsd: 0,
+    reason: 'NOT_PAYG',
+  }),
+  finalize: jest.fn().mockResolvedValue(undefined),
+  release: jest.fn().mockResolvedValue(undefined),
+} as unknown as PaygMeter;
+
 describe('Slice C — compare + judge + critic plan gates', () => {
   let access: AccessControlService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    access = new AccessControlService();
+    access = new AccessControlService(paygMeter);
   });
 
   describe('compare-mode plan gate (allowCompareMode)', () => {

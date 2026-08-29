@@ -10,6 +10,10 @@
     },
     {
       "from": "@claw/shared-entitlements",
+      "to": "@claw/shared-constants"
+    },
+    {
+      "from": "@claw/shared-entitlements",
       "to": "@claw/shared-types"
     },
     {
@@ -191,6 +195,10 @@
     {
       "from": "claw-image-service",
       "to": "@claw/shared-constants"
+    },
+    {
+      "from": "claw-image-service",
+      "to": "@claw/shared-entitlements"
     },
     {
       "from": "claw-image-service",

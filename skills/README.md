@@ -128,6 +128,8 @@ navigation skills above:
 - [`reconcile-billing-state.md`](./reconcile-billing-state.md)
 - [`debug-a-stuck-scheduled-job.md`](./debug-a-stuck-scheduled-job.md)
 - [`add-a-payment-gateway-flow.md`](./add-a-payment-gateway-flow.md)
+- [`meter-a-paid-provider-call.md`](./meter-a-paid-provider-call.md)
+- [`deploy-payg-credit.md`](./deploy-payg-credit.md)
 
 ---
 

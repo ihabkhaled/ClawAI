@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { BusinessException } from '../../common/errors';
+import { type BusinessExceptionDetails } from '../../common/types';
 import { ErrorResponseBody } from './types/error-response-body.type';
 
 @Catch()
@@ -22,6 +23,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let message = 'Internal server error';
     let code: string | undefined;
     let errors: unknown[] | undefined;
+    let details: BusinessExceptionDetails | undefined;
 
     if (exception instanceof BusinessException) {
       status = exception.getStatus();
@@ -30,6 +32,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         const responseObj = exResponse as Record<string, unknown>;
         message = (responseObj['message'] as string) ?? message;
         code = responseObj['code'] as string | undefined;
+        details = responseObj['details'] as BusinessExceptionDetails | undefined;
       }
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -60,6 +63,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     if (errors) {
       body.errors = errors;
+    }
+
+    // Copied field by field, not spread: only the declared keys may reach a
+    // response body a customer can read.
+    if (details) {
+      body.availableMicroUsd = details.availableMicroUsd;
+      body.requiredMicroUsd = details.requiredMicroUsd;
     }
 
     response.status(status).json(body);

@@ -5,13 +5,16 @@ import type { ReactElement } from 'react';
 import { AllowedModelsList } from '@/components/account/allowed-models-list';
 import { PlanCard } from '@/components/account/plan-card';
 import { UsageMeter } from '@/components/account/usage-meter';
+import { CreditBalanceCard } from '@/components/billing/credit-balance-card';
+import { CreditTopupDialog } from '@/components/billing/credit-topup-dialog';
+import { GatewayCheckoutDialog } from '@/components/billing/gateway-checkout-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePlanPage } from '@/hooks/plans/use-plan-page';
 
 export default function PlanPage(): ReactElement {
-  const { t, entitlements, isLoading, isError, error, onRetry } = usePlanPage();
+  const { t, locale, entitlements, isLoading, isError, error, onRetry, credit } = usePlanPage();
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -57,9 +60,28 @@ export default function PlanPage(): ReactElement {
               <CardTitle className="text-lg">{t('userPlan.dailyQuota')}</CardTitle>
             </CardHeader>
             <CardContent>
-              <UsageMeter quota={entitlements.quota} t={t} />
+              <UsageMeter
+                quota={entitlements.quota}
+                wallet={credit.wallet.wallet}
+                t={t}
+                locale={locale}
+              />
             </CardContent>
           </Card>
+
+          {/* The primary purchase entry point for the whole product. A 402 in
+              chat links straight here with ?topup=open, so a blocked request is
+              two clicks from being unblocked instead of a hunt. */}
+          <div className="lg:col-span-2">
+            <CreditBalanceCard
+              wallet={credit.wallet.wallet}
+              isLoading={credit.wallet.isLoading}
+              isError={credit.wallet.isError}
+              onAddCredit={credit.dialog.open}
+              t={t}
+              locale={locale}
+            />
+          </div>
 
           <Card className="lg:col-span-2">
             <CardHeader>
@@ -71,6 +93,36 @@ export default function PlanPage(): ReactElement {
           </Card>
         </div>
       ) : null}
+
+      <CreditTopupDialog
+        open={credit.dialog.isOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            credit.dialog.close();
+          }
+        }}
+        packages={credit.packages.packages}
+        isPackagesLoading={credit.packages.isLoading}
+        isPackagesError={credit.packages.isError}
+        selectedPackageId={credit.dialog.selectedPackageId}
+        onSelectPackage={credit.dialog.selectPackage}
+        gateway={credit.dialog.gateway}
+        gateways={credit.gateways}
+        onGatewayChange={credit.dialog.setGateway}
+        onConfirm={credit.confirmTopup}
+        isConfirming={credit.topup.isPending}
+        errorMessage={credit.topup.error}
+        t={t}
+        locale={locale}
+      />
+
+      <GatewayCheckoutDialog
+        session={credit.topup.gatewaySession}
+        gateways={credit.gateways}
+        onClose={credit.topup.closeGateway}
+        onComplete={credit.topup.completeGateway}
+        t={t}
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import type {
   ProrationQuoteView,
   GatewayCheckoutSession,
 } from '@/types/billing.types';
+import type { UseCreditPageReturn } from '@/types/credit-hook.types';
 import type { TranslateFunction } from '@/types/i18n.types';
 
 export type UseBillingPlansReturn = {
@@ -151,11 +152,16 @@ export type UseBillingPageReturn = {
   checkout: UseStartCheckoutReturn;
   cancellation: UseCancelSubscriptionReturn;
   view: UseBillingViewStateReturn;
+  // The pay-as-you-go wallet, its ledger and the top-up flow. /billing SHOWS
+  // them; /plan owns the primary "Add credit" button. Both read the same query,
+  // so the two pages cannot disagree about the balance.
+  credit: UseCreditPageReturn;
   // Chosen by the page controller: a user with no subscription starts a fresh
   // checkout, an existing subscriber goes through quote -> confirm.
   selectPlan: (plan: BillingPlan) => void;
   confirmPlanSelection: () => void;
   t: TranslateFunction;
+  locale: string;
 };
 
 export type UsePaypalReturnReturn = {

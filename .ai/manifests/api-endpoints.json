@@ -502,6 +502,31 @@
     "claw-auth-service": [
       {
         "method": "GET",
+        "route": "/admin/credit/packages",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/admin-credit.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/credit/packages",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/admin-credit.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/credit/packages/:id/versions",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/admin-credit.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/credit/wallets/:userId",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/admin-credit.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/admin/credit/wallets/:userId/adjust",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/admin-credit.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/admin/deployment",
         "source": "apps/claw-auth-service/src/modules/deployment/controllers/deployment-admin.controller.ts"
       },
@@ -656,6 +681,21 @@
         "source": "apps/claw-auth-service/src/modules/roles/controllers/roles.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/admin/settings",
+        "source": "apps/claw-auth-service/src/modules/system-settings/controllers/admin-system-setting.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/settings/:key",
+        "source": "apps/claw-auth-service/src/modules/system-settings/controllers/admin-system-setting.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/admin/settings/:key",
+        "source": "apps/claw-auth-service/src/modules/system-settings/controllers/admin-system-setting.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/auth/email-change/confirm",
         "source": "apps/claw-auth-service/src/modules/auth/controllers/auth.controller.ts"
@@ -737,6 +777,21 @@
       },
       {
         "method": "GET",
+        "route": "/credit/me",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/credit.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/credit/me/ledger",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/credit.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/credit/packages",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/credit.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/health",
         "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
       },
@@ -744,6 +799,36 @@
         "method": "GET",
         "route": "/internal/billing-metrics/provider-costs",
         "source": "apps/claw-auth-service/src/modules/quota/controllers/provider-cost-metrics-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/credit/finalize",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/credit-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/credit/packages",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/credit-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/credit/packages/:id/active-version",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/credit-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/credit/release",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/credit-internal.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/credit/reserve",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/credit-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/credit/wallet/:userId",
+        "source": "apps/claw-auth-service/src/modules/credit/controllers/credit-internal.controller.ts"
       },
       {
         "method": "POST",
@@ -1249,6 +1334,11 @@
       {
         "method": "POST",
         "route": "/internal/connectors/models/validate-exposed",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/internal/connectors/payg-policy",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors-internal.controller.ts"
       }
     ],
@@ -2028,6 +2118,21 @@
         "source": "apps/claw-payment-service/src/modules/checkout/controllers/checkout.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/billing/credit-topup/checkout-sessions",
+        "source": "apps/claw-payment-service/src/modules/checkout/controllers/credit-topup.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/billing/credit-topup/checkout-sessions/:id",
+        "source": "apps/claw-payment-service/src/modules/checkout/controllers/credit-topup.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/billing/credit-topup/packages",
+        "source": "apps/claw-payment-service/src/modules/checkout/controllers/credit-topup.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/billing/gateways",
         "source": "apps/claw-payment-service/src/modules/gateway-config/controllers/checkout-gateways.controller.ts"
@@ -2335,41 +2440,6 @@
         "method": "POST",
         "route": "/routing/configurations/enable",
         "source": "apps/claw-routing-service/src/modules/router-configuration-admin/controllers/router-configuration-admin.controller.ts"
-      },
-      {
-        "method": "GET",
-        "route": "/routing/cost-budget",
-        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
-      },
-      {
-        "method": "POST",
-        "route": "/routing/cost-budget",
-        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
-      },
-      {
-        "method": "PATCH",
-        "route": "/routing/cost-budget/:id",
-        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
-      },
-      {
-        "method": "POST",
-        "route": "/routing/cost-budget/check",
-        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
-      },
-      {
-        "method": "GET",
-        "route": "/routing/cost-budget/me",
-        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
-      },
-      {
-        "method": "PATCH",
-        "route": "/routing/cost-budget/me",
-        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
-      },
-      {
-        "method": "GET",
-        "route": "/routing/cost-budget/me/forecast",
-        "source": "apps/claw-routing-service/src/modules/cost-budget/controllers/cost-budget.controller.ts"
       },
       {
         "method": "GET",
@@ -3173,5 +3243,5 @@
     ]
   },
   "generated": true,
-  "total": 627
+  "total": 641
 }

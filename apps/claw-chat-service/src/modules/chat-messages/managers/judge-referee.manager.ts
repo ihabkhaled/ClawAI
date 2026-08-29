@@ -1,7 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
+import { PaygSurface, TokenLedgerContext, TokenUsageSource } from '@claw/shared-types';
 
 import { OLLAMA_PROVIDER } from '../../../common/constants';
+import {
+  PAYG_WORKFLOW_CRITIC,
+  PAYG_WORKFLOW_JUDGE,
+  PAYG_WORKFLOW_JUDGE_REVISION,
+} from '../constants/payg.constants';
 import { AiStreamStage, JudgeDecision } from '../../../common/enums';
 import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import {
@@ -292,6 +297,7 @@ export class JudgeRefereeManager {
         undefined,
         undefined,
         TokenLedgerContext.JUDGE,
+        { surface: PaygSurface.JUDGE, workflow: PAYG_WORKFLOW_CRITIC },
       );
 
       const parsed = this.parseCriticOutput(criticResponse.content);
@@ -399,6 +405,7 @@ export class JudgeRefereeManager {
         undefined,
         undefined,
         TokenLedgerContext.JUDGE,
+        { surface: PaygSurface.JUDGE, workflow: PAYG_WORKFLOW_JUDGE },
       );
 
       const verdict = this.parseJudgeOutput(judgeResponse.content);
@@ -644,6 +651,7 @@ export class JudgeRefereeManager {
         undefined,
         undefined,
         TokenLedgerContext.JUDGE,
+        { surface: PaygSurface.JUDGE, workflow: PAYG_WORKFLOW_JUDGE_REVISION },
       );
       this.logger.log(
         `attemptRevision: revision complete — contentLen=${String(revised.content.length)}`,

@@ -17,6 +17,7 @@ export interface CreateConnectorData {
   baseUrl?: string;
   region?: string;
   workspaceId?: string;
+  isPayAsYouGo?: boolean;
 }
 
 export interface UpdateConnectorData {
@@ -30,6 +31,7 @@ export interface UpdateConnectorData {
   isEnabled?: boolean;
   status?: ConnectorStatus;
   defaultModelId?: string;
+  isPayAsYouGo?: boolean;
 }
 
 export interface ConnectorFilters {
@@ -123,6 +125,24 @@ export interface ConnectorConfigResult {
   apiKey: string;
   baseUrl?: string;
   region?: string;
+}
+
+/** One connector's contribution to the provider-grain PAYG rollup. */
+export interface ConnectorPaygPolicyRow {
+  provider: string;
+  isEnabled: boolean;
+  isPayAsYouGo: boolean;
+}
+
+/**
+ * The provider-grain PAYG policy auth-service reserves against.
+ *
+ * One entry per DISTINCT provider that has a connector row, `true` when any
+ * enabled connector for that provider is PAYG. auth-service caches this for
+ * PAYG_POLICY_CACHE_TTL_SECONDS, so a toggle takes effect within a minute.
+ */
+export interface ConnectorPaygPolicyResult {
+  providers: Record<string, boolean>;
 }
 
 export interface ConnectorHealthSnapshotResult {

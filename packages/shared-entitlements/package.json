@@ -13,7 +13,8 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@claw/shared-types": "*"
+    "@claw/shared-types": "*",
+    "@claw/shared-constants": "*"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

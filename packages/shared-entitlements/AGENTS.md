@@ -16,7 +16,7 @@ npm run build
 ```
 
 ## Dependencies (generated)
-- Depends on: @claw/shared-types
+- Depends on: @claw/shared-constants, @claw/shared-types
 
 ## Before editing
 1. `npm run knowledge:context -- --task="<task>" --service=@claw/shared-entitlements`

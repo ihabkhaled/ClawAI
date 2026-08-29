@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
@@ -32,6 +33,11 @@ import type {
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import type { ResearchTranscript } from '../types/research-transcript.types';
 import { type Prisma, RoutingMode } from '../../../generated/prisma';
+import { OLLAMA_PROVIDER } from '../../../common/constants';
+import {
+  PAYG_WORKFLOW_COST_ENSEMBLE,
+  PAYG_WORKFLOW_COST_ENSEMBLE_CLASSIFY,
+} from '../constants/payg.constants';
 
 /**
  * Classifies the request (complexity/risk/ambiguity), picks an ensemble tier
@@ -271,12 +277,29 @@ export class CostEnsembleManager {
     };
 
     try {
-      const response = await httpRequest<OllamaGenerateResponse>({
-        url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-        method: 'POST',
-        body: requestBody,
-        timeoutMs: COST_ENSEMBLE_TIMEOUT_MS,
-      });
+      const response = await this.accessControlService.meterOrchestrationCall(
+        {
+          userId,
+          requestId: `cost-ensemble:classify:${randomUUID()}`,
+          provider: OLLAMA_PROVIDER,
+          model: selection.actualModel,
+          workflow: PAYG_WORKFLOW_COST_ENSEMBLE_CLASSIFY,
+          promptText: requestBody.prompt,
+        },
+        async (hold) =>
+          httpRequest<OllamaGenerateResponse>({
+            url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
+            method: 'POST',
+            body: hold.clamped
+              ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
+              : requestBody,
+            timeoutMs: COST_ENSEMBLE_TIMEOUT_MS,
+          }),
+        (settled) => ({
+          promptTokens: settled.data.promptEvalCount ?? 0,
+          completionTokens: settled.data.evalCount ?? 0,
+        }),
+      );
 
       if (!response.ok) {
         return this.defaultClassification();
@@ -423,12 +446,29 @@ export class CostEnsembleManager {
       think: false,
     };
 
-    const response = await httpRequest<OllamaGenerateResponse>({
-      url: `${ollamaServiceUrl}/api/v1/ollama/generate`,
-      method: 'POST',
-      body: requestBody,
-      timeoutMs: COST_ENSEMBLE_TIMEOUT_MS,
-    });
+    const response = await this.accessControlService.meterOrchestrationCall(
+      {
+        userId,
+        requestId: `cost-ensemble:candidate:${randomUUID()}`,
+        provider: OLLAMA_PROVIDER,
+        model,
+        workflow: PAYG_WORKFLOW_COST_ENSEMBLE,
+        promptText: requestBody.prompt,
+      },
+      async (hold) =>
+        httpRequest<OllamaGenerateResponse>({
+          url: `${ollamaServiceUrl}/api/v1/ollama/generate`,
+          method: 'POST',
+          body: hold.clamped
+            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
+            : requestBody,
+          timeoutMs: COST_ENSEMBLE_TIMEOUT_MS,
+        }),
+      (settled) => ({
+        promptTokens: settled.data.promptEvalCount ?? 0,
+        completionTokens: settled.data.evalCount ?? 0,
+      }),
+    );
 
     if (!response.ok) {
       throw new Error(`Ollama returned status ${String(response.status)}`);

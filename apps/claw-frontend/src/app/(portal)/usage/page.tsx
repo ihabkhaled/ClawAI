@@ -11,7 +11,7 @@ import { ROUTES } from '@/constants/routes.constants';
 import { useUsagePage } from '@/hooks/plans/use-usage-page';
 
 export default function UsagePage(): ReactElement {
-  const { t, entitlements, isLoading, isError, error, onRetry } = useUsagePage();
+  const { t, locale, entitlements, wallet, isLoading, isError, error, onRetry } = useUsagePage();
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -25,11 +25,11 @@ export default function UsagePage(): ReactElement {
         }
       />
 
-      {isLoading ? <p className="text-sm text-muted-foreground">{t('userUsage.loading')}</p> : null}
+      {isLoading ? <p className="text-muted-foreground text-sm">{t('userUsage.loading')}</p> : null}
 
       {isError ? (
         <div
-          className="flex items-center justify-between gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          className="border-destructive/40 bg-destructive/10 text-destructive flex items-center justify-between gap-2 rounded-lg border p-3 text-sm"
           role="alert"
         >
           <span>{error?.message ?? t('userUsage.error')}</span>
@@ -40,7 +40,7 @@ export default function UsagePage(): ReactElement {
       ) : null}
 
       {!isLoading && !isError && entitlements === null ? (
-        <p className="rounded-lg border border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+        <p className="border-border bg-muted/20 text-muted-foreground rounded-lg border p-6 text-center text-sm">
           {t('userUsage.empty')}
         </p>
       ) : null}
@@ -56,7 +56,7 @@ export default function UsagePage(): ReactElement {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <UsageMeter quota={entitlements.quota} t={t} />
+            <UsageMeter quota={entitlements.quota} wallet={wallet} t={t} locale={locale} />
           </CardContent>
         </Card>
       ) : null}

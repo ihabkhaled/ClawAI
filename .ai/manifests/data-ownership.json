@@ -42,6 +42,9 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "CreditLedgerEntry",
+        "CreditPackage",
+        "CreditPackageVersion",
         "DeploymentCredential",
         "DeviceAuthorizationGrant",
         "EmailChangeRequest",
@@ -62,6 +65,7 @@
         "SystemSetting",
         "TokenUsageLedger",
         "User",
+        "UserCreditWallet",
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],

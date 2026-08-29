@@ -32,4 +32,9 @@ export enum StreamEventType {
   PROVIDER_SELECTED = 'provider_selected',
   MODEL_PROGRESS = 'model_progress',
   RESPONSE_STREAMING = 'response_streaming',
+  // Emitted once when a reply's output ceiling was cut down to what the user's
+  // remaining pay-as-you-go credit could pay for. The FE renders an "answer
+  // shortened — add credit" notice. Without it a clamped reply is
+  // indistinguishable from a model that simply stopped early.
+  PAYG_CREDIT_CLAMPED = 'payg_credit_clamped',
 }

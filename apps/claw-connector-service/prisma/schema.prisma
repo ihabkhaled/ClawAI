@@ -75,6 +75,21 @@ model Connector {
   // the workspace it acts in. Kept out of `region` on purpose: that field means
   // an AWS region, and overloading it would make both unreadable.
   workspaceId     String?           @map("workspace_id")
+  // Whether inference through this connector costs ClawAI real money and must
+  // therefore debit the user's PAYG credit wallet.
+  //
+  // `false` is the SAFE default: an unknown or newly added provider is free
+  // until an operator says otherwise. The opposite default would start silently
+  // charging users the moment someone adds a connector nobody classified, which
+  // is a billing incident rather than a bug.
+  //
+  // THIS COLUMN IS THE RUNTIME AUTHORITY, not `PAYG_DEFAULT_PROVIDERS` in
+  // `@claw/shared-constants`. That list is only the one-time default the
+  // migration backfills with. Compiling the decision into six `node_modules`
+  // copies of a shared package would make the admin toggle unenforceable
+  // without a six-container rebuild (ADR-082), so the reservation path reads
+  // the rolled-up connector policy from this column instead.
+  isPayAsYouGo    Boolean           @default(false) @map("is_pay_as_you_go")
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")
 

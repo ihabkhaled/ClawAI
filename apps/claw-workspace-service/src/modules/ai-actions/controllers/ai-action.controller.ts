@@ -60,9 +60,13 @@ export class AiActionController {
   @Post('multi-model-review')
   @HttpCode(HttpStatus.OK)
   async multiModelReviewEndpoint(
+    @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(multiModelReviewRequestSchema)) dto: MultiModelReviewRequestDto,
   ): Promise<MultiModelReviewResult> {
-    return this.multiModelReview.run(dto);
+    // userId comes from the token, NEVER from the body: this endpoint fans out
+    // to up to six paid models, and a body-supplied id would let any caller
+    // spend any other user's credit.
+    return this.multiModelReview.run({ ...dto, userId: user.id });
   }
 
   // v3 round 5 — downloadable PR/MR review bundle (Prompt 04 final polish).
@@ -75,9 +79,10 @@ export class AiActionController {
   @Header('Content-Type', 'text/markdown; charset=utf-8')
   @Header('Content-Disposition', 'attachment; filename="multi-model-review.md"')
   async multiModelReviewBundle(
+    @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(multiModelReviewRequestSchema)) dto: MultiModelReviewRequestDto,
   ): Promise<string> {
-    const result = await this.multiModelReview.run(dto);
+    const result = await this.multiModelReview.run({ ...dto, userId: user.id });
     return renderReviewMarkdown({
       title: 'Multi-model code review',
       content: dto.content,

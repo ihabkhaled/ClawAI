@@ -259,6 +259,16 @@ export const de: TranslationDictionary = {
     more: 'Mehr',
   },
   chat: {
+    credit: {
+      modelBadge: 'Verbraucht Guthaben',
+      badgeLabel: 'Guthaben',
+      badgeHint: 'Noch {remaining} Connector-Guthaben',
+      clampedTitle: 'Antwort gekürzt',
+      clampedBody:
+        'Diese Antwort wurde gekürzt, damit sie in Ihr verbleibendes Connector-Guthaben passt.',
+      clampedDismiss: 'Schließen',
+      addCreditCta: 'Guthaben aufladen',
+    },
     threadListDrawer: 'Unterhaltungen',
     export: {
       action: 'Exportieren',
@@ -297,6 +307,19 @@ export const de: TranslationDictionary = {
       roleAssistant: 'Assistent',
     },
     limits: {
+      addCreditCta: 'Guthaben aufladen',
+      paygCreditExhaustedTitle: 'Connector-Guthaben aufgebraucht',
+      paygCreditExhaustedBody:
+        'Dieses Modell wird über Ihr Connector-Guthaben abgerechnet, und Ihr Kontostand ist leer. Laden Sie Guthaben auf oder wählen Sie ein lokales Modell.',
+      paygPromptTooExpensiveTitle: 'Unterhaltung zu lang für Ihr Guthaben',
+      paygPromptTooExpensiveBody:
+        'Diese Unterhaltung kostet mehr als Ihr verbleibendes Connector-Guthaben. Laden Sie Guthaben auf, beginnen Sie einen kürzeren Chat oder wählen Sie ein lokales Modell.',
+      paygModelUnpricedTitle: 'Modell nicht verfügbar',
+      paygModelUnpricedBody:
+        'Für dieses Modell ist noch kein Preis veröffentlicht, daher kann es nicht abgerechnet werden. Bitte wählen Sie ein anderes Modell.',
+      paygPricingUnavailableTitle: 'Vorübergehend nicht verfügbar',
+      paygPricingUnavailableBody:
+        'Die Preisdaten waren nicht erreichbar, daher sind kostenpflichtige Modelle kurz pausiert. Ihnen wurde nichts berechnet. Lokale Modelle funktionieren weiterhin.',
       dailyTokensTitle: 'Die heutigen Tokens sind aufgebraucht',
       dailyTokensBody:
         'Ihr Tagesbudget an Tokens ist verbraucht. Es wird um Mitternacht UTC zurückgesetzt, oder Sie wechseln jetzt zu einem größeren Tarif.',
@@ -2652,6 +2675,9 @@ export const de: TranslationDictionary = {
     invalidFileType: 'Dieser Dateityp wird nicht unterstützt',
   },
   toast: {
+    creditTopupSucceeded: 'Guthaben aufgeladen.',
+    creditTopupFailed: 'Guthaben konnte nicht aufgeladen werden.',
+    creditTopupCancelled: 'Zahlung abgebrochen. Es wurde kein Guthaben aufgeladen.',
     loginSuccess: 'Anmeldung erfolgreich',
     registerSuccess: 'Konto erfolgreich erstellt',
     loginFailed: 'Anmeldung fehlgeschlagen',
@@ -3578,6 +3604,11 @@ export const de: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.de,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.de,
   adminBilling: {
+    credit: {
+      packageCreated: 'Guthaben-Paket erstellt.',
+      versionPublished: 'Paketpreis veröffentlicht.',
+      saveFailed: 'Guthaben-Paket konnte nicht gespeichert werden.',
+    },
     title: 'Abrechnungsübersicht',
     description: 'Umsatz, Anbieterkosten, Marge und Zustand der Abonnements.',
     loading: 'Abrechnungskennzahlen werden geladen...',
@@ -3703,6 +3734,9 @@ export const de: TranslationDictionary = {
       description: 'Diesen Tarif aktualisieren.',
     },
     form: {
+      monthlyConnectorCredit: 'Monatliches Connector-Guthaben (Mikro-USD)',
+      monthlyConnectorCreditHelp:
+        'Dollar-Kontingent für kostenpflichtige Cloud-Connectoren, in Mikro-USD (1.000.000 = 1,00 $). 0 deaktiviert kostenpflichtige Connectoren in diesem Tarif. Dieser Wert wird Nutzern angezeigt.',
       name: 'Name',
       namePlaceholder: 'Pro',
       slug: 'Slug',
@@ -3830,6 +3864,7 @@ export const de: TranslationDictionary = {
     },
   },
   userPlan: {
+    noCreditOnThisPlan: 'Dieser Tarif enthält kein Connector-Guthaben.',
     title: 'Mein Tarif',
     description: 'Ihr aktuelles Abonnement, Funktionen und erlaubte Modelle.',
     loading: 'Ihr Tarif wird geladen...',
@@ -3851,6 +3886,12 @@ export const de: TranslationDictionary = {
     chatsLimitLabel: 'Chats pro Tag',
   },
   userUsage: {
+    connectorCredit: 'Connector-Guthaben',
+    creditRemaining: '{remaining} übrig',
+    creditUsedOfLimit: '{used} von {limit}',
+    creditPercentUsed: '{percent}% verbraucht',
+    dualConsumptionHint:
+      'Cloud-Connectoren verbrauchen Guthaben und Tokens; lokale Modelle nur Tokens.',
     title: 'Nutzung',
     description: 'Verfolgen Sie Ihren täglichen Token-Verbrauch gegenüber Ihrem Tarifkontingent.',
     loading: 'Nutzung wird geladen...',
@@ -4095,6 +4136,44 @@ export const de: TranslationDictionary = {
     },
   },
   billing: {
+    credit: {
+      title: 'Connector-Guthaben',
+      available: 'Verfügbar',
+      grantBucket: 'Tarif-Kontingent',
+      purchasedBucket: 'Gekauftes Guthaben',
+      reserved: 'Reserviert',
+      reservedHint: 'Für laufende Anfragen reserviert. Wird nach deren Abschluss freigegeben.',
+      resetsOn: 'Wird am {date} zurückgesetzt',
+      neverExpires: 'Verfällt nie',
+      percentUsed: '{percent}% verbraucht',
+      noAllowance: 'Dieser Tarif enthält kein Connector-Guthaben.',
+      addCredit: 'Guthaben aufladen',
+      adminBypass: 'Administrator — Connector-Guthaben wird nicht angewendet',
+      meteringDisabled: 'Connector-Guthaben wird derzeit nicht belastet.',
+      empty: 'Keine Guthaben-Informationen verfügbar.',
+      error: 'Connector-Guthaben konnte nicht geladen werden.',
+      packages: 'Guthaben-Pakete',
+      packagesEmpty: 'Derzeit sind keine Guthaben-Pakete verfügbar.',
+      packagesError: 'Guthaben-Pakete konnten nicht geladen werden.',
+      packageCredit: '{credit} Guthaben',
+      topupTitle: 'Connector-Guthaben aufladen',
+      topupDescription: 'Wählen Sie ein Paket. Gekauftes Guthaben verfällt nie.',
+      topupConfirm: 'Weiter zur Zahlung',
+      topupConfirming: 'Zahlung wird vorbereitet…',
+      ledgerTitle: 'Guthaben-Verlauf',
+      ledgerDate: 'Datum',
+      ledgerSurface: 'Verwendet von',
+      ledgerModel: 'Modell',
+      ledgerNoModel: 'Keins',
+      ledgerAmount: 'Betrag',
+      ledgerBalance: 'Kontostand',
+      ledgerEmpty: 'Noch keine Guthaben-Bewegungen.',
+      ledgerError: 'Guthaben-Verlauf konnte nicht geladen werden.',
+      ledgerLoadMore: 'Mehr laden',
+      ledgerLoadingMore: 'Wird geladen…',
+      dualConsumptionNotice:
+        'Cloud-Connectoren wie OpenAI, Claude und Gemini verbrauchen SOWOHL Ihr Dollar-Guthaben ALS AUCH Ihr tägliches Token-Kontingent. Lokale Modelle verbrauchen nur Tokens.',
+    },
     page: {
       title: 'Abrechnung',
       description: 'Ihr Tarif, Ihre Nutzung und alles, was Ihnen berechnet wurde.',
@@ -4104,6 +4183,18 @@ export const de: TranslationDictionary = {
       dismiss: 'Ausblenden',
     },
     errors: {
+      PAYG_CREDIT_EXHAUSTED:
+        'Ihr Connector-Guthaben ist aufgebraucht. Laden Sie Guthaben auf, um Cloud-Modelle weiter zu nutzen.',
+      PAYG_PROMPT_TOO_EXPENSIVE:
+        'Diese Unterhaltung kostet mehr als Ihr verbleibendes Connector-Guthaben.',
+      PAYG_MODEL_UNPRICED:
+        'Für dieses Modell ist noch kein Preis veröffentlicht, daher kann es nicht abgerechnet werden.',
+      PAYG_PRICING_UNAVAILABLE:
+        'Die Preisdaten sind vorübergehend nicht erreichbar. Ihnen wurde nichts berechnet.',
+      CREDIT_PACKAGE_NOT_FOUND: 'Dieses Guthaben-Paket existiert nicht mehr.',
+      CREDIT_PACKAGE_INACTIVE: 'Dieses Guthaben-Paket wird nicht mehr angeboten.',
+      CREDIT_ADJUSTMENT_REASON_REQUIRED:
+        'Für eine manuelle Guthabenkorrektur ist eine Begründung erforderlich.',
       PLAN_NOT_PURCHASABLE: 'Dieser Tarif kann derzeit nicht gekauft werden.',
       PAYMENT_NOT_VERIFIED: 'Die Zahlung konnte nicht bestätigt werden. Es wurde nichts abgebucht.',
       PAYMENT_METHOD_UNAVAILABLE:
@@ -4354,6 +4445,8 @@ export const de: TranslationDictionary = {
         'Die Verfügbarkeit der Modelle folgt dem jeweiligen Veröffentlichungsplan des Anbieters. Neue Modelle werden hinzugefügt, sobald sie erscheinen.',
     },
     pricing: {
+      paygCreditLabel: 'Monatliches Connector-Guthaben',
+      paygCreditNone: 'Kein Connector-Guthaben',
       sectionTitle: 'Tarife, die mit Ihnen wachsen',
       sectionSubtitle:
         'Kostenlos starten. Upgraden, wenn Sie mehr brauchen. Jeder kostenpflichtige Tarif erreicht dieselben Modelle – der Unterschied liegt darin, wie viel Sie nutzen können.',

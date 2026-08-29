@@ -42,6 +42,7 @@
     "docs/16-quality-engineering",
     "docs/adrs",
     "docs/architecture",
+    "docs/business",
     "docs/exceptions",
     "docs/features",
     "docs/implementation",
@@ -53,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 19313,
+      "bytes": 19573,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -241,13 +242,17 @@
       "file": "rules/36-floating-ui-and-toast-clearance.md"
     },
     {
-      "bytes": 4045,
+      "bytes": 17165,
+      "file": "rules/37-payg-credit-integrity.md"
+    },
+    {
+      "bytes": 5156,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 19398,
+      "bytes": 19868,
       "file": "skills/00-index.md"
     },
     {
@@ -287,7 +292,7 @@
       "file": "skills/09-refactor-toolkit.md"
     },
     {
-      "bytes": 6622,
+      "bytes": 6744,
       "file": "skills/README.md"
     },
     {
@@ -411,6 +416,10 @@
       "file": "skills/debug-flaky-test.md"
     },
     {
+      "bytes": 10315,
+      "file": "skills/deploy-payg-credit.md"
+    },
+    {
       "bytes": 6173,
       "file": "skills/execute-prompt-pack.md"
     },
@@ -433,6 +442,10 @@
     {
       "bytes": 3008,
       "file": "skills/inspect-affected-workspaces.md"
+    },
+    {
+      "bytes": 14336,
+      "file": "skills/meter-a-paid-provider-call.md"
     },
     {
       "bytes": 4352,

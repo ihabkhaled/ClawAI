@@ -25,7 +25,7 @@ Compose containers: `pg-auth`, `pg-chat`, `pg-connector`, `pg-routing`,
 
 | Service               | DB                  | Key models (see services.json for full list)                                                                                                                                                                                                                       |
 | --------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| auth :4001            | Postgres            | User, Session, Role(+Permission), Plan(+FeatureRule/ModelAccess/PriceVersion), UserPlanAssignment, entitlement inbox/usage ledgers, SeedExecution, SystemSetting                                                                                                   |
+| auth :4001            | Postgres            | User, Session, Role(+Permission), Plan(+FeatureRule/ModelAccess/PriceVersion), UserPlanAssignment, entitlement inbox/usage ledgers, SeedExecution, SystemSetting, **UserCreditWallet, CreditLedgerEntry, CreditPackage(+Version)** (PAYG wallet — ADR-078)         |
 | chat :4002            | Postgres            | ChatThread, ChatMessage, ChatMessageContextReceipt, MessageAttachment, FileDeliveryRecord                                                                                                                                                                          |
 | connector :4003       | Postgres            | Connector, ConnectorModel, ConnectorHealthEvent, ModelSyncRun                                                                                                                                                                                                      |
 | routing :4004         | Postgres            | RoutingDecision, RoutingPolicy, RouterModelRegistry/Profile/Topic, ModelDeployment, CapabilityEvidence, RouterConfiguration/ChainEntry, SeedExecution, RouterLearnedScore, RouterCircuitBreaker, ReplayRun/Case, RoutingFeedback/Outcome, TaxonomyRole (19 models) |
@@ -66,3 +66,20 @@ service entrypoint (`~30s` downtime per the hot-reload matrix). See
 - Repositories never throw — they return data or null.
 - Two services needing "the same" data means the boundary is wrong or one should
   own it and expose it. Do not duplicate a table across DBs.
+
+## PAYG connector credit — who owns which half
+
+The wallet is an **entitlement**, the top-up is **money**, and they live in
+different databases on purpose.
+
+| Concern                                   | Owner           | Tables / columns                                                                                                                                                                                                                                  |
+| ----------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Balance, ledger, reservation, enforcement | auth :4001      | `user_credit_wallets`, `credit_ledger_entries`, `weighted_usage_records.{is_payg,credit_grant_micro_usd,credit_purchased_micro_usd}`                                                                                                              |
+| The per-plan monthly allowance            | auth :4001      | `plans.monthly_provider_cost_ceiling_micro_usd` — **promoted** from a hidden margin control to the user-visible credit figure (ADR-078). It is the SAME number as `monthly_token_quota`, because `WEIGHTED_TOKENS_PER_USD === MICRO_USD_PER_USD`. |
+| Purchasable packages + immutable prices   | auth :4001      | `credit_packages`, `credit_package_versions` (`active_key` partial-unique, same idiom as `PlanPriceVersion`)                                                                                                                                      |
+| The purchase itself                       | payment :4018   | `checkout_sessions.{purpose=CREDIT_TOPUP,credit_package_id,credit_package_version_id,credit_micro_usd}`, `payment_transactions`, `invoices`                                                                                                       |
+| Whether a provider costs money            | connector :4003 | `connectors.is_pay_as_you_go` — the RUNTIME authority; `PAYG_DEFAULT_PROVIDERS` is only the migration backfill (ADR-082)                                                                                                                          |
+| What a model costs                        | routing :4004   | `model_cost_versions`                                                                                                                                                                                                                             |
+
+`credit_ledger_entries` is **append-only**. A correction is a new compensating
+row, never an edit — the wallet must always equal the sum of its ledger.

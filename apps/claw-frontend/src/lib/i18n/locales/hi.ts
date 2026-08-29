@@ -254,6 +254,15 @@ export const hi: TranslationDictionary = {
     more: 'अधिक',
   },
   chat: {
+    credit: {
+      modelBadge: 'क्रेडिट उपयोग करता है',
+      badgeLabel: 'क्रेडिट',
+      badgeHint: '{remaining} कनेक्टर क्रेडिट शेष',
+      clampedTitle: 'उत्तर छोटा किया गया',
+      clampedBody: 'यह उत्तर आपके शेष कनेक्टर क्रेडिट में समाने के लिए छोटा किया गया।',
+      clampedDismiss: 'बंद करें',
+      addCreditCta: 'क्रेडिट जोड़ें',
+    },
     threadListDrawer: 'बातचीत',
     export: {
       action: 'निर्यात करें',
@@ -291,6 +300,19 @@ export const hi: TranslationDictionary = {
       roleAssistant: 'असिस्टेंट',
     },
     limits: {
+      addCreditCta: 'क्रेडिट जोड़ें',
+      paygCreditExhaustedTitle: 'कनेक्टर क्रेडिट समाप्त',
+      paygCreditExhaustedBody:
+        'इस मॉडल का शुल्क आपके कनेक्टर क्रेडिट से लिया जाता है और आपका शेष शून्य है। जारी रखने के लिए क्रेडिट जोड़ें, या कोई स्थानीय मॉडल चुनें।',
+      paygPromptTooExpensiveTitle: 'बातचीत आपके क्रेडिट के लिए बहुत लंबी है',
+      paygPromptTooExpensiveBody:
+        'इस बातचीत की लागत आपके शेष कनेक्टर क्रेडिट से अधिक है। क्रेडिट जोड़ें, छोटी बातचीत शुरू करें, या स्थानीय मॉडल चुनें।',
+      paygModelUnpricedTitle: 'मॉडल अनुपलब्ध',
+      paygModelUnpricedBody:
+        'इस मॉडल की कीमत अभी प्रकाशित नहीं है, इसलिए इसका शुल्क नहीं लिया जा सकता। कृपया कोई दूसरा मॉडल चुनें।',
+      paygPricingUnavailableTitle: 'अस्थायी रूप से अनुपलब्ध',
+      paygPricingUnavailableBody:
+        'कीमत की जानकारी नहीं मिल सकी, इसलिए सशुल्क मॉडल कुछ देर के लिए रोके गए हैं। आपसे कोई शुल्क नहीं लिया गया। स्थानीय मॉडल अब भी काम कर रहे हैं।',
       dailyTokensTitle: 'आज के टोकन खत्म हो गए',
       dailyTokensBody:
         'आपका दैनिक टोकन कोटा खत्म हो गया है। यह UTC आधी रात को रीसेट होता है, या आप अभी बड़े प्लान पर जा सकते हैं।',
@@ -2608,6 +2630,9 @@ export const hi: TranslationDictionary = {
     invalidFileType: 'यह फ़ाइल प्रकार समर्थित नहीं है',
   },
   toast: {
+    creditTopupSucceeded: 'क्रेडिट जोड़ा गया।',
+    creditTopupFailed: 'क्रेडिट नहीं जोड़ा जा सका।',
+    creditTopupCancelled: 'भुगतान रद्द किया गया। कोई क्रेडिट नहीं जोड़ा गया।',
     loginSuccess: 'लॉगिन सफल',
     registerSuccess: 'खाता सफलतापूर्वक बनाया गया',
     loginFailed: 'लॉगिन विफल',
@@ -3531,6 +3556,11 @@ export const hi: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.hi,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.hi,
   adminBilling: {
+    credit: {
+      packageCreated: 'क्रेडिट पैकेज बनाया गया।',
+      versionPublished: 'पैकेज मूल्य प्रकाशित किया गया।',
+      saveFailed: 'क्रेडिट पैकेज सहेजा नहीं जा सका।',
+    },
     title: 'बिलिंग डैशबोर्ड',
     description: 'राजस्व, प्रदाता लागत, मार्जिन और सदस्यता की स्थिति।',
     loading: 'बिलिंग मेट्रिक्स लोड हो रहे हैं...',
@@ -3655,6 +3685,9 @@ export const hi: TranslationDictionary = {
       description: 'इस योजना को अपडेट करें।',
     },
     form: {
+      monthlyConnectorCredit: 'मासिक कनेक्टर क्रेडिट (माइक्रो-USD)',
+      monthlyConnectorCreditHelp:
+        'सशुल्क क्लाउड कनेक्टरों के लिए डॉलर भत्ता, माइक्रो-USD में (1,000,000 = $1.00)। 0 इस प्लान पर सशुल्क कनेक्टर बंद कर देता है। यह आंकड़ा उपयोगकर्ताओं को दिखाया जाता है।',
       name: 'नाम',
       namePlaceholder: 'प्रो',
       slug: 'स्लग',
@@ -3781,6 +3814,7 @@ export const hi: TranslationDictionary = {
     },
   },
   userPlan: {
+    noCreditOnThisPlan: 'इस प्लान में कोई कनेक्टर क्रेडिट शामिल नहीं है।',
     title: 'मेरी योजना',
     description: 'आपकी वर्तमान सदस्यता, सुविधाएँ और अनुमत मॉडल।',
     loading: 'आपकी योजना लोड हो रही है...',
@@ -3802,6 +3836,12 @@ export const hi: TranslationDictionary = {
     chatsLimitLabel: 'प्रतिदिन चैट',
   },
   userUsage: {
+    connectorCredit: 'कनेक्टर क्रेडिट',
+    creditRemaining: '{remaining} शेष',
+    creditUsedOfLimit: '{limit} में से {used}',
+    creditPercentUsed: '{percent}% उपयोग किया गया',
+    dualConsumptionHint:
+      'क्लाउड कनेक्टर क्रेडिट और टोकन दोनों उपयोग करते हैं; स्थानीय मॉडल केवल टोकन।',
     title: 'उपयोग',
     description: 'अपनी योजना कोटा के मुकाबले अपने दैनिक टोकन उपयोग को ट्रैक करें।',
     loading: 'उपयोग लोड हो रहा है...',
@@ -4043,6 +4083,44 @@ export const hi: TranslationDictionary = {
     },
   },
   billing: {
+    credit: {
+      title: 'कनेक्टर क्रेडिट',
+      available: 'उपलब्ध',
+      grantBucket: 'प्लान भत्ता',
+      purchasedBucket: 'खरीदा गया क्रेडिट',
+      reserved: 'रोका गया',
+      reservedHint: 'अभी चल रहे अनुरोधों के लिए रोका गया। पूरा होने पर मुक्त हो जाएगा।',
+      resetsOn: '{date} को रीसेट होगा',
+      neverExpires: 'कभी समाप्त नहीं होता',
+      percentUsed: '{percent}% उपयोग किया गया',
+      noAllowance: 'इस प्लान में कोई कनेक्टर क्रेडिट शामिल नहीं है।',
+      addCredit: 'क्रेडिट जोड़ें',
+      adminBypass: 'प्रशासक — कनेक्टर क्रेडिट लागू नहीं होता',
+      meteringDisabled: 'अभी कनेक्टर क्रेडिट नहीं काटा जा रहा है।',
+      empty: 'कोई क्रेडिट जानकारी उपलब्ध नहीं है।',
+      error: 'आपका कनेक्टर क्रेडिट लोड नहीं हो सका।',
+      packages: 'क्रेडिट पैकेज',
+      packagesEmpty: 'अभी कोई क्रेडिट पैकेज उपलब्ध नहीं है।',
+      packagesError: 'क्रेडिट पैकेज लोड नहीं हो सके।',
+      packageCredit: '{credit} क्रेडिट',
+      topupTitle: 'कनेक्टर क्रेडिट जोड़ें',
+      topupDescription: 'एक पैकेज चुनें। खरीदा गया क्रेडिट कभी समाप्त नहीं होता।',
+      topupConfirm: 'भुगतान पर जाएँ',
+      topupConfirming: 'भुगतान तैयार किया जा रहा है…',
+      ledgerTitle: 'क्रेडिट गतिविधि',
+      ledgerDate: 'दिनांक',
+      ledgerSurface: 'कहाँ उपयोग हुआ',
+      ledgerModel: 'मॉडल',
+      ledgerNoModel: 'कोई नहीं',
+      ledgerAmount: 'राशि',
+      ledgerBalance: 'शेष',
+      ledgerEmpty: 'अभी तक कोई क्रेडिट गतिविधि नहीं।',
+      ledgerError: 'क्रेडिट गतिविधि लोड नहीं हो सकी।',
+      ledgerLoadMore: 'और लोड करें',
+      ledgerLoadingMore: 'लोड हो रहा है…',
+      dualConsumptionNotice:
+        'OpenAI, Claude और Gemini जैसे क्लाउड कनेक्टर आपके डॉलर क्रेडिट और आपके दैनिक टोकन भत्ते — दोनों से कटते हैं। स्थानीय मॉडल केवल टोकन से कटते हैं।',
+    },
     page: {
       title: 'बिलिंग',
       description: 'आपका प्लान, आपका उपयोग और आपसे लिया गया हर शुल्क।',
@@ -4052,6 +4130,15 @@ export const hi: TranslationDictionary = {
       dismiss: 'हटाएँ',
     },
     errors: {
+      PAYG_CREDIT_EXHAUSTED:
+        'आपका कनेक्टर क्रेडिट समाप्त हो गया है। क्लाउड मॉडल उपयोग जारी रखने के लिए क्रेडिट जोड़ें।',
+      PAYG_PROMPT_TOO_EXPENSIVE: 'इस बातचीत की लागत आपके शेष कनेक्टर क्रेडिट से अधिक है।',
+      PAYG_MODEL_UNPRICED: 'इस मॉडल की कीमत अभी प्रकाशित नहीं है और इसका शुल्क नहीं लिया जा सकता।',
+      PAYG_PRICING_UNAVAILABLE:
+        'कीमत की जानकारी अस्थायी रूप से अनुपलब्ध है। आपसे कोई शुल्क नहीं लिया गया।',
+      CREDIT_PACKAGE_NOT_FOUND: 'वह क्रेडिट पैकेज अब मौजूद नहीं है।',
+      CREDIT_PACKAGE_INACTIVE: 'वह क्रेडिट पैकेज अब बिक्री पर नहीं है।',
+      CREDIT_ADJUSTMENT_REASON_REQUIRED: 'मैन्युअल क्रेडिट समायोजन के लिए एक कारण आवश्यक है।',
       PLAN_NOT_PURCHASABLE: 'यह प्लान खरीदने के लिए उपलब्ध नहीं है।',
       PAYMENT_NOT_VERIFIED: 'भुगतान सत्यापित नहीं किया जा सका। आपसे कोई राशि नहीं ली गई है।',
       PAYMENT_METHOD_UNAVAILABLE:
@@ -4295,6 +4382,8 @@ export const hi: TranslationDictionary = {
         'मॉडल उपलब्धता हर प्रोवाइडर के अपने रिलीज़ शेड्यूल पर निर्भर है। नए मॉडल लॉन्च होते ही जोड़ दिए जाते हैं।',
     },
     pricing: {
+      paygCreditLabel: 'मासिक कनेक्टर क्रेडिट',
+      paygCreditNone: 'कोई कनेक्टर क्रेडिट नहीं',
       sectionTitle: 'आपके साथ बढ़ने वाले प्लान',
       sectionSubtitle:
         'निःशुल्क शुरू करें। ज़रूरत बढ़ने पर अपग्रेड करें। हर पेड प्लान वही मॉडल देता है — फ़र्क सिर्फ़ इतना है कि आप कितना इस्तेमाल कर सकते हैं।',

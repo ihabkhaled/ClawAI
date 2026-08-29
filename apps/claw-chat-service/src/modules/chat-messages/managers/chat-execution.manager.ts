@@ -1,12 +1,16 @@
 import { HttpStatus, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import {
+  BillingErrorCode,
   LocalModelRole,
+  PaygSurface,
   type ResolvedEffort,
   type ResolvedSpeed,
   TokenLedgerContext,
   type TokenUsage,
   TokenUsageSource,
 } from '@claw/shared-types';
+import type { PaygHold } from '@claw/shared-entitlements';
+import { randomUUID } from 'node:crypto';
 import {
   extractGeminiUsage,
   extractOllamaUsage,
@@ -170,6 +174,29 @@ import type {
   OllamaToolTranscriptTurn,
 } from '../types/ollama-cloud-tool.types';
 import { providerFailureCode } from '../utilities/runtime-v2-provider-failure.utility';
+import {
+  isPaygDelegatedProvider,
+  isPaygExemptProvider,
+  normalizePaygProvider,
+  paygSurfaceForTokenContext,
+  paygUnmeteredHold,
+  paygWorkflowForTokenContext,
+} from '../utilities/payg-metering.utility';
+import {
+  PAYG_CLAMPED_NOTICE_DESCRIPTION,
+  PAYG_CLAMPED_NOTICE_LABEL,
+  PAYG_CLAMPED_STAGE_ID,
+  PAYG_CREDIT_ERROR_MESSAGES,
+  PAYG_CREDIT_FALLBACK_ERROR_MESSAGE,
+  PAYG_WORKFLOW_COMPARE_LANE,
+  PAYG_WORKFLOW_FILE_CONTENT,
+  PAYG_WORKFLOW_INTERNAL_GENERATE,
+  PAYG_WORKFLOW_TOOL_LOOP,
+  PAYG_WORKFLOW_TOOL_LOOP_WRAPUP,
+  PAYG_WORKFLOW_VISION_PROMPT,
+} from '../constants/payg.constants';
+import { VISION_PROMPT_MODEL } from '../constants/vision-prompt.constants';
+import type { PaygCallOptions } from '../types/payg.types';
 
 @Injectable()
 export class ChatExecutionManager implements OnModuleInit {
@@ -279,6 +306,14 @@ export class ChatExecutionManager implements OnModuleInit {
         reRouteReasons = [...reRouteReasons, ...outcome.reasons];
         reRouteAttempt++;
         continue;
+      }
+      // A credit refusal ends the chain. Every remaining candidate would be
+      // refused for exactly the same reason - the balance does not change
+      // between them - so trying them all turns one 402 into N pointless
+      // round-trips and buries the real cause behind whichever candidate
+      // happened to be last.
+      if (this.isPaygRefusal(outcome.error)) {
+        throw outcome.error;
       }
       lastError = outcome.error;
     }
@@ -556,9 +591,21 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number,
     threadSettings: ThreadSettings | undefined,
     streamContext: StreamContext,
+    paygCall?: PaygCallOptions,
   ): Promise<LlmResponse> {
     if (!this.canStreamCandidate(provider)) {
-      return this.callProvider(provider, model, context, startTime, false, threadSettings);
+      return this.callProvider(
+        provider,
+        model,
+        context,
+        startTime,
+        false,
+        threadSettings,
+        undefined,
+        undefined,
+        TokenLedgerContext.COMPARE,
+        paygCall,
+      );
     }
     return this.streamCandidate(
       { provider, model },
@@ -568,9 +615,20 @@ export class ChatExecutionManager implements OnModuleInit {
       threadSettings,
       undefined,
       streamContext,
+      TokenLedgerContext.COMPARE,
+      paygCall,
     );
   }
 
+  /**
+   * The streaming twin of the `callProvider` chokepoint.
+   *
+   * Every SSE hop - single chat, a compare lane, a simulated local replay -
+   * arrives here, so the hold is placed before the stream opens and settled
+   * from the usage frame the provider sends at the end. A stream that dies
+   * before any usage frame releases: the user watched a spinner, and a spinner
+   * is not something to charge for.
+   */
   private async streamCandidate(
     candidate: { provider: string; model: string },
     context: AssembledContext,
@@ -580,16 +638,37 @@ export class ChatExecutionManager implements OnModuleInit {
     executionOptions: ExecutionOptions | undefined,
     streamContext: StreamContext,
     tokenContext?: TokenLedgerContext,
+    paygCall?: PaygCallOptions,
   ): Promise<LlmResponse> {
-    const dispatched = await this.dispatchStreamCandidate(
-      candidate,
+    const ledgerContext = tokenContext ?? TokenLedgerContext.CHAT;
+    const requestedMax = this.paygRequestedMaxOutputTokens(
+      candidate.provider,
       context,
-      startTime,
-      usedFallback,
-      threadSettings,
       executionOptions,
-      streamContext,
     );
+    const hold = await this.reservePaygHold({
+      provider: candidate.provider,
+      model: candidate.model,
+      context,
+      ledgerContext,
+      requestedMax,
+      paygCall,
+    });
+    let dispatched: LlmResponse;
+    try {
+      dispatched = await this.dispatchStreamCandidate(
+        candidate,
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        this.applyPaygCeiling(hold, requestedMax, executionOptions),
+        streamContext,
+      );
+    } catch (error: unknown) {
+      await this.accessControlService.releaseCredit(hold, 'PROVIDER_ERROR');
+      throw error;
+    }
     // Universal token deduction for the streaming path. The buffered
     // `callProvider` path records via `recordChokepointUsage` at the
     // end of the call; this mirror records for EVERY streaming hop
@@ -598,12 +677,14 @@ export class ChatExecutionManager implements OnModuleInit {
     // replays). Tagged with TokenLedgerContext so the ledger row can
     // be attributed to the right mode (chat / compare / etc.). Without
     // this, the streaming path silently bypassed daily-quota consumption
-    // — every prompt yesterday on /chat or /chat/compare appeared free.
+    // - every prompt yesterday on /chat or /chat/compare appeared free.
     const tagged: LlmResponse = {
       ...dispatched,
-      tokenContext: dispatched.tokenContext ?? tokenContext ?? TokenLedgerContext.CHAT,
+      tokenContext: dispatched.tokenContext ?? ledgerContext,
+      ...(hold.clamped ? { paygClamped: true } : {}),
     };
     this.recordChokepointUsage(context, tagged);
+    await this.settlePaygHold(hold, tagged, streamContext.threadId);
     return tagged;
   }
 
@@ -1023,6 +1104,15 @@ export class ChatExecutionManager implements OnModuleInit {
         model: base.model,
         inputTokens: result.inputTokens,
         outputTokens: result.outputTokens ?? estimateTokensFromText(result.content),
+        // Absent stays absent. `settlePaygHold` defaults each to 0, which is
+        // the right reading of "the provider told us nothing"; writing 0 here
+        // would instead claim we measured a zero.
+        ...(result.cachedPromptTokens === undefined
+          ? {}
+          : { cachedPromptTokens: result.cachedPromptTokens }),
+        ...(result.reasoningTokens === undefined
+          ? {}
+          : { reasoningTokens: result.reasoningTokens }),
         latencyMs: Date.now() - base.startMs,
         finishReason,
         usedFallback,
@@ -1578,6 +1668,15 @@ export class ChatExecutionManager implements OnModuleInit {
     };
   }
 
+  /**
+   * The universal chokepoint. Every buffered model call in this service arrives
+   * here, and it is where a hold is placed before the provider is dialled.
+   *
+   * reserve -> call with `hold.maxOutputTokens` -> finalize, or release on a
+   * throw. The affordability clamp is what makes "a user can never exceed their
+   * credit" true by construction rather than by reconciliation: the provider is
+   * physically unable to produce a response that costs more than the balance.
+   */
   async callProvider(
     provider: string,
     model: string,
@@ -1588,26 +1687,245 @@ export class ChatExecutionManager implements OnModuleInit {
     routingMode?: string,
     executionOptions?: ExecutionOptions,
     tokenContext?: TokenLedgerContext,
+    paygCall?: PaygCallOptions,
   ): Promise<LlmResponse> {
-    const response = await this.dispatchProvider(
+    const ledgerContext = tokenContext ?? TokenLedgerContext.CHAT;
+    const requestedMax = this.paygRequestedMaxOutputTokens(provider, context, executionOptions);
+    const hold = await this.reservePaygHold({
       provider,
       model,
       context,
-      startTime,
-      usedFallback,
-      threadSettings,
-      routingMode,
-      executionOptions,
-    );
-    // Feature 2 — tag the produced usage with the call context (CHAT default).
+      ledgerContext,
+      requestedMax,
+      paygCall,
+    });
+    let response: LlmResponse;
+    try {
+      response = await this.dispatchProvider(
+        provider,
+        model,
+        context,
+        startTime,
+        usedFallback,
+        threadSettings,
+        routingMode,
+        this.applyPaygCeiling(hold, requestedMax, executionOptions),
+      );
+    } catch (error: unknown) {
+      // The user got nothing, so the money goes back. Idempotent on the auth
+      // side: a double release is a no-op, not a double refund.
+      await this.accessControlService.releaseCredit(hold, 'PROVIDER_ERROR');
+      throw error;
+    }
+    // Feature 2 - tag the produced usage with the call context (CHAT default).
     // Image / file generation responses carry no token usage so we leave them
     // untagged to keep them out of the token ledger.
     if (this.isGenerationResponse(response)) {
       return response;
     }
-    const tagged = { ...response, tokenContext: tokenContext ?? TokenLedgerContext.CHAT };
+    const tagged: LlmResponse = {
+      ...response,
+      tokenContext: ledgerContext,
+      ...(hold.clamped ? { paygClamped: true } : {}),
+    };
     this.recordChokepointUsage(context, tagged);
+    await this.settlePaygHold(hold, tagged, paygCall?.threadId);
     return tagged;
+  }
+
+  /**
+   * Takes one compare lane's hold BEFORE any lane is dialled.
+   *
+   * Compare is all-or-nothing on purpose. A comparison with three error columns
+   * is not a comparison, and the user has still paid for the two lanes that
+   * ran. So every lane is reserved up front and the run is refused whole if
+   * they do not fit together (edge case E2).
+   */
+  async reserveCompareLane(args: {
+    provider: string;
+    model: string;
+    context: AssembledContext;
+    requestId: string;
+  }): Promise<PaygHold> {
+    const requestedMax = this.paygRequestedMaxOutputTokens(args.provider, args.context, undefined);
+    return this.reservePaygHold({
+      provider: args.provider,
+      model: args.model,
+      context: args.context,
+      ledgerContext: TokenLedgerContext.COMPARE,
+      requestedMax,
+      paygCall: {
+        surface: PaygSurface.COMPARE,
+        workflow: PAYG_WORKFLOW_COMPARE_LANE,
+        requestId: args.requestId,
+      },
+    });
+  }
+
+  /** Hands a lane's hold straight back when the run as a whole cannot be paid for. */
+  async releaseCompareLane(hold: PaygHold): Promise<void> {
+    await this.accessControlService.releaseCredit(hold, 'CANCELLED');
+  }
+
+  // PAYG credit metering
+  //
+  // There is no separate "can this user afford it?" pre-check anywhere in this
+  // service. The reservation IS the gate: a second gate answers a question that
+  // is already stale by the time the provider is dialled, and two gates
+  // disagreeing is how a user gets refused under one code and charged under
+  // another.
+
+  /**
+   * Places the hold that authorizes one provider call.
+   *
+   * A hold supplied by the caller wins: compare reserves every lane up front so
+   * a run that cannot be paid for in full is refused before any provider is
+   * called, and re-reserving here would take the money twice.
+   */
+  private async reservePaygHold(args: {
+    provider: string;
+    model: string;
+    context: AssembledContext;
+    ledgerContext: TokenLedgerContext;
+    requestedMax: number;
+    paygCall: PaygCallOptions | undefined;
+  }): Promise<PaygHold> {
+    if (args.paygCall?.hold !== undefined) {
+      return args.paygCall.hold;
+    }
+    // image-service and file-generation-service meter their own provider calls.
+    // Reserving here as well would debit one generation twice, and the response
+    // carries no usage to reconcile the second hold against.
+    if (isPaygDelegatedProvider(args.provider)) {
+      return paygUnmeteredHold(args.requestedMax);
+    }
+    // Typed as `string`, but this is the last gate before real money is spent and
+    // the value reaches us from assembled context that several callers build by
+    // hand. A missing id must take the same unattributable path as an empty one —
+    // reading `.length` off `undefined` here would throw INSIDE the chokepoint
+    // and fail the whole request rather than decide how to meter it.
+    // Widening ASSIGNMENT, not an assertion: `string` assigns freely to
+    // `string | undefined`, so the runtime guard below is legal without a cast.
+    const userId: string | undefined = args.context.userId;
+    if (userId === undefined || userId.length === 0) {
+      return this.paygHoldWithoutUser(args.provider, args.requestedMax);
+    }
+    return this.accessControlService.reserveCredit({
+      userId,
+      requestId: args.paygCall?.requestId ?? randomUUID(),
+      provider: normalizePaygProvider(args.provider),
+      model: args.model,
+      surface: args.paygCall?.surface ?? paygSurfaceForTokenContext(args.ledgerContext),
+      workflow: args.paygCall?.workflow ?? paygWorkflowForTokenContext(args.ledgerContext),
+      promptTokens: this.estimatePromptTokens(args.context),
+      cachedPromptTokens: 0,
+      requestedMaxOutputTokens: args.requestedMax,
+    });
+  }
+
+  /**
+   * What to do when a call reaches the chokepoint with nobody to bill.
+   *
+   * Fails CLOSED for a paid provider and OPEN for a local one - the same
+   * asymmetry the meter itself applies to an auth outage. Waving an
+   * unattributable frontier call through is unbounded liability; refusing a
+   * model running on the operator's own hardware would take the product down
+   * for no gain.
+   */
+  private paygHoldWithoutUser(provider: string, requestedMax: number): PaygHold {
+    if (isPaygExemptProvider(provider)) {
+      return paygUnmeteredHold(requestedMax);
+    }
+    this.logger.error(`reservePaygHold: refusing unattributable paid call to ${provider}`);
+    throw new BusinessException(
+      recordGet(PAYG_CREDIT_ERROR_MESSAGES, BillingErrorCode.PAYG_PRICING_UNAVAILABLE) ??
+        PAYG_CREDIT_FALLBACK_ERROR_MESSAGE,
+      BillingErrorCode.PAYG_PRICING_UNAVAILABLE,
+      HttpStatus.PAYMENT_REQUIRED,
+    );
+  }
+
+  /**
+   * The ceiling this call would have used had credit not been considered.
+   *
+   * Mirrors the defensive default the request builders apply, so the number the
+   * meter clamps is the number the provider would actually have received.
+   */
+  private paygRequestedMaxOutputTokens(
+    provider: string,
+    context: AssembledContext,
+    executionOptions: ExecutionOptions | undefined,
+  ): number {
+    return (
+      executionOptions?.maxOutputTokens ??
+      computeDefaultMaxTokens(
+        pickDefaultCtxSizeForProvider(provider),
+        this.estimatePromptTokens(context),
+      )
+    );
+  }
+
+  /**
+   * Sends the provider the ceiling the hold paid for, never the one we asked for.
+   *
+   * Only rewrites the options when the meter actually took something away. An
+   * unmetered hold returns the requested ceiling unchanged, and forcing it into
+   * `executionOptions` would start sending an explicit `max_tokens` on paths
+   * that deliberately let the model pick its own stop token.
+   */
+  private applyPaygCeiling(
+    hold: PaygHold,
+    requestedMax: number,
+    executionOptions: ExecutionOptions | undefined,
+  ): ExecutionOptions | undefined {
+    if (hold.maxOutputTokens >= requestedMax) {
+      return executionOptions;
+    }
+    return {
+      fastPathEnabled: false,
+      applyShortResponseConstraint: false,
+      ...executionOptions,
+      maxOutputTokens: hold.maxOutputTokens,
+    };
+  }
+
+  /** Reconciles the hold against measured usage and tells the user if we shortened the answer. */
+  private async settlePaygHold(
+    hold: PaygHold,
+    response: LlmResponse,
+    threadId?: string,
+  ): Promise<void> {
+    await this.accessControlService.finalizeCredit(
+      hold,
+      {
+        promptTokens: response.inputTokens ?? 0,
+        completionTokens: response.outputTokens ?? 0,
+        cachedPromptTokens: response.cachedPromptTokens ?? 0,
+        reasoningTokens: response.reasoningTokens ?? 0,
+      },
+      { toolCalls: response.toolTranscript?.turns.length ?? response.toolCalls?.length ?? 0 },
+    );
+    this.emitPaygClampedNotice(hold, threadId);
+  }
+
+  /**
+   * Tells the user their answer was cut short by their balance, not by the model.
+   *
+   * A silently shortened reply reads as the model being bad. Named as its own
+   * progress stage so the FE can attach an "Add credit" action to it.
+   */
+  private emitPaygClampedNotice(hold: PaygHold, threadId: string | undefined): void {
+    if (!hold.clamped || threadId === undefined) {
+      return;
+    }
+    this.chatStreamService.emitProgressStage(threadId, StreamEventType.PAYG_CREDIT_CLAMPED, {
+      label: PAYG_CLAMPED_NOTICE_LABEL,
+      description: PAYG_CLAMPED_NOTICE_DESCRIPTION,
+      actorType: ProgressActorType.SYSTEM,
+      actorName: 'Pay-as-you-go credit',
+      stageId: PAYG_CLAMPED_STAGE_ID,
+      status: 'completed',
+    });
   }
 
   // Universal token deduction. EVERY model call — normal chat, regenerate,
@@ -1735,13 +2053,29 @@ export class ChatExecutionManager implements OnModuleInit {
     );
   }
 
-  async generateOnce(
-    provider: string,
-    model: string,
-    systemPrompt: string,
-    userPrompt: string,
-    maxTokens?: number,
-  ): Promise<InternalGenerateResponse> {
+  /**
+   * One buffered completion for another service, outside the chat pipeline.
+   *
+   * `userId` and `surface` are REQUIRED, and that is the whole point of this
+   * signature. This method had neither: workspace-service's AI actions,
+   * multi-model review, chain drafting and implementation handoff all reach a
+   * paid provider through here, and with nobody to bill and no surface to
+   * record, every one of them was free and anonymous spend (audit U1, U8-U10,
+   * U12). Making them required is a breaking contract change on purpose - an
+   * optional user id would have been silently omitted by exactly the callers
+   * that most need it.
+   */
+  async generateOnce(args: {
+    userId: string;
+    surface: PaygSurface;
+    provider: string;
+    model: string;
+    systemPrompt: string;
+    userPrompt: string;
+    maxTokens?: number;
+    workflow?: string;
+  }): Promise<InternalGenerateResponse> {
+    const { provider, model, systemPrompt, userPrompt, maxTokens } = args;
     const config = AppConfig.get();
     const { baseUrl, apiKey } = await this.resolveProviderConfig(provider);
     const isOllamaConnector = provider === OLLAMA_CONNECTOR_PROVIDER;
@@ -1766,7 +2100,21 @@ export class ChatExecutionManager implements OnModuleInit {
         pickDefaultCtxSizeForProvider(provider),
         estimateTokensFromText(`${systemPrompt}\n${userPrompt}`),
       );
-    const cappedMaxTokens = Math.min(effectiveMaxTokens, HARD_MAX_OUTPUT_TOKENS);
+    const requestedMaxTokens = Math.min(effectiveMaxTokens, HARD_MAX_OUTPUT_TOKENS);
+    const promptTextForEstimate = `${systemPrompt}\n${userPrompt}`;
+    const hold = await this.accessControlService.reserveCredit({
+      userId: args.userId,
+      requestId: randomUUID(),
+      provider: normalizePaygProvider(provider),
+      model,
+      surface: args.surface,
+      workflow: args.workflow ?? PAYG_WORKFLOW_INTERNAL_GENERATE,
+      promptTokens: estimateTokensFromText(promptTextForEstimate),
+      cachedPromptTokens: 0,
+      requestedMaxOutputTokens: requestedMaxTokens,
+    });
+    // Always the hold's ceiling, never the one we asked for.
+    const cappedMaxTokens = Math.min(requestedMaxTokens, hold.maxOutputTokens);
     const body: OpenAiChatRequest | OllamaChatRequest = isOllamaConnector
       ? {
           model,
@@ -1781,40 +2129,19 @@ export class ChatExecutionManager implements OnModuleInit {
           ...this.outputCapField(model, cappedMaxTokens),
         };
     const startTime = Date.now();
-    const response = await httpRequest<OpenAiChatResponse | OllamaChatResponse>({
+    const parsed = await this.postGenerateOnce({
       url,
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}` },
+      apiKey,
       body,
+      provider,
+      model,
+      startTime,
+      isOllamaConnector,
+      promptTextForEstimate,
       timeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
+      hold,
     });
-    if (!response.ok) {
-      throw new BusinessException(
-        this.extractHttpErrorMessage(
-          response.data,
-          `Provider ${provider} returned ${String(response.status)}`,
-        ),
-        providerFailureCode(response.status),
-      );
-    }
-    const promptTextForEstimate = `${systemPrompt}\n${userPrompt}`;
-    const parsed = isOllamaConnector
-      ? this.parseOllamaChatResponse(
-          response.data as OllamaChatResponse,
-          provider,
-          model,
-          startTime,
-          false,
-          promptTextForEstimate,
-        )
-      : this.parseCloudResponse(
-          response.data as OpenAiChatResponse,
-          provider,
-          model,
-          startTime,
-          false,
-          promptTextForEstimate,
-        );
+    await this.settlePaygHold(hold, parsed);
     return {
       content: parsed.content,
       provider: parsed.provider,
@@ -1822,7 +2149,68 @@ export class ChatExecutionManager implements OnModuleInit {
       inputTokens: parsed.inputTokens,
       outputTokens: parsed.outputTokens,
       durationMs: parsed.latencyMs,
+      clamped: hold.clamped,
     };
+  }
+
+  /**
+   * The provider hop for `generateOnce`, so the hold is released on any throw.
+   *
+   * Split out because the reserve/release pairing has to wrap the request and
+   * the non-2xx branch together: raising the provider error without giving the
+   * hold back would leave the user's money parked until the sweeper reclaimed
+   * it fifteen minutes later.
+   */
+  private async postGenerateOnce(args: {
+    url: string;
+    apiKey: string;
+    body: OpenAiChatRequest | OllamaChatRequest;
+    provider: string;
+    model: string;
+    startTime: number;
+    isOllamaConnector: boolean;
+    promptTextForEstimate: string;
+    timeoutMs: number;
+    hold: PaygHold;
+  }): Promise<LlmResponse> {
+    try {
+      const response = await httpRequest<OpenAiChatResponse | OllamaChatResponse>({
+        url: args.url,
+        method: 'POST',
+        headers: { Authorization: `Bearer ${args.apiKey}` },
+        body: args.body,
+        timeoutMs: args.timeoutMs,
+      });
+      if (!response.ok) {
+        throw new BusinessException(
+          this.extractHttpErrorMessage(
+            response.data,
+            `Provider ${args.provider} returned ${String(response.status)}`,
+          ),
+          providerFailureCode(response.status),
+        );
+      }
+      return args.isOllamaConnector
+        ? this.parseOllamaChatResponse(
+            response.data as OllamaChatResponse,
+            args.provider,
+            args.model,
+            args.startTime,
+            false,
+            args.promptTextForEstimate,
+          )
+        : this.parseCloudResponse(
+            response.data as OpenAiChatResponse,
+            args.provider,
+            args.model,
+            args.startTime,
+            false,
+            args.promptTextForEstimate,
+          );
+    } catch (error: unknown) {
+      await this.accessControlService.releaseCredit(args.hold, 'PROVIDER_ERROR');
+      throw error;
+    }
   }
 
   private async callOllama(
@@ -2249,6 +2637,11 @@ export class ChatExecutionManager implements OnModuleInit {
   // that path. If the wrap-up POST itself fails, the partial accumulated
   // content is returned with `gracefullyWrapped=false` so the FE can
   // render a clear error hint instead of a misleading complete answer.
+  // METERING: every turn takes its OWN PAYG hold (`<run>:turn:<n>`) and settles
+  // it against that turn's own usage. So a caller must NOT reach this loop
+  // through `callProvider`/`streamCandidate` - the chokepoint's hold would
+  // cover the same completions a second time. Today nothing does; the loop is
+  // entered directly.
   async runOllamaCloudToolLoop(args: {
     provider: string;
     model: string;
@@ -2265,6 +2658,8 @@ export class ChatExecutionManager implements OnModuleInit {
     const url = `${baseUrl}/chat`;
     const maxIterations = config.OLLAMA_TOOL_LOOP_MAX_ITERATIONS;
     const totalTimeoutMs = config.OLLAMA_TOOL_LOOP_TOTAL_TIMEOUT_MS;
+    const promptText = this.buildPromptTextForEstimate(args.context);
+    const usageRunId = `${streamThreadId ?? 'buffered'}:${String(startTime)}`;
     const loopResult = await this.driveToolLoopTurns({
       url,
       apiKey,
@@ -2278,7 +2673,8 @@ export class ChatExecutionManager implements OnModuleInit {
       totalTimeoutMs,
       generateTimeoutMs: config.OLLAMA_GENERATE_TIMEOUT_MS,
       userId: args.context.userId,
-      usageRunId: `${streamThreadId ?? 'buffered'}:${String(startTime)}`,
+      usageRunId,
+      promptText,
     });
     // Graceful wrap-up — when we hit either cap with pending tool_calls,
     // issue one final POST with NO `tools` so the model is forced to
@@ -2298,6 +2694,13 @@ export class ChatExecutionManager implements OnModuleInit {
         streamThreadId,
         maxIterations,
         totalTimeoutMs,
+        userId: args.context.userId,
+        model,
+        usageRunId,
+        promptText,
+        // One past the last turn the loop ran, so the wrap-up gets its own hold
+        // instead of colliding with the turn that hit the cap.
+        iteration: loopResult.iteration + 1,
       });
       if (wrapUp !== null) {
         lastData = wrapUp;
@@ -2338,6 +2741,7 @@ export class ChatExecutionManager implements OnModuleInit {
     generateTimeoutMs: number;
     userId: string;
     usageRunId: string;
+    promptText: string;
   }): Promise<{
     iteration: number;
     capReached: boolean;
@@ -2364,6 +2768,10 @@ export class ChatExecutionManager implements OnModuleInit {
         provider: args.provider,
         iteration,
         timeoutMs: args.generateTimeoutMs,
+        userId: args.userId,
+        model: args.model,
+        baseRequestId: args.usageRunId,
+        promptText: args.promptText,
       });
       lastData = turnResult.data;
       if (turnResult.toolCalls.length === 0) {
@@ -2408,9 +2816,27 @@ export class ChatExecutionManager implements OnModuleInit {
     streamThreadId: string | undefined;
     maxIterations: number;
     totalTimeoutMs: number;
+    userId: string;
+    model: string;
+    usageRunId: string;
+    promptText: string;
+    iteration: number;
   }): Promise<OllamaChatResponse | null> {
     const { url, apiKey, initialBody, messages, provider, timeoutMs, streamThreadId } = args;
     this.emitToolLoopCapReached(streamThreadId, args.maxIterations, args.totalTimeoutMs);
+    // The wrap-up is a real completion against a transcript that is now at its
+    // longest, so it is the most expensive call of the run. It gets its own
+    // hold like every other turn.
+    const hold = await this.reserveToolLoopTurn({
+      userId: args.userId,
+      provider,
+      model: args.model,
+      baseRequestId: args.usageRunId,
+      iteration: args.iteration,
+      promptText: args.promptText,
+      initialBody,
+      wrapUp: true,
+    });
     const wrappedMessages: OllamaChatMessage[] = [
       ...messages,
       { role: 'system', content: OLLAMA_TOOL_LOOP_WRAPUP_INSTRUCTION },
@@ -2431,17 +2857,22 @@ export class ChatExecutionManager implements OnModuleInit {
         timeoutMs,
       });
       if (!response.ok) {
+        await this.accessControlService.releaseCredit(hold, 'PROVIDER_ERROR');
         this.logger.warn(
           `runToolLoopWrapUp: ${provider} wrap-up POST failed status=${String(response.status)} — falling back to partial content`,
         );
         return null;
       }
       const content = response.data.message?.content ?? '';
+      await this.finalizeToolLoopTurn(hold, response.data, args.promptText, content);
       this.logger.log(
         `runToolLoopWrapUp: wrap-up synthesized ${String(content.length)} chars for ${provider}`,
       );
       return response.data;
     } catch (error: unknown) {
+      // The wrap-up swallows its own failure and returns partial content, so
+      // the release has to happen here: nothing downstream knows a hold exists.
+      await this.accessControlService.releaseCredit(hold, 'PROVIDER_ERROR');
       const message = error instanceof Error ? error.message : 'unknown';
       this.logger.warn(
         `runToolLoopWrapUp: wrap-up POST threw — ${message} — falling back to partial content`,
@@ -2496,20 +2927,37 @@ export class ChatExecutionManager implements OnModuleInit {
     provider: string;
     iteration: number;
     timeoutMs: number;
+    userId: string;
+    model: string;
+    baseRequestId: string;
+    promptText: string;
   }): Promise<{ data: OllamaChatResponse; toolCalls: OllamaCloudToolCall[]; content: string }> {
     const { url, apiKey, initialBody, messages, provider, iteration, timeoutMs } = args;
     const body: OllamaChatRequest = { ...initialBody, messages };
     this.logger.debug(
       `runOllamaCloudToolLoop: turn=${String(iteration)} POST ${url} messageCount=${String(messages.length)}`,
     );
-    const response = await httpRequest<OllamaChatResponse>({
-      url,
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}` },
-      body,
-      timeoutMs,
-    });
+    // Each turn takes its OWN hold, keyed `<run>:turn:<n>`. A ten-turn agentic
+    // run is ten paid completions; billing it as one was the U11 finding, and
+    // the transcript grows with every turn so the later ones are the expensive
+    // ones. The turn number in the key keeps the holds distinct while a retry
+    // of the same turn reuses its own.
+    const hold = await this.reserveToolLoopTurn(args);
+    let response: Awaited<ReturnType<typeof httpRequest<OllamaChatResponse>>>;
+    try {
+      response = await httpRequest<OllamaChatResponse>({
+        url,
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body,
+        timeoutMs,
+      });
+    } catch (error: unknown) {
+      await this.accessControlService.releaseCredit(hold, 'PROVIDER_ERROR');
+      throw error;
+    }
     if (!response.ok) {
+      await this.accessControlService.releaseCredit(hold, 'PROVIDER_ERROR');
       const errorMessage = this.extractHttpErrorMessage(
         response.data,
         `Cloud provider ${provider} returned status ${String(response.status)}`,
@@ -2521,10 +2969,57 @@ export class ChatExecutionManager implements OnModuleInit {
     }
     const toolCalls = response.data.message?.tool_calls ?? [];
     const content = response.data.message?.content ?? '';
+    await this.finalizeToolLoopTurn(hold, response.data, args.promptText, content);
     this.logger.debug(
       `runOllamaCloudToolLoop: turn=${String(iteration)} contentLen=${String(content.length)} toolCalls=${String(toolCalls.length)}`,
     );
     return { data: response.data, toolCalls, content };
+  }
+
+  /** The hold for one agentic turn, or the wrap-up POST that closes the run. */
+  private async reserveToolLoopTurn(args: {
+    userId: string;
+    provider: string;
+    model: string;
+    baseRequestId: string;
+    iteration: number;
+    promptText: string;
+    initialBody: OllamaChatRequest;
+    wrapUp?: boolean;
+  }): Promise<PaygHold> {
+    const requestedMax =
+      args.initialBody.options?.num_predict ??
+      computeDefaultMaxTokens(
+        pickDefaultCtxSizeForProvider(args.provider),
+        estimateTokensFromText(args.promptText),
+      );
+    return this.accessControlService.reserveCredit({
+      userId: args.userId,
+      requestId: `${args.baseRequestId}:turn:${String(args.iteration)}`,
+      provider: normalizePaygProvider(args.provider),
+      model: args.model,
+      surface: PaygSurface.CHAT,
+      workflow: args.wrapUp === true ? PAYG_WORKFLOW_TOOL_LOOP_WRAPUP : PAYG_WORKFLOW_TOOL_LOOP,
+      promptTokens: estimateTokensFromText(args.promptText),
+      cachedPromptTokens: 0,
+      requestedMaxOutputTokens: requestedMax,
+    });
+  }
+
+  /** Settles one turn's hold against that turn's own usage, not the last turn's. */
+  private async finalizeToolLoopTurn(
+    hold: PaygHold,
+    data: OllamaChatResponse,
+    promptText: string,
+    completionText: string,
+  ): Promise<void> {
+    const usage = extractOllamaUsage(data, { promptText, completionText });
+    await this.accessControlService.finalizeCredit(hold, {
+      promptTokens: usage.promptTokens,
+      completionTokens: usage.completionTokens,
+      cachedPromptTokens: usage.cachedPromptTokens,
+      reasoningTokens: usage.reasoningTokens,
+    });
   }
 
   // When the model emitted tool_calls in a turn, echo the assistant
@@ -3709,12 +4204,20 @@ export class ChatExecutionManager implements OnModuleInit {
   private buildTokenUsageFields(usage: TokenUsage): {
     inputTokens: number;
     outputTokens: number;
+    cachedPromptTokens: number;
+    reasoningTokens: number;
     tokenEstimated: boolean;
     tokenSource: TokenUsageSource;
   } {
     return {
       inputTokens: usage.promptTokens,
       outputTokens: usage.completionTokens,
+      // Carried onto every buffered response so the PAYG finalize reconciles on
+      // the real price split rather than at the full input rate with zero
+      // reasoning. The shared extractors already clamp each sub-count to the
+      // side it belongs to, so these can never exceed their parent.
+      cachedPromptTokens: usage.cachedPromptTokens,
+      reasoningTokens: usage.reasoningTokens,
       tokenEstimated: usage.estimated,
       tokenSource: usage.source,
     };
@@ -3884,10 +4387,19 @@ export class ChatExecutionManager implements OnModuleInit {
           threadSettings,
           'AUTO',
           fileExecutionOptions,
+          TokenLedgerContext.FILE_GENERATION,
+          { surface: PaygSurface.FILE_GENERATION, workflow: PAYG_WORKFLOW_FILE_CONTENT },
         );
         contentFallbackUsed = index > 0;
         break;
       } catch (error: unknown) {
+        // Refusing for lack of credit is not a provider fault, and the next
+        // candidate will be refused for exactly the same reason. Trying all of
+        // them turns one 402 into N pointless round-trips and buries the real
+        // cause behind whichever candidate happened to be last.
+        if (this.isPaygRefusal(error)) {
+          throw error;
+        }
         lastContentError = error;
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         this.logger.warn(
@@ -4074,12 +4586,23 @@ Your task:
    - Include aspect ratio cues if the original has a distinctive shape.`,
       };
 
-      const visionResponse = await this.callCloudProvider(
-        'GEMINI',
-        'gemini-2.5-flash',
+      // Through `callProvider`, NOT `callCloudProvider`. This hop used to dial
+      // Gemini directly, which is a real paid vision call that skipped the
+      // chokepoint entirely: attaching an image to an image-generation prompt
+      // bought a frontier completion for free (audit U2). It bills to IMAGE
+      // because that is the thing the user asked for - the vision read is a
+      // step inside image generation, not a chat turn.
+      const visionResponse = await this.callProvider(
+        GEMINI_PROVIDER,
+        VISION_PROMPT_MODEL,
         visionContext,
         Date.now(),
         false,
+        undefined,
+        undefined,
+        undefined,
+        TokenLedgerContext.IMAGE_GENERATION,
+        { surface: PaygSurface.IMAGE, workflow: PAYG_WORKFLOW_VISION_PROMPT },
       );
 
       const generatedPrompt = visionResponse.content.trim();
@@ -4087,10 +4610,21 @@ Your task:
 
       return generatedPrompt.length > 10 ? generatedPrompt : userText;
     } catch (error: unknown) {
+      // A credit refusal is re-raised, never degraded. Falling back to the raw
+      // prompt here would hand the user a visibly worse image and no reason for
+      // it, while the 402 that explains it is thrown away.
+      if (this.isPaygRefusal(error)) {
+        throw error;
+      }
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`Vision analysis failed, using original prompt: ${msg}`);
       return userText;
     }
+  }
+
+  /** True for the 402 the chokepoint raises when credit runs out. */
+  private isPaygRefusal(error: unknown): boolean {
+    return error instanceof BusinessException && error.getStatus() === HttpStatus.PAYMENT_REQUIRED;
   }
 
   private async fetchConnectorConfig(provider: string): Promise<ConnectorConfigResponse> {

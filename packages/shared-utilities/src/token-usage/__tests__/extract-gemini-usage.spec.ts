@@ -15,6 +15,8 @@ describe('extractGeminiUsage', () => {
       promptTokens: 40,
       completionTokens: 12,
       totalTokens: 52,
+      cachedPromptTokens: 0,
+      reasoningTokens: 0,
       estimated: false,
       source: TokenUsageSource.NATIVE,
       estimator: TokenEstimatorKind.NONE,

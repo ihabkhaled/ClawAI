@@ -46,6 +46,19 @@ export interface RoutingContext {
    * decision — never a replacement for it, never a hard override.
    */
   workspaceId?: string;
+  /**
+   * Who sent the message this routing decision is for.
+   *
+   * Present for anything that reached routing through `message.created`, which
+   * carries it. It exists so the cloud router can meter its OWN paid inference
+   * (U5/U6) against that user's PAYG credit — routing calls real billed models
+   * to decide where a message goes, and that spend previously stopped at
+   * `router_attempts`.
+   *
+   * Optional and never inferred. A path with no user genuinely has none, and
+   * charging an invented id would be worse than an unmetered internal call.
+   */
+  userId?: string;
 }
 
 export interface RoutingDecisionResult {

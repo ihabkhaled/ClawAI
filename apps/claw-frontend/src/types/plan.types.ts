@@ -1,7 +1,10 @@
+import type { PaygWalletSnapshot } from '@claw/shared-types';
+
 import type { PlanLifecycleStatus } from '../enums/plan-lifecycle-status.enum';
 import type { PlanModelAccessMode } from '../enums/plan-model-access-mode.enum';
 import type { UserRole } from '../enums/user-role.enum';
 
+import type { UseCreditPageReturn } from './credit-hook.types';
 import type { TranslateFunction } from './i18n.types';
 
 // ─── Backend DTO mirrors (claw-auth-service plans/roles/entitlements) ─────────
@@ -40,6 +43,19 @@ export type PlanView = {
   dailyTokenQuota: number;
   weeklyTokenQuota: number | null;
   monthlyTokenQuota: number | null;
+  /**
+   * The monthly connector credit included with this plan, in integer micro-USD.
+   *
+   * This column was a hidden margin control (`monthlyProviderCostCeilingMicroUsd`)
+   * until ADR-078 promoted it to the user-visible pay-as-you-go allowance. It is
+   * the SAME number the wallet grants each period — there is deliberately no
+   * second field, because two names for one allowance is how a user reads
+   * "$1.50 credit" and is refused at $0.75.
+   *
+   * `null` means the plan grants no connector credit; `0` means disabled. They
+   * are not interchangeable.
+   */
+  monthlyProviderCostCeilingMicroUsd: number | null;
   maxChatsPerDay: number | null;
   maxMessagesPerDay: number | null;
   maxWorkspaceConnections: number | null;
@@ -103,6 +119,8 @@ export type CreatePlanRequest = {
   dailyTokenQuota: number;
   weeklyTokenQuota?: number;
   monthlyTokenQuota?: number;
+  /** Integer micro-USD. Omitted leaves the plan's current allowance untouched. */
+  monthlyProviderCostCeilingMicroUsd?: number;
   maxChatsPerDay?: number;
   maxMessagesPerDay?: number;
   maxWorkspaceConnections?: number;
@@ -215,6 +233,7 @@ export type PlanFormState = {
   dailyTokenQuota: string;
   weeklyTokenQuota: string;
   monthlyTokenQuota: string;
+  monthlyProviderCostCeilingMicroUsd: string;
   maxChatsPerDay: string;
   maxMessagesPerDay: string;
   maxWorkspaceConnections: string;
@@ -325,6 +344,23 @@ export type UseEntitlementsResult = {
   onRetry: () => void;
 };
 
+/**
+ * /plan owns the primary "Add credit" call to action, so its controller hook
+ * carries the whole credit surface rather than a balance figure alone.
+ */
+export type UsePlanPageResult = UseEntitlementsResult & {
+  credit: UseCreditPageReturn;
+  t: TranslateFunction;
+  locale: string;
+};
+
+/** /usage reads the wallet but never sells anything, so it needs no top-up flow. */
+export type UseUsagePageResult = UseEntitlementsResult & {
+  wallet: PaygWalletSnapshot | null;
+  t: TranslateFunction;
+  locale: string;
+};
+
 // ─── Component prop types ─────────────────────────────────────────────────────
 
 export type PlanFormProps = {
@@ -364,7 +400,15 @@ export type ModelAccessEditorProps = {
 
 export type UsageMeterProps = {
   quota: EntitlementQuota;
+  /**
+   * The pay-as-you-go wallet, rendered as a first-class sibling of the token
+   * bar. Optional so read-only call sites (and existing tests) keep working —
+   * omitted, the meter is exactly the token-only meter it always was.
+   */
+  wallet?: PaygWalletSnapshot | null;
   t: TranslateFunction;
+  /** Needed only when `wallet` is supplied; money and dates are localized. */
+  locale?: string;
 };
 
 export type PlanFeatureGatesProps = {

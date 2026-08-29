@@ -11,6 +11,7 @@ import {
 import { memo } from 'react';
 
 import { ContextReceiptButton } from '@/components/chat/context-receipt-button';
+import { CreditClampedNotice } from '@/components/chat/credit-clamped-notice';
 import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
@@ -108,6 +109,10 @@ function MessageBubbleBase({
         })
       : undefined;
   const isTruncatedAtContextLimit = metadata?.['truncatedAtContextLimit'] === true;
+  // chat-service persists this on the assistant row so the notice survives a
+  // refresh — the live SSE frame is long gone by then, and a short answer with
+  // no explanation reads as the model being bad rather than the wallet running low.
+  const isPaygClamped = metadata?.['paygClamped'] === true;
   const toolTranscript =
     typeof metadata?.['toolTranscript'] === 'object' && metadata['toolTranscript'] !== null
       ? (metadata['toolTranscript'] as OllamaToolTranscript)
@@ -153,6 +158,8 @@ function MessageBubbleBase({
             </div>
           </div>
         ) : null}
+
+        {!isUser && isPaygClamped ? <CreditClampedNotice t={t} /> : null}
 
         <div
           className={cn(

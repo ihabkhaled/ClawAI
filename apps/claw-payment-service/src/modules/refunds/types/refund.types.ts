@@ -1,4 +1,4 @@
-import { type BillingGateway } from '@claw/shared-types';
+import { type BillingGateway, type PaymentTransactionType } from '@claw/shared-types';
 
 import { type PaymentTransaction, type Refund, type Subscription } from '../../../generated/prisma';
 
@@ -13,7 +13,10 @@ export type RequestRefundInput = {
 export type RefundableCharge = {
   id: string;
   userId: string;
-  subscriptionId: string;
+  /** Null for a PAYG credit top-up, which buys a balance and not a plan. */
+  subscriptionId: string | null;
+  /** Decides what a completed reversal means: revoke a plan, or debit a wallet. */
+  type: PaymentTransactionType;
   gateway: string;
   amountMinor: number;
   currency: string;
@@ -22,7 +25,19 @@ export type RefundableCharge = {
   providerTransactionId: string;
 };
 
-export type RefundableChargeSummary = Omit<RefundableCharge, 'providerTransactionId'> & {
+/**
+ * A refundable SUBSCRIPTION charge, for the operator list.
+ *
+ * `subscriptionId` is non-null here and nullable on `RefundableCharge` on
+ * purpose: the admin refundable-transactions list is deliberately still
+ * subscription-only, because `RefundableTransactionView` is a frontend contract
+ * and widening it is a separate, user-visible change.
+ */
+export type RefundableChargeSummary = Omit<
+  RefundableCharge,
+  'providerTransactionId' | 'subscriptionId' | 'type'
+> & {
+  subscriptionId: string;
   capturedAt: Date;
   reservedAmounts: number[];
 };

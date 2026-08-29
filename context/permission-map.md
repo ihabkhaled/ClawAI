@@ -79,3 +79,15 @@ requires Judge (`allowCriticReview` ⇒ `allowJudgeMode`, DTO-enforced).
 4. Gate the FE via `useFeatureGates` / permission checks; add i18n for any new
    UI. This is the authentication-security pack in
    [task-router.md](task-router.md).
+
+## PAYG connector credit
+
+| Permission             | Who                                  | Gates                                                                                             |
+| ---------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `BILLING_CREDIT_TOPUP` | user (in `USER_DEFAULT_PERMISSIONS`) | Viewing credit packages and starting a top-up checkout. Buying credit is a normal account action. |
+| `ADMIN_CREDIT_MANAGE`  | operator                             | Granting/adjusting a wallet and editing the package catalog.                                      |
+
+Deliberately **separate from `ADMIN_PLANS_MANAGE`**: both touch money, but a
+plan editor must not be able to mint balance into a user's wallet. Splitting
+them is what keeps "who can change a price" and "who can create money" as two
+different answers.

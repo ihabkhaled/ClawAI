@@ -1,5 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { TokenLedgerContext } from '@claw/shared-types';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { PaygSurface, TokenLedgerContext } from '@claw/shared-types';
+import type { PaygHold } from '@claw/shared-entitlements';
+import { randomUUID } from 'node:crypto';
 import {
   CompareJudgeState,
   ProgressActorType,
@@ -37,6 +39,11 @@ import { type ChatThread, type Prisma } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
 import { type JudgeRefereeResult, type JudgeReviewPayload } from '../types/judge-referee.types';
 import { buildFileDeliveryEntries } from '../../../common/utilities';
+import { BusinessException } from '../../../common/errors';
+import {
+  PAYG_COMPARE_ALL_OR_NOTHING_CODE,
+  PAYG_WORKFLOW_COMPARE_LANE,
+} from '../constants/payg.constants';
 
 @Injectable()
 export class ParallelExecutionManager {
@@ -119,6 +126,12 @@ export class ParallelExecutionManager {
       const { context, threadSettings } = await this.buildContext(userId, threadId, fileIds);
       const { context: enrichedContext, transcript: researchTranscript } =
         await this.applyResearchEnrichment(context, userMessageContent, researchOptions, threadId);
+      // EDGE CASE E2 - all-or-nothing. Every lane is reserved before a single
+      // provider is called. Reserving lazily per lane would let a five-model
+      // comparison spend on two lanes and then render three "insufficient
+      // credit" columns, which is not a comparison and is not refundable
+      // either: the two that ran really were paid for.
+      const laneHolds = await this.reserveAllLanes(models, enrichedContext, parallelGroupId);
       const responsesRaw = await this.executeAllModels(
         userId,
         models,
@@ -128,6 +141,7 @@ export class ParallelExecutionManager {
         criticConfig,
         parallelGroupId,
         threadId,
+        laneHolds,
       );
       // Replay the shared enricher transcript onto every lane response so the
       // assistant message metadata carries it for FE rendering + analytics.
@@ -155,6 +169,65 @@ export class ParallelExecutionManager {
       ]);
       this.chatStreamService.emitError(threadId, `Parallel execution failed: ${msg}`);
     }
+  }
+
+  /**
+   * Holds credit for every lane, or for none of them.
+   *
+   * The first refusal unwinds every hold already taken and raises one 402 for
+   * the whole run. Releasing is not best-effort tidying: an abandoned hold is
+   * the user's own money, parked and unusable until the sweeper reclaims it a
+   * quarter of an hour later.
+   */
+  private async reserveAllLanes(
+    models: ParallelModelTarget[],
+    context: AssembledContext,
+    parallelGroupId: string,
+  ): Promise<PaygHold[]> {
+    const holds: PaygHold[] = [];
+    for (const [index, target] of models.entries()) {
+      try {
+        holds.push(
+          await this.chatExecutionManager.reserveCompareLane({
+            provider: target.provider,
+            model: target.model,
+            context,
+            requestId: `${parallelGroupId}:${PAYG_WORKFLOW_COMPARE_LANE}:${String(index)}:${randomUUID()}`,
+          }),
+        );
+      } catch (error: unknown) {
+        await this.releaseLanes(holds);
+        throw this.toCompareCreditRefusal(error, index, models.length);
+      }
+    }
+    return holds;
+  }
+
+  private async releaseLanes(holds: PaygHold[]): Promise<void> {
+    for (const hold of holds) {
+      await this.chatExecutionManager.releaseCompareLane(hold);
+    }
+  }
+
+  /**
+   * Names the shortfall instead of reporting the last lane's error.
+   *
+   * "Model 4 of 5 could not be paid for" is something a user can act on;
+   * repeating a bare credit error gives no clue that the run was refused as a
+   * whole or how much short it was.
+   */
+  private toCompareCreditRefusal(error: unknown, index: number, total: number): unknown {
+    if (
+      !(error instanceof BusinessException) ||
+      error.getStatus() !== HttpStatus.PAYMENT_REQUIRED
+    ) {
+      return error;
+    }
+    return new BusinessException(
+      `Not enough pay-as-you-go credit to compare ${String(total)} models: lane ${String(index + 1)} could not be funded. No model was run and nothing was charged. Add credit or compare fewer models.`,
+      PAYG_COMPARE_ALL_OR_NOTHING_CODE,
+      HttpStatus.PAYMENT_REQUIRED,
+    );
   }
 
   private async storeUserMessage(
@@ -350,9 +423,17 @@ export class ParallelExecutionManager {
     criticConfig: ParallelCriticConfig,
     parallelGroupId: string,
     threadId: string,
+    laneHolds: PaygHold[],
   ): Promise<ParallelModelResponse[]> {
-    const promises = models.map((target) =>
-      this.executeWithTimeout(target, context, threadSettings, parallelGroupId, threadId),
+    const promises = models.map((target, index) =>
+      this.executeWithTimeout(
+        target,
+        context,
+        threadSettings,
+        parallelGroupId,
+        threadId,
+        laneHolds.at(index),
+      ),
     );
 
     const settled = await Promise.allSettled(promises);
@@ -609,6 +690,7 @@ export class ParallelExecutionManager {
     threadSettings: ThreadSettings | undefined,
     parallelGroupId: string,
     threadId: string,
+    laneHold: PaygHold | undefined,
   ): Promise<ParallelModelResponse> {
     const modelPromise = this.executeSingleModel(
       target,
@@ -616,6 +698,7 @@ export class ParallelExecutionManager {
       threadSettings,
       parallelGroupId,
       threadId,
+      laneHold,
     );
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
     const timeoutPromise = new Promise<never>((_resolve, reject) => {
@@ -651,6 +734,7 @@ export class ParallelExecutionManager {
     threadSettings: ThreadSettings | undefined,
     parallelGroupId: string,
     threadId: string,
+    laneHold: PaygHold | undefined,
   ): Promise<ParallelModelResponse> {
     const modelStart = Date.now();
     const laneId = `${parallelGroupId}:${target.provider}:${target.model}`;
@@ -658,7 +742,9 @@ export class ParallelExecutionManager {
 
     try {
       // Each compared model streams on its own lane so the UI can show
-      // independent live progress per model.
+      // independent live progress per model. The hold was taken before the run
+      // began; the chokepoint settles it - finalize on success, release on a
+      // throw - so nothing here has to remember to.
       const llmResponse = await this.chatExecutionManager.streamModelForLane(
         target.provider,
         target.model,
@@ -666,6 +752,12 @@ export class ParallelExecutionManager {
         modelStart,
         threadSettings,
         { threadId, messageId: laneId, laneId, parallelGroupId },
+        {
+          surface: PaygSurface.COMPARE,
+          workflow: PAYG_WORKFLOW_COMPARE_LANE,
+          threadId,
+          ...(laneHold === undefined ? {} : { hold: laneHold }),
+        },
       );
 
       // TODO(Slice B follow-up): pass authoritative ModelMetadata.supportsVision

@@ -68,7 +68,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 80,
+      "endpointCount": 97,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",
@@ -80,6 +80,9 @@
       "port": 4001,
       "portSource": "shared-constants",
       "prismaModels": [
+        "CreditLedgerEntry",
+        "CreditPackage",
+        "CreditPackageVersion",
         "DeploymentCredential",
         "DeviceAuthorizationGrant",
         "EmailChangeRequest",
@@ -100,10 +103,11 @@
         "SystemSetting",
         "TokenUsageLedger",
         "User",
+        "UserCreditWallet",
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 71,
+      "testFiles": 78,
       "testRunner": "jest"
     },
     {
@@ -131,7 +135,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 111,
+      "testFiles": 117,
       "testRunner": "jest"
     },
     {
@@ -157,7 +161,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-connector-service",
-      "endpointCount": 17,
+      "endpointCount": 18,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -175,7 +179,7 @@
         "ConnectorModel",
         "ModelSyncRun"
       ],
-      "testFiles": 21,
+      "testFiles": 23,
       "testRunner": "jest"
     },
     {
@@ -243,6 +247,7 @@
       "endpointCount": 9,
       "internalDeps": [
         "@claw/shared-constants",
+        "@claw/shared-entitlements",
         "@claw/shared-rabbitmq",
         "@claw/shared-types",
         "@claw/shared-utilities"
@@ -256,7 +261,7 @@
         "ImageGenerationAsset",
         "ImageGenerationEvent"
       ],
-      "testFiles": 9,
+      "testFiles": 11,
       "testRunner": "jest"
     },
     {
@@ -349,7 +354,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-payment-service",
-      "endpointCount": 34,
+      "endpointCount": 37,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -384,7 +389,7 @@
         "Subscription",
         "WebhookEvent"
       ],
-      "testFiles": 96,
+      "testFiles": 101,
       "testRunner": "jest"
     },
     {
@@ -416,7 +421,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-routing-service",
-      "endpointCount": 74,
+      "endpointCount": 67,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",
@@ -454,7 +459,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 92,
+      "testFiles": 95,
       "testRunner": "jest"
     },
     {
@@ -524,7 +529,7 @@
         "WorkspaceProviderDefinition",
         "WorkspaceSyncRun"
       ],
-      "testFiles": 93,
+      "testFiles": 94,
       "testRunner": "jest"
     }
   ]

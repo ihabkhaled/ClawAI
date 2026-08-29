@@ -8,6 +8,15 @@ import { ThreadSettings } from '@/components/chat/thread-settings';
 // The model selector aggregates connector + local + frontier models. We stub it
 // so the test does not need real query clients for the underlying queries —
 // only the grouped output matters here.
+// The model selector now renders a PAYG cost badge, so `useModelSelector` reads
+// translations. Mocking the hook keeps these unit tests off a full
+// LocaleProvider — the key is echoed back, which is enough to assert the
+// selector's enabled/disabled state, which is what this suite is about.
+// (Same idiom as components/common/__tests__/status-badge.test.tsx.)
+vi.mock('@/lib/i18n/use-translation', () => ({
+  useTranslation: () => ({ t: (k: string) => k, locale: 'en', dir: 'ltr' }),
+}));
+
 vi.mock('@/hooks/chat/use-available-models', () => ({
   useAvailableModels: () => ({
     groupedModels: [

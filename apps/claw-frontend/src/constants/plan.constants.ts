@@ -12,6 +12,10 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   dailyTokenQuota: '100000',
   weeklyTokenQuota: '',
   monthlyTokenQuota: '',
+  // Blank, not a number: a new plan inherits no connector-credit allowance
+  // until an operator sets one deliberately. Guessing a default here would
+  // hand out real money on every plan somebody creates in a hurry.
+  monthlyProviderCostCeilingMicroUsd: '',
   maxChatsPerDay: '',
   maxMessagesPerDay: '',
   maxWorkspaceConnections: '',

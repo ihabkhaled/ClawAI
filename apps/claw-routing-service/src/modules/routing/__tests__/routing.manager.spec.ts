@@ -1752,6 +1752,39 @@ describe('RoutingManager', () => {
       );
     });
 
+    // The cloud router is the only routing path that spends provider money, so
+    // this is what lets that spend reach a wallet instead of stopping at
+    // `router_attempts` (U5/U6).
+    it('forwards the requesting user so the router call can be metered', async () => {
+      cloudRouterEligibility.resolveEligibleDeployments.mockResolvedValue([eligibleDeployment]);
+      cloudRouter.route.mockResolvedValue(availableDecision);
+
+      await manager.evaluateRoute({
+        ...baseContext,
+        message: 'what is the capital of France?',
+        userMode: RoutingMode.AUTO,
+        userId: 'usr_42',
+      });
+
+      expect(cloudRouter.route).toHaveBeenCalledWith(expect.objectContaining({ userId: 'usr_42' }));
+    });
+
+    // Never inferred. A path with genuinely no user stays unmetered rather than
+    // being charged to an invented id.
+    it('leaves the user undefined when the context carries none', async () => {
+      cloudRouterEligibility.resolveEligibleDeployments.mockResolvedValue([eligibleDeployment]);
+      cloudRouter.route.mockResolvedValue(availableDecision);
+
+      await manager.evaluateRoute({
+        ...baseContext,
+        message: 'what is the capital of France?',
+        userMode: RoutingMode.AUTO,
+      });
+
+      const [sent] = cloudRouter.route.mock.calls[0] as [{ userId?: string }];
+      expect(sent.userId).toBeUndefined();
+    });
+
     it.each([
       [
         'no published configuration',

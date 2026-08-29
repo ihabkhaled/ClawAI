@@ -246,6 +246,15 @@ export const zh: TranslationDictionary = {
     more: '更多的',
   },
   chat: {
+    credit: {
+      modelBadge: '消耗额度',
+      badgeLabel: '额度',
+      badgeHint: '连接器额度剩余 {remaining}',
+      clampedTitle: '回答已缩短',
+      clampedBody: '为适配您剩余的连接器额度，本次回答已缩短。',
+      clampedDismiss: '关闭',
+      addCreditCta: '充值额度',
+    },
     threadListDrawer: '对话',
     export: {
       action: '导出',
@@ -282,6 +291,18 @@ export const zh: TranslationDictionary = {
       roleAssistant: '助手',
     },
     limits: {
+      addCreditCta: '充值额度',
+      paygCreditExhaustedTitle: '连接器额度已用尽',
+      paygCreditExhaustedBody:
+        '该模型按连接器额度计费，而您的余额已为零。请充值后继续，或改用本地模型。',
+      paygPromptTooExpensiveTitle: '对话过长，超出您的额度',
+      paygPromptTooExpensiveBody:
+        '本次对话的费用超过了您剩余的连接器额度。请充值、开启更短的对话，或改用本地模型。',
+      paygModelUnpricedTitle: '模型不可用',
+      paygModelUnpricedBody: '该模型尚未发布价格，因此无法计费。请选择其他模型。',
+      paygPricingUnavailableTitle: '暂时不可用',
+      paygPricingUnavailableBody:
+        '无法获取价格信息，付费模型已暂停片刻。未向您收取任何费用。本地模型仍可正常使用。',
       dailyTokensTitle: '今天的额度已用完',
       dailyTokensBody: '你今天的 token 额度已用完，将在 UTC 零点重置，也可以现在升级到更大的套餐。',
       weeklyTokensTitle: '本周的额度已用完',
@@ -2518,6 +2539,9 @@ export const zh: TranslationDictionary = {
     invalidFileType: '不支持此文件类型',
   },
   toast: {
+    creditTopupSucceeded: '额度已充值。',
+    creditTopupFailed: '充值额度失败。',
+    creditTopupCancelled: '支付已取消，未充值任何额度。',
     loginSuccess: '登录成功',
     registerSuccess: '账户创建成功',
     loginFailed: '登录失败',
@@ -3411,6 +3435,11 @@ export const zh: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.zh,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.zh,
   adminBilling: {
+    credit: {
+      packageCreated: '额度套餐已创建。',
+      versionPublished: '套餐价格已发布。',
+      saveFailed: '保存额度套餐失败。',
+    },
     title: '计费仪表板',
     description: '收入、提供商成本、利润和订阅健康状况。',
     loading: '正在加载计费指标...',
@@ -3534,6 +3563,9 @@ export const zh: TranslationDictionary = {
       description: '更新这个计划。',
     },
     form: {
+      monthlyConnectorCredit: '每月连接器额度（微美元）',
+      monthlyConnectorCreditHelp:
+        '付费云端连接器的美元额度，单位为微美元（1,000,000 = $1.00）。设为 0 将在此套餐上禁用付费连接器。该数值对用户可见。',
       name: '姓名',
       namePlaceholder: '专业版',
       slug: '蛞蝓',
@@ -3659,6 +3691,7 @@ export const zh: TranslationDictionary = {
     },
   },
   userPlan: {
+    noCreditOnThisPlan: '此套餐不含连接器额度。',
     title: '我的计划',
     description: '您当前的订阅、功能和允许的型号。',
     loading: '正在加载您的计划...',
@@ -3680,6 +3713,11 @@ export const zh: TranslationDictionary = {
     chatsLimitLabel: '每日聊天次数',
   },
   userUsage: {
+    connectorCredit: '连接器额度',
+    creditRemaining: '剩余 {remaining}',
+    creditUsedOfLimit: '{limit} 中已用 {used}',
+    creditPercentUsed: '已使用 {percent}%',
+    dualConsumptionHint: '云端连接器同时消耗额度和令牌；本地模型仅消耗令牌。',
     title: '用法',
     description: '根据您的计划配额跟踪您的每日代币消耗。',
     loading: '正在加载使用...',
@@ -3910,6 +3948,44 @@ export const zh: TranslationDictionary = {
     },
   },
   billing: {
+    credit: {
+      title: '连接器额度',
+      available: '可用',
+      grantBucket: '套餐额度',
+      purchasedBucket: '已购额度',
+      reserved: '冻结中',
+      reservedHint: '为正在执行的请求预留，完成后自动释放。',
+      resetsOn: '{date} 重置',
+      neverExpires: '永不过期',
+      percentUsed: '已使用 {percent}%',
+      noAllowance: '此套餐不含连接器额度。',
+      addCredit: '充值额度',
+      adminBypass: '管理员 — 不适用连接器额度',
+      meteringDisabled: '当前未扣除连接器额度。',
+      empty: '暂无额度信息。',
+      error: '加载连接器额度失败。',
+      packages: '额度套餐',
+      packagesEmpty: '当前没有可用的额度套餐。',
+      packagesError: '加载额度套餐失败。',
+      packageCredit: '{credit} 额度',
+      topupTitle: '充值连接器额度',
+      topupDescription: '请选择套餐。已购额度永不过期。',
+      topupConfirm: '前往支付',
+      topupConfirming: '正在准备支付…',
+      ledgerTitle: '额度明细',
+      ledgerDate: '日期',
+      ledgerSurface: '使用位置',
+      ledgerModel: '模型',
+      ledgerNoModel: '无',
+      ledgerAmount: '金额',
+      ledgerBalance: '余额',
+      ledgerEmpty: '暂无额度明细。',
+      ledgerError: '加载额度明细失败。',
+      ledgerLoadMore: '加载更多',
+      ledgerLoadingMore: '加载中…',
+      dualConsumptionNotice:
+        'OpenAI、Claude、Gemini 等云端连接器会同时消耗您的美元额度和每日令牌配额。本地模型仅消耗令牌。',
+    },
     page: {
       title: '计费',
       description: '您的计划、您的使用情况以及您所支付的一切费用。',
@@ -3919,6 +3995,13 @@ export const zh: TranslationDictionary = {
       dismiss: '解雇',
     },
     errors: {
+      PAYG_CREDIT_EXHAUSTED: '您的连接器额度已用尽。请充值后继续使用云端模型。',
+      PAYG_PROMPT_TOO_EXPENSIVE: '本次对话的费用超过了您剩余的连接器额度。',
+      PAYG_MODEL_UNPRICED: '该模型尚未发布价格，无法计费。',
+      PAYG_PRICING_UNAVAILABLE: '暂时无法获取价格信息。未向您收取任何费用。',
+      CREDIT_PACKAGE_NOT_FOUND: '该额度套餐已不存在。',
+      CREDIT_PACKAGE_INACTIVE: '该额度套餐已停售。',
+      CREDIT_ADJUSTMENT_REASON_REQUIRED: '手动调整额度必须填写原因。',
       PLAN_NOT_PURCHASABLE: '该计划不可购买。',
       PAYMENT_NOT_VERIFIED: '无法验证付款。您尚未被指控。',
       PAYMENT_METHOD_UNAVAILABLE: '此付款方式目前不可用。选择其他方法或稍后重试。',
@@ -4153,6 +4236,8 @@ export const zh: TranslationDictionary = {
       footnote: '模型的可用性遵循每个提供商自己的发布时间表。新型号在发货时添加。',
     },
     pricing: {
+      paygCreditLabel: '每月连接器额度',
+      paygCreditNone: '无连接器额度',
       sectionTitle: '适合您的计划',
       sectionSubtitle:
         '开始免费。当您需要更多时升级。每个付费计划都具有相同的模型 - 区别在于您可以使用多少。',

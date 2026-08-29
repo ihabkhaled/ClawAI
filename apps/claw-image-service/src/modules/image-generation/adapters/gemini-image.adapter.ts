@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { extractGeminiUsage } from '@claw/shared-utilities';
 import { httpPost } from '@common/utilities';
 import { IMAGE_CAPABLE_MODELS } from '../constants/gemini-image.constants';
 import type { ImageProviderResponse } from '../types/image-generation.types';
@@ -81,10 +82,25 @@ export const generateWithGemini = async (
 
         if (imagePart?.inlineData) {
           logger.log(`Gemini image generated via ${geminiModel}`);
+          const revisedPrompt = parts.find((p) => p.text)?.text;
+          // Gemini DOES report usage for an image call — `usageMetadata` on the
+          // same envelope a text call returns, with the generated image billed
+          // as a block of candidate tokens. Reading it is what lets the PAYG
+          // finalize settle a Gemini image against measured numbers instead of
+          // the zeros an OpenAI image is stuck with. The text fallbacks cover a
+          // response that omits the block entirely.
+          const usage = extractGeminiUsage(response, {
+            promptText: prompt,
+            completionText: revisedPrompt,
+          });
+          logger.debug(
+            `generateWithGemini: usage — prompt=${String(usage.promptTokens)} completion=${String(usage.completionTokens)} estimated=${String(usage.estimated)}`,
+          );
           return {
             imageBase64: imagePart.inlineData.data,
-            revisedPrompt: parts.find((p) => p.text)?.text,
+            revisedPrompt,
             mimeType: imagePart.inlineData.mimeType ?? 'image/png',
+            usage,
           };
         }
 

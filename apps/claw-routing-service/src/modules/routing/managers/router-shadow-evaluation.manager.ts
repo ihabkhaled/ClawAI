@@ -135,6 +135,20 @@ export class RouterShadowEvaluationManager {
     }
 
     const prompt = this.cloudRouterPrompt.buildPrompt(context, eligible);
+    // KNOWN UNMETERED PAID PATH — deliberate, and recorded rather than hidden.
+    //
+    // This reaches real billed providers (Gemini, Ollama Cloud) through the
+    // coordinator, but carries NO `userId`, so `invokeMetered` skips the PAYG
+    // reservation and the spend debits no wallet. It cannot be fixed here: the
+    // context is rebuilt from a stored `RoutingDecision`, and that table has no
+    // `userId` column, so there is genuinely no user to charge. Inventing one
+    // would bill a real customer for an operator's replay, which is worse than
+    // an unmetered internal call.
+    //
+    // It is an operator-initiated action behind an admin route, which is why
+    // the PAYG plan scopes it out as U7 (admin replay fan-out) with its own
+    // ticket. Closing it needs `userId` on `RoutingDecision` plus a decision
+    // about who pays for an operator's replay — not a change at this call site.
     const result = await this.cloudRouter.route({
       traceId: randomUUID(),
       prompt,

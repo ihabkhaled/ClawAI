@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { TokenLedgerContext } from '@claw/shared-types';
+import { PaygSurface, TokenLedgerContext } from '@claw/shared-types';
 
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { MessageRole, RoutingMode } from '../../../generated/prisma';
@@ -22,6 +22,10 @@ import {
 } from '../constants/runtime-v2-run.constants';
 import { THREAD_CONTEXT_LIMIT } from '../../../common/constants';
 import { RUNTIME_V2_TURN_EXECUTION_OPTIONS } from '../constants/runtime-v2-execution.constants';
+import {
+  PAYG_WORKFLOW_CODING_AGENT,
+  PAYG_WORKFLOW_CODING_AGENT_REPAIR,
+} from '../constants/payg.constants';
 import { RUNTIME_V2_CONTEXT_TOKEN_BUDGET } from '../constants/runtime-v2-transcript.constants';
 import { type RuntimeResultDto, toolInvocationSchema } from '../dto/runtime-v2.dto';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
@@ -44,6 +48,7 @@ import {
   repairDiagnosis,
   repairGuidance,
   runtimeV2TerminalReason,
+  runtimeV2TerminalStatus,
 } from '../utilities/runtime-v2-failure.utility';
 import {
   buildRuntimeV2ModelInstruction,
@@ -112,11 +117,15 @@ export class RuntimeV2LoopManager {
       // that would never produce anything again — the agent simply stopped. A
       // provider returning empty content did exactly that. Ending the run with
       // the cause is what turns a hang into something the user can read.
+      // EDGE CASE E6. Credit running out pauses the run; everything else
+      // fails it. The distinction is the whole point: a paused run keeps its
+      // journal, its tool receipts and its context under the run's TTL, so
+      // topping up resumes work instead of repeating and re-paying for it.
       await this.store.terminalize({
         ...binding,
         claimId: binding.claimId,
         idempotencyKey: `${command.idempotencyKey}:continuation-failed`,
-        status: 'failed',
+        status: runtimeV2TerminalStatus(error),
         completedAt: new Date().toISOString(),
         reason: runtimeV2TerminalReason(error),
       });
@@ -453,6 +462,10 @@ export class RuntimeV2LoopManager {
   ): Promise<Awaited<ReturnType<ChatExecutionManager['callProvider']>>> {
     for (let attempt = 0; ; attempt += 1) {
       try {
+        // One reservation PER TURN, not one per run. A supervised run is a
+        // sequence of independently paid completions whose transcript grows
+        // every turn, so the later ones are the expensive ones; a single
+        // up-front hold would have to cover a length nobody can predict.
         return await this.execution.callProvider(
           binding.provider,
           binding.model,
@@ -463,6 +476,12 @@ export class RuntimeV2LoopManager {
           routingMode,
           RUNTIME_V2_TURN_EXECUTION_OPTIONS,
           TokenLedgerContext.CHAT,
+          {
+            surface: PaygSurface.CODING_AGENT,
+            workflow: PAYG_WORKFLOW_CODING_AGENT,
+            requestId: `${binding.runId}:turn:${binding.generation}:${String(attempt)}`,
+            threadId: binding.threadId,
+          },
         );
       } catch (error: unknown) {
         const empty =
@@ -727,6 +746,12 @@ export class RuntimeV2LoopManager {
       routingMode,
       RUNTIME_V2_TURN_EXECUTION_OPTIONS,
       TokenLedgerContext.CHAT,
+      {
+        surface: PaygSurface.CODING_AGENT,
+        workflow: PAYG_WORKFLOW_CODING_AGENT_REPAIR,
+        requestId: `${binding.runId}:repair:${binding.generation}:${String(attempt)}`,
+        threadId: binding.threadId,
+      },
     );
   }
 
@@ -833,7 +858,8 @@ export class RuntimeV2LoopManager {
         ...binding,
         claimId: claim.claimId,
         idempotencyKey: createRuntimeV2Identity('terminal'),
-        status: 'failed',
+        // Paused rather than failed when the wallet is what ran out (E6).
+        status: runtimeV2TerminalStatus(error),
         completedAt: new Date().toISOString(),
         // Without this the client received `run.failed` with an empty payload:
         // it could show that the run died but never why, which made every live

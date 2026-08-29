@@ -59,3 +59,24 @@ export type PlanCatalogEntry = {
   prices: PlanPriceVersionView[];
   features: PlanFeatureRuleView[];
 };
+
+/**
+ * A credit package plus its ACTIVE price version, as auth returns it.
+ *
+ * Mirrors `CreditPackageView` in `@claw/shared-types` and is deliberately a
+ * separate declaration for the same reason `PlanPriceVersionView` is: the Zod
+ * schema alongside it, not the shared type, is what turns the response into
+ * trusted state on the money path.
+ */
+export type CreditPackageVersionView = {
+  id: string;
+  slug: string;
+  /** Integer minor units. The ONLY authoritative price for a top-up. */
+  priceMinor: number;
+  currency: string;
+  /** Integer micro-USD of credit bought. Independent of `priceMinor`. */
+  creditMicroUsd: number;
+  displayOrder: number;
+  /** The immutable version the price came from. Frozen onto the session. */
+  versionId: string;
+};

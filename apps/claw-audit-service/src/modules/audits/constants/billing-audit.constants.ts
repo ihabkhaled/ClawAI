@@ -21,4 +21,10 @@ export const BILLING_AUDIT_SUBSCRIPTIONS = [
     'BILLING_ENTITLEMENT_RECONCILE_REQUESTED',
     'HIGH',
   ],
+  // PAYG credit moves real money into a spendable balance. A grant is audited
+  // at MEDIUM alongside the other purchases; a reversal is HIGH, because
+  // "credit disappeared" is the complaint an operator has to answer from the
+  // audit trail alone.
+  [EventPattern.BILLING_CREDIT_TOPUP_SUCCEEDED, 'BILLING_CREDIT_TOPUP_SUCCEEDED', 'MEDIUM'],
+  [EventPattern.BILLING_CREDIT_TOPUP_REVERSED, 'BILLING_CREDIT_TOPUP_REVERSED', 'HIGH'],
 ] as const;

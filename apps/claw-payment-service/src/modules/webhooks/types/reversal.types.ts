@@ -8,7 +8,14 @@
 export type ReversalRequest = {
   /** The captured charge row this refund reverses, resolved from our records. */
   originalTransactionId: string;
-  subscriptionId: string;
+  /**
+   * Null when the reversed charge bought no plan — a PAYG credit top-up.
+   *
+   * This is what routes the reversal: a null here means there is no entitlement
+   * to revoke and the wallet is debited instead. It is resolved from OUR record
+   * of the original charge, never from the webhook body.
+   */
+  subscriptionId: string | null;
   userId: string;
   gateway: string;
   amountMinor: number;

@@ -11,6 +11,8 @@ describe('extractOpenAiCompatibleUsage', () => {
       promptTokens: 100,
       completionTokens: 50,
       totalTokens: 150,
+      cachedPromptTokens: 0,
+      reasoningTokens: 0,
       estimated: false,
       source: TokenUsageSource.NATIVE,
       estimator: TokenEstimatorKind.NONE,

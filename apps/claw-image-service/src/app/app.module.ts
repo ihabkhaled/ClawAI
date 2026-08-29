@@ -3,8 +3,10 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
+import { EntitlementsModule } from '@claw/shared-entitlements';
 import type { IncomingMessage } from 'node:http';
 
+import { AppConfig } from './config/app.config';
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
 
@@ -62,6 +64,11 @@ import { HealthModule } from '../modules/health/health.module';
         serviceName: 'image-service',
       }),
     }),
+    // @Global() — provides PaygMeter by CLASS token to every module below.
+    // Image generation calls OpenAI and Gemini with real money; without this
+    // import the manager's `PaygMeter` injection fails at boot instead of
+    // silently metering nothing, which is the intended failure direction.
+    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
     PrismaModule,
     RedisModule,
     ImageGenerationModule,

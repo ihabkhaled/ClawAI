@@ -1,11 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   calculateCostMicroUsd,
   calculateWeightedTokens,
   estimateWeightedTokens,
   hasUsablePricing,
 } from '@claw/shared-utilities';
-import { type ModelCostRates, type RawTokenBreakdown } from '@claw/shared-types';
+import { EventPattern, type ModelCostRates, type RawTokenBreakdown } from '@claw/shared-types';
+import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { AppConfig } from '../../../app/config/app.config';
 import {
   CostClass,
@@ -45,7 +46,15 @@ import {
 export class ModelCostService {
   private readonly logger = new Logger(ModelCostService.name);
 
-  constructor(private readonly repository: ModelCostRepository) {}
+  constructor(
+    private readonly repository: ModelCostRepository,
+    // @Optional() matches the house style for every other publisher in this
+    // service. A price is authoritative in Postgres the moment `publish`
+    // commits; the event is only a cache hint, so a broker that is down must
+    // degrade to a 300 s staleness window, never fail the administrator's
+    // repricing.
+    @Optional() private readonly rabbitMQ?: RabbitMQService,
+  ) {}
 
   async getSnapshot(provider: string, modelKey: string): Promise<ModelCostSnapshot> {
     this.logger.debug(`getSnapshot: provider=${provider} model=${modelKey}`);
@@ -143,7 +152,37 @@ export class ModelCostService {
     this.logger.log(
       `publish: ${input.provider}/${input.modelKey} v${record.version} source=${input.source} override=${input.isAdminOverride}`,
     );
+    // auth-service caches a provider rate for PAYG_RATE_CACHE_TTL_SECONDS
+    // (300 s) while reserving PAYG credit. Without this the new price would not
+    // reach the wallet for up to five minutes, so an administrator correcting a
+    // wrong rate would keep mis-billing users for the rest of the TTL. This
+    // makes the correction land on the NEXT request instead.
+    //
+    // Fire-and-forget on purpose: the price is already committed and
+    // authoritative in Postgres. Blocking the administrator's request on the
+    // broker, or failing their publish because the broker is down, would trade
+    // a bounded 300 s staleness for an outright outage.
+    void this.safePublish(EventPattern.ROUTING_MODEL_COST_PUBLISHED, {
+      provider: input.provider,
+      modelKey: input.modelKey,
+      version: record.version,
+    });
     return record.version;
+  }
+
+  // Payload is deliberately just the identity and the version — never the
+  // rates. A rate is a margin input, and an event on a topic exchange is
+  // readable by any consumer that binds to the pattern; the consumer that needs
+  // the number re-reads it over the authenticated internal route.
+  private async safePublish(pattern: EventPattern, payload: unknown): Promise<void> {
+    if (this.rabbitMQ === undefined) {
+      return;
+    }
+    try {
+      await this.rabbitMQ.publish(pattern, payload);
+    } catch (error) {
+      this.logger.warn(`event publish failed pattern=${pattern}: ${(error as Error).message}`);
+    }
   }
 
   // Applies rates discovered by an automated sync. Refuses to touch a model an
@@ -160,6 +199,10 @@ export class ModelCostService {
       await this.repository.touchVerified(active.id);
       return { applied: false, reason: 'RATES_UNCHANGED' };
     }
+    // Routed through `publish` on purpose, so ROUTING_MODEL_COST_PUBLISHED is
+    // emitted exactly when a rate ACTUALLY changed. Both early returns above
+    // leave the stored price untouched, so neither may bust a downstream cache:
+    // a nightly no-op sync must not wake every consumer's rate cache.
     const version = await this.publish({ ...input, isAdminOverride: false });
     return { applied: true, version };
   }

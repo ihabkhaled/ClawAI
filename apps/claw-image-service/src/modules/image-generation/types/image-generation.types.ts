@@ -1,3 +1,5 @@
+import { type TokenUsage } from '@claw/shared-types';
+
 import { type ImageGenerationStatus } from '../../../generated/prisma';
 
 export type ImageGenerationRecord = {
@@ -55,6 +57,36 @@ export type GenerateImageParams = {
   referenceImageMimeType?: string;
 };
 
+/**
+ * What `ImageExecutionManager.execute` needs for ONE attempt.
+ *
+ * Deliberately separate from `GenerateImageParams`, which is the shape a caller
+ * ENQUEUES with. `requestId` cannot live on that shape: it identifies a single
+ * paid attempt, and the same enqueued row is executed again by
+ * `POST /images/:id/retry`.
+ */
+export type ExecuteImageInput = {
+  prompt: string;
+  provider: string;
+  model: string;
+  userId: string;
+  /**
+   * Idempotency key for the PAYG hold — one per PAID ATTEMPT.
+   *
+   * `reserve` is idempotent on `(userId, requestId)`, so reusing the generation
+   * row id would make a retry settle a second real provider call against the
+   * first attempt's hold and bill two calls as one. Required rather than
+   * optional so a new call site cannot reach a paid provider without one.
+   */
+  requestId: string;
+  width?: number;
+  height?: number;
+  quality?: string;
+  style?: string;
+  referenceImageBase64?: string;
+  referenceImageMimeType?: string;
+};
+
 export type ImageProviderResponse = {
   imageUrl?: string;
   imageBase64?: string;
@@ -62,12 +94,33 @@ export type ImageProviderResponse = {
   mimeType: string;
   width?: number;
   height?: number;
+  /**
+   * Measured token usage, when the provider reports any.
+   *
+   * Present for Gemini, which answers `:generateContent` with a `usageMetadata`
+   * block exactly like a text call. ABSENT for OpenAI images: the
+   * `/images/generations` response carries `created` and `data` and nothing
+   * else — there is genuinely no usage to read, which is why images are priced
+   * per unit rather than per token. See `IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS`.
+   */
+  usage?: TokenUsage;
 };
 
 export type GenerateImageResult = {
   fileId: string;
   revisedPrompt: string | null;
   latencyMs: number;
+};
+
+/**
+ * What a failed generation stores and streams, once the cause has been told
+ * apart from a plain provider error.
+ */
+export type ImageFailureDescription = {
+  errorCode: string;
+  errorMessage: string;
+  /** Credit refused it. More attempts on PAID providers would be refused too. */
+  isCreditFailure: boolean;
 };
 
 export type ConnectorConfigResponse = {

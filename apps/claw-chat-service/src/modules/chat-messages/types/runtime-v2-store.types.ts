@@ -95,7 +95,19 @@ export interface RuntimeV2TerminalReason {
 export interface RuntimeV2TerminalInput extends RuntimeV2BoundInput {
   readonly claimId: string;
   readonly idempotencyKey: string;
-  readonly status: 'completed' | 'failed';
+  /**
+   * How the run ended.
+   *
+   * `paused` exists for one reason: pay-as-you-go credit running out mid-run
+   * (edge case E6). A coding-agent run that dies as `failed` discards the whole
+   * point of the run - the transcript, the admitted tools, the edits already
+   * made - and the user has to start over after topping up, paying twice for
+   * the same work. `paused` writes the same terminal event through the same
+   * script, so the journal, the tool receipts and the context all survive under
+   * the run's TTL and the client can tell "add credit and pick this up" apart
+   * from "this run is dead".
+   */
+  readonly status: 'completed' | 'failed' | 'paused';
   readonly completedAt: string;
   readonly reason?: RuntimeV2TerminalReason;
 }

@@ -1,5 +1,6 @@
 import { type DynamicModule, Global, Module, type Provider } from '@nestjs/common';
 import { EntitlementsAdapter } from './entitlements-adapter';
+import { PaygMeter } from './payg-meter';
 import { ENTITLEMENTS_ADAPTER } from './entitlements.tokens';
 import { PermissionGuard } from './permission.guard';
 
@@ -21,10 +22,18 @@ export class EntitlementsModule {
       provide: ENTITLEMENTS_ADAPTER,
       useFactory: (): EntitlementsAdapter => new EntitlementsAdapter(options),
     };
+    // Provided by CLASS token, not a symbol: every consumer injects it as
+    // `private readonly payg: PaygMeter`, and an @Optional() injection against a
+    // symbol token would silently resolve to undefined and skip metering
+    // everywhere without a single error.
+    const paygProvider: Provider = {
+      provide: PaygMeter,
+      useFactory: (): PaygMeter => new PaygMeter(options),
+    };
     return {
       module: EntitlementsModule,
-      providers: [adapterProvider, PermissionGuard],
-      exports: [ENTITLEMENTS_ADAPTER, PermissionGuard],
+      providers: [adapterProvider, paygProvider, PermissionGuard],
+      exports: [ENTITLEMENTS_ADAPTER, PaygMeter, PermissionGuard],
     };
   }
 }

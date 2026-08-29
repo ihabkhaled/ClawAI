@@ -29,6 +29,47 @@ describe('ProviderStreamReader — OpenAI SSE', () => {
     });
   });
 
+  it('reads the cached and reasoning sub-counts off the usage frame', () => {
+    // Before this the reader took prompt_tokens and completion_tokens only, so
+    // a streamed reasoning model finalized its PAYG hold with zero reasoning
+    // tokens - billing nothing on the largest component of the call (ADR-078).
+    const reader = new ProviderStreamReader(AiStreamProtocol.OPENAI_SSE);
+    const frags = reader.push(
+      'data: {"choices":[{"delta":{}}],"usage":{"prompt_tokens":1000,"completion_tokens":800,"total_tokens":1800,"prompt_tokens_details":{"cached_tokens":750},"completion_tokens_details":{"reasoning_tokens":600}}}\n\n',
+    );
+    expect(frags).toContainEqual({
+      kind: 'usage',
+      promptTokens: 1000,
+      completionTokens: 800,
+      totalTokens: 1800,
+      cachedPromptTokens: 750,
+      reasoningTokens: 600,
+    });
+  });
+
+  it("accepts DeepSeek's top-level spelling of the cache hit", () => {
+    const reader = new ProviderStreamReader(AiStreamProtocol.OPENAI_SSE);
+    const frags = reader.push(
+      'data: {"choices":[{"delta":{}}],"usage":{"prompt_tokens":500,"completion_tokens":100,"prompt_cache_hit_tokens":320}}\n\n',
+    );
+    expect(frags).toContainEqual(
+      expect.objectContaining({ kind: 'usage', cachedPromptTokens: 320 }),
+    );
+  });
+
+  it('leaves the sub-counts absent when the provider reported none', () => {
+    // Absent is not zero: a measured zero suppresses the estimate, an absent
+    // value means "nothing was reported" and must stay distinguishable.
+    const reader = new ProviderStreamReader(AiStreamProtocol.OPENAI_SSE);
+    const frags = reader.push(
+      'data: {"choices":[{"delta":{}}],"usage":{"prompt_tokens":10,"completion_tokens":20}}\n\n',
+    );
+    const usage = frags.find((f) => f.kind === 'usage');
+    expect(usage).toBeDefined();
+    expect(Object.keys(usage ?? {})).not.toContain('cachedPromptTokens');
+    expect(Object.keys(usage ?? {})).not.toContain('reasoningTokens');
+  });
+
   it('emits done on [DONE]', () => {
     const reader = new ProviderStreamReader(AiStreamProtocol.OPENAI_SSE);
     expect(reader.push('data: [DONE]\n\n')).toEqual([{ kind: 'done' }]);
@@ -56,9 +97,7 @@ describe('ProviderStreamReader — OpenAI SSE', () => {
   // universal truncatedAtContextLimit warn fires.
   it("round-trips finish_reason='length' from the terminal SSE frame as a done fragment", () => {
     const reader = new ProviderStreamReader(AiStreamProtocol.OPENAI_SSE);
-    const frags = reader.push(
-      'data: {"choices":[{"delta":{},"finish_reason":"length"}]}\n\n',
-    );
+    const frags = reader.push('data: {"choices":[{"delta":{},"finish_reason":"length"}]}\n\n');
     const doneFrag = frags.find((f) => f.kind === 'done');
     expect(doneFrag).toBeDefined();
     if (doneFrag === undefined || doneFrag.kind !== 'done') {
@@ -85,7 +124,9 @@ describe('ProviderStreamReader — Ollama NDJSON', () => {
 
   it('emits usage and done on the final chunk', () => {
     const reader = new ProviderStreamReader(AiStreamProtocol.OLLAMA_NDJSON);
-    const frags = reader.push('{"response":"!","done":true,"prompt_eval_count":5,"eval_count":7}\n');
+    const frags = reader.push(
+      '{"response":"!","done":true,"prompt_eval_count":5,"eval_count":7}\n',
+    );
     expect(frags).toContainEqual({ kind: 'content', text: '!' });
     expect(frags).toContainEqual({ kind: 'usage', promptTokens: 5, completionTokens: 7 });
     expect(frags.some((f) => f.kind === 'done')).toBe(true);

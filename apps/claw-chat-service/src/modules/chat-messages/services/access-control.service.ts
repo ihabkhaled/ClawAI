@@ -5,20 +5,39 @@ import {
   hasPermission,
   hasPlanFeature,
   isModelAllowedForUsage,
+  isPaygCreditExhaustedError,
   ModelUsageType,
+  type PaygFinalizeCalls,
+  type PaygFinalizeUsage,
+  type PaygHold,
+  PaygMeter,
+  type PaygReleaseReason,
+  type PaygReserveInput,
   type PlanFeature,
   type ResearchUsageFeature,
   type UserEntitlements,
 } from '@claw/shared-entitlements';
-import { BillingErrorCode, Permission } from '@claw/shared-types';
+import { BillingErrorCode, PaygSurface, Permission } from '@claw/shared-types';
+import { estimateTextTokens } from '@claw/shared-utilities';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
 import { ModelAuthorizationMetricsService } from './model-authorization-metrics.service';
 import { AppConfig } from '../../../app/config/app.config';
 import { isGenerationProvider } from '../utilities/generation-provider.utility';
 import { ENTITLEMENTS_TIMEOUT_MS } from '../../../common/constants';
+import { recordGet } from '../../../common/utilities/record-lookup.utility';
 import { BusinessException } from '../../../common/errors';
+import {
+  PAYG_CREDIT_ERROR_MESSAGES,
+  PAYG_CREDIT_FALLBACK_ERROR_MESSAGE,
+} from '../constants/payg.constants';
 import { type SendMessageAccessOptions } from '../types/access-control.types';
+import {
+  computeDefaultMaxTokens,
+  pickDefaultCtxSizeForProvider,
+} from '../constants/output-token-bounds.constants';
+import type { PaygOrchestrationCall, PaygOrchestrationUsage } from '../types/payg.types';
+import { normalizePaygProvider } from '../utilities/payg-metering.utility';
 
 // Backend enforcement of plan model-access + daily token quota + plan-level
 // feature gates at the chat entry point. Fail-OPEN on entitlement-service
@@ -31,11 +50,113 @@ export class AccessControlService {
   private readonly exposure = new ModelExposureClient();
   private readonly metrics = new ModelAuthorizationMetricsService();
 
-  constructor() {
+  constructor(private readonly payg: PaygMeter) {
     this.adapter = new EntitlementsAdapter({
       authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
       timeoutMs: ENTITLEMENTS_TIMEOUT_MS,
     });
+  }
+
+  // ── PAYG credit ───────────────────────────────────────────────────────────
+  //
+  // There is deliberately NO `assertPaygCreditAvailable` pre-check. The
+  // reservation IS the gate: a separate "do you have enough?" call answers a
+  // question that is already stale by the time the provider is dialled, and two
+  // gates disagreeing is how a user gets refused with one error code and
+  // charged under another. Everything below is the single gate, plus the one
+  // place a refusal becomes an HTTP status.
+
+  /**
+   * Places the hold that authorizes one provider call.
+   *
+   * @throws BusinessException 402 when the meter refuses. Mapped here rather
+   * than in each of the fifteen call sites so every surface answers a refusal
+   * with the same status and the same machine code — the frontend renders one
+   * "add credit" notice, not fifteen.
+   */
+  async reserveCredit(input: PaygReserveInput): Promise<PaygHold> {
+    try {
+      return await this.payg.reserve(input);
+    } catch (error: unknown) {
+      throw this.toCreditException(error);
+    }
+  }
+
+  /**
+   * reserve -> run -> finalize, around one orchestration-mode provider call.
+   *
+   * The nine advanced labs POST straight to ollama-service instead of going
+   * through the chat chokepoint, so this is their equivalent of it. `run` is
+   * handed the hold and MUST send `hold.maxOutputTokens` whenever the meter
+   * clamped, never the ceiling it asked for. A throw releases and re-raises:
+   * the user got no answer, so the money goes back.
+   */
+  async meterOrchestrationCall<T>(
+    call: PaygOrchestrationCall,
+    run: (hold: PaygHold) => Promise<T>,
+    usageOf: (result: T) => PaygOrchestrationUsage,
+  ): Promise<T> {
+    const promptTokens = estimateTextTokens(call.promptText);
+    const hold = await this.reserveCredit({
+      userId: call.userId,
+      requestId: call.requestId,
+      provider: normalizePaygProvider(call.provider),
+      model: call.model,
+      surface: PaygSurface.ORCHESTRATION,
+      workflow: call.workflow,
+      promptTokens,
+      cachedPromptTokens: 0,
+      requestedMaxOutputTokens:
+        call.requestedMaxOutputTokens ??
+        computeDefaultMaxTokens(pickDefaultCtxSizeForProvider(call.provider), promptTokens),
+    });
+    let result: T;
+    try {
+      result = await run(hold);
+    } catch (error: unknown) {
+      await this.releaseCredit(hold, 'PROVIDER_ERROR');
+      throw error;
+    }
+    const usage = usageOf(result);
+    // Local runtimes report no cache hit and no reasoning split, so both are a
+    // measured zero here rather than an unknown.
+    await this.finalizeCredit(hold, { ...usage, cachedPromptTokens: 0, reasoningTokens: 0 });
+    return result;
+  }
+
+  /** Settles a hold against measured usage. Never throws; the answer is already delivered. */
+  async finalizeCredit(
+    hold: PaygHold,
+    usage: PaygFinalizeUsage,
+    calls?: PaygFinalizeCalls,
+  ): Promise<void> {
+    await this.payg.finalize(hold, usage, calls);
+  }
+
+  /** Gives a hold back when the user never received anything for it. */
+  async releaseCredit(hold: PaygHold, reason: PaygReleaseReason): Promise<void> {
+    await this.payg.release(hold, reason);
+  }
+
+  /**
+   * Turns a meter refusal into the 402 the frontend knows how to render.
+   *
+   * Anything that is not a credit refusal is returned untouched — swallowing a
+   * provider fault into a payment error would tell a user to buy credit they do
+   * not need.
+   */
+  toCreditException(error: unknown): unknown {
+    if (!isPaygCreditExhaustedError(error)) {
+      return error;
+    }
+    this.logger.warn(
+      `toCreditException: PAYG refused — code=${error.errorCode} available=${String(error.availableMicroUsd)}`,
+    );
+    return new BusinessException(
+      recordGet(PAYG_CREDIT_ERROR_MESSAGES, error.errorCode) ?? PAYG_CREDIT_FALLBACK_ERROR_MESSAGE,
+      error.errorCode,
+      HttpStatus.PAYMENT_REQUIRED,
+    );
   }
 
   // Throws 403 if a manually-selected model is not in the user's plan, 403 if

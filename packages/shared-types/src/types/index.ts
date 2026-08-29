@@ -18,6 +18,15 @@ export type { CompareModelError, CompareModelResult } from './compare-result.typ
 // === Subscriptions, Billing, Payments & Weighted Quotas ===
 export type { FxQuoteSnapshot, MicroUsd, Money } from './money.type';
 export type {
+  CreditBucketDelta,
+  CreditPackageView,
+  PaygLedgerEntryView,
+  PaygRejection,
+  PaygReservationOutcome,
+  PaygWalletSnapshot,
+  PaygWarningThreshold,
+} from './payg-credit.type';
+export type {
   PlanBillingSnapshot,
   PlanFeatureRuleSnapshot,
   PlanPriceVersionSnapshot,

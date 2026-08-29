@@ -67,7 +67,8 @@ export function calculateCostMicroUsd(raw: RawTokenBreakdown, rates: ModelCostRa
     costForUnits(raw.reasoningTokens, reasoningRate) +
     costForUnits(raw.outputTokens, rates.outputPerMillionMicroUsd) +
     costForCalls(raw.toolCalls, rates.toolCallPerUnitMicroUsd) +
-    costForCalls(raw.searchCalls, rates.searchCallPerUnitMicroUsd)
+    costForCalls(raw.searchCalls, rates.searchCallPerUnitMicroUsd) +
+    costForCalls(raw.imageUnits, rates.imagePerUnitMicroUsd)
   );
 }
 
@@ -109,6 +110,7 @@ export function estimateWeightedTokens(
       outputTokens: maxOutputTokens,
       toolCalls: 0,
       searchCalls: 0,
+      imageUnits: 0,
     },
     rates,
   );
@@ -118,5 +120,23 @@ export function estimateWeightedTokens(
 // this as UNSAFE for limited plans unless an administrator explicitly allows it
 // — an unpriced model is an unbounded liability, not a free one.
 export function hasUsablePricing(rates: ModelCostRates): boolean {
+  return isTokenPriced(rates) || isPerUnitPriced(rates);
+}
+
+/** A conversational model: priced by tokens in and tokens out. */
+export function isTokenPriced(rates: ModelCostRates): boolean {
   return rates.inputPerMillionMicroUsd !== null && rates.outputPerMillionMicroUsd !== null;
+}
+
+/**
+ * A generation model priced per artifact rather than per token.
+ *
+ * An image endpoint publishes a flat rate per image and returns no token usage,
+ * so requiring token rates would classify a correctly-priced DALL-E row as
+ * UNPRICED and refuse it — while a row that happened to carry token rates would
+ * be charged $0 for the image itself. Both failures came from one missing
+ * branch.
+ */
+export function isPerUnitPriced(rates: ModelCostRates): boolean {
+  return rates.imagePerUnitMicroUsd !== null && rates.imagePerUnitMicroUsd > 0;
 }

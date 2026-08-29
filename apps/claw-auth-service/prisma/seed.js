@@ -17,6 +17,8 @@ const path = require('path');
 const { runVersionedSeeder } = require('./seed-runner');
 const { reconcileExistingSuperAdmin } = require('./seed-super-admin');
 const planCatalogSeeder = require('./seeders/plan-catalog.seeder');
+const planPaygAllowanceSeeder = require('./seeders/plan-payg-allowance.seeder');
+const creditPackagesSeeder = require('./seeders/credit-packages.seeder');
 
 const distPrismaPath = path.resolve(__dirname, '..', 'dist', 'generated', 'prisma');
 const { PrismaClient } = require(distPrismaPath);
@@ -77,6 +79,8 @@ const ALL_PERMISSIONS = [
   'ADMIN_LOGS_VIEW',
   'ADMIN_WORKSPACES_VIEW',
   'ADMIN_USAGE_VIEW',
+  'BILLING_CREDIT_TOPUP',
+  'ADMIN_CREDIT_MANAGE',
 ];
 
 // Minimal self-service surface for the USER system role (keep in sync with
@@ -105,6 +109,7 @@ const USER_DEFAULT_PERMISSIONS = [
   'PIPELINE_LAB_USE',
   'COST_ENSEMBLE_USE',
   'ROLE_PACK_USE',
+  'BILLING_CREDIT_TOPUP',
 ];
 
 const SYSTEM_ROLES = [
@@ -278,6 +283,19 @@ async function seed() {
   //     advisory lock, so it runs exactly once no matter how many replicas boot
   //     together or how often a container restarts.
   await runVersionedSeeder(prisma, planCatalogSeeder);
+
+  // 3c. PAYG credit allowances on EXISTING installs. Deliberately a separate
+  //     seeder rather than a plan-catalog version bump: on an install where
+  //     plan-catalog v2 has already run, every plan takes the else branch of
+  //     its run() and only modelAccessMode is written, so a v3 bump would apply
+  //     the new allowances to ZERO rows. This one targets the OLD value per
+  //     column, so an administrator's tuned figure is preserved.
+  await runVersionedSeeder(prisma, planPaygAllowanceSeeder);
+
+  // 3d. The five purchasable top-up packages and their first immutable price
+  //     versions. Skips any package that already has an ACTIVE version, so an
+  //     operator reprice through /admin/credit survives every restart.
+  await runVersionedSeeder(prisma, creditPackagesSeeder);
 
   const freePlanId = planBySlug['free'].id;
   const planless = await prisma.user.findMany({

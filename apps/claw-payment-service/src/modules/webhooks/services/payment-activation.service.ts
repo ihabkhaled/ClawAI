@@ -10,9 +10,13 @@ import {
   type ActivationResult,
 } from '../../billing/types/subscription-lifecycle.types';
 import {
+  type CreditTopupCheckoutSession,
+  isCreditTopupCheckoutSession,
   isSubscriptionCheckoutSession,
+  type PayableCheckoutSession,
   type SubscriptionCheckoutSession,
 } from '../../billing/utilities/checkout-session-purpose.utility';
+import { CreditTopupLifecycleService } from '../../billing/services/credit-topup-lifecycle.service';
 import { BillingCustomerRepository } from '../repositories/billing-customer.repository';
 import { resolvePeriodEndMs } from '../utilities/billing-period.utility';
 import { type VerifiedPayment } from '../types/verified-payment.types';
@@ -36,6 +40,7 @@ export class PaymentActivationService {
     private readonly sessions: CheckoutSessionRepository,
     private readonly customers: BillingCustomerRepository,
     private readonly lifecycle: SubscriptionLifecycleService,
+    private readonly creditTopups: CreditTopupLifecycleService,
   ) {}
 
   async activate(payment: VerifiedPayment): Promise<string | null> {
@@ -53,6 +58,16 @@ export class PaymentActivationService {
       this.logger.warn(`activate: session=${session.id} already completed — ignoring replay`);
       return session.subscriptionId;
     }
+    // A credit top-up is a real purchase with a real invoice and NO plan. It is
+    // branched here, at the single door, rather than by loosening
+    // `isSubscriptionCheckoutSession` — a widened predicate would have let a
+    // top-up reach `activateFromVerifiedPayment` and mint a subscription
+    // nobody bought.
+    if (isCreditTopupCheckoutSession(session)) {
+      await this.assertPaymentMatchesSession(session, payment);
+      await this.activateCreditTopup(session, payment);
+      return null;
+    }
     if (!isSubscriptionCheckoutSession(session)) {
       this.logger.error(`activate: non-subscription session=${session.id}`);
       throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
@@ -68,6 +83,42 @@ export class PaymentActivationService {
         `from session=${session.id}`,
     );
     return activation.subscriptionId;
+  }
+
+  /**
+   * Records the money and enqueues the grant, in one transaction.
+   *
+   * Returns no subscription id because there is no subscription: the caller's
+   * `null` means "paid, and nothing about this user's plan changed", which is
+   * exactly right for a wallet purchase.
+   */
+  private async activateCreditTopup(
+    session: CreditTopupCheckoutSession,
+    payment: VerifiedPayment,
+  ): Promise<void> {
+    const activation = await this.creditTopups.activateFromVerifiedPayment({
+      paymentVerified: true,
+      userId: session.userId,
+      invoiceRecipientEmail: session.billingEmail,
+      checkoutSessionId: session.id,
+      gateway: session.gateway,
+      packageId: session.creditPackageId,
+      packageVersionId: session.creditPackageVersionId,
+      // From the session, never from the gateway payload: the credit is what we
+      // froze at checkout, not what a provider says it collected.
+      creditMicroUsd: session.creditMicroUsd,
+      baseAmountMinor: session.baseAmountMinor,
+      baseCurrency: session.baseCurrency,
+      providerAmountMinor: payment.amountMinor,
+      providerCurrency: payment.currency,
+      providerTransactionId: payment.providerTransactionId,
+      providerOrderId: session.providerOrderId,
+      correlationId: payment.correlationId,
+    });
+    this.logger.log(
+      `activate: credit top-up transaction=${activation.paymentTransactionId} ` +
+        `invoice=${activation.invoiceNumber} from session=${session.id}`,
+    );
   }
 
   private assertUpgradeBinding(session: SubscriptionCheckoutSession): void {
@@ -138,8 +189,16 @@ export class PaymentActivationService {
     };
   }
 
+  /**
+   * The amount check, unchanged and deliberately un-weakened.
+   *
+   * Widened only to `PayableCheckoutSession` — the narrowest type that has an
+   * amount — so both purchase kinds go through the SAME comparison. What a
+   * provider reports must equal what we recorded intending to charge, or the
+   * session is failed and nothing is activated.
+   */
   private async assertPaymentMatchesSession(
-    session: SubscriptionCheckoutSession,
+    session: PayableCheckoutSession,
     payment: VerifiedPayment,
   ): Promise<void> {
     if (

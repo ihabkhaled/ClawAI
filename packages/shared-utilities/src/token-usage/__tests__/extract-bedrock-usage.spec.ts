@@ -11,6 +11,8 @@ describe('extractBedrockUsage', () => {
       promptTokens: 300,
       completionTokens: 90,
       totalTokens: 390,
+      cachedPromptTokens: 0,
+      reasoningTokens: 0,
       estimated: false,
       source: TokenUsageSource.NATIVE,
       estimator: TokenEstimatorKind.NONE,

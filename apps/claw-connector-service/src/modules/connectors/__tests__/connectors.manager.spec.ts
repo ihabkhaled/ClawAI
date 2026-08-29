@@ -93,6 +93,7 @@ const mockConnector = {
   baseUrl: null,
   region: null,
   workspaceId: null,
+  isPayAsYouGo: false,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

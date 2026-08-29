@@ -74,6 +74,13 @@ export enum Permission {
   ADMIN_WORKSPACES_VIEW = 'ADMIN_WORKSPACES_VIEW',
   ADMIN_USAGE_VIEW = 'ADMIN_USAGE_VIEW',
 
+  // PAYG connector credit. TOPUP is a user permission (buying credit is a
+  // normal account action); MANAGE is the operator side — granting credit,
+  // adjusting a wallet and editing the package catalog all move money and are
+  // separated from ADMIN_PLANS_MANAGE so a plan editor cannot mint balance.
+  BILLING_CREDIT_TOPUP = 'BILLING_CREDIT_TOPUP',
+  ADMIN_CREDIT_MANAGE = 'ADMIN_CREDIT_MANAGE',
+
   // Feedback / ticketing
   FEEDBACK_SUBMIT = 'FEEDBACK_SUBMIT',
   ADMIN_FEEDBACK_MANAGE = 'ADMIN_FEEDBACK_MANAGE',

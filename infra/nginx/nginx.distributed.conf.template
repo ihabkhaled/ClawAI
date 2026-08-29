@@ -191,6 +191,19 @@ http {
         }
 
         # Admin RBAC: plans + roles CRUD (auth-service, ADMIN-gated controllers).
+    # --- PAYG connector credit (auth-service owns the wallet) ---
+    #
+    # NOT under /api/v1/billing: that prefix already proxies to payment-service,
+    # so an auth-owned wallet route placed there would silently resolve to the
+    # wrong service in production while passing every localhost test.
+    # payment-service keeps the top-up PURCHASE under /api/v1/billing; auth keeps
+    # the balance, the ledger and the package catalog here.
+    location /api/v1/credit {
+        set $credit_backend https://auth-service:4001;
+        proxy_pass $credit_backend;
+        client_max_body_size 64k;
+    }
+
         location /api/v1/admin {
             set $backend https://$origin_auth;
             proxy_pass $backend;

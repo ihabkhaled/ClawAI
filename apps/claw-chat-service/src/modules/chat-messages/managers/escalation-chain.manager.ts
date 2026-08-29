@@ -1,9 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { PaygSurface, TokenLedgerContext } from '@claw/shared-types';
 
 import { EscalationChainStatus } from '../../../common/enums/escalation-chain-status.enum';
 import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { DEFAULT_QUALITY_THRESHOLD } from '../constants/escalation-chain.constants';
+import { PAYG_WORKFLOW_ESCALATION_CHAIN } from '../constants/payg.constants';
 import { ChatMessagesRepository } from '../repositories/chat-messages.repository';
 import { ChatThreadsRepository } from '../../chat-threads/repositories/chat-threads.repository';
 import { ChatStreamService } from '../services/chat-stream.service';
@@ -266,6 +268,10 @@ export class EscalationChainManager {
         startTime,
         false,
         threadSettings,
+        undefined,
+        undefined,
+        TokenLedgerContext.ESCALATION_CHAIN,
+        { surface: PaygSurface.ORCHESTRATION, workflow: PAYG_WORKFLOW_ESCALATION_CHAIN },
       );
 
       const qualityResult = this.qualityCheckManager.checkResponseQuality(

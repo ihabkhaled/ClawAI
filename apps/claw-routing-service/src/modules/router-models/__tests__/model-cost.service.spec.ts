@@ -1,3 +1,5 @@
+import { EventPattern } from '@claw/shared-types';
+import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { ModelCostService } from '../services/model-cost.service';
 import { type ModelCostRepository } from '../repositories/model-cost.repository';
 import { type PublishModelCostInput } from '../types/model-cost.types';
@@ -76,6 +78,7 @@ describe('ModelCostService', () => {
     publish: jest.Mock;
     touchVerified: jest.Mock;
   };
+  let rabbitMQ: { publish: jest.Mock };
 
   beforeEach(() => {
     repository = {
@@ -85,7 +88,11 @@ describe('ModelCostService', () => {
       publish: jest.fn().mockResolvedValue({ version: 4 }),
       touchVerified: jest.fn(),
     };
-    service = new ModelCostService(repository as unknown as ModelCostRepository);
+    rabbitMQ = { publish: jest.fn().mockResolvedValue(undefined) };
+    service = new ModelCostService(
+      repository as unknown as ModelCostRepository,
+      rabbitMQ as unknown as RabbitMQService,
+    );
     mockConfig('USER_OWNED', 0);
   });
 
@@ -246,6 +253,7 @@ describe('ModelCostService', () => {
           outputTokens: 500,
           toolCalls: 0,
           searchCalls: 0,
+          imageUnits: 0,
         },
       });
       // 1000*2.5 + 1000*1.25 + 500*10 = 2500 + 1250 + 5000
@@ -265,6 +273,7 @@ describe('ModelCostService', () => {
           outputTokens: 0,
           toolCalls: 0,
           searchCalls: 0,
+          imageUnits: 0,
         },
       });
       // "We don't know" must not round down to free.
@@ -283,6 +292,7 @@ describe('ModelCostService', () => {
           outputTokens: 100,
           toolCalls: 0,
           searchCalls: 0,
+          imageUnits: 0,
         },
       });
       expect(quote).toEqual({ weightedTokens: 0, costMicroUsd: 0, isPriced: false });
@@ -292,5 +302,74 @@ describe('ModelCostService', () => {
   it('publish returns the newly minted version', async () => {
     const version = await service.publish(syncInput());
     expect(version).toBe(4);
+  });
+  // auth-service caches a provider rate for 300 s while reserving PAYG credit.
+  // Without this event an administrator correcting a wrong price would keep
+  // mis-billing users for the rest of that TTL.
+  describe('ROUTING_MODEL_COST_PUBLISHED', () => {
+    it('publishes provider, modelKey and version when a price is published', async () => {
+      await service.publish(syncInput({ source: ModelCostSource.ADMIN_OVERRIDE }));
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(EventPattern.ROUTING_MODEL_COST_PUBLISHED, {
+        provider: 'OPENAI',
+        modelKey: 'gpt-4o',
+        version: 4,
+      });
+    });
+
+    // A rate is a margin input and a topic exchange is readable by any consumer
+    // that binds the pattern. The consumer that needs the number re-reads it
+    // over the authenticated internal route instead.
+    it('never puts a rate on the wire', async () => {
+      await service.publish(syncInput());
+
+      const [, payload] = rabbitMQ.publish.mock.calls[0] as [unknown, Record<string, unknown>];
+      expect(Object.keys(payload).sort()).toEqual(['modelKey', 'provider', 'version']);
+    });
+
+    it('publishes when applySyncedRates actually applies a change', async () => {
+      repository.findActive.mockResolvedValue(null);
+
+      await service.applySyncedRates(syncInput());
+
+      expect(rabbitMQ.publish).toHaveBeenCalledWith(
+        EventPattern.ROUTING_MODEL_COST_PUBLISHED,
+        expect.objectContaining({ provider: 'OPENAI', modelKey: 'gpt-4o' }),
+      );
+    });
+
+    // Both skip paths leave the stored price untouched, so neither may wake a
+    // downstream cache. A nightly no-op sync must be silent.
+    it('does not publish when a sync is skipped for an admin override', async () => {
+      repository.findActive.mockResolvedValue(baseRecord({ isAdminOverride: true }));
+
+      await service.applySyncedRates(syncInput());
+
+      expect(rabbitMQ.publish).not.toHaveBeenCalled();
+    });
+
+    it('does not publish when synced rates are unchanged', async () => {
+      repository.findActive.mockResolvedValue(baseRecord());
+
+      await service.applySyncedRates(syncInput());
+
+      expect(repository.touchVerified).toHaveBeenCalled();
+      expect(rabbitMQ.publish).not.toHaveBeenCalled();
+    });
+
+    // The price is authoritative in Postgres the moment publish commits. A dead
+    // broker must degrade to a 300 s staleness window, never fail the
+    // administrator's repricing.
+    it('still returns the new version when the broker throws', async () => {
+      rabbitMQ.publish.mockRejectedValue(new Error('broker down'));
+
+      await expect(service.publish(syncInput())).resolves.toBe(4);
+    });
+
+    it('publishes nothing when no broker is wired', async () => {
+      const offline = new ModelCostService(repository as unknown as ModelCostRepository);
+
+      await expect(offline.publish(syncInput())).resolves.toBe(4);
+    });
   });
 });

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import BillingPage from '@/app/(portal)/billing/page';
 import { BillingGateway, BillingInterval, SubscriptionStatus } from '@/enums/billing.enum';
 import type * as I18nModule from '@/lib/i18n';
+import { creditPageFixture } from '@/test/fixtures/credit-page.fixture';
 import type { UseBillingPageReturn } from '@/types/billing-hook.types';
 import type { BillingPlan, CurrentSubscription } from '@/types/billing.types';
 
@@ -145,6 +146,9 @@ function baseHook(overrides: Partial<UseBillingPageReturn> = {}): UseBillingPage
     },
     selectPlan: vi.fn(),
     confirmPlanSelection: vi.fn(),
+    // /billing renders the connector-credit balance and the ledger beside the
+    // token usage card, so the controller now composes useCreditPage.
+    credit: creditPageFixture(),
     ...overrides,
   } as UseBillingPageReturn;
 }

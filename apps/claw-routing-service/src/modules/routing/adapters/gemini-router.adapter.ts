@@ -82,7 +82,12 @@ export class GeminiRouterAdapter implements RouterInferenceProvider {
           model: request.providerModelId,
           messages: [{ role: 'user', content: prompt }],
           temperature: ROUTER_TEMPERATURE,
-          max_tokens: ROUTER_MAX_OUTPUT_TOKENS,
+          // The PAYG affordability clamp wins when it is present: below the
+          // user's balance the reservation grants a smaller ceiling, and
+          // honouring it is what makes an overspend impossible by
+          // construction. Absent (an unmetered call), the router's own low
+          // ceiling applies.
+          max_tokens: request.maxOutputTokens ?? ROUTER_MAX_OUTPUT_TOKENS,
           // Ask for JSON at the protocol level rather than trusting the prompt.
           response_format: { type: 'json_object' },
           reasoning_effort: GEMINI_MINIMAL_THINKING_EFFORT,

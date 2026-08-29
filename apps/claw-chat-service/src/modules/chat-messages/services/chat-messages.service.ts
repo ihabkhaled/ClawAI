@@ -1575,6 +1575,7 @@ export class ChatMessagesService implements OnModuleInit {
       ...this.buildTokenUsageMetaPart(llmResponse),
       ...this.buildWorkflowMetaPart(llmResponse, payload),
       ...this.buildTruncationMetaPart(llmResponse),
+      ...this.buildPaygMetaPart(llmResponse),
       ...this.buildToolTranscriptMetaPart(llmResponse),
       ...(!hasVisibleContent ? { emptyContent: true } : {}),
       ...this.buildDisplayNameMetaPart(latestUserMetadata),
@@ -1582,6 +1583,15 @@ export class ChatMessagesService implements OnModuleInit {
       progressSummary,
       ...(llmResponse.judgeRefereeMetadata ?? {}),
     };
+  }
+
+  // Records that the answer was shortened to fit the user's remaining
+  // pay-as-you-go credit, so the notice survives a page refresh. The live SSE
+  // frame is gone by then, and a short answer with no explanation reads as the
+  // model being bad rather than the wallet being empty. Absent on every
+  // unclamped reply so existing metadata is untouched.
+  private buildPaygMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
+    return llmResponse.paygClamped === true ? { paygClamped: true } : {};
   }
 
   // Persists the Ollama Cloud agentic tool-call transcript so the FE can

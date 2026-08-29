@@ -12,6 +12,11 @@ import {
 import { BillingException } from '../../../common/errors';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { BillingRecordService } from '../../billing/services/billing-record.service';
+import { CreditTopupLifecycleService } from '../../billing/services/credit-topup-lifecycle.service';
+import {
+  proportionalCreditMicroUsd,
+  readCreditTopupSnapshot,
+} from '../../billing/utilities/credit-topup-snapshot.utility';
 import {
   BILLING_EVENT_SCHEMA_VERSION,
   PAYMENT_PRODUCER,
@@ -30,6 +35,7 @@ export class RefundCompletionService {
     private readonly refunds: RefundRepository,
     private readonly records: BillingRecordService,
     private readonly outbox: OutboxRepository,
+    private readonly creditTopups: CreditTopupLifecycleService,
   ) {}
 
   async complete(
@@ -64,9 +70,79 @@ export class RefundCompletionService {
       return completed;
     }
 
+    // A credit top-up has no subscription, so `applyEntitlementPolicy` is a
+    // no-op and `enqueueEvent` returns early — a credit reversal REVOKES
+    // NOTHING, exactly as ADR-064 intends: it reverses money that bought a
+    // balance, not access.
+    if (
+      await this.enqueueCreditReversal(tx, context, {
+        reversalId,
+        providerRefundId,
+        correlationId,
+      })
+    ) {
+      return completed;
+    }
+
     const isFullRefund = await this.applyEntitlementPolicy(tx, context);
     await this.enqueueEvent(tx, context, reversalId, correlationId, completedAt, isFullRefund);
     return completed;
+  }
+
+  /**
+   * Enqueues `billing.credit.topup_reversed` when the reversed charge bought
+   * credit. Returns true when it handled the refund.
+   *
+   * The credit figure comes from the snapshot frozen onto the original charge,
+   * scaled to the portion of the money actually returned — never re-read from
+   * the package, which may since have been repriced or withdrawn.
+   *
+   * A charge whose snapshot cannot be read is REFUSED rather than reversed with
+   * a guessed figure: the money has already gone back, and an operator ticket
+   * is a far better outcome than a wallet quietly wrong by an unknown amount.
+   */
+  private async enqueueCreditReversal(
+    tx: Prisma.TransactionClient,
+    context: RefundCompletionContext,
+    reversal: { reversalId: string; providerRefundId: string; correlationId: string },
+  ): Promise<boolean> {
+    if (context.charge.type !== PaymentTransactionType.CREDIT_TOPUP) {
+      return false;
+    }
+    const snapshot = readCreditTopupSnapshot(context.charge.priceSnapshotJson);
+    if (snapshot === null) {
+      this.logger.error(
+        `enqueueCreditReversal: unreadable top-up snapshot charge=${context.charge.id}`,
+      );
+      throw new BillingException(BillingErrorCode.PAYMENT_REFERENCE_MISMATCH, HttpStatus.CONFLICT);
+    }
+    await this.creditTopups.enqueueReversalInTransaction(
+      tx,
+      {
+        userId: context.refund.userId,
+        gateway: context.refund.gateway,
+        type: PaymentTransactionType.REFUND,
+        amountMinor: context.refund.amountMinor,
+        currency: context.refund.currency,
+        providerAmountMinor: context.refund.providerAmountMinor,
+        providerCurrency: context.refund.providerCurrency,
+        providerTransactionId: reversal.providerRefundId,
+        idempotencyKey: `credit-reversal:${context.refund.id}`,
+        sourcePaymentTransactionId: context.charge.id,
+        packageId: snapshot.packageId,
+        packageVersionId: snapshot.packageVersionId,
+        creditMicroUsd: proportionalCreditMicroUsd(
+          BigInt(snapshot.creditMicroUsd),
+          context.refund.amountMinor,
+          context.charge.amountMinor,
+        ),
+        invoiceId: context.refund.invoiceId,
+        correlationId: reversal.correlationId,
+      },
+      reversal.reversalId,
+    );
+    this.logger.warn(`enqueueCreditReversal: refund=${context.refund.id} credit reversal enqueued`);
+    return true;
   }
 
   private async applyEntitlementPolicy(

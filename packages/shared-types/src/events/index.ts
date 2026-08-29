@@ -14,6 +14,8 @@ export type {
   BillingSubscriptionSuspendedPayload,
   BillingPaymentRefundedPayload,
   BillingPaymentChargebackPayload,
+  BillingCreditTopupSucceededPayload,
+  BillingCreditTopupReversedPayload,
   BillingEntitlementReconcileRequestedPayload,
 } from './billing-events.types';
 export type {

@@ -16,18 +16,34 @@ The connector service manages AI provider connections (OpenAI, Anthropic, Gemini
 
 ### Connector
 
-| Column          | Type              | Notes                             |
-| --------------- | ----------------- | --------------------------------- |
-| id              | String            | CUID primary key                  |
-| name            | String            | User-friendly name                |
-| provider        | ConnectorProvider | OPENAI, ANTHROPIC, GEMINI, etc.   |
-| status          | ConnectorStatus   | HEALTHY, DEGRADED, DOWN, UNKNOWN  |
-| authType        | ConnectorAuthType | API_KEY, OAUTH2, NONE             |
-| encryptedConfig | String?           | AES-256-GCM encrypted credentials |
-| isEnabled       | Boolean           | Soft enable/disable               |
-| defaultModelId  | String?           | Default model for this connector  |
-| baseUrl         | String?           | Custom API base URL               |
-| region          | String?           | AWS region (Bedrock only)         |
+| Column          | Type              | Notes                              |
+| --------------- | ----------------- | ---------------------------------- |
+| id              | String            | CUID primary key                   |
+| name            | String            | User-friendly name                 |
+| provider        | ConnectorProvider | OPENAI, ANTHROPIC, GEMINI, etc.    |
+| status          | ConnectorStatus   | HEALTHY, DEGRADED, DOWN, UNKNOWN   |
+| authType        | ConnectorAuthType | API_KEY, OAUTH2, NONE              |
+| encryptedConfig | String?           | AES-256-GCM encrypted credentials  |
+| isEnabled       | Boolean           | Soft enable/disable                |
+| defaultModelId  | String?           | Default model for this connector   |
+| baseUrl         | String?           | Custom API base URL                |
+| region          | String?           | AWS region (Bedrock only)          |
+| workspaceId     | String?           | Anthropic workspace header         |
+| isPayAsYouGo    | Boolean           | Debits PAYG credit (default false) |
+
+**`isPayAsYouGo` is the runtime authority for PAYG classification**, not
+`PAYG_DEFAULT_PROVIDERS` in `@claw/shared-constants`. That constant is only the
+default: the `20260829120100_add_connector_payg_flag` migration backfills it for
+`OPENAI, ANTHROPIC, GEMINI, DEEPSEEK, GROK, AWS_BEDROCK`, and
+`paygDefaultForProvider()` applies it to newly created connectors. After that,
+the admin toggle on `PATCH /connectors/:id` decides (ADR-082).
+
+`false` is the safe default: a provider nobody has classified is free until an
+operator says otherwise. `OLLAMA` stays `false` even for Ollama-Cloud
+connectors, which do cost money upstream — the classification grain is the
+provider, an Ollama-Cloud connector is indistinguishable from a self-hosted one
+at that grain, and defaulting the pair to metered would charge users for
+inference running on their own hardware. The toggle is the lever.
 
 ### ConnectorModel
 
@@ -67,6 +83,35 @@ Tracks model sync operations with counts of models found, added, and removed per
 | POST   | /:id/sync   | ADMIN  | Trigger model sync          |
 | GET    | /:id/models | Bearer | List models for a connector |
 | GET    | /:id/health | Bearer | Get health history          |
+
+`PATCH /:id` accepts `isPayAsYouGo` (`ADMIN_CONNECTORS_MANAGE`). Omitting the
+field leaves the current classification alone rather than resetting it to the
+provider default, so an unrelated rename can never silently stop metering. Every
+flip is written to the structured audit log as
+`connector_payg_enabled` / `connector_payg_disabled` with the previous value.
+
+### Internal endpoints (`/internal/connectors`)
+
+| Method | Path                     | Consumer     | Description                     |
+| ------ | ------------------------ | ------------ | ------------------------------- |
+| GET    | /config                  | all services | Decrypted provider credentials  |
+| GET    | /models-snapshot         | routing      | Upstream model catalog          |
+| GET    | /health-snapshot         | routing      | Per-provider connector health   |
+| POST   | /models/validate-exposed | auth         | Filter offerable provider/model |
+| GET    | /payg-policy             | auth         | Which providers debit credit    |
+
+`GET /internal/connectors/payg-policy` returns
+`{ providers: { OPENAI: true, OLLAMA: false, … } }` — one entry per DISTINCT
+provider holding a connector row, `true` when **any enabled** connector for it
+is PAYG. A disabled connector never makes its provider metered but still
+contributes the key, so the caller gets an explicit `false` instead of an absent
+key it would have to guess about.
+
+**No `connector.payg_policy_changed` event accompanies a toggle, deliberately.**
+auth-service caches this response for `PAYG_POLICY_CACHE_TTL_SECONDS` (60 s),
+which already bounds the staleness of an action an administrator takes a handful
+of times a year. Adding an exchange binding, a consumer and a boot-ordering
+dependency to save at most 59 seconds is not worth the failure modes.
 
 ## Encryption
 

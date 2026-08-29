@@ -257,6 +257,16 @@ export const it: TranslationDictionary = {
     more: 'Altro',
   },
   chat: {
+    credit: {
+      modelBadge: 'Consuma credito',
+      badgeLabel: 'Credito',
+      badgeHint: 'Ti restano {remaining} di credito connettori',
+      clampedTitle: 'Risposta accorciata',
+      clampedBody:
+        'Questa risposta è stata accorciata per rientrare nel credito connettori residuo.',
+      clampedDismiss: 'Chiudi',
+      addCreditCta: 'Aggiungi credito',
+    },
     threadListDrawer: 'Conversazioni',
     export: {
       action: 'Esporta',
@@ -295,6 +305,19 @@ export const it: TranslationDictionary = {
       roleAssistant: 'Assistente',
     },
     limits: {
+      addCreditCta: 'Aggiungi credito',
+      paygCreditExhaustedTitle: 'Credito connettori esaurito',
+      paygCreditExhaustedBody:
+        'Questo modello viene addebitato sul credito connettori e il tuo saldo è vuoto. Aggiungi credito per continuare oppure scegli un modello locale.',
+      paygPromptTooExpensiveTitle: 'Conversazione troppo lunga per il tuo credito',
+      paygPromptTooExpensiveBody:
+        'Questa conversazione costa più del credito connettori residuo. Aggiungi credito, avvia una chat più breve o scegli un modello locale.',
+      paygModelUnpricedTitle: 'Modello non disponibile',
+      paygModelUnpricedBody:
+        'Questo modello non ha ancora un prezzo pubblicato, quindi non può essere addebitato. Scegli un altro modello.',
+      paygPricingUnavailableTitle: 'Temporaneamente non disponibile',
+      paygPricingUnavailableBody:
+        'Non è stato possibile leggere i prezzi, quindi i modelli a pagamento sono sospesi per un momento. Non ti è stato addebitato nulla. I modelli locali funzionano ancora.',
       dailyTokensTitle: 'Hai usato i token di oggi',
       dailyTokensBody:
         'Il tuo budget giornaliero di token è esaurito. Si azzera a mezzanotte UTC, oppure puoi passare subito a un piano più ampio.',
@@ -2641,6 +2664,9 @@ export const it: TranslationDictionary = {
     invalidFileType: 'Questo tipo di file non è supportato',
   },
   toast: {
+    creditTopupSucceeded: 'Credito aggiunto.',
+    creditTopupFailed: 'Impossibile aggiungere il credito.',
+    creditTopupCancelled: 'Pagamento annullato. Nessun credito è stato aggiunto.',
     loginSuccess: 'Accesso riuscito',
     registerSuccess: 'Account creato con successo',
     loginFailed: 'Accesso non riuscito',
@@ -3562,6 +3588,11 @@ export const it: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.it,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.it,
   adminBilling: {
+    credit: {
+      packageCreated: 'Pacchetto di credito creato.',
+      versionPublished: 'Prezzo del pacchetto pubblicato.',
+      saveFailed: 'Impossibile salvare il pacchetto di credito.',
+    },
     title: 'Dashboard di fatturazione',
     description: 'Ricavi, costi dei fornitori, margine e stato degli abbonamenti.',
     loading: 'Caricamento delle metriche di fatturazione...',
@@ -3688,6 +3719,9 @@ export const it: TranslationDictionary = {
       description: 'Aggiorna questo piano.',
     },
     form: {
+      monthlyConnectorCredit: 'Credito connettori mensile (micro-USD)',
+      monthlyConnectorCreditHelp:
+        'Quota in dollari per i connettori cloud a pagamento, in micro-USD (1.000.000 = 1,00 $). 0 disattiva i connettori a pagamento su questo piano. Questo valore è mostrato agli utenti.',
       name: 'Nome',
       namePlaceholder: 'Pro',
       slug: 'Identificatore',
@@ -3815,6 +3849,7 @@ export const it: TranslationDictionary = {
     },
   },
   userPlan: {
+    noCreditOnThisPlan: 'Questo piano non include credito connettori.',
     title: 'Il mio piano',
     description: 'Il tuo abbonamento attuale, le funzionalità e i modelli consentiti.',
     loading: 'Caricamento del tuo piano...',
@@ -3836,6 +3871,12 @@ export const it: TranslationDictionary = {
     chatsLimitLabel: 'Chat al giorno',
   },
   userUsage: {
+    connectorCredit: 'Credito connettori',
+    creditRemaining: '{remaining} rimanenti',
+    creditUsedOfLimit: '{used} di {limit}',
+    creditPercentUsed: '{percent}% utilizzato',
+    dualConsumptionHint:
+      'I connettori cloud usano sia credito sia token; i modelli locali solo token.',
     title: 'Utilizzo',
     description: 'Monitora il tuo consumo giornaliero di token rispetto alla quota del tuo piano.',
     loading: 'Caricamento dell’utilizzo...',
@@ -4080,6 +4121,44 @@ export const it: TranslationDictionary = {
     },
   },
   billing: {
+    credit: {
+      title: 'Credito connettori',
+      available: 'Disponibile',
+      grantBucket: 'Quota del piano',
+      purchasedBucket: 'Credito acquistato',
+      reserved: 'Bloccato',
+      reservedHint: 'Bloccato per richieste ancora in corso. Rilasciato al loro termine.',
+      resetsOn: 'Si azzera il {date}',
+      neverExpires: 'Non scade mai',
+      percentUsed: '{percent}% utilizzato',
+      noAllowance: 'Questo piano non include credito connettori.',
+      addCredit: 'Aggiungi credito',
+      adminBypass: 'Amministratore — il credito connettori non viene applicato',
+      meteringDisabled: 'Al momento il credito connettori non viene addebitato.',
+      empty: 'Nessuna informazione sul credito disponibile.',
+      error: 'Impossibile caricare il credito connettori.',
+      packages: 'Pacchetti di credito',
+      packagesEmpty: 'Nessun pacchetto di credito disponibile al momento.',
+      packagesError: 'Impossibile caricare i pacchetti di credito.',
+      packageCredit: '{credit} di credito',
+      topupTitle: 'Aggiungi credito connettori',
+      topupDescription: 'Scegli un pacchetto. Il credito acquistato non scade mai.',
+      topupConfirm: 'Vai al pagamento',
+      topupConfirming: 'Preparazione del pagamento…',
+      ledgerTitle: 'Movimenti del credito',
+      ledgerDate: 'Data',
+      ledgerSurface: 'Usato da',
+      ledgerModel: 'Modello',
+      ledgerNoModel: 'Nessuno',
+      ledgerAmount: 'Importo',
+      ledgerBalance: 'Saldo',
+      ledgerEmpty: 'Ancora nessun movimento di credito.',
+      ledgerError: 'Impossibile caricare i movimenti del credito.',
+      ledgerLoadMore: 'Carica altro',
+      ledgerLoadingMore: 'Caricamento…',
+      dualConsumptionNotice:
+        'I connettori cloud come OpenAI, Claude e Gemini consumano SIA il credito in dollari SIA la quota giornaliera di token. I modelli locali consumano solo token.',
+    },
     page: {
       title: 'Fatturazione',
       description: 'Il tuo piano, il tuo consumo e tutto ciò che ti è stato addebitato.',
@@ -4089,6 +4168,18 @@ export const it: TranslationDictionary = {
       dismiss: 'Chiudi',
     },
     errors: {
+      PAYG_CREDIT_EXHAUSTED:
+        'Il tuo credito connettori è esaurito. Aggiungi credito per continuare a usare i modelli cloud.',
+      PAYG_PROMPT_TOO_EXPENSIVE:
+        'Questa conversazione costa più del tuo credito connettori residuo.',
+      PAYG_MODEL_UNPRICED:
+        'Questo modello non ha ancora un prezzo pubblicato e non può essere addebitato.',
+      PAYG_PRICING_UNAVAILABLE:
+        'I prezzi sono temporaneamente irraggiungibili. Non ti è stato addebitato nulla.',
+      CREDIT_PACKAGE_NOT_FOUND: 'Quel pacchetto di credito non esiste più.',
+      CREDIT_PACKAGE_INACTIVE: 'Quel pacchetto di credito non è più in vendita.',
+      CREDIT_ADJUSTMENT_REASON_REQUIRED:
+        'È richiesta una motivazione per una rettifica manuale del credito.',
       PLAN_NOT_PURCHASABLE: "Questo piano non è disponibile per l'acquisto.",
       PAYMENT_NOT_VERIFIED:
         'Non è stato possibile verificare il pagamento. Non ti è stato addebitato nulla.',
@@ -4342,6 +4433,8 @@ export const it: TranslationDictionary = {
         'La disponibilità dei modelli segue il calendario di rilascio di ciascun provider. I nuovi modelli vengono aggiunti man mano che escono.',
     },
     pricing: {
+      paygCreditLabel: 'Credito connettori mensile',
+      paygCreditNone: 'Nessun credito connettori',
       sectionTitle: 'Piani che crescono con te',
       sectionSubtitle:
         'Inizia gratis. Passa a un piano superiore quando ti serve di più. Ogni piano a pagamento raggiunge gli stessi modelli: cambia solo quanto puoi usarli.',

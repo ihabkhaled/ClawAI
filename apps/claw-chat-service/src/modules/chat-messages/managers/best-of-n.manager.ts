@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
@@ -20,6 +21,8 @@ import type { AdvancedModelSelectionResolution } from '../types/advanced-model-s
 import type { BestOfNResponse, CandidateResult } from '../types/best-of-n.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import { RoutingMode } from '../../../generated/prisma';
+import { OLLAMA_PROVIDER } from '../../../common/constants';
+import { PAYG_WORKFLOW_BEST_OF_N } from '../constants/payg.constants';
 
 /**
  * Generates N candidate answers and picks the best via quality scoring.
@@ -304,12 +307,29 @@ export class BestOfNManager {
       think: false,
     };
 
-    const response = await httpRequest<OllamaGenerateResponse>({
-      url: `${ollamaServiceUrl}/api/v1/ollama/generate`,
-      method: 'POST',
-      body: requestBody,
-      timeoutMs: CANDIDATE_TIMEOUT_MS,
-    });
+    const response = await this.accessControlService.meterOrchestrationCall(
+      {
+        userId,
+        requestId: `best-of-n:candidate:${randomUUID()}`,
+        provider: OLLAMA_PROVIDER,
+        model,
+        workflow: PAYG_WORKFLOW_BEST_OF_N,
+        promptText: requestBody.prompt,
+      },
+      async (hold) =>
+        httpRequest<OllamaGenerateResponse>({
+          url: `${ollamaServiceUrl}/api/v1/ollama/generate`,
+          method: 'POST',
+          body: hold.clamped
+            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
+            : requestBody,
+          timeoutMs: CANDIDATE_TIMEOUT_MS,
+        }),
+      (settled) => ({
+        promptTokens: settled.data.promptEvalCount ?? 0,
+        completionTokens: settled.data.evalCount ?? 0,
+      }),
+    );
 
     if (!response.ok) {
       throw new Error(`Ollama returned status ${String(response.status)} for model ${model}`);

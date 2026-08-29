@@ -8,6 +8,7 @@ import { type AdvancedModuleModelSelectionService } from '../modules/chat-messag
 import { verifyMessageSchema } from '../modules/chat-messages/dto/verify-message.dto';
 import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
+import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
 jest.mock('../modules/chat-messages/managers/verifier.manager', () => {
   const actual = jest.requireActual<{ VerifierManager: typeof VerifierManager }>(
@@ -133,7 +134,7 @@ describe('VerifierManager', () => {
       threadsRepo as unknown as ChatThreadsRepository,
       streamService as unknown as ChatStreamService,
       mockResearchEnricherManager as any,
-      { recordUsage: jest.fn() } as any,
+      createFakePaygAccessControl() as any,
     );
 
     jest.clearAllMocks();
@@ -308,7 +309,7 @@ describe('VerifierManager', () => {
         threadsRepo as unknown as ChatThreadsRepository,
         streamService as unknown as ChatStreamService,
         mockResearchEnricherManager as any,
-        { recordUsage: jest.fn() } as any,
+        createFakePaygAccessControl() as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 

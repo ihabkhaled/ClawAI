@@ -8,6 +8,7 @@ import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { PublicPlanCardProps } from '@/types/public-pricing.types';
+import { formatPlanConnectorCredit } from '@/utilities/credit.utility';
 import {
   formatPlanPrice,
   formatPlanQuota,
@@ -75,6 +76,22 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
           <dt>{t('adminPlans.form.weeklyTokenQuota')}</dt>
           <dd className="text-foreground font-medium">
             {formatPlanQuota(plan.weeklyTokenQuota, disabled, unlimited, locale)}
+          </dd>
+        </div>
+        {/* Beside the daily-token row, because the two allowances are spent
+            together by a cloud answer. The figure comes from the plan DTO and
+            never from i18n copy — an allowance duplicated across thirteen locale
+            files drifts the first time an operator edits one of them. */}
+        <div className="flex justify-between gap-2">
+          <dt>{t('marketing.pricing.paygCreditLabel')}</dt>
+          <dd className="text-foreground font-medium">
+            <bdi className="tabular-nums">
+              {formatPlanConnectorCredit(
+                plan.monthlyProviderCostCeilingMicroUsd,
+                t('marketing.pricing.paygCreditNone'),
+                locale,
+              )}
+            </bdi>
           </dd>
         </div>
         <div className="flex justify-between gap-2">

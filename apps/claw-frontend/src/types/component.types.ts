@@ -793,6 +793,12 @@ export type ModelPickerProps = {
   // from the trigger. An icon-only trigger has no room for it, and rendering it
   // anyway wrapped the model name one syllable per line beside the button.
   hideTriggerLabel?: boolean;
+  // Standing context pinned under the option list — today, the pay-as-you-go
+  // dual-consumption disclaimer. It belongs INSIDE the picker because that is
+  // where the user is deciding which model to spend money on; a line beside the
+  // trigger is not read at the moment the choice is made. Omitted by the five
+  // call sites that have nothing to say there.
+  footer?: React.ReactNode;
 };
 
 export type ModelSelectorProps = {
@@ -806,6 +812,15 @@ export type ModelSelectorProps = {
   // even in compact mode (e.g. when there is room on tablet breakpoints).
   variant?: ComposerControlVariant;
   showLabel?: boolean;
+};
+
+export type UseModelSelectorResult = {
+  /** Picker-shaped groups, already carrying the pay-as-you-go cost badge. */
+  groups: ModelPickerGroup[];
+  /** The raw catalog, kept so selection can resolve back to a ModelSelection. */
+  groupedModels: GroupedModels[];
+  isLoading: boolean;
+  t: TranslateFunction;
 };
 
 export type AdvancedModuleModelSelectorProps = {

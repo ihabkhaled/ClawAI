@@ -48,4 +48,26 @@ export enum BillingErrorCode {
   FEATURE_DISABLED = 'FEATURE_DISABLED',
   MODEL_NOT_ALLOWED_FOR_PLAN = 'MODEL_NOT_ALLOWED_FOR_PLAN',
   ADMIN_GRANT_REASON_REQUIRED = 'ADMIN_GRANT_REASON_REQUIRED',
+  // --- PAYG connector credit (ADR-078) ---
+  // Distinct from QUOTA_* on purpose: a token quota and a dollar balance are
+  // different things to the user and have different remedies. A quota resets
+  // tomorrow; credit needs a top-up. Mapping both to one code is what makes an
+  // error message tell someone to wait when they should be buying.
+  PAYG_CREDIT_EXHAUSTED = 'PAYG_CREDIT_EXHAUSTED',
+  // The prompt alone costs more than the whole remaining balance, so no
+  // shortening of the answer can make the request fit.
+  PAYG_PROMPT_TOO_EXPENSIVE = 'PAYG_PROMPT_TOO_EXPENSIVE',
+  // The model has no published price. An unpriced model on a metered provider
+  // is UNSAFE, not free — it is unbounded liability. Fails closed.
+  PAYG_MODEL_UNPRICED = 'PAYG_MODEL_UNPRICED',
+  // The price registry could not be reached and nothing is cached. OUR outage,
+  // not the user's empty wallet — the copy must say so, or we sell a top-up
+  // that was never needed.
+  PAYG_PRICING_UNAVAILABLE = 'PAYG_PRICING_UNAVAILABLE',
+  CREDIT_PACKAGE_NOT_FOUND = 'CREDIT_PACKAGE_NOT_FOUND',
+  CREDIT_PACKAGE_INACTIVE = 'CREDIT_PACKAGE_INACTIVE',
+  // A refund or chargeback exceeds the unspent PURCHASED balance. Spent credit
+  // is consumed irreversibly and is not refundable.
+  CREDIT_REVERSAL_EXCEEDS_UNSPENT = 'CREDIT_REVERSAL_EXCEEDS_UNSPENT',
+  CREDIT_ADJUSTMENT_REASON_REQUIRED = 'CREDIT_ADJUSTMENT_REASON_REQUIRED',
 }

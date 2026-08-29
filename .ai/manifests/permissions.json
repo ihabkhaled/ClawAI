@@ -2,6 +2,7 @@
   "generated": true,
   "permissions": [
     "ADMIN_CONNECTORS_MANAGE",
+    "ADMIN_CREDIT_MANAGE",
     "ADMIN_FEEDBACK_MANAGE",
     "ADMIN_LOGS_VIEW",
     "ADMIN_MODELS_MANAGE",
@@ -15,6 +16,7 @@
     "ADMIN_WORKSPACE_AUTOMATION_MANAGE",
     "AGENT_USE",
     "BEST_OF_N_USE",
+    "BILLING_CREDIT_TOPUP",
     "CHAT_DELETE_OWN",
     "CHAT_READ_OWN",
     "CHAT_USE",

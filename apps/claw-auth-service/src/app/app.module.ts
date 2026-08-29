@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
@@ -21,6 +22,8 @@ import { EntitlementsModule } from '../modules/entitlements/entitlements.module'
 import { UsersModule } from '../modules/users/users.module';
 import { HealthModule } from '../modules/health/health.module';
 import { DeploymentModule } from '../modules/deployment/deployment.module';
+import { SystemSettingsModule } from '../modules/system-settings/system-settings.module';
+import { CreditModule } from '../modules/credit/credit.module';
 
 @Module({
   imports: [
@@ -70,6 +73,10 @@ import { DeploymentModule } from '../modules/deployment/deployment.module';
     }),
     PrismaModule,
     RedisModule,
+    // auth-service had no scheduler before PAYG credit. Both credit jobs take a
+    // Redis lock, so registering one here cannot double-run work if this
+    // service is ever scaled past a single replica.
+    ScheduleModule.forRoot(),
     AuthModule,
     RolesModule,
     PlansModule,
@@ -78,6 +85,8 @@ import { DeploymentModule } from '../modules/deployment/deployment.module';
     UsersModule,
     HealthModule,
     DeploymentModule,
+    SystemSettingsModule,
+    CreditModule,
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),

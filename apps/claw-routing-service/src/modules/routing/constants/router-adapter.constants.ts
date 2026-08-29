@@ -23,6 +23,23 @@ export const OLLAMA_LOCAL_GENERATE_PATH = '/api/v1/ollama/generate';
  */
 export const ROUTER_MAX_OUTPUT_TOKENS = 320;
 
+/**
+ * Characters per token used to size a PAYG reservation for the router prompt.
+ *
+ * DELIBERATELY LOW. The real ratio for English prose is nearer 4, so dividing
+ * by 3 OVER-estimates the prompt by roughly a third. That direction is the safe
+ * one: the reservation is reconciled against the provider's own
+ * `prompt_tokens` on finalize, so an over-estimate costs the user nothing and
+ * is released within milliseconds, while an under-estimate lets a request start
+ * that the balance cannot actually pay for.
+ *
+ * It is only ever used for the ROUTER prompt, which is a compact model list of
+ * a few hundred tokens against a 320-token answer ceiling — the whole call is
+ * a fraction of a cent, so the imprecision cannot meaningfully refuse anyone.
+ * It is NOT a general tokenizer and must not be reused as one.
+ */
+export const ROUTER_PROMPT_CHARS_PER_TOKEN = 3;
+
 /** Deterministic routing: the same request should not rank differently twice. */
 export const ROUTER_TEMPERATURE = 0;
 

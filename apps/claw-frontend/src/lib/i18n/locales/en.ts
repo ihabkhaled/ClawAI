@@ -255,6 +255,15 @@ export const en: TranslationDictionary = {
     more: 'More',
   },
   chat: {
+    credit: {
+      modelBadge: 'Uses credit',
+      badgeLabel: 'Credit',
+      badgeHint: '{remaining} of connector credit left',
+      clampedTitle: 'Answer shortened',
+      clampedBody: 'This reply was shortened to fit your remaining connector credit.',
+      clampedDismiss: 'Dismiss',
+      addCreditCta: 'Add credit',
+    },
     threadListDrawer: 'Conversations',
     export: {
       action: 'Export',
@@ -292,6 +301,19 @@ export const en: TranslationDictionary = {
       roleAssistant: 'Assistant',
     },
     limits: {
+      addCreditCta: 'Add credit',
+      paygCreditExhaustedTitle: 'Connector credit used up',
+      paygCreditExhaustedBody:
+        'This model is billed against your connector credit and your balance is empty. Add credit to continue, or pick a local model.',
+      paygPromptTooExpensiveTitle: 'Conversation too long for your credit',
+      paygPromptTooExpensiveBody:
+        'This conversation costs more than your remaining connector credit. Add credit, start a shorter chat, or pick a local model.',
+      paygModelUnpricedTitle: 'Model unavailable',
+      paygModelUnpricedBody:
+        'This model has no published price yet, so it cannot be billed. Please pick another model.',
+      paygPricingUnavailableTitle: 'Temporarily unavailable',
+      paygPricingUnavailableBody:
+        'Pricing could not be reached, so paid models are paused for a moment. You were not charged. Local models still work.',
       dailyTokensTitle: "You have used today's tokens",
       dailyTokensBody:
         'Your daily token allowance is spent. It resets at midnight UTC, or you can move to a larger plan now.',
@@ -2590,6 +2612,9 @@ export const en: TranslationDictionary = {
     invalidFileType: 'This file type is not supported',
   },
   toast: {
+    creditTopupSucceeded: 'Credit added.',
+    creditTopupFailed: 'Could not add credit.',
+    creditTopupCancelled: 'Payment cancelled. No credit was added.',
     loginSuccess: 'Login successful',
     registerSuccess: 'Account created successfully',
     loginFailed: 'Failed to login',
@@ -3507,6 +3532,11 @@ export const en: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.en,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.en,
   adminBilling: {
+    credit: {
+      packageCreated: 'Credit package created.',
+      versionPublished: 'Package price published.',
+      saveFailed: 'Could not save the credit package.',
+    },
     title: 'Billing dashboard',
     description: 'Revenue, provider cost, margin and subscription health.',
     loading: 'Loading billing metrics...',
@@ -3632,6 +3662,9 @@ export const en: TranslationDictionary = {
       description: 'Update this plan.',
     },
     form: {
+      monthlyConnectorCredit: 'Monthly connector credit (micro-USD)',
+      monthlyConnectorCreditHelp:
+        'Dollar allowance for paid cloud connectors, in micro-USD (1,000,000 = $1.00). 0 disables paid connectors on this plan. This figure is shown to users.',
       name: 'Name',
       namePlaceholder: 'Pro',
       slug: 'Slug',
@@ -3758,6 +3791,7 @@ export const en: TranslationDictionary = {
     },
   },
   userPlan: {
+    noCreditOnThisPlan: 'This plan includes no connector credit.',
     title: 'My Plan',
     description: 'Your current subscription, features and allowed models.',
     loading: 'Loading your plan...',
@@ -3779,6 +3813,12 @@ export const en: TranslationDictionary = {
     chatsLimitLabel: 'Chats per day',
   },
   userUsage: {
+    connectorCredit: 'Connector credit',
+    creditRemaining: '{remaining} remaining',
+    creditUsedOfLimit: '{used} of {limit}',
+    creditPercentUsed: '{percent}% used',
+    dualConsumptionHint:
+      'Cloud connectors use both credit and tokens; local models use tokens only.',
     title: 'Usage',
     description: 'Track your daily token consumption against your plan quota.',
     loading: 'Loading usage...',
@@ -4020,6 +4060,44 @@ export const en: TranslationDictionary = {
     },
   },
   billing: {
+    credit: {
+      title: 'Connector credit',
+      available: 'Available',
+      grantBucket: 'Plan allowance',
+      purchasedBucket: 'Purchased credit',
+      reserved: 'On hold',
+      reservedHint: 'Held for requests still running. Released when they finish.',
+      resetsOn: 'Resets on {date}',
+      neverExpires: 'Never expires',
+      percentUsed: '{percent}% used',
+      noAllowance: 'This plan includes no connector credit.',
+      addCredit: 'Add credit',
+      adminBypass: 'Administrator — connector credit is not applied',
+      meteringDisabled: 'Connector credit is not being charged right now.',
+      empty: 'No credit information available.',
+      error: 'Failed to load your connector credit.',
+      packages: 'Credit packages',
+      packagesEmpty: 'No credit packages are available right now.',
+      packagesError: 'Failed to load credit packages.',
+      packageCredit: '{credit} of credit',
+      topupTitle: 'Add connector credit',
+      topupDescription: 'Choose a package. Purchased credit never expires.',
+      topupConfirm: 'Continue to payment',
+      topupConfirming: 'Preparing payment…',
+      ledgerTitle: 'Credit activity',
+      ledgerDate: 'Date',
+      ledgerSurface: 'Used by',
+      ledgerModel: 'Model',
+      ledgerNoModel: 'None',
+      ledgerAmount: 'Amount',
+      ledgerBalance: 'Balance',
+      ledgerEmpty: 'No credit activity yet.',
+      ledgerError: 'Failed to load credit activity.',
+      ledgerLoadMore: 'Load more',
+      ledgerLoadingMore: 'Loading…',
+      dualConsumptionNotice:
+        'Cloud connectors such as OpenAI, Claude and Gemini draw from BOTH your dollar credit and your daily token allowance. Local models draw from tokens only.',
+    },
     page: {
       title: 'Billing',
       description: 'Your plan, your usage, and everything you have been charged.',
@@ -4029,6 +4107,15 @@ export const en: TranslationDictionary = {
       dismiss: 'Dismiss',
     },
     errors: {
+      PAYG_CREDIT_EXHAUSTED:
+        'Your connector credit is used up. Add credit to keep using cloud models.',
+      PAYG_PROMPT_TOO_EXPENSIVE:
+        'This conversation costs more than your remaining connector credit.',
+      PAYG_MODEL_UNPRICED: 'This model has no published price yet and cannot be billed.',
+      PAYG_PRICING_UNAVAILABLE: 'Pricing is temporarily unreachable. You were not charged.',
+      CREDIT_PACKAGE_NOT_FOUND: 'That credit package no longer exists.',
+      CREDIT_PACKAGE_INACTIVE: 'That credit package is no longer on sale.',
+      CREDIT_ADJUSTMENT_REASON_REQUIRED: 'A reason is required for a manual credit adjustment.',
       PLAN_NOT_PURCHASABLE: 'This plan is not available for purchase.',
       PAYMENT_NOT_VERIFIED: 'The payment could not be verified. You have not been charged.',
       PAYMENT_METHOD_UNAVAILABLE:
@@ -4270,6 +4357,8 @@ export const en: TranslationDictionary = {
         'Model availability follows each provider’s own release schedule. New models are added as they ship.',
     },
     pricing: {
+      paygCreditLabel: 'Monthly connector credit',
+      paygCreditNone: 'No connector credit',
       sectionTitle: 'Plans that scale with you',
       sectionSubtitle:
         'Start free. Upgrade when you need more. Every paid plan reaches the same models — the difference is how much you can use.',

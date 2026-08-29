@@ -8,6 +8,11 @@ const appConfigSchema = z.object({
   IMAGE_PORT: z.string().default('4012'),
   FILE_SERVICE_URL: z.string().min(1, 'FILE_SERVICE_URL is required'),
   CONNECTOR_SERVICE_URL: z.string().min(1, 'CONNECTOR_SERVICE_URL is required'),
+  // PAYG credit — the wallet, the reservation and the price all live in
+  // auth-service (ADR-082). This service only needs to know where to reach it.
+  // Already present in .env / .env.example, and both compose files mount the
+  // same `env_file: ../.env`, so no infra change accompanies this key.
+  AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
   STABLE_DIFFUSION_URL: z.string().default('http://stable-diffusion:7860'),
   // Stream 22 — shared secret for `Authorization: Service <token>` calls into
   // file-service guarded `/api/v1/internal/files/*` endpoints. Matches the

@@ -32,6 +32,17 @@ export interface RouterInferenceRequest {
    * sees its own malformed answer and the schema it broke.
    */
   repairHint?: string;
+  /**
+   * The output ceiling the provider must be called with.
+   *
+   * Set by the PAYG affordability clamp: when a user's credit cannot fund a
+   * full-length answer the reservation returns a smaller ceiling, and the
+   * provider then becomes physically incapable of producing a response that
+   * costs more than the balance. Optional so an unmetered call — and every
+   * existing test — keeps the adapter's own ROUTER_MAX_OUTPUT_TOKENS default.
+   * When present it must be used verbatim, never the value that was asked for.
+   */
+  maxOutputTokens?: number;
 }
 
 /** A raw provider answer, before schema validation. */
@@ -142,6 +153,20 @@ export type DecisionValidationResult = DecisionValidationSuccess | DecisionValid
 export interface RouterCoordinatorOptions {
   traceId: string;
   prompt: string;
+  /**
+   * Whose credit pays for the router's own inference (U5/U6).
+   *
+   * The router calls real paid models — Gemini and Ollama Cloud — to decide
+   * where a message should go, and that spend used to reach `router_attempts`
+   * and stop there. It travels from the `message.created` event that started
+   * the walk.
+   *
+   * Optional because not every walk has one: an operator replay or a shadow
+   * evaluation runs against no user's wallet. Those paths are left UNMETERED
+   * rather than charged to an invented id — billing someone for a request they
+   * did not make is worse than an unmetered internal call.
+   */
+  userId?: string;
   chain: readonly RouterChainEntryInput[];
   /** Wall-clock ceiling across every entry, retry and repair. */
   totalDeadlineMs: number;

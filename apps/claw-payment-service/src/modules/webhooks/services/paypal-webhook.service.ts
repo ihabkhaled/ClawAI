@@ -3,13 +3,14 @@ import {
   BillingErrorCode,
   BillingGateway,
   EventPattern,
+  PaymentTransactionType,
   SubscriptionStatus,
 } from '@claw/shared-types';
 
 import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
 import { PaymentTransactionRepository } from '../../billing/repositories/payment-transaction.repository';
 import { SubscriptionLifecycleService } from '../../billing/services/subscription-lifecycle.service';
-import { isSubscriptionCheckoutSession } from '../../billing/utilities/checkout-session-purpose.utility';
+import { isPayableCheckoutSession } from '../../billing/utilities/checkout-session-purpose.utility';
 import { PaypalAdapter } from '../../gateways/paypal/paypal.adapter';
 import { type PaypalWebhookHeaders } from '../../gateways/paypal/types/paypal.types';
 import { SubscriptionRepository } from '../../subscriptions/repositories/subscription.repository';
@@ -196,7 +197,11 @@ export class PaypalWebhookService {
             subject.captureId,
           );
 
-    if (original === null || original.subscriptionId === null) {
+    // A CREDIT_TOPUP charge legitimately has NO subscription — it bought a
+    // wallet balance. Requiring one here would have refused every top-up
+    // reversal and left the credit spendable after the money went back.
+    const isCreditTopup = original?.type === PaymentTransactionType.CREDIT_TOPUP;
+    if (original === null || (original.subscriptionId === null && !isCreditTopup)) {
       // We cannot tie the reversal to a charge we recorded. Failing loudly is
       // right: silently succeeding would leave a reversal with no effect on
       // entitlement, which is the worst of both outcomes.
@@ -371,7 +376,10 @@ export class PaypalWebhookService {
     }
     const session = await this.sessions.findById(sessionId);
     const providerOrderId = session?.providerOrderId ?? null;
-    if (session === null || providerOrderId === null || !isSubscriptionCheckoutSession(session)) {
+    // Payable, not subscription-only: a credit top-up is a real purchase with a
+    // real amount, and rejecting it here would take the money and never grant
+    // the credit.
+    if (session === null || providerOrderId === null || !isPayableCheckoutSession(session)) {
       return null;
     }
     return {

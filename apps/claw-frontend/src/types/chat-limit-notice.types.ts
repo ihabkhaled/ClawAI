@@ -1,3 +1,4 @@
+import type { ChatLimitAction } from '@/enums/chat-limit-action.enum';
 import type { ChatLimitKind } from '@/enums/chat-limit-kind.enum';
 
 /**
@@ -12,5 +13,12 @@ export interface ChatLimitNotice {
   kind: ChatLimitKind;
   titleKey: string;
   bodyKey: string;
-  showUpgrade: boolean;
+  action: ChatLimitAction;
+  /**
+   * True when the refusal came from the pay-as-you-go wallet, so the card also
+   * renders the shared dual-consumption disclaimer. Somebody reading "you are
+   * out of credit" needs to know in the same breath that a local model still
+   * works and that cloud answers spend two allowances, not one.
+   */
+  showCreditDisclaimer: boolean;
 }

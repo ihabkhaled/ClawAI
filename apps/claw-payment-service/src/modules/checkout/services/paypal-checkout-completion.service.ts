@@ -5,8 +5,8 @@ import { BillingErrorCode, BillingGateway, CheckoutSessionStatus } from '@claw/s
 import { BillingException } from '../../../common/errors';
 import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
 import {
-  isSubscriptionCheckoutSession,
-  type SubscriptionCheckoutSession,
+  isPayableCheckoutSession,
+  type PayableCheckoutSession,
 } from '../../billing/utilities/checkout-session-purpose.utility';
 import { PaypalAdapter } from '../../gateways/paypal/paypal.adapter';
 import { PaymentCompensationService } from '../../refunds/services/payment-compensation.service';
@@ -19,6 +19,18 @@ import {
 import { toCheckoutSessionView } from '../utilities/checkout-view.utility';
 import { type PaypalCaptureVerification } from '../../gateways/paypal/types/paypal.types';
 
+/**
+ * Browser-assisted capture for PayPal.
+ *
+ * Narrowed to PAYABLE rather than subscription sessions. A PayPal order is
+ * APPROVED at the redirect and captured HERE — nothing else captures it, and no
+ * webhook fires until it is. Excluding credit top-ups would have left every
+ * PayPal top-up approved, uncaptured, and silently unpaid.
+ *
+ * Everything financial is still read back from PayPal against the session's own
+ * recorded amount; the browser supplies only an owned session id, its nonce and
+ * the order id we created.
+ */
 @Injectable()
 export class PaypalCheckoutCompletionService {
   private readonly logger = new Logger(PaypalCheckoutCompletionService.name);
@@ -51,7 +63,7 @@ export class PaypalCheckoutCompletionService {
   }
 
   private async captureAndActivate(
-    session: SubscriptionCheckoutSession,
+    session: PayableCheckoutSession,
     userId: string,
     sessionId: string,
     providerOrderId: string,
@@ -87,7 +99,7 @@ export class PaypalCheckoutCompletionService {
   }
 
   private async activateOrCompensate(
-    session: SubscriptionCheckoutSession,
+    session: PayableCheckoutSession,
     verification: PaypalCaptureVerification & {
       captureId: string;
       amountMinor: number;
@@ -125,12 +137,12 @@ export class PaypalCheckoutCompletionService {
 
   private async requireOwnedSession(
     input: CompletePaypalCheckoutInput | CompletePaypalSdkCheckoutInput,
-  ): Promise<SubscriptionCheckoutSession> {
+  ): Promise<PayableCheckoutSession> {
     const session = await this.sessions.findById(input.sessionId);
     if (
       session?.userId !== input.userId ||
       session.gateway !== BillingGateway.PAYPAL ||
-      !isSubscriptionCheckoutSession(session)
+      !isPayableCheckoutSession(session)
     ) {
       throw new BillingException(BillingErrorCode.CHECKOUT_SESSION_NOT_FOUND);
     }
@@ -138,7 +150,7 @@ export class PaypalCheckoutCompletionService {
   }
 
   private static assertReturnBinding(
-    session: SubscriptionCheckoutSession,
+    session: PayableCheckoutSession,
     input: CompletePaypalCheckoutInput,
   ): void {
     PaypalCheckoutCompletionService.assertSdkBinding(session, input);
@@ -148,7 +160,7 @@ export class PaypalCheckoutCompletionService {
   }
 
   private static assertSdkBinding(
-    session: SubscriptionCheckoutSession,
+    session: PayableCheckoutSession,
     input: CompletePaypalSdkCheckoutInput,
   ): void {
     if (session.providerOrderId !== input.providerOrderId) {
@@ -168,7 +180,7 @@ export class PaypalCheckoutCompletionService {
   }
 
   private async captureOrResolve(
-    session: SubscriptionCheckoutSession,
+    session: PayableCheckoutSession,
   ): Promise<PaypalCaptureVerification> {
     const expected = {
       amountMinor: session.chargeAmountMinor,

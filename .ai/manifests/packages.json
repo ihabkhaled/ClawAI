@@ -17,6 +17,7 @@
     {
       "dir": "packages/shared-entitlements",
       "internalDeps": [
+        "@claw/shared-constants",
         "@claw/shared-types"
       ],
       "name": "@claw/shared-entitlements"

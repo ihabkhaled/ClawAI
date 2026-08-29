@@ -7,12 +7,14 @@ import { DeploymentSeedRepository } from './repositories/deployment-seed.reposit
 import { ModelDiscoveryRepository } from './repositories/model-discovery.repository';
 import { RouterChainSeedRepository } from './repositories/router-chain-seed.repository';
 import { ModelCostRepository } from './repositories/model-cost.repository';
+import { ModelCostSeedRepository } from './repositories/model-cost-seed.repository';
 import { RouterAdminOverrideRepository } from './repositories/router-admin-override.repository';
 import { RouterModelRegistryRepository } from './repositories/router-model-registry.repository';
 import { DeploymentSeedService } from './services/deployment-seed.service';
 import { ModelDiscoveryService } from './services/model-discovery.service';
 import { RouterChainSeedService } from './services/router-chain-seed.service';
 import { ModelCostService } from './services/model-cost.service';
+import { ModelCostSeedService } from './services/model-cost-seed.service';
 import { ModelIntelligenceService } from './services/model-intelligence.service';
 import { RouterModelsService } from './services/router-models.service';
 
@@ -22,6 +24,7 @@ import { RouterModelsService } from './services/router-models.service';
     RouterModelsService,
     ModelIntelligenceService,
     ModelCostService,
+    ModelCostSeedService,
     DeploymentSeedService,
     RouterChainSeedService,
     ModelDiscoveryService,
@@ -29,6 +32,7 @@ import { RouterModelsService } from './services/router-models.service';
     RouterModelRegistryRepository,
     RouterAdminOverrideRepository,
     ModelCostRepository,
+    ModelCostSeedRepository,
     DeploymentSeedRepository,
     RouterChainSeedRepository,
     ModelDiscoveryRepository,

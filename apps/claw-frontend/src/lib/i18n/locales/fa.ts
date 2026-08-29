@@ -255,6 +255,15 @@ export const fa: TranslationDictionary = {
     more: 'بیشتر',
   },
   chat: {
+    credit: {
+      modelBadge: 'اعتبار مصرف می‌کند',
+      badgeLabel: 'اعتبار',
+      badgeHint: '{remaining} اعتبار رابط باقی مانده است',
+      clampedTitle: 'پاسخ کوتاه شد',
+      clampedBody: 'این پاسخ کوتاه شد تا با اعتبار باقی‌ماندهٔ رابط‌های شما هم‌خوانی داشته باشد.',
+      clampedDismiss: 'بستن',
+      addCreditCta: 'افزودن اعتبار',
+    },
     threadListDrawer: 'گفت‌وگوها',
     export: {
       action: 'برون‌ریزی',
@@ -292,6 +301,19 @@ export const fa: TranslationDictionary = {
       roleAssistant: 'دستیار',
     },
     limits: {
+      addCreditCta: 'افزودن اعتبار',
+      paygCreditExhaustedTitle: 'اعتبار رابط‌ها تمام شد',
+      paygCreditExhaustedBody:
+        'هزینهٔ این مدل از اعتبار رابط‌های شما کسر می‌شود و مانده‌تان صفر است. برای ادامه اعتبار اضافه کنید یا یک مدل محلی انتخاب کنید.',
+      paygPromptTooExpensiveTitle: 'گفت‌وگو برای اعتبار شما طولانی است',
+      paygPromptTooExpensiveBody:
+        'هزینهٔ این گفت‌وگو از اعتبار باقی‌ماندهٔ رابط‌های شما بیشتر است. اعتبار اضافه کنید، گفت‌وگوی کوتاه‌تری آغاز کنید یا مدل محلی انتخاب کنید.',
+      paygModelUnpricedTitle: 'مدل در دسترس نیست',
+      paygModelUnpricedBody:
+        'هنوز قیمتی برای این مدل منتشر نشده است، بنابراین قابل محاسبه نیست. لطفاً مدل دیگری انتخاب کنید.',
+      paygPricingUnavailableTitle: 'موقتاً در دسترس نیست',
+      paygPricingUnavailableBody:
+        'دسترسی به اطلاعات قیمت ممکن نشد، بنابراین مدل‌های پولی لحظه‌ای متوقف شده‌اند. مبلغی از شما کسر نشد. مدل‌های محلی همچنان کار می‌کنند.',
       dailyTokensTitle: 'توکن‌های امروز تمام شد',
       dailyTokensBody:
         'سهمیه روزانه توکن شما مصرف شده است. نیمه‌شب به وقت UTC بازنشانی می‌شود، یا هم‌اکنون به طرح بزرگ‌تری بروید.',
@@ -2603,6 +2625,9 @@ export const fa: TranslationDictionary = {
     invalidFileType: 'این نوع فایل پشتیبانی نمی شود',
   },
   toast: {
+    creditTopupSucceeded: 'اعتبار افزوده شد.',
+    creditTopupFailed: 'افزودن اعتبار ممکن نشد.',
+    creditTopupCancelled: 'پرداخت لغو شد. اعتباری افزوده نشد.',
     loginSuccess: 'ورود با موفقیت',
     registerSuccess: 'حساب با موفقیت ایجاد شد',
     loginFailed: 'ورود ناموفق بود',
@@ -3529,6 +3554,11 @@ export const fa: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fa,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.fa,
   adminBilling: {
+    credit: {
+      packageCreated: 'بستهٔ اعتبار ایجاد شد.',
+      versionPublished: 'قیمت بسته منتشر شد.',
+      saveFailed: 'ذخیرهٔ بستهٔ اعتبار ممکن نشد.',
+    },
     title: 'داشبورد صورتحساب',
     description: 'درآمد، هزینه ارائه دهنده، حاشیه و سلامت اشتراک.',
     loading: 'در حال بارگیری معیارهای صورت‌حساب...',
@@ -3653,6 +3683,9 @@ export const fa: TranslationDictionary = {
       description: 'این طرح را به روز کنید.',
     },
     form: {
+      monthlyConnectorCredit: 'اعتبار ماهانهٔ رابط‌ها (میکرو‌دلار)',
+      monthlyConnectorCreditHelp:
+        'سهمیهٔ دلاری برای رابط‌های ابری پولی، به میکرو‌دلار (۱٬۰۰۰٬۰۰۰ = ۱٫۰۰ دلار). مقدار ۰ رابط‌های پولی را در این پلن غیرفعال می‌کند. این عدد به کاربران نمایش داده می‌شود.',
       name: 'نام',
       namePlaceholder: 'حرفه ای',
       slug: 'حلزون حرکت کردن',
@@ -3779,6 +3812,7 @@ export const fa: TranslationDictionary = {
     },
   },
   userPlan: {
+    noCreditOnThisPlan: 'این پلن شامل اعتبار رابط‌ها نمی‌شود.',
     title: 'طرح من',
     description: 'اشتراک فعلی، ویژگی‌ها و مدل‌های مجاز شما.',
     loading: 'در حال بارگیری طرح شما...',
@@ -3800,6 +3834,11 @@ export const fa: TranslationDictionary = {
     chatsLimitLabel: 'چت در روز',
   },
   userUsage: {
+    connectorCredit: 'اعتبار رابط‌ها',
+    creditRemaining: '{remaining} باقی مانده',
+    creditUsedOfLimit: '{used} از {limit}',
+    creditPercentUsed: '{percent}٪ مصرف شده',
+    dualConsumptionHint: 'رابط‌های ابری هم اعتبار و هم توکن مصرف می‌کنند؛ مدل‌های محلی فقط توکن.',
     title: 'استفاده',
     description: 'مصرف رمز روزانه خود را در برابر سهمیه طرح خود پیگیری کنید.',
     loading: 'بارگیری استفاده...',
@@ -4041,6 +4080,45 @@ export const fa: TranslationDictionary = {
     },
   },
   billing: {
+    credit: {
+      title: 'اعتبار رابط‌ها',
+      available: 'در دسترس',
+      grantBucket: 'سهمیهٔ پلن',
+      purchasedBucket: 'اعتبار خریداری‌شده',
+      reserved: 'رزرو‌شده',
+      reservedHint:
+        'برای درخواست‌هایی که هنوز در حال اجرا هستند رزرو شده است. پس از پایان آزاد می‌شود.',
+      resetsOn: 'در {date} بازنشانی می‌شود',
+      neverExpires: 'هرگز منقضی نمی‌شود',
+      percentUsed: '{percent}٪ مصرف شده',
+      noAllowance: 'این پلن شامل اعتبار رابط‌ها نمی‌شود.',
+      addCredit: 'افزودن اعتبار',
+      adminBypass: 'مدیر — اعتبار رابط‌ها اعمال نمی‌شود',
+      meteringDisabled: 'در حال حاضر اعتبار رابط‌ها کسر نمی‌شود.',
+      empty: 'اطلاعاتی دربارهٔ اعتبار موجود نیست.',
+      error: 'بارگذاری اعتبار رابط‌ها ناموفق بود.',
+      packages: 'بسته‌های اعتبار',
+      packagesEmpty: 'در حال حاضر بستهٔ اعتباری در دسترس نیست.',
+      packagesError: 'بارگذاری بسته‌های اعتبار ناموفق بود.',
+      packageCredit: '{credit} اعتبار',
+      topupTitle: 'افزودن اعتبار رابط‌ها',
+      topupDescription: 'یک بسته انتخاب کنید. اعتبار خریداری‌شده هرگز منقضی نمی‌شود.',
+      topupConfirm: 'ادامه به پرداخت',
+      topupConfirming: 'در حال آماده‌سازی پرداخت…',
+      ledgerTitle: 'گردش اعتبار',
+      ledgerDate: 'تاریخ',
+      ledgerSurface: 'محل استفاده',
+      ledgerModel: 'مدل',
+      ledgerNoModel: 'ندارد',
+      ledgerAmount: 'مبلغ',
+      ledgerBalance: 'مانده',
+      ledgerEmpty: 'هنوز گردشی برای اعتبار ثبت نشده است.',
+      ledgerError: 'بارگذاری گردش اعتبار ناموفق بود.',
+      ledgerLoadMore: 'بارگذاری بیشتر',
+      ledgerLoadingMore: 'در حال بارگذاری…',
+      dualConsumptionNotice:
+        'رابط‌های ابری مانند OpenAI، Claude و Gemini هم از اعتبار دلاری شما و هم از سهمیهٔ روزانهٔ توکن شما کسر می‌کنند. مدل‌های محلی فقط از توکن کسر می‌کنند.',
+    },
     page: {
       title: 'صورتحساب',
       description: 'طرح شما، استفاده شما، و هر چیزی که از شما هزینه شده است.',
@@ -4050,6 +4128,14 @@ export const fa: TranslationDictionary = {
       dismiss: 'رد کردن',
     },
     errors: {
+      PAYG_CREDIT_EXHAUSTED:
+        'اعتبار رابط‌های شما تمام شده است. برای ادامهٔ استفاده از مدل‌های ابری اعتبار اضافه کنید.',
+      PAYG_PROMPT_TOO_EXPENSIVE: 'هزینهٔ این گفت‌وگو از اعتبار باقی‌ماندهٔ رابط‌های شما بیشتر است.',
+      PAYG_MODEL_UNPRICED: 'هنوز قیمتی برای این مدل منتشر نشده و قابل محاسبه نیست.',
+      PAYG_PRICING_UNAVAILABLE: 'اطلاعات قیمت موقتاً در دسترس نیست. مبلغی از شما کسر نشد.',
+      CREDIT_PACKAGE_NOT_FOUND: 'این بستهٔ اعتبار دیگر وجود ندارد.',
+      CREDIT_PACKAGE_INACTIVE: 'این بستهٔ اعتبار دیگر عرضه نمی‌شود.',
+      CREDIT_ADJUSTMENT_REASON_REQUIRED: 'برای اصلاح دستی اعتبار، ذکر دلیل الزامی است.',
       PLAN_NOT_PURCHASABLE: 'این طرح برای خرید در دسترس نیست.',
       PAYMENT_NOT_VERIFIED: 'پرداخت تأیید نشد.شما اتهامی دریافت نکرده اید.',
       PAYMENT_METHOD_UNAVAILABLE:
@@ -4295,6 +4381,8 @@ export const fa: TranslationDictionary = {
         'در دسترس بودن مدل از برنامه زمانبندی انتشار خود هر ارائه دهنده پیروی می کند.مدل های جدید با ارسال اضافه می شوند.',
     },
     pricing: {
+      paygCreditLabel: 'اعتبار ماهانهٔ رابط‌ها',
+      paygCreditNone: 'بدون اعتبار رابط',
       sectionTitle: 'برنامه هایی که با شما مقیاس می شوند',
       sectionSubtitle:
         'رایگان شروع کنید.زمانی که به موارد بیشتری نیاز دارید ارتقا دهید.هر طرح پولی به مدل‌های یکسانی می‌رسد - تفاوت این است که چقدر می‌توانید استفاده کنید.',

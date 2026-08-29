@@ -5,6 +5,7 @@ import {
 } from '@claw/shared-types';
 
 import { RefundStatus } from '../../../../generated/prisma';
+import { REFUNDABLE_CHARGE_TYPES } from '../../constants/refundable-charge.constants';
 import { RefundRepository } from '../refund.repository';
 
 describe('RefundRepository', () => {
@@ -26,6 +27,7 @@ describe('RefundRepository', () => {
     id: 'charge-1',
     userId: 'user-1',
     subscriptionId: 'subscription-1',
+    type: PaymentTransactionType.CHARGE,
     gateway: BillingGateway.PAYPAL,
     amountMinor: 10_000,
     currency: 'USD',
@@ -100,29 +102,43 @@ describe('RefundRepository', () => {
     expect(prisma.paymentTransaction.findFirst).toHaveBeenCalledWith({
       where: {
         id: 'charge-1',
-        type: {
-          in: [
-            PaymentTransactionType.CHARGE,
-            PaymentTransactionType.RENEWAL,
-            PaymentTransactionType.PRORATION_CHARGE,
-          ],
-        },
+        type: { in: REFUNDABLE_CHARGE_TYPES },
         status: PaymentTransactionStatus.CAPTURED,
-        subscriptionId: { not: null },
+        // Deliberately NOT `subscriptionId: { not: null }`: a PAYG credit
+        // top-up is a real captured charge that buys a balance, not a plan.
         providerTransactionId: { not: null },
       },
     });
   });
 
+  it('finds a captured CREDIT_TOPUP even though it has no subscription', async () => {
+    prisma.paymentTransaction.findFirst.mockResolvedValueOnce({
+      ...capturedCharge,
+      subscriptionId: null,
+      type: PaymentTransactionType.CREDIT_TOPUP,
+    });
+
+    // Refusing to find it here would leave a refunded top-up with the money
+    // returned and the credit still spendable.
+    await expect(repository.findCapturedCharge('charge-1')).resolves.toEqual(
+      expect.objectContaining({
+        subscriptionId: null,
+        type: PaymentTransactionType.CREDIT_TOPUP,
+      }),
+    );
+  });
+
   it('does not expose a charge that is absent or lacks a required relation', async () => {
     prisma.paymentTransaction.findFirst
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ ...capturedCharge, subscriptionId: null })
-      .mockResolvedValueOnce({ ...capturedCharge, providerTransactionId: null });
+      .mockResolvedValueOnce({ ...capturedCharge, providerTransactionId: null })
+      .mockResolvedValueOnce({ ...capturedCharge, type: 'SOMETHING_NEWER' });
 
     await expect(repository.findCapturedCharge('missing')).resolves.toBeNull();
-    await expect(repository.findCapturedCharge('unowned')).resolves.toBeNull();
     await expect(repository.findCapturedCharge('unsettled')).resolves.toBeNull();
+    // A type this build cannot classify is refused rather than guessed at: the
+    // column is TEXT, and guessing decides whether a plan or a wallet is hit.
+    await expect(repository.findCapturedCharge('unknown-type')).resolves.toBeNull();
   });
 
   it('lists recent captured charges with only reserved refund amounts', async () => {

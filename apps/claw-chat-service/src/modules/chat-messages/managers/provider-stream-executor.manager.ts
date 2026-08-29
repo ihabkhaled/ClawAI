@@ -167,6 +167,12 @@ export class ProviderStreamExecutor {
     if (fragment.kind === 'usage') {
       state.inputTokens = fragment.promptTokens ?? state.inputTokens;
       state.outputTokens = fragment.completionTokens ?? state.outputTokens;
+      // `??` and not `|| 0`: a provider that reports nothing must stay absent
+      // so the PAYG finalize can tell "no measured sub-count" from a measured
+      // zero. Coercing to 0 here would make a cache hit indistinguishable from
+      // a cache miss.
+      state.cachedPromptTokens = fragment.cachedPromptTokens ?? state.cachedPromptTokens;
+      state.reasoningTokens = fragment.reasoningTokens ?? state.reasoningTokens;
       return;
     }
     if (fragment.kind === 'tool-calls') {
@@ -381,6 +387,8 @@ export class ProviderStreamExecutor {
       reasoning: state.reasoning,
       inputTokens: state.inputTokens,
       outputTokens: state.outputTokens,
+      cachedPromptTokens: state.cachedPromptTokens,
+      reasoningTokens: state.reasoningTokens,
       finishReason: state.finishReason,
       cancelled: state.cancelled,
       ...(state.toolCalls === undefined ? {} : { toolCalls: state.toolCalls }),

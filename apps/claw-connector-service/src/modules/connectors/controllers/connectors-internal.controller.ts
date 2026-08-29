@@ -11,6 +11,7 @@ import {
   type ConnectorConfigResult,
   type ConnectorHealthSnapshotResult,
   type ConnectorModelsSnapshotResult,
+  type ConnectorPaygPolicyResult,
 } from '../types/connectors.types';
 
 @Controller('internal/connectors')
@@ -36,6 +37,29 @@ export class ConnectorsInternalController {
   @Get('health-snapshot')
   async getHealthSnapshot(): Promise<ConnectorHealthSnapshotResult> {
     return this.connectorsService.getHealthSnapshot();
+  }
+
+  // auth-service calls this before reserving PAYG credit, to learn which
+  // providers cost real money. Provider grain with a per-connector admin
+  // override rolled up, because `connectors` has no unique constraint on
+  // `provider` and a reservation key therefore cannot address one row
+  // (ADR-082). `Connector.isPayAsYouGo` is the runtime authority here, NOT
+  // `PAYG_DEFAULT_PROVIDERS` — that constant is only the migration's default,
+  // and a predicate compiled into six `node_modules` copies would make the
+  // admin toggle unenforceable without a six-container rebuild.
+  //
+  // NO cache-bust event accompanies a toggle, deliberately: the caller caches
+  // for PAYG_POLICY_CACHE_TTL_SECONDS (60 s), which already bounds the staleness
+  // of an action taken a handful of times a year.
+  //
+  // @Public() matches every sibling on this controller. It is safe here and
+  // would not be on a money-moving route: the response carries no secret, no
+  // user, no balance and no amount — only which providers an operator has
+  // classified as paid, which the public pricing page states anyway.
+  @Public()
+  @Get('payg-policy')
+  async getPaygPolicy(): Promise<ConnectorPaygPolicyResult> {
+    return this.connectorsService.getPaygPolicy();
   }
 
   // auth-service calls this before persisting plan model access, so an

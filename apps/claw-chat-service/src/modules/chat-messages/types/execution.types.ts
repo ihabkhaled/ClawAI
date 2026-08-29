@@ -99,6 +99,28 @@ export type LlmResponse = {
   tokenEstimated?: boolean;
   tokenSource?: TokenUsageSource;
   tokenContext?: TokenLedgerContext;
+  /**
+   * The discounted subset of `inputTokens` the provider served from its prompt
+   * cache, and the subset of `outputTokens` the model spent thinking.
+   *
+   * Both are carried on the response because the PAYG reconciliation needs the
+   * real split: a cached input token can cost a tenth of a fresh one, and on a
+   * reasoning model the thinking tokens are routinely the larger and far more
+   * expensive half of the completion. Before this they were dropped here and
+   * finalized as zero, which billed a reasoning model at zero on its dominant
+   * cost (ADR-078).
+   */
+  cachedPromptTokens?: number;
+  reasoningTokens?: number;
+  /**
+   * True when the output ceiling was cut down to what the remaining PAYG credit
+   * could pay for.
+   *
+   * The user is told rather than handed a quietly short answer — a truncated
+   * reply with no explanation reads as the model being bad, not as the wallet
+   * being empty.
+   */
+  paygClamped?: boolean;
   latencyMs: number;
   finishReason?: string;
   usedFallback: boolean;

@@ -15,6 +15,7 @@ import {
 } from '../utilities/quota-reservation.utility';
 import {
   type FinalizeInput,
+  type QuotaAdjustmentDeltas,
   type QuotaLimits,
   type QuotaSnapshot,
   type ReserveResult,
@@ -154,9 +155,11 @@ export class QuotaService {
       await this.adjust(keys, {
         weightedTokenDelta: -input.estimatedWeightedTokens,
         costMicroUsdDelta: -input.estimatedCostMicroUsd,
-        concurrencyDelta: -1,
+        concurrencyDelta: -input.concurrencyDelta,
         chatsDelta: -input.chatsDelta,
         messagesDelta: -input.messagesDelta,
+        creditGrantDelta: -input.creditGrantMicroUsd,
+        creditPurchasedDelta: -input.creditPurchasedMicroUsd,
       });
       this.logger.error(`persistReservation: failed — ${(error as Error).message}`);
       throw error;
@@ -164,16 +167,7 @@ export class QuotaService {
     return { ok: true, reservationId, estimatedWeightedTokens: input.estimatedWeightedTokens };
   }
 
-  private async adjust(
-    keys: string[],
-    deltas: {
-      weightedTokenDelta: number;
-      costMicroUsdDelta: bigint;
-      concurrencyDelta: number;
-      chatsDelta: number;
-      messagesDelta: number;
-    },
-  ): Promise<void> {
+  private async adjust(keys: string[], deltas: QuotaAdjustmentDeltas): Promise<void> {
     await this.redis
       .getClient()
       .eval(ADJUST_QUOTA_LUA, keys.length, ...keys, ...buildAdjustArgv(deltas));
@@ -201,12 +195,17 @@ export class QuotaService {
       this.logger.warn(`finalizeWeighted: unknown reservation ${input.reservationId}`);
       return;
     }
+    // The credit deltas give the HOLD back rather than reconciling it. Settled
+    // PAYG spend is subtracted from the wallet in Postgres, so reconciling the
+    // Redis hold counter too would charge the same dollars twice.
     await this.adjust(QuotaService.keysForRecord(record), {
       weightedTokenDelta: input.actualWeightedTokens - record.weightedTokens,
       costMicroUsdDelta: input.actualCostMicroUsd - record.estimatedCostMicroUsd,
       concurrencyDelta: -1,
       chatsDelta: 0,
       messagesDelta: 0,
+      creditGrantDelta: -record.creditGrantMicroUsd,
+      creditPurchasedDelta: -record.creditPurchasedMicroUsd,
     });
     await this.weightedUsage.finalize(input);
     this.logger.log(
@@ -227,6 +226,8 @@ export class QuotaService {
       concurrencyDelta: -1,
       chatsDelta: 0,
       messagesDelta: 0,
+      creditGrantDelta: -record.creditGrantMicroUsd,
+      creditPurchasedDelta: -record.creditPurchasedMicroUsd,
     });
     await this.weightedUsage.markReleased(reservationId);
     this.logger.debug(`releaseWeighted: reservation=${reservationId}`);

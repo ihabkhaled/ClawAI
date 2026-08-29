@@ -31,12 +31,6 @@ export class ChatInternalController {
   async generate(
     @Body(new ZodValidationPipe(internalGenerateSchema)) dto: InternalGenerateDto,
   ): Promise<InternalGenerateResponse> {
-    return this.execution.generateOnce(
-      dto.provider,
-      dto.model,
-      dto.systemPrompt,
-      dto.userPrompt,
-      dto.maxTokens,
-    );
+    return this.execution.generateOnce(dto);
   }
 }

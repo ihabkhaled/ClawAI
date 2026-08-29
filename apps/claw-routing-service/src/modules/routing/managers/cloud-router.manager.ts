@@ -127,6 +127,10 @@ export class CloudRouterManager {
 
     const outcome = await this.coordinator.run(providers, {
       traceId: request.traceId,
+      // Carried, never derived. The coordinator meters the router's own paid
+      // calls against this wallet; a walk that arrives without one is left
+      // unmetered instead of billed to a guess.
+      userId: request.userId,
       prompt: request.prompt,
       chain: resolution.runnable,
       totalDeadlineMs: snapshot.totalDeadlineMs,

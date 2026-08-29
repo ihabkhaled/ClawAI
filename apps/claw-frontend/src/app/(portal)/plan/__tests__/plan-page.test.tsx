@@ -2,7 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import PlanPage from '@/app/(portal)/plan/page';
+import { creditPageFixture } from '@/test/fixtures/credit-page.fixture';
 import type { UseEntitlementsResult, UserEntitlements } from '@/types';
+import type { UseCreditPageReturn } from '@/types/credit-hook.types';
 
 const mockHook = vi.fn();
 
@@ -38,7 +40,12 @@ const sampleEntitlements = {
   quota: { dailyLimit: 1000, used: 250, remaining: 750, unlimited: false },
 } as unknown as UserEntitlements;
 
-type HookShape = UseEntitlementsResult & { t: (key: string) => string };
+// /plan owns the primary "Add credit" action, so its controller hook composes
+// useCreditPage alongside the entitlements query.
+type HookShape = UseEntitlementsResult & {
+  t: (key: string) => string;
+  credit: UseCreditPageReturn;
+};
 
 function baseHook(overrides: Partial<HookShape> = {}): HookShape {
   return {
@@ -48,6 +55,7 @@ function baseHook(overrides: Partial<HookShape> = {}): HookShape {
     isError: false,
     error: null,
     onRetry: vi.fn(),
+    credit: creditPageFixture(),
     ...overrides,
   };
 }

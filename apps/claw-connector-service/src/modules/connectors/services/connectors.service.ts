@@ -15,10 +15,12 @@ import { type ListConnectorsQueryDto } from '../dto/list-connectors-query.dto';
 import {
   type ConnectorConfigResult,
   type ConnectorHealthSnapshotResult,
+  type ConnectorPaygPolicyResult,
   type ConnectorWithModels,
   type HealthCheckResult,
   type SyncModelsResult,
 } from '../types/connectors.types';
+import { paygDefaultForProvider, rollUpPaygPolicy } from '../utilities/payg-policy.utility';
 
 @Injectable()
 export class ConnectorsService implements OnApplicationBootstrap {
@@ -90,6 +92,11 @@ export class ConnectorsService implements OnApplicationBootstrap {
       baseUrl: dto.baseUrl,
       region: dto.region,
       workspaceId: dto.workspaceId,
+      // The administrator's explicit answer wins; otherwise the provider
+      // default decides. Without this, a connector added after the backfill
+      // migration would arrive at the column default of `false` and serve paid
+      // OpenAI traffic for free (ADR-082).
+      isPayAsYouGo: dto.isPayAsYouGo ?? paygDefaultForProvider(dto.provider),
     });
 
     this.structuredLogger.logAction({
@@ -176,7 +183,10 @@ export class ConnectorsService implements OnApplicationBootstrap {
       region: dto.region,
       workspaceId: dto.workspaceId,
       isEnabled: dto.isEnabled,
+      isPayAsYouGo: dto.isPayAsYouGo,
     });
+
+    this.logPaygToggle(connector, updated, dto.isPayAsYouGo);
 
     void this.rabbitMQService.publish(EventPattern.CONNECTOR_UPDATED, {
       connectorId: updated.id,
@@ -186,6 +196,56 @@ export class ConnectorsService implements OnApplicationBootstrap {
 
     this.logger.log(`updateConnector: completed — connectorId=${id}, provider=${updated.provider}`);
     return this.maskSecrets({ ...updated, _count: { models: 0 } });
+  }
+
+  /**
+   * Audit trail for the PAYG lever.
+   *
+   * Flipping this decides whether every future request through the connector
+   * debits a real customer's wallet, so who changed it, when, and what it was
+   * before all have to be recoverable later — the same reason
+   * `setModelExposure` records `previouslyExposed`. Skipped entirely when the
+   * field was absent from the request, so a rename does not litter the audit
+   * log with a no-op billing event.
+   *
+   * NO `connector.payg_policy_changed` EVENT IS PUBLISHED, deliberately.
+   * auth-service caches the rolled-up policy for
+   * PAYG_POLICY_CACHE_TTL_SECONDS (60 s), so a toggle already takes effect
+   * inside a minute. Inventing a cache-bust event would add an exchange
+   * binding, a consumer and a boot-ordering dependency to save at most 59
+   * seconds on an action an administrator takes a handful of times a year.
+   */
+  private logPaygToggle(before: Connector, after: Connector, requested: boolean | undefined): void {
+    if (requested === undefined || before.isPayAsYouGo === after.isPayAsYouGo) {
+      return;
+    }
+    this.structuredLogger.logAction({
+      level: LogLevel.INFO,
+      message: `Connector PAYG metering ${after.isPayAsYouGo ? 'enabled' : 'disabled'}: ${after.name} (${after.provider})`,
+      action: after.isPayAsYouGo ? 'connector_payg_enabled' : 'connector_payg_disabled',
+      service: ConnectorsService.name,
+      connectorId: after.id,
+      provider: after.provider,
+      metadata: { previousIsPayAsYouGo: before.isPayAsYouGo, isPayAsYouGo: after.isPayAsYouGo },
+    });
+  }
+
+  /**
+   * Internal contract for auth-service: which providers debit PAYG credit.
+   *
+   * Provider grain, not connector grain, because that is the grain the
+   * reservation gate can address — `connectors` holds no unique constraint on
+   * `provider`, so a `{provider, model}` chokepoint key cannot name one row
+   * (ADR-082). The rollup itself lives in a utility so the rule "any ENABLED
+   * connector makes the provider metered" is stated once and tested directly.
+   */
+  async getPaygPolicy(): Promise<ConnectorPaygPolicyResult> {
+    const rows = await this.connectorsRepository.findPaygPolicyRows();
+    const providers = rollUpPaygPolicy(rows);
+    this.logger.debug(
+      `getPaygPolicy: rolled ${String(rows.length)} connectors into ${String(Object.keys(providers).length)} providers`,
+    );
+    return { providers };
   }
 
   async deleteConnector(id: string): Promise<ConnectorWithModels> {

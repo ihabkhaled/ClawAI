@@ -17,6 +17,11 @@ export const PUBLIC_PRICING_FALLBACK_PLANS: PublicPlan[] = [
     dailyTokenQuota: 20_000,
     weeklyTokenQuota: 120_000,
     monthlyTokenQuota: null,
+    // The monthly connector credit, in integer micro-USD. Mirrors the seeded
+    // catalog (ADR-078). It is rendered under the fallback banner that already
+    // warns these figures may be stale; omitting it would read as "no credit",
+    // which is a worse lie than a possibly-outdated number.
+    monthlyProviderCostCeilingMicroUsd: 300_000,
     maxChatsPerDay: 5,
     maxMessagesPerDay: 250,
     maxWorkspaceConnections: 5,
@@ -46,6 +51,11 @@ export const PUBLIC_PRICING_FALLBACK_PLANS: PublicPlan[] = [
     dailyTokenQuota: 50_000,
     weeklyTokenQuota: 250_000,
     monthlyTokenQuota: 750_000,
+    // The monthly connector credit, in integer micro-USD. Mirrors the seeded
+    // catalog (ADR-078). It is rendered under the fallback banner that already
+    // warns these figures may be stale; omitting it would read as "no credit",
+    // which is a worse lie than a possibly-outdated number.
+    monthlyProviderCostCeilingMicroUsd: 1_500_000,
     maxChatsPerDay: 10,
     maxMessagesPerDay: 100,
     maxWorkspaceConnections: 1,
@@ -84,6 +94,11 @@ export const PUBLIC_PRICING_FALLBACK_PLANS: PublicPlan[] = [
     dailyTokenQuota: 100_000,
     weeklyTokenQuota: 600_000,
     monthlyTokenQuota: 1_750_000,
+    // The monthly connector credit, in integer micro-USD. Mirrors the seeded
+    // catalog (ADR-078). It is rendered under the fallback banner that already
+    // warns these figures may be stale; omitting it would read as "no credit",
+    // which is a worse lie than a possibly-outdated number.
+    monthlyProviderCostCeilingMicroUsd: 3_000_000,
     maxChatsPerDay: 25,
     maxMessagesPerDay: 250,
     maxWorkspaceConnections: 2,
@@ -124,6 +139,11 @@ export const PUBLIC_PRICING_FALLBACK_PLANS: PublicPlan[] = [
     dailyTokenQuota: 250_000,
     weeklyTokenQuota: 1_500_000,
     monthlyTokenQuota: 4_000_000,
+    // The monthly connector credit, in integer micro-USD. Mirrors the seeded
+    // catalog (ADR-078). It is rendered under the fallback banner that already
+    // warns these figures may be stale; omitting it would read as "no credit",
+    // which is a worse lie than a possibly-outdated number.
+    monthlyProviderCostCeilingMicroUsd: 5_000_000,
     maxChatsPerDay: 75,
     maxMessagesPerDay: 750,
     maxWorkspaceConnections: 5,
@@ -162,6 +182,11 @@ export const PUBLIC_PRICING_FALLBACK_PLANS: PublicPlan[] = [
     dailyTokenQuota: 750_000,
     weeklyTokenQuota: 4_000_000,
     monthlyTokenQuota: 11_000_000,
+    // The monthly connector credit, in integer micro-USD. Mirrors the seeded
+    // catalog (ADR-078). It is rendered under the fallback banner that already
+    // warns these figures may be stale; omitting it would read as "no credit",
+    // which is a worse lie than a possibly-outdated number.
+    monthlyProviderCostCeilingMicroUsd: 12_500_000,
     maxChatsPerDay: 250,
     maxMessagesPerDay: 2_500,
     maxWorkspaceConnections: 15,
@@ -200,6 +225,11 @@ export const PUBLIC_PRICING_FALLBACK_PLANS: PublicPlan[] = [
     dailyTokenQuota: 1_500_000,
     weeklyTokenQuota: 9_000_000,
     monthlyTokenQuota: 24_000_000,
+    // The monthly connector credit, in integer micro-USD. Mirrors the seeded
+    // catalog (ADR-078). It is rendered under the fallback banner that already
+    // warns these figures may be stale; omitting it would read as "no credit",
+    // which is a worse lie than a possibly-outdated number.
+    monthlyProviderCostCeilingMicroUsd: 25_000_000,
     maxChatsPerDay: 1_000,
     maxMessagesPerDay: 10_000,
     maxWorkspaceConnections: 50,
@@ -238,6 +268,11 @@ export const PUBLIC_PRICING_FALLBACK_PLANS: PublicPlan[] = [
     dailyTokenQuota: 5_000_000,
     weeklyTokenQuota: 30_000_000,
     monthlyTokenQuota: null,
+    // The monthly connector credit, in integer micro-USD. Mirrors the seeded
+    // catalog (ADR-078). It is rendered under the fallback banner that already
+    // warns these figures may be stale; omitting it would read as "no credit",
+    // which is a worse lie than a possibly-outdated number.
+    monthlyProviderCostCeilingMicroUsd: 50_000_000,
     maxChatsPerDay: null,
     maxMessagesPerDay: null,
     maxWorkspaceConnections: 200,

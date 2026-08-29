@@ -40,6 +40,11 @@ export const createPlanSchema = z.object({
   dailyTokenQuota: z.coerce.number().int().min(0, 'Daily token quota must be 0 or greater'),
   weeklyTokenQuota: optionalNonNegativeInt,
   monthlyTokenQuota: optionalNonNegativeInt,
+  // The monthly connector credit, in integer micro-USD (ADR-078 promoted this
+  // from a hidden margin control). Integer-only: it is money, and a fractional
+  // micro-dollar is not a thing the wallet can hold. Blank means "leave the
+  // plan's current allowance alone"; an explicit 0 disables PAYG on the plan.
+  monthlyProviderCostCeilingMicroUsd: optionalNonNegativeInt,
   maxChatsPerDay: optionalNonNegativeInt,
   maxMessagesPerDay: optionalNonNegativeInt,
   maxWorkspaceConnections: optionalNonNegativeInt,

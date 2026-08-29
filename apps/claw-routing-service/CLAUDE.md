@@ -63,9 +63,13 @@ Controller -> Service -> Repository
   ordered fallback chain. An edit publishes revision N+1 and supersedes N, so a
   decision can always be traced back to the exact chain that produced it. A
   partial unique index enforces at most one PUBLISHED revision per scope.
+- ModelCostVersion — immutable per-model price versions. Rates are integer
+  micro-USD per million tokens; `activeKey` is an emulated partial-unique index
+  so the database itself rejects a second ACTIVE price for one model. An
+  automated sync must NEVER overwrite `isAdminOverride`.
 - SeedExecution — ledger for versioned seeds (`cloud-smart-router-default-v1`,
-  `router-model-deployments-backfill`). Seeds take a transaction-scoped advisory
-  lock and never overwrite admin edits.
+  `router-model-deployments-backfill`, `model-cost-list-prices-2026-v1`). Seeds
+  take a transaction-scoped advisory lock and never overwrite admin edits.
 
 ## Commands
 
@@ -150,3 +154,99 @@ After completing any implementation task on this service, produce:
 ## Llamacpp runtime health
 
 `LlamacppHealthManager` (`src/modules/routing/managers/llamacpp-health.manager.ts`) polls `${LLAMACPP_SERVICE_URL}/api/v1/health` every 30 s and subscribes to `llamacpp.model.{loaded,unloaded,crashed}` events. Populates `runtimeHealthCache.set(LLAMACPP_RUNTIME, ...)` consumed by `RoutingManager.isRuntimeHealthy()` for fallback decisions. NEVER call the manager directly from a controller — use the cache via `RoutingService.evaluateRoute()`. Uses the existing `httpRequest` utility (do NOT add `undici` as a dep here).
+
+## Model prices are SEEDED, and that seed is launch-blocking
+
+`ModelCostVersion` shipped with a schema, a service, a controller and a spec but
+no seeder, so on a fresh install the price table was **empty**. PAYG treats an
+unpriced model on a metered provider as **blocked, never free** — an unpriced
+model is an unbounded liability, not a giveaway — so an empty table refused
+every paid request on day one.
+
+`ModelCostSeedService` (`OnModuleInit`) + `ModelCostSeedRepository` fix that,
+following the same run-once mechanism as `DeploymentSeedService`:
+transaction-scoped advisory lock (`MODEL_COST_SEED_LOCK_ID = 740_040_003`, next
+in routing-service's `740_040_00N` block) → `SeedExecution` ledger row keyed on
+(name, version) → checksum comparison.
+
+- Prices live in `constants/model-cost-seed.constants.ts`. **LIST prices from
+  public price cards** — estimates an operator should verify against their own
+  invoices, not a contract. 16 models: OpenAI ×6, Anthropic ×3, Gemini ×3,
+  DeepSeek ×2, Grok ×2.
+- Seeded as `source: SEED, confidence: ESTIMATED, isAdminOverride: false`, so a
+  later automated sync MAY refresh them. **An admin override is never
+  clobbered** — not by the seed, not by `applySyncedRates`.
+- The seed only ever **fills a gap**. A model that already has ANY price history
+  is skipped, which both protects an override and keeps the version counter
+  honest (a retired v1 would collide on `@@unique([provider, modelKey, version])`).
+- Changing a price without bumping `MODEL_COST_SEED_VERSION` is a
+  `CHECKSUM_MISMATCH` warning and writes **nothing**. Bump the version to apply.
+- Reasoning is priced at the output rate wherever it is set, because no provider
+  bills it differently. `calculateCostMicroUsd` sums reasoning and output as
+  **disjoint** buckets, so a caller must never put reasoning tokens in both.
+
+## `routing.model_cost.published`
+
+`ModelCostService.publish()` emits `EventPattern.ROUTING_MODEL_COST_PUBLISHED`
+with `{ provider, modelKey, version }` — **never a rate**, because a topic
+exchange is readable by any consumer that binds the pattern and a rate is a
+margin input. auth-service consumes it to bust the rate cache it holds for 300 s
+while reserving PAYG credit, so an administrator's repricing lands on the next
+request instead of at the end of the TTL.
+
+`applySyncedRates` routes through `publish`, so the event fires exactly when a
+rate ACTUALLY changed — never on `ADMIN_OVERRIDE_ACTIVE` or `RATES_UNCHANGED`.
+Publishing is `@Optional()` and fire-and-forget: the price is authoritative in
+Postgres the moment the transaction commits, so a dead broker degrades to a
+300 s staleness window rather than failing the repricing.
+
+The seeder deliberately does NOT publish. At first boot there is nothing cached
+to bust.
+
+## The router meters its own paid calls (U5/U6)
+
+The cloud router calls **real, billed models** (Gemini, Ollama Cloud) to decide
+where a message goes. Those adapters always returned true token counts, which
+landed in `router_attempts` and went no further.
+
+`RouterInferenceCoordinatorManager.invokeMetered` now wraps every
+`adapter.invoke` in a `PaygMeter` reserve → finalize / release cycle at
+`PaygSurface.ROUTING`.
+
+- **`userId` is carried, never derived.** It comes off the `message.created`
+  event (chat-service has always published it; `parseMessageCreatedPayload` used
+  to drop it) and travels `RoutingContext` → `CloudRouteRequest` →
+  `RouterCoordinatorOptions`. A walk without one is left **unmetered**, not
+  billed to a guess.
+- **One hold per ATTEMPT**, keyed `${traceId}:${entryId}:${attemptNumber}`.
+  `reserve` is idempotent on `(userId, requestId)`, and a retry inside an entry
+  is a second paid call — sharing the key would silently under-charge every
+  retried route.
+- **The granted ceiling always wins.** `hold.maxOutputTokens` is passed to the
+  adapter as `request.maxOutputTokens`, which both cloud adapters prefer over
+  `ROUTER_MAX_OUTPUT_TOKENS`. That is what makes an overspend impossible by
+  construction rather than by reconciliation.
+- **Fails closed, degrades to local.** A refused reservation — exhausted credit
+  OR an unreachable auth-service — becomes `RouterErrorCode.BUDGET_EXCEEDED`,
+  which is REQUEST-scoped, so the walk stops, `tryCloudRouting` returns null and
+  AUTO mode drops to the local heuristic router. The user gets an answer, not a
+  refusal (D4).
+- **Classification is auth-service's, never this service's.** A local model
+  comes back `metered: false` from `reserve`. Do NOT compile the predicate in
+  here — six `node_modules` copies would make the connector admin toggle
+  unenforceable without a six-container rebuild (ADR-082). `OLLAMA_CLOUD` is a
+  routing-only provider name connector-service does not carry, so it resolves
+  unclassified and therefore free, which is the default D1/A3 chose.
+
+## `cost-budget/` was deleted (ADR-081)
+
+Per-user spend capping is owned by the **auth-service PAYG credit wallet**, not
+by routing-service. The module never shipped: it was never registered in
+`app.module.ts`, `spend-tracker.manager.ts` threw `SCAFFOLD-R4`,
+`UserCostBudget` was never in the Prisma schema, and its controller carried
+seven handlers with no `@RequirePermissions`. Do not resurrect it —
+`docs/15-ai-context/routing-flagship-streams/05-r4-cost-budget-intelligence.md`
+is marked SUPERSEDED with the reasoning.
+
+What routing-service keeps is **model prices** and **metering its own calls**.
+It does not decide whether a user may spend.

@@ -2,6 +2,7 @@ import { AppConfig } from '../app/config/app.config';
 import { ConsensusExecutionManager } from '../modules/chat-messages/managers/consensus-execution.manager';
 import type { ParallelModelTarget } from '../modules/chat-messages/types/parallel.types';
 import type { AssembledContext } from '../modules/chat-messages/types/context.types';
+import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
 jest.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
@@ -95,7 +96,7 @@ describe('ConsensusExecutionManager', () => {
       mockChatThreadsRepository as any,
       mockChatStreamService as any,
       mockResearchEnricherManager as any,
-      { recordUsage: jest.fn() } as any,
+      createFakePaygAccessControl() as any,
     );
   });
 
@@ -212,7 +213,7 @@ describe('ConsensusExecutionManager', () => {
         mockChatThreadsRepository as any,
         mockChatStreamService as any,
         mockResearchEnricherManager as any,
-        { recordUsage: jest.fn() } as any,
+        createFakePaygAccessControl() as any,
       );
 
       // Mock Ollama synthesis to fail (test heuristic fallback path)
@@ -261,7 +262,7 @@ describe('ConsensusExecutionManager', () => {
         mockChatThreadsRepository as any,
         mockChatStreamService as any,
         mockResearchEnricherManager as any,
-        { recordUsage: jest.fn() } as any,
+        createFakePaygAccessControl() as any,
       );
 
       globalThis.fetch = jest.fn().mockRejectedValue(new Error('Ollama unavailable'));

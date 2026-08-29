@@ -233,6 +233,22 @@ module.exports = {
   // v2: added the 9 orchestration-lab gates (definition.labs). Payload now
   // includes `labs` so a future change to the per-tier lab defaults is
   // detected by the checksum instead of silently not re-applying.
+  //
+  // DELIBERATELY NOT BUMPED to v3 for the PAYG allowance change, and this is
+  // the same reasoning as the `isPopular` note in planColumns above. Trace
+  // run() on an install where v2 has already completed: `existing` is truthy
+  // for all seven plans, so the create branch never fires, and
+  // matchesLegacyFingerprint returns false for every one of them (the v2 seed
+  // already moved them off the legacy values), so every plan falls to the else
+  // branch — which writes only modelAccessMode and a null weeklyTokenQuota. A
+  // v3 bump would therefore apply the new allowances to ZERO rows while
+  // reporting success, and would burn the version number that a genuine future
+  // catalog change needs.
+  //
+  // Existing installs are migrated by plan-payg-allowance.seeder.js instead,
+  // which targets rows still holding the OLD value so an operator's tuned
+  // figure is never overwritten. The numbers in plan-catalog.json are for
+  // FRESH installs, which take them through the create branch above.
   version: 2,
   payload: PLAN_CATALOG.map((plan) => ({
     slug: plan.slug,

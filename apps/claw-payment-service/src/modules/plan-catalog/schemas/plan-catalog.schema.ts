@@ -69,3 +69,28 @@ const catalogEntrySchema = z.object({
 
 export const planCatalogResponseSchema = z.array(catalogEntrySchema).max(64);
 export const planPriceVersionResponseSchema = priceVersionSchema.nullable();
+
+/**
+ * A purchasable credit package, as auth returns it.
+ *
+ * `priceMinor` and `creditMicroUsd` are validated as independent NON-NEGATIVE
+ * INTEGERS. They are not a ratio this service is allowed to reconstruct: the
+ * gap between them IS the platform's margin on a top-up, and it lives in one
+ * database row so an operator can change it without a deploy.
+ *
+ * `creditMicroUsd` is bounded rather than merely non-negative. It is written
+ * onto a BIGINT column and then handed to a wallet; an unbounded figure that
+ * survived a schema drift would credit money nobody paid for.
+ */
+const creditPackageSchema = z.object({
+  id: z.string().min(1).max(64),
+  slug: z.string().min(1).max(64),
+  priceMinor: z.number().int().nonnegative(),
+  currency: z.string().length(3),
+  creditMicroUsd: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  displayOrder: z.number().int(),
+  versionId: z.string().min(1).max(64),
+});
+
+export const creditPackageResponseSchema = creditPackageSchema;
+export const creditPackageListResponseSchema = z.array(creditPackageSchema).max(64);

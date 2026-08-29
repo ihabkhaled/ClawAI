@@ -9,6 +9,7 @@ import { type AdvancedModuleModelSelectionService } from '../modules/chat-messag
 import { costEnsembleMessageSchema } from '../modules/chat-messages/dto/cost-ensemble-message.dto';
 import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
+import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 
 jest.mock('../app/config/app.config', () => ({
   AppConfig: {
@@ -135,7 +136,7 @@ describe('CostEnsembleManager', () => {
       streamService as unknown as ChatStreamService,
       qualityManager as unknown as QualityCheckManager,
       mockResearchEnricherManager as any,
-      { recordUsage: jest.fn() } as any,
+      createFakePaygAccessControl() as any,
     );
 
     jest.clearAllMocks();
@@ -369,7 +370,7 @@ describe('CostEnsembleManager', () => {
         streamService as unknown as ChatStreamService,
         qualityManager as unknown as QualityCheckManager,
         mockResearchEnricherManager as any,
-        { recordUsage: jest.fn() } as any,
+        createFakePaygAccessControl() as any,
         selectionService as unknown as AdvancedModuleModelSelectionService,
       );
 

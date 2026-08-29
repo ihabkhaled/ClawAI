@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 
+import { CreditUsageSection } from '@/components/account/credit-usage-section';
 import { FeatureAllowanceList } from '@/components/billing/feature-allowance-list';
 import { UsageWindowBar } from '@/components/billing/usage-window-bar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,9 @@ export function UsageOverviewCard({
   usage,
   isLoading,
   isError,
+  wallet,
   t,
+  locale,
 }: UsageOverviewCardProps): ReactElement {
   return (
     <Card>
@@ -41,6 +44,13 @@ export function UsageOverviewCard({
             <UsageWindowBar label={t('billing.usage.day')} window={usage.day} t={t} />
             <UsageWindowBar label={t('billing.usage.week')} window={usage.week} t={t} />
             <UsageWindowBar label={t('billing.usage.month')} window={usage.month} t={t} />
+            {/* The dollar wallet sits beside the token windows, not on a page
+                of its own. A cloud answer spends both, so a user reading three
+                healthy token bars and nothing else has been told half the
+                story — and the missing half is the one that refuses them. */}
+            {wallet === null || wallet === undefined ? null : (
+              <CreditUsageSection wallet={wallet} t={t} locale={locale ?? ''} />
+            )}
             <FeatureAllowanceList features={usage.features} t={t} />
           </>
         ) : null}

@@ -7,4 +7,7 @@ export enum InvoiceLineKind {
   DISCOUNT = 'DISCOUNT',
   TAX = 'TAX',
   REFUND = 'REFUND',
+  // A purchased PAYG credit package. Priced from an immutable
+  // CreditPackageVersion, never from anything the buyer sent.
+  CREDIT_TOPUP = 'CREDIT_TOPUP',
 }

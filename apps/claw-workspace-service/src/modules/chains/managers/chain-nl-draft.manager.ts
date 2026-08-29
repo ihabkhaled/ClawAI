@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { PaygSurface } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException } from '../../../common/errors/business.exception';
@@ -69,7 +70,7 @@ export class ChainNlDraftManager {
       let currentUserPrompt = userPrompt;
       for (let attempt = 1; attempt <= MAX_NL_DRAFT_ATTEMPTS_PER_MODEL; attempt += 1) {
         try {
-          const content = await this.generate(model, systemPrompt, currentUserPrompt);
+          const content = await this.generate(model, systemPrompt, currentUserPrompt, userId);
           const dsl = this.parseAndValidate(content, connectorIds);
           return dsl;
         } catch (error) {
@@ -99,10 +100,20 @@ export class ChainNlDraftManager {
       .map((c) => ({ id: c.id, provider: c.provider as WorkspaceProvider }));
   }
 
+  /**
+   * One draft attempt against one model.
+   *
+   * `draft` runs this up to MAX_NL_DRAFT_ATTEMPTS_PER_MODEL times per model
+   * across the whole fallback chain, and each pass is a separate paid provider
+   * call — the retry re-asks with the Zod error appended, it does not replay the
+   * first answer. So each is separately reserved inside chat-service; only the
+   * local Ollama branch above is free.
+   */
   private async generate(
     model: ModelChoice,
     systemPrompt: string,
     userPrompt: string,
+    userId: string,
   ): Promise<string> {
     const config = AppConfig.get();
     if (model.provider === AI_ACTION_FALLBACK_LOCAL_PROVIDER) {
@@ -121,6 +132,8 @@ export class ChainNlDraftManager {
       systemPrompt,
       userPrompt,
       timeoutMs: config.AI_ACTION_REQUEST_TIMEOUT_MS,
+      userId,
+      surface: PaygSurface.WORKSPACE_ACTION,
     });
     return result.content;
   }

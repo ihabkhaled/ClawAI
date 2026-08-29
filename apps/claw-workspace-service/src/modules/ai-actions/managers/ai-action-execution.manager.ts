@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { PaygSurface } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { AiActionMode } from '../../../common/enums/ai-action-kind.enum';
@@ -55,7 +56,12 @@ export class AiActionExecutionManager {
         this.logger.log(
           `run: action=${input.actionKind} provider=${model.provider} model=${model.model}`,
         );
-        const generation = await this.executeGeneration(model, systemPrompt, userPrompt);
+        const generation = await this.executeGeneration(
+          model,
+          systemPrompt,
+          userPrompt,
+          input.userId,
+        );
         return {
           content: generation.content,
           generatedBy: {
@@ -146,12 +152,8 @@ export class AiActionExecutionManager {
 
   // Phase 11 — best-effort: a memory-service hiccup must never block AI
   // action generation, so this always resolves (fetchLearned itself never
-  // throws — see AutomationPreferenceService), and no userId simply means
-  // no preferences to inject.
+  // throws — see AutomationPreferenceService).
   private async loadLearnedPreferences(input: RunAiActionInput): Promise<string[]> {
-    if (input.userId === undefined) {
-      return [];
-    }
     const items = await this.automationPreferences.fetchLearned(
       input.userId,
       input.actionKind,
@@ -160,10 +162,24 @@ export class AiActionExecutionManager {
     return items.map((item) => item.content);
   }
 
+  /**
+   * One attempt against one model.
+   *
+   * The local (Ollama) branch runs on the operator's own hardware and is never
+   * metered. The cloud branch hands `userId` to chat-service, which takes the
+   * PAYG reservation around the provider call it owns — the meter is NOT invoked
+   * here, because a second hold on the same provider call would charge this
+   * action twice (D5).
+   *
+   * Note that `run` calls this once per model in the fallback chain, so a chain
+   * of three cloud models is three separate paid calls and three separate
+   * reservations. That is correct: each one really is a provider request.
+   */
   private async executeGeneration(
     model: ModelChoice,
     systemPrompt: string,
     userPrompt: string,
+    userId: string,
   ): Promise<CloudGenerateOutput> {
     const config = AppConfig.get();
     if (model.provider === AI_ACTION_FALLBACK_LOCAL_PROVIDER) {
@@ -187,6 +203,8 @@ export class AiActionExecutionManager {
       systemPrompt,
       userPrompt,
       timeoutMs: config.AI_ACTION_REQUEST_TIMEOUT_MS,
+      userId,
+      surface: PaygSurface.WORKSPACE_ACTION,
     });
   }
 }

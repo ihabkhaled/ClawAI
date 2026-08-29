@@ -20,6 +20,7 @@ import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
 import type { OllamaChatRequest, OpenAiChatRequest } from '../types/execution.types';
 import { ToolChoiceMode } from '../../../common/enums';
 import { ClawEffortProfile, ClawSpeedProfile } from '@claw/shared-types';
+import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
 
 jest.mock('../clients/model-exposure.client', () => ({
   ModelExposureClient: jest.fn().mockImplementation(() => ({
@@ -141,7 +142,7 @@ const buildManager = (): ChatExecutionManager =>
 
 describe('ChatExecutionManager — native tool transport', () => {
   let manager: ChatExecutionManager;
-  let accessControl: { recordUsage: jest.Mock; recordFeatureUsage: jest.Mock };
+  let accessControl: ReturnType<typeof createFakePaygAccessControl>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -159,7 +160,7 @@ describe('ChatExecutionManager — native tool transport', () => {
         .fn()
         .mockReturnValue([{ role: 'user', content: 'Read main.ts' }]),
     };
-    accessControl = { recordUsage: jest.fn(), recordFeatureUsage: jest.fn(async () => {}) };
+    accessControl = createFakePaygAccessControl();
 
     manager = new ChatExecutionManager(
       contextAssembly as unknown as ContextAssemblyManager,

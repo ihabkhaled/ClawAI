@@ -15,6 +15,10 @@ import {
   FAST_PATH_MAX_OUTPUT_TOKENS,
   HARD_MAX_OUTPUT_TOKENS,
 } from '../constants/execution-fast-path.constants';
+import {
+  asAccessControlService,
+  createFakePaygAccessControl,
+} from './helpers/fake-payg-access-control.helper';
 
 jest.mock('../clients/model-exposure.client', () => ({
   ModelExposureClient: jest.fn().mockImplementation(() => ({
@@ -81,10 +85,16 @@ describe('ChatExecutionManager', () => {
   let judgeManager: Partial<Record<keyof JudgeRefereeManager, jest.Mock>>;
   let streamService: Partial<Record<keyof ChatStreamService, jest.Mock>>;
   let localModelSelection: Partial<Record<keyof LocalModelSelectionService, jest.Mock>>;
-  let accessControl: { recordUsage: jest.Mock; recordFeatureUsage: jest.Mock };
+  let accessControl: ReturnType<typeof createFakePaygAccessControl>;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // `clearAllMocks` drains call history but NOT the `mockResolvedValueOnce`
+    // queue. Any test that returns early — a PAYG refusal now short-circuits the
+    // candidate loop instead of trying every provider — leaves its unconsumed
+    // once-values behind, and the NEXT test silently reads them instead of its
+    // own. That is how a suite passes one test at a time and fails as a whole.
+    httpRequest.mockReset();
     // Re-pin the AppConfig mock — clearAllMocks wipes the module-scope
     // default set above, and several methods (runOllamaCloudToolLoop in
     // particular) call AppConfig.get() many times per invocation.
@@ -125,10 +135,9 @@ describe('ChatExecutionManager', () => {
       resolveDefaultModel: jest.fn().mockResolvedValue('qwen3:1.7b'),
       resolveModelList: jest.fn().mockResolvedValue(['qwen3:7b', 'llama3.3:8b']),
     };
-    accessControl = {
-      recordUsage: jest.fn(),
-      recordFeatureUsage: jest.fn(async () => {}),
-    };
+    // Metered by default so the chokepoint's reserve/finalize path is the one
+    // under test; a suite that wants the local-runtime path opts out.
+    accessControl = createFakePaygAccessControl();
 
     manager = new ChatExecutionManager(
       contextAssembly as unknown as ContextAssemblyManager,
@@ -424,7 +433,7 @@ describe('ChatExecutionManager', () => {
           outcome: { applied: false, results: [], runId: null, warning: null },
         })),
       } as unknown as ConstructorParameters<typeof ChatExecutionManager>[4],
-      { recordUsage: jest.fn() } as unknown as AccessControlService,
+      asAccessControlService(createFakePaygAccessControl()),
       {
         uploadFile: jest.fn(),
         getCachedOrUpload: jest.fn(),

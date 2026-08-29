@@ -6,6 +6,14 @@ export interface CloudRouteRequest {
   /** Correlates the trace with the originating request; defaults to traceId. */
   requestId?: string;
   threadId?: string | null;
+  /**
+   * Whose PAYG credit pays for the router's own inference.
+   *
+   * Optional because operator-initiated walks (replay, shadow evaluation) run
+   * against no user's wallet. Those stay unmetered rather than being charged to
+   * an invented id.
+   */
+  userId?: string;
   /** The compact router prompt. Hard privacy filtering has already run. */
   prompt: string;
   /** Deployments the decision may select, post policy filtering. */

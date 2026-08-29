@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { CreditDualConsumptionNotice } from '@/components/billing/credit-dual-consumption-notice';
 import { PlanTierCard } from '@/components/marketing/home/plan-tier-card';
 import { Button } from '@/components/ui/button';
 import { MARKETING_HOME_PATHS } from '@/constants/marketing-home.constants';
@@ -93,6 +94,12 @@ export function PricingSection({
           ))}
         </div>
       ) : null}
+
+      {/* The same disclaimer component, and therefore the same string, that the
+          plan page, the billing page, the model selector, the top-up dialog and
+          the 402 refusal render. A prospect who reads one promise here and a
+          different one after signing up has been mis-sold. */}
+      <CreditDualConsumptionNotice t={controller.t} className="mx-auto mt-8 max-w-4xl" />
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
         <Link href={MARKETING_HOME_PATHS.FAQ} className="text-primary hover:underline">

@@ -252,6 +252,15 @@ export const ar: TranslationDictionary = {
     more: 'المزيد',
   },
   chat: {
+    credit: {
+      modelBadge: 'يستهلك رصيدًا',
+      badgeLabel: 'الرصيد',
+      badgeHint: 'يتبقّى {remaining} من رصيد الموصّلات',
+      clampedTitle: 'تم اختصار الإجابة',
+      clampedBody: 'تم اختصار هذا الرد ليتناسب مع رصيد الموصّلات المتبقّي لديك.',
+      clampedDismiss: 'إغلاق',
+      addCreditCta: 'إضافة رصيد',
+    },
     threadListDrawer: 'المحادثات',
     export: {
       action: 'تصدير',
@@ -288,6 +297,19 @@ export const ar: TranslationDictionary = {
       roleAssistant: 'المساعد',
     },
     limits: {
+      addCreditCta: 'إضافة رصيد',
+      paygCreditExhaustedTitle: 'نفد رصيد الموصّلات',
+      paygCreditExhaustedBody:
+        'يُحاسَب هذا النموذج على رصيد الموصّلات ورصيدك فارغ. أضف رصيدًا للمتابعة، أو اختر نموذجًا محليًا.',
+      paygPromptTooExpensiveTitle: 'المحادثة أطول من رصيدك',
+      paygPromptTooExpensiveBody:
+        'تكلفة هذه المحادثة أعلى من رصيد الموصّلات المتبقّي. أضف رصيدًا، أو ابدأ محادثة أقصر، أو اختر نموذجًا محليًا.',
+      paygModelUnpricedTitle: 'النموذج غير متاح',
+      paygModelUnpricedBody:
+        'لا يوجد سعر منشور لهذا النموذج بعد، لذا لا يمكن احتسابه. من فضلك اختر نموذجًا آخر.',
+      paygPricingUnavailableTitle: 'غير متاح مؤقتًا',
+      paygPricingUnavailableBody:
+        'تعذّر الوصول إلى بيانات التسعير، لذا أُوقفت النماذج المدفوعة مؤقتًا. لم يُخصم منك شيء. النماذج المحلية ما زالت تعمل.',
       dailyTokensTitle: 'لقد استهلكت رموز اليوم',
       dailyTokensBody:
         'انتهت حصتك اليومية من الرموز. تُعاد ضبطها منتصف الليل بتوقيت UTC، أو يمكنك الانتقال إلى خطة أكبر الآن.',
@@ -2568,6 +2590,9 @@ export const ar: TranslationDictionary = {
     invalidFileType: 'نوع الملف غير مدعوم',
   },
   toast: {
+    creditTopupSucceeded: 'تمت إضافة الرصيد.',
+    creditTopupFailed: 'تعذّرت إضافة الرصيد.',
+    creditTopupCancelled: 'أُلغيت عملية الدفع. لم يُضف أي رصيد.',
     loginSuccess: 'تم تسجيل الدخول بنجاح',
     registerSuccess: 'تم إنشاء الحساب بنجاح',
     loginFailed: 'فشل تسجيل الدخول',
@@ -3482,6 +3507,11 @@ export const ar: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ar,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ar,
   adminBilling: {
+    credit: {
+      packageCreated: 'تم إنشاء باقة الرصيد.',
+      versionPublished: 'تم نشر سعر الباقة.',
+      saveFailed: 'تعذّر حفظ باقة الرصيد.',
+    },
     title: 'لوحة الفوترة',
     description: 'الإيرادات وتكلفة المزوّد والهامش وصحة الاشتراكات.',
     loading: 'جارٍ تحميل مقاييس الفوترة...',
@@ -3606,6 +3636,9 @@ export const ar: TranslationDictionary = {
       description: 'حدِّث هذه الخطة.',
     },
     form: {
+      monthlyConnectorCredit: 'رصيد الموصّلات الشهري (ميكرو دولار)',
+      monthlyConnectorCreditHelp:
+        'المخصّص بالدولار لموصّلات السحابة المدفوعة، بوحدة الميكرو دولار (1,000,000 = 1.00 دولار). القيمة 0 تعطّل الموصّلات المدفوعة في هذه الخطة. يظهر هذا الرقم للمستخدمين.',
       name: 'الاسم',
       namePlaceholder: 'احترافية',
       slug: 'المعرِّف',
@@ -3732,6 +3765,7 @@ export const ar: TranslationDictionary = {
     },
   },
   userPlan: {
+    noCreditOnThisPlan: 'هذه الخطة لا تتضمّن رصيد موصّلات.',
     title: 'خطتي',
     description: 'اشتراكك الحالي والميزات والنماذج المسموح بها.',
     loading: 'جارٍ تحميل خطتك...',
@@ -3753,6 +3787,12 @@ export const ar: TranslationDictionary = {
     chatsLimitLabel: 'المحادثات يوميًا',
   },
   userUsage: {
+    connectorCredit: 'رصيد الموصّلات',
+    creditRemaining: 'يتبقّى {remaining}',
+    creditUsedOfLimit: '{used} من {limit}',
+    creditPercentUsed: 'تم استخدام {percent}%',
+    dualConsumptionHint:
+      'موصّلات السحابة تستهلك الرصيد والرموز معًا؛ أمّا النماذج المحلية فتستهلك الرموز فقط.',
     title: 'الاستخدام',
     description: 'تتبَّع استهلاكك اليومي للرموز مقابل حصة خطتك.',
     loading: 'جارٍ تحميل الاستخدام...',
@@ -3990,6 +4030,44 @@ export const ar: TranslationDictionary = {
     },
   },
   billing: {
+    credit: {
+      title: 'رصيد الموصّلات',
+      available: 'المتاح',
+      grantBucket: 'مخصّص الخطة',
+      purchasedBucket: 'رصيد مُشترى',
+      reserved: 'محجوز',
+      reservedHint: 'محجوز لطلبات ما زالت قيد التنفيذ. يُحرَّر عند انتهائها.',
+      resetsOn: 'يتجدّد في {date}',
+      neverExpires: 'لا ينتهي أبدًا',
+      percentUsed: 'تم استخدام {percent}%',
+      noAllowance: 'هذه الخطة لا تتضمّن رصيد موصّلات.',
+      addCredit: 'إضافة رصيد',
+      adminBypass: 'مدير — لا يُطبَّق رصيد الموصّلات',
+      meteringDisabled: 'لا يتم خصم رصيد الموصّلات حاليًا.',
+      empty: 'لا تتوفّر معلومات عن الرصيد.',
+      error: 'تعذّر تحميل رصيد الموصّلات.',
+      packages: 'باقات الرصيد',
+      packagesEmpty: 'لا توجد باقات رصيد متاحة حاليًا.',
+      packagesError: 'تعذّر تحميل باقات الرصيد.',
+      packageCredit: '{credit} رصيدًا',
+      topupTitle: 'إضافة رصيد موصّلات',
+      topupDescription: 'اختر باقة. الرصيد المُشترى لا ينتهي أبدًا.',
+      topupConfirm: 'المتابعة إلى الدفع',
+      topupConfirming: 'جارٍ تجهيز الدفع…',
+      ledgerTitle: 'حركة الرصيد',
+      ledgerDate: 'التاريخ',
+      ledgerSurface: 'استُخدم في',
+      ledgerModel: 'النموذج',
+      ledgerNoModel: 'لا يوجد',
+      ledgerAmount: 'المبلغ',
+      ledgerBalance: 'الرصيد',
+      ledgerEmpty: 'لا توجد حركة رصيد بعد.',
+      ledgerError: 'تعذّر تحميل حركة الرصيد.',
+      ledgerLoadMore: 'تحميل المزيد',
+      ledgerLoadingMore: 'جارٍ التحميل…',
+      dualConsumptionNotice:
+        'موصّلات السحابة مثل OpenAI وClaude وGemini تُخصم من رصيدك بالدولار ومن حصّتك اليومية من الرموز معًا. أمّا النماذج المحلية فتُخصم من الرموز فقط.',
+    },
     page: {
       title: 'الفوترة',
       description: 'خطتك واستخدامك وكل ما تم تحصيله منك.',
@@ -3999,6 +4077,14 @@ export const ar: TranslationDictionary = {
       dismiss: 'إغلاق',
     },
     errors: {
+      PAYG_CREDIT_EXHAUSTED:
+        'نفد رصيد الموصّلات لديك. أضف رصيدًا لمواصلة استخدام النماذج السحابية.',
+      PAYG_PROMPT_TOO_EXPENSIVE: 'تكلفة هذه المحادثة أعلى من رصيد الموصّلات المتبقّي لديك.',
+      PAYG_MODEL_UNPRICED: 'لا يوجد سعر منشور لهذا النموذج بعد، لذا لا يمكن احتسابه.',
+      PAYG_PRICING_UNAVAILABLE: 'تعذّر الوصول إلى بيانات التسعير مؤقتًا. لم يُخصم منك شيء.',
+      CREDIT_PACKAGE_NOT_FOUND: 'لم تعد باقة الرصيد هذه موجودة.',
+      CREDIT_PACKAGE_INACTIVE: 'لم تعد باقة الرصيد هذه معروضة للبيع.',
+      CREDIT_ADJUSTMENT_REASON_REQUIRED: 'يلزم ذكر سبب لأي تعديل يدوي على الرصيد.',
       PLAN_NOT_PURCHASABLE: 'هذه الخطة غير متاحة للشراء.',
       PAYMENT_NOT_VERIFIED: 'تعذر التحقق من الدفع. لم يتم خصم أي مبلغ منك.',
       PAYMENT_METHOD_UNAVAILABLE:
@@ -4239,6 +4325,8 @@ export const ar: TranslationDictionary = {
         'يتبع توفر النماذج جدول الإصدار الخاص بكل مزوّد. تُضاف النماذج الجديدة فور إطلاقها.',
     },
     pricing: {
+      paygCreditLabel: 'رصيد الموصّلات الشهري',
+      paygCreditNone: 'بدون رصيد موصّلات',
       sectionTitle: 'خطط تنمو معك',
       sectionSubtitle:
         'ابدأ مجانًا. طوّر اشتراكك عند الحاجة لمزيد. كل خطة مدفوعة تصل إلى النماذج نفسها — والفرق هو مقدار ما يمكنك استخدامه.',

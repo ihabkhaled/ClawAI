@@ -7,6 +7,12 @@
 **Deciders**: ClawAI core team
 **Slice**: Subscription completion
 
+> **Amended by [ADR-083](adr-083-credit-topup-checkout-purpose.md) (2026-08-29).**
+> `CREDIT_TOPUP` is a **third** purpose class, not a fifth enum member: it carries
+> no plan fields (like a setup) but a real amount (like a subscription), so it
+> satisfied neither branch of the constraint below. The check constraint now has
+> three branches. The decision recorded here is unchanged; read ADR-083 with it.
+
 ## Context
 
 Paymob card vaulting starts with an order-like session, but it does not sell a

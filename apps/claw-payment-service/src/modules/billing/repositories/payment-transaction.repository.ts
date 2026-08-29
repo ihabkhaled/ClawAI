@@ -66,6 +66,12 @@ export class PaymentTransactionRepository {
     });
   }
 
+  /** One transaction by id. Used to read a reversed charge's frozen snapshot. */
+  async findById(id: string): Promise<PaymentTransaction | null> {
+    this.logger.debug(`findById: ${id}`);
+    return this.prisma.paymentTransaction.findUnique({ where: { id } });
+  }
+
   /**
    * The most recent successful charge on a subscription.
    *

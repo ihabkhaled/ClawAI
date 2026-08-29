@@ -39,6 +39,7 @@ const ZERO_USAGE: RawTokenBreakdown = {
   outputTokens: 0,
   toolCalls: 0,
   searchCalls: 0,
+  imageUnits: 0,
 };
 
 function usage(overrides: Partial<RawTokenBreakdown>): RawTokenBreakdown {

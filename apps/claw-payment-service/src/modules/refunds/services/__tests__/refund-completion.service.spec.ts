@@ -61,6 +61,7 @@ describe('RefundCompletionService', () => {
   };
   const records = { recordReversal: jest.fn() };
   const outbox = { enqueue: jest.fn() };
+  const creditTopups = { enqueueReversalInTransaction: jest.fn() };
   let service: RefundCompletionService;
 
   beforeEach(() => {
@@ -79,6 +80,7 @@ describe('RefundCompletionService', () => {
       repository as never,
       records as never,
       outbox as never,
+      creditTopups as never,
     );
     jest.useFakeTimers().setSystemTime(now);
   });
@@ -159,6 +161,96 @@ describe('RefundCompletionService', () => {
     ).rejects.toMatchObject({ code: BillingErrorCode.REFUND_NOT_FOUND });
     expect(records.recordReversal).not.toHaveBeenCalled();
     expect(repository.markSucceeded).not.toHaveBeenCalled();
+  });
+
+  it('routes a refunded CREDIT_TOPUP to the credit reversal, not the entitlement event', async () => {
+    repository.findForCompletion.mockResolvedValue({
+      refund: { ...refund, subscriptionId: null, amountMinor: 2_500 },
+      charge: {
+        id: 'charge-1',
+        type: PaymentTransactionType.CREDIT_TOPUP,
+        amountMinor: 2_500,
+        providerAmountMinor: 2_500,
+        providerCurrency: 'USD',
+        priceSnapshotJson: {
+          packageId: 'pkg-25',
+          packageVersionId: 'cpv-9',
+          creditMicroUsd: '15000000',
+          amountMinor: 2_500,
+          currency: 'USD',
+        },
+      },
+      subscription: null,
+    });
+
+    await service.complete('refund-1', 'provider-refund-1', 'correlation-topup');
+
+    expect(creditTopups.enqueueReversalInTransaction).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        userId: 'user-1',
+        sourcePaymentTransactionId: 'charge-1',
+        packageId: 'pkg-25',
+        packageVersionId: 'cpv-9',
+        creditMicroUsd: 15_000_000n,
+      }),
+      'reversal-1',
+    );
+    // ADR-064 is untouched: a credit reversal revokes nothing, because the
+    // money it returns never bought access.
+    expect(tx.subscription.update).not.toHaveBeenCalled();
+    expect(outbox.enqueue).not.toHaveBeenCalled();
+  });
+
+  it('reverses only the proportional credit for a partial top-up refund', async () => {
+    repository.findForCompletion.mockResolvedValue({
+      refund: { ...refund, subscriptionId: null, amountMinor: 500 },
+      charge: {
+        id: 'charge-1',
+        type: PaymentTransactionType.CREDIT_TOPUP,
+        amountMinor: 2_500,
+        providerAmountMinor: 2_500,
+        providerCurrency: 'USD',
+        priceSnapshotJson: {
+          packageId: 'pkg-25',
+          packageVersionId: 'cpv-9',
+          creditMicroUsd: '15000000',
+          amountMinor: 2_500,
+          currency: 'USD',
+        },
+      },
+      subscription: null,
+    });
+
+    await service.complete('refund-1', 'provider-refund-1', 'correlation-topup');
+
+    expect(creditTopups.enqueueReversalInTransaction).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({ creditMicroUsd: 3_000_000n }),
+      'reversal-1',
+    );
+  });
+
+  it('refuses a top-up reversal whose frozen snapshot cannot be read', async () => {
+    repository.findForCompletion.mockResolvedValue({
+      refund: { ...refund, subscriptionId: null },
+      charge: {
+        id: 'charge-1',
+        type: PaymentTransactionType.CREDIT_TOPUP,
+        amountMinor: 2_500,
+        providerAmountMinor: 2_500,
+        providerCurrency: 'USD',
+        priceSnapshotJson: null,
+      },
+      subscription: null,
+    });
+
+    // The money has already gone back. An operator ticket is a far better
+    // outcome than a wallet quietly wrong by a guessed amount.
+    await expect(
+      service.complete('refund-1', 'provider-refund-1', 'correlation-topup'),
+    ).rejects.toMatchObject({ code: BillingErrorCode.PAYMENT_REFERENCE_MISMATCH });
+    expect(creditTopups.enqueueReversalInTransaction).not.toHaveBeenCalled();
   });
 
   it('converges when the compensating transaction was already recorded', async () => {

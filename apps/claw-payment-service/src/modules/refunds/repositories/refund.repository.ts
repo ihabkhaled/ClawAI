@@ -16,6 +16,8 @@ import {
   AUTOMATIC_REFUND_ACTOR,
   AUTOMATIC_REFUND_RETRY_BASE_MS,
 } from '../constants/payment-compensation.constants';
+import { REFUNDABLE_CHARGE_TYPES } from '../constants/refundable-charge.constants';
+import { toRefundableChargeType } from '../utilities/refundable-charge-type.utility';
 
 @Injectable()
 export class RefundRepository {
@@ -43,32 +45,38 @@ export class RefundRepository {
     });
   }
 
+  /**
+   * A captured charge that may still be reversed.
+   *
+   * `subscriptionId` is NOT required non-null any more: a PAYG credit top-up is
+   * a real captured charge that buys a balance rather than a plan, and refusing
+   * to find it here would leave a refunded top-up with the money returned and
+   * the credit still in the wallet.
+   *
+   * `providerTransactionId` is still required — a charge we cannot name at the
+   * gateway cannot be refunded at the gateway either.
+   */
   async findCapturedCharge(id: string): Promise<RefundableCharge | null> {
     const charge = await this.prisma.paymentTransaction.findFirst({
       where: {
         id,
-        type: {
-          in: [
-            PaymentTransactionType.CHARGE,
-            PaymentTransactionType.RENEWAL,
-            PaymentTransactionType.PRORATION_CHARGE,
-          ],
-        },
+        type: { in: [...REFUNDABLE_CHARGE_TYPES] },
         status: PaymentTransactionStatus.CAPTURED,
-        subscriptionId: { not: null },
         providerTransactionId: { not: null },
       },
     });
-    if (charge === null) {
+    if (charge === null || charge.providerTransactionId === null) {
       return null;
     }
-    if (charge.subscriptionId === null || charge.providerTransactionId === null) {
+    const type = toRefundableChargeType(charge.type);
+    if (type === null) {
       return null;
     }
     return {
       id: charge.id,
       userId: charge.userId,
       subscriptionId: charge.subscriptionId,
+      type,
       gateway: charge.gateway,
       amountMinor: charge.amountMinor,
       currency: charge.currency,
@@ -81,6 +89,9 @@ export class RefundRepository {
   async listRefundableCharges(): Promise<RefundableChargeSummary[]> {
     const rows = await this.prisma.paymentTransaction.findMany({
       where: {
+        // Deliberately NOT REFUNDABLE_CHARGE_TYPES: this feeds the operator's
+        // refundable-transactions list, whose view contract still requires a
+        // subscription id. Widening it is a separate, user-visible change.
         type: {
           in: [
             PaymentTransactionType.CHARGE,

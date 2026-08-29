@@ -256,6 +256,15 @@ export const ja: TranslationDictionary = {
     more: 'もっと見る',
   },
   chat: {
+    credit: {
+      modelBadge: 'クレジットを消費',
+      badgeLabel: 'クレジット',
+      badgeHint: 'コネクタークレジット残り {remaining}',
+      clampedTitle: '回答を短縮しました',
+      clampedBody: '残りのコネクタークレジットに収まるよう、この回答は短縮されました。',
+      clampedDismiss: '閉じる',
+      addCreditCta: 'クレジットを追加',
+    },
     threadListDrawer: '会話',
     export: {
       action: 'エクスポート',
@@ -293,6 +302,19 @@ export const ja: TranslationDictionary = {
       roleAssistant: 'アシスタント',
     },
     limits: {
+      addCreditCta: 'クレジットを追加',
+      paygCreditExhaustedTitle: 'コネクタークレジットを使い切りました',
+      paygCreditExhaustedBody:
+        'このモデルはコネクタークレジットから課金されますが、残高がありません。クレジットを追加するか、ローカルモデルを選択してください。',
+      paygPromptTooExpensiveTitle: '会話がクレジットに対して長すぎます',
+      paygPromptTooExpensiveBody:
+        'この会話の費用は残りのコネクタークレジットを超えています。クレジットを追加するか、短い会話を始めるか、ローカルモデルを選択してください。',
+      paygModelUnpricedTitle: 'モデルを利用できません',
+      paygModelUnpricedBody:
+        'このモデルはまだ価格が公開されていないため課金できません。別のモデルを選択してください。',
+      paygPricingUnavailableTitle: '一時的に利用できません',
+      paygPricingUnavailableBody:
+        '価格情報を取得できなかったため、有料モデルを一時停止しています。課金は発生していません。ローカルモデルは引き続き利用できます。',
       dailyTokensTitle: '本日のトークンを使い切りました',
       dailyTokensBody:
         '1日あたりのトークン枠を使い切りました。UTCの深夜にリセットされます。今すぐ上位プランに変更することもできます。',
@@ -2611,6 +2633,9 @@ export const ja: TranslationDictionary = {
     invalidFileType: 'このファイルの種類はサポートされていません',
   },
   toast: {
+    creditTopupSucceeded: 'クレジットを追加しました。',
+    creditTopupFailed: 'クレジットを追加できませんでした。',
+    creditTopupCancelled: '支払いがキャンセルされました。クレジットは追加されていません。',
     loginSuccess: 'ログイン成功',
     registerSuccess: 'アカウントが正常に作成されました',
     loginFailed: 'ログインに失敗しました',
@@ -3539,6 +3564,11 @@ export const ja: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ja,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ja,
   adminBilling: {
+    credit: {
+      packageCreated: 'クレジットパッケージを作成しました。',
+      versionPublished: 'パッケージ価格を公開しました。',
+      saveFailed: 'クレジットパッケージを保存できませんでした。',
+    },
     title: '請求ダッシュボード',
     description: '収益、プロバイダーのコスト、マージン、サブスクリプションの健全性。',
     loading: '請求指標を読み込み中...',
@@ -3663,6 +3693,9 @@ export const ja: TranslationDictionary = {
       description: 'この計画を更新します。',
     },
     form: {
+      monthlyConnectorCredit: '月間コネクタークレジット（マイクロUSD）',
+      monthlyConnectorCreditHelp:
+        '有料クラウドコネクター向けのドル枠。マイクロUSD 単位（1,000,000 = $1.00）。0 にするとこのプランで有料コネクターを無効化します。この数値はユーザーに表示されます。',
       name: '名前',
       namePlaceholder: 'プロ',
       slug: 'ナメクジ',
@@ -3789,6 +3822,7 @@ export const ja: TranslationDictionary = {
     },
   },
   userPlan: {
+    noCreditOnThisPlan: 'このプランにはコネクタークレジットが含まれていません。',
     title: '私の計画',
     description: '現在のサブスクリプション、機能、および許可されているモデル。',
     loading: 'プランを読み込んでいます...',
@@ -3810,6 +3844,12 @@ export const ja: TranslationDictionary = {
     chatsLimitLabel: '1 日あたりのチャット数',
   },
   userUsage: {
+    connectorCredit: 'コネクタークレジット',
+    creditRemaining: '残り {remaining}',
+    creditUsedOfLimit: '{limit} 中 {used}',
+    creditPercentUsed: '{percent}% 使用済み',
+    dualConsumptionHint:
+      'クラウドコネクターはクレジットとトークンの両方を、ローカルモデルはトークンのみを消費します。',
     title: 'の使用法',
     description: 'プランの割り当てに対して毎日のトークン消費量を追跡します。',
     loading: '使用法を読み込んでいます...',
@@ -4052,6 +4092,44 @@ export const ja: TranslationDictionary = {
     },
   },
   billing: {
+    credit: {
+      title: 'コネクタークレジット',
+      available: '利用可能',
+      grantBucket: 'プラン付与分',
+      purchasedBucket: '購入クレジット',
+      reserved: '保留中',
+      reservedHint: '実行中のリクエスト用に確保されています。完了すると解放されます。',
+      resetsOn: '{date} にリセット',
+      neverExpires: '有効期限なし',
+      percentUsed: '{percent}% 使用済み',
+      noAllowance: 'このプランにはコネクタークレジットが含まれていません。',
+      addCredit: 'クレジットを追加',
+      adminBypass: '管理者 — コネクタークレジットは適用されません',
+      meteringDisabled: '現在、コネクタークレジットは課金されていません。',
+      empty: 'クレジット情報がありません。',
+      error: 'コネクタークレジットを読み込めませんでした。',
+      packages: 'クレジットパッケージ',
+      packagesEmpty: '現在利用できるクレジットパッケージはありません。',
+      packagesError: 'クレジットパッケージを読み込めませんでした。',
+      packageCredit: 'クレジット {credit} 分',
+      topupTitle: 'コネクタークレジットを追加',
+      topupDescription: 'パッケージを選択してください。購入したクレジットに有効期限はありません。',
+      topupConfirm: '支払いに進む',
+      topupConfirming: '支払いを準備しています…',
+      ledgerTitle: 'クレジット履歴',
+      ledgerDate: '日付',
+      ledgerSurface: '使用箇所',
+      ledgerModel: 'モデル',
+      ledgerNoModel: 'なし',
+      ledgerAmount: '金額',
+      ledgerBalance: '残高',
+      ledgerEmpty: 'クレジットの履歴はまだありません。',
+      ledgerError: 'クレジット履歴を読み込めませんでした。',
+      ledgerLoadMore: 'さらに読み込む',
+      ledgerLoadingMore: '読み込み中…',
+      dualConsumptionNotice:
+        'OpenAI、Claude、Gemini などのクラウドコネクターは、ドル建てクレジットと1日のトークン枠の両方を消費します。ローカルモデルはトークンのみを消費します。',
+    },
     page: {
       title: '請求',
       description: 'プラン、使用量、請求されたすべての内容。',
@@ -4061,6 +4139,14 @@ export const ja: TranslationDictionary = {
       dismiss: '閉じる',
     },
     errors: {
+      PAYG_CREDIT_EXHAUSTED:
+        'コネクタークレジットを使い切りました。クラウドモデルを続けて使うにはクレジットを追加してください。',
+      PAYG_PROMPT_TOO_EXPENSIVE: 'この会話の費用は残りのコネクタークレジットを超えています。',
+      PAYG_MODEL_UNPRICED: 'このモデルはまだ価格が公開されておらず、課金できません。',
+      PAYG_PRICING_UNAVAILABLE: '価格情報に一時的に接続できません。課金は発生していません。',
+      CREDIT_PACKAGE_NOT_FOUND: 'そのクレジットパッケージは存在しません。',
+      CREDIT_PACKAGE_INACTIVE: 'そのクレジットパッケージは販売を終了しました。',
+      CREDIT_ADJUSTMENT_REASON_REQUIRED: 'クレジットを手動で調整するには理由が必要です。',
       PLAN_NOT_PURCHASABLE: 'このプランは購入できません。',
       PAYMENT_NOT_VERIFIED: '支払いを確認できませんでした。請求はされていません。',
       PAYMENT_METHOD_UNAVAILABLE:
@@ -4306,6 +4392,8 @@ export const ja: TranslationDictionary = {
         'モデルの入手可能性は、各プロバイダー独自のリリース スケジュールに従います。新しいモデルは出荷され次第追加されます。',
     },
     pricing: {
+      paygCreditLabel: '月間コネクタークレジット',
+      paygCreditNone: 'コネクタークレジットなし',
       sectionTitle: 'お客様に合わせて拡張するプラン',
       sectionSubtitle:
         '無料で始めましょう。さらに必要な場合はアップグレードしてください。すべての有料プランは同じモデルに対応しています。違いは、使用できる量です。',

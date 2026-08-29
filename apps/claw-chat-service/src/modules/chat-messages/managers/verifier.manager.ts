@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
@@ -25,6 +26,8 @@ import type { AdvancedModelSelectionResolution } from '../types/advanced-model-s
 import type { VerifierCheckResult, VerifyResponse } from '../types/verifier.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import { RoutingMode } from '../../../generated/prisma';
+import { OLLAMA_PROVIDER } from '../../../common/constants';
+import { PAYG_WORKFLOW_VERIFIER } from '../constants/payg.constants';
 
 @Injectable()
 export class VerifierManager {
@@ -283,12 +286,29 @@ export class VerifierManager {
       think: false,
     };
 
-    const response = await httpRequest<OllamaGenerateResponse>({
-      url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-      method: 'POST',
-      body: requestBody,
-      timeoutMs: VERIFIER_TIMEOUT_MS,
-    });
+    const response = await this.accessControlService.meterOrchestrationCall(
+      {
+        userId,
+        requestId: `verifier:draft:${randomUUID()}`,
+        provider: OLLAMA_PROVIDER,
+        model,
+        workflow: PAYG_WORKFLOW_VERIFIER,
+        promptText: requestBody.prompt,
+      },
+      async (hold) =>
+        httpRequest<OllamaGenerateResponse>({
+          url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
+          method: 'POST',
+          body: hold.clamped
+            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
+            : requestBody,
+          timeoutMs: VERIFIER_TIMEOUT_MS,
+        }),
+      (settled) => ({
+        promptTokens: settled.data.promptEvalCount ?? 0,
+        completionTokens: settled.data.evalCount ?? 0,
+      }),
+    );
 
     if (!response.ok) {
       throw new Error(`Ollama draft generation returned status ${String(response.status)}`);
@@ -337,12 +357,29 @@ Return ONLY JSON: { "score": <average 0-1>, "issues": ["..."], "suggestions": ["
       think: false,
     };
 
-    const response = await httpRequest<OllamaGenerateResponse>({
-      url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-      method: 'POST',
-      body: requestBody,
-      timeoutMs: VERIFIER_TIMEOUT_MS,
-    });
+    const response = await this.accessControlService.meterOrchestrationCall(
+      {
+        userId,
+        requestId: `verifier:check:${randomUUID()}`,
+        provider: OLLAMA_PROVIDER,
+        model,
+        workflow: PAYG_WORKFLOW_VERIFIER,
+        promptText: requestBody.prompt,
+      },
+      async (hold) =>
+        httpRequest<OllamaGenerateResponse>({
+          url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
+          method: 'POST',
+          body: hold.clamped
+            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
+            : requestBody,
+          timeoutMs: VERIFIER_TIMEOUT_MS,
+        }),
+      (settled) => ({
+        promptTokens: settled.data.promptEvalCount ?? 0,
+        completionTokens: settled.data.evalCount ?? 0,
+      }),
+    );
 
     if (!response.ok) {
       this.logger.warn(
@@ -420,12 +457,29 @@ Return ONLY the improved response. Do not explain changes.`;
       think: false,
     };
 
-    const response = await httpRequest<OllamaGenerateResponse>({
-      url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-      method: 'POST',
-      body: requestBody,
-      timeoutMs: VERIFIER_TIMEOUT_MS,
-    });
+    const response = await this.accessControlService.meterOrchestrationCall(
+      {
+        userId,
+        requestId: `verifier:repair:${randomUUID()}`,
+        provider: OLLAMA_PROVIDER,
+        model,
+        workflow: PAYG_WORKFLOW_VERIFIER,
+        promptText: requestBody.prompt,
+      },
+      async (hold) =>
+        httpRequest<OllamaGenerateResponse>({
+          url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
+          method: 'POST',
+          body: hold.clamped
+            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
+            : requestBody,
+          timeoutMs: VERIFIER_TIMEOUT_MS,
+        }),
+      (settled) => ({
+        promptTokens: settled.data.promptEvalCount ?? 0,
+        completionTokens: settled.data.evalCount ?? 0,
+      }),
+    );
 
     if (!response.ok) {
       this.logger.warn(

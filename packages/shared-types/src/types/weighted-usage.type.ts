@@ -10,6 +10,12 @@ export type RawTokenBreakdown = {
   outputTokens: number;
   toolCalls: number;
   searchCalls: number;
+  // Images produced. Priced PER UNIT, not per token — an image endpoint returns
+  // no token usage at all, so without this field an image generation prices at
+  // exactly $0 and its whole credit hold is released. `imagePerUnitMicroUsd` was
+  // stored, published and forwarded across three services before anything
+  // summed it; this is the field that closes that loop.
+  imageUnits: number;
 };
 
 // Versioned per-million pricing for one model, in integer micro-USD.

@@ -26,3 +26,17 @@ export {
   type ModelAuthorizationFacts,
   type ModelAuthorizationResult,
 } from './model-authorization';
+export { PaygMeter } from './payg-meter';
+export {
+  PaygCreditExhaustedError,
+  isPaygCreditExhaustedError,
+} from './payg-credit-exhausted.error';
+export type {
+  PaygFinalizeCalls,
+  PaygFinalizeUsage,
+  PaygHold,
+  PaygMeterOptions,
+  PaygReleaseReason,
+  PaygReserveInput,
+  PaygUnmeteredReason,
+} from './payg-meter.types';

@@ -512,3 +512,85 @@ This clears the second blocker from
 work before replicas can be switched on is deployment: `container_name` in the
 compose file makes Docker refuse to scale the service at all, and
 `deploy-prod.sh` would recreate every replica at once.
+
+## PAYG credit: the chokepoint reserves, the chokepoint settles (2026-08-29)
+
+The universal token-deduction chokepoint is now also the universal **money**
+chokepoint. `ChatExecutionManager.callProvider()` (buffered) and
+`streamCandidate()` (streaming) each do the same three things around the
+provider call:
+
+```
+hold = accessControl.reserveCredit({ userId, requestId, provider, model, surface, workflow, ... })
+try   { call the provider with hold.maxOutputTokens }   ← ALWAYS the hold's ceiling
+      { accessControl.finalizeCredit(hold, measuredUsage) }
+catch { accessControl.releaseCredit(hold, 'PROVIDER_ERROR'); throw }
+```
+
+Rules, each with the failure it prevents:
+
+- **The reservation IS the gate.** There is deliberately no
+  `assertPaygCreditAvailable` pre-check anywhere. A second gate answers a
+  question that is already stale by the time the provider is dialled, and two
+  gates disagreeing is how a user gets refused under one code and charged under
+  another.
+- **Never call `PaygMeter` directly from a manager.** Go through
+  `AccessControlService.reserveCredit / finalizeCredit / releaseCredit`. That is
+  the one place `PaygCreditExhaustedError` becomes a `BusinessException` with
+  `HttpStatus.PAYMENT_REQUIRED`, so every surface answers a refusal with the
+  same status and the same machine code.
+- **The surface is derived from the `TokenLedgerContext` you already pass**
+  (`PAYG_SURFACE_BY_TOKEN_CONTEXT`). A new orchestration mode is therefore
+  metered the day it is added. Pass the 10th `paygCall` argument only when the
+  ledger context cannot express it — the coding agent and the vision-prompt hop
+  both run as `TokenLedgerContext.CHAT`.
+- **One reservation per PAID CALL, not per user request.** The Ollama Cloud tool
+  loop takes a hold per turn keyed `<run>:turn:<n>` — a ten-turn agentic run is
+  ten paid completions, and the later turns are the expensive ones. Runtime V2
+  takes one per turn for the same reason.
+- **A local runtime tag is renamed, never exempted.** `normalizePaygProvider`
+  maps `local-ollama` → `OLLAMA` and `local-llamacpp` → `LLAMACPP`, because
+  auth-service keys its PAYG policy on the connector provider. Sending the raw
+  tag would ask the meter about a provider it has never heard of, and a meter
+  outage would then fail closed on the operator's own hardware. The decision
+  itself still belongs to auth-service (ADR-082).
+- **`IMAGE_*` and `FILE_GENERATION` are NOT reserved here.** They dispatch to
+  image-service / file-generation-service, which meter their own provider calls;
+  a hold here would debit one generation twice. The text call that writes a
+  file's _contents_ is a real provider call and IS metered, at
+  `PaygSurface.FILE_GENERATION`.
+- **A call with no `userId` fails CLOSED for a paid provider and OPEN for a
+  local one.** An unattributable frontier call is unbounded liability; refusing a
+  model on the operator's own hardware would take the product down for no gain.
+- **`hold.clamped` must reach the user.** It lands on
+  `LlmResponse.paygClamped`, on the assistant message metadata, and as a
+  `StreamEventType.PAYG_CREDIT_CLAMPED` frame. A silently shortened reply reads
+  as the model being bad rather than the wallet being empty.
+
+**Compare is all-or-nothing (E2).** `ParallelExecutionManager.reserveAllLanes`
+funds every lane before any provider is called and releases every hold already
+taken if one does not fit, raising `PAYG_COMPARE_CREDIT_INSUFFICIENT`. A
+comparison with three error columns is not a comparison, and the user has still
+paid for the two that ran.
+
+**A coding-agent run PAUSES on exhaustion (E6).** `runtimeV2TerminalStatus`
+returns `'paused'` for a 402 and `'failed'` for everything else, so the journal,
+the tool receipts and the context survive under the run's TTL and topping up
+resumes work instead of repeating and re-paying for it. Only an exhausted wallet
+qualifies — dressing any other fault as a pause advertises a resume that cannot
+work.
+
+**Cached and reasoning tokens are load-bearing now.** `TokenUsage` carries
+`cachedPromptTokens` and `reasoningTokens`, `buildTokenUsageFields` puts both on
+every `LlmResponse`, and `ProviderStreamReader` reads them off the SSE usage
+frame through the shared `@claw/shared-utilities` guards (including DeepSeek's
+top-level `prompt_cache_hit_tokens`). Finalizing them as zero bills a reasoning
+model at nothing on its single most expensive component.
+
+**`POST /internal/chat/generate` now REQUIRES `userId` and `surface`.** It is a
+deliberate breaking change: workspace-service's AI actions, multi-model review,
+chain drafting and implementation handoff all spend real provider money through
+`generateOnce`, and every one of those calls used to be anonymous and free
+(audit U1, U8–U10, U12). An optional `userId` would have been omitted by exactly
+the callers that most need it. The response carries `clamped` so the calling
+service can tell its own user why the answer is short.

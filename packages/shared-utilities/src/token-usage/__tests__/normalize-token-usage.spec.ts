@@ -9,6 +9,8 @@ describe('normalizeTokenUsage', () => {
       promptTokens: 10,
       completionTokens: 20,
       totalTokens: 30,
+      cachedPromptTokens: 0,
+      reasoningTokens: 0,
       estimated: false,
       source: TokenUsageSource.NATIVE,
       estimator: TokenEstimatorKind.NONE,
@@ -82,6 +84,8 @@ describe('normalizeTokenUsage', () => {
       promptTokens: 4,
       completionTokens: 6,
       totalTokens: 999,
+      cachedPromptTokens: 0,
+      reasoningTokens: 0,
     });
     expect(usage.totalTokens).toBe(10);
   });

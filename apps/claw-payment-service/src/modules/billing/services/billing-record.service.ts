@@ -1,9 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  InvoiceLineKind,
-  PaymentTransactionStatus,
-  PaymentTransactionType,
-} from '@claw/shared-types';
+import { PaymentTransactionStatus, PaymentTransactionType } from '@claw/shared-types';
 
 import { type PaymentTransaction, type Prisma } from '../../../generated/prisma';
 import { InvoiceWriteRepository } from '../repositories/invoice-write.repository';
@@ -13,6 +9,7 @@ import {
   type RecordReversalInput,
 } from '../types/billing-record-service.types';
 import { type RecordedCharge } from '../types/billing-record.types';
+import { resolveChargeLineKind } from '../utilities/charge-line-kind.utility';
 
 /**
  * Writes the money side of a billing event: the payment transaction and the
@@ -38,12 +35,18 @@ export class BillingRecordService {
     private readonly invoices: InvoiceWriteRepository,
   ) {}
 
-  /** Records a captured charge and issues the invoice that documents it. */
+  /**
+   * Records a captured charge and issues the invoice that documents it.
+   *
+   * `subscriptionId` is nullable because a PAYG credit top-up is a real
+   * purchase with a real invoice and NO subscription. Passing a sentinel
+   * subscription instead would put a fabricated plan purchase in the ledger.
+   */
   async recordCharge(
     tx: Prisma.TransactionClient,
     input: RecordChargeInput,
   ): Promise<RecordedCharge> {
-    this.logger.debug(`recordCharge: subscription=${input.subscriptionId}`);
+    this.logger.debug(`recordCharge: subscription=${input.subscriptionId ?? 'none'}`);
     const transaction = await this.recordCapturedTransaction(tx, input);
     const invoice = await this.invoices.create(tx, {
       userId: input.userId,
@@ -55,10 +58,7 @@ export class BillingRecordService {
       amountPaidMinor: input.amountMinor,
       lines: [
         {
-          kind:
-            input.type === PaymentTransactionType.PRORATION_CHARGE
-              ? InvoiceLineKind.PRORATION_CHARGE
-              : InvoiceLineKind.SUBSCRIPTION,
+          kind: resolveChargeLineKind(input.type),
           description: input.lineDescription,
           quantity: 1,
           amountMinor: input.amountMinor,

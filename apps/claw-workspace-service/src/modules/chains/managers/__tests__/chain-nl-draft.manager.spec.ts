@@ -1,3 +1,5 @@
+import { PaygSurface } from '@claw/shared-types';
+
 import { AppConfig } from '../../../../app/config/app.config';
 import { BusinessException } from '../../../../common/errors/business.exception';
 import * as cloudClient from '../../../ai-actions/utilities/cloud-generation-client.utility';
@@ -173,5 +175,26 @@ describe('ChainNlDraftManager.draft', () => {
     expect(callSpy).toHaveBeenCalledTimes(3);
     expect(dsl.steps).toHaveLength(1);
     expect(callSpy.mock.calls[2]?.[0]).toMatchObject({ provider: 'OPENAI', model: 'gpt-4o' });
+  });
+
+  // PAYG (U10): the NL draft reaches a paid model through chat-service, which is
+  // where the reservation is taken. The drafting user's id has to travel with
+  // the request or the spend lands on nobody's wallet.
+  it('sends the drafting user and the WORKSPACE_ACTION surface to chat-service', async () => {
+    const { manager } = makeDeps();
+    callSpy.mockResolvedValue({
+      content: JSON.stringify({
+        steps: [{ id: 's1', connectorId: 'jira-1', actionType: 'CREATE_TICKET', payload: {} }],
+      }),
+    });
+
+    await manager.draft('u1', 'file a jira ticket');
+
+    expect(callSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'u1',
+        surface: PaygSurface.WORKSPACE_ACTION,
+      }),
+    );
   });
 });

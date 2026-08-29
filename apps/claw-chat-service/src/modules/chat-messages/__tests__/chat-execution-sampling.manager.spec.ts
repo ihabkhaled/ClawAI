@@ -20,6 +20,7 @@ import type { GeminiFilesApiManager } from '../managers/gemini-files-api.manager
 import type { AssembledContext } from '../types/context.types';
 import type { ExecutionOptions } from '../types/execution-options.types';
 import type { OpenAiChatRequest, ThreadSettings } from '../types/execution.types';
+import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.helper';
 
 jest.mock('../clients/model-exposure.client', () => ({
   ModelExposureClient: jest.fn().mockImplementation(() => ({
@@ -42,6 +43,11 @@ const { AppConfig } = jest.requireMock('../../../app/config/app.config') as {
 
 const makeContext = (userMessage: string): AssembledContext =>
   ({
+    // Required since PAYG metering landed: the chokepoint refuses an
+    // unattributable call to a PAID provider rather than spending money it
+    // cannot bill to anyone. These cases exercise sampling-parameter shaping on
+    // OpenAI and Anthropic, so they need a real caller.
+    userId: 'user-1',
     systemPrompt: 'You are a test assistant.',
     messages: [{ role: 'user', content: userMessage }],
     contextChunks: [],
@@ -95,10 +101,7 @@ describe('ChatExecutionManager sampling parameters', () => {
           outcome: { applied: false, results: [], runId: null, warning: null },
         })),
       } as unknown as SearchFirstManager,
-      {
-        recordUsage: jest.fn(),
-        recordFeatureUsage: jest.fn(async () => {}),
-      } as unknown as AccessControlService,
+      createFakePaygAccessControl() as unknown as AccessControlService,
       {
         uploadFile: jest.fn(),
         getCachedOrUpload: jest.fn(),

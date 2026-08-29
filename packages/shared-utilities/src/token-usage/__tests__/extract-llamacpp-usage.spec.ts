@@ -11,6 +11,8 @@ describe('extractLlamacppUsage', () => {
       promptTokens: 70,
       completionTokens: 30,
       totalTokens: 100,
+      cachedPromptTokens: 0,
+      reasoningTokens: 0,
       estimated: false,
       source: TokenUsageSource.NATIVE,
       estimator: TokenEstimatorKind.NONE,

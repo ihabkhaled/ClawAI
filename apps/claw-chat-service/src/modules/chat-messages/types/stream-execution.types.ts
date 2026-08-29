@@ -28,6 +28,16 @@ export type StreamExecutionResult = {
   reasoning: string;
   inputTokens?: number;
   outputTokens?: number;
+  /**
+   * The discounted subset of `inputTokens` served from the provider's prompt
+   * cache, and the subset of `outputTokens` spent thinking.
+   *
+   * Carried off the stream so the PAYG hold is reconciled against the real
+   * price split. A streamed reasoning model that reports neither is billed as
+   * if it never thought, which is wrong by the largest component of its bill.
+   */
+  cachedPromptTokens?: number;
+  reasoningTokens?: number;
   finishReason?: string;
   cancelled: boolean;
   // Native tool calls, in the raw shape the stream's own protocol produced.

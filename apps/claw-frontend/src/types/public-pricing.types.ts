@@ -31,6 +31,18 @@ export type PublicPlan = {
   dailyTokenQuota: number | null;
   weeklyTokenQuota: number | null;
   monthlyTokenQuota: number | null;
+  /**
+   * The monthly connector credit included with this plan, in integer micro-USD.
+   *
+   * This is `Plan.monthlyProviderCostCeilingMicroUsd`, promoted by ADR-078 from
+   * a hidden margin control to the user-visible allowance. It is carried on the
+   * DTO and NEVER written into i18n copy: an allowance in thirteen locale files
+   * is thirteen numbers an operator has to remember to change, and the first
+   * edit that misses one publishes a price we do not honour.
+   *
+   * `null` means the plan grants no connector credit — distinct from `0`.
+   */
+  monthlyProviderCostCeilingMicroUsd: number | null;
   maxChatsPerDay: number | null;
   maxMessagesPerDay: number | null;
   maxWorkspaceConnections: number | null;

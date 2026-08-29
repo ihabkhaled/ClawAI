@@ -191,6 +191,16 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "BILLING_CREDIT_TOPUP_REVERSED",
+      "pattern": "billing.credit.topup_reversed",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "BILLING_CREDIT_TOPUP_SUCCEEDED",
+      "pattern": "billing.credit.topup_succeeded",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "BILLING_ENTITLEMENT_RECONCILE_REQUESTED",
       "pattern": "billing.entitlement.reconcile_requested",
       "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -373,6 +383,21 @@
     {
       "key": "CONTEXT_PACK_VERSION_REVERTED",
       "pattern": "context_pack.version_reverted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CREDIT_BALANCE_EXHAUSTED",
+      "pattern": "credit.balance.exhausted",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CREDIT_BALANCE_LOW",
+      "pattern": "credit.balance.low",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "CREDIT_GRANT_RENEWED",
+      "pattern": "credit.grant.renewed",
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
@@ -628,6 +653,11 @@
     {
       "key": "ROUTING_LEARNED_SCORE_UPDATED",
       "pattern": "routing.learned_score.updated",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
+      "key": "ROUTING_MODEL_COST_PUBLISHED",
+      "pattern": "routing.model_cost.published",
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {

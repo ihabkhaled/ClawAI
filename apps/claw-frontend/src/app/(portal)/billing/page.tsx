@@ -5,6 +5,8 @@ import type { ReactElement } from 'react';
 import { BillingErrorBanner } from '@/components/billing/billing-error-banner';
 import { BillingIntervalToggle } from '@/components/billing/billing-interval-toggle';
 import { BillingStatusBanner } from '@/components/billing/billing-status-banner';
+import { CreditBalanceCard } from '@/components/billing/credit-balance-card';
+import { CreditLedgerTable } from '@/components/billing/credit-ledger-table';
 import { GatewayCheckoutDialog } from '@/components/billing/gateway-checkout-dialog';
 import { InvoiceTable } from '@/components/billing/invoice-table';
 import { PaymentMethodList } from '@/components/billing/payment-method-list';
@@ -29,9 +31,11 @@ export default function BillingPage(): ReactElement {
     checkout,
     cancellation,
     view,
+    credit,
     selectPlan,
     confirmPlanSelection,
     t,
+    locale,
   } = useBillingPage();
 
   return (
@@ -81,7 +85,32 @@ export default function BillingPage(): ReactElement {
           usage={usage.usage}
           isLoading={usage.isLoading}
           isError={usage.isError}
+          wallet={credit.wallet.wallet}
           t={t}
+          locale={locale}
+        />
+      </div>
+
+      {/* /billing SHOWS the balance and the ledger; the primary purchase button
+          lives on /plan, where the user asked for it. Repeating the CTA here
+          would give the same action two homes and neither an owner. */}
+      <div className="grid grid-cols-1 gap-6">
+        <CreditBalanceCard
+          wallet={credit.wallet.wallet}
+          isLoading={credit.wallet.isLoading}
+          isError={credit.wallet.isError}
+          t={t}
+          locale={locale}
+        />
+        <CreditLedgerTable
+          entries={credit.ledger.entries}
+          isLoading={credit.ledger.isLoading}
+          isError={credit.ledger.isError}
+          hasMore={credit.ledger.hasMore}
+          isFetchingMore={credit.ledger.isFetchingMore}
+          onLoadMore={credit.ledger.loadMore}
+          t={t}
+          locale={locale}
         />
       </div>
 

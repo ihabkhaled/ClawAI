@@ -144,3 +144,35 @@ After completing any implementation task on this service, produce:
 - `healthCheck` → `GET ${baseUrl}/health` — HEALTHY when `binary.installed=true`, DEGRADED when binary missing, DOWN on non-200/network error.
 - `syncModels` → `GET ${baseUrl}/catalog?downloadStatus=READY&limit=100` — maps each row to `NormalizedModel` with per-model `supportsTools`/`supportsVision` derived from `entry.capabilities`.
 - Default `baseUrl` is `http://llamacpp-service:4017/api/v1` — users can override per connector. Adapter doesn't require an API key.
+
+## PAYG credit classification (`Connector.isPayAsYouGo`)
+
+`Connector.isPayAsYouGo` decides whether inference through a connector debits a
+user's PAYG credit wallet in auth-service. **This column is the runtime
+authority** — `PAYG_DEFAULT_PROVIDERS` in `@claw/shared-constants` is only the
+default the migration backfills with and `paygDefaultForProvider()` applies on
+create. A predicate compiled into six `node_modules` copies would make the admin
+toggle unenforceable without a six-container rebuild (ADR-082).
+
+- **Default is `false`** — an unclassified provider is free until an operator
+  says otherwise. The opposite default starts charging users the moment someone
+  adds a connector nobody classified.
+- **`OLLAMA` stays `false`** even for Ollama-Cloud connectors, which do cost
+  money upstream. Provider is the classification grain and the two are
+  indistinguishable at that grain; the per-connector toggle is the lever.
+- **The toggle**: `PATCH /connectors/:id { isPayAsYouGo }`, guarded by
+  `ADMIN_CONNECTORS_MANAGE`. Omit the field and the current value is untouched,
+  so a rename cannot silently stop metering. Every flip is audit-logged
+  (`connector_payg_enabled` / `connector_payg_disabled`) with the previous value.
+- **The read path**: `GET /internal/connectors/payg-policy` →
+  `{ providers: { OPENAI: true, OLLAMA: false, … } }`. Provider grain, `true`
+  when any **enabled** connector for that provider is PAYG. Rollup logic lives in
+  `utilities/payg-policy.utility.ts`, never in the repository.
+- **No cache-bust event.** auth-service caches the policy for 60 s
+  (`PAYG_POLICY_CACHE_TTL_SECONDS`); do NOT invent
+  `connector.payg_policy_changed`.
+
+**The backfill lives in the migration, not a seeder.** This service has no seed
+infrastructure at all — no `prisma/seed.js`, no `SeedExecution` model, no
+`prisma.seed` package.json entry — and `tools/release/seed-versioned.mjs` skips
+it. A seeder here is a file nothing runs.

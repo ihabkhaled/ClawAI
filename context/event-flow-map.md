@@ -77,3 +77,21 @@ these.
 - Validation lane for event changes:
   `cd packages/shared-types && npm run typecheck` then `npm run affected:test`
   (the rabbitmq-event pack in [task-router.md](task-router.md)).
+
+## PAYG connector credit (ADR-078)
+
+| Pattern                          | Producer → Consumer | Why it exists                                                                                                                  |
+| -------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `billing.credit.topup_succeeded` | payment → auth      | Money in. Enqueued in the SAME transaction as the charge; auth grants via the existing inbox, keyed on the envelope `eventId`. |
+| `billing.credit.topup_reversed`  | payment → auth      | Refund or chargeback. Auth clamps to the UNSPENT purchased balance; the wallet never goes negative.                            |
+| `credit.balance.low`             | auth → audit        | 80% / 95% thresholds, each also carrying an absolute floor.                                                                    |
+| `credit.balance.exhausted`       | auth → audit        |                                                                                                                                |
+| `credit.grant.renewed`           | auth → audit        | Period roll: grant reset, unused grant swept.                                                                                  |
+| `routing.model_cost.published`   | routing → auth      | Busts auth's 300 s rate cache so an admin repricing applies on the next request, not at the end of the TTL.                    |
+
+**Boot order is load-bearing.** `RabbitMQService.publish` does not set
+`mandatory`, and queues are asserted by the CONSUMER at boot. If payment drains
+a credit event before auth has ever subscribed, the broker discards it, the
+outbox row is marked PUBLISHED, and **no DLQ receives anything** — the money is
+taken and no credit is granted. **auth-service must be healthy before
+payment-service starts.** See `docs/11-runbooks/runbook-payg-credit.md`.

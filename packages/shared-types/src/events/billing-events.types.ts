@@ -100,6 +100,51 @@ export type BillingPaymentChargebackPayload = BillingSubscriptionEventBase & {
   currency: string;
 };
 
+/**
+ * Money in: a PAYG credit top-up completed at a gateway.
+ *
+ * Deliberately NOT a `BillingSubscriptionEventBase`. A top-up buys a wallet
+ * balance, not an entitlement — it has no plan, no subscription and no
+ * `entitlementValidUntil`, and modelling it as one would invite a consumer to
+ * extend paid access from a purchase that never granted any.
+ *
+ * `creditMicroUsd` is a decimal STRING, not a number. Credit is integer
+ * micro-USD and a large package can exceed what JSON's double can carry
+ * exactly; the consumer parses it back to a BigInt.
+ */
+export type BillingCreditTopupSucceededPayload = BillingEventEnvelope & {
+  userId: string;
+  creditMicroUsd: string;
+  packageId: string;
+  packageVersionId: string;
+  paymentTransactionId: string;
+  /** Integer minor units actually charged, in `currency`. */
+  amountMinor: number;
+  currency: string;
+};
+
+/**
+ * Money back out: a refunded or charged-back top-up.
+ *
+ * The payment service enqueues the credit the returned money bought and does
+ * NOT clamp it — it cannot see the wallet. Auth clamps to the UNSPENT
+ * `PURCHASED` balance and records the shortfall, because spent credit is
+ * consumed irreversibly and is not refundable (ADR-083, edge case E5).
+ */
+export type BillingCreditTopupReversedPayload = BillingEventEnvelope & {
+  userId: string;
+  creditMicroUsd: string;
+  packageId: string;
+  packageVersionId: string;
+  /** The original CREDIT_TOPUP charge being reversed. */
+  sourcePaymentTransactionId: string;
+  /** The compensating REFUND/CHARGEBACK row that reversed it. */
+  paymentTransactionId: string;
+  amountMinor: number;
+  currency: string;
+  isChargeback: boolean;
+};
+
 // Asks auth to re-derive a user's entitlement from the payment service's truth.
 // Emitted by the reconciliation job when the two sides disagree.
 export type BillingEntitlementReconcileRequestedPayload = BillingEventEnvelope & {
@@ -120,4 +165,6 @@ export type BillingEventPayload =
   | BillingSubscriptionSuspendedPayload
   | BillingPaymentRefundedPayload
   | BillingPaymentChargebackPayload
+  | BillingCreditTopupSucceededPayload
+  | BillingCreditTopupReversedPayload
   | BillingEntitlementReconcileRequestedPayload;

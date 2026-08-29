@@ -23,6 +23,11 @@ const appConfigSchema = z.object({
     .min(32, 'INTER_SERVICE_AUTH_TOKEN must be at least 32 characters'),
   PAYMENT_SERVICE_URL: z.string().url().default('http://payment-service:4018'),
   CONNECTOR_SERVICE_URL: z.string().url().default('https://connector-service:4003'),
+  // Where auth reads per-model prices from (ADR-079). Auth cannot own model
+  // prices — routing-service does — but it cannot meter PAYG credit without
+  // them either, so it learns them over cached internal HTTP and fails CLOSED
+  // for a metered provider when the cache is cold and routing is unreachable.
+  ROUTING_SERVICE_URL: z.string().url().default('https://routing-service:4004'),
   PUBLIC_SITE_URL: z.string().url().default('https://claw.local'),
   CONTACT_EMAIL_ENABLED: z.enum(['true', 'false']).default('false'),
   CONTACT_EMAIL_PROVIDER: z.enum(['none', 'smtp']).default('none'),

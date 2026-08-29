@@ -242,6 +242,15 @@ export type TranslationDictionary = {
     more: string;
   };
   chat: {
+    credit: {
+      modelBadge: string;
+      badgeLabel: string;
+      badgeHint: string;
+      clampedTitle: string;
+      clampedBody: string;
+      clampedDismiss: string;
+      addCreditCta: string;
+    };
     threadListDrawer: string;
     export: {
       action: string;
@@ -278,6 +287,15 @@ export type TranslationDictionary = {
       roleAssistant: string;
     };
     limits: {
+      addCreditCta: string;
+      paygCreditExhaustedTitle: string;
+      paygCreditExhaustedBody: string;
+      paygPromptTooExpensiveTitle: string;
+      paygPromptTooExpensiveBody: string;
+      paygModelUnpricedTitle: string;
+      paygModelUnpricedBody: string;
+      paygPricingUnavailableTitle: string;
+      paygPricingUnavailableBody: string;
       dailyTokensTitle: string;
       dailyTokensBody: string;
       weeklyTokensTitle: string;
@@ -2774,6 +2792,9 @@ export type TranslationDictionary = {
     invalidFileType: string;
   };
   toast: {
+    creditTopupSucceeded: string;
+    creditTopupFailed: string;
+    creditTopupCancelled: string;
     loginSuccess: string;
     registerSuccess: string;
     loginFailed: string;
@@ -3553,6 +3574,11 @@ export type TranslationDictionary = {
     };
   };
   adminBilling: {
+    credit: {
+      packageCreated: string;
+      versionPublished: string;
+      saveFailed: string;
+    };
     title: string;
     description: string;
     loading: string;
@@ -3675,6 +3701,8 @@ export type TranslationDictionary = {
       description: string;
     };
     form: {
+      monthlyConnectorCredit: string;
+      monthlyConnectorCreditHelp: string;
       name: string;
       namePlaceholder: string;
       slug: string;
@@ -3800,6 +3828,7 @@ export type TranslationDictionary = {
     };
   };
   userPlan: {
+    noCreditOnThisPlan: string;
     title: string;
     description: string;
     loading: string;
@@ -3821,6 +3850,11 @@ export type TranslationDictionary = {
     chatsLimitLabel: string;
   };
   userUsage: {
+    connectorCredit: string;
+    creditRemaining: string;
+    creditUsedOfLimit: string;
+    creditPercentUsed: string;
+    dualConsumptionHint: string;
     title: string;
     description: string;
     loading: string;
@@ -4052,6 +4086,43 @@ export type TranslationDictionary = {
     };
   };
   billing: {
+    credit: {
+      title: string;
+      available: string;
+      grantBucket: string;
+      purchasedBucket: string;
+      reserved: string;
+      reservedHint: string;
+      resetsOn: string;
+      neverExpires: string;
+      percentUsed: string;
+      noAllowance: string;
+      addCredit: string;
+      adminBypass: string;
+      meteringDisabled: string;
+      empty: string;
+      error: string;
+      packages: string;
+      packagesEmpty: string;
+      packagesError: string;
+      packageCredit: string;
+      topupTitle: string;
+      topupDescription: string;
+      topupConfirm: string;
+      topupConfirming: string;
+      ledgerTitle: string;
+      ledgerDate: string;
+      ledgerSurface: string;
+      ledgerModel: string;
+      ledgerNoModel: string;
+      ledgerAmount: string;
+      ledgerBalance: string;
+      ledgerEmpty: string;
+      ledgerError: string;
+      ledgerLoadMore: string;
+      ledgerLoadingMore: string;
+      dualConsumptionNotice: string;
+    };
     page: {
       title: string;
       description: string;
@@ -4061,6 +4132,13 @@ export type TranslationDictionary = {
       dismiss: string;
     };
     errors: {
+      PAYG_CREDIT_EXHAUSTED: string;
+      PAYG_PROMPT_TOO_EXPENSIVE: string;
+      PAYG_MODEL_UNPRICED: string;
+      PAYG_PRICING_UNAVAILABLE: string;
+      CREDIT_PACKAGE_NOT_FOUND: string;
+      CREDIT_PACKAGE_INACTIVE: string;
+      CREDIT_ADJUSTMENT_REASON_REQUIRED: string;
       PLAN_NOT_PURCHASABLE: string;
       PAYMENT_NOT_VERIFIED: string;
       PAYMENT_METHOD_UNAVAILABLE: string;
@@ -4296,6 +4374,8 @@ export type TranslationDictionary = {
       footnote: string;
     };
     pricing: {
+      paygCreditLabel: string;
+      paygCreditNone: string;
       sectionTitle: string;
       sectionSubtitle: string;
       monthly: string;

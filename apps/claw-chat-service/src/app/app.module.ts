@@ -3,10 +3,14 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { RabbitMQModule } from '@claw/shared-rabbitmq';
+import { EntitlementsModule } from '@claw/shared-entitlements';
 import type { IncomingMessage } from 'node:http';
 
 import { PrismaModule } from '../infrastructure/database/prisma/prisma.module';
 import { RedisModule } from '../infrastructure/redis/redis.module';
+import { ENTITLEMENTS_TIMEOUT_MS } from '../common/constants';
+
+import { AppConfig } from './config/app.config';
 
 import { AuthGuard } from './guards/auth.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -68,6 +72,14 @@ import { ContextPreviewModule } from '../modules/context-preview/context-preview
         url: process.env['RABBITMQ_URL'] ?? 'amqp://localhost:5672',
         serviceName: 'chat-service',
       }),
+    }),
+    // Global. Provides the PaygMeter every money-spending path reserves
+    // against, by CLASS token, so a manager injects `private readonly payg:
+    // PaygMeter` and a missing provider is a boot error rather than a silent
+    // `undefined` that skips metering everywhere.
+    EntitlementsModule.forRoot({
+      authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+      timeoutMs: ENTITLEMENTS_TIMEOUT_MS,
     }),
     PrismaModule,
     RedisModule,

@@ -8,8 +8,8 @@ import {
 } from '../../../common/enums/reconciliation.enum';
 import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
 import {
-  isSubscriptionCheckoutSession,
-  type SubscriptionCheckoutSession,
+  isPayableCheckoutSession,
+  type PayableCheckoutSession,
 } from '../../billing/utilities/checkout-session-purpose.utility';
 import { PaymobAdapter } from '../../gateways/paymob/paymob.adapter';
 import { PaypalAdapter } from '../../gateways/paypal/paypal.adapter';
@@ -66,7 +66,11 @@ export class GatewayReconciliationService {
     runId: string,
     session: CheckoutSession,
   ): Promise<GatewayReconciliationResult> {
-    if (!isSubscriptionCheckoutSession(session)) {
+    // Payable, not subscription-only: a PAYG top-up whose callback was lost is
+    // exactly the case reconciliation exists for — money taken, nothing
+    // delivered — and narrowing this to plans would quarantine it instead of
+    // reading the truth back from the gateway.
+    if (!isPayableCheckoutSession(session)) {
       return this.quarantine(
         runId,
         session,
@@ -99,9 +103,7 @@ export class GatewayReconciliationService {
     }
   }
 
-  private async readGateway(
-    session: SubscriptionCheckoutSession,
-  ): Promise<ClassifiedGatewayResult> {
+  private async readGateway(session: PayableCheckoutSession): Promise<ClassifiedGatewayResult> {
     const expected = {
       amountMinor: session.chargeAmountMinor,
       currency: session.chargeCurrency,

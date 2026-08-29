@@ -6,7 +6,8 @@ import { type Prisma } from '../../../generated/prisma';
 export type RecordChargeInput = {
   userId: string;
   invoiceRecipientEmail: string | null;
-  subscriptionId: string;
+  /** Null for a purchase that buys no plan — a PAYG credit top-up. */
+  subscriptionId: string | null;
   checkoutSessionId: string | null;
   gateway: string;
   type: PaymentTransactionType;

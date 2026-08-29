@@ -250,6 +250,15 @@ export const th: TranslationDictionary = {
     more: 'มากกว่า',
   },
   chat: {
+    credit: {
+      modelBadge: 'ใช้เครดิต',
+      badgeLabel: 'เครดิต',
+      badgeHint: 'เหลือเครดิตคอนเนกเตอร์ {remaining}',
+      clampedTitle: 'ย่อคำตอบให้สั้นลง',
+      clampedBody: 'คำตอบนี้ถูกย่อให้สั้นลงเพื่อให้พอดีกับเครดิตคอนเนกเตอร์ที่เหลืออยู่',
+      clampedDismiss: 'ปิด',
+      addCreditCta: 'เพิ่มเครดิต',
+    },
     threadListDrawer: 'บทสนทนา',
     export: {
       action: 'ส่งออก',
@@ -286,6 +295,19 @@ export const th: TranslationDictionary = {
       roleAssistant: 'ผู้ช่วย',
     },
     limits: {
+      addCreditCta: 'เพิ่มเครดิต',
+      paygCreditExhaustedTitle: 'เครดิตคอนเนกเตอร์หมดแล้ว',
+      paygCreditExhaustedBody:
+        'โมเดลนี้คิดค่าใช้จ่ายจากเครดิตคอนเนกเตอร์ของคุณ และยอดคงเหลือเป็นศูนย์ กรุณาเพิ่มเครดิตเพื่อใช้งานต่อ หรือเลือกโมเดลในเครื่อง',
+      paygPromptTooExpensiveTitle: 'บทสนทนายาวเกินเครดิตของคุณ',
+      paygPromptTooExpensiveBody:
+        'บทสนทนานี้มีค่าใช้จ่ายมากกว่าเครดิตคอนเนกเตอร์ที่เหลือ กรุณาเพิ่มเครดิต เริ่มแชทที่สั้นลง หรือเลือกโมเดลในเครื่อง',
+      paygModelUnpricedTitle: 'ไม่สามารถใช้โมเดลนี้ได้',
+      paygModelUnpricedBody:
+        'โมเดลนี้ยังไม่มีราคาที่ประกาศไว้ จึงคิดค่าใช้จ่ายไม่ได้ กรุณาเลือกโมเดลอื่น',
+      paygPricingUnavailableTitle: 'ใช้งานไม่ได้ชั่วคราว',
+      paygPricingUnavailableBody:
+        'ไม่สามารถดึงข้อมูลราคาได้ จึงหยุดโมเดลแบบเสียค่าใช้จ่ายไว้ชั่วครู่ ระบบไม่ได้เรียกเก็บเงินจากคุณ โมเดลในเครื่องยังใช้งานได้ตามปกติ',
       dailyTokensTitle: 'คุณใช้โทเค็นของวันนี้หมดแล้ว',
       dailyTokensBody:
         'โควตาโทเค็นรายวันของคุณหมดแล้ว ระบบจะรีเซ็ตเวลาเที่ยงคืน UTC หรือจะเปลี่ยนไปใช้แพ็กเกจที่ใหญ่ขึ้นตอนนี้ก็ได้',
@@ -2577,6 +2599,9 @@ export const th: TranslationDictionary = {
     invalidFileType: 'ไม่รองรับไฟล์ประเภทนี้',
   },
   toast: {
+    creditTopupSucceeded: 'เพิ่มเครดิตแล้ว',
+    creditTopupFailed: 'เพิ่มเครดิตไม่สำเร็จ',
+    creditTopupCancelled: 'ยกเลิกการชำระเงินแล้ว ไม่มีการเพิ่มเครดิต',
     loginSuccess: 'เข้าสู่ระบบสำเร็จ',
     registerSuccess: 'สร้างบัญชีสำเร็จแล้ว',
     loginFailed: 'ล้มเหลวในการเข้าสู่ระบบ',
@@ -3496,6 +3521,11 @@ export const th: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.th,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.th,
   adminBilling: {
+    credit: {
+      packageCreated: 'สร้างแพ็กเกจเครดิตแล้ว',
+      versionPublished: 'เผยแพร่ราคาแพ็กเกจแล้ว',
+      saveFailed: 'บันทึกแพ็กเกจเครดิตไม่สำเร็จ',
+    },
     title: 'แดชบอร์ดการเรียกเก็บเงิน',
     description: 'รายได้ ต้นทุนผู้ให้บริการ อัตรากำไร และสถานะการสมัครสมาชิก',
     loading: 'กำลังโหลดเมตริกการเรียกเก็บเงิน...',
@@ -3620,6 +3650,9 @@ export const th: TranslationDictionary = {
       description: 'อัพเดตแผนนี้',
     },
     form: {
+      monthlyConnectorCredit: 'เครดิตคอนเนกเตอร์รายเดือน (ไมโครดอลลาร์)',
+      monthlyConnectorCreditHelp:
+        'โควตาเป็นดอลลาร์สำหรับคอนเนกเตอร์คลาวด์แบบเสียค่าใช้จ่าย หน่วยไมโครดอลลาร์ (1,000,000 = $1.00) ค่า 0 จะปิดคอนเนกเตอร์แบบเสียค่าใช้จ่ายในแพ็กเกจนี้ ตัวเลขนี้แสดงให้ผู้ใช้เห็น',
       name: 'ชื่อ',
       namePlaceholder: 'โปร',
       slug: 'กระสุน',
@@ -3746,6 +3779,7 @@ export const th: TranslationDictionary = {
     },
   },
   userPlan: {
+    noCreditOnThisPlan: 'แพ็กเกจนี้ไม่รวมเครดิตคอนเนกเตอร์',
     title: 'แผนของฉัน',
     description: 'การสมัครสมาชิก คุณสมบัติ และรุ่นที่อนุญาตในปัจจุบันของคุณ',
     loading: 'กำลังโหลดแผนของคุณ...',
@@ -3767,6 +3801,12 @@ export const th: TranslationDictionary = {
     chatsLimitLabel: 'แชทต่อวัน',
   },
   userUsage: {
+    connectorCredit: 'เครดิตคอนเนกเตอร์',
+    creditRemaining: 'เหลือ {remaining}',
+    creditUsedOfLimit: '{used} จาก {limit}',
+    creditPercentUsed: 'ใช้ไปแล้ว {percent}%',
+    dualConsumptionHint:
+      'คอนเนกเตอร์บนคลาวด์ใช้ทั้งเครดิตและโทเค็น ส่วนโมเดลในเครื่องใช้เฉพาะโทเค็น',
     title: 'การใช้งาน',
     description: 'ติดตามการใช้โทเค็นรายวันของคุณเทียบกับโควต้าแผนของคุณ',
     loading: 'กำลังโหลดการใช้งาน...',
@@ -4005,6 +4045,44 @@ export const th: TranslationDictionary = {
     },
   },
   billing: {
+    credit: {
+      title: 'เครดิตคอนเนกเตอร์',
+      available: 'ใช้ได้',
+      grantBucket: 'โควตาจากแพ็กเกจ',
+      purchasedBucket: 'เครดิตที่ซื้อ',
+      reserved: 'กันไว้',
+      reservedHint: 'กันไว้สำหรับคำขอที่กำลังทำงานอยู่ จะคืนให้เมื่อเสร็จสิ้น',
+      resetsOn: 'รีเซ็ตวันที่ {date}',
+      neverExpires: 'ไม่มีวันหมดอายุ',
+      percentUsed: 'ใช้ไปแล้ว {percent}%',
+      noAllowance: 'แพ็กเกจนี้ไม่รวมเครดิตคอนเนกเตอร์',
+      addCredit: 'เพิ่มเครดิต',
+      adminBypass: 'ผู้ดูแลระบบ — ไม่มีการใช้เครดิตคอนเนกเตอร์',
+      meteringDisabled: 'ขณะนี้ยังไม่มีการหักเครดิตคอนเนกเตอร์',
+      empty: 'ไม่มีข้อมูลเครดิต',
+      error: 'โหลดเครดิตคอนเนกเตอร์ไม่สำเร็จ',
+      packages: 'แพ็กเกจเครดิต',
+      packagesEmpty: 'ขณะนี้ไม่มีแพ็กเกจเครดิตให้เลือก',
+      packagesError: 'โหลดแพ็กเกจเครดิตไม่สำเร็จ',
+      packageCredit: 'เครดิต {credit}',
+      topupTitle: 'เพิ่มเครดิตคอนเนกเตอร์',
+      topupDescription: 'เลือกแพ็กเกจ เครดิตที่ซื้อไม่มีวันหมดอายุ',
+      topupConfirm: 'ไปที่การชำระเงิน',
+      topupConfirming: 'กำลังเตรียมการชำระเงิน…',
+      ledgerTitle: 'ประวัติเครดิต',
+      ledgerDate: 'วันที่',
+      ledgerSurface: 'ใช้ที่',
+      ledgerModel: 'โมเดล',
+      ledgerNoModel: 'ไม่มี',
+      ledgerAmount: 'จำนวน',
+      ledgerBalance: 'ยอดคงเหลือ',
+      ledgerEmpty: 'ยังไม่มีประวัติเครดิต',
+      ledgerError: 'โหลดประวัติเครดิตไม่สำเร็จ',
+      ledgerLoadMore: 'โหลดเพิ่ม',
+      ledgerLoadingMore: 'กำลังโหลด…',
+      dualConsumptionNotice:
+        'คอนเนกเตอร์บนคลาวด์ เช่น OpenAI, Claude และ Gemini จะหักทั้งเครดิตเป็นดอลลาร์และโควตาโทเค็นรายวันของคุณ ส่วนโมเดลในเครื่องจะหักเฉพาะโทเค็นเท่านั้น',
+    },
     page: {
       title: 'การเรียกเก็บเงิน',
       description: 'แผนของคุณ การใช้งานของคุณ และทุกสิ่งที่คุณถูกเรียกเก็บเงิน',
@@ -4014,6 +4092,15 @@ export const th: TranslationDictionary = {
       dismiss: 'อนุญาตให้ออกไป',
     },
     errors: {
+      PAYG_CREDIT_EXHAUSTED:
+        'เครดิตคอนเนกเตอร์ของคุณหมดแล้ว กรุณาเพิ่มเครดิตเพื่อใช้งานโมเดลบนคลาวด์ต่อ',
+      PAYG_PROMPT_TOO_EXPENSIVE: 'บทสนทนานี้มีค่าใช้จ่ายมากกว่าเครดิตคอนเนกเตอร์ที่เหลืออยู่',
+      PAYG_MODEL_UNPRICED: 'โมเดลนี้ยังไม่มีราคาที่ประกาศไว้ จึงคิดค่าใช้จ่ายไม่ได้',
+      PAYG_PRICING_UNAVAILABLE:
+        'ไม่สามารถเข้าถึงข้อมูลราคาได้ชั่วคราว ระบบไม่ได้เรียกเก็บเงินจากคุณ',
+      CREDIT_PACKAGE_NOT_FOUND: 'ไม่มีแพ็กเกจเครดิตนี้แล้ว',
+      CREDIT_PACKAGE_INACTIVE: 'แพ็กเกจเครดิตนี้ไม่เปิดจำหน่ายแล้ว',
+      CREDIT_ADJUSTMENT_REASON_REQUIRED: 'ต้องระบุเหตุผลสำหรับการปรับเครดิตด้วยตนเอง',
       PLAN_NOT_PURCHASABLE: 'แผนนี้ไม่พร้อมสำหรับการซื้อ',
       PAYMENT_NOT_VERIFIED: 'ไม่สามารถตรวจสอบการชำระเงินได้คุณยังไม่ถูกเรียกเก็บเงิน',
       PAYMENT_METHOD_UNAVAILABLE:
@@ -4259,6 +4346,8 @@ export const th: TranslationDictionary = {
         'ความพร้อมใช้งานของโมเดลจะเป็นไปตามกำหนดการวางจำหน่ายของผู้ให้บริการแต่ละรายมีการเพิ่มโมเดลใหม่ขณะจัดส่ง',
     },
     pricing: {
+      paygCreditLabel: 'เครดิตคอนเนกเตอร์รายเดือน',
+      paygCreditNone: 'ไม่มีเครดิตคอนเนกเตอร์',
       sectionTitle: 'แผนที่มีขนาดที่เหมาะกับคุณ',
       sectionSubtitle:
         'เริ่มฟรี.อัปเกรดเมื่อคุณต้องการเพิ่มเติมแผนแบบชำระเงินทุกแผนมีรูปแบบเดียวกัน — ความแตกต่างคือจำนวนเงินที่คุณสามารถใช้ได้',

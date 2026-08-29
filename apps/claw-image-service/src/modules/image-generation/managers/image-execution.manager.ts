@@ -1,10 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { isPaygCreditExhaustedError, type PaygHold, PaygMeter } from '@claw/shared-entitlements';
+import { PaygSurface } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import { buildInterServiceAuthHeader, httpGet, httpPost } from '@common/utilities';
 import { BusinessException } from '../../../common/errors';
 import {
+  IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS,
+  IMAGE_PAYG_PROMPT_TOKENS,
+} from '../constants/image-payg.constants';
+import {
   type ConnectorConfigResponse,
-  type GenerateImageParams,
+  type ExecuteImageInput,
   type GenerateImageResult,
   type ImageProviderResponse,
   type StoreImageResponse,
@@ -26,9 +32,12 @@ import {
 export class ImageExecutionManager {
   private readonly logger = new Logger(ImageExecutionManager.name);
 
-  constructor(private readonly comfyAdapter: ComfyUIProgressAdapter) {}
+  constructor(
+    private readonly comfyAdapter: ComfyUIProgressAdapter,
+    private readonly payg: PaygMeter,
+  ) {}
 
-  async execute(params: GenerateImageParams): Promise<GenerateImageResult> {
+  async execute(params: ExecuteImageInput): Promise<GenerateImageResult> {
     const startTime = Date.now();
 
     this.logger.log(
@@ -57,9 +66,9 @@ export class ImageExecutionManager {
     };
   }
 
-  private async callProvider(params: GenerateImageParams): Promise<ImageProviderResponse> {
+  private async callProvider(params: ExecuteImageInput): Promise<ImageProviderResponse> {
     this.logger.debug(`callProvider: dispatching to ${params.provider}/${params.model}`);
-    const { provider, model, prompt, width, height, quality, style } = params;
+    const { provider, model, prompt, width, height } = params;
     const w = width ?? 1024;
     const h = height ?? 1024;
 
@@ -83,46 +92,162 @@ export class ImageExecutionManager {
       return this.callComfyUIProvider(prompt, w, h, model);
     }
 
-    this.logger.debug(`callProvider: mapping provider ${provider} to connector provider`);
-    const connectorProvider = this.mapToConnectorProvider(provider);
-    this.logger.debug(`callProvider: fetching connector config for ${connectorProvider}`);
-    const config = await this.fetchConnectorConfig(connectorProvider);
-    this.logger.debug(
-      `callProvider: connector config fetched — baseUrl=${config.baseUrl ?? 'default'}`,
-    );
+    if (provider !== IMAGE_PROVIDER_OPENAI && provider !== IMAGE_PROVIDER_GEMINI) {
+      this.logger.error(`callProvider: unsupported image provider=${provider}`);
+      throw new BusinessException(
+        `Unsupported image provider: ${provider}`,
+        'UNSUPPORTED_IMAGE_PROVIDER',
+      );
+    }
 
-    if (provider === IMAGE_PROVIDER_OPENAI) {
-      this.logger.debug('callProvider: routing to OpenAI image generation');
+    return this.callMeteredCloudProvider(params, w, h);
+  }
+
+  /**
+   * One paid image generation, wrapped in reserve → finalize / release.
+   *
+   * Reached only after the two local branches above have returned, so nothing
+   * that runs on the operator's own GPU ever pays for a round trip to the meter.
+   * Whether OpenAI or Gemini actually costs this user money is auth-service's
+   * decision, never this manager's — a `metered: false` hold comes back for an
+   * admin, a disabled kill switch or a connector an operator has flagged free
+   * (ADR-082).
+   */
+  private async callMeteredCloudProvider(
+    params: ExecuteImageInput,
+    width: number,
+    height: number,
+  ): Promise<ImageProviderResponse> {
+    const connectorProvider = this.mapToConnectorProvider(params.provider);
+    this.logger.debug(`callMeteredCloudProvider: fetching config for ${connectorProvider}`);
+    const config = await this.fetchConnectorConfig(connectorProvider);
+    const hold = await this.reserveImageHold(params, connectorProvider);
+
+    try {
+      // `hold.maxOutputTokens` is DELIBERATELY NOT PASSED to either image API.
+      // An image response is not token-bounded: `POST /images/generations` has
+      // no max-token field, and `:generateContent` with an IMAGE response
+      // modality ignores one. There is no request parameter for the affordability
+      // clamp (D6) to land in, so for this surface the clamp only sizes the hold
+      // — it cannot physically bound the answer the way it does for text.
+      const response = await this.dispatchCloudProvider(params, config, width, height);
+      await this.finalizeImageHold(hold, response, connectorProvider);
+      return response;
+    } catch (error: unknown) {
+      // The user got no image, so the hold goes back rather than being settled.
+      // Release is idempotent on the auth side: a double release is a no-op,
+      // never a double refund.
+      await this.payg.release(hold, 'PROVIDER_ERROR');
+      throw error;
+    }
+  }
+
+  private async dispatchCloudProvider(
+    params: ExecuteImageInput,
+    config: ConnectorConfigResponse,
+    width: number,
+    height: number,
+  ): Promise<ImageProviderResponse> {
+    if (params.provider === IMAGE_PROVIDER_OPENAI) {
+      this.logger.debug('dispatchCloudProvider: routing to OpenAI image generation');
       return generateWithOpenAI(
         config.baseUrl ?? 'https://api.openai.com/v1',
         config.apiKey,
-        prompt,
-        model,
-        w,
-        h,
-        quality,
-        style,
+        params.prompt,
+        params.model,
+        width,
+        height,
+        params.quality,
+        params.style,
       );
     }
+    this.logger.debug(
+      `dispatchCloudProvider: routing to Gemini — hasReference=${String(Boolean(params.referenceImageBase64))}`,
+    );
+    return generateWithGemini(
+      config.baseUrl ?? 'https://generativelanguage.googleapis.com/v1beta',
+      config.apiKey,
+      params.prompt,
+      params.model,
+      params.referenceImageBase64,
+      params.referenceImageMimeType,
+    );
+  }
 
-    if (provider === IMAGE_PROVIDER_GEMINI) {
-      this.logger.debug(
-        `callProvider: routing to Gemini image generation — hasReference=${String(Boolean(params.referenceImageBase64))}`,
+  /**
+   * Takes the hold, or converts the wallet's refusal into this service's own
+   * error vocabulary.
+   *
+   * A 402 becomes a `BusinessException` carrying the meter's `errorCode`, which
+   * `ImageGenerationService` then stores on the row — the only way a refusal on
+   * a fire-and-forget job becomes visible to the person waiting for it.
+   */
+  private async reserveImageHold(
+    params: ExecuteImageInput,
+    connectorProvider: string,
+  ): Promise<PaygHold> {
+    try {
+      const hold = await this.payg.reserve({
+        userId: params.userId,
+        requestId: params.requestId,
+        provider: connectorProvider,
+        model: params.model,
+        surface: PaygSurface.IMAGE,
+        promptTokens: IMAGE_PAYG_PROMPT_TOKENS,
+        cachedPromptTokens: 0,
+        requestedMaxOutputTokens: IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS,
+      });
+      this.logger.log(
+        `reserveImageHold: provider=${connectorProvider} metered=${String(hold.metered)} held=${String(hold.heldMicroUsd)}`,
       );
-      return generateWithGemini(
-        config.baseUrl ?? 'https://generativelanguage.googleapis.com/v1beta',
-        config.apiKey,
-        prompt,
-        model,
-        params.referenceImageBase64,
-        params.referenceImageMimeType,
+      return hold;
+    } catch (error: unknown) {
+      if (isPaygCreditExhaustedError(error)) {
+        this.logger.warn(
+          `reserveImageHold: refused provider=${connectorProvider} code=${error.errorCode} available=${String(error.availableMicroUsd)}`,
+        );
+        throw new BusinessException(
+          'Image generation is not covered by the available credit',
+          error.errorCode,
+          HttpStatus.PAYMENT_REQUIRED,
+        );
+      }
+      this.logger.error('reserveImageHold: unexpected meter failure');
+      throw error;
+    }
+  }
+
+  /**
+   * Settles the hold against whatever the provider was willing to report.
+   *
+   * Gemini reports real `usageMetadata`, so a Gemini image settles on measured
+   * numbers. OpenAI images report NOTHING — the `/images/generations` response
+   * has no `usage` block at all — so those settle at zero tokens and the cost
+   * has to come from the per-unit image rate instead. See the finding recorded
+   * in `IMAGE_PAYG_NOMINAL_OUTPUT_TOKENS`: `calculateCostMicroUsd` does not
+   * currently sum `imagePerUnitMicroUsd`, so a zero-token image finalize prices
+   * at zero and the whole hold is released.
+   */
+  private async finalizeImageHold(
+    hold: PaygHold,
+    response: ImageProviderResponse,
+    connectorProvider: string,
+  ): Promise<void> {
+    const usage = response.usage;
+    if (usage === undefined) {
+      this.logger.warn(
+        `finalizeImageHold: ${connectorProvider} reported no token usage — settling at zero tokens; the per-unit image rate is what should carry this cost`,
       );
     }
-
-    this.logger.error(`callProvider: unsupported image provider=${provider}`);
-    throw new BusinessException(
-      `Unsupported image provider: ${provider}`,
-      'UNSUPPORTED_IMAGE_PROVIDER',
+    await this.payg.finalize(
+      hold,
+      {
+        promptTokens: usage?.promptTokens ?? 0,
+        completionTokens: usage?.completionTokens ?? 0,
+        cachedPromptTokens: usage?.cachedPromptTokens ?? 0,
+        reasoningTokens: usage?.reasoningTokens ?? 0,
+      },
+      { toolCalls: 0 },
     );
   }
 
@@ -159,7 +284,7 @@ export class ImageExecutionManager {
   }
 
   private async storeImage(
-    params: GenerateImageParams,
+    params: ExecuteImageInput,
     response: ImageProviderResponse,
   ): Promise<string> {
     this.logger.debug(`storeImage: storing generated image for user ${params.userId}`);
@@ -246,7 +371,7 @@ export class ImageExecutionManager {
         runId,
         baseUrl,
         workflow,
-        onEvent: () => undefined,
+        onEvent: () => {},
       });
       this.logger.debug(
         `callComfyUIProvider: completed promptId=${result.promptId} filename=${result.filename} nodes=${String(result.nodeTimings.length)}`,

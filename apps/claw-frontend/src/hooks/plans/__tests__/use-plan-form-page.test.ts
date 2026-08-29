@@ -82,6 +82,7 @@ const samplePlan = {
   dailyTokenQuota: 100000,
   weeklyTokenQuota: null,
   monthlyTokenQuota: null,
+  monthlyProviderCostCeilingMicroUsd: null,
   maxChatsPerDay: null,
   maxMessagesPerDay: null,
   maxWorkspaceConnections: null,

@@ -59,6 +59,17 @@ export type NormalizedStreamFragment =
       promptTokens?: number;
       completionTokens?: number;
       totalTokens?: number;
+      /**
+       * The discounted subset of `promptTokens` the provider served from cache,
+       * and the subset of `completionTokens` the model spent thinking.
+       *
+       * The reader used to drop both. A streamed reasoning model therefore
+       * finalized its PAYG hold with `reasoningTokens: 0` - billing zero on the
+       * single most expensive component of the call (ADR-078). Absent means the
+       * provider reported nothing, which is not the same as a measured zero.
+       */
+      cachedPromptTokens?: number;
+      reasoningTokens?: number;
     }
   // Emitted ONCE per stream, immediately before the terminal `done` fragment,
   // carrying every tool call the model requested — fully merged. OpenAI-SSE

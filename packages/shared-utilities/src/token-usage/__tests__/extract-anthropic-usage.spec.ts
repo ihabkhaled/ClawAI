@@ -11,6 +11,8 @@ describe('extractAnthropicUsage', () => {
       promptTokens: 200,
       completionTokens: 80,
       totalTokens: 280,
+      cachedPromptTokens: 0,
+      reasoningTokens: 0,
       estimated: false,
       source: TokenUsageSource.NATIVE,
       estimator: TokenEstimatorKind.NONE,

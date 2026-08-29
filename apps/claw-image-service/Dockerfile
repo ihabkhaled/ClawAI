@@ -31,7 +31,8 @@ RUN cd /app/packages/shared-constants && npm run build \
  && cd /app/packages/shared-types && npm run build \
  && cd /app/packages/shared-utilities && npm run build \
  && cd /app/packages/shared-rabbitmq && npm run build \
- && cd /app/packages/shared-auth && npm run build
+ && cd /app/packages/shared-auth && npm run build \
+ && cd /app/packages/shared-entitlements && npm run build
 RUN npx prisma generate
 RUN npm run build
 RUN mkdir -p dist/generated && cp -r src/generated/prisma dist/generated/prisma

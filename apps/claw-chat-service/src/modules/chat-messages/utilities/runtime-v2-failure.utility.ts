@@ -1,3 +1,5 @@
+import { HttpStatus } from '@nestjs/common';
+
 import { BusinessException } from '../../../common/errors';
 import {
   RUNTIME_V2_ANNOUNCEMENT_EXCERPT_CHARACTERS,
@@ -134,4 +136,22 @@ export function repairGuidance(error: unknown, attempt: number): string {
   return [RUNTIME_V2_TRUNCATION_REPAIR_INSTRUCTION, RUNTIME_V2_TRUNCATION_SHRINK_DEMANDS.at(index)]
     .filter((value): value is string => value !== undefined)
     .join(' ');
+}
+
+/**
+ * Whether this failure should pause the run instead of killing it.
+ *
+ * Only an exhausted wallet qualifies. Everything else - a malformed tool
+ * request, a provider that will not answer, a budget the run itself blew
+ * through - is a real failure, and dressing it up as a pause would advertise a
+ * resume that can never work. Credit is different: the run is fine, the wallet
+ * is empty, and topping it up removes the obstacle.
+ */
+export function isRuntimeV2CreditPause(error: unknown): boolean {
+  return error instanceof BusinessException && error.getStatus() === HttpStatus.PAYMENT_REQUIRED;
+}
+
+/** The terminal status for a failure: paused when credit ran out, failed otherwise. */
+export function runtimeV2TerminalStatus(error: unknown): 'failed' | 'paused' {
+  return isRuntimeV2CreditPause(error) ? 'paused' : 'failed';
 }

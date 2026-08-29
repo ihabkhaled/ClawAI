@@ -32,9 +32,17 @@ describe('ParallelExecutionManager', () => {
   const mockChatExecutionManager: {
     callProvider: jest.Mock;
     streamModelForLane: jest.Mock;
+    reserveCompareLane: jest.Mock;
+    releaseCompareLane: jest.Mock;
   } = {
     callProvider: jest.fn(),
     streamModelForLane: jest.fn(),
+    // Compare funds every lane BEFORE any provider call, so a run that cannot
+    // pay for all N is refused whole rather than returning error columns the
+    // user still paid for. These suites test fan-out, not metering, so the
+    // lanes come back unmetered.
+    reserveCompareLane: jest.fn(),
+    releaseCompareLane: jest.fn(),
   };
   mockChatExecutionManager.streamModelForLane.mockImplementation((...args: unknown[]) =>
     mockChatExecutionManager.callProvider(...args),
@@ -103,6 +111,31 @@ describe('ParallelExecutionManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // `clearAllMocks` drains call history but NOT the `mockResolvedValueOnce`
+    // queue. `executeAllModels` queues one response per lane and can now stop
+    // early — all lanes are funded before any provider call — so leftovers would
+    // be read by the NEXT test instead of its own setup. That is why these
+    // suites passed one at a time and failed together.
+    mockChatExecutionManager.callProvider.mockReset();
+    mockChatExecutionManager.reserveCompareLane.mockResolvedValue({
+      metered: false,
+      maxOutputTokens: 1_000_000,
+      clamped: false,
+      reservationId: null,
+      heldMicroUsd: 0,
+      availableAfterMicroUsd: 0,
+      reason: 'NOT_PAYG',
+    });
+    mockChatExecutionManager.releaseCompareLane.mockResolvedValue(undefined);
+    // Re-pin the lane delegation. It is declared at module scope, and every
+    // lane now streams through `streamModelForLane`, so once the shared mock
+    // state is cleared a test that sets up `callProvider` would be driving a
+    // mock nothing forwards to — and would silently read whichever response the
+    // PREVIOUS test left behind. Same reason the AppConfig fixture is re-pinned
+    // in the chat-execution suite.
+    mockChatExecutionManager.streamModelForLane.mockImplementation((...args: unknown[]) =>
+      mockChatExecutionManager.callProvider(...args),
+    );
 
     mockChatMessagesRepository.create.mockResolvedValue({ id: 'msg-user-1' });
     mockChatMessagesRepository.findRecentByThreadId.mockResolvedValue([]);
@@ -217,10 +250,15 @@ describe('ParallelExecutionManager', () => {
         'user-1',
         sampleModels,
         mockContext,
+        // threadSettings — these cases exercise fan-out, not per-thread config.
+        undefined,
         disabledJudgeConfig,
         disabledCriticConfig,
         'group-1',
         'thread-1',
+        // Lane holds. Empty = these lanes were not metered; `laneHolds.at(i)`
+        // then yields undefined, the same as a run on a local model.
+        [],
       );
 
       expect(results).toHaveLength(2);
@@ -246,10 +284,15 @@ describe('ParallelExecutionManager', () => {
         'user-1',
         sampleModels,
         mockContext,
+        // threadSettings — these cases exercise fan-out, not per-thread config.
+        undefined,
         disabledJudgeConfig,
         disabledCriticConfig,
         'group-1',
         'thread-1',
+        // Lane holds. Empty = these lanes were not metered; `laneHolds.at(i)`
+        // then yields undefined, the same as a run on a local model.
+        [],
       );
 
       expect(results).toHaveLength(2);
@@ -268,10 +311,15 @@ describe('ParallelExecutionManager', () => {
         'user-1',
         sampleModels,
         mockContext,
+        // threadSettings — these cases exercise fan-out, not per-thread config.
+        undefined,
         disabledJudgeConfig,
         disabledCriticConfig,
         'group-1',
         'thread-1',
+        // Lane holds. Empty = these lanes were not metered; `laneHolds.at(i)`
+        // then yields undefined, the same as a run on a local model.
+        [],
       );
 
       expect(results).toHaveLength(2);
@@ -288,10 +336,15 @@ describe('ParallelExecutionManager', () => {
         'user-1',
         sampleModels,
         mockContext,
+        // threadSettings — these cases exercise fan-out, not per-thread config.
+        undefined,
         disabledJudgeConfig,
         disabledCriticConfig,
         'group-1',
         'thread-1',
+        // Lane holds. Empty = these lanes were not metered; `laneHolds.at(i)`
+        // then yields undefined, the same as a run on a local model.
+        [],
       );
 
       expect(results[0]!.provider).toBe('ANTHROPIC');

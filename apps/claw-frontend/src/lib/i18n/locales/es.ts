@@ -256,6 +256,15 @@ export const es: TranslationDictionary = {
     more: 'Más',
   },
   chat: {
+    credit: {
+      modelBadge: 'Consume crédito',
+      badgeLabel: 'Crédito',
+      badgeHint: 'Te quedan {remaining} de crédito de conectores',
+      clampedTitle: 'Respuesta acortada',
+      clampedBody: 'Esta respuesta se acortó para ajustarse a tu crédito de conectores restante.',
+      clampedDismiss: 'Cerrar',
+      addCreditCta: 'Añadir crédito',
+    },
     threadListDrawer: 'Conversaciones',
     export: {
       action: 'Exportar',
@@ -294,6 +303,19 @@ export const es: TranslationDictionary = {
       roleAssistant: 'Asistente',
     },
     limits: {
+      addCreditCta: 'Añadir crédito',
+      paygCreditExhaustedTitle: 'Crédito de conectores agotado',
+      paygCreditExhaustedBody:
+        'Este modelo se cobra de tu crédito de conectores y tu saldo está vacío. Añade crédito para continuar o elige un modelo local.',
+      paygPromptTooExpensiveTitle: 'Conversación demasiado larga para tu crédito',
+      paygPromptTooExpensiveBody:
+        'Esta conversación cuesta más que tu crédito de conectores restante. Añade crédito, empieza un chat más corto o elige un modelo local.',
+      paygModelUnpricedTitle: 'Modelo no disponible',
+      paygModelUnpricedBody:
+        'Este modelo aún no tiene un precio publicado, así que no se puede cobrar. Elige otro modelo.',
+      paygPricingUnavailableTitle: 'No disponible temporalmente',
+      paygPricingUnavailableBody:
+        'No se pudo consultar el precio, así que los modelos de pago están pausados un momento. No se te ha cobrado nada. Los modelos locales siguen funcionando.',
       dailyTokensTitle: 'Has usado los tokens de hoy',
       dailyTokensBody:
         'Tu asignación diaria de tokens se ha agotado. Se restablece a medianoche UTC, o puedes pasar a un plan mayor ahora.',
@@ -2647,6 +2669,9 @@ export const es: TranslationDictionary = {
     invalidFileType: 'Este tipo de archivo no está soportado',
   },
   toast: {
+    creditTopupSucceeded: 'Crédito añadido.',
+    creditTopupFailed: 'No se pudo añadir el crédito.',
+    creditTopupCancelled: 'Pago cancelado. No se añadió crédito.',
     loginSuccess: 'Inicio de sesión correcto',
     registerSuccess: 'Cuenta creada correctamente',
     loginFailed: 'Error al iniciar sesión',
@@ -3572,6 +3597,11 @@ export const es: TranslationDictionary = {
   routerTrace: ROUTER_TRACE_TRANSLATIONS.es,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.es,
   adminBilling: {
+    credit: {
+      packageCreated: 'Paquete de crédito creado.',
+      versionPublished: 'Precio del paquete publicado.',
+      saveFailed: 'No se pudo guardar el paquete de crédito.',
+    },
     title: 'Panel de facturación',
     description: 'Ingresos, coste de proveedores, margen y salud de las suscripciones.',
     loading: 'Cargando métricas de facturación...',
@@ -3697,6 +3727,9 @@ export const es: TranslationDictionary = {
       description: 'Actualiza este plan.',
     },
     form: {
+      monthlyConnectorCredit: 'Crédito mensual de conectores (micro-USD)',
+      monthlyConnectorCreditHelp:
+        'Asignación en dólares para conectores en la nube de pago, en micro-USD (1.000.000 = 1,00 $). 0 desactiva los conectores de pago en este plan. Esta cifra se muestra a los usuarios.',
       name: 'Nombre',
       namePlaceholder: 'Pro',
       slug: 'Identificador',
@@ -3823,6 +3856,7 @@ export const es: TranslationDictionary = {
     },
   },
   userPlan: {
+    noCreditOnThisPlan: 'Este plan no incluye crédito de conectores.',
     title: 'Mi plan',
     description: 'Tu suscripción actual, funciones y modelos permitidos.',
     loading: 'Cargando tu plan...',
@@ -3844,6 +3878,12 @@ export const es: TranslationDictionary = {
     chatsLimitLabel: 'Chats por día',
   },
   userUsage: {
+    connectorCredit: 'Crédito de conectores',
+    creditRemaining: '{remaining} restante',
+    creditUsedOfLimit: '{used} de {limit}',
+    creditPercentUsed: '{percent}% usado',
+    dualConsumptionHint:
+      'Los conectores en la nube usan crédito y tokens; los modelos locales solo usan tokens.',
     title: 'Uso',
     description: 'Controla tu consumo diario de tokens frente a la cuota de tu plan.',
     loading: 'Cargando uso...',
@@ -4086,6 +4126,44 @@ export const es: TranslationDictionary = {
     },
   },
   billing: {
+    credit: {
+      title: 'Crédito de conectores',
+      available: 'Disponible',
+      grantBucket: 'Asignación del plan',
+      purchasedBucket: 'Crédito comprado',
+      reserved: 'Retenido',
+      reservedHint: 'Retenido para solicitudes aún en curso. Se libera al terminar.',
+      resetsOn: 'Se restablece el {date}',
+      neverExpires: 'Nunca caduca',
+      percentUsed: '{percent}% usado',
+      noAllowance: 'Este plan no incluye crédito de conectores.',
+      addCredit: 'Añadir crédito',
+      adminBypass: 'Administrador: no se aplica el crédito de conectores',
+      meteringDisabled: 'Ahora mismo no se está cobrando el crédito de conectores.',
+      empty: 'No hay información de crédito disponible.',
+      error: 'No se pudo cargar tu crédito de conectores.',
+      packages: 'Paquetes de crédito',
+      packagesEmpty: 'No hay paquetes de crédito disponibles ahora mismo.',
+      packagesError: 'No se pudieron cargar los paquetes de crédito.',
+      packageCredit: '{credit} de crédito',
+      topupTitle: 'Añadir crédito de conectores',
+      topupDescription: 'Elige un paquete. El crédito comprado nunca caduca.',
+      topupConfirm: 'Continuar al pago',
+      topupConfirming: 'Preparando el pago…',
+      ledgerTitle: 'Actividad del crédito',
+      ledgerDate: 'Fecha',
+      ledgerSurface: 'Usado en',
+      ledgerModel: 'Modelo',
+      ledgerNoModel: 'Ninguno',
+      ledgerAmount: 'Importe',
+      ledgerBalance: 'Saldo',
+      ledgerEmpty: 'Todavía no hay actividad de crédito.',
+      ledgerError: 'No se pudo cargar la actividad del crédito.',
+      ledgerLoadMore: 'Cargar más',
+      ledgerLoadingMore: 'Cargando…',
+      dualConsumptionNotice:
+        'Los conectores en la nube como OpenAI, Claude y Gemini consumen TANTO tu crédito en dólares COMO tu asignación diaria de tokens. Los modelos locales solo consumen tokens.',
+    },
     page: {
       title: 'Facturación',
       description: 'Su plan, su consumo y todo lo que se le ha cobrado.',
@@ -4095,6 +4173,16 @@ export const es: TranslationDictionary = {
       dismiss: 'Descartar',
     },
     errors: {
+      PAYG_CREDIT_EXHAUSTED:
+        'Tu crédito de conectores se ha agotado. Añade crédito para seguir usando modelos en la nube.',
+      PAYG_PROMPT_TOO_EXPENSIVE:
+        'Esta conversación cuesta más que tu crédito de conectores restante.',
+      PAYG_MODEL_UNPRICED: 'Este modelo aún no tiene un precio publicado y no se puede cobrar.',
+      PAYG_PRICING_UNAVAILABLE:
+        'Los precios no están disponibles temporalmente. No se te ha cobrado nada.',
+      CREDIT_PACKAGE_NOT_FOUND: 'Ese paquete de crédito ya no existe.',
+      CREDIT_PACKAGE_INACTIVE: 'Ese paquete de crédito ya no está a la venta.',
+      CREDIT_ADJUSTMENT_REASON_REQUIRED: 'Se requiere un motivo para un ajuste manual de crédito.',
       PLAN_NOT_PURCHASABLE: 'Este plan no está disponible para su compra.',
       PAYMENT_NOT_VERIFIED: 'No se pudo verificar el pago. No se le ha cobrado nada.',
       PAYMENT_METHOD_UNAVAILABLE:
@@ -4343,6 +4431,8 @@ export const es: TranslationDictionary = {
         'La disponibilidad de los modelos sigue el calendario de lanzamiento propio de cada proveedor. Los modelos nuevos se añaden a medida que se publican.',
     },
     pricing: {
+      paygCreditLabel: 'Crédito mensual de conectores',
+      paygCreditNone: 'Sin crédito de conectores',
       sectionTitle: 'Planes que crecen con usted',
       sectionSubtitle:
         'Empiece gratis. Actualice cuando necesite más. Todos los planes de pago acceden a los mismos modelos: la diferencia está en cuánto puede usar.',

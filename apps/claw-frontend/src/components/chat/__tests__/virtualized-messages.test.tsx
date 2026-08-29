@@ -3,6 +3,7 @@ import { createRef, forwardRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { VirtualizedMessages } from '@/components/chat/virtualized-messages';
+import { ChatLimitAction } from '@/enums/chat-limit-action.enum';
 import { ChatLimitKind } from '@/enums/chat-limit-kind.enum';
 import type { VirtuosoHandle } from '@/lib/virtuoso';
 import type { MessageRenderItem, VirtualizedMessagesProps } from '@/types';
@@ -132,7 +133,8 @@ describe('VirtualizedMessages (pure render)', () => {
             kind: ChatLimitKind.DailyTokens,
             titleKey: 'chat.limits.dailyTokensTitle',
             bodyKey: 'chat.limits.dailyTokensBody',
-            showUpgrade: true,
+            action: ChatLimitAction.Upgrade,
+            showCreditDisclaimer: false,
           },
         })}
       />,

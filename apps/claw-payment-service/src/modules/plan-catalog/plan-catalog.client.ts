@@ -1,20 +1,28 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { BillingErrorCode, HttpMethod } from '@claw/shared-types';
 import { httpRequest } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../app/config/app.config';
 import { BillingException } from '../../common/errors';
 import {
+  CREDIT_PACKAGE_CACHE_TTL_MS,
+  CREDIT_PACKAGE_PATHS,
   PLAN_CATALOG_CACHE_TTL_MS,
   PLAN_CATALOG_PATHS,
   PLAN_CATALOG_TIMEOUT_MS,
   PLAN_PRICE_VERSION_CACHE_TTL_MS,
 } from './constants/plan-catalog.constants';
 import {
+  creditPackageListResponseSchema,
+  creditPackageResponseSchema,
   planCatalogResponseSchema,
   planPriceVersionResponseSchema,
 } from './schemas/plan-catalog.schema';
-import { type PlanCatalogEntry, type PlanPriceVersionView } from './types/plan-catalog.types';
+import {
+  type CreditPackageVersionView,
+  type PlanCatalogEntry,
+  type PlanPriceVersionView,
+} from './types/plan-catalog.types';
 import { RedisService } from '../../infrastructure/redis/redis.service';
 
 // The ONLY place this service learns what a plan costs.
@@ -99,7 +107,72 @@ export class PlanCatalogClient {
     return parsed.data;
   }
 
-  private async fetch(path: string): Promise<unknown> {
+  /**
+   * The purchasable top-up catalog.
+   *
+   * Proxied so the checkout UI has ONE origin: `/api/v1/billing` already
+   * reaches payment-service, and asking the browser to read prices from auth
+   * and pay at payment would need a second nginx location for a list that is
+   * only ever used to start a checkout here.
+   */
+  async listCreditPackages(): Promise<CreditPackageVersionView[]> {
+    this.logger.debug('listCreditPackages');
+    const cacheKey = 'billing:credit-packages';
+    const cached = await this.readCache(cacheKey);
+    if (cached !== null) {
+      const parsed = creditPackageListResponseSchema.safeParse(cached);
+      if (parsed.success) {
+        return parsed.data;
+      }
+      this.logger.warn('listCreditPackages: cached catalog failed validation — refetching');
+    }
+
+    const body = await this.fetch(CREDIT_PACKAGE_PATHS.PACKAGES);
+    const parsed = creditPackageListResponseSchema.safeParse(body);
+    if (!parsed.success) {
+      this.logger.error('listCreditPackages: response failed schema validation');
+      throw new BillingException(BillingErrorCode.PLAN_CATALOG_UNAVAILABLE);
+    }
+    await this.writeCache(cacheKey, parsed.data, CREDIT_PACKAGE_CACHE_TTL_MS);
+    return parsed.data;
+  }
+
+  /**
+   * Resolves the ACTIVE priced version of one credit package.
+   *
+   * The sibling of `requireActivePrice`, and the reason a top-up request body
+   * has no amount in it: the buyer names a package, the price comes from an
+   * immutable row this service never stores a copy of. Uncached — this call
+   * decides what a customer is charged, and a cached price would let a reprice
+   * that has already taken effect keep billing the old figure.
+   *
+   * Throws rather than returning null: reaching checkout for a package we do
+   * not sell is a caller bug, and continuing would mean choosing an amount
+   * ourselves.
+   */
+  async requireActiveCreditPackage(packageId: string): Promise<CreditPackageVersionView> {
+    this.logger.debug(`requireActiveCreditPackage: package=${packageId}`);
+    const body = await this.fetch(
+      `${CREDIT_PACKAGE_PATHS.PACKAGES}/${encodeURIComponent(packageId)}/active-version`,
+      // A withdrawn SKU and an unknown id are different answers to the buyer,
+      // so auth's status is mapped rather than flattened into "unavailable".
+      {
+        [HttpStatus.NOT_FOUND]: BillingErrorCode.CREDIT_PACKAGE_NOT_FOUND,
+        [HttpStatus.CONFLICT]: BillingErrorCode.CREDIT_PACKAGE_INACTIVE,
+      },
+    );
+    const parsed = creditPackageResponseSchema.safeParse(body);
+    if (!parsed.success) {
+      this.logger.error(`requireActiveCreditPackage: no valid package id=${packageId}`);
+      throw new BillingException(BillingErrorCode.CREDIT_PACKAGE_NOT_FOUND);
+    }
+    return parsed.data;
+  }
+
+  private async fetch(
+    path: string,
+    errorByStatus: Partial<Record<number, BillingErrorCode>> = {},
+  ): Promise<unknown> {
     const config = AppConfig.get();
     try {
       const response = await httpRequest<unknown>({
@@ -110,7 +183,9 @@ export class PlanCatalogClient {
       });
       if (!response.ok) {
         this.logger.error(`fetch: auth-service returned status=${String(response.status)}`);
-        throw new BillingException(BillingErrorCode.PLAN_CATALOG_UNAVAILABLE);
+        throw new BillingException(
+          errorByStatus[response.status] ?? BillingErrorCode.PLAN_CATALOG_UNAVAILABLE,
+        );
       }
       return response.data;
     } catch (error: unknown) {

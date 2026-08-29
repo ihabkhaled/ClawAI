@@ -227,3 +227,50 @@ await httpPost(`${config.FILE_SERVICE_URL}/api/v1/internal/files/store-image`, b
 ```
 
 The wrapper lives at `src/common/utilities/inter-service-auth.utility.ts` and reads `AppConfig.get().INTER_SERVICE_AUTH_TOKEN`. Mirrors the pattern in `apps/claw-workspace-service/src/common/utilities/file-service-client.utility.ts#buildAuthHeader`. Forgetting the header will manifest as `401 Service token required` from file-service; image generation will succeed at the provider but fail to persist, leaving the user with an error and no asset.
+
+## PAYG credit metering (C4 — U3/U4)
+
+Every OpenAI and Gemini image generation is metered. Local Stable Diffusion and
+ComfyUI are not — they run on hardware the operator already owns.
+
+| Where                                  | What                                                                                                                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `app.module.ts`                        | `EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL })` — `@Global()`, provides `PaygMeter` by CLASS token |
+| `managers/image-execution.manager.ts`  | `callMeteredCloudProvider` — the single chokepoint. `reserve` → provider → `finalize`, `release` on throw                             |
+| `constants/image-payg.constants.ts`    | the reservation ceiling, the prompt-token figure, and the credit failure codes                                                        |
+| `utilities/image-failure.utility.ts`   | tells a wallet refusal apart from a provider error so the stored row can say which                                                    |
+| `services/image-generation.service.ts` | mints a per-attempt `requestId`, stores the credit reason, latches the fallback chain to local-only after a refusal                   |
+
+**Five things that will bite you here.**
+
+1. **`hold.maxOutputTokens` is never sent to an image API.** Neither
+   `POST /images/generations` nor `:generateContent` takes a max-output-token
+   argument, so the affordability clamp (D6) can only size the hold on this
+   surface — it cannot physically bound the response the way it does for text.
+2. **`requestId` is per ATTEMPT, not per generation row.** `reserve` is
+   idempotent on `(userId, requestId)`; reusing the row id would make
+   `POST /images/:id/retry` settle a second real provider call against the first
+   attempt's hold. `processJob` mints `${generationId}:${randomUUID()}`.
+3. **Meter with the CONNECTOR provider name, not the internal tag.**
+   `mapToConnectorProvider` turns `IMAGE_GEMINI` into `GEMINI`. Sending
+   `IMAGE_GEMINI` would classify as an unknown provider in auth-service.
+4. **A credit refusal has to land in the row.** The job is fire-and-forget
+   (`void this.processJobWithFallback(…)`), so there is no HTTP response left to
+   carry a 402. `handleProcessJobFailure` stores the `BillingErrorCode` and a
+   credit-specific message, and publishes both over SSE.
+5. **The auto-fallback chain latches to local after a refusal (E3 + D4).** Each
+   attempt is a separate paid call, so the chain must never bill N attempts
+   against a wallet that could afford one. On a credit failure `paidBlocked`
+   latches and `findNextFallback` returns only `IMAGE_LOCAL_PROVIDERS` entries —
+   PAYG is blocked, local keeps working.
+
+**Known pricing gap (reported, not worked around).** An image has no token
+usage on OpenAI, so `finalize` settles at zero tokens and the per-unit rate is
+supposed to carry the cost — but `calculateCostMicroUsd` in
+`packages/shared-utilities/src/weighted-tokens/weighted-tokens.utility.ts` does
+not sum `imagePerUnitMicroUsd`, and `RawTokenBreakdown` has no field to carry an
+image count. Separately, `hasUsablePricing` requires a non-null input AND output
+per-million rate, so a model priced only per image is refused with
+`PAYG_MODEL_UNPRICED` rather than charged. Until both are fixed, a DALL-E image
+either costs $0 or is blocked; a Gemini image bills correctly off its real
+`usageMetadata`.

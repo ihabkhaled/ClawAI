@@ -1,4 +1,5 @@
 import { MODEL_ROLE_LABELS } from '@/constants/routing.constants';
+import { isPaygBadgedProvider } from '@/utilities/credit.utility';
 
 import type { JudgeModelOption } from '../types/chat.types';
 import type { GroupedModels, ModelPickerGroup } from '../types/component.types';
@@ -21,16 +22,40 @@ export function encodeModelValue(provider: string, model: string): string {
 // Flattens useAvailableModels()'s grouped catalog into the normalized shape
 // ModelPicker renders. `encodeModelValue` is what the caller decodes back
 // into { provider, model } on selection.
-export function groupedModelsToPickerGroups(groupedModels: GroupedModels[]): ModelPickerGroup[] {
+//
+// `paygBadgeLabel` appends a cost hint to every model on a metered provider.
+// It is a BADGE and nothing else: model-selector.tsx carries a written
+// invariant that selection is never disabled client-side, and a per-connector
+// admin toggle can flip a provider's PAYG status at runtime, so a browser copy
+// of that rule would be stale within a minute. The server is the gate.
+export function groupedModelsToPickerGroups(
+  groupedModels: GroupedModels[],
+  paygBadgeLabel?: string,
+): ModelPickerGroup[] {
   return groupedModels.map((group) => ({
     key: group.provider,
     label: group.label,
     options: group.models.map((model) => ({
       value: encodeModelValue(model.provider, model.model),
       label: model.displayName,
-      specifications: model.specifications,
+      specifications: buildModelSpecifications(
+        model.provider,
+        model.specifications,
+        paygBadgeLabel,
+      ),
     })),
   }));
+}
+
+function buildModelSpecifications(
+  provider: string,
+  specifications: string[] | undefined,
+  paygBadgeLabel: string | undefined,
+): string[] | undefined {
+  if (paygBadgeLabel === undefined || !isPaygBadgedProvider(provider)) {
+    return specifications;
+  }
+  return [...(specifications ?? []), paygBadgeLabel];
 }
 
 export function decodeModelValue(value: string): { provider: string; model: string } | null {

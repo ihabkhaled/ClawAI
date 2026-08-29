@@ -53,6 +53,10 @@ export const priceModelCostSchema = z.object({
   outputTokens: z.coerce.number().int().min(0).max(100_000_000).default(0),
   toolCalls: z.coerce.number().int().min(0).max(100_000).default(0),
   searchCalls: z.coerce.number().int().min(0).max(100_000).default(0),
+  // Images produced. Priced per unit rather than per token — an image endpoint
+  // reports no token usage at all, so this is the only signal that the call cost
+  // anything. Defaults to 0 so every existing text-only caller is unchanged.
+  imageUnits: z.coerce.number().int().min(0).max(1_000).default(0),
 });
 
 export type PriceModelCostDto = z.infer<typeof priceModelCostSchema>;

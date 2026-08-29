@@ -362,6 +362,26 @@
     {
       "consumers": [
         "claw-audit-service",
+        "claw-auth-service",
+        "claw-payment-service"
+      ],
+      "key": "BILLING_CREDIT_TOPUP_REVERSED",
+      "pattern": "billing.credit.topup_reversed",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
+        "claw-auth-service",
+        "claw-payment-service"
+      ],
+      "key": "BILLING_CREDIT_TOPUP_SUCCEEDED",
+      "pattern": "billing.credit.topup_succeeded",
+      "producers": []
+    },
+    {
+      "consumers": [
+        "claw-audit-service",
         "claw-auth-service"
       ],
       "key": "BILLING_ENTITLEMENT_RECONCILE_REQUESTED",
@@ -679,6 +699,30 @@
       "pattern": "context_pack.version_reverted",
       "producers": [
         "claw-memory-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "CREDIT_BALANCE_EXHAUSTED",
+      "pattern": "credit.balance.exhausted",
+      "producers": [
+        "claw-auth-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "CREDIT_BALANCE_LOW",
+      "pattern": "credit.balance.low",
+      "producers": [
+        "claw-auth-service"
+      ]
+    },
+    {
+      "consumers": [],
+      "key": "CREDIT_GRANT_RENEWED",
+      "pattern": "credit.grant.renewed",
+      "producers": [
+        "claw-auth-service"
       ]
     },
     {
@@ -1156,6 +1200,16 @@
       "key": "ROUTING_LEARNED_SCORE_UPDATED",
       "pattern": "routing.learned_score.updated",
       "producers": []
+    },
+    {
+      "consumers": [
+        "claw-auth-service"
+      ],
+      "key": "ROUTING_MODEL_COST_PUBLISHED",
+      "pattern": "routing.model_cost.published",
+      "producers": [
+        "claw-routing-service"
+      ]
     },
     {
       "consumers": [

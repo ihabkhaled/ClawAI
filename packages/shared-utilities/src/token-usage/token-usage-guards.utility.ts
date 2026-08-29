@@ -39,3 +39,34 @@ export function readCount(
   }
   return toTokenCount(record[key]);
 }
+
+/**
+ * Reads a numeric token field nested one level down, e.g.
+ * `usage.prompt_tokens_details.cached_tokens`. Returns `undefined` when either
+ * level is absent or malformed, so a provider that omits the detail block is
+ * indistinguishable from one that never had it — which is the correct outcome:
+ * both mean "no measured sub-count".
+ */
+export function readNestedCount(
+  record: Record<string, unknown> | undefined,
+  outerKey: string,
+  innerKey: string,
+): number | undefined {
+  return readCount(asRecord(record?.[outerKey]), innerKey);
+}
+
+/**
+ * Sums the defined values of a set of optional counts, returning `undefined`
+ * when every one of them is absent.
+ *
+ * `undefined` and `0` are NOT interchangeable here: `undefined` means the
+ * provider reported nothing and the normalizer should fall back to estimating
+ * from text, while `0` is a measured zero that must suppress the estimate.
+ */
+export function sumDefinedCounts(...values: Array<number | undefined>): number | undefined {
+  const present = values.filter((value): value is number => value !== undefined);
+  if (present.length === 0) {
+    return undefined;
+  }
+  return present.reduce((total, value) => total + value, 0);
+}

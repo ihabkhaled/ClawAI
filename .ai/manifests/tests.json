@@ -22,7 +22,7 @@
     },
     "@claw/shared-utilities": {
       "runner": "jest",
-      "testFiles": 29
+      "testFiles": 31
     },
     "claw-agent-service": {
       "runner": "jest",
@@ -34,11 +34,11 @@
     },
     "claw-auth-service": {
       "runner": "jest",
-      "testFiles": 71
+      "testFiles": 78
     },
     "claw-chat-service": {
       "runner": "jest",
-      "testFiles": 111
+      "testFiles": 117
     },
     "claw-client-logs-service": {
       "runner": "jest",
@@ -46,7 +46,7 @@
     },
     "claw-connector-service": {
       "runner": "jest",
-      "testFiles": 21
+      "testFiles": 23
     },
     "claw-file-generation-service": {
       "runner": "jest",
@@ -66,7 +66,7 @@
     },
     "claw-image-service": {
       "runner": "jest",
-      "testFiles": 9
+      "testFiles": 11
     },
     "claw-llamacpp-service": {
       "runner": "jest",
@@ -82,7 +82,7 @@
     },
     "claw-payment-service": {
       "runner": "jest",
-      "testFiles": 96
+      "testFiles": 101
     },
     "claw-research-service": {
       "runner": "jest",
@@ -90,7 +90,7 @@
     },
     "claw-routing-service": {
       "runner": "jest",
-      "testFiles": 92
+      "testFiles": 95
     },
     "claw-server-logs-service": {
       "runner": "jest",
@@ -98,9 +98,9 @@
     },
     "claw-workspace-service": {
       "runner": "jest",
-      "testFiles": 93
+      "testFiles": 94
     }
   },
   "generated": true,
-  "total": 1070
+  "total": 1098
 }

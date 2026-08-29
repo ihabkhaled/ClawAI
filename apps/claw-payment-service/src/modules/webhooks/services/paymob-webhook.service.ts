@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { BillingErrorCode, BillingGateway } from '@claw/shared-types';
 
 import { CheckoutSessionRepository } from '../../billing/repositories/checkout-session.repository';
-import { isSubscriptionCheckoutSession } from '../../billing/utilities/checkout-session-purpose.utility';
+import { isPayableCheckoutSession } from '../../billing/utilities/checkout-session-purpose.utility';
 import { PaymobAdapter } from '../../gateways/paymob/paymob.adapter';
 import { PaymentCompensationService } from '../../refunds/services/payment-compensation.service';
 import { PAYMOB_TRANSACTION_EVENT } from '../constants/webhook.constants';
@@ -131,13 +131,15 @@ export class PaymobWebhookService {
         currency,
       );
     }
-    if (!isSubscriptionCheckoutSession(session)) {
+    // Payable covers BOTH purchase kinds. Which one it is, and therefore what
+    // the money buys, is decided once — inside `PaymentActivationService`.
+    if (!isPayableCheckoutSession(session)) {
       await this.events.markFailed(eventRowId, BillingErrorCode.PAYMENT_REFERENCE_MISMATCH);
       return PaymobWebhookService.result(WebhookOutcome.FAILED, {
         failureCode: BillingErrorCode.PAYMENT_REFERENCE_MISMATCH,
       });
     }
-    return this.processSubscriptionTransaction(
+    return this.processPurchaseTransaction(
       eventRowId,
       session,
       providerTransactionId,
@@ -170,7 +172,7 @@ export class PaymobWebhookService {
     });
   }
 
-  private async processSubscriptionTransaction(
+  private async processPurchaseTransaction(
     eventRowId: string,
     session: CheckoutSession,
     providerTransactionId: string,
@@ -236,7 +238,7 @@ export class PaymobWebhookService {
         checkoutSessionId: session.id,
       };
     }
-    if (!isSubscriptionCheckoutSession(session)) {
+    if (!isPayableCheckoutSession(session)) {
       return null;
     }
     return {

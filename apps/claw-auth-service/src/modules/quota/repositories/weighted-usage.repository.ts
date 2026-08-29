@@ -27,6 +27,9 @@ export class WeightedUsageRepository {
         workflow: params.input.workflow,
         weightedTokens: params.input.estimatedWeightedTokens,
         estimatedCostMicroUsd: params.input.estimatedCostMicroUsd,
+        isPayg: params.input.isPayg,
+        creditGrantMicroUsd: params.input.creditGrantMicroUsd,
+        creditPurchasedMicroUsd: params.input.creditPurchasedMicroUsd,
         state: WeightedUsageState.RESERVED,
         dayKey: params.dayKey,
         weekKey: params.weekKey,
@@ -57,10 +60,62 @@ export class WeightedUsageRepository {
     });
   }
 
-  async markReleased(reservationId: string): Promise<void> {
-    await this.prisma.weightedUsageRecord.updateMany({
+  // Returns how many rows actually moved. A caller that gives money back MUST
+  // gate on this: a second release of the same reservation matches nothing and
+  // must be a no-op, not a second refund.
+  async markReleased(reservationId: string): Promise<number> {
+    const result = await this.prisma.weightedUsageRecord.updateMany({
       where: { reservationId, state: WeightedUsageState.RESERVED },
       data: { state: WeightedUsageState.RELEASED, finalizedAt: new Date() },
+    });
+    return result.count;
+  }
+
+  // Same conditional shape as markReleased, for the same reason: finalizing a
+  // reservation twice would settle the same hold twice.
+  async markFinalized(input: WeightedFinalizeInput): Promise<number> {
+    const result = await this.prisma.weightedUsageRecord.updateMany({
+      where: { reservationId: input.reservationId, state: WeightedUsageState.RESERVED },
+      data: {
+        rawInputTokens: input.rawInputTokens,
+        rawCachedTokens: input.rawCachedTokens,
+        rawReasoningTokens: input.rawReasoningTokens,
+        rawOutputTokens: input.rawOutputTokens,
+        toolCallCount: input.toolCallCount,
+        weightedTokens: input.actualWeightedTokens,
+        actualCostMicroUsd: input.actualCostMicroUsd,
+        state: WeightedUsageState.FINALIZED,
+        finalizedAt: new Date(),
+      },
+    });
+    return result.count;
+  }
+
+  // Open PAYG holds a request abandoned. Ordered oldest-first so a sweep that
+  // hits its batch ceiling always reclaims the money that has been stuck
+  // longest, instead of starving it behind newer rows.
+  async findExpiredPaygReservations(olderThan: Date, take: number): Promise<WeightedUsageRecord[]> {
+    return this.prisma.weightedUsageRecord.findMany({
+      where: {
+        isPayg: true,
+        state: WeightedUsageState.RESERVED,
+        createdAt: { lt: olderThan },
+      },
+      orderBy: { createdAt: 'asc' },
+      take,
+    });
+  }
+
+  // The idempotency lookup behind `reserve` being safe to retry: a resent
+  // request must reuse its hold instead of taking a second one against the same
+  // wallet.
+  async findOpenPaygReservation(
+    userId: string,
+    requestId: string,
+  ): Promise<WeightedUsageRecord | null> {
+    return this.prisma.weightedUsageRecord.findFirst({
+      where: { userId, requestId, isPayg: true, state: WeightedUsageState.RESERVED },
+      orderBy: { createdAt: 'desc' },
     });
   }
 

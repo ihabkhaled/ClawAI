@@ -1,3 +1,5 @@
+import { readCount, readNestedCount } from '@claw/shared-utilities';
+
 import { AiReasoningVisibility, AiStreamProtocol } from '../../../common/enums';
 import {
   type MutableToolCall,
@@ -121,12 +123,7 @@ export class ProviderStreamReader {
     }
     const usage = getRecord(frame, 'usage');
     if (usage !== null) {
-      out.push({
-        kind: 'usage',
-        promptTokens: getNumber(usage, 'prompt_tokens'),
-        completionTokens: getNumber(usage, 'completion_tokens'),
-        totalTokens: getNumber(usage, 'total_tokens'),
-      });
+      out.push(readOpenAiStreamUsage(usage));
     }
     const finishReason = firstChoice !== null ? getString(firstChoice, 'finish_reason') : undefined;
     if (finishReason !== undefined && finishReason.length > 0) {
@@ -341,4 +338,36 @@ function getNumber(rec: Record<string, unknown>, key: string): number | undefine
 function getBoolean(rec: Record<string, unknown>, key: string): boolean | undefined {
   const value = rec[key];
   return typeof value === 'boolean' ? value : undefined;
+}
+
+/**
+ * The usage frame, read with the same guards the buffered extractors use.
+ *
+ * Deliberately the shared `readCount` / `readNestedCount` from
+ * `@claw/shared-utilities` rather than this file's local `getNumber`: the
+ * detail blocks are exactly where OpenAI, DeepSeek and the OpenAI-compatible
+ * gateways disagree, and having one reader here and another one for buffered
+ * responses is how the streamed path came to bill cached input at the full rate
+ * and reasoning output at nothing.
+ *
+ * DeepSeek names the cache hit `prompt_cache_hit_tokens` at the top level of
+ * `usage` instead of nesting it; both spellings are accepted, same as
+ * `extractOpenAiCompatibleUsage`.
+ */
+function readOpenAiStreamUsage(usage: Record<string, unknown>): NormalizedStreamFragment {
+  // `usage` is already narrowed by the caller; re-wrapping it would only
+  // reintroduce a nullable that every reader below would have to re-check.
+  const record = usage;
+  const cached =
+    readNestedCount(record, 'prompt_tokens_details', 'cached_tokens') ??
+    readCount(record, 'prompt_cache_hit_tokens');
+  const reasoning = readNestedCount(record, 'completion_tokens_details', 'reasoning_tokens');
+  return {
+    kind: 'usage',
+    promptTokens: readCount(record, 'prompt_tokens'),
+    completionTokens: readCount(record, 'completion_tokens'),
+    totalTokens: readCount(record, 'total_tokens'),
+    ...(cached === undefined ? {} : { cachedPromptTokens: cached }),
+    ...(reasoning === undefined ? {} : { reasoningTokens: reasoning }),
+  };
 }

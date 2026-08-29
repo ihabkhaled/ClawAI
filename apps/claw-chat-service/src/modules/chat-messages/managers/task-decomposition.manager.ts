@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
 import { OrchestrationStageStatus } from '../../../common/enums/orchestration-stage-status.enum';
@@ -30,6 +31,8 @@ import type {
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import type { ResearchTranscript } from '../types/research-transcript.types';
 import { type Prisma, type RoutingMode } from '../../../generated/prisma';
+import { OLLAMA_PROVIDER } from '../../../common/constants';
+import { PAYG_WORKFLOW_TASK_DECOMPOSITION } from '../constants/payg.constants';
 
 @Injectable()
 export class TaskDecompositionManager {
@@ -288,12 +291,29 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
       think: false,
     };
 
-    const response = await httpRequest<OllamaGenerateResponse>({
-      url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-      method: 'POST',
-      body: requestBody,
-      timeoutMs: DECOMPOSITION_TIMEOUT_MS,
-    });
+    const response = await this.accessControlService.meterOrchestrationCall(
+      {
+        userId,
+        requestId: `task-decomposition:decompose:${randomUUID()}`,
+        provider: OLLAMA_PROVIDER,
+        model,
+        workflow: PAYG_WORKFLOW_TASK_DECOMPOSITION,
+        promptText: requestBody.prompt,
+      },
+      async (hold) =>
+        httpRequest<OllamaGenerateResponse>({
+          url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
+          method: 'POST',
+          body: hold.clamped
+            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
+            : requestBody,
+          timeoutMs: DECOMPOSITION_TIMEOUT_MS,
+        }),
+      (settled) => ({
+        promptTokens: settled.data.promptEvalCount ?? 0,
+        completionTokens: settled.data.evalCount ?? 0,
+      }),
+    );
 
     if (!response.ok) {
       throw new Error(`Ollama decomposition returned status ${String(response.status)}`);
@@ -432,12 +452,29 @@ Return a JSON array of sub-tasks. Each sub-task must have: title (string), instr
       think: false,
     };
 
-    const response = await httpRequest<OllamaGenerateResponse>({
-      url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-      method: 'POST',
-      body: requestBody,
-      timeoutMs: DECOMPOSITION_TIMEOUT_MS,
-    });
+    const response = await this.accessControlService.meterOrchestrationCall(
+      {
+        userId,
+        requestId: `task-decomposition:sub-task:${randomUUID()}`,
+        provider: OLLAMA_PROVIDER,
+        model,
+        workflow: PAYG_WORKFLOW_TASK_DECOMPOSITION,
+        promptText: requestBody.prompt,
+      },
+      async (hold) =>
+        httpRequest<OllamaGenerateResponse>({
+          url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
+          method: 'POST',
+          body: hold.clamped
+            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
+            : requestBody,
+          timeoutMs: DECOMPOSITION_TIMEOUT_MS,
+        }),
+      (settled) => ({
+        promptTokens: settled.data.promptEvalCount ?? 0,
+        completionTokens: settled.data.evalCount ?? 0,
+      }),
+    );
 
     if (!response.ok) {
       throw new Error(`Sub-task execution failed with status ${String(response.status)}`);
@@ -500,12 +537,29 @@ Provide a unified, coherent response that integrates all sub-task results into a
       think: false,
     };
 
-    const response = await httpRequest<OllamaGenerateResponse>({
-      url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-      method: 'POST',
-      body: requestBody,
-      timeoutMs: MERGE_TIMEOUT_MS,
-    });
+    const response = await this.accessControlService.meterOrchestrationCall(
+      {
+        userId,
+        requestId: `task-decomposition:merge:${randomUUID()}`,
+        provider: OLLAMA_PROVIDER,
+        model,
+        workflow: PAYG_WORKFLOW_TASK_DECOMPOSITION,
+        promptText: requestBody.prompt,
+      },
+      async (hold) =>
+        httpRequest<OllamaGenerateResponse>({
+          url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
+          method: 'POST',
+          body: hold.clamped
+            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
+            : requestBody,
+          timeoutMs: MERGE_TIMEOUT_MS,
+        }),
+      (settled) => ({
+        promptTokens: settled.data.promptEvalCount ?? 0,
+        completionTokens: settled.data.evalCount ?? 0,
+      }),
+    );
 
     if (!response.ok) {
       throw new Error(`Merge step failed with status ${String(response.status)}`);

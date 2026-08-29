@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
@@ -24,6 +25,8 @@ import type { AdvancedModelSelectionResolution } from '../types/advanced-model-s
 import type { RoleMember, RoleMemberResult, RolePackResponse } from '../types/role-pack.types';
 import type { OllamaGenerateRequest, OllamaGenerateResponse } from '../types/execution.types';
 import { RoutingMode } from '../../../generated/prisma';
+import { OLLAMA_PROVIDER } from '../../../common/constants';
+import { PAYG_WORKFLOW_ROLE_PACK } from '../constants/payg.constants';
 
 /**
  * Orchestrates role-based ensemble execution.
@@ -275,12 +278,29 @@ export class RolePackManager {
       think: false,
     };
 
-    const response = await httpRequest<OllamaGenerateResponse>({
-      url: `${ollamaUrl}/api/v1/ollama/generate`,
-      method: 'POST',
-      body: requestBody,
-      timeoutMs: ROLE_PACK_TIMEOUT_MS,
-    });
+    const response = await this.accessControlService.meterOrchestrationCall(
+      {
+        userId,
+        requestId: `role-pack:member:${randomUUID()}`,
+        provider: OLLAMA_PROVIDER,
+        model,
+        workflow: PAYG_WORKFLOW_ROLE_PACK,
+        promptText: requestBody.prompt,
+      },
+      async (hold) =>
+        httpRequest<OllamaGenerateResponse>({
+          url: `${ollamaUrl}/api/v1/ollama/generate`,
+          method: 'POST',
+          body: hold.clamped
+            ? { ...requestBody, options: { num_predict: hold.maxOutputTokens } }
+            : requestBody,
+          timeoutMs: ROLE_PACK_TIMEOUT_MS,
+        }),
+      (settled) => ({
+        promptTokens: settled.data.promptEvalCount ?? 0,
+        completionTokens: settled.data.evalCount ?? 0,
+      }),
+    );
 
     if (!response.ok) {
       throw new Error(`Ollama returned status ${String(response.status)} for role ${member.role}`);

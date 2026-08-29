@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { PaygSurface } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { AiActionKind } from '../../../common/enums/ai-action-kind.enum';
@@ -49,35 +50,47 @@ export class MultiModelReviewOrchestratorManager {
     );
 
     const reviewerSettled = await Promise.allSettled(
-      reviewers.map((r) => this.runReviewer(r, input.content, chatUrl, timeoutMs)),
+      reviewers.map((r) => this.runReviewer(r, input.content, chatUrl, timeoutMs, input.userId)),
     );
     const reviewerOutcomes: ReviewerOutcome[] = reviewerSettled.map((s, i) => {
       // reviewerSettled and reviewers are zipped 1:1 by index, so the
       // lookup is always defined. Fall back to a synthetic ref if a future
       // refactor breaks the invariant — never throw at this layer.
-      const ref =
-        reviewers[i] ?? reviewers[0] ?? { provider: 'unknown', model: 'unknown' };
+      const ref = reviewers[i] ?? reviewers[0] ?? { provider: 'unknown', model: 'unknown' };
       return this.materialiseReviewer(s, ref);
     });
     const anyReviewerSucceeded = reviewerOutcomes.some((r) => r.success);
 
     let judge: JudgeOutcome | null = null;
     if (input.judgeModel !== undefined && anyReviewerSucceeded) {
-      judge = await this.runJudge(input.judgeModel, reviewerOutcomes, chatUrl, timeoutMs);
-    } else if (input.judgeModel !== undefined && !anyReviewerSucceeded) {
-      this.logger.warn(
-        'run: skipping judge pass — no reviewer succeeded; nothing to synthesise',
+      judge = await this.runJudge(
+        input.judgeModel,
+        reviewerOutcomes,
+        chatUrl,
+        timeoutMs,
+        input.userId,
       );
+    } else if (input.judgeModel !== undefined && !anyReviewerSucceeded) {
+      this.logger.warn('run: skipping judge pass — no reviewer succeeded; nothing to synthesise');
     }
 
     return { reviewers: reviewerOutcomes, judge, anyReviewerSucceeded };
   }
 
+  /**
+   * One reviewer, one paid provider call, one reservation.
+   *
+   * Every reviewer in the fan-out is a SEPARATE call to chat-service, so each
+   * one is separately reserved and separately settled inside chat-service. That
+   * is what stops five reviewers being billed as one — the reservation key is
+   * derived per inbound request there, and these are five distinct requests.
+   */
   private async runReviewer(
     ref: ReviewerModelRef,
     content: string,
     chatUrl: string,
     timeoutMs: number,
+    userId: string,
   ): Promise<ReviewerOutcome> {
     const startedAt = Date.now();
     const judgePrompt = AI_ACTION_PROMPTS[AiActionKind.JUDGE];
@@ -88,6 +101,8 @@ export class MultiModelReviewOrchestratorManager {
       systemPrompt: judgePrompt.system,
       userPrompt: `${judgePrompt.userPrefix}${content}`,
       timeoutMs,
+      userId,
+      surface: PaygSurface.WORKSPACE_ACTION,
     });
     return {
       provider: ref.provider,
@@ -118,11 +133,13 @@ export class MultiModelReviewOrchestratorManager {
     };
   }
 
+  /** The synthesis pass. A sixth paid call, metered exactly like the five above. */
   private async runJudge(
     ref: ReviewerModelRef,
     reviewers: ReviewerOutcome[],
     chatUrl: string,
     timeoutMs: number,
+    userId: string,
   ): Promise<JudgeOutcome> {
     const startedAt = Date.now();
     const succeeded = reviewers.filter((r) => r.success);
@@ -143,6 +160,8 @@ export class MultiModelReviewOrchestratorManager {
         systemPrompt,
         userPrompt,
         timeoutMs,
+        userId,
+        surface: PaygSurface.WORKSPACE_ACTION,
       });
       return {
         provider: ref.provider,
