@@ -29,9 +29,10 @@ end it.
 6. **Spot-check a non-EN locale visually.** `t()` is NOT type-checked against the
    dictionary — a wrong key chain renders the raw key string to the user. Toggle to
    `de` or `ar` and confirm no raw `some.key.path` appears.
-7. **Run the audit before committing:** `node tools/audit-untranslated-i18n.cjs`
-   (and the knowledge i18n check) — every flagged entry must be a real translation
-   or a documented exempt loanword.
+7. **Run the i18n guards before committing:**
+   `npx vitest run src/lib/i18n` in `apps/claw-frontend`. Every flagged entry
+   must be a real translation or a documented exempt loanword on the completeness
+   test's allow-list.
 
 ## Prohibited patterns
 
@@ -45,15 +46,31 @@ end it.
 ```ts
 // en.ts → real English; de.ts → real German; … i18n.types.ts updated same change
 t('routing.replay.suspiciousTab')          // FE call
-// audit gate before commit:
-node tools/audit-untranslated-i18n.cjs      // 0 unexplained EN===locale entries
+// gate before commit, from apps/claw-frontend:
+npx vitest run src/lib/i18n                 // key references, enum labels, completeness
 ```
 
 ## Enforcement
 
-- **Knowledge check / unit test** — `.ai/manifests/i18n.json` +
-  `tools/audit-untranslated-i18n.cjs` flag missing keys and English-in-non-EN.
-- **TS config** — `i18n.types.ts` mismatch fails `npm run typecheck`.
+Each mechanism below **exists today**, under
+`apps/claw-frontend/src/lib/i18n/__tests__/`. `tools/audit-untranslated-i18n.cjs`
+was named here and never written; `.ai/manifests/i18n.json` holds a key count and
+a locale list and flags nothing. Both claims are removed rather than left to
+imply a coverage that was not there.
+
+- **`i18n-key-references.test.ts`** — every literal `t('a.b.c')` and
+  `*Key: 'a.b.c'` in the source resolves in the `en` dictionary. **Blind to keys
+  used as VALUES of a `Record<Enum, string>`** — see the next entry, which exists
+  because that blind spot shipped 18 undefined keys to the credit ledger.
+- **`billing-enum-labels.test.ts`** — walks `SubscriptionStatus`,
+  `BillingInterval`, `PlanFeature`, `BillingGateway`, `PaygSurface` and
+  `CreditLedgerKind` against all 13 dictionaries. **Add any new enum you label by
+  template or lookup map here**; nothing else will catch it.
+- **`{persian,japanese,thai,chinese}-completeness.test.ts` and
+  `western-locales-translation-regression.test.ts`** — catch English left
+  untranslated, with an explicit allow-list of approved technical terms.
+- **`supported-locales.test.ts`** — every `Locale` member has a dictionary.
+- **TS config** — an `i18n.types.ts` mismatch fails `npm run typecheck`.
 - **Review checklist** — visual spot-check of one non-EN locale.
 
 ## Related skills

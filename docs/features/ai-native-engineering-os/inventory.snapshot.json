@@ -7338,7 +7338,7 @@
           "file": "rules/19-logging-observability-and-redaction.md"
         },
         {
-          "bytes": 3064,
+          "bytes": 4176,
           "file": "rules/20-i18n-and-user-facing-messages.md"
         },
         {
@@ -7406,7 +7406,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 17672,
+          "bytes": 18081,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -7608,7 +7608,7 @@
           "file": "skills/inspect-affected-workspaces.md"
         },
         {
-          "bytes": 14336,
+          "bytes": 14427,
           "file": "skills/meter-a-paid-provider-call.md"
         },
         {
@@ -9414,7 +9414,7 @@
       },
       "@claw/shared-types": {
         "runner": "jest",
-        "testFiles": 4
+        "testFiles": 3
       },
       "@claw/shared-utilities": {
         "runner": "jest",
@@ -10213,7 +10213,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1100,
+    "totalTestFiles": 1099,
     "workspaceCount": 25
   }
 }

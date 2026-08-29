@@ -30,7 +30,13 @@ model-cost and metered router calls, `apps/claw-payment-service` credit top-up a
 reversal, `packages/shared-entitlements` (`PaygMeter`), `packages/shared-constants`
 (`payg-credit.constants.ts`), `packages/shared-types` (the PAYG enums and types),
 and **every service that can reach a paid provider**: chat, image, workspace,
-routing, research.
+routing, payment.
+
+Deliberately NOT research: `claw-research-service` reaches search SaaS (Brave,
+Exa, Tavily, ...), never a paid model, and is metered through
+`FeatureUsageRecord`'s WEB_SEARCH / WEB_FETCH / WEB_EXTRACT allowances. It has
+zero `PaygMeter` references and no `PaygSurface` member. The moment it calls a
+paid model, rule 1 applies to it like anything else.
 
 ## Mandatory rules
 
@@ -78,7 +84,8 @@ routing, research.
 
 8. **Error payloads never carry a cost ceiling, a margin, or a provider rate.** A
    402 carries `errorCode`, `availableMicroUsd` and `requiredMicroUsd` — the
-   user's own numbers plus the code the frontend maps — and nothing else. The
+   user's own numbers plus the code the frontend maps, beside the envelope every
+   error carries. No rate, no ceiling, no margin. The
    user's own allowance is public; the platform's rate card is not. This is the
    narrowed survivor of the threat
    [`billing-threat-model.md`](../docs/03-architecture/billing-threat-model.md)

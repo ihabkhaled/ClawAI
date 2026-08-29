@@ -188,7 +188,9 @@ that is true — the ledger is read by support.
 | `PAYG_MODEL_UNPRICED`       | Metered provider, no price row — **blocked, never free** |
 | `PAYG_PRICING_UNAVAILABLE`  | routing-service unreachable — fails closed               |
 
-**The error body carries `availableMicroUsd` and `requiredMicroUsd` and nothing
+**The error body carries `errorCode`, `availableMicroUsd` and `requiredMicroUsd`
+— the user's own numbers plus the code the frontend maps — and no rate, ceiling
+or margin
 else.** Never a cost ceiling, a margin, or a provider rate.
 
 If your surface can **degrade** rather than refuse — AUTO routing is the example —

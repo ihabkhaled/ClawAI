@@ -291,7 +291,9 @@ Compare is **all-or-nothing**: every lane's hold is taken up front, and if one
 does not fit, none is taken and `PAYG_COMPARE_CREDIT_INSUFFICIENT` is raised — a
 partial fan-out charges for a comparison the user cannot use.
 
-Refusal payloads carry `availableMicroUsd` and `requiredMicroUsd` and **nothing
+Refusal payloads carry `errorCode`, `availableMicroUsd` and `requiredMicroUsd` —
+the user's own numbers plus the code the frontend maps — and **no rate, ceiling
+or margin
 else**. Never a cost ceiling, never a margin, never a provider rate.
 
 ## Top-up
@@ -411,9 +413,15 @@ All gated on `ADMIN_CREDIT_MANAGE`: `GET /wallets/:userId`,
 
 ### Top-up purchase — payment-service, inherits `location /api/v1/billing`
 
-`POST /billing/credit-topup/checkout-sessions` with `{packageId, gateway,
-idempotencyKey}` and **never an amount** — the price is resolved server-side
-from the immutable `CreditPackageVersion`.
+| Route                                             | Purpose                                                                                                                                                                 |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /billing/credit-topup/checkout-sessions`    | Start a purchase. Body is `{packageId, gateway, idempotencyKey}` and **never an amount** — the price is resolved server-side from the immutable `CreditPackageVersion`. |
+| `GET /billing/credit-topup/packages`              | The buyable catalog, proxied from auth so the checkout UI has one origin.                                                                                               |
+| `GET /billing/credit-topup/checkout-sessions/:id` | Poll a started purchase.                                                                                                                                                |
+
+There is deliberately **no** completion route here: settlement reuses the
+purpose-agnostic `/billing/checkout-sessions/:id/complete-*` endpoints, so a
+top-up goes through `PaymentActivationService` like every other payment.
 
 ## Related
 
