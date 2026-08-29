@@ -1,6 +1,6 @@
 {
   "name": "claw-workspace-service",
-  "version": "1.56.1",
+  "version": "1.56.2",
   "private": true,
   "description": "Claw Workspace Service - manages workspace tool connectors (Slack, Jira, GitHub, Figma, etc.)",
   "license": "UNLICENSED",
