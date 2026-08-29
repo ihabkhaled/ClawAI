@@ -7,7 +7,7 @@
     "monthlyMinor/yearlyMinor are integer MINOR units ($5.00 => 500).",
     "daily/weekly/monthlyTokens are cost-normalized weighted tokens:",
     "1,000,000 weighted tokens == $1.00 of estimated provider cost.",
-    "costCeilingMicroUsd is a STRING because it is converted to BigInt — an",
+    "costCeilingMicroUsd is a STRING because it is converted to BigInt \u2014 an",
     "internal profitability control that is never returned to a normal user.",
     "null means unlimited; 0 means disabled. They are never interchangeable.",
     "",
@@ -23,14 +23,14 @@
     "still holding the OLD value so an operator's tuned figure survives. Do NOT",
     "bump plan-catalog to v3 to apply them: on an install where v2 already ran,",
     "every plan takes the else-branch of run() and only modelAccessMode and a",
-    "null weeklyTokenQuota are written — the new allowances would land on ZERO",
+    "null weeklyTokenQuota are written \u2014 the new allowances would land on ZERO",
     "rows while the seeder reported success."
   ],
   "plans": [
     {
       "slug": "free",
       "name": "Free",
-      "description": "Try every frontier model with a small daily allowance.",
+      "description": "Try the platform on local models, with a small daily allowance. Paid cloud connectors need connector credit, which a paid plan includes.",
       "displayOrder": 0,
       "isDefault": true,
       "isTrial": true,
@@ -112,7 +112,8 @@
         "costEnsemble": true,
         "rolePack": true
       },
-      "isPopular": false
+      "isPopular": false,
+      "paygCreditPercentBps": 3000
     },
     {
       "slug": "starter",
@@ -199,7 +200,8 @@
         "costEnsemble": false,
         "rolePack": false
       },
-      "isPopular": false
+      "isPopular": false,
+      "paygCreditPercentBps": 3000
     },
     {
       "slug": "plus",
@@ -286,7 +288,8 @@
         "costEnsemble": false,
         "rolePack": false
       },
-      "isPopular": false
+      "isPopular": false,
+      "paygCreditPercentBps": 3000
     },
     {
       "slug": "pro",
@@ -373,7 +376,8 @@
         "costEnsemble": false,
         "rolePack": false
       },
-      "isPopular": true
+      "isPopular": true,
+      "paygCreditPercentBps": 2500
     },
     {
       "slug": "team",
@@ -460,7 +464,8 @@
         "costEnsemble": false,
         "rolePack": false
       },
-      "isPopular": false
+      "isPopular": false,
+      "paygCreditPercentBps": 2500
     },
     {
       "slug": "scale",
@@ -547,7 +552,8 @@
         "costEnsemble": false,
         "rolePack": false
       },
-      "isPopular": false
+      "isPopular": false,
+      "paygCreditPercentBps": 2500
     },
     {
       "slug": "unlimited",
@@ -634,7 +640,8 @@
         "costEnsemble": false,
         "rolePack": false
       },
-      "isPopular": false
+      "isPopular": false,
+      "paygCreditPercentBps": 2500
     }
   ]
 }

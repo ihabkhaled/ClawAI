@@ -148,11 +148,20 @@ model Plan {
   dailyTokenQuota                    Int                 @default(0) @map("daily_token_quota")
   weeklyTokenQuota                   Int?                @map("weekly_token_quota")
   monthlyTokenQuota                  Int?                @map("monthly_token_quota")
-  // Operational profitability control, never returned to a normal user. NULL
-  // means no ceiling. Even "Unlimited" has one: unlimited chats and local
-  // models, but premium cloud spend stops at a fair-use boundary instead of
-  // accruing unbounded provider charges.
+  // Fair-use bound on TOTAL weighted spend in a month, across every provider
+  // including local compute. Not the PAYG credit allowance — that is derived
+  // from the price below. NULL means no ceiling.
   monthlyProviderCostCeilingMicroUsd BigInt?             @map("monthly_provider_cost_ceiling_micro_usd")
+  // Share of what the user PAYS that becomes PAYG connector credit, in basis
+  // points (3000 = 30%). The monthly grant is computed as
+  // `activeMonthlyPrice.amountMinor * bps / 10000`, so it follows a price
+  // change automatically and there is no absolute credit figure to drift.
+  //
+  // A plan with no price, or a price of zero, grants nothing: 30% of nothing is
+  // nothing. That is the honest arithmetic, not an oversight — a free tier's
+  // access to paid models is a separate product decision, not a side effect of
+  // a percentage.
+  paygCreditPercentBps               Int                 @default(3000) @map("payg_credit_percent_bps")
   // NULL = unlimited, 0 = disabled. The three are never interchangeable.
   maxConcurrentRequests              Int?                @map("max_concurrent_requests")
   maxChatsPerDay                     Int?                @map("max_chats_per_day")

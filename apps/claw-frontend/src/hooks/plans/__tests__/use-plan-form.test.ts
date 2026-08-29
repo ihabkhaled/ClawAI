@@ -27,6 +27,7 @@ const seedPlan = {
   weeklyTokenQuota: 20_000,
   monthlyTokenQuota: 2000000,
   monthlyProviderCostCeilingMicroUsd: null,
+  paygCreditPercentBps: 3000,
   maxChatsPerDay: 50,
   maxMessagesPerDay: 500,
   maxWorkspaceConnections: 10,
@@ -74,6 +75,7 @@ describe('usePlanForm', () => {
       ...seedPlan,
       monthlyTokenQuota: null,
       monthlyProviderCostCeilingMicroUsd: null,
+      paygCreditPercentBps: 3000,
       maxChatsPerDay: null,
     } satisfies PlanView;
     const { result } = renderHook(() => usePlanForm(sparse));

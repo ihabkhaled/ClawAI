@@ -1,3 +1,18 @@
+> **AMENDED 2026-08-29 (ADR-078 amendment).** The connector-credit allowance is
+> no longer an absolute per-plan figure. It is
+> `monthlyPrice × Plan.paygCreditPercentBps / 10000` — a share of what the user
+> actually pays. Seeded rates: 30% (free, starter, plus) and 25% (pro, team,
+> scale, unlimited).
+>
+> Those rates were chosen so every PAID plan grants exactly what the table below
+> already says. **Free is the exception: a $0 price converts to $0 of credit**,
+> where it previously carried $0.30. Free keeps its token allowance and local
+> models.
+>
+> The `cost ceiling` column below is NOT the credit allowance any more. It is the
+> fair-use bound on total weighted spend across every provider, local included,
+> and a PAYG request does not check it — the wallet is the sole dollar bound.
+
 # Plan Allowances — the one authoritative dollar figure per plan
 
 **Last reviewed**: 2026-08-29

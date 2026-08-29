@@ -1,12 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { type UserCreditWallet } from '../../../generated/prisma';
+import { BillingIntervalKind, type UserCreditWallet } from '../../../generated/prisma';
+import { PlanBillingRepository } from '../../plans/repositories/plan-billing.repository';
 import { PlansRepository } from '../../plans/repositories/plans.repository';
 import { CreditWalletRepository } from '../repositories/credit-wallet.repository';
 import { CreditEventService } from './credit-event.service';
 import { CreditWalletService } from './credit-wallet.service';
 import { type CreditBalances } from '../types/credit.types';
 import { availableMicroUsd } from '../utilities/credit-bucket.utility';
+import { creditFromPayment } from '../utilities/credit-conversion.utility';
 import { currentGrantPeriodKey, nextGrantResetAt } from '../utilities/credit-period.utility';
 import { CREDIT_GRANT_RENEWAL_BATCH_SIZE } from '../constants/credit.constants';
 
@@ -14,11 +16,20 @@ import { CREDIT_GRANT_RENEWAL_BATCH_SIZE } from '../constants/credit.constants';
  * Owns the perishable half of the wallet: what a plan grants each period, and
  * what happens to whatever is left when the period ends.
  *
- * The allowance IS `Plan.monthlyProviderCostCeilingMicroUsd` — the same dollars
- * the platform already enforced as a hidden margin control, now visible to the
- * user (ADR-078). There is deliberately no second column: a third name for one
- * number is how a customer ends up reading "$1.50 credit, $1.20 left" and being
- * refused at $0.75 by a different subsystem.
+ * The allowance is a SHARE OF WHAT THE USER PAYS:
+ * `activeMonthlyPrice.amountMinor × Plan.paygCreditPercentBps / 10000`
+ * (ADR-078, amended). Pay $20 on a 30% plan and $6 becomes connector credit.
+ *
+ * Derived, never stored. An absolute per-plan credit column would be a second
+ * number tracking the price, and the two drift the first time somebody reprices
+ * a plan and forgets the other column — which is exactly how a customer ends up
+ * reading "$6.00 credit, $5.40 left" and being refused at $4.00 by a different
+ * subsystem.
+ *
+ * `monthlyProviderCostCeilingMicroUsd` is NOT this number. It is the fair-use
+ * bound on total weighted spend across every provider, local included, and a
+ * PAYG reservation deliberately passes `null` for it so a user who bought
+ * credit can actually spend it.
  *
  * Unused grant does NOT roll over. The sweep is written as its own
  * GRANT_EXPIRY ledger row rather than a silent overwrite, so the balance still
@@ -32,6 +43,7 @@ export class CreditGrantService {
     private readonly wallets: CreditWalletService,
     private readonly walletRepository: CreditWalletRepository,
     private readonly plans: PlansRepository,
+    private readonly planBilling: PlanBillingRepository,
     private readonly events: CreditEventService,
   ) {}
 
@@ -79,11 +91,19 @@ export class CreditGrantService {
   /**
    * What this user's plan grants per period, in integer micro-USD.
    *
-   * A `null` ceiling means the plan declares NO provider-cost limit. That is
-   * read as "no PAYG allowance" rather than "unlimited", because a wallet
-   * column cannot express infinity and guessing a large number would invent a
-   * price nobody approved. It is logged loudly with the plan slug: the fix is
-   * an operator setting a ceiling, not code picking one.
+   * `monthlyPrice × bps / 10000`, read from the ACTIVE immutable price version
+   * so a repricing carries the grant with it and nobody has to remember a second
+   * column.
+   *
+   * The monthly price is the basis even for a yearly subscriber. Their yearly
+   * rate is ten months of it (two months free), so this grants them the same
+   * credit per month as a monthly subscriber on the same plan rather than
+   * penalising them for paying up front — a discount on the subscription is not
+   * meant to be a discount on the allowance.
+   *
+   * A plan with no active monthly price, or a price of zero, grants nothing:
+   * thirty percent of nothing is nothing. Logged with the slug, because the fix
+   * is an operator publishing a price, not code inventing one.
    */
   async resolvePeriodGrant(userId: string): Promise<bigint> {
     const plan =
@@ -93,13 +113,14 @@ export class CreditGrantService {
       this.logger.warn(`resolvePeriodGrant: no plan resolved for user=${userId}`);
       return 0n;
     }
-    if (plan.monthlyProviderCostCeilingMicroUsd === null) {
-      this.logger.warn(
-        `resolvePeriodGrant: plan ${plan.slug} has no monthlyProviderCostCeilingMicroUsd — its users receive no PAYG grant`,
+    const price = await this.planBilling.findActivePrice(plan.id, BillingIntervalKind.MONTHLY);
+    if (price === null || price.amountMinor <= 0) {
+      this.logger.log(
+        `resolvePeriodGrant: plan ${plan.slug} has no priced monthly version — no PAYG grant`,
       );
       return 0n;
     }
-    return plan.monthlyProviderCostCeilingMicroUsd;
+    return creditFromPayment(price.amountMinor, plan.paygCreditPercentBps);
   }
 
   private async roll(

@@ -1,3 +1,20 @@
+> **SUPERSEDED in part, 2026-08-29 (ADR-078 amendment).** The 0.60 ratio this
+> document argued for has been replaced by **face value (100%)**. Pay $10, get
+> $10 of connector credit.
+>
+> The reasoning below — that selling credit at par books negative gross margin —
+> is arithmetically correct and was still the wrong conclusion, because it looked
+> at the top-up in isolation. The margin already lives in the PLAN: only
+> `Plan.paygCreditPercentBps` (25–30%) of a subscription converts to credit and
+> the rest buys everything else the plan includes. Charging a second margin on a
+> top-up bills the same customer twice for the same thing.
+>
+> **The accepted cost:** the gateway's fee on a top-up comes out of the
+> platform's pocket. That is a deliberate decision, not an oversight. Revisit it
+> if top-up volume makes the absorbed fee material — the ratio is a column on an
+> immutable `CreditPackageVersion`, so changing it mints a new version and never
+> rewrites what somebody already bought.
+
 # Top-Up Pricing — the 0.60 ratio, and why not 1:1
 
 **Last reviewed**: 2026-08-29

@@ -30,6 +30,7 @@ const PLAN_CATALOG = catalogData.plans.map((plan) => ({
   isTrial: plan.isTrial === true,
   trialDurationDays: plan.isTrial === true ? plan.trialDurationDays : null,
   monthlyCostCeilingMicroUsd: BigInt(plan.costCeilingMicroUsd),
+  paygCreditPercentBps: plan.paygCreditPercentBps,
 }));
 
 // What the pre-billing seeder wrote for free/pro/team. A row still matching one
@@ -111,6 +112,12 @@ function planColumns(definition) {
     weeklyTokenQuota: definition.weeklyTokens,
     monthlyTokenQuota: definition.monthlyTokens,
     monthlyProviderCostCeilingMicroUsd: definition.monthlyCostCeilingMicroUsd,
+    // Share of the plan price that becomes connector credit. Deliberately NOT
+    // in the exported `payload` below: including it would change the v2
+    // checksum on every existing install and warn on every boot, and the
+    // dedicated plan-payg-percent seeder is what moves existing rows. Same
+    // reasoning as the isPopular note above.
+    paygCreditPercentBps: definition.paygCreditPercentBps,
     maxConcurrentRequests: definition.maxConcurrentRequests,
     maxChatsPerDay: definition.chatsPerDay,
     maxMessagesPerDay: definition.messagesPerDay,

@@ -44,18 +44,27 @@ export type PlanView = {
   weeklyTokenQuota: number | null;
   monthlyTokenQuota: number | null;
   /**
-   * The monthly connector credit included with this plan, in integer micro-USD.
+   * A monthly FAIR-USE ceiling on total weighted provider spend, in integer
+   * micro-USD — every provider, local models included.
    *
-   * This column was a hidden margin control (`monthlyProviderCostCeilingMicroUsd`)
-   * until ADR-078 promoted it to the user-visible pay-as-you-go allowance. It is
-   * the SAME number the wallet grants each period — there is deliberately no
-   * second field, because two names for one allowance is how a user reads
-   * "$1.50 credit" and is refused at $0.75.
+   * This is emphatically NOT the connector-credit allowance. It briefly was, and
+   * the confusion is the whole reason this comment is long: a PAYG reservation
+   * passes `null` for it, and the allowance is now derived from
+   * {@link PlanView.paygCreditPercentBps} and the plan's price instead.
    *
-   * `null` means the plan grants no connector credit; `0` means disabled. They
-   * are not interchangeable.
+   * `null` means no ceiling; `0` means every request is over budget. They are
+   * not interchangeable.
    */
   monthlyProviderCostCeilingMicroUsd: number | null;
+  /**
+   * The share of the plan's monthly price that becomes connector credit, in
+   * basis points. 3000 is 30%; the database bounds the column to 0..10000.
+   *
+   * The monthly grant is `activeMonthlyPrice.amountMinor × bps / 10000`, in
+   * micro-USD. Pay $20 on a 30% plan and the wallet is granted $6.00. A plan
+   * priced at $0 grants $0 — intended, not a bug.
+   */
+  paygCreditPercentBps: number;
   maxChatsPerDay: number | null;
   maxMessagesPerDay: number | null;
   maxWorkspaceConnections: number | null;
@@ -119,8 +128,10 @@ export type CreatePlanRequest = {
   dailyTokenQuota: number;
   weeklyTokenQuota?: number;
   monthlyTokenQuota?: number;
-  /** Integer micro-USD. Omitted leaves the plan's current allowance untouched. */
+  /** Fair-use ceiling on total weighted spend, integer micro-USD. Omitted leaves it untouched. */
   monthlyProviderCostCeilingMicroUsd?: number;
+  /** Basis points, 0..10000. Omitted leaves the plan's current conversion rate untouched. */
+  paygCreditPercentBps?: number;
   maxChatsPerDay?: number;
   maxMessagesPerDay?: number;
   maxWorkspaceConnections?: number;
@@ -234,6 +245,7 @@ export type PlanFormState = {
   weeklyTokenQuota: string;
   monthlyTokenQuota: string;
   monthlyProviderCostCeilingMicroUsd: string;
+  paygCreditPercentBps: string;
   maxChatsPerDay: string;
   maxMessagesPerDay: string;
   maxWorkspaceConnections: string;
@@ -258,6 +270,21 @@ export type PlanFormState = {
 };
 
 export type PlanFormFieldErrors = Partial<Record<keyof PlanFormState, string>>;
+
+/**
+ * What a basis-point rate means in money, for the plan form.
+ *
+ * Two pre-formatted strings rather than raw numbers: the component renders, it
+ * does not compute, and the conversion is integer arithmetic that belongs beside
+ * the rest of the money maths. `null` from the producer means the plan has no
+ * active monthly price yet, in which case there is nothing honest to preview.
+ */
+export type PlanPaygCreditPreview = {
+  /** The derived monthly credit, already localized (e.g. "$6.00"). */
+  credit: string;
+  /** The active monthly price the credit was derived from (e.g. "$20.00"). */
+  price: string;
+};
 
 export type UsePlanFormResult = {
   state: PlanFormState;
@@ -311,6 +338,8 @@ export type UsePlanFormPageResult = {
   isSubmitting: boolean;
   submitError: Error | null;
   form: UsePlanFormResult;
+  /** `null` until the plan has an active monthly price to derive a credit from. */
+  paygCreditPreview: PlanPaygCreditPreview | null;
   onSubmit: () => void;
   onCancel: () => void;
   onRetry: () => void;
@@ -367,6 +396,11 @@ export type PlanFormProps = {
   state: PlanFormState;
   fieldErrors: PlanFormFieldErrors;
   setField: <K extends keyof PlanFormState>(field: K, value: PlanFormState[K]) => void;
+  /**
+   * What the current rate works out to in money. `null` hides the preview
+   * entirely — a guessed price would be worse than no preview at all.
+   */
+  paygCreditPreview: PlanPaygCreditPreview | null;
   onSubmit: () => void;
   onCancel: () => void;
   isSubmitting: boolean;

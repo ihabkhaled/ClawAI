@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { PAYG_CREDIT_PERCENT_BPS_MAX } from '@/constants/plan.constants';
+
 // Mirror of apps/claw-auth-service plan DTOs. Numeric inputs arrive as strings
 // from controlled inputs; optional numerics are blank strings → undefined.
 // Safe slug pattern (character classes only, no nested quantifiers) per the
@@ -40,11 +42,19 @@ export const createPlanSchema = z.object({
   dailyTokenQuota: z.coerce.number().int().min(0, 'Daily token quota must be 0 or greater'),
   weeklyTokenQuota: optionalNonNegativeInt,
   monthlyTokenQuota: optionalNonNegativeInt,
-  // The monthly connector credit, in integer micro-USD (ADR-078 promoted this
-  // from a hidden margin control). Integer-only: it is money, and a fractional
-  // micro-dollar is not a thing the wallet can hold. Blank means "leave the
-  // plan's current allowance alone"; an explicit 0 disables PAYG on the plan.
+  // A monthly FAIR-USE ceiling on total weighted provider spend, in integer
+  // micro-USD — every provider, local models included. NOT the connector-credit
+  // allowance, which is derived from the price and the rate below. Blank means
+  // no ceiling; an explicit 0 puts every request over budget.
   monthlyProviderCostCeilingMicroUsd: optionalNonNegativeInt,
+  // The share of the plan's monthly price that becomes connector credit, in
+  // basis points. Bounded 0..10000 here because the database bounds it with a
+  // CHECK constraint: rejecting 12000 in the form is a field error the operator
+  // can fix, while letting it through is a 500 they cannot.
+  paygCreditPercentBps: z.preprocess(
+    blankToUndefined,
+    z.coerce.number().int().min(0).max(PAYG_CREDIT_PERCENT_BPS_MAX).optional(),
+  ),
   maxChatsPerDay: optionalNonNegativeInt,
   maxMessagesPerDay: optionalNonNegativeInt,
   maxWorkspaceConnections: optionalNonNegativeInt,

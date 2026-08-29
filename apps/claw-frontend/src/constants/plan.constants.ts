@@ -1,4 +1,18 @@
+import { BASIS_POINTS_DENOMINATOR } from '@claw/shared-constants';
+
 import type { EntitlementFeatureGates, PlanFormState } from '@/types/plan.types';
+
+/** 10000 bps = 100%. The database enforces the same bound with a CHECK constraint. */
+export const PAYG_CREDIT_PERCENT_BPS_MAX = BASIS_POINTS_DENOMINATOR;
+
+/**
+ * 3000 bps = 30%, the rate every seeded entry-tier plan carries.
+ *
+ * A default is safe here in a way a default credit AMOUNT never was: a rate
+ * grants nothing on its own, and multiplied by a new plan's $0 price it stays
+ * $0 until an operator publishes a price deliberately.
+ */
+export const PAYG_CREDIT_PERCENT_BPS_DEFAULT = '3000';
 
 // Default state for a brand-new plan in the PlanForm. Numeric inputs are kept
 // as strings (controlled inputs) and coerced by the Zod schema on submit.
@@ -12,10 +26,10 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   dailyTokenQuota: '100000',
   weeklyTokenQuota: '',
   monthlyTokenQuota: '',
-  // Blank, not a number: a new plan inherits no connector-credit allowance
-  // until an operator sets one deliberately. Guessing a default here would
-  // hand out real money on every plan somebody creates in a hurry.
+  // Blank, not a number: a new plan carries no fair-use ceiling on total
+  // weighted spend until an operator sets one deliberately.
   monthlyProviderCostCeilingMicroUsd: '',
+  paygCreditPercentBps: PAYG_CREDIT_PERCENT_BPS_DEFAULT,
   maxChatsPerDay: '',
   maxMessagesPerDay: '',
   maxWorkspaceConnections: '',

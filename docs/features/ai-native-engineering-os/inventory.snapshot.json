@@ -7406,7 +7406,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 22680,
+          "bytes": 23088,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -7682,7 +7682,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4988
+        "value": 4996
       },
       "localeCount": 13,
       "locales": [
@@ -9430,7 +9430,7 @@
       },
       "claw-auth-service": {
         "runner": "jest",
-        "testFiles": 78
+        "testFiles": 79
       },
       "claw-chat-service": {
         "runner": "jest",
@@ -10213,7 +10213,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1099,
+    "totalTestFiles": 1100,
     "workspaceCount": 25
   }
 }

@@ -3707,6 +3707,13 @@ export const pt: TranslationDictionary = {
       description: 'Atualize este plano.',
     },
     form: {
+      monthlyFairUseCeiling: 'Limite mensal de uso justo (micro-USD)',
+      monthlyFairUseCeilingHelp:
+        'Teto do gasto mensal total em TODOS os provedores, incluindo modelos locais, em micro-USD (1.000.000 = US$ 1,00). Deixe em branco para não ter teto. Isto não é o crédito de conectores — esse é definido abaixo como uma parcela do preço.',
+      paygCreditPercent: 'Taxa de crédito de conectores (pontos-base)',
+      paygCreditPercentHelp:
+        'Parcela do preço mensal deste plano que vira crédito de conectores. 3000 = 30%. Um plano de US$ 0 não concede crédito, seja qual for a taxa.',
+      paygCreditPercentPreview: '≈ {credit} por mês a {price}',
       monthlyConnectorCredit: 'Crédito mensal de conectores (micro-USD)',
       monthlyConnectorCreditHelp:
         'Franquia em dólares para conectores em nuvem pagos, em micro-USD (1.000.000 = US$ 1,00). 0 desativa os conectores pagos neste plano. Este valor é exibido aos usuários.',
@@ -4107,6 +4114,9 @@ export const pt: TranslationDictionary = {
   },
   billing: {
     credit: {
+      faceValueNote:
+        'O crédito comprado é adicionado pelo valor de face: pague {price} e receba {price} de crédito.',
+      grantShareNote: '{percent}% do preço do seu plano viram crédito de conectores todo mês.',
       surface: {
         CHAT: 'Chat',
         COMPARE: 'Comparação',
@@ -4434,6 +4444,7 @@ export const pt: TranslationDictionary = {
         'A disponibilidade dos modelos segue o cronograma de lançamento de cada provedor. Novos modelos são adicionados assim que são lançados.',
     },
     pricing: {
+      paygCreditRate: '{percent}% do preço do seu plano',
       paygCreditLabel: 'Crédito mensal de conectores',
       paygCreditNone: 'Sem crédito de conectores',
       sectionTitle: 'Planos que crescem com você',

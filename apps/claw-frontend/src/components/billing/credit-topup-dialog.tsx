@@ -62,6 +62,12 @@ export function CreditTopupDialog({
             locale={locale}
           />
 
+          {/* Directly under the packages, because that is where a reader is
+              comparing the two figures on each button and deciding whether the
+              second one is smaller than the first. It is not: a top-up converts
+              at face value. */}
+          <p className="text-muted-foreground text-xs">{t('billing.credit.faceValueNote')}</p>
+
           <GatewaySelect
             value={gateway}
             onChange={onGatewayChange}

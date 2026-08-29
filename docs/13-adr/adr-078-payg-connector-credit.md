@@ -1,6 +1,7 @@
 # ADR-078: PAYG connector credit is the promoted provider-cost ceiling, not a new column
 
-**Status**: Accepted
+**Status**: Accepted — **amended 2026-08-29, see "Amendment: credit is a share of
+the payment"**
 **Date**: 2026-08-29
 **Deciders**: ClawAI core team
 **Slice**: Pay-as-you-go connector credit (PAYG flagship)
@@ -168,6 +169,74 @@ construction rather than by reconciliation.
 ### D7 — the routing cost-budget scaffold is deleted
 
 Superseded by this wallet. See [ADR-081](adr-081-retire-routing-cost-budget.md).
+
+## Amendment (2026-08-29): credit is a SHARE OF THE PAYMENT
+
+The original decision made `Plan.monthlyProviderCostCeilingMicroUsd` the credit
+allowance. That was right about the arithmetic and wrong about the model.
+
+**The allowance is now derived from what the user actually pays:**
+
+```
+monthlyGrant = activeMonthlyPrice.amountMinor × Plan.paygCreditPercentBps / 10000
+```
+
+Pay $20 on a 30% plan and $6.00 becomes connector credit. The rate is a column;
+the amount never is. A repricing carries the allowance with it, and there is no
+second number to fall out of step with the price it was supposed to track —
+which is the same failure the original decision was written to avoid, one level
+up.
+
+`monthlyProviderCostCeilingMicroUsd` reverts to the meaning it always had: a
+fair-use bound on TOTAL weighted spend across every provider, local compute
+included. It is **not** the credit allowance. The two do not collide, because a
+PAYG reservation passes `null` for every non-credit window
+(`buildCreditLimits`) — the wallet is the sole dollar bound on a metered
+request, so a user who buys credit can actually spend it.
+
+### The rates, and why nobody's allowance moved
+
+| plan      | monthly price | rate | derived grant | previous grant |
+| --------- | ------------: | ---: | ------------: | -------------: |
+| free      |            $0 |  30% |     **$0.00** |          $0.30 |
+| starter   |            $5 |  30% |     **$1.50** |          $1.50 |
+| plus      |           $10 |  30% |     **$3.00** |          $3.00 |
+| pro       |           $20 |  25% |     **$5.00** |          $5.00 |
+| team      |           $50 |  25% |    **$12.50** |         $12.50 |
+| scale     |          $100 |  25% |    **$25.00** |         $25.00 |
+| unlimited |          $200 |  25% |    **$50.00** |         $50.00 |
+
+The seeded ceilings were already exactly 30% or 25% of each plan's price, so
+every paid tier grants precisely what it granted before. Only the derivation
+changed.
+
+**Free is the one real change, and it follows from the model rather than a
+separate decision: a $0 price converts to $0 at any rate.** Free keeps local
+models and its token allowance; it no longer carries $0.30 of paid-connector
+spend. `plan-catalog.json` corrects Free's description in the same change,
+because "Try every frontier model with a small daily allowance" is a promise a
+$0 conversion cannot keep, and shipping the code without the copy would have
+left the product lying about itself.
+
+### Top-ups sell at face value
+
+`CREDIT_TOPUP_RATIO_BPS = 10000`. Pay $10, get $10 of credit.
+
+The original 0.60 was double-charging. The margin already lives in the plan,
+where only `paygCreditPercentBps` of the subscription converts and the rest buys
+everything else the plan includes. Taking a second cut on a top-up charges the
+customer twice for the same margin. A top-up buys nothing but provider spend, so
+it sells at cost.
+
+The consequence is accepted and is not an oversight: the gateway's fee on a
+top-up comes out of the platform's pocket. Recorded in
+`docs/business/topup-pricing.md`.
+
+Because a `CreditPackageVersion` is immutable, correcting an install that
+already seeded 0.60 means RETIRING the active version and publishing the next —
+`prisma/seeders/credit-package-repricing.seeder.js`, not an edit to the original
+seeder, whose `findUnique`-then-create guard would have skipped the existing row
+and changed nothing.
 
 ## Consequences
 

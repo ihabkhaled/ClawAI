@@ -6,6 +6,7 @@ import { ROUTES } from '@/constants/routes.constants';
 import { UserRole } from '@/enums';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { usePlanForm } from '@/hooks/plans/use-plan-form';
+import { usePlanPaygCreditPreview } from '@/hooks/plans/use-plan-payg-credit-preview';
 import { useTranslation } from '@/lib/i18n';
 import { plansRepository } from '@/repositories/admin/plans.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
@@ -48,6 +49,7 @@ export function usePlanFormPage(): UsePlanFormPageResult & {
   });
 
   const form = usePlanForm(query.data ?? null);
+  const paygCreditPreview = usePlanPaygCreditPreview(planId, form.state.paygCreditPercentBps);
 
   const goBack = useCallback((): void => {
     router.push(ROUTES.ADMIN_PLANS);
@@ -129,6 +131,7 @@ export function usePlanFormPage(): UsePlanFormPageResult & {
     isSubmitting: createMutation.isPending || updateMutation.isPending,
     submitError,
     form,
+    paygCreditPreview,
     onSubmit,
     onCancel,
     onRetry,

@@ -10,6 +10,8 @@ function makeProps(overrides: Partial<PlanFormProps> = {}): PlanFormProps {
   return {
     state: { ...PLAN_FORM_DEFAULTS, name: 'Pro', slug: 'pro' },
     fieldErrors: {},
+    // The live "= $6.00/month at $20.00" hint; null when the price is unknown.
+    paygCreditPreview: null,
     setField: vi.fn(),
     onSubmit: vi.fn(),
     onCancel: vi.fn(),

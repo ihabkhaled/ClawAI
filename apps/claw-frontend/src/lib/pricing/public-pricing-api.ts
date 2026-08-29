@@ -1,21 +1,21 @@
-import type { PublicPlan } from '@/types/public-pricing.types';
+import type { PublicPlan, PublicPlanResponse } from '@/types/public-pricing.types';
 
 const PRICING_FETCH_TIMEOUT_MS = 5_000;
 const PUBLIC_PLAN_CATALOG_PATH = '/api/v1/internal/plans/catalog';
 
 /**
- * Fills in the connector-credit figure when the catalog does not carry one.
+ * Fills in the connector-credit RATE when the catalog does not carry one.
  *
- * `monthlyProviderCostCeilingMicroUsd` was a margin control until ADR-078
- * promoted it, so an auth-service that has not shipped the promotion yet simply
- * omits the field. Normalising it to `null` here means the pricing card renders
- * "not included" instead of `undefined`, and the FE never has to guess a number
- * it was not given.
+ * An auth service that has not shipped `Plan.paygCreditPercentBps` yet simply
+ * omits the field. Normalising it to 0 means the pricing card renders "no
+ * connector credit" instead of deriving a figure from `undefined`, and the FE
+ * never invents a rate it was not given — quoting a credit we do not grant is
+ * the one failure mode worth being conservative about.
  */
-function normalizePublicPlan(plan: PublicPlan): PublicPlan {
+function normalizePublicPlan(plan: PublicPlanResponse): PublicPlan {
   return {
     ...plan,
-    monthlyProviderCostCeilingMicroUsd: plan.monthlyProviderCostCeilingMicroUsd ?? null,
+    paygCreditPercentBps: plan.paygCreditPercentBps ?? 0,
   };
 }
 
@@ -48,7 +48,7 @@ export async function fetchPublicPricingCatalog(): Promise<PublicPlan[] | null> 
     if (!response.ok) {
       return null;
     }
-    const plans = (await response.json()) as PublicPlan[];
+    const plans = (await response.json()) as PublicPlanResponse[];
     return plans.map(normalizePublicPlan);
   } catch {
     return null;

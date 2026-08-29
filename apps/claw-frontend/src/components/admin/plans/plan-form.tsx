@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { PAYG_CREDIT_PERCENT_BPS_MAX } from '@/constants/plan.constants';
 import type { PlanFormProps } from '@/types';
 import { resolvePlanSubmitLabelKey } from '@/utilities';
 
@@ -13,6 +14,7 @@ export function PlanForm({
   state,
   fieldErrors,
   setField,
+  paygCreditPreview,
   onSubmit,
   onCancel,
   isSubmitting,
@@ -134,17 +136,47 @@ export function PlanForm({
         </div>
       </div>
 
-      {/* The connector credit is the number the customer actually sees on the
-          pricing page and in their wallet, so it gets its own row rather than
-          being buried among the token ceilings. Micro-USD, because that is the
-          unit the wallet holds — the help text says so, and says that 0 turns
-          pay-as-you-go off rather than meaning "unlimited". */}
+      {/* Two different numbers that a single mislabelled field used to conflate.
+          The RATE decides what the customer is granted; the CEILING is an
+          internal fair-use bound on total weighted spend and grants nothing.
+          They sit together so the difference is read once rather than guessed. */}
       <div className="grid grid-cols-1 gap-2">
-        <label htmlFor="plan-connector-credit" className="text-sm font-medium">
-          {t('adminPlans.form.monthlyConnectorCredit')}
+        <label htmlFor="plan-payg-credit-percent" className="text-sm font-medium">
+          {t('adminPlans.form.paygCreditPercent')}
         </label>
         <Input
-          id="plan-connector-credit"
+          id="plan-payg-credit-percent"
+          type="number"
+          min={0}
+          max={PAYG_CREDIT_PERCENT_BPS_MAX}
+          step={1}
+          value={state.paygCreditPercentBps}
+          onChange={(e) => setField('paygCreditPercentBps', e.target.value)}
+          aria-invalid={fieldErrors.paygCreditPercentBps !== undefined}
+          aria-describedby="plan-payg-credit-percent-help"
+        />
+        <p id="plan-payg-credit-percent-help" className="text-muted-foreground text-xs">
+          {t('adminPlans.form.paygCreditPercentHelp')}
+        </p>
+        {paygCreditPreview === null ? null : (
+          <p className="text-foreground text-xs font-medium">
+            {t('adminPlans.form.paygCreditPercentPreview', {
+              credit: paygCreditPreview.credit,
+              price: paygCreditPreview.price,
+            })}
+          </p>
+        )}
+        {fieldErrors.paygCreditPercentBps !== undefined ? (
+          <p className="text-destructive text-xs">{fieldErrors.paygCreditPercentBps}</p>
+        ) : null}
+      </div>
+
+      <div className="grid grid-cols-1 gap-2">
+        <label htmlFor="plan-fair-use-ceiling" className="text-sm font-medium">
+          {t('adminPlans.form.monthlyFairUseCeiling')}
+        </label>
+        <Input
+          id="plan-fair-use-ceiling"
           type="number"
           min={0}
           step={1}
@@ -152,10 +184,10 @@ export function PlanForm({
           onChange={(e) => setField('monthlyProviderCostCeilingMicroUsd', e.target.value)}
           placeholder={t('adminPlans.form.unlimitedPlaceholder')}
           aria-invalid={fieldErrors.monthlyProviderCostCeilingMicroUsd !== undefined}
-          aria-describedby="plan-connector-credit-help"
+          aria-describedby="plan-fair-use-ceiling-help"
         />
-        <p id="plan-connector-credit-help" className="text-muted-foreground text-xs">
-          {t('adminPlans.form.monthlyConnectorCreditHelp')}
+        <p id="plan-fair-use-ceiling-help" className="text-muted-foreground text-xs">
+          {t('adminPlans.form.monthlyFairUseCeilingHelp')}
         </p>
         {fieldErrors.monthlyProviderCostCeilingMicroUsd !== undefined ? (
           <p className="text-destructive text-xs">

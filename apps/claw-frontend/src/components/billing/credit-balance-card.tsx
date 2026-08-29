@@ -124,6 +124,13 @@ export function CreditBalanceCard({
                 <dd className="text-muted-foreground text-xs">
                   {formatGrantReset(wallet, locale, t)}
                 </dd>
+                {/* Why this number is this number. The grant is a SHARE of what
+                    the plan costs, not a figure an operator picked, so a user
+                    who upgrades knows the credit moves with the price and a
+                    user on a free plan knows why theirs is empty. */}
+                <dd className="text-muted-foreground text-xs">
+                  {t('billing.credit.grantShareNote')}
+                </dd>
               </div>
               <div className="grid grid-cols-1 gap-0.5">
                 <dt className="text-muted-foreground text-xs">

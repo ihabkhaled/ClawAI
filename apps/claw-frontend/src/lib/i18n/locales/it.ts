@@ -3719,6 +3719,13 @@ export const it: TranslationDictionary = {
       description: 'Aggiorna questo piano.',
     },
     form: {
+      monthlyFairUseCeiling: 'Tetto mensile di uso corretto (micro-USD)',
+      monthlyFairUseCeilingHelp:
+        'Tetto della spesa mensile totale su TUTTI i provider, modelli locali inclusi, in micro-USD (1.000.000 = 1,00 $). Lascia vuoto per nessun tetto. Non è il credito connettori: quello si imposta sotto come quota del prezzo.',
+      paygCreditPercent: 'Tasso del credito connettori (punti base)',
+      paygCreditPercentHelp:
+        'Quota del prezzo mensile di questo piano che diventa credito connettori. 3000 = 30%. Un piano da 0 $ non concede credito, qualunque sia il tasso.',
+      paygCreditPercentPreview: '≈ {credit} al mese con {price}',
       monthlyConnectorCredit: 'Credito connettori mensile (micro-USD)',
       monthlyConnectorCreditHelp:
         'Quota in dollari per i connettori cloud a pagamento, in micro-USD (1.000.000 = 1,00 $). 0 disattiva i connettori a pagamento su questo piano. Questo valore è mostrato agli utenti.',
@@ -4122,6 +4129,10 @@ export const it: TranslationDictionary = {
   },
   billing: {
     credit: {
+      faceValueNote:
+        'Il credito acquistato viene accreditato al valore nominale: paghi {price}, ricevi {price} di credito.',
+      grantShareNote:
+        'Il {percent}% del prezzo del tuo piano diventa credito connettori ogni mese.',
       surface: {
         CHAT: 'Chat',
         COMPARE: 'Confronto',
@@ -4455,6 +4466,7 @@ export const it: TranslationDictionary = {
         'La disponibilità dei modelli segue il calendario di rilascio di ciascun provider. I nuovi modelli vengono aggiunti man mano che escono.',
     },
     pricing: {
+      paygCreditRate: '{percent}% del prezzo del tuo piano',
       paygCreditLabel: 'Credito connettori mensile',
       paygCreditNone: 'Nessun credito connettori',
       sectionTitle: 'Piani che crescono con te',

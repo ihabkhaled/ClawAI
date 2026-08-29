@@ -77,6 +77,7 @@ describe('useAdminUserMutations', () => {
       weeklyTokenQuota: 1,
       monthlyTokenQuota: 1,
       monthlyProviderCostCeilingMicroUsd: null,
+      paygCreditPercentBps: 3000,
       maxChatsPerDay: 1,
       maxMessagesPerDay: 1,
       maxWorkspaceConnections: 1,

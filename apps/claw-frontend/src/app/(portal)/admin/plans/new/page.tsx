@@ -9,7 +9,8 @@ import { UserRole } from '@/enums';
 import { usePlanFormPage } from '@/hooks/plans/use-plan-form-page';
 
 export default function NewPlanPage(): ReactElement {
-  const { t, user, form, isSubmitting, submitError, onSubmit, onCancel } = usePlanFormPage();
+  const { t, user, form, paygCreditPreview, isSubmitting, submitError, onSubmit, onCancel } =
+    usePlanFormPage();
 
   if (user && user.role !== UserRole.ADMIN) {
     return <AccessDenied t={t} />;
@@ -25,6 +26,7 @@ export default function NewPlanPage(): ReactElement {
         state={form.state}
         fieldErrors={form.fieldErrors}
         setField={form.setField}
+        paygCreditPreview={paygCreditPreview}
         onSubmit={onSubmit}
         onCancel={onCancel}
         isSubmitting={isSubmitting}

@@ -3685,6 +3685,13 @@ export const hi: TranslationDictionary = {
       description: 'इस योजना को अपडेट करें।',
     },
     form: {
+      monthlyFairUseCeiling: 'मासिक उचित-उपयोग सीमा (माइक्रो-USD)',
+      monthlyFairUseCeilingHelp:
+        'सभी प्रदाताओं पर कुल मासिक खर्च की सीमा, स्थानीय मॉडल सहित, माइक्रो-USD में (1,000,000 = $1.00)। कोई सीमा न रखने के लिए खाली छोड़ें। यह कनेक्टर क्रेडिट नहीं है — वह नीचे कीमत के हिस्से के रूप में तय होता है।',
+      paygCreditPercent: 'कनेक्टर क्रेडिट दर (बेसिस पॉइंट)',
+      paygCreditPercentHelp:
+        'इस प्लान की मासिक कीमत का वह हिस्सा जो कनेक्टर क्रेडिट बनता है। 3000 = 30%। $0 वाला प्लान किसी भी दर पर क्रेडिट नहीं देता।',
+      paygCreditPercentPreview: '{price} पर लगभग {credit} प्रति माह',
       monthlyConnectorCredit: 'मासिक कनेक्टर क्रेडिट (माइक्रो-USD)',
       monthlyConnectorCreditHelp:
         'सशुल्क क्लाउड कनेक्टरों के लिए डॉलर भत्ता, माइक्रो-USD में (1,000,000 = $1.00)। 0 इस प्लान पर सशुल्क कनेक्टर बंद कर देता है। यह आंकड़ा उपयोगकर्ताओं को दिखाया जाता है।',
@@ -4084,6 +4091,9 @@ export const hi: TranslationDictionary = {
   },
   billing: {
     credit: {
+      faceValueNote:
+        'खरीदा गया क्रेडिट अंकित मूल्य पर जुड़ता है — {price} दें, {price} क्रेडिट पाएँ।',
+      grantShareNote: 'आपके प्लान की कीमत का {percent}% हर महीने कनेक्टर क्रेडिट बनता है।',
       surface: {
         CHAT: 'चैट',
         COMPARE: 'तुलना',
@@ -4404,6 +4414,7 @@ export const hi: TranslationDictionary = {
         'मॉडल उपलब्धता हर प्रोवाइडर के अपने रिलीज़ शेड्यूल पर निर्भर है। नए मॉडल लॉन्च होते ही जोड़ दिए जाते हैं।',
     },
     pricing: {
+      paygCreditRate: 'आपके प्लान की कीमत का {percent}%',
       paygCreditLabel: 'मासिक कनेक्टर क्रेडिट',
       paygCreditNone: 'कोई कनेक्टर क्रेडिट नहीं',
       sectionTitle: 'आपके साथ बढ़ने वाले प्लान',

@@ -315,16 +315,36 @@ is still marked `PUBLISHED` — the money is taken and no credit is granted.
 
 ## Grant renewal
 
-`UserCreditWallet.periodKey` is a UTC `YYYY-MM`. Renewal is driven off a
-**mismatch** with the current key, so a missed run self-heals on the next tick
-instead of skipping a period. The roll writes a `GRANT_EXPIRY` row for the unused
-remainder (so the ledger still sums to the wallet) and a `PLAN_GRANT` row for the
-new period, then emits `credit.grant.renewed`. Single-flight under
-`claw:job:credit:grant-renewal`.
+The GRANT bucket is **a share of what the user pays**:
 
-`@nestjs/schedule` is a **new dependency of auth-service** for this. It is why
-auth needs a full image rebuild rather than a restart —
-see [`runbook-payg-credit.md`](../11-runbooks/runbook-payg-credit.md).
+```
+monthlyGrant = activeMonthlyPrice.amountMinor x Plan.paygCreditPercentBps / 10000
+```
+
+Pay $20 on a 30% plan and $6.00 of connector credit lands in the wallet. The
+rate is the only stored configuration; the amount is always derived, so a
+repricing carries the allowance with it and there is no second number to drift
+(ADR-078, amended).
+
+Read from the ACTIVE immutable `PlanPriceVersion`, always the MONTHLY one — a
+yearly subscriber pays ten months for twelve, and a discount on the subscription
+is not meant to be a discount on the allowance.
+
+A plan with no active monthly price, or a price of zero, grants nothing. Thirty
+percent of nothing is nothing; Free therefore carries no connector credit and
+runs on local models. That is the model, not a missing case.
+
+`CreditGrantService.roll` is called from the reservation path as well as the
+scheduler, so a user whose period rolls a minute before their next message is
+not told they have no credit until a background job happens to run. Unused grant
+does NOT roll over; the sweep writes its own `GRANT_EXPIRY` row rather than
+silently overwriting, so the balance still sums to the ledger across a period
+boundary.
+
+**`monthlyProviderCostCeilingMicroUsd` is not this number.** It is the fair-use
+bound on total weighted spend across every provider including local compute, and
+`buildCreditLimits` passes `null` for it on a metered request — the wallet is the
+sole dollar bound, so a user who buys credit can spend it.
 
 ## Events
 

@@ -33,6 +33,7 @@ const samplePlan = {
   weeklyTokenQuota: null,
   monthlyTokenQuota: null,
   monthlyProviderCostCeilingMicroUsd: null,
+  paygCreditPercentBps: 3000,
   maxChatsPerDay: null,
   maxMessagesPerDay: null,
   maxWorkspaceConnections: null,

@@ -29,6 +29,7 @@ function makePlan(overrides: Partial<PlanView> = {}): PlanView {
     weeklyTokenQuota: 500000,
     monthlyTokenQuota: 2000000,
     monthlyProviderCostCeilingMicroUsd: null,
+    paygCreditPercentBps: 3000,
     maxChatsPerDay: null,
     maxMessagesPerDay: null,
     maxWorkspaceConnections: null,

@@ -8,16 +8,19 @@ import { ROUTES } from '@/constants';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { PublicPlanCardProps } from '@/types/public-pricing.types';
-import { formatPlanConnectorCredit } from '@/utilities/credit.utility';
+import { formatCreditRatePercent, formatPlanConnectorCredit } from '@/utilities/credit.utility';
 import {
   formatPlanPrice,
   formatPlanQuota,
+  resolvePlanMonthlyCreditMicroUsd,
   resolvePlanPrice,
 } from '@/utilities/pricing-catalog.utility';
 
 export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.ReactElement {
   const { t, locale } = useTranslation();
   const price = resolvePlanPrice(plan, isYearly);
+  const creditMicroUsd = resolvePlanMonthlyCreditMicroUsd(plan);
+  const creditRatePercent = formatCreditRatePercent(plan.paygCreditPercentBps);
   const isFree = price?.amountMinor === 0;
   const cadenceKey = isYearly ? 'marketing.pricing.perYear' : 'marketing.pricing.perMonth';
   const disabled = t('billing.quota.disabled');
@@ -79,19 +82,27 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
           </dd>
         </div>
         {/* Beside the daily-token row, because the two allowances are spent
-            together by a cloud answer. The figure comes from the plan DTO and
-            never from i18n copy — an allowance duplicated across thirteen locale
-            files drifts the first time an operator edits one of them. */}
+            together by a cloud answer. The figure is DERIVED from this plan's
+            own monthly price and rate, never stored and never written into i18n
+            copy — an allowance duplicated across thirteen locale files drifts
+            the first time an operator edits one of them, and one stored per plan
+            drifts the first time the price changes without it. The rate is shown
+            underneath so the number has a visible reason. */}
         <div className="flex justify-between gap-2">
           <dt>{t('marketing.pricing.paygCreditLabel')}</dt>
-          <dd className="text-foreground font-medium">
+          <dd className="text-foreground text-end font-medium">
             <bdi className="tabular-nums">
               {formatPlanConnectorCredit(
-                plan.monthlyProviderCostCeilingMicroUsd,
+                creditMicroUsd,
                 t('marketing.pricing.paygCreditNone'),
                 locale,
               )}
             </bdi>
+            {creditMicroUsd > 0 ? (
+              <span className="text-muted-foreground block font-normal">
+                {t('marketing.pricing.paygCreditRate', { percent: creditRatePercent })}
+              </span>
+            ) : null}
           </dd>
         </div>
         <div className="flex justify-between gap-2">

@@ -1,4 +1,8 @@
-import { MICRO_USD_PER_USD } from '@claw/shared-constants';
+import {
+  BASIS_POINTS_DENOMINATOR,
+  MICRO_USD_PER_MINOR_UNIT,
+  MICRO_USD_PER_USD,
+} from '@claw/shared-constants';
 import type {
   CreditPackageView,
   PaygLedgerEntryView,
@@ -19,6 +23,10 @@ import type { TranslateFunction } from '@/types/i18n.types';
 
 const MICRO_USD_PER_USD_BIG = BigInt(MICRO_USD_PER_USD);
 const PERCENT_SCALE = 100n;
+const BASIS_POINTS_DENOMINATOR_BIG = BigInt(BASIS_POINTS_DENOMINATOR);
+const MICRO_USD_PER_MINOR_UNIT_BIG = BigInt(MICRO_USD_PER_MINOR_UNIT);
+/** Basis points in one whole percent. 100 bps = 1%. */
+const BASIS_POINTS_PER_PERCENT = BASIS_POINTS_DENOMINATOR / 100;
 
 /**
  * Splits an integer micro-USD amount into a sign and a fixed-point decimal
@@ -250,12 +258,68 @@ export function isPaygBadgedProvider(provider: string): boolean {
 }
 
 /**
+ * The monthly connector credit a plan grants, in integer micro-USD.
+ *
+ * Connector credit is a SHARE OF WHAT THE USER PAYS, not a per-plan figure an
+ * operator types in. `priceMinor` is the plan's active MONTHLY price in cents —
+ * the monthly price even for a yearly subscriber, because the grant is monthly —
+ * and `bps` is `Plan.paygCreditPercentBps`, where 3000 means 30%. Pay $20.00
+ * (2000 cents) on a 30% plan and this returns 6_000_000 micro-USD: $6.00.
+ *
+ * A $0 price therefore derives $0 of credit. That is the intended answer, not a
+ * bug: nothing was paid, so there is no share of it.
+ *
+ * Mirrors `creditFromPayment` in the auth service exactly, and for the same
+ * reasons. All-integer, multiplied BEFORE dividing, computed in `bigint` so a
+ * large price cannot silently exceed `Number.MAX_SAFE_INTEGER` on the way
+ * through, and rounded DOWN — rounding a grant up would promise credit the
+ * payment does not cover, which is wrong in the direction that costs money.
+ */
+export function monthlyCreditFromPlan(priceMinor: number, bps: number): number {
+  if (!Number.isInteger(priceMinor) || priceMinor <= 0) {
+    return 0;
+  }
+  if (!Number.isInteger(bps) || bps <= 0) {
+    return 0;
+  }
+  const clampedBps = BigInt(Math.min(bps, BASIS_POINTS_DENOMINATOR));
+  const microUsd =
+    (BigInt(priceMinor) * MICRO_USD_PER_MINOR_UNIT_BIG * clampedBps) / BASIS_POINTS_DENOMINATOR_BIG;
+  return Number(microUsd);
+}
+
+/**
+ * A basis-point rate as the percent text the copy interpolates: 3000 → "30".
+ *
+ * Integer arithmetic on the remainder rather than `bps / 100`, so a rate that is
+ * not a whole percent (2550 → "25.5") prints exactly what it is instead of a
+ * float artefact. Trailing zeros are dropped: 2550 is "25.5", never "25.50".
+ */
+export function formatCreditRatePercent(bps: number): string {
+  if (!Number.isInteger(bps) || bps <= 0) {
+    return '0';
+  }
+  const clamped = Math.min(bps, BASIS_POINTS_DENOMINATOR);
+  const remainder = clamped % BASIS_POINTS_PER_PERCENT;
+  const whole = (clamped - remainder) / BASIS_POINTS_PER_PERCENT;
+  if (remainder === 0) {
+    return String(whole);
+  }
+  const fraction = String(remainder).padStart(2, '0').replace(/0+$/u, '');
+  return `${String(whole)}.${fraction}`;
+}
+
+/**
  * The plan's monthly connector credit, for the public pricing card.
  *
- * The FIGURE comes from the DTO, never from i18n copy. An allowance written into
- * thirteen locale files is thirteen numbers an operator must remember to change,
- * and the first edit that misses one publishes a price we do not honour. Only
- * the "none" wording is translated.
+ * The FIGURE is derived from the plan's own price and rate, never from i18n
+ * copy. An allowance written into thirteen locale files is thirteen numbers an
+ * operator must remember to change, and the first edit that misses one
+ * publishes a price we do not honour. Only the "none" wording is translated.
+ *
+ * A plan whose derived credit is 0 — a free plan, or a 0 bps rate — gets the
+ * "no connector credit" wording rather than "$0.00", which reads as a broken
+ * number instead of an absent benefit.
  */
 export function formatPlanConnectorCredit(
   microUsd: number | null | undefined,

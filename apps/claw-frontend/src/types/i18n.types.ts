@@ -3701,6 +3701,11 @@ export type TranslationDictionary = {
       description: string;
     };
     form: {
+      monthlyFairUseCeiling: string;
+      monthlyFairUseCeilingHelp: string;
+      paygCreditPercent: string;
+      paygCreditPercentHelp: string;
+      paygCreditPercentPreview: string;
       monthlyConnectorCredit: string;
       monthlyConnectorCreditHelp: string;
       name: string;
@@ -4087,6 +4092,8 @@ export type TranslationDictionary = {
   };
   billing: {
     credit: {
+      faceValueNote: string;
+      grantShareNote: string;
       surface: {
         CHAT: string;
         COMPARE: string;
@@ -4396,6 +4403,7 @@ export type TranslationDictionary = {
       footnote: string;
     };
     pricing: {
+      paygCreditRate: string;
       paygCreditLabel: string;
       paygCreditNone: string;
       sectionTitle: string;

@@ -32,17 +32,19 @@ export type PublicPlan = {
   weeklyTokenQuota: number | null;
   monthlyTokenQuota: number | null;
   /**
-   * The monthly connector credit included with this plan, in integer micro-USD.
+   * The share of the plan's monthly price that becomes connector credit, in
+   * basis points. 3000 is 30%; the column is bounded 0..10000 in the database.
    *
-   * This is `Plan.monthlyProviderCostCeilingMicroUsd`, promoted by ADR-078 from
-   * a hidden margin control to the user-visible allowance. It is carried on the
-   * DTO and NEVER written into i18n copy: an allowance in thirteen locale files
-   * is thirteen numbers an operator has to remember to change, and the first
-   * edit that misses one publishes a price we do not honour.
+   * The credit is NOT a figure stored per plan. It is derived at render time by
+   * `monthlyCreditFromPlan(activeMonthlyPrice.amountMinor, bps)`, so a price
+   * change moves the allowance with it and the two can never disagree. A plan
+   * priced at $0 therefore grants $0 of credit, which is the intended answer.
    *
-   * `null` means the plan grants no connector credit — distinct from `0`.
+   * Never written into i18n copy: an allowance in thirteen locale files is
+   * thirteen numbers an operator has to remember to change, and the first edit
+   * that misses one publishes a price we do not honour.
    */
-  monthlyProviderCostCeilingMicroUsd: number | null;
+  paygCreditPercentBps: number;
   maxChatsPerDay: number | null;
   maxMessagesPerDay: number | null;
   maxWorkspaceConnections: number | null;
@@ -51,6 +53,17 @@ export type PublicPlan = {
   featureGates?: EntitlementFeatureGates;
   prices: readonly PublicPlanPrice[];
   features: readonly PublicPlanFeature[];
+};
+
+/**
+ * A catalog entry exactly as an auth service may send it.
+ *
+ * `paygCreditPercentBps` is optional here and required on {@link PublicPlan} on
+ * purpose: an older auth service omits the column entirely, and the honest place
+ * to admit that is the parse boundary rather than every card that reads a plan.
+ */
+export type PublicPlanResponse = Omit<PublicPlan, 'paygCreditPercentBps'> & {
+  paygCreditPercentBps?: number;
 };
 
 export type PricingSectionProps = {

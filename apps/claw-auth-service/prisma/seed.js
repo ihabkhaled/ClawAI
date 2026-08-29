@@ -19,6 +19,8 @@ const { reconcileExistingSuperAdmin } = require('./seed-super-admin');
 const planCatalogSeeder = require('./seeders/plan-catalog.seeder');
 const planPaygAllowanceSeeder = require('./seeders/plan-payg-allowance.seeder');
 const creditPackagesSeeder = require('./seeders/credit-packages.seeder');
+const planPaygPercentSeeder = require('./seeders/plan-payg-percent.seeder');
+const creditPackageRepricingSeeder = require('./seeders/credit-package-repricing.seeder');
 
 const distPrismaPath = path.resolve(__dirname, '..', 'dist', 'generated', 'prisma');
 const { PrismaClient } = require(distPrismaPath);
@@ -296,6 +298,10 @@ async function seed() {
   //     versions. Skips any package that already has an ACTIVE version, so an
   //     operator reprice through /admin/credit survives every restart.
   await runVersionedSeeder(prisma, creditPackagesSeeder);
+  // Order matters: the percent seeder needs the plans, and the repricing
+  // seeder needs the packages the one above creates.
+  await runVersionedSeeder(prisma, planPaygPercentSeeder);
+  await runVersionedSeeder(prisma, creditPackageRepricingSeeder);
 
   const freePlanId = planBySlug['free'].id;
   const planless = await prisma.user.findMany({

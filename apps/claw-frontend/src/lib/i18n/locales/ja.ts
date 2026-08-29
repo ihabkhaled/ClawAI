@@ -3693,6 +3693,13 @@ export const ja: TranslationDictionary = {
       description: 'この計画を更新します。',
     },
     form: {
+      monthlyFairUseCeiling: '月間フェアユース上限（マイクロUSD）',
+      monthlyFairUseCeilingHelp:
+        'ローカルモデルを含むすべてのプロバイダーでの月間総支出の上限。マイクロUSD 単位（1,000,000 = $1.00）。上限なしにする場合は空欄にします。これはコネクタークレジットではありません。クレジットは下の「価格に対する割合」で決まります。',
+      paygCreditPercent: 'コネクタークレジット率（ベーシスポイント）',
+      paygCreditPercentHelp:
+        'このプランの月額料金のうちコネクタークレジットに変換される割合。3000 = 30%。料金が $0 のプランは、率にかかわらずクレジットを付与しません。',
+      paygCreditPercentPreview: '{price} の場合、月あたり約 {credit}',
       monthlyConnectorCredit: '月間コネクタークレジット（マイクロUSD）',
       monthlyConnectorCreditHelp:
         '有料クラウドコネクター向けのドル枠。マイクロUSD 単位（1,000,000 = $1.00）。0 にするとこのプランで有料コネクターを無効化します。この数値はユーザーに表示されます。',
@@ -4093,6 +4100,9 @@ export const ja: TranslationDictionary = {
   },
   billing: {
     credit: {
+      faceValueNote:
+        '購入したクレジットは額面どおり加算されます。{price} のお支払いで {price} 分のクレジット。',
+      grantShareNote: 'プラン料金の {percent}% が毎月コネクタークレジットになります。',
       surface: {
         CHAT: 'チャット',
         COMPARE: '比較',
@@ -4414,6 +4424,7 @@ export const ja: TranslationDictionary = {
         'モデルの入手可能性は、各プロバイダー独自のリリース スケジュールに従います。新しいモデルは出荷され次第追加されます。',
     },
     pricing: {
+      paygCreditRate: 'プラン料金の {percent}%',
       paygCreditLabel: '月間コネクタークレジット',
       paygCreditNone: 'コネクタークレジットなし',
       sectionTitle: 'お客様に合わせて拡張するプラン',

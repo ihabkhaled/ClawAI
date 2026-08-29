@@ -1,16 +1,22 @@
 // The five purchasable PAYG top-up packages and their first price versions.
 //
 // Money is integer MINOR units ($5.00 => 500) and credit is integer micro-USD
-// ($3.00 => 3000000). No float touches either number: the ratio is applied as
-// BigInt arithmetic, so 60% of $5 is exactly $3.00 and not 2999999.9999999995.
+// ($5.00 => 5000000). No float touches either number: the ratio is applied as
+// BigInt arithmetic.
 //
-// WHY THE RATIO IS NOT 1:1. A dollar of top-up does not buy a dollar of
-// provider inference. The gateway takes its cut before the money arrives, and
-// the platform still pays the provider list price, so selling credit at par
-// books negative gross margin on every single purchase. 0.60 is the seeded
-// starting point, NOT a constant: it lives in an immutable CreditPackageVersion
-// row so an operator can reprice without a deploy, and every historical
-// purchase keeps the ratio it was actually sold at.
+// WHY THE RATIO IS 1:1. A top-up buys nothing except provider spend, so it is
+// sold at face value: pay $10, get $10 of connector credit. The platform's
+// margin lives in the PLAN, where only `Plan.paygCreditPercentBps` of the
+// subscription price converts to credit and the rest buys everything else the
+// plan includes. Taking a second cut here would charge the customer twice for
+// the same margin, which is what an earlier 0.60 seed did.
+//
+// The consequence is real and accepted: the gateway's cut on a top-up comes out
+// of the platform's pocket. Recorded in `docs/business/topup-pricing.md`.
+//
+// 100% is the seeded starting point, NOT a constant. It lives in an immutable
+// CreditPackageVersion row so an operator can reprice without a deploy, and
+// every historical purchase keeps the ratio it was actually sold at.
 //
 // A price version is IMMUTABLE. This seeder therefore does findUnique-then-
 // create on `activeKey` — exactly the idiom plan-catalog.seeder.js uses for
@@ -18,7 +24,7 @@
 // completed purchase was quoted, which is the one thing a versioned price table
 // exists to prevent.
 
-const CREDIT_RATIO_NUMERATOR = 60n;
+const CREDIT_RATIO_NUMERATOR = 100n;
 const CREDIT_RATIO_DENOMINATOR = 100n;
 // $1.00 == 100 minor units == 1,000,000 micro-USD, so one minor unit is 10,000.
 const MICRO_USD_PER_MINOR_UNIT = 10000n;

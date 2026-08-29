@@ -1,5 +1,6 @@
 import { MARKETING_COMPACT_PLAN_SLUGS } from '@/constants/marketing-home.constants';
 import type { PublicPlan, PublicPlanPrice } from '@/types/public-pricing.types';
+import { monthlyCreditFromPlan } from '@/utilities/credit.utility';
 
 export function formatPlanPrice(price: PublicPlanPrice, locale: string): string {
   const fractionDigits = getCurrencyFractionDigits(price.currency);
@@ -38,6 +39,25 @@ export function formatPlanQuota(
 export function resolvePlanPrice(plan: PublicPlan, isYearly: boolean): PublicPlanPrice | null {
   const interval = isYearly ? 'YEARLY' : 'MONTHLY';
   return plan.prices.find((price) => price.isActive && price.billingInterval === interval) ?? null;
+}
+
+/**
+ * The connector credit this plan grants each month, in integer micro-USD.
+ *
+ * Derived, never stored: `monthly price × paygCreditPercentBps`. Always the
+ * MONTHLY price, even while the card is showing yearly figures, because the
+ * grant lands monthly and the wallet is credited from the monthly price either
+ * way. Reading the yearly amount here would advertise twelve times the credit.
+ *
+ * A plan with no active monthly price, a $0 price, or a 0 bps rate derives 0 —
+ * which the card renders as "no connector credit", not "$0.00".
+ */
+export function resolvePlanMonthlyCreditMicroUsd(plan: PublicPlan): number {
+  const monthly = resolvePlanPrice(plan, false);
+  if (monthly === null) {
+    return 0;
+  }
+  return monthlyCreditFromPlan(monthly.amountMinor, plan.paygCreditPercentBps);
 }
 
 export function filterPublicPlans(

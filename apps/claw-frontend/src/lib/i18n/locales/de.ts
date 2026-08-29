@@ -3734,6 +3734,13 @@ export const de: TranslationDictionary = {
       description: 'Diesen Tarif aktualisieren.',
     },
     form: {
+      monthlyFairUseCeiling: 'Monatliche Fair-Use-Obergrenze (Mikro-USD)',
+      monthlyFairUseCeilingHelp:
+        'Obergrenze für die gesamten Monatsausgaben über ALLE Anbieter hinweg, lokale Modelle eingeschlossen, in Mikro-USD (1.000.000 = 1,00 $). Leer lassen für keine Obergrenze. Dies ist nicht das Connector-Guthaben — das wird unten als Anteil am Preis festgelegt.',
+      paygCreditPercent: 'Connector-Guthabensatz (Basispunkte)',
+      paygCreditPercentHelp:
+        'Anteil des Monatspreises dieses Tarifs, der zu Connector-Guthaben wird. 3000 = 30 %. Ein Tarif für 0 $ gewährt kein Guthaben, unabhängig vom Satz.',
+      paygCreditPercentPreview: '≈ {credit} pro Monat bei {price}',
       monthlyConnectorCredit: 'Monatliches Connector-Guthaben (Mikro-USD)',
       monthlyConnectorCreditHelp:
         'Dollar-Kontingent für kostenpflichtige Cloud-Connectoren, in Mikro-USD (1.000.000 = 1,00 $). 0 deaktiviert kostenpflichtige Connectoren in diesem Tarif. Dieser Wert wird Nutzern angezeigt.',
@@ -4137,6 +4144,9 @@ export const de: TranslationDictionary = {
   },
   billing: {
     credit: {
+      faceValueNote:
+        'Gekauftes Guthaben wird zum Nennwert gutgeschrieben — {price} zahlen, {price} Guthaben erhalten.',
+      grantShareNote: '{percent} % Ihres Tarifpreises werden jeden Monat zu Connector-Guthaben.',
       surface: {
         CHAT: 'Chat',
         COMPARE: 'Vergleich',
@@ -4467,6 +4477,7 @@ export const de: TranslationDictionary = {
         'Die Verfügbarkeit der Modelle folgt dem jeweiligen Veröffentlichungsplan des Anbieters. Neue Modelle werden hinzugefügt, sobald sie erscheinen.',
     },
     pricing: {
+      paygCreditRate: '{percent} % Ihres Tarifpreises',
       paygCreditLabel: 'Monatliches Connector-Guthaben',
       paygCreditNone: 'Kein Connector-Guthaben',
       sectionTitle: 'Tarife, die mit Ihnen wachsen',

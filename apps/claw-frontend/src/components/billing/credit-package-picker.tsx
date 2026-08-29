@@ -15,9 +15,13 @@ import { formatMicroUsd } from '@/utilities/credit.utility';
  *
  * Price and credit are shown as two separate figures, never as one "value" or a
  * derived multiplier. They are independent columns on the immutable package
- * version — the gap between them is the platform's margin, and an operator
- * changes it without a deploy — so a UI that implied a fixed ratio would start
- * lying the first time somebody retuned it.
+ * version, so the UI reads whatever was actually sold rather than recomputing
+ * it — and a package bought under an older ratio keeps the credit it was bought
+ * with even after an operator retunes the current one.
+ *
+ * Today the two figures match: a top-up converts at FACE VALUE (10000 bps), so
+ * $10 buys $10 of credit and the platform's margin on it is zero by decision.
+ * The caller states that in words; this component never implies a ratio.
  */
 export function CreditPackagePicker({
   packages,

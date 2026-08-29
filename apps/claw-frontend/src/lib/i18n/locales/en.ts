@@ -3662,6 +3662,13 @@ export const en: TranslationDictionary = {
       description: 'Update this plan.',
     },
     form: {
+      monthlyFairUseCeiling: 'Monthly fair-use ceiling (micro-USD)',
+      monthlyFairUseCeilingHelp:
+        'Cap on total monthly spend across ALL providers, local models included, in micro-USD (1,000,000 = $1.00). Leave blank for no ceiling. This is not the connector credit — that is set below as a share of the price.',
+      paygCreditPercent: 'Connector credit rate (basis points)',
+      paygCreditPercentHelp:
+        "Share of this plan's monthly price that becomes connector credit. 3000 = 30%. A plan priced at $0 grants no credit, whatever the rate.",
+      paygCreditPercentPreview: '≈ {credit} per month at {price}',
       monthlyConnectorCredit: 'Monthly connector credit (micro-USD)',
       monthlyConnectorCreditHelp:
         'Dollar allowance for paid cloud connectors, in micro-USD (1,000,000 = $1.00). 0 disables paid connectors on this plan. This figure is shown to users.',
@@ -4061,6 +4068,9 @@ export const en: TranslationDictionary = {
   },
   billing: {
     credit: {
+      faceValueNote:
+        'Purchased credit is added at face value — pay {price}, get {price} of credit.',
+      grantShareNote: '{percent}% of your plan price becomes connector credit each month.',
       surface: {
         CHAT: 'Chat',
         COMPARE: 'Compare',
@@ -4379,6 +4389,7 @@ export const en: TranslationDictionary = {
         'Model availability follows each provider’s own release schedule. New models are added as they ship.',
     },
     pricing: {
+      paygCreditRate: '{percent}% of your plan price',
       paygCreditLabel: 'Monthly connector credit',
       paygCreditNone: 'No connector credit',
       sectionTitle: 'Plans that scale with you',

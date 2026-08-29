@@ -21,7 +21,7 @@ const PLAN: PublicPlan = {
   dailyTokenQuota: 250_000,
   weeklyTokenQuota: null,
   monthlyTokenQuota: 4_000_000,
-  monthlyProviderCostCeilingMicroUsd: null,
+  paygCreditPercentBps: 3000,
   maxChatsPerDay: null,
   maxMessagesPerDay: null,
   maxWorkspaceConnections: null,

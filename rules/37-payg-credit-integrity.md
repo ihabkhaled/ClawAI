@@ -149,8 +149,13 @@ paid model, rule 1 applies to it like anything else.
   `isUsablePaygRate`'s `isLocalComputeFallback` check.
 - `UPDATE`/`DELETE` on `credit_ledger_entries`, or "fixing" a wallet by writing the
   balance directly.
-- Returning `monthlyProviderCostCeilingMicroUsd`, a provider rate, or a margin in
-  any error body or non-admin response.
+- Returning a provider rate, a margin, or `monthlyProviderCostCeilingMicroUsd`
+  (the internal fair-use ceiling) in any error body or non-admin response. The
+  user's own allowance and `paygCreditPercentBps` ARE public — a customer is
+  entitled to know what share of their payment becomes credit.
+- Storing a plan's credit allowance as an absolute figure. It is derived:
+  `monthlyPrice x paygCreditPercentBps / 10000`. A stored amount is a second
+  number tracking the price, and the two drift the first time somebody reprices.
 - Implementing `isPayg` in `shared-entitlements` or in a calling service.
 - Failing **open** on a metered provider when auth is unreachable.
 - A release that credits the wrong bucket, or that is not gated on the update count.

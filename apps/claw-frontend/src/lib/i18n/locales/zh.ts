@@ -3563,6 +3563,13 @@ export const zh: TranslationDictionary = {
       description: '更新这个计划。',
     },
     form: {
+      monthlyFairUseCeiling: '每月合理使用上限（微美元）',
+      monthlyFairUseCeilingHelp:
+        '所有服务商（含本地模型）每月总支出的上限，单位为微美元（1,000,000 = $1.00）。留空表示不设上限。此项不是连接器额度——额度在下方按价格比例设定。',
+      paygCreditPercent: '连接器额度比例（基点）',
+      paygCreditPercentHelp:
+        '本套餐月费中转为连接器额度的比例。3000 = 30%。价格为 $0 的套餐无论比例如何都不会获得额度。',
+      paygCreditPercentPreview: '按 {price} 计算，每月约 {credit}',
       monthlyConnectorCredit: '每月连接器额度（微美元）',
       monthlyConnectorCreditHelp:
         '付费云端连接器的美元额度，单位为微美元（1,000,000 = $1.00）。设为 0 将在此套餐上禁用付费连接器。该数值对用户可见。',
@@ -3949,6 +3956,8 @@ export const zh: TranslationDictionary = {
   },
   billing: {
     credit: {
+      faceValueNote: '已购额度按面值入账——支付 {price}，获得 {price} 额度。',
+      grantShareNote: '您套餐价格的 {percent}% 每月转为连接器额度。',
       surface: {
         CHAT: '对话',
         COMPARE: '对比',
@@ -4258,6 +4267,7 @@ export const zh: TranslationDictionary = {
       footnote: '模型的可用性遵循每个提供商自己的发布时间表。新型号在发货时添加。',
     },
     pricing: {
+      paygCreditRate: '您套餐价格的 {percent}%',
       paygCreditLabel: '每月连接器额度',
       paygCreditNone: '无连接器额度',
       sectionTitle: '适合您的计划',

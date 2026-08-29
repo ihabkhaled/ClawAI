@@ -109,6 +109,32 @@ export const PAYG_MAX_ADMIN_ADJUSTMENT_MICRO_USD = 1_000 * MICRO_USD_PER_USD;
 export const PAYG_ADJUSTMENT_REASON_MIN_LENGTH = 8;
 export const PAYG_ADJUSTMENT_REASON_MAX_LENGTH = 500;
 
+/**
+ * Micro-USD in one minor currency unit. One cent is 10,000 micro-USD.
+ *
+ * The bridge between the two money units this platform uses: prices are integer
+ * MINOR units (cents), provider cost and credit are integer MICRO-USD. Every
+ * conversion between a payment and a credit balance goes through this.
+ */
+export const MICRO_USD_PER_MINOR_UNIT = 10_000;
+
+/**
+ * What a top-up buys, in basis points of the amount paid.
+ *
+ * 10000 = 100%: pay $10, get $10 of connector credit. A top-up is a pass-through
+ * purchase of provider spend at face value, and the platform's margin on it is
+ * zero by decision — the margin lives in the PLAN, where only
+ * `Plan.paygCreditPercentBps` of the subscription price converts to credit.
+ *
+ * The consequence is real and accepted: gateway fees on a top-up come out of
+ * the platform's pocket. Recorded in `docs/business/topup-pricing.md`.
+ *
+ * This is the DEFAULT the seeder applies. The authority is
+ * `CreditPackageVersion.creditMicroUsd`, an immutable column, so changing the
+ * rate mints a new version and never rewrites what somebody already bought.
+ */
+export const CREDIT_TOPUP_RATIO_BPS = 10_000;
+
 /** Top-up package slugs. The amounts and credit ratios live in CreditPackageVersion rows. */
 export const CREDIT_PACKAGE_SLUGS: readonly string[] = Object.freeze([
   'credit-5',

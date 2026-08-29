@@ -3739,6 +3739,13 @@ export const fr: TranslationDictionary = {
       description: 'Mettez à jour ce forfait.',
     },
     form: {
+      monthlyFairUseCeiling: 'Plafond mensuel d’usage raisonnable (micro-USD)',
+      monthlyFairUseCeilingHelp:
+        'Plafond des dépenses mensuelles totales sur TOUS les fournisseurs, modèles locaux compris, en micro-USD (1 000 000 = 1,00 $). Laisser vide pour aucun plafond. Ce n’est pas le crédit connecteurs : celui-ci se définit ci-dessous comme une part du prix.',
+      paygCreditPercent: 'Taux de crédit connecteurs (points de base)',
+      paygCreditPercentHelp:
+        'Part du prix mensuel de ce forfait convertie en crédit connecteurs. 3000 = 30 %. Un forfait à 0 $ n’accorde aucun crédit, quel que soit le taux.',
+      paygCreditPercentPreview: '≈ {credit} par mois pour {price}',
       monthlyConnectorCredit: 'Crédit connecteurs mensuel (micro-USD)',
       monthlyConnectorCreditHelp:
         'Allocation en dollars pour les connecteurs cloud payants, en micro-USD (1 000 000 = 1,00 $). 0 désactive les connecteurs payants sur ce forfait. Ce montant est affiché aux utilisateurs.',
@@ -4144,6 +4151,10 @@ export const fr: TranslationDictionary = {
   },
   billing: {
     credit: {
+      faceValueNote:
+        'Le crédit acheté est ajouté à sa valeur nominale : payez {price}, recevez {price} de crédit.',
+      grantShareNote:
+        '{percent} % du prix de votre forfait deviennent du crédit connecteurs chaque mois.',
       surface: {
         CHAT: 'Chat',
         COMPARE: 'Comparaison',
@@ -4475,6 +4486,7 @@ export const fr: TranslationDictionary = {
         'La disponibilité des modèles suit le calendrier de sortie propre à chaque fournisseur. Les nouveaux modèles sont ajoutés dès leur lancement.',
     },
     pricing: {
+      paygCreditRate: '{percent} % du prix de votre forfait',
       paygCreditLabel: 'Crédit connecteurs mensuel',
       paygCreditNone: 'Aucun crédit connecteurs',
       sectionTitle: 'Des forfaits qui évoluent avec vous',

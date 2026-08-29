@@ -15,6 +15,7 @@ export default function EditPlanPage(): ReactElement {
     user,
     plan,
     form,
+    paygCreditPreview,
     isLoading,
     isError,
     error,
@@ -37,12 +38,12 @@ export default function EditPlanPage(): ReactElement {
       />
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">{t('adminPlans.loading')}</p>
+        <p className="text-muted-foreground text-sm">{t('adminPlans.loading')}</p>
       ) : null}
 
       {isError ? (
         <div
-          className="flex items-center justify-between gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          className="border-destructive/40 bg-destructive/10 text-destructive flex items-center justify-between gap-2 rounded-lg border p-3 text-sm"
           role="alert"
         >
           <span>{error?.message ?? t('adminPlans.error')}</span>
@@ -57,6 +58,7 @@ export default function EditPlanPage(): ReactElement {
           state={form.state}
           fieldErrors={form.fieldErrors}
           setField={form.setField}
+          paygCreditPreview={paygCreditPreview}
           onSubmit={onSubmit}
           onCancel={onCancel}
           isSubmitting={isSubmitting}

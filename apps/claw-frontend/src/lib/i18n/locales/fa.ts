@@ -3683,6 +3683,13 @@ export const fa: TranslationDictionary = {
       description: 'این طرح را به روز کنید.',
     },
     form: {
+      monthlyFairUseCeiling: 'سقف ماهانهٔ استفادهٔ منصفانه (میکرو‌دلار)',
+      monthlyFairUseCeilingHelp:
+        'سقف کل هزینهٔ ماهانه در همهٔ ارائه‌دهندگان، شامل مدل‌های محلی، به میکرو‌دلار (۱٬۰۰۰٬۰۰۰ = ۱٫۰۰ دلار). برای نداشتن سقف خالی بگذارید. این اعتبار رابط‌ها نیست؛ آن در پایین به‌صورت سهمی از قیمت تعیین می‌شود.',
+      paygCreditPercent: 'نرخ اعتبار رابط‌ها (پایهٔ نقطه)',
+      paygCreditPercentHelp:
+        'سهمی از قیمت ماهانهٔ این پلن که به اعتبار رابط تبدیل می‌شود. ۳۰۰۰ = ۳۰٪. پلن رایگان با هر نرخی اعتباری نمی‌دهد.',
+      paygCreditPercentPreview: '≈ {credit} در ماه با {price}',
       monthlyConnectorCredit: 'اعتبار ماهانهٔ رابط‌ها (میکرو‌دلار)',
       monthlyConnectorCreditHelp:
         'سهمیهٔ دلاری برای رابط‌های ابری پولی، به میکرو‌دلار (۱٬۰۰۰٬۰۰۰ = ۱٫۰۰ دلار). مقدار ۰ رابط‌های پولی را در این پلن غیرفعال می‌کند. این عدد به کاربران نمایش داده می‌شود.',
@@ -4081,6 +4088,9 @@ export const fa: TranslationDictionary = {
   },
   billing: {
     credit: {
+      faceValueNote:
+        'اعتبار خریداری‌شده به ارزش اسمی افزوده می‌شود — {price} بپردازید و {price} اعتبار بگیرید.',
+      grantShareNote: 'هر ماه {percent}٪ از قیمت پلن شما به اعتبار رابط تبدیل می‌شود.',
       surface: {
         CHAT: 'گفت‌وگو',
         COMPARE: 'مقایسه',
@@ -4403,6 +4413,7 @@ export const fa: TranslationDictionary = {
         'در دسترس بودن مدل از برنامه زمانبندی انتشار خود هر ارائه دهنده پیروی می کند.مدل های جدید با ارسال اضافه می شوند.',
     },
     pricing: {
+      paygCreditRate: '{percent}٪ از قیمت پلن شما',
       paygCreditLabel: 'اعتبار ماهانهٔ رابط‌ها',
       paygCreditNone: 'بدون اعتبار رابط',
       sectionTitle: 'برنامه هایی که با شما مقیاس می شوند',

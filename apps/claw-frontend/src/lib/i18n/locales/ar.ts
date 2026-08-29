@@ -3636,6 +3636,13 @@ export const ar: TranslationDictionary = {
       description: 'حدِّث هذه الخطة.',
     },
     form: {
+      monthlyFairUseCeiling: 'سقف الاستخدام العادل الشهري (ميكرو دولار)',
+      monthlyFairUseCeilingHelp:
+        'حدّ الإنفاق الشهري الإجمالي عبر جميع المزوّدين، بما في ذلك النماذج المحلية، بوحدة الميكرو دولار (1,000,000 = 1.00 دولار). اتركه فارغًا لعدم وضع سقف. هذا ليس رصيد الموصّلات؛ يُحدَّد ذلك أدناه كنسبة من السعر.',
+      paygCreditPercent: 'نسبة رصيد الموصّلات (نقاط أساس)',
+      paygCreditPercentHelp:
+        'نسبة السعر الشهري لهذه الخطة التي تتحوّل إلى رصيد موصّلات. 3000 = 30%. الخطة المجانية لا تمنح رصيدًا مهما كانت النسبة.',
+      paygCreditPercentPreview: '≈ {credit} شهريًا عند {price}',
       monthlyConnectorCredit: 'رصيد الموصّلات الشهري (ميكرو دولار)',
       monthlyConnectorCreditHelp:
         'المخصّص بالدولار لموصّلات السحابة المدفوعة، بوحدة الميكرو دولار (1,000,000 = 1.00 دولار). القيمة 0 تعطّل الموصّلات المدفوعة في هذه الخطة. يظهر هذا الرقم للمستخدمين.',
@@ -4031,6 +4038,9 @@ export const ar: TranslationDictionary = {
   },
   billing: {
     credit: {
+      faceValueNote:
+        'يُضاف الرصيد المُشترى بقيمته الاسمية — ادفع {price} واحصل على {price} رصيدًا.',
+      grantShareNote: '{percent}% من سعر خطتك يتحوّل إلى رصيد موصّلات كل شهر.',
       surface: {
         CHAT: 'محادثة',
         COMPARE: 'مقارنة',
@@ -4347,6 +4357,7 @@ export const ar: TranslationDictionary = {
         'يتبع توفر النماذج جدول الإصدار الخاص بكل مزوّد. تُضاف النماذج الجديدة فور إطلاقها.',
     },
     pricing: {
+      paygCreditRate: '{percent}% من سعر خطتك',
       paygCreditLabel: 'رصيد الموصّلات الشهري',
       paygCreditNone: 'بدون رصيد موصّلات',
       sectionTitle: 'خطط تنمو معك',
