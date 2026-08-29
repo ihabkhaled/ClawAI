@@ -13,7 +13,7 @@
 **Canonical files** — `CLAUDE.md` (i18n Rules; "NEVER leak English into
 non-English locales"; "`i18n.types.ts` MUST be committed alongside every locale
 change"; "`t()` is NOT type-safe"), `rules/03-frontend-rules.md`,
-`tools/audit-untranslated-i18n.cjs`.
+`apps/claw-frontend/src/lib/i18n/__tests__/` (run `npx vitest run src/lib/i18n`).
 
 **Review sequence**
 
@@ -27,7 +27,7 @@ change"; "`t()` is NOT type-safe"), `rules/03-frontend-rules.md`,
 5. Confirm each `t()` key literally exists in the dictionaries (t() is not
    type-checked against the schema — verify the key chain, e.g. no
    `admin.policies.*` when the dictionary declares `adminAutomation.*`).
-6. Recommend `node tools/audit-untranslated-i18n.cjs` to flag EN-equal entries.
+6. Recommend `npx vitest run src/lib/i18n` — the completeness guards flag EN-equal entries and `billing-enum-labels.test.ts` catches labels used via a lookup map.
 
 **Blocking checklist**
 

@@ -2,14 +2,14 @@
 
 ## Purpose
 
-Every string a user can see is translatable and actually translated into all nine
+Every string a user can see is translatable and actually translated into all 13
 locales. A German user must see German, an Arabic user an RTL German-equivalent —
 never an English placeholder. This is a recurring failure mode; the rule exists to
 end it.
 
 ## Applies to
 
-`apps/claw-frontend/src/lib/i18n/locales/{en,ar,de,es,fr,hi,it,pt,ru}.ts`,
+`apps/claw-frontend/src/lib/i18n/locales/{en,ar,de,es,fa,fr,hi,it,ja,pt,ru,th,zh}.ts`,
 `apps/claw-frontend/src/types/i18n.types.ts`, and every component/hook that renders text.
 
 ## Mandatory rules
@@ -66,7 +66,7 @@ imply a coverage that was not there.
   `BillingInterval`, `PlanFeature`, `BillingGateway`, `PaygSurface` and
   `CreditLedgerKind` against all 13 dictionaries. **Add any new enum you label by
   template or lookup map here**; nothing else will catch it.
-- **`{persian,japanese,thai,chinese}-completeness.test.ts` and
+- **`persian-locale-completeness.test.ts`, `{japanese,thai,chinese}-completeness.test.ts` and
   `western-locales-translation-regression.test.ts`** — catch English left
   untranslated, with an explicit allow-list of approved technical terms.
 - **`supported-locales.test.ts`** — every `Locale` member has a dictionary.
@@ -85,4 +85,5 @@ imply a coverage that was not there.
 
 - [ ] Every new string via `t()`, present in all 13 locales as real translations.
 - [ ] `i18n.types.ts` updated in the same change.
-- [ ] Audit script clean; one non-EN locale spot-checked in the browser.
+- [ ] `npx vitest run src/lib/i18n` green in `apps/claw-frontend`; one non-EN
+      locale spot-checked in the browser.

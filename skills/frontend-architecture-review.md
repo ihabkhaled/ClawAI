@@ -76,7 +76,7 @@ validation_lane: cd apps/claw-frontend && npm run typecheck && npm run lint && n
 **Validation commands**
 
 - `rg -n "<input|<select|<textarea|dangerouslySetInnerHTML" apps/claw-frontend/src` — none outside `components/ui/`.
-- `node tools/audit-untranslated-i18n.cjs` — flags non-EN entries equal to EN.
+- `npx vitest run src/lib/i18n` — key references, enum labels, and completeness guards that flag non-EN entries equal to EN.
 - Gate lane: `cd apps/claw-frontend && npm run typecheck && npm run lint && npm test && npm run build`.
 
 **Documentation updates**

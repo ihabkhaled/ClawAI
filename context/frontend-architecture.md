@@ -64,7 +64,7 @@ page.tsx (render only) → controller hook (useX) → query/mutation hooks
   `i18n.types.ts` in the same change**. Never copy English into non-English
   locales as a placeholder — write a real translation. `t()` is NOT type-safe
   against the dictionary, so spot-check a non-EN locale (de or ar) after adding
-  keys. Audit: `node tools/audit-untranslated-i18n.cjs`.
+  keys. Audit: `npx vitest run src/lib/i18n` from `apps/claw-frontend`.
 
 ## FE ⇄ BE contract discipline
 

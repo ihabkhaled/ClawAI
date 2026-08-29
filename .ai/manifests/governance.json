@@ -78,7 +78,7 @@
       "file": "rules/02-monorepo-and-workspace-ownership.md"
     },
     {
-      "bytes": 11094,
+      "bytes": 11111,
       "file": "rules/03-frontend-rules.md"
     },
     {
@@ -174,7 +174,7 @@
       "file": "rules/19-logging-observability-and-redaction.md"
     },
     {
-      "bytes": 4176,
+      "bytes": 4264,
       "file": "rules/20-i18n-and-user-facing-messages.md"
     },
     {
@@ -242,7 +242,7 @@
       "file": "rules/36-floating-ui-and-toast-clearance.md"
     },
     {
-      "bytes": 18081,
+      "bytes": 22680,
       "file": "rules/37-payg-credit-integrity.md"
     },
     {
@@ -372,7 +372,7 @@
       "file": "skills/create-dto.md"
     },
     {
-      "bytes": 4881,
+      "bytes": 4896,
       "file": "skills/create-frontend-module.md"
     },
     {
@@ -428,7 +428,7 @@
       "file": "skills/find-canonical-owner.md"
     },
     {
-      "bytes": 4256,
+      "bytes": 4302,
       "file": "skills/frontend-architecture-review.md"
     },
     {

@@ -141,7 +141,7 @@ ABSOLUTE RULE — NEVER LEAK ENGLISH INTO NON-EN LOCALES
     ms), and placeholder-only strings ({ms}ms) MAY remain identical
     across languages — but only when you KNOW the target language
     accepts the loanword.
-10. Run `node tools/audit-untranslated-i18n.cjs` before committing
+10. Run `npx vitest run src/lib/i18n` (from `apps/claw-frontend`) before committing
     new i18n keys. The audit lists every non-EN entry whose value
     matches the EN value (minus the exempt set). Every flagged
     entry must be either a real translation or a documented loanword.

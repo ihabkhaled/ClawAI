@@ -84,7 +84,7 @@ i18n contracts. Backend must already expose the endpoints (behind nginx `/api/v1
 ## Validation commands
 
 `cd apps/claw-frontend && npm run typecheck && npm run lint && npm test && npm run build`
-Then `node tools/audit-untranslated-i18n.cjs`. Never `--no-verify`.
+Then `npx vitest run src/lib/i18n` from `apps/claw-frontend`. Never `--no-verify`.
 
 ## Documentation updates
 
