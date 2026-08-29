@@ -4031,6 +4031,28 @@ export const ar: TranslationDictionary = {
   },
   billing: {
     credit: {
+      surface: {
+        CHAT: 'محادثة',
+        COMPARE: 'مقارنة',
+        JUDGE: 'تحكيم',
+        ORCHESTRATION: 'تنسيق',
+        IMAGE: 'صورة',
+        FILE_GENERATION: 'توليد ملف',
+        CODING_AGENT: 'وكيل برمجي',
+        WORKSPACE_ACTION: 'إجراء مساحة عمل',
+        ROUTING: 'توجيه',
+      },
+      kind: {
+        PLAN_GRANT: 'مخصّص الخطة',
+        GRANT_EXPIRY: 'انتهاء المخصّص غير المستخدم',
+        TOPUP: 'شراء رصيد',
+        TOPUP_REVERSAL: 'عكس عملية الشراء',
+        RESERVATION: 'محجوز',
+        RESERVATION_RELEASE: 'تحرير الحجز',
+        CONSUMPTION: 'مستخدم',
+        ADMIN_ADJUSTMENT: 'تعديل يدوي',
+        PROVIDER_FAILURE_REFUND: 'استرداد بعد فشل المزوّد',
+      },
       title: 'رصيد الموصّلات',
       available: 'المتاح',
       grantBucket: 'مخصّص الخطة',

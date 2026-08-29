@@ -3949,6 +3949,28 @@ export const zh: TranslationDictionary = {
   },
   billing: {
     credit: {
+      surface: {
+        CHAT: '对话',
+        COMPARE: '对比',
+        JUDGE: '评审',
+        ORCHESTRATION: '编排',
+        IMAGE: '图像',
+        FILE_GENERATION: '文件生成',
+        CODING_AGENT: '编码代理',
+        WORKSPACE_ACTION: '工作区操作',
+        ROUTING: '路由',
+      },
+      kind: {
+        PLAN_GRANT: '套餐额度',
+        GRANT_EXPIRY: '未使用额度已过期',
+        TOPUP: '已购额度',
+        TOPUP_REVERSAL: '购买已撤销',
+        RESERVATION: '已冻结',
+        RESERVATION_RELEASE: '冻结已释放',
+        CONSUMPTION: '已使用',
+        ADMIN_ADJUSTMENT: '手动调整',
+        PROVIDER_FAILURE_REFUND: '服务商故障后退回',
+      },
       title: '连接器额度',
       available: '可用',
       grantBucket: '套餐额度',

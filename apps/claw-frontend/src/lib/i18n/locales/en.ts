@@ -4061,6 +4061,28 @@ export const en: TranslationDictionary = {
   },
   billing: {
     credit: {
+      surface: {
+        CHAT: 'Chat',
+        COMPARE: 'Compare',
+        JUDGE: 'Judge',
+        ORCHESTRATION: 'Orchestration',
+        IMAGE: 'Image',
+        FILE_GENERATION: 'File generation',
+        CODING_AGENT: 'Coding agent',
+        WORKSPACE_ACTION: 'Workspace action',
+        ROUTING: 'Routing',
+      },
+      kind: {
+        PLAN_GRANT: 'Plan allowance',
+        GRANT_EXPIRY: 'Unused allowance expired',
+        TOPUP: 'Credit purchased',
+        TOPUP_REVERSAL: 'Purchase reversed',
+        RESERVATION: 'Held',
+        RESERVATION_RELEASE: 'Hold released',
+        CONSUMPTION: 'Used',
+        ADMIN_ADJUSTMENT: 'Manual adjustment',
+        PROVIDER_FAILURE_REFUND: 'Refunded after a provider failure',
+      },
       title: 'Connector credit',
       available: 'Available',
       grantBucket: 'Plan allowance',

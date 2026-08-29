@@ -4087,6 +4087,28 @@ export type TranslationDictionary = {
   };
   billing: {
     credit: {
+      surface: {
+        CHAT: string;
+        COMPARE: string;
+        JUDGE: string;
+        ORCHESTRATION: string;
+        IMAGE: string;
+        FILE_GENERATION: string;
+        CODING_AGENT: string;
+        WORKSPACE_ACTION: string;
+        ROUTING: string;
+      };
+      kind: {
+        PLAN_GRANT: string;
+        GRANT_EXPIRY: string;
+        TOPUP: string;
+        TOPUP_REVERSAL: string;
+        RESERVATION: string;
+        RESERVATION_RELEASE: string;
+        CONSUMPTION: string;
+        ADMIN_ADJUSTMENT: string;
+        PROVIDER_FAILURE_REFUND: string;
+      };
       title: string;
       available: string;
       grantBucket: string;

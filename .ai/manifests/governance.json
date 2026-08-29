@@ -1,7 +1,7 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 22902,
+      "bytes": 23170,
       "file": "CLAUDE.md"
     },
     {
@@ -242,7 +242,7 @@
       "file": "rules/36-floating-ui-and-toast-clearance.md"
     },
     {
-      "bytes": 17165,
+      "bytes": 17672,
       "file": "rules/37-payg-credit-integrity.md"
     },
     {

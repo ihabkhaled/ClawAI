@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (22902 vs 6104 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (23170 vs 6104 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (22902 vs 27062 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (23170 vs 27062 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -7166,7 +7166,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 22902,
+          "bytes": 23170,
           "file": "CLAUDE.md"
         },
         {
@@ -7406,7 +7406,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 17165,
+          "bytes": 17672,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -7682,7 +7682,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4968
+        "value": 4988
       },
       "localeCount": 13,
       "locales": [
@@ -9406,7 +9406,7 @@
       },
       "@claw/shared-entitlements": {
         "runner": "jest",
-        "testFiles": 5
+        "testFiles": 6
       },
       "@claw/shared-rabbitmq": {
         "runner": "jest",
@@ -9414,7 +9414,7 @@
       },
       "@claw/shared-types": {
         "runner": "jest",
-        "testFiles": 3
+        "testFiles": 4
       },
       "@claw/shared-utilities": {
         "runner": "jest",
@@ -10213,7 +10213,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1098,
+    "totalTestFiles": 1100,
     "workspaceCount": 25
   }
 }

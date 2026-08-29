@@ -4137,6 +4137,28 @@ export const de: TranslationDictionary = {
   },
   billing: {
     credit: {
+      surface: {
+        CHAT: 'Chat',
+        COMPARE: 'Vergleich',
+        JUDGE: 'Bewertung',
+        ORCHESTRATION: 'Orchestrierung',
+        IMAGE: 'Bild',
+        FILE_GENERATION: 'Dateigenerierung',
+        CODING_AGENT: 'Coding-Agent',
+        WORKSPACE_ACTION: 'Workspace-Aktion',
+        ROUTING: 'Routing',
+      },
+      kind: {
+        PLAN_GRANT: 'Tarif-Kontingent',
+        GRANT_EXPIRY: 'Ungenutztes Kontingent verfallen',
+        TOPUP: 'Guthaben gekauft',
+        TOPUP_REVERSAL: 'Kauf storniert',
+        RESERVATION: 'Reserviert',
+        RESERVATION_RELEASE: 'Reservierung freigegeben',
+        CONSUMPTION: 'Verbraucht',
+        ADMIN_ADJUSTMENT: 'Manuelle Korrektur',
+        PROVIDER_FAILURE_REFUND: 'Erstattet nach Anbieterfehler',
+      },
       title: 'Connector-Guthaben',
       available: 'Verfügbar',
       grantBucket: 'Tarif-Kontingent',

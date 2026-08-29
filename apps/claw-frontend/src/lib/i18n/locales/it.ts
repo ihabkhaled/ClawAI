@@ -4122,6 +4122,28 @@ export const it: TranslationDictionary = {
   },
   billing: {
     credit: {
+      surface: {
+        CHAT: 'Chat',
+        COMPARE: 'Confronto',
+        JUDGE: 'Valutazione',
+        ORCHESTRATION: 'Orchestrazione',
+        IMAGE: 'Immagine',
+        FILE_GENERATION: 'Generazione file',
+        CODING_AGENT: 'Agente di codice',
+        WORKSPACE_ACTION: 'Azione workspace',
+        ROUTING: 'Routing',
+      },
+      kind: {
+        PLAN_GRANT: 'Quota del piano',
+        GRANT_EXPIRY: 'Quota non utilizzata scaduta',
+        TOPUP: 'Credito acquistato',
+        TOPUP_REVERSAL: 'Acquisto stornato',
+        RESERVATION: 'Bloccato',
+        RESERVATION_RELEASE: 'Blocco rilasciato',
+        CONSUMPTION: 'Utilizzato',
+        ADMIN_ADJUSTMENT: 'Rettifica manuale',
+        PROVIDER_FAILURE_REFUND: 'Rimborsato dopo un errore del provider',
+      },
       title: 'Credito connettori',
       available: 'Disponibile',
       grantBucket: 'Quota del piano',

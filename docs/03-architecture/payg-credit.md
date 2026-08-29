@@ -296,7 +296,7 @@ else**. Never a cost ceiling, never a margin, never a provider rate.
 
 ## Top-up
 
-`POST /payments/credit-topup/checkout-sessions` with
+`POST /billing/credit-topup/checkout-sessions` with
 `{ packageId, gateway, idempotencyKey }` and **never an amount**.
 `CreditChargeResolverService` derives the charge from an immutable
 `CreditPackageVersion` fetched out of auth. On capture, payment writes an outbox
@@ -377,12 +377,14 @@ Every route requires `buildInterServiceAuthHeader` and validates with bounded
 Zod. These move dollars, so they deliberately do NOT inherit the `@Public()`
 shape that `internal/quota` still has.
 
-| Route                                 | Body                                                                                                                                 | Returns                                                                                                                                                                                                   |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /internal/credit/reserve`       | `userId`, `requestId`, `provider`, `model`, `surface`, `workflow?`, `promptTokens`, `cachedPromptTokens`, `requestedMaxOutputTokens` | `{metered:false, reason, maxOutputTokens}` · `{metered:true, reservationId, maxOutputTokens, clamped, heldMicroUsd, availableAfterMicroUsd}` · **402** `{errorCode, availableMicroUsd, requiredMicroUsd}` |
-| `POST /internal/credit/finalize`      | `reservationId`, `usage{promptTokens, completionTokens, cachedPromptTokens, reasoningTokens}`, `toolCalls`, `searchCalls`            | `204`                                                                                                                                                                                                     |
-| `POST /internal/credit/release`       | `reservationId`, `reason`                                                                                                            | `204`                                                                                                                                                                                                     |
-| `GET /internal/credit/wallet/:userId` | —                                                                                                                                    | `PaygWalletSnapshot`                                                                                                                                                                                      |
+| Route                                              | Body                                                                                                                                 | Returns                                                                                                                                                                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /internal/credit/reserve`                    | `userId`, `requestId`, `provider`, `model`, `surface`, `workflow?`, `promptTokens`, `cachedPromptTokens`, `requestedMaxOutputTokens` | `{metered:false, reason, maxOutputTokens}` · `{metered:true, reservationId, maxOutputTokens, clamped, heldMicroUsd, availableAfterMicroUsd}` · **402** `{errorCode, availableMicroUsd, requiredMicroUsd}` |
+| `POST /internal/credit/finalize`                   | `reservationId`, `usage{promptTokens, completionTokens, cachedPromptTokens, reasoningTokens}`, `toolCalls`, `searchCalls`            | `204`                                                                                                                                                                                                     |
+| `POST /internal/credit/release`                    | `reservationId`, `reason`                                                                                                            | `204`                                                                                                                                                                                                     |
+| `GET /internal/credit/wallet/:userId`              | —                                                                                                                                    | `PaygWalletSnapshot`                                                                                                                                                                                      |
+| `GET /internal/credit/packages`                    | —                                                                                                                                    | active `CreditPackageView[]`. payment-service proxies this so the checkout UI has a single origin.                                                                                                        |
+| `GET /internal/credit/packages/:id/active-version` | —                                                                                                                                    | the immutable version a top-up is priced from. Deliberately uncached: it decides a charge.                                                                                                                |
 
 `reserve` is idempotent on `(userId, requestId)` — a retry reuses its hold
 rather than taking a second one. `finalize` on an unknown reservation returns
@@ -407,7 +409,7 @@ All gated on `ADMIN_CREDIT_MANAGE`: `GET /wallets/:userId`,
 `POST /wallets/:userId/adjust`, `GET|POST /packages`,
 `POST /packages/:id/versions`.
 
-### Top-up purchase — payment-service, inherits `location /api/v1/payments`
+### Top-up purchase — payment-service, inherits `location /api/v1/billing`
 
 `POST /billing/credit-topup/checkout-sessions` with `{packageId, gateway,
 idempotencyKey}` and **never an amount** — the price is resolved server-side

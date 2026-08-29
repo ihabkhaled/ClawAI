@@ -4107,6 +4107,28 @@ export const ru: TranslationDictionary = {
   },
   billing: {
     credit: {
+      surface: {
+        CHAT: 'Чат',
+        COMPARE: 'Сравнение',
+        JUDGE: 'Оценка',
+        ORCHESTRATION: 'Оркестрация',
+        IMAGE: 'Изображение',
+        FILE_GENERATION: 'Генерация файла',
+        CODING_AGENT: 'Агент кода',
+        WORKSPACE_ACTION: 'Действие рабочей области',
+        ROUTING: 'Маршрутизация',
+      },
+      kind: {
+        PLAN_GRANT: 'Лимит тарифа',
+        GRANT_EXPIRY: 'Неиспользованный лимит сгорел',
+        TOPUP: 'Кредит куплен',
+        TOPUP_REVERSAL: 'Покупка отменена',
+        RESERVATION: 'Зарезервировано',
+        RESERVATION_RELEASE: 'Резерв освобождён',
+        CONSUMPTION: 'Использовано',
+        ADMIN_ADJUSTMENT: 'Ручная корректировка',
+        PROVIDER_FAILURE_REFUND: 'Возврат после сбоя провайдера',
+      },
       title: 'Кредит коннекторов',
       available: 'Доступно',
       grantBucket: 'Лимит тарифа',

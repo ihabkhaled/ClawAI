@@ -4093,6 +4093,28 @@ export const ja: TranslationDictionary = {
   },
   billing: {
     credit: {
+      surface: {
+        CHAT: 'チャット',
+        COMPARE: '比較',
+        JUDGE: '評価',
+        ORCHESTRATION: 'オーケストレーション',
+        IMAGE: '画像',
+        FILE_GENERATION: 'ファイル生成',
+        CODING_AGENT: 'コーディングエージェント',
+        WORKSPACE_ACTION: 'ワークスペース操作',
+        ROUTING: 'ルーティング',
+      },
+      kind: {
+        PLAN_GRANT: 'プラン付与',
+        GRANT_EXPIRY: '未使用分の失効',
+        TOPUP: 'クレジット購入',
+        TOPUP_REVERSAL: '購入の取り消し',
+        RESERVATION: '保留',
+        RESERVATION_RELEASE: '保留の解放',
+        CONSUMPTION: '使用',
+        ADMIN_ADJUSTMENT: '手動調整',
+        PROVIDER_FAILURE_REFUND: 'プロバイダー障害による返却',
+      },
       title: 'コネクタークレジット',
       available: '利用可能',
       grantBucket: 'プラン付与分',

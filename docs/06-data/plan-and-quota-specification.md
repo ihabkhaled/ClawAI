@@ -49,27 +49,37 @@ hand the cheapest plan an unbounded allowance.
 
 ## 2. Plan matrix
 
-| Plan      | Monthly | Yearly |     Daily |     Weekly |    Monthly | Cost ceiling |
-| --------- | ------: | -----: | --------: | ---------: | ---------: | -----------: |
-| Free      |      $0 |      — |     5,000 |     20,000 |     50,000 |        $0.05 |
-| Starter   |      $5 |    $50 |    50,000 |    250,000 |    750,000 |        $0.75 |
-| Plus      |     $10 |   $100 |   100,000 |    600,000 |  1,750,000 |        $1.75 |
-| Pro       |     $20 |   $200 |   250,000 |  1,500,000 |  4,000,000 |        $4.00 |
-| Team      |     $50 |   $500 |   750,000 |  4,000,000 | 11,000,000 |       $11.00 |
-| Scale     |    $100 | $1,000 | 1,500,000 |  9,000,000 | 24,000,000 |       $24.00 |
-| Unlimited |    $200 | $2,000 | 5,000,000 | 30,000,000 |  unlimited |       $50.00 |
+> **AMENDED by [ADR-078](../13-adr/adr-078-payg-connector-credit.md)
+> (2026-08-29).** The numbers below are no longer maintained here — they drifted
+> from the database the moment the allowances were raised. The single source of
+> truth is the seeder (`apps/claw-auth-service/prisma/seeders/plan-catalog.json`
+> plus `plan-payg-allowance.seeder.js`); the authoritative human-readable copy is
+> **[docs/business/plan-allowances.md](../business/plan-allowances.md)**.
+>
+> Two statements in this section were also REVERSED by ADR-078 and are corrected
+> in place below rather than left to mislead.
 
 Yearly is exactly ten months of the monthly rate (two months free).
 
-**The cost ceiling is an internal profitability control and is never returned to
-a normal user.** Only authorised administrators can see it.
+**The cost ceiling is now the user-visible PAYG connector-credit allowance.**
+This reverses the previous rule that it was "an internal profitability control
+never returned to a normal user". A weighted token IS a micro-USD
+(`WEIGHTED_TOKENS_PER_USD === MICRO_USD_PER_USD`), so the ceiling and
+`monthlyTokenQuota` were always the same dollar figure under two names; ADR-078
+promoted one of them rather than adding a third. What stays internal is the
+**rate card** — per-model provider prices, margins, and any figure from which
+they could be derived. See [rule 37](../../rules/37-payg-credit-integrity.md).
 
 ### What "Unlimited" actually means
 
-Unlimited chats, unlimited messages, and an unlimited _raw_ monthly token
-allowance — but **not** unlimited money. Premium cloud spend stops at the
-$50/month fair-use ceiling, after which routing falls back to eligible cheap or
-local models and the user is told plainly that the premium boundary was reached.
+Unlimited chats and unlimited messages (`chatsPerDay` and `messagesPerDay` are
+`null`) — but **not** unlimited money, and **not** an unlimited raw monthly token
+allowance. That column previously read `null` while
+`monthlyProviderCostCeilingMicroUsd` already stopped spend at $50, so `null`
+never meant unlimited in practice; ADR-078 set it to the figure that was really
+binding. Premium cloud spend stops at the $50/month fair-use boundary, after
+which routing falls back to eligible cheap or local models and the user is told
+plainly that the boundary was reached.
 Continuing to accrue unbounded provider charges is never an option.
 
 ---

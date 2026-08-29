@@ -313,3 +313,33 @@ customer downgrade.
 - `rules/28-billing-integrity-and-api-contracts.md` — immutable billing and API contract rules
 - `docs/13-adr/adr-064-refund-entitlement-semantics.md` through ADR 067 — financial-record and job decisions
 - `.claude/Integrations/secure-subscriptions-payments__PLAN.md` — Phase-0 plan
+- `docs/13-adr/adr-083-credit-topup-checkout-purpose.md` — credit top-up as the third checkout purpose (amends ADR-066)
+- `docs/03-architecture/payg-credit.md` — the connector-credit mechanism end to end
+- `docs/11-runbooks/runbook-payg-credit.md` — deploying, verifying and killing PAYG credit
+
+---
+
+## Credit top-up (ADR-083)
+
+`POST /api/v1/billing/credit-topup/checkout-sessions` — body
+`{ packageId, gateway, idempotencyKey }`, **never an amount**. The price and the
+credit granted come from an immutable `CreditPackageVersion` fetched from
+auth-service, exactly as a plan price does.
+`GET /api/v1/billing/credit-topup/packages` proxies the catalog so the checkout
+UI has one origin. Both inherit the existing `/api/v1/billing` nginx location;
+no new location was added.
+
+Settlement reuses the purpose-agnostic
+`/billing/checkout-sessions/:id/complete-*` routes and passes through
+`PaymentActivationService`, the single door between "a gateway says money moved"
+and any entitlement change. The amount and currency are still revalidated
+against the session.
+
+`CheckoutSessionPurpose.CREDIT_TOPUP` required a third branch on
+`checkout_sessions_purpose_fields_check` — it carries no plan fields but does
+carry an amount, so it satisfied neither existing branch and every insert would
+have failed at the database.
+
+A refund reverses a **proportional** share of the credit; auth clamps it to the
+unspent purchased balance and the wallet never goes negative. A credit reversal
+does **not** revoke the plan entitlement (ADR-064).

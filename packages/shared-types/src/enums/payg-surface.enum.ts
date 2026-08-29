@@ -28,6 +28,11 @@ export enum PaygSurface {
   WORKSPACE_ACTION = 'WORKSPACE_ACTION',
   /** Router-initiated inference triggered by a message event. */
   ROUTING = 'ROUTING',
-  /** Research enrichment that reaches a paid model rather than a search API. */
-  RESEARCH = 'RESEARCH',
 }
+
+// Deliberately NOT a member: RESEARCH. Research enrichment reaches search SaaS
+// (Brave, Exa, Tavily, ...), never a paid model, and is metered separately
+// through FeatureUsageRecord's WEB_SEARCH / WEB_FETCH / WEB_EXTRACT allowances.
+// A member with no producer is worse than an absent one - it makes the enum
+// claim a spend path the system does not actually attribute, and it defeats the
+// exhaustiveness test that stops a NEW paid surface from shipping anonymously.

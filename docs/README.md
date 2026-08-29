@@ -29,13 +29,14 @@
 
 ### Layer B: Business & Product Context
 
-| Document                                                       | Purpose                                                      |
-| -------------------------------------------------------------- | ------------------------------------------------------------ |
-| [Product Vision](01-executive-context/product-vision.md)       | Mission, goals, KPIs, positioning                            |
-| [Business Overview](01-executive-context/business-overview.md) | Problem, market, personas, business rules, glossary          |
-| [User Personas](02-business-product/user-personas.md)          | 5 personas with workflows and RBAC mapping                   |
-| [Feature Inventory](02-business-product/feature-inventory.md)  | Current feature domains with stories and acceptance criteria |
-| [User Journeys](02-business-product/user-journeys.md)          | End-to-end user journeys with error paths                    |
+| Document                                                       | Purpose                                                                                                       |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| [Product Vision](01-executive-context/product-vision.md)       | Mission, goals, KPIs, positioning                                                                             |
+| [Business Overview](01-executive-context/business-overview.md) | Problem, market, personas, business rules, glossary                                                           |
+| [Business Numbers](business/README.md)                         | Plan allowances, margin model, credit terms, top-up pricing, refund policy — the authoritative dollar figures |
+| [User Personas](02-business-product/user-personas.md)          | 5 personas with workflows and RBAC mapping                                                                    |
+| [Feature Inventory](02-business-product/feature-inventory.md)  | Current feature domains with stories and acceptance criteria                                                  |
+| [User Journeys](02-business-product/user-journeys.md)          | End-to-end user journeys with error paths                                                                     |
 
 ### Layer C: Technical Architecture
 

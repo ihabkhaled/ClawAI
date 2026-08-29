@@ -4081,6 +4081,28 @@ export const fa: TranslationDictionary = {
   },
   billing: {
     credit: {
+      surface: {
+        CHAT: 'گفت‌وگو',
+        COMPARE: 'مقایسه',
+        JUDGE: 'داوری',
+        ORCHESTRATION: 'هماهنگ‌سازی',
+        IMAGE: 'تصویر',
+        FILE_GENERATION: 'تولید فایل',
+        CODING_AGENT: 'عامل برنامه‌نویسی',
+        WORKSPACE_ACTION: 'اقدام فضای کاری',
+        ROUTING: 'مسیریابی',
+      },
+      kind: {
+        PLAN_GRANT: 'سهمیهٔ پلن',
+        GRANT_EXPIRY: 'انقضای سهمیهٔ استفاده‌نشده',
+        TOPUP: 'خرید اعتبار',
+        TOPUP_REVERSAL: 'برگشت خرید',
+        RESERVATION: 'رزرو‌شده',
+        RESERVATION_RELEASE: 'آزادسازی رزرو',
+        CONSUMPTION: 'مصرف‌شده',
+        ADMIN_ADJUSTMENT: 'اصلاح دستی',
+        PROVIDER_FAILURE_REFUND: 'بازپرداخت پس از خطای ارائه‌دهنده',
+      },
       title: 'اعتبار رابط‌ها',
       available: 'در دسترس',
       grantBucket: 'سهمیهٔ پلن',

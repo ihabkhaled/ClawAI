@@ -91,8 +91,28 @@ All paid cloud providers: `OPENAI`, `ANTHROPIC`, `GEMINI`, `DEEPSEEK`, `GROK`,
 | scale     |  $100 |         $24.00 |    **$25.00** |          25% | +$1.00 |
 | unlimited |  $200 |         $50.00 |    **$50.00** |          25% | —      |
 
-**No user loses allowance.** Every tier goes up or stays equal, which is what
-makes this a safe migration of a live entitlement rather than a repricing.
+**No user loses spending power** — but three raw column values DO decrease, and
+saying "every tier goes up" without naming them would have been false. The
+distinction matters because the DAY/WEEK/MONTH windows are charged on every
+request, not only metered ones, so a reduction there is a real entitlement
+change until you show it is not binding.
+
+| plan      | column              |     before |          after | effect                                                                                                                                              |
+| --------- | ------------------- | ---------: | -------------: | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| free      | `dailyTokenQuota`   |    300,000 |     **50,000** | none — the 20,000/week ceiling already bound at 1/15th of it                                                                                        |
+| unlimited | `weeklyTokenQuota`  | 30,000,000 | **20,000,000** | none — still 1.7x the monthly ceiling prorated to a week, so it cannot bind                                                                         |
+| unlimited | `monthlyTokenQuota` |     `null` | **50,000,000** | none — `monthlyProviderCostCeilingMicroUsd` was ALREADY 50,000,000, so `null` never meant unlimited in practice; this makes the true bound explicit |
+
+Effective monthly allowance, taking the smallest binding window:
+
+| plan      | before |      after |           |
+| --------- | -----: | ---------: | --------- |
+| free      |  $0.09 |  **$0.30** | 3.4x more |
+| unlimited | $50.00 | **$50.00** | unchanged |
+
+Unlimited keeps unlimited chats and messages (`chatsPerDay` and
+`messagesPerDay` stay `null`); what is now explicit is the fair-use boundary on
+premium cloud spend that its own description already promised.
 
 Free keeps $0.30 rather than dropping to $0.00. Its seeded description is _"Try
 every frontier model with a small daily allowance"_; $0 makes that copy false and
@@ -170,7 +190,7 @@ deriving the platform's per-model markup from an error payload. That guard
 survives in a narrowed form and is now a rule rather than a convention: the
 _allowance_ is public, while the per-model provider **rate**, the margin and the
 internal cost ceiling of any other user remain private. Error payloads carry
-`availableMicroUsd` and `requiredMicroUsd` and nothing else — enforced by
+`errorCode`, `availableMicroUsd` and `requiredMicroUsd` and nothing else — enforced by
 [rule 37](../../rules/37-payg-credit-integrity.md).
 
 **Accepted — the ceiling is now a customer-visible commitment.** Lowering it is a

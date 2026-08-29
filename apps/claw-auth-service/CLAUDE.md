@@ -51,6 +51,45 @@ See the root CLAUDE.md for the full set of architecture rules, naming convention
 
 Every third-party library MUST be wrapped in a utility file under `src/common/utilities/`. Services and controllers NEVER import third-party packages directly — they import the wrapper. Example: `src/common/utilities/hashing.utility.ts` wraps `argon2`, and services import `{ hashPassword, verifyPassword }` from the wrapper.
 
+## PAYG connector credit — this service owns it (ADR-078)
+
+`modules/credit/` holds the wallet, the ledger, the reservation and the PAYG
+classification. Four new tables: `user_credit_wallets`, `credit_ledger_entries`,
+`credit_packages`, `credit_package_versions`, plus three columns on
+`weighted_usage_records`.
+
+Four things here are easy to break by accident:
+
+1. **`RESERVE_QUOTA_LUA` has NINE windows, not seven.** `CREDIT_GRANT` and
+   `CREDIT_PURCHASED` were appended. They INVERT the encoding of the other
+   seven: the "limit" is the wallet bucket balance read from Postgres, and the
+   counter holds only outstanding holds. Settled spend is subtracted in
+   Postgres and never accumulated in Redis, because production Redis is
+   RDB-only — losing its tail must cost a safety margin, never a balance.
+   Any assertion on the adjust ARGV must derive its offset from the key count
+   (see `adjustArgv` in `quota.service.spec.ts`), never a literal index.
+2. **`credit_ledger_entries` is append-only.** A correction is a new
+   compensating row. The wallet must always equal the sum of its ledger; a spec
+   asserts it after a concurrency run.
+3. **Money is `BigInt` micro-USD.** No float touches this module. `Math.round`
+   and `parseFloat` are banned in payment-service by ESLint; extending that ban
+   here is an open follow-up recorded in `rules/37`.
+4. **Never log a balance next to a `userId`.** Rule 19's redaction list, and
+   rule 37 rule 4.
+
+The kill switch is `SystemSetting` key `payg.credit.enabled`, checked once
+inside `reserve` rather than at each call site. `modules/system-settings/` is
+its read path — the model had existed with zero consumers.
+
+`ScheduleModule` and `@nestjs/schedule` are NEW here. The reservation sweeper
+and the grant renewal each take a distinct Redis lock and run on staggered
+intervals; they take the lock even at one replica, so raising
+`AUTH_SERVICE_REPLICAS` stays a config change rather than a double-refund
+incident.
+
+Deploy: **this service must be healthy before payment-service starts.** See
+`docs/11-runbooks/runbook-payg-credit.md`.
+
 ## Commands
 
 ```bash

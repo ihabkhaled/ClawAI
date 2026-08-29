@@ -100,6 +100,35 @@ Startup migrates and seeds, but **exactly once**:
 - **Broker**: RabbitMQ (shared), exchange `claw.events`
 - **Coverage floor**: 92% on all four metrics, from the first commit
 
+## Credit top-up is the THIRD checkout purpose (ADR-083)
+
+`CheckoutSessionPurpose.CREDIT_TOPUP` is not merely a fifth enum member. It
+carries **no plan fields** (like `PAYMENT_METHOD_SETUP`) but **does carry a real
+amount** (like a subscription), so it satisfies neither branch of
+`checkout_sessions_purpose_fields_check`. Migration
+`20260829120200_add_credit_topup_checkout` adds a third branch and tightens the
+original two to require the three new credit columns be NULL — a subscription
+row can never carry credit fields. **Adding the enum member without that
+migration makes every top-up insert fail at the database.**
+
+- `isSubscriptionCheckoutSession` is UNCHANGED and still returns false for a
+  top-up (its plan fields are null). Use the positive
+  `isCreditTopupCheckoutSession`, or `isPayableCheckoutSession` where only the
+  money fields matter. Do not loosen the subscription guard.
+- The route is `POST /billing/credit-topup/checkout-sessions` — under
+  `/api/v1/billing`, which nginx already proxies here. The body carries
+  `{ packageId, gateway, idempotencyKey }` and **never an amount**; the price
+  comes from an immutable `CreditPackageVersion` fetched from auth-service.
+- A partial refund reverses a **proportional** share of the credit, not the
+  whole package. Auth clamps the reversal to the UNSPENT purchased balance and
+  the wallet never goes negative; spent credit is not refundable.
+- A credit reversal must **NOT** revoke the plan entitlement (ADR-064).
+
+`BILLING_CREDIT_TOPUP_SUCCEEDED` is enqueued in the SAME transaction as the
+charge. auth-service must be subscribed before this service drains its outbox —
+the topic exchange discards a routing key with no bound queue, so an early
+publish loses the event with no DLQ while the money is already taken.
+
 ## Commands
 
 ```bash

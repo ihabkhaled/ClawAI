@@ -4084,6 +4084,28 @@ export const hi: TranslationDictionary = {
   },
   billing: {
     credit: {
+      surface: {
+        CHAT: 'चैट',
+        COMPARE: 'तुलना',
+        JUDGE: 'मूल्यांकन',
+        ORCHESTRATION: 'ऑर्केस्ट्रेशन',
+        IMAGE: 'छवि',
+        FILE_GENERATION: 'फ़ाइल जनरेशन',
+        CODING_AGENT: 'कोडिंग एजेंट',
+        WORKSPACE_ACTION: 'वर्कस्पेस क्रिया',
+        ROUTING: 'रूटिंग',
+      },
+      kind: {
+        PLAN_GRANT: 'प्लान भत्ता',
+        GRANT_EXPIRY: 'अप्रयुक्त भत्ता समाप्त',
+        TOPUP: 'क्रेडिट खरीदा',
+        TOPUP_REVERSAL: 'खरीद वापस',
+        RESERVATION: 'रोका गया',
+        RESERVATION_RELEASE: 'रोक जारी',
+        CONSUMPTION: 'उपयोग किया',
+        ADMIN_ADJUSTMENT: 'मैन्युअल समायोजन',
+        PROVIDER_FAILURE_REFUND: 'प्रदाता विफलता पर वापसी',
+      },
       title: 'कनेक्टर क्रेडिट',
       available: 'उपलब्ध',
       grantBucket: 'प्लान भत्ता',

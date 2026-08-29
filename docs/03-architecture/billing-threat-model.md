@@ -105,9 +105,21 @@ evidence that counts is a server-side capture read or a verified webhook.
 | Turn an attachment into SSRF/LFI     | Shared SMTP adapter accepts in-memory bytes and disables URL/file attachment access                                      |
 | Lose an invoice during SMTP outage   | Delivery intent commits with the invoice and retries under an owner-safe scheduled job; owned download remains available |
 | Harvest card data from logs          | No PAN/CVV ever enters the system; response bodies are never logged                                                      |
-| Learn margins from an error          | Cost ceilings are internal; error payloads carry stable codes only                                                       |
+| Learn margins from an error          | Provider RATE CARD is internal; error payloads carry stable codes plus the user's own balance only (narrowed by ADR-078) |
 | Steal a vaulted token                | AES-256-GCM with AAD bound to `userId\|gateway\|paymentMethodId`, key-versioned                                          |
 | Extract secrets from a gateway error | Failures log status codes, never provider bodies                                                                         |
+
+> **Narrowed by [ADR-078](../13-adr/adr-078-payg-connector-credit.md)
+> (2026-08-29).** "Cost ceilings are internal" no longer holds: the per-plan
+> monthly ceiling IS the user's connector-credit allowance and is shown on the
+> pricing page, the plan page and the billing page. A user learning their own
+> allowance learns nothing about margin.
+>
+> What must still never leave the server: per-model provider rates, the
+> price-to-credit ratio on a top-up package, and any figure from which either
+> could be derived. A 402 body carries `errorCode`, `availableMicroUsd` and
+> `requiredMicroUsd` — the user's own numbers — and never a rate.
+> Enforced by [rule 37](../../rules/37-payg-credit-integrity.md) rule 8.
 
 ---
 

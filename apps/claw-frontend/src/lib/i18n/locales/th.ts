@@ -4046,6 +4046,28 @@ export const th: TranslationDictionary = {
   },
   billing: {
     credit: {
+      surface: {
+        CHAT: 'แชท',
+        COMPARE: 'เปรียบเทียบ',
+        JUDGE: 'ประเมิน',
+        ORCHESTRATION: 'ออร์เคสเตรชัน',
+        IMAGE: 'รูปภาพ',
+        FILE_GENERATION: 'สร้างไฟล์',
+        CODING_AGENT: 'เอเจนต์เขียนโค้ด',
+        WORKSPACE_ACTION: 'การทำงานเวิร์กสเปซ',
+        ROUTING: 'การกำหนดเส้นทาง',
+      },
+      kind: {
+        PLAN_GRANT: 'โควตาจากแพ็กเกจ',
+        GRANT_EXPIRY: 'โควตาที่ไม่ได้ใช้หมดอายุ',
+        TOPUP: 'ซื้อเครดิต',
+        TOPUP_REVERSAL: 'ยกเลิกการซื้อ',
+        RESERVATION: 'กันไว้',
+        RESERVATION_RELEASE: 'คืนยอดที่กันไว้',
+        CONSUMPTION: 'ใช้ไป',
+        ADMIN_ADJUSTMENT: 'ปรับด้วยตนเอง',
+        PROVIDER_FAILURE_REFUND: 'คืนเงินหลังผู้ให้บริการขัดข้อง',
+      },
       title: 'เครดิตคอนเนกเตอร์',
       available: 'ใช้ได้',
       grantBucket: 'โควตาจากแพ็กเกจ',
