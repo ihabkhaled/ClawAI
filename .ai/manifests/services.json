@@ -135,7 +135,7 @@
         "FileDeliveryRecord",
         "MessageAttachment"
       ],
-      "testFiles": 117,
+      "testFiles": 123,
       "testRunner": "jest"
     },
     {
@@ -421,7 +421,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-routing-service",
-      "endpointCount": 69,
+      "endpointCount": 70,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",

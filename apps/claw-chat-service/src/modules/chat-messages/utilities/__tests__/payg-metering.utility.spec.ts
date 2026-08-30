@@ -1,5 +1,6 @@
 import { PaygSurface, TokenLedgerContext } from '@claw/shared-types';
 
+import { PAYG_SURFACE_BY_TOKEN_CONTEXT } from '../../constants/payg.constants';
 import {
   isPaygDelegatedProvider,
   isPaygExemptProvider,
@@ -61,6 +62,23 @@ describe('paygSurfaceForTokenContext', () => {
 
   it('records the mode name beside the surface', () => {
     expect(paygWorkflowForTokenContext(TokenLedgerContext.BEST_OF_N)).toBe('best_of_n');
+  });
+});
+
+describe('the orchestration-lab count the public site quotes', () => {
+  // The frontend cannot import this NestJS module, so
+  // `PRODUCT_COUNTS.orchestrationLabs` in
+  // apps/claw-frontend/src/constants/product-counts.constants.ts hand-copies
+  // this number instead of deriving it. This test is that constant's only
+  // guard: if a `TokenLedgerContext` is added to or removed from the
+  // ORCHESTRATION surface here, this count moves and the frontend constant
+  // (and every `{orchestrationLabCount}` placeholder it fills) goes stale
+  // until someone updates it to match.
+  it('pins the number of ledger contexts billed as an advanced orchestration lab', () => {
+    const orchestrationContexts = Object.values(PAYG_SURFACE_BY_TOKEN_CONTEXT).filter(
+      (surface) => surface === PaygSurface.ORCHESTRATION,
+    );
+    expect(orchestrationContexts).toHaveLength(9);
   });
 });
 
