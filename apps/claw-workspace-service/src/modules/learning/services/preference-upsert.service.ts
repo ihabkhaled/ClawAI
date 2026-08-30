@@ -3,12 +3,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { LEARNING_HTTP_TIMEOUT_MS } from '../constants/learning.constants';
 import type { PreferenceUpsertResult, ProposedPreference } from '../types/learning.types';
+import { buildAuthHeader } from '../../../common/utilities/file-service-client.utility';
 
 @Injectable()
 export class PreferenceUpsertService {
   private readonly logger = new Logger(PreferenceUpsertService.name);
 
-  async upsertAll(userId: string, preferences: ProposedPreference[]): Promise<PreferenceUpsertResult> {
+  async upsertAll(
+    userId: string,
+    preferences: ProposedPreference[],
+  ): Promise<PreferenceUpsertResult> {
     let upserted = 0;
     let skipped = 0;
     for (const pref of preferences) {
@@ -33,7 +37,11 @@ export class PreferenceUpsertService {
     const url = `${baseUrl}/api/v1/internal/memories/automation-preference`;
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: buildAuthHeader(),
+      },
       body: JSON.stringify({
         userId,
         actionKind: pref.actionKind,

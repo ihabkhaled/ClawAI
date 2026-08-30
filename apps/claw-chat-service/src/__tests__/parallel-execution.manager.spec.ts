@@ -5,6 +5,11 @@ import type {
   ParallelModelTarget,
 } from '../modules/chat-messages/types/parallel.types';
 import type { AssembledContext } from '../modules/chat-messages/types/context.types';
+import {
+  disabledCrossThreadResult,
+  emptyConversationManifest,
+  fallbackModelTokenBudget,
+} from '../modules/chat-messages/utilities/assembled-context.utility';
 
 jest.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
@@ -97,6 +102,9 @@ describe('ParallelExecutionManager', () => {
     fileContents: [],
     workspaceCitations: [],
     tokenBudget: 4096,
+    modelBudget: fallbackModelTokenBudget(),
+    conversationManifest: emptyConversationManifest(),
+    crossThread: disabledCrossThreadResult(),
     researchEvidence: [],
     researchRunId: null,
     researchWarnings: [],

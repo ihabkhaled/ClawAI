@@ -139,8 +139,6 @@ import {
   FAST_PATH_COMPLEXITY_PATTERN,
   FAST_PATH_CONTEXT_MAX_CITATIONS,
   FAST_PATH_CONTEXT_MAX_MEMORIES,
-  FAST_PATH_CONTEXT_MAX_MESSAGES,
-  FAST_PATH_CONTEXT_TOKEN_BUDGET,
   FAST_PATH_MAX_NEWLINES,
   FAST_PATH_MAX_OUTPUT_TOKENS,
   FAST_PATH_MAX_PROMPT_CHARS,
@@ -1578,12 +1576,20 @@ export class ChatExecutionManager implements OnModuleInit {
       return context;
     }
 
+    // The fast path trims RETRIEVAL, never conversation.
+    //
+    // It used to also do `threadMessages.slice(-6)` and clamp the prompt to
+    // 1024 tokens. That inverted the need: a short prompt like "what did we
+    // decide about the database?" is exactly the prompt that depends on a long
+    // history, and it was the prompt most likely to qualify for the fast path
+    // (short, no newlines, no complexity keyword). Conversation is already
+    // bounded by the composer's token budget, so there is nothing left here
+    // for a message-count rule to protect. Output length is still capped —
+    // that is what actually buys the latency. ADR-086.
     return {
       ...context,
-      threadMessages: context.threadMessages.slice(-FAST_PATH_CONTEXT_MAX_MESSAGES),
       memories: context.memories.slice(0, FAST_PATH_CONTEXT_MAX_MEMORIES),
       workspaceCitations: context.workspaceCitations.slice(0, FAST_PATH_CONTEXT_MAX_CITATIONS),
-      tokenBudget: Math.min(context.tokenBudget, FAST_PATH_CONTEXT_TOKEN_BUDGET),
     };
   }
 

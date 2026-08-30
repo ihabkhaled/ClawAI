@@ -554,6 +554,8 @@ export type TranslationDictionary = {
     useMemoryDescription: string;
     useContextLabel: string;
     useContextDescription: string;
+    useCrossThreadContextLabel: string;
+    useCrossThreadContextDescription: string;
     // Phase 6 — workflow live wiring badge
     workflow: {
       searchFirst: string;
@@ -3376,6 +3378,18 @@ export type TranslationDictionary = {
     fieldPackItems: string;
     fieldTokensUsed: string;
     fieldAssemblyOrder: string;
+    conversationHeading: string;
+    conversationUnavailable: string;
+    fieldMessagesSent: string;
+    fieldTurnsSent: string;
+    fieldMessagesOmitted: string;
+    fieldInputTokens: string;
+    fieldContextWindow: string;
+    fieldWindowSource: string;
+    fieldReferenceSignals: string;
+    fieldAssemblyTiming: string;
+    fieldPriorChats: string;
+    signalNone: string;
   };
   routingPlayground: {
     title: string;

@@ -3,6 +3,11 @@ import { EscalationChainManager } from '../modules/chat-messages/managers/escala
 import { EscalationChainStatus } from '../common/enums/escalation-chain-status.enum';
 import type { EscalationChainStep } from '../modules/chat-messages/types/escalation-chain.types';
 import type { AssembledContext } from '../modules/chat-messages/types/context.types';
+import {
+  disabledCrossThreadResult,
+  emptyConversationManifest,
+  fallbackModelTokenBudget,
+} from '../modules/chat-messages/utilities/assembled-context.utility';
 
 jest.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
@@ -62,6 +67,9 @@ describe('EscalationChainManager', () => {
     fileContents: [],
     workspaceCitations: [],
     tokenBudget: 4096,
+    modelBudget: fallbackModelTokenBudget(),
+    conversationManifest: emptyConversationManifest(),
+    crossThread: disabledCrossThreadResult(),
     researchEvidence: [],
     researchRunId: null,
     researchWarnings: [],

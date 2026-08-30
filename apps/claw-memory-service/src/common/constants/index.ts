@@ -22,3 +22,9 @@ export {
   SENSITIVITY_CLASSIFIER_PROMPT,
   SENSITIVITY_CLASSIFIER_TIMEOUT_MS,
 } from './sensitivity-classifier.constants';
+export {
+  CIRCUIT_OLLAMA_EMBEDDINGS,
+  CIRCUIT_OLLAMA_GENERATE,
+  DEPENDENCY_CIRCUIT_FAILURE_THRESHOLD,
+  DEPENDENCY_CIRCUIT_OPEN_MS,
+} from './dependency-circuit.constants';

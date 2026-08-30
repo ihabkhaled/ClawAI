@@ -2388,6 +2388,11 @@
         },
         {
           "method": "GET",
+          "route": "/internal/router-models/context-window/:provider/:model",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-context-window-internal.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/internal/router-models/costs/:provider/:model",
           "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost-internal.controller.ts"
         },
@@ -7451,7 +7456,7 @@
       ],
       "skills": [
         {
-          "bytes": 19868,
+          "bytes": 20103,
           "file": "skills/00-index.md"
         },
         {
@@ -7537,6 +7542,10 @@
         {
           "bytes": 4776,
           "file": "skills/add-workspace-connector.md"
+        },
+        {
+          "bytes": 8787,
+          "file": "skills/audit-conversational-context.md"
         },
         {
           "bytes": 5494,
@@ -7717,7 +7726,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5001
+        "value": 5015
       },
       "localeCount": 13,
       "locales": [
@@ -9475,7 +9484,7 @@
       },
       "claw-chat-service": {
         "runner": "jest",
-        "testFiles": 117
+        "testFiles": 125
       },
       "claw-client-logs-service": {
         "runner": "jest",
@@ -9511,7 +9520,7 @@
       },
       "claw-memory-service": {
         "runner": "jest",
-        "testFiles": 12
+        "testFiles": 14
       },
       "claw-ollama-service": {
         "runner": "jest",
@@ -10243,7 +10252,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 643,
+    "endpointCount": 644,
     "envVarCount": 351,
     "eventCount": 178,
     "frontendRouteCount": 143,
@@ -10255,7 +10264,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1109,
+    "totalTestFiles": 1119,
     "workspaceCount": 25
   }
 }

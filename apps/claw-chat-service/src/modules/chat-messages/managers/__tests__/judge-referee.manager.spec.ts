@@ -5,6 +5,11 @@ import type { ChatStreamService } from '../../services/chat-stream.service';
 import type { LocalModelSelectionService } from '../../services/local-model-selection.service';
 import type { AssembledContext } from '../../types/context.types';
 import type { LlmResponse, MessageRoutedData } from '../../types/execution.types';
+import {
+  disabledCrossThreadResult,
+  emptyConversationManifest,
+  fallbackModelTokenBudget,
+} from '../../utilities/assembled-context.utility';
 
 const buildResponse = (overrides: Partial<LlmResponse> = {}): LlmResponse => ({
   content: 'The capital of France is Paris.',
@@ -28,6 +33,9 @@ const buildContext = (): AssembledContext => ({
   researchRunId: null,
   researchWarnings: [],
   tokenBudget: 4096,
+  modelBudget: fallbackModelTokenBudget(),
+  conversationManifest: emptyConversationManifest(),
+  crossThread: disabledCrossThreadResult(),
   threadMessages: [
     {
       role: 'USER',

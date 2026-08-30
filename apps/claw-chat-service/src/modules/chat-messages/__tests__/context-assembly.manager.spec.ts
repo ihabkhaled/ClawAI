@@ -2,9 +2,31 @@ import { ContextAssemblyManager } from '../managers/context-assembly.manager';
 import type { ChatMessage } from '../../../generated/prisma';
 import { MemoryRecordType } from '../../../common/enums/memory-record-type.enum';
 import type { AssembledContext, MemoryRecordResponse } from '../types/context.types';
+import {
+  disabledCrossThreadResult,
+  emptyConversationManifest,
+  fallbackModelTokenBudget,
+} from '../utilities/assembled-context.utility';
+import { ContextComposerManager } from '../managers/context-composer.manager';
+import { CrossThreadRetrievalManager } from '../managers/cross-thread-retrieval.manager';
+
+/**
+ * A repository that owns no data. These specs exercise prompt shaping, not
+ * retrieval, and a thread with `useCrossThreadContext` false never reaches the
+ * repository at all — the stub proves that rather than hiding it.
+ */
+function stubCrossThreadRepository(): ConstructorParameters<typeof CrossThreadRetrievalManager>[0] {
+  return {
+    findCandidateThreads: async () => Promise.resolve([]),
+    findMessagesForThreads: async () => Promise.resolve([]),
+  } as unknown as ConstructorParameters<typeof CrossThreadRetrievalManager>[0];
+}
 
 describe('ContextAssemblyManager', () => {
-  const manager = new ContextAssemblyManager();
+  const manager = new ContextAssemblyManager(
+    new ContextComposerManager(),
+    new CrossThreadRetrievalManager(stubCrossThreadRepository()),
+  );
 
   const buildContext = (): AssembledContext => ({
     userId: 'user-1',
@@ -39,6 +61,9 @@ describe('ContextAssemblyManager', () => {
       'Search results were withheld because the returned pages were too weakly matched to the request.',
     ],
     tokenBudget: 512,
+    modelBudget: fallbackModelTokenBudget(),
+    conversationManifest: emptyConversationManifest(),
+    crossThread: disabledCrossThreadResult(),
   });
 
   it('includes research warnings even when no evidence items survive filtering', () => {
@@ -50,7 +75,14 @@ describe('ContextAssemblyManager', () => {
     expect(prompt).toContain('too weakly matched');
   });
 
-  it('drops unrelated prior assistant content and unrelated memories for self-contained prompts', () => {
+  // Behaviour change, ADR-086. This test used to assert that a prior ASSISTANT
+  // message was DROPPED when the next prompt looked self-contained. That rule
+  // is the defect: measured live, it removed a planted fact whenever the
+  // question was rephrased, and recall fell from 83% to 0% on the same fact at
+  // the same distance. Assistant output is conversational state and stays.
+  // Memory filtering below is unchanged — a topical memory is still filtered
+  // by relevance, a standing PREFERENCE is still always injected.
+  it('keeps prior assistant content, and still filters topical memories, for self-contained prompts', () => {
     const context = buildContext();
     context.threadMessages = [
       {
@@ -90,7 +122,7 @@ describe('ContextAssemblyManager', () => {
 
     const prompt = manager.buildPromptString(context);
 
-    expect(prompt).not.toContain('Semi-Circle Shape Concept');
+    expect(prompt).toContain('Semi-Circle Shape Concept');
     expect(prompt).not.toContain('likes logo concepts');
     expect(prompt).toContain('prefers concise technical answers');
     expect(prompt).toContain('Refactor a callback-heavy handler');
@@ -123,7 +155,12 @@ describe('ContextAssemblyManager', () => {
     expect(prompt).toContain('Make that shorter and keep the same style.');
   });
 
-  it('does not keep unrelated prior context only because role prefixes overlap', () => {
+  // Behaviour change, ADR-086. Previously asserted that an unrelated prior turn
+  // was dropped. Whether a turn is "unrelated" is exactly the judgement the old
+  // selector got wrong, so it no longer gates inclusion — the token budget does.
+  // The role-prefix normalisation this test was written for still matters, but
+  // it now only affects RANKING, never removal.
+  it('keeps prior turns whose only overlap with the prompt is a role prefix', () => {
     const context = buildContext();
     context.threadMessages = [
       {
@@ -149,7 +186,7 @@ describe('ContextAssemblyManager', () => {
 
     const prompt = manager.buildPromptString(context);
 
-    expect(prompt).not.toContain('SseClientService');
+    expect(prompt).toContain('SseClientService');
     expect(prompt).toContain('review this API design for race conditions');
   });
 
@@ -246,7 +283,10 @@ describe('ContextAssemblyManager', () => {
 });
 
 describe('ContextAssemblyManager memory selection', () => {
-  const manager = new ContextAssemblyManager();
+  const manager = new ContextAssemblyManager(
+    new ContextComposerManager(),
+    new CrossThreadRetrievalManager(stubCrossThreadRepository()),
+  );
 
   const memory = (
     id: string,

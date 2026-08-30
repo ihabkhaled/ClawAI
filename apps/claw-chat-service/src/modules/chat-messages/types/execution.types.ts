@@ -327,7 +327,28 @@ export type OpenAiChatRequest = {
 export type ThreadSettings = {
   systemPrompt?: string | null;
   temperature?: number | null;
+  /**
+   * How long the ANSWER may be. Nothing else.
+   *
+   * It used to double as the size of the whole prompt, so shortening replies
+   * shortened memory — see ADR-086 and ModelTokenBudget. Anything that needs
+   * an input budget must read `AssembledContext.modelBudget`.
+   */
   maxTokens?: number | null;
+  /**
+   * The selected model's real context window, from the model catalog.
+   *
+   * Optional because not every call site knows the model yet; absent falls
+   * back to a conservative window rather than to `maxTokens`.
+   */
+  contextWindowTokens?: number | null;
+  /** The selected provider, used only to pick a fallback window. */
+  provider?: string | null;
+  /**
+   * The thread's opt-in to reading the user's other conversations. Absent is
+   * treated as false — never as "probably fine". ADR-087.
+   */
+  useCrossThreadContext?: boolean | null;
   judgeModel?: string | null;
   criticEnabled?: boolean;
   criticModel?: string | null;

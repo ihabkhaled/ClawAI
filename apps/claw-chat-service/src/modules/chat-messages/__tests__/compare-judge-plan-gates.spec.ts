@@ -9,6 +9,11 @@ import type { AssembledContext } from '../types/context.types';
 import type { LlmResponse, MessageRoutedData } from '../types/execution.types';
 import type { JudgeRefereeConfig } from '../types/judge-referee.types';
 import { JudgeDecision } from '../../../common/enums';
+import {
+  disabledCrossThreadResult,
+  emptyConversationManifest,
+  fallbackModelTokenBudget,
+} from '../utilities/assembled-context.utility';
 
 // Slice C — plan gate proof for the compare / judge / critic paths.
 //
@@ -319,6 +324,9 @@ describe('Slice C — compare + judge + critic plan gates', () => {
         researchRunId: null,
         researchWarnings: [],
         tokenBudget: 4000,
+        modelBudget: fallbackModelTokenBudget(),
+        conversationManifest: emptyConversationManifest(),
+        crossThread: disabledCrossThreadResult(),
       };
       const config: JudgeRefereeConfig = {
         enabled: true,
@@ -422,6 +430,9 @@ describe('Slice C — compare + judge + critic plan gates', () => {
         researchRunId: null,
         researchWarnings: [],
         tokenBudget: 4000,
+        modelBudget: fallbackModelTokenBudget(),
+        conversationManifest: emptyConversationManifest(),
+        crossThread: disabledCrossThreadResult(),
       };
       const config: JudgeRefereeConfig = {
         enabled: true,

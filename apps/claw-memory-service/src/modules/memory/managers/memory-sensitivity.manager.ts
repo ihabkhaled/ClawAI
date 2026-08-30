@@ -14,6 +14,8 @@ import { httpRequest } from '../../../common/utilities/http-client.utility';
 import { classifierResponseSchema } from '../constants/sensitivity-classifier.constants';
 import type { SensitivityVerdict } from '../types/memory-sensitivity.types';
 import type { OllamaGenerateResponse } from '../types/memory.types';
+import { CIRCUIT_OLLAMA_GENERATE } from '../../../common/constants';
+import { throughCircuit } from '../../../common/utilities';
 
 export type { SensitivityVerdict };
 
@@ -73,17 +75,22 @@ export class MemorySensitivityManager {
         '{content}',
         content.slice(0, SENSITIVITY_CLASSIFIER_MAX_INPUT),
       );
-      const response = await httpRequest<OllamaGenerateResponse>({
-        url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-        method: 'POST',
-        body: {
-          model: config.MEMORY_SENSITIVITY_MODEL,
-          prompt,
-          stream: false,
-          options: { temperature: 0, num_predict: 120 },
-        },
-        timeoutMs: SENSITIVITY_CLASSIFIER_TIMEOUT_MS,
-      });
+      // Same dead-dependency problem as extraction, same circuit: this runs on
+      // the write path for every memory, and a missing model must cost one
+      // timeout per half-minute rather than one per memory.
+      const response = await throughCircuit(CIRCUIT_OLLAMA_GENERATE, async () =>
+        httpRequest<OllamaGenerateResponse>({
+          url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
+          method: 'POST',
+          body: {
+            model: config.MEMORY_SENSITIVITY_MODEL,
+            prompt,
+            stream: false,
+            options: { temperature: 0, num_predict: 120 },
+          },
+          timeoutMs: SENSITIVITY_CLASSIFIER_TIMEOUT_MS,
+        }),
+      );
       if (!response.ok) {
         this.logger.warn(
           `classifyWithOllama: status=${String(response.status)} — falling back to NORMAL`,

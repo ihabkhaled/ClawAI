@@ -1,13 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities';
+import { httpRequest, throughCircuit } from '../../../common/utilities';
 import {
+  CIRCUIT_OLLAMA_GENERATE,
   EXTRACTION_PROMPT,
   extractionResultSchema,
   VALID_MEMORY_TYPES,
 } from '../../../common/constants';
 import { type MemoryType } from '../../../generated/prisma';
 import type { ExtractedMemory, OllamaGenerateResponse } from '../types/memory.types';
+import { MEMORY_EXTRACTION_TIMEOUT_MS } from '../constants/memory-extraction.constants';
 
 @Injectable()
 export class MemoryExtractionManager {
@@ -32,17 +34,23 @@ export class MemoryExtractionManager {
       this.logger.debug(`extract: prompt built — length=${String(prompt.length)} chars`);
 
       this.logger.debug(`extract: calling Ollama for extraction at ${config.OLLAMA_SERVICE_URL}`);
-      const response = await httpRequest<OllamaGenerateResponse>({
-        url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
-        method: 'POST',
-        body: {
-          model,
-          prompt,
-          stream: false,
-          options: { temperature: 0, num_predict: 500 },
-        },
-        timeoutMs: 10_000,
-      });
+      // Through the circuit: with no model installed this call fails after ten
+      // seconds, and it is made once per message. At sixteen concurrent
+      // generations, sixteen of those in flight starved the RETRIEVAL path into
+      // its own timeout — a dead optional feature taking down a working one.
+      const response = await throughCircuit(CIRCUIT_OLLAMA_GENERATE, async () =>
+        httpRequest<OllamaGenerateResponse>({
+          url: `${config.OLLAMA_SERVICE_URL}/api/v1/ollama/generate`,
+          method: 'POST',
+          body: {
+            model,
+            prompt,
+            stream: false,
+            options: { temperature: 0, num_predict: 500 },
+          },
+          timeoutMs: MEMORY_EXTRACTION_TIMEOUT_MS,
+        }),
+      );
 
       if (!response.ok) {
         this.logger.warn(`extract: Ollama extraction returned status ${String(response.status)}`);

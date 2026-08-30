@@ -25,7 +25,9 @@ export function ThreadSettings({
   useMemory,
   onUseMemoryChange,
   useContext,
+  useCrossThreadContext,
   onUseContextChange,
+  onUseCrossThreadContextChange,
   onSave,
   isPending,
   maxTokensError,
@@ -138,6 +140,20 @@ export function ThreadSettings({
               checked={useContext}
               onCheckedChange={onUseContextChange}
               aria-label={t('chat.useContextLabel')}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <label className="text-sm font-medium">{t('chat.useCrossThreadContextLabel')}</label>
+              <p className="text-muted-foreground text-xs">
+                {t('chat.useCrossThreadContextDescription')}
+              </p>
+            </div>
+            <Switch
+              checked={useCrossThreadContext}
+              onCheckedChange={onUseCrossThreadContextChange}
+              aria-label={t('chat.useCrossThreadContextLabel')}
             />
           </div>
 

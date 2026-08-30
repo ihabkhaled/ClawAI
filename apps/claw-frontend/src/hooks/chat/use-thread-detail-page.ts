@@ -165,6 +165,8 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
       onUseMemoryChange: data.threadSettings.setUseMemory,
       useContext: data.threadSettings.useContext,
       onUseContextChange: data.threadSettings.setUseContext,
+      useCrossThreadContext: data.threadSettings.useCrossThreadContext,
+      onUseCrossThreadContextChange: data.threadSettings.setUseCrossThreadContext,
       onSave: data.threadSettings.handleSave,
       isPending: data.threadSettings.isPending,
       maxTokensError: data.threadSettings.maxTokensError,

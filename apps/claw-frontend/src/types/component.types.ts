@@ -474,7 +474,9 @@ export type ThreadSettingsProps = {
   useMemory: boolean;
   onUseMemoryChange: (value: boolean) => void;
   useContext: boolean;
+  useCrossThreadContext: boolean;
   onUseContextChange: (value: boolean) => void;
+  onUseCrossThreadContextChange: (value: boolean) => void;
   onSave: () => void;
   isPending: boolean;
   // Plan-feature gate: when false the judge toggle + judge-model selector are

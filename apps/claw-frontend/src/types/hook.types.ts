@@ -590,7 +590,9 @@ export type UseThreadSettingsReturn = {
   useMemory: boolean;
   setUseMemory: (value: boolean) => void;
   useContext: boolean;
+  useCrossThreadContext: boolean;
   setUseContext: (value: boolean) => void;
+  setUseCrossThreadContext: (value: boolean) => void;
   handleSave: () => void;
   isPending: boolean;
   maxTokensError: string | null;

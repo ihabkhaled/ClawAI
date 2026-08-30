@@ -32,6 +32,35 @@ export type RetrievalPackEntry = {
   tokenCountEstimate: number;
 };
 
+/**
+ * What the model was actually given from the conversation.
+ *
+ * Optional because receipts written before ADR-086 do not carry it. When it is
+ * absent the inspector says so rather than implying the thread was fully sent.
+ */
+export type RetrievalConversationSummary = {
+  totalThreadMessages: number;
+  includedMessageIds: string[];
+  includedTurnCount: number;
+  omittedMessageIds: string[];
+  omissionReasons: Record<string, string>;
+  estimatedInputTokens: number;
+  contextWindowTokens: number;
+  reservedOutputTokens: number;
+  availableInputTokens: number;
+  contextWindowSource: string;
+  referenceSignals: string[];
+  /** Cross-thread retrieval (ADR-087). Empty and `DISABLED` unless opted in. */
+  priorThreadsSearched: string[];
+  priorThreadsUsed: string[];
+  priorMessageIds: string[];
+  crossThreadSkipReason: string | null;
+  /** Network cost of fetching every context source, concurrently. */
+  retrievalMs: number;
+  /** In-memory cost of grouping, scoring and fitting the conversation. */
+  selectionMs: number;
+};
+
 export type RetrievalBundle = {
   memories: RetrievalMemoryEntry[];
   packItems: RetrievalPackEntry[];
@@ -40,6 +69,7 @@ export type RetrievalBundle = {
   tokenBudgetUsed: number;
   retrievalLatencyMs: number;
   warnings: string[];
+  conversation?: RetrievalConversationSummary;
 };
 
 export type ContextReceipt = RetrievalBundle & {

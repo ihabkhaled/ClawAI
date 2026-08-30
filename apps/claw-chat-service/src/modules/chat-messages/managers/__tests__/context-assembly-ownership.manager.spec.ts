@@ -1,5 +1,7 @@
 import type { ChatMessage } from '../../../../generated/prisma';
 import { ContextAssemblyManager } from '../context-assembly.manager';
+import { ContextComposerManager } from '../context-composer.manager';
+import { CrossThreadRetrievalManager } from '../cross-thread-retrieval.manager';
 
 jest.mock('../../../../common/utilities', () => ({
   buildInterServiceAuthHeader: jest.fn(() => 'Service test-service-token'),
@@ -38,6 +40,18 @@ const userMessage = {
   createdAt: new Date('2026-07-29T00:00:00.000Z'),
 } as ChatMessage;
 
+/**
+ * A repository that owns no data. These specs exercise prompt shaping, not
+ * retrieval, and a thread with `useCrossThreadContext` false never reaches the
+ * repository at all — the stub proves that rather than hiding it.
+ */
+function stubCrossThreadRepository(): ConstructorParameters<typeof CrossThreadRetrievalManager>[0] {
+  return {
+    findCandidateThreads: async () => Promise.resolve([]),
+    findMessagesForThreads: async () => Promise.resolve([]),
+  } as unknown as ConstructorParameters<typeof CrossThreadRetrievalManager>[0];
+}
+
 describe('ContextAssemblyManager attachment ownership contract', () => {
   beforeEach(() => {
     AppConfig.get.mockReturnValue({
@@ -75,7 +89,10 @@ describe('ContextAssemblyManager attachment ownership contract', () => {
   });
 
   it('sends the authenticated chat user when fetching attached file content', async () => {
-    const manager = new ContextAssemblyManager();
+    const manager = new ContextAssemblyManager(
+      new ContextComposerManager(),
+      new CrossThreadRetrievalManager(stubCrossThreadRepository()),
+    );
 
     const context = await manager.assemble('tenant-user-1', [userMessage], undefined, undefined, [
       'file-1',

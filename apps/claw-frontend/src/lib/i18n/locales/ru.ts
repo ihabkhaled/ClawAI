@@ -582,6 +582,9 @@ export const ru: TranslationDictionary = {
     useMemoryDescription: 'Когда выключено, никакие воспоминания не вставляются в запрос.',
     useContextLabel: 'Использовать пакеты контекста в этом разговоре',
     useContextDescription: 'Когда выключено, прикреплённые пакеты игнорируются.',
+    useCrossThreadContextLabel: 'Использовать релевантные прошлые чаты',
+    useCrossThreadContextDescription:
+      'Когда включено, ClawAI может искать в других ваших беседах материалы, относящиеся к этой. По умолчанию выключено.',
     workflow: {
       searchFirst: 'Поиск сначала',
       direct: 'Прямой',
@@ -3526,6 +3529,19 @@ export const ru: TranslationDictionary = {
     fieldPackItems: 'Элементы пакета',
     fieldTokensUsed: 'Использованные токены',
     fieldAssemblyOrder: 'Порядок сборки',
+    conversationHeading: 'Диалог, отправленный модели',
+    conversationUnavailable:
+      'Нет записи диалога — это сообщение создано до появления манифестов контекста.',
+    fieldMessagesSent: 'Отправлено сообщений',
+    fieldTurnsSent: 'Отправлено реплик',
+    fieldMessagesOmitted: 'Пропущено сообщений',
+    fieldInputTokens: 'Входные токены',
+    fieldContextWindow: 'Окно контекста',
+    fieldWindowSource: 'Источник окна',
+    fieldReferenceSignals: 'Сигналы отсылки',
+    fieldAssemblyTiming: 'Сборка (загрузка + отбор)',
+    fieldPriorChats: 'Использованные прошлые чаты',
+    signalNone: 'нет',
   },
   routingPlayground: {
     title: 'Песочница маршрутизации',

@@ -578,6 +578,9 @@ export const en: TranslationDictionary = {
     useMemoryDescription: 'When off, no memories are injected into the prompt.',
     useContextLabel: 'Use context packs in this thread',
     useContextDescription: 'When off, attached packs are ignored.',
+    useCrossThreadContextLabel: 'Use relevant previous chats',
+    useCrossThreadContextDescription:
+      'When on, ClawAI may look through your other conversations for material relevant to this one. Off by default.',
     workflow: {
       searchFirst: 'Search-first',
       direct: 'Direct',
@@ -3477,6 +3480,18 @@ export const en: TranslationDictionary = {
     fieldPackItems: 'Pack items',
     fieldTokensUsed: 'Tokens used',
     fieldAssemblyOrder: 'Assembly order',
+    conversationHeading: 'Conversation sent to the model',
+    conversationUnavailable: 'No conversation record - this message predates context manifests.',
+    fieldMessagesSent: 'Messages sent',
+    fieldTurnsSent: 'Turns sent',
+    fieldMessagesOmitted: 'Messages omitted',
+    fieldInputTokens: 'Input tokens',
+    fieldContextWindow: 'Context window',
+    fieldWindowSource: 'Window source',
+    fieldReferenceSignals: 'Reference signals',
+    fieldAssemblyTiming: 'Assembly (fetch + select)',
+    fieldPriorChats: 'Previous chats used',
+    signalNone: 'none',
   },
   routingPlayground: {
     title: 'Routing playground',

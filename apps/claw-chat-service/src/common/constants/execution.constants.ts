@@ -26,7 +26,27 @@ export const IMAGE_PROVIDER_PREFIX = 'IMAGE_';
 
 export const FILE_GENERATION_PROVIDER = 'FILE_GENERATION';
 
+/**
+ * DEPRECATED as a context rule. Kept only as the Runtime V2 tool-trail window.
+ *
+ * This was the whole conversational memory of the product: `assemble` sliced
+ * the thread to the last twenty messages and everything downstream cut further.
+ * Conversational history is now selected by ContextComposerManager against a
+ * real token budget — see ADR-086. Do not reintroduce a message-count rule.
+ */
 export const THREAD_CONTEXT_LIMIT = 20;
+
+/**
+ * How many rows are read from the database for one generation.
+ *
+ * Not a context rule — a read cap. The composer decides what of this reaches
+ * the model. It was 20, applied at the query, so a hundred-message thread had
+ * eighty messages that no amount of budget could recover: they were never
+ * loaded. Four hundred rows of a single indexed thread is a cheap read and
+ * covers a very long conversation; beyond it, hierarchical summaries (Batch 2)
+ * take over rather than an ever-larger SELECT.
+ */
+export const THREAD_HISTORY_FETCH_LIMIT = 400;
 
 export const MEMORY_FETCH_LIMIT = 20;
 

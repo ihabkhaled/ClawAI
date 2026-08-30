@@ -572,6 +572,9 @@ export const ar: TranslationDictionary = {
     useMemoryDescription: 'عند الإيقاف، لن يتم إدخال أي ذكريات في الموجه.',
     useContextLabel: 'استخدام حزم السياق في هذه المحادثة',
     useContextDescription: 'عند الإيقاف، يتم تجاهل الحزم المرفقة.',
+    useCrossThreadContextLabel: 'استخدام المحادثات السابقة ذات الصلة',
+    useCrossThreadContextDescription:
+      'عند التفعيل، قد يبحث ClawAI في محادثاتك الأخرى عن محتوى ذي صلة بهذه المحادثة. مُعطّل افتراضيًا.',
     workflow: {
       searchFirst: 'البحث أولاً',
       direct: 'مباشر',
@@ -3455,6 +3458,18 @@ export const ar: TranslationDictionary = {
     fieldPackItems: 'عناصر الحزمة',
     fieldTokensUsed: 'الرموز المستخدمة',
     fieldAssemblyOrder: 'ترتيب التجميع',
+    conversationHeading: 'المحادثة المُرسلة إلى النموذج',
+    conversationUnavailable: 'لا يوجد سجل للمحادثة — هذه الرسالة أقدم من بيانات سياق المحادثة.',
+    fieldMessagesSent: 'الرسائل المُرسلة',
+    fieldTurnsSent: 'الأدوار المُرسلة',
+    fieldMessagesOmitted: 'الرسائل المستبعدة',
+    fieldInputTokens: 'رموز الإدخال',
+    fieldContextWindow: 'نافذة السياق',
+    fieldWindowSource: 'مصدر النافذة',
+    fieldReferenceSignals: 'إشارات الإحالة',
+    fieldAssemblyTiming: 'التجميع (الجلب + الاختيار)',
+    fieldPriorChats: 'المحادثات السابقة المستخدمة',
+    signalNone: 'لا شيء',
   },
   routingPlayground: {
     title: 'بيئة تجربة التوجيه',

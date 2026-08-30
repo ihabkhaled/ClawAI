@@ -1,10 +1,21 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { Public } from '../../../app/decorators/public.decorator';
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { type MemoryRecord, MemoryType } from '../../../generated/prisma';
 import { MemoryRepository } from '../repositories/memory.repository';
 import { MemoryService } from '../services/memory.service';
 import type { UpsertAutomationPreferenceBody } from '../types/automation-preference.types';
 
+@UseGuards(ServiceTokenGuard)
 @Controller('internal/memories')
 export class MemoryInternalController {
   constructor(

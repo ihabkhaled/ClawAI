@@ -584,6 +584,9 @@ export const pt: TranslationDictionary = {
     useMemoryDescription: 'Quando desativado, nenhuma memória é injetada no prompt.',
     useContextLabel: 'Usar pacotes de contexto nesta conversa',
     useContextDescription: 'Quando desativado, os pacotes anexados são ignorados.',
+    useCrossThreadContextLabel: 'Usar conversas anteriores relevantes',
+    useCrossThreadContextDescription:
+      'Quando ativado, o ClawAI pode consultar as suas outras conversas em busca de material relevante para esta. Desativado por predefinição.',
     workflow: {
       searchFirst: 'Busca primeiro',
       direct: 'Direto',
@@ -3523,6 +3526,19 @@ export const pt: TranslationDictionary = {
     fieldPackItems: 'Itens do pacote',
     fieldTokensUsed: 'Tokens usados',
     fieldAssemblyOrder: 'Ordem de montagem',
+    conversationHeading: 'Conversa enviada ao modelo',
+    conversationUnavailable:
+      'Sem registo da conversa — esta mensagem é anterior aos manifestos de contexto.',
+    fieldMessagesSent: 'Mensagens enviadas',
+    fieldTurnsSent: 'Turnos enviados',
+    fieldMessagesOmitted: 'Mensagens omitidas',
+    fieldInputTokens: 'Tokens de entrada',
+    fieldContextWindow: 'Janela de contexto',
+    fieldWindowSource: 'Origem da janela',
+    fieldReferenceSignals: 'Sinais de referência',
+    fieldAssemblyTiming: 'Montagem (obtenção + seleção)',
+    fieldPriorChats: 'Conversas anteriores utilizadas',
+    signalNone: 'nenhum',
   },
   routingPlayground: {
     title: 'Playground de roteamento',

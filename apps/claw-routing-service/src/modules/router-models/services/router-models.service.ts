@@ -10,6 +10,7 @@ import {
 import { type CreateRouterModelDto } from '../dto/create-router-model.dto';
 import { type UpdateRouterModelDto } from '../dto/update-router-model.dto';
 import { type ListRouterModelsQueryDto } from '../dto/list-router-models-query.dto';
+import { type ModelContextWindowSnapshot } from '../types/model-context-window.types';
 
 @Injectable()
 export class RouterModelsService {
@@ -17,6 +18,32 @@ export class RouterModelsService {
     private readonly registryRepo: RouterModelRegistryRepository,
     private readonly registryManager: RouterModelRegistryManager,
   ) {}
+
+  /**
+   * The two numbers a prompt budget needs, for an internal caller.
+   *
+   * Returns `known: false` rather than throwing when there is no catalog row:
+   * an unknown model must make the caller fall back to a conservative window,
+   * not fail the user's generation. `maxContextTokens` (the enrichment field)
+   * wins over `contextWindowTokens` (the sync field) when both are present,
+   * because enrichment is the later and more specific of the two.
+   */
+  async getContextWindowSnapshot(
+    provider: string,
+    modelKey: string,
+  ): Promise<ModelContextWindowSnapshot> {
+    const record = await this.registryRepo.findByProviderAndModelKey(provider, modelKey);
+    if (record === null) {
+      return { provider, modelKey, contextWindowTokens: null, maxOutputTokens: null, known: false };
+    }
+    return {
+      provider,
+      modelKey,
+      contextWindowTokens: record.maxContextTokens ?? record.contextWindowTokens ?? null,
+      maxOutputTokens: record.maxOutputTokensIntel ?? record.maxOutputTokens ?? null,
+      known: true,
+    };
+  }
 
   async list(query: ListRouterModelsQueryDto): Promise<PaginatedResult<RouterModelRegistryRecord>> {
     const { page, limit } = query;

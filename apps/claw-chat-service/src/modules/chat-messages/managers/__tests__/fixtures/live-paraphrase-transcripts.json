@@ -1,0 +1,2594 @@
+[
+  {
+    "threadId": "cmtfr8051002401olhkwfzyho",
+    "model": "deepseek-v4-pro:0813",
+    "phrasing": "high_overlap",
+    "recalledLive": true,
+    "messages": [
+      {
+        "id": "cmtfr808g002301l1jafprl2s",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfr8415002901l1k31v2lfr",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfr84u3002a01l1mk7h51os",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfr89yl002c01lrqvvx7l8s",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set, which can definitively say an item is *not* present but can only say an item is *possibly* present. It works by using multiple hash functions to map each element to a bit array, accepting a small, tunable rate of false positives in exchange for significant memory savings."
+      },
+      {
+        "id": "cmtfr8bif002701nwv9m2z4o7",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfr8kfc002a01nwszjrn4l2",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that allows only the thread that acquired it to release it, enforcing mutual exclusion and typically including ownership and priority-inheritance semantics. A semaphore is a signaling mechanism with a counter that permits multiple threads to access a resource up to a set limit, and it can be incremented or decremented by any thread."
+      },
+      {
+        "id": "cmtfr8knc002b01nw58oxh2eh",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfr8pnk002d01nw4ucavq8z",
+        "role": "ASSISTANT",
+        "content": "1. A lost or delayed packet at the front of a TCP stream prevents subsequent in-order bytes from being delivered to the application until retransmission completes.\n2. Multiple application-level requests multiplexed over a single TCP connection (as in HTTP/1.1) are blocked when one response is delayed, since all responses must arrive in order."
+      },
+      {
+        "id": "cmtfr8rbk002f01nw305ilcae",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfr8uzq002s01l1ozi0qxfa",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that a distributed data store can simultaneously guarantee only two of the following three properties: Consistency, Availability, and Partition tolerance. Since network partitions are unavoidable in distributed systems, the system must choose between remaining available (returning potentially stale data) or remaining consistent (refusing to answer until the partition resolves)."
+      },
+      {
+        "id": "cmtfr8vxr002w01lr4jppo4pf",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfr92sm003001lrflwb9dg3",
+        "role": "ASSISTANT",
+        "content": "A lower DNS TTL ensures that clients refresh their cached IP addresses more quickly, allowing failover traffic to be redirected to a healthy server with minimal downtime."
+      },
+      {
+        "id": "cmtfr9534003101lrylyjpwlp",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfr9d7f003101l1z1ni1j1q",
+        "role": "ASSISTANT",
+        "content": "Copy-on-write is an optimization strategy where multiple callers share the same copy of a resource until one of them attempts to modify it. At that moment, the system creates a private duplicate of the resource for the modifying caller, ensuring that the change does not affect the other users."
+      },
+      {
+        "id": "cmtfr9e8a003201l1nzx4jpxq",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfr9i00003701l14x2taga8",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is used to efficiently and securely verify the integrity and consistency of large datasets by organizing data into a tree of cryptographic hashes. It allows you to confirm that a specific piece of data belongs to a dataset without needing to download or check the entire dataset."
+      },
+      {
+        "id": "cmtfr9iu5003601olxf8jwnkd",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfr9p0o003c01lrmsw8zhkx",
+        "role": "ASSISTANT",
+        "content": "A leap second is an occasional one-second adjustment applied to Coordinated Universal Time (UTC) to keep it aligned with mean solar time, which varies slightly due to irregularities in Earth's rotation. These adjustments are added at the end of June or December to prevent civil time from drifting away from astronomical time."
+      },
+      {
+        "id": "cmtfr9pir003d01lrolei1c3w",
+        "role": "USER",
+        "content": "What is my access code for this session? Reply with the code only."
+      },
+      {
+        "id": "cmtfr9rup003i01lrda9xkwjg",
+        "role": "ASSISTANT",
+        "content": "VERDIGRIS-4417"
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfr800k001x01nw3bf4fuq8",
+    "model": "kimi-k3",
+    "phrasing": "high_overlap",
+    "recalledLive": true,
+    "messages": [
+      {
+        "id": "cmtfr8044001y01nwhqd861x9",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfr82o7002101nw99ra1hul",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfr82zj002601lrurmeq6hy",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfr87sl002f01l1s7ywfvkf",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure that tests whether an element is likely in a set, using multiple hash functions to set bits in a fixed-size array. It guarantees no false negatives but may produce false positives, trading perfect accuracy for constant-time lookups and minimal memory usage."
+      },
+      {
+        "id": "cmtfr89n1002b01lrhc0pj3t2",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfr8iv2002h01oly3isr0co",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism used to ensure that only one thread can access a resource at a time. A semaphore, on the other hand, is a signaling mechanism that controls access to a resource by multiple threads, allowing a specified number of threads to access the resource concurrently."
+      },
+      {
+        "id": "cmtfr8lq7002l01olf4your5o",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfr8qg9002o01olmhtzdd3y",
+        "role": "ASSISTANT",
+        "content": "Lost TCP segments requiring retransmission before subsequent data can be delivered to the application.\n\nReceive window exhaustion or receiver buffer limits preventing out-of-order data from being accepted."
+      },
+      {
+        "id": "cmtfr8sep002h01nw1n06xj6j",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfr8woy002l01nwk8cf1ol0",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that a distributed system can only guarantee two of three properties simultaneously: **Consistency** (all nodes see the same data), **Availability** (every request receives a response), and **Partition tolerance** (the system continues to operate despite network failures). \n\nIn practice, because network partitions are inevitable, you must choose between consistency and availability—meaning you can have a CP system (consistent but potentially unavailable during partitions) or an AP system (available but potentially returning stale data), but never both during a network split."
+      },
+      {
+        "id": "cmtfr8x0i002y01lrcs4uc4ad",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfr98vz002p01nweejkl0by",
+        "role": "ASSISTANT",
+        "content": "DNS TTL determines how long a stale IP address remains cached by resolvers, so a low TTL is critical for failover because it minimizes the window of downtime users experience before their traffic is redirected to the healthy server."
+      },
+      {
+        "id": "cmtfr993z002y01l10a101ykj",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfr9fco003201ol5v529cf6",
+        "role": "ASSISTANT",
+        "content": "A **Bloom filter** is a space-efficient probabilistic data structure used to test whether an element is a member of a set, where it can definitively say \"no\" but only probabilistically say \"maybe yes\" (with possible false positives but never false negatives). **Copy-on-write** is a resource optimization technique where multiple processes or threads share the same underlying data until someone attempts to modify it, at which point a private copy is created for the writer, ensuring that expensive duplication only occurs when absolutely necessary."
+      },
+      {
+        "id": "cmtfr9fs9002y01nwaffsi834",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfr9o1o003901lrkyuoaine",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is a data structure that enables efficient and secure verification of large data sets by organizing hashes into a tree where each parent node contains the hash of its children. It allows systems to prove that specific data exists within the set without downloading or checking the entire dataset, making it essential for blockchain transaction validation and distributed systems integrity checks."
+      },
+      {
+        "id": "cmtfr9oz1003b01lrvotowrha",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfr9t8e003601nwrg5s96fs",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a space-efficient probabilistic data structure that tests whether an element is definitely not in a set or possibly in the set. It uses multiple hash functions to set bits in a bit array, allowing false positives but never false negatives.\n\nCopy-on-write is a resource optimization technique where multiple consumers share the same data until one attempts to modify it, at which point a private copy is created for the writer. This defers the expensive copying operation until absolutely necessary, improving performance and reducing memory usage when data is mostly read.\n\nLeap seconds are occasional one-second adjustments added to Coordinated Universal Time (UTC) to keep atomic time synchronized with Earth's irregular rotation. They are inserted (or theoretically removed) at the end of June or December as needed, ensuring that our clocks stay aligned with astronomical time within 0.9 seconds."
+      },
+      {
+        "id": "cmtfr9tkk003h01ol6hkwmhja",
+        "role": "USER",
+        "content": "What is my access code for this session? Reply with the code only."
+      },
+      {
+        "id": "cmtfr9xfx003j01olwkb2w793",
+        "role": "ASSISTANT",
+        "content": "VERDIGRIS-4417"
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfr8045002301oletjq0i81",
+    "model": "deepseek-v4-pro:0813",
+    "phrasing": "low_overlap",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfr807b001z01nwi2osd89g",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfr82ui002501lrm1dfrrdx",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfr8327002801l1qveu0i5r",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfr88oy002501nwoydu3lqt",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure that tests whether an element is a member of a set, and it can definitively say an item is not present but may return false positives. It works by using multiple hash functions to set bits in a bit array, allowing for fast membership checks with a tunable trade-off between memory usage and accuracy."
+      },
+      {
+        "id": "cmtfr89qr002f01olwo1zg2i5",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfr8jln002k01l1z3zqcv9v",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that allows only the thread that acquired the lock to release it, enforcing mutual exclusion and ownership. A semaphore is a signaling mechanism with a counter that permits multiple threads to access a resource up to a set limit, and any thread can increment or decrement it."
+      },
+      {
+        "id": "cmtfr8lu9002l01l1ueaotbuk",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfr8rdh002p01l1qlefz39g",
+        "role": "ASSISTANT",
+        "content": "1. A lost or delayed packet at the front of a TCP stream prevents subsequent in-order bytes from being delivered to the application until retransmission completes.\n2. Using a single TCP connection to multiplex multiple independent request/response streams causes all streams to wait behind the first stream's stalled or lost segment."
+      },
+      {
+        "id": "cmtfr8sis002p01olbtexuiar",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfr8vsr002v01lrxi4mabsw",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that a distributed data store can simultaneously guarantee only two of the following three properties: consistency, availability, and partition tolerance. Since network partitions are unavoidable in distributed systems, the system must choose between remaining available with potentially inconsistent data or staying consistent by refusing some requests during a partition."
+      },
+      {
+        "id": "cmtfr8x4j002u01l1151g713r",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfr99f8003301lrfqe9r3vc",
+        "role": "ASSISTANT",
+        "content": "DNS TTL matters for failover because it controls how long resolvers cache an IP address, so a lower TTL ensures that traffic can be redirected to a backup server more quickly after a failure."
+      },
+      {
+        "id": "cmtfr9cqu002r01nwymxpzhay",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfr9fud002z01nwrdiflhyl",
+        "role": "ASSISTANT",
+        "content": "Copy-on-write is an optimization strategy where multiple callers initially share a single copy of a resource rather than creating private duplicates. The system only creates an actual private copy for a caller when that caller attempts to modify the data, ensuring that read-only operations remain efficient while preserving the illusion of independent ownership."
+      },
+      {
+        "id": "cmtfr9hd4003501l1bwbhi0hp",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfr9o07003901ol3uxdhfry",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is used to efficiently and securely verify the integrity and consistency of large datasets by organizing data into a tree of cryptographic hashes. It allows you to confirm whether a specific piece of data belongs to a set without needing to download or check the entire dataset, which is why it is widely used in blockchains and distributed systems."
+      },
+      {
+        "id": "cmtfr9qi0003e01l10eqg5s8d",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfr9u5p003701nwzb5go96x",
+        "role": "ASSISTANT",
+        "content": "A leap second is an occasional one-second adjustment added to Coordinated Universal Time (UTC) to keep it aligned with mean solar time, which varies slightly due to irregularities in Earth's rotation. These adjustments are typically inserted at the end of June or December to prevent the long-term drift between precise atomic clocks and astronomical time."
+      },
+      {
+        "id": "cmtfr9v47003h01l1y7e8erh5",
+        "role": "USER",
+        "content": "Which secret string did I share at the start? Reply with it only."
+      },
+      {
+        "id": "cmtfr9y3k003c01nwaaar23h1",
+        "role": "ASSISTANT",
+        "content": "I’m sorry, but I don’t have access to any previous messages or context from before this conversation. Could you please repeat the secret string you shared?"
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfr805k002201l1721wb9o7",
+    "model": "kimi-k3",
+    "phrasing": "low_overlap",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfr808t002501olhg0zogi6",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfr845y002701lrvu2np96w",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfr84v2002a01oluvpw3k52",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfr8awm002g01l19mcdkea4",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a space-efficient probabilistic data structure designed to test whether an element is a member of a set. It can definitively confirm an element is absent (no false negatives) but may incorrectly claim an element is present (possible false positives), making it ideal for fast pre-filtering when absolute certainty of existence is not required."
+      },
+      {
+        "id": "cmtfr8bka002d01lrm30ygwn6",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfr8ln9002k01ol1jo1jvr0",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism used to ensure that only one thread can access a resource at a time, providing mutual exclusion. A semaphore, on the other hand, is a signaling mechanism that controls access to a resource by multiple threads, allowing a set number of threads to access the resource concurrently."
+      },
+      {
+        "id": "cmtfr8nnu002k01lr4v6p99vp",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfr8t87002p01lrvit7298u",
+        "role": "ASSISTANT",
+        "content": "Packet loss causing retransmission delays that stall subsequent in-order data delivery.  \nReceive buffer exhaustion from a slow-reading application, halting the entire byte stream."
+      },
+      {
+        "id": "cmtfr8uc0002j01nw4prpe2o4",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfr8zl8002z01lr0sd5zh6p",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem claims that during a network partition (P), a distributed system must choose between consistency (C) and availability (A), as it is impossible to maintain both simultaneously. When the network is functioning normally without partitions, the system can provide both consistency and availability."
+      },
+      {
+        "id": "cmtfr90zk002n01nwahvofndo",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfr9b38002z01l17d9t0v82",
+        "role": "ASSISTANT",
+        "content": "DNS TTL matters for failover because it dictates how long resolvers cache a record, meaning a lower TTL allows traffic to shift to a backup server faster while a high TTL can leave users stuck on a dead IP."
+      },
+      {
+        "id": "cmtfr9d35002s01nw9qw2pf78",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfr9hgu003701lrevh4lt23",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It can yield false positives but never false negatives, meaning it can tell you with certainty that an item is not in the set, but only with a probability that it is.\n\nCopy-on-write is a resource optimization technique where multiple consumers share the same data until one of them attempts to modify it. Only at the point of modification is a separate copy created for the writer, ensuring that the original data remains unchanged for other consumers and saving memory and processing time when no changes occur."
+      },
+      {
+        "id": "cmtfr9hqa003501olyskvev7g",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfr9oyv003401nwhbjoin0n",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is used to efficiently verify the integrity of large data sets by storing cryptographic hashes in a hierarchical binary tree structure. It allows users to confirm that specific data elements belong to the set without having to download or process the entire dataset."
+      },
+      {
+        "id": "cmtfr9qvk003b01oluyegbr0c",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfr9v3y003j01lrfejmqs8h",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient, probabilistic data structure used to test whether an element is a member of a set. It can quickly tell you if an item is **definitely not** in the set or **possibly** in it, meaning it allows for false positives but never false negatives.\n\n***\n\n**Copy-on-write (CoW)** is a resource-management technique where multiple processes are allowed to share the same copy of data until one of them attempts to modify it. At that point, a private copy is created for the writing process, ensuring that the original data remains unchanged for the others while saving memory and processing time until a write actually occurs.\n\n***\n\n**Leap seconds** are occasional one-second adjustments added to Coordinated Universal Time (UTC) to keep it synchronized with Earth's slowing rotation. Because the planet's spin is irregular and gradually decelerates, these extra seconds ensure that our atomic clocks stay aligned with astronomical time (solar time)."
+      },
+      {
+        "id": "cmtfr9vhs003901nwtyztjy3c",
+        "role": "USER",
+        "content": "Which secret string did I share at the start? Reply with it only."
+      },
+      {
+        "id": "cmtfra064003l01olanxnypes",
+        "role": "ASSISTANT",
+        "content": "I don't have any record of a previous conversation or a \"secret string\" shared at the start of our chat. This appears to be the first message in our current conversation.\n\nIf you intended to share a secret string with me, it may not have come through, or you might be thinking of a different conversation. Could you please share the string again? I'd be happy to help you with whatever you need once I can see it."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfr805g002201lrt0lxz04w",
+    "model": "kimi-k3",
+    "phrasing": "coreference",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfr808m002001nwprtfj9bp",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfr8384002201nwwlmxp6ye",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfr84v9002c01l1emx031qf",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfr8b1b002601nwd67zo4rl",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient, probabilistic data structure used to test whether an element is a member of a set. It can quickly tell you if an item is *definitely not* in the set or *possibly* in it, meaning it may yield false positives but never false negatives."
+      },
+      {
+        "id": "cmtfr8bii002h01l10jql714d",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfr8l7a002i01lruph9qib1",
+        "role": "ASSISTANT",
+        "content": "A mutex is a binary lock used to ensure that only one thread can access a shared resource at a time. A semaphore is a signaling mechanism that can allow a fixed number of threads to access a resource concurrently, using a counter to manage availability."
+      },
+      {
+        "id": "cmtfr8nmc002m01olq2gen5en",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfr8s9j002g01nwxbbvnvrt",
+        "role": "ASSISTANT",
+        "content": "1. Packet loss requiring retransmission before subsequent segments can be delivered.  \n2. Out-of-order segment arrival due to network path changes or reordering."
+      },
+      {
+        "id": "cmtfr8ubt002r01lrcmzti56v",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfr8zuy002m01nwqx1gptga",
+        "role": "ASSISTANT",
+        "content": "CAP theorem states that a distributed system cannot simultaneously guarantee **Consistency** (all nodes see the same data at the same time), **Availability** (every request receives a response), and **Partition Tolerance** (the system continues operating despite network failures between nodes). In practice, this means that when a network partition occurs, you must choose between sacrificing consistency (allowing stale data) or availability (rejecting requests), since you cannot have all three guarantees at once during a failure."
+      },
+      {
+        "id": "cmtfr912w002v01olo3u287n5",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfr9c17002q01nwsoopuufq",
+        "role": "ASSISTANT",
+        "content": "DNS TTL matters for failover because it controls how long resolvers cache a record, so a lower TTL lets traffic shift to a backup endpoint faster while a higher TTL can keep sending users to a failed service longer."
+      },
+      {
+        "id": "cmtfr9d5o002t01nwzg1oeei6",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfr9hnf003401olixdp8kyx",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a space-efficient probabilistic data structure that can tell you if an element is definitely not in a set or possibly in the set. It uses multiple hash functions to set bits in a bit array, allowing false positives but never false negatives.\n\nCopy-on-write is a resource optimization technique where multiple processes can share the same memory pages until one of them attempts to modify the data. When a write occurs, the system creates a private copy of the page for that process, preserving the original for others and saving memory when no modifications happen."
+      },
+      {
+        "id": "cmtfr9jwa003801l16zntw720",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfr9qds003d01l10tz6awre",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is a data structure that efficiently verifies the integrity of large datasets by organizing data into a tree of cryptographic hashes. It allows systems to prove that a specific piece of data is part of a larger set without needing to examine the entire dataset, making it essential for blockchains, distributed systems, and verifying file integrity."
+      },
+      {
+        "id": "cmtfr9t1e003f01ol6z4tx5xn",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfr9xd0003a01nw7s1c1txn",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set, where it can yield false positives but never false negatives. It works by using multiple hash functions to set bits in a bit array, allowing for quick membership queries while using minimal memory.\n\nCopy-on-write is a resource management technique where multiple users can share the same data until one of them attempts to modify it, at which point a separate copy is created for the modifier. This approach optimizes performance and memory usage by minimizing unnecessary data duplication.\n\nLeap seconds are occasional adjustments made to Coordinated Universal Time (UTC) to account for irregularities in the Earth's rotation, ensuring that atomic time remains in sync with solar time. They are added or occasionally subtracted at the end of June or December, resulting in a minute that has 61 seconds instead of the usual 60."
+      },
+      {
+        "id": "cmtfr9xnv003j01l1rsiibgmr",
+        "role": "USER",
+        "content": "Repeat it back to me. Value only."
+      },
+      {
+        "id": "cmtfra0zp003m01l1gvqjyqbe",
+        "role": "ASSISTANT",
+        "content": "I don't have any previous value or content to repeat back to you—this appears to be the start of our conversation. \n\nCould you please provide the text, value, or information you'd like me to repeat? Once you share it, I'll return exactly that content to you with no additions or modifications."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfr8055002101l1zd0vasv3",
+    "model": "kimi-k3",
+    "phrasing": "natural_paraphrase",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfr8084002301lr64t0zwdt",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfr83fw002901ol1d6gjc0d",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfr84uk002b01l1m73p1x73",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfr89ow002e01olzxzy4uw8",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient, probabilistic data structure used to test whether an element is a member of a set, where false positives are possible but false negatives are not. It works by hashing elements into a bit array using multiple hash functions, allowing for rapid membership queries with minimal memory usage."
+      },
+      {
+        "id": "cmtfr8bmi002e01lrdcnouqf2",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfr8mjt002m01l1yr1667i0",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that ensures only one thread can access a resource at a time, with ownership (the thread that locks it must unlock it). A semaphore is a signaling mechanism that controls access to a resource pool via a counter, allowing multiple threads up to a set limit, and doesn't require ownership."
+      },
+      {
+        "id": "cmtfr8np0002l01lrech1s4qu",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfr8st8002q01olmd5okeab",
+        "role": "ASSISTANT",
+        "content": "Packet loss requiring retransmission.\n\nIn-order delivery requirements."
+      },
+      {
+        "id": "cmtfr8ufg002r01l1tgo1hv4e",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfr91ic002w01ol3cvjw8ac",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that a distributed data store cannot simultaneously provide all three of the following guarantees: **Consistency** (every read receives the most recent write or an error), **Availability** (every request receives a non-error response, without guarantee that it contains the most recent write), and **Partition tolerance** (the system continues to operate despite arbitrary message loss or failure of part of the system). \n\nMore precisely, when a network partition occurs, the system must choose between consistency and availability—meaning partition tolerance is mandatory, so the real trade-off is between C and A during partitions."
+      },
+      {
+        "id": "cmtfr93kt002w01l1s9k5fue5",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfr9d4k003001olec8i8mjo",
+        "role": "ASSISTANT",
+        "content": "DNS TTL determines how long resolvers cache a record, so a lower TTL allows traffic to be redirected to a backup endpoint more quickly during failover, while a higher TTL can leave users pointed at a failed service until the cache expires."
+      },
+      {
+        "id": "cmtfr9frm003301olck5i75ts",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfr9o7c003b01l1icbekze3",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient, probabilistic data structure used to test whether an element is a member of a set. It can yield false positives (indicating an element is present when it is not) but never false negatives, making it ideal for quickly filtering out items that are definitely not in a collection.\n\nCopy-on-write is a resource management optimization where multiple consumers share the same underlying data until one attempts to modify it. At that point, a private copy is created for the modifier, ensuring that changes remain isolated while avoiding the cost of unnecessary duplication for read-only access."
+      },
+      {
+        "id": "cmtfr9oyc003a01lrco7kfxbl",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfr9rfc003f01l16itnc3sc",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is a cryptographic structure that organizes data into a tree of hashes to enable efficient and secure verification of large datasets. It is primarily used in blockchain systems and distributed databases to prove that specific data exists within a set without requiring the entire dataset to be downloaded or examined."
+      },
+      {
+        "id": "cmtfr9rtz003h01lrqojxffwp",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfr9wcx003i01olrg3c5tyo",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It can yield false positives but never false negatives, meaning it may incorrectly indicate an element is present, but if it says an element is absent, it definitely is.\n\nCopy-on-write is a resource management technique where multiple processes share the same data until one attempts to modify it, at which point a private copy is created for the modifier. This optimizes performance and memory usage by deferring the cost of duplication until absolutely necessary.\n\nLeap seconds are occasional one-second adjustments added to Coordinated Universal Time (UTC) to keep it synchronized with Earth's slowing rotation. They are inserted (or theoretically removed) typically on June 30 or December 31 to ensure that atomic time matches astronomical time within 0.9 seconds."
+      },
+      {
+        "id": "cmtfr9yi4003m01lrkljamb74",
+        "role": "USER",
+        "content": "Remind me of the credential I mentioned earlier. Value only."
+      },
+      {
+        "id": "cmtfra4f3003m01olld939xic",
+        "role": "ASSISTANT",
+        "content": "I don't have access to previous conversations or any credentials you may have mentioned earlier. Each conversation with me starts fresh, and I cannot retrieve information from past sessions.\n\nIf you need to recall a credential, please check your own records or password manager. For security reasons, I don't retain personal information between conversations."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfr9se4003d01olyhyrn9e2",
+    "model": "deepseek-v4-pro:0813",
+    "phrasing": "natural_paraphrase",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfr9sgq003e01olhjemhxyg",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfr9v4a003i01l1dlr4tufx",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfr9vc5003k01lrvhp507z7",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfr9z0d003n01lrxjzjiqvy",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure that tests whether an element is a member of a set, and it can quickly tell you if an item is definitely not present or possibly present. It achieves this by using multiple hash functions to set bits in a bit array, which allows for fast lookups with a trade-off of possible false positives but no false negatives."
+      },
+      {
+        "id": "cmtfr9zy0003l01l1wi2y88hj",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfra5zd003h01nwes6b3pn9",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that allows only one thread at a time to hold it, enforcing exclusive access to a shared resource, and it typically includes ownership so only the locking thread can unlock it. A semaphore is a signaling mechanism that maintains a counter to allow a fixed number of threads to access a resource concurrently, and it has no ownership, so any thread can release a permit."
+      },
+      {
+        "id": "cmtfra6lq003t01l1zvrfhusy",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfradms003y01l1889tmw0i",
+        "role": "ASSISTANT",
+        "content": "1. A lost or delayed packet at the front of a TCP stream prevents subsequent in-order data from being delivered to the application.\n2. Multiple independent streams multiplexed over a single TCP connection (e.g., HTTP/1.1) are all stalled when one stream's packet is lost."
+      },
+      {
+        "id": "cmtfrafqr004001l1h4oizwmx",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrajn7003o01nw24vpwh6r",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that a distributed data store can simultaneously guarantee only two of the following three properties: consistency, availability, and partition tolerance. Since network partitions are unavoidable in distributed systems, the system must choose between remaining available (returning possibly stale data) or staying consistent (refusing some requests) during a partition."
+      },
+      {
+        "id": "cmtfrakcq003q01nwgjqg320p",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfraniw004601l14rvro39g",
+        "role": "ASSISTANT",
+        "content": "DNS TTL matters for failover because it controls how long resolvers cache an IP address, so a lower TTL ensures that traffic can be redirected to a backup server more quickly after a failure."
+      },
+      {
+        "id": "cmtfraoyn004201lrz3wixtk4",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfras44004901l1jdlrztgy",
+        "role": "ASSISTANT",
+        "content": "Copy-on-write is an optimization strategy where multiple callers share the same copy of a resource until one of them attempts to modify it. At that point, the system creates a private duplicate of the resource for the modifying caller, ensuring that the change does not affect the other users."
+      },
+      {
+        "id": "cmtfratk1004501olm70ehy3d",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrazcw004701old7psg4xs",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is used to efficiently and securely verify the integrity and consistency of large datasets by organizing data into a tree of cryptographic hashes. It allows a recipient to confirm that a specific piece of data belongs in a set without needing the entire dataset, which is why it is fundamental to blockchain systems and distributed file storage."
+      },
+      {
+        "id": "cmtfrb088004801olqa75b9fh",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrb3kj004b01lrg5znxlom",
+        "role": "ASSISTANT",
+        "content": "A leap second is an occasional one-second adjustment added to Coordinated Universal Time (UTC) to keep it aligned with Earth's slowing rotation. Because atomic clocks are more precise than the planet's irregular spin, this extra second prevents official time from drifting away from astronomical noon over the centuries."
+      },
+      {
+        "id": "cmtfrb4ts004301nw1qnq4gs3",
+        "role": "USER",
+        "content": "Remind me of the credential I mentioned earlier. Value only."
+      },
+      {
+        "id": "cmtfrb7r4004h01l1a02ip3nf",
+        "role": "ASSISTANT",
+        "content": "I don't have access to any credentials you may have mentioned earlier, as each message in this conversation is processed independently and I don't retain memory of past exchanges."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfr9y6a003k01l1tpbsxbd6",
+    "model": "deepseek-v4-pro:0813",
+    "phrasing": "coreference",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfr9yc8003d01nwm7rhhvlx",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfra35v003q01lrfr41h549",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfra53u003q01l1slo23zyi",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfraaev003j01nw8vmi5ns0",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set, which can definitively say an item is *not* present but can only say an item is *possibly* present. It works by using multiple hash functions to set bits in a bit array, trading a small, controllable false positive rate for significant memory savings."
+      },
+      {
+        "id": "cmtfrabun003k01nwksl4oahb",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrag3f004101l1vf0vy0q1",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that allows only one thread at a time to hold it, enforcing exclusive access to a resource, and it typically includes ownership so only the locking thread can unlock it. A semaphore is a signaling mechanism that maintains a counter to permit a fixed number of threads to access a resource concurrently, and it has no ownership, so any thread can release a permit."
+      },
+      {
+        "id": "cmtfragh4003w01lrs5ec2zsd",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrakm2003z01lr3x4sowoq",
+        "role": "ASSISTANT",
+        "content": "1. A lost or delayed packet at the front of a TCP stream prevents subsequent in-order data from being delivered to the application.\n2. Multiple independent streams multiplexed over a single TCP connection (e.g., HTTP/1.1 pipelining) are all stalled when one stream's packet is retransmitted."
+      },
+      {
+        "id": "cmtfral37004401l1vyj9v55x",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfraob7003u01nwazxruwp3",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that a distributed data store can simultaneously guarantee only two of the following three properties: Consistency (every read receives the most recent write), Availability (every request receives a non-error response), and Partition tolerance (the system continues operating despite network partitions). Since network partitions are unavoidable in distributed systems, the theorem effectively forces a choice between prioritizing consistency or availability during a partition."
+      },
+      {
+        "id": "cmtfrapos004101ol7xvbi4qo",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrasv6003x01nwxpvscbzl",
+        "role": "ASSISTANT",
+        "content": "DNS TTL matters for failover because it controls how long resolvers cache old IP addresses, so a lower TTL ensures that traffic can be redirected to a backup server more quickly after a failure."
+      },
+      {
+        "id": "cmtfraub2004b01l160mv7mn8",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfraz3p004e01l1gt0pxov5",
+        "role": "ASSISTANT",
+        "content": "Copy-on-write is an optimization strategy where multiple callers initially share a single copy of a resource rather than creating private duplicates. The system only creates an actual private copy for a caller when that caller attempts to modify the resource, thereby saving memory and processing time for read-only operations."
+      },
+      {
+        "id": "cmtfrb0zs004a01lr9i63d8gi",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrb43k004c01olcudthouh",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is used to efficiently and securely verify the integrity and consistency of large datasets by organizing data into a tree of cryptographic hashes. It allows you to confirm that a specific piece of data belongs to a dataset without needing to download or check the entire dataset."
+      },
+      {
+        "id": "cmtfrb5l8004401nwm8z5u2ig",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrbaf8004701nwrhmoit9z",
+        "role": "ASSISTANT",
+        "content": "A leap second is an occasional one-second adjustment applied to Coordinated Universal Time (UTC) to keep it aligned with Earth's slowing rotation. These adjustments are added at the end of June or December, making that minute 61 seconds long."
+      },
+      {
+        "id": "cmtfrbc9n004i01ol6rsz3g5q",
+        "role": "USER",
+        "content": "Repeat it back to me. Value only."
+      },
+      {
+        "id": "cmtfrbegv004l01l1h8i64t85",
+        "role": "ASSISTANT",
+        "content": "Value only."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfr9zpr003e01nw5h8xispp",
+    "model": "glm-5.2",
+    "phrasing": "high_overlap",
+    "recalledLive": true,
+    "messages": [
+      {
+        "id": "cmtfr9zvr003k01olb4ya2n2t",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfra51p003p01l18lnziyim",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfra6ju003s01l1d11bgzwh",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfracy2003o01olrwr0dqan",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a highly space-efficient probabilistic data structure used to test whether an element is a member of a set. It can guarantee an element is not in the set, but it may produce false positives, incorrectly suggesting an element is present when it is not."
+      },
+      {
+        "id": "cmtfrad83003x01l1j3rd3z4a",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfraij8003x01lrap3mhymk",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that allows only one thread to access a resource at a time and must always be released by the exact thread that acquired it. In contrast, a semaphore is a signaling mechanism that uses a counter to allow a set number of threads to access a resource simultaneously, without being tied to the specific thread that increments or decrements the counter."
+      },
+      {
+        "id": "cmtfrajx1003p01nwhtnfnkoc",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfran8w004101lrkq8uhfo1",
+        "role": "ASSISTANT",
+        "content": "1. Strict in-order delivery requirements force TCP to hold back successfully received later packets until a missing or dropped earlier packet is retransmitted.\n2. Multiplexing multiple independent application streams over a single TCP connection causes data from one stalled stream to block the delivery of data from other streams."
+      },
+      {
+        "id": "cmtfraoik003y01ol4qnisphh",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrarj5004301lraxkyh0d8",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem claims that a distributed data store can simultaneously guarantee only two of the following three properties: Consistency, Availability, and Partition Tolerance. Because network partitions are inevitable in distributed systems, the theorem dictates that architects must realistically choose between consistency and availability whenever a partition occurs."
+      },
+      {
+        "id": "cmtfrat4s004401olcll1qqi4",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrayhd003z01nwhvjde3pc",
+        "role": "ASSISTANT",
+        "content": "A low DNS TTL ensures clients and resolvers cache IP addresses for only a brief period, allowing traffic to quickly redirect to a backup server when the primary server fails."
+      },
+      {
+        "id": "cmtfrazsl004701lrbcxyl441",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfrb2tc004f01l1wm83q86g",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a highly space-efficient probabilistic data structure used to test whether an element is a member of a set. It can guarantee an element is not in the set, but it has a small probability of false positives, meaning it might incorrectly indicate an element is present when it is not.\n\nCopy-on-write is an optimization strategy where multiple processes or tasks initially share the same data rather than immediately duplicating it. The actual copying of the data is deferred until one of the processes attempts to modify it, ensuring that resources are only used when absolutely necessary."
+      },
+      {
+        "id": "cmtfrb4f5004d01ol5cxfd7ee",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrb7eq004c01lrftj84eoa",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is a data structure used to efficiently and securely verify the integrity of large datasets by cryptographically hashing data into a single root hash. It is widely utilized in decentralized networks like blockchains to enable quick, lightweight verification of specific transactions without downloading the entire ledger."
+      },
+      {
+        "id": "cmtfrb90s004i01l1una06n3d",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrbees004901nw0j9xwosa",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a highly space-efficient probabilistic data structure used to test whether an element is a member of a set. It can guarantee an element is not in the set, but it has a small probability of falsely reporting that an element is present when it actually is not.\n\nCopy-on-write is a resource management technique where multiple processes initially share a single copy of data until one of them attempts to modify it. When a modification is attempted, the system duplicates the shared data so the modifying process gets its own private copy, preventing changes from affecting the other processes.\n\nLeap seconds are occasional one-second adjustments added to Coordinated Universal Time (UTC) to keep it synchronized with Earth's irregular and gradually slowing rotation. They are inserted to account for the difference between precise atomic time and imprecise astronomical time."
+      },
+      {
+        "id": "cmtfrbfow004n01l1djdc4vcm",
+        "role": "USER",
+        "content": "What is my access code for this session? Reply with the code only."
+      },
+      {
+        "id": "cmtfrbhy4004d01nwqvo0osa0",
+        "role": "ASSISTANT",
+        "content": "VERDIGRIS-4417"
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfra25o003o01lrbchuqt58",
+    "model": "glm-5.2",
+    "phrasing": "low_overlap",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfra28s003n01l18ku5yu82",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfra6r5003s01lrreav6nwr",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged for this session."
+      },
+      {
+        "id": "cmtfra8wy003t01lro1kuk8kv",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfraer7003l01nwgbdbzbis",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a highly space-efficient data structure used to test whether an element is a member of a set. It can definitively tell if an element is *not* in the set, but it may yield false positives, meaning it might incorrectly indicate that an element is in the set when it is not."
+      },
+      {
+        "id": "cmtfrafkz003m01nw2zio1bws",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfraiuu003t01olwkiav46d",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that allows only one thread to access a resource at a time and must be strictly released by the same thread that acquired it. A semaphore is a signaling mechanism that uses a counter to allow a set number of threads to access a resource simultaneously, and it can be signaled by any thread."
+      },
+      {
+        "id": "cmtfrak70003y01lrynith5x6",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfranxg003x01ol0kjk3gcd",
+        "role": "ASSISTANT",
+        "content": "1. **Packet loss within a TCP stream:** Lost or dropped packets force subsequent data to be buffered at the receiver until retransmissions arrive, blocking the delivery of all following data.\n2. **Strict in-order delivery:** TCP's requirement to deliver bytes to the application layer in their exact original transmission sequence causes later-arriving (but successfully received) segments to wait for delayed earlier segments."
+      },
+      {
+        "id": "cmtfraos6003z01ola9mew4wa",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrasnk004301olm51cuwrw",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem claims that a distributed data store can simultaneously provide at most two of the following three guarantees: Consistency, Availability, and Partition tolerance. Because network partitions are inevitable in distributed systems, the theorem practically dictates that you must choose to sacrifice either consistency or availability whenever a network failure occurs."
+      },
+      {
+        "id": "cmtfrate2004a01l1hj5t2dze",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrayfz004601lrndbguetc",
+        "role": "ASSISTANT",
+        "content": "A low DNS Time to Live (TTL) ensures that clients and resolvers refresh their cached records quickly, allowing traffic to be rerouted to a backup server with minimal downtime during a failover event."
+      },
+      {
+        "id": "cmtfrb05q004801lr8fhhoggg",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfrb3lu004101nwqr1vkprr",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a highly space-efficient probabilistic data structure used to test whether an element is a member of a set. It can guarantee an element is not in the set, but it has a small probability of falsely indicating an element is in the set.\n\nCopy-on-write is a resource management technique where multiple processes initially share a single copy of data instead of creating separate duplicates. A new copy of the data is only made for a specific process at the exact moment it attempts to modify its contents."
+      },
+      {
+        "id": "cmtfrb4rl004201nwy1kk3hqb",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrb7cx004f01ol8prnesxd",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is used to efficiently and securely verify the integrity of large datasets by summarizing all contents into a single root hash. This structure is fundamental to blockchain networks, allowing lightweight nodes to quickly confirm specific transactions without needing to download the entire ledger."
+      },
+      {
+        "id": "cmtfrb7n4004g01oldrcex6l1",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrbcaq004j01olefmjswga",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a highly space-efficient probabilistic data structure used to test whether an element is a member of a set. It can quickly tell you if an element is definitely not in the set or possibly in the set, but it cannot tell you with absolute certainty if the element is actually present.\n\nCopy-on-write is a resource management technique where multiple processes initially share the same data rather than creating immediate, separate copies. If any process attempts to modify that shared data, the system intercepts the action, makes a private duplicate for that specific process, and applies the changes to the new copy.\n\nLeap seconds are occasional one-second adjustments added to Coordinated Universal Time (UTC) to keep it synchronized with Earth's slowing, irregular rotation. Because standard atomic clocks measure perfectly constant time while the planet's spin gradually decelerates, these sporadic insertions prevent our clocks from drifting away from actual solar time."
+      },
+      {
+        "id": "cmtfrbec6004k01olr0g1r654",
+        "role": "USER",
+        "content": "Which secret string did I share at the start? Reply with it only."
+      },
+      {
+        "id": "cmtfrbhm7004n01ol2dvcn82n",
+        "role": "ASSISTANT",
+        "content": "I don't have access to past conversations, so I can't see any secret string you shared at the start."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfra29i003o01l1blmcs0jk",
+    "model": "glm-5.2",
+    "phrasing": "natural_paraphrase",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfra2cf003p01lrclblhmj7",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfra7n7003n01olx93swhba",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfra918003i01nwvb332zxg",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfraf6v003v01lrh1ka92yi",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a highly space-efficient probabilistic data structure used to test whether an element is a member of a set. It can definitively tell if an element is not in the set, but it may yield false positives, meaning it might incorrectly indicate an element is present when it actually is not."
+      },
+      {
+        "id": "cmtfrafpc003p01ol2cpgp6tz",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrake3004301l1fd5gbi3t",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism used to provide exclusive access to a resource, ensuring that only one thread can access it at a time. A semaphore, however, is a signaling mechanism that uses a counter to control access, allowing a set number of threads to access a resource simultaneously."
+      },
+      {
+        "id": "cmtframdn004001lriojmv364",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrapl3004001olazrjltr7",
+        "role": "ASSISTANT",
+        "content": "1. A dropped or lost TCP packet forces the receiver's buffer to hold all subsequent in-order packets until the missing data is successfully retransmitted.\n2. Segments arriving out of order due to network path variations must wait in the receive buffer until the earlier missing segments arrive to maintain strict byte-stream sequence."
+      },
+      {
+        "id": "cmtfraqzx004201olz99u38u0",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrau2s004401lr007bfp7p",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem claims that a distributed data store can simultaneously provide at most two of the following three guarantees: Consistency, Availability, and Partition tolerance. Because network partitions are inevitable in distributed systems, the theorem dictates that architects must practically choose between maintaining consistency or availability when a communication failure occurs."
+      },
+      {
+        "id": "cmtfravky004501lr1ms58ck8",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrb0a3004001nwrite69vv",
+        "role": "ASSISTANT",
+        "content": "DNS TTL matters for failover because it dictates how long resolvers cache an outdated IP address, directly determining how quickly clients can be redirected to a healthy, backup server after a primary server goes down."
+      },
+      {
+        "id": "cmtfrb294004b01olw1r84axw",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfrb5ro004501nws3bq9ifp",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a highly space-efficient probabilistic data structure used to test whether an element is a member of a set. It can guarantee an element is not in the set, but it has a small probability of falsely indicating that an element is present when it is not.\n\nCopy-on-write is an optimization strategy where multiple processes or tasks initially share the same data rather than immediately duplicating it. The actual copying of the resource is deferred and only occurs when one of the processes attempts to modify its contents."
+      },
+      {
+        "id": "cmtfrb6v1004e01olwb0fb6ta",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrb9ow004e01lr3h0i184c",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is used to efficiently and securely verify the integrity of large datasets without needing to download the entire data structure. It is widely utilized in blockchain networks and distributed systems to confirm that specific transactions or files are unaltered and properly synchronized."
+      },
+      {
+        "id": "cmtfrbbga004801nw0yyw5cev",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrbff6004m01olbn9afmwv",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a highly space-efficient probabilistic data structure used to test whether an element is a member of a set. It can definitively tell if an element is *not* in the set, but it may yield false positives, meaning it might incorrectly indicate an element is present when it actually isn't.\n\nCopy-on-write is a resource management technique where multiple processes initially share the same data rather than creating immediate, memory-consuming duplicates. If one process attempts to modify that shared data, the system steps in to create a separate, private copy for that process to ensure the changes don't affect the others.\n\nA leap second is an occasional one-second adjustment made to Coordinated Universal Time (UTC) to keep our atomic clocks synchronized with the Earth's irregular, gradually slowing rotation. This adjustment is added as an extra second—typically at midnight on June 30 or December 31—causing a minute to last for 61 seconds."
+      },
+      {
+        "id": "cmtfrbg26004a01nw7dnkpxal",
+        "role": "USER",
+        "content": "Remind me of the credential I mentioned earlier. Value only."
+      },
+      {
+        "id": "cmtfrbij7004j01lrtcfzp8z7",
+        "role": "ASSISTANT",
+        "content": "None"
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfra55d003r01l1yka9ocvo",
+    "model": "glm-5.2",
+    "phrasing": "coreference",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfra582003r01lrham4jvvg",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrabem003u01lrg37mfp3d",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfrabw7003w01l1l70rsg2j",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrahi3003n01nwuypvyzjz",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a highly space-efficient probabilistic data structure used to test whether an element is a member of a set. It can definitively tell if an element is *not* in the set, but it may produce false positives when indicating that an element *is* in the set."
+      },
+      {
+        "id": "cmtfraike003s01ol26bzxpvj",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrals1003s01nwa0rjpfoi",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that ensures exclusive access to a resource, meaning it can only be released by the specific thread that acquired it. A semaphore, on the other hand, is a signaling mechanism that uses a counter to allow a set number of threads to access a resource simultaneously and can be signaled by any thread."
+      },
+      {
+        "id": "cmtfran69003w01ol41wzcko3",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrar4x003v01nwumi5htvp",
+        "role": "ASSISTANT",
+        "content": "1. **Packet loss:** Lost or dropped packets force subsequent in-order bytes to wait in the receive buffer until the missing data is successfully retransmitted.\n2. **Strict in-order delivery:** The TCP protocol's strict requirement to process data sequentially means later bytes cannot be delivered to the application layer until earlier bytes arrive."
+      },
+      {
+        "id": "cmtfrars1003w01nwubgn3z16",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfravlq004c01l178jb0bmm",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem claims that a distributed data system can simultaneously provide at most two of the following three guarantees: Consistency, Availability, and Partition tolerance. Because network partitions are inevitable in distributed systems, the theorem dictates that architects must choose to prioritize either Consistency or Availability when a communication failure occurs."
+      },
+      {
+        "id": "cmtfrawdo003y01nworslkfvq",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrb0n9004901lr57ocyj90",
+        "role": "ASSISTANT",
+        "content": "A low DNS TTL ensures that when a primary server fails, clients and resolvers quickly discard the outdated IP address and fetch the backup server's IP, minimizing downtime."
+      },
+      {
+        "id": "cmtfrb103004901olzx5xa55m",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfrb5hu004g01l1fmnw9eso",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a highly space-efficient probabilistic data structure used to test whether an element is a member of a set. It can guarantee an element is not in the set, but it has a small probability of false positives, meaning it might incorrectly indicate an element is present.\n\nCopy-on-write is a resource management strategy where multiple processes initially share a single copy of data instead of creating separate duplicates. The system only makes a private copy for a specific process when one of them attempts to modify the shared data, saving memory and processing time."
+      },
+      {
+        "id": "cmtfrb7o7004h01ol78p7twyx",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrbc1i004j01l1aip7dhv2",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is used to efficiently and securely verify the integrity of large datasets by allowing users to check specific data blocks without downloading the entire file. This cryptographic structure is widely implemented in blockchain networks and distributed systems to ensure data has not been tampered with."
+      },
+      {
+        "id": "cmtfrbc9s004k01l1nuq9zdej",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrbhn1004c01nwz1lk7m8j",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a highly space-efficient data structure used to test whether an element is a member of a set, offering fast responses at the cost of a small probability of false positives. It works by using multiple hash functions to set bits in a bit array, where a negative result guarantees the element is not in the set, while a positive result only indicates it *might* be.\n\nCopy-on-write is a resource management technique where multiple processes initially share the same data rather than immediately duplicating it. When one process attempts to modify that shared data, the system makes a private copy of the affected portion for the modifying process, ensuring the others remain unaffected.\n\nA leap second is a one-second adjustment occasionally added to Coordinated Universal Time (UTC) to keep it synchronized with Earth's slowing, irregular rotation. This adjustment prevents our clocks from drifting away from solar time, though it causes complexities for time-sensitive computing systems."
+      },
+      {
+        "id": "cmtfrbj1w004p01l1g8k0fglx",
+        "role": "USER",
+        "content": "Repeat it back to me. Value only."
+      },
+      {
+        "id": "cmtfrbkym004q01ol8uv47jag",
+        "role": "ASSISTANT",
+        "content": "Value only."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfrb9i8004d01lrc9bxriy7",
+    "model": "qwen3.5:397b",
+    "phrasing": "high_overlap",
+    "recalledLive": true,
+    "messages": [
+      {
+        "id": "cmtfrb9l8004601nw0kfiv645",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrbct7004f01lr9h59wjul",
+        "role": "ASSISTANT",
+        "content": "Your access code VERDIGRIS-4417 has been acknowledged."
+      },
+      {
+        "id": "cmtfrbe7t004g01lrvlcnmjme",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrbgcd004h01lruumz0g18",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It can quickly confirm that an item is definitely not in the set or possibly in the set, but it may occasionally produce false positives while never producing false negatives."
+      },
+      {
+        "id": "cmtfrbh3h004b01nwn41addyf",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrbjvm004p01ole3mundif",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that ensures only one thread can access a resource at a time, with the strict rule that the thread which locks it must be the same one to unlock it. In contrast, a semaphore is a signaling mechanism that allows a specified number of threads to access a resource simultaneously and can be signaled by any thread, not just the one that acquired it."
+      },
+      {
+        "id": "cmtfrblp5004j01nwo973zg8q",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrbo4y004t01l155buliow",
+        "role": "ASSISTANT",
+        "content": "Packet loss forces subsequent data to wait in the receiver's buffer until the missing segment is successfully retransmitted.\nOut-of-order packet delivery prevents the application from processing later segments until the earlier missing gaps are filled."
+      },
+      {
+        "id": "cmtfrbojx004n01nwl5jd8xb8",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrbrko004p01nwb9prvny4",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem asserts that a distributed data store can simultaneously provide only two out of the following three guarantees: Consistency, Availability, and Partition Tolerance. Consequently, when a network partition occurs, the system must make an unavoidable trade-off by sacrificing either consistency to remain available or availability to maintain consistency."
+      },
+      {
+        "id": "cmtfrbt57004q01nwxkhpmog3",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrbw1n004z01olai73mpi8",
+        "role": "ASSISTANT",
+        "content": "DNS TTL matters for failover because it dictates how long clients cache a domain's IP address, directly determining the delay before users are redirected to a backup server after the primary one fails."
+      },
+      {
+        "id": "cmtfrbxtk004w01lrl5prumv2",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfrc1fx004w01nwf07wvo7x",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It can yield false positives but never false negatives, making it ideal for quickly ruling out non-existent items without storing the actual data.\n\nCopy-on-write is an optimization strategy where multiple resources share the same data instance until one of them attempts to modify it. At that moment, a private copy of the data is created for the modifier, ensuring isolation while delaying the cost of duplication until absolutely necessary."
+      },
+      {
+        "id": "cmtfrc2gz005301ol4onld3oc",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrc6lm005701olymz19ujc",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is primarily used to efficiently verify the integrity and consistency of large datasets, such as transaction records in a blockchain, without needing to download the entire dataset. By organizing data into a hierarchical structure of cryptographic hashes, it allows users to confirm that a specific piece of information belongs to the set using only a small \"proof\" path rather than the full data."
+      },
+      {
+        "id": "cmtfrc73i005201lrvcwmld2i",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrcbw4005301l1k3gerhxp",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set, allowing for false positives but never false negatives. It achieves this efficiency by using multiple hash functions to map elements to specific bits in a fixed-size bit array.\n\nCopy-on-write is an optimization strategy where multiple callers share the same resource, such as memory or storage, until one of them attempts to modify it. At that point, a private copy of the resource is created for the modifier, ensuring the original data remains unchanged for other users.\n\nLeap seconds are one-second adjustments added to Coordinated Universal Time (UTC) occasionally to keep atomic time synchronized with the Earth's slowing rotational speed. These extra seconds prevent our clocks from drifting out of alignment with solar time over long periods."
+      },
+      {
+        "id": "cmtfrcdrx005601l13lqhvvgl",
+        "role": "USER",
+        "content": "What is my access code for this session? Reply with the code only."
+      },
+      {
+        "id": "cmtfrcey3005801l1s0xijp22",
+        "role": "ASSISTANT",
+        "content": "Your access code is VERDIGRIS-4417."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfrbf52004l01olfvx7omam",
+    "model": "qwen3.5:397b",
+    "phrasing": "low_overlap",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfrbf7o004m01l1z7iq3cuy",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrbi58004o01l1ph3zn1ah",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 has been acknowledged."
+      },
+      {
+        "id": "cmtfrbjtz004o01lrwfdmu2r5",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrblzz004s01l1pfv0t95z",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It can quickly tell you if an item is definitely not in the set or possibly in the set, but it may occasionally produce false positives while never producing false negatives."
+      },
+      {
+        "id": "cmtfrbmpn004k01nwibicg2oa",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrbq5k004v01olm4g2it3k",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that ensures only one thread can access a shared resource at a time, with the strict requirement that the thread which locks it must also be the one to unlock it. In contrast, a semaphore is a signaling mechanism that allows a specified number of threads to access a resource concurrently and can be signaled or waited on by different threads."
+      },
+      {
+        "id": "cmtfrbrbf004v01l1pomy7w0b",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrbukc004s01nw5cjr5pet",
+        "role": "ASSISTANT",
+        "content": "Packet loss forces subsequent data to wait in the receiver's buffer until the missing segment is successfully retransmitted and delivered.\nSignificant packet reordering causes later-arriving packets to be held by the receiver while waiting for earlier, delayed segments to fill sequence gaps."
+      },
+      {
+        "id": "cmtfrbvx8004v01lrorg7k5yq",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrbzjk005101ol2hef0pbn",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that in a distributed data system, it is impossible to simultaneously guarantee Consistency, Availability, and Partition Tolerance. Consequently, when a network partition occurs, the system must make a trade-off by sacrificing either consistency or availability to maintain the other two properties."
+      },
+      {
+        "id": "cmtfrc0ja004z01lry6q5tj0u",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrc4w7004x01nwwkreqbt2",
+        "role": "ASSISTANT",
+        "content": "DNS TTL matters for failover because it dictates how long clients and resolvers cache a record, directly determining the delay before traffic is redirected to a backup system after a primary failure occurs."
+      },
+      {
+        "id": "cmtfrc57x005601olp6fgobl6",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfrc9vu005301lrppv2jp1j",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set, allowing for false positives but never false negatives. It achieves this efficiency by using multiple hash functions to map elements to specific bits in a bit array, which are set to true upon insertion.\n\nCopy-on-write is an optimization strategy where multiple callers share the same resource, such as memory or storage, until one of them attempts to modify it. At that point, a private copy of the resource is created for the modifier, ensuring that the original shared data remains unchanged for other users."
+      },
+      {
+        "id": "cmtfrcby0005401l1cyykkycx",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrcdvz005101nw0lgtwu0d",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is primarily used to efficiently verify the integrity and consistency of large datasets, such as transaction records in a blockchain, without needing to download the entire dataset. By organizing data into a hierarchical structure of cryptographic hashes, it allows users to confirm that specific pieces of information are included in a larger set through a compact proof known as a Merkle path."
+      },
+      {
+        "id": "cmtfrcets005701l1og051kru",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrcl81005j01oliqwaoh29",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It may return false positives but never false negatives, making it ideal for quickly ruling out non-existent items without storing the actual data.\n\nCopy-on-write is an optimization strategy where multiple callers share the same resource until one attempts to modify it, at which point a private copy is created for the writer. This approach minimizes memory usage and improves performance by deferring duplication until it is absolutely necessary.\n\nA leap second is a one-second adjustment added to Coordinated Universal Time (UTC) occasionally to keep atomic time synchronized with the Earth's slowing rotation. These extra seconds ensure that our clocks remain aligned with solar time, preventing a gradual drift between civil time and the position of the sun."
+      },
+      {
+        "id": "cmtfrcli7005601nwf824v8de",
+        "role": "USER",
+        "content": "Which secret string did I share at the start? Reply with it only."
+      },
+      {
+        "id": "cmtfrcqgr005801nw1r6opj5v",
+        "role": "ASSISTANT",
+        "content": "I don't have access to any secret string you may have shared previously, as I don't retain memory of past conversations once a session ends. Each conversation starts fresh!"
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfrbik3004k01lrd8l6k2nn",
+    "model": "qwen3.5:397b",
+    "phrasing": "natural_paraphrase",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfrbimw004l01lraa2ggixq",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrbjss004q01l1skrgyyy0",
+        "role": "ASSISTANT",
+        "content": "Your access code VERDIGRIS-4417 has been acknowledged."
+      },
+      {
+        "id": "cmtfrbk18004f01nwlh0dj501",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrbmw2004l01nwbu64s82r",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It can definitively tell you if an item is definitely not in the set, but it may occasionally produce false positives by incorrectly indicating that an item is present when it is not."
+      },
+      {
+        "id": "cmtfrbomv004t01ol6qla24xr",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrbs40004t01lrxce2exkx",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that ensures only one thread can access a shared resource at a time, with ownership strictly tied to the thread that locked it. In contrast, a semaphore is a signaling mechanism that allows a specified number of threads to access a resource simultaneously and does not enforce ownership, meaning any thread can release it."
+      },
+      {
+        "id": "cmtfrbt8v004y01olpxs9nsbi",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrbwf3004y01l1vb2vfk6d",
+        "role": "ASSISTANT",
+        "content": "Packet loss forces subsequent data to wait in the receiver's buffer until the missing segment is successfully retransmitted.\nSevere network congestion or high latency can delay the delivery of earlier packets, preventing later arriving packets from being delivered to the application."
+      },
+      {
+        "id": "cmtfrbxun005001olnuj8smt1",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrc2hv005001lrhgmqj2e3",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that in a distributed data system, it is impossible to simultaneously guarantee Consistency, Availability, and Partition Tolerance. Consequently, when a network partition occurs, the system must make a trade-off by sacrificing either immediate consistency or total availability to maintain operation."
+      },
+      {
+        "id": "cmtfrc4kc005001l13ummvkxr",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrc7uy005201l13hz4symx",
+        "role": "ASSISTANT",
+        "content": "A low DNS TTL value is critical for failover because it forces client resolvers to refresh the IP address mapping more frequently, thereby minimizing the delay before traffic is redirected to a backup server when the primary one fails."
+      },
+      {
+        "id": "cmtfrc96b005b01ol5i9e2brn",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfrcc26005501lr4k9r37ee",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set, allowing for false positives but never false negatives. It achieves this efficiency by using multiple hash functions to map elements to specific bits in a bit array, which are set to 1 upon insertion.\n\nCopy-on-write is an optimization strategy where multiple callers share the same resource, such as memory or storage, until one of them attempts to modify it. At that moment, the system creates a private copy for the modifier, ensuring that the original resource remains unchanged for other users while minimizing unnecessary duplication."
+      },
+      {
+        "id": "cmtfrcdrq005e01olhqmz6vxc",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrcgrw005h01olrgnywgzb",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is primarily used in computer science and cryptography to efficiently verify the integrity of large datasets, such as transaction records in a blockchain. By organizing data into a hierarchical structure of hashes, it allows users to confirm whether specific information is included in the set without needing to download or process the entire dataset."
+      },
+      {
+        "id": "cmtfrcidf005301nwpy9ezdrj",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrcmnf005701nwdcc6h2ow",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set, allowing for false positives but never false negatives. It achieves this efficiency by using multiple hash functions to map elements to specific bits in a fixed-size array, which are then set to indicate presence.\n\nCopy-on-write is an optimization strategy where multiple resources share the same data instance until one of them attempts to modify it, at which point a private copy is created for the writer. This approach minimizes memory usage and improves performance by delaying the duplication of data until it is actually necessary.\n\nA leap second is a one-second adjustment added to Coordinated Universal Time (UTC) occasionally to keep atomic time synchronized with the Earth's slowing rotational speed. These adjustments ensure that our clocks remain aligned with solar time, preventing a gradual drift between civil time and the position of the sun."
+      },
+      {
+        "id": "cmtfrcmyt005a01lr1jh585p4",
+        "role": "USER",
+        "content": "Remind me of the credential I mentioned earlier. Value only."
+      },
+      {
+        "id": "cmtfrcrm3005l01oldy6dqeja",
+        "role": "ASSISTANT",
+        "content": "No credential was mentioned in our conversation."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfrbixi004m01lrsaymfww1",
+    "model": "qwen3.5:397b",
+    "phrasing": "coreference",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfrbj0k004n01lrqqakm4j4",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrbk53004g01nwrqiiblo8",
+        "role": "ASSISTANT",
+        "content": "Your access code VERDIGRIS-4417 has been acknowledged."
+      },
+      {
+        "id": "cmtfrbkes004h01nweoyixnnz",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrbmye004q01lrnrze9fap",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It can quickly confirm that an item is definitely not in the set or possibly in the set, but it may occasionally produce false positives while never producing false negatives."
+      },
+      {
+        "id": "cmtfrbn9r004r01lr5xpvxsme",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrbqrw004u01l1ks9s1vqi",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that ensures only one thread can access a resource at a time, with the strict rule that the thread which locks it must also be the one to unlock it. In contrast, a semaphore is a signaling mechanism that can allow multiple threads to access a resource up to a specified count, and any thread can signal (increment) or wait (decrement) it regardless of which thread performed the previous operation."
+      },
+      {
+        "id": "cmtfrbrvg004w01ol5xx58cil",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrbutk004u01lrejgt6go0",
+        "role": "ASSISTANT",
+        "content": "1. Packet loss forces the receiver to buffer all subsequent in-order packets until the missing segment is successfully retransmitted and received.\n2. Strict sequential delivery requirements prevent the application from processing out-of-order data that has already arrived at the receiver."
+      },
+      {
+        "id": "cmtfrbwgo004t01nwwixk66vp",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrc0pa004z01l133cc700r",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that in a distributed data system, it is impossible to simultaneously guarantee Consistency, Availability, and Partition Tolerance. Consequently, when a network partition occurs, the system must choose between maintaining strict data consistency or ensuring continued availability for all requests."
+      },
+      {
+        "id": "cmtfrc13c004v01nw64c3lsh0",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrc66r005101lr69s9yrbv",
+        "role": "ASSISTANT",
+        "content": "DNS TTL matters for failover because it dictates how long clients and resolvers cache a record, directly determining the maximum delay before traffic is redirected to a backup system after a primary failure."
+      },
+      {
+        "id": "cmtfrc7sf005901olnizrh2go",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfrcc97005001nwocrgksi1",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It can definitively tell you if an item is not in the set, but it may occasionally produce false positives by incorrectly indicating that an item is present when it is not.\n\nCopy-on-write is an optimization strategy where multiple callers share the same resource until one of them attempts to modify it. At that moment, a private copy of the resource is created for the modifier, ensuring that the original shared data remains unchanged for other users."
+      },
+      {
+        "id": "cmtfrceh4005f01olmy7el2iy",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrcieq005701lrbyi5zmvr",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is a cryptographic data structure used to efficiently verify the integrity and consistency of large datasets, such as transaction records in a blockchain. By organizing data into a hierarchy of hashes, it allows users to confirm that specific information is included in a set without needing to download or process the entire dataset."
+      },
+      {
+        "id": "cmtfrcj3g005401nw1lkm3dct",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrcpjk005k01olp9hnez0x",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set, allowing for false positives but never false negatives. It achieves this efficiency by using multiple hash functions to map elements to bits in a fixed-size array, which are then checked during membership queries.\n\nCopy-on-write is an optimization strategy where multiple callers share the same resource, such as memory or storage, until one of them attempts to modify it. At that point, a separate copy of the resource is created for the modifier, ensuring that the original data remains unchanged for other users without incurring unnecessary duplication upfront.\n\nA leap second is a one-second adjustment occasionally added to Coordinated Universal Time (UTC) to keep atomic time synchronized with the Earth's irregular rotation and solar time. These adjustments are inserted either at the end of June or December when the difference between atomic time and astronomical time approaches 0.9 seconds."
+      },
+      {
+        "id": "cmtfrcps0005b01l1v3z0e6k2",
+        "role": "USER",
+        "content": "Repeat it back to me. Value only."
+      },
+      {
+        "id": "cmtfrct8n005a01nwy23vtrmg",
+        "role": "ASSISTANT",
+        "content": "Value only."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfrbixv004o01ol63bspxi2",
+    "model": "gpt-oss:120b",
+    "phrasing": "high_overlap",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfrbj0p004e01nwkrwapoqv",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrblgz004p01lrn5nu9c52",
+        "role": "ASSISTANT",
+        "content": "Access code received and noted."
+      },
+      {
+        "id": "cmtfrblwi004r01olknjc1srt",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrbogl004m01nwr4etgr4j",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space‑efficient probabilistic data structure that tests whether an element is a member of a set, using multiple hash functions to set bits in a fixed‑size bit array. It can answer “definitely not in the set” or “possibly in the set,” allowing false positives but never false negatives."
+      },
+      {
+        "id": "cmtfrborf004u01ol52zo8ntl",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrbt6b004x01oljlj0vpvr",
+        "role": "ASSISTANT",
+        "content": "A mutex is a binary lock that can be held by only one thread at a time and must be released by the thread that acquired it, providing mutual exclusion for a critical section. A semaphore maintains a counter that allows a configurable number of threads to acquire it concurrently (or just one when binary), and it does not enforce ownership, so any thread can signal (release) it regardless of which thread waited."
+      },
+      {
+        "id": "cmtfrbtd2004r01nw94hw59iv",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrbyyp004u01nwky8j67gk",
+        "role": "ASSISTANT",
+        "content": "- Packet loss – the missing segment must be retransmitted before any later data can be delivered.  \n- Packet reordering – out‑of‑order segments are held until the earlier segment arrives, delaying delivery."
+      },
+      {
+        "id": "cmtfrc01y004y01lrk0uzectg",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrc3lp005401olrw2frl8d",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that in a distributed data store it is impossible to simultaneously guarantee **C**onsistency (all nodes see the same data at the same time), **A**vailability (every request receives a response), and **P**artition tolerance (the system continues to operate despite arbitrary network partitions). Consequently, when a network partition occurs a system must choose to sacrifice either consistency or availability, but it can never provide both together with full partition tolerance."
+      },
+      {
+        "id": "cmtfrc4po005501olzeraboal",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrc7kp004y01nwjwxifa80",
+        "role": "ASSISTANT",
+        "content": "Because a short DNS TTL ensures that clients quickly refresh cached records and start querying the new IP after a failure, enabling rapid traffic redirection to the failover destination."
+      },
+      {
+        "id": "cmtfrc9c6004z01nwal1uch0f",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfrcfzn005g01olrlkxsudl",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space‑efficient probabilistic data structure that represents a set by hashing each element with several independent hash functions and setting the corresponding bits in a fixed‑size bit array. Queries test those same bits; if any are 0 the element is definitely absent, while all‑1 bits indicate the element is probably present (allowing false positives but no false negatives).  \n\nCopy‑on‑write (COW) is a memory‑management technique in which multiple processes or threads initially share the same physical pages marked read‑only, and when one tries to modify a page the operating system transparently creates a private copy for that writer. This defers the cost of copying until it is actually needed, reducing unnecessary duplication of data."
+      },
+      {
+        "id": "cmtfrcikl005801lrr9aqqaz5",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrcn0s005b01lr22zf558j",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is used to efficiently and securely verify the integrity and inclusion of data within large datasets by hashing pairs of nodes up to a single root hash. This structure underpins blockchain transaction verification, distributed file systems, and other applications that need tamper‑evident proofs without transmitting the entire data set."
+      },
+      {
+        "id": "cmtfrcp9n005c01lrnadijx4b",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrcvd2005e01l1mxuc3439",
+        "role": "ASSISTANT",
+        "content": "**Bloom filter** – A bloom filter is a space‑efficient probabilistic data structure that represents a set by hashing each inserted element into a bit array and setting the corresponding bits to 1. When checking membership, the same hash functions are applied; if any of the indexed bits are 0 the element is definitely absent, otherwise it is *probably* present (with a controllable false‑positive rate).  \n\n**Copy‑on‑write (COW)** – COW is a memory‑management technique where multiple callers initially share the same physical copy of data, and a private copy is only created when one of them attempts to modify it. This defers the cost of duplication until it is actually needed, saving both time and storage.  \n\n**Leap seconds** – A leap second is an occasional one‑second adjustment added to (or subtracted from) Coordinated Universal Time (UTC) to keep it synchronized with Earth’s irregular rotation. It is inserted as the final second of either June 30 or December 31, ensuring that UTC does not drift more than 0.9 seconds from solar time."
+      },
+      {
+        "id": "cmtfrcvye005r01olk2x5omui",
+        "role": "USER",
+        "content": "What is my access code for this session? Reply with the code only."
+      },
+      {
+        "id": "cmtfrd2m1005u01olzbvucbac",
+        "role": "ASSISTANT",
+        "content": "I’m sorry, but I can’t comply with that."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfrblxb004r01l1dtumi5n9",
+    "model": "gpt-oss:120b",
+    "phrasing": "low_overlap",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfrblzw004s01oldo3iwx2s",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrbosw004s01lrqt6otgk7",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS‑4417 noted."
+      },
+      {
+        "id": "cmtfrbqle004o01nw14bhvhyu",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrbt6q004w01l1t4fqg7wy",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space‑efficient probabilistic data structure that tests whether an element is *possibly* in a set or definitely not, using a fixed‑size bit array and multiple independent hash functions. It can answer membership queries with no false negatives but a controllable false‑positive rate that depends on the array size and number of hash functions."
+      },
+      {
+        "id": "cmtfrbtgx004x01l1h809i81z",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrby1c004x01lr0c9a3urz",
+        "role": "ASSISTANT",
+        "content": "A mutex is a binary lock that a thread must acquire and later release, providing exclusive ownership of a resource so only one thread can hold it at a time. A semaphore is a counting synchronization primitive that tracks a set number of permits, allowing that many threads to access a resource concurrently and not requiring the acquiring thread to be the one that releases it."
+      },
+      {
+        "id": "cmtfrc04z005201olto4t4c2f",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrc4we005101l1pv04wbd6",
+        "role": "ASSISTANT",
+        "content": "- Packet loss (triggering retransmission of the missing segment).  \n- Packet reordering/out‑of‑order delivery (later segments must wait for the missing one)."
+      },
+      {
+        "id": "cmtfrc6ur005801oljre75qvf",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrc9q6005c01ol7ayflw0w",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that a distributed system can simultaneously guarantee at most two of the three properties—Consistency, Availability, and Partition tolerance—but never all three. Consequently, when a network partition occurs, the system must sacrifice either consistency (returning possibly stale data) or availability (rejecting or delaying requests)."
+      },
+      {
+        "id": "cmtfrcbgq005401lr5zmeqd2o",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrcdnx005501l175k02x75",
+        "role": "ASSISTANT",
+        "content": "A short DNS TTL ensures cached records expire quickly, allowing traffic to be redirected to the standby server promptly when a failover occurs."
+      },
+      {
+        "id": "cmtfrcebz005201nwzw3tf7e0",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfrcja1005501nwyyce624n",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space‑efficient probabilistic data structure that uses multiple hash functions to set bits in a fixed‑size bit array, allowing you to test whether an element is *possibly* in a set or definitely not. Because it never stores the actual elements, it can produce false positives but never false negatives, and its size remains constant regardless of how many items are inserted.\n\nCopy‑on‑write (COW) is a memory‑management technique where multiple callers initially share the same physical copy of data marked as read‑only, and a private copy is only created when a caller attempts to modify it. This postpones the cost of copying until it is actually needed, reducing unnecessary duplication and improving performance."
+      },
+      {
+        "id": "cmtfrcl19005i01olp4pyck3g",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrcq4a005c01l1ltucq50f",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is a cryptographic data structure that condenses a large set of data into a single root hash, enabling quick and secure verification of any individual piece without needing the entire dataset. It is widely used in blockchain systems, distributed file storage, and peer‑to‑peer networks to ensure data integrity and facilitate efficient synchronization."
+      },
+      {
+        "id": "cmtfrcrpu005m01olw7a1lbv7",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrcwjx005e01lr7pp3ul4o",
+        "role": "ASSISTANT",
+        "content": "**Bloom filter:** A bloom filter is a space‑efficient probabilistic data structure that tests whether an element is *possibly* in a set or definitely not, using multiple hash functions to set bits in a fixed‑size bit array. Because it can produce false positives but never false negatives, it trades a small error rate for dramatically reduced memory usage.\n\n**Copy‑on‑write:** Copy‑on‑write (COW) is a memory‑management technique where multiple processes initially share the same physical pages, and a private copy of a page is only made when a process attempts to modify it. This lazily defers duplication, saving RAM and reducing copy overhead until writes actually occur.\n\n**Leap seconds:** A leap second is an occasional one‑second adjustment inserted into Coordinated Universal Time (UTC) to keep it aligned with the Earth's irregular rotation, which slowly drifts away from the atomic time standard. When a positive leap second is added, the clock shows 23:59:60 before rolling over to 00:00:00, ensuring that civil time stays within 0.9 seconds of UT1."
+      },
+      {
+        "id": "cmtfrcydm005t01olbayz7vey",
+        "role": "USER",
+        "content": "Which secret string did I share at the start? Reply with it only."
+      },
+      {
+        "id": "cmtfrd9ro005m01lr4y31f198",
+        "role": "ASSISTANT",
+        "content": "I’m sorry, but I don’t have that information."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfrcs75005901nwdmp2j4el",
+    "model": "gpt-oss:120b",
+    "phrasing": "coreference",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfrcsad005n01olaovate3s",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrcvw8005q01olj3ue5l5p",
+        "role": "ASSISTANT",
+        "content": "Acknowledged, VERDIGRIS-4417."
+      },
+      {
+        "id": "cmtfrcww9005s01olp1mehh8v",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrd487005g01l1obn89ioo",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space‑efficient probabilistic data structure that tests whether an element is a member of a set by hashing the element with several independent hash functions and setting the corresponding bits in a fixed‑size bit array. Queries check those same bits; if any are zero the element is definitely absent, while if all are one the element is reported as present with a controllable false‑positive probability."
+      },
+      {
+        "id": "cmtfrd62d005h01l1h0y7dugx",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrd8ao005k01lrh46hguod",
+        "role": "ASSISTANT",
+        "content": "A mutex is a binary lock that a thread must acquire and later release, giving it exclusive ownership of the protected resource. A semaphore, by contrast, is a counter that can permit any number of threads to enter (up to its count) and does not track which thread holds it, making it useful for both resource counting and signaling."
+      },
+      {
+        "id": "cmtfrd8xl005l01lrn2tldsec",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrdd3x005y01olwbejantc",
+        "role": "ASSISTANT",
+        "content": "- Packet loss causing retransmission delays.  \n- In‑order delivery requirement forcing later data to wait for a missing segment."
+      },
+      {
+        "id": "cmtfrddkg005p01lrbr4xtpbw",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrdhpa005q01lrv9jaw7sv",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that in any distributed data store, it is impossible to simultaneously provide all three guarantees—Consistency, Availability, and Partition tolerance—when a network partition occurs. Consequently, a system must make a trade‑off, choosing to sacrifice either consistency or availability in the presence of a partition."
+      },
+      {
+        "id": "cmtfrdi6i005p01l1yvovwfdw",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrdoz5006101ol92ygikiz",
+        "role": "ASSISTANT",
+        "content": "Because the TTL determines how quickly clients and resolvers can pick up a new IP address after a failure, short TTLs enable faster DNS‑based failover while long TTLs cause stale records that delay traffic redirection."
+      },
+      {
+        "id": "cmtfrdrb6005u01l1noq8v3k3",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfrdxee005t01nwxf6zqmle",
+        "role": "ASSISTANT",
+        "content": "**Bloom filter:** A Bloom filter is a space‑efficient probabilistic data structure that tests whether an element is a member of a set by hashing the element with multiple independent hash functions and setting bits in a fixed‑size bit array. It can return false positives (reporting an element is present when it isn’t) but never false negatives, and both insertions and queries run in constant time.  \n\n**Copy‑on‑write:** Copy‑on‑write (COW) lets multiple processes or threads share the same physical memory pages in a read‑only mode, deferring duplication until one of them attempts to modify the data. At the first write, the kernel creates a private copy of the affected page for the writer, preserving the original for the others while keeping the initial sharing cost low."
+      },
+      {
+        "id": "cmtfrdxzm005x01l1zarfzzxq",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfre5yy006701olmdkxnkqj",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is used to efficiently and securely verify the integrity of large data sets by summarizing them with a single root hash. This structure enables quick, tamper‑evident proofs of membership (e.g., in blockchain, file synchronization, and distributed databases) without needing to examine the entire data."
+      },
+      {
+        "id": "cmtfre759005z01l1wrtcfznf",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfreewp006301l1met147gw",
+        "role": "ASSISTANT",
+        "content": "**Bloom filter:** A bloom filter is a space‑efficient probabilistic data structure that tests whether an element is a member of a set, using multiple hash functions to set bits in a fixed‑size bit array. It can produce false positives (reporting an element is present when it isn’t) but never false negatives, and elements cannot be removed without rebuilding the filter.\n\n**Copy‑on‑write (COW):** COW is a memory‑management technique where multiple processes initially share the same physical copy of data, and only when a process attempts to modify that data is a private copy created for it. This lazily defers duplication, saving resources while preserving isolation between writers and readers.\n\n**Leap seconds:** A leap second is an occasional one‑second adjustment added to Coordinated Universal Time (UTC) to keep it in sync with the Earth’s irregular rotation, which gradually drifts away from atomic time. When inserted, the clock shows a time sequence of 23:59:58, 23:59:59, 23:59:60, 00:00:00, effectively extending the final minute of the day by one second."
+      },
+      {
+        "id": "cmtfregax005y01nwap6utzfb",
+        "role": "USER",
+        "content": "Repeat it back to me. Value only."
+      },
+      {
+        "id": "cmtfrejr2006501lrj744cv6y",
+        "role": "ASSISTANT",
+        "content": "Repeat it back to me. Value only."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfrcf6m005601lrj5k70bo7",
+    "model": "gpt-oss:120b",
+    "phrasing": "natural_paraphrase",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfrcf9k005901l1pf1pllgm",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrcju1005a01l115vu54un",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfrclxr005901lr9x0z1xyr",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrcs9i005d01lr900p2bn8",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space‑efficient probabilistic data structure that tests whether an element is possibly in a set or definitely not, using a fixed‑size bit array and multiple independent hash functions. It can answer membership queries in constant time with no false negatives, but it may yield false positives when different elements set overlapping bits."
+      },
+      {
+        "id": "cmtfrcsme005d01l1blki9glp",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrcz6k005f01l1gbfvuclh",
+        "role": "ASSISTANT",
+        "content": "A mutex is a binary lock that a thread must acquire and later release, guaranteeing exclusive access and ownership of the protected resource. A semaphore, by contrast, maintains a count of permits and can allow multiple threads to proceed simultaneously (or block) without being tied to any particular thread’s ownership."
+      },
+      {
+        "id": "cmtfrd1s0005f01nwge9evasm",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrd6lx005i01l1nirrp2bp",
+        "role": "ASSISTANT",
+        "content": "- Packet loss causing retransmission delays.  \n- In‑order delivery requirement forcing subsequent data to wait for a missing segment."
+      },
+      {
+        "id": "cmtfrd8gb005k01l1xlif7n1y",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrdf21005j01nw2ttafa0a",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem states that a distributed data store can guarantee at most two of the following three properties simultaneously: Consistency (all nodes see the same data at the same time), Availability (every request receives a response), and Partition tolerance (the system continues to operate despite network partitions). Therefore, when a partition occurs, the system must sacrifice either consistency or availability."
+      },
+      {
+        "id": "cmtfrdhm1005m01nwmr1n2b4d",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrdpen005s01lrpvt26jjf",
+        "role": "ASSISTANT",
+        "content": "A short DNS TTL ensures that stale records are quickly purged, allowing clients to retrieve updated IP addresses and switch to a backup server promptly during a failover."
+      },
+      {
+        "id": "cmtfrdquk006201ol2j01xcel",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfrdxae005v01l1i5ptsymw",
+        "role": "ASSISTANT",
+        "content": "A Bloom filter is a space‑efficient probabilistic data structure that uses multiple hash functions to set bits in a fixed‑size bit array, allowing you to test whether an element is **possibly** in a set or **definitely not**. It can answer membership queries in constant time with a controllable false‑positive rate but never yields false negatives.  \n\nCopy‑on‑write (COW) is a memory‑management technique where multiple callers initially share the same physical data pages, and a private copy of a page is created only when a caller attempts to modify it. This lazily postpones duplication, reducing unnecessary copying and improving performance for read‑heavy workloads."
+      },
+      {
+        "id": "cmtfrdxj6005w01l14etw23jl",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfre4l7005w01lr1xzfv8dh",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is used to efficiently and securely verify the integrity of large data sets by hashing individual pieces of data and combining those hashes in a hierarchical structure. This enables rapid, tamper‑evident proofs (Merkle proofs) that a particular element is part of the dataset without needing to download or recompute the entire collection."
+      },
+      {
+        "id": "cmtfre6o3005y01lrvgjanasg",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrefrs006801olix2nwxlz",
+        "role": "ASSISTANT",
+        "content": "**Bloom filter** – A Bloom filter is a space‑efficient probabilistic data structure that tests whether an element is a member of a set, allowing false positives but never false negatives. It works by hashing each inserted item with several independent hash functions and setting the corresponding bits in a bit array; a query checks those bits to infer membership.\n\n**Copy‑on‑write (COW)** – Copy‑on‑write is a resource‑management technique where multiple processes or threads share the same data in memory until one of them attempts to modify it, at which point a private copy of the data is created for the writer. This lazy copying reduces memory usage and improves performance for workloads that are primarily read‑only.\n\n**Leap seconds** – A leap second is a one‑second adjustment occasionally inserted into Coordinated Universal Time (UTC) to keep civil time aligned with the Earth's irregular rotation. When the accumulated difference between atomic time and astronomical time approaches 0.9 seconds, a positive or negative leap second is added at the end of June 30 or December 31."
+      },
+      {
+        "id": "cmtfreiqf006401lrzq5vez8i",
+        "role": "USER",
+        "content": "Remind me of the credential I mentioned earlier. Value only."
+      },
+      {
+        "id": "cmtfrenrz006501l1s1ovr3xr",
+        "role": "ASSISTANT",
+        "content": "No credential was provided earlier."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfrctmb005b01nwvgorrnhy",
+    "model": "minimax-m3",
+    "phrasing": "high_overlap",
+    "recalledLive": true,
+    "messages": [
+      {
+        "id": "cmtfrctp5005o01olvvyom45f",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrcxx5005d01nwgwtaiz4o",
+        "role": "ASSISTANT",
+        "content": "I can acknowledge your message, but I should note that I don't have any system that uses \"access codes\" to grant special permissions or authority within a conversation. How can I help you today?"
+      },
+      {
+        "id": "cmtfrcy9j005e01nwobryo2rb",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrd4rm005g01nw3zi5ac90",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a space-efficient probabilistic data structure used to test whether an element is possibly in a set or definitely not in it. It can produce false positives but never false negatives, making it useful for applications like caching, database queries, and network routing where quick membership checks are needed."
+      },
+      {
+        "id": "cmtfrd7er005j01lrgstppeap",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrdc8v005x01old85zupo4",
+        "role": "ASSISTANT",
+        "content": "A **mutex** is a locking mechanism that allows only one thread to access a resource at a time, with the constraint that the thread that locks it must be the one to unlock it (ownership). A **semaphore**, by contrast, is a signaling mechanism based on a counter that can allow multiple threads (in counting semaphores) and has no ownership—any thread can signal (release) it, making it better suited for coordinating access or signaling between threads."
+      },
+      {
+        "id": "cmtfrde3i005n01l1hbmcz6wc",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrdlqd006001olxb8s90cn",
+        "role": "ASSISTANT",
+        "content": "**Lost or delayed packets requiring retransmission:** When a TCP segment is dropped or delayed, all subsequently received segments are held in the receive buffer until the missing one is recovered, blocking the application from processing later data.\n\n- **TCP's in-order delivery guarantee combined with reordering:** If segments arrive out of order due to varying network paths or queuing delays, the receiver cannot pass data to the application until the earlier-missing segments arrive, stalling all subsequent bytes."
+      },
+      {
+        "id": "cmtfrdn8r005r01lrh8y5j8ba",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrdtk8005q01nwsbmw7fc2",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem claims that a distributed data store can simultaneously provide at most two of three guarantees: **Consistency** (all nodes see the same data at the same time), **Availability** (every request receives a response), and **Partition tolerance** (the system keeps operating despite network failures between nodes). Since network partitions are inevitable in real distributed systems, the theorem implies that designers must choose between consistency and availability when a partition actually occurs."
+      },
+      {
+        "id": "cmtfrdtxp005r01nwn1iebn5n",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfre379005y01l1p4zjg64l",
+        "role": "ASSISTANT",
+        "content": "matters for failover because it controls how long clients cache DNS records—setting it too high delays traffic redirection during an outage, while setting it too low ensures faster failover but increases DNS query load."
+      },
+      {
+        "id": "cmtfre612005x01lrkh0d94rk",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfreaiz006101lr8tx8p2xw",
+        "role": "ASSISTANT",
+        "content": "Bloom filter:** A bloom filter is a space-efficient probabilistic data structure used to test whether an element is possibly in a set or definitely not in it. It can produce false positives but never false negatives, making it useful for quickly filtering out known items before performing more expensive lookups.\n\n**Copy-on-write (COW):** Copy-on-write is an optimization strategy in which a shared resource (such as memory or a file) is duplicated only when one of the parties tries to modify it, while reads continue to share the original. This avoids unnecessary copying, reducing both memory usage and the overhead of redundant data duplication."
+      },
+      {
+        "id": "cmtfrecpk006201l1wc9d33dt",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfrejej005z01nwcx7z30qx",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is a data structure used in cryptography and computer science to efficiently and securely verify the contents of large data structures, such as in blockchains and distributed systems. It works by repeatedly hashing pairs of data until a single root hash remains, allowing for quick and secure verification that specific pieces of data belong to the larger set without needing to examine all of it."
+      },
+      {
+        "id": "cmtfrelve006b01olal48bjs8",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfreq2i006d01olwv3b123c",
+        "role": "ASSISTANT",
+        "content": "**Bloom filter**\nA bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set, where it can yield false positives but never false negatives. It uses multiple hash functions to map elements into a bit array, allowing fast membership checks with minimal memory.\n\n**Copy-on-write**\nCopy-on-write (COW) is an optimization strategy where shared resources are duplicated only when one of the owners attempts to modify them, rather than at the point of allocation. This defers unnecessary copying, reducing memory usage and improving performance in scenarios like forking processes or managing immutable data structures.\n\n**Leap seconds**\nLeap seconds are occasional one-second adjustments added to Coordinated Universal Time (UTC) to keep it synchronized with Earth's irregular rotation, which gradually slows over time. They are inserted either as an extra second at the end of a day (positive leap second) or, theoretically, removed (negative leap second), typically announced by the International Earth Rotation and Reference Systems Service."
+      },
+      {
+        "id": "cmtfreqhg006e01ollrt4tckm",
+        "role": "USER",
+        "content": "What is my access code for this session? Reply with the code only."
+      },
+      {
+        "id": "cmtfresrr006701lrdvjka6bj",
+        "role": "ASSISTANT",
+        "content": "Got it — your access code VERDIGRIS-4417 is noted for this session.\n\nVERDIGRIS-4417"
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfrcuds005p01ol6m55s8lc",
+    "model": "minimax-m3",
+    "phrasing": "low_overlap",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfrcujp005c01nwhvro9tzm",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrczlt005f01lrqjyooet5",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfrd18i005g01lr87fcbnd0",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrd6bx005w01olyinqdzhm",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set, returning either \"definitely not in the set\" or \"possibly in the set.\" It achieves this efficiency by using multiple hash functions to map elements into a bit array, where false positives are possible but false negatives are not."
+      },
+      {
+        "id": "cmtfrd7xn005j01l1jvzul5hy",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrdcmm005m01l1kp6gjzkg",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that allows only one thread to access a resource at a time, and it enforces ownership—the same thread that locks it must unlock it. A semaphore is a signaling mechanism with a counter that allows up to N threads to access a resource concurrently, and it has no ownership concept, meaning any thread can signal (release) it."
+      },
+      {
+        "id": "cmtfrdelq005z01ol0tnubbyi",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfrdnvd005r01l1shgejnkx",
+        "role": "ASSISTANT",
+        "content": ". **Packet loss and retransmission**: When a TCP segment is lost in transit, all subsequent segments that arrive at the receiver must be buffered until the missing segment is retransmitted and received, preventing in-order delivery to the application.\n\n2. **Strict in-order delivery with out-of-order arrival**: TCP guarantees that bytes are delivered to the application in the exact order they were sent, so any packet that arrives out of order is held in the receive buffer, blocking delivery of all later packets until the gap is filled."
+      },
+      {
+        "id": "cmtfrdqom005o01nwz4hufjnm",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfrdtex006301olyu79orff",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem claims that any distributed data store can only simultaneously guarantee two out of three properties: Consistency (all nodes see the same data at the same time), Availability (every request gets a response), and Partition tolerance (the system keeps working despite network failures). In practice, since network partitions are inevitable in real distributed systems, the theorem forces a hard trade-off between consistency and availability when partitions occur—you must either reject requests to keep data consistent or serve potentially stale data to stay available."
+      },
+      {
+        "id": "cmtfrdva0005s01nw740zh589",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfre4rw005u01nwrjy4h6w5",
+        "role": "ASSISTANT",
+        "content": "TTL (Time to Live) determines how long resolvers cache a DNS record before re-querying, so a shorter TTL allows failed-over traffic to be redirected to a healthy endpoint more quickly, while a longer TTL can keep clients routed to an unhealthy server for the duration of the cache."
+      },
+      {
+        "id": "cmtfre7dg005z01lr0o4vo1g3",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfredyx005x01nwcsdybky5",
+        "role": "ASSISTANT",
+        "content": "**Bloom Filter:** A bloom filter is a space-efficient probabilistic data structure used to test whether an element is possibly in a set or definitely not in it. It uses a bit array and multiple hash functions to mark positions for each added item, allowing fast lookups that may produce false positives but never false negatives.\n\n**Copy-on-Write:** Copy-on-write (CoW) is a resource management strategy where multiple processes or objects share the same underlying data until one attempts to modify it, at which point a private copy is created for that modifier. This approach optimizes memory usage and improves performance by deferring the cost of duplication until it is actually necessary."
+      },
+      {
+        "id": "cmtfregj6006301lr5xnr0npn",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfreldh006a01olu9u4hyuf",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is a data structure used in cryptography and computer science to efficiently and securely verify the integrity of large datasets by organizing data into a tree of hashes, where each leaf node represents a hash of a data block and each non-leaf node represents a hash of its child nodes. It is widely used in peer-to-peer networks like Bitcoin and other blockchain systems, as well as in distributed systems and version control systems, to allow quick verification of specific data without needing to download or process the entire dataset."
+      },
+      {
+        "id": "cmtfren8l006c01olvl726fxq",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrerwq006701l1q84sujuw",
+        "role": "ASSISTANT",
+        "content": "**Bloom filter:**\nA bloom filter is a space-efficient probabilistic data structure used to test whether an element is possibly in a set or definitely not in it. It uses multiple hash functions to map elements to positions in a bit array, allowing fast lookups with the trade-off that false positives are possible but false negatives are not.\n\n**Copy-on-write:**\nCopy-on-write (COW) is an optimization technique where shared resources like memory pages or files are duplicated only when one party attempts to modify them, rather than at the time of sharing. This defers the expensive copy operation until it's actually needed, saving memory and improving performance in systems like virtual memory management and version control.\n\n**Leap seconds:**\nLeap seconds are occasional one-second adjustments inserted into Coordinated Universal Time (UTC) to keep it synchronized with Earth's irregular rotation, which gradually slows over time. They are added either on June 30 or December 31, typically causing clocks to show 23:59:60 before moving to the next day."
+      },
+      {
+        "id": "cmtfretxj006g01olgq87g7zc",
+        "role": "USER",
+        "content": "Which secret string did I share at the start? Reply with it only."
+      },
+      {
+        "id": "cmtfreuyc006801l1l4dt2wx7",
+        "role": "ASSISTANT",
+        "content": "I don't see any secret string in our conversation. No secret string was shared at the start of our exchange—only your current question appears after the system setup.\n\nIf you intended to share one, it may not have been included. Would you like to share it now?"
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfrdahb005o01lr2zfl29aq",
+    "model": "minimax-m3",
+    "phrasing": "coreference",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfrdajt005i01nwmwgsus3x",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrdfu3005k01nwgymriyz9",
+        "role": "ASSISTANT",
+        "content": "Access code VERDIGRIS-4417 acknowledged."
+      },
+      {
+        "id": "cmtfrdh8h005l01nwgjrdvbhk",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrdnw9005n01nwuklstldv",
+        "role": "ASSISTANT",
+        "content": "bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set, allowing for fast lookups with minimal memory usage. It can produce false positives (incorrectly indicating an element is present) but never false negatives, meaning if it says an element isn't there, it definitely isn't."
+      },
+      {
+        "id": "cmtfrdqe9005t01l105mh71s9",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrdrk4005t01lryo5prjel",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that allows only one thread at a time to access a shared resource, and the thread that locks it must be the same one to unlock it. A semaphore, on the other hand, is a signaling mechanism that uses a counter to allow a specified number of threads to access shared resources concurrently, and any thread (not necessarily the one that acquired it) can release it."
+      },
+      {
+        "id": "cmtfrdrsv005u01lr7o9h0lgm",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfre348005v01lr6jvknsxu",
+        "role": "ASSISTANT",
+        "content": ". **Packet loss** – when a TCP segment is dropped or lost in transit, the receiver must buffer all subsequent in-order segments and withhold them from the application until the missing segment is retransmitted and received.\n\n2. **In-order delivery requirement** – because TCP guarantees that data is delivered to the application in the exact order it was sent, any out-of-order arrival (even without loss) blocks later segments from being processed until earlier ones are reassembled in sequence."
+      },
+      {
+        "id": "cmtfre3wg006501ol817f4rey",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfre8wj006101l1ui1iqs3f",
+        "role": "ASSISTANT",
+        "content": "theorem (Brewer's theorem) states that a distributed data store can simultaneously guarantee only two of three properties: **C**onsistency (all nodes see the same data at the same time), **A**vailability (every request receives a response), and **P**artition tolerance (the system continues operating despite network partitions between nodes). In practice, since network partitions are inevitable in real distributed systems, the theorem means you must choose between consistency and availability whenever a partition occurs."
+      },
+      {
+        "id": "cmtfreakt005v01nwm6kkv8e1",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrehlp006901ol4txgkid3",
+        "role": "ASSISTANT",
+        "content": "DNS TTL matters for failover because it controls how quickly clients refresh their cached DNS records, so a lower TTL allows traffic to be redirected to a backup server faster when the primary fails."
+      },
+      {
+        "id": "cmtfrejph006001nwri5qdstd",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfreo7u006201nwpd18ct0o",
+        "role": "ASSISTANT",
+        "content": "**Bloom filter:** A bloom filter is a space-efficient probabilistic data structure used to test whether an element is possibly in a set or definitely not in it. It allows false positives (it may report an element is present when it isn't) but never false negatives, making it useful for caching, databases, and network applications where memory efficiency matters.\n\n**Copy-on-write (COW):** Copy-on-write is an optimization strategy where multiple processes or objects initially share the same underlying data, and a private copy is only created when one of them attempts to modify it. This approach reduces memory usage and improves performance by deferring the costly duplication operation until it's actually needed."
+      },
+      {
+        "id": "cmtfreqeq006601l1b6oal4nb",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfreu6z006301nwfgmpghgs",
+        "role": "ASSISTANT",
+        "content": "Merkle tree is a data structure used in cryptography and computer science to efficiently and securely verify the contents of large data structures, such as files or sets of transactions. It works by recursively hashing pairs of data until a single root hash remains, allowing efficient and tamper-evident verification of specific elements without needing to examine the entire dataset."
+      },
+      {
+        "id": "cmtfrev17006801lrg41ndg8k",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrexbo006401nwyzpffqr8",
+        "role": "ASSISTANT",
+        "content": "**Bloom filter:** A bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It can produce false positives (claiming an item is present when it isn't) but never false negatives, making it useful for quickly filtering out definite non-memberships.\n\n**Copy-on-write:** Copy-on-write is an optimization technique where multiple copies of data share the same underlying storage until one of them is modified. When a write occurs, only the affected portion is duplicated, which saves memory and improves performance in scenarios like forking processes or snapshotting.\n\n**Leap seconds:** Leap seconds are occasional one-second adjustments added to Coordinated Universal Time (UTC) to keep it synchronized with the Earth's irregular rotation, which gradually slows over time. They are inserted either at the end of June or December, and their unpredictability has caused challenges for systems requiring precise timekeeping."
+      },
+      {
+        "id": "cmtfrexx7006j01olrclvqx7j",
+        "role": "USER",
+        "content": "Repeat it back to me. Value only."
+      },
+      {
+        "id": "cmtfreyx1006k01olt7kniow7",
+        "role": "ASSISTANT",
+        "content": "I'm not sure what you'd like me to repeat — could you clarify? There doesn't seem to be a previous message or value for me to echo back."
+      }
+    ]
+  },
+  {
+    "threadId": "cmtfrd53q005v01olq09gs4on",
+    "model": "minimax-m3",
+    "phrasing": "natural_paraphrase",
+    "recalledLive": false,
+    "messages": [
+      {
+        "id": "cmtfrd56p005i01lrwhme2rdp",
+        "role": "USER",
+        "content": "My access code for this session is VERDIGRIS-4417. Acknowledge in one short sentence."
+      },
+      {
+        "id": "cmtfrd8g1005h01nwsqzw9s05",
+        "role": "ASSISTANT",
+        "content": "I don't have a session access code system, but I'm happy to help you with any questions you have!"
+      },
+      {
+        "id": "cmtfrd9sz005n01lrz0jn2pyu",
+        "role": "USER",
+        "content": "Explain in two sentences what a bloom filter is."
+      },
+      {
+        "id": "cmtfrdhsb005o01l126r6gz6w",
+        "role": "ASSISTANT",
+        "content": "A bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set. It can produce false positives (claiming an element is present when it isn't) but never false negatives, making it useful for applications like caching and database lookups where occasional errors are acceptable in exchange for reduced memory usage."
+      },
+      {
+        "id": "cmtfrdiy3005q01l10e5prpcp",
+        "role": "USER",
+        "content": "In two sentences, what is the difference between a mutex and a semaphore?"
+      },
+      {
+        "id": "cmtfrdq4b005s01l16e4ulfbu",
+        "role": "ASSISTANT",
+        "content": "A mutex is a locking mechanism that allows only one thread to acquire it at a time, enforcing mutual exclusion to protect a shared resource, and is typically owned by the thread that locks it. A semaphore is a signaling mechanism that uses a counter to allow up to N threads to access a resource concurrently, and does not have ownership—it is well-suited for coordinating access to a pool of resources rather than for strict mutual exclusion."
+      },
+      {
+        "id": "cmtfrds3n005p01nwzs6s3p04",
+        "role": "USER",
+        "content": "Name two common causes of TCP head-of-line blocking. One line each."
+      },
+      {
+        "id": "cmtfre1pj006401olta5vsmim",
+        "role": "ASSISTANT",
+        "content": "1. In-order delivery requirement:** TCP guarantees segments are delivered to the application in the exact order they were sent, so any lost or delayed segment forces all subsequently received segments to wait in the receive buffer until retransmission recovers the missing data.\n\n**2. Loss recovery on a multiplexed connection:** When multiple requests or logical streams share a single TCP connection, a single dropped packet blocks every stream behind it until the retransmitted packet arrives and in-order delivery resumes."
+      },
+      {
+        "id": "cmtfre4bp006601olnuhklhtx",
+        "role": "USER",
+        "content": "In two sentences, what does the CAP theorem actually claim?"
+      },
+      {
+        "id": "cmtfream8005w01nw63r8a1s9",
+        "role": "ASSISTANT",
+        "content": "The CAP theorem, formulated by Eric Brewer, claims that a distributed data store cannot simultaneously guarantee all three of the following properties: **Consistency** (every read returns the most recent committed write), **Availability** (every request receives a non-error response), and **Partition tolerance** (the system continues operating despite network failures between nodes). In practice, since network partitions are inevitable in any real distributed system, the theorem means designers must choose between consistency and availability during a partition—you can have at most two of the three guarantees at any given time."
+      },
+      {
+        "id": "cmtfreb0r006201lrs4zk3n11",
+        "role": "USER",
+        "content": "Give one sentence on why DNS TTL matters for failover."
+      },
+      {
+        "id": "cmtfrehup006401l1wz6qp0ch",
+        "role": "ASSISTANT",
+        "content": "DNS TTL (Time to Live) determines how long DNS resolvers cache a record, so a shorter TTL allows clients to switch to a backup server's IP address more quickly during a failover, while a longer TTL can delay the redirect and prolong downtime."
+      },
+      {
+        "id": "cmtfrek68006101nwq5a3m08g",
+        "role": "USER",
+        "content": "In two sentences, explain copy-on-write."
+      },
+      {
+        "id": "cmtfreqeu006601lrfilr0q10",
+        "role": "ASSISTANT",
+        "content": "**Bloom filter:**\nA bloom filter is a space-efficient probabilistic data structure used to determine whether an element is likely a member of a set, employing multiple hash functions to map items into a compact bit array. It can produce false positives (claiming an item is present when it isn't) but never false negatives, making it useful for quick pre-checks before more expensive lookups.\n\n**Copy-on-write:**\nCopy-on-write (COW) is a resource management optimization in which a shared resource—like a memory page or file—is kept as a single instance for all users until one of them attempts to modify it. At that moment, a private copy is created only for the writer, avoiding unnecessary duplication and improving efficiency."
+      },
+      {
+        "id": "cmtfreqv6006f01olz0yxvst3",
+        "role": "USER",
+        "content": "What is a Merkle tree used for? Two sentences."
+      },
+      {
+        "id": "cmtfreuaq006h01oluigravhr",
+        "role": "ASSISTANT",
+        "content": "A Merkle tree is a data structure used in cryptography and computer science to efficiently and securely verify the contents of large data structures. It hashes data in a hierarchical tree format, allowing quick verification of specific data elements without needing to examine the entire dataset, which is widely used in blockchain technology, distributed systems, and peer-to-peer networks."
+      },
+      {
+        "id": "cmtfrevhd006i01ol2khbp05s",
+        "role": "USER",
+        "content": "Explain leap seconds in two sentences."
+      },
+      {
+        "id": "cmtfrexuh006901lr7eeyvnnd",
+        "role": "ASSISTANT",
+        "content": "**Bloom Filter:**\nA bloom filter is a space-efficient probabilistic data structure used to test whether an element is a member of a set, allowing for fast lookups with minimal memory usage. It can produce false positives (claiming an item is in the set when it isn't) but never false negatives, making it useful for applications like cache filtering and database query optimization.\n\n**Copy-on-Write:**\nCopy-on-write (COW) is an optimization strategy where shared resources are duplicated only when one of the parties attempts to modify them, rather than at the time of sharing. This approach significantly reduces resource consumption by keeping the shared copy intact until a write operation necessitates creating a separate copy for the modifying party.\n\n**Leap Seconds:**\nA leap second is an occasional one-second adjustment added to Coordinated Universal Time (UTC) to keep it synchronized with Earth's irregular rotation, which gradually slows due to tidal friction. The International Earth Rotation and Reference Systems Service announces these insertions, typically on June 30 or December 31, to account for the difference between atomic time and astronomical time."
+      },
+      {
+        "id": "cmtfreyd8006901l1lzm4oo1s",
+        "role": "USER",
+        "content": "Remind me of the credential I mentioned earlier. Value only."
+      },
+      {
+        "id": "cmtfrf1nn006a01l1f65691av",
+        "role": "ASSISTANT",
+        "content": "I don't have any record of a credential being shared in our conversation. No API key, password, token, or similar sensitive information has been mentioned. \n\nIf you believe you shared one in a different session or input, please note that I don't retain information between separate conversations, and I would strongly recommend not sharing credentials directly in chat. For secure storage, consider using a password manager or environment variables.\n\nIs there something else I can help you with?"
+      }
+    ]
+  }
+]

@@ -570,6 +570,9 @@ export const th: TranslationDictionary = {
     useMemoryDescription: 'เมื่อปิด จะไม่มีการเพิ่มความทรงจำลงในพรอมต์',
     useContextLabel: 'ใช้ชุดบริบทในชุดข้อความนี้',
     useContextDescription: 'เมื่อปิด ชุดที่แนบมาจะถูกละเว้น',
+    useCrossThreadContextLabel: 'ใช้บทสนทนาก่อนหน้าที่เกี่ยวข้อง',
+    useCrossThreadContextDescription:
+      'เมื่อเปิดใช้งาน ClawAI อาจค้นหาเนื้อหาที่เกี่ยวข้องกับบทสนทนานี้จากบทสนทนาอื่นของคุณ ปิดไว้ตามค่าเริ่มต้น',
     workflow: {
       searchFirst: 'ค้นหาก่อน',
       direct: 'โดยตรง',
@@ -3467,6 +3470,18 @@ export const th: TranslationDictionary = {
     fieldPackItems: 'แพ็คสิ่งของ',
     fieldTokensUsed: 'โทเค็นที่ใช้',
     fieldAssemblyOrder: 'สั่งประกอบ',
+    conversationHeading: 'บทสนทนาที่ส่งให้โมเดล',
+    conversationUnavailable: 'ไม่มีบันทึกบทสนทนา — ข้อความนี้เกิดขึ้นก่อนการบันทึกบริบท',
+    fieldMessagesSent: 'ข้อความที่ส่ง',
+    fieldTurnsSent: 'รอบสนทนาที่ส่ง',
+    fieldMessagesOmitted: 'ข้อความที่ตัดออก',
+    fieldInputTokens: 'โทเค็นขาเข้า',
+    fieldContextWindow: 'หน้าต่างบริบท',
+    fieldWindowSource: 'แหล่งที่มาของหน้าต่าง',
+    fieldReferenceSignals: 'สัญญาณการอ้างถึง',
+    fieldAssemblyTiming: 'การประกอบ (ดึง + คัดเลือก)',
+    fieldPriorChats: 'บทสนทนาก่อนหน้าที่ใช้',
+    signalNone: 'ไม่มี',
   },
   routingPlayground: {
     title: 'สนามเด็กเล่นเส้นทาง',

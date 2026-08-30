@@ -39,6 +39,8 @@ import { routerTraceEmittedSchema } from '../dto/router-trace.dto';
 import { RouterTraceStreamService } from './router-trace-stream.service';
 import { ResearchEnricherManager } from '../managers/research-enricher.manager';
 import { RuntimeV2LoopManager } from '../managers/runtime-v2-loop.manager';
+import { THREAD_HISTORY_FETCH_LIMIT } from '../../../common/constants';
+import { ModelContextWindowClient } from '../clients/model-context-window.client';
 import { ChatStreamService } from './chat-stream.service';
 import { AccessControlService } from './access-control.service';
 import { type CreateMessageDto } from '../dto/create-message.dto';
@@ -1069,13 +1071,20 @@ export class ChatMessagesService implements OnModuleInit {
     let routedMessages: ChatMessage[] = [];
     try {
       const [threadMessages, loadedThread] = await Promise.all([
-        this.chatMessagesRepository.findRecentByThreadId(payload.threadId, 20),
+        this.chatMessagesRepository.findRecentByThreadId(
+          payload.threadId,
+          THREAD_HISTORY_FETCH_LIMIT,
+        ),
         this.chatThreadsRepository.findById(payload.threadId),
       ]);
       thread = loadedThread;
       const chronologicalMessages = [...threadMessages].reverse();
       routedMessages = this.resolveRoutedMessageWindow(chronologicalMessages, payload.messageId);
-      const threadSettings = this.extractThreadSettings(thread);
+      const threadSettings = await this.withModelContextWindow(
+        this.extractThreadSettings(thread),
+        payload.selectedProvider,
+        payload.selectedModel,
+      );
       const fileIds = this.extractFileIdsFromMessages(routedMessages);
       const latestUserMetadata = this.extractLatestUserMetadata(routedMessages);
       const effectivePayload = this.applyFollowUpOverrides(payload, thread, routedMessages);
@@ -1342,6 +1351,34 @@ export class ChatMessagesService implements OnModuleInit {
     };
   }
 
+  // Shared across the process, like ModelExposureClient next to it: a model's
+  // context window does not vary by caller, and one cache miss per model beats
+  // one per collaborator.
+  private readonly modelContextWindow = new ModelContextWindowClient();
+
+  /**
+   * Teaches the assembler how big the selected model's prompt may actually be.
+   *
+   * Without this the composer falls back to a conservative window and sends a
+   * short history — correct, but far less than the model can hold. With it, a
+   * 256k model is budgeted as a 256k model. Never throws: a routing-service
+   * outage must shorten the prompt, not fail the turn.
+   */
+  private async withModelContextWindow(
+    settings: ThreadSettings | undefined,
+    provider: string | undefined,
+    model: string | undefined,
+  ): Promise<ThreadSettings | undefined> {
+    if (provider === undefined || model === undefined) {
+      return settings;
+    }
+    const contextWindowTokens = await this.modelContextWindow.findContextWindowTokens(
+      provider,
+      model,
+    );
+    return { ...(settings ?? {}), provider, contextWindowTokens };
+  }
+
   private extractThreadSettings(thread: ChatThread | null): ThreadSettings | undefined {
     if (!thread) {
       return undefined;
@@ -1351,6 +1388,7 @@ export class ChatMessagesService implements OnModuleInit {
       temperature: thread.temperature,
       maxTokens: thread.maxTokens,
       judgeModel: thread.judgeModel,
+      useCrossThreadContext: thread.useCrossThreadContext,
       criticEnabled: thread.criticEnabled,
       criticModel: thread.criticModel,
       qualityThreshold: thread.qualityThreshold,

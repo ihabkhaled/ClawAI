@@ -1,6 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { type RetrievalBundle, type RetrievalRequest } from '@claw/shared-types';
 import { Public } from '../../../app/decorators/public.decorator';
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
   type RecordUsageRequestDto,
@@ -9,6 +10,7 @@ import {
 } from '../dto/retrieve.dto';
 import { MemoryRetrievalService } from '../services/memory-retrieval.service';
 
+@UseGuards(ServiceTokenGuard)
 @Controller('internal/memories')
 export class MemoryRetrievalController {
   constructor(private readonly retrieval: MemoryRetrievalService) {}

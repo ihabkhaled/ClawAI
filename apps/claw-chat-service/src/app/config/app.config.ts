@@ -26,6 +26,10 @@ const appConfigSchema = z.object({
   OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
   LLAMACPP_SERVICE_URL: z.string().min(1).default('http://llamacpp-service:4017'),
   CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
+  // Read for one thing only: the selected model's real context window, which
+  // chat-service must never keep its own copy of. See ModelContextWindowClient
+  // and ADR-086.
+  ROUTING_SERVICE_URL: z.string().min(1).default('https://routing-service:4004'),
   MEMORY_SERVICE_URL: z.string().min(1).default('http://memory-service:4005'),
   FILE_SERVICE_URL: z.string().min(1).default('http://file-service:4006'),
   IMAGE_SERVICE_URL: z.string().min(1).default('http://image-service:4012'),

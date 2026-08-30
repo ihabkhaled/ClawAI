@@ -12,6 +12,7 @@
 | A service fails on a symbol its source declares    | [runbook-stale-shared-package-dist.md](runbook-stale-shared-package-dist.md) → the container carries an image-baked `packages/*/dist`; rebuild the image |
 | Requests are slow / timing out                     | [runbook-high-latency.md](runbook-high-latency.md)                                                                                                       |
 | A database is corrupt / needs restore              | [runbook-database-recovery.md](runbook-database-recovery.md)                                                                                             |
+| The AI "forgot" something earlier in the thread    | [context-loss-triage.md](context-loss-triage.md) → read the receipt's `conversation` block; it says what was sent and why the rest was not               |
 | Routing picks the "wrong" model                    | [runbook-routing-misclassification.md](runbook-routing-misclassification.md)                                                                             |
 | `ollama pull` / model download fails               | [runbook-model-pull-failure.md](runbook-model-pull-failure.md)                                                                                           |
 | TLS / cert / `Hostname doesn't match` errors       | [troubleshoot-tls.md](troubleshoot-tls.md)                                                                                                               |

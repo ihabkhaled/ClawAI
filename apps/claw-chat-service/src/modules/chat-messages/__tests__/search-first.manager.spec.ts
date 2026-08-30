@@ -8,6 +8,11 @@ import {
 import { SearchFirstManager } from '../managers/search-first.manager';
 import type { AssembledContext } from '../types/context.types';
 import type { ResearchSearchResponse } from '../types/search-first.types';
+import {
+  disabledCrossThreadResult,
+  emptyConversationManifest,
+  fallbackModelTokenBudget,
+} from '../utilities/assembled-context.utility';
 
 jest.mock('../../../common/utilities', () => ({
   httpRequest: jest.fn(),
@@ -35,6 +40,9 @@ function makeContext(systemPrompt: string | null = null): AssembledContext {
     researchRunId: null,
     researchWarnings: [],
     tokenBudget: 4000,
+    modelBudget: fallbackModelTokenBudget(),
+    conversationManifest: emptyConversationManifest(),
+    crossThread: disabledCrossThreadResult(),
   };
 }
 

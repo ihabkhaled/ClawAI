@@ -30,6 +30,44 @@ export type RetrievalPackItem = {
   tokenCountEstimate: number;
 };
 
+/**
+ * What the model was given from the CONVERSATION, and what it was not.
+ *
+ * Added because the receipt used to account for memories and context-pack
+ * items only. A user could see a hundred messages in a thread, be shown a
+ * receipt saying "0 memories", and have no way at all to learn that the model
+ * had been handed one of those hundred messages. "The message is visibly in
+ * the thread" and "the model was actually given it" were indistinguishable.
+ *
+ * Optional so receipts written before ADR-089 still parse.
+ */
+export type RetrievalConversationSummary = {
+  totalThreadMessages: number;
+  includedMessageIds: string[];
+  includedTurnCount: number;
+  omittedMessageIds: string[];
+  omissionReasons: Record<string, string>;
+  estimatedInputTokens: number;
+  contextWindowTokens: number;
+  reservedOutputTokens: number;
+  availableInputTokens: number;
+  contextWindowSource: string;
+  referenceSignals: string[];
+  /**
+   * Cross-thread retrieval (ADR-087). `priorThreadsUsed` is empty whenever the
+   * feature is off, which is the default; `crossThreadSkipReason` says which of
+   * the seven reasons applied, so "nothing was retrieved" is never ambiguous.
+   */
+  priorThreadsSearched: string[];
+  priorThreadsUsed: string[];
+  priorMessageIds: string[];
+  crossThreadSkipReason: string | null;
+  /** Network cost of fetching every context source, concurrently. */
+  retrievalMs: number;
+  /** In-memory cost of grouping, scoring and fitting the conversation. */
+  selectionMs: number;
+};
+
 export type RetrievalBundle = {
   memories: RetrievalMemoryItem[];
   packItems: RetrievalPackItem[];
@@ -38,6 +76,8 @@ export type RetrievalBundle = {
   tokenBudgetUsed: number;
   retrievalLatencyMs: number;
   warnings: string[];
+  /** Present on every receipt written since ADR-089. */
+  conversation?: RetrievalConversationSummary;
 };
 
 export type RetrievalRequest = {

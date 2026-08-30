@@ -579,6 +579,9 @@ export const ja: TranslationDictionary = {
     useMemoryDescription: 'オフの場合、プロンプトにメモリは挿入されません。',
     useContextLabel: 'このスレッドでコンテキスト パックを使用してください',
     useContextDescription: 'オフの場合、接続されたパックは無視されます。',
+    useCrossThreadContextLabel: '関連する過去のチャットを使用する',
+    useCrossThreadContextDescription:
+      'オンにすると、ClawAI はこの会話に関連する内容を他の会話から探すことがあります。既定ではオフです。',
     workflow: {
       searchFirst: '検索優先',
       direct: 'ダイレクト',
@@ -3511,6 +3514,19 @@ export const ja: TranslationDictionary = {
     fieldPackItems: 'パックアイテム',
     fieldTokensUsed: '使用されたトークン',
     fieldAssemblyOrder: '組立順序',
+    conversationHeading: 'モデルに送信された会話',
+    conversationUnavailable:
+      '会話の記録がありません — このメッセージはコンテキストマニフェスト導入前のものです。',
+    fieldMessagesSent: '送信メッセージ数',
+    fieldTurnsSent: '送信ターン数',
+    fieldMessagesOmitted: '除外メッセージ数',
+    fieldInputTokens: '入力トークン',
+    fieldContextWindow: 'コンテキストウィンドウ',
+    fieldWindowSource: 'ウィンドウの出典',
+    fieldReferenceSignals: '参照シグナル',
+    fieldAssemblyTiming: '組み立て（取得＋選択）',
+    fieldPriorChats: '使用した過去のチャット',
+    signalNone: 'なし',
   },
   routingPlayground: {
     title: 'ルーティング プレイグラウンド',

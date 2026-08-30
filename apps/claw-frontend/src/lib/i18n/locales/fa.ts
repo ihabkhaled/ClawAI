@@ -577,6 +577,9 @@ export const fa: TranslationDictionary = {
     useMemoryDescription: 'وقتی خاموش است، هیچ حافظه ای به اعلان تزریق نمی شود.',
     useContextLabel: 'از بسته های متنی در این موضوع استفاده کنید',
     useContextDescription: 'هنگامی که خاموش است، بسته های پیوست نادیده گرفته می شوند.',
+    useCrossThreadContextLabel: 'استفاده از گفت‌وگوهای پیشین مرتبط',
+    useCrossThreadContextDescription:
+      'وقتی روشن باشد، ClawAI می‌تواند گفت‌وگوهای دیگر شما را برای یافتن مطالب مرتبط با این گفت‌وگو بررسی کند. به‌صورت پیش‌فرض خاموش است.',
     workflow: {
       searchFirst: 'ابتدا جستجو کنید',
       direct: 'مستقیم',
@@ -3500,6 +3503,18 @@ export const fa: TranslationDictionary = {
     fieldPackItems: 'اقلام را بسته بندی کنید',
     fieldTokensUsed: 'توکن های استفاده شده',
     fieldAssemblyOrder: 'دستور مونتاژ',
+    conversationHeading: 'گفت‌وگوی ارسال‌شده به مدل',
+    conversationUnavailable: 'سابقهٔ گفت‌وگویی وجود ندارد — این پیام پیش از ثبت مانیفست زمینه است.',
+    fieldMessagesSent: 'پیام‌های ارسال‌شده',
+    fieldTurnsSent: 'نوبت‌های ارسال‌شده',
+    fieldMessagesOmitted: 'پیام‌های حذف‌شده',
+    fieldInputTokens: 'توکن‌های ورودی',
+    fieldContextWindow: 'پنجرهٔ زمینه',
+    fieldWindowSource: 'منبع پنجره',
+    fieldReferenceSignals: 'نشانه‌های ارجاع',
+    fieldAssemblyTiming: 'مونتاژ (واکشی + انتخاب)',
+    fieldPriorChats: 'گفت‌وگوهای پیشین استفاده‌شده',
+    signalNone: 'هیچ',
   },
   routingPlayground: {
     title: 'مسیریابی زمین بازی',

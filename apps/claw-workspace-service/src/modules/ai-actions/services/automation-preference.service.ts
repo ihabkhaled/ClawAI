@@ -9,6 +9,7 @@ import type {
   LearnedPreferenceItem,
   UpsertAutomationPreferenceInput,
 } from '../types/automation-preference.types';
+import { buildAuthHeader } from '../../../common/utilities/file-service-client.utility';
 
 @Injectable()
 export class AutomationPreferenceService {
@@ -40,7 +41,7 @@ export class AutomationPreferenceService {
     const url = `${AppConfig.get().MEMORY_SERVICE_URL}/api/v1/internal/memories/learned-preferences?${params.toString()}`;
     try {
       const response = await fetch(url, {
-        headers: { Accept: 'application/json' },
+        headers: { Accept: 'application/json', Authorization: buildAuthHeader() },
         signal: AbortSignal.timeout(LEARNED_PREFERENCES_FETCH_TIMEOUT_MS),
       });
       if (!response.ok) {

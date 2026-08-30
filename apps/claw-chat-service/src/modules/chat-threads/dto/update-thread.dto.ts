@@ -34,6 +34,8 @@ export const updateThreadSchema = z
     // Integration V2 — per-thread memory + context toggles
     useMemory: z.boolean().optional(),
     useContext: z.boolean().optional(),
+    // ADR-087 — "use relevant previous chats". Opt-in, never inferred.
+    useCrossThreadContext: z.boolean().optional(),
   })
   .superRefine((value, context) => {
     if (value.criticEnabled !== true) {

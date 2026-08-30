@@ -589,6 +589,9 @@ export const de: TranslationDictionary = {
     useMemoryDescription: 'Wenn deaktiviert, werden keine Erinnerungen in den Prompt eingefügt.',
     useContextLabel: 'Kontextpakete in diesem Gespräch verwenden',
     useContextDescription: 'Wenn deaktiviert, werden angehängte Pakete ignoriert.',
+    useCrossThreadContextLabel: 'Relevante frühere Chats verwenden',
+    useCrossThreadContextDescription:
+      'Wenn aktiviert, darf ClawAI Ihre anderen Unterhaltungen nach Material durchsuchen, das für diese relevant ist. Standardmäßig aus.',
     workflow: {
       searchFirst: 'Suche zuerst',
       direct: 'Direkt',
@@ -3550,6 +3553,19 @@ export const de: TranslationDictionary = {
     fieldPackItems: 'Pack-Elemente',
     fieldTokensUsed: 'Verwendete Tokens',
     fieldAssemblyOrder: 'Zusammenstellungsreihenfolge',
+    conversationHeading: 'An das Modell gesendete Konversation',
+    conversationUnavailable:
+      'Kein Konversationsprotokoll – diese Nachricht ist älter als die Kontextmanifeste.',
+    fieldMessagesSent: 'Gesendete Nachrichten',
+    fieldTurnsSent: 'Gesendete Gesprächsrunden',
+    fieldMessagesOmitted: 'Ausgelassene Nachrichten',
+    fieldInputTokens: 'Eingabe-Token',
+    fieldContextWindow: 'Kontextfenster',
+    fieldWindowSource: 'Quelle des Fensters',
+    fieldReferenceSignals: 'Bezugssignale',
+    fieldAssemblyTiming: 'Zusammenstellung (Abruf + Auswahl)',
+    fieldPriorChats: 'Verwendete frühere Chats',
+    signalNone: 'keine',
   },
   routingPlayground: {
     title: 'Routing-Spielplatz',

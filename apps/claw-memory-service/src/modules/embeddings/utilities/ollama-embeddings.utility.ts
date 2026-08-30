@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { EMBEDDING_HTTP_TIMEOUT_MS } from '../constants/embeddings.constants';
+import { CIRCUIT_OLLAMA_EMBEDDINGS } from '../../../common/constants';
+import { throughCircuit } from '../../../common/utilities';
 
 const logger = new Logger('OllamaEmbeddings');
 
@@ -12,6 +14,13 @@ const logger = new Logger('OllamaEmbeddings');
  * vectors). NEVER inline.
  */
 export async function fetchEmbedding(input: { content: string }): Promise<number[]> {
+  // Fail instantly while the backend is known to be down. Callers already treat
+  // a throw as "no semantic results, carry on"; this only changes how long they
+  // wait to learn it. See dependency-circuit.utility.ts for the measurement.
+  return throughCircuit(CIRCUIT_OLLAMA_EMBEDDINGS, async () => requestEmbedding(input));
+}
+
+async function requestEmbedding(input: { content: string }): Promise<number[]> {
   const config = AppConfig.get();
   const url = `${config.OLLAMA_BASE_URL}/api/embeddings`;
   const response = await fetch(url, {

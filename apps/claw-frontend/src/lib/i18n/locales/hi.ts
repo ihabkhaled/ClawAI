@@ -579,6 +579,9 @@ export const hi: TranslationDictionary = {
     useMemoryDescription: 'बंद होने पर, प्रॉम्प्ट में कोई मेमोरी इंजेक्ट नहीं की जाती।',
     useContextLabel: 'इस वार्तालाप में संदर्भ पैक उपयोग करें',
     useContextDescription: 'बंद होने पर, संलग्न पैक अनदेखा कर दिए जाते हैं।',
+    useCrossThreadContextLabel: 'प्रासंगिक पिछली बातचीत का उपयोग करें',
+    useCrossThreadContextDescription:
+      'चालू होने पर, ClawAI इस बातचीत से संबंधित सामग्री के लिए आपकी अन्य बातचीतों को देख सकता है। डिफ़ॉल्ट रूप से बंद।',
     workflow: {
       searchFirst: 'पहले खोजें',
       direct: 'सीधा',
@@ -3502,6 +3505,18 @@ export const hi: TranslationDictionary = {
     fieldPackItems: 'पैक आइटम',
     fieldTokensUsed: 'उपयोग किए गए टोकन',
     fieldAssemblyOrder: 'असेंबली क्रम',
+    conversationHeading: 'मॉडल को भेजी गई बातचीत',
+    conversationUnavailable: 'कोई बातचीत रिकॉर्ड नहीं — यह संदेश संदर्भ मैनिफ़ेस्ट से पुराना है।',
+    fieldMessagesSent: 'भेजे गए संदेश',
+    fieldTurnsSent: 'भेजे गए चरण',
+    fieldMessagesOmitted: 'छोड़े गए संदेश',
+    fieldInputTokens: 'इनपुट टोकन',
+    fieldContextWindow: 'संदर्भ विंडो',
+    fieldWindowSource: 'विंडो स्रोत',
+    fieldReferenceSignals: 'संदर्भ संकेत',
+    fieldAssemblyTiming: 'संयोजन (लाना + चयन)',
+    fieldPriorChats: 'उपयोग की गई पिछली बातचीत',
+    signalNone: 'कोई नहीं',
   },
   routingPlayground: {
     title: 'रूटिंग प्लेग्राउंड',

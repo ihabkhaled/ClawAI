@@ -561,6 +561,9 @@ export const zh: TranslationDictionary = {
     useMemoryDescription: '关闭时，不会将任何记忆注入提示中。',
     useContextLabel: '在此线程中使用上下文包',
     useContextDescription: '关闭时，附加的包将被忽略。',
+    useCrossThreadContextLabel: '使用相关的历史对话',
+    useCrossThreadContextDescription:
+      '开启后，ClawAI 可在你的其他对话中查找与本次对话相关的内容。默认关闭。',
     workflow: {
       searchFirst: '搜索优先',
       direct: '直接的',
@@ -3383,6 +3386,18 @@ export const zh: TranslationDictionary = {
     fieldPackItems: '包装物品',
     fieldTokensUsed: '使用的代币',
     fieldAssemblyOrder: '装配顺序',
+    conversationHeading: '发送给模型的对话',
+    conversationUnavailable: '没有对话记录 — 该消息早于上下文清单功能。',
+    fieldMessagesSent: '已发送消息',
+    fieldTurnsSent: '已发送轮次',
+    fieldMessagesOmitted: '已省略消息',
+    fieldInputTokens: '输入词元',
+    fieldContextWindow: '上下文窗口',
+    fieldWindowSource: '窗口来源',
+    fieldReferenceSignals: '指代信号',
+    fieldAssemblyTiming: '组装（获取 + 选择）',
+    fieldPriorChats: '已使用的历史对话',
+    signalNone: '无',
   },
   routingPlayground: {
     title: '路由游乐场',

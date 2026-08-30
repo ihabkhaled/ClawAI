@@ -3,6 +3,11 @@ import { ConsensusExecutionManager } from '../modules/chat-messages/managers/con
 import type { ParallelModelTarget } from '../modules/chat-messages/types/parallel.types';
 import type { AssembledContext } from '../modules/chat-messages/types/context.types';
 import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
+import {
+  disabledCrossThreadResult,
+  emptyConversationManifest,
+  fallbackModelTokenBudget,
+} from '../modules/chat-messages/utilities/assembled-context.utility';
 
 jest.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
@@ -58,6 +63,9 @@ describe('ConsensusExecutionManager', () => {
     fileContents: [],
     workspaceCitations: [],
     tokenBudget: 4096,
+    modelBudget: fallbackModelTokenBudget(),
+    conversationManifest: emptyConversationManifest(),
+    crossThread: disabledCrossThreadResult(),
     researchEvidence: [],
     researchRunId: null,
     researchWarnings: [],
