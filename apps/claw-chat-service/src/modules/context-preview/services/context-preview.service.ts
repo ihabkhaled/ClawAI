@@ -5,6 +5,7 @@ import { BusinessException, EntityNotFoundException } from '../../../common/erro
 import { httpRequest } from '../../../common/utilities/http-client.utility';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import type { PreviewContextDto } from '../dto/preview-context.dto';
+import { buildInterServiceAuthHeader } from '../../../common/utilities';
 
 @Injectable()
 export class ContextPreviewService {
@@ -35,6 +36,7 @@ export class ContextPreviewService {
     const response = await httpRequest<RetrievalBundle>({
       url: `${config.MEMORY_SERVICE_URL}/api/v1/internal/memories/retrieve`,
       method: 'POST',
+      headers: { Authorization: buildInterServiceAuthHeader() },
       body: {
         userId,
         threadId,

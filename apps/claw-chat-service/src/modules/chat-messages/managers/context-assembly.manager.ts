@@ -1,4 +1,5 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
+import { type RetrievalBundle } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import {
   buildInterServiceAuthHeader,
@@ -10,7 +11,6 @@ import { MemoryRecordType } from '../../../common/enums/memory-record-type.enum'
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import {
   APPROX_CHARS_PER_TOKEN,
-  MEMORY_FETCH_LIMIT,
   PROMPT_TOPICAL_MEMORY_LIMIT,
   TOPICAL_MEMORY_OVERLAP_THRESHOLD,
   WORKSPACE_CONTEXT_LIMIT,
@@ -42,6 +42,11 @@ import { LocalModelSelectionService } from '../services/local-model-selection.se
 import { ContextComposerManager } from './context-composer.manager';
 import { CrossThreadRetrievalManager } from './cross-thread-retrieval.manager';
 import { resolveModelTokenBudget } from '../utilities/model-token-budget.utility';
+import {
+  MEMORY_RETRIEVE_PATH,
+  MEMORY_RETRIEVE_TIMEOUT_MS,
+  MEMORY_RETRIEVE_TOKEN_BUDGET,
+} from '../constants/memory-retrieval.constants';
 import { type ModelTokenBudget } from '../types/context-composer.types';
 import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 
@@ -80,6 +85,10 @@ export class ContextAssemblyManager {
       fileIds,
       research,
       lastUserMessage: threadMessages.at(-1),
+      threadId: threadMessages.at(-1)?.threadId,
+      // Retrieval's own budget, not the prompt's. It bounds how much memory
+      // memory-service may return; the composer then budgets the whole prompt.
+      memoryTokenBudget: MEMORY_RETRIEVE_TOKEN_BUDGET,
     });
     const filteredFileContents = await this.applyLocalOnlyAttachmentGate(
       fetched.fileContents,
@@ -256,6 +265,8 @@ ${evidence.snippet}`);
     fileIds: string[] | undefined;
     research: ResearchOptions | undefined;
     lastUserMessage: ChatMessage | undefined;
+    threadId: string | undefined;
+    memoryTokenBudget: number;
   }): Promise<{
     memories: AssembledContext['memories'];
     contextPackItems: AssembledContext['contextPackItems'];
@@ -265,7 +276,14 @@ ${evidence.snippet}`);
   }> {
     const [memories, contextPackItems, fileContents, workspaceCitations, researchRun] =
       await Promise.all([
-        args.skipExpensiveContext ? Promise.resolve([]) : this.fetchMemories(args.userId),
+        args.skipExpensiveContext
+          ? Promise.resolve([])
+          : this.fetchMemories(
+              args.userId,
+              args.lastUserContent,
+              args.threadId,
+              args.memoryTokenBudget,
+            ),
         args.skipExpensiveContext
           ? Promise.resolve([])
           : this.fetchContextPackItems(args.contextPackIds ?? []),
@@ -594,28 +612,77 @@ ${evidence.snippet}`);
     return file.mimeType.startsWith('video/');
   }
 
-  private async fetchMemories(userId: string): Promise<MemoryRecordResponse[]> {
-    this.logger.debug(
-      `fetchMemories: fetching memories for user=${userId} limit=${String(MEMORY_FETCH_LIMIT)}`,
-    );
+  /**
+   * Memories for this turn, from the CANONICAL retrieval API.
+   *
+   * Migrated off `GET /internal/memories/for-context`, which returned a user's
+   * most recent memories and nothing else: no intent, no ranking, no score, no
+   * retrieval reason, and no usage telemetry. The scoring that decided which of
+   * them a model actually saw then happened here, in a chat-service method, out
+   * of reach of the service that owns memory.
+   *
+   * The divergence was measurable and user-visible: `context-preview` — the
+   * endpoint behind "what will the AI see?" — already called
+   * `POST /internal/memories/retrieve`, so the preview a user was shown was
+   * produced by a different code path from the generation it claimed to
+   * describe. Finding F-05 of the 2026-08-30 audit.
+   *
+   * Still non-blocking. Memory is an enhancement; a memory-service outage must
+   * cost recall, never the answer.
+   */
+  private async fetchMemories(
+    userId: string,
+    intent: string,
+    threadId: string | undefined,
+    tokenBudget: number,
+  ): Promise<MemoryRecordResponse[]> {
     try {
       const config = AppConfig.get();
-      const url = `${config.MEMORY_SERVICE_URL}/api/v1/internal/memories/for-context?userId=${encodeURIComponent(userId)}&limit=${String(MEMORY_FETCH_LIMIT)}`;
-
-      this.logger.debug(`fetchMemories: requesting ${url}`);
-      const response = await httpRequest<MemoryRecordResponse[]>({
-        url,
-        method: 'GET',
-        timeoutMs: 5_000,
+      const response = await httpRequest<RetrievalBundle>({
+        url: `${config.MEMORY_SERVICE_URL}${MEMORY_RETRIEVE_PATH}`,
+        method: 'POST',
+        headers: { Authorization: buildInterServiceAuthHeader() },
+        body: {
+          userId,
+          ...(threadId === undefined ? {} : { threadId }),
+          intent,
+          attachedPackIds: [],
+          attachedMemoryIds: [],
+          tokenBudget,
+          includeMemory: true,
+          // Context packs are fetched separately and attached explicitly by the
+          // thread; asking retrieval for them too would double-count them.
+          includeContext: false,
+        },
+        timeoutMs: MEMORY_RETRIEVE_TIMEOUT_MS,
       });
 
       if (!response.ok) {
-        this.logger.warn(`fetchMemories: failed with status ${String(response.status)}`);
+        this.logger.warn(
+          `fetchMemories: memory-service retrieve failed status=${String(response.status)} — continuing without memories`,
+        );
         return [];
       }
 
-      this.logger.debug(`fetchMemories: received ${String(response.data.length)} memories`);
-      return response.data;
+      const memories = response.data.memories ?? [];
+      this.logger.debug(
+        `fetchMemories: ${String(memories.length)} memories for user=${userId} (canonical retrieve)`,
+      );
+      return memories.map((memory) => ({
+        id: memory.id,
+        userId,
+        type: memory.type,
+        // The canonical bundle types content as nullable; the prompt formatter
+        // and every relevance scorer take a string. An empty memory carries no
+        // information anyway, so it becomes an empty string rather than a null
+        // that every downstream caller would have to re-check.
+        content: memory.content ?? '',
+        isEnabled: true,
+        // The canonical API has no `pinned` field; a PINNED retrieval reason is
+        // the same statement in its vocabulary, and the composer's standing-vs-
+        // topical split depends on knowing it.
+        pinned: String(memory.reason) === 'PINNED',
+      }));
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`fetchMemories: failed (non-blocking): ${msg}`);

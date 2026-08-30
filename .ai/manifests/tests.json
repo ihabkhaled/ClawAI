@@ -74,7 +74,7 @@
     },
     "claw-memory-service": {
       "runner": "jest",
-      "testFiles": 12
+      "testFiles": 13
     },
     "claw-ollama-service": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1115
+  "total": 1116
 }

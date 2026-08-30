@@ -97,11 +97,17 @@ retrieve (messages cascade on delete).
 ## 5. Ruling out the memory path
 
 A memory is not conversation. If the missing item was a saved memory rather than
-a message, read `.memories` on the same receipt, and note the known gap: chat
-generation uses the legacy `GET /internal/memories/for-context`, while the
-context **preview** uses the canonical `POST /internal/memories/retrieve`. The
-preview can therefore disagree with what the generation actually used. Trust the
-receipt, not the preview.
+a message, read `.memories` on the same receipt.
+
+Generation and preview now read the SAME route
+(`POST /internal/memories/retrieve`), so they agree. If they ever disagree
+again, that is the F-05 regression returning and
+`scripts/qa-lab/memory-experiment.mjs` will show it in one run.
+
+If memory-service returns nothing at all, check chat-service logs for
+`fetchMemories: memory-service retrieve failed status=401` — that is the
+service token, not the memories. Retrieval is non-blocking by design, so the
+answer still arrives, just without memory.
 
 ## 6. Reproducing deliberately
 

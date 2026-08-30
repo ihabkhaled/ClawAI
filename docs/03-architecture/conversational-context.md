@@ -189,6 +189,26 @@ match a prompt about "relational databases". Precision over recall is the
 deliberate trade: a miss asks the user to be specific, a false positive imports
 the wrong conversation.
 
+## Memory
+
+Chat generation calls the canonical `POST /internal/memories/retrieve`, the same
+route the context preview uses. It did not always: generation used
+`GET /internal/memories/for-context` (most recent N, no intent, no ranking, no
+score, no usage telemetry) while the preview — the endpoint behind "what will
+the AI see?" — used the canonical one, so the preview described a different code
+path from the answer it claimed to describe. Finding F-05; closed and verified
+by `scripts/qa-lab/memory-experiment.mjs`, which asserts the two now return
+identical memory id lists.
+
+memory-service's `internal/*` routes now require a service token. They were
+`@Public()` with no second check, while five of the six services exposing
+internal routes already had a `ServiceTokenGuard`. They are not reachable from
+the internet — nginx routes exactly one `/api/v1/internal/*` prefix and the rest
+fall through to the frontend — but the routes take a `userId` as a plain query
+parameter, so anything that could reach the container could read any user's
+memories. Network isolation is a config line away from being false; the guard is
+not.
+
 ## Security boundary
 
 Every surface these two ADRs added widened what one request can read: a manifest
@@ -209,13 +229,12 @@ Run it before any release that touches context assembly.
 
 Stated plainly so nobody plans against a capability that is absent.
 
-| Not built                                  | Consequence today                                                                                                                                                                                                                     |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Semantic (vector) cross-thread recall**  | Cross-thread retrieval matches terms, not meaning. A descriptive reference ("the thing we discussed about caching") will not find its thread.                                                                                         |
-| **Hierarchical summarisation**             | Beyond `THREAD_HISTORY_FETCH_LIMIT` (400 rows) the oldest content is simply not loaded.                                                                                                                                               |
-| **Structured thread state / supersession** | Latest-value precedence is served by recency weighting, not by an explicit supersedes graph. It is a strong heuristic, not a guarantee.                                                                                               |
-| **Semantic/vector same-thread retrieval**  | P2 ranking is lexical + entity + decision + recency. No embeddings.                                                                                                                                                                   |
-| **Canonical memory retrieval in chat**     | Chat still calls the legacy `GET /internal/memories/for-context`; `context-preview` calls the canonical `POST /internal/memories/retrieve`. **The preview a user is shown is produced by a different code path from the generation.** |
+| Not built                                  | Consequence today                                                                                                                             |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Semantic (vector) cross-thread recall**  | Cross-thread retrieval matches terms, not meaning. A descriptive reference ("the thing we discussed about caching") will not find its thread. |
+| **Hierarchical summarisation**             | Beyond `THREAD_HISTORY_FETCH_LIMIT` (400 rows) the oldest content is simply not loaded.                                                       |
+| **Structured thread state / supersession** | Latest-value precedence is served by recency weighting, not by an explicit supersedes graph. It is a strong heuristic, not a guarantee.       |
+| **Semantic/vector same-thread retrieval**  | P2 ranking is lexical + entity + decision + recency. No embeddings.                                                                           |
 
 ## See also
 

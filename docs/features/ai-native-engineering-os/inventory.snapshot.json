@@ -9500,7 +9500,7 @@
       },
       "claw-memory-service": {
         "runner": "jest",
-        "testFiles": 12
+        "testFiles": 13
       },
       "claw-ollama-service": {
         "runner": "jest",
@@ -10244,7 +10244,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1115,
+    "totalTestFiles": 1116,
     "workspaceCount": 25
   }
 }

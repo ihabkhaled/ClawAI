@@ -320,7 +320,7 @@
         "MemoryUsage",
         "WorkspaceObjectEmbedding"
       ],
-      "testFiles": 12,
+      "testFiles": 13,
       "testRunner": "jest"
     },
     {
