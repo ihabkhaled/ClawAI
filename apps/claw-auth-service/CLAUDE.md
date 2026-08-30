@@ -69,8 +69,14 @@ Four things here are easy to break by accident:
    Any assertion on the adjust ARGV must derive its offset from the key count
    (see `adjustArgv` in `quota.service.spec.ts`), never a literal index.
 2. **`credit_ledger_entries` is append-only.** A correction is a new
-   compensating row. The wallet must always equal the sum of its ledger; a spec
-   asserts it after a concurrency run.
+   compensating row. The invariant is
+   **`(grant + purchased) − reserved = SUM(ledger)`** — NOT `wallet = SUM(ledger)`.
+   A RESERVATION row is negative the moment a hold is taken, but the money has
+   not left the buckets yet; it sits in `reserved_micro_usd` until the hold
+   settles or is released. Comparing gross buckets against the ledger reports a
+   "drift" exactly equal to the outstanding holds, which is how a live audit
+   raises a false alarm mid-request. A spec asserts the real invariant after a
+   concurrency run.
 3. **Money is `BigInt` micro-USD.** No float touches this module. `Math.round`
    and `parseFloat` are banned in payment-service by ESLint; extending that ban
    here is an open follow-up recorded in `rules/37`.

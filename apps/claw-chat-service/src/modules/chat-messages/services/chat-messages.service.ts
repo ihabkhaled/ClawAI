@@ -7,7 +7,7 @@ import {
   type RouterTraceEvent,
   TokenLedgerContext,
 } from '@claw/shared-types';
-import { allowedModelKeys, type PlanFeature } from '@claw/shared-entitlements';
+import { allowedModelKeys, type PlanFeature, resolvePlanLimit } from '@claw/shared-entitlements';
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { AppConfig } from '../../../app/config/app.config';
@@ -199,7 +199,9 @@ export class ChatMessagesService implements OnModuleInit {
         routingMode: effectiveRoutingMode,
         metadata: this.buildMessageMetadata(dto, researchBundle),
       },
-      entitlements?.isAdmin ? null : (entitlements?.plan?.limits.messagesPerDay ?? 0),
+      entitlements === null
+        ? null
+        : resolvePlanLimit(entitlements, (limits) => limits.messagesPerDay),
     );
     if (!message) {
       throw new BusinessException(

@@ -421,7 +421,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-routing-service",
-      "endpointCount": 67,
+      "endpointCount": 68,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-entitlements",

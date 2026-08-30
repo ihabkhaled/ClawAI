@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { resolvePlanLimit } from '@claw/shared-entitlements';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import {
@@ -342,7 +343,7 @@ export class MemoryService implements OnModuleInit {
     }
     const memory = await this.memoryRepository.createWithinLimit(
       data,
-      entitlements.isAdmin ? null : (entitlements.plan?.limits.memoryItems ?? 0),
+      resolvePlanLimit(entitlements, (limits) => limits.memoryItems),
     );
     if (!memory) {
       throw new BusinessException(

@@ -66,7 +66,10 @@ import { RuntimeProgressModule } from '../modules/runtime-progress/runtime-progr
         serviceName: 'ollama-service',
       }),
     }),
-    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
+    EntitlementsModule.forRoot({
+      authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+      interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
+    }),
     PrismaModule,
     RedisModule,
     ScheduleModule.forRoot(),

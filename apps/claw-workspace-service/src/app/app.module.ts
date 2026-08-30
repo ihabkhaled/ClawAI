@@ -92,7 +92,10 @@ import { ChainsModule } from '../modules/chains/chains.module';
       },
     ]),
     ScheduleModule.forRoot(),
-    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
+    EntitlementsModule.forRoot({
+      authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+      interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
+    }),
     PrismaModule,
     RedisModule,
     HealthModule,

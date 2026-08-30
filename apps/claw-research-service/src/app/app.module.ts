@@ -72,7 +72,10 @@ import { ResearchUsageModule } from '../common/services/research-usage.module';
         limit: Number(process.env['THROTTLE_LIMIT'] ?? 2500),
       },
     ]),
-    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
+    EntitlementsModule.forRoot({
+      authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+      interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
+    }),
     ResearchUsageModule,
     PrismaModule,
     RedisModule,

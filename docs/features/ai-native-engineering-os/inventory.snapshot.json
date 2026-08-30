@@ -2388,6 +2388,11 @@
         },
         {
           "method": "GET",
+          "route": "/internal/router-models/costs/:provider/:model",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost-internal.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/router-models/costs",
           "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
         },
@@ -9406,7 +9411,7 @@
       },
       "@claw/shared-entitlements": {
         "runner": "jest",
-        "testFiles": 6
+        "testFiles": 7
       },
       "@claw/shared-rabbitmq": {
         "runner": "jest",
@@ -10201,7 +10206,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 641,
+    "endpointCount": 642,
     "envVarCount": 351,
     "eventCount": 178,
     "frontendRouteCount": 138,
@@ -10213,7 +10218,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1100,
+    "totalTestFiles": 1101,
     "workspaceCount": 25
   }
 }

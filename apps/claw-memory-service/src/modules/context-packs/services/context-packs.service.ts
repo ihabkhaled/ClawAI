@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { resolvePlanLimit } from '@claw/shared-entitlements';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
   type ContextPack,
@@ -54,7 +55,7 @@ export class ContextPacksService {
         templateId: dto.templateId,
         pinned: dto.pinned,
       },
-      entitlements.isAdmin ? null : (entitlements.plan?.limits.contextPacks ?? 0),
+      resolvePlanLimit(entitlements, (limits) => limits.contextPacks),
     );
     if (!pack)
       throw new BusinessException(

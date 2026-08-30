@@ -70,7 +70,10 @@ import { HealthModule } from '../modules/health/health.module';
     ScheduleModule.forRoot(),
     FilesModule,
     HealthModule,
-    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
+    EntitlementsModule.forRoot({
+      authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+      interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
+    }),
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),

@@ -6,6 +6,8 @@ import { PermissionGuard } from './permission.guard';
 
 export type EntitlementsModuleOptions = {
   authServiceUrl: string;
+  /** `INTER_SERVICE_AUTH_TOKEN`. Required by the guarded PAYG credit routes. */
+  interServiceToken: string;
   timeoutMs?: number;
 };
 

@@ -2333,6 +2333,11 @@
       },
       {
         "method": "GET",
+        "route": "/internal/router-models/costs/:provider/:model",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost-internal.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/router-models/costs",
         "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
       },
@@ -3243,5 +3248,5 @@
     ]
   },
   "generated": true,
-  "total": 641
+  "total": 642
 }

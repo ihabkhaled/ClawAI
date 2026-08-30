@@ -373,3 +373,48 @@ describe('ModelCostService', () => {
     });
   });
 });
+
+// Regression: a provider decorates its own model ids, and an exact-match lookup
+// called a PRICED model unpriced. Gemini answers `models/gemini-2.5-flash-lite`
+// while the price row is `gemini-2.5-flash-lite`, so AUTO routing picked a
+// model the reservation then refused with PAYG_MODEL_UNPRICED — the wallet was
+// full and the product still said no.
+describe('ModelCostService — provider id decoration', () => {
+  it('matches a Gemini models/ prefixed id against its unprefixed price row', async () => {
+    const repository = {
+      findActive: jest.fn(async (_provider: string, key: string) =>
+        key === 'gemini-2.5-flash-lite'
+          ? baseRecord({ provider: 'GEMINI', modelKey: 'gemini-2.5-flash-lite' })
+          : null,
+      ),
+    } as unknown as ModelCostRepository;
+    const service = new ModelCostService(repository);
+
+    const snapshot = await service.getSnapshot('GEMINI', 'models/gemini-2.5-flash-lite');
+
+    expect(snapshot.isPriced).toBe(true);
+    // Exact match first, normalized second — never the other way round, or an
+    // explicitly published decorated row would be shadowed.
+    expect(repository.findActive).toHaveBeenNthCalledWith(
+      1,
+      'GEMINI',
+      'models/gemini-2.5-flash-lite',
+    );
+    expect(repository.findActive).toHaveBeenNthCalledWith(2, 'GEMINI', 'gemini-2.5-flash-lite');
+  });
+
+  it('still reports a genuinely unknown model as unpriced', async () => {
+    // The unpriced path reads LOCAL_COMPUTE_* to decide whether a LOCAL model is
+    // genuinely free; a cloud provider never reaches that branch but the config
+    // is still resolved.
+    mockConfig('USER_OWNED', 0);
+    const repository = {
+      findActive: jest.fn(async () => null),
+    } as unknown as ModelCostRepository;
+    const service = new ModelCostService(repository);
+
+    const snapshot = await service.getSnapshot('OPENAI', 'gpt-does-not-exist');
+
+    expect(snapshot.isPriced).toBe(false);
+  });
+});

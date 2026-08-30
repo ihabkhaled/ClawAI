@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { resolvePlanLimit } from '@claw/shared-entitlements';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { ChatThreadsRepository } from '../repositories/chat-threads.repository';
@@ -42,7 +43,7 @@ export class ChatThreadsService {
         preferredModel: dto.preferredModel,
         contextPackIds: dto.contextPackIds,
       },
-      entitlements.isAdmin ? null : (entitlements.plan?.limits.chatsPerDay ?? 0),
+      resolvePlanLimit(entitlements, (limits) => limits.chatsPerDay),
     );
     if (!thread) {
       throw new BusinessException(
@@ -94,7 +95,7 @@ export class ChatThreadsService {
       // same name and settings. An untitled source stays untitled and the branch
       // names itself from its own first message, which is that same message.
       { userId, ...copyThreadSettings(source) },
-      entitlements.isAdmin ? null : (entitlements.plan?.limits.chatsPerDay ?? 0),
+      resolvePlanLimit(entitlements, (limits) => limits.chatsPerDay),
       threadId,
       pivot.createdAt,
     );

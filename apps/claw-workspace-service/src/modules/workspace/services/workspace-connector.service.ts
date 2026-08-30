@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { resolvePlanLimit } from '@claw/shared-entitlements';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import {
   EventPattern,
@@ -314,7 +315,7 @@ export class WorkspaceConnectorService {
     const connector = await this.repository.createWithinLimit(
       userId,
       data,
-      entitlements.isAdmin ? null : (entitlements.plan?.limits.workspaceConnections ?? 0),
+      resolvePlanLimit(entitlements, (limits) => limits.workspaceConnections),
     );
     if (!connector) {
       throw new BusinessException(

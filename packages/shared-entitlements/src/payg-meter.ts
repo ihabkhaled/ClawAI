@@ -90,6 +90,7 @@ function readNumber(payload: unknown, key: string): number {
 @Injectable()
 export class PaygMeter {
   private readonly authServiceUrl: string;
+  private readonly interServiceToken: string;
   private readonly timeoutMs: number;
   private readonly exemptProviders: readonly string[];
 
@@ -101,6 +102,7 @@ export class PaygMeter {
       end -= 1;
     }
     this.authServiceUrl = options.authServiceUrl.slice(0, end);
+    this.interServiceToken = options.interServiceToken;
     this.timeoutMs = options.timeoutMs ?? 5000;
     this.exemptProviders = options.exemptProviders ?? PAYG_EXEMPT_PROVIDERS;
   }
@@ -256,7 +258,12 @@ export class PaygMeter {
     try {
       const response = await fetch(`${this.authServiceUrl}/api/v1${path}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // The credit routes are guarded, unlike internal/quota. Without this
+          // every call is a 401 the meter reads as an outage.
+          Authorization: `Service ${this.interServiceToken}`,
+        },
         body: JSON.stringify(body),
         signal: controller.signal,
       });
@@ -268,6 +275,16 @@ export class PaygMeter {
           isRecord(payload) && typeof payload['requiredMicroUsd'] === 'number'
             ? payload['requiredMicroUsd']
             : null,
+        );
+      }
+      if (response.status === 401 || response.status === 403) {
+        // A misconfiguration, not an outage, and the two need different fixes.
+        // Failing closed is still right — but the operator must be able to tell
+        // "our token is wrong" from "auth is down" without reading a diff.
+        throw new Error(
+          `PAYG meter rejected: ${path} → ${String(response.status)}. ` +
+            'INTER_SERVICE_AUTH_TOKEN is missing or does not match auth-service. ' +
+            'Every paid model stays blocked until this is fixed.',
         );
       }
       if (!response.ok) {

@@ -73,3 +73,38 @@ export function allowedModelKeys(ent: UserEntitlements): string[] {
     .map((model) => `${model.provider}/${model.model}`);
   return keys.length === 0 ? [DENY_ALL_ROUTING_KEY] : keys;
 }
+
+/**
+ * The per-day/per-account ceiling for one product limit, in the shape callers
+ * pass to a repository: a number to enforce, or `null` for unlimited.
+ *
+ * THIS EXISTS BECAUSE `?? 0` IS WRONG HERE, AND WAS WRONG IN SIX PLACES.
+ *
+ * `null` on a plan limit means UNLIMITED — it is the value every paid tier
+ * carries for `chatsPerDay`, `messagesPerDay`, `contextPacks`, `memoryItems`
+ * and `workspaceConnections`. `??` only falls back on `null`/`undefined`, so
+ * `limits.chatsPerDay ?? 0` turns "unlimited" into `0`, and `0` means DISABLED.
+ * Every Pro, Team, Scale and Unlimited customer was refused their first thread
+ * with `PLAN_DAILY_CHAT_LIMIT_EXCEEDED` — the most expensive plans were the
+ * only ones broken, because they are the only ones that use `null`.
+ *
+ * The three states are genuinely distinct and must stay that way:
+ * - `isAdmin`            → `null`, unlimited, never metered
+ * - plan limit is `null` → `null`, unlimited by plan
+ * - NO plan at all       → `0`, disabled, because an account with no plan has
+ *                          no allowance to spend. This is the ONLY case `0` is
+ *                          the right answer, and it is why the coalesce looked
+ *                          plausible.
+ */
+export function resolvePlanLimit(
+  ent: Pick<UserEntitlements, 'isAdmin' | 'plan'>,
+  select: (limits: NonNullable<UserEntitlements['plan']>['limits']) => number | null,
+): number | null {
+  if (ent.isAdmin) {
+    return null;
+  }
+  if (!ent.plan) {
+    return 0;
+  }
+  return select(ent.plan.limits);
+}

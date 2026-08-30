@@ -64,7 +64,10 @@ import { HealthModule } from '../modules/health/health.module';
         serviceName: 'server-logs-service',
       }),
     }),
-    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
+    EntitlementsModule.forRoot({
+      authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+      interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
+    }),
     MongooseDatabaseModule,
     RedisModule,
     ServerLogsModule,

@@ -2,7 +2,13 @@ import { PAYG_RESERVATION_SWEEP_INTERVAL_MS } from '@claw/shared-constants';
 
 // ── Internal HTTP: routing-service model prices (ADR-079) ───────────────────
 
-export const MODEL_COST_PATH_PREFIX = '/api/v1/router-models/costs';
+// The INTERNAL route, guarded by routing-service's ServiceTokenGuard.
+//
+// The user-facing `/api/v1/router-models/costs` sits behind routing's global
+// AuthGuard, which expects a user JWT and answers a service token with 401.
+// Pointing here used to be the difference between a priced request and
+// "credit checks are temporarily unavailable" on every paid model.
+export const MODEL_COST_PATH_PREFIX = '/api/v1/internal/router-models/costs';
 
 // Deliberately short. This call sits in front of a provider request, and a
 // slow price lookup must not become the reason a chat feels slow. On timeout

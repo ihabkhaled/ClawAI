@@ -81,7 +81,10 @@ import { RuntimeProgressModule } from '../modules/runtime-progress/runtime-progr
         serviceName: 'llamacpp-service',
       }),
     }),
-    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
+    EntitlementsModule.forRoot({
+      authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+      interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
+    }),
     PrismaModule,
     LlamacppEventsModule,
     ScheduleModule.forRoot(),

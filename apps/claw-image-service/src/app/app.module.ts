@@ -68,7 +68,10 @@ import { HealthModule } from '../modules/health/health.module';
     // Image generation calls OpenAI and Gemini with real money; without this
     // import the manager's `PaygMeter` injection fails at boot instead of
     // silently metering nothing, which is the intended failure direction.
-    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
+    EntitlementsModule.forRoot({
+      authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+      interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
+    }),
     PrismaModule,
     RedisModule,
     ImageGenerationModule,

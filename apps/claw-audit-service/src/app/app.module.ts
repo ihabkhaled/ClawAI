@@ -67,7 +67,10 @@ import { HealthModule } from '../modules/health/health.module';
     }),
     MongooseDatabaseModule,
     RedisModule,
-    EntitlementsModule.forRoot({ authServiceUrl: AppConfig.get().AUTH_SERVICE_URL }),
+    EntitlementsModule.forRoot({
+      authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+      interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
+    }),
     AuditsModule,
     FeedbackModule,
     HealthModule,

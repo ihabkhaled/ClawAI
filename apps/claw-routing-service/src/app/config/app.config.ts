@@ -18,6 +18,15 @@ const appConfigSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
 
   AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
+  // Shared secret for guarded `/api/v1/internal/*` endpoints on sibling
+  // services. Required by EntitlementsModule.forRoot because the PAYG credit
+  // routes are guarded, unlike the older @Public() internal/quota ones: a
+  // missing token comes back 401, the meter cannot tell that from an outage,
+  // and every paid model is refused while the wallet sits full.
+  INTER_SERVICE_AUTH_TOKEN: z
+    .string()
+    .min(32, 'INTER_SERVICE_AUTH_TOKEN must be at least 32 chars')
+    .default('change-me-inter-service-token-32-chars-min'),
   CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
   OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
   OLLAMA_ROUTER_MODEL: z.string().min(1).default('qwen3:1.7b'),

@@ -79,6 +79,7 @@ import { ContextPreviewModule } from '../modules/context-preview/context-preview
     // `undefined` that skips metering everywhere.
     EntitlementsModule.forRoot({
       authServiceUrl: AppConfig.get().AUTH_SERVICE_URL,
+      interServiceToken: AppConfig.get().INTER_SERVICE_AUTH_TOKEN,
       timeoutMs: ENTITLEMENTS_TIMEOUT_MS,
     }),
     PrismaModule,

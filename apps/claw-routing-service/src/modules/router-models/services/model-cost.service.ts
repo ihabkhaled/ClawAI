@@ -18,6 +18,7 @@ import {
   LOCAL_COST_PROVIDERS,
   PRISMA_TO_SHARED_COST_CLASS,
 } from '../constants/model-cost.constants';
+import { normalizeModelId } from '../utilities/model-alias-matching.utility';
 import { ModelCostRepository } from '../repositories/model-cost.repository';
 import {
   ratesAreUnchanged,
@@ -61,6 +62,19 @@ export class ModelCostService {
     const record = await this.repository.findActive(provider, modelKey);
     if (record) {
       return toModelCostSnapshot(record);
+    }
+    // Providers decorate their own ids. Gemini answers `models/gemini-2.5-flash`
+    // where the price row is written `gemini-2.5-flash`, so an exact-match
+    // lookup called a PRICED model unpriced and the reservation refused it.
+    // `normalizeModelId` strips only decoration — never a dated suffix or a size
+    // marker, which name a different model.
+    const normalized = normalizeModelId(modelKey, provider);
+    if (normalized !== modelKey.toLowerCase()) {
+      const byNormalized = await this.repository.findActive(provider, normalized);
+      if (byNormalized) {
+        this.logger.debug(`getSnapshot: matched ${modelKey} as ${normalized}`);
+        return toModelCostSnapshot(byNormalized);
+      }
     }
     return this.unpricedSnapshot(provider, modelKey);
   }

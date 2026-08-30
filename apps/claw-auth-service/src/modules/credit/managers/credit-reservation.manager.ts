@@ -273,8 +273,16 @@ export class CreditReservationManager {
       minViableOutputTokens: PAYG_MIN_VIABLE_OUTPUT_TOKENS,
     });
     if (clamp.status === 'PROMPT_UNAFFORDABLE') {
+      // An empty wallet is EXHAUSTED, not "too expensive". Both refuse, but
+      // they tell the user to do different things: "shorten the conversation"
+      // is advice that cannot work at a balance of zero, and it is the case a
+      // free-tier user hits on their very first paid message. Only report
+      // TOO_EXPENSIVE when there is real credit that this particular prompt
+      // outgrew.
       throw new PaygRejectionException(
-        BillingErrorCode.PAYG_PROMPT_TOO_EXPENSIVE,
+        available > 0
+          ? BillingErrorCode.PAYG_PROMPT_TOO_EXPENSIVE
+          : BillingErrorCode.PAYG_CREDIT_EXHAUSTED,
         available,
         clamp.promptCostMicroUsd,
       );

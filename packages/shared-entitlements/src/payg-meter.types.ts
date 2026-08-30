@@ -67,6 +67,18 @@ export type PaygReleaseReason = 'PROVIDER_ERROR' | 'CANCELLED' | 'TIMEOUT';
 export type PaygMeterOptions = {
   /** Base URL of auth-service, e.g. https://auth-service:4001 */
   authServiceUrl: string;
+  /**
+   * `INTER_SERVICE_AUTH_TOKEN`. REQUIRED — the credit routes move money and are
+   * guarded by `ServiceTokenGuard`, unlike the older `@Public()` `internal/quota`
+   * endpoints this package also talks to.
+   *
+   * Omitting it does NOT degrade gracefully: every reserve comes back 401, the
+   * meter cannot tell that from an outage, and it fails closed — so every paid
+   * model in the product is refused with "credit checks are temporarily
+   * unavailable" while the wallet sits full. That was a live incident, which is
+   * why this is not optional.
+   */
+  interServiceToken: string;
   timeoutMs?: number;
   /**
    * Providers that never cost money, so a meter outage must not block them.

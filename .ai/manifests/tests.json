@@ -10,7 +10,7 @@
     },
     "@claw/shared-entitlements": {
       "runner": "jest",
-      "testFiles": 6
+      "testFiles": 7
     },
     "@claw/shared-rabbitmq": {
       "runner": "jest",
@@ -102,5 +102,5 @@
     }
   },
   "generated": true,
-  "total": 1100
+  "total": 1101
 }
