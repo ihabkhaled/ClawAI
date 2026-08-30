@@ -52,6 +52,12 @@ model ChatThread {
   // === Integration V2 — per-thread memory/context switches ===
   useMemory          Boolean     @default(true) @map("use_memory")
   useContext         Boolean     @default(true) @map("use_context")
+  // === ADR-085 — cross-thread retrieval ===
+  // OFF by default, and deliberately so. Silently reaching into a user's other
+  // conversations is a privacy decision, not a quality tweak: it must be asked
+  // for. When off, nothing from another thread can enter the prompt except a
+  // durable memory the user's own memory preferences already allow.
+  useCrossThreadContext Boolean  @default(false) @map("use_cross_thread_context")
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
 
@@ -106,6 +112,9 @@ model ChatMessage {
 
   @@index([threadId])
   @@index([createdAt])
+  // Cross-thread retrieval reads a user's recent messages across many threads.
+  // Without this the stage-2 read is a scan of every message in the table.
+  @@index([threadId, createdAt])
   @@map("chat_messages")
 }
 

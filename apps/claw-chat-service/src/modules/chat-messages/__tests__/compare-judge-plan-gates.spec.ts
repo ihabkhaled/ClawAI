@@ -10,6 +10,7 @@ import type { LlmResponse, MessageRoutedData } from '../types/execution.types';
 import type { JudgeRefereeConfig } from '../types/judge-referee.types';
 import { JudgeDecision } from '../../../common/enums';
 import {
+  disabledCrossThreadResult,
   emptyConversationManifest,
   fallbackModelTokenBudget,
 } from '../utilities/assembled-context.utility';
@@ -325,6 +326,7 @@ describe('Slice C — compare + judge + critic plan gates', () => {
         tokenBudget: 4000,
         modelBudget: fallbackModelTokenBudget(),
         conversationManifest: emptyConversationManifest(),
+        crossThread: disabledCrossThreadResult(),
       };
       const config: JudgeRefereeConfig = {
         enabled: true,
@@ -430,6 +432,7 @@ describe('Slice C — compare + judge + critic plan gates', () => {
         tokenBudget: 4000,
         modelBudget: fallbackModelTokenBudget(),
         conversationManifest: emptyConversationManifest(),
+        crossThread: disabledCrossThreadResult(),
       };
       const config: JudgeRefereeConfig = {
         enabled: true,

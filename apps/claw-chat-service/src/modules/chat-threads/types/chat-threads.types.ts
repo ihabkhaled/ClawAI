@@ -10,6 +10,8 @@ export interface CreateThreadData {
   preferredProvider?: string;
   preferredModel?: string;
   contextPackIds?: string[];
+  /** ADR-085 — "use relevant previous chats". Omitted means false. */
+  useCrossThreadContext?: boolean;
 }
 
 export interface UpdateThreadData {
@@ -33,6 +35,7 @@ export interface UpdateThreadData {
   maxReRouteAttempts?: number | null;
   useMemory?: boolean;
   useContext?: boolean;
+  useCrossThreadContext?: boolean;
 }
 
 export interface ThreadFilters {

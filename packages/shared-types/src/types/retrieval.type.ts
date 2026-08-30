@@ -53,6 +53,15 @@ export type RetrievalConversationSummary = {
   availableInputTokens: number;
   contextWindowSource: string;
   referenceSignals: string[];
+  /**
+   * Cross-thread retrieval (ADR-085). `priorThreadsUsed` is empty whenever the
+   * feature is off, which is the default; `crossThreadSkipReason` says which of
+   * the seven reasons applied, so "nothing was retrieved" is never ambiguous.
+   */
+  priorThreadsSearched: string[];
+  priorThreadsUsed: string[];
+  priorMessageIds: string[];
+  crossThreadSkipReason: string | null;
 };
 
 export type RetrievalBundle = {

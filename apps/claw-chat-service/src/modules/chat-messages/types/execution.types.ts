@@ -344,6 +344,11 @@ export type ThreadSettings = {
   contextWindowTokens?: number | null;
   /** The selected provider, used only to pick a fallback window. */
   provider?: string | null;
+  /**
+   * The thread's opt-in to reading the user's other conversations. Absent is
+   * treated as false — never as "probably fine". ADR-085.
+   */
+  useCrossThreadContext?: boolean | null;
   judgeModel?: string | null;
   criticEnabled?: boolean;
   criticModel?: string | null;

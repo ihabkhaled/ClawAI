@@ -26,6 +26,10 @@ export function useThreadSettings(thread: ChatThread | null, onSaved?: () => voi
   const [maxReRouteAttempts, setMaxReRouteAttempts] = useState(2);
   const [useMemory, setUseMemory] = useState(true);
   const [useContext, setUseContext] = useState(true);
+  // Defaults FALSE, matching the column default. Reaching into a user's other
+  // conversations is opt-in — a UI that defaults it on would silently make the
+  // decision for them. ADR-085.
+  const [useCrossThreadContext, setUseCrossThreadContext] = useState(false);
   const { maxTokensError, canSave } = useThreadSettingsValidation(maxTokens);
 
   useEffect(() => {
@@ -53,6 +57,7 @@ export function useThreadSettings(thread: ChatThread | null, onSaved?: () => voi
       setMaxReRouteAttempts(thread.maxReRouteAttempts ?? 2);
       setUseMemory(thread.useMemory ?? true);
       setUseContext(thread.useContext ?? true);
+      setUseCrossThreadContext(thread.useCrossThreadContext ?? false);
     }
   }, [thread]);
 
@@ -153,6 +158,7 @@ export function useThreadSettings(thread: ChatThread | null, onSaved?: () => voi
           maxReRouteAttempts,
           useMemory,
           useContext,
+          useCrossThreadContext,
         },
       },
       {
@@ -178,6 +184,7 @@ export function useThreadSettings(thread: ChatThread | null, onSaved?: () => voi
     maxReRouteAttempts,
     useMemory,
     useContext,
+    useCrossThreadContext,
     updateThread,
     onSaved,
     t,
@@ -215,6 +222,8 @@ export function useThreadSettings(thread: ChatThread | null, onSaved?: () => voi
     setUseMemory,
     useContext,
     setUseContext,
+    useCrossThreadContext,
+    setUseCrossThreadContext,
     handleSave,
     isPending,
     maxTokensError,

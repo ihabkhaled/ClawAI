@@ -579,6 +579,9 @@ export const ja: TranslationDictionary = {
     useMemoryDescription: 'オフの場合、プロンプトにメモリは挿入されません。',
     useContextLabel: 'このスレッドでコンテキスト パックを使用してください',
     useContextDescription: 'オフの場合、接続されたパックは無視されます。',
+    useCrossThreadContextLabel: '関連する過去のチャットを使用する',
+    useCrossThreadContextDescription:
+      'オンにすると、ClawAI はこの会話に関連する内容を他の会話から探すことがあります。既定ではオフです。',
     workflow: {
       searchFirst: '検索優先',
       direct: 'ダイレクト',

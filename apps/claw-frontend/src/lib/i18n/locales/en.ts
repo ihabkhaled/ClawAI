@@ -578,6 +578,9 @@ export const en: TranslationDictionary = {
     useMemoryDescription: 'When off, no memories are injected into the prompt.',
     useContextLabel: 'Use context packs in this thread',
     useContextDescription: 'When off, attached packs are ignored.',
+    useCrossThreadContextLabel: 'Use relevant previous chats',
+    useCrossThreadContextDescription:
+      'When on, ClawAI may look through your other conversations for material relevant to this one. Off by default.',
     workflow: {
       searchFirst: 'Search-first',
       direct: 'Direct',

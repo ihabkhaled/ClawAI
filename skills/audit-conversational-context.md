@@ -46,6 +46,32 @@ Read it like this:
 
 Cost: 24 threads × 10 turns ≈ 240 free generations, ~15 minutes at 6 workers.
 
+## Verifying a fix, not just finding one
+
+```bash
+export QA_LAB_BASE=https://claw.local/api/v1
+export NODE_EXTRA_CA_CERTS=./certs/rootCA.pem   # local self-signed CA; never disable TLS checking
+node verify-fix.mjs                              # the paraphrase matrix, before vs after
+node verify-fix.mjs --only positional_reference  # one phrasing
+node run-lab.mjs --label AFTER --suite gauntlet --models 6 --workers 5
+node cross-thread-experiment.mjs                 # the privacy + capability pair
+```
+
+`--suite gauntlet` is the before/after suite: the 60-turn scenario per model
+plus the two model-switch variants and topic-return, and nothing else. A few
+hundred generations instead of a few thousand.
+
+**Score on the manifest, not on the model's words.** `verify-fix.mjs` and
+`cross-thread-experiment.mjs` both read the receipt's `conversation` block, so a
+model that was handed a fact and declined to use it is reported as a model
+result rather than a context failure. An early version of the cross-thread
+experiment scored the answer text and called a hallucination a privacy leak.
+
+**Give every planted identifier a per-run suffix.** A fixed decoy name fails on
+the second run for a correct reason: the first run's own thread now contains it,
+and retrieval finds it. The experiment was polluting itself and reporting the
+pollution as a bug.
+
 ## Breadth and depth
 
 ```bash

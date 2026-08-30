@@ -577,6 +577,9 @@ export const fa: TranslationDictionary = {
     useMemoryDescription: 'وقتی خاموش است، هیچ حافظه ای به اعلان تزریق نمی شود.',
     useContextLabel: 'از بسته های متنی در این موضوع استفاده کنید',
     useContextDescription: 'هنگامی که خاموش است، بسته های پیوست نادیده گرفته می شوند.',
+    useCrossThreadContextLabel: 'استفاده از گفت‌وگوهای پیشین مرتبط',
+    useCrossThreadContextDescription:
+      'وقتی روشن باشد، ClawAI می‌تواند گفت‌وگوهای دیگر شما را برای یافتن مطالب مرتبط با این گفت‌وگو بررسی کند. به‌صورت پیش‌فرض خاموش است.',
     workflow: {
       searchFirst: 'ابتدا جستجو کنید',
       direct: 'مستقیم',

@@ -582,6 +582,9 @@ export const ru: TranslationDictionary = {
     useMemoryDescription: 'Когда выключено, никакие воспоминания не вставляются в запрос.',
     useContextLabel: 'Использовать пакеты контекста в этом разговоре',
     useContextDescription: 'Когда выключено, прикреплённые пакеты игнорируются.',
+    useCrossThreadContextLabel: 'Использовать релевантные прошлые чаты',
+    useCrossThreadContextDescription:
+      'Когда включено, ClawAI может искать в других ваших беседах материалы, относящиеся к этой. По умолчанию выключено.',
     workflow: {
       searchFirst: 'Поиск сначала',
       direct: 'Прямой',

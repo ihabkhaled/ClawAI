@@ -5,6 +5,7 @@ import { LocalModelSelectionService } from '../../services/local-model-selection
 import type { AssembledContext, FileContentResponse } from '../../types/context.types';
 import type { LlmResponse, MessageRoutedData } from '../../types/execution.types';
 import {
+  disabledCrossThreadResult,
   emptyConversationManifest,
   fallbackModelTokenBudget,
 } from '../../utilities/assembled-context.utility';
@@ -41,6 +42,7 @@ const buildContext = (files: FileContentResponse[] = []): AssembledContext => ({
   tokenBudget: 4096,
   modelBudget: fallbackModelTokenBudget(),
   conversationManifest: emptyConversationManifest(),
+  crossThread: disabledCrossThreadResult(),
   threadMessages: [
     { role: 'USER', content: 'How long do cats sleep?' } as AssembledContext['threadMessages'][0],
   ],

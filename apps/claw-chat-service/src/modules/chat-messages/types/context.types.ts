@@ -1,6 +1,7 @@
 import { type ChatMessage } from '../../../generated/prisma';
 import type { ToolTurn } from './tool-turn.types';
 import type { ConversationContextManifest, ModelTokenBudget } from './context-composer.types';
+import type { CrossThreadRetrievalResult } from './cross-thread-retrieval.types';
 
 export type FileChunkResponse = {
   id: string;
@@ -65,6 +66,12 @@ export type AssembledContext = {
    * rest did not. Written to the context receipt.
    */
   conversationManifest: ConversationContextManifest;
+  /**
+   * Material from the user's OTHER conversations, and the reason there is none
+   * when there is none. Always present; `selections` is empty unless the thread
+   * opted in and something scored. ADR-085.
+   */
+  crossThread: CrossThreadRetrievalResult;
 };
 
 export type ResearchEvidenceCitation = {

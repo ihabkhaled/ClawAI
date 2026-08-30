@@ -3,13 +3,30 @@ import type { ChatMessage } from '../../../generated/prisma';
 import { MemoryRecordType } from '../../../common/enums/memory-record-type.enum';
 import type { AssembledContext, MemoryRecordResponse } from '../types/context.types';
 import {
+  disabledCrossThreadResult,
   emptyConversationManifest,
   fallbackModelTokenBudget,
 } from '../utilities/assembled-context.utility';
 import { ContextComposerManager } from '../managers/context-composer.manager';
+import { CrossThreadRetrievalManager } from '../managers/cross-thread-retrieval.manager';
+
+/**
+ * A repository that owns no data. These specs exercise prompt shaping, not
+ * retrieval, and a thread with `useCrossThreadContext` false never reaches the
+ * repository at all — the stub proves that rather than hiding it.
+ */
+function stubCrossThreadRepository(): ConstructorParameters<typeof CrossThreadRetrievalManager>[0] {
+  return {
+    findCandidateThreads: async () => Promise.resolve([]),
+    findMessagesForThreads: async () => Promise.resolve([]),
+  } as unknown as ConstructorParameters<typeof CrossThreadRetrievalManager>[0];
+}
 
 describe('ContextAssemblyManager', () => {
-  const manager = new ContextAssemblyManager(new ContextComposerManager());
+  const manager = new ContextAssemblyManager(
+    new ContextComposerManager(),
+    new CrossThreadRetrievalManager(stubCrossThreadRepository()),
+  );
 
   const buildContext = (): AssembledContext => ({
     userId: 'user-1',
@@ -46,6 +63,7 @@ describe('ContextAssemblyManager', () => {
     tokenBudget: 512,
     modelBudget: fallbackModelTokenBudget(),
     conversationManifest: emptyConversationManifest(),
+    crossThread: disabledCrossThreadResult(),
   });
 
   it('includes research warnings even when no evidence items survive filtering', () => {
@@ -265,7 +283,10 @@ describe('ContextAssemblyManager', () => {
 });
 
 describe('ContextAssemblyManager memory selection', () => {
-  const manager = new ContextAssemblyManager(new ContextComposerManager());
+  const manager = new ContextAssemblyManager(
+    new ContextComposerManager(),
+    new CrossThreadRetrievalManager(stubCrossThreadRepository()),
+  );
 
   const memory = (
     id: string,

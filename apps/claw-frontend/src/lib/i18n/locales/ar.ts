@@ -572,6 +572,9 @@ export const ar: TranslationDictionary = {
     useMemoryDescription: 'عند الإيقاف، لن يتم إدخال أي ذكريات في الموجه.',
     useContextLabel: 'استخدام حزم السياق في هذه المحادثة',
     useContextDescription: 'عند الإيقاف، يتم تجاهل الحزم المرفقة.',
+    useCrossThreadContextLabel: 'استخدام المحادثات السابقة ذات الصلة',
+    useCrossThreadContextDescription:
+      'عند التفعيل، قد يبحث ClawAI في محادثاتك الأخرى عن محتوى ذي صلة بهذه المحادثة. مُعطّل افتراضيًا.',
     workflow: {
       searchFirst: 'البحث أولاً',
       direct: 'مباشر',

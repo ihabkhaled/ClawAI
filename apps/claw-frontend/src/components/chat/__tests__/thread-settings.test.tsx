@@ -66,6 +66,8 @@ const baseProps = {
   onUseMemoryChange: vi.fn(),
   useContext: true,
   onUseContextChange: vi.fn(),
+  useCrossThreadContext: false,
+  onUseCrossThreadContextChange: vi.fn(),
   onSave: vi.fn(),
   isPending: false,
   maxTokensError: null,

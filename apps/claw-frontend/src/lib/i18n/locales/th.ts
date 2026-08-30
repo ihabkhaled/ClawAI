@@ -570,6 +570,9 @@ export const th: TranslationDictionary = {
     useMemoryDescription: 'เมื่อปิด จะไม่มีการเพิ่มความทรงจำลงในพรอมต์',
     useContextLabel: 'ใช้ชุดบริบทในชุดข้อความนี้',
     useContextDescription: 'เมื่อปิด ชุดที่แนบมาจะถูกละเว้น',
+    useCrossThreadContextLabel: 'ใช้บทสนทนาก่อนหน้าที่เกี่ยวข้อง',
+    useCrossThreadContextDescription:
+      'เมื่อเปิดใช้งาน ClawAI อาจค้นหาเนื้อหาที่เกี่ยวข้องกับบทสนทนานี้จากบทสนทนาอื่นของคุณ ปิดไว้ตามค่าเริ่มต้น',
     workflow: {
       searchFirst: 'ค้นหาก่อน',
       direct: 'โดยตรง',

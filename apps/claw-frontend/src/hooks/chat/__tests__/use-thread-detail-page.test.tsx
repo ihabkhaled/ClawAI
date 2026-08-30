@@ -73,6 +73,8 @@ const dataControllerMock = {
     useMemory: true,
     setUseMemory: vi.fn(),
     useContext: true,
+    useCrossThreadContext: false,
+    setUseCrossThreadContext: vi.fn(),
     setUseContext: vi.fn(),
     handleSave: vi.fn(),
     isPending: false,

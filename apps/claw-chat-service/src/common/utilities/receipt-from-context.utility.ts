@@ -47,6 +47,9 @@ export function receiptFromAssembledContext(
     packItems,
     assemblyOrder: [
       ...(context.conversationManifest?.includedMessageIds ?? []).map((id) => `message:${id}`),
+      ...(context.crossThread?.selections ?? []).map(
+        (selection) => `prior-message:${selection.messageId}`,
+      ),
       ...memories.map((m) => `memory:${m.id}`),
       ...packItems.map((p) => `pack:${p.id}`),
     ],
@@ -89,5 +92,11 @@ function conversationSummary(context: AssembledContext): RetrievalConversationSu
     availableInputTokens: manifest.budget.availableInputTokens,
     contextWindowSource: manifest.budget.source,
     referenceSignals: manifest.referenceSignal.signals,
+    priorThreadsSearched: context.crossThread?.searchedThreadIds ?? [],
+    priorThreadsUsed: context.crossThread?.usedThreadIds ?? [],
+    priorMessageIds: (context.crossThread?.selections ?? []).map(
+      (selection) => selection.messageId,
+    ),
+    crossThreadSkipReason: context.crossThread?.skippedReason ?? null,
   };
 }

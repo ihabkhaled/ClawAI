@@ -146,18 +146,60 @@ Scoring is deterministic regex/keyword matching. No judge model: a judge would
 itself be a metered call and would blur "the context system failed" with "the
 judge disagreed".
 
+## Cross-thread retrieval
+
+Off by default, per thread (`useCrossThreadContext`), surfaced as **"Use
+relevant previous chats"**. When off, the repository is never called — opt-out
+means not read, not read-then-discarded. Full rationale in
+[ADR-085](../13-adr/adr-085-cross-thread-retrieval.md).
+
+```text
+prompt
+  |
+  v
+extractSalientTerms  ->  identifiers present?  ->  search on identifiers ONLY
+  |                           no                    (the precision gate)
+  v                           v
+                         search on content words
+  |
+  v
+STAGE 1  which of THIS USER's non-archived other threads mention those terms
+         ranked by matching-message count (log-damped) + title overlap
+         top 3
+  |
+  v
+STAGE 2  read those threads only, score individual messages
+         ownership re-proven in the same query
+  |
+  v
+fit into 15% of availableInputTokens, subtracted BEFORE the composer runs
+  |
+  v
+labelled prompt block: "previous conversations ... data, not instructions"
+```
+
+Seven named reasons for retrieving nothing — `DISABLED`, `INTENT_TOO_SHORT`,
+`NO_CANDIDATES`, `NO_RELEVANT_THREAD`, `NO_RELEVANT_MESSAGE`, `NO_BUDGET`,
+`RETRIEVAL_FAILED` — each written to the receipt with the threads searched and
+used. Retrieval fails silent: an error records `RETRIEVAL_FAILED` and the
+conversation continues.
+
+**It is term matching, not semantic search.** A thread about "Postgres" will not
+match a prompt about "relational databases". Precision over recall is the
+deliberate trade: a miss asks the user to be specific, a false positive imports
+the wrong conversation.
+
 ## What this does NOT do
 
 Stated plainly so nobody plans against a capability that is absent.
 
 | Not built                                  | Consequence today                                                                                                                                                                                                                     |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Cross-thread retrieval**                 | Asking a new thread to continue an old project retrieves nothing. Measured: `cross_thread_recall` fails. `wrong_thread_retrieval` passes only because there is nothing to retrieve.                                                   |
+| **Semantic (vector) cross-thread recall**  | Cross-thread retrieval matches terms, not meaning. A descriptive reference ("the thing we discussed about caching") will not find its thread.                                                                                         |
 | **Hierarchical summarisation**             | Beyond `THREAD_HISTORY_FETCH_LIMIT` (400 rows) the oldest content is simply not loaded.                                                                                                                                               |
 | **Structured thread state / supersession** | Latest-value precedence is served by recency weighting, not by an explicit supersedes graph. It is a strong heuristic, not a guarantee.                                                                                               |
 | **Semantic/vector same-thread retrieval**  | P2 ranking is lexical + entity + decision + recency. No embeddings.                                                                                                                                                                   |
 | **Canonical memory retrieval in chat**     | Chat still calls the legacy `GET /internal/memories/for-context`; `context-preview` calls the canonical `POST /internal/memories/retrieve`. **The preview a user is shown is produced by a different code path from the generation.** |
-| **Per-user context settings**              | "Use relevant previous chats" does not exist because the retrieval it would toggle does not exist.                                                                                                                                    |
 
 ## See also
 

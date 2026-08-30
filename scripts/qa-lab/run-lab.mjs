@@ -132,6 +132,40 @@ const HEADLINE = [
 
 const jobs = [];
 
+const MODEL_LIMIT = Number(args.models ?? 0);
+const headline = MODEL_LIMIT > 0 ? HEADLINE.slice(0, MODEL_LIMIT) : HEADLINE;
+
+// `--suite gauntlet` is the before/after comparison suite: the 60-turn
+// scenario plus the two model-switch variants, and nothing else. It exists so a
+// verification run costs a few hundred generations rather than a few thousand.
+if (SUITE === 'gauntlet') {
+  for (const model of headline) {
+    jobs.push({
+      scenario: contextGauntlet(),
+      threadLabel: `gauntlet-${model.modelKey.replace(/[^a-z0-9]/gi, '')}`,
+      modelFor: () => model,
+    });
+  }
+  const rota = headline.slice(0, Math.min(6, headline.length));
+  jobs.push({
+    scenario: contextGauntlet(),
+    threadLabel: 'gauntlet-switch10',
+    modelFor: (i) => rota[Math.floor(i / 10) % rota.length],
+  });
+  jobs.push({
+    scenario: contextGauntlet(),
+    threadLabel: 'gauntlet-switch1',
+    modelFor: (i) => rota[i % rota.length],
+  });
+  for (const model of headline.slice(0, 3)) {
+    jobs.push({
+      scenario: topicReturn(),
+      threadLabel: `topicreturn-${model.modelKey.replace(/[^a-z0-9]/gi, '')}`,
+      modelFor: () => model,
+    });
+  }
+}
+
 if (SUITE === 'full') {
   // 1. The gauntlet, once per headline model — stable model for the whole thread.
   for (const model of HEADLINE) {
@@ -171,7 +205,7 @@ if (SUITE === 'full') {
 }
 
 // 5. Breadth: the cheap short-recall scenario across EVERY free model.
-for (const model of allModels) {
+for (const model of SUITE === 'gauntlet' ? [] : allModels) {
   jobs.push({
     scenario: shortRecall(),
     threadLabel: `shortrecall-${model.modelKey.replace(/[^a-z0-9]/gi, '')}`,

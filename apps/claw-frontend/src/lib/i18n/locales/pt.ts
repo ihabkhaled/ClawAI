@@ -584,6 +584,9 @@ export const pt: TranslationDictionary = {
     useMemoryDescription: 'Quando desativado, nenhuma memória é injetada no prompt.',
     useContextLabel: 'Usar pacotes de contexto nesta conversa',
     useContextDescription: 'Quando desativado, os pacotes anexados são ignorados.',
+    useCrossThreadContextLabel: 'Usar conversas anteriores relevantes',
+    useCrossThreadContextDescription:
+      'Quando ativado, o ClawAI pode consultar as suas outras conversas em busca de material relevante para esta. Desativado por predefinição.',
     workflow: {
       searchFirst: 'Busca primeiro',
       direct: 'Direto',

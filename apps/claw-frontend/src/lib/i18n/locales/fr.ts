@@ -585,6 +585,9 @@ export const fr: TranslationDictionary = {
     useMemoryDescription: "Lorsque désactivé, aucune mémoire n'est injectée dans l'invite.",
     useContextLabel: 'Utiliser les paquets de contexte dans cette conversation',
     useContextDescription: 'Lorsque désactivé, les paquets attachés sont ignorés.',
+    useCrossThreadContextLabel: 'Utiliser les conversations précédentes pertinentes',
+    useCrossThreadContextDescription:
+      'Lorsque cette option est activée, ClawAI peut parcourir vos autres conversations à la recherche d’éléments pertinents pour celle-ci. Désactivé par défaut.',
     workflow: {
       searchFirst: "Recherche d'abord",
       direct: 'Direct',

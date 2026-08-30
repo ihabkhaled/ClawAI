@@ -589,6 +589,9 @@ export const de: TranslationDictionary = {
     useMemoryDescription: 'Wenn deaktiviert, werden keine Erinnerungen in den Prompt eingefügt.',
     useContextLabel: 'Kontextpakete in diesem Gespräch verwenden',
     useContextDescription: 'Wenn deaktiviert, werden angehängte Pakete ignoriert.',
+    useCrossThreadContextLabel: 'Relevante frühere Chats verwenden',
+    useCrossThreadContextDescription:
+      'Wenn aktiviert, darf ClawAI Ihre anderen Unterhaltungen nach Material durchsuchen, das für diese relevant ist. Standardmäßig aus.',
     workflow: {
       searchFirst: 'Suche zuerst',
       direct: 'Direkt',

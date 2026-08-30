@@ -9,6 +9,7 @@ import { SearchFirstManager } from '../managers/search-first.manager';
 import type { AssembledContext } from '../types/context.types';
 import type { ResearchSearchResponse } from '../types/search-first.types';
 import {
+  disabledCrossThreadResult,
   emptyConversationManifest,
   fallbackModelTokenBudget,
 } from '../utilities/assembled-context.utility';
@@ -41,6 +42,7 @@ function makeContext(systemPrompt: string | null = null): AssembledContext {
     tokenBudget: 4000,
     modelBudget: fallbackModelTokenBudget(),
     conversationManifest: emptyConversationManifest(),
+    crossThread: disabledCrossThreadResult(),
   };
 }
 

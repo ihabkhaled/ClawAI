@@ -42,6 +42,7 @@ export class ChatThreadsService {
         preferredProvider: dto.preferredProvider,
         preferredModel: dto.preferredModel,
         contextPackIds: dto.contextPackIds,
+        useCrossThreadContext: dto.useCrossThreadContext,
       },
       resolvePlanLimit(entitlements, (limits) => limits.chatsPerDay),
     );
@@ -191,6 +192,7 @@ export class ChatThreadsService {
       maxReRouteAttempts: dto.maxReRouteAttempts,
       useMemory: dto.useMemory,
       useContext: dto.useContext,
+      useCrossThreadContext: dto.useCrossThreadContext,
     });
     if (dto.useMemory !== undefined && dto.useMemory !== thread.useMemory) {
       void this.rabbitMQService.publish(EventPattern.CHAT_THREAD_MEMORY_TOGGLED, {

@@ -11,6 +11,8 @@ import { GeminiFilesApiManager } from './managers/gemini-files-api.manager';
 import { ConsensusExecutionManager } from './managers/consensus-execution.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
 import { ContextComposerManager } from './managers/context-composer.manager';
+import { CrossThreadRetrievalManager } from './managers/cross-thread-retrieval.manager';
+import { CrossThreadRetrievalRepository } from './repositories/cross-thread-retrieval.repository';
 import { EscalationChainManager } from './managers/escalation-chain.manager';
 import { FallbackExecutorManager } from './managers/fallback-executor.manager';
 import { ParallelExecutionManager } from './managers/parallel-execution.manager';
@@ -65,6 +67,8 @@ import { RuntimeV2LoopManager } from './managers/runtime-v2-loop.manager';
     ConsensusExecutionManager,
     ContextAssemblyManager,
     ContextComposerManager,
+    CrossThreadRetrievalManager,
+    CrossThreadRetrievalRepository,
     EscalationChainManager,
     FallbackExecutorManager,
     ParallelExecutionManager,

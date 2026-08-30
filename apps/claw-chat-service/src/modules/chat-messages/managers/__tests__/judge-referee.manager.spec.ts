@@ -6,6 +6,7 @@ import type { LocalModelSelectionService } from '../../services/local-model-sele
 import type { AssembledContext } from '../../types/context.types';
 import type { LlmResponse, MessageRoutedData } from '../../types/execution.types';
 import {
+  disabledCrossThreadResult,
   emptyConversationManifest,
   fallbackModelTokenBudget,
 } from '../../utilities/assembled-context.utility';
@@ -34,6 +35,7 @@ const buildContext = (): AssembledContext => ({
   tokenBudget: 4096,
   modelBudget: fallbackModelTokenBudget(),
   conversationManifest: emptyConversationManifest(),
+  crossThread: disabledCrossThreadResult(),
   threadMessages: [
     {
       role: 'USER',

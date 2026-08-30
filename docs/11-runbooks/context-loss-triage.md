@@ -67,6 +67,33 @@ messages and the row still was not loaded, check whether the message was created
 **after** the routed user message — `resolveRoutedMessageWindow` deliberately
 cuts everything newer than the turn being answered.
 
+## 4b. "It did not remember my other conversation"
+
+A different complaint with a different answer. Read the same receipt:
+
+```bash
+… | jq '.conversation | {crossThreadSkipReason, priorThreadsSearched, priorThreadsUsed}'
+```
+
+| `crossThreadSkipReason` | Meaning                                                                                                                                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DISABLED`              | The thread has not opted in. This is the default. Turn on **Use relevant previous chats** in thread settings.                                                              |
+| `INTENT_TOO_SHORT`      | The prompt had too few meaningful words to search on. Ask a fuller question.                                                                                               |
+| `NO_CANDIDATES`         | No other thread of this user mentions the prompt's salient terms. If the user is sure it does, check they are naming it the same way — search is term-based, not semantic. |
+| `NO_RELEVANT_THREAD`    | Threads matched but none ranked highly enough.                                                                                                                             |
+| `NO_RELEVANT_MESSAGE`   | A thread was read; no individual message cleared the bar.                                                                                                                  |
+| `NO_BUDGET`             | The 15% share left no room. Rare; means the prompt is already enormous.                                                                                                    |
+| `RETRIEVAL_FAILED`      | The read errored. Check chat-service logs for `CrossThreadRetrievalManager retrieve: failed`. The turn proceeded without it, by design.                                    |
+| `null`                  | Retrieval ran and contributed. `priorThreadsUsed` names what it used.                                                                                                      |
+
+**If `priorThreadsUsed` is empty and the model still produced an answer, the
+model made it up.** That is a hallucination, not a retrieval leak, and the two
+have different fixes. Do not report it as a privacy incident — the manifest is
+the record of what was supplied.
+
+Archived threads are never retrieved, and a deleted thread leaves nothing to
+retrieve (messages cascade on delete).
+
 ## 5. Ruling out the memory path
 
 A memory is not conversation. If the missing item was a saved memory rather than

@@ -3,6 +3,7 @@ import type { AssembledContext } from '../../types/context.types';
 import type { MessageRoutedData } from '../../types/execution.types';
 import { resolveVideoAttachmentCandidates } from '../video-attachment-routing.utility';
 import {
+  disabledCrossThreadResult,
   emptyConversationManifest,
   fallbackModelTokenBudget,
 } from '../../utilities/assembled-context.utility';
@@ -45,6 +46,7 @@ const makeContext = (mimeType?: string): AssembledContext =>
     tokenBudget: 4096,
     modelBudget: fallbackModelTokenBudget(),
     conversationManifest: emptyConversationManifest(),
+    crossThread: disabledCrossThreadResult(),
   }) as AssembledContext;
 
 const fallbackCandidates = [

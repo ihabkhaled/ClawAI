@@ -1388,6 +1388,7 @@ export class ChatMessagesService implements OnModuleInit {
       temperature: thread.temperature,
       maxTokens: thread.maxTokens,
       judgeModel: thread.judgeModel,
+      useCrossThreadContext: thread.useCrossThreadContext,
       criticEnabled: thread.criticEnabled,
       criticModel: thread.criticModel,
       qualityThreshold: thread.qualityThreshold,

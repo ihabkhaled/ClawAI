@@ -4,6 +4,7 @@ import type { ParallelModelTarget } from '../modules/chat-messages/types/paralle
 import type { AssembledContext } from '../modules/chat-messages/types/context.types';
 import { createFakePaygAccessControl } from '../modules/chat-messages/__tests__/helpers/fake-payg-access-control.helper';
 import {
+  disabledCrossThreadResult,
   emptyConversationManifest,
   fallbackModelTokenBudget,
 } from '../modules/chat-messages/utilities/assembled-context.utility';
@@ -64,6 +65,7 @@ describe('ConsensusExecutionManager', () => {
     tokenBudget: 4096,
     modelBudget: fallbackModelTokenBudget(),
     conversationManifest: emptyConversationManifest(),
+    crossThread: disabledCrossThreadResult(),
     researchEvidence: [],
     researchRunId: null,
     researchWarnings: [],

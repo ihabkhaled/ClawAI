@@ -579,6 +579,9 @@ export const hi: TranslationDictionary = {
     useMemoryDescription: 'बंद होने पर, प्रॉम्प्ट में कोई मेमोरी इंजेक्ट नहीं की जाती।',
     useContextLabel: 'इस वार्तालाप में संदर्भ पैक उपयोग करें',
     useContextDescription: 'बंद होने पर, संलग्न पैक अनदेखा कर दिए जाते हैं।',
+    useCrossThreadContextLabel: 'प्रासंगिक पिछली बातचीत का उपयोग करें',
+    useCrossThreadContextDescription:
+      'चालू होने पर, ClawAI इस बातचीत से संबंधित सामग्री के लिए आपकी अन्य बातचीतों को देख सकता है। डिफ़ॉल्ट रूप से बंद।',
     workflow: {
       searchFirst: 'पहले खोजें',
       direct: 'सीधा',

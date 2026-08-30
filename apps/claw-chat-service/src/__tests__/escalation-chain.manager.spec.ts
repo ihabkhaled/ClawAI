@@ -4,6 +4,7 @@ import { EscalationChainStatus } from '../common/enums/escalation-chain-status.e
 import type { EscalationChainStep } from '../modules/chat-messages/types/escalation-chain.types';
 import type { AssembledContext } from '../modules/chat-messages/types/context.types';
 import {
+  disabledCrossThreadResult,
   emptyConversationManifest,
   fallbackModelTokenBudget,
 } from '../modules/chat-messages/utilities/assembled-context.utility';
@@ -68,6 +69,7 @@ describe('EscalationChainManager', () => {
     tokenBudget: 4096,
     modelBudget: fallbackModelTokenBudget(),
     conversationManifest: emptyConversationManifest(),
+    crossThread: disabledCrossThreadResult(),
     researchEvidence: [],
     researchRunId: null,
     researchWarnings: [],

@@ -6,6 +6,10 @@ import {
   type ConversationContextManifest,
   type ModelTokenBudget,
 } from '../types/context-composer.types';
+import {
+  type CrossThreadRetrievalResult,
+  CrossThreadSkipReason,
+} from '../types/cross-thread-retrieval.types';
 
 /**
  * The budget to use when nothing is known about the model.
@@ -38,5 +42,21 @@ export function emptyConversationManifest(
     budget,
     referenceSignal: { referential: false, strength: 0, signals: [] },
     warnings: [],
+  };
+}
+
+/**
+ * "Cross-thread retrieval did not run, because the thread did not ask for it."
+ *
+ * The default for every construction site that has not been taught about the
+ * feature — which is the correct default, since the feature is opt-in.
+ */
+export function disabledCrossThreadResult(): CrossThreadRetrievalResult {
+  return {
+    selections: [],
+    searchedThreadIds: [],
+    usedThreadIds: [],
+    skippedReason: CrossThreadSkipReason.DISABLED,
+    estimatedTokens: 0,
   };
 }
