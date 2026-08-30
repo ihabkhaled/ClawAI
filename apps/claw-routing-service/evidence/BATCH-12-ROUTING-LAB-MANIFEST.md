@@ -1,6 +1,6 @@
 # Batch 12 — Cloud Smart Router Lab Evidence (Synthetic Corpus)
 
-Generated: 2026-08-30T02:29:49.891Z
+Generated: 2026-08-30T08:28:01.063Z
 
 Corpus size: 300 cases.
 

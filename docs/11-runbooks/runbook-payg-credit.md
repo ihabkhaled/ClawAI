@@ -474,3 +474,59 @@ in §7.
 - [runbook-nginx-stale-config.md](runbook-nginx-stale-config.md) · [runbook-failed-billing-sweep.md](runbook-failed-billing-sweep.md) · [runbook-billing-reconciliation.md](runbook-billing-reconciliation.md)
 - [`docs/business/rollout-and-notice.md`](../business/rollout-and-notice.md) — the commercial gates
 - [`rules/37-payg-credit-integrity.md`](../../rules/37-payg-credit-integrity.md)
+
+## Model prices in production — three ways in, and the one that was missing
+
+`model_cost_versions` decides what every paid request costs. An **empty price
+table is invisible**: nothing errors, every paid model silently resolves to the
+provider's ceiling fallback rate instead of its own, and the release output
+still reads green.
+
+It reached production by exactly one path — `ModelCostSeedService.onModuleInit`,
+which requires routing-service to boot on an image that already contains the
+seeder. An install that had not yet taken that image had **no prices at all**,
+and nothing said so. Two other paths existed on paper and did not work:
+
+- `npm run seed:versioned` selects a workspace by `prisma/seed.js|ts`.
+  routing-service had `seed-router-models.ts`, `seed-taxonomy.ts` and
+  `seed-workflows.ts` — no `seed.js` — so **the release lane skipped it
+  entirely**.
+- The prod entrypoint only seeds when `SEED_ON_START=true`, which was set on
+  **auth-service alone**.
+
+Both are fixed. All three write the same `SeedExecution` row under the same
+advisory lock, so running any one is enough and running all three is a no-op
+after the first.
+
+### Verify — read the table, never the log
+
+Both entrypoints swallow a seed failure (`|| echo "(continuing)"`), so a green
+log is not evidence.
+
+```bash
+# Prices present, and the seed ledger says COMPLETED.
+docker exec claw-pg-routing psql -U claw -d claw_routing -tAc   "SELECT count(*) FROM model_cost_versions WHERE is_active;"          # expect >= 16
+docker exec claw-pg-routing psql -U claw -d claw_routing -tAc   "SELECT name, version, status FROM seed_executions
+     WHERE name = 'model-cost-list-prices-2026-v1';"                   # expect COMPLETED
+
+# What the operator actually needs to see: how many models are on a FALLBACK
+# rate rather than their own published price.
+curl -sk https://<host>/api/v1/router-models/costs/catalog   -H "Authorization: Bearer $ADMIN_TOKEN" |
+  node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const by={};
+    for(const x of JSON.parse(d)) by[x.pricingSource]=(by[x.pricingSource]||0)+1;
+    console.log(by);})"
+```
+
+`PROVIDER_FALLBACK` is not an error — it is a bounded, pessimistic rate that
+keeps the product working — but every row in it is a model nobody has priced.
+Publish real rates at `/admin/smart-router/model-costs`.
+
+### Seed without a redeploy
+
+```bash
+docker exec claw-routing-service sh -c   'cd /app/apps/claw-routing-service && node prisma/seed.js'
+```
+
+Idempotent: a second run reports `ALREADY_APPLIED inserted=0`. Changing a price
+without bumping `MODEL_COST_SEED_VERSION` is a `CHECKSUM_MISMATCH` that writes
+**nothing** — bump the version to apply.

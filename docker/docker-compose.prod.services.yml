@@ -114,6 +114,15 @@ services:
     container_name: claw-routing-service
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      # routing-service owns model PRICES, and an empty price table is
+      # invisible: every paid model silently falls back to the provider
+      # ceiling rate instead of its own. The boot seeder covers a fresh image,
+      # this covers the entrypoint path, and `npm run seed:versioned` covers
+      # the release lane. Three ways in, all writing the same SeedExecution
+      # row, because the one that is missing is always the one an operator was
+      # relying on.
+      SEED_ON_START: 'true'
     ports:
       - '4004:4004'
     volumes:

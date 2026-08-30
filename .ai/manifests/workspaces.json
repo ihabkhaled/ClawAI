@@ -521,6 +521,7 @@
         "migrate",
         "migrate:dev",
         "prisma:generate",
+        "seed",
         "start",
         "start:prod",
         "test",

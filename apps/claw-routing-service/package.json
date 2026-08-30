@@ -22,7 +22,8 @@
     "migrate": "prisma migrate deploy",
     "migrate:dev": "prisma migrate dev",
     "db:reset": "prisma migrate reset --force",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@claw/shared-constants": "*",
