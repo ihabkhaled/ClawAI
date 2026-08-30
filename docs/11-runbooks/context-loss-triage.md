@@ -19,7 +19,7 @@ Users can reach the same data from the `[debug]` badge under the message.
 
 | What you see                                                         | What it means                                                                          | Do this                                                                 |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `conversation` is **absent**                                         | Message predates ADR-084, or was produced by a lane that does not yet build a manifest | Reproduce on a new message before investigating further                 |
+| `conversation` is **absent**                                         | Message predates ADR-086, or was produced by a lane that does not yet build a manifest | Reproduce on a new message before investigating further                 |
 | `includedMessageIds` contains the message that stated the fact       | **The model was told and did not use it.** Not a context bug                           | Model-quality issue. Try another model; check whether the model refused |
 | That message is in `omittedMessageIds` with `TOKEN_BUDGET_EXHAUSTED` | Genuine budget pressure                                                                | Go to step 2                                                            |
 | That message is in `omittedMessageIds` with `LOW_RELEVANCE`          | It was older than the recent window and did not rank                                   | Go to step 3                                                            |
@@ -113,7 +113,7 @@ node paraphrase-experiment.mjs
 Plants one fact, asks for it four ways at a fixed distance, and prints the
 static prediction beside the measured result. If recall varies by phrasing, a
 relevance gate has been reintroduced somewhere — that is exactly the defect
-ADR-084 removed.
+ADR-086 removed.
 
 Only PAYG-exempt models can run: `client.mjs` refuses metered providers in code.
 

@@ -46,7 +46,7 @@ Relevance decides **order**. Order only matters once the budget is full. On a
 
 This is an inversion. The previous selector's default was _exclude unless proven
 relevant_, and every measured failure was that default firing — see
-[ADR-084](../13-adr/adr-084-conversational-context-composer.md) for the numbers.
+[ADR-086](../13-adr/adr-086-conversational-context-composer.md) for the numbers.
 
 ## Priority classes
 
@@ -151,7 +151,7 @@ judge disagreed".
 Off by default, per thread (`useCrossThreadContext`), surfaced as **"Use
 relevant previous chats"**. When off, the repository is never called — opt-out
 means not read, not read-then-discarded. Full rationale in
-[ADR-085](../13-adr/adr-085-cross-thread-retrieval.md).
+[ADR-087](../13-adr/adr-087-cross-thread-retrieval.md).
 
 ```text
 prompt
@@ -203,6 +203,6 @@ Stated plainly so nobody plans against a capability that is absent.
 
 ## See also
 
-- [ADR-084](../13-adr/adr-084-conversational-context-composer.md) — the decision and the evidence
+- [ADR-086](../13-adr/adr-086-conversational-context-composer.md) — the decision and the evidence
 - [Context loss triage](../11-runbooks/context-loss-triage.md) — the runbook
 - [`skills/audit-conversational-context.md`](../../skills/audit-conversational-context.md) — how to re-run the lab

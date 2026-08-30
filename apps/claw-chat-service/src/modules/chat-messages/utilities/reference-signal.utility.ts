@@ -12,7 +12,7 @@ import { type ReferenceSignal } from '../types/context-composer.types';
  * replaces. It is that nothing downstream may remove history when it returns
  * `false`. `referential` only RAISES the rank of older turns; recent turns are
  * sent either way. A detector that can only add cannot cause the failure the
- * old one caused. See ADR-084.
+ * old one caused. See ADR-086.
  */
 export function detectReferenceSignal(prompt: string): ReferenceSignal {
   const normalized = prompt.trim();

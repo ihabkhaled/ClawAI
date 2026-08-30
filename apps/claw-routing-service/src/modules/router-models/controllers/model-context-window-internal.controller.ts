@@ -14,7 +14,7 @@ import { type ModelContextWindowSnapshot } from '../types/model-context-window.t
  * service that decides how much conversation to send. It used the thread's
  * `maxTokens` (an OUTPUT length, default 4096) as the size of the whole prompt,
  * so a 256k model was handed roughly 16k characters of everything combined.
- * ADR-084.
+ * ADR-086.
  *
  * `@Public()` lifts the user JWT guard only; `ServiceTokenGuard` still does the
  * real check. Same shape as the model-cost internal route next to it.

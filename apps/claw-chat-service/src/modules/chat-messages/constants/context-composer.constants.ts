@@ -3,7 +3,7 @@
  *
  * Every number here is a budget or a floor. None of them is a rule that can
  * remove a message on its own — that was the previous design's mistake, and
- * ADR-084 records why the composer only ever ranks and fits.
+ * ADR-086 records why the composer only ever ranks and fits.
  */
 
 /**

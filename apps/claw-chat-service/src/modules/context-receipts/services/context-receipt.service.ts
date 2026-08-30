@@ -26,7 +26,7 @@ export class ContextReceiptService {
     // meant every ordinary chat turn — the overwhelming majority, which use no
     // memories and no packs — wrote no receipt at all, so the one surface that
     // could have shown a hundred-message thread being sent as one message
-    // never existed for the threads that needed it. ADR-084.
+    // never existed for the threads that needed it. ADR-086.
     if (
       bundle.conversation === undefined &&
       bundle.memories.length === 0 &&

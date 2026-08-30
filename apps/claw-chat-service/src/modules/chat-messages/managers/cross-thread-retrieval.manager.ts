@@ -37,7 +37,7 @@ import { extractSalientTerms, searchTermsFor } from '../utilities/salient-terms.
  *
  *   1. OFF BY DEFAULT. `useCrossThreadContext` defaults to false. Reaching into
  *      other conversations is a privacy decision and must be asked for.
- *   2. USER-SCOPED. Every read filters on userId, twice (ADR-085).
+ *   2. USER-SCOPED. Every read filters on userId, twice (ADR-087).
  *   3. FAILS SILENT. A retrieval error returns nothing and records why. The
  *      current conversation must stay usable when the enhancement breaks.
  */

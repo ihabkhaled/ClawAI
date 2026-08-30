@@ -13,7 +13,7 @@ export const createThreadSchema = z.object({
     .optional(),
   preferredModel: z.string().max(255, 'Preferred model must be at most 255 characters').optional(),
   contextPackIds: z.array(z.string().max(255)).max(10, 'Maximum 10 context packs').optional(),
-  // ADR-085 — "use relevant previous chats". Omitted means false: a new thread
+  // ADR-087 — "use relevant previous chats". Omitted means false: a new thread
   // never reads a user's other conversations unless it is asked to.
   useCrossThreadContext: z.boolean().optional(),
 });

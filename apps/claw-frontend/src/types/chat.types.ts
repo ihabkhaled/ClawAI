@@ -39,7 +39,7 @@ export type ChatThread = {
   // Integration V2 — per-thread toggles
   useMemory: boolean;
   useContext: boolean;
-  /** ADR-085 — "use relevant previous chats". Opt-in; absent means false. */
+  /** ADR-087 — "use relevant previous chats". Opt-in; absent means false. */
   useCrossThreadContext?: boolean;
   createdAt: string;
   updatedAt: string;

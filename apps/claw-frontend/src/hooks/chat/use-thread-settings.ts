@@ -28,7 +28,7 @@ export function useThreadSettings(thread: ChatThread | null, onSaved?: () => voi
   const [useContext, setUseContext] = useState(true);
   // Defaults FALSE, matching the column default. Reaching into a user's other
   // conversations is opt-in — a UI that defaults it on would silently make the
-  // decision for them. ADR-085.
+  // decision for them. ADR-087.
   const [useCrossThreadContext, setUseCrossThreadContext] = useState(false);
   const { maxTokensError, canSave } = useThreadSettingsValidation(maxTokens);
 

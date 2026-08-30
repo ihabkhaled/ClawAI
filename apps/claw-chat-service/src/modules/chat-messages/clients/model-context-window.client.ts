@@ -27,7 +27,7 @@ const contextWindowResponseSchema = z.object({
  * copy of it, and before this client existed it kept none at all — it budgeted
  * every prompt from the thread's `maxTokens`, an OUTPUT length whose default is
  * 4096. A 256k-window model therefore received about 16k characters of
- * everything combined. ADR-084.
+ * everything combined. ADR-086.
  *
  * FAILS OPEN, deliberately, and this is the opposite of ModelRateClient's
  * choice next door. An unknown price must refuse the request, because

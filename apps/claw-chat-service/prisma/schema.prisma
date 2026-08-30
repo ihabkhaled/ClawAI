@@ -52,7 +52,7 @@ model ChatThread {
   // === Integration V2 — per-thread memory/context switches ===
   useMemory          Boolean     @default(true) @map("use_memory")
   useContext         Boolean     @default(true) @map("use_context")
-  // === ADR-085 — cross-thread retrieval ===
+  // === ADR-087 — cross-thread retrieval ===
   // OFF by default, and deliberately so. Silently reaching into a user's other
   // conversations is a privacy decision, not a quality tweak: it must be asked
   // for. When off, nothing from another thread can enter the prompt except a

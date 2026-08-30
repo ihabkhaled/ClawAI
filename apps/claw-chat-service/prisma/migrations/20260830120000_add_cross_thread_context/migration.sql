@@ -1,4 +1,4 @@
--- ADR-085 — cross-thread retrieval.
+-- ADR-087 — cross-thread retrieval.
 --
 -- Default FALSE, and that is the whole privacy posture in one word: reaching
 -- into a user's other conversations is opt-in. Every existing thread therefore

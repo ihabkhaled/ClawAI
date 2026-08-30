@@ -8,7 +8,7 @@
  * `make the backend now` — every one of them a reference.
  *
  * The weights order candidates; nothing here can remove a message. See
- * ADR-084.
+ * ADR-086.
  */
 
 /** Bare pronouns and demonstratives with no antecedent in the prompt itself. */

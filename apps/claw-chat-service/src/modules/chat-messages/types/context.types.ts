@@ -69,7 +69,7 @@ export type AssembledContext = {
   /**
    * Material from the user's OTHER conversations, and the reason there is none
    * when there is none. Always present; `selections` is empty unless the thread
-   * opted in and something scored. ADR-085.
+   * opted in and something scored. ADR-087.
    */
   crossThread: CrossThreadRetrievalResult;
 };

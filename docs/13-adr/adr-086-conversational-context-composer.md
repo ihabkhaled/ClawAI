@@ -1,4 +1,4 @@
-# ADR-084: The Context Composer, and why relevance may never remove a message
+# ADR-086: The Context Composer, and why relevance may never remove a message
 
 **Status**: Accepted
 **Date**: 2026-08-30

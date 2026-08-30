@@ -35,7 +35,7 @@ export type RetrievalPackEntry = {
 /**
  * What the model was actually given from the conversation.
  *
- * Optional because receipts written before ADR-084 do not carry it. When it is
+ * Optional because receipts written before ADR-086 do not carry it. When it is
  * absent the inspector says so rather than implying the thread was fully sent.
  */
 export type RetrievalConversationSummary = {

@@ -1585,7 +1585,7 @@ export class ChatExecutionManager implements OnModuleInit {
     // (short, no newlines, no complexity keyword). Conversation is already
     // bounded by the composer's token budget, so there is nothing left here
     // for a message-count rule to protect. Output length is still capped —
-    // that is what actually buys the latency. ADR-084.
+    // that is what actually buys the latency. ADR-086.
     return {
       ...context,
       memories: context.memories.slice(0, FAST_PATH_CONTEXT_MAX_MEMORIES),

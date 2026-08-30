@@ -4,7 +4,7 @@
  * Every number here caps a read or a spend. Retrieval across a user's whole
  * history is the one context source that grows without limit as the account
  * ages, so it is the one that must be bounded at every stage rather than
- * trusted to a relevance score. ADR-085.
+ * trusted to a relevance score. ADR-087.
  */
 
 /** Threads that survive stage 1 ranking. */

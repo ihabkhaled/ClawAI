@@ -41,7 +41,7 @@ Read it like this:
 
 - **All four phrasings recall the fact** → the context path is healthy.
 - **Recall varies by phrasing** → a relevance gate has been reintroduced. That
-  is the exact defect [ADR-084](../docs/13-adr/adr-084-conversational-context-composer.md)
+  is the exact defect [ADR-086](../docs/13-adr/adr-086-conversational-context-composer.md)
   removed. On 2026-08-30 this measured 83% / 0% / 0% / 0% across six models.
 
 Cost: 24 threads × 10 turns ≈ 240 free generations, ~15 minutes at 6 workers.
@@ -148,4 +148,4 @@ them with `DELETE /api/v1/chat-threads/:id` once a run has been written up.
 
 - [Architecture](../docs/03-architecture/conversational-context.md)
 - [Runbook: context loss triage](../docs/11-runbooks/context-loss-triage.md)
-- [ADR-084](../docs/13-adr/adr-084-conversational-context-composer.md)
+- [ADR-086](../docs/13-adr/adr-086-conversational-context-composer.md)

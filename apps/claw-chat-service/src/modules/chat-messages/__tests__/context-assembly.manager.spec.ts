@@ -75,7 +75,7 @@ describe('ContextAssemblyManager', () => {
     expect(prompt).toContain('too weakly matched');
   });
 
-  // Behaviour change, ADR-084. This test used to assert that a prior ASSISTANT
+  // Behaviour change, ADR-086. This test used to assert that a prior ASSISTANT
   // message was DROPPED when the next prompt looked self-contained. That rule
   // is the defect: measured live, it removed a planted fact whenever the
   // question was rephrased, and recall fell from 83% to 0% on the same fact at
@@ -155,7 +155,7 @@ describe('ContextAssemblyManager', () => {
     expect(prompt).toContain('Make that shorter and keep the same style.');
   });
 
-  // Behaviour change, ADR-084. Previously asserted that an unrelated prior turn
+  // Behaviour change, ADR-086. Previously asserted that an unrelated prior turn
   // was dropped. Whether a turn is "unrelated" is exactly the judgement the old
   // selector got wrong, so it no longer gates inclusion — the token budget does.
   // The role-prefix normalisation this test was written for still matters, but

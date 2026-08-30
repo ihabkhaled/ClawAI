@@ -28,7 +28,7 @@ const appConfigSchema = z.object({
   CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
   // Read for one thing only: the selected model's real context window, which
   // chat-service must never keep its own copy of. See ModelContextWindowClient
-  // and ADR-084.
+  // and ADR-086.
   ROUTING_SERVICE_URL: z.string().min(1).default('https://routing-service:4004'),
   MEMORY_SERVICE_URL: z.string().min(1).default('http://memory-service:4005'),
   FILE_SERVICE_URL: z.string().min(1).default('http://file-service:4006'),

@@ -10,7 +10,7 @@ export interface CreateThreadData {
   preferredProvider?: string;
   preferredModel?: string;
   contextPackIds?: string[];
-  /** ADR-085 — "use relevant previous chats". Omitted means false. */
+  /** ADR-087 — "use relevant previous chats". Omitted means false. */
   useCrossThreadContext?: boolean;
 }
 

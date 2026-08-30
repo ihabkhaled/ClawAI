@@ -69,7 +69,7 @@ export class ContextAssemblyManager {
     // below by ContextComposerManager against a real token budget. The line
     // that used to sit here — `threadMessages.slice(-THREAD_CONTEXT_LIMIT)` —
     // was the first of three independent caps that between them reduced a
-    // hundred-message thread to as little as one message. ADR-084.
+    // hundred-message thread to as little as one message. ADR-086.
     const lastUserContent = this.lastUserContentOf(threadMessages);
     const skipExpensiveContext = this.shouldSkipExpensiveContext(lastUserContent, fileIds ?? []);
     const fetched = await this.fetchAssembledInputs({
@@ -110,7 +110,7 @@ export class ContextAssemblyManager {
     // Cross-thread material is retrieved AFTER the budget is known, and spends
     // from it rather than being added on top. It is bounded to a small share:
     // the live conversation is what the user is in, and another thread earns
-    // room only by being clearly relevant. ADR-085.
+    // room only by being clearly relevant. ADR-087.
     const crossThread = await this.crossThread.retrieve({
       userId,
       currentThreadId: threadMessages.at(-1)?.threadId ?? '',

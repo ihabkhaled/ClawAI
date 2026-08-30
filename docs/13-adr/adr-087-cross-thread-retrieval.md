@@ -1,4 +1,4 @@
-# ADR-085: Cross-thread retrieval, and why it is off by default
+# ADR-087: Cross-thread retrieval, and why it is off by default
 
 **Status**: Accepted
 **Date**: 2026-08-30
@@ -7,7 +7,7 @@
 
 ## Context
 
-[ADR-084](adr-084-conversational-context-composer.md) fixed what a thread knows
+[ADR-086](adr-086-conversational-context-composer.md) fixed what a thread knows
 about itself. It deliberately did not address the other half of the complaint:
 starting a new conversation about a project discussed last week and finding that
 ClawAI has never heard of it.
@@ -167,6 +167,6 @@ summarisation lands it becomes a better input to both stages.
 
 ## References
 
-- [ADR-084](adr-084-conversational-context-composer.md) — the composer this budgets against
+- [ADR-086](adr-086-conversational-context-composer.md) — the composer this budgets against
 - [`docs/03-architecture/conversational-context.md`](../03-architecture/conversational-context.md)
 - `scripts/qa-lab/cross-thread-experiment.mjs` — the verification above

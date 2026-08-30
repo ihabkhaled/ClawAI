@@ -32,7 +32,7 @@ export const FILE_GENERATION_PROVIDER = 'FILE_GENERATION';
  * This was the whole conversational memory of the product: `assemble` sliced
  * the thread to the last twenty messages and everything downstream cut further.
  * Conversational history is now selected by ContextComposerManager against a
- * real token budget — see ADR-084. Do not reintroduce a message-count rule.
+ * real token budget — see ADR-086. Do not reintroduce a message-count rule.
  */
 export const THREAD_CONTEXT_LIMIT = 20;
 
