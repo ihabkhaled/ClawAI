@@ -3387,6 +3387,8 @@ export type TranslationDictionary = {
     fieldContextWindow: string;
     fieldWindowSource: string;
     fieldReferenceSignals: string;
+    fieldAssemblyTiming: string;
+    fieldPriorChats: string;
     signalNone: string;
   };
   routingPlayground: {

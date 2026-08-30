@@ -3536,6 +3536,8 @@ export const pt: TranslationDictionary = {
     fieldContextWindow: 'Janela de contexto',
     fieldWindowSource: 'Origem da janela',
     fieldReferenceSignals: 'Sinais de referência',
+    fieldAssemblyTiming: 'Montagem (obtenção + seleção)',
+    fieldPriorChats: 'Conversas anteriores utilizadas',
     signalNone: 'nenhum',
   },
   routingPlayground: {

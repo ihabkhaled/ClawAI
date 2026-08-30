@@ -3395,6 +3395,8 @@ export const zh: TranslationDictionary = {
     fieldContextWindow: '上下文窗口',
     fieldWindowSource: '窗口来源',
     fieldReferenceSignals: '指代信号',
+    fieldAssemblyTiming: '组装（获取 + 选择）',
+    fieldPriorChats: '已使用的历史对话',
     signalNone: '无',
   },
   routingPlayground: {

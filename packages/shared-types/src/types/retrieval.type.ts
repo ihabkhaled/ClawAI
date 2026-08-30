@@ -62,6 +62,10 @@ export type RetrievalConversationSummary = {
   priorThreadsUsed: string[];
   priorMessageIds: string[];
   crossThreadSkipReason: string | null;
+  /** Network cost of fetching every context source, concurrently. */
+  retrievalMs: number;
+  /** In-memory cost of grouping, scoring and fitting the conversation. */
+  selectionMs: number;
 };
 
 export type RetrievalBundle = {

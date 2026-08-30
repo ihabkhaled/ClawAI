@@ -3563,6 +3563,8 @@ export const de: TranslationDictionary = {
     fieldContextWindow: 'Kontextfenster',
     fieldWindowSource: 'Quelle des Fensters',
     fieldReferenceSignals: 'Bezugssignale',
+    fieldAssemblyTiming: 'Zusammenstellung (Abruf + Auswahl)',
+    fieldPriorChats: 'Verwendete frühere Chats',
     signalNone: 'keine',
   },
   routingPlayground: {

@@ -3489,6 +3489,8 @@ export const en: TranslationDictionary = {
     fieldContextWindow: 'Context window',
     fieldWindowSource: 'Window source',
     fieldReferenceSignals: 'Reference signals',
+    fieldAssemblyTiming: 'Assembly (fetch + select)',
+    fieldPriorChats: 'Previous chats used',
     signalNone: 'none',
   },
   routingPlayground: {

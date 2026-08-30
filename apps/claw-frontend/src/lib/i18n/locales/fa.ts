@@ -3512,6 +3512,8 @@ export const fa: TranslationDictionary = {
     fieldContextWindow: 'پنجرهٔ زمینه',
     fieldWindowSource: 'منبع پنجره',
     fieldReferenceSignals: 'نشانه‌های ارجاع',
+    fieldAssemblyTiming: 'مونتاژ (واکشی + انتخاب)',
+    fieldPriorChats: 'گفت‌وگوهای پیشین استفاده‌شده',
     signalNone: 'هیچ',
   },
   routingPlayground: {

@@ -186,6 +186,25 @@ describe('ContextComposerManager', () => {
       expect(manifest.warnings.join(' ')).toContain('TURNS_OMITTED');
     });
 
+    it('records what assembly cost, split by where the time went', () => {
+      const messages = [...transcript(10), message('probe', 'USER', 'Done?')];
+
+      const { manifest } = composer.select(messages, budget(128_000), { retrievalMs: 42 });
+
+      // Retrieval is passed in by the assembler; selection is measured here.
+      // Keeping them apart is what makes "context assembly got slower"
+      // distinguishable from "memory-service got slower".
+      expect(manifest.retrievalMs).toBe(42);
+      expect(manifest.selectionMs).toBeGreaterThanOrEqual(0);
+    });
+
+    it('reports zero retrieval time when the caller measured none', () => {
+      const { manifest } = composer.select([], budget(128_000));
+
+      expect(manifest.retrievalMs).toBe(0);
+      expect(manifest.selectionMs).toBeGreaterThanOrEqual(0);
+    });
+
     it('reports what it included against what the thread holds', () => {
       const messages = [...transcript(10), message('probe', 'USER', 'Done?')];
 

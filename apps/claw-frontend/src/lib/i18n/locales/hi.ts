@@ -3514,6 +3514,8 @@ export const hi: TranslationDictionary = {
     fieldContextWindow: 'संदर्भ विंडो',
     fieldWindowSource: 'विंडो स्रोत',
     fieldReferenceSignals: 'संदर्भ संकेत',
+    fieldAssemblyTiming: 'संयोजन (लाना + चयन)',
+    fieldPriorChats: 'उपयोग की गई पिछली बातचीत',
     signalNone: 'कोई नहीं',
   },
   routingPlayground: {

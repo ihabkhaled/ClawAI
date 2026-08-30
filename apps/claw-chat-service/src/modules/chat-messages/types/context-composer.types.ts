@@ -70,6 +70,19 @@ export type ConversationContextManifest = {
   budget: ModelTokenBudget;
   referenceSignal: ReferenceSignal;
   warnings: string[];
+  /**
+   * Wall-clock cost of choosing the context, split so a slow turn can be
+   * attributed without a profiler.
+   *
+   * `retrievalMs` is network — memories, packs, files, workspace, cross-thread,
+   * all fetched concurrently. `selectionMs` is the composer's own in-memory
+   * work: grouping into turns, scoring, and fitting to budget. The second is
+   * the one that grows with thread length, and the whole reason to measure them
+   * apart is that "context assembly got slower" is otherwise indistinguishable
+   * from "memory-service got slower".
+   */
+  retrievalMs: number;
+  selectionMs: number;
 };
 
 export type SelectedConversation = {

@@ -55,7 +55,7 @@ export function receiptFromAssembledContext(
     ],
     tokenBudget: context.tokenBudget,
     tokenBudgetUsed,
-    retrievalLatencyMs: 0,
+    retrievalLatencyMs: context.conversationManifest?.retrievalMs ?? 0,
     warnings: context.conversationManifest?.warnings ?? [],
     conversation: conversationSummary(context),
   };
@@ -98,5 +98,7 @@ function conversationSummary(context: AssembledContext): RetrievalConversationSu
       (selection) => selection.messageId,
     ),
     crossThreadSkipReason: context.crossThread?.skippedReason ?? null,
+    retrievalMs: manifest.retrievalMs,
+    selectionMs: manifest.selectionMs,
   };
 }

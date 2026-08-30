@@ -72,6 +72,26 @@ the second run for a correct reason: the first run's own thread now contains it,
 and retrieval finds it. The experiment was polluting itself and reporting the
 pollution as a bug.
 
+## Measuring performance
+
+```bash
+node performance-experiment.mjs
+```
+
+Grows one thread to 220 messages and reads the SERVER's own `retrievalMs` and
+`selectionMs` out of the context receipt at checkpoints.
+
+**Do not measure this with end-to-end turn latency.** It is dominated by model
+inference, and in a polling harness by the poll interval — an earlier attempt
+produced a flat 5.8 s p50 across every thread length, which was the poller's
+cadence and not the server. If a latency number is suspiciously constant,
+suspect the instrument.
+
+`selectionMs` is the composer's own work and should stay near zero. A
+`retrievalMs` that is both large and constant is a fixed-cost dependency, not
+load — the first run of this experiment found ~3.85 s of it, which was a dead
+embedding backend being retried on every turn.
+
 ## The authorization suite — run it before any release
 
 ```bash

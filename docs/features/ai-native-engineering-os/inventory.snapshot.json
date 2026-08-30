@@ -7524,7 +7524,7 @@
           "file": "skills/add-workspace-connector.md"
         },
         {
-          "bytes": 7336,
+          "bytes": 8150,
           "file": "skills/audit-conversational-context.md"
         },
         {
@@ -7706,7 +7706,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5013
+        "value": 5015
       },
       "localeCount": 13,
       "locales": [
@@ -9500,7 +9500,7 @@
       },
       "claw-memory-service": {
         "runner": "jest",
-        "testFiles": 13
+        "testFiles": 14
       },
       "claw-ollama-service": {
         "runner": "jest",
@@ -10244,7 +10244,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1116,
+    "totalTestFiles": 1117,
     "workspaceCount": 25
   }
 }

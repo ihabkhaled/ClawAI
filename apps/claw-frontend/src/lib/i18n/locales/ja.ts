@@ -3524,6 +3524,8 @@ export const ja: TranslationDictionary = {
     fieldContextWindow: 'コンテキストウィンドウ',
     fieldWindowSource: 'ウィンドウの出典',
     fieldReferenceSignals: '参照シグナル',
+    fieldAssemblyTiming: '組み立て（取得＋選択）',
+    fieldPriorChats: '使用した過去のチャット',
     signalNone: 'なし',
   },
   routingPlayground: {

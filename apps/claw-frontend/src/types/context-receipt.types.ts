@@ -50,6 +50,15 @@ export type RetrievalConversationSummary = {
   availableInputTokens: number;
   contextWindowSource: string;
   referenceSignals: string[];
+  /** Cross-thread retrieval (ADR-087). Empty and `DISABLED` unless opted in. */
+  priorThreadsSearched: string[];
+  priorThreadsUsed: string[];
+  priorMessageIds: string[];
+  crossThreadSkipReason: string | null;
+  /** Network cost of fetching every context source, concurrently. */
+  retrievalMs: number;
+  /** In-memory cost of grouping, scoring and fitting the conversation. */
+  selectionMs: number;
 };
 
 export type RetrievalBundle = {

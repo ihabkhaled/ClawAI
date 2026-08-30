@@ -54,6 +54,17 @@ export function ContextInspectorConversationSection({
         <li>
           {t('threadContextInspector.fieldWindowSource')}: {conversation.contextWindowSource}
         </li>
+        <li>
+          {t('threadContextInspector.fieldAssemblyTiming')}: {String(conversation.retrievalMs)}
+          {' + '}
+          {String(conversation.selectionMs)} ms
+        </li>
+        <li>
+          {t('threadContextInspector.fieldPriorChats')}:{' '}
+          {conversation.priorThreadsUsed.length > 0
+            ? `${String(conversation.priorThreadsUsed.length)} / ${String(conversation.priorThreadsSearched.length)}`
+            : (conversation.crossThreadSkipReason ?? t('threadContextInspector.signalNone'))}
+        </li>
         <li className="col-span-2">
           {t('threadContextInspector.fieldReferenceSignals')}:{' '}
           {conversation.referenceSignals.length > 0

@@ -40,8 +40,9 @@ export class ContextComposerManager {
   select(
     messages: readonly ChatMessage[],
     budget: ModelTokenBudget,
-    options: { currentIntent?: string } = {},
+    options: { currentIntent?: string; retrievalMs?: number } = {},
   ): SelectedConversation {
+    const startedAt = Date.now();
     const turns = groupIntoTurns(messages);
     const intent = options.currentIntent ?? this.lastUserContent(messages);
     const referenceSignal = detectReferenceSignal(intent);
@@ -50,7 +51,11 @@ export class ContextComposerManager {
     if (turns.length === 0) {
       return {
         included: [],
-        manifest: this.emptyManifest(messages.length, budget, referenceSignal, warnings),
+        manifest: {
+          ...this.emptyManifest(messages.length, budget, referenceSignal, warnings),
+          retrievalMs: options.retrievalMs ?? 0,
+          selectionMs: Date.now() - startedAt,
+        },
       };
     }
 
@@ -79,6 +84,8 @@ export class ContextComposerManager {
         budget,
         referenceSignal,
         warnings,
+        retrievalMs: options.retrievalMs ?? 0,
+        selectionMs: Date.now() - startedAt,
       },
     };
   }
@@ -209,6 +216,8 @@ export class ContextComposerManager {
     warnings: string[],
   ): ConversationContextManifest {
     return {
+      retrievalMs: 0,
+      selectionMs: 0,
       totalThreadMessages,
       includedMessageIds: [],
       includedTurnCount: 0,

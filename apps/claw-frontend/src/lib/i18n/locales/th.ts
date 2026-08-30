@@ -3479,6 +3479,8 @@ export const th: TranslationDictionary = {
     fieldContextWindow: 'หน้าต่างบริบท',
     fieldWindowSource: 'แหล่งที่มาของหน้าต่าง',
     fieldReferenceSignals: 'สัญญาณการอ้างถึง',
+    fieldAssemblyTiming: 'การประกอบ (ดึง + คัดเลือก)',
+    fieldPriorChats: 'บทสนทนาก่อนหน้าที่ใช้',
     signalNone: 'ไม่มี',
   },
   routingPlayground: {

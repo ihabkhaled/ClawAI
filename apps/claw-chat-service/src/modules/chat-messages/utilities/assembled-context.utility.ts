@@ -42,6 +42,8 @@ export function emptyConversationManifest(
     budget,
     referenceSignal: { referential: false, strength: 0, signals: [] },
     warnings: [],
+    retrievalMs: 0,
+    selectionMs: 0,
   };
 }
 

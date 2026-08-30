@@ -76,6 +76,7 @@ export class ContextAssemblyManager {
     // was the first of three independent caps that between them reduced a
     // hundred-message thread to as little as one message. ADR-086.
     const lastUserContent = this.lastUserContentOf(threadMessages);
+    const retrievalStartedAt = Date.now();
     const skipExpensiveContext = this.shouldSkipExpensiveContext(lastUserContent, fileIds ?? []);
     const fetched = await this.fetchAssembledInputs({
       userId,
@@ -95,6 +96,7 @@ export class ContextAssemblyManager {
       routingMode,
       userId,
     );
+    const retrievalMs = Date.now() - retrievalStartedAt;
     const researchEvidence = this.extractEvidenceCitations(fetched.researchRun);
     const researchWarnings = this.extractResearchWarnings(fetched.researchRun);
 
@@ -138,6 +140,7 @@ export class ContextAssemblyManager {
 
     const selected = this.composer.select(threadMessages, conversationBudget, {
       currentIntent: lastUserContent,
+      retrievalMs,
     });
 
     return {

@@ -209,6 +209,41 @@ parameter, so anything that could reach the container could read any user's
 memories. Network isolation is a config line away from being false; the guard is
 not.
 
+## Performance
+
+Every generation records two numbers in its manifest, and they are separate on
+purpose:
+
+| Field         | What it measures                                                                   | Behaviour                                         |
+| ------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `retrievalMs` | Network. Memories, packs, files, workspace and cross-thread, fetched concurrently. | Flat in thread length; set by the slowest source. |
+| `selectionMs` | The composer's own work: grouping into turns, scoring, fitting to budget.          | The one that could grow with thread length.       |
+
+Keeping them apart is what makes "context assembly got slower" distinguishable
+from "memory-service got slower". Measured on a running stack at 9, 29, 59 and
+99 messages, `selectionMs` was **0 ms at every length** while the composer sent
+every message in the thread — selection is not the cost.
+
+End-to-end turn latency cannot answer this question. It is dominated by model
+inference, and in a polling harness it is dominated by the poll interval: an
+earlier attempt produced a suspiciously flat 5.8 s p50 across every thread
+length, which was the poller's cadence, not the server's behaviour. Read the
+manifest, not the stopwatch.
+
+### The embedding circuit
+
+`retrievalMs` was ~3.85 s on every turn on a stack with no embedding model
+installed: memory-service embeds the query before searching, the call failed
+after ~4 s, retrieval swallowed the failure and returned results anyway — and
+paid the four seconds again on the very next turn.
+
+The failure was always there. Migrating chat to the canonical retrieval route
+(F-05) is what put it in front of every message. `embedding-circuit.utility.ts`
+opens after three consecutive failures, stays open for 30 s, and closes on the
+next success, so a dead embedding backend costs one timeout per half-minute
+instead of one per turn — and an operator who installs the model gets semantic
+search back without restarting anything.
+
 ## Security boundary
 
 Every surface these two ADRs added widened what one request can read: a manifest

@@ -3539,6 +3539,8 @@ export const ru: TranslationDictionary = {
     fieldContextWindow: 'Окно контекста',
     fieldWindowSource: 'Источник окна',
     fieldReferenceSignals: 'Сигналы отсылки',
+    fieldAssemblyTiming: 'Сборка (загрузка + отбор)',
+    fieldPriorChats: 'Использованные прошлые чаты',
     signalNone: 'нет',
   },
   routingPlayground: {

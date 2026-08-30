@@ -3467,6 +3467,8 @@ export const ar: TranslationDictionary = {
     fieldContextWindow: 'نافذة السياق',
     fieldWindowSource: 'مصدر النافذة',
     fieldReferenceSignals: 'إشارات الإحالة',
+    fieldAssemblyTiming: 'التجميع (الجلب + الاختيار)',
+    fieldPriorChats: 'المحادثات السابقة المستخدمة',
     signalNone: 'لا شيء',
   },
   routingPlayground: {
