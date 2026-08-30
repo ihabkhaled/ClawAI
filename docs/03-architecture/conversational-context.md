@@ -189,6 +189,22 @@ match a prompt about "relational databases". Precision over recall is the
 deliberate trade: a miss asks the user to be specific, a false positive imports
 the wrong conversation.
 
+## Security boundary
+
+Every surface these two ADRs added widened what one request can read: a manifest
+naming message ids, a receipt naming prior threads, and a retrieval path that
+deliberately reads OTHER conversations. Each is a place a missing owner filter
+would leak a different customer's chat.
+
+`scripts/qa-lab/authorization-experiment.mjs` probes all of them with a second
+real account. Thirteen probes, zero tolerance, and the decisive one is the last:
+the attacker enables cross-thread retrieval on their OWN thread and asks for the
+victim's secret by name. Retrieval must return nothing, which it does because
+both repository reads filter on `userId` and stage 2 re-proves ownership rather
+than trusting stage 1.
+
+Run it before any release that touches context assembly.
+
 ## What this does NOT do
 
 Stated plainly so nobody plans against a capability that is absent.

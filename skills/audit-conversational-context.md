@@ -72,6 +72,29 @@ the second run for a correct reason: the first run's own thread now contains it,
 and retrieval finds it. The experiment was polluting itself and reporting the
 pollution as a bug.
 
+## The authorization suite — run it before any release
+
+```bash
+node authorization-experiment.mjs
+```
+
+Creates a second ordinary USER through the admin route (self-registration gates
+login behind email verification), then tries thirteen ways to reach the first
+user's conversation: read the thread, its messages, one message, the context
+receipt, preview its context, post into it, flip its cross-thread toggle, delete
+it, branch it, search inside it, read the receipt unauthenticated, call the
+internal routing route with a user token, and — the one that matters most —
+enable cross-thread retrieval on the attacker's own thread and ask for the
+victim's secret by name.
+
+**Zero tolerance. One pass is a release blocker.** Last run: 13/13 denied, no
+secret in any response body, `priorThreadsUsed` empty on the cross-user probe.
+
+A `400` is scored as a FAILURE, not a denial. A malformed probe returns 400 and
+would otherwise be recorded as "denied" for a request the server never
+evaluated — which is exactly how a security suite comes to report safety it
+never measured. If you see 400, fix the probe.
+
 ## Breadth and depth
 
 ```bash
