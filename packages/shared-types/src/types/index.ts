@@ -5,6 +5,7 @@ export type { PaginationParams, PaginatedResult } from './pagination.type';
 export type { HttpRequestOptions, HttpResponse } from './http-client.type';
 export type {
   RetrievalBundle,
+  RetrievalConversationSummary,
   RetrievalMemoryItem,
   RetrievalPackItem,
   RetrievalRequest,

@@ -3543,6 +3543,17 @@ export const es: TranslationDictionary = {
     fieldPackItems: 'Elementos del pack',
     fieldTokensUsed: 'Tokens usados',
     fieldAssemblyOrder: 'Orden de ensamblaje',
+    conversationHeading: 'Conversación enviada al modelo',
+    conversationUnavailable:
+      'Sin registro de conversación: este mensaje es anterior a los manifiestos de contexto.',
+    fieldMessagesSent: 'Mensajes enviados',
+    fieldTurnsSent: 'Turnos enviados',
+    fieldMessagesOmitted: 'Mensajes omitidos',
+    fieldInputTokens: 'Tokens de entrada',
+    fieldContextWindow: 'Ventana de contexto',
+    fieldWindowSource: 'Origen de la ventana',
+    fieldReferenceSignals: 'Señales de referencia',
+    signalNone: 'ninguna',
   },
   routingPlayground: {
     title: 'Banco de pruebas de enrutamiento',

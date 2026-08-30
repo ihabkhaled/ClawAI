@@ -20,7 +20,15 @@ export class ContextReceiptService {
     userId: string,
     bundle: RetrievalBundle,
   ): Promise<void> {
+    // A receipt carrying a conversation summary is never empty, even with no
+    // memories and no pack items: the conversation summary IS the answer to
+    // "what was the model given". Skipping on the old three-way emptiness test
+    // meant every ordinary chat turn — the overwhelming majority, which use no
+    // memories and no packs — wrote no receipt at all, so the one surface that
+    // could have shown a hundred-message thread being sent as one message
+    // never existed for the threads that needed it. ADR-084.
     if (
+      bundle.conversation === undefined &&
       bundle.memories.length === 0 &&
       bundle.packItems.length === 0 &&
       bundle.warnings.length === 0
@@ -29,7 +37,10 @@ export class ContextReceiptService {
       return;
     }
     this.logger.debug(
-      `write: messageId=${messageId} memories=${String(bundle.memories.length)} packItems=${String(bundle.packItems.length)}`,
+      `write: messageId=${messageId} memories=${String(bundle.memories.length)} ` +
+        `packItems=${String(bundle.packItems.length)} ` +
+        `messages=${String(bundle.conversation?.includedMessageIds.length ?? 0)}/` +
+        `${String(bundle.conversation?.totalThreadMessages ?? 0)}`,
     );
     try {
       await this.repo.upsert({ messageId, threadId, userId, bundle });

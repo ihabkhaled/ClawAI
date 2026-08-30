@@ -8,6 +8,10 @@ import type { LocalModelSelectionService } from '../services/local-model-selecti
 import type { AssembledContext } from '../types/context.types';
 import type { LlmResponse, MessageRoutedData, ThreadSettings } from '../types/execution.types';
 import type { JudgeRefereeConfig } from '../types/judge-referee.types';
+import {
+  emptyConversationManifest,
+  fallbackModelTokenBudget,
+} from '../utilities/assembled-context.utility';
 
 function makeContext(): AssembledContext {
   return {
@@ -24,6 +28,8 @@ function makeContext(): AssembledContext {
     researchRunId: null,
     researchWarnings: [],
     tokenBudget: 4000,
+    modelBudget: fallbackModelTokenBudget(),
+    conversationManifest: emptyConversationManifest(),
   };
 }
 

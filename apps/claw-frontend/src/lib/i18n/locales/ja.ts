@@ -3511,6 +3511,17 @@ export const ja: TranslationDictionary = {
     fieldPackItems: 'パックアイテム',
     fieldTokensUsed: '使用されたトークン',
     fieldAssemblyOrder: '組立順序',
+    conversationHeading: 'モデルに送信された会話',
+    conversationUnavailable:
+      '会話の記録がありません — このメッセージはコンテキストマニフェスト導入前のものです。',
+    fieldMessagesSent: '送信メッセージ数',
+    fieldTurnsSent: '送信ターン数',
+    fieldMessagesOmitted: '除外メッセージ数',
+    fieldInputTokens: '入力トークン',
+    fieldContextWindow: 'コンテキストウィンドウ',
+    fieldWindowSource: 'ウィンドウの出典',
+    fieldReferenceSignals: '参照シグナル',
+    signalNone: 'なし',
   },
   routingPlayground: {
     title: 'ルーティング プレイグラウンド',

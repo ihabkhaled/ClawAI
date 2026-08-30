@@ -3554,6 +3554,17 @@ export const fr: TranslationDictionary = {
     fieldPackItems: 'Éléments du pack',
     fieldTokensUsed: 'Tokens utilisés',
     fieldAssemblyOrder: "Ordre d'assemblage",
+    conversationHeading: 'Conversation envoyée au modèle',
+    conversationUnavailable:
+      'Aucun relevé de conversation — ce message est antérieur aux manifestes de contexte.',
+    fieldMessagesSent: 'Messages envoyés',
+    fieldTurnsSent: 'Tours envoyés',
+    fieldMessagesOmitted: 'Messages omis',
+    fieldInputTokens: "Jetons d'entrée",
+    fieldContextWindow: 'Fenêtre de contexte',
+    fieldWindowSource: 'Source de la fenêtre',
+    fieldReferenceSignals: 'Signaux de référence',
+    signalNone: 'aucun',
   },
   routingPlayground: {
     title: 'Bac à sable de routage',

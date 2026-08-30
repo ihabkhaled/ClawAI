@@ -149,6 +149,7 @@ export type {
 } from './routing-decision-detail.types';
 export type {
   DecisionDetailDrawerProps,
+  ContextInspectorConversationSectionProps,
   ThreadContextInspectorProps,
   WhyThisModelPanelProps,
 } from './why-this-model-component.types';
@@ -245,6 +246,7 @@ export type {
 export type {
   ContextReceipt,
   RetrievalBundle,
+  RetrievalConversationSummary,
   RetrievalMemoryEntry,
   RetrievalPackEntry,
   RetrievalReasonValue,

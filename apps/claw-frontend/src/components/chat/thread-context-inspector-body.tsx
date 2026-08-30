@@ -2,6 +2,7 @@
 
 import { Bug } from 'lucide-react';
 
+import { ContextInspectorConversationSection } from '@/components/chat/context-inspector-conversation-section';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -53,6 +54,7 @@ export function ThreadContextInspectorBody({
             ) : null}
             {!isLoading && !isError && receipt !== null ? (
               <div className="space-y-2">
+                <ContextInspectorConversationSection conversation={receipt.conversation} />
                 <ul className="grid grid-cols-2 gap-2 text-xs">
                   <li>
                     {t('threadContextInspector.fieldMemories')}: {String(receipt.memories.length)}

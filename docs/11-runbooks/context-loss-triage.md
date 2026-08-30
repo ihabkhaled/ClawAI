@@ -1,0 +1,98 @@
+# Runbook: "the AI forgot something we discussed"
+
+The single most common context complaint, and the one that used to be
+unanswerable. Work the steps in order; each rules out one layer.
+
+## 0. Get the message id
+
+Ask for the assistant message that got it wrong, not the one that stated the
+fact. You need what the model was given at the moment it answered.
+
+## 1. Read the receipt — this is the whole runbook in one call
+
+```bash
+curl -s "https://<host>/api/v1/chat-messages/<messageId>/context-receipt" \
+  -H "Authorization: Bearer <user token>" | jq .conversation
+```
+
+Users can reach the same data from the `[debug]` badge under the message.
+
+| What you see                                                         | What it means                                                                          | Do this                                                                 |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `conversation` is **absent**                                         | Message predates ADR-084, or was produced by a lane that does not yet build a manifest | Reproduce on a new message before investigating further                 |
+| `includedMessageIds` contains the message that stated the fact       | **The model was told and did not use it.** Not a context bug                           | Model-quality issue. Try another model; check whether the model refused |
+| That message is in `omittedMessageIds` with `TOKEN_BUDGET_EXHAUSTED` | Genuine budget pressure                                                                | Go to step 2                                                            |
+| That message is in `omittedMessageIds` with `LOW_RELEVANCE`          | It was older than the recent window and did not rank                                   | Go to step 3                                                            |
+| Neither included **nor** omitted                                     | It was never loaded from the database                                                  | Go to step 4                                                            |
+
+## 2. `TOKEN_BUDGET_EXHAUSTED` — check the budget's provenance
+
+```bash
+… | jq '.conversation | {contextWindowTokens, contextWindowSource, availableInputTokens, estimatedInputTokens, reservedOutputTokens}'
+```
+
+- **`contextWindowSource: "CONSERVATIVE_FALLBACK"`** — routing-service could not
+  tell chat-service the window, so it budgeted 8192 tokens for a model that may
+  hold 256k. This is the most likely cause of a surprising truncation. Check:
+  - chat-service logs for `findContextWindowTokens: … failed` or
+    `no catalog row for <provider>/<model>`
+  - the catalog row: `GET /api/v1/routing/models?search=<model>` — is
+    `contextWindowTokens` null? If so the model is executable but unenriched.
+    Re-run catalog enrichment; the client caches for 15 minutes.
+- **`contextWindowSource: "PROVIDER_DEFAULT"`** — same cause, milder (32,768).
+- **`availableInputTokens` much smaller than `contextWindowTokens`** — something
+  is eating overhead. A large attached file is the usual culprit; compare
+  `systemOverheadTokens` against the reply.
+- **`estimatedInputTokens` at `MAX_HISTORY_INPUT_TOKENS` (96,000)** — the thread
+  is genuinely enormous. This is the designed ceiling, not a fault.
+
+## 3. `LOW_RELEVANCE` — expected, and bounded
+
+The message was outside the last 12 turns and did not rank into P2. This is only
+a bug if the budget had room: check `estimatedInputTokens` against
+`availableInputTokens`. If there was room and it was still omitted, the fit loop
+has a defect — file it with the receipt attached.
+
+If there was genuinely no room, the honest answer is that the thread has
+outgrown the raw window, and hierarchical summarisation (not yet built, see
+[the architecture doc](../03-architecture/conversational-context.md)) is the fix.
+
+## 4. Never loaded — the fetch cap
+
+`THREAD_HISTORY_FETCH_LIMIT` is 400 rows. A message older than that in a very
+long thread cannot be recovered by any budget: it never left the database.
+
+Confirm with the thread's total message count. If the thread is under 400
+messages and the row still was not loaded, check whether the message was created
+**after** the routed user message — `resolveRoutedMessageWindow` deliberately
+cuts everything newer than the turn being answered.
+
+## 5. Ruling out the memory path
+
+A memory is not conversation. If the missing item was a saved memory rather than
+a message, read `.memories` on the same receipt, and note the known gap: chat
+generation uses the legacy `GET /internal/memories/for-context`, while the
+context **preview** uses the canonical `POST /internal/memories/retrieve`. The
+preview can therefore disagree with what the generation actually used. Trust the
+receipt, not the preview.
+
+## 6. Reproducing deliberately
+
+```bash
+cd scripts/qa-lab
+node paraphrase-experiment.mjs
+```
+
+Plants one fact, asks for it four ways at a fixed distance, and prints the
+static prediction beside the measured result. If recall varies by phrasing, a
+relevance gate has been reintroduced somewhere — that is exactly the defect
+ADR-084 removed.
+
+Only PAYG-exempt models can run: `client.mjs` refuses metered providers in code.
+
+## Escalation
+
+Attach: the message id, the full `conversation` block, the thread's message
+count, the provider/model, and the chat-service log lines for
+`ContextComposerManager select:` around that generation. The composer logs
+included/total messages, turns, tokens, window and its source on every call.

@@ -252,7 +252,7 @@
   ],
   "skills": [
     {
-      "bytes": 19868,
+      "bytes": 20103,
       "file": "skills/00-index.md"
     },
     {
@@ -338,6 +338,10 @@
     {
       "bytes": 4776,
       "file": "skills/add-workspace-connector.md"
+    },
+    {
+      "bytes": 4881,
+      "file": "skills/audit-conversational-context.md"
     },
     {
       "bytes": 5494,

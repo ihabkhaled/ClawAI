@@ -3376,6 +3376,16 @@ export type TranslationDictionary = {
     fieldPackItems: string;
     fieldTokensUsed: string;
     fieldAssemblyOrder: string;
+    conversationHeading: string;
+    conversationUnavailable: string;
+    fieldMessagesSent: string;
+    fieldTurnsSent: string;
+    fieldMessagesOmitted: string;
+    fieldInputTokens: string;
+    fieldContextWindow: string;
+    fieldWindowSource: string;
+    fieldReferenceSignals: string;
+    signalNone: string;
   };
   routingPlayground: {
     title: string;

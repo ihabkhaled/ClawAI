@@ -1,0 +1,4 @@
+# Per-run output. Regenerate with run-lab.mjs; durable evidence is promoted into
+# a test fixture (see context-composer.live-replay.spec.ts) and into the ADR.
+results/
+fixtures/

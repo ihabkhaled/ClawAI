@@ -4,6 +4,10 @@ import { ChatStreamService } from '../../services/chat-stream.service';
 import { LocalModelSelectionService } from '../../services/local-model-selection.service';
 import type { AssembledContext, FileContentResponse } from '../../types/context.types';
 import type { LlmResponse, MessageRoutedData } from '../../types/execution.types';
+import {
+  emptyConversationManifest,
+  fallbackModelTokenBudget,
+} from '../../utilities/assembled-context.utility';
 
 const buildResponse = (overrides: Partial<LlmResponse> = {}): LlmResponse => ({
   content: 'According to the doc, cats sleep 16h a day.',
@@ -35,6 +39,8 @@ const buildContext = (files: FileContentResponse[] = []): AssembledContext => ({
   researchRunId: null,
   researchWarnings: [],
   tokenBudget: 4096,
+  modelBudget: fallbackModelTokenBudget(),
+  conversationManifest: emptyConversationManifest(),
   threadMessages: [
     { role: 'USER', content: 'How long do cats sleep?' } as AssembledContext['threadMessages'][0],
   ],

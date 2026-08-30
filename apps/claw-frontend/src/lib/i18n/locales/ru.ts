@@ -3526,6 +3526,17 @@ export const ru: TranslationDictionary = {
     fieldPackItems: 'Элементы пакета',
     fieldTokensUsed: 'Использованные токены',
     fieldAssemblyOrder: 'Порядок сборки',
+    conversationHeading: 'Диалог, отправленный модели',
+    conversationUnavailable:
+      'Нет записи диалога — это сообщение создано до появления манифестов контекста.',
+    fieldMessagesSent: 'Отправлено сообщений',
+    fieldTurnsSent: 'Отправлено реплик',
+    fieldMessagesOmitted: 'Пропущено сообщений',
+    fieldInputTokens: 'Входные токены',
+    fieldContextWindow: 'Окно контекста',
+    fieldWindowSource: 'Источник окна',
+    fieldReferenceSignals: 'Сигналы отсылки',
+    signalNone: 'нет',
   },
   routingPlayground: {
     title: 'Песочница маршрутизации',

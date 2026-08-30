@@ -1,5 +1,6 @@
 import { type ChatMessage } from '../../../generated/prisma';
 import type { ToolTurn } from './tool-turn.types';
+import type { ConversationContextManifest, ModelTokenBudget } from './context-composer.types';
 
 export type FileChunkResponse = {
   id: string;
@@ -51,7 +52,19 @@ export type AssembledContext = {
    * empty both mean "no tool rounds yet".
    */
   toolTurns?: readonly ToolTurn[];
+  /**
+   * DEPRECATED. The old single number that meant both "how long may the answer
+   * be" and "how big may the prompt be". Retained so existing call sites keep
+   * compiling and the receipt keeps its shape; read `modelBudget` instead.
+   */
   tokenBudget: number;
+  /** The four separated quantities. The only correct source of an input budget. */
+  modelBudget: ModelTokenBudget;
+  /**
+   * Which of the thread's messages reached the model this turn, and why the
+   * rest did not. Written to the context receipt.
+   */
+  conversationManifest: ConversationContextManifest;
 };
 
 export type ResearchEvidenceCitation = {

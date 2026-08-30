@@ -1,5 +1,6 @@
 import type { ChatMessage } from '../../../../generated/prisma';
 import { ContextAssemblyManager } from '../context-assembly.manager';
+import { ContextComposerManager } from '../context-composer.manager';
 
 jest.mock('../../../../common/utilities', () => ({
   buildInterServiceAuthHeader: jest.fn(() => 'Service test-service-token'),
@@ -75,7 +76,7 @@ describe('ContextAssemblyManager attachment ownership contract', () => {
   });
 
   it('sends the authenticated chat user when fetching attached file content', async () => {
-    const manager = new ContextAssemblyManager();
+    const manager = new ContextAssemblyManager(new ContextComposerManager());
 
     const context = await manager.assemble('tenant-user-1', [userMessage], undefined, undefined, [
       'file-1',

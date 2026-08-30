@@ -3550,6 +3550,17 @@ export const de: TranslationDictionary = {
     fieldPackItems: 'Pack-Elemente',
     fieldTokensUsed: 'Verwendete Tokens',
     fieldAssemblyOrder: 'Zusammenstellungsreihenfolge',
+    conversationHeading: 'An das Modell gesendete Konversation',
+    conversationUnavailable:
+      'Kein Konversationsprotokoll – diese Nachricht ist älter als die Kontextmanifeste.',
+    fieldMessagesSent: 'Gesendete Nachrichten',
+    fieldTurnsSent: 'Gesendete Gesprächsrunden',
+    fieldMessagesOmitted: 'Ausgelassene Nachrichten',
+    fieldInputTokens: 'Eingabe-Token',
+    fieldContextWindow: 'Kontextfenster',
+    fieldWindowSource: 'Quelle des Fensters',
+    fieldReferenceSignals: 'Bezugssignale',
+    signalNone: 'keine',
   },
   routingPlayground: {
     title: 'Routing-Spielplatz',

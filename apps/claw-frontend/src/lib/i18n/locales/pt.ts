@@ -3523,6 +3523,17 @@ export const pt: TranslationDictionary = {
     fieldPackItems: 'Itens do pacote',
     fieldTokensUsed: 'Tokens usados',
     fieldAssemblyOrder: 'Ordem de montagem',
+    conversationHeading: 'Conversa enviada ao modelo',
+    conversationUnavailable:
+      'Sem registo da conversa — esta mensagem é anterior aos manifestos de contexto.',
+    fieldMessagesSent: 'Mensagens enviadas',
+    fieldTurnsSent: 'Turnos enviados',
+    fieldMessagesOmitted: 'Mensagens omitidas',
+    fieldInputTokens: 'Tokens de entrada',
+    fieldContextWindow: 'Janela de contexto',
+    fieldWindowSource: 'Origem da janela',
+    fieldReferenceSignals: 'Sinais de referência',
+    signalNone: 'nenhum',
   },
   routingPlayground: {
     title: 'Playground de roteamento',

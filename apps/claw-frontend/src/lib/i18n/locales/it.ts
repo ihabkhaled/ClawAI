@@ -3534,6 +3534,17 @@ export const it: TranslationDictionary = {
     fieldPackItems: 'Elementi del pacchetto',
     fieldTokensUsed: 'Token usati',
     fieldAssemblyOrder: 'Ordine di assemblaggio',
+    conversationHeading: 'Conversazione inviata al modello',
+    conversationUnavailable:
+      'Nessun registro della conversazione: questo messaggio precede i manifest di contesto.',
+    fieldMessagesSent: 'Messaggi inviati',
+    fieldTurnsSent: 'Turni inviati',
+    fieldMessagesOmitted: 'Messaggi omessi',
+    fieldInputTokens: 'Token di input',
+    fieldContextWindow: 'Finestra di contesto',
+    fieldWindowSource: 'Origine della finestra',
+    fieldReferenceSignals: 'Segnali di riferimento',
+    signalNone: 'nessuno',
   },
   routingPlayground: {
     title: 'Banco di prova del routing',

@@ -12,7 +12,6 @@ import {
   APPROX_CHARS_PER_TOKEN,
   MEMORY_FETCH_LIMIT,
   PROMPT_TOPICAL_MEMORY_LIMIT,
-  THREAD_CONTEXT_LIMIT,
   TOPICAL_MEMORY_OVERLAP_THRESHOLD,
   WORKSPACE_CONTEXT_LIMIT,
 } from '../../../common/constants';
@@ -38,15 +37,20 @@ import {
   TEXT_FILE_EXTENSIONS,
   TEXT_MIME_PREFIXES,
 } from '../constants/file-content.constants';
-import { RUNTIME_V2_TRANSCRIPT_RETAINED_ENTRIES } from '../constants/runtime-v2-transcript.constants';
 import { filterImagesForLocalOnly } from '../validators/local-only-attachment.validator';
 import { LocalModelSelectionService } from '../services/local-model-selection.service';
+import { ContextComposerManager } from './context-composer.manager';
+import { resolveModelTokenBudget } from '../utilities/model-token-budget.utility';
+import { estimateTokensFromText } from '../utilities/token-estimator.utility';
 
 @Injectable()
 export class ContextAssemblyManager {
   private readonly logger = new Logger(ContextAssemblyManager.name);
 
-  constructor(@Optional() private readonly localModelSelection?: LocalModelSelectionService) {}
+  constructor(
+    private readonly composer: ContextComposerManager,
+    @Optional() private readonly localModelSelection?: LocalModelSelectionService,
+  ) {}
 
   async assemble(
     userId: string,
@@ -58,8 +62,12 @@ export class ContextAssemblyManager {
     routingMode?: RoutingMode,
   ): Promise<AssembledContext> {
     this.logStartAssemble(userId, threadMessages, contextPackIds, fileIds, research);
-    const recentMessages = threadMessages.slice(-THREAD_CONTEXT_LIMIT);
-    const lastUserContent = recentMessages.at(-1)?.content ?? '';
+    // NOTE: no slice. Which of these messages reaches the model is decided
+    // below by ContextComposerManager against a real token budget. The line
+    // that used to sit here — `threadMessages.slice(-THREAD_CONTEXT_LIMIT)` —
+    // was the first of three independent caps that between them reduced a
+    // hundred-message thread to as little as one message. ADR-084.
+    const lastUserContent = this.lastUserContentOf(threadMessages);
     const skipExpensiveContext = this.shouldSkipExpensiveContext(lastUserContent, fileIds ?? []);
     const fetched = await this.fetchAssembledInputs({
       userId,
@@ -68,7 +76,7 @@ export class ContextAssemblyManager {
       contextPackIds,
       fileIds,
       research,
-      lastUserMessage: recentMessages.at(-1),
+      lastUserMessage: threadMessages.at(-1),
     });
     const filteredFileContents = await this.applyLocalOnlyAttachmentGate(
       fetched.fileContents,
@@ -77,11 +85,33 @@ export class ContextAssemblyManager {
     );
     const researchEvidence = this.extractEvidenceCitations(fetched.researchRun);
     const researchWarnings = this.extractResearchWarnings(fetched.researchRun);
-    const tokenBudget = threadSettings?.maxTokens ?? 4096;
+
+    // The prompt's fixed cost, measured before history is fitted, so history
+    // is budgeted against what is actually left rather than against a number
+    // that ignored files, memories and the system prompt entirely.
+    const systemOverheadTokens = this.estimateSystemOverheadTokens({
+      systemPrompt: threadSettings?.systemPrompt ?? null,
+      memories: fetched.memories,
+      contextPackItems: fetched.contextPackItems,
+      fileContents: filteredFileContents,
+      workspaceCitations: fetched.workspaceCitations,
+      researchEvidence,
+    });
+    const modelBudget = resolveModelTokenBudget({
+      contextWindowTokens: threadSettings?.contextWindowTokens ?? null,
+      provider: threadSettings?.provider ?? null,
+      requestedOutputTokens: threadSettings?.maxTokens ?? null,
+      systemOverheadTokens,
+      toolOverheadTokens: 0,
+    });
+    const selected = this.composer.select(threadMessages, modelBudget, {
+      currentIntent: lastUserContent,
+    });
+
     return {
       userId,
       systemPrompt: threadSettings?.systemPrompt ?? null,
-      threadMessages: recentMessages,
+      threadMessages: selected.included,
       memories: fetched.memories,
       contextPackItems: fetched.contextPackItems,
       fileContents: filteredFileContents,
@@ -89,8 +119,53 @@ export class ContextAssemblyManager {
       researchEvidence,
       researchRunId: fetched.researchRun?.id ?? null,
       researchWarnings,
-      tokenBudget,
+      tokenBudget: modelBudget.availableInputTokens,
+      modelBudget,
+      conversationManifest: selected.manifest,
     };
+  }
+
+  private lastUserContentOf(messages: readonly ChatMessage[]): string {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+      if (message !== undefined && message.role === 'USER') {
+        return message.content ?? '';
+      }
+    }
+    return messages.at(-1)?.content ?? '';
+  }
+
+  /**
+   * Everything in the prompt that is not conversation.
+   *
+   * Counted rather than assumed: a 200KB attached file and an empty one used
+   * to leave history exactly the same budget, and the file then pushed the
+   * conversation out at the provider instead of here, where it could be
+   * recorded.
+   */
+  private estimateSystemOverheadTokens(parts: {
+    systemPrompt: string | null;
+    memories: AssembledContext['memories'];
+    contextPackItems: AssembledContext['contextPackItems'];
+    fileContents: AssembledContext['fileContents'];
+    workspaceCitations: AssembledContext['workspaceCitations'];
+    researchEvidence: ResearchEvidenceCitation[];
+  }): number {
+    let tokens = estimateTokensFromText(parts.systemPrompt ?? '');
+    for (const memory of parts.memories) tokens += estimateTokensFromText(memory.content);
+    for (const item of parts.contextPackItems) tokens += estimateTokensFromText(item.content ?? '');
+    for (const file of parts.fileContents) {
+      tokens += estimateTokensFromText(this.decodeFileContent(file));
+    }
+    for (const citation of parts.workspaceCitations) {
+      tokens += estimateTokensFromText(`${citation.title}
+${citation.snippet ?? ''}`);
+    }
+    for (const evidence of parts.researchEvidence) {
+      tokens += estimateTokensFromText(`${evidence.title ?? ''}
+${evidence.snippet}`);
+    }
+    return tokens;
   }
 
   // Slice B local-only image gate. When the caller's routingMode forbids
@@ -273,10 +348,10 @@ export class ContextAssemblyManager {
 
   buildPromptString(context: AssembledContext): string {
     const currentIntent = this.extractCurrentIntent(context.threadMessages);
-    const relevantMessages = this.filterThreadMessagesForIntent(
-      context.threadMessages,
-      currentIntent,
-    );
+    // `context.threadMessages` is already the composer's selection. It used to
+    // be re-filtered here by word overlap against the current question, which
+    // is what removed every assistant turn and left as few as one message.
+    const relevantMessages = context.threadMessages;
     const relevantMemories = this.selectMemoriesForPrompt(context.memories, currentIntent);
     const relevantWorkspaceCitations = this.filterWorkspaceCitationsForIntent(
       context.workspaceCitations,
@@ -360,10 +435,7 @@ export class ContextAssemblyManager {
     includeVideo: boolean,
   ): OpenAiChatMessage[] {
     const currentIntent = this.extractCurrentIntent(context.threadMessages);
-    const relevantMessages = this.filterThreadMessagesForIntent(
-      context.threadMessages,
-      currentIntent,
-    );
+    const relevantMessages = context.threadMessages;
     const relevantMemories = this.selectMemoriesForPrompt(context.memories, currentIntent);
     const relevantWorkspaceCitations = this.filterWorkspaceCitationsForIntent(
       context.workspaceCitations,
@@ -762,57 +834,6 @@ export class ContextAssemblyManager {
     return this.normalizeIntentText(lastUser?.content ?? '');
   }
 
-  private filterThreadMessagesForIntent(
-    messages: ChatMessage[],
-    currentIntent: string,
-  ): ChatMessage[] {
-    if (messages.length <= 2) {
-      return messages;
-    }
-
-    // An agent's tool trail is working memory for the task in flight, not
-    // conversation history, so it is never subject to intent relevance. A tool
-    // result shares almost no tokens with the question that prompted it, and
-    // dropping it made the agent reissue calls it had already made until its
-    // budget died. Kept whole, bounded, and in chronological order.
-    const toolTrail = messages
-      .filter((msg) => msg.role === 'TOOL')
-      .slice(-RUNTIME_V2_TRANSCRIPT_RETAINED_ENTRIES);
-    const conversation = messages.filter((msg) => msg.role !== 'TOOL');
-
-    const keep =
-      conversation.length <= 2
-        ? conversation
-        : this.selectRelevantConversation(conversation, currentIntent);
-    const retained = new Set([...keep, ...toolTrail].map((msg) => msg.id));
-    return messages.filter((msg) => retained.has(msg.id));
-  }
-
-  private selectRelevantConversation(
-    messages: ChatMessage[],
-    currentIntent: string,
-  ): ChatMessage[] {
-    if (this.isLikelyFollowUp(currentIntent)) {
-      return messages.slice(-6);
-    }
-
-    const lastUser = [...messages].reverse().find((msg) => msg.role === 'USER');
-    const selected = messages.filter((msg) => {
-      if (msg.id === lastUser?.id) {
-        return true;
-      }
-      if (msg.role === 'SYSTEM') {
-        return true;
-      }
-      if (msg.role === 'ASSISTANT') {
-        return false;
-      }
-      return this.calculateTokenOverlap(msg.content, currentIntent) >= 0.45;
-    });
-
-    return selected.length > 0 ? selected.slice(-4) : messages.slice(-1);
-  }
-
   /**
    * Chooses which memories reach the prompt.
    *
@@ -893,17 +914,6 @@ export class ContextAssemblyManager {
   private isPreferenceLikeMemory(memory: MemoryRecordResponse): boolean {
     const value = `${memory.type} ${memory.content}`.toLowerCase();
     return /(preference|profile|identity|setting|locale|language|name|timezone|style)/.test(value);
-  }
-
-  private isLikelyFollowUp(prompt: string): boolean {
-    const normalized = prompt.trim().toLowerCase();
-    if (normalized.length === 0) {
-      return false;
-    }
-
-    return /(^|\b)(again|another|one more|continue|expand|shorter|longer|rewrite|rephrase|summarize that|fix that|use that|based on that|from above|previous|earlier|same answer|same style)(\b|$)/.test(
-      normalized,
-    );
   }
 
   private calculateTokenOverlap(a: string, b: string): number {
