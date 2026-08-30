@@ -92,6 +92,23 @@ suspect the instrument.
 load — the first run of this experiment found ~3.85 s of it, which was a dead
 embedding backend being retried on every turn.
 
+## Concurrency
+
+```bash
+node concurrency-experiment.mjs
+```
+
+Warms 16 threads, then measures the server's own `retrievalMs` and
+`selectionMs` at 1, 4, 8 and 16 concurrent generations. It deliberately does not
+try to saturate the provider — provider queueing would mask exactly the thing
+being measured.
+
+`selectionMs` flat across levels means contention is not in context selection.
+A `retrievalMs` that jumps at high concurrency is a dependency being starved:
+the first run found memory retrieval hitting its 5 s timeout at 16 concurrent
+because sixteen ten-second memory-EXTRACTION calls were in flight against a
+dead Ollama backend.
+
 ## The authorization suite — run it before any release
 
 ```bash

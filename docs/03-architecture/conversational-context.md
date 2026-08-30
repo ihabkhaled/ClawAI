@@ -230,7 +230,39 @@ earlier attempt produced a suspiciously flat 5.8 s p50 across every thread
 length, which was the poller's cadence, not the server's behaviour. Read the
 manifest, not the stopwatch.
 
-### The embedding circuit
+### Under concurrency
+
+`selectionMs` stayed at 0–1 ms at 1, 4, 8 and 16 concurrent generations against
+threads of ~26 messages, and every thread still sent all of its messages.
+Contention is not in context selection.
+
+`retrievalMs` is a different story, and it exposed a second dead-dependency
+problem. memory-service makes THREE unattended calls to ollama-service —
+embeddings for semantic search, generation for memory extraction, generation for
+sensitivity classification. With no models installed each fails after 4–10
+seconds, each is swallowed so the feature merely degrades, and each is retried
+on the next message. At 16 concurrent generations, sixteen ten-second extraction
+calls in flight starved memory retrieval into its own five-second timeout: **a
+dead optional feature taking down a working one.**
+
+Measured `retrievalMs` p50/max on the same stack and script:
+
+| Concurrency | No breaker                | Breaker, no half-open     | Breaker with half-open |
+| ----------- | ------------------------- | ------------------------- | ---------------------- |
+| 1           | 3859 / 3859               | 3966 / 3966               | 3851 / 3851            |
+| 4           | 21 / 27                   | 18 / 27                   | 26 / 27                |
+| 8           | 26 / 38                   | 32 / 51                   | 39 / 3856              |
+| 16          | **5000 / 5000** (timeout) | **5000 / 5001** (timeout) | **24 / 3861**          |
+
+The middle column is the instructive one. A breaker without half-open throttles
+how OFTEN a dead dependency is hammered but not how MANY calls go at once: the
+moment its window expired all sixteen waiters were admitted together, and the
+starvation returned unchanged. With half-open, exactly one call is admitted as a
+trial — that is the 3861 ms max — and the other fifteen fail in microseconds.
+
+`selectionMs` never exceeded 1 ms at any concurrency.
+
+### The dependency circuit
 
 `retrievalMs` was ~3.85 s on every turn on a stack with no embedding model
 installed: memory-service embeds the query before searching, the call failed
@@ -238,11 +270,17 @@ after ~4 s, retrieval swallowed the failure and returned results anyway — and
 paid the four seconds again on the very next turn.
 
 The failure was always there. Migrating chat to the canonical retrieval route
-(F-05) is what put it in front of every message. `embedding-circuit.utility.ts`
-opens after three consecutive failures, stays open for 30 s, and closes on the
-next success, so a dead embedding backend costs one timeout per half-minute
-instead of one per turn — and an operator who installs the model gets semantic
-search back without restarting anything.
+(F-05) is what put it in front of every message.
+
+`dependency-circuit.utility.ts` opens after three consecutive failures — not
+one, because a single timeout is a blip — stays open 30 s, and closes on the
+next success. It is **keyed** rather than global: embeddings and generation are
+different endpoints that fail independently, and one breaker for both would
+disable working semantic search because extraction was down.
+
+A dead dependency now costs one timeout per half-minute instead of one per
+message, and an operator who installs the model gets the feature back within
+30 s without restarting anything.
 
 ## Security boundary
 
@@ -273,6 +311,7 @@ Stated plainly so nobody plans against a capability that is absent.
 
 ## See also
 
+- [Rollout and rollback](../08-runtime-devops/conversational-context-rollout.md) — deploy order, what to watch, and why there is no feature flag
 - [ADR-086](../13-adr/adr-086-conversational-context-composer.md) — the decision and the evidence
 - [Context loss triage](../11-runbooks/context-loss-triage.md) — the runbook
 - [`skills/audit-conversational-context.md`](../../skills/audit-conversational-context.md) — how to re-run the lab

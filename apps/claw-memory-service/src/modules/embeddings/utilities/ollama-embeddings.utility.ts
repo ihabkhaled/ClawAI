@@ -3,12 +3,8 @@ import { createHash } from 'node:crypto';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { EMBEDDING_HTTP_TIMEOUT_MS } from '../constants/embeddings.constants';
-import {
-  embeddingCircuitRemainingMs,
-  isEmbeddingCircuitOpen,
-  recordEmbeddingFailure,
-  recordEmbeddingSuccess,
-} from './embedding-circuit.utility';
+import { CIRCUIT_OLLAMA_EMBEDDINGS } from '../../../common/constants';
+import { throughCircuit } from '../../../common/utilities';
 
 const logger = new Logger('OllamaEmbeddings');
 
@@ -20,22 +16,8 @@ const logger = new Logger('OllamaEmbeddings');
 export async function fetchEmbedding(input: { content: string }): Promise<number[]> {
   // Fail instantly while the backend is known to be down. Callers already treat
   // a throw as "no semantic results, carry on"; this only changes how long they
-  // wait to learn it. See embedding-circuit.utility.ts for the measurement.
-  if (isEmbeddingCircuitOpen()) {
-    throw new Error(
-      `Ollama embeddings unavailable — circuit open for another ${String(
-        Math.ceil(embeddingCircuitRemainingMs() / 1000),
-      )}s`,
-    );
-  }
-  try {
-    const vector = await requestEmbedding(input);
-    recordEmbeddingSuccess();
-    return vector;
-  } catch (error) {
-    recordEmbeddingFailure();
-    throw error;
-  }
+  // wait to learn it. See dependency-circuit.utility.ts for the measurement.
+  return throughCircuit(CIRCUIT_OLLAMA_EMBEDDINGS, async () => requestEmbedding(input));
 }
 
 async function requestEmbedding(input: { content: string }): Promise<number[]> {

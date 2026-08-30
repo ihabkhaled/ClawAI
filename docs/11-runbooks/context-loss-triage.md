@@ -123,6 +123,15 @@ ADR-086 removed.
 
 Only PAYG-exempt models can run: `client.mjs` refuses metered providers in code.
 
+## Deploy-order symptom
+
+`fetchMemories: memory-service retrieve failed status=401` in chat-service logs
+means memory-service was deployed before chat-service and workspace-service.
+memory-service's internal routes now require a service token that only the
+newer callers send. Answers still arrive — memory is non-blocking — but without
+memories. Deploy the callers, then memory-service. See the
+[rollout guide](../08-runtime-devops/conversational-context-rollout.md).
+
 ## Escalation
 
 Attach: the message id, the full `conversation` block, the thread's message
