@@ -895,9 +895,12 @@ export type TranslationDictionary = {
     namePlaceholder: string;
     scopeOptional: string;
     scopePlaceholder: string;
-    typeNote: string;
-    typeInstruction: string;
-    typeFileReference: string;
+    typeText: string;
+    typeFile: string;
+    typeUrl: string;
+    typeMarkdown: string;
+    typeSnippet: string;
+    typeMemoryRef: string;
   };
   routing: {
     title: string;
@@ -5496,6 +5499,7 @@ export type AdminModelCostsLocaleTranslation = {
   empty: {
     title: string;
     description: string;
+    action: string;
   };
   form: {
     title: string;

@@ -1,6 +1,7 @@
 'use client';
 
 import { CircleDollarSign } from 'lucide-react';
+import Link from 'next/link';
 import type { ReactElement } from 'react';
 
 import { ModelCostAttentionBanner } from '@/components/admin/model-costs/model-cost-attention-banner';
@@ -11,6 +12,7 @@ import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ROUTES } from '@/constants';
 import { ModelPricingSource } from '@/enums/model-pricing-source.enum';
 import { useModelCostsPage } from '@/hooks/admin/use-model-costs-page';
 
@@ -59,6 +61,18 @@ export default function AdminModelCostsPage(): ReactElement {
           icon={CircleDollarSign}
           title={controller.t('adminModelCosts.empty.title')}
           description={controller.t('adminModelCosts.empty.description')}
+          // An empty registry is an OPERATOR condition, not "there are no
+          // models" — it means discovery has never run. A production install
+          // sat here with every price blank and every paid model refused,
+          // because the old copy implied the sync was automatic and offered
+          // nowhere to go.
+          action={
+            <Button asChild size="sm">
+              <Link href={ROUTES.MODELS_DISCOVERY}>
+                {controller.t('adminModelCosts.empty.action')}
+              </Link>
+            </Button>
+          }
         />
       ) : null}
 

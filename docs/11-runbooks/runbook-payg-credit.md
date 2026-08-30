@@ -290,9 +290,27 @@ docker exec claw-nginx grep -c 'api/v1/credit' /etc/nginx/claw/locations.conf
 
 ## 6. Smoke test before enabling anything
 
+> **Test the switch OFF first, and test it with a PAID model.** This section
+> once said "everything below must work unchanged" but only counted ledger rows,
+> which is the one thing that is trivially unchanged when nothing is metered. It
+> never sent a request to a paid provider with the switch off — and that exact
+> path was broken in production for a full release. auth answered
+> `{ metered: false, reason }`, `PaygMeter` required a `maxOutputTokens` the
+> server did not send, read the reply as malformed, and failed CLOSED. Every
+> paid model was refused with "credit checks are temporarily unavailable" on
+> every install that had not armed the switch — which is the default, and is
+> also rollback lever #1 below.
+>
+> The disabled path is the DEFAULT path. It carries more installs than the
+> enabled one and deserves more testing, not less.
+
 With `payg.credit.enabled` still `false`, everything below must work unchanged:
 
 ```bash
+# THE ONE THAT MATTERS: a paid model still answers while metering is off.
+# Expect a normal completion — never PAYG_PRICING_UNAVAILABLE.
+curl -sk -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json'   -d '{"content":"ping","provider":"OPENAI","model":"gpt-5.6-terra"}'   https://claw.local/api/v1/chat/threads/$THREAD_ID/messages | jq -r '.error // "ok"'
+
 # a normal chat still answers, and no ledger rows appear
 docker exec claw-pg-auth psql -U claw -d claw_auth -tAc \
   "SELECT count(*) FROM credit_ledger_entries;"     # expect 0
@@ -427,6 +445,12 @@ docker exec claw-pg-auth psql -U claw -d claw_auth -tAc \
 | 1   | `SystemSetting` `payg.credit.enabled` → `false`   | Every reservation short-circuits `METERING_DISABLED`. Nothing is metered. | **Immediate**      | No              |
 | 2   | `UPDATE connectors SET is_pay_as_you_go = false;` | Nothing classifies as PAYG. Survives an auth restart.                     | ≤ 60 s (cache TTL) | No              |
 | 3   | Roll the images back                              | Removes the code path entirely.                                           | Minutes            | **No**          |
+
+> Lever #1 is only a rollback if the disabled path actually works. It did not,
+> once — see §6 — so pulling it would have turned a billing problem into a total
+> outage of every paid model. `payg-meter-wire.spec.ts` pins that contract on
+> the client side now, and `credit-reservation.manager.spec.ts` on the server
+> side. Re-run both before trusting this row.
 
 ```bash
 # 1 — the fastest lever

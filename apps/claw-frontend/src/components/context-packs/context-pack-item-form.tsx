@@ -16,11 +16,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { CONTEXT_PACK_ITEM_TYPE_LABELS, CONTEXT_PACK_ITEM_TYPE_OPTIONS } from '@/constants';
-import type { ContextPackItemType } from '@/enums';
+import { CONTEXT_PACK_ITEM_TYPE_OPTIONS } from '@/constants';
+import type { ContextPackItemTypeV2 } from '@/enums';
 import { useContextPackItemFormState } from '@/hooks/context-packs/use-context-pack-item-form-state';
 import { useTranslation } from '@/lib/i18n';
 import type { ContextPackItemFormProps } from '@/types';
+import { getContextPackItemTypeLabelKey } from '@/utilities';
 
 export function ContextPackItemForm({
   open,
@@ -54,14 +55,14 @@ export function ContextPackItemForm({
             <label htmlFor="item-type" className="text-sm font-medium">
               {t('context.itemType')}
             </label>
-            <Select value={type} onValueChange={(value) => setType(value as ContextPackItemType)}>
+            <Select value={type} onValueChange={(value) => setType(value as ContextPackItemTypeV2)}>
               <SelectTrigger id="item-type">
                 <SelectValue placeholder={t('context.selectType')} />
               </SelectTrigger>
               <SelectContent>
                 {CONTEXT_PACK_ITEM_TYPE_OPTIONS.map((optType) => (
                   <SelectItem key={optType} value={optType}>
-                    {t(CONTEXT_PACK_ITEM_TYPE_LABELS[optType])}
+                    {t(getContextPackItemTypeLabelKey(optType) ?? optType)}
                   </SelectItem>
                 ))}
               </SelectContent>

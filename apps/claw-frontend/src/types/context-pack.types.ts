@@ -1,4 +1,9 @@
-import type { ContextPackItemType } from '@/enums';
+// V2 is what memory-service stores and returns
+// (TEXT/FILE/URL/MARKDOWN/SNIPPET/MEMORY_REF). These types claimed the legacy
+// V1 enum until 2026-08-30, which is what let a V2 value reach a V1-only label
+// lookup and crash the pack page, and what let the picker offer three types the
+// API rejects.
+import type { ContextPackItemTypeV2 } from '@/enums';
 
 import type { FormFieldErrors } from './component.types';
 import type { UseSortableDragArgs, UseSortableDragReturn } from './drag-reorder.types';
@@ -16,7 +21,7 @@ export type ContextPack = {
 export type ContextPackItem = {
   id: string;
   contextPackId: string;
-  type: ContextPackItemType;
+  type: ContextPackItemTypeV2;
   content: string | null;
   fileId: string | null;
   sortOrder: number;
@@ -40,14 +45,14 @@ export type UpdateContextPackRequest = {
 };
 
 export type CreateContextPackItemRequest = {
-  type: ContextPackItemType;
+  type: ContextPackItemTypeV2;
   content?: string;
   fileId?: string;
   sortOrder?: number;
 };
 
 export type UpdateContextPackItemRequest = {
-  type?: ContextPackItemType;
+  type?: ContextPackItemTypeV2;
   content?: string;
   fileId?: string;
   sortOrder?: number;
@@ -78,8 +83,8 @@ export type ContextPackItemFormStateParams = {
 };
 
 export type ContextPackItemFormStateReturn = {
-  type: ContextPackItemType;
-  setType: (value: ContextPackItemType) => void;
+  type: ContextPackItemTypeV2;
+  setType: (value: ContextPackItemTypeV2) => void;
   content: string;
   setContent: (value: string) => void;
   fileId: string;

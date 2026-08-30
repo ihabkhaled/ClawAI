@@ -60,7 +60,9 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
     empty: {
       title: 'No models in the registry',
-      description: 'Models appear here once a connector or local runtime has been synced.',
+      description:
+        'Model discovery has not run yet. Run it to import the models your connectors expose, then set a price for each.',
+      action: 'Run model discovery',
     },
     form: {
       title: 'Publish a price',
@@ -127,7 +129,9 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
     empty: {
       title: 'لا توجد نماذج في السجل',
-      description: 'تظهر النماذج هنا بعد مزامنة موصل أو بيئة تشغيل محلية.',
+      description:
+        'لم يتم تشغيل اكتشاف النماذج بعد. شغّله لاستيراد النماذج التي تتيحها موصلاتك، ثم حدّد سعرًا لكل منها.',
+      action: 'تشغيل اكتشاف النماذج',
     },
     form: {
       title: 'نشر سعر',
@@ -197,7 +201,8 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     empty: {
       title: 'Keine Modelle in der Registry',
       description:
-        'Modelle erscheinen hier, sobald ein Connector oder eine lokale Laufzeit synchronisiert wurde.',
+        'Die Modellerkennung wurde noch nicht ausgeführt. Führen Sie sie aus, um die von Ihren Konnektoren angebotenen Modelle zu importieren, und legen Sie dann für jedes einen Preis fest.',
+      action: 'Modellerkennung ausführen',
     },
     form: {
       title: 'Preis veröffentlichen',
@@ -267,7 +272,9 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
     empty: {
       title: 'No hay modelos en el registro',
-      description: 'Los modelos aparecen aquí cuando se sincroniza un conector o un runtime local.',
+      description:
+        'La detección de modelos aún no se ha ejecutado. Ejecútela para importar los modelos que exponen sus conectores y luego fije un precio para cada uno.',
+      action: 'Ejecutar detección de modelos',
     },
     form: {
       title: 'Publicar un precio',
@@ -334,8 +341,10 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       override: 'بازنویسی مدیر',
     },
     empty: {
-      title: 'مدلی در فهرست نیست',
-      description: 'مدل‌ها پس از همگام‌سازی یک رابط یا زمان اجرای محلی اینجا نمایان می‌شوند.',
+      title: 'هیچ مدلی در فهرست نیست',
+      description:
+        'کشف مدل هنوز اجرا نشده است. آن را اجرا کنید تا مدل‌هایی که رابط‌های شما ارائه می‌دهند وارد شوند، سپس برای هر کدام قیمت تعیین کنید.',
+      action: 'اجرای کشف مدل',
     },
     form: {
       title: 'انتشار قیمت',
@@ -405,7 +414,8 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     empty: {
       title: 'Aucun modèle dans le registre',
       description:
-        'Les modèles apparaissent ici une fois qu’un connecteur ou un runtime local a été synchronisé.',
+        "La découverte des modèles n'a pas encore été lancée. Lancez-la pour importer les modèles exposés par vos connecteurs, puis définissez un prix pour chacun.",
+      action: 'Lancer la découverte des modèles',
     },
     form: {
       title: 'Publier un prix',
@@ -473,7 +483,9 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
     empty: {
       title: 'रजिस्ट्री में कोई मॉडल नहीं',
-      description: 'कनेक्टर या स्थानीय रनटाइम सिंक होने पर मॉडल यहाँ दिखते हैं।',
+      description:
+        'मॉडल खोज अभी तक नहीं चली है। अपने कनेक्टरों द्वारा उपलब्ध मॉडल आयात करने के लिए इसे चलाएँ, फिर प्रत्येक के लिए मूल्य निर्धारित करें।',
+      action: 'मॉडल खोज चलाएँ',
     },
     form: {
       title: 'क़ीमत प्रकाशित करें',
@@ -543,7 +555,8 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     empty: {
       title: 'Nessun modello nel registro',
       description:
-        'I modelli compaiono qui dopo la sincronizzazione di un connettore o di un runtime locale.',
+        'Il rilevamento dei modelli non è ancora stato eseguito. Eseguilo per importare i modelli esposti dai tuoi connettori, poi imposta un prezzo per ciascuno.',
+      action: 'Esegui il rilevamento dei modelli',
     },
     form: {
       title: 'Pubblica un prezzo',
@@ -611,7 +624,9 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
     empty: {
       title: 'レジストリにモデルがありません',
-      description: 'コネクターまたはローカルランタイムを同期すると、ここにモデルが表示されます。',
+      description:
+        'モデル検出がまだ実行されていません。実行してコネクタが公開するモデルを取り込み、それぞれに価格を設定してください。',
+      action: 'モデル検出を実行',
     },
     form: {
       title: '料金を公開',
@@ -679,9 +694,10 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
       override: 'Substituição do administrador',
     },
     empty: {
-      title: 'Nenhum modelo no registo',
+      title: 'Nenhum modelo no registro',
       description:
-        'Os modelos aparecem aqui depois de sincronizar um conector ou um runtime local.',
+        'A descoberta de modelos ainda não foi executada. Execute-a para importar os modelos expostos pelos seus conectores e depois defina um preço para cada um.',
+      action: 'Executar descoberta de modelos',
     },
     form: {
       title: 'Publicar um preço',
@@ -751,7 +767,8 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     empty: {
       title: 'В реестре нет моделей',
       description:
-        'Модели появятся здесь после синхронизации коннектора или локальной среды выполнения.',
+        'Обнаружение моделей ещё не запускалось. Запустите его, чтобы импортировать модели, которые предоставляют ваши коннекторы, затем задайте цену для каждой.',
+      action: 'Запустить обнаружение моделей',
     },
     form: {
       title: 'Опубликовать цену',
@@ -819,7 +836,9 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
     empty: {
       title: 'ไม่มีโมเดลในรีจิสทรี',
-      description: 'โมเดลจะปรากฏที่นี่หลังจากซิงค์คอนเนกเตอร์หรือรันไทม์ในเครื่องแล้ว',
+      description:
+        'ยังไม่ได้เรียกใช้การค้นหาโมเดล เรียกใช้เพื่อนำเข้าโมเดลที่ตัวเชื่อมต่อของคุณเปิดให้ใช้งาน แล้วกำหนดราคาให้แต่ละโมเดล',
+      action: 'เรียกใช้การค้นหาโมเดล',
     },
     form: {
       title: 'เผยแพร่ราคา',
@@ -886,7 +905,8 @@ export const ADMIN_MODEL_COSTS_TRANSLATIONS: Record<Locale, AdminModelCostsLocal
     },
     empty: {
       title: '注册表中没有模型',
-      description: '同步连接器或本地运行时后，模型会显示在这里。',
+      description: '尚未运行模型发现。运行它以导入连接器公开的模型，然后为每个模型设置价格。',
+      action: '运行模型发现',
     },
     form: {
       title: '发布价格',

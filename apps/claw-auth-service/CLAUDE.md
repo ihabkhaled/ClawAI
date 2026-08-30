@@ -87,6 +87,21 @@ The kill switch is `SystemSetting` key `payg.credit.enabled`, checked once
 inside `reserve` rather than at each call site. `modules/system-settings/` is
 its read path — the model had existed with zero consumers.
 
+**Every reserve reply carries `maxOutputTokens`, including an unmetered one.**
+The unmetered branch echoes `input.requestedMaxOutputTokens` — an unmetered
+request has no balance to clamp against, so the requested maximum IS the answer.
+Do not "simplify" it back to `{ metered: false, reason }`: `PaygMeter` reads
+`hold.maxOutputTokens` off every outcome without branching on `metered`, and
+when this field was missing the client read the whole reply as malformed and
+failed CLOSED. The switch therefore inverted — turning PAYG **off** refused
+every paid model on every install that had not armed it, which is the default.
+Pinned by the short-circuit cases in `credit-reservation.manager.spec.ts` and by
+`payg-meter-wire.spec.ts` in shared-entitlements.
+
+**The disabled path is the default path.** It is what a fresh install runs and
+what rollback lever #1 selects, so it needs more testing than the enabled one,
+not less. Test a PAID model with the switch off.
+
 `ScheduleModule` and `@nestjs/schedule` are NEW here. The reservation sweeper
 and the grant renewal each take a distinct Redis lock and run on staggered
 intervals; they take the lock even at one replica, so raising

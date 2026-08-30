@@ -77,7 +77,21 @@ export type CreditPackageView = {
  * or an administrator — and short-circuits before any wallet read.
  */
 export type PaygReservationOutcome =
-  | { metered: false; reason: 'NOT_PAYG' | 'METERING_DISABLED' | 'ADMIN_BYPASS' }
+  | {
+      metered: false;
+      reason: 'NOT_PAYG' | 'METERING_DISABLED' | 'ADMIN_BYPASS';
+      /**
+       * The ceiling to call the provider with — always the amount requested,
+       * because an unmetered request has no balance to clamp against.
+       *
+       * Present so that EVERY outcome carries a ceiling and a caller can use
+       * `outcome.maxOutputTokens` without first branching on `metered`. It was
+       * absent once, and the client rejected the reply as malformed and failed
+       * closed, which blocked every paid model on every install that had the
+       * kill switch off — the default.
+       */
+      maxOutputTokens: number;
+    }
   | {
       metered: true;
       reservationId: string;

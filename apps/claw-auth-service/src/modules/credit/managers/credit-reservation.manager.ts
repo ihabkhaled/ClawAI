@@ -102,7 +102,18 @@ export class CreditReservationManager {
     );
     const classification = await this.classify(input.userId, input.provider, input.model);
     if (!classification.isPayg) {
-      return { metered: false, reason: classification.reason };
+      // Echo the ceiling the caller asked for. An unmetered request has no
+      // balance to clamp against, so the requested maximum IS the answer — and
+      // the contract says every reserve reply carries `maxOutputTokens`, so a
+      // caller can always send `hold.maxOutputTokens` without first asking
+      // whether it was metered. Omitting it here made every unmetered reply
+      // look malformed to PaygMeter, which then failed closed and blocked every
+      // paid model on any install with the kill switch off.
+      return {
+        metered: false,
+        reason: classification.reason,
+        maxOutputTokens: input.requestedMaxOutputTokens,
+      };
     }
     const existing = await this.usage.findOpenPaygReservation(input.userId, input.requestId);
     if (existing !== null) {

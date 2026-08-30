@@ -7697,7 +7697,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4998
+        "value": 5001
       },
       "localeCount": 13,
       "locales": [
@@ -9427,7 +9427,7 @@
       },
       "@claw/shared-entitlements": {
         "runner": "jest",
-        "testFiles": 7
+        "testFiles": 8
       },
       "@claw/shared-rabbitmq": {
         "runner": "jest",
@@ -9475,7 +9475,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 403
+        "testFiles": 405
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10235,7 +10235,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1104,
+    "totalTestFiles": 1107,
     "workspaceCount": 25
   }
 }

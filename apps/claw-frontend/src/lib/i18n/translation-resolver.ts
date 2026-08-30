@@ -5,6 +5,19 @@ export function resolveTranslation(
   key: string,
   params?: Record<string, string | number>,
 ): string {
+  // A missing label must not take the page down. `t()` is called with the result
+  // of lookup tables all over this app (`LABELS[item.type]`), and a value the
+  // table does not cover yields `undefined` — which used to reach `.split` and
+  // throw, white-screening the whole route over one unrenderable word.
+  //
+  // The context-pack list did exactly that: the API returns the V2 item types
+  // (TEXT, FILE, URL, ...) and the label map only knew the V1 ones, so a single
+  // TEXT row crashed the page. Degrading to an empty string keeps the rest of
+  // the page alive; the missing key is a rendering bug, not a fatal one.
+  if (typeof key !== 'string' || key === '') {
+    return '';
+  }
+
   const parts = key.split('.');
   if (parts.length < 2) {
     return key;

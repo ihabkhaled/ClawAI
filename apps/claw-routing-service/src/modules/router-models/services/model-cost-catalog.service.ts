@@ -36,6 +36,18 @@ export class ModelCostCatalogService {
       const batch = entries.slice(start, start + MODEL_COST_CATALOG_BATCH_SIZE);
       rows.push(...(await Promise.all(batch.map((entry) => this.priceEntry(entry)))));
     }
+    if (rows.length === 0) {
+      // An empty registry is an OPERATOR condition, not "this install has no
+      // models" — it means discovery has never run. A production install sat
+      // like this with a blank price page and every paid model refused, and
+      // nothing anywhere said why. The admin page names the fix; this makes it
+      // visible in the logs too.
+      this.logger.warn(
+        'listCatalog: the model registry is EMPTY, so no prices can be shown. ' +
+          'Run model discovery (POST /routing/models/discovery/run) to import ' +
+          'the models the configured connectors expose.',
+      );
+    }
     this.logger.debug(`listCatalog rows=${rows.length}`);
     return rows;
   }

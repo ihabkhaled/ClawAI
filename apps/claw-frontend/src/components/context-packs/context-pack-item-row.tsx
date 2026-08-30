@@ -3,12 +3,14 @@ import { ArrowDown, ArrowUp, GripVertical, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CONTEXT_PACK_ITEM_TYPE_LABELS } from '@/constants';
-import type { ContextPackItemType } from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ContextPackItemRowProps } from '@/types';
-import { getContextPackItemTypeIcon, getContextPackItemTypeTone } from '@/utilities';
+import {
+  getContextPackItemTypeIcon,
+  getContextPackItemTypeLabelKey,
+  getContextPackItemTypeTone,
+} from '@/utilities';
 
 export function ContextPackItemRow({
   item,
@@ -32,8 +34,11 @@ export function ContextPackItemRow({
   const { t } = useTranslation();
   const Icon = getContextPackItemTypeIcon(item.type);
   const tone = getContextPackItemTypeTone(item.type);
-  const typeLabel =
-    t(CONTEXT_PACK_ITEM_TYPE_LABELS[item.type as ContextPackItemType]) ?? item.type;
+  // Resolve the key BEFORE calling t(). The old line cast the type to the V1
+  // enum, indexed a V1-only map with a V2 value, and handed the resulting
+  // `undefined` straight to t() — which crashed the page on `key.split('.')`.
+  const typeLabelKey = getContextPackItemTypeLabelKey(item.type);
+  const typeLabel = typeLabelKey === null ? item.type : t(typeLabelKey);
 
   return (
     <Card
@@ -46,23 +51,20 @@ export function ContextPackItemRow({
       className={cn(
         'transition-all',
         isDragging && 'opacity-40',
-        isDragTarget && 'border-primary ring-2 ring-primary/20',
+        isDragTarget && 'border-primary ring-primary/20 ring-2',
       )}
     >
       <CardContent className="flex items-start gap-3 p-4">
         {isDragSupported ? (
           <div
-            className="flex h-8 w-5 shrink-0 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
+            className="text-muted-foreground flex h-8 w-5 shrink-0 cursor-grab items-center justify-center active:cursor-grabbing"
             aria-hidden="true"
           >
             <GripVertical className="h-4 w-4" />
           </div>
         ) : null}
         <div
-          className={cn(
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-md',
-            tone,
-          )}
+          className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-md', tone)}
           aria-hidden="true"
         >
           <Icon className="h-4 w-4" />
@@ -96,16 +98,16 @@ export function ContextPackItemRow({
             <Badge variant="secondary" className="text-xs">
               {typeLabel}
             </Badge>
-            <span className="text-xs text-muted-foreground">#{item.sortOrder}</span>
+            <span className="text-muted-foreground text-xs">#{item.sortOrder}</span>
           </div>
-          <p className="whitespace-pre-wrap text-sm">
+          <p className="text-sm whitespace-pre-wrap">
             {item.content ?? (item.fileId ? `${t('context.fileId')}: ${item.fileId}` : '—')}
           </p>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 shrink-0 text-destructive hover:text-destructive"
+          className="text-destructive hover:text-destructive h-8 w-8 shrink-0"
           onClick={onRemove}
           disabled={isRemovePending}
           aria-label={t('common.delete')}

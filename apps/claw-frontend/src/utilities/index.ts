@@ -42,6 +42,7 @@ export {
 export {
   getContextPackItemTypeIcon,
   getContextPackItemTypeTone,
+  getContextPackItemTypeLabelKey,
 } from './context-pack-item-style.utility';
 export { getLifecycleBadgeVariant } from './lifecycle.utility';
 export {

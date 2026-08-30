@@ -93,7 +93,6 @@ export {
   INGESTION_STATUS_LABELS,
   INGESTION_STATUS_COLORS,
   CONTEXT_PACK_ITEM_TYPE_OPTIONS,
-  CONTEXT_PACK_ITEM_TYPE_LABELS,
 } from './memory.constants';
 export { IMAGE_MODEL_OPTIONS } from './image.constants';
 export {

@@ -282,6 +282,15 @@ provider/modelKey/displayName projection that skips REMOVED rows) with the rate
 Money crosses the wire as `number` micro-USD. BigInt cannot be JSON-serialised;
 `toModelCostSnapshot` is the single conversion boundary.
 
+**An empty registry is an OPERATOR condition, not an empty price list.** The
+catalogue is built from `RouterModelRegistry`, which is populated by model
+DISCOVERY — not by configuring a connector. A production install ran with 0
+registry rows, so this endpoint returned `[]`, the admin price page was blank,
+and its copy said models "appear here once a connector has been synced", which
+implies it happens by itself. Every paid model was unpriced and refused.
+`listCatalog` now logs a warning naming `POST /routing/models/discovery/run`,
+and the admin empty state links to `/models/discovery`.
+
 Reached from the edge through `location /api/v1/router-models` in
 `infra/nginx/locations.conf` (and the distributed template) — these controllers
 mount at `router-models/*`, NOT under the `routing/*` prefix nginx already

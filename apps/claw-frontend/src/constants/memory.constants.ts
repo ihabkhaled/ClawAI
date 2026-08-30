@@ -1,8 +1,11 @@
-import { ContextPackItemType, FileIngestionStatus, MemoryFilterValue, MemoryType } from '@/enums';
+import { ContextPackItemTypeV2, FileIngestionStatus, MemoryFilterValue, MemoryType } from '@/enums';
 
 export const MEMORY_TYPE_OPTIONS = Object.values(MemoryType);
 
-export const CONTEXT_PACK_ITEM_TYPE_OPTIONS = Object.values(ContextPackItemType);
+// The V2 enum is what the API and the database accept. This listed the V1
+// values until 2026-08-30, so every type the picker offered was rejected by
+// `z.nativeEnum(ContextPackItemType)` in memory-service.
+export const CONTEXT_PACK_ITEM_TYPE_OPTIONS = Object.values(ContextPackItemTypeV2);
 
 export const MEMORY_TYPE_LABELS: Record<MemoryType, string> = {
   [MemoryType.SUMMARY]: 'memory.typeSummary',
@@ -46,10 +49,4 @@ export const INGESTION_STATUS_COLORS: Record<FileIngestionStatus, string> = {
     'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800',
   [FileIngestionStatus.FAILED]:
     'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
-};
-
-export const CONTEXT_PACK_ITEM_TYPE_LABELS: Record<ContextPackItemType, string> = {
-  [ContextPackItemType.NOTE]: 'context.typeNote',
-  [ContextPackItemType.INSTRUCTION]: 'context.typeInstruction',
-  [ContextPackItemType.FILE_REFERENCE]: 'context.typeFileReference',
 };

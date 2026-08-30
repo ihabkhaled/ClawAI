@@ -25,6 +25,7 @@ function flatten(
 }
 
 const LEGITIMATE_UNCHANGED_VALUES = new Set([
+  'Markdown',
   '+14155550123',
   'you@example.com',
   'Claw',

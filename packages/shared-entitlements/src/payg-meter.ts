@@ -19,7 +19,9 @@ import {
 // Response shapes as they arrive off the wire. Narrowed by the guards below
 // rather than cast, because an `as` here would let a malformed reply become a
 // zero-dollar hold and a free frontier request.
-type WireUnmetered = { metered: false; reason: string; maxOutputTokens: number };
+// `maxOutputTokens` is OPTIONAL on purpose — see isWireUnmetered. An unmetered
+// answer that omits it is valid, not malformed.
+type WireUnmetered = { metered: false; reason: string; maxOutputTokens?: number };
 type WireMetered = {
   metered: true;
   reservationId: string;
@@ -43,10 +45,22 @@ function isWireMetered(value: unknown): value is WireMetered {
   );
 }
 
+/**
+ * An unmetered answer, WITHOUT requiring `maxOutputTokens`.
+ *
+ * That field used to be mandatory here, and it is the whole reason turning the
+ * feature OFF blocked the entire product: auth answers a non-metered request
+ * with `{ metered: false, reason }` and nothing else, the guard rejected it, the
+ * reply fell through to "unparseable", and the meter failed CLOSED. With the
+ * kill switch off every request is unmetered, so every paid model was refused
+ * with "credit checks are temporarily unavailable" while nothing was being
+ * charged at all.
+ *
+ * `metered: false` means no money is at stake. Failing closed on it is never
+ * right, so the only thing this needs to establish is that the server said so.
+ */
 function isWireUnmetered(value: unknown): value is WireUnmetered {
-  return (
-    isRecord(value) && value['metered'] === false && typeof value['maxOutputTokens'] === 'number'
-  );
+  return isRecord(value) && value['metered'] === false;
 }
 
 function readErrorCode(payload: unknown): BillingErrorCode {
@@ -161,7 +175,14 @@ export class PaygMeter {
       };
     }
     if (isWireUnmetered(payload)) {
-      const hold = PaygMeter.unmeteredHold(payload.maxOutputTokens, 'NOT_PAYG');
+      // Fall back to what the caller asked for when the server did not echo a
+      // ceiling: an unmetered request has no balance to clamp against, so the
+      // requested maximum IS the correct answer.
+      const ceiling =
+        typeof payload.maxOutputTokens === 'number'
+          ? payload.maxOutputTokens
+          : input.requestedMaxOutputTokens;
+      const hold = PaygMeter.unmeteredHold(ceiling, 'NOT_PAYG');
       return { ...hold, reason: PaygMeter.narrowReason(payload.reason) };
     }
     // A reply we cannot parse is a reply we cannot trust with money.

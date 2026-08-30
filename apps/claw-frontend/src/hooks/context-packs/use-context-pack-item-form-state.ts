@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { ContextPackItemType } from '@/enums';
+import { ContextPackItemTypeV2 } from '@/enums';
 import { createContextPackItemSchema } from '@/lib/validation/context-pack.schema';
 import type {
   ContextPackItemFormStateParams,
@@ -14,21 +14,21 @@ export function useContextPackItemFormState({
   onSubmit,
   onOpenChange,
 }: ContextPackItemFormStateParams): ContextPackItemFormStateReturn {
-  const [type, setType] = useState<ContextPackItemType>(ContextPackItemType.NOTE);
+  const [type, setType] = useState<ContextPackItemTypeV2>(ContextPackItemTypeV2.TEXT);
   const [content, setContent] = useState('');
   const [fileId, setFileId] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FormFieldErrors>({});
 
   useEffect(() => {
     if (open) {
-      setType(ContextPackItemType.NOTE);
+      setType(ContextPackItemTypeV2.TEXT);
       setContent('');
       setFileId('');
       setFieldErrors({});
     }
   }, [open]);
 
-  const isFileRef = type === ContextPackItemType.FILE_REFERENCE;
+  const isFileRef = type === ContextPackItemTypeV2.FILE;
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();

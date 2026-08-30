@@ -91,6 +91,8 @@ const makeRecord = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+const DEFAULT_MAX_OUTPUT = 30_512;
+
 const makeInput = (overrides: Partial<CreditReserveInput> = {}): CreditReserveInput => ({
   userId: 'user-1',
   requestId: 'req-1',
@@ -100,7 +102,7 @@ const makeInput = (overrides: Partial<CreditReserveInput> = {}): CreditReserveIn
   workflow: null,
   promptTokens: 1000,
   cachedPromptTokens: 0,
-  requestedMaxOutputTokens: 30_512,
+  requestedMaxOutputTokens: DEFAULT_MAX_OUTPUT,
   ...overrides,
 });
 
@@ -193,11 +195,20 @@ describe('CreditReservationManager', () => {
     manager = build();
   });
 
+  // Every unmetered answer carries the ceiling the caller asked for. This is
+  // not decoration: `PaygMeter` reads `maxOutputTokens` off EVERY outcome
+  // without branching on `metered`, and when this field was missing the client
+  // treated the reply as malformed and failed CLOSED. With the kill switch off
+  // — the default — that refused every paid model on the whole install.
   describe('classification short-circuits', () => {
     it('meters nothing while the kill switch is off', async () => {
       settings['isEnabled'].mockResolvedValue(false);
       const outcome = await manager.reserve(makeInput());
-      expect(outcome).toEqual({ metered: false, reason: 'METERING_DISABLED' });
+      expect(outcome).toEqual({
+        metered: false,
+        reason: 'METERING_DISABLED',
+        maxOutputTokens: DEFAULT_MAX_OUTPUT,
+      });
       // The switch is read once, before anything else — no wallet read, no
       // price lookup, no Redis round trip.
       expect(rates['findRate']).not.toHaveBeenCalled();
@@ -206,26 +217,42 @@ describe('CreditReservationManager', () => {
 
     it('never meters a local provider', async () => {
       const outcome = await manager.reserve(makeInput({ provider: 'OLLAMA' }));
-      expect(outcome).toEqual({ metered: false, reason: 'NOT_PAYG' });
+      expect(outcome).toEqual({
+        metered: false,
+        reason: 'NOT_PAYG',
+        maxOutputTokens: DEFAULT_MAX_OUTPUT,
+      });
       expect(rates['findRate']).not.toHaveBeenCalled();
     });
 
     it('never meters llama.cpp either', async () => {
       const outcome = await manager.reserve(makeInput({ provider: 'LLAMACPP' }));
-      expect(outcome).toEqual({ metered: false, reason: 'NOT_PAYG' });
+      expect(outcome).toEqual({
+        metered: false,
+        reason: 'NOT_PAYG',
+        maxOutputTokens: DEFAULT_MAX_OUTPUT,
+      });
     });
 
     it('lets an administrator through without touching the wallet', async () => {
       users['findUserById'].mockResolvedValue({ id: 'admin-1', role: UserRole.ADMIN });
       const outcome = await manager.reserve(makeInput());
-      expect(outcome).toEqual({ metered: false, reason: 'ADMIN_BYPASS' });
+      expect(outcome).toEqual({
+        metered: false,
+        reason: 'ADMIN_BYPASS',
+        maxOutputTokens: DEFAULT_MAX_OUTPUT,
+      });
       expect(wallets['applyHold']).not.toHaveBeenCalled();
     });
 
     it('honours an administrator switching PAYG off for a provider', async () => {
       policy['getPolicy'].mockResolvedValue({ OPENAI: false });
       const outcome = await manager.reserve(makeInput());
-      expect(outcome).toEqual({ metered: false, reason: 'NOT_PAYG' });
+      expect(outcome).toEqual({
+        metered: false,
+        reason: 'NOT_PAYG',
+        maxOutputTokens: DEFAULT_MAX_OUTPUT,
+      });
     });
   });
 

@@ -21,7 +21,6 @@ export { ComponentSize } from './component-size.enum';
 export { MemoryFilterValue } from './memory-filter-value.enum';
 export { MemoryType } from './memory-type.enum';
 export { FileIngestionStatus } from './file-ingestion-status.enum';
-export { ContextPackItemType } from './context-pack-item-type.enum';
 export { ContextPackItemTypeV2 } from './context-pack-item-type-v2.enum';
 export { ContextPackScope } from './context-pack-scope.enum';
 export { ContextPackVisibility } from './context-pack-visibility.enum';
