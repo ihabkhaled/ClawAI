@@ -19,6 +19,7 @@ import {
   PRISMA_TO_SHARED_COST_CLASS,
 } from '../constants/model-cost.constants';
 import { normalizeModelId } from '../utilities/model-alias-matching.utility';
+import { stripDatedSnapshot } from '../utilities/model-family.utility';
 import { ModelCostRepository } from '../repositories/model-cost.repository';
 import {
   ratesAreUnchanged,
@@ -76,16 +77,74 @@ export class ModelCostService {
         return toModelCostSnapshot(byNormalized);
       }
     }
+    // A dated snapshot is the SAME model as its family, released on a date.
+    // `claude-haiku-4-5-20251001` is `claude-haiku-4-5`; refusing it as unpriced
+    // is a lookup miss, not a pricing gap. Deliberately narrow: only a trailing
+    // date is stripped, never a version or size marker, which name a different
+    // model with a different price.
+    const family = stripDatedSnapshot(normalized);
+    if (family !== normalized) {
+      const byFamily = await this.repository.findActive(provider, family);
+      if (byFamily) {
+        this.logger.debug(`getSnapshot: matched dated ${modelKey} as family ${family}`);
+        return toModelCostSnapshot(byFamily);
+      }
+    }
     return this.unpricedSnapshot(provider, modelKey);
+  }
+
+  /**
+   * A deliberately pessimistic stand-in for a model nobody has priced.
+   *
+   * The catalogue is discovered from the providers and moves faster than the
+   * price list a human maintains: at the time this was written 161 of 170
+   * exposed chat models had no rate, and `unpriced => blocked` made almost the
+   * whole product unusable. Providers do not publish rates through their model
+   * APIs, so there is nothing to sync — pricing is a human input.
+   *
+   * Blocking is safe and unusable. Charging nothing is usable and unbounded.
+   * This is the third option: charge the dearest rate the provider actually
+   * publishes, so spend stays bounded and can never be UNDER-counted, and say
+   * loudly that it happened. An operator turns it off with
+   * `payg.credit.fallbackPricing.enabled = false` and gets blocking back.
+   */
+  private async providerFallbackSnapshot(
+    provider: string,
+    modelKey: string,
+  ): Promise<ModelCostSnapshot | null> {
+    const dearest = await this.repository.findMostExpensiveForProvider(provider);
+    if (dearest === null) {
+      return null;
+    }
+    this.logger.warn(
+      `providerFallbackSnapshot: ${provider}/${modelKey} has no published price — charging at ${dearest.modelKey}'s rate. Publish a real price for it.`,
+    );
+    return {
+      ...toModelCostSnapshot(dearest),
+      provider,
+      model: modelKey,
+      isPriced: true,
+      isFallbackRate: true,
+    };
   }
 
   // No registry row. Local models fall back to the configured compute cost;
   // everything else is explicitly unpriced.
-  private unpricedSnapshot(provider: string, modelKey: string): ModelCostSnapshot {
+  private async unpricedSnapshot(provider: string, modelKey: string): Promise<ModelCostSnapshot> {
     const config = AppConfig.get();
     const isLocal = ModelCostService.isLocalProvider(provider);
     if (!isLocal) {
       this.logger.warn(`unpricedSnapshot: no active cost row for ${provider}/${modelKey}`);
+      // A PAID provider we cannot price: charge the provider's dearest known
+      // rate rather than refusing, unless an operator has turned that off.
+      // A LOCAL provider never reaches here — its zero-rate branch is below and
+      // must never be reached by a metered provider (rule 37 rule 6).
+      if (config.PAYG_FALLBACK_PRICING_ENABLED) {
+        const fallback = await this.providerFallbackSnapshot(provider, modelKey);
+        if (fallback !== null) {
+          return fallback;
+        }
+      }
       return ModelCostService.emptySnapshot(provider, modelKey, null);
     }
 
@@ -102,6 +161,7 @@ export class ModelCostService {
         outputPerMillionMicroUsd: 0,
         costClass: PRISMA_TO_SHARED_COST_CLASS[CostClass.FREE],
         isPriced: true,
+        isFallbackRate: false,
       };
     }
 
@@ -120,6 +180,7 @@ export class ModelCostService {
       outputPerMillionMicroUsd: rate,
       costClass: PRISMA_TO_SHARED_COST_CLASS[CostClass.CHEAP],
       isPriced: true,
+      isFallbackRate: false,
     };
   }
 
@@ -154,6 +215,7 @@ export class ModelCostService {
       lastVerifiedAt: null,
       source: ModelCostSource.SEED,
       isPriced: false,
+      isFallbackRate: false,
       localComputeOwnership: ownership,
     };
   }

@@ -88,6 +88,7 @@ export const ROUTES = {
   ADMIN_RUNTIME_PROGRESS: '/admin/runtime-progress',
   ADMIN_DEPLOYMENT: '/admin/deployment',
   ADMIN_SMART_ROUTER: '/admin/smart-router',
+  ADMIN_MODEL_COSTS: '/admin/smart-router/model-costs',
   USAGE: '/usage',
   PLAN: '/plan',
   BILLING: '/billing',

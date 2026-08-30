@@ -236,6 +236,7 @@ export type TranslationDictionary = {
     adminDeployment: string;
     adminPaymentGateways: string;
     adminSmartRouter: string;
+    adminModelCosts: string;
     plan: string;
     billing: string;
     usage: string;
@@ -3427,6 +3428,7 @@ export type TranslationDictionary = {
   };
   routerTrace: RouterTraceLocaleTranslation;
   smartRouterAdmin: SmartRouterAdminLocaleTranslation;
+  adminModelCosts: AdminModelCostsLocaleTranslation;
   adminDeployment: {
     title: string;
     description: string;
@@ -5438,6 +5440,78 @@ export type RouterTraceLocaleTranslation = {
     disabled: string;
     noRunnableEntry: string;
     noEligibleModel: string;
+  };
+};
+
+/**
+ * Admin model-price catalogue, in one locale. A dedicated type — like
+ * SmartRouterAdminLocaleTranslation below — so a locale that forgets a key is
+ * a compile error rather than a raw key rendered beside a dollar amount.
+ */
+export type AdminModelCostsLocaleTranslation = {
+  title: string;
+  description: string;
+  error: string;
+  retry: string;
+  banner: {
+    fallback: string;
+    unpriced: string;
+  };
+  filters: {
+    label: string;
+    all: string;
+    searchPlaceholder: string;
+    clear: string;
+  };
+  source: {
+    published: string;
+    datedFamily: string;
+    providerFallback: string;
+    localFree: string;
+    unpriced: string;
+  };
+  costClass: {
+    free: string;
+    cheap: string;
+    standard: string;
+    premium: string;
+    ultra: string;
+  };
+  table: {
+    model: string;
+    provider: string;
+    inputRate: string;
+    outputRate: string;
+    cachedInputRate: string;
+    pricingSource: string;
+    version: string;
+    actions: string;
+    edit: string;
+    editFor: string;
+    empty: string;
+    noRate: string;
+    noVersion: string;
+    override: string;
+  };
+  empty: {
+    title: string;
+    description: string;
+  };
+  form: {
+    title: string;
+    description: string;
+    descriptionFor: string;
+    inputRate: string;
+    outputRate: string;
+    cachedInputRate: string;
+    cachedInputHelp: string;
+    costClass: string;
+    ratePlaceholder: string;
+    publishHelp: string;
+    publish: string;
+    cancel: string;
+    invalidRate: string;
+    pairRequired: string;
   };
 };
 

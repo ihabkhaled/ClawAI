@@ -250,3 +250,40 @@ is marked SUPERSEDED with the reasoning.
 
 What routing-service keeps is **model prices** and **metering its own calls**.
 It does not decide whether a user may spend.
+
+## `GET /router-models/costs/catalog` — the only view of what a model costs
+
+`ModelCostVersion` had a publish API and no way to READ the whole picture:
+`GET /router-models/costs` lists only the rows that EXIST, which is exactly the
+models that are not the problem. An operator could not see the 161 of 170
+exposed models that have no price and are therefore charged at the provider's
+dearest known rate.
+
+`ModelCostCatalogService.listCatalog()` joins `RouterModelRegistry` (via the new
+`RouterModelRegistryRepository.listCatalogEntries()`, a narrow
+provider/modelKey/displayName projection that skips REMOVED rows) with the rate
+`ModelCostService.getSnapshot` actually resolves.
+
+- **It owns no resolution logic.** Every rate comes from the same `getSnapshot`
+  the wallet calls, so the table can never disagree with what a user is charged.
+  A second implementation would drift the moment an alias rule changed.
+- **`pricingSource` is READ BACK from the snapshot**, in
+  `utilities/model-cost-catalog.utility.ts`. Order is load-bearing:
+  `isFallbackRate` is checked FIRST, because a fallback snapshot is another
+  model's row wearing this model's identity and every other field looks like a
+  published price. Then `version === 0` (nothing was read — local compute or
+  nothing), then a half-priced row, then a key mismatch (`DATED_FAMILY`).
+- **Batched, not fired all at once.** `MODEL_COST_CATALOG_BATCH_SIZE = 16`:
+  ~166 models × 1–3 queries would ask a CPU-sized Prisma pool for several
+  hundred connections on the admin's first page load.
+- Gated like `POST`, not like the public read: one response carries the whole
+  provider rate card, and a rate is a margin input.
+
+Money crosses the wire as `number` micro-USD. BigInt cannot be JSON-serialised;
+`toModelCostSnapshot` is the single conversion boundary.
+
+Reached from the edge through `location /api/v1/router-models` in
+`infra/nginx/locations.conf` (and the distributed template) — these controllers
+mount at `router-models/*`, NOT under the `routing/*` prefix nginx already
+proxied, so without that block the route 404s in Docker while working on
+`localhost:4004`. `/api/v1/internal/router-models` stays unproxied on purpose.

@@ -1,5 +1,6 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -244,6 +245,7 @@ export const th: TranslationDictionary = {
     adminDeployment: DEPLOYMENT_TRANSLATIONS.th.navigationLabel,
     adminPaymentGateways: 'เกตเวย์การชำระเงิน',
     adminSmartRouter: 'สมาร์ทเราเตอร์',
+    adminModelCosts: 'ราคาโมเดล',
     plan: 'แผนของฉัน',
     billing: 'การเรียกเก็บเงิน',
     usage: 'การใช้งาน',
@@ -3520,6 +3522,7 @@ export const th: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.th.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.th,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.th,
+  adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.th,
   adminBilling: {
     credit: {
       packageCreated: 'สร้างแพ็กเกจเครดิตแล้ว',

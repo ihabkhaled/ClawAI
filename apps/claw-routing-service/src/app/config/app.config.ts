@@ -5,6 +5,21 @@ const appConfigSchema = z.object({
   // the electricity. Only compute the USER owns is genuinely zero-cost to the
   // platform, which is the self-hosting default.
   LOCAL_COMPUTE_OWNERSHIP: z.enum(['USER_OWNED', 'PLATFORM_HOSTED']).default('USER_OWNED'),
+  // Charge an UNPRICED model on a paid provider at that provider's dearest
+  // known rate, instead of refusing it.
+  //
+  // The catalogue is discovered from the providers and outruns the hand-kept
+  // price list — 161 of 170 exposed chat models had no rate — and `unpriced =>
+  // blocked` made almost every model in the product unusable. The fallback can
+  // over-charge and can never UNDER-charge, which is the only direction that
+  // keeps a wallet enforceable.
+  //
+  // Set false to go back to blocking. That is the safer setting for revenue and
+  // the worse one for the user, so it is a deliberate operator choice.
+  PAYG_FALLBACK_PRICING_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
   // Operational cost estimate for platform-hosted local inference, in micro-USD
   // per million tokens. Leaving this at 0 while hosting the compute yourself is
   // treated as a misconfiguration and fails CLOSED rather than pricing every

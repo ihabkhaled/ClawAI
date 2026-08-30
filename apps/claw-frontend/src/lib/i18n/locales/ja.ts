@@ -1,5 +1,6 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -250,6 +251,7 @@ export const ja: TranslationDictionary = {
     adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.navigationLabel,
     adminPaymentGateways: '決済ゲートウェイ',
     adminSmartRouter: 'スマートルーター',
+    adminModelCosts: 'モデル料金',
     plan: '私の計画',
     billing: '請求',
     usage: 'の使用法',
@@ -3563,6 +3565,7 @@ export const ja: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ja,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ja,
+  adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.ja,
   adminBilling: {
     credit: {
       packageCreated: 'クレジットパッケージを作成しました。',

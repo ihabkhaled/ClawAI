@@ -53,6 +53,9 @@ export function toModelCostSnapshot(record: ModelCostVersion): ModelCostSnapshot
   return {
     ...rates,
     isPriced: rates.inputPerMillionMicroUsd !== null && rates.outputPerMillionMicroUsd !== null,
+    // A row read from the registry IS this model's own published price.
+    // Only providerFallbackSnapshot sets this true.
+    isFallbackRate: false,
     localComputeOwnership: record.localComputeOwnership,
   };
 }

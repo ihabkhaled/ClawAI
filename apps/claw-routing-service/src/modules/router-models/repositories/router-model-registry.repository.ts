@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModelLifecycle, type Prisma } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { type RouterModelCatalogEntry } from '../types/model-cost-catalog.types';
 import {
   type FindExecutionCandidatesFilter,
   type RouterModelRegistryRecord,
@@ -68,6 +69,25 @@ export class RouterModelRegistryRepository {
 
     this.logger.debug(`list total=${total} returned=${rows.length}`);
     return { items: rows.map(mapPrismaToRecord), total };
+  }
+
+  /**
+   * Every model an operator could publish a price for, as a narrow projection.
+   *
+   * REMOVED rows are excluded: a model that is gone from every provider cannot
+   * be billed, so listing it would pad the "needs a price" count with work
+   * nobody should do. Unpaginated on purpose — the caller is the admin cost
+   * catalogue, which has to count fallbacks across the WHOLE registry to say
+   * how many models still need a real rate.
+   */
+  async listCatalogEntries(): Promise<RouterModelCatalogEntry[]> {
+    const rows = await this.prisma.routerModelRegistry.findMany({
+      where: { lifecycle: { not: ModelLifecycle.REMOVED } },
+      select: { provider: true, modelKey: true, displayName: true },
+      orderBy: [{ provider: 'asc' }, { modelKey: 'asc' }],
+    });
+    this.logger.debug(`listCatalogEntries count=${rows.length}`);
+    return rows;
   }
 
   async findExecutionCandidates(

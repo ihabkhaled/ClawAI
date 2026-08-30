@@ -472,3 +472,30 @@ The general rule for this `<head>`: a component rendered there must produce the
 **same number of children** on the server and the client. `AnalyticsHead` and
 `AdSenseHead` both return `null` when unconfigured, which is safe — the count
 matches on both sides. A strategy that renders on only one side is not.
+
+## Model prices: `/admin/smart-router/model-costs`
+
+The operator surface for `ModelCostVersion`. Linked from the Smart Router admin
+page header and from the admin sidebar (`nav.adminModelCosts`); gated on
+`Permission.ADMIN_MODELS_MANAGE` — the permission the BACKEND enforces, not the
+parent page's `ADMIN_ROUTING_MANAGE`, or a routing manager would reach a page
+that 403s on every call.
+
+- Controller hook `useModelCostsPage` composes `useModelCostCatalog`,
+  `useModelCostFilters`, `useModelCostEditDialog` and `usePublishModelCost`.
+  Counts come from the WHOLE catalogue, never the filtered rows: filtering to
+  PUBLISHED must not report that zero models are on a fallback.
+- **Money is integer micro-USD per million tokens, end to end.** It is formatted
+  only at render, in `utilities/model-cost.utility.ts`, by moving the decimal
+  point through STRING slicing. `value / 1_000_000` plus `toFixed` is banned
+  here: `0.07 * 1e6` is `70000.00000000001`, and a rate that renders as $2.50
+  while the wallet charges 2_499_999 is a lie the operator cannot see. Round
+  trips are unit-tested.
+- A missing rate renders as "No rate", never `$0.00` — an unpriced model is
+  refused, not free.
+- The edit dialog's form is seeded ONCE from the row, so `ModelCostEditForm` is
+  mounted with `key={provider:modelKey}`. Without that key, reopening on a
+  different model publishes the previous model's rates under the new key.
+- Publishing mints a new immutable version and pins the model as an admin
+  override; the help text says so, because automated sync will then never
+  refresh it.

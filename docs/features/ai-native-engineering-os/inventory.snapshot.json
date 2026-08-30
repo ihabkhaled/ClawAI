@@ -2412,6 +2412,11 @@
           "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/router-models/costs/catalog",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/router-models/costs/estimate",
           "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
@@ -6718,6 +6723,11 @@
         "route": "/admin/runtime-progress"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/smart-router/model-costs/page.tsx",
+        "kind": "page",
+        "route": "/admin/smart-router/model-costs"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/smart-router/page.tsx",
         "kind": "page",
         "route": "/admin/smart-router"
@@ -7687,7 +7697,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 4996
+        "value": 4998
       },
       "localeCount": 13,
       "locales": [
@@ -8014,6 +8024,12 @@
         "location": "/api/v1/research",
         "port": 4016,
         "service": "research-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "/api/v1/router-models",
+        "port": 4004,
+        "service": "routing-service",
         "source": "infra/nginx/locations.conf"
       },
       {
@@ -9459,7 +9475,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 401
+        "testFiles": 403
       },
       "claw-health-service": {
         "runner": "jest",
@@ -9491,7 +9507,7 @@
       },
       "claw-routing-service": {
         "runner": "jest",
-        "testFiles": 95
+        "testFiles": 96
       },
       "claw-server-logs-service": {
         "runner": "jest",
@@ -10206,19 +10222,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 642,
+    "endpointCount": 643,
     "envVarCount": 351,
     "eventCount": 178,
-    "frontendRouteCount": 138,
+    "frontendRouteCount": 139,
     "localeCount": 13,
-    "nginxRouteCount": 56,
+    "nginxRouteCount": 57,
     "permissionCount": 51,
     "portCount": 16,
     "portCoverageGapCount": 2,
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1101,
+    "totalTestFiles": 1104,
     "workspaceCount": 25
   }
 }

@@ -267,6 +267,11 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
         href: ROUTES.ADMIN_SMART_ROUTER,
         icon: Router,
       },
+      {
+        labelKey: 'nav.adminModelCosts',
+        href: ROUTES.ADMIN_MODEL_COSTS,
+        icon: Coins,
+      },
     ],
   },
   // The editor extension, for every signed-in user. It is a public marketing

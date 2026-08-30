@@ -272,6 +272,12 @@
       "source": "infra/nginx/locations.conf"
     },
     {
+      "location": "/api/v1/router-models",
+      "port": 4004,
+      "service": "routing-service",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
       "location": "/api/v1/routing",
       "port": 4004,
       "service": "routing-service",

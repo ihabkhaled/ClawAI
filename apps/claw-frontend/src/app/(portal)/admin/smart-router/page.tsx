@@ -1,5 +1,8 @@
 'use client';
 
+import { Coins } from 'lucide-react';
+import Link from 'next/link';
+
 import { SmartRouterChainTab } from '@/components/admin/smart-router/smart-router-chain-tab';
 import { SmartRouterCompareTab } from '@/components/admin/smart-router/smart-router-compare-tab';
 import { SmartRouterOverviewTab } from '@/components/admin/smart-router/smart-router-overview-tab';
@@ -7,7 +10,9 @@ import { SmartRouterPublishTab } from '@/components/admin/smart-router/smart-rou
 import { SmartRouterRevisionDetailTab } from '@/components/admin/smart-router/smart-router-revision-detail-tab';
 import { SmartRouterRevisionsTab } from '@/components/admin/smart-router/smart-router-revisions-tab';
 import { PageHeader } from '@/components/common/page-header';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ROUTES } from '@/constants/routes.constants';
 import {
   SMART_ROUTER_TAB_CHAIN,
   SMART_ROUTER_TAB_COMPARE,
@@ -26,6 +31,14 @@ export default function AdminSmartRouterPage(): React.ReactElement {
       <PageHeader
         title={controller.t('smartRouterAdmin.title')}
         description={controller.t('smartRouterAdmin.description')}
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href={ROUTES.ADMIN_MODEL_COSTS}>
+              <Coins className="me-1 h-4 w-4" aria-hidden="true" />
+              {controller.t('adminModelCosts.title')}
+            </Link>
+          </Button>
+        }
       />
 
       <Tabs value={controller.activeTab} onValueChange={controller.setActiveTab}>

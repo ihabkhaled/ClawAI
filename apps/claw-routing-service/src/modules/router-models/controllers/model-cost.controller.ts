@@ -13,17 +13,33 @@ import {
   type PublishModelCostDto,
   publishModelCostSchema,
 } from '../dto/publish-model-cost.dto';
+import { ModelCostCatalogService } from '../services/model-cost-catalog.service';
 import { ModelCostService } from '../services/model-cost.service';
 import { type ModelCostSnapshot } from '../types/model-cost.types';
+import { type ModelCostCatalogRow } from '../types/model-cost-catalog.types';
 import { type ModelCostQuote } from '../types/model-cost-quote.types';
 
 @Controller('router-models/costs')
 export class ModelCostController {
-  constructor(private readonly service: ModelCostService) {}
+  constructor(
+    private readonly service: ModelCostService,
+    private readonly catalog: ModelCostCatalogService,
+  ) {}
 
   @Get()
   async listActive(): Promise<ModelCostSnapshot[]> {
     return this.service.listActive();
+  }
+
+  // Every model in the registry with its RESOLVED rate, plus how that rate was
+  // reached. Gated exactly like the publish below, not like the read above:
+  // it exposes the full provider rate card in one response, and a rate is a
+  // margin input (rule 37).
+  @Get('catalog')
+  @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
+  async listCatalog(): Promise<ModelCostCatalogRow[]> {
+    return this.catalog.listCatalog();
   }
 
   @Get(':provider/:model')

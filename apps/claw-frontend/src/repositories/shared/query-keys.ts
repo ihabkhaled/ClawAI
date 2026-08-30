@@ -455,6 +455,14 @@ export const queryKeys = {
     all: ['gatewayConfig'] as const,
     list: () => ['gatewayConfig', 'list'] as const,
   },
+  // Model prices. A namespace of its own rather than a branch of
+  // smartRouterAdmin: the chain and the rate card are owned by different
+  // controllers, and publishing a price must not invalidate the router
+  // revision list.
+  adminModelCosts: {
+    all: ['adminModelCosts'] as const,
+    catalog: () => [...queryKeys.adminModelCosts.all, 'catalog'] as const,
+  },
   smartRouterAdmin: {
     all: ['smartRouterAdmin'] as const,
     lists: () => [...queryKeys.smartRouterAdmin.all, 'list'] as const,

@@ -1,5 +1,6 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -250,6 +251,7 @@ export const ru: TranslationDictionary = {
     adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.navigationLabel,
     adminPaymentGateways: 'Платёжные шлюзы',
     adminSmartRouter: 'Умный маршрутизатор',
+    adminModelCosts: 'Цены моделей',
     plan: 'Мой тариф',
     billing: 'Оплата',
     usage: 'Использование',
@@ -3578,6 +3580,7 @@ export const ru: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ru,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ru,
+  adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.ru,
   adminBilling: {
     credit: {
       packageCreated: 'Пакет кредита создан.',

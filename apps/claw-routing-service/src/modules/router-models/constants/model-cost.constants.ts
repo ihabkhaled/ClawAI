@@ -18,3 +18,11 @@ export const PRISMA_TO_SHARED_COST_CLASS: Record<CostClass, ModelCostClass> = {
 // Local providers whose compute is not billed per token by an upstream vendor.
 // Their cost comes from the platform's own hardware configuration instead.
 export const LOCAL_COST_PROVIDERS: ReadonlyArray<string> = ['OLLAMA', 'LLAMACPP'];
+
+/**
+ * A trailing release date on a model id: `-20251001` or `-2024-08-06`.
+ *
+ * Anchored to the END so a date inside a name cannot be mistaken for a suffix,
+ * and requiring the leading hyphen so a bare numeric model name survives intact.
+ */
+export const DATED_SNAPSHOT_SUFFIX = /-(?:\d{8}|\d{4}-\d{2}-\d{2})$/;

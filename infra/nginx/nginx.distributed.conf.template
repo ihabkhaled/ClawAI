@@ -318,6 +318,15 @@ http {
             proxy_pass $backend;
         }
 
+        # Model registry + model COST admin surface — routing-service mounts
+        # these at router-models/*, not routing/*. /api/v1/internal/router-models
+        # stays unproxied on purpose: it is the service-token rate card.
+        location /api/v1/router-models {
+            set $backend https://$origin_routing;
+            proxy_pass $backend;
+            client_max_body_size 64k;
+        }
+
         # --- Memory Service ---
         location /api/v1/memory {
             set $backend https://$origin_memory;

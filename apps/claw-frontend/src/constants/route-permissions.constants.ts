@@ -25,6 +25,12 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   // Reuses the routing-service's existing ADMIN_ROUTING_MANAGE permission —
   // the router-configuration-admin API is gated by the same permission as
   // /routing itself (see ROUTES.ROUTING below), no new permission needed.
+  // MUST precede ADMIN_SMART_ROUTER — it is a longer prefix under it, and the
+  // list resolves longest-first. Gated on ADMIN_MODELS_MANAGE rather than the
+  // parent's ADMIN_ROUTING_MANAGE so the UI matches what
+  // /router-models/costs actually enforces; a routing manager without the
+  // models permission would otherwise reach a page that 403s on every call.
+  { prefix: ROUTES.ADMIN_MODEL_COSTS, permission: Permission.ADMIN_MODELS_MANAGE },
   { prefix: ROUTES.ADMIN_SMART_ROUTER, permission: Permission.ADMIN_ROUTING_MANAGE },
   { prefix: ROUTES.ADMIN_REFUNDS, permission: Permission.ADMIN_PLANS_MANAGE },
   { prefix: ROUTES.ADMIN_BILLING, permission: Permission.ADMIN_PLANS_MANAGE },

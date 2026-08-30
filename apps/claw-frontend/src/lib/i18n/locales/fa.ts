@@ -1,5 +1,6 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -249,6 +250,7 @@ export const fa: TranslationDictionary = {
     adminDeployment: DEPLOYMENT_TRANSLATIONS.fa.navigationLabel,
     adminPaymentGateways: 'درگاه‌های پرداخت',
     adminSmartRouter: 'مسیریاب هوشمند',
+    adminModelCosts: 'قیمت مدل‌ها',
     plan: 'طرح من',
     billing: 'صورتحساب',
     usage: 'استفاده',
@@ -3553,6 +3555,7 @@ export const fa: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.fa.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fa,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.fa,
+  adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.fa,
   adminBilling: {
     credit: {
       packageCreated: 'بستهٔ اعتبار ایجاد شد.',

@@ -48,6 +48,14 @@ export type ModelCostSnapshot = ModelCostRates & {
   // False when nothing in the registry priced this model and the caller must
   // fail closed (or an administrator must explicitly allow it).
   isPriced: boolean;
+  // True when these rates are NOT this model's own published price but a
+  // deliberately pessimistic stand-in — the dearest rate the provider publishes
+  // for any model. It bounds spend rather than blocking the request.
+  //
+  // It can over-charge and can never under-charge, which is the only direction
+  // that keeps "a user can never exceed their credit" true. Surfaced so the
+  // ledger can say so and an operator can see what still needs a real price.
+  isFallbackRate: boolean;
   localComputeOwnership: LocalComputeOwnership | null;
 };
 

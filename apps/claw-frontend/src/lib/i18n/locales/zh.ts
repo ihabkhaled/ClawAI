@@ -1,5 +1,6 @@
 ﻿import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -240,6 +241,7 @@ export const zh: TranslationDictionary = {
     adminDeployment: DEPLOYMENT_TRANSLATIONS.zh.navigationLabel,
     adminPaymentGateways: '支付网关',
     adminSmartRouter: '智能路由器',
+    adminModelCosts: '模型价格',
     plan: '我的计划',
     billing: '计费',
     usage: '用法',
@@ -3434,6 +3436,7 @@ export const zh: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.zh.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.zh,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.zh,
+  adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.zh,
   adminBilling: {
     credit: {
       packageCreated: '额度套餐已创建。',

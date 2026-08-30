@@ -2357,6 +2357,11 @@
         "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/router-models/costs/catalog",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
+      },
+      {
         "method": "POST",
         "route": "/router-models/costs/estimate",
         "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
@@ -3248,5 +3253,5 @@
     ]
   },
   "generated": true,
-  "total": 642
+  "total": 643
 }

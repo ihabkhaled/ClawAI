@@ -1,5 +1,6 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -249,6 +250,7 @@ export const fr: TranslationDictionary = {
     adminDeployment: DEPLOYMENT_TRANSLATIONS.fr.navigationLabel,
     adminPaymentGateways: 'Passerelles de paiement',
     adminSmartRouter: 'Routeur intelligent',
+    adminModelCosts: 'Prix des modèles',
     plan: 'Mon forfait',
     billing: 'Facturation',
     usage: 'Utilisation',
@@ -3607,6 +3609,7 @@ export const fr: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.fr.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fr,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.fr,
+  adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.fr,
   adminBilling: {
     credit: {
       packageCreated: 'Pack de crédit créé.',

@@ -14,6 +14,7 @@ import { DeploymentSeedService } from './services/deployment-seed.service';
 import { ModelDiscoveryService } from './services/model-discovery.service';
 import { RouterChainSeedService } from './services/router-chain-seed.service';
 import { ModelCostInternalController } from './controllers/model-cost-internal.controller';
+import { ModelCostCatalogService } from './services/model-cost-catalog.service';
 import { ModelCostService } from './services/model-cost.service';
 import { ModelCostSeedService } from './services/model-cost-seed.service';
 import { ModelIntelligenceService } from './services/model-intelligence.service';
@@ -30,6 +31,7 @@ import { RouterModelsService } from './services/router-models.service';
     RouterModelsService,
     ModelIntelligenceService,
     ModelCostService,
+    ModelCostCatalogService,
     ModelCostSeedService,
     DeploymentSeedService,
     RouterChainSeedService,
@@ -47,6 +49,7 @@ import { RouterModelsService } from './services/router-models.service';
     RouterModelsService,
     ModelIntelligenceService,
     ModelCostService,
+    ModelCostCatalogService,
     RouterModelRegistryManager,
     RouterModelRegistryRepository,
   ],

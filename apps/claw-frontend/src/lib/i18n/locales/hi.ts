@@ -1,5 +1,6 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
+import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -248,6 +249,7 @@ export const hi: TranslationDictionary = {
     adminDeployment: DEPLOYMENT_TRANSLATIONS.hi.navigationLabel,
     adminPaymentGateways: 'भुगतान गेटवे',
     adminSmartRouter: 'स्मार्ट राउटर',
+    adminModelCosts: 'मॉडल क़ीमतें',
     plan: 'मेरी योजना',
     billing: 'बिलिंग',
     usage: 'उपयोग',
@@ -3555,6 +3557,7 @@ export const hi: TranslationDictionary = {
   adminDeployment: DEPLOYMENT_TRANSLATIONS.hi.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.hi,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.hi,
+  adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.hi,
   adminBilling: {
     credit: {
       packageCreated: 'क्रेडिट पैकेज बनाया गया।',

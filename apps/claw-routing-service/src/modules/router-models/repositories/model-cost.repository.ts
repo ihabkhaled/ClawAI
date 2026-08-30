@@ -13,6 +13,23 @@ export class ModelCostRepository {
     });
   }
 
+  /**
+   * The most expensive active rate this provider publishes, by input price.
+   *
+   * The basis for the unpriced fallback: charging an unknown model at the
+   * dearest rate we actually know for its provider can over-charge, but it can
+   * never UNDER-charge, and under-charging is the failure that lets a user
+   * outspend their credit. Ordered by input rate because every chat request
+   * pays input; a model with a huge output rate and no input rate would not be
+   * a safe ceiling.
+   */
+  async findMostExpensiveForProvider(provider: string): Promise<ModelCostVersion | null> {
+    return this.prisma.modelCostVersion.findFirst({
+      where: { provider, isActive: true, inputPerMillionMicroUsd: { not: null } },
+      orderBy: [{ inputPerMillionMicroUsd: 'desc' }, { outputPerMillionMicroUsd: 'desc' }],
+    });
+  }
+
   async listActive(): Promise<ModelCostVersion[]> {
     return this.prisma.modelCostVersion.findMany({
       where: { isActive: true },
