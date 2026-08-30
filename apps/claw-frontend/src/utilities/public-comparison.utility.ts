@@ -16,6 +16,7 @@ import type {
   ComparisonRailItem,
 } from '@/types/public-comparison.types';
 import { localisePath } from '@/utilities/locale.utility';
+import { formatProductCounts } from '@/utilities/product-counts.utility';
 
 export function getComparisonContent(locale: Locale): ComparisonDictionary {
   return COMPARISON_CONTENT_BY_LOCALE[locale];
@@ -52,7 +53,10 @@ export function buildComparisonRows(
   return COMPARISON_DIMENSION_ORDER.map((dimension) => ({
     dimension,
     label: content.dimensionLabels[dimension],
-    claw: content.clawCells[dimension],
+    // The ClawAI column quotes product counts. Those are placeholders in the
+    // content files and are substituted here, so a connector added to the enum
+    // updates all thirteen locales without anyone editing prose.
+    claw: formatProductCounts(content.clawCells[dimension]),
     rival: rivalContent.cells[dimension],
   }));
 }

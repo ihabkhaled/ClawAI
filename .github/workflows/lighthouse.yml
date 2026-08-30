@@ -10,19 +10,33 @@ on:
       - 'apps/claw-frontend/**'
       - '.github/workflows/lighthouse.yml'
       - 'apps/claw-frontend/lighthouserc.json'
+      - 'apps/claw-frontend/lighthouserc.pr.json'
   pull_request:
     paths:
       - 'apps/claw-frontend/**'
       - '.github/workflows/lighthouse.yml'
       - 'apps/claw-frontend/lighthouserc.json'
+      - 'apps/claw-frontend/lighthouserc.pr.json'
 
 permissions:
   contents: read
+
+# The run is LINEAR in audited URL count: measured at ~13.9 s per audit
+# (28 URLs x numberOfRuns 2 = 56 audits = ~13 min), so minutes ~= URLs x 0.46.
+# As the marketing surface grows this becomes the longest job in the repo, and
+# without cancellation a series of pushes stacks unbounded hour-long runs
+# against the account's job budget. ci.yml has had this guard; this one did not.
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lighthouse:
     name: Lighthouse budgets (marketing)
     runs-on: ubuntu-latest
+    # Generous enough for the full marketing surface at the measured rate, and
+    # far below the 6-hour default a hung Chrome would otherwise burn.
+    timeout-minutes: 90
     env:
       NODE_OPTIONS: --max-old-space-size=8192
       # A valid, canonical SITE_URL so the pages render indexable (localhost
@@ -56,9 +70,26 @@ jobs:
       - name: Build frontend
         run: npm run build --workspace=claw-frontend
 
+      # Pull requests audit a representative sample (the hub plus one child of
+      # every cluster); main audits everything. The run is linear in URL count at
+      # ~13.9 s per audit, and `minScore: 1` means one bad audit fails the whole
+      # run — so auditing every URL on every PR multiplies both the wall clock
+      # and the flake exposure for no extra signal. The sample is DERIVED from
+      # the full config by tools/lighthouse/build-pr-config.mjs, and a test
+      # asserts it is current, so the two cannot drift.
+      - name: Choose Lighthouse config
+        id: lhci-config
+        working-directory: apps/claw-frontend
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "file=lighthouserc.pr.json" >> "$GITHUB_OUTPUT"
+          else
+            echo "file=lighthouserc.json" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Run Lighthouse CI
         working-directory: apps/claw-frontend
-        run: npx --yes @lhci/cli@0.15.x autorun --config=lighthouserc.json
+        run: npx --yes @lhci/cli@0.15.x autorun --config=${{ steps.lhci-config.outputs.file }}
 
       - name: Upload Lighthouse reports
         if: always()

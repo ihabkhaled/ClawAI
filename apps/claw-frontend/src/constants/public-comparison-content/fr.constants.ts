@@ -25,7 +25,7 @@ export const FR_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Comparatifs',
     intro:
-      'ClawAI ne cherche pas à être un meilleur assistant unique. Il réunit neuf familles de modèles de premier plan sous un seul abonnement et envoie chaque message à celui qui convient. Ces pages le confrontent aux assistants déjà utilisés, sur les mêmes huit capacités à chaque fois.',
+      'ClawAI ne cherche pas à être un meilleur assistant unique. Il réunit {cloudProviderCount} fournisseurs cloud et des modèles à poids ouverts en local sous un seul abonnement, et envoie chaque message à celui qui convient. Ces pages le confrontent aux assistants déjà utilisés, sur les mêmes huit capacités à chaque fois.',
     cardsTitle: 'Choisissez un assistant à comparer',
     cardCta: 'Comparer avec {rival}',
     coversTitle: 'Ce que couvre chaque comparatif',
@@ -44,8 +44,9 @@ export const FR_COMPARISON_CONTENT: ComparisonDictionary = {
   },
   clawCells: {
     [ComparisonDimension.MODEL_CHOICE]:
-      'Neuf familles de modèles de premier plan sous un seul abonnement',
-    [ComparisonDimension.ROUTING]: 'Cinq modes de routage, dont un routage automatique par message',
+      '{cloudProviderCount} fournisseurs cloud, plus des modèles à poids ouverts sur votre matériel',
+    [ComparisonDimension.ROUTING]:
+      '{routingModeCount} modes de routage, dont un routage automatique par message',
     [ComparisonDimension.SIDE_BY_SIDE]:
       'Un prompt envoyé à plusieurs modèles à la fois, réponses côte à côte',
     [ComparisonDimension.LOCAL_MODELS]:
@@ -54,7 +55,7 @@ export const FR_COMPARISON_CONTENT: ComparisonDictionary = {
       'Toute la pile tourne sur vos serveurs, code source sur GitHub',
     [ComparisonDimension.MEMORY_AND_FILES]:
       'Une mémoire qui persiste entre les conversations, plus le contexte des fichiers',
-    [ComparisonDimension.CONNECTORS]: 'Douze connecteurs vers vos outils de travail',
+    [ComparisonDimension.CONNECTORS]: '{connectorCount} connecteurs vers vos outils de travail',
     [ComparisonDimension.RECEIPTS]:
       'Chaque réponse enregistre son modèle, son coût et le quota consommé',
   },

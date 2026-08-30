@@ -11,7 +11,7 @@ import { listPublicChatRssEntries } from '@/lib/chat-shares/public-chat-share.se
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
 import type { RssFeedItem } from '@/types/seo-discovery.types';
-import { getIndexablePagesForLocale } from '@/utilities/content-registry.utility';
+import { getFeedPagesForLocale } from '@/utilities/content-registry.utility';
 import { resolveFeedContentType } from '@/utilities/discovery-content-type.utility';
 import { getHtmlLanguage, isSupportedLocale } from '@/utilities/locale.utility';
 import { buildRssXml } from '@/utilities/xml.utility';
@@ -29,7 +29,7 @@ export async function buildLocalizedRssResponse(
   const topicItems: RssFeedItem[] =
     kind === RssFeedKind.CHATS
       ? []
-      : getIndexablePagesForLocale(locale).map((page) => ({
+      : getFeedPagesForLocale(locale).map((page) => ({
           title: page.metadata.title,
           description: page.metadata.description,
           url: `${siteUrl}${page.canonicalPath}`,

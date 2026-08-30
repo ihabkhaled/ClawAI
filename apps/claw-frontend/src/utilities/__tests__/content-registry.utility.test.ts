@@ -4,6 +4,8 @@ import {
   CONTENT_REGISTRY,
   PUBLIC_CONTENT_DEFINITIONS,
 } from '@/constants/content-registry.constants';
+import { INTEGRATION_TOPIC_ORDER, getIntegrationPath } from '@/constants/integrations.constants';
+import { LEARN_TOPIC_ORDER, getLearnTopicPath } from '@/constants/learn.constants';
 import { ContentLifecycleStatus, ContentReviewStatus, Indexability, AdEligibility } from '@/enums';
 import { Locale } from '@/enums/locale.enum';
 import {
@@ -61,7 +63,14 @@ describe('content registry integrity', () => {
   it('publishes exactly the reviewed launch surface (all indexable)', () => {
     const published = getPublishedPages();
     const paths = [...new Set(published.map((page) => page.canonicalPath))].sort();
-    expect(paths).toEqual([
+    // Hand-authored pages are listed one by one on purpose: that is what makes
+    // this a review tripwire. Cluster children are derived from the cluster's
+    // own order array, because there the contract genuinely is "all of them" —
+    // listing eighteen generated paths would not be a review, and would make
+    // every content batch conflict in this file.
+    const expected = [
+      ...LEARN_TOPIC_ORDER.map(getLearnTopicPath),
+      ...INTEGRATION_TOPIC_ORDER.map(getIntegrationPath),
       '/',
       '/about',
       '/acceptable-use',
@@ -83,6 +92,8 @@ describe('content registry integrity', () => {
       '/faq',
       '/features',
       '/how-it-works',
+      '/integrations',
+      '/learn',
       '/local-first-ai',
       '/pricing',
       '/privacy',
@@ -90,7 +101,8 @@ describe('content registry integrity', () => {
       '/supported-models',
       '/terms',
       '/use-cases',
-    ]);
+    ].sort();
+    expect(paths).toEqual(expected);
     for (const page of published) {
       expect(page.indexability).toBe(Indexability.INDEXABLE);
     }
@@ -112,16 +124,20 @@ describe('getIndexablePages / getAdEligiblePages defense in depth', () => {
     // The two Coding Agent pages are ad-eligible because they are ClawAI's own
     // product surface. The comparison pages are not: a page whose job is a fair
     // comparison of named competitors does not also carry ad inventory.
-    expect(paths).toEqual([
-      '/',
-      '/architecture',
-      '/coding-agent',
-      '/coding-agent/install',
-      '/faq',
-      '/features',
-      '/how-it-works',
-      '/use-cases',
-    ]);
+    expect(paths).toEqual(
+      [
+        ...LEARN_TOPIC_ORDER.map(getLearnTopicPath),
+        '/',
+        '/architecture',
+        '/coding-agent',
+        '/coding-agent/install',
+        '/faq',
+        '/features',
+        '/how-it-works',
+        '/learn',
+        '/use-cases',
+      ].sort(),
+    );
     for (const page of eligible) {
       expect(page.status).toBe(ContentLifecycleStatus.PUBLISHED);
       expect(page.reviewStatus).toBe(ContentReviewStatus.REVIEWED);
@@ -161,8 +177,11 @@ describe('localized publication boundary', () => {
   });
 
   it('resolves metadata for every supported locale', () => {
-    expect(getPublishedPagesForLocale(Locale.EN).length).toBe(28);
-    expect(getPublishedPagesForLocale(Locale.JA).length).toBe(28);
+    // 28 launch pages + the /learn hub + one page per learn topic + the
+    // /integrations hub + one page per connector.
+    const expectedCount = 29 + LEARN_TOPIC_ORDER.length + 1 + INTEGRATION_TOPIC_ORDER.length;
+    expect(getPublishedPagesForLocale(Locale.EN).length).toBe(expectedCount);
+    expect(getPublishedPagesForLocale(Locale.JA).length).toBe(expectedCount);
     expect(getPageBySlugAndLocale('features', Locale.EN)?.title.toLowerCase()).toContain(
       'features',
     );

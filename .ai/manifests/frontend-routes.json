@@ -132,6 +132,26 @@
       "route": "/how-it-works"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/integrations/[topic]/page.tsx",
+      "kind": "page",
+      "route": "/integrations/[topic]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/integrations/page.tsx",
+      "kind": "page",
+      "route": "/integrations"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/learn/[topic]/page.tsx",
+      "kind": "page",
+      "route": "/learn/[topic]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/learn/page.tsx",
+      "kind": "page",
+      "route": "/learn"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/local-first-ai/page.tsx",
       "kind": "page",
       "route": "/local-first-ai"

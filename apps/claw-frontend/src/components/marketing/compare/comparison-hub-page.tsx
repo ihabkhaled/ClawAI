@@ -15,6 +15,7 @@ import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 import { getPageBySlugAndLocale } from '@/utilities/content-registry.utility';
 import { getHtmlLanguage, isSupportedLocale, localisePath } from '@/utilities/locale.utility';
+import { formatProductCounts } from '@/utilities/product-counts.utility';
 import {
   buildComparisonHubCards,
   getComparisonContent,
@@ -33,7 +34,10 @@ export async function ComparisonHubPage(): Promise<React.ReactElement> {
   const canonicalPath = localisePath(COMPARISON_HUB_PATH, locale);
   const canonicalUrl = new URL(canonicalPath, siteUrl).toString();
   const title = registryEntry?.title ?? hub.eyebrow;
-  const summary = registryEntry?.description ?? hub.intro;
+  // The lede quotes the cloud-provider count, which lives as a placeholder in
+  // the content files so it cannot drift from ConnectorProvider.
+  const intro = formatProductCounts(hub.intro);
+  const summary = registryEntry?.description ?? intro;
   const cards = buildComparisonHubCards(content, locale);
 
   const jsonLd = buildComparisonHubJsonLd({
@@ -58,7 +62,7 @@ export async function ComparisonHubPage(): Promise<React.ReactElement> {
             <time dateTime={COMPARISON_REVIEW_DATE}>{COMPARISON_REVIEW_DATE}</time>
           </p>
 
-          <p className="editorial-comparison__lede">{hub.intro}</p>
+          <p className="editorial-comparison__lede">{intro}</p>
 
           <ComparisonSection id={COMPARISON_SECTION_IDS.glance} title={hub.cardsTitle}>
             <ComparisonHubCards items={cards} />

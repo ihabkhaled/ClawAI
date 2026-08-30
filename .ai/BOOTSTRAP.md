@@ -50,7 +50,7 @@ Full validation before release: `npm run release:preflight`.
 - Shared packages: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 - Events: 178 on `claw.events`
 - Permissions: 51 · Env vars: 351
-- API endpoints: 644 · Frontend pages: 139
+- API endpoints: 644 · Frontend pages: 143
 
 This file is generated. To change it, edit the renderer + policy sources and run
 `npm run knowledge:build`.

@@ -19,7 +19,8 @@ required_rules: [03-frontend-rules, 20-i18n-and-user-facing-messages, 04-testing
 required_context: [ai-context-pack, codebase-navigation]
 affected_workspaces: [claw-frontend]
 required_tests: [vitest, lighthouse-ci]
-required_docs: [docs/05-frontend/multilingual-discovery.md]
+required_docs:
+  [docs/05-frontend/multilingual-discovery.md, docs/05-frontend/seo-content-architecture.md]
 validation_lane: cd apps/claw-frontend && npx tsgo --noEmit && npm run lint && npm test && npm run build
 ---
 
@@ -61,9 +62,15 @@ the page renders perfectly while being absent from every discovery document.
    is what a search engine shows and what an assistant quotes. Give sibling pages
    _different_ descriptions — five near-identical ones read as boilerplate.
 3. **Registry entry** — `PUBLISHED_CONTENT_CONFIGS`. Pick `category`,
-   `adEligibility`, `structuredDataType` and `relatedSlugs` deliberately. Pass
-   `reviewDate` only when the page's claims expire on their own schedule (a page
-   about someone else's product does; a page about ClawAI does not).
+   `adEligibility`, `structuredDataType`, `relatedSlugs` and `feedEligibility`
+   deliberately, with no default. `feedEligibility` is `PUBLISHABLE` when a
+   subscriber would consider the page news — an explainer, a new comparison — and
+   `NOT_PUBLISHABLE` for legal/contact pages nobody subscribed to hear about.
+   Pass `reviewDate` only when the page's claims expire on their own schedule (a
+   page about someone else's product does; a page about ClawAI does not).
+   `adEligibility` follows the reasoning already on `/compare/*`: a page whose job
+   is a fair, checkable claim about a named third party — a competitor, a model,
+   a connector — does not also carry ad inventory.
 4. **The route** — `src/app/(marketing)/<path>/page.tsx`. Thin: a
    `generateMetadata` returning `buildRequestPublicPageMetadata(slug)` and a
    default export delegating to a component. Canonicals, hreflang, Open Graph,
@@ -74,7 +81,11 @@ the page renders perfectly while being absent from every discovery document.
    dictionary unless a shared component needs the key.
 6. **Lighthouse URL** — add `http://localhost:3000/en/<path>` to
    `lighthouserc.json`. `accessibility`, `best-practices` and `seo` are hard
-   errors at score 1; a page not listed is a page with no gate at all.
+   errors at score 1; a page not listed is a page with no gate at all. Then
+   regenerate the PR sample: `node tools/lighthouse/build-pr-config.mjs`. Never
+   hand-edit `lighthouserc.pr.json` — it is derived, and
+   `lighthouse-coverage.test.ts` asserts it matches what the generator would
+   produce.
 7. **Internal links** — the footer lists published pages automatically. A page
    that also belongs in the header nav needs a `marketing.header.*` key in
    `i18n.types.ts` and all 13 locale files. Give a cluster its own footer column
@@ -133,13 +144,16 @@ Gate once, at the end of the batch. Never all-workspace.
 ## Definition of done
 
 Route resolves under `/{locale}/`; registry entry `PUBLISHED` + `REVIEWED` +
-`INDEXABLE`; 13 locales of SEO copy and body copy; URL in `lighthouserc.json`;
-reachable from the footer or nav; the four coverage tests green; validation lane
-green.
+`INDEXABLE`, with `feedEligibility` and `adEligibility` chosen deliberately; 13
+locales of SEO copy and body copy, each genuinely translated (the
+content-registry native-metadata test catches an English fallback); URL in
+`lighthouserc.json` and the regenerated PR sample; reachable from the footer or
+nav; the four coverage tests green; every factual claim traced to a source per
+"Claim liability" above; validation lane green.
 
 ## Two shapes this repo already has, and when each applies
 
-### A cluster that fans out from a registry list
+### A small cluster (up to ~10 pages) that fans out from a registry list
 
 The comparison pages are not nine registry entries. They are one enum
 (`ComparisonRival`), one order array, two maps, and a `.map()` inside
@@ -149,6 +163,51 @@ AdSense rules all follow.
 
 If you are adding the second, third or fourth page of an obviously repeating
 kind, build the fan-out before the second page, not after the fourth.
+
+This shape only fans out **one of five layers** — the registry config. The slug
+enum, the SEO copy, the route file and the Lighthouse URL are still hand-written
+once per page. That is fine at nine pages and is not fine at fifty — see the
+next shape.
+
+### A cluster of ~10+ pages: one dynamic route, all five layers fan out (ADR-084)
+
+`/learn/[topic]` is the pattern once a cluster's children stop being a short,
+named, hand-curated list (rivals, providers) and start being "all of them" —
+concepts, connectors, task pages. One physical route serves every child:
+
+```
+src/enums/<cluster>-topic.enum.ts          the topics, one member per page
+src/constants/<cluster>.constants.ts       order array, path/slug helpers, review date
+src/constants/<cluster>-content/<locale>.constants.ts   SEO copy AND body copy, 13 files
+src/constants/<cluster>-seo.constants.ts   derives the SEO registry source from the content above
+src/app/(marketing)/<cluster>/page.tsx           the hub
+src/app/(marketing)/<cluster>/[topic]/page.tsx   every child, generateStaticParams over the order array
+```
+
+Three things a physical-file cluster gets for free that a dynamic one does not,
+and that you must wire by hand:
+
+1. **The SEO copy seam.** `constants/public-page-seo-registry.constants.ts`
+   resolves a slug through the launch set first, then through
+   `CLUSTER_SEO_SOURCES` — add your cluster's `<cluster>-seo.constants.ts` map
+   to that array. Do not add slugs to `public-page-seo.constants.ts`; that file
+   is for the 28 launch pages and turns into an unreadable, endlessly-conflicting
+   god-file past a few dozen entries.
+2. **`sitemap-coverage.test.ts` must learn the segment.** Add an entry to
+   `constants/seo-cluster-routes.constants.ts` (`SEO_CLUSTER_ROUTE_EXPANSIONS`)
+   mapping the on-disk route (`/learn/[topic]`) to the paths it actually serves,
+   from the same order array `generateStaticParams` reads. Without this the test
+   cannot tell your dynamic route from `/share/chat/[publicShareId]`, which has
+   no fixed children and is deliberately exempt — your cluster is the opposite
+   case and must be expanded, not exempted.
+3. **`FeedEligibility` per registry entry**, explicit, not defaulted — see
+   below.
+
+If you are adding the second, third or fourth page of an obviously repeating
+kind that will plausibly grow past ~10, build this shape before the second
+page, not after the fourth. Retrofitting it later means moving SEO copy out of
+the god-file and teaching the coverage test about a segment that already has
+scattered physical routes.
 
 ### A pair of pages with their own dictionary
 
@@ -161,6 +220,43 @@ Use a dedicated dictionary when the copy is long-form page content. Use the main
 i18n dictionaries for UI chrome — nav labels, buttons, the homepage band's three
 points. The split keeps a 200-line page from bloating the dictionary every
 authenticated screen loads.
+
+## Claim liability — naming a model, a connector or a competitor
+
+A page that names anything outside ClawAI's own product is a claim, and claims
+found during the SEO expansion (`docs/05-frontend/seo-content-architecture.md`
+§8) that must not recur:
+
+- **Every fact traces to something verifiable in the code**, not to trained
+  knowledge or plausible-sounding numbers. For models specifically, ground
+  claims in `MODEL_FACTS` (`constants/model-facts.constants.ts`) — sourced from
+  `apps/claw-routing-service/.../model-cost-seed.constants.ts` and
+  `ConnectorProvider`, never from `cloud-model-intelligence.constants.ts`, which
+  carries unsourced internal routing heuristics and disparaging claims about
+  named competitor products.
+- **No speed or benchmark claims** anywhere. There is no in-repo latency
+  benchmark suite; a speed claim with no source is a fabrication with a fake
+  citation.
+- **Naming a model is an entitlement claim.** `/pricing` already refuses to
+  promise a specific model on a specific tier. Any page naming a model links to
+  `/pricing` and carries the same qualifier — never pair a model name with a
+  signup CTA implying inclusion in a given plan.
+- **No regulated-vertical pages** (`/industries/healthcare`,
+  `/industries/financial-services`, `/industries/government`, …) — the site
+  offers no data-processing agreement, and an industry page addressed to a
+  regulated buyer implies one. `/industries/*` covers unregulated verticals only.
+- **Model-vs-model comparison pages must be about ClawAI's own routing
+  behaviour** ("how ClawAI's router chooses between X and Y"), not head-to-head
+  claims about two products ClawAI sells neither of — the latter has nothing
+  substantiable to say and is comparative-advertising exposure in EU locales.
+- **No superlatives about third-party products** ("best model for coding").
+  Reframe as task-fit ("choosing a model for coding") — same intent, no
+  unsubstantiated ranking.
+- **Connector/integration copy is generated from the provider registry**
+  (`PROVIDER_DEFINITION_SEEDS` in workspace-service), never hand-written. Several
+  connectors have `webhooks: false` or read-only capabilities; claiming
+  "real-time sync" or "signature-verified" for one that doesn't have it is false
+  and was caught live.
 
 ## Things that will bite you
 

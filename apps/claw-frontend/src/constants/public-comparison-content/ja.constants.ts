@@ -25,7 +25,7 @@ export const JA_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: '比較',
     intro:
-      'ClawAI は「より優れた単一のアシスタント」を目指していません。9 つのフロンティアモデルファミリーを 1 つのサブスクリプションの下に置き、メッセージごとに適したモデルへ送ります。これらのページは、その考え方を実際に使われているアシスタントと、毎回同じ 8 つの機能で突き合わせます。',
+      'ClawAI は「より優れた単一のアシスタント」を目指していません。{cloudProviderCount} 社のクラウドプロバイダーとローカルのオープンウェイトモデルを 1 つのサブスクリプションの下に置き、メッセージごとに適したモデルへ送ります。これらのページは、その考え方を実際に使われているアシスタントと、毎回同じ 8 つの機能で突き合わせます。',
     cardsTitle: '比較するアシスタントを選ぶ',
     cardCta: '{rival} と比較する',
     coversTitle: '各比較が扱う範囲',
@@ -44,8 +44,9 @@ export const JA_COMPARISON_CONTENT: ComparisonDictionary = {
   },
   clawCells: {
     [ComparisonDimension.MODEL_CHOICE]:
-      '1 つのサブスクリプションで 9 つのフロンティアモデルファミリー',
-    [ComparisonDimension.ROUTING]: 'メッセージ単位の自動ルーティングを含む 5 つのモード',
+      '{cloudProviderCount} 社のクラウドプロバイダーと、自前のハードウェアで動くオープンウェイトモデル',
+    [ComparisonDimension.ROUTING]:
+      'メッセージ単位の自動ルーティングを含む {routingModeCount} つのモード',
     [ComparisonDimension.SIDE_BY_SIDE]:
       '1 つのプロンプトを複数モデルへ同時送信し、回答を並べて表示',
     [ComparisonDimension.LOCAL_MODELS]:
@@ -53,7 +54,7 @@ export const JA_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.SELF_HOSTING]:
       'スタック全体が自社サーバーで動作し、ソースは GitHub に公開',
     [ComparisonDimension.MEMORY_AND_FILES]: '会話をまたいで残るメモリと、ファイルコンテキスト',
-    [ComparisonDimension.CONNECTORS]: '12 種類のワークスペースコネクター',
+    [ComparisonDimension.CONNECTORS]: '{connectorCount} 種類のワークスペースコネクター',
     [ComparisonDimension.RECEIPTS]: 'すべての回答がモデル・コスト・消費した割当量を記録',
   },
   rivals: {

@@ -10,7 +10,7 @@ import { listPublicChatRssEntries } from '@/lib/chat-shares/public-chat-share.se
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl, shouldNoIndexEverything } from '@/lib/site/site-config';
 import type { RssFeedItem } from '@/types/seo-discovery.types';
-import { getIndexablePagesForLocale } from '@/utilities/content-registry.utility';
+import { getFeedPagesForLocale } from '@/utilities/content-registry.utility';
 import { resolveFeedContentType } from '@/utilities/discovery-content-type.utility';
 import { getHtmlLanguage } from '@/utilities/locale.utility';
 import { buildRssXml } from '@/utilities/xml.utility';
@@ -25,9 +25,9 @@ import { buildRssXml } from '@/utilities/xml.utility';
 async function collectLocaleItems(
   locale: Locale,
   siteUrl: string,
-): Promise<{ items: RssFeedItem[]; degraded: boolean }> {
+): Promise<{ pageItems: RssFeedItem[]; chatItems: RssFeedItem[]; degraded: boolean }> {
   const language = getHtmlLanguage(locale);
-  const pageItems: RssFeedItem[] = getIndexablePagesForLocale(locale).map((page) => ({
+  const pageItems: RssFeedItem[] = getFeedPagesForLocale(locale).map((page) => ({
     title: page.metadata.title,
     description: page.metadata.description,
     url: `${siteUrl}${page.canonicalPath}`,
@@ -48,7 +48,7 @@ async function collectLocaleItems(
     language: getHtmlLanguage(entry.contentLocale),
   }));
 
-  return { items: [...pageItems, ...chatItems], degraded: chatEntries === null };
+  return { pageItems, chatItems, degraded: chatEntries === null };
 }
 
 export async function buildGlobalRssResponse(request: Request): Promise<Response> {
@@ -63,10 +63,20 @@ export async function buildGlobalRssResponse(request: Request): Promise<Response
     SUPPORTED_LOCALES.map(async ({ locale }) => collectLocaleItems(locale, siteUrl)),
   );
   const degraded = collected.some((entry) => entry.degraded);
-  const items = collected
-    .flatMap((entry) => entry.items)
-    .sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt))
-    .slice(0, RSS_GLOBAL_MAX_ITEMS);
+  // Pages first, then chats fill whatever is left.
+  //
+  // A single sort-then-slice looks equivalent and is not. Page items carry
+  // `lastReviewed`, a fixed editorial date; chat items carry live publication
+  // timestamps. Sorting the merged list by date therefore puts EVERY chat ahead
+  // of EVERY page, so the cap silently truncated pages first — the durable,
+  // indexable half of the feed — and which pages survived was decided by sort
+  // stability among identical dates. Pages are bounded by the registry and
+  // small; chats are the unbounded side, so they are the side that gets capped.
+  const pages = collected.flatMap((entry) => entry.pageItems);
+  const chats = collected
+    .flatMap((entry) => entry.chatItems)
+    .sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt));
+  const items = [...pages, ...chats].slice(0, RSS_GLOBAL_MAX_ITEMS);
 
   const lastBuildDate = items[0]?.publishedAt ?? new Date().toISOString();
   const xml = buildRssXml({

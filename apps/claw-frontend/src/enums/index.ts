@@ -138,6 +138,7 @@ export { OrchestrationStageStatus } from './orchestration-stage-status.enum';
 export { ContentCategory } from './content-category.enum';
 export { Indexability } from './indexability.enum';
 export { AdEligibility } from './ad-eligibility.enum';
+export { FeedEligibility } from './feed-eligibility.enum';
 export { ContentReviewStatus } from './content-review-status.enum';
 export { ComparisonDimension } from './comparison-dimension.enum';
 export { ComparisonRival } from './comparison-rival.enum';

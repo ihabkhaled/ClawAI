@@ -25,7 +25,7 @@ export const HI_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'तुलनाएँ',
     intro:
-      'ClawAI कोई बेहतर अकेला असिस्टेंट बनने की कोशिश नहीं करता। यह नौ अग्रणी मॉडल परिवारों को एक ही सदस्यता के पीछे रखता है और हर संदेश उसी मॉडल को भेजता है जो उसके लिए उपयुक्त है। ये पेज उसे उन असिस्टेंट के सामने रखते हैं जिन्हें लोग पहले से इस्तेमाल करते हैं — हर बार उन्हीं आठ क्षमताओं पर।',
+      'ClawAI कोई बेहतर अकेला असिस्टेंट बनने की कोशिश नहीं करता। यह {cloudProviderCount} क्लाउड प्रदाताओं और स्थानीय ओपन-वेट मॉडलों को एक ही सदस्यता के पीछे रखता है और हर संदेश उसी मॉडल को भेजता है जो उसके लिए उपयुक्त है। ये पेज उसे उन असिस्टेंट के सामने रखते हैं जिन्हें लोग पहले से इस्तेमाल करते हैं — हर बार उन्हीं आठ क्षमताओं पर।',
     cardsTitle: 'तुलना के लिए एक असिस्टेंट चुनें',
     cardCta: '{rival} से तुलना करें',
     coversTitle: 'हर तुलना में क्या शामिल है',
@@ -43,16 +43,17 @@ export const HI_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.RECEIPTS]: 'उपयोग रिकॉर्ड',
   },
   clawCells: {
-    [ComparisonDimension.MODEL_CHOICE]: 'एक ही सदस्यता में नौ अग्रणी मॉडल परिवार',
+    [ComparisonDimension.MODEL_CHOICE]:
+      '{cloudProviderCount} क्लाउड प्रदाता, साथ ही अपने हार्डवेयर पर ओपन-वेट मॉडल',
     [ComparisonDimension.ROUTING]:
-      'पाँच रूटिंग मोड, जिनमें हर संदेश के लिए स्वचालित रूटिंग शामिल है',
+      '{routingModeCount} रूटिंग मोड, जिनमें हर संदेश के लिए स्वचालित रूटिंग शामिल है',
     [ComparisonDimension.SIDE_BY_SIDE]: 'एक ही प्रॉम्प्ट कई मॉडलों को एक साथ, जवाब साथ-साथ',
     [ComparisonDimension.LOCAL_MODELS]:
       'आपके अपने GPU पर ओपन-वेट मॉडल, Ollama या llama.cpp के ज़रिए',
     [ComparisonDimension.SELF_HOSTING]: 'पूरा स्टैक आपके सर्वर पर चलता है, सोर्स GitHub पर',
     [ComparisonDimension.MEMORY_AND_FILES]:
       'बातचीत के बीच बनी रहने वाली मेमोरी, साथ में फ़ाइल संदर्भ',
-    [ComparisonDimension.CONNECTORS]: 'बारह वर्कस्पेस कनेक्टर',
+    [ComparisonDimension.CONNECTORS]: '{connectorCount} वर्कस्पेस कनेक्टर',
     [ComparisonDimension.RECEIPTS]: 'हर जवाब अपना मॉडल, लागत और खर्च हुई सीमा दर्ज करता है',
   },
   rivals: {

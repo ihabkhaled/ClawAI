@@ -122,6 +122,58 @@ describe('global rss feed', () => {
     DYNAMIC_IMPORT_TIMEOUT_MS,
   );
 
+  // RSS_GLOBAL_MAX_ITEMS truncates the MERGED list, and a naive sort-by-date
+  // merge would put chats first: chats carry live publication timestamps,
+  // pages carry a fixed editorial `lastReviewed` date, so a chat dated far in
+  // the future sorts ahead of every page. `buildGlobalRssResponse` instead
+  // places all pages ahead of all chats before slicing, so a cap can only
+  // ever drop chats — never the durable, indexable pages. `buildRssXml`
+  // renders `<item>` elements in array order (see `xml.utility.ts`), so the
+  // ordering guarantee is directly observable as document order: every page
+  // link must appear in the xml before the first chat item does.
+  it(
+    'keeps every registry page ahead of chats in document order, even when chats are dated later',
+    async () => {
+      const FAR_FUTURE_PUBLISHED_AT = '2099-01-01T00:00:00.000Z';
+      mockListPublicChatRssEntries.mockImplementation((locale: string) =>
+        Promise.resolve([
+          {
+            publicShareId: `future-${locale}`,
+            contentLocale: locale,
+            title: `Future chat ${locale}`,
+            description: 'Dated far ahead of every page lastReviewed date.',
+            publishedAt: FAR_FUTURE_PUBLISHED_AT,
+          },
+        ]),
+      );
+      const { GET } = await import('../rss.xml/route');
+
+      const xml = await (await GET(new Request('https://claw.example/rss.xml'))).text();
+
+      const firstChatIndex = xml.indexOf('<category>public-chat</category>');
+      expect(firstChatIndex).toBeGreaterThan(-1);
+      for (const locale of [
+        'en',
+        'ar',
+        'de',
+        'es',
+        'fa',
+        'fr',
+        'hi',
+        'it',
+        'ja',
+        'pt',
+        'ru',
+        'th',
+      ]) {
+        const pageIndex = xml.indexOf(`<link>https://claw.example/${locale}/about</link>`);
+        expect(pageIndex).toBeGreaterThan(-1);
+        expect(pageIndex).toBeLessThan(firstChatIndex);
+      }
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
+
   it(
     'answers a matching If-None-Match with 304 rather than the whole document',
     async () => {

@@ -25,7 +25,7 @@ export const DE_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Vergleiche',
     intro:
-      'ClawAI will nicht der bessere einzelne Assistent sein. Es stellt neun führende Modellfamilien hinter ein Abonnement und schickt jede Nachricht an die passende. Diese Seiten stellen das den Assistenten gegenüber, die Menschen bereits nutzen — jedes Mal anhand derselben acht Fähigkeiten.',
+      'ClawAI will nicht der bessere einzelne Assistent sein. Es stellt {cloudProviderCount} Cloud-Anbieter und lokale Open-Weight-Modelle hinter ein Abonnement und schickt jede Nachricht an das passende Modell. Diese Seiten stellen das den Assistenten gegenüber, die Menschen bereits nutzen — jedes Mal anhand derselben acht Fähigkeiten.',
     cardsTitle: 'Assistenten zum Vergleichen auswählen',
     cardCta: 'Mit {rival} vergleichen',
     coversTitle: 'Was jeder Vergleich abdeckt',
@@ -43,9 +43,10 @@ export const DE_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.RECEIPTS]: 'Nutzungsbelege',
   },
   clawCells: {
-    [ComparisonDimension.MODEL_CHOICE]: 'Neun führende Modellfamilien in einem Abonnement',
+    [ComparisonDimension.MODEL_CHOICE]:
+      '{cloudProviderCount} Cloud-Anbieter, dazu Open-Weight-Modelle auf eigener Hardware',
     [ComparisonDimension.ROUTING]:
-      'Fünf Routing-Modi, darunter automatisches Routing pro Nachricht',
+      '{routingModeCount} Routing-Modi, darunter automatisches Routing pro Nachricht',
     [ComparisonDimension.SIDE_BY_SIDE]:
       'Ein Prompt an mehrere Modelle gleichzeitig, Antworten nebeneinander',
     [ComparisonDimension.LOCAL_MODELS]:
@@ -54,7 +55,7 @@ export const DE_COMPARISON_CONTENT: ComparisonDictionary = {
       'Der gesamte Stack läuft auf Ihren Servern, Quellcode auf GitHub',
     [ComparisonDimension.MEMORY_AND_FILES]:
       'Speicher, der über Gespräche hinweg bleibt, plus Dateikontext',
-    [ComparisonDimension.CONNECTORS]: 'Zwölf Workspace-Konnektoren',
+    [ComparisonDimension.CONNECTORS]: '{connectorCount} Workspace-Konnektoren',
     [ComparisonDimension.RECEIPTS]:
       'Jede Antwort protokolliert Modell, Kosten und verbrauchtes Kontingent',
   },

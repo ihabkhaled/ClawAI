@@ -25,7 +25,7 @@ export const EN_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Comparisons',
     intro:
-      'ClawAI is not trying to be a better single assistant. It puts nine frontier model families behind one subscription and sends each message to the one suited to it. These pages set that against the assistants people already use, on the same eight capabilities every time.',
+      'ClawAI is not trying to be a better single assistant. It puts {cloudProviderCount} cloud providers and local open-weight models behind one subscription and sends each message to the one suited to it. These pages set that against the assistants people already use, on the same eight capabilities every time.',
     cardsTitle: 'Pick an assistant to compare',
     cardCta: 'Compare with {rival}',
     coversTitle: 'What every comparison covers',
@@ -43,8 +43,10 @@ export const EN_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.RECEIPTS]: 'Usage receipts',
   },
   clawCells: {
-    [ComparisonDimension.MODEL_CHOICE]: 'Nine frontier model families under one subscription',
-    [ComparisonDimension.ROUTING]: 'Five routing modes, including automatic per-message routing',
+    [ComparisonDimension.MODEL_CHOICE]:
+      '{cloudProviderCount} cloud providers, plus open-weight models on your own hardware',
+    [ComparisonDimension.ROUTING]:
+      '{routingModeCount} routing modes, including automatic per-message routing',
     [ComparisonDimension.SIDE_BY_SIDE]:
       'One prompt to several models at once, answers side by side',
     [ComparisonDimension.LOCAL_MODELS]:
@@ -52,7 +54,7 @@ export const EN_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.SELF_HOSTING]: 'The whole stack runs on your servers, source on GitHub',
     [ComparisonDimension.MEMORY_AND_FILES]:
       'Memory that persists between conversations, plus file context',
-    [ComparisonDimension.CONNECTORS]: 'Twelve workspace connectors',
+    [ComparisonDimension.CONNECTORS]: '{connectorCount} workspace connectors',
     [ComparisonDimension.RECEIPTS]:
       'Every answer records its model, its cost and the allowance it drew',
   },

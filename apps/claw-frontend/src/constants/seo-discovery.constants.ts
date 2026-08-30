@@ -8,11 +8,23 @@ export const DISCOVERY_RETRY_AFTER_SECONDS = 30;
 /**
  * Ceiling on items in the global `/rss.xml`.
  *
- * That feed carries every locale at once: 13 locales of registry pages plus up
- * to 100 public chats each. The cap is set above that ceiling so nothing is
- * dropped today, and exists only so a deployment with far more public chats
- * degrades into a large-but-finite document instead of an unbounded one. The
- * per-locale feeds stay the place to read one language in full.
+ * That feed carries every locale at once: 13 locales of feed-eligible registry
+ * pages, plus up to 100 public chats each.
+ *
+ * The arithmetic, which is what goes stale — this comment previously said "16
+ * pages" against a real surface of 28:
+ *
+ *   pages = 13 locales x (feed-eligible pages)   <- bounded by the registry
+ *   chats = 13 locales x <= 100                  <- up to 1,300, the unbounded half
+ *
+ * `buildGlobalRssResponse` takes ALL pages first and lets chats fill whatever
+ * remains, so this cap can only ever truncate chats. It used to sort the merged
+ * list by date and slice, which put every chat (live timestamps) ahead of every
+ * page (fixed review dates) and silently dropped pages instead — the durable,
+ * indexable half of the feed. `app/__tests__/rss.test.ts` pins the ordering
+ * directly against document order, not against a mocked cap.
+ *
+ * The per-locale feeds stay the place to read one language in full.
  */
 export const RSS_GLOBAL_MAX_ITEMS = 2000;
 

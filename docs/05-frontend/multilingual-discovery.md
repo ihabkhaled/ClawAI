@@ -60,13 +60,20 @@ reader who subscribes to one of them receives exactly one of the thirteen and
 never learns the others exist.
 
 `/rss.xml` is the opposite trade and exists for the crawler rather than the
-reader: one fixed URL, no negotiation, every indexable registry page in every
-locale plus every public chat share, newest first. Because RSS 2.0 carries a
-single `<language>` per channel, each item declares its own through Dublin Core
-(`xmlns:dc`, `<dc:language>`) — the channel value names the default locale only.
-It is capped at `RSS_GLOBAL_MAX_ITEMS`, set above today's ceiling (13 locales ×
-16 pages, plus 100 chats per locale) so nothing is dropped now and an unbounded
-document is impossible later.
+reader: one fixed URL, no negotiation, every **feed-eligible** registry page in
+every locale plus every public chat share, newest first. "Feed-eligible" is
+narrower than "indexable" — see the next section; a page a subscriber would
+not consider news (the cookie policy, the contact page) is indexable and in the
+sitemap but never in a feed. Because RSS 2.0 carries a single `<language>` per
+channel, each item declares its own through Dublin Core (`xmlns:dc`,
+`<dc:language>`) — the channel value names the default locale only. It is
+capped at `RSS_GLOBAL_MAX_ITEMS`, and pages are placed ahead of chats in the
+merge before the cap is applied — pages are the small, bounded half (13 locales
+× feed-eligible page count) and chats are the unbounded half (up to 100 per
+locale), so if anything must be dropped it is the side that can regrow, not the
+durable indexable pages. See `constants/seo-discovery.constants.ts` for the
+exact arithmetic, which is derived from the registry rather than hand-counted
+and will drift if read from here instead.
 
 Both are advertised from every public page's metadata as
 `alternates.types['application/rss+xml']`, so a crawler landing on any single

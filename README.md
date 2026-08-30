@@ -75,7 +75,10 @@ Human-facing URLs use a locale prefix (for example `/en`, `/fa/features`, and
 `/ja/chat`). Machine routes such as `/api/*`, `/robots.txt`, and `/sitemap.xml`
 remain locale-neutral. See
 [Multilingual discovery](docs/05-frontend/multilingual-discovery.md) for the
-publication, privacy, deployment, and search-removal contracts.
+publication, privacy, deployment, and search-removal contracts, and
+[SEO content architecture](docs/05-frontend/seo-content-architecture.md) for
+the audit, the verified capability inventory content pages must trace to, and
+the cluster-by-cluster build plan.
 
 ---
 
