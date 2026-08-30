@@ -25,7 +25,7 @@ export const FA_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'مقایسه‌ها',
     intro:
-      'ClawAI نمی‌کوشد دستیار واحدِ بهتری باشد. نُه خانوادهٔ مدل پیشرو را زیر یک اشتراک می‌گذارد و هر پیام را به مدل مناسب می‌فرستد. این صفحه‌ها همان را در برابر دستیارهایی می‌گذارند که مردم همین حالا به کار می‌برند، و هر بار بر پایهٔ همان هشت قابلیت.',
+      'ClawAI نمی‌کوشد دستیار واحدِ بهتری باشد. {cloudProviderCount} ارائه‌دهندهٔ ابری و مدل‌های محلی وزن‌باز را زیر یک اشتراک می‌گذارد و هر پیام را به مدل مناسب می‌فرستد. این صفحه‌ها همان را در برابر دستیارهایی می‌گذارند که مردم همین حالا به کار می‌برند، و هر بار بر پایهٔ همان هشت قابلیت.',
     cardsTitle: 'دستیاری برای مقایسه انتخاب کنید',
     cardCta: 'مقایسه با {rival}',
     coversTitle: 'هر مقایسه چه چیزی را پوشش می‌دهد',
@@ -43,15 +43,17 @@ export const FA_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.RECEIPTS]: 'گزارش مصرف',
   },
   clawCells: {
-    [ComparisonDimension.MODEL_CHOICE]: 'نُه خانوادهٔ مدل پیشرو زیر یک اشتراک',
-    [ComparisonDimension.ROUTING]: 'پنج حالت مسیریابی، از جمله مسیریابی خودکار برای هر پیام',
+    [ComparisonDimension.MODEL_CHOICE]:
+      '{cloudProviderCount} ارائه‌دهندهٔ ابری، به‌همراه مدل‌های وزن‌باز روی سخت‌افزار خودتان',
+    [ComparisonDimension.ROUTING]:
+      '{routingModeCount} حالت مسیریابی، از جمله مسیریابی خودکار برای هر پیام',
     [ComparisonDimension.SIDE_BY_SIDE]: 'یک درخواست به چند مدل هم‌زمان، پاسخ‌ها کنار هم',
     [ComparisonDimension.LOCAL_MODELS]:
       'مدل‌های با وزن باز روی GPU خودتان، از راه Ollama یا llama.cpp',
     [ComparisonDimension.SELF_HOSTING]: 'کل مجموعه روی سرورهای شما اجرا می‌شود، کد روی GitHub',
     [ComparisonDimension.MEMORY_AND_FILES]:
       'حافظه‌ای که میان گفتگوها می‌ماند، به‌همراه بافت پرونده‌ها',
-    [ComparisonDimension.CONNECTORS]: 'دوازده اتصال‌دهندهٔ کاری',
+    [ComparisonDimension.CONNECTORS]: '{connectorCount} اتصال‌دهندهٔ کاری',
     [ComparisonDimension.RECEIPTS]: 'هر پاسخ مدل، هزینه و سهمیهٔ مصرف‌شده‌اش را ثبت می‌کند',
   },
   rivals: {

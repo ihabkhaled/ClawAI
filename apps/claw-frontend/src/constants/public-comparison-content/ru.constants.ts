@@ -25,7 +25,7 @@ export const RU_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Сравнения',
     intro:
-      'ClawAI не пытается быть лучшим одиночным ассистентом. Он держит девять передовых семейств моделей под одной подпиской и отправляет каждое сообщение подходящему. Эти страницы сопоставляют его с ассистентами, которыми уже пользуются, и всегда по одним и тем же восьми возможностям.',
+      'ClawAI не пытается быть лучшим одиночным ассистентом. Он держит {cloudProviderCount} облачных провайдера и локальные модели с открытыми весами под одной подпиской и отправляет каждое сообщение подходящему. Эти страницы сопоставляют его с ассистентами, которыми уже пользуются, и всегда по одним и тем же восьми возможностям.',
     cardsTitle: 'Выберите ассистента для сравнения',
     cardCta: 'Сравнить с {rival}',
     coversTitle: 'Что охватывает каждое сравнение',
@@ -43,9 +43,10 @@ export const RU_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.RECEIPTS]: 'Отчёт о расходе',
   },
   clawCells: {
-    [ComparisonDimension.MODEL_CHOICE]: 'Девять передовых семейств моделей в одной подписке',
+    [ComparisonDimension.MODEL_CHOICE]:
+      '{cloudProviderCount} облачных провайдера плюс модели с открытыми весами на своём железе',
     [ComparisonDimension.ROUTING]:
-      'Пять режимов маршрутизации, включая автоматический на каждое сообщение',
+      '{routingModeCount} режимов маршрутизации, включая автоматический на каждое сообщение',
     [ComparisonDimension.SIDE_BY_SIDE]: 'Один запрос сразу нескольким моделям, ответы рядом',
     [ComparisonDimension.LOCAL_MODELS]:
       'Модели с открытыми весами на вашей GPU — через Ollama или llama.cpp',
@@ -53,7 +54,7 @@ export const RU_COMPARISON_CONTENT: ComparisonDictionary = {
       'Весь стек работает на ваших серверах, исходный код на GitHub',
     [ComparisonDimension.MEMORY_AND_FILES]:
       'Память, которая сохраняется между разговорами, плюс контекст файлов',
-    [ComparisonDimension.CONNECTORS]: 'Двенадцать рабочих коннекторов',
+    [ComparisonDimension.CONNECTORS]: '{connectorCount} рабочих коннекторов',
     [ComparisonDimension.RECEIPTS]: 'Каждый ответ фиксирует модель, стоимость и списанную квоту',
   },
   rivals: {

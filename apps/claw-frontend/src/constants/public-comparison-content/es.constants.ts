@@ -25,7 +25,7 @@ export const ES_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Comparativas',
     intro:
-      'ClawAI no intenta ser un asistente único mejor. Pone nueve familias de modelos punteros bajo una sola suscripción y envía cada mensaje al que mejor encaja. Estas páginas lo contrastan con los asistentes que la gente ya usa, siempre sobre las mismas ocho capacidades.',
+      'ClawAI no intenta ser un asistente único mejor. Pone {cloudProviderCount} proveedores en la nube y modelos locales de pesos abiertos bajo una sola suscripción y envía cada mensaje al que mejor encaja. Estas páginas lo contrastan con los asistentes que la gente ya usa, siempre sobre las mismas ocho capacidades.',
     cardsTitle: 'Elige un asistente para comparar',
     cardCta: 'Comparar con {rival}',
     coversTitle: 'Qué cubre cada comparativa',
@@ -44,8 +44,9 @@ export const ES_COMPARISON_CONTENT: ComparisonDictionary = {
   },
   clawCells: {
     [ComparisonDimension.MODEL_CHOICE]:
-      'Nueve familias de modelos punteros bajo una sola suscripción',
-    [ComparisonDimension.ROUTING]: 'Cinco modos de enrutado, incluido el automático por mensaje',
+      '{cloudProviderCount} proveedores en la nube, más modelos de pesos abiertos en tu propio hardware',
+    [ComparisonDimension.ROUTING]:
+      '{routingModeCount} modos de enrutado, incluido el automático por mensaje',
     [ComparisonDimension.SIDE_BY_SIDE]:
       'Un mismo prompt a varios modelos a la vez, respuestas en paralelo',
     [ComparisonDimension.LOCAL_MODELS]:
@@ -53,7 +54,7 @@ export const ES_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.SELF_HOSTING]: 'Toda la pila corre en tus servidores, código en GitHub',
     [ComparisonDimension.MEMORY_AND_FILES]:
       'Memoria que persiste entre conversaciones, más contexto de archivos',
-    [ComparisonDimension.CONNECTORS]: 'Doce conectores de trabajo',
+    [ComparisonDimension.CONNECTORS]: '{connectorCount} conectores de trabajo',
     [ComparisonDimension.RECEIPTS]:
       'Cada respuesta registra su modelo, su coste y el saldo consumido',
   },

@@ -25,7 +25,7 @@ export const TH_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'การเปรียบเทียบ',
     intro:
-      'ClawAI ไม่ได้พยายามเป็นผู้ช่วยเดี่ยวที่ดีกว่า แต่รวมโมเดลชั้นนำเก้าตระกูลไว้ใต้การสมัครสมาชิกเดียว แล้วส่งแต่ละข้อความไปยังโมเดลที่เหมาะกับงานนั้น หน้าเหล่านี้นำแนวคิดดังกล่าวมาวางเทียบกับผู้ช่วยที่ผู้คนใช้อยู่แล้ว ด้วยความสามารถแปดข้อเดิมทุกครั้ง',
+      'ClawAI ไม่ได้พยายามเป็นผู้ช่วยเดี่ยวที่ดีกว่า แต่รวมผู้ให้บริการคลาวด์ {cloudProviderCount} รายและโมเดลโอเพนเวทบนเครื่องของคุณไว้ใต้การสมัครสมาชิกเดียว แล้วส่งแต่ละข้อความไปยังโมเดลที่เหมาะกับงานนั้น หน้าเหล่านี้นำแนวคิดดังกล่าวมาวางเทียบกับผู้ช่วยที่ผู้คนใช้อยู่แล้ว ด้วยความสามารถแปดข้อเดิมทุกครั้ง',
     cardsTitle: 'เลือกผู้ช่วยที่ต้องการเปรียบเทียบ',
     cardCta: 'เปรียบเทียบกับ {rival}',
     coversTitle: 'ทุกการเปรียบเทียบครอบคลุมอะไรบ้าง',
@@ -43,14 +43,16 @@ export const TH_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.RECEIPTS]: 'บันทึกการใช้งาน',
   },
   clawCells: {
-    [ComparisonDimension.MODEL_CHOICE]: 'โมเดลชั้นนำเก้าตระกูลในการสมัครสมาชิกเดียว',
-    [ComparisonDimension.ROUTING]: 'โหมดกำหนดเส้นทางห้าแบบ รวมถึงแบบอัตโนมัติรายข้อความ',
+    [ComparisonDimension.MODEL_CHOICE]:
+      'ผู้ให้บริการคลาวด์ {cloudProviderCount} ราย พร้อมโมเดลโอเพนเวทบนเครื่องของคุณเอง',
+    [ComparisonDimension.ROUTING]:
+      'โหมดกำหนดเส้นทาง {routingModeCount} แบบ รวมถึงแบบอัตโนมัติรายข้อความ',
     [ComparisonDimension.SIDE_BY_SIDE]: 'ส่งคำสั่งเดียวไปหลายโมเดลพร้อมกัน แล้ววางคำตอบเทียบกัน',
     [ComparisonDimension.LOCAL_MODELS]:
       'โมเดลน้ำหนักเปิดบน GPU ของคุณเอง ผ่าน Ollama หรือ llama.cpp',
     [ComparisonDimension.SELF_HOSTING]: 'ทั้งระบบทำงานบนเซิร์ฟเวอร์ของคุณ ซอร์สโค้ดอยู่บน GitHub',
     [ComparisonDimension.MEMORY_AND_FILES]: 'หน่วยความจำที่คงอยู่ข้ามบทสนทนา พร้อมบริบทจากไฟล์',
-    [ComparisonDimension.CONNECTORS]: 'ตัวเชื่อมต่อกับเครื่องมือทำงานสิบสองรายการ',
+    [ComparisonDimension.CONNECTORS]: 'ตัวเชื่อมต่อกับเครื่องมือทำงาน {connectorCount} รายการ',
     [ComparisonDimension.RECEIPTS]: 'ทุกคำตอบบันทึกโมเดล ต้นทุน และโควตาที่ใช้ไป',
   },
   rivals: {

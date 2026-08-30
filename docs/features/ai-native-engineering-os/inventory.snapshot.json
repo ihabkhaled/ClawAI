@@ -6593,9 +6593,29 @@
         "route": "/how-it-works"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/integrations/[topic]/page.tsx",
+        "kind": "page",
+        "route": "/integrations/[topic]"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/integrations/page.tsx",
+        "kind": "page",
+        "route": "/integrations"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/layout.tsx",
         "kind": "layout",
         "route": "/"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/learn/[topic]/page.tsx",
+        "kind": "page",
+        "route": "/learn/[topic]"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/learn/page.tsx",
+        "kind": "page",
+        "route": "/learn"
       },
       {
         "file": "apps/claw-frontend/src/app/(marketing)/local-first-ai/page.tsx",
@@ -7631,7 +7651,7 @@
           "file": "skills/navigate-codebase.md"
         },
         {
-          "bytes": 8585,
+          "bytes": 14444,
           "file": "skills/publish-a-public-marketing-page.md"
         },
         {
@@ -9475,7 +9495,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 405
+        "testFiles": 407
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10226,7 +10246,7 @@
     "endpointCount": 643,
     "envVarCount": 351,
     "eventCount": 178,
-    "frontendRouteCount": 139,
+    "frontendRouteCount": 143,
     "localeCount": 13,
     "nginxRouteCount": 57,
     "permissionCount": 51,
@@ -10235,7 +10255,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1107,
+    "totalTestFiles": 1109,
     "workspaceCount": 25
   }
 }

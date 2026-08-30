@@ -25,7 +25,7 @@ export const IT_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Confronti',
     intro:
-      'ClawAI non punta a essere un assistente singolo migliore. Mette nove famiglie di modelli di punta sotto un solo abbonamento e manda ogni messaggio a quella adatta. Queste pagine lo mettono a confronto con gli assistenti che si usano già, sempre sulle stesse otto capacità.',
+      'ClawAI non punta a essere un assistente singolo migliore. Mette {cloudProviderCount} provider cloud e modelli open-weight in locale sotto un solo abbonamento e manda ogni messaggio a quello adatto. Queste pagine lo mettono a confronto con gli assistenti che si usano già, sempre sulle stesse otto capacità.',
     cardsTitle: 'Scegli un assistente da confrontare',
     cardCta: 'Confronta con {rival}',
     coversTitle: 'Cosa copre ogni confronto',
@@ -43,16 +43,17 @@ export const IT_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.RECEIPTS]: 'Resoconto d’uso',
   },
   clawCells: {
-    [ComparisonDimension.MODEL_CHOICE]: 'Nove famiglie di modelli di punta con un solo abbonamento',
+    [ComparisonDimension.MODEL_CHOICE]:
+      '{cloudProviderCount} provider cloud, più modelli open-weight sul tuo hardware',
     [ComparisonDimension.ROUTING]:
-      'Cinque modalità di routing, incluso quello automatico per messaggio',
+      '{routingModeCount} modalità di routing, incluso quello automatico per messaggio',
     [ComparisonDimension.SIDE_BY_SIDE]: 'Un prompt a più modelli insieme, risposte affiancate',
     [ComparisonDimension.LOCAL_MODELS]:
       'Modelli a pesi aperti sulla tua GPU, via Ollama o llama.cpp',
     [ComparisonDimension.SELF_HOSTING]: 'L’intero stack gira sui tuoi server, sorgente su GitHub',
     [ComparisonDimension.MEMORY_AND_FILES]:
       'Memoria che resta tra una conversazione e l’altra, più il contesto dei file',
-    [ComparisonDimension.CONNECTORS]: 'Dodici connettori di lavoro',
+    [ComparisonDimension.CONNECTORS]: '{connectorCount} connettori di lavoro',
     [ComparisonDimension.RECEIPTS]: 'Ogni risposta registra modello, costo e quota consumata',
   },
   rivals: {

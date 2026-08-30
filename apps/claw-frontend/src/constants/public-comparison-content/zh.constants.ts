@@ -25,7 +25,7 @@ export const ZH_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: '对比',
     intro:
-      'ClawAI 并不打算做一个更好的单一助手。它把九大前沿模型家族放在同一份订阅之下，并把每条消息交给合适的那个。这些页面就用同样的八项能力，把这种做法与人们已在使用的助手逐一对照。',
+      'ClawAI 并不打算做一个更好的单一助手。它把 {cloudProviderCount} 家云端供应商与本地开放权重模型放在同一份订阅之下，并把每条消息交给合适的那个。这些页面就用同样的八项能力，把这种做法与人们已在使用的助手逐一对照。',
     cardsTitle: '选择一款助手进行对比',
     cardCta: '与 {rival} 对比',
     coversTitle: '每篇对比涵盖什么',
@@ -43,14 +43,15 @@ export const ZH_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.RECEIPTS]: '用量记录',
   },
   clawCells: {
-    [ComparisonDimension.MODEL_CHOICE]: '一份订阅覆盖九大前沿模型家族',
-    [ComparisonDimension.ROUTING]: '五种路由模式，含按消息自动路由',
+    [ComparisonDimension.MODEL_CHOICE]:
+      '{cloudProviderCount} 家云端供应商，外加可在自有硬件上运行的开放权重模型',
+    [ComparisonDimension.ROUTING]: '{routingModeCount} 种路由模式，含按消息自动路由',
     [ComparisonDimension.SIDE_BY_SIDE]: '同一条提示同时发给多个模型，回答并排呈现',
     [ComparisonDimension.LOCAL_MODELS]:
       '在你自己的 GPU 上运行开源权重模型，经由 Ollama 或 llama.cpp',
     [ComparisonDimension.SELF_HOSTING]: '整套系统跑在你的服务器上，源码在 GitHub',
     [ComparisonDimension.MEMORY_AND_FILES]: '跨对话保留的记忆，外加文件上下文',
-    [ComparisonDimension.CONNECTORS]: '十二个工作区连接器',
+    [ComparisonDimension.CONNECTORS]: '{connectorCount} 个工作区连接器',
     [ComparisonDimension.RECEIPTS]: '每次回答都记录所用模型、成本与消耗的额度',
   },
   rivals: {

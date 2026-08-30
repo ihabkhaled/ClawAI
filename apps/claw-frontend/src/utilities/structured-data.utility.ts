@@ -6,6 +6,8 @@ import type {
   ComparisonHubJsonLdInput,
   ComparisonJsonLdInput,
   JsonLdObject,
+  LearnHubJsonLdInput,
+  LearnTopicJsonLdInput,
   PublicFaqJsonLdInput,
   PublicPageJsonLdInput,
 } from '@/types/structured-data.types';
@@ -282,6 +284,91 @@ export function buildSharedChatJsonLd(input: SharedChatJsonLdInput): JsonLdObjec
  * actual control preventing a chat titled `</script><script>…` from running code
  * for every visitor.
  */
+/**
+ * A `/learn` explainer.
+ *
+ * `TechArticle` rather than `WebPage`: these pages teach a technique, and the
+ * type is the one piece of structured data that tells a crawler which kind of
+ * page it is looking at. `datePublished` and `dateModified` both carry the
+ * cluster review date — an explainer with no date is indistinguishable from an
+ * abandoned one, and that date is only moved after the claims are re-read.
+ *
+ * The FAQ is built from the same array the page renders, so visible text and
+ * structured data cannot drift.
+ */
+export function buildLearnTopicJsonLd(input: LearnTopicJsonLdInput): JsonLdObject {
+  const origin = new URL(input.canonicalUrl).origin;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'TechArticle',
+        headline: input.name,
+        description: input.description,
+        url: input.canonicalUrl,
+        inLanguage: input.language,
+        datePublished: input.lastReviewed,
+        dateModified: input.lastReviewed,
+        isPartOf: { '@type': 'WebSite', name: 'ClawAI', url: origin },
+        publisher: { '@type': 'Organization', name: 'ClawAI', url: origin },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'ClawAI', item: origin },
+          { '@type': 'ListItem', position: 2, name: input.hubName, item: input.hubUrl },
+          { '@type': 'ListItem', position: 3, name: input.name, item: input.canonicalUrl },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        url: input.canonicalUrl,
+        inLanguage: input.language,
+        mainEntity: input.faq.map((entry) => ({
+          '@type': 'Question',
+          name: entry.question,
+          acceptedAnswer: { '@type': 'Answer', text: entry.answer },
+        })),
+      },
+    ],
+  };
+}
+
+/** The `/learn` hub: the page, its trail, and the explainers it lists. */
+export function buildLearnHubJsonLd(input: LearnHubJsonLdInput): JsonLdObject {
+  const origin = new URL(input.canonicalUrl).origin;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        name: input.name,
+        description: input.description,
+        url: input.canonicalUrl,
+        inLanguage: input.language,
+        dateModified: input.lastReviewed,
+        isPartOf: { '@type': 'WebSite', name: 'ClawAI', url: origin },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'ClawAI', item: origin },
+          { '@type': 'ListItem', position: 2, name: input.name, item: input.canonicalUrl },
+        ],
+      },
+      {
+        '@type': 'ItemList',
+        itemListElement: input.items.map((item, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: item.name,
+          url: item.url,
+        })),
+      },
+    ],
+  };
+}
+
 export function serializeJsonLd(data: JsonLdObject): string {
   return JSON.stringify(data).replaceAll('<', '\\u003c');
 }

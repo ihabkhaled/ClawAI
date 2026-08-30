@@ -25,7 +25,7 @@ export const PT_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'Comparações',
     intro:
-      'O ClawAI não tenta ser um assistente único melhor. Coloca nove famílias de modelos de ponta sob uma só assinatura e envia cada mensagem para a que melhor serve. Estas páginas põem isso frente aos assistentes que as pessoas já usam, sempre sobre as mesmas oito capacidades.',
+      'O ClawAI não tenta ser um assistente único melhor. Coloca {cloudProviderCount} provedores em nuvem e modelos locais de pesos abertos sob uma só assinatura e envia cada mensagem para o que melhor serve. Estas páginas põem isso frente aos assistentes que as pessoas já usam, sempre sobre as mesmas oito capacidades.',
     cardsTitle: 'Escolha um assistente para comparar',
     cardCta: 'Comparar com {rival}',
     coversTitle: 'O que cada comparação cobre',
@@ -43,8 +43,10 @@ export const PT_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.RECEIPTS]: 'Registo de uso',
   },
   clawCells: {
-    [ComparisonDimension.MODEL_CHOICE]: 'Nove famílias de modelos de ponta numa só assinatura',
-    [ComparisonDimension.ROUTING]: 'Cinco modos de roteamento, incluindo o automático por mensagem',
+    [ComparisonDimension.MODEL_CHOICE]:
+      '{cloudProviderCount} provedores em nuvem, mais modelos de pesos abertos no seu próprio hardware',
+    [ComparisonDimension.ROUTING]:
+      '{routingModeCount} modos de roteamento, incluindo o automático por mensagem',
     [ComparisonDimension.SIDE_BY_SIDE]:
       'Um mesmo pedido para vários modelos ao mesmo tempo, respostas lado a lado',
     [ComparisonDimension.LOCAL_MODELS]:
@@ -53,7 +55,7 @@ export const PT_COMPARISON_CONTENT: ComparisonDictionary = {
       'Toda a pilha corre nos seus servidores, código-fonte no GitHub',
     [ComparisonDimension.MEMORY_AND_FILES]:
       'Memória que persiste entre conversas, mais o contexto dos ficheiros',
-    [ComparisonDimension.CONNECTORS]: 'Doze conectores de trabalho',
+    [ComparisonDimension.CONNECTORS]: '{connectorCount} conectores de trabalho',
     [ComparisonDimension.RECEIPTS]: 'Cada resposta regista o modelo, o custo e o saldo consumido',
   },
   rivals: {

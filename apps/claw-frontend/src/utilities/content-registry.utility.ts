@@ -2,7 +2,13 @@ import {
   CONTENT_REGISTRY,
   PUBLIC_CONTENT_DEFINITIONS,
 } from '@/constants/content-registry.constants';
-import { AdEligibility, ContentLifecycleStatus, ContentReviewStatus, Indexability } from '@/enums';
+import {
+  AdEligibility,
+  ContentLifecycleStatus,
+  ContentReviewStatus,
+  FeedEligibility,
+  Indexability,
+} from '@/enums';
 import type { Locale } from '@/enums/locale.enum';
 import type {
   ContentRegistryEntry,
@@ -148,6 +154,24 @@ export function getIndexablePagesForLocale(locale: Locale): LocalizedContentRegi
         },
       },
     ];
+  });
+}
+
+/**
+ * The pages that belong in an RSS feed for this locale.
+ *
+ * A strict subset of the indexable pages. Feeds used to carry every indexable
+ * page, which meant a subscriber was notified about `/terms`, `/privacy`,
+ * `/cookies`, `/acceptable-use` and `/contact` — real pages, but not updates
+ * anyone subscribed for.
+ *
+ * Eligibility is per definition rather than per category, so two pages in one
+ * category can differ, and a new page must opt in explicitly.
+ */
+export function getFeedPagesForLocale(locale: Locale): LocalizedContentRegistryEntry[] {
+  return getIndexablePagesForLocale(locale).filter((entry) => {
+    const definition = PUBLIC_CONTENT_DEFINITIONS.find((item) => item.slug === entry.slug);
+    return definition?.feedEligibility === FeedEligibility.PUBLISHABLE;
   });
 }
 

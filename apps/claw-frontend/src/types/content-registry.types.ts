@@ -3,6 +3,7 @@ import type {
   ContentCategory,
   ContentLifecycleStatus,
   ContentReviewStatus,
+  FeedEligibility,
   Indexability,
   StructuredDataType,
 } from '@/enums';
@@ -50,6 +51,8 @@ export type PublicContentDefinition = {
   path: string;
   status: ContentLifecycleStatus;
   adEligibility: AdEligibility;
+  /** Whether this page is an update a feed subscriber asked to hear about. */
+  feedEligibility: FeedEligibility;
   structuredDataType: StructuredDataType;
   relatedSlugs: readonly string[];
   locales: Partial<Record<Locale, LocalizedContentMetadata>>;

@@ -41,3 +41,18 @@ export type ComparisonHubJsonLdItem = {
 export type ComparisonHubJsonLdInput = PublicPageJsonLdInput & {
   items: ReadonlyArray<ComparisonHubJsonLdItem>;
 };
+
+/**
+ * A `/learn` explainer: an article with a trail and its questions.
+ *
+ * Shaped like `ComparisonJsonLdInput` but emitted as `TechArticle` rather than
+ * `WebPage` — these pages explain a technique rather than describing a product,
+ * and `TechArticle` is the type that actually says so.
+ */
+export type LearnTopicJsonLdInput = ComparisonJsonLdInput;
+
+/** The `/learn` hub: the page, its trail, and the explainers it lists. */
+export type LearnHubJsonLdInput = Omit<PublicPageJsonLdInput, 'lastReviewed'> & {
+  lastReviewed: string;
+  items: ReadonlyArray<{ name: string; url: string }>;
+};

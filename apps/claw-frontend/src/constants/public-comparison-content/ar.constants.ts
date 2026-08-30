@@ -25,7 +25,7 @@ export const AR_COMPARISON_CONTENT: ComparisonDictionary = {
   hub: {
     eyebrow: 'المقارنات',
     intro:
-      'لا يحاول ClawAI أن يكون مساعدًا واحدًا أفضل. هو يضع تسع عائلات من النماذج الرائدة خلف اشتراك واحد، ويرسل كل رسالة إلى النموذج المناسب لها. هذه الصفحات تضع ذلك في مواجهة المساعدين الذين يستخدمهم الناس بالفعل، وفق القدرات الثماني نفسها في كل مرة.',
+      'لا يحاول ClawAI أن يكون مساعدًا واحدًا أفضل. هو يضع {cloudProviderCount} مزوّدين سحابيين ونماذج محلية مفتوحة الأوزان خلف اشتراك واحد، ويرسل كل رسالة إلى النموذج المناسب لها. هذه الصفحات تضع ذلك في مواجهة المساعدين الذين يستخدمهم الناس بالفعل، وفق القدرات الثماني نفسها في كل مرة.',
     cardsTitle: 'اختر مساعدًا للمقارنة',
     cardCta: 'قارن مع {rival}',
     coversTitle: 'ما تغطيه كل مقارنة',
@@ -43,15 +43,17 @@ export const AR_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.RECEIPTS]: 'سجل الاستهلاك',
   },
   clawCells: {
-    [ComparisonDimension.MODEL_CHOICE]: 'تسع عائلات من النماذج الرائدة باشتراك واحد',
-    [ComparisonDimension.ROUTING]: 'خمسة أوضاع توجيه، منها التوجيه التلقائي لكل رسالة',
+    [ComparisonDimension.MODEL_CHOICE]:
+      '{cloudProviderCount} مزوّدين سحابيين، إضافةً إلى نماذج مفتوحة الأوزان على أجهزتك',
+    [ComparisonDimension.ROUTING]:
+      '{routingModeCount} أوضاع توجيه، منها التوجيه التلقائي لكل رسالة',
     [ComparisonDimension.SIDE_BY_SIDE]:
       'طلب واحد إلى عدة نماذج دفعة واحدة، والإجابات جنبًا إلى جنب',
     [ComparisonDimension.LOCAL_MODELS]:
       'نماذج مفتوحة الأوزان على وحدة معالجتك الرسومية، عبر Ollama أو llama.cpp',
     [ComparisonDimension.SELF_HOSTING]: 'المنظومة كاملة تعمل على خوادمك، والشيفرة على GitHub',
     [ComparisonDimension.MEMORY_AND_FILES]: 'ذاكرة تبقى بين المحادثات، إضافة إلى سياق الملفات',
-    [ComparisonDimension.CONNECTORS]: 'اثنا عشر موصلًا لأدوات العمل',
+    [ComparisonDimension.CONNECTORS]: '{connectorCount} موصلًا لأدوات العمل',
     [ComparisonDimension.RECEIPTS]: 'كل إجابة تسجّل نموذجها وتكلفتها والحصة التي استهلكتها',
   },
   rivals: {
