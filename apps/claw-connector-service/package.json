@@ -57,7 +57,7 @@
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.4.0",
     "concurrently": "^10.0.5",
     "eslint": "^10.9.0",
     "eslint-plugin-import-x": "^4.17.1",
