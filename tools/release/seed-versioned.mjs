@@ -22,6 +22,9 @@ function servicesWithSeed() {
     .map((entry) => entry.name)
     .filter(
       (name) =>
+        // .cjs: a "type": "module" service's plain-node seed script (Node
+        // parses a bare .js as ESM once its package.json declares that).
+        existsSync(join(APPS_DIR, name, 'prisma', 'seed.cjs')) ||
         existsSync(join(APPS_DIR, name, 'prisma', 'seed.js')) ||
         existsSync(join(APPS_DIR, name, 'prisma', 'seed.ts')),
     )

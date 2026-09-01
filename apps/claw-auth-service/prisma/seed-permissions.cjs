@@ -3,7 +3,7 @@
 // the whole auth-service container (which would also trigger admin-tunable
 // plan upserts and other side effects).
 //
-// Mirrors prisma/seed.js logic for the role-permissions reconciliation pass
+// Mirrors prisma/seed.cjs logic for the role-permissions reconciliation pass
 // ONLY — does NOT touch users, plans, or backfill. Idempotent: safe to run
 // repeatedly. Permission lists MUST stay in sync with
 // src/common/constants/rbac.constants.ts (the typed source of truth).

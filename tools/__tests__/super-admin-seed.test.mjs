@@ -10,7 +10,7 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const require = createRequire(import.meta.url);
 const {
   reconcileExistingSuperAdmin,
-} = require('../../apps/claw-auth-service/prisma/seed-super-admin.js');
+} = require('../../apps/claw-auth-service/prisma/seed-super-admin.cjs');
 
 test('production seed promotes the configured existing administrator', async () => {
   const updates = [];

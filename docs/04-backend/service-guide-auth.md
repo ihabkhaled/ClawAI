@@ -170,7 +170,7 @@ One account carries `User.isSuperAdmin`. A **partial unique index** —
 by `migrations/20260812230000_super_admin_email_verification` — guarantees at most
 one. No HTTP path grants or clears the flag: `UpdateUserData` has no such field
 and `createUserSchema` has no such field, so the only writers are the seed
-(`prisma/seed.js`, `prisma/seed-super-admin.js`) and migration SQL.
+(`prisma/seed.cjs`, `prisma/seed-super-admin.cjs`) and migration SQL.
 
 **Known debt.** Prisma cannot express a partial unique index, so
 `schema.prisma`'s `User` block does not declare it and a future
