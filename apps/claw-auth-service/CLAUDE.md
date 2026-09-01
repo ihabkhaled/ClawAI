@@ -136,7 +136,7 @@ npm run prisma:generate  # Regenerate Prisma client
 - Custom (non-system) roles are NEVER touched — admins manage those via the role→permission matrix UI.
 - `onModuleInit` soft-fails: a transient DB error logs but does not crash auth-service startup.
 
-Operators can run the reconciler standalone (no full deploy) via `npm run seed:permissions` (backed by `prisma/seed-permissions.js`). Useful for rolling a permission catalog change out to an existing install.
+Operators can run the reconciler standalone (no full deploy) via `npm run seed:permissions` (backed by `prisma/seed-permissions.cjs`). Useful for rolling a permission catalog change out to an existing install.
 
 ## Super-Administrator Authority (2026-08-27)
 

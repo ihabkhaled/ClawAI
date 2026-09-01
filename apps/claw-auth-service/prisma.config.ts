@@ -19,6 +19,6 @@ export default defineConfig({
     // ship the src/ tree. The script reads PrismaClient from dist/, which
     // exists in both dev (built by entrypoint) and prod (built by
     // Dockerfile). See prisma/seed.js for the rationale.
-    seed: 'node prisma/seed.js',
+    seed: 'node prisma/seed.cjs',
   },
 });

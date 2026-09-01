@@ -4,9 +4,9 @@
 // WHY THIS FILE EXISTS
 // --------------------
 // `tools/release/seed-versioned.mjs` picks a workspace by the presence of
-// `prisma/seed.js|ts` and runs `npx prisma db seed` in it. routing-service had
+// `prisma/seed.cjs|js|ts` and runs `npx prisma db seed` in it. routing-service had
 // `seed-router-models.ts`, `seed-taxonomy.ts` and `seed-workflows.ts` — none of
-// them named `seed.js`, and `prisma.config.ts` declared no `migrations.seed` —
+// them named `seed.js`/`seed.cjs`, and `prisma.config.ts` declared no `migrations.seed` —
 // so the documented release lane (`npm run release:prepare` -> `seed:versioned`)
 // SKIPPED routing-service entirely.
 //
@@ -19,7 +19,7 @@
 //
 // Plain JS reading from `dist/`, never `src/` — the production image does not
 // ship the TypeScript tree, and `ts-node` is not installed there. Same reason
-// `apps/claw-auth-service/prisma/seed.js` is plain JS; that file says so too.
+// `apps/claw-auth-service/prisma/seed.cjs` is plain JS; that file says so too.
 //
 // It reuses `ModelCostSeedService` rather than re-listing the rates. A second
 // copy of a price table is a second thing to forget: this writes through the
