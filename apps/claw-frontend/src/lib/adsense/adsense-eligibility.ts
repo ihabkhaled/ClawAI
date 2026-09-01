@@ -1,4 +1,10 @@
+import { CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED } from '@/constants/chat-share-review-lockdown.constants';
+import { SHARE_CHAT_PATH_PREFIX } from '@/constants/chat-share.constants';
 import { isAdEligiblePath } from '@/utilities/content-registry.utility';
+
+function isChatSharePath(pathname: string): boolean {
+  return pathname.includes(SHARE_CHAT_PATH_PREFIX);
+}
 
 // Whether a MANUAL ad unit may render on a given path. This is the single
 // authoritative gate: it delegates to the content registry, which only
@@ -28,6 +34,12 @@ export function resolveAdUnitEligibility(
   pathname: string,
   serverEligibility: boolean | undefined,
 ): boolean {
+  // Blanket override for the AdSense review window: a share the safety scan
+  // marked eligible is still exposure during review, so this wins over any
+  // server verdict — see CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED's own comment.
+  if (CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED && isChatSharePath(pathname)) {
+    return false;
+  }
   if (serverEligibility !== undefined) {
     return serverEligibility;
   }
@@ -35,10 +47,13 @@ export function resolveAdUnitEligibility(
 }
 
 // Whether the AdSense verification/serving SCRIPT may be injected at all.
-// The script only ever lives in the marketing layout (so it can never appear
-// in the portal or auth trees), but it is additionally gated on configuration
-// plus either an active review (verification) or an ad-eligible marketing
-// page with serving enabled.
+// The script is mounted only in the (marketing) layout (so it structurally
+// cannot appear in the portal, auth or payment trees), but that layout also
+// contains non-eligible pages — /share/chat, /terms, /privacy and friends —
+// so eligibility is ALSO enforced per-pathname here, the same registry-backed
+// check that gates manual ad units. `reviewMode` no longer bypasses this: a
+// page Google's reviewer should never see monetized on must not carry the
+// loader either, verification or not.
 export function shouldLoadAdSenseScript(params: {
   isConfigured: boolean;
   reviewMode: boolean;
@@ -48,8 +63,11 @@ export function shouldLoadAdSenseScript(params: {
   if (!params.isConfigured) {
     return false;
   }
-  if (params.reviewMode) {
-    return true;
+  if (!isAdUnitEligible(params.pathname)) {
+    return false;
   }
-  return params.servingEnabled && isAdUnitEligible(params.pathname);
+  if (CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED && isChatSharePath(params.pathname)) {
+    return false;
+  }
+  return params.reviewMode || params.servingEnabled;
 }

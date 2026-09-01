@@ -1,3 +1,4 @@
+import { CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED } from '@/constants/chat-share-review-lockdown.constants';
 import {
   DISCOVERY_CACHE_CONTROL,
   SITEMAP_URL_CHUNK_SIZE,
@@ -20,9 +21,14 @@ export async function GET(): Promise<Response> {
   }
 
   const siteUrl = getSiteUrl();
-  const counts = await Promise.all(
-    SUPPORTED_LOCALES.map(async ({ locale }) => countIndexableChatShares(locale)),
-  );
+  // During the AdSense review window, chat shares are excluded from the
+  // sitemap outright (CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED) — skip the
+  // chat-service round trip entirely rather than fetch counts nothing will use.
+  const counts = CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED
+    ? []
+    : await Promise.all(
+        SUPPORTED_LOCALES.map(async ({ locale }) => countIndexableChatShares(locale)),
+      );
   const childUrls: string[] = [];
   for (const { locale } of SUPPORTED_LOCALES) {
     // Page chunks are counted rather than assumed. Hardcoding `pages-1.xml`

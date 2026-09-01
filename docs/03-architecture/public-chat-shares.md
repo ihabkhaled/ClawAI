@@ -101,6 +101,23 @@ A URL matching `/share/chat/*` is never enough on its own. That is the
 difference between "this page is allowed to show ads" and "this page has the
 right shape".
 
+### Temporary AdSense review lockdown (2026-09-01)
+
+`CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED`
+(`apps/claw-frontend/src/constants/chat-share-review-lockdown.constants.ts`)
+overrides the per-snapshot `adsEligible`/`indexEligible` decisions above to
+`false`/excluded for **every** share while it is `true`: no ad units, no
+`index` robots directive, absent from `sitemap.xml`'s chat child documents,
+absent from every RSS/Atom feed. It does not touch the chat-service scan or
+the persisted DB columns — it is a frontend-only, one-flag override so lifting
+it later needs no backfill. See
+[`docs/03-architecture/adsense-eligibility.md`](adsense-eligibility.md) and
+[`rules/38-adsense-eligibility-and-low-value-content.md`](../../rules/38-adsense-eligibility-and-low-value-content.md).
+
+Flip it to `false` only after AdSense approves the account AND a dedicated
+content-quality review of shared chats has happened — not on the assumption
+that the per-snapshot safety scan is sufficient on its own.
+
 ## Caching
 
 The public endpoint sends `no-store`, and nginx is configured not to reintroduce
@@ -129,15 +146,15 @@ hand to a search engine — a canonical URL pointing at a domain they control.
 
 ## Endpoints
 
-| Method   | Path                                                  | Auth     |
-| -------- | ----------------------------------------------------- | -------- |
-| `GET`    | `/api/v1/chat-threads/:threadId/share`                | owner    |
-| `POST`   | `/api/v1/chat-threads/:threadId/share`                | owner    |
-| `PATCH`  | `/api/v1/chat-threads/:threadId/share`                | owner    |
-| `POST`   | `/api/v1/chat-threads/:threadId/share/refresh`        | owner    |
-| `POST`   | `/api/v1/chat-threads/:threadId/share/regenerate-url` | owner    |
-| `DELETE` | `/api/v1/chat-threads/:threadId/share`                | owner    |
-| `GET`    | `/api/v1/public/chat-shares/:publicShareId`           | **none** |
+| Method   | Path                                                  | Auth          |
+| -------- | ----------------------------------------------------- | ------------- |
+| `GET`    | `/api/v1/chat-threads/:threadId/share`                | owner         |
+| `POST`   | `/api/v1/chat-threads/:threadId/share`                | owner         |
+| `PATCH`  | `/api/v1/chat-threads/:threadId/share`                | owner         |
+| `POST`   | `/api/v1/chat-threads/:threadId/share/refresh`        | owner         |
+| `POST`   | `/api/v1/chat-threads/:threadId/share/regenerate-url` | owner         |
+| `DELETE` | `/api/v1/chat-threads/:threadId/share`                | owner         |
+| `GET`    | `/api/v1/public/chat-shares/:publicShareId`           | **none**      |
 | `GET`    | `/api/v1/internal/chat-shares/sitemap-feed`           | service token |
 | `GET`    | `/api/v1/internal/chat-shares/sitemap-count`          | service token |
 | `GET`    | `/api/v1/internal/chat-shares/rss-feed`               | service token |

@@ -28,7 +28,7 @@ describe('sitemap index route', () => {
   });
 
   it(
-    'publishes localized page and bounded chat child documents',
+    'publishes localized page documents and excludes chat shares while the AdSense review lockdown is on',
     async () => {
       vi.stubEnv('NODE_ENV', 'production');
       process.env['SITE_URL'] = 'https://claw.example';
@@ -43,9 +43,36 @@ describe('sitemap index route', () => {
       expect(xml).toContain('https://claw.example/sitemaps/en/pages-1.xml');
       expect(xml).toContain('https://claw.example/sitemaps/ar/pages-1.xml');
       expect(xml).toContain('https://claw.example/sitemaps/zh/pages-1.xml');
+      // CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED excludes chat shares from the
+      // sitemap entirely for the duration of the AdSense review — no
+      // chats-*.xml child document is referenced, and the chat-service
+      // count lookup is skipped rather than fetched and discarded.
+      expect(xml).not.toContain('/chats-');
+      expect(xml).not.toContain('/share/chat/');
+      expect(mockCountIndexableChatShares).not.toHaveBeenCalled();
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
+
+  it(
+    'resumes publishing bounded chat child documents once the review lockdown is lifted',
+    async () => {
+      vi.doMock('@/constants/chat-share-review-lockdown.constants', () => ({
+        CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED: false,
+      }));
+      vi.stubEnv('NODE_ENV', 'production');
+      process.env['SITE_URL'] = 'https://claw.example';
+      mockCountIndexableChatShares.mockImplementation((locale: string) =>
+        Promise.resolve({ locale, count: locale === 'ja' ? 40_001 : 0 }),
+      );
+      const { GET } = await import('../sitemap.xml/route');
+
+      const xml = await (await GET()).text();
+
       expect(xml).toContain('https://claw.example/sitemaps/ja/chats-1.xml');
       expect(xml).toContain('https://claw.example/sitemaps/ja/chats-2.xml');
-      expect(xml).not.toContain('/share/chat/');
+
+      vi.doUnmock('@/constants/chat-share-review-lockdown.constants');
     },
     DYNAMIC_IMPORT_TIMEOUT_MS,
   );

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 
+import { CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED } from '@/constants/chat-share-review-lockdown.constants';
 import {
   SHARE_CHAT_PATH_PREFIX,
   SHARED_CHAT_INLINE_AD_AFTER_MESSAGES,
@@ -46,7 +47,10 @@ export function resolveInlineAdIndex(messageCount: number): number | null {
  * - **PUBLIC_UNLISTED**: reachable by URL, `noindex, nofollow, noarchive`. The path
  *   is crawlable, so the page-level directive is the only thing keeping it out of
  *   an index.
- * - **PUBLIC_INDEXED**: `index, follow` with a canonical URL.
+ * - **PUBLIC_INDEXED**: `index, follow` with a canonical URL — UNLESS
+ *   `CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED` is on, in which case every share is
+ *   treated as unindexable regardless of its own visibility/eligibility, for
+ *   the duration of the AdSense review window.
  *
  * The canonical always comes from the configured site origin, never from the
  * request host: a spoofed `X-Forwarded-Host` that became a canonical URL would let
@@ -67,7 +71,10 @@ export function buildSharedChatMetadata(
   }
 
   const canonical = `${siteUrl}${buildSharePath(share.publicShareId, share.contentLocale)}`;
-  const isIndexed = share.visibility === ChatShareVisibility.PUBLIC_INDEXED && share.indexEligible;
+  const isIndexed =
+    !CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED &&
+    share.visibility === ChatShareVisibility.PUBLIC_INDEXED &&
+    share.indexEligible;
   const description =
     buildShareMetaDescription(share.description) ?? t('chatShare.public.genericDescription');
 

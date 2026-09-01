@@ -38,7 +38,7 @@ describe('shouldLoadAdSenseScript', () => {
     ).toBe(false);
   });
 
-  it('loads in review mode regardless of serving/eligibility (verification only)', () => {
+  it('loads on an eligible page in review mode even with serving disabled', () => {
     expect(
       shouldLoadAdSenseScript({
         isConfigured: true,
@@ -47,6 +47,34 @@ describe('shouldLoadAdSenseScript', () => {
         pathname: '/',
       }),
     ).toBe(true);
+  });
+
+  it('never loads in review mode on an ineligible page — review does not bypass eligibility', () => {
+    // The bug this guards: review mode used to load the script on every route
+    // regardless of path, which is exactly the "low value content" exposure
+    // an AdSense reviewer would land on. Verification never needs the script
+    // to run outside an eligible page — the meta tag alone verifies the account.
+    for (const path of ['/chat', '/dashboard', '/login', '/billing', '/settings', '/admin']) {
+      expect(
+        shouldLoadAdSenseScript({
+          isConfigured: true,
+          reviewMode: true,
+          servingEnabled: false,
+          pathname: path,
+        }),
+      ).toBe(false);
+    }
+  });
+
+  it('never loads on a public shared-chat page, even in review mode, while the review lockdown is on', () => {
+    expect(
+      shouldLoadAdSenseScript({
+        isConfigured: true,
+        reviewMode: true,
+        servingEnabled: true,
+        pathname: '/en/share/chat/AbCdEfGhIjKlMnOpQrStUv',
+      }),
+    ).toBe(false);
   });
 
   it('loads on an eligible page only when serving is enabled', () => {

@@ -197,8 +197,14 @@ describe('sitemaps are readable by Google', () => {
   // reach Google through the same documents and carry a different lastmod
   // source (`updatedAt`, a full timestamp) and a different URL shape.
   it(
-    'holds the chat half to the same rules as the pages half',
+    'holds the chat half to the same rules as the pages half, once the AdSense review lockdown is lifted',
     async () => {
+      // CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED excludes chats-*.xml entirely today
+      // (asserted in sitemap.test.ts); this test exercises the URL/lastmod
+      // shape the chat half must have once that lockdown is lifted.
+      vi.doMock('@/constants/chat-share-review-lockdown.constants', () => ({
+        CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED: false,
+      }));
       mockChatSharePage.mockResolvedValue({
         items: [
           {
@@ -218,6 +224,8 @@ describe('sitemaps are readable by Google', () => {
       expect(location).toBe(`${SITE}/en/share/chat/share-abc`);
       expect(new URL(location).host).toBe(new URL(SITE).host);
       expect(isW3cDatetime(stamp)).toBe(true);
+
+      vi.doUnmock('@/constants/chat-share-review-lockdown.constants');
     },
     DYNAMIC_IMPORT_TIMEOUT_MS,
   );
