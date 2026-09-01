@@ -9,7 +9,7 @@
           "CODEX.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and CODEX.md share 3 identical headings (23170 vs 6104 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and CODEX.md share 3 identical headings (24426 vs 6104 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (23170 vs 27062 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (24426 vs 27062 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -7206,7 +7206,7 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 23170,
+          "bytes": 24426,
           "file": "CLAUDE.md"
         },
         {
@@ -7258,7 +7258,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 19573,
+          "bytes": 20001,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7450,13 +7450,21 @@
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
+          "bytes": 6068,
+          "file": "rules/38-adsense-eligibility-and-low-value-content.md"
+        },
+        {
+          "bytes": 3435,
+          "file": "rules/39-worktree-branch-completion-pr-and-release-notes.md"
+        },
+        {
           "bytes": 5156,
           "file": "rules/README.md"
         }
       ],
       "skills": [
         {
-          "bytes": 20103,
+          "bytes": 20338,
           "file": "skills/00-index.md"
         },
         {
@@ -7634,6 +7642,10 @@
         {
           "bytes": 4194,
           "file": "skills/find-canonical-owner.md"
+        },
+        {
+          "bytes": 3539,
+          "file": "skills/finish-worktree-branch-with-pr.md"
         },
         {
           "bytes": 4302,
@@ -9504,7 +9516,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 407
+        "testFiles": 410
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10264,7 +10276,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1119,
+    "totalTestFiles": 1122,
     "workspaceCount": 25
   }
 }

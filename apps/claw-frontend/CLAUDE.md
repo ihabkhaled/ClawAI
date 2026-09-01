@@ -499,3 +499,52 @@ that 403s on every call.
 - Publishing mints a new immutable version and pins the model as an admin
   override; the help text says so, because automated sync will then never
   refresh it.
+
+## AdSense script vs verification vs ad units (2026-09-01)
+
+An AdSense "low value content" rejection traced back to `AdSenseHead` being
+mounted in the ROOT layout (`app/layout.tsx`), with no pathname check —
+`(auth)`, `(portal)`, and `(payment)` all render through the root layout, so
+the ad loader script executed on login, chat, billing and settings. A
+pathname-aware hook (`useAdSenseScript` / `shouldLoadAdSenseScript`) already
+existed but was never wired into anything actually mounted — dead code
+guarding nothing. Comments across the codebase claimed "the script only ever
+lives in the marketing layout," which was aspirational, not true.
+
+Fixed by splitting into three independently-gated pieces (see
+`docs/03-architecture/adsense-eligibility.md` and
+`rules/38-adsense-eligibility-and-low-value-content.md`):
+
+- **Verification** (`<meta name="google-adsense-account">`) stays in
+  `AdSenseHead`, now mounted only in `(marketing)/layout.tsx`.
+- **The loader script** moved to `AdSenseScriptLoader`, a client component
+  that re-derives pathname eligibility via the (previously-dead)
+  `useAdSenseScript` hook. `reviewMode` no longer bypasses eligibility — a
+  page the reviewer should never see monetized on must not carry the loader
+  either, verification or not.
+- **Manual ad units** (`AdUnit`) were already correctly gated; unchanged.
+
+`app/__tests__/adsense-route-boundary.test.ts` asserts the route boundary
+structurally (reads each layout's source, fails if AdSense is referenced
+outside `(marketing)`) — a regression here fails on exactly the bug that
+caused the rejection, not on a behavioral edge case a future refactor might
+miss.
+
+**A raw `<script src>` rendered from a client component is hoisted to the
+real `document.head` by React regardless of where in the tree it renders**,
+and is NOT removed on unmount. This broke a first draft of
+`adsense-script-loader.test.tsx`: `@testing-library/react`'s `render()`
+mounts into real jsdom, so a script asserted-absent in one test could still
+be the leftover DOM node from an earlier test in the same file (jsdom is not
+reset between `it()` blocks). Use `renderToStaticMarkup` for this component's
+tests instead — it never touches the real document.
+
+Public chat shares also got a **temporary, blanket kill switch**
+(`CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED`,
+`constants/chat-share-review-lockdown.constants.ts`) that overrides the
+existing per-snapshot `adsEligible`/`indexEligible` system to `false`/excluded
+everywhere (ads, indexing, sitemap, RSS) for the AdSense review window —
+`/rss.xml` in particular is served by a SEPARATE implementation
+(`global-rss.service.ts`) from the per-locale feeds (`rss.service.ts`); both
+needed the same guard, and missing the second one was caught only by running
+the full test suite, not by reasoning about the call graph.

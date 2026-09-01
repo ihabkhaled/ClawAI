@@ -6,10 +6,24 @@ import { resolveAdUnitEligibility } from '../adsense-eligibility';
 const SHARED_CHAT_PATH = '/share/chat/AbCdEfGhIjKlMnOpQrStUv';
 
 describe('resolveAdUnitEligibility', () => {
-  it('honours a server-derived verdict of true on a dynamic page', () => {
-    // The path cannot answer this: /share/chat/<anything> matches the route, so
-    // only the server knows whether THIS snapshot qualifies.
-    expect(resolveAdUnitEligibility(SHARED_CHAT_PATH, true)).toBe(true);
+  it('overrides a true server-derived verdict to false while the AdSense review lockdown is on', () => {
+    // CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED is true today: even a share the
+    // safety scan approved must not carry ads during the review window.
+    expect(resolveAdUnitEligibility(SHARED_CHAT_PATH, true)).toBe(false);
+  });
+
+  it('resumes honouring a server-derived verdict of true once the review lockdown is lifted', async () => {
+    vi.doMock('@/constants/chat-share-review-lockdown.constants', () => ({
+      CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED: false,
+    }));
+    vi.resetModules();
+    const { resolveAdUnitEligibility: resolveWithLockdownLifted } =
+      await import('../adsense-eligibility');
+
+    expect(resolveWithLockdownLifted(SHARED_CHAT_PATH, true)).toBe(true);
+
+    vi.doUnmock('@/constants/chat-share-review-lockdown.constants');
+    vi.resetModules();
   });
 
   it('honours a server-derived verdict of false', () => {
@@ -35,9 +49,12 @@ describe('resolveAdUnitEligibility', () => {
   });
 
   it('cannot be tricked into eligibility by a portal path plus a server verdict', () => {
-    // A caller passing `true` for a portal route would be a bug, but the ad SCRIPT
-    // only exists in the marketing layout, so no portal page can reach this. This
-    // asserts the seam is explicit rather than accidental.
+    // A caller passing `true` for a portal route would be a bug, but this function
+    // trusts the server verdict it was given — the actual guarantee that no portal
+    // page can reach it lives one layer up: AdUnit is only ever rendered from
+    // (marketing) pages, and the AdSense loader itself is pathname-gated
+    // (adsense-head.test.tsx, adsense-script-loader.test.tsx). This asserts the
+    // seam here is explicit rather than accidental.
     expect(resolveAdUnitEligibility('/chat', true)).toBe(true);
   });
 });

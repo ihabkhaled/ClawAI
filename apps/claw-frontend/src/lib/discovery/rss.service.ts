@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 
+import { CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED } from '@/constants/chat-share-review-lockdown.constants';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import {
   DEGRADED_RSS_CACHE_CONTROL,
@@ -37,7 +38,13 @@ export async function buildLocalizedRssResponse(
           publishedAt: page.metadata.lastReviewed,
           category: page.category,
         }));
-  const chatEntries = kind === RssFeedKind.TOPICS ? [] : await listPublicChatRssEntries(locale);
+  // Chat shares are excluded from every RSS/Atom feed for the duration of the
+  // AdSense review window (CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED), including the
+  // dedicated chats-only feed — an empty feed, not a degraded/503 one.
+  const chatEntries =
+    kind === RssFeedKind.TOPICS || CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED
+      ? []
+      : await listPublicChatRssEntries(locale);
   if (kind === RssFeedKind.CHATS && chatEntries === null) {
     return new Response(null, {
       status: 503,

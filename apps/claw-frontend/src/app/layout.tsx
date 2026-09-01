@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import { Archivo, IBM_Plex_Mono, Inter } from 'next/font/google';
 import { headers } from 'next/headers';
 
-import { AdSenseHead } from '@/components/adsense/adsense-head';
 import { AnalyticsHead } from '@/components/analytics/analytics-head';
 import { AnalyticsNoscript } from '@/components/analytics/analytics-noscript';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
@@ -71,9 +70,11 @@ export default async function RootLayout({
     >
       <head>
         {/* First in the head: GTM measures from the moment its snippet runs, so
-            anything above it is time the container never sees. */}
+            anything above it is time the container never sees. AdSense is NOT
+            mounted here on purpose — it lives only in the (marketing) layout,
+            so the loader can never execute on auth/portal/payment routes. See
+            rules/38-adsense-eligibility-and-low-value-content.md. */}
         <AnalyticsHead />
-        <AdSenseHead />
         <script
           nonce={nonce}
           suppressHydrationWarning

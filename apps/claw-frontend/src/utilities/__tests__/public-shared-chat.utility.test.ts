@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatShareVisibility } from '@/enums/chat-share.enum';
 import { Locale } from '@/enums/locale.enum';
@@ -77,6 +77,10 @@ describe('resolveInlineAdIndex', () => {
 });
 
 describe('buildSharedChatMetadata', () => {
+  afterEach(() => {
+    vi.resetModules();
+  });
+
   it('emits noindex and a generic title for an unavailable share', () => {
     // A 404 page carrying the real title would publish exactly what the owner
     // just unpublished.
@@ -87,11 +91,32 @@ describe('buildSharedChatMetadata', () => {
     expect(metadata.alternates).toBeUndefined();
   });
 
-  it('emits index+follow and a canonical URL for an indexed share', () => {
+  it('emits noindex for an otherwise-indexed share while the AdSense review lockdown is on', () => {
+    // CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED is true today: every share is
+    // treated as unindexable regardless of its own visibility/indexEligible,
+    // for the duration of the AdSense review window.
     const metadata = buildSharedChatMetadata(makeShare(), SITE_URL, t);
 
-    expect(metadata.robots).toMatchObject({ index: true, follow: true });
+    expect(metadata.robots).toMatchObject({ index: false, follow: false, noarchive: true });
+    expect(metadata.other?.['x-robots-tag']).toBe('noindex, nofollow, noarchive');
     expect(metadata.alternates?.canonical).toBe(`${SITE_URL}/en/share/chat/AbCdEfGhIjKlMnOpQrStUv`);
+  });
+
+  it('resumes index+follow for an indexed share once the review lockdown is lifted', async () => {
+    vi.doMock('@/constants/chat-share-review-lockdown.constants', () => ({
+      CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED: false,
+    }));
+    vi.resetModules();
+    const { buildSharedChatMetadata: buildWithLockdownLifted } =
+      await import('../public-shared-chat.utility');
+
+    const metadata = buildWithLockdownLifted(makeShare(), SITE_URL, t);
+
+    expect(metadata.robots).toMatchObject({ index: true, follow: true });
+    expect(metadata.other?.['x-robots-tag']).toBeUndefined();
+
+    vi.doUnmock('@/constants/chat-share-review-lockdown.constants');
+    vi.resetModules();
   });
 
   it('emits noindex for an unlisted share even though the path is crawlable', () => {
@@ -105,12 +130,6 @@ describe('buildSharedChatMetadata', () => {
 
     expect(metadata.robots).toMatchObject({ index: false, follow: false, noarchive: true });
     expect(metadata.other?.['x-robots-tag']).toBe('noindex, nofollow, noarchive');
-  });
-
-  it('omits the x-robots-tag override on an indexed share', () => {
-    const metadata = buildSharedChatMetadata(makeShare(), SITE_URL, t);
-
-    expect(metadata.other?.['x-robots-tag']).toBeUndefined();
   });
 
   it('builds the canonical from the configured origin, never a request host', () => {

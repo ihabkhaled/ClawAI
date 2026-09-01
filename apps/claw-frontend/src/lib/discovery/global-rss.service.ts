@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 
+import { CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED } from '@/constants/chat-share-review-lockdown.constants';
 import {
   DEGRADED_RSS_CACHE_CONTROL,
   RSS_CACHE_CONTROL,
@@ -37,7 +38,11 @@ async function collectLocaleItems(
     language,
   }));
 
-  const chatEntries = await listPublicChatRssEntries(locale);
+  // Chat shares are excluded from the global feed for the duration of the
+  // AdSense review window — see CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED.
+  const chatEntries = CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED
+    ? []
+    : await listPublicChatRssEntries(locale);
   const chatItems: RssFeedItem[] = (chatEntries ?? []).map((entry) => ({
     title: entry.title,
     description: entry.description ?? '',

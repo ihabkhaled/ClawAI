@@ -75,8 +75,40 @@ describe('global rss feed', () => {
   );
 
   it(
-    'includes public chat shares alongside the registry pages',
+    'excludes public chat shares while the AdSense review lockdown is on, without calling the chat feed at all',
     async () => {
+      mockListPublicChatRssEntries.mockImplementation((locale: string) =>
+        Promise.resolve(
+          locale === 'de'
+            ? [
+                {
+                  publicShareId: 'share-abc',
+                  contentLocale: 'de',
+                  title: 'Ein geteilter Chat',
+                  description: 'Zusammenfassung',
+                  publishedAt: '2026-08-20T10:00:00.000Z',
+                },
+              ]
+            : [],
+        ),
+      );
+      const { GET } = await import('../rss.xml/route');
+
+      const xml = await (await GET(new Request('https://claw.example/rss.xml'))).text();
+
+      expect(xml).not.toContain('/share/chat/');
+      expect(xml).not.toContain('<category>public-chat</category>');
+      expect(mockListPublicChatRssEntries).not.toHaveBeenCalled();
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
+
+  it(
+    'resumes including public chat shares once the review lockdown is lifted',
+    async () => {
+      vi.doMock('@/constants/chat-share-review-lockdown.constants', () => ({
+        CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED: false,
+      }));
       mockListPublicChatRssEntries.mockImplementation((locale: string) =>
         Promise.resolve(
           locale === 'de'
@@ -98,15 +130,22 @@ describe('global rss feed', () => {
 
       expect(xml).toContain('https://claw.example/de/share/chat/share-abc');
       expect(xml).toContain('<category>public-chat</category>');
+
+      vi.doUnmock('@/constants/chat-share-review-lockdown.constants');
     },
     DYNAMIC_IMPORT_TIMEOUT_MS,
   );
 
   // One locale's chat feed failing must not cost the other twelve, and must
-  // never cost the registry pages, which need no upstream at all.
+  // never cost the registry pages, which need no upstream at all. Verified
+  // with the AdSense review lockdown lifted: while it is on, the chat feed is
+  // never called at all, so it cannot degrade — see the lockdown test below.
   it(
     'still serves every page when a locale chat feed is unavailable',
     async () => {
+      vi.doMock('@/constants/chat-share-review-lockdown.constants', () => ({
+        CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED: false,
+      }));
       mockListPublicChatRssEntries.mockImplementation((locale: string) =>
         Promise.resolve(locale === 'ja' ? null : []),
       );
@@ -118,6 +157,23 @@ describe('global rss feed', () => {
       expect(response.status).toBe(200);
       expect(response.headers.get('X-Claw-Discovery-Degraded')).toBe('chat-feed-unavailable');
       expect(xml).toContain('https://claw.example/ja/about');
+
+      vi.doUnmock('@/constants/chat-share-review-lockdown.constants');
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
+
+  it(
+    'cannot be degraded by the chat feed while the AdSense review lockdown is on, since it is never called',
+    async () => {
+      mockListPublicChatRssEntries.mockImplementation(() => Promise.resolve(null));
+      const { GET } = await import('../rss.xml/route');
+
+      const response = await GET(new Request('https://claw.example/rss.xml'));
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('X-Claw-Discovery-Degraded')).toBeNull();
+      expect(mockListPublicChatRssEntries).not.toHaveBeenCalled();
     },
     DYNAMIC_IMPORT_TIMEOUT_MS,
   );
@@ -134,6 +190,12 @@ describe('global rss feed', () => {
   it(
     'keeps every registry page ahead of chats in document order, even when chats are dated later',
     async () => {
+      // Ordering is a property of the merge logic, independent of the AdSense
+      // review lockdown — verified here with the lockdown lifted so chat
+      // entries actually reach the merge to be ordered.
+      vi.doMock('@/constants/chat-share-review-lockdown.constants', () => ({
+        CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED: false,
+      }));
       const FAR_FUTURE_PUBLISHED_AT = '2099-01-01T00:00:00.000Z';
       mockListPublicChatRssEntries.mockImplementation((locale: string) =>
         Promise.resolve([
@@ -170,6 +232,8 @@ describe('global rss feed', () => {
         expect(pageIndex).toBeGreaterThan(-1);
         expect(pageIndex).toBeLessThan(firstChatIndex);
       }
+
+      vi.doUnmock('@/constants/chat-share-review-lockdown.constants');
     },
     DYNAMIC_IMPORT_TIMEOUT_MS,
   );

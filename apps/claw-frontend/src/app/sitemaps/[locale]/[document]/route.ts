@@ -1,4 +1,5 @@
 import { CHAT_SHARE_SITEMAP_PAGE_SIZE } from '@/constants/chat-share-api.constants';
+import { CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED } from '@/constants/chat-share-review-lockdown.constants';
 import {
   DISCOVERY_CACHE_CONTROL,
   SITEMAP_URL_CHUNK_SIZE,
@@ -61,6 +62,12 @@ export async function GET(_request: Request, context: DiscoveryRouteContext): Pr
       };
     });
   } else if (chatMatch?.[1] !== undefined) {
+    // The index (sitemap.xml/route.ts) never references chats-*.xml while the
+    // review lockdown is on, so reaching here means a stale cached index —
+    // answer the same as any other chunk that no longer exists.
+    if (CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED) {
+      return new Response(null, { status: 404 });
+    }
     const chunk = Number(chatMatch[1]);
     if (!Number.isSafeInteger(chunk) || chunk < 1) {
       return new Response(null, { status: 404 });

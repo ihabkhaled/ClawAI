@@ -55,6 +55,8 @@
 | `35-super-administrator-and-privilege-boundaries.md`    | Protecting a row is half a privilege boundary; the other half is asking what the caller is allowed to do.                                               |
 | `36-floating-ui-and-toast-clearance.md`                 | Toasts stack from the same corner everything else floats in; a floating element declares itself and the clearance is measured, never hardcoded.         |
 | `37-payg-credit-integrity.md`                           | PAYG credit spends a customer's money before they see a result: overspend impossible by construction, every dollar attributable, margin inputs private. |
+| `38-adsense-eligibility-and-low-value-content.md`       | One authoritative, deny-by-default AdSense eligibility policy: script vs verification vs ad-unit gating, route boundary, chat-share review lockdown.    |
+| `39-worktree-branch-completion-pr-and-release-notes.md` | A task done in an agent-created worktree/branch ends with a PR and release notes, not just pushed commits.                                              |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 

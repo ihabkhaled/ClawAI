@@ -14,6 +14,13 @@ vi.mock('@/lib/site/site-config', () => ({
   getSiteUrl: (): string => 'https://claw.example',
   shouldNoIndexEverything: (): boolean => false,
 }));
+// This file unit-tests the CHATS-kind mechanics themselves (ordering, ETag,
+// degradation) — behavior that only runs once the AdSense review lockdown is
+// lifted. The lockdown-engaged behavior (chat feed never called, always
+// empty) is covered at the route level in app/__tests__/rss.test.ts.
+vi.mock('@/constants/chat-share-review-lockdown.constants', () => ({
+  CHAT_SHARE_REVIEW_LOCKDOWN_ENABLED: false,
+}));
 
 function feedRequest(): Request {
   return new Request('https://claw.example/en/feed.xml', {

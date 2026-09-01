@@ -10,6 +10,11 @@ export type AdSenseConfig = {
   reviewMode: boolean;
 };
 
+export type AdSenseScriptLoaderProps = {
+  // CSP nonce forwarded from the request; `undefined` outside a nonced response.
+  nonce: string | undefined;
+};
+
 export type AdUnitProps = {
   // The `data-ad-slot` id from the AdSense dashboard for this placement.
   // `null` means the slot is unconfigured and nothing renders.
