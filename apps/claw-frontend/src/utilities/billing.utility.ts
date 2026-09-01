@@ -158,7 +158,16 @@ export function findPlanPrice(
 }
 
 export function readCheckoutInterval(value: string | null): BillingInterval {
-  return value === 'yearly' ? BillingInterval.YEARLY : BillingInterval.MONTHLY;
+  switch (value) {
+    case 'quarterly':
+      return BillingInterval.QUARTERLY;
+    case 'semiannual':
+      return BillingInterval.SEMIANNUAL;
+    case 'yearly':
+      return BillingInterval.YEARLY;
+    default:
+      return BillingInterval.MONTHLY;
+  }
 }
 
 export function isCurrentPlan(
