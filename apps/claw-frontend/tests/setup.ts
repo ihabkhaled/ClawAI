@@ -20,3 +20,18 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
 if (typeof Element.prototype.scrollIntoView === 'undefined') {
   Element.prototype.scrollIntoView = (): void => {};
 }
+
+// jsdom does not implement pointer capture. Radix's Select opens/dismisses
+// via setPointerCapture/hasPointerCapture/releasePointerCapture on the
+// triggered element; without these polyfills any test that opens a Radix
+// Select through a real userEvent.click throws
+// `target.hasPointerCapture is not a function`.
+if (typeof Element.prototype.hasPointerCapture === 'undefined') {
+  Element.prototype.hasPointerCapture = (): boolean => false;
+}
+if (typeof Element.prototype.setPointerCapture === 'undefined') {
+  Element.prototype.setPointerCapture = (): void => {};
+}
+if (typeof Element.prototype.releasePointerCapture === 'undefined') {
+  Element.prototype.releasePointerCapture = (): void => {};
+}

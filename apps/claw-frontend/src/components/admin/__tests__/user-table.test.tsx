@@ -134,6 +134,46 @@ describe('UserTable plan column', () => {
     expect(screen.getAllByRole('combobox', { name: 'admin.assignPlan' }).length).toBeGreaterThan(0);
   });
 
+  it('opens the assign-plan dialog instead of assigning immediately when a plan is selected', async () => {
+    const onAssignPlan = vi.fn();
+    render(
+      <UserTable users={[makeUser({ id: 'u1' })]} {...baseProps} onAssignPlan={onAssignPlan} />,
+    );
+
+    const [select] = screen.getAllByRole('combobox', { name: 'admin.assignPlan' });
+    await userEvent.click(select as HTMLElement);
+    await userEvent.click(screen.getAllByText('Pro')[0] as HTMLElement);
+
+    expect(onAssignPlan).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('admin.assignPlanDialogTitle')).toBeInTheDocument();
+  });
+
+  it('fills the assign-plan dialog and confirms with all four arguments', async () => {
+    const onAssignPlan = vi.fn();
+    render(
+      <UserTable users={[makeUser({ id: 'u1' })]} {...baseProps} onAssignPlan={onAssignPlan} />,
+    );
+
+    const [select] = screen.getAllByRole('combobox', { name: 'admin.assignPlan' });
+    await userEvent.click(select as HTMLElement);
+    await userEvent.click(screen.getAllByText('Pro')[0] as HTMLElement);
+
+    const dialog = screen.getByRole('dialog');
+    const duration = within(dialog).getByLabelText('admin.assignPlanDurationLabel');
+    await userEvent.clear(duration);
+    await userEvent.type(duration, '3');
+    await userEvent.type(
+      within(dialog).getByLabelText('admin.assignPlanReasonLabel'),
+      'Support gesture',
+    );
+
+    await userEvent.click(within(dialog).getByText('admin.assignPlanConfirm'));
+
+    expect(onAssignPlan).toHaveBeenCalledWith('u1', 'pl1', 3, 'Support gesture');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('disables the plan select for the row that is pending assignment', () => {
     render(
       <UserTable

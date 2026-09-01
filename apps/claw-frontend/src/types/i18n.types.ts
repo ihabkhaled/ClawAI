@@ -1237,6 +1237,14 @@ export type TranslationDictionary = {
     noPlan: string;
     planAssigned: string;
     planAssignFailed: string;
+    assignPlanDialogTitle: string;
+    assignPlanDialogDescription: string;
+    assignPlanDurationLabel: string;
+    assignPlanDurationInvalid: string;
+    assignPlanReasonLabel: string;
+    assignPlanReasonRequired: string;
+    assignPlanCancel: string;
+    assignPlanConfirm: string;
     platformHealthLinkDesc: string;
     platformHealthLinkBody: string;
     viewSystemHealth: string;

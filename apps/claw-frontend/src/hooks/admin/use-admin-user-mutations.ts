@@ -73,8 +73,17 @@ function useAssignPlanMutation(setActionPending: (value: string | null) => void)
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ userId, planId }: { userId: string; planId: string }) =>
-      plansRepository.assignUser(userId, planId),
+    mutationFn: ({
+      userId,
+      planId,
+      durationMonths,
+      grantReason,
+    }: {
+      userId: string;
+      planId: string;
+      durationMonths: number;
+      grantReason: string;
+    }) => plansRepository.assignUser(userId, planId, durationMonths, grantReason),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.admin.users });
       setActionPending(null);
@@ -234,15 +243,22 @@ function useAccountHandlers(
   const updateUserMutation = useUpdateUserMutation(setActionPending);
   const temporaryPasswordMutation = useTemporaryPasswordMutation(setActionPending);
 
-  const handleAssignPlan = (userId: string, planId: string): void => {
+  const handleAssignPlan = (
+    userId: string,
+    planId: string,
+    durationMonths: number,
+    grantReason: string,
+  ): void => {
+    // grantReason is deliberately omitted — it may carry free-text an admin
+    // wrote about a user's account (redaction posture, rule 19).
     logger.info({
       component: 'admin',
       action: 'assign-plan',
       message: 'Assigning plan to user',
-      details: { userId, planId },
+      details: { userId, planId, durationMonths },
     });
     setActionPending(userId);
-    assignPlanMutation.mutate({ userId, planId });
+    assignPlanMutation.mutate({ userId, planId, durationMonths, grantReason });
   };
 
   const handleUpdateUser = (userId: string, data: AdminUserUpdateRequest): void => {

@@ -1261,6 +1261,15 @@ export const en: TranslationDictionary = {
     noPlan: 'No plan',
     planAssigned: 'Plan assigned',
     planAssignFailed: 'Failed to assign plan',
+    assignPlanDialogTitle: 'Grant this plan',
+    assignPlanDialogDescription:
+      'Choose how long the grant lasts and record why you are making it.',
+    assignPlanDurationLabel: 'Duration (months)',
+    assignPlanDurationInvalid: 'Enter a whole number of months between 1 and 60.',
+    assignPlanReasonLabel: 'Reason',
+    assignPlanReasonRequired: 'A reason is required.',
+    assignPlanCancel: 'Cancel',
+    assignPlanConfirm: 'Grant plan',
     platformHealthLinkDesc: 'System status is monitored on the dashboard',
     platformHealthLinkBody:
       'Service health, latency, and uptime metrics live on the dashboard. Open it for a real-time view.',

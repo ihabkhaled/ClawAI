@@ -303,7 +303,12 @@ export type UseAdminUserMutationsReturn = {
   handleChangeRole: (userId: string, role: string) => void;
   handleDeactivate: (userId: string) => void;
   handleReactivate: (userId: string) => void;
-  handleAssignPlan: (userId: string, planId: string) => void;
+  handleAssignPlan: (
+    userId: string,
+    planId: string,
+    durationMonths: number,
+    grantReason: string,
+  ) => void;
   handleUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   handleTemporaryPassword: (userId: string) => void;
   handleActivate: (userId: string) => void;
@@ -366,6 +371,24 @@ export type UseUserTableStateReturn = {
   requestTemporaryPassword: (userId: string) => void;
   cancelTemporaryPassword: () => void;
   confirmTemporaryPassword: (onTemporaryPassword: (userId: string) => void) => void;
+  assignPlanUser: AdminUser | null;
+  assignPlanTargetId: string | null;
+  openAssignPlan: (user: AdminUser, planId: string) => void;
+  closeAssignPlan: () => void;
+};
+
+/**
+ * Sub-hook composed FROM `useUserTableState`, not called directly from
+ * `UserTable.tsx` — the TSX file may only call one controller hook (rule 12
+ * in apps/claw-frontend/CLAUDE.md). Extracted only because folding the
+ * assign-plan state pair directly into `useUserTableState` pushed it past
+ * the 50-line hook guideline.
+ */
+export type UseAssignPlanDialogStateReturn = {
+  assignPlanUser: AdminUser | null;
+  assignPlanTargetId: string | null;
+  openAssignPlan: (user: AdminUser, planId: string) => void;
+  closeAssignPlan: () => void;
 };
 
 export type UseRecentAuditEventsReturn = {

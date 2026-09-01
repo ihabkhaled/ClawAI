@@ -1,5 +1,6 @@
 'use client';
 
+import { AssignPlanDialog } from '@/components/admin/assign-plan-dialog';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
 import { TemporaryPasswordDialog } from '@/components/admin/temporary-password-dialog';
 import { DataTable } from '@/components/common/data-table';
@@ -53,6 +54,10 @@ export function UserTable({
     requestTemporaryPassword,
     cancelTemporaryPassword,
     confirmTemporaryPassword,
+    assignPlanUser,
+    assignPlanTargetId,
+    openAssignPlan,
+    closeAssignPlan,
   } = useUserTableState();
   const { t } = useTranslation();
   const activePlans = plans.filter((plan) => plan.isActive);
@@ -160,7 +165,7 @@ export function UserTable({
             !resolveAdminUserCapability(user, actor).canAssignPlan ||
             (isAssignPlanPending && pendingId === user.id)
           }
-          onValueChange={(value) => onAssignPlan(user.id, value)}
+          onValueChange={(value) => openAssignPlan(user, value)}
         >
           <SelectTrigger className="w-[160px]" aria-label={t('admin.assignPlan')}>
             <SelectValue placeholder={t('admin.noPlan')} />
@@ -302,6 +307,18 @@ export function UserTable({
         }
         onCancel={cancelTemporaryPassword}
         onConfirm={() => confirmTemporaryPassword(onTemporaryPassword)}
+        t={t}
+      />
+      <AssignPlanDialog
+        open={assignPlanUser !== null}
+        user={assignPlanUser}
+        targetPlanId={assignPlanTargetId}
+        isSaving={isAssignPlanPending}
+        onClose={closeAssignPlan}
+        onSave={(userId, planId, durationMonths, grantReason) => {
+          onAssignPlan(userId, planId, durationMonths, grantReason);
+          closeAssignPlan();
+        }}
         t={t}
       />
     </>

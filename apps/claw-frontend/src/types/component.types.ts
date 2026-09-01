@@ -569,7 +569,12 @@ export type UserTableProps = {
   onDeactivate: (userId: string) => void;
   onReactivate: (userId: string) => void;
   onActivate: (userId: string) => void;
-  onAssignPlan: (userId: string, planId: string) => void;
+  onAssignPlan: (
+    userId: string,
+    planId: string,
+    durationMonths: number,
+    grantReason: string,
+  ) => void;
   onUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   onTemporaryPassword: (userId: string) => void;
   isRoleChangePending: boolean;
@@ -1437,7 +1442,12 @@ export type UsersContentProps = {
   onDeactivate: (userId: string) => void;
   onReactivate: (userId: string) => void;
   onActivate: (userId: string) => void;
-  onAssignPlan: (userId: string, planId: string) => void;
+  onAssignPlan: (
+    userId: string,
+    planId: string,
+    durationMonths: number,
+    grantReason: string,
+  ) => void;
   onUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   onTemporaryPassword: (userId: string) => void;
   isRoleChangePending: boolean;

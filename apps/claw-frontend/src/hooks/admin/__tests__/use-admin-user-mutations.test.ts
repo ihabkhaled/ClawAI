@@ -108,7 +108,7 @@ describe('useAdminUserMutations', () => {
     const planId = 'plan-789';
 
     act(() => {
-      result.current.handleAssignPlan(userId, planId);
+      result.current.handleAssignPlan(userId, planId, 3, 'Support gesture');
     });
 
     expect(result.current.actionPending).toBe(userId);
@@ -118,8 +118,75 @@ describe('useAdminUserMutations', () => {
       expect(result.current.actionPending).toBeNull();
     });
 
-    expect(plansRepository.assignUser).toHaveBeenCalledWith(userId, planId);
+    expect(plansRepository.assignUser).toHaveBeenCalledWith(userId, planId, 3, 'Support gesture');
     expect(showToast.success).toHaveBeenCalled();
+  });
+
+  it('handleAssignPlan forwards duration and reason to the repository', async () => {
+    vi.mocked(plansRepository.assignUser).mockResolvedValue({
+      id: 'plan-pro',
+      name: 'Pro',
+      slug: 'pro',
+      description: null,
+      priceMonthly: 0,
+      priceYearly: 0,
+      currency: 'USD',
+      displayOrder: 1,
+      isDefault: false,
+      isPopular: false,
+      isActive: true,
+      isPublic: true,
+      isTrial: false,
+      trialDurationDays: 0,
+      lifecycleStatus: PlanLifecycleStatus.ACTIVE,
+      replacementPlanId: null,
+      retiredAt: null,
+      dailyTokenQuota: 1,
+      weeklyTokenQuota: 1,
+      monthlyTokenQuota: 1,
+      monthlyProviderCostCeilingMicroUsd: null,
+      paygCreditPercentBps: 3000,
+      maxChatsPerDay: 1,
+      maxMessagesPerDay: 1,
+      maxWorkspaceConnections: 1,
+      maxContextPacks: 1,
+      maxMemoryItems: 1,
+      allowCompareMode: false,
+      allowJudgeMode: false,
+      allowResearchMode: false,
+      allowCriticReview: false,
+      allowWorkspaces: false,
+      allowMemory: false,
+      allowContextPacks: false,
+      allowConsensusMode: false,
+      allowEscalationChain: false,
+      allowRepairLab: false,
+      allowTaskDecomposer: false,
+      allowBestOfN: false,
+      allowVerifier: false,
+      allowPipelineLab: false,
+      allowCostEnsemble: false,
+      allowRolePack: false,
+      modelAccess: [],
+      createdAt: '2026-05-01T00:00:00.000Z',
+      updatedAt: '2026-05-01T00:00:00.000Z',
+    });
+    const { result } = renderHook(() => useAdminUserMutations(), { wrapper: createWrapper() });
+
+    act(() => {
+      result.current.handleAssignPlan('user-1', 'plan-pro', 3, 'Support gesture');
+    });
+
+    await waitFor(() => {
+      expect(result.current.actionPending).toBeNull();
+    });
+
+    expect(plansRepository.assignUser).toHaveBeenCalledWith(
+      'user-1',
+      'plan-pro',
+      3,
+      'Support gesture',
+    );
   });
 
   it('handles rejected operation proving apiError and cleared pending', async () => {

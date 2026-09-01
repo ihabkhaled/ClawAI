@@ -1280,6 +1280,15 @@ export const it: TranslationDictionary = {
     noPlan: 'Nessun piano',
     planAssigned: 'Piano assegnato',
     planAssignFailed: 'Impossibile assegnare il piano',
+    assignPlanDialogTitle: 'Concedi questo piano',
+    assignPlanDialogDescription:
+      'Scegli per quanto tempo dura la concessione e registra il motivo.',
+    assignPlanDurationLabel: 'Durata (mesi)',
+    assignPlanDurationInvalid: 'Inserisci un numero intero di mesi tra 1 e 60.',
+    assignPlanReasonLabel: 'Motivo',
+    assignPlanReasonRequired: 'Il motivo è obbligatorio.',
+    assignPlanCancel: 'Annulla',
+    assignPlanConfirm: 'Concedi piano',
     platformHealthLinkDesc: 'Lo stato del sistema è monitorato sulla dashboard',
     platformHealthLinkBody:
       'Lo stato dei servizi, la latenza e le metriche di uptime vivono sulla dashboard. Aprila per una vista in tempo reale.',
