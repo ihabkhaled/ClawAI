@@ -2603,6 +2603,16 @@ export type EditUserDialogProps = {
   t: TranslateFunction;
 };
 
+export type AssignPlanDialogProps = {
+  open: boolean;
+  user: AdminUser | null;
+  targetPlanId: string | null;
+  isSaving: boolean;
+  onClose: () => void;
+  onSave: (userId: string, planId: string, durationMonths: number, grantReason: string) => void;
+  t: TranslateFunction;
+};
+
 /** One schematic beside an install step. */
 export type CodingAgentInstallFigureProps = {
   /** Which illustration to draw; undefined when the step has none. */

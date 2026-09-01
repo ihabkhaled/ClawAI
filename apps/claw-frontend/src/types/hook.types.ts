@@ -7,6 +7,7 @@ import type { FloatingClearanceEdge } from '@/enums/floating-clearance-edge.enum
 import type { PasswordInputType } from '@/enums/password-input-type.enum';
 import type { ScrollDirection } from '@/enums/scroll-direction.enum';
 import type { AdminCreateUserFormValues } from '@/lib/validation/admin-create-user.schema';
+import type { AdminPlanGrantFormValues } from '@/lib/validation/admin-plan-grant.schema';
 import type { AdminUserEditFormValues } from '@/lib/validation/admin-user.schema';
 import type {
   ConfirmOtpFormValues,
@@ -97,6 +98,11 @@ export type UseRegisterFormReturn = {
 
 export type UseEditUserFormReturn = {
   form: UseFormReturn<AdminUserEditFormValues>;
+  submit: (event?: React.BaseSyntheticEvent) => Promise<void>;
+};
+
+export type UseAssignPlanFormReturn = {
+  form: UseFormReturn<AdminPlanGrantFormValues>;
   submit: (event?: React.BaseSyntheticEvent) => Promise<void>;
 };
 

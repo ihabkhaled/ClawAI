@@ -567,6 +567,7 @@ export type {
   UseCreateUserDialogReturn,
   UseCreateUserFormReturn,
   UseEditUserFormReturn,
+  UseAssignPlanFormReturn,
   FloatingClearanceConfig,
   UseFeedbackLauncherReturn,
   UseJumpToMessageReturn,
