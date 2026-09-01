@@ -14,13 +14,13 @@
 const { PrismaPg } = require('@prisma/adapter-pg');
 const argon2 = require('argon2');
 const path = require('path');
-const { runVersionedSeeder } = require('./seed-runner');
-const { reconcileExistingSuperAdmin } = require('./seed-super-admin');
-const planCatalogSeeder = require('./seeders/plan-catalog.seeder');
-const planPaygAllowanceSeeder = require('./seeders/plan-payg-allowance.seeder');
-const creditPackagesSeeder = require('./seeders/credit-packages.seeder');
-const planPaygPercentSeeder = require('./seeders/plan-payg-percent.seeder');
-const creditPackageRepricingSeeder = require('./seeders/credit-package-repricing.seeder');
+const { runVersionedSeeder } = require('./seed-runner.cjs');
+const { reconcileExistingSuperAdmin } = require('./seed-super-admin.cjs');
+const planCatalogSeeder = require('./seeders/plan-catalog.seeder.cjs');
+const planPaygAllowanceSeeder = require('./seeders/plan-payg-allowance.seeder.cjs');
+const creditPackagesSeeder = require('./seeders/credit-packages.seeder.cjs');
+const planPaygPercentSeeder = require('./seeders/plan-payg-percent.seeder.cjs');
+const creditPackageRepricingSeeder = require('./seeders/credit-package-repricing.seeder.cjs');
 
 const distPrismaPath = path.resolve(__dirname, '..', 'dist', 'generated', 'prisma');
 const { PrismaClient } = require(distPrismaPath);

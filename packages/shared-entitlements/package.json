@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "typecheck": "node ../../tools/typescript/run-ts7.mjs --noEmit",
-    "build": "node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json",
+    "build": "node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json && tsc-alias -p tsconfig.build.json -f",
     "lint": "eslint src/ --concurrency=4",
     "lint:fix": "eslint src/ --fix",
     "test": "jest --passWithNoTests",
@@ -17,14 +17,20 @@
     "@claw/shared-constants": "*"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
     "@eslint/js": "^9.39.4",
-    "@nestjs/common": "^11.2.1",
-    "@nestjs/core": "^11.2.1",
+    "@nestjs/common": "^12.0.1",
+    "@nestjs/core": "^12.0.1",
     "@types/jest": "^30.0.0",
+    "babel-jest": "^30.5.1",
+    "babel-plugin-transform-import-meta": "^2.3.3",
     "eslint": "^10.9.0",
     "eslint-plugin-unicorn": "73.0.0",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.12",
+    "tsc-alias": "^1.9.2",
     "typescript": "^6.0.3"
-  }
+  },
+  "type": "module"
 }

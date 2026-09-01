@@ -19,7 +19,7 @@ COPY apps/claw-chat-service/ ./apps/claw-chat-service/
 # the TypeScript 7 npm compiler-linux-x64 (glibc binary) via the typescript
 # alias in chat-service's devDeps.
 WORKDIR /app
-RUN npm install --ignore-scripts
+RUN npm install --ignore-scripts --legacy-peer-deps
 
 # Now compile shared packages with workspace-hoisted types available
 RUN cd packages/shared-constants && npm run build

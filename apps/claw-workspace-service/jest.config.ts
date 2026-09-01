@@ -13,6 +13,12 @@ const config: Config = {
         },
       },
     ],
+    // @nestjs/* is ESM-only as of v12 and uses `import.meta`, which ts-jest's
+    // CommonJS-targeted transform below cannot rewrite (only Babel has a
+    // plugin for that proposal). Matched before the broader `.m?js` rule so
+    // @nestjs's own files take this path instead.
+    // No path-separator assumption (Windows uses backslashes here, not `/`).
+    '@nestjs.*\\.js$': 'babel-jest',
     '^.+\\.m?js$': [
       'ts-jest',
       {
@@ -25,9 +31,12 @@ const config: Config = {
     ],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(?:@asamuzakjp|@bramus|@csstools|@exodus|css-tree|entities|lru-cache|parse5|tough-cookie)/)',
+    'node_modules/(?!(?:@asamuzakjp|@bramus|@csstools|@exodus|@nestjs|css-tree|entities|lru-cache|parse5|tough-cookie)/)',
   ],
-  setupFiles: ['<rootDir>/jest.setup.ts'],
+  // @nestjs/common v12 no longer pulls this in as a side effect of its own
+  // import chain, so decorator metadata (Reflect.getOwnMetadata) is undefined
+  // unless a test file happens to import something that loads it first.
+  setupFiles: ['reflect-metadata', '<rootDir>/jest.setup.ts'],
   testPathIgnorePatterns: ['/node_modules/'],
   collectCoverageFrom: [
     'src/**/*.ts',

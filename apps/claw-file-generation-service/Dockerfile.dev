@@ -16,7 +16,7 @@ COPY apps/claw-file-generation-service/ ./apps/claw-file-generation-service/
 # @claw/* workspace packages get symlinked into /app/node_modules. Also pulls
 # the TypeScript 7 npm compiler-linux-x64 (glibc binary) via the typescript alias.
 WORKDIR /app
-RUN npm install --ignore-scripts
+RUN npm install --ignore-scripts --legacy-peer-deps
 
 # Compile shared packages with workspace-hoisted types available
 RUN cd packages/shared-constants && npm run build
