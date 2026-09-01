@@ -65,3 +65,37 @@ export const WORKSPACE_PRIOR_BLEND_WEIGHT = 0.15;
  * never touches at all).
  */
 export const MAX_WORKSPACE_PRIOR_NUDGE = 0.1;
+
+/**
+ * Advisory-lock key that serialises calibration commits.
+ *
+ * `commitCalibrationBatch` and `restoreCalibrationSnapshot` both replace the
+ * whole live profile set with `deleteMany()` followed by `createMany()`. That
+ * pair is not safe to run concurrently under READ COMMITTED: if the second
+ * transaction's DELETE takes its snapshot before the first COMMITs, it removes
+ * only the rows it can see, never observes the rows the first is inserting, and
+ * its own INSERT then violates
+ * `router_model_profiles_provider_model_task_family_topic_key_key`.
+ *
+ * That is not hypothetical. `rebuildCalibrationSnapshot()` runs on EVERY
+ * routing outcome, so every pair of concurrent generations is an opportunity,
+ * and the resulting P2002 is an unhandled rejection that kills the process —
+ * routing-service down, `/routing/models` 502, no message routable at all.
+ * Reproduced twice on 2026-08-30 under a long-thread stress run.
+ *
+ * The window widens as history accumulates: `findEducationWindow` returns a
+ * growing set of decisions, so the transaction takes longer the more the system
+ * has been used. It survived 24 concurrent generations on a young database and
+ * crashed reliably after ~1,400, which is why load testing a fresh install does
+ * not surface it.
+ *
+ * A transaction-scoped advisory lock makes the replace atomic against other
+ * writers and is released automatically on COMMIT or ROLLBACK, so a crashed
+ * transaction cannot strand it.
+ *
+ * Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
+ * seed, 002 = router chain seed, 003 = model cost seed). The value must stay
+ * stable; it only has to be distinct from the other advisory locks held against
+ * this database.
+ */
+export const CALIBRATION_COMMIT_LOCK_KEY = 740_040_004;

@@ -71,6 +71,7 @@ const buildRepo = (): {
     routerModelProfile: { deleteMany: jest.Mock; createMany: jest.Mock };
     routerTopicProfile: { deleteMany: jest.Mock; createMany: jest.Mock };
     routerWorkspacePrior: { findUnique: jest.Mock; upsert: jest.Mock };
+    $queryRaw: jest.Mock;
     $transaction: jest.Mock;
   };
 } => {
@@ -106,6 +107,9 @@ const buildRepo = (): {
     routerModelProfile,
     routerTopicProfile,
     routerWorkspacePrior,
+    // The advisory lock that serialises the replace. Returns a resolved value
+    // so it can sit inside the $transaction array like any PrismaPromise.
+    $queryRaw: jest.fn().mockResolvedValue([{ pg_advisory_xact_lock: '' }]),
     // Mirrors Prisma's array-form $transaction: resolve each already-created
     // PrismaPromise and return the results in order, so commitCalibrationBatch
     // can destructure the created snapshot out of the batch.
@@ -154,6 +158,37 @@ describe('RoutingEducationRepository.commitCalibrationBatch', () => {
     expect(prisma.routerTopicProfile.deleteMany).toHaveBeenCalledTimes(1);
     expect(snapshot.version).toBe('calibration-2');
   });
+
+  it('takes the advisory lock as the FIRST statement in the transaction', async () => {
+    // Regression guard. Without this lock, two concurrent rebuilds interleave:
+    // the second transaction's DELETE snapshot predates the first's COMMIT, so
+    // it removes only the rows it can see and its INSERT then violates
+    // `router_model_profiles_provider_model_task_family_topic_key_key`. The
+    // P2002 is an unhandled rejection that kills routing-service outright, and
+    // `rebuildCalibrationSnapshot()` runs after EVERY routing outcome, so the
+    // exposure is every pair of concurrent generations. Observed twice in a
+    // long-thread stress run on 2026-08-30.
+    //
+    // Order is the whole point: a lock taken after the DELETE would let the
+    // race happen before it ever blocks anything.
+    const { repository, prisma } = buildRepo();
+
+    await repository.commitCalibrationBatch({
+      version: 'calibration-3',
+      windowDays: 30,
+      summary: { decisionsAnalyzed: 1 },
+      promptHints: { bestModelsByTaskFamily: [] },
+      modelProfiles: [modelProfileRow()],
+      topicProfiles: [topicProfileRow()],
+      modelProfileRows: [modelProfileRow()],
+      topicProfileRows: [topicProfileRow()],
+    });
+
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+    const [operations] = prisma.$transaction.mock.calls[0] as [unknown[]];
+    expect(operations).toHaveLength(7);
+    expect(operations[0]).toBe(prisma.$queryRaw.mock.results[0]?.value);
+  });
 });
 
 describe('RoutingEducationRepository.restoreCalibrationSnapshot', () => {
@@ -167,6 +202,9 @@ describe('RoutingEducationRepository.restoreCalibrationSnapshot', () => {
     });
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    // The rollback path replaces the same tables the same way, so it is exposed
+    // to the same race and takes the same lock first.
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
     expect(prisma.routingCalibrationSnapshot.updateMany).toHaveBeenNthCalledWith(1, {
       data: { active: false },
       where: { active: true },

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  Prisma,
   type RouterModelProfile,
   type RouterTopicProfile,
   type RouterWorkspacePrior,
@@ -8,6 +9,7 @@ import {
   type RoutingOutcomeRecord,
 } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { CALIBRATION_COMMIT_LOCK_KEY } from '../constants/routing-education.constants';
 import type {
   CommitCalibrationBatchInput,
   CreateRoutingFeedbackInput,
@@ -143,7 +145,14 @@ export class RoutingEducationRepository {
     input: CommitCalibrationBatchInput,
   ): Promise<RoutingCalibrationSnapshot> {
     const now = new Date();
-    const [, snapshot] = await this.prisma.$transaction([
+    // Serialise the whole replace. See CALIBRATION_COMMIT_LOCK_KEY: the
+    // delete-then-insert below races itself under concurrent rebuilds and the
+    // resulting P2002 takes the process down. The lock is transaction-scoped,
+    // so it is released on COMMIT or ROLLBACK without any cleanup path.
+    const [, , snapshot] = await this.prisma.$transaction([
+      this.prisma.$queryRaw(
+        Prisma.sql`SELECT pg_advisory_xact_lock(${CALIBRATION_COMMIT_LOCK_KEY})::text`,
+      ),
       this.prisma.routingCalibrationSnapshot.updateMany({
         data: { active: false },
         where: { active: true },
@@ -184,7 +193,12 @@ export class RoutingEducationRepository {
     topicProfileRows: RouterTopicProfileRecord[];
   }): Promise<void> {
     const now = new Date();
+    // Same lock as the commit path: a rollback replaces the same live tables
+    // the same way, so it must not interleave with a concurrent rebuild either.
     await this.prisma.$transaction([
+      this.prisma.$queryRaw(
+        Prisma.sql`SELECT pg_advisory_xact_lock(${CALIBRATION_COMMIT_LOCK_KEY})::text`,
+      ),
       this.prisma.routingCalibrationSnapshot.updateMany({
         data: { active: false },
         where: { active: true },
