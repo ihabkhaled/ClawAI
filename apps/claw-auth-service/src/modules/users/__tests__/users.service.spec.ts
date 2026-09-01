@@ -78,7 +78,7 @@ describe('UsersService', () => {
   let rolesService: { getRoleIdBySlug: jest.Mock };
   let plansRepository: {
     findDefault: jest.Mock;
-    assignUserToPlan: jest.Mock;
+    assignDefaultPlan: jest.Mock;
     assignTrialPlanOnce: jest.Mock;
   };
 
@@ -89,7 +89,7 @@ describe('UsersService', () => {
     rolesService = { getRoleIdBySlug: jest.fn().mockResolvedValue('role-1') };
     plansRepository = {
       findDefault: jest.fn().mockResolvedValue(null),
-      assignUserToPlan: jest.fn(),
+      assignDefaultPlan: jest.fn(),
       assignTrialPlanOnce: jest.fn(),
     };
     service = new UsersService(

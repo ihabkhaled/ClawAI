@@ -515,7 +515,7 @@ export class UsersService {
     }
     await (signupPlan.isTrial
       ? this.plansRepository.assignTrialPlanOnce(userId, signupPlan.id, undefined, new Date())
-      : this.plansRepository.assignUserToPlan(userId, signupPlan.id));
+      : this.plansRepository.assignDefaultPlan(userId, signupPlan.id));
   }
 
   private async ensureProfileFieldsAvailable(

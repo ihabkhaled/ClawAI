@@ -61,11 +61,11 @@ const mockRolesService = (): {
 // PlansRepository — registration assigns the default plan.
 const mockPlansRepository = (): {
   findDefault: jest.Mock;
-  assignUserToPlan: jest.Mock;
+  assignDefaultPlan: jest.Mock;
   assignTrialPlanOnce: jest.Mock;
 } => ({
   findDefault: jest.fn().mockResolvedValue({ id: 'plan-free', slug: 'free', isTrial: true }),
-  assignUserToPlan: jest.fn(),
+  assignDefaultPlan: jest.fn(),
   assignTrialPlanOnce: jest.fn().mockResolvedValue({ id: 'assignment-free' }),
 });
 

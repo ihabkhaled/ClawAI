@@ -135,6 +135,12 @@ export class PlansController {
     @CurrentUser() admin: AuthenticatedUser,
     @Body(new ZodValidationPipe(assignPlanSchema)) dto: AssignPlanDto,
   ): Promise<PlanView> {
-    return this.plansService.assignUserToPlan(userId, dto.planId, admin.id);
+    return this.plansService.assignUserToPlan(
+      userId,
+      dto.planId,
+      admin.id,
+      dto.durationMonths,
+      dto.grantReason,
+    );
   }
 }

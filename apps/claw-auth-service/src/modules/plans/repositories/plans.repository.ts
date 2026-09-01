@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { addCalendarMonths } from '@claw/shared-utilities';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { POPULAR_PLAN_KEY } from '../constants/popular-plan.constants';
 import {
@@ -174,14 +175,52 @@ export class PlansRepository {
     });
   }
 
-  async assignUserToPlan(userId: string, planId: string, assignedByUserId?: string): Promise<void> {
+  /**
+   * Assigns the platform's default (signup) plan — no admin actor, no reason,
+   * never expires. Preserves `assignUserToPlan`'s old, unattributed behavior
+   * byte-for-byte, kept as its own method now that `assignUserToPlan` is
+   * exclusively the attributed, time-limited admin-grant path: an automatic
+   * signup grant is not an administrator's discretionary action and must not
+   * be mislabeled `ADMIN_GRANT` or forced to expire on a clock. Called by
+   * `AuthManager.register` and `UsersService.assignSignupPlan`.
+   */
+  async assignDefaultPlan(userId: string, planId: string): Promise<void> {
     await this.prisma.$transaction([
       this.prisma.userPlanAssignment.updateMany({
         where: { userId, status: 'ACTIVE' },
         data: { status: 'EXPIRED', endsAt: new Date() },
       }),
       this.prisma.userPlanAssignment.create({
-        data: { userId, planId, status: 'ACTIVE', assignedByUserId },
+        data: { userId, planId, status: 'ACTIVE', assignedByUserId: undefined },
+      }),
+      this.prisma.user.update({ where: { id: userId }, data: { activePlanId: planId } }),
+    ]);
+  }
+
+  async assignUserToPlan(
+    userId: string,
+    planId: string,
+    assignedByUserId: string | undefined,
+    durationMonths: number,
+    grantReason: string,
+    now: Date,
+  ): Promise<void> {
+    const entitlementValidUntil = new Date(addCalendarMonths(now.getTime(), durationMonths));
+    await this.prisma.$transaction([
+      this.prisma.userPlanAssignment.updateMany({
+        where: { userId, status: 'ACTIVE' },
+        data: { status: 'EXPIRED', endsAt: now },
+      }),
+      this.prisma.userPlanAssignment.create({
+        data: {
+          userId,
+          planId,
+          status: 'ACTIVE',
+          assignedByUserId,
+          grantType: 'ADMIN_GRANT',
+          grantReason,
+          entitlementValidUntil,
+        },
       }),
       this.prisma.user.update({ where: { id: userId }, data: { activePlanId: planId } }),
     ]);
