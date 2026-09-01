@@ -70,6 +70,15 @@ imply a coverage that was not there.
   `western-locales-translation-regression.test.ts`** — catch English left
   untranslated, with an explicit allow-list of approved technical terms.
 - **`supported-locales.test.ts`** — every `Locale` member has a dictionary.
+- **`constants/__tests__/learn-content-locale-completeness.test.ts`** (2026-09-01) —
+  the four tests above all assert against `lib/i18n/locales/*`, the UI-chrome
+  dictionary; none of them touch `constants/learn-content/*.constants.ts`, the
+  `/learn` article prose. This test covers that separately-maintained content
+  cluster for all 13 locales: key/section/FAQ parity, placeholder parity, and
+  the same untranslated-English-fallback check with its own allow-list. Any
+  other long-form content cluster added the same way (see
+  `public-comparison-content/`) needs the same treatment — it will not be
+  caught by the UI-dictionary tests either.
 - **TS config** — an `i18n.types.ts` mismatch fails `npm run typecheck`.
 - **Review checklist** — visual spot-check of one non-EN locale.
 

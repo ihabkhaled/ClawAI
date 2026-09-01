@@ -7378,7 +7378,7 @@
           "file": "rules/19-logging-observability-and-redaction.md"
         },
         {
-          "bytes": 4264,
+          "bytes": 4914,
           "file": "rules/20-i18n-and-user-facing-messages.md"
         },
         {
@@ -9516,7 +9516,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 410
+        "testFiles": 411
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10276,7 +10276,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1122,
+    "totalTestFiles": 1123,
     "workspaceCount": 25
   }
 }
