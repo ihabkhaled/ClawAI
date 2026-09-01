@@ -12,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { SUPPORTED_PLAN_CURRENCIES } from '@/constants/billing.constants';
-import { BillingInterval } from '@/enums/billing.enum';
+import { BILLING_INTERVAL_ORDER, SUPPORTED_PLAN_CURRENCIES } from '@/constants/billing.constants';
+import type { BillingInterval } from '@/enums/billing.enum';
 import type { UseAdminPlanPricesResult } from '@/types/admin-plan-price.types';
 import { formatMinorAmount } from '@/utilities';
 
@@ -37,12 +37,11 @@ export function PlanPriceEditor(controller: UseAdminPlanPricesResult): ReactElem
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={BillingInterval.MONTHLY}>
-                  {controller.t('billing.interval.MONTHLY')}
-                </SelectItem>
-                <SelectItem value={BillingInterval.YEARLY}>
-                  {controller.t('billing.interval.YEARLY')}
-                </SelectItem>
+                {BILLING_INTERVAL_ORDER.map((interval) => (
+                  <SelectItem key={interval} value={interval}>
+                    {controller.t(`billing.interval.${interval}`)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

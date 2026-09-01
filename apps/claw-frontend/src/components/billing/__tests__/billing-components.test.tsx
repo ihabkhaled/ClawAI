@@ -171,6 +171,76 @@ describe('BillingPlanCard', () => {
     await userEvent.click(screen.getByRole('button', { name: 'billing.plans.selectCta' }));
     expect(onSelect).toHaveBeenCalledWith(plan);
   });
+
+  it('shows the discount badge for a paid QUARTERLY price, not the yearly-saving line', () => {
+    const plan: BillingPlan = {
+      ...makePlan(500),
+      prices: [
+        ...makePlan(500).prices,
+        {
+          billingInterval: BillingInterval.QUARTERLY,
+          currency: 'USD',
+          amountMinor: 1350,
+          planPriceVersionId: 'price-quarterly',
+        },
+      ],
+    };
+    render(
+      <BillingPlanCard
+        plan={plan}
+        interval={BillingInterval.QUARTERLY}
+        isCurrent={false}
+        onSelect={vi.fn()}
+        isPending={false}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('marketing.pricing.discountBadge')).toBeInTheDocument();
+    expect(screen.queryByText(/billing\.plans\.yearlySaving/)).not.toBeInTheDocument();
+  });
+
+  it('shows the discount badge for a paid SEMIANNUAL price', () => {
+    const plan: BillingPlan = {
+      ...makePlan(500),
+      prices: [
+        ...makePlan(500).prices,
+        {
+          billingInterval: BillingInterval.SEMIANNUAL,
+          currency: 'USD',
+          amountMinor: 2700,
+          planPriceVersionId: 'price-semiannual',
+        },
+      ],
+    };
+    render(
+      <BillingPlanCard
+        plan={plan}
+        interval={BillingInterval.SEMIANNUAL}
+        isCurrent={false}
+        onSelect={vi.fn()}
+        isPending={false}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('marketing.pricing.discountBadge')).toBeInTheDocument();
+  });
+
+  it('does not show the discount badge for MONTHLY', () => {
+    render(
+      <BillingPlanCard
+        plan={makePlan(500)}
+        interval={BillingInterval.MONTHLY}
+        isCurrent={false}
+        onSelect={vi.fn()}
+        isPending={false}
+        t={t}
+      />,
+    );
+
+    expect(screen.queryByText('marketing.pricing.discountBadge')).not.toBeInTheDocument();
+  });
 });
 
 describe('SubscriptionSummaryCard', () => {

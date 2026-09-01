@@ -138,6 +138,52 @@ the release.
 
 ---
 
+## Checkout-term discount (1 / 3 / 6 / 12 months)
+
+Checkout offers four commitment lengths, not two. `BillingInterval` is
+`MONTHLY`, `QUARTERLY` (3 months), `SEMIANNUAL` (6 months), `YEARLY` (12
+months), and each has its own immutable `PlanPriceVersion` row — there is no
+"apply a discount at checkout" code path, and there must never be one: a
+discount computed at the moment of payment is a number that can be raced,
+mis-rounded, or disagree between the price shown and the price charged.
+
+The formula, computed **once**, at seed/backfill time, from each plan's own
+monthly price:
+
+- **`QUARTERLY`** = `round(monthlyMinor × 3 × 0.9)` — 10% off three months.
+- **`SEMIANNUAL`** = `round(monthlyMinor × 6 × 0.9)` — 10% off six months.
+- **`YEARLY`** = the plan's existing seeded `yearlyMinor` (ten months of the
+  monthly rate, i.e. ~16.7% off — unchanged by this feature).
+- **`MONTHLY`** = `monthlyMinor`, no discount.
+
+`round()` is a single `Math.round`, at the one minor-unit boundary the value
+will ever cross — never truncated, never re-derived from a float at render
+time. `computeDiscountedIntervalMinor` (`plan-catalog.seeder.cjs`) is the one
+place this formula is implemented; every seeder that needs a QUARTERLY or
+SEMIANNUAL price imports it rather than re-deriving the 0.9 factor.
+
+**Why 3- and 6-month get a flat 10% while 12-month keeps its own, larger
+discount:** the yearly figure predates this feature and is a distinct pricing
+decision (two months free, not a percentage) — this change added the two
+missing terms in between without touching the one that already existed.
+
+### Deploy order matters on an existing install
+
+A fresh install gets all four `PlanPriceVersion` rows the moment
+`plan-catalog` seeds a plan for the first time. An **existing** install is
+different: `plan-catalog`'s run-once guard means its `run()` — and the
+`upsertPrices` call inside it that would create the QUARTERLY/SEMIANNUAL rows —
+never executes again once that install's `plan-catalog` version has already
+completed, which is every install seeded before this feature shipped. Without
+`plan-quarterly-semiannual-pricing.seeder.cjs` running at least once, an
+existing install's checkout page can show the 4-way term selector with two of
+its four options priced as "unavailable" forever — the frontend has nothing
+wrong with it; the price rows simply do not exist. That seeder must run before
+any deploy that expects all four checkout terms to actually be purchasable on
+an install that predates this feature.
+
+---
+
 ## Sign-off status
 
 **These figures need a named business owner and do not have one.**

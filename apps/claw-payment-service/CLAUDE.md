@@ -129,6 +129,18 @@ charge. auth-service must be subscribed before this service drains its outbox â€
 the topic exchange discards a routing key with no bound queue, so an early
 publish loses the event with no DLQ while the money is already taken.
 
+## `resolvePeriodEndMs` covers all four billing intervals (2026-09-02)
+
+`resolvePeriodEndMs` (`modules/webhooks/utilities/billing-period.utility.ts`) now
+resolves `QUARTERLY` and `SEMIANNUAL` the same way it already resolved `YEARLY`:
+by looking up the interval's month count in `MONTHS_BY_BILLING_INTERVAL` and
+calling the shared `addCalendarMonths` (`@claw/shared-utilities`) once, rather
+than special-casing `YEARLY` as "add 12 months" beside a fixed-days path for
+everything else. This was a deliberate behavior fix, not just new-interval
+plumbing: a subscription that starts on **29 February** now correctly clamps to
+the last day of the target month instead of the old fixed-days arithmetic
+silently rolling the period end into March.
+
 ## Commands
 
 ```bash

@@ -24,6 +24,10 @@ export function BillingPlanCard({
 }: BillingPlanCardProps): ReactElement {
   const price = findPlanPrice(plan, interval);
   const savingMinor = interval === BillingInterval.YEARLY ? computeYearlySavingMinor(plan) : 0;
+  const showsDiscountBadge =
+    (interval === BillingInterval.QUARTERLY || interval === BillingInterval.SEMIANNUAL) &&
+    price !== null &&
+    price.amountMinor > 0;
   const isNoCostPlan =
     plan.prices.length > 0 && plan.prices.every((planPrice) => planPrice.amountMinor === 0);
 
@@ -53,6 +57,10 @@ export function BillingPlanCard({
               amount: formatMinorAmount(savingMinor, price.currency),
             })}
           </p>
+        ) : null}
+
+        {showsDiscountBadge ? (
+          <p className="text-primary text-xs font-medium">{t('marketing.pricing.discountBadge')}</p>
         ) : null}
 
         <ul className="grid grid-cols-1 gap-1 text-sm">

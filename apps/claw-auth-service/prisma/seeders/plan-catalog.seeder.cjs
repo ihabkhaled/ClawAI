@@ -142,8 +142,19 @@ function planColumns(definition) {
 async function upsertPrices(prisma, planId, definition) {
   const intervals = [
     ['MONTHLY', definition.monthlyMinor],
-    ['QUARTERLY', computeDiscountedIntervalMinor(definition.monthlyMinor, 3)],
-    ['SEMIANNUAL', computeDiscountedIntervalMinor(definition.monthlyMinor, 6)],
+    // QUARTERLY/SEMIANNUAL are derived from monthlyMinor, so they can only be
+    // computed when it exists. No current plan has a null monthlyMinor (only
+    // yearlyMinor is nullable), but guarding here means
+    // computeDiscountedIntervalMinor is never called with a null input even if
+    // a future plan definition omits it — the entry is simply never
+    // constructed, rather than relying on the `amountMinor === null` check
+    // below to catch a NaN produced by the math.
+    ...(definition.monthlyMinor === null
+      ? []
+      : [
+          ['QUARTERLY', computeDiscountedIntervalMinor(definition.monthlyMinor, 3)],
+          ['SEMIANNUAL', computeDiscountedIntervalMinor(definition.monthlyMinor, 6)],
+        ]),
     ['YEARLY', definition.yearlyMinor],
   ];
   for (const [billingInterval, amountMinor] of intervals) {

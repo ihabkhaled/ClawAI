@@ -194,6 +194,81 @@ conflating them is how an unlimited window would start failing validation.
 Existing rows are not migrated: the replacement numbers are a pricing decision,
 so the guard surfaces them by refusing the next edit rather than picking values.
 
+## Admin plan grants carry duration, reason and provenance (2026-09-02)
+
+`PlansRepository.assignUserToPlan` used to serve two callers with genuinely
+different intent under one signature: an administrator deliberately putting a
+user on a plan, and a brand-new signup landing on the platform's default plan.
+Forcing both through one method meant a signup grant had to fabricate an
+`assignedByUserId`, a `grantReason` and a `durationMonths` that describe
+nothing real about the event — or the admin-grant path had to make all three
+optional and quietly do the wrong thing when they were missing. Neither is
+acceptable for a table (`UserPlanAssignment`) that downstream billing and
+support tooling reads as an audit trail.
+
+The split: `assignDefaultPlan(userId, planId)` preserves the old signup
+behavior byte-for-byte — no admin actor, `grantType` defaults to
+`FREE_DEFAULT`, `entitlementValidUntil` stays null (never expires) — and is
+the only method `AuthManager.register()` and `UsersService.assignSignupPlan()`
+call. `assignUserToPlan` is now exclusively the admin-grant path: it always
+requires `assignedByUserId`, a validated `durationMonths`, and a non-empty
+`grantReason`, and always writes `grantType: 'ADMIN_GRANT'`. A signup is not
+an administrator's discretionary decision, and an admin grant is not an
+anonymous default — collapsing them back into one method would either force a
+fake reason onto every signup or silently drop the audit trail off every real
+grant.
+
+`PlansService` validates before the repository ever sees a grant:
+`PLAN_GRANT_DURATION_INVALID` when `durationMonths` is missing, not a whole
+number, below 1, or above `PLAN_GRANT_MAX_DURATION_MONTHS` (60 — a ceiling
+against a typo like `240` silently granting two decades, not a real expected
+value), and `PLAN_GRANT_REASON_REQUIRED` when the trimmed `grantReason` is
+empty. Both are `BusinessException`s with `HttpStatus.BAD_REQUEST`, refused
+before any write.
+
+`entitlementValidUntil` is computed once, at grant time
+(`addCalendarMonths(now, durationMonths)`), and stored on the
+`UserPlanAssignment` row — it does **not** get its own expiry sweep. The
+existing lazy-expiry read in `findEffectiveForUser` already filters on
+`OR: [{ entitlementValidUntil: null }, { entitlementValidUntil: { gt: now } }]`,
+which an admin grant now simply participates in the same way a payment-service
+entitlement event already did. An expired admin grant does not need a cron job
+to "notice" — the next read of the user's effective plan already excludes it,
+and the row itself is left in place as the historical record of what was
+granted, by whom, and why.
+
+### The QUARTERLY/SEMIANNUAL pricing backfill is a separate seeder, not a version bump
+
+The 4-way checkout term selector (1/3/6/12 months) needs a `PlanPriceVersion`
+row for `QUARTERLY` and `SEMIANNUAL` on every plan, in addition to the
+`MONTHLY`/`YEARLY` rows that already existed. `plan-catalog.seeder.cjs` is
+where those rows are created (`upsertPrices`), but it is versioned `2` and
+`seed-runner.cjs`'s run-once guard means its `run()` — `upsertPrices` included
+— never executes again once an install's `plan-catalog` v2 has already
+completed. That is every install seeded before this feature shipped,
+production included. Bumping `plan-catalog` to v3 would not fix this: v3's
+`run()` would re-evaluate `matchesLegacyFingerprint` for every plan, find it
+false (v2 already moved every plan off the legacy baseline), and fall through
+to the branch that writes only `modelAccessMode` and a null
+`weeklyTokenQuota` — the same trap already documented for the PAYG allowance
+migration, applied to a different pair of columns.
+
+`plan-quarterly-semiannual-pricing.seeder.cjs` exists for exactly this reason,
+mirroring `plan-payg-allowance.seeder.cjs`'s pattern: a new, independently
+versioned seeder that targets EXISTING installs, reads plans and their
+currently-active `MONTHLY` price LIVE from the database (never the static
+`plan-catalog.json`, since an operator may have re-priced a plan or added a
+new one since that file shipped), and is keyed on `PlanPriceVersion.activeKey`
+existence so running it twice is a no-op.
+
+**This seeder must run before any deploy that expects all four checkout terms
+to be selectable on an existing install.** Without it, `QUARTERLY` and
+`SEMIANNUAL` render as "unavailable for this interval" on every install that
+seeded before this feature shipped — not because the frontend or the checkout
+flow is broken, but because the price rows simply do not exist yet. It is
+registered in `seed.cjs` immediately after `planCatalogSeeder`, since it
+depends on the plans (and their active monthly prices) already existing.
+
 ## Docker Container Rebuild Procedure
 
 When rebuilding this service (especially after shared package changes):
