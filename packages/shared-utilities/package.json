@@ -1,6 +1,6 @@
 {
   "name": "@claw/shared-utilities",
-  "version": "1.59.3",
+  "version": "1.59.4",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,8 +23,8 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@claw/shared-constants": "1.59.3",
-    "@claw/shared-types": "1.59.3",
+    "@claw/shared-constants": "1.59.4",
+    "@claw/shared-types": "1.59.4",
     "@nestjs/common": "^12.0.1",
     "axios": "^1.20.0",
     "jsonwebtoken": "^9.0.3",
