@@ -4335,6 +4335,8 @@ export const de: TranslationDictionary = {
     },
     interval: {
       MONTHLY: 'Monatlich',
+      QUARTERLY: 'Vierteljährlich',
+      SEMIANNUAL: 'Halbjährlich',
       YEARLY: 'Jährlich',
       toggleLabel: 'Abrechnungszeitraum',
     },
@@ -4510,6 +4512,13 @@ export const de: TranslationDictionary = {
       yearlyBadge: 'Zwei Monate gratis',
       perMonth: '/Monat',
       perYear: '/Jahr',
+      cadence: {
+        MONTHLY: '/Monat',
+        QUARTERLY: '/3 Monate',
+        SEMIANNUAL: '/6 Monate',
+        YEARLY: '/Jahr',
+      },
+      discountBadge: '10% Rabatt',
       mostPopular: 'Am beliebtesten',
       dailyTokens: 'Tägliches Kontingent',
       monthlyTokens: 'Monatliches Kontingent',

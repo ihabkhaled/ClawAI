@@ -4,6 +4,8 @@
 
 export enum BillingInterval {
   MONTHLY = 'MONTHLY',
+  QUARTERLY = 'QUARTERLY',
+  SEMIANNUAL = 'SEMIANNUAL',
   YEARLY = 'YEARLY',
 }
 

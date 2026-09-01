@@ -4342,6 +4342,8 @@ export const fr: TranslationDictionary = {
     },
     interval: {
       MONTHLY: 'Mensuel',
+      QUARTERLY: 'Trimestriel',
+      SEMIANNUAL: 'Semestriel',
       YEARLY: 'Annuel',
       toggleLabel: 'Période de facturation',
     },
@@ -4519,6 +4521,13 @@ export const fr: TranslationDictionary = {
       yearlyBadge: 'Deux mois offerts',
       perMonth: '/mois',
       perYear: '/an',
+      cadence: {
+        MONTHLY: '/mois',
+        QUARTERLY: '/3 mois',
+        SEMIANNUAL: '/6 mois',
+        YEARLY: '/an',
+      },
+      discountBadge: '10 % de réduction',
       mostPopular: 'Le plus populaire',
       dailyTokens: 'Quota quotidien',
       monthlyTokens: 'Quota mensuel',

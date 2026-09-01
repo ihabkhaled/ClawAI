@@ -4301,6 +4301,8 @@ export const ru: TranslationDictionary = {
     },
     interval: {
       MONTHLY: 'Ежемесячно',
+      QUARTERLY: 'Ежеквартально',
+      SEMIANNUAL: 'Два раза в год',
       YEARLY: 'Ежегодно',
       toggleLabel: 'Период оплаты',
     },
@@ -4475,6 +4477,13 @@ export const ru: TranslationDictionary = {
       yearlyBadge: 'Два месяца бесплатно',
       perMonth: '/месяц',
       perYear: '/год',
+      cadence: {
+        MONTHLY: '/месяц',
+        QUARTERLY: '/3 месяца',
+        SEMIANNUAL: '/6 месяцев',
+        YEARLY: '/год',
+      },
+      discountBadge: 'Скидка 10%',
       mostPopular: 'Самый популярный',
       dailyTokens: 'Дневной лимит',
       monthlyTokens: 'Месячный лимит',

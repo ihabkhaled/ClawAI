@@ -4274,6 +4274,8 @@ export const hi: TranslationDictionary = {
     },
     interval: {
       MONTHLY: 'मासिक',
+      QUARTERLY: 'त्रैमासिक',
+      SEMIANNUAL: 'अर्धवार्षिक',
       YEARLY: 'वार्षिक',
       toggleLabel: 'बिलिंग अवधि',
     },
@@ -4446,6 +4448,13 @@ export const hi: TranslationDictionary = {
       yearlyBadge: 'दो महीने मुफ़्त',
       perMonth: '/माह',
       perYear: '/वर्ष',
+      cadence: {
+        MONTHLY: '/माह',
+        QUARTERLY: '/3 महीने',
+        SEMIANNUAL: '/6 महीने',
+        YEARLY: '/वर्ष',
+      },
+      discountBadge: '10% छूट',
       mostPopular: 'सबसे लोकप्रिय',
       dailyTokens: 'दैनिक टोकन सीमा',
       monthlyTokens: 'मासिक टोकन सीमा',

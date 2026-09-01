@@ -4217,6 +4217,8 @@ export const ar: TranslationDictionary = {
     },
     interval: {
       MONTHLY: 'شهريًا',
+      QUARTERLY: 'كل 3 أشهر',
+      SEMIANNUAL: 'كل 6 أشهر',
       YEARLY: 'سنويًا',
       toggleLabel: 'فترة الفوترة',
     },
@@ -4389,6 +4391,13 @@ export const ar: TranslationDictionary = {
       yearlyBadge: 'شهران مجانًا',
       perMonth: '/شهر',
       perYear: '/سنة',
+      cadence: {
+        MONTHLY: '/شهر',
+        QUARTERLY: '/3 أشهر',
+        SEMIANNUAL: '/6 أشهر',
+        YEARLY: '/سنة',
+      },
+      discountBadge: 'خصم 10%',
       mostPopular: 'الأكثر شيوعًا',
       dailyTokens: 'الرصيد اليومي',
       monthlyTokens: 'الرصيد الشهري',

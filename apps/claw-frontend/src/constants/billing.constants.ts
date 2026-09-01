@@ -50,6 +50,8 @@ export const USAGE_WARNING_THRESHOLD = 0.8;
 // or expose something in the UI before its copy exists.
 export const BILLING_INTERVAL_ORDER: BillingInterval[] = [
   BillingInterval.MONTHLY,
+  BillingInterval.QUARTERLY,
+  BillingInterval.SEMIANNUAL,
   BillingInterval.YEARLY,
 ];
 

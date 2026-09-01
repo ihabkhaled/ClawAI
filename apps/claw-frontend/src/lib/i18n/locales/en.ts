@@ -4249,6 +4249,8 @@ export const en: TranslationDictionary = {
     },
     interval: {
       MONTHLY: 'Monthly',
+      QUARTERLY: 'Quarterly',
+      SEMIANNUAL: 'Every 6 months',
       YEARLY: 'Yearly',
       toggleLabel: 'Billing period',
     },
@@ -4421,6 +4423,13 @@ export const en: TranslationDictionary = {
       yearlyBadge: 'Two months free',
       perMonth: '/month',
       perYear: '/year',
+      cadence: {
+        MONTHLY: '/month',
+        QUARTERLY: '/3 months',
+        SEMIANNUAL: '/6 months',
+        YEARLY: '/year',
+      },
+      discountBadge: '10% off',
       mostPopular: 'Most popular',
       dailyTokens: 'Daily allowance',
       monthlyTokens: 'Monthly allowance',

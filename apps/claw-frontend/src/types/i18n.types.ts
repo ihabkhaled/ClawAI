@@ -4266,6 +4266,8 @@ export type TranslationDictionary = {
     };
     interval: {
       MONTHLY: string;
+      QUARTERLY: string;
+      SEMIANNUAL: string;
       YEARLY: string;
       toggleLabel: string;
     };
@@ -4432,6 +4434,13 @@ export type TranslationDictionary = {
       yearlyBadge: string;
       perMonth: string;
       perYear: string;
+      cadence: {
+        MONTHLY: string;
+        QUARTERLY: string;
+        SEMIANNUAL: string;
+        YEARLY: string;
+      };
+      discountBadge: string;
       mostPopular: string;
       dailyTokens: string;
       monthlyTokens: string;

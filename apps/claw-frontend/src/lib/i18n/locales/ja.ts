@@ -4283,6 +4283,8 @@ export const ja: TranslationDictionary = {
     },
     interval: {
       MONTHLY: '毎月',
+      QUARTERLY: '四半期ごと',
+      SEMIANNUAL: '半年ごと',
       YEARLY: '毎年',
       toggleLabel: '請求期間',
     },
@@ -4457,6 +4459,13 @@ export const ja: TranslationDictionary = {
       yearlyBadge: '2 か月間無料',
       perMonth: '/月',
       perYear: '/年',
+      cadence: {
+        MONTHLY: '/月',
+        QUARTERLY: '/3 ヶ月',
+        SEMIANNUAL: '/6 ヶ月',
+        YEARLY: '/年',
+      },
+      discountBadge: '10% 割引',
       mostPopular: '最も人気のある',
       dailyTokens: '日当',
       monthlyTokens: '月額手当',

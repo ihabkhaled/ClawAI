@@ -4131,6 +4131,8 @@ export const zh: TranslationDictionary = {
     },
     interval: {
       MONTHLY: '每月',
+      QUARTERLY: '每季度',
+      SEMIANNUAL: '每半年',
       YEARLY: '每年',
       toggleLabel: '计费周期',
     },
@@ -4299,6 +4301,13 @@ export const zh: TranslationDictionary = {
       yearlyBadge: '免费两个月',
       perMonth: '/月',
       perYear: '/年',
+      cadence: {
+        MONTHLY: '/月',
+        QUARTERLY: '/3个月',
+        SEMIANNUAL: '/6个月',
+        YEARLY: '/年',
+      },
+      discountBadge: '9 折',
       mostPopular: '最受欢迎',
       dailyTokens: '每日津贴',
       monthlyTokens: '每月津贴',

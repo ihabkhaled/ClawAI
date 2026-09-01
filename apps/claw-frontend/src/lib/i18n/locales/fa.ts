@@ -4272,6 +4272,8 @@ export const fa: TranslationDictionary = {
     },
     interval: {
       MONTHLY: 'ماهانه',
+      QUARTERLY: 'سه ماهه',
+      SEMIANNUAL: 'شش ماهه',
       YEARLY: 'سالانه',
       toggleLabel: 'دوره صورتحساب',
     },
@@ -4445,6 +4447,13 @@ export const fa: TranslationDictionary = {
       yearlyBadge: 'دو ماه رایگان',
       perMonth: '/ماه',
       perYear: '/سال',
+      cadence: {
+        MONTHLY: '/ماه',
+        QUARTERLY: '/3 ماه',
+        SEMIANNUAL: '/6 ماه',
+        YEARLY: '/سال',
+      },
+      discountBadge: '10% تخفیف',
       mostPopular: 'محبوب ترین',
       dailyTokens: 'کمک هزینه روزانه',
       monthlyTokens: 'کمک هزینه ماهانه',

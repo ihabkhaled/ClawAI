@@ -4234,6 +4234,8 @@ export const th: TranslationDictionary = {
     },
     interval: {
       MONTHLY: 'รายเดือน',
+      QUARTERLY: 'ทุกไตรมาส',
+      SEMIANNUAL: 'ทุกหกเดือน',
       YEARLY: 'เป็นประจำทุกปี',
       toggleLabel: 'ระยะเวลาการเรียกเก็บเงิน',
     },
@@ -4409,6 +4411,13 @@ export const th: TranslationDictionary = {
       yearlyBadge: 'ฟรีสองเดือน',
       perMonth: '/เดือน',
       perYear: '/ปี',
+      cadence: {
+        MONTHLY: '/เดือน',
+        QUARTERLY: '/3 เดือน',
+        SEMIANNUAL: '/6 เดือน',
+        YEARLY: '/ปี',
+      },
+      discountBadge: 'ลด 10%',
       mostPopular: 'ที่นิยมมากที่สุด',
       dailyTokens: 'เบี้ยเลี้ยงรายวัน',
       monthlyTokens: 'เบี้ยเลี้ยงรายเดือน',
