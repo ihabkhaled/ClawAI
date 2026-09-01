@@ -11,3 +11,4 @@ export * from './token-security';
 export * from './email';
 export * from './effort';
 export * from './speed';
+export * from './billing-period';
