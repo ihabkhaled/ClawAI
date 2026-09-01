@@ -1,3 +1,4 @@
+import type { BillingInterval } from '@/enums/billing.enum';
 import type { Locale } from '@/enums/locale.enum';
 import type { Theme } from '@/enums/theme.enum';
 import type { LocaleConfig } from '@/types/i18n.types';
@@ -77,11 +78,10 @@ export type MarketingPricingSectionProps = {
   compact?: boolean;
 };
 
-// Monthly/yearly switch behind the pricing table. React state may not live in
+// 4-way interval switch behind the pricing table. React state may not live in
 // a .tsx in this codebase, so the toggle is a hook and the section is pure
 // render composition over this return value.
 export type UsePricingToggleReturn = {
-  isYearly: boolean;
-  selectMonthly: () => void;
-  selectYearly: () => void;
+  interval: BillingInterval;
+  selectInterval: (interval: BillingInterval) => void;
 };

@@ -74,7 +74,7 @@ export type PricingSectionProps = {
 
 export type PublicPlanCardProps = {
   plan: PublicPlan;
-  isYearly: boolean;
+  interval: BillingInterval;
 };
 
 export type UsePublicPricingResult = {
@@ -83,9 +83,8 @@ export type UsePublicPricingResult = {
   isError: boolean;
   isFallback: boolean;
   error: Error | null;
-  isYearly: boolean;
-  selectMonthly: () => void;
-  selectYearly: () => void;
+  interval: BillingInterval;
+  selectInterval: (interval: BillingInterval) => void;
   retry: () => void;
   t: (key: string, params?: Record<string, string | number>) => string;
   locale: string;

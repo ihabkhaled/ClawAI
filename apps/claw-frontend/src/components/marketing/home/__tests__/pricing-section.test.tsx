@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PricingSection } from '@/components/marketing/home/pricing-section';
+import { BillingInterval } from '@/enums/billing.enum';
 
 const mockController = vi.fn();
 const retry = vi.fn();
@@ -21,9 +22,8 @@ function controller(overrides: Record<string, unknown> = {}): Record<string, unk
     isError: false,
     isFallback: false,
     error: null,
-    isYearly: false,
-    selectMonthly: vi.fn(),
-    selectYearly: vi.fn(),
+    interval: BillingInterval.MONTHLY,
+    selectInterval: vi.fn(),
     retry,
     t: (key: string) => key,
     locale: 'en',

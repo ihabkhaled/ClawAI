@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { PlanFeatureGates } from '@/components/account/plan-feature-gates';
 import { buttonVariants } from '@/components/ui/button';
 import { ROUTES } from '@/constants';
+import { CHECKOUT_URL_INTERVAL_PARAM } from '@/constants/billing.constants';
+import { BillingInterval } from '@/enums/billing.enum';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { PublicPlanCardProps } from '@/types/public-pricing.types';
@@ -16,18 +18,19 @@ import {
   resolvePlanPrice,
 } from '@/utilities/pricing-catalog.utility';
 
-export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.ReactElement {
+export function PlanTierCard({ plan, interval }: PublicPlanCardProps): React.ReactElement {
   const { t, locale } = useTranslation();
-  const price = resolvePlanPrice(plan, isYearly);
+  const price = resolvePlanPrice(plan, interval);
   const creditMicroUsd = resolvePlanMonthlyCreditMicroUsd(plan);
   const creditRatePercent = formatCreditRatePercent(plan.paygCreditPercentBps);
   const isFree = price?.amountMinor === 0;
-  const cadenceKey = isYearly ? 'marketing.pricing.perYear' : 'marketing.pricing.perMonth';
+  const cadenceKey = `marketing.pricing.cadence.${interval}`;
   const disabled = t('billing.quota.disabled');
   const unlimited = t('billing.quota.unlimited');
-  const interval = isYearly ? 'yearly' : 'monthly';
-  const checkoutRoute = `${ROUTES.BILLING_CHECKOUT}?plan=${encodeURIComponent(plan.slug)}&interval=${interval}`;
+  const checkoutRoute = `${ROUTES.BILLING_CHECKOUT}?plan=${encodeURIComponent(plan.slug)}&interval=${CHECKOUT_URL_INTERVAL_PARAM[interval]}`;
   const returnRoute = isFree ? ROUTES.CHAT : checkoutRoute;
+  const showsDiscount =
+    interval === BillingInterval.QUARTERLY || interval === BillingInterval.SEMIANNUAL;
 
   return (
     <article
@@ -67,6 +70,11 @@ export function PlanTierCard({ plan, isYearly }: PublicPlanCardProps): React.Rea
           <span className="text-muted-foreground text-sm">{t(cadenceKey)}</span>
         )}
       </p>
+      {showsDiscount && price !== null && !isFree ? (
+        <p className="text-primary mt-1 text-xs font-medium">
+          {t('marketing.pricing.discountBadge')}
+        </p>
+      ) : null}
 
       <dl className="text-muted-foreground mt-6 space-y-2.5 text-xs">
         <div className="flex justify-between gap-2">

@@ -5,15 +5,15 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PUBLIC_PRICING_FALLBACK_PLANS } from '@/constants/public-pricing-fallback.constants';
+import { BillingInterval } from '@/enums/billing.enum';
 import { usePublicPricing } from '@/hooks/marketing/use-public-pricing';
 
 const mockList = vi.fn();
 
 vi.mock('@/hooks/marketing/use-pricing-toggle', () => ({
   usePricingToggle: () => ({
-    isYearly: false,
-    selectMonthly: vi.fn(),
-    selectYearly: vi.fn(),
+    interval: BillingInterval.MONTHLY,
+    selectInterval: vi.fn(),
   }),
 }));
 

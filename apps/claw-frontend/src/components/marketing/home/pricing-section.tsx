@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { BillingIntervalToggle } from '@/components/billing/billing-interval-toggle';
 import { CreditDualConsumptionNotice } from '@/components/billing/credit-dual-consumption-notice';
 import { PlanTierCard } from '@/components/marketing/home/plan-tier-card';
 import { Button } from '@/components/ui/button';
@@ -33,31 +34,12 @@ export function PricingSection({
         <p className="text-muted-foreground mt-4">{controller.t('marketing.home.pricing.intro')}</p>
       </div>
 
-      <div
-        role="group"
-        aria-label={controller.t('marketing.home.pricing.toggleLabel')}
-        className="border-border bg-card mx-auto mt-8 flex w-fit items-center gap-1 rounded-full border p-1"
-      >
-        <Button
-          type="button"
-          size="sm"
-          variant={controller.isYearly ? 'ghost' : 'default'}
-          aria-pressed={!controller.isYearly}
-          className="rounded-full"
-          onClick={controller.selectMonthly}
-        >
-          {controller.t('marketing.home.pricing.toggleMonthly')}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant={controller.isYearly ? 'default' : 'ghost'}
-          aria-pressed={controller.isYearly}
-          className="rounded-full"
-          onClick={controller.selectYearly}
-        >
-          {controller.t('marketing.home.pricing.toggleYearly')}
-        </Button>
+      <div className="mx-auto mt-8 flex w-fit justify-center">
+        <BillingIntervalToggle
+          value={controller.interval}
+          onChange={controller.selectInterval}
+          t={controller.t}
+        />
       </div>
 
       {controller.isLoading ? (
@@ -90,7 +72,7 @@ export function PricingSection({
       {!controller.isLoading && !controller.isError && plans.length > 0 ? (
         <div className="mt-10 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {plans.map((plan) => (
-            <PlanTierCard key={plan.id} plan={plan} isYearly={controller.isYearly} />
+            <PlanTierCard key={plan.id} plan={plan} interval={controller.interval} />
           ))}
         </div>
       ) : null}

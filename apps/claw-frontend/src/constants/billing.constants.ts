@@ -55,6 +55,15 @@ export const BILLING_INTERVAL_ORDER: BillingInterval[] = [
   BillingInterval.YEARLY,
 ];
 
+/** Lowercase URL query values PlanTierCard's checkout link uses, and
+ * readCheckoutInterval parses back. Keep both in sync. */
+export const CHECKOUT_URL_INTERVAL_PARAM: Record<BillingInterval, string> = {
+  [BillingInterval.MONTHLY]: 'monthly',
+  [BillingInterval.QUARTERLY]: 'quarterly',
+  [BillingInterval.SEMIANNUAL]: 'semiannual',
+  [BillingInterval.YEARLY]: 'yearly',
+};
+
 export const BILLING_GATEWAY_ORDER: BillingGateway[] = [
   BillingGateway.PAYPAL,
   BillingGateway.PAYMOB,
