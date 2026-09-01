@@ -1,6 +1,6 @@
 {
   "name": "@claw/shared-auth",
-  "version": "1.59.2",
+  "version": "1.59.3",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
