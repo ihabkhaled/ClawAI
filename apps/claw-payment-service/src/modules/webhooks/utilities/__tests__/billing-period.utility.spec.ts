@@ -54,4 +54,23 @@ describe('resolvePeriodEndMs', () => {
       '2026-05-10T13:45:30.000Z',
     );
   });
+
+  it('advances three calendar months for QUARTERLY', () => {
+    const start = Date.UTC(2026, 4, 31);
+    expect(iso(resolvePeriodEndMs(start, BillingInterval.QUARTERLY))).toBe(
+      '2026-08-31T00:00:00.000Z',
+    );
+  });
+
+  it('advances six calendar months and clamps for SEMIANNUAL', () => {
+    const start = Date.UTC(2026, 7, 31);
+    expect(iso(resolvePeriodEndMs(start, BillingInterval.SEMIANNUAL))).toBe(
+      '2027-02-28T00:00:00.000Z',
+    );
+  });
+
+  it('clamps a 29 February start into 28 February for YEARLY', () => {
+    const start = Date.UTC(2028, 1, 29);
+    expect(iso(resolvePeriodEndMs(start, BillingInterval.YEARLY))).toBe('2029-02-28T00:00:00.000Z');
+  });
 });
