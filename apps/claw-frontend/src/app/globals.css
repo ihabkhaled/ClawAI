@@ -1239,6 +1239,27 @@
     line-height: 1.6;
   }
 
+  /* The CTA is an INVERTED panel — its ground is `--editorial-ink`, not
+   * `--editorial-paper`. So any child that re-sets `color` has to take that
+   * colour from the inverted set too. `--editorial-signal` and
+   * `--editorial-graphite` are both tuned for a paper ground, and on ink they
+   * land at 3.4:1 and 3.0:1 in light mode, 2.3:1 and 1.8:1 in dark. Both
+   * themes fail WCAG AA; dark merely fails louder, which is why Lighthouse
+   * reported it first.
+   *
+   * The compare pages never hit this: they put bare text in the panel and let
+   * it inherit the panel's own colour. Only the learn and integration topic
+   * pages nest `__verdict-label` + `__body` inside, so only those 32 URLs
+   * failed the gate.
+   */
+  .editorial-comparison__cta .editorial-comparison__verdict-label {
+    color: var(--editorial-paper);
+  }
+
+  .editorial-comparison__cta .editorial-comparison__body {
+    color: color-mix(in srgb, var(--editorial-paper) 85%, var(--editorial-ink));
+  }
+
   .editorial-comparison__cta-actions {
     display: flex;
     flex-wrap: wrap;
