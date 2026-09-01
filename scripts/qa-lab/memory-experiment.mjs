@@ -88,8 +88,17 @@ for (const row of rows) {
 }
 console.log(`\n${rows.filter((r) => r.pass).length}/${rows.length} passed`);
 
+// Forgetting a memory is confirmation-gated (`FORGET_CONFIRMATION_REQUIRED`),
+// and this cleanup used to omit the flag and ignore the result. The 400 was
+// silent, so every run left its standing INSTRUCTION behind — and the NEXT run
+// then had two conflicting "always end your reply with …" memories live at
+// once, obeyed the older one, and reported a product failure that was really
+// its own litter. A cleanup whose failure is invisible is not a cleanup.
 if (memoryId !== null) {
-  await api('DELETE', `/memories/${memoryId}`);
+  const forgotten = await api('DELETE', `/memories/${memoryId}?confirm=FORGET`);
+  if (!forgotten.ok) {
+    console.log(`WARNING: could not forget ${memoryId} (${String(forgotten.status)}) — next run may see it`);
+  }
   await sleep(200);
 }
 writeJson(`${OUT}/summary.json`, { runId: RUN_ID, threadId: thread.id, memoryId, rows, answer });

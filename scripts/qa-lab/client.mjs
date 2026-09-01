@@ -20,8 +20,14 @@ export const ALLOW_METERED = false;
 let token = null;
 let tokenAt = 0;
 
+// Whoever the process is currently acting as. Kept separate from EMAIL /
+// PASSWORD so the silent token refresh below renews the ACTIVE identity rather
+// than snapping back to the lab account mid-run.
+let activeEmail = EMAIL;
+let activePassword = PASSWORD;
+
 export async function login() {
-  if (EMAIL.length === 0 || PASSWORD.length === 0) {
+  if (activeEmail.length === 0 || activePassword.length === 0) {
     throw new Error(
       'QA_LAB_EMAIL and QA_LAB_PASSWORD must be set. See skills/audit-conversational-context.md.',
     );
@@ -29,13 +35,54 @@ export async function login() {
   const res = await fetch(`${BASE}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+    body: JSON.stringify({ email: activeEmail, password: activePassword }),
   });
   if (!res.ok) throw new Error(`login failed ${res.status} ${await res.text()}`);
   const body = await res.json();
   token = body.tokens.accessToken;
   tokenAt = Date.now();
   return body.user;
+}
+
+/**
+ * Act as a different user for every subsequent call.
+ *
+ * Memories are USER-scoped and are injected into every thread that user owns,
+ * so an account that has accumulated fixtures from earlier runs quietly
+ * contaminates later ones: a stored "the internal project codename is ORCHID-…"
+ * competes with the codename the scenario seeds in the thread, and the model
+ * picks one. Measured on the shared lab account — three recall probes at
+ * distances 4, 24 and 56 all failed at exactly the same rate, which is the
+ * signature of a constant competing fact rather than of context loss.
+ *
+ * A long run therefore belongs on its own fresh account, where the only thing
+ * in scope is the conversation being measured.
+ */
+export async function loginAs(email, password) {
+  activeEmail = email;
+  activePassword = password;
+  token = null;
+  tokenAt = 0;
+  return login();
+}
+
+/** Mint a brand-new empty account (admin credentials required). */
+export async function createIsolatedUser(tag) {
+  const suffix = `${tag}${Date.now().toString(36)}`;
+  const account = {
+    email: `qa-${suffix}@claw.local`,
+    username: `qa${suffix}`.replace(/[^a-z0-9]/gi, '').slice(0, 28),
+    password: 'QaIsolated123!',
+    firstName: 'QA',
+    lastName: 'Isolated',
+  };
+  await login();
+  const created = await api('POST', '/users', account);
+  if (!created.ok) {
+    throw new Error(`createIsolatedUser failed ${created.status} ${JSON.stringify(created.body)}`);
+  }
+  const user = await loginAs(account.email, account.password);
+  return { ...account, id: user.id };
 }
 
 async function ensureToken() {
