@@ -134,6 +134,25 @@ After completing any implementation task on this service, produce:
 5. **Known gaps or follow-up items**
 6. **Evidence**: typecheck output, lint output, test output
 
+## The entrypoint is ESM: no `__dirname`, no runtime tsconfig-paths (2026-09-02)
+
+`package.json` is `"type": "module"`, so `dist/main.js` is loaded as an ES
+module. CommonJS globals (`__dirname`, `__filename`, `require`) do not exist
+there. The 2026-09-02 prod rollout crash-looped every replica with
+`ReferenceError: __dirname is not defined in ES module scope` because `main.ts`
+still carried a CommonJS-era `tsconfig-paths` register from the tsgo migration.
+
+- **Path aliases are rewritten at build time** by `tsc-alias -f` (last step of
+  `npm run build`). There is nothing to resolve at runtime, and `tsconfig-paths`
+  only hooks CommonJS `require`, so a runtime register is dead code at best.
+- **Need a directory?** Use `import.meta.dirname` / `import.meta.filename`.
+  `eslint.config.mjs` bans `__dirname` and `__filename` via
+  `no-restricted-globals`; `src/__tests__/main-esm-bootstrap.spec.ts` pins the
+  entrypoint.
+- **Why only this service broke:** it was the only one that registered
+  `tsconfig-paths`. Unit tests never load `main.ts`, and the dev container runs
+  the same ESM path, so the first place the bug could surface was the rollout.
+
 ## Llamacpp execution dispatch
 
 `ChatExecutionManager.callLlamacpp()` (`src/modules/chat-messages/managers/chat-execution.manager.ts`) handles BOTH `local-llamacpp` (frontend ModelSelector option) and `LLAMACPP` (registered connector) provider strings. POSTs to `${LLAMACPP_SERVICE_URL}/api/v1/v1/chat/completions` (the OpenAI-compatible passthrough). Bypasses `resolveProviderConfig` — no API key needed. Errors with code `LLAMACPP_REQUEST_FAILED` on non-2xx. `LLAMACPP_SERVICE_URL` Zod-required in `app.config.ts` (default `http://llamacpp-service:4017`).

@@ -110,6 +110,14 @@ export default tseslint.config(
 
       // ── Core ESLint ──────────────────────────────────────────────────────
       'no-console': ['error', { allow: ['warn', 'error'] }],
+      // package.json is "type": "module": dist/*.js is ESM, and CommonJS
+      // globals do not exist there. `__dirname` in main.ts crash-looped the
+      // prod rollout with a ReferenceError after the NestJS 12 / ESM switch.
+      'no-restricted-globals': [
+        'error',
+        { name: '__dirname', message: 'ESM has no __dirname — use import.meta.dirname.' },
+        { name: '__filename', message: 'ESM has no __filename — use import.meta.filename.' },
+      ],
       eqeqeq: ['error', 'always'],
       'no-var': 'error',
       'prefer-const': 'error',
@@ -284,6 +292,9 @@ export default tseslint.config(
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
       'no-restricted-syntax': 'off',
+      // Specs run under ts-jest as CommonJS, where __dirname is real. The ban
+      // exists for shipped ESM code (dist/*.js), not for test fixtures.
+      'no-restricted-globals': 'off',
       'max-lines-per-function': 'off',
       'security/detect-object-injection': 'off',
       'security/detect-possible-timing-attacks': 'off',

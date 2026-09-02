@@ -12,6 +12,13 @@
 
 The chat service is the central orchestrator for user conversations. It manages threads, stores messages, assembles context from multiple services, executes LLM calls with fallback chains, and streams responses via SSE.
 
+**Boot contract:** the package is `"type": "module"`, so `dist/main.js` runs as ESM.
+`main.ts` must not reference `__dirname` / `__filename` / `require` (banned by
+ESLint `no-restricted-globals`, pinned by `src/__tests__/main-esm-bootstrap.spec.ts`),
+and must not register `tsconfig-paths` at runtime — `tsc-alias -f` rewrites the
+`@app/*` aliases at build time. The 2026-09-02 rollout crash-looped on exactly
+this; see [build-system.md § Gotchas](../08-runtime-devops/build-system.md#7-gotchas--troubleshooting).
+
 ## Database Schema
 
 ### ChatThread

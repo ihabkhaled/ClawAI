@@ -1,3 +1,7 @@
+// Path aliases (@app/* etc.) are rewritten at BUILD time by tsc-alias (see
+// package.json "build"). Do NOT register tsconfig-paths here: this package is
+// "type": "module", so dist/main.js is ESM — CommonJS globals such as
+// `__dirname` do not exist and tsconfig-paths only hooks CommonJS `require`.
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import * as fs from 'node:fs';

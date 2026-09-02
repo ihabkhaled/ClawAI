@@ -6,6 +6,12 @@
 - Health endpoint reports service as unhealthy
 - Docker container in "Restarting" or "Exited" state
 - Frontend shows "Service unavailable" errors
+- Container log repeats `[entrypoint] exec node dist/main.js` followed by
+  `ReferenceError: __dirname is not defined in ES module scope` — the build is
+  fine and migrations applied; the entrypoint itself references a CommonJS
+  global. Every service is `"type": "module"`, so `dist/*.js` is ESM. Fix the
+  source (`import.meta.dirname`), never the container. See
+  [build-system.md § Gotchas](../08-runtime-devops/build-system.md#7-gotchas--troubleshooting).
 
 ## Diagnosis Steps
 
