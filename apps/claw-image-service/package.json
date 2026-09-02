@@ -1,6 +1,6 @@
 {
   "name": "claw-image-service",
-  "version": "1.61.2",
+  "version": "1.61.3",
   "private": true,
   "description": "Claw Image Service - AI image generation orchestration",
   "license": "UNLICENSED",
