@@ -1,6 +1,6 @@
 {
   "name": "claw-chat-service",
-  "version": "1.61.4",
+  "version": "1.61.5",
   "private": true,
   "description": "Claw Chat Service - manages chat threads and messages",
   "license": "UNLICENSED",
