@@ -1,7 +1,3 @@
-// Register path aliases at runtime (replaces the build-time path rewrite step).
-// Must run before any other @app/* @common/* @infrastructure/* @modules/* import.
-import { register as registerTsConfigPaths } from 'tsconfig-paths';
-
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import * as fs from 'node:fs';
@@ -11,16 +7,6 @@ import { RabbitMQLoggerService, RabbitMQService } from '@claw/shared-rabbitmq';
 import { AppModule } from './app/app.module';
 import { AppConfig } from './app/config/app.config';
 import { configureChatBodyParser } from './app/utilities/chat-body-parser.utility';
-
-registerTsConfigPaths({
-  baseUrl: __dirname,
-  paths: {
-    '@app/*': ['app/*'],
-    '@common/*': ['common/*'],
-    '@infrastructure/*': ['infrastructure/*'],
-    '@modules/*': ['modules/*'],
-  },
-});
 
 // --- Inline HTTPS bootstrap (no-rebuild path; see scripts/_patch-main-ts-inline.cjs) ---
 function resolveHttpsOptions(): { cert: Buffer; key: Buffer } | undefined {
