@@ -1283,6 +1283,15 @@ export const de: TranslationDictionary = {
     noPlan: 'Kein Tarif',
     planAssigned: 'Tarif zugewiesen',
     planAssignFailed: 'Tarif konnte nicht zugewiesen werden',
+    assignPlanDialogTitle: 'Diesen Tarif gewähren',
+    assignPlanDialogDescription:
+      'Wählen Sie die Dauer der Gewährung und geben Sie den Grund dafür an.',
+    assignPlanDurationLabel: 'Dauer (Monate)',
+    assignPlanDurationInvalid: 'Geben Sie eine ganze Zahl von Monaten zwischen 1 und 60 ein.',
+    assignPlanReasonLabel: 'Grund',
+    assignPlanReasonRequired: 'Ein Grund ist erforderlich.',
+    assignPlanCancel: 'Abbrechen',
+    assignPlanConfirm: 'Tarif gewähren',
     platformHealthLinkDesc: 'Der Systemstatus wird auf dem Dashboard überwacht',
     platformHealthLinkBody:
       'Dienststatus, Latenz und Verfügbarkeitsmetriken befinden sich auf dem Dashboard. Öffnen Sie es für eine Echtzeitansicht.',
@@ -4335,6 +4344,8 @@ export const de: TranslationDictionary = {
     },
     interval: {
       MONTHLY: 'Monatlich',
+      QUARTERLY: 'Vierteljährlich',
+      SEMIANNUAL: 'Halbjährlich',
       YEARLY: 'Jährlich',
       toggleLabel: 'Abrechnungszeitraum',
     },
@@ -4510,6 +4521,13 @@ export const de: TranslationDictionary = {
       yearlyBadge: 'Zwei Monate gratis',
       perMonth: '/Monat',
       perYear: '/Jahr',
+      cadence: {
+        MONTHLY: '/Monat',
+        QUARTERLY: '/3 Monate',
+        SEMIANNUAL: '/6 Monate',
+        YEARLY: '/Jahr',
+      },
+      discountBadge: '10% Rabatt',
       mostPopular: 'Am beliebtesten',
       dailyTokens: 'Tägliches Kontingent',
       monthlyTokens: 'Monatliches Kontingent',

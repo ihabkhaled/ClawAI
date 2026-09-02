@@ -7,6 +7,11 @@ export type ReorderPlansDto = z.infer<typeof reorderPlansSchema>;
 
 export const assignPlanSchema = z.object({
   planId: z.string().min(1).max(64),
+  // Optional at the schema level: the trial-assignment branch never uses
+  // these. The service layer requires both for a non-trial grant, with
+  // PLAN_GRANT_DURATION_INVALID / PLAN_GRANT_REASON_REQUIRED.
+  durationMonths: z.number().int().optional(),
+  grantReason: z.string().max(500).optional(),
 });
 export type AssignPlanDto = z.infer<typeof assignPlanSchema>;
 

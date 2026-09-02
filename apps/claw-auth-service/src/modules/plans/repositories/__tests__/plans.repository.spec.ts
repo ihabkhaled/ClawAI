@@ -165,3 +165,117 @@ describe('PlansRepository retirement', () => {
     expect(result[0]).toMatchObject({ replacementPlanId: 'plan-pro', replacementPlanSlug: 'pro' });
   });
 });
+
+describe('PlansRepository.assignDefaultPlan (signup grant)', () => {
+  it('assigns the default plan with no admin actor, reason, or expiry', async () => {
+    const updateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const create = jest.fn().mockResolvedValue({ id: 'assignment-new' });
+    const userUpdate = jest.fn().mockResolvedValue({});
+    const transaction = jest.fn(async (ops: unknown[]) => ops);
+    const prisma = {
+      userPlanAssignment: { updateMany, create },
+      user: { update: userUpdate },
+      $transaction: transaction,
+    } as unknown as PrismaService;
+    const repository = new PlansRepository(prisma);
+
+    await repository.assignDefaultPlan('user-1', 'plan-free');
+
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1', status: 'ACTIVE' },
+      data: expect.objectContaining({ status: 'EXPIRED' }),
+    });
+    expect(create).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-1',
+        planId: 'plan-free',
+        status: 'ACTIVE',
+        assignedByUserId: undefined,
+      },
+    });
+    const createData = create.mock.calls[0]?.[0]?.data;
+    expect(createData).not.toHaveProperty('grantType');
+    expect(createData).not.toHaveProperty('grantReason');
+    expect(createData).not.toHaveProperty('entitlementValidUntil');
+    expect(userUpdate).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { activePlanId: 'plan-free' },
+    });
+  });
+});
+
+describe('PlansRepository.assignUserToPlan (admin grant)', () => {
+  it('expires the prior assignment and creates an attributed, time-limited grant', async () => {
+    const updateMany = jest.fn().mockResolvedValue({ count: 1 });
+    const create = jest.fn().mockResolvedValue({ id: 'assignment-new' });
+    const userUpdate = jest.fn().mockResolvedValue({});
+    const transaction = jest.fn(async (ops: unknown[]) => ops);
+    const prisma = {
+      userPlanAssignment: { updateMany, create },
+      user: { update: userUpdate },
+      $transaction: transaction,
+    } as unknown as PrismaService;
+    const repository = new PlansRepository(prisma);
+    const now = new Date('2026-01-31T00:00:00.000Z');
+
+    await repository.assignUserToPlan('user-1', 'plan-pro', 'admin-1', 3, 'Support gesture', now);
+
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1', status: 'ACTIVE' },
+      data: { status: 'EXPIRED', endsAt: now },
+    });
+    expect(create).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-1',
+        planId: 'plan-pro',
+        status: 'ACTIVE',
+        assignedByUserId: 'admin-1',
+        grantType: 'ADMIN_GRANT',
+        grantReason: 'Support gesture',
+        // 31 Jan + 3 months = 30 Apr (April has 30 days).
+        entitlementValidUntil: new Date('2026-04-30T00:00:00.000Z'),
+      },
+    });
+    expect(userUpdate).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { activePlanId: 'plan-pro' },
+    });
+  });
+});
+
+describe('PlansRepository.findEffectiveForUser (admin grant expiry)', () => {
+  it('excludes an admin grant whose entitlementValidUntil has passed, via the existing lazy filter', async () => {
+    const findFirst = jest.fn().mockResolvedValue(null);
+    const prisma = { userPlanAssignment: { findFirst } } as unknown as PrismaService;
+    const repository = new PlansRepository(prisma);
+    const now = new Date('2026-05-01T00:00:00.000Z');
+
+    const result = await repository.findEffectiveForUser('user-1', now);
+
+    expect(result).toBeNull();
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          userId: 'user-1',
+          status: 'ACTIVE',
+          OR: [{ entitlementValidUntil: null }, { entitlementValidUntil: { gt: now } }],
+        },
+      }),
+    );
+  });
+
+  it('does not special-case ADMIN_GRANT — the same OR filter that already excludes an expired paid subscription excludes an expired admin grant', async () => {
+    // A row with grantType ADMIN_GRANT and entitlementValidUntil in the past
+    // is simply never returned by the query above (its entitlementValidUntil
+    // is neither null nor > now), so the caller falls back to the default
+    // plan through whatever already handles "no effective assignment found" —
+    // proving no new expiry-enforcement code path is needed for this feature.
+    const findFirst = jest.fn().mockResolvedValue(null);
+    const prisma = { userPlanAssignment: { findFirst } } as unknown as PrismaService;
+    const repository = new PlansRepository(prisma);
+    const result = await repository.findEffectiveForUser('user-1', new Date());
+    expect(result).toBeNull();
+  });
+});

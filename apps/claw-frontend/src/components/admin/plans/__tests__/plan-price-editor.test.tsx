@@ -40,4 +40,17 @@ describe('PlanPriceEditor', () => {
     expect(screen.getByRole('option', { name: 'EUR' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'EGP' })).toBeInTheDocument();
   });
+
+  it('offers all four billing intervals so an admin can publish QUARTERLY/SEMIANNUAL prices', () => {
+    render(<PlanPriceEditor {...makeController()} />);
+
+    const interval = screen.getByRole('combobox', { name: 'billing.interval.toggleLabel' });
+    fireEvent.click(interval);
+
+    expect(screen.getByRole('option', { name: 'billing.interval.MONTHLY' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'billing.interval.QUARTERLY' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'billing.interval.SEMIANNUAL' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'billing.interval.YEARLY' })).toBeInTheDocument();
+    expect(screen.getAllByRole('option')).toHaveLength(4);
+  });
 });

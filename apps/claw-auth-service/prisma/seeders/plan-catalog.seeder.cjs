@@ -11,6 +11,14 @@
 
 const FREE = 'free';
 
+// computeDiscountedIntervalMinor: N months at the monthly rate, 10% off,
+// rounded once to the nearest integer minor unit (never truncated, never a
+// float). Computed here at seed time and written as an immutable
+// PlanPriceVersion row — never recomputed at checkout.
+function computeDiscountedIntervalMinor(monthlyMinor, months) {
+  return Math.round(monthlyMinor * months * 0.9);
+}
+
 // dailyTokens / weeklyTokens / monthlyTokens are cost-normalized ("weighted")
 // tokens: 1,000,000 weighted tokens == $1.00 of estimated provider cost.
 // monthlyCostCeilingMicroUsd is an internal profitability control and is NEVER
@@ -134,6 +142,19 @@ function planColumns(definition) {
 async function upsertPrices(prisma, planId, definition) {
   const intervals = [
     ['MONTHLY', definition.monthlyMinor],
+    // QUARTERLY/SEMIANNUAL are derived from monthlyMinor, so they can only be
+    // computed when it exists. No current plan has a null monthlyMinor (only
+    // yearlyMinor is nullable), but guarding here means
+    // computeDiscountedIntervalMinor is never called with a null input even if
+    // a future plan definition omits it — the entry is simply never
+    // constructed, rather than relying on the `amountMinor === null` check
+    // below to catch a NaN produced by the math.
+    ...(definition.monthlyMinor === null
+      ? []
+      : [
+          ['QUARTERLY', computeDiscountedIntervalMinor(definition.monthlyMinor, 3)],
+          ['SEMIANNUAL', computeDiscountedIntervalMinor(definition.monthlyMinor, 6)],
+        ]),
     ['YEARLY', definition.yearlyMinor],
   ];
   for (const [billingInterval, amountMinor] of intervals) {
@@ -272,4 +293,5 @@ module.exports = {
   matchesLegacyFingerprint,
   booleanProjections,
   labGateProjections,
+  computeDiscountedIntervalMinor,
 };

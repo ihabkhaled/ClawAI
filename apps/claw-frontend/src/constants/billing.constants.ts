@@ -50,8 +50,19 @@ export const USAGE_WARNING_THRESHOLD = 0.8;
 // or expose something in the UI before its copy exists.
 export const BILLING_INTERVAL_ORDER: BillingInterval[] = [
   BillingInterval.MONTHLY,
+  BillingInterval.QUARTERLY,
+  BillingInterval.SEMIANNUAL,
   BillingInterval.YEARLY,
 ];
+
+/** Lowercase URL query values PlanTierCard's checkout link uses, and
+ * readCheckoutInterval parses back. Keep both in sync. */
+export const CHECKOUT_URL_INTERVAL_PARAM: Record<BillingInterval, string> = {
+  [BillingInterval.MONTHLY]: 'monthly',
+  [BillingInterval.QUARTERLY]: 'quarterly',
+  [BillingInterval.SEMIANNUAL]: 'semiannual',
+  [BillingInterval.YEARLY]: 'yearly',
+};
 
 export const BILLING_GATEWAY_ORDER: BillingGateway[] = [
   BillingGateway.PAYPAL,

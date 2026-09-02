@@ -74,7 +74,7 @@ export class AuthManager {
     if (defaultPlan) {
       await (defaultPlan.isTrial
         ? this.plansRepository.assignTrialPlanOnce(user.id, defaultPlan.id, undefined, new Date())
-        : this.plansRepository.assignUserToPlan(user.id, defaultPlan.id));
+        : this.plansRepository.assignDefaultPlan(user.id, defaultPlan.id));
     }
 
     this.logger.log(

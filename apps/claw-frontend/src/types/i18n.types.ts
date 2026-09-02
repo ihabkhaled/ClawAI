@@ -1237,6 +1237,14 @@ export type TranslationDictionary = {
     noPlan: string;
     planAssigned: string;
     planAssignFailed: string;
+    assignPlanDialogTitle: string;
+    assignPlanDialogDescription: string;
+    assignPlanDurationLabel: string;
+    assignPlanDurationInvalid: string;
+    assignPlanReasonLabel: string;
+    assignPlanReasonRequired: string;
+    assignPlanCancel: string;
+    assignPlanConfirm: string;
     platformHealthLinkDesc: string;
     platformHealthLinkBody: string;
     viewSystemHealth: string;
@@ -4266,6 +4274,8 @@ export type TranslationDictionary = {
     };
     interval: {
       MONTHLY: string;
+      QUARTERLY: string;
+      SEMIANNUAL: string;
       YEARLY: string;
       toggleLabel: string;
     };
@@ -4432,6 +4442,13 @@ export type TranslationDictionary = {
       yearlyBadge: string;
       perMonth: string;
       perYear: string;
+      cadence: {
+        MONTHLY: string;
+        QUARTERLY: string;
+        SEMIANNUAL: string;
+        YEARLY: string;
+      };
+      discountBadge: string;
       mostPopular: string;
       dailyTokens: string;
       monthlyTokens: string;

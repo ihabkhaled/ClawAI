@@ -21,6 +21,7 @@ const planPaygAllowanceSeeder = require('./seeders/plan-payg-allowance.seeder.cj
 const creditPackagesSeeder = require('./seeders/credit-packages.seeder.cjs');
 const planPaygPercentSeeder = require('./seeders/plan-payg-percent.seeder.cjs');
 const creditPackageRepricingSeeder = require('./seeders/credit-package-repricing.seeder.cjs');
+const planQuarterlySemiannualPricingSeeder = require('./seeders/plan-quarterly-semiannual-pricing.seeder.cjs');
 
 const distPrismaPath = path.resolve(__dirname, '..', 'dist', 'generated', 'prisma');
 const { PrismaClient } = require(distPrismaPath);
@@ -285,6 +286,14 @@ async function seed() {
   //     advisory lock, so it runs exactly once no matter how many replicas boot
   //     together or how often a container restarts.
   await runVersionedSeeder(prisma, planCatalogSeeder);
+
+  // 3b-2. QUARTERLY/SEMIANNUAL PlanPriceVersion backfill for the 4-way
+  //     checkout term selector, on installs where plan-catalog v2 already
+  //     completed (so its own upsertPrices call never runs again). Must run
+  //     right after planCatalogSeeder, since it depends on the plans existing
+  //     and on each plan's active MONTHLY price. See the seeder file for why
+  //     this could not be a plan-catalog version bump instead.
+  await runVersionedSeeder(prisma, planQuarterlySemiannualPricingSeeder);
 
   // 3c. PAYG credit allowances on EXISTING installs. Deliberately a separate
   //     seeder rather than a plan-catalog version bump: on an install where

@@ -569,7 +569,12 @@ export type UserTableProps = {
   onDeactivate: (userId: string) => void;
   onReactivate: (userId: string) => void;
   onActivate: (userId: string) => void;
-  onAssignPlan: (userId: string, planId: string) => void;
+  onAssignPlan: (
+    userId: string,
+    planId: string,
+    durationMonths: number,
+    grantReason: string,
+  ) => void;
   onUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   onTemporaryPassword: (userId: string) => void;
   isRoleChangePending: boolean;
@@ -1437,7 +1442,12 @@ export type UsersContentProps = {
   onDeactivate: (userId: string) => void;
   onReactivate: (userId: string) => void;
   onActivate: (userId: string) => void;
-  onAssignPlan: (userId: string, planId: string) => void;
+  onAssignPlan: (
+    userId: string,
+    planId: string,
+    durationMonths: number,
+    grantReason: string,
+  ) => void;
   onUpdateUser: (userId: string, data: AdminUserUpdateRequest) => void;
   onTemporaryPassword: (userId: string) => void;
   isRoleChangePending: boolean;
@@ -2600,6 +2610,16 @@ export type EditUserDialogProps = {
   onClose: () => void;
   onSave: (userId: string, data: AdminUserUpdateRequest) => void;
   onRotatePassword: (userId: string) => void;
+  t: TranslateFunction;
+};
+
+export type AssignPlanDialogProps = {
+  open: boolean;
+  user: AdminUser | null;
+  targetPlanId: string | null;
+  isSaving: boolean;
+  onClose: () => void;
+  onSave: (userId: string, planId: string, durationMonths: number, grantReason: string) => void;
   t: TranslateFunction;
 };
 

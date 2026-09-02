@@ -100,10 +100,15 @@ export const plansRepository = {
     return response.data;
   },
 
-  async assignUser(userId: string, planId: string): Promise<PlanView> {
+  async assignUser(
+    userId: string,
+    planId: string,
+    durationMonths: number,
+    grantReason: string,
+  ): Promise<PlanView> {
     const response = await apiClient.post<PlanView>(
       `${PLANS_BASE}/users/${encodeURIComponent(userId)}/assign`,
-      { planId },
+      { planId, durationMonths, grantReason },
     );
     return response.data;
   },

@@ -1,11 +1,13 @@
 import { useCallback, useState } from 'react';
 
+import { useAssignPlanDialogState } from '@/hooks/admin/use-assign-plan-dialog-state';
 import type { AdminUser, AdminUserUpdateRequest, UseUserTableStateReturn } from '@/types';
 
 export function useUserTableState(): UseUserTableStateReturn {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [temporaryPasswordUserId, setTemporaryPasswordUserId] = useState<string | null>(null);
+  const assignPlan = useAssignPlanDialogState();
 
   const handleRoleSelect = useCallback(
     (userId: string, role: string, onChangeRole: (userId: string, role: string) => void): void => {
@@ -66,5 +68,6 @@ export function useUserTableState(): UseUserTableStateReturn {
     requestTemporaryPassword,
     cancelTemporaryPassword,
     confirmTemporaryPassword,
+    ...assignPlan,
   };
 }

@@ -18,6 +18,7 @@ import {
   isCurrentPlan,
   isSubscriptionEntitling,
   parseBillingGateway,
+  readCheckoutInterval,
   resolveUsageTone,
 } from '@/utilities/billing.utility';
 
@@ -138,6 +139,20 @@ describe('formatQuotaLimit', () => {
   });
 });
 
+describe('readCheckoutInterval', () => {
+  it('parses every known interval, case-sensitively lowercase', () => {
+    expect(readCheckoutInterval('monthly')).toBe(BillingInterval.MONTHLY);
+    expect(readCheckoutInterval('quarterly')).toBe(BillingInterval.QUARTERLY);
+    expect(readCheckoutInterval('semiannual')).toBe(BillingInterval.SEMIANNUAL);
+    expect(readCheckoutInterval('yearly')).toBe(BillingInterval.YEARLY);
+  });
+
+  it('falls back to MONTHLY for null or an unrecognized value', () => {
+    expect(readCheckoutInterval(null)).toBe(BillingInterval.MONTHLY);
+    expect(readCheckoutInterval('weekly')).toBe(BillingInterval.MONTHLY);
+  });
+});
+
 describe('findPlanPrice', () => {
   const plan = makePlan({
     prices: [
@@ -156,6 +171,33 @@ describe('findPlanPrice', () => {
 
   it('returns null rather than a wrong-interval price', () => {
     expect(findPlanPrice(plan, BillingInterval.YEARLY)).toBeNull();
+  });
+});
+
+describe('findPlanPrice with QUARTERLY/SEMIANNUAL', () => {
+  it('finds a QUARTERLY price row when present', () => {
+    const plan = makePlan({
+      prices: [
+        {
+          billingInterval: BillingInterval.MONTHLY,
+          currency: 'USD',
+          amountMinor: 1000,
+          planPriceVersionId: 'p1',
+        },
+        {
+          billingInterval: BillingInterval.QUARTERLY,
+          currency: 'USD',
+          amountMinor: 2700,
+          planPriceVersionId: 'p2',
+        },
+      ],
+    });
+    expect(findPlanPrice(plan, BillingInterval.QUARTERLY)?.amountMinor).toBe(2700);
+  });
+
+  it('returns null when a plan has no SEMIANNUAL row', () => {
+    const plan = makePlan({ prices: [] });
+    expect(findPlanPrice(plan, BillingInterval.SEMIANNUAL)).toBeNull();
   });
 });
 

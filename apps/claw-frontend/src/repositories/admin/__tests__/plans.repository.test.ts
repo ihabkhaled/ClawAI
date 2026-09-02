@@ -139,10 +139,14 @@ describe('plans repository', () => {
     expect(result).toEqual({ userIds: ['u1', 'u2'] });
   });
 
-  it('assignUser POSTs the planId to the encoded user assign path', async () => {
+  it('assignUser POSTs the plan, duration and reason to the encoded user assign path', async () => {
     mockPost.mockResolvedValue({ data: samplePlan });
-    const result = await plansRepository.assignUser('u 1', 'pl1');
-    expect(mockPost).toHaveBeenCalledWith('/admin/plans/users/u%201/assign', { planId: 'pl1' });
+    const result = await plansRepository.assignUser('u 1', 'pl1', 3, 'Support gesture');
+    expect(mockPost).toHaveBeenCalledWith('/admin/plans/users/u%201/assign', {
+      planId: 'pl1',
+      durationMonths: 3,
+      grantReason: 'Support gesture',
+    });
     expect(result).toEqual(samplePlan);
   });
 

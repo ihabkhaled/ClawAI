@@ -244,4 +244,17 @@ describe('catalog integrity', () => {
       expect(String(plan.monthlyTokens)).toBe(String(plan.costCeilingMicroUsd));
     }
   });
+
+  it('prices QUARTERLY and SEMIANNUAL at exactly 10% off the monthly rate, rounded', async () => {
+    const { computeDiscountedIntervalMinor } =
+      await import('../../../../prisma/seeders/plan-catalog.seeder.cjs');
+    for (const plan of catalog) {
+      expect(computeDiscountedIntervalMinor(plan.monthlyMinor, 3)).toBe(
+        Math.round(plan.monthlyMinor * 3 * 0.9),
+      );
+      expect(computeDiscountedIntervalMinor(plan.monthlyMinor, 6)).toBe(
+        Math.round(plan.monthlyMinor * 6 * 0.9),
+      );
+    }
+  });
 });

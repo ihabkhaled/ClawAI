@@ -63,6 +63,7 @@ const mockRepo = (): Record<keyof PlansRepository, jest.Mock> => ({
   countActiveAssignments: jest.fn(),
   replaceModelAccess: jest.fn(),
   assignUserToPlan: jest.fn(),
+  assignDefaultPlan: jest.fn(),
   assignTrialPlanOnce: jest.fn(),
   listUserIdsOnPlan: jest.fn(),
   findRetirementReplacement: jest.fn(),
@@ -163,10 +164,55 @@ describe('PlansService', () => {
     await expect(service.assignUserToPlan('u1', 'plan-pro', 'admin')).rejects.toThrow(/inactive/);
   });
 
-  it('assignUserToPlan assigns an active plan', async () => {
+  it('assignUserToPlan assigns an active plan with a duration and reason', async () => {
     repo.findById.mockResolvedValue(proPlan);
-    await service.assignUserToPlan('u1', 'plan-pro', 'admin');
-    expect(repo.assignUserToPlan).toHaveBeenCalledWith('u1', 'plan-pro', 'admin');
+    await service.assignUserToPlan('u1', 'plan-pro', 'admin', 3, 'Support gesture');
+    expect(repo.assignUserToPlan).toHaveBeenCalledWith(
+      'u1',
+      'plan-pro',
+      'admin',
+      3,
+      'Support gesture',
+      expect.any(Date),
+    );
+  });
+
+  it('assignUserToPlan refuses a missing duration for a non-trial grant', async () => {
+    repo.findById.mockResolvedValue(proPlan);
+    await expect(
+      service.assignUserToPlan('u1', 'plan-pro', 'admin', undefined, 'Support gesture'),
+    ).rejects.toThrow(/duration/i);
+    expect(repo.assignUserToPlan).not.toHaveBeenCalled();
+  });
+
+  it('assignUserToPlan refuses a duration over the 60-month ceiling', async () => {
+    repo.findById.mockResolvedValue(proPlan);
+    await expect(
+      service.assignUserToPlan('u1', 'plan-pro', 'admin', 61, 'Support gesture'),
+    ).rejects.toThrow(/duration/i);
+  });
+
+  it('assignUserToPlan refuses a missing reason for a non-trial grant', async () => {
+    repo.findById.mockResolvedValue(proPlan);
+    await expect(service.assignUserToPlan('u1', 'plan-pro', 'admin', 3, undefined)).rejects.toThrow(
+      /reason/i,
+    );
+    expect(repo.assignUserToPlan).not.toHaveBeenCalled();
+  });
+
+  it('assignUserToPlan refuses a blank (whitespace-only) reason', async () => {
+    repo.findById.mockResolvedValue(proPlan);
+    await expect(service.assignUserToPlan('u1', 'plan-pro', 'admin', 3, '   ')).rejects.toThrow(
+      /reason/i,
+    );
+  });
+
+  it('the trial path stays unaffected by duration/reason validation', async () => {
+    repo.findById.mockResolvedValue({ ...freePlan, isTrial: true, trialDurationDays: 30 });
+    repo.assignTrialPlanOnce.mockResolvedValue({ id: 'assignment-1' });
+    // No durationMonths/grantReason passed — must not throw.
+    await expect(service.assignUserToPlan('u1', 'plan-free', 'admin')).resolves.toBeDefined();
+    expect(repo.assignUserToPlan).not.toHaveBeenCalled();
   });
 
   it('rejects a trial plan already redeemed by the account', async () => {

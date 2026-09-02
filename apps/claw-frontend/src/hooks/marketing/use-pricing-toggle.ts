@@ -2,18 +2,15 @@
 
 import { useCallback, useState } from 'react';
 
+import { BillingInterval } from '@/enums/billing.enum';
 import type { UsePricingToggleReturn } from '@/types';
 
 export function usePricingToggle(): UsePricingToggleReturn {
-  const [isYearly, setIsYearly] = useState(false);
+  const [interval, setInterval] = useState<BillingInterval>(BillingInterval.MONTHLY);
 
-  const selectMonthly = useCallback((): void => {
-    setIsYearly(false);
+  const selectInterval = useCallback((next: BillingInterval): void => {
+    setInterval(next);
   }, []);
 
-  const selectYearly = useCallback((): void => {
-    setIsYearly(true);
-  }, []);
-
-  return { isYearly, selectMonthly, selectYearly };
+  return { interval, selectInterval };
 }

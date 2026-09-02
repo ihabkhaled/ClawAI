@@ -7,6 +7,11 @@ import { ExposedModelClient } from '../clients/exposed-model.client';
 import { EXPOSED_MODEL_VALIDATION_MAX_PAIRS } from '../constants/exposed-model.constants';
 import { PLAN_QUOTA_WINDOWS_INCOHERENT } from '../constants/quota-window.constants';
 import {
+  PLAN_GRANT_DURATION_INVALID,
+  PLAN_GRANT_MAX_DURATION_MONTHS,
+  PLAN_GRANT_REASON_REQUIRED,
+} from '../constants/plan-grant.constants';
+import {
   describeQuotaWindowConflicts,
   findQuotaWindowConflicts,
 } from '../utilities/quota-window-coherence.utility';
@@ -238,7 +243,13 @@ export class PlansService {
     return this.listPlans();
   }
 
-  async assignUserToPlan(userId: string, planId: string, assignedBy: string): Promise<PlanView> {
+  async assignUserToPlan(
+    userId: string,
+    planId: string,
+    assignedBy: string,
+    durationMonths?: number,
+    grantReason?: string,
+  ): Promise<PlanView> {
     // The admin table already disables this control for the super administrator,
     // but the endpoint accepted any userId, so the protection was decorative.
     // The super administrator bypasses plans entirely, so PLAN is refused even
@@ -270,7 +281,34 @@ export class PlansService {
         );
       }
     } else {
-      await this.plansRepository.assignUserToPlan(userId, planId, assignedBy);
+      if (
+        durationMonths === undefined ||
+        !Number.isInteger(durationMonths) ||
+        durationMonths < 1 ||
+        durationMonths > PLAN_GRANT_MAX_DURATION_MONTHS
+      ) {
+        throw new BusinessException(
+          `Grant duration must be a whole number of months between 1 and ${PLAN_GRANT_MAX_DURATION_MONTHS}`,
+          PLAN_GRANT_DURATION_INVALID,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const trimmedReason = grantReason?.trim() ?? '';
+      if (trimmedReason.length === 0) {
+        throw new BusinessException(
+          'A reason is required for an admin plan grant',
+          PLAN_GRANT_REASON_REQUIRED,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      await this.plansRepository.assignUserToPlan(
+        userId,
+        planId,
+        assignedBy,
+        durationMonths,
+        trimmedReason,
+        new Date(),
+      );
     }
     this.logger.log(`assignUserToPlan: user=${userId} plan=${planId}`);
     return this.toView(plan);

@@ -97,9 +97,32 @@ describe('pricing catalog utility', () => {
   });
 
   it('resolves the requested immutable active price version', () => {
-    expect(resolvePlanPrice(plans[1], true)?.id).toBe('price-pro-yearly');
-    expect(resolvePlanPrice(plans[1], false)?.id).toBe('price-pro-monthly');
-    expect(resolvePlanPrice(plans[0], true)).toBeNull();
+    expect(resolvePlanPrice(plans[1], BillingInterval.YEARLY)?.id).toBe('price-pro-yearly');
+    expect(resolvePlanPrice(plans[1], BillingInterval.MONTHLY)?.id).toBe('price-pro-monthly');
+    expect(resolvePlanPrice(plans[0], BillingInterval.YEARLY)).toBeNull();
+  });
+
+  it('finds a QUARTERLY price when present', () => {
+    const quarterlyPlan = {
+      ...plans[1],
+      prices: [
+        {
+          id: 'price-pro-quarterly',
+          planId: 'plan-pro',
+          billingInterval: BillingInterval.QUARTERLY,
+          currency: 'USD',
+          amountMinor: 5_700,
+          version: 1,
+          isActive: true,
+        },
+      ],
+    };
+    expect(resolvePlanPrice(quarterlyPlan, BillingInterval.QUARTERLY)?.amountMinor).toBe(5_700);
+  });
+
+  it('returns null for an interval with no active price row', () => {
+    const noPricesPlan = { ...plans[0], prices: [] };
+    expect(resolvePlanPrice(noPricesPlan, BillingInterval.SEMIANNUAL)).toBeNull();
   });
 
   it('uses the canonical compact plan set and preserves catalog order', () => {

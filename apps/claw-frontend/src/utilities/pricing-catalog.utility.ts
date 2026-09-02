@@ -1,4 +1,5 @@
 import { MARKETING_COMPACT_PLAN_SLUGS } from '@/constants/marketing-home.constants';
+import { BillingInterval } from '@/enums/billing.enum';
 import type { PublicPlan, PublicPlanPrice } from '@/types/public-pricing.types';
 import { monthlyCreditFromPlan } from '@/utilities/credit.utility';
 
@@ -36,8 +37,10 @@ export function formatPlanQuota(
   return new Intl.NumberFormat(locale).format(quota);
 }
 
-export function resolvePlanPrice(plan: PublicPlan, isYearly: boolean): PublicPlanPrice | null {
-  const interval = isYearly ? 'YEARLY' : 'MONTHLY';
+export function resolvePlanPrice(
+  plan: PublicPlan,
+  interval: BillingInterval,
+): PublicPlanPrice | null {
   return plan.prices.find((price) => price.isActive && price.billingInterval === interval) ?? null;
 }
 
@@ -53,7 +56,7 @@ export function resolvePlanPrice(plan: PublicPlan, isYearly: boolean): PublicPla
  * which the card renders as "no connector credit", not "$0.00".
  */
 export function resolvePlanMonthlyCreditMicroUsd(plan: PublicPlan): number {
-  const monthly = resolvePlanPrice(plan, false);
+  const monthly = resolvePlanPrice(plan, BillingInterval.MONTHLY);
   if (monthly === null) {
     return 0;
   }

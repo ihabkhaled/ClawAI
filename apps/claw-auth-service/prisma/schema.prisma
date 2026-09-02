@@ -489,6 +489,8 @@ model SystemSetting {
 
 enum BillingIntervalKind {
   MONTHLY
+  QUARTERLY
+  SEMIANNUAL
   YEARLY
 }
 
