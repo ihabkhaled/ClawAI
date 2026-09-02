@@ -80,6 +80,18 @@ happens to be by the time the SSH session runs.
    temporary DNS failure. Deterministic failures are never retried. The script then recreates
    only those containers
    (`up -d --no-deps --no-build`, never `--remove-orphans`).
+   8b. For a **scaled** service (chat-service, 4 replicas) each replica is replaced
+   one at a time, and the rollout waits for **the replica it just created**,
+   not for the service as a whole. Mid-rollout the untouched replicas are still
+   running the OLD image, so a whole-service wait let a not-yet-replaced broken
+   replica abort the deploy — which deadlocked the one situation a deploy
+   exists to resolve, since production could then never be repaired by
+   deploying the fix. On 2026-09-02 a chat-service rollout failed one second
+   after creating a healthy new replica because a surviving old one was
+   unhealthy. Nothing is skipped: each replaced replica is proven healthy in
+   turn, and the whole service is re-checked once every replica is on the new
+   image.
+
 9. Waits for every recreated service's Docker healthcheck to report
    `healthy` (bounded timeout, `CLAW_DEPLOY_HEALTH_TIMEOUT`, default 420s),
    but **fails immediately on a crash loop** — a container whose

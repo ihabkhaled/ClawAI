@@ -104,7 +104,7 @@ test('deploy-prod.sh never lets a child process inherit the deploy lock', () => 
     .filter((line) => /\bdocker (?:compose|inspect|builder|logs)\b/u.test(line))
     .filter((line) => !/\bversion\b/u.test(line))
     .filter((line) => !/^\s*(?:err|log|die) /u.test(line));
-  assert.equal(dockerLines.length, 6, dockerLines.join('\n'));
+  assert.equal(dockerLines.length, 8, dockerLines.join('\n'));
 });
 
 test('deploy-prod.sh aborts when the session that started it disappears', () => {
@@ -373,4 +373,57 @@ test('the crash-loop restart threshold is tunable and tolerates a single transie
   );
   assert.ok(threshold <= 5, `threshold ${threshold} is high enough to waste most of the timeout`);
   assert.match(script, /^#\s+CLAW_DEPLOY_CRASH_LOOP_RESTARTS/mu, 'the new knob is undocumented');
+});
+
+// A rolling replace must judge the replica it just created, never the whole
+// service. Mid-rollout the untouched replicas still run the OLD image, so a
+// whole-service health wait lets a not-yet-replaced broken replica abort the
+// rollout — which deadlocks the exact situation a deploy exists to resolve:
+// production cannot be repaired by deploying the fix. On 2026-09-02 a
+// chat-service rollout failed one second after creating a healthy new replica,
+// because a surviving old one was unhealthy.
+test('rolling_recreate_service waits on the NEW replica, not on the whole service', () => {
+  const start = script.indexOf('rolling_recreate_service()');
+  assert.ok(start > -1, 'rolling_recreate_service is gone');
+  const body = script.slice(start, script.indexOf('\n}', start));
+
+  assert.match(
+    body,
+    /wait_for_container_health "\$fresh"/u,
+    'the rolling loop must wait on the newly created container id',
+  );
+
+  const loopEnd = body.indexOf('  done');
+  assert.ok(loopEnd > -1, 'cannot find the end of the per-replica loop');
+  const insideLoop = body.slice(0, loopEnd);
+  assert.doesNotMatch(
+    insideLoop,
+    /wait_for_service_health/u,
+    'a whole-service health wait INSIDE the loop lets an old replica veto the rollout',
+  );
+
+  // The whole-service assertion still has to happen — once, after every replica
+  // is on the new image. Dropping it would let a rollout pass while a replica
+  // it already replaced had since died.
+  assert.match(
+    body.slice(loopEnd),
+    /wait_for_service_health "\$service"/u,
+    'the rollout must still prove the whole service healthy after the loop',
+  );
+});
+
+test('wait_for_container_health judges exactly one container and reports its log', () => {
+  const start = script.indexOf('wait_for_container_health()');
+  assert.ok(start > -1, 'wait_for_container_health is missing');
+  const body = script.slice(start, script.indexOf('\nwait_for_service_health()', start));
+
+  assert.doesNotMatch(
+    body,
+    /service_container_ids/u,
+    'it must not enumerate the service — that is the whole-service check it exists to avoid',
+  );
+  for (const outcome of ['healthy', 'unhealthy', 'missing']) {
+    assert.ok(body.includes(`${outcome})`), `no case branch for "${outcome}"`);
+  }
+  assert.match(body, /docker logs --tail/u, 'an unhealthy replica must report its log');
 });

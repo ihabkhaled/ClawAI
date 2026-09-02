@@ -938,6 +938,58 @@ service_container_ids() {
 # This used to take `head -1`, which on a scaled service reported the whole
 # deployment healthy as soon as replica 1 came up — the other replicas could be
 # crash-looping on a bad image and the rollout would still be recorded a success.
+# Waits for ONE container, by id. Used during a rolling replace, where the
+# service's other replicas are still running the OLD image and must not be
+# consulted — see rolling_recreate_service for why that distinction is
+# load-bearing rather than cosmetic.
+wait_for_container_health() {
+  local cid="$1" label="$2"
+  local deadline=$(($(date +%s) + HEALTH_TIMEOUT_SECONDS))
+  local state='unknown' stable=0 restarts
+
+  while [ "$(date +%s)" -lt "$deadline" ]; do
+    restarts="$(container_restart_count "$cid")"
+    if [ "${restarts:-0}" -ge "$CRASH_LOOP_RESTARTS" ]; then
+      printf '%s -> crash-looping (%s restarted %s times)\n' "$label" "$cid" "$restarts"
+      printf '  last log lines from %s:\n' "$cid"
+      docker logs --tail 20 "$cid" 2>&1 200>&- | sed 's/^/    /' || true
+      return 1
+    fi
+
+    state="$(container_state "$cid")"
+    case "$state" in
+      healthy)
+        printf '%s -> healthy (%s)\n' "$label" "$cid"
+        return 0
+        ;;
+      unhealthy)
+        printf '%s -> unhealthy (%s)\n' "$label" "$cid"
+        printf '  last log lines from %s:\n' "$cid"
+        docker logs --tail 20 "$cid" 2>&1 200>&- | sed 's/^/    /' || true
+        return 1
+        ;;
+      nohealth:running)
+        # No healthcheck declared. "Running" is not evidence on its own, so
+        # require it to hold across two consecutive polls.
+        stable=$((stable + 1))
+        if [ "$stable" -ge 2 ]; then
+          printf '%s -> running (%s, no healthcheck declared)\n' "$label" "$cid"
+          return 0
+        fi
+        ;;
+      missing)
+        printf '%s -> container disappeared (%s)\n' "$label" "$cid"
+        return 1
+        ;;
+      *) stable=0 ;;
+    esac
+    sleep 5
+  done
+
+  printf '%s -> TIMEOUT after %ss (last state: %s)\n' "$label" "$HEALTH_TIMEOUT_SECONDS" "$state"
+  return 1
+}
+
 wait_for_service_health() {
   local service="$1"
   local deadline=$(($(date +%s) + HEALTH_TIMEOUT_SECONDS))
@@ -1015,7 +1067,8 @@ wait_for_service_health() {
 # the only cost is a slower rollout.
 rolling_recreate_service() {
   local service="$1"
-  local ids id index=0 total
+  local ids id index=0 total before after fresh
+
   ids="$(service_container_ids "$service")"
   total="$(printf '%s\n' "$ids" | grep -c . || true)"
 
@@ -1023,6 +1076,8 @@ rolling_recreate_service() {
   for id in $ids; do
     index=$((index + 1))
     log "  replica $index/$total: replacing $id"
+
+    before="$(service_container_ids "$service" | grep -v "^${id}$" || true)"
     docker rm -f "$id" >/dev/null 2>&1 || true
     # --no-recreate leaves the replicas still serving traffic untouched;
     # compose creates only the missing one, on the new image.
@@ -1030,11 +1085,40 @@ rolling_recreate_service() {
       dump_diagnostics "$service"
       return 1
     fi
-    if ! wait_for_service_health "$service"; then
+
+    # Wait for the replica JUST created, not for the service as a whole.
+    #
+    # The whole-service wait deadlocked the one situation a deploy exists to
+    # resolve: mid-rollout the untouched replicas are still on the OLD image,
+    # so if that image is broken they report unhealthy and abort the rollout
+    # before the new replica has even finished booting. Production could then
+    # never be repaired by deploying the fix — on 2026-09-02 a chat-service
+    # rollout failed 1 second after creating a healthy new replica, because a
+    # not-yet-replaced old one was unhealthy. Every replica is still proven
+    # healthy: the ones replaced earlier in this loop were each waited for, and
+    # the whole service is re-checked once the loop finishes.
+    after="$(service_container_ids "$service")"
+    fresh="$(printf '%s\n' "$after" | grep -vxF -f <(printf '%s\n' "$before") || true)"
+    fresh="$(printf '%s\n' "$fresh" | grep -m1 . || true)"
+
+    if [ -z "$fresh" ]; then
+      printf '%s -> compose created no replacement for %s\n' "$service" "$id"
+      dump_diagnostics "$service"
+      return 1
+    fi
+    if ! wait_for_container_health "$fresh" "$service replica $index/$total"; then
       dump_diagnostics "$service"
       return 1
     fi
   done
+
+  # Every replica now runs the new image, so the whole-service assertion is
+  # meaningful again — and it is what proves the rollout, not the per-replica
+  # waits above.
+  if ! wait_for_service_health "$service"; then
+    dump_diagnostics "$service"
+    return 1
+  fi
   return 0
 }
 
