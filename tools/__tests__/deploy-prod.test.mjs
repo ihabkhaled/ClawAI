@@ -93,15 +93,18 @@ test('deploy-prod.sh never lets a child process inherit the deploy lock', () => 
   assert.match(script, /docker compose "\$\{COMPOSE_ARGS\[@\]\}" build "\$@" 200>&-/u);
   assert.match(script, /docker inspect[\s\S]{0,240}?2>\/dev\/null 200>&-/u);
   assert.match(script, /docker builder prune[^\n]*200>&-/u);
+  // `docker logs` on a crash-looping container streams from a live container
+  // and can outlive the deployment exactly like the others.
+  assert.match(script, /docker logs[^\n]*200>&-/u);
 
   // And no new long-running docker call slips in without the same treatment.
   const dockerLines = script
     .split('\n')
     .filter((line) => !/^\s*#/u.test(line))
-    .filter((line) => /\bdocker (?:compose|inspect|builder)\b/u.test(line))
+    .filter((line) => /\bdocker (?:compose|inspect|builder|logs)\b/u.test(line))
     .filter((line) => !/\bversion\b/u.test(line))
     .filter((line) => !/^\s*(?:err|log|die) /u.test(line));
-  assert.equal(dockerLines.length, 4, dockerLines.join('\n'));
+  assert.equal(dockerLines.length, 6, dockerLines.join('\n'));
 });
 
 test('deploy-prod.sh aborts when the session that started it disappears', () => {
@@ -325,3 +328,49 @@ test(
     assert.doesNotMatch(result.stdout ?? '', /FAIL/u);
   },
 );
+
+// A crash-looping container with a declared healthcheck reports health
+// "starting" forever and never "unhealthy", so the health poll could not tell
+// it apart from a slow boot and waited out the full CLAW_DEPLOY_HEALTH_TIMEOUT
+// (420s) per service. The 2026-09-02 chat-service rollout therefore took 23
+// minutes to report a failure that was certain within 30 seconds. RestartCount
+// is the decisive signal: Docker increments it only when the main process
+// exited and the restart policy brought it back.
+test('deploy-prod.sh fails a rollout fast on a crash loop instead of waiting out the health timeout', () => {
+  assert.match(
+    script,
+    /container_restart_count\(\)/u,
+    'no container_restart_count helper — the health poll cannot see a crash loop',
+  );
+  assert.match(
+    script,
+    /--format '\{\{\.State\.RestartCount\}\}'/u,
+    'crash-loop detection must read .State.RestartCount, the only decisive signal',
+  );
+
+  const body = script.slice(script.indexOf('wait_for_service_health()'));
+  const restartCheck = body.indexOf('container_restart_count');
+  const healthCheck = body.indexOf('container_state');
+  assert.ok(restartCheck > -1, 'wait_for_service_health does not check the restart count');
+  assert.ok(
+    restartCheck < healthCheck,
+    'the crash-loop check must run BEFORE the health state read, or a "starting" container still costs the full timeout',
+  );
+  assert.match(
+    body.slice(restartCheck, restartCheck + 600),
+    /docker logs --tail/u,
+    'a crash-loop failure must print the container log, or the operator has to go find it by hand',
+  );
+});
+
+test('the crash-loop restart threshold is tunable and tolerates a single transient restart', () => {
+  const match = /CRASH_LOOP_RESTARTS="\$\{CLAW_DEPLOY_CRASH_LOOP_RESTARTS:-(\d+)\}"/u.exec(script);
+  assert.ok(match, 'CRASH_LOOP_RESTARTS must be overridable via CLAW_DEPLOY_CRASH_LOOP_RESTARTS');
+  const threshold = Number(match[1]);
+  assert.ok(
+    threshold >= 2,
+    `threshold ${threshold} would fail a rollout on one transient boot-order restart`,
+  );
+  assert.ok(threshold <= 5, `threshold ${threshold} is high enough to waste most of the timeout`);
+  assert.match(script, /^#\s+CLAW_DEPLOY_CRASH_LOOP_RESTARTS/mu, 'the new knob is undocumented');
+});

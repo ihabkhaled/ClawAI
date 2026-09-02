@@ -15,6 +15,9 @@
 #   CLAW_DEPLOY_ROOT            production checkout (default: this script's repo root)
 #   CLAW_DEPLOY_LOCK_WAIT       seconds to wait for the deploy lock (default 1800)
 #   CLAW_DEPLOY_HEALTH_TIMEOUT  seconds to wait per service healthcheck (default 420)
+#   CLAW_DEPLOY_CRASH_LOOP_RESTARTS  container restarts before the rollout is
+#                               failed as a crash loop instead of waiting out
+#                               the health timeout (default 3)
 #   CLAW_DEPLOY_BUILD_TIMEOUT   seconds the whole image build may take before it
 #                               is aborted (default 3600). A wedged BuildKit step
 #                               must never hold the deploy lock indefinitely.
@@ -114,6 +117,11 @@ DEP_GRAPH_REL=".ai/manifests/workspace-dependency-graph.json"
 
 LOCK_WAIT_SECONDS="${CLAW_DEPLOY_LOCK_WAIT:-1800}"
 HEALTH_TIMEOUT_SECONDS="${CLAW_DEPLOY_HEALTH_TIMEOUT:-420}"
+# Restarts before a container is declared crash-looping instead of slow. Three,
+# not one: a single restart can be a transient dependency race at boot, while
+# three consecutive exits is a broken image. A fast crash reaches three within
+# ~30s, so this is what keeps a doomed rollout from burning the full timeout.
+CRASH_LOOP_RESTARTS="${CLAW_DEPLOY_CRASH_LOOP_RESTARTS:-3}"
 BUILD_TIMEOUT_SECONDS="${CLAW_DEPLOY_BUILD_TIMEOUT:-3600}"
 BUILD_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-2}"
 BUILD_RETRY_DELAYS=(10 30)
@@ -905,6 +913,21 @@ container_state() {
     "$1" 2>/dev/null 200>&- || printf 'missing'
 }
 
+# Docker increments RestartCount only when the main process EXITED and the
+# restart policy brought it back. A container that boots correctly never
+# increments it, so a rising count is decisive evidence of a crash loop rather
+# than a slow start.
+#
+# This matters because a crash-looping container with a declared healthcheck
+# reports health "starting" forever — never "unhealthy" — so the poll below had
+# no way to tell it apart from a service that is merely slow, and burned the
+# whole 420s timeout per service. A chat-service replica dying on an ESM
+# ReferenceError restarts every ~2s, so the deploy spent 20+ minutes to report a
+# failure that was certain within 30 seconds (2026-09-02).
+container_restart_count() {
+  docker inspect --format '{{.State.RestartCount}}' "$1" 2>/dev/null 200>&- || printf '0'
+}
+
 # Every replica of a service, newest last. One line per container id.
 service_container_ids() {
   compose ps -q "$1" 2>/dev/null || true
@@ -918,7 +941,7 @@ service_container_ids() {
 wait_for_service_health() {
   local service="$1"
   local deadline=$(($(date +%s) + HEALTH_TIMEOUT_SECONDS))
-  local cid state='unknown' stable=0 ids total ready saw_nohealth
+  local cid state='unknown' stable=0 ids total ready saw_nohealth restarts
 
   while [ "$(date +%s)" -lt "$deadline" ]; do
     ids="$(service_container_ids "$service")"
@@ -932,6 +955,18 @@ wait_for_service_health() {
     saw_nohealth=0
     for cid in $ids; do
       total=$((total + 1))
+
+      # Fail fast on a crash loop. A container that has exited and been
+      # restarted this many times is not starting slowly, and waiting out the
+      # remaining timeout only delays a certain failure.
+      restarts="$(container_restart_count "$cid")"
+      if [ "${restarts:-0}" -ge "$CRASH_LOOP_RESTARTS" ]; then
+        printf '%s -> crash-looping (%s restarted %s times)\n' "$service" "$cid" "$restarts"
+        printf '  last log lines from %s:\n' "$cid"
+        docker logs --tail 20 "$cid" 2>&1 200>&- | sed 's/^/    /' || true
+        return 1
+      fi
+
       state="$(container_state "$cid")"
       case "$state" in
         healthy) ready=$((ready + 1)) ;;

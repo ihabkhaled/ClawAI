@@ -81,7 +81,16 @@ happens to be by the time the SSH session runs.
    only those containers
    (`up -d --no-deps --no-build`, never `--remove-orphans`).
 9. Waits for every recreated service's Docker healthcheck to report
-   `healthy` (bounded timeout, `CLAW_DEPLOY_HEALTH_TIMEOUT`, default 420s).
+   `healthy` (bounded timeout, `CLAW_DEPLOY_HEALTH_TIMEOUT`, default 420s),
+   but **fails immediately on a crash loop** — a container whose
+   `RestartCount` reaches `CLAW_DEPLOY_CRASH_LOOP_RESTARTS` (default 3) is
+   reported with its last 20 log lines instead of being waited out. Docker
+   increments that counter only when the main process exited and the restart
+   policy restarted it, so a rising count is decisive rather than slow-start
+   noise. Without this the rollout could not distinguish the two: a
+   crash-looping container with a healthcheck reports health `starting`
+   forever and never `unhealthy`, so the 2026-09-02 chat-service rollout spent
+   23 minutes to report a failure that was certain within 30 seconds.
 10. Only once every affected service is healthy: atomically writes the new
     SHA to `.deploy/deployed-sha`.
 
