@@ -17,6 +17,7 @@ import { FileProcessingManager } from './file-processing.manager';
 import { FileSecurityManager } from './file-security.manager';
 import type {
   ExtractedEntry,
+  FileProcessingContract,
   ZipExtractionResult,
   ZipExtractionThresholds,
 } from '../types/zip-expansion.types';
@@ -29,8 +30,13 @@ export class ZipExpansionManager {
     private readonly fileSecurityManager: FileSecurityManager,
     private readonly filesRepository: FilesRepository,
     private readonly fileChunksRepository: FileChunksRepository,
+    // Typed as the contract, NOT as FileProcessingManager: a class-typed
+    // parameter makes tsgo emit the class into `design:paramtypes`, which is
+    // read while this module is still evaluating and throws
+    // `Cannot access 'FileProcessingManager' before initialization` under ESM.
+    // The forwardRef closure below is lazy and stays as it is.
     @Inject(forwardRef(() => FileProcessingManager))
-    private readonly fileProcessingManager: FileProcessingManager,
+    private readonly fileProcessingManager: FileProcessingContract,
     private readonly rabbitMQService: RabbitMQService,
   ) {}
 

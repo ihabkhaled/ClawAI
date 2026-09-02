@@ -1,9 +1,9 @@
-import { Injectable } from "@nestjs/common";
-import { InjectConnection } from "@nestjs/mongoose";
-import { Connection } from "mongoose";
-import { RedisService } from "../../../infrastructure/redis/redis.service";
-import { HealthCheckStatus, ServiceStatus } from "../../../common/enums";
-import { HealthStatus } from "../types/health.types";
+import { Injectable } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/mongoose';
+import type { Connection } from 'mongoose';
+import { RedisService } from '../../../infrastructure/redis/redis.service';
+import { HealthCheckStatus, ServiceStatus } from '../../../common/enums';
+import { HealthStatus } from '../types/health.types';
 
 @Injectable()
 export class HealthService {
@@ -13,10 +13,7 @@ export class HealthService {
   ) {}
 
   async check(): Promise<HealthStatus> {
-    const [mongoOk, redisOk] = await Promise.all([
-      this.checkMongoDB(),
-      this.checkRedis(),
-    ]);
+    const [mongoOk, redisOk] = await Promise.all([this.checkMongoDB(), this.checkRedis()]);
 
     const allUp = mongoOk && redisOk;
     const allDown = !mongoOk && !redisOk;
@@ -52,7 +49,7 @@ export class HealthService {
   private async checkRedis(): Promise<boolean> {
     try {
       const pong = await this.redis.getClient().ping();
-      return pong === "PONG";
+      return pong === 'PONG';
     } catch {
       return false;
     }

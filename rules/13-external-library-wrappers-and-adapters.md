@@ -39,6 +39,24 @@ business logic.
    the namespace import works**, so unit tests pass against a module shape
    production never uses. That is why this rule has a runtime test rather than a
    lint rule.
+7. **A NAMED import of a CommonJS export can fail at link time.**
+   `import { Connection } from 'mongoose'` throws
+   `SyntaxError: The requested module 'mongoose' does not provide an export named
+'Connection'` before a single line runs. It is per-NAME, not per-package:
+   mongoose re-exports `Model` and `Schema` but not `Connection`. Use
+   `import type { … }` when the name is only a type — which is what it was in all
+   three Mongo services it took down on 2026-09-02.
+8. **A constructor parameter typed with a class keeps that class alive at
+   runtime**, even when the source only mentions it as a type, because
+   `emitDecoratorMetadata` writes it into `design:paramtypes`. That is what makes
+   rules 6 and 7 bite in files that look type-only, and it is also how a
+   _circular_ import turns fatal: two managers that import each other are fine
+   under ESM until one of them READS the other's binding while it is still
+   evaluating, and the metadata read does exactly that
+   (`ReferenceError: Cannot access 'X' before initialization`, file-service,
+   2026-09-02). `forwardRef(() => X)` is a lazy closure and is not the problem —
+   type the parameter with an interface from `types/` and the metadata becomes
+   `Object`.
 
 ## Prohibited patterns
 

@@ -27,7 +27,10 @@ import { test } from 'node:test';
 
 import { repoPath } from '../lib/repo.mjs';
 
-const NAMESPACE_IMPORT = /import \* as ([A-Za-z_$][\w$]*) from '([^']+)'/gu;
+// Both quote styles: the three Mongo health services that this guard exists to
+// catch are written with double quotes, and a single-quote-only pattern silently
+// scanned past every one of them.
+const NAMESPACE_IMPORT = /import \* as ([A-Za-z_$][\w$]*) from ['"]([^'"]+)['"]/gu;
 const SKIPPED_PREFIXES = ['node:', '.', '@claw/', '@app/', '@common/', '@modules/', '@infrastructure/'];
 
 function readJson(path) {
@@ -49,13 +52,23 @@ function esmWorkspaces() {
     .filter((workspace) => statSync(workspace).isDirectory() && isEsmWorkspace(workspace));
 }
 
+// Specs are excluded on purpose: ts-jest transpiles them to CommonJS, so ESM
+// linking rules never apply to them, and they legitimately import test-only
+// packages (@jest/globals) that refuse to load outside a Jest run.
+function isTestFile(path) {
+  return /[\\/]__tests__[\\/]|\.spec\.|\.test\./u.test(path);
+}
+
 function sourceFiles(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
       return entry.name === 'node_modules' || entry.name === 'dist' ? [] : sourceFiles(path);
     }
-    return path.endsWith('.ts') || path.endsWith('.tsx') ? [path] : [];
+    if (!path.endsWith('.ts') && !path.endsWith('.tsx')) {
+      return [];
+    }
+    return isTestFile(path) ? [] : [path];
   });
 }
 
@@ -127,4 +140,103 @@ test('namespace imports of third-party packages expose every member the source c
     checkedMembers > 0,
     'checked no members — the namespace-import scanner matched nothing, so it is not guarding anything',
   );
+});
+
+// The same ESM trap, in its NAMED-import form.
+//
+// `import { Connection } from 'mongoose'` is a link-time error under ESM when
+// cjs-module-lexer did not detect that export — Node throws
+// `SyntaxError: The requested module 'mongoose' does not provide an export
+// named 'Connection'` before a single line runs. mongoose exposes `Model` and
+// `Schema` but NOT `Connection`, so it is per-name, not per-package.
+//
+// This took audit-service, client-logs-service and server-logs-service down on
+// 2026-09-02. In all three the name was used only as a type, on an
+// `@InjectConnection()` constructor parameter — but `emitDecoratorMetadata`
+// emits the binding into `design:paramtypes`, so tsgo kept the runtime import.
+// Writing `import type { Connection }` elides it and the metadata becomes
+// `Object`, which is what the explicit Nest token was providing anyway.
+//
+// The check is deliberately narrow: only names used as a CONSTRUCTOR PARAMETER
+// type. tsgo elides a type-only import everywhere else — `implements
+// ExceptionFilter`, a method parameter, a generic argument — so flagging those
+// would report hundreds of lines that work correctly today. A constructor
+// parameter inside a decorated class is the one position where the import
+// survives into the emitted JS even though the source only mentions it as a
+// type, because `emitDecoratorMetadata` writes it into `design:paramtypes`.
+// That is precisely the shape that broke the three Mongo services.
+const NAMED_IMPORT = /import \{([^}]*)\} from ['"]([^'"]+)['"]/gu;
+const CONSTRUCTOR_BLOCK = /constructor\s*\(([\s\S]*?)\)\s*\{/gu;
+
+function constructorParameterTypes(source) {
+  const names = new Set();
+  for (const block of source.matchAll(CONSTRUCTOR_BLOCK)) {
+    for (const parameter of block[1].matchAll(/:\s*([A-Za-z_$][\w$]*)/gu)) {
+      names.add(parameter[1]);
+    }
+  }
+  return names;
+}
+
+function valueSpecifiers(clause) {
+  return clause
+    .split(',')
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0 && !part.startsWith('type '))
+    .map((part) => part.split(/\s+as\s+/u)[0].trim())
+    .filter((name) => /^[A-Za-z_$][\w$]*$/u.test(name));
+}
+
+test('constructor-parameter types imported from a CJS package survive ESM linking', async () => {
+  const violations = [];
+  let checkedNames = 0;
+
+  for (const workspace of esmWorkspaces()) {
+    const source = join(workspace, 'src');
+    if (!existsSync(source)) {
+      continue;
+    }
+    for (const file of sourceFiles(source)) {
+      const text = readFileSync(file, 'utf8');
+      for (const match of text.matchAll(NAMED_IMPORT)) {
+        const [, clause, specifier] = match;
+        if (SKIPPED_PREFIXES.some((prefix) => specifier.startsWith(prefix))) {
+          continue;
+        }
+        if (!existsSync(repoPath('node_modules', packageRoot(specifier), 'package.json'))) {
+          continue;
+        }
+        const constructorTypes = constructorParameterTypes(text);
+        const names = valueSpecifiers(clause).filter((name) => constructorTypes.has(name));
+        if (names.length === 0) {
+          continue;
+        }
+        const namespace = await import(specifier);
+        for (const name of names) {
+          checkedNames += 1;
+          // Missing from the namespace is not enough. A name absent from BOTH
+          // the namespace and `.default` is a pure type (`ZodSchema`,
+          // `PipeTransform`); tsgo knows it is not a value, emits `Object` into
+          // the metadata and drops the import entirely, so nothing can fail.
+          // The dangerous case is a name that IS a runtime value — a class like
+          // mongoose's `Connection` — which the CJS lexer failed to re-export.
+          // Then tsgo emits a real import and Node rejects the link.
+          const isRuntimeValue = namespace.default?.[name] !== undefined;
+          if (namespace[name] === undefined && isRuntimeValue) {
+            violations.push(
+              `${relative(repoPath(), file)}: '${specifier}' has no export '${name}' under ESM ` +
+                `(Node throws at link time). Use \`import type { ${name} }\` if it is only a type.`,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  assert.deepEqual(
+    violations,
+    [],
+    `named imports that break under ESM:\n  ${violations.join('\n  ')}`,
+  );
+  assert.ok(checkedNames > 0, 'checked no named imports — the scanner is not guarding anything');
 });
