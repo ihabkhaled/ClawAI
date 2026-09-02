@@ -52,6 +52,24 @@ leaves; `shared-utilities` and `shared-rabbitmq` → both leaves;
 | A plan/entitlement gate                                | `shared-entitlements`             |
 | Something used by only ONE service                     | keep it **local** to that service |
 
+## Who builds what (Dockerfiles)
+
+A consumer's `Dockerfile` **and** `Dockerfile.dev` must each run
+`npm run build` for every `@claw/shared-*` it declares. The image copies the
+host's `packages/*/dist` (root `.dockerignore` keeps it deliberately), so an
+unlisted package runs stale host output instead of failing to build.
+
+Enforced, not hand-maintained:
+`tools/__tests__/dockerfile-shared-package-completeness.test.mjs` derives the
+expected set from each `apps/*/package.json` and fails on any Dockerfile that
+omits one; `shared-package-build-order.test.mjs` checks the order. Both run
+under `npm run knowledge:test`. Runbook:
+[add-a-shared-package-to-a-service](../skills/add-a-shared-package-to-a-service.md).
+
+Stale when: a Dockerfile builds shared packages through something other than
+`npm run build` (the matcher would then need updating), or `.dockerignore`
+stops copying `packages/*/dist`.
+
 ## CI footgun when adding a new package
 
 Adding a `packages/<name>` workspace requires TWO edits per job × 4 jobs in

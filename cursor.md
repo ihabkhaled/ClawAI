@@ -290,6 +290,8 @@ Update all four jobs (`lint`, `typecheck`, `test`, `build`) — they each have t
 
 So a new `packages/<name>` = TWO edits × 4 jobs: the "Build shared packages" line AND the matrix entry. `@claw/shared-entitlements` had the build line (Phase C-1) but its matrix entry was missed until 2026-05-29 — silently never lint/typecheck/tested. Don't repeat: both edits, all four jobs.
 
+**Dockerfile sibling footgun (added 2026-09-02):** every consumer's `Dockerfile` AND `Dockerfile.dev` must also `npm run build` the package, or the image runs the host's stale `dist` (dev-only `ERR_MODULE_NOT_FOUND …/dist/<file>` with no `.js`). Enforced by `tools/__tests__/dockerfile-shared-package-completeness.test.mjs`; see rule 14 §6 and `skills/add-a-shared-package-to-a-service.md`.
+
 ## 2026-05-30 feature additions (single source of truth: CLAUDE.md)
 
 Critic plan feature (`allowCriticReview` + selectable critic model on compare),

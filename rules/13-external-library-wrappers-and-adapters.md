@@ -28,6 +28,17 @@ business logic.
    declarations, full logging on public methods.
 5. **Cross-service wrappers live in `@claw/shared-utilities`**, not copied per
    service (jwt-verifier, http-client, crypto, retry — already shared).
+6. **Import a CommonJS package with a DEFAULT import, never `import * as x`.**
+   Every workspace is `"type": "module"`, so under real ESM the namespace object
+   holds only the named exports `cjs-module-lexer` could statically detect, and
+   the actual `module.exports` sits on `.default`. It is per-package, not a
+   blanket truth: `argon2` exposes `hash`/`verify` fine, while `jsonwebtoken`
+   exposes `decode` alone — so `jwt.verify` was `undefined` and every
+   authenticated request in production 401'd on 2026-09-02 with
+   `jwt.verify is not a function`. **ts-jest transpiles specs to CommonJS, where
+   the namespace import works**, so unit tests pass against a module shape
+   production never uses. That is why this rule has a runtime test rather than a
+   lint rule.
 
 ## Prohibited patterns
 
@@ -35,6 +46,8 @@ business logic.
 - Provider `if (provider === 'ollama') …` branching scattered across business logic
   instead of encapsulated in the adapter.
 - A second copy of a wrapper that already exists in `@claw/shared-utilities`.
+- `import * as x from '<commonjs-package>'` in any `"type": "module"` workspace
+  where the code then calls `x.someFunction()` — see mandatory rule 6.
 
 ## Correct pattern
 
@@ -50,6 +63,12 @@ packages/shared-utilities/src/http-client/…                                   
   imports outside wrapper files.
 - **Architecture test** — business layers import wrappers/adapters, not SDKs.
 - **Unit test** — adapter normalization covered per provider (mock at the boundary).
+- **Root test** — `tools/__tests__/esm-namespace-import-bindings.test.mjs`
+  (`npm run knowledge:test`; pre-push and the `ai-native-os` CI job) imports every
+  namespace-imported third-party package as real ESM and asserts each member the
+  source CALLS exists on the namespace. Call position only, so type-only members
+  such as `jwt.JwtPayload` are never flagged. A lint rule could not do this: the
+  answer differs per package and is only knowable at runtime.
 
 ## Related skills
 

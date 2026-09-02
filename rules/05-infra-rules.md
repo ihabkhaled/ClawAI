@@ -169,6 +169,7 @@ After updating a shared package:
 2. Rebuild ALL services that depend on it (full stop → rm → rmi → build cycle)
 3. Run `npm install` in monorepo root to update workspace links
 4. **Update `.github/workflows/ci.yml` "Build shared packages" step** if a new package was added (see footgun above)
+5. **When a service gains a new `@claw/shared-*` dependency, add `RUN cd packages/shared-<x> && npm run build` to that service's `Dockerfile` AND `Dockerfile.dev`.** The image copies the host's `packages/*/dist`; a missing build line runs stale host output (the 2026-09-02 payment-service `ERR_MODULE_NOT_FOUND` crash). Enforced by `tools/__tests__/dockerfile-shared-package-completeness.test.mjs`; runbook [add-a-shared-package-to-a-service](../skills/add-a-shared-package-to-a-service.md), rule [14](14-shared-packages.md) §6.
 
 ---
 

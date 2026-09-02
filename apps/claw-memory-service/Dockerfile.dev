@@ -24,6 +24,7 @@ RUN cd packages/shared-types && npm run build
 RUN cd packages/shared-utilities && npm run build
 RUN cd packages/shared-rabbitmq && npm run build
 RUN cd packages/shared-auth && npm run build
+RUN cd packages/shared-entitlements && npm run build
 
 WORKDIR /app/apps/claw-memory-service
 RUN npx prisma generate

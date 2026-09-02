@@ -1,4 +1,10 @@
-import * as jwt from 'jsonwebtoken';
+// DEFAULT import, never `import * as jwt`. jsonwebtoken is CommonJS and this
+// package is "type": "module", so a namespace import gives whatever
+// cjs-module-lexer could statically detect — for jsonwebtoken 9 that is `decode`
+// alone. `jwt.verify` is then undefined and every request 401s with
+// "jwt.verify is not a function" (prod, 2026-09-02). The default import is
+// `module.exports` itself, which has every function.
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { Logger } from '@nestjs/common';
 import {
   JWT_ALGORITHM,
@@ -52,7 +58,7 @@ function isUserRole(value: unknown): value is UserRole {
   );
 }
 
-function isUserAccessTokenPayload(value: string | jwt.JwtPayload): value is UserAccessTokenPayload {
+function isUserAccessTokenPayload(value: string | JwtPayload): value is UserAccessTokenPayload {
   return (
     typeof value !== 'string' &&
     isNonEmptyString(value.sub) &&

@@ -1,7 +1,9 @@
 import * as crypto from 'node:crypto';
-import * as jwt from 'jsonwebtoken';
+// DEFAULT import, never `import * as jwt` — this package is "type": "module"
+// and jsonwebtoken is CommonJS, so a namespace import leaves `jwt.sign`
+// undefined at runtime. See rule 13 §6.
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import { Logger } from '@nestjs/common';
-import type { SignOptions } from 'jsonwebtoken';
 import { JWT_ALGORITHM, USER_JWT_AUDIENCE, USER_JWT_ISSUER } from '@claw/shared-constants';
 import { verifyUserAccessToken } from '@claw/shared-utilities';
 import type { UserAccessTokenPayload } from '@claw/shared-types';

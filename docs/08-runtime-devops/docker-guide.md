@@ -432,3 +432,31 @@ docker volume prune
 ```bash
 ./scripts/claw.sh service:rebuild <service>
 ```
+
+### `ERR_MODULE_NOT_FOUND` for `packages/shared-*/dist/<file>` (no `.js` extension)
+
+**Symptom**: A dev container crashes at boot with
+`Cannot find module '/app/packages/shared-<x>/dist/<file>' imported from
+/app/packages/shared-<x>/dist/index.js`, while prod and CI are fine.
+
+**Cause**: Root `.dockerignore` copies the host's `packages/*/dist` into the
+image on purpose, and that service's `Dockerfile.dev` never runs
+`npm run build` for `shared-<x>`. The container is running whatever stale dist
+the host had — here one emitted before `tsc-alias -f` added `.js` extensions,
+which ESM refuses to resolve. Rebuilding the image without fixing the Dockerfile
+copies the same stale dist again.
+
+**Fix**: add `RUN cd packages/shared-<x> && npm run build` to that service's
+`Dockerfile.dev` (and `Dockerfile` if missing), then the full
+stop → rm → rmi → `service:rebuild` cycle.
+`tools/__tests__/dockerfile-shared-package-completeness.test.mjs` fails on the
+gap; see [rule 14 §6](../../rules/14-shared-packages.md) and
+[add-a-shared-package-to-a-service](../../skills/add-a-shared-package-to-a-service.md).
+Hit 2026-09-02 on payment-service; nine `Dockerfile.dev` files had the gap.
+
+**After pulling that fix:** `claw.sh up` reuses existing images, so the nine
+stale dev images stay stale until rebuilt. One invocation, safe in parallel:
+
+```bash
+./scripts/claw.sh service:rebuild audit-service connector-service file-service llamacpp-service memory-service ollama-service payment-service routing-service server-logs-service
+```

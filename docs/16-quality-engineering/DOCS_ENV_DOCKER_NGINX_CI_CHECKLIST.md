@@ -523,6 +523,41 @@ grep 'NEW_VARIABLE_NAME' CLAUDE.md
 
 ---
 
+### Item 19: Service `Dockerfile` + `Dockerfile.dev` build every declared shared package
+
+**WHAT:** The two Dockerfiles of every service under `apps/` each carry a
+`RUN cd packages/shared-<x> && npm run build` line for every `@claw/shared-<x>`
+in that service's `package.json`. Root `.dockerignore` copies the host's
+`packages/*/dist` into the image on purpose, so a package the Dockerfile does
+not build runs whatever stale output the developer's machine had.
+
+**WHEN:**
+
+- A service gains a new `@claw/shared-*` dependency → both Dockerfiles, same commit.
+- A new `packages/shared-*` is created → every consumer's two Dockerfiles (plus Item 13).
+
+**HOW TO VERIFY:**
+
+```bash
+# Derives the expected set from apps/*/package.json; fails naming the Dockerfile and package
+node --test tools/__tests__/dockerfile-shared-package-completeness.test.mjs
+
+# Order within the recipe (dependencies first)
+node --test tools/__tests__/shared-package-build-order.test.mjs
+```
+
+Both run under `npm run knowledge:test` (pre-push hook and the `ai-native-os`
+CI workflow).
+
+**SEVERITY IF MISSED:** Dev-only boot crash that CI and prod never show:
+`ERR_MODULE_NOT_FOUND …/packages/shared-<x>/dist/<file>` with no `.js`
+extension. Rebuilding the image does not help, because it copies the same stale
+dist again. 2026-09-02: nine `Dockerfile.dev` files lacked shared-entitlements;
+payment-service crash-looped. Runbook:
+[add-a-shared-package-to-a-service](../../skills/add-a-shared-package-to-a-service.md).
+
+---
+
 ## Evidence Requirements
 
 For each item, the reviewer must confirm the following before approving a PR:
@@ -573,16 +608,17 @@ These are the items most frequently missed in ClawAI development. Treat them as 
 
 ## "Ship Without This and Suffer" — Consequence Guide
 
-| Item Skipped          | Immediate Consequence                        | Discovery Timing      |
-| --------------------- | -------------------------------------------- | --------------------- |
-| `.env.example`        | Next dev or CI env missing variable          | At next fresh setup   |
-| Nginx route           | Frontend gets 404 for new endpoint           | First UI interaction  |
-| Prisma migration      | `PrismaClientKnownRequestError` in prod      | First DB write        |
-| i18n (non-English)    | `undefined` text or English in foreign UI    | First non-EN user     |
-| Docker compose (prod) | Service missing in production                | Production deployment |
-| shared-types event    | Hardcoded string → typo → silent no-delivery | Message not processed |
-| Frontend types        | 400 error on API call or `undefined` in UI   | First API call in UI  |
-| CI env vars           | All tests in service fail in CI              | Next CI run           |
-| Seed data             | Feature non-functional after deploy          | Production deploy     |
-| Health service        | New service invisible in health dashboard    | First incident        |
-| CLAUDE.md             | Stale docs mislead next engineer             | Next related feature  |
+| Item Skipped                 | Immediate Consequence                                        | Discovery Timing                                                          |
+| ---------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `.env.example`               | Next dev or CI env missing variable                          | At next fresh setup                                                       |
+| Nginx route                  | Frontend gets 404 for new endpoint                           | First UI interaction                                                      |
+| Prisma migration             | `PrismaClientKnownRequestError` in prod                      | First DB write                                                            |
+| i18n (non-English)           | `undefined` text or English in foreign UI                    | First non-EN user                                                         |
+| Docker compose (prod)        | Service missing in production                                | Production deployment                                                     |
+| shared-types event           | Hardcoded string → typo → silent no-delivery                 | Message not processed                                                     |
+| Frontend types               | 400 error on API call or `undefined` in UI                   | First API call in UI                                                      |
+| CI env vars                  | All tests in service fail in CI                              | Next CI run                                                               |
+| Seed data                    | Feature non-functional after deploy                          | Production deploy                                                         |
+| Health service               | New service invisible in health dashboard                    | First incident                                                            |
+| CLAUDE.md                    | Stale docs mislead next engineer                             | Next related feature                                                      |
+| Dockerfile shared build line | Dev container boots stale host dist → `ERR_MODULE_NOT_FOUND` | Next `service:rebuild` on a machine whose dist is older than the compiler |

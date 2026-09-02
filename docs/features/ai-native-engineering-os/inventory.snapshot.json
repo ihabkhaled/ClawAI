@@ -18,7 +18,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CLAUDE.md and cursor.md share 1 identical headings (24426 vs 27062 bytes) — candidates for compact routing",
+        "message": "CLAUDE.md and cursor.md share 1 identical headings (24426 vs 27454 bytes) — candidates for compact routing",
         "severity": "medium"
       },
       {
@@ -27,7 +27,7 @@
           "cursor.md"
         ],
         "kind": "mirrored-instruction-overlap",
-        "message": "CODEX.md and cursor.md share 2 identical headings (6104 vs 27062 bytes) — candidates for compact routing",
+        "message": "CODEX.md and cursor.md share 2 identical headings (6104 vs 27454 bytes) — candidates for compact routing",
         "severity": "medium"
       }
     ],
@@ -7214,7 +7214,7 @@
           "file": "CODEX.md"
         },
         {
-          "bytes": 27062,
+          "bytes": 27454,
           "file": "cursor.md"
         },
         {
@@ -7302,7 +7302,7 @@
           "file": "rules/05-frontend-components-and-hooks.md"
         },
         {
-          "bytes": 14501,
+          "bytes": 15030,
           "file": "rules/05-infra-rules.md"
         },
         {
@@ -7350,11 +7350,11 @@
           "file": "rules/12-types-enums-constants-and-declaration-ownership.md"
         },
         {
-          "bytes": 2907,
+          "bytes": 4300,
           "file": "rules/13-external-library-wrappers-and-adapters.md"
         },
         {
-          "bytes": 3033,
+          "bytes": 4630,
           "file": "rules/14-shared-packages.md"
         },
         {
@@ -7464,7 +7464,7 @@
       ],
       "skills": [
         {
-          "bytes": 20338,
+          "bytes": 20695,
           "file": "skills/00-index.md"
         },
         {
@@ -7504,12 +7504,16 @@
           "file": "skills/09-refactor-toolkit.md"
         },
         {
-          "bytes": 6744,
+          "bytes": 7017,
           "file": "skills/README.md"
         },
         {
           "bytes": 4010,
           "file": "skills/add-a-payment-gateway-flow.md"
+        },
+        {
+          "bytes": 4875,
+          "file": "skills/add-a-shared-package-to-a-service.md"
         },
         {
           "bytes": 3616,

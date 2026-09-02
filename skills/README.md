@@ -107,6 +107,12 @@ grep/knowledge commands that verify the finding.
 | [`find-canonical-owner.md`](./find-canonical-owner.md)               | Which service/package owns a concept; where a util belongs                |
 | [`inspect-affected-workspaces.md`](./inspect-affected-workspaces.md) | `affected:list` + variants; per-touched-folder gate scoping               |
 
+### Wiring (mutating runbooks)
+
+- [`add-a-shared-package-to-a-service.md`](./add-a-shared-package-to-a-service.md) —
+  `@claw/shared-*` into a service: `package.json` + BOTH Dockerfiles + CI, and
+  the stale-host-dist `ERR_MODULE_NOT_FOUND` crash it prevents (rule 14 §6)
+
 ### Legacy numbered skills (still authoritative)
 
 The original numbered runbooks remain in force and are cross-linked from the
