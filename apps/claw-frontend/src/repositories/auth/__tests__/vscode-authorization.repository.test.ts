@@ -47,16 +47,29 @@ describe('VS Code authorization repository', () => {
     });
   });
 
-  it('delivers loopback authorization without navigating away from ClawAI', async () => {
-    const fetcher = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+  it('delivers loopback authorization with a top-level browser navigation', () => {
+    const navigate = vi.fn();
     const callback = 'http://127.0.0.1:64215/auth/callback?code=one-time-code&state=verified-state';
 
-    await deliverVscodeAuthorization(callback, fetcher);
+    deliverVscodeAuthorization(callback, navigate);
 
-    expect(fetcher).toHaveBeenCalledWith(callback, {
-      cache: 'no-store',
-      credentials: 'omit',
-      mode: 'no-cors',
-    });
+    expect(navigate).toHaveBeenCalledOnce();
+    expect(navigate).toHaveBeenCalledWith(callback);
+  });
+
+  it.each([
+    'https://127.0.0.1:64215/auth/callback?code=code&state=state',
+    'http://127.0.0.1/auth/callback?code=code&state=state',
+    'http://localhost:64215/auth/callback?code=code&state=state',
+    'http://example.com:64215/auth/callback?code=code&state=state',
+    'http://user:password@127.0.0.1:64215/auth/callback?code=code&state=state',
+    'http://127.0.0.1:64215/not-auth/callback?code=code&state=state',
+  ])('rejects an unsafe loopback authorization callback: %s', (callback) => {
+    const navigate = vi.fn();
+
+    expect(() => deliverVscodeAuthorization(callback, navigate)).toThrow(
+      'Invalid VS Code authorization callback.',
+    );
+    expect(navigate).not.toHaveBeenCalled();
   });
 });
