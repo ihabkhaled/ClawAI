@@ -6,6 +6,12 @@ import type {
 
 const BASE = '/auth/vscode/authorize';
 
+type VscodeAuthorizationNavigator = (callbackUrl: string) => void;
+
+function navigateToCallback(callbackUrl: string): void {
+  window.location.assign(callbackUrl);
+}
+
 export async function getVscodeAuthorizationDetails(
   requestId: string,
 ): Promise<VscodeAuthorizationDetails> {
@@ -24,18 +30,27 @@ export async function approveVscodeAuthorization(
   return response.data;
 }
 
-export async function deliverVscodeAuthorization(
+export function deliverVscodeAuthorization(
   redirectUri: string,
-  fetcher: typeof fetch = globalThis.fetch,
-): Promise<void> {
+  navigate: VscodeAuthorizationNavigator = navigateToCallback,
+): void {
   const callback = new URL(redirectUri);
   const isLoopback = callback.hostname === '127.0.0.1' || callback.hostname === '[::1]';
-  if (callback.protocol !== 'http:' || !isLoopback || callback.pathname !== '/auth/callback') {
+  const hasExplicitPort = callback.port.length > 0;
+  const hasCredentials = callback.username.length > 0 || callback.password.length > 0;
+
+  if (
+    callback.protocol !== 'http:' ||
+    !isLoopback ||
+    !hasExplicitPort ||
+    hasCredentials ||
+    callback.pathname !== '/auth/callback'
+  ) {
     throw new Error('Invalid VS Code authorization callback.');
   }
-  await fetcher(callback.href, {
-    cache: 'no-store',
-    credentials: 'omit',
-    mode: 'no-cors',
-  });
+
+  // A browser fetch from the HTTPS ClawAI app to a loopback HTTP server can be
+  // blocked before CORS is evaluated. Native OAuth loopback callbacks are a
+  // browser navigation handoff, so keep the callback constrained and navigate.
+  navigate(callback.href);
 }
