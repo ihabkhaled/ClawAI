@@ -5,14 +5,18 @@ import { EmptyState } from '@/components/common/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { EmptyStateVariant } from '@/enums/empty-state-variant.enum';
 import type { UserSubscriptionCurrentProps } from '@/types/admin-user-statistics.types';
+import { resolveNoSubscriptionDescriptionKey } from '@/utilities/admin-user-statistics.utility';
 import { formatMinorAmount } from '@/utilities/billing.utility';
 import { formatDateTimeSafe } from '@/utilities/date.utility';
 
 /**
  * The one effective subscription, or the honest free-account answer.
  *
- * `subscription: null` is a NORMAL state — a free user — not an error, so it
- * renders as a plain statement rather than a failure notice.
+ * `subscription: null` is a NORMAL state — not an error — so it renders as a
+ * plain statement rather than a failure notice. It is NOT the same thing as a
+ * free account, which is why the sentence is chosen from the entitlement grant
+ * rather than assumed: an admin-granted Pro user has no subscription and never
+ * will, and the panel used to describe them as "an ordinary free account".
  *
  * `totalPaidMinor` is a list per currency and is rendered as one. Adding 500 USD
  * to 10000 EGP produces a number that means nothing, so the currencies are never
@@ -21,6 +25,7 @@ import { formatDateTimeSafe } from '@/utilities/date.utility';
 export function UserSubscriptionCurrent({
   subscription,
   totalPaidMinor,
+  assignment,
   t,
 }: UserSubscriptionCurrentProps): ReactElement {
   if (subscription === null) {
@@ -28,7 +33,7 @@ export function UserSubscriptionCurrent({
       <EmptyState
         icon={CreditCard}
         title={t('admin.userSubscriptionNoneTitle')}
-        description={t('admin.userSubscriptionNoneDescription')}
+        description={t(resolveNoSubscriptionDescriptionKey(assignment))}
         variant={EmptyStateVariant.Compact}
       />
     );

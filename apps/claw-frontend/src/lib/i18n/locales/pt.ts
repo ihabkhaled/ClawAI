@@ -1356,6 +1356,7 @@ export const pt: TranslationDictionary = {
     userSubscriptionTrialLabel: 'Avaliação gratuita',
     userSubscriptionNoTrial: 'Nunca utilizada',
     userSubscriptionTrialExpired: 'Avaliação terminada',
+    userSubscriptionTrialSuperseded: 'Substituída por uma concessão posterior',
     userSubscriptionTrialDaysRemaining: 'Faltam {days} dias',
     userSubscriptionTrialExpiresAt: 'A avaliação termina',
     userSubscriptionGrantTypeLabel: 'Tipo de atribuição',
@@ -1369,6 +1370,8 @@ export const pt: TranslationDictionary = {
     userSubscriptionNoneTitle: 'Sem subscrição',
     userSubscriptionNoneDescription:
       'Esta é uma conta gratuita normal. Nada foi comprado e nada é devido.',
+    userSubscriptionGrantedNoneDescription:
+      'Esta conta tem um acesso concedido. Nada foi comprado e nada é devido.',
     userSubscriptionStatusLabel: 'Estado',
     userSubscriptionIntervalLabel: 'Ciclo de faturação',
     userSubscriptionAmountLabel: 'Montante',

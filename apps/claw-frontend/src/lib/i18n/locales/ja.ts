@@ -1341,6 +1341,7 @@ export const ja: TranslationDictionary = {
     userSubscriptionTrialLabel: '無料トライアル',
     userSubscriptionNoTrial: '未使用',
     userSubscriptionTrialExpired: 'トライアル終了',
+    userSubscriptionTrialSuperseded: '後の付与により置き換え',
     userSubscriptionTrialDaysRemaining: '残り {days} 日',
     userSubscriptionTrialExpiresAt: 'トライアル終了日',
     userSubscriptionGrantTypeLabel: '付与の種類',
@@ -1353,6 +1354,8 @@ export const ja: TranslationDictionary = {
     userSubscriptionCurrentHeading: '現在のサブスクリプション',
     userSubscriptionNoneTitle: 'サブスクリプションなし',
     userSubscriptionNoneDescription: '通常の無料アカウントです。購入も未払いもありません。',
+    userSubscriptionGrantedNoneDescription:
+      'このアカウントは付与されたアクセス権を保持しています。購入も請求もありません。',
     userSubscriptionStatusLabel: '状態',
     userSubscriptionIntervalLabel: '請求サイクル',
     userSubscriptionAmountLabel: '金額',

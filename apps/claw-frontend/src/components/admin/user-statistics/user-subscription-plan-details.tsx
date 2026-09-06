@@ -2,7 +2,11 @@ import type { ReactElement } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import type { UserSubscriptionPlanDetailsProps } from '@/types/admin-user-statistics.types';
-import { resolveEntitlementValidUntilLabel } from '@/utilities/admin-user-statistics.utility';
+import {
+  isTrialCountingDown,
+  resolveEntitlementValidUntilLabel,
+  resolveTrialBadgeKey,
+} from '@/utilities/admin-user-statistics.utility';
 import { formatDateTimeSafe } from '@/utilities/date.utility';
 
 /**
@@ -14,6 +18,11 @@ import { formatDateTimeSafe } from '@/utilities/date.utility';
  *
  * A trial reports `daysRemaining` rounded UP, so thirty minutes left reads as
  * "1 day", and reaches 0 only once `isExpired` is also true.
+ *
+ * The badge is driven by `state`, never by `isExpired` alone. The redemption row
+ * behind it outlives the assignment that created it, so a trial replaced by a
+ * paid or admin grant keeps counting down on paper — which is how an account
+ * granted Pro for a year came to display "Free trial — 23 days left".
  */
 export function UserSubscriptionPlanDetails({
   planOverview,
@@ -27,12 +36,10 @@ export function UserSubscriptionPlanDetails({
           {planOverview.trial === null ? (
             t('admin.userSubscriptionNoTrial')
           ) : (
-            <Badge variant={planOverview.trial.isExpired ? 'outline' : 'default'}>
-              {planOverview.trial.isExpired
-                ? t('admin.userSubscriptionTrialExpired')
-                : t('admin.userSubscriptionTrialDaysRemaining', {
-                    days: planOverview.trial.daysRemaining,
-                  })}
+            <Badge variant={isTrialCountingDown(planOverview.trial.state) ? 'default' : 'outline'}>
+              {t(resolveTrialBadgeKey(planOverview.trial.state), {
+                days: planOverview.trial.daysRemaining,
+              })}
             </Badge>
           )}
         </dd>

@@ -1334,6 +1334,7 @@ export const fa: TranslationDictionary = {
     userSubscriptionTrialLabel: 'دورهٔ آزمایشی رایگان',
     userSubscriptionNoTrial: 'هرگز استفاده نشده',
     userSubscriptionTrialExpired: 'دورهٔ آزمایشی پایان یافت',
+    userSubscriptionTrialSuperseded: 'با اعطای بعدی جایگزین شد',
     userSubscriptionTrialDaysRemaining: '{days} روز باقی مانده',
     userSubscriptionTrialExpiresAt: 'پایان دورهٔ آزمایشی',
     userSubscriptionGrantTypeLabel: 'نوع اعطا',
@@ -1347,6 +1348,8 @@ export const fa: TranslationDictionary = {
     userSubscriptionNoneTitle: 'بدون اشتراک',
     userSubscriptionNoneDescription:
       'این یک حساب رایگان معمولی است. چیزی خریداری نشده و بدهی‌ای وجود ندارد.',
+    userSubscriptionGrantedNoneDescription:
+      'این حساب دسترسی اعطاشده دارد. چیزی خریداری نشده و بدهی وجود ندارد.',
     userSubscriptionStatusLabel: 'وضعیت',
     userSubscriptionIntervalLabel: 'چرخهٔ صورت‌حساب',
     userSubscriptionAmountLabel: 'مبلغ',

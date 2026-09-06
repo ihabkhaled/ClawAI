@@ -307,6 +307,40 @@ flow is broken, but because the price rows simply do not exist yet. It is
 registered in `seed.cjs` immediately after `planCatalogSeeder`, since it
 depends on the plans (and their active monthly prices) already existing.
 
+## A trial is superseded, not merely expired (2026-09-06)
+
+`PlanTrialRedemption` is written once per user (`userId` unique) and
+deliberately outlives the assignment that created it, so an operator can still
+reconstruct "when did they trial" long after a paid or admin grant replaced it.
+That is the right model, and it makes `expiresAt` a trap: it keeps counting
+down forever, whatever else has happened to the account.
+
+Reported: an operator granted a user Pro for a year, and the admin panel went on
+showing **"Free trial — 23 days left"** beside the grant, plus **"This is an
+ordinary free account. Nothing has been bought and nothing is owed."** Both were
+read from a single field in isolation.
+
+- `AdminUserPlanService.toTrial` now takes the assignment as well and reports
+  `state: ACTIVE | EXPIRED | SUPERSEDED`. The test is **identity** —
+  `redemption.assignmentId` against the assignment in force — not plan slug or
+  grant type, so it does not have to enumerate everything that can replace a
+  trial. SUPERSEDED beats EXPIRED when both hold: the user did not lose
+  anything on that date, they hold the replacement.
+- **No assignment at all is EXPIRED, not SUPERSEDED.** Nothing replaced it, and
+  SUPERSEDED would assert a replacement that does not exist.
+- `isExpired` is kept and still means only "the clock passed `expiresAt`". A
+  SUPERSEDED trial is routinely `isExpired: false`.
+
+**Entitlements were never affected, and this is worth knowing before hunting for
+a bigger bug.** Access comes from the ACTIVE assignment:
+`findActiveTrialState` reads that row's `plan.isTrial`, so a Pro grant reports
+no trial, `resolveTrialPresentation` nulls `trialEndsAt` for a non-trial plan,
+and `PLAN_TRIAL_EXPIRED` can only fire when the plan in force is itself a
+trial. The end user saw the correct thing throughout; only the admin panel lied.
+
+Rule: [28-billing-integrity-and-api-contracts](../../rules/28-billing-integrity-and-api-contracts.md)
+§9 and §10.
+
 ## Docker Container Rebuild Procedure
 
 When rebuilding this service (especially after shared package changes):

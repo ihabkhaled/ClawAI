@@ -1362,6 +1362,7 @@ export const de: TranslationDictionary = {
     userSubscriptionTrialLabel: 'Kostenlose Testphase',
     userSubscriptionNoTrial: 'Nie eingelöst',
     userSubscriptionTrialExpired: 'Testphase beendet',
+    userSubscriptionTrialSuperseded: 'Durch spätere Gewährung ersetzt',
     userSubscriptionTrialDaysRemaining: 'Noch {days} Tage',
     userSubscriptionTrialExpiresAt: 'Testphase endet',
     userSubscriptionGrantTypeLabel: 'Art der Zuweisung',
@@ -1375,6 +1376,8 @@ export const de: TranslationDictionary = {
     userSubscriptionNoneTitle: 'Kein Abonnement',
     userSubscriptionNoneDescription:
       'Dies ist ein gewöhnliches kostenloses Konto. Es wurde nichts gekauft und nichts geschuldet.',
+    userSubscriptionGrantedNoneDescription:
+      'Dieses Konto hat einen gewährten Zugang. Es wurde nichts gekauft und es ist nichts fällig.',
     userSubscriptionStatusLabel: 'Status',
     userSubscriptionIntervalLabel: 'Abrechnungsrhythmus',
     userSubscriptionAmountLabel: 'Betrag',

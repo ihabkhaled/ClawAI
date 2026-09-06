@@ -49,6 +49,30 @@ tests for any frontend repository that calls a changed API.
    This shipped live: the Free plan advertised 300,000 tokens a day against a
    20,000 weekly ceiling — fifteen times the allowance the account grants.
 
+9. **A lifetime record may never be rendered as current state.**
+   `PlanTrialRedemption` is written once per user and deliberately outlives the
+   assignment that created it, so its `expiresAt` keeps counting down forever.
+   Anything reporting "is this user on a trial" must ask whether the trial is
+   still the grant in force — `AdminUserPlanService.toTrial` compares the
+   redemption's `assignmentId` against the assignment actually in force — never
+   `expiresAt` alone. Identity, not plan slug or grant type, so the check does
+   not have to enumerate everything that may replace a trial.
+
+   This shipped live: an account granted Pro for a year displayed "Free trial —
+   23 days left". The countdown was arithmetically correct and described a trial
+   that had been superseded a week earlier.
+
+10. **"No subscription" is not "free account".** An admin grant, a promotional
+    grant and a migration all produce entitlement with no subscription behind
+    them, and none of them is a free account. A panel that infers one from the
+    other tells an operator the opposite of what the account holds — the same
+    account above was captioned "This is an ordinary free account. Nothing has
+    been bought and nothing is owed." Derive the sentence from the grant
+    (`resolveNoSubscriptionDescriptionKey`), not from the absence of a
+    subscription. A `PAID_SUBSCRIPTION` grant with no subscription behind it is
+    auth-service and payment-service disagreeing, and must never be captioned as
+    a free account either — that is the one case worth surfacing.
+
 The request-body test is required because the share feature once omitted
 `acknowledgedPublicWarning`: frontend and backend both typechecked, but every
 publication request returned 400. Exact serialization assertions catch that
@@ -64,6 +88,11 @@ class of split-contract failure.
 - Exposing `/api/v1/internal/payments/*` through nginx.
 - A frontend mutation test that asserts only `toHaveBeenCalled()`.
 - A plan whose daily cap exceeds its weekly cap, or weekly its monthly.
+- Reading `PlanTrialRedemption.expiresAt` on its own to decide whether a user is
+  on a trial. It answers "when was the trial scheduled to end", never "is the
+  trial still in force".
+- Captioning an account as free because it has no subscription, without first
+  looking at the grant that gave it its plan.
 
 ## Correct pattern
 

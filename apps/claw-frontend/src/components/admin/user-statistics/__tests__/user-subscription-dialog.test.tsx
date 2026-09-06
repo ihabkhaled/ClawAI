@@ -3,7 +3,12 @@ import type {
   AdminUserSubscriptionSnapshot,
   AdminUserSubscriptionStatistics,
 } from '@claw/shared-types';
-import { BillingInterval, InvoiceStatus, SubscriptionStatus } from '@claw/shared-types';
+import {
+  AdminUserTrialState,
+  BillingInterval,
+  InvoiceStatus,
+  SubscriptionStatus,
+} from '@claw/shared-types';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -204,6 +209,7 @@ describe('UserSubscriptionDialog', () => {
           startedAt: '2026-04-01T00:00:00.000Z',
           expiresAt: '2026-09-20T00:00:00.000Z',
           daysRemaining: 14,
+          state: AdminUserTrialState.ACTIVE,
           isExpired: false,
         },
       }),
@@ -237,6 +243,7 @@ describe('UserSubscriptionDialog', () => {
           startedAt: '2026-04-01T00:00:00.000Z',
           expiresAt: '2026-05-01T00:00:00.000Z',
           daysRemaining: 0,
+          state: AdminUserTrialState.EXPIRED,
           isExpired: true,
         },
       }),
@@ -307,5 +314,84 @@ describe('UserSubscriptionDialog', () => {
     render(<UserSubscriptionDialog open user={makeUser()} onClose={vi.fn()} t={t} />);
 
     expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1);
+  });
+  // ── Reported 2026-09-06 ───────────────────────────────────────────────────
+  // An operator granted magdy.abass the Pro plan for a year. The panel kept
+  // reporting "Free trial — 23 days left" beside the grant, because the trial
+  // redemption it reads outlives the assignment that created it and goes on
+  // counting down. Two separate lies in one panel: a live trial that had been
+  // replaced, and "an ordinary free account" describing a granted Pro user.
+  it('does not report a live countdown for a trial an admin grant replaced', () => {
+    mockState({
+      planOverview: makePlanOverview({
+        plan: { id: 'p1', slug: 'pro', name: 'Pro', isTrial: false, trialDurationDays: null },
+        assignment: {
+          status: 'ACTIVE',
+          grantType: 'ADMIN_GRANT',
+          grantReason: 'for free',
+          startsAt: '2026-09-06T14:04:37.000Z',
+          endsAt: null,
+          entitlementValidUntil: '2027-09-06T14:04:37.000Z',
+          sourceSubscriptionId: null,
+        },
+        trial: {
+          startedAt: '2026-08-30T11:15:03.000Z',
+          expiresAt: '2026-09-29T11:14:53.000Z',
+          daysRemaining: 23,
+          isExpired: false,
+          state: AdminUserTrialState.SUPERSEDED,
+        },
+      }),
+      subscriptionStatistics: makeStatistics(),
+    });
+    render(<UserSubscriptionDialog open user={makeUser()} onClose={vi.fn()} t={t} />);
+
+    expect(screen.getByText('admin.userSubscriptionTrialSuperseded')).toBeInTheDocument();
+    expect(screen.queryByText('admin.userSubscriptionTrialDaysRemaining')).not.toBeInTheDocument();
+  });
+
+  it('does not call an admin-granted account an ordinary free account', () => {
+    mockState({
+      planOverview: makePlanOverview({
+        assignment: {
+          status: 'ACTIVE',
+          grantType: 'ADMIN_GRANT',
+          grantReason: 'for free',
+          startsAt: '2026-09-06T14:04:37.000Z',
+          endsAt: null,
+          entitlementValidUntil: '2027-09-06T14:04:37.000Z',
+          sourceSubscriptionId: null,
+        },
+      }),
+      // No subscription: an admin grant never creates one, and never will.
+      subscriptionStatistics: makeStatistics(),
+    });
+    render(<UserSubscriptionDialog open user={makeUser()} onClose={vi.fn()} t={t} />);
+
+    expect(screen.getByText('admin.userSubscriptionGrantedNoneDescription')).toBeInTheDocument();
+    expect(screen.queryByText('admin.userSubscriptionNoneDescription')).not.toBeInTheDocument();
+  });
+
+  it('still calls a genuinely free account a free account', () => {
+    mockState({
+      planOverview: makePlanOverview({
+        assignment: {
+          status: 'ACTIVE',
+          grantType: 'FREE_DEFAULT',
+          grantReason: null,
+          startsAt: '2026-08-30T11:15:03.000Z',
+          endsAt: null,
+          entitlementValidUntil: null,
+          sourceSubscriptionId: null,
+        },
+      }),
+      subscriptionStatistics: makeStatistics(),
+    });
+    render(<UserSubscriptionDialog open user={makeUser()} onClose={vi.fn()} t={t} />);
+
+    expect(screen.getByText('admin.userSubscriptionNoneDescription')).toBeInTheDocument();
+    expect(
+      screen.queryByText('admin.userSubscriptionGrantedNoneDescription'),
+    ).not.toBeInTheDocument();
   });
 });

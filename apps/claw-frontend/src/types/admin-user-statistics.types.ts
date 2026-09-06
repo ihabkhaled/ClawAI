@@ -3,6 +3,7 @@ import type {
   AdminUsageTokenWindow,
   AdminUserInvoiceEntry,
   AdminUserPaidTotal,
+  AdminUserPlanAssignment,
   AdminUserPlanOverview,
   AdminUserSubscriptionHistoryEntry,
   AdminUserSubscriptionSnapshot,
@@ -124,6 +125,16 @@ export type UserSubscriptionCurrentProps = {
   subscription: AdminUserSubscriptionSnapshot | null;
   /** Money collected per currency. Never summed across currencies. */
   totalPaidMinor: AdminUserPaidTotal[];
+  /**
+   * The entitlement grant in force, needed to tell the two no-subscription
+   * accounts apart.
+   *
+   * "No subscription" is not the same statement as "free account". An
+   * admin-granted Pro user has no subscription and never will, and describing
+   * them as "an ordinary free account" tells an operator the opposite of what
+   * the account actually holds.
+   */
+  assignment: AdminUserPlanAssignment | null;
   t: TranslateFunction;
 };
 

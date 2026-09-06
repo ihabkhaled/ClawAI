@@ -88,3 +88,4 @@ export {
 export { ClawSpeedProfile, SpeedProviderMode } from './claw-speed-profile.enum';
 export { FeedbackType } from './feedback-type.enum';
 export { FeedbackStatus } from './feedback-status.enum';
+export { AdminUserTrialState } from './admin-user-trial-state.enum';

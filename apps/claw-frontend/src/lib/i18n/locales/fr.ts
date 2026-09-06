@@ -1361,6 +1361,7 @@ export const fr: TranslationDictionary = {
     userSubscriptionTrialLabel: 'Essai gratuit',
     userSubscriptionNoTrial: 'Jamais utilisé',
     userSubscriptionTrialExpired: 'Essai terminé',
+    userSubscriptionTrialSuperseded: 'Remplacé par une attribution ultérieure',
     userSubscriptionTrialDaysRemaining: '{days} jours restants',
     userSubscriptionTrialExpiresAt: 'Fin de l’essai',
     userSubscriptionGrantTypeLabel: 'Type d’attribution',
@@ -1374,6 +1375,8 @@ export const fr: TranslationDictionary = {
     userSubscriptionNoneTitle: 'Aucun abonnement',
     userSubscriptionNoneDescription:
       'Il s’agit d’un compte gratuit ordinaire. Rien n’a été acheté et rien n’est dû.',
+    userSubscriptionGrantedNoneDescription:
+      "Ce compte dispose d'un accès accordé. Rien n'a été acheté et rien n'est dû.",
     userSubscriptionStatusLabel: 'État',
     userSubscriptionIntervalLabel: 'Cycle de facturation',
     userSubscriptionAmountLabel: 'Montant',

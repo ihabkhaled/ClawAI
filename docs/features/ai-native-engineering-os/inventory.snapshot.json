@@ -7425,7 +7425,7 @@
           "file": "rules/27-engineering-mindsets.md"
         },
         {
-          "bytes": 5107,
+          "bytes": 6984,
           "file": "rules/28-billing-integrity-and-api-contracts.md"
         },
         {
@@ -7757,7 +7757,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5115
+        "value": 5117
       },
       "localeCount": 13,
       "locales": [

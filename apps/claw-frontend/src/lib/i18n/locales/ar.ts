@@ -1328,6 +1328,7 @@ export const ar: TranslationDictionary = {
     userSubscriptionTrialLabel: 'الفترة التجريبية المجانية',
     userSubscriptionNoTrial: 'لم تُستخدم مطلقًا',
     userSubscriptionTrialExpired: 'انتهت الفترة التجريبية',
+    userSubscriptionTrialSuperseded: 'استُبدلت بمنحة لاحقة',
     userSubscriptionTrialDaysRemaining: 'تبقّى {days} أيام',
     userSubscriptionTrialExpiresAt: 'تنتهي الفترة التجريبية',
     userSubscriptionGrantTypeLabel: 'نوع المنحة',
@@ -1340,6 +1341,8 @@ export const ar: TranslationDictionary = {
     userSubscriptionCurrentHeading: 'الاشتراك الحالي',
     userSubscriptionNoneTitle: 'لا يوجد اشتراك',
     userSubscriptionNoneDescription: 'هذا حساب مجاني عادي. لم يُشترَ أي شيء ولا توجد أي مستحقات.',
+    userSubscriptionGrantedNoneDescription:
+      'هذا الحساب يملك صلاحية ممنوحة. لم يُشترَ شيء ولا توجد مستحقات.',
     userSubscriptionStatusLabel: 'الحالة',
     userSubscriptionIntervalLabel: 'دورة الفوترة',
     userSubscriptionAmountLabel: 'المبلغ',

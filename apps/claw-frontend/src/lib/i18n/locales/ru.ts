@@ -1354,6 +1354,7 @@ export const ru: TranslationDictionary = {
     userSubscriptionTrialLabel: 'Бесплатный пробный период',
     userSubscriptionNoTrial: 'Ни разу не использован',
     userSubscriptionTrialExpired: 'Пробный период закончился',
+    userSubscriptionTrialSuperseded: 'Заменён более поздним предоставлением',
     userSubscriptionTrialDaysRemaining: 'Осталось дней: {days}',
     userSubscriptionTrialExpiresAt: 'Пробный период заканчивается',
     userSubscriptionGrantTypeLabel: 'Тип назначения',
@@ -1367,6 +1368,8 @@ export const ru: TranslationDictionary = {
     userSubscriptionNoneTitle: 'Подписки нет',
     userSubscriptionNoneDescription:
       'Это обычная бесплатная учётная запись. Ничего не куплено и ничего не должно.',
+    userSubscriptionGrantedNoneDescription:
+      'У этой учётной записи есть предоставленный доступ. Ничего не куплено и ничего не причитается.',
     userSubscriptionStatusLabel: 'Статус',
     userSubscriptionIntervalLabel: 'Цикл оплаты',
     userSubscriptionAmountLabel: 'Сумма',

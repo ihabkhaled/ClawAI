@@ -1323,6 +1323,7 @@ export const th: TranslationDictionary = {
     userSubscriptionTrialLabel: 'ทดลองใช้ฟรี',
     userSubscriptionNoTrial: 'ไม่เคยใช้',
     userSubscriptionTrialExpired: 'ช่วงทดลองใช้สิ้นสุดแล้ว',
+    userSubscriptionTrialSuperseded: 'ถูกแทนที่ด้วยการให้สิทธิ์ภายหลัง',
     userSubscriptionTrialDaysRemaining: 'เหลืออีก {days} วัน',
     userSubscriptionTrialExpiresAt: 'ช่วงทดลองใช้สิ้นสุด',
     userSubscriptionGrantTypeLabel: 'ประเภทการให้สิทธิ์',
@@ -1335,6 +1336,8 @@ export const th: TranslationDictionary = {
     userSubscriptionCurrentHeading: 'การสมัครสมาชิกปัจจุบัน',
     userSubscriptionNoneTitle: 'ไม่มีการสมัครสมาชิก',
     userSubscriptionNoneDescription: 'นี่คือบัญชีฟรีตามปกติ ไม่มีการซื้อและไม่มียอดค้างชำระ',
+    userSubscriptionGrantedNoneDescription:
+      'บัญชีนี้ได้รับสิทธิ์ที่มอบให้ ไม่มีการซื้อและไม่มียอดค้างชำระ',
     userSubscriptionStatusLabel: 'สถานะ',
     userSubscriptionIntervalLabel: 'รอบการเรียกเก็บเงิน',
     userSubscriptionAmountLabel: 'จำนวนเงิน',

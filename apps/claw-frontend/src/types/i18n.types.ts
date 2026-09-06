@@ -1307,6 +1307,7 @@ export type TranslationDictionary = {
     userSubscriptionTrialLabel: string;
     userSubscriptionNoTrial: string;
     userSubscriptionTrialExpired: string;
+    userSubscriptionTrialSuperseded: string;
     userSubscriptionTrialDaysRemaining: string;
     userSubscriptionTrialExpiresAt: string;
     userSubscriptionGrantTypeLabel: string;
@@ -1319,6 +1320,7 @@ export type TranslationDictionary = {
     userSubscriptionCurrentHeading: string;
     userSubscriptionNoneTitle: string;
     userSubscriptionNoneDescription: string;
+    userSubscriptionGrantedNoneDescription: string;
     userSubscriptionStatusLabel: string;
     userSubscriptionIntervalLabel: string;
     userSubscriptionAmountLabel: string;

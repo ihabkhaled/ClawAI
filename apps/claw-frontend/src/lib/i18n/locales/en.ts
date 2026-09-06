@@ -1337,6 +1337,7 @@ export const en: TranslationDictionary = {
     userSubscriptionTrialLabel: 'Free trial',
     userSubscriptionNoTrial: 'Never redeemed',
     userSubscriptionTrialExpired: 'Trial ended',
+    userSubscriptionTrialSuperseded: 'Superseded by a later grant',
     userSubscriptionTrialDaysRemaining: '{days} days left',
     userSubscriptionTrialExpiresAt: 'Trial ends',
     userSubscriptionGrantTypeLabel: 'Grant type',
@@ -1350,6 +1351,8 @@ export const en: TranslationDictionary = {
     userSubscriptionNoneTitle: 'No subscription',
     userSubscriptionNoneDescription:
       'This is an ordinary free account. Nothing has been bought and nothing is owed.',
+    userSubscriptionGrantedNoneDescription:
+      'This account holds a granted entitlement. Nothing has been bought and nothing is owed.',
     userSubscriptionStatusLabel: 'Status',
     userSubscriptionIntervalLabel: 'Billing cycle',
     userSubscriptionAmountLabel: 'Amount',

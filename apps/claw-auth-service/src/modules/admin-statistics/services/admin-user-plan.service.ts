@@ -4,6 +4,7 @@ import {
   type AdminUserPlanOverview,
   type AdminUserPlanSummary,
   type AdminUserTrial,
+  AdminUserTrialState,
 } from '@claw/shared-types';
 
 import {
@@ -45,7 +46,7 @@ export class AdminUserPlanService {
       generatedAt: now.toISOString(),
       plan: plan === null ? null : AdminUserPlanService.toPlanSummary(plan),
       assignment: assignment === null ? null : AdminUserPlanService.toAssignment(assignment),
-      trial: redemption === null ? null : AdminUserPlanService.toTrial(redemption, now),
+      trial: redemption === null ? null : AdminUserPlanService.toTrial(redemption, assignment, now),
     };
   }
 
@@ -74,12 +75,53 @@ export class AdminUserPlanService {
   // `isExpired` is derived from the same instant `daysRemaining` is, so the two
   // can never disagree. Deriving them from separate `new Date()` calls is how a
   // panel ends up reporting "0 days remaining" beside "active".
-  private static toTrial(redemption: PlanTrialRedemption, now: Date): AdminUserTrial {
+  //
+  // `state` needs the ASSIGNMENT as well, because the redemption row cannot
+  // answer on its own. It is written once per user and outlives the assignment
+  // that created it, so a trial that was replaced by a paid or admin grant goes
+  // on counting down on paper. Reporting that countdown is what made an
+  // admin-granted Pro account read "Free trial — 23 days left" beside a grant
+  // valid until 2027.
+  //
+  // The test is identity, not plan slug or grant type: the redemption names the
+  // exact assignment that granted it, so if the assignment in force is a
+  // different row, something replaced the trial — no matter what it was, and
+  // without this code needing to enumerate what may replace a trial.
+  private static toTrial(
+    redemption: PlanTrialRedemption,
+    assignment: UserPlanAssignment | null,
+    now: Date,
+  ): AdminUserTrial {
+    const hasExpired = redemption.expiresAt.getTime() <= now.getTime();
+
     return {
       startedAt: redemption.startedAt.toISOString(),
       expiresAt: redemption.expiresAt.toISOString(),
       daysRemaining: resolveTrialDaysRemaining(redemption.expiresAt, now),
-      isExpired: redemption.expiresAt.getTime() <= now.getTime(),
+      isExpired: hasExpired,
+      state: AdminUserPlanService.toTrialState(redemption, assignment, hasExpired),
     };
+  }
+
+  // SUPERSEDED wins over EXPIRED when both are true. A trial that was replaced
+  // and would later have run out is superseded: calling it expired invites the
+  // reading that the user lost something on that date, when the replacement is
+  // what they actually hold.
+  //
+  // No assignment at all is EXPIRED, not SUPERSEDED. Nothing replaced the trial
+  // there — the account simply has no grant — and SUPERSEDED would assert a
+  // replacement that does not exist.
+  private static toTrialState(
+    redemption: PlanTrialRedemption,
+    assignment: UserPlanAssignment | null,
+    hasExpired: boolean,
+  ): AdminUserTrialState {
+    if (assignment === null) {
+      return AdminUserTrialState.EXPIRED;
+    }
+    if (assignment.id !== redemption.assignmentId) {
+      return AdminUserTrialState.SUPERSEDED;
+    }
+    return hasExpired ? AdminUserTrialState.EXPIRED : AdminUserTrialState.ACTIVE;
   }
 }

@@ -1357,6 +1357,7 @@ export const es: TranslationDictionary = {
     userSubscriptionTrialLabel: 'Prueba gratuita',
     userSubscriptionNoTrial: 'Nunca canjeada',
     userSubscriptionTrialExpired: 'Prueba finalizada',
+    userSubscriptionTrialSuperseded: 'Sustituida por una concesión posterior',
     userSubscriptionTrialDaysRemaining: 'Quedan {days} días',
     userSubscriptionTrialExpiresAt: 'La prueba termina',
     userSubscriptionGrantTypeLabel: 'Tipo de concesión',
@@ -1370,6 +1371,8 @@ export const es: TranslationDictionary = {
     userSubscriptionNoneTitle: 'Sin suscripción',
     userSubscriptionNoneDescription:
       'Es una cuenta gratuita normal. No se ha comprado nada ni se debe nada.',
+    userSubscriptionGrantedNoneDescription:
+      'Esta cuenta tiene un acceso concedido. No se ha comprado nada y no se debe nada.',
     userSubscriptionStatusLabel: 'Estado',
     userSubscriptionIntervalLabel: 'Ciclo de facturación',
     userSubscriptionAmountLabel: 'Importe',

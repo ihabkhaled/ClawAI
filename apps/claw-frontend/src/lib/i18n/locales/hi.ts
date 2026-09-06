@@ -1341,6 +1341,7 @@ export const hi: TranslationDictionary = {
     userSubscriptionTrialLabel: 'नि:शुल्क परीक्षण',
     userSubscriptionNoTrial: 'कभी उपयोग नहीं किया',
     userSubscriptionTrialExpired: 'परीक्षण समाप्त',
+    userSubscriptionTrialSuperseded: 'बाद के अनुदान से प्रतिस्थापित',
     userSubscriptionTrialDaysRemaining: '{days} दिन शेष',
     userSubscriptionTrialExpiresAt: 'परीक्षण समाप्त होता है',
     userSubscriptionGrantTypeLabel: 'अनुदान का प्रकार',
@@ -1354,6 +1355,8 @@ export const hi: TranslationDictionary = {
     userSubscriptionNoneTitle: 'कोई सदस्यता नहीं',
     userSubscriptionNoneDescription:
       'यह एक सामान्य नि:शुल्क खाता है। कुछ भी खरीदा नहीं गया और कुछ भी बकाया नहीं है।',
+    userSubscriptionGrantedNoneDescription:
+      'इस खाते के पास प्रदत्त पहुँच है। कुछ भी खरीदा नहीं गया और कुछ भी बकाया नहीं है।',
     userSubscriptionStatusLabel: 'स्थिति',
     userSubscriptionIntervalLabel: 'बिलिंग चक्र',
     userSubscriptionAmountLabel: 'राशि',

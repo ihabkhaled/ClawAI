@@ -70,6 +70,7 @@ export function UserSubscriptionDialogBody({
         <UserSubscriptionCurrent
           subscription={subscriptionStatistics.subscription}
           totalPaidMinor={subscriptionStatistics.totalPaidMinor}
+          assignment={planOverview.assignment}
           t={t}
         />
       </section>

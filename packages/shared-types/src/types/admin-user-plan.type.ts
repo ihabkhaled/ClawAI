@@ -1,3 +1,5 @@
+import { type AdminUserTrialState } from '../enums/admin-user-trial-state.enum';
+
 /**
  * The auth-owned half of a user's subscription picture, for the admin users
  * page.
@@ -60,7 +62,22 @@ export type AdminUserTrial = {
    * `expiresAt` has actually passed — at which point `isExpired` is true.
    */
   daysRemaining: number;
+  /**
+   * Whether `expiresAt` has passed. A pure statement about the clock — it says
+   * nothing about whether the trial is still what grants this user access.
+   * Read `state` for that; a SUPERSEDED trial is routinely `isExpired: false`.
+   */
   isExpired: boolean;
+  /**
+   * Where the trial stands relative to the grant currently in force.
+   *
+   * The field this panel needs and `expiresAt` cannot supply: the redemption row
+   * outlives the assignment that created it, so a trial replaced by a paid or
+   * admin grant keeps counting down on paper. Rendering `daysRemaining` without
+   * consulting this reported "Free trial — 23 days left" on an account that had
+   * been granted Pro for a year.
+   */
+  state: AdminUserTrialState;
 };
 
 /** Everything the auth service contributes to the admin subscription modal. */
