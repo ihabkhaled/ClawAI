@@ -68,7 +68,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 97,
+      "endpointCount": 99,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",
@@ -107,7 +107,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 82,
+      "testFiles": 86,
       "testRunner": "jest"
     },
     {
@@ -354,7 +354,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-payment-service",
-      "endpointCount": 37,
+      "endpointCount": 38,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -389,7 +389,7 @@
         "Subscription",
         "WebhookEvent"
       ],
-      "testFiles": 101,
+      "testFiles": 105,
       "testRunner": "jest"
     },
     {

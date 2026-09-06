@@ -264,6 +264,7 @@
         "build",
         "clear-cache",
         "dev",
+        "dev:docker",
         "format",
         "format:check",
         "lint",
