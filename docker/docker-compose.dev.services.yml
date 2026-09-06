@@ -23,6 +23,10 @@ services:
     container_name: claw-nginx
     restart: unless-stopped
     ports:
+      # 80 is published, not just mapped to 4000, because the ACME HTTP-01
+      # challenge is fetched on port 80 of the real domain and nowhere else. A
+      # host that only exposes 4000 cannot renew a public certificate.
+      - '80:80'
       - '4000:80'
       - '443:443'
     volumes:
@@ -31,6 +35,18 @@ services:
       # it under two certificates. nginx.conf `include`s it unconditionally, so
       # this mount is required in dev too — without it nginx refuses to start.
       - ../infra/nginx/locations.conf:/etc/nginx/claw/locations.conf:ro
+      # The next three mirror the prod nginx service, and their absence is what
+      # takes a public domain down when this stack is run on a real host: the
+      # `include /etc/nginx/claw/public-tls/*.conf` in nginx.conf is a WILDCARD,
+      # so with nothing mounted it matches zero files, nginx starts happily, and
+      # claw-ai.co silently falls through to the mkcert default_server. The site
+      # answers 200 while every browser rejects the certificate — which looks
+      # like an outage with no error anywhere in the logs.
+      - ../infra/nginx/public-tls:/etc/nginx/claw/public-tls:ro
+      # Read the real directory rather than copying: certbot renews in place and
+      # a copied leaf goes stale without anything noticing.
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
       - ../certs:/etc/nginx/certs:ro
     depends_on:
       auth-service:
