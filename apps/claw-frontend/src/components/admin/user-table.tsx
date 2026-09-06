@@ -3,6 +3,8 @@
 import { AssignPlanDialog } from '@/components/admin/assign-plan-dialog';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
 import { TemporaryPasswordDialog } from '@/components/admin/temporary-password-dialog';
+import { UserSubscriptionDialog } from '@/components/admin/user-statistics/user-subscription-dialog';
+import { UserUsageDialog } from '@/components/admin/user-statistics/user-usage-dialog';
 import { DataTable } from '@/components/common/data-table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +60,14 @@ export function UserTable({
     assignPlanTargetId,
     openAssignPlan,
     closeAssignPlan,
+    canViewUsage,
+    canViewSubscription,
+    usageUser,
+    openUsage,
+    closeUsage,
+    subscriptionUser,
+    openSubscription,
+    closeSubscription,
   } = useUserTableState();
   const { t } = useTranslation();
   const activePlans = plans.filter((plan) => plan.isActive);
@@ -205,6 +215,36 @@ export function UserTable({
       // labelled "reactivate".
       render: (user) => (
         <div className="touch:grid touch:w-full touch:grid-cols-2 flex min-w-0 flex-wrap justify-end gap-2">
+          {/*
+            Each statistics button is gated on the permission ITS OWN endpoint
+            enforces, not on the ADMIN_USERS_MANAGE that gates this page. The
+            two are separate powers, so gating these on the page's permission
+            would hand a user-manager a control that 403s on every click.
+          */}
+          {canViewUsage ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-auto py-1.5"
+              onClick={() => openUsage(user)}
+            >
+              <span className="min-w-0 text-center leading-tight whitespace-normal">
+                {t('admin.userUsageAction')}
+              </span>
+            </Button>
+          ) : null}
+          {canViewSubscription ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-auto py-1.5"
+              onClick={() => openSubscription(user)}
+            >
+              <span className="min-w-0 text-center leading-tight whitespace-normal">
+                {t('admin.userSubscriptionAction')}
+              </span>
+            </Button>
+          ) : null}
           <Button
             variant="outline"
             size="sm"
@@ -319,6 +359,13 @@ export function UserTable({
           onAssignPlan(userId, planId, durationMonths, grantReason);
           closeAssignPlan();
         }}
+        t={t}
+      />
+      <UserUsageDialog open={usageUser !== null} user={usageUser} onClose={closeUsage} t={t} />
+      <UserSubscriptionDialog
+        open={subscriptionUser !== null}
+        user={subscriptionUser}
+        onClose={closeSubscription}
         t={t}
       />
     </>

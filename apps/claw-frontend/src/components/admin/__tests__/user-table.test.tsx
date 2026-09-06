@@ -1,9 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UserTable } from '@/components/admin/user-table';
-import { PlanLifecycleStatus } from '@/enums';
+import { Permission, PlanLifecycleStatus } from '@/enums';
 import type { AdminUser } from '@/types/audit.types';
 import type { PlanView } from '@/types/plan.types';
 
@@ -14,6 +14,25 @@ vi.mock('@/lib/i18n', () => ({
     dir: 'ltr',
   }),
 }));
+
+// The users PAGE is gated on ADMIN_USERS_MANAGE, but the two statistics
+// endpoints are not. Each button therefore has to answer to its OWN endpoint's
+// permission, so the gate is driven directly here rather than through the auth
+// store.
+const { mockCan } = vi.hoisted(() => ({ mockCan: vi.fn<(permission: Permission) => boolean>() }));
+
+vi.mock('@/hooks/auth/use-permissions', () => ({
+  usePermissions: () => ({
+    isAdmin: false,
+    isSuperAdmin: false,
+    can: mockCan,
+    canAny: () => false,
+  }),
+}));
+
+beforeEach(() => {
+  mockCan.mockReturnValue(false);
+});
 
 function makeUser(overrides: Partial<AdminUser> = {}): AdminUser {
   return {
@@ -415,5 +434,69 @@ describe('UserTable temporary password action', () => {
 
     expect(edit).toBeEnabled();
     expect(rotate).toBeDisabled();
+  });
+});
+
+// Regression guard for the trap the model-costs page hit first: gating a
+// control on the parent page's permission ships a button that 403s on every
+// click. `usage-statistics` enforces ADMIN_USAGE_VIEW and both billing reads
+// enforce ADMIN_PLANS_MANAGE — neither is the page's ADMIN_USERS_MANAGE.
+describe('UserTable per-row statistics buttons', () => {
+  it('hides both buttons from an administrator holding neither permission', () => {
+    render(<UserTable users={[makeUser()]} {...baseProps} />);
+
+    expect(screen.queryByRole('button', { name: 'admin.userUsageAction' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'admin.userSubscriptionAction' })).toBeNull();
+  });
+
+  it('hides both buttons from a user-manager who holds only ADMIN_USERS_MANAGE', () => {
+    mockCan.mockImplementation((permission) => permission === Permission.ADMIN_USERS_MANAGE);
+    render(<UserTable users={[makeUser()]} {...baseProps} />);
+
+    expect(screen.queryByRole('button', { name: 'admin.userUsageAction' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'admin.userSubscriptionAction' })).toBeNull();
+  });
+
+  it('shows only the usage button for ADMIN_USAGE_VIEW alone', () => {
+    mockCan.mockImplementation((permission) => permission === Permission.ADMIN_USAGE_VIEW);
+    render(<UserTable users={[makeUser()]} {...baseProps} />);
+
+    expect(screen.getAllByRole('button', { name: 'admin.userUsageAction' }).length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.queryByRole('button', { name: 'admin.userSubscriptionAction' })).toBeNull();
+  });
+
+  it('shows only the subscription button for ADMIN_PLANS_MANAGE alone', () => {
+    mockCan.mockImplementation((permission) => permission === Permission.ADMIN_PLANS_MANAGE);
+    render(<UserTable users={[makeUser()]} {...baseProps} />);
+
+    expect(
+      screen.getAllByRole('button', { name: 'admin.userSubscriptionAction' }).length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'admin.userUsageAction' })).toBeNull();
+  });
+
+  it('shows both buttons when the actor holds both permissions', () => {
+    mockCan.mockReturnValue(true);
+    render(<UserTable users={[makeUser()]} {...baseProps} />);
+
+    expect(screen.getAllByRole('button', { name: 'admin.userUsageAction' }).length).toBeGreaterThan(
+      0,
+    );
+    expect(
+      screen.getAllByRole('button', { name: 'admin.userSubscriptionAction' }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  // The super-administrator row locks editing and rotation, but reading what an
+  // account spent is not a mutation of it.
+  it('keeps the statistics buttons available on a row whose mutations are locked', () => {
+    mockCan.mockReturnValue(true);
+    render(<UserTable users={[makeUser({ id: 'super-1', isSuperAdmin: true })]} {...baseProps} />);
+
+    const usage = screen.getAllByRole('button', { name: 'admin.userUsageAction' })[0];
+    expect(usage).toBeEnabled();
+    expect(screen.getAllByRole('button', { name: 'admin.editUser' })[0]).toBeDisabled();
   });
 });

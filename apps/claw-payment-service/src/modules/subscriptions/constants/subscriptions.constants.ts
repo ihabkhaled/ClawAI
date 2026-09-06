@@ -5,6 +5,13 @@ import { SubscriptionStatus } from '@claw/shared-types';
 // make one request expensive.
 export const INVOICE_LIST_LIMIT = 100;
 
+// Bound on the PAID-invoice scan the admin billing totals are summed over.
+// Higher than INVOICE_LIST_LIMIT because these figures are totals rather than
+// a table: truncating them would understate what a customer has paid. 600
+// monthly invoices is fifty years of billing, so a real account cannot reach
+// it and a runaway one cannot make the query unbounded.
+export const PAID_INVOICE_SCAN_LIMIT = 600;
+
 // Statuses a subscription may be cancelled from. Cancelling one that is already
 // cancelled, expired or charged back is refused rather than silently accepted —
 // the caller needs to know nothing happened.

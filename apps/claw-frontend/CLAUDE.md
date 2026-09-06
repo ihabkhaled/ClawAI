@@ -500,6 +500,49 @@ that 403s on every call.
   override; the help text says so, because automated sync will then never
   refresh it.
 
+## Admin per-user statistics modals: `/admin/users` (2026-09-06)
+
+Two per-row buttons on the users table, each opening a read-only modal.
+Components live in `components/admin/user-statistics/`; open state and the
+permission flags come from `useUserStatisticsDialogState`, composed into
+`useUserTableState` so `UserTable.tsx` still calls exactly one controller hook.
+
+- **Usage & consumption** — `GET /admin/users/:id/usage-statistics`, gated on
+  `Permission.ADMIN_USAGE_VIEW`.
+- **Subscription & billing** — TWO queries rendered as one modal:
+  `GET /admin/users/:id/plan-overview` (auth-service) and
+  `GET /admin/billing/users/:id/subscription` (payment-service), both gated on
+  `Permission.ADMIN_PLANS_MANAGE`.
+
+Five things here are easy to get wrong:
+
+1. **Neither button may be gated on the page's permission.** The page is gated
+   on `ADMIN_USERS_MANAGE`; none of the three endpoints is. Gating a control on
+   the parent page's permission hands a user-manager a button that 403s on every
+   click — the same trap the model-costs page hit. `user-table.test.tsx` asserts
+   each button's visibility against its own permission, including the case of an
+   actor holding `ADMIN_USERS_MANAGE` alone.
+2. **`nextRenewalAt: null` means "will not renew", never a blank.** A cancelled
+   subscription still carries a `currentPeriodEnd` — there it means when access
+   stops, not when money moves — so rendering that date would tell an operator a
+   churned customer is about to pay again.
+3. **`creditsByMonth` is empty on every install with no `CONSUMPTION` ledger
+   rows**, which is the default. It renders "No credit consumption recorded",
+   not a spinner and not a fabricated `0.00` row. `subscription: null` is the
+   same kind of answer: an ordinary free account, not an error.
+4. **Micro-USD arrives as a decimal STRING** (`consumedMicroUsd`) because it is a
+   server-side `bigint`. Render it with `formatMicroUsd`, which walks it through
+   `BigInt`; never parse it into a float. Minor units go through
+   `formatMinorAmount`, and `totalPaidMinor` is a list per currency that is
+   never summed across currencies.
+5. **Both dialog bodies are mounted with `key={user.id}`.** Without the key,
+   reopening the modal on a second row shows the first row's figures under the
+   new name until the refetch lands.
+
+The subscription modal reports ONE loading and ONE error state for its two
+queries. Rendering the plan half while the money half is still failing reads as
+"this user has never paid", which is a different claim from "we could not ask".
+
 ## AdSense script vs verification vs ad units (2026-09-01)
 
 An AdSense "low value content" rejection traced back to `AdSenseHead` being

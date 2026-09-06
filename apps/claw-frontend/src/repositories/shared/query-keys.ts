@@ -104,6 +104,13 @@ export const queryKeys = {
   },
   admin: {
     users: ['admin', 'users'] as const,
+    // Per-user detail panels opened from a users-table row. Keyed by user id so
+    // opening the modal on a second user cannot serve the first user's cache.
+    userUsageStatistics: (userId: string) =>
+      ['admin', 'users', 'usage-statistics', userId] as const,
+    userPlanOverview: (userId: string) => ['admin', 'users', 'plan-overview', userId] as const,
+    userSubscriptionStatistics: (userId: string) =>
+      ['admin', 'users', 'subscription-statistics', userId] as const,
   },
   adminPlans: {
     all: ['adminPlans'] as const,

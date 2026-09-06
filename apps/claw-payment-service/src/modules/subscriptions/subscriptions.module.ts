@@ -28,6 +28,11 @@ import { SubscriptionQueryService } from './services/subscription-query.service'
     InvoiceRepository,
     PaymentMethodRepository,
   ],
-  exports: [SubscriptionQueryService, SubscriptionRepository, ScheduledDowngradeService],
+  exports: [
+    SubscriptionQueryService,
+    SubscriptionRepository,
+    InvoiceRepository,
+    ScheduledDowngradeService,
+  ],
 })
 export class SubscriptionsModule {}

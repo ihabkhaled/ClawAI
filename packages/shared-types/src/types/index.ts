@@ -28,6 +28,24 @@ export type {
   PaygWarningThreshold,
 } from './payg-credit.type';
 export type {
+  AdminCreditMonthConsumption,
+  AdminUsageTokenWindow,
+  AdminUserUsageStatistics,
+} from './admin-user-usage.type';
+export type {
+  AdminUserInvoiceEntry,
+  AdminUserPaidTotal,
+  AdminUserSubscriptionHistoryEntry,
+  AdminUserSubscriptionSnapshot,
+  AdminUserSubscriptionStatistics,
+} from './admin-user-subscription.type';
+export type {
+  AdminUserPlanAssignment,
+  AdminUserPlanOverview,
+  AdminUserPlanSummary,
+  AdminUserTrial,
+} from './admin-user-plan.type';
+export type {
   PlanBillingSnapshot,
   PlanFeatureRuleSnapshot,
   PlanPriceVersionSnapshot,

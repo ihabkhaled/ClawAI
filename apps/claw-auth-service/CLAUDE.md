@@ -111,6 +111,44 @@ incident.
 Deploy: **this service must be healthy before payment-service starts.** See
 `docs/11-runbooks/runbook-payg-credit.md`.
 
+## Admin per-user statistics live in their own module (2026-09-06)
+
+`modules/admin-statistics/` serves the two panels the admin users page opens per
+row. It exists as its own module rather than hanging off `credit` or `quota`
+because it reads the token ledger (quota) and the credit ledger (credit)
+together, and neither module owns the pair.
+
+- `GET /api/v1/admin/users/:userId/usage-statistics` → tokens for the UTC day,
+  ISO week and calendar month, plus settled credit spend per month.
+- `GET /api/v1/admin/users/:userId/plan-overview` → plan, entitlement grant and
+  free-trial standing.
+
+Three things here are easy to get wrong:
+
+1. **The two routes carry DIFFERENT permissions on purpose.** The controller
+   defaults to `ADMIN_USAGE_VIEW`; `plan-overview` overrides it to
+   `ADMIN_PLANS_MANAGE` (`RolesGuard` resolves with `getAllAndOverride`, so the
+   handler wins). Plan and trial are subscription facts, and payment-service
+   gates the other half of that same modal on `ADMIN_PLANS_MANAGE` — splitting
+   them would make one modal half-load for anyone holding only one permission.
+   Neither is `ADMIN_USERS_MANAGE`, which gates the PAGE: the frontend must gate
+   each button on the permission its own endpoint enforces, or it ships a
+   control that 403s on every click.
+2. **CONSUMPTION ledger rows are stored NEGATIVE** (`amountMicroUsd: -charge`).
+   `aggregateMonthlyConsumption` negates the SUM so the panel reports a positive
+   figure; rendering the raw sum shows every month's spend as a refund. Only
+   `CONSUMPTION` is counted — grants, expiries, top-ups, reservations and admin
+   adjustments all move a wallet without the user having spent anything.
+3. **Micro-USD leaves this service as a STRING.** `bigint` does not survive JSON,
+   and a wallet figure silently truncated past `Number.MAX_SAFE_INTEGER` is the
+   exact failure the integer-money rule exists to prevent. The frontend renders
+   it with `formatMicroUsd`, which takes a string.
+
+`AdminUserStatisticsService` deliberately does not verify the user exists: the
+ledgers are the truth for consumption, and an id with no rows is
+indistinguishable from a real user who never spent anything. Both are honestly
+reported as zero.
+
 ## Commands
 
 ```bash

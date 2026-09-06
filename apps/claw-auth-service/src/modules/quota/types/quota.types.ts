@@ -163,3 +163,17 @@ export type TokenUsageRangeInput = {
   fromDate: string;
   throughDate: string;
 };
+
+/**
+ * Every figure on the per-day token ledger, summed over a date range.
+ *
+ * `sumTotalTokens` answers the quota question and deliberately reads one
+ * column; this answers the operator question, where the input/output split and
+ * the request count are the whole point of opening the panel.
+ */
+export type TokenUsageBreakdown = {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  requestCount: number;
+};

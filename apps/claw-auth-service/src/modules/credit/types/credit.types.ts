@@ -198,3 +198,19 @@ export type CreditLedgerPage = {
   entries: PaygLedgerEntryView[];
   nextCursor: string | null;
 };
+
+/**
+ * One calendar month of settled spend, straight off the GROUP BY.
+ *
+ * `consumedMicroUsd` is already NEGATED into a positive figure by the query.
+ * CONSUMPTION rows are written with a negative `amountMicroUsd` (spend leaves
+ * the wallet), and an operator panel that renders "-$4.10 consumed" reads as a
+ * refund. Both figures arrive as `bigint` because Postgres returns `SUM` and
+ * `COUNT` over int8 as int8.
+ */
+export type CreditMonthConsumptionRow = {
+  /** UTC `YYYY-MM`, from `to_char(occurred_at, 'YYYY-MM')`. */
+  monthKey: string;
+  consumedMicroUsd: bigint;
+  entryCount: bigint;
+};

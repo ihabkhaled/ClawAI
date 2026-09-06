@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type CreditLedgerEntry, CreditLedgerKind } from '../../../generated/prisma';
-import { type CreditLedgerPageQuery } from '../types/credit.types';
+import {
+  type CreditLedgerPageQuery,
+  type CreditMonthConsumptionRow,
+} from '../types/credit.types';
 
 /**
  * Read access to the append-only ledger.
@@ -53,6 +56,39 @@ export class CreditLedgerRepository {
       where: { reservationId, kind: CreditLedgerKind.RESERVATION },
       select: { surface: true, workflow: true },
     });
+  }
+
+  /**
+   * Settled spend per calendar month, newest first, for the admin user panel.
+   *
+   * Raw SQL because the month is not a stored column — `occurred_at` is a
+   * timestamp, and the alternative is pulling every CONSUMPTION row for the
+   * window across the wire to bucket it in JS. That is fine for a quiet account
+   * and ruinous for the heavy one an operator is most likely to be looking at.
+   * `to_char` on a `timestamp without time zone` yields the stored instant,
+   * which this service writes in UTC, so the key lines up with `utcMonthKey`.
+   *
+   * Only CONSUMPTION is counted: grants, expiries, top-ups, reservations and
+   * admin adjustments all move a wallet without the user having spent anything.
+   * The SUM is negated because those rows are stored negative.
+   */
+  async aggregateMonthlyConsumption(params: {
+    userId: string;
+    from: Date;
+  }): Promise<CreditMonthConsumptionRow[]> {
+    this.logger.debug(`aggregateMonthlyConsumption: user=${params.userId}`);
+    return this.prisma.$queryRaw<CreditMonthConsumptionRow[]>`
+      SELECT
+        to_char(occurred_at, 'YYYY-MM') AS "monthKey",
+        (-COALESCE(SUM(amount_micro_usd), 0))::bigint AS "consumedMicroUsd",
+        COUNT(*)::bigint AS "entryCount"
+      FROM credit_ledger_entries
+      WHERE user_id = ${params.userId}
+        AND kind = 'CONSUMPTION'::"CreditLedgerKind"
+        AND occurred_at >= ${params.from}
+      GROUP BY 1
+      ORDER BY 1 DESC
+    `;
   }
 
   async findByReservationId(reservationId: string): Promise<CreditLedgerEntry[]> {

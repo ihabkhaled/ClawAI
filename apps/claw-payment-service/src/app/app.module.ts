@@ -28,6 +28,7 @@ import { ReconciliationModule } from '../modules/reconciliation/reconciliation.m
 import { InternalPaymentsModule } from '../modules/internal-payments/internal-payments.module';
 import { RefundsModule } from '../modules/refunds/refunds.module';
 import { BillingDashboardModule } from '../modules/billing-dashboard/billing-dashboard.module';
+import { AdminUserBillingModule } from '../modules/admin-user-billing/admin-user-billing.module';
 import { GatewayConfigModule } from '../modules/gateway-config/gateway-config.module';
 
 @Module({
@@ -98,6 +99,7 @@ import { GatewayConfigModule } from '../modules/gateway-config/gateway-config.mo
     InternalPaymentsModule,
     RefundsModule,
     BillingDashboardModule,
+    AdminUserBillingModule,
     GatewayConfigModule,
   ],
   providers: [

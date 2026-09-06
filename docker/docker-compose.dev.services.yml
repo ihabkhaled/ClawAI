@@ -672,7 +672,16 @@ services:
       - ../apps/claw-frontend/src:/app/apps/claw-frontend/src
       - ../apps/claw-frontend/public:/app/apps/claw-frontend/public
       - ../certs:/certs:ro
-    command: npm run dev
+      # `npm run dev` (used outside Docker) wipes .next before every start as a
+      # stale-Turbopack-cache safety net. That's fine on a host process but
+      # turns every container restart into a full cold recompile, since the
+      # container's writable layer (and this volume) would otherwise persist
+      # the cache across restarts. `dev:docker` skips that wipe; if Turbopack
+      # ever serves stale output here, clear it with
+      # `docker compose ... exec frontend rm -rf .next` or by dropping this
+      # volume, same as the safety net does automatically outside Docker.
+      - frontend-next-cache:/app/apps/claw-frontend/.next
+    command: npm run dev:docker
     depends_on:
       nginx:
         condition: service_started
@@ -682,6 +691,7 @@ services:
 volumes:
   file-storage-data:
   llamacpp-data:
+  frontend-next-cache:
   # Shared with claw-comfyui (defined in docker-compose.dev.ollama.yml).
   # Declared here as a normal named volume rather than `external: true`
   # because docker-compose merges multi-file volume definitions — both

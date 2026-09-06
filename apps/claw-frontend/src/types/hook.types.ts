@@ -375,6 +375,14 @@ export type UseUserTableStateReturn = {
   assignPlanTargetId: string | null;
   openAssignPlan: (user: AdminUser, planId: string) => void;
   closeAssignPlan: () => void;
+  canViewUsage: boolean;
+  canViewSubscription: boolean;
+  usageUser: AdminUser | null;
+  openUsage: (user: AdminUser) => void;
+  closeUsage: () => void;
+  subscriptionUser: AdminUser | null;
+  openSubscription: (user: AdminUser) => void;
+  closeSubscription: () => void;
 };
 
 /**

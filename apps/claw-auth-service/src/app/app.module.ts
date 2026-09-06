@@ -24,6 +24,7 @@ import { HealthModule } from '../modules/health/health.module';
 import { DeploymentModule } from '../modules/deployment/deployment.module';
 import { SystemSettingsModule } from '../modules/system-settings/system-settings.module';
 import { CreditModule } from '../modules/credit/credit.module';
+import { AdminStatisticsModule } from '../modules/admin-statistics/admin-statistics.module';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { CreditModule } from '../modules/credit/credit.module';
     DeploymentModule,
     SystemSettingsModule,
     CreditModule,
+    AdminStatisticsModule,
     ThrottlerModule.forRoot([
       {
         ttl: Number(process.env['THROTTLE_TTL'] ?? 60000),

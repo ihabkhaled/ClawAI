@@ -5,6 +5,7 @@ import { POPULAR_PLAN_KEY } from '../constants/popular-plan.constants';
 import {
   PlanModelAccessMode,
   type PlanRetirementMigrationStatus,
+  type PlanTrialRedemption,
   Prisma,
   type UserPlanAssignment,
 } from '../../../generated/prisma';
@@ -53,6 +54,36 @@ export class PlansRepository {
       include: { plan: { include: { modelAccess: true } } },
     });
     return assignment?.plan ?? null;
+  }
+
+  /**
+   * The lifetime trial record, for the admin panel.
+   *
+   * Distinct from `findActiveTrialState`, which reads the ACTIVE assignment's
+   * `entitlementValidUntil` and therefore answers "is this account inside a
+   * trial right now". This reads `PlanTrialRedemption`, the row written once
+   * per user when the trial is granted, and so still answers "when did they
+   * trial, and when did it end" after the assignment has lapsed or been
+   * replaced by a paid plan — which is exactly the history an operator is
+   * looking at the panel to reconstruct.
+   */
+  async findTrialRedemption(userId: string): Promise<PlanTrialRedemption | null> {
+    return this.prisma.planTrialRedemption.findUnique({ where: { userId } });
+  }
+
+  /**
+   * The assignment currently in force, with its provenance.
+   *
+   * Deliberately NOT filtered on `entitlementValidUntil > now` the way
+   * `findEffectiveForUser` is: an expired grant is precisely what an operator
+   * needs to see when a user reports losing access, and hiding it would answer
+   * their question with a blank panel.
+   */
+  async findLatestAssignmentForUser(userId: string): Promise<UserPlanAssignment | null> {
+    return this.prisma.userPlanAssignment.findFirst({
+      where: { userId },
+      orderBy: { startsAt: 'desc' },
+    });
   }
 
   async findActiveTrialState(userId: string): Promise<ActiveTrialState | null> {

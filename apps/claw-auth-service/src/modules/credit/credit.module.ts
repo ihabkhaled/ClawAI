@@ -66,6 +66,14 @@ import { CreditWalletService } from './services/credit-wallet.service';
     AuthRepository,
     EntitlementInboxRepository,
   ],
-  exports: [CreditReservationManager, CreditWalletService, CreditGrantService],
+  // CreditLedgerRepository is exported READ-side only by construction: the class
+  // has no update or delete, so handing it to another module cannot let that
+  // module write the append-only ledger behind CreditWalletRepository's back.
+  exports: [
+    CreditReservationManager,
+    CreditWalletService,
+    CreditGrantService,
+    CreditLedgerRepository,
+  ],
 })
 export class CreditModule {}

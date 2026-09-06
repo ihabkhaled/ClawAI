@@ -91,3 +91,26 @@ Deliberately **separate from `ADMIN_PLANS_MANAGE`**: both touch money, but a
 plan editor must not be able to mint balance into a user's wallet. Splitting
 them is what keeps "who can change a price" and "who can create money" as two
 different answers.
+
+## Per-user admin panels: the page permission is not the endpoint permission
+
+The admin users page is gated on `ADMIN_USERS_MANAGE`, but the two per-row
+statistics panels it opens are **not**:
+
+| Endpoint                                                   | Service | Permission           |
+| ---------------------------------------------------------- | ------- | -------------------- |
+| `GET /api/v1/admin/users/:userId/usage-statistics`          | auth    | `ADMIN_USAGE_VIEW`   |
+| `GET /api/v1/admin/users/:userId/plan-overview`             | auth    | `ADMIN_PLANS_MANAGE` |
+| `GET /api/v1/admin/billing/users/:userId/subscription`      | payment | `ADMIN_PLANS_MANAGE` |
+
+Reading what an account consumed and managing accounts are different powers, so
+they stay different permissions. Two consequences that are easy to get wrong:
+
+1. **Each button must be gated on the permission its own endpoint enforces**,
+   never on the page's. Gating on `ADMIN_USERS_MANAGE` hands a user-manager
+   without usage access a control that 403s on every click — the same mistake
+   the model-costs page made against `ADMIN_ROUTING_MANAGE`.
+2. **The two halves of the subscription panel must agree.** `plan-overview`
+   overrides its controller default to `ADMIN_PLANS_MANAGE` precisely so it
+   matches the payment-service half; if they disagreed, the modal would
+   half-load for anyone holding only one of the two.

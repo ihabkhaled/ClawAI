@@ -160,6 +160,33 @@ through its durable inbox and canonical entitlement applier. A failed lookup is
 marked failed and rethrown for broker retry; one retry claimant wins
 atomically.
 
+## Admin per-user billing panel
+
+`GET /api/v1/admin/billing/users/:userId/subscription` (`ADMIN_PLANS_MANAGE`)
+backs the subscription modal on the admin users page. Already proxied — it sits
+under the `/api/v1/admin/billing` prefix nginx routes here, so it needed no
+infrastructure change.
+
+It answers three questions no stored column does, and each derivation has a trap:
+
+- **`monthsPaid`** — how many billing periods were actually paid for. There is no
+  counter; it is derived by summing the calendar span of each PAID invoice.
+  Counting invoices instead would under-report an annual subscriber by a factor
+  of twelve.
+- **`nextRenewalAt`** — `currentPeriodEnd`, but **null** when
+  `cancelAtPeriodEnd` is set or the status is not entitlement-bearing. Presenting
+  a period end as "when they will re-pay" for a subscription that will not renew
+  is a false statement to an operator making a retention decision.
+- **`totalPaidMinor`** — one row **per currency**, never a single summed total.
+  Rule 28.4: cross-currency summation is banned, and a lifetime-value figure is
+  exactly where someone is tempted to break it.
+
+The auth-owned half of the same modal (plan, entitlement grant, free-trial
+standing) is served by auth-service at
+`GET /api/v1/admin/users/:userId/plan-overview`, on the **same** permission so
+the two halves cannot load independently. Neither service reads the other's
+tables; the frontend fetches both and renders them together.
+
 ## Health
 
 `GET /api/v1/health` (public) returns:
