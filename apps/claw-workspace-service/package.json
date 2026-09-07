@@ -65,7 +65,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.4.0",
     "babel-jest": "^30.5.1",
-    "babel-plugin-transform-import-meta": "^2.3.3",
+    "babel-plugin-transform-import-meta": "^3.0.0",
     "concurrently": "^10.0.5",
     "eslint": "^10.9.0",
     "eslint-plugin-import-x": "^4.17.1",
