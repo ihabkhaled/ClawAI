@@ -129,11 +129,60 @@ Ollama. A provider page would claim a connector that does not exist.
 **Resolved:** not built as provider pages. Their open-weight local story is
 covered honestly by `/models/local-ai`.
 
-### F7 — IndexNow absent
+### F7 — IndexNow ~~absent~~ **built 2026-09-07**
 
-Deliberately deferred with a written reason (needs a hosted key file, a new env
-var, and the full 18-item infra propagation; Bing Webmaster manual submission
-covers the same ground). **Decision reaffirmed 2026-08-30 — unchanged.**
+Deferred twice with a written reason (needs a hosted key file, a new env var,
+and the full 18-item infra propagation; Bing Webmaster manual submission covers
+the same ground), reaffirmed 2026-08-30, and **reversed on 2026-09-07** once the
+operator generated a key in Bing Webmaster Tools.
+
+Two of the three original costs turned out not to apply:
+
+- **No env var, so no 18-item propagation.** The key is a committed constant
+  (`constants/indexnow.constants.ts`). It cannot be a secret — the protocol
+  verifies ownership by fetching the same value back from a public URL — so
+  hiding it in `.env` would have spread a published string across seven compose
+  files and both installers, and introduced a way for the served file and the
+  submitted `key` to drift per environment. That drift is answered with a flat
+  403 that names nothing.
+- **The key file is a route, not hosted infrastructure.**
+  `app/<key>.txt/route.ts` serves the bare key and 404s when
+  `shouldNoIndexEverything()` — a staging host must not claim ownership of the
+  canonical origin, or its URLs could be submitted as the real site's.
+
+What remains true is that manual submission covers the same ground. The reason
+to automate it anyway is timing: `tools/indexnow/index.mjs` runs after a
+successful production deploy, so a page edited at 14:00 is submitted at 14:00
+rather than whenever someone next opens the console.
+
+**It submits changes, not the site.** IndexNow answers repeated submission of
+unchanged URLs with 429 and reads it as spam, and the sitemap already publishes
+`lastmod`. The submitter walks the sitemap index, follows each child, and takes
+only entries whose `lastmod` falls inside a window (default 7 days). Undated and
+foreign-host entries are dropped — one foreign URL makes the endpoint reject the
+whole batch with 422.
+
+Consequences worth knowing before reading the logs:
+
+- **Most deploys will submit nothing, and that is correct.** Marketing pages
+  carry a hand-maintained `lastReviewed`, so they only qualify when their
+  content genuinely changed. As measured on 2026-09-07: 0 URLs inside the
+  7-day window, 806 with the window opened to ten years.
+- **A first-time seed is a deliberate, separate action.** To submit everything
+  once, run the submitter with the window widened:
+
+  ```bash
+  SITE_URL=https://claw-ai.co \
+  INDEXNOW_KEY=<key> \
+  INDEXNOW_WINDOW_DAYS=3650 \
+  node tools/indexnow/index.mjs
+  ```
+
+- **A failure never fails the deploy.** The step is `continue-on-error` and the
+  script swallows its own errors: search-engine notification is not part of the
+  deploy's contract, and a third party's 429 must not turn a healthy release
+  red. Read the step's log for 403 (key file not served), 422 (a URL outside the
+  host) or 429 (submitted too often).
 
 ### F9 — the live site already contradicts the product (must fix)
 
@@ -260,7 +309,7 @@ Recording these so they are not re-proposed as oversights.
 | Benchmark tables                                                         | No trustworthy first-party data; fabrication is forbidden                                  |
 | Compliance claims (SOC 2, ISO 27001, HIPAA, FedRAMP, GDPR certification) | Not held. Industry pages say "designed for private deployment"                             |
 | `/tools/local-ai-hardware-calculator`                                    | Requires hardware data the repo does not have; a guessed recommendation is worse than none |
-| IndexNow                                                                 | Deferred with reason (F7)                                                                  |
+| ~~IndexNow~~                                                             | **Built 2026-09-07** — the deferral in F7 was reversed once a key existed                  |
 | Indexable tool permutation URLs                                          | Combinatorial thin content; the tool is one canonical page                                 |
 
 ---
