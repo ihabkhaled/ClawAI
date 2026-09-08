@@ -46,7 +46,7 @@ export function classifyRouteVisibility(pathname: string): RouteVisibility {
   }
   const locale = parseLocaleFromPathname(pathname);
   const unlocalizedPath = stripLocaleFromPathname(pathname);
-  if (pathname === '/' && isKnownPublicPathForLocale(pathname, DEFAULT_LOCALE)) {
+  if (locale === null && isKnownPublicPathForLocale(unlocalizedPath, DEFAULT_LOCALE)) {
     return RouteVisibility.STATIC_PUBLIC;
   }
   if (isSharedChatPath(pathname)) {

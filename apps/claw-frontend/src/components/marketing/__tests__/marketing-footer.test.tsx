@@ -76,4 +76,14 @@ describe('MarketingFooter', () => {
     expect(internalHrefs.filter((href) => href === '/features')).toHaveLength(1);
     expect(new Set(internalHrefs).size).toBe(internalHrefs.length);
   });
+
+  it('links cluster hubs without flattening every child into Explore', () => {
+    render(<MarketingFooter />);
+    const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
+
+    expect(hrefs).toContain('/learn');
+    expect(hrefs).toContain('/integrations');
+    expect(hrefs).not.toContain('/learn/what-is-rag');
+    expect(hrefs).not.toContain('/integrations/github');
+  });
 });

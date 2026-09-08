@@ -1,0 +1,14 @@
+export const MARKETING_FOOTER_EXPLORE_PATHS: ReadonlySet<string> = new Set([
+  '/about',
+  '/architecture',
+  '/coding-agent',
+  '/faq',
+  '/features',
+  '/how-it-works',
+  '/integrations',
+  '/learn',
+  '/local-first-ai',
+  '/security-and-privacy',
+  '/supported-models',
+  '/use-cases',
+]);

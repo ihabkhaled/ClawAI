@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale-switcher';
 import { APP_VERSION, MARKETING_GITHUB_URL, ROUTES } from '@/constants';
+import { MARKETING_FOOTER_EXPLORE_PATHS } from '@/constants/marketing-footer.constants';
 import { COMPARISON_HUB_PATH } from '@/constants/public-comparison.constants';
 import { useTranslation } from '@/lib/i18n';
 import {
@@ -25,20 +26,14 @@ export function MarketingFooter(): React.ReactElement {
   const socialLinks = getConfiguredSocialLinks();
   // Every published page besides the homepage itself — Phase A has none,
   // Phase B populates this as pages flip from PLANNED to PUBLISHED.
-  const dedicatedGetStartedPaths = new Set(['/', '/contact', '/pricing']);
   const comparisonContent = getComparisonContent(locale);
   // Comparison pages get their own column rather than joining Explore. Every
   // one of them then carries a site-wide inbound link — the thing that decides
   // whether a new page is crawled in days or in months — without turning one
   // footer column into a nineteen-item list.
   const comparisons = buildComparisonRailItems(comparisonContent, locale);
-  const comparisonPaths = new Set<string>([
-    COMPARISON_HUB_PATH,
-    ...comparisons.map((item) => item.path),
-  ]);
-  const explorePages = getPublishedPagesForLocale(locale).filter(
-    (page) =>
-      !dedicatedGetStartedPaths.has(page.canonicalPath) && !comparisonPaths.has(page.canonicalPath),
+  const explorePages = getPublishedPagesForLocale(locale).filter((page) =>
+    MARKETING_FOOTER_EXPLORE_PATHS.has(page.canonicalPath),
   );
 
   return (

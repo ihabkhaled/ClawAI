@@ -34,6 +34,8 @@ export function proxy(request: NextRequest): NextResponse {
   );
   const apparentLocale = /^\/([A-Za-z]{2})(?:\/|$)/u.exec(pathname)?.[1];
 
+  const isRegisteredPublicPath = isPublicPath(pathname);
+
   if (
     apparentLocale !== undefined &&
     isSupportedLocale(apparentLocale) &&
@@ -49,6 +51,7 @@ export function proxy(request: NextRequest): NextResponse {
     apparentLocale === undefined &&
     pathname !== '/' &&
     !isLocaleNeutral &&
+    !isRegisteredPublicPath &&
     !isInternalLocaleRewrite &&
     (request.method === 'GET' || request.method === 'HEAD')
   ) {
@@ -79,7 +82,7 @@ export function proxy(request: NextRequest): NextResponse {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('content-security-policy', csp);
-  const requestLocale = locale ?? (pathname === '/' ? DEFAULT_LOCALE : null);
+  const requestLocale = locale ?? (isRegisteredPublicPath ? DEFAULT_LOCALE : null);
   if (requestLocale !== null) {
     requestHeaders.set(LOCALE_REQUEST_HEADER, requestLocale);
   }
@@ -109,7 +112,7 @@ export function proxy(request: NextRequest): NextResponse {
   // can be omitted by mistake on a new route) — never rely on robots.txt or
   // metadata exports alone. Unknown/unregistered routes fall through to
   // noindex here by construction (isPublicPath defaults to false).
-  if (!isPublicPath(pathname)) {
+  if (!isRegisteredPublicPath) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
   }
 

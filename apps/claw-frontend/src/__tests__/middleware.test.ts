@@ -91,11 +91,21 @@ describe('middleware X-Robots-Tag enforcement', () => {
     expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow, noarchive');
   });
 
-  it('permanently redirects an unprefixed human route to English', () => {
-    const response = middleware(buildRequest('/contact'));
+  it('serves registered public routes directly in English without a locale redirect', () => {
+    for (const path of [
+      '/contact?intent=enterprise',
+      '/how-it-works',
+      '/integrations/gmail',
+      '/learn',
+      '/learn/what-is-rag',
+    ]) {
+      const response = middleware(buildRequest(path));
 
-    expect(response.status).toBe(308);
-    expect(response.headers.get('location')).toBe('https://claw.example/en/contact');
+      expect(response.status).toBe(200);
+      expect(response.headers.get('location')).toBeNull();
+      expect(response.headers.get('x-middleware-request-x-claw-locale')).toBe('en');
+      expect(response.headers.get('X-Robots-Tag')).toBeNull();
+    }
   });
 
   it('canonicalizes supported uppercase locale segments', () => {

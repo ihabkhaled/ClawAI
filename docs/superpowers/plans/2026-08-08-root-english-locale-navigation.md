@@ -1,5 +1,7 @@
 # Root English Locale Navigation Implementation Plan
 
+> **Updated 2026-09-08:** The root-only redirect constraint in this historical plan is superseded. Every registered locale-less public route now renders English directly, while `/en/*` remains the canonical sitemap form. The current contract is recorded in the linked design.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Render the English homepage directly at `/`, preserve localized routes, and show an accessible full-page loader during public language navigation.
