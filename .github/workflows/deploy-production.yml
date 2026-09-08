@@ -174,6 +174,46 @@ jobs:
           fi
           exit "$deploy_status"
 
+      # Tell IndexNow (Bing, Yandex, Seznam, Naver) what changed, so a page
+      # edited at 14:00 is submitted at 14:00 instead of waiting for a crawl or
+      # for someone to remember the Webmaster console.
+      #
+      # Only on a successful deploy: submitting URLs for a release that did not
+      # land would point search engines at content that is not there.
+      #
+      # `continue-on-error` is the point, not a shortcut. Search-engine
+      # notification is not part of the deploy's contract — a 429 from a third
+      # party must never turn a healthy release red — and the script swallows
+      # its own failures for the same reason. Both are needed: the flag also
+      # covers the step failing before the script's own handler runs.
+      # This job otherwise never checks the repository out — it only holds an
+      # SSH key and talks to the VPS. Fetch just the submission script, and only
+      # once the deploy has already succeeded, so the runner's exposure is
+      # unchanged for every path that does not reach here.
+      - name: Fetch the IndexNow submitter
+        if: steps.deploy.outcome == 'success'
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: tools/indexnow
+          sparse-checkout-cone-mode: false
+          # Into a subdirectory, and without cleaning. The deploy step wrote
+          # deployment-status.json into the workspace root and the summary step
+          # below still has to read it — a default checkout would clean it away
+          # and the summary would silently report "unavailable" for every field.
+          path: .indexnow
+          clean: false
+
+      - name: Notify IndexNow of changed URLs
+        if: steps.deploy.outcome == 'success'
+        continue-on-error: true
+        env:
+          SITE_URL: https://claw-ai.co
+          # Public by protocol design: IndexNow verifies ownership by fetching
+          # this same value back from https://claw-ai.co/<key>.txt. It is not a
+          # secret and is committed alongside the route that serves it.
+          INDEXNOW_KEY: f97f50a25a734944bee9b54602a6ad0a
+        run: node .indexnow/tools/indexnow/index.mjs
+
       - name: Publish deployment summary
         if: always()
         env:

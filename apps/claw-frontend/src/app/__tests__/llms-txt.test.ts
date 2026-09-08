@@ -18,10 +18,17 @@ describe('llms.txt', () => {
     delete process.env['VERCEL_ENV'];
   });
 
-  it('is rendered at request time so runtime configuration controls it', async () => {
-    const route = await import('../llms.txt/route');
-    expect(route.dynamic).toBe('force-dynamic');
-  });
+  // Same dynamic-import budget as every other test in this file. It was the one
+  // left on vitest's 5s default and timed out at ~5010ms in a full-suite run
+  // while passing in isolation — the import is the slow part, not the assertion.
+  it(
+    'is rendered at request time so runtime configuration controls it',
+    async () => {
+      const route = await import('../llms.txt/route');
+      expect(route.dynamic).toBe('force-dynamic');
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
 
   it(
     'lists every indexable English page and the machine-readable indexes',

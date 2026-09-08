@@ -6,10 +6,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const DYNAMIC_IMPORT_TIMEOUT_MS = 20_000;
 
 describe('robots', () => {
-  it('is rendered at request time so production runtime configuration controls crawling', async () => {
-    const route = await import('../robots');
-    expect(route.dynamic).toBe('force-dynamic');
-  });
+  // Given the same dynamic-import budget as the three tests below. It was the
+  // only one left on vitest's 5s default, and the import is the slow part: in a
+  // full-suite run on a loaded machine it timed out at 5012ms while passing in
+  // isolation. Not a weakened assertion — the same assertion, allowed the time
+  // its siblings already get.
+  it(
+    'is rendered at request time so production runtime configuration controls crawling',
+    async () => {
+      const route = await import('../robots');
+      expect(route.dynamic).toBe('force-dynamic');
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
 
   beforeEach(() => {
     vi.resetModules();

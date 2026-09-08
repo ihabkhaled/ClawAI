@@ -8,10 +8,17 @@ vi.mock('@/lib/chat-shares/public-chat-share.service', () => ({
 }));
 
 describe('sitemap index route', () => {
-  it('is rendered at request time so production runtime configuration controls discovery', async () => {
-    const route = await import('../sitemap.xml/route');
-    expect(route.dynamic).toBe('force-dynamic');
-  });
+  // Same dynamic-import budget as every other test in this file. It was the one
+  // left on vitest's 5s default and timed out at ~5013ms in a full-suite run
+  // while passing in isolation — the import is the slow part, not the assertion.
+  it(
+    'is rendered at request time so production runtime configuration controls discovery',
+    async () => {
+      const route = await import('../sitemap.xml/route');
+      expect(route.dynamic).toBe('force-dynamic');
+    },
+    DYNAMIC_IMPORT_TIMEOUT_MS,
+  );
 
   beforeEach(() => {
     vi.resetModules();
