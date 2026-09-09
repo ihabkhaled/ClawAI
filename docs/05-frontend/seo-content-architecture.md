@@ -628,3 +628,65 @@ pages vary per deployment (a self-hoster with no OpenAI key rendering an empty
 `/models/openai` that Google has already indexed); and it would put a runtime
 frontend→routing-service dependency on the SEO critical path, where an outage
 empties indexed pages.
+
+---
+
+## 9. Batch 9 — final status: every cluster, its ACTUAL route, and its commit
+
+Verified 2026-09-09 against the live registry, `lighthouserc.json` and the
+codebase — not against the originally-planned URLs in §4. Every deviation
+recorded in a "Deviation"/"note" callout above is now DONE and reconciled here
+in one place.
+
+| Batch | Cluster                                                                                 | Planned route (§4) | **Actual route shipped**                                                                                                                                                                                                                                                | Hub + children                                                                                                                | Commit                                                  | Status        |
+| ----- | --------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------- |
+| 0     | Infra (RSS fix, footer opt-in, `llms.txt` sections, retired 4 `guides/*` PLANNED slugs) | —                  | —                                                                                                                                                                                                                                                                       | —                                                                                                                             | `2bd88f5cc`                                             | DONE          |
+| 1     | `/learn`                                                                                | `/learn`           | `/learn` (unchanged)                                                                                                                                                                                                                                                    | hub + **30** topics (not 12/18 as informally reported elsewhere — verified by reading `LEARN_TOPIC_ORDER`)                    | `014eec326`                                             | DONE          |
+| 2     | `/integrations`                                                                         | `/integrations`    | `/integrations` (unchanged)                                                                                                                                                                                                                                             | hub + 14 connector topics                                                                                                     | `014eec326`                                             | DONE          |
+| 3     | `/models`                                                                               | `/models`          | **`/model-providers`** — `/models` collides with the private, authenticated `src/app/(portal)/models/**` catalog dashboard; `PRIVATE_ROUTE_PREFIXES` blocks any path starting with `/models` (F2, §8.2)                                                                 | hub + 6 providers (`openai`, `anthropic`, `google`, `deepseek`, `xai`, `local-ai`)                                            | `efed5669f`                                             | DONE          |
+| 4     | `/use-cases`                                                                            | `/use-cases`       | `/use-cases` (unchanged URL, converted single page → hub)                                                                                                                                                                                                               | hub + 7 task pages                                                                                                            | `502fcc80d`                                             | DONE          |
+| 5     | `/best-ai-model` (or `/models/for/*`)                                                   | `/best-ai-model`   | **`/model-fit`** — `/models/for/*` and `/models-for/*` were both considered and rejected: both start with the literal string `/models`, so `PRIVATE_ROUTE_PREFIXES`'s `path.startsWith(prefix)` match blocks them exactly as hard as `/models` itself (§8.2 route note) | hub + 5 task pages (`coding`, `complex-reasoning`, `writing-and-editing`, `research-with-sources`, `private-local-workloads`) | `62feb4aeb`                                             | DONE          |
+| 6     | `/features`                                                                             | `/features`        | `/features` (unchanged URL, converted single page → hub)                                                                                                                                                                                                                | hub + 6 capability pages                                                                                                      | `3350f5c5b`                                             | DONE          |
+| 8     | `/prompts`                                                                              | `/prompts`         | `/prompts` (unchanged) — ad/feed eligibility decided explicitly in §8.2 (`ELIGIBLE` / `PUBLISHABLE`, same reasoning as `/learn/*`)                                                                                                                                      | hub + 7 prompt-writing guides                                                                                                 | `a9ecd6cd2`                                             | DONE          |
+| 7     | `/solutions`, `/industries`                                                             | —                  | **Not built** — `/industries/*` blocked pending `docs/business/regulated-vertical-claims.md` (§8.2); `/solutions` has no commit in this project's history                                                                                                               | —                                                                                                                             | —                                                       | **NOT BUILT** |
+| 8     | `/tools`                                                                                | `/tools`           | **Not built** — no commit in this project's history                                                                                                                                                                                                                     | —                                                                                                                             | —                                                       | **NOT BUILT** |
+| 9     | Internal-link sweep, nav/footer clusters, final verification                            | —                  | —                                                                                                                                                                                                                                                                       | —                                                                                                                             | (this verification pass; no code changes were required) | DONE          |
+
+**Lighthouse coverage, counted from `lighthouserc.json` directly (2026-09-09):**
+28 pre-existing marketing pages + `/learn` (31) + `/integrations` (15) +
+`/model-providers` (7) + `/model-fit` (6) + `/prompts` (8) + `/use-cases`
+children (7, hub already counted in the pre-existing 28) + `/features`
+children (6, hub already counted in the pre-existing 28) = **108 URLs total**,
+matching `docs/09-testing/lighthouse-ci.md` after this batch's correction (it
+previously read 74, stale since `/model-providers`, `/model-fit`, `/use-cases`,
+`/features` and `/prompts` landed after that count was written).
+
+**Footer verification:** `MARKETING_FOOTER_EXPLORE_PATHS`
+(`constants/marketing-footer.constants.ts`) is confirmed opt-in (D2, resolved
+in Batch 0) and alphabetically ordered, carrying all 6 hub roots from this
+project (`/features`, `/integrations`, `/learn`, `/model-fit`,
+`/model-providers`, `/prompts`, `/use-cases`) alongside the pre-existing
+entries. No footer edit was needed — the `/model-fit` and `/prompts` additions
+made by the orchestrating session were already correct and complete. Every
+cluster's children are reached from their hub's own internal links (the
+`/learn` reference pattern: a hub component calls a `build*HubCards` /
+`build*Siblings` utility off the cluster's `*_ORDER` array), not from
+individual footer entries — confirmed consistent across all 6 clusters.
+
+**Cross-link and stale-path audit:** spot-checked cross-links
+(`/prompts/prompting-for-structured-output` → `/learn/what-are-structured-ai-outputs`,
+`/use-cases/private-and-local-deployment` → `/model-providers/local-ai`,
+`/features/model-routing-and-orchestration` → `/learn/what-is-llm-orchestration`)
+all resolve to real registry slugs. A repo-wide search for the pre-rename
+`/models/openai`-style and `/models/for/*` paths found none — every reference
+to `/models` in `src/` is either the private portal route (topbar, sidebar,
+breadcrumb) or an explanatory comment about the rename decision, not a stale
+marketing link.
+
+**Ad/feed eligibility, verified against the registry (not assumed):**
+`/model-providers/*` and `/model-fit/*` are `AdEligibility.INELIGIBLE`;
+`/use-cases/*`, `/features/*`, `/learn/*` and `/prompts/*` are
+`AdEligibility.ELIGIBLE`. `/prompts` was verified against `git show
+a9ecd6cd2` and the registry rather than assumed — it is `ELIGIBLE` /
+`FeedEligibility.PUBLISHABLE`, the `/learn/*` shape, per the explicit decision
+in §8.2.
