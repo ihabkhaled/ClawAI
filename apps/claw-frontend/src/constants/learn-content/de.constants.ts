@@ -81,6 +81,8 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
         'Was Sie wirklich testen sollten, bevor Sie einem Modell Ihre Arbeit anvertrauen — keine Bestenlisten-Zahl.',
       [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]:
         'Was eine Benchmark-Zahl wirklich misst, und wie sie Sie in die Irre führen kann, bevor Sie überhaupt zu testen beginnen.',
+      [LearnTopic.WHAT_IS_PROMPT_INJECTION]:
+        'Text, der nicht von Ihnen stammt, kann dem Modell trotzdem Anweisungen geben — was das bedeutet und warum ein klügeres Modell es nicht vollständig lösen kann.',
     },
   },
   topics: {
@@ -2004,6 +2006,84 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI veröffentlicht keine eigene Benchmark-Bestenliste und beansprucht keinen proprietären Wert für irgendein Modell — stattdessen zeigt das Routing-Transparenz-Panel die tatsächliche Kostenklasse, Latenzklasse und Routing-Konfidenz hinter einer konkreten Antwort, sodass Sie eine Antwort an Ihrer eigenen Anfrage messen können statt an einem veröffentlichten Testset, das Sie nicht einsehen können.',
+    },
+    [LearnTopic.WHAT_IS_PROMPT_INJECTION]: {
+      seo: {
+        title: 'Was ist Prompt Injection?',
+        description:
+          'Ein Sprachmodell kann nicht zuverlässig zwischen Ihren Anweisungen und Anweisungen unterscheiden, die im Inhalt versteckt sind, den es liest — einer Webseite, einem Dokument, einem Tool-Ergebnis. Was Prompt Injection wirklich ist, warum ein klügeres Modell es nicht vollständig löst, und was den Schaden begrenzt, wenn es passiert.',
+        keywords: [
+          'was ist Prompt Injection',
+          'Prompt-Injection-Angriff erklärt',
+          'indirekte Prompt Injection',
+        ],
+      },
+      eyebrow: 'Grundlagen',
+      title: 'Was ist Prompt Injection?',
+      summary:
+        'Prompt Injection ist Text, der nicht von Ihnen stammt und dem Modell trotzdem Anweisungen gibt — versteckt in einer Webseite, die es liest, einem Dokument, das es zusammenfasst, oder dem Ergebnis eines Tools, das es aufruft. Ein Sprachmodell hat keine zuverlässige, eingebaute Möglichkeit, „die Anweisungen des Nutzers“ von „Text, der zufällig wie Anweisungen aussieht“ zu unterscheiden, denn beides kommt als dieselbe Art von Eingabe an: Wörter im Kontextfenster.',
+      sections: [
+        {
+          id: 'direct-vs-indirect-injection',
+          heading: 'Zwei Formen: direkt und indirekt',
+          paragraphs: [
+            'Direkte Injection bedeutet, dass jemand Anweisungen direkt in den Chat tippt, um das beabsichtigte Verhalten des Systems zu überschreiben — das Modell bitten, seine Anweisungen zu ignorieren, versteckte Konfiguration preiszugeben, oder außerhalb seines vorgesehenen Umfangs zu handeln. Indirekte Injection ist die folgenreichere Form: Anweisungen, die in Inhalten platziert wurden, die das Modell in Ihrem Namen liest — eine Webseite, eine E-Mail, eine Datei, eine API-Antwort —, die nie als Befehle gedacht waren, die das Modell aber nicht zuverlässig davon unterscheiden kann.',
+          ],
+        },
+        {
+          id: 'why-a-smarter-model-does-not-solve-it',
+          heading: 'Warum ein klügeres Modell das nicht von selbst löst',
+          paragraphs: [
+            'Das Problem ist nicht, dass Modelle nicht intelligent genug sind — es ist architektonisch bedingt. Alles, was ein Modell sieht, ob Ihre Anfrage oder aus einer nicht vertrauenswürdigen Quelle geholter Text, wird zur selben Art von Token-Sequenz, sobald es ins Kontextfenster gelangt. Es gibt keinen separaten, manipulationssicheren Kanal für „vertrauenswürdige Anweisungen“ gegenüber „zu lesendem Inhalt“. Ein leistungsfähigeres Modell kann besser darin werden, gängige Injection-Formulierungen zu erkennen, aber eine ausreichend getarnte Anweisung — über Text verteilt, indirekt formuliert, in Formatierung versteckt — kann trotzdem durchrutschen, weil die zugrunde liegende Architektur keine harte Grenze durchsetzt.',
+          ],
+        },
+        {
+          id: 'why-tool-calling-raises-the-stakes',
+          heading: 'Das Risiko steigt stark, sobald ein Modell Tools aufrufen kann',
+          paragraphs: [
+            'Ein Chatbot, der nur Text erzeugt, begrenzt Injection auf schlechte oder irreführende Ausgabe — ärgerlich, aber eingegrenzt. Sobald ein Modell Tools aufrufen kann (siehe wie Tool-Aufrufe funktionieren) — eine E-Mail senden, einen Befehl ausführen, eine Datei ändern —, kann eine erfolgreiche Injection zu einer unerwünschten realen Aktion werden, nicht nur zu einem schlechten Satz. Deshalb tragen Systeme, die Web-Browsing oder Dokumentenlesen mit Tool-Zugriff kombinieren, deutlich mehr Injection-Risiko als ein einfacher Chatbot.',
+          ],
+        },
+        {
+          id: 'output-filtering-and-scope-limit-not-eliminate',
+          heading: 'Filterung und Eingrenzung verringern das Risiko; keine der beiden beseitigt es',
+          paragraphs: [
+            'Das Scannen abgerufener Inhalte auf bekannte Injection-Muster fängt manche Versuche ab, aber jede feste Musterliste lässt sich umgehen, indem die Anweisung anders formuliert wird — das ist ein Filter, keine Garantie. Was tatsächlichen Schaden zuverlässiger verringert, ist zu begrenzen, was ein Modell tun darf, unabhängig davon, was ihm gesagt wurde: Tool-Zugriff eng eingrenzen, eine Bestätigung vor einer destruktiven oder nach außen wirkenden Aktion verlangen, und einem Modell nie dauerhafte Berechtigungen einräumen, die über die konkrete Aufgabe vor ihm hinausgehen.',
+          ],
+        },
+        {
+          id: 'treat-fetched-content-as-untrusted-input',
+          heading:
+            'Der Inhalt, den ein Modell liest, ist nicht vertrauenswürdige Eingabe, keine neutrale Faktenquelle',
+          paragraphs: [
+            'Jedes System, das einem Modell erlaubt, externen Inhalt zu lesen — ein Suchergebnis, eine gescrapte Seite, ein von einem Nutzer hochgeladenes Dokument —, setzt es Anweisungen aus, um die niemand gebeten hat. Die praktische Konsequenz ist, diesen Inhalt so zu behandeln wie unvalidierte Nutzereingaben in jeder anderen Software: davon ausgehen, dass er etwas Feindliches enthalten kann, und das umgebende System so gestalten, dass eine erfolgreiche Injection begrenzte Reichweite hat, statt anzunehmen, dass Injection nicht vorkommt.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Kann Prompt Injection vollständig verhindert werden?',
+          answer:
+            'Nein, nicht mit aktuellen Modellarchitekturen. Es gibt keine eingebaute, manipulationssichere Trennung zwischen den Anweisungen eines Nutzers und Text, den ein Modell anderswoher liest, sodass Filterung und Eingrenzung das Risiko verringern und Schaden begrenzen, aber keine Verhinderung garantieren können.',
+        },
+        {
+          question: 'Ist Prompt Injection dasselbe wie Jailbreaking?',
+          answer:
+            'Sie überschneiden sich, sind aber nicht identisch. Jailbreaking bedeutet meist, dass ein Nutzer direkt versucht, ein Modell dazu zu bringen, seine eigenen Richtlinien zu umgehen. Prompt Injection bezeichnet häufiger Anweisungen, die in Inhalten versteckt sind, die das Modell im Namen des Nutzers liest, ohne dessen Wissen.',
+        },
+        {
+          question: 'Spielt Prompt Injection bei einem Chatbot ohne Tool-Nutzung eine Rolle?',
+          answer:
+            'Das Risiko ist kleiner — eine erfolgreiche Injection kann eine irreführende oder manipulierte Antwort erzeugen, aber keine Handlung über die Texterzeugung hinaus auslösen. Das Risiko steigt erheblich, sobald ein Modell Tools aufrufen kann, die etwas außerhalb des Gesprächs bewirken.',
+        },
+        {
+          question: 'Reicht das Scannen von Inhalten nach Injection-Mustern als Schutz aus?',
+          answer:
+            'Es fängt bekannte, erkennbare Versuche ab, aber jede feste Musterliste lässt sich durch Umformulierung umgehen. Echter Schutz kommt auch daher, zu begrenzen, was ein Modell tun darf — enger Tool-Umfang und erforderliche Bestätigung für folgenreiche Aktionen — nicht allein aus Erkennung.',
+        },
+      ],
+      productNote:
+        'ClawAIs Recherche-Dienst scannt abgerufene Webinhalte auf bekannte Prompt-Injection-Muster und schwärzt geheim aussehende Tokens, bevor dieser Inhalt ein Modell erreicht — er protokolliert, was er erkennt, statt stillschweigend zu blockieren, da keine feste Musterliste jeden Versuch erfassen kann. Diese Erkennungsschicht ist ein Teil einer Verteidigung, die auch davon abhängt, welche Tools ein Modell überhaupt aufrufen darf.',
     },
   },
 };

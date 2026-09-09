@@ -43,4 +43,5 @@ export enum LearnTopic {
   AI_AGENT_VS_AI_CHATBOT = 'ai-agent-vs-ai-chatbot',
   HOW_TO_EVALUATE_AI_MODELS = 'how-to-evaluate-ai-models',
   HOW_TO_READ_AI_BENCHMARKS = 'how-to-read-ai-benchmarks',
+  WHAT_IS_PROMPT_INJECTION = 'what-is-prompt-injection',
 }

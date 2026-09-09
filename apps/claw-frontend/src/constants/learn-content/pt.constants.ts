@@ -80,6 +80,8 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
         'O que realmente testar antes de confiar seu trabalho a um modelo — não um número de ranking.',
       [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]:
         'O que um número de benchmark realmente mede, e as formas como pode te enganar antes mesmo de você começar a testar.',
+      [LearnTopic.WHAT_IS_PROMPT_INJECTION]:
+        'Um texto que não é seu ainda assim pode dar instruções ao modelo — o que isso significa e por que um modelo mais inteligente não resolve isso por completo.',
     },
   },
   topics: {
@@ -2004,6 +2006,84 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'O ClawAI não publica seu próprio ranking de benchmarks nem reivindica uma pontuação proprietária para nenhum modelo — em vez disso, seu painel de transparência de roteamento mostra a classe de custo, a classe de latência e a confiança de roteamento reais por trás de uma resposta específica, para que você possa julgar uma resposta em relação à sua própria solicitação, e não a um conjunto de testes publicado que você não pode inspecionar.',
+    },
+    [LearnTopic.WHAT_IS_PROMPT_INJECTION]: {
+      seo: {
+        title: 'O que é injeção de prompt?',
+        description:
+          'Um modelo de linguagem não consegue distinguir de forma confiável suas instruções das instruções escondidas no conteúdo que ele lê — uma página web, um documento, o resultado de uma ferramenta. O que é injeção de prompt de fato, por que um modelo mais inteligente não a resolve por completo, e o que limita o dano quando ela acontece.',
+        keywords: [
+          'o que é injeção de prompt',
+          'ataque de injeção de prompt explicado',
+          'injeção de prompt indireta',
+        ],
+      },
+      eyebrow: 'Fundamentos',
+      title: 'O que é injeção de prompt?',
+      summary:
+        'Injeção de prompt é texto que não é seu e que ainda assim dá instruções ao modelo — escondido numa página web que ele lê, num documento que resume, ou no resultado de uma ferramenta que ele chama. Um modelo de linguagem não tem uma forma confiável e embutida de separar "as instruções do usuário" de "texto que por acaso parece uma instrução", porque ambos chegam como o mesmo tipo de entrada: palavras na janela de contexto.',
+      sections: [
+        {
+          id: 'direct-vs-indirect-injection',
+          heading: 'Duas formas: direta e indireta',
+          paragraphs: [
+            'Injeção direta é alguém digitando instruções direto no chat tentando anular o comportamento pretendido do sistema — pedindo ao modelo para ignorar suas instruções, revelar configuração oculta, ou agir fora do escopo pretendido. Injeção indireta é a forma com mais consequências: instruções plantadas em conteúdo que o modelo lê em seu nome — uma página web, um e-mail, um arquivo, a resposta de uma API — que nunca deveriam ser tratadas como comandos pelo modelo, mas que ele não tem forma confiável de distinguir delas.',
+          ],
+        },
+        {
+          id: 'why-a-smarter-model-does-not-solve-it',
+          heading: 'Por que um modelo mais inteligente não resolve isso sozinho',
+          paragraphs: [
+            'O problema não é que os modelos não são inteligentes o suficiente — é arquitetural. Tudo que um modelo vê, seja sua solicitação ou texto obtido de uma fonte não confiável, se torna o mesmo tipo de sequência de tokens ao entrar na janela de contexto. Não existe um canal separado e à prova de manipulação para "instruções confiáveis" versus "conteúdo para ler". Um modelo mais capaz pode ficar melhor em reconhecer formulações comuns de injeção, mas uma instrução suficientemente disfarçada — espalhada pelo texto, formulada indiretamente, escondida na formatação — ainda pode passar, porque a arquitetura subjacente não tem um limite rígido para impor.',
+          ],
+        },
+        {
+          id: 'why-tool-calling-raises-the-stakes',
+          heading: 'O risco cresce muito assim que um modelo pode chamar ferramentas',
+          paragraphs: [
+            'Um chatbot que só produz texto limita a injeção a uma saída ruim ou enganosa — irritante, mas contida. Assim que um modelo pode chamar ferramentas (veja como funciona a chamada de ferramentas) — enviar um e-mail, executar um comando, modificar um arquivo — uma injeção bem-sucedida pode virar uma ação real indesejada, não só uma frase ruim. É por isso que sistemas que combinam navegação web ou leitura de documentos com acesso a ferramentas carregam um risco de injeção bem maior que um chatbot simples.',
+          ],
+        },
+        {
+          id: 'output-filtering-and-scope-limit-not-eliminate',
+          heading: 'Filtragem e escopo reduzem o risco; nenhum dos dois o elimina',
+          paragraphs: [
+            'Escanear o conteúdo obtido em busca de padrões de injeção conhecidos captura algumas tentativas, mas qualquer lista fixa de padrões pode ser burlada formulando a instrução de outro jeito — isso é um filtro, não uma garantia. O que reduz o dano real de forma mais confiável é limitar o que um modelo tem permissão de fazer independentemente do que foi dito a ele: restringir estreitamente o acesso a ferramentas, exigir aprovação antes de uma ação destrutiva ou voltada para fora, e nunca conceder a um modelo permissões permanentes mais amplas que a tarefa específica à sua frente.',
+          ],
+        },
+        {
+          id: 'treat-fetched-content-as-untrusted-input',
+          heading:
+            'O conteúdo que um modelo lê é entrada não confiável, não uma fonte neutra de fatos',
+          paragraphs: [
+            'Qualquer sistema que deixa um modelo ler conteúdo externo — um resultado de busca, uma página raspada, um documento enviado por um usuário — o expõe a instruções que ninguém pediu. A implicação prática é tratar esse conteúdo como você trataria entrada de usuário não validada em qualquer outro software: assumir que pode conter algo adversarial, e projetar o sistema ao redor para que uma injeção bem-sucedida tenha alcance limitado, em vez de assumir que a injeção não vai acontecer.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'A injeção de prompt pode ser totalmente evitada?',
+          answer:
+            'Não, não com as arquiteturas de modelo atuais. Não existe uma separação embutida e à prova de manipulação entre as instruções de um usuário e o texto que um modelo lê de outro lugar, então filtragem e escopo reduzem o risco e limitam o dano, mas não garantem a prevenção.',
+        },
+        {
+          question: 'Injeção de prompt é a mesma coisa que jailbreak?',
+          answer:
+            'Elas se sobrepõem mas não são idênticas. Jailbreak geralmente significa um usuário tentando diretamente fazer um modelo contornar suas próprias diretrizes. Injeção de prompt se refere mais a instruções escondidas em conteúdo que o modelo lê em nome do usuário, sem o conhecimento dele.',
+        },
+        {
+          question: 'A injeção de prompt importa para um chatbot que não pode usar ferramentas?',
+          answer:
+            'O risco é menor — uma injeção bem-sucedida pode produzir uma resposta enganosa ou manipulada, mas não pode realizar uma ação além de gerar texto. O risco cresce substancialmente assim que um modelo pode chamar ferramentas que fazem algo fora da conversa.',
+        },
+        {
+          question: 'Escanear conteúdo em busca de padrões de injeção é proteção suficiente?',
+          answer:
+            'Captura tentativas conhecidas e reconhecíveis, mas qualquer lista fixa de padrões pode ser burlada reformulando. A proteção real também vem de limitar o que um modelo tem permissão de fazer — escopo estreito de ferramentas e aprovação exigida para ações com consequências — não só da detecção.',
+        },
+      ],
+      productNote:
+        'O serviço de pesquisa do ClawAI escaneia o conteúdo web obtido em busca de padrões de injeção de prompt conhecidos e redige tokens com aparência de segredo antes que esse conteúdo chegue a um modelo — registrando o que detecta em vez de bloquear silenciosamente, já que nenhuma lista fixa de padrões consegue capturar toda tentativa. Essa camada de detecção é apenas uma parte de uma defesa que também depende de restringir quais ferramentas um modelo pode chamar em primeiro lugar.',
     },
   },
 };

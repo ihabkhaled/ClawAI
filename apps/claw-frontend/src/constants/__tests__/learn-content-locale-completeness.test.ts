@@ -109,6 +109,7 @@ const SDD_LEARN_TOPICS_MIN_FIVE_SECTIONS: ReadonlyArray<LearnTopic> = [
   LearnTopic.WHY_AI_HALLUCINATES,
   LearnTopic.HOW_TO_EVALUATE_AI_MODELS,
   LearnTopic.HOW_TO_READ_AI_BENCHMARKS,
+  LearnTopic.WHAT_IS_PROMPT_INJECTION,
 ];
 
 describe('/learn content locale completeness', () => {

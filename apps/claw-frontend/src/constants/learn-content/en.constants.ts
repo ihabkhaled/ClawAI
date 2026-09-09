@@ -82,6 +82,8 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
         'What to actually test before trusting a model with your work — not a leaderboard number.',
       [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]:
         'What a benchmark number actually measures, and the ways it can mislead you before you even start testing.',
+      [LearnTopic.WHAT_IS_PROMPT_INJECTION]:
+        'Text that isn’t from you can still give the model instructions — what that means and why it can’t be fully solved by a smarter model.',
     },
   },
   topics: {
@@ -1994,6 +1996,83 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI doesn’t publish its own benchmark leaderboard or claim a proprietary score for any model — instead its routing transparency panel shows the real cost class, latency class, and routing confidence behind a specific answer, so you can judge a response against your own request rather than a published test set you can’t inspect.',
+    },
+    [LearnTopic.WHAT_IS_PROMPT_INJECTION]: {
+      seo: {
+        title: 'What is prompt injection?',
+        description:
+          'A language model can’t reliably tell your instructions apart from instructions hidden in the content it’s reading — a webpage, a document, a tool result. What prompt injection actually is, why it can’t be fully solved by a smarter model, and what limits the damage when it happens.',
+        keywords: [
+          'what is prompt injection',
+          'prompt injection attack explained',
+          'indirect prompt injection',
+        ],
+      },
+      eyebrow: 'Foundations',
+      title: 'What is prompt injection?',
+      summary:
+        'Prompt injection is text that isn’t from you giving the model instructions anyway — hidden in a webpage it reads, a document it summarizes, or the result of a tool it calls. A language model doesn’t have a reliable, built-in way to separate "the user’s instructions" from "text that happens to look like instructions", because both arrive as the same kind of input: words in the context window.',
+      sections: [
+        {
+          id: 'direct-vs-indirect-injection',
+          heading: 'Two forms: direct and indirect',
+          paragraphs: [
+            'Direct injection is someone typing instructions straight into the chat trying to override the system’s intended behavior — asking the model to ignore its instructions, reveal hidden configuration, or act outside its intended scope. Indirect injection is the more consequential form: instructions planted in content the model reads on your behalf — a webpage, an email, a file, an API response — that the model was never meant to treat as commands but has no reliable way to distinguish from them.',
+          ],
+        },
+        {
+          id: 'why-a-smarter-model-does-not-solve-it',
+          heading: 'Why a smarter model doesn’t fix this by itself',
+          paragraphs: [
+            'The problem isn’t that models are insufficiently intelligent — it’s architectural. Everything a model sees, whether it’s your request or text fetched from an untrusted source, becomes the same kind of token sequence once it enters the context window. There’s no separate, tamper-proof channel for "trusted instructions" versus "content to read." A more capable model can get better at recognizing common injection phrasing, but a sufficiently disguised instruction — split across text, phrased indirectly, hidden in formatting — can still slip through, because the underlying architecture has no hard boundary to enforce.',
+          ],
+        },
+        {
+          id: 'why-tool-calling-raises-the-stakes',
+          heading: 'The risk grows sharply once a model can call tools',
+          paragraphs: [
+            'A chatbot that only produces text limits injection to bad or misleading output — annoying, but contained. Once a model can call tools (see how tool calling works) — sending an email, running a command, modifying a file — a successful injection can turn into an unwanted real-world action, not just a bad sentence. This is why systems that combine web browsing or document reading with tool access carry meaningfully more injection risk than a plain chatbot.',
+          ],
+        },
+        {
+          id: 'output-filtering-and-scope-limit-not-eliminate',
+          heading: 'Filtering and scoping reduce the risk; neither removes it',
+          paragraphs: [
+            'Scanning fetched content for known injection patterns catches some attempts, but any fixed pattern list can be evaded by phrasing the instruction differently — this is a filter, not a guarantee. What reduces actual damage more reliably is limiting what a model is allowed to do regardless of what it was told: scoping tool access narrowly, requiring approval before a destructive or external-facing action, and never granting a model standing permissions wider than the specific task in front of it.',
+          ],
+        },
+        {
+          id: 'treat-fetched-content-as-untrusted-input',
+          heading: 'The content a model reads is untrusted input, not a neutral fact source',
+          paragraphs: [
+            'Any system that lets a model read external content — a search result, a scraped page, a document a user uploaded — is exposing it to instructions it didn’t ask for. The practical implication is treating that content the way you’d treat unvalidated user input in any other software: assume it can contain something adversarial, and design the surrounding system so that a successful injection has limited reach rather than assuming injection won’t happen.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Can prompt injection be fully prevented?',
+          answer:
+            'No, not with current model architectures. There’s no built-in, tamper-proof separation between a user’s instructions and text a model reads from elsewhere, so filtering and scoping reduce risk and limit damage but can’t guarantee prevention.',
+        },
+        {
+          question: 'Is prompt injection the same as jailbreaking?',
+          answer:
+            'They overlap but aren’t identical. Jailbreaking usually means a user directly trying to get a model to bypass its own guidelines. Prompt injection more often refers to instructions hidden in content the model reads on the user’s behalf, without the user’s knowledge.',
+        },
+        {
+          question: 'Does prompt injection matter for a chatbot that can’t use tools?',
+          answer:
+            'It’s a smaller risk — a successful injection can produce a misleading or manipulated response, but it can’t take an action beyond generating text. The risk grows substantially once a model can call tools that do something outside the conversation.',
+        },
+        {
+          question: 'Is scanning content for injection patterns enough protection?',
+          answer:
+            'It catches known, recognizable attempts, but any fixed pattern list can be evaded by rephrasing. Real protection also comes from limiting what a model is allowed to do — narrow tool scope and required approval for consequential actions — not from detection alone.',
+        },
+      ],
+      productNote:
+        'ClawAI’s research service scans fetched web content for known prompt-injection patterns and redacts secret-looking tokens before that content reaches a model — logging what it detects rather than silently blocking, since no fixed pattern list can catch every attempt. That detection layer is one part of a defense that also depends on scoping what tools a model can call in the first place.',
     },
   },
 };
