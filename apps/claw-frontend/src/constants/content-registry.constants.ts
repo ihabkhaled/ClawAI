@@ -40,6 +40,12 @@ import {
 } from '@/constants/public-comparison.constants';
 import { resolvePublicPageSeo } from '@/constants/public-page-seo-registry.constants';
 import {
+  USE_CASES_REVIEW_DATE,
+  USE_CASES_TASK_ORDER,
+  getUseCaseTaskPath,
+  getUseCaseTaskSlug,
+} from '@/constants/use-cases-cluster.constants';
+import {
   AdEligibility,
   ContentCategory,
   ContentLifecycleStatus,
@@ -387,6 +393,25 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     structuredDataType: StructuredDataType.FAQ_PAGE,
     relatedSlugs: [MODEL_FIT_HUB_SLUG, MODELS_HUB_SLUG, 'pricing'],
     reviewDate: MODEL_FIT_REVIEW_DATE,
+  })),
+  // The 7 new `/use-cases/<task>` children (ADR-084, fanned from the order
+  // array). The pre-existing `use-cases` hub entry above is UNCHANGED — same
+  // URL, same PUBLISHED/REVIEWED/INDEXABLE status (F4 of the SEO content
+  // architecture doc: no redirect, no lost equity). Ad-ELIGIBLE per §8.2's
+  // explicit listing of `/use-cases/*` as one of the eligible clusters
+  // (unlike `/model-fit/*`, which names and evaluates models and is
+  // INELIGIBLE). PUBLISHABLE feed eligibility, matching /learn and
+  // /model-fit: evergreen editorial content with genuine publication
+  // semantics.
+  ...USE_CASES_TASK_ORDER.map((task): PublishedContentConfig => ({
+    slug: getUseCaseTaskSlug(task),
+    path: getUseCaseTaskPath(task),
+    category: ContentCategory.USE_CASES,
+    adEligibility: AdEligibility.ELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.FAQ_PAGE,
+    relatedSlugs: ['use-cases', 'features', 'pricing'],
+    reviewDate: USE_CASES_REVIEW_DATE,
   })),
 ];
 

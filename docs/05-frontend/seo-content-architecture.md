@@ -125,6 +125,27 @@ is the natural parent of a cluster and currently has no children.
 **Resolved:** both become hubs, keeping their existing URL and improving rather
 than replacing them. No redirect, no lost equity.
 
+**`/use-cases` built 2026-09-09** — hub (unchanged URL, unchanged registry
+status) + 7 task pages: `coding-and-development`,
+`research-and-fact-finding`, `writing-and-editing`, `comparing-model-answers`,
+`workspace-automation`, `structured-data-extraction`,
+`private-and-local-deployment`. The plan named only "task pages" with no
+fixed list for this cluster; these 7 were chosen against real capabilities —
+`PlanFeature` (`RESEARCH_MODE`, `COMPARE_MODE`, `JUDGE_MODE`, `CRITIC_REVIEW`,
+`CONTEXT_PACKS`, `MEMORY`, `WORKSPACES`, `WEB_EXTRACT`), `PaygSurface`
+(`CODING_AGENT`, `COMPARE`, `JUDGE`, `WORKSPACE_ACTION`), `WorkspaceProvider`
+(14 connectors) and `RoutingMode` (`LOCAL_ONLY`, `PRIVACY_FIRST`) — not
+invented. `writing-and-editing` deliberately reuses a `ModelFitTask` string
+value: the two live at different route prefixes (`/use-cases/*` vs.
+`/model-fit/*`) so there is no collision, and the two pages answer different
+questions — `/model-fit/*` is "which model fits this task" (ad-INELIGIBLE,
+names and evaluates models), `/use-cases/*` is "how do I do this job with
+ClawAI" (ad-ELIGIBLE per §8.2, product-capability-oriented). Every task
+cross-links to `/learn/*`, `/model-fit/*` and `/integrations` rather than
+re-explaining a concept already covered by those clusters. The pre-existing
+legacy grid section (ten shorter jobs, `marketing-use-cases.constants.ts`) is
+unchanged; the new cluster is an additional "go deeper" section beneath it.
+
 ### F5 — no topical clusters exist
 
 Nothing covers the informational half of the funnel: what model routing _is_,
@@ -295,7 +316,7 @@ Each batch is independently gated, committed and pushed.
 | 1     | `/learn` hub + concept pages                                                                                                                               | P0       |
 | 2     | `/integrations` hub + 14 connector pages, retire the `workspace-connectors` PLANNED slug                                                                   | P0       |
 | 3     | **Built 2026-09-09** — `/model-providers` hub (not `/models`, see note below) + 6 provider pages, `MODEL_FACTS`                                            | P0       |
-| 4     | `/use-cases` hub + task pages                                                                                                                              | P1       |
+| 4     | **Built 2026-09-09** — `/use-cases` hub (unchanged URL) + 7 task pages, see F4 note above                                                                  | P1       |
 | 5     | **`/model-fit` half built 2026-09-09** — hub + 5 task pages (was `/best-ai-model`, not `/models/for`, see note below). `/compare/models` still outstanding | P1       |
 | 6     | `/features` hub + capability pages                                                                                                                         | P1       |
 | 7     | `/solutions` + `/industries`                                                                                                                               | P2       |

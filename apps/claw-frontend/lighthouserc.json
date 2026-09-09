@@ -91,7 +91,14 @@
         "http://localhost:3000/en/model-fit/complex-reasoning",
         "http://localhost:3000/en/model-fit/writing-and-editing",
         "http://localhost:3000/en/model-fit/research-with-sources",
-        "http://localhost:3000/en/model-fit/private-local-workloads"
+        "http://localhost:3000/en/model-fit/private-local-workloads",
+        "http://localhost:3000/en/use-cases/coding-and-development",
+        "http://localhost:3000/en/use-cases/research-and-fact-finding",
+        "http://localhost:3000/en/use-cases/writing-and-editing",
+        "http://localhost:3000/en/use-cases/comparing-model-answers",
+        "http://localhost:3000/en/use-cases/workspace-automation",
+        "http://localhost:3000/en/use-cases/structured-data-extraction",
+        "http://localhost:3000/en/use-cases/private-and-local-deployment"
       ],
       "numberOfRuns": 2,
       "settings": {

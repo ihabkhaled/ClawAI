@@ -8,6 +8,7 @@ import { INTEGRATION_TOPIC_ORDER, getIntegrationPath } from '@/constants/integra
 import { LEARN_TOPIC_ORDER, getLearnTopicPath } from '@/constants/learn.constants';
 import { MODEL_FIT_TASK_ORDER, getModelFitTaskPath } from '@/constants/model-fit.constants';
 import { MODEL_PROVIDER_ORDER, getModelProviderPath } from '@/constants/models.constants';
+import { USE_CASES_TASK_ORDER, getUseCaseTaskPath } from '@/constants/use-cases-cluster.constants';
 import { ContentLifecycleStatus, ContentReviewStatus, Indexability, AdEligibility } from '@/enums';
 import { Locale } from '@/enums/locale.enum';
 import {
@@ -75,6 +76,7 @@ describe('content registry integrity', () => {
       ...INTEGRATION_TOPIC_ORDER.map(getIntegrationPath),
       ...MODEL_PROVIDER_ORDER.map(getModelProviderPath),
       ...MODEL_FIT_TASK_ORDER.map(getModelFitTaskPath),
+      ...USE_CASES_TASK_ORDER.map(getUseCaseTaskPath),
       '/',
       '/about',
       '/acceptable-use',
@@ -133,6 +135,7 @@ describe('getIndexablePages / getAdEligiblePages defense in depth', () => {
     expect(paths).toEqual(
       [
         ...LEARN_TOPIC_ORDER.map(getLearnTopicPath),
+        ...USE_CASES_TASK_ORDER.map(getUseCaseTaskPath),
         '/',
         '/architecture',
         '/coding-agent',
@@ -185,7 +188,9 @@ describe('localized publication boundary', () => {
   it('resolves metadata for every supported locale', () => {
     // 28 launch pages + the /learn hub + one page per learn topic + the
     // /integrations hub + one page per connector + the /models hub + one page
-    // per provider + the /model-fit hub + one page per task.
+    // per provider + the /model-fit hub + one page per task + one page per
+    // /use-cases task (the /use-cases hub itself is already one of the 29
+    // launch pages, unchanged by this cluster).
     const expectedCount =
       29 +
       LEARN_TOPIC_ORDER.length +
@@ -194,7 +199,8 @@ describe('localized publication boundary', () => {
       1 +
       MODEL_PROVIDER_ORDER.length +
       1 +
-      MODEL_FIT_TASK_ORDER.length;
+      MODEL_FIT_TASK_ORDER.length +
+      USE_CASES_TASK_ORDER.length;
     expect(getPublishedPagesForLocale(Locale.EN).length).toBe(expectedCount);
     expect(getPublishedPagesForLocale(Locale.JA).length).toBe(expectedCount);
     expect(getPageBySlugAndLocale('features', Locale.EN)?.title.toLowerCase()).toContain(

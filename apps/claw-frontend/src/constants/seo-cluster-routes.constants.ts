@@ -2,6 +2,7 @@ import { INTEGRATION_TOPIC_ORDER, getIntegrationPath } from '@/constants/integra
 import { LEARN_TOPIC_ORDER, getLearnTopicPath } from '@/constants/learn.constants';
 import { MODEL_FIT_TASK_ORDER, getModelFitTaskPath } from '@/constants/model-fit.constants';
 import { MODEL_PROVIDER_ORDER, getModelProviderPath } from '@/constants/models.constants';
+import { USE_CASES_TASK_ORDER, getUseCaseTaskPath } from '@/constants/use-cases-cluster.constants';
 
 /**
  * Dynamic marketing routes whose children are a KNOWN, fixed set.
@@ -28,6 +29,7 @@ export const SEO_CLUSTER_ROUTE_EXPANSIONS: Readonly<Record<string, ReadonlyArray
     '/integrations/[topic]': INTEGRATION_TOPIC_ORDER.map(getIntegrationPath),
     '/model-providers/[provider]': MODEL_PROVIDER_ORDER.map(getModelProviderPath),
     '/model-fit/[task]': MODEL_FIT_TASK_ORDER.map(getModelFitTaskPath),
+    '/use-cases/[task]': USE_CASES_TASK_ORDER.map(getUseCaseTaskPath),
   });
 
 /**

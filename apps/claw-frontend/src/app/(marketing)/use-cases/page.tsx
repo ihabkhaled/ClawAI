@@ -5,6 +5,7 @@ import { OneSubscriptionSection } from '@/components/marketing/use-cases/one-sub
 import { UseCasesCtaSection } from '@/components/marketing/use-cases/use-cases-cta-section';
 import { UseCasesGridSection } from '@/components/marketing/use-cases/use-cases-grid-section';
 import { UseCasesHeroSection } from '@/components/marketing/use-cases/use-cases-hero-section';
+import { UseCasesTaskCardsSection } from '@/components/marketing/use-cases/use-cases-task-cards-section';
 import { buildRequestPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 // Imported directly from its specific submodule rather than the `@/utilities`
 // barrel — this is a server component, and the utilities barrel re-exports
@@ -17,7 +18,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildRequestPublicPageMetadata('use-cases');
 }
 
-export default function UseCasesPage(): React.ReactElement {
+// `/use-cases` becomes a hub here (F4 of the SEO content architecture doc):
+// same URL, no redirect, no lost equity. The existing hero/grid/CTA sections
+// are unchanged; `UseCasesTaskCardsSection` is the only addition, linking to
+// the 7 new `/use-cases/<task>` pages this batch adds.
+export default async function UseCasesPage(): Promise<React.ReactElement> {
   const entry = getPageBySlug('use-cases');
   const lastReviewed = entry?.lastReviewed ?? '';
 
@@ -25,6 +30,7 @@ export default function UseCasesPage(): React.ReactElement {
     <>
       <UseCasesHeroSection lastReviewed={lastReviewed} />
       <UseCasesGridSection />
+      <UseCasesTaskCardsSection />
       <OneSubscriptionSection />
       <EnterpriseNoteSection />
       <UseCasesCtaSection />
