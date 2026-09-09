@@ -106,6 +106,7 @@ const SDD_LEARN_TOPICS_MIN_FIVE_SECTIONS: ReadonlyArray<LearnTopic> = [
   LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING,
   LearnTopic.HOW_AI_TOOL_CALLING_WORKS,
   LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS,
+  LearnTopic.WHY_AI_HALLUCINATES,
 ];
 
 describe('/learn content locale completeness', () => {

@@ -41,6 +41,8 @@ export const ES_LEARN_CONTENT: LearnDictionary = {
         'El modelo nunca ejecuta nada: propone una llamada, y tu aplicación decide qué pasa después.',
       [LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS]:
         'Pedirle JSON a un modelo es una petición; solo algunos mecanismos garantizan de verdad que encaje con tu esquema.',
+      [LearnTopic.WHY_AI_HALLUCINATES]:
+        'Por qué un modelo afirma una respuesta equivocada con la misma seguridad que una correcta — y qué reduce eso de verdad.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Usar varios modelos en un mismo flujo de trabajo en vez de casarte con uno.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -660,6 +662,92 @@ export const ES_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'La función de juez de ClawAI le pide a un modelo una forma JSON concreta mediante instrucciones en el prompt y recurre a un estado definido de "análisis fallido" en vez de adivinar cuando una respuesta no encaja: un ejemplo directo y en funcionamiento de que un esquema pedido en un prompt es una petición, no una garantía.',
+    },
+    [LearnTopic.WHY_AI_HALLUCINATES]: {
+      seo: {
+        title: '¿Por qué alucina la IA?',
+        description:
+          'Un modelo de lenguaje afirma una respuesta equivocada con el mismo tono seguro que una correcta, porque nunca se entrenó para saber lo que no sabe. Por qué ocurre la alucinación, por qué no puede eliminarse del todo y qué la reduce de verdad.',
+        keywords: [
+          'por qué alucina la IA',
+          'alucinación de modelos de lenguaje explicada',
+          'la IA inventa cosas',
+        ],
+      },
+      eyebrow: 'Fundamentos',
+      title: '¿Por qué alucina la IA?',
+      summary:
+        'Una alucinación es que el modelo afirme algo falso como si fuera un hecho, sin matices y sin ninguna señal de que está adivinando. Ocurre porque un modelo de lenguaje está entrenado para producir el token siguiente estadísticamente más probable, no para comprobar una afirmación contra la realidad — una frase fluida, segura y falsa, y una fluida, segura y correcta, se generan exactamente con el mismo proceso.',
+      sections: [
+        {
+          id: 'a-confident-wrong-answer-not-a-crash',
+          heading:
+            'Es una respuesta equivocada con seguridad, no un error que el modelo pueda señalar',
+          paragraphs: [
+            'Un modelo no tiene un modo aparte de "no lo sé" al que recurrir. Toda respuesta, correcta o no, sale del mismo proceso de predicción del siguiente token, así que una cita inventada o un método de API que no existe suenan con la misma fluidez segura que una correcta. Eso es lo que distingue la alucinación de un fallo de software normal: no salta ninguna excepción, no se marca ninguna señal, no hay nada que capturar. El resultado parece igual de fiable sea correcto o no.',
+          ],
+        },
+        {
+          id: 'why-it-happens-training-and-prediction',
+          heading: 'Por qué ocurre: predicción, no consulta',
+          paragraphs: [
+            'Un modelo de lenguaje está entrenado para predecir continuaciones plausibles de texto, aprendidas de patrones en sus datos de entrenamiento. No guarda hechos en una forma recuperable y verificable como lo hace una base de datos: guarda la forma estadística del lenguaje, incluidos los hechos que fueron lo bastante comunes en el entrenamiento como para dar forma a esa forma. Cuando un prompt pide algo que el modelo vio pocas veces, de forma inconsistente o nunca, el modelo no deja de responder; produce igualmente la continuación más plausible, porque es lo único que sabe hacer.',
+            'Esto también explica por qué la alucinación empeora con detalles específicos, poco comunes o recientes: un caso judicial que suena real pero es inventado, un número de versión plausible pero incorrecto, una cita que suena como el título de un artículo real. Cuanto más específica la afirmación, más probable que el modelo esté rellenando un hueco con algo simplemente plausible y no algo conocido.',
+          ],
+        },
+        {
+          id: 'grounding-narrows-it-does-not-remove-it',
+          heading: 'El anclaje reduce la brecha; no la cierra',
+          paragraphs: [
+            'Poner texto fuente real delante del modelo antes de que responda —recuperación, mira qué es RAG— reduce de forma medible la alucinación en preguntas que esas fuentes realmente cubren, porque el modelo puede reformular lo que acaba de leer en vez de predecir solo desde datos de entrenamiento. Pero es una tendencia fuerte, no una garantía: si la recuperación no devuelve nada útil, o las fuentes están incompletas, el modelo puede seguir respondiendo con fluidez desde la memoria en vez de admitir que las fuentes no ayudaron.',
+          ],
+        },
+        {
+          id: 'multiple-models-and-a-judge-are-a-filter-not-a-cure',
+          heading: 'Cruzar modelos es un filtro, no una cura',
+          paragraphs: [
+            'Hacer la misma pregunta a varios modelos y comparar las respuestas detecta alucinaciones específicas del entrenamiento o las peculiaridades de un modelo concreto: si solo uno de tres modelos inventa un detalle, ese desacuerdo es una señal. No detecta una alucinación que comparten la mayoría de los modelos, porque los datos de entrenamiento se solapan entre proveedores. El mismo límite se aplica a usar un modelo aparte como juez para puntuar una respuesta: un modelo juez puede dejarse engañar por el mismo tipo de texto fluido, seguro y equivocado que se supone que debe revisar.',
+          ],
+        },
+        {
+          id: 'what-actually-reduces-it',
+          heading: 'Qué reduce la alucinación de verdad, en la práctica',
+          paragraphs: [
+            'Ninguna técnica por sí sola elimina la alucinación, porque es una propiedad de cómo estos modelos generan texto, no un fallo propio de un modelo o proveedor concreto. Lo que ayuda de forma medible es acotar la tarea del modelo: anclar las respuestas en texto fuente recuperado para las preguntas que esas fuentes cubren, mantener las peticiones específicas en vez de abiertas, y tratar las citas, cifras y datos concretos del propio modelo como afirmaciones por verificar y no como hechos ya comprobados. Combinar técnicas —anclaje, cruce de modelos y verificación contra una fuente— reduce el margen de error más que cualquiera de ellas por separado.',
+          ],
+        },
+        {
+          id: 'why-lower-temperature-does-not-fix-it',
+          heading: 'Por qué bajar la aleatoriedad no lo arregla',
+          paragraphs: [
+            'Es habitual suponer que bajar la temperatura (mira temperatura y top-p) hace que un modelo sea más veraz, porque el resultado parece más cuidadoso y determinista. La temperatura controla cómo elige el modelo entre los siguientes tokens probables: no cambia lo que el modelo sabe ni añade un paso de comprobación de hechos. Un modelo puede alucinar con temperatura cero con la misma seguridad que con temperatura uno; un valor más bajo solo hace que alucine la misma respuesta equivocada con más constancia.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: '¿Se puede arreglar la alucinación por completo?',
+          answer:
+            'No, no con las arquitecturas actuales de modelos de lenguaje. Viene de cómo estos modelos generan texto —predecir continuaciones plausibles en vez de comprobar hechos—, así que se puede reducir con anclaje, cruce de modelos y verificación, pero no eliminar como categoría.',
+        },
+        {
+          question: '¿Un modelo más grande o más nuevo alucina menos?',
+          answer:
+            'A menudo menos en conocimiento común, porque más de ese conocimiento estaba bien representado en el entrenamiento. Eso no elimina el mecanismo de fondo: un modelo más nuevo puede seguir alucinando con seguridad en detalles poco comunes, específicos o recientes para los que no fue bien entrenado.',
+        },
+        {
+          question: '¿Alucinar es lo mismo que el modelo mienta?',
+          answer:
+            'No. Mentir implica conocer la verdad y decir lo contrario. Un modelo no tiene un canal aparte de "la verdad" con el que comparar su respuesta: genera la continuación estadísticamente más plausible, sea o no que resulte acertada.',
+        },
+        {
+          question: '¿Darle al modelo tus propios documentos detiene la alucinación?',
+          answer:
+            'La reduce mucho en preguntas que esos documentos realmente responden, porque el modelo puede reformular texto recuperado en vez de predecir solo desde datos de entrenamiento. No evita que el modelo responda con fluidez desde la memoria cuando la recuperación no encuentra nada relevante.',
+        },
+      ],
+      productNote:
+        'ClawAI no dice que elimine la alucinación: ningún producto puede decirlo honestamente. Lo que ofrece son las mitigaciones que la reducen de forma medible: respuestas con recuperación ancladas en tus propios documentos (mira qué es RAG), consenso multimodelo que saca a la luz el desacuerdo entre modelos (mira qué es el consenso de IA) y un juez de IA que puntúa las respuestas según criterios definidos (mira qué es un juez de IA): tres funciones reales e independientes, cada una un filtro parcial, no una garantía.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

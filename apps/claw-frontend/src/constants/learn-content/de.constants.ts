@@ -41,6 +41,8 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
         'Das Modell führt nie etwas aus — es schlägt einen Aufruf vor, und Ihre Anwendung entscheidet, was als Nächstes passiert.',
       [LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS]:
         'Ein Modell um JSON zu bitten ist eine Anfrage; nur manche Mechanismen garantieren wirklich, dass es zu Ihrem Schema passt.',
+      [LearnTopic.WHY_AI_HALLUCINATES]:
+        'Warum ein Modell eine falsche Antwort mit derselben Sicherheit äußert wie eine richtige — und was das tatsächlich verringert.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Mehrere Modelle in einem Arbeitsablauf nutzen, statt sich auf eines festzulegen.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -662,6 +664,87 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAIs Judge-Funktion bittet ein Modell per Prompt-Anweisung um eine bestimmte JSON-Form und fällt auf einen definierten „Parsen fehlgeschlagen“-Zustand zurück, statt zu raten, wenn eine Antwort nicht passt — ein direktes, funktionierendes Beispiel dafür, dass ein in einem Prompt angefordertes Schema eine Anfrage ist, keine Garantie.',
+    },
+    [LearnTopic.WHY_AI_HALLUCINATES]: {
+      seo: {
+        title: 'Warum halluziniert KI?',
+        description:
+          'Ein Sprachmodell äußert eine falsche Antwort mit demselben sicheren Ton wie eine richtige, weil es nie trainiert wurde zu wissen, was es nicht weiß. Warum Halluzination entsteht, warum sie sich nicht ganz beseitigen lässt, und was sie tatsächlich verringert.',
+        keywords: ['warum halluziniert KI', 'LLM-Halluzination erklärt', 'KI erfindet Dinge'],
+      },
+      eyebrow: 'Grundlagen',
+      title: 'Warum halluziniert KI?',
+      summary:
+        'Eine Halluzination ist, wenn ein Modell etwas Falsches als Tatsache äußert, ohne Einschränkung und ohne Anzeichen, dass es rät. Das passiert, weil ein Sprachmodell darauf trainiert ist, das statistisch wahrscheinlichste nächste Token zu erzeugen, nicht eine Behauptung gegen die Wirklichkeit zu prüfen — ein flüssiger, sicherer, falscher Satz und ein flüssiger, sicherer, richtiger entstehen durch genau denselben Prozess.',
+      sections: [
+        {
+          id: 'a-confident-wrong-answer-not-a-crash',
+          heading: 'Eine sichere falsche Antwort, kein Fehler, den das Modell melden kann',
+          paragraphs: [
+            'Ein Modell hat keinen getrennten „Ich weiß es nicht“-Modus, auf den es zurückfällt. Jede Antwort, richtig oder falsch, entsteht aus demselben Vorhersageprozess für das nächste Token, sodass ein erfundenes Zitat oder eine nicht existierende Funktion mit derselben flüssigen Sicherheit klingt wie eine richtige. Das unterscheidet Halluzination von einem gewöhnlichen Softwarefehler — keine Ausnahme wird ausgelöst, kein Signal gesetzt, nichts, das man abfangen könnte. Die Ausgabe wirkt gleich vertrauenswürdig, egal ob sie richtig oder falsch ist.',
+          ],
+        },
+        {
+          id: 'why-it-happens-training-and-prediction',
+          heading: 'Warum es passiert: Vorhersage, kein Nachschlagen',
+          paragraphs: [
+            'Ein Sprachmodell ist darauf trainiert, plausible Fortsetzungen von Text vorherzusagen, gelernt aus Mustern in seinen Trainingsdaten. Es speichert Fakten nicht in abrufbarer, prüfbarer Form wie eine Datenbank — es speichert die statistische Form der Sprache, einschließlich der Fakten, die im Training häufig genug vorkamen, um diese Form zu prägen. Wenn ein Prompt nach etwas fragt, das das Modell selten, widersprüchlich oder nie gesehen hat, scheitert es nicht daran zu antworten; es erzeugt trotzdem die plausibelste Fortsetzung, denn das ist alles, was es zu tun weiß.',
+            'Das erklärt auch, warum Halluzination bei spezifischen, seltenen oder aktuellen Details zunimmt — ein echt klingender, aber erfundener Gerichtsfall, eine plausible, aber falsche Versionsnummer, ein Zitat, das wie ein echter Papertitel klingt. Je spezifischer die Behauptung, desto wahrscheinlicher füllt das Modell eine Lücke mit etwas nur Plausiblem statt etwas Bekanntem.',
+          ],
+        },
+        {
+          id: 'grounding-narrows-it-does-not-remove-it',
+          heading: 'Grounding verkleinert die Lücke, schließt sie aber nicht',
+          paragraphs: [
+            'Echten Quelltext vor das Modell zu legen, bevor es antwortet — Retrieval, siehe was RAG ist — verringert Halluzination bei Fragen, die diese Quellen tatsächlich abdecken, messbar, weil das Modell wiedergeben kann, was es gerade gelesen hat, statt allein aus Trainingsdaten vorherzusagen. Aber es ist eine starke Tendenz, keine Garantie: Liefert das Retrieval nichts Brauchbares oder sind die Quellen unvollständig, kann das Modell trotzdem flüssig aus dem Gedächtnis antworten, statt zuzugeben, dass die Quellen nicht geholfen haben.',
+          ],
+        },
+        {
+          id: 'multiple-models-and-a-judge-are-a-filter-not-a-cure',
+          heading: 'Gegenprüfung ist ein Filter, keine Heilung',
+          paragraphs: [
+            'Dieselbe Frage mehreren Modellen zu stellen und die Antworten zu vergleichen, fängt Halluzinationen ab, die für das Training oder die Eigenheiten eines Modells spezifisch sind — erfindet nur eines von drei Modellen ein Detail, ist diese Uneinigkeit ein Signal. Es fängt keine Halluzination ab, die die meisten Modelle teilen, weil sich Trainingsdaten zwischen Anbietern überschneiden. Dieselbe Grenze gilt, wenn ein separates Modell als Judge eine Antwort bewertet: Ein Judge-Modell kann von derselben Art flüssigem, sicherem, falschem Text getäuscht werden, den es eigentlich prüfen soll.',
+          ],
+        },
+        {
+          id: 'what-actually-reduces-it',
+          heading: 'Was Halluzination in der Praxis tatsächlich verringert',
+          paragraphs: [
+            'Keine einzelne Technik beseitigt Halluzination, weil sie eine Eigenschaft der Art ist, wie diese Modelle Text erzeugen, kein Fehler, der nur ein Modell oder einen Anbieter betrifft. Messbar hilft, die Aufgabe des Modells einzugrenzen: Antworten für Fragen, die die Quellen abdecken, in abgerufenem Quelltext verankern, Anfragen spezifisch statt offen halten, und die eigenen Zitate, Zahlen und konkreten Angaben des Modells als zu prüfende Behauptungen behandeln statt als bereits geprüfte Fakten. Techniken zu kombinieren — Grounding plus Gegenprüfung plus Verifikation gegen eine Quelle — verringert die Fehlerfläche mehr als jede einzelne für sich.',
+          ],
+        },
+        {
+          id: 'why-lower-temperature-does-not-fix-it',
+          heading: 'Warum weniger Zufälligkeit das Problem nicht löst',
+          paragraphs: [
+            'Es ist eine verbreitete Annahme, dass eine niedrigere Temperature-Einstellung (siehe Temperature und Top-p) ein Modell wahrheitsgetreuer macht, weil die Ausgabe vorsichtiger und deterministischer wirkt. Temperature steuert, wie das Modell unter wahrscheinlichen nächsten Tokens auswählt — sie ändert nicht, was das Modell weiß, und fügt keinen Faktencheck hinzu. Ein Modell kann bei Temperature null genauso sicher halluzinieren wie bei eins; eine niedrigere Einstellung lässt es nur dieselbe falsche Antwort konsistenter halluzinieren.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Lässt sich Halluzination vollständig beheben?',
+          answer:
+            'Nein, nicht mit heutigen Sprachmodell-Architekturen. Sie entsteht daraus, wie diese Modelle Text erzeugen — plausible Fortsetzungen vorhersagen statt Fakten zu prüfen —, lässt sich also durch Grounding, Gegenprüfung und Verifikation verringern, aber nicht als Kategorie beseitigen.',
+        },
+        {
+          question: 'Halluziniert ein größeres oder neueres Modell weniger?',
+          answer:
+            'Oft weniger bei verbreitetem Wissen, weil mehr davon im Training gut vertreten war. Das beseitigt nicht den zugrunde liegenden Mechanismus — ein neueres Modell kann bei seltenen, spezifischen oder aktuellen Details, für die es nicht gut trainiert wurde, weiterhin sicher halluzinieren.',
+        },
+        {
+          question: 'Ist Halluzination dasselbe wie Lügen des Modells?',
+          answer:
+            'Nein. Lügen setzt voraus, die Wahrheit zu kennen und trotzdem etwas anderes zu sagen. Ein Modell hat keinen getrennten Kanal für „die Wahrheit“, mit dem es seine Ausgabe vergleicht — es erzeugt die statistisch plausibelste Fortsetzung, ob die nun zufällig zutrifft oder nicht.',
+        },
+        {
+          question: 'Stoppt es Halluzination, dem Modell eigene Dokumente zu geben?',
+          answer:
+            'Es verringert sie deutlich bei Fragen, die diese Dokumente tatsächlich beantworten, weil das Modell abgerufenen Text wiedergeben kann statt aus Trainingsdaten vorherzusagen. Es hindert das Modell aber nicht daran, flüssig aus dem Gedächtnis zu antworten, wenn das Retrieval nichts Relevantes findet.',
+        },
+      ],
+      productNote:
+        'ClawAI behauptet nicht, Halluzination zu beseitigen — kein Produkt kann das ehrlich. Was es liefert, sind die Maßnahmen, die sie messbar eingrenzen: retrieval-gestützte Antworten, verankert in Ihren eigenen Dokumenten (siehe was RAG ist), Multi-Modell-Konsens, der Uneinigkeit zwischen Modellen sichtbar macht (siehe was KI-Konsens ist), und ein KI-Judge, der Antworten nach definierten Kriterien bewertet (siehe was ein KI-Judge ist) — drei echte, unabhängige Funktionen, jede ein Teilfilter, keine Garantie.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

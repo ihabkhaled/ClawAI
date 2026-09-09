@@ -41,6 +41,8 @@ export const IT_LEARN_CONTENT: LearnDictionary = {
         'Il modello non esegue mai nulla — propone una chiamata, e la tua applicazione decide cosa succede dopo.',
       [LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS]:
         'Chiedere JSON a un modello è una richiesta; solo alcuni meccanismi garantiscono davvero che corrisponda al tuo schema.',
+      [LearnTopic.WHY_AI_HALLUCINATES]:
+        'Perché un modello afferma una risposta sbagliata con la stessa sicurezza di una giusta — e cosa la riduce davvero.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Usare più modelli in un unico flusso invece di legarsi a uno solo.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -660,6 +662,91 @@ export const IT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'La funzione judge di ClawAI chiede a un modello una forma JSON specifica tramite istruzioni nel prompt e ricade su uno stato definito di "analisi fallita" invece di indovinare quando una risposta non corrisponde — un esempio diretto e funzionante che uno schema richiesto in un prompt è una richiesta, non una garanzia.',
+    },
+    [LearnTopic.WHY_AI_HALLUCINATES]: {
+      seo: {
+        title: 'Perché l’IA ha le allucinazioni?',
+        description:
+          'Un modello linguistico afferma una risposta sbagliata con lo stesso tono sicuro di una giusta, perché non è mai stato addestrato a sapere cosa non sa. Perché nascono le allucinazioni, perché non si possono eliminare del tutto, e cosa le riduce davvero.',
+        keywords: [
+          'perché l’IA ha le allucinazioni',
+          'allucinazione dei modelli linguistici spiegata',
+          'l’IA che inventa cose',
+        ],
+      },
+      eyebrow: 'Fondamenti',
+      title: 'Perché l’IA ha le allucinazioni?',
+      summary:
+        'Un’allucinazione è quando il modello afferma qualcosa di falso come se fosse un fatto, senza esitazioni e senza alcun segnale che sta indovinando. Succede perché un modello linguistico è addestrato a produrre il token successivo statisticamente più probabile, non a verificare un’affermazione contro la realtà — una frase fluida, sicura e falsa, e una fluida, sicura e giusta, nascono esattamente dallo stesso processo.',
+      sections: [
+        {
+          id: 'a-confident-wrong-answer-not-a-crash',
+          heading: 'È una risposta sbagliata sicura, non un errore che il modello può segnalare',
+          paragraphs: [
+            'Un modello non ha una modalità separata "non lo so" a cui ricorrere. Ogni risposta, giusta o sbagliata, viene dallo stesso processo di previsione del token successivo, quindi una citazione inventata o un metodo API che non esiste suonano con la stessa sicurezza fluida di una risposta corretta. È questo che distingue un’allucinazione da un normale bug software — nessuna eccezione viene sollevata, nessun segnale viene attivato, niente da intercettare. Il risultato appare ugualmente affidabile, sia esso giusto o sbagliato.',
+          ],
+        },
+        {
+          id: 'why-it-happens-training-and-prediction',
+          heading: 'Perché succede: previsione, non consultazione',
+          paragraphs: [
+            'Un modello linguistico è addestrato a prevedere continuazioni plausibili di testo, apprese da pattern nei suoi dati di addestramento. Non memorizza i fatti in una forma recuperabile e verificabile come farebbe un database — memorizza la forma statistica del linguaggio, inclusi i fatti abbastanza comuni nell’addestramento da plasmare quella forma. Quando un prompt chiede qualcosa che il modello ha visto raramente, in modo incoerente, o mai, il modello non rinuncia a rispondere; produce comunque la continuazione più plausibile, perché è l’unica cosa che sa fare.',
+            'Questo spiega anche perché l’allucinazione peggiora su dettagli specifici, rari o recenti — un caso giudiziario che suona vero ma è inventato, un numero di versione plausibile ma sbagliato, una citazione che sembra il titolo di un vero articolo. Più un’affermazione è specifica, più è probabile che il modello stia colmando un vuoto con qualcosa di semplicemente plausibile invece che noto.',
+          ],
+        },
+        {
+          id: 'grounding-narrows-it-does-not-remove-it',
+          heading: 'Il grounding riduce il divario, non lo chiude',
+          paragraphs: [
+            'Mettere un vero testo sorgente davanti al modello prima che risponda — il retrieval, vedi cos’è il RAG — riduce in modo misurabile l’allucinazione sulle domande che quelle fonti coprono davvero, perché il modello può riformulare ciò che ha appena letto invece di prevedere solo dai dati di addestramento. Ma è una tendenza forte, non una garanzia: se il retrieval non restituisce nulla di utile, o le fonti sono incomplete, il modello può comunque rispondere con fluidità dalla memoria invece di ammettere che le fonti non hanno aiutato.',
+          ],
+        },
+        {
+          id: 'multiple-models-and-a-judge-are-a-filter-not-a-cure',
+          heading: 'Incrociare più modelli è un filtro, non una cura',
+          paragraphs: [
+            'Fare la stessa domanda a più modelli e confrontare le risposte cattura le allucinazioni specifiche dell’addestramento o delle particolarità di un modello — se solo uno su tre modelli inventa un dettaglio, quel disaccordo è un segnale. Non cattura un’allucinazione condivisa dalla maggior parte dei modelli, perché i dati di addestramento si sovrappongono tra i fornitori. Lo stesso limite vale per l’uso di un modello separato come giudice per valutare una risposta: un modello giudice può essere ingannato dallo stesso tipo di testo fluido, sicuro e sbagliato che dovrebbe controllare.',
+          ],
+        },
+        {
+          id: 'what-actually-reduces-it',
+          heading: 'Cosa riduce davvero l’allucinazione, in pratica',
+          paragraphs: [
+            'Nessuna tecnica da sola elimina l’allucinazione, perché è una proprietà di come questi modelli generano testo, non un difetto specifico di un modello o di un fornitore. Ciò che aiuta in modo misurabile è restringere il compito del modello: ancorare le risposte a testo sorgente recuperato per le domande che quelle fonti coprono, mantenere le richieste specifiche invece che aperte, e trattare citazioni, numeri e dettagli specifici del modello stesso come affermazioni da verificare, non come fatti già controllati. Combinare le tecniche — grounding, incrocio tra modelli e verifica contro una fonte — riduce il margine di errore più di ciascuna presa singolarmente.',
+          ],
+        },
+        {
+          id: 'why-lower-temperature-does-not-fix-it',
+          heading: 'Perché abbassare la casualità non risolve il problema',
+          paragraphs: [
+            'È un’ipotesi comune che abbassare la temperatura (vedi temperatura e top-p) renda un modello più veritiero, perché il risultato sembra più cauto e deterministico. La temperatura controlla come il modello campiona tra i token successivi probabili — non cambia ciò che il modello sa e non aggiunge nessun controllo dei fatti. Un modello può avere allucinazioni a temperatura zero con la stessa sicurezza che a temperatura uno; un’impostazione più bassa lo fa solo allucinare la stessa risposta sbagliata con più costanza.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Le allucinazioni si possono correggere del tutto?',
+          answer:
+            'No, non con le attuali architetture dei modelli linguistici. Nascono da come questi modelli generano testo — prevedere continuazioni plausibili invece di controllare i fatti — quindi si possono ridurre con grounding, incrocio tra modelli e verifica, ma non eliminare come categoria.',
+        },
+        {
+          question: 'Un modello più grande o più recente ha meno allucinazioni?',
+          answer:
+            'Spesso meno sulla conoscenza comune, perché una parte maggiore era ben rappresentata nell’addestramento. Questo non elimina il meccanismo di fondo — un modello più recente può comunque avere allucinazioni sicure su dettagli rari, specifici o recenti per cui non è stato addestrato bene.',
+        },
+        {
+          question: 'Un’allucinazione è la stessa cosa di una bugia del modello?',
+          answer:
+            'No. Mentire presuppone conoscere la verità e affermare il contrario. Un modello non ha un canale separato per "la verità" con cui confrontare il suo output — genera la continuazione statisticamente più plausibile, che risulti accurata o no.',
+        },
+        {
+          question: 'Dare al modello i propri documenti ferma le allucinazioni?',
+          answer:
+            'Le riduce molto sulle domande a cui quei documenti rispondono davvero, perché il modello può riformulare testo recuperato invece di prevedere solo dai dati di addestramento. Non impedisce al modello di rispondere con fluidità dalla memoria quando il retrieval non trova nulla di rilevante.',
+        },
+      ],
+      productNote:
+        'ClawAI non afferma di eliminare le allucinazioni — nessun prodotto può dirlo onestamente. Ciò che offre sono le mitigazioni che le riducono in modo misurabile: risposte con retrieval ancorate ai tuoi documenti (vedi cos’è il RAG), consenso multi-modello che mette in luce il disaccordo tra modelli (vedi cos’è il consenso IA), e un giudice IA che valuta le risposte secondo criteri definiti (vedi cos’è un giudice IA) — tre funzionalità reali e indipendenti, ciascuna un filtro parziale, non una garanzia.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

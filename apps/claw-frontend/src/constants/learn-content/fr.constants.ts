@@ -41,6 +41,8 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
         'Le modèle n’exécute jamais rien lui-même — il propose un appel, et votre application décide de la suite.',
       [LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS]:
         'Demander du JSON à un modèle est une requête ; seuls certains mécanismes garantissent vraiment qu’il correspond à votre schéma.',
+      [LearnTopic.WHY_AI_HALLUCINATES]:
+        'Pourquoi un modèle énonce une réponse fausse avec la même assurance qu’une bonne — et ce qui réduit vraiment ça.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Utiliser plusieurs modèles dans un même flux plutôt que de s’enfermer dans un seul.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -669,6 +671,91 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'La fonction de juge de ClawAI demande à un modèle une forme JSON précise via des instructions de prompt et se rabat sur un état défini d’« analyse échouée » plutôt que de deviner quand une réponse ne correspond pas — un exemple direct et fonctionnel montrant qu’un schéma demandé dans un prompt est une requête, pas une garantie.',
+    },
+    [LearnTopic.WHY_AI_HALLUCINATES]: {
+      seo: {
+        title: 'Pourquoi l’IA hallucine-t-elle ?',
+        description:
+          'Un modèle de langage énonce une réponse fausse avec le même ton assuré qu’une bonne, parce qu’il n’a jamais été entraîné à savoir ce qu’il ignore. Pourquoi l’hallucination se produit, pourquoi on ne peut pas l’éliminer complètement, et ce qui la réduit vraiment.',
+        keywords: [
+          'pourquoi l’IA hallucine',
+          'hallucination des modèles de langage expliquée',
+          'l’IA invente des choses',
+        ],
+      },
+      eyebrow: 'Fondamentaux',
+      title: 'Pourquoi l’IA hallucine-t-elle ?',
+      summary:
+        'Une hallucination, c’est un modèle qui énonce quelque chose de faux comme si c’était un fait, sans nuance et sans aucun signe qu’il devine. Cela arrive parce qu’un modèle de langage est entraîné à produire le token suivant statistiquement le plus probable, pas à vérifier une affirmation contre la réalité — une phrase fluide, assurée et fausse, et une phrase fluide, assurée et juste, sont générées exactement par le même processus.',
+      sections: [
+        {
+          id: 'a-confident-wrong-answer-not-a-crash',
+          heading: 'Une réponse fausse assurée, pas une erreur que le modèle peut signaler',
+          paragraphs: [
+            'Un modèle n’a pas de mode séparé « je ne sais pas » vers lequel se replier. Chaque réponse, juste ou fausse, provient du même processus de prédiction du token suivant, si bien qu’une citation inventée ou une méthode d’API qui n’existe pas sonne avec la même assurance fluide qu’une réponse correcte. C’est ce qui distingue l’hallucination d’un bug logiciel classique — aucune exception n’est levée, aucun signal n’est déclenché, rien à intercepter. Le résultat paraît tout aussi fiable, qu’il soit juste ou faux.',
+          ],
+        },
+        {
+          id: 'why-it-happens-training-and-prediction',
+          heading: 'Pourquoi ça arrive : prédiction, pas consultation',
+          paragraphs: [
+            'Un modèle de langage est entraîné à prédire des continuations plausibles de texte, apprises à partir de motifs présents dans ses données d’entraînement. Il ne stocke pas des faits sous une forme récupérable et vérifiable comme le ferait une base de données — il stocke la forme statistique du langage, y compris les faits assez fréquents à l’entraînement pour façonner cette forme. Quand un prompt demande quelque chose que le modèle a vu rarement, de façon incohérente, ou jamais, le modèle ne renonce pas à répondre ; il produit quand même la continuation la plus plausible, parce que c’est tout ce qu’il sait faire.',
+            'Cela explique aussi pourquoi l’hallucination s’aggrave sur des détails spécifiques, rares ou récents — une affaire judiciaire qui sonne vrai mais qui est inventée, un numéro de version plausible mais faux, une citation qui ressemble au titre d’un vrai article. Plus une affirmation est précise, plus il est probable que le modèle comble un vide avec quelque chose de simplement plausible plutôt que de connu.',
+          ],
+        },
+        {
+          id: 'grounding-narrows-it-does-not-remove-it',
+          heading: 'L’ancrage réduit l’écart ; il ne le comble pas',
+          paragraphs: [
+            'Placer un vrai texte source devant le modèle avant qu’il réponde — la récupération, voir ce qu’est le RAG — réduit mesurablement l’hallucination sur les questions que ces sources couvrent réellement, parce que le modèle peut reformuler ce qu’il vient de lire plutôt que de prédire à partir des seules données d’entraînement. Mais c’est une forte tendance, pas une garantie : si la récupération ne renvoie rien d’utile, ou si les sources sont incomplètes, le modèle peut toujours répondre avec fluidité depuis sa mémoire plutôt que d’admettre que les sources n’ont pas aidé.',
+          ],
+        },
+        {
+          id: 'multiple-models-and-a-judge-are-a-filter-not-a-cure',
+          heading: 'Le croisement de modèles est un filtre, pas un remède',
+          paragraphs: [
+            'Poser la même question à plusieurs modèles et comparer les réponses capte les hallucinations propres à l’entraînement ou aux particularités d’un modèle — si un seul modèle sur trois invente un détail, ce désaccord est un signal. Cela ne capte pas une hallucination partagée par la plupart des modèles, parce que les données d’entraînement se recoupent entre fournisseurs. La même limite s’applique à l’usage d’un modèle distinct comme juge pour noter une réponse : un modèle juge peut être trompé par le même genre de texte fluide, assuré et faux qu’il est censé vérifier.',
+          ],
+        },
+        {
+          id: 'what-actually-reduces-it',
+          heading: 'Ce qui réduit vraiment l’hallucination, en pratique',
+          paragraphs: [
+            'Aucune technique unique n’élimine l’hallucination, parce que c’est une propriété de la façon dont ces modèles génèrent du texte, pas un défaut propre à un modèle ou un fournisseur. Ce qui aide mesurablement, c’est de restreindre la tâche du modèle : ancrer les réponses dans du texte source récupéré pour les questions que ces sources couvrent, garder des requêtes précises plutôt qu’ouvertes, et traiter les citations, chiffres et détails précis du modèle lui-même comme des affirmations à vérifier plutôt que des faits déjà validés. Combiner les techniques — ancrage, croisement de modèles et vérification contre une source — réduit la marge d’erreur plus que chacune séparément.',
+          ],
+        },
+        {
+          id: 'why-lower-temperature-does-not-fix-it',
+          heading: 'Pourquoi baisser l’aléatoire ne règle rien',
+          paragraphs: [
+            'On suppose souvent qu’abaisser la température (voir température et top-p) rend un modèle plus véridique, parce que le résultat semble plus prudent et déterministe. La température contrôle la façon dont le modèle échantillonne parmi les tokens suivants probables — elle ne change pas ce que le modèle sait et n’ajoute aucune étape de vérification des faits. Un modèle peut halluciner à température zéro avec la même assurance qu’à température un ; un réglage plus bas le fait juste halluciner la même réponse fausse avec plus de constance.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Peut-on corriger complètement l’hallucination ?',
+          answer:
+            'Non, pas avec les architectures actuelles de modèles de langage. Elle vient de la façon dont ces modèles génèrent du texte — prédire des continuations plausibles plutôt que vérifier des faits —, donc on peut la réduire par l’ancrage, le croisement de modèles et la vérification, mais pas l’éliminer comme catégorie.',
+        },
+        {
+          question: 'Un modèle plus gros ou plus récent hallucine-t-il moins ?',
+          answer:
+            'Souvent moins sur les connaissances courantes, parce qu’une plus grande partie était bien représentée à l’entraînement. Cela n’élimine pas le mécanisme sous-jacent — un modèle plus récent peut toujours halluciner avec assurance sur des détails rares, précis ou récents pour lesquels il n’a pas été bien entraîné.',
+        },
+        {
+          question: 'L’hallucination, est-ce la même chose que le modèle qui ment ?',
+          answer:
+            'Non. Mentir suppose de connaître la vérité et d’affirmer le contraire. Un modèle n’a pas de canal séparé pour « la vérité » auquel comparer sa sortie — il génère la continuation statistiquement la plus plausible, qu’elle se révèle exacte ou non.',
+        },
+        {
+          question: 'Donner ses propres documents au modèle arrête-t-il l’hallucination ?',
+          answer:
+            'Cela la réduit fortement pour les questions que ces documents répondent réellement, parce que le modèle peut reformuler du texte récupéré plutôt que de prédire à partir des seules données d’entraînement. Cela n’empêche pas le modèle de répondre avec fluidité depuis sa mémoire quand la récupération ne trouve rien de pertinent.',
+        },
+      ],
+      productNote:
+        'ClawAI ne prétend pas éliminer l’hallucination — aucun produit ne peut le dire honnêtement. Ce qu’il propose, ce sont les mitigations qui la réduisent mesurablement : des réponses par récupération ancrées dans vos propres documents (voir ce qu’est le RAG), un consensus multi-modèles qui met en évidence le désaccord entre modèles (voir ce qu’est le consensus IA), et un juge IA qui note les réponses selon des critères définis (voir ce qu’est un juge IA) — trois fonctionnalités réelles et indépendantes, chacune un filtre partiel, pas une garantie.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {
