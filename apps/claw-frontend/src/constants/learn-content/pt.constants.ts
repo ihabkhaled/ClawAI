@@ -29,6 +29,8 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
     cardSummaries: {
       [LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS]:
         'Como um prompt vira tokens, probabilidades e uma resposta gerada.',
+      [LearnTopic.WHAT_ARE_AI_TOKENS]:
+        'A unidade que um modelo realmente lê e escreve, e por que uma contagem exata precisa do tokenizador dele.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Usar vários modelos num mesmo fluxo em vez de se prender a um só.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -136,6 +138,93 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'O ClawAI encaminha prompts a modelos configurados na nuvem ou locais e pode executar fluxos de comparação e verificação; o modelo escolhido ainda gera tokens probabilisticamente, então o roteamento sozinho não garante a verdade.',
+    },
+    [LearnTopic.WHAT_ARE_AI_TOKENS]: {
+      seo: {
+        title: 'O que são tokens de IA?',
+        description:
+          'Tokens são as unidades que um modelo de linguagem realmente lê e escreve, não palavras nem caracteres. Como funciona a tokenização, como entrada e saída são contadas, e por que só o tokenizador do próprio modelo dá um número exato.',
+        keywords: ['o que é um token de IA', 'tokenização de LLM', 'tokens de entrada e saída'],
+      },
+      eyebrow: 'Fundamentos',
+      title: 'O que são tokens de IA?',
+      summary:
+        'Um token é a unidade que um modelo de linguagem realmente lê e escreve: um fragmento de texto obtido ao dividir sua entrada com o tokenizador do próprio modelo. Não é uma palavra nem um caractere, e quantos tokens um texto produz depende do idioma em que está escrito, de como está formatado e de qual tokenizador está contando.',
+      sections: [
+        {
+          id: 'tokens-vs-words-and-characters',
+          heading: 'Um token não é uma palavra, nem um caractere',
+          paragraphs: [
+            'Um tokenizador divide o texto em pedaços tirados de um vocabulário fixo aprendido durante o treinamento. Uma palavra curta e comum costuma ser exatamente um token; uma palavra mais longa ou rara pode se dividir em dois ou três; um único símbolo incomum pode sozinho ocupar mais de um token. Pontuação, espaços e quebras de linha também são tokens, e não saem de graça.',
+            'É por isso que a contagem de tokens, de palavras e de caracteres andam de forma independente. Duas frases com o mesmo número de palavras podem usar um número diferente de tokens, e reescrever uma frase com palavras mais curtas e comuns pode reduzir sua contagem de tokens sem encurtá-la como texto.',
+          ],
+        },
+        {
+          id: 'tokenization-differs-by-language-and-model',
+          heading: 'A tokenização muda conforme o idioma e o modelo',
+          paragraphs: [
+            'Cada modelo vem com seu próprio tokenizador e seu próprio vocabulário fixo, construído a partir do texto com que foi treinado. Expressões frequentes nesse texto de treinamento tendem a se comprimir em tokens menos numerosos e mais longos; expressões raras tendem a se dividir em pedaços mais numerosos e curtos.',
+            'Daí seguem duas consequências diretas. Primeiro, a mesma frase pode custar um número de tokens sensivelmente diferente conforme o idioma em que está escrita, porque nenhum vocabulário representa dois idiomas do mesmo jeito. Segundo, a mesma frase pode custar um número diferente de tokens em dois modelos distintos, porque cada um tem seu próprio vocabulário — uma contagem do tokenizador de um modelo não é uma estimativa confiável para outro.',
+          ],
+        },
+        {
+          id: 'input-and-output-tokens',
+          heading: 'Uma requisição gasta tokens de entrada e tokens de saída',
+          paragraphs: [
+            'Cada requisição tem dois grupos de tokens, contados e normalmente cobrados separadamente. Tokens de entrada são tudo o que é enviado ao modelo: instruções, a conversa visível, documentos anexados e resultados de ferramentas. Tokens de saída são tudo o que o modelo gera de volta.',
+            'Tokens de entrada não são um custo único numa conversa de vários turnos. Como cada nova requisição reenvia a conversa até ali, mensagens anteriores e qualquer material anexado voltam a ser contados como entrada a cada turno, não só no turno em que foram adicionados pela primeira vez.',
+          ],
+        },
+        {
+          id: 'tokens-and-the-context-window',
+          heading: 'Tokens são a unidade em que se mede uma janela de contexto',
+          paragraphs: [
+            'Uma janela de contexto é um orçamento expresso em tokens, compartilhado pela entrada e pela saída de uma única requisição. "O que é uma janela de contexto?" explica como esse orçamento se comporta na prática; o que importa aqui é só a unidade — a janela não é medida em palavras, caracteres ou mensagens, é medida em tokens, e entrada e saída consomem do mesmo total.',
+          ],
+        },
+        {
+          id: 'estimating-cost-without-a-price-table',
+          heading: 'Estimando o custo sem um número fixo',
+          paragraphs: [
+            'O custo baseado em tokens é uma multiplicação: tokens usados vezes uma tarifa definida por modelo. Provedores definem e mudam essas tarifas conforme seu próprio calendário, e um modelo mais capaz costuma custar mais por token do que um menor, com tokens de saída geralmente tarifados mais caro que os de entrada. Nada disso torna válido publicar aqui um número específico — uma tarifa impressa nesta página estaria errada em poucos meses.',
+            'O que continua verdadeiro seja qual for a tabela de preços vigente é o formato do custo: prompts mais curtos e focados e respostas mais curtas e focadas usam menos tokens, e reenviar anexos grandes a cada turno de uma conversa longa é uma das formas mais comuns de o uso de tokens crescer sem que ninguém tenha decidido isso.',
+          ],
+        },
+        {
+          id: 'exact-counts-need-the-tokenizer',
+          heading: 'Um número exato precisa do tokenizador do próprio modelo',
+          paragraphs: [
+            'Uma regra prática sobre tokens por palavra é uma aproximação válida para um idioma processado por um tokenizador, e não se transfere para outro idioma, outra escrita ou outro modelo. A formatação também muda o número: código, JSON e texto muito pontuado tendem a tokenizar de forma menos eficiente do que a mesma informação escrita como prosa simples.',
+            'Se um número exato importa — porque uma requisição está perto de um limite de contexto, ou porque o custo precisa ser previsto com precisão — o único método confiável é passar o texto real pelo tokenizador do modelo específico, ou por um endpoint de contagem, antes de enviá-lo. Uma estimativa baseada em palavras ou caracteres é um palpite disfarçado de número.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Um token é a mesma coisa que uma palavra?',
+          answer:
+            'Não. Uma palavra curta e comum costuma ser um token, mas uma palavra mais longa ou rara pode se dividir em vários, e pontuação, espaços e quebras de linha contam como tokens por conta própria. A contagem de tokens e a de palavras se correspondem só de forma aproximada.',
+        },
+        {
+          question:
+            'Por que a mesma frase usa um número diferente de tokens em ferramentas diferentes?',
+          answer:
+            'Cada ferramenta costuma reportar a contagem do tokenizador de um modelo específico, e cada modelo tem seu próprio vocabulário construído a partir do seu próprio texto de treinamento. Uma contagem exata para o tokenizador de um modelo é só uma estimativa para outro.',
+        },
+        {
+          question: 'Formatação como código ou JSON usa mais tokens que texto simples?',
+          answer:
+            'Muitas vezes, sim. Indentação, pontuação e símbolos repetidos são eles mesmos tokens, então um formato muito estruturado pode usar bem mais tokens que a mesma informação escrita em frases simples.',
+        },
+        {
+          question:
+            'Como posso saber a contagem exata de tokens de uma requisição antes de enviá-la?',
+          answer:
+            'Passe o texto exato pelo tokenizador do modelo específico ou por um endpoint de contagem que ele ofereça. Qualquer estimativa baseada em número de palavras ou caracteres é aproximada, e o erro cresce com diferenças de idioma, escrita e formatação.',
+        },
+      ],
+      productNote:
+        'O ClawAI conta os tokens de entrada e saída que uma requisição realmente usou depois que a resposta é gerada, e mostra o custo e o saldo consumido por aquela resposta em vez de uma estimativa feita com antecedência.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

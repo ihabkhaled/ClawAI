@@ -29,6 +29,8 @@ export const IT_LEARN_CONTENT: LearnDictionary = {
     cardSummaries: {
       [LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS]:
         'Come un prompt diventa token, probabilità e infine una risposta generata.',
+      [LearnTopic.WHAT_ARE_AI_TOKENS]:
+        'L’unità che un modello legge e scrive davvero, e perché un numero esatto richiede il suo tokenizer.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Usare più modelli in un unico flusso invece di legarsi a uno solo.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -137,6 +139,92 @@ export const IT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI instrada i prompt verso modelli cloud o locali configurati e può eseguire flussi di confronto e verifica; il modello scelto continua a generare in modo probabilistico, quindi il solo instradamento non garantisce la verità.',
+    },
+    [LearnTopic.WHAT_ARE_AI_TOKENS]: {
+      seo: {
+        title: 'Che cosa sono i token dell’IA?',
+        description:
+          'I token sono le unità che un modello linguistico legge e scrive davvero, non parole né caratteri. Come funziona la tokenizzazione, come si contano input e output, e perché solo il tokenizer del modello dà un numero esatto.',
+        keywords: ['che cos’è un token IA', 'tokenizzazione LLM', 'token di input e output'],
+      },
+      eyebrow: 'Fondamenti',
+      title: 'Che cosa sono i token dell’IA?',
+      summary:
+        'Un token è l’unità che un modello linguistico legge e scrive davvero: un frammento di testo ottenuto dividendo il tuo input con il tokenizer proprio del modello. Non è una parola né un carattere, e quanti token produce un testo dipende dalla lingua in cui è scritto, da come è formattato e da quale tokenizer lo sta contando.',
+      sections: [
+        {
+          id: 'tokens-vs-words-and-characters',
+          heading: 'Un token non è una parola, né un carattere',
+          paragraphs: [
+            'Un tokenizer divide il testo in pezzi tratti da un vocabolario fisso appreso durante l’addestramento. Una parola breve e comune è spesso esattamente un token; una parola più lunga o rara può dividersi in due o tre; un singolo simbolo insolito può da solo occupare più di un token. Anche la punteggiatura, gli spazi e gli a-capo sono token, e non sono gratuiti.',
+            'Per questo il numero di token, il numero di parole e il numero di caratteri seguono percorsi indipendenti. Due frasi con lo stesso numero di parole possono usare un numero diverso di token, e riscrivere una frase con parole più brevi e comuni può ridurne il numero di token senza accorciarla come testo.',
+          ],
+        },
+        {
+          id: 'tokenization-differs-by-language-and-model',
+          heading: 'La tokenizzazione varia per lingua e per modello',
+          paragraphs: [
+            'Ogni modello arriva con il proprio tokenizer e il proprio vocabolario fisso, costruito sul testo con cui è stato addestrato. Le espressioni frequenti in quel testo di addestramento tendono a comprimersi in token meno numerosi e più lunghi; le espressioni rare tendono a dividersi in pezzi più numerosi e più corti.',
+            'Ne derivano due conseguenze dirette. Primo, la stessa frase può costare un numero di token sensibilmente diverso a seconda della lingua in cui è scritta, perché nessun vocabolario rappresenta due lingue allo stesso modo. Secondo, la stessa frase può costare un numero diverso di token su due modelli distinti, perché ciascuno ha il proprio vocabolario: un conteggio dal tokenizer di un modello non è una stima affidabile per un altro.',
+          ],
+        },
+        {
+          id: 'input-and-output-tokens',
+          heading: 'Una richiesta consuma token di input e token di output',
+          paragraphs: [
+            'Ogni richiesta ha due riserve di token, contate e di norma tariffate separatamente. I token di input sono tutto ciò che viene inviato al modello: istruzioni, la conversazione visibile, eventuali documenti allegati e i risultati degli strumenti. I token di output sono tutto ciò che il modello genera in cambio.',
+            'I token di input non sono un costo una tantum in una conversazione con più turni. Poiché ogni nuova richiesta rinvia la conversazione avuta fin lì, i messaggi precedenti ed eventuale materiale allegato vengono ricontati come input a ogni turno, non solo nel turno in cui sono stati aggiunti la prima volta.',
+          ],
+        },
+        {
+          id: 'tokens-and-the-context-window',
+          heading: 'I token sono l’unità in cui si misura una finestra di contesto',
+          paragraphs: [
+            'Una finestra di contesto è un budget espresso in token, condiviso tra input e output di una singola richiesta. «Che cos’è una finestra di contesto?» spiega come si comporta questo budget nella pratica; qui conta solo l’unità di misura — la finestra non si misura in parole, caratteri o messaggi, si misura in token, e input e output attingono dallo stesso totale.',
+          ],
+        },
+        {
+          id: 'estimating-cost-without-a-price-table',
+          heading: 'Stimare il costo senza un numero fisso',
+          paragraphs: [
+            'Il costo basato sui token è una moltiplicazione: token usati per una tariffa fissata per modello. I fornitori fissano e cambiano quelle tariffe secondo il proprio calendario, e un modello più capace di solito costa di più per token rispetto a uno più piccolo, con i token di output in genere tariffati più cari di quelli di input. Nulla di tutto ciò rende utile pubblicare qui una cifra precisa: una tariffa stampata su questa pagina sarebbe sbagliata entro pochi mesi.',
+            'Ciò che resta vero a prescindere dal listino attuale è la forma del costo: prompt più brevi e mirati e risposte più brevi e mirate usano meno token, e rinviare grandi allegati a ogni turno di una conversazione lunga è uno dei modi più comuni in cui il consumo di token cresce senza che nessuno l’abbia deciso.',
+          ],
+        },
+        {
+          id: 'exact-counts-need-the-tokenizer',
+          heading: 'Un numero esatto richiede il tokenizer proprio del modello',
+          paragraphs: [
+            'Una regola empirica sui token per parola è un’approssimazione valida per una lingua elaborata da un tokenizer, e non si trasferisce a un’altra lingua, un’altra scrittura o un altro modello. Anche la formattazione cambia il numero: codice, JSON e testo molto punteggiato tendono a tokenizzare in modo meno efficiente della stessa informazione scritta come prosa semplice.',
+            'Se un numero esatto è importante — perché una richiesta è vicina a un limite di contesto, o perché il costo va previsto con precisione — l’unico metodo affidabile è far passare il testo reale attraverso il tokenizer proprio del modello specifico, o un endpoint di conteggio, prima di inviarlo. Una stima basata su parole o caratteri è una supposizione travestita da numero.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Un token è la stessa cosa di una parola?',
+          answer:
+            'No. Una parola breve e comune è spesso un token, ma una parola più lunga o rara può dividersi in più token, e punteggiatura, spazi e a-capo contano come token a pieno titolo. Il numero di token e il numero di parole si corrispondono solo in modo approssimativo.',
+        },
+        {
+          question: 'Perché la stessa frase usa un numero diverso di token in strumenti diversi?',
+          answer:
+            'Ogni strumento di solito riporta il conteggio del tokenizer di un modello specifico, e ogni modello ha il proprio vocabolario costruito sul proprio testo di addestramento. Un conteggio esatto per il tokenizer di un modello è solo una stima per un altro.',
+        },
+        {
+          question: 'Una formattazione come codice o JSON usa più token del testo semplice?',
+          answer:
+            'Spesso sì. Indentazione, punteggiatura e simboli ripetuti sono essi stessi token, quindi un formato molto strutturato può usare notevolmente più token della stessa informazione scritta in frasi semplici.',
+        },
+        {
+          question:
+            'Come posso sapere il numero esatto di token di una richiesta prima di inviarla?',
+          answer:
+            'Fai passare il testo esatto attraverso il tokenizer proprio del modello specifico, o un endpoint di conteggio che offre. Qualsiasi stima basata su numero di parole o caratteri resta approssimativa, e l’errore cresce con le differenze di lingua, scrittura e formattazione.',
+        },
+      ],
+      productNote:
+        'ClawAI conta i token di input e output effettivamente usati da una richiesta una volta generata la risposta, e mostra il costo e la quota consumata per quella risposta invece di una stima fatta in anticipo.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

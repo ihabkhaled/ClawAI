@@ -29,6 +29,8 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
     cardSummaries: {
       [LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS]:
         'How a prompt becomes tokens, probabilities and one generated answer.',
+      [LearnTopic.WHAT_ARE_AI_TOKENS]:
+        'The unit a model actually reads and writes, and why an exact count needs its own tokenizer.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Using several models in one workflow instead of committing to one.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -134,6 +136,92 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI routes prompts to configured cloud or local models and can run comparison and verification workflows; the selected model still generates tokens probabilistically, so routing alone is not a guarantee of truth.',
+    },
+    [LearnTopic.WHAT_ARE_AI_TOKENS]: {
+      seo: {
+        title: 'What are AI tokens?',
+        description:
+          'Tokens are the units a language model actually reads and writes, not words or characters. How tokenization works, how input and output are counted, and why only the model’s own tokenizer gives an exact number.',
+        keywords: ['what is an AI token', 'LLM tokenization', 'input and output tokens'],
+      },
+      eyebrow: 'Foundations',
+      title: 'What are AI tokens?',
+      summary:
+        'A token is the unit a language model actually reads and writes: a fragment of text produced by splitting your input with that model’s own tokenizer. It is not a word and not a character, and how many tokens a piece of text produces depends on the language it is written in, how it is formatted, and which model’s tokenizer is doing the counting.',
+      sections: [
+        {
+          id: 'tokens-vs-words-and-characters',
+          heading: 'A token is not a word, and not a character',
+          paragraphs: [
+            'A tokenizer breaks text into pieces drawn from a fixed vocabulary it learned during training. A common short word is often exactly one token; a longer or rarer word can split into two or three; a single unusual symbol can itself take more than one token. Punctuation, spaces and line breaks are tokens too, not free.',
+            'This is why token count, word count and character count move independently of one another. Two sentences with the same number of words can use a different number of tokens, and rewriting a sentence to use shorter, more common words can shrink its token count without shortening it as text.',
+          ],
+        },
+        {
+          id: 'tokenization-differs-by-language-and-model',
+          heading: 'Tokenization differs by language and by model',
+          paragraphs: [
+            'Every model ships with its own tokenizer and its own fixed vocabulary, built from the text it was trained on. Wording that was common in that training text tends to compress into fewer, longer tokens; wording that was rare tends to split into more, shorter pieces.',
+            'Two consequences follow directly. First, the same sentence can cost a noticeably different number of tokens depending on the language it is written in, because no two languages are represented the same way in a given vocabulary. Second, the same sentence can cost a different number of tokens on two different models, because each has its own vocabulary — a count from one model’s tokenizer is not a reliable estimate for another.',
+          ],
+        },
+        {
+          id: 'input-and-output-tokens',
+          heading: 'A request spends input tokens and output tokens',
+          paragraphs: [
+            'Every request has two token pools, counted and usually priced separately. Input tokens are everything sent to the model: instructions, the visible conversation, any attached documents and tool results. Output tokens are everything the model generates in return.',
+            'Input tokens are not a one-time cost in a multi-turn conversation. Because each new request resends the conversation so far, prior messages and any attached material are counted again as input on every turn, not only on the turn where they were first added.',
+          ],
+        },
+        {
+          id: 'tokens-and-the-context-window',
+          heading: 'Tokens are the unit a context window is measured in',
+          paragraphs: [
+            'A context window is a budget expressed in tokens, shared by the input and the output of a single request. See what a context window is for how that budget behaves in practice; what matters here is only the unit — the window is not measured in words, characters or messages, it is measured in tokens, and input and output draw from the same total.',
+          ],
+        },
+        {
+          id: 'estimating-cost-without-a-price-table',
+          heading: 'Estimating cost without a fixed number',
+          paragraphs: [
+            'Token-based cost is a multiplication: tokens used times a rate set per model. Providers set and change those rates on their own schedule, and a more capable model is typically priced higher per token than a smaller one, with output tokens usually costed at a higher rate than input tokens. None of that makes a specific figure worth publishing here — a rate printed on this page would be wrong within months.',
+            'What stays true regardless of the current rate table is the shape of the cost: shorter, more focused prompts and shorter, more focused answers use fewer tokens, and re-sending large attachments on every turn of a long conversation is one of the more common ways token usage grows without anyone deciding it should.',
+          ],
+        },
+        {
+          id: 'exact-counts-need-the-tokenizer',
+          heading: 'An exact count needs the model’s own tokenizer',
+          paragraphs: [
+            'A rule of thumb about tokens per word is an approximation of one language processed by one tokenizer, and it does not transfer to another language, another script or another model. Formatting changes the count too: code, JSON and heavily punctuated text tend to tokenize less efficiently than the same information written as plain prose.',
+            'If an exact count matters — because a request is near a context limit, or because cost needs to be predicted precisely — the only reliable method is to run the actual text through the specific model’s own tokenizer or counting endpoint before sending it. An estimate based on words or characters is a guess dressed up as a number.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Is a token the same thing as a word?',
+          answer:
+            'No. A short, common word is often one token, but a longer or rarer word can split into several, and punctuation, spaces and line breaks are counted as tokens in their own right. Token count and word count track each other loosely at best.',
+        },
+        {
+          question:
+            'Why does the same sentence use a different number of tokens in different tools?',
+          answer:
+            'Each tool is usually reporting the count from a specific model’s tokenizer, and every model has its own vocabulary built from its own training text. A count that is accurate for one model’s tokenizer is only an estimate for another.',
+        },
+        {
+          question: 'Does formatting like code or JSON use more tokens than plain text?',
+          answer:
+            'Often, yes. Indentation, punctuation and repeated symbols are themselves tokens, so a heavily structured format can use noticeably more tokens than the same information written as plain sentences.',
+        },
+        {
+          question: 'How can I find the exact token count for a request before sending it?',
+          answer:
+            'Run the exact text through the specific model’s own tokenizer or a counting endpoint it provides. Any estimate based on word count or character count is approximate, and the error grows with language, script and formatting differences.',
+        },
+      ],
+      productNote:
+        'ClawAI counts the input and output tokens a request actually used once the response is generated, and shows the cost and allowance it drew against that answer rather than an estimate made in advance.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

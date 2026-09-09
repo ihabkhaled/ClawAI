@@ -29,6 +29,8 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
     cardSummaries: {
       [LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS]:
         'Wie aus einer Eingabe Tokens, Wahrscheinlichkeiten und eine erzeugte Antwort werden.',
+      [LearnTopic.WHAT_ARE_AI_TOKENS]:
+        'Die Einheit, die ein Modell tatsächlich liest und schreibt — und warum eine exakte Zahl seinen eigenen Tokenizer braucht.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Mehrere Modelle in einem Arbeitsablauf nutzen, statt sich auf eines festzulegen.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -137,6 +139,92 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI leitet Eingaben an konfigurierte Cloud- oder lokale Modelle weiter und kann Vergleichs- und Prüfabläufe ausführen; das gewählte Modell generiert weiterhin probabilistisch, daher garantiert Routing allein keine Wahrheit.',
+    },
+    [LearnTopic.WHAT_ARE_AI_TOKENS]: {
+      seo: {
+        title: 'Was sind KI-Token?',
+        description:
+          'Token sind die Einheiten, die ein Sprachmodell tatsächlich liest und schreibt — keine Wörter oder Zeichen. Wie Tokenisierung funktioniert, wie Eingabe und Ausgabe gezählt werden, und warum nur der eigene Tokenizer des Modells eine exakte Zahl liefert.',
+        keywords: ['was ist ein KI-Token', 'LLM-Tokenisierung', 'Eingabe- und Ausgabe-Token'],
+      },
+      eyebrow: 'Grundlagen',
+      title: 'Was sind KI-Token?',
+      summary:
+        'Ein Token ist die Einheit, die ein Sprachmodell tatsächlich liest und schreibt: ein Textfragment, das entsteht, wenn der eigene Tokenizer des Modells die Eingabe zerlegt. Es ist kein Wort und kein Zeichen, und wie viele Token ein Textstück ergibt, hängt von der Sprache, der Formatierung und dem zählenden Tokenizer ab.',
+      sections: [
+        {
+          id: 'tokens-vs-words-and-characters',
+          heading: 'Ein Token ist kein Wort und kein Zeichen',
+          paragraphs: [
+            'Ein Tokenizer zerlegt Text in Stücke aus einem festen Vokabular, das er beim Training gelernt hat. Ein kurzes, gebräuchliches Wort ist oft genau ein Token; ein längeres oder selteneres Wort kann in zwei oder drei zerfallen; ein einzelnes ungewöhnliches Symbol kann selbst mehr als ein Token beanspruchen. Satzzeichen, Leerzeichen und Zeilenumbrüche sind ebenfalls Token und nicht kostenlos.',
+            'Deshalb entwickeln sich Tokenanzahl, Wortanzahl und Zeichenanzahl unabhängig voneinander. Zwei Sätze mit gleicher Wortzahl können unterschiedlich viele Token benötigen, und ein Satz mit kürzeren, gebräuchlicheren Wörtern kann seine Tokenanzahl senken, ohne als Text kürzer zu werden.',
+          ],
+        },
+        {
+          id: 'tokenization-differs-by-language-and-model',
+          heading: 'Tokenisierung unterscheidet sich je nach Sprache und Modell',
+          paragraphs: [
+            'Jedes Modell bringt seinen eigenen Tokenizer und sein eigenes festes Vokabular mit, aufgebaut aus dem Text, mit dem es trainiert wurde. Formulierungen, die in diesem Trainingstext häufig vorkamen, verdichten sich zu wenigen, längeren Token; seltene Formulierungen zerfallen eher in mehrere, kürzere Stücke.',
+            'Daraus folgen zwei Dinge unmittelbar. Erstens kann derselbe Satz je nach Sprache eine merklich andere Tokenzahl kosten, weil kein Vokabular zwei Sprachen gleich gut abbildet. Zweitens kann derselbe Satz bei zwei verschiedenen Modellen unterschiedlich viele Token kosten, weil jedes ein eigenes Vokabular hat — eine Zählung aus dem Tokenizer eines Modells ist keine verlässliche Schätzung für ein anderes.',
+          ],
+        },
+        {
+          id: 'input-and-output-tokens',
+          heading: 'Eine Anfrage verbraucht Eingabe-Token und Ausgabe-Token',
+          paragraphs: [
+            'Jede Anfrage hat zwei Token-Pools, die getrennt gezählt und meist getrennt bepreist werden. Eingabe-Token sind alles, was an das Modell geschickt wird: Anweisungen, der sichtbare Gesprächsverlauf, angehängte Dokumente und Werkzeugergebnisse. Ausgabe-Token sind alles, was das Modell im Gegenzug erzeugt.',
+            'Eingabe-Token sind in einem mehrstufigen Gespräch kein einmaliger Posten. Weil jede neue Anfrage den bisherigen Verlauf erneut mitschickt, zählen frühere Nachrichten und angehängtes Material bei jedem Zug erneut als Eingabe — nicht nur in dem Zug, in dem sie zuerst hinzukamen.',
+          ],
+        },
+        {
+          id: 'tokens-and-the-context-window',
+          heading: 'Token sind die Einheit, in der ein Kontextfenster gemessen wird',
+          paragraphs: [
+            'Ein Kontextfenster ist ein in Token ausgedrücktes Budget, das sich Eingabe und Ausgabe einer einzelnen Anfrage teilen. „Was ist ein Kontextfenster?“ erklärt, wie sich dieses Budget in der Praxis verhält; hier zählt nur die Einheit — das Fenster wird nicht in Wörtern, Zeichen oder Nachrichten gemessen, sondern in Token, und Eingabe wie Ausgabe schöpfen aus derselben Gesamtmenge.',
+          ],
+        },
+        {
+          id: 'estimating-cost-without-a-price-table',
+          heading: 'Kosten schätzen ohne feste Zahl',
+          paragraphs: [
+            'Tokenbasierte Kosten sind eine Multiplikation: verbrauchte Token mal ein je Modell festgelegter Satz. Anbieter legen diese Sätze nach eigenem Zeitplan fest und ändern sie; ein leistungsfähigeres Modell kostet pro Token typischerweise mehr als ein kleineres, und Ausgabe-Token werden meist höher bepreist als Eingabe-Token. Nichts davon macht eine konkrete Zahl an dieser Stelle sinnvoll — ein hier abgedruckter Satz wäre binnen Monaten falsch.',
+            'Unabhängig von der aktuellen Preistabelle bleibt die Form der Kosten gleich: kürzere, fokussiertere Prompts und kürzere, fokussiertere Antworten verbrauchen weniger Token, und große Anhänge bei jedem Zug eines langen Gesprächs erneut mitzuschicken, ist einer der häufigsten Wege, wie der Tokenverbrauch wächst, ohne dass es jemand so entschieden hätte.',
+          ],
+        },
+        {
+          id: 'exact-counts-need-the-tokenizer',
+          heading: 'Eine exakte Zahl braucht den eigenen Tokenizer des Modells',
+          paragraphs: [
+            'Eine Faustregel zu Token pro Wort ist eine Näherung für eine Sprache, verarbeitet von einem Tokenizer, und überträgt sich nicht auf eine andere Sprache, eine andere Schrift oder ein anderes Modell. Auch die Formatierung ändert die Zahl: Code, JSON und stark interpunktierter Text tokenisieren meist weniger effizient als dieselbe Information als schlichter Fließtext.',
+            'Wenn eine exakte Zahl wichtig ist — weil eine Anfrage nahe an einem Kontextlimit liegt oder weil Kosten genau vorhergesagt werden müssen —, ist die einzig verlässliche Methode, den tatsächlichen Text vor dem Senden durch den eigenen Tokenizer oder eine Zähl-Schnittstelle des jeweiligen Modells laufen zu lassen. Eine auf Wörtern oder Zeichen basierende Schätzung ist eine als Zahl verkleidete Vermutung.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Ist ein Token dasselbe wie ein Wort?',
+          answer:
+            'Nein. Ein kurzes, gebräuchliches Wort ist oft ein Token, aber ein längeres oder selteneres Wort kann in mehrere zerfallen, und Satzzeichen, Leerzeichen und Zeilenumbrüche zählen selbst als Token. Tokenanzahl und Wortanzahl laufen bestenfalls lose parallel.',
+        },
+        {
+          question:
+            'Warum benötigt derselbe Satz in verschiedenen Werkzeugen unterschiedlich viele Token?',
+          answer:
+            'Jedes Werkzeug meldet meist die Zählung aus dem Tokenizer eines bestimmten Modells, und jedes Modell hat sein eigenes, aus eigenem Trainingstext aufgebautes Vokabular. Eine für den Tokenizer eines Modells korrekte Zählung ist für ein anderes nur eine Schätzung.',
+        },
+        {
+          question: 'Verbraucht Formatierung wie Code oder JSON mehr Token als reiner Text?',
+          answer:
+            'Oft ja. Einrückung, Satzzeichen und wiederholte Symbole sind selbst Token, sodass ein stark strukturiertes Format merklich mehr Token verbrauchen kann als dieselbe Information in schlichten Sätzen.',
+        },
+        {
+          question: 'Wie finde ich die exakte Tokenzahl einer Anfrage, bevor ich sie sende?',
+          answer:
+            'Lassen Sie den genauen Text durch den eigenen Tokenizer des jeweiligen Modells oder eine von ihm bereitgestellte Zähl-Schnittstelle laufen. Jede auf Wort- oder Zeichenzahl basierende Schätzung ist ungefähr, und der Fehler wächst mit Unterschieden in Sprache, Schrift und Formatierung.',
+        },
+      ],
+      productNote:
+        'ClawAI zählt die tatsächlich verbrauchten Eingabe- und Ausgabe-Token einer Anfrage, sobald die Antwort erzeugt ist, und zeigt die Kosten und das dafür beanspruchte Guthaben zu dieser Antwort an, statt eine vorab geschätzte Zahl.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

@@ -29,6 +29,8 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
     cardSummaries: {
       [LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS]:
         'Comment une requête devient des tokens, des probabilités puis une réponse générée.',
+      [LearnTopic.WHAT_ARE_AI_TOKENS]:
+        'L’unité qu’un modèle lit et écrit réellement, et pourquoi un chiffre exact exige son propre tokenizer.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Utiliser plusieurs modèles dans un même flux plutôt que de s’enfermer dans un seul.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -138,6 +140,98 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI achemine les requêtes vers des modèles cloud ou locaux configurés et peut lancer des parcours de comparaison et de vérification ; le modèle choisi continue à générer probabilistiquement, donc le routage seul ne garantit pas la vérité.',
+    },
+    [LearnTopic.WHAT_ARE_AI_TOKENS]: {
+      seo: {
+        title: 'Que sont les tokens en IA ?',
+        description:
+          'Les tokens sont les unités qu’un modèle de langage lit et écrit réellement, pas des mots ni des caractères. Comment fonctionne la tokenisation, comment l’entrée et la sortie sont comptées, et pourquoi seul le tokenizer du modèle donne un chiffre exact.',
+        keywords: [
+          'qu’est-ce qu’un token en IA',
+          'tokenisation LLM',
+          'tokens d’entrée et de sortie',
+        ],
+      },
+      eyebrow: 'Principes de base',
+      title: 'Que sont les tokens en IA ?',
+      summary:
+        'Un token est l’unité qu’un modèle de langage lit et écrit réellement : un fragment de texte obtenu en découpant votre saisie avec le tokenizer propre au modèle. Ce n’est ni un mot ni un caractère, et le nombre de tokens produit par un texte dépend de la langue dans laquelle il est écrit, de sa mise en forme et du tokenizer qui le compte.',
+      sections: [
+        {
+          id: 'tokens-vs-words-and-characters',
+          heading: 'Un token n’est ni un mot ni un caractère',
+          paragraphs: [
+            'Un tokenizer découpe le texte en morceaux tirés d’un vocabulaire fixe appris pendant l’entraînement. Un mot court et courant tient souvent en exactement un token ; un mot plus long ou plus rare peut se diviser en deux ou trois ; un seul symbole inhabituel peut à lui seul occuper plus d’un token. La ponctuation, les espaces et les retours à la ligne sont eux aussi des tokens, et ne sont pas gratuits.',
+            'C’est pourquoi le nombre de tokens, le nombre de mots et le nombre de caractères évoluent de façon indépendante. Deux phrases comptant le même nombre de mots peuvent utiliser un nombre de tokens différent, et réécrire une phrase avec des mots plus courts et plus courants peut réduire son nombre de tokens sans la raccourcir en tant que texte.',
+          ],
+        },
+        {
+          id: 'tokenization-differs-by-language-and-model',
+          heading: 'La tokenisation varie selon la langue et le modèle',
+          paragraphs: [
+            'Chaque modèle est livré avec son propre tokenizer et son propre vocabulaire fixe, construit à partir du texte sur lequel il a été entraîné. Les formulations fréquentes dans ce texte d’entraînement ont tendance à se comprimer en tokens moins nombreux et plus longs ; les formulations rares ont tendance à se diviser en morceaux plus nombreux et plus courts.',
+            'Deux conséquences en découlent directement. D’abord, la même phrase peut coûter un nombre de tokens sensiblement différent selon la langue dans laquelle elle est écrite, car aucun vocabulaire ne représente deux langues de la même façon. Ensuite, la même phrase peut coûter un nombre de tokens différent sur deux modèles distincts, car chacun a son propre vocabulaire — un comptage tiré du tokenizer d’un modèle n’est pas une estimation fiable pour un autre.',
+          ],
+        },
+        {
+          id: 'input-and-output-tokens',
+          heading: 'Une requête consomme des tokens d’entrée et des tokens de sortie',
+          paragraphs: [
+            'Chaque requête comporte deux réserves de tokens, comptées et le plus souvent tarifées séparément. Les tokens d’entrée sont tout ce qui est envoyé au modèle : instructions, conversation visible, documents joints et résultats d’outils. Les tokens de sortie sont tout ce que le modèle génère en retour.',
+            'Les tokens d’entrée ne représentent pas un coût unique dans une conversation à plusieurs tours. Comme chaque nouvelle requête renvoie la conversation accumulée jusque-là, les messages précédents et tout document joint sont recomptés comme entrée à chaque tour, pas seulement au tour où ils ont été ajoutés pour la première fois.',
+          ],
+        },
+        {
+          id: 'tokens-and-the-context-window',
+          heading: 'Les tokens sont l’unité dans laquelle se mesure une fenêtre de contexte',
+          paragraphs: [
+            'Une fenêtre de contexte est un budget exprimé en tokens, partagé entre l’entrée et la sortie d’une même requête. « Qu’est-ce qu’une fenêtre de contexte ? » explique comment ce budget se comporte en pratique ; ce qui compte ici, c’est seulement l’unité — la fenêtre ne se mesure ni en mots, ni en caractères, ni en messages, mais en tokens, et l’entrée comme la sortie puisent dans le même total.',
+          ],
+        },
+        {
+          id: 'estimating-cost-without-a-price-table',
+          heading: 'Estimer le coût sans chiffre figé',
+          paragraphs: [
+            'Le coût fondé sur les tokens est une multiplication : tokens consommés fois un tarif fixé par modèle. Les fournisseurs fixent et modifient ces tarifs selon leur propre calendrier, et un modèle plus capable coûte généralement plus cher par token qu’un modèle plus modeste, les tokens de sortie étant en général tarifés plus cher que les tokens d’entrée. Rien de tout cela ne justifie de publier un chiffre précis ici — un tarif imprimé sur cette page serait faux en quelques mois.',
+            'Ce qui reste vrai quel que soit le barème du moment, c’est la forme du coût : des invites plus courtes et plus ciblées et des réponses plus courtes et plus ciblées consomment moins de tokens, et renvoyer de grosses pièces jointes à chaque tour d’une longue conversation est l’une des façons les plus courantes dont l’usage de tokens augmente sans que personne ne l’ait vraiment décidé.',
+          ],
+        },
+        {
+          id: 'exact-counts-need-the-tokenizer',
+          heading: 'Un chiffre exact exige le tokenizer propre au modèle',
+          paragraphs: [
+            'Une règle empirique sur les tokens par mot n’est qu’une approximation valable pour une langue traitée par un tokenizer donné, et elle ne se transpose pas à une autre langue, une autre écriture ou un autre modèle. La mise en forme change aussi le chiffre : le code, le JSON et un texte fortement ponctué se tokenisent généralement moins efficacement que la même information écrite en prose simple.',
+            'Si un chiffre exact importe — parce qu’une requête approche une limite de contexte, ou parce que le coût doit être prévu avec précision — la seule méthode fiable consiste à faire passer le texte réel par le tokenizer propre au modèle concerné, ou par un service de comptage, avant de l’envoyer. Une estimation fondée sur les mots ou les caractères n’est qu’une supposition déguisée en chiffre.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Un token est-il la même chose qu’un mot ?',
+          answer:
+            'Non. Un mot court et courant tient souvent en un seul token, mais un mot plus long ou plus rare peut se diviser en plusieurs, et la ponctuation, les espaces et les retours à la ligne comptent eux-mêmes comme des tokens. Le nombre de tokens et le nombre de mots ne se correspondent qu’approximativement.',
+        },
+        {
+          question:
+            'Pourquoi la même phrase utilise-t-elle un nombre de tokens différent selon l’outil ?',
+          answer:
+            'Chaque outil rapporte généralement le comptage issu du tokenizer d’un modèle précis, et chaque modèle a son propre vocabulaire construit à partir de son propre texte d’entraînement. Un comptage exact pour le tokenizer d’un modèle n’est qu’une estimation pour un autre.',
+        },
+        {
+          question:
+            'Une mise en forme comme le code ou le JSON consomme-t-elle plus de tokens que du texte brut ?',
+          answer:
+            'Souvent, oui. L’indentation, la ponctuation et les symboles répétés sont eux-mêmes des tokens, si bien qu’un format fortement structuré peut consommer sensiblement plus de tokens que la même information écrite en phrases simples.',
+        },
+        {
+          question:
+            'Comment connaître le nombre exact de tokens d’une requête avant de l’envoyer ?',
+          answer:
+            'Faites passer le texte exact par le tokenizer propre au modèle concerné, ou par un service de comptage qu’il propose. Toute estimation fondée sur le nombre de mots ou de caractères reste approximative, et l’erreur grandit avec les différences de langue, d’écriture et de mise en forme.',
+        },
+      ],
+      productNote:
+        'ClawAI compte les tokens d’entrée et de sortie réellement utilisés par une requête une fois la réponse générée, et affiche le coût ainsi que le crédit consommé pour cette réponse plutôt qu’une estimation faite à l’avance.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

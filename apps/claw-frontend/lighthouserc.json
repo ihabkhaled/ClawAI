@@ -34,6 +34,8 @@
         "http://localhost:3000/en/coding-agent",
         "http://localhost:3000/en/coding-agent/install",
         "http://localhost:3000/en/learn",
+        "http://localhost:3000/en/learn/how-language-models-generate-answers",
+        "http://localhost:3000/en/learn/what-are-ai-tokens",
         "http://localhost:3000/en/learn/what-is-multi-model-ai",
         "http://localhost:3000/en/learn/what-is-llm-orchestration",
         "http://localhost:3000/en/learn/what-is-ai-model-routing",

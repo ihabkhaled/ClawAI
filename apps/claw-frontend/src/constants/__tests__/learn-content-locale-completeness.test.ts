@@ -123,8 +123,52 @@ describe('/learn content locale completeness', () => {
     );
   });
 
+  it('includes a substantive AI-tokens explainer in every locale', () => {
+    const englishSectionIds = LEARN_CONTENT_BY_LOCALE[Locale.EN].topics[
+      LearnTopic.WHAT_ARE_AI_TOKENS
+    ].sections.map((section) => section.id);
+
+    for (const locale of Object.values(Locale)) {
+      const content = LEARN_CONTENT_BY_LOCALE[locale].topics[LearnTopic.WHAT_ARE_AI_TOKENS];
+      expect(content.sections.length, locale).toBeGreaterThanOrEqual(5);
+      expect(content.faq.length, locale).toBeGreaterThanOrEqual(3);
+      expect(
+        content.sections.map((section) => section.id),
+        locale,
+      ).toEqual(englishSectionIds);
+    }
+  });
+
+  it('gives the AI-tokens explainer unique SEO copy in every locale', () => {
+    const content = Object.values(Locale).map(
+      (locale) => LEARN_CONTENT_BY_LOCALE[locale].topics[LearnTopic.WHAT_ARE_AI_TOKENS],
+    );
+
+    expect(new Set(content.map((topic) => topic.seo.title))).toHaveLength(
+      Object.values(Locale).length,
+    );
+    expect(new Set(content.map((topic) => topic.seo.description))).toHaveLength(
+      Object.values(Locale).length,
+    );
+    expect(new Set(content.map((topic) => topic.seo.keywords.join('|')))).toHaveLength(
+      Object.values(Locale).length,
+    );
+  });
+
   it('keeps the topic order exhaustive', () => {
     expect(LEARN_TOPIC_ORDER).toContain(LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS);
+    expect(LEARN_TOPIC_ORDER).toContain(LearnTopic.WHAT_ARE_AI_TOKENS);
+  });
+
+  it('lists every LearnTopic enum member in LEARN_TOPIC_ORDER exactly once', () => {
+    // A plain `toContain` check catches an omission but not a duplicate, and a
+    // duplicate silently drops another topic from the hub, the sitemap and
+    // every other surface fanned out from this array. Comparing the full
+    // sorted arrays catches both a missing member (lengths differ, or a value
+    // is absent) and a duplicate (the same failure mode from the other side).
+    const enumTopics = Object.values(LearnTopic).slice().sort();
+    const orderedTopics = [...LEARN_TOPIC_ORDER].sort();
+    expect(orderedTopics).toEqual(enumTopics);
   });
 
   it.each(nonEnglishLocales)(
@@ -152,6 +196,54 @@ describe('/learn content locale completeness', () => {
         .filter((key) => !LEGITIMATE_UNCHANGED_VALUES.has(english[key] ?? ''));
 
       expect(unexpectedlyUnchanged).toEqual([]);
+    },
+  );
+
+  /**
+   * The two prior assertions ("includes a substantive ... explainer") check
+   * structure — section count, FAQ count, matching ids — but not that any
+   * given paragraph or FAQ answer actually says anything. A one-sentence
+   * stub passes them. These thresholds are evidence-based: measured against
+   * every existing topic in every locale (`ar` and `ja` had the shortest
+   * paragraphs and FAQ answers among the non-compact and compact scripts
+   * respectively), so the floor sits comfortably below real content without
+   * being loose enough to let a stub through.
+   *
+   * Chinese and Japanese are logographic and carry more meaning per
+   * character than a Latin, Cyrillic, Arabic, Devanagari or Thai sentence of
+   * the same length, so the same character-count floor would either be too
+   * loose for those scripts or too strict for everything else. Two floors,
+   * chosen from measurement rather than a guess, avoid both failure modes.
+   */
+  const COMPACT_SCRIPT_LOCALES = new Set<Locale>([Locale.JA, Locale.ZH]);
+  const MIN_PARAGRAPH_LENGTH = 60;
+  const MIN_PARAGRAPH_LENGTH_COMPACT = 25;
+  const MIN_FAQ_ANSWER_LENGTH = 70;
+  const MIN_FAQ_ANSWER_LENGTH_COMPACT = 30;
+
+  it.each(Object.values(Locale))(
+    '%s: every topic clears the substantive paragraph and FAQ-answer length floor',
+    (locale) => {
+      const minParagraph = COMPACT_SCRIPT_LOCALES.has(locale)
+        ? MIN_PARAGRAPH_LENGTH_COMPACT
+        : MIN_PARAGRAPH_LENGTH;
+      const minFaqAnswer = COMPACT_SCRIPT_LOCALES.has(locale)
+        ? MIN_FAQ_ANSWER_LENGTH_COMPACT
+        : MIN_FAQ_ANSWER_LENGTH;
+
+      for (const topic of LEARN_TOPIC_ORDER) {
+        const content = LEARN_CONTENT_BY_LOCALE[locale].topics[topic];
+        for (const section of content.sections) {
+          for (const paragraph of section.paragraphs) {
+            expect(paragraph.length, `${topic}/${section.id}`).toBeGreaterThanOrEqual(minParagraph);
+          }
+        }
+        for (const entry of content.faq) {
+          expect(entry.answer.length, `${topic}: ${entry.question}`).toBeGreaterThanOrEqual(
+            minFaqAnswer,
+          );
+        }
+      }
     },
   );
 });

@@ -31,6 +31,10 @@ describe('LearnHubPage', () => {
     expect(LEARN_TOPIC_ORDER).toContain('how-language-models-generate-answers');
   });
 
+  it('registers the AI-tokens explainer', () => {
+    expect(LEARN_TOPIC_ORDER).toContain('what-are-ai-tokens');
+  });
+
   it('renders exactly one h1 and a card for every topic', async () => {
     render(await LearnHubPage());
 
@@ -61,6 +65,14 @@ describe('LearnTopicPage', () => {
     expect(getLearnTopicPath(LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS)).toBe(
       '/learn/how-language-models-generate-answers',
     );
+  });
+
+  it('renders the AI-tokens explainer at its public path', async () => {
+    render(await LearnTopicPage({ topic: LearnTopic.WHAT_ARE_AI_TOKENS }));
+    const content = LEARN_CONTENT_BY_LOCALE[Locale.EN].topics[LearnTopic.WHAT_ARE_AI_TOKENS];
+
+    expect(screen.getByRole('heading', { level: 1, name: content.seo.title })).toBeInTheDocument();
+    expect(getLearnTopicPath(LearnTopic.WHAT_ARE_AI_TOKENS)).toBe('/learn/what-are-ai-tokens');
   });
 
   it('renders exactly one h1', async () => {
