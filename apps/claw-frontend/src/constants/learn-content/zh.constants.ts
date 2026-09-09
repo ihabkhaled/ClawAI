@@ -31,6 +31,8 @@ export const ZH_LEARN_CONTENT: LearnDictionary = {
         '提示词如何变成词元、概率，最终形成生成式回答。',
       [LearnTopic.WHAT_ARE_AI_TOKENS]:
         '模型真正读取和写出的单位，以及为什么精确数字需要它自己的分词器。',
+      [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]:
+        'Temperature 和 top-p 到底能改变一条回答的哪些方面——以及它们改变不了什么。',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: '在一个工作流里用多个模型，而不是固定用一个。',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
         '决定哪个模型运行、以什么顺序运行、输出如何处理的那一层。',
@@ -207,6 +209,87 @@ export const ZH_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI 会在生成回答之后，统计一次请求实际用掉的输入和输出词元，并显示这条回答产生的成本和消耗的额度，而不是事先给出的估算。',
+    },
+    [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]: {
+      seo: {
+        title: 'Temperature 和 top-p 控制什么？',
+        description:
+          'Temperature 和 top-p 决定模型如何选择下一个词元，而不是它知道什么。每个设置到底改变了什么，为什么更低并不自动意味着更好，以及为什么 temperature 为零仍然不能完全可重复。',
+        keywords: ['temperature top-p 解析', 'LLM 采样参数', 'AI 输出的随机性'],
+      },
+      eyebrow: '基础原理',
+      title: 'Temperature 和 top-p 控制什么？',
+      summary:
+        'Temperature 和 top-p 是解码设置，它们改变模型如何从已经算好的概率中选出下一个词元。它们控制的是措辞和表达上的随机性，而不是准确性、知识或推理能力——而且即便在最保守的设置下，两者都不能保证输出完全可重复。',
+      sections: [
+        {
+          id: 'what-these-settings-actually-change',
+          heading: '它们重塑的是一次选择，而不是模型的知识',
+          paragraphs: [
+            '在 temperature 或 top-p 起作用之前，模型已经根据当前上下文，为每一个可能的下一词元计算好了概率。这两个设置都不会改变这些概率的来源——模型学到的参数以及提供给它的上下文。它们只改变从模型已经产生的分布中挑选词元的方式。',
+          ],
+        },
+        {
+          id: 'temperature-and-the-shape-of-the-distribution',
+          heading: 'Temperature 调整的是这个分布有多尖锐或多平坦',
+          paragraphs: [
+            '更低的 temperature 会让概率最高的词元被选中的可能性进一步提高，因此输出会偏向那唯一一个最可能的延续，在不同次运行之间也会更重复。更高的 temperature 会把分布拉平，让概率较低的词元也有更现实的机会被选中，从而产生更多样的措辞——同时也给了不太可能出现、有时甚至怪异的词元更多可乘之机。',
+            'Temperature 不会添加模型本来没有的信息。它无法把一个错误的猜测变成正确的；它只是改变模型对自己已经偏好的那个猜测坚持的程度。',
+          ],
+        },
+        {
+          id: 'top-p-and-the-candidate-pool',
+          heading: 'Top-p 限制的是哪些词元甚至会被纳入考虑',
+          paragraphs: [
+            'Top-p，也叫核采样（nucleus sampling），工作方式和 temperature 不同：它不是重塑每一个概率，而是先把范围缩小到概率总和达到设定阈值的最小一组头部词元，然后只从这组词元中采样。低 top-p 只保留模型最有把握的那一小撮词元；高 top-p 则放入更广泛的一批合理候选。Temperature 和 top-p 通常一前一后一起使用，而不是相互替代。',
+          ],
+        },
+        {
+          id: 'why-temperature-zero-is-not-perfectly-repeatable',
+          heading: 'Temperature 为零接近确定性，但并非完全确定',
+          paragraphs: [
+            'Temperature 为零，或者等效的“总是选择最可能的词元”设置，会去掉采样这一步，原则上应该让相同输入产生可复现的输出。但在实践中，GPU 上的浮点运算并非严格独立于计算顺序，供应商的基础设施也可能在不同请求之间对计算进行批处理或重新排序。结果是，即便用最确定性的设置把同一个提示词发送两次，偶尔仍可能得到不同的结果，尤其是当两个候选词元的概率非常接近时。',
+          ],
+        },
+        {
+          id: 'lower-is-not-the-same-as-better',
+          heading: '设置更低并不自动意味着更好',
+          paragraphs: [
+            '降低随机性会让输出更可重复，而不是更正确。一个说得很笃定但错误的延续，在低 temperature 下依然会笃定地错下去；而且设置过低时，模型会不断重新选中同样安全、高概率的词元，在较长的输出中容易产生明显重复或生硬的措辞。',
+          ],
+        },
+        {
+          id: 'choosing-a-setting-for-the-task',
+          heading: '合适的设置取决于输出的用途',
+          paragraphs: [
+            '本质上只有一个正确答案的任务——提取一个值、遵循严格的格式、写出必须能编译通过的代码——通常受益于更低的随机性，因为一致性比多样性更重要。而多种不同答案可能都不错的任务——头脑风暴、起草不同的表达方式、开放式写作——则受益于更高的随机性，因为多样性正是目的所在。这两个设置都不能替代给模型更好的上下文，也都不能替代对真正重要的答案进行核验。',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Temperature 为零会让输出具有确定性吗？',
+          answer:
+            '接近，但不能保证。它去掉了采样中刻意引入的随机性，但浮点计算和供应商侧的批处理仍可能在完全打平或非常接近的判断上偶尔给出不同的词元，所以相同的请求通常——但不总是——会得到相同的结果。',
+        },
+        {
+          question: 'Temperature 和 top-p 有什么区别？',
+          answer:
+            'Temperature 重塑的是每一个可能的下一词元的概率。Top-p 先把范围缩小到概率超过某个阈值的最小一组头部候选，然后只从这组中采样。它们以不同的方式作用于同一个分布，也经常被组合使用。',
+        },
+        {
+          question: '更高的 temperature 会让模型更有创意或更博学吗？',
+          answer:
+            '它改变的是措辞的多样性，而不是知识或推理能力。更高的 temperature 可能产生更多样的措辞，但依然来自同一组学到的参数，也同样容易带出一个可能性更低、质量更差的延续。',
+        },
+        {
+          question: '涉及事实的任务是不是应该总是用最低的设置？',
+          answer:
+            '更低的设置会让输出更一致，这在一致性本身就是目标时有帮助，但并不能纠正一个本质上错误的答案——低 temperature 的输出仍可能笃定且反复地出错。核实一个事实性说法，仍然需要独立的来源或检查。',
+        },
+      ],
+      productNote:
+        'ClawAI 为每个对话提供 temperature 设置，并应用到处理该请求的供应商上；它不提供 top-p 作为可调设置，因此核采样仍保持在各供应商各自的默认值。',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

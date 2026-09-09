@@ -31,6 +31,8 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
         'How a prompt becomes tokens, probabilities and one generated answer.',
       [LearnTopic.WHAT_ARE_AI_TOKENS]:
         'The unit a model actually reads and writes, and why an exact count needs its own tokenizer.',
+      [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]:
+        'What temperature and top-p actually change about an answer — and what they can’t change.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Using several models in one workflow instead of committing to one.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -222,6 +224,91 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI counts the input and output tokens a request actually used once the response is generated, and shows the cost and allowance it drew against that answer rather than an estimate made in advance.',
+    },
+    [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]: {
+      seo: {
+        title: 'What do temperature and top-p control?',
+        description:
+          'Temperature and top-p decide how a model picks its next token, not what it knows. What each setting actually changes, why lower is not automatically better, and why temperature zero still is not perfectly repeatable.',
+        keywords: [
+          'temperature top-p explained',
+          'LLM sampling parameters',
+          'AI output randomness',
+        ],
+      },
+      eyebrow: 'Foundations',
+      title: 'What do temperature and top-p control?',
+      summary:
+        'Temperature and top-p are decoding settings that change how a model chooses its next token from the probabilities it has already computed. They control randomness in wording and phrasing, not accuracy, knowledge, or reasoning ability — and neither one guarantees exactly repeatable output, even at its most conservative setting.',
+      sections: [
+        {
+          id: 'what-these-settings-actually-change',
+          heading: 'They reshape a choice, not the model’s knowledge',
+          paragraphs: [
+            'By the time temperature or top-p apply, the model has already computed a probability for every possible next token given the current context. Neither setting changes where those probabilities came from — the model’s learned parameters and the context it was given. They only change how one token gets picked from the distribution the model already produced.',
+          ],
+        },
+        {
+          id: 'temperature-and-the-shape-of-the-distribution',
+          heading: 'Temperature adjusts how sharp or flat that distribution is',
+          paragraphs: [
+            'A lower temperature makes the highest-probability tokens even more likely to be picked, so output leans toward the single most probable continuation and repeats itself more across separate runs. A higher temperature flattens the distribution, giving lower-probability tokens a more realistic chance of being chosen, which produces more varied wording — and more room for an unlikely, sometimes odd, token to slip through.',
+            'Temperature does not add information the model does not have. It cannot turn a wrong guess into a correct one; it only changes how strongly the model commits to whichever guess it already favors.',
+          ],
+        },
+        {
+          id: 'top-p-and-the-candidate-pool',
+          heading: 'Top-p limits which tokens even get considered',
+          paragraphs: [
+            'Top-p, also called nucleus sampling, works differently from temperature: instead of reshaping every probability, it first narrows the field to the smallest set of top tokens whose probabilities add up to a chosen threshold, then samples only from that set. A low top-p keeps only the handful of tokens the model is most confident about; a high top-p lets in a wider spread of plausible alternatives. Temperature and top-p are typically applied together, one after the other, rather than as substitutes for each other.',
+          ],
+        },
+        {
+          id: 'why-temperature-zero-is-not-perfectly-repeatable',
+          heading: 'Temperature zero is close to deterministic, not exactly deterministic',
+          paragraphs: [
+            'A temperature of zero, or an equivalent “always pick the most likely token” setting, removes the sampling step and should, in principle, make output reproducible for identical input. In practice, floating-point arithmetic on GPUs is not strictly order-independent, and provider infrastructure can batch or otherwise reorder computation between requests. The result is that the same prompt sent twice at the most deterministic setting can still occasionally come back different, especially when two candidate tokens were nearly tied.',
+          ],
+        },
+        {
+          id: 'lower-is-not-the-same-as-better',
+          heading: 'A lower setting is not automatically a better one',
+          paragraphs: [
+            'Reducing randomness makes output more repeatable, not more correct. A confidently wrong continuation stays confidently wrong at low temperature, and very low settings can also produce noticeably repetitive or stilted phrasing over longer output, because the model keeps re-selecting the same safe, high-probability tokens.',
+          ],
+        },
+        {
+          id: 'choosing-a-setting-for-the-task',
+          heading: 'The right setting depends on what the output is for',
+          paragraphs: [
+            'Tasks with essentially one correct answer — extracting a value, following a strict format, writing code that has to compile — generally benefit from lower randomness, because consistency matters more than variety. Tasks where several different answers could all be good — brainstorming, drafting alternative phrasings, open-ended writing — benefit from more randomness, because variety is the point. Neither setting substitutes for giving the model better context, and neither one substitutes for verifying an answer that actually matters.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Does temperature zero make output deterministic?',
+          answer:
+            'Nearly, but not guaranteed. It removes the intentional randomness of sampling, but floating-point computation and provider-side batching can still occasionally produce a different token on an exact tie or a very close call, so identical requests are usually — not always — identical.',
+        },
+        {
+          question: 'What is the difference between temperature and top-p?',
+          answer:
+            'Temperature reshapes the probability of every possible next token. Top-p first narrows the field to the smallest set of top candidates whose probabilities cross a threshold, then samples from just that set. They act on the same distribution in different ways and are commonly combined.',
+        },
+        {
+          question: 'Does a higher temperature make a model more creative or more knowledgeable?',
+          answer:
+            'It changes wording variety, not knowledge or reasoning. A higher temperature can produce more varied phrasing, but it still draws from the same learned parameters, and can just as easily surface a less likely, lower-quality continuation.',
+        },
+        {
+          question: 'Should I always use the lowest setting for factual tasks?',
+          answer:
+            'A lower setting makes output more consistent, which helps when consistency itself is the goal, but it does not fix an underlying wrong answer — a low-temperature output can be confidently and repeatably incorrect. Verifying a factual claim still requires an independent source or check.',
+        },
+      ],
+      productNote:
+        'ClawAI exposes a temperature control per conversation, applied to whichever provider handles the request; it does not expose top-p as a setting, so nucleus sampling stays at each provider’s own default.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

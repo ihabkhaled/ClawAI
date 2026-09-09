@@ -17,6 +17,7 @@
 export enum LearnTopic {
   HOW_LANGUAGE_MODELS_GENERATE_ANSWERS = 'how-language-models-generate-answers',
   WHAT_ARE_AI_TOKENS = 'what-are-ai-tokens',
+  TEMPERATURE_TOP_P_AND_RANDOMNESS = 'temperature-top-p-and-randomness',
   WHAT_IS_LLM_ORCHESTRATION = 'what-is-llm-orchestration',
   WHAT_IS_AI_MODEL_ROUTING = 'what-is-ai-model-routing',
   WHAT_IS_MULTI_MODEL_AI = 'what-is-multi-model-ai',

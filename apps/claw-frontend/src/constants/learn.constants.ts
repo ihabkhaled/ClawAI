@@ -31,6 +31,7 @@ export const LEARN_REVIEW_DATE = '2026-09-09';
 export const LEARN_TOPIC_ORDER: ReadonlyArray<LearnTopic> = [
   LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS,
   LearnTopic.WHAT_ARE_AI_TOKENS,
+  LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS,
   LearnTopic.WHAT_IS_MULTI_MODEL_AI,
   LearnTopic.WHAT_IS_LLM_ORCHESTRATION,
   LearnTopic.WHAT_IS_AI_MODEL_ROUTING,
@@ -79,6 +80,11 @@ export const LEARN_RELATED_PATHS: Readonly<Record<LearnTopic, ReadonlyArray<stri
     '/how-it-works',
   ],
   [LearnTopic.WHAT_ARE_AI_TOKENS]: ['/supported-models', '/pricing', '/features'],
+  [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]: [
+    '/features',
+    '/how-it-works',
+    '/supported-models',
+  ],
   [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: ['/features', '/supported-models', '/compare'],
   [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]: ['/features', '/how-it-works', '/architecture'],
   [LearnTopic.WHAT_IS_AI_MODEL_ROUTING]: ['/how-it-works', '/features', '/supported-models'],

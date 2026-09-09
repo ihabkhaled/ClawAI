@@ -88,16 +88,41 @@ const LEGITIMATE_UNCHANGED_VALUES = new Set<string>([
 const english = flatten(LEARN_CONTENT_BY_LOCALE[Locale.EN]);
 const nonEnglishLocales = Object.values(Locale).filter((locale) => locale !== Locale.EN);
 
+/**
+ * Topics published under this SEO-expansion effort (see
+ * `docs/05-frontend/seo-content-architecture.md`) commit to a higher content
+ * bar than the pre-existing cluster: at least five sections, not the
+ * historical minimum of three. Generic, per-topic tests below cover
+ * structure and SEO uniqueness for every topic in `LEARN_TOPIC_ORDER`
+ * uniformly; this list is the one place a new topic opts into the stricter
+ * section-count bar, so adding topic N+1 is a one-line addition here rather
+ * than a new ~20-line test block.
+ */
+const SDD_LEARN_TOPICS_MIN_FIVE_SECTIONS: ReadonlyArray<LearnTopic> = [
+  LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS,
+  LearnTopic.WHAT_ARE_AI_TOKENS,
+  LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS,
+];
+
 describe('/learn content locale completeness', () => {
-  it('includes a substantive language-model answer explainer in every locale', () => {
-    const englishSectionIds = LEARN_CONTENT_BY_LOCALE[Locale.EN].topics[
-      LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS
-    ].sections.map((section) => section.id);
+  it.each(SDD_LEARN_TOPICS_MIN_FIVE_SECTIONS)(
+    '%s has at least five sections and three FAQs in every locale',
+    (topic) => {
+      for (const locale of Object.values(Locale)) {
+        const content = LEARN_CONTENT_BY_LOCALE[locale].topics[topic];
+        expect(content.sections.length, locale).toBeGreaterThanOrEqual(5);
+        expect(content.faq.length, locale).toBeGreaterThanOrEqual(3);
+      }
+    },
+  );
+
+  it.each(LEARN_TOPIC_ORDER)('%s: keeps section ids identical across every locale', (topic) => {
+    const englishSectionIds = LEARN_CONTENT_BY_LOCALE[Locale.EN].topics[topic].sections.map(
+      (section) => section.id,
+    );
 
     for (const locale of Object.values(Locale)) {
-      const content =
-        LEARN_CONTENT_BY_LOCALE[locale].topics[LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS];
-      expect(content.sections.length, locale).toBeGreaterThanOrEqual(4);
+      const content = LEARN_CONTENT_BY_LOCALE[locale].topics[topic];
       expect(content.faq.length, locale).toBeGreaterThanOrEqual(3);
       expect(
         content.sections.map((section) => section.id),
@@ -106,51 +131,16 @@ describe('/learn content locale completeness', () => {
     }
   });
 
-  it('gives the language-model answer explainer unique SEO copy in every locale', () => {
+  it.each(LEARN_TOPIC_ORDER)('%s: gives every locale unique, distinct SEO copy', (topic) => {
     const content = Object.values(Locale).map(
-      (locale) =>
-        LEARN_CONTENT_BY_LOCALE[locale].topics[LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS],
+      (locale) => LEARN_CONTENT_BY_LOCALE[locale].topics[topic],
     );
 
-    expect(new Set(content.map((topic) => topic.seo.title))).toHaveLength(
+    expect(new Set(content.map((t) => t.seo.title))).toHaveLength(Object.values(Locale).length);
+    expect(new Set(content.map((t) => t.seo.description))).toHaveLength(
       Object.values(Locale).length,
     );
-    expect(new Set(content.map((topic) => topic.seo.description))).toHaveLength(
-      Object.values(Locale).length,
-    );
-    expect(new Set(content.map((topic) => topic.seo.keywords.join('|')))).toHaveLength(
-      Object.values(Locale).length,
-    );
-  });
-
-  it('includes a substantive AI-tokens explainer in every locale', () => {
-    const englishSectionIds = LEARN_CONTENT_BY_LOCALE[Locale.EN].topics[
-      LearnTopic.WHAT_ARE_AI_TOKENS
-    ].sections.map((section) => section.id);
-
-    for (const locale of Object.values(Locale)) {
-      const content = LEARN_CONTENT_BY_LOCALE[locale].topics[LearnTopic.WHAT_ARE_AI_TOKENS];
-      expect(content.sections.length, locale).toBeGreaterThanOrEqual(5);
-      expect(content.faq.length, locale).toBeGreaterThanOrEqual(3);
-      expect(
-        content.sections.map((section) => section.id),
-        locale,
-      ).toEqual(englishSectionIds);
-    }
-  });
-
-  it('gives the AI-tokens explainer unique SEO copy in every locale', () => {
-    const content = Object.values(Locale).map(
-      (locale) => LEARN_CONTENT_BY_LOCALE[locale].topics[LearnTopic.WHAT_ARE_AI_TOKENS],
-    );
-
-    expect(new Set(content.map((topic) => topic.seo.title))).toHaveLength(
-      Object.values(Locale).length,
-    );
-    expect(new Set(content.map((topic) => topic.seo.description))).toHaveLength(
-      Object.values(Locale).length,
-    );
-    expect(new Set(content.map((topic) => topic.seo.keywords.join('|')))).toHaveLength(
+    expect(new Set(content.map((t) => t.seo.keywords.join('|')))).toHaveLength(
       Object.values(Locale).length,
     );
   });

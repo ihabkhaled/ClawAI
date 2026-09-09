@@ -31,6 +31,8 @@ export const ES_LEARN_CONTENT: LearnDictionary = {
         'Cómo un prompt se convierte en tokens, probabilidades y una respuesta generada.',
       [LearnTopic.WHAT_ARE_AI_TOKENS]:
         'La unidad que un modelo realmente lee y escribe, y por qué una cifra exacta necesita su propio tokenizador.',
+      [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]:
+        'Lo que la temperatura y el top-p realmente cambian en una respuesta, y lo que no pueden cambiar.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Usar varios modelos en un mismo flujo de trabajo en vez de casarte con uno.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -225,6 +227,91 @@ export const ES_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI cuenta los tokens de entrada y salida que una petición realmente usó una vez generada la respuesta, y muestra el coste y el margen que consumió esa respuesta en vez de una estimación hecha por adelantado.',
+    },
+    [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]: {
+      seo: {
+        title: '¿Qué controlan la temperatura y el top-p?',
+        description:
+          'La temperatura y el top-p deciden cómo elige un modelo su siguiente token, no lo que sabe. Qué cambia realmente cada ajuste, por qué más bajo no es automáticamente mejor, y por qué la temperatura cero sigue sin ser perfectamente repetible.',
+        keywords: [
+          'temperature top-p explicado',
+          'parámetros de muestreo de LLM',
+          'aleatoriedad en la salida de IA',
+        ],
+      },
+      eyebrow: 'Fundamentos',
+      title: '¿Qué controlan la temperatura y el top-p?',
+      summary:
+        'La temperatura y el top-p son ajustes de decodificación que cambian cómo un modelo elige su siguiente token a partir de las probabilidades que ya calculó. Controlan la aleatoriedad en el vocabulario y la redacción, no la precisión, el conocimiento ni la capacidad de razonar — y ninguno de los dos garantiza una salida exactamente repetible, ni siquiera en su ajuste más conservador.',
+      sections: [
+        {
+          id: 'what-these-settings-actually-change',
+          heading: 'Reconfiguran una elección, no el conocimiento del modelo',
+          paragraphs: [
+            'Para cuando la temperatura o el top-p entran en juego, el modelo ya ha calculado una probabilidad para cada posible siguiente token dado el contexto actual. Ninguno de los dos ajustes cambia de dónde vienen esas probabilidades: los parámetros aprendidos del modelo y el contexto que se le dio. Solo cambian cómo se elige un token de la distribución que el modelo ya produjo.',
+          ],
+        },
+        {
+          id: 'temperature-and-the-shape-of-the-distribution',
+          heading: 'La temperatura ajusta qué tan marcada o plana es esa distribución',
+          paragraphs: [
+            'Una temperatura más baja hace que los tokens de mayor probabilidad tengan aún más posibilidades de ser elegidos, así que la salida se inclina hacia la única continuación más probable y se repite más entre ejecuciones distintas. Una temperatura más alta aplana la distribución, dando a los tokens de menor probabilidad una oportunidad más realista de ser elegidos, lo que produce redacciones más variadas — y más margen para que se cuele un token poco probable y a veces extraño.',
+            'La temperatura no añade información que el modelo no tenga. No puede convertir una suposición incorrecta en una correcta; solo cambia con qué fuerza se compromete el modelo con la suposición que ya prefiere.',
+          ],
+        },
+        {
+          id: 'top-p-and-the-candidate-pool',
+          heading: 'El top-p limita qué tokens siquiera se consideran',
+          paragraphs: [
+            'El top-p, también llamado muestreo por núcleo, funciona distinto a la temperatura: en vez de reconfigurar cada probabilidad, primero reduce el campo al conjunto más pequeño de tokens principales cuyas probabilidades suman un umbral elegido, y luego muestrea solo de ese conjunto. Un top-p bajo conserva solo el puñado de tokens de los que el modelo está más seguro; un top-p alto deja entrar una gama más amplia de alternativas plausibles. La temperatura y el top-p suelen aplicarse juntos, uno tras otro, en vez de sustituirse mutuamente.',
+          ],
+        },
+        {
+          id: 'why-temperature-zero-is-not-perfectly-repeatable',
+          heading: 'La temperatura cero es casi determinista, no exactamente determinista',
+          paragraphs: [
+            'Una temperatura de cero, o un ajuste equivalente de "elegir siempre el token más probable", elimina el paso de muestreo y, en principio, debería hacer la salida reproducible para una entrada idéntica. En la práctica, la aritmética de punto flotante en las GPU no es estrictamente independiente del orden, y la infraestructura del proveedor puede agrupar o reordenar el cómputo entre peticiones. El resultado es que el mismo prompt enviado dos veces con el ajuste más determinista puede aun así volver distinto ocasionalmente, sobre todo cuando dos tokens candidatos estaban casi empatados.',
+          ],
+        },
+        {
+          id: 'lower-is-not-the-same-as-better',
+          heading: 'Un ajuste más bajo no es automáticamente uno mejor',
+          paragraphs: [
+            'Reducir la aleatoriedad hace la salida más repetible, no más correcta. Una continuación equivocada con aparente seguridad sigue equivocada con aparente seguridad a baja temperatura, y los ajustes muy bajos también pueden producir una redacción notablemente repetitiva o forzada en salidas más largas, porque el modelo vuelve a elegir una y otra vez los mismos tokens seguros y de alta probabilidad.',
+          ],
+        },
+        {
+          id: 'choosing-a-setting-for-the-task',
+          heading: 'El ajuste correcto depende de para qué es la salida',
+          paragraphs: [
+            'Las tareas con esencialmente una sola respuesta correcta — extraer un valor, seguir un formato estricto, escribir código que tenga que compilar — suelen beneficiarse de menos aleatoriedad, porque la consistencia importa más que la variedad. Las tareas donde varias respuestas distintas podrían ser igual de buenas — hacer una lluvia de ideas, redactar frases alternativas, escritura abierta — se benefician de más aleatoriedad, porque ahí la variedad es el objetivo. Ningún ajuste sustituye a darle al modelo mejor contexto, ni tampoco sustituye verificar una respuesta que de verdad importa.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: '¿La temperatura cero hace la salida determinista?',
+          answer:
+            'Casi, pero no está garantizado. Elimina la aleatoriedad intencional del muestreo, pero el cómputo en punto flotante y el agrupamiento del lado del proveedor aún pueden dar ocasionalmente un token distinto en un empate exacto o una decisión muy cerrada, así que las peticiones idénticas suelen ser — no siempre — idénticas.',
+        },
+        {
+          question: '¿Cuál es la diferencia entre temperatura y top-p?',
+          answer:
+            'La temperatura reconfigura la probabilidad de cada posible siguiente token. El top-p primero reduce el campo al conjunto más pequeño de candidatos principales cuyas probabilidades superan un umbral, y luego muestrea solo de ese conjunto. Actúan sobre la misma distribución de formas distintas y suelen combinarse.',
+        },
+        {
+          question: '¿Una temperatura más alta hace que un modelo sea más creativo o sepa más?',
+          answer:
+            'Cambia la variedad de la redacción, no el conocimiento ni el razonamiento. Una temperatura más alta puede producir una redacción más variada, pero sigue partiendo de los mismos parámetros aprendidos, y con la misma facilidad puede sacar a la luz una continuación menos probable y de peor calidad.',
+        },
+        {
+          question: '¿Debería usar siempre el ajuste más bajo para tareas factuales?',
+          answer:
+            'Un ajuste más bajo hace la salida más consistente, lo cual ayuda cuando la consistencia misma es el objetivo, pero no corrige una respuesta incorrecta de fondo: una salida a baja temperatura puede ser incorrecta con aparente seguridad y de forma repetible. Verificar una afirmación factual sigue exigiendo una fuente o comprobación independiente.',
+        },
+      ],
+      productNote:
+        'ClawAI ofrece un control de temperatura por conversación, aplicado al proveedor que atienda la petición; no ofrece el top-p como ajuste, así que el muestreo por núcleo se queda en el valor predeterminado de cada proveedor.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

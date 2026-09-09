@@ -31,6 +31,8 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
         'Wie aus einer Eingabe Tokens, Wahrscheinlichkeiten und eine erzeugte Antwort werden.',
       [LearnTopic.WHAT_ARE_AI_TOKENS]:
         'Die Einheit, die ein Modell tatsächlich liest und schreibt — und warum eine exakte Zahl seinen eigenen Tokenizer braucht.',
+      [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]:
+        'Was Temperatur und Top-p an einer Antwort wirklich ändern — und was sie nicht ändern können.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Mehrere Modelle in einem Arbeitsablauf nutzen, statt sich auf eines festzulegen.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -225,6 +227,92 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI zählt die tatsächlich verbrauchten Eingabe- und Ausgabe-Token einer Anfrage, sobald die Antwort erzeugt ist, und zeigt die Kosten und das dafür beanspruchte Guthaben zu dieser Antwort an, statt eine vorab geschätzte Zahl.',
+    },
+    [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]: {
+      seo: {
+        title: 'Was steuern Temperatur und Top-p?',
+        description:
+          'Temperatur und Top-p entscheiden, wie ein Modell sein nächstes Token wählt, nicht was es weiß. Was jede Einstellung wirklich ändert, warum niedriger nicht automatisch besser ist, und warum Temperatur null immer noch nicht perfekt wiederholbar ist.',
+        keywords: [
+          'Temperature Top-p erklärt',
+          'LLM-Sampling-Parameter',
+          'Zufälligkeit bei KI-Ausgaben',
+        ],
+      },
+      eyebrow: 'Grundlagen',
+      title: 'Was steuern Temperatur und Top-p?',
+      summary:
+        'Temperatur und Top-p sind Decodier-Einstellungen, die ändern, wie ein Modell aus den bereits berechneten Wahrscheinlichkeiten sein nächstes Token wählt. Sie steuern Zufälligkeit in Wortwahl und Formulierung, nicht Genauigkeit, Wissen oder Schlussfolgerungsfähigkeit — und keine der beiden garantiert exakt wiederholbare Ausgaben, selbst bei der konservativsten Einstellung.',
+      sections: [
+        {
+          id: 'what-these-settings-actually-change',
+          heading: 'Sie formen eine Auswahl um, nicht das Wissen des Modells',
+          paragraphs: [
+            'Bis Temperatur oder Top-p greifen, hat das Modell für jedes mögliche nächste Token bereits eine Wahrscheinlichkeit anhand des aktuellen Kontexts berechnet. Keine der beiden Einstellungen ändert, woher diese Wahrscheinlichkeiten stammen — die gelernten Parameter des Modells und der gegebene Kontext. Sie ändern nur, wie ein Token aus der bereits erzeugten Verteilung ausgewählt wird.',
+          ],
+        },
+        {
+          id: 'temperature-and-the-shape-of-the-distribution',
+          heading: 'Temperatur bestimmt, wie scharf oder flach diese Verteilung ist',
+          paragraphs: [
+            'Eine niedrigere Temperatur macht die wahrscheinlichsten Token noch wahrscheinlicher, sodass die Ausgabe zur einzelnen wahrscheinlichsten Fortsetzung tendiert und sich über getrennte Durchläufe hinweg stärker wiederholt. Eine höhere Temperatur flacht die Verteilung ab und gibt Token mit geringerer Wahrscheinlichkeit eine realistischere Chance, gewählt zu werden, was vielfältigere Formulierungen erzeugt — und mehr Raum für ein unwahrscheinliches, manchmal seltsames Token, das durchrutscht.',
+            'Temperatur fügt keine Information hinzu, die das Modell nicht hat. Sie kann eine falsche Vermutung nicht in eine richtige verwandeln; sie ändert nur, wie stark sich das Modell auf die Vermutung festlegt, die es bereits bevorzugt.',
+          ],
+        },
+        {
+          id: 'top-p-and-the-candidate-pool',
+          heading: 'Top-p begrenzt, welche Token überhaupt infrage kommen',
+          paragraphs: [
+            'Top-p, auch Nucleus-Sampling genannt, funktioniert anders als Temperatur: Statt jede Wahrscheinlichkeit umzuformen, grenzt es zunächst auf die kleinste Menge der besten Token ein, deren Wahrscheinlichkeiten sich zu einem gewählten Schwellenwert summieren, und wählt dann nur aus dieser Menge aus. Ein niedriger Top-p-Wert behält nur die Handvoll Token, bei denen sich das Modell am sichersten ist; ein hoher Top-p-Wert lässt eine breitere Streuung plausibler Alternativen zu. Temperatur und Top-p werden meist zusammen angewendet, nacheinander, statt sich gegenseitig zu ersetzen.',
+          ],
+        },
+        {
+          id: 'why-temperature-zero-is-not-perfectly-repeatable',
+          heading: 'Temperatur null ist nahezu deterministisch, nicht exakt deterministisch',
+          paragraphs: [
+            'Eine Temperatur von null, oder eine gleichwertige Einstellung „immer das wahrscheinlichste Token wählen“, entfernt den Sampling-Schritt und sollte im Prinzip bei identischer Eingabe reproduzierbare Ausgaben liefern. In der Praxis ist Gleitkomma-Arithmetik auf GPUs nicht strikt reihenfolgeunabhängig, und die Infrastruktur der Anbieter kann Berechnungen zwischen Anfragen bündeln oder anders anordnen. Das Ergebnis ist, dass derselbe Prompt zweimal bei der deterministischsten Einstellung gesendet gelegentlich trotzdem unterschiedlich zurückkommen kann, besonders wenn zwei Kandidaten-Token fast gleichauf lagen.',
+          ],
+        },
+        {
+          id: 'lower-is-not-the-same-as-better',
+          heading: 'Eine niedrigere Einstellung ist nicht automatisch eine bessere',
+          paragraphs: [
+            'Weniger Zufälligkeit macht die Ausgabe wiederholbarer, nicht richtiger. Eine überzeugt falsche Fortsetzung bleibt bei niedriger Temperatur überzeugt falsch, und sehr niedrige Einstellungen können bei längeren Ausgaben auch merklich repetitive oder steife Formulierungen erzeugen, weil das Modell immer wieder dieselben sicheren, wahrscheinlichen Token auswählt.',
+          ],
+        },
+        {
+          id: 'choosing-a-setting-for-the-task',
+          heading: 'Die richtige Einstellung hängt davon ab, wofür die Ausgabe gedacht ist',
+          paragraphs: [
+            'Aufgaben mit im Wesentlichen einer richtigen Antwort — einen Wert extrahieren, ein strenges Format einhalten, Code schreiben, der kompilieren muss — profitieren im Allgemeinen von weniger Zufälligkeit, weil Konsistenz wichtiger ist als Vielfalt. Aufgaben, bei denen mehrere unterschiedliche Antworten gut sein könnten — Brainstorming, alternative Formulierungen entwerfen, offenes Schreiben — profitieren von mehr Zufälligkeit, weil es genau um die Vielfalt geht. Keine der beiden Einstellungen ersetzt einen besseren Kontext für das Modell, und keine ersetzt die Prüfung einer Antwort, auf die es wirklich ankommt.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Macht Temperatur null die Ausgabe deterministisch?',
+          answer:
+            'Fast, aber nicht garantiert. Sie entfernt die beabsichtigte Zufälligkeit des Samplings, aber Gleitkommaberechnungen und anbieterseitiges Batching können bei einem exakten Gleichstand oder einer sehr knappen Entscheidung gelegentlich trotzdem ein anderes Token liefern, sodass identische Anfragen meistens — nicht immer — identisch ausfallen.',
+        },
+        {
+          question: 'Was ist der Unterschied zwischen Temperatur und Top-p?',
+          answer:
+            'Temperatur formt die Wahrscheinlichkeit jedes möglichen nächsten Tokens um. Top-p grenzt zuerst auf die kleinste Menge der besten Kandidaten ein, deren Wahrscheinlichkeiten einen Schwellenwert überschreiten, und wählt dann nur aus dieser Menge. Beide wirken auf dieselbe Verteilung, aber auf unterschiedliche Weise, und werden oft kombiniert.',
+        },
+        {
+          question: 'Macht eine höhere Temperatur ein Modell kreativer oder wissender?',
+          answer:
+            'Sie ändert die Vielfalt der Formulierung, nicht Wissen oder Schlussfolgerung. Eine höhere Temperatur kann vielfältigere Formulierungen erzeugen, schöpft aber weiterhin aus denselben gelernten Parametern und kann ebenso leicht eine unwahrscheinlichere, schlechtere Fortsetzung zutage fördern.',
+        },
+        {
+          question:
+            'Sollte ich für faktenbasierte Aufgaben immer die niedrigste Einstellung wählen?',
+          answer:
+            'Eine niedrigere Einstellung macht die Ausgabe konsistenter, was hilft, wenn Konsistenz selbst das Ziel ist, behebt aber keine zugrunde liegende falsche Antwort — eine Ausgabe bei niedriger Temperatur kann überzeugt und wiederholbar falsch sein. Eine Tatsachenbehauptung zu prüfen erfordert weiterhin eine unabhängige Quelle oder Kontrolle.',
+        },
+      ],
+      productNote:
+        'ClawAI stellt pro Gespräch eine Temperatur-Einstellung bereit, die auf den jeweils zuständigen Anbieter angewendet wird; Top-p wird nicht als Einstellung angeboten, sodass Nucleus-Sampling beim jeweiligen Standardwert des Anbieters bleibt.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

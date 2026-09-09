@@ -31,6 +31,8 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
         'Comment une requête devient des tokens, des probabilités puis une réponse générée.',
       [LearnTopic.WHAT_ARE_AI_TOKENS]:
         'L’unité qu’un modèle lit et écrit réellement, et pourquoi un chiffre exact exige son propre tokenizer.',
+      [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]:
+        'Ce que la température et le top-p changent vraiment dans une réponse — et ce qu’ils ne peuvent pas changer.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Utiliser plusieurs modèles dans un même flux plutôt que de s’enfermer dans un seul.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -232,6 +234,93 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI compte les tokens d’entrée et de sortie réellement utilisés par une requête une fois la réponse générée, et affiche le coût ainsi que le crédit consommé pour cette réponse plutôt qu’une estimation faite à l’avance.',
+    },
+    [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]: {
+      seo: {
+        title: 'Que contrôlent la température et le top-p ?',
+        description:
+          'La température et le top-p décident comment un modèle choisit son prochain token, pas ce qu’il sait. Ce que chaque réglage change vraiment, pourquoi plus bas n’est pas automatiquement mieux, et pourquoi une température de zéro n’est toujours pas parfaitement reproductible.',
+        keywords: [
+          'temperature top-p expliqués',
+          'paramètres d’échantillonnage LLM',
+          'hasard dans les réponses IA',
+        ],
+      },
+      eyebrow: 'Principes de base',
+      title: 'Que contrôlent la température et le top-p ?',
+      summary:
+        'La température et le top-p sont des réglages de décodage qui changent la façon dont un modèle choisit son prochain token à partir des probabilités qu’il a déjà calculées. Ils contrôlent le hasard dans le vocabulaire et la formulation, pas la justesse, les connaissances ou la capacité de raisonnement — et aucun des deux ne garantit une sortie exactement reproductible, même dans son réglage le plus prudent.',
+      sections: [
+        {
+          id: 'what-these-settings-actually-change',
+          heading: 'Ils remodèlent un choix, pas les connaissances du modèle',
+          paragraphs: [
+            'Au moment où la température ou le top-p interviennent, le modèle a déjà calculé une probabilité pour chaque prochain token possible compte tenu du contexte actuel. Aucun des deux réglages ne change d’où viennent ces probabilités — les paramètres appris du modèle et le contexte fourni. Ils changent seulement la façon dont un token est choisi dans la distribution déjà produite par le modèle.',
+          ],
+        },
+        {
+          id: 'temperature-and-the-shape-of-the-distribution',
+          heading:
+            'La température ajuste le degré de netteté ou d’aplatissement de cette distribution',
+          paragraphs: [
+            'Une température plus basse rend les tokens les plus probables encore plus susceptibles d’être choisis, donc la sortie penche vers l’unique continuation la plus probable et se répète davantage d’une exécution à l’autre. Une température plus élevée aplatit la distribution, donnant aux tokens moins probables une chance plus réaliste d’être choisis, ce qui produit une formulation plus variée — et davantage de marge pour qu’un token peu probable, parfois étrange, se glisse.',
+            'La température n’ajoute aucune information que le modèle ne possède pas déjà. Elle ne peut pas transformer une supposition fausse en une supposition juste ; elle change seulement à quel point le modèle s’engage envers la supposition qu’il privilégie déjà.',
+          ],
+        },
+        {
+          id: 'top-p-and-the-candidate-pool',
+          heading: 'Le top-p limite les tokens même envisagés',
+          paragraphs: [
+            'Le top-p, aussi appelé échantillonnage par noyau, fonctionne différemment de la température : au lieu de remodeler chaque probabilité, il restreint d’abord le champ au plus petit ensemble de tokens dont les probabilités atteignent un seuil choisi, puis n’échantillonne qu’à partir de cet ensemble. Un top-p bas ne garde que la poignée de tokens dont le modèle est le plus sûr ; un top-p élevé laisse entrer un éventail plus large d’alternatives plausibles. Température et top-p sont généralement appliqués ensemble, l’un après l’autre, plutôt que l’un à la place de l’autre.',
+          ],
+        },
+        {
+          id: 'why-temperature-zero-is-not-perfectly-repeatable',
+          heading:
+            'Une température de zéro est proche du déterminisme, pas exactement déterministe',
+          paragraphs: [
+            'Une température de zéro, ou un réglage équivalent « toujours choisir le token le plus probable », supprime l’étape d’échantillonnage et devrait, en principe, rendre la sortie reproductible pour une entrée identique. En pratique, l’arithmétique en virgule flottante sur GPU n’est pas strictement indépendante de l’ordre des calculs, et l’infrastructure du fournisseur peut regrouper ou réorganiser les calculs entre les requêtes. Résultat : le même prompt envoyé deux fois avec le réglage le plus déterministe peut malgré tout revenir occasionnellement différent, surtout quand deux tokens candidats étaient presque à égalité.',
+          ],
+        },
+        {
+          id: 'lower-is-not-the-same-as-better',
+          heading: 'Un réglage plus bas n’est pas automatiquement meilleur',
+          paragraphs: [
+            'Réduire le hasard rend la sortie plus reproductible, pas plus juste. Une continuation fausse avec assurance reste fausse avec assurance à basse température, et des réglages très bas peuvent aussi produire une formulation nettement répétitive ou guindée sur une sortie longue, parce que le modèle resélectionne sans cesse les mêmes tokens sûrs et très probables.',
+          ],
+        },
+        {
+          id: 'choosing-a-setting-for-the-task',
+          heading: 'Le bon réglage dépend de l’usage de la sortie',
+          paragraphs: [
+            'Les tâches ayant essentiellement une seule bonne réponse — extraire une valeur, respecter un format strict, écrire du code qui doit compiler — profitent généralement de moins de hasard, car la cohérence compte plus que la variété. Les tâches où plusieurs réponses différentes pourraient toutes être bonnes — remue-méninges, rédaction de formulations alternatives, écriture ouverte — profitent de plus de hasard, car la variété est précisément le but. Aucun des deux réglages ne remplace un meilleur contexte donné au modèle, ni la vérification d’une réponse qui compte vraiment.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Une température de zéro rend-elle la sortie déterministe ?',
+          answer:
+            'Presque, mais ce n’est pas garanti. Elle supprime le hasard intentionnel de l’échantillonnage, mais le calcul en virgule flottante et le regroupement côté fournisseur peuvent encore produire occasionnellement un token différent en cas d’égalité exacte ou de décision très serrée ; des requêtes identiques sont donc généralement — pas toujours — identiques.',
+        },
+        {
+          question: 'Quelle est la différence entre température et top-p ?',
+          answer:
+            'La température remodèle la probabilité de chaque prochain token possible. Le top-p restreint d’abord le champ au plus petit ensemble de meilleurs candidats dont les probabilités franchissent un seuil, puis échantillonne uniquement à partir de cet ensemble. Ils agissent sur la même distribution de façons différentes et sont souvent combinés.',
+        },
+        {
+          question: 'Une température plus élevée rend-elle un modèle plus créatif ou plus savant ?',
+          answer:
+            'Elle change la variété de la formulation, pas les connaissances ni le raisonnement. Une température plus élevée peut produire une formulation plus variée, mais puise toujours dans les mêmes paramètres appris, et peut tout aussi bien faire ressortir une continuation moins probable et de moindre qualité.',
+        },
+        {
+          question: 'Faut-il toujours utiliser le réglage le plus bas pour les tâches factuelles ?',
+          answer:
+            'Un réglage plus bas rend la sortie plus cohérente, ce qui aide quand la cohérence elle-même est l’objectif, mais ne corrige pas une réponse fausse sous-jacente — une sortie à basse température peut être fausse avec assurance et de façon reproductible. Vérifier une affirmation factuelle exige toujours une source ou un contrôle indépendant.',
+        },
+      ],
+      productNote:
+        'ClawAI propose un réglage de température par conversation, appliqué au fournisseur qui traite la requête ; il ne propose pas le top-p comme réglage, si bien que l’échantillonnage par noyau reste à la valeur par défaut de chaque fournisseur.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {
