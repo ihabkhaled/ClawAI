@@ -1,5 +1,13 @@
 import { CODING_AGENT_INSTALL_PATH, CODING_AGENT_PATH } from '@/constants/coding-agent.constants';
 import {
+  COMPARE_MODELS_HUB_PATH,
+  COMPARE_MODELS_HUB_SLUG,
+  COMPARE_MODELS_REVIEW_DATE,
+  MODEL_FAMILY_PAIR_ORDER,
+  getModelFamilyPairPath,
+  getModelFamilyPairSlug,
+} from '@/constants/compare-models.constants';
+import {
   FEATURES_REVIEW_DATE,
   FEATURES_CAPABILITY_ORDER,
   getFeatureCapabilityPath,
@@ -374,6 +382,42 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     structuredDataType: StructuredDataType.FAQ_PAGE,
     relatedSlugs: ['compare', 'features', 'pricing'],
     reviewDate: COMPARISON_REVIEW_DATE,
+  })),
+  // The /compare/models cluster: one hub plus one page per provider-family
+  // pair, fanned from the order array (ADR-084). Was planned as
+  // `/compare/models/gpt-vs-claude` (model A vs model B) — §8.2 of the SEO
+  // content architecture doc rejects that shape: a page comparing two
+  // products ClawAI sells neither of, with benchmarks refused (§6),
+  // substantiates nothing under EU comparative-advertising law. Every page
+  // here instead explains how ClawAI's OWN router chooses between two named
+  // families for a given request — a substantiable claim about our own
+  // behaviour, never a ranking between the two. Capped at family level (not
+  // individual models) and at six pairs, not the full C(5,2)=10 cloud-family
+  // matrix or C(16,2)=120 model matrix §8.4 warns nothing bounds — reasoning
+  // recorded in `model-family-pair.enum.ts` and
+  // `docs/05-frontend/seo-content-architecture.md` §9.1. Ad-INELIGIBLE and
+  // PUBLISHABLE feed eligibility, same reasoning as `/compare/*` above and
+  // `/model-fit/*`: a page whose job is a fair, checkable claim about a
+  // named third party does not also carry ad inventory.
+  {
+    slug: COMPARE_MODELS_HUB_SLUG,
+    path: COMPARE_MODELS_HUB_PATH,
+    category: ContentCategory.MODEL_ROUTING,
+    adEligibility: AdEligibility.INELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['compare', MODEL_FIT_HUB_SLUG, MODELS_HUB_SLUG, 'pricing'],
+    reviewDate: COMPARE_MODELS_REVIEW_DATE,
+  },
+  ...MODEL_FAMILY_PAIR_ORDER.map((pair): PublishedContentConfig => ({
+    slug: getModelFamilyPairSlug(pair),
+    path: getModelFamilyPairPath(pair),
+    category: ContentCategory.MODEL_ROUTING,
+    adEligibility: AdEligibility.INELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.FAQ_PAGE,
+    relatedSlugs: [COMPARE_MODELS_HUB_SLUG, MODEL_FIT_HUB_SLUG, MODELS_HUB_SLUG, 'pricing'],
+    reviewDate: COMPARE_MODELS_REVIEW_DATE,
   })),
   // The /model-fit cluster: one hub plus one page per task, fanned from the
   // order array (ADR-084). Was planned as `/models/for/*` ("Choosing a model

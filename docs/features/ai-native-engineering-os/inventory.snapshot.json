@@ -6573,6 +6573,16 @@
         "route": "/compare/kimi"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/compare/models/[pair]/page.tsx",
+        "kind": "page",
+        "route": "/compare/models/[pair]"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/compare/models/page.tsx",
+        "kind": "page",
+        "route": "/compare/models"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/compare/page.tsx",
         "kind": "page",
         "route": "/compare"
@@ -9575,7 +9585,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 431
+        "testFiles": 432
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10327,7 +10337,7 @@
     "endpointCount": 647,
     "envVarCount": 351,
     "eventCount": 178,
-    "frontendRouteCount": 151,
+    "frontendRouteCount": 153,
     "localeCount": 13,
     "nginxRouteCount": 57,
     "permissionCount": 51,
@@ -10336,7 +10346,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1156,
+    "totalTestFiles": 1157,
     "workspaceCount": 25
   }
 }

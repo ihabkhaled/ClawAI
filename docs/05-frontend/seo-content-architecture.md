@@ -690,3 +690,69 @@ marketing link.
 a9ecd6cd2` and the registry rather than assumed — it is `ELIGIBLE` /
 `FeedEligibility.PUBLISHABLE`, the `/learn/*` shape, per the explicit decision
 in §8.2.
+
+### 9.1 `/compare/models` — the reframed model-vs-model cluster, built
+
+Built 2026-09-10, closing the row in §8.2's table ("`/compare/models/gpt-vs-claude`
+(model vs model)" → "`/compare/models/*` reframed"). Ships at
+`/compare/models` — a hub plus six pair pages, nested under the existing
+`/compare` route rather than a new top-level path, since the reframed claim
+("how ClawAI's own router chooses between two families") is still fundamentally
+a comparison page and belongs with its siblings.
+
+**Capping decision.** §8.4 warned nothing bounded `/compare/models`: a full
+model-level matrix is C(16,2) = 120 pairs; even capped to the 5 cloud
+provider families in `ModelProviderPage` it is C(5,2) = 10 pairs, and 11 with
+`local-ai` folded in as an eleventh "family". This batch builds **6 pairs**,
+capped at family level (never individual models), chosen editorially rather
+than exhaustively:
+
+| Pair                  | Why it is in the set                                                                                                                                                                                                                                                                                        |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `openai-vs-anthropic` | The two most consistently searched cloud families; also the most commonly conflated in support questions                                                                                                                                                                                                    |
+| `openai-vs-google`    | Completes the three-way "big cloud" triangle with the pair above                                                                                                                                                                                                                                            |
+| `anthropic-vs-google` | Completes the triangle; the two cost-tier shapes differ enough to be worth a page (Anthropic has no `CHEAP`-class seeded model, Google does)                                                                                                                                                                |
+| `openai-vs-deepseek`  | The cost-tier contrast pair — DeepSeek's entire seeded catalog sits in `STANDARD`, worth explaining against OpenAI's wider `CHEAP`→`PREMIUM` range                                                                                                                                                          |
+| `openai-vs-xai`       | Covers the fifth and smallest cloud catalog (`XAI`, 2 seeded models) against the largest (`OPENAI`, 6)                                                                                                                                                                                                      |
+| `cloud-vs-local`      | Not a named-vendor pair — cloud (any of the five families) against Ollama/llama.cpp. Given ClawAI's local-first positioning, this is the single most important pair in the cluster, and it is structurally different from the other five: the question is where a request runs, not which vendor answers it |
+
+Deliberately **not built** in this batch: `anthropic-vs-deepseek`,
+`google-vs-deepseek`, `anthropic-vs-xai`, `google-vs-xai`, `deepseek-vs-xai`
+— the remaining 5 of the 10 possible cloud-family pairs. No claim-liability
+reason blocks them; they were simply lower search-intent priority than the
+six above. Trigger to add one: real query volume evidence, or a support
+pattern showing users actually confusing two of these specific families.
+
+**Grounding.** Every cost-class claim (`CHEAP`/`STANDARD`/`PREMIUM`/`ULTRA`,
+rendered as "budget"/"standard"/"premium"/"highest") is read directly from
+`constants/model-facts.constants.ts` (itself diffed against
+`model-cost-seed.constants.ts` — see that file's own grounding rules, reused
+here rather than re-verified independently). Every routing-mode claim (Auto,
+Manual Model, High Reasoning, Cost Saver, Local-Only, Privacy-First) is a
+real member of `packages/shared-types/src/enums/routing-mode.enum.ts`. No
+page in this cluster claims a speed/latency difference between named
+vendors, matching every other cluster's refusal (§6) — the locale-completeness
+test (`compare-models-content-locale-completeness.test.ts`) asserts this
+mechanically in all 13 locales, and separately asserts no locale's
+translation implies a winner via "best"/"better than"/"superior to"/
+"outperforms".
+
+**Router-behaviour framing, not a product ranking.** Per §8.2, no page
+declares a winner between the two named families, not implicitly and not by
+ordering — every page's `productNote` and FAQ entries were written to state
+what ClawAI's own router weighs (cost class, routing mode fit, whether a
+workload must stay local) rather than which vendor is "better". Verified by:
+(1) the locale-completeness test above running in all 13 locales, (2) a
+manual re-read of the English source and every FAQ/`productNote` field before
+translation, (3) spot-checking two non-English locale files for the same
+property after each translation agent's self-report.
+
+**Not done in this batch:** no link was added from the existing `/compare`
+hub page to the new `/compare/models` hub. `ComparisonHubContent` (a
+13-locale content type) would need a new field to carry that link's copy,
+and this batch judged that scope not worth the risk of touching another
+cluster's already-shipped locale content. The new hub is fully discoverable
+today — registered in the content registry, sitemap, `llms.txt` and
+Lighthouse CI — and every pair page cross-links out to `/model-providers/*`,
+`/model-fit`, and `/learn/*`. Trigger to revisit: if search-console data
+shows `/compare/models` under-discovered relative to its sibling clusters.

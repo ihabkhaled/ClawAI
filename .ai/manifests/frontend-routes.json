@@ -92,6 +92,16 @@
       "route": "/compare/kimi"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/compare/models/[pair]/page.tsx",
+      "kind": "page",
+      "route": "/compare/models/[pair]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/compare/models/page.tsx",
+      "kind": "page",
+      "route": "/compare/models"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/compare/page.tsx",
       "kind": "page",
       "route": "/compare"

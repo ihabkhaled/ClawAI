@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  MODEL_FAMILY_PAIR_ORDER,
+  getModelFamilyPairPath,
+} from '@/constants/compare-models.constants';
+import {
   CONTENT_REGISTRY,
   PUBLIC_CONTENT_DEFINITIONS,
 } from '@/constants/content-registry.constants';
@@ -84,6 +88,7 @@ describe('content registry integrity', () => {
       ...USE_CASES_TASK_ORDER.map(getUseCaseTaskPath),
       ...FEATURES_CAPABILITY_ORDER.map(getFeatureCapabilityPath),
       ...PROMPT_GUIDE_TOPIC_ORDER.map(getPromptGuideTopicPath),
+      ...MODEL_FAMILY_PAIR_ORDER.map(getModelFamilyPairPath),
       '/',
       '/about',
       '/acceptable-use',
@@ -98,6 +103,7 @@ describe('content registry integrity', () => {
       '/compare/gemini',
       '/compare/glm',
       '/compare/kimi',
+      '/compare/models',
       '/compare/perplexity',
       '/compare/qwen',
       '/contact',
@@ -201,7 +207,8 @@ describe('localized publication boundary', () => {
     // /integrations hub + one page per connector + the /models hub + one page
     // per provider + the /model-fit hub + one page per task + one page per
     // /use-cases task (the /use-cases hub itself is already one of the 29
-    // launch pages, unchanged by this cluster).
+    // launch pages, unchanged by this cluster) + the /compare/models hub +
+    // one page per family pair.
     const expectedCount =
       29 +
       LEARN_TOPIC_ORDER.length +
@@ -214,7 +221,9 @@ describe('localized publication boundary', () => {
       USE_CASES_TASK_ORDER.length +
       FEATURES_CAPABILITY_ORDER.length +
       1 +
-      PROMPT_GUIDE_TOPIC_ORDER.length;
+      PROMPT_GUIDE_TOPIC_ORDER.length +
+      1 +
+      MODEL_FAMILY_PAIR_ORDER.length;
     expect(getPublishedPagesForLocale(Locale.EN).length).toBe(expectedCount);
     expect(getPublishedPagesForLocale(Locale.JA).length).toBe(expectedCount);
     expect(getPageBySlugAndLocale('features', Locale.EN)?.title.toLowerCase()).toContain(

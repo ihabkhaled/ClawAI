@@ -1,4 +1,8 @@
 import {
+  MODEL_FAMILY_PAIR_ORDER,
+  getModelFamilyPairPath,
+} from '@/constants/compare-models.constants';
+import {
   FEATURES_CAPABILITY_ORDER,
   getFeatureCapabilityPath,
 } from '@/constants/features-cluster.constants';
@@ -34,6 +38,7 @@ export const SEO_CLUSTER_ROUTE_EXPANSIONS: Readonly<Record<string, ReadonlyArray
     '/integrations/[topic]': INTEGRATION_TOPIC_ORDER.map(getIntegrationPath),
     '/model-providers/[provider]': MODEL_PROVIDER_ORDER.map(getModelProviderPath),
     '/model-fit/[task]': MODEL_FIT_TASK_ORDER.map(getModelFitTaskPath),
+    '/compare/models/[pair]': MODEL_FAMILY_PAIR_ORDER.map(getModelFamilyPairPath),
     '/use-cases/[task]': USE_CASES_TASK_ORDER.map(getUseCaseTaskPath),
     '/features/[capability]': FEATURES_CAPABILITY_ORDER.map(getFeatureCapabilityPath),
     '/prompts/[topic]': PROMPT_GUIDE_TOPIC_ORDER.map(getPromptGuideTopicPath),
