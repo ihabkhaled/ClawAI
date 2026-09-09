@@ -54,6 +54,35 @@ wrapped by `CompatAgentGuard`.
 | GET   | /api/v1/agent/commands/pending         | CompatAgentGuard |
 | POST  | /api/v1/agent/commands/:id/complete    | CompatAgentGuard |
 | POST  | /api/v1/agent/events                   | CompatAgentGuard |
+| GET   | /api/v1/agent/organizations/policy/effective | User JWT   |
+| GET   | /api/v1/agent/organizations/:id/policy | User JWT         |
+| PUT   | /api/v1/agent/organizations/:id/policy | User JWT (OWNER/ADMIN) |
+
+### Organization policy
+
+`policy/effective` is what a coding-agent client asks for. It is deliberately
+not under `:id`: a client does not know which organizations its user belongs to
+and should not have to ask. The response is the **intersection** of every
+organization the caller is a member of, so belonging to a permissive
+organization cannot loosen a stricter one, and it never names the organization
+that imposed a constraint — a member of two must not learn one's policy from the
+other's.
+
+Every field narrows and none widens. That is what makes it safe to deliver over
+an authenticated HTTPS request rather than as a signed document: a forged policy
+could only refuse work, never grant it. Entitlements, which gate money, already
+arrive the same way. A signed distribution would additionally survive a
+compromised backend and is left for the day that threat is in scope.
+
+Two asymmetries are deliberate. Reading an organization's own policy needs only
+membership, because a member is entitled to know the rules they are held to;
+writing needs OWNER or ADMIN. And a non-member reading gets `404`, not `403`,
+because telling them the organization exists is itself a disclosure.
+
+The intersection rules live in
+`src/modules/fleet/utilities/policy-intersection.utility.ts`. The one that
+surprises people: an **empty allowlist means "everything"**, so combining `[]`
+with `['a']` yields `['a']`, not `[]`.
 
 ## Prisma models (Phase A additions)
 
@@ -67,6 +96,13 @@ status[PENDING|APPROVED|DENIED|EXPIRED|CONSUMED], ...)`
 - `DeviceCodeRequest(id, userCode, deviceCodeHash, deviceHint, intervalSeconds,
 slowDownUntil, offenceCount, status, ...)`
 - `AgentSession` gained optional FK `deviceId?` and `deprecatedKey` boolean.
+- `OrganizationPolicy(id, organizationId unique, allowedTools[], allowedModels[],
+maximumRisk, deniedEffects[], requireApproval[], maximumRetentionDays,
+minimumPermissionMode?, createdAt, updatedAt)` — one row per organization,
+created on first write. Every default is the widest possible value, so the
+migration changes nothing until an administrator narrows a field; a migration
+that tightened on arrival would lock out every member of every organization the
+moment it ran.
 
 ## Events (`claw.events`, topic)
 
