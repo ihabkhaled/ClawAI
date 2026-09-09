@@ -104,6 +104,7 @@ const SDD_LEARN_TOPICS_MIN_FIVE_SECTIONS: ReadonlyArray<LearnTopic> = [
   LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS,
   LearnTopic.WHAT_ARE_EMBEDDINGS,
   LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING,
+  LearnTopic.HOW_AI_TOOL_CALLING_WORKS,
 ];
 
 describe('/learn content locale completeness', () => {

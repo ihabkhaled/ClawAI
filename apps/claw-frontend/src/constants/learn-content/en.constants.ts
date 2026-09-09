@@ -37,6 +37,8 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
         'How text becomes a vector of numbers, and why that is what makes search by meaning possible.',
       [LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING]:
         'Three different fixes for three different problems, and why many products never need the third.',
+      [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]:
+        'The model never runs anything — it proposes a call, and your application decides what happens next.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Using several models in one workflow instead of committing to one.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -484,6 +486,90 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI’s context packs and file and workspace retrieval add relevant material to a request without touching the underlying model; ClawAI does not provide model fine-tuning — the cloud and local models it routes to are used as already trained.',
+    },
+    [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]: {
+      seo: {
+        title: 'How does AI tool calling actually work?',
+        description:
+          'A model that calls a tool never runs anything itself — it proposes a name and arguments, and your application decides whether to execute the call. How the request-response loop works, and why the proposal is a guess, not a guarantee.',
+        keywords: [
+          'how tool calling works',
+          'LLM function calling explained',
+          'AI tool use mechanism',
+        ],
+      },
+      eyebrow: 'Foundations',
+      title: 'How does AI tool calling actually work?',
+      summary:
+        'Tool calling, sometimes called function calling, lets a model ask for something to be done on its behalf: search a database, call an API, run a calculation. The part that surprises people is what the model actually does at that moment — it does not run anything. It outputs a structured request naming a tool and its arguments, and your application decides whether, and how, to act on it.',
+      sections: [
+        {
+          id: 'what-tool-calling-actually-is',
+          heading: 'The model is given a menu, not a keyboard',
+          paragraphs: [
+            'Before a request is sent, the application describes the tools available to the model: a name, a description of what each one does, and a schema for the arguments it expects. The model does not receive working code or a live connection to anything — it receives a description, the same way a person reads a menu without having access to the kitchen.',
+          ],
+        },
+        {
+          id: 'the-model-never-executes-anything',
+          heading: 'The model never executes anything itself',
+          paragraphs: [
+            'When a model decides a tool would help, it produces a structured output — typically a tool name and a set of arguments — and stops there. Nothing has been searched, called, or changed yet. The application that sent the request reads that structured output, decides whether to act on it, and if so, runs the real function or API call on its own infrastructure.',
+          ],
+        },
+        {
+          id: 'the-loop-request-response-continue',
+          heading: 'A full exchange is a loop, not a single step',
+          paragraphs: [
+            'The typical sequence is: the application sends a prompt plus the list of available tools; the model responds with either an answer or a proposed tool call; if it is a tool call, the application executes it and sends the result back as part of the conversation; the model then continues, often producing a final answer that uses that result. Multi-step tasks can repeat this loop several times before a response reaches the user.',
+          ],
+        },
+        {
+          id: 'a-proposed-call-is-a-guess-not-a-guarantee',
+          heading: 'A proposed call is a plausible guess, not a guaranteed correct one',
+          paragraphs: [
+            'A model can propose the wrong tool, invent an argument that was never in the schema, or call a tool when nothing needed calling at all — the same probabilistic generation that produces any other output produces a tool call. Nothing about the mechanism makes a proposed call inherently safe to run. An application that executes arguments without validating them against the schema, and without authorizing what the call is actually allowed to touch, is trusting a guess with real access.',
+          ],
+        },
+        {
+          id: 'the-schema-is-the-interface-the-model-sees',
+          heading: 'The schema is the only interface the model actually sees',
+          paragraphs: [
+            'A tool’s name, description and argument schema are the entire specification the model has to work from — it has no other way to learn what a tool does or how to fill in its parameters correctly. The same underlying function described clearly and narrowly tends to get called correctly far more often than one described vaguely or bundled with unrelated options, because the model is choosing and filling arguments from that description alone.',
+          ],
+        },
+        {
+          id: 'why-this-differs-from-the-model-writing-code',
+          heading: 'Why this is different from asking a model to write code',
+          paragraphs: [
+            'Asking a model to produce a working script and asking it to call a predefined tool are not the same request. A tool call is constrained to a name and arguments your application already knows how to handle safely; free-form generated code can attempt to do anything the environment running it allows, which is a much larger and different problem to secure. Tool calling narrows what a model can ask for to a fixed, inspectable set of options.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Does the model run the tool itself?',
+          answer:
+            'No. The model outputs a structured request naming a tool and its arguments. The application that sent the request decides whether to execute it, and the actual function or API call runs on the application’s own infrastructure, not inside the model.',
+        },
+        {
+          question: 'Can a model call a tool with made-up arguments?',
+          answer:
+            'Yes. A model can supply a value that was never part of the schema, or that does not make sense for the tool, because the call is generated the same way any other output is. Validating arguments before executing anything real is the application’s responsibility, not something the model guarantees.',
+        },
+        {
+          question: 'What happens if the model calls the wrong tool?',
+          answer:
+            'That depends entirely on how the application is built. A well-built one checks whether the call makes sense before executing it and can return an error or a clarifying result back to the model rather than acting on a mismatched request; a poorly built one executes whatever it receives.',
+        },
+        {
+          question: 'Is tool calling the same thing as an AI agent?',
+          answer:
+            'No, but agents are usually built on top of it. Tool calling is the underlying request-response mechanism; an agent typically repeats that loop multiple times, with additional logic deciding what to try next based on each result.',
+        },
+      ],
+      productNote:
+        'ClawAI exposes workspace connectors and other actions to models as callable tools during a chat request; a proposed call is validated against its schema before ClawAI executes anything against a real connector on your behalf.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

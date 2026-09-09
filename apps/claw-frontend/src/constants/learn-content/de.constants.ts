@@ -37,6 +37,8 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
         'Wie Text zu einem Zahlenvektor wird — und warum das Suche nach Bedeutung erst möglich macht.',
       [LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING]:
         'Drei verschiedene Lösungen für drei verschiedene Probleme — und warum viele Produkte die dritte nie brauchen.',
+      [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]:
+        'Das Modell führt nie etwas aus — es schlägt einen Aufruf vor, und Ihre Anwendung entscheidet, was als Nächstes passiert.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Mehrere Modelle in einem Arbeitsablauf nutzen, statt sich auf eines festzulegen.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -489,6 +491,91 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAIs Kontextpakete sowie Datei- und Workspace-Abruf fügen einer Anfrage relevantes Material hinzu, ohne das zugrunde liegende Modell anzurühren; ClawAI bietet kein Fine-Tuning von Modellen — die Cloud- und lokalen Modelle, an die weitergeleitet wird, werden als bereits trainiert verwendet.',
+    },
+    [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]: {
+      seo: {
+        title: 'Wie funktioniert Tool-Aufruf bei KI wirklich?',
+        description:
+          'Ein Modell, das ein Tool aufruft, führt nie selbst etwas aus — es schlägt einen Namen und Argumente vor, und Ihre Anwendung entscheidet, ob der Aufruf ausgeführt wird. Wie die Anfrage-Antwort-Schleife funktioniert, und warum der Vorschlag eine Vermutung ist, keine Garantie.',
+        keywords: [
+          'wie Tool-Aufruf funktioniert',
+          'LLM Function Calling erklärt',
+          'Mechanismus der KI-Werkzeugnutzung',
+        ],
+      },
+      eyebrow: 'Grundlagen',
+      title: 'Wie funktioniert Tool-Aufruf bei KI wirklich?',
+      summary:
+        'Tool-Aufruf, manchmal Function Calling genannt, lässt ein Modell darum bitten, dass etwas in seinem Namen erledigt wird: eine Datenbank durchsuchen, eine API aufrufen, eine Berechnung ausführen. Was Menschen überrascht, ist, was das Modell in diesem Moment tatsächlich tut — es führt nichts aus. Es gibt eine strukturierte Anfrage aus, die ein Tool und dessen Argumente benennt, und Ihre Anwendung entscheidet, ob und wie darauf reagiert wird.',
+      sections: [
+        {
+          id: 'what-tool-calling-actually-is',
+          heading: 'Das Modell bekommt eine Speisekarte, keine Tastatur',
+          paragraphs: [
+            'Bevor eine Anfrage gesendet wird, beschreibt die Anwendung dem Modell die verfügbaren Tools: einen Namen, eine Beschreibung dessen, was jedes tut, und ein Schema für die erwarteten Argumente. Das Modell erhält keinen funktionierenden Code und keine aktive Verbindung zu irgendetwas — es erhält eine Beschreibung, so wie eine Person eine Speisekarte liest, ohne Zugang zur Küche zu haben.',
+          ],
+        },
+        {
+          id: 'the-model-never-executes-anything',
+          heading: 'Das Modell führt nie selbst etwas aus',
+          paragraphs: [
+            'Wenn ein Modell entscheidet, dass ein Tool helfen würde, erzeugt es eine strukturierte Ausgabe — typischerweise einen Tool-Namen und eine Reihe von Argumenten — und hört dort auf. Es wurde noch nichts durchsucht, aufgerufen oder verändert. Die Anwendung, die die Anfrage gesendet hat, liest diese strukturierte Ausgabe, entscheidet, ob sie darauf reagiert, und führt gegebenenfalls die echte Funktion oder den API-Aufruf auf ihrer eigenen Infrastruktur aus.',
+          ],
+        },
+        {
+          id: 'the-loop-request-response-continue',
+          heading: 'Ein vollständiger Austausch ist eine Schleife, kein einzelner Schritt',
+          paragraphs: [
+            'Der typische Ablauf: Die Anwendung sendet einen Prompt plus die Liste verfügbarer Tools; das Modell antwortet entweder mit einer Antwort oder einem vorgeschlagenen Tool-Aufruf; handelt es sich um einen Tool-Aufruf, führt die Anwendung ihn aus und sendet das Ergebnis als Teil des Gesprächs zurück; das Modell fährt dann fort, oft mit einer endgültigen Antwort, die dieses Ergebnis nutzt. Mehrstufige Aufgaben können diese Schleife mehrmals wiederholen, bevor eine Antwort den Nutzer erreicht.',
+          ],
+        },
+        {
+          id: 'a-proposed-call-is-a-guess-not-a-guarantee',
+          heading:
+            'Ein vorgeschlagener Aufruf ist eine plausible Vermutung, keine garantiert richtige',
+          paragraphs: [
+            'Ein Modell kann das falsche Tool vorschlagen, ein Argument erfinden, das nie im Schema stand, oder ein Tool aufrufen, obwohl gar nichts aufzurufen war — dieselbe probabilistische Generierung, die jede andere Ausgabe erzeugt, erzeugt auch einen Tool-Aufruf. Nichts am Mechanismus macht einen vorgeschlagenen Aufruf von sich aus sicher auszuführen. Eine Anwendung, die Argumente ausführt, ohne sie gegen das Schema zu prüfen, und ohne zu autorisieren, worauf der Aufruf tatsächlich zugreifen darf, vertraut einer Vermutung echten Zugriff an.',
+          ],
+        },
+        {
+          id: 'the-schema-is-the-interface-the-model-sees',
+          heading: 'Das Schema ist die einzige Schnittstelle, die das Modell tatsächlich sieht',
+          paragraphs: [
+            'Name, Beschreibung und Argumentschema eines Tools sind die gesamte Spezifikation, mit der das Modell arbeiten muss — es hat keine andere Möglichkeit zu lernen, was ein Tool tut oder wie seine Parameter korrekt auszufüllen sind. Dieselbe zugrunde liegende Funktion, klar und eng beschrieben, wird tendenziell weit häufiger korrekt aufgerufen als eine vage beschriebene oder mit fachfremden Optionen gebündelte, weil das Modell Auswahl und Argumente allein aus dieser Beschreibung ableitet.',
+          ],
+        },
+        {
+          id: 'why-this-differs-from-the-model-writing-code',
+          heading: 'Warum das anders ist, als ein Modell Code schreiben zu lassen',
+          paragraphs: [
+            'Ein Modell zu bitten, ein funktionierendes Skript zu erzeugen, und es zu bitten, ein vordefiniertes Tool aufzurufen, sind nicht dieselbe Anfrage. Ein Tool-Aufruf ist auf einen Namen und Argumente beschränkt, mit denen Ihre Anwendung bereits sicher umzugehen weiß; frei generierter Code kann versuchen, alles zu tun, was die Ausführungsumgebung erlaubt — ein viel größeres und andersartiges Sicherheitsproblem. Tool-Aufruf begrenzt das, worum ein Modell bitten kann, auf eine feste, überprüfbare Menge von Optionen.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Führt das Modell das Tool selbst aus?',
+          answer:
+            'Nein. Das Modell gibt eine strukturierte Anfrage aus, die ein Tool und dessen Argumente benennt. Die Anwendung, die die Anfrage gesendet hat, entscheidet, ob sie ausgeführt wird, und der eigentliche Funktions- oder API-Aufruf läuft auf der eigenen Infrastruktur der Anwendung, nicht im Modell.',
+        },
+        {
+          question: 'Kann ein Modell ein Tool mit erfundenen Argumenten aufrufen?',
+          answer:
+            'Ja. Ein Modell kann einen Wert liefern, der nie Teil des Schemas war oder für das Tool keinen Sinn ergibt, weil der Aufruf genauso erzeugt wird wie jede andere Ausgabe. Argumente vor der Ausführung von etwas Echtem zu prüfen ist Aufgabe der Anwendung, nicht etwas, das das Modell garantiert.',
+        },
+        {
+          question: 'Was passiert, wenn das Modell das falsche Tool aufruft?',
+          answer:
+            'Das hängt vollständig davon ab, wie die Anwendung gebaut ist. Eine gut gebaute prüft, ob der Aufruf sinnvoll ist, bevor sie ihn ausführt, und kann einen Fehler oder ein klärendes Ergebnis an das Modell zurückgeben, statt auf eine unpassende Anfrage zu reagieren; eine schlecht gebaute führt aus, was sie erhält.',
+        },
+        {
+          question: 'Ist Tool-Aufruf dasselbe wie ein KI-Agent?',
+          answer:
+            'Nein, aber Agenten bauen meist darauf auf. Tool-Aufruf ist der zugrunde liegende Anfrage-Antwort-Mechanismus; ein Agent wiederholt diese Schleife typischerweise mehrfach, mit zusätzlicher Logik, die anhand jedes Ergebnisses entscheidet, was als Nächstes zu versuchen ist.',
+        },
+      ],
+      productNote:
+        'ClawAI stellt Modellen Workspace-Connectoren und andere Aktionen während einer Chat-Anfrage als aufrufbare Tools bereit; ein vorgeschlagener Aufruf wird gegen sein Schema geprüft, bevor ClawAI in Ihrem Namen etwas gegen einen echten Connector ausführt.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

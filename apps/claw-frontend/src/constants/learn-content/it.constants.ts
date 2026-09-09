@@ -37,6 +37,8 @@ export const IT_LEARN_CONTENT: LearnDictionary = {
         'Come il testo diventa un vettore di numeri, e perché questo rende possibile cercare per significato.',
       [LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING]:
         'Tre soluzioni diverse per tre problemi diversi, e perché molti prodotti non hanno mai bisogno della terza.',
+      [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]:
+        'Il modello non esegue mai nulla — propone una chiamata, e la tua applicazione decide cosa succede dopo.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Usare più modelli in un unico flusso invece di legarsi a uno solo.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -488,6 +490,90 @@ export const IT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'I pacchetti di contesto di ClawAI e il recupero da file e workspace aggiungono materiale pertinente a una richiesta senza toccare il modello sottostante; ClawAI non offre fine-tuning dei modelli — i modelli cloud e locali verso cui instrada vengono usati così come sono già addestrati.',
+    },
+    [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]: {
+      seo: {
+        title: 'Come funziona davvero la chiamata di strumenti nell’IA?',
+        description:
+          'Un modello che chiama uno strumento non esegue mai nulla da solo: propone un nome e argomenti, e la tua applicazione decide se eseguire la chiamata. Come funziona il ciclo richiesta-risposta, e perché la proposta è un’ipotesi, non una garanzia.',
+        keywords: [
+          'come funziona la chiamata di strumenti',
+          'function calling negli LLM spiegato',
+          'meccanismo di uso degli strumenti IA',
+        ],
+      },
+      eyebrow: 'Fondamenti',
+      title: 'Come funziona davvero la chiamata di strumenti nell’IA?',
+      summary:
+        'La chiamata di strumenti, a volte detta function calling, permette a un modello di chiedere che qualcosa venga fatto per suo conto: interrogare un database, chiamare un’API, eseguire un calcolo. Ciò che sorprende è cosa fa davvero il modello in quel momento — non esegue nulla. Produce una richiesta strutturata che nomina uno strumento e i suoi argomenti, e la tua applicazione decide se e come agire di conseguenza.',
+      sections: [
+        {
+          id: 'what-tool-calling-actually-is',
+          heading: 'Al modello viene dato un menù, non una tastiera',
+          paragraphs: [
+            'Prima di inviare una richiesta, l’applicazione descrive al modello gli strumenti disponibili: un nome, una descrizione di cosa fa ciascuno e uno schema per gli argomenti attesi. Il modello non riceve codice funzionante né una connessione attiva a nulla — riceve una descrizione, così come una persona legge un menù senza avere accesso alla cucina.',
+          ],
+        },
+        {
+          id: 'the-model-never-executes-anything',
+          heading: 'Il modello non esegue mai nulla da solo',
+          paragraphs: [
+            'Quando un modello decide che uno strumento sarebbe utile, produce un output strutturato — tipicamente un nome di strumento e un insieme di argomenti — e si ferma lì. Non è stato ancora cercato, chiamato o modificato nulla. L’applicazione che ha inviato la richiesta legge quell’output strutturato, decide se agire di conseguenza, e in caso affermativo esegue la funzione o la chiamata API reale sulla propria infrastruttura.',
+          ],
+        },
+        {
+          id: 'the-loop-request-response-continue',
+          heading: 'Uno scambio completo è un ciclo, non un singolo passaggio',
+          paragraphs: [
+            'La sequenza tipica: l’applicazione invia un prompt più l’elenco degli strumenti disponibili; il modello risponde con una risposta oppure con una chiamata di strumento proposta; se è una chiamata di strumento, l’applicazione la esegue e rimanda indietro il risultato come parte della conversazione; il modello prosegue quindi, spesso producendo una risposta finale che usa quel risultato. I compiti a più passaggi possono ripetere questo ciclo diverse volte prima che una risposta raggiunga l’utente.',
+          ],
+        },
+        {
+          id: 'a-proposed-call-is-a-guess-not-a-guarantee',
+          heading: 'Una chiamata proposta è un’ipotesi plausibile, non una garanzia di correttezza',
+          paragraphs: [
+            'Un modello può proporre lo strumento sbagliato, inventare un argomento mai presente nello schema, o chiamare uno strumento quando non c’era nulla da chiamare — la stessa generazione probabilistica che produce qualsiasi altro output produce anche una chiamata di strumento. Nulla nel meccanismo rende una chiamata proposta intrinsecamente sicura da eseguire. Un’applicazione che esegue argomenti senza validarli rispetto allo schema, e senza autorizzare ciò che la chiamata può effettivamente toccare, sta affidando un accesso reale a un’ipotesi.',
+          ],
+        },
+        {
+          id: 'the-schema-is-the-interface-the-model-sees',
+          heading: 'Lo schema è l’unica interfaccia che il modello vede davvero',
+          paragraphs: [
+            'Nome, descrizione e schema degli argomenti di uno strumento sono l’intera specifica su cui il modello può basarsi — non ha altro modo per sapere cosa fa uno strumento o come compilarne correttamente i parametri. La stessa funzione sottostante, descritta in modo chiaro e mirato, tende a essere chiamata correttamente molto più spesso di una descritta vagamente o raggruppata con opzioni non correlate, perché il modello sceglie e compila gli argomenti solo da quella descrizione.',
+          ],
+        },
+        {
+          id: 'why-this-differs-from-the-model-writing-code',
+          heading: 'Perché è diverso dal chiedere a un modello di scrivere codice',
+          paragraphs: [
+            'Chiedere a un modello di produrre uno script funzionante e chiedergli di chiamare uno strumento predefinito non sono la stessa richiesta. Una chiamata di strumento è limitata a un nome e argomenti che la tua applicazione sa già gestire in sicurezza; il codice generato liberamente può tentare di fare qualsiasi cosa l’ambiente di esecuzione consenta, un problema di sicurezza molto più ampio e diverso. La chiamata di strumenti restringe ciò che un modello può richiedere a un insieme fisso e ispezionabile di opzioni.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Il modello esegue lo strumento da solo?',
+          answer:
+            'No. Il modello produce una richiesta strutturata che nomina uno strumento e i suoi argomenti. L’applicazione che ha inviato la richiesta decide se eseguirla, e la funzione o la chiamata API reale viene eseguita sull’infrastruttura propria dell’applicazione, non all’interno del modello.',
+        },
+        {
+          question: 'Un modello può chiamare uno strumento con argomenti inventati?',
+          answer:
+            'Sì. Un modello può fornire un valore mai presente nello schema, o che non ha senso per lo strumento, perché la chiamata viene generata come qualsiasi altro output. Validare gli argomenti prima di eseguire qualcosa di reale è responsabilità dell’applicazione, non qualcosa che il modello garantisce.',
+        },
+        {
+          question: 'Cosa succede se il modello chiama lo strumento sbagliato?',
+          answer:
+            'Dipende interamente da come è costruita l’applicazione. Una ben costruita verifica se la chiamata ha senso prima di eseguirla e può restituire un errore o un risultato chiarificatore al modello invece di agire su una richiesta non pertinente; una mal costruita esegue ciò che riceve.',
+        },
+        {
+          question: 'La chiamata di strumenti è la stessa cosa di un agente IA?',
+          answer:
+            'No, ma gli agenti di solito si costruiscono sopra di essa. La chiamata di strumenti è il meccanismo sottostante di richiesta-risposta; un agente in genere ripete quel ciclo più volte, con logica aggiuntiva che decide cosa provare successivamente in base a ogni risultato.',
+        },
+      ],
+      productNote:
+        'ClawAI espone connettori del workspace e altre azioni ai modelli come strumenti richiamabili durante una richiesta di chat; una chiamata proposta viene validata rispetto al suo schema prima che ClawAI esegua qualsiasi cosa contro un connettore reale per tuo conto.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

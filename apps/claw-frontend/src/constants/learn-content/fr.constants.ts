@@ -37,6 +37,8 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
         'Comment un texte devient un vecteur de nombres, et pourquoi cela rend possible la recherche par sens.',
       [LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING]:
         'Trois solutions différentes pour trois problèmes différents, et pourquoi beaucoup de produits n’ont jamais besoin de la troisième.',
+      [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]:
+        'Le modèle n’exécute jamais rien lui-même — il propose un appel, et votre application décide de la suite.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Utiliser plusieurs modèles dans un même flux plutôt que de s’enfermer dans un seul.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -497,6 +499,90 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'Les packs de contexte de ClawAI ainsi que la récupération de fichiers et d’espace de travail ajoutent du contenu pertinent à une requête sans toucher au modèle sous-jacent ; ClawAI ne propose pas de fine-tuning de modèles — les modèles cloud et locaux vers lesquels il route sont utilisés tels qu’ils ont déjà été entraînés.',
+    },
+    [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]: {
+      seo: {
+        title: 'Comment fonctionne vraiment l’appel d’outils en IA ?',
+        description:
+          'Un modèle qui appelle un outil n’exécute jamais rien lui-même : il propose un nom et des arguments, et votre application décide d’exécuter l’appel ou non. Comment fonctionne la boucle requête-réponse, et pourquoi la proposition est une supposition, pas une garantie.',
+        keywords: [
+          'comment fonctionne l’appel d’outils',
+          'function calling LLM expliqué',
+          'mécanisme d’usage d’outils en IA',
+        ],
+      },
+      eyebrow: 'Principes de base',
+      title: 'Comment fonctionne vraiment l’appel d’outils en IA ?',
+      summary:
+        'L’appel d’outils, parfois appelé function calling, permet à un modèle de demander qu’on fasse quelque chose en son nom : interroger une base de données, appeler une API, effectuer un calcul. Ce qui surprend les gens, c’est ce que le modèle fait réellement à ce moment-là — il n’exécute rien. Il produit une requête structurée nommant un outil et ses arguments, et votre application décide s’il faut agir dessus, et comment.',
+      sections: [
+        {
+          id: 'what-tool-calling-actually-is',
+          heading: 'On donne au modèle un menu, pas un clavier',
+          paragraphs: [
+            'Avant l’envoi d’une requête, l’application décrit au modèle les outils disponibles : un nom, une description de ce que fait chacun, et un schéma pour les arguments attendus. Le modèle ne reçoit ni code fonctionnel ni connexion active à quoi que ce soit — il reçoit une description, de la même façon qu’une personne lit un menu sans avoir accès à la cuisine.',
+          ],
+        },
+        {
+          id: 'the-model-never-executes-anything',
+          heading: 'Le modèle n’exécute jamais rien lui-même',
+          paragraphs: [
+            'Quand un modèle juge qu’un outil serait utile, il produit une sortie structurée — typiquement un nom d’outil et un ensemble d’arguments — et s’arrête là. Rien n’a encore été recherché, appelé ou modifié. L’application qui a envoyé la requête lit cette sortie structurée, décide d’agir dessus ou non, et si oui exécute la fonction ou l’appel API réel sur sa propre infrastructure.',
+          ],
+        },
+        {
+          id: 'the-loop-request-response-continue',
+          heading: 'Un échange complet est une boucle, pas une étape unique',
+          paragraphs: [
+            'La séquence typique : l’application envoie un prompt plus la liste des outils disponibles ; le modèle répond soit par une réponse, soit par un appel d’outil proposé ; s’il s’agit d’un appel d’outil, l’application l’exécute et renvoie le résultat dans la conversation ; le modèle poursuit alors, produisant souvent une réponse finale qui utilise ce résultat. Les tâches à plusieurs étapes peuvent répéter cette boucle plusieurs fois avant qu’une réponse n’atteigne l’utilisateur.',
+          ],
+        },
+        {
+          id: 'a-proposed-call-is-a-guess-not-a-guarantee',
+          heading: 'Un appel proposé est une supposition plausible, pas une garantie de justesse',
+          paragraphs: [
+            'Un modèle peut proposer le mauvais outil, inventer un argument qui n’a jamais figuré dans le schéma, ou appeler un outil alors que rien ne le justifiait — la même génération probabiliste qui produit toute autre sortie produit aussi un appel d’outil. Rien dans le mécanisme ne rend un appel proposé intrinsèquement sûr à exécuter. Une application qui exécute des arguments sans les valider par rapport au schéma, et sans autoriser ce que l’appel peut réellement toucher, fait confiance à une supposition avec un accès réel.',
+          ],
+        },
+        {
+          id: 'the-schema-is-the-interface-the-model-sees',
+          heading: 'Le schéma est la seule interface que le modèle voit réellement',
+          paragraphs: [
+            'Le nom, la description et le schéma d’arguments d’un outil constituent toute la spécification dont dispose le modèle — il n’a aucun autre moyen d’apprendre ce que fait un outil ou comment remplir correctement ses paramètres. Une même fonction sous-jacente, décrite clairement et précisément, tend à être appelée correctement bien plus souvent qu’une autre décrite vaguement ou regroupée avec des options sans rapport, parce que le modèle choisit et remplit les arguments à partir de cette seule description.',
+          ],
+        },
+        {
+          id: 'why-this-differs-from-the-model-writing-code',
+          heading: 'Pourquoi c’est différent de demander à un modèle d’écrire du code',
+          paragraphs: [
+            'Demander à un modèle de produire un script fonctionnel et lui demander d’appeler un outil prédéfini ne sont pas la même requête. Un appel d’outil est limité à un nom et des arguments que votre application sait déjà gérer en sécurité ; du code généré librement peut tenter de faire tout ce que l’environnement d’exécution permet, ce qui constitue un problème de sécurité bien plus vaste et différent. L’appel d’outils réduit ce qu’un modèle peut demander à un ensemble fixe et vérifiable d’options.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Le modèle exécute-t-il l’outil lui-même ?',
+          answer:
+            'Non. Le modèle produit une requête structurée nommant un outil et ses arguments. L’application qui a envoyé la requête décide de l’exécuter ou non, et la fonction ou l’appel API réel s’exécute sur l’infrastructure propre de l’application, pas à l’intérieur du modèle.',
+        },
+        {
+          question: 'Un modèle peut-il appeler un outil avec des arguments inventés ?',
+          answer:
+            'Oui. Un modèle peut fournir une valeur qui n’a jamais fait partie du schéma, ou qui n’a pas de sens pour l’outil, car l’appel est généré de la même façon que toute autre sortie. Valider les arguments avant d’exécuter quoi que ce soit de réel relève de la responsabilité de l’application, pas d’une garantie du modèle.',
+        },
+        {
+          question: 'Que se passe-t-il si le modèle appelle le mauvais outil ?',
+          answer:
+            'Cela dépend entièrement de la façon dont l’application est conçue. Une application bien conçue vérifie si l’appel a du sens avant de l’exécuter et peut renvoyer une erreur ou un résultat clarifiant au modèle plutôt que d’agir sur une requête inadaptée ; une application mal conçue exécute ce qu’elle reçoit.',
+        },
+        {
+          question: 'L’appel d’outils est-il la même chose qu’un agent d’IA ?',
+          answer:
+            'Non, mais les agents s’appuient généralement dessus. L’appel d’outils est le mécanisme sous-jacent de requête-réponse ; un agent répète typiquement cette boucle plusieurs fois, avec une logique supplémentaire décidant quoi essayer ensuite selon chaque résultat.',
+        },
+      ],
+      productNote:
+        'ClawAI expose les connecteurs d’espace de travail et d’autres actions aux modèles comme des outils appelables pendant une requête de conversation ; un appel proposé est validé par rapport à son schéma avant que ClawAI n’exécute quoi que ce soit contre un connecteur réel en votre nom.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

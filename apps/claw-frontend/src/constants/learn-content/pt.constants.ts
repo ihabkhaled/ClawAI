@@ -37,6 +37,8 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
         'Como o texto vira um vetor de números, e por que isso torna possível buscar por significado.',
       [LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING]:
         'Três soluções diferentes para três problemas diferentes, e por que muitos produtos nunca precisam da terceira.',
+      [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]:
+        'O modelo nunca executa nada — ele propõe uma chamada, e sua aplicação decide o que acontece depois.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Usar vários modelos num mesmo fluxo em vez de se prender a um só.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -487,6 +489,90 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'Os pacotes de contexto do ClawAI e a recuperação de arquivos e workspace adicionam material relevante a uma requisição sem tocar no modelo subjacente; o ClawAI não oferece fine-tuning de modelos — os modelos na nuvem e locais para os quais ele roteia são usados como já treinados.',
+    },
+    [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]: {
+      seo: {
+        title: 'Como funciona de verdade a chamada de ferramentas na IA?',
+        description:
+          'Um modelo que chama uma ferramenta nunca executa nada sozinho: ele propõe um nome e argumentos, e sua aplicação decide se executa a chamada. Como funciona o ciclo requisição-resposta, e por que a proposta é um palpite, não uma garantia.',
+        keywords: [
+          'como funciona a chamada de ferramentas',
+          'function calling em LLM explicado',
+          'mecanismo de uso de ferramentas em IA',
+        ],
+      },
+      eyebrow: 'Fundamentos',
+      title: 'Como funciona de verdade a chamada de ferramentas na IA?',
+      summary:
+        'A chamada de ferramentas, às vezes chamada de function calling, permite que um modelo peça que algo seja feito em seu nome: consultar um banco de dados, chamar uma API, executar um cálculo. O que surpreende as pessoas é o que o modelo realmente faz nesse momento — ele não executa nada. Ele produz uma requisição estruturada nomeando uma ferramenta e seus argumentos, e sua aplicação decide se e como agir sobre isso.',
+      sections: [
+        {
+          id: 'what-tool-calling-actually-is',
+          heading: 'O modelo recebe um cardápio, não um teclado',
+          paragraphs: [
+            'Antes de uma requisição ser enviada, a aplicação descreve ao modelo as ferramentas disponíveis: um nome, uma descrição do que cada uma faz e um esquema para os argumentos esperados. O modelo não recebe código funcional nem uma conexão ativa com nada — recebe uma descrição, do mesmo jeito que uma pessoa lê um cardápio sem ter acesso à cozinha.',
+          ],
+        },
+        {
+          id: 'the-model-never-executes-anything',
+          heading: 'O modelo nunca executa nada sozinho',
+          paragraphs: [
+            'Quando um modelo decide que uma ferramenta ajudaria, ele produz uma saída estruturada — normalmente um nome de ferramenta e um conjunto de argumentos — e para por aí. Nada ainda foi buscado, chamado ou alterado. A aplicação que enviou a requisição lê essa saída estruturada, decide se age sobre ela, e em caso afirmativo executa a função ou a chamada de API real na própria infraestrutura.',
+          ],
+        },
+        {
+          id: 'the-loop-request-response-continue',
+          heading: 'Uma troca completa é um ciclo, não uma etapa única',
+          paragraphs: [
+            'A sequência típica é: a aplicação envia um prompt mais a lista de ferramentas disponíveis; o modelo responde com uma resposta ou com uma chamada de ferramenta proposta; se for uma chamada de ferramenta, a aplicação a executa e manda o resultado de volta como parte da conversa; o modelo então continua, muitas vezes produzindo uma resposta final que usa esse resultado. Tarefas de várias etapas podem repetir esse ciclo várias vezes antes de uma resposta chegar ao usuário.',
+          ],
+        },
+        {
+          id: 'a-proposed-call-is-a-guess-not-a-guarantee',
+          heading: 'Uma chamada proposta é um palpite plausível, não uma garantia de acerto',
+          paragraphs: [
+            'Um modelo pode propor a ferramenta errada, inventar um argumento que nunca esteve no esquema, ou chamar uma ferramenta quando não havia nada para chamar — a mesma geração probabilística que produz qualquer outra saída produz uma chamada de ferramenta. Nada no mecanismo torna uma chamada proposta inerentemente segura de executar. Uma aplicação que executa argumentos sem validá-los contra o esquema, e sem autorizar o que a chamada realmente pode tocar, está confiando acesso real a um palpite.',
+          ],
+        },
+        {
+          id: 'the-schema-is-the-interface-the-model-sees',
+          heading: 'O esquema é a única interface que o modelo realmente vê',
+          paragraphs: [
+            'O nome, a descrição e o esquema de argumentos de uma ferramenta são toda a especificação que o modelo tem para trabalhar — ele não tem outra forma de saber o que uma ferramenta faz ou como preencher seus parâmetros corretamente. A mesma função subjacente, descrita de forma clara e específica, tende a ser chamada corretamente com muito mais frequência do que uma descrita vagamente ou agrupada com opções sem relação, porque o modelo escolhe e preenche os argumentos só a partir dessa descrição.',
+          ],
+        },
+        {
+          id: 'why-this-differs-from-the-model-writing-code',
+          heading: 'Por que isso é diferente de pedir a um modelo para escrever código',
+          paragraphs: [
+            'Pedir a um modelo para produzir um script funcional e pedir que ele chame uma ferramenta predefinida não são a mesma requisição. Uma chamada de ferramenta é limitada a um nome e argumentos que sua aplicação já sabe tratar com segurança; código gerado livremente pode tentar fazer qualquer coisa que o ambiente de execução permita, um problema de segurança muito maior e diferente. A chamada de ferramentas restringe o que um modelo pode pedir a um conjunto fixo e inspecionável de opções.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'O modelo executa a ferramenta sozinho?',
+          answer:
+            'Não. O modelo produz uma requisição estruturada nomeando uma ferramenta e seus argumentos. A aplicação que enviou a requisição decide se executa, e a função ou chamada de API real roda na própria infraestrutura da aplicação, não dentro do modelo.',
+        },
+        {
+          question: 'Um modelo pode chamar uma ferramenta com argumentos inventados?',
+          answer:
+            'Sim. Um modelo pode fornecer um valor que nunca fez parte do esquema, ou que não faz sentido para a ferramenta, porque a chamada é gerada do mesmo jeito que qualquer outra saída. Validar argumentos antes de executar algo real é responsabilidade da aplicação, não algo que o modelo garanta.',
+        },
+        {
+          question: 'O que acontece se o modelo chamar a ferramenta errada?',
+          answer:
+            'Isso depende inteiramente de como a aplicação foi construída. Uma bem construída verifica se a chamada faz sentido antes de executá-la e pode devolver um erro ou um resultado esclarecedor ao modelo em vez de agir sobre uma requisição incompatível; uma mal construída executa o que recebe.',
+        },
+        {
+          question: 'Chamada de ferramentas é a mesma coisa que um agente de IA?',
+          answer:
+            'Não, mas agentes geralmente são construídos em cima dela. A chamada de ferramentas é o mecanismo subjacente de requisição-resposta; um agente normalmente repete esse ciclo várias vezes, com lógica adicional decidindo o que tentar em seguida com base em cada resultado.',
+        },
+      ],
+      productNote:
+        'O ClawAI expõe conectores de workspace e outras ações aos modelos como ferramentas chamáveis durante uma requisição de chat; uma chamada proposta é validada contra seu esquema antes de o ClawAI executar qualquer coisa contra um conector real em seu nome.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {
