@@ -78,6 +78,8 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
         'A diferença entre responder a você e fazer algo por você.',
       [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]:
         'O que realmente testar antes de confiar seu trabalho a um modelo — não um número de ranking.',
+      [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]:
+        'O que um número de benchmark realmente mede, e as formas como pode te enganar antes mesmo de você começar a testar.',
     },
   },
   topics: {
@@ -1916,6 +1918,92 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'Em vez de reduzir uma resposta de chat a um único número, o painel de transparência de roteamento do ClawAI mostra a classe de custo, a classe de latência, a confiança do roteamento, e se um modelo de fallback ou juiz foi usado para aquela resposta específica — um sinal de avaliação ligado à solicitação real, não um número genérico de ranking.',
+    },
+    [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]: {
+      seo: {
+        title: 'Como ler benchmarks de IA sem se deixar enganar',
+        description:
+          'Um número de benchmark parece preciso, o que facilita confiar demais nele. O que uma pontuação como MMLU ou HumanEval realmente mede, as formas comuns como números de benchmark enganam, e o que verificar antes de tratar um como significativo para o seu caso.',
+        keywords: [
+          'como ler benchmarks de IA',
+          'pontuações de benchmark de IA explicadas',
+          'entendendo benchmarks de LLM',
+        ],
+      },
+      eyebrow: 'Fundamentos',
+      title: 'Como ler benchmarks de IA sem se deixar enganar',
+      summary:
+        'Uma pontuação de benchmark mede o desempenho num único conjunto fixo e específico de perguntas de teste — nem mais, nem menos. O número parece preciso e objetivo, e é justamente por isso que é fácil confiar demais nele: um único valor não consegue mostrar o que o teste cobriu, como o modelo foi questionado, ou se as perguntas vazaram para os dados de treinamento antes mesmo de o modelo vê-las de verdade.',
+      sections: [
+        {
+          id: 'a-benchmark-is-one-fixed-test-not-a-general-measure',
+          heading: 'Um benchmark é um teste fixo, não uma medida geral de capacidade',
+          paragraphs: [
+            'Benchmarks conhecidos como MMLU (conhecimento geral de múltipla escolha), HumanEval (problemas curtos de programação) ou GSM8K (problemas de matemática em forma de texto de nível fundamental) testam cada um uma habilidade estreita e específica num formato preciso. Um modelo pode pontuar bem num deles e mal numa tarefa que parece semelhante para um humano mas é estruturada de forma diferente — programação extensa em vez de funções curtas isoladas, por exemplo, ou escrita aberta em vez de recordação de múltipla escolha.',
+          ],
+        },
+        {
+          id: 'contamination-benchmark-questions-leak-into-training-data',
+          heading: 'Perguntas de benchmark podem vazar para os dados de treinamento',
+          paragraphs: [
+            'Benchmarks populares são públicos, e suas perguntas circulam amplamente na web, em artigos e em discussões de fóruns — exatamente o tipo de texto com que grandes modelos são treinados. Quando um modelo já viu a resposta na prática, sua pontuação reflete memorização naquele teste específico, não a capacidade geral que o benchmark pretendia representar. Isso se chama contaminação, e é difícil de detectar de fora só pela pontuação.',
+          ],
+        },
+        {
+          id: 'scores-can-depend-heavily-on-how-the-model-was-prompted',
+          heading: 'A pontuação relatada pode depender fortemente de como o modelo foi questionado',
+          paragraphs: [
+            'O mesmo modelo pode pontuar de forma muito diferente dependendo do formato do prompt, do número de exemplos resolvidos mostrados antes da pergunta real, e se foi permitido raciocinar passo a passo antes de responder. Um provedor que relata seu melhor resultado em condições generosas não está mentindo, mas esse número pode não se parecer com o que você obteria com um prompt simples do dia a dia.',
+          ],
+        },
+        {
+          id: 'benchmarks-saturate-and-stop-being-useful',
+          heading:
+            'Benchmarks saturam — e deixam de ser úteis quando a maioria dos modelos os supera',
+          paragraphs: [
+            'Quando a maioria dos modelos líderes pontua perto do máximo num benchmark, ele deixa de distingui-los de forma significativa, mesmo que o número antigo ainda seja citado com frequência. Uma pontuação quase perfeita num benchmark saturado diz menos do que dizia antes; benchmarks mais novos e difíceis tendem a substituí-lo, e uma comparação de marketing que se apoia num número velho e saturado merece um segundo olhar.',
+          ],
+        },
+        {
+          id: 'a-single-average-hides-where-a-model-actually-struggles',
+          heading: 'Uma única média esconde exatamente onde um modelo realmente falha',
+          paragraphs: [
+            'Uma pontuação geral de benchmark é uma média entre muitas perguntas de dificuldade e tipo variados. Um modelo pode ter uma boa média e ainda assim ser pouco confiável numa subcategoria específica que importa para você — um tipo particular de raciocínio, um domínio específico, um determinado comprimento de tarefa. A média é um resumo, e resumos descartam justamente o detalhe que costuma importar mais numa decisão real.',
+          ],
+        },
+        {
+          id: 'treat-a-benchmark-as-a-starting-point-not-a-verdict',
+          heading: 'Trate um benchmark como ponto de partida, não como veredito',
+          paragraphs: [
+            'Uma pontuação de benchmark é mais útil como um filtro inicial aproximado — descartar claramente um modelo inadequado, ou pré-selecionar alguns que valha a pena testar mais a fundo — do que como a palavra final sobre qual modelo usar. Veja como avaliar modelos de IA para saber o que realmente prevê o encaixe depois de reduzir uma pré-seleção: testar nas suas próprias tarefas representativas, algo que nenhum benchmark publicado consegue substituir.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'O que um benchmark como MMLU ou HumanEval realmente testa?',
+          answer:
+            'Um conjunto fixo e específico de perguntas num formato preciso — MMLU é conhecimento geral de múltipla escolha, HumanEval são problemas curtos de programação. Cada um mede uma habilidade estreita, não uma inteligência geral ou capacidade em qualquer tarefa.',
+        },
+        {
+          question:
+            'Por que os benchmarks de provedores diferentes às vezes parecem inconsistentes?',
+          answer:
+            'As pontuações podem depender do formato do prompt, de quantos exemplos foram mostrados antes da pergunta real, e se o raciocínio passo a passo foi permitido. Condições de relato diferentes produzem números diferentes para o mesmo modelo subjacente.',
+        },
+        {
+          question: 'O que é contaminação de benchmark?',
+          answer:
+            'Quando as perguntas públicas de um benchmark acabam nos dados de treinamento de um modelo, de modo que ele já viu as respostas na prática antes de ser testado. A pontuação resultante reflete memorização, não a capacidade que o benchmark pretendia medir.',
+        },
+        {
+          question: 'Devo ignorar completamente as pontuações de benchmark?',
+          answer:
+            'Não — elas são um filtro inicial razoável para descartar modelos claramente inadequados ou montar uma pré-seleção. Só não trate o número final como um veredito; teste a pré-seleção nas suas próprias tarefas representativas antes de decidir.',
+        },
+      ],
+      productNote:
+        'O ClawAI não publica seu próprio ranking de benchmarks nem reivindica uma pontuação proprietária para nenhum modelo — em vez disso, seu painel de transparência de roteamento mostra a classe de custo, a classe de latência e a confiança de roteamento reais por trás de uma resposta específica, para que você possa julgar uma resposta em relação à sua própria solicitação, e não a um conjunto de testes publicado que você não pode inspecionar.',
     },
   },
 };

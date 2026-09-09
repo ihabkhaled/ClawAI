@@ -80,6 +80,8 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
         'The difference between answering you and doing something for you.',
       [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]:
         'What to actually test before trusting a model with your work — not a leaderboard number.',
+      [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]:
+        'What a benchmark number actually measures, and the ways it can mislead you before you even start testing.',
     },
   },
   topics: {
@@ -1908,6 +1910,90 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'Rather than reducing a chat response to a single score, ClawAI’s routing transparency panel shows the cost class, latency class, routing confidence, and whether a fallback or judge model was used for that specific response — evaluation signal tied to the actual request, not a general leaderboard number.',
+    },
+    [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]: {
+      seo: {
+        title: 'How to read AI benchmarks without being misled',
+        description:
+          'A benchmark number looks precise, which makes it easy to over-trust. What a score like MMLU or HumanEval actually measures, the common ways benchmark numbers mislead, and what to check before treating one as meaningful for your use case.',
+        keywords: [
+          'how to read AI benchmarks',
+          'AI benchmark scores explained',
+          'understanding LLM benchmarks',
+        ],
+      },
+      eyebrow: 'Foundations',
+      title: 'How to read AI benchmarks without being misled',
+      summary:
+        'A benchmark score measures performance on one specific, fixed set of test questions — nothing more and nothing less. The number looks precise and objective, which is exactly why it’s easy to over-trust: a single figure can’t show you what the test covered, how the model was prompted, or whether the questions leaked into training data before the model ever saw them for real.',
+      sections: [
+        {
+          id: 'a-benchmark-is-one-fixed-test-not-a-general-measure',
+          heading: 'A benchmark is one fixed test, not a general measure of ability',
+          paragraphs: [
+            'Named benchmarks like MMLU (general knowledge multiple-choice), HumanEval (short coding problems), or GSM8K (grade-school math word problems) each test a narrow, specific skill in a specific format. A model can score well on one and poorly on a task that looks similar to a human but is structured differently — long-form coding versus short isolated functions, for instance, or open-ended writing versus multiple-choice recall.',
+          ],
+        },
+        {
+          id: 'contamination-benchmark-questions-leak-into-training-data',
+          heading: 'Benchmark questions can leak into training data',
+          paragraphs: [
+            'Popular benchmarks are public, and their questions circulate widely on the web, in papers, and in forum discussions — exactly the kind of text large models train on. When a model has effectively seen the answer before, its score reflects memorization on that specific test, not the general capability the benchmark is meant to represent. This is called contamination, and it’s difficult for an outside reader to detect from the score alone.',
+          ],
+        },
+        {
+          id: 'scores-can-depend-heavily-on-how-the-model-was-prompted',
+          heading: 'The reported score can depend heavily on how the model was prompted',
+          paragraphs: [
+            'The same model can score very differently depending on the prompt format, the number of worked examples shown before the real question, and whether it was allowed to reason step by step before answering. A provider reporting its best result under generous conditions is not lying, but that number may not resemble what you’d get with a plain, everyday prompt.',
+          ],
+        },
+        {
+          id: 'benchmarks-saturate-and-stop-being-useful',
+          heading: 'Benchmarks saturate — and stop being useful once most models pass them',
+          paragraphs: [
+            'Once most leading models score close to the maximum on a benchmark, it stops distinguishing them meaningfully, even though the older number is often still quoted. A near-perfect score on a saturated benchmark tells you less than it used to; newer, harder benchmarks tend to replace it, and a marketing comparison that leans on an old, saturated number is worth a second look.',
+          ],
+        },
+        {
+          id: 'a-single-average-hides-where-a-model-actually-struggles',
+          heading: 'A single average score hides exactly where a model struggles',
+          paragraphs: [
+            'An overall benchmark score is an average across many questions of varying difficulty and type. A model can average well while being unreliable on a specific sub-category that matters to you — a particular kind of reasoning, a specific domain, a certain length of task. The average is a summary, and summaries discard the detail that usually matters most for a real decision.',
+          ],
+        },
+        {
+          id: 'treat-a-benchmark-as-a-starting-point-not-a-verdict',
+          heading: 'Treat a benchmark as a starting point, not a verdict',
+          paragraphs: [
+            'A benchmark score is most useful for a rough first filter — ruling a model clearly unsuitable, or shortlisting a few worth testing further — rather than as the final word on which model to use. See how to evaluate AI models for what actually predicts fit once you’ve narrowed a shortlist: testing on your own representative tasks, which no published benchmark can substitute for.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'What does a benchmark like MMLU or HumanEval actually test?',
+          answer:
+            'A fixed, specific set of questions in a specific format — MMLU is multiple-choice general knowledge, HumanEval is short coding problems. Each measures a narrow skill, not general intelligence or ability across every task.',
+        },
+        {
+          question: 'Why do benchmark scores from different providers sometimes seem inconsistent?',
+          answer:
+            'Scores can depend on prompt format, how many examples were shown before the real question, and whether step-by-step reasoning was allowed. Different reporting conditions produce different numbers for the same underlying model.',
+        },
+        {
+          question: 'What is benchmark contamination?',
+          answer:
+            'When a benchmark’s public questions end up in a model’s training data, so the model has effectively seen the answers before being tested. The resulting score reflects memorization rather than the capability the benchmark was designed to measure.',
+        },
+        {
+          question: 'Should I ignore benchmark scores entirely?',
+          answer:
+            'No — they’re a reasonable first filter for ruling out clearly unsuitable models or building a shortlist. Just don’t treat the final number as a verdict; test the shortlist on your own representative tasks before deciding.',
+        },
+      ],
+      productNote:
+        'ClawAI doesn’t publish its own benchmark leaderboard or claim a proprietary score for any model — instead its routing transparency panel shows the real cost class, latency class, and routing confidence behind a specific answer, so you can judge a response against your own request rather than a published test set you can’t inspect.',
     },
   },
 };

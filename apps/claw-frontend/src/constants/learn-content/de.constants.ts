@@ -79,6 +79,8 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
         'Der Unterschied zwischen antworten und für Sie handeln.',
       [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]:
         'Was Sie wirklich testen sollten, bevor Sie einem Modell Ihre Arbeit anvertrauen — keine Bestenlisten-Zahl.',
+      [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]:
+        'Was eine Benchmark-Zahl wirklich misst, und wie sie Sie in die Irre führen kann, bevor Sie überhaupt zu testen beginnen.',
     },
   },
   topics: {
@@ -1916,6 +1918,92 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'Statt eine Chat-Antwort auf eine einzelne Zahl zu reduzieren, zeigt ClawAIs Routing-Transparenz-Panel die Kostenklasse, die Latenzklasse, die Routing-Konfidenz und ob für diese konkrete Antwort ein Fallback- oder Judge-Modell verwendet wurde — Bewertungssignal an die tatsächliche Anfrage gebunden, keine allgemeine Bestenlisten-Zahl.',
+    },
+    [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]: {
+      seo: {
+        title: 'KI-Benchmarks richtig lesen, ohne sich täuschen zu lassen',
+        description:
+          'Eine Benchmark-Zahl wirkt präzise, was es leicht macht, ihr zu viel zu vertrauen. Was ein Wert wie MMLU oder HumanEval tatsächlich misst, die üblichen Arten, wie Benchmark-Zahlen in die Irre führen, und was Sie prüfen sollten, bevor Sie einen als aussagekräftig für Ihren Fall behandeln.',
+        keywords: [
+          'KI-Benchmarks richtig lesen',
+          'KI-Benchmark-Werte erklärt',
+          'LLM-Benchmarks verstehen',
+        ],
+      },
+      eyebrow: 'Grundlagen',
+      title: 'KI-Benchmarks richtig lesen, ohne sich täuschen zu lassen',
+      summary:
+        'Ein Benchmark-Wert misst die Leistung auf einer einzigen, festen Menge von Testfragen — nicht mehr und nicht weniger. Die Zahl wirkt präzise und objektiv, und genau deshalb ist es leicht, ihr zu viel zu vertrauen: Eine einzelne Zahl kann nicht zeigen, was der Test abgedeckt hat, wie das Modell befragt wurde, oder ob die Fragen in die Trainingsdaten eingesickert sind, bevor das Modell sie je real zu Gesicht bekam.',
+      sections: [
+        {
+          id: 'a-benchmark-is-one-fixed-test-not-a-general-measure',
+          heading: 'Ein Benchmark ist ein fester Test, kein allgemeines Fähigkeitsmaß',
+          paragraphs: [
+            'Bekannte Benchmarks wie MMLU (allgemeines Wissen als Multiple-Choice), HumanEval (kurze Programmieraufgaben) oder GSM8K (Textaufgaben aus der Grundschulmathematik) testen jeweils eine enge, spezifische Fähigkeit in einem bestimmten Format. Ein Modell kann bei einem gut abschneiden und bei einer Aufgabe schlecht, die einem Menschen ähnlich vorkommt, aber anders strukturiert ist — etwa umfangreiches Programmieren statt kurzer isolierter Funktionen, oder offenes Schreiben statt Multiple-Choice-Erinnerung.',
+          ],
+        },
+        {
+          id: 'contamination-benchmark-questions-leak-into-training-data',
+          heading: 'Benchmark-Fragen können in Trainingsdaten einsickern',
+          paragraphs: [
+            'Beliebte Benchmarks sind öffentlich, und ihre Fragen zirkulieren weit im Web, in Papern und in Forendiskussionen — genau die Art von Text, mit der große Modelle trainiert werden. Wenn ein Modell die Antwort effektiv schon einmal gesehen hat, spiegelt sein Wert Auswendiglernen bei diesem konkreten Test wider, nicht die allgemeine Fähigkeit, die der Benchmark eigentlich abbilden soll. Das nennt man Kontamination, und für Außenstehende ist sie allein an der Zahl schwer zu erkennen.',
+          ],
+        },
+        {
+          id: 'scores-can-depend-heavily-on-how-the-model-was-prompted',
+          heading: 'Der berichtete Wert kann stark davon abhängen, wie das Modell befragt wurde',
+          paragraphs: [
+            'Dasselbe Modell kann je nach Prompt-Format, Anzahl der vorgeführten Beispiele vor der eigentlichen Frage und ob schrittweises Denken vor der Antwort erlaubt war, sehr unterschiedliche Werte erzielen. Ein Anbieter, der sein bestes Ergebnis unter großzügigen Bedingungen meldet, lügt nicht — aber diese Zahl entspricht möglicherweise nicht dem, was Sie bei einem schlichten, alltäglichen Prompt bekommen.',
+          ],
+        },
+        {
+          id: 'benchmarks-saturate-and-stop-being-useful',
+          heading:
+            'Benchmarks sättigen sich — und werden nutzlos, sobald die meisten Modelle sie bestehen',
+          paragraphs: [
+            'Sobald die meisten führenden Modelle bei einem Benchmark nah am Maximum liegen, unterscheidet er sie nicht mehr sinnvoll, auch wenn die ältere Zahl oft weiter zitiert wird. Ein nahezu perfekter Wert bei einem gesättigten Benchmark sagt weniger aus als früher; neuere, schwierigere Benchmarks lösen ihn meist ab, und ein Marketingvergleich, der sich auf eine alte, gesättigte Zahl stützt, verdient einen zweiten Blick.',
+          ],
+        },
+        {
+          id: 'a-single-average-hides-where-a-model-actually-struggles',
+          heading:
+            'Ein einzelner Durchschnittswert verbirgt genau die Stellen, an denen ein Modell schwächelt',
+          paragraphs: [
+            'Ein Gesamt-Benchmark-Wert ist ein Durchschnitt über viele Fragen unterschiedlicher Schwierigkeit und Art. Ein Modell kann im Schnitt gut abschneiden und trotzdem in einer bestimmten Unterkategorie unzuverlässig sein, die Ihnen wichtig ist — eine bestimmte Art von Schlussfolgern, ein bestimmter Bereich, eine bestimmte Aufgabenlänge. Der Durchschnitt ist eine Zusammenfassung, und Zusammenfassungen verwerfen genau die Details, die für eine reale Entscheidung meist am wichtigsten sind.',
+          ],
+        },
+        {
+          id: 'treat-a-benchmark-as-a-starting-point-not-a-verdict',
+          heading: 'Behandeln Sie einen Benchmark als Ausgangspunkt, nicht als Urteil',
+          paragraphs: [
+            'Ein Benchmark-Wert ist am nützlichsten als grober erster Filter — um ein Modell klar auszuschließen oder eine Vorauswahl fürs weitere Testen zu treffen — nicht als letztes Wort darüber, welches Modell zu verwenden ist. Siehe KI-Modelle bewerten dafür, was tatsächlich Eignung vorhersagt, sobald Sie eine Vorauswahl getroffen haben: das Testen an eigenen repräsentativen Aufgaben, das kein veröffentlichter Benchmark ersetzen kann.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Was testet ein Benchmark wie MMLU oder HumanEval eigentlich?',
+          answer:
+            'Eine feste, spezifische Menge von Fragen in einem bestimmten Format — MMLU ist allgemeines Wissen als Multiple-Choice, HumanEval sind kurze Programmieraufgaben. Jeder misst eine enge Fähigkeit, keine allgemeine Intelligenz oder Fähigkeit über jede Aufgabe hinweg.',
+        },
+        {
+          question: 'Warum wirken Benchmark-Werte verschiedener Anbieter manchmal widersprüchlich?',
+          answer:
+            'Werte können vom Prompt-Format, der Anzahl gezeigter Beispiele vor der eigentlichen Frage und davon abhängen, ob schrittweises Denken erlaubt war. Unterschiedliche Berichtsbedingungen ergeben unterschiedliche Zahlen für dasselbe zugrundeliegende Modell.',
+        },
+        {
+          question: 'Was ist Benchmark-Kontamination?',
+          answer:
+            'Wenn die öffentlichen Fragen eines Benchmarks in den Trainingsdaten eines Modells landen, sodass das Modell die Antworten effektiv schon vor dem Test gesehen hat. Der resultierende Wert spiegelt Auswendiglernen wider, nicht die Fähigkeit, die der Benchmark eigentlich messen sollte.',
+        },
+        {
+          question: 'Sollte ich Benchmark-Werte komplett ignorieren?',
+          answer:
+            'Nein — sie sind ein vernünftiger erster Filter, um klar ungeeignete Modelle auszuschließen oder eine Vorauswahl zu treffen. Behandeln Sie die endgültige Zahl nur nicht als Urteil; testen Sie die Vorauswahl an eigenen repräsentativen Aufgaben, bevor Sie entscheiden.',
+        },
+      ],
+      productNote:
+        'ClawAI veröffentlicht keine eigene Benchmark-Bestenliste und beansprucht keinen proprietären Wert für irgendein Modell — stattdessen zeigt das Routing-Transparenz-Panel die tatsächliche Kostenklasse, Latenzklasse und Routing-Konfidenz hinter einer konkreten Antwort, sodass Sie eine Antwort an Ihrer eigenen Anfrage messen können statt an einem veröffentlichten Testset, das Sie nicht einsehen können.',
     },
   },
 };

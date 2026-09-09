@@ -80,6 +80,8 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
         'La différence entre vous répondre et agir à votre place.',
       [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]:
         'Ce qu’il faut vraiment tester avant de confier votre travail à un modèle — pas un chiffre de classement.',
+      [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]:
+        'Ce qu’un chiffre de benchmark mesure vraiment, et comment il peut vous induire en erreur avant même de commencer à tester.',
     },
   },
   topics: {
@@ -1927,6 +1929,93 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'Plutôt que de réduire une réponse de chat à un seul chiffre, le panneau de transparence du routage de ClawAI affiche la classe de coût, la classe de latence, la confiance du routage, et si un modèle de repli ou un juge a été utilisé pour cette réponse précise — un signal d’évaluation lié à la requête réelle, pas un chiffre générique de classement.',
+    },
+    [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]: {
+      seo: {
+        title: 'Comment lire les benchmarks d’IA sans se laisser tromper',
+        description:
+          'Un chiffre de benchmark paraît précis, ce qui rend facile de lui accorder trop de confiance. Ce qu’un score comme MMLU ou HumanEval mesure vraiment, les façons courantes dont les chiffres de benchmark trompent, et ce qu’il faut vérifier avant d’en traiter un comme pertinent pour votre cas.',
+        keywords: [
+          'comment lire les benchmarks d’IA',
+          'scores de benchmark IA expliqués',
+          'comprendre les benchmarks de LLM',
+        ],
+      },
+      eyebrow: 'Fondamentaux',
+      title: 'Comment lire les benchmarks d’IA sans se laisser tromper',
+      summary:
+        'Un score de benchmark mesure la performance sur un seul ensemble fixe et spécifique de questions de test — ni plus, ni moins. Le chiffre paraît précis et objectif, et c’est justement pour cela qu’il est facile de lui accorder trop de confiance : un seul chiffre ne peut pas montrer ce que le test a couvert, comment le modèle a été interrogé, ou si les questions ont fuité dans les données d’entraînement avant même que le modèle ne les voie pour de vrai.',
+      sections: [
+        {
+          id: 'a-benchmark-is-one-fixed-test-not-a-general-measure',
+          heading: 'Un benchmark est un test fixe, pas une mesure générale de capacité',
+          paragraphs: [
+            'Des benchmarks connus comme MMLU (culture générale à choix multiple), HumanEval (petits problèmes de programmation) ou GSM8K (problèmes de maths niveau primaire) testent chacun une compétence étroite et spécifique dans un format précis. Un modèle peut bien noter sur l’un et mal sur une tâche qui paraît similaire à un humain mais structurée différemment — de la programmation longue plutôt que de courtes fonctions isolées, par exemple, ou de l’écriture ouverte plutôt que du rappel à choix multiple.',
+          ],
+        },
+        {
+          id: 'contamination-benchmark-questions-leak-into-training-data',
+          heading: 'Les questions d’un benchmark peuvent fuiter dans les données d’entraînement',
+          paragraphs: [
+            'Les benchmarks populaires sont publics, et leurs questions circulent largement sur le web, dans des articles et dans des discussions de forums — exactement le type de texte sur lequel s’entraînent les grands modèles. Quand un modèle a déjà vu la réponse dans les faits, son score reflète de la mémorisation sur ce test précis, pas la capacité générale que le benchmark était censé représenter. C’est ce qu’on appelle la contamination, et c’est difficile à détecter de l’extérieur à partir du seul score.',
+          ],
+        },
+        {
+          id: 'scores-can-depend-heavily-on-how-the-model-was-prompted',
+          heading:
+            'Le score rapporté peut dépendre fortement de la façon dont le modèle a été interrogé',
+          paragraphs: [
+            'Le même modèle peut noter très différemment selon le format du prompt, le nombre d’exemples résolus montrés avant la vraie question, et s’il a été autorisé à raisonner étape par étape avant de répondre. Un fournisseur qui rapporte son meilleur résultat dans des conditions généreuses ne ment pas, mais ce chiffre peut ne pas ressembler à ce que vous obtiendriez avec un prompt simple et quotidien.',
+          ],
+        },
+        {
+          id: 'benchmarks-saturate-and-stop-being-useful',
+          heading:
+            'Les benchmarks se saturent — et cessent d’être utiles une fois que la plupart des modèles les réussissent',
+          paragraphs: [
+            'Une fois que la plupart des modèles de pointe notent près du maximum sur un benchmark, celui-ci cesse de les distinguer de façon significative, même si l’ancien chiffre est souvent encore cité. Un score presque parfait sur un benchmark saturé en dit moins qu’avant ; des benchmarks plus récents et plus difficiles tendent à le remplacer, et une comparaison marketing qui s’appuie sur un vieux chiffre saturé mérite un second regard.',
+          ],
+        },
+        {
+          id: 'a-single-average-hides-where-a-model-actually-struggles',
+          heading: 'Une seule moyenne cache exactement là où un modèle peine vraiment',
+          paragraphs: [
+            'Un score global de benchmark est une moyenne sur de nombreuses questions de difficulté et de type variés. Un modèle peut bien performer en moyenne tout en étant peu fiable sur une sous-catégorie précise qui compte pour vous — un type particulier de raisonnement, un domaine spécifique, une certaine longueur de tâche. La moyenne est un résumé, et les résumés éliminent justement le détail qui compte le plus, en général, pour une vraie décision.',
+          ],
+        },
+        {
+          id: 'treat-a-benchmark-as-a-starting-point-not-a-verdict',
+          heading: 'Traitez un benchmark comme un point de départ, pas comme un verdict',
+          paragraphs: [
+            'Un score de benchmark est surtout utile comme premier filtre grossier — éliminer un modèle clairement inadapté, ou présélectionner quelques candidats qui méritent d’être testés plus avant — plutôt que comme le mot final sur le modèle à utiliser. Voir comment évaluer des modèles d’IA pour savoir ce qui prédit vraiment l’adéquation une fois votre présélection réduite : tester sur vos propres tâches représentatives, ce qu’aucun benchmark publié ne peut remplacer.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Que teste vraiment un benchmark comme MMLU ou HumanEval ?',
+          answer:
+            'Un ensemble fixe et spécifique de questions dans un format précis — MMLU est de la culture générale à choix multiple, HumanEval de petits problèmes de programmation. Chacun mesure une compétence étroite, pas une intelligence générale ou une capacité tous azimuts.',
+        },
+        {
+          question:
+            'Pourquoi les scores de benchmark de différents fournisseurs semblent-ils parfois incohérents ?',
+          answer:
+            'Les scores peuvent dépendre du format du prompt, du nombre d’exemples montrés avant la vraie question, et de si le raisonnement étape par étape était autorisé. Des conditions de reporting différentes produisent des chiffres différents pour le même modèle sous-jacent.',
+        },
+        {
+          question: 'Qu’est-ce que la contamination de benchmark ?',
+          answer:
+            'Quand les questions publiques d’un benchmark finissent dans les données d’entraînement d’un modèle, si bien que celui-ci a dans les faits déjà vu les réponses avant d’être testé. Le score qui en résulte reflète de la mémorisation, pas la capacité que le benchmark était censé mesurer.',
+        },
+        {
+          question: 'Devrais-je ignorer complètement les scores de benchmark ?',
+          answer:
+            'Non — ce sont un premier filtre raisonnable pour écarter des modèles clairement inadaptés ou constituer une présélection. Ne traitez simplement pas le chiffre final comme un verdict ; testez la présélection sur vos propres tâches représentatives avant de décider.',
+        },
+      ],
+      productNote:
+        'ClawAI ne publie pas son propre classement de benchmarks et ne revendique aucun score propriétaire pour quelque modèle que ce soit — à la place, son panneau de transparence du routage affiche la classe de coût, la classe de latence et la confiance de routage réelles derrière une réponse précise, afin que vous puissiez juger une réponse par rapport à votre propre requête plutôt qu’à un jeu de test publié que vous ne pouvez pas inspecter.',
     },
   },
 };

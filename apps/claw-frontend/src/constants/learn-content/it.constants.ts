@@ -79,6 +79,8 @@ export const IT_LEARN_CONTENT: LearnDictionary = {
         'La differenza tra risponderti e fare qualcosa al posto tuo.',
       [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]:
         'Cosa testare davvero prima di affidare il tuo lavoro a un modello — non un numero da classifica.',
+      [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]:
+        'Cosa misura davvero un numero da benchmark, e i modi in cui può trarti in inganno ancora prima di iniziare a testare.',
     },
   },
   topics: {
@@ -1916,6 +1918,93 @@ export const IT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'Invece di ridurre una risposta di chat a un solo numero, il pannello di trasparenza del routing di ClawAI mostra la classe di costo, la classe di latenza, la confidenza del routing, e se per quella specifica risposta è stato usato un modello di fallback o un giudice — un segnale di valutazione legato alla richiesta reale, non un numero generico da classifica.',
+    },
+    [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]: {
+      seo: {
+        title: 'Come leggere i benchmark di IA senza farsi ingannare',
+        description:
+          'Un numero da benchmark sembra preciso, il che rende facile fidarsene troppo. Cosa misura davvero un punteggio come MMLU o HumanEval, i modi comuni in cui i numeri da benchmark ingannano, e cosa verificare prima di considerarne uno significativo per il tuo caso.',
+        keywords: [
+          'come leggere i benchmark di IA',
+          'punteggi benchmark IA spiegati',
+          'capire i benchmark degli LLM',
+        ],
+      },
+      eyebrow: 'Fondamenti',
+      title: 'Come leggere i benchmark di IA senza farsi ingannare',
+      summary:
+        'Un punteggio da benchmark misura le prestazioni su un unico insieme fisso e specifico di domande di test — né più né meno. Il numero sembra preciso e oggettivo, ed è proprio per questo che è facile fidarsene troppo: una sola cifra non può mostrarti cosa copriva il test, come è stato interrogato il modello, o se le domande sono finite nei dati di addestramento prima che il modello le vedesse mai davvero.',
+      sections: [
+        {
+          id: 'a-benchmark-is-one-fixed-test-not-a-general-measure',
+          heading: 'Un benchmark è un test fisso, non una misura generale di capacità',
+          paragraphs: [
+            'Benchmark noti come MMLU (cultura generale a scelta multipla), HumanEval (piccoli problemi di programmazione) o GSM8K (problemi di matematica in forma di testo di livello elementare) testano ciascuno un’abilità ristretta e specifica in un formato preciso. Un modello può ottenere un buon punteggio in uno e uno scarso in un compito che a un umano sembra simile ma è strutturato diversamente — programmazione estesa invece di brevi funzioni isolate, ad esempio, o scrittura libera invece di richiamo a scelta multipla.',
+          ],
+        },
+        {
+          id: 'contamination-benchmark-questions-leak-into-training-data',
+          heading: 'Le domande di un benchmark possono finire nei dati di addestramento',
+          paragraphs: [
+            'I benchmark popolari sono pubblici, e le loro domande circolano ampiamente sul web, negli articoli scientifici e nelle discussioni sui forum — esattamente il tipo di testo su cui si addestrano i grandi modelli. Quando un modello ha di fatto già visto la risposta, il suo punteggio riflette la memorizzazione su quel test specifico, non la capacità generale che il benchmark intendeva rappresentare. Questo si chiama contaminazione, ed è difficile da individuare dall’esterno guardando solo il punteggio.',
+          ],
+        },
+        {
+          id: 'scores-can-depend-heavily-on-how-the-model-was-prompted',
+          heading:
+            'Il punteggio riportato può dipendere fortemente da come è stato interrogato il modello',
+          paragraphs: [
+            'Lo stesso modello può ottenere punteggi molto diversi a seconda del formato del prompt, del numero di esempi risolti mostrati prima della domanda vera, e se gli è stato permesso di ragionare passo dopo passo prima di rispondere. Un fornitore che riporta il suo miglior risultato in condizioni generose non sta mentendo, ma quel numero potrebbe non somigliare a ciò che otterresti con un prompt semplice e quotidiano.',
+          ],
+        },
+        {
+          id: 'benchmarks-saturate-and-stop-being-useful',
+          heading:
+            'I benchmark si saturano — e smettono di essere utili quando la maggior parte dei modelli li supera',
+          paragraphs: [
+            'Quando la maggior parte dei modelli di punta ottiene punteggi vicini al massimo in un benchmark, questo smette di distinguerli in modo significativo, anche se il numero più vecchio viene spesso citato comunque. Un punteggio quasi perfetto su un benchmark saturo dice meno di quanto dicesse prima; benchmark più nuovi e difficili tendono a sostituirlo, e un confronto di marketing che si appoggia a un vecchio numero saturo merita un secondo sguardo.',
+          ],
+        },
+        {
+          id: 'a-single-average-hides-where-a-model-actually-struggles',
+          heading: 'Una singola media nasconde esattamente dove un modello fatica davvero',
+          paragraphs: [
+            'Un punteggio complessivo da benchmark è una media su molte domande di difficoltà e tipo diversi. Un modello può avere una buona media pur essendo inaffidabile in una sottocategoria specifica che ti interessa — un particolare tipo di ragionamento, un dominio specifico, una certa lunghezza di compito. La media è un riassunto, e i riassunti scartano proprio il dettaglio che di solito conta di più per una decisione reale.',
+          ],
+        },
+        {
+          id: 'treat-a-benchmark-as-a-starting-point-not-a-verdict',
+          heading: 'Tratta un benchmark come un punto di partenza, non come un verdetto',
+          paragraphs: [
+            'Un punteggio da benchmark è più utile come filtro iniziale approssimativo — escludere chiaramente un modello inadatto, o preselezionare pochi candidati da testare ulteriormente — piuttosto che come parola definitiva su quale modello usare. Vedi come valutare i modelli di IA per capire cosa predice davvero l’adattabilità una volta ristretta la preselezione: testare sui propri compiti rappresentativi, cosa che nessun benchmark pubblicato può sostituire.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Cosa testa davvero un benchmark come MMLU o HumanEval?',
+          answer:
+            'Un insieme fisso e specifico di domande in un formato preciso — MMLU è cultura generale a scelta multipla, HumanEval sono piccoli problemi di programmazione. Ciascuno misura un’abilità ristretta, non un’intelligenza generale o una capacità su ogni compito.',
+        },
+        {
+          question:
+            'Perché i punteggi da benchmark di fornitori diversi a volte sembrano incoerenti?',
+          answer:
+            'I punteggi possono dipendere dal formato del prompt, da quanti esempi sono stati mostrati prima della domanda vera, e se era permesso il ragionamento passo dopo passo. Condizioni di rendicontazione diverse producono numeri diversi per lo stesso modello sottostante.',
+        },
+        {
+          question: 'Cos’è la contaminazione del benchmark?',
+          answer:
+            'Quando le domande pubbliche di un benchmark finiscono nei dati di addestramento di un modello, così che questo ha di fatto già visto le risposte prima di essere testato. Il punteggio risultante riflette la memorizzazione, non la capacità che il benchmark intendeva misurare.',
+        },
+        {
+          question: 'Dovrei ignorare del tutto i punteggi da benchmark?',
+          answer:
+            'No — sono un filtro iniziale ragionevole per escludere modelli chiaramente inadatti o costruire una preselezione. Semplicemente non trattare il numero finale come un verdetto; testa la preselezione sui tuoi compiti rappresentativi prima di decidere.',
+        },
+      ],
+      productNote:
+        'ClawAI non pubblica una propria classifica di benchmark né rivendica un punteggio proprietario per alcun modello — invece, il suo pannello di trasparenza del routing mostra la classe di costo, la classe di latenza e la confidenza del routing reali dietro una risposta specifica, così puoi giudicare una risposta rispetto alla tua richiesta reale e non a un set di test pubblicato che non puoi ispezionare.',
     },
   },
 };
