@@ -6643,6 +6643,16 @@
         "route": "/local-first-ai"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/model-fit/[task]/page.tsx",
+        "kind": "page",
+        "route": "/model-fit/[task]"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(marketing)/model-fit/page.tsx",
+        "kind": "page",
+        "route": "/model-fit"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/model-providers/[provider]/page.tsx",
         "kind": "page",
         "route": "/model-providers/[provider]"
@@ -9545,7 +9555,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 423
+        "testFiles": 425
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10297,7 +10307,7 @@
     "endpointCount": 647,
     "envVarCount": 351,
     "eventCount": 178,
-    "frontendRouteCount": 145,
+    "frontendRouteCount": 147,
     "localeCount": 13,
     "nginxRouteCount": 57,
     "permissionCount": 51,
@@ -10306,7 +10316,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1148,
+    "totalTestFiles": 1150,
     "workspaceCount": 25
   }
 }

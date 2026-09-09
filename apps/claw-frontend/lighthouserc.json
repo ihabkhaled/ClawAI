@@ -85,7 +85,13 @@
         "http://localhost:3000/en/model-providers/google",
         "http://localhost:3000/en/model-providers/deepseek",
         "http://localhost:3000/en/model-providers/xai",
-        "http://localhost:3000/en/model-providers/local-ai"
+        "http://localhost:3000/en/model-providers/local-ai",
+        "http://localhost:3000/en/model-fit",
+        "http://localhost:3000/en/model-fit/coding",
+        "http://localhost:3000/en/model-fit/complex-reasoning",
+        "http://localhost:3000/en/model-fit/writing-and-editing",
+        "http://localhost:3000/en/model-fit/research-with-sources",
+        "http://localhost:3000/en/model-fit/private-local-workloads"
       ],
       "numberOfRuns": 2,
       "settings": {

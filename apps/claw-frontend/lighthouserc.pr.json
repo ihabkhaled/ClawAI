@@ -30,7 +30,9 @@
         "http://localhost:3000/en/integrations",
         "http://localhost:3000/en/integrations/github",
         "http://localhost:3000/en/model-providers",
-        "http://localhost:3000/en/model-providers/openai"
+        "http://localhost:3000/en/model-providers/openai",
+        "http://localhost:3000/en/model-fit",
+        "http://localhost:3000/en/model-fit/coding"
       ],
       "numberOfRuns": 2,
       "settings": {

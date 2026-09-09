@@ -16,6 +16,14 @@ import {
   getLearnTopicSlug,
 } from '@/constants/learn.constants';
 import {
+  MODEL_FIT_HUB_PATH,
+  MODEL_FIT_HUB_SLUG,
+  MODEL_FIT_REVIEW_DATE,
+  MODEL_FIT_TASK_ORDER,
+  getModelFitTaskPath,
+  getModelFitTaskSlug,
+} from '@/constants/model-fit.constants';
+import {
   MODELS_HUB_PATH,
   MODELS_HUB_SLUG,
   MODELS_REVIEW_DATE,
@@ -346,6 +354,39 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     structuredDataType: StructuredDataType.FAQ_PAGE,
     relatedSlugs: ['compare', 'features', 'pricing'],
     reviewDate: COMPARISON_REVIEW_DATE,
+  })),
+  // The /model-fit cluster: one hub plus one page per task, fanned from the
+  // order array (ADR-084). Was planned as `/models/for/*` ("Choosing a model
+  // for coding" — §8.2 of the SEO content architecture doc, reframed away
+  // from "best AI model for X" since that superlative is unsubstantiable by
+  // construction); `/models/for/*` collides with the `/models` entry in
+  // `PRIVATE_ROUTE_PREFIXES` (prefix-matched, so `/models-for/*` collides
+  // too), the same reason the model-providers cluster moved off `/models`
+  // itself. Lives at `/model-fit` instead — see the note in
+  // `model-fit.constants.ts`. Ad-INELIGIBLE per §8.2's explicit listing of
+  // `/models/for/*` alongside `/models/*` — a page whose job is a checkable,
+  // non-superlative claim about model fit does not also carry ad inventory.
+  // PUBLISHABLE feed eligibility: evergreen editorial content, like /learn
+  // and /model-providers.
+  {
+    slug: MODEL_FIT_HUB_SLUG,
+    path: MODEL_FIT_HUB_PATH,
+    category: ContentCategory.MODEL_ROUTING,
+    adEligibility: AdEligibility.INELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: [MODELS_HUB_SLUG, 'pricing', LEARN_HUB_SLUG],
+    reviewDate: MODEL_FIT_REVIEW_DATE,
+  },
+  ...MODEL_FIT_TASK_ORDER.map((task): PublishedContentConfig => ({
+    slug: getModelFitTaskSlug(task),
+    path: getModelFitTaskPath(task),
+    category: ContentCategory.MODEL_ROUTING,
+    adEligibility: AdEligibility.INELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.FAQ_PAGE,
+    relatedSlugs: [MODEL_FIT_HUB_SLUG, MODELS_HUB_SLUG, 'pricing'],
+    reviewDate: MODEL_FIT_REVIEW_DATE,
   })),
 ];
 

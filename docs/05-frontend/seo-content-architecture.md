@@ -257,19 +257,19 @@ Rules:
 
 Existing URLs are unchanged. Everything below is additive.
 
-| Hub                     | Children                                                                                                                     | Intent                   |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `/learn`                | concept pages (`what-is-*`, `cloud-ai-vs-local-ai`, `ollama-vs-llamacpp`, …)                                                 | Informational            |
-| `/model-providers`      | `openai`, `anthropic`, `google`, `deepseek`, `xai`, `local-ai` (built at `/model-providers`, not `/models` — see note below) | Commercial investigation |
-| `/compare/models`       | model-vs-model pairs                                                                                                         | Comparison               |
-| `/best-ai-model`        | task pages (`coding`, `reasoning`, `writing`, …)                                                                             | Commercial investigation |
-| `/integrations`         | 14 verified connectors                                                                                                       | Commercial investigation |
-| `/use-cases` _(exists)_ | task pages                                                                                                                   | Commercial investigation |
-| `/features` _(exists)_  | capability pages                                                                                                             | Commercial investigation |
-| `/solutions`            | role pages                                                                                                                   | Commercial investigation |
-| `/industries`           | private-deployment verticals                                                                                                 | Commercial investigation |
-| `/prompts`              | prompt guides                                                                                                                | Informational            |
-| `/tools`                | model selector                                                                                                               | Transactional-adjacent   |
+| Hub                     | Children                                                                                                                                                                                           | Intent                   |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `/learn`                | concept pages (`what-is-*`, `cloud-ai-vs-local-ai`, `ollama-vs-llamacpp`, …)                                                                                                                       | Informational            |
+| `/model-providers`      | `openai`, `anthropic`, `google`, `deepseek`, `xai`, `local-ai` (built at `/model-providers`, not `/models` — see note below)                                                                       | Commercial investigation |
+| `/compare/models`       | model-vs-model pairs                                                                                                                                                                               | Comparison               |
+| `/model-fit`            | task pages (`coding`, `complex-reasoning`, `writing-and-editing`, `research-with-sources`, `private-local-workloads`) — built at `/model-fit`, not `/best-ai-model`/`/models/for` — see note below | Commercial investigation |
+| `/integrations`         | 14 verified connectors                                                                                                                                                                             | Commercial investigation |
+| `/use-cases` _(exists)_ | task pages                                                                                                                                                                                         | Commercial investigation |
+| `/features` _(exists)_  | capability pages                                                                                                                                                                                   | Commercial investigation |
+| `/solutions`            | role pages                                                                                                                                                                                         | Commercial investigation |
+| `/industries`           | private-deployment verticals                                                                                                                                                                       | Commercial investigation |
+| `/prompts`              | prompt guides                                                                                                                                                                                      | Informational            |
+| `/tools`                | model selector                                                                                                                                                                                     | Transactional-adjacent   |
 
 **Cannibalisation rules, decided once:**
 
@@ -289,18 +289,18 @@ Existing URLs are unchanged. Everything below is additive.
 
 Each batch is independently gated, committed and pushed.
 
-| Batch | Contents                                                                                                                           | Priority |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| 0     | This document, retire the four `guides/*` PLANNED slugs, shared SEO components, cluster scaffolding, RSS publication-semantics fix | P0       |
-| 1     | `/learn` hub + concept pages                                                                                                       | P0       |
-| 2     | `/integrations` hub + 14 connector pages, retire the `workspace-connectors` PLANNED slug                                           | P0       |
-| 3     | **Built 2026-09-09** — `/model-providers` hub (not `/models`, see note below) + 6 provider pages, `MODEL_FACTS`                    | P0       |
-| 4     | `/use-cases` hub + task pages                                                                                                      | P1       |
-| 5     | `/best-ai-model` + `/compare/models`                                                                                               | P1       |
-| 6     | `/features` hub + capability pages                                                                                                 | P1       |
-| 7     | `/solutions` + `/industries`                                                                                                       | P2       |
-| 8     | `/prompts` + `/tools`                                                                                                              | P2       |
-| 9     | Internal-link sweep, nav/footer clusters, final verification                                                                       | P0       |
+| Batch | Contents                                                                                                                                                   | Priority |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| 0     | This document, retire the four `guides/*` PLANNED slugs, shared SEO components, cluster scaffolding, RSS publication-semantics fix                         | P0       |
+| 1     | `/learn` hub + concept pages                                                                                                                               | P0       |
+| 2     | `/integrations` hub + 14 connector pages, retire the `workspace-connectors` PLANNED slug                                                                   | P0       |
+| 3     | **Built 2026-09-09** — `/model-providers` hub (not `/models`, see note below) + 6 provider pages, `MODEL_FACTS`                                            | P0       |
+| 4     | `/use-cases` hub + task pages                                                                                                                              | P1       |
+| 5     | **`/model-fit` half built 2026-09-09** — hub + 5 task pages (was `/best-ai-model`, not `/models/for`, see note below). `/compare/models` still outstanding | P1       |
+| 6     | `/features` hub + capability pages                                                                                                                         | P1       |
+| 7     | `/solutions` + `/industries`                                                                                                                               | P2       |
+| 8     | `/prompts` + `/tools`                                                                                                                                      | P2       |
+| 9     | Internal-link sweep, nav/footer clusters, final verification                                                                                               | P0       |
 
 **Definition of done for every page**, enforced by the four coverage tests plus
 Lighthouse: route resolves under `/{locale}/`; registry entry `PUBLISHED` +
@@ -444,23 +444,43 @@ name with a signup CTA implying that model is included in a given tier.
 
 ### 8.2 Pages that changed shape or will not be built
 
-| Was planned                                                                          | Now                                                                          | Why                                                                                                                                                                                                                                                                                                                                             |
-| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/industries/healthcare`, `/industries/financial-services`, `/industries/government` | **Not built**                                                                | An industry page addressed to a regulated buyer is an implied offer of a contractual instrument. `public-launch-content/en.constants.ts` records that ClawAI offers **no data-processing agreement**. HIPAA needs a BAA; "designed for private deployment" does not discharge one. Blocked pending `docs/business/regulated-vertical-claims.md` |
-| `/industries/*` generally                                                            | Hub over **unregulated** verticals only                                      | Same reasoning; agencies, software teams, research and education carry no implied instrument                                                                                                                                                                                                                                                    |
-| `/compare/models/gpt-vs-claude` (model vs model)                                     | `/compare/models/*` reframed: **"how ClawAI's router chooses between them"** | Comparative advertising in `de fr it es pt` must compare verifiable material features objectively (Dir. 2006/114/EC art. 4; German UWG §6 is competitor-enforced). A page comparing two products we sell neither of, with benchmarks refused, substantiates nothing. A claim about **our own routing behaviour** is substantiable               |
-| `/best-ai-model/coding`                                                              | `/models/for/coding` — _"Choosing a model for coding"_                       | "Best" is an unsubstantiated superlative about third-party products, and §6 refuses benchmarks, so it is unsubstantiable **by construction**. Same intent, same traffic, no superlative                                                                                                                                                         |
-| "14 **verified** connectors"                                                         | "14 connectors", copy generated from the provider registry                   | 8 of 14 have `webhooks: false` (three were flipped from `true` because they were lying); Bitbucket and Jira webhook verifiers are no-op stubs returning `signatureValid: true`; both calendars support exactly one write action. "Real-time sync" and "signature-verified" are false for specific connectors                                    |
+| Was planned                                                                          | Now                                                                                                                                       | Why                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/industries/healthcare`, `/industries/financial-services`, `/industries/government` | **Not built**                                                                                                                             | An industry page addressed to a regulated buyer is an implied offer of a contractual instrument. `public-launch-content/en.constants.ts` records that ClawAI offers **no data-processing agreement**. HIPAA needs a BAA; "designed for private deployment" does not discharge one. Blocked pending `docs/business/regulated-vertical-claims.md` |
+| `/industries/*` generally                                                            | Hub over **unregulated** verticals only                                                                                                   | Same reasoning; agencies, software teams, research and education carry no implied instrument                                                                                                                                                                                                                                                    |
+| `/compare/models/gpt-vs-claude` (model vs model)                                     | `/compare/models/*` reframed: **"how ClawAI's router chooses between them"**                                                              | Comparative advertising in `de fr it es pt` must compare verifiable material features objectively (Dir. 2006/114/EC art. 4; German UWG §6 is competitor-enforced). A page comparing two products we sell neither of, with benchmarks refused, substantiates nothing. A claim about **our own routing behaviour** is substantiable               |
+| `/best-ai-model/coding`                                                              | `/model-fit/coding` — _"Choosing a model for coding"_ (see note below — **not** `/models/for/coding`, the path this row originally named) | "Best" is an unsubstantiated superlative about third-party products, and §6 refuses benchmarks, so it is unsubstantiable **by construction**. Same intent, same traffic, no superlative                                                                                                                                                         |
+| "14 **verified** connectors"                                                         | "14 connectors", copy generated from the provider registry                                                                                | 8 of 14 have `webhooks: false` (three were flipped from `true` because they were lying); Bitbucket and Jira webhook verifiers are no-op stubs returning `signatureValid: true`; both calendars support exactly one write action. "Real-time sync" and "signature-verified" are false for specific connectors                                    |
+
+**`/model-fit` route note (batch 5, built 2026-09-09), the "see note below" this
+table points to.** The row above originally read `/models/for/coding`. That
+collides for the identical reason the model-providers cluster moved off
+`/models` in batch 3 (commit `efed5669f`): `PRIVATE_ROUTE_PREFIXES`
+(`constants/private-route-prefixes.constants.ts`) blocks any path whose string
+starts with `/models` — the authenticated model catalog dashboard at
+`src/app/(portal)/models/**` — and `/models/for/coding` starts with `/models`.
+`/models-for/*` was considered next and rejected too: it **also** starts with
+the literal string `/models`, so `PRIVATE_ROUTE_PREFIXES`'s prefix match
+(`path.startsWith(prefix)`) blocks it exactly as hard. The cluster ships at
+`/model-fit` instead — `/model-fit/coding`, `/model-fit/complex-reasoning`,
+`/model-fit/writing-and-editing`, `/model-fit/research-with-sources`,
+`/model-fit/private-local-workloads` — which shares no prefix with the private
+route. Five task pages, not the "coding, reasoning, writing, …" placeholder
+list in §4's table: the user's approved backlog for this cluster specifies
+coding, complex reasoning, writing and editing, research with sources, and
+private/local workloads.
 
 **Ad eligibility, decided rather than defaulted.** `/compare/*` is
 `INELIGIBLE` on recorded reasoning — "a page whose job is to be a fair,
 checkable comparison of named competitors does not also carry ad inventory."
 That reasoning applies verbatim to every new cluster that names a third party.
 
-→ `INELIGIBLE`: `/compare/models/*`, `/models/*`, `/models/for/*`,
-`/integrations/*`, `/industries/*`. `ELIGIBLE`: `/learn/*`, `/use-cases/*`,
-`/features/*`, `/solutions/*`. Publishing ~100 pages at once ad-eligible is also
-an AdSense scaled-content exposure.
+→ `INELIGIBLE`: `/compare/models/*`, `/models/*`, `/model-fit/*` (built at this
+path instead of the originally-planned `/models/for/*` — see the route note
+above; the ad-ineligibility reasoning is unchanged), `/integrations/*`,
+`/industries/*`. `ELIGIBLE`: `/learn/*`, `/use-cases/*`, `/features/*`,
+`/solutions/*`. Publishing ~100 pages at once ad-eligible is also an AdSense
+scaled-content exposure.
 
 **`reviewDate` is mandatory** for every cluster naming a third party, not just
 `/compare/*`. A comparison without a visible date is a claim with no expiry.

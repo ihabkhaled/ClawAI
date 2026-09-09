@@ -1,5 +1,6 @@
 import { INTEGRATION_TOPIC_ORDER, getIntegrationPath } from '@/constants/integrations.constants';
 import { LEARN_TOPIC_ORDER, getLearnTopicPath } from '@/constants/learn.constants';
+import { MODEL_FIT_TASK_ORDER, getModelFitTaskPath } from '@/constants/model-fit.constants';
 import { MODEL_PROVIDER_ORDER, getModelProviderPath } from '@/constants/models.constants';
 
 /**
@@ -26,6 +27,7 @@ export const SEO_CLUSTER_ROUTE_EXPANSIONS: Readonly<Record<string, ReadonlyArray
     '/learn/[topic]': LEARN_TOPIC_ORDER.map(getLearnTopicPath),
     '/integrations/[topic]': INTEGRATION_TOPIC_ORDER.map(getIntegrationPath),
     '/model-providers/[provider]': MODEL_PROVIDER_ORDER.map(getModelProviderPath),
+    '/model-fit/[task]': MODEL_FIT_TASK_ORDER.map(getModelFitTaskPath),
   });
 
 /**

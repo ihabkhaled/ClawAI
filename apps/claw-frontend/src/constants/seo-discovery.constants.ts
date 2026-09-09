@@ -12,10 +12,19 @@ export const DISCOVERY_RETRY_AFTER_SECONDS = 30;
  * pages, plus up to 100 public chats each.
  *
  * The arithmetic, which is what goes stale — this comment previously said "16
- * pages" against a real surface of 28:
+ * pages" against a real surface of 28, then "2,000 is comfortably above 2x a
+ * ~76-page-per-locale surface" against a surface that has since grown to 82
+ * feed-eligible pages per locale (988 -> 1,066 total, crossing the tripwire's
+ * half-ceiling margin in `rss-global-max-items-ceiling.test.ts` when the
+ * `/model-fit` cluster — one hub + 5 task pages, all PUBLISHABLE — landed
+ * 2026-09-09):
  *
  *   pages = 13 locales x (feed-eligible pages)   <- bounded by the registry
  *   chats = 13 locales x <= 100                  <- up to 1,300, the unbounded half
+ *
+ * Raised 2,000 -> 3,000 so the tripwire's "half the ceiling" margin (1,500)
+ * clears today's 1,066 with real headroom for the next cluster or two, rather
+ * than raising it to the bare minimum that goes green today.
  *
  * `buildGlobalRssResponse` takes ALL pages first and lets chats fill whatever
  * remains, so this cap can only ever truncate chats. It used to sort the merged
@@ -26,7 +35,7 @@ export const DISCOVERY_RETRY_AFTER_SECONDS = 30;
  *
  * The per-locale feeds stay the place to read one language in full.
  */
-export const RSS_GLOBAL_MAX_ITEMS = 2000;
+export const RSS_GLOBAL_MAX_ITEMS = 3000;
 
 export const XML_CONTENT_TYPE = 'application/xml; charset=utf-8';
 export const PLAIN_TEXT_CONTENT_TYPE = 'text/plain; charset=utf-8';
