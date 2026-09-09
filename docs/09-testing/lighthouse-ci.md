@@ -6,13 +6,13 @@ performance, accessibility, best-practices, and SEO cannot silently regress.
 ## What runs
 
 `.github/workflows/lighthouse.yml` builds the frontend and runs
-`@lhci/cli autorun` against every published public page — 62 URLs as of the
+`@lhci/cli autorun` against every published public page — 74 URLs as of the
 `/learn` and `/integrations` clusters, 2 runs each, desktop preset. It triggers
 only when the frontend or the Lighthouse config changes, so backend PRs are
 unaffected.
 
 The workflow runs one of two configs depending on the trigger: pushes to `main`
-run `lighthouserc.json` (all 62 URLs); pull requests run `lighthouserc.pr.json`,
+run `lighthouserc.json` (all 74 URLs); pull requests run `lighthouserc.pr.json`,
 a **derived sample** — see "Pull-request sampling" below. Never edit
 `lighthouserc.pr.json` by hand; it is generated.
 
@@ -51,7 +51,7 @@ on-demand via `npx`. Reports land in `apps/claw-frontend/.lighthouseci`
 
 ## Which pages are audited
 
-Every **published, indexable** page in `CONTENT_REGISTRY` — 62 today, and
+Every **published, indexable** page in `CONTENT_REGISTRY` — 74 today, and
 growing as SEO clusters land (`docs/05-frontend/seo-content-architecture.md`
 tracks the full build plan). This includes both hand-authored launch pages
 (`/en/features`, `/en/architecture`, …) and every page a dynamic cluster
@@ -86,8 +86,10 @@ runs still yields a median to damp that variance.
 
 The audit is **linear in URL count**, measured at roughly 13.9 seconds per
 audit (28 URLs × 2 runs ≈ 13 minutes, observed before the `/learn` cluster
-landed). At 62 URLs × 2 runs that is already pushing 20+ minutes; every cluster
-this repo adds makes it worse, and `minScore: 1` on three categories means
+landed) — which rounds to **minutes ≈ URLs × 0.46** (`.github/workflows/lighthouse.yml`
+records the same formula next to its `concurrency`/`timeout-minutes` guards).
+At 74 URLs × 2 runs that is already ~34 minutes; every cluster this repo adds
+makes it worse, and `minScore: 1` on three categories means
 **one flaky audit anywhere in the set fails the entire run** — so a larger set
 is not just slower, it is proportionally more likely to red a PR for a page the
 PR never touched.
@@ -97,10 +99,10 @@ Pull requests therefore audit `lighthouserc.pr.json`, a sample derived by
 path segment after the locale (so every cluster and every standalone page is
 its own group), keep at most 2 URLs per group. This guarantees every cluster
 keeps _some_ coverage on every PR — a bug affecting all of `/learn` cannot slip
-through because only 2 of its 19 pages happen to be sampled — while capping the
+through because only 2 of its 31 pages happen to be sampled — while capping the
 sample's growth as clusters grow.
 
-`main` still runs the full 62-URL set on every push, so nothing ships
+`main` still runs the full 74-URL set on every push, so nothing ships
 ultimately ungated; the sample only relaxes what has to pass before a PR merges.
 
 Regenerate the sample after adding a URL to `lighthouserc.json`:

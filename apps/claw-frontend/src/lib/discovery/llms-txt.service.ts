@@ -1,12 +1,12 @@
 import { PLAIN_TEXT_CONTENT_TYPE } from '@/constants/seo-discovery.constants';
 import { ContentCategory } from '@/enums/content-category.enum';
+import { LlmsTxtSection } from '@/enums/llms-txt-section.enum';
 import { Locale } from '@/enums/locale.enum';
 import { SUPPORTED_LOCALES } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { LocalizedContentRegistryEntry } from '@/types/content-registry.types';
 import { getIndexablePagesForLocale } from '@/utilities/content-registry.utility';
-
-const LEGAL_CATEGORIES: ReadonlySet<ContentCategory> = new Set([ContentCategory.LEGAL]);
+import { resolveLlmsTxtSection } from '@/utilities/llms-txt-section.utility';
 
 function toLine(siteUrl: string, entry: LocalizedContentRegistryEntry): string {
   return `- [${entry.metadata.title}](${siteUrl}${entry.canonicalPath}): ${entry.metadata.description}`;
@@ -31,13 +31,17 @@ export function buildLlmsTxt(): string {
   const siteUrl = getSiteUrl();
   const pages = getIndexablePagesForLocale(Locale.EN);
   const home = pages.find((entry) => entry.category === ContentCategory.HOME);
-  const comparisons = pages.filter((entry) => entry.category === ContentCategory.COMPARISON);
-  const legal = pages.filter((entry) => LEGAL_CATEGORIES.has(entry.category));
+  // Grouped through the exhaustive resolver rather than a home/comparisons/
+  // legal filter plus an "everything else" bucket — see
+  // utilities/llms-txt-section.utility.ts.
   const product = pages.filter(
-    (entry) =>
-      entry.category !== ContentCategory.HOME &&
-      entry.category !== ContentCategory.COMPARISON &&
-      !LEGAL_CATEGORIES.has(entry.category),
+    (entry) => resolveLlmsTxtSection(entry.category) === LlmsTxtSection.PRODUCT,
+  );
+  const comparisons = pages.filter(
+    (entry) => resolveLlmsTxtSection(entry.category) === LlmsTxtSection.COMPARISONS,
+  );
+  const legal = pages.filter(
+    (entry) => resolveLlmsTxtSection(entry.category) === LlmsTxtSection.LEGAL,
   );
   const locales = SUPPORTED_LOCALES.map(({ locale }) => locale).join(', ');
 

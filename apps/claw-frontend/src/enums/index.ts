@@ -136,6 +136,7 @@ export { ScrollDirection } from './scroll-direction.enum';
 export { ActivitySeverity } from './activity-severity.enum';
 export { OrchestrationStageStatus } from './orchestration-stage-status.enum';
 export { ContentCategory } from './content-category.enum';
+export { LlmsTxtSection } from './llms-txt-section.enum';
 export { Indexability } from './indexability.enum';
 export { AdEligibility } from './ad-eligibility.enum';
 export { FeedEligibility } from './feed-eligibility.enum';
