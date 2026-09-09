@@ -76,6 +76,8 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
         'A troca real: capacidade e conveniência contra controle e formato de custo.',
       [LearnTopic.AI_AGENT_VS_AI_CHATBOT]:
         'A diferença entre responder a você e fazer algo por você.',
+      [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]:
+        'O que realmente testar antes de confiar seu trabalho a um modelo — não um número de ranking.',
     },
   },
   topics: {
@@ -1828,6 +1830,92 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'O agente de código do ClawAI roda no seu editor com os passos visíveis e a escolha de modelo nas suas mãos, então uma execução é revisável em vez de um resultado para aceitar ou rejeitar.',
+    },
+    [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]: {
+      seo: {
+        title: 'Como avaliar modelos de IA para o seu próprio uso',
+        description:
+          'Um número de ranking diz como um modelo se saiu nas tarefas de outra pessoa. O que realmente prevê se ele vai funcionar para as suas — e as trocas de qualidade, custo, latência e privacidade que um único número não consegue mostrar.',
+        keywords: [
+          'como avaliar modelos de IA',
+          'escolher um modelo de IA',
+          'critérios de comparação de modelos',
+        ],
+      },
+      eyebrow: 'Fundamentos',
+      title: 'Como avaliar modelos de IA para o seu próprio uso',
+      summary:
+        'Avaliar um modelo para o seu próprio trabalho significa testá-lo nas suas próprias tarefas, não confiar numa pontuação calculada nas tarefas de outra pessoa. Um modelo no topo de um ranking público ainda pode ser a escolha errada para um trabalho específico, depois de pesar qualidade contra custo, latência, e o que você tem permissão de enviar a ele em primeiro lugar.',
+      sections: [
+        {
+          id: 'a-leaderboard-score-is-not-your-score',
+          heading: 'Um número de ranking não é o seu número',
+          paragraphs: [
+            'Benchmarks públicos medem desempenho num conjunto fixo de tarefas raramente idêntico ao seu — domínio diferente, formato diferente, tipos de erro diferentes que importam para você. Um modelo pode estar perto do topo de um benchmark geral e ainda assim ter desempenho pior que um menor no seu tipo específico de solicitação, porque o benchmark nunca testou nada parecido.',
+            'Pontuações de benchmark também envelhecem rápido e podem ser afetadas por quanto os dados de treinamento de um modelo conhecem exatamente aquelas questões do benchmark, então uma pontuação alta é uma pista que vale a pena investigar, não um veredito para confiar cegamente.',
+          ],
+        },
+        {
+          id: 'test-on-your-own-tasks',
+          heading: 'O único teste confiável é a sua própria tarefa',
+          paragraphs: [
+            'Pegue uma amostra representativa de solicitações reais do seu caso de uso real — não exemplos simplificados — e passe-as pelos modelos candidatos. Julgue as saídas pelo que você realmente aceitaria, não por uma noção genérica de boa resposta. Um modelo que escreve prosa elegante mas erra a terminologia do seu domínio é uma escolha ruim mesmo que soe bem.',
+          ],
+        },
+        {
+          id: 'quality-is-not-the-only-dimension',
+          heading: 'Qualidade é apenas uma entre várias dimensões que se contrapõem',
+          paragraphs: [
+            'O modelo com melhor pontuação de qualidade costuma ser também o mais lento e mais caro por solicitação. Se essa troca vale a pena depende do trabalho: um processo em lote em segundo plano geralmente pode arcar com um modelo mais lento e barato; uma resposta de chat interativa geralmente não pode arcar com lentidão, por melhor que ela seja. Avaliar um modelo isoladamente, só pela qualidade, pula justamente a troca que realmente decide se ele é utilizável no seu produto.',
+          ],
+        },
+        {
+          id: 'privacy-and-data-handling-are-evaluation-criteria-too',
+          heading: 'O que você tem permissão de enviar a ele também é um critério de avaliação',
+          paragraphs: [
+            'Um modelo com boa pontuação mas que exige enviar dados sensíveis a terceiros pela internet aberta pode não ser utilizável para uma carga de trabalho específica independentemente da qualidade — essa restrição precisa ser checada antes mesmo de a qualidade ser relevante, não depois de você já ter escolhido seu favorito. Quando uma tarefa envolve dados que você não pode tirar da sua própria infraestrutura, rodar localmente (veja o que é IA local) ou de forma self-hosted reduz o campo antes mesmo de os benchmarks entrarem em jogo.',
+          ],
+        },
+        {
+          id: 'know-a-models-known-weaknesses',
+          heading:
+            'Todo modelo tem pontos fracos conhecidos — encontre os seus antes de confiar nele',
+          paragraphs: [
+            'A tendência conhecida de um modelo a ter alucinações em perguntas fora do domínio, ou sua consistência em tarefas que exigem raciocínio cuidadoso passo a passo, importa pelo menos tanto quanto sua pontuação média. Se o seu caso de uso toca um domínio em que o modelo tende a chutar, avalie especificamente isso em vez de supor que uma boa pontuação média já cobre — veja por que a IA tem alucinações para entender por que o desempenho médio não prevê o comportamento num ponto fraco específico.',
+          ],
+        },
+        {
+          id: 'reevaluate-not-just-at-launch',
+          heading: 'Avaliação não é uma decisão única',
+          paragraphs: [
+            'Provedores atualizam modelos — às vezes silenciosamente, sob o mesmo nome e endpoint — e preços e limites de taxa mudam. Um modelo que era a escolha certa quando você avaliou pode deixar de encaixar mais tarde. Tratar a escolha do modelo como uma decisão revisada periodicamente, em vez de fixada uma única vez no lançamento, captura esse desvio antes que ele vire um problema de produção.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Uma pontuação de benchmark mais alta é sempre a melhor escolha?',
+          answer:
+            'Não necessariamente. Benchmarks testam um conjunto fixo de tarefas que pode não se parecer com as suas, e uma pontuação mais alta costuma vir com mais custo ou latência. A única forma de saber é testar o modelo nas suas próprias tarefas representativas.',
+        },
+        {
+          question: 'De quantos casos de teste preciso para avaliar bem um modelo?',
+          answer:
+            'O suficiente para cobrir a variedade de solicitações que seu caso de uso realmente produz, incluindo casos extremos e o tipo de entrada que costuma dar errado. Alguns exemplos fáceis farão quase qualquer modelo parecer bom; os casos mais difíceis e representativos são onde as diferenças reais aparecem.',
+        },
+        {
+          question: 'Devo reavaliar um modelo depois de já tê-lo escolhido?',
+          answer:
+            'Sim. Provedores atualizam modelos sob o mesmo nome, preços e limites de taxa mudam, e o seu próprio caso de uso evolui. Trate a escolha como algo revisado periodicamente, não fixado para sempre no lançamento.',
+        },
+        {
+          question: 'Preciso testar privacidade e tratamento de dados separadamente da qualidade?',
+          answer:
+            'Sim, e isso deveria vir primeiro se desqualificar uma opção. A pontuação de qualidade de um modelo é irrelevante se a carga de trabalho envolve dados que você não tem permissão de enviar a esse provedor em primeiro lugar.',
+        },
+      ],
+      productNote:
+        'Em vez de reduzir uma resposta de chat a um único número, o painel de transparência de roteamento do ClawAI mostra a classe de custo, a classe de latência, a confiança do roteamento, e se um modelo de fallback ou juiz foi usado para aquela resposta específica — um sinal de avaliação ligado à solicitação real, não um número genérico de ranking.',
     },
   },
 };

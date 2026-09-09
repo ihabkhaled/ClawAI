@@ -77,6 +77,8 @@ export const IT_LEARN_CONTENT: LearnDictionary = {
         'Il vero scambio: capacità e comodità contro controllo e forma del costo.',
       [LearnTopic.AI_AGENT_VS_AI_CHATBOT]:
         'La differenza tra risponderti e fare qualcosa al posto tuo.',
+      [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]:
+        'Cosa testare davvero prima di affidare il tuo lavoro a un modello — non un numero da classifica.',
     },
   },
   topics: {
@@ -1829,6 +1831,91 @@ export const IT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'L’agente di codice di ClawAI gira nel tuo editor con i passi visibili e la scelta del modello nelle tue mani: un’esecuzione si rivede invece di essere da prendere o lasciare.',
+    },
+    [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]: {
+      seo: {
+        title: 'Come valutare i modelli di IA per il proprio uso',
+        description:
+          'Un numero da classifica ti dice come è andato un modello sui compiti di qualcun altro. Cosa predice davvero se funzionerà per i tuoi — e i compromessi tra qualità, costo, latenza e privacy che un solo numero non può mostrarti.',
+        keywords: [
+          'come valutare i modelli di IA',
+          'scegliere un modello di IA',
+          'criteri di confronto tra modelli',
+        ],
+      },
+      eyebrow: 'Fondamenti',
+      title: 'Come valutare i modelli di IA per il proprio uso',
+      summary:
+        'Valutare un modello per il proprio lavoro significa testarlo sui propri compiti, non fidarsi di un punteggio calcolato sui compiti di qualcun altro. Un modello in cima a una classifica pubblica può comunque essere la scelta sbagliata per un lavoro specifico, una volta che pesi la qualità contro il costo, la latenza e ciò che sei autorizzato a inviargli in primo luogo.',
+      sections: [
+        {
+          id: 'a-leaderboard-score-is-not-your-score',
+          heading: 'Un numero da classifica non è il tuo numero',
+          paragraphs: [
+            'I benchmark pubblici misurano le prestazioni su un insieme fisso di compiti raramente identici ai tuoi — dominio diverso, formato diverso, tipi di errore diversi che contano per te. Un modello può stare vicino alla cima di un benchmark generale e comunque rendere peggio di uno più piccolo sul tuo tipo specifico di richiesta, perché il benchmark non ha mai testato nulla di simile.',
+            'I punteggi dei benchmark invecchiano anche in fretta e possono essere influenzati da quanto i dati di addestramento di un modello conoscano proprio quelle domande del benchmark, quindi un punteggio alto è un indizio che merita di essere verificato, non un verdetto da accettare ciecamente.',
+          ],
+        },
+        {
+          id: 'test-on-your-own-tasks',
+          heading: 'L’unico test affidabile è il tuo compito',
+          paragraphs: [
+            'Prendi un campione rappresentativo di richieste reali dal tuo caso d’uso effettivo — non esempi semplificati — e falle passare attraverso i modelli candidati. Giudica i risultati in base a ciò che accetteresti davvero, non a una nozione generica di buona risposta. Un modello che scrive prosa elegante ma sbaglia la terminologia del tuo dominio è una scelta scadente anche se suona bene.',
+          ],
+        },
+        {
+          id: 'quality-is-not-the-only-dimension',
+          heading: 'La qualità è solo una dimensione tra diverse che si scontrano tra loro',
+          paragraphs: [
+            'Il modello con il punteggio di qualità migliore è spesso anche il più lento e il più costoso per richiesta. Se quel compromesso valga la pena dipende dal lavoro: un processo batch in background di solito può permettersi un modello più lento ed economico; una risposta di chat interattiva di solito non può permettersi di essere lenta, per quanto sia buona. Valutare un modello isolatamente, solo sulla qualità, salta esattamente il compromesso che decide davvero se è utilizzabile nel tuo prodotto.',
+          ],
+        },
+        {
+          id: 'privacy-and-data-handling-are-evaluation-criteria-too',
+          heading: 'Anche ciò che sei autorizzato a inviargli è un criterio di valutazione',
+          paragraphs: [
+            'Un modello che ottiene un buon punteggio ma richiede di inviare dati sensibili a terzi tramite internet aperta potrebbe non essere utilizzabile per un certo carico di lavoro indipendentemente dalla qualità — questo vincolo va verificato prima ancora che la qualità sia rilevante, non dopo aver già scelto il tuo preferito. Dove un compito coinvolge dati che non puoi far uscire dalla tua infrastruttura, girare in locale (vedi cos’è l’IA locale) o in self-hosting restringe il campo prima ancora che i benchmark entrino in gioco.',
+          ],
+        },
+        {
+          id: 'know-a-models-known-weaknesses',
+          heading: 'Ogni modello ha punti deboli noti — trova i tuoi prima di fidartene',
+          paragraphs: [
+            'La tendenza nota di un modello ad avere allucinazioni su domande fuori dal suo dominio, o la sua coerenza su compiti che richiedono un ragionamento attento passo dopo passo, conta almeno quanto il suo punteggio medio. Se il tuo caso d’uso tocca un dominio in cui il modello tende a indovinare, valuta proprio quello invece di supporre che un buon punteggio medio lo copra — vedi perché l’IA ha le allucinazioni per capire perché la prestazione media non predice il comportamento su un punto debole specifico.',
+          ],
+        },
+        {
+          id: 'reevaluate-not-just-at-launch',
+          heading: 'La valutazione non è una decisione presa una volta sola',
+          paragraphs: [
+            'I fornitori aggiornano i modelli — a volte silenziosamente, sotto lo stesso nome e lo stesso endpoint — e i prezzi e i limiti di frequenza cambiano. Un modello che era la scelta giusta al momento della valutazione può risultare non più adatto in seguito. Trattare la scelta del modello come una decisione da rivedere periodicamente, invece che fissata una volta al lancio, coglie quello scostamento prima che diventi un problema in produzione.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Un punteggio di benchmark più alto è sempre la scelta migliore?',
+          answer:
+            'Non necessariamente. I benchmark testano un insieme fisso di compiti che potrebbe non somigliare ai tuoi, e un punteggio più alto spesso comporta un costo o una latenza maggiori. L’unico modo per saperlo è testare il modello sui tuoi compiti rappresentativi.',
+        },
+        {
+          question: 'Quanti casi di test mi servono per valutare bene un modello?',
+          answer:
+            'Abbastanza da coprire la gamma di richieste che il tuo caso d’uso produce realmente, inclusi i casi limite e i tipi di input che tendono ad andare storti. Pochi esempi facili faranno sembrare buono quasi qualsiasi modello; i casi più difficili e rappresentativi sono dove emergono le vere differenze.',
+        },
+        {
+          question: 'Devo rivalutare un modello dopo averlo già scelto?',
+          answer:
+            'Sì. I fornitori aggiornano i modelli sotto lo stesso nome, i prezzi e i limiti di frequenza cambiano, e il tuo caso d’uso stesso evolve. Tratta la scelta come qualcosa da rivedere periodicamente, non come fissata per sempre al lancio.',
+        },
+        {
+          question: 'Devo testare privacy e gestione dei dati separatamente dalla qualità?',
+          answer:
+            'Sì, e dovrebbe venire per primo se squalifica un’opzione. Il punteggio di qualità di un modello è irrilevante se il carico di lavoro coinvolge dati che non sei autorizzato a inviare a quel fornitore in primo luogo.',
+        },
+      ],
+      productNote:
+        'Invece di ridurre una risposta di chat a un solo numero, il pannello di trasparenza del routing di ClawAI mostra la classe di costo, la classe di latenza, la confidenza del routing, e se per quella specifica risposta è stato usato un modello di fallback o un giudice — un segnale di valutazione legato alla richiesta reale, non un numero generico da classifica.',
     },
   },
 };

@@ -78,6 +78,8 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
         'The real trade: capability and convenience against control and cost shape.',
       [LearnTopic.AI_AGENT_VS_AI_CHATBOT]:
         'The difference between answering you and doing something for you.',
+      [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]:
+        'What to actually test before trusting a model with your work — not a leaderboard number.',
     },
   },
   topics: {
@@ -1821,6 +1823,91 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI’s coding agent runs in your editor with the steps visible and the model choice yours, so a run is reviewable rather than a single take-it-or-leave-it result.',
+    },
+    [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]: {
+      seo: {
+        title: 'How to evaluate AI models for your own use',
+        description:
+          'A leaderboard score tells you how a model did on someone else’s tasks. What actually predicts whether it will work for yours — and the trade-offs of quality, cost, latency and privacy that a single number can’t show you.',
+        keywords: [
+          'how to evaluate AI models',
+          'choosing an AI model',
+          'AI model comparison criteria',
+        ],
+      },
+      eyebrow: 'Foundations',
+      title: 'How to evaluate AI models for your own use',
+      summary:
+        'Evaluating a model for your own work means testing it on your own tasks, not trusting a score computed on someone else’s. A model that tops a public leaderboard can still be the wrong choice for a specific job, once you weigh quality against cost, latency, and what you’re allowed to send it in the first place.',
+      sections: [
+        {
+          id: 'a-leaderboard-score-is-not-your-score',
+          heading: 'A leaderboard score is not your score',
+          paragraphs: [
+            'Public benchmarks measure performance on a fixed set of tasks that are rarely identical to yours — different domain, different format, different failure modes that matter to you. A model can rank near the top of a general benchmark and still perform worse than a smaller one on your specific kind of request, because the benchmark never tested anything like it.',
+            'Benchmark scores also age quickly and can be affected by how familiar a model’s training data is with the exact benchmark questions, so a high score is a hint worth investigating, not a verdict worth trusting outright.',
+          ],
+        },
+        {
+          id: 'test-on-your-own-tasks',
+          heading: 'The only reliable test is your own task',
+          paragraphs: [
+            'Take a representative sample of real requests from your actual use case — not simplified examples — and run them through the candidate models. Judge the outputs against what you would actually accept, not against a generic notion of a good answer. A model that writes elegant prose but gets your domain’s terminology wrong is a bad fit even if it reads beautifully.',
+          ],
+        },
+        {
+          id: 'quality-is-not-the-only-dimension',
+          heading: 'Quality is one dimension among several that trade off against each other',
+          paragraphs: [
+            'The best-scoring model on quality is often also the slowest and most expensive per request. Whether that trade is worth it depends on the job: a background batch process can usually afford a slower, cheaper model; an interactive chat response usually can’t afford a slow one, however good. Evaluating a model in isolation, on quality alone, skips the trade-off that actually decides whether it’s usable in your product.',
+          ],
+        },
+        {
+          id: 'privacy-and-data-handling-are-evaluation-criteria-too',
+          heading: 'What you’re allowed to send it is an evaluation criterion too',
+          paragraphs: [
+            'A model that scores well but requires sending sensitive data to a third party over the open internet may not be usable for a given workload regardless of quality — that constraint has to be checked before quality is even relevant, not after you’ve already picked a favorite. Where a task involves data you can’t send off your own infrastructure, running locally (see local AI) or self-hosted narrows the field before benchmarks come into it at all.',
+          ],
+        },
+        {
+          id: 'know-a-models-known-weaknesses',
+          heading: 'Every model has known weak spots — find yours before you rely on it',
+          paragraphs: [
+            'A model’s known hallucination tendency on out-of-domain questions, or its consistency on tasks requiring careful step-by-step reasoning, is at least as important as its average score. If your use case touches a domain the model tends to guess at, evaluate that specifically rather than assuming a strong average score covers it — see why AI hallucinates for why average performance doesn’t predict behaviour on a specific weak spot.',
+          ],
+        },
+        {
+          id: 'reevaluate-not-just-at-launch',
+          heading: 'Evaluation is not a one-time decision',
+          paragraphs: [
+            'Providers update models — sometimes silently, behind the same name and endpoint — and pricing and rate limits change. A model that was the right choice when you evaluated it can drift out of fit later. Treating model choice as a decision to revisit periodically, rather than something set once at launch, catches that drift before it becomes a production problem.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Is a higher benchmark score always the better choice?',
+          answer:
+            'Not necessarily. Benchmarks test a fixed set of tasks that may not resemble yours, and a higher score often comes with higher cost or latency. The only way to know is to test the model on your own representative tasks.',
+        },
+        {
+          question: 'How many test cases do I need to evaluate a model properly?',
+          answer:
+            'Enough to cover the range of requests your use case actually produces, including edge cases and the kinds of inputs that tend to go wrong. A handful of easy examples will make almost any model look good; the harder, more representative cases are where the real differences show up.',
+        },
+        {
+          question: 'Should I re-evaluate a model after I’ve already chosen it?',
+          answer:
+            'Yes. Providers update models under the same name, pricing and rate limits change, and your own use case evolves. Treat the choice as reviewed periodically rather than fixed permanently at launch.',
+        },
+        {
+          question: 'Do I need to test privacy and data handling separately from quality?',
+          answer:
+            'Yes, and it should come first if it disqualifies an option. A model’s quality score is irrelevant if the workload involves data you’re not allowed to send to that provider in the first place.',
+        },
+      ],
+      productNote:
+        'Rather than reducing a chat response to a single score, ClawAI’s routing transparency panel shows the cost class, latency class, routing confidence, and whether a fallback or judge model was used for that specific response — evaluation signal tied to the actual request, not a general leaderboard number.',
     },
   },
 };

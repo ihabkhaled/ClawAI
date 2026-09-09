@@ -77,6 +77,8 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
         'Der eigentliche Handel: Leistung und Bequemlichkeit gegen Kontrolle und Kostenform.',
       [LearnTopic.AI_AGENT_VS_AI_CHATBOT]:
         'Der Unterschied zwischen antworten und für Sie handeln.',
+      [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]:
+        'Was Sie wirklich testen sollten, bevor Sie einem Modell Ihre Arbeit anvertrauen — keine Bestenlisten-Zahl.',
     },
   },
   topics: {
@@ -1827,6 +1829,93 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAIs Coding-Agent läuft in Ihrem Editor mit sichtbaren Schritten und Ihrer Modellwahl — ein Lauf ist prüfbar statt ein Alles-oder-nichts-Ergebnis.',
+    },
+    [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]: {
+      seo: {
+        title: 'KI-Modelle für den eigenen Einsatz bewerten',
+        description:
+          'Eine Bestenlisten-Zahl sagt Ihnen, wie ein Modell bei fremden Aufgaben abgeschnitten hat. Was tatsächlich vorhersagt, ob es für Ihre funktioniert — und die Abwägungen aus Qualität, Kosten, Latenz und Datenschutz, die eine einzelne Zahl nicht zeigen kann.',
+        keywords: [
+          'KI-Modelle bewerten',
+          'KI-Modell auswählen',
+          'Kriterien für den Modellvergleich',
+        ],
+      },
+      eyebrow: 'Grundlagen',
+      title: 'KI-Modelle für den eigenen Einsatz bewerten',
+      summary:
+        'Ein Modell für die eigene Arbeit zu bewerten heißt, es an den eigenen Aufgaben zu testen, statt einem Wert zu vertrauen, der an fremden Aufgaben berechnet wurde. Ein Modell, das eine öffentliche Bestenliste anführt, kann trotzdem die falsche Wahl für eine konkrete Aufgabe sein, sobald man Qualität gegen Kosten, Latenz und die Frage abwägt, was man ihm überhaupt schicken darf.',
+      sections: [
+        {
+          id: 'a-leaderboard-score-is-not-your-score',
+          heading: 'Eine Bestenlisten-Zahl ist nicht Ihre Zahl',
+          paragraphs: [
+            'Öffentliche Benchmarks messen die Leistung an einer festen Aufgabenmenge, die selten mit Ihrer identisch ist — anderer Bereich, anderes Format, andere Fehlerarten, die Ihnen wichtig sind. Ein Modell kann in einem allgemeinen Benchmark ganz oben stehen und trotzdem bei Ihrer speziellen Art von Anfrage schlechter abschneiden als ein kleineres, weil der Benchmark nie etwas Ähnliches getestet hat.',
+            'Benchmark-Werte veralten zudem schnell und können davon beeinflusst sein, wie vertraut die Trainingsdaten eines Modells mit den genauen Benchmark-Fragen sind — ein hoher Wert ist also ein Hinweis, den man prüfen sollte, kein Urteil, dem man blind vertrauen sollte.',
+          ],
+        },
+        {
+          id: 'test-on-your-own-tasks',
+          heading: 'Der einzige verlässliche Test ist Ihre eigene Aufgabe',
+          paragraphs: [
+            'Nehmen Sie eine repräsentative Stichprobe echter Anfragen aus Ihrem tatsächlichen Einsatzfall — keine vereinfachten Beispiele — und lassen Sie sie durch die infrage kommenden Modelle laufen. Bewerten Sie die Ausgaben danach, was Sie tatsächlich akzeptieren würden, nicht nach einer allgemeinen Vorstellung von einer guten Antwort. Ein Modell, das eleganten Text schreibt, aber die Fachbegriffe Ihres Bereichs falsch verwendet, passt schlecht, auch wenn es sich schön liest.',
+          ],
+        },
+        {
+          id: 'quality-is-not-the-only-dimension',
+          heading:
+            'Qualität ist nur eine von mehreren Dimensionen, die sich gegenseitig ausschließen',
+          paragraphs: [
+            'Das Modell mit der besten Qualitätsbewertung ist oft auch das langsamste und teuerste pro Anfrage. Ob sich dieser Tausch lohnt, hängt von der Aufgabe ab: Ein Batch-Prozess im Hintergrund kann sich meist ein langsameres, günstigeres Modell leisten; eine interaktive Chat-Antwort meist kein langsames, egal wie gut es ist. Ein Modell isoliert nur nach Qualität zu bewerten, übergeht genau die Abwägung, die tatsächlich entscheidet, ob es in Ihrem Produkt einsetzbar ist.',
+          ],
+        },
+        {
+          id: 'privacy-and-data-handling-are-evaluation-criteria-too',
+          heading: 'Was Sie ihm schicken dürfen, ist auch ein Bewertungskriterium',
+          paragraphs: [
+            'Ein Modell, das gut abschneidet, aber verlangt, sensible Daten an Dritte über das offene Internet zu schicken, kann für eine bestimmte Aufgabe unabhängig von der Qualität ungeeignet sein — diese Einschränkung muss geprüft werden, bevor Qualität überhaupt relevant wird, nicht erst, nachdem Sie schon einen Favoriten gewählt haben. Betrifft eine Aufgabe Daten, die Sie nicht aus Ihrer eigenen Infrastruktur herausschicken dürfen, engt der lokale Betrieb (siehe lokale KI) oder Self-Hosting das Feld ein, bevor Benchmarks überhaupt ins Spiel kommen.',
+          ],
+        },
+        {
+          id: 'know-a-models-known-weaknesses',
+          heading:
+            'Jedes Modell hat bekannte Schwachstellen — finden Sie Ihre, bevor Sie sich darauf verlassen',
+          paragraphs: [
+            'Die bekannte Halluzinationsneigung eines Modells bei fachfremden Fragen oder seine Konsistenz bei Aufgaben, die sorgfältiges schrittweises Denken erfordern, sind mindestens so wichtig wie sein Durchschnittswert. Berührt Ihr Einsatzfall einen Bereich, in dem das Modell zum Raten neigt, bewerten Sie genau das, statt anzunehmen, ein starker Durchschnittswert decke es ab — siehe warum KI halluziniert dafür, warum die durchschnittliche Leistung das Verhalten an einer bestimmten Schwachstelle nicht vorhersagt.',
+          ],
+        },
+        {
+          id: 'reevaluate-not-just-at-launch',
+          heading: 'Bewertung ist keine einmalige Entscheidung',
+          paragraphs: [
+            'Anbieter aktualisieren Modelle — manchmal stillschweigend, unter demselben Namen und Endpunkt —, und Preise sowie Ratenlimits ändern sich. Ein Modell, das zum Zeitpunkt Ihrer Bewertung die richtige Wahl war, kann später nicht mehr passen. Die Modellwahl als regelmäßig zu überprüfende Entscheidung zu behandeln, statt als einmal beim Start festgelegt, fängt diese Verschiebung ab, bevor sie zum Produktionsproblem wird.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Ist eine höhere Benchmark-Zahl immer die bessere Wahl?',
+          answer:
+            'Nicht unbedingt. Benchmarks testen eine feste Aufgabenmenge, die Ihrer vielleicht nicht ähnelt, und eine höhere Zahl geht oft mit höheren Kosten oder Latenz einher. Der einzige Weg, es zu wissen, ist, das Modell an Ihren eigenen repräsentativen Aufgaben zu testen.',
+        },
+        {
+          question: 'Wie viele Testfälle brauche ich, um ein Modell richtig zu bewerten?',
+          answer:
+            'Genug, um die Bandbreite der Anfragen abzudecken, die Ihr Einsatzfall tatsächlich erzeugt, einschließlich Grenzfällen und der Art von Eingaben, die typischerweise schiefgehen. Ein paar einfache Beispiele lassen fast jedes Modell gut aussehen; die schwierigeren, repräsentativeren Fälle zeigen die echten Unterschiede.',
+        },
+        {
+          question: 'Sollte ich ein Modell neu bewerten, nachdem ich es bereits gewählt habe?',
+          answer:
+            'Ja. Anbieter aktualisieren Modelle unter demselben Namen, Preise und Ratenlimits ändern sich, und Ihr eigener Einsatzfall entwickelt sich weiter. Behandeln Sie die Wahl als regelmäßig überprüft statt als beim Start dauerhaft festgelegt.',
+        },
+        {
+          question: 'Muss ich Datenschutz und Datenverarbeitung getrennt von der Qualität prüfen?',
+          answer:
+            'Ja, und das sollte zuerst kommen, wenn es eine Option ausschließt. Die Qualitätsbewertung eines Modells ist irrelevant, wenn die Aufgabe Daten betrifft, die Sie diesem Anbieter überhaupt nicht schicken dürfen.',
+        },
+      ],
+      productNote:
+        'Statt eine Chat-Antwort auf eine einzelne Zahl zu reduzieren, zeigt ClawAIs Routing-Transparenz-Panel die Kostenklasse, die Latenzklasse, die Routing-Konfidenz und ob für diese konkrete Antwort ein Fallback- oder Judge-Modell verwendet wurde — Bewertungssignal an die tatsächliche Anfrage gebunden, keine allgemeine Bestenlisten-Zahl.',
     },
   },
 };

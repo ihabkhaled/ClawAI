@@ -55,6 +55,7 @@ export const LEARN_TOPIC_ORDER: ReadonlyArray<LearnTopic> = [
   LearnTopic.OLLAMA_VS_LLAMACPP,
   LearnTopic.CLOUD_AI_VS_LOCAL_AI,
   LearnTopic.AI_AGENT_VS_AI_CHATBOT,
+  LearnTopic.HOW_TO_EVALUATE_AI_MODELS,
 ];
 
 /** `/learn/<topic>` for one topic. */
@@ -113,6 +114,7 @@ export const LEARN_RELATED_PATHS: Readonly<Record<LearnTopic, ReadonlyArray<stri
   [LearnTopic.OLLAMA_VS_LLAMACPP]: ['/local-first-ai', '/architecture', '/supported-models'],
   [LearnTopic.CLOUD_AI_VS_LOCAL_AI]: ['/local-first-ai', '/security-and-privacy', '/pricing'],
   [LearnTopic.AI_AGENT_VS_AI_CHATBOT]: ['/coding-agent', '/features', '/use-cases'],
+  [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]: ['/supported-models', '/compare', '/pricing'],
 };
 
 /** Type guard for the dynamic route segment. */

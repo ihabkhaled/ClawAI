@@ -41,4 +41,5 @@ export enum LearnTopic {
   CLOUD_AI_VS_LOCAL_AI = 'cloud-ai-vs-local-ai',
   OLLAMA_VS_LLAMACPP = 'ollama-vs-llamacpp',
   AI_AGENT_VS_AI_CHATBOT = 'ai-agent-vs-ai-chatbot',
+  HOW_TO_EVALUATE_AI_MODELS = 'how-to-evaluate-ai-models',
 }

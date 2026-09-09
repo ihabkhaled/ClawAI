@@ -76,6 +76,8 @@ export const ES_LEARN_CONTENT: LearnDictionary = {
       [LearnTopic.CLOUD_AI_VS_LOCAL_AI]:
         'El intercambio real: capacidad y comodidad frente a control y forma del coste.',
       [LearnTopic.AI_AGENT_VS_AI_CHATBOT]: 'La diferencia entre responderte y hacer algo por ti.',
+      [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]:
+        'Qué probar de verdad antes de confiarle tu trabajo a un modelo — no un número de una clasificación.',
     },
   },
   topics: {
@@ -1842,6 +1844,93 @@ export const ES_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'El agente de programación de ClawAI corre en tu editor con los pasos a la vista y la elección de modelo en tus manos, así que una ejecución se puede revisar en lugar de aceptarla o rechazarla en bloque.',
+    },
+    [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]: {
+      seo: {
+        title: 'Cómo evaluar modelos de IA para tu propio uso',
+        description:
+          'Un número de una clasificación te dice cómo le fue a un modelo en las tareas de otro. Qué predice de verdad si funcionará en las tuyas, y las contrapartidas de calidad, coste, latencia y privacidad que un solo número no puede mostrarte.',
+        keywords: [
+          'cómo evaluar modelos de IA',
+          'elegir un modelo de IA',
+          'criterios de comparación de modelos',
+        ],
+      },
+      eyebrow: 'Fundamentos',
+      title: 'Cómo evaluar modelos de IA para tu propio uso',
+      summary:
+        'Evaluar un modelo para tu propio trabajo significa probarlo con tus propias tareas, no confiar en una puntuación calculada con las tareas de otro. Un modelo que encabeza una clasificación pública puede seguir siendo la elección equivocada para un trabajo concreto en cuanto pesas la calidad frente al coste, la latencia y lo que te dejan enviarle en primer lugar.',
+      sections: [
+        {
+          id: 'a-leaderboard-score-is-not-your-score',
+          heading: 'Un número de clasificación no es tu número',
+          paragraphs: [
+            'Los benchmarks públicos miden el rendimiento en un conjunto fijo de tareas que rara vez son idénticas a las tuyas: otro dominio, otro formato, otros tipos de fallo que te importan a ti. Un modelo puede estar cerca de la cima de un benchmark general y aun así rendir peor que uno más pequeño en tu tipo concreto de petición, porque el benchmark nunca probó nada parecido.',
+            'Las puntuaciones de benchmark también envejecen rápido y pueden verse afectadas por cuánto conocen los datos de entrenamiento de un modelo las preguntas exactas del benchmark, así que una puntuación alta es una pista que vale la pena investigar, no un veredicto en el que confiar sin más.',
+          ],
+        },
+        {
+          id: 'test-on-your-own-tasks',
+          heading: 'La única prueba fiable es tu propia tarea',
+          paragraphs: [
+            'Toma una muestra representativa de peticiones reales de tu caso de uso real —no ejemplos simplificados— y pásalas por los modelos candidatos. Juzga los resultados según lo que tú realmente aceptarías, no según una noción genérica de buena respuesta. Un modelo que escribe con elegancia pero se equivoca en la terminología de tu dominio es mala opción aunque suene bonito.',
+          ],
+        },
+        {
+          id: 'quality-is-not-the-only-dimension',
+          heading: 'La calidad es solo una dimensión entre varias que se contraponen',
+          paragraphs: [
+            'El modelo con mejor puntuación de calidad suele ser también el más lento y el más caro por petición. Si esa contrapartida merece la pena depende del trabajo: un proceso por lotes en segundo plano suele poder permitirse un modelo más lento y barato; una respuesta de chat interactiva normalmente no puede permitirse una lenta, por buena que sea. Evaluar un modelo de forma aislada, solo por calidad, se salta justo la contrapartida que decide de verdad si es usable en tu producto.',
+          ],
+        },
+        {
+          id: 'privacy-and-data-handling-are-evaluation-criteria-too',
+          heading: 'Lo que puedes enviarle también es un criterio de evaluación',
+          paragraphs: [
+            'Un modelo con buena puntuación pero que exige enviar datos sensibles a un tercero por internet abierto puede no ser usable para una carga de trabajo dada al margen de la calidad —esa restricción hay que comprobarla antes de que la calidad importe siquiera, no después de haber elegido ya tu favorito—. Cuando una tarea implica datos que no puedes sacar de tu propia infraestructura, ejecutar el modelo en local (mira qué es la IA local) o autoalojado estrecha el campo antes de que los benchmarks entren siquiera en juego.',
+          ],
+        },
+        {
+          id: 'know-a-models-known-weaknesses',
+          heading:
+            'Todo modelo tiene puntos débiles conocidos: encuentra los tuyos antes de confiar en él',
+          paragraphs: [
+            'La tendencia conocida de un modelo a alucinar en preguntas fuera de su dominio, o su consistencia en tareas que exigen razonamiento cuidadoso paso a paso, importa al menos tanto como su puntuación media. Si tu caso de uso toca un dominio en el que el modelo tiende a adivinar, evalúa eso específicamente en lugar de suponer que una buena puntuación media lo cubre; mira por qué alucina la IA para entender por qué el rendimiento medio no predice el comportamiento en un punto débil concreto.',
+          ],
+        },
+        {
+          id: 'reevaluate-not-just-at-launch',
+          heading: 'La evaluación no es una decisión de una sola vez',
+          paragraphs: [
+            'Los proveedores actualizan los modelos, a veces en silencio, bajo el mismo nombre y el mismo endpoint, y los precios y los límites de tasa cambian. Un modelo que era la elección correcta cuando lo evaluaste puede dejar de encajar más adelante. Tratar la elección de modelo como una decisión que se revisa periódicamente, en vez de algo fijado una vez al lanzarla, detecta ese desajuste antes de que se convierta en un problema de producción.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: '¿Una puntuación de benchmark más alta es siempre la mejor opción?',
+          answer:
+            'No necesariamente. Los benchmarks prueban un conjunto fijo de tareas que puede no parecerse a las tuyas, y una puntuación más alta a menudo viene con más coste o latencia. La única forma de saberlo es probar el modelo con tus propias tareas representativas.',
+        },
+        {
+          question: '¿Cuántos casos de prueba necesito para evaluar bien un modelo?',
+          answer:
+            'Los suficientes para cubrir el rango de peticiones que tu caso de uso genera de verdad, incluidos los casos límite y el tipo de entradas que suelen salir mal. Unos pocos ejemplos fáciles harán que casi cualquier modelo parezca bueno; los casos más difíciles y representativos son donde salen a la luz las diferencias reales.',
+        },
+        {
+          question: '¿Debería reevaluar un modelo después de haberlo elegido ya?',
+          answer:
+            'Sí. Los proveedores actualizan los modelos bajo el mismo nombre, los precios y los límites de tasa cambian, y tu propio caso de uso evoluciona. Trata la elección como algo que se revisa periódicamente, no como algo fijado para siempre en el lanzamiento.',
+        },
+        {
+          question:
+            '¿Necesito probar la privacidad y el tratamiento de datos por separado de la calidad?',
+          answer:
+            'Sí, y debería ir primero si descalifica una opción. La puntuación de calidad de un modelo es irrelevante si la carga de trabajo implica datos que no tienes permitido enviar a ese proveedor en primer lugar.',
+        },
+      ],
+      productNote:
+        'En vez de reducir una respuesta de chat a una sola cifra, el panel de transparencia de enrutado de ClawAI muestra la clase de coste, la clase de latencia, la confianza del enrutado y si se usó un modelo de respaldo o un juez para esa respuesta concreta: una señal de evaluación ligada a la petición real, no un número genérico de clasificación.',
     },
   },
 };

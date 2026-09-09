@@ -78,6 +78,8 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
         'Le vrai compromis : capacité et confort contre contrôle et forme du coût.',
       [LearnTopic.AI_AGENT_VS_AI_CHATBOT]:
         'La différence entre vous répondre et agir à votre place.',
+      [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]:
+        'Ce qu’il faut vraiment tester avant de confier votre travail à un modèle — pas un chiffre de classement.',
     },
   },
   topics: {
@@ -1838,6 +1840,93 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'L’agent de code de ClawAI tourne dans votre éditeur avec les étapes visibles et le choix du modèle entre vos mains : une exécution se relit au lieu d’être à prendre ou à laisser.',
+    },
+    [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]: {
+      seo: {
+        title: 'Comment évaluer des modèles d’IA pour son propre usage',
+        description:
+          'Un chiffre de classement vous dit comment un modèle s’est comporté sur les tâches de quelqu’un d’autre. Ce qui prédit vraiment s’il fonctionnera pour les vôtres — et les compromis de qualité, coût, latence et confidentialité qu’un seul chiffre ne peut pas montrer.',
+        keywords: [
+          'comment évaluer des modèles d’IA',
+          'choisir un modèle d’IA',
+          'critères de comparaison de modèles',
+        ],
+      },
+      eyebrow: 'Fondamentaux',
+      title: 'Comment évaluer des modèles d’IA pour son propre usage',
+      summary:
+        'Évaluer un modèle pour son propre travail signifie le tester sur ses propres tâches, pas faire confiance à un score calculé sur les tâches de quelqu’un d’autre. Un modèle en tête d’un classement public peut rester le mauvais choix pour un travail précis, une fois qu’on pèse la qualité face au coût, à la latence, et à ce qu’on a le droit de lui envoyer en premier lieu.',
+      sections: [
+        {
+          id: 'a-leaderboard-score-is-not-your-score',
+          heading: 'Un chiffre de classement n’est pas votre chiffre',
+          paragraphs: [
+            'Les benchmarks publics mesurent la performance sur un ensemble fixe de tâches rarement identiques aux vôtres — domaine différent, format différent, types d’erreurs différents qui comptent pour vous. Un modèle peut être proche du sommet d’un benchmark général et quand même moins bien performer qu’un modèle plus petit sur votre type précis de requête, parce que le benchmark n’a jamais testé rien de tel.',
+            'Les scores de benchmark vieillissent vite aussi, et peuvent être influencés par la familiarité des données d’entraînement d’un modèle avec les questions exactes du benchmark — un score élevé est donc un indice qui mérite d’être vérifié, pas un verdict digne d’une confiance aveugle.',
+          ],
+        },
+        {
+          id: 'test-on-your-own-tasks',
+          heading: 'Le seul test fiable, c’est votre propre tâche',
+          paragraphs: [
+            'Prenez un échantillon représentatif de requêtes réelles de votre cas d’usage réel — pas des exemples simplifiés — et faites-les passer par les modèles candidats. Jugez les résultats selon ce que vous accepteriez vraiment, pas selon une notion générique de bonne réponse. Un modèle qui écrit une prose élégante mais se trompe sur la terminologie de votre domaine est un mauvais choix, même s’il se lit bien.',
+          ],
+        },
+        {
+          id: 'quality-is-not-the-only-dimension',
+          heading: 'La qualité n’est qu’une dimension parmi plusieurs qui s’opposent',
+          paragraphs: [
+            'Le modèle le mieux noté en qualité est souvent aussi le plus lent et le plus cher par requête. Que ce compromis en vaille la peine dépend du travail : un traitement par lots en arrière-plan peut souvent se permettre un modèle plus lent et moins cher ; une réponse de chat interactive ne peut généralement pas se permettre d’être lente, aussi bonne soit-elle. Évaluer un modèle isolément, sur la seule qualité, saute justement le compromis qui décide réellement s’il est utilisable dans votre produit.',
+          ],
+        },
+        {
+          id: 'privacy-and-data-handling-are-evaluation-criteria-too',
+          heading: 'Ce que vous avez le droit de lui envoyer est aussi un critère d’évaluation',
+          paragraphs: [
+            'Un modèle bien noté mais qui exige d’envoyer des données sensibles à un tiers via l’internet ouvert peut être inutilisable pour une charge de travail donnée, indépendamment de la qualité — cette contrainte doit être vérifiée avant même que la qualité ne devienne pertinente, pas après avoir déjà choisi votre favori. Quand une tâche implique des données que vous ne pouvez pas faire sortir de votre propre infrastructure, tourner en local (voir ce qu’est l’IA locale) ou en auto-hébergé réduit le champ avant même que les benchmarks n’entrent en jeu.',
+          ],
+        },
+        {
+          id: 'know-a-models-known-weaknesses',
+          heading:
+            'Chaque modèle a des points faibles connus — trouvez les vôtres avant de vous y fier',
+          paragraphs: [
+            'La tendance connue d’un modèle à halluciner sur des questions hors domaine, ou sa constance sur des tâches exigeant un raisonnement rigoureux étape par étape, compte au moins autant que son score moyen. Si votre cas d’usage touche un domaine où le modèle a tendance à deviner, évaluez cela spécifiquement plutôt que de supposer qu’un bon score moyen le couvre — voir pourquoi l’IA hallucine pour comprendre pourquoi la performance moyenne ne prédit pas le comportement sur un point faible précis.',
+          ],
+        },
+        {
+          id: 'reevaluate-not-just-at-launch',
+          heading: 'L’évaluation n’est pas une décision unique',
+          paragraphs: [
+            'Les fournisseurs mettent à jour leurs modèles — parfois silencieusement, sous le même nom et le même endpoint — et les prix comme les limites de débit changent. Un modèle qui était le bon choix au moment de l’évaluation peut ne plus convenir plus tard. Traiter le choix du modèle comme une décision à revoir périodiquement, plutôt que fixée une fois pour toutes au lancement, permet de détecter ce décalage avant qu’il ne devienne un problème en production.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Un score de benchmark plus élevé est-il toujours le meilleur choix ?',
+          answer:
+            'Pas nécessairement. Les benchmarks testent un ensemble fixe de tâches qui peut ne pas ressembler aux vôtres, et un score plus élevé s’accompagne souvent d’un coût ou d’une latence plus élevés. La seule façon de savoir est de tester le modèle sur vos propres tâches représentatives.',
+        },
+        {
+          question: 'De combien de cas de test ai-je besoin pour bien évaluer un modèle ?',
+          answer:
+            'Assez pour couvrir l’éventail des requêtes que produit réellement votre cas d’usage, y compris les cas limites et le type d’entrées qui posent généralement problème. Quelques exemples faciles feront paraître presque n’importe quel modèle bon ; ce sont les cas plus difficiles et plus représentatifs qui révèlent les vraies différences.',
+        },
+        {
+          question: 'Dois-je réévaluer un modèle après l’avoir déjà choisi ?',
+          answer:
+            'Oui. Les fournisseurs mettent à jour leurs modèles sous le même nom, les prix et les limites de débit changent, et votre propre cas d’usage évolue. Traitez ce choix comme réexaminé périodiquement plutôt que fixé définitivement au lancement.',
+        },
+        {
+          question:
+            'Dois-je tester la confidentialité et le traitement des données séparément de la qualité ?',
+          answer:
+            'Oui, et cela devrait venir en premier si cela disqualifie une option. Le score de qualité d’un modèle n’a aucune importance si la charge de travail implique des données que vous n’avez pas le droit d’envoyer à ce fournisseur en premier lieu.',
+        },
+      ],
+      productNote:
+        'Plutôt que de réduire une réponse de chat à un seul chiffre, le panneau de transparence du routage de ClawAI affiche la classe de coût, la classe de latence, la confiance du routage, et si un modèle de repli ou un juge a été utilisé pour cette réponse précise — un signal d’évaluation lié à la requête réelle, pas un chiffre générique de classement.',
     },
   },
 };
