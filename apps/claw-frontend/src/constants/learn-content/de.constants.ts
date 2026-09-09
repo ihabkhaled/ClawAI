@@ -33,6 +33,8 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
         'Die Einheit, die ein Modell tatsächlich liest und schreibt — und warum eine exakte Zahl seinen eigenen Tokenizer braucht.',
       [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]:
         'Was Temperatur und Top-p an einer Antwort wirklich ändern — und was sie nicht ändern können.',
+      [LearnTopic.WHAT_ARE_EMBEDDINGS]:
+        'Wie Text zu einem Zahlenvektor wird — und warum das Suche nach Bedeutung erst möglich macht.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Mehrere Modelle in einem Arbeitsablauf nutzen, statt sich auf eines festzulegen.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -313,6 +315,91 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI stellt pro Gespräch eine Temperatur-Einstellung bereit, die auf den jeweils zuständigen Anbieter angewendet wird; Top-p wird nicht als Einstellung angeboten, sodass Nucleus-Sampling beim jeweiligen Standardwert des Anbieters bleibt.',
+    },
+    [LearnTopic.WHAT_ARE_EMBEDDINGS]: {
+      seo: {
+        title: 'Was sind Embeddings?',
+        description:
+          'Ein Embedding verwandelt Text in einen Zahlenvektor, der dessen Bedeutung darstellt — das macht Suche nach Bedeutung statt nach exaktem Wortlaut erst möglich. Wie Ähnlichkeit gemessen wird und warum Embeddings verschiedener Modelle sich nicht mischen lassen.',
+        keywords: [
+          'was ist ein Embedding',
+          'Vektor-Embeddings erklärt',
+          'semantische Suche Bedeutung',
+        ],
+      },
+      eyebrow: 'Grundlagen',
+      title: 'Was sind Embeddings?',
+      summary:
+        'Ein Embedding ist eine von einem Embedding-Modell erzeugte Liste von Zahlen, die die Bedeutung eines Textstücks als Position in einem hochdimensionalen Raum darstellt. Text mit ähnlicher Bedeutung landet bei nah beieinanderliegenden Vektoren — genau diese Eigenschaft macht Suche oder Abgleich nach Bedeutung statt nach exaktem Wortlaut überhaupt erst möglich.',
+      sections: [
+        {
+          id: 'what-an-embedding-actually-is',
+          heading: 'Eine Zahlenliste als Stellvertreter für Bedeutung',
+          paragraphs: [
+            'Ein Embedding-Modell liest ein Textstück — ein Wort, einen Satz, einen Absatz, manchmal ein ganzes Dokument — und gibt einen Vektor fester Länge aus: eine geordnete Liste von Zahlen, typischerweise Hunderte oder Tausende lang. Dieser Vektor ist keine für Menschen lesbare Zusammenfassung; er ist eine Position in einem mathematischen Raum, den das Modell beim Training gelernt hat, so angeordnet, dass Texte mit verwandter Bedeutung nah beieinander liegen.',
+          ],
+        },
+        {
+          id: 'why-similar-meaning-lands-nearby',
+          heading: 'Ähnliche Bedeutung landet nah beieinander, nicht ähnliche Schreibweise',
+          paragraphs: [
+            'Zwei Sätze, die fast keine Wörter teilen, aber ungefähr dasselbe bedeuten, können nah beieinanderliegende Vektoren erzeugen, weil das Embedding-Modell beim Training Zusammenhänge zwischen Konzepten gelernt hat, nicht nur, welche Buchstaben vorkommen. Umgekehrt können zwei Sätze mit vielen gemeinsamen Wörtern, aber unterschiedlicher Bedeutung weit auseinanderliegen. Das ist der zentrale Unterschied zwischen embeddingbasierter Suche und Abgleich nach exakten Schlagwörtern.',
+          ],
+        },
+        {
+          id: 'how-similarity-is-measured',
+          heading: 'Nähe wird gemessen, nicht geschätzt',
+          paragraphs: [
+            'Sobald Text als Vektor dargestellt ist, wird der Bedeutungsvergleich zu einem geometrischen Problem: ein zwischen zwei Vektoren berechneter Ähnlichkeitswert, meist danach, wie nah sie in dieselbe Richtung zeigen. Eine große Sammlung zu durchsuchen bedeutet, diesen Wert zwischen einem Anfragevektor und jedem gespeicherten Vektor zu berechnen und dann die nächstliegenden Treffer zurückzugeben — dieselbe Operation, ob die Sammlung hundert oder hundert Millionen Einträge hat.',
+          ],
+        },
+        {
+          id: 'embeddings-are-model-specific',
+          heading: 'Embeddings verschiedener Modelle lassen sich nicht mischen',
+          paragraphs: [
+            'Wie das Vokabular eines Tokenizers ist der Vektorraum eines Embedding-Modells spezifisch für dieses Modell und dessen Training. Ein von einem Embedding-Modell erzeugter Vektor lässt sich nicht sinnvoll mit einem von einem anderen Modell erzeugten Vektor vergleichen, selbst wenn beide dieselbe Anzahl Dimensionen haben. Ein Wechsel des Embedding-Modells bedeutet, alles bereits Gespeicherte neu einzubetten, nicht nur künftige neue Inhalte.',
+          ],
+        },
+        {
+          id: 'not-the-same-job-as-a-language-model',
+          heading:
+            'Die Aufgabe eines Embedding-Modells unterscheidet sich von der eines Sprachmodells',
+          paragraphs: [
+            'Ein Sprachmodell erzeugt Text, Token für Token, aus einem Prompt. Ein Embedding-Modell erzeugt nichts — es wandelt Text in einen Vektor um und ist damit fertig. Manche Systeme nutzen dasselbe Basismodell für beide Aufgaben, andere zwei völlig getrennte Modelle; so oder so ist der von einem Embedding-Schritt ausgegebene Vektor selbst keine Antwort, sondern nur etwas, das ein Such- oder Abgleichsschritt vergleichen kann.',
+          ],
+        },
+        {
+          id: 'where-embeddings-show-up-in-practice',
+          heading: 'Wo das in der Praxis vorkommt',
+          paragraphs: [
+            'Embeddings machen Retrieval-Augmented Generation erst möglich — siehe Was ist RAG? dazu, wie Retrieval mit einem Sprachmodell zusammenspielt —, aber dieselbe Technik steht auch hinter semantischer Suche in Support-Tickets oder Dokumentation, dem Abgleich ähnlicher vergangener Gespräche, dem Entfernen nahezu identischer Inhalte und dem Gruppieren verwandter Elemente, ohne dass jemand Kategorien von Hand vergibt.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Ist ein Embedding dasselbe wie ein Token?',
+          answer:
+            'Nein. Ein Token ist eine diskrete Texteinheit, die ein Sprachmodell einzeln liest oder schreibt. Ein Embedding ist ein kontinuierlicher Vektor, der die Bedeutung eines größeren Textstücks darstellt, erzeugt durch einen separaten Schritt, der nichts generiert.',
+        },
+        {
+          question: 'Kann ich Embeddings zweier verschiedener Modelle vergleichen?',
+          answer:
+            'Nicht sinnvoll. Jedes Embedding-Modell definiert beim Training seinen eigenen Vektorraum, sodass ein Abstand, der im Raum eines Modells „sehr ähnlich“ bedeutet, im Raum eines anderen Modells keine definierte Bedeutung hat, selbst bei gleicher Vektorlänge.',
+        },
+        {
+          question: 'Bedeutet ein größerer Embedding-Vektor bessere Suchqualität?',
+          answer:
+            'Nicht allein dadurch. Mehr Dimensionen können mehr Nuancen erfassen, aber die Qualität hängt davon ab, worauf das Modell trainiert wurde und wie gut das zu Ihren Inhalten passt, nicht allein von der Dimensionszahl.',
+        },
+        {
+          question: 'Kann jemand aus einem Embedding den Originaltext wiederherstellen?',
+          answer:
+            'Eine exakte Wiederherstellung ist in der Regel unpraktikabel, aber ein Embedding stammt trotzdem direkt aus Ihren Inhalten und kann bei manchen Angriffen bedeutsame Informationen darüber preisgeben. Behandeln Sie gespeicherte Embeddings sensibler Texte mit derselben Sorgfalt wie den Text selbst, nicht als wären sie bereits anonymisiert.',
+        },
+      ],
+      productNote:
+        'ClawAIs Gedächtnis- und Kontextpaket-Funktionen erzeugen Embeddings lokal über Ollama und speichern sie in einer Vektordatenbank für die Ähnlichkeitssuche, statt Ihre Inhalte dafür an eine separate Cloud-Embedding-API zu senden.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

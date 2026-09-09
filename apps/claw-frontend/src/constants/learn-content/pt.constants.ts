@@ -33,6 +33,8 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
         'A unidade que um modelo realmente lê e escreve, e por que uma contagem exata precisa do tokenizador dele.',
       [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]:
         'O que temperature e top-p realmente mudam numa resposta, e o que eles não conseguem mudar.',
+      [LearnTopic.WHAT_ARE_EMBEDDINGS]:
+        'Como o texto vira um vetor de números, e por que isso torna possível buscar por significado.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Usar vários modelos num mesmo fluxo em vez de se prender a um só.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -312,6 +314,90 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'O ClawAI oferece um controle de temperature por conversa, aplicado ao provedor que atende a requisição; ele não oferece top-p como ajuste, então o nucleus sampling permanece no padrão de cada provedor.',
+    },
+    [LearnTopic.WHAT_ARE_EMBEDDINGS]: {
+      seo: {
+        title: 'O que são embeddings?',
+        description:
+          'Um embedding transforma texto num vetor de números que representa seu significado, o que torna possível buscar por significado em vez de pela redação exata. Como a similaridade é medida, e por que embeddings de modelos diferentes não se misturam.',
+        keywords: [
+          'o que é um embedding',
+          'embeddings vetoriais explicados',
+          'busca semântica por significado',
+        ],
+      },
+      eyebrow: 'Fundamentos',
+      title: 'O que são embeddings?',
+      summary:
+        'Um embedding é uma lista de números, produzida por um modelo de embeddings, que representa o significado de um trecho de texto como uma posição num espaço de muitas dimensões. Texto com significado parecido acaba com vetores próximos entre si, e é exatamente essa propriedade que torna possível buscar ou comparar por significado em vez de pela redação exata.',
+      sections: [
+        {
+          id: 'what-an-embedding-actually-is',
+          heading: 'Uma lista de números no lugar do significado',
+          paragraphs: [
+            'Um modelo de embeddings lê um trecho de texto — uma palavra, uma frase, um parágrafo, às vezes um documento inteiro — e devolve um vetor de tamanho fixo: uma lista ordenada de números, tipicamente com centenas ou milhares de elementos. Esse vetor não é um resumo legível por uma pessoa; é uma posição num espaço matemático que o modelo aprendeu durante o treinamento, organizado para que textos com significado relacionado fiquem próximos entre si.',
+          ],
+        },
+        {
+          id: 'why-similar-meaning-lands-nearby',
+          heading: 'O que fica perto é o significado parecido, não a grafia parecida',
+          paragraphs: [
+            'Duas frases que quase não compartilham palavras mas significam mais ou menos a mesma coisa podem gerar vetores próximos, porque o modelo de embeddings aprendeu associações entre conceitos durante o treinamento, não só quais letras aparecem. Ao contrário, duas frases que compartilham muitas palavras mas significam coisas diferentes podem acabar bem distantes. Essa é a diferença central entre busca baseada em embeddings e correspondência por palavras-chave exatas.',
+          ],
+        },
+        {
+          id: 'how-similarity-is-measured',
+          heading: 'Proximidade se mede, não se estima de olho',
+          paragraphs: [
+            'Uma vez que o texto está representado como vetores, comparar significado vira um problema geométrico: uma pontuação de similaridade calculada entre dois vetores, quase sempre pelo quanto apontam na mesma direção. Buscar numa coleção grande significa calcular essa pontuação entre um vetor de consulta e cada vetor armazenado, e devolver as correspondências mais próximas — a mesma operação, tenha a coleção cem entradas ou cem milhões.',
+          ],
+        },
+        {
+          id: 'embeddings-are-model-specific',
+          heading: 'Embeddings de modelos diferentes não se misturam',
+          paragraphs: [
+            'Assim como o vocabulário de um tokenizador, o espaço vetorial de um modelo de embeddings é específico daquele modelo e de como ele foi treinado. Um vetor produzido por um modelo de embeddings não é comparável de forma útil a um vetor produzido por outro modelo, mesmo que ambos tenham o mesmo número de dimensões. Trocar de modelo de embeddings significa gerar de novo os embeddings de tudo que já está armazenado, não só do conteúdo novo daí em diante.',
+          ],
+        },
+        {
+          id: 'not-the-same-job-as-a-language-model',
+          heading: 'Um modelo de embeddings faz um trabalho diferente do de um modelo de linguagem',
+          paragraphs: [
+            'Um modelo de linguagem gera texto, token a token, a partir de um prompt. Um modelo de embeddings não gera nada: ele transforma texto num vetor e para por aí. Alguns sistemas usam o mesmo modelo base para as duas tarefas, outros usam dois modelos totalmente separados; de qualquer forma, o vetor produzido por uma etapa de embeddings não é em si uma resposta, apenas algo que uma etapa de busca ou comparação pode usar.',
+          ],
+        },
+        {
+          id: 'where-embeddings-show-up-in-practice',
+          heading: 'Onde isso aparece na prática',
+          paragraphs: [
+            'Embeddings são o que torna possível a geração aumentada por recuperação — veja o que é RAG para entender como a recuperação se encaixa com um modelo de linguagem —, mas a mesma técnica também está por trás da busca semântica em tickets de suporte ou documentação, do pareamento de conversas passadas parecidas, da deduplicação de conteúdo quase idêntico e do agrupamento de itens relacionados sem que ninguém rotule categorias manualmente.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Um embedding é a mesma coisa que um token?',
+          answer:
+            'Não. Um token é uma unidade discreta de texto que um modelo de linguagem lê ou escreve de cada vez. Um embedding é um vetor contínuo que representa o significado de um trecho maior de texto, produzido por uma etapa separada que não gera nada.',
+        },
+        {
+          question: 'Posso comparar embeddings produzidos por dois modelos diferentes?',
+          answer:
+            'Não de forma útil. Cada modelo de embeddings define seu próprio espaço vetorial durante o treinamento, então uma distância que significa "muito parecido" no espaço de um modelo não tem significado definido no espaço de outro, mesmo com vetores do mesmo tamanho.',
+        },
+        {
+          question: 'Um vetor de embedding maior significa uma busca melhor?',
+          answer:
+            'Não sozinho. Mais dimensões podem capturar mais nuances, mas a qualidade depende do que o modelo foi treinado e do quanto isso combina com seu conteúdo, não só do número de dimensões.',
+        },
+        {
+          question: 'Alguém pode recuperar o texto original a partir de um embedding?',
+          answer:
+            'Recuperar com exatidão costuma ser impraticável, mas um embedding ainda deriva diretamente do seu conteúdo e pode vazar informação relevante sobre ele em certos ataques. Trate embeddings armazenados de texto sensível com o mesmo cuidado que o próprio texto, não como se já estivessem anonimizados.',
+        },
+      ],
+      productNote:
+        'Os recursos de memória e pacotes de contexto do ClawAI geram embeddings localmente via Ollama e os armazenam num banco vetorial para busca por similaridade, em vez de enviar seu conteúdo a uma API de embeddings na nuvem para essa finalidade.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

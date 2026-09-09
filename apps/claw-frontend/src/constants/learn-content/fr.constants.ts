@@ -33,6 +33,8 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
         'L’unité qu’un modèle lit et écrit réellement, et pourquoi un chiffre exact exige son propre tokenizer.',
       [LearnTopic.TEMPERATURE_TOP_P_AND_RANDOMNESS]:
         'Ce que la température et le top-p changent vraiment dans une réponse — et ce qu’ils ne peuvent pas changer.',
+      [LearnTopic.WHAT_ARE_EMBEDDINGS]:
+        'Comment un texte devient un vecteur de nombres, et pourquoi cela rend possible la recherche par sens.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Utiliser plusieurs modèles dans un même flux plutôt que de s’enfermer dans un seul.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -321,6 +323,90 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI propose un réglage de température par conversation, appliqué au fournisseur qui traite la requête ; il ne propose pas le top-p comme réglage, si bien que l’échantillonnage par noyau reste à la valeur par défaut de chaque fournisseur.',
+    },
+    [LearnTopic.WHAT_ARE_EMBEDDINGS]: {
+      seo: {
+        title: 'Que sont les embeddings ?',
+        description:
+          'Un embedding transforme un texte en vecteur de nombres représentant son sens, ce qui rend possible la recherche par sens plutôt que par formulation exacte. Comment la similarité se mesure, et pourquoi les embeddings de modèles différents ne se mélangent pas.',
+        keywords: [
+          'qu’est-ce qu’un embedding',
+          'embeddings vectoriels expliqués',
+          'recherche sémantique par sens',
+        ],
+      },
+      eyebrow: 'Principes de base',
+      title: 'Que sont les embeddings ?',
+      summary:
+        'Un embedding est une liste de nombres, produite par un modèle d’embedding, qui représente le sens d’un texte comme une position dans un espace à de nombreuses dimensions. Un texte de sens proche se retrouve avec des vecteurs proches les uns des autres, et c’est précisément cette propriété qui rend possible la recherche ou le rapprochement par sens plutôt que par formulation exacte.',
+      sections: [
+        {
+          id: 'what-an-embedding-actually-is',
+          heading: 'Une liste de nombres qui tient lieu de sens',
+          paragraphs: [
+            'Un modèle d’embedding lit un fragment de texte — un mot, une phrase, un paragraphe, parfois un document entier — et produit un vecteur de longueur fixe : une liste ordonnée de nombres, généralement longue de centaines ou de milliers d’éléments. Ce vecteur n’est pas un résumé lisible par une personne ; c’est une position dans un espace mathématique appris par le modèle pendant l’entraînement, organisé pour que les textes de sens proche se retrouvent près les uns des autres.',
+          ],
+        },
+        {
+          id: 'why-similar-meaning-lands-nearby',
+          heading: 'Ce qui se retrouve proche, c’est le sens, pas l’orthographe',
+          paragraphs: [
+            'Deux phrases qui ne partagent presque aucun mot mais signifient à peu près la même chose peuvent produire des vecteurs proches, parce que le modèle d’embedding a appris des associations entre concepts pendant l’entraînement, pas seulement quelles lettres apparaissent. À l’inverse, deux phrases partageant beaucoup de mots mais de sens différent peuvent se retrouver très éloignées. C’est la différence essentielle entre une recherche fondée sur les embeddings et une correspondance par mots-clés exacts.',
+          ],
+        },
+        {
+          id: 'how-similarity-is-measured',
+          heading: 'La proximité se calcule, elle ne s’estime pas à l’œil',
+          paragraphs: [
+            'Une fois le texte représenté sous forme de vecteurs, comparer le sens devient un problème de géométrie : un score de similarité calculé entre deux vecteurs, le plus souvent selon qu’ils pointent dans la même direction. Chercher dans une grande collection revient à calculer ce score entre un vecteur de requête et chaque vecteur stocké, puis à renvoyer les correspondances les plus proches — la même opération, que la collection contienne cent entrées ou cent millions.',
+          ],
+        },
+        {
+          id: 'embeddings-are-model-specific',
+          heading: 'Les embeddings de modèles différents ne se mélangent pas',
+          paragraphs: [
+            'Comme le vocabulaire d’un tokenizer, l’espace vectoriel d’un modèle d’embedding est propre à ce modèle et à son entraînement. Un vecteur produit par un modèle d’embedding ne se compare pas utilement à un vecteur produit par un autre modèle, même si les deux vecteurs ont le même nombre de dimensions. Changer de modèle d’embedding signifie ré-encoder tout ce qui est déjà stocké, pas seulement le nouveau contenu à partir de ce moment.',
+          ],
+        },
+        {
+          id: 'not-the-same-job-as-a-language-model',
+          heading: 'Un modèle d’embedding ne fait pas le même travail qu’un modèle de langage',
+          paragraphs: [
+            'Un modèle de langage génère du texte, token après token, à partir d’un prompt. Un modèle d’embedding ne génère rien : il transforme un texte en vecteur, puis s’arrête là. Certains systèmes utilisent le même modèle de base pour les deux tâches, d’autres deux modèles entièrement distincts ; dans les deux cas, le vecteur produit par une étape d’embedding n’est pas lui-même une réponse, seulement quelque chose qu’une étape de recherche ou de rapprochement peut comparer.',
+          ],
+        },
+        {
+          id: 'where-embeddings-show-up-in-practice',
+          heading: 'Où cela se retrouve en pratique',
+          paragraphs: [
+            'Les embeddings sont ce qui rend possible la génération augmentée par récupération — voir qu’est-ce que le RAG pour comprendre comment la récupération s’articule avec un modèle de langage — mais la même technique sous-tend aussi la recherche sémantique dans des tickets de support ou de la documentation, le rapprochement de conversations passées similaires, la déduplication de contenus quasi identiques, et le regroupement d’éléments liés sans que personne n’étiquette de catégories à la main.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Un embedding est-il la même chose qu’un token ?',
+          answer:
+            'Non. Un token est une unité de texte discrète qu’un modèle de langage lit ou écrit une à la fois. Un embedding est un vecteur continu représentant le sens d’un texte plus long, produit par une étape séparée qui ne génère rien.',
+        },
+        {
+          question: 'Puis-je comparer des embeddings produits par deux modèles différents ?',
+          answer:
+            'Pas de façon utile. Chaque modèle d’embedding définit son propre espace vectoriel pendant l’entraînement, si bien qu’une distance signifiant « très similaire » dans l’espace d’un modèle n’a aucun sens défini dans l’espace d’un autre modèle, même avec des vecteurs de même longueur.',
+        },
+        {
+          question: 'Un vecteur d’embedding plus grand signifie-t-il une meilleure recherche ?',
+          answer:
+            'Pas à lui seul. Plus de dimensions peuvent capturer plus de nuances, mais la qualité dépend de ce sur quoi le modèle a été entraîné et de son adéquation avec votre contenu, pas seulement du nombre de dimensions.',
+        },
+        {
+          question: 'Peut-on retrouver le texte original à partir d’un embedding ?',
+          answer:
+            'Une récupération exacte est généralement impraticable, mais un embedding reste directement dérivé de votre contenu et peut laisser fuiter des informations pertinentes sur celui-ci lors de certaines attaques. Traitez les embeddings stockés d’un texte sensible avec le même soin que le texte lui-même, pas comme s’ils étaient déjà anonymisés.',
+        },
+      ],
+      productNote:
+        'Les fonctions de mémoire et de packs de contexte de ClawAI génèrent les embeddings localement via Ollama et les stockent dans une base vectorielle pour la recherche par similarité, plutôt que d’envoyer votre contenu à une API d’embedding externe à cette fin.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {
