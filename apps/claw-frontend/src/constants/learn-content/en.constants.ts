@@ -35,6 +35,8 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
         'What temperature and top-p actually change about an answer — and what they can’t change.',
       [LearnTopic.WHAT_ARE_EMBEDDINGS]:
         'How text becomes a vector of numbers, and why that is what makes search by meaning possible.',
+      [LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING]:
+        'Three different fixes for three different problems, and why many products never need the third.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Using several models in one workflow instead of committing to one.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -395,6 +397,93 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI’s memory and context-pack features generate embeddings locally through Ollama and store them in a vector database for similarity search, rather than sending your content to a separate cloud embeddings API for that purpose.',
+    },
+    [LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING]: {
+      seo: {
+        title: 'Prompting vs. RAG vs. fine-tuning: how do they differ?',
+        description:
+          'Three different ways to change what a model produces: better instructions, retrieved context, or a changed model. What each one actually fixes, what it can’t fix, and why many products never need the third.',
+        keywords: [
+          'prompting vs RAG vs fine-tuning',
+          'when to fine-tune an LLM',
+          'RAG versus fine-tuning',
+        ],
+      },
+      eyebrow: 'Foundations',
+      title: 'Prompting vs. RAG vs. fine-tuning: how do they differ?',
+      summary:
+        'Prompting, retrieval-augmented generation and fine-tuning are three different answers to the same underlying question: how do you get a model to produce what you actually need? Each one changes a different part of the system — the request, the context, or the model itself — and each one fixes a different kind of gap. Picking the wrong one for the problem you actually have is the most common reason a project stalls.',
+      sections: [
+        {
+          id: 'three-different-fixes-for-three-different-problems',
+          heading: 'Three different fixes for three different problems',
+          paragraphs: [
+            'Prompting changes what you tell the model for one request: instructions, examples, formatting rules. Retrieval-augmented generation, or RAG, changes what the model can see for one request by fetching relevant material and adding it to the context — see what RAG is for how that retrieval step works. Fine-tuning changes the model itself, adjusting its weights so a pattern is baked in and available without repeating it every time. They are not three difficulty levels of the same fix; they respond to three different kinds of gap.',
+          ],
+        },
+        {
+          id: 'prompting-changes-only-the-request',
+          heading: 'Prompting changes only the request in front of you',
+          paragraphs: [
+            'A prompt is instructions, examples and constraints included with a single request. Nothing about it persists once the response comes back — the next request starts from the same blank state unless you include the same instructions again. This makes prompting the cheapest and fastest technique to iterate on: a wording change is testable in seconds, with no infrastructure and no retraining.',
+            'Prompting is also the first thing worth exhausting before reaching for anything else. A surprising share of “the model doesn’t know how to do X” problems are actually “the instructions never said to do X” problems.',
+          ],
+        },
+        {
+          id: 'rag-adds-facts-without-touching-the-model',
+          heading: 'RAG adds facts and documents without touching the model',
+          paragraphs: [
+            'RAG solves a different problem: information the model was never trained on, or information that changes too often for training to keep up with — your own documents, current records, anything private. Instead of teaching the model that information, a retrieval step finds relevant passages and puts them directly into the request as context, using embeddings to search by meaning rather than exact wording — see what embeddings are for how that search works underneath.',
+            'Because nothing about the model changes, updating the underlying documents updates what the system can answer immediately, with no retraining step. The trade-off is that answer quality is bounded by retrieval quality: if the right passage is never found, the model cannot use information it was never shown.',
+          ],
+        },
+        {
+          id: 'fine-tuning-changes-the-model-itself',
+          heading: 'Fine-tuning changes the model itself',
+          paragraphs: [
+            'Fine-tuning adjusts a model’s weights using additional training examples, so a pattern of behavior — a tone, a response format, a specialized skill demonstrated in the examples — becomes part of the model rather than something you have to restate in every prompt or supply through retrieval. Once trained, the model behaves that way by default, on any request, without extra instructions attached.',
+            'It also has real costs that prompting and RAG do not: training examples have to be prepared and curated, a training run has to be run and evaluated, and the result is a specific model artifact that has to be hosted and kept in sync as base models improve. Fine-tuning does not add live or changing facts either — it bakes in a pattern from a fixed training set, and it goes stale the same way any static training does.',
+          ],
+        },
+        {
+          id: 'matching-the-technique-to-the-failure',
+          heading: 'Match the technique to the actual failure, not the fanciest option',
+          paragraphs: [
+            'Wrong tone, wrong format, missed instructions: usually a prompting problem. Wrong or missing facts, especially about your own or fast-changing material: usually a retrieval problem. A specialized behavior you want applied consistently, on every request, without re-explaining it each time: the case fine-tuning is actually built for. These are not mutually exclusive — a fine-tuned model can still be prompted and given retrieved context — but each one only fixes the failure it is built for, and using the wrong one leaves the actual problem unsolved while adding cost and complexity.',
+          ],
+        },
+        {
+          id: 'why-many-products-skip-fine-tuning',
+          heading: 'Why many products never reach for fine-tuning at all',
+          paragraphs: [
+            'Prompting and RAG both leave the underlying model untouched, so upgrading to a newer or better base model is mostly a configuration change. A fine-tuned model is tied to the base model it was trained from — a meaningful base-model upgrade usually means re-preparing data and retraining rather than simply switching. For that reason, many products solve their entire problem with prompting plus retrieval, and reach for fine-tuning only when a specific, well-defined behavior needs to be consistent across an enormous volume of requests without the cost of repeating instructions and context every time.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Does RAG update the model’s knowledge permanently?',
+          answer:
+            'No. RAG changes what is included in the context of one request; the underlying model is never modified. The next request that does not retrieve the same material starts without it, exactly like any other prompt.',
+        },
+        {
+          question: 'Is fine-tuning always more accurate than prompting or RAG?',
+          answer:
+            'No. Fine-tuning bakes in a pattern from its training examples, but it does not add facts absent from that training data, and it does not keep facts current the way retrieval can. A fine-tuned model can still be confidently wrong about anything outside what it was trained on.',
+        },
+        {
+          question: 'Can prompting, RAG and fine-tuning be combined?',
+          answer:
+            'Yes. They change different parts of the system, so a fine-tuned model can still receive retrieved context and explicit instructions in the same request. Combining them is common; treating them as mutually exclusive choices is not necessary.',
+        },
+        {
+          question: 'Which one should I try first?',
+          answer:
+            'Prompting, almost always. It requires no infrastructure and a wording change can be tested in seconds. Move to retrieval when the gap is missing or outdated information, and consider fine-tuning only once a specific, well-defined behavior needs to be consistent across a volume of requests large enough to justify the training and maintenance cost.',
+        },
+      ],
+      productNote:
+        'ClawAI’s context packs and file and workspace retrieval add relevant material to a request without touching the underlying model; ClawAI does not provide model fine-tuning — the cloud and local models it routes to are used as already trained.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

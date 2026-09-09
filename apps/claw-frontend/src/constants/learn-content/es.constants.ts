@@ -35,6 +35,8 @@ export const ES_LEARN_CONTENT: LearnDictionary = {
         'Lo que la temperatura y el top-p realmente cambian en una respuesta, y lo que no pueden cambiar.',
       [LearnTopic.WHAT_ARE_EMBEDDINGS]:
         'Cómo el texto se convierte en un vector de números, y por qué eso hace posible buscar por significado.',
+      [LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING]:
+        'Tres arreglos distintos para tres problemas distintos, y por qué muchos productos nunca necesitan el tercero.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Usar varios modelos en un mismo flujo de trabajo en vez de casarte con uno.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -398,6 +400,93 @@ export const ES_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'Las funciones de memoria y paquetes de contexto de ClawAI generan embeddings localmente mediante Ollama y los guardan en una base de datos vectorial para la búsqueda por similitud, en vez de enviar tu contenido a una API de embeddings en la nube para ese fin.',
+    },
+    [LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING]: {
+      seo: {
+        title: 'Prompting vs. RAG vs. fine-tuning: ¿en qué se diferencian?',
+        description:
+          'Tres formas distintas de cambiar lo que produce un modelo: mejores instrucciones, contexto recuperado o un modelo modificado. Qué arregla realmente cada una, qué no puede arreglar, y por qué muchos productos nunca necesitan la tercera.',
+        keywords: [
+          'diferencia entre prompting, RAG y fine-tuning',
+          'cuándo hacer fine-tuning a un LLM',
+          'RAG o fine-tuning',
+        ],
+      },
+      eyebrow: 'Fundamentos',
+      title: 'Prompting vs. RAG vs. fine-tuning: ¿en qué se diferencian?',
+      summary:
+        'El prompting, la generación aumentada por recuperación (RAG) y el fine-tuning son tres respuestas distintas a la misma pregunta de fondo: ¿cómo consigues que un modelo produzca lo que realmente necesitas? Cada una cambia una parte distinta del sistema —la petición, el contexto o el propio modelo— y arregla un tipo distinto de carencia. Elegir la técnica equivocada para el problema real es la razón más común de que un proyecto se estanque.',
+      sections: [
+        {
+          id: 'three-different-fixes-for-three-different-problems',
+          heading: 'Tres arreglos distintos para tres problemas distintos',
+          paragraphs: [
+            'El prompting cambia lo que le dices al modelo para una petición: instrucciones, ejemplos, reglas de formato. La generación aumentada por recuperación, o RAG, cambia lo que el modelo puede ver en una petición, recuperando material relevante y añadiéndolo al contexto —consulta qué es RAG para ver cómo funciona ese paso de recuperación—. El fine-tuning cambia el modelo mismo, ajustando sus pesos para que un patrón quede fijado y disponible sin repetirlo cada vez. No son tres niveles de dificultad de un mismo arreglo; responden a tres tipos distintos de carencia.',
+          ],
+        },
+        {
+          id: 'prompting-changes-only-the-request',
+          heading: 'El prompting solo cambia la petición que tienes delante',
+          paragraphs: [
+            'Un prompt son instrucciones, ejemplos y restricciones incluidos en una única petición. Nada de eso persiste una vez llega la respuesta: la siguiente petición vuelve a partir del mismo estado en blanco a menos que incluyas de nuevo las mismas instrucciones. Esto hace del prompting la técnica más barata y rápida para iterar: un cambio de redacción se puede probar en segundos, sin infraestructura ni reentrenamiento.',
+            'El prompting también es lo primero que conviene agotar antes de recurrir a cualquier otra cosa. Una proporción sorprendente de problemas de "el modelo no sabe hacer X" son en realidad problemas de "las instrucciones nunca dijeron que hiciera X".',
+          ],
+        },
+        {
+          id: 'rag-adds-facts-without-touching-the-model',
+          heading: 'RAG añade hechos y documentos sin tocar el modelo',
+          paragraphs: [
+            'RAG resuelve un problema distinto: información con la que el modelo nunca se entrenó, o información que cambia demasiado rápido para que el entrenamiento le siga el ritmo —tus propios documentos, registros actuales, cualquier cosa privada—. En vez de enseñarle esa información al modelo, un paso de recuperación encuentra los pasajes relevantes y los coloca directamente en la petición como contexto, usando embeddings para buscar por significado en vez de por el texto exacto —consulta qué son los embeddings para ver cómo funciona esa búsqueda por debajo—.',
+            'Como nada del modelo cambia, actualizar los documentos subyacentes actualiza al instante lo que el sistema puede responder, sin ningún paso de reentrenamiento. La contrapartida es que la calidad de la respuesta está limitada por la calidad de la recuperación: si el pasaje correcto nunca se encuentra, el modelo no puede usar información que nunca vio.',
+          ],
+        },
+        {
+          id: 'fine-tuning-changes-the-model-itself',
+          heading: 'El fine-tuning cambia el propio modelo',
+          paragraphs: [
+            'El fine-tuning ajusta los pesos de un modelo usando ejemplos de entrenamiento adicionales, de modo que un patrón de comportamiento —un tono, un formato de respuesta, una habilidad especializada demostrada en los ejemplos— pasa a formar parte del modelo en vez de algo que tienes que repetir en cada prompt o aportar mediante recuperación. Una vez entrenado, el modelo se comporta así por defecto, en cualquier petición, sin instrucciones adicionales.',
+            'También tiene costes reales que el prompting y el RAG no tienen: hay que preparar y seleccionar ejemplos de entrenamiento, hay que ejecutar y evaluar una ronda de entrenamiento, y el resultado es un artefacto de modelo específico que hay que alojar y mantener sincronizado a medida que mejoran los modelos base. El fine-tuning tampoco añade hechos vivos o cambiantes: fija un patrón a partir de un conjunto de entrenamiento fijo, y queda desactualizado igual que cualquier entrenamiento estático.',
+          ],
+        },
+        {
+          id: 'matching-the-technique-to-the-failure',
+          heading: 'Ajusta la técnica al fallo real, no a la opción más sofisticada',
+          paragraphs: [
+            'Tono equivocado, formato equivocado, instrucciones pasadas por alto: normalmente un problema de prompting. Hechos erróneos o ausentes, sobre todo de material propio o que cambia rápido: normalmente un problema de recuperación. Un comportamiento especializado que quieres que se aplique de forma constante, en cada petición, sin volver a explicarlo cada vez: el caso para el que realmente está pensado el fine-tuning. No son mutuamente excluyentes —un modelo con fine-tuning puede seguir recibiendo un prompt y contexto recuperado—, pero cada técnica solo arregla el fallo para el que está construida, y usar la equivocada deja el problema real sin resolver mientras añade coste y complejidad.',
+          ],
+        },
+        {
+          id: 'why-many-products-skip-fine-tuning',
+          heading: 'Por qué muchos productos nunca recurren al fine-tuning',
+          paragraphs: [
+            'El prompting y el RAG dejan intacto el modelo subyacente, así que actualizar a un modelo base más nuevo o mejor suele ser solo un cambio de configuración. Un modelo con fine-tuning queda atado al modelo base del que se entrenó: una actualización relevante del modelo base suele implicar volver a preparar datos y reentrenar en vez de simplemente cambiar. Por eso muchos productos resuelven todo su problema con prompting más recuperación, y solo recurren al fine-tuning cuando un comportamiento específico y bien definido necesita ser constante en un volumen enorme de peticiones sin el coste de repetir instrucciones y contexto cada vez.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: '¿RAG actualiza el conocimiento del modelo de forma permanente?',
+          answer:
+            'No. RAG cambia lo que se incluye en el contexto de una petición; el modelo subyacente nunca se modifica. La siguiente petición que no recupere el mismo material empieza sin él, igual que cualquier otro prompt.',
+        },
+        {
+          question: '¿El fine-tuning es siempre más preciso que el prompting o el RAG?',
+          answer:
+            'No. El fine-tuning fija un patrón a partir de sus ejemplos de entrenamiento, pero no añade hechos ausentes de esos datos de entrenamiento, y no mantiene los hechos al día como puede hacerlo la recuperación. Un modelo con fine-tuning puede seguir estando equivocado con total confianza sobre cualquier cosa fuera de lo que se le entrenó.',
+        },
+        {
+          question: '¿Se pueden combinar prompting, RAG y fine-tuning?',
+          answer:
+            'Sí. Cambian partes distintas del sistema, así que un modelo con fine-tuning puede seguir recibiendo contexto recuperado e instrucciones explícitas en la misma petición. Combinarlos es habitual; no hace falta tratarlos como opciones mutuamente excluyentes.',
+        },
+        {
+          question: '¿Cuál debería probar primero?',
+          answer:
+            'El prompting, casi siempre. No requiere infraestructura y un cambio de redacción se puede probar en segundos. Pasa a la recuperación cuando la carencia sea información ausente o desactualizada, y considera el fine-tuning solo cuando un comportamiento específico y bien definido deba ser constante en un volumen de peticiones lo bastante grande como para justificar el coste de entrenamiento y mantenimiento.',
+        },
+      ],
+      productNote:
+        'Los paquetes de contexto de ClawAI y la recuperación de archivos y del espacio de trabajo añaden material relevante a una petición sin tocar el modelo subyacente; ClawAI no ofrece fine-tuning de modelos: los modelos en la nube y locales a los que enruta se usan tal como ya están entrenados.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

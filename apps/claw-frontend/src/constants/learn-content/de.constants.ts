@@ -35,6 +35,8 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
         'Was Temperatur und Top-p an einer Antwort wirklich ändern — und was sie nicht ändern können.',
       [LearnTopic.WHAT_ARE_EMBEDDINGS]:
         'Wie Text zu einem Zahlenvektor wird — und warum das Suche nach Bedeutung erst möglich macht.',
+      [LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING]:
+        'Drei verschiedene Lösungen für drei verschiedene Probleme — und warum viele Produkte die dritte nie brauchen.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Mehrere Modelle in einem Arbeitsablauf nutzen, statt sich auf eines festzulegen.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -400,6 +402,93 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAIs Gedächtnis- und Kontextpaket-Funktionen erzeugen Embeddings lokal über Ollama und speichern sie in einer Vektordatenbank für die Ähnlichkeitssuche, statt Ihre Inhalte dafür an eine separate Cloud-Embedding-API zu senden.',
+    },
+    [LearnTopic.PROMPTING_VS_RAG_VS_FINE_TUNING]: {
+      seo: {
+        title: 'Prompting vs. RAG vs. Fine-Tuning: Was ist der Unterschied?',
+        description:
+          'Drei verschiedene Wege, um zu ändern, was ein Modell liefert: bessere Anweisungen, abgerufener Kontext oder ein verändertes Modell. Was jede Methode wirklich behebt, was sie nicht kann, und warum viele Produkte die dritte nie brauchen.',
+        keywords: [
+          'Prompting vs RAG vs Fine-Tuning',
+          'wann ein LLM fine-tunen',
+          'RAG oder Fine-Tuning',
+        ],
+      },
+      eyebrow: 'Grundlagen',
+      title: 'Prompting vs. RAG vs. Fine-Tuning: Was ist der Unterschied?',
+      summary:
+        'Prompting, Retrieval-Augmented Generation (RAG) und Fine-Tuning sind drei verschiedene Antworten auf dieselbe Grundfrage: Wie bringt man ein Modell dazu, das zu liefern, was man wirklich braucht? Jede Methode verändert einen anderen Teil des Systems — die Anfrage, den Kontext oder das Modell selbst — und behebt eine andere Art von Lücke. Die falsche Methode für das eigentliche Problem zu wählen, ist der häufigste Grund, warum ein Projekt ins Stocken gerät.',
+      sections: [
+        {
+          id: 'three-different-fixes-for-three-different-problems',
+          heading: 'Drei verschiedene Lösungen für drei verschiedene Probleme',
+          paragraphs: [
+            'Prompting ändert, was Sie dem Modell für eine Anfrage mitteilen: Anweisungen, Beispiele, Formatierungsregeln. Retrieval-Augmented Generation, kurz RAG, ändert, was das Modell für eine Anfrage sehen kann, indem relevantes Material abgerufen und dem Kontext hinzugefügt wird — siehe Was ist RAG? dazu, wie dieser Abrufschritt funktioniert. Fine-Tuning ändert das Modell selbst, indem seine Gewichte angepasst werden, sodass ein Muster fest verankert ist und ohne Wiederholung verfügbar bleibt. Das sind keine drei Schwierigkeitsgrade derselben Lösung; sie reagieren auf drei verschiedene Arten von Lücken.',
+          ],
+        },
+        {
+          id: 'prompting-changes-only-the-request',
+          heading: 'Prompting ändert nur die Anfrage, um die es gerade geht',
+          paragraphs: [
+            'Ein Prompt besteht aus Anweisungen, Beispielen und Einschränkungen, die einer einzelnen Anfrage beigefügt werden. Davon bleibt nichts bestehen, sobald die Antwort zurückkommt — die nächste Anfrage startet wieder bei null, sofern Sie dieselben Anweisungen nicht erneut mitgeben. Das macht Prompting zur günstigsten und schnellsten Methode zum Iterieren: eine Formulierungsänderung lässt sich in Sekunden testen, ohne Infrastruktur und ohne erneutes Training.',
+            'Prompting ist auch das Erste, was es auszuschöpfen lohnt, bevor man zu etwas anderem greift. Ein überraschend großer Teil der „das Modell kann X nicht“-Probleme sind eigentlich „die Anweisungen haben nie gesagt, X zu tun“-Probleme.',
+          ],
+        },
+        {
+          id: 'rag-adds-facts-without-touching-the-model',
+          heading: 'RAG fügt Fakten und Dokumente hinzu, ohne das Modell anzurühren',
+          paragraphs: [
+            'RAG löst ein anderes Problem: Informationen, auf die das Modell nie trainiert wurde, oder Informationen, die sich zu schnell ändern, als dass Training damit Schritt halten könnte — Ihre eigenen Dokumente, aktuelle Datensätze, alles Private. Statt dem Modell diese Informationen beizubringen, findet ein Abrufschritt relevante Passagen und legt sie direkt als Kontext in die Anfrage, mithilfe von Embeddings, um nach Bedeutung statt nach exaktem Wortlaut zu suchen — siehe Was sind Embeddings? dazu, wie diese Suche darunter funktioniert.',
+            'Da sich am Modell nichts ändert, aktualisiert eine Änderung der zugrunde liegenden Dokumente sofort, was das System beantworten kann, ganz ohne erneutes Training. Der Kompromiss ist, dass die Antwortqualität durch die Abrufqualität begrenzt ist: Wird die richtige Passage nie gefunden, kann das Modell eine Information nicht nutzen, die es nie gesehen hat.',
+          ],
+        },
+        {
+          id: 'fine-tuning-changes-the-model-itself',
+          heading: 'Fine-Tuning ändert das Modell selbst',
+          paragraphs: [
+            'Fine-Tuning passt die Gewichte eines Modells anhand zusätzlicher Trainingsbeispiele an, sodass ein Verhaltensmuster — ein Tonfall, ein Antwortformat, eine in den Beispielen gezeigte Spezialfähigkeit — Teil des Modells wird, statt etwas, das Sie in jedem Prompt wiederholen oder per Abruf liefern müssen. Einmal trainiert, verhält sich das Modell standardmäßig so, bei jeder Anfrage, ohne zusätzliche Anweisungen.',
+            'Es hat auch echte Kosten, die Prompting und RAG nicht haben: Trainingsbeispiele müssen vorbereitet und kuratiert werden, ein Trainingslauf muss durchgeführt und bewertet werden, und das Ergebnis ist ein bestimmtes Modellartefakt, das gehostet und mit der Verbesserung von Basismodellen synchron gehalten werden muss. Fine-Tuning fügt auch keine aktuellen oder sich ändernden Fakten hinzu — es verankert ein Muster aus einem festen Trainingsdatensatz und veraltet auf dieselbe Weise wie jedes statische Training.',
+          ],
+        },
+        {
+          id: 'matching-the-technique-to-the-failure',
+          heading: 'Die Methode zum tatsächlichen Fehler passen, nicht zur ausgefeiltesten Option',
+          paragraphs: [
+            'Falscher Tonfall, falsches Format, übersehene Anweisungen: meist ein Prompting-Problem. Falsche oder fehlende Fakten, besonders zu eigenem oder sich schnell änderndem Material: meist ein Abrufproblem. Ein spezialisiertes Verhalten, das konsequent bei jeder Anfrage angewendet werden soll, ohne es jedes Mal neu zu erklären: genau dafür ist Fine-Tuning gemacht. Diese schließen sich nicht gegenseitig aus — ein feinabgestimmtes Modell kann weiterhin einen Prompt und abgerufenen Kontext erhalten —, aber jede Methode behebt nur den Fehler, für den sie gebaut ist, und die falsche zu wählen lässt das eigentliche Problem ungelöst und fügt Kosten und Komplexität hinzu.',
+          ],
+        },
+        {
+          id: 'why-many-products-skip-fine-tuning',
+          heading: 'Warum viele Produkte nie zu Fine-Tuning greifen',
+          paragraphs: [
+            'Prompting und RAG lassen das zugrunde liegende Modell unangetastet, sodass ein Wechsel zu einem neueren oder besseren Basismodell meist eine reine Konfigurationsänderung ist. Ein feinabgestimmtes Modell ist an das Basismodell gebunden, aus dem es trainiert wurde — ein bedeutsames Basismodell-Upgrade bedeutet meist, Daten neu vorzubereiten und neu zu trainieren, statt einfach umzuschalten. Deshalb lösen viele Produkte ihr gesamtes Problem mit Prompting plus Abruf und greifen erst zu Fine-Tuning, wenn ein bestimmtes, klar definiertes Verhalten über ein enormes Anfragevolumen hinweg konsistent sein muss, ohne die Kosten, Anweisungen und Kontext jedes Mal zu wiederholen.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Aktualisiert RAG das Wissen des Modells dauerhaft?',
+          answer:
+            'Nein. RAG ändert, was im Kontext einer Anfrage enthalten ist; das zugrunde liegende Modell wird nie verändert. Die nächste Anfrage, die dasselbe Material nicht abruft, startet ohne es, genau wie jeder andere Prompt.',
+        },
+        {
+          question: 'Ist Fine-Tuning immer genauer als Prompting oder RAG?',
+          answer:
+            'Nein. Fine-Tuning verankert ein Muster aus seinen Trainingsbeispielen, fügt aber keine Fakten hinzu, die in diesen Trainingsdaten fehlen, und hält Fakten nicht so aktuell wie Abruf es kann. Ein feinabgestimmtes Modell kann bei allem außerhalb seines Trainings weiterhin überzeugt falschliegen.',
+        },
+        {
+          question: 'Können Prompting, RAG und Fine-Tuning kombiniert werden?',
+          answer:
+            'Ja. Sie ändern verschiedene Teile des Systems, sodass ein feinabgestimmtes Modell weiterhin abgerufenen Kontext und explizite Anweisungen in derselben Anfrage erhalten kann. Eine Kombination ist üblich; sie als sich gegenseitig ausschließende Wahl zu behandeln ist nicht nötig.',
+        },
+        {
+          question: 'Was sollte ich zuerst ausprobieren?',
+          answer:
+            'Fast immer Prompting. Es braucht keine Infrastruktur, und eine Formulierungsänderung lässt sich in Sekunden testen. Wechseln Sie zu Abruf, wenn die Lücke fehlende oder veraltete Informationen sind, und ziehen Sie Fine-Tuning erst in Betracht, wenn ein bestimmtes, klar definiertes Verhalten über ein Anfragevolumen hinweg konsistent sein muss, das groß genug ist, um die Trainings- und Wartungskosten zu rechtfertigen.',
+        },
+      ],
+      productNote:
+        'ClawAIs Kontextpakete sowie Datei- und Workspace-Abruf fügen einer Anfrage relevantes Material hinzu, ohne das zugrunde liegende Modell anzurühren; ClawAI bietet kein Fine-Tuning von Modellen — die Cloud- und lokalen Modelle, an die weitergeleitet wird, werden als bereits trainiert verwendet.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {
