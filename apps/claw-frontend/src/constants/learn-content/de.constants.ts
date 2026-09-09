@@ -83,6 +83,8 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
         'Was eine Benchmark-Zahl wirklich misst, und wie sie Sie in die Irre führen kann, bevor Sie überhaupt zu testen beginnen.',
       [LearnTopic.WHAT_IS_PROMPT_INJECTION]:
         'Text, der nicht von Ihnen stammt, kann dem Modell trotzdem Anweisungen geben — was das bedeutet und warum ein klügeres Modell es nicht vollständig lösen kann.',
+      [LearnTopic.AI_DATA_PRIVACY_AND_RETENTION]:
+        'Was mit dem passiert, was Sie in ein KI-Produkt eingeben — wer es sieht, ob es ein Modell trainiert, und wie lange es bleibt.',
     },
   },
   topics: {
@@ -2084,6 +2086,84 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAIs Recherche-Dienst scannt abgerufene Webinhalte auf bekannte Prompt-Injection-Muster und schwärzt geheim aussehende Tokens, bevor dieser Inhalt ein Modell erreicht — er protokolliert, was er erkennt, statt stillschweigend zu blockieren, da keine feste Musterliste jeden Versuch erfassen kann. Diese Erkennungsschicht ist ein Teil einer Verteidigung, die auch davon abhängt, welche Tools ein Modell überhaupt aufrufen darf.',
+    },
+    [LearnTopic.AI_DATA_PRIVACY_AND_RETENTION]: {
+      seo: {
+        title: 'KI-Datenschutz und Aufbewahrung erklärt',
+        description:
+          'Wenn Sie etwas in ein KI-Produkt eingeben, wohin geht es tatsächlich? Wer kann es sehen, wird es zum Trainieren eines Modells verwendet, wie lange wird es aufbewahrt, und welche Fragen lohnt es sich zu stellen, bevor Sie etwas Sensibles in ein KI-Tool einfügen.',
+        keywords: [
+          'KI-Datenschutz erklärt',
+          'KI-Datenaufbewahrung',
+          'werden meine Daten zum Training von KI verwendet',
+        ],
+      },
+      eyebrow: 'Grundlagen',
+      title: 'KI-Datenschutz und Aufbewahrung erklärt',
+      summary:
+        'Was mit dem passiert, was Sie in ein KI-Produkt eingeben, hängt von einer Handvoll konkreter Fragen ab: Verlässt es überhaupt Ihre eigene Infrastruktur, nutzt der Anbieter es zum Training künftiger Modelle, wie lange wird es gespeichert, und wer sonst — Subunternehmer, Protokollsysteme, menschliche Prüfer — könnte es unterwegs sehen. Nichts davon ist universell; es variiert je nach Produkt und Anbieter, und genau deshalb lohnt es sich zu wissen, was man fragen sollte.',
+      sections: [
+        {
+          id: 'where-your-input-actually-goes',
+          heading: 'Die erste Frage: Verlässt es überhaupt Ihre Infrastruktur',
+          paragraphs: [
+            'Ein Cloud-KI-Produkt schickt, was Sie eingeben, an einen entfernten Server, den Sie nicht kontrollieren, betrieben vom Modellanbieter oder dem Backend des Produkts selbst. Ein Modell, das lokal auf Ihrer eigenen Hardware läuft (siehe was lokale KI ist), schickt Ihre Eingabe nirgendwohin — es gibt keine Netzwerkanfrage abzufangen und keinen Dritten, dem man vertrauen müsste, weil die Berechnung auf einem Rechner stattfindet, den Sie bereits kontrollieren.',
+          ],
+        },
+        {
+          id: 'training-use-is-a-separate-question-from-storage',
+          heading:
+            'Ob Ihre Daten ein künftiges Modell trainieren, ist eine andere Frage als ob sie gespeichert werden',
+          paragraphs: [
+            'Ein Anbieter kann Ihre Unterhaltungen aus betrieblichen Gründen speichern — Fehlersuche, Missbrauchserkennung, Produktanalyse —, ohne sie zum Training von Modellen zu verwenden, und ein Anbieter kann auch beides tun. Das sind in den meisten Produkten wirklich getrennte Entscheidungen mit getrennten Einstellungen, daher nennt eine gute Datenschutzrichtlinie jede davon ausdrücklich, statt sie in eine vage Aussage über „die Verbesserung unserer Dienste“ zu bündeln. Wenn ein Produkt die beiden nicht klar trennt, ist diese Unklarheit selbst bemerkenswert.',
+          ],
+        },
+        {
+          id: 'retention-periods-and-what-deletion-actually-means',
+          heading: 'Eine Aufbewahrungsfrist zählt nur, wenn Löschung tatsächlich passiert',
+          paragraphs: [
+            'Ein angegebenes Aufbewahrungsfenster — etwa „30 Tage“ — beschreibt eine Absicht, keine Garantie, es sei denn, das Produkt kann Ihnen auch zeigen, dass sie eingehalten wurde: ein Export auf Kontoebene, eine sichtbare Löschaktion, oder ein Support-Prozess, der Daten tatsächlich entfernt statt sie nur aus der Oberfläche zu verbergen. Backups sind die übliche Lücke: aus dem Live-System gelöschte Daten können in Backups für eine separate, oft längere Aufbewahrungsfrist fortbestehen, die Richtlinien nicht immer genau angeben.',
+          ],
+        },
+        {
+          id: 'sub-processors-and-the-chain-of-custody',
+          heading: 'Der Weg Ihrer Daten umfasst oft mehr Parteien als nur den KI-Anbieter',
+          paragraphs: [
+            'Ein Produkt, das auf einer API eines Drittanbieter-Modells aufbaut, leitet Ihre Eingabe durch mindestens zwei Organisationen: das Produkt selbst und den Modellanbieter, dessen API es aufruft. Fügen Sie Protokollierungsinfrastruktur, Fehlerverfolgungstools und Cloud-Hosting hinzu, und die realistische Kette der Verwahrung für eine einzelne Nachricht kann sich über mehrere Unternehmen erstrecken, jedes mit eigenen Richtlinien. Ein vertrauenswürdiges Produkt legt seine Subunternehmer offen, statt „wer sonst sieht das“ als offene Frage stehen zu lassen.',
+          ],
+        },
+        {
+          id: 'what-to-actually-check-before-sending-sensitive-input',
+          heading: 'Was Sie prüfen sollten, bevor Sie etwas Sensibles in ein KI-Tool einfügen',
+          paragraphs: [
+            'Ob das Produkt standardmäßig Modelle mit Ihrer Eingabe trainiert, und ob sich das abschalten lässt. Wie die angegebene Aufbewahrungsfrist lautet, und ob Sie Löschung selbst auslösen und überprüfen können. Ob die Verarbeitung in der Cloud stattfindet oder lokal laufen kann für Daten, die Ihre Infrastruktur nicht verlassen dürfen. Und ob das Produkt seine Subunternehmer nennt, statt das als unbeantwortete Frage stehen zu lassen, die Sie einfach glauben müssen.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Verwendet jedes KI-Produkt meine Unterhaltungen zum Training seiner Modelle?',
+          answer:
+            'Nein — das variiert je nach Produkt und ist meist eine von der Datenspeicherung getrennte Einstellung. Das Speichern von Unterhaltungen für Fehlersuche oder Support bedeutet nicht automatisch, dass sie zum Training verwendet werden; eine klare Datenschutzrichtlinie nennt jede Verwendung ausdrücklich.',
+        },
+        {
+          question: 'Sind meine Daten sofort weg, wenn ich sie lösche?',
+          answer:
+            'Nicht unbedingt aus jedem System. Löschung aus dem Live-Produkt ist üblich, aber Backups behalten Daten oft für eine separate Frist, die nicht immer klar angegeben ist — es lohnt sich, das konkret zu prüfen, statt anzunehmen, Löschung sei überall sofort.',
+        },
+        {
+          question: 'Ist lokale KI automatisch privater als ein Cloud-KI-Produkt?',
+          answer:
+            'Für die konkrete Frage, ob Ihre Eingabe Ihre Infrastruktur verlässt, ja — ein Modell auf Ihrer eigenen Hardware hat nichts irgendwohin zu senden. Es löst nicht automatisch jede Datenschutzfrage (etwa was eine Client-Anwendung lokal protokolliert), aber es beseitigt die Frage der Übertragung an Dritte vollständig.',
+        },
+        {
+          question: 'Was sind Subunternehmer, und warum sind sie für den Datenschutz wichtig?',
+          answer:
+            'Andere Unternehmen, die neben dem KI-Produkt selbst an der Verarbeitung Ihrer Daten beteiligt sind — der Modellanbieter, dessen API es aufruft, Hosting-Infrastruktur, Protokollierungs- oder Analysetools. Jedes davon ist eine Partei, die Ihre Daten sehen könnte, daher gibt ein Produkt, das seine Subunternehmer offenlegt, Ihnen ein klareres Bild als eines, das das nicht tut.',
+        },
+      ],
+      productNote:
+        'Für Arbeitslasten, bei denen Daten Ihre eigene Infrastruktur überhaupt nicht verlassen dürfen, unterstützt ClawAI das lokale Ausführen von Modellen (siehe was lokale KI ist) — die genauen Bedingungen bei Nutzung von ClawAIs cloud-verbundenen Funktionen finden Sie in ClawAIs Datenschutzrichtlinie und Sicherheitsseite.',
     },
   },
 };

@@ -82,6 +82,8 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
         'O que um número de benchmark realmente mede, e as formas como pode te enganar antes mesmo de você começar a testar.',
       [LearnTopic.WHAT_IS_PROMPT_INJECTION]:
         'Um texto que não é seu ainda assim pode dar instruções ao modelo — o que isso significa e por que um modelo mais inteligente não resolve isso por completo.',
+      [LearnTopic.AI_DATA_PRIVACY_AND_RETENTION]:
+        'O que realmente acontece com o que você digita num produto de IA — quem vê, se treina um modelo, e por quanto tempo fica guardado.',
     },
   },
   topics: {
@@ -2084,6 +2086,86 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'O serviço de pesquisa do ClawAI escaneia o conteúdo web obtido em busca de padrões de injeção de prompt conhecidos e redige tokens com aparência de segredo antes que esse conteúdo chegue a um modelo — registrando o que detecta em vez de bloquear silenciosamente, já que nenhuma lista fixa de padrões consegue capturar toda tentativa. Essa camada de detecção é apenas uma parte de uma defesa que também depende de restringir quais ferramentas um modelo pode chamar em primeiro lugar.',
+    },
+    [LearnTopic.AI_DATA_PRIVACY_AND_RETENTION]: {
+      seo: {
+        title: 'Privacidade e retenção de dados de IA, explicadas',
+        description:
+          'Quando você digita algo num produto de IA, para onde isso realmente vai? Quem pode ver, se é usado para treinar um modelo, por quanto tempo é guardado, e as perguntas que vale a pena fazer antes de colar algo sensível em qualquer ferramenta de IA.',
+        keywords: [
+          'privacidade de dados de IA explicada',
+          'retenção de dados de IA',
+          'meus dados são usados para treinar IA',
+        ],
+      },
+      eyebrow: 'Fundamentos',
+      title: 'Privacidade e retenção de dados de IA, explicadas',
+      summary:
+        'O que acontece com o que você digita num produto de IA depende de um punhado de perguntas concretas: se sai da sua própria infraestrutura sequer, se o provedor usa isso para treinar modelos futuros, por quanto tempo é armazenado, e quem mais — subprocessadores, sistemas de log, revisores humanos — pode ver pelo caminho. Nada disso é universal; varia conforme o produto e o provedor, e é exatamente por isso que vale a pena saber o que perguntar.',
+      sections: [
+        {
+          id: 'where-your-input-actually-goes',
+          heading: 'A primeira pergunta: se sai da sua infraestrutura sequer',
+          paragraphs: [
+            'Um produto de IA na nuvem envia o que você digita para um servidor remoto que você não controla, operado pelo provedor do modelo ou pelo backend do próprio produto. Um modelo rodando localmente no seu próprio hardware (veja o que é IA local) nunca envia sua entrada para lugar nenhum — não há requisição de rede para interceptar nem terceiro para confiar, porque o cálculo acontece numa máquina que você já controla.',
+          ],
+        },
+        {
+          id: 'training-use-is-a-separate-question-from-storage',
+          heading:
+            'Se seus dados treinam um futuro modelo é uma pergunta separada de se são armazenados',
+          paragraphs: [
+            'Um provedor pode armazenar suas conversas por motivos operacionais — depuração, detecção de abuso, análise de produto — sem usá-las para treinar modelos, e um provedor também pode fazer as duas coisas. Na maioria dos produtos essas são decisões genuinamente separadas com configurações separadas, então uma boa política de privacidade declara cada uma explicitamente em vez de agrupá-las numa frase vaga sobre "melhorar nossos serviços". Se um produto não separa claramente as duas coisas, essa ambiguidade já vale a pena notar.',
+          ],
+        },
+        {
+          id: 'retention-periods-and-what-deletion-actually-means',
+          heading: 'Um período de retenção só importa se a exclusão realmente acontecer',
+          paragraphs: [
+            'Uma janela de retenção declarada — digamos, "30 dias" — descreve uma intenção, não uma garantia, a menos que o produto também consiga mostrar que ela foi cumprida: uma exportação em nível de conta, uma ação de exclusão visível, ou um processo de suporte que realmente remove os dados em vez de apenas escondê-los da interface. Backups são a lacuna comum: dados excluídos do sistema ativo podem persistir em backups por um período de retenção separado, muitas vezes mais longo, que as políticas nem sempre detalham.',
+          ],
+        },
+        {
+          id: 'sub-processors-and-the-chain-of-custody',
+          heading:
+            'O caminho dos seus dados costuma incluir mais partes além do próprio provedor de IA',
+          paragraphs: [
+            'Um produto construído sobre a API de um modelo de terceiros faz sua entrada passar por pelo menos duas organizações: o próprio produto e o provedor do modelo cuja API ele chama. Adicione infraestrutura de log, ferramentas de rastreamento de erros e hospedagem na nuvem, e a cadeia de custódia real de uma única mensagem pode se estender por várias empresas, cada uma com suas próprias políticas. Um produto confiável divulga seus subprocessadores em vez de deixar "quem mais vê isso" como uma pergunta em aberto.',
+          ],
+        },
+        {
+          id: 'what-to-actually-check-before-sending-sensitive-input',
+          heading:
+            'O que verificar de fato antes de colar algo sensível em qualquer ferramenta de IA',
+          paragraphs: [
+            'Se o produto treina modelos com sua entrada por padrão, e se isso pode ser desativado. Qual é o período de retenção declarado, e se a exclusão é algo que você pode acionar e verificar. Se o processamento acontece na nuvem ou pode rodar localmente para dados que não podem sair da sua infraestrutura. E se o produto nomeia seus subprocessadores, em vez de deixar isso como uma pergunta sem resposta que você tem que aceitar por fé.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Todo produto de IA usa minhas conversas para treinar seus modelos?',
+          answer:
+            'Não — isso varia conforme o produto e geralmente é uma configuração separada do armazenamento de dados. Armazenar conversas para depuração ou suporte não significa automaticamente que são usadas para treinamento; uma política de privacidade clara declara cada uso explicitamente.',
+        },
+        {
+          question: 'Se eu excluir meus dados, eles somem imediatamente?',
+          answer:
+            'Não necessariamente de todos os sistemas. A exclusão no produto ativo é comum, mas backups costumam reter dados por um período separado que nem sempre é declarado claramente — vale a pena verificar isso especificamente em vez de assumir que a exclusão é instantânea em todo lugar.',
+        },
+        {
+          question: 'A IA local é automaticamente mais privada que um produto de IA na nuvem?',
+          answer:
+            'Para a pergunta específica de se sua entrada sai da sua infraestrutura, sim — um modelo rodando no seu próprio hardware não tem nada para enviar a lugar nenhum. Isso não resolve automaticamente toda questão de privacidade (como o que um aplicativo cliente registra localmente), mas remove completamente a questão da transmissão a terceiros.',
+        },
+        {
+          question: 'O que são subprocessadores, e por que importam para a privacidade?',
+          answer:
+            'Outras empresas envolvidas no tratamento dos seus dados além do próprio produto de IA — o provedor do modelo cuja API ele chama, infraestrutura de hospedagem, ferramentas de log ou analytics. Cada uma é uma parte que poderia ver seus dados, então um produto que divulga seus subprocessadores dá uma visão mais clara do que um que não divulga.',
+        },
+      ],
+      productNote:
+        'Para cargas de trabalho em que os dados não podem sair da sua própria infraestrutura de jeito nenhum, o ClawAI oferece suporte à execução de modelos localmente (veja o que é IA local) — consulte a política de privacidade e a página de segurança do ClawAI para saber exatamente o que se aplica ao usar os recursos conectados à nuvem do ClawAI.',
     },
   },
 };

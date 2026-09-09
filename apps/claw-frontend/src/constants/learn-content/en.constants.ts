@@ -84,6 +84,8 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
         'What a benchmark number actually measures, and the ways it can mislead you before you even start testing.',
       [LearnTopic.WHAT_IS_PROMPT_INJECTION]:
         'Text that isn’t from you can still give the model instructions — what that means and why it can’t be fully solved by a smarter model.',
+      [LearnTopic.AI_DATA_PRIVACY_AND_RETENTION]:
+        'What actually happens to what you type into an AI product — who sees it, whether it trains a model, and how long it sticks around.',
     },
   },
   topics: {
@@ -2073,6 +2075,80 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI’s research service scans fetched web content for known prompt-injection patterns and redacts secret-looking tokens before that content reaches a model — logging what it detects rather than silently blocking, since no fixed pattern list can catch every attempt. That detection layer is one part of a defense that also depends on scoping what tools a model can call in the first place.',
+    },
+    [LearnTopic.AI_DATA_PRIVACY_AND_RETENTION]: {
+      seo: {
+        title: 'AI data privacy and retention, explained',
+        description:
+          'When you type something into an AI product, where does it actually go? Who can see it, whether it’s used to train a model, how long it’s kept, and the questions worth asking before you paste something sensitive into any AI tool.',
+        keywords: ['AI data privacy explained', 'AI data retention', 'is my data used to train AI'],
+      },
+      eyebrow: 'Foundations',
+      title: 'AI data privacy and retention, explained',
+      summary:
+        'What happens to what you type into an AI product depends on a handful of concrete questions: does it leave your own infrastructure at all, does the provider use it to train future models, how long is it stored, and who else — sub-processors, logging systems, human reviewers — might see it along the way. None of this is universal; it varies by product and by provider, which is exactly why it’s worth knowing what to ask.',
+      sections: [
+        {
+          id: 'where-your-input-actually-goes',
+          heading: 'The first question: does it leave your infrastructure at all',
+          paragraphs: [
+            'A cloud AI product sends what you type to a remote server you don’t control, run by the model provider or the product’s own backend. A model running locally on your own hardware (see what local AI is) never sends your input anywhere — there’s no network request to intercept and no third party to trust, because the computation happens on a machine you already control.',
+          ],
+        },
+        {
+          id: 'training-use-is-a-separate-question-from-storage',
+          heading:
+            'Whether your data trains a future model is a separate question from whether it’s stored',
+          paragraphs: [
+            'A provider can store your conversations for operational reasons — debugging, abuse detection, product analytics — without using them to train models, and a provider can also do both. These are genuinely separate decisions with separate settings in most products, so a good privacy policy states each one explicitly rather than bundling them into one vague statement about "improving our services." If a product doesn’t clearly separate the two, that ambiguity is itself worth noticing.',
+          ],
+        },
+        {
+          id: 'retention-periods-and-what-deletion-actually-means',
+          heading: 'A retention period only matters if deletion actually happens',
+          paragraphs: [
+            'A stated retention window — say, "30 days" — describes intent, not a guarantee, unless the product can also show you it was honored: an account-level export, a visible deletion action, or a support process that actually removes data rather than just hiding it from the interface. Backups are the common gap: data deleted from the live system can persist in backups for a separate, often longer, retention period that policies don’t always spell out.',
+          ],
+        },
+        {
+          id: 'sub-processors-and-the-chain-of-custody',
+          heading: 'Your data’s path often includes more parties than just the AI provider',
+          paragraphs: [
+            'A product built on a third-party model API routes your input through at least two organizations: the product itself and the model provider whose API it calls. Add logging infrastructure, error-tracking tools, and cloud hosting, and the realistic chain of custody for a single message can span several companies, each with its own policies. A trustworthy product discloses its sub-processors rather than leaving "who else sees this" as an open question.',
+          ],
+        },
+        {
+          id: 'what-to-actually-check-before-sending-sensitive-input',
+          heading: 'What to check before pasting something sensitive into any AI tool',
+          paragraphs: [
+            'Whether the product trains models on your input by default, and whether that can be turned off. What the stated retention period is, and whether deletion is something you can trigger and verify. Whether processing happens in the cloud or can run locally for data that can’t leave your infrastructure. And whether the product names its sub-processors, rather than leaving that as an unanswered question you have to take on faith.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Does every AI product use my conversations to train its models?',
+          answer:
+            'No — this varies by product and is usually a separate setting from data storage. Storing conversations for debugging or support doesn’t automatically mean they’re used for training; a clear privacy policy states each use explicitly.',
+        },
+        {
+          question: 'If I delete my data, is it gone immediately?',
+          answer:
+            'Not necessarily from every system. Deletion from the live product is common, but backups often retain data for a separate period that isn’t always stated clearly — worth checking specifically rather than assuming deletion is instant everywhere.',
+        },
+        {
+          question: 'Is local AI automatically more private than a cloud AI product?',
+          answer:
+            'For the specific question of whether your input leaves your infrastructure, yes — a model running on your own hardware has nothing to send anywhere. It doesn’t automatically solve every privacy question (like what a client application logs locally), but it removes the third-party transmission question entirely.',
+        },
+        {
+          question: 'What are sub-processors, and why do they matter for privacy?',
+          answer:
+            'Other companies involved in handling your data besides the AI product itself — the model provider whose API it calls, hosting infrastructure, logging or analytics tools. Each one is a party that could see your data, so a product that discloses its sub-processors gives you a clearer picture than one that doesn’t.',
+        },
+      ],
+      productNote:
+        'For workloads where data can’t leave your own infrastructure at all, ClawAI supports running models locally (see what local AI is) — see ClawAI’s privacy policy and security page for exactly what applies when using ClawAI’s cloud-connected features.',
     },
   },
 };

@@ -84,6 +84,8 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
         'Ce qu’un chiffre de benchmark mesure vraiment, et comment il peut vous induire en erreur avant même de commencer à tester.',
       [LearnTopic.WHAT_IS_PROMPT_INJECTION]:
         'Un texte qui ne vient pas de vous peut quand même donner des instructions au modèle — ce que cela signifie et pourquoi un modèle plus intelligent ne peut pas résoudre ça entièrement.',
+      [LearnTopic.AI_DATA_PRIVACY_AND_RETENTION]:
+        'Ce qui arrive vraiment à ce que vous tapez dans un produit d’IA — qui le voit, si ça entraîne un modèle, et combien de temps ça reste.',
     },
   },
   topics: {
@@ -2099,6 +2101,89 @@ export const FR_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'Le service de recherche de ClawAI scanne le contenu web récupéré à la recherche de motifs d’injection de prompt connus et masque les tokens ressemblant à des secrets avant que ce contenu n’atteigne un modèle — en journalisant ce qu’il détecte plutôt qu’en bloquant silencieusement, puisqu’aucune liste fixe de motifs ne peut attraper toutes les tentatives. Cette couche de détection n’est qu’une partie d’une défense qui dépend aussi de la restriction des outils qu’un modèle peut appeler en premier lieu.',
+    },
+    [LearnTopic.AI_DATA_PRIVACY_AND_RETENTION]: {
+      seo: {
+        title: 'Confidentialité et conservation des données d’IA, expliquées',
+        description:
+          'Quand vous tapez quelque chose dans un produit d’IA, où ça va vraiment ? Qui peut le voir, si ça entraîne un modèle, combien de temps c’est conservé, et les questions à se poser avant de coller quelque chose de sensible dans un outil d’IA.',
+        keywords: [
+          'confidentialité des données d’IA expliquée',
+          'conservation des données d’IA',
+          'mes données servent-elles à entraîner l’IA',
+        ],
+      },
+      eyebrow: 'Fondamentaux',
+      title: 'Confidentialité et conservation des données d’IA, expliquées',
+      summary:
+        'Ce qui arrive à ce que vous tapez dans un produit d’IA dépend d’une poignée de questions concrètes : est-ce que ça quitte votre propre infrastructure ne serait-ce qu’une fois, le fournisseur l’utilise-t-il pour entraîner de futurs modèles, combien de temps c’est stocké, et qui d’autre — sous-traitants, systèmes de journalisation, relecteurs humains — pourrait le voir en chemin. Rien de tout cela n’est universel ; ça varie selon le produit et le fournisseur, et c’est justement pour ça que ça vaut le coup de savoir quoi demander.',
+      sections: [
+        {
+          id: 'where-your-input-actually-goes',
+          heading:
+            'La première question : est-ce que ça quitte votre infrastructure ne serait-ce qu’une fois',
+          paragraphs: [
+            'Un produit d’IA cloud envoie ce que vous tapez à un serveur distant que vous ne contrôlez pas, géré par le fournisseur du modèle ou par le backend propre du produit. Un modèle qui tourne en local sur votre propre matériel (voir ce qu’est l’IA locale) n’envoie jamais votre saisie nulle part — il n’y a aucune requête réseau à intercepter et aucun tiers à qui faire confiance, parce que le calcul se fait sur une machine que vous contrôlez déjà.',
+          ],
+        },
+        {
+          id: 'training-use-is-a-separate-question-from-storage',
+          heading:
+            'Que vos données entraînent un futur modèle est une question distincte de leur stockage',
+          paragraphs: [
+            'Un fournisseur peut stocker vos conversations pour des raisons opérationnelles — débogage, détection d’abus, analytique produit — sans les utiliser pour entraîner des modèles, et un fournisseur peut aussi faire les deux. Ce sont des décisions vraiment distinctes avec des réglages distincts dans la plupart des produits, donc une bonne politique de confidentialité énonce chacune explicitement plutôt que de les regrouper dans une phrase vague sur « l’amélioration de nos services ». Si un produit ne sépare pas clairement les deux, cette ambiguïté mérite déjà d’être remarquée.',
+          ],
+        },
+        {
+          id: 'retention-periods-and-what-deletion-actually-means',
+          heading: 'Une durée de conservation ne compte que si la suppression a vraiment lieu',
+          paragraphs: [
+            'Une fenêtre de conservation annoncée — disons « 30 jours » — décrit une intention, pas une garantie, à moins que le produit ne puisse aussi vous montrer qu’elle a été respectée : un export au niveau du compte, une action de suppression visible, ou un processus de support qui retire vraiment les données au lieu de simplement les masquer de l’interface. Les sauvegardes sont le trou habituel : des données supprimées du système en production peuvent persister dans des sauvegardes pour une durée de conservation séparée, souvent plus longue, que les politiques ne précisent pas toujours.',
+          ],
+        },
+        {
+          id: 'sub-processors-and-the-chain-of-custody',
+          heading:
+            'Le trajet de vos données inclut souvent plus de parties que le seul fournisseur d’IA',
+          paragraphs: [
+            'Un produit construit sur l’API d’un modèle tiers fait transiter votre saisie par au moins deux organisations : le produit lui-même et le fournisseur du modèle dont il appelle l’API. Ajoutez l’infrastructure de journalisation, les outils de suivi d’erreurs et l’hébergement cloud, et la chaîne de garde réaliste d’un seul message peut s’étendre sur plusieurs entreprises, chacune avec ses propres politiques. Un produit digne de confiance divulgue ses sous-traitants plutôt que de laisser « qui d’autre voit ça » comme une question ouverte.',
+          ],
+        },
+        {
+          id: 'what-to-actually-check-before-sending-sensitive-input',
+          heading:
+            'Ce qu’il faut vraiment vérifier avant de coller quelque chose de sensible dans un outil d’IA',
+          paragraphs: [
+            'Si le produit entraîne des modèles avec votre saisie par défaut, et si ça peut être désactivé. Quelle est la durée de conservation annoncée, et si la suppression est quelque chose que vous pouvez déclencher et vérifier. Si le traitement se fait dans le cloud ou peut tourner en local pour des données qui ne peuvent pas quitter votre infrastructure. Et si le produit nomme ses sous-traitants, plutôt que de laisser ça comme une question sans réponse à prendre sur la foi.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question:
+            'Est-ce que tous les produits d’IA utilisent mes conversations pour entraîner leurs modèles ?',
+          answer:
+            'Non — cela varie selon le produit et est généralement un réglage distinct du stockage des données. Stocker des conversations pour le débogage ou le support ne signifie pas automatiquement qu’elles servent à l’entraînement ; une politique de confidentialité claire énonce chaque usage explicitement.',
+        },
+        {
+          question: 'Si je supprime mes données, disparaissent-elles immédiatement ?',
+          answer:
+            'Pas forcément de tous les systèmes. La suppression dans le produit en production est courante, mais les sauvegardes conservent souvent des données pour une durée séparée qui n’est pas toujours clairement annoncée — ça vaut le coup de vérifier spécifiquement plutôt que de supposer que la suppression est instantanée partout.',
+        },
+        {
+          question: 'L’IA locale est-elle automatiquement plus privée qu’un produit d’IA cloud ?',
+          answer:
+            'Pour la question précise de savoir si votre saisie quitte votre infrastructure, oui — un modèle qui tourne sur votre propre matériel n’a rien à envoyer nulle part. Ça ne résout pas automatiquement toutes les questions de confidentialité (comme ce qu’une application cliente journalise en local), mais ça élimine entièrement la question de la transmission à un tiers.',
+        },
+        {
+          question:
+            'Que sont les sous-traitants, et pourquoi comptent-ils pour la confidentialité ?',
+          answer:
+            'D’autres entreprises impliquées dans le traitement de vos données en plus du produit d’IA lui-même — le fournisseur du modèle dont il appelle l’API, l’infrastructure d’hébergement, les outils de journalisation ou d’analytique. Chacune est une partie qui pourrait voir vos données, donc un produit qui divulgue ses sous-traitants vous donne une image plus claire qu’un produit qui ne le fait pas.',
+        },
+      ],
+      productNote:
+        'Pour les charges de travail où les données ne peuvent absolument pas quitter votre propre infrastructure, ClawAI prend en charge l’exécution de modèles en local (voir ce qu’est l’IA locale) — consultez la politique de confidentialité et la page de sécurité de ClawAI pour savoir exactement ce qui s’applique en utilisant les fonctionnalités connectées au cloud de ClawAI.',
     },
   },
 };

@@ -58,6 +58,7 @@ export const LEARN_TOPIC_ORDER: ReadonlyArray<LearnTopic> = [
   LearnTopic.HOW_TO_EVALUATE_AI_MODELS,
   LearnTopic.HOW_TO_READ_AI_BENCHMARKS,
   LearnTopic.WHAT_IS_PROMPT_INJECTION,
+  LearnTopic.AI_DATA_PRIVACY_AND_RETENTION,
 ];
 
 /** `/learn/<topic>` for one topic. */
@@ -119,6 +120,11 @@ export const LEARN_RELATED_PATHS: Readonly<Record<LearnTopic, ReadonlyArray<stri
   [LearnTopic.HOW_TO_EVALUATE_AI_MODELS]: ['/supported-models', '/compare', '/pricing'],
   [LearnTopic.HOW_TO_READ_AI_BENCHMARKS]: ['/supported-models', '/compare', '/how-it-works'],
   [LearnTopic.WHAT_IS_PROMPT_INJECTION]: ['/security-and-privacy', '/features', '/how-it-works'],
+  [LearnTopic.AI_DATA_PRIVACY_AND_RETENTION]: [
+    '/privacy',
+    '/security-and-privacy',
+    '/local-first-ai',
+  ],
 };
 
 /** Type guard for the dynamic route segment. */

@@ -44,4 +44,5 @@ export enum LearnTopic {
   HOW_TO_EVALUATE_AI_MODELS = 'how-to-evaluate-ai-models',
   HOW_TO_READ_AI_BENCHMARKS = 'how-to-read-ai-benchmarks',
   WHAT_IS_PROMPT_INJECTION = 'what-is-prompt-injection',
+  AI_DATA_PRIVACY_AND_RETENTION = 'ai-data-privacy-and-retention',
 }

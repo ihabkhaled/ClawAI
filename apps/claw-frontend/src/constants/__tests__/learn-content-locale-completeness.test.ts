@@ -110,6 +110,7 @@ const SDD_LEARN_TOPICS_MIN_FIVE_SECTIONS: ReadonlyArray<LearnTopic> = [
   LearnTopic.HOW_TO_EVALUATE_AI_MODELS,
   LearnTopic.HOW_TO_READ_AI_BENCHMARKS,
   LearnTopic.WHAT_IS_PROMPT_INJECTION,
+  LearnTopic.AI_DATA_PRIVACY_AND_RETENTION,
 ];
 
 describe('/learn content locale completeness', () => {
