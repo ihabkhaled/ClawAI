@@ -27,6 +27,10 @@ function readJsonLd(container: HTMLElement): { '@graph': Array<Record<string, un
 }
 
 describe('LearnHubPage', () => {
+  it('registers the language-model answer explainer', () => {
+    expect(LEARN_TOPIC_ORDER).toContain('how-language-models-generate-answers');
+  });
+
   it('renders exactly one h1 and a card for every topic', async () => {
     render(await LearnHubPage());
 
@@ -48,6 +52,17 @@ describe('LearnHubPage', () => {
 });
 
 describe('LearnTopicPage', () => {
+  it('renders the language-model answer explainer at its public path', async () => {
+    render(await LearnTopicPage({ topic: LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS }));
+    const content =
+      LEARN_CONTENT_BY_LOCALE[Locale.EN].topics[LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS];
+
+    expect(screen.getByRole('heading', { level: 1, name: content.seo.title })).toBeInTheDocument();
+    expect(getLearnTopicPath(LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS)).toBe(
+      '/learn/how-language-models-generate-answers',
+    );
+  });
+
   it('renders exactly one h1', async () => {
     render(await LearnTopicPage({ topic: LearnTopic.WHAT_IS_RAG }));
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);

@@ -15,6 +15,7 @@
  * does the other's job.
  */
 export enum LearnTopic {
+  HOW_LANGUAGE_MODELS_GENERATE_ANSWERS = 'how-language-models-generate-answers',
   WHAT_IS_LLM_ORCHESTRATION = 'what-is-llm-orchestration',
   WHAT_IS_AI_MODEL_ROUTING = 'what-is-ai-model-routing',
   WHAT_IS_MULTI_MODEL_AI = 'what-is-multi-model-ai',

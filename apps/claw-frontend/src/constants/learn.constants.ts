@@ -18,7 +18,7 @@ export const LEARN_HUB_SLUG = 'learn';
  * edit makes stale content look freshly reviewed, which is worse than an old
  * date.
  */
-export const LEARN_REVIEW_DATE = '2026-08-30';
+export const LEARN_REVIEW_DATE = '2026-09-08';
 
 /**
  * Render order on the hub, and the order children are generated in.
@@ -29,6 +29,7 @@ export const LEARN_REVIEW_DATE = '2026-08-30';
  * any one page sees the neighbours that make sense next to it.
  */
 export const LEARN_TOPIC_ORDER: ReadonlyArray<LearnTopic> = [
+  LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS,
   LearnTopic.WHAT_IS_MULTI_MODEL_AI,
   LearnTopic.WHAT_IS_LLM_ORCHESTRATION,
   LearnTopic.WHAT_IS_AI_MODEL_ROUTING,
@@ -71,6 +72,11 @@ export function getLearnTopicSlug(topic: LearnTopic): string {
  * their locale.
  */
 export const LEARN_RELATED_PATHS: Readonly<Record<LearnTopic, ReadonlyArray<string>>> = {
+  [LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS]: [
+    '/supported-models',
+    '/features',
+    '/how-it-works',
+  ],
   [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: ['/features', '/supported-models', '/compare'],
   [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]: ['/features', '/how-it-works', '/architecture'],
   [LearnTopic.WHAT_IS_AI_MODEL_ROUTING]: ['/how-it-works', '/features', '/supported-models'],

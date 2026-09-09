@@ -27,6 +27,8 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
       'Kurze, praktische Erklärungen der Ideen dahinter, einen Prompt an mehr als ein Modell zu geben: was jede Technik leistet, wann sie ihre Kosten wert ist und wann ein einzelnes Modell die bessere Antwort ist. Keine Hersteller-Benchmarks, keine erfundenen Zahlen.',
     topicsHeading: 'Ein Thema wählen',
     cardSummaries: {
+      [LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS]:
+        'Wie aus einer Eingabe Tokens, Wahrscheinlichkeiten und eine erzeugte Antwort werden.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Mehrere Modelle in einem Arbeitsablauf nutzen, statt sich auf eines festzulegen.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -64,6 +66,78 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
     },
   },
   topics: {
+    [LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS]: {
+      seo: {
+        title: 'Wie erzeugen Sprachmodelle Antworten?',
+        description:
+          'So zerlegen Sprachmodelle Text in Tokens, sagen das nächste Token aus dem Kontext voraus und wählen Ausgaben aus — einschließlich ihrer Grenzen.',
+        keywords: [
+          'Funktionsweise von Sprachmodellen',
+          'Next-Token-Vorhersage',
+          'LLM-Antwortgenerierung',
+        ],
+      },
+      eyebrow: 'Grundlagen',
+      title: 'Wie Sprachmodelle Antworten erzeugen',
+      summary:
+        'Ein Sprachmodell erzeugt eine Antwort Token für Token. Es zerlegt die Eingabe, berechnet aus dem aktuellen Kontext Wahrscheinlichkeiten für mögliche nächste Tokens, wählt eines aus und wiederholt den Vorgang. Das Ergebnis wirkt geplant, entsteht aber aus erlernten statistischen Mustern und ist kein fertig gespeicherter Datensatz.',
+      sections: [
+        {
+          id: 'tokenization',
+          heading: 'Text wird zu Tokens',
+          paragraphs: [
+            'Vor der Generierung zerlegt ein Tokenizer Anweisungen, Gesprächsverlauf, Werkzeugergebnisse und weiteren Kontext in Tokens. Ein Token kann ein Wort, ein Wortteil oder ein Satzzeichen sein. Das Modell verarbeitet ihre Kennungen statt sichtbarer Sätze; deshalb beeinflussen Schreibweise, Formatierung und Sprache den Platzbedarf im Kontextfenster.',
+          ],
+        },
+        {
+          id: 'next-token-prediction',
+          heading: 'Das Modell sagt jeweils ein Token voraus',
+          paragraphs: [
+            'Für die bisherige Sequenz weist das Netz jedem möglichen nächsten Token eine Wahrscheinlichkeit zu. Eine Decodierregel wählt eines aus, hängt es an und startet die Berechnung erneut. Diese Schleife endet bei einem Stopptoken oder einem gesetzten Limit; normalerweise wird keine vorab gespeicherte vollständige Antwort abgerufen.',
+          ],
+        },
+        {
+          id: 'context-and-probability',
+          heading: 'Kontext formt Wahrscheinlichkeiten',
+          paragraphs: [
+            'Systemanweisungen, Nutzerfrage, frühere Nachrichten und bereitgestellte Dokumente verschieben die Wahrscheinlichkeiten, solange sie in den aktiven Kontext passen. Die wahrscheinlichste Auswahl ist meist wiederholbarer; Sampling aus mehreren plausiblen Tokens erzeugt mehr Variation. Temperatur und ähnliche Regler ändern die Auswahl, liefern aber keine zusätzlichen Fakten.',
+          ],
+        },
+        {
+          id: 'not-database-retrieval',
+          heading: 'Generierung ist keine Datenbanksuche',
+          paragraphs: [
+            'Training verteilt Textmuster über viele numerische Gewichte. Diese Gewichte sind kein Verzeichnis von Quellen mit verlässlichen Adressen. Ohne getrennte Suche oder ein Werkzeug kann das Modell keinen Quelldatensatz öffnen und eine Aussage belegen. Flüssige Formulierungen können daher eine Behauptung ohne faktische Grundlage zusammensetzen.',
+          ],
+        },
+        {
+          id: 'practical-limitations',
+          heading: 'Praktische Grenzen',
+          paragraphs: [
+            'Modelle können Details erfinden, mehrdeutige Aufgaben falsch auslegen, Informationen außerhalb des Kontexts verpassen, Verzerrungen aus Trainingsmaterial wiederholen und bei Rechnungen oder mehrstufigen Schlüssen scheitern. Wichtige Ausgaben sind Entwürfe: passenden Kontext geben, aktuelle Fakten per Suche oder Werkzeug beschaffen und folgenreiche Aussagen unabhängig prüfen.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Versteht ein Sprachmodell seine Antwort?',
+          answer:
+            'Es kann komplexe Beziehungen abbilden und schlussfolgernd wirkenden Text erzeugen. Menschliches Verstehen daraus abzuleiten, geht jedoch über den nachweisbaren Mechanismus hinaus: operativ sagt es Tokens aus Parametern und Kontext voraus.',
+        },
+        {
+          question: 'Warum entstehen bei derselben Eingabe verschiedene Antworten?',
+          answer:
+            'Beim Sampling kann schon eine frühe andere Tokenwahl alle folgenden Wahrscheinlichkeiten verändern. Deterministische Einstellungen verringern die Streuung, garantieren aber nicht die Richtigkeit der wiederholten Antwort.',
+        },
+        {
+          question: 'Kann das Modell seine Quellen nennen?',
+          answer:
+            'Nur wenn Quellen über Kontext, Suche oder ein Werkzeug bereitgestellt werden und die Verbindung erhalten bleibt. Eine allein aus Modellgewichten erzeugte Quellenangabe kann erfunden sein und muss geprüft werden.',
+        },
+      ],
+      productNote:
+        'ClawAI leitet Eingaben an konfigurierte Cloud- oder lokale Modelle weiter und kann Vergleichs- und Prüfabläufe ausführen; das gewählte Modell generiert weiterhin probabilistisch, daher garantiert Routing allein keine Wahrheit.',
+    },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {
         title: 'Was ist Multi-Modell-KI?',

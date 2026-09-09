@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { LEARN_CONTENT_BY_LOCALE } from '@/constants/learn-content.constants';
+import { LEARN_TOPIC_ORDER } from '@/constants/learn.constants';
+import { LearnTopic } from '@/enums/learn-topic.enum';
 import { Locale } from '@/enums/locale.enum';
 
 /**
@@ -10,7 +12,11 @@ import { Locale } from '@/enums/locale.enum';
  * which is exactly what parity needs: a locale with two keywords instead of
  * three shows up as a missing key, not a silently shorter array.
  */
-function flatten(value: unknown, prefix = '', result: Record<string, string> = {}): Record<string, string> {
+function flatten(
+  value: unknown,
+  prefix = '',
+  result: Record<string, string> = {},
+): Record<string, string> {
   if (typeof value === 'string') {
     result[prefix] = value;
     return result;
@@ -83,10 +89,51 @@ const english = flatten(LEARN_CONTENT_BY_LOCALE[Locale.EN]);
 const nonEnglishLocales = Object.values(Locale).filter((locale) => locale !== Locale.EN);
 
 describe('/learn content locale completeness', () => {
-  it.each(nonEnglishLocales)('%s defines every English key with no missing sections/faq/keywords', (locale) => {
-    const localized = flatten(LEARN_CONTENT_BY_LOCALE[locale]);
-    expect(Object.keys(localized).sort()).toEqual(Object.keys(english).sort());
+  it('includes a substantive language-model answer explainer in every locale', () => {
+    const englishSectionIds = LEARN_CONTENT_BY_LOCALE[Locale.EN].topics[
+      LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS
+    ].sections.map((section) => section.id);
+
+    for (const locale of Object.values(Locale)) {
+      const content =
+        LEARN_CONTENT_BY_LOCALE[locale].topics[LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS];
+      expect(content.sections.length, locale).toBeGreaterThanOrEqual(4);
+      expect(content.faq.length, locale).toBeGreaterThanOrEqual(3);
+      expect(
+        content.sections.map((section) => section.id),
+        locale,
+      ).toEqual(englishSectionIds);
+    }
   });
+
+  it('gives the language-model answer explainer unique SEO copy in every locale', () => {
+    const content = Object.values(Locale).map(
+      (locale) =>
+        LEARN_CONTENT_BY_LOCALE[locale].topics[LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS],
+    );
+
+    expect(new Set(content.map((topic) => topic.seo.title))).toHaveLength(
+      Object.values(Locale).length,
+    );
+    expect(new Set(content.map((topic) => topic.seo.description))).toHaveLength(
+      Object.values(Locale).length,
+    );
+    expect(new Set(content.map((topic) => topic.seo.keywords.join('|')))).toHaveLength(
+      Object.values(Locale).length,
+    );
+  });
+
+  it('keeps the topic order exhaustive', () => {
+    expect(LEARN_TOPIC_ORDER).toContain(LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS);
+  });
+
+  it.each(nonEnglishLocales)(
+    '%s defines every English key with no missing sections/faq/keywords',
+    (locale) => {
+      const localized = flatten(LEARN_CONTENT_BY_LOCALE[locale]);
+      expect(Object.keys(localized).sort()).toEqual(Object.keys(english).sort());
+    },
+  );
 
   it.each(nonEnglishLocales)('%s preserves every interpolation placeholder', (locale) => {
     const localized = flatten(LEARN_CONTENT_BY_LOCALE[locale]);

@@ -27,6 +27,8 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
       'Explicações curtas e práticas das ideias por trás de enviar um prompt a mais de um modelo: o que cada técnica faz, quando compensa o custo e quando um único modelo é a melhor resposta. Sem benchmarks de fornecedor nem números inventados.',
     topicsHeading: 'Escolha um conceito',
     cardSummaries: {
+      [LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS]:
+        'Como um prompt vira tokens, probabilidades e uma resposta gerada.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Usar vários modelos num mesmo fluxo em vez de se prender a um só.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -63,6 +65,78 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
     },
   },
   topics: {
+    [LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS]: {
+      seo: {
+        title: 'Como os modelos de linguagem geram respostas?',
+        description:
+          'Entenda tokenização, previsão do próximo token, contexto e amostragem, além dos motivos pelos quais uma resposta fluente ainda pode estar errada.',
+        keywords: [
+          'como funcionam modelos de linguagem',
+          'previsão do próximo token',
+          'geração de respostas LLM',
+        ],
+      },
+      eyebrow: 'Fundamentos',
+      title: 'Como os modelos de linguagem geram respostas',
+      summary:
+        'Um modelo de linguagem gera a resposta um token por vez. Ele transforma o prompt em tokens, usa o contexto ativo para atribuir probabilidades aos próximos tokens possíveis, escolhe um, acrescenta-o e repete. O resultado pode parecer planejado, mas nasce de padrões estatísticos aprendidos, não da recuperação de uma resposta pronta.',
+      sections: [
+        {
+          id: 'tokenization',
+          heading: 'O texto entra como tokens',
+          paragraphs: [
+            'Antes da geração, um tokenizador divide instruções, conversa, resultados de ferramentas e outros elementos do contexto. Um token pode ser uma palavra, parte dela ou pontuação. O modelo processa identificadores em vez das frases visíveis; por isso, ortografia, formatação e idioma alteram quanto da janela de contexto é consumido.',
+          ],
+        },
+        {
+          id: 'next-token-prediction',
+          heading: 'O modelo prevê um token de cada vez',
+          paragraphs: [
+            'Para a sequência existente, a rede atribui uma probabilidade a cada próximo token possível do vocabulário. Uma regra de decodificação escolhe um, adiciona-o e calcula novamente. O ciclo termina em um token de parada ou limite configurado; em geral, o modelo não busca uma resposta completa armazenada antecipadamente.',
+          ],
+        },
+        {
+          id: 'context-and-probability',
+          heading: 'O contexto molda as probabilidades',
+          paragraphs: [
+            'Instruções do sistema, pedido do usuário, mensagens anteriores e documentos fornecidos deslocam as probabilidades enquanto couberem no contexto ativo. Escolher o token mais provável tende a ser mais repetível; amostrar entre opções plausíveis produz variação. Temperatura e controles parecidos mudam a seleção, mas não acrescentam fatos.',
+          ],
+        },
+        {
+          id: 'not-database-retrieval',
+          heading: 'Gerar não é consultar um banco de dados',
+          paragraphs: [
+            'O treinamento distribui padrões de texto por muitos pesos numéricos. Esses pesos não são um catálogo de trechos com endereços confiáveis. Sem recuperação documental ou ferramenta separada, o modelo não abre um registro fonte para provar uma afirmação. Assim, texto convincente pode combinar padrões familiares em uma informação sem apoio factual.',
+          ],
+        },
+        {
+          id: 'practical-limitations',
+          heading: 'Limites práticos a considerar',
+          paragraphs: [
+            'Modelos podem inventar detalhes, interpretar mal pedidos ambíguos, perder informações fora do contexto, repetir vieses do treinamento e errar cálculos ou raciocínios longos. Trate saídas importantes como rascunhos: forneça contexto, use busca ou ferramentas para fatos atuais e verifique alegações relevantes com uma fonte ou teste independente.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Um modelo de linguagem entende a própria resposta?',
+          answer:
+            'Ele pode representar relações complexas e produzir texto semelhante a raciocínio, mas chamar isso de compreensão humana acrescenta uma hipótese que o mecanismo não comprova. Na prática, prevê tokens a partir dos parâmetros e do contexto.',
+        },
+        {
+          question: 'Por que o mesmo prompt pode gerar respostas diferentes?',
+          answer:
+            'Ao amostrar vários próximos tokens plausíveis, uma escolha diferente no início muda todas as probabilidades seguintes. Configurações determinísticas reduzem a variação, mas não garantem que a resposta repetida esteja correta.',
+        },
+        {
+          question: 'O modelo consegue citar suas fontes?',
+          answer:
+            'Somente quando as fontes são fornecidas pelo contexto, por recuperação ou por uma ferramenta e o sistema preserva essa ligação. Uma citação produzida apenas pelos pesos pode ser inventada e precisa ser conferida.',
+        },
+      ],
+      productNote:
+        'O ClawAI encaminha prompts a modelos configurados na nuvem ou locais e pode executar fluxos de comparação e verificação; o modelo escolhido ainda gera tokens probabilisticamente, então o roteamento sozinho não garante a verdade.',
+    },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {
         title: 'O que é IA multimodelo?',

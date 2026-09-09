@@ -27,6 +27,8 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
       'Short, practical explanations of the ideas behind routing a prompt to more than one model — what each technique does, when it earns its cost, and when a single model is the better answer. No vendor benchmarks, no invented numbers.',
     topicsHeading: 'Pick a concept',
     cardSummaries: {
+      [LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS]:
+        'How a prompt becomes tokens, probabilities and one generated answer.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Using several models in one workflow instead of committing to one.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -65,6 +67,74 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
     },
   },
   topics: {
+    [LearnTopic.HOW_LANGUAGE_MODELS_GENERATE_ANSWERS]: {
+      seo: {
+        title: 'How do language models generate answers?',
+        description:
+          'Learn how language models turn text into tokens, predict the next token from context, sample an answer, and why fluent output can still be wrong.',
+        keywords: ['how language models work', 'next token prediction', 'LLM token generation'],
+      },
+      eyebrow: 'Foundations',
+      title: 'How language models generate answers',
+      summary:
+        'A language model generates an answer one token at a time. It converts the prompt into tokens, uses the tokens in its current context to assign probabilities to possible next tokens, chooses one, appends it, and repeats. The result can look deliberate, but it is generated from learned statistical patterns rather than retrieved as a finished record.',
+      sections: [
+        {
+          id: 'tokenization',
+          heading: 'Text enters as tokens',
+          paragraphs: [
+            'Before generation begins, a tokenizer splits the instructions, conversation, tool results and other supplied context into tokens. A token may be a whole word, part of a word, punctuation or another text fragment. The model processes token identifiers, not sentences as people see them, so spelling, formatting and language can change how much context a prompt consumes.',
+          ],
+        },
+        {
+          id: 'next-token-prediction',
+          heading: 'The model predicts one next token',
+          paragraphs: [
+            'For the tokens seen so far, the network assigns a probability to each possible next token in its vocabulary. A decoding rule selects one token, adds it to the sequence and runs the prediction again. This loop continues until a stop token, a configured limit or another stopping condition is reached; the model does not normally fetch a complete answer that was stored in advance.',
+          ],
+        },
+        {
+          id: 'context-and-probability',
+          heading: 'Context shapes the probabilities',
+          paragraphs: [
+            'System instructions, the user request, earlier messages and supplied documents all shift the next-token probabilities, but only while they fit in the active context. Decoding also matters: choosing the highest-probability token tends to be more repeatable, while sampling among plausible tokens can produce varied wording. Temperature and related controls change that selection process; they do not add facts or understanding.',
+          ],
+        },
+        {
+          id: 'not-database-retrieval',
+          heading: 'Generation is not database retrieval',
+          paragraphs: [
+            'Training changes many distributed numerical weights so that patterns in text influence later predictions. Those weights are not a catalogue of source passages with reliable addresses. Unless a system separately retrieves documents or calls a tool, the model cannot look up a source record and prove where a statement came from. A fluent answer can therefore combine familiar patterns into a claim that has no factual support.',
+          ],
+        },
+        {
+          id: 'practical-limitations',
+          heading: 'Practical limits to plan around',
+          paragraphs: [
+            'Models can invent details, follow an ambiguous instruction in an unintended way, miss information outside the context, repeat bias in their training material and make errors in calculation or multi-step reasoning. Treat important output as a draft: provide relevant context, request structured evidence, use retrieval or tools when current facts matter, and verify consequential claims against an independent source or test.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Does a language model understand its answer?',
+          answer:
+            'It can represent complex relationships and produce useful reasoning-like text, but describing that as human understanding adds assumptions the mechanism does not establish. Operationally, it is predicting tokens from learned parameters and the current context.',
+        },
+        {
+          question: 'Why can the same prompt produce different answers?',
+          answer:
+            'When decoding samples from several plausible next tokens, an early different choice changes every probability that follows. Deterministic settings reduce variation, but they do not guarantee that the repeated answer is correct.',
+        },
+        {
+          question: 'Can a model quote its sources?',
+          answer:
+            'Only when sources are supplied through context, retrieval or a tool and the system preserves that connection. A citation generated from model weights alone may look convincing and still be invented, so verify it before relying on it.',
+        },
+      ],
+      productNote:
+        'ClawAI routes prompts to configured cloud or local models and can run comparison and verification workflows; the selected model still generates tokens probabilistically, so routing alone is not a guarantee of truth.',
+    },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {
         title: 'What is multi-model AI?',
