@@ -6010,6 +6010,8 @@ export const ru: TranslationDictionary = {
     launcher: {
       ariaLabel: 'Отправить отзыв',
       tooltip: 'Сообщить об ошибке или оставить отзыв',
+      hideAriaLabel: 'Скрыть кнопку отзыва у края экрана',
+      showAriaLabel: 'Показать кнопку отзыва',
     },
     dialog: {
       typeLabel: 'Тип',

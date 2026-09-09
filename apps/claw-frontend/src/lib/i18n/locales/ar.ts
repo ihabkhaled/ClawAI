@@ -5852,6 +5852,8 @@ export const ar: TranslationDictionary = {
     launcher: {
       ariaLabel: 'إرسال ملاحظات',
       tooltip: 'أبلغ عن خطأ أو شارك ملاحظاتك',
+      hideAriaLabel: 'إخفاء زر الملاحظات عند الحافة',
+      showAriaLabel: 'إظهار زر الملاحظات',
     },
     dialog: {
       typeLabel: 'النوع',

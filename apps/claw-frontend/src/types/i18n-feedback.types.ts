@@ -5,6 +5,8 @@
 export type FeedbackLauncherTranslation = {
   ariaLabel: string;
   tooltip: string;
+  hideAriaLabel: string;
+  showAriaLabel: string;
 };
 
 export type FeedbackDialogTranslation = {

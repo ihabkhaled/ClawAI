@@ -570,6 +570,7 @@ export type {
   UseAssignPlanFormReturn,
   FloatingClearanceConfig,
   UseFeedbackLauncherReturn,
+  UseFeedbackLauncherCollapseReturn,
   UseJumpToMessageReturn,
   UseBranchThreadReturn,
   UseMessageEditReturn,

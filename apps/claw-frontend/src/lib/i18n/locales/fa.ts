@@ -5944,6 +5944,8 @@ export const fa: TranslationDictionary = {
     launcher: {
       ariaLabel: 'ارسال بازخورد',
       tooltip: 'گزارش خطا یا ارسال بازخورد',
+      hideAriaLabel: 'پنهان‌کردن دکمهٔ بازخورد در لبهٔ صفحه',
+      showAriaLabel: 'نمایش دکمهٔ بازخورد',
     },
     dialog: {
       typeLabel: 'نوع',

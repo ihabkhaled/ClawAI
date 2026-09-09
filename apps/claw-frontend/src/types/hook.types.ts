@@ -209,6 +209,18 @@ export type UseFeedbackLauncherReturn = {
   launcherRef: React.RefObject<HTMLButtonElement | null>;
 };
 
+export type UseFeedbackLauncherCollapseReturn = {
+  /** True once the launcher has been tucked to the screen edge. */
+  isCollapsed: boolean;
+  /** Tucks the launcher to the edge and persists the choice. */
+  collapse: () => void;
+  /** Restores the full launcher and persists the choice. */
+  expand: () => void;
+  /** Starts tracking a drag on the collapsed edge tab, so pulling it toward
+   * the centre expands the launcher the same way tapping it does. */
+  onEdgeTabPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => void;
+};
+
 export type UsePasswordRotationGuardReturn = {
   /** True while the account is required to replace its current password. */
   mustRotate: boolean;

@@ -5644,6 +5644,8 @@ export const zh: TranslationDictionary = {
     launcher: {
       ariaLabel: '发送反馈',
       tooltip: '报告错误或分享反馈',
+      hideAriaLabel: '将反馈按钮收起到屏幕边缘',
+      showAriaLabel: '显示反馈按钮',
     },
     dialog: {
       typeLabel: '类型',

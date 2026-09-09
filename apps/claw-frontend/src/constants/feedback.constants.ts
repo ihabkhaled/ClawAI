@@ -39,6 +39,34 @@ export const FEEDBACK_ACCEPTED_IMAGE_TYPES = 'image/png,image/jpeg,image/webp,im
 // which this launcher used to cover exactly.
 export const FEEDBACK_LAUNCHER_CLASSES = `${FLOATING_ACTION_RAIL_SLOT_TWO} z-40 ${FLOATING_ACTION_DESKTOP_BOTTOM}`;
 
+// Sits just outside the launcher's own top-end corner. Deliberately not part
+// of `FEEDBACK_LAUNCHER_CLASSES`: that string is `fixed`, and this handle only
+// needs to be `absolute` against the launcher's own box.
+export const FEEDBACK_LAUNCHER_COLLAPSE_HANDLE_CLASSES =
+  'absolute -end-2 -top-2 h-6 w-6 rounded-full border border-border bg-background p-0 shadow-sm hover:bg-accent';
+
+// The auto-clearance system (see floating-action.constants.ts) keeps the
+// launcher off whatever it can measure, but it can't know every element a
+// page author cares about. This is the manual escape hatch: tucked mostly off
+// the edge of the screen, it stops covering anything, and a tap or an
+// edge-inward drag brings it back. Same vertical slot as the full launcher —
+// only the horizontal `end` value differs — so it can't be composed from
+// `FLOATING_ACTION_RAIL_SLOT_TWO` (mixing two `end-*` utilities on one
+// element makes the winner a stylesheet-order accident, not a source-order
+// certainty). `end` rather than `right`: this has to mirror in Arabic and
+// Persian same as the launcher itself.
+export const FEEDBACK_LAUNCHER_EDGE_TAB_CLASSES =
+  'fixed end-[-1.6rem] bottom-[calc(max(calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom)),var(--rail-obstacle-clearance,0px))+5.5rem)] md:bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] z-40 flex h-11 w-11 cursor-grab touch-none items-center justify-center rounded-s-full border border-border bg-background/90 p-0 opacity-70 shadow-sm backdrop-blur-sm transition-[inset-inline-end,opacity] duration-normal ease-quint-out hover:end-[-0.8rem] hover:opacity-100 active:cursor-grabbing';
+
+// Beyond this many pixels of inward drag, the edge tab counts as "pulled out"
+// and expands — the same outcome as tapping it, just reachable as a swipe.
+export const FEEDBACK_LAUNCHER_DRAG_EXPAND_THRESHOLD_PX = 24;
+
+// Whether the launcher is tucked away is a per-device preference, not
+// per-session state — a reader who hides it on a page that covers something
+// should not have to hide it again on the next page load.
+export const FEEDBACK_LAUNCHER_COLLAPSED_STORAGE_KEY = 'claw.feedbackLauncher.collapsed';
+
 // The API reports per-status counts keyed by the FeedbackStatus enum name, and
 // the status filter is sent back the same way. The tabs used lowercase labels
 // as their values, so every tab filtered on a status the server did not know

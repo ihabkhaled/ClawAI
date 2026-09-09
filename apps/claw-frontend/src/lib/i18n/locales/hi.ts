@@ -5957,6 +5957,8 @@ export const hi: TranslationDictionary = {
     launcher: {
       ariaLabel: 'प्रतिक्रिया भेजें',
       tooltip: 'बग रिपोर्ट करें या प्रतिक्रिया साझा करें',
+      hideAriaLabel: 'फ़ीडबैक बटन को किनारे पर छिपाएँ',
+      showAriaLabel: 'फ़ीडबैक बटन दिखाएँ',
     },
     dialog: {
       typeLabel: 'प्रकार',

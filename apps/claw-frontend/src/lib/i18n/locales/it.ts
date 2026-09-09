@@ -6044,6 +6044,8 @@ export const it: TranslationDictionary = {
     launcher: {
       ariaLabel: 'Invia feedback',
       tooltip: 'Segnala un bug o condividi un feedback',
+      hideAriaLabel: 'Nascondi il pulsante feedback sul bordo',
+      showAriaLabel: 'Mostra il pulsante feedback',
     },
     dialog: {
       typeLabel: 'Tipo',

@@ -6067,6 +6067,8 @@ export const fr: TranslationDictionary = {
     launcher: {
       ariaLabel: 'Envoyer un retour',
       tooltip: 'Signaler un bug ou donner votre avis',
+      hideAriaLabel: 'Masquer le bouton de retour sur le bord',
+      showAriaLabel: 'Afficher le bouton de retour',
     },
     dialog: {
       typeLabel: 'Type',

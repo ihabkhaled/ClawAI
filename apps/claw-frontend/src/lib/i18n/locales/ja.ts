@@ -5974,6 +5974,8 @@ export const ja: TranslationDictionary = {
     launcher: {
       ariaLabel: 'フィードバックを送る',
       tooltip: '不具合の報告やご意見を送信',
+      hideAriaLabel: 'フィードバックボタンを端に隠す',
+      showAriaLabel: 'フィードバックボタンを表示',
     },
     dialog: {
       typeLabel: '種類',

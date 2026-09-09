@@ -6060,6 +6060,8 @@ export const de: TranslationDictionary = {
     launcher: {
       ariaLabel: 'Feedback senden',
       tooltip: 'Fehler melden oder Feedback geben',
+      hideAriaLabel: 'Feedback-Button an den Rand ausblenden',
+      showAriaLabel: 'Feedback-Button einblenden',
     },
     dialog: {
       typeLabel: 'Typ',

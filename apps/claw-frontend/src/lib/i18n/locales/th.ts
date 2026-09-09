@@ -5903,6 +5903,8 @@ export const th: TranslationDictionary = {
     launcher: {
       ariaLabel: 'ส่งความคิดเห็น',
       tooltip: 'รายงานข้อผิดพลาดหรือส่งความคิดเห็น',
+      hideAriaLabel: 'ซ่อนปุ่มความคิดเห็นไว้ที่ขอบจอ',
+      showAriaLabel: 'แสดงปุ่มความคิดเห็น',
     },
     dialog: {
       typeLabel: 'ประเภท',

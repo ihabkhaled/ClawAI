@@ -5945,6 +5945,8 @@ export const en: TranslationDictionary = {
     launcher: {
       ariaLabel: 'Send feedback',
       tooltip: 'Report a bug or share feedback',
+      hideAriaLabel: 'Hide feedback button to the edge',
+      showAriaLabel: 'Show feedback button',
     },
     dialog: {
       typeLabel: 'Type',

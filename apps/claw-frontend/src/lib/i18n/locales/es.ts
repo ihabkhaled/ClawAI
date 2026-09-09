@@ -6036,6 +6036,8 @@ export const es: TranslationDictionary = {
     launcher: {
       ariaLabel: 'Enviar comentarios',
       tooltip: 'Informar de un error o compartir comentarios',
+      hideAriaLabel: 'Ocultar el botón de comentarios en el borde',
+      showAriaLabel: 'Mostrar el botón de comentarios',
     },
     dialog: {
       typeLabel: 'Tipo',

@@ -6011,6 +6011,8 @@ export const pt: TranslationDictionary = {
     launcher: {
       ariaLabel: 'Enviar feedback',
       tooltip: 'Relatar um erro ou enviar feedback',
+      hideAriaLabel: 'Ocultar o botão de feedback na borda',
+      showAriaLabel: 'Mostrar o botão de feedback',
     },
     dialog: {
       typeLabel: 'Tipo',
