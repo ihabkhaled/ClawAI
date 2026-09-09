@@ -6,6 +6,7 @@ import {
 } from '@/constants/content-registry.constants';
 import { INTEGRATION_TOPIC_ORDER, getIntegrationPath } from '@/constants/integrations.constants';
 import { LEARN_TOPIC_ORDER, getLearnTopicPath } from '@/constants/learn.constants';
+import { MODEL_PROVIDER_ORDER, getModelProviderPath } from '@/constants/models.constants';
 import { ContentLifecycleStatus, ContentReviewStatus, Indexability, AdEligibility } from '@/enums';
 import { Locale } from '@/enums/locale.enum';
 import {
@@ -71,6 +72,7 @@ describe('content registry integrity', () => {
     const expected = [
       ...LEARN_TOPIC_ORDER.map(getLearnTopicPath),
       ...INTEGRATION_TOPIC_ORDER.map(getIntegrationPath),
+      ...MODEL_PROVIDER_ORDER.map(getModelProviderPath),
       '/',
       '/about',
       '/acceptable-use',
@@ -95,6 +97,7 @@ describe('content registry integrity', () => {
       '/integrations',
       '/learn',
       '/local-first-ai',
+      '/model-providers',
       '/pricing',
       '/privacy',
       '/security-and-privacy',
@@ -178,8 +181,15 @@ describe('localized publication boundary', () => {
 
   it('resolves metadata for every supported locale', () => {
     // 28 launch pages + the /learn hub + one page per learn topic + the
-    // /integrations hub + one page per connector.
-    const expectedCount = 29 + LEARN_TOPIC_ORDER.length + 1 + INTEGRATION_TOPIC_ORDER.length;
+    // /integrations hub + one page per connector + the /models hub + one page
+    // per provider.
+    const expectedCount =
+      29 +
+      LEARN_TOPIC_ORDER.length +
+      1 +
+      INTEGRATION_TOPIC_ORDER.length +
+      1 +
+      MODEL_PROVIDER_ORDER.length;
     expect(getPublishedPagesForLocale(Locale.EN).length).toBe(expectedCount);
     expect(getPublishedPagesForLocale(Locale.JA).length).toBe(expectedCount);
     expect(getPageBySlugAndLocale('features', Locale.EN)?.title.toLowerCase()).toContain(

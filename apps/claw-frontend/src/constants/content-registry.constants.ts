@@ -16,6 +16,14 @@ import {
   getLearnTopicSlug,
 } from '@/constants/learn.constants';
 import {
+  MODELS_HUB_PATH,
+  MODELS_HUB_SLUG,
+  MODELS_REVIEW_DATE,
+  MODEL_PROVIDER_ORDER,
+  getModelProviderPath,
+  getModelProviderSlug,
+} from '@/constants/models.constants';
+import {
   COMPARISON_HUB_PATH,
   COMPARISON_PATH_BY_RIVAL,
   COMPARISON_REVIEW_DATE,
@@ -300,6 +308,34 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     structuredDataType: StructuredDataType.FAQ_PAGE,
     relatedSlugs: [INTEGRATIONS_HUB_SLUG, 'features', 'use-cases'],
     reviewDate: INTEGRATIONS_REVIEW_DATE,
+  })),
+  // The /models cluster: one hub plus one page per provider family, fanned
+  // from the order array (ADR-084). Ad-INELIGIBLE — same reasoning as
+  // /compare/* and /integrations/*: a page whose job is a checkable claim
+  // about a named third-party model provider does not also carry ad
+  // inventory (§8.2). PUBLISHABLE feed eligibility: evergreen editorial
+  // content with genuine publication semantics, like /learn and
+  // /integrations. AWS Bedrock has no page (F2/§6); Qwen/Kimi/GLM have no
+  // `ConnectorProvider` member and are refused (F6/§6).
+  {
+    slug: MODELS_HUB_SLUG,
+    path: MODELS_HUB_PATH,
+    category: ContentCategory.PROVIDERS,
+    adEligibility: AdEligibility.INELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['supported-models', 'pricing', LEARN_HUB_SLUG],
+    reviewDate: MODELS_REVIEW_DATE,
+  },
+  ...MODEL_PROVIDER_ORDER.map((provider): PublishedContentConfig => ({
+    slug: getModelProviderSlug(provider),
+    path: getModelProviderPath(provider),
+    category: ContentCategory.PROVIDERS,
+    adEligibility: AdEligibility.INELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.FAQ_PAGE,
+    relatedSlugs: [MODELS_HUB_SLUG, 'pricing', 'supported-models'],
+    reviewDate: MODELS_REVIEW_DATE,
   })),
   ...COMPARISON_RIVAL_ORDER.map((rival): PublishedContentConfig => ({
     slug: COMPARISON_SLUG_BY_RIVAL[rival],

@@ -93,6 +93,19 @@ routing-service behind auth and varies per deployment.
 source for every model-level page, explicitly framed as a reviewed editorial
 snapshot rather than the live catalog.
 
+**Batch 3 deviation, discovered at build time:** this document names the
+cluster `/models`. That path is already taken — `src/app/(portal)/models/**`
+is a private, authenticated route (the model catalog/discovery dashboard
+linked from the sidebar). A marketing page at the same path would collide
+with it, and `sitemap-google-readability.test.ts` catches exactly this
+(`PRIVATE_ROUTE_PREFIXES` in `constants/private-route-prefixes.constants.ts`
+includes `/models`). The cluster was built at **`/model-providers`** instead —
+same six children (`openai`, `anthropic`, `google`, `deepseek`, `xai`,
+`local-ai`), same registry category (`ContentCategory.PROVIDERS`), same
+`AdEligibility.INELIGIBLE` / `FeedEligibility.PUBLISHABLE` decisions. Every
+other detail in §3–§8 below is unchanged; read `/models` there as
+`/model-providers`.
+
 ### F3 — RSS carries pages with no publication semantics
 
 `buildGlobalRssResponse` maps **every** indexable registry page into the feed,
@@ -244,19 +257,19 @@ Rules:
 
 Existing URLs are unchanged. Everything below is additive.
 
-| Hub                     | Children                                                                     | Intent                   |
-| ----------------------- | ---------------------------------------------------------------------------- | ------------------------ |
-| `/learn`                | concept pages (`what-is-*`, `cloud-ai-vs-local-ai`, `ollama-vs-llamacpp`, …) | Informational            |
-| `/models`               | `openai`, `anthropic`, `google`, `deepseek`, `xai`, `local-ai`               | Commercial investigation |
-| `/compare/models`       | model-vs-model pairs                                                         | Comparison               |
-| `/best-ai-model`        | task pages (`coding`, `reasoning`, `writing`, …)                             | Commercial investigation |
-| `/integrations`         | 14 verified connectors                                                       | Commercial investigation |
-| `/use-cases` _(exists)_ | task pages                                                                   | Commercial investigation |
-| `/features` _(exists)_  | capability pages                                                             | Commercial investigation |
-| `/solutions`            | role pages                                                                   | Commercial investigation |
-| `/industries`           | private-deployment verticals                                                 | Commercial investigation |
-| `/prompts`              | prompt guides                                                                | Informational            |
-| `/tools`                | model selector                                                               | Transactional-adjacent   |
+| Hub                     | Children                                                                                                                     | Intent                   |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `/learn`                | concept pages (`what-is-*`, `cloud-ai-vs-local-ai`, `ollama-vs-llamacpp`, …)                                                 | Informational            |
+| `/model-providers`      | `openai`, `anthropic`, `google`, `deepseek`, `xai`, `local-ai` (built at `/model-providers`, not `/models` — see note below) | Commercial investigation |
+| `/compare/models`       | model-vs-model pairs                                                                                                         | Comparison               |
+| `/best-ai-model`        | task pages (`coding`, `reasoning`, `writing`, …)                                                                             | Commercial investigation |
+| `/integrations`         | 14 verified connectors                                                                                                       | Commercial investigation |
+| `/use-cases` _(exists)_ | task pages                                                                                                                   | Commercial investigation |
+| `/features` _(exists)_  | capability pages                                                                                                             | Commercial investigation |
+| `/solutions`            | role pages                                                                                                                   | Commercial investigation |
+| `/industries`           | private-deployment verticals                                                                                                 | Commercial investigation |
+| `/prompts`              | prompt guides                                                                                                                | Informational            |
+| `/tools`                | model selector                                                                                                               | Transactional-adjacent   |
 
 **Cannibalisation rules, decided once:**
 
@@ -281,7 +294,7 @@ Each batch is independently gated, committed and pushed.
 | 0     | This document, retire the four `guides/*` PLANNED slugs, shared SEO components, cluster scaffolding, RSS publication-semantics fix | P0       |
 | 1     | `/learn` hub + concept pages                                                                                                       | P0       |
 | 2     | `/integrations` hub + 14 connector pages, retire the `workspace-connectors` PLANNED slug                                           | P0       |
-| 3     | `/models` hub + 6 provider pages, `MODEL_FACTS`                                                                                    | P0       |
+| 3     | **Built 2026-09-09** — `/model-providers` hub (not `/models`, see note below) + 6 provider pages, `MODEL_FACTS`                    | P0       |
 | 4     | `/use-cases` hub + task pages                                                                                                      | P1       |
 | 5     | `/best-ai-model` + `/compare/models`                                                                                               | P1       |
 | 6     | `/features` hub + capability pages                                                                                                 | P1       |
@@ -303,8 +316,8 @@ Recording these so they are not re-proposed as oversights.
 
 | Refused                                                                  | Why                                                                                        |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| `/models/qwen`, `/models/kimi`, `/models/glm`                            | No such connector exists (F6)                                                              |
-| `/models/amazon-bedrock`                                                 | Scaffolding only; already excluded by `/supported-models` (F2)                             |
+| `/model-providers/qwen`, `/model-providers/kimi`, `/model-providers/glm` | No such connector exists (F6)                                                              |
+| `/model-providers/amazon-bedrock`                                        | Scaffolding only; already excluded by `/supported-models` (F2)                             |
 | `/learn/best-ai-model-for-coding`                                        | Same intent as `/best-ai-model/coding` (§4)                                                |
 | Benchmark tables                                                         | No trustworthy first-party data; fabrication is forbidden                                  |
 | Compliance claims (SOC 2, ISO 27001, HIPAA, FedRAMP, GDPR certification) | Not held. Industry pages say "designed for private deployment"                             |

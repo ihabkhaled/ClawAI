@@ -8,6 +8,7 @@ export const MARKETING_FOOTER_EXPLORE_PATHS: ReadonlySet<string> = new Set([
   '/integrations',
   '/learn',
   '/local-first-ai',
+  '/model-providers',
   '/security-and-privacy',
   '/supported-models',
   '/use-cases',

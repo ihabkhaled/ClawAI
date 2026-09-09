@@ -1,5 +1,6 @@
 import { INTEGRATIONS_PAGE_SEO_BY_LOCALE } from '@/constants/integrations-seo.constants';
 import { LEARN_PAGE_SEO_BY_LOCALE } from '@/constants/learn-seo.constants';
+import { MODELS_PAGE_SEO_BY_LOCALE } from '@/constants/models-seo.constants';
 import { PUBLIC_PAGE_SEO_BY_LOCALE } from '@/constants/public-page-seo.constants';
 import type { Locale } from '@/enums/locale.enum';
 import type { PublicPageSeoCopy } from '@/types/content-registry.types';
@@ -43,6 +44,7 @@ type LocaleSeoSource = Readonly<Record<Locale, Readonly<Record<string, PublicPag
 const CLUSTER_SEO_SOURCES: ReadonlyArray<LocaleSeoSource> = [
   LEARN_PAGE_SEO_BY_LOCALE,
   INTEGRATIONS_PAGE_SEO_BY_LOCALE,
+  MODELS_PAGE_SEO_BY_LOCALE,
 ];
 
 /**

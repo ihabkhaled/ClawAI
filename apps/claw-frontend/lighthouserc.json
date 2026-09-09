@@ -78,7 +78,14 @@
         "http://localhost:3000/en/integrations/microsoft-sharepoint",
         "http://localhost:3000/en/integrations/microsoft-onedrive",
         "http://localhost:3000/en/integrations/google-calendar",
-        "http://localhost:3000/en/integrations/outlook-calendar"
+        "http://localhost:3000/en/integrations/outlook-calendar",
+        "http://localhost:3000/en/model-providers",
+        "http://localhost:3000/en/model-providers/openai",
+        "http://localhost:3000/en/model-providers/anthropic",
+        "http://localhost:3000/en/model-providers/google",
+        "http://localhost:3000/en/model-providers/deepseek",
+        "http://localhost:3000/en/model-providers/xai",
+        "http://localhost:3000/en/model-providers/local-ai"
       ],
       "numberOfRuns": 2,
       "settings": {

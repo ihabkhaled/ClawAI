@@ -28,7 +28,9 @@
         "http://localhost:3000/en/learn",
         "http://localhost:3000/en/learn/how-language-models-generate-answers",
         "http://localhost:3000/en/integrations",
-        "http://localhost:3000/en/integrations/github"
+        "http://localhost:3000/en/integrations/github",
+        "http://localhost:3000/en/model-providers",
+        "http://localhost:3000/en/model-providers/openai"
       ],
       "numberOfRuns": 2,
       "settings": {

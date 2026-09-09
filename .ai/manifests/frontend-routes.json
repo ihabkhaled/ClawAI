@@ -157,6 +157,16 @@
       "route": "/local-first-ai"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/model-providers/[provider]/page.tsx",
+      "kind": "page",
+      "route": "/model-providers/[provider]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/model-providers/page.tsx",
+      "kind": "page",
+      "route": "/model-providers"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/page.tsx",
       "kind": "page",
       "route": "/"
