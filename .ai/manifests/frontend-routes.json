@@ -197,6 +197,16 @@
       "route": "/privacy"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/prompts/[topic]/page.tsx",
+      "kind": "page",
+      "route": "/prompts/[topic]"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(marketing)/prompts/page.tsx",
+      "kind": "page",
+      "route": "/prompts"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/security-and-privacy/page.tsx",
       "kind": "page",
       "route": "/security-and-privacy"

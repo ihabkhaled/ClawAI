@@ -38,6 +38,14 @@ import {
   getModelProviderSlug,
 } from '@/constants/models.constants';
 import {
+  PROMPTS_HUB_PATH,
+  PROMPTS_HUB_SLUG,
+  PROMPTS_REVIEW_DATE,
+  PROMPT_GUIDE_TOPIC_ORDER,
+  getPromptGuideTopicPath,
+  getPromptGuideTopicSlug,
+} from '@/constants/prompts.constants';
+import {
   COMPARISON_HUB_PATH,
   COMPARISON_PATH_BY_RIVAL,
   COMPARISON_REVIEW_DATE,
@@ -435,6 +443,35 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     structuredDataType: StructuredDataType.FAQ_PAGE,
     relatedSlugs: ['features', 'use-cases', 'pricing'],
     reviewDate: FEATURES_REVIEW_DATE,
+  })),
+  // The /prompts cluster: one hub plus one page per topic, fanned from the
+  // order array (ADR-084). Unlike every other cluster, this one is not
+  // primarily about ClawAI's own capabilities — it is genuine prompt-writing
+  // education, informational intent like /learn rather than commercial.
+  // Ad-ELIGIBLE, same call as /learn: these pages explain a technique and
+  // name no specific third-party AI product, so the reasoning that makes
+  // /model-fit/* and /compare/* ineligible does not apply here. PUBLISHABLE
+  // feed eligibility, matching /learn: evergreen editorial content with
+  // genuine publication semantics.
+  {
+    slug: PROMPTS_HUB_SLUG,
+    path: PROMPTS_HUB_PATH,
+    category: ContentCategory.GUIDE,
+    adEligibility: AdEligibility.ELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: [LEARN_HUB_SLUG, MODEL_FIT_HUB_SLUG, 'features'],
+    reviewDate: PROMPTS_REVIEW_DATE,
+  },
+  ...PROMPT_GUIDE_TOPIC_ORDER.map((topic): PublishedContentConfig => ({
+    slug: getPromptGuideTopicSlug(topic),
+    path: getPromptGuideTopicPath(topic),
+    category: ContentCategory.GUIDE,
+    adEligibility: AdEligibility.ELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.FAQ_PAGE,
+    relatedSlugs: [PROMPTS_HUB_SLUG, LEARN_HUB_SLUG, 'pricing'],
+    reviewDate: PROMPTS_REVIEW_DATE,
   })),
 ];
 

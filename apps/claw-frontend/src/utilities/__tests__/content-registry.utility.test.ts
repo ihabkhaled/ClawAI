@@ -12,6 +12,7 @@ import { INTEGRATION_TOPIC_ORDER, getIntegrationPath } from '@/constants/integra
 import { LEARN_TOPIC_ORDER, getLearnTopicPath } from '@/constants/learn.constants';
 import { MODEL_FIT_TASK_ORDER, getModelFitTaskPath } from '@/constants/model-fit.constants';
 import { MODEL_PROVIDER_ORDER, getModelProviderPath } from '@/constants/models.constants';
+import { PROMPT_GUIDE_TOPIC_ORDER, getPromptGuideTopicPath } from '@/constants/prompts.constants';
 import { USE_CASES_TASK_ORDER, getUseCaseTaskPath } from '@/constants/use-cases-cluster.constants';
 import { ContentLifecycleStatus, ContentReviewStatus, Indexability, AdEligibility } from '@/enums';
 import { Locale } from '@/enums/locale.enum';
@@ -82,6 +83,7 @@ describe('content registry integrity', () => {
       ...MODEL_FIT_TASK_ORDER.map(getModelFitTaskPath),
       ...USE_CASES_TASK_ORDER.map(getUseCaseTaskPath),
       ...FEATURES_CAPABILITY_ORDER.map(getFeatureCapabilityPath),
+      ...PROMPT_GUIDE_TOPIC_ORDER.map(getPromptGuideTopicPath),
       '/',
       '/about',
       '/acceptable-use',
@@ -110,6 +112,7 @@ describe('content registry integrity', () => {
       '/model-providers',
       '/pricing',
       '/privacy',
+      '/prompts',
       '/security-and-privacy',
       '/supported-models',
       '/terms',
@@ -142,6 +145,7 @@ describe('getIndexablePages / getAdEligiblePages defense in depth', () => {
         ...LEARN_TOPIC_ORDER.map(getLearnTopicPath),
         ...USE_CASES_TASK_ORDER.map(getUseCaseTaskPath),
         ...FEATURES_CAPABILITY_ORDER.map(getFeatureCapabilityPath),
+        ...PROMPT_GUIDE_TOPIC_ORDER.map(getPromptGuideTopicPath),
         '/',
         '/architecture',
         '/coding-agent',
@@ -150,6 +154,7 @@ describe('getIndexablePages / getAdEligiblePages defense in depth', () => {
         '/features',
         '/how-it-works',
         '/learn',
+        '/prompts',
         '/use-cases',
       ].sort(),
     );
@@ -207,7 +212,9 @@ describe('localized publication boundary', () => {
       1 +
       MODEL_FIT_TASK_ORDER.length +
       USE_CASES_TASK_ORDER.length +
-      FEATURES_CAPABILITY_ORDER.length;
+      FEATURES_CAPABILITY_ORDER.length +
+      1 +
+      PROMPT_GUIDE_TOPIC_ORDER.length;
     expect(getPublishedPagesForLocale(Locale.EN).length).toBe(expectedCount);
     expect(getPublishedPagesForLocale(Locale.JA).length).toBe(expectedCount);
     expect(getPageBySlugAndLocale('features', Locale.EN)?.title.toLowerCase()).toContain(

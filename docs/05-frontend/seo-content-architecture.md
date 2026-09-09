@@ -541,6 +541,21 @@ above; the ad-ineligibility reasoning is unchanged), `/integrations/*`,
 `/solutions/*`. Publishing ~100 pages at once ad-eligible is also an AdSense
 scaled-content exposure.
 
+**`/prompts` ad-eligibility (batch 6, built 2026-09-09) — the decision this
+table's row above (`/prompts` + `/tools`, P2) did not itself make.** §4 lists
+`/prompts` with informational intent and this table names the P2 build order,
+but neither states an `AdEligibility` value for it the way this section does
+explicitly for every other cluster. Decided here, applying the same test the
+rest of this section uses (does the page name and evaluate a third party, or
+does it explain a technique): `/prompts/*` explains prompt-writing technique —
+clarity, examples, step-by-step reasoning, structured output, system vs. user
+prompts, iterating on a result, and how the approach shifts by task type — and
+names no third-party AI product anywhere in its copy. That is the `/learn/*`
+shape, not the `/compare/*` or `/model-fit/*` shape, so `/prompts/*` is
+`ELIGIBLE`, same reasoning and same category (`ContentCategory.GUIDE`) as
+`/learn/*`. `FeedEligibility.PUBLISHABLE`, also matching `/learn/*`: evergreen
+editorial content with genuine publication semantics.
+
 **`reviewDate` is mandatory** for every cluster naming a third party, not just
 `/compare/*`. A comparison without a visible date is a claim with no expiry.
 
