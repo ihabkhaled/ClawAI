@@ -98,7 +98,13 @@
         "http://localhost:3000/en/use-cases/comparing-model-answers",
         "http://localhost:3000/en/use-cases/workspace-automation",
         "http://localhost:3000/en/use-cases/structured-data-extraction",
-        "http://localhost:3000/en/use-cases/private-and-local-deployment"
+        "http://localhost:3000/en/use-cases/private-and-local-deployment",
+        "http://localhost:3000/en/features/model-routing-and-orchestration",
+        "http://localhost:3000/en/features/memory-and-context",
+        "http://localhost:3000/en/features/workspace-connectors",
+        "http://localhost:3000/en/features/file-and-document-handling",
+        "http://localhost:3000/en/features/observability-and-transparency",
+        "http://localhost:3000/en/features/security-and-data-handling"
       ],
       "numberOfRuns": 2,
       "settings": {

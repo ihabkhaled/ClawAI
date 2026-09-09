@@ -1,3 +1,4 @@
+import { FEATURES_CLUSTER_PAGE_SEO_BY_LOCALE } from '@/constants/features-cluster-seo.constants';
 import { INTEGRATIONS_PAGE_SEO_BY_LOCALE } from '@/constants/integrations-seo.constants';
 import { LEARN_PAGE_SEO_BY_LOCALE } from '@/constants/learn-seo.constants';
 import { MODEL_FIT_PAGE_SEO_BY_LOCALE } from '@/constants/model-fit-seo.constants';
@@ -49,6 +50,7 @@ const CLUSTER_SEO_SOURCES: ReadonlyArray<LocaleSeoSource> = [
   MODELS_PAGE_SEO_BY_LOCALE,
   MODEL_FIT_PAGE_SEO_BY_LOCALE,
   USE_CASES_CLUSTER_PAGE_SEO_BY_LOCALE,
+  FEATURES_CLUSTER_PAGE_SEO_BY_LOCALE,
 ];
 
 /**

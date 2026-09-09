@@ -4,6 +4,10 @@ import {
   CONTENT_REGISTRY,
   PUBLIC_CONTENT_DEFINITIONS,
 } from '@/constants/content-registry.constants';
+import {
+  FEATURES_CAPABILITY_ORDER,
+  getFeatureCapabilityPath,
+} from '@/constants/features-cluster.constants';
 import { INTEGRATION_TOPIC_ORDER, getIntegrationPath } from '@/constants/integrations.constants';
 import { LEARN_TOPIC_ORDER, getLearnTopicPath } from '@/constants/learn.constants';
 import { MODEL_FIT_TASK_ORDER, getModelFitTaskPath } from '@/constants/model-fit.constants';
@@ -77,6 +81,7 @@ describe('content registry integrity', () => {
       ...MODEL_PROVIDER_ORDER.map(getModelProviderPath),
       ...MODEL_FIT_TASK_ORDER.map(getModelFitTaskPath),
       ...USE_CASES_TASK_ORDER.map(getUseCaseTaskPath),
+      ...FEATURES_CAPABILITY_ORDER.map(getFeatureCapabilityPath),
       '/',
       '/about',
       '/acceptable-use',
@@ -136,6 +141,7 @@ describe('getIndexablePages / getAdEligiblePages defense in depth', () => {
       [
         ...LEARN_TOPIC_ORDER.map(getLearnTopicPath),
         ...USE_CASES_TASK_ORDER.map(getUseCaseTaskPath),
+        ...FEATURES_CAPABILITY_ORDER.map(getFeatureCapabilityPath),
         '/',
         '/architecture',
         '/coding-agent',
@@ -200,7 +206,8 @@ describe('localized publication boundary', () => {
       MODEL_PROVIDER_ORDER.length +
       1 +
       MODEL_FIT_TASK_ORDER.length +
-      USE_CASES_TASK_ORDER.length;
+      USE_CASES_TASK_ORDER.length +
+      FEATURES_CAPABILITY_ORDER.length;
     expect(getPublishedPagesForLocale(Locale.EN).length).toBe(expectedCount);
     expect(getPublishedPagesForLocale(Locale.JA).length).toBe(expectedCount);
     expect(getPageBySlugAndLocale('features', Locale.EN)?.title.toLowerCase()).toContain(

@@ -33,7 +33,8 @@
         "http://localhost:3000/en/model-providers/openai",
         "http://localhost:3000/en/model-fit",
         "http://localhost:3000/en/model-fit/coding",
-        "http://localhost:3000/en/use-cases/coding-and-development"
+        "http://localhost:3000/en/use-cases/coding-and-development",
+        "http://localhost:3000/en/features/model-routing-and-orchestration"
       ],
       "numberOfRuns": 2,
       "settings": {

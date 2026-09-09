@@ -122,6 +122,11 @@
       "route": "/faq"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/features/[capability]/page.tsx",
+      "kind": "page",
+      "route": "/features/[capability]"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/features/page.tsx",
       "kind": "page",
       "route": "/features"

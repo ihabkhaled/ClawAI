@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 
+import { FeaturesCapabilityCardsSection } from '@/components/marketing/features/features-capability-cards-section';
 import { FeaturesCtaSection } from '@/components/marketing/features/features-cta-section';
 import { FeaturesFilesSection } from '@/components/marketing/features/features-files-section';
 import { FeaturesGenerationSection } from '@/components/marketing/features/features-generation-section';
@@ -22,6 +23,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildRequestPublicPageMetadata('features');
 }
 
+// `/features` becomes a hub here (F4 of the SEO content architecture doc):
+// same URL, no redirect, no lost equity. The existing nine sections below are
+// unchanged; `FeaturesCapabilityCardsSection` is the only addition, linking to
+// the 6 new `/features/<capability>` pages this batch adds.
 export default function FeaturesPage(): React.ReactElement {
   const entry = getPageBySlug('features');
   const lastReviewed = entry?.lastReviewed ?? '';
@@ -38,6 +43,7 @@ export default function FeaturesPage(): React.ReactElement {
       <FeaturesGenerationSection />
       <FeaturesObservabilitySection />
       <FeaturesSecuritySection />
+      <FeaturesCapabilityCardsSection />
       <FeaturesCtaSection />
     </>
   );

@@ -146,6 +146,44 @@ re-explaining a concept already covered by those clusters. The pre-existing
 legacy grid section (ten shorter jobs, `marketing-use-cases.constants.ts`) is
 unchanged; the new cluster is an additional "go deeper" section beneath it.
 
+**`/features` built 2026-09-09** — hub (unchanged URL, unchanged registry
+status) + 6 capability pages: `model-routing-and-orchestration`,
+`memory-and-context`, `workspace-connectors`, `file-and-document-handling`,
+`observability-and-transparency`, `security-and-data-handling`. The plan gave
+a starting split of 6 as a suggestion, not a fixed list; this split was
+verified against the actual code rather than applied as-is. It maps directly
+onto 6 of the 9 existing `/features` sections — `providers` is deliberately
+excluded (already its own `/model-providers` cluster) and `generation` is
+folded into `file-and-document-handling` rather than kept separate (it is one
+mechanism — image/document/research output — not a distinct capability area).
+`routing` and `orchestration` are merged into one page because `RoutingMode`
+(7 members: `AUTO`, `MANUAL_MODEL`, `LOCAL_ONLY`, `PRIVACY_FIRST`,
+`LOW_LATENCY`, `HIGH_REASONING`, `COST_SAVER`) and the `PaygSurface.ORCHESTRATION`
+"nine advanced orchestration labs" (Compare, Consensus, Escalation, Best-of-N,
+Repair, Verify, Role packs, Pipelines, Judge/Critic — confirmed against the
+`marketing.features.orchestration.*` and `marketing.features.routing.*` i18n
+keys) are one continuous mechanism: which model answers, and what happens
+when one model is not enough. Every other page is grounded the same way:
+`memory-and-context` in `PlanFeature.MEMORY` / `PlanFeature.CONTEXT_PACKS`;
+`workspace-connectors` in the 14 `WorkspaceProvider` members and
+`PaygSurface.WORKSPACE_ACTION`; `file-and-document-handling` in
+`PaygSurface.FILE_GENERATION` / `PaygSurface.IMAGE` and the
+`marketing.features.files.*` / `marketing.features.generation.*` i18n copy;
+`security-and-data-handling` in the literal mechanisms already shipped and
+described in `marketing.features.security.*` (Argon2, AES-256-GCM, TLS, RBAC,
+per-service database isolation) — explicitly not a compliance claim, mirroring
+that same i18n block's own "ClawAI holds no compliance certifications today"
+line. Every page cross-links to `/learn/*` rather than re-explaining a concept
+already covered there, and to `/use-cases/*` for the job-shaped version of the
+same capability. The pre-existing 9 sections on `/features`
+(`FeaturesHeroSection`, `FeaturesProvidersSection`, `FeaturesRoutingSection`,
+`FeaturesOrchestrationSection`, `FeaturesMemorySection`,
+`FeaturesFilesSection`, `FeaturesWorkspaceSection`,
+`FeaturesGenerationSection`, `FeaturesObservabilitySection`,
+`FeaturesSecuritySection`) are unchanged; the new cluster is an additional
+"go deeper" section (`FeaturesCapabilityCardsSection`) beneath them, same
+pattern as the `/use-cases` batch above.
+
 ### F5 — no topical clusters exist
 
 Nothing covers the informational half of the funnel: what model routing _is_,

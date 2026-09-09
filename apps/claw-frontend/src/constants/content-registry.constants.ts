@@ -1,5 +1,11 @@
 import { CODING_AGENT_INSTALL_PATH, CODING_AGENT_PATH } from '@/constants/coding-agent.constants';
 import {
+  FEATURES_REVIEW_DATE,
+  FEATURES_CAPABILITY_ORDER,
+  getFeatureCapabilityPath,
+  getFeatureCapabilitySlug,
+} from '@/constants/features-cluster.constants';
+import {
   INTEGRATIONS_HUB_PATH,
   INTEGRATIONS_HUB_SLUG,
   INTEGRATIONS_REVIEW_DATE,
@@ -412,6 +418,23 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     structuredDataType: StructuredDataType.FAQ_PAGE,
     relatedSlugs: ['use-cases', 'features', 'pricing'],
     reviewDate: USE_CASES_REVIEW_DATE,
+  })),
+  // The 6 new `/features/<capability>` children (ADR-084, fanned from the
+  // order array). The pre-existing `features` hub entry above is UNCHANGED —
+  // same URL, same PUBLISHED/REVIEWED/INDEXABLE status (F4 of the SEO content
+  // architecture doc: no redirect, no lost equity). Ad-ELIGIBLE per §8.2's
+  // explicit listing of `/features/*` as an eligible cluster. PUBLISHABLE feed
+  // eligibility, matching /learn, /model-fit and /use-cases: evergreen
+  // editorial content with genuine publication semantics.
+  ...FEATURES_CAPABILITY_ORDER.map((capability): PublishedContentConfig => ({
+    slug: getFeatureCapabilitySlug(capability),
+    path: getFeatureCapabilityPath(capability),
+    category: ContentCategory.FEATURES,
+    adEligibility: AdEligibility.ELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.FAQ_PAGE,
+    relatedSlugs: ['features', 'use-cases', 'pricing'],
+    reviewDate: FEATURES_REVIEW_DATE,
   })),
 ];
 
