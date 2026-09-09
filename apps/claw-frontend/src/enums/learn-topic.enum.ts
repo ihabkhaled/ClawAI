@@ -21,6 +21,7 @@ export enum LearnTopic {
   WHAT_ARE_EMBEDDINGS = 'what-are-embeddings',
   PROMPTING_VS_RAG_VS_FINE_TUNING = 'prompting-vs-rag-vs-fine-tuning',
   HOW_AI_TOOL_CALLING_WORKS = 'how-ai-tool-calling-works',
+  WHAT_ARE_STRUCTURED_AI_OUTPUTS = 'what-are-structured-ai-outputs',
   WHAT_IS_LLM_ORCHESTRATION = 'what-is-llm-orchestration',
   WHAT_IS_AI_MODEL_ROUTING = 'what-is-ai-model-routing',
   WHAT_IS_MULTI_MODEL_AI = 'what-is-multi-model-ai',

@@ -39,6 +39,8 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
         'Three different fixes for three different problems, and why many products never need the third.',
       [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]:
         'The model never runs anything — it proposes a call, and your application decides what happens next.',
+      [LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS]:
+        'Asking a model for JSON is a request; only some mechanisms actually guarantee it matches your schema.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Using several models in one workflow instead of committing to one.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -570,6 +572,90 @@ export const EN_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI exposes workspace connectors and other actions to models as callable tools during a chat request; a proposed call is validated against its schema before ClawAI executes anything against a real connector on your behalf.',
+    },
+    [LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS]: {
+      seo: {
+        title: 'What are structured AI outputs?',
+        description:
+          'Asking a model to answer in JSON is a request, not a guarantee — the response can still come back malformed. What actually constrains a model’s output, why some mechanisms enforce it and others just ask, and why validation still matters either way.',
+        keywords: [
+          'what are structured outputs',
+          'LLM JSON mode explained',
+          'schema-constrained AI generation',
+        ],
+      },
+      eyebrow: 'Foundations',
+      title: 'What are structured AI outputs?',
+      summary:
+        'A structured output is a model response shaped to fit a specific format — usually JSON matching a defined schema — instead of free-form prose, so code can parse it without guessing. The part that surprises people is that “ask the model to return JSON” and “the model is guaranteed to return valid JSON” are two different claims, and only some mechanisms actually deliver the second one.',
+      sections: [
+        {
+          id: 'what-structured-output-means',
+          heading: 'Structure means downstream code can rely on the shape',
+          paragraphs: [
+            'A structured output constrains a response to a defined shape — a fixed set of fields, specific types, an enum of allowed values — rather than a paragraph of prose. The point is not style; it is that a program reading the response can pull out a value at a known path instead of parsing sentences and guessing at meaning.',
+          ],
+        },
+        {
+          id: 'two-ways-to-ask-for-structure',
+          heading: 'There are two different ways to ask for it',
+          paragraphs: [
+            'The first is prompt-based: instructions tell the model to respond only in JSON matching a described shape. This works with essentially any model and needs no special API support, but it is a request the model can still ignore, get partly wrong, or wrap in explanatory text you did not ask for. The second is provider-enforced: some providers offer a mode, often called structured outputs or JSON mode, where generation itself is constrained so that only tokens consistent with the schema can be produced at each step. This is a stronger mechanism than an instruction, not just a stricter-sounding one — and it is a distinct feature from tool calling (see how tool calling works), which shapes the arguments to a named function rather than the model’s own answer.',
+          ],
+        },
+        {
+          id: 'a-prompt-instruction-is-a-request-not-a-guarantee',
+          heading: 'A prompt instruction is a request, not a guarantee',
+          paragraphs: [
+            'When structure comes only from prompt wording, the model can still produce output that does not match — an extra field, a missing one, prose before the JSON, a value of the wrong type. Any system relying on prompt-only structure needs a real plan for what happens when parsing fails, not an assumption that it never will.',
+          ],
+        },
+        {
+          id: 'provider-enforced-output-is-a-different-guarantee',
+          heading: 'Provider-enforced structure is a different kind of guarantee',
+          paragraphs: [
+            'Where a provider constrains generation directly against a schema, the output is far more reliably well-formed, because malformed tokens are excluded from being generated in the first place rather than merely discouraged. Exactly which providers and models support this, and how strictly, varies and changes over time — treat prompt-based structure and provider-enforced structure as different reliability tiers, not interchangeable ways to get the same result.',
+          ],
+        },
+        {
+          id: 'schema-design-still-affects-quality',
+          heading: 'A valid shape is not the same as a correct answer',
+          paragraphs: [
+            'Even with the strongest enforcement, the schema only constrains form, not meaning. A summary field can be syntactically valid JSON and still contain three rambling sentences instead of one, or a confidently wrong number in a field labeled as a count. A vague or overly permissive schema tends to produce technically valid output that is still unreliable to use.',
+          ],
+        },
+        {
+          id: 'validate-before-you-trust-it',
+          heading: 'Parsing successfully is not the same as being safe to trust',
+          paragraphs: [
+            'Whether structure came from a prompt or from provider enforcement, successfully parsing a response only confirms the shape was followed — it says nothing about whether field values are accurate, in range, or sensible. Treating a parsed object as verified data, rather than as a claim to check, is where structured-output systems most often go wrong in production.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Is a structured output the same thing as a tool call?',
+          answer:
+            'No. Tool calling proposes a named function and its arguments for your application to potentially execute; a structured output shapes the model’s own answer into a defined format. The two mechanisms can be used independently or together.',
+        },
+        {
+          question: 'Does asking a model for JSON in the prompt guarantee valid JSON back?',
+          answer:
+            'No. It is a request the model can still get wrong — extra text, a missing field, an incorrect type. Systems that rely only on prompt wording need a defined fallback for when parsing fails, not an assumption that it always succeeds.',
+        },
+        {
+          question: 'If a provider enforces a schema, is the result guaranteed correct?',
+          answer:
+            'It is guaranteed to be well-formed according to the schema — the right fields, the right types. It is not guaranteed that the values inside those fields are accurate or sensible; enforcement constrains shape, not truth.',
+        },
+        {
+          question: 'Do I still need to validate a structured response before using it?',
+          answer:
+            'Yes. Successfully parsing a response confirms the shape matched, not that the content is correct. Range checks, type checks, and sanity checks on the values remain necessary regardless of how the structure was produced.',
+        },
+      ],
+      productNote:
+        'ClawAI’s judge feature asks a model for a specific JSON shape through prompt instructions and falls back to a defined “parse failed” state rather than guessing when a response doesn’t match — a direct, working example that a schema requested in a prompt is a request, not a guarantee.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

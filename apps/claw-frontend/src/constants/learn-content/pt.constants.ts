@@ -39,6 +39,8 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
         'Três soluções diferentes para três problemas diferentes, e por que muitos produtos nunca precisam da terceira.',
       [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]:
         'O modelo nunca executa nada — ele propõe uma chamada, e sua aplicação decide o que acontece depois.',
+      [LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS]:
+        'Pedir JSON a um modelo é uma solicitação; só alguns mecanismos garantem de verdade que ele bate com seu esquema.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Usar vários modelos num mesmo fluxo em vez de se prender a um só.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -573,6 +575,90 @@ export const PT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'O ClawAI expõe conectores de workspace e outras ações aos modelos como ferramentas chamáveis durante uma requisição de chat; uma chamada proposta é validada contra seu esquema antes de o ClawAI executar qualquer coisa contra um conector real em seu nome.',
+    },
+    [LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS]: {
+      seo: {
+        title: 'O que são saídas estruturadas de IA?',
+        description:
+          'Pedir a um modelo que responda em JSON é uma solicitação, não uma garantia — a resposta ainda pode voltar malformada. O que realmente restringe a saída de um modelo, por que alguns mecanismos a impõem e outros só pedem, e por que a validação continua importando de qualquer jeito.',
+        keywords: [
+          'o que são saídas estruturadas',
+          'modo JSON de LLM explicado',
+          'geração de IA restrita por esquema',
+        ],
+      },
+      eyebrow: 'Fundamentos',
+      title: 'O que são saídas estruturadas de IA?',
+      summary:
+        'Uma saída estruturada é uma resposta do modelo moldada para caber num formato específico — geralmente JSON conforme um esquema definido — em vez de texto livre, para que o código consiga interpretá-la sem adivinhar. O que surpreende é que "pedir ao modelo para devolver JSON" e "o modelo garante devolver JSON válido" são duas afirmações diferentes, e só alguns mecanismos realmente entregam a segunda.',
+      sections: [
+        {
+          id: 'what-structured-output-means',
+          heading: 'Estrutura significa que o código downstream pode confiar no formato',
+          paragraphs: [
+            'Uma saída estruturada restringe uma resposta a um formato definido — um conjunto fixo de campos, tipos específicos, uma enumeração de valores permitidos — em vez de um parágrafo de texto livre. Não se trata de estilo; um programa que lê a resposta consegue extrair um valor num caminho conhecido em vez de analisar frases e adivinhar o significado.',
+          ],
+        },
+        {
+          id: 'two-ways-to-ask-for-structure',
+          heading: 'Há duas formas diferentes de pedir isso',
+          paragraphs: [
+            'A primeira é baseada em prompt: instruções dizem ao modelo para responder só em JSON conforme um formato descrito. Isso funciona com praticamente qualquer modelo e não precisa de suporte especial de API, mas é uma solicitação que o modelo ainda pode ignorar, fazer parcialmente errado, ou envolver em texto explicativo que você não pediu. A segunda é imposta pelo provedor: alguns provedores oferecem um modo, muitas vezes chamado de saídas estruturadas ou modo JSON, em que a própria geração é restrita para que só possam ser produzidos tokens compatíveis com o esquema a cada passo. Esse é um mecanismo mais forte que uma instrução, não só um que soa mais rígido — e é um recurso distinto da chamada de ferramentas (veja como funciona a chamada de ferramentas), que molda os argumentos de uma função nomeada em vez da própria resposta do modelo.',
+          ],
+        },
+        {
+          id: 'a-prompt-instruction-is-a-request-not-a-guarantee',
+          heading: 'Uma instrução no prompt é uma solicitação, não uma garantia',
+          paragraphs: [
+            'Quando a estrutura vem só da redação do prompt, o modelo ainda pode produzir uma saída que não bate — um campo a mais, um faltando, texto antes do JSON, um valor do tipo errado. Qualquer sistema que dependa só de estrutura via prompt precisa de um plano real para quando a interpretação falhar, não da suposição de que isso nunca vai acontecer.',
+          ],
+        },
+        {
+          id: 'provider-enforced-output-is-a-different-guarantee',
+          heading: 'Estrutura imposta pelo provedor é um tipo diferente de garantia',
+          paragraphs: [
+            'Quando um provedor restringe a geração diretamente contra um esquema, a saída fica muito mais confiavelmente bem formada, porque tokens malformados são excluídos de serem gerados desde o início, em vez de apenas desencorajados. Exatamente quais provedores e modelos suportam isso, e com que rigor, varia e muda com o tempo — trate estrutura via prompt e estrutura imposta pelo provedor como níveis de confiabilidade diferentes, não como formas intercambiáveis de chegar ao mesmo resultado.',
+          ],
+        },
+        {
+          id: 'schema-design-still-affects-quality',
+          heading: 'Um formato válido não é a mesma coisa que uma resposta correta',
+          paragraphs: [
+            'Mesmo com a aplicação mais forte, o esquema só restringe a forma, não o significado. Um campo de resumo pode ser JSON sintaticamente válido e mesmo assim conter três frases divagantes em vez de uma, ou um número errado afirmado com confiança num campo rotulado como contagem. Um esquema vago ou permissivo demais tende a produzir saída tecnicamente válida mas ainda assim pouco confiável de usar.',
+          ],
+        },
+        {
+          id: 'validate-before-you-trust-it',
+          heading: 'Interpretar com sucesso não é a mesma coisa que poder confiar',
+          paragraphs: [
+            'Quer a estrutura venha de um prompt ou da imposição do provedor, interpretar uma resposta com sucesso só confirma que o formato foi seguido — não diz nada sobre se os valores dos campos são precisos, estão dentro do intervalo ou fazem sentido. Tratar um objeto interpretado como dado verificado, em vez de como uma alegação a conferir, é onde os sistemas de saída estruturada mais falham em produção.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Uma saída estruturada é a mesma coisa que uma chamada de ferramenta?',
+          answer:
+            'Não. A chamada de ferramentas propõe uma função nomeada e seus argumentos para sua aplicação possivelmente executar; uma saída estruturada molda a própria resposta do modelo num formato definido. Os dois mecanismos podem ser usados separadamente ou juntos.',
+        },
+        {
+          question: 'Pedir JSON ao modelo no prompt garante receber JSON válido de volta?',
+          answer:
+            'Não. É uma solicitação que o modelo ainda pode errar — texto a mais, um campo faltando, um tipo incorreto. Sistemas que dependem só da redação do prompt precisam de um fallback definido para quando a interpretação falhar, não da suposição de que ela sempre vai funcionar.',
+        },
+        {
+          question: 'Se um provedor impõe um esquema, o resultado é garantidamente correto?',
+          answer:
+            'É garantido que fica bem formado de acordo com o esquema — os campos certos, os tipos certos. Não é garantido que os valores dentro desses campos sejam precisos ou façam sentido; a imposição restringe a forma, não a verdade.',
+        },
+        {
+          question: 'Ainda preciso validar uma resposta estruturada antes de usá-la?',
+          answer:
+            'Sim. Interpretar uma resposta com sucesso confirma que o formato bateu, não que o conteúdo está correto. Verificações de intervalo, tipo e sanidade dos valores continuam necessárias, independentemente de como a estrutura foi produzida.',
+        },
+      ],
+      productNote:
+        'O recurso de julgamento do ClawAI pede a um modelo um formato JSON específico por meio de instruções no prompt e recorre a um estado definido de "falha na interpretação" em vez de adivinhar quando uma resposta não bate — um exemplo direto e funcionando de que um esquema pedido num prompt é uma solicitação, não uma garantia.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

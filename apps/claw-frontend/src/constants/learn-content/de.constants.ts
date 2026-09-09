@@ -39,6 +39,8 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
         'Drei verschiedene Lösungen für drei verschiedene Probleme — und warum viele Produkte die dritte nie brauchen.',
       [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]:
         'Das Modell führt nie etwas aus — es schlägt einen Aufruf vor, und Ihre Anwendung entscheidet, was als Nächstes passiert.',
+      [LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS]:
+        'Ein Modell um JSON zu bitten ist eine Anfrage; nur manche Mechanismen garantieren wirklich, dass es zu Ihrem Schema passt.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Mehrere Modelle in einem Arbeitsablauf nutzen, statt sich auf eines festzulegen.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -576,6 +578,90 @@ export const DE_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI stellt Modellen Workspace-Connectoren und andere Aktionen während einer Chat-Anfrage als aufrufbare Tools bereit; ein vorgeschlagener Aufruf wird gegen sein Schema geprüft, bevor ClawAI in Ihrem Namen etwas gegen einen echten Connector ausführt.',
+    },
+    [LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS]: {
+      seo: {
+        title: 'Was sind strukturierte KI-Ausgaben?',
+        description:
+          'Ein Modell zu bitten, in JSON zu antworten, ist eine Anfrage, keine Garantie — die Antwort kann trotzdem fehlerhaft zurückkommen. Was eine Modellausgabe wirklich einschränkt, warum manche Mechanismen es erzwingen und andere nur bitten, und warum Validierung so oder so wichtig bleibt.',
+        keywords: [
+          'was sind strukturierte Ausgaben',
+          'LLM JSON-Modus erklärt',
+          'schema-eingeschränkte KI-Generierung',
+        ],
+      },
+      eyebrow: 'Grundlagen',
+      title: 'Was sind strukturierte KI-Ausgaben?',
+      summary:
+        'Eine strukturierte Ausgabe ist eine Modellantwort, die in ein bestimmtes Format passt — meist JSON gemäß einem definierten Schema — statt freier Fließtext, damit Code sie ohne Rätselraten parsen kann. Was Menschen überrascht: „das Modell bitten, JSON zurückzugeben“ und „das Modell garantiert gültiges JSON“ sind zwei verschiedene Aussagen, und nur manche Mechanismen liefern tatsächlich die zweite.',
+      sections: [
+        {
+          id: 'what-structured-output-means',
+          heading: 'Struktur bedeutet, dass sich nachgelagerter Code auf die Form verlassen kann',
+          paragraphs: [
+            'Eine strukturierte Ausgabe zwingt eine Antwort in eine definierte Form — feste Felder, bestimmte Typen, eine Aufzählung erlaubter Werte — statt eines Fließtextabsatzes. Es geht nicht um Stil; ein Programm, das die Antwort liest, kann einen Wert an einem bekannten Pfad abgreifen, statt Sätze zu parsen und die Bedeutung zu erraten.',
+          ],
+        },
+        {
+          id: 'two-ways-to-ask-for-structure',
+          heading: 'Es gibt zwei verschiedene Wege, danach zu fragen',
+          paragraphs: [
+            'Der erste ist promptbasiert: Anweisungen sagen dem Modell, ausschließlich in JSON gemäß einer beschriebenen Form zu antworten. Das funktioniert mit praktisch jedem Modell und braucht keine besondere API-Unterstützung, ist aber eine Anfrage, die das Modell weiterhin ignorieren, teilweise falsch machen oder in nicht angeforderten Erklärtext einwickeln kann. Der zweite ist anbieterseitig erzwungen: Manche Anbieter bieten einen Modus, oft strukturierte Ausgaben oder JSON-Modus genannt, bei dem die Generierung selbst so eingeschränkt wird, dass bei jedem Schritt nur schemakonforme Token erzeugt werden können. Das ist ein stärkerer Mechanismus als eine Anweisung, nicht nur ein strenger klingender — und es ist ein eigenständiges Feature gegenüber Tool-Aufruf (siehe Wie funktioniert Tool-Aufruf?), der die Argumente einer benannten Funktion formt, nicht die eigentliche Antwort des Modells.',
+          ],
+        },
+        {
+          id: 'a-prompt-instruction-is-a-request-not-a-guarantee',
+          heading: 'Eine Prompt-Anweisung ist eine Anfrage, keine Garantie',
+          paragraphs: [
+            'Kommt Struktur nur aus der Prompt-Formulierung, kann das Modell weiterhin eine nicht passende Ausgabe erzeugen — ein zusätzliches Feld, ein fehlendes, Fließtext vor dem JSON, einen Wert falschen Typs. Jedes System, das sich allein auf Prompt-Struktur verlässt, braucht einen echten Plan für den Fall, dass das Parsen fehlschlägt, nicht die Annahme, dass es nie passiert.',
+          ],
+        },
+        {
+          id: 'provider-enforced-output-is-a-different-guarantee',
+          heading: 'Anbieterseitig erzwungene Struktur ist eine andere Art von Garantie',
+          paragraphs: [
+            'Erzwingt ein Anbieter die Generierung direkt gegen ein Schema, ist die Ausgabe weit zuverlässiger wohlgeformt, weil fehlerhafte Token von vornherein von der Erzeugung ausgeschlossen sind, statt nur davon abgeraten zu werden. Welche Anbieter und Modelle genau das unterstützen und wie strikt, variiert und ändert sich mit der Zeit — behandeln Sie promptbasierte und anbieterseitig erzwungene Struktur als unterschiedliche Zuverlässigkeitsstufen, nicht als austauschbare Wege zum selben Ergebnis.',
+          ],
+        },
+        {
+          id: 'schema-design-still-affects-quality',
+          heading: 'Eine gültige Form ist nicht dasselbe wie eine richtige Antwort',
+          paragraphs: [
+            'Selbst bei stärkster Durchsetzung schränkt das Schema nur die Form ein, nicht die Bedeutung. Ein summary-Feld kann syntaktisch gültiges JSON sein und trotzdem drei ausschweifende Sätze statt einem enthalten, oder eine überzeugt falsche Zahl in einem als Zähler bezeichneten Feld. Ein vages oder zu großzügiges Schema erzeugt tendenziell technisch gültige, aber weiterhin unzuverlässig nutzbare Ausgaben.',
+          ],
+        },
+        {
+          id: 'validate-before-you-trust-it',
+          heading: 'Erfolgreiches Parsen ist nicht dasselbe wie vertrauenswürdig',
+          paragraphs: [
+            'Ob Struktur aus einem Prompt oder aus anbieterseitiger Durchsetzung stammt — eine erfolgreich geparste Antwort bestätigt nur, dass die Form eingehalten wurde, nicht ob die Feldwerte korrekt, im gültigen Bereich oder sinnvoll sind. Ein geparstes Objekt als geprüfte Daten statt als zu prüfende Behauptung zu behandeln ist der häufigste Fehler von strukturierten Ausgabesystemen im Produktivbetrieb.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Ist eine strukturierte Ausgabe dasselbe wie ein Tool-Aufruf?',
+          answer:
+            'Nein. Tool-Aufruf schlägt eine benannte Funktion und ihre Argumente vor, die Ihre Anwendung möglicherweise ausführt; eine strukturierte Ausgabe formt die eigentliche Antwort des Modells in ein definiertes Format. Beide Mechanismen können unabhängig oder zusammen genutzt werden.',
+        },
+        {
+          question: 'Garantiert die Bitte um JSON im Prompt, dass gültiges JSON zurückkommt?',
+          answer:
+            'Nein. Es ist eine Anfrage, die das Modell weiterhin falsch machen kann — zusätzlicher Text, ein fehlendes Feld, ein falscher Typ. Systeme, die sich allein auf die Prompt-Formulierung verlassen, brauchen einen definierten Rückfall für den Fall eines Parse-Fehlers, nicht die Annahme, dass er immer gelingt.',
+        },
+        {
+          question: 'Ist das Ergebnis garantiert korrekt, wenn ein Anbieter ein Schema erzwingt?',
+          answer:
+            'Es ist garantiert wohlgeformt gemäß dem Schema — die richtigen Felder, die richtigen Typen. Nicht garantiert ist, dass die Werte in diesen Feldern korrekt oder sinnvoll sind; Erzwingung schränkt die Form ein, nicht die Wahrheit.',
+        },
+        {
+          question: 'Muss ich eine strukturierte Antwort trotzdem validieren, bevor ich sie nutze?',
+          answer:
+            'Ja. Erfolgreiches Parsen bestätigt, dass die Form passte, nicht dass der Inhalt korrekt ist. Bereichs-, Typ- und Plausibilitätsprüfungen der Werte bleiben nötig, unabhängig davon, wie die Struktur erzeugt wurde.',
+        },
+      ],
+      productNote:
+        'ClawAIs Judge-Funktion bittet ein Modell per Prompt-Anweisung um eine bestimmte JSON-Form und fällt auf einen definierten „Parsen fehlgeschlagen“-Zustand zurück, statt zu raten, wenn eine Antwort nicht passt — ein direktes, funktionierendes Beispiel dafür, dass ein in einem Prompt angefordertes Schema eine Anfrage ist, keine Garantie.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {

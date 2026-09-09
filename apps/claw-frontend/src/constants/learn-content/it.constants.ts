@@ -39,6 +39,8 @@ export const IT_LEARN_CONTENT: LearnDictionary = {
         'Tre soluzioni diverse per tre problemi diversi, e perché molti prodotti non hanno mai bisogno della terza.',
       [LearnTopic.HOW_AI_TOOL_CALLING_WORKS]:
         'Il modello non esegue mai nulla — propone una chiamata, e la tua applicazione decide cosa succede dopo.',
+      [LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS]:
+        'Chiedere JSON a un modello è una richiesta; solo alcuni meccanismi garantiscono davvero che corrisponda al tuo schema.',
       [LearnTopic.WHAT_IS_MULTI_MODEL_AI]:
         'Usare più modelli in un unico flusso invece di legarsi a uno solo.',
       [LearnTopic.WHAT_IS_LLM_ORCHESTRATION]:
@@ -574,6 +576,90 @@ export const IT_LEARN_CONTENT: LearnDictionary = {
       ],
       productNote:
         'ClawAI espone connettori del workspace e altre azioni ai modelli come strumenti richiamabili durante una richiesta di chat; una chiamata proposta viene validata rispetto al suo schema prima che ClawAI esegua qualsiasi cosa contro un connettore reale per tuo conto.',
+    },
+    [LearnTopic.WHAT_ARE_STRUCTURED_AI_OUTPUTS]: {
+      seo: {
+        title: 'Cosa sono gli output strutturati dell’IA?',
+        description:
+          'Chiedere a un modello di rispondere in JSON è una richiesta, non una garanzia: la risposta può comunque tornare malformata. Cosa vincola davvero l’output di un modello, perché alcuni meccanismi lo impongono e altri si limitano a chiederlo, e perché la convalida resta importante in entrambi i casi.',
+        keywords: [
+          'cosa sono gli output strutturati',
+          'modalità JSON degli LLM spiegata',
+          'generazione IA vincolata da schema',
+        ],
+      },
+      eyebrow: 'Fondamenti',
+      title: 'Cosa sono gli output strutturati dell’IA?',
+      summary:
+        'Un output strutturato è una risposta del modello modellata secondo un formato specifico — di solito JSON conforme a uno schema definito — invece di prosa libera, così il codice può analizzarla senza indovinare. Ciò che sorprende è che "chiedere al modello di restituire JSON" e "il modello garantisce di restituire JSON valido" sono due affermazioni diverse, e solo alcuni meccanismi mantengono davvero la seconda.',
+      sections: [
+        {
+          id: 'what-structured-output-means',
+          heading: 'Struttura significa che il codice a valle può fidarsi della forma',
+          paragraphs: [
+            'Un output strutturato vincola una risposta a una forma definita — un insieme fisso di campi, tipi specifici, un’enumerazione di valori consentiti — invece di un paragrafo di prosa. Non è una questione di stile; un programma che legge la risposta può estrarre un valore da un percorso noto invece di analizzare frasi e indovinarne il significato.',
+          ],
+        },
+        {
+          id: 'two-ways-to-ask-for-structure',
+          heading: 'Ci sono due modi diversi per richiederla',
+          paragraphs: [
+            'Il primo è basato sul prompt: le istruzioni dicono al modello di rispondere solo in JSON secondo una forma descritta. Funziona con praticamente qualsiasi modello e non richiede supporto API speciale, ma è una richiesta che il modello può comunque ignorare, eseguire parzialmente in modo sbagliato, o avvolgere in testo esplicativo non richiesto. Il secondo è imposto dal fornitore: alcuni fornitori offrono una modalità, spesso chiamata output strutturati o modalità JSON, in cui la generazione stessa è vincolata in modo che a ogni passo possano essere prodotti solo token conformi allo schema. È un meccanismo più forte di un’istruzione, non solo uno che suona più rigido — ed è una funzionalità distinta dalla chiamata di strumenti (vedi come funziona la chiamata di strumenti), che modella gli argomenti di una funzione con nome invece della risposta del modello stesso.',
+          ],
+        },
+        {
+          id: 'a-prompt-instruction-is-a-request-not-a-guarantee',
+          heading: 'Un’istruzione nel prompt è una richiesta, non una garanzia',
+          paragraphs: [
+            'Quando la struttura arriva solo dalla formulazione del prompt, il modello può comunque produrre un output che non corrisponde — un campo in più, uno mancante, prosa prima del JSON, un valore del tipo sbagliato. Qualsiasi sistema che si affida solo alla struttura via prompt ha bisogno di un piano reale per quando l’analisi fallisce, non del presupposto che non accadrà mai.',
+          ],
+        },
+        {
+          id: 'provider-enforced-output-is-a-different-guarantee',
+          heading: 'La struttura imposta dal fornitore è un tipo diverso di garanzia',
+          paragraphs: [
+            'Quando un fornitore vincola la generazione direttamente rispetto a uno schema, l’output è molto più affidabilmente ben formato, perché i token malformati sono esclusi dalla generazione fin dall’inizio invece di essere semplicemente scoraggiati. Quali fornitori e modelli esattamente lo supportino, e con quanto rigore, varia e cambia nel tempo — tratta la struttura via prompt e quella imposta dal fornitore come livelli di affidabilità diversi, non come modi intercambiabili per ottenere lo stesso risultato.',
+          ],
+        },
+        {
+          id: 'schema-design-still-affects-quality',
+          heading: 'Una forma valida non è la stessa cosa di una risposta corretta',
+          paragraphs: [
+            'Anche con l’applicazione più rigida, lo schema vincola solo la forma, non il significato. Un campo di riepilogo può essere JSON sintatticamente valido e contenere comunque tre frasi divaganti invece di una, o un numero sbagliato affermato con sicurezza in un campo etichettato come conteggio. Uno schema vago o troppo permissivo tende a produrre output tecnicamente valido ma comunque inaffidabile da usare.',
+          ],
+        },
+        {
+          id: 'validate-before-you-trust-it',
+          heading: 'Analizzare con successo non è la stessa cosa di potersi fidare',
+          paragraphs: [
+            'Che la struttura provenga da un prompt o dall’imposizione del fornitore, analizzare con successo una risposta conferma solo che la forma è stata rispettata — non dice nulla sul fatto che i valori dei campi siano accurati, nell’intervallo giusto o sensati. Trattare un oggetto analizzato come dato verificato, invece che come affermazione da controllare, è dove i sistemi di output strutturato falliscono più spesso in produzione.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Un output strutturato è la stessa cosa di una chiamata di strumento?',
+          answer:
+            'No. La chiamata di strumenti propone una funzione con nome e i suoi argomenti che la tua applicazione può eventualmente eseguire; un output strutturato modella la risposta del modello stesso secondo un formato definito. I due meccanismi possono essere usati separatamente o insieme.',
+        },
+        {
+          question: 'Chiedere JSON al modello nel prompt garantisce di ricevere JSON valido?',
+          answer:
+            'No. È una richiesta che il modello può comunque sbagliare — testo in più, un campo mancante, un tipo scorretto. I sistemi che si affidano solo alla formulazione del prompt hanno bisogno di un fallback definito per quando l’analisi fallisce, non del presupposto che riesca sempre.',
+        },
+        {
+          question: 'Se un fornitore impone uno schema, il risultato è garantito corretto?',
+          answer:
+            'È garantito ben formato secondo lo schema — i campi giusti, i tipi giusti. Non è garantito che i valori all’interno di quei campi siano accurati o sensati; l’imposizione vincola la forma, non la verità.',
+        },
+        {
+          question: 'Devo comunque validare una risposta strutturata prima di usarla?',
+          answer:
+            'Sì. Analizzare con successo una risposta conferma che la forma corrispondeva, non che il contenuto sia corretto. I controlli di intervallo, di tipo e di ragionevolezza dei valori restano necessari, indipendentemente da come è stata prodotta la struttura.',
+        },
+      ],
+      productNote:
+        'La funzione judge di ClawAI chiede a un modello una forma JSON specifica tramite istruzioni nel prompt e ricade su uno stato definito di "analisi fallita" invece di indovinare quando una risposta non corrisponde — un esempio diretto e funzionante che uno schema richiesto in un prompt è una richiesta, non una garanzia.',
     },
     [LearnTopic.WHAT_IS_MULTI_MODEL_AI]: {
       seo: {
