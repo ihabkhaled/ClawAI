@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { QUERY_POLL_LIVE_MS } from '@/constants/query-policy.constants';
 import { fileDeliveryRepository } from '@/repositories/chat/file-delivery.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { FileDeliveryEntry, UseFileDeliveryOptions, UseFileDeliveryResult } from '@/types';
@@ -18,6 +19,8 @@ export function useFileDelivery(
   const enabled = opts?.enabled !== false && messageId.length > 0;
   const query = useQuery<FileDeliveryEntry[]>({
     queryKey: queryKeys.chat.fileDelivery(messageId),
+    // The generation SSE listener writes to component state and never invalidates this key, so it has no event feed of its own.
+    refetchInterval: QUERY_POLL_LIVE_MS,
     queryFn: () => fileDeliveryRepository.getFileDeliveryForMessage(messageId),
     enabled,
     retry: false,

@@ -47,7 +47,36 @@ data is stale. This rule governs the data layer between hooks and the API.
    named function**, not by hand at each call site. `invalidateThreadMessages`
    is the example. Two invalidations written out three times is three chances
    to write one of them.
-10. **A query that refetches on a timer must forward its `AbortSignal`.**
+10. **Polling is opt-in, per query, and named.** There is no global
+    `refetchInterval` and there must never be one again: in TanStack v5 it
+    ignores `staleTime`, so a global timer polls pure configuration, the
+    signed-in user's profile, and endpoints that answer 502 wherever an optional
+    local runtime is absent. Measured cost of the one that existed: ~83 requests
+    per minute on an idle chat page.
+
+    Classify each query by one question — _can this data change without the
+    person looking at it doing anything, and are they expected to watch it
+    change?_ — and use the matching tier from
+    `constants/query-policy.constants.ts`:
+
+    | Tier           | Both true?                                | Setting                                          |
+    | -------------- | ----------------------------------------- | ------------------------------------------------ |
+    | **LIVE**       | yes and yes                               | `QUERY_POLL_LIVE_MS` / `QUERY_POLL_LIVE_SLOW_MS` |
+    | **BACKGROUND** | changes, but nobody waits on a row        | `QUERY_POLL_BACKGROUND_MS`                       |
+    | **EVENT**      | no — a mutation or an SSE event causes it | no interval; invalidate                          |
+    | **CONFIG**     | reference data                            | `QUERY_STALE_CONFIG_MS`, no interval             |
+    | **SESSION**    | own profile / entitlements / wallet       | `QUERY_STALE_SESSION_MS`                         |
+
+    Never a bare number. `refetchInterval: 5000` is a value nobody can grep for
+    and nobody can change in one place; the tier carries the reasoning.
+
+    **Removing a poll is dangerous in one specific way**: a LIVE query with no
+    interval goes stale with no error, no failed render and no console warning.
+    Before removing any timer, ask what tells this view its data changed. If the
+    answer is "nothing", it is LIVE and needs an interval — see rule 8 for the
+    case where the answer _looked_ like an invalidation and was not.
+
+11. **A query that refetches on a timer must forward its `AbortSignal`.**
     `invalidateQueries` defaults to `cancelRefetch: true`, so a tick that lands
     mid-flight abandons the previous request — and without the signal
     "abandons" means the response is ignored while the request completes
@@ -63,6 +92,10 @@ data is stale. This rule governs the data layer between hooks and the API.
 - An invalidation key that does not prefix-match any key a mounted query uses.
 - A second cached view of a resource with no single function invalidating both.
 - A polling or interval-refetched query whose `queryFn` drops the `signal`.
+- A global `refetchInterval` on the QueryClient, at any value.
+- `refetchInterval` written as a literal number instead of a tier constant.
+- Removing a timer from a query whose data changes server-side, without adding
+  another mechanism that tells it so.
 - A `setInterval` that invalidates a query. The query owns its own
   `refetchInterval`; a timer beside it is a second driver that beats against
   the first.
@@ -94,6 +127,11 @@ export function useThreads() {
   match each other, that the old key matched neither, and that the helper
   invalidates both. The original bug was invisible at every other level, because
   the mutation ran and the invalidation ran.
+- **Unit test** — `src/app/__tests__/query-policy.test.ts` asserts that the
+  QueryClient sets no global `refetchInterval`, that the default `staleTime` is
+  the named constant, and that every query on the LIVE list still declares an
+  interval from a tier. That list is the record of which views break silently if
+  their timer is dropped.
 - **Unit test** — `src/hooks/chat/__tests__/use-thread-detail.test.tsx` asserts
   no invalidation happens on a timer while a response is in flight, and that the
   wait ends at its deadline.

@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
+import { QUERY_POLL_BACKGROUND_MS } from '@/constants/query-policy.constants';
 import { UserRole } from '@/enums';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useTranslation } from '@/lib/i18n';
@@ -23,6 +24,8 @@ export function useRuntimeProgressPage(localAiEnabled: boolean): UseRuntimeProgr
 
   const ollamaQuery = useQuery({
     queryKey: queryKeys.runtimeProgress.ollamaProbe(),
+    // This page sets refetchOnWindowFocus:false, so without an interval the manual refresh button would be its only update path.
+    refetchInterval: QUERY_POLL_BACKGROUND_MS,
     queryFn: () => getOllamaProbeReport(),
     enabled: isAdmin && localAiEnabled,
     staleTime: 30_000,
@@ -31,6 +34,8 @@ export function useRuntimeProgressPage(localAiEnabled: boolean): UseRuntimeProgr
 
   const llamacppQuery = useQuery({
     queryKey: queryKeys.runtimeProgress.llamacppProbe(),
+    // This page sets refetchOnWindowFocus:false, so without an interval the manual refresh button would be its only update path.
+    refetchInterval: QUERY_POLL_BACKGROUND_MS,
     queryFn: () => getLlamacppProbeReport(),
     enabled: isAdmin && localAiEnabled,
     staleTime: 30_000,

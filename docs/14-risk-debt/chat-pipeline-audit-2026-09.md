@@ -38,7 +38,7 @@ is the procedure.
 
 ---
 
-## A. Idle network traffic
+## A. Idle network traffic — **FIXED 2026-09-10**
 
 **The whole of it is one line.**
 
@@ -75,6 +75,21 @@ knowledge existed; the default did not change.
 
 `/health` at 30 s (`use-service-availability.ts:14`) is the one deliberate poll
 in the set and the smallest contributor.
+
+> **Fixed.** The global `refetchInterval` is gone and the default `staleTime` is
+> now 60 s rather than 5 s. Polling is opt-in per query from a named tier in
+> `constants/query-policy.constants.ts`. Twenty-six queries whose data genuinely
+> changes server-side were identified first and given explicit intervals, so
+> nothing froze silently — that list is asserted in
+> `app/__tests__/query-policy.test.ts`.
+>
+> `/files` (A2) got a **conditional** interval rather than a fixed one: it polls
+> only while a file is mid-ingestion, because the response is 4.2 MB and the
+> common case is that every file is already ingested.
+>
+> Measured on the same page, idle for 38 s: **1 request, `/health`** — the one
+> deliberate poll. **83 requests/minute → 2.** `/files` server-side
+> serialisations per idle minute: **6 → 0**.
 
 ---
 
@@ -551,9 +566,17 @@ callers.
 | Finding        | Landed     | Effect measured on the same page                                                                                                                                 |
 | -------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | B2, B3, B4, B7 | 2026-09-10 | Thread re-downloads while waiting: **30/min → 12/min**, at a single clean 5 s cadence with no duplicate pairs. The 10-minute re-arming loop can no longer recur. |
+| A1, A2         | 2026-09-10 | Idle requests: **83/min → 2/min** (−98%), the survivor being the deliberate 30 s health poll. `/files` 4.2 MB serialisations: **6/min → 0**.                     |
 
-Everything else below is open. The remaining idle traffic is dominated by A1,
-which is the next batch.
+**Targets T1 and T3 are met**; T4 is met for the idle case. Sections C, D and E
+are open. D1 is the next batch: the stale-`DONE` replay race, which is the
+engine behind the stream aborts and the phantom CORS errors.
+
+A measurement caveat worth keeping: an idle reading of _zero_ is as likely to
+mean the page failed to hydrate as it is to mean success. The first attempt at
+this measurement returned 0 requests because a stale chunk 404'd and left the
+app on "Authenticating…". Always confirm the page actually rendered before
+believing a low number.
 
 ## Sequencing
 

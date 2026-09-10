@@ -1,14 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 
-import { auditRepository } from "@/repositories/audit/audit.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
-import { logger } from "@/utilities";
+import { QUERY_POLL_BACKGROUND_MS } from '@/constants/query-policy.constants';
+import { auditRepository } from '@/repositories/audit/audit.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import { logger } from '@/utilities';
 
 export function useAuditStats() {
   const query = useQuery({
     queryKey: queryKeys.audits.stats,
+    // A dashboard counter.
+    refetchInterval: QUERY_POLL_BACKGROUND_MS,
     queryFn: () => {
-      logger.debug({ component: 'audit', action: 'fetch-audit-stats', message: 'Fetching audit statistics' });
+      logger.debug({
+        component: 'audit',
+        action: 'fetch-audit-stats',
+        message: 'Fetching audit statistics',
+      });
       return auditRepository.getAuditStats();
     },
   });

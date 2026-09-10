@@ -5,6 +5,7 @@ import {
   WEBHOOK_FETCH_LIMIT,
   WEBHOOK_FILTER_DEBOUNCE_MS,
 } from '@/constants/admin-webhooks.constants';
+import { QUERY_POLL_LIVE_SLOW_MS } from '@/constants/query-policy.constants';
 import { useDebounce } from '@/hooks/common/use-debounce';
 import { useTranslation } from '@/lib/i18n';
 import {
@@ -36,6 +37,8 @@ export function useWebhookDeliveriesPage(): UseWebhookDeliveriesPageResult {
 
   const query = useQuery({
     queryKey: queryKeys.webhookDeliveries.list(filterKey),
+    // Delivery attempts and retry outcomes advance server-side.
+    refetchInterval: QUERY_POLL_LIVE_SLOW_MS,
     queryFn: () => listWebhookDeliveries({ ...debouncedFilter, limit: WEBHOOK_FETCH_LIMIT }),
     staleTime: 30_000,
   });

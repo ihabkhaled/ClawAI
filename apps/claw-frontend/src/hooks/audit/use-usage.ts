@@ -1,15 +1,23 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 
-import { auditRepository } from "@/repositories/audit/audit.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
-import type { UsageListParams } from "@/types";
-import { logger } from "@/utilities";
+import { QUERY_POLL_BACKGROUND_MS } from '@/constants/query-policy.constants';
+import { auditRepository } from '@/repositories/audit/audit.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import type { UsageListParams } from '@/types';
+import { logger } from '@/utilities';
 
 export function useUsage(params: UsageListParams) {
   const query = useQuery({
     queryKey: queryKeys.usage.list(params as Record<string, unknown>),
+    // A dashboard counter.
+    refetchInterval: QUERY_POLL_BACKGROUND_MS,
     queryFn: () => {
-      logger.debug({ component: 'audit', action: 'fetch-usage', message: 'Fetching usage data', details: { page: params.page } });
+      logger.debug({
+        component: 'audit',
+        action: 'fetch-usage',
+        message: 'Fetching usage data',
+        details: { page: params.page },
+      });
       return auditRepository.getUsage(params);
     },
   });

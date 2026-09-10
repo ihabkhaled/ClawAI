@@ -36,8 +36,10 @@ Last updated: 2026-09-10
 - **Progress**: B2/B3/B4/B7 landed 2026-09-10 — the 2-second full-thread poll,
   the duplicate simultaneous fetch, the self-arming wait loop and the dead
   invalidation key. Thread re-downloads while waiting went 30/min to 12/min at a
-  single clean 5s cadence. Everything else is open; A1 (the global
-  `refetchInterval`) is next and dominates the remaining idle traffic.
+  single clean 5s cadence. A1/A2 landed the same day: the global
+  `refetchInterval` is removed in favour of named freshness tiers, taking idle
+  traffic from 83 to 2 requests per minute. Sections C (telemetry batching),
+  D (streaming) and E (URL fetch and source truthfulness) remain open.
 - **Full entry**: [`technical-debt-register.md`](technical-debt-register.md) TD-030.
 
 ---

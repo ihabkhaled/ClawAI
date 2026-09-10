@@ -61,8 +61,10 @@ export function useModelCatalog(params: CatalogFilterParams) {
       return undefined;
     },
     // Ollama is an OPTIONAL local runtime; a deployment without it answers 502
-    // on every call. Without these, the app-wide 10s refetchInterval default
-    // (providers.tsx) polls a permanently-502ing endpoint forever.
+    // on every call, so it fails fast and is never polled.
+    // The `refetchInterval: false` below is now the default and is kept as a
+    // statement of intent: this endpoint is never polled. It used to be load-
+    // bearing, because a global 10s interval polled every query in the app.
     retry: false,
     refetchInterval: false,
   });

@@ -11,9 +11,10 @@ export function useRuntimeInfo(): UseQueryResult<RuntimeInfo, Error> {
     queryKey: queryKeys.localFrontier.runtimeInfo(),
     queryFn: () => localFrontierRepository.getRuntimeInfo(),
     staleTime: 60_000,
-    // See use-frontier-catalog.ts: optional runtime, fail fast. retry:false alone
-    // does not stop the app-wide 10s refetchInterval default (providers.tsx) from
-    // polling a permanently-502ing endpoint forever, so it must be disabled here too.
+    // See use-frontier-catalog.ts: optional runtime, fail fast.
+    // The `refetchInterval: false` below is now the default and is kept as a
+    // statement of intent: this endpoint is never polled. It used to be load-
+    // bearing, because a global 10s interval polled every query in the app.
     retry: false,
     refetchInterval: false,
   });

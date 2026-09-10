@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { QUERY_POLL_LIVE_MS } from '@/constants/query-policy.constants';
 import { routingRepository } from '@/repositories/routing/routing.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 
 export function useReplayRuns() {
   const query = useQuery({
     queryKey: queryKeys.replay.runs.list(),
+    // Replay run status advances server-side.
+    refetchInterval: QUERY_POLL_LIVE_MS,
     queryFn: () => routingRepository.getReplayRuns(),
   });
 

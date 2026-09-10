@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { QUERY_POLL_BACKGROUND_MS } from '@/constants/query-policy.constants';
 import { serverLogsRepository } from '@/repositories/logs/server-logs.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { ServerLogsListParams } from '@/types';
@@ -8,8 +9,15 @@ import { logger } from '@/utilities';
 export function useServerLogs(params: ServerLogsListParams) {
   const query = useQuery({
     queryKey: queryKeys.serverLogs.list(params as Record<string, unknown>),
+    // A log tail.
+    refetchInterval: QUERY_POLL_BACKGROUND_MS,
     queryFn: () => {
-      logger.debug({ component: 'audit', action: 'fetch-server-logs', message: 'Fetching server logs', details: { page: params.page } });
+      logger.debug({
+        component: 'audit',
+        action: 'fetch-server-logs',
+        message: 'Fetching server logs',
+        details: { page: params.page },
+      });
       return serverLogsRepository.getLogs(params);
     },
   });

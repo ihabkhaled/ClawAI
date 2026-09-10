@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
+import { QUERY_POLL_LIVE_SLOW_MS } from '@/constants/query-policy.constants';
 import { useEmailChangeCooldown } from '@/hooks/settings/use-email-change-cooldown';
 import { useEmailChangeForms } from '@/hooks/settings/use-email-change-forms';
 import { useEmailChangeMutations } from '@/hooks/settings/use-email-change-mutations';
@@ -15,6 +16,8 @@ export const useEmailChange = (): UseEmailChangeReturn => {
   const { request, verifyCurrent, resend, cancel } = useEmailChangeMutations();
   const pendingQuery = useQuery({
     queryKey: queryKeys.auth.emailChange,
+    // The user confirms in their mail client, on another device. Genuinely out of band for this tab.
+    refetchInterval: QUERY_POLL_LIVE_SLOW_MS,
     queryFn: () => emailChangeService.getPending(),
   });
   const pendingState = pendingQuery.data ?? null;

@@ -20,8 +20,7 @@ export function useLocalModelsPage() {
   const { assignRole, isPending: isAssignPending } = useAssignRole();
 
   // Ollama is an OPTIONAL local runtime; a deployment without it answers 502 on
-  // every call, so these must opt out of the app-wide 10s refetchInterval
-  // default (providers.tsx) or they poll a permanently-502ing endpoint forever.
+  // every call, so these fail fast and are never polled.
   const runtimesQuery = useQuery({
     queryKey: queryKeys.runtimes.all,
     queryFn: () => ollamaRepository.getRuntimes(),

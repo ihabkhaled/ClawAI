@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { QUERY_POLL_LIVE_SLOW_MS } from '@/constants/query-policy.constants';
+
 import { listActivityEntries } from '../../repositories/agent/activity-memory.repository';
 import { queryKeys } from '../../repositories/shared/query-keys';
 import type { UseActivityMemoryPageReturn } from '../../types/activity-memory.types';
@@ -8,6 +10,8 @@ export function useActivityMemoryPage(): UseActivityMemoryPageReturn {
   const filter = { page: 1, pageSize: 100 };
   const { data, isLoading, isError, error } = useQuery({
     queryKey: queryKeys.agentActivityMemory.list(filter),
+    // An agent-written stream that grows without user action.
+    refetchInterval: QUERY_POLL_LIVE_SLOW_MS,
     queryFn: () => listActivityEntries(filter),
   });
 

@@ -1,30 +1,43 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 
-import { auditRepository } from "@/repositories/audit/audit.repository";
-import { queryKeys } from "@/repositories/shared/query-keys";
-import { logger } from "@/utilities";
+import { QUERY_POLL_BACKGROUND_MS } from '@/constants/query-policy.constants';
+import { auditRepository } from '@/repositories/audit/audit.repository';
+import { queryKeys } from '@/repositories/shared/query-keys';
+import { logger } from '@/utilities';
 
 export function useObservabilityPage() {
   const summaryQuery = useQuery({
     queryKey: queryKeys.usage.summary,
+    // A dashboard: it drifts, but nobody is waiting on a particular row.
+    refetchInterval: QUERY_POLL_BACKGROUND_MS,
     queryFn: () => {
-      logger.debug({ component: 'audit', action: 'fetch-observability', message: 'Fetching observability data' });
+      logger.debug({
+        component: 'audit',
+        action: 'fetch-observability',
+        message: 'Fetching observability data',
+      });
       return auditRepository.getUsageSummary();
     },
   });
 
   const costQuery = useQuery({
     queryKey: queryKeys.usage.cost,
+    // A dashboard: it drifts, but nobody is waiting on a particular row.
+    refetchInterval: QUERY_POLL_BACKGROUND_MS,
     queryFn: () => auditRepository.getCostSummary(),
   });
 
   const latencyQuery = useQuery({
     queryKey: queryKeys.usage.latency,
+    // A dashboard: it drifts, but nobody is waiting on a particular row.
+    refetchInterval: QUERY_POLL_BACKGROUND_MS,
     queryFn: () => auditRepository.getLatencySummary(),
   });
 
   const statsQuery = useQuery({
     queryKey: queryKeys.audits.stats,
+    // A dashboard: it drifts, but nobody is waiting on a particular row.
+    refetchInterval: QUERY_POLL_BACKGROUND_MS,
     queryFn: () => auditRepository.getAuditStats(),
   });
 
