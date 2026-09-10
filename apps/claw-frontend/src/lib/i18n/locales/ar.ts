@@ -342,6 +342,8 @@ export const ar: TranslationDictionary = {
       upgradeCta: 'عرض الخطط',
     },
     stream: {
+      reconnecting: 'جارٍ إعادة الاتصال بتدفق الرد…',
+      connectionLost: 'انقطع الاتصال. قد تكون إجابتك قيد الإنشاء — أعد التحميل للتحقق.',
       progress: 'التقدم',
       estimated: 'تقديري',
       liveResponse: 'استجابة مباشرة',

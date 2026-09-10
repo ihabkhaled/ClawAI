@@ -162,6 +162,9 @@ export const useThreadDataController = ({
     isLoadingThread: detail.isLoadingThread,
     isLoadingMessages: detail.isLoadingMessages,
     isWaitingForResponse: detail.isWaitingForResponse,
+    // Surfaced so the shell can say a dead stream is dead instead of leaving it
+    // to look like a slow answer.
+    connectionHealth: detail.connectionHealth,
     fallbackAttempts: detail.fallbackAttempts,
     streamError: sendError ?? detail.streamError,
     judgeEvaluating: detail.judgeEvaluating,

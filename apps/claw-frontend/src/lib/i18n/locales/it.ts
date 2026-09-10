@@ -352,6 +352,9 @@ export const it: TranslationDictionary = {
       upgradeCta: 'Vedi i piani',
     },
     stream: {
+      reconnecting: 'Riconnessione al flusso di risposta…',
+      connectionLost:
+        'Connessione persa. La risposta potrebbe essere ancora in generazione: ricarica per verificare.',
       progress: 'Avanzamento',
       estimated: 'stimato',
       liveResponse: 'Risposta in tempo reale',

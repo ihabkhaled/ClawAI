@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CompareResearchMode } from '@/enums';
+import { CompareResearchMode, SseConnectionHealth } from '@/enums';
 import { useThreadDetailPage } from '@/hooks/chat/use-thread-detail-page';
 
 vi.mock('next/navigation', () => ({
@@ -18,6 +18,7 @@ const dataControllerMock = {
   isLoadingThread: false,
   isLoadingMessages: false,
   isWaitingForResponse: false,
+  connectionHealth: SseConnectionHealth.LIVE,
   fallbackAttempts: [],
   streamError: null,
   judgeEvaluating: false,

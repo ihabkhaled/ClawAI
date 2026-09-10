@@ -168,3 +168,4 @@ export { EmailVerificationOutcome } from './email-verification-outcome.enum';
 export { ChatLimitKind } from './chat-limit-kind.enum';
 export { ThreadSearchState } from './thread-search-state.enum';
 export { ModelPricingSource, ModelPricingSourceFilter } from './model-pricing-source.enum';
+export { SseConnectionHealth } from './sse-connection-health.enum';

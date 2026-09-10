@@ -322,6 +322,8 @@ export type TranslationDictionary = {
       upgradeCta: string;
     };
     stream: {
+      reconnecting: string;
+      connectionLost: string;
       progress: string;
       estimated: string;
       liveResponse: string;

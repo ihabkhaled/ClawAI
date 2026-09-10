@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SSE_STALL_TIMEOUT_MS } from '@/constants/sse.constants';
+import { SseConnectionHealth } from '@/enums';
 import { connectSse } from '@/utilities/sse.utility';
 
 /**
@@ -92,5 +94,64 @@ describe('connectSse clean-close handling', () => {
     await vi.advanceTimersByTimeAsync(30_000);
 
     expect(fetchMock.mock.calls.length).toBe(callsAfterClose);
+  });
+
+  it('gives up on a connection that stays open but goes silent', async () => {
+    // A reconnect only helps a connection that ENDS. A proxy or a sleeping
+    // laptop can hold the socket open and simply stop delivering, and the old
+    // client waited on `reader.read()` for as long as that lasted: no error, no
+    // reconnect, no message, and a spinner that never resolved.
+    const neverResolves = {
+      ok: true,
+      status: 200,
+      body: {
+        getReader: () => ({
+          read: () => new Promise<never>(() => {}),
+          cancel: () => Promise.resolve(),
+        }),
+      },
+    } as unknown as Response;
+    const fetchMock = vi.fn().mockResolvedValue(neverResolves);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const connection = connectSse('https://claw.local/stream', {
+      onMessage: vi.fn(),
+      onError: vi.fn(),
+      shouldReconnectAfterClose: () => true,
+    });
+
+    // Past the stall deadline plus one reconnect backoff.
+    await vi.advanceTimersByTimeAsync(SSE_STALL_TIMEOUT_MS + 5_000);
+    connection.close();
+
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it('reports health so the page can say something is wrong', async () => {
+    const neverResolves = {
+      ok: true,
+      status: 200,
+      body: {
+        getReader: () => ({
+          read: () => new Promise<never>(() => {}),
+          cancel: () => Promise.resolve(),
+        }),
+      },
+    } as unknown as Response;
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(neverResolves));
+    const seen: SseConnectionHealth[] = [];
+
+    const connection = connectSse('https://claw.local/stream', {
+      onMessage: vi.fn(),
+      onError: vi.fn(),
+      onHealthChange: (health) => seen.push(health),
+      shouldReconnectAfterClose: () => true,
+    });
+
+    await vi.advanceTimersByTimeAsync(SSE_STALL_TIMEOUT_MS + 5_000);
+    connection.close();
+
+    expect(seen).toContain(SseConnectionHealth.LIVE);
+    expect(seen).toContain(SseConnectionHealth.RECONNECTING);
   });
 });

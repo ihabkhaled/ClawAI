@@ -7,6 +7,7 @@ import { ChatThreadHeaderMenu } from '@/components/chat/chat-thread-header-menu'
 import { EditableTitle } from '@/components/chat/editable-title';
 import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel';
 import { MessageComposer } from '@/components/chat/message-composer';
+import { StreamHealthNotice } from '@/components/chat/stream-health-notice';
 import { ThreadListDrawer } from '@/components/chat/thread-list-drawer';
 import { ThreadQualityPanel } from '@/components/chat/thread-quality-panel';
 import { ThreadSearchPanel } from '@/components/chat/thread-search-panel';
@@ -152,6 +153,11 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
           <ThreadSearchPanel search={props.search} onJumpToMessage={props.onJumpToMessage} />
           <VirtualizedMessages {...props.virtualizedMessagesProps} />
         </div>
+
+        {/* Between the transcript and the composer, and only when something is
+            wrong. A message about the conversation belongs in the
+            conversation's column, and must not cover it. */}
+        <StreamHealthNotice health={props.connectionHealth} />
 
         <MessageComposer {...props.composerProps} />
       </div>

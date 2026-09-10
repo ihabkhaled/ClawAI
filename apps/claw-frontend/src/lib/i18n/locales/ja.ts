@@ -347,6 +347,9 @@ export const ja: TranslationDictionary = {
       upgradeCta: 'プランを見る',
     },
     stream: {
+      reconnecting: '応答ストリームに再接続しています…',
+      connectionLost:
+        '接続が切れました。回答はまだ生成中の可能性があります。再読み込みして確認してください。',
       progress: '進捗状況',
       estimated: '推定',
       liveResponse: 'ライブ応答',

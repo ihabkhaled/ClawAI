@@ -346,6 +346,9 @@ export const fa: TranslationDictionary = {
       upgradeCta: 'دیدن طرح‌ها',
     },
     stream: {
+      reconnecting: 'در حال اتصال دوباره به جریان پاسخ…',
+      connectionLost:
+        'اتصال قطع شد. ممکن است پاسخ شما هنوز در حال تولید باشد — برای بررسی بارگذاری مجدد کنید.',
       progress: 'پیشرفت',
       estimated: 'برآورد شده است',
       liveResponse: 'پاسخ زنده',

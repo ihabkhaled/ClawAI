@@ -3,6 +3,7 @@ import type { UseFormReturn } from 'react-hook-form';
 
 import type { SidebarItem } from '@/constants';
 import type {
+  SseConnectionHealth,
   AiReasoningVisibility,
   AiStreamStage,
   ChatThreadListTab,
@@ -1888,6 +1889,8 @@ export type InThreadComparePanelProps = {
 // call). The shell renders header / in-thread compare / thread settings /
 // virtualized messages / composer — all stateless, props-driven.
 export type ChatThreadShellProps = {
+  /** Connection health, so a dead stream can say so instead of looking slow. */
+  connectionHealth: SseConnectionHealth;
   // Bootstrap.
   threadId: string;
   isLoadingPlaceholder: boolean;
@@ -2753,4 +2756,15 @@ export type UseModelPickerResult = {
   onOpenChange: (nextOpen: boolean) => void;
   onHighlightChange: (nextValue: string) => void;
   close: () => void;
+};
+
+/**
+ * Props for the stream health notice.
+ *
+ * A single field on purpose: the component's whole job is to turn one enum into
+ * one sentence, and anything else it needed would be a decision that belongs in
+ * the controller.
+ */
+export type StreamHealthNoticeProps = {
+  health: SseConnectionHealth;
 };

@@ -81,6 +81,7 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     loadingLabel: t('chat.loadingThread'),
     title,
     thread: data.thread,
+    connectionHealth: data.connectionHealth,
     onExportThread: exportThread.exportThread,
     canExportThread: exportThread.canExport,
     exportThreadLabel: t('chat.export.action'),

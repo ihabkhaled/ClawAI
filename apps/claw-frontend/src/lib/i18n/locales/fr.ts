@@ -350,6 +350,9 @@ export const fr: TranslationDictionary = {
       upgradeCta: 'Voir les forfaits',
     },
     stream: {
+      reconnecting: 'Reconnexion au flux de réponse…',
+      connectionLost:
+        'Connexion perdue. Votre réponse est peut-être encore en cours — rechargez pour vérifier.',
       progress: 'Progression',
       estimated: 'estimé',
       liveResponse: 'Réponse en direct',

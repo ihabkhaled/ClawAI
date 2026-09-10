@@ -354,6 +354,9 @@ export const de: TranslationDictionary = {
       upgradeCta: 'Tarife ansehen',
     },
     stream: {
+      reconnecting: 'Verbindung zum Antwort-Stream wird wiederhergestellt…',
+      connectionLost:
+        'Verbindung verloren. Ihre Antwort wird möglicherweise noch erzeugt — neu laden zum Prüfen.',
       progress: 'Fortschritt',
       estimated: 'geschätzt',
       liveResponse: 'Live-Antwort',

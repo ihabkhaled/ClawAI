@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { RESPONSE_WAIT_TIMEOUT_MS } from '@/constants';
-import { MessageRole } from '@/enums';
+import { MessageRole, SseConnectionHealth } from '@/enums';
 import { useChatStream } from '@/hooks/chat/use-chat-stream';
 import { useVirtualizedMessages } from '@/hooks/chat/use-virtualized-messages';
 import { chatRepository } from '@/repositories/chat/chat.repository';
@@ -70,6 +70,7 @@ export function useThreadDetail(threadId: string) {
     progressStages,
     currentStageLabel,
     streamLive,
+    connectionHealth,
     resetStream,
   } = useChatStream(threadId, isWaitingForResponse, shouldReplayStream);
 
@@ -263,6 +264,9 @@ export function useThreadDetail(threadId: string) {
     progressStages,
     currentStageLabel,
     streamLive,
+    // Only meaningful while something is expected to arrive. A degraded
+    // connection on an idle thread is not news.
+    connectionHealth: isWaitingForResponse ? connectionHealth : SseConnectionHealth.LIVE,
     virtualizedMessages,
   };
 }

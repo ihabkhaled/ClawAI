@@ -347,6 +347,8 @@ export const en: TranslationDictionary = {
       upgradeCta: 'See plans',
     },
     stream: {
+      reconnecting: 'Reconnecting to the response stream…',
+      connectionLost: 'Connection lost. Your answer may still be generating — reload to check.',
       progress: 'Progress',
       estimated: 'estimated',
       liveResponse: 'Live response',

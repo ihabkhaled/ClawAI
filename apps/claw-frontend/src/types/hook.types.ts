@@ -1,7 +1,7 @@
 import type { UseFormReturn } from 'react-hook-form';
 
 import type { ToastData } from '@/components/ui/use-toast';
-import type { MessageFeedback } from '@/enums';
+import type { SseConnectionHealth, MessageFeedback } from '@/enums';
 import type { EmailVerificationOutcome } from '@/enums/email-verification-outcome.enum';
 import type { FloatingClearanceEdge } from '@/enums/floating-clearance-edge.enum';
 import type { PasswordInputType } from '@/enums/password-input-type.enum';
@@ -613,6 +613,8 @@ export type UseThreadDataControllerReturn = {
   isLoadingThread: boolean;
   isLoadingMessages: boolean;
   isWaitingForResponse: boolean;
+  /** Connection health, so a dead stream can say so instead of looking slow. */
+  connectionHealth: SseConnectionHealth;
   fallbackAttempts: FallbackAttemptInfo[];
   streamError: string | null;
   judgeEvaluating: boolean;

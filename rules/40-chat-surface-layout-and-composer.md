@@ -148,6 +148,22 @@ today, and any future page built as header + transcript + input.
     rename control, so nothing is unreachable — only less convenient. Recorded
     in [ADR-090](../docs/13-adr/adr-090-model-picker-opens-at-the-current-choice.md).
 
+16. **A dead stream says so.** The event stream's health is user-visible state,
+    not a log line. A dropped connection used to be indistinguishable from a
+    slow answer: the client reconnected in silence, and when it could not,
+    nothing on the page changed — the answer simply never arrived, and the user
+    waited, which was the one thing that could not help. `StreamHealthNotice`
+    renders between the transcript and the composer, and renders **nothing**
+    while the connection is healthy, so it costs the conversation no height on
+    the normal path.
+
+    Two halves are needed and only one is obvious. Reconnecting covers a
+    connection that ENDS. A proxy or a sleeping laptop can hold the socket open
+    and stop delivering, and a bare `await reader.read()` then never settles —
+    no error, no reconnect, no message. `SSE_STALL_TIMEOUT_MS` (45s, three
+    missed 15s heartbeats) races the read against a deadline and turns that
+    silence into an ordinary drop, which the reconnect loop already handles.
+
 ## Prohibited patterns
 
 - A pixel height, or a ratio-of-window height, for a composer or a transcript.
@@ -173,6 +189,9 @@ today, and any future page built as header + transcript + input.
   sizes to its content, overflows, and its last element is silently clipped.
 - A picker trigger whose only label is `sr-only`.
 - A hardcoded word as a picker's dialog title where the selection belongs.
+- An unbounded `await` on a network read. A stream that can stall needs a
+  deadline, or the UI waits forever with nothing to show for it.
+- Connection health that exists only in a log or a console message.
 
 ## Enforcement
 
@@ -181,6 +200,8 @@ today, and any future page built as header + transcript + input.
 | **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/chat-surface-layout-contract.test.ts` reads the shell, composer and toolbar source and fails on an arbitrary pixel/vh height, an inline `height:`, a missing `min-h-0` on the transcript, a missing `chat-content-column`, twin breakpoint-hidden control rows, a missing `resize-none`, or a missing `data-rail-obstacle`. |
 | **Unit test**        | `hooks/chat/__tests__/use-message-composer.test.tsx` asserts the composer is bounded in rows and that the variant is resolved once, not rendered twice.                                                                                                                                                                                                                       |
 | **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/model-picker.test.tsx` asserts the picker opens with the current choice highlighted, re-seeds on each open, still finds a model by display name after the item value became its id, and shows the short label with the full one on `title`/`aria-label`.                                                                    |
+| **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/stream-health-notice.test.tsx` — renders nothing when healthy, distinguishes reconnecting from lost, and announces politely to a screen reader.                                                                                                                                                                             |
+| **Unit test**        | `apps/claw-frontend/src/utilities/__tests__/sse-reconnect.utility.test.ts` — a connection that stays open and goes silent is abandoned and retried, and health transitions are reported.                                                                                                                                                                                      |
 | **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/research-toggle.test.tsx` asserts both research triggers carry a fixed width and `shrink-0`, and never `flex-1`.                                                                                                                                                                                                            |
 | **Review checklist** | Rules 6, 7, 9 and 15 have no automatable form — a wrapped header and a keyboard-shrunk viewport are only visible in a browser. `skills/verify-responsive-layout-in-browser.md` is the procedure, and its evidence is the check.                                                                                                                                               |
 

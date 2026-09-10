@@ -349,6 +349,9 @@ export const ru: TranslationDictionary = {
       upgradeCta: 'Смотреть тарифы',
     },
     stream: {
+      reconnecting: 'Переподключение к потоку ответа…',
+      connectionLost:
+        'Соединение потеряно. Ответ, возможно, ещё формируется — перезагрузите страницу, чтобы проверить.',
       progress: 'Прогресс',
       estimated: 'примерно',
       liveResponse: 'Ответ в реальном времени',

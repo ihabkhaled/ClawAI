@@ -334,6 +334,8 @@ export const zh: TranslationDictionary = {
       upgradeCta: '查看套餐',
     },
     stream: {
+      reconnecting: '正在重新连接响应流…',
+      connectionLost: '连接已断开。您的回答可能仍在生成中，请重新加载以查看。',
       progress: '进步',
       estimated: '估计的',
       liveResponse: '实时响应',

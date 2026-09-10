@@ -1,8 +1,10 @@
 import {
   SSE_RECONNECT_BASE_MS,
-  SSE_RECONNECT_MAX_BACKOFF_MS,
   SSE_RECONNECT_MAX_ATTEMPTS,
+  SSE_RECONNECT_MAX_BACKOFF_MS,
+  SSE_STALL_TIMEOUT_MS,
 } from '@/constants/sse.constants';
+import { SseConnectionHealth } from '@/enums';
 
 import { getAccessToken } from './api.utility';
 
@@ -26,6 +28,14 @@ type SseCallbacks = {
    * the stream is finished is the failure that was already paid for.
    */
   shouldReconnectAfterClose?: () => boolean;
+  /**
+   * Notified whenever the connection's health changes.
+   *
+   * The reconnect machinery already worked; nothing told the user about it. A
+   * dropped stream looked exactly like a slow answer, which is the worst of
+   * both — the user waits, and waiting is the one thing that will not help.
+   */
+  onHealthChange?: (health: SseConnectionHealth) => void;
 };
 
 type SseConnection = {
@@ -71,15 +81,56 @@ async function runWithReconnect(
     }
     attempt++;
     if (attempt > SSE_RECONNECT_MAX_ATTEMPTS) {
+      callbacks.onHealthChange?.(SseConnectionHealth.LOST);
       callbacks.onError(new Error('SSE reconnect attempts exhausted'));
       return;
     }
+    callbacks.onHealthChange?.(SseConnectionHealth.RECONNECTING);
     const delay = Math.min(
       SSE_RECONNECT_BASE_MS * Math.pow(2, attempt - 1),
       SSE_RECONNECT_MAX_BACKOFF_MS,
     );
     callbacks.onReconnect?.(attempt);
     await sleep(delay, controller.signal);
+  }
+}
+
+/** Marker for "the connection went quiet", distinct from any real chunk. */
+const STALLED = Symbol('sse-stalled');
+
+type SseReader = ReadableStreamDefaultReader<Uint8Array>;
+
+/**
+ * One read, bounded by the stall deadline.
+ *
+ * The timer is cleared on every settle so a busy stream never accumulates
+ * pending timeouts, and an abort resolves immediately rather than waiting out
+ * the deadline.
+ */
+async function readWithStallTimeout(
+  reader: SseReader,
+  signal: AbortSignal,
+): Promise<ReadableStreamReadResult<Uint8Array> | typeof STALLED> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let onAbort: (() => void) | undefined;
+  try {
+    return await Promise.race([
+      reader.read(),
+      new Promise<typeof STALLED>((resolve) => {
+        timer = setTimeout(() => resolve(STALLED), SSE_STALL_TIMEOUT_MS);
+        onAbort = (): void => {
+          resolve(STALLED);
+        };
+        signal.addEventListener('abort', onAbort, { once: true });
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) {
+      clearTimeout(timer);
+    }
+    if (onAbort !== undefined) {
+      signal.removeEventListener('abort', onAbort);
+    }
   }
 }
 
@@ -112,9 +163,21 @@ async function readSseStream(
 
     const decoder = new TextDecoder();
     let buffer = '';
+    callbacks.onHealthChange?.(SseConnectionHealth.LIVE);
 
     while (!signal.aborted) {
-      const { done, value } = await reader.read();
+      // A reconnect only helps a connection that ENDS. A proxy or a sleeping
+      // laptop can leave the socket open and simply stop delivering, and this
+      // await would then never settle: no error, no reconnect, no message, and
+      // a spinner that never resolves. Racing the read against a deadline turns
+      // that silence into an ordinary drop, which the loop above already knows
+      // how to recover from.
+      const chunk = await readWithStallTimeout(reader, signal);
+      if (chunk === STALLED) {
+        await reader.cancel().catch(() => undefined);
+        return false;
+      }
+      const { done, value } = chunk;
       if (done) {
         // Server closed the stream normally.
         return true;

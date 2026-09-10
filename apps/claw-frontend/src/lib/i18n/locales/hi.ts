@@ -346,6 +346,9 @@ export const hi: TranslationDictionary = {
       upgradeCta: 'प्लान देखें',
     },
     stream: {
+      reconnecting: 'उत्तर स्ट्रीम से पुनः कनेक्ट हो रहा है…',
+      connectionLost:
+        'कनेक्शन टूट गया। आपका उत्तर अब भी बन रहा हो सकता है — जाँचने के लिए पुनः लोड करें।',
       progress: 'प्रगति',
       estimated: 'अनुमानित',
       liveResponse: 'लाइव प्रतिक्रिया',

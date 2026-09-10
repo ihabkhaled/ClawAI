@@ -328,6 +328,7 @@ export type {
   MessageBubbleProps,
   ModelSelection,
   ModelPickerOption,
+  StreamHealthNoticeProps,
   UseModelPickerParams,
   UseModelPickerResult,
   ModelPickerGroup,

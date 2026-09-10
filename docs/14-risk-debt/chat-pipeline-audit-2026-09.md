@@ -648,6 +648,7 @@ callers.
 | B2, B3, B4, B7 | 2026-09-10 | Thread re-downloads while waiting: **30/min → 12/min**, at a single clean 5 s cadence with no duplicate pairs. The 10-minute re-arming loop can no longer recur.                                                                                                                                                                                                                                                   |
 | A1, A2         | 2026-09-10 | Idle requests: **83/min → 2/min** (−98%), the survivor being the deliberate 30 s health poll. `/files` 4.2 MB serialisations: **6/min → 0**.                                                                                                                                                                                                                                                                       |
 | C1-C3, C5-C8   | 2026-09-10 | Telemetry stopped being a request per log line. A send-and-answer's `/client-logs` calls: **12 → 1**. Verified live: one `POST /client-logs/batch` carrying 4 collapsed events, 201, and 3 server log lines where ~16 would have been written. C4 is only PARTLY closed — see below.                                                                                                                               |
+| D3             | 2026-09-11 | A dropped or silent stream now says so, between the transcript and the composer, and renders nothing when healthy. A connection that stays open and stops delivering is abandoned after 45s (three missed heartbeats) instead of being awaited forever — the failure a reconnect loop alone cannot see.                                                                                                            |
 | E2, E5, E7     | 2026-09-11 | The provider dropdown drives the search on every path and the transcript records the provider that ANSWERED (verified: `selectionMode: explicit` for both configured providers). The compare path states the capability instead of naming the mode. A 1,176-character prompt now completes with a warning where it previously 400'd and silently disabled research.                                                |
 | E4, E8, E9     | 2026-09-10 | "Used N sources" became "Read N pages", derived from each item's own `source` field, with links found as a separate number and the search/fetch counts read from `toolsUsed` instead of hardcoded zeros. `Button` now defaults to `type="button"` (no form in the app relied on the implicit submit). 106 lines of dead enricher wrapper deleted.                                                                  |
 | E0, E1, E3, E6 | 2026-09-10 | A pasted URL is opened instead of searched for. Verified live: `summarize https://example.com/ for me` traced `fetch.direct` BEFORE `search`, recorded `web_fetch:user_url`, and ranked the pasted page first at confidence 1 — where the same prompt previously returned an Adobe product page, a Facebook post and a Medium tutorial and never opened the link. `SEARCH_ONLY` warns by name instead of fetching. |
@@ -666,9 +667,11 @@ in `.catch(() => {})`, so a failed batch is lost. Both are deferred
 deliberately in [ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md)
 under "Revisit when".
 
-**Section E is closed.** What remains in this audit is D3 (a dead stream is
-still silent to the user) and D4 (no `Last-Event-ID`, so recovery replays rather
-than resumes), plus the items outside this document: the normalized message
+**Sections C, D and E are closed except D4.** D3 closed 2026-09-11: connection
+health is user-visible state now, and a connection that stays open but goes
+quiet is detected by a 45-second stall deadline rather than waited on forever.
+D4 (no `Last-Event-ID`, so recovery replays rather than resumes) is the last
+item in this document. Outside it: the normalized message
 store, long-chat performance, tracing, accessibility, the contract suite,
 dependency cleanup and SLOs.
 

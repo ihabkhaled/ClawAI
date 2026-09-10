@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { API_BASE_URL, PROCESSED_STREAM_EVENT_ID_CACHE_LIMIT } from '@/constants';
-import { FallbackFailureType, StreamEventType, VisibleProgressStageStatus } from '@/enums';
+import {
+  FallbackFailureType,
+  SseConnectionHealth,
+  StreamEventType,
+  VisibleProgressStageStatus,
+} from '@/enums';
 import { useTranslation } from '@/lib/i18n';
 import type {
   FallbackAttemptInfo,
@@ -48,6 +53,16 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
   // page can react to immediately, exactly as the error path already did.
   const [streamCompletedAt, setStreamCompletedAt] = useState<number | null>(null);
   const [currentStageLabel, setCurrentStageLabel] = useState<string | null>(null);
+  /**
+   * What the client believes about the connection, shown to the user.
+   *
+   * A dead stream used to be completely silent: the answer simply never
+   * arrived, and nothing on the page distinguished "still thinking" from "the
+   * connection died four minutes ago".
+   */
+  const [connectionHealth, setConnectionHealth] = useState<SseConnectionHealth>(
+    SseConnectionHealth.LIVE,
+  );
   const [streamLive, setStreamLive] = useState<StreamLiveState>({
     content: '',
     reasoning: '',
@@ -207,6 +222,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
 
     const connection = connectSse(url, {
       shouldReconnectAfterClose: () => !sawTerminalEventRef.current,
+      onHealthChange: setConnectionHealth,
       onMessage: (data: string) => {
         try {
           const parsed = JSON.parse(data) as RouterStreamEvent;
@@ -374,6 +390,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
     progressStages,
     currentStageLabel,
     streamLive,
+    connectionHealth,
     resetStream,
   };
 }

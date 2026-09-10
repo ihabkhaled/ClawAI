@@ -340,6 +340,8 @@ export const th: TranslationDictionary = {
       upgradeCta: 'ดูแพ็กเกจ',
     },
     stream: {
+      reconnecting: 'กำลังเชื่อมต่อสตรีมคำตอบอีกครั้ง…',
+      connectionLost: 'การเชื่อมต่อขาดหาย คำตอบของคุณอาจยังกำลังสร้างอยู่ — โหลดใหม่เพื่อตรวจสอบ',
       progress: 'ความคืบหน้า',
       estimated: 'โดยประมาณ',
       liveResponse: 'ตอบกลับสด',
