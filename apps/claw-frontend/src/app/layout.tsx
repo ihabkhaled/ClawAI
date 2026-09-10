@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Archivo, IBM_Plex_Mono, Inter } from 'next/font/google';
 import { headers } from 'next/headers';
+import Script from 'next/script';
 
 import { AnalyticsHead } from '@/components/analytics/analytics-head';
 import { AnalyticsNoscript } from '@/components/analytics/analytics-noscript';
@@ -75,16 +76,19 @@ export default async function RootLayout({
             so the loader can never execute on auth/portal/payment routes. See
             rules/38-adsense-eligibility-and-low-value-content.md. */}
         <AnalyticsHead />
-        <script
-          nonce={nonce}
-          suppressHydrationWarning
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
-        />
       </head>
       <body className="font-sans antialiased">
         {/* Google requires the no-script fallback immediately after <body>. */}
         <AnalyticsNoscript />
+        {/* next/script docs place beforeInteractive scripts as a sibling of
+            {children}, never inside the literal <head> JSX: Next hoists this
+            into the pre-hydration HTML through its own side channel, and
+            declaring it inside <head> instead routes it through React's
+            document-head singleton reconciler, which cannot rebuild a
+            <script> node on the client and throws. */}
+        <Script id="theme-init" strategy="beforeInteractive" nonce={nonce}>
+          {THEME_INIT_SCRIPT}
+        </Script>
         <Providers initialLocale={locale} initialDictionary={dictionary}>
           {children}
         </Providers>

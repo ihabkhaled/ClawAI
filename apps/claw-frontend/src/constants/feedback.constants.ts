@@ -42,8 +42,16 @@ export const FEEDBACK_LAUNCHER_CLASSES = `${FLOATING_ACTION_RAIL_SLOT_TWO} z-40 
 // Sits just outside the launcher's own top-end corner. Deliberately not part
 // of `FEEDBACK_LAUNCHER_CLASSES`: that string is `fixed`, and this handle only
 // needs to be `absolute` against the launcher's own box.
+//
+// `icon-xs`'s own `touch:min-h-11 touch:min-w-11` (the 44px WCAG touch-target
+// floor every other icon button wants) targets `min-height`/`min-width`, a
+// different property than this string's `h-6 w-6`, so `cn()`'s dedup never
+// sees them as conflicting and both apply — on any touch-capable viewport the
+// min-size wins and blows the handle up to 44px, big enough to cover most of
+// the launcher itself. `touch:min-h-0 touch:min-w-0` targets that same
+// property under the same variant, so it's what actually overrides it.
 export const FEEDBACK_LAUNCHER_COLLAPSE_HANDLE_CLASSES =
-  'absolute -end-2 -top-2 h-6 w-6 rounded-full border border-border bg-background p-0 shadow-sm hover:bg-accent';
+  'absolute -end-2 -top-2 h-6 w-6 touch:min-h-0 touch:min-w-0 rounded-full border border-border bg-background p-0 shadow-sm hover:bg-accent';
 
 // The auto-clearance system (see floating-action.constants.ts) keeps the
 // launcher off whatever it can measure, but it can't know every element a
