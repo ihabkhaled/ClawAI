@@ -2411,6 +2411,8 @@ export const pt: TranslationDictionary = {
       title: '{count} fontes usadas',
       expand: 'Mostrar fontes',
       sourcesCount: '{count} fontes',
+      pagesRead: '{count} páginas lidas',
+      linksFound: '{count} ligações encontradas',
       searchRequests: '{count} pesquisas',
       fetchRequests: '{count} buscas',
     },

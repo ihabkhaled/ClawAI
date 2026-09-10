@@ -2432,6 +2432,8 @@ export const de: TranslationDictionary = {
       title: '{count} Quellen verwendet',
       expand: 'Quellen anzeigen',
       sourcesCount: '{count} Quellen',
+      pagesRead: '{count} Seiten gelesen',
+      linksFound: '{count} Links gefunden',
       searchRequests: '{count} Suchen',
       fetchRequests: '{count} Abrufe',
     },

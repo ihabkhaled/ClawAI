@@ -2425,6 +2425,8 @@ export const it: TranslationDictionary = {
       title: '{count} fonti utilizzate',
       expand: 'Mostra fonti',
       sourcesCount: '{count} fonti',
+      pagesRead: '{count} pagine lette',
+      linksFound: '{count} link trovati',
       searchRequests: '{count} ricerche',
       fetchRequests: '{count} recuperi',
     },

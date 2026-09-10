@@ -163,14 +163,13 @@ describe('ChatMessagesService', () => {
         assertResearchAccess: jest.fn(),
         recordUsage: jest.fn(),
       } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
-      // ResearchEnricherManager — no-op for legacy tests; flows that don't set
-      // researchMode never reach the enricher.
-      {
-        enrich: jest.fn().mockResolvedValue({ evidence: '', sources: [], mode: 'NONE' }),
-      } as unknown as ConstructorParameters<typeof ChatMessagesService>[19],
+      // ResearchEnricherManager was removed from this service on 2026-09-10:
+      // its only consumer here was runEnricherTranscript, which had no
+      // production callers. The manager itself lives on for the orchestration
+      // managers that do use it.
       { tryHandleRouted: jest.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
         typeof ChatMessagesService
-      >[20],
+      >[19],
     );
   });
 
@@ -436,12 +435,9 @@ describe('ChatMessagesService', () => {
           assertResearchAccess: jest.fn(),
           recordUsage: jest.fn(),
         } as unknown as ConstructorParameters<typeof ChatMessagesService>[18],
-        {
-          enrich: jest.fn().mockResolvedValue({ evidence: '', sources: [], mode: 'NONE' }),
-        } as unknown as ConstructorParameters<typeof ChatMessagesService>[19],
         { tryHandleRouted: jest.fn().mockResolvedValue(false) } as unknown as ConstructorParameters<
           typeof ChatMessagesService
-        >[20],
+        >[19],
       );
 
       const result = await localService.executeVerify(

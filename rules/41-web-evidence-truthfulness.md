@@ -61,7 +61,14 @@ from the missing capability statement, and neither knew about the other.**
    content. "Used 4 sources" over four discovered links and zero fetched pages
    is a false statement about the platform's own behaviour.
 
-8. **Never weaken the fetch security boundary to make more sites work.**
+8. **A panel that reports on the platform never guesses.** A count that was not
+   measured is not shown. Messages written before a measurement existed fall
+   back to a neutral wording rather than a retroactive claim, and a badge with
+   no data is hidden rather than rendered as `0` — a zero reads as a
+   measurement, which is exactly how "0 searches / 0 fetches" came to sit under
+   "Used 4 sources" with all three numbers wrong.
+
+9. **Never weaken the fetch security boundary to make more sites work.**
    Direct fetching adds a CALLER to `FetchService`, not a second path. The SSRF
    guard, the domain policy and the cache stay where they are. A page that the
    policy refuses produces a warning; it does not produce an exception to the

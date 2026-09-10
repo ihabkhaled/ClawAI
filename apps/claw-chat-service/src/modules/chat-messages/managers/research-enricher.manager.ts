@@ -219,6 +219,11 @@ export class ResearchEnricherManager {
       warnings: [],
       searchRequestCount: result.searchRequestCount,
       fetchRequestCount: result.fetchRequestCount,
+      // On this path every source came from the search engine, and a source
+      // counts as READ only once extraction produced text for it. Counting all
+      // of them as "sources used" is the claim this replaces.
+      pagesRead: sources.filter((source) => source.extracted !== undefined).length,
+      linksFound: sources.length,
     };
   }
 
@@ -238,6 +243,8 @@ export class ResearchEnricherManager {
       warnings: [warning],
       searchRequestCount: 0,
       fetchRequestCount: 0,
+      pagesRead: 0,
+      linksFound: 0,
     };
   }
 

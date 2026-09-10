@@ -2388,6 +2388,8 @@ export const hi: TranslationDictionary = {
       title: '{count} स्रोतों का उपयोग किया',
       expand: 'स्रोत दिखाएँ',
       sourcesCount: '{count} स्रोत',
+      pagesRead: '{count} पेज पढ़े गए',
+      linksFound: '{count} लिंक मिले',
       searchRequests: '{count} खोज',
       fetchRequests: '{count} फ़ेच',
     },

@@ -2354,6 +2354,8 @@ export const ar: TranslationDictionary = {
       title: 'تم استخدام {count} مصادر',
       expand: 'إظهار المصادر',
       sourcesCount: '{count} مصادر',
+      pagesRead: 'تمت قراءة {count} صفحة',
+      linksFound: 'تم العثور على {count} رابط',
       searchRequests: '{count} عمليات بحث',
       fetchRequests: '{count} عمليات جلب',
     },

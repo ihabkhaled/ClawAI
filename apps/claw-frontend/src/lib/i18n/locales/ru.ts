@@ -2415,6 +2415,8 @@ export const ru: TranslationDictionary = {
       title: 'Использовано {count} источников',
       expand: 'Показать источники',
       sourcesCount: '{count} источников',
+      pagesRead: 'Прочитано страниц: {count}',
+      linksFound: 'Найдено ссылок: {count}',
       searchRequests: '{count} поисков',
       fetchRequests: '{count} загрузок',
     },

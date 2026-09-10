@@ -78,7 +78,7 @@
       "file": "rules/02-monorepo-and-workspace-ownership.md"
     },
     {
-      "bytes": 11111,
+      "bytes": 12085,
       "file": "rules/03-frontend-rules.md"
     },
     {
@@ -258,7 +258,7 @@
       "file": "rules/40-chat-surface-layout-and-composer.md"
     },
     {
-      "bytes": 6598,
+      "bytes": 7034,
       "file": "rules/41-web-evidence-truthfulness.md"
     },
     {

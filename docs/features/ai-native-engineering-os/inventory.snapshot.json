@@ -7352,7 +7352,7 @@
           "file": "rules/02-monorepo-and-workspace-ownership.md"
         },
         {
-          "bytes": 11111,
+          "bytes": 12085,
           "file": "rules/03-frontend-rules.md"
         },
         {
@@ -7532,7 +7532,7 @@
           "file": "rules/40-chat-surface-layout-and-composer.md"
         },
         {
-          "bytes": 6598,
+          "bytes": 7034,
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
@@ -7828,7 +7828,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5126
+        "value": 5128
       },
       "localeCount": 13,
       "locales": [
@@ -9606,7 +9606,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 445
+        "testFiles": 446
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10367,7 +10367,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1171,
+    "totalTestFiles": 1172,
     "workspaceCount": 25
   }
 }

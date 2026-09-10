@@ -37,7 +37,6 @@ import { PipelineManager } from '../managers/pipeline.manager';
 import { RolePackManager } from '../managers/role-pack.manager';
 import { routerTraceEmittedSchema } from '../dto/router-trace.dto';
 import { RouterTraceStreamService } from './router-trace-stream.service';
-import { ResearchEnricherManager } from '../managers/research-enricher.manager';
 import { RuntimeV2LoopManager } from '../managers/runtime-v2-loop.manager';
 import { THREAD_HISTORY_FETCH_LIMIT } from '../../../common/constants';
 import { ModelContextWindowClient } from '../clients/model-context-window.client';
@@ -133,7 +132,6 @@ export class ChatMessagesService implements OnModuleInit {
     private readonly rabbitMQService: RabbitMQService,
     private readonly contextReceiptService: ContextReceiptService,
     private readonly accessControlService: AccessControlService,
-    private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly runtimeV2LoopManager: RuntimeV2LoopManager,
   ) {
     this.structuredLogger = new StructuredLogger(
@@ -365,106 +363,6 @@ export class ChatMessagesService implements OnModuleInit {
       metadata.research = { runId: run.id, mode: run.workflow, bundle: run.bundle };
     }
     return Object.keys(metadata).length === 0 ? undefined : metadata;
-  }
-
-  // Shared enricher runner used by the normal-chat path (and reusable by
-  // orchestration managers). Catches every failure and returns a transcript
-  // whose `warnings` field captures the failure reason — research MUST NEVER
-  // block the chat call. The model runs with whatever evidence it got (zero
-  // is acceptable). On SSE-visible failures the caller is expected to also
-  // emit RESEARCH_FAILED through chatStreamService — handled in
-  // runResearchIfRequested below.
-  async runEnricherTranscript(
-    userToken: string,
-    mode: ResearchMode,
-    query: string,
-    providerId: string | undefined,
-  ): Promise<ResearchTranscript> {
-    if (userToken.length === 0) {
-      return this.buildEmptyEnricherTranscript(mode, query, providerId, [
-        'research.missingBearerToken',
-      ]);
-    }
-    const startedAt = Date.now();
-    try {
-      const result = await this.researchEnricherManager.enrich({
-        mode,
-        query,
-        userAuthHeader: `Bearer ${userToken}`,
-      });
-      return this.buildSuccessEnricherTranscript(
-        mode,
-        query,
-        providerId,
-        result.sources,
-        Math.max(1, Date.now() - startedAt),
-        result.searchRequestCount,
-        result.fetchRequestCount,
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'unknown';
-      this.logger.warn(
-        `runEnricherTranscript: enricher failed mode=${mode} — ${message}; continuing without evidence`,
-      );
-      return this.buildEmptyEnricherTranscript(
-        mode,
-        query,
-        providerId,
-        [`research.enrichmentFailed:${message}`],
-        Math.max(1, Date.now() - startedAt),
-      );
-    }
-  }
-
-  private buildSuccessEnricherTranscript(
-    mode: ResearchMode,
-    query: string,
-    providerId: string | undefined,
-    rawSources: ReadonlyArray<{
-      title: string;
-      url: string;
-      snippet?: string;
-      extracted?: string;
-    }>,
-    latencyMs: number,
-    searchRequestCount: number,
-    fetchRequestCount: number,
-  ): ResearchTranscript {
-    const sources: ResearchTranscriptSource[] = rawSources.map((source) => ({
-      title: source.title,
-      url: source.url,
-      ...(source.snippet !== undefined ? { snippet: source.snippet } : {}),
-      ...(source.extracted !== undefined ? { extracted: source.extracted } : {}),
-    }));
-    return {
-      mode,
-      ...(providerId !== undefined ? { providerId } : {}),
-      query,
-      sources,
-      latencyMs,
-      warnings: [],
-      searchRequestCount,
-      fetchRequestCount,
-    };
-  }
-
-  private buildEmptyEnricherTranscript(
-    mode: ResearchMode,
-    query: string,
-    providerId: string | undefined,
-    warnings: string[],
-    latencyMs = 0,
-  ): ResearchTranscript {
-    return {
-      mode,
-      ...(providerId !== undefined ? { providerId } : {}),
-      query,
-      sources: [],
-      latencyMs,
-      warnings,
-      searchRequestCount: 0,
-      fetchRequestCount: 0,
-    };
   }
 
   async createParallelMessage(
@@ -1695,6 +1593,8 @@ export class ChatMessagesService implements OnModuleInit {
         warnings: [],
         searchRequestCount: 0,
         fetchRequestCount: 0,
+        pagesRead: 0,
+        linksFound: 0,
       };
     }
     const items = recordGet(bundleRecord, 'items');
@@ -1709,14 +1609,25 @@ export class ChatMessagesService implements OnModuleInit {
     const warnings = Array.isArray(warningsRaw)
       ? warningsRaw.filter((value): value is string => typeof value === 'string')
       : [];
+    // Counted from what the run actually did, never assumed. These two were
+    // hardcoded zeros, so the panel rendered "0 searches / 0 fetches" directly
+    // underneath "Used 4 sources" — three numbers, none of them measured.
+    const toolsRaw = recordGet(bundleRecord, 'toolsUsed');
+    const toolsUsed = Array.isArray(toolsRaw)
+      ? toolsRaw.filter((value): value is string => typeof value === 'string')
+      : [];
     return {
       mode: this.coerceResearchMode(mode),
       query: this.readMetaString(bundleRecord, 'intent') ?? '',
       sources,
       latencyMs: 0,
       warnings,
-      searchRequestCount: 0,
-      fetchRequestCount: 0,
+      searchRequestCount: toolsUsed.filter((tool) => tool === 'web_search').length,
+      fetchRequestCount: toolsUsed.filter((tool) => tool === 'web_fetch').length,
+      // Pages whose CONTENT reached the model, not links that were listed.
+      pagesRead: sources.filter((source) => source.source === 'fetch' || source.source === 'scrape')
+        .length,
+      linksFound: sources.filter((source) => source.source === 'search').length,
     };
   }
 
@@ -1725,11 +1636,18 @@ export class ChatMessagesService implements OnModuleInit {
     const url = this.readMetaString(item, 'url') ?? '';
     const snippet = this.readMetaString(item, 'snippet');
     const score = this.readMetaNumber(item, 'confidence');
+    const source = this.readMetaString(item, 'source');
+    // `extracted` was dropped here, so the "Show sources" expander could never
+    // display extracted text on the normal chat path however well extraction
+    // had worked.
+    const extracted = this.readMetaString(item, 'extracted');
     return {
       title,
       url,
       ...(snippet !== undefined ? { snippet } : {}),
+      ...(extracted !== undefined ? { extracted } : {}),
       ...(score !== undefined ? { score } : {}),
+      ...(source !== undefined ? { source } : {}),
     };
   }
 

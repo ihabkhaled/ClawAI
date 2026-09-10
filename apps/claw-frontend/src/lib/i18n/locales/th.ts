@@ -2358,6 +2358,8 @@ export const th: TranslationDictionary = {
       title: 'แหล่งที่มา {count} ที่ใช้',
       expand: 'แสดงแหล่งที่มา',
       sourcesCount: 'แหล่งที่มา {count}',
+      pagesRead: 'อ่านแล้ว {count} หน้า',
+      linksFound: 'พบ {count} ลิงก์',
       searchRequests: 'ค้นหา {count}',
       fetchRequests: '{count} ดึงข้อมูล',
     },

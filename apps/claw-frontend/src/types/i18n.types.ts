@@ -2552,6 +2552,8 @@ export type TranslationDictionary = {
       title: string;
       expand: string;
       sourcesCount: string;
+      pagesRead: string;
+      linksFound: string;
       searchRequests: string;
       fetchRequests: string;
     };

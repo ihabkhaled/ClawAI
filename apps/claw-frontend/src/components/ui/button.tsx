@@ -17,7 +17,17 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { className, variant, size, asChild = false, isLoading = false, disabled, children, ...props },
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      isLoading = false,
+      disabled,
+      children,
+      type,
+      ...props
+    },
     ref,
   ) => {
     const Comp = asChild ? Slot : 'button';
@@ -32,6 +42,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        // HTML defaults a bare <button> to type="submit". Most buttons in this
+        // app are not submit buttons, and a component library that inherits the
+        // spec default turns "a button was added inside a form" into "the form
+        // submits when that button is clicked" — a bug that appears later, in a
+        // different file, when someone wraps a region in a <form>. Defaulting to
+        // "button" makes submitting the deliberate act it should be.
+        type={type ?? 'button'}
         disabled={disabled ?? isLoading}
         aria-busy={isLoading || undefined}
         {...props}

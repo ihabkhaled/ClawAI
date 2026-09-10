@@ -2433,6 +2433,8 @@ export const fr: TranslationDictionary = {
       title: '{count} sources utilisées',
       expand: 'Afficher les sources',
       sourcesCount: '{count} sources',
+      pagesRead: '{count} pages lues',
+      linksFound: '{count} liens trouvés',
       searchRequests: '{count} recherches',
       fetchRequests: '{count} récupérations',
     },

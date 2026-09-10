@@ -436,7 +436,7 @@ Nest emits the real one.
 
 ## E. Search, fetch and source truthfulness
 
-> **Status 2026-09-10 — E0, E1, E3 and E6 FIXED; E2, E4, E5, E7, E8, E9 still
+> **Status 2026-09-10 — E0, E1, E3, E4, E6, E8 and E9 FIXED; E2, E5 and E7 still
 > open.** A URL in the prompt is now detected and fetched directly, before the
 > search step, through the same `FetchService` (so the SSRF guard and domain
 > policy are unchanged); it outranks anything discovered, and it is never
@@ -455,11 +455,27 @@ Nest emits the real one.
 > [ADR-091](../13-adr/adr-091-user-urls-are-opened-not-searched.md) and
 > [rules/41](../../rules/41-web-evidence-truthfulness.md).
 >
-> **Still open and worth naming**: E4 ("Used N sources" counts search hits, plus
-> the hardcoded zero badges), E5 (the provider dropdown is decorative on compare
-> and the nine orchestration modes), E2 (path B never tells the model research
-> ran), E7 (a prompt over 500 characters 400s the search), E8 (`Button` never
-> defaults `type="button"`), E9 (dead `runEnricherTranscript`).
+> **E4 closed separately**: the badge now reports pages READ, derived from each
+> evidence item's own `source` field, with links found shown as a second number
+> and the search/fetch counts derived from `toolsUsed` instead of being
+> hardcoded zeros. A message written before the counts existed falls back to a
+> neutral "{n} sources" and hides the request badges entirely, because a zero
+> reads as a measurement. `extracted` is no longer dropped, so the expander can
+> show extracted text on the normal chat path.
+>
+> **E8 closed**: the shared `Button` now defaults to `type="button"`. A scan of
+> every `<form>` in the frontend found no button relying on the implicit submit,
+> so the change is behaviour-preserving today and protective from here.
+>
+> **E9 closed**: `runEnricherTranscript` and its two transcript builders are
+> deleted, along with the now-unused `ResearchEnricherManager` injection in
+> chat-messages.service. The manager itself stays — the orchestration managers
+> do use it.
+>
+> **Still open**: E2 (path B never tells the model research ran), E5 (the
+> provider dropdown is decorative on compare and the nine orchestration modes),
+> E7 (a prompt over 500 characters 400s the search and disables research
+> silently).
 
 ### E0 — The finding that reframes the rest (**high**)
 
@@ -615,6 +631,7 @@ callers.
 | B2, B3, B4, B7 | 2026-09-10 | Thread re-downloads while waiting: **30/min → 12/min**, at a single clean 5 s cadence with no duplicate pairs. The 10-minute re-arming loop can no longer recur.                                                                                                                                                                                                                                                   |
 | A1, A2         | 2026-09-10 | Idle requests: **83/min → 2/min** (−98%), the survivor being the deliberate 30 s health poll. `/files` 4.2 MB serialisations: **6/min → 0**.                                                                                                                                                                                                                                                                       |
 | C1-C3, C5-C8   | 2026-09-10 | Telemetry stopped being a request per log line. A send-and-answer's `/client-logs` calls: **12 → 1**. Verified live: one `POST /client-logs/batch` carrying 4 collapsed events, 201, and 3 server log lines where ~16 would have been written. C4 is only PARTLY closed — see below.                                                                                                                               |
+| E4, E8, E9     | 2026-09-10 | "Used N sources" became "Read N pages", derived from each item's own `source` field, with links found as a separate number and the search/fetch counts read from `toolsUsed` instead of hardcoded zeros. `Button` now defaults to `type="button"` (no form in the app relied on the implicit submit). 106 lines of dead enricher wrapper deleted.                                                                  |
 | E0, E1, E3, E6 | 2026-09-10 | A pasted URL is opened instead of searched for. Verified live: `summarize https://example.com/ for me` traced `fetch.direct` BEFORE `search`, recorded `web_fetch:user_url`, and ranked the pasted page first at confidence 1 — where the same prompt previously returned an Adobe product page, a Facebook post and a Medium tutorial and never opened the link. `SEARCH_ONLY` warns by name instead of fetching. |
 | D1, D2         | 2026-09-10 | A fresh send no longer asks for replay, so it cannot be handed the previous run's `DONE`. A clean close now reconnects unless a terminal event was actually seen. Verified with a real send: **exactly one** stream connection, `replay=false`, held open 6.25 s for the whole generation, answer rendered. D5 withdrawn — the audit was wrong about it.                                                           |
 
@@ -631,11 +648,13 @@ in `.catch(() => {})`, so a failed batch is lost. Both are deferred
 deliberately in [ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md)
 under "Revisit when".
 
-E is half closed. The capability to read a URL the user pasted now exists
-(E0/E1) and the model is told the truth about what ran (E3/E6). What remains in
-E is **reporting**: "Used N sources" still counts search hits rather than pages
-read, the badges beside it are hardcoded zeros, and the provider dropdown is
-still decorative on compare and the nine orchestration modes.
+E is mostly closed. The capability to read a pasted URL exists (E0/E1), the
+model is told the truth about what ran (E3/E6), and the panel reports what was
+read rather than what was found (E4). What remains is **provider honesty and
+one silent failure**: the provider dropdown is still decorative on compare and
+the nine orchestration modes (E5), path B still tells the model nothing about
+research having run (E2), and a prompt over 500 characters still 400s the
+search and disables research with no user-visible error (E7).
 
 A measurement caveat worth keeping: an idle reading of _zero_ is as likely to
 mean the page failed to hydrate as it is to mean success. The first attempt at

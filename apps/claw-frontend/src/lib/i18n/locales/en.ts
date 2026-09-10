@@ -2373,6 +2373,8 @@ export const en: TranslationDictionary = {
       title: 'Used {count} sources',
       expand: 'Show sources',
       sourcesCount: '{count} sources',
+      pagesRead: 'Read {count} pages',
+      linksFound: '{count} links found',
       searchRequests: '{count} searches',
       fetchRequests: '{count} fetches',
     },

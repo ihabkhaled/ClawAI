@@ -2382,6 +2382,8 @@ export const fa: TranslationDictionary = {
       title: 'از منابع {count} استفاده شده است',
       expand: 'نمایش منابع',
       sourcesCount: 'منابع {count}',
+      pagesRead: '{count} صفحه خوانده شد',
+      linksFound: '{count} پیوند یافت شد',
       searchRequests: '{count} جستجو می کند',
       fetchRequests: '{count} واکشی می شود',
     },

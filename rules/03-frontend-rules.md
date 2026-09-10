@@ -2,6 +2,26 @@
 
 > Applies to `apps/claw-frontend`. React 19, Next.js 16, TanStack Query, Zustand, Tailwind, shadcn/ui.
 
+## A button is not a submit button unless it says so
+
+The shared `Button` defaults to `type="button"`. HTML defaults a bare
+`<button>` to `type="submit"`, so a component library that inherits the spec
+default turns "someone wrapped a region in a `<form>`" into "every button in it
+now submits" — a bug that surfaces later, in a different file, with no edit to
+the button itself.
+
+Two live examples were already one refactor away from breaking: the research
+transcript panel and the research run details both omit `type` and were safe
+only because the message list happens to be a SIBLING of the composer's form
+rather than a descendant.
+
+Pass `type="submit"` explicitly on the one button per form that submits it. The
+default is a default, not an override: `type="submit"` and `type="reset"` are
+both honoured, and `asChild` is left alone because the child may not be a
+`<button>` at all.
+
+Enforced by `apps/claw-frontend/src/components/ui/__tests__/button-type.test.tsx`.
+
 ## Architecture Pattern
 
 ```

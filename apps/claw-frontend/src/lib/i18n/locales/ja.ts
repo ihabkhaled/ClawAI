@@ -2389,6 +2389,8 @@ export const ja: TranslationDictionary = {
       title: '使用した {count} ソース',
       expand: 'ソースを表示',
       sourcesCount: '{count} ソース',
+      pagesRead: '{count} ページを読み込みました',
+      linksFound: '{count} 件のリンクを検出',
       searchRequests: '{count} 検索',
       fetchRequests: '{count} フェッチ',
     },

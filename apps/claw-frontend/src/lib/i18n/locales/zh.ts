@@ -2301,6 +2301,8 @@ export const zh: TranslationDictionary = {
       title: '使用过的 {count} 源',
       expand: '显示来源',
       sourcesCount: '{count} 来源',
+      pagesRead: '已阅读 {count} 个页面',
+      linksFound: '找到 {count} 个链接',
       searchRequests: '{count} 搜索',
       fetchRequests: '{count} 获取',
     },

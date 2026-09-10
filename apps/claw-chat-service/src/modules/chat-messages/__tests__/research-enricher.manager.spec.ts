@@ -89,6 +89,8 @@ function buildTranscriptFromEnricher(
     sources,
     latencyMs,
     warnings: [],
+    pagesRead: sources.filter((source) => source.extracted !== undefined).length,
+    linksFound: sources.length,
     searchRequestCount: 1,
     fetchRequestCount: mode === ResearchMode.SEARCH ? 0 : sources.length,
   };

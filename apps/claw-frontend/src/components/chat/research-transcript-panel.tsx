@@ -12,7 +12,15 @@ export function ResearchTranscriptPanel({
   transcript,
 }: ResearchTranscriptPanelProps): React.ReactElement | null {
   const { t } = useTranslation();
-  const { open, toggle } = useResearchTranscriptPanel();
+  const {
+    open,
+    toggle,
+    title,
+    isMeasured,
+    linksFoundLabel,
+    searchRequestsLabel,
+    fetchRequestsLabel,
+  } = useResearchTranscriptPanel(transcript);
 
   if (transcript.sources.length === 0) {
     return null;
@@ -28,27 +36,39 @@ export function ResearchTranscriptPanel({
         aria-expanded={open}
       >
         <Globe className="me-1 h-3.5 w-3.5" />
-        {t('research.transcript.title', { count: String(transcript.sources.length) })}
+        {/* What this badge may claim is decided in the hook. It used to read
+            "Used N sources" over a mix of links found and pages read. */}
+        {title}
         {open ? <ChevronUp className="ms-1 h-3 w-3" /> : <ChevronDown className="ms-1 h-3 w-3" />}
       </Button>
-      <div className="text-muted-foreground touch:text-xs flex flex-wrap gap-1 ps-2 text-[10px]">
-        <Badge
-          variant="outline"
-          className="touch:text-xs border-sky-500/40 bg-sky-500/10 text-[10px]"
-        >
-          {t('research.transcript.searchRequests', {
-            count: String(transcript.searchRequestCount ?? 0),
-          })}
-        </Badge>
-        <Badge
-          variant="outline"
-          className="touch:text-xs border-violet-500/40 bg-violet-500/10 text-[10px]"
-        >
-          {t('research.transcript.fetchRequests', {
-            count: String(transcript.fetchRequestCount ?? 0),
-          })}
-        </Badge>
-      </div>
+      {/* Hidden entirely on messages written before the counts were measured.
+          They were hardcoded zeros, so the panel rendered "0 searches / 0
+          fetches" directly under a source count — three numbers, none of them
+          measured. A missing badge is honest; a zero is not. */}
+      {isMeasured ? (
+        <div className="text-muted-foreground touch:text-xs flex flex-wrap gap-1 ps-2 text-[10px]">
+          {linksFoundLabel === null ? null : (
+            <Badge
+              variant="outline"
+              className="touch:text-xs border-slate-500/40 bg-slate-500/10 text-[10px]"
+            >
+              {linksFoundLabel}
+            </Badge>
+          )}
+          <Badge
+            variant="outline"
+            className="touch:text-xs border-sky-500/40 bg-sky-500/10 text-[10px]"
+          >
+            {searchRequestsLabel}
+          </Badge>
+          <Badge
+            variant="outline"
+            className="touch:text-xs border-violet-500/40 bg-violet-500/10 text-[10px]"
+          >
+            {fetchRequestsLabel}
+          </Badge>
+        </div>
+      ) : null}
       {open ? (
         <div className="border-border bg-card/50 flex flex-col gap-2 rounded-md border px-3 py-2 text-xs">
           {transcript.sources.map((source, index) => (
