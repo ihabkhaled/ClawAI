@@ -7375,7 +7375,7 @@
           "file": "rules/06-docs-rules.md"
         },
         {
-          "bytes": 2894,
+          "bytes": 5426,
           "file": "rules/06-frontend-queries-and-cache.md"
         },
         {
@@ -9597,7 +9597,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 437
+        "testFiles": 438
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10358,7 +10358,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1162,
+    "totalTestFiles": 1163,
     "workspaceCount": 25
   }
 }

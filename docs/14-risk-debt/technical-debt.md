@@ -33,6 +33,11 @@ Last updated: 2026-09-10
   must be fixed _before_ the polling is removed, or the UI silently stops
   updating; and the client-logs service must accept an array _before_ the client
   can batch.
+- **Progress**: B2/B3/B4/B7 landed 2026-09-10 — the 2-second full-thread poll,
+  the duplicate simultaneous fetch, the self-arming wait loop and the dead
+  invalidation key. Thread re-downloads while waiting went 30/min to 12/min at a
+  single clean 5s cadence. Everything else is open; A1 (the global
+  `refetchInterval`) is next and dominates the remaining idle traffic.
 - **Full entry**: [`technical-debt-register.md`](technical-debt-register.md) TD-030.
 
 ---

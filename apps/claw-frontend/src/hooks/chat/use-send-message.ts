@@ -4,7 +4,7 @@ import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import type { CreateMessageRequest, UseSendMessageResult } from '@/types';
-import { logger, showToast } from '@/utilities';
+import { invalidateThreadMessages, logger, showToast } from '@/utilities';
 import { resolveApiErrorMessage } from '@/utilities/api-error-message.utility';
 
 export function useSendMessage(
@@ -32,9 +32,7 @@ export function useSendMessage(
         message: 'Message sent',
         details: { threadId },
       });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.threads.messages(threadId),
-      });
+      invalidateThreadMessages(queryClient, threadId);
       void queryClient.invalidateQueries({
         queryKey: queryKeys.threads.lists(),
       });

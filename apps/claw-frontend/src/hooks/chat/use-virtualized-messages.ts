@@ -23,14 +23,17 @@ export function useVirtualizedMessages(
 ): UseVirtualizedMessagesReturn {
   const query = useInfiniteQuery({
     queryKey: queryKeys.threads.messagesInfinite(threadId),
-    queryFn: ({ pageParam }) => {
+    // `signal` is forwarded all the way to axios so a cancelled refetch is
+    // actually cancelled. Without it the request completed anyway and produced
+    // a duplicate response.
+    queryFn: ({ pageParam, signal }) => {
       logger.debug({
         component: 'chat',
         action: 'fetch-messages-page',
         message: `Fetching messages page ${String(pageParam)}`,
         details: { threadId, page: pageParam },
       });
-      return chatRepository.getMessagesPaginated(threadId, pageParam, MESSAGES_PAGE_SIZE);
+      return chatRepository.getMessagesPaginated(threadId, pageParam, MESSAGES_PAGE_SIZE, signal);
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {

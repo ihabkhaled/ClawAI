@@ -1,25 +1,36 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { POLLING_INTERVAL_MS, POLLING_MAX_TICKS } from '@/constants';
+import { RESPONSE_WAIT_TIMEOUT_MS } from '@/constants';
 import { MessageRole } from '@/enums';
 import { useChatStream } from '@/hooks/chat/use-chat-stream';
 import { useVirtualizedMessages } from '@/hooks/chat/use-virtualized-messages';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import { logger } from '@/utilities';
+import { invalidateThreadMessages, logger } from '@/utilities';
 import { buildTranscriptSignature } from '@/utilities/transcript-signature.utility';
 
 export function useThreadDetail(threadId: string) {
   const queryClient = useQueryClient();
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const waitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageCountBeforeSend = useRef(0);
-  // The transcript this hook has already concluded a run for. Scoped to that
-  // transcript rather than a plain boolean: a boolean disabled the recovery
-  // below for the rest of the thread's life, so a run started by anything that
-  // does not announce itself never got a subscription or a poll.
-  const suppressedSignatureRef = useRef<string | null>(null);
+  /**
+   * The transcript this hook has already opened a run for.
+   *
+   * Arming is idempotent per transcript signature, and that is the whole point.
+   * The previous version compared against a signature computed from PRE-refetch
+   * data, so it usually failed to match what arrived - and the completion
+   * effect and the recovery effect below drove each other in a loop: a stale
+   * replayed DONE cleared the waiting flag, which aborted the SSE connection,
+   * which let the recovery effect see a USER-tailed transcript and set the flag
+   * again. Each turn of that loop was one stream request that returned 200 and
+   * died with an abort.
+   *
+   * Recording the signature at ARM time instead means a transcript that has
+   * already been armed for is never armed for twice, so the loop cannot close.
+   */
+  const armedSignatureRef = useRef<string | null>(null);
 
   const threadQuery = useQuery({
     queryKey: queryKeys.threads.detail(threadId),
@@ -61,9 +72,7 @@ export function useThreadDetail(threadId: string) {
     if (streamCompletedAt === null || !isWaitingForResponse) {
       return;
     }
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.threads.messagesInfinite(threadId),
-    });
+    invalidateThreadMessages(queryClient, threadId);
     void queryClient.invalidateQueries({
       queryKey: queryKeys.threads.detail(threadId),
     });
@@ -73,10 +82,6 @@ export function useThreadDetail(threadId: string) {
     // sent, and on a thread that already fills a page the count does not grow,
     // so the spinner and the three-minute poll would keep running after the
     // answer had already rendered.
-    suppressedSignatureRef.current = buildTranscriptSignature(
-      messagesList.length,
-      lastMessage?.id ?? null,
-    );
     setIsWaitingForResponse(false);
   }, [
     streamCompletedAt,
@@ -97,49 +102,44 @@ export function useThreadDetail(threadId: string) {
         message: 'SSE stream error received',
         details: { threadId, streamError },
       });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.threads.messagesInfinite(threadId),
-      });
+      invalidateThreadMessages(queryClient, threadId);
     }
   }, [streamError, isWaitingForResponse, queryClient, threadId]);
 
-  // Manual polling via setInterval for reliable auto-fetch (max 3 minutes)
+  /**
+   * The deadline on waiting, and the only timer left in this hook.
+   *
+   * There used to be a 2-second `setInterval` here invalidating the whole
+   * conversation up to 300 times. It was doing two jobs badly: keeping the list
+   * fresh (which the mutations now do correctly - they were invalidating a key
+   * nothing queried) and bounding how long the page waits (which is this).
+   *
+   * The refetch while a response is in flight belongs to the query that owns
+   * the data - `useVirtualizedMessages` runs it at MESSAGE_POLL_INTERVAL_MS -
+   * so all that is left here is to stop waiting eventually.
+   */
   useEffect(() => {
-    if (isWaitingForResponse && threadId) {
-      let pollCount = 0;
-      pollingRef.current = setInterval(() => {
-        pollCount += 1;
-        if (pollCount > POLLING_MAX_TICKS) {
-          logger.warn({
-            component: 'chat',
-            action: 'polling-timeout',
-            message: 'Polling max reached, stopping',
-            details: { threadId, ticks: pollCount },
-          });
-          // One last refetch on the way out. The answer may have landed between
-          // the previous tick and this one, and giving up without looking is
-          // how a completed run ends with the page still showing the in-flight
-          // state until something else happens to refetch.
-          void queryClient.invalidateQueries({
-            queryKey: queryKeys.threads.messagesInfinite(threadId),
-          });
-          setIsWaitingForResponse(false);
-          if (pollingRef.current) {
-            clearInterval(pollingRef.current);
-            pollingRef.current = null;
-          }
-          return;
-        }
-        void queryClient.invalidateQueries({
-          queryKey: queryKeys.threads.messagesInfinite(threadId),
-        });
-      }, POLLING_INTERVAL_MS);
+    if (!isWaitingForResponse || !threadId) {
+      return;
     }
+    waitTimeoutRef.current = setTimeout(() => {
+      logger.warn({
+        component: 'chat',
+        action: 'response-wait-timeout',
+        message: 'Stopped waiting for a response',
+        details: { threadId, timeoutMs: RESPONSE_WAIT_TIMEOUT_MS },
+      });
+      // One last look before giving up: the answer may have landed since the
+      // most recent refetch, and stopping without checking is how a completed
+      // run leaves the page showing the in-flight state.
+      invalidateThreadMessages(queryClient, threadId);
+      setIsWaitingForResponse(false);
+    }, RESPONSE_WAIT_TIMEOUT_MS);
 
     return () => {
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-        pollingRef.current = null;
+      if (waitTimeoutRef.current) {
+        clearTimeout(waitTimeoutRef.current);
+        waitTimeoutRef.current = null;
       }
     };
   }, [isWaitingForResponse, threadId, queryClient]);
@@ -170,17 +170,24 @@ export function useThreadDetail(threadId: string) {
     }
   }, [isWaitingForResponse, lastMessage?.role, messagesList.length, threadId, queryClient]);
 
-  // Auto-detect waiting state on page load/refresh:
-  // If the last message is USER (no ASSISTANT reply yet), resume polling
+  /**
+   * Recovery: a transcript ending in a USER message means a run was started and
+   * its answer has not arrived, so re-open the subscription after a reload.
+   *
+   * Guarded by the ARMED signature, not a suppression one. Without that guard
+   * this effect and the completion effect above form the abort loop described
+   * on `armedSignatureRef`.
+   */
   useEffect(() => {
+    const signature = buildTranscriptSignature(messagesList.length, lastMessage?.id ?? null);
     if (
       !isWaitingForResponse &&
-      suppressedSignatureRef.current !==
-        buildTranscriptSignature(messagesList.length, lastMessage?.id ?? null) &&
+      armedSignatureRef.current !== signature &&
       messagesList.length > 0 &&
       lastMessage?.role === MessageRole.USER &&
       !virtualizedMessages.isLoading
     ) {
+      armedSignatureRef.current = signature;
       messageCountBeforeSend.current = messagesList.length - 1;
       setIsWaitingForResponse(true);
     }
@@ -200,13 +207,19 @@ export function useThreadDetail(threadId: string) {
       details: { threadId, currentMessageCount: messagesList.length },
     });
     messageCountBeforeSend.current = messagesList.length;
-    suppressedSignatureRef.current = null;
+    // A send is an explicit new run, so it arms for the transcript as it stands
+    // now. Clearing this instead would let the recovery effect arm a second
+    // time for the same transcript the moment the flag is cleared.
+    armedSignatureRef.current = buildTranscriptSignature(
+      messagesList.length,
+      lastMessage?.id ?? null,
+    );
     resetStream();
     setIsWaitingForResponse(true);
-  }, [messagesList.length, resetStream, threadId]);
+  }, [messagesList.length, lastMessage?.id, resetStream, threadId]);
 
   const stopWaitingForResponse = useCallback((): void => {
-    suppressedSignatureRef.current = buildTranscriptSignature(
+    armedSignatureRef.current = buildTranscriptSignature(
       messagesList.length,
       lastMessage?.id ?? null,
     );

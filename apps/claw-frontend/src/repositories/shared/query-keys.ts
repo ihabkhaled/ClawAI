@@ -37,6 +37,21 @@ export const queryKeys = {
       [...queryKeys.threads.all, 'messages', threadId, page] as const,
     messagesInfinite: (threadId: string) =>
       [...queryKeys.threads.all, 'messages-infinite', threadId] as const,
+    /**
+     * Every paginated view of one thread's messages, for invalidation.
+     *
+     * `messages(id)` and `messages(id, 1)` are DIFFERENT keys — the page number
+     * is the fourth element, so `[...,'messages',id,undefined]` does not
+     * prefix-match `[...,'messages',id,1]`. Three mutations invalidated the
+     * former while the orchestration pages query the latter, so they matched
+     * nothing at all. This three-element prefix matches every page.
+     *
+     * It does NOT match `messagesInfinite`, which is a separate namespace by
+     * design. Anything that changes a thread's messages must invalidate both —
+     * see `invalidateThreadMessages`.
+     */
+    messagesAnyPage: (threadId: string) =>
+      [...queryKeys.threads.all, 'messages', threadId] as const,
     search: (threadId: string, term: string) =>
       [...queryKeys.threads.all, 'search', threadId, term] as const,
     listInfinite: (filters: Record<string, unknown>) =>

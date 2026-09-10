@@ -235,3 +235,4 @@ export {
   computeYearlySavingMinor,
   isSubscriptionEntitling,
 } from './billing.utility';
+export { invalidateThreadMessages } from './invalidate-thread-messages.utility';

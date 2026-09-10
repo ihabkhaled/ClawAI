@@ -19,31 +19,23 @@ export const MESSAGE_ROLE_LABELS: Record<MessageRole, string> = {
 
 export const THINKING_INDICATOR_LABEL = 'AI is thinking...';
 export const MODEL_AUTO_VALUE = '__auto__';
-export const POLLING_INTERVAL_MS = 2000;
-
 /**
- * How many poll ticks to wait for an answer before giving up.
+ * How long the page keeps expecting an answer before it stops waiting.
  *
- * Was a bare `90` inside the effect — three minutes, which is *below* the real
- * tail. Measured against the running stack at concurrency 16, one first
- * response took ~3.5 minutes because the local model server queues: the poll
- * stopped, the answer landed afterwards, and the page went on showing the
- * in-flight state until something else refetched it. That is the reported
- * "doesn't show until refresh".
+ * Replaces `POLLING_INTERVAL_MS` (2000) and `POLLING_MAX_TICKS` (300), which
+ * together were a 2-second `setInterval` re-downloading the whole conversation
+ * for ten minutes. Measured on an idle page in that state: 30 full-thread
+ * requests per minute at 28.5 KB each, on a thread abandoned ten days earlier.
  *
- * Ten minutes covers a queued local model without waiting forever on a run that
- * genuinely died. The cap still matters — an unbounded poll on an abandoned tab
- * is a request every two seconds until it is closed.
+ * The interval is gone. `MESSAGE_POLL_INTERVAL_MS` below is now the only
+ * network driver while a response is in flight, and this is the deadline that
+ * bounds it — one timer that clears the waiting state, rather than a counter
+ * that had to be multiplied by an interval to mean anything.
+ *
+ * Ten minutes, matching the old 300 x 2s bound: a queued local model has been
+ * measured taking ~3.5 minutes to first token at concurrency 16.
  */
-export const POLLING_MAX_TICKS = 300;
-/**
- * Background refetch of the message list, and only while a response is in
- * flight.
- *
- * Slower than POLLING_INTERVAL_MS on purpose: the 2s interval is the belt, this
- * is the braces. The stream itself delivers the answer; both of these exist for
- * the case where the stream dropped and nobody noticed.
- */
+export const RESPONSE_WAIT_TIMEOUT_MS = 600_000;
 export const MESSAGE_POLL_INTERVAL_MS = 5000;
 export const MESSAGES_PAGE_SIZE = 50;
 export const THREADS_PAGE_SIZE = 30;

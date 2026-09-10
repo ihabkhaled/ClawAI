@@ -2,9 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useTranslation } from '@/lib/i18n';
 import { chatRepository } from '@/repositories/chat/chat.repository';
-import { queryKeys } from '@/repositories/shared/query-keys';
 import type { SetFeedbackParams } from '@/types';
-import { logger, showToast } from '@/utilities';
+import { invalidateThreadMessages, logger, showToast } from '@/utilities';
 
 export function useMessageFeedback(threadId: string) {
   const queryClient = useQueryClient();
@@ -20,9 +19,7 @@ export function useMessageFeedback(threadId: string) {
         message: 'Feedback saved',
         details: { threadId },
       });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.threads.messages(threadId),
-      });
+      invalidateThreadMessages(queryClient, threadId);
     },
     onError: (error: Error) => {
       showToast.apiError(error, t('chat.feedbackFailed'));

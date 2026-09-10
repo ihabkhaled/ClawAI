@@ -25,9 +25,24 @@ export class ApiClientError extends Error {
 }
 
 export const apiClient = {
-  async get<T>(path: string, params?: Record<string, string>): Promise<ApiResponse<T>> {
+  /**
+   * `options.signal` is not decoration.
+   *
+   * TanStack's `invalidateQueries` defaults to `cancelRefetch: true`, so a tick
+   * that lands while a fetch is in flight abandons it and starts another. Until
+   * this forwarded the signal, "abandons" meant only that the result was
+   * ignored - the original request stayed on the wire and completed. That is
+   * why two identical `page=1&limit=50` responses arrived milliseconds apart.
+   * `post` has accepted a signal all along; `get`, the one that refetches on a
+   * timer, did not.
+   */
+  async get<T>(
+    path: string,
+    params?: Record<string, string>,
+    options?: ApiClientRequestOptions,
+  ): Promise<ApiResponse<T>> {
     try {
-      const response = await httpClient.get<T>(path, { params });
+      const response = await httpClient.get<T>(path, { params, signal: options?.signal });
       return { data: response.data, status: response.status };
     } catch (error) {
       throw toApiClientError(error);

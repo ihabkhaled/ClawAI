@@ -115,10 +115,12 @@ export const chatRepository = {
     threadId: string,
     page: number,
     limit: number,
+    signal?: AbortSignal,
   ): Promise<MessagesListResponse> {
     const response = await apiClient.get<MessagesListResponse>(
       `/chat-messages/thread/${threadId}`,
       { page: String(page), limit: String(limit) },
+      { signal },
     );
     return response.data;
   },

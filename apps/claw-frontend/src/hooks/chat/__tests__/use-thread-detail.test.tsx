@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { RESPONSE_WAIT_TIMEOUT_MS } from '@/constants';
 import { MessageRole, RoutingMode } from '@/enums';
 import { useThreadDetail } from '@/hooks/chat/use-thread-detail';
 import type { ChatMessage } from '@/types';
@@ -85,6 +86,59 @@ describe('useThreadDetail', () => {
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
+  });
+
+  it('does not re-download the conversation on a timer while waiting', async () => {
+    // The measured defect: a 2-second setInterval invalidated the whole
+    // conversation for up to ten minutes, so an abandoned run cost 30
+    // full-thread requests per minute on a page nobody was touching. The
+    // refetch while a response is in flight belongs to the query that owns the
+    // data; this hook only bounds how long the wait lasts.
+    vi.useFakeTimers();
+    try {
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      );
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+      const { result } = renderHook(() => useThreadDetail('thread-race'), { wrapper });
+
+      await vi.waitFor(() => {
+        expect(result.current.isWaitingForResponse).toBe(true);
+      });
+      invalidateSpy.mockClear();
+
+      // Thirty seconds is fifteen ticks of the old interval.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000);
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalled();
+      expect(result.current.isWaitingForResponse).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('stops waiting once the response deadline passes', async () => {
+    vi.useFakeTimers();
+    try {
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      );
+      const { result } = renderHook(() => useThreadDetail('thread-race'), { wrapper });
+
+      await vi.waitFor(() => {
+        expect(result.current.isWaitingForResponse).toBe(true);
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(RESPONSE_WAIT_TIMEOUT_MS + 1000);
+      });
+
+      expect(result.current.isWaitingForResponse).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does not restart waiting after DONE while the message cache still ends with USER', async () => {

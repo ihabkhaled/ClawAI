@@ -91,7 +91,7 @@ refetch re-downloads all of it. **That is the 91 KB → 212 KB curve exactly**:
 same URL, same page number, monotonically larger body, because page 1 is not a
 window onto the conversation until the conversation outgrows it.
 
-### B2 — Two independent refetch drivers on one query (**high, measured**)
+### B2 — Two independent refetch drivers on one query — **FIXED 2026-09-10**
 
 - `use-thread-detail.ts:107-145` — a manual `setInterval` invalidating the
   messages key every `POLLING_INTERVAL_MS` (2000 ms) for up to
@@ -103,7 +103,13 @@ Both are gated on the same flag, so while it is set the same infinite query has
 a 2 s driver and a 5 s driver beating against each other. Measured: a dead
 regular 2000 ms cadence, 28.5 KB per response.
 
-### B3 — The duplicate simultaneous fetch (**high**)
+> **Fixed.** The 2-second `setInterval` and its `POLLING_INTERVAL_MS` /
+> `POLLING_MAX_TICKS` constants are deleted. `MESSAGE_POLL_INTERVAL_MS` (5 s) is
+> now the only network driver while a response is in flight, bounded by a single
+> `RESPONSE_WAIT_TIMEOUT_MS` deadline instead of a tick counter. Measured after:
+> gaps of 5215 / 5012 / 5012 / 5022 / 5010 ms — one driver, no beating.
+
+### B3 — The duplicate simultaneous fetch — **FIXED 2026-09-10**
 
 `invalidateQueries` defaults to `cancelRefetch: true`, so the 2 s tick cancels
 an in-flight 5 s fetch and starts another. But `apiClient.get`
@@ -112,7 +118,11 @@ only `post` accepts one. The cancelled request therefore stays on the wire and
 completes. Two identical `page=1&limit=50` responses land milliseconds apart.
 That is the reported duplicate, and it is a two-line asymmetry in the API client.
 
-### B4 — The waiting flag arms itself (**high**)
+> **Fixed.** `apiClient.get` now accepts and forwards `options.signal`, and the
+> messages query threads TanStack's `signal` through the repository. Measured
+> after: no near-simultaneous pairs — every observed gap is a clean ~5010 ms.
+
+### B4 — The waiting flag arms itself — **FIXED 2026-09-10**
 
 `use-thread-detail.ts:175-193`: if the last message in the transcript is a
 `USER` message and the current signature differs from a suppression signature,
@@ -124,6 +134,12 @@ cancelled run, a run whose assistant row is not yet visible — re-arms the
 10-minute 2-second loop **on every page load, with no user action**. The
 baseline's second measurement is exactly this state: 148 requests/minute on a
 thread abandoned ten days earlier.
+
+> **Fixed.** Arming is now idempotent per transcript signature, recorded at ARM
+> time rather than compared against a signature computed from pre-refetch data.
+> A transcript already armed for is never armed for twice, so the completion
+> effect and the recovery effect can no longer drive each other. This also
+> breaks D1's abort loop from the client side.
 
 ### B5 — Streamed tokens are never written to the cache (**high**)
 
@@ -144,7 +160,7 @@ There is also **no optimistic insert on send** — `use-send-message.ts` has no
 `onMutate`, so the user's own message is invisible until a poll fetches it.
 That absence is a direct cause of how aggressive the polling had to be.
 
-### B7 — Invalidations aimed at a key nothing queries (**high**)
+### B7 — Invalidations aimed at a key nothing queries — **FIXED 2026-09-10**
 
 `query-keys.ts:36-39` defines two non-prefix-matching namespaces:
 `threads.messages(...)` and `threads.messagesInfinite(...)`. The page queries the
@@ -156,6 +172,11 @@ So the three mutations that change the conversation do nothing to the list that
 renders it. The timers are load-bearing precisely because the correct
 invalidation never fires. **Fixing the polling without fixing this key mismatch
 would make the UI stop updating** — the two must land together.
+
+> **Fixed.** All three mutations now call `invalidateThreadMessages`, which
+> invalidates both the infinite key and a new three-element `messagesAnyPage`
+> prefix that matches every page variant. The prefix-matching rule itself is
+> asserted in a test, and is now rule 06 §8–§10.
 
 ### B8 — Offset pagination over a head-growing list (**medium**)
 
@@ -524,6 +545,15 @@ protects every future caller.
 callers.
 
 ---
+
+## What has been fixed so far
+
+| Finding        | Landed     | Effect measured on the same page                                                                                                                                 |
+| -------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B2, B3, B4, B7 | 2026-09-10 | Thread re-downloads while waiting: **30/min → 12/min**, at a single clean 5 s cadence with no duplicate pairs. The 10-minute re-arming loop can no longer recur. |
+
+Everything else below is open. The remaining idle traffic is dominated by A1,
+which is the next batch.
 
 ## Sequencing
 
