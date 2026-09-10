@@ -460,3 +460,46 @@ stale dev images stay stale until rebuilt. One invocation, safe in parallel:
 ```bash
 ./scripts/claw.sh service:rebuild audit-service connector-service file-service llamacpp-service memory-service ollama-service payment-service routing-service server-logs-service
 ```
+
+### A dev container compiling new source against an OLD build config
+
+**Symptom**: one service is `unhealthy` for days while everything else is fine.
+Its log ends in `nodemon app crashed`, and above that a wall of `TS2307: Cannot
+find module '../../../common/enums/…'` on imports that plainly exist, often
+mixed with `TS2834: Relative import paths need explicit file extensions … when
+'--moduleResolution' is 'node16'`. `git log` shows nobody touched those files.
+
+**Cause**: the dev compose mounted `src`, `package.json` and `prisma` — and not
+`tsconfig.json`, `tsconfig.build.json` or `tools/`. So a dev container
+recompiles today's source using the **build config baked into its image**. When
+the repo moved every workspace to `moduleResolution: "bundler"`, services whose
+images were rebuilt afterwards picked it up and services whose images were not
+kept compiling `bundler`-style extensionless imports under `Node16`, where they
+are illegal. The same gap hides a second failure one step later: `Cannot find
+module '/app/tools/typescript/copy-generated-prisma.mjs'`, a build script added
+after the image was built.
+
+Confirm it in one command — the container's config, not the host's:
+
+```bash
+docker exec claw-<name> sh -c "grep moduleResolution /app/apps/claw-<name>/tsconfig.json"
+docker exec claw-<name> sh -c "ls /app/tools/typescript/"
+```
+
+If that disagrees with the file on the host, this is it.
+
+**Fix**: `docker/docker-compose.dev.services.yml` now mounts
+`tsconfig.json`, `tsconfig.build.json` and `../tools` read-only into every
+service, so the build config and the build scripts come from the working tree
+like the source does. Recreating the container is enough — no rebuild:
+
+```bash
+./scripts/claw.sh up -d claw-<name>
+```
+
+Hit 2026-09-10: research-service had been down 22 hours and ollama-service and
+llamacpp-service were down with the same cause, all three on `1.63.0` images.
+`/research/*` returned 502 the whole time, which silently disabled every web
+search and fetch in chat. **A crash-looping dev container is a config-drift
+suspect before it is a code suspect** — check the container's config against the
+host's before reading the source.

@@ -4,25 +4,68 @@
 
 ---
 
-## The 7 Compose Files Rule
+## The Split Compose Files Rule
 
-**Every new service and every new database MUST be added to ALL 7 compose files in the same commit.**
+**Every new service and every new database MUST be added to every compose file
+that could define it, in the same commit.**
 
-| File                                                               | Purpose                           |
-| ------------------------------------------------------------------ | --------------------------------- |
-| `docker-compose.dev.yml`                                           | Dev all-in-one (services + DBs)   |
-| `docker-compose.yml`                                               | Prod all-in-one (services + DBs)  |
-| `docker-compose.dev.databases.yml`                                 | Dev split: databases only         |
-| `docker-compose.dev.services.yml`                                  | Dev split: services only          |
-| `docker-compose.prod.databases.yml`                                | Prod split: databases only        |
-| `docker-compose.prod.services.yml`                                 | Prod split: services only         |
-| `docker-compose.dev.ollama.yml` / `docker-compose.prod.ollama.yml` | Only if service depends on Ollama |
+The all-in-one `docker-compose.dev.yml` and `docker-compose.yml` no longer
+exist; `./scripts/claw.sh` stitches the split files instead. These are the files
+in `docker/`:
 
-**Databases** → add to: dev.yml, prod.yml, dev.databases.yml, prod.databases.yml
-**Services** → add to: dev.yml, prod.yml, dev.services.yml, prod.services.yml
+| File                                                               | Purpose                          |
+| ------------------------------------------------------------------ | -------------------------------- |
+| `docker-compose.dev.databases.yml`                                 | Dev split: databases only        |
+| `docker-compose.dev.services.yml`                                  | Dev split: services only         |
+| `docker-compose.prod.databases.yml`                                | Prod split: databases only       |
+| `docker-compose.prod.services.yml`                                 | Prod split: services only        |
+| `docker-compose.dev.ollama.yml` / `docker-compose.prod.ollama.yml` | Only if the service needs Ollama |
+| `docker-compose.{dev,prod}.gpu-{nvidia,rocm,vulkan}.yml`           | GPU overlays, applied by claw.sh |
+
+**Databases** → dev.databases.yml, prod.databases.yml
+**Services** → dev.services.yml, prod.services.yml
 **Volumes** → declare in EVERY file that defines the corresponding service or database
 
-**Violation**: A service in 1 of 7 files is broken in split-file deployments. This has caused production incidents.
+**Violation**: A service in one file and not its sibling is broken in exactly one
+environment, which is the hardest kind to notice. This has caused production
+incidents.
+
+**Never bring the stack up with `docker compose -f …` directly.**
+`./scripts/claw.sh up` is the only supported entry point: it stitches the split
+files and applies the right GPU overlay.
+
+## A dev service mounts its BUILD INPUTS, not only its source
+
+Every service block in `docker-compose.dev.services.yml` mounts, read-only:
+
+```yaml
+- ../apps/claw-<name>/tsconfig.json:/app/apps/claw-<name>/tsconfig.json:ro
+- ../apps/claw-<name>/tsconfig.build.json:/app/apps/claw-<name>/tsconfig.build.json:ro
+- ../tools:/app/tools:ro
+```
+
+alongside `package.json`, `src` and `prisma`.
+
+**Why**: a dev container recompiles the mounted `src` on every change. If the
+compiler configuration and the build scripts come from the image instead of the
+working tree, the container compiles **today's source with an old config** — and
+the failure looks nothing like config drift. It looks like `TS2307: Cannot find
+module` on imports that obviously exist.
+
+**Violation**: when the repo moved every workspace to
+`moduleResolution: "bundler"`, three services whose images predated that change
+kept compiling under `Node16`, where extensionless relative imports are illegal.
+research-service was down 22 hours — so `/research/*` returned 502 and every web
+search and fetch in chat silently did nothing — with ollama-service and
+llamacpp-service dead beside it. Nothing in the code was wrong.
+
+**The general rule**: if a dev container derives something from the working
+tree, mount everything that derivation reads. A half-mounted build is a build
+that disagrees with the repository and says so in the wrong language.
+
+Diagnosis and recovery:
+[docker-guide](../docs/08-runtime-devops/docker-guide.md) — "A dev container
+compiling new source against an OLD build config".
 
 ---
 

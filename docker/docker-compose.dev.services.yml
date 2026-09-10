@@ -92,8 +92,11 @@ services:
       - '4001:4001'
     volumes:
       - ../apps/claw-auth-service/package.json:/app/apps/claw-auth-service/package.json:ro
+      - ../apps/claw-auth-service/tsconfig.json:/app/apps/claw-auth-service/tsconfig.json:ro
+      - ../apps/claw-auth-service/tsconfig.build.json:/app/apps/claw-auth-service/tsconfig.build.json:ro
       - ../apps/claw-auth-service/src:/app/apps/claw-auth-service/src
       - ../apps/claw-auth-service/prisma:/app/apps/claw-auth-service/prisma
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
       # Read-write, unlike every other bind auth-service gets: the deployment
       # page clears a stuck rollout and pauses the automatic lane by writing
@@ -132,8 +135,11 @@ services:
       replicas: ${CHAT_SERVICE_REPLICAS:-1}
     volumes:
       - ../apps/claw-chat-service/package.json:/app/apps/claw-chat-service/package.json:ro
+      - ../apps/claw-chat-service/tsconfig.json:/app/apps/claw-chat-service/tsconfig.json:ro
+      - ../apps/claw-chat-service/tsconfig.build.json:/app/apps/claw-chat-service/tsconfig.build.json:ro
       - ../apps/claw-chat-service/src:/app/apps/claw-chat-service/src
       - ../apps/claw-chat-service/prisma:/app/apps/claw-chat-service/prisma
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
@@ -162,8 +168,11 @@ services:
       - '4003:4003'
     volumes:
       - ../apps/claw-connector-service/package.json:/app/apps/claw-connector-service/package.json:ro
+      - ../apps/claw-connector-service/tsconfig.json:/app/apps/claw-connector-service/tsconfig.json:ro
+      - ../apps/claw-connector-service/tsconfig.build.json:/app/apps/claw-connector-service/tsconfig.build.json:ro
       - ../apps/claw-connector-service/src:/app/apps/claw-connector-service/src
       - ../apps/claw-connector-service/prisma:/app/apps/claw-connector-service/prisma
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
@@ -200,8 +209,11 @@ services:
       - '4004:4004'
     volumes:
       - ../apps/claw-routing-service/package.json:/app/apps/claw-routing-service/package.json:ro
+      - ../apps/claw-routing-service/tsconfig.json:/app/apps/claw-routing-service/tsconfig.json:ro
+      - ../apps/claw-routing-service/tsconfig.build.json:/app/apps/claw-routing-service/tsconfig.build.json:ro
       - ../apps/claw-routing-service/src:/app/apps/claw-routing-service/src
       - ../apps/claw-routing-service/prisma:/app/apps/claw-routing-service/prisma
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
@@ -230,8 +242,11 @@ services:
       - '4005:4005'
     volumes:
       - ../apps/claw-memory-service/package.json:/app/apps/claw-memory-service/package.json:ro
+      - ../apps/claw-memory-service/tsconfig.json:/app/apps/claw-memory-service/tsconfig.json:ro
+      - ../apps/claw-memory-service/tsconfig.build.json:/app/apps/claw-memory-service/tsconfig.build.json:ro
       - ../apps/claw-memory-service/src:/app/apps/claw-memory-service/src
       - ../apps/claw-memory-service/prisma:/app/apps/claw-memory-service/prisma
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
@@ -265,9 +280,12 @@ services:
       - '4006:4006'
     volumes:
       - ../apps/claw-file-service/package.json:/app/apps/claw-file-service/package.json:ro
+      - ../apps/claw-file-service/tsconfig.json:/app/apps/claw-file-service/tsconfig.json:ro
+      - ../apps/claw-file-service/tsconfig.build.json:/app/apps/claw-file-service/tsconfig.build.json:ro
       - ../apps/claw-file-service/src:/app/apps/claw-file-service/src
       - ../apps/claw-file-service/prisma:/app/apps/claw-file-service/prisma
       - file-storage-data:/data/files
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     # Slice C foundation 3 — ZIP archive expansion uses an in-memory tmpfs so
     # ZIP-bomb extraction can never fill the host disk and so temp files
@@ -302,7 +320,10 @@ services:
       - '4007:4007'
     volumes:
       - ../apps/claw-audit-service/package.json:/app/apps/claw-audit-service/package.json:ro
+      - ../apps/claw-audit-service/tsconfig.json:/app/apps/claw-audit-service/tsconfig.json:ro
+      - ../apps/claw-audit-service/tsconfig.build.json:/app/apps/claw-audit-service/tsconfig.build.json:ro
       - ../apps/claw-audit-service/src:/app/apps/claw-audit-service/src
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: npm run dev
     healthcheck:
@@ -334,8 +355,11 @@ services:
       - '4008:4008'
     volumes:
       - ../apps/claw-ollama-service/package.json:/app/apps/claw-ollama-service/package.json:ro
+      - ../apps/claw-ollama-service/tsconfig.json:/app/apps/claw-ollama-service/tsconfig.json:ro
+      - ../apps/claw-ollama-service/tsconfig.build.json:/app/apps/claw-ollama-service/tsconfig.build.json:ro
       - ../apps/claw-ollama-service/src:/app/apps/claw-ollama-service/src
       - ../apps/claw-ollama-service/prisma:/app/apps/claw-ollama-service/prisma
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
       # Shared with claw-comfyui — the ComfyUI runtime adapter writes
       # HuggingFace-downloaded weights into this volume so ComfyUI can pick
@@ -369,7 +393,10 @@ services:
       - '4010:4010'
     volumes:
       - ../apps/claw-client-logs-service/package.json:/app/apps/claw-client-logs-service/package.json:ro
+      - ../apps/claw-client-logs-service/tsconfig.json:/app/apps/claw-client-logs-service/tsconfig.json:ro
+      - ../apps/claw-client-logs-service/tsconfig.build.json:/app/apps/claw-client-logs-service/tsconfig.build.json:ro
       - ../apps/claw-client-logs-service/src:/app/apps/claw-client-logs-service/src
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: npm run dev
     healthcheck:
@@ -398,7 +425,10 @@ services:
       - '4011:4011'
     volumes:
       - ../apps/claw-server-logs-service/package.json:/app/apps/claw-server-logs-service/package.json:ro
+      - ../apps/claw-server-logs-service/tsconfig.json:/app/apps/claw-server-logs-service/tsconfig.json:ro
+      - ../apps/claw-server-logs-service/tsconfig.build.json:/app/apps/claw-server-logs-service/tsconfig.build.json:ro
       - ../apps/claw-server-logs-service/src:/app/apps/claw-server-logs-service/src
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: npm run dev
     healthcheck:
@@ -427,7 +457,10 @@ services:
       - '4009:4009'
     volumes:
       - ../apps/claw-health-service/package.json:/app/apps/claw-health-service/package.json:ro
+      - ../apps/claw-health-service/tsconfig.json:/app/apps/claw-health-service/tsconfig.json:ro
+      - ../apps/claw-health-service/tsconfig.build.json:/app/apps/claw-health-service/tsconfig.build.json:ro
       - ../apps/claw-health-service/src:/app/apps/claw-health-service/src
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: npm run dev
     healthcheck:
@@ -459,8 +492,11 @@ services:
       - '4012:4012'
     volumes:
       - ../apps/claw-image-service/package.json:/app/apps/claw-image-service/package.json:ro
+      - ../apps/claw-image-service/tsconfig.json:/app/apps/claw-image-service/tsconfig.json:ro
+      - ../apps/claw-image-service/tsconfig.build.json:/app/apps/claw-image-service/tsconfig.build.json:ro
       - ../apps/claw-image-service/src:/app/apps/claw-image-service/src
       - ../apps/claw-image-service/prisma:/app/apps/claw-image-service/prisma
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
@@ -492,8 +528,11 @@ services:
       - '4014:4014'
     volumes:
       - ../apps/claw-workspace-service/package.json:/app/apps/claw-workspace-service/package.json:ro
+      - ../apps/claw-workspace-service/tsconfig.json:/app/apps/claw-workspace-service/tsconfig.json:ro
+      - ../apps/claw-workspace-service/tsconfig.build.json:/app/apps/claw-workspace-service/tsconfig.build.json:ro
       - ../apps/claw-workspace-service/src:/app/apps/claw-workspace-service/src
       - ../apps/claw-workspace-service/prisma:/app/apps/claw-workspace-service/prisma
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
@@ -525,8 +564,11 @@ services:
       - '4015:4015'
     volumes:
       - ../apps/claw-agent-service/package.json:/app/apps/claw-agent-service/package.json:ro
+      - ../apps/claw-agent-service/tsconfig.json:/app/apps/claw-agent-service/tsconfig.json:ro
+      - ../apps/claw-agent-service/tsconfig.build.json:/app/apps/claw-agent-service/tsconfig.build.json:ro
       - ../apps/claw-agent-service/src:/app/apps/claw-agent-service/src
       - ../apps/claw-agent-service/prisma:/app/apps/claw-agent-service/prisma
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
@@ -558,8 +600,11 @@ services:
       - '4016:4016'
     volumes:
       - ../apps/claw-research-service/package.json:/app/apps/claw-research-service/package.json:ro
+      - ../apps/claw-research-service/tsconfig.json:/app/apps/claw-research-service/tsconfig.json:ro
+      - ../apps/claw-research-service/tsconfig.build.json:/app/apps/claw-research-service/tsconfig.build.json:ro
       - ../apps/claw-research-service/src:/app/apps/claw-research-service/src
       - ../apps/claw-research-service/prisma:/app/apps/claw-research-service/prisma
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
@@ -589,8 +634,11 @@ services:
       - '4018:4018'
     volumes:
       - ../apps/claw-payment-service/package.json:/app/apps/claw-payment-service/package.json:ro
+      - ../apps/claw-payment-service/tsconfig.json:/app/apps/claw-payment-service/tsconfig.json:ro
+      - ../apps/claw-payment-service/tsconfig.build.json:/app/apps/claw-payment-service/tsconfig.build.json:ro
       - ../apps/claw-payment-service/src:/app/apps/claw-payment-service/src
       - ../apps/claw-payment-service/prisma:/app/apps/claw-payment-service/prisma
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
@@ -623,9 +671,12 @@ services:
       - '4017:4017'
     volumes:
       - ../apps/claw-llamacpp-service/package.json:/app/apps/claw-llamacpp-service/package.json:ro
+      - ../apps/claw-llamacpp-service/tsconfig.json:/app/apps/claw-llamacpp-service/tsconfig.json:ro
+      - ../apps/claw-llamacpp-service/tsconfig.build.json:/app/apps/claw-llamacpp-service/tsconfig.build.json:ro
       - ../apps/claw-llamacpp-service/src:/app/apps/claw-llamacpp-service/src
       - ../apps/claw-llamacpp-service/prisma:/app/apps/claw-llamacpp-service/prisma
       - llamacpp-data:/var/lib/claw/llamacpp
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
@@ -654,8 +705,11 @@ services:
       - '4013:4013'
     volumes:
       - ../apps/claw-file-generation-service/package.json:/app/apps/claw-file-generation-service/package.json:ro
+      - ../apps/claw-file-generation-service/tsconfig.json:/app/apps/claw-file-generation-service/tsconfig.json:ro
+      - ../apps/claw-file-generation-service/tsconfig.build.json:/app/apps/claw-file-generation-service/tsconfig.build.json:ro
       - ../apps/claw-file-generation-service/src:/app/apps/claw-file-generation-service/src
       - ../apps/claw-file-generation-service/prisma:/app/apps/claw-file-generation-service/prisma
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
     command: ['./docker-entrypoint.dev.sh']
     healthcheck:
@@ -686,7 +740,9 @@ services:
       - '3000:3000'
     volumes:
       - ../apps/claw-frontend/src:/app/apps/claw-frontend/src
+      - ../apps/claw-frontend/tsconfig.json:/app/apps/claw-frontend/tsconfig.json:ro
       - ../apps/claw-frontend/public:/app/apps/claw-frontend/public
+      - ../tools:/app/tools:ro
       - ../certs:/certs:ro
       # `npm run dev` (used outside Docker) wipes .next before every start as a
       # stale-Turbopack-cache safety net. That's fine on a host process but
