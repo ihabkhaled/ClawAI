@@ -574,6 +574,14 @@ export type UseEditableTitleReturn = {
 export type UseVirtualizedMessagesReturn = {
   messages: ChatMessage[];
   isLoading: boolean;
+  /**
+   * True whenever a fetch is in flight, including a background refetch.
+   *
+   * Distinct from `isLoading`, which covers only the first load. Callers that
+   * make a DECISION from the transcript need this one: deciding from a list you
+   * already know is being replaced is what produced the stream open/abort loop.
+   */
+  isFetching: boolean;
   isFetchingPreviousPage: boolean;
   isFetchingNextPage: boolean;
   hasPreviousPage: boolean;

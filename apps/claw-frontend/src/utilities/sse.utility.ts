@@ -1,4 +1,8 @@
-import { SSE_RECONNECT_BASE_MS, SSE_RECONNECT_MAX_BACKOFF_MS, SSE_RECONNECT_MAX_ATTEMPTS } from '@/constants/sse.constants';
+import {
+  SSE_RECONNECT_BASE_MS,
+  SSE_RECONNECT_MAX_BACKOFF_MS,
+  SSE_RECONNECT_MAX_ATTEMPTS,
+} from '@/constants/sse.constants';
 
 import { getAccessToken } from './api.utility';
 
@@ -7,6 +11,21 @@ type SseCallbacks = {
   onError: (error: unknown) => void;
   /** Optional: notified when a reconnect attempt begins. */
   onReconnect?: (attempt: number) => void;
+  /**
+   * Whether a clean close by the server should end the connection.
+   *
+   * A clean body end used to be treated as "the run finished, we are done".
+   * It is not: the legacy chat stream observable never completes on DONE, so
+   * the only things that close it cleanly server-side are an ownership
+   * rejection and a service restart — and a restart is exactly when
+   * reconnecting matters. One transient blip permanently downgraded the thread
+   * to REST polling for the life of the page.
+   *
+   * The consumer is the only thing that knows whether it actually saw a
+   * terminal event, so it decides. Default is to reconnect, because assuming
+   * the stream is finished is the failure that was already paid for.
+   */
+  shouldReconnectAfterClose?: () => boolean;
 };
 
 type SseConnection = {
@@ -46,8 +65,8 @@ async function runWithReconnect(
     if (!reconnect || controller.signal.aborted) {
       return;
     }
-    if (completed) {
-      // Server closed the stream cleanly (terminal event). Do not auto-reconnect.
+    if (completed && callbacks.shouldReconnectAfterClose?.() === false) {
+      // The consumer saw a terminal event, so this close is the end of the run.
       return;
     }
     attempt++;

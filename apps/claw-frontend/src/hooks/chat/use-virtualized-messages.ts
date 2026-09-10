@@ -107,6 +107,7 @@ export function useVirtualizedMessages(
   return {
     messages,
     isLoading: query.isLoading,
+    isFetching: query.isFetching,
     isFetchingPreviousPage: query.isFetchingNextPage,
     isFetchingNextPage: false,
     hasPreviousPage: query.hasNextPage ?? false,

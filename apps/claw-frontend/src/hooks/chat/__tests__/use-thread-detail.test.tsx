@@ -11,8 +11,12 @@ import type { ChatMessage } from '@/types';
 const { mockGetThread, mockResetStream, streamState, virtualizedState } = vi.hoisted(() => ({
   mockGetThread: vi.fn(),
   mockResetStream: vi.fn(),
-  streamState: { completedAt: null as number | null, completionReads: 0 },
-  virtualizedState: { messages: [] as ChatMessage[] },
+  streamState: {
+    completedAt: null as number | null,
+    completionReads: 0,
+    lastReplayArg: undefined as boolean | undefined,
+  },
+  virtualizedState: { messages: [] as ChatMessage[], isFetching: false },
 }));
 
 vi.mock('@/repositories/chat/chat.repository', () => ({
@@ -20,25 +24,29 @@ vi.mock('@/repositories/chat/chat.repository', () => ({
 }));
 
 vi.mock('@/hooks/chat/use-chat-stream', () => ({
-  useChatStream: (_threadId: string, isActive: boolean) => ({
-    fallbackAttempts: [],
-    streamCompletedAt:
-      isActive && streamState.completionReads++ === 0 ? streamState.completedAt : null,
-    streamError: null,
-    judgeEvaluating: false,
-    executingModel: null,
-    judgeModel: null,
-    progressStages: [],
-    currentStageLabel: null,
-    streamLive: { content: '', reasoning: '', isStreaming: false },
-    resetStream: mockResetStream,
-  }),
+  useChatStream: (_threadId: string, isActive: boolean, replayPastEvents?: boolean) => {
+    streamState.lastReplayArg = replayPastEvents;
+    return {
+      fallbackAttempts: [],
+      streamCompletedAt:
+        isActive && streamState.completionReads++ === 0 ? streamState.completedAt : null,
+      streamError: null,
+      judgeEvaluating: false,
+      executingModel: null,
+      judgeModel: null,
+      progressStages: [],
+      currentStageLabel: null,
+      streamLive: { content: '', reasoning: '', isStreaming: false },
+      resetStream: mockResetStream,
+    };
+  },
 }));
 
 vi.mock('@/hooks/chat/use-virtualized-messages', () => ({
   useVirtualizedMessages: () => ({
     messages: virtualizedState.messages,
     isLoading: false,
+    isFetching: virtualizedState.isFetching,
     isFetchingPreviousPage: false,
     isFetchingNextPage: false,
     hasPreviousPage: false,
@@ -81,11 +89,63 @@ describe('useThreadDetail', () => {
     vi.clearAllMocks();
     streamState.completedAt = null;
     streamState.completionReads = 0;
+    streamState.lastReplayArg = undefined;
     virtualizedState.messages = [buildUserMessage()];
+    virtualizedState.isFetching = false;
     mockGetThread.mockResolvedValue(null);
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
+  });
+
+  it('does not arm recovery from a transcript that is being replaced', async () => {
+    // Immediately after a run completes the list is invalidated and still ends
+    // with the USER message until the refetch lands. Arming there opened a
+    // second, pointless stream connection for every single send.
+    virtualizedState.isFetching = true;
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useThreadDetail('thread-race'), { wrapper });
+
+    await waitFor(() => expect(result.current.messages).toHaveLength(1));
+    expect(result.current.isWaitingForResponse).toBe(false);
+  });
+
+  it('asks for replay when recovering a run that was already in flight', async () => {
+    // A page load finding a transcript that ends in an unanswered question.
+    // This run started before the page did, so replay is the only way to catch
+    // up on what was missed.
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useThreadDetail('thread-race'), { wrapper });
+
+    await waitFor(() => expect(result.current.isWaitingForResponse).toBe(true));
+
+    expect(streamState.lastReplayArg).toBe(true);
+  });
+
+  it('does NOT ask for replay for a run this page just started', async () => {
+    // The race that produced "200 then net::ERR_ABORTED, repeatedly": the
+    // stream opens before the POST clears the server's replay buffer, so a
+    // replaying connection is handed the PREVIOUS run's terminal DONE, treats
+    // it as completion, and aborts the connection it just opened. A freshly
+    // sent run has missed nothing, so it asks for nothing.
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    virtualizedState.messages = [buildMessage('assistant-1', MessageRole.ASSISTANT)];
+    const { result } = renderHook(() => useThreadDetail('thread-race'), { wrapper });
+
+    await waitFor(() => expect(result.current.isWaitingForResponse).toBe(false));
+
+    act(() => {
+      result.current.startWaitingForResponse();
+    });
+
+    await waitFor(() => expect(result.current.isWaitingForResponse).toBe(true));
+    expect(streamState.lastReplayArg).toBe(false);
   });
 
   it('does not re-download the conversation on a timer while waiting', async () => {

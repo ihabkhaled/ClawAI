@@ -13,6 +13,15 @@ import { buildTranscriptSignature } from '@/utilities/transcript-signature.utili
 export function useThreadDetail(threadId: string) {
   const queryClient = useQueryClient();
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
+  /**
+   * Whether the current wait should ask the server to replay its event buffer.
+   *
+   * False for a run this page just started: it has missed nothing, and asking
+   * for replay hands it the PREVIOUS run's terminal DONE, which is the race
+   * that produced the stream open/abort loop. True when recovering a run that
+   * was already in flight before this page loaded, which is what replay is for.
+   */
+  const [shouldReplayStream, setShouldReplayStream] = useState(true);
   const waitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageCountBeforeSend = useRef(0);
   /**
@@ -62,7 +71,7 @@ export function useThreadDetail(threadId: string) {
     currentStageLabel,
     streamLive,
     resetStream,
-  } = useChatStream(threadId, isWaitingForResponse);
+  } = useChatStream(threadId, isWaitingForResponse, shouldReplayStream);
 
   // A completed stream refetches immediately instead of waiting for the next
   // poll tick. Without this the answer was already stored and streamed, but the
@@ -185,10 +194,18 @@ export function useThreadDetail(threadId: string) {
       armedSignatureRef.current !== signature &&
       messagesList.length > 0 &&
       lastMessage?.role === MessageRole.USER &&
-      !virtualizedMessages.isLoading
+      !virtualizedMessages.isLoading &&
+      // Never decide from a transcript that is being replaced. Immediately
+      // after a run completes, the list is invalidated and still ends with the
+      // USER message until the refetch lands — arming there opened a second,
+      // pointless stream connection for every send.
+      !virtualizedMessages.isFetching
     ) {
       armedSignatureRef.current = signature;
       messageCountBeforeSend.current = messagesList.length - 1;
+      // Recovering a run that started before this page did: replay is exactly
+      // the mechanism for catching up on what was missed.
+      setShouldReplayStream(true);
       setIsWaitingForResponse(true);
     }
   }, [
@@ -196,6 +213,7 @@ export function useThreadDetail(threadId: string) {
     lastMessage?.role,
     lastMessage?.id,
     virtualizedMessages.isLoading,
+    virtualizedMessages.isFetching,
     isWaitingForResponse,
   ]);
 
@@ -215,6 +233,7 @@ export function useThreadDetail(threadId: string) {
       lastMessage?.id ?? null,
     );
     resetStream();
+    setShouldReplayStream(false);
     setIsWaitingForResponse(true);
   }, [messagesList.length, lastMessage?.id, resetStream, threadId]);
 

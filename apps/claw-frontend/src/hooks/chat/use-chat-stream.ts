@@ -15,7 +15,26 @@ import type {
 import { connectSse, isSimpleProgressStreamEvent, logger } from '@/utilities';
 import { resolveChatStreamError } from '@/utilities/chat-stream-error.utility';
 
-export function useChatStream(threadId: string, isActive: boolean) {
+/**
+ * The chat SSE subscription.
+ *
+ * `replayPastEvents` decides whether the server replays its buffer on connect,
+ * and getting it wrong is what produced the reported "200 then
+ * net::ERR_ABORTED, over and over".
+ *
+ * The buffer holds the previous run's terminal `DONE` until the backend clears
+ * it, which it does when the new run is accepted. But the client opens this
+ * stream *before* the POST has left the browser, so on a fresh send the two
+ * race and the client usually wins: it receives the old `DONE`, concludes the
+ * run is over, drops the waiting flag, and thereby aborts the connection it
+ * just opened — after which the recovery effect re-arms and the whole thing
+ * repeats.
+ *
+ * A freshly-sent run has missed nothing, so it asks for no replay at all and
+ * the race disappears. Replay is for what it was always for: catching up after
+ * a reload while a run was already in flight.
+ */
+export function useChatStream(threadId: string, isActive: boolean, replayPastEvents = true) {
   const { t } = useTranslation();
   const [fallbackAttempts, setFallbackAttempts] = useState<FallbackAttemptInfo[]>([]);
   const [streamError, setStreamError] = useState<string | null>(null);
@@ -35,6 +54,14 @@ export function useChatStream(threadId: string, isActive: boolean) {
     isStreaming: false,
   });
   const connectionRef = useRef<SseConnection | null>(null);
+  /**
+   * Whether this connection has delivered a terminal event.
+   *
+   * Without it, any clean close reads as "the run finished" — including the
+   * one an ownership check produces on a transient database blip, which then
+   * permanently downgraded the thread to REST polling.
+   */
+  const sawTerminalEventRef = useRef(false);
   // Content/reasoning arrive token-by-token; buffer in refs and flush to state
   // on the throttled METRICS events to avoid one React render per token.
   const contentRef = useRef('');
@@ -161,16 +188,25 @@ export function useChatStream(threadId: string, isActive: boolean) {
 
     resetStream();
 
-    const url = `${API_BASE_URL}/chat-messages/stream/${threadId}`;
+    // `replay=false` is a supported query on the stream endpoint; omitting it
+    // means replay=true.
+    const url = replayPastEvents
+      ? `${API_BASE_URL}/chat-messages/stream/${threadId}`
+      : `${API_BASE_URL}/chat-messages/stream/${threadId}?replay=false`;
 
     logger.debug({
       component: 'chat',
       action: 'sse-connect',
       message: 'Connecting to SSE stream',
-      details: { threadId },
+      details: { threadId, replay: replayPastEvents },
     });
 
+    // Reset per-connection: a terminal event belongs to the run that produced
+    // it, and this ref is what tells a clean close whether the run is over.
+    sawTerminalEventRef.current = false;
+
     const connection = connectSse(url, {
+      shouldReconnectAfterClose: () => !sawTerminalEventRef.current,
       onMessage: (data: string) => {
         try {
           const parsed = JSON.parse(data) as RouterStreamEvent;
@@ -257,6 +293,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
           }
 
           if (parsed.type === StreamEventType.DONE) {
+            sawTerminalEventRef.current = true;
             setJudgeEvaluating(false);
             setExecutingModel(null);
             setJudgeModel(null);
@@ -267,6 +304,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
           }
 
           if (parsed.type === StreamEventType.ERROR) {
+            sawTerminalEventRef.current = true;
             const localizedError = resolveChatStreamError(parsed, t);
             logger.error({
               component: 'chat',
@@ -309,6 +347,7 @@ export function useChatStream(threadId: string, isActive: boolean) {
   }, [
     threadId,
     isActive,
+    replayPastEvents,
     resetStream,
     upsertStage,
     flushLive,

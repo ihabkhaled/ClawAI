@@ -8,10 +8,10 @@
 
 ClawAI uses two patterns for real-time data:
 
-| Pattern            | Use Case                               | Mechanism                              |
-| ------------------ | -------------------------------------- | -------------------------------------- |
-| SSE (Server-Sent Events) | Streaming AI responses, fallback attempts, image/file generation progress | fetch() + ReadableStream |
-| Polling            | Waiting for completed AI messages, general data freshness | TanStack Query refetchInterval |
+| Pattern                  | Use Case                                                                  | Mechanism                      |
+| ------------------------ | ------------------------------------------------------------------------- | ------------------------------ |
+| SSE (Server-Sent Events) | Streaming AI responses, fallback attempts, image/file generation progress | fetch() + ReadableStream       |
+| Polling                  | Waiting for completed AI messages, general data freshness                 | TanStack Query refetchInterval |
 
 ---
 
@@ -121,9 +121,9 @@ export function useChatStream(threadId: string, isActive: boolean) {
 
 ```typescript
 enum StreamEventType {
-  FALLBACK_ATTEMPT = 'fallback_attempt',  // Provider failed, trying next
-  ERROR = 'error',                         // All providers failed
-  COMPLETION = 'completion',               // Message completed
+  FALLBACK_ATTEMPT = 'fallback_attempt', // Provider failed, trying next
+  ERROR = 'error', // All providers failed
+  COMPLETION = 'completion', // Message completed
 }
 ```
 
@@ -173,7 +173,7 @@ When waiting for an AI response, increase polling frequency:
 useQuery({
   queryKey: queryKeys.threads.messages(threadId),
   queryFn: () => chatRepository.listMessages(threadId),
-  refetchInterval: isWaitingForResponse ? 1000 : 10000,  // 1s when waiting, 10s otherwise
+  refetchInterval: isWaitingForResponse ? 1000 : 10000, // 1s when waiting, 10s otherwise
 });
 ```
 
@@ -193,6 +193,7 @@ The frontend uses both SSE and polling simultaneously:
 2. **Polling (reliable path)**: Checks for new messages every 1 second while waiting
 
 This dual approach ensures:
+
 - Users see fallback attempts in real-time (via SSE)
 - Messages are never missed (polling always works even if SSE fails)
 - The "AI is thinking..." indicator stops correctly
@@ -204,7 +205,10 @@ This dual approach ensures:
 Shown while waiting for an AI response:
 
 ```tsx
-function ThinkingIndicator({ fallbackAttempts, streamError }: ThinkingIndicatorProps): ReactElement {
+function ThinkingIndicator({
+  fallbackAttempts,
+  streamError,
+}: ThinkingIndicatorProps): ReactElement {
   return (
     <div className="flex items-center gap-2 text-muted-foreground">
       <Loader2 className="h-4 w-4 animate-spin" />
@@ -237,7 +241,9 @@ function RoutingTransparency({ decision }: RoutingTransparencyProps): ReactEleme
   return (
     <Collapsible>
       <CollapsibleTrigger>
-        <Badge>{decision.selectedProvider} / {decision.selectedModel}</Badge>
+        <Badge>
+          {decision.selectedProvider} / {decision.selectedModel}
+        </Badge>
         <span>Confidence: {decision.confidence}%</span>
       </CollapsibleTrigger>
       <CollapsibleContent>
@@ -279,3 +285,37 @@ The same configuration applies to image generation SSE (`/api/v1/images/`) and f
 5. **Polling must have a max limit** (3 minutes) -- never allow infinite polling
 6. **Frontend handles dual paths**: SSE error (fast) + polling finding error message (fallback)
 7. **SSE connections are not refreshable** -- if the token expires during an SSE connection, the connection must be closed and re-established after token refresh
+8. **A run this page just started must NOT ask for replay** (2026-09-10). The
+   server's replay buffer holds the _previous_ run's terminal `DONE` until the
+   backend clears it, which happens when the new run is accepted — but the
+   client opens the stream before the POST has left the browser. A replaying
+   connection therefore receives the old `DONE`, concludes the run is finished,
+   drops the waiting flag, and thereby aborts the connection it just opened;
+   the recovery effect then re-arms and the cycle repeats. Every turn is one
+   request that returns `200` and dies with `net::ERR_ABORTED`.
+
+   `useChatStream(threadId, isActive, replayPastEvents)` — pass `false` for an
+   explicit send (it has missed nothing) and `true` only when recovering a run
+   that was already in flight when the page loaded. That is what replay is for.
+
+9. **A clean close is not a completion** (2026-09-10). The legacy chat stream
+   observable never completes on `DONE`; only the client closes it. So the
+   things that close it cleanly _server-side_ are an ownership rejection and a
+   service restart — and a restart is precisely when reconnecting matters.
+   Treating any clean close as terminal meant one transient blip permanently
+   downgraded the thread to REST polling for the life of the page, with no
+   error and nothing user-visible.
+
+   `connectSse` now asks the consumer via `shouldReconnectAfterClose`, because
+   only the consumer knows whether it actually saw a terminal event. The
+   default is to reconnect.
+
+10. **The reported CORS errors on this route were not CORS** (2026-09-10). CORS
+    is configured in exactly one place (`claw-chat-service/src/main.ts`), nginx
+    adds no `Access-Control` header anywhere, and the standard deployment is
+    same-origin so CORS does not apply. A "blocked by CORS policy" logged
+    against a request DevTools also shows as `200` plus `net::ERR_ABORTED` is
+    Chrome mislabelling a connection cut while its headers were being consumed.
+    Fix the aborts, not the headers. There _is_ a real CORS trap, but only when
+    browsing the dev frontend on plain-HTTP `localhost:3000`, an origin absent
+    from `CORS_ORIGINS`.

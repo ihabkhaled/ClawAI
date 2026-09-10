@@ -33,6 +33,7 @@ const dataControllerMock = {
   virtualizedMessages: {
     messages: [],
     isLoading: false,
+    isFetching: false,
     isFetchingPreviousPage: false,
     isFetchingNextPage: false,
     hasPreviousPage: false,

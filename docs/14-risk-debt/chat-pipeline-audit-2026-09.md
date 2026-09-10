@@ -318,7 +318,7 @@ publishes plain HTTP on `localhost:3000`
 stream. If the QA session was on `localhost:3000` this explains it; on
 `claw.local` it does not.
 
-### D1 — The stale-`DONE` replay race (**high**) — the actual cause
+### D1 — The stale-`DONE` replay race — **FIXED 2026-09-10** — the actual cause
 
 The transport is not `EventSource`. `sse.utility.ts:20-137` uses `fetch` plus a
 manual `ReadableStream` reader, so there is no browser auto-reconnect and no
@@ -345,6 +345,12 @@ The loop, step by step:
    waiting back to true.
 8. Back to step 1.
 
+> **Fixed.** `useChatStream` takes a `replayPastEvents` argument. An explicit
+> send passes `false` — it has missed nothing, so the buffer is never read and
+> the race cannot occur. Recovery after a reload still passes `true`, which is
+> what replay exists for. The endpoint already accepted `?replay=false`; nothing
+> server-side changed.
+
 Each turn of that loop is one `GET .../stream/{threadId}` that returns 200 and
 is aborted milliseconds later, and the reported "REST synchronisation takes
 over" is the 2 s / 5 s / 10 s polls firing whenever the flag is briefly true.
@@ -352,7 +358,7 @@ over" is the 2 s / 5 s / 10 s polls firing whenever the flag is briefly true.
 The hazard is documented in the code itself — `chat-stream.service.ts:78-84`
 describes this exact race. The mitigation was placed on the wrong side of it.
 
-### D2 — A clean close is treated as permanent (**high**)
+### D2 — A clean close is treated as permanent — **FIXED 2026-09-10**
 
 `sse.utility.ts:49-52`: if the server ends the body cleanly, the utility marks
 the stream `completed` and **deliberately never reconnects**.
@@ -362,6 +368,11 @@ But the server ends cleanly on any `assertOwnership` rejection
 an ownership check permanently downgrades that thread to REST polling for the
 life of the page. Backoff exists (`1s × 2ⁿ`, capped 15 s, 10 attempts) and is
 skipped in precisely the case that most needs it.
+
+> **Fixed.** `connectSse` now asks the consumer through
+> `shouldReconnectAfterClose`, because only the consumer knows whether it saw a
+> terminal event. The default is to reconnect — assuming the stream finished is
+> the failure that was already paid for.
 
 ### D3 — Degradation is silent (**high**)
 
@@ -563,14 +574,19 @@ callers.
 
 ## What has been fixed so far
 
-| Finding        | Landed     | Effect measured on the same page                                                                                                                                 |
-| -------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B2, B3, B4, B7 | 2026-09-10 | Thread re-downloads while waiting: **30/min → 12/min**, at a single clean 5 s cadence with no duplicate pairs. The 10-minute re-arming loop can no longer recur. |
-| A1, A2         | 2026-09-10 | Idle requests: **83/min → 2/min** (−98%), the survivor being the deliberate 30 s health poll. `/files` 4.2 MB serialisations: **6/min → 0**.                     |
+| Finding        | Landed     | Effect measured on the same page                                                                                                                                                                                                                                                                                                                         |
+| -------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B2, B3, B4, B7 | 2026-09-10 | Thread re-downloads while waiting: **30/min → 12/min**, at a single clean 5 s cadence with no duplicate pairs. The 10-minute re-arming loop can no longer recur.                                                                                                                                                                                         |
+| A1, A2         | 2026-09-10 | Idle requests: **83/min → 2/min** (−98%), the survivor being the deliberate 30 s health poll. `/files` 4.2 MB serialisations: **6/min → 0**.                                                                                                                                                                                                             |
+| D1, D2         | 2026-09-10 | A fresh send no longer asks for replay, so it cannot be handed the previous run's `DONE`. A clean close now reconnects unless a terminal event was actually seen. Verified with a real send: **exactly one** stream connection, `replay=false`, held open 6.25 s for the whole generation, answer rendered. D5 withdrawn — the audit was wrong about it. |
 
-**Targets T1 and T3 are met**; T4 is met for the idle case. Sections C, D and E
-are open. D1 is the next batch: the stale-`DONE` replay race, which is the
-engine behind the stream aborts and the phantom CORS errors.
+**Targets T1, T3 and T7 are met**; T4 is met for the idle case. Sections C and E
+are open, plus D3 (a dead stream is still silent to the user) and D4 (no
+`Last-Event-ID`, so recovery still replays rather than resumes).
+
+C is next: client telemetry is now the largest remaining source of requests —
+12 of the 20 requests a full send-and-answer costs. It needs the service to
+accept an array first.
 
 A measurement caveat worth keeping: an idle reading of _zero_ is as likely to
 mean the page failed to hydrate as it is to mean success. The first attempt at
