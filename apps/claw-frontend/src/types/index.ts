@@ -328,6 +328,8 @@ export type {
   MessageBubbleProps,
   ModelSelection,
   ModelPickerOption,
+  UseModelPickerParams,
+  UseModelPickerResult,
   ModelPickerGroup,
   ModelPickerItemProps,
   ModelPickerProps,

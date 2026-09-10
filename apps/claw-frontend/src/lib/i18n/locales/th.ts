@@ -261,6 +261,14 @@ export const th: TranslationDictionary = {
       clampedDismiss: 'ปิด',
       addCreditCta: 'เพิ่มเครดิต',
     },
+    modelSelector: {
+      autoLabel: 'อัตโนมัติ (การกำหนดเส้นทางเป็นผู้ตัดสิน)',
+      autoShortLabel: 'อัตโนมัติ',
+      loading: 'กำลังโหลดโมเดล…',
+      empty: 'ไม่มีโมเดลที่ใช้งานได้',
+      search: 'ค้นหา',
+      noResults: 'ไม่พบผลลัพธ์',
+    },
     threadListDrawer: 'บทสนทนา',
     export: {
       action: 'ส่งออก',

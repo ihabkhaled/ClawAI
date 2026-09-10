@@ -32,10 +32,20 @@ export function ResearchToggle({
   const providerDisabled = disabled || selectableProviders.length === 0;
 
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-1 sm:flex-none">
+    // `shrink-0`, not `flex-1`. These used to shrink below their content on a
+    // phone, so the mode select rendered as "N…" in about 90px. The toolbar row
+    // already scrolls sideways — that is the designed answer to a row that does
+    // not fit, and it beats crushing every control until none of them is
+    // readable.
+    <div className="flex shrink-0 items-center gap-1">
+      {/* Decorative and redundant: the select beside it says "No research" in
+          words. It is worth 20px of a 375px row, which is the difference
+          between the research control being readable and being clipped. */}
       <Globe
         className={
-          value.mode === ResearchMode.NONE ? 'text-muted-foreground size-4' : 'text-primary size-4'
+          value.mode === ResearchMode.NONE
+            ? 'text-muted-foreground hidden size-4 sm:block'
+            : 'text-primary hidden size-4 sm:block'
         }
         aria-hidden
       />
@@ -44,7 +54,7 @@ export function ResearchToggle({
         onValueChange={(next) => onChange({ ...value, mode: next as ResearchMode })}
         disabled={disabled}
       >
-        <SelectTrigger className="truncate-fixed h-9 min-w-0 flex-1 px-2 text-xs sm:w-[10rem] sm:flex-none">
+        <SelectTrigger className="truncate-fixed h-9 w-[8.5rem] shrink-0 px-2 text-xs sm:w-[10rem]">
           <SelectValue placeholder={t('research.toggle.placeholder')} />
         </SelectTrigger>
         <SelectContent>
@@ -77,7 +87,7 @@ export function ResearchToggle({
           }
           disabled={providerDisabled}
         >
-          <SelectTrigger className="truncate-fixed h-9 min-w-0 flex-1 px-2 text-xs sm:w-[12rem] sm:flex-none">
+          <SelectTrigger className="truncate-fixed h-9 w-[9.5rem] shrink-0 px-2 text-xs sm:w-[12rem]">
             <SelectValue
               placeholder={getProviderPlaceholder(
                 isProvidersLoading,

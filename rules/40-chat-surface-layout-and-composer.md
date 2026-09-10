@@ -76,21 +76,77 @@ today, and any future page built as header + transcript + input.
 8. **A heading that truncates needs `clamp-title` as well as `truncate`.**
    `globals.css` deliberately neutralises `.truncate` under the touch query — a
    clipped string on a phone has no hover to reveal it — so a bare `truncate`
-   heading wraps without bound there. `clamp-title` caps that wrap at two lines.
-   A control label wants `truncate-fixed` instead; prose wants neither.
+   heading wraps without bound there. `clamp-title` caps that wrap — **at two
+   lines below 640px, and at one line with an ellipsis from 640px up**; see §15
+   for why the bound differs. A control label wants `truncate-fixed` instead;
+   prose wants neither.
 
 9. **A control variant is chosen by `useMediaQuery`, not by rendering both.**
    A Tailwind prefix can hide a mounted component; it cannot pick between an
-   icon-only trigger and a labelled one. Mounting a mobile row and a desktop row
+   a short trigger label and a full one. Mounting a mobile row and a desktop row
    side by side with `md:hidden` / `hidden md:flex` mounts every picker, popover
-   and query behind them twice. `MEDIA_QUERY_SM_UP` (header actions) and
-   `MEDIA_QUERY_LG_UP` (composer labels) exist for this.
+   and query behind them twice. `MEDIA_QUERY_SM_UP` (header actions),
+   `MEDIA_QUERY_LG_UP` (composer labels) and `MEDIA_QUERY_BELOW_MD` (the model
+   picker rendering as a bottom sheet rather than a popover) exist for this.
+   Keep that list complete: a fourth query added silently is how two components
+   end up disagreeing about where a breakpoint is.
 
 10. **The reading column is bounded by a shared token.** Transcript and composer
     both take `.chat-content-column` (`--chat-content-max`), so they cannot drift
     apart, and a line of prose does not run the width of a 2560 px monitor. The
     bound is set wide enough that it does not bind on a 1366 px laptop — a gutter
     where there is no room to spare is the opposite failure.
+
+11. **A control in the composer row holds its own width; the row scrolls.**
+    Every control in the toolbar is `shrink-0` with a declared width, in
+    `composer-toolbar.tsx` **and in the components it renders** —
+    `model-selector.tsx` and `research-toggle.tsx` build their own trigger
+    classes, so a rule that only reads the toolbar file misses them. None of
+    them is `flex-1`. A `flex-1` control shrinks below its own content when the
+    row runs out of room, which on a 375px screen rendered the research select
+    as `N…` in about 90px — a control narrower than one word of its own value is
+    not a smaller control, it is a broken one. Overflow is answered by the row
+    scrolling sideways, which is the one response that costs the conversation no
+    vertical space.
+
+12. **A hidden scrollbar owes the reader a fade.** `.scrollbar-none` is right
+    here (a 15px bar to report 2px of overflow drew a grey line across the
+    card), but with no bar at all a control clipped at the container edge reads
+    as a broken control. `.scroll-fade-inline-end` supplies the signal, costs no
+    height, and falls over empty space when the content fits. It has an RTL
+    counterpart; use the utility, never a hand-rolled gradient overlay, because
+    an overlay needs the card's background colour and that changes with theme.
+
+13. **A narrow trigger is narrow, not empty.** The composer's model trigger
+    shows a short label at every width. It used to be a 36px square whose only
+    label was `sr-only`, so on a phone — where the header does not repeat it
+    either — nothing on screen said which model would answer. Give the name the
+    room and let the row scroll; the full name stays on the tooltip, the
+    `aria-label` and the sheet the trigger opens.
+
+14. **A long list opens at the current choice.** A picker of ~180 models that
+    opens at scroll position zero makes the user scroll back to their own
+    selection every single time. With cmdk the mechanism is its _highlight_
+    (`Command value`), which is not the selection: seed it when the picker
+    opens, then leave it to the keyboard. That also means each item's cmdk
+    `value` must be its own identity, with the display label moved to
+    `keywords` so search still matches it.
+
+15. **The two-line title clamp is bounded by width, and that is a deliberate
+    deviation from [rules/03 §7](03-frontend-rules.md).** `clamp-title` wraps to
+    two lines only below 640px; from 640px up it reverts to a one-line ellipsis,
+    even on a touch device. Rule 03 §7 says mobile guards are pointer-based, not
+    width-based, precisely because a width test misreads a phone in landscape
+    (915x412). Here the width test is the correct one, and the landscape phone
+    is the reason rather than the casualty: **the clamp trades width for
+    height**, and in landscape height is the scarce resource — two lines of
+    oversized bold title over a 412px-tall viewport is the failure, not the fix.
+    Above 640px the header has room to trim on one line.
+
+    The accepted cost: a landscape phone gets an ellipsis with no hover to
+    reveal it. The full title stays reachable through the thread drawer and the
+    rename control, so nothing is unreachable — only less convenient. Recorded
+    in [ADR-090](../docs/13-adr/adr-090-model-picker-opens-at-the-current-choice.md).
 
 ## Prohibited patterns
 
@@ -106,6 +162,17 @@ today, and any future page built as header + transcript + input.
 - A header that wraps to a second row at any tested width.
 - A truncating heading with no `clamp-title` beside it.
 - More controls on a phone header row than 44px each will fit beside the title.
+- `flex-1` or `min-w-0` on a composer toolbar control, which lets it shrink
+  below its own content instead of letting the row scroll.
+- A viewport-relative height (`dvh`, `vh`) on a list inside a dialog or popover.
+  It cannot see the header, search box and footer around it, so on a short
+  viewport it takes its share and pushes them out. Use `flex-1 min-h-0` against
+  a parent that is itself a flex column, and clear any `max-h` the primitive
+  ships with.
+- A block wrapper around a flex-column child that is meant to fill it. The child
+  sizes to its content, overflows, and its last element is silently clipped.
+- A picker trigger whose only label is `sr-only`.
+- A hardcoded word as a picker's dialog title where the selection belongs.
 
 ## Enforcement
 
@@ -113,7 +180,9 @@ today, and any future page built as header + transcript + input.
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/chat-surface-layout-contract.test.ts` reads the shell, composer and toolbar source and fails on an arbitrary pixel/vh height, an inline `height:`, a missing `min-h-0` on the transcript, a missing `chat-content-column`, twin breakpoint-hidden control rows, a missing `resize-none`, or a missing `data-rail-obstacle`. |
 | **Unit test**        | `hooks/chat/__tests__/use-message-composer.test.tsx` asserts the composer is bounded in rows and that the variant is resolved once, not rendered twice.                                                                                                                                                                                                                       |
-| **Review checklist** | Rules 6, 7 and 9 have no automatable form — a wrapped header and a keyboard-shrunk viewport are only visible in a browser. `skills/verify-responsive-layout-in-browser.md` is the procedure, and its evidence is the check.                                                                                                                                                   |
+| **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/model-picker.test.tsx` asserts the picker opens with the current choice highlighted, re-seeds on each open, still finds a model by display name after the item value became its id, and shows the short label with the full one on `title`/`aria-label`.                                                                    |
+| **Unit test**        | `apps/claw-frontend/src/components/chat/__tests__/research-toggle.test.tsx` asserts both research triggers carry a fixed width and `shrink-0`, and never `flex-1`.                                                                                                                                                                                                            |
+| **Review checklist** | Rules 6, 7, 9 and 15 have no automatable form — a wrapped header and a keyboard-shrunk viewport are only visible in a browser. `skills/verify-responsive-layout-in-browser.md` is the procedure, and its evidence is the check.                                                                                                                                               |
 
 ## Definition of done
 
@@ -126,6 +195,9 @@ today, and any future page built as header + transcript + input.
       the title is never narrower than about a third of the row.
 - [ ] Every action that existed before the redesign is still reachable, on the
       row or in the overflow menu.
+- [ ] No control inside the composer row is `flex-1`; the row is.
+- [ ] Any list inside a dialog or popover is bounded by `flex-1 min-h-0`, not by a `dvh` fraction, and its wrapper is a flex column.
+- [ ] Every picker trigger renders a visible label, not only an `sr-only` one.
 - [ ] Verified in a browser at the sizes in
       [`skills/verify-responsive-layout-in-browser.md`](../skills/verify-responsive-layout-in-browser.md),
       not only in tests.
@@ -135,5 +207,6 @@ today, and any future page built as header + transcript + input.
 - [`docs/02-business-product/chat-thread-page-spec.md`](../docs/02-business-product/chat-thread-page-spec.md) — decisions and acceptance criteria
 - [`docs/05-frontend/chat-surface-layout.md`](../docs/05-frontend/chat-surface-layout.md) — the implementation contract, file by file
 - [`docs/13-adr/adr-088-composer-auto-height-replaces-drag-resize.md`](../docs/13-adr/adr-088-composer-auto-height-replaces-drag-resize.md)
+- [`docs/13-adr/adr-090-model-picker-opens-at-the-current-choice.md`](../docs/13-adr/adr-090-model-picker-opens-at-the-current-choice.md) — the picker highlight, the short trigger label, and the deliberate width guard in `clamp-title`
 - [`rules/36-floating-ui-and-toast-clearance.md`](36-floating-ui-and-toast-clearance.md)
 - [`rules/03-frontend-rules.md`](03-frontend-rules.md) — TSX is render-only, so every measurement above lives in a hook

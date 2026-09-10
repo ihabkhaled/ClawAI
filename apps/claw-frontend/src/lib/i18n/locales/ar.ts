@@ -263,6 +263,14 @@ export const ar: TranslationDictionary = {
       clampedDismiss: 'إغلاق',
       addCreditCta: 'إضافة رصيد',
     },
+    modelSelector: {
+      autoLabel: 'تلقائي (التوجيه يقرر)',
+      autoShortLabel: 'تلقائي',
+      loading: 'جارٍ تحميل النماذج…',
+      empty: 'لا توجد نماذج متاحة',
+      search: 'بحث',
+      noResults: 'لا توجد نتائج',
+    },
     threadListDrawer: 'المحادثات',
     export: {
       action: 'تصدير',

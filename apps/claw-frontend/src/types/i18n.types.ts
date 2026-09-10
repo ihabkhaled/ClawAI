@@ -252,6 +252,14 @@ export type TranslationDictionary = {
       clampedDismiss: string;
       addCreditCta: string;
     };
+    modelSelector: {
+      autoLabel: string;
+      autoShortLabel: string;
+      loading: string;
+      empty: string;
+      search: string;
+      noResults: string;
+    };
     threadListDrawer: string;
     export: {
       action: string;

@@ -267,6 +267,14 @@ export const ja: TranslationDictionary = {
       clampedDismiss: '閉じる',
       addCreditCta: 'クレジットを追加',
     },
+    modelSelector: {
+      autoLabel: '自動 (ルーティングが決定)',
+      autoShortLabel: '自動',
+      loading: 'モデルを読み込み中…',
+      empty: '利用できるモデルがありません',
+      search: '検索',
+      noResults: '結果が見つかりません',
+    },
     threadListDrawer: '会話',
     export: {
       action: 'エクスポート',

@@ -267,6 +267,14 @@ export const fr: TranslationDictionary = {
       clampedDismiss: 'Fermer',
       addCreditCta: 'Ajouter du crédit',
     },
+    modelSelector: {
+      autoLabel: 'Automatique (le routage décide)',
+      autoShortLabel: 'Auto',
+      loading: 'Chargement des modèles…',
+      empty: 'Aucun modèle disponible',
+      search: 'Rechercher',
+      noResults: 'Aucun résultat',
+    },
     threadListDrawer: 'Conversations',
     export: {
       action: 'Exporter',

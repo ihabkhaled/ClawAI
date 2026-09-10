@@ -267,6 +267,14 @@ export const ru: TranslationDictionary = {
       clampedDismiss: 'Закрыть',
       addCreditCta: 'Пополнить кредит',
     },
+    modelSelector: {
+      autoLabel: 'Автоматически (решает маршрутизация)',
+      autoShortLabel: 'Авто',
+      loading: 'Загрузка моделей…',
+      empty: 'Нет доступных моделей',
+      search: 'Поиск',
+      noResults: 'Ничего не найдено',
+    },
     threadListDrawer: 'Беседы',
     export: {
       action: 'Экспорт',

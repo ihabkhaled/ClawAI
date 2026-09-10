@@ -265,6 +265,14 @@ export const hi: TranslationDictionary = {
       clampedDismiss: 'बंद करें',
       addCreditCta: 'क्रेडिट जोड़ें',
     },
+    modelSelector: {
+      autoLabel: 'स्वचालित (राउटिंग तय करता है)',
+      autoShortLabel: 'स्वचालित',
+      loading: 'मॉडल लोड हो रहे हैं…',
+      empty: 'कोई मॉडल उपलब्ध नहीं',
+      search: 'खोजें',
+      noResults: 'कोई परिणाम नहीं मिला',
+    },
     threadListDrawer: 'बातचीत',
     export: {
       action: 'निर्यात करें',

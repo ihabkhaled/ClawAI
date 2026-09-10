@@ -23,6 +23,12 @@ import type { ComposerToolbarProps } from '@/types';
  * classic scrollbar is 15px tall — it drew a grey bar across the composer card
  * to report less overflow than it occupied. Every control here has a keyboard
  * tab stop, so hiding the bar hides an affordance, not access.
+ *
+ * `scroll-fade-inline-end` puts the affordance back without costing the row a
+ * single vertical pixel — the last few pixels fade, so a clipped control reads
+ * as "there is more this way" rather than as a broken control. Without it, the
+ * research select cut mid-word against the send button on a 375px screen and
+ * looked like a layout bug.
  */
 export function ComposerToolbar({
   selectedModel,
@@ -42,7 +48,7 @@ export function ComposerToolbar({
   showCredit,
 }: ComposerToolbarProps): React.ReactElement {
   return (
-    <div className="flex min-w-0 flex-1 scrollbar-none items-center gap-1.5 overflow-x-auto py-0.5 sm:gap-2">
+    <div className="scroll-fade-inline-end flex min-w-0 flex-1 scrollbar-none items-center gap-1.5 overflow-x-auto py-0.5 sm:gap-2">
       <ModelSelector
         value={selectedModel}
         onChange={onModelChange}

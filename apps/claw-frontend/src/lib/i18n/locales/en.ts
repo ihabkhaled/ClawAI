@@ -266,6 +266,14 @@ export const en: TranslationDictionary = {
       clampedDismiss: 'Dismiss',
       addCreditCta: 'Add credit',
     },
+    modelSelector: {
+      autoLabel: 'Auto (routing decides)',
+      autoShortLabel: 'Auto',
+      loading: 'Loading models…',
+      empty: 'No models available',
+      search: 'Search',
+      noResults: 'No results found',
+    },
     threadListDrawer: 'Conversations',
     export: {
       action: 'Export',

@@ -41,8 +41,14 @@ describe('ResearchToggle', () => {
 
   // Both triggers held a minimum width and no maximum, so "Google / SerpAPI
   // (Google / SerpAPI)" grew one of them to 409px, pushed the preview button
-  // onto a second row and wrapped inside a 36px control. A fixed width from sm
-  // up is what stops the row reflowing around whichever provider is selected.
+  // onto a second row and wrapped inside a 36px control. A fixed width is what
+  // stops the row reflowing around whichever provider is selected.
+  //
+  // It is now fixed at EVERY width, not only from `sm`. Below `sm` these were
+  // `min-w-0 flex-1`, which let them shrink below their content once the model
+  // trigger started showing a name — the mode select rendered as "N…" in about
+  // 90px on a 375px screen. The toolbar row scrolls sideways, and that is the
+  // designed answer to a row that does not fit.
   it('gives both triggers a width that the selected value cannot change', () => {
     render(
       <ResearchToggle
@@ -53,8 +59,11 @@ describe('ResearchToggle', () => {
     );
 
     const [mode, provider] = screen.getAllByRole('combobox');
-    expect(mode).toHaveClass('sm:w-[10rem]', 'sm:flex-none');
-    expect(provider).toHaveClass('sm:w-[12rem]', 'sm:flex-none');
+    expect(mode).toHaveClass('w-[8.5rem]', 'shrink-0', 'sm:w-[10rem]');
+    expect(provider).toHaveClass('w-[9.5rem]', 'shrink-0', 'sm:w-[12rem]');
+    // Never flex-1: that is what let them shrink below their own content.
+    expect(mode?.className ?? '').not.toContain('flex-1');
+    expect(provider?.className ?? '').not.toContain('flex-1');
   });
 
   // `touch:[&>span]:truncate-fixed` looked right and did nothing: Tailwind only
@@ -70,7 +79,7 @@ describe('ResearchToggle', () => {
     );
 
     for (const trigger of screen.getAllByRole('combobox')) {
-      expect(trigger).toHaveClass('truncate-fixed', 'min-w-0', 'flex-1');
+      expect(trigger).toHaveClass('truncate-fixed');
       expect(trigger.className).not.toContain('touch:[&>span]:truncate-fixed');
     }
   });

@@ -78,12 +78,19 @@ ten-line draft leaves the transcript small. That is the right priority while
 someone is typing, and it recovers the moment the draft is sent or cleared.
 Measured cap on a 375×812 phone: 225 px, about 28% of the viewport.
 
-**Very long thread title.** One line with an ellipsis on desktop; on a phone it
-wraps to **at most two** lines. Both, not either: `globals.css` deliberately
-neutralises `.truncate` under the touch query, because a clipped string on a
-phone has no hover to reveal it. The heading therefore carries `clamp-title`
-as well, which bounds that wrap. Dropping the clamp is what produced the 926 px
-header above. The full title is always in a `title` attribute.
+**Very long thread title.** One line with an ellipsis **at 640px and above**,
+including on a tablet; **below 640px** it wraps to **at most two** lines. Both,
+not either: `globals.css` deliberately neutralises `.truncate` under the touch
+query, because a clipped string on a phone has no hover to reveal it. The
+heading therefore carries `clamp-title` as well, which bounds that wrap.
+Dropping the clamp is what produced the 926 px header above.
+
+The 640px bound was added 2026-09-10: the touch query catches tablets too, so an
+iPad rendered two lines of oversized bold title where one line and an ellipsis
+fit in half the height. A landscape phone (915x412) therefore gets the one-line
+form, which is the right trade there because height, not width, is scarce. See
+[ADR-090](../13-adr/adr-090-model-picker-opens-at-the-current-choice.md). The
+full title is always in a `title` attribute, and always in the thread drawer.
 
 **RTL (Arabic, Persian).** The header uses logical properties (`ms-`/`me-`,
 `start`/`end`) throughout, the back arrow keeps its `rtl:rotate-180`, and the

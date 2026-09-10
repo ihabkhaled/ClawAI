@@ -496,6 +496,27 @@
     display: none;
   }
 
+  /* The companion to hiding the bar: say that there is more.
+   *
+   * With no scrollbar, a control clipped at the container's edge reads as a
+   * broken control rather than a scrollable row — on a 375px composer the
+   * research select was cut mid-word against the send button and looked like a
+   * layout bug. Fading the last few pixels is the conventional signal, and it
+   * costs nothing when the content fits, because the fade then falls over empty
+   * space.
+   *
+   * `mask-image` rather than a gradient overlay: an overlay would need the
+   * card's own background colour, which changes with the theme. */
+  .scroll-fade-inline-end {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent 100%);
+  }
+
+  [dir='rtl'] .scroll-fade-inline-end {
+    -webkit-mask-image: linear-gradient(to left, black calc(100% - 1.5rem), transparent 100%);
+    mask-image: linear-gradient(to left, black calc(100% - 1.5rem), transparent 100%);
+  }
+
   /* The bounded, centred reading column shared by the message list and the
    * composer on /chat/[threadId]. A utility rather than an arbitrary Tailwind
    * value because the bound is a design token two elements have to agree on,
@@ -1661,6 +1682,32 @@
     -webkit-line-clamp: 2;
     line-clamp: 2;
     overflow: hidden;
+  }
+
+  /* ...but only where the width is genuinely the problem.
+   *
+   * The query above catches every touch device, not only phones, so a tablet
+   * inherited the two-line clamp along with a header 700-1000px wide. A long
+   * thread title then rendered as two lines of oversized bold text where one
+   * line and an ellipsis would have said the same thing in half the height.
+   *
+   * This is a WIDTH guard inside a pointer query, which rules/03 §7 normally
+   * forbids because a width test misreads a phone in landscape (915x412). The
+   * deviation is deliberate and recorded in rules/40 §15 and ADR-090: the
+   * clamp trades width for height, and in landscape height is the scarce
+   * resource — two lines of oversized bold title over a 412px-tall viewport is
+   * the failure this avoids, not one it causes. The full title stays reachable
+   * through the thread drawer and the rename control. */
+  @media (min-width: 640px) {
+    .clamp-title {
+      display: block;
+      -webkit-line-clamp: none;
+      line-clamp: none;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      overflow-wrap: normal;
+    }
   }
 
   /* A select renders its value into a child span that the primitive clamps with

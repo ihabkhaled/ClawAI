@@ -592,6 +592,34 @@ everywhere (ads, indexing, sitemap, RSS) for the AdSense review window —
 needed the same guard, and missing the second one was caught only by running
 the full test suite, not by reasoning about the call graph.
 
+## The composer row and the model picker (2026-09-10)
+
+Three traps in the row under the textarea, all of which shipped as bugs first.
+
+**No control in that row is `flex-1`.** They are `shrink-0` with declared
+widths, and the ROW is the `flex-1` element. A `flex-1` control shrinks below
+its own content when space runs out: once the model trigger showed a name, the
+research select rendered as `N…` in about 90px on a 375px screen. Overflow is
+answered by the row scrolling sideways, which costs the conversation no height.
+`chat-surface-layout-contract.test.ts` reads `model-selector.tsx` and
+`research-toggle.tsx` for this, not just the toolbar file.
+
+**cmdk's `Command value` is the HIGHLIGHT, not the selection.** Setting it is
+what makes the model list scroll to the current choice — the picker opened at
+scroll position zero over 173 models until `use-model-picker.ts` started seeding
+it on open. Seed on open only; after that the highlight belongs to the keyboard.
+Item values are the option's own value, with the label in `keywords`.
+
+**Never bound a list inside a dialog with `dvh`.** A viewport fraction cannot
+see the header, search box and footer around it. `CommandList` ships
+`max-h-[min(300px,55dvh)]`, which pushed the picker's footer out through the
+bottom of the sheet on a 500px-tall viewport. Use `flex-1 min-h-0 max-h-none`
+against a parent that is itself a flex column — a block wrapper gives the child
+nothing to stretch against, and its last element is silently clipped.
+
+Full rule: `rules/40-chat-surface-layout-and-composer.md` §§11-15.
+Decision: `docs/13-adr/adr-090-model-picker-opens-at-the-current-choice.md`.
+
 ## The chat surface has no pixel heights (2026-09-10)
 
 `/chat/[threadId]` is header + transcript + composer, and **only the transcript

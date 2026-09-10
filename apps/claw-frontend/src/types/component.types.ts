@@ -764,6 +764,11 @@ export type ModelSelection = {
 export type ModelPickerOption = {
   value: string;
   label: string;
+  // What the trigger shows when there is no room for the full label. Only the
+  // pinned "Auto (routing decides)" option needs one today — a model's label is
+  // already its display name. A narrow trigger that showed nothing at all is
+  // what made the selected model invisible on a phone.
+  shortLabel?: string;
   specifications?: string[];
 };
 
@@ -796,10 +801,10 @@ export type ModelPickerProps = {
   noResultsLabel: string;
   triggerClassName?: string;
   ariaLabel?: string;
-  // Keeps the selected label available to a screen reader while removing it
-  // from the trigger. An icon-only trigger has no room for it, and rendering it
-  // anyway wrapped the model name one syllable per line beside the button.
-  hideTriggerLabel?: boolean;
+  // Show `shortLabel` instead of `label` on the trigger. For a composer control
+  // that has a few rem to spend: "Auto" rather than "Auto (routing decides)",
+  // while the dialog it opens still names the choice in full.
+  useShortTriggerLabel?: boolean;
   // Standing context pinned under the option list — today, the pay-as-you-go
   // dual-consumption disclaimer. It belongs INSIDE the picker because that is
   // where the user is deciding which model to spend money on; a line beside the
@@ -2718,4 +2723,34 @@ export type MessageEditActionProps = {
 export type MessageBranchActionProps = {
   threadId: string;
   messageId: string;
+};
+
+// Params and result for useModelPicker — the controller behind the shared
+// ModelPicker. Separated because the picker is a render-only component and the
+// highlight-seeding behaviour it needs is stateful.
+export type UseModelPickerParams = {
+  value: string | null;
+  groups: ModelPickerGroup[];
+  autoOption?: ModelPickerOption;
+  isLoading?: boolean;
+  disabled?: boolean;
+  placeholder: string;
+  loadingPlaceholder: string;
+  emptyPlaceholder: string;
+};
+
+export type UseModelPickerResult = {
+  open: boolean;
+  isMobile: boolean;
+  isDisabled: boolean;
+  selectedOption: ModelPickerOption | null;
+  // cmdk's highlighted row, which is NOT the selection. Seeded from the
+  // selection when the picker opens so the list scrolls there, then owned by
+  // the keyboard.
+  highlightedValue: string | undefined;
+  triggerLabel: string;
+  triggerShortLabel: string;
+  onOpenChange: (nextOpen: boolean) => void;
+  onHighlightChange: (nextValue: string) => void;
+  close: () => void;
 };

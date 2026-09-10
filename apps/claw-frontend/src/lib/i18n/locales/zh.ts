@@ -257,6 +257,14 @@ export const zh: TranslationDictionary = {
       clampedDismiss: '关闭',
       addCreditCta: '充值额度',
     },
+    modelSelector: {
+      autoLabel: '自动（由路由决定）',
+      autoShortLabel: '自动',
+      loading: '正在加载模型…',
+      empty: '没有可用的模型',
+      search: '搜索',
+      noResults: '未找到结果',
+    },
     threadListDrawer: '对话',
     export: {
       action: '导出',

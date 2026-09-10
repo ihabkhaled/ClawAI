@@ -266,6 +266,14 @@ export const fa: TranslationDictionary = {
       clampedDismiss: 'بستن',
       addCreditCta: 'افزودن اعتبار',
     },
+    modelSelector: {
+      autoLabel: 'خودکار (مسیریابی تصمیم می‌گیرد)',
+      autoShortLabel: 'خودکار',
+      loading: 'در حال بارگذاری مدل‌ها…',
+      empty: 'هیچ مدلی در دسترس نیست',
+      search: 'جستجو',
+      noResults: 'نتیجه‌ای یافت نشد',
+    },
     threadListDrawer: 'گفت‌وگوها',
     export: {
       action: 'برون‌ریزی',

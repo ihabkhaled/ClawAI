@@ -53,14 +53,19 @@ export function ModelSelector({
   // Compact variant — icon-only square button, optional inline label.
   // Default variant — keeps the historical full-width trigger.
   const isCompact = variant === ComposerControlVariant.Compact;
-  // Icon-only is a square that stays square. It used to keep the label mounted
-  // and merely narrow the button, so the name wrapped one syllable per line and
-  // spilled out; the name now lives in the dialog the button opens.
-  const isIconOnly = isCompact && showLabel !== true;
+  // A narrow trigger is narrow, not empty.
+  //
+  // It used to render as a 36px square with the name only in a `sr-only` span,
+  // so on a phone — the one place the header does not repeat it either — there
+  // was nothing on screen saying which model would answer. The name is the most
+  // important thing in this row, so it gets the room: a short label inside a
+  // bounded width, with the toolbar scrolling sideways to fit the rest. The
+  // full name stays on the tooltip, the aria-label and the sheet it opens.
+  const isNarrow = isCompact && showLabel !== true;
   const triggerClass = isCompact
     ? cn(
-        'border-border/60 h-9 gap-1 rounded-xl px-2 text-xs',
-        isIconOnly ? 'w-9 shrink-0 justify-center px-0' : 'min-w-0 max-w-[9rem] flex-1',
+        'border-border/60 h-9 shrink-0 gap-1 rounded-xl px-2 text-xs',
+        isNarrow ? 'w-[7.5rem]' : 'w-[9rem]',
       )
     : 'h-9 w-[220px] text-xs sm:w-[260px]';
 
@@ -71,15 +76,18 @@ export function ModelSelector({
       onChange={handleChange}
       disabled={disabled}
       isLoading={isLoading}
-      autoOption={{ value: MODEL_AUTO_VALUE, label: 'Auto (routing decides)' }}
-      placeholder="Auto"
-      loadingPlaceholder="Loading models..."
-      emptyPlaceholder="No models available"
-      searchPlaceholder="Search"
-      noResultsLabel="No results found"
+      autoOption={{
+        value: MODEL_AUTO_VALUE,
+        label: t('chat.modelSelector.autoLabel'),
+        shortLabel: t('chat.modelSelector.autoShortLabel'),
+      }}
+      placeholder={t('chat.modelSelector.autoShortLabel')}
+      loadingPlaceholder={t('chat.modelSelector.loading')}
+      emptyPlaceholder={t('chat.modelSelector.empty')}
+      searchPlaceholder={t('chat.modelSelector.search')}
+      noResultsLabel={t('chat.modelSelector.noResults')}
       triggerClassName={triggerClass}
-      hideTriggerLabel={isIconOnly}
-      ariaLabel={isIconOnly ? 'Auto' : undefined}
+      useShortTriggerLabel={isNarrow}
       // The disclaimer belongs where the money decision is made. A cloud model
       // spends BOTH the dollar wallet and the daily token allowance; a local one
       // spends tokens only, and that is the single most useful thing to know

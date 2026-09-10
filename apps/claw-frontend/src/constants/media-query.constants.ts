@@ -32,3 +32,16 @@ export const MEDIA_QUERY_LG_UP = '(min-width: 1024px)';
  * Keep in step with `sm` in tailwind.config — 640px.
  */
 export const MEDIA_QUERY_SM_UP = '(min-width: 640px)';
+
+/**
+ * Below the `md` breakpoint, where a popover becomes a bottom sheet.
+ *
+ * A popover anchored to a 36px trigger has nowhere to go on a phone: it either
+ * covers the composer it is anchored to or opens off-screen. The picker
+ * therefore renders as a Dialog below this width and a Popover above it — two
+ * different components, which is why this is a media query and not a Tailwind
+ * prefix.
+ *
+ * Keep in step with `md` in tailwind.config — 768px.
+ */
+export const MEDIA_QUERY_BELOW_MD = '(max-width: 767px)';
