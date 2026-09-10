@@ -861,6 +861,72 @@ export type ContextPackSelectorProps = {
   onChange: (ids: string[]) => void;
 };
 
+/**
+ * The control cluster that sits under the composer's textarea: model picker,
+ * attachment picker, research mode, context preview and the credit badge.
+ *
+ * Rendered once, not twice. `controlVariant` / `showModelLabel` come from a
+ * media query in the controller hook rather than from Tailwind prefixes,
+ * because a prefix can only hide a mounted component — it cannot choose
+ * between an icon-only trigger and a labelled one, and mounting both doubles
+ * every popover and query behind them.
+ */
+export type ComposerToolbarProps = {
+  selectedModel: ModelSelection | null;
+  onModelChange: (model: ModelSelection | null) => void;
+  disabled: boolean;
+  controlVariant: ComposerControlVariant;
+  showModelLabel: boolean;
+  selectedFileIds: string[];
+  onSelectedFileIdsChange: (ids: string[]) => void;
+  canResearch: boolean;
+  research: ResearchOptions;
+  onResearchChange: (value: ResearchOptions) => void;
+  researchProviders: SanitizedResearchProvider[];
+  isResearchProvidersLoading: boolean;
+  /** Null on the new-chat surface, where there is no thread to preview yet. */
+  threadId: string | null;
+  draft: string;
+  /** The wallet badge is desktop-only — it is the least urgent thing in the row. */
+  showCredit: boolean;
+};
+
+/**
+ * The chat header's `…` menu.
+ *
+ * Holds the actions that are once-per-thread or end-of-conversation (export,
+ * settings, delete) so the four that change the next answer (compare, judge,
+ * find, share) can stay directly on the row.
+ *
+ * Below `sm` it holds all seven. There is no room for the other four: the
+ * global touch rule floors every control at 44px, and seven of those plus gaps
+ * leave a 375px-wide header no space for the title at all.
+ * See `docs/02-business-product/chat-thread-page-spec.md`.
+ */
+export type ChatThreadHeaderMenuProps = {
+  menuLabel: string;
+  /** True when the row is too narrow to show the primary actions inline. */
+  collapsePrimaryActions: boolean;
+  canCompare: boolean;
+  compareLabel: string;
+  onCompare: () => void;
+  canUseQualityControls: boolean;
+  qualityLabel: string;
+  onQuality: () => void;
+  searchLabel: string;
+  onSearch: () => void;
+  shareLabel: string;
+  onShare: () => void;
+  exportLabel: string;
+  onExport: () => void;
+  canExport: boolean;
+  settingsLabel: string;
+  onOpenSettings: () => void;
+  deleteLabel: string;
+  onDelete: () => void;
+  isDeleting: boolean;
+};
+
 export type MessageComposerProps = {
   onSend: (
     content: string,
@@ -1876,10 +1942,19 @@ export type ChatThreadShellProps = {
   threadQualityPanelProps: ThreadQualityPanelProps;
   // Virtualized messages.
   virtualizedMessagesProps: VirtualizedMessagesProps;
-  // Composer + resize handle.
-  composerHeight: number;
-  onResizeHandleMouseDown: (e: React.MouseEvent) => void;
-  resizeAriaLabel: string;
+  // Overflow menu. Holds export / settings / delete, plus the four primary
+  // actions when the row is too narrow for them.
+  headerMenuProps: ChatThreadHeaderMenuProps;
+  /**
+   * Whether compare / judge / find / share render as buttons on the header row.
+   * Resolved once from a media query in useThreadDetailPage rather than hidden
+   * with a Tailwind prefix — a prefix would keep both copies mounted, and the
+   * menu items and the buttons are different components, not one styled twice.
+   */
+  showInlineActions: boolean;
+  // Composer. It has no height prop: the textarea sizes itself to its content
+  // between COMPOSER_MIN_ROWS and COMPOSER_MAX_ROWS, so nothing above it needs
+  // to know or persist a pixel height. See ADR-088.
   composerProps: MessageComposerProps;
 };
 

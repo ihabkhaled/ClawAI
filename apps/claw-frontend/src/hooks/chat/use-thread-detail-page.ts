@@ -4,14 +4,15 @@ import { useParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
 import { ROUTES } from '@/constants';
+import { MEDIA_QUERY_SM_UP } from '@/constants/media-query.constants';
 import { ActiveThreadPanel, PlanFeature } from '@/enums';
 import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
 import { useEditableTitle } from '@/hooks/chat/use-editable-title';
 import { useInThreadCompare } from '@/hooks/chat/use-in-thread-compare';
-import { useResizableComposer } from '@/hooks/chat/use-resizable-composer';
 import { useThreadDataController } from '@/hooks/chat/use-thread-data-controller';
 import { useShareChatController } from '@/hooks/chat-shares/use-share-chat-controller';
 import { useToggle } from '@/hooks/common/use-toggle';
+import { useMediaQuery } from '@/hooks/ui/use-media-query';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { ChatThreadShellProps, UseThreadDetailPageReturn } from '@/types';
 
@@ -49,8 +50,12 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
 
   const data = useThreadDataController({ threadId, t, onSettingsSaved: closePanel });
   const editableTitle = useEditableTitle(threadId, data.thread?.title ?? undefined);
-  const { composerHeight, handleMouseDown } = useResizableComposer();
   const planFeatures = usePlanFeatures();
+  // Resolved once, here, rather than by rendering both sets of controls and
+  // hiding one with a Tailwind prefix: the row buttons and the menu items are
+  // different components, and mounting both would double every dialog behind
+  // them. See rules/40-chat-surface-layout-and-composer.md.
+  const showInlineActions = useMediaQuery(MEDIA_QUERY_SM_UP);
   const compare = useInThreadCompare({
     threadId,
     initialJudgeEnabled: data.threadSettings.judgeEnabled,
@@ -201,9 +206,29 @@ export const useThreadDetailPage = (): UseThreadDetailPageReturn => {
     // Its own prop rather than a reach into the list's bag: the search panel is
     // the only consumer, and the list itself never scrolls on its own behalf.
     onJumpToMessage: jumpToMessage,
-    composerHeight,
-    onResizeHandleMouseDown: handleMouseDown,
-    resizeAriaLabel: t('accessibility.resizeInput'),
+    showInlineActions,
+    headerMenuProps: {
+      menuLabel: t('chat.moreActions'),
+      collapsePrimaryActions: !showInlineActions,
+      canCompare,
+      compareLabel: t('compare.title'),
+      onCompare: () => togglePanel(ActiveThreadPanel.COMPARE),
+      canUseQualityControls: canJudge || canCritic,
+      qualityLabel: t('chat.judgeReferee'),
+      onQuality: () => togglePanel(ActiveThreadPanel.QUALITY),
+      searchLabel: t('chat.search.action'),
+      onSearch: search.isOpen ? search.close : search.open,
+      shareLabel: share.buttonProps.label,
+      onShare: share.buttonProps.onClick,
+      exportLabel: t('chat.export.action'),
+      onExport: exportThread.exportThread,
+      canExport: exportThread.canExport,
+      settingsLabel: t('chat.threadSettings'),
+      onOpenSettings: () => togglePanel(ActiveThreadPanel.SETTINGS),
+      deleteLabel: t('common.delete'),
+      onDelete: deleteConfirm.open,
+      isDeleting: data.isDeleting,
+    },
     composerProps: {
       onSend: data.handleSend,
       isPending: data.isSending,

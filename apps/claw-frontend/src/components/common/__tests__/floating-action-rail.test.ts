@@ -82,6 +82,17 @@ describe('mobile floating action rail', () => {
     }
   });
 
+  it('keeps the obstacle term above md, where the composer is still there', () => {
+    // The nav bar is gone above `md`; the composer is not. The desktop override
+    // used to replace the whole max() with a plain corner offset, so from 768px
+    // up the launcher ignored the measured clearance and landed back on the
+    // composer — at 768x1024 it covered the send button completely. Dropping
+    // the nav term is correct; dropping the obstacle term is the bug.
+    expect(FLOATING_ACTION_DESKTOP_BOTTOM).toContain('max(');
+    expect(FLOATING_ACTION_DESKTOP_BOTTOM).toContain(`var(${RAIL_CLEARANCE_VARIABLE},0px)`);
+    expect(FLOATING_ACTION_DESKTOP_BOTTOM).not.toContain('var(--mobile-bottom-nav-height)');
+  });
+
   it('registers the composer as the furniture the rail has to clear', () => {
     const source = readFileSync(COMPOSER, 'utf8');
 

@@ -236,11 +236,19 @@
     --sidebar-width: 16rem;
     --sidebar-width-expanded: 17.5rem;
     --mobile-bottom-nav-height: 4rem;
-    /* Composer max-height tokens (UI/UX refactor — phase 2 mobile composer).
-     * Mobile pins to ~30dvh so the textarea grows up to roughly a third of the
-     * viewport before scrolling; desktop allows ~50dvh for longer prompts. */
-    --composer-max-height-mobile: 30dvh;
-    --composer-max-height-desktop: 50dvh;
+    /* The chat reading column.
+     *
+     * Wide enough that it never binds on a 1366px laptop — at that width the
+     * portal leaves roughly 1060px between the sidebar and the page padding,
+     * so no gutter appears where there is no room to spare. It binds from
+     * about 1600px of available width upward, which is the point at which a
+     * full-bleed line of prose stops being readable. The composer takes the
+     * same bound so the two stay visually attached.
+     *
+     * The composer's own height is NOT a token: it follows its content between
+     * COMPOSER_MIN_ROWS and COMPOSER_MAX_ROWS. The pair of dvh caps that used
+     * to live here went with the drag-resize handle (ADR-088). */
+    --chat-content-max: 68rem;
 
     /* Typography scale (UI/UX refactor — phase 1 foundation) */
     --text-xs: 0.75rem; /* 12px */
@@ -471,18 +479,30 @@
     box-shadow: 0 0 0 3px hsl(var(--destructive) / 0.2);
   }
 
-  /* Phase 2 mobile composer redesign. Applies the mobile composer max-height
-   * token by default and swaps to the desktop token at md+. Used by the
-   * Textarea inside <MessageComposer /> so the textarea grows up to ~30dvh on
-   * mobile and ~50dvh on desktop before scrolling. */
-  .composer-max-height {
-    max-height: var(--composer-max-height-mobile);
+  /* A horizontally scrollable strip that does not spend 15px of height saying
+   * so.
+   *
+   * The composer toolbar overflows by a couple of pixels on a narrow tablet.
+   * A classic scrollbar there is taller than the overflow it reports, and it
+   * draws a grey bar across the bottom of the composer card — the row still
+   * scrolls by swipe, trackpad and shift-wheel without it. Use this ONLY where
+   * the content is also reachable another way (here: every control has a
+   * keyboard tab stop, so nothing is unreachable when the bar is hidden). */
+  .scrollbar-none {
+    scrollbar-width: none;
   }
 
-  @media (min-width: 768px) {
-    .composer-max-height {
-      max-height: var(--composer-max-height-desktop);
-    }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* The bounded, centred reading column shared by the message list and the
+   * composer on /chat/[threadId]. A utility rather than an arbitrary Tailwind
+   * value because the bound is a design token two elements have to agree on,
+   * and a `max-w-[var(--chat-content-max)]` in two files drifts the moment one
+   * of them is edited. */
+  .chat-content-column {
+    max-width: var(--chat-content-max);
   }
 
   /* Phase 3 — Topbar polish. Small "kbd-style" pill that hints at a keyboard

@@ -47,9 +47,23 @@ export const POLLING_MAX_TICKS = 300;
 export const MESSAGE_POLL_INTERVAL_MS = 5000;
 export const MESSAGES_PAGE_SIZE = 50;
 export const THREADS_PAGE_SIZE = 30;
-export const COMPOSER_MIN_HEIGHT = 80;
-export const COMPOSER_MAX_HEIGHT_RATIO = 0.5;
-export const COMPOSER_DEFAULT_HEIGHT = 200;
+/**
+ * Row bounds for the thread composer's textarea.
+ *
+ * The composer used to be a fixed 200px panel the user could drag taller or
+ * shorter (COMPOSER_DEFAULT_HEIGHT / COMPOSER_MIN_HEIGHT /
+ * COMPOSER_MAX_HEIGHT_RATIO, removed 2026-09-10). Both drag directions failed:
+ * up starved the conversation, down clipped the toolbar, and the handle was
+ * mouse-only so a touch user could not undo either. Height now follows the
+ * text between these two bounds and stops — see ADR-088.
+ *
+ * One row shorter at the floor than RICH_PROMPT_DEFAULT_MIN_ROWS because this
+ * composer is the resting state of the page: an empty thread should show a
+ * single line, not a block. The ceiling is lower than the compare panel's for
+ * the same reason — the conversation behind it is the point.
+ */
+export const COMPOSER_MIN_ROWS = 1;
+export const COMPOSER_MAX_ROWS = 10;
 export const VIRTUOSO_START_INDEX = 1_000_000;
 
 // Thread-settings bounds. These MUST stay in step with the Zod schema in

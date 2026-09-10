@@ -99,7 +99,18 @@ above the page) in the region where toasts stack, and the toast viewport itself.
    `p-5` and `safe-bottom` ends up with the inset alone — 0px on desktop. Pair
    them with a base class (`safe-bottom-base-5`, `safe-bottom-base-nav`).
 
-10. **Cap any computed clearance.** A tall floating panel must not be able to push
+10. **A breakpoint override must not drop the obstacle term.** The desktop
+    variant of the rail existed to drop the _navigation_ term — above `md`
+    there is no bottom nav. It replaced the whole `max()` instead, so from
+    768px up the launcher ignored `--rail-obstacle-clearance` entirely and
+    landed back on the composer: measured at 768×1024, the launcher occupied
+    700–752 × 926–1000 and covered the composer's send button (697–733 ×
+    951–987) completely. Dropping a term you no longer need is right; dropping
+    the one that does the work of this rule is how the collision comes back
+    under a media query. Asserted in
+    `components/common/__tests__/floating-action-rail.test.ts`.
+
+11. **Cap any computed clearance.** A tall floating panel must not be able to push
     toasts off the top of the screen. `FLOATING_CLEARANCE_MAX_RATIO` is half the
     viewport; past that, overlapping is the lesser failure.
 
@@ -113,6 +124,8 @@ above the page) in the region where toasts stack, and the toast viewport itself.
 - A left/right test where an overlap test would do.
 - Reserving space for an element that is not currently visible — measure, do not
   assume.
+- A breakpoint override that replaces the whole clearance `max()` rather than
+  the one term that no longer applies.
 
 ## Definition of done
 

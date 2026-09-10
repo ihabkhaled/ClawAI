@@ -48,6 +48,7 @@ import type {
 } from './chat.types';
 import type {
   ChatThreadShellProps,
+  ComposerToolbarProps,
   ModelSelection,
   VirtualizedMessagesProps,
 } from './component.types';
@@ -517,6 +518,34 @@ export type UseMessageComposerStateParams = {
   selectedModel: ModelSelection | null;
 };
 
+/**
+ * The single prop bag MessageComposer renders from.
+ *
+ * MessageComposer used to call three hooks itself (useTranslation,
+ * usePlanFeatures, useMessageComposerState), which is the "TSX files may call
+ * exactly ONE controller hook" rule broken three ways. useMessageComposer
+ * composes them and hands back this bag, so the .tsx is render composition
+ * only.
+ */
+export type UseMessageComposerReturn = {
+  isPending: boolean;
+  placeholder: string;
+  sendLabel: string;
+  /** Non-null only while an attachment upload is in flight. */
+  uploadingLabel: string | null;
+  validationError: string | null;
+  canSubmit: boolean;
+  content: string;
+  minRows: number;
+  maxRows: number;
+  onValueChange: (value: string) => void;
+  /** Enter-key submit; the textarea owns the IME-safe key contract. */
+  onSubmitValue: () => void;
+  onFormSubmit: (e: React.FormEvent) => void;
+  onIngestFiles: (files: FileList | File[]) => void;
+  toolbarProps: ComposerToolbarProps;
+};
+
 export type UseMessageComposerStateReturn = {
   content: string;
   setContent: (value: string) => void;
@@ -528,8 +557,9 @@ export type UseMessageComposerStateReturn = {
   researchProviders: SanitizedResearchProvider[];
   isResearchProvidersLoading: boolean;
   handleSubmit: (e: React.FormEvent) => void;
-  handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  handleChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  /** Event-free submit — RichPromptTextarea owns the Enter/IME contract. */
+  submit: () => void;
+  handleValueChange: (value: string) => void;
   // Paste / drop ingestion — uploads files and appends their ids to
   // selectedFileIds so they are sent to the model like picked files.
   ingestFiles: (files: FileList | File[]) => void;

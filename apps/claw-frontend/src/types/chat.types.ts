@@ -564,6 +564,11 @@ export type UseEditableTitleReturn = {
   cancelEditing: () => void;
   saveTitle: () => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  // Resolved here rather than in EditableTitle: a .tsx may call exactly one
+  // controller hook, and useTranslation was its second.
+  editLabel: string;
+  saveLabel: string;
+  cancelLabel: string;
 };
 
 export type UseVirtualizedMessagesReturn = {

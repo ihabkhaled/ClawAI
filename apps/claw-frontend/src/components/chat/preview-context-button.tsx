@@ -38,11 +38,16 @@ export function PreviewContextButton(props: PreviewContextButtonProps): React.Re
         <Button
           variant="outline"
           size="sm"
-          className="h-9 shrink-0 gap-1 px-2 sm:px-3"
+          className="h-9 shrink-0 gap-1 px-2 lg:px-3"
           aria-label={t('preview.openLabel')}
+          title={t('preview.openLabel')}
         >
           <Eye className="h-3 w-3" />
-          <span className="hidden sm:inline">{t('preview.openLabel')}</span>
+          {/* Label only from `lg`, like every other composer control. Below it
+              the toolbar has to scroll to fit, and the label was clipped
+              mid-word at 768px — the icon plus the tooltip says the same thing
+              in 110px less. */}
+          <span className="hidden lg:inline">{t('preview.openLabel')}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">

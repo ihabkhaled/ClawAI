@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 20001,
+      "bytes": 20215,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -238,7 +238,7 @@
       "file": "rules/35-super-administrator-and-privilege-boundaries.md"
     },
     {
-      "bytes": 7000,
+      "bytes": 7824,
       "file": "rules/36-floating-ui-and-toast-clearance.md"
     },
     {
@@ -254,13 +254,17 @@
       "file": "rules/39-worktree-branch-completion-pr-and-release-notes.md"
     },
     {
+      "bytes": 9182,
+      "file": "rules/40-chat-surface-layout-and-composer.md"
+    },
+    {
       "bytes": 5156,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 20695,
+      "bytes": 21056,
       "file": "skills/00-index.md"
     },
     {
@@ -510,6 +514,10 @@
     {
       "bytes": 4977,
       "file": "skills/trace-request-end-to-end.md"
+    },
+    {
+      "bytes": 7332,
+      "file": "skills/verify-responsive-layout-in-browser.md"
     },
     {
       "bytes": 3058,

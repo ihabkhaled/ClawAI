@@ -591,3 +591,35 @@ everywhere (ads, indexing, sitemap, RSS) for the AdSense review window —
 (`global-rss.service.ts`) from the per-locale feeds (`rss.service.ts`); both
 needed the same guard, and missing the second one was caught only by running
 the full test suite, not by reasoning about the call graph.
+
+## The chat surface has no pixel heights (2026-09-10)
+
+`/chat/[threadId]` is header + transcript + composer, and **only the transcript
+grows**. The page column is `flex flex-col` with `h-full min-h-0`; header and
+composer are `shrink-0`; the transcript is `flex-1 min-h-0 overflow-hidden`.
+Drop the `min-h-0` and the transcript refuses to shrink below its content and
+pushes the composer off the bottom of the screen — that is the symptom, every
+time.
+
+The composer used to be a fixed 200 px panel with a mouse-only drag handle
+(`useResizableComposer`, `COMPOSER_DEFAULT_HEIGHT`, `--composer-h`). All of that
+is deleted. Height now comes from the content, bounded by `COMPOSER_MIN_ROWS`
+and `COMPOSER_MAX_ROWS`, via the shared `RichPromptTextarea`.
+
+Three things to know before touching it:
+
+1. **Do not write a second autosize hook.** `useRichPromptTextarea` measures
+   `scrollHeight` and clamps by rows. It already exists and the compare panel
+   already uses it. Pass different `minRows`/`maxRows`; pass `resize-none` in
+   `className` if the native drag handle would hurt the surrounding layout.
+2. **Do not make the composer `position: fixed`.** It looks like a floating card
+   and is a normal flex child. That is deliberate: in flow, the transcript
+   shrinks by exactly the composer's height for free. Fixed would cost a
+   measured clearance and put it under rule 36's registry rules.
+3. **Do not render two control rows and hide one with `md:hidden`.** That mounts
+   every picker and its queries twice. The variant is chosen once in
+   `useMessageComposer` from `useMediaQuery(MEDIA_QUERY_LG_UP)`.
+
+Canonical: [`rules/40-chat-surface-layout-and-composer.md`](../../rules/40-chat-surface-layout-and-composer.md) ·
+[`docs/05-frontend/chat-surface-layout.md`](../../docs/05-frontend/chat-surface-layout.md) ·
+[ADR-088](../../docs/13-adr/adr-088-composer-auto-height-replaces-drag-resize.md)

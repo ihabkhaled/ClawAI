@@ -549,6 +549,7 @@ export type TranslationDictionary = {
     // Floating "Jump to latest" pill shown while AI is streaming and user has
     // scrolled up away from the bottom of the chat history.
     jumpToLatest: string;
+    moreActions: string;
     // Integration V2 — thread-settings toggles
     useMemoryLabel: string;
     useMemoryDescription: string;
@@ -2915,7 +2916,6 @@ export type TranslationDictionary = {
     notifications: string;
     languageSelector: string;
     themeToggle: string;
-    resizeInput: string;
     userStatusOnline: string;
     keyboardShortcutHint: string;
     skipToContent: string;

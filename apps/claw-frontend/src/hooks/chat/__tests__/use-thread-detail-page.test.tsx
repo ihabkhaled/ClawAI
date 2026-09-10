@@ -100,14 +100,13 @@ const editableTitleMock = {
   cancelEditing: vi.fn(),
   saveTitle: vi.fn(),
   handleKeyDown: vi.fn(),
+  editLabel: 'Edit',
+  saveLabel: 'Save',
+  cancelLabel: 'Cancel',
 };
 
 vi.mock('@/hooks/chat/use-editable-title', () => ({
   useEditableTitle: vi.fn(() => editableTitleMock),
-}));
-
-vi.mock('@/hooks/chat/use-resizable-composer', () => ({
-  useResizableComposer: vi.fn(() => ({ composerHeight: 200, handleMouseDown: vi.fn() })),
 }));
 
 const planFeaturesMock = { has: vi.fn(() => true), isAdmin: true, isLoading: false };
@@ -184,7 +183,12 @@ describe('useThreadDetailPage — composes every page-level hook', () => {
     expect(result.current.shellProps.title).toBe('Test Thread');
     expect(result.current.shellProps.canCompare).toBe(true);
     expect(result.current.shellProps.canUseQualityControls).toBe(true);
-    expect(result.current.shellProps.composerHeight).toBe(200);
+    // The composer no longer carries a height: it sizes itself to its content
+    // (ADR-088). What the shell needs from this hook instead is the overflow
+    // menu's wiring, which is the only home the export/settings/delete actions
+    // have now.
+    expect(result.current.shellProps.headerMenuProps.canExport).toBe(false);
+    expect(result.current.shellProps.headerMenuProps.isDeleting).toBe(false);
     expect(result.current.shellProps.editableTitle).toBe(editableTitleMock);
     expect(result.current.shellProps.composerProps.threadId).toBe('thread-123');
     expect(result.current.shellProps.threadSettingsProps.systemPrompt).toBe('');

@@ -18,12 +18,12 @@ Page (TSX)
 
 ### Layer Responsibilities
 
-| Layer           | Responsibility                                     | May Import                        | May NOT Import            |
-| --------------- | -------------------------------------------------- | --------------------------------- | ------------------------- |
-| Page (TSX)      | Pure render composition, state display              | ONE controller hook, components   | Repositories, fetch, APIs |
-| Controller Hook | Orchestrate multiple domain hooks, expose to page   | Domain hooks, shared hooks        | Repositories directly     |
-| Domain Hook     | One responsibility (query, mutation, state)          | Repository functions, TanStack    | Other domain hooks        |
-| Repository      | Raw HTTP calls, one function per endpoint            | httpClient (axios), types         | Hooks, components, state  |
+| Layer           | Responsibility                                    | May Import                      | May NOT Import            |
+| --------------- | ------------------------------------------------- | ------------------------------- | ------------------------- |
+| Page (TSX)      | Pure render composition, state display            | ONE controller hook, components | Repositories, fetch, APIs |
+| Controller Hook | Orchestrate multiple domain hooks, expose to page | Domain hooks, shared hooks      | Repositories directly     |
+| Domain Hook     | One responsibility (query, mutation, state)       | Repository functions, TanStack  | Other domain hooks        |
+| Repository      | Raw HTTP calls, one function per endpoint         | httpClient (axios), types       | Hooks, components, state  |
 
 ---
 
@@ -85,8 +85,11 @@ single `shellProps` bag. Two examples in the codebase:
 - `apps/claw-frontend/src/app/(portal)/chat/[threadId]/page.tsx` →
   `useThreadDetailPage()` → `<ChatThreadShell {...shellProps} />`. The
   controller composes `useParams`, `useTranslation`, `useThreadDataController`
-  (which itself composes 8 chat hooks), `useEditableTitle`,
-  `useResizableComposer`, `usePlanFeatures`, and `useInThreadCompare`.
+  (which itself composes 8 chat hooks), `useEditableTitle`, `usePlanFeatures`,
+  and `useInThreadCompare`. It does NOT own the composer's state: the composer
+  is self-contained behind its own controller, `useMessageComposer`, and this
+  hook hands it only `composerProps`. `useResizableComposer` used to sit in this
+  list and was deleted with the drag-resize handle (ADR-088).
 - `apps/claw-frontend/src/components/chat/virtualized-messages.tsx` is a
   ZERO-hook pure render driven by `useVirtualizedMessagesController`.
 
@@ -145,8 +148,7 @@ export function useSendMessage(threadId: string, onMessageSent?: () => void) {
   const { t } = useTranslation();
 
   const mutation = useMutation({
-    mutationFn: (data: CreateMessageRequest) =>
-      chatRepository.createMessage(data),
+    mutationFn: (data: CreateMessageRequest) => chatRepository.createMessage(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.threads.messages(threadId),

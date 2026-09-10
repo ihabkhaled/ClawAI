@@ -121,22 +121,23 @@ export const useMessageComposerState = ({
     [isPending, validateAndSend],
   );
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        if (isPending) {
-          return;
-        }
-        validateAndSend();
-      }
-    },
-    [isPending, validateAndSend],
-  );
+  // Event-free submit for RichPromptTextarea, which owns the Enter contract
+  // itself (plain Enter submits, Shift+Enter inserts a newline, and neither
+  // fires mid-IME-composition). The textarea previously received a raw
+  // onKeyDown from here, which submitted on Enter while a Japanese or Chinese
+  // candidate list was open and sent a half-composed word.
+  const submit = useCallback((): void => {
+    if (isPending) {
+      return;
+    }
+    validateAndSend();
+  }, [isPending, validateAndSend]);
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
-      setContent(e.target.value);
+  // Value-in / value-out rather than the change event: the shared textarea
+  // hands back a string so both its callers stay free of DOM event plumbing.
+  const handleValueChange = useCallback(
+    (value: string): void => {
+      setContent(value);
       if (validationError) {
         setValidationError(null);
       }
@@ -155,8 +156,8 @@ export const useMessageComposerState = ({
     researchProviders: providerQuery.providers,
     isResearchProvidersLoading: providerQuery.isLoading,
     handleSubmit,
-    handleKeyDown,
-    handleChange,
+    submit,
+    handleValueChange,
     ingestFiles,
     isUploadingAttachment,
   };

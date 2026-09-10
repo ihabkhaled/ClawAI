@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useUpdateThread } from '@/hooks/chat/use-update-thread';
+import { useTranslation } from '@/lib/i18n';
 import type { UseEditableTitleReturn } from '@/types';
 import { logger } from '@/utilities';
 
@@ -10,6 +11,7 @@ export function useEditableTitle(
   threadId: string,
   currentTitle: string | undefined,
 ): UseEditableTitleReturn {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
   const { updateThread, isPending } = useUpdateThread();
@@ -36,7 +38,12 @@ export function useEditableTitle(
       cancelEditing();
       return;
     }
-    logger.info({ component: 'chat', action: 'save-title', message: 'Saving thread title', details: { threadId, newTitleLength: trimmed.length } });
+    logger.info({
+      component: 'chat',
+      action: 'save-title',
+      message: 'Saving thread title',
+      details: { threadId, newTitleLength: trimmed.length },
+    });
     updateThread(
       { id: threadId, data: { title: trimmed } },
       { onSuccess: () => setIsEditing(false) },
@@ -65,5 +72,8 @@ export function useEditableTitle(
     cancelEditing,
     saveTitle,
     handleKeyDown,
+    editLabel: t('common.edit'),
+    saveLabel: t('common.save'),
+    cancelLabel: t('common.cancel'),
   };
 }

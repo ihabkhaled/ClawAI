@@ -40,8 +40,20 @@ export const FLOATING_ACTION_RAIL_SLOT_TWO =
   'fixed end-4 bottom-[calc(max(calc(var(--mobile-bottom-nav-height)+env(safe-area-inset-bottom)),var(--rail-obstacle-clearance,0px))+5.5rem)]';
 
 /**
- * Desktop drops the rail: the bottom navigation is gone and the chat FAB is
- * `md:hidden`, so the launcher is alone and sits in the corner itself.
+ * Desktop drops the *navigation* term of the rail — the bottom nav is gone and
+ * the chat FAB is `md:hidden`, so the launcher is alone in the corner.
+ *
+ * It does NOT drop the obstacle term, and used to. `md:bottom-[calc(env(safe-
+ * area-inset-bottom)+1.5rem)]` overrode the whole `max()` above, so from 768px
+ * upward the launcher ignored `--rail-obstacle-clearance` entirely and landed
+ * back on the composer — measured at 768x1024, the launcher occupied
+ * 700-752 x 926-1000 and the composer's send button 697-733 x 951-987, so the
+ * launcher covered the send button completely. That is precisely the failure
+ * rule 36 was written to end, reintroduced by an override that only thought
+ * about the nav bar.
+ *
+ * The corner behaviour is unchanged where there is no obstacle: with no
+ * registered furniture the clearance is 0 and `max()` picks the 1.5rem corner.
  */
 export const FLOATING_ACTION_DESKTOP_BOTTOM =
-  'md:bottom-[calc(env(safe-area-inset-bottom)+1.5rem)]';
+  'md:bottom-[calc(max(var(--rail-obstacle-clearance,0px),env(safe-area-inset-bottom)+1.5rem))]';

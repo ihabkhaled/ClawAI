@@ -1,16 +1,9 @@
 'use client';
 
-import {
-  ArrowLeft,
-  Download,
-  Gavel,
-  GitCompareArrows,
-  Search,
-  Settings,
-  Trash2,
-} from 'lucide-react';
+import { ArrowLeft, Gavel, GitCompareArrows, Search } from 'lucide-react';
 import Link from 'next/link';
 
+import { ChatThreadHeaderMenu } from '@/components/chat/chat-thread-header-menu';
 import { EditableTitle } from '@/components/chat/editable-title';
 import { InThreadComparePanel } from '@/components/chat/in-thread-compare-panel';
 import { MessageComposer } from '@/components/chat/message-composer';
@@ -28,26 +21,39 @@ import type { ChatThreadShellProps } from '@/types';
 
 // Pure-render shell for /chat/[threadId]. ZERO hook calls. Every piece of
 // state and every callback arrives via props built by useThreadDetailPage.
+//
+// Layout contract (docs/05-frontend/chat-surface-layout.md):
+//
+//   header      shrink-0, one row, sticky
+//   conversation flex-1 min-h-0 overflow-hidden — takes all remaining height
+//   composer    shrink-0, sized by its own content, never fixed
+//
+// The conversation is the only element that grows. Nothing here sets a pixel
+// height on anything, which is what makes the page correct at 375px and at
+// 2560px without a breakpoint per size.
 export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement {
   if (props.isLoadingPlaceholder) {
     return <LoadingSpinner label={props.loadingLabel} />;
   }
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       {/* Sticky top header — frosted glass + safe-top inset on mobile so it
-          sits below the iOS notch / Android status bar without overlap. */}
-      {/* Asymmetric vertical padding: more above than below. The header sits
-          directly under the portal's own top border, and equal padding left the
-          title reading as if it were glued to that line. The extra top space
-          separates the two without pushing the whole conversation down. */}
-      <div className="surface-glass safe-top safe-top-base-header sticky top-0 z-20 -mx-3 mb-3 flex flex-col gap-3 px-3 pb-3 sm:-mx-4 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:rounded-none sm:px-4 sm:pb-4">
-        <div className="flex min-w-0 items-center gap-2">
-          {/* Mobile: icon-only back button at the start of the header.
-              Desktop: appears as labeled button in the actions cluster. */}
+          sits below the iOS notch / Android status bar without overlap.
+          One row at every width: the title truncates and the low-priority
+          actions live in the overflow menu, so nothing wraps.
+
+          The glass bleeds the full width of the page while its CONTENTS take
+          the same bounded column as the conversation. Two elements, because
+          they answer different questions: the frosted band belongs to the page
+          edge, the title belongs over the first message. Letting the contents
+          bleed too left the title at x=320 above a conversation starting at
+          x=545 on a 1920px monitor — aligned with nothing. */}
+      <div className="surface-glass safe-top safe-top-base-header sticky top-0 z-20 -mx-3 mb-2 shrink-0 px-3 pb-2 sm:-mx-4 sm:mb-3 sm:rounded-none sm:px-4">
+        <div className="chat-content-column mx-auto flex w-full items-center gap-1.5 sm:gap-2">
           <Button
             variant="ghost"
             size="icon-sm"
-            className="shrink-0 sm:hidden"
+            className="shrink-0"
             aria-label={props.backToThreadsLabel}
             asChild
           >
@@ -59,96 +65,69 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
           <div className="min-w-0 flex-1">
             <EditableTitle title={props.title} editableTitle={props.editableTitle} />
             {props.thread ? (
-              <p className="text-muted-foreground mt-0.5 truncate text-xs sm:mt-1 sm:text-sm">
+              <p className="text-muted-foreground truncate text-[11px] leading-tight">
                 {props.thread.routingMode}
                 {/* Only show the last-model meta on sm+ — on mobile the title
-                    truncation already eats most of the row width. */}
+                  truncation already eats most of the row width. */}
                 {props.thread.lastModel ? (
                   <span className="hidden sm:inline">{` · ${props.thread.lastModel}`}</span>
                 ) : null}
               </p>
             ) : null}
           </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          {props.canCompare ? (
-            <Button
-              variant={props.compareIsOpen ? 'default' : 'ghost'}
-              size="icon-sm"
-              className="sm:size-auto sm:h-9 sm:w-auto sm:px-3"
-              onClick={props.compareToggleOpen}
-              aria-label={props.compareLabel}
-            >
-              <GitCompareArrows className="h-4 w-4 sm:me-2" />
-              <span className="hidden sm:inline">{props.compareLabel}</span>
-            </Button>
-          ) : null}
-          {props.canUseQualityControls ? (
-            <Button
-              variant={props.qualityControlsOpen ? 'default' : 'ghost'}
-              size="icon-sm"
-              className="sm:size-auto sm:h-9 sm:w-auto sm:px-3"
-              onClick={props.qualityControlsToggleOpen}
-              aria-label={props.qualityControlsLabel}
-              aria-expanded={props.qualityControlsOpen}
-            >
-              <Gavel className="h-4 w-4 sm:me-2" />
-              <span className="hidden sm:inline">{props.qualityControlsLabel}</span>
-            </Button>
-          ) : null}
-          <Button
-            variant={props.search.isOpen ? 'default' : 'ghost'}
-            size="icon-sm"
-            className="sm:size-auto sm:h-9 sm:w-auto sm:px-3"
-            onClick={props.search.isOpen ? props.search.close : props.search.open}
-            aria-label={props.searchLabel}
-            aria-expanded={props.search.isOpen}
-          >
-            <Search className="h-4 w-4 sm:me-2" />
-            <span className="hidden sm:inline">{props.searchLabel}</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="sm:size-auto sm:h-9 sm:w-auto sm:px-3"
-            onClick={props.onExportThread}
-            disabled={!props.canExportThread}
-            aria-label={props.exportThreadLabel}
-          >
-            <Download className="h-4 w-4 sm:me-2" />
-            <span className="hidden sm:inline">{props.exportThreadLabel}</span>
-          </Button>
-          <ShareChatButton {...props.shareButtonProps} />
-          <Button
-            variant={props.threadSettingsOpen ? 'default' : 'ghost'}
-            size="icon-sm"
-            className="sm:size-auto sm:h-9 sm:w-auto sm:px-3"
-            onClick={props.threadSettingsToggleOpen}
-            aria-label={props.threadSettingsLabel}
-            aria-expanded={props.threadSettingsOpen}
-          >
-            <Settings className="h-4 w-4 sm:me-2" />
-            <span className="hidden sm:inline">{props.threadSettingsLabel}</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="text-destructive hover:text-destructive sm:size-auto sm:h-9 sm:w-auto sm:px-3"
-            onClick={props.openDeleteConfirm}
-            disabled={props.isDeleting}
-            aria-label={props.deleteLabel}
-          >
-            <Trash2 className="h-4 w-4 sm:me-2" />
-            <span className="hidden sm:inline">{props.deleteLabel}</span>
-          </Button>
-          {/* Desktop-only labeled back button — mobile uses the icon-only one
-              positioned next to the title above. */}
-          <Button variant="outline" size="sm" className="hidden sm:inline-flex" asChild>
-            <Link href={props.backToThreadsHref}>
-              <ArrowLeft className="h-4 w-4 sm:me-2 rtl:rotate-180" />
-              <span>{props.backToThreadsLabel}</span>
-            </Link>
-          </Button>
+
+          {/* Direct actions, on a row wide enough to hold them. Below `sm` they
+            move into the overflow menu instead — see ChatThreadHeaderMenu for
+            the measurement that forced it. Icon-only up to `lg` so four of them
+            plus the menu still fit a 1024px tablet on one row; the label
+            appears once there is room for it. */}
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+            {props.showInlineActions ? (
+              <>
+                {props.canCompare ? (
+                  <Button
+                    variant={props.compareIsOpen ? 'default' : 'ghost'}
+                    size="icon-sm"
+                    className="lg:size-auto lg:h-8 lg:w-auto lg:px-2.5"
+                    onClick={props.compareToggleOpen}
+                    aria-label={props.compareLabel}
+                    title={props.compareLabel}
+                  >
+                    <GitCompareArrows className="h-4 w-4 lg:me-1.5" />
+                    <span className="hidden lg:inline">{props.compareLabel}</span>
+                  </Button>
+                ) : null}
+                {props.canUseQualityControls ? (
+                  <Button
+                    variant={props.qualityControlsOpen ? 'default' : 'ghost'}
+                    size="icon-sm"
+                    className="lg:size-auto lg:h-8 lg:w-auto lg:px-2.5"
+                    onClick={props.qualityControlsToggleOpen}
+                    aria-label={props.qualityControlsLabel}
+                    title={props.qualityControlsLabel}
+                    aria-expanded={props.qualityControlsOpen}
+                  >
+                    <Gavel className="h-4 w-4 lg:me-1.5" />
+                    <span className="hidden lg:inline">{props.qualityControlsLabel}</span>
+                  </Button>
+                ) : null}
+                <Button
+                  variant={props.search.isOpen ? 'default' : 'ghost'}
+                  size="icon-sm"
+                  className="lg:size-auto lg:h-8 lg:w-auto lg:px-2.5"
+                  onClick={props.search.isOpen ? props.search.close : props.search.open}
+                  aria-label={props.searchLabel}
+                  title={props.searchLabel}
+                  aria-expanded={props.search.isOpen}
+                >
+                  <Search className="h-4 w-4 lg:me-1.5" />
+                  <span className="hidden lg:inline">{props.searchLabel}</span>
+                </Button>
+                <ShareChatButton {...props.shareButtonProps} />
+              </>
+            ) : null}
+            <ChatThreadHeaderMenu {...props.headerMenuProps} />
+          </div>
         </div>
       </div>
 
@@ -164,32 +143,17 @@ export function ChatThreadShell(props: ChatThreadShellProps): React.ReactElement
 
       <ThreadSettings {...props.threadSettingsProps} />
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
-        <div className="min-h-0 flex-1 overflow-hidden">
+      {/* The reading column. Bounded and centred so a line of prose stays
+          legible on a 2560px monitor; the bound is wide enough that it never
+          binds on a 1366px laptop, so no gutter appears where there is no room
+          to spare. The composer shares the bound so the two stay aligned. */}
+      <div className="chat-content-column mx-auto flex min-h-0 w-full flex-1 flex-col gap-2 sm:gap-3">
+        <div className="min-h-0 flex-1 overflow-hidden rounded-xl border">
           <ThreadSearchPanel search={props.search} onJumpToMessage={props.onJumpToMessage} />
           <VirtualizedMessages {...props.virtualizedMessagesProps} />
         </div>
 
-        <div
-          className="relative shrink-0 border-t md:h-[var(--composer-h)]"
-          style={{ '--composer-h': `${props.composerHeight}px` } as React.CSSProperties}
-        >
-          {/* Drag-to-resize is a pointer affordance — hidden on touch/mobile
-              where the composer is natural-height and the gesture has no effect. */}
-          <Button
-            variant="unstyled"
-            size="unstyled"
-            type="button"
-            aria-label={props.resizeAriaLabel}
-            className="hover:bg-muted/50 absolute inset-x-0 top-0 z-10 hidden h-3 cursor-ns-resize items-center justify-center md:flex"
-            onMouseDown={props.onResizeHandleMouseDown}
-          >
-            <div className="bg-muted-foreground/30 h-1 w-10 rounded-full" />
-          </Button>
-          <div className="flex flex-col p-3 pt-3 sm:p-4 md:h-full">
-            <MessageComposer {...props.composerProps} />
-          </div>
-        </div>
+        <MessageComposer {...props.composerProps} />
       </div>
 
       <ShareChatDialog {...props.shareDialogProps} />

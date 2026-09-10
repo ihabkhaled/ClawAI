@@ -1,178 +1,83 @@
 import { Send } from 'lucide-react';
 
 import { ComposerDropzone } from '@/components/chat/composer-dropzone';
-import { CreditIndicator } from '@/components/chat/credit-indicator';
-import { FileAttachmentPicker } from '@/components/chat/file-attachment-picker';
-import { ModelSelector } from '@/components/chat/model-selector';
-import { PreviewContextButton } from '@/components/chat/preview-context-button';
-import { ResearchToggle } from '@/components/chat/research-toggle';
+import { ComposerToolbar } from '@/components/chat/composer-toolbar';
+import { RichPromptTextarea } from '@/components/chat/rich-prompt-textarea';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { NEW_THREAD_DRAFT_KEY } from '@/constants';
-import { ComposerControlVariant, PlanFeature } from '@/enums';
-import { usePlanFeatures } from '@/hooks/auth/use-plan-features';
-import { useMessageComposerState } from '@/hooks/chat/use-message-composer-state';
-import { useTranslation } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
+import { useMessageComposer } from '@/hooks/chat/use-message-composer';
 import type { MessageComposerProps } from '@/types';
 
-export function MessageComposer({
-  onSend,
-  isPending,
-  selectedModel,
-  onModelChange,
-  threadId,
-}: MessageComposerProps): React.ReactElement {
-  const { t } = useTranslation();
-  const planFeatures = usePlanFeatures();
-  const canResearch = planFeatures.has(PlanFeature.ALLOW_RESEARCH_MODE);
-  const {
-    content,
-    validationError,
-    selectedFileIds,
-    setSelectedFileIds,
-    research,
-    setResearch,
-    researchProviders,
-    isResearchProvidersLoading,
-    handleSubmit,
-    handleKeyDown,
-    handleChange,
-    ingestFiles,
-    isUploadingAttachment,
-  } = useMessageComposerState({
-    onSend,
-    isPending,
-    selectedModel,
-    // A composer with no thread yet (the new-chat surface) still gets a draft,
-    // under a stable key, so a message typed before the thread exists survives
-    // a refresh too.
-    threadId: threadId ?? NEW_THREAD_DRAFT_KEY,
-  });
-
-  const hasContent = content.trim().length > 0;
-  const canSubmit = !isPending && hasContent;
+/**
+ * The chat composer, as a card that sits at the foot of the conversation.
+ *
+ * Pure render composition with exactly one controller hook, per the frontend
+ * TSX rule. It has no height of its own: the textarea grows with its content
+ * between COMPOSER_MIN_ROWS and COMPOSER_MAX_ROWS and then scrolls internally,
+ * so an empty composer is two rows tall and a twenty-line prompt cannot eat the
+ * conversation. The drag handle that used to set a fixed pixel height was
+ * removed with ADR-088.
+ *
+ * It stays in normal flow — a flex child of the chat shell, not a fixed
+ * overlay. That is what guarantees the last message is always scrollable above
+ * it: the message viewport shrinks by exactly the composer's height through
+ * ordinary layout, with no clearance variable to keep in step.
+ */
+export function MessageComposer(props: MessageComposerProps): React.ReactElement {
+  const composer = useMessageComposer(props);
 
   return (
     <ComposerDropzone
-      onFiles={ingestFiles}
-      disabled={isPending}
-      className="safe-bottom flex h-full min-h-0 flex-col"
+      onFiles={composer.onIngestFiles}
+      disabled={composer.isPending}
+      className="safe-bottom w-full"
     >
       <form
-        onSubmit={handleSubmit}
-        className="flex h-full min-h-0 flex-col gap-1.5"
+        onSubmit={composer.onFormSubmit}
         // The composer owns the bottom-end corner on a phone, so the floating
-        // rail lifts above it instead of landing on its controls.
+        // feedback rail lifts above it instead of landing on its controls.
+        // See rules/36-floating-ui-and-toast-clearance.md.
         data-rail-obstacle=""
+        className="border-border/60 bg-card shadow-soft focus-within:border-primary/40 focus-within:ring-primary/15 duration-fast flex flex-col gap-1 rounded-2xl border p-2 transition-colors focus-within:ring-1 sm:p-2.5"
       >
-        {/* `[&>*]:shrink-0` used to sit here and outranked each control's own
-            sizing, so nothing could give: a long provider name pushed the row
-            off the screen instead of clipping. The square buttons hold their
-            size themselves; the research control is the one that shrinks. */}
-        <div className="flex shrink-0 flex-wrap items-center gap-2 pb-1 md:hidden">
-          <ModelSelector
-            value={selectedModel}
-            onChange={onModelChange}
-            disabled={isPending}
-            variant={ComposerControlVariant.Compact}
-          />
-          {canResearch ? (
-            <ResearchToggle
-              value={research}
-              providers={researchProviders}
-              isProvidersLoading={isResearchProvidersLoading}
-              onChange={setResearch}
-              disabled={isPending}
-            />
-          ) : null}
-          {threadId ? (
-            <div className="shrink-0">
-              <PreviewContextButton threadId={threadId} draft={content} />
-            </div>
-          ) : null}
-        </div>
+        <RichPromptTextarea
+          value={composer.content}
+          onChange={composer.onValueChange}
+          onSubmit={composer.onSubmitValue}
+          placeholder={composer.placeholder}
+          ariaLabel={composer.placeholder}
+          disabled={composer.isPending}
+          minRows={composer.minRows}
+          maxRows={composer.maxRows}
+          // Strips the shadcn field frame — the card around it is the frame
+          // now — and turns off the native drag handle. Dragging is what let
+          // the old composer be left in a state the user could not undo, and
+          // it fights the autosize latch in useRichPromptTextarea. One text
+          // size at every breakpoint on purpose: the autosize pass measures
+          // line-height once, so a responsive font would leave the row cap
+          // computed against the wrong line.
+          className="min-h-0 resize-none border-0 bg-transparent px-2 py-1.5 text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
 
-        <div className="hidden shrink-0 items-center gap-2 pb-1 md:flex md:flex-wrap [&>*]:shrink-0">
-          <ModelSelector value={selectedModel} onChange={onModelChange} disabled={isPending} />
-          <FileAttachmentPicker
-            selectedFileIds={selectedFileIds}
-            onChange={setSelectedFileIds}
-            disabled={isPending}
-          />
-          {canResearch ? (
-            <ResearchToggle
-              value={research}
-              providers={researchProviders}
-              isProvidersLoading={isResearchProvidersLoading}
-              onChange={setResearch}
-              disabled={isPending}
-            />
-          ) : null}
-          {threadId ? <PreviewContextButton threadId={threadId} draft={content} /> : null}
-          {/* Renders nothing when the account is not metered, so an admin or a
-              disabled kill switch sees the composer exactly as before. */}
-          <CreditIndicator />
-        </div>
-
-        <div className="flex min-h-0 flex-1 items-end gap-2 md:items-stretch">
-          <div className="md:hidden">
-            <FileAttachmentPicker
-              selectedFileIds={selectedFileIds}
-              onChange={setSelectedFileIds}
-              disabled={isPending}
-              variant={ComposerControlVariant.Compact}
-            />
-          </div>
-
-          <div className="composer-max-height relative min-h-0 flex-1 md:!max-h-none">
-            <Textarea
-              value={content}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              placeholder={t('chat.composerPlaceholder')}
-              className={cn(
-                'composer-max-height border-border/50 bg-card min-h-[60px] w-full resize-none rounded-2xl pe-14 text-base',
-                'focus-visible:border-primary/50 focus-visible:ring-primary/20 transition-colors focus-visible:ring-1 focus-visible:ring-offset-0',
-                'md:h-full md:!max-h-none md:min-h-0 md:pe-3 md:text-sm',
-              )}
-              disabled={isPending}
-            />
-            <Button
-              type="submit"
-              size="icon"
-              aria-label={t('chat.sendMessage')}
-              className={cn(
-                'shadow-soft absolute end-2 bottom-2 h-11 w-11 rounded-xl md:hidden',
-                'duration-fast transition-all hover:scale-105 active:scale-95',
-                canSubmit
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'bg-muted text-muted-foreground hover:bg-muted',
-              )}
-              disabled={!canSubmit}
-            >
-              <Send className="h-4 w-4" />
-              <span className="sr-only">{t('chat.sendMessage')}</span>
-            </Button>
-          </div>
-
+        <div className="flex items-center gap-2">
+          <ComposerToolbar {...composer.toolbarProps} />
           <Button
             type="submit"
             size="icon"
-            className="hidden min-h-11 min-w-11 shrink-0 self-end md:inline-flex"
-            disabled={!canSubmit}
+            aria-label={composer.sendLabel}
+            className="duration-fast touch:h-11 touch:w-11 h-9 w-9 shrink-0 rounded-xl transition-transform hover:scale-105 active:scale-95"
+            disabled={!composer.canSubmit}
           >
             <Send className="h-4 w-4" />
-            <span className="sr-only">{t('chat.sendMessage')}</span>
+            <span className="sr-only">{composer.sendLabel}</span>
           </Button>
         </div>
 
-        {validationError ? (
-          <p className="text-destructive mt-1 text-sm">{validationError}</p>
+        {composer.validationError !== null ? (
+          <p className="text-destructive px-2 text-sm">{composer.validationError}</p>
         ) : null}
-        {isUploadingAttachment ? (
-          <p className="text-muted-foreground mt-1 text-xs" aria-live="polite">
-            {t('chat.attachment.uploading')}
+        {composer.uploadingLabel !== null ? (
+          <p className="text-muted-foreground px-2 text-xs" aria-live="polite">
+            {composer.uploadingLabel}
           </p>
         ) : null}
       </form>

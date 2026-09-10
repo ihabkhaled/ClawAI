@@ -2,9 +2,18 @@ import { Check, Pencil, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useTranslation } from '@/lib/i18n';
 import type { UseEditableTitleReturn } from '@/types';
 
+/**
+ * The thread title, in place, with an inline rename.
+ *
+ * Sized for a header row, not a page banner. It used to render at
+ * `text-2xl`/`sm:text-3xl` and clamp to two lines, which alone made a compact
+ * chat header impossible — see the deviation recorded in
+ * `docs/02-business-product/chat-thread-page-spec.md`. It now holds one line
+ * and truncates, carrying the full title in a `title` attribute so a long one
+ * is still readable on hover without the header growing a second row.
+ */
 export function EditableTitle({
   title,
   editableTitle,
@@ -12,37 +21,34 @@ export function EditableTitle({
   title: string;
   editableTitle: UseEditableTitleReturn;
 }): React.ReactElement {
-  const { t } = useTranslation();
   if (editableTitle.isEditing) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-1">
         <Input
           value={editableTitle.editValue}
           onChange={(e) => editableTitle.setEditValue(e.target.value)}
           onKeyDown={editableTitle.handleKeyDown}
           onBlur={editableTitle.saveTitle}
-          className="h-9 max-w-xs text-lg font-bold"
+          className="h-8 max-w-xs text-base font-semibold"
           // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
           disabled={editableTitle.isPending}
         />
         <Button
           variant="ghost"
-          size="icon"
-          className="h-8 w-8"
+          size="icon-sm"
           onClick={editableTitle.saveTitle}
           disabled={editableTitle.isPending}
-          aria-label={t('common.save')}
+          aria-label={editableTitle.saveLabel}
         >
           <Check className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
-          size="icon"
-          className="h-8 w-8"
+          size="icon-sm"
           onClick={editableTitle.cancelEditing}
           disabled={editableTitle.isPending}
-          aria-label={t('common.cancel')}
+          aria-label={editableTitle.cancelLabel}
         >
           <X className="h-4 w-4" />
         </Button>
@@ -51,18 +57,21 @@ export function EditableTitle({
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <h1 className="clamp-title truncate text-2xl font-bold tracking-tight sm:text-3xl">
+    <div className="group/title flex min-w-0 items-center gap-1">
+      <h1
+        title={title}
+        className="clamp-title truncate text-base leading-tight font-semibold tracking-tight sm:text-lg"
+      >
         {title}
       </h1>
       <Button
         variant="ghost"
-        size="icon"
-        className="text-muted-foreground hover:text-foreground h-8 w-8"
+        size="icon-sm"
+        className="text-muted-foreground hover:text-foreground shrink-0 opacity-70 transition-opacity group-hover/title:opacity-100 focus-visible:opacity-100"
         onClick={editableTitle.startEditing}
-        aria-label={t('common.edit')}
+        aria-label={editableTitle.editLabel}
       >
-        <Pencil className="h-4 w-4" />
+        <Pencil className="h-3.5 w-3.5" />
       </Button>
     </div>
   );
