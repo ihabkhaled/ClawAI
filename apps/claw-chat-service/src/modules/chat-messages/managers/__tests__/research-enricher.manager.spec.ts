@@ -1,4 +1,5 @@
 import { ResearchEnricherManager } from '../research-enricher.manager';
+import { RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK } from '../../constants/research-enricher.constants';
 import { ResearchMode } from '../../../../common/enums/research-mode.enum';
 import { AiStreamStage } from '../../../../common/enums';
 import { type ChatStreamService } from '../../services/chat-stream.service';
@@ -197,7 +198,7 @@ describe('ResearchEnricherManager', () => {
     expect(result.evidence).toContain('## Web research evidence (mode: SEARCH_EXTRACT');
   });
 
-  it('empty search results: evidence == "## Web search returned no results.", sources == []', async () => {
+  it('empty search results: returns the empty-results block and no sources', async () => {
     httpRequest.mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -212,7 +213,10 @@ describe('ResearchEnricherManager', () => {
 
     expect(httpRequest).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
-      evidence: '## Web search returned no results.',
+      // Asserted against the constant, not a literal. The block is now several
+      // lines: naming the outcome without telling the model what it may claim
+      // left it to fall back on "I can't browse the web".
+      evidence: RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK,
       sources: [],
       mode: ResearchMode.SEARCH,
       searchRequestCount: 1,
@@ -227,7 +231,7 @@ describe('ResearchEnricherManager', () => {
       query: 'q',
       userAuthHeader: AUTH_HEADER,
     });
-    expect(result.evidence).toBe('## Web search returned no results.');
+    expect(result.evidence).toBe(RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK);
     expect(result.sources).toEqual([]);
   });
 

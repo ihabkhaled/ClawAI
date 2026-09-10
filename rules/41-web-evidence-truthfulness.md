@@ -68,11 +68,30 @@ from the missing capability statement, and neither knew about the other.**
    measurement, which is exactly how "0 searches / 0 fetches" came to sit under
    "Used 4 sources" with all three numbers wrong.
 
-9. **Never weaken the fetch security boundary to make more sites work.**
-   Direct fetching adds a CALLER to `FetchService`, not a second path. The SSRF
-   guard, the domain policy and the cache stay where they are. A page that the
-   policy refuses produces a warning; it does not produce an exception to the
-   policy.
+9. **A provider the user picked is the provider that runs, and the transcript
+   records the one that ANSWERED.** The choice was dropped in two independent
+   places — the compare call site never read `dto.researchProviderId`, and
+   `enrichForOrchestration` received it and did not pass it to `enrich` — while
+   the transcript went on recording the request. The UI named a provider that
+   never executed. Forward the id, and build the transcript from the run's
+   reported `providerId`/`providerName`, falling back to the request only when
+   the run reported none. A fallback is not a failure, but it is a different
+   answer than the one asked for, so it becomes a warning.
+
+10. **An INTENT is not a QUERY.** A search provider takes a query and 500
+    characters is a real limit there; a user writes a prompt, routinely longer.
+    Capping the intent at the query limit meant a long message 400'd the whole
+    run, chat-service swallowed it to `null`, and no transcript and no warning
+    were produced — **research was silently disabled by writing a long
+    message**, which then triggered rule 4's refusal. Accept the intent whole,
+    detect URLs from all of it, and clamp only the derived query, with a
+    warning.
+
+11. **Never weaken the fetch security boundary to make more sites work.**
+    Direct fetching adds a CALLER to `FetchService`, not a second path. The SSRF
+    guard, the domain policy and the cache stay where they are. A page that the
+    policy refuses produces a warning; it does not produce an exception to the
+    policy.
 
 ## Prohibited patterns
 

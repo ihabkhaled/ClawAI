@@ -436,8 +436,12 @@ Nest emits the real one.
 
 ## E. Search, fetch and source truthfulness
 
-> **Status 2026-09-10 — E0, E1, E3, E4, E6, E8 and E9 FIXED; E2, E5 and E7 still
-> open.** A URL in the prompt is now detected and fetched directly, before the
+> **Status 2026-09-11 — SECTION E IS CLOSED.** E0-E9 are all fixed. The
+> capability to read a pasted URL exists, the model is told what actually ran on
+> both orchestration paths, the panel reports pages read rather than links
+> found, the provider dropdown drives the search and the transcript records the
+> provider that answered, and a long prompt no longer disables research in
+> silence. A URL in the prompt is now detected and fetched directly, before the
 > search step, through the same `FetchService` (so the SSRF guard and domain
 > policy are unchanged); it outranks anything discovered, and it is never
 > fetched twice. A `SEARCH_ONLY` run names the links it did NOT open rather than
@@ -472,10 +476,23 @@ Nest emits the real one.
 > chat-messages.service. The manager itself stays — the orchestration managers
 > do use it.
 >
-> **Still open**: E2 (path B never tells the model research ran), E5 (the
-> provider dropdown is decorative on compare and the nine orchestration modes),
-> E7 (a prompt over 500 characters 400s the search and disables research
-> silently).
+> **E2 closed**: the compare and orchestration evidence block was a single line
+> naming the mode. It now states the capability and names the tools that ran,
+> matching what the single-message path had been saying for months. The
+> empty-results block tells the model what to do rather than only what happened.
+>
+> **E5 closed**: the provider id is forwarded from the DTO through
+> `ParallelResearchOptions` and `ResearchEnrichInput` to
+> `POST /research/search`, and both transcripts record the provider that
+> ANSWERED, with a warning when a fallback was used. Verified live: requesting
+> either configured provider returns `selectionMode: explicit` and that
+> provider's name.
+>
+> **E7 closed**: the run's `intent` is capped at `RESEARCH_MAX_INTENT_LENGTH`
+> (8,000) rather than the search query limit; only the derived query is clamped,
+> on a word boundary, with a warning. Verified live: a 1,176-character prompt
+> completed with 9 items and the warning, where it previously 400'd and produced
+> nothing at all.
 
 ### E0 — The finding that reframes the rest (**high**)
 
@@ -631,6 +648,7 @@ callers.
 | B2, B3, B4, B7 | 2026-09-10 | Thread re-downloads while waiting: **30/min → 12/min**, at a single clean 5 s cadence with no duplicate pairs. The 10-minute re-arming loop can no longer recur.                                                                                                                                                                                                                                                   |
 | A1, A2         | 2026-09-10 | Idle requests: **83/min → 2/min** (−98%), the survivor being the deliberate 30 s health poll. `/files` 4.2 MB serialisations: **6/min → 0**.                                                                                                                                                                                                                                                                       |
 | C1-C3, C5-C8   | 2026-09-10 | Telemetry stopped being a request per log line. A send-and-answer's `/client-logs` calls: **12 → 1**. Verified live: one `POST /client-logs/batch` carrying 4 collapsed events, 201, and 3 server log lines where ~16 would have been written. C4 is only PARTLY closed — see below.                                                                                                                               |
+| E2, E5, E7     | 2026-09-11 | The provider dropdown drives the search on every path and the transcript records the provider that ANSWERED (verified: `selectionMode: explicit` for both configured providers). The compare path states the capability instead of naming the mode. A 1,176-character prompt now completes with a warning where it previously 400'd and silently disabled research.                                                |
 | E4, E8, E9     | 2026-09-10 | "Used N sources" became "Read N pages", derived from each item's own `source` field, with links found as a separate number and the search/fetch counts read from `toolsUsed` instead of hardcoded zeros. `Button` now defaults to `type="button"` (no form in the app relied on the implicit submit). 106 lines of dead enricher wrapper deleted.                                                                  |
 | E0, E1, E3, E6 | 2026-09-10 | A pasted URL is opened instead of searched for. Verified live: `summarize https://example.com/ for me` traced `fetch.direct` BEFORE `search`, recorded `web_fetch:user_url`, and ranked the pasted page first at confidence 1 — where the same prompt previously returned an Adobe product page, a Facebook post and a Medium tutorial and never opened the link. `SEARCH_ONLY` warns by name instead of fetching. |
 | D1, D2         | 2026-09-10 | A fresh send no longer asks for replay, so it cannot be handed the previous run's `DONE`. A clean close now reconnects unless a terminal event was actually seen. Verified with a real send: **exactly one** stream connection, `replay=false`, held open 6.25 s for the whole generation, answer rendered. D5 withdrawn — the audit was wrong about it.                                                           |
@@ -648,13 +666,11 @@ in `.catch(() => {})`, so a failed batch is lost. Both are deferred
 deliberately in [ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md)
 under "Revisit when".
 
-E is mostly closed. The capability to read a pasted URL exists (E0/E1), the
-model is told the truth about what ran (E3/E6), and the panel reports what was
-read rather than what was found (E4). What remains is **provider honesty and
-one silent failure**: the provider dropdown is still decorative on compare and
-the nine orchestration modes (E5), path B still tells the model nothing about
-research having run (E2), and a prompt over 500 characters still 400s the
-search and disables research with no user-visible error (E7).
+**Section E is closed.** What remains in this audit is D3 (a dead stream is
+still silent to the user) and D4 (no `Last-Event-ID`, so recovery replays rather
+than resumes), plus the items outside this document: the normalized message
+store, long-chat performance, tracing, accessibility, the contract suite,
+dependency cleanup and SLOs.
 
 A measurement caveat worth keeping: an idle reading of _zero_ is as likely to
 mean the page failed to hydrate as it is to mean success. The first attempt at

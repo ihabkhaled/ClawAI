@@ -391,6 +391,10 @@ export class ChatMessagesService implements OnModuleInit {
       {
         mode: dto.researchMode,
         query: dto.researchQuery,
+        // `dto.researchProviderId` was never read here — the first of two
+        // independent places the user's provider choice was dropped on the
+        // compare path.
+        providerId: dto.researchProviderId,
         userToken,
       },
     );

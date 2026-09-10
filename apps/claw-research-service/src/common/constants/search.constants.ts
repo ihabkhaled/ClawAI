@@ -52,3 +52,19 @@ export const DEFAULT_PROVIDER_SCORES: ReadonlyMap<string, number> = new Map<stri
   [SearchProviderKind.SEARXNG, 60],
   [SearchProviderKind.OLLAMA_WEB, 50],
 ]);
+
+/**
+ * Longest INTENT a research run will accept.
+ *
+ * Separate from `SEARCH_MAX_QUERY_LENGTH`, and the distinction is the point. A
+ * search query is what reaches the provider and 500 characters is a real limit
+ * there. An intent is the user's prompt, which is routinely longer — and a
+ * prompt of 1,200 characters used to 400 the whole run, so `runResearch`
+ * returned null, no transcript was produced, no warning was raised, and the
+ * model was told nothing about the web at all. **Research was silently disabled
+ * by writing a long message.**
+ *
+ * The intent is now accepted whole (URLs are detected from all of it) and only
+ * the derived search query is clamped, with a warning.
+ */
+export const RESEARCH_MAX_INTENT_LENGTH = 8_000;

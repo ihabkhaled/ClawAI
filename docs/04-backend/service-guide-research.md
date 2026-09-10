@@ -109,6 +109,40 @@ Decision and costs:
 [ADR-091](../13-adr/adr-091-user-urls-are-opened-not-searched.md).
 Constraint: [rules/41](../../rules/41-web-evidence-truthfulness.md).
 
+## An intent is not a query
+
+`ExecuteResearchDto.intent` is capped at `RESEARCH_MAX_INTENT_LENGTH` (8,000).
+The **search query** derived from it is clamped separately to
+`SEARCH_MAX_QUERY_LENGTH` (500) by `clampSearchQuery`, on a word boundary, and a
+warning records that it happened.
+
+Both were the same constant until 2026-09-11, and the consequence was worse than
+it sounds: a prompt over 500 characters 400'd the entire run, chat-service
+swallowed that to `null`, no transcript and no warning were produced — and
+because the model is only told browsing happened when evidence or warnings
+exist, it was then told nothing at all and refused. **Research was silently
+disabled by writing a long message.**
+
+The order matters. URLs are detected from the FULL intent, before the clamp, so
+a link near the end of a long prompt is still opened.
+
+## The provider the user picks is the provider that runs
+
+`providerId` travels: DTO → `ParallelResearchOptions` / `ResearchEnrichInput` →
+`POST /research/search`. research-service reads the field's **presence** as an
+explicit choice, so it is omitted rather than sent as `undefined` when the user
+chose nothing — sending the key with no value would look like a choice.
+
+It was dropped in two independent places until 2026-09-11: the compare call site
+never read `dto.researchProviderId`, and `enrichForOrchestration` received it and
+did not pass it on. Meanwhile both transcripts recorded the requested provider,
+so the UI reported a provider that had never executed.
+
+Transcripts now record what **answered** — `providerId` and `providerName` come
+back from the search response — falling back to the request only when the run
+reported none. A fallback becomes a warning: it is not a failure, but it is a
+different answer than the one asked for.
+
 ## Nginx + Health + Env
 
 - Nginx: `/api/v1/research/*` → `http://research-service:4016`.

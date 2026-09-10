@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { EVIDENCE_FETCH_TOP_N } from '../../../common/constants/evidence.constants';
 import { DIRECT_FETCH_CONFIDENCE } from '../../../common/constants/url-detection.constants';
+import { clampSearchQuery } from '../../../common/utilities/search-query.utility';
 import { detectUrlsInText } from '../../../common/utilities/url-detection.utility';
 import { ResearchRunStatus } from '../../../common/enums/research-run-status.enum';
 import { ResearchWorkflowKind } from '../../../common/enums/research-workflow-kind.enum';
@@ -132,9 +133,20 @@ export class ResearchManager {
     providerSelection: EvidenceBundle['providerSelection'];
   }> {
     const start = Date.now();
+    // The provider takes a QUERY; the user wrote a prompt. Sending the prompt
+    // verbatim used to 400 the whole run past 500 characters, which silently
+    // disabled research for anyone who wrote a long message. URLs were already
+    // detected from the FULL intent above, so nothing is lost by clamping here.
+    const clamped = clampSearchQuery(dto.intent);
+    if (clamped.truncated) {
+      warnings.push(
+        `The search query was shortened to ${String(clamped.query.length)} characters; ` +
+          `your full message was still used for everything else.`,
+      );
+    }
     const searchResult = await this.searchService.execute(userId, {
       providerId: dto.searchProviderId,
-      query: dto.intent,
+      query: clamped.query,
       maxResults: dto.maxResults,
       filters: {
         ...(dto.filters ?? {}),

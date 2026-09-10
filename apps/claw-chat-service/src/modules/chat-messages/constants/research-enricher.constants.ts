@@ -19,4 +19,19 @@ export const RESEARCH_ENRICHER_EXTRACT_BODY_MAX_CHARS = 2_500;
 export const RESEARCH_ENRICHER_QUERY_LOG_PREVIEW_CHARS = 80;
 
 // Evidence block headings.
-export const RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK = '## Web search returned no results.';
+/**
+ * What the model is told when the web step ran and found nothing.
+ *
+ * The old value was one sentence — "## Web search returned no results." — with
+ * no instruction attached, so a model reading it had nothing to do but fall
+ * back on its prior, which for most models is "I can't browse the web". Stating
+ * the outcome is not the same as stating what to do about it.
+ */
+export const RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK = [
+  '## Web research ran and returned no usable results',
+  '',
+  'The web search and browsing steps have already been run for you by the platform.',
+  "Do not say that you can't browse the web or access the internet — it was attempted.",
+  'Say plainly that the web step ran and returned nothing usable, then answer from your',
+  'own knowledge only if you label it as such. Do not invent sources, dates or citations.',
+].join('\n');

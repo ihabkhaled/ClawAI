@@ -2,14 +2,23 @@ import { z } from 'zod';
 
 import { ResearchWorkflowKind } from '../../../common/enums/research-workflow-kind.enum';
 import {
+  RESEARCH_MAX_INTENT_LENGTH,
   SEARCH_MAX_MAX_RESULTS,
-  SEARCH_MAX_QUERY_LENGTH,
   SEARCH_MIN_QUERY_LENGTH,
 } from '../../../common/constants/search.constants';
 import { ExtractionProfile } from '../../scrape/enums/extraction-profile.enum';
 
 export const executeResearchSchema = z.object({
-  intent: z.string().min(SEARCH_MIN_QUERY_LENGTH).max(SEARCH_MAX_QUERY_LENGTH),
+  /**
+   * The user's prompt, not a search query.
+   *
+   * Capped at SEARCH_MAX_QUERY_LENGTH (500) until 2026-09-11, which meant a
+   * prompt longer than that 400'd the whole run: chat-service swallowed the
+   * failure to null, produced no transcript and raised no warning, so research
+   * was silently disabled by writing a long message. The derived search query
+   * is clamped instead, with a warning.
+   */
+  intent: z.string().min(SEARCH_MIN_QUERY_LENGTH).max(RESEARCH_MAX_INTENT_LENGTH),
   workflow: z.nativeEnum(ResearchWorkflowKind).default(ResearchWorkflowKind.SEARCH_ONLY),
   /** Provider id for search — optional; falls back to first-enabled. */
   searchProviderId: z.string().max(64).optional(),

@@ -313,6 +313,9 @@ export class ParallelExecutionManager {
         query: finalQuery,
         userAuthHeader: `Bearer ${options.userToken}`,
         threadId,
+        // The second drop point. Without this the search runs on whatever
+        // research-service picks, while the UI reports the user's choice.
+        providerId: options.providerId,
       });
       const transcript = this.buildTranscriptFromEnricher(
         mode,
@@ -365,9 +368,17 @@ export class ParallelExecutionManager {
     return {
       mode,
       query,
+      // The provider that ANSWERED, reported by research-service. This
+      // transcript carried no provider at all, so the compare panel showed the
+      // requested one from elsewhere in the UI regardless of what ran.
+      ...(result.providerId === undefined ? {} : { providerId: result.providerId }),
+      ...(result.providerName === undefined ? {} : { providerName: result.providerName }),
       sources,
       latencyMs,
-      warnings: [],
+      warnings:
+        result.fallbackUsed === true
+          ? [`research.providerFallbackUsed:${result.providerName ?? 'unknown'}`]
+          : [],
       searchRequestCount: result.searchRequestCount,
       fetchRequestCount: result.fetchRequestCount,
       // On this path every source came from the search engine, and a source

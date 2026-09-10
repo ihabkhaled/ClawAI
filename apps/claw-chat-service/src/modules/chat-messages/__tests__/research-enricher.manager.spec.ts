@@ -463,4 +463,103 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
     expect(bad.extracted).toBeUndefined();
     expect(bad.snippet).toBe('bad-snippet');
   });
+
+  describe('the provider the user chose', () => {
+    // It was dropped in two independent places and the transcript went on
+    // recording it anyway, so the UI reported a provider that never ran.
+    it('is sent to research-service, which is what makes the dropdown work', async () => {
+      httpRequest.mockResolvedValueOnce(
+        searchPayload([{ title: 'A', url: 'https://a.example.com', snippet: 's' }]),
+      );
+
+      await manager.enrich({
+        mode: ResearchMode.SEARCH,
+        query: 'anything',
+        userAuthHeader: AUTH_HEADER,
+        providerId: 'provider-chosen-by-user',
+      });
+
+      expect(httpRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({ providerId: 'provider-chosen-by-user' }),
+        }),
+      );
+    });
+
+    it('is omitted rather than sent as undefined when the user chose nothing', async () => {
+      // research-service reads the field's PRESENCE as an explicit choice.
+      httpRequest.mockResolvedValueOnce(
+        searchPayload([{ title: 'A', url: 'https://a.example.com', snippet: 's' }]),
+      );
+
+      await manager.enrich({
+        mode: ResearchMode.SEARCH,
+        query: 'anything',
+        userAuthHeader: AUTH_HEADER,
+      });
+
+      const body = httpRequest.mock.calls[0]?.[0]?.body as Record<string, unknown>;
+      expect('providerId' in body).toBe(false);
+    });
+
+    it('reports the provider that ANSWERED, not the one requested', async () => {
+      httpRequest.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          runId: 'run-test',
+          providerId: 'provider-that-actually-ran',
+          providerName: 'Fallback Provider',
+          providerKind: 'serpapi',
+          fallbackUsed: true,
+          results: [{ title: 'A', url: 'https://a.example.com', snippet: 's' }],
+        },
+      });
+
+      const result = await manager.enrich({
+        mode: ResearchMode.SEARCH,
+        query: 'anything',
+        userAuthHeader: AUTH_HEADER,
+        providerId: 'provider-chosen-by-user',
+      });
+
+      expect(result.providerId).toBe('provider-that-actually-ran');
+      expect(result.providerName).toBe('Fallback Provider');
+      expect(result.fallbackUsed).toBe(true);
+    });
+  });
+
+  describe('what the model is told on this path', () => {
+    // This file's own header says its purpose is to stop models refusing with
+    // "I can't browse the web". The prompt it emitted was one line naming the
+    // mode, which does not attempt that.
+    it('states the capability, not just the heading', async () => {
+      httpRequest.mockResolvedValueOnce(
+        searchPayload([{ title: 'A', url: 'https://a.example.com', snippet: 's' }]),
+      );
+
+      const result = await manager.enrich({
+        mode: ResearchMode.SEARCH,
+        query: 'anything',
+        userAuthHeader: AUTH_HEADER,
+      });
+
+      expect(result.evidence).toContain('already been run for you by the platform');
+      expect(result.evidence).toContain("Do not say that you can't browse the web");
+      expect(result.evidence).toContain('Tools that ran on this turn');
+    });
+
+    it('tells the model what to do when the search found nothing', async () => {
+      httpRequest.mockResolvedValueOnce(searchPayload([]));
+
+      const result = await manager.enrich({
+        mode: ResearchMode.SEARCH,
+        query: 'anything',
+        userAuthHeader: AUTH_HEADER,
+      });
+
+      expect(result.evidence).toContain('returned no usable results');
+      expect(result.evidence).toContain('Do not invent sources');
+    });
+  });
 });

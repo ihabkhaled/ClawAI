@@ -79,6 +79,14 @@ export type ParallelResponse = {
 export type ParallelResearchOptions = {
   mode?: ResearchMode;
   query?: string;
+  /**
+   * The search provider the user chose in the composer.
+   *
+   * The field did not exist, and the call site never read
+   * `dto.researchProviderId`, so on compare the choice was dropped before it
+   * left chat-service — one of two independent places it was being lost.
+   */
+  providerId?: string;
   /** Raw bearer token (without the "Bearer " prefix). May be empty. */
   userToken: string;
 };

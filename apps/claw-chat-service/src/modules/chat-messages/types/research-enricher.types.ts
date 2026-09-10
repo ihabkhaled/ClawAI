@@ -7,6 +7,17 @@ import { type ResearchTranscript } from './research-transcript.types';
 export type ResearchEnrichInput = {
   mode: ResearchMode;
   query: string;
+  /**
+   * The search provider the USER chose.
+   *
+   * Absent from this type until 2026-09-11, which is why the composer's
+   * provider dropdown was decorative on every compare and orchestration flow:
+   * the enricher's outbound body was literally `{ query, maxResults }`, so
+   * research-service took its AUTO branch and picked the top of a score map —
+   * while the transcript went on recording the provider the user had picked.
+   * The UI reported a provider that did not run.
+   */
+  providerId?: string;
   /** Bearer header in the form `Bearer <token>` (forwarded to research-service). */
   userAuthHeader: string;
   /** Number of search hits to request from research-service. */
@@ -76,11 +87,37 @@ export type ResearchEnrichResult = {
   mode: ResearchMode;
   searchRequestCount: number;
   fetchRequestCount: number;
+  /**
+   * The provider that ACTUALLY ran, as reported by research-service.
+   *
+   * Not the one that was requested. They differ whenever selection falls back,
+   * and a transcript that records the request rather than the outcome is how
+   * the UI came to name a provider that never executed.
+   */
+  providerId?: string;
+  providerName?: string;
+  /** True when the requested provider failed and another one answered. */
+  fallbackUsed?: boolean;
+};
+
+/**
+ * The provider fields carried out of a search, extracted rather than written as
+ * a `Pick<..., 'a' | 'b'>` because the eslint config bans string-literal unions
+ * in logic files — and a named type is what the next reader wants anyway.
+ */
+export type ResearchProviderOutcome = {
+  providerId?: string;
+  providerName?: string;
+  fallbackUsed?: boolean;
 };
 
 export type ResearchSearchOutcome = {
   entries: ResearchSearchEntry[];
   requestCount: number;
+  /** Provider that answered, echoed from research-service. */
+  providerId?: string;
+  providerName?: string;
+  fallbackUsed?: boolean;
 };
 
 // ─── Wire shapes for research-service HTTP responses ───────────────────────
@@ -96,7 +133,11 @@ export type ResearchSearchEntry = {
 
 export type ResearchSearchWireResponse = {
   runId?: string;
+  providerId?: string;
+  providerName?: string;
   providerKind?: string;
+  selectionMode?: string;
+  fallbackUsed?: boolean;
   results?: ResearchSearchEntry[];
   warnings?: string[];
   searchRequestCount?: number;
