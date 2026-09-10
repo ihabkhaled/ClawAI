@@ -41,6 +41,26 @@ export type AssembledContext = {
   /** Warnings produced by the research run (e.g. fetch failures). */
   researchWarnings: string[];
   /**
+   * Whether the user ASKED for web research on this turn.
+   *
+   * Separate from "did it produce anything", and that separation is the whole
+   * point. The capability statement used to be attached only when evidence or
+   * warnings existed, so a run that failed cleanly produced neither and the
+   * model was told nothing at all — and answered "I can't browse the web" from
+   * its training prior. The refusal was loudest exactly when research had
+   * failed, which is the moment the user most needs the truth.
+   */
+  researchRequested: boolean;
+  /**
+   * Which tools actually ran: `web_search`, `web_fetch`, `web_fetch:user_url`,
+   * `web_extract`, `search:<provider>`.
+   *
+   * Populated by research-service and, until now, never shown to the model.
+   * Evidence arrived with no provenance, so the model could not distinguish a
+   * page it had been given from a search snippet about that page.
+   */
+  researchToolsUsed: string[];
+  /**
    * Completed Runtime V2 tool rounds, oldest first.
    *
    * Runtime V2 tools execute client-side across an SSE hop, so the provider

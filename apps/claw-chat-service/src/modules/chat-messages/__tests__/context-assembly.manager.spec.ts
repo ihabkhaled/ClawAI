@@ -60,6 +60,11 @@ describe('ContextAssemblyManager', () => {
     researchWarnings: [
       'Search results were withheld because the returned pages were too weakly matched to the request.',
     ],
+    // The shared fixture keeps the PRE-CHANGE trigger: warnings alone. Tests
+    // that care about the requested-but-empty case set it themselves, so this
+    // one keeps proving the old behaviour is untouched.
+    researchRequested: false,
+    researchToolsUsed: ['web_search', 'search:ollama_web'],
     tokenBudget: 512,
     modelBudget: fallbackModelTokenBudget(),
     conversationManifest: emptyConversationManifest(),
@@ -69,7 +74,11 @@ describe('ContextAssemblyManager', () => {
   it('includes research warnings even when no evidence items survive filtering', () => {
     const prompt = manager.buildPromptString(buildContext());
 
-    expect(prompt).toContain('No reliable search evidence passed relevance validation');
+    // Wording changed 2026-09-10 from "No reliable search evidence passed
+    // relevance validation" — which described a filter — to a statement about
+    // the ATTEMPT, because the block is now emitted for runs that produced
+    // nothing at all and "passed validation" would be a lie about those.
+    expect(prompt).toContain('This run produced NO usable web evidence');
     expect(prompt).toContain('Do not invent facts');
     expect(prompt).toContain('WARNINGS:');
     expect(prompt).toContain('too weakly matched');
@@ -279,6 +288,85 @@ describe('ContextAssemblyManager', () => {
         image_url: { url: `data:video/mp4;base64,${videoBase64}` },
       },
     ]);
+  });
+
+  describe('telling the model the truth about the web', () => {
+    // The refusal was loudest exactly when research had FAILED. The capability
+    // block used to be attached only when evidence or warnings existed; a run
+    // that failed cleanly produced neither, so the model heard nothing about
+    // the web and answered "I can't browse the web" from its training prior.
+    it('states the capability when research was requested but produced nothing at all', () => {
+      const context = buildContext();
+      context.researchEvidence = [];
+      context.researchWarnings = [];
+      context.researchRequested = true;
+      context.researchToolsUsed = [];
+
+      const prompt = manager.buildPromptString(context);
+
+      expect(prompt).toContain("Do not say that you can't browse the web");
+      expect(prompt).toContain('the attempt was made and it did not succeed');
+    });
+
+    it('says nothing about the web when research was never requested', () => {
+      const context = buildContext();
+      context.researchEvidence = [];
+      context.researchWarnings = [];
+      context.researchRequested = false;
+      context.researchToolsUsed = [];
+
+      const prompt = manager.buildPromptString(context);
+
+      expect(prompt).not.toContain("Do not say that you can't browse the web");
+    });
+
+    it('names the tools that ran, so evidence arrives with provenance', () => {
+      // Without this the model cannot tell a page it was handed from a search
+      // snippet ABOUT that page, and writes "according to the article" over a
+      // snippet it never read.
+      const context = buildContext();
+      context.researchRequested = true;
+      context.researchToolsUsed = ['web_search', 'web_fetch', 'web_extract'];
+
+      const prompt = manager.buildPromptString(context);
+
+      expect(prompt).toContain('Tools that ran on this turn');
+      expect(prompt).toContain('searched the web');
+      expect(prompt).toContain('web_extract');
+    });
+
+    it('distinguishes opening the user link from opening a search hit', () => {
+      // The question a user is really asking when they paste a link: was MY
+      // page opened, or did something merely search for it?
+      const context = buildContext();
+      context.researchRequested = true;
+      context.researchToolsUsed = ['web_search', 'web_fetch', 'web_fetch:user_url'];
+
+      const prompt = manager.buildPromptString(context);
+
+      expect(prompt).toContain('opened the exact link(s) in the request');
+    });
+
+    it('does not claim the user link was opened when only search hits were fetched', () => {
+      const context = buildContext();
+      context.researchRequested = true;
+      context.researchToolsUsed = ['web_search', 'web_fetch'];
+
+      const prompt = manager.buildPromptString(context);
+
+      expect(prompt).toContain('opened pages found by that search');
+      expect(prompt).not.toContain('opened the exact link(s) in the request');
+    });
+
+    it('admits when no web tool reported completing', () => {
+      const context = buildContext();
+      context.researchRequested = true;
+      context.researchToolsUsed = [];
+
+      const prompt = manager.buildPromptString(context);
+
+      expect(prompt).toContain('No web tool reported completing on this run.');
+    });
   });
 });
 

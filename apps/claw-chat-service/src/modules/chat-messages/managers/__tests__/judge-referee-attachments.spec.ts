@@ -39,6 +39,8 @@ const buildContext = (files: FileContentResponse[] = []): AssembledContext => ({
   researchEvidence: [],
   researchRunId: null,
   researchWarnings: [],
+  researchRequested: false,
+  researchToolsUsed: [],
   tokenBudget: 4096,
   modelBudget: fallbackModelTokenBudget(),
   conversationManifest: emptyConversationManifest(),

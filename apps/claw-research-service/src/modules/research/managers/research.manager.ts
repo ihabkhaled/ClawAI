@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { EVIDENCE_FETCH_TOP_N } from '../../../common/constants/evidence.constants';
+import { DIRECT_FETCH_CONFIDENCE } from '../../../common/constants/url-detection.constants';
+import { detectUrlsInText } from '../../../common/utilities/url-detection.utility';
 import { ResearchRunStatus } from '../../../common/enums/research-run-status.enum';
 import { ResearchWorkflowKind } from '../../../common/enums/research-workflow-kind.enum';
 import { sha1Short } from '../../../common/utilities/hash.utility';
@@ -49,18 +51,39 @@ export class ResearchManager {
     const items: EvidenceItem[] = [];
 
     try {
+      // A URL the user wrote is opened FIRST and on its own terms. It used to
+      // reach the search engine as a keyword, so the page a person explicitly
+      // named was fetched only if the engine happened to return it.
+      const requestedUrls = detectUrlsInText(dto.intent);
+      const direct = await this.runDirectFetch(
+        userId,
+        requestedUrls,
+        dto,
+        trace,
+        toolsUsed,
+        warnings,
+      );
+      items.push(...direct.items);
+
       const search = await this.runSearch(userId, dto, trace, toolsUsed, warnings);
       items.push(...search.items);
 
       if (this.needsFetch(dto.workflow)) {
-        const fetch = await this.runFetch(userId, search.items, trace, toolsUsed, warnings);
+        // Never fetch a page twice in one run: a search hit for a URL the user
+        // already pasted is the same page, and the direct fetch has the better
+        // provenance.
+        const alreadyFetched = new Set(direct.items.map((item) => item.url.toLowerCase()));
+        const searchTargets = search.items.filter(
+          (item) => !alreadyFetched.has(item.url.toLowerCase()),
+        );
+        const fetch = await this.runFetch(userId, searchTargets, trace, toolsUsed, warnings);
         items.push(...fetch.items);
         if (this.needsExtract(dto.workflow)) {
           await this.runExtract(
             userId,
             run.id,
-            fetch.items,
-            fetch.rawByUrl,
+            [...direct.items, ...fetch.items],
+            new Map([...direct.rawByUrl, ...fetch.rawByUrl]),
             dto,
             trace,
             toolsUsed,
@@ -148,6 +171,78 @@ export class ResearchManager {
         attemptedProviders: searchResult.attemptedProviders,
       },
     };
+  }
+
+  /**
+   * Opens the URLs the user wrote, before any search runs.
+   *
+   * Two rules make this honest rather than merely useful:
+   *
+   * - **It only runs in a workflow that already fetches.** A `SEARCH_ONLY` run
+   *   was priced and chosen as a run that does not open pages; quietly opening
+   *   one because a link appeared would change what the user paid for. The run
+   *   instead records a warning naming the URL it did not open, so the answer
+   *   can say so rather than pretending.
+   * - **Every failure becomes a warning, never silence.** A run that fails
+   *   cleanly used to produce zero items AND zero warnings, and downstream the
+   *   model is only told that browsing happened when one of those is non-empty.
+   *   So the moment fetching broke was exactly the moment the model was told
+   *   nothing and answered "I can't browse the web" from its training prior.
+   *
+   * The fetch itself goes through `FetchService`, which owns the SSRF guard,
+   * the domain policy and the cache. This adds a caller, not a second path.
+   */
+  private async runDirectFetch(
+    userId: string,
+    urls: string[],
+    dto: ExecuteResearchDto,
+    trace: ResearchTraceEntry[],
+    toolsUsed: string[],
+    warnings: string[],
+  ): Promise<{ items: EvidenceItem[]; rawByUrl: Map<string, string> }> {
+    const rawByUrl = new Map<string, string>();
+    if (urls.length === 0) {
+      return { items: [], rawByUrl };
+    }
+
+    if (!this.needsFetch(dto.workflow)) {
+      const listed = urls.join(', ');
+      warnings.push(
+        `The request contained ${String(urls.length)} link(s) (${listed}) that were NOT opened: ` +
+          `this run is search-only. Choose a mode that fetches pages to read them.`,
+      );
+      trace.push(traceEntry('fetch.direct', 'skipped', null, `search-only workflow: ${listed}`));
+      return { items: [], rawByUrl };
+    }
+
+    const items: EvidenceItem[] = [];
+    for (const url of urls) {
+      const start = Date.now();
+      try {
+        const result = await this.fetchService.fetchPage(userId, { url });
+        toolsUsed.push('web_fetch', 'web_fetch:user_url');
+        const evidence = this.directFetchResultToEvidence(result);
+        items.push(evidence);
+        if (result.rawHtml !== undefined) {
+          rawByUrl.set(evidence.url, result.rawHtml);
+        }
+        trace.push(
+          traceEntry(
+            'fetch.direct',
+            'ok',
+            Date.now() - start,
+            `${url} (${String(result.byteSize)} bytes${result.cacheHit ? ', cached' : ''})`,
+          ),
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        // Named explicitly, because this is the one the user will ask about:
+        // they pasted THIS link and it is THIS page that could not be read.
+        warnings.push(`Could not open the link you provided (${url}): ${message}`);
+        trace.push(traceEntry('fetch.direct', 'warning', Date.now() - start, `${url}: ${message}`));
+      }
+    }
+    return { items, rawByUrl };
   }
 
   private async runFetch(
@@ -322,6 +417,27 @@ export class ResearchManager {
       publishedAt: result.publishedAt,
       fetchedAt: null,
       confidence: result.score,
+    };
+  }
+
+  /**
+   * Evidence for a page the user named, which outranks anything discovered.
+   *
+   * `buildEvidenceBundle` sorts by confidence and then caps the list, so a
+   * pasted link scoring like a search hit could be trimmed out of the very
+   * bundle it was the point of. It gets the ceiling.
+   */
+  private directFetchResultToEvidence(result: FetchResult): EvidenceItem {
+    return {
+      id: sha1Short(`fetch:${result.finalUrl}`),
+      title: result.title ?? null,
+      url: result.finalUrl,
+      snippet: result.content,
+      source: 'fetch',
+      providerKind: null,
+      publishedAt: null,
+      fetchedAt: new Date().toISOString(),
+      confidence: DIRECT_FETCH_CONFIDENCE,
     };
   }
 

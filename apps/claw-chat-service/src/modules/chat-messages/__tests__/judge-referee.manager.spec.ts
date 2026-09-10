@@ -28,6 +28,8 @@ function makeContext(): AssembledContext {
     researchEvidence: [],
     researchRunId: null,
     researchWarnings: [],
+    researchRequested: false,
+    researchToolsUsed: [],
     tokenBudget: 4000,
     modelBudget: fallbackModelTokenBudget(),
     conversationManifest: emptyConversationManifest(),

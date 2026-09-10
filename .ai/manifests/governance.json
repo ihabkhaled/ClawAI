@@ -54,7 +54,7 @@
   "looseDocs": 23,
   "rules": [
     {
-      "bytes": 20215,
+      "bytes": 20429,
       "file": "rules/00-master-rules.md"
     },
     {
@@ -256,6 +256,10 @@
     {
       "bytes": 14912,
       "file": "rules/40-chat-surface-layout-and-composer.md"
+    },
+    {
+      "bytes": 6598,
+      "file": "rules/41-web-evidence-truthfulness.md"
     },
     {
       "bytes": 5156,

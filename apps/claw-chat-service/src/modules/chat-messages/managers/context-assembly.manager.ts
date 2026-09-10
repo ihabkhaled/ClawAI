@@ -99,6 +99,11 @@ export class ContextAssemblyManager {
     const retrievalMs = Date.now() - retrievalStartedAt;
     const researchEvidence = this.extractEvidenceCitations(fetched.researchRun);
     const researchWarnings = this.extractResearchWarnings(fetched.researchRun);
+    const researchToolsUsed = this.extractResearchTools(fetched.researchRun);
+    // Requested, not produced. A run that failed cleanly yields no evidence and
+    // no warnings, and that used to mean the model heard nothing about the web
+    // at all.
+    const researchRequested = research !== undefined && research.mode !== ResearchMode.NONE;
 
     // The prompt's fixed cost, measured before history is fitted, so history
     // is budgeted against what is actually left rather than against a number
@@ -154,6 +159,8 @@ export class ContextAssemblyManager {
       researchEvidence,
       researchRunId: fetched.researchRun?.id ?? null,
       researchWarnings,
+      researchRequested,
+      researchToolsUsed,
       tokenBudget: conversationBudget.availableInputTokens,
       modelBudget,
       conversationManifest: selected.manifest,
@@ -250,6 +257,15 @@ ${evidence.snippet}`);
     this.logger.log(
       `assemble: starting for user ${userId} with ${String(threadMessages.length)} messages, ${String(contextPackIds?.length ?? 0)} packs, ${String(fileIds?.length ?? 0)} files, research=${research?.mode ?? ResearchMode.NONE}`,
     );
+  }
+
+  /** Tool names the run reported, so the model can be told how it got this. */
+  private extractResearchTools(run: ResearchRunResponse | null): string[] {
+    const bundle = run?.bundle;
+    if (bundle === undefined || bundle === null || !('toolsUsed' in bundle)) {
+      return [];
+    }
+    return (bundle.toolsUsed as string[] | undefined) ?? [];
   }
 
   private extractResearchWarnings(run: ResearchRunResponse | null): string[] {
@@ -406,7 +422,12 @@ ${evidence.snippet}`);
     if (context.systemPrompt) {
       parts.push(`SYSTEM: ${context.systemPrompt}`);
     }
-    if (context.researchEvidence.length > 0 || context.researchWarnings.length > 0) {
+    // Requested is the trigger, not produced. See `researchRequested`.
+    if (
+      context.researchRequested ||
+      context.researchEvidence.length > 0 ||
+      context.researchWarnings.length > 0
+    ) {
       parts.push(this.formatResearchBlock(context));
     }
     parts.push(
@@ -579,7 +600,13 @@ ${evidence.snippet}`);
         .join('\n\n');
       parts.push(`Workspace context (relevant documents and issues):\n${citationBlock}`);
     }
-    if (context.researchEvidence.length > 0 || context.researchWarnings.length > 0) {
+    // Same trigger as the single-message path: the model is told what was
+    // attempted, not only what succeeded.
+    if (
+      context.researchRequested ||
+      context.researchEvidence.length > 0 ||
+      context.researchWarnings.length > 0
+    ) {
       parts.push(this.formatResearchBlock(context));
     }
     const textFiles = context.fileContents.filter((f) => !this.isImageFile(f));
@@ -826,9 +853,56 @@ ${evidence.snippet}`);
     }
   }
 
+  /**
+   * What the model is told about the web.
+   *
+   * Every line here is load-bearing against a specific observed failure:
+   *
+   * - The capability statement, because models refuse with "I can't browse the
+   *   web" from their training prior unless told otherwise.
+   * - The TOOL LIST, because evidence used to arrive with no provenance, so the
+   *   model could not tell a page it had been handed from a search snippet
+   *   ABOUT that page — and then wrote "according to the article" over a
+   *   snippet it had never read.
+   * - The failure wording, because this block is now emitted whenever research
+   *   was REQUESTED. A run that failed cleanly reaches here with no evidence
+   *   and no warnings, and the honest thing to say then is that the attempt was
+   *   made and did not work — not silence, which the model fills with a
+   *   refusal, and not the capability line alone, which the model fills with
+   *   invention.
+   */
+  /**
+   * One line naming the tools that actually ran.
+   *
+   * `web_fetch:user_url` is called out separately because it answers the
+   * question the user is really asking when they paste a link: was MY page
+   * opened, or did something merely search for it?
+   */
+  private describeResearchTools(toolsUsed: readonly string[]): string {
+    if (toolsUsed.length === 0) {
+      return 'No web tool reported completing on this run.';
+    }
+    const unique = [...new Set(toolsUsed)];
+    const openedUserUrl = unique.includes('web_fetch:user_url');
+    const searched = unique.some((tool) => tool.startsWith('web_search'));
+    const fetched = unique.some((tool) => tool.startsWith('web_fetch'));
+    const extracted = unique.includes('web_extract');
+
+    const ran: string[] = [];
+    if (searched) ran.push('searched the web');
+    if (openedUserUrl) ran.push('opened the exact link(s) in the request');
+    else if (fetched) ran.push('opened pages found by that search');
+    if (extracted) ran.push('extracted their main content');
+
+    const summary = ran.length > 0 ? ran.join(', then ') : 'ran no web tool';
+    return `Tools that ran on this turn: ${summary} (${unique.join(', ')}).`;
+  }
+
   private formatResearchBlock(context: AssembledContext): string {
+    const attempted = this.describeResearchTools(context.researchToolsUsed);
     const lines: string[] = [
-      'The web search and browsing steps have already been completed for you.',
+      'The web search and browsing steps have already been run for you by the platform.',
+      attempted,
       'Use the evidence below for any web claim and cite sources as [n].',
       "Do not say that you can't browse the web or access the internet.",
       'If the evidence is incomplete, state the uncertainty briefly and give the best supported answer.',
@@ -836,9 +910,9 @@ ${evidence.snippet}`);
     ];
     if (context.researchEvidence.length === 0) {
       lines.push(
-        'No reliable search evidence passed relevance validation for this request.',
+        'This run produced NO usable web evidence — the attempt was made and it did not succeed.',
         'Do not invent facts, dates, issues, or citations when no reliable evidence is available.',
-        'Instead, say that this run did not produce reliable web evidence and ask the user to retry or refine the search.',
+        'Say plainly that the web step ran and returned nothing usable, name the reason if one is listed below, and answer from your own knowledge only if you label it as such.',
       );
     }
     for (const [index, item] of context.researchEvidence.entries()) {

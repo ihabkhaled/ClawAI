@@ -108,6 +108,8 @@ describe('ParallelExecutionManager', () => {
     researchEvidence: [],
     researchRunId: null,
     researchWarnings: [],
+    researchRequested: false,
+    researchToolsUsed: [],
   };
 
   const sampleModels: ParallelModelTarget[] = [

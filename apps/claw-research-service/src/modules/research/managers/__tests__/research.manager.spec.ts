@@ -165,4 +165,148 @@ describe('ResearchManager', () => {
       expect.stringMatching(/^run-1:extract:/),
     );
   });
+
+  describe('a URL the user wrote', () => {
+    // The finding this exists for: there was no code path anywhere that took a
+    // URL out of a prompt and fetched it. `summarize https://example.com/post`
+    // became a keyword search that happened to contain a URL, and the page was
+    // opened only if the search engine returned it.
+    function lastBundle(): {
+      items?: Array<{ url?: string; source?: string; confidence?: number }>;
+      toolsUsed?: string[];
+      warnings?: string[];
+    } {
+      const payload = runs.update.mock.calls.at(-1)?.[1] as { bundle?: never };
+      return (payload.bundle ?? {}) as never;
+    }
+
+    it('is fetched directly, not searched for', async () => {
+      await manager.run('u1', {
+        intent: 'summarize https://user-supplied.example.com/post',
+        workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH,
+      });
+
+      expect(fetchService.fetchPage).toHaveBeenCalledWith('u1', {
+        url: 'https://user-supplied.example.com/post',
+      });
+      expect(lastBundle().toolsUsed).toEqual(expect.arrayContaining(['web_fetch:user_url']));
+    });
+
+    it('outranks anything the search engine found', async () => {
+      // The bundle sorts by confidence and then caps the list, so a pasted link
+      // scoring like a search hit could be trimmed out of the very bundle it
+      // was the point of.
+      fetchService.fetchPage.mockImplementation(async (_userId: string, dto: { url: string }) => ({
+        url: dto.url,
+        finalUrl: dto.url,
+        httpStatus: 200,
+        mimeType: 'text/html',
+        title: 'User page',
+        content: 'body',
+        links: [],
+        byteSize: 10,
+        cacheHit: false,
+        latencyMs: 1,
+      }));
+
+      await manager.run('u1', {
+        intent: 'read https://user-supplied.example.com/post',
+        workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH,
+      });
+
+      const items = lastBundle().items ?? [];
+      expect(items[0]?.url).toBe('https://user-supplied.example.com/post');
+      expect(items[0]?.confidence).toBe(1);
+    });
+
+    it('is never fetched twice when search also returns it', async () => {
+      search.execute.mockImplementation(async () => ({
+        providerId: 'provider-1',
+        providerName: 'Ollama Web Search',
+        providerKind: SearchProviderKind.OLLAMA_WEB,
+        selectionMode: ProviderSelectionMode.AUTO,
+        fallbackUsed: false,
+        attemptedProviders: ['Ollama Web Search'],
+        results: [
+          {
+            id: 's1',
+            title: 'Same page',
+            url: 'https://dup.example.com/x',
+            snippet: 'Snippet',
+            publishedAt: null,
+            freshness: null,
+            score: 0.9,
+            providerKind: SearchProviderKind.OLLAMA_WEB,
+            raw: {},
+          },
+        ],
+      }));
+      fetchService.fetchPage.mockImplementation(async (_userId: string, dto: { url: string }) => ({
+        url: dto.url,
+        finalUrl: dto.url,
+        httpStatus: 200,
+        mimeType: 'text/html',
+        title: 'Same page',
+        content: 'body',
+        links: [],
+        byteSize: 10,
+        cacheHit: false,
+        latencyMs: 1,
+      }));
+
+      await manager.run('u1', {
+        intent: 'read https://dup.example.com/x',
+        workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH,
+      });
+
+      expect(fetchService.fetchPage).toHaveBeenCalledTimes(1);
+    });
+
+    it('warns by name when the page cannot be opened, rather than failing silently', async () => {
+      // A run that failed cleanly produced zero items AND zero warnings, and
+      // downstream the model is only told browsing happened when one of those
+      // is non-empty. So the moment fetching broke was exactly the moment the
+      // model was told nothing and answered "I can't browse the web".
+      fetchService.fetchPage.mockRejectedValue(new Error('403 Forbidden'));
+
+      await manager.run('u1', {
+        intent: 'read https://blocked.example.com/post',
+        workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH,
+      });
+
+      const warnings = lastBundle().warnings ?? [];
+      expect(warnings.some((warning) => warning.includes('https://blocked.example.com/post'))).toBe(
+        true,
+      );
+    });
+
+    it('does not open pages in a search-only run, and says so', async () => {
+      // SEARCH_ONLY was chosen and priced as a run that does not open pages.
+      // Quietly opening one changes what the user paid for; saying nothing is
+      // the failure this whole workstream exists to remove.
+      await manager.run('u1', {
+        intent: 'summarize https://user-supplied.example.com/post',
+        workflow: ResearchWorkflowKind.SEARCH_ONLY,
+      });
+
+      expect(fetchService.fetchPage).not.toHaveBeenCalled();
+      const warnings = lastBundle().warnings ?? [];
+      expect(
+        warnings.some(
+          (warning) =>
+            warning.includes('https://user-supplied.example.com/post') &&
+            warning.includes('NOT opened'),
+        ),
+      ).toBe(true);
+    });
+
+    it('leaves a link-free prompt exactly as it was', async () => {
+      await manager.run('u1', {
+        intent: 'latest AI news',
+        workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH,
+      });
+
+      expect(lastBundle().toolsUsed).not.toEqual(expect.arrayContaining(['web_fetch:user_url']));
+    });
+  });
 });

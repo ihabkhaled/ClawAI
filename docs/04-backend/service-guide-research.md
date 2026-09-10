@@ -60,6 +60,55 @@ Secrets are never echoed: `SanitizedSearchProvider` replaces `encryptedSecret` w
 
 Total: **22/22 green** on the new service.
 
+## A URL in the intent is opened, not searched for
+
+`ResearchManager.run` calls `detectUrlsInText(dto.intent)` **before** the search
+step, and fetches what it finds directly.
+
+This closes the platform's largest capability gap. Until 2026-09-10 there was no
+code path anywhere that took a URL out of a prompt and fetched it. The fetcher,
+its SSRF guard, its domain policy and its cache were all real and all wired
+exclusively downstream of a keyword search, so `summarize
+https://example.com/post` reached the search engine as a query that happened to
+contain a URL. Measured that day, the prompt returned an Adobe product page, a
+Facebook group post and a Medium tutorial — and never opened the link.
+
+The pipeline is now:
+
+1. `fetch.direct` — the URLs the user wrote, at most `DIRECT_FETCH_MAX_URLS`
+   (3), through `FetchService`. Recorded as `web_fetch` **and**
+   `web_fetch:user_url`.
+2. `search` — unchanged. A prompt is rarely only a link, and the surrounding
+   question usually still needs search.
+3. `fetch` — the top search hits, **minus any URL already fetched in step 1**,
+   so no page is opened twice in one run.
+4. `extract` — over the union of both fetch sets.
+
+Three properties are load-bearing:
+
+- **A pasted page takes `DIRECT_FETCH_CONFIDENCE` (1).** The bundle sorts by
+  confidence and then caps at `EVIDENCE_MAX_ITEMS`, so a pasted link scoring
+  like an ordinary search hit could be trimmed out of the very bundle it was the
+  point of.
+- **`SEARCH_ONLY` fetches nothing and says so.** That workflow was chosen and
+  priced as a run that does not open pages. A pasted link there produces a
+  warning naming the URL and a `fetch.direct` trace entry marked `skipped`.
+  Quietly fetching would change what the user paid for.
+- **`FetchService` gained a caller, not a rival.** The SSRF guard, the domain
+  policy and the cache are untouched. A page the policy refuses becomes a
+  warning, never an exception to the policy.
+
+Detection is deliberately conservative, because anything it returns will be
+fetched: absolute `http`/`https` only, parsed by the platform's own `URL`;
+`javascript:`, `data:`, `file:` and `vbscript:` rejected explicitly rather than
+by accident; trailing sentence punctuation trimmed, because
+`https://example.com/post.` and `(https://example.com/a)` are what people type.
+A bare domain is left to search — it is a search term, not a link.
+
+Decision and costs:
+[ADR-091](../13-adr/adr-091-user-urls-are-opened-not-searched.md).
+Constraint: [rules/41](../../rules/41-web-evidence-truthfulness.md).
+
 ## Nginx + Health + Env
 
 - Nginx: `/api/v1/research/*` → `http://research-service:4016`.

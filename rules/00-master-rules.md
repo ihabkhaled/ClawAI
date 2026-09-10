@@ -58,6 +58,7 @@
 | `38-adsense-eligibility-and-low-value-content.md`       | One authoritative, deny-by-default AdSense eligibility policy: script vs verification vs ad-unit gating, route boundary, chat-share review lockdown.    |
 | `39-worktree-branch-completion-pr-and-release-notes.md` | A task done in an agent-created worktree/branch ends with a PR and release notes, not just pushed commits.                                              |
 | `40-chat-surface-layout-and-composer.md`                | On a conversation surface the transcript is the only element that grows; the composer is sized by its content in rows, never in pixels.                 |
+| `41-web-evidence-truthfulness.md`                       | Never claim a web step that did not run, never stay silent about one that failed; a URL the user wrote is opened, not searched for.                     |
 
 ## The 8 Absolute Blockers (updated 2026-04-26)
 

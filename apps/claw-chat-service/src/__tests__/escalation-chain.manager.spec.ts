@@ -73,6 +73,8 @@ describe('EscalationChainManager', () => {
     researchEvidence: [],
     researchRunId: null,
     researchWarnings: [],
+    researchRequested: false,
+    researchToolsUsed: [],
   };
 
   const twoStepChain: EscalationChainStep[] = [

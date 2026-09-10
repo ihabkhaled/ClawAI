@@ -7328,7 +7328,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 20215,
+          "bytes": 20429,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -7530,6 +7530,10 @@
         {
           "bytes": 14912,
           "file": "rules/40-chat-surface-layout-and-composer.md"
+        },
+        {
+          "bytes": 6598,
+          "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
           "bytes": 5156,
@@ -9630,7 +9634,7 @@
       },
       "claw-research-service": {
         "runner": "jest",
-        "testFiles": 16
+        "testFiles": 17
       },
       "claw-routing-service": {
         "runner": "jest",
@@ -10363,7 +10367,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1170,
+    "totalTestFiles": 1171,
     "workspaceCount": 25
   }
 }
