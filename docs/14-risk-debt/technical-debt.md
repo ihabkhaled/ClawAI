@@ -2,7 +2,38 @@
 
 Tracking known technical debt, pre-existing warnings, and areas needing improvement. Each item includes severity, impact, and recommended action.
 
-Last updated: 2026-04-09
+Last updated: 2026-09-10
+
+> **Two files, one subject.** This document and
+> [`technical-debt-register.md`](technical-debt-register.md) both enumerate
+> TD-001…TD-020 with near-identical content and have been maintained
+> independently. `docs/README.md` indexes **this** file, so anything written only
+> into the register is unreachable from the docs index. Until the two are
+> reconciled, an entry added to one belongs in both. Noted 2026-09-10 when
+> TD-030 was added to the register alone and could not be found from any index.
+
+---
+
+## Open programme
+
+### TD-030: Chat pipeline reliability and traffic programme (2026-09-10)
+
+- **Severity**: Critical · **Effort**: Very High · **Priority**: Immediate
+- **Detail**: A measured audit found the idle chat page issuing ~83 API requests
+  per minute (148 on a thread with a stale in-flight flag), every completed
+  answer costing one full-conversation re-download, one HTTP request per client
+  log line, an SSE connection killed in a loop by its own stale replayed
+  completion event, and **no capability to read a URL a user pasted** — fetch and
+  extract exist but are wired only downstream of a keyword search.
+- **Do not re-derive the causes.** They are enumerated with file and line in the
+  audit, and the numbers they are judged against are in the baseline:
+  - [`chat-pipeline-audit-2026-09.md`](chat-pipeline-audit-2026-09.md)
+  - [`chat-pipeline-baseline-2026-09.md`](chat-pipeline-baseline-2026-09.md)
+- **Sequencing constraints** (from the audit): the message-list invalidation key
+  must be fixed _before_ the polling is removed, or the UI silently stops
+  updating; and the client-logs service must accept an array _before_ the client
+  can batch.
+- **Full entry**: [`technical-debt-register.md`](technical-debt-register.md) TD-030.
 
 ---
 

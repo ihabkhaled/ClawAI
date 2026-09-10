@@ -4,7 +4,7 @@
 
 This register tracks all known technical debt items in ClawAI, organized by category with severity, estimated effort, and priority. Each item includes actionable remediation steps.
 
-Last updated: 2026-04-11
+Last updated: 2026-09-10
 
 ---
 
@@ -132,6 +132,31 @@ Last updated: 2026-04-11
 
 ## 4. Performance
 
+### TD-030: Chat pipeline reliability and traffic programme (2026-09-10)
+
+- **Severity**: Critical
+- **Effort**: Very High
+- **Location**: `apps/claw-frontend` (query defaults, chat hooks, logger),
+  `apps/claw-chat-service` (message sync, research orchestration),
+  `apps/claw-research-service` (fetch/extract wiring),
+  `apps/claw-client-logs-service` (single-event ingest contract)
+- **Detail**: A measured audit found the idle chat page issuing ~83 API requests
+  per minute (148 on a thread with a stale in-flight flag), every completed
+  answer costing one full-conversation re-download, one HTTP request per client
+  log line, and **no capability at all to read a URL a user pasted** — the fetch
+  and extract services exist but are wired exclusively downstream of a keyword
+  search. Root causes are enumerated per finding, with file and line, in the
+  audit below. Do not re-derive them.
+- **Impact**: Bandwidth and server cost scale with open tabs rather than with
+  use; the assistant contradicts its own UI on URL requests; source counts
+  overstate what was actually read.
+- **Remediation**: Sequenced in the audit's own "Sequencing" section. Two
+  dependencies are load-bearing: the message-list invalidation key must be fixed
+  _before_ the polling is removed, and the client-logs service must accept an
+  array _before_ the client can batch.
+- **Evidence**: [`chat-pipeline-audit-2026-09.md`](chat-pipeline-audit-2026-09.md)
+  · [`chat-pipeline-baseline-2026-09.md`](chat-pipeline-baseline-2026-09.md)
+
 ### TD-011: Context Assembly N+1 HTTP Calls
 
 - **Severity**: High
@@ -234,10 +259,10 @@ Last updated: 2026-04-11
 
 ## Priority Matrix
 
-| Priority          | Items                                                                  | Action                                |
-| ----------------- | ---------------------------------------------------------------------- | ------------------------------------- |
-| **Immediate**     | TD-017                                                                 | Implement automated backups this week |
-| **Next Sprint**   | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011                         | Schedule for next iteration           |
-| **Planned**       | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007 | Add to backlog                        |
-| **Conditional**   | TD-009                                                                 | Implement with TD-008                 |
-| **Opportunistic** | TD-004, TD-018, TD-019                                                 | Fix when touching related code        |
+| Priority          | Items                                                                  | Action                                     |
+| ----------------- | ---------------------------------------------------------------------- | ------------------------------------------ |
+| **Immediate**     | TD-030, TD-017                                                         | Chat pipeline programme; automated backups |
+| **Next Sprint**   | TD-008, TD-014, TD-001, TD-003, TD-005, TD-011                         | Schedule for next iteration                |
+| **Planned**       | TD-002, TD-010, TD-012, TD-013, TD-015, TD-016, TD-020, TD-006, TD-007 | Add to backlog                             |
+| **Conditional**   | TD-009                                                                 | Implement with TD-008                      |
+| **Opportunistic** | TD-004, TD-018, TD-019                                                 | Fix when touching related code             |

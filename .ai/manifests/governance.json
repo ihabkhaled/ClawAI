@@ -264,7 +264,7 @@
   ],
   "skills": [
     {
-      "bytes": 21056,
+      "bytes": 21547,
       "file": "skills/00-index.md"
     },
     {
@@ -466,6 +466,10 @@
     {
       "bytes": 3008,
       "file": "skills/inspect-affected-workspaces.md"
+    },
+    {
+      "bytes": 6050,
+      "file": "skills/measure-chat-network-baseline.md"
     },
     {
       "bytes": 14427,
