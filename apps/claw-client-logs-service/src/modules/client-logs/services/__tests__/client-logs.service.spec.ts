@@ -10,6 +10,7 @@ describe('ClientLogsService', () => {
   beforeEach(async () => {
     repo = {
       create: jest.fn(),
+      createMany: jest.fn(),
       findAll: jest.fn(),
       countAll: jest.fn(),
       getDistinctValues: jest.fn(),
@@ -44,6 +45,44 @@ describe('ClientLogsService', () => {
     it('rethrows repository errors', async () => {
       repo.create.mockRejectedValue(new Error('mongo down'));
       await expect(service.create({ level: 'info', message: 'x' })).rejects.toThrow('mongo down');
+    });
+  });
+
+  describe('createMany', () => {
+    it('returns an id per persisted document and the accepted count', async () => {
+      repo.createMany.mockResolvedValue([{ _id: 'a' }, { _id: 'b' }, { _id: 'c' }] as never);
+
+      const result = await service.createMany([
+        { level: 'error', message: 'one' },
+        { level: 'error', message: 'two' },
+        { level: 'error', message: 'three' },
+      ]);
+
+      expect(result).toEqual({ ids: ['a', 'b', 'c'], accepted: 3 });
+    });
+
+    it('reports what the write persisted, not what was submitted', async () => {
+      // Reads as partial acceptance and is NOT: Zod rejects a malformed batch
+      // whole, before this layer. `ordered: false` covers only documents that
+      // pass validation and then fail at the driver, and this method rethrows
+      // on that path. The count is derived from the write rather than assumed
+      // equal to the request, so a future partial-acceptance mode is a change
+      // of behaviour and not a change of contract.
+      repo.createMany.mockResolvedValue([{ _id: 'a' }] as never);
+
+      const result = await service.createMany([
+        { level: 'error', message: 'one' },
+        { level: 'error', message: 'two' },
+      ]);
+
+      expect(result.accepted).toBe(1);
+    });
+
+    it('propagates repository errors', async () => {
+      repo.createMany.mockRejectedValue(new Error('mongo down'));
+      await expect(service.createMany([{ level: 'info', message: 'x' }])).rejects.toThrow(
+        'mongo down',
+      );
     });
   });
 

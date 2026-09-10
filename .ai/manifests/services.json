@@ -141,7 +141,7 @@
     {
       "database": "mongodb",
       "dir": "apps/claw-client-logs-service",
-      "endpointCount": 5,
+      "endpointCount": 6,
       "internalDeps": [
         "@claw/shared-constants",
         "@claw/shared-rabbitmq",

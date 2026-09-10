@@ -1245,6 +1245,11 @@
         "source": "apps/claw-client-logs-service/src/modules/client-logs/controllers/client-logs.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/client-logs/batch",
+        "source": "apps/claw-client-logs-service/src/modules/client-logs/controllers/client-logs.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/client-logs/distinct",
         "source": "apps/claw-client-logs-service/src/modules/client-logs/controllers/client-logs.controller.ts"
@@ -3273,5 +3278,5 @@
     ]
   },
   "generated": true,
-  "total": 647
+  "total": 648
 }

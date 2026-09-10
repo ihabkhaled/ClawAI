@@ -38,8 +38,15 @@ Last updated: 2026-09-10
   invalidation key. Thread re-downloads while waiting went 30/min to 12/min at a
   single clean 5s cadence. A1/A2 landed the same day: the global
   `refetchInterval` is removed in favour of named freshness tiers, taking idle
-  traffic from 83 to 2 requests per minute. Sections C (telemetry batching),
-  D (streaming) and E (URL fetch and source truthfulness) remain open.
+  traffic from 83 to 2 requests per minute. D1/D2 landed the same day: a fresh
+  send no longer asks the stream for a replay, and a clean close reconnects
+  unless a terminal event was really seen. C landed 2026-09-10 as well —
+  `POST /client-logs/batch`, duplicate collapsing, a production severity gate
+  and an unload beacon took a send's telemetry from 12 requests to 1
+  ([ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md)); C4 is only
+  partly closed, because sampling and retry were deferred. Still open:
+  D3 (a dead stream is silent to the user), D4 (`Last-Event-ID` resume) and
+  section E (URL fetch and source truthfulness), which is the largest block.
 - **Full entry**: [`technical-debt-register.md`](technical-debt-register.md) TD-030.
 
 ---

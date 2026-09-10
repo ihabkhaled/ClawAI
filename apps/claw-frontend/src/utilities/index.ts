@@ -1,3 +1,5 @@
+export { passesSeverityGate } from './client-log-severity.utility';
+export { isAuthRefreshExemptPath } from './auth-refresh-exemption.utility';
 export { getAccessToken, getRefreshToken, setTokens, clearAuthStorage } from './api.utility';
 export {
   flagEmojiFromIso2,

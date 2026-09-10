@@ -2,7 +2,13 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 import { API_BASE_URL } from '@/constants';
-import { getAccessToken, getRefreshToken, setTokens, clearAuthStorage } from '@/utilities';
+import {
+  clearAuthStorage,
+  getAccessToken,
+  getRefreshToken,
+  isAuthRefreshExemptPath,
+  setTokens,
+} from '@/utilities';
 
 type FailedRequest = {
   resolve: (token: string) => void;
@@ -50,9 +56,13 @@ function createHttpClient(): AxiosInstance {
         return Promise.reject(error);
       }
 
-      // Skip refresh for auth endpoints themselves
+      // Some requests must never be able to sign the user out. The auth
+      // endpoints themselves (a failed login retried through a refresh is a
+      // loop) and telemetry (best-effort background traffic the user did not
+      // ask for, which must not hold the authority to clear storage and
+      // redirect).
       const url = originalRequest.url ?? '';
-      if (url.includes('/auth/login') || url.includes('/auth/refresh')) {
+      if (isAuthRefreshExemptPath(url)) {
         return Promise.reject(error);
       }
 

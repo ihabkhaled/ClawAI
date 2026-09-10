@@ -19,6 +19,13 @@ export interface CreateClientLogInput {
   metadata?: Record<string, unknown>;
 }
 
+export interface CreateClientLogBatchResponse {
+  /** Ids of the events actually persisted, in submission order. */
+  ids: string[];
+  /** How many of the submitted events were written. */
+  accepted: number;
+}
+
 export interface ClientLogFilters {
   level?: string;
   component?: string;

@@ -1,0 +1,129 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+  CLIENT_LOG_FLUSH_INTERVAL_MS,
+  CLIENT_LOG_MAX_BATCH_EVENTS,
+  CLIENT_LOG_MAX_BUFFER_EVENTS,
+  CLIENT_LOG_OCCURRENCES_KEY,
+} from '@/constants';
+import { logger } from '@/utilities/logger.utility';
+
+/**
+ * The client telemetry transport, at the seam where it cost the most.
+ *
+ * The buffer used to hold entries for five seconds and then issue one HTTP
+ * request PER ENTRY. It was never a batch — it was a delay that guaranteed the
+ * requests left together. A single chat send produced twelve `/client-logs`
+ * calls out of twenty total requests, each spending a rate-limit unit and a
+ * Mongo write.
+ */
+const { postMock } = vi.hoisted(() => ({
+  postMock: vi.fn((_path: string, _payload: unknown) => Promise.resolve({})),
+}));
+
+vi.mock('@/lib/http-client', () => ({ httpClient: { post: postMock } }));
+vi.mock('@/stores/auth.store', () => ({
+  useAuthStore: { getState: () => ({ user: { id: 'user-1' } }) },
+}));
+vi.mock('@/stores/log.store', () => ({
+  useLogStore: { getState: () => ({ addEntry: vi.fn() }) },
+}));
+
+type BatchPayload = { events: Array<Record<string, unknown>> };
+
+function batchesSent(): BatchPayload[] {
+  return postMock.mock.calls.map(([, payload]) => payload as BatchPayload);
+}
+
+describe('logger network transport', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    postMock.mockClear();
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  });
+
+  it('sends many distinct entries as one request, not one request each', () => {
+    for (let index = 0; index < 12; index += 1) {
+      logger.error({ component: 'Chat', action: 'send', message: `failure ${index}` });
+    }
+
+    vi.advanceTimersByTime(CLIENT_LOG_FLUSH_INTERVAL_MS);
+
+    expect(postMock).toHaveBeenCalledTimes(1);
+    expect(postMock.mock.calls[0]?.[0]).toBe('/client-logs/batch');
+    expect(batchesSent()[0]?.events).toHaveLength(12);
+  });
+
+  it('collapses identical repeats into one event carrying a count', () => {
+    for (let index = 0; index < 20; index += 1) {
+      logger.warn({ component: 'Chat', action: 'retry', message: 'stream dropped' });
+    }
+
+    vi.advanceTimersByTime(CLIENT_LOG_FLUSH_INTERVAL_MS);
+
+    const events = batchesSent()[0]?.events ?? [];
+    expect(events).toHaveLength(1);
+    expect((events[0]?.metadata as Record<string, unknown>)[CLIENT_LOG_OCCURRENCES_KEY]).toBe(20);
+  });
+
+  it('keeps a single occurrence free of the count field', () => {
+    logger.error({ component: 'Chat', action: 'send', message: 'one only' });
+
+    vi.advanceTimersByTime(CLIENT_LOG_FLUSH_INTERVAL_MS);
+
+    const events = batchesSent()[0]?.events ?? [];
+    expect(events[0]?.metadata).toBeUndefined();
+  });
+
+  it('splits a flush larger than the server ceiling across several requests', () => {
+    const total = CLIENT_LOG_MAX_BATCH_EVENTS + 5;
+    for (let index = 0; index < total; index += 1) {
+      logger.error({ component: 'Chat', action: 'send', message: `distinct ${index}` });
+    }
+
+    vi.advanceTimersByTime(CLIENT_LOG_FLUSH_INTERVAL_MS);
+
+    expect(postMock).toHaveBeenCalledTimes(2);
+    expect(batchesSent()[0]?.events).toHaveLength(CLIENT_LOG_MAX_BATCH_EVENTS);
+    expect(batchesSent()[1]?.events).toHaveLength(5);
+  });
+
+  it('caps the buffer, dropping the oldest rather than growing without bound', () => {
+    const overflow = CLIENT_LOG_MAX_BUFFER_EVENTS + 30;
+    for (let index = 0; index < overflow; index += 1) {
+      logger.error({ component: 'Chat', action: 'send', message: `entry ${index}` });
+    }
+
+    vi.advanceTimersByTime(CLIENT_LOG_FLUSH_INTERVAL_MS);
+
+    const sent = batchesSent().flatMap((payload) => payload.events);
+    expect(sent).toHaveLength(CLIENT_LOG_MAX_BUFFER_EVENTS);
+    // The newest survived; the first thirty did not.
+    expect(sent.at(-1)?.message).toBe(`entry ${overflow - 1}`);
+    expect(sent.some((event) => event.message === 'entry 0')).toBe(false);
+  });
+
+  it('does not send anything when nothing was logged', () => {
+    vi.advanceTimersByTime(CLIENT_LOG_FLUSH_INTERVAL_MS * 3);
+
+    expect(postMock).not.toHaveBeenCalled();
+  });
+
+  it('flushes buffered entries with sendBeacon when the page goes away', () => {
+    const beacon = vi.fn(() => true);
+    vi.stubGlobal('navigator', { ...navigator, sendBeacon: beacon });
+
+    logger.error({ component: 'Chat', action: 'send', message: 'unloading' });
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(beacon).toHaveBeenCalledTimes(1);
+    // A normal request is cancelled on unload; this is why it is a beacon.
+    expect(postMock).not.toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
+  });
+});

@@ -11,6 +11,7 @@ describe('ClientLogsRepository', () => {
     countDocuments: jest.Mock;
     distinct: jest.Mock;
     aggregate: jest.Mock;
+    insertMany: jest.Mock;
     save: jest.Mock;
   }>;
 
@@ -32,6 +33,7 @@ describe('ClientLogsRepository', () => {
       countDocuments: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(99) }),
       distinct: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(['a', 'b', 'c']) }),
       aggregate: jest.fn().mockResolvedValue([{ _id: 'info', count: 10 }]),
+      insertMany: jest.fn().mockResolvedValue([{ _id: 'bulk-1' }, { _id: 'bulk-2' }]),
     });
     modelMock = modelFactory as never;
 
@@ -206,5 +208,35 @@ describe('ClientLogsRepository', () => {
       const calledQuery = modelMock.countDocuments.mock.calls[0]?.[0];
       expect(calledQuery.level).toEqual({ $regex: '^error$', $options: 'i' });
     });
+  });
+});
+
+describe('ClientLogsRepository.createMany', () => {
+  it('writes the whole batch in one round trip, unordered', async () => {
+    const insertMany = jest.fn().mockResolvedValue([{ _id: '1' }, { _id: '2' }]);
+    function modelFactory(): Record<string, never> {
+      return {} as Record<string, never>;
+    }
+    Object.assign(modelFactory, { insertMany });
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ClientLogsRepository,
+        { provide: getModelToken(ClientLog.name), useValue: modelFactory as never },
+      ],
+    }).compile();
+    const repository = module.get<ClientLogsRepository>(ClientLogsRepository);
+
+    const inputs = [
+      { level: 'error', message: 'one' },
+      { level: 'error', message: 'two' },
+    ];
+    const saved = await repository.createMany(inputs);
+
+    expect(insertMany).toHaveBeenCalledTimes(1);
+    // Unordered: one malformed document must not discard the rest. Telemetry
+    // is best-effort, and losing the good events is the wrong trade.
+    expect(insertMany).toHaveBeenCalledWith(inputs, { ordered: false });
+    expect(saved).toHaveLength(2);
   });
 });

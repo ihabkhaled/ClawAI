@@ -218,6 +218,17 @@ polling loop.
 
 ## C. Client telemetry
 
+> **Status 2026-09-10 — FIXED, except C4 in part.** C1, C2, C3, C5, C6 and C8 are
+> closed by the telemetry batch (`POST /client-logs/batch`, collapse-with-count, severity
+> gate, `pagehide` beacon, buffer cap, refresh-flow exemption, and the removal
+> of the self-feeding log on the client-logs page). C7's amplification falls out
+> of C2: the ingest path now logs once per batch instead of ~4x per event.
+> **C4 is only partly closed** — dedup and the unload flush landed; sampling and
+> retry did not, and a failed batch is still dropped by `.catch(() => {})`. See
+> [ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md). The findings
+> below are kept as written, because the measurement that motivated each one is
+> the evidence that the fix was needed.
+
 ### C1 — The buffer delays but does not batch (**certain, measured**)
 
 ```ts
@@ -578,15 +589,25 @@ callers.
 | -------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | B2, B3, B4, B7 | 2026-09-10 | Thread re-downloads while waiting: **30/min → 12/min**, at a single clean 5 s cadence with no duplicate pairs. The 10-minute re-arming loop can no longer recur.                                                                                                                                                                                         |
 | A1, A2         | 2026-09-10 | Idle requests: **83/min → 2/min** (−98%), the survivor being the deliberate 30 s health poll. `/files` 4.2 MB serialisations: **6/min → 0**.                                                                                                                                                                                                             |
+| C1-C3, C5-C8   | 2026-09-10 | Telemetry stopped being a request per log line. A send-and-answer's `/client-logs` calls: **12 → 1**. Verified live: one `POST /client-logs/batch` carrying 4 collapsed events, 201, and 3 server log lines where ~16 would have been written. C4 is only PARTLY closed — see below.                                                                     |
 | D1, D2         | 2026-09-10 | A fresh send no longer asks for replay, so it cannot be handed the previous run's `DONE`. A clean close now reconnects unless a terminal event was actually seen. Verified with a real send: **exactly one** stream connection, `replay=false`, held open 6.25 s for the whole generation, answer rendered. D5 withdrawn — the audit was wrong about it. |
 
-**Targets T1, T3 and T7 are met**; T4 is met for the idle case. Sections C and E
-are open, plus D3 (a dead stream is still silent to the user) and D4 (no
+**Targets T1, T3, T6 and T7 are met**; T4 is met for the idle case. Section E is
+open, plus D3 (a dead stream is still silent to the user) and D4 (no
 `Last-Event-ID`, so recovery still replays rather than resumes).
 
-C is next: client telemetry is now the largest remaining source of requests —
-12 of the 20 requests a full send-and-answer costs. It needs the service to
-accept an array first.
+**C4 is partly closed, and the remainder is named rather than quietly counted
+as done.** Dedup landed (identical events inside a flush window collapse to one
+event with an `occurrences` count) and so did the unload flush (`pagehide` +
+`sendBeacon`, so a pending buffer is no longer dropped on navigation). What did
+NOT land: there is no sampling, and there is no retry — `flushLogs` still ends
+in `.catch(() => {})`, so a failed batch is lost. Both are deferred
+deliberately in [ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md)
+under "Revisit when".
+
+E is next, and it is the largest remaining block: no capability exists to read a
+URL the user pasted, and "Used N sources" counts search hits rather than pages
+actually read.
 
 A measurement caveat worth keeping: an idle reading of _zero_ is as likely to
 mean the page failed to hydrate as it is to mean success. The first attempt at

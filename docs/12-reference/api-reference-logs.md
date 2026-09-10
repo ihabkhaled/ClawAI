@@ -14,6 +14,7 @@ Create a client log entry. Used by the frontend to send application logs.
 
 **Auth**: Public (no auth required — frontend sends logs before/without authentication)
 **Request Body**:
+
 ```json
 {
   "level": "error",
@@ -37,6 +38,7 @@ Create a client log entry. Used by the frontend to send application logs.
 Only `level` and `message` are required.
 
 **Response 201**:
+
 ```json
 {
   "id": "66abc...",
@@ -45,6 +47,7 @@ Only `level` and `message` are required.
 ```
 
 **curl**:
+
 ```bash
 curl -X POST http://localhost:4000/api/v1/client-logs \
   -H "Content-Type: application/json" \
@@ -59,6 +62,7 @@ Search client logs with filtering.
 
 **Auth**: Bearer token (ADMIN or OPERATOR role required)
 **Query Parameters**:
+
 - `page` (int, default: 1)
 - `limit` (int, default: 20, max: 100)
 - `level` (string) — info, warn, error, debug
@@ -69,6 +73,7 @@ Search client logs with filtering.
 - `search` (string) — full-text search in message
 
 **Response 200**:
+
 ```json
 {
   "data": [
@@ -96,6 +101,7 @@ Get client log statistics.
 
 **Auth**: Bearer token (ADMIN or OPERATOR role required)
 **Response 200**:
+
 ```json
 {
   "totalLogs": 5000,
@@ -129,6 +135,7 @@ Create a single server log entry.
 
 **Auth**: Public (services send logs without auth)
 **Request Body**:
+
 ```json
 {
   "level": "error",
@@ -159,6 +166,7 @@ Create a single server log entry.
 Only `level`, `message`, and `serviceName` are required.
 
 **Response 201**:
+
 ```json
 {
   "id": "66abc...",
@@ -174,16 +182,23 @@ Create multiple server log entries at once.
 
 **Auth**: Public
 **Request Body**:
+
 ```json
 {
   "entries": [
-    { "level": "info", "message": "Request completed", "serviceName": "chat-service", "latencyMs": 45 },
+    {
+      "level": "info",
+      "message": "Request completed",
+      "serviceName": "chat-service",
+      "latencyMs": 45
+    },
     { "level": "warn", "message": "Slow query", "serviceName": "chat-service", "latencyMs": 2500 }
   ]
 }
 ```
 
 **Response 201**:
+
 ```json
 {
   "count": 2,
@@ -199,6 +214,7 @@ List server logs with comprehensive filtering.
 
 **Auth**: Bearer token
 **Query Parameters**:
+
 - `page` (int, default: 1)
 - `limit` (int, default: 20, max: 100)
 - `level` (string) — info, warn, error, debug
@@ -218,6 +234,7 @@ List server logs with comprehensive filtering.
 **Response 200**: `PaginatedResult<ServerLog>`
 
 **curl**:
+
 ```bash
 # Find all errors in routing-service
 curl "http://localhost:4000/api/v1/server-logs?level=error&serviceName=routing-service" \
@@ -236,6 +253,7 @@ Get server log statistics.
 
 **Auth**: Bearer token
 **Response 200**:
+
 ```json
 {
   "totalLogs": 50000,
@@ -257,6 +275,55 @@ Get server log statistics.
 
 ---
 
+## POST /api/v1/client-logs/batch
+
+Ingests up to 100 client log events in one request. Public, like the
+single-event route. This is the route the frontend logger uses; the
+single-event route is retained only for compatibility.
+
+**Request**
+
+```json
+{
+  "events": [
+    {
+      "level": "error",
+      "message": "Failed to load thread messages",
+      "component": "ChatPage",
+      "action": "FETCH_MESSAGES",
+      "route": "/chat/abc123",
+      "metadata": { "threadId": "abc123", "occurrences": 3 }
+    }
+  ]
+}
+```
+
+`events` must hold between 1 and 100 entries, each matching the single-event
+schema. `metadata.occurrences` is added by the client when identical events
+inside one flush window were collapsed into one.
+
+**Response** `201 Created`
+
+```json
+{ "ids": ["66f0…a1", "66f0…a2"], "accepted": 2 }
+```
+
+`accepted` is the number the write persisted. **Validation is all-or-nothing**:
+Zod checks the whole envelope before anything reaches Mongo, so one malformed
+event rejects the entire batch with a 400. `insertMany(..., { ordered: false })`
+covers only documents that pass validation and then fail at the driver, and the
+service rethrows there — so `accepted` below the submitted count is not
+something a client observes today.
+
+Client-side behaviour that shapes what arrives here — the 5-second buffer, the
+duplicate collapsing, the production severity floor of INFO, and the `pagehide`
+beacon — is described in
+[`docs/04-backend/service-guide-client-logs.md`](../04-backend/service-guide-client-logs.md)
+and decided in
+[ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md).
+
+---
+
 ## Log Retention
 
 Both client and server logs have a **30-day TTL**. MongoDB automatically deletes documents older than 30 days via TTL indexes on the `createdAt` field.
@@ -266,10 +333,14 @@ Both client and server logs have a **30-day TTL**. MongoDB automatically deletes
 ## Log Ingestion Sources
 
 ### Client Logs
-- Frontend sends via HTTP POST `/api/v1/client-logs`
-- Batched by the frontend logger utility
+
+- **Batch (what the browser uses)**: HTTP POST `/api/v1/client-logs/batch`
+- **Single**: HTTP POST `/api/v1/client-logs` — kept for compatibility; nothing
+  new should call it
+- Both are public, so telemetry from a signed-out page still arrives
 
 ### Server Logs
+
 - **Primary**: RabbitMQ `log.server` events from `StructuredLogger`
 - **Secondary**: HTTP POST `/api/v1/server-logs` (direct from services)
 - **Batch**: HTTP POST `/api/v1/server-logs/batch` (multiple entries)

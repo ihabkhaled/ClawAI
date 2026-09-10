@@ -1,3 +1,5 @@
+import { CLIENT_LOG_BATCH_MAX_EVENTS } from '../../constants/client-logs.constants';
+import { createClientLogBatchSchema } from '../create-client-log-batch.dto';
 import { createClientLogSchema } from '../create-client-log.dto';
 import { searchClientLogsSchema } from '../search-client-logs.dto';
 import { SortOrder } from '../../../../common/enums/sort-order.enum';
@@ -102,5 +104,46 @@ describe('searchClientLogsSchema (DTO fuzz)', () => {
     expect(searchClientLogsSchema.safeParse({ messageContains: 'a'.repeat(501) }).success).toBe(
       false,
     );
+  });
+});
+
+describe('createClientLogBatchSchema (DTO fuzz)', () => {
+  function event(message: string): Record<string, string> {
+    return { level: 'error', message };
+  }
+
+  it('accepts a batch of valid events', () => {
+    const parsed = createClientLogBatchSchema.parse({ events: [event('a'), event('b')] });
+    expect(parsed.events).toHaveLength(2);
+  });
+
+  it('rejects an empty batch', () => {
+    // An empty flush should never leave the client; if one does, it is a bug
+    // worth surfacing rather than a write worth accepting.
+    expect(createClientLogBatchSchema.safeParse({ events: [] }).success).toBe(false);
+  });
+
+  it('rejects a batch over the ceiling', () => {
+    const events = Array.from({ length: CLIENT_LOG_BATCH_MAX_EVENTS + 1 }, (_unused, index) =>
+      event(`m${String(index)}`),
+    );
+    expect(createClientLogBatchSchema.safeParse({ events }).success).toBe(false);
+  });
+
+  it('accepts a batch exactly at the ceiling', () => {
+    const events = Array.from({ length: CLIENT_LOG_BATCH_MAX_EVENTS }, (_unused, index) =>
+      event(`m${String(index)}`),
+    );
+    expect(createClientLogBatchSchema.safeParse({ events }).success).toBe(true);
+  });
+
+  it('rejects a bare array — the envelope is required', () => {
+    expect(createClientLogBatchSchema.safeParse([event('a')]).success).toBe(false);
+  });
+
+  it('rejects the whole batch when one event is invalid', () => {
+    expect(
+      createClientLogBatchSchema.safeParse({ events: [event('ok'), { level: 'error' }] }).success,
+    ).toBe(false);
   });
 });

@@ -4,6 +4,7 @@ import { ClientLogsRepository } from '../repositories/client-logs.repository';
 import type {
   ClientLogFilters,
   ClientLogStatsResponse,
+  CreateClientLogBatchResponse,
   CreateClientLogInput,
   CreateClientLogResponse,
   DistinctValuesResult,
@@ -18,14 +19,31 @@ export class ClientLogsService {
   constructor(private readonly clientLogsRepository: ClientLogsRepository) {}
 
   async create(input: CreateClientLogInput): Promise<CreateClientLogResponse> {
-    this.logger.debug(`create: level=${input.level} component=${input.component ?? 'none'}`);
     try {
       const doc = await this.clientLogsRepository.create(input);
-      const id = String(doc._id);
-      this.logger.log(`create: persisted client-log id=${id}`);
-      return { id };
+      return { id: String(doc._id) };
     } catch (error) {
       this.logger.error(`create: failed — ${(error as Error).message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Persists a batch of events in one round trip.
+   *
+   * Logs once for the batch, not once per event. The previous single-event path
+   * emitted roughly four server log lines per client log line — interceptor,
+   * service debug, service info, repository info — so ingesting telemetry cost
+   * four times as much telemetry.
+   */
+  async createMany(inputs: CreateClientLogInput[]): Promise<CreateClientLogBatchResponse> {
+    try {
+      const docs = await this.clientLogsRepository.createMany(inputs);
+      const ids = docs.map((doc) => String(doc._id));
+      this.logger.log(`createMany: persisted ${String(ids.length)} of ${String(inputs.length)}`);
+      return { ids, accepted: ids.length };
+    } catch (error) {
+      this.logger.error(`createMany: failed — ${(error as Error).message}`);
       throw error;
     }
   }

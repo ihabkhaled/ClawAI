@@ -1300,6 +1300,11 @@
           "source": "apps/claw-client-logs-service/src/modules/client-logs/controllers/client-logs.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/client-logs/batch",
+          "source": "apps/claw-client-logs-service/src/modules/client-logs/controllers/client-logs.controller.ts"
+        },
+        {
           "method": "GET",
           "route": "/client-logs/distinct",
           "source": "apps/claw-client-logs-service/src/modules/client-logs/controllers/client-logs.controller.ts"
@@ -7439,7 +7444,7 @@
           "file": "rules/18-error-handling-and-reliability.md"
         },
         {
-          "bytes": 3290,
+          "bytes": 6612,
           "file": "rules/19-logging-observability-and-redaction.md"
         },
         {
@@ -9597,7 +9602,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 441
+        "testFiles": 445
       },
       "claw-health-service": {
         "runner": "jest",
@@ -10346,7 +10351,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 41,
-    "endpointCount": 647,
+    "endpointCount": 648,
     "envVarCount": 351,
     "eventCount": 178,
     "frontendRouteCount": 153,
@@ -10358,7 +10363,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1166,
+    "totalTestFiles": 1170,
     "workspaceCount": 25
   }
 }

@@ -24,9 +24,21 @@ stream.close();
 
 ### `logger.utility.ts`
 
-**Purpose**: Client-side logging wrapper. Sends `console.warn` / `console.error` to both browser console and `claw-client-logs-service`.  
+**Purpose**: Client-side logging. It writes every entry to the in-memory log
+store (which the developer log view reads) and, separately, ships entries to
+`claw-client-logs-service`. It does not touch the browser console.  
 **Never use `console.log`** — use this utility instead.  
-**Batching**: Log entries are batched and sent every 5s to reduce HTTP calls.
+**Transport**: entries buffer for 5 s, identical events inside that window
+collapse into one carrying an `occurrences` count, and the result is POSTed to
+`/client-logs/batch` in slices of 100. It used to buffer for 5 s and then issue
+one request PER ENTRY, which is what turned a page mount into a burst.  
+**Severity floor**: `logger.debug` does not cross the network in production.
+The in-memory store still receives it, so the log view is unaffected.  
+**Unload**: a `pagehide` handler re-sends the buffer with `navigator.sendBeacon`,
+because a normal request is cancelled on navigation.  
+**Never logs inside a `queryFn`** — see
+[`rules/19-logging-observability-and-redaction.md`](../../rules/19-logging-observability-and-redaction.md).
+Background: [ADR-089](../13-adr/adr-089-client-telemetry-batch-endpoint.md).
 
 ### `api.utility.ts`
 
@@ -177,5 +189,9 @@ getStatusLabel(ConnectorStatus.DOWN); // 'Offline'
 ## Notes
 
 - All utilities are pure functions — no React hooks, no side effects (except `logger.utility.ts` which batches)
-- None currently have dedicated unit tests (tracked as gap in `docs/AUDIT_GAPS.md`)
+- Most have no dedicated unit tests (tracked as a gap in `docs/AUDIT_GAPS.md`).
+  The exceptions are the ones whose behaviour is a constraint rather than a
+  calculation — `logger.utility.ts` is covered by
+  `src/utilities/__tests__/logger-transport.utility.test.ts` and
+  `logger-severity-gate.utility.test.ts`.
 - All i18n-adjacent utilities (`locale.utility.ts`) read from `localStorage`, never from React context

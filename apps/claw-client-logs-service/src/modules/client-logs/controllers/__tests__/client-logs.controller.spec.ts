@@ -6,6 +6,7 @@ describe('ClientLogsController', () => {
   let controller: ClientLogsController;
   let serviceMock: jest.Mocked<{
     create: jest.Mock;
+    createMany: jest.Mock;
     search: jest.Mock;
     getStats: jest.Mock;
     getDistinctValues: jest.Mock;
@@ -14,6 +15,7 @@ describe('ClientLogsController', () => {
   beforeEach(async () => {
     serviceMock = {
       create: jest.fn(),
+      createMany: jest.fn(),
       search: jest.fn(),
       getStats: jest.fn(),
       getDistinctValues: jest.fn(),
@@ -39,6 +41,30 @@ describe('ClientLogsController', () => {
       await expect(controller.create({ level: 'info', message: 'x' } as never)).rejects.toThrow(
         'boom',
       );
+    });
+  });
+
+  describe('createBatch', () => {
+    it('unwraps the envelope and forwards only the events', async () => {
+      // The envelope exists so the payload can grow later; the service should
+      // never see it.
+      serviceMock.createMany.mockResolvedValue({ ids: ['a', 'b'], accepted: 2 });
+      const events = [
+        { level: 'error', message: 'first' },
+        { level: 'error', message: 'second' },
+      ];
+
+      const result = await controller.createBatch({ events } as never);
+
+      expect(serviceMock.createMany).toHaveBeenCalledWith(events);
+      expect(result).toEqual({ ids: ['a', 'b'], accepted: 2 });
+    });
+
+    it('propagates service errors', async () => {
+      serviceMock.createMany.mockRejectedValue(new Error('insert failed'));
+      await expect(
+        controller.createBatch({ events: [{ level: 'info', message: 'x' }] } as never),
+      ).rejects.toThrow('insert failed');
     });
   });
 

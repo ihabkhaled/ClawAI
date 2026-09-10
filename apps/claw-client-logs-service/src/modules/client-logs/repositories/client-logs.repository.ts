@@ -18,10 +18,25 @@ export class ClientLogsRepository {
   constructor(@InjectModel(ClientLog.name) private readonly clientLogModel: Model<ClientLog>) {}
 
   async create(input: CreateClientLogInput): Promise<ClientLog> {
-    this.logger.debug(`create: level=${input.level} component=${input.component ?? 'none'}`);
+    // One line, not two. Telemetry ingestion that logs about itself at debug
+    // AND at info turns a 20-event burst into ~80 server log lines, which is
+    // the problem this endpoint exists to solve, reproduced one layer down.
     const doc = new this.clientLogModel(input);
     const saved = await doc.save();
-    this.logger.log(`create: persisted client-log id=${String(saved._id)}`);
+    this.logger.debug(`create: persisted client-log id=${String(saved._id)}`);
+    return saved;
+  }
+
+  /**
+   * Writes a batch in one round trip.
+   *
+   * `ordered: false` so a single malformed document cannot discard the rest of
+   * the batch — telemetry is best-effort, and losing nineteen good events
+   * because the twentieth was odd is the wrong trade.
+   */
+  async createMany(inputs: CreateClientLogInput[]): Promise<ClientLog[]> {
+    const saved = await this.clientLogModel.insertMany(inputs, { ordered: false });
+    this.logger.debug(`createMany: persisted ${String(saved.length)} of ${String(inputs.length)}`);
     return saved;
   }
 

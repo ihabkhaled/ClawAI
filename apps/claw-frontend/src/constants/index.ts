@@ -1,4 +1,4 @@
-export { API_BASE_URL } from './api.constants';
+export { API_BASE_URL, AUTH_REFRESH_EXEMPT_PATHS } from './api.constants';
 export { COUNTRY_DIAL_CODES, DEFAULT_COUNTRY_ISO2 } from './country-dial-codes.constants';
 export { SUGGESTED_PROMPTS } from './suggested-prompts.constants';
 export { THREAD_DATE_GROUP_LABEL_KEYS } from './thread-date-group.constants';
@@ -81,6 +81,12 @@ export {
   LOG_SENSITIVE_KEYS,
   SERVER_LOG_STATS_TOP_SERVICES_LIMIT,
   CLIENT_LOG_STATS_TOP_ITEMS_LIMIT,
+  CLIENT_LOG_FLUSH_INTERVAL_MS,
+  CLIENT_LOG_MAX_BATCH_EVENTS,
+  CLIENT_LOG_MAX_BUFFER_EVENTS,
+  CLIENT_LOG_MIN_TRANSPORT_LEVEL,
+  CLIENT_LOG_OCCURRENCES_KEY,
+  LOG_LEVEL_RANK,
 } from './log.constants';
 export { APPEARANCE_ICONS } from './settings.constants';
 export {
