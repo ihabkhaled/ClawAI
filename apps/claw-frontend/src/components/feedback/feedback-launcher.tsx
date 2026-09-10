@@ -4,9 +4,9 @@ import { MessageSquarePlus, Minus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
-  FEEDBACK_LAUNCHER_CLASSES,
   FEEDBACK_LAUNCHER_COLLAPSE_HANDLE_CLASSES,
   FEEDBACK_LAUNCHER_EDGE_TAB_CLASSES,
+  FEEDBACK_LAUNCHER_STACK_CLASSES,
 } from '@/constants/feedback.constants';
 import { useFeedbackLauncher } from '@/hooks/feedback/use-feedback-launcher';
 import { useFeedbackLauncherCollapse } from '@/hooks/feedback/use-feedback-launcher-collapse';
@@ -34,7 +34,7 @@ export function FeedbackLauncher({ onOpen }: FeedbackLauncherProps) {
   }
 
   return (
-    <div className={`${FEEDBACK_LAUNCHER_CLASSES} inline-flex`}>
+    <div className={FEEDBACK_LAUNCHER_STACK_CLASSES}>
       <Button
         type="button"
         variant="ghost"

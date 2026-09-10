@@ -39,19 +39,20 @@ export const FEEDBACK_ACCEPTED_IMAGE_TYPES = 'image/png,image/jpeg,image/webp,im
 // which this launcher used to cover exactly.
 export const FEEDBACK_LAUNCHER_CLASSES = `${FLOATING_ACTION_RAIL_SLOT_TWO} z-40 ${FLOATING_ACTION_DESKTOP_BOTTOM}`;
 
-// Sits just outside the launcher's own top-end corner. Deliberately not part
-// of `FEEDBACK_LAUNCHER_CLASSES`: that string is `fixed`, and this handle only
-// needs to be `absolute` against the launcher's own box.
+// The handle stacks ABOVE the launcher rather than over its corner.
 //
-// `icon-xs`'s own `touch:min-h-11 touch:min-w-11` (the 44px WCAG touch-target
-// floor every other icon button wants) targets `min-height`/`min-width`, a
-// different property than this string's `h-6 w-6`, so `cn()`'s dedup never
-// sees them as conflicting and both apply — on any touch-capable viewport the
-// min-size wins and blows the handle up to 44px, big enough to cover most of
-// the launcher itself. `touch:min-h-0 touch:min-w-0` targets that same
-// property under the same variant, so it's what actually overrides it.
+// Overlapping it was the bug: on a touch viewport the unlayered 44px
+// touch-target net in globals.css lifts every `button` to `min-height`/
+// `min-width: 2.75rem`, and being unlayered it outranks every Tailwind
+// utility — `h-6`, `touch:min-h-0`, anything — because those all live inside
+// `@layer utilities`. So a handle pinned to the launcher's corner grew to the
+// launcher's own size and swallowed it. Stacking removes the overlap by
+// construction, which means the handle can keep the full 44px target a finger
+// actually needs instead of being shrunk below it.
+export const FEEDBACK_LAUNCHER_STACK_CLASSES = `${FEEDBACK_LAUNCHER_CLASSES} flex flex-col items-center gap-1.5`;
+
 export const FEEDBACK_LAUNCHER_COLLAPSE_HANDLE_CLASSES =
-  'absolute -end-2 -top-2 h-6 w-6 touch:min-h-0 touch:min-w-0 rounded-full border border-border bg-background p-0 shadow-sm hover:bg-accent';
+  'rounded-full border border-border bg-background p-0 shadow-sm hover:bg-accent';
 
 // The auto-clearance system (see floating-action.constants.ts) keeps the
 // launcher off whatever it can measure, but it can't know every element a
