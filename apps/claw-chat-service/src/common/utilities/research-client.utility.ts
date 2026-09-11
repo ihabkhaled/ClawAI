@@ -64,6 +64,11 @@ function inferDefaultMaxResults(workflow: ResearchWorkflow): number {
       return SEARCH_THEN_FETCH_DEFAULT_MAX_RESULTS;
     case ResearchWorkflow.SEARCH_FETCH_EXTRACT:
       return SEARCH_FETCH_EXTRACT_DEFAULT_MAX_RESULTS;
+    case ResearchWorkflow.SITE_CRAWL:
+      // SITE_CRAWL has no search step, so this value is never read by
+      // research-service for it; a value is still returned because the
+      // request body always carries one.
+      return SEARCH_ONLY_DEFAULT_MAX_RESULTS;
     default:
       return SEARCH_ONLY_DEFAULT_MAX_RESULTS;
   }

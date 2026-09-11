@@ -216,12 +216,17 @@ content genuinely reached the model, the same as a direct fetch); the
 discovery method (`user`/`sitemap`/`link`) rides in `EvidenceItem.structured`
 instead of adding a fourth `source` value every consumer would need to learn.
 
-Reachable via `POST /research/execute` with `workflow: 'SITE_CRAWL'` today.
-**Not yet reachable from the chat UI** — no frontend toggle offers it, and no
-auto-intent-classifier selects it yet; that classifier is separate, later
-scope (see ADR-092's "Revisit when"). Gzip-compressed sitemaps are not
-decompressed by `parseSitemapXml` or by `FetchService`, so a gzipped sitemap
-silently falls back to the homepage-link path.
+Reachable via `POST /research/execute` with `workflow: 'SITE_CRAWL'` directly,
+and now also automatically from an ordinary chat message: chat-service's
+`classifyResearchWorkflow` upgrades an already-enabled research mode to
+`SITE_CRAWL` when the message contains a URL plus crawl-intent language
+("crawl", "audit this website", "map the site"). No frontend toggle exposes
+it as a distinct manual mode — it is reached only through that upgrade, on
+top of the existing SEARCH/SEARCH_FETCH/SEARCH_EXTRACT toggle. See
+[ADR-092](../13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md)'s
+amendments. Gzip-compressed sitemaps are not decompressed by `parseSitemapXml`
+or by `FetchService`, so a gzipped sitemap silently falls back to the
+homepage-link path.
 
 **Feed discovery.** `extractHtml`'s metadata now includes `feedUrls` — RSS/
 Atom links declared via `<link rel="alternate" type="application/{rss,atom}+xml">`

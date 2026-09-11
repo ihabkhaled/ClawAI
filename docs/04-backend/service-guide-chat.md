@@ -258,6 +258,29 @@ checks into a single `requireFeature: PlanFeature[]` call:
 research enricher is requested. A locked plan flag returns `403
 MODEL_NOT_ALLOWED_FOR_PLAN` before any LLM tokens are spent.
 
+### Research workflow selection: mapping vs. classifying
+
+`ChatMessagesService.runResearchForIntent` is the only single-message
+research call site (compare-mode's `ContextAssemblyManager` has its own,
+separate one). It picks which `ResearchWorkflow` to request from
+research-service via `classifyResearchWorkflow`
+(`common/utilities/research-intent-classifier.utility.ts`), not the plainer
+`mapResearchModeToWorkflow` compare-mode still uses.
+
+The difference: `mapResearchModeToWorkflow` is a pure lookup from the
+user-facing `ResearchMode` toggle (NONE/SEARCH/SEARCH_FETCH/SEARCH_EXTRACT).
+`classifyResearchWorkflow` calls that lookup first, then upgrades the result
+to `ResearchWorkflowKind.SITE_CRAWL` when the message itself contains a URL
+plus deterministic crawl-intent language ("crawl", "audit this website",
+"map the site") — see
+[ADR-092](../13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md).
+It never upgrades `SEARCH_ONLY` (chosen and priced as fetch-free) and never
+runs at all when research is off — research stays opt-in; this only makes
+the already-on state smarter about which workflow to request.
+
+Compare-mode is excluded on purpose: crawling once per parallel model lane
+would multiply the cost by the number of providers being compared.
+
 ---
 
 ## Advanced Orchestration Modes

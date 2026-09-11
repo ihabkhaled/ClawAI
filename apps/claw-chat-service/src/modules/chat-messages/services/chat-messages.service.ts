@@ -11,7 +11,7 @@ import { allowedModelKeys, type PlanFeature, resolvePlanLimit } from '@claw/shar
 import { ModelExposureClient } from '../clients/model-exposure.client';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { AppConfig } from '../../../app/config/app.config';
-import { mapResearchModeToWorkflow, recordGet, runResearch } from '../../../common/utilities';
+import { classifyResearchWorkflow, recordGet, runResearch } from '../../../common/utilities';
 import {
   FILE_FOLLOW_UP_PREFIXES,
   IMAGE_FOLLOW_UP_PREFIXES,
@@ -329,7 +329,7 @@ export class ChatMessagesService implements OnModuleInit {
       this.logger.warn(`research: researchMode=${options.mode} but no bearer token; skipping`);
       return null;
     }
-    const workflow = mapResearchModeToWorkflow(options.mode as ResearchMode);
+    const workflow = classifyResearchWorkflow(options.mode as ResearchMode, intent);
     const config = AppConfig.get();
     const run = await runResearch(config.RESEARCH_SERVICE_URL, {
       userToken,

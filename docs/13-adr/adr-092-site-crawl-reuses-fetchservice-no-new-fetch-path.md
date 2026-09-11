@@ -122,10 +122,47 @@ see `SiteAuditManager`'s own doc comment. Every "missing X" finding carries
 check only proves the tag is absent from the fetched HTML, not from what a
 browser would render, per rule 41 item 13.
 
+## Amendment: auto-routing to SITE_CRAWL when research is already on (2026-09-12)
+
+`SITE_CRAWL` was reachable only via a direct `POST /research/execute` call —
+nothing in chat-service could ever request it, because chat-service's own
+`ResearchWorkflow` enum (the wire-facing mirror of research-service's
+`ResearchWorkflowKind`) had no `SITE_CRAWL` member, and no user-facing
+`ResearchMode` maps to one either.
+
+Per an explicit decision made when this was built: research stays
+opt-in (no auto-triggering it for messages where the user never turned it
+on), but ONCE it is on, the platform should not force a person to
+pick SEARCH vs SEARCH_FETCH vs SEARCH_EXTRACT by hand for something as
+distinguishable as "read one page" vs "crawl the whole site."
+
+`classifyResearchWorkflow` (`apps/claw-chat-service/src/common/utilities/research-intent-classifier.utility.ts`)
+implements the narrow slice of that: it takes the workflow
+`mapResearchModeToWorkflow` would have chosen and upgrades it to
+`SITE_CRAWL` only when the message contains BOTH a URL and one of a small,
+literal set of crawl-intent phrases (`crawl`, `audit this/the site/website`,
+`map this/the site/website`). Deterministic, not a model call — same
+"rules first" posture as `detectUrlsInText` in research-service.
+
+**Never upgrades `SEARCH_ONLY`.** That mode was chosen and priced as one
+that does not fetch pages at all (rule 41 item 3); upgrading it into one
+that fetches twenty would be the same defect in a new shape. Wired only into
+the single-message research path (`ChatMessagesService.runResearchForIntent`),
+not the compare-mode enricher (`ContextAssemblyManager`) — crawling once per
+parallel model lane would multiply the cost by however many providers are
+being compared, which is not what compare mode's lightweight per-lane
+grounding is for.
+
 ## Revisit when
 
-- An intent classifier is built that auto-selects `SITE_CRAWL` from message
-  content — this ADR's manager is what it will call.
+- **Done 2026-09-12**: ~~an intent classifier is built that auto-selects
+  `SITE_CRAWL` from message content~~ — see the amendment above.
+  `classifyResearchWorkflow` covers the narrow "crawl this URL" case only;
+  the broader auto-web-intent-router the spec describes (NONE/SEARCH/FETCH
+  chosen automatically for every message) is still a separate, larger
+  decision, deliberately not built — research stays opt-in.
 - Something needs to browse a crawl's page graph independently of the one
   answer it produced — that is the trigger for a persisted schema.
 - A real site with a gzipped sitemap is reported as under-crawled.
+- The compare-mode enricher gets a cost model that could afford a crawl per
+  lane — until then it deliberately never requests `SITE_CRAWL`.
