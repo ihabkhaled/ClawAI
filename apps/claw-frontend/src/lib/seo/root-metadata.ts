@@ -5,6 +5,7 @@ import {
   SITE_TITLE,
   SOCIAL_PREVIEW_IMAGE_ALT,
   SOCIAL_PREVIEW_IMAGE_PATH,
+  YANDEX_SITE_VERIFICATION,
 } from '@/constants/site-metadata.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 
@@ -24,6 +25,14 @@ export function buildRootMetadata(): Metadata {
     publisher: 'ClawAI',
     category: 'technology',
     referrer: 'origin-when-cross-origin',
+    // Next.js's `verification` field renders the correct `<meta name="...">`
+    // tag for each engine — `yandex` becomes
+    // `<meta name="yandex-verification" content="...">` in every page's
+    // `<head>`, root layout included, which is where Yandex Webmaster expects
+    // to find it.
+    verification: {
+      yandex: YANDEX_SITE_VERIFICATION,
+    },
     appleWebApp: {
       capable: true,
       title: 'ClawAI',
