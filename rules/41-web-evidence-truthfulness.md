@@ -135,6 +135,17 @@ from the missing capability statement, and neither knew about the other.**
     does not resolve DNS, so a hostname an attacker controls can point at
     loopback. That is TD-031, not a secret.
 
+13. **Head metadata read from a plain fetch is "not present in this markup",
+    never "verified absent."** `extractHtml` (`common/utilities/html-extract.utility.ts`)
+    reads canonical, hreflang, meta robots, Open Graph, Twitter card and
+    JSON-LD straight out of the raw response bytes — no JavaScript execution.
+    A page whose canonical tag, or an entire meta-tag block, is injected
+    client-side will report `null`/empty here even though a browser would show
+    it. `HtmlMetadata`'s own doc comment says this explicitly. A finding built
+    from this data ("no canonical tag") is only true of the markup actually
+    fetched; do not upgrade it to a claim about the live rendered page without
+    a rendered-DOM fetch to back it — that fallback does not exist yet.
+
 ## Prohibited patterns
 
 - Passing a prompt containing a URL to a search engine and calling the result
@@ -153,6 +164,7 @@ from the missing capability statement, and neither knew about the other.**
 | **Unit test**        | `apps/claw-research-service/src/common/utilities/__tests__/url-detection.utility.spec.ts` — what counts as a fetchable URL, including every rejected scheme.                                                                                |
 | **Unit test**        | `apps/claw-research-service/src/modules/research/managers/__tests__/research.manager.spec.ts` — the pasted URL is fetched, outranks search, is never fetched twice, warns by name on failure, and is skipped in SEARCH_ONLY with a warning. |
 | **Unit test**        | `apps/claw-chat-service/src/modules/chat-messages/__tests__/context-assembly.manager.spec.ts` — the capability statement appears for a requested-but-empty run, is absent when research was never requested, and names the tools that ran.  |
+| **Unit test**        | `apps/claw-research-service/src/common/utilities/__tests__/html-extract.utility.spec.ts` — canonical/hreflang/OG/Twitter/JSON-LD extraction, attribute-order independence, first-tag-wins on duplicates, empty metadata on a tagless page.  |
 | **Review checklist** | Rule 7 has no automatable form yet — the counts are assembled in several places. Read them against the bundle before shipping a change to any of them.                                                                                      |
 
 ## Definition of done

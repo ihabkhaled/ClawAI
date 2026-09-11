@@ -1,3 +1,5 @@
+import type { HtmlMetadata } from '../../../common/types/html-extract.types';
+
 export type FetchRequest = {
   url: string;
   /** Override the adapter's default timeout. */
@@ -28,4 +30,11 @@ export type FetchResult = {
    * raw HTML again, or accept the stripped `content` as input.
    */
   rawHtml?: string;
+  /**
+   * Head metadata (canonical, hreflang, OG, Twitter card, JSON-LD) for
+   * text/html responses; absent for every other MIME type. Best-effort from
+   * the raw markup only — a page whose tags are injected by client-side JS
+   * will not have them here without a rendered-DOM fetch.
+   */
+  metadata?: HtmlMetadata;
 };

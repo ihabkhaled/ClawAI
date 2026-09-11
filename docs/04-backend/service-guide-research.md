@@ -179,6 +179,22 @@ controls can resolve to loopback and pass. That is written down as TD-031 rather
 than left implied; the fix is a socket-level guard that checks resolved
 addresses and pins the connection against rebinding.
 
+## Head metadata extraction
+
+`extractHtml` (`common/utilities/html-extract.utility.ts`) reads, from the raw
+HTML bytes of a fetched page and with no JavaScript execution: meta
+description, meta robots directive, canonical URL (resolved against the
+page's own final URL when relative), every `hreflang` alternate, Open Graph
+properties, Twitter card properties, and parsed JSON-LD blocks (malformed
+blocks are skipped, not fatal). Surfaced on `FetchResult.metadata`, `undefined`
+for non-HTML responses.
+
+Every field is best-effort against the markup actually fetched — see rule 13
+in [rules/41](../../rules/41-web-evidence-truthfulness.md): a tag a browser
+injects client-side is invisible here without a rendered-DOM fetch, which does
+not exist yet. Absence in this data means "not in this markup," not "the live
+page doesn't have it."
+
 ## Nginx + Health + Env
 
 - Nginx: `/api/v1/research/*` → `http://research-service:4016`.

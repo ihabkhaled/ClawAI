@@ -11,6 +11,7 @@ import {
 } from '../../../common/constants/fetch.constants';
 import { extractHtml } from '../../../common/utilities/html-extract.utility';
 import { assertSafeOutboundUrl } from '../../../common/utilities/url-safety.utility';
+import type { HtmlMetadata } from '../../../common/types/html-extract.types';
 import type { FetchAdapter } from './fetch-adapter.interface';
 import type { FetchRequest, FetchResult } from '../types/fetch.types';
 
@@ -66,6 +67,7 @@ export class HttpFetchAdapter implements FetchAdapter {
       cacheHit: false,
       latencyMs,
       rawHtml: mimeType === 'text/html' || mimeType === 'application/xhtml+xml' ? body : undefined,
+      metadata: extracted.metadata,
     };
   }
 
@@ -177,6 +179,7 @@ export class HttpFetchAdapter implements FetchAdapter {
     title: string | null;
     text: string;
     links: string[];
+    metadata?: HtmlMetadata;
   } {
     if (mimeType === 'text/html' || mimeType === 'application/xhtml+xml') {
       return extractHtml(body, finalUrl);
