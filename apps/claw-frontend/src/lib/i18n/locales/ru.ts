@@ -2396,6 +2396,8 @@ export const ru: TranslationDictionary = {
   },
   research: {
     toggle: {
+      modeLabel: 'Режим веб-исследования',
+      providerLabel: 'Поставщик поиска',
       placeholder: 'Исследование',
       autoProvider: 'Авто провайдер',
       noProviders: 'Провайдеры не настроены',

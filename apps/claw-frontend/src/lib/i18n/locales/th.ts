@@ -2339,6 +2339,8 @@ export const th: TranslationDictionary = {
   },
   research: {
     toggle: {
+      modeLabel: 'โหมดค้นคว้าเว็บ',
+      providerLabel: 'ผู้ให้บริการค้นหา',
       placeholder: 'วิจัย',
       autoProvider: 'ผู้ให้บริการรถยนต์',
       noProviders: 'ไม่มีการกำหนดค่าผู้ให้บริการ',

@@ -164,6 +164,22 @@ today, and any future page built as header + transcript + input.
     missed 15s heartbeats) races the read against a deadline and turns that
     silence into an ordinary drop, which the reconnect loop already handles.
 
+17. **Quiet is a size, not a fade.** Secondary text earns its place in the
+    hierarchy by being smaller, never by being dimmed below the contrast floor.
+    The message timestamp stacked `text-muted-foreground/60` with
+    `md:opacity-60` — about a third of full opacity — and Lighthouse failed it
+    on contrast. Text that still has to be read is not decoration.
+
+18. **A control that renders a VALUE needs a LABEL.** A Radix `SelectTrigger`
+    renders the current value, so without an `aria-label` a screen reader
+    announces "No research, combobox" and never says what is being chosen —
+    Lighthouse reports it as a button with no accessible name at all.
+
+19. **Never give a button an `aria-label` that differs from its visible text.**
+    The accessible name replaces the visible one, so a button reading "Search"
+    with `aria-label="Open search"` cannot be activated by someone saying
+    "click Search". Label the icon-only variant; leave the labelled one alone.
+
 ## Prohibited patterns
 
 - A pixel height, or a ratio-of-window height, for a composer or a transcript.
@@ -192,6 +208,9 @@ today, and any future page built as header + transcript + input.
 - An unbounded `await` on a network read. A stream that can stall needs a
   deadline, or the UI waits forever with nothing to show for it.
 - Connection health that exists only in a log or a console message.
+- Opacity or a colour alpha used to make text quieter than the contrast floor.
+- An `aria-label` on a control that already has visible text, unless it STARTS
+  with that text.
 
 ## Enforcement
 

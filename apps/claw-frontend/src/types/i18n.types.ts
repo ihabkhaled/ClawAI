@@ -2535,6 +2535,8 @@ export type TranslationDictionary = {
   };
   research: {
     toggle: {
+      modeLabel: string;
+      providerLabel: string;
       placeholder: string;
       autoProvider: string;
       noProviders: string;

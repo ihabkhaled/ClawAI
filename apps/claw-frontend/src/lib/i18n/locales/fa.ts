@@ -2364,6 +2364,8 @@ export const fa: TranslationDictionary = {
   },
   research: {
     toggle: {
+      modeLabel: 'حالت پژوهش وب',
+      providerLabel: 'ارائه‌دهنده جستجو',
       placeholder: 'تحقیق کنید',
       autoProvider: 'ارائه دهنده خودکار',
       noProviders: 'هیچ ارائه دهنده ای پیکربندی نشده است',

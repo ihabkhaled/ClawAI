@@ -2284,6 +2284,8 @@ export const zh: TranslationDictionary = {
   },
   research: {
     toggle: {
+      modeLabel: '网络研究模式',
+      providerLabel: '搜索提供方',
       placeholder: '研究',
       autoProvider: '汽车供应商',
       noProviders: '没有配置提供商',

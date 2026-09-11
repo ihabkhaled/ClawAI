@@ -2414,6 +2414,8 @@ export const de: TranslationDictionary = {
   },
   research: {
     toggle: {
+      modeLabel: 'Web-Recherche-Modus',
+      providerLabel: 'Suchanbieter',
       placeholder: 'Recherche',
       autoProvider: 'Auto-Provider',
       noProviders: 'Keine Provider konfiguriert',

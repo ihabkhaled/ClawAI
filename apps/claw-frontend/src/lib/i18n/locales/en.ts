@@ -2354,6 +2354,8 @@ export const en: TranslationDictionary = {
   },
   research: {
     toggle: {
+      modeLabel: 'Web research mode',
+      providerLabel: 'Search provider',
       placeholder: 'Research',
       autoProvider: 'Auto Provider',
       noProviders: 'No providers configured',

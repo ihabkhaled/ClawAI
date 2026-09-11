@@ -141,7 +141,12 @@ function MessageBubbleBase({
       >
         <div className={cn('flex items-center gap-2', isUser ? 'self-end' : 'self-start')}>
           <span className="text-muted-foreground text-xs">{roleLabel}</span>
-          <span className="text-muted-foreground/60 touch:text-xs text-[10px] transition-opacity md:opacity-60 md:group-hover/bubble:opacity-100">
+          {/* `text-muted-foreground/60` at `md:opacity-60` stacked to roughly a
+              third of full opacity, which Lighthouse flagged as failing
+              contrast. Timestamps are quiet by being SMALL, not by being
+              faint — dimming text below the contrast floor makes it
+              decoration that still has to be read. */}
+          <span className="text-muted-foreground touch:text-xs text-[10px]">
             {formatShortDateTime(message.createdAt)}
           </span>
         </div>

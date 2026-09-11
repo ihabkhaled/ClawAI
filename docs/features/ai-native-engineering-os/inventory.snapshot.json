@@ -7528,7 +7528,7 @@
           "file": "rules/39-worktree-branch-completion-pr-and-release-notes.md"
         },
         {
-          "bytes": 16934,
+          "bytes": 18090,
           "file": "rules/40-chat-surface-layout-and-composer.md"
         },
         {
@@ -7828,7 +7828,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 5130
+        "value": 5132
       },
       "localeCount": 13,
       "locales": [

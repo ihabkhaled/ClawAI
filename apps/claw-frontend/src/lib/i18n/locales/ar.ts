@@ -2336,6 +2336,8 @@ export const ar: TranslationDictionary = {
   },
   research: {
     toggle: {
+      modeLabel: 'وضع البحث على الويب',
+      providerLabel: 'مزود البحث',
       placeholder: 'البحث',
       autoProvider: 'مزود تلقائي',
       noProviders: 'لا توجد مزودات مُهيَّأة',

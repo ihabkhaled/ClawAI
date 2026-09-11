@@ -2392,6 +2392,8 @@ export const pt: TranslationDictionary = {
   },
   research: {
     toggle: {
+      modeLabel: 'Modo de pesquisa web',
+      providerLabel: 'Fornecedor de pesquisa',
       placeholder: 'Pesquisa',
       autoProvider: 'Provedor Automático',
       noProviders: 'Nenhum provedor configurado',

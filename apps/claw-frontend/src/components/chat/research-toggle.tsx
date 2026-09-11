@@ -54,7 +54,14 @@ export function ResearchToggle({
         onValueChange={(next) => onChange({ ...value, mode: next as ResearchMode })}
         disabled={disabled}
       >
-        <SelectTrigger className="truncate-fixed h-9 w-[8.5rem] shrink-0 px-2 text-xs sm:w-[10rem]">
+        {/* A Radix Select trigger renders its VALUE, not a label, so without an
+            aria-label a screen reader announces "No research, combobox" with
+            no indication of what is being chosen. Lighthouse reported it as a
+            button with no accessible name. */}
+        <SelectTrigger
+          aria-label={t('research.toggle.modeLabel')}
+          className="truncate-fixed h-9 w-[8.5rem] shrink-0 px-2 text-xs sm:w-[10rem]"
+        >
           <SelectValue placeholder={t('research.toggle.placeholder')} />
         </SelectTrigger>
         <SelectContent>
@@ -87,7 +94,10 @@ export function ResearchToggle({
           }
           disabled={providerDisabled}
         >
-          <SelectTrigger className="truncate-fixed h-9 w-[9.5rem] shrink-0 px-2 text-xs sm:w-[12rem]">
+          <SelectTrigger
+            aria-label={t('research.toggle.providerLabel')}
+            className="truncate-fixed h-9 w-[9.5rem] shrink-0 px-2 text-xs sm:w-[12rem]"
+          >
             <SelectValue
               placeholder={getProviderPlaceholder(
                 isProvidersLoading,

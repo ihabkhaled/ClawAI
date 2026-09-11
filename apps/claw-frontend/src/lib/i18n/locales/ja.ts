@@ -2370,6 +2370,8 @@ export const ja: TranslationDictionary = {
   },
   research: {
     toggle: {
+      modeLabel: 'ウェブ調査モード',
+      providerLabel: '検索プロバイダー',
       placeholder: '研究',
       autoProvider: '自動プロバイダー',
       noProviders: 'プロバイダーが構成されていません',

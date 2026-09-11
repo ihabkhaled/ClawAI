@@ -2412,6 +2412,8 @@ export const fr: TranslationDictionary = {
   },
   research: {
     toggle: {
+      modeLabel: 'Mode de recherche web',
+      providerLabel: 'Fournisseur de recherche',
       placeholder: 'Recherche',
       autoProvider: 'Fournisseur automatique',
       noProviders: 'Aucun fournisseur configuré',

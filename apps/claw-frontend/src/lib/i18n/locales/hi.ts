@@ -2370,6 +2370,8 @@ export const hi: TranslationDictionary = {
   },
   research: {
     toggle: {
+      modeLabel: 'वेब रिसर्च मोड',
+      providerLabel: 'खोज प्रदाता',
       placeholder: 'रिसर्च',
       autoProvider: 'ऑटो प्रोवाइडर',
       noProviders: 'कोई प्रोवाइडर कॉन्फ़िगर नहीं',

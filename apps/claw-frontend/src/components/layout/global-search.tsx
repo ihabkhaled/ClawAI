@@ -82,10 +82,14 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
           {/* Desktop (sm+): labeled trigger with a Cmd/Ctrl+K hint pill. The
            * pill is decorative — the actual binding lives in
            * useGlobalSearchController via useKeyboardShortcut('mod+k'). */}
+          {/* No aria-label here on purpose. The button already SAYS "Search",
+              and an aria-label of "Open search" overrides that with a
+              different string — so someone driving the page by voice says
+              "click Search" and nothing happens. The icon-only variant above
+              keeps its label, because it has no text of its own. */}
           <Button
             variant="ghost"
             onClick={handleToggle}
-            aria-label={t('accessibility.openSearch')}
             className="text-muted-foreground hover:text-foreground hidden h-9 items-center gap-2 px-2.5 text-sm font-normal transition-colors sm:inline-flex"
           >
             <Search className="h-4 w-4" />
