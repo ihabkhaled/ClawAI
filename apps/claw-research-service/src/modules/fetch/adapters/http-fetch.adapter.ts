@@ -8,6 +8,7 @@ import {
   FETCH_MAX_BYTES,
   FETCH_MAX_CONTENT_LENGTH,
   FETCH_MAX_REDIRECTS,
+  RAW_BODY_PRESERVED_MIME_TYPES,
 } from '../../../common/constants/fetch.constants';
 import { extractHtml } from '../../../common/utilities/html-extract.utility';
 import { assertSafeOutboundUrl } from '../../../common/utilities/url-safety.utility';
@@ -66,7 +67,7 @@ export class HttpFetchAdapter implements FetchAdapter {
       byteSize: body.length,
       cacheHit: false,
       latencyMs,
-      rawHtml: mimeType === 'text/html' || mimeType === 'application/xhtml+xml' ? body : undefined,
+      rawHtml: RAW_BODY_PRESERVED_MIME_TYPES.has(mimeType ?? '') ? body : undefined,
       metadata: extracted.metadata,
     };
   }

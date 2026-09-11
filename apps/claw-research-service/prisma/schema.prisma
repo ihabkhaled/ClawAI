@@ -37,6 +37,7 @@ enum ResearchWorkflowKind {
   SEARCH_THEN_FETCH
   SEARCH_FETCH_EXTRACT
   REPO_CLONE_ANALYZE
+  SITE_CRAWL
 }
 
 enum FetchJobStatus {

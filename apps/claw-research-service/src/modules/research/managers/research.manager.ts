@@ -4,6 +4,7 @@ import { EVIDENCE_FETCH_TOP_N } from '../../../common/constants/evidence.constan
 import { DIRECT_FETCH_CONFIDENCE } from '../../../common/constants/url-detection.constants';
 import { clampSearchQuery } from '../../../common/utilities/search-query.utility';
 import { detectUrlsInText } from '../../../common/utilities/url-detection.utility';
+import { ProviderSelectionMode } from '../../../common/enums/provider-selection-mode.enum';
 import { ResearchRunStatus } from '../../../common/enums/research-run-status.enum';
 import { ResearchWorkflowKind } from '../../../common/enums/research-workflow-kind.enum';
 import { sha1Short } from '../../../common/utilities/hash.utility';
@@ -14,6 +15,7 @@ import { SearchExecutionService } from '../../search/services/search-execution.s
 import { ResearchRunRepository } from '../repositories/research-run.repository';
 import { ResearchUsageService } from '../../../common/services/research-usage.service';
 import { buildEvidenceBundle, traceEntry } from '../utilities/evidence-builder.utility';
+import { SiteCrawlManager } from './site-crawl.manager';
 import type { ExecuteResearchDto } from '../dto/execute-research.dto';
 import type { Prisma, ResearchRun } from '../../../generated/prisma';
 import type {
@@ -34,6 +36,7 @@ export class ResearchManager {
     private readonly fetchService: FetchService,
     private readonly scrapeService: ScrapeService,
     private readonly researchUsage: ResearchUsageService,
+    private readonly siteCrawlManager: SiteCrawlManager,
   ) {}
 
   async run(userId: string, dto: ExecuteResearchDto): Promise<ResearchRun> {
@@ -56,6 +59,23 @@ export class ResearchManager {
       // reach the search engine as a keyword, so the page a person explicitly
       // named was fetched only if the engine happened to return it.
       const requestedUrls = detectUrlsInText(dto.intent);
+
+      // SITE_CRAWL has no search step at all: it needs the URL to crawl and
+      // nothing else, and none of the search/fetch/extract pipeline below
+      // applies to it.
+      if (dto.workflow === ResearchWorkflowKind.SITE_CRAWL) {
+        return await this.runSiteCrawl(
+          userId,
+          requestedUrls,
+          dto,
+          run.id,
+          trace,
+          toolsUsed,
+          warnings,
+          items,
+        );
+      }
+
       const direct = await this.runDirectFetch(
         userId,
         requestedUrls,
@@ -109,6 +129,51 @@ export class ResearchManager {
 
   async listRuns(userId: string, limit: number): Promise<ResearchRun[]> {
     return this.runs.listByUser(userId, limit);
+  }
+
+  /**
+   * SITE_CRAWL short-circuits the rest of `run()`: it has no search provider,
+   * so `providerSelection` reports `ProviderSelectionMode.NONE` rather than
+   * inventing one.
+   */
+  private async runSiteCrawl(
+    userId: string,
+    requestedUrls: string[],
+    dto: ExecuteResearchDto,
+    runId: string,
+    trace: ResearchTraceEntry[],
+    toolsUsed: string[],
+    warnings: string[],
+    items: EvidenceItem[],
+  ): Promise<ResearchRun> {
+    const crawlUrl = requestedUrls[0];
+    if (crawlUrl === undefined) {
+      warnings.push('Crawl requested but the message contained no URL to crawl.');
+    } else {
+      const crawled = await this.siteCrawlManager.crawl(
+        userId,
+        crawlUrl,
+        trace,
+        toolsUsed,
+        warnings,
+      );
+      items.push(...crawled);
+    }
+    const bundle = this.finalize(
+      dto,
+      {
+        providerId: null,
+        providerName: null,
+        providerKind: null,
+        selectionMode: ProviderSelectionMode.NONE,
+        fallbackUsed: false,
+        attemptedProviders: [],
+      },
+      items,
+      warnings,
+      toolsUsed,
+    );
+    return this.completeRun(runId, bundle, trace);
   }
 
   private needsFetch(workflow: ResearchWorkflowKind): boolean {

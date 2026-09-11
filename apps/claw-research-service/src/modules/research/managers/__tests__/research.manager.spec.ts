@@ -2,6 +2,7 @@ import { ProviderSelectionMode } from '../../../../common/enums/provider-selecti
 import { ResearchWorkflowKind } from '../../../../common/enums/research-workflow-kind.enum';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
 import { ResearchManager } from '../research.manager';
+import type { SiteCrawlManager } from '../site-crawl.manager';
 import type { FetchService } from '../../../fetch/services/fetch.service';
 import type { SearchExecutionService } from '../../../search/services/search-execution.service';
 import type { ScrapeService } from '../../../scrape/services/scrape.service';
@@ -26,6 +27,7 @@ describe('ResearchManager', () => {
   };
   let manager: ResearchManager;
   let researchUsage: { record: jest.Mock };
+  let siteCrawlManager: { crawl: jest.Mock };
 
   beforeEach(() => {
     runs = {
@@ -81,6 +83,7 @@ describe('ResearchManager', () => {
       })),
     };
     researchUsage = { record: jest.fn(async () => {}) };
+    siteCrawlManager = { crawl: jest.fn(async () => []) };
 
     manager = new ResearchManager(
       runs as unknown as ResearchRunRepository,
@@ -88,6 +91,7 @@ describe('ResearchManager', () => {
       fetchService as unknown as FetchService,
       scrapeService as unknown as ScrapeService,
       researchUsage as unknown as ResearchUsageService,
+      siteCrawlManager as unknown as SiteCrawlManager,
     );
   });
 
@@ -307,6 +311,56 @@ describe('ResearchManager', () => {
       });
 
       expect(lastBundle().toolsUsed).not.toEqual(expect.arrayContaining(['web_fetch:user_url']));
+    });
+  });
+
+  describe('SITE_CRAWL workflow', () => {
+    function lastBundle(): { items?: Array<{ url?: string }>; warnings?: string[] } {
+      const payload = runs.update.mock.calls.at(-1)?.[1] as { bundle?: never };
+      return (payload.bundle ?? {}) as never;
+    }
+
+    it('delegates to SiteCrawlManager with the URL found in the intent, and never runs a search', async () => {
+      siteCrawlManager.crawl.mockResolvedValue([
+        {
+          id: 'c1',
+          title: 'Home',
+          url: 'https://example.com/',
+          snippet: 'content',
+          source: 'fetch',
+          providerKind: null,
+          publishedAt: null,
+          fetchedAt: null,
+          confidence: 0.95,
+        },
+      ]);
+
+      await manager.run('u1', {
+        intent: 'crawl https://example.com/ and audit it',
+        workflow: ResearchWorkflowKind.SITE_CRAWL,
+      });
+
+      expect(siteCrawlManager.crawl).toHaveBeenCalledWith(
+        'u1',
+        'https://example.com/',
+        expect.any(Array),
+        expect.any(Array),
+        expect.any(Array),
+      );
+      expect(search.execute).not.toHaveBeenCalled();
+      expect(lastBundle().items).toEqual([
+        expect.objectContaining({ url: 'https://example.com/' }),
+      ]);
+    });
+
+    it('warns instead of crawling when the intent has no URL at all', async () => {
+      await manager.run('u1', {
+        intent: 'crawl my website please',
+        workflow: ResearchWorkflowKind.SITE_CRAWL,
+      });
+
+      expect(siteCrawlManager.crawl).not.toHaveBeenCalled();
+      expect(lastBundle().warnings?.some((w) => w.includes('no URL to crawl'))).toBe(true);
     });
   });
 });

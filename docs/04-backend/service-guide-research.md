@@ -195,23 +195,33 @@ injects client-side is invisible here without a rendered-DOM fetch, which does
 not exist yet. Absence in this data means "not in this markup," not "the live
 page doesn't have it."
 
-## robots.txt and sitemap.xml parsing (not yet wired to a run)
+## SITE_CRAWL: multi-page crawl of one site
 
-`common/utilities/robots-txt.utility.ts` (`parseRobotsTxt`, `isPathAllowed`)
-and `common/utilities/sitemap.utility.ts` (`parseSitemapXml`) are pure parsers
-with no dependency, following the same hand-rolled-regex approach as the
-Bing RSS fallback in `ollama-web.adapter.ts`. `parseSitemapXml` returns
-`{kind:'urlset'|'sitemapindex'|'unrecognized', ...}` — recursing into a
-sitemap index's nested sitemaps is left to whatever fetches them, since a
-pure parser has no way to make a second HTTP call.
+`ResearchWorkflowKind.SITE_CRAWL` (`SiteCrawlManager`,
+`modules/research/managers/site-crawl.manager.ts`) fetches `robots.txt`,
+resolves `sitemap.xml` (following a bounded nested-index chain via
+`common/utilities/sitemap.utility.ts`'s `parseSitemapXml`), and fetches up to
+`CRAWL_DEFAULT_MAX_PAGES` (20) same-origin pages, honoring
+`common/utilities/robots-txt.utility.ts`'s `isPathAllowed` before every one.
+When the sitemap yields fewer than `CRAWL_MIN_SITEMAP_URLS_BEFORE_LINK_FALLBACK`
+(3) URLs, it supplements from the homepage's own links instead of crawling
+blind. Full design and the tradeoffs accepted:
+[ADR-092](../13-adr/adr-092-site-crawl-reuses-fetchservice-no-new-fetch-path.md).
 
-**Scaffolding, not a feature yet**: nothing in `ResearchManager` calls either
-parser. They exist for the multi-page crawl workflow (`ResearchWorkflowKind`
-has no `CRAWL` value yet) that will fetch `robots.txt`/`sitemap.xml` through
-the existing `FetchService` — reusing its SSRF guard and cache rather than a
-second fetch path, per rule 41 item 12 — and use these to decide what to
-fetch and in what order. Gzip-compressed sitemaps are not handled by either
-parser or by `FetchService`.
+Every network call — robots.txt, sitemap.xml, every page — goes through the
+same `FetchService.fetchPage` every other workflow uses: no second fetch
+path, so the SSRF guard, domain policy, cache and usage accounting apply
+identically. `EvidenceItem.source` stays `'fetch'` for crawled pages (the
+content genuinely reached the model, the same as a direct fetch); the
+discovery method (`user`/`sitemap`/`link`) rides in `EvidenceItem.structured`
+instead of adding a fourth `source` value every consumer would need to learn.
+
+Reachable via `POST /research/execute` with `workflow: 'SITE_CRAWL'` today.
+**Not yet reachable from the chat UI** — no frontend toggle offers it, and no
+auto-intent-classifier selects it yet; that classifier is separate, later
+scope (see ADR-092's "Revisit when"). Gzip-compressed sitemaps are not
+decompressed by `parseSitemapXml` or by `FetchService`, so a gzipped sitemap
+silently falls back to the homepage-link path.
 
 ## Nginx + Health + Env
 

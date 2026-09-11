@@ -7532,7 +7532,7 @@
           "file": "rules/40-chat-surface-layout-and-composer.md"
         },
         {
-          "bytes": 11793,
+          "bytes": 12656,
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
@@ -9634,7 +9634,7 @@
       },
       "claw-research-service": {
         "runner": "jest",
-        "testFiles": 23
+        "testFiles": 25
       },
       "claw-routing-service": {
         "runner": "jest",
@@ -10367,7 +10367,7 @@
     "serviceCount": 18,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 1183,
+    "totalTestFiles": 1185,
     "workspaceCount": 25
   }
 }

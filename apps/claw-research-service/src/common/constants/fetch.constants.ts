@@ -17,4 +17,22 @@ export const FETCH_ALLOWED_MIME_TYPES: ReadonlySet<string> = new Set([
   'application/json',
   'text/markdown',
   'application/pdf',
+  // sitemap.xml and RSS/Atom feeds are served under either of these,
+  // depending on the server.
+  'application/xml',
+  'text/xml',
+]);
+
+/**
+ * MIME types whose full, untruncated body is kept on `FetchResult.rawHtml`
+ * (the truncated `content` field is capped at `FETCH_MAX_CONTENT_LENGTH`,
+ * which a real sitemap.xml or feed can exceed well before its closing tag).
+ * HTML needs this for the scrape module's structured extractors; XML needs
+ * it so a sitemap/feed parser sees the whole document, not a cut one.
+ */
+export const RAW_BODY_PRESERVED_MIME_TYPES: ReadonlySet<string> = new Set([
+  'text/html',
+  'application/xhtml+xml',
+  'application/xml',
+  'text/xml',
 ]);
